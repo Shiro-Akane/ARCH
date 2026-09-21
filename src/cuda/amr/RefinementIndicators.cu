@@ -8,7 +8,7 @@
  * runtime control owns buffers, synchronization and refine/derefine decisions.
  */
 
-#include "RefinementIndicators.h"
+#include "cuda/amr/RefinementIndicators.h"
 #include "cuda/common/DeviceEosStatus.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 

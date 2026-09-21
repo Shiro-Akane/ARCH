@@ -186,7 +186,7 @@ ODE 和两种存储规模全部通过；单方法诊断或跳过 GPU 均不算�
 已有生成包继续使用原有普通 ODE 路径。
 
 真实生成包 [nse_light](inputs/nse_light.py) 与 [nse_alpha](inputs/nse_alpha.py)
-已通过定向 CPU [平衡与燃烧交接检查](../../tests/host/test_generated_nse_network.cpp)。
+已通过定向 CPU [平衡与燃烧交接检查](../../tests/host/network/test_generated_nse_network.cpp)。
 每个包检查九个状态：`T={4.5,5,7}e9 K` 与 `rho={1e6,1e7,1e9} g/cm³`。
 测试调用包内真实反应率与 RHS 代码，逐对隔离正／逆单向流并独立要求流量相抵，
 同时以全部单向流绝对值之和归一化，检查真实完整 RHS。

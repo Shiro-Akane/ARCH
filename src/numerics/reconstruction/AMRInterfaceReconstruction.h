@@ -14,9 +14,9 @@
 
 #include <type_traits>
 
-#include "AMRInterfaceStencil.h"
-#include "Reconstruction.h"
-#include "../../grid/Grid.h"
+#include "numerics/reconstruction/AMRInterfaceStencil.h"
+#include "numerics/reconstruction/Reconstruction.h"
+#include "grid/Grid.h"
 
 /**
  * Faces marked as 2:1 coarse-fine interfaces use conservative second-order

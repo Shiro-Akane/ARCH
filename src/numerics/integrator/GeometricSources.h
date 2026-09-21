@@ -10,8 +10,8 @@
  */
 #pragma once
 
-#include "../../data/FluidState.h"
-#include "../../grid/GridMetrics.h"
+#include "data/FluidState.h"
+#include "grid/GridMetrics.h"
 
 #include <algorithm>
 #include <cmath>

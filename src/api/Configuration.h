@@ -1,7 +1,7 @@
 #pragma once
-#include "Json.h"
-#include "Preview.h"
-#include "../data/GlobalDefs.h"
+#include "api/protocol/Json.h"
+#include "api/Preview.h"
+#include "data/GlobalDefs.h"
 
 namespace arch::api {
 detail::Json ConfigurationSchema();

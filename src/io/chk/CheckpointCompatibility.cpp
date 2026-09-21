@@ -3,13 +3,13 @@
  * @brief Deterministic checkpoint provenance and compatibility validation.
  */
 
-#include "CheckpointCompatibility.h"
+#include "io/chk/CheckpointCompatibility.h"
 
-#include "../../core/FileFingerprint.h"
-#include "../../data/GlobalDefs.h"
-#include "../../driver/dispatch/PolicyDescriptor.h"
-#include "../../physics/species/Species.h"
-#include "../../physics/eos/TabularSource.h"
+#include "core/files/FileFingerprint.h"
+#include "data/GlobalDefs.h"
+#include "driver/dispatch/PolicyDescriptor.h"
+#include "physics/species/Species.h"
+#include "physics/eos/sources/TabularSource.h"
 
 #include <algorithm>
 #include <cctype>

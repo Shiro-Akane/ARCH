@@ -8,8 +8,8 @@
  */
 #pragma once
 
-#include "../../core/ArchPortability.h"
-#include "../../core/CompensatedSum.h"
+#include "core/ArchPortability.h"
+#include "core/CompensatedSum.h"
 
 namespace arch::network_energy {
 

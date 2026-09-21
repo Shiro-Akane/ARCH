@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "../../core/ArchPortability.h"
+#include "core/ArchPortability.h"
 
 /**
  * Dispatch limits dense storage by BurnLimits::MAX_ODE_NEQ, including thermal

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "../../core/ArchPortability.h"
+#include "core/ArchPortability.h"
 
 namespace AMRInterfaceReconstruction {
 

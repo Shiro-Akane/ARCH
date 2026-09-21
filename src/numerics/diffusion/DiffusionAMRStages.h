@@ -21,10 +21,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include "DiffFlux.h"
-#include "DiffFunction.h"
-#include "../../amr/AMRFluxRegistering.h"
-#include "../../driver/StageScheduler.h"
+#include "numerics/diffusion/DiffFlux.h"
+#include "numerics/diffusion/DiffFunction.h"
+#include "amr/flux/AMRFluxRegistering.h"
+#include "driver/schedule/StageScheduler.h"
 
 namespace Numerics::Diffusion {
 

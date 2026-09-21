@@ -5,10 +5,10 @@
 
 #include <array>
 
-#include "TimmesRateLibrary.h"
+#include "physics/network/aprox13/TimmesRateLibrary.h"
 
-#include "../timmes_common/AproxRateAssembly.h"
-#include "../timmes_common/TimmesNetworkSupport.h"
+#include "physics/network/timmes_common/AproxRateAssembly.h"
+#include "physics/network/timmes_common/TimmesNetworkSupport.h"
 
 namespace timmes_aprox13_detail {
 
@@ -50,8 +50,8 @@ inline constexpr std::array<const char*, nrat> RATE_NAMES{
 
 inline constexpr double sixth = 1.0 / 6.0;
 
-#include "TimmesRhs.inc"
-#include "TimmesJacobian.inc"
+#include "physics/network/aprox13/TimmesRhs.inc"
+#include "physics/network/aprox13/TimmesJacobian.inc"
 
 #undef TIMMES_APROX13_RATES
 

@@ -59,4 +59,4 @@ CPU Debug，CUDA OFF、KLU OFF、OpenMP ON。2026-09-21 共 15 组 scoped CTest 
 
 已通过临时 Git 索引确认，本轮完整补丁可直接应用到上述 v0.13.0 checkpoint。
 
-已有 `5e96d4f0` 的前端分支只需 cherry-pick 此后本轮新增提交，再重建 CPU binary。不要重复摘取 Core A/B，也不要合入整条前端历史。Host 的构建身份至少应覆盖新增 src/api、共享 src/driver/InitialMesh.h、src/amr/RefinementThermodynamics.h、注册模型、IdealGas/Species、EOSDispatcher/InspectionSources 及其实际依赖；建议以构建清单记录所有输入，而非手工固定短白名单。
+已有 `5e96d4f0` 的前端分支只需 cherry-pick 此后本轮新增提交，再重建 CPU binary。不要重复摘取 Core A/B，也不要合入整条前端历史。Host 的构建身份至少应覆盖新增 src/api、共享 src/driver/initialization/InitialMesh.h、src/amr/refinement/RefinementThermodynamics.h、注册模型、IdealGas/Species、EOSDispatcher/InspectionSources 及其实际依赖；建议以构建清单记录所有输入，而非手工固定短白名单。

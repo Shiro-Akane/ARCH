@@ -3,12 +3,12 @@
 | 项目 | 当前记录 |
 |---|---|
 | 文档状态 | P0/P1 CPU 与相关 GPU 门槛通过，CI/验证流程整理完成；停在 P1，P2 尚未开始 |
-| 文档版本 | 0.5，2026-09-22，补齐 P1 GPU 验证 |
+| 文档版本 | 0.6，2026-09-22，P1 目录/include 整理与 CGS 约束 |
 | 审查基准 | 远端 `main`：`01cc4f723e674d47fe23850e7c0fef221e92e98c`，2026-09-21 已重新拉取并核对 |
 | GUI 契约基准 | `codex/studio-core-ui-contracts`：`d98f6f6e853ccb23eaa916ab1d20356019087622`；完整继承其 6 个 Core API 提交 |
 | 文档所在工作区 | `/home/shiroakane/ARCH`，`physics/selfgravity`；P1 实现提交 `95b858fc9f97147a8bced5146dd229dcc3d08df4` |
 | 目的 | 在实施、复查、接续任务和合并时，统一约束模块归属、功能保持、生命周期、数值方案与验收范围 |
-| 当前改动授权 | 建立并推送 `physics/selfgravity`，整合适用 GUI 内容，实施至 P1；CPU 验证后补齐 GPU 验证，可优化 CI/验证流程，但不得降低测试标准；允许高负载编译，仍停在 P1 |
+| 当前改动授权 | 建立并推送 `physics/selfgravity`，整合适用 GUI 内容，实施至 P1；CPU 验证后补齐 GPU 验证，可优化 CI/验证流程，但不得降低测试标准；允许高负载编译；GPU 验证后按职责分类目录、全面统一 include 并提供公开算例头，本轮以 CPU 编译验收；沿用全系统 CGS，仍停在 P1 |
 
 本文是本功能的实施参考，不表示 self-gravity 已可用，也不替代现有
 [实现归属](ImplementationOwnership.md)、[项目验收要求](CudaReleaseStandard.md)、
@@ -56,6 +56,7 @@ P1 的准备接口和字段身份不代表已有 Poisson/MG 或可运行自引�
 | SG-12 | 自引力的时间离散、动量与能量耦合必须单独定义并验证。 | 源项推导、时间收敛、力对称性和带正确边界项的能量预算。 |
 | SG-13 | 支持情况必须按几何、维度、边界、AMR、积分器、backend 的组合声明。 | 不支持的组合在启动解析阶段报错；不静默换物理模型。 |
 | SG-14 | CUDA“可运行”“数值通过”“取得加速”分别记录。 | 同误差预算的端到端 CPU/GPU 比较，含适用范围与退化案例。 |
+| SG-15 | 沿用 ARCH/GUI Core 的全系统 CGS，包括 IdealGas；自引力使用现有 G 常数，不新增用户单位模式或隐式换算。 | phi 为 cm²/s²、g 为 cm/s²、rho 为 g/cm³；单位元数据与物理输入一致。 |
 
 ## 3. 目标范围与首版边界
 
@@ -84,12 +85,12 @@ Cartesian 1D/2D 方程对应其平移不变的物理假设，不等同于球对�
 ### 4.1 已核对的基准事实
 
 - [Driver](../../src/driver/Driver.h) 在审查基准上为 1499 行；统一控制流已存在，但状态同步、AMR 事务、物理阶段和 IO 混在同一函数。
-- [StageScheduler](../../src/driver/StageScheduler.h) 已共享 Euler/RK2/RK3、RKL 阶段与发布规则；CPU 积分器和 CUDA 执行器均经过这些规则。
-- [IGravityPolicy](../../src/physics/gravity/IGravityPolicy.h) 是 Host patch 接口；[工厂](../../src/physics/gravity/GravityDispatch.h)和[能力检查](../../src/driver/dispatch/BackendCapabilities.h)仍拒绝 Self 路线。
-- [AMR tree](../../src/amr/AmrTree.h)在重网格中退休/释放块；[粗细层传输](../../src/amr/CoarseFineCellPlan.h)使用 `6 + species_count`，不能直接充当 MG 标量接口。
+- [StageScheduler](../../src/driver/schedule/StageScheduler.h) 已共享 Euler/RK2/RK3、RKL 阶段与发布规则；CPU 积分器和 CUDA 执行器均经过这些规则。
+- [IGravityPolicy](../../src/physics/gravity/IGravityPolicy.h) 是 Host patch 接口；[工厂](../../src/physics/gravity/GravityDispatch.h)和[能力检查](../../src/driver/dispatch/capability/BackendCapabilities.h)仍拒绝 Self 路线。
+- [AMR tree](../../src/amr/topology/AmrTree.h)在重网格中退休/释放块；[粗细层传输](../../src/amr/exchange/CoarseFineCellPlan.h)使用 `6 + species_count`，不能直接充当 MG 标量接口。
 - [SparseWrap](../../src/numerics/linalg/SparseWrap.h)的 `SparseMatrixData<N>` 分配 `N*N` 个索引；[CsrMatrixView](../../src/numerics/linalg/CsrMatrixView.h)仍为固定模板维数。
-- [CsrPattern](../../src/numerics/linalg/CsrPattern.h)已有运行时 extent 和稀疏结构；[CuDssSparseSolver](../../src/cuda/microphysics/CuDssSparseSolver.h)已有运行时维度、设备数据和因子生命周期能力。应按职责复用，不能把它们与整个燃烧求解栈绑在一起。
-- [Application.cmake](../../cmake/Application.cmake)不会自动收集新增的 `src/driver/*.cpp`；必须明确加入构建目标。
+- [CsrPattern](../../src/numerics/linalg/CsrPattern.h)已有运行时 extent 和稀疏结构；[CuDssSparseSolver](../../src/cuda/microphysics/linalg/CuDssSparseSolver.h)已有运行时维度、设备数据和因子生命周期能力。应按职责复用，不能把它们与整个燃烧求解栈绑在一起。
+- [Application.cmake](../../cmake/project/Application.cmake)不会自动收集新增的 `src/driver/*.cpp`；必须明确加入构建目标。
 
 这些是源码事实，不是本轮数值正确性或性能验收。实现开始时如 main 已变化，更新基准并复核这些入口。
 
@@ -134,7 +135,7 @@ P1 接续这些共享入口，不从旧 main 再提取一套。`BCHandler` 同�
 | `src/cuda/elliptic/`、`src/cuda/multigrid/` | 共享离散规则的 GPU stencil/transfer/reduction kernels | 另一套物理公式 |
 | `src/cuda/runtime/gravity/CudaBackendGravity.h/.cu`、`multigrid/CudaMGExecutor.h/.cu` | 设备存储、层/批执行、stream 与完成状态 | CPU patch 虚接口的设备调用 |
 | `src/numerics/linalg/`，按需扩充 | 可选动态 CSR/CSC、粗层或参考 provider 适配 | MG 与 gravity 生命周期 |
-| `cmake/Application.cmake`、`cmake/CudaBackend.cmake`，必要时 `cmake/SelfGravity.cmake` | 显式编译和可选依赖接入 | CPU-only 构建对 CUDA/cuDSS 的强制依赖 |
+| `cmake/project/Application.cmake`、`cmake/cuda/CudaBackend.cmake`，必要时 `cmake/SelfGravity.cmake` | 显式编译和可选依赖接入 | CPU-only 构建对 CUDA/cuDSS 的强制依赖 |
 
 首版只实现常系数 Poisson 所需能力。接口应允许其他线性椭圆算子接入，但不提前实现
 辐射、FLD、非线性 FAS 或通用插件框架。复用通过通用算子与 MG 接口完成；现有 RKL
@@ -214,7 +215,7 @@ CPU 的 Euler/RK2/RK3 和 CUDA batch 必须共享这个准备契约。仅在
 
 物理约定为 `laplacian(phi) = 4*pi*G*rho_source`、`g = -grad(phi)`。
 数值实现可统一使用 `A = -laplacian`、`b = -4*pi*G*rho_source`，但 apply、residual、
-粗层求解、梯度和源项必须使用同一符号。G、密度、长度与时间单位必须在 D-01 中明确。
+粗层求解、梯度和源项必须使用同一符号。D-01 的单位部分已确定为 CGS：G 直接使用 `arch::constants::gravity::cgs::gravitational_constant`（6.67430e-8 cm³/(g·s²)），rho 为 g/cm³、长度为 cm、时间为 s；phi 为 cm²/s²（erg/g），g 为 cm/s²，Poisson RHS/物理残差为 s⁻²。MG 可以在内部做明示的数值缩放，但对外恢复 CGS，不形成第二套用户单位制。
 
 - 周期域使用体积加权平均 `rho_source = rho - mean_V(rho)`；仅统计有效复合域，不能重复计入被细层覆盖的区域。
 - 周期势固定体积加权零均值；RHS 相容性、残差与校正的零空间处理贯穿各层。记录被移除的均值，不把不相容 RHS 默默伪装成原方程已解。
@@ -329,7 +330,7 @@ P5 前可单独报告周期范围完成，但不能宣称首版全部范围完�
 
 | 编号 | 需要冻结的决定 | 本计划默认方向 | 最迟完成时间 | 当前状态 |
 |---|---|---|---|---|
-| D-01 | G/单位、维度含义、质量源、phi/g 位置、边界键与错误处理 | 对齐 GUI configuration v2 的 CGS；G 沿用 Core 常数；气体密度、cell phi、兼容面梯度、独立 gravity BC | P2 前；孤立部分 P5 前 | 待冻结 |
+| D-01 | G/单位、维度含义、质量源、phi/g 位置、边界键与错误处理 | 沿用 GUI configuration v2 的 CGS 和 Core G 常数；气体密度、cell phi、兼容面梯度、独立 gravity BC | P2 前；孤立部分 P5 前 | CGS/G 已确定；离散位置与 BC 仍待冻结 |
 | D-02 | 离散算子、粗细面、粗层算子、transfer、平滑器与 bottom solver | matrix-free composite GMG/FAC；独立辅助层；Jacobi 原型 | P2 前冻结单层，P3 前冻结 AMR | 待冻结 |
 | D-03 | RK 阶段时间、动量/能量源项、reflux 后处理与重力步长 | 每阶段密度求解，保持已有分裂顺序，显式定义能量预算 | P4 前 | 待推导 |
 | D-04 | atol/rtol、最大循环、力误差、时间/空间阶数、物理误差预算 | 第 6 节残差定义；预算先于候选结果固定 | 每个对应测试实施前 | 待冻结 |
@@ -368,8 +369,8 @@ SSPRK3 为 `t,t+dt,t+dt/2`，分别消费 `Current`、`Scratch`、`Next` 的实�
 
 | 位置/当前变化 | 未来可能的问题 | 本计划的处理 |
 |---|---|---|
-| `Driver.h` 将 EOS 细化量绑定提取到 `amr/RefinementThermodynamics.h`；`SolverDispatch.cpp` 与 API 共用 `driver/InitialMesh.h` | P1 从旧实现重拆会冲突、漏掉预览消费者或重复初始化 | 先整合共享入口，再提取 Driver；保留生产与预览的共同数值路径。 |
-| `api/InitialMesh.h` 直接消费 AMRControl/tree/pool、ghost exchange、Regrid、BCHandler | AMR 签名/布局迁移可能编译失败；自动合并后也可能改变预算停止点、插值或 2:1 网格 | 变更由 Core 同步适配 API，保持预览与正式 CPU t=0 的逐块比较；大规模 AMR 搬迁后置。 |
+| `Driver.h` 将 EOS 细化量绑定提取到 `amr/refinement/RefinementThermodynamics.h`；`SolverDispatch.cpp` 与 API 共用 `driver/initialization/InitialMesh.h` | P1 从旧实现重拆会冲突、漏掉预览消费者或重复初始化 | 先整合共享入口，再提取 Driver；保留生产与预览的共同数值路径。 |
+| `api/preview/InitialMesh.h` 直接消费 AMRControl/tree/pool、ghost exchange、Regrid、BCHandler | AMR 签名/布局迁移可能编译失败；自动合并后也可能改变预算停止点、插值或 2:1 网格 | 变更由 Core 同步适配 API，保持预览与正式 CPU t=0 的逐块比较；大规模 AMR 搬迁后置。 |
 | `RuntimeParams.h`、`StandardParameters.h`、`ConfigParser.h`、`GlobalDefs.h`、API Configuration | gravity 新键只进运行解析会使表单、默认值、单位或可用性失真 | 标准键、解析、配置元数据与执行 capability 同次接入；GUI 消费权威结果。 |
 | `ProblemGenerator.h`、`GenericProblem.h`、ProblemRegistry、Grid、InitialStateConversion | 清理 includes 或初始化流程会破坏检查钩子、模型枚举、点采样及源关联 | 按新接口复核依赖；已有 inline 检查体需要完整类型，不能照旧 main 的引用接口判断直接改成全前置声明。 |
 | `eosdispatch.h`、InspectionEosCache、FileFingerprint/VerifiedFileCache、Species | EOS owner/view 拆分可能使跨请求缓存悬空、错配组分或接受过期表数据 | R4 EOS 整理延后；保留请求前后内容校验、拥有的组分存储、失败清理与历史回调类型。 |
@@ -446,6 +447,7 @@ topology/storage generation、exchange/reflux、完成凭证、设备资源退�
 - [x] I1：从 GUI Core `d98f6f6e` 建立物理分支，完整继承 6 个提交；既有 GUI 测试沿用。
 - [x] P0：冻结 main/GUI 基准、工作分支、CPU 二进制及复用输入，登记阶段时间和延后决策。
 - [x] P1：完成 Driver 职责提取、Burn 去重、全域阶段准备与标量/字段身份契约；CPU 与相关 GPU 门槛通过。
+- [x] R3/P1 后续整理：294 个文件按职责归类；内部根相对 include、测试引用和两个公开算例头完成；CPU 全目标编译通过，见 [目录记录](layout/README.zh-CN.md)。
 - [ ] P2：完成单层 CPU Poisson/MG。
 - [ ] P3：完成 CPU composite AMR 求解。
 - [ ] P4：完成 CPU 自引力、动态 AMR 与 restart 闭环。
@@ -484,6 +486,7 @@ P1 实现为 `95b858fc`；[验证证据](../../validation/gravity/results/selfgr
 | 2026-09-21 | 扩充为版本 0.3 | 核对 Core UI `d98f6f6e`；新增共享接口、兼容检查与整合顺序。长度/目录阈值仅作线索，取消 Driver 行数目标，全部拆并建议按维护收益选择。 |
 | 2026-09-21 | 实施版本 0.4 | 按用户新授权建立 `physics/selfgravity` 并完整继承 GUI Core；完成 P0/P1 CPU 工作和封包。实际阶段绑定集中到 `DriverStages`，Boundary/Regrid 共用 Runtime 声明；算子空壳延后到首个消费者。GUI 旧测试不重跑，所有 CUDA 验证后置。 |
 | 2026-09-22 | 验证版本 0.5 | 按后续授权补齐 P1 Release CUDA 构建、契约/数值/重启/sanitizer 验证；CI 接入物理分支、按需下载 LFS，审计排除构建产物，Host 比较器解除 CUDA 链接依赖。维持原数值预算并拒绝漏跑/skip，仍停在 P1。 |
+| 2026-09-22 | 维护版本 0.6 | GPU 封包后按新授权完成目录分类、项目根相对引用及公开算例头；更新已审核案例源码摘要，CPU 编译通过。沿用 GUI 已交付 CGS，修正过期单位说明；无物理实现修改，仍停 P1。 |
 
 ## 11. 参考依据
 
@@ -543,7 +546,7 @@ P1 实现为 `95b858fc`；[验证证据](../../validation/gravity/results/selfgr
 | R0 全仓清点 | 基准、阈值清单、Fortran 豁免、引用/目录/include 审查 | 为本计划提供可复查清单；不代表构建/数值基线已完成 | 已完成 |
 | R1 gravity 必需的职责边界 | Driver 与窄 Runtime/Boundary/Regrid、AMR 标量适配所需界面、阶段准备契约 | 与 P1 合并安排；AMR 几何/数值适配继续随 P2/P3 实施 | P1 部分已完成，GPU 补验状态见第 10.6 节 |
 | R2 机械重复的收拢 | Burn 半步、Host flux traversal、Tabular loader 校验、AMR byte fingerprint | DU-01 与 P1 协同；其他项目可独立，不阻塞单层 MG | DU-01 已收拢，其余未开始 |
-| R3 目录与 include | 从 driver/amr/cuda microphysics/tests/tools 候选中选择；审计 scope、测试发现与路径 owner 同步 | 先冻结共同归属，再按收益迁移；GUI 活跃接口的大搬迁后置，不一次全仓搬家 | 审计 scope 与 Host 比较器构建已整理；目录迁移未开始 |
+| R3 目录与 include | 按职责分类生产代码、测试和 CMake；规范公开与内部 include | 后续明确授权覆盖本轮目录整理；保持公开 API、工具 CLI 与历史记录入口，CPU 编译验收 | 已完成 294 项迁移、公开算例头及 include 统一；完整映射和例外见 [目录记录](layout/README.zh-CN.md) |
 | R4 次级大文件/测试/工具 | 按需评估 EOS Host owner/view、CUDA resource/control、测试责任分组、validation CLI | 保持公开入口与全部案例覆盖；EOS 整理先对接 GUI session 生命周期，其他项可独立进行 | 未开始 |
 | R5 兼容入口复核 | DC-01 的旧别名头等非数学候选 | 默认保留；只有契约与构建/使用证据充分时才做等价迁移或独立退役决定 | 未开始 |
 
@@ -569,7 +572,7 @@ AMR 可分 topology/exchange/regrid/flux；CUDA microphysics 可分 eos owners/b
 已定位为审计扫描边界问题，列入 R3。解决时应保留对真实生成源和已配置外部网络的检查，
 不能用“只查 tracked 文件”掩盖会参与构建的新增源码。
 
-上述 main 清点保留原始快照口径；v0.4 已实施 P1，v0.5 补齐 GPU/流程记录，当前状态以第 10.6 节为准。
+上述 main 清点保留原始快照口径；v0.4 已实施 P1，v0.5 补齐 GPU/流程记录，v0.6 完成授权目录/include 整理，当前状态以第 10.6 节为准。
 本次整合还修正审计器对 GUI 严格布尔错误和 schema 默认值导出的两处过期规则，并新增反例检查；
 构建目录/其他 worktree 的扫描范围问题暂未改工具，通过包含全部候选源码的干净快照执行审计。
 “审查完成”不等于“重构完成”“没有其他死代码”或“加速已实现”。

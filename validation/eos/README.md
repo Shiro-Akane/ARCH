@@ -113,7 +113,7 @@ retains the original spacing study and source-data analysis.
 
 The local working tree based on `e799640b` plus uncommitted changes was checked
 against the original EOSDriver `HShenEOS.h5` with
-[NativeTabularRegression.cpp](../../tests/host/NativeTabularRegression.cpp).
+[NativeTabularRegression.cpp](../../tests/host/eos/NativeTabularRegression.cpp).
 Of 400 deterministic interior samples, 395 had unique usable inverses:
 391 were thermally resolved at the fixed `2e-8` relative-temperature budget,
 and 4 were separately classified as source-precision-limited. Four samples

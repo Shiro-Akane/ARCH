@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "ResolvedExecutionPlan.h"
-#include "../../data/GlobalDefs.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
+#include "data/GlobalDefs.h"
 
 #include <array>
 #include <cstddef>

@@ -15,13 +15,13 @@
 #include <algorithm>
 #include <vector>
 
-#include "../../amr/AMRControl.h"
-#include "../../amr/AMRFluxRegistering.h"
-#include "../../data/FluidState.h"
-#include "../../grid/Grid.h"
-#include "../../grid/GridMetrics.h"
-#include "../../physics/gravity/IGravityPolicy.h"
-#include "GeometricSources.h"
+#include "amr/AMRControl.h"
+#include "amr/flux/AMRFluxRegistering.h"
+#include "data/FluidState.h"
+#include "grid/Grid.h"
+#include "grid/GridMetrics.h"
+#include "physics/gravity/IGravityPolicy.h"
+#include "numerics/integrator/GeometricSources.h"
 
 namespace TimeIntegration
 {

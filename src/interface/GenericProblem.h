@@ -13,15 +13,15 @@
 #include <functional>
 #include <vector>
 
-#include "ProblemGenerator.h"
+#include "interface/ProblemGenerator.h"
 
-#include "../amr/AMRControl.h"
-#include "../core/ProblemHelper.h"
-#include "../data/FluidState.h"
-#include "../data/GlobalDefs.h"
-#include "../data/UserTypes.h"
-#include "../grid/Grid.h"
-#include "../physics/species/Species.h"
+#include "amr/AMRControl.h"
+#include "core/problem/ProblemHelper.h"
+#include "data/FluidState.h"
+#include "data/GlobalDefs.h"
+#include "data/UserTypes.h"
+#include "grid/Grid.h"
+#include "physics/species/Species.h"
 
 class GenericProblemGenerator : public ProblemGenerator
 {

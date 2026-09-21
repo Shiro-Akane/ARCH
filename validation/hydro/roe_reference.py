@@ -121,7 +121,7 @@ def main():
             with mp.workdps(90):
                 assert max(abs(mp.mpf(a)-mp.mpf(b)) for a, b in
                            zip(low[case][field], high[case][field])) < mp.mpf('1e-55')
-    fixture = Path(__file__).resolve().parents[2] / 'tests/fixtures/RoeFluxReference.h'
+    fixture = Path(__file__).resolve().parents[2] / 'tests/fixtures/hydro/RoeFluxReference.h'
     declarations = dict(re.findall(r'double (\w+)\[7\] = \{([^}]+)\}', fixture.read_text()))
     assert set(declarations) == {'hll', 'hllc', 'roe', 'linear_pcm'}
     for name, declaration in declarations.items():

@@ -11,7 +11,7 @@
 
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/DeviceBlockStore.h"
-#include "driver/ComputeBackend.h"
+#include "driver/runtime/ComputeBackend.h"
 
 #include <cstdint>
 #include <memory>

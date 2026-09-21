@@ -21,19 +21,19 @@
 #include <utility>
 #include <vector>
 
-#include "HelmEos.h"
-#include "IdealGas.h"
-#include "Tabular3DEOS.h"
-#include "Tabular4DEOS.h"
-#include "TabularSource.h"
-#include "eos.h"
-#include "InspectionEosCache.h"
+#include "physics/eos/HelmEos.h"
+#include "physics/eos/IdealGas.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular4DEOS.h"
+#include "physics/eos/sources/TabularSource.h"
+#include "physics/eos/eos.h"
+#include "physics/eos/InspectionEosCache.h"
 
-#include "../../core/FileFingerprint.h"
-#include "../../core/InspectionSources.h"
-#include "../../core/RuntimeParams.h"
-#include "../../driver/dispatch/PolicyDescriptor.h"
-#include "../species/Species.h"
+#include "core/files/FileFingerprint.h"
+#include "core/files/InspectionSources.h"
+#include "core/config/RuntimeParams.h"
+#include "driver/dispatch/PolicyDescriptor.h"
+#include "physics/species/Species.h"
 
 int inspect_eos_table_rank(const std::string& path);
 

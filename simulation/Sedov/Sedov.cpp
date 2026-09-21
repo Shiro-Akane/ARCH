@@ -14,8 +14,8 @@
 #include <numbers>
 #include <stdexcept>
 
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 
 class SedovProblem
 {

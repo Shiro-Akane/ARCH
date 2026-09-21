@@ -11,8 +11,8 @@
 
 #include <vector>
 
-#include "../../data/FluidState.h"
-#include "../../grid/Grid.h"
+#include "data/FluidState.h"
+#include "grid/Grid.h"
 
 namespace Physical {
 namespace Gravity {

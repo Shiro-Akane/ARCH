@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "DriverControl.h"
-#include "DriverRuntime.h"
-#include "DriverStages.h"
-#include "DriverIO.h"
-#include "../amr/RefinementThermodynamics.h"
+#include "driver/schedule/DriverControl.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/stages/DriverStages.h"
+#include "driver/io/DriverIO.h"
+#include "amr/refinement/RefinementThermodynamics.h"
 #include <iostream>
 #include <limits>
 #ifdef _OPENMP

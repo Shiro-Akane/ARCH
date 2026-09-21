@@ -12,8 +12,8 @@
 #include <array>
 #include <vector>
 
-#include "../amr/AmrDefines.h"
-#include "../core/ArchPortability.h"
+#include "amr/topology/AmrDefines.h"
+#include "core/ArchPortability.h"
 
 /**
  * @brief Represents the conserved variables at a single point.

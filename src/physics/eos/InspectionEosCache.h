@@ -1,8 +1,8 @@
 #pragma once
 
-#include "HelmEos.h"
-#include "Tabular3DEOS.h"
-#include "Tabular4DEOS.h"
+#include "physics/eos/HelmEos.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular4DEOS.h"
 #include <cstdint>
 #include <memory>
 #include <string>

@@ -5,8 +5,8 @@
 #pragma once
 
 #include "data/FluidState.h"
-#include "driver/DriverBurnPolicy.h"
-#include "numerics/burnsolver/OdeContinuation.h"
+#include "driver/stages/DriverBurnPolicy.h"
+#include "numerics/burnsolver/ode/OdeContinuation.h"
 #include "numerics/linalg/DenseWrap.h"
 
 #include <cstddef>

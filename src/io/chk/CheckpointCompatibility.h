@@ -7,8 +7,8 @@
 
 #include <string_view>
 
-#include "../../driver/dispatch/ResolvedExecutionPlan.h"
-#include "../hdf5/HDF5Writer.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
+#include "io/hdf5/HDF5Writer.h"
 
 struct SimConfig;
 struct SpeciesManager;

@@ -10,8 +10,8 @@
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
-#include "amr/Block.h"
-#include "amr/BoundaryPlan.h"
+#include "amr/storage/Block.h"
+#include "amr/exchange/BoundaryPlan.h"
 #include "cuda/common/GridMetricsCache.h"
 #include "cuda/microphysics/common.h"
 #include "grid/GridMetrics.h"

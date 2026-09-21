@@ -3,14 +3,14 @@
 This directory couples reaction networks, thermodynamics and linear solvers
 without introducing separate CPU and CUDA ODE algorithms.
 
-- [OdeContinuation.h](OdeContinuation.h) defines shared linear-solve suspension
+- [OdeContinuation.h](ode/OdeContinuation.h) defines shared linear-solve suspension
   points and workspace contracts.
-- [ode_be-nr.h](ode_be-nr.h), [ode_bd.h](ode_bd.h) and
-  [ode_ros4.h](ode_ros4.h) own each method's continuation and adaptive control.
-- [odeFunction.h](odeFunction.h) owns common RHS/Jacobian assembly, accepted-state
-  arithmetic, accepted energy and NSE handoff; [BurnThermodynamics.h](BurnThermodynamics.h)
+- [ode_be-nr.h](ode/ode_be-nr.h), [ode_bd.h](ode/ode_bd.h) and
+  [ode_ros4.h](ode/ode_ros4.h) own each method's continuation and adaptive control.
+- [odeFunction.h](coupling/odeFunction.h) owns common RHS/Jacobian assembly, accepted-state
+  arithmetic, accepted energy and NSE handoff; [BurnThermodynamics.h](coupling/BurnThermodynamics.h)
   supplies the shared first-law closure.
-- [NetworkDerivative.h](NetworkDerivative.h) supplies the generated-network
+- [NetworkDerivative.h](coupling/NetworkDerivative.h) supplies the generated-network
   temperature-derivative fallback. [BurnDispatch.h](BurnDispatch.h),
   [BurnerHandle.h](BurnerHandle.h) and [Networks.h](Networks.h) bind policies.
 

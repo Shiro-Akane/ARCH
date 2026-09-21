@@ -6,11 +6,11 @@
 #include <array>
 #include <cmath>
 
-#include "TimmesRateLibrary.h"
+#include "physics/network/iso7/TimmesRateLibrary.h"
 
-#include "../timmes_common/AproxRateAssembly.h"
-#include "../timmes_common/TimmesNetworkSupport.h"
-#include "../timmes_common/TfactorsData.h"
+#include "physics/network/timmes_common/AproxRateAssembly.h"
+#include "physics/network/timmes_common/TimmesNetworkSupport.h"
+#include "physics/network/timmes_common/TfactorsData.h"
 
 namespace timmes_iso7_detail {
 
@@ -23,7 +23,7 @@ enum Rates : int {
 
 inline constexpr double sixth = 1.0 / 6.0;
 
-#include "TimmesRhs.inc"
+#include "physics/network/iso7/TimmesRhs.inc"
 
 } // namespace timmes_iso7_detail
 

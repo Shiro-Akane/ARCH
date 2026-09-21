@@ -264,7 +264,7 @@ CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，�
 | Sampling.h | 一维/二维采样计划及分配前数量检查 |
 | ParameterMetadata.h / .cpp | 将实际读取记录与模型位置描述组织为 JSON 扩展 |
 | ../interface/PreviewMetadata.h | 独立于 JSON 的读取记录与轴向位置数据 |
-| ../core/InitialStateConversion.h | 正式网格初始化和预览共用的数据转换 |
+| ../core/problem/InitialStateConversion.h | 正式网格初始化和预览共用的数据转换 |
 
 测试入口：
 

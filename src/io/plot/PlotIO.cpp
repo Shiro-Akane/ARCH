@@ -16,16 +16,16 @@
 #include <sstream>
 #include <vector>
 
-#include "../../amr/AMRControl.h"
-#include "../../core/RuntimeParams.h" // For SimConfig
-#include "../../data/FluidState.h"
-#include "../../data/GlobalDefs.h"
-#include "../../grid/Grid.h"
-#include "../../physics/diagnostics/VelocityDiagnostics.h"
-#include "../../physics/species/Species.h"
+#include "amr/AMRControl.h"
+#include "core/config/RuntimeParams.h" // For SimConfig
+#include "data/FluidState.h"
+#include "data/GlobalDefs.h"
+#include "grid/Grid.h"
+#include "physics/diagnostics/VelocityDiagnostics.h"
+#include "physics/species/Species.h"
 
-#include "../IO.h"
-#include "../hdf5/HDF5Writer.h"
+#include "io/IO.h"
+#include "io/hdf5/HDF5Writer.h"
 
 namespace fs = std::filesystem;
 

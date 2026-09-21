@@ -18,9 +18,9 @@
 #include <type_traits>
 #include <vector>
 
-#include "../core/ArchPortability.h"
-#include "../interface/PreviewMetadata.h"
-#include "../physics/constant/PhysicalConstants.h"
+#include "core/ArchPortability.h"
+#include "interface/PreviewMetadata.h"
+#include "physics/constant/PhysicalConstants.h"
 
 // Grid and domain configuration.
 struct GridConfig

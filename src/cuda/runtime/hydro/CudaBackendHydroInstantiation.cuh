@@ -11,9 +11,9 @@
 
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 
-#include "cuda/hydro/CheckedHydroEos.cuh"
-#include "cuda/hydro/HydroIntegratorPolicies.cuh"
-#include "cuda/hydro/HydroBatchKernels.cuh"
+#include "cuda/hydro/policies/CheckedHydroEos.cuh"
+#include "cuda/hydro/policies/HydroIntegratorPolicies.cuh"
+#include "cuda/hydro/kernels/HydroBatchKernels.cuh"
 
 #ifndef ARCH_CUDA_HYDRO_EOS_TYPE
 #error "a CUDA Hydro EOS owner must define ARCH_CUDA_HYDRO_EOS_TYPE"

@@ -1,7 +1,7 @@
 #pragma once
-#include "Preview.h"
-#include "Json.h"
-#include "../core/ProblemRegistry.h"
+#include "api/Preview.h"
+#include "api/protocol/Json.h"
+#include "core/problem/ProblemRegistry.h"
 namespace arch::api {
 std::string RegisteredCases();
 PreviewResponse InspectCase(const PreviewRequest& request);

@@ -12,7 +12,7 @@ updates of a block's conserved state.
 - [IHydroSolver.h](IHydroSolver.h) and [HydroSolverImpl.h](HydroSolverImpl.h)
   connect the block interface to concrete EOS/flux policies.
 
-The shared [StageScheduler](../../driver/StageScheduler.h) owns stage weights
+The shared [StageScheduler](../../driver/schedule/StageScheduler.h) owns stage weights
 and scheduling. CUDA executors bind those stages to the common cell operations,
 using the same integration coefficients. The driver and AMR modules own ghost
 exchange, reflux correction and state publication.

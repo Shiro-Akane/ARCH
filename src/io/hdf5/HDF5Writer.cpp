@@ -12,7 +12,7 @@
 #include <cmath>
 #include <limits>
 
-#include "HDF5Writer.h"
+#include "io/hdf5/HDF5Writer.h"
 
 #include <highfive/H5DataSet.hpp>
 #include <highfive/H5DataSpace.hpp>

@@ -617,8 +617,8 @@ policy interface.
 For `simulation/<Case>/<Case>.cpp`:
 
 ```cpp
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 ```
 
 These are the only ARCH headers a case may include. C++ standard-library
@@ -1195,8 +1195,8 @@ directory inventories.
 | Area | Primary files |
 | --- | --- |
 | application entry | `src/main.cpp` |
-| parameter loading | `src/io/ConfigParser.h`, `src/core/RuntimeParams.h` |
-| case registration/public facade | `src/core/UserInterface.h`, `ProblemRegistry.h`, `ProblemHelper.h/.cpp` |
+| parameter loading | `src/io/ConfigParser.h`, `src/core/config/RuntimeParams.h` |
+| case registration/public facade | `src/core/config/UserInterface.h`, `ProblemRegistry.h`, `ProblemHelper.h/.cpp` |
 | case adapter | `src/interface/GenericProblem.h`, `ProblemGenerator.h` |
 | case-facing data | `src/data/UserTypes.h`, `GlobalDefs.h`, `physics/species/Species.h` |
 | conserved storage | `src/data/FluidState.h` |

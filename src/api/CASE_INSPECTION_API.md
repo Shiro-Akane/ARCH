@@ -62,7 +62,7 @@ Initial field responses add `fields[].logDomain` with `positiveCount`, `zeroCoun
 | CaseUnitEvidence.cpp | Source-guarded reviewed model units; no parser, copied defaults or numerical model |
 | ResourceEstimates.cpp / InitialMesh.h | Allocation-free level estimates / real bounded initial hierarchy |
 | WorkerLimits.cpp | Shared Linux worker resource guard |
-| ../core/InspectionSources.h / EOSDispatcher::InspectionScope | One verified EOS source generation per inspection request, with final content verification |
+| ../core/files/InspectionSources.h / EOSDispatcher::InspectionScope | One verified EOS source generation per inspection request, with final content verification |
 | ValueDomain.h | Zero/negative/nonfinite separation for Log presentation |
 
 `case_inspection_contract` checks all compiled built-in cases, source stamps, numeric unit coverage, composition reads, defaults/explicit values, 1D/2D/3D Sedov units, curvilinear coordinate conversion, strict integers, partial errors and no scientific output. `initialization_probe` checks the ProblemGenerator boundary, observer restoration, ambiguous dimensional inference, stale evidence, unit conflicts and Log statistics. Existing field, configuration and AMR regression groups remain required.

@@ -16,10 +16,10 @@
 #include <cstdint>
 #include <limits>
 
-#include "../../core/ArchPortability.h"
-#include "../../core/CompensatedSum.h"
-#include "../constant/PhysicalConstants.h"
-#include "../network/NuclearEnergy.h"
+#include "core/ArchPortability.h"
+#include "core/CompensatedSum.h"
+#include "physics/constant/PhysicalConstants.h"
+#include "physics/network/NuclearEnergy.h"
 
 namespace arch::nse_detail {
 

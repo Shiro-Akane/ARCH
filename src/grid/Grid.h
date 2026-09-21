@@ -19,8 +19,8 @@
 #include <string>
 #include <vector>
 
-#include "../amr/AmrDefines.h"
-#include "../data/GlobalDefs.h"
+#include "amr/topology/AmrDefines.h"
+#include "data/GlobalDefs.h"
 
 // One physical point expressed in each supported coordinate system.
 struct PointCoords

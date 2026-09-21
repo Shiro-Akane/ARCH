@@ -13,11 +13,11 @@
 #include <stdexcept>
 #include <string>
 
-#include "ExternalGravity.h"
-#include "GravityNone.h"
+#include "physics/gravity/ExternalGravity.h"
+#include "physics/gravity/GravityNone.h"
 
-#include "../../data/GlobalDefs.h"
-#include "../../driver/dispatch/ResolvedExecutionPlan.h"
+#include "data/GlobalDefs.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 
 namespace Physical
 {

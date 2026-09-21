@@ -19,13 +19,13 @@
 #include <string>
 #include <vector>
 
-#include "eos.h"
-#include "eos_Utils.h"
+#include "physics/eos/eos.h"
+#include "physics/eos/eos_Utils.h"
 
-#include "../../data/FluidState.h"
-#include "../../core/CompensatedSum.h"
-#include "../species/Species.h"
-#include "../constant/PhysicalConstants.h"
+#include "data/FluidState.h"
+#include "core/CompensatedSum.h"
+#include "physics/species/Species.h"
+#include "physics/constant/PhysicalConstants.h"
 
 
 // Timmes Helmholtz EOS leaf parameterized by host or device species metadata.

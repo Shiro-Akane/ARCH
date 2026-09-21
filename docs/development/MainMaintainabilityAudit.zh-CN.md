@@ -47,46 +47,46 @@
 
 | 编号 | 文件 | 行数 | 判断 | 具体边界 |
 |---|---|---:|---|---|
-| L-01 | [src/amr/AmrTree.h](../../src/amr/AmrTree.h) | 1039 | 优先评估提取 | 树/邻接/平衡保留为 topology owner；PreparedRegrid 与 prepare/migrate/publish/rollback 提取到 regrid 模块，保持事务与私有状态一致。 |
-| L-02 | [src/amr/ExchangePlan.h](../../src/amr/ExchangePlan.h) | 712 | 优先评估提取 | 逻辑同层计划、Host lowering 和 Host executor/workspace 分离；指纹字节顺序保持。 |
-| L-03 | [src/amr/GhostExchange.h](../../src/amr/GhostExchange.h) | 706 | 优先评估提取 | 计划缓存/构建与 Host 粗细层执行分离；对外仍保留一个 exchange 协调入口。 |
+| L-01 | [src/amr/AmrTree.h](../../src/amr/topology/AmrTree.h) | 1039 | 优先评估提取 | 树/邻接/平衡保留为 topology owner；PreparedRegrid 与 prepare/migrate/publish/rollback 提取到 regrid 模块，保持事务与私有状态一致。 |
+| L-02 | [src/amr/ExchangePlan.h](../../src/amr/exchange/ExchangePlan.h) | 712 | 优先评估提取 | 逻辑同层计划、Host lowering 和 Host executor/workspace 分离；指纹字节顺序保持。 |
+| L-03 | [src/amr/GhostExchange.h](../../src/amr/exchange/GhostExchange.h) | 706 | 优先评估提取 | 计划缓存/构建与 Host 粗细层执行分离；对外仍保留一个 exchange 协调入口。 |
 | L-04 | [src/cuda/diffusion/DiffusionKernels.cuh](../../src/cuda/diffusion/DiffusionKernels.cuh) | 709 | 后续评估 | operator/dt kernels、RKL update kernels、launch validation 分层；共享数学先从 Host 调度头解耦。 |
 | L-05 | [src/cuda/runtime/control/CudaBackendResources.cpp](../../src/cuda/runtime/control/CudaBackendResources.cpp) | 884 | 优先评估提取 | stream/event 与基础 storage、BlockRuntime 建立/上传、EOS/species workspace 分离；异常 quiescence/析构顺序不变。 |
 | L-06 | [src/cuda/runtime/hydro/CudaBackendHydroControl.cpp](../../src/cuda/runtime/hydro/CudaBackendHydroControl.cpp) | 711 | 优先评估提取 | 同层与粗细层 exchange 协调进入 runtime/amr 的 control 文件；Hydro 阶段、CFL、slot 轮换保留。 |
 | L-07 | [src/driver/Driver.h](../../src/driver/Driver.h) | 1499 | 优先评估提取 | 执行主计划 P1；Runtime、Boundary、Regrid、IO、Hydro/Diffusion 分工，Burn 半步去重复。 |
-| L-08 | [src/driver/StageScheduler.h](../../src/driver/StageScheduler.h) | 775 | 优先评估提取 | 可按 plans/descriptors、context/clock/binding、execution 分开；gravity prepare 仍由同一执行路径触发。 |
+| L-08 | [src/driver/StageScheduler.h](../../src/driver/schedule/StageScheduler.h) | 775 | 优先评估提取 | 可按 plans/descriptors、context/clock/binding、execution 分开；gravity prepare 仍由同一执行路径触发。 |
 | L-09 | [src/driver/dispatch/PolicyDescriptor.h](../../src/driver/dispatch/PolicyDescriptor.h) | 851 | 后续评估 | 轻量 IDs/tags、单一 registration 数据、visitor/lookup 分离；不为 CPU/CUDA 各造注册表。 |
 | L-10 | [src/numerics/diffusion/DiffFlux.h](../../src/numerics/diffusion/DiffFlux.h) | 803 | 优先评估提取 | 可共享的 face/geometry/stability 数学与 Host 数组遍历分开，便于 GPU 窄包含。 |
 | L-11 | [src/numerics/diffusion/DiffusionAMRStages.h](../../src/numerics/diffusion/DiffusionAMRStages.h) | 820 | 优先评估提取 | 公共 cell recurrence 与 Host single/AMR 调度分离；保留表达式求值顺序、reflux 与边界时序。 |
 | L-12 | [src/numerics/flux/FluxFunctions.h](../../src/numerics/flux/FluxFunctions.h) | 673 | 后续评估 | 方向/物理通量、分裂通量、Roe/HLL 波速按数学族分类；源项公式与浮点求值次序不改。 |
 | L-13 | [src/physics/eos/HelmEos.h](../../src/physics/eos/HelmEos.h) | 791 | 数学豁免 | Timmes Helmholtz 转译公式及插值主体不拆；Host 加载/owner 边界若要移动，另做不触碰公式的独立验证。 |
-| L-14 | [src/physics/eos/Tabular3DEOS.h](../../src/physics/eos/Tabular3DEOS.h) | 966 | 后续评估 | Host storage/loader 与共享 view/query 分离；native/normalized/free-energy 支持均保留，避免增添一套 EOS。 |
-| L-15 | [src/physics/eos/Tabular4DEOS.h](../../src/physics/eos/Tabular4DEOS.h) | 804 | 后续评估 | Host owner 与 4D query 分层；重插值函数的 ARCH_HEAVY_INLINE 边界保持，未测量前不强制内联。 |
+| L-14 | [src/physics/eos/Tabular3DEOS.h](../../src/physics/eos/tabular/Tabular3DEOS.h) | 966 | 后续评估 | Host storage/loader 与共享 view/query 分离；native/normalized/free-energy 支持均保留，避免增添一套 EOS。 |
+| L-15 | [src/physics/eos/Tabular4DEOS.h](../../src/physics/eos/tabular/Tabular4DEOS.h) | 804 | 后续评估 | Host owner 与 4D query 分层；重插值函数的 ARCH_HEAVY_INLINE 边界保持，未测量前不强制内联。 |
 | L-16 | [src/physics/network/aprox13/TimmesRateLibrary.h](../../src/physics/network/aprox13/TimmesRateLibrary.h) | 963 | 数学豁免 | public_aprox13.f90 机械转译；保留文件、公式、常数、源行映射与调用顺序。 |
 | L-17 | [src/physics/network/aprox19/TimmesRateLibrary.h](../../src/physics/network/aprox19/TimmesRateLibrary.h) | 1364 | 数学豁免 | public_aprox19.f90 机械转译；不按长度拆分，也不跨网络合并相似反应式。 |
 | L-18 | [src/physics/network/aprox21/TimmesRateLibrary.h](../../src/physics/network/aprox21/TimmesRateLibrary.h) | 1468 | 数学豁免 | public_aprox21.f90 机械转译；不按长度拆分，也不因函数名相同认定重复算法。 |
 | L-19 | [src/physics/nse/nse_solver.h](../../src/physics/nse/nse_solver.h) | 747 | 数学豁免 | Timmes NSE 改编的 Saha/Newton 主体保守纳入豁免；记录 ARCH adapter 边界，但本轮不拆公式。 |
-| L-20 | [tests/cuda/test_burn_policy_parity.cu](../../tests/cuda/test_burn_policy_parity.cu) | 839 | 后续评估 | route parity、handoff/status、workspace/lifetime 按测试责任分组；保持独立参照与完整路线集合。 |
-| L-21 | [tests/cuda/test_cuda_hydro_block.cu](../../tests/cuda/test_cuda_hydro_block.cu) | 1251 | 优先评估提取 | Hydro route/integrator、EOS owner、burn/diffusion、lifetime/ENUC 分离；保留每类原有 CTest 运行覆盖。 |
-| L-22 | [tests/cuda/test_cuda_multiblock_hydro.cu](../../tests/cuda/test_cuda_multiblock_hydro.cu) | 649 | 保留 | 649 行集中验证多块 Hydro/ghost/indicator 批契约；暂不为超限 49 行增加入口，仅按函数整理。 |
-| L-23 | [tests/cuda/test_cuda_single_level_validation.cpp](../../tests/cuda/test_cuda_single_level_validation.cpp) | 1346 | 优先评估提取 | 参数/运行、输出比较、计时与 trace 验证分离，保留 CLI 与原有验证口径。 |
-| L-24 | [tests/cuda/test_curvilinear_geometry_smoke.cu](../../tests/cuda/test_curvilinear_geometry_smoke.cu) | 622 | 保留 | 622 行为一套几何组合 smoke；保持案例矩阵，增加场景时再提取 fixture。 |
-| L-25 | [tests/cuda/test_diffusion_rkl_parity.cu](../../tests/cuda/test_diffusion_rkl_parity.cu) | 1538 | 优先评估提取 | operator/dt、RKL recurrence、边界/失败与 workspace 分组；预算检查与独立 reference 保留。 |
-| L-26 | [tests/cuda/test_eos_host_device_parity.cu](../../tests/cuda/test_eos_host_device_parity.cu) | 1931 | 优先评估提取 | immutable owner/lifetime、Ideal/Helm、Tabular3D/4D 查询分离；数值期望不调用被测实现。 |
-| L-27 | [tests/cuda/test_hydro_leaf_parity.cu](../../tests/cuda/test_hydro_leaf_parity.cu) | 1754 | 优先评估提取 | reconstruction、flux/source、route matrix 与共享测试装置分组；冻结参照值原样迁移。 |
-| L-28 | [tests/cuda/test_network_nse_device.cu](../../tests/cuda/test_network_nse_device.cu) | 3301 | 优先评估提取 | network RHS/Jacobian、NSE、设备存储/热路径分组；大型参照数据进入 fixture，保留其身份。 |
-| L-29 | [tests/host/test_amr_operation_plans.cpp](../../tests/host/test_amr_operation_plans.cpp) | 1156 | 后续评估 | 标量数学、逻辑计划/lowering、composition、Host exchange/cache 分组，语义不同的 oracle 保持独立。 |
-| L-30 | [tests/host/test_boundary_plan.cpp](../../tests/host/test_boundary_plan.cpp) | 764 | 后续评估 | 边界计划/指纹、Host lowering/BCHandler、scheduler completion 分组；不能删源位置断言而不补行为断言。 |
-| L-31 | [tests/host/test_checkpoint_compatibility.cpp](../../tests/host/test_checkpoint_compatibility.cpp) | 646 | 后续评估 | 文件指纹、科学身份、HDF5/native composition roundtrip、restart 分组；schema/拒绝规则保留。 |
-| L-32 | [tests/host/test_compute_backend.cpp](../../tests/host/test_compute_backend.cpp) | 782 | 后续评估 | storage generation、transfer transaction、batch contracts 分组；FakeBackend 只作 fixture。 |
-| L-33 | [tests/host/test_resolved_execution_plan.cpp](../../tests/host/test_resolved_execution_plan.cpp) | 916 | 后续评估 | 参数 aliases/defaults、capabilities、factory 与 NSE auto 分组；不删仍受支持的别名。 |
-| L-34 | [tests/host/test_runtime_probe_and_capabilities.cpp](../../tests/host/test_runtime_probe_and_capabilities.cpp) | 675 | 保留 | 同一启动能力矩阵，675 行尚连贯；可提 fixture，不必立即多建可执行文件。 |
-| L-35 | [tests/host/test_shared_stage_scheduler.cpp](../../tests/host/test_shared_stage_scheduler.cpp) | 1668 | 优先评估提取 | topology identity、plan/clock、执行/失败发布、生产接线分组；全局 allocation-failure override 必须隔离，防止改变其他测试环境。 |
-| L-36 | [tests/host/test_state_residency.cpp](../../tests/host/test_state_residency.cpp) | 738 | 保留 | 状态机转换测试边界明确；先整理 fixture/章节，避免拆散跨转换不变量。 |
-| L-37 | [tests/host/test_topology_transaction.cpp](../../tests/host/test_topology_transaction.cpp) | 720 | 后续评估 | 通用 transaction 与真实 PreparedRegrid 故障/回滚分离，仍验证集成后的原子发布。 |
-| L-38 | [tests/tooling/test_audit_architecture.py](../../tests/tooling/test_audit_architecture.py) | 1034 | 优先评估提取 | include graph、数学 authority、CMake/注册、runtime 生命周期按规则族分组；发现路径规则保持可测试。 |
-| L-39 | [tests/tooling/test_portable_network_generator.py](../../tests/tooling/test_portable_network_generator.py) | 932 | 后续评估 | NSE eligibility、weak storage/坐标、生成 C++ 转换分组；保留运行环境 skip 的准确状态。 |
-| L-40 | [tests/tooling/test_validation_provenance.py](../../tests/tooling/test_validation_provenance.py) | 656 | 后续评估 | 源码/二进制来源身份与 qualification 分组；旧 evidence 兼容检查继续保留。 |
+| L-20 | [tests/cuda/test_burn_policy_parity.cu](../../tests/cuda/microphysics/burn/test_burn_policy_parity.cu) | 839 | 后续评估 | route parity、handoff/status、workspace/lifetime 按测试责任分组；保持独立参照与完整路线集合。 |
+| L-21 | [tests/cuda/test_cuda_hydro_block.cu](../../tests/cuda/hydro/test_cuda_hydro_block.cu) | 1251 | 优先评估提取 | Hydro route/integrator、EOS owner、burn/diffusion、lifetime/ENUC 分离；保留每类原有 CTest 运行覆盖。 |
+| L-22 | [tests/cuda/test_cuda_multiblock_hydro.cu](../../tests/cuda/hydro/test_cuda_multiblock_hydro.cu) | 649 | 保留 | 649 行集中验证多块 Hydro/ghost/indicator 批契约；暂不为超限 49 行增加入口，仅按函数整理。 |
+| L-23 | [tests/cuda/test_cuda_single_level_validation.cpp](../../tests/host/io/test_cuda_single_level_validation.cpp) | 1346 | 优先评估提取 | 参数/运行、输出比较、计时与 trace 验证分离，保留 CLI 与原有验证口径。 |
+| L-24 | [tests/cuda/test_curvilinear_geometry_smoke.cu](../../tests/cuda/grid/test_curvilinear_geometry_smoke.cu) | 622 | 保留 | 622 行为一套几何组合 smoke；保持案例矩阵，增加场景时再提取 fixture。 |
+| L-25 | [tests/cuda/test_diffusion_rkl_parity.cu](../../tests/cuda/numerics/test_diffusion_rkl_parity.cu) | 1538 | 优先评估提取 | operator/dt、RKL recurrence、边界/失败与 workspace 分组；预算检查与独立 reference 保留。 |
+| L-26 | [tests/cuda/test_eos_host_device_parity.cu](../../tests/cuda/microphysics/eos/test_eos_host_device_parity.cu) | 1931 | 优先评估提取 | immutable owner/lifetime、Ideal/Helm、Tabular3D/4D 查询分离；数值期望不调用被测实现。 |
+| L-27 | [tests/cuda/test_hydro_leaf_parity.cu](../../tests/cuda/hydro/test_hydro_leaf_parity.cu) | 1754 | 优先评估提取 | reconstruction、flux/source、route matrix 与共享测试装置分组；冻结参照值原样迁移。 |
+| L-28 | [tests/cuda/test_network_nse_device.cu](../../tests/cuda/microphysics/network/test_network_nse_device.cu) | 3301 | 优先评估提取 | network RHS/Jacobian、NSE、设备存储/热路径分组；大型参照数据进入 fixture，保留其身份。 |
+| L-29 | [tests/host/test_amr_operation_plans.cpp](../../tests/host/amr/test_amr_operation_plans.cpp) | 1156 | 后续评估 | 标量数学、逻辑计划/lowering、composition、Host exchange/cache 分组，语义不同的 oracle 保持独立。 |
+| L-30 | [tests/host/test_boundary_plan.cpp](../../tests/host/amr/test_boundary_plan.cpp) | 764 | 后续评估 | 边界计划/指纹、Host lowering/BCHandler、scheduler completion 分组；不能删源位置断言而不补行为断言。 |
+| L-31 | [tests/host/test_checkpoint_compatibility.cpp](../../tests/host/io/test_checkpoint_compatibility.cpp) | 646 | 后续评估 | 文件指纹、科学身份、HDF5/native composition roundtrip、restart 分组；schema/拒绝规则保留。 |
+| L-32 | [tests/host/test_compute_backend.cpp](../../tests/host/driver/test_compute_backend.cpp) | 782 | 后续评估 | storage generation、transfer transaction、batch contracts 分组；FakeBackend 只作 fixture。 |
+| L-33 | [tests/host/test_resolved_execution_plan.cpp](../../tests/host/driver/test_resolved_execution_plan.cpp) | 916 | 后续评估 | 参数 aliases/defaults、capabilities、factory 与 NSE auto 分组；不删仍受支持的别名。 |
+| L-34 | [tests/host/test_runtime_probe_and_capabilities.cpp](../../tests/host/driver/test_runtime_probe_and_capabilities.cpp) | 675 | 保留 | 同一启动能力矩阵，675 行尚连贯；可提 fixture，不必立即多建可执行文件。 |
+| L-35 | [tests/host/test_shared_stage_scheduler.cpp](../../tests/host/driver/test_shared_stage_scheduler.cpp) | 1668 | 优先评估提取 | topology identity、plan/clock、执行/失败发布、生产接线分组；全局 allocation-failure override 必须隔离，防止改变其他测试环境。 |
+| L-36 | [tests/host/test_state_residency.cpp](../../tests/host/driver/test_state_residency.cpp) | 738 | 保留 | 状态机转换测试边界明确；先整理 fixture/章节，避免拆散跨转换不变量。 |
+| L-37 | [tests/host/test_topology_transaction.cpp](../../tests/host/amr/test_topology_transaction.cpp) | 720 | 后续评估 | 通用 transaction 与真实 PreparedRegrid 故障/回滚分离，仍验证集成后的原子发布。 |
+| L-38 | [tests/tooling/test_audit_architecture.py](../../tests/tooling/architecture/test_audit_architecture.py) | 1034 | 优先评估提取 | include graph、数学 authority、CMake/注册、runtime 生命周期按规则族分组；发现路径规则保持可测试。 |
+| L-39 | [tests/tooling/test_portable_network_generator.py](../../tests/tooling/network/test_portable_network_generator.py) | 932 | 后续评估 | NSE eligibility、weak storage/坐标、生成 C++ 转换分组；保留运行环境 skip 的准确状态。 |
+| L-40 | [tests/tooling/test_validation_provenance.py](../../tests/tooling/validation/test_validation_provenance.py) | 656 | 后续评估 | 源码/二进制来源身份与 qualification 分组；旧 evidence 兼容检查继续保留。 |
 | L-41 | [tools/audit_architecture.py](../../tools/audit_architecture.py) | 977 | 优先评估提取 | 文件枚举/词法解析、include graph、数学归属、构建/runtime 规则拆成模块；CLI 保持，先修审查范围和错误定位。 |
 | L-42 | [tools/validate_backend_results.py](../../tools/validate_backend_results.py) | 1187 | 优先评估提取 | manifest/参数、运行协调、checkpoint/物理比较、trace/STS/regrid 分离；复用已有 provenance/设备测量 helper。 |
 
@@ -97,57 +97,57 @@
 | 编号 | 文件 | 行数 | 判断与理由 |
 |---|---|---:|---|
 | S-001 | [CMakeLists.txt](../../CMakeLists.txt) | 38 | 保留：项目构建入口；短是分层后的正常结果。 |
-| S-002 | [cmake/CudaBurnDenseRoutes.cmake](../../cmake/CudaBurnDenseRoutes.cmake) | 58 | 保留：构建能力/注册/依赖发现的功能模块；可随 cmake/cuda 分类迁移。 |
-| S-003 | [cmake/CudaBurnNetworks.cmake](../../cmake/CudaBurnNetworks.cmake) | 25 | 保留：构建能力/注册/依赖发现的功能模块；可随 cmake/cuda 分类迁移。 |
-| S-004 | [cmake/CudaCodeImages.cmake](../../cmake/CudaCodeImages.cmake) | 36 | 保留：构建能力/注册/依赖发现的功能模块；可随 cmake/cuda 分类迁移。 |
-| S-005 | [cmake/CudaCustomDenseRoute.cu.in](../../cmake/CudaCustomDenseRoute.cu.in) | 40 | 保留：配置生成的 CUDA 绑定模板；集中于 templates，保留独立 TU 粒度。 |
-| S-006 | [cmake/FindCuDSS.cmake](../../cmake/FindCuDSS.cmake) | 19 | 保留：构建能力/注册/依赖发现的功能模块；可随 cmake/cuda 分类迁移。 |
+| S-002 | [cmake/CudaBurnDenseRoutes.cmake](../../cmake/cuda/CudaBurnDenseRoutes.cmake) | 58 | 保留：构建能力/注册/依赖发现的功能模块；可随 cmake/cuda 分类迁移。 |
+| S-003 | [cmake/CudaBurnNetworks.cmake](../../cmake/cuda/CudaBurnNetworks.cmake) | 25 | 保留：构建能力/注册/依赖发现的功能模块；可随 cmake/cuda 分类迁移。 |
+| S-004 | [cmake/CudaCodeImages.cmake](../../cmake/cuda/CudaCodeImages.cmake) | 36 | 保留：构建能力/注册/依赖发现的功能模块；可随 cmake/cuda 分类迁移。 |
+| S-005 | [cmake/CudaCustomDenseRoute.cu.in](../../cmake/templates/CudaCustomDenseRoute.cu.in) | 40 | 保留：配置生成的 CUDA 绑定模板；集中于 templates，保留独立 TU 粒度。 |
+| S-006 | [cmake/FindCuDSS.cmake](../../cmake/dependencies/FindCuDSS.cmake) | 19 | 保留：构建能力/注册/依赖发现的功能模块；可随 cmake/cuda 分类迁移。 |
 | S-007 | [cmake/templates/CudaBurnDenseRoute.cu.in](../../cmake/templates/CudaBurnDenseRoute.cu.in) | 45 | 保留：配置生成的 CUDA 绑定模板；集中于 templates，保留独立 TU 粒度。 |
 | S-008 | [cmake/templates/CudaBurnSparseOwner.cu.in](../../cmake/templates/CudaBurnSparseOwner.cu.in) | 24 | 保留：配置生成的 CUDA 绑定模板；集中于 templates，保留独立 TU 粒度。 |
 | S-009 | [examples/network/CustomNetworkRecipe.py](../../examples/network/CustomNetworkRecipe.py) | 21 | 保留：用户可独立复用的生成配方示例。 |
 | S-010 | [simulation/BurnOneZone/BurnOneZone.cpp](../../simulation/BurnOneZone/BurnOneZone.cpp) | 57 | 保留：独立注册的物理算例入口；不是可合并的重复算法。 |
 | S-011 | [simulation/ExternalGravity/ExternalGravity.cpp](../../simulation/ExternalGravity/ExternalGravity.cpp) | 51 | 保留：独立注册的物理算例入口；不是可合并的重复算法。 |
-| S-012 | [src/amr/AmrDefines.h](../../src/amr/AmrDefines.h) | 32 | 保留：块尺寸/ghost 常量的单一入口，不混入控制逻辑。 |
-| S-013 | [src/amr/ConservativeRestriction.h](../../src/amr/ConservativeRestriction.h) | 45 | 保留：CPU/CUDA 共用的 restriction 数学叶子。 |
+| S-012 | [src/amr/AmrDefines.h](../../src/amr/topology/AmrDefines.h) | 32 | 保留：块尺寸/ghost 常量的单一入口，不混入控制逻辑。 |
+| S-013 | [src/amr/ConservativeRestriction.h](../../src/amr/transfer/ConservativeRestriction.h) | 45 | 保留：CPU/CUDA 共用的 restriction 数学叶子。 |
 | S-014 | [src/core/ArchPortability.h](../../src/core/ArchPortability.h) | 25 | 保留：Host/Device 编译宏；两个 force-inline 名称都有测试消费者。 |
 | S-015 | [src/core/CompensatedSum.h](../../src/core/CompensatedSum.h) | 52 | 保留：独立公共补偿求和数学及浮点约束。 |
-| S-016 | [src/core/FileFingerprint.h](../../src/core/FileFingerprint.h) | 23 | 保留：SHA 接口与实现分离，避免扩大依赖。 |
+| S-016 | [src/core/FileFingerprint.h](../../src/core/files/FileFingerprint.h) | 23 | 保留：SHA 接口与实现分离，避免扩大依赖。 |
 | S-017 | [src/cuda/amr/RegridMigration.h](../../src/cuda/amr/RegridMigration.h) | 48 | 保留：迁移 kernel 的窄声明与非 owning view。 |
 | S-018 | [src/cuda/common/DeviceEosStatus.h](../../src/cuda/common/DeviceEosStatus.h) | 27 | 保留：device EOS 错误状态绑定的共享叶子。 |
 | S-019 | [src/cuda/common/DeviceStateFields.cuh](../../src/cuda/common/DeviceStateFields.cuh) | 26 | 保留：设备状态字段映射权威，避免各 kernel 复制。 |
 | S-020 | [src/cuda/common/GridMetricsCache.h](../../src/cuda/common/GridMetricsCache.h) | 44 | 保留：几何缓存接口，与 .cu 分离。 |
 | S-021 | [src/cuda/hydro/GridGeometryAdapter.cuh](../../src/cuda/hydro/GridGeometryAdapter.cuh) | 32 | 保留：设备 POD 到公共几何 view 的适配，无另一套几何公式。 |
-| S-022 | [src/cuda/hydro/HydroFluxPolicies.cuh](../../src/cuda/hydro/HydroFluxPolicies.cuh) | 41 | 保留：调用原通量策略的适配层。 |
-| S-023 | [src/cuda/microphysics/SparseBeNrBatch.cuh](../../src/cuda/microphysics/SparseBeNrBatch.cuh) | 17 | 待核实退役：仓内未找到 include 或别名消费者；兼容承诺未排除前保留，见 DC-01。 |
-| S-024 | [src/cuda/microphysics/SparseEquilibration.h](../../src/cuda/microphysics/SparseEquilibration.h) | 25 | 保留：稀疏缩放/原始残差的 CUDA 声明。 |
-| S-025 | [src/cuda/microphysics/device_eos_owner_utils.h](../../src/cuda/microphysics/device_eos_owner_utils.h) | 55 | 保留：EOS owners 共用分配/上传辅助；不能复制进各 owner。 |
-| S-026 | [src/cuda/microphysics/device_network_owner.h](../../src/cuda/microphysics/device_network_owner.h) | 56 | 保留：弱反应表的设备存储生命周期。 |
-| S-027 | [src/cuda/microphysics/device_species_owner.h](../../src/cuda/microphysics/device_species_owner.h) | 51 | 保留：组分设备所有权；后续可收窄其 IdealGas 依赖。 |
-| S-028 | [src/cuda/microphysics/helm_eos_device_owner.h](../../src/cuda/microphysics/helm_eos_device_owner.h) | 53 | 保留：一种 EOS 的设备 owner 声明；重组目录不合并不同存储生命周期。 |
-| S-029 | [src/cuda/microphysics/helm_eos_loader.h](../../src/cuda/microphysics/helm_eos_loader.h) | 17 | 保留聚合入口：仍被 runtime internal 与 EOS 测试包含；重组时可明确命名为 owners aggregate。 |
-| S-030 | [src/cuda/microphysics/tabular3_eos_device_owner.h](../../src/cuda/microphysics/tabular3_eos_device_owner.h) | 55 | 保留：一种 EOS 的设备 owner 声明；重组目录不合并不同存储生命周期。 |
-| S-031 | [src/cuda/microphysics/tabular4_eos_device_owner.h](../../src/cuda/microphysics/tabular4_eos_device_owner.h) | 54 | 保留：一种 EOS 的设备 owner 声明；重组目录不合并不同存储生命周期。 |
+| S-022 | [src/cuda/hydro/HydroFluxPolicies.cuh](../../src/cuda/hydro/policies/HydroFluxPolicies.cuh) | 41 | 保留：调用原通量策略的适配层。 |
+| S-023 | [src/cuda/microphysics/SparseBeNrBatch.cuh](../../src/cuda/microphysics/burn/SparseBeNrBatch.cuh) | 17 | 待核实退役：仓内未找到 include 或别名消费者；兼容承诺未排除前保留，见 DC-01。 |
+| S-024 | [src/cuda/microphysics/SparseEquilibration.h](../../src/cuda/microphysics/linalg/SparseEquilibration.h) | 25 | 保留：稀疏缩放/原始残差的 CUDA 声明。 |
+| S-025 | [src/cuda/microphysics/device_eos_owner_utils.h](../../src/cuda/microphysics/eos/device_eos_owner_utils.h) | 55 | 保留：EOS owners 共用分配/上传辅助；不能复制进各 owner。 |
+| S-026 | [src/cuda/microphysics/device_network_owner.h](../../src/cuda/microphysics/network/device_network_owner.h) | 56 | 保留：弱反应表的设备存储生命周期。 |
+| S-027 | [src/cuda/microphysics/device_species_owner.h](../../src/cuda/microphysics/network/device_species_owner.h) | 51 | 保留：组分设备所有权；后续可收窄其 IdealGas 依赖。 |
+| S-028 | [src/cuda/microphysics/helm_eos_device_owner.h](../../src/cuda/microphysics/eos/owners/helm_eos_device_owner.h) | 53 | 保留：一种 EOS 的设备 owner 声明；重组目录不合并不同存储生命周期。 |
+| S-029 | [src/cuda/microphysics/helm_eos_loader.h](../../src/cuda/microphysics/eos/helm_eos_loader.h) | 17 | 保留聚合入口：仍被 runtime internal 与 EOS 测试包含；重组时可明确命名为 owners aggregate。 |
+| S-030 | [src/cuda/microphysics/tabular3_eos_device_owner.h](../../src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.h) | 55 | 保留：一种 EOS 的设备 owner 声明；重组目录不合并不同存储生命周期。 |
+| S-031 | [src/cuda/microphysics/tabular4_eos_device_owner.h](../../src/cuda/microphysics/eos/owners/tabular4_eos_device_owner.h) | 54 | 保留：一种 EOS 的设备 owner 声明；重组目录不合并不同存储生命周期。 |
 | S-032 | [src/cuda/runtime/CudaBackendTypes.h](../../src/cuda/runtime/CudaBackendTypes.h) | 18 | 保留：跨执行单元使用的轻量结果类型，避免包含整个 backend。 |
-| S-033 | [src/cuda/runtime/burn/CudaBackendBurnDenseRoutes.h](../../src/cuda/runtime/burn/CudaBackendBurnDenseRoutes.h) | 47 | 保留：类型绑定的声明面，具体实现进入独立编译单元。 |
-| S-034 | [src/cuda/runtime/burn/CudaBackendBurnNetworkRouteImpl.cuh](../../src/cuda/runtime/burn/CudaBackendBurnNetworkRouteImpl.cuh) | 24 | 保留：小型 route 定义宏，共享委托体；不手工复制到每个 .cu。 |
-| S-035 | [src/cuda/runtime/burn/CudaBackendBurnNetworkRoutes.h](../../src/cuda/runtime/burn/CudaBackendBurnNetworkRoutes.h) | 52 | 保留：route 声明，与模板重实现隔离。 |
+| S-033 | [src/cuda/runtime/burn/CudaBackendBurnDenseRoutes.h](../../src/cuda/runtime/burn/dense/CudaBackendBurnDenseRoutes.h) | 47 | 保留：类型绑定的声明面，具体实现进入独立编译单元。 |
+| S-034 | [src/cuda/runtime/burn/CudaBackendBurnNetworkRouteImpl.cuh](../../src/cuda/runtime/burn/dispatch/CudaBackendBurnNetworkRouteImpl.cuh) | 24 | 保留：小型 route 定义宏，共享委托体；不手工复制到每个 .cu。 |
+| S-035 | [src/cuda/runtime/burn/CudaBackendBurnNetworkRoutes.h](../../src/cuda/runtime/burn/dispatch/CudaBackendBurnNetworkRoutes.h) | 52 | 保留：route 声明，与模板重实现隔离。 |
 | S-036 | [src/cuda/runtime/burn/CudaBackendBurnReduction.cuh](../../src/cuda/runtime/burn/CudaBackendBurnReduction.cuh) | 58 | 保留：所有 dense burn route 共用归约 kernel。 |
-| S-037 | [src/cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h](../../src/cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h) | 48 | 保留：消费单一注册表的 visitor，不是第二份网络清单。 |
-| S-038 | [src/cuda/runtime/burn/CudaBackendBurnSparse.h](../../src/cuda/runtime/burn/CudaBackendBurnSparse.h) | 57 | 保留：稀疏 owner 的轻量 ABI。 |
-| S-039 | [src/cuda/runtime/burn/CudaBackendBurnSparseRoutes.h](../../src/cuda/runtime/burn/CudaBackendBurnSparseRoutes.h) | 42 | 保留：稀疏 owner route 声明，避免拉入完整 ODE。 |
+| S-037 | [src/cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h](../../src/cuda/runtime/burn/dispatch/CudaBackendBurnRegisteredRoutes.h) | 48 | 保留：消费单一注册表的 visitor，不是第二份网络清单。 |
+| S-038 | [src/cuda/runtime/burn/CudaBackendBurnSparse.h](../../src/cuda/runtime/burn/sparse/CudaBackendBurnSparse.h) | 57 | 保留：稀疏 owner 的轻量 ABI。 |
+| S-039 | [src/cuda/runtime/burn/CudaBackendBurnSparseRoutes.h](../../src/cuda/runtime/burn/sparse/CudaBackendBurnSparseRoutes.h) | 42 | 保留：稀疏 owner route 声明，避免拉入完整 ODE。 |
 | S-040 | [src/cuda/runtime/burn/CudaBurnOdeTypes.h](../../src/cuda/runtime/burn/CudaBurnOdeTypes.h) | 31 | 保留：ODE tag 到类型绑定的小型所有者；限定为需要完整类型的消费者。 |
 | S-041 | [src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu) | 24 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
 | S-042 | [src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu) | 24 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-043 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu) | 48 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-044 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-045 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-046 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-047 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-048 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu) | 48 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-049 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-050 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-051 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
-| S-052 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu](../../src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-043 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu](../../src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3D.cu) | 48 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-044 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu](../../src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3DAprox13.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-045 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu](../../src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3DAprox19.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-046 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu](../../src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3DAprox21.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-047 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu](../../src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3DIso7.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-048 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu](../../src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4D.cu) | 48 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-049 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu](../../src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DAprox13.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-050 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu](../../src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DAprox19.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-051 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu](../../src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DAprox21.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
+| S-052 | [src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu](../../src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DIso7.cu) | 15 | 保留：EOS/network 独立编译绑定，控制模板编译内存；可按 tabular3/tabular4 分类。 |
 | S-053 | [src/cuda/runtime/hydro/CudaBackendHydroHelm.cu](../../src/cuda/runtime/hydro/CudaBackendHydroHelm.cu) | 11 | 保留：单 EOS 的 Hydro 显式实例化入口；合并会改变 NVCC 编译粒度。 |
 | S-054 | [src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu](../../src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu) | 11 | 保留：单 EOS 的 Hydro 显式实例化入口；合并会改变 NVCC 编译粒度。 |
 | S-055 | [src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu](../../src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu) | 11 | 保留：单 EOS 的 Hydro 显式实例化入口；合并会改变 NVCC 编译粒度。 |
@@ -157,15 +157,15 @@
 | S-059 | [src/io/IO.h](../../src/io/IO.h) | 52 | 保留：IO 公共接口与 HDF5/AMR 实现隔离。 |
 | S-060 | [src/io/chk/CheckpointCompatibility.h](../../src/io/chk/CheckpointCompatibility.h) | 46 | 保留：checkpoint identity 契约声明。 |
 | S-061 | [src/numerics/burnsolver/Networks.h](../../src/numerics/burnsolver/Networks.h) | 36 | 保留为 factory 专用目录；移除 Driver 无需求的直连前须做自包含编译检查。 |
-| S-062 | [src/numerics/burnsolver/OdeContinuation.h](../../src/numerics/burnsolver/OdeContinuation.h) | 34 | 保留：CPU/provider/device 共用 continuation 协议。 |
+| S-062 | [src/numerics/burnsolver/OdeContinuation.h](../../src/numerics/burnsolver/ode/OdeContinuation.h) | 34 | 保留：CPU/provider/device 共用 continuation 协议。 |
 | S-063 | [src/numerics/diffusion/DiffFunction.h](../../src/numerics/diffusion/DiffFunction.h) | 59 | 保留：RKL 系数声明与 .cpp 的单一数学权威。 |
 | S-064 | [src/numerics/diffusion/RKL1TimeIntegrator.h](../../src/numerics/diffusion/RKL1TimeIntegrator.h) | 36 | 保留：RKL1 的薄策略入口，委托公共阶段引擎。 |
 | S-065 | [src/numerics/diffusion/RKL2TimeIntegrator.h](../../src/numerics/diffusion/RKL2TimeIntegrator.h) | 36 | 保留：RKL2 的薄策略入口，区别不能因行数被抹去。 |
 | S-066 | [src/numerics/integrator/HydroSolverImpl.h](../../src/numerics/integrator/HydroSolverImpl.h) | 59 | 保留：模板策略到 IHydroSolver 的适配，防止 Driver 模板组合膨胀。 |
 | S-067 | [src/numerics/linalg/LinearEquilibration.h](../../src/numerics/linalg/LinearEquilibration.h) | 51 | 保留：各 provider 共享的缩放数学。 |
 | S-068 | [src/numerics/reconstruction/AMRInterfaceStencil.h](../../src/numerics/reconstruction/AMRInterfaceStencil.h) | 38 | 保留：共同界面 stencil 判据，CPU/CUDA 消费。 |
-| S-069 | [src/physics/eos/TabularCompletion.h](../../src/physics/eos/TabularCompletion.h) | 41 | 保留：补全物理成分的独立声明；不能与表格读取混为一层。 |
-| S-070 | [src/physics/eos/TabularSource.h](../../src/physics/eos/TabularSource.h) | 41 | 保留：source format/component 元数据契约。 |
+| S-069 | [src/physics/eos/TabularCompletion.h](../../src/physics/eos/sources/TabularCompletion.h) | 41 | 保留：补全物理成分的独立声明；不能与表格读取混为一层。 |
+| S-070 | [src/physics/eos/TabularSource.h](../../src/physics/eos/sources/TabularSource.h) | 41 | 保留：source format/component 元数据契约。 |
 | S-071 | [src/physics/eos/eos.h](../../src/physics/eos/eos.h) | 55 | 保留：规范的 EOS 前置声明/别名与 marker；可收窄无必要的 STL/FluidState includes。 |
 | S-072 | [src/physics/eos/eos_state.h](../../src/physics/eos/eos_state.h) | 35 | 保留：热力学输入输出 POD，与拥有数据的 EOS 分开。 |
 | S-073 | [src/physics/gravity/ExternalGravity.h](../../src/physics/gravity/ExternalGravity.h) | 50 | 保留：Host patch adapter；物理 cell 数学已共享。 |
@@ -182,20 +182,20 @@
 | S-084 | [src/physics/network/iso7/TimmesRhs.inc](../../src/physics/network/iso7/TimmesRhs.inc) | 18 | 数学豁免：短 RHS 仍保留原始网络映射。 |
 | S-085 | [src/physics/network/timmes_common/NuclearConstants.h](../../src/physics/network/timmes_common/NuclearConstants.h) | 20 | 数学豁免：保留 Timmes 原始常数约定，不改成别的常数口径。 |
 | S-086 | [src/physics/network/timmes_common/RatePair.h](../../src/physics/network/timmes_common/RatePair.h) | 41 | 保留：公共 rate 值/导数 adapter；不随数值公式复制。 |
-| S-087 | [tests/cuda/GeneratedSparseBurnFactory.h](../../tests/cuda/GeneratedSparseBurnFactory.h) | 11 | 保留：独立 oracle/生成工厂声明；不并入生产数学。 |
-| S-088 | [tests/cuda/test_generated_nse_device.cu](../../tests/cuda/test_generated_nse_device.cu) | 40 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-089 | [tests/cuda/test_generated_sparse_burn_factory.cu](../../tests/cuda/test_generated_sparse_burn_factory.cu) | 14 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-090 | [tests/cuda/test_network_derivative.cu](../../tests/cuda/test_network_derivative.cu) | 32 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-091 | [tests/fixtures/GeneratedNseReference.h](../../tests/fixtures/GeneratedNseReference.h) | 19 | 保留：独立 oracle/生成工厂声明；不并入生产数学。 |
-| S-092 | [tests/host/SparseKLURegression.cpp](../../tests/host/SparseKLURegression.cpp) | 33 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-093 | [tests/host/test_compensated_sum.cpp](../../tests/host/test_compensated_sum.cpp) | 25 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-094 | [tests/host/test_generated_network_reference.cpp](../../tests/host/test_generated_network_reference.cpp) | 33 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-095 | [tests/host/test_generated_nse.cpp](../../tests/host/test_generated_nse.cpp) | 37 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-096 | [tests/host/test_physical_constants.cpp](../../tests/host/test_physical_constants.cpp) | 43 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-097 | [tests/host/test_sparse_residual.cpp](../../tests/host/test_sparse_residual.cpp) | 54 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-098 | [tests/tooling/test_cuda_code_images.py](../../tests/tooling/test_cuda_code_images.py) | 55 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-099 | [tests/tooling/test_large_network_runtime_manifest.py](../../tests/tooling/test_large_network_runtime_manifest.py) | 32 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
-| S-100 | [tests/tooling/test_microphysics_progress.py](../../tests/tooling/test_microphysics_progress.py) | 46 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-087 | [tests/cuda/GeneratedSparseBurnFactory.h](../../tests/cuda/generated/GeneratedSparseBurnFactory.h) | 11 | 保留：独立 oracle/生成工厂声明；不并入生产数学。 |
+| S-088 | [tests/cuda/test_generated_nse_device.cu](../../tests/cuda/generated/test_generated_nse_device.cu) | 40 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-089 | [tests/cuda/test_generated_sparse_burn_factory.cu](../../tests/cuda/generated/test_generated_sparse_burn_factory.cu) | 14 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-090 | [tests/cuda/test_network_derivative.cu](../../tests/cuda/microphysics/network/test_network_derivative.cu) | 32 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-091 | [tests/fixtures/GeneratedNseReference.h](../../tests/fixtures/network/GeneratedNseReference.h) | 19 | 保留：独立 oracle/生成工厂声明；不并入生产数学。 |
+| S-092 | [tests/host/SparseKLURegression.cpp](../../tests/host/numerics/SparseKLURegression.cpp) | 33 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-093 | [tests/host/test_compensated_sum.cpp](../../tests/host/numerics/test_compensated_sum.cpp) | 25 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-094 | [tests/host/test_generated_network_reference.cpp](../../tests/host/network/test_generated_network_reference.cpp) | 33 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-095 | [tests/host/test_generated_nse.cpp](../../tests/host/network/test_generated_nse.cpp) | 37 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-096 | [tests/host/test_physical_constants.cpp](../../tests/host/core/test_physical_constants.cpp) | 43 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-097 | [tests/host/test_sparse_residual.cpp](../../tests/host/numerics/test_sparse_residual.cpp) | 54 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-098 | [tests/tooling/test_cuda_code_images.py](../../tests/tooling/build_tools/test_cuda_code_images.py) | 55 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-099 | [tests/tooling/test_large_network_runtime_manifest.py](../../tests/tooling/network/test_large_network_runtime_manifest.py) | 32 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
+| S-100 | [tests/tooling/test_microphysics_progress.py](../../tests/tooling/microphysics/test_microphysics_progress.py) | 46 | 保留：独立测试入口或 Host/Device 共用测试体的绑定，短入口不代表无覆盖。 |
 | S-101 | [validation/network/inputs/audit150.py](../../validation/network/inputs/audit150.py) | 22 | 保留：独立网络规模/物理配方；分文件支持可复现生成。 |
 | S-102 | [validation/network/inputs/audit200.py](../../validation/network/inputs/audit200.py) | 21 | 保留：独立网络规模/物理配方；分文件支持可复现生成。 |
 | S-103 | [validation/network/inputs/audit31.py](../../validation/network/inputs/audit31.py) | 18 | 保留：独立网络规模/物理配方；分文件支持可复现生成。 |
@@ -235,7 +235,7 @@
 
 | 头/入口 | 直接项目依赖 | 传递可达项目文件 | 建议 |
 |---|---:|---:|---|
-| [src/driver/dispatch/DispatchImpl.h](../../src/driver/dispatch/DispatchImpl.h) | 16 | 104 | 随 Driver 拆分隔离非模板组织逻辑，保留必要的策略实例化。 |
+| [src/driver/dispatch/DispatchImpl.h](../../src/driver/dispatch/bindings/DispatchImpl.h) | 16 | 104 | 随 Driver 拆分隔离非模板组织逻辑，保留必要的策略实例化。 |
 | [src/driver/Driver.h](../../src/driver/Driver.h) | 19 | 92 | Networks.h 等目录仅供真实 factory 消费；提取 .cpp，避免拆头后仍全部传递包含。 |
 | [src/cuda/runtime/control/CudaBackendInternal.h](../../src/cuda/runtime/control/CudaBackendInternal.h) | 18 | 61 | 实际资源 owner 当前确需完整 EOS/variant；未来拆资源声明需处理 incomplete-type/析构，不能只删 include。 |
 | [src/cuda/diffusion/DiffusionKernels.cuh](../../src/cuda/diffusion/DiffusionKernels.cuh) | 9 | 57 | 从 DiffusionAMRStages/DiffFlux 提取真正共享数学叶子，去掉间接 Host 调度依赖。 |
@@ -378,3 +378,14 @@
 单独登记 Release CUDA 构建和实际检查范围；仍未进入 P2。
 后续完整工具测试 355/355、零跳过，工作区直接审计通过；不再需要导出源码快照来避开构建产物。
 该范围修正不代表其余大型文件拆分、目录迁移或死代码删除候选已经实施。
+
+## 12. P1 目录与引用增量（2026-09-22）
+
+GPU 验证封包 `c95f606f` 后按用户追加授权实施 F-02/03/05–11/13/15–19 及 GUI 新增 API/core
+的职责分类，294 项路径见 [目录记录](layout/README.zh-CN.md)。F-12/14 保持内聚入口；
+F-20/22 的公开 CLI/import 路径继续兼容，F-21、历史记录和既有文档入口不强制迁移。
+
+内部 include 全面统一为根相对路径，测试亦同；公开算例新增两个稳定转发头，短小是其契约职责，
+不是重复声明。来源数学主体不变。CMake、生成模板、审计 owner、路径断言与测试发现同步更新。
+最终全部配置 CPU 目标编译成功，工具检查 355/355；没有减少验收断言或重写历史 GPU 证据。
+所有当前状态以主计划 0.6 和目录记录为准，上文 main 计数继续保持历史快照。

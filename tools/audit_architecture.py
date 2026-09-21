@@ -14,25 +14,25 @@ _CUDA_DEVICE_OBJECT_SOURCES = {
     "arch_cuda_backend_burn_helm":
         "src/cuda/runtime/burn/routes/cudabackendburnhelm.cu",
     "arch_cuda_backend_burn_tabular3d":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular3d.cu",
+        "src/cuda/runtime/burn/routes/tabular3/cudabackendburntabular3d.cu",
     "arch_cuda_backend_burn_tabular3d_aprox13":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular3daprox13.cu",
+        "src/cuda/runtime/burn/routes/tabular3/cudabackendburntabular3daprox13.cu",
     "arch_cuda_backend_burn_tabular3d_aprox19":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular3daprox19.cu",
+        "src/cuda/runtime/burn/routes/tabular3/cudabackendburntabular3daprox19.cu",
     "arch_cuda_backend_burn_tabular3d_aprox21":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular3daprox21.cu",
+        "src/cuda/runtime/burn/routes/tabular3/cudabackendburntabular3daprox21.cu",
     "arch_cuda_backend_burn_tabular3d_iso7":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular3diso7.cu",
+        "src/cuda/runtime/burn/routes/tabular3/cudabackendburntabular3diso7.cu",
     "arch_cuda_backend_burn_tabular4d":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular4d.cu",
+        "src/cuda/runtime/burn/routes/tabular4/cudabackendburntabular4d.cu",
     "arch_cuda_backend_burn_tabular4d_aprox13":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular4daprox13.cu",
+        "src/cuda/runtime/burn/routes/tabular4/cudabackendburntabular4daprox13.cu",
     "arch_cuda_backend_burn_tabular4d_aprox19":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular4daprox19.cu",
+        "src/cuda/runtime/burn/routes/tabular4/cudabackendburntabular4daprox19.cu",
     "arch_cuda_backend_burn_tabular4d_aprox21":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular4daprox21.cu",
+        "src/cuda/runtime/burn/routes/tabular4/cudabackendburntabular4daprox21.cu",
     "arch_cuda_backend_burn_tabular4d_iso7":
-        "src/cuda/runtime/burn/routes/cudabackendburntabular4diso7.cu",
+        "src/cuda/runtime/burn/routes/tabular4/cudabackendburntabular4diso7.cu",
     "arch_cuda_backend_hydro_ideal":
         "src/cuda/runtime/hydro/cudabackendhydroideal.cu",
     "arch_cuda_backend_hydro_helm":
@@ -57,15 +57,15 @@ _CUDA_DEVICE_OBJECT_SOURCES = {
 
 _CUDA_HOST_OBJECT_SPECS = {
     "arch_cuda_backend_eos_utils": (
-        "src/cuda/microphysics/device_eos_owner_utils.cpp", "-g0"),
+        "src/cuda/microphysics/eos/device_eos_owner_utils.cpp", "-g0"),
     "arch_cuda_backend_eos_species": (
-        "src/cuda/microphysics/device_species_owner.cpp", "-g0"),
+        "src/cuda/microphysics/network/device_species_owner.cpp", "-g0"),
     "arch_cuda_backend_eos_helm": (
-        "src/cuda/microphysics/helm_eos_device_owner.cpp", "-g0"),
+        "src/cuda/microphysics/eos/owners/helm_eos_device_owner.cpp", "-g0"),
     "arch_cuda_backend_eos_tabular3": (
-        "src/cuda/microphysics/tabular3_eos_device_owner.cpp", "-g0"),
+        "src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.cpp", "-g0"),
     "arch_cuda_backend_eos_tabular4": (
-        "src/cuda/microphysics/tabular4_eos_device_owner.cpp", "-g0"),
+        "src/cuda/microphysics/eos/owners/tabular4_eos_device_owner.cpp", "-g0"),
     "arch_cuda_backend_resources": (
         "src/cuda/runtime/control/cudabackendresources.cpp", "-g1"),
     "arch_cuda_backend_core": (
@@ -83,7 +83,7 @@ _CUDA_HOST_OBJECT_SPECS = {
     "arch_cuda_backend_migration": (
         "src/cuda/runtime/amr/cudabackendmigration.cpp", "-g1"),
     "arch_cuda_backend_sparse_factory": (
-        "src/cuda/runtime/burn/cudabackendburnsparsefactory.cpp", "-g1"),
+        "src/cuda/runtime/burn/sparse/cudabackendburnsparsefactory.cpp", "-g1"),
 }
 
 # These executables link an already compiled production object, rather than
@@ -91,23 +91,23 @@ _CUDA_HOST_OBJECT_SPECS = {
 # and object; a target name alone does not grant production ownership.
 _CUDA_FOCUSED_OBJECT_CONSUMERS = {
     "arch_cuda_regrid_migration": (
-        "tests/cuda/test_cuda_regrid_migration.cu",
+        "tests/cuda/amr/test_cuda_regrid_migration.cu",
         "arch_cuda_backend_amr_migration"),
     "arch_cuda_refinement_indicators": (
-        "tests/cuda/test_refinement_indicators.cpp",
+        "tests/cuda/amr/test_refinement_indicators.cpp",
         "arch_cuda_backend_amr_indicators"),
     "arch_cuda_grid_metrics_cache": (
-        "tests/cuda/test_grid_metrics_cache.cu",
+        "tests/cuda/grid/test_grid_metrics_cache.cu",
         "arch_cuda_backend_grid_metrics"),
 }
 
 _CUDA_FOCUSED_LINK_OBJECT_CONSUMERS = {
     "arch_cuda_burn_policy_parity": (
-        ("tests/cuda/test_burn_policy_parity.cu", "src/core/filefingerprint.cpp"),
+        ("tests/cuda/microphysics/burn/test_burn_policy_parity.cu", "src/core/files/filefingerprint.cpp"),
         ("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_species",
          "arch_cuda_backend_eos_utils")),
     "arch_cuda_burn_controller_parity": (
-        ("tests/cuda/test_burn_controller_parity.cu",),
+        ("tests/cuda/microphysics/burn/test_burn_controller_parity.cu",),
         ("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_species",
          "arch_cuda_backend_eos_utils")),
 }
@@ -116,7 +116,7 @@ _CUDA_FOCUSED_LINK_OBJECT_CONSUMERS = {
 # template must all agree, and their objects may enter only arch_cuda_backend.
 # This is deliberately not a general exception for dynamic CMake target names.
 _CUDA_GENERATED_OBJECT_ROUTES = {
-    "cmake/cudacustomdenseroute.cu.in": (
+    "cmake/templates/cudacustomdenseroute.cu.in": (
         "arch_cuda_burn_${custom_eos_tag}_${custom_id}",
         "${arch_custom_registry_dir}/burn_${custom_eos_tag}_${custom_id}.cu"),
     "cmake/templates/cudaburndenseroute.cu.in": (
@@ -134,12 +134,12 @@ _CUDA_GENERATED_OBJECT_ROUTES = {
 # Core/Adapter/Device source still fails closed until its role is reviewed.
 _CUDA_FORMULA_FILENAME_EXCEPTIONS = frozenset({
     "src/cuda/runtime/control/cudabackendcore.cpp",
-    "src/cuda/microphysics/helm_eos_device_owner.h",
-    "src/cuda/microphysics/helm_eos_device_owner.cpp",
-    "src/cuda/microphysics/tabular3_eos_device_owner.h",
-    "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
-    "src/cuda/microphysics/tabular4_eos_device_owner.h",
-    "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+    "src/cuda/microphysics/eos/owners/helm_eos_device_owner.h",
+    "src/cuda/microphysics/eos/owners/helm_eos_device_owner.cpp",
+    "src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.h",
+    "src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.cpp",
+    "src/cuda/microphysics/eos/owners/tabular4_eos_device_owner.h",
+    "src/cuda/microphysics/eos/owners/tabular4_eos_device_owner.cpp",
 })
 
 _CUDA_RUNTIME_FUNCTION_OWNERS = {
@@ -440,7 +440,7 @@ def _is_generated_dispatch_delegate(relative: str, content: str) -> bool:
         else return cudaErrorInvalidValue;
     """
     bodies = {
-        "cmake/cudacustomdenseroute.cu.in": [
+        "cmake/templates/cudacustomdenseroute.cu.in": [
             dense_call.replace("workspace_storage", "workspace").replace("burn_dt", "dt"),
             """return custom_dense_route<@custom_type@>(plan, state, grid, workspace,
                 candidates, statuses, summary, dt, eos, config, stream);"""],
@@ -533,30 +533,30 @@ def audit_header_dependencies(root: pathlib.Path, sources):
         return reached
 
     catalogue = root / "src/numerics/burnsolver/Networks.h"
-    for relative in ("driver/DriverBurn.h", "driver/DriverBurnPolicy.h",
-                     "numerics/burnsolver/ode_bd.h", "numerics/burnsolver/ode_be-nr.h",
-                     "numerics/burnsolver/ode_ros4.h"):
+    for relative in ("driver/stages/DriverBurn.h", "driver/stages/DriverBurnPolicy.h",
+                     "numerics/burnsolver/ode/ode_bd.h", "numerics/burnsolver/ode/ode_be-nr.h",
+                     "numerics/burnsolver/ode/ode_ros4.h"):
         if catalogue in dependencies(relative):
             violations.append("generic burn mathematics must not include the network catalogue: " + relative)
 
     # Interface/storage declarations must not pull the numerical graph back
     # into every dispatch TU. A real owner may include complete EOS types;
     # declaration-only ABIs and shared cell policies may not import the owner.
-    interfaces = ("cuda/runtime/burn/CudaBackendBurn.h", "cuda/runtime/burn/CudaBackendBurnSparse.h",
+    interfaces = ("cuda/runtime/burn/CudaBackendBurn.h", "cuda/runtime/burn/sparse/CudaBackendBurnSparse.h",
                   "cuda/runtime/hydro/CudaBackendHydro.h", "cuda/runtime/diffusion/CudaBackendDiffusion.h",
                   "cuda/common/CudaLaunchConfig.h")
     eos_bodies = {root / "src/physics/eos" / name for name in
-                  ("IdealGas.h", "HelmEos.h", "Tabular3DEOS.h", "Tabular4DEOS.h")}
+                  ("IdealGas.h", "HelmEos.h", "tabular/Tabular3DEOS.h", "tabular/Tabular4DEOS.h")}
     for relative in interfaces:
         if dependencies(relative) & eos_bodies:
             violations.append("CUDA declaration ABI must not import EOS implementations: " + relative)
-    for relative in (*interfaces, "driver/DriverBurnPolicy.h", "cuda/microphysics/common.h"):
+    for relative in (*interfaces, "driver/stages/DriverBurnPolicy.h", "cuda/microphysics/common.h"):
         forbidden = {root / "src" / name for name in
-                     ("driver/DriverBurn.h", "core/RuntimeParams.h",
+                     ("driver/stages/DriverBurn.h", "core/config/RuntimeParams.h",
                       "physics/nse/nse_solver.h")}
         if dependencies(relative) & forbidden:
             violations.append("burn/launch declarations must not import host iteration, parsing or NSE: " + relative)
-    for relative in ("cuda/common/DeviceAllocation.h", "cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh"):
+    for relative in ("cuda/common/DeviceAllocation.h", "cuda/runtime/burn/sparse/CudaBackendBurnSparseImpl.cuh"):
         if root / "src/cuda/runtime/control/CudaBackendInternal.h" in dependencies(relative):
             violations.append("typed sparse/allocation owner must not import the complete runtime layout: " + relative)
     for relative in (*interfaces, "numerics/diffusion/DiffusionTypes.h"):
@@ -567,7 +567,7 @@ def audit_header_dependencies(root: pathlib.Path, sources):
             violations.append("launch/types declarations must not import grid or numerical operators: " + relative)
     support = "physics/network/timmes_common/TimmesNetworkSupport.h"
     providers = {root / "src" / name for name in
-                 ("core/RuntimeParams.h", "numerics/linalg/DenseWrap.h",
+                 ("core/config/RuntimeParams.h", "numerics/linalg/DenseWrap.h",
                   "numerics/linalg/SparseWrap.h")}
     if dependencies(support) & providers:
         violations.append("duck-typed network support must not import parsing or linear providers: " + support)
@@ -581,15 +581,15 @@ def audit_tree(root: pathlib.Path):
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
         "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
-        "src/core/RuntimeParams.h": "parser.GetBool",
-        "src/driver/DriverControl.h": "1.0e-12",
+        "src/core/config/RuntimeParams.h": "parser.GetBool",
+        "src/driver/schedule/DriverControl.h": "1.0e-12",
         "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
         "src/physics/eos/eos_Utils.h": "get_isentropic_state_at_pressure_factor",
-        "src/physics/eos/Tabular3DEOS.h": "eos_utils",
-        "src/physics/eos/Tabular4DEOS.h": "eos_utils",
-        "src/core/UserInterface.h": "ProblemHelper.h",
-        "src/core/ProblemHelper.cpp": "eos_utils::get_isentropic_state_at_pressure_factor",
-        "src/core/ProblemHelper.h": "GetRootCellWidth",
+        "src/physics/eos/tabular/Tabular3DEOS.h": "eos_utils",
+        "src/physics/eos/tabular/Tabular4DEOS.h": "eos_utils",
+        "src/core/config/UserInterface.h": "ProblemHelper.h",
+        "src/core/problem/ProblemHelper.cpp": "eos_utils::get_isentropic_state_at_pressure_factor",
+        "src/core/problem/ProblemHelper.h": "GetRootCellWidth",
         "simulation/SmoothAdvection/SmoothAdvection.cpp": "ProblemHelper::GetRootCellWidth",
         "simulation/DiffusionMode/DiffusionMode.cpp": "ProblemHelper::GetRootCellWidth",
         "simulation/Cellular/Cellular.par": "EOS_toolkit/tables/helmholtz/helm_table.dat",
@@ -652,7 +652,7 @@ def audit_tree(root: pathlib.Path):
         if (relative == "src/cuda/runtime/CudaBackend.h"
                 and "const simconfig& launch" in content_lower):
             violations.append("CUDA runtime must consume the frozen launch plan")
-        if (relative == "src/core/ProblemHelper.cpp"
+        if (relative == "src/core/problem/ProblemHelper.cpp"
                 and "ProblemInitializationContext" in content):
             bootstrap_eos_calls = content.count(
                 "EOSDispatcher::dispatch_eos(config, specs")
@@ -662,12 +662,12 @@ def audit_tree(root: pathlib.Path):
                 violations.append(
                     "post-freeze EOS dispatch must consume ProblemInitializationContext")
         fallback_scan = semantic_code
-        if relative == "src/api/Configuration.cpp":
+        if relative == "src/api/configuration/Configuration.cpp":
             # Schema export reads a parameter's default value. This particular
             # member is not a backend fallback; execution calls remain scanned.
             fallback_scan = re.sub(r"\bdefinition\s*\.\s*fallback\b", "", fallback_scan)
         if relative in {
-            "src/driver/dispatch/BackendCapabilities.h",
+            "src/driver/dispatch/capability/BackendCapabilities.h",
             "src/driver/SolverDispatch.cpp",
         }:
             fallback_scan = re.sub(r"\bfallback_reason\b", "", fallback_scan)
@@ -701,7 +701,7 @@ def audit_tree(root: pathlib.Path):
                  or re.search(r"\bfallback_reason\b", fallback_scan))):
             violations.append(f"hidden CUDA fallback is forbidden: {relative}")
         bounded_stage_headers = {
-            "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+            "src/cuda/hydro/policies/HydroIntegratorPolicies.cuh",
             "src/cuda/diffusion/DiffusionSolver.cuh",
         }
         historical_content = re.sub(
@@ -721,7 +721,7 @@ def audit_tree(root: pathlib.Path):
             for identifier in historical_identifiers)
         if cuda_production and (historical_in_path or historical_in_body):
             violations.append(f"backend-local complete controller is forbidden: {relative}")
-        if (relative == "src/cuda/hydro/HydroIntegratorPolicies.cuh"
+        if (relative == "src/cuda/hydro/policies/HydroIntegratorPolicies.cuh"
                 and "launch_bounded_hydro_stage" in content):
             required_hydro_lowering = (
                 "clear_hydro_buffer(delta, stream)",

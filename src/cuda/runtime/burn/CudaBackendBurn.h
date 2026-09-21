@@ -12,8 +12,8 @@
 #include "cuda/runtime/CudaBackendTypes.h"
 #include "cuda/common/CudaCommon.cuh"
 #include "data/GlobalDefs.h"
-#include "driver/dispatch/ResolvedExecutionPlan.h"
-#include "driver/ReductionSpec.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
+#include "driver/schedule/ReductionSpec.h"
 #include "physics/eos/eos.h"
 
 #include <cuda_runtime.h>

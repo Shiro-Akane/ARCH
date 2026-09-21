@@ -5,11 +5,11 @@
 
 #include <array>
 
-#include "TimmesRateLibrary.h"
+#include "physics/network/aprox19/TimmesRateLibrary.h"
 
-#include "../timmes_common/AproxRateAssembly.h"
-#include "../timmes_common/Ecapnuc.h"
-#include "../timmes_common/TimmesNetworkSupport.h"
+#include "physics/network/timmes_common/AproxRateAssembly.h"
+#include "physics/network/timmes_common/Ecapnuc.h"
+#include "physics/network/timmes_common/TimmesNetworkSupport.h"
 
 namespace timmes_aprox19_detail {
 
@@ -51,8 +51,8 @@ struct RateIds {
 inline constexpr double sixth = 1.0 / 6.0;
 inline constexpr double c54 = 56.0 / 54.0;
 
-#include "TimmesRhs.inc"
-#include "TimmesJacobian.inc"
+#include "physics/network/aprox19/TimmesRhs.inc"
+#include "physics/network/aprox19/TimmesJacobian.inc"
 
 #undef TIMMES_APROX19_RATES
 

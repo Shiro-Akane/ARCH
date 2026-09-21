@@ -94,7 +94,7 @@ EOSDriver 文件。当前源码还支持 EOS2/EOS4 共用的有限温重子 ASCI
 ### 原生接口定向检查
 
 基于 `e799640b` 加未提交修改的本地工作树，通过
-[NativeTabularRegression.cpp](../../tests/host/NativeTabularRegression.cpp)
+[NativeTabularRegression.cpp](../../tests/host/eos/NativeTabularRegression.cpp)
 检查了原始 EOSDriver `HShenEOS.h5`。400 个确定性内部样本中，395 个具有
 可用的唯一反解：391 个满足固定 `2e-8` 相对温度容差的分辨率要求，另有 4 个
 单独归为来源精度受限。4 个样本触及无效单元，1 个存在多个有效温度根；这些

@@ -12,9 +12,9 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "../../src/core/UserInterface.h"
+#include <UserInterface.h>
 
-#include "../../src/data/GlobalDefs.h"
+#include <GlobalDefs.h>
 
 class SmoothAdvectionProblem
 {

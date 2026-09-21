@@ -11,8 +11,8 @@
 
 #include "cuda/common/CudaCommon.cuh"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
-#include "driver/StageScheduler.h"
-#include "driver/dispatch/ResolvedExecutionPlan.h"
+#include "driver/schedule/StageScheduler.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "physics/eos/eos.h"
 #include "physics/gravity/ExternalGravitySource.h"
 

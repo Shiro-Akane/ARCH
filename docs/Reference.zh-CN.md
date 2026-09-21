@@ -458,8 +458,8 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 对 `simulation/<Case>/<Case>.cpp`：
 
 ```cpp
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 ```
 
 这是算例可以包含的全部 ARCH 头文件；C++ 标准库头文件不受限制。算例需要的 EOS 操作通过 `ProblemHelper` 提供，因此切换运行时 EOS 不会改变算例 include，也不会把具体 EOS 策略类型暴露给用户。
@@ -888,8 +888,8 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 | 区域 | 主要文件 |
 | --- | --- |
 | 程序入口 | `src/main.cpp` |
-| 参数加载 | `src/io/ConfigParser.h`、`src/core/RuntimeParams.h` |
-| 算例注册/公共门面 | `src/core/UserInterface.h`、`ProblemRegistry.h`、`ProblemHelper.h/.cpp` |
+| 参数加载 | `src/io/ConfigParser.h`、`src/core/config/RuntimeParams.h` |
+| 算例注册/公共门面 | `src/core/config/UserInterface.h`、`ProblemRegistry.h`、`ProblemHelper.h/.cpp` |
 | 算例适配 | `src/interface/GenericProblem.h`、`ProblemGenerator.h` |
 | 算例侧数据 | `src/data/UserTypes.h`、`GlobalDefs.h`、`physics/species/Species.h` |
 | 守恒存储 | `src/data/FluidState.h` |

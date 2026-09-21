@@ -10,8 +10,8 @@
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 
 #include "cuda/amr/CoarseFineExchangeKernels.cuh"
-#include "cuda/hydro/Boundary.cuh"
-#include "cuda/hydro/ExchangeKernels.cuh"
+#include "cuda/hydro/boundary/Boundary.cuh"
+#include "cuda/hydro/boundary/ExchangeKernels.cuh"
 #include <algorithm>
 
 namespace arch::cuda {

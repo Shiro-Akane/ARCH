@@ -5,9 +5,9 @@
 #include <array>
 #include <cstddef>
 
-#include "RatePair.h"
-#include "ScreeningTimmes.h"
-#include "TfactorsData.h"
+#include "physics/network/timmes_common/RatePair.h"
+#include "physics/network/timmes_common/ScreeningTimmes.h"
+#include "physics/network/timmes_common/TfactorsData.h"
 
 namespace timmes {
 

@@ -17,7 +17,7 @@
 #include <limits>
 #include <type_traits>
 
-#include "../../data/FluidState.h"
+#include "data/FluidState.h"
 
 namespace arch::cuda
 {

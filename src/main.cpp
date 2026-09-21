@@ -22,12 +22,12 @@
 #include "api/Preview.h"
 
 // Application control and public problem interface.
-#include "core/ProblemRegistry.h"
-#include "core/RuntimeParams.h"
+#include "core/problem/ProblemRegistry.h"
+#include "core/config/RuntimeParams.h"
 #include "interface/ProblemGenerator.h"
 
 // Runtime data required for startup reporting and dispatch.
-#include "amr/AmrDefines.h"
+#include "amr/topology/AmrDefines.h"
 #include "data/GlobalDefs.h"
 #include "physics/species/Species.h"
 

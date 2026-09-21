@@ -19,16 +19,16 @@
 #include <type_traits>
 #include <vector>
 
-#include "../integrator/TimeIntegratorHelper.h"
-#include "DiffusionTypes.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
+#include "numerics/diffusion/DiffusionTypes.h"
 
-#include "../../data/FluidState.h"
-#include "../../data/GlobalDefs.h"
-#include "../../driver/ReductionSpec.h"
-#include "../../grid/Grid.h"
-#include "../../physics/diffusionCoe/diffusion_math.hpp"
-#include "../../physics/eos/eos_state.h"
-#include "../../physics/species/Species.h"
+#include "data/FluidState.h"
+#include "data/GlobalDefs.h"
+#include "driver/schedule/ReductionSpec.h"
+#include "grid/Grid.h"
+#include "physics/diffusionCoe/diffusion_math.hpp"
+#include "physics/eos/eos_state.h"
+#include "physics/species/Species.h"
 
 // Diffusive flux and operator assembly.
 

@@ -7,11 +7,11 @@
  */
 
 #pragma once
-#include "IGravityPolicy.h"
-#include "ExternalGravitySource.h"
+#include "physics/gravity/IGravityPolicy.h"
+#include "physics/gravity/ExternalGravitySource.h"
 
-#include "../../data/FluidState.h"
-#include "../../grid/Grid.h"
+#include "data/FluidState.h"
+#include "grid/Grid.h"
 
 namespace Physical {
 namespace Gravity {

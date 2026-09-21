@@ -10,8 +10,8 @@
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
-#include "amr/CoarseFineCellPlan.h"
-#include "amr/LimitedLinearProlongation.h"
+#include "amr/exchange/CoarseFineCellPlan.h"
+#include "amr/transfer/LimitedLinearProlongation.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 
 #include <cmath>

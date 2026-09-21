@@ -69,7 +69,7 @@ B(dt/2) -> D(dt/2) -> H(dt) -> D(dt/2) -> B(dt/2)
 
 ### 单位
 
-理想气体 Euler 方程可使用任意内部一致的单位制。Helmholtz EOS、核反应网络、NSE 阈值和恒星输运使用 CGS 量，例如 `g`、`cm`、`s`、`K` 和 `erg`。
+ARCH 的输入、初始化、计算、输出与 GUI 统一使用 CGS，包括 IdealGas。长度为 `cm`，时间为 `s`，密度为 `g/cm³`，压力为 `erg/cm³`，比内能为 `erg/g`，温度为 `K`，比热为 `erg/(g·K)`；角度用 `rad`，质量分数等无量纲。显式提供的数值不自动换算；IdealGas 无组分时的模型回退比热为 `7.18e6 erg/(g·K)`。
 
 ## 3. 理解最小参数文件
 
@@ -183,12 +183,14 @@ void Setup(SimConfig &config, SpeciesManager &specs);
 void Init(const PointCoords &point, PrimitiveData &out) const;
 ```
 
-在 `simulation/` 下一层目录中使用以下两个 ARCH 头文件：
+用户算例使用以下两个稳定的 ARCH 公开头文件：
 
 ```cpp
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 ```
+
+CMake 自动提供 `include/` 与 `src/` 搜索路径，因此算例不需要知道内部目录层级或本机路径；换机器后重新配置工程即可。两个公开头见 [include/](../../include/README.md)。
 
 这两个文件构成完整的算例侧 ARCH 头文件表面。可以按需加入 C++ 标准库头文件，但算例不得直接包含具体 EOS 头文件、`eos_Utils.h` 或 `eosdispatch.h`。`UserInterface.h` 重新导出稳定的注册宏、算例类型和 `ProblemHelper` 操作；第二个显式头文件 `GlobalDefs.h` 提供有类型的运行时配置，同时避免算例依赖具体 EOS 策略。
 
@@ -197,8 +199,8 @@ void Init(const PointCoords &point, PrimitiveData &out) const;
 最小完整示例：
 
 ```cpp
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 
 #include <cmath>
 #include <stdexcept>
@@ -347,7 +349,7 @@ const ProblemHelper::IsentropicState compressed =
 - 所有路径相对于进程工作目录解析。
 - 使用维护中的 MUSCL limiter；`none` 会选择 MinMod fallback。
 - 二维 spherical 几何中的 `x2` 表示平面 `phi`。
-- Helmholtz 和反应网络模块使用 CGS 材料数据。
+- 所有模型与材料输入使用 CGS，包括 IdealGas；显式比热不自动换算。
 - 对 Helmholtz 验证运行，用 Git LFS 实体化 `EOS_toolkit/tables/helmholtz/helm_table.dat` 并核对 checksum。
 - 组分索引前必须确认 `GetSpeciesID >= 0`。
 - 初始化所有核素分数并保证总和为一。

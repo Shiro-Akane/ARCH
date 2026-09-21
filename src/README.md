@@ -20,3 +20,7 @@ To trace a calculation end-to-end, start with the initialization in `main.cpp`, 
 
 Before adding any new implementations, always consult the [ownership map](../docs/development/ImplementationOwnership.md) to understand module boundaries. As a core design principle, both CPU and CUDA call the exact same mathematical bodies—only execution flow and resource management should be placed in backend-specific code.
 Note that build and run instructions are maintained in the central [project guide](../README.md), rather than within the source directories.
+
+User cases start with the two [public headers](../include/README.md). Internal
+headers use paths relative to `src/`; tests use their own fixture root. See the
+[directory and include convention](../docs/development/layout/README.zh-CN.md).

@@ -50,7 +50,7 @@ ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 ## Studio 接入事项
 
 - 按 README 更新扩展类型、能力协商与响应校验；不要从布尔 markers 推断任意模型都存在可编辑绑定。
-- 更新编译输入跟踪，覆盖新增的 `src/api/ParameterMetadata.h/.cpp`、`src/interface/PreviewMetadata.h`，以及此次修改的 GlobalDefs、RuntimeParams、ProblemGenerator、GenericProblem、Preview.cpp 和 Sod.cpp。
+- 更新编译输入跟踪，覆盖新增的 `src/api/configuration/ParameterMetadata.h/.cpp`、`src/interface/PreviewMetadata.h`，以及此次修改的 GlobalDefs、RuntimeParams、ProblemGenerator、GenericProblem、Preview.cpp 和 Sod.cpp。
 - 拖动只形成一次工作副本编辑/撤销，标记 stale；用户点击 Update Preview 才请求计算，不自动保存。
 - 缺失 x_pos 的安全插入由 Studio 实现并独立验收。
 - 图、绑定、metadata、Inspector 和状态快照按相同请求身份关联。失败保留旧图时，不混入失败请求或迟到请求的状态。

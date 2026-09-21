@@ -81,9 +81,12 @@ complete accuracy contract.
 
 ### Units
 
-The ideal-gas Euler equations accept any internally consistent unit system.
-Helmholtz EOS, nuclear networks, NSE thresholds, and stellar transport use CGS
-quantities such as `g`, `cm`, `s`, `K`, and `erg`.
+ARCH inputs, initialization, computation, output and GUI use CGS, including
+IdealGas: length in cm, time in s, density in g/cm^3, pressure in erg/cm^3,
+specific energy in erg/g, temperature in K and specific heat in erg/(g K).
+Angles use rad and mass fractions are dimensionless. Explicit user values are
+not converted automatically. The empty-species IdealGas model fallback is
+7.18e6 erg/(g K).
 
 ## 3. Understand the minimal parameter file
 
@@ -220,9 +223,13 @@ void Init(const PointCoords &point, PrimitiveData &out) const;
 Use these two ARCH headers from a directory one level below `simulation/`:
 
 ```cpp
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 ```
+
+CMake supplies the `include/` and `src/` search roots, so case sources need no
+internal-directory or machine-specific paths. Reconfigure CMake after moving a
+checkout. See the [public entry points](../../include/README.md).
 
 These are the complete case-facing ARCH header surface. Standard-library
 headers may be added as needed, but a simulation case must not include concrete
@@ -236,8 +243,8 @@ configuration without coupling a case to an EOS policy.
 Minimal complete example:
 
 ```cpp
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 
 #include <cmath>
 #include <stdexcept>
@@ -408,7 +415,7 @@ energy must match the specified temperature exactly.
 - Resolve file paths from the process working directory.
 - Use a maintained MUSCL limiter; `none` selects the MinMod fallback.
 - Interpret 2D spherical `x2` as planar `phi`.
-- Use CGS material data with Helmholtz and network modules.
+- Use CGS inputs for every model, including IdealGas; explicit heat capacities are not converted automatically.
 - Materialize `EOS_toolkit/tables/helmholtz/helm_table.dat` with Git LFS
   and verify its checksum for Helmholtz validation runs.
 - Require `GetSpeciesID >= 0` before indexing composition.

@@ -5,7 +5,8 @@
 # test registration remain visible at their individual declarations.
 function(arch_configure_cuda_math_test target)
     target_compile_features(${target} PRIVATE cxx_std_20)
-    target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_include_directories(${target} PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/tests")
     set(cuda_options --expt-relaxed-constexpr)
     list(APPEND cuda_options ${ARGN})
     target_compile_options(${target} PRIVATE
@@ -17,6 +18,7 @@ endfunction()
 # Leaf witnesses inherit host features from their original dependencies.
 # Keep their explicit IPO-off contract distinct from the broader math tests.
 function(arch_configure_cuda_leaf_test target)
+    target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
     target_compile_options(${target} PRIVATE
         $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
     set_target_properties(${target} PROPERTIES
@@ -24,6 +26,7 @@ function(arch_configure_cuda_leaf_test target)
 endfunction()
 
 function(arch_configure_generated_cuda_test target custom_id)
+    target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
     target_compile_options(${target} PRIVATE
         $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
         "-include" "${ARCH_CUSTOM_HEADER_${custom_id}}")
@@ -39,7 +42,7 @@ endfunction()
 # Generated-network mathematical and trajectory witnesses.
 foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
     set(custom_test "arch_cuda_generated_math_${custom_id}")
-    add_executable(${custom_test} tests/cuda/test_generated_network_math.cu)
+    add_executable(${custom_test} tests/cuda/generated/test_generated_network_math.cu)
     arch_configure_generated_cuda_test(${custom_test} "${custom_id}")
     target_link_libraries(${custom_test} PRIVATE CUDA::cudart)
     add_test(NAME cuda_generated_math_${custom_id} COMMAND ${custom_test})
@@ -51,8 +54,8 @@ foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
         # dependent defaults or a substitute manufactured matrix.
         set(sparse_test "arch_cuda_generated_sparse_burn_${custom_id}")
         add_executable(${sparse_test}
-            tests/cuda/test_generated_sparse_burn.cpp
-            tests/cuda/test_generated_sparse_burn_factory.cu)
+            tests/cuda/generated/test_generated_sparse_burn.cpp
+            tests/cuda/generated/test_generated_sparse_burn_factory.cu)
         arch_configure_generated_cuda_test(${sparse_test} "${custom_id}")
         target_link_libraries(${sparse_test} PRIVATE arch_build_contract arch_cuda_sparse_provider)
     endif()
@@ -64,7 +67,7 @@ foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
         foreach(weak_control trajectory factory)
             set(weak_test "arch_cuda_generated_weak_${weak_control}_${custom_id}")
             add_executable(${weak_test}
-                "tests/cuda/test_generated_weak_${weak_control}.cu")
+                "tests/cuda/generated/test_generated_weak_${weak_control}.cu")
             arch_configure_generated_cuda_test(${weak_test} "${custom_id}")
             target_link_libraries(${weak_test} PRIVATE arch_build_contract CUDA::cudart)
             if(weak_control STREQUAL "trajectory")
@@ -81,7 +84,8 @@ foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
 endforeach()
 
 # Backend resource ownership, AMR transactions and geometric leaves.
-add_executable(arch_cuda_regrid_transaction tests/cuda/test_cuda_regrid_transaction.cpp)
+add_executable(arch_cuda_regrid_transaction tests/cuda/amr/test_cuda_regrid_transaction.cpp)
+target_include_directories(arch_cuda_regrid_transaction PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_link_libraries(arch_cuda_regrid_transaction PRIVATE
     arch_cuda_backend CUDA::cudart)
 add_test(NAME cuda_regrid_transaction COMMAND arch_cuda_regrid_transaction)
@@ -89,7 +93,7 @@ set_tests_properties(cuda_regrid_transaction PROPERTIES SKIP_RETURN_CODE 77)
 # Exercise the same setup kernel owned by the production backend without
 # compiling its unrelated hydro/burn instantiation matrix.
 add_executable(arch_cuda_grid_metrics_cache
-    tests/cuda/test_grid_metrics_cache.cu
+    tests/cuda/grid/test_grid_metrics_cache.cu
     $<TARGET_OBJECTS:arch_cuda_backend_grid_metrics>)
 target_link_libraries(arch_cuda_grid_metrics_cache PRIVATE
     arch_build_contract CUDA::cudart)
@@ -103,20 +107,20 @@ endif()
 add_test(NAME cuda_grid_metrics_cache COMMAND arch_cuda_grid_metrics_cache)
 set_tests_properties(cuda_grid_metrics_cache PROPERTIES SKIP_RETURN_CODE 77)
 if(TARGET arch_cuda_sparse_provider)
-    add_executable(arch_cuda_sparse_burn_factory tests/cuda/test_cuda_sparse_burn_factory.cpp)
+    add_executable(arch_cuda_sparse_burn_factory tests/cuda/microphysics/linalg/test_cuda_sparse_burn_factory.cpp)
     target_link_libraries(arch_cuda_sparse_burn_factory PRIVATE arch_cuda_backend CUDA::cudart)
     add_test(NAME cuda_sparse_burn_factory COMMAND arch_cuda_sparse_burn_factory)
     set_tests_properties(cuda_sparse_burn_factory PROPERTIES SKIP_RETURN_CODE 77)
-    add_executable(arch_cuda_sparse_be_nr_batch tests/cuda/test_sparse_be_nr_batch.cu)
+    add_executable(arch_cuda_sparse_be_nr_batch tests/cuda/microphysics/linalg/test_sparse_be_nr_batch.cu)
     target_link_libraries(arch_cuda_sparse_be_nr_batch PRIVATE arch_cuda_sparse_provider)
     arch_configure_cuda_leaf_test(arch_cuda_sparse_be_nr_batch)
     add_test(NAME cuda_sparse_be_nr_batch COMMAND arch_cuda_sparse_be_nr_batch)
     set_tests_properties(cuda_sparse_be_nr_batch PROPERTIES SKIP_RETURN_CODE 77)
-    add_executable(arch_cuda_cudss_sparse_solver tests/cuda/test_cudss_sparse_solver.cpp)
+    add_executable(arch_cuda_cudss_sparse_solver tests/cuda/microphysics/linalg/test_cudss_sparse_solver.cpp)
     target_link_libraries(arch_cuda_cudss_sparse_solver PRIVATE arch_cuda_sparse_provider)
     add_test(NAME cuda_cudss_sparse_solver COMMAND arch_cuda_cudss_sparse_solver)
     set_tests_properties(cuda_cudss_sparse_solver PROPERTIES SKIP_RETURN_CODE 77)
-    add_executable(arch_cuda_burn_eos_failure tests/cuda/test_burn_eos_failure.cu)
+    add_executable(arch_cuda_burn_eos_failure tests/cuda/microphysics/burn/test_burn_eos_failure.cu)
     target_link_libraries(arch_cuda_burn_eos_failure PRIVATE arch_cuda_sparse_provider)
     arch_configure_cuda_leaf_test(arch_cuda_burn_eos_failure)
     if(ARCH_CUDA_HEAVY_JOB_POOL)
@@ -126,20 +130,20 @@ if(TARGET arch_cuda_sparse_provider)
     set_tests_properties(cuda_burn_eos_failure PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 add_executable(arch_cuda_regrid_migration
-    tests/cuda/test_cuda_regrid_migration.cu
+    tests/cuda/amr/test_cuda_regrid_migration.cu
     $<TARGET_OBJECTS:arch_cuda_backend_amr_migration>)
 target_link_libraries(arch_cuda_regrid_migration PRIVATE arch_build_contract CUDA::cudart)
 arch_configure_cuda_leaf_test(arch_cuda_regrid_migration)
 add_test(NAME cuda_regrid_migration COMMAND arch_cuda_regrid_migration)
 set_tests_properties(cuda_regrid_migration PROPERTIES SKIP_RETURN_CODE 77)
 add_executable(arch_cuda_curvilinear_geometry_smoke
-    tests/cuda/test_curvilinear_geometry_smoke.cu)
+    tests/cuda/grid/test_curvilinear_geometry_smoke.cu)
 target_link_libraries(arch_cuda_curvilinear_geometry_smoke PRIVATE
     arch_build_contract CUDA::cudart arch_diffusion_math)
 arch_configure_cuda_leaf_test(arch_cuda_curvilinear_geometry_smoke)
 add_test(NAME cuda_curvilinear_geometry_smoke COMMAND arch_cuda_curvilinear_geometry_smoke)
 set_tests_properties(cuda_curvilinear_geometry_smoke PROPERTIES SKIP_RETURN_CODE 77)
-add_executable(arch_cuda_hydro_eos_failure tests/cuda/test_hydro_eos_failure.cu)
+add_executable(arch_cuda_hydro_eos_failure tests/cuda/hydro/test_hydro_eos_failure.cu)
 target_link_libraries(arch_cuda_hydro_eos_failure PRIVATE arch_build_contract CUDA::cudart)
 arch_configure_cuda_leaf_test(arch_cuda_hydro_eos_failure)
 if(ARCH_CUDA_HEAVY_JOB_POOL)
@@ -149,7 +153,7 @@ add_test(NAME cuda_hydro_eos_failure COMMAND arch_cuda_hydro_eos_failure)
 set_tests_properties(cuda_hydro_eos_failure PROPERTIES SKIP_RETURN_CODE 77)
 # Host-only registry execution compiled by NVCC: catches closure-lowering
 # regressions without instantiating the full Hydro numerical route matrix.
-add_executable(arch_cuda_hydro_dispatch tests/cuda/test_hydro_dispatch.cu)
+add_executable(arch_cuda_hydro_dispatch tests/cuda/hydro/test_hydro_dispatch.cu)
 target_link_libraries(arch_cuda_hydro_dispatch PRIVATE arch_build_contract CUDA::cudart)
 arch_configure_cuda_leaf_test(arch_cuda_hydro_dispatch)
 if(ARCH_CUDA_HEAVY_JOB_POOL)
@@ -158,7 +162,7 @@ if(ARCH_CUDA_HEAVY_JOB_POOL)
 endif()
 add_test(NAME cuda_hydro_dispatch COMMAND arch_cuda_hydro_dispatch)
 add_executable(arch_cuda_refinement_indicators
-    tests/cuda/test_refinement_indicators.cpp
+    tests/cuda/amr/test_refinement_indicators.cpp
     $<TARGET_OBJECTS:arch_cuda_backend_amr_indicators>)
 target_link_libraries(arch_cuda_refinement_indicators PRIVATE
     arch_build_contract CUDA::cudart)
@@ -167,13 +171,13 @@ set_tests_properties(cuda_refinement_indicators PROPERTIES SKIP_RETURN_CODE 77)
 
 # These mathematical regressions use the same build contract as production
 # without requiring the complete template-heavy backend archive.
-add_executable(arch_cuda_compensated_sum tests/cuda/test_compensated_sum.cu)
+add_executable(arch_cuda_compensated_sum tests/cuda/numerics/test_compensated_sum.cu)
 target_compile_features(arch_cuda_compensated_sum PRIVATE cxx_std_20)
 arch_configure_cuda_leaf_test(arch_cuda_compensated_sum)
 add_test(NAME cuda_compensated_sum COMMAND arch_cuda_compensated_sum)
 set_tests_properties(cuda_compensated_sum PROPERTIES SKIP_RETURN_CODE 77)
 add_executable(arch_cuda_amr_composition
-    tests/cuda/test_cuda_amr_composition.cu)
+    tests/cuda/amr/test_cuda_amr_composition.cu)
 target_compile_features(arch_cuda_amr_composition PRIVATE cxx_std_20)
 arch_configure_cuda_leaf_test(arch_cuda_amr_composition)
 target_link_libraries(arch_cuda_amr_composition PRIVATE CUDA::cudart)
@@ -181,37 +185,37 @@ add_test(NAME cuda_amr_composition COMMAND arch_cuda_amr_composition)
 set_tests_properties(cuda_amr_composition PROPERTIES SKIP_RETURN_CODE 77)
 
 # Mathematical policy witnesses and immutable EOS resource owners.
-add_executable(arch_cuda_compile_probe tests/cuda/test_cuda_compile_probe.cu)
+add_executable(arch_cuda_compile_probe tests/cuda/runtime/test_cuda_compile_probe.cu)
 arch_configure_cuda_math_test(arch_cuda_compile_probe)
 add_executable(arch_cuda_eos_host_device_parity
-    tests/cuda/test_eos_host_device_parity.cu)
+    tests/cuda/microphysics/eos/test_eos_host_device_parity.cu)
 arch_configure_cuda_math_test(arch_cuda_eos_host_device_parity)
 target_compile_definitions(arch_cuda_eos_host_device_parity PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(arch_cuda_eos_host_device_parity PRIVATE
     arch_cuda_backend)
 add_executable(arch_cuda_tabular_free_energy_owner
-    tests/cuda/test_tabular_free_energy_owner.cu)
+    tests/cuda/microphysics/eos/test_tabular_free_energy_owner.cu)
 arch_configure_cuda_math_test(arch_cuda_tabular_free_energy_owner)
 target_link_libraries(arch_cuda_tabular_free_energy_owner PRIVATE
     arch_cuda_backend)
 add_executable(arch_cuda_network_nse_device
-    tests/cuda/test_network_nse_device.cu)
+    tests/cuda/microphysics/network/test_network_nse_device.cu)
 arch_configure_cuda_math_test(arch_cuda_network_nse_device)
-add_executable(arch_cuda_generated_nse tests/cuda/test_generated_nse_device.cu)
+add_executable(arch_cuda_generated_nse tests/cuda/generated/test_generated_nse_device.cu)
 arch_configure_cuda_math_test(arch_cuda_generated_nse)
 target_link_libraries(arch_cuda_generated_nse PRIVATE arch_build_contract CUDA::cudart)
 add_test(NAME generated_nse_device COMMAND arch_cuda_generated_nse)
 add_executable(arch_cuda_native_tabular
-    tests/cuda/test_native_tabular_owner.cu
-    src/core/FileFingerprint.cpp
-    src/physics/eos/Tabular3DEOS.cpp
+    tests/cuda/microphysics/eos/test_native_tabular_owner.cu
+    src/core/files/FileFingerprint.cpp
+    src/physics/eos/sources/Tabular3DEOS.cpp
     src/physics/eos/eosdispatch.cpp
-    src/physics/eos/TabularBaryonSource.cpp
-    src/physics/eos/TabularCompletion.cpp
-    src/cuda/microphysics/tabular3_eos_device_owner.cpp
-    src/cuda/microphysics/device_eos_owner_utils.cpp
-    src/cuda/microphysics/device_species_owner.cpp)
+    src/physics/eos/sources/TabularBaryonSource.cpp
+    src/physics/eos/sources/TabularCompletion.cpp
+    src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.cpp
+    src/cuda/microphysics/eos/device_eos_owner_utils.cpp
+    src/cuda/microphysics/network/device_species_owner.cpp)
 arch_configure_cuda_math_test(arch_cuda_native_tabular)
 target_include_directories(arch_cuda_native_tabular PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/tests")
@@ -221,14 +225,14 @@ target_link_libraries(arch_cuda_native_tabular PRIVATE
 add_test(NAME native_tabular_device COMMAND arch_cuda_native_tabular
     "${CMAKE_CURRENT_BINARY_DIR}/native-tabular-device-data")
 add_executable(arch_cuda_tabular_completion
-    tests/cuda/test_tabular_completion_device.cu
-    src/core/FileFingerprint.cpp src/physics/eos/eosdispatch.cpp
-    src/physics/eos/Tabular3DEOS.cpp src/physics/eos/Tabular4DEOS.cpp
-    src/physics/eos/TabularBaryonSource.cpp src/physics/eos/TabularCompletion.cpp
-    src/cuda/microphysics/tabular3_eos_device_owner.cpp
-    src/cuda/microphysics/tabular4_eos_device_owner.cpp
-    src/cuda/microphysics/device_eos_owner_utils.cpp
-    src/cuda/microphysics/device_species_owner.cpp)
+    tests/cuda/microphysics/eos/test_tabular_completion_device.cu
+    src/core/files/FileFingerprint.cpp src/physics/eos/eosdispatch.cpp
+    src/physics/eos/sources/Tabular3DEOS.cpp src/physics/eos/sources/Tabular4DEOS.cpp
+    src/physics/eos/sources/TabularBaryonSource.cpp src/physics/eos/sources/TabularCompletion.cpp
+    src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.cpp
+    src/cuda/microphysics/eos/owners/tabular4_eos_device_owner.cpp
+    src/cuda/microphysics/eos/device_eos_owner_utils.cpp
+    src/cuda/microphysics/network/device_species_owner.cpp)
 arch_configure_cuda_math_test(arch_cuda_tabular_completion)
 target_include_directories(arch_cuda_tabular_completion PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/tests")
@@ -240,16 +244,16 @@ add_test(NAME tabular_completion_device COMMAND arch_cuda_tabular_completion
 set_tests_properties(tabular_completion_device PROPERTIES
     FIXTURES_REQUIRED tabular_completion_tables)
 add_executable(arch_cuda_hydro_leaf_parity
-    tests/cuda/test_hydro_leaf_parity.cu)
+    tests/cuda/hydro/test_hydro_leaf_parity.cu)
 arch_configure_cuda_math_test(arch_cuda_hydro_leaf_parity)
 target_link_libraries(arch_cuda_hydro_leaf_parity PRIVATE
     arch_build_contract)
 add_executable(arch_cuda_reduction_contract
-    tests/cuda/test_cuda_reduction_contract.cu)
+    tests/cuda/runtime/test_cuda_reduction_contract.cu)
 arch_configure_cuda_math_test(arch_cuda_reduction_contract)
 add_executable(arch_cuda_burn_policy_parity
-    tests/cuda/test_burn_policy_parity.cu
-    src/core/FileFingerprint.cpp)
+    tests/cuda/microphysics/burn/test_burn_policy_parity.cu
+    src/core/files/FileFingerprint.cpp)
 arch_configure_cuda_math_test(arch_cuda_burn_policy_parity
     "-Xcompiler=-march=native,-fno-inline,-fno-tree-vectorize,-fno-tree-slp-vectorize")
 target_compile_definitions(arch_cuda_burn_policy_parity PRIVATE
@@ -264,7 +268,7 @@ target_link_libraries(arch_cuda_burn_policy_parity PRIVATE
     arch_cuda_backend_eos_utils
     arch_build_contract CUDA::cudart)
 add_executable(arch_cuda_burn_controller_parity
-    tests/cuda/test_burn_controller_parity.cu)
+    tests/cuda/microphysics/burn/test_burn_controller_parity.cu)
 arch_configure_cuda_math_test(arch_cuda_burn_controller_parity)
 target_compile_definitions(arch_cuda_burn_controller_parity PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
@@ -273,12 +277,12 @@ target_link_libraries(arch_cuda_burn_controller_parity PRIVATE
     arch_cuda_backend_eos_utils arch_build_contract CUDA::cudart)
 add_test(NAME burn_controller_parity COMMAND arch_cuda_burn_controller_parity)
 set_tests_properties(burn_controller_parity PROPERTIES SKIP_RETURN_CODE 77)
-add_executable(arch_cuda_network_derivative tests/cuda/test_network_derivative.cu)
+add_executable(arch_cuda_network_derivative tests/cuda/microphysics/network/test_network_derivative.cu)
 arch_configure_cuda_math_test(arch_cuda_network_derivative)
 target_link_libraries(arch_cuda_network_derivative PRIVATE arch_build_contract CUDA::cudart)
 add_test(NAME cuda_network_derivative COMMAND arch_cuda_network_derivative)
 set_tests_properties(cuda_network_derivative PROPERTIES SKIP_RETURN_CODE 77)
-add_executable(arch_cuda_burn_thermal_math tests/cuda/test_burn_thermal_math.cu)
+add_executable(arch_cuda_burn_thermal_math tests/cuda/microphysics/burn/test_burn_thermal_math.cu)
 arch_configure_cuda_math_test(arch_cuda_burn_thermal_math)
 target_link_libraries(arch_cuda_burn_thermal_math PRIVATE arch_build_contract CUDA::cudart)
 add_test(NAME cuda_burn_thermal_math COMMAND arch_cuda_burn_thermal_math)
@@ -286,12 +290,12 @@ set_tests_properties(cuda_burn_thermal_math PROPERTIES SKIP_RETURN_CODE 77)
 
 # Host scheduler witnesses reuse the production backend; these .cu files stay C++.
 add_executable(arch_cuda_hydro_block
-    tests/cuda/test_cuda_hydro_block.cu)
+    tests/cuda/hydro/test_cuda_hydro_block.cu)
 # This is a Host scheduler/controller witness linked to the one
 # production CUDA backend.  It intentionally owns no device code, so
 # compile the .cu-named focused fixture as ordinary C++ and keep all
 # kernels in arch_cuda_backend.
-set_source_files_properties(tests/cuda/test_cuda_hydro_block.cu
+set_source_files_properties(tests/cuda/hydro/test_cuda_hydro_block.cu
     PROPERTIES
         LANGUAGE CXX
         COMPILE_FLAGS "-x c++")
@@ -301,8 +305,8 @@ target_compile_definitions(arch_cuda_hydro_block PRIVATE
 target_link_libraries(arch_cuda_hydro_block PRIVATE
     arch_cuda_backend arch_solver_dispatch CUDA::cudart)
 add_executable(arch_cuda_multiblock_hydro
-    tests/cuda/test_cuda_multiblock_hydro.cu)
-set_source_files_properties(tests/cuda/test_cuda_multiblock_hydro.cu
+    tests/cuda/hydro/test_cuda_multiblock_hydro.cu)
+set_source_files_properties(tests/cuda/hydro/test_cuda_multiblock_hydro.cu
     PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
 target_compile_features(arch_cuda_multiblock_hydro PRIVATE cxx_std_20)
 target_include_directories(arch_cuda_multiblock_hydro PRIVATE
@@ -312,8 +316,8 @@ set_target_properties(arch_cuda_multiblock_hydro PROPERTIES
 target_link_libraries(arch_cuda_multiblock_hydro PRIVATE
     arch_cuda_backend arch_solver_dispatch CUDA::cudart)
 add_executable(arch_cuda_multiblock_diffusion
-    tests/cuda/test_cuda_multiblock_diffusion.cu)
-set_source_files_properties(tests/cuda/test_cuda_multiblock_diffusion.cu
+    tests/cuda/numerics/test_cuda_multiblock_diffusion.cu)
+set_source_files_properties(tests/cuda/numerics/test_cuda_multiblock_diffusion.cu
     PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
 target_compile_features(arch_cuda_multiblock_diffusion PRIVATE cxx_std_20)
 target_include_directories(arch_cuda_multiblock_diffusion PRIVATE
@@ -321,8 +325,8 @@ target_include_directories(arch_cuda_multiblock_diffusion PRIVATE
 target_link_libraries(arch_cuda_multiblock_diffusion PRIVATE
     arch_cuda_backend arch_solver_dispatch)
 add_executable(arch_cuda_multiblock_burn
-    tests/cuda/test_cuda_multiblock_burn.cu)
-set_source_files_properties(tests/cuda/test_cuda_multiblock_burn.cu
+    tests/cuda/microphysics/burn/test_cuda_multiblock_burn.cu)
+set_source_files_properties(tests/cuda/microphysics/burn/test_cuda_multiblock_burn.cu
     PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
 target_compile_features(arch_cuda_multiblock_burn PRIVATE cxx_std_20)
 target_include_directories(arch_cuda_multiblock_burn PRIVATE
@@ -332,29 +336,29 @@ target_compile_definitions(arch_cuda_multiblock_burn PRIVATE
 target_link_libraries(arch_cuda_multiblock_burn PRIVATE
     arch_cuda_backend arch_solver_dispatch)
 add_executable(arch_cuda_store_lifecycle
-    tests/cuda/test_cuda_store_lifecycle.cpp)
+    tests/cuda/runtime/test_cuda_store_lifecycle.cpp)
 target_compile_features(arch_cuda_store_lifecycle PRIVATE cxx_std_20)
 target_include_directories(arch_cuda_store_lifecycle PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(arch_cuda_store_lifecycle PRIVATE
     arch_cuda_backend arch_solver_dispatch CUDA::cudart)
 add_executable(arch_cuda_amr_exchange
-    tests/cuda/test_cuda_amr_exchange.cpp)
+    tests/cuda/amr/test_cuda_amr_exchange.cpp)
 target_compile_features(arch_cuda_amr_exchange PRIVATE cxx_std_20)
 target_include_directories(arch_cuda_amr_exchange PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(arch_cuda_amr_exchange PRIVATE
     arch_cuda_backend arch_solver_dispatch CUDA::cudart)
 add_executable(arch_cuda_diffusion_rkl_parity
-    tests/cuda/test_diffusion_rkl_parity.cu)
+    tests/cuda/numerics/test_diffusion_rkl_parity.cu)
 arch_configure_cuda_math_test(arch_cuda_diffusion_rkl_parity "-Xcompiler=-march=native")
 target_link_libraries(arch_cuda_diffusion_rkl_parity PRIVATE
     arch_cuda_backend)
 add_executable(arch_cuda_boundary_plan_parity
-    tests/cuda/test_boundary_plan_parity.cu)
+    tests/cuda/grid/test_boundary_plan_parity.cu)
 arch_configure_cuda_math_test(arch_cuda_boundary_plan_parity)
 add_executable(arch_cuda_policy_resolution
-    tests/cuda/test_cuda_policy_resolution.cu)
+    tests/cuda/runtime/test_cuda_policy_resolution.cu)
 arch_configure_cuda_math_test(arch_cuda_policy_resolution)
 target_link_libraries(arch_cuda_policy_resolution PRIVATE
     arch_build_contract)

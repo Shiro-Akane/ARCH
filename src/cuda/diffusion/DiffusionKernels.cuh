@@ -16,15 +16,15 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "../common/CudaCommon.cuh"
-#include "../common/DeviceEosStatus.h"
-#include "../hydro/HydroStateKernels.cuh"
-#include "../hydro/GridGeometryAdapter.cuh"
+#include "cuda/common/CudaCommon.cuh"
+#include "cuda/common/DeviceEosStatus.h"
+#include "cuda/hydro/kernels/HydroStateKernels.cuh"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
-#include "../../numerics/diffusion/DiffFlux.h"
-#include "../../numerics/diffusion/DiffusionAMRStages.h"
-#include "../../physics/species/Species.h"
+#include "numerics/diffusion/DiffFlux.h"
+#include "numerics/diffusion/DiffusionAMRStages.h"
+#include "physics/species/Species.h"
 
 namespace arch::cuda
 {

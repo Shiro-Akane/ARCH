@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "Dual.h"
+#include "physics/network/timmes_common/Dual.h"
 
 namespace timmes {
 

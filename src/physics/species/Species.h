@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "../../core/ArchPortability.h"
+#include "core/ArchPortability.h"
 
 #ifndef EOS_INLINE
 #define EOS_INLINE inline

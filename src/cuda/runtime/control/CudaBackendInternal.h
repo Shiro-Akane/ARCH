@@ -14,20 +14,20 @@
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
-#include "amr/AmrFluxExecutionPlan.h"
+#include "amr/flux/AmrFluxExecutionPlan.h"
 #include "cuda/runtime/CudaBackendTypes.h"
-#include "cuda/runtime/burn/CudaBackendBurnSparse.h"
+#include "cuda/runtime/burn/sparse/CudaBackendBurnSparse.h"
 #include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 
-#include "cuda/hydro/BoundaryPlan.h"
+#include "cuda/hydro/boundary/BoundaryPlan.h"
 #include "cuda/common/DeviceAllocation.h"
-#include "cuda/microphysics/helm_eos_loader.h"
-#include "cuda/microphysics/device_network_owner.h"
+#include "cuda/microphysics/eos/helm_eos_loader.h"
+#include "cuda/microphysics/network/device_network_owner.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"
-#include "physics/eos/Tabular3DEOS.h"
-#include "physics/eos/Tabular4DEOS.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular4DEOS.h"
 
 #include <cuda_runtime.h>
 

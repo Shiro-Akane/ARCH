@@ -5,18 +5,18 @@ This directory owns thermodynamic closures and their host-side data loading.
 - [eos.h](eos.h) declares the policy/view surface;
   [eos_state.h](eos_state.h) describes a thermodynamic query.
 - [IdealGas.h](IdealGas.h), [HelmEos.h](HelmEos.h),
-  [Tabular3DEOS.h](Tabular3DEOS.h) and [Tabular4DEOS.h](Tabular4DEOS.h)
+  [Tabular3DEOS.h](tabular/Tabular3DEOS.h) and [Tabular4DEOS.h](tabular/Tabular4DEOS.h)
   own the concrete shared views.
-- [eos_Utils.h](eos_Utils.h), [TabularInterpolation.h](TabularInterpolation.h),
-  [TabularFreeEnergy.h](TabularFreeEnergy.h) and
-  [TabularInversion.h](TabularInversion.h) own shared thermodynamics,
+- [eos_Utils.h](eos_Utils.h), [TabularInterpolation.h](tabular/TabularInterpolation.h),
+  [TabularFreeEnergy.h](tabular/TabularFreeEnergy.h) and
+  [TabularInversion.h](tabular/TabularInversion.h) own shared thermodynamics,
   interpolation and bounded temperature inversion.
-- [TabularLoaderUtils.h](TabularLoaderUtils.h), the table implementation files
+- [TabularLoaderUtils.h](sources/TabularLoaderUtils.h), the table implementation files
   and [eosdispatch.h](eosdispatch.h) handle loading, validation and selection.
-- [TabularSource.h](TabularSource.h) keeps source inspection, component and
+- [TabularSource.h](sources/TabularSource.h) keeps source inspection, component and
   mass declarations, and fingerprint metadata independent of heavy EOS math.
-- [TabularBaryonSource.h](TabularBaryonSource.h) decodes the supported original
-  baryon ASCII format; [TabularCompletion.h](TabularCompletion.h) adds only
+- [TabularBaryonSource.h](sources/TabularBaryonSource.h) decodes the supported original
+  baryon ASCII format; [TabularCompletion.h](sources/TabularCompletion.h) adds only
   declared missing electron/positron and photon terms during host loading.
   The same completion layer accepts normalized 3D/4D free-energy tables.
 

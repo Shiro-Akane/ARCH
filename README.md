@@ -11,6 +11,13 @@ Chinese translation: [README.zh-CN.md](README.zh-CN.md) · [Documentation overvi
 
 ARCH is a computational framework for simulating the motion, heat transfer, and reactions of compressible fluids. Whether you are a newcomer eager to learn computational fluid dynamics (CFD) or a researcher looking to extend the underlying physical equations and numerical methods directly in the source code, ARCH provides a solid and welcoming foundation.
 
+**Units: ARCH uses CGS throughout, including IdealGas and the GUI.** Length is in
+`cm`, time in `s`, density in `g/cm³`, pressure and energy density in `erg/cm³`,
+specific energy in `erg/g`, temperature in `K`, and specific heat in `erg/(g·K)`.
+Angles use `rad`; fractions and other dimensionless quantities remain unitless.
+User inputs must follow this convention; ARCH does not convert them automatically.
+See the [unit and case guide](docs/guides/SimulationCase.md#units).
+
 Under the hood, ARCH uses the finite-volume method: it divides the fluid domain into distinct cells and accurately tracks the exchange of mass, momentum, and energy between them. To capture fine details efficiently, adaptive mesh refinement (AMR) dynamically inserts smaller cells only where they are truly needed, cleverly avoiding the massive computational cost of a uniformly fine mesh. Furthermore, both CPU and CUDA execution share the exact same mathematical and physical core; their respective backends simply handle how calculations are scheduled and where data is stored, ensuring robust consistency and ease of maintenance.
 
 To run your very first simulation, follow the [Build](#build) and [First run](#first-run) sections below. Once you have it running, the [Simulation Case Guide](docs/guides/SimulationCase.md) will step-by-step walk you through reading the output, tweaking parameters, and creating your own unique scenarios. Rest assured, the beginner example is designed to be highly accessible—it doesn't require a GPU or any complex nuclear reaction networks to get started.

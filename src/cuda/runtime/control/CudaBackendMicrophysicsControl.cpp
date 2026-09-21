@@ -9,7 +9,7 @@
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
 #include "cuda/runtime/burn/CudaBackendBurn.h"
-#include "driver/DriverBurnPolicy.h"
+#include "driver/stages/DriverBurnPolicy.h"
 
 namespace arch::cuda {
 namespace {

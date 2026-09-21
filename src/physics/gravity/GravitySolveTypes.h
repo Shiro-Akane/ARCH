@@ -4,9 +4,9 @@
  * block; the service cannot identify a whole domain by its first block alone.
  */
 #pragma once
-#include "../../amr/BlockHandle.h"
-#include "../../driver/StateResidency.h"
-#include "../../grid/ScalarFieldView.h"
+#include "amr/topology/BlockHandle.h"
+#include "driver/runtime/StateResidency.h"
+#include "grid/ScalarFieldView.h"
 #include <cmath>
 #include <optional>
 #include <span>

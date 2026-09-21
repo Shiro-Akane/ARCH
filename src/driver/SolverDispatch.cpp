@@ -1,4 +1,4 @@
-#include "InitialMesh.h"
+#include "driver/initialization/InitialMesh.h"
 /**
  * @file SolverDispatch.cpp
  * @brief Resolve startup policies and launch the selected time-integrator driver.
@@ -15,18 +15,18 @@
 #include <stdexcept>
 #include <string>
 
-#include "SolverDispatch.h"
+#include "driver/SolverDispatch.h"
 
-#include "../amr/AMRControl.h"
-#include "../core/RuntimeParams.h"
-#include "../data/FluidState.h"
-#include "../grid/Grid.h"
-#include "../interface/ProblemGenerator.h"
-#include "../io/IO.h"
-#include "../io/chk/CheckpointCompatibility.h"
-#include "../physics/eos/eosdispatch.h"
-#include "dispatch/BackendCapabilities.h"
-#include "dispatch/PolicyDescriptor.h"
+#include "amr/AMRControl.h"
+#include "core/config/RuntimeParams.h"
+#include "data/FluidState.h"
+#include "grid/Grid.h"
+#include "interface/ProblemGenerator.h"
+#include "io/IO.h"
+#include "io/chk/CheckpointCompatibility.h"
+#include "physics/eos/eosdispatch.h"
+#include "driver/dispatch/capability/BackendCapabilities.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 
 #ifndef ARCH_CUDA_BUILD_ENABLED
 #define ARCH_CUDA_BUILD_ENABLED 0

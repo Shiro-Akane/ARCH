@@ -16,7 +16,7 @@
 #include <limits>
 #include <vector>
 
-#include "../../data/FluidState.h"
+#include "data/FluidState.h"
 
 // Direction map: dir=0, 1, and 2 select the stored native momentum axes.
 // Flux formulas use local orthonormal normal/tangential components and map

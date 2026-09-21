@@ -19,7 +19,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 ## 参数目录：configuration-schema
 
-`parameters` 恰含当前 `RuntimeParams` 的 90 个标准配置键，包括兼容别名。默认值来自 `src/core/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
+`parameters` 恰含当前 `RuntimeParams` 的 90 个标准配置键，包括兼容别名。默认值来自 `src/core/config/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
 
 | 字段 | 含义 |
 |---|---|

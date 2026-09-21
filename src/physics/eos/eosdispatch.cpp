@@ -3,9 +3,9 @@
  * @brief HDF5 rank inspection kept out of the templated EOS dispatcher.
  */
 
-#include "eosdispatch.h"
-#include "TabularSource.h"
-#include "TabularBaryonSource.h"
+#include "physics/eos/eosdispatch.h"
+#include "physics/eos/sources/TabularSource.h"
+#include "physics/eos/sources/TabularBaryonSource.h"
 
 #include <algorithm>
 #include <set>

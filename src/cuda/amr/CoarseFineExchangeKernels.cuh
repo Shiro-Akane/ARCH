@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "amr/ConservativeRestriction.h"
-#include "amr/LimitedLinearProlongation.h"
+#include "amr/transfer/ConservativeRestriction.h"
+#include "amr/transfer/LimitedLinearProlongation.h"
 #include "cuda/common/DeviceStateFields.cuh"
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 

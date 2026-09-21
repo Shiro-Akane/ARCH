@@ -8,18 +8,18 @@ Here a "witness" means a specific input and its expected numerical property,
 such as a known derivative or conserved quantity. Sharing these cases lets the
 host and device tests ask the same question of the same mathematical routine.
 
-- [BurnThermalCases.h](BurnThermalCases.h): thermal closure, Jacobian and rejected
+- [BurnThermalCases.h](microphysics/BurnThermalCases.h): thermal closure, Jacobian and rejected
   ODE-trial checks.
-- [DenseLuCases.h](DenseLuCases.h) and [NetworkDerivativeCases.h](NetworkDerivativeCases.h):
+- [DenseLuCases.h](DenseLuCases.h) and [NetworkDerivativeCases.h](microphysics/NetworkDerivativeCases.h):
   mixed-scale linear solves and derivative callbacks.
 - [CompensatedSumCases.h](CompensatedSumCases.h): cancellation-sensitive sums.
-- [GeneratedNseCases.h](GeneratedNseCases.h): independent rank-one/rank-two
+- [GeneratedNseCases.h](microphysics/GeneratedNseCases.h): independent rank-one/rank-two
   equilibrium, fixed points, energy-gauge/thermal closure and rejection controls.
-- [CurvilinearMetricCases.h](CurvilinearMetricCases.h) and
-  [ViscousGeometryCases.h](ViscousGeometryCases.h): physical measures and analytic
+- [CurvilinearMetricCases.h](geometry/CurvilinearMetricCases.h) and
+  [ViscousGeometryCases.h](geometry/ViscousGeometryCases.h): physical measures and analytic
   diffusion witnesses.
 - [RoeThermodynamicCases.h](RoeThermodynamicCases.h): thermodynamic and flux identities.
-- [Strict tabular inversion](test_tabular_strict.cpp): exact free-energy
+- [Strict tabular inversion](microphysics/test_tabular_strict.cpp): exact free-energy
   polynomials, both table ranks, nonuniform Ye, derivative constraints,
   multiple/flat roots, masked intervals and floating-point boundary failures.
 

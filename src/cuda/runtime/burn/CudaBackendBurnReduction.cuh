@@ -9,8 +9,8 @@
 #pragma once
 #include "cuda/runtime/CudaBackendTypes.h"
 #include "cuda/runtime/burn/CudaBackendBurn.h"
-#include "driver/DriverBurnPolicy.h"
-#include "driver/ReductionSpec.h"
+#include "driver/stages/DriverBurnPolicy.h"
+#include "driver/schedule/ReductionSpec.h"
 #include <cuda_runtime.h>
 
 namespace arch::cuda::burn_detail {

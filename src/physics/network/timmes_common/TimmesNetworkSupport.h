@@ -9,13 +9,13 @@
 #include <string>
 #include <vector>
 
-#include "Dual.h"
-#include "NuclearConstants.h"
-#include "RatePair.h"
+#include "physics/network/timmes_common/Dual.h"
+#include "physics/network/timmes_common/NuclearConstants.h"
+#include "physics/network/timmes_common/RatePair.h"
 
-#include "../../../data/GlobalDefs.h"
-#include "../../../core/CompensatedSum.h"
-#include "../../species/Species.h"
+#include "data/GlobalDefs.h"
+#include "core/CompensatedSum.h"
+#include "physics/species/Species.h"
 
 namespace timmes {
 

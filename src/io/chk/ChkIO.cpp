@@ -14,14 +14,14 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "../../amr/AMRControl.h"
-#include "../../core/RuntimeParams.h" // For SimConfig
-#include "../../data/GlobalDefs.h"
+#include "amr/AMRControl.h"
+#include "core/config/RuntimeParams.h" // For SimConfig
+#include "data/GlobalDefs.h"
 
-#include "../IO.h"
-#include "CheckpointCompatibility.h"
-#include "../hdf5/HDF5Writer.h"
-#include "../../physics/species/Species.h"
+#include "io/IO.h"
+#include "io/chk/CheckpointCompatibility.h"
+#include "io/hdf5/HDF5Writer.h"
+#include "physics/species/Species.h"
 
 namespace fs = std::filesystem;
 

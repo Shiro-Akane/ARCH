@@ -9,16 +9,16 @@
 
 #pragma once
 
-#include "ReductionSpec.h"
-#include "dispatch/PolicyDescriptor.h"
+#include "driver/schedule/ReductionSpec.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 
-#include "../amr/BoundaryPlan.h"
-#include "../data/FluidState.h"
+#include "amr/exchange/BoundaryPlan.h"
+#include "data/FluidState.h"
 
-#include "../core/RuntimeParams.h"
+#include "core/config/RuntimeParams.h"
 
-#include "../grid/Grid.h"
-#include "../grid/GridMetrics.h"
+#include "grid/Grid.h"
+#include "grid/GridMetrics.h"
 
 #include <bit>
 #include <cstdint>

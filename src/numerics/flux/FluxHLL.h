@@ -17,9 +17,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "FluxFunctions.h"
+#include "numerics/flux/FluxFunctions.h"
 
-#include "../reconstruction/AMRInterfaceReconstruction.h"
+#include "numerics/reconstruction/AMRInterfaceReconstruction.h"
 
 template <typename ReconstructPolicy>
 struct FluxHLL

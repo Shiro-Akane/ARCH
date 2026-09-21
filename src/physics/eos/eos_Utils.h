@@ -10,9 +10,9 @@
 #include <limits>
 #include <stdexcept>
 
-#include "../../core/ArchPortability.h"
-#include "../../core/CompensatedSum.h"
-#include "eos.h" // Provides FluidVector through the EOS policy surface.
+#include "core/ArchPortability.h"
+#include "core/CompensatedSum.h"
+#include "physics/eos/eos.h" // Provides FluidVector through the EOS policy surface.
 
 #ifndef EOS_INLINE
 #define EOS_INLINE inline

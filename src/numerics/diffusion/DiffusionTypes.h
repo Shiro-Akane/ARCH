@@ -9,7 +9,7 @@
  */
 #pragma once
 
-#include "../../data/GlobalDefs.h"
+#include "data/GlobalDefs.h"
 #include <type_traits>
 
 namespace DiffFlux

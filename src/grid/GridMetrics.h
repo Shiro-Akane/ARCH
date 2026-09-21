@@ -13,8 +13,8 @@
 
 #include <cmath>
 
-#include "Grid.h"
-#include "GridGeometryView.h"
+#include "grid/Grid.h"
+#include "grid/GridGeometryView.h"
 
 namespace GridMetrics {
 

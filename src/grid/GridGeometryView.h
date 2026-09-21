@@ -4,8 +4,8 @@
  */
 #pragma once
 
-#include "../core/ArchPortability.h"
-#include "../physics/constant/PhysicalConstants.h"
+#include "core/ArchPortability.h"
+#include "physics/constant/PhysicalConstants.h"
 
 #include <type_traits>
 

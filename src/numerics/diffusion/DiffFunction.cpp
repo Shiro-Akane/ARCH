@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "DiffFunction.h"
+#include "numerics/diffusion/DiffFunction.h"
 
 // RKL stage-count and recurrence-coefficient utilities.
 

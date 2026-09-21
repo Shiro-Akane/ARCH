@@ -6,7 +6,7 @@
 #pragma once
 
 #include "numerics/diffusion/DiffusionTypes.h"
-#include "driver/dispatch/ResolvedExecutionPlan.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "data/GlobalDefs.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "physics/gravity/ExternalGravitySource.h"

@@ -2,7 +2,7 @@
  * @file TimeIntegratorRK3.h
  * @brief 3rd Order Strong Stability Preserving Runge-Kutta (SSPRK3) Time Integrator.
  *
- * Host block execution binds the shared driver/StageScheduler.h descriptors
+ * Host block execution binds the shared driver/schedule/StageScheduler.h descriptors
  * to concrete state slots. The scheduler owns stage order and weights; the
  * hydro interface performs patch updates, and callbacks synchronize halos,
  * rotate storage, and apply reflux at the prescribed completion boundary.
@@ -14,12 +14,12 @@
 #include <string>
 #include <vector>
 
-#include "IHydroSolver.h"
-#include "TimeIntegratorHelper.h"
+#include "numerics/integrator/IHydroSolver.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 
-#include "../../amr/AMRControl.h"
-#include "../../data/FluidState.h"
-#include "../../driver/StageScheduler.h"
+#include "amr/AMRControl.h"
+#include "data/FluidState.h"
+#include "driver/schedule/StageScheduler.h"
 
 struct SolverRK3
 {

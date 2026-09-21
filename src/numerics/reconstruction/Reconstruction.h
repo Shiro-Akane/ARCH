@@ -9,9 +9,9 @@
 #include <cmath>
 #include <utility>
 
-#include "Limiters.h"
+#include "numerics/reconstruction/Limiters.h"
 
-#include "../../data/FluidState.h"
+#include "data/FluidState.h"
 
 namespace ReconstructionMath {
 // One simplex normalization for all reconstructed face compositions. Applying

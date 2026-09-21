@@ -14,10 +14,10 @@
 #include <cmath>
 #include <vector>
 
-#include "eos.h"
-#include "eos_Utils.h"
+#include "physics/eos/eos.h"
+#include "physics/eos/eos_Utils.h"
 
-#include "../species/Species.h"
+#include "physics/species/Species.h"
 
 struct IdealGasView
 {

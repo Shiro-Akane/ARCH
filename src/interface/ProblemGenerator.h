@@ -17,13 +17,13 @@
 
 #include <stdexcept>
 
-#include "../amr/AMRControl.h"
-#include "../data/GlobalDefs.h"
-#include "../data/UserTypes.h"
-#include "../grid/Grid.h"
-#include "../physics/eos/IdealGas.h"
-#include "../physics/species/Species.h"
-#include "../driver/dispatch/ResolvedExecutionPlan.h"
+#include "amr/AMRControl.h"
+#include "data/GlobalDefs.h"
+#include "data/UserTypes.h"
+#include "grid/Grid.h"
+#include "physics/eos/IdealGas.h"
+#include "physics/species/Species.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 
 struct ProblemInitializationContext
 {

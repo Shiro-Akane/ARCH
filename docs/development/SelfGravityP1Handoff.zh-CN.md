@@ -14,8 +14,8 @@ CPU 门槛已完成并封包；按后续授权补齐的 P1 CUDA 门槛也已通�
 - GUI 分支的跟踪树不含 Studio 前端；本地未跟踪 `studio/` 是独立工作，未纳入本次提交。
 
 完整继承比选择性摘取更合适：这些 Core API 共同消费新的初始化、EOS、参数与资源接口，
-后续提交依赖先前提交。P1 沿用 `driver/InitialMesh.h`、`amr/RefinementThermodynamics.h`
-和 `core/InitialStateConversion.h` 的共同路径，没有再造旧 main 的初始化实现。
+后续提交依赖先前提交。P1 沿用 `driver/initialization/InitialMesh.h`、`amr/refinement/RefinementThermodynamics.h`
+和 `core/problem/InitialStateConversion.h` 的共同路径，没有再造旧 main 的初始化实现。
 
 GUI 已记录的 18/18 CPU 检查沿用
 [PREVIEW_SESSION_HANDOFF](../../src/api/PREVIEW_SESSION_HANDOFF.md)，本地没有专门重跑。
@@ -100,6 +100,17 @@ active-ENUC+全输运覆盖 12 条路线、9 次同/跨后端重启比较及两�
 全部工具测试 355/355、零跳过；Host-only 新构建比较器复核原 40 对 CPU 检查点通过，
 错步反例仍拒绝。远端 `74a755e5` 的完整 Tooling + CPU Release CI 已通过。
 CI 改动限定为分支接入、按需 LFS 下载、Host 比较器解耦及完整报告核对，未改变原数值预算。
+
+### 4.3 GPU 封包后的目录与 include 整理
+
+在 `c95f606f` 完成 GPU 证据封包后，按后续授权完成 294 项职责分类迁移；内部引用统一以
+源码根目录为准，测试使用测试根目录，用户算例采用 `<UserInterface.h>` / `<GlobalDefs.h>`。
+[目录交接与映射](layout/README.zh-CN.md)列明稳定入口、GUI 接续、构建和不迁移的理由。
+
+全部配置 CPU 目标编译通过；355 项工具检查无跳过；CPU/CUDA CTest 清单分别保持 53/128 项。
+本轮未重跑 GUI 专项和数值验证，也未重新编译 CUDA；旧 GPU 证据仍绑定整理前源码。
+CGS 已由 GUI Core `97a2b50c` 交付，直接复用；修正了仍称 IdealGas 可选任意单位的活动文档。
+11 个算例源码摘要在逐一确认实现不变后更新，单位映射不变，记录见目录交接。
 
 ## 5. 下一步边界
 

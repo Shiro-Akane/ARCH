@@ -10,7 +10,7 @@
 #pragma once
 
 #include "cuda/common/CudaCommon.cuh"
-#include "cuda/hydro/BoundaryPlan.h"
+#include "cuda/hydro/boundary/BoundaryPlan.h"
 
 #include <cuda_runtime.h>
 

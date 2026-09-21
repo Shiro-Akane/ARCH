@@ -9,7 +9,7 @@
  */
 #include "cuda/runtime/control/CudaBackendInternal.h"
 #include "cuda/amr/RegridMigration.h"
-#include "amr/RegridExecutionPlan.h"
+#include "amr/transfer/RegridExecutionPlan.h"
 
 #include <set>
 

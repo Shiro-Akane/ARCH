@@ -9,8 +9,8 @@ project(ARCH LANGUAGES C CXX)
 # Modules are included in this directory (not add_subdirectory), preserving
 # source properties, output paths and the directory-wide numerical contract.
 # See cmake/README.md for module ownership and extension points.
-include(cmake/BuildOptions.cmake)
-include(cmake/Application.cmake)
+include(cmake/project/BuildOptions.cmake)
+include(cmake/project/Application.cmake)
 
 include(CTest)
 if(BUILD_TESTING)
@@ -18,13 +18,13 @@ if(BUILD_TESTING)
 endif()
 
 if(ARCH_ENABLE_CUDA)
-    include(cmake/CudaBackend.cmake)
+    include(cmake/cuda/CudaBackend.cmake)
     if(BUILD_TESTING)
         include(cmake/tests/CudaTests.cmake)
     endif()
 endif()
 
-include(cmake/Dependencies.cmake)
+include(cmake/dependencies/Dependencies.cmake)
 if(BUILD_TESTING)
     arch_register_io_regression_tests()
 endif()

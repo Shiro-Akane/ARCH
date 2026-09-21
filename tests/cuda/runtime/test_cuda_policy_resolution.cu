@@ -1,0 +1,577 @@
+/**
+ * @file test_cuda_policy_resolution.cu
+ * @brief Exercise device-callable bindings from the shared policy lists.
+ *
+ * Instantiate the registered method families and compare numerical results
+ * with host and independent checks, rather than testing names alone.
+ */
+#include "driver/dispatch/PolicyDescriptor.h"
+
+#include "cuda/diffusion/DiffusionKernels.cuh"
+#include "cuda/hydro/policies/HydroFluxPolicies.cuh"
+#include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
+#include "cuda/hydro/kernels/HydroStageKernels.cuh"
+#include "cuda/microphysics/microphysics_api.h"
+#include "numerics/burnsolver/Networks.h"
+#include "numerics/burnsolver/ode/ode_bd.h"
+#include "numerics/burnsolver/ode/ode_be-nr.h"
+#include "numerics/burnsolver/ode/ode_ros4.h"
+#include "numerics/reconstruction/Limiters.h"
+#include "physics/eos/HelmEos.h"
+#include "physics/eos/IdealGas.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular4DEOS.h"
+#include "fixtures/hydro/RoeFluxReference.h"
+
+#include <cuda_runtime.h>
+
+#include <algorithm>
+#include <bit>
+#include <cstdint>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <stdexcept>
+#include <type_traits>
+
+namespace {
+
+using namespace arch::dispatch;
+
+// This witness executes device-callable mathematical bindings. Generated
+// networks and the Host-mediated cuDSS provider have their own real generated-
+// math/trajectory/provider tests; do not invent a scalar kernel for either.
+template<class Binding> inline constexpr bool external_execution = false;
+template<> inline constexpr bool external_execution<CudaCuDssBinding> = true;
+#define ARCH_EXTERNAL_NETWORK_WITNESS(TAG, VALUE, NAME, TYPE) \
+    template<> inline constexpr bool external_execution<Cuda##TAG##Binding> = true;
+ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(ARCH_EXTERNAL_NETWORK_WITNESS)
+#undef ARCH_EXTERNAL_NETWORK_WITNESS
+
+constexpr double ode_interval = 0.5;
+constexpr double ode_initial_fraction = 0.75;
+constexpr double ode_initial_temperature = 2.0;
+
+struct OdeRouteFingerprint
+{
+    std::uint64_t state_hash{};
+    std::uint64_t dt_bits{};
+    int status{};
+    int attempted_substeps{};
+    int rejected_substeps{};
+    double first_species{}, species_sum{}, temperature{};
+};
+
+struct OdeProbeEos
+{
+    ARCH_INLINE double get_eint_from_T(double, double temperature,
+                                       const double*) const
+    { return temperature; }
+    ARCH_INLINE double get_cv(double, double, const double*) const { return 1.0; }
+    ARCH_INLINE double get_eta(double, double, const double*) const { return 0.0; }
+};
+
+struct OdeProbeNet
+{
+    static constexpr int NUM_SPECIES = 2;
+    static constexpr int ODE_NEQ = 3;
+    static constexpr bool SUPPORTS_NSE = false;
+    static constexpr double ENERGY_CONVERSION = 1.0;
+    static constexpr double decay_rate = 0.02;
+
+    ARCH_INLINE static constexpr double aion(int) { return 1.0; }
+    ARCH_INLINE static constexpr double zion(int) { return 0.5; }
+    ARCH_INLINE static constexpr double binding_energy(int) { return 0.0; }
+    ARCH_INLINE static constexpr double spin_weight(int) { return 0.0; }
+    ARCH_INLINE static constexpr double energy_weight(int) { return 0.0; }
+
+    ARCH_INLINE static void eval_rhs(
+        const double* state, double, double, double* rhs, double& enuc)
+    {
+        rhs[0] = -decay_rate * state[0];
+        rhs[1] = decay_rate * state[0];
+        enuc = 0.0;
+    }
+
+    template <class Matrix>
+    ARCH_INLINE static void eval_jacobian(
+        const double*, double, double, Matrix& matrix, double* denuc)
+    {
+        matrix.set(1, 1, -decay_rate);
+        matrix.set(2, 1, decay_rate);
+        denuc[0] = 0.0;
+        denuc[1] = 0.0;
+    }
+
+    ARCH_INLINE static void eval_temperature_derivative(
+        const double*, double, double, double* rhs, double& denuc)
+    {
+        rhs[0] = 0.0;
+        rhs[1] = 0.0;
+        denuc = 0.0;
+    }
+};
+
+ARCH_INLINE BurnConfigView ode_probe_config()
+{
+    return {true, 0.1, 0.1, 0.1, 1.0e-30, 1.0e30,
+            false, 1.0e20, 1.0e20, true,
+            {1.0e-8, 1.0e-12, 50, 10000, 0.9, 2.0, 0.1, 1.0,
+             false, false}};
+}
+
+ARCH_INLINE std::uint64_t ode_state_hash(const double* values, int count)
+{
+    std::uint64_t hash = 1469598103934665603ULL;
+    for (int i = 0; i < count; ++i) {
+        hash ^= std::bit_cast<std::uint64_t>(values[i]);
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+ARCH_INLINE double flux_witness(double mass, double normal_momentum, double energy)
+{
+    return mass + 0.13 * normal_momentum + 0.017 * energy;
+}
+
+bool independent_flux_witness_matches(double actual, double expected)
+{
+    // The existing independent hydro budget is separate from the exact
+    // Host/Device policy-binding fingerprint comparison below.
+    return std::isfinite(actual) && std::isfinite(expected)
+        && std::abs(actual - expected) <= 3e-14 * std::max(1.0, std::abs(expected));
+}
+
+template <class Binding>
+ARCH_INLINE double policy_witness(
+    double* storage, arch::cuda::BurnOdeMatrixWorkspace& ode_workspace,
+    OdeRouteFingerprint& ode_fingerprint)
+{
+    IdealGasView eos{};
+    eos.global_gamma = 1.4;
+
+    if constexpr (std::is_same_v<Binding, CudaVlBinding>
+                  || std::is_same_v<Binding, CudaSwBinding>
+                  || std::is_same_v<Binding, CudaRoeBinding>
+                  || std::is_same_v<Binding, CudaHllBinding>
+                  || std::is_same_v<Binding, CudaHllcBinding>) {
+        using Flux = std::conditional_t<std::is_same_v<Binding, CudaVlBinding>, arch::cuda::CudaVlFlux,
+            std::conditional_t<std::is_same_v<Binding, CudaSwBinding>, arch::cuda::CudaSwFlux,
+            std::conditional_t<std::is_same_v<Binding, CudaRoeBinding>, arch::cuda::CudaRoeFlux,
+            std::conditional_t<std::is_same_v<Binding, CudaHllBinding>, arch::cuda::CudaHllFlux,
+                               arch::cuda::CudaHllcFlux>>>>;
+        FluidVector flux{};
+        const FluidVector left{1.0, 0.7, 0.1, -0.05, 3.4};
+        const FluidVector right{0.42, -0.08, 0.02, 0.03, 1.1};
+        Flux::compute(left, right, nullptr, nullptr, 0, eos, 0, 0.9, flux, nullptr);
+        return flux_witness(flux.rho, flux.mom_u, flux.eng);
+    } else if constexpr (std::is_same_v<Binding, CudaPcmBinding>
+                         || std::is_same_v<Binding, CudaMusclBinding>
+                         || std::is_same_v<Binding, CudaPpmBinding>) {
+        for (int i = 0; i < 8; ++i) {
+            storage[i] = 1.0 + 0.07 * i + 0.011 * i * i;
+            storage[8 + i] = 0.2 + 0.03 * i;
+            storage[16 + i] = -0.1 + 0.02 * i;
+            storage[24 + i] = 0.05 - 0.004 * i;
+            storage[32 + i] = 2.5 + 0.2 * i + 0.03 * i * i;
+            storage[40 + i] = 0.0;
+        }
+        arch::cuda::DeviceStateView state{
+            storage, storage + 8, storage + 16, storage + 24,
+            storage + 32, storage + 40, nullptr, 8, 0};
+        FluidVector left{}, right{};
+        double species_left[1]{}, species_right[1]{}, species_cell[1]{};
+        if constexpr (std::is_same_v<Binding, CudaPcmBinding>)
+            arch::cuda::CudaPcmReconstruction::reconstruct(
+                state, 2, 1, eos, left, right,
+                species_left, species_right, species_cell);
+        else if constexpr (std::is_same_v<Binding, CudaMusclBinding>)
+            arch::cuda::CudaMusclReconstruction<McLimiter>::reconstruct(
+                state, 2, 1, eos, left, right,
+                species_left, species_right, species_cell);
+        else
+            arch::cuda::CudaPpmReconstruction::reconstruct(
+                state, 2, 1, eos, left, right,
+                species_left, species_right, species_cell);
+        return left.rho + 0.3 * right.rho + 0.01 * left.eng;
+    } else if constexpr (std::is_same_v<Binding, CudaMinModBinding>) {
+        return MinMod::calc(0.37);
+    } else if constexpr (std::is_same_v<Binding, CudaMcBinding>) {
+        return McLimiter::calc(0.37);
+    } else if constexpr (std::is_same_v<Binding, CudaSuperBeeBinding>) {
+        return SuperBee::calc(0.37);
+    } else if constexpr (std::is_same_v<Binding, CudaVanLeerLimiterBinding>) {
+        return VanLeer::calc(0.37);
+    } else if constexpr (std::is_same_v<Binding, CudaEulerBinding>
+                         || std::is_same_v<Binding, CudaRk2Binding>
+                         || std::is_same_v<Binding, CudaRk3Binding>) {
+        const FluidVector old_state{1.0, 0.2, 0.1, -0.1, 3.0};
+        const FluidVector current{1.2, 0.3, 0.05, -0.02, 3.4};
+        const FluidVector delta{0.1, 0.02, -0.01, 0.03, 0.4};
+        FluidVector result{};
+        const double old_weight = std::is_same_v<Binding, CudaEulerBinding> ? 0.0
+            : (std::is_same_v<Binding, CudaRk2Binding> ? 0.5 : 0.75);
+        const double flux_weight = std::is_same_v<Binding, CudaEulerBinding> ? 1.0
+            : (std::is_same_v<Binding, CudaRk2Binding> ? 0.5 : 0.25);
+        TimeIntegration::update_stage_cell(
+            old_state, current, delta, nullptr, nullptr, nullptr, 0, 1,
+            old_weight, flux_weight, 1e-12, 1e-10, 1e21, result, nullptr);
+        return result.rho + 0.1 * result.eng;
+    } else if constexpr (std::is_same_v<Binding, CudaIdealBinding>) {
+        return eos.get_pressure_from_rho_e(1.7, 2.3, nullptr);
+    } else if constexpr (std::is_same_v<Binding, CudaHelmholtzBinding>) {
+        HelmEosView view{};
+        return view.get_gamma(nullptr) * 2.1;
+    } else if constexpr (std::is_same_v<Binding, CudaTabular3DBinding>) {
+        Tabular3DEOSView view{};
+        return view.fallback_pressure(1.7, 2.3);
+    } else if constexpr (std::is_same_v<Binding, CudaTabular4DBinding>) {
+        Tabular4DEOSView view{};
+        return view.fallback_pressure(1.9, 2.3);
+    } else if constexpr (std::is_same_v<Binding, CudaAprox13Binding>) {
+        return NetAprox13::binding_energy(1)
+            + 0.001 * NetAprox13::NUM_SPECIES + 0.00001 * NetAprox13::ODE_NEQ;
+    } else if constexpr (std::is_same_v<Binding, CudaAprox19Binding>) {
+        return NetAprox19::binding_energy(1)
+            + 0.001 * NetAprox19::NUM_SPECIES + 0.00001 * NetAprox19::ODE_NEQ;
+    } else if constexpr (std::is_same_v<Binding, CudaAprox21Binding>) {
+        return NetAprox21::binding_energy(1)
+            + 0.001 * NetAprox21::NUM_SPECIES + 0.00001 * NetAprox21::ODE_NEQ;
+    } else if constexpr (std::is_same_v<Binding, CudaIso7Binding>) {
+        return NetIso7::binding_energy(1)
+            + 0.001 * NetIso7::NUM_SPECIES + 0.00001 * NetIso7::ODE_NEQ;
+    } else if constexpr (std::is_same_v<Binding, CudaBeNrBinding>
+                         || std::is_same_v<Binding, CudaBdBinding>
+                         || std::is_same_v<Binding, CudaRos4Binding>) {
+        arch::cuda::BurnPolicyCell cell{};
+        cell.fluid.rho = 1.0;
+        cell.state[0] = ode_initial_fraction;
+        cell.state[1] = 1.0 - ode_initial_fraction;
+        cell.state[2] = ode_initial_temperature;
+        cell.burn_dt = ode_interval;
+        if constexpr (std::is_same_v<Binding, CudaBeNrBinding>)
+            arch::cuda::execute_ode_policy<OdeProbeNet, Solver_BE_NR>(
+                cell, ode_workspace, OdeProbeEos{}, ode_probe_config());
+        else if constexpr (std::is_same_v<Binding, CudaBdBinding>)
+            arch::cuda::execute_ode_policy<OdeProbeNet, Solver_BD>(
+                cell, ode_workspace, OdeProbeEos{}, ode_probe_config());
+        else
+            arch::cuda::execute_ode_policy<OdeProbeNet, Solver_ROS4>(
+                cell, ode_workspace, OdeProbeEos{}, ode_probe_config());
+        ode_fingerprint.state_hash = ode_state_hash(cell.state, OdeProbeNet::ODE_NEQ);
+        ode_fingerprint.dt_bits =
+            std::bit_cast<std::uint64_t>(cell.dt_recommended);
+        ode_fingerprint.status = static_cast<int>(cell.ode.status);
+        ode_fingerprint.attempted_substeps = cell.ode.attempted_substeps;
+        ode_fingerprint.rejected_substeps = cell.ode.rejected_substeps;
+        ode_fingerprint.first_species = cell.state[0];
+        ode_fingerprint.species_sum = cell.state[0] + cell.state[1];
+        ode_fingerprint.temperature = cell.state[2];
+        return cell.state[0] + 0.1 * cell.state[1]
+            + 0.001 * cell.dt_recommended
+            + 0.0001 * cell.ode.attempted_substeps
+            + 0.00001 * cell.ode.rejected_substeps;
+    } else if constexpr (std::is_same_v<Binding, CudaDenseLuBinding>) {
+        DenseMatrixData<2> matrix{};
+        matrix.set(1, 1, 3.0); matrix.set(1, 2, 1.0);
+        matrix.set(2, 1, 1.0); matrix.set(2, 2, 2.0);
+        double rhs[BurnLimits::MAX_ODE_NEQ]{};
+        rhs[0] = 9.0; rhs[1] = 8.0;
+        return DenseLUSolver::solve<2, BurnLimits::MAX_ODE_NEQ>(matrix, rhs)
+            ? rhs[0] + 0.1 * rhs[1] : -1.0;
+    } else if constexpr (std::is_same_v<Binding, CudaRkl1Binding>
+                         || std::is_same_v<Binding, CudaRkl2Binding>) {
+        const FluidVector base{1.0, 0.2, -0.1, 0.05, 3.0};
+        const FluidVector increment{0.1, -0.03, 0.02, 0.01, 0.4};
+        FluidVector result{};
+        const double coefficient = std::is_same_v<Binding, CudaRkl1Binding> ? 0.2 : 0.35;
+        Numerics::Diffusion::detail::apply_first_rkl_stage_cell(
+            base, nullptr, increment, nullptr, 0, 1, coefficient, result, nullptr);
+        return result.rho + 0.1 * result.eng;
+    } else if constexpr (std::is_same_v<Binding, CudaNoNetworkBinding>
+                         || std::is_same_v<Binding, CudaNoOdeBinding>
+                         || std::is_same_v<Binding, CudaNoLinearBinding>
+                         || std::is_same_v<Binding, CudaNoDiffusionBinding>) {
+        return -0.5;
+    } else {
+        return -999.0;
+    }
+}
+
+template <class Registration>
+__global__ void route_kernel(
+    int* ids, double* values, double* storage,
+    arch::cuda::BurnOdeMatrixWorkspace* ode_workspaces,
+    OdeRouteFingerprint* ode_fingerprints, int index)
+{
+    if (blockIdx.x != 0 || threadIdx.x != 0) return;
+    using Binding = typename PolicyRegistration<Registration>::CudaBinding;
+    ids[index] = static_cast<int>(PolicyRegistration<Registration>::id);
+    values[index] = policy_witness<Binding>(
+        storage + index * 48, ode_workspaces[index], ode_fingerprints[index]);
+}
+
+template <class List>
+struct ListLauncher;
+
+template <class Id, UnknownPolicyBehavior Behavior, class... Registrations>
+struct ListLauncher<TypeList<Id, Behavior, Registrations...>>
+{
+    static constexpr int device_count = (0 + ... +
+        static_cast<int>(!std::is_same_v<typename PolicyRegistration<Registrations>::CudaBinding, AbsentBinding>
+            && !external_execution<typename PolicyRegistration<Registrations>::CudaBinding>));
+    static constexpr int external_count = (0 + ... +
+        static_cast<int>(external_execution<typename PolicyRegistration<Registrations>::CudaBinding>));
+    static void launch(
+        int* ids, double* values, double* storage,
+        arch::cuda::BurnOdeMatrixWorkspace* ode_workspaces,
+        OdeRouteFingerprint* ode_fingerprints, int& index)
+    {
+        ([&] {
+            using Binding = typename PolicyRegistration<Registrations>::CudaBinding;
+            if constexpr (!std::is_same_v<Binding, AbsentBinding> && !external_execution<Binding>) {
+                route_kernel<Registrations><<<1, 1>>>(
+                    ids, values, storage, ode_workspaces,
+                    ode_fingerprints, index++);
+            }
+        }(), ...);
+    }
+
+    // Small flux and analytic ODE policy groups have independent mathematical
+    // acceptance below as well as this exact Host/Device binding comparison.
+    static void host_reference(double* values, OdeRouteFingerprint* fingerprints)
+    {
+        int index = 0;
+        double storage[48]{};
+        arch::cuda::BurnOdeMatrixWorkspace workspace{};
+        ([&] {
+            using Binding = typename PolicyRegistration<Registrations>::CudaBinding;
+            if constexpr (!std::is_same_v<Binding, AbsentBinding> && !external_execution<Binding>) {
+                values[index] = policy_witness<Binding>(storage, workspace, fingerprints[index]);
+                ++index;
+            }
+        }(), ...);
+    }
+};
+
+void check(cudaError_t error, const char* operation)
+{
+    if (error != cudaSuccess) {
+        std::fprintf(stderr, "%s: %s\n", operation, cudaGetErrorString(error));
+        std::exit(2);
+    }
+}
+
+} // namespace
+
+int main()
+{
+    constexpr int group_sizes[] = {
+        ListLauncher<FluxPolicies>::device_count,
+        ListLauncher<ReconstructionPolicies>::device_count,
+        ListLauncher<LimiterPolicies>::device_count,
+        ListLauncher<TimeIntegratorPolicies>::device_count,
+        ListLauncher<EosPolicies>::device_count,
+        ListLauncher<NetworkPolicies>::device_count,
+        ListLauncher<OdeSolverPolicies>::device_count,
+        ListLauncher<LinearSolverPolicies>::device_count,
+        ListLauncher<DiffusionIntegratorPolicies>::device_count};
+    constexpr int maximum_routes = [&] { int count = 0;
+        for (const auto size : group_sizes) count += size; return count; }();
+    constexpr int ode_begin = ListLauncher<FluxPolicies>::device_count
+        + ListLauncher<ReconstructionPolicies>::device_count
+        + ListLauncher<LimiterPolicies>::device_count
+        + ListLauncher<TimeIntegratorPolicies>::device_count
+        + ListLauncher<EosPolicies>::device_count
+        + ListLauncher<NetworkPolicies>::device_count;
+    int* device_ids = nullptr;
+    double* device_values = nullptr;
+    double* device_storage = nullptr;
+    arch::cuda::BurnOdeMatrixWorkspace* device_ode_workspaces = nullptr;
+    OdeRouteFingerprint* device_ode_fingerprints = nullptr;
+    check(cudaMalloc(&device_ids, maximum_routes * sizeof(int)), "cudaMalloc(ids)");
+    check(cudaMalloc(&device_values, maximum_routes * sizeof(double)), "cudaMalloc(values)");
+    check(cudaMalloc(&device_storage, maximum_routes * 48 * sizeof(double)), "cudaMalloc(storage)");
+    check(cudaMalloc(&device_ode_workspaces,
+                     maximum_routes * sizeof(arch::cuda::BurnOdeMatrixWorkspace)),
+          "cudaMalloc(ode workspaces)");
+    check(cudaMalloc(&device_ode_fingerprints,
+                     maximum_routes * sizeof(OdeRouteFingerprint)),
+          "cudaMalloc(ode fingerprints)");
+    check(cudaMemset(device_ode_fingerprints, 0,
+                     maximum_routes * sizeof(OdeRouteFingerprint)),
+          "clear ode fingerprints");
+
+    int count = 0;
+    ListLauncher<FluxPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    ListLauncher<ReconstructionPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    ListLauncher<LimiterPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    ListLauncher<TimeIntegratorPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    ListLauncher<EosPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    ListLauncher<NetworkPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    ListLauncher<OdeSolverPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    ListLauncher<LinearSolverPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    ListLauncher<DiffusionIntegratorPolicies>::launch(device_ids, device_values, device_storage, device_ode_workspaces, device_ode_fingerprints, count);
+    check(cudaGetLastError(), "route launches");
+    check(cudaDeviceSynchronize(), "route synchronize");
+
+    int ids[maximum_routes]{};
+    double values[maximum_routes]{};
+    OdeRouteFingerprint ode_fingerprints[maximum_routes]{};
+    check(cudaMemcpy(ids, device_ids, count * sizeof(int), cudaMemcpyDeviceToHost), "copy ids");
+    check(cudaMemcpy(values, device_values, count * sizeof(double), cudaMemcpyDeviceToHost), "copy values");
+    check(cudaMemcpy(ode_fingerprints, device_ode_fingerprints,
+                     count * sizeof(OdeRouteFingerprint), cudaMemcpyDeviceToHost),
+          "copy ode fingerprints");
+    check(cudaFree(device_ode_fingerprints), "cudaFree(ode fingerprints)");
+    check(cudaFree(device_ode_workspaces), "cudaFree(ode workspaces)");
+    check(cudaFree(device_storage), "cudaFree(storage)");
+    check(cudaFree(device_values), "cudaFree(values)");
+    check(cudaFree(device_ids), "cudaFree(ids)");
+
+    if (count != maximum_routes) {
+        std::fprintf(stderr, "route count mismatch: %d\n", count);
+        return 1;
+    }
+    // Preserve historical snapshots, including the three invalidated Roe-
+    // family values as negative controls. Only those slots and the ODE slots
+    // receive shared Host witnesses, with separate independent acceptance.
+    double expected_values[] = {
+        0.90457253867564613, 1.013305618008822, 1.0233133021289982,
+        1.0385394119668141, 1.0148855113826238,
+        1.6069000000000002, 1.6451000000000002, 1.6475335300217602,
+        0.37, 0.68500000000000005, 0.73999999999999999,
+        0.54014598540145986,
+        1.6800000000000002, 1.49, 1.395,
+        1.5639999999999994, 2.9399999999999999, 2.6066666666666669,
+        2.9133333333333331,
+        -0.5, 92.176080000000013, 7.7373900000000004,
+        7.7394099999999995, 92.170020000000008,
+        -0.5, 0.0, 0.0, 0.0,
+        -0.5, 2.2999999999999998,
+        -0.5, 1.3280000000000001, 1.349};
+    static_assert(std::size(expected_values) == maximum_routes,
+                  "new device mathematical binding needs a discriminating witness");
+    double host_flux_values[ListLauncher<FluxPolicies>::device_count]{};
+    OdeRouteFingerprint unused_flux_fingerprints[ListLauncher<FluxPolicies>::device_count]{};
+    ListLauncher<FluxPolicies>::host_reference(host_flux_values, unused_flux_fingerprints);
+    constexpr FluxId roe_family_fluxes[] = {FluxId::Roe, FluxId::Hll, FluxId::Hllc};
+    static_assert(std::size(roe_family_fluxes) == std::size(RoeFluxReference::policy_flux));
+    double independent_flux_values[std::size(roe_family_fluxes)]{};
+    for (std::size_t i = 0; i < std::size(roe_family_fluxes); ++i) {
+        const int expected_id = static_cast<int>(roe_family_fluxes[i]);
+        int index = -1;
+        for (int slot = 0; slot < ListLauncher<FluxPolicies>::device_count; ++slot) {
+            if (ids[slot] != expected_id) continue;
+            if (index >= 0) {
+                std::fprintf(stderr, "duplicate flux route id=%d\n", expected_id);
+                return 1;
+            }
+            index = slot;
+        }
+        if (index < 0) {
+            std::fprintf(stderr, "missing flux route id=%d\n", expected_id);
+            return 1;
+        }
+        const auto& reference = RoeFluxReference::policy_flux[i];
+        const double independent = flux_witness(reference[0], reference[1], reference[4]);
+        independent_flux_values[i] = independent;
+        if (!independent_flux_witness_matches(host_flux_values[index], independent)
+            || !independent_flux_witness_matches(values[index], independent)) {
+            std::fprintf(stderr, "flux route %d failed independent Euler/RH witness: expected=%.17g host=%.17g device=%.17g\n",
+                         index, independent, host_flux_values[index], values[index]);
+            return 1;
+        }
+        if (independent_flux_witness_matches(expected_values[index], independent)) {
+            std::fprintf(stderr, "flux route %d no longer rejects its invalidated historical fingerprint\n", index);
+            return 1;
+        }
+        expected_values[index] = host_flux_values[index];
+    }
+    for (std::size_t i = 0; i < std::size(roe_family_fluxes); ++i)
+        for (std::size_t j = i + 1; j < std::size(roe_family_fluxes); ++j)
+            if (independent_flux_witness_matches(independent_flux_values[i], independent_flux_values[j])) {
+                std::fprintf(stderr, "independent flux witnesses cannot distinguish bindings %zu and %zu\n", i, j);
+                return 1;
+            }
+    OdeRouteFingerprint host_fingerprints[ListLauncher<OdeSolverPolicies>::device_count]{};
+    ListLauncher<OdeSolverPolicies>::host_reference(expected_values + ode_begin, host_fingerprints);
+    const int ode_end = ode_begin + ListLauncher<OdeSolverPolicies>::device_count;
+    for (int i = ode_begin + 1; i < ode_end; ++i)
+        std::printf("ode[%d] state=%016llx dt=%016llx status=%d attempts=%d rejected=%d\n",
+                    i,
+                    static_cast<unsigned long long>(ode_fingerprints[i].state_hash),
+                    static_cast<unsigned long long>(ode_fingerprints[i].dt_bits),
+                    ode_fingerprints[i].status,
+                    ode_fingerprints[i].attempted_substeps,
+                    ode_fingerprints[i].rejected_substeps);
+    for (int i = ode_begin + 1; i < ode_end; ++i)
+        std::printf("ode_route_value[%d]=%.17g\n", i, values[i]);
+    for (int i = 0; i < count; ++i) {
+        if (!std::isfinite(values[i]) || values[i] == -999.0) {
+            std::fprintf(stderr, "route %d id=%d did not execute a real binding: %.17g\n",
+                         i, ids[i], values[i]);
+            return 1;
+        }
+        if (std::bit_cast<std::uint64_t>(values[i])
+            != std::bit_cast<std::uint64_t>(expected_values[i])) {
+            std::fprintf(stderr,
+                         "route numeric fingerprint mismatch at %d id=%d expected=%.17g actual=%.17g\n",
+                         i, ids[i], expected_values[i], values[i]);
+            return 1;
+        }
+        std::printf("route[%d] id=%d value=%.17g\n", i, ids[i], values[i]);
+    }
+    for (int i = ode_begin + 1; i < ode_end; ++i) {
+        const OdeRouteFingerprint& actual = ode_fingerprints[i];
+        const OdeRouteFingerprint& expected = host_fingerprints[i - ode_begin];
+        if (actual.state_hash != expected.state_hash
+            || actual.dt_bits != expected.dt_bits
+            || actual.status != expected.status
+            || actual.attempted_substeps != expected.attempted_substeps
+            || actual.rejected_substeps != expected.rejected_substeps) {
+            std::fprintf(stderr,
+                         "ODE route %d committed callable status/output/dt fingerprint drifted\n",
+                         i);
+            return 1;
+        }
+        // Independent analytic witness: no-op, failed-but-matching backends,
+        // lost composition or spurious heating must not pass a bit comparison.
+        const double exact = ode_initial_fraction * std::exp(-OdeProbeNet::decay_rate * ode_interval);
+        if (actual.status != static_cast<int>(BurnOdeStatus::OdeSuccess)
+            || actual.attempted_substeps <= 0 || !std::isfinite(actual.first_species)
+            || std::abs(actual.first_species - exact) > 1.0e-6
+            || std::abs(actual.species_sum - 1.0) > 1.0e-12
+            || actual.temperature != ode_initial_temperature) {
+            std::fprintf(stderr, "ODE route %d failed independent decay/closure control\n", i);
+            return 1;
+        }
+    }
+    int group_offset = 0;
+    for (int group_size : group_sizes) {
+        for (int i = 0; i < group_size; ++i) {
+            if (ids[group_offset + i] != i) {
+                std::fprintf(stderr, "route identity mismatch at %d: %d\n",
+                             group_offset + i, ids[group_offset + i]);
+                return 1;
+            }
+            for (int j = i + 1; j < group_size; ++j) {
+                if (values[group_offset + i] == values[group_offset + j]) {
+                    std::fprintf(stderr,
+                                 "route values are not discriminating at %d and %d: %.17g\n",
+                                 group_offset + i, group_offset + j,
+                                 values[group_offset + i]);
+                    return 1;
+                }
+            }
+        }
+        group_offset += group_size;
+    }
+    static_assert(std::is_same_v<PolicyRegistration<SparseKluPolicy>::CudaBinding, AbsentBinding>);
+    static_assert(std::is_same_v<PolicyRegistration<CuDssPolicy>::CpuBinding, AbsentBinding>);
+    std::printf("external execution requires separate generated/provider tests: networks=%d providers=%d\n",
+        ListLauncher<NetworkPolicies>::external_count, ListLauncher<LinearSolverPolicies>::external_count);
+    std::printf("cuda_policy_resolution routes=%d first=%.17g last=%.17g\n",
+                count, values[0], values[count - 1]);
+}
