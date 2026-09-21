@@ -59,7 +59,7 @@ FetchContent_Populate(highfive)
 foreach(target ARCH arch_solver_dispatch)
     target_include_directories(${target} PRIVATE ${highfive_SOURCE_DIR}/include)
 endforeach()
-# This focused CUDA test reads the production Host checkpoint schema directly.
+# The Host comparison utility reads the production checkpoint schema directly.
 # Keep it on the same HDF5Writer implementation as CPU restart rather than
 # introducing a CUDA-specific reader or duplicating schema logic in the test.
 if(TARGET arch_cuda_single_level_validation)

@@ -57,6 +57,12 @@ Full resource-guard coverage needs Linux `/proc`, child-process ownership suppor
 and Python's `os.pidfd_open`. An unsupported Python build or kernel may skip those
 controls. Read the summary: a skip does not verify that feature.
 
+The architecture audit prunes configured CMake build trees and auxiliary Git
+worktrees before scanning. It still reads new/untracked source and user modules
+under source directories; it does not rely on a clean Git index or ignore a
+broad `build*` prefix. Running from a normal development checkout therefore does
+not require exporting a temporary source snapshot.
+
 ## Build and run CPU regressions
 
 Prepare the dependencies in the [build guide](../docs/guides/Build.md). Default
@@ -77,6 +83,12 @@ configured tests. For a quick checkpoint-only check, build
 `arch_checkpoint_compatibility` and select `-R '^checkpoint_compatibility$'`.
 It checks complete ARCH state restoration and rejected input through the same
 reader used by both backends.
+
+`arch_cuda_single_level_validation` is also available in CPU-only builds. The
+historical target name is retained for runner compatibility, but the utility
+uses ordinary C++ and the Host HDF5 reader and does not link the CUDA backend.
+Its comparison rules and `checkpoint_temporal_comparison` test are unchanged.
+Build this target to compare CPU artifacts without a CUDA build.
 
 ## Add CUDA and its sparse provider
 

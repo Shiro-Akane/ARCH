@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check CPU CI coverage and CTest completion, without redefining test physics.
+"""Check declared CTest coverage and completion, without redefining test physics.
 
 CTest owns test discovery, execution and numerical pass/fail decisions. This
 reader rejects incomplete or skipped runs that would otherwise look successful.
@@ -20,11 +20,28 @@ CPU_COVERAGE_ANCHORS = frozenset({
     "topology_transaction", "burn_mainline_reference",
     "checkpoint_compatibility", "tabular_eos_ideal_gas",
     "sparse_klu_161_equations",
+    "shared_stage_scheduler", "gravity_stage_contract", "checkpoint_temporal_comparison",
 })
 
+DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
+    "cuda_compile_probe", "shared_stage_scheduler", "gravity_stage_contract",
+    "cuda_regrid_transaction", "cuda_regrid_migration", "cuda_amr_composition",
+    "cuda_store_lifecycle", "cuda_amr_exchange", "cuda_hydro_dispatch",
+    "diffusion_rkl_parity", "cuda_multiblock_hydro", "cuda_multiblock_diffusion",
+    "cuda_multiblock_burn", "cuda_reduction_contract", "checkpoint_temporal_comparison",
+})
+PROFILES = {"cpu": CPU_COVERAGE_ANCHORS, "driver-cuda": DRIVER_CUDA_COVERAGE_ANCHORS}
 
-def check_inventory(inventory):
-    """Return unique configured test names and require the CPU coverage anchors."""
+
+def check_inventory(inventory, profile="cpu"):
+    """Require profile anchors and later account for every supplied inventory entry.
+
+    CPU CI supplies the entire configured inventory. Driver-CUDA is explicitly
+    scoped to orchestration contracts, not the complete GPU scientific campaign.
+    Neither profile permits missing, skipped or unexpected result entries.
+    """
+    if profile not in PROFILES:
+        raise ValueError("unknown coverage profile: " + profile)
     tests = inventory.get("tests")
     if not isinstance(tests, list) or not tests:
         raise ValueError("CTest inventory is empty or malformed")
@@ -34,9 +51,9 @@ def check_inventory(inventory):
         raise ValueError("CTest inventory contains an invalid test name")
     if len(names) != len(set(names)):
         raise ValueError("CTest inventory contains duplicate test names")
-    missing = CPU_COVERAGE_ANCHORS - set(names)
+    missing = PROFILES[profile] - set(names)
     if missing:
-        raise ValueError("CPU coverage is missing: " + ", ".join(sorted(missing)))
+        raise ValueError(profile + " coverage is missing: " + ", ".join(sorted(missing)))
     return set(names)
 
 
@@ -62,6 +79,8 @@ def check_junit(root, expected):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--profile", choices=PROFILES, default="cpu",
+                        help="cpu uses the complete inventory; driver-cuda is a scoped GPU gate")
     parser.add_argument("--inventory", type=Path, required=True,
                         help="ctest --show-only=json-v1 output from the CI build")
     parser.add_argument("--junit", type=Path,
@@ -71,14 +90,14 @@ def main(argv=None):
         inventory = json.loads(args.inventory.read_text(encoding="utf-8"))
         if not isinstance(inventory, dict):
             raise ValueError("CTest inventory must be a JSON object")
-        expected = check_inventory(inventory)
+        expected = check_inventory(inventory, args.profile)
         if args.junit is not None:
             count = check_junit(ET.parse(args.junit).getroot(), expected)
-            print(f"CPU CI: all {count} configured tests passed without skips")
+            print(f"{args.profile}: all {count} supplied inventory tests passed without skips")
         else:
-            print(f"CPU CI: {len(expected)} configured tests; coverage anchors present")
+            print(f"{args.profile}: {len(expected)} inventory tests; coverage anchors present")
     except (OSError, ValueError, ET.ParseError) as error:
-        print(f"CPU CI check failed: {error}", file=sys.stderr)
+        print(f"{args.profile} result check failed: {error}", file=sys.stderr)
         return 1
     return 0
 

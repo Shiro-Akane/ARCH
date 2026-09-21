@@ -12,10 +12,23 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
-from check_ci_results import CPU_COVERAGE_ANCHORS, check_inventory, check_junit, main
+from check_ci_results import (CPU_COVERAGE_ANCHORS, DRIVER_CUDA_COVERAGE_ANCHORS,
+                              check_inventory, check_junit, main)
 
 
 class CiResultTests(unittest.TestCase):
+    def test_driver_cuda_requires_real_device_coverage_and_rejects_skips(self):
+        names = DRIVER_CUDA_COVERAGE_ANCHORS | {"additional_cuda_contract"}
+        self.assertEqual(check_inventory(self.inventory(names), "driver-cuda"), names)
+        with self.assertRaisesRegex(ValueError, "cuda_compile_probe"):
+            check_inventory(self.inventory(CPU_COVERAGE_ANCHORS), "driver-cuda")
+        report = self.report(names)
+        ET.SubElement(report[0], "skipped")
+        with self.assertRaises(ValueError):
+            check_junit(report, names)
+        with self.assertRaisesRegex(ValueError, "unknown coverage profile"):
+            check_inventory(self.inventory(), "typo")
+
     def inventory(self, names=None):
         return {"tests": [{"name": name} for name in sorted(
             CPU_COVERAGE_ANCHORS if names is None else names)]}

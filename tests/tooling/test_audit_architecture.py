@@ -6,10 +6,41 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
-from audit_architecture import audit_tree
+from audit_architecture import audit_tree, _source_files
 
 
 class CombinationAuditTests(unittest.TestCase):
+    def test_audit_scope_prunes_configured_builds_and_nested_checkouts(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            self.populate_protected(root)
+            for name in ("build-cpu", "custom-cache"):
+                build = root / name
+                (build / "CMakeFiles").mkdir(parents=True)
+                (build / "CMakeCache.txt").write_text("configured build")
+                (build / "CMakeLists.txt").write_text("file(GLOB sources *.cu)")
+            nested = root / ".worktrees" / "other-revision"
+            nested.mkdir(parents=True)
+            (nested / ".git").write_text("gitdir: /another/checkout")
+            (nested / "CMakeLists.txt").write_text("file(GLOB sources *.cu)")
+            self.assertEqual(audit_tree(root), [])
+            visited = {p.relative_to(root).parts[0] for p in _source_files(root)}
+            self.assertTrue(visited.isdisjoint({"build-cpu", "custom-cache", ".worktrees"}))
+
+    def test_scope_does_not_hide_untracked_source_or_build_named_modules(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            # The caller's root can itself be called build; only descendants
+            # are pruned. No Git index is required to discover new source.
+            root = pathlib.Path(temporary) / "build"
+            self.populate_protected(root)
+            module = root / "src" / "build_helpers"
+            module.mkdir()
+            (module / "New.cpp").write_text("void run() { cpu_fallback(); }")
+            (module / ".git").write_text("gitdir: /user/source/submodule")
+            (module / "CMakeCache.txt").write_text("not a configured build root")
+            self.assertIn("hidden CUDA fallback is forbidden: src/build_helpers/New.cpp",
+                          audit_tree(root))
+
     object_helpers = """
 function(arch_configure_cuda_backend_object target source)
     add_library(${target} OBJECT ${source})

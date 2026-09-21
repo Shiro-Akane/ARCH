@@ -345,16 +345,6 @@ target_include_directories(arch_cuda_amr_exchange PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(arch_cuda_amr_exchange PRIVATE
     arch_cuda_backend arch_solver_dispatch CUDA::cudart)
-add_executable(arch_cuda_single_level_validation
-    tests/cuda/test_cuda_single_level_validation.cpp)
-target_compile_features(arch_cuda_single_level_validation PRIVATE
-    cxx_std_20)
-target_include_directories(arch_cuda_single_level_validation PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/src")
-target_link_libraries(arch_cuda_single_level_validation PRIVATE
-    arch_cuda_backend)
-add_test(NAME checkpoint_temporal_comparison
-    COMMAND arch_cuda_single_level_validation --test-time-comparison)
 add_executable(arch_cuda_diffusion_rkl_parity
     tests/cuda/test_diffusion_rkl_parity.cu)
 arch_configure_cuda_math_test(arch_cuda_diffusion_rkl_parity "-Xcompiler=-march=native")
@@ -398,7 +388,6 @@ if(ARCH_CUDA_HEAVY_JOB_POOL)
             arch_cuda_multiblock_burn
             arch_cuda_store_lifecycle
             arch_cuda_amr_exchange
-            arch_cuda_single_level_validation
             arch_cuda_diffusion_rkl_parity
             arch_cuda_boundary_plan_parity
             arch_cuda_policy_resolution)

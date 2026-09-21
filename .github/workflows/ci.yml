@@ -2,9 +2,9 @@ name: ARCH CI
 
 on:
   push:
-    branches: [main, CUDA_complete_v1]
+    branches: [main, CUDA_complete_v1, physics/selfgravity]
   pull_request:
-    branches: [main, CUDA_complete_v1]
+    branches: [main, CUDA_complete_v1, physics/selfgravity]
   workflow_dispatch:
 
 # Public PRs run only on disposable GitHub-hosted machines, without secrets or
@@ -94,6 +94,14 @@ jobs:
     steps:
       - name: Check out source and the required EOS table
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env:
+          # Limit LFS hydration while checkout still owns its temporary auth.
+          # Do not fetch historical HDF5 results or unused large EOS tables.
+          GIT_CONFIG_COUNT: '2'
+          GIT_CONFIG_KEY_0: lfs.fetchinclude
+          GIT_CONFIG_VALUE_0: EOS_toolkit/tables/helmholtz/helm_table.dat
+          GIT_CONFIG_KEY_1: lfs.fetchexclude
+          GIT_CONFIG_VALUE_1: ''
         with:
           persist-credentials: false
           lfs: true
@@ -159,7 +167,7 @@ jobs:
 
       # A PR may restore trusted caches, but cannot publish a new shared cache.
       - name: Save cache after a successful main or V1 push
-        if: success() && github.event_name == 'push' && steps.cache.outputs.cache-hit != 'true'
+        if: success() && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CUDA_complete_v1') && steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: build-ci/ccache

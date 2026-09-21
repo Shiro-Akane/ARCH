@@ -2,6 +2,7 @@
 """Check that CPU and CUDA share numerical policies and simulation control."""
 
 import argparse
+import os
 import pathlib
 import re
 import sys
@@ -201,15 +202,26 @@ _CUDA_SCALAR_BATCH_DELEGATES = {
 
 
 def _source_files(root: pathlib.Path):
+    # Prune artifact roots before descent, rather than visiting every downloaded
+    # dependency and filtering individual files afterwards. Do not ignore a
+    # broad "build*" prefix or untracked source: both can contain real owners.
     ignored = {".git", "build", "output", ".superpowers"}
-    for path in root.rglob("*"):
-        if not path.is_file() or any(part in ignored for part in path.parts):
-            continue
-        if (path.name == "CMakeLists.txt"
-                or path.suffix.lower() in {
-                    ".cu", ".cuh", ".cpp", ".h", ".hpp", ".inc", ".py", ".cmake"}
-                or path.name.lower().endswith(".cu.in")):
-            yield path
+    for directory, subdirectories, files in os.walk(root):
+        current = pathlib.Path(directory)
+        subdirectories[:] = sorted(name for name in subdirectories
+            if name not in ignored
+            and not ((current / name / ".git").exists()
+                     and (current / name).relative_to(root).parts[0]
+                         not in {"src", "simulation", "cmake", "tests", "tools"})
+            and not ((current / name / "CMakeCache.txt").is_file()
+                     and (current / name / "CMakeFiles").is_dir()))
+        for name in sorted(files):
+            path = current / name
+            if path.is_file() and (path.name == "CMakeLists.txt"
+                    or path.suffix.lower() in {
+                        ".cu", ".cuh", ".cpp", ".h", ".hpp", ".inc", ".py", ".cmake"}
+                    or path.name.lower().endswith(".cu.in")):
+                yield path
 
 
 def _without_cpp_comments(content: str, *, strings: bool = False) -> str:

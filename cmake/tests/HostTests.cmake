@@ -11,6 +11,16 @@ endfunction()
 # Python tooling contracts.
 find_package(Threads REQUIRED)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
+# This utility reads Host HDF5 checkpoints/traces; its historical target name
+# stays stable for validation runners. Its source and acceptance logic are
+# unchanged, and it does not construct or link the production CUDA backend.
+add_executable(arch_cuda_single_level_validation
+    tests/cuda/test_cuda_single_level_validation.cpp)
+arch_configure_host_test(arch_cuda_single_level_validation)
+target_link_libraries(arch_cuda_single_level_validation PRIVATE arch_build_contract)
+add_test(NAME checkpoint_temporal_comparison
+    COMMAND arch_cuda_single_level_validation --test-time-comparison)
+
 add_executable(arch_preview_initial_conversion tests/api/test_initial_conversion.cpp)
 arch_configure_host_test(arch_preview_initial_conversion)
 add_test(NAME preview_initial_conversion COMMAND arch_preview_initial_conversion)

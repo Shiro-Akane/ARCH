@@ -26,6 +26,8 @@
 全部 Python 工具测试，以及包含 KLU 和所有已配置 Host 测试的 CPU Release 构建。
 这些任务复用下文的测试入口，不维护另一套 CI 数学实现。CPU 任务会下载所需的
 Helmholtz LFS 表，拒绝缺项或跳过的 CTest 报告；工具任务同样不接受跳过的检查。
+`physics/selfgravity` 的 push/目标 PR 也触发同一完整流程。下载限定为当前测试真正使用的
+Helmholtz 表，不下载无关历史 HDF5 与大表；测试选择、数值容差和失败判据保持不变。
 
 `CI required` 汇总这两个任务的结果，不代表实际执行了 CUDA 或重新完成了整套科学
 验证。诊断附件保留 14 天，与维护者审阅过的 Validation 记录分开存放。
@@ -45,6 +47,9 @@ python3 -m unittest discover -s tests/tooling -p 'test_*.py'
 接口。缺少这些功能的 Python 构建或内核可能导致对应测试跳过。请阅读汇总：
 跳过不表示功能已经验证。
 
+架构审计会在遍历前排除已配置的 CMake 构建树与辅助 Git worktree，仍检查未跟踪源码
+和生产目录中的用户模块。不笼统忽略 `build*`，日常工作目录不再需要先导出干净快照。
+
 ## 编译并运行 CPU 回归
 
 先按[构建指南](../docs/guides/Build.zh-CN.md)准备依赖。默认启用 KLU 以测试 CPU
@@ -62,6 +67,10 @@ ctest --test-dir build-test-cpu --parallel 1 --output-on-failure
 CTest 不会编译缺失的程序；上述默认构建包含已配置的测试目标。需要先检查重启时，
 可只构建 `arch_checkpoint_compatibility`，再用 `-R '^checkpoint_compatibility$'`
 选择它。该测试通过两种后端共用的读取器检查完整状态恢复，并拒绝不完整或不匹配输入。
+
+历史命名的 `arch_cuda_single_level_validation` 现在也可在 CPU-only 构建中单独编译。
+它只使用普通 C++ 与 Host HDF5 读取器，不再链接 CUDA 后端；比较源码、CLI 和容差不变。
+`checkpoint_temporal_comparison` 同样进入 CPU CTest，避免仅为比较检查点而编译整套 CUDA。
 
 ## 加入 CUDA 和原生稀疏求解器
 

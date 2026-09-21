@@ -16,17 +16,22 @@ runner is required for this workflow.
 | `CPU Release` | The `cpu-release` preset with tests and KLU enabled; builds ARCH and all configured CPU tests, then runs the complete CTest inventory |
 | `CI required` | Succeeds only when both jobs succeed; failed, cancelled or skipped dependencies do not count as passing |
 
-Pull requests targeting `main` or `CUDA_complete_v1` and pushes to either
-branch trigger the workflow. There are no path exclusions, so documentation
+Pull requests targeting `main`, `CUDA_complete_v1` or `physics/selfgravity`, and
+pushes to those branches, trigger the workflow. There are no path exclusions, so documentation
 changes also receive a check result. A newer run cancels an older run for the
 same event and branch or pull request. `workflow_dispatch` supports manual
 runs after the workflow is present on the default branch.
 
-The CPU job downloads the tracked Helmholtz EOS table through Git LFS. CMake
+The CPU checkout downloads only the tracked Helmholtz EOS table through Git LFS.
+Its temporary Git configuration restricts `lfs.fetchinclude` during the existing
+authenticated checkout; credentials are still removed afterwards. Current tests
+create their own tabular fixtures, so unrelated large tables and archived HDF5
+results stay as LFS pointers. This changes downloads, not test selection. CMake
 discovers or fetches its existing HighFive and SuiteSparse dependencies. GCC 12
 is selected for both C and C++; Release optimization, LTO and the shared
 floating-point contract are unchanged. CMake's test inventory is checked for
 CPU coverage anchors, including KLU, burning, EOS, AMR and checkpoint tests.
+Shared-stage and gravity preparation contracts are now explicit anchors too.
 After execution, [check_ci_results.py](../../tools/check_ci_results.py) requires
 one passing JUnit entry per configured test, without omissions or skips.
 The inventory, rather than a hard-coded total, determines how many tests run.
