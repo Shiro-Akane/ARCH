@@ -1,0 +1,14 @@
+PASS external_euler: 4 checkpoints, zero field tolerance
+PASS none_amr_euler: 4 checkpoints, zero field tolerance
+PASS external_rk2: 4 checkpoints, zero field tolerance
+PASS none_amr_rk2: 4 checkpoints, zero field tolerance
+PASS external_rk3: 4 checkpoints, zero field tolerance
+PASS none_amr_rk3: 4 checkpoints, zero field tolerance
+PASS gravity_amr_rk2: 4 checkpoints, zero field tolerance
+PASS external_amr_rkl1: 4 checkpoints, zero field tolerance
+PASS external_amr_rkl2: 4 checkpoints, zero field tolerance
+PASS external_amr_rkl2 restart phase=True
+PASS external_amr_rkl2 restart phase=False
+PASS burn_enuc_amr: 4 checkpoints, zero field tolerance
+PASS burn_enuc_amr restart phase=True
+PASS burn_enuc_amr restart phase=False

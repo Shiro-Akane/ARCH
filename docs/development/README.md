@@ -4,6 +4,20 @@ Start with [implementation ownership](ImplementationOwnership.md) before changin
 shared mathematics, backend storage, or execution paths. The map identifies the
 single maintained implementation and its CPU/CUDA consumers.
 
+For the planned self-gravity work, use the
+[self-gravity, maintainability and GUI coordination plan (Chinese)](SelfGravityImplementationPlan.zh-CN.md)
+to track module boundaries, stage contracts, decisions, GUI/Core integration
+order and validation gates.
+The [P1 handoff (Chinese)](SelfGravityP1Handoff.zh-CN.md) records the integrated
+GUI Core baseline, implemented boundaries and CPU evidence; CUDA validation
+is explicitly deferred for this work package.
+Its [main maintainability audit (Chinese)](MainMaintainabilityAudit.zh-CN.md)
+records file-size reviews, source-math exemptions, dependency findings and
+directory proposals. Size thresholds trigger review rather than mandatory
+splitting or merging; keep related responsibilities together and preserve
+supported behavior.
+The plan describes pending work; it does not declare self-gravity available.
+
 The *owner* of an implementation is the specific file or module where its core behavior is defined and maintained. A caller might supply data to this implementation or decide *how* it should execute, but it must never introduce a duplicate copy of the same formula. *Memory owners*, on the other hand, serve a different purpose: they allocate system resources and guarantee they remain alive until all consumers have finished using them.
 
 When changing a module, identify its owner and callers, explain the inputs and
