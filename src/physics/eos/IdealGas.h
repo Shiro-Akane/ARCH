@@ -21,8 +21,8 @@
 
 struct IdealGasView
 {
-    // Air-like model fallback in J/(kg K), not a universal physical constant.
-    static constexpr double default_specific_heat_cv = 718.0;
+    // Air-like model fallback in erg/(g K), not a universal physical constant.
+    static constexpr double default_specific_heat_cv = 7.18e6;
     SpeciesPODView species{};
     double global_gamma = 1.4;
 

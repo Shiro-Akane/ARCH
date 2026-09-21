@@ -1,4 +1,90 @@
 {
+  "amrIndicators": {
+    "alternativeSeparator": "+",
+    "choices": [
+      {
+        "available": true,
+        "reason": null,
+        "selected": true,
+        "value": "DENS"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "PRES"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "TEMP"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "VELX"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "VELY"
+      },
+      {
+        "available": false,
+        "reason": "requires 3D",
+        "selected": false,
+        "value": "VELZ"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "ENER"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "VORT"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "DIVV"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "ENTR"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "ENUC"
+      },
+      {
+        "available": false,
+        "reason": "self gravity is not implemented",
+        "selected": false,
+        "value": "JENS"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "SPECIES"
+      }
+    ],
+    "namedSpecies": [],
+    "separator": ",",
+    "speciesResolution": "requires case Setup"
+  },
   "coordinates": {
     "activation": "positive-block-count",
     "axes": [
@@ -138,6 +224,43 @@
       "severity": "warning"
     }
   ],
+  "diffusion": {
+    "channels": [
+      {
+        "coefficientKey": "alpha_therm",
+        "constantInputAllowed": false,
+        "stellarModelSuppliesCoefficient": true,
+        "toggleKey": "use_thermal_diff",
+        "unit": "cm^2/s"
+      },
+      {
+        "coefficientKey": "nu_visc",
+        "constantInputAllowed": false,
+        "stellarModelSuppliesCoefficient": false,
+        "toggleKey": "use_viscous_diff",
+        "unit": "cm^2/s"
+      },
+      {
+        "coefficientKey": "D_spec",
+        "constantInputAllowed": false,
+        "stellarModelSuppliesCoefficient": false,
+        "toggleKey": "use_species_diff",
+        "unit": "cm^2/s"
+      }
+    ],
+    "conflictResolution": "explicit reversible removal from working text; hiding fields is insufficient",
+    "enabled": false,
+    "forbiddenExplicitKeys": [],
+    "modeEditable": false,
+    "possibleSources": [
+      "constant",
+      "stellar-conductivity"
+    ],
+    "selectionRule": "species_count > 0 and EOS electron density > 0 selects stellar transport; positive viscosity/thermal overrides then fail",
+    "source": "state-dependent",
+    "sourceScope": "configuration; EOS state not evaluated",
+    "version": "1"
+  },
   "execution": {
     "caseRegistration": "not_checked",
     "cuda": "not_initialized",
@@ -149,7 +272,7 @@
   "identity": {
     "caseId": "CellularDet",
     "configRevision": "c33965b71bc301ca7ae155f123039857b9db59493feebc2577a5512a4dac940f",
-    "requestId": "inspect-cellular"
+    "requestId": ""
   },
   "kind": "configuration-inspection",
   "parameters": [
@@ -1640,5 +1763,5 @@
   "schemaVersion": "1.0",
   "status": "ok",
   "unitSystem": "cgs",
-  "version": "1"
+  "version": "2"
 }

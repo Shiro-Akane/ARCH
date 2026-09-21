@@ -1,6 +1,6 @@
 # Studio 标准配置接口
 
-接口版本 `1`，外层 `schemaVersion="1.0"`。沿用 ARCH 的进程 + stdin/JSON 通道。无需运行 simulation、加载 EOS 表或启动 CUDA，也不写 `.par`、输出目录或数据文件。
+配置扩展版本 `2`，外层 `schemaVersion="1.0"`。沿用 ARCH 的进程 + stdin/JSON 通道。无需运行 simulation、加载 EOS 表或启动 CUDA，也不写 `.par`、输出目录或数据文件。
 
 ## 两个入口
 
@@ -31,6 +31,9 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 | applicability | 适用条件的解释；本次配置的布尔结果由检查接口提供 |
 | path | 输入文件或输出目录、相对路径基准；普通字符串为 null |
 | units | 单位及状态；坐标相关项通过 axis 指向坐标描述 |
+| presentation | displayName、description、subgroup；90 键全覆盖。含指定参数的 toggle / enabledBy |
+
+`presentation.toggle` 仅出现在 max_steps、plt_dt、plt_dstep、chk_dt、chk_dstep，启用条件 value > 0，关闭写入值 -1，未编辑原文保留。enabledBy 给出三个常量扩散系数对应的通道开关键。options.choices 的 displayName 用于显示，value 用于写回，acceptedNames 用于识别输入别名；不按别名逐个生成选项。
 
 `options` 的 CPU/CUDA 标记仅描述注册的实现，不能用来认定当前 binary/device/依赖或组合已可运行。未知 solver 等选项原先会回退到默认策略，这一行为以 `unknownBehavior=core-fallback` 保留，不伪装成输入已经改写；严格报错选项使用 `error`。
 
@@ -69,21 +72,26 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 正整数 blocks（包括 1）启用该轴；第二/第三轴用 0 关闭，第三轴依赖第二轴。非活动轴显示名保留 x2/x3，其单位不猜测；GUI 可以使用目录中的目标维度模板提供启用提示。二维 cylindrical/spherical 为 r–phi，三维分别为 r–z–phi / r–theta–phi。
 
-单位不改变数值。Helmholtz/tabular 采用 CGS；IdealGas 接受模型提供的比热及自定标度，以 `code_*` 标明模型单位，不承诺 SI/CGS 或无量纲。Sod 的比热和科学初始化均未修改。
+标准输入和输出统一采用 CGS，包括 IdealGas。单位字段不对用户数据做自动换算。
 
-| 字段 | CGS | 模型自定单位 |
-|---|---|---|
-| 坐标长度 | cm | code_length |
-| DENS | g/cm^3 | code_density |
-| TEMP | K | code_temperature |
-| PRES | erg/cm^3 | code_pressure |
-| ENER | erg/cm^3 | code_energy_density |
-| EINT | erg/g | code_specific_energy |
-| VELX/VELY/VELZ | cm/s | code_velocity |
+| 字段 | 单位 |
+|---|---|
+| 坐标长度 / 角度 | cm / rad |
+| DENS | g/cm^3 |
+| TEMP | K |
+| PRES / ENER | erg/cm^3 |
+| EINT | erg/g |
+| VELX/VELY/VELZ | cm/s |
 
-角坐标为 rad。`state.units` 在 Preview 中表明配置选择的 EOS 单位约定与 `valuesConverted=false`；它不是 EOS 加载成功的标记，成功仍查看 state.eos/status。
+`state.units.system=cgs`、`basis=core-cgs-contract`、`valuesConverted=false`。兼容目录中的旧 code 字段仅为历史标签，当前运行不选择 code 单位。IdealGas 无组分回退比热修正为 7.18e6 erg/(g K)，显式 Cv 不自动换算；Sod 显式 Cv=1 的数值保持不变。
 
-标准参数的 units.status 区分 known、dimensionless、not-applicable、coordinate-dependent、model-dependent、mixed-state、not-specified。`ode_atol` 用于温度/丰度混合状态，没有一个统一标量单位；`ode_rtol` 无量纲。未知 custom 单位保持 null。Sod x_pos 旧 metadata 的 unit 仍为 null，图形位置单位可按其显式绑定轴取得。
+units.status 区分 known、dimensionless、not-applicable、coordinate-dependent、mixed-state 等。ode_atol 用于温度/丰度混合状态，没有一个统一标量单位；不显示为“单位不清楚”。未知 custom 单位仍为 null。Sod x_pos 通过已有明确 Cartesian 坐标绑定返回 cm 和 unitEvidence；没有通用 C++ 自动推断。
+
+## Diffusion 与 AMR 展示状态
+
+成功检查响应新增 `diffusion`：enabled、modeEditable=false、source、possibleSources、sourceScope、selectionRule、forbiddenExplicitKeys 和 channels。IdealGas 常量路径可按通道开关显示对应 cm^2/s 数值。Helmholtz 启用扩散时，三个常量键即使等于零也不得显式出现；普通关闭模块/通道则保留原值。物理系数最终取决于实际 EOS 状态，配置检查不会假装加载 EOS；stellar 分支目前只给出热扩散率。
+
+`amrIndicators` 给出规范名字、Core 解析后 selected、当前 available 和不可用原因，以及需要 Setup 解析的组分名字。字段使用逗号分隔（兼容加号）；不能把未知文本自动当密度指标。Preview 状态也带该结构，实际网格和资源接口见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。
 
 ## Host / Studio 接入边界
 

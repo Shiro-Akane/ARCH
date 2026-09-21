@@ -1,5 +1,7 @@
 # Core B 交接：CellularDet 二维初始预览
 
+> 历史交接记录：本文保留当时的功能和测试范围。本轮新增能力与单位变更请以 [LOCAL_WORKFLOW_HANDOFF.md](LOCAL_WORKFLOW_HANDOFF.md) 为准，当前响应示例见 examples/local-workflow 与 examples/configuration。
+
 ## 分支与接入顺序
 
 - 实现分支：`codex/studio-core-a`，继续使用 Core A 从 main 建立的分支。

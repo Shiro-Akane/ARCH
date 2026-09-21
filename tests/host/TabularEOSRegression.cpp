@@ -175,6 +175,32 @@ int main(int argc,char** argv) {
         throw std::runtime_error("dispatcher did not report the loaded table digest");
 
     {
+        EOSDispatcher::InspectionScope inspection;
+        std::string request_digest;
+        for (int i=0; i<4; ++i)
+            EOSDispatcher::dispatch_eos(
+                arch::dispatch::EosId::Tabular3D, dispatch_config, species,
+                [&](auto&&, std::string_view digest) { request_digest=std::string(digest); });
+        inspection.validate();
+        if(request_digest!=first_digest)
+            throw std::runtime_error("inspection changed the loaded EOS identity");
+        {
+            HighFive::File file(pcache.string(),HighFive::File::ReadWrite);
+            scalar(file,"inspection_generation",1);
+        }
+        EOSDispatcher::dispatch_eos(
+            arch::dispatch::EosId::Tabular3D, dispatch_config, species,
+            [&](auto&&, std::string_view digest) {
+                if(digest!=request_digest) throw std::runtime_error("inspection mixed source generations");
+            });
+        bool changed=false;
+        try { inspection.validate(); } catch(const std::runtime_error&) { changed=true; }
+        if(!changed) throw std::runtime_error("inspection accepted an EOS source changed during the request");
+    }
+    if(EOSDispatcher::inspection_sources)
+        throw std::runtime_error("inspection scope leaked into ordinary dispatch");
+
+    {
         HighFive::File file(pcache.string(),HighFive::File::ReadWrite);
         scalar(file,"cache_generation",1);
     }

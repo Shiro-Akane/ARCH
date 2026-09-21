@@ -15,7 +15,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "x",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -51,7 +51,7 @@
       "disabledBlockCount": 0,
       "geometry": "cartesian",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     },
     {
       "activation": "positive-block-count",
@@ -67,7 +67,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "x",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -81,7 +81,7 @@
           "maxKey": "x2_max",
           "minKey": "x2_min",
           "nativeName": "y",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x2r_boundary_type"
         },
         {
@@ -103,7 +103,7 @@
       "disabledBlockCount": 0,
       "geometry": "cartesian",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     },
     {
       "activation": "positive-block-count",
@@ -119,7 +119,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "x",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -133,7 +133,7 @@
           "maxKey": "x2_max",
           "minKey": "x2_min",
           "nativeName": "y",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x2r_boundary_type"
         },
         {
@@ -147,7 +147,7 @@
           "maxKey": "x3_max",
           "minKey": "x3_min",
           "nativeName": "z",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x3r_boundary_type"
         }
       ],
@@ -155,7 +155,7 @@
       "disabledBlockCount": 0,
       "geometry": "cartesian",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     },
     {
       "activation": "positive-block-count",
@@ -171,7 +171,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "r_cy",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -207,7 +207,7 @@
       "disabledBlockCount": 0,
       "geometry": "cylindrical",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     },
     {
       "activation": "positive-block-count",
@@ -223,7 +223,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "r_cy",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -259,7 +259,7 @@
       "disabledBlockCount": 0,
       "geometry": "cylindrical",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     },
     {
       "activation": "positive-block-count",
@@ -275,7 +275,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "r_cy",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -289,7 +289,7 @@
           "maxKey": "x2_max",
           "minKey": "x2_min",
           "nativeName": "z_cy",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x2r_boundary_type"
         },
         {
@@ -311,7 +311,7 @@
       "disabledBlockCount": 0,
       "geometry": "cylindrical",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     },
     {
       "activation": "positive-block-count",
@@ -327,7 +327,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "r",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -363,7 +363,7 @@
       "disabledBlockCount": 0,
       "geometry": "spherical",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     },
     {
       "activation": "positive-block-count",
@@ -379,7 +379,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "r",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -415,7 +415,7 @@
       "disabledBlockCount": 0,
       "geometry": "spherical",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     },
     {
       "activation": "positive-block-count",
@@ -431,7 +431,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "r",
-          "unit": null,
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -467,7 +467,7 @@
       "disabledBlockCount": 0,
       "geometry": "spherical",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "unknown"
+      "unitSystem": "cgs"
     }
   ],
   "coverage": "standard-runtime-inputs",
@@ -523,6 +523,7 @@
     }
   ],
   "kind": "configuration-schema",
+  "legacyCodeUnits": "deprecated; no current preview selects them",
   "parameters": [
     {
       "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
@@ -540,24 +541,32 @@
             "acceptedNames": [
               "cartesian"
             ],
+            "displayName": "cartesian",
             "value": "cartesian"
           },
           {
             "acceptedNames": [
               "cylindrical"
             ],
+            "displayName": "cylindrical",
             "value": "cylindrical"
           },
           {
             "acceptedNames": [
               "spherical"
             ],
+            "displayName": "spherical",
             "value": "spherical"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Coordinate system used to interpret the three logical axes.",
+        "displayName": "Coordinate system",
+        "subgroup": "Grid"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -580,6 +589,11 @@
       "key": "nblockx1",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Root block count. Axis 1 must be positive; axes 2 and 3 use zero to disable the axis. Any positive integer enables it.",
+        "displayName": "Axis 1 blocks",
+        "subgroup": "Grid"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -602,6 +616,11 @@
       "key": "nblockx2",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Root block count. Axis 1 must be positive; axes 2 and 3 use zero to disable the axis. Any positive integer enables it.",
+        "displayName": "Axis 2 blocks",
+        "subgroup": "Grid"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -624,6 +643,11 @@
       "key": "nblockx3",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Root block count. Axis 1 must be positive; axes 2 and 3 use zero to disable the axis. Any positive integer enables it.",
+        "displayName": "Axis 3 blocks",
+        "subgroup": "Grid"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -644,6 +668,11 @@
       "key": "max_blocks",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Capacity of the simulation block pool. Nonpositive values use 10000; this is not an off switch.",
+        "displayName": "Block pool capacity",
+        "subgroup": "AMR"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -662,6 +691,11 @@
       "key": "x1_min",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 1 minimum",
+        "subgroup": "Grid"
+      },
       "type": "expression",
       "units": {
         "axis": "x1",
@@ -681,6 +715,11 @@
       "key": "x1_max",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 1 maximum",
+        "subgroup": "Grid"
+      },
       "type": "expression",
       "units": {
         "axis": "x1",
@@ -700,6 +739,11 @@
       "key": "x2_min",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 2 minimum",
+        "subgroup": "Grid"
+      },
       "type": "expression",
       "units": {
         "axis": "x2",
@@ -719,6 +763,11 @@
       "key": "x2_max",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 2 maximum",
+        "subgroup": "Grid"
+      },
       "type": "expression",
       "units": {
         "axis": "x2",
@@ -738,6 +787,11 @@
       "key": "x3_min",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 3 minimum",
+        "subgroup": "Grid"
+      },
       "type": "expression",
       "units": {
         "axis": "x3",
@@ -757,6 +811,11 @@
       "key": "x3_max",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 3 maximum",
+        "subgroup": "Grid"
+      },
       "type": "expression",
       "units": {
         "axis": "x3",
@@ -780,30 +839,33 @@
             "acceptedNames": [
               "outflow"
             ],
+            "displayName": "Outflow",
             "value": "outflow"
           },
           {
             "acceptedNames": [
               "periodic"
             ],
+            "displayName": "Periodic",
             "value": "periodic"
           },
           {
             "acceptedNames": [
-              "reflect"
-            ],
-            "value": "reflect"
-          },
-          {
-            "acceptedNames": [
+              "reflect",
               "reflecting"
             ],
-            "value": "reflecting"
+            "displayName": "Reflecting",
+            "value": "reflect"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the lower end of this active axis.",
+        "displayName": "Axis 1 lower boundary",
+        "subgroup": "Grid"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -826,30 +888,33 @@
             "acceptedNames": [
               "outflow"
             ],
+            "displayName": "Outflow",
             "value": "outflow"
           },
           {
             "acceptedNames": [
               "periodic"
             ],
+            "displayName": "Periodic",
             "value": "periodic"
           },
           {
             "acceptedNames": [
-              "reflect"
-            ],
-            "value": "reflect"
-          },
-          {
-            "acceptedNames": [
+              "reflect",
               "reflecting"
             ],
-            "value": "reflecting"
+            "displayName": "Reflecting",
+            "value": "reflect"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the upper end of this active axis.",
+        "displayName": "Axis 1 upper boundary",
+        "subgroup": "Grid"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -872,30 +937,33 @@
             "acceptedNames": [
               "outflow"
             ],
+            "displayName": "Outflow",
             "value": "outflow"
           },
           {
             "acceptedNames": [
               "periodic"
             ],
+            "displayName": "Periodic",
             "value": "periodic"
           },
           {
             "acceptedNames": [
-              "reflect"
-            ],
-            "value": "reflect"
-          },
-          {
-            "acceptedNames": [
+              "reflect",
               "reflecting"
             ],
-            "value": "reflecting"
+            "displayName": "Reflecting",
+            "value": "reflect"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the lower end of this active axis.",
+        "displayName": "Axis 2 lower boundary",
+        "subgroup": "Grid"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -918,30 +986,33 @@
             "acceptedNames": [
               "outflow"
             ],
+            "displayName": "Outflow",
             "value": "outflow"
           },
           {
             "acceptedNames": [
               "periodic"
             ],
+            "displayName": "Periodic",
             "value": "periodic"
           },
           {
             "acceptedNames": [
-              "reflect"
-            ],
-            "value": "reflect"
-          },
-          {
-            "acceptedNames": [
+              "reflect",
               "reflecting"
             ],
-            "value": "reflecting"
+            "displayName": "Reflecting",
+            "value": "reflect"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the upper end of this active axis.",
+        "displayName": "Axis 2 upper boundary",
+        "subgroup": "Grid"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -964,30 +1035,33 @@
             "acceptedNames": [
               "outflow"
             ],
+            "displayName": "Outflow",
             "value": "outflow"
           },
           {
             "acceptedNames": [
               "periodic"
             ],
+            "displayName": "Periodic",
             "value": "periodic"
           },
           {
             "acceptedNames": [
-              "reflect"
-            ],
-            "value": "reflect"
-          },
-          {
-            "acceptedNames": [
+              "reflect",
               "reflecting"
             ],
-            "value": "reflecting"
+            "displayName": "Reflecting",
+            "value": "reflect"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the lower end of this active axis.",
+        "displayName": "Axis 3 lower boundary",
+        "subgroup": "Grid"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1010,30 +1084,33 @@
             "acceptedNames": [
               "outflow"
             ],
+            "displayName": "Outflow",
             "value": "outflow"
           },
           {
             "acceptedNames": [
               "periodic"
             ],
+            "displayName": "Periodic",
             "value": "periodic"
           },
           {
             "acceptedNames": [
-              "reflect"
-            ],
-            "value": "reflect"
-          },
-          {
-            "acceptedNames": [
+              "reflect",
               "reflecting"
             ],
-            "value": "reflecting"
+            "displayName": "Reflecting",
+            "value": "reflect"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the upper end of this active axis.",
+        "displayName": "Axis 3 upper boundary",
+        "subgroup": "Grid"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1060,6 +1137,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "vl",
             "value": "vl"
           },
           {
@@ -1069,6 +1147,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "sw",
             "value": "sw"
           },
           {
@@ -1077,6 +1156,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "roe",
             "value": "roe"
           },
           {
@@ -1085,6 +1165,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "hll",
             "value": "hll"
           },
           {
@@ -1093,12 +1174,18 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "hllc",
             "value": "hllc"
           }
         ],
         "unknownBehavior": "core-fallback"
       },
       "path": null,
+      "presentation": {
+        "description": "Numerical flux used to advance the fluid state.",
+        "displayName": "Flux solver",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1117,6 +1204,11 @@
       "key": "cfl",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Safety factor for the fluid time step.",
+        "displayName": "CFL factor",
+        "subgroup": "Runtime"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -1142,6 +1234,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "minmod",
             "value": "minmod"
           },
           {
@@ -1150,6 +1243,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "mc",
             "value": "mc"
           },
           {
@@ -1158,6 +1252,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "superbee",
             "value": "superbee"
           },
           {
@@ -1166,12 +1261,18 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "vanleer",
             "value": "vanleer"
           }
         ],
         "unknownBehavior": "core-fallback"
       },
       "path": null,
+      "presentation": {
+        "description": "Limits reconstructed slopes near sharp changes.",
+        "displayName": "Slope limiter",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1198,6 +1299,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "pcm",
             "value": "pcm"
           },
           {
@@ -1207,6 +1309,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "plm",
             "value": "plm"
           },
           {
@@ -1215,12 +1318,18 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "ppm",
             "value": "ppm"
           }
         ],
         "unknownBehavior": "core-fallback"
       },
       "path": null,
+      "presentation": {
+        "description": "Reconstructs the state at cell faces.",
+        "displayName": "Reconstruction",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1248,6 +1357,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "euler",
             "value": "euler"
           },
           {
@@ -1257,6 +1367,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "RK2",
             "value": "rk2"
           },
           {
@@ -1266,12 +1377,18 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "RK3",
             "value": "rk3"
           }
         ],
         "unknownBehavior": "core-fallback"
       },
       "path": null,
+      "presentation": {
+        "description": "Legacy alias of time_integrator; the canonical key takes precedence.",
+        "displayName": "Time integrator",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1289,6 +1406,11 @@
       "key": "EntropyFix",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Enables the solver entropy correction where supported.",
+        "displayName": "Entropy correction",
+        "subgroup": "Runtime"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -1307,6 +1429,11 @@
       "key": "EntropyFixCoefficient",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Strength of the correction when EntropyFix is enabled.",
+        "displayName": "Entropy correction strength",
+        "subgroup": "Runtime"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -1327,10 +1454,15 @@
       "key": "sml_rho",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Minimum permitted density used by numerical state repairs.",
+        "displayName": "Density floor",
+        "subgroup": "Runtime"
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "g/cm^3"
       }
     },
     {
@@ -1347,10 +1479,15 @@
       "key": "min_eint",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Lower bound on specific internal energy.",
+        "displayName": "Internal energy floor",
+        "subgroup": "Runtime"
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "erg/g"
       }
     },
     {
@@ -1365,10 +1502,15 @@
       "key": "max_eint",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Upper bound on specific internal energy.",
+        "displayName": "Internal energy ceiling",
+        "subgroup": "Runtime"
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "erg/g"
       }
     },
     {
@@ -1387,24 +1529,32 @@
             "acceptedNames": [
               "cpu"
             ],
+            "displayName": "cpu",
             "value": "cpu"
           },
           {
             "acceptedNames": [
               "cuda"
             ],
+            "displayName": "cuda",
             "value": "cuda"
           },
           {
             "acceptedNames": [
               "auto"
             ],
+            "displayName": "auto",
             "value": "auto"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Requested backend for simulation. Initial previews always use CPU.",
+        "displayName": "Compute backend",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1425,6 +1575,11 @@
       "key": "cuda_device",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Device index for a CUDA simulation; configuration inspection does not probe devices.",
+        "displayName": "CUDA device",
+        "subgroup": "Runtime"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -1447,24 +1602,32 @@
             "acceptedNames": [
               "ideal"
             ],
+            "displayName": "ideal",
             "value": "ideal"
           },
           {
             "acceptedNames": [
               "helmholtz"
             ],
+            "displayName": "helmholtz",
             "value": "helmholtz"
           },
           {
             "acceptedNames": [
               "tabular"
             ],
+            "displayName": "tabular",
             "value": "tabular"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Converts between density, pressure, temperature and internal energy.",
+        "displayName": "Equation of state",
+        "subgroup": "EOS"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1487,6 +1650,11 @@
         "relativeTo": "process-working-directory",
         "role": "input-file",
         "targetMayBeNew": false
+      },
+      "presentation": {
+        "description": "Main table used by Helmholtz or Tabular. Relative paths use the worker working directory.",
+        "displayName": "Main EOS table",
+        "subgroup": "EOS"
       },
       "type": "string",
       "units": {
@@ -1511,6 +1679,11 @@
         "role": "input-file",
         "targetMayBeNew": false
       },
+      "presentation": {
+        "description": "Optional electron and positron table for Tabular tables that need this component. This is not an alias of the main table.",
+        "displayName": "Supplementary EOS table",
+        "subgroup": "EOS"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1529,6 +1702,11 @@
       "key": "gamma",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Global ideal-gas gamma; a case can supply species-specific values.",
+        "displayName": "Heat capacity ratio",
+        "subgroup": "EOS"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -1546,6 +1724,11 @@
       "key": "use_burn",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Enables reaction evolution; case composition setup can still need the selected network when disabled.",
+        "displayName": "Enable reactions",
+        "subgroup": "Network"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -1571,6 +1754,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "none",
             "value": "none"
           },
           {
@@ -1579,6 +1763,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "aprox13",
             "value": "aprox13"
           },
           {
@@ -1587,6 +1772,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "aprox19",
             "value": "aprox19"
           },
           {
@@ -1595,6 +1781,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "aprox21",
             "value": "aprox21"
           },
           {
@@ -1603,12 +1790,18 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "iso7",
             "value": "iso7"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Registered network used for species and reaction data.",
+        "displayName": "Reaction network",
+        "subgroup": "Network"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1627,6 +1820,11 @@
       "key": "nuclearTempMin",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Minimum temperature at which reaction evolution is attempted.",
+        "displayName": "Reaction temperature threshold",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "known",
@@ -1645,6 +1843,11 @@
       "key": "nuclearDensMin",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Minimum density at which reaction evolution is attempted.",
+        "displayName": "Reaction density threshold",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "known",
@@ -1663,6 +1866,11 @@
       "key": "smallt",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Temperature floor used by the reaction solver.",
+        "displayName": "Temperature floor",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "known",
@@ -1681,6 +1889,11 @@
       "key": "smallx",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Small abundance cutoff used by the reaction solver.",
+        "displayName": "Abundance floor",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -1699,6 +1912,11 @@
       "key": "enucDtFactor",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Controls the reaction energy based time step restriction.",
+        "displayName": "Energy time step factor",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -1721,24 +1939,32 @@
             "acceptedNames": [
               "true"
             ],
+            "displayName": "true",
             "value": "true"
           },
           {
             "acceptedNames": [
               "false"
             ],
+            "displayName": "false",
             "value": "false"
           },
           {
             "acceptedNames": [
               "auto"
             ],
+            "displayName": "auto",
             "value": "auto"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Enables, disables or automatically selects the nuclear equilibrium shortcut.",
+        "displayName": "Equilibrium mode",
+        "subgroup": "Network"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1759,6 +1985,11 @@
       "key": "nseTempThreshold",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Temperature threshold for the equilibrium shortcut.",
+        "displayName": "Equilibrium temperature threshold",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "known",
@@ -1779,6 +2010,11 @@
       "key": "nseDensThreshold",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Density threshold for the equilibrium shortcut.",
+        "displayName": "Equilibrium density threshold",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "known",
@@ -1796,6 +2032,11 @@
       "key": "enforce_mass_conservation",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Enables mass conservation handling in reaction integration.",
+        "displayName": "Conserve composition mass",
+        "subgroup": "Network"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -1816,6 +2057,11 @@
       "key": "burn_verbose_level",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Detail level of reaction solver diagnostics.",
+        "displayName": "Reaction logging level",
+        "subgroup": "Network"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -1841,6 +2087,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "none",
             "value": "none"
           },
           {
@@ -1850,6 +2097,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "Backward Euler (Newton)",
             "value": "be_nr"
           },
           {
@@ -1858,6 +2106,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "Bader-Deuflhard (BD)",
             "value": "bd"
           },
           {
@@ -1866,12 +2115,18 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "ROS4",
             "value": "ros4"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "ODE integration method for reactions.",
+        "displayName": "Reaction integrator",
+        "subgroup": "Network"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1897,6 +2152,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "none",
             "value": "none"
           },
           {
@@ -1906,6 +2162,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "denselu",
             "value": "denselu"
           },
           {
@@ -1915,6 +2172,7 @@
             ],
             "cpuSupported": false,
             "cudaSupported": false,
+            "displayName": "sparseklu",
             "value": "sparseklu"
           },
           {
@@ -1924,18 +2182,25 @@
             ],
             "cpuSupported": false,
             "cudaSupported": false,
+            "displayName": "cudss",
             "value": "cudss"
           },
           {
             "acceptedNames": [
               "auto"
             ],
+            "displayName": "Automatic",
             "value": "auto"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Linear system solver used by implicit reaction integration.",
+        "displayName": "Linear solver",
+        "subgroup": "Network"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -1954,6 +2219,11 @@
       "key": "ode_rtol",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Relative component error tolerance for reaction integration.",
+        "displayName": "Relative tolerance",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -1972,6 +2242,11 @@
       "key": "ode_atol",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Absolute component error tolerance for the mixed temperature and abundance state; there is no single scalar unit.",
+        "displayName": "Absolute tolerance",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "reason": "Absolute tolerance for temperature and abundance components; no single scalar unit.",
@@ -1993,6 +2268,11 @@
       "key": "ode_max_newton_iter",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Iteration limit for an implicit reaction substep.",
+        "displayName": "Maximum Newton iterations",
+        "subgroup": "Network"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2013,6 +2293,11 @@
       "key": "ode_max_substeps",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Maximum substeps allowed in one reaction advance.",
+        "displayName": "Maximum reaction substeps",
+        "subgroup": "Network"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2031,6 +2316,11 @@
       "key": "ode_dt_safe_fac",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Safety factor used when choosing the next reaction substep.",
+        "displayName": "Reaction step safety factor",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -2049,6 +2339,11 @@
       "key": "ode_dt_fac_max",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Upper multiplier for reaction substep adaptation.",
+        "displayName": "Maximum step growth",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -2067,6 +2362,11 @@
       "key": "ode_dt_fac_min",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Lower multiplier for reaction substep adaptation.",
+        "displayName": "Minimum step shrink factor",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -2085,6 +2385,11 @@
       "key": "ode_initial_dt_frac",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Fraction of the requested reaction interval used for the first substep.",
+        "displayName": "Initial substep fraction",
+        "subgroup": "Network"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -2102,6 +2407,11 @@
       "key": "ode_use_numerical_jac",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Uses numerical derivatives where supported by the selected integrator.",
+        "displayName": "Numerical Jacobian",
+        "subgroup": "Network"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -2119,6 +2429,11 @@
       "key": "ode_freeze_jacobian",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Reuses the Jacobian within iterations where supported.",
+        "displayName": "Reuse Jacobian",
+        "subgroup": "Network"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -2136,6 +2451,11 @@
       "key": "use_diffusion",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Enables diffusion evolution and reveals diffusion settings.",
+        "displayName": "Enable diffusion",
+        "subgroup": "Diffusion"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -2161,6 +2481,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "none",
             "value": "none"
           },
           {
@@ -2169,6 +2490,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "rkl1",
             "value": "rkl1"
           },
           {
@@ -2177,12 +2499,18 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "rkl2",
             "value": "rkl2"
           }
         ],
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Time integration method used for diffusion.",
+        "displayName": "Diffusion integrator",
+        "subgroup": "Diffusion"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -2201,6 +2529,11 @@
       "key": "diff_cfl",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Safety factor used by diffusion time step estimates.",
+        "displayName": "Diffusion CFL factor",
+        "subgroup": "Diffusion"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -2221,6 +2554,11 @@
       "key": "diff_max_stages",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Stage limit for diffusion integration.",
+        "displayName": "Maximum diffusion stages",
+        "subgroup": "Diffusion"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2238,6 +2576,11 @@
       "key": "use_thermal_diff",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Enables heat transport. Constant thermal diffusivity is entered only on the constant coefficient path.",
+        "displayName": "Thermal diffusion",
+        "subgroup": "Diffusion"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -2255,6 +2598,11 @@
       "key": "use_viscous_diff",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Enables momentum diffusion. The stellar model currently supplies no viscosity.",
+        "displayName": "Viscous diffusion",
+        "subgroup": "Diffusion"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -2272,6 +2620,11 @@
       "key": "use_species_diff",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Enables composition diffusion. The stellar model currently supplies no species diffusivity.",
+        "displayName": "Species diffusion",
+        "subgroup": "Diffusion"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -2290,10 +2643,16 @@
       "key": "nu_visc",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Constant kinematic viscosity on the constant coefficient path.",
+        "displayName": "Kinematic viscosity",
+        "enabledBy": "use_viscous_diff",
+        "subgroup": "Diffusion"
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "cm^2/s"
       }
     },
     {
@@ -2308,10 +2667,16 @@
       "key": "alpha_therm",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Constant thermal diffusivity, not thermal conductivity.",
+        "displayName": "Thermal diffusivity",
+        "enabledBy": "use_thermal_diff",
+        "subgroup": "Diffusion"
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "cm^2/s"
       }
     },
     {
@@ -2326,10 +2691,16 @@
       "key": "D_spec",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Constant composition diffusivity on the constant coefficient path.",
+        "displayName": "Species diffusivity",
+        "enabledBy": "use_species_diff",
+        "subgroup": "Diffusion"
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "cm^2/s"
       }
     },
     {
@@ -2348,18 +2719,21 @@
             "acceptedNames": [
               "none"
             ],
+            "displayName": "none",
             "value": "none"
           },
           {
             "acceptedNames": [
               "external"
             ],
+            "displayName": "external",
             "value": "external"
           },
           {
             "acceptedNames": [
               "self"
             ],
+            "displayName": "self",
             "value": "self"
           }
         ],
@@ -2370,6 +2744,11 @@
         "unknownBehavior": "error"
       },
       "path": null,
+      "presentation": {
+        "description": "Selects no gravity or an external acceleration. Self gravity is not implemented.",
+        "displayName": "Gravity model",
+        "subgroup": "Gravity"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -2388,10 +2767,15 @@
       "key": "gravity_g_x",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Constant acceleration component used by external gravity.",
+        "displayName": "External x acceleration",
+        "subgroup": "Gravity"
+      },
       "type": "expression",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "cm/s^2"
       }
     },
     {
@@ -2406,10 +2790,15 @@
       "key": "gravity_g_y",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Constant acceleration component used by external gravity.",
+        "displayName": "External y acceleration",
+        "subgroup": "Gravity"
+      },
       "type": "expression",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "cm/s^2"
       }
     },
     {
@@ -2424,10 +2813,15 @@
       "key": "gravity_g_z",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Constant acceleration component used by external gravity.",
+        "displayName": "External z acceleration",
+        "subgroup": "Gravity"
+      },
       "type": "expression",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "cm/s^2"
       }
     },
     {
@@ -2442,6 +2836,11 @@
       "key": "gravity_G",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Gravitational constant reserved for self gravity; that module is not implemented.",
+        "displayName": "Gravitational constant",
+        "subgroup": "Gravity"
+      },
       "type": "expression",
       "units": {
         "status": "known",
@@ -2466,6 +2865,11 @@
       "key": "lrefinemin",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Prevents coarsening below this level; it does not force uniform initial refinement.",
+        "displayName": "Minimum refinement level",
+        "subgroup": "AMR"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2490,6 +2894,11 @@
       "key": "lrefinemax",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Highest allowed refinement level; each active direction is halved per level.",
+        "displayName": "Maximum refinement level",
+        "subgroup": "AMR"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2512,6 +2921,11 @@
       "key": "regrid_interval",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Number of simulation steps between regrids. Must be positive; it is not an initial preview iteration count.",
+        "displayName": "Regrid interval",
+        "subgroup": "AMR"
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2529,6 +2943,11 @@
       "key": "refine_var",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Fields used by the refinement indicators, separated by commas or plus signs; species names are resolved after Setup.",
+        "displayName": "Refinement fields",
+        "subgroup": "AMR"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -2551,6 +2970,11 @@
       "key": "refine_threshold",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Refines blocks when their indicator exceeds this threshold.",
+        "displayName": "Refinement threshold",
+        "subgroup": "AMR"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -2573,6 +2997,11 @@
       "key": "derefine_threshold",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Coarsens eligible block families when their indicators fall below this threshold.",
+        "displayName": "Coarsening threshold",
+        "subgroup": "AMR"
+      },
       "type": "float",
       "units": {
         "status": "dimensionless",
@@ -2591,10 +3020,15 @@
       "key": "tmax",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Requested simulation end time.",
+        "displayName": "End time",
+        "subgroup": "Runtime"
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "s"
       }
     },
     {
@@ -2611,6 +3045,17 @@
       "key": "max_steps",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Stops after this many steps when positive; nonpositive values disable this limit.",
+        "displayName": "Step limit",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2634,6 +3079,11 @@
         "role": "output-directory",
         "targetMayBeNew": true
       },
+      "presentation": {
+        "description": "Directory for simulation output. Preview does not create it.",
+        "displayName": "Output directory",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -2651,6 +3101,11 @@
       "key": "base_name",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Prefix for simulation output files.",
+        "displayName": "Output base name",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -2669,10 +3124,21 @@
       "key": "plt_dt",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Writes plot output at this positive time interval; nonpositive disables this trigger.",
+        "displayName": "Plot time interval",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "s"
       }
     },
     {
@@ -2689,6 +3155,17 @@
       "key": "plt_dstep",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Writes plot output every this many steps when positive; nonpositive disables this trigger.",
+        "displayName": "Plot step interval",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2707,10 +3184,21 @@
       "key": "chk_dt",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Writes recovery checkpoints at this positive time interval; nonpositive disables this trigger.",
+        "displayName": "Checkpoint time interval",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
       "type": "float",
       "units": {
-        "status": "model-dependent",
-        "unit": null
+        "status": "known",
+        "unit": "s"
       }
     },
     {
@@ -2727,6 +3215,17 @@
       "key": "chk_dstep",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Writes recovery checkpoints every this many steps when positive; nonpositive disables this trigger.",
+        "displayName": "Checkpoint step interval",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
       "type": "int",
       "units": {
         "status": "dimensionless",
@@ -2744,6 +3243,11 @@
       "key": "restart",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Loads a saved simulation state instead of creating initial conditions.",
+        "displayName": "Resume from checkpoint",
+        "subgroup": "Runtime"
+      },
       "type": "bool",
       "units": {
         "status": "not-applicable",
@@ -2767,6 +3271,11 @@
         "role": "input-file",
         "targetMayBeNew": false
       },
+      "presentation": {
+        "description": "Input checkpoint used when restart is enabled.",
+        "displayName": "Checkpoint file",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -2784,6 +3293,11 @@
       "key": "plt_variables",
       "options": null,
       "path": null,
+      "presentation": {
+        "description": "Selects the fields written to plot output; ALL selects the default complete set.",
+        "displayName": "Plot fields",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -2810,6 +3324,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "euler",
             "value": "euler"
           },
           {
@@ -2819,6 +3334,7 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "RK2",
             "value": "rk2"
           },
           {
@@ -2828,12 +3344,18 @@
             ],
             "cpuSupported": true,
             "cudaSupported": true,
+            "displayName": "RK3",
             "value": "rk3"
           }
         ],
         "unknownBehavior": "core-fallback"
       },
       "path": null,
+      "presentation": {
+        "description": "Time stepping method for fluid evolution.",
+        "displayName": "Time integrator",
+        "subgroup": "Runtime"
+      },
       "type": "string",
       "units": {
         "status": "not-applicable",
@@ -2845,5 +3367,6 @@
   "schemaVersion": "1.0",
   "standardParametersComplete": true,
   "status": "ok",
-  "version": "1"
+  "unitSystem": "cgs",
+  "version": "2"
 }

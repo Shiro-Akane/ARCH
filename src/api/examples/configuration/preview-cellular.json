@@ -27,6 +27,15 @@
       {
         "displayName": "Density",
         "key": "DENS",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 43968592.359031275,
+          "minPositive": 10000000,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 15,
+          "zeroCount": 0
+        },
         "max": 43968592.359031275,
         "min": 10000000,
         "unit": "g/cm^3",
@@ -51,6 +60,15 @@
       {
         "displayName": "Pressure",
         "key": "PRES",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 1.4606892916359918e+25,
+          "minPositive": 8.67346941474081e+23,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 15,
+          "zeroCount": 0
+        },
         "max": 1.4606892916359918e+25,
         "min": 8.67346941474081e+23,
         "unit": "erg/cm^3",
@@ -75,6 +93,15 @@
       {
         "displayName": "Temperature",
         "key": "TEMP",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 4708357311.028496,
+          "minPositive": 199999999.99999762,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 15,
+          "zeroCount": 0
+        },
         "max": 4708357311.028496,
         "min": 199999999.99999762,
         "unit": "K",
@@ -99,6 +126,15 @@
       {
         "displayName": "X velocity",
         "key": "VELX",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 1011000000,
+          "minPositive": 1011000000,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 3,
+          "zeroCount": 12
+        },
         "max": 1011000000,
         "min": 0,
         "unit": "cm/s",
@@ -123,6 +159,15 @@
       {
         "displayName": "Total energy density",
         "key": "ENER",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 5.547861132792775e+25,
+          "minPositive": 1.628661499878004e+24,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 15,
+          "zeroCount": 0
+        },
         "max": 5.547861132792775e+25,
         "min": 1.628661499878004e+24,
         "unit": "erg/cm^3",
@@ -147,6 +192,15 @@
       {
         "displayName": "Specific internal energy",
         "key": "EINT",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 7.507177001049729e+17,
+          "minPositive": 1.628661499878004e+17,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 15,
+          "zeroCount": 0
+        },
         "max": 7.507177001049729e+17,
         "min": 1.628661499878004e+17,
         "unit": "erg/g",
@@ -171,6 +225,15 @@
       {
         "displayName": "Y velocity",
         "key": "VELY",
+        "logDomain": {
+          "canLog": false,
+          "maxPositive": null,
+          "minPositive": null,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 0,
+          "zeroCount": 15
+        },
         "max": 0,
         "min": 0,
         "unit": "cm/s",
@@ -234,7 +297,7 @@
   "identity": {
     "caseId": "CellularDet",
     "configRevision": "c33965b71bc301ca7ae155f123039857b9db59493feebc2577a5512a4dac940f",
-    "requestId": "preview-cellular-units"
+    "requestId": "cellular"
   },
   "kind": "initial-state-preview",
   "schemaVersion": "1.0",
@@ -257,6 +320,92 @@
       "regridInterval": 2,
       "requestedIndicators": "DENS",
       "status": "configured"
+    },
+    "amrIndicators": {
+      "alternativeSeparator": "+",
+      "choices": [
+        {
+          "available": true,
+          "reason": null,
+          "selected": true,
+          "value": "DENS"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "PRES"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "TEMP"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "VELX"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "VELY"
+        },
+        {
+          "available": false,
+          "reason": "requires 3D",
+          "selected": false,
+          "value": "VELZ"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "ENER"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "VORT"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "DIVV"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "ENTR"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "ENUC"
+        },
+        {
+          "available": false,
+          "reason": "self gravity is not implemented",
+          "selected": false,
+          "value": "JENS"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "SPECIES"
+        }
+      ],
+      "namedSpecies": [],
+      "separator": ",",
+      "speciesResolution": "requires case Setup"
     },
     "computeBackendRequested": "cpu",
     "configuration": "parsed",
@@ -311,6 +460,43 @@
       "geometry": "cartesian",
       "thirdAxisRequiresSecond": true,
       "unitSystem": "cgs"
+    },
+    "diffusion": {
+      "channels": [
+        {
+          "coefficientKey": "alpha_therm",
+          "constantInputAllowed": false,
+          "stellarModelSuppliesCoefficient": true,
+          "toggleKey": "use_thermal_diff",
+          "unit": "cm^2/s"
+        },
+        {
+          "coefficientKey": "nu_visc",
+          "constantInputAllowed": false,
+          "stellarModelSuppliesCoefficient": false,
+          "toggleKey": "use_viscous_diff",
+          "unit": "cm^2/s"
+        },
+        {
+          "coefficientKey": "D_spec",
+          "constantInputAllowed": false,
+          "stellarModelSuppliesCoefficient": false,
+          "toggleKey": "use_species_diff",
+          "unit": "cm^2/s"
+        }
+      ],
+      "conflictResolution": "explicit reversible removal from working text; hiding fields is insufficient",
+      "enabled": false,
+      "forbiddenExplicitKeys": [],
+      "modeEditable": false,
+      "possibleSources": [
+        "constant",
+        "stellar-conductivity"
+      ],
+      "selectionRule": "species_count > 0 and EOS electron density > 0 selects stellar transport; positive viscosity/thermal overrides then fail",
+      "source": "state-dependent",
+      "sourceScope": "configuration; EOS state not evaluated",
+      "version": "1"
     },
     "eos": {
       "componentTablePath": "",
@@ -436,7 +622,7 @@
       }
     ],
     "units": {
-      "basis": "configured-eos-convention",
+      "basis": "core-cgs-contract",
       "system": "cgs",
       "valuesConverted": false
     }

@@ -19,7 +19,7 @@
   "identity": {
     "caseId": "Sod",
     "configRevision": "3d7f3934bbf6d5ac94c45deccbbb18c5b27e97459c4d632ef350a052aae51aa7",
-    "requestId": "invalid-integer"
+    "requestId": ""
   },
   "kind": "configuration-inspection",
   "parameters": [
@@ -738,5 +738,5 @@
   ],
   "schemaVersion": "1.0",
   "status": "error",
-  "version": "1"
+  "version": "2"
 }

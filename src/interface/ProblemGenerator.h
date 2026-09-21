@@ -35,6 +35,22 @@ class ProblemGenerator
 public:
     virtual ~ProblemGenerator() = default;
 
+    // Explicit inspection boundary. Production InitializeData has no observer
+    // or extra per-cell branch. Restore the caller's observer even on failure.
+    void InspectSetup(SimConfig& config, SpeciesManager& species,
+                      const std::shared_ptr<arch::preview::ParameterReadTrace>& reads) {
+        const auto previous = config.parameter_reads;
+        config.parameter_reads = reads;
+        try { Setup(config, species); }
+        catch (...) { config.parameter_reads = previous; throw; }
+        config.parameter_reads = previous;
+    }
+    void InspectInitialPrimitive(const PointCoords& point, PrimitiveData& data,
+                                 arch::preview::InitializationObserver& observer) const {
+        SampleInitialPrimitive(point, data);
+        observer.initial_primitive(point, data);
+    }
+
     /**
      * @brief Global Setup Routine.
      * Responsibilities:

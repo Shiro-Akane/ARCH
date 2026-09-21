@@ -3,12 +3,16 @@
     "axes": [
       {
         "name": "x1",
-        "unit": "code_length",
+        "unit": "cm",
         "values": [
-          0.125,
-          0.375,
-          0.625,
-          0.875
+          0.0625,
+          0.1875,
+          0.3125,
+          0.4375,
+          0.5625,
+          0.6875,
+          0.8125,
+          0.9375
         ]
       }
     ],
@@ -17,12 +21,25 @@
       {
         "displayName": "Density",
         "key": "DENS",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 1,
+          "minPositive": 0.125,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 8,
+          "zeroCount": 0
+        },
         "max": 1,
         "min": 0.125,
-        "unit": "code_density",
+        "unit": "g/cm^3",
         "values": [
           1,
           1,
+          1,
+          1,
+          0.125,
+          0.125,
           0.125,
           0.125
         ]
@@ -30,12 +47,25 @@
       {
         "displayName": "Pressure",
         "key": "PRES",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 1,
+          "minPositive": 0.1,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 8,
+          "zeroCount": 0
+        },
         "max": 1,
         "min": 0.1,
-        "unit": "code_pressure",
+        "unit": "erg/cm^3",
         "values": [
           1,
           1,
+          1,
+          1,
+          0.1,
+          0.1,
           0.1,
           0.1
         ]
@@ -43,12 +73,25 @@
       {
         "displayName": "Temperature",
         "key": "TEMP",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 2.5000000000000004,
+          "minPositive": 2.0000000000000004,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 8,
+          "zeroCount": 0
+        },
         "max": 2.5000000000000004,
         "min": 2.0000000000000004,
-        "unit": "code_temperature",
+        "unit": "K",
         "values": [
           2.5000000000000004,
           2.5000000000000004,
+          2.5000000000000004,
+          2.5000000000000004,
+          2.0000000000000004,
+          2.0000000000000004,
           2.0000000000000004,
           2.0000000000000004
         ]
@@ -56,10 +99,23 @@
       {
         "displayName": "X velocity",
         "key": "VELX",
+        "logDomain": {
+          "canLog": false,
+          "maxPositive": null,
+          "minPositive": null,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 0,
+          "zeroCount": 8
+        },
         "max": 0,
         "min": 0,
-        "unit": "code_velocity",
+        "unit": "cm/s",
         "values": [
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -69,12 +125,25 @@
       {
         "displayName": "Total energy density",
         "key": "ENER",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 2.5000000000000004,
+          "minPositive": 0.25000000000000006,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 8,
+          "zeroCount": 0
+        },
         "max": 2.5000000000000004,
         "min": 0.25000000000000006,
-        "unit": "code_energy_density",
+        "unit": "erg/cm^3",
         "values": [
           2.5000000000000004,
           2.5000000000000004,
+          2.5000000000000004,
+          2.5000000000000004,
+          0.25000000000000006,
+          0.25000000000000006,
           0.25000000000000006,
           0.25000000000000006
         ]
@@ -82,12 +151,25 @@
       {
         "displayName": "Specific internal energy",
         "key": "EINT",
+        "logDomain": {
+          "canLog": true,
+          "maxPositive": 2.5000000000000004,
+          "minPositive": 2.0000000000000004,
+          "negativeCount": 0,
+          "nonFiniteCount": 0,
+          "positiveCount": 8,
+          "zeroCount": 0
+        },
         "max": 2.5000000000000004,
         "min": 2.0000000000000004,
-        "unit": "code_specific_energy",
+        "unit": "erg/g",
         "values": [
           2.5000000000000004,
           2.5000000000000004,
+          2.5000000000000004,
+          2.5000000000000004,
+          2.0000000000000004,
+          2.0000000000000004,
           2.0000000000000004,
           2.0000000000000004
         ]
@@ -95,12 +177,12 @@
     ],
     "kind": "line",
     "sampling": {
-      "count": 4,
+      "count": 8,
       "kind": "uniform",
       "order": "x1-fastest",
       "position": "bin-center",
       "shape": [
-        4
+        8
       ],
       "valueLocation": "init-sample"
     }
@@ -140,7 +222,7 @@
   "identity": {
     "caseId": "Sod",
     "configRevision": "cd54c4000a8bd3917f5b3fb658c2614f91bddc7ebd84e7e076f6c3bb79489284",
-    "requestId": "preview-sod-units"
+    "requestId": "sod"
   },
   "kind": "initial-state-preview",
   "parameterMetadata": {
@@ -161,9 +243,16 @@
         "explicitValue": 0.5,
         "key": "x_pos",
         "rawValue": "0.5",
+        "readCount": 1,
         "sourceReason": null,
         "type": "float",
-        "unit": null,
+        "unit": "cm",
+        "unitEvidence": {
+          "automaticInference": false,
+          "axis": "x1",
+          "basis": "explicit-cartesian-axis-binding",
+          "status": "known"
+        },
         "valueSource": "explicit"
       }
     ],
@@ -190,6 +279,92 @@
       "requestedIndicators": "DENS",
       "status": "configured"
     },
+    "amrIndicators": {
+      "alternativeSeparator": "+",
+      "choices": [
+        {
+          "available": true,
+          "reason": null,
+          "selected": true,
+          "value": "DENS"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "PRES"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "TEMP"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "VELX"
+        },
+        {
+          "available": false,
+          "reason": "requires at least 2D",
+          "selected": false,
+          "value": "VELY"
+        },
+        {
+          "available": false,
+          "reason": "requires 3D",
+          "selected": false,
+          "value": "VELZ"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "ENER"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "VORT"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "DIVV"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "ENTR"
+        },
+        {
+          "available": false,
+          "reason": "requires reactions",
+          "selected": false,
+          "value": "ENUC"
+        },
+        {
+          "available": false,
+          "reason": "self gravity is not implemented",
+          "selected": false,
+          "value": "JENS"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "SPECIES"
+        }
+      ],
+      "namedSpecies": [],
+      "separator": ",",
+      "speciesResolution": "requires case Setup"
+    },
     "computeBackendRequested": "cpu",
     "configuration": "parsed",
     "coordinates": {
@@ -206,7 +381,7 @@
           "maxKey": "x1_max",
           "minKey": "x1_min",
           "nativeName": "x",
-          "unit": "code_length",
+          "unit": "cm",
           "upperBoundaryKey": "x1r_boundary_type"
         },
         {
@@ -242,7 +417,43 @@
       "disabledBlockCount": 0,
       "geometry": "cartesian",
       "thirdAxisRequiresSecond": true,
-      "unitSystem": "code"
+      "unitSystem": "cgs"
+    },
+    "diffusion": {
+      "channels": [
+        {
+          "coefficientKey": "alpha_therm",
+          "constantInputAllowed": true,
+          "stellarModelSuppliesCoefficient": true,
+          "toggleKey": "use_thermal_diff",
+          "unit": "cm^2/s"
+        },
+        {
+          "coefficientKey": "nu_visc",
+          "constantInputAllowed": true,
+          "stellarModelSuppliesCoefficient": false,
+          "toggleKey": "use_viscous_diff",
+          "unit": "cm^2/s"
+        },
+        {
+          "coefficientKey": "D_spec",
+          "constantInputAllowed": true,
+          "stellarModelSuppliesCoefficient": false,
+          "toggleKey": "use_species_diff",
+          "unit": "cm^2/s"
+        }
+      ],
+      "conflictResolution": "explicit reversible removal from working text; hiding fields is insufficient",
+      "enabled": false,
+      "forbiddenExplicitKeys": [],
+      "modeEditable": false,
+      "possibleSources": [
+        "constant"
+      ],
+      "selectionRule": "species_count > 0 and EOS electron density > 0 selects stellar transport; positive viscosity/thermal overrides then fail",
+      "source": "constant",
+      "sourceScope": "configuration; EOS state not evaluated",
+      "version": "1"
     },
     "eos": {
       "componentTablePath": "",
@@ -266,7 +477,7 @@
           "name": "x1",
           "rootBlocks": 8,
           "rootCells": 128,
-          "unit": "code_length",
+          "unit": "cm",
           "upperBoundary": "outflow"
         }
       ],
@@ -283,8 +494,8 @@
       }
     ],
     "units": {
-      "basis": "configured-eos-convention",
-      "system": "code",
+      "basis": "core-cgs-contract",
+      "system": "cgs",
       "valuesConverted": false
     }
   },

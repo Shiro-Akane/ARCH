@@ -5,6 +5,9 @@
 #include "Sampling.h"
 #include "LogCapture.h"
 #include "Configuration.h"
+#include "InitialMesh.h"
+#include "StateSnapshot.h"
+#include "ValueDomain.h"
 
 #include <algorithm>
 #include <array>
@@ -31,7 +34,7 @@ Json diagnostic(const char *severity, const std::string &code, const std::string
 }
 Json envelope(const PreviewRequest &request) {
     return Json::object({
-        {"schemaVersion", preview_schema_version}, {"kind", "initial-state-preview"},
+        {"schemaVersion", preview_schema_version}, {"kind", request.initial_mesh ? "initial-amr-preview" : "initial-state-preview"},
         {"status", "error"}, {"stage", "input"},
         {"identity", Json::object({{"requestId", request.request_id}, {"caseId", request.case_id},
             {"configRevision", core::string_sha256(request.config_text)}})},
@@ -42,70 +45,6 @@ Json envelope(const PreviewRequest &request) {
         {"data", Json()}, {"diagnostics", Json::array()}});
 }
 
-Json grid_snapshot(const SimConfig &config) {
-    const auto &g = config.grid;
-    const int blocks[] = {g.nblockx1, g.nblockx2, g.nblockx3};
-    const int cells[] = {amr::BLOCK_NX, amr::BLOCK_NY, amr::BLOCK_NZ};
-    const double lo[] = {g.x1_min, g.x2_min, g.x3_min};
-    const double hi[] = {g.x1_max, g.x2_max, g.x3_max};
-    const std::string lower[] = {g.x1l_boundary_type, g.x2l_boundary_type, g.x3l_boundary_type};
-    const std::string upper[] = {g.x1r_boundary_type, g.x2r_boundary_type, g.x3r_boundary_type};
-    Grid native; native.geometry = g.geometry; native.dim = g.dim;
-    const auto names = native.GetAxisNames();
-    auto axes = Json::array();
-    for (int axis = 0; axis < g.dim; ++axis) {
-        const std::int64_t n = std::int64_t(blocks[axis]) * cells[axis];
-        const bool known = dispatch::parse_geometry(g.geometry).ok;
-        const auto label = known ? names.at(axis) : "x"+std::to_string(axis+1);
-        const auto unit = known ? AxisUnit(label, UnitSystem(config)) : std::string();
-        axes.push(Json::object({{"name", "x" + std::to_string(axis + 1)}, {"unit", unit.empty() ? Json() : Json(unit)},
-            {"displayName", label.ends_with("_cy") ? label.substr(0, label.size()-3) : label},
-            {"min", lo[axis]}, {"max", hi[axis]}, {"rootBlocks", blocks[axis]},
-            {"activeCellsPerBlock", cells[axis]}, {"rootCells", n},
-            {"coordinateSpacing", n > 0 ? Json((hi[axis] - lo[axis]) / n) : Json()},
-            {"lowerBoundary", lower[axis]}, {"upperBoundary", upper[axis]}}));
-    }
-    return Json::object({{"status", "configured"}, {"geometry", g.geometry}, {"dimension", g.dim},
-        {"axes", axes}, {"hierarchy", "not_constructed"}});
-}
-Json amr_snapshot(const SimConfig &config) {
-    const auto &a = config.amr;
-    auto indicators = Json::array();
-    const std::pair<const char *, bool> flags[] = {
-        {"DENS", a.refine_on_rho}, {"PRES", a.refine_on_p}, {"TEMP", a.refine_on_temp},
-        {"VELX", a.refine_on_velx}, {"VELY", a.refine_on_vely}, {"VELZ", a.refine_on_velz},
-        {"ENER", a.refine_on_eng}, {"VORT", a.refine_on_vorticity}, {"DIVV", a.refine_on_div_v},
-        {"ENTR", a.refine_on_entropy}, {"ENUC", a.refine_on_enuc}, {"JENS", a.refine_on_jeans}};
-    for (const auto &[key, active] : flags) if (active) indicators.push(key);
-    if (a.refine_on_species) {
-        if (a.refine_all_species) indicators.push("SPECIES");
-        else for (const auto &name : a.refine_species_names) indicators.push(name);
-    }
-    return Json::object({{"status", "configured"}, {"enabled", a.lrefinemax > 0},
-        {"minLevel", a.lrefinemin}, {"maxLevel", a.lrefinemax},
-        {"requestedIndicators", a.refine_var}, {"parsedIndicators", indicators},
-        {"indicatorEvaluation", "not_executed"},
-        {"refineThreshold", a.refine_threshold}, {"derefineThreshold", a.derefine_threshold},
-        {"regridInterval", a.regrid_interval}, {"maxBlocks", config.grid.amr_max_blocks},
-        {"effectiveMaxBlocks", config.grid.amr_max_blocks > 0 ? config.grid.amr_max_blocks : 10000},
-        {"initialRefinement", "not_executed"}, {"actualHierarchy", Json()}});
-}
-Json eos_snapshot(const SimConfig &config) {
-    return Json::object({{"status", "not_loaded"}, {"requested", config.physics.eos_type},
-        {"resolved", Json()}, {"configuredGamma", config.physics.gamma},
-        {"tablePath", config.physics.eos_table_path},
-        {"componentTablePath", config.physics.eos_helm_table_path},
-        {"loadedTablePath", Json()}, {"sourceFingerprint", Json()}});
-}
-void snapshot(Json &state, const SimConfig &config) {
-    state["configuration"] = "parsed";
-    state["units"] = Json::object({{"system", UnitSystem(config)}, {"basis", "configured-eos-convention"}, {"valuesConverted", false}});
-    state["coordinates"] = CoordinateMetadata(config.grid, UnitSystem(config));
-    state["grid"] = grid_snapshot(config);
-    state["amr"] = amr_snapshot(config);
-    state["eos"] = eos_snapshot(config);
-    state["computeBackendRequested"] = config.execution.compute_backend;
-}
 void validate_grid(const SimConfig &config) {
     for (const auto &[key, value] : config.custom_params)
         if (!std::isfinite(value))
@@ -152,19 +91,14 @@ Json axis_json(const char *name, const std::vector<double> &coordinates, const s
     for (double x : coordinates) values.push(x);
     return Json::object({{"name", name}, {"unit", AxisUnit("x", system)}, {"values", values}});
 }
-Json species_snapshot(const SpeciesManager &specs) {
-    auto species = Json::array();
-    for (int i = 0; i < specs.count(); ++i)
-        species.push(Json::object({{"index", i}, {"name", specs.get_name(i)}}));
-    return species;
-}
 
 Json field(const char *key, const char *name, const std::vector<double> &values, const std::string& system) {
     auto data = Json::array();
-    for (double value : values) data.push(value);
+    ValueDomain domain;
+    for (double value : values) { data.push(value); domain.observe(value); }
     const auto [low, high] = std::minmax_element(values.begin(), values.end());
     return Json::object({{"key", key}, {"displayName", name}, {"unit", FieldUnit(key, system)},
-        {"values", data}, {"min", *low}, {"max", *high}});
+        {"values", data}, {"min", *low}, {"max", *high}, {"logDomain", domain.json()}});
 }
 } // namespace
 
@@ -187,7 +121,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{"x_pos"});
         SimConfig config = RuntimeParams::LoadText(request.config_text, reads);
         auto &state = result["state"];
-        snapshot(state, config);
+        PublishStateSnapshot(state, config);
         result["stage"] = "support";
         exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
         if (config.grid.geometry != "cartesian"
@@ -202,8 +136,9 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         if (sampling.two_dimensional) {
             auto it = config.custom_params.find("shock_dir");
             if (it != config.custom_params.end()
-                && (it->second < std::numeric_limits<int>::min() || it->second > std::numeric_limits<int>::max()))
-                throw std::invalid_argument("shock_dir is outside the integer range");
+                && (std::trunc(it->second) != it->second || it->second < std::numeric_limits<int>::min()
+                    || it->second > std::numeric_limits<int>::max()))
+                throw std::invalid_argument("shock_dir must be a whole number within the integer range");
             result["stage"] = "support";
             exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
             const int direction = config.Get<int>("shock_dir", 0);
@@ -220,7 +155,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             problem->Setup(config, specs);
         } catch (const ProblemHelper::InitialEosError &) {
             config.parameter_reads.reset();
-            state["species"] = species_snapshot(specs);
+            state["species"] = SpeciesSnapshot(specs);
             state["eos"]["status"] = "error";
             result["stage"] = "eos";
             error_code = "EOS_FAILED";
@@ -233,9 +168,9 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         config.parameter_reads.reset();
         const auto positions = problem->PreviewPositions(config);
         if (reads) PublishParameterMetadata(result, *reads, positions, false);
-        snapshot(state, config); // Setup can change the effective configuration.
+        PublishStateSnapshot(state, config); // Setup can change the effective configuration.
         state["setup"] = "ready";
-        state["species"] = species_snapshot(specs);
+        state["species"] = SpeciesSnapshot(specs);
         if (specs.count() == 0) throw std::runtime_error("Initialization registered no species");
         result["stage"] = "eos";
         error_code = "EOS_FAILED";
@@ -251,6 +186,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             eos_id = parsed.value;
         }
         state["eos"]["resolved"] = std::string(dispatch::canonical_policy_name<dispatch::EosPolicies>(eos_id));
+        std::optional<MeshResult> mesh;
         std::vector<double> x_coordinates, y_coordinates;
         const std::size_t field_count = sampling.two_dimensional ? max_preview_fields : 6;
         std::vector<std::vector<double>> values(field_count);
@@ -260,6 +196,12 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             if (eos_id != dispatch::EosId::Ideal)
                 state["eos"]["loadedTablePath"] = EOSDispatcher::table_path(config, "Preview");
             state["eos"]["sourceFingerprint"] = fingerprint.empty() ? Json() : Json(std::string(fingerprint));
+            if (request.initial_mesh) {
+                result["stage"] = "initial-refinement";
+                error_code = "INITIAL_MESH_FAILED"; exit_code = 6;
+                mesh = BuildInitialMesh(*problem, config, specs, eos_id, eos, request);
+                return;
+            }
             result["stage"] = "sampling";
             exit_code = 6; error_code = "INITIALIZATION_FAILED";
             PrimitiveData data{};
@@ -292,6 +234,22 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                 }
             }
         });
+        if (mesh) {
+            if (reads && mesh->constructed) PublishParameterMetadata(result, *reads, positions, true);
+            result["data"] = std::move(mesh->data);
+            result["status"] = mesh->complete ? "ok" : "limited";
+            result["stage"] = "complete";
+            state["grid"]["hierarchy"] = mesh->constructed ? "constructed" : "not_constructed";
+            state["amr"]["actualHierarchy"] = mesh->constructed ? Json::object({{"location", "data.leaves"}}) : Json();
+            state["amr"]["initialRefinement"] = mesh->complete ? "complete" : "limited";
+            state["amr"]["indicatorEvaluation"] = "see-data-completedPasses";
+            if (!mesh->complete) result["diagnostics"].push(diagnostic("warning", "PREVIEW_BUDGET_LIMIT", "Preview stopped at its working budget; this is not an OOM prediction."));
+            for (const auto& [log, severity] : {std::pair{&logs.info, "info"}, std::pair{&logs.warning, "warning"}}) {
+                if (!log->text.empty()) result["diagnostics"].push(diagnostic(severity, "CORE_LOG", log->message()));
+                if (log->truncated) result["diagnostics"].push(diagnostic("warning", "LOG_TRUNCATED", "Core log exceeded 16 KiB"));
+            }
+            return SerializePreviewResponse(result, 0);
+        }
         auto axes = Json::array({axis_json("x1", x_coordinates, UnitSystem(config))});
         auto shape = Json::array({sampling.nx});
         if (sampling.two_dimensional) {
@@ -348,6 +306,17 @@ std::string PreviewCapabilities() {
     // clients use modelCapabilities to negotiate each case independently.
     auto extensions = ParameterExtensionCapabilities();
     extensions["configuration"] = ConfigurationExtensions();
+    extensions["discovery"] = Json::object({{"version", "1"}, {"command", "--list-cases"}});
+    extensions["amr"] = Json::object({{"version", "1"}, {"resourcesCommand", "--amr-resources"},
+        {"meshCommand", "--preview-amr"}, {"workerPlatform", "linux"},
+        {"cases", Json::array({"Sod", "CellularDet"})}, {"geometries", Json::array({"cartesian"})},
+        {"defaultMaxBlocks", contract::mesh_default_blocks}, {"defaultMemoryMiB", contract::mesh_default_memory_mib}, {"processAddressSpaceMiB", contract::worker_address_space_mib},
+        {"processCpuSeconds", contract::worker_cpu_seconds}, {"hostWallTimeoutRequired", true}});
+    extensions["caseInspection"] = Json::object({{"version", contract::initialization_version},
+        {"command", "--inspect-case"}, {"caseDiscovery", "--list-cases"},
+        {"automaticExpressionInference", false}, {"workerPlatform", "linux"},
+        {"hostWallTimeoutSeconds", contract::case_wall_seconds}, {"processCpuSeconds", contract::case_cpu_seconds},
+        {"processAddressSpaceMiB", contract::worker_address_space_mib}, {"primitiveProbeSamplesPerAxis", 3}});
     return Json::object({{"schemaVersion", preview_schema_version}, {"kind", "preview-capabilities"},
         {"status", "ok"}, {"cases", Json::array({"Sod"})}, {"dimensions", Json::array({1})},
         {"geometries", Json::array({"cartesian"})}, {"previewBackend", "cpu"},

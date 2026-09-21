@@ -132,8 +132,8 @@ class ConfigurationContract(unittest.TestCase):
                     self.assertEqual([a['unit'] for a in axes if a['active']], ['rad' if x in ['phi','theta'] else 'cm' for x in labels])
                     self.assertTrue(all(a['unit'] is None for a in axes if not a['active']))
         r=self.inspect('nblockx2=0\nnblockx3=0')
-        self.assertEqual(r['unitSystem'], 'code')
-        self.assertEqual(r['coordinates']['axes'][0]['unit'], 'code_length')
+        self.assertEqual(r['unitSystem'], 'cgs')
+        self.assertEqual(r['coordinates']['axes'][0]['unit'], 'cm')
 
     def test_constraints_and_forbidden_diffusion_are_structured(self):
         for text,key in [('nblockx2=-1\nnblockx3=0','nblockx2'),

@@ -1,5 +1,7 @@
 # Core 参数编辑接口交接
 
+> 历史交接记录：本文保留当时的功能和测试范围。本轮新增能力与单位变更请以 [LOCAL_WORKFLOW_HANDOFF.md](LOCAL_WORKFLOW_HANDOFF.md) 为准，当前响应示例见 examples/local-workflow 与 examples/configuration。
+
 ## 分支与同步
 
 - 交付分支：`codex/studio-core-ui-contracts`。准确新增提交号随推送后的交接消息提供。

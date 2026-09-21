@@ -4,6 +4,8 @@
 
 新增的标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。它们在生成预览前提供 90 个标准参数、默认值、约束和坐标信息；本轮交接与同步方式见 [Core UI 交接](CORE_UI_HANDOFF.md)。
 
+最新增量交接见 [本地工作流 API 交接](LOCAL_WORKFLOW_HANDOFF.md)：90 项标准说明、统一 CGS、模型查询、逐级资源估算，以及有界 CPU 实际初始 AMR 网格。旧 `--preview` 点采样接口保持独立；新命令见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。全部现有模型的统一参数与初始化检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，该入口与完整场/网格渲染能力分别查询。
+
 ## 当前提供什么
 
 - 支持已注册的 **一维 Cartesian Sod** 与 **二维 Cartesian CellularDet**；直接调用各模型的 `Setup/Init`。
@@ -13,11 +15,11 @@
 - Core B：返回 CellularDet 的二维坐标和真实场数据，包括两个方向的速度；提供独立二维参考配置。
 - Core A：返回 Sod `x_pos` 的实际读取值、默认值、来源和当前域约束，以及与真实初始化一致的 x1 位置绑定。
 - 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制模型公式。
-- 不进入时间推进，不建立 AMR 层级，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
+- 旧 `--preview` 不建立 AMR 层级；`--preview-amr` 建立真实初始层级。两者均不进入时间推进，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
 
-当前没有实际 AMR 细化布局或完整参数使用追踪。标准配置目录/检查与 Setup 读取追踪是两个独立接口；后者目前只覆盖 Sod `x_pos`；CellularDet 本次仅提供二维场，不提供参数 metadata 或可编辑分界线。未返回某参数不表示其未被使用。其他模型或维度返回错误，Host 可以继续保留旧图并标记过期。
+新 `--preview-amr` 提供 Linux/WSL 上的真实初始 AMR 布局。旧场采样入口的参数 metadata 仍只覆盖 Sod `x_pos`；新增 `--inspect-case` 独立提供所有注册模型的 Setup/Get 与少量 Init 检查，当前 11 个内置模型均有与编译源码关联的单位证据。未观察到的参数不表示未使用。完整场图和 AMR 网格仍以各自能力列表为准；CellularDet 尚无可编辑分界线。任意 C++ 表达式的自动单位反推未提供。
 
-这里的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
+旧 `--preview` 中的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
 
 ## CPU 构建
 
@@ -129,7 +131,7 @@ graphicalBindings?: { version: "1", items }
 | rawValue | 存在时返回原解析器保留的有效 token；重复 key 采用最后一项 |
 | valueSource | `explicit`、`default` 或 `unknown` |
 | sourceReason | 显式值为 null；默认值为 `missing-key` 或 `parse-failure`；其他见下文 |
-| unit / description | 本版均为 null，不推测单位 |
+| unit / unitEvidence / description | Sod x_pos 为 cm，附显式轴绑定依据；不自动解释 custom 含义，description 仍为 null |
 | constraints | 本次域的 min/max；两个 Inclusive 字段均为 false |
 | diagnostics | 参数级 severity/code/message 列表 |
 
@@ -176,7 +178,7 @@ CellularDet 返回 `dimension=2`、`kind=grid`：
 | ENER | 单位体积的总能量，包含动能 |
 | EINT | 单位质量的内能 |
 
-标准场和坐标现在返回单位标签：Helmholtz / tabular 场景按 CGS 返回；IdealGas 支持模型自定标度，使用 `code_length`、`code_density`、`code_temperature` 等标签，不自动解释为 CGS 或 SI。`state.units` 标明单位来源与 `valuesConverted=false`，没有转换任何数值。Sod 的 `x_pos` 读取 metadata 仍保留 `unit=null`，其图形坐标与绑定轴共享位置单位；未知 custom 单位也保留 null。完整对照见 [配置接口说明](CONFIGURATION_API.md)。数值以 double 精度输出，所有成功样本均为有限数值；出现无效数据时整个请求失败。
+标准场和坐标统一返回 CGS 单位，包括 IdealGas。`state.units` 标明 `core-cgs-contract` 与 `valuesConverted=false`；标签不换算输入。Sod `x_pos` 的 metadata 依据明确坐标绑定返回 `unit=cm` 和 unitEvidence，未知 custom 仍为 null。完整对照见 [配置接口说明](CONFIGURATION_API.md)。数值以 double 精度输出，所有成功样本均为有限数值；出现无效数据时整个请求失败。
 
 CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，坐标小于该值的一侧为扰动区域。`noiseAmplitude` 调整该区域内的场值，不移动分界。Studio 直接显示返回的场；本次没有 Cellular 的图形绑定描述，不从参数名称猜测圆形或波动界面。
 
@@ -202,7 +204,7 @@ CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，�
 
 基础单元数使用 **当前编译程序**的有效块尺寸计算，不包含 ghost 或内存填充单元。调整 `--samples` 或二维轴采样数量只调整显示采样，不改变这些网格设置。
 
-### AMR 状态
+### 旧 --preview 的 AMR 配置状态
 
 `state.amr` 返回配置是否开启细化、最低/最高级别、阈值、重建间隔及块数量上限。
 
@@ -249,7 +251,12 @@ CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，�
 | 文件 | 负责内容 |
 |---|---|
 | Preview.h | 请求、结果和数量限制 |
-| Preview.cpp | 初始化、状态快照、数据检查和结果组织 |
+| Preview.cpp / StateSnapshot.cpp | 初始场、共用状态快照、数据检查和结果组织 |
+| ApplicationContract.h / WorkerLimits.cpp | 统一命令、版本、预算及 Linux worker 限制 |
+| CaseInspection.cpp / CaseUnitEvidence.cpp | ProblemGenerator 检查流程、与编译源码匹配的模型单位依据 |
+| Discovery.cpp | 注册模型、编译源码身份及能力查询 |
+| ResourceEstimates.cpp / InitialMesh.h | 逐级资源提示、真实有界 AMR 初始网格 |
+| ValueDomain.h | 原值不变的 Log 值域统计 |
 | PreviewCommand.cpp | 命令选项、stdin 和 stdout 边界 |
 | Json.h / Response.h | 有字节限制的 JSON 输出与超限错误响应 |
 | Sampling.h | 一维/二维采样计划及分配前数量检查 |

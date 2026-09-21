@@ -1,4 +1,90 @@
 {
+  "amrIndicators": {
+    "alternativeSeparator": "+",
+    "choices": [
+      {
+        "available": true,
+        "reason": null,
+        "selected": true,
+        "value": "DENS"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "PRES"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "TEMP"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "VELX"
+      },
+      {
+        "available": false,
+        "reason": "requires at least 2D",
+        "selected": false,
+        "value": "VELY"
+      },
+      {
+        "available": false,
+        "reason": "requires 3D",
+        "selected": false,
+        "value": "VELZ"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "ENER"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "VORT"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "DIVV"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "ENTR"
+      },
+      {
+        "available": false,
+        "reason": "requires reactions",
+        "selected": false,
+        "value": "ENUC"
+      },
+      {
+        "available": false,
+        "reason": "self gravity is not implemented",
+        "selected": false,
+        "value": "JENS"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "SPECIES"
+      }
+    ],
+    "namedSpecies": [],
+    "separator": ",",
+    "speciesResolution": "requires case Setup"
+  },
   "coordinates": {
     "activation": "positive-block-count",
     "axes": [
@@ -13,7 +99,7 @@
         "maxKey": "x1_max",
         "minKey": "x1_min",
         "nativeName": "x",
-        "unit": "code_length",
+        "unit": "cm",
         "upperBoundaryKey": "x1r_boundary_type"
       },
       {
@@ -49,7 +135,7 @@
     "disabledBlockCount": 0,
     "geometry": "cartesian",
     "thirdAxisRequiresSecond": true,
-    "unitSystem": "code"
+    "unitSystem": "cgs"
   },
   "customParameters": [
     {
@@ -103,6 +189,42 @@
     }
   ],
   "diagnostics": [],
+  "diffusion": {
+    "channels": [
+      {
+        "coefficientKey": "alpha_therm",
+        "constantInputAllowed": true,
+        "stellarModelSuppliesCoefficient": true,
+        "toggleKey": "use_thermal_diff",
+        "unit": "cm^2/s"
+      },
+      {
+        "coefficientKey": "nu_visc",
+        "constantInputAllowed": true,
+        "stellarModelSuppliesCoefficient": false,
+        "toggleKey": "use_viscous_diff",
+        "unit": "cm^2/s"
+      },
+      {
+        "coefficientKey": "D_spec",
+        "constantInputAllowed": true,
+        "stellarModelSuppliesCoefficient": false,
+        "toggleKey": "use_species_diff",
+        "unit": "cm^2/s"
+      }
+    ],
+    "conflictResolution": "explicit reversible removal from working text; hiding fields is insufficient",
+    "enabled": false,
+    "forbiddenExplicitKeys": [],
+    "modeEditable": false,
+    "possibleSources": [
+      "constant"
+    ],
+    "selectionRule": "species_count > 0 and EOS electron density > 0 selects stellar transport; positive viscosity/thermal overrides then fail",
+    "source": "constant",
+    "sourceScope": "configuration; EOS state not evaluated",
+    "version": "1"
+  },
   "execution": {
     "caseRegistration": "not_checked",
     "cuda": "not_initialized",
@@ -114,7 +236,7 @@
   "identity": {
     "caseId": "Sod",
     "configRevision": "cd54c4000a8bd3917f5b3fb658c2614f91bddc7ebd84e7e076f6c3bb79489284",
-    "requestId": "inspect-sod"
+    "requestId": ""
   },
   "kind": "configuration-inspection",
   "parameters": [
@@ -519,7 +641,7 @@
       "sourceKey": "sml_rho",
       "units": {
         "status": "known",
-        "unit": "code_density"
+        "unit": "g/cm^3"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -535,7 +657,7 @@
       "sourceKey": "min_eint",
       "units": {
         "status": "known",
-        "unit": "code_specific_energy"
+        "unit": "erg/g"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -551,7 +673,7 @@
       "sourceKey": "max_eint",
       "units": {
         "status": "known",
-        "unit": "code_specific_energy"
+        "unit": "erg/g"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1172,7 +1294,7 @@
       "sourceKey": "nu_visc",
       "units": {
         "status": "known",
-        "unit": "code_diffusivity"
+        "unit": "cm^2/s"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1188,7 +1310,7 @@
       "sourceKey": "alpha_therm",
       "units": {
         "status": "known",
-        "unit": "code_diffusivity"
+        "unit": "cm^2/s"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1204,7 +1326,7 @@
       "sourceKey": "D_spec",
       "units": {
         "status": "known",
-        "unit": "code_diffusivity"
+        "unit": "cm^2/s"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1236,7 +1358,7 @@
       "sourceKey": "gravity_g_x",
       "units": {
         "status": "known",
-        "unit": "code_acceleration"
+        "unit": "cm/s^2"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1252,7 +1374,7 @@
       "sourceKey": "gravity_g_y",
       "units": {
         "status": "known",
-        "unit": "code_acceleration"
+        "unit": "cm/s^2"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1268,7 +1390,7 @@
       "sourceKey": "gravity_g_z",
       "units": {
         "status": "known",
-        "unit": "code_acceleration"
+        "unit": "cm/s^2"
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1396,7 +1518,7 @@
       "sourceKey": "tmax",
       "units": {
         "status": "known",
-        "unit": "code_time"
+        "unit": "s"
       },
       "valueSource": "explicit",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1466,7 +1588,7 @@
       "sourceKey": "plt_dt",
       "units": {
         "status": "known",
-        "unit": "code_time"
+        "unit": "s"
       },
       "valueSource": "explicit",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1498,7 +1620,7 @@
       "sourceKey": "chk_dt",
       "units": {
         "status": "known",
-        "unit": "code_time"
+        "unit": "s"
       },
       "valueSource": "explicit",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1604,6 +1726,6 @@
   },
   "schemaVersion": "1.0",
   "status": "ok",
-  "unitSystem": "code",
-  "version": "1"
+  "unitSystem": "cgs",
+  "version": "2"
 }

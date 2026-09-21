@@ -1,3 +1,4 @@
+#include "InitialMesh.h"
 /**
  * @file SolverDispatch.cpp
  * @brief Resolve startup policies and launch the selected time-integrator driver.
@@ -286,9 +287,7 @@ void DispatchSolver(const std::string &solver_name,
     else
     {
         std::cout << "[Dispatch] Initializing Root Grid (Level 0)..." << std::endl;
-        amr_ctrl.tree->InitRootGrid(config, specs.count());
-        std::cout << "[Dispatch] Initializing Data via Problem Generator..." << std::endl;
-        problem.InitializeData(amr_ctrl, config, specs, initialization);
+        arch::driver::InitializeRootState(amr_ctrl, problem, config, specs, initialization);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim
                   << " | Geometry: " << config.grid.geometry << std::endl;
         print_amr_resolution_summary(config);

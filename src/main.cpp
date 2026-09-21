@@ -39,10 +39,7 @@ int main(int argc, char **argv)
 {
     // Isolated application request: branch before logs, directories, backend
     // resolution or the simulation driver can acquire resources.
-    if (argc > 1 && (std::string(argv[1]) == "--preview"
-                     || std::string(argv[1]) == "--preview-capabilities"
-                     || std::string(argv[1]) == "--config-schema"
-                     || std::string(argv[1]) == "--inspect-config"))
+    if (argc > 1 && arch::api::contract::find(argv[1]))
         return arch::api::RunPreviewCommand(argc, argv);
 
     // The CLI contract has three entries: executable, problem name, and

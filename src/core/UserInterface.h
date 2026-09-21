@@ -12,6 +12,10 @@
 
 #include <memory>
 
+#ifndef ARCH_CASE_SOURCE_SHA256
+#define ARCH_CASE_SOURCE_SHA256 ""
+#endif
+
 #include "ProblemHelper.h"
 #include "ProblemRegistry.h"
 
@@ -35,7 +39,7 @@
             ProxyRegisterer()                                                                                                             \
             {                                                                                                                             \
                 /* The constructor runs before main(), registering the callback */                                                        \
-                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<GenericProblemGenerator>(SETUP_FUNC, INIT_FUNC); }); \
+                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<GenericProblemGenerator>(SETUP_FUNC, INIT_FUNC); }, {__FILE__, ARCH_CASE_SOURCE_SHA256, true}); \
             }                                                                                                                             \
         };                                                                                                                                \
                                                                                                                                           \
@@ -55,7 +59,7 @@
         {                                                                                                                                 \
             ProxyRegistererClass()                                                                                                        \
             {                                                                                                                             \
-                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<TypedProblemGenerator<CLASS_TYPE>>(); });            \
+                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<TypedProblemGenerator<CLASS_TYPE>>(); }, {__FILE__, ARCH_CASE_SOURCE_SHA256, true});            \
             }                                                                                                                             \
         };                                                                                                                                \
         static ProxyRegistererClass global_proxy_class_instance;                                                                          \
