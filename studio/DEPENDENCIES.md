@@ -26,3 +26,9 @@ H5Web is used only through its public visualization API. Its peer/transitive Web
 - h5wasm 0.10.3: browser-local read-only HDF5 decoding using the public NIST API; no server and no @h5web/app dependency.
 - License: NIST notice plus bundled HDF5 license (package LICENSE.txt; not MIT). Preserve the complete notice. Official source: https://github.com/usnistgov/h5wasm .
 - Needed to decode the bytes of files explicitly selected by the user; renderer remains independent.
+
+## Phase 2G-C desktop additions
+
+- Electron 44.4.3 (MIT): Windows x64 independent packaged window; ships its upstream LICENSE and LICENSES.chromium.html. Linux Node/Core remain external prerequisites.
+- @electron/packager 20.3.0 (BSD-2-Clause): development-only portable Windows packaging.
+- Full locked package inventory is regenerated in DEPENDENCY-LICENSES.json from package-lock.json. No installer/signing/auto-update service.

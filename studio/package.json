@@ -11,7 +11,8 @@
     "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "test": "node --test tests/*.test.ts",
     "local-host": "node host/cli.ts",
-    "test:host": "node --test tests/host-*.test.ts"
+    "test:host": "node --test tests/host-*.test.ts",
+    "desktop:package": "npm run build && node desktop/package.mjs"
   },
   "dependencies": {
     "@h5web/lib": "17.0.0",
@@ -21,12 +22,14 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@electron/packager": "20.3.0",
     "@eslint/js": "10.0.1",
     "@types/ndarray": "1.1.0",
     "@types/node": "24.13.4",
     "@types/react": "18.3.31",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "6.1.1",
+    "electron": "44.4.3",
     "eslint": "10.10.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.6",

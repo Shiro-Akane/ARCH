@@ -1,3 +1,4 @@
+import {hostEndpoint} from './desktop.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';import type {ConfigReadResponse,ConfigWriteResponse,SaveConfigRequest,SaveConfigAsRequest,ConfigFileError} from './contracts.ts';import {validateSnapshot} from './LocalHostAdapter.ts';
 export class ConfigRequestError extends Error { info:ConfigFileError;constructor(info:ConfigFileError){super(info.message);this.info=info;} }
 export function validateConfigResponse(value:unknown):ConfigReadResponse {
@@ -6,7 +7,7 @@ export function validateConfigResponse(value:unknown):ConfigReadResponse {
 }
 export class ConfigAdapter {
  async request(route:string,payload?:SaveConfigRequest|SaveConfigAsRequest):Promise<unknown>{
-  let response:Response;try{response=await fetch('http://127.0.0.1:4180'+route,{method:payload?'POST':'GET',headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,...(payload?{'Content-Type':'application/json'}:{})},body:payload?JSON.stringify(payload):undefined,credentials:'omit',redirect:'error',signal:AbortSignal.timeout(15000)});}catch{throw new ConfigRequestError({code:'read-error',message:'Local Host unavailable. Working Copy has been kept.'});}
+  let response:Response;try{response=await fetch(hostEndpoint+route,{method:payload?'POST':'GET',headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,...(payload?{'Content-Type':'application/json'}:{})},body:payload?JSON.stringify(payload):undefined,credentials:'omit',redirect:'error',signal:AbortSignal.timeout(15000)});}catch{throw new ConfigRequestError({code:'read-error',message:'Local Host unavailable. Working Copy has been kept.'});}
   const reader=response.body?.getReader();if(!reader)throw new Error('Empty configuration response.');const chunks:Uint8Array[]=[];let size=0;try{while(true){const r=await reader.read();if(r.done)break;size+=r.value.length;if(size>8*1024*1024){await reader.cancel();throw new Error('Configuration response too large.');}chunks.push(r.value);}}finally{reader.releaseLock();}const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length;}let data:unknown;try{data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw new Error('Malformed configuration response.');}
   if(!response.ok){const e=(data as {error?:ConfigFileError})?.error;if(e&&typeof e.code==='string'&&typeof e.message==='string')throw new ConfigRequestError(e);throw new Error(`Configuration request failed (${response.status}). Working Copy kept.`);}return data;
  }

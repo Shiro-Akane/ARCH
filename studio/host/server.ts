@@ -13,11 +13,12 @@ import { createServer } from 'node:http';
 import type { Server } from 'node:http';
 import type { ProjectSnapshot } from '../src/host/contracts.ts';
 export interface ProjectReader { workflow?:WorkflowRunner; configuration?:ConfigurationAdapter; preview?:PreviewRunner; readSource?():Promise<unknown>; build?:BuildRunner; saveConfig?(request:SaveConfigRequest):Promise<ConfigWriteResponse>; saveConfigAs?(request:SaveConfigAsRequest):Promise<ConfigWriteResponse>; readConfig?(): Promise<ConfigReadResponse>; snapshot(): ProjectSnapshot; refresh(): Promise<ProjectSnapshot> }
-export function createHostServer(reader: ProjectReader, origin: string): Server {
+export function createHostServer(reader: ProjectReader, origin: string, desktop?:{token:string}): Server {
   const allowed = new URL(origin);
   if (allowed.protocol !== 'http:' || allowed.hostname !== '127.0.0.1' || allowed.origin !== origin) throw new Error('UI origin must be an exact http://127.0.0.1:PORT origin');
   return createServer(async (req, res) => {
     const send = (status: number, value: unknown) => {res.writeHead(status, {'Content-Type':'application/json', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
+    if(desktop&&req.headers['x-arch-desktop-token']!==desktop.token){send(403,{error:'Desktop ownership rejected'});return;}
     const address = req.socket.localPort;
     if (req.headers.host !== `127.0.0.1:${address}` || req.headers.origin !== origin) {send(403,{error:'Host or Origin rejected'});return;}
     res.setHeader('Access-Control-Allow-Origin',origin);
@@ -66,7 +67,7 @@ export function createHostServer(reader: ProjectReader, origin: string): Server 
       }
       if(req.url==='/api/config'){if(!reader.readConfig){send(404,{error:'Config unavailable'});return;}send(200,await reader.readConfig());return;}
       const result = refresh ? await reader.refresh() : reader.snapshot();
-      if (req.url === '/api/health') send(200,{protocolVersion:result.host.protocolVersion,status:'ready'});
+      if (req.url === '/api/health') send(200,{protocolVersion:result.host.protocolVersion,status:'ready',...(desktop?{desktopToken:desktop.token}:{})});
       else if (req.url === '/api/host') send(200,result.host);
       else if (req.url === '/api/project/files') send(200,[result.session.caseSource,result.session.parameterFile,result.session.executable].filter(Boolean));
       else send(200,result);

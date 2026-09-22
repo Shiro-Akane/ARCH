@@ -7,7 +7,11 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 export default tseslint.config(
   { ignores: ['dist/**', 'node_modules/**', '.local/**'] },
   js.configs.recommended,
+  {files:['desktop/**/*.{cjs,mjs}'],languageOptions:{globals:globals.node}},
+  {files:['desktop/launcher.js'],languageOptions:{globals:globals.browser}},
   ...tseslint.configs.recommended,
+  // Sandboxed Electron preload and main use native CommonJS.
+  {files:['desktop/**/*.cjs'],rules:{'@typescript-eslint/no-require-imports':'off'}},
   {
     files: ['src/**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },

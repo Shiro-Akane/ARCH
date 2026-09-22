@@ -1,3 +1,4 @@
+import {desktop} from './host/desktop';
 import {ConfigurationBridge,ConfigurationIdentity} from './components/ConfigurationBridge';
 import {CoreParameterProvider} from './state/coreParameters';
 import {RealInitWorkspace} from './components/RealInitWorkspace';
@@ -23,7 +24,7 @@ export default function App() {
   const mockHistory=useRef(new EditHistory<Parameters>());
   const [parameter,setParameter]=useState<ParameterDetails|null>(null);
   const [copy,setCopy]=useState<WorkingCopy|null>(null);
-  const [source, setSource] = useState('mock');
+  const [source, setSource] = useState(desktop?'config':'mock');
   const sampleView = source === 'cellular';
   const realView = source === 'plotfile';
   const configView = source === 'config';

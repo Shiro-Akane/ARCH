@@ -1,3 +1,4 @@
+import {hostEndpoint} from './desktop.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';
 import type {LocalHostAdapter,ProjectSnapshot} from './contracts.ts';
 function record(v:unknown):v is Record<string,unknown>{return typeof v==='object'&&v!==null&&!Array.isArray(v);}
@@ -19,7 +20,7 @@ export function validateSnapshot(value:unknown):ProjectSnapshot {
 export class HttpLocalHostAdapter implements LocalHostAdapter {
  private base:string;
  private transport:typeof fetch;
- constructor(base='http://127.0.0.1:4180',transport:typeof fetch=(...args)=>fetch(...args)){const url=new URL(base);if(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.username||url.password||url.search||url.hash||url.pathname!=='/')throw new Error('Local Host URL must be a loopback HTTP origin');this.base=url.origin;this.transport=transport;}
+ constructor(base=hostEndpoint,transport:typeof fetch=(...args)=>fetch(...args)){const url=new URL(base);if(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.username||url.password||url.search||url.hash||url.pathname!=='/')throw new Error('Local Host URL must be a loopback HTTP origin');this.base=url.origin;this.transport=transport;}
  private async request(refresh:boolean):Promise<ProjectSnapshot>{
   let response:Response;
   try{response=await this.transport(this.base+(refresh?'/api/project/refresh':'/api/project'),{method:refresh?'POST':'GET',headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION},credentials:'omit',redirect:'error',signal:AbortSignal.timeout(10000)});}catch{throw new Error('Local Host unavailable. Start the local service and check its authorized UI origin.');}

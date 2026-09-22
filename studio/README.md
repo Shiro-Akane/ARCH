@@ -1,6 +1,21 @@
-# ARCH Studio — Phase 2G-B · desktop frontend checkpoint
+# ARCH Studio — Phase 2G · Windows desktop + WSL workflow
 
 Studio supports **Sod 1D Real IC**, authoritative Sod `x_pos` binding, and **CellularDet Cartesian 2D Real IC** (`shock_dir=0/1`, x3=0). Preview calls Core initialization only: no simulation timesteps or scientific output. Initial AMR is a separate, explicit Core operation. Mock and existing Plotfile viewing remain available.
+
+## Desktop startup (default)
+
+Extract the complete Windows x64 portable package and run **arch-studio.exe**.
+The independent window loads packaged React assets and starts its own WSL Host;
+no npm terminal, Vite server, copied port or external browser is required.
+Project root / nested-directory discovery, --case / --config, --project / --binary,
+and --source / --config are supported. The native picker accepts WSL project paths.
+See [desktop launch guide](desktop/README.md) for commands and prerequisites.
+
+This is a Windows desktop for **Linux/WSL CPU Core**, not a native Windows Core build.
+WSL2, Linux Node 24+, an approved fixed Host profile and successful tracked CPU Build
+are prerequisites. The package is portable and unsigned; no installer/auto-updater is
+included. Closing the window stops its Host and Preview worker; active Build completion
+is awaited. Existing unrelated browser-mode services remain untouched.
 
 ## Current workflow
 
@@ -21,9 +36,9 @@ Studio supports **Sod 1D Real IC**, authoritative Sod `x_pos` binding, and **Cel
 - Preview limits default to 512 blocks /128 MiB, separate from `.par max_blocks`; the current Core v1 limits are 1–1024 blocks /16–256 MiB. A limited balanced snapshot is **Incomplete**; a root grid that exceeds the budget has **no snapshot**, not a successful zero-block mesh.
 - Block outlines, resolved cell lines and level visibility use the same physical projection as the field. Zoom/pan/Fit redraw existing data only. The block Inspector reports logical identity, bounds, shape and spacing. Core provides no AMR cell field arrays: field colors and the **Init sample Inspector** remain separate sampled initialization values.
 - Overlay requires matching project/case/configRevision/build/binary and authoritative EOS source. A previous hierarchy is labeled and drawn separately from the current field when identities differ. New field results do not automatically run AMR.
-- This checkpoint stops at 2G-B. Desktop Launcher (2G-C) is not implemented.
+- Desktop launcher reuses these same Host workflows. Final Phase 2G stops before Phase 3.
 
-## Current local startup
+## Optional browser/debug startup
 
 Tested environment: **Node 24.21.0 / npm 11.19.0**. In a fresh checkout run `npm ci` in `studio/`. Current fixed Preview profile `arch-preview-cpu-integration` is bound to:
 

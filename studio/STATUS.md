@@ -661,3 +661,21 @@ Target A1–A17 rechecked. Session integration, latest-pending scheduling, real 
 - Real Sod/Cellular AMR, limited/no-snapshot, Gaussian edit/inspect, resource overflow and desktop UAT passed.
 - A unchanged at13345ba4d1b7379ff5481bf9ca4f2fc9156aee7c. Delivery confined to studio/.
 - Checkpoint: studio-phase2g-b-v0.15.0. STOP; no2G-C or Phase3.
+
+## Phase 2G-C C1 architecture audit — STOP
+- C branch studio/phase2g-desktop-launcher starts at B2cd4dbbabc6a17123950a4b2ab6d612a6c0831b2. A/B tags unchanged.
+- Electron recommended after code/environment comparison; see PHASE2G_C_DESKTOP_ARCHITECTURE_AUDIT.md.
+- Required native Windows UAT is blocked: available computer-use surfaces expose browsers only; native APIs disabled. This is a verification limitation, not an Electron feasibility verdict.
+- No launcher implementation, dependencies, build, final tag or push. Resume only after a real desktop UAT channel or explicit human UAT arrangement is available.
+
+## Phase 2G-C C1 corrected / cleared
+- Dedicated computer-use skill exposes node_repl + @oai/sky; real native window enumeration and project Explorer state capture succeeded. Earlier browser-only conclusion corrected.
+- Electron selected; proceed C2–C8 under existing user authorization. No desktop success claimed before packaged UAT.
+
+## Phase 2G-C C2–C8 / final Phase 2G checkpoint
+- Architecture gate cleared before implementation; Electron selected using actual code/environment/native UI evidence.
+- Packaged Windows desktop + owned WSL Host delivered; CLI, native picker/Save As, path association, port ownership and clean shutdown verified.
+- Final npm164/164, Host69/69; lint/typecheck/build/Windows packaging/diff-check PASS. Core/A/B baseline retained without repeat.
+- Real native Windows UAT: root/nested/space paths, missing prerequisites/binary, picker recovery, Build, Save/Save As, warm Preview, AMR, close/relaunch/no orphans.
+- Reports: PHASE2G_DESKTOP_LAUNCH_REPORT.md and PHASE2G_COMPLETION_REPORT.md; A/B summaries linked.
+- Checkpoint studio-phase2g-v0.16.0. A/B tags unchanged. STOP: no Phase3 or automatic push.
