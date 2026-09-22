@@ -15,7 +15,7 @@ function expression(text:string):number|undefined {
  return number(t);
 }
 /** Shared by every standard edit route; custom model parameters retain their own contract. */
-export function standardValueError(parameter:StandardParameter,raw:string):string|undefined {
+export function standardValueError(parameter:Pick<StandardParameter,'type'|'constraints'>,raw:string):string|undefined {
  const text=raw.trim();let value:number|undefined;
  switch(parameter.type){
  case 'string':return undefined;

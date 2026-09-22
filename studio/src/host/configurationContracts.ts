@@ -11,7 +11,7 @@ export interface StandardParameter {
  units:Record<string,unknown>; path:Record<string,unknown>|null; applicability:string;
 }
 export interface ConfigurationSchema {
- schemaVersion:'1.0';version:'1';kind:'configuration-schema';status:'ok';
+ schemaVersion:'1.0';version:'1'|'2';kind:'configuration-schema';status:'ok';
  standardParametersComplete:true;customParametersComplete:false;constraintsComplete:false;
  parameters:StandardParameter[]; coordinateSystems?:CoordinateSystem[];
 }
@@ -22,7 +22,7 @@ export function sameConfigurationIdentity(a:ConfigurationIdentity,b:Configuratio
 
 export interface ConfigurationBuildScope {projectId:string;buildId:string;binarySha256:string}
 export interface InspectionParameter {key:string;parsedValue:number|string|boolean;defaultValue:number|string|boolean;rawValue:string|null;valueSource:'explicit'|'default'|'alias';sourceKey?:string;valueStage:'typed-input-before-setup-and-policy-resolution';applicable?:boolean;units?:Record<string,unknown>}
-export interface ConfigurationInspection {schemaVersion:'1.0';version:'1';kind:'configuration-inspection';status:'ok'|'error';identity:{requestId:string;caseId:string;configRevision:string};parameters:InspectionParameter[];diagnostics:{severity:'info'|'warning'|'error';code:string;message:string;parameterKey:string|null}[];execution:Record<string,string>;coordinates?:CoordinateSystem;unitSystem?:string}
+export interface ConfigurationInspection {schemaVersion:'1.0';version:'1'|'2';kind:'configuration-inspection';status:'ok'|'error';identity:{requestId:string;caseId:string;configRevision:string};parameters:InspectionParameter[];diagnostics:{severity:'info'|'warning'|'error';code:string;message:string;parameterKey:string|null}[];execution:Record<string,string>;coordinates?:CoordinateSystem;unitSystem?:string}
 export interface SchemaResponse extends ConfigurationBuildScope {protocolVersion:string;core:ConfigurationSchema}
 export interface InspectionResponse {protocolVersion:string;identity:ConfigurationIdentity;core:ConfigurationInspection;pathChecks?:PathCheck[]}
 export function sameBuildScope(a:ConfigurationBuildScope|null|undefined,b:ConfigurationBuildScope|null|undefined){return !!a&&!!b&&a.projectId===b.projectId&&a.buildId===b.buildId&&a.binarySha256===b.binarySha256;}

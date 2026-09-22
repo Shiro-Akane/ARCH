@@ -43,6 +43,20 @@ export function validatePreviewStatus(v:unknown,projectId:string):PreviewStatus 
  if(v.requestId!==undefined)need(typeof v.requestId==='string'&&/^[a-f0-9-]{36}$/.test(v.requestId),'request ID');
  if(v.build!==undefined)need(record(v.build)&&text(v.build.buildId)&&record(v.build.outputBinary)&&record(v.build.outputBinary.fingerprint)&&text(v.build.outputBinary.fingerprint.sha256),'build');
  if(v.profiles!==undefined)need(Array.isArray(v.profiles)&&v.profiles.length<=2&&v.profiles.every(p=>record(p)&&((p.id==='sod-initial-cpu'&&p.caseId==='Sod'&&p.dimension===1)||(p.id==='cellular-initial-cpu'&&p.caseId==='CellularDet'&&p.dimension===2))),'profiles');
+ if(v.queue!==undefined){
+  need(record(v.queue)&&v.queue.activeRequestId===v.requestId&&Number.isSafeInteger(v.queue.replacedPending)&&Number(v.queue.replacedPending)>=0,'queue');
+  if(v.queue.pendingRequestId!==undefined)need(typeof v.queue.pendingRequestId==='string'&&/^[a-f0-9-]{36}$/.test(v.queue.pendingRequestId)&&v.queue.pendingRequestId!==v.requestId,'pending request');
+ }
+ if(v.session!==undefined){
+  need(record(v.session)&&Number.isSafeInteger(v.session.generation)&&Number(v.session.generation)>0&&text(v.session.processToken)&&typeof v.session.stage==='string'&&['request','configuration','support','setup','eos','sampling','initialization','initial-refinement','source-validation','complete'].includes(v.session.stage),'session');
+  for(const key of ['elapsedMilliseconds','transportParseMilliseconds'])if(v.session[key]!==undefined)need(typeof v.session[key]==='number'&&Number.isFinite(v.session[key])&&Number(v.session[key])>=0,'session timing');
+  if(v.session.sequence!==undefined)need(Number.isInteger(v.session.sequence)&&Number(v.session.sequence)>=1&&Number(v.session.sequence)<=256,'session sequence');
+  if(v.session.resources!==undefined)need(record(v.session.resources)&&v.session.resources.resultReused===false,'session resources');
+ }
+ if(v.timing!==undefined){
+  need(record(v.timing),'timing');
+  for(const value of Object.values(v.timing))need(typeof value==='number'&&Number.isFinite(value)&&value>=0,'duration');
+ }
  if(v.modelCapabilities!==undefined)validateModelCapabilities(v.modelCapabilities);
  return v as unknown as PreviewStatus;
 }

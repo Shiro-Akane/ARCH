@@ -619,3 +619,30 @@ From clean B 6b0b10b8 on studio/phase2f-plot-presentation. A/B tags unchanged. R
 
 ## Phase 2F-C / final closure (2026-09-21)
 Rechecked Phase2F Target/Requirements at C boundary. UI-06 fixes precede UI-07. Final real-only PhysicalPlot now shares forward/inverse physical projection across drawing, axes, hit testing, selection and Sod binding; existing Plotfile/Mock renderers remain unchanged. Independent axes/field scales, manual ranges, lower/upper clipping, Viridis/Hot, explicit Log failure/recovery and README current startup are complete. Core 8/8 (oracle disabled, no rebuild), Studio 128/128, Host 46/46, lint/typecheck/build PASS. Agent desktop UAT covers Sod and Cellular shock_dir 0/1, 64x32, four 1D scale combinations, 2D independent scales, drag/one Undo, raw Inspector and saved config lifecycle; 1920x1080,1280x720 and narrow800x720. See PHASE2F_COMPLETION_REPORT.md and PHASE2F_UI_REVIEW_CLOSURE_REPORT.md. Final local tag studio-phase2f-v0.13.0 on studio/phase2f-plot-presentation; resolve tag for hash. A/B tags and root STATUS unchanged. STOP before Phase 3; no push.
+
+## Phase 2G-A — Core gate and session transport foundation (in progress)
+- Active Target: PHASE2G_TARGET.md; A only. B/C remain gated behind separate user confirmations.
+- Frozen v0.13.0 unchanged. Independent worktree /home/arch/projects/ARCH-phase2g-continuous-local-workflow, branch studio/phase2g-continuous-local-workflow.
+- Authorized Core increments 97a2b50c then d98f6f6e integrated as e75d2391 / 1c8e659c, without conflicts or main merge.
+- Fresh CPU Debug build completed. Required 18/18 scoped groups PASS (166.99 s); simulation oracle disabled, no CUDA baseline.
+- A1–A7/A12 transport foundation: capability opt-in, fixed argv/cwd/env, persistent NDJSON, bounded UTF-8 frames/stderr, sequence/identity checks, final-only authority, TERM/KILL/reap, process token and generation. Nested scientific result retains existing validator. Legacy single-shot retained.
+- 12 focused transport tests PASS; full Host tests 58/58 and lint PASS after accepting authoritative configuration extension v2 alongside v1. No numerical unit conversion in Studio.
+- Actual new CPU binary Sod512 requests .3 then .4 shared one process token, sequence1/2, both status ok; each reported512 Init calls and resultReused=false. Transport smoke only, not full Studio performance UAT.
+- Fixed CPU profile now points at this independent project and explicitly extends API/session/AMR/discovery/EOS/cache input tracking. dependenciesComplete remains false.
+- Still incomplete: latest-pending queue, automatic debounce, UI progress/atomic retention, actual Build Manifest, regression and desktop/performance UAT. No checkpoint/tag/push; no B/C work.
+
+### 2G-A queue and initial production UAT (in progress)
+- Host now retains one active + one replaceable latest pending request. Three integration tests prove intermediate edits never execute, obsolete active success does not replace prior success, cancellation drops pending, and changed build prevents queued execution.
+- Frontend ordinary valid edits debounce300ms; explicit Update submits immediately; pointer candidate/display state excluded from scheduling key. Host submissions serialized, old UI poll generations discarded.
+- Process recycle waits for prior session reap. Host CLI now awaits shutdown/reap even for idle sessions.
+- Full npm test143/143 PASS before the final numeric-input guard; lint/typecheck/production build PASS. Added2 focused guard tests PASS after UAT found custom x_pos='-' would otherwise invoke Core default fallback.
+- Production4189 + Host4180 active in isolated worktree. Actual controlled Build ID308e3477-ce97-4c81-96c8-874c41277d9a;75 explicit inputs, dependenciesComplete=false. Build succeeded via standard existing-tree ARCH target, no configure/simulation.
+- Browser Sod512: cold sessionsequence1 Core6.082ms / UI1028.9ms; warm .30/.31/.32 collapsed to sequence2, Core6.012ms / UI1070.2ms. These initial measurements predate render-to-current instrumentation; final performance table still required.
+- Rebuilt production verified x_pos='-' keeps sequence4 unchanged and retains old success, displays automatic-pause reason. Correcting .35 producessequence5/Current, Core6.072ms, Host526.422ms, parse0.184ms, render-to-current8.9ms, total1027.9ms. No auto Save. Fit/Hot did not add another request.
+- UAT still partial: Cellular cold/warm performance, real256x256 cancellation/reap/restart, marker/Undo, Save/Build/Mock/Plotfile/path-preflight desktop regressions and final18-group Core gate/report/checkpoint remain. No A checkpoint, no B/C.
+
+### 2G-A final acceptance audit in progress
+Final checks verified: Studio146/146, Host62/62, lint/typecheck/build/diff PASS; Core18/18 PASS126.43s. Production UAT additionally verified Plotfile HDF5 load, Host path preflight failure/recovery and Sod drag/one Undo with automatic real Preview. PHASE2G_A_SESSION_COMPLETION_REPORT.md records evidence and remaining checkpoint audit. No A tag yet; B/C remain unauthorized.
+
+### 2G-A completion / checkpoint STOP
+Target A1–A17 rechecked. Session integration, latest-pending scheduling, real cancellation/restart, marker/Undo, save/build/Plotfile/path regressions and desktop UAT passed. Final checks: Studio146/146, Host62/62, Core18/18, lint/typecheck/build/diff PASS. Cold Sod timing completed on fresh session generation5/sequence1; all five required performance scenarios recorded with explicit dispatch-to-Current timing boundary. See PHASE2G_A_SESSION_COMPLETION_REPORT.md. Local checkpoint studio-phase2g-a-v0.14.0; no push. Phase2F tag/root STATUS unchanged; B/C remain unstarted. STOP awaiting B authorization.

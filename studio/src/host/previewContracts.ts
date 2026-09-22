@@ -9,7 +9,12 @@ export interface RealPreviewData { dimension:1|2; kind:'line'|'grid'; sampling:{
 export interface CorePreview { schemaVersion:'1.0'; kind:'initial-state-preview'; status:'ok'|'error'; stage:string; identity:{requestId:string;caseId:string;configRevision:string}|null; execution?:{previewBackend:'cpu';simulationReadiness:'not_checked';timeStepping:'not_executed';scientificOutput:'not_created'}; state?:Record<string,unknown>|null; parameterMetadata?:ParameterMetadata; graphicalBindings?:GraphicalBindings; data:RealPreviewData|null; diagnostics:PreviewDiagnostic[] }
 export interface RealPreviewResult { protocolVersion:string; identity:PreviewIdentity; generatedAt:string; core:CorePreview }
 export type PreviewRunState='none'|'generating'|'succeeded'|'failed'|'cancelled';
-export interface PreviewStatus { protocolVersion:string; projectId:string; profile:PreviewProfile; profiles?:PreviewProfile[]; modelCapabilities?:ModelCapability[]; failure?:CorePreview; ready:boolean; reason:string; state:PreviewRunState; requestId?:string; error?:string; diagnostics?:PreviewDiagnostic[]; result?:RealPreviewResult; build?:BuildManifest }
+export interface PreviewSessionStatus {
+ generation:number; processToken:string; stage:string; elapsedMilliseconds?:number; sequence?:number;
+ transportParseMilliseconds?:number; resources?:Record<string,unknown>; stages?:{stage:string;milliseconds:number}[];
+}
+export interface PreviewTiming {hostQueueMilliseconds:number;hostElapsedMilliseconds?:number;coreElapsedMilliseconds?:number;transportParseMilliseconds?:number}
+export interface PreviewStatus {queue?:{activeRequestId:string;pendingRequestId?:string;replacedPending:number};timing?:PreviewTiming; session?:PreviewSessionStatus; protocolVersion:string; projectId:string; profile:PreviewProfile; profiles?:PreviewProfile[]; modelCapabilities?:ModelCapability[]; failure?:CorePreview; ready:boolean; reason:string; state:PreviewRunState; requestId?:string; error?:string; diagnostics?:PreviewDiagnostic[]; result?:RealPreviewResult; build?:BuildManifest }
 
 export interface ParameterConstraints {min:number;max:number;minInclusive:boolean;maxInclusive:boolean}
 export interface CoreParameter {key:string;type:'float'|'int'|'bool'|'string'|null;explicitValue:number|string|boolean|null;effectiveValue:number|string|boolean|null;defaultValue:number|string|boolean|null;rawValue?:string;valueSource:'explicit'|'default'|'unknown';sourceReason:string|null;unit:string|null;description:string|null;constraints?:ParameterConstraints;diagnostics:PreviewDiagnostic[]}

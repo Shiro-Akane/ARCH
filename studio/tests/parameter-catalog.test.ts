@@ -32,5 +32,9 @@ test('units retain Core status; coordinate values are inherited only from provid
  const p=schema.parameters.find(p=>p.key==='x1_min')!;
  assert.match(parameterUnit(p),/Unit not provided.*coordinate-dependent/);
  const inspected=JSON.parse(requirelessFixture);
- assert.match(parameterUnit(p,undefined,inspected.coordinates),/code_length/);
+ // Core configuration extension v2 explicitly publishes CGS; Studio must not compensate.
+ assert.equal(inspected.coordinates.axes[0].unit,'cm');
+ assert.equal(parameterUnit(p,undefined,inspected.coordinates),'cm · coordinate-dependent');
+ const unavailable=structuredClone(inspected.coordinates);unavailable.axes[0].unit=null;
+ assert.match(parameterUnit(p,undefined,unavailable),/Unit not provided/);
 });

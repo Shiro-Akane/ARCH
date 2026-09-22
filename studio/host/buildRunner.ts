@@ -36,12 +36,13 @@ export class BuildRunner {
  snapshot(){return structuredClone(this.current);}
  async validate(){try{await validateProfile(this.root,this.profile,this.hooks.cmake??CMAKE);this.current.configured=true;this.current.reason=undefined;if(this.current.state==='not-configured')this.current.state='ready';}catch(e){this.current.configured=false;this.current.reason=e instanceof Error?e.message:'Build profile unavailable';if(!this.current.activeBuildId)this.current.state='not-configured';}return this.snapshot();}
  executionBlocked?:()=>boolean;
+ beforeStart?:()=>Promise<void>;
  async start(projectId:string,profileId:string){
   if(this.executionBlocked?.())throw new BuildError('Preview is active; cancel or wait before Build.',409);
   if(projectId!==this.projectId||profileId!==this.profile.id)throw new BuildError('Unknown project or build profile.');
   if(this.current.activeBuildId)throw new BuildError('build-busy',409);
   const id=randomUUID(),startedAt=new Date().toISOString();this.current.activeBuildId=id;this.current.state='queued';
-  try{await this.validate();if(!this.current.configured)throw new BuildError(this.current.reason??'Not configured');}
+  try{await this.beforeStart?.();await this.validate();if(!this.current.configured)throw new BuildError(this.current.reason??'Not configured');}
   catch(e){delete this.current.activeBuildId;this.current.state='not-configured';throw e;}
   this.log=new BuildLog(this.projectId,id);this.log.append('state',undefined,'building');this.current.state='building';
   void this.run(id,startedAt);
