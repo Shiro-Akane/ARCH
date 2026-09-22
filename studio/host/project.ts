@@ -1,3 +1,4 @@
+import {WorkflowRunner} from './workflow.ts';
 import {ConfigurationAdapter} from './configuration.ts';
 import {PreviewRunner} from './previewRunner.ts';
 import {SOD_PREVIEW_PROFILE,PREVIEW_PROFILES} from './previewProfile.ts';
@@ -25,7 +26,9 @@ export async function openProject(options:ProjectOptions) {
  let build:BuildRunner|undefined;
  if(options.buildProfile){if(!selectedProfile)throw new Error('Unknown Host build profile');build=new BuildRunner(root,result.session.projectId,selectedProfile!);result.host.capabilities.build=(await build.initialize()).configured;}
  const preview=build?.profile.id===SOD_PREVIEW_PROFILE.buildProfileId?new PreviewRunner(build,SOD_PREVIEW_PROFILE,{},PREVIEW_PROFILES):undefined;
- if(preview&&build){build.executionBlocked=()=>preview.isActive();result.host.capabilities.preview=(await preview.readiness()).ready;}
+ const workflow=preview?new WorkflowRunner(preview):undefined;
+ if(preview)preview.externalBusy=()=>workflow?.isActive()??false;
+ if(preview&&build){build.executionBlocked=()=>preview.isActive()||(workflow?.isActive()??false);result.host.capabilities.preview=(await preview.readiness()).ready;}
  const baseline=structuredClone(result.session);
  const changed=(a:ProjectFileRef|undefined,b:ProjectFileRef|undefined)=>Boolean(a&&b&&(a.exists!==b.exists||a.sha256!==b.sha256||a.size!==b.size||a.modifiedTime!==b.modifiedTime));
  async function refresh(){
@@ -47,7 +50,7 @@ export async function openProject(options:ProjectOptions) {
  function serial<T>(operation:()=>Promise<T>):Promise<T>{const next=queue.then(operation);queue=next.catch(()=>undefined);return next;}
  async function saved(read:ConfigReadResponse):Promise<ConfigWriteResponse>{options.config=read.relativePath;const current=await fingerprint(root,read.relativePath,'parameter');result.session.parameterFile=current;baseline.parameterFile=structuredClone(current);result.session.configFileState=current.error?'unknown':current.exists?'available':'missing';result.session.refreshedAt=new Date().toISOString();return {...read,project:structuredClone(result)};}
  function projectId(id:string){if(id!==result.session.projectId)throw new ConfigError('protocol-error','Project session changed. Reconnect before saving.');}
- return {build,preview,configuration:preview?new ConfigurationAdapter(preview):undefined,readSource:()=>readSource(root,options.case,result.session.projectId),snapshot:()=>{result.host.capabilities.preview=preview?.snapshot().ready??false;return structuredClone(result);},refresh:()=>serial(refresh),readConfig:()=>serial(()=>readConfig(root,options.config,result.session.projectId)),
+ return {build,preview,workflow,configuration:preview?new ConfigurationAdapter(preview,workflow?()=>workflow.discovery():undefined):undefined,readSource:()=>readSource(root,options.case,result.session.projectId),snapshot:()=>{result.host.capabilities.preview=preview?.snapshot().ready??false;return structuredClone(result);},refresh:()=>serial(refresh),readConfig:()=>serial(()=>readConfig(root,options.config,result.session.projectId)),
   saveConfig:(request:SaveConfigRequest)=>serial(async()=>{projectId(request.projectId);if(request.relativePath!==options.config)throw new ConfigError('invalid-path','Save may only update the current associated configuration.');return saved(await atomicSave(root,request.relativePath,result.session.projectId,request.text,request.expectedFingerprint));}),
   saveConfigAs:(request:SaveConfigAsRequest)=>serial(async()=>{projectId(request.projectId);return saved(await publishConfig(root,request.destinationRelativePath,result.session.projectId,request.text,undefined,true));})};
 }

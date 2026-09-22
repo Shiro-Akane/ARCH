@@ -646,3 +646,18 @@ Final checks verified: Studio146/146, Host62/62, lint/typecheck/build/diff PASS;
 
 ### 2G-A completion / checkpoint STOP
 Target A1–A17 rechecked. Session integration, latest-pending scheduling, real cancellation/restart, marker/Undo, save/build/Plotfile/path regressions and desktop UAT passed. Final checks: Studio146/146, Host62/62, Core18/18, lint/typecheck/build/diff PASS. Cold Sod timing completed on fresh session generation5/sequence1; all five required performance scenarios recorded with explicit dispatch-to-Current timing boundary. See PHASE2G_A_SESSION_COMPLETION_REPORT.md. Local checkpoint studio-phase2g-a-v0.14.0; no push. Phase2F tag/root STATUS unchanged; B/C remain unstarted. STOP awaiting B authorization.
+
+
+## Phase 2G-B — B1–B10 implementation / B11 validation in progress
+- Branch studio/phase2g-initial-amr starts at immutable A checkpoint 13345ba4d1b7379ff5481bf9ca4f2fc9156aee7c.
+- Rechecked PHASE2G_TARGET.md B1–B11. No C launcher, scientific Core, simulation or A rebuild.
+- Binary-owned discovery, all-model initialization inspection, AMR parameters/resources, session-owned AMR and physical hierarchy rendering implemented.
+- Real Host verification: all 11 registered models inspected; Sod complete/limited/no-snapshot and Cellular complete passed.
+- Desktop B UAT ongoing at 127.0.0.1:4190. Final regression/report/checkpoint pending.
+
+## Phase 2G-B final checkpoint
+- B1–B11 complete; target scope rechecked. See PHASE2G_B_AMR_COMPLETION_REPORT.md.
+- Final: npm160/160, Host67/67, Core18/18; lint/typecheck/build/diff-check PASS.
+- Real Sod/Cellular AMR, limited/no-snapshot, Gaussian edit/inspect, resource overflow and desktop UAT passed.
+- A unchanged at13345ba4d1b7379ff5481bf9ca4f2fc9156aee7c. Delivery confined to studio/.
+- Checkpoint: studio-phase2g-b-v0.15.0. STOP; no2G-C or Phase3.

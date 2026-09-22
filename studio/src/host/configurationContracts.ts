@@ -1,10 +1,12 @@
-export type ConfigurationCase = 'Sod' | 'CellularDet';
+/** Registered name is validated against the selected binary by Host discovery. */
+export type ConfigurationCase = string;
 export interface ConfigurationIdentity {
  projectId:string; caseId:ConfigurationCase; configRevision:string;
  requestId:string; buildId:string; binarySha256:string;
 }
 export interface ConfigurationRequest {projectId:string;caseId:ConfigurationCase;configText:string;configRevision:string}
 export interface StandardParameter {
+ presentation?:{displayName:string;description:string;subgroup:string};
  key:string; type:'int'|'float'|'bool'|'string'|'expression'; group:string;
  defaultValue:number|string|boolean; defaultSource:string; aliasOf?:string;
  constraints:Record<string,unknown>; options:Record<string,unknown>|null;
@@ -22,7 +24,7 @@ export function sameConfigurationIdentity(a:ConfigurationIdentity,b:Configuratio
 
 export interface ConfigurationBuildScope {projectId:string;buildId:string;binarySha256:string}
 export interface InspectionParameter {key:string;parsedValue:number|string|boolean;defaultValue:number|string|boolean;rawValue:string|null;valueSource:'explicit'|'default'|'alias';sourceKey?:string;valueStage:'typed-input-before-setup-and-policy-resolution';applicable?:boolean;units?:Record<string,unknown>}
-export interface ConfigurationInspection {schemaVersion:'1.0';version:'1'|'2';kind:'configuration-inspection';status:'ok'|'error';identity:{requestId:string;caseId:string;configRevision:string};parameters:InspectionParameter[];diagnostics:{severity:'info'|'warning'|'error';code:string;message:string;parameterKey:string|null}[];execution:Record<string,string>;coordinates?:CoordinateSystem;unitSystem?:string}
+export interface ConfigurationInspection {amrIndicators?:{choices:{value:string;available:boolean;selected:boolean;reason:string|null}[];speciesResolution:string};schemaVersion:'1.0';version:'1'|'2';kind:'configuration-inspection';status:'ok'|'error';identity:{requestId:string;caseId:string;configRevision:string};parameters:InspectionParameter[];diagnostics:{severity:'info'|'warning'|'error';code:string;message:string;parameterKey:string|null}[];execution:Record<string,string>;coordinates?:CoordinateSystem;unitSystem?:string}
 export interface SchemaResponse extends ConfigurationBuildScope {protocolVersion:string;core:ConfigurationSchema}
 export interface InspectionResponse {protocolVersion:string;identity:ConfigurationIdentity;core:ConfigurationInspection;pathChecks?:PathCheck[]}
 export function sameBuildScope(a:ConfigurationBuildScope|null|undefined,b:ConfigurationBuildScope|null|undefined){return !!a&&!!b&&a.projectId===b.projectId&&a.buildId===b.buildId&&a.binarySha256===b.binarySha256;}

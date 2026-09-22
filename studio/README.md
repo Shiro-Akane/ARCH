@@ -1,6 +1,6 @@
-# ARCH Studio — Phase 2G-A · desktop frontend checkpoint
+# ARCH Studio — Phase 2G-B · desktop frontend checkpoint
 
-Studio supports **Sod 1D Real IC**, authoritative Sod `x_pos` binding, and **CellularDet Cartesian 2D Real IC** (`shock_dir=0/1`, x3=0). Preview calls Core initialization only: no simulation timesteps, scientific output or AMR hierarchy. Mock and existing Plotfile viewing remain available.
+Studio supports **Sod 1D Real IC**, authoritative Sod `x_pos` binding, and **CellularDet Cartesian 2D Real IC** (`shock_dir=0/1`, x3=0). Preview calls Core initialization only: no simulation timesteps or scientific output. Initial AMR is a separate, explicit Core operation. Mock and existing Plotfile viewing remain available.
 
 ## Current workflow
 
@@ -13,6 +13,16 @@ Studio supports **Sod 1D Real IC**, authoritative Sod `x_pos` binding, and **Cel
 - Real plots: scroll zoom, drag pan, click sample, Fit. Data, axes, selection and Sod marker use the same physical projection. Coordinate Axes and Field Values have independent Linear/Log, Auto/Manual ranges and Reset. Lower/upper clipping and Viridis/Hot affect only display; Inspector remains raw. Log rejects nonpositive values/ranges explicitly. For a domain starting at zero, use an explicit positive Manual display range or return to Linear. Fit restores full coordinate domain and Linear spatial axes; intentional field clipping remains until Reset Field Values.
 - **Save / Save As / Revert / Download Copy** are explicit. Preview and display controls never save. External disk changes require conflict resolution. Units, coordinate labels, applicability and path fields come from Core; Host checks schema-declared paths relative to its actual process working directory.
 
+## Case inspection and initial AMR
+
+- Models come from the selected binary's `--list-cases`. Registered does not imply full field support. All 11 current models offer **Inspect initialization**, showing actual reads, defaults/effective/source and Core-reviewed units plus raw Init probes. Missing parameters remain absent until edited.
+- **Estimate AMR resources** reports full-domain refinement scales, overflow/unknown values and assumptions. It is not an OOM prediction.
+- **Generate initial AMR** supports Sod 1D and CellularDet 2D Cartesian, uses the current unsaved Working Copy and the same owned CPU session. It never saves or evolves a simulation. Inspection has the capability's 360-second budget; mesh uses 45 seconds. Cancel retires and reaps the owned worker.
+- Preview limits default to 512 blocks /128 MiB, separate from `.par max_blocks`; the current Core v1 limits are 1–1024 blocks /16–256 MiB. A limited balanced snapshot is **Incomplete**; a root grid that exceeds the budget has **no snapshot**, not a successful zero-block mesh.
+- Block outlines, resolved cell lines and level visibility use the same physical projection as the field. Zoom/pan/Fit redraw existing data only. The block Inspector reports logical identity, bounds, shape and spacing. Core provides no AMR cell field arrays: field colors and the **Init sample Inspector** remain separate sampled initialization values.
+- Overlay requires matching project/case/configRevision/build/binary and authoritative EOS source. A previous hierarchy is labeled and drawn separately from the current field when identities differ. New field results do not automatically run AMR.
+- This checkpoint stops at 2G-B. Desktop Launcher (2G-C) is not implemented.
+
 ## Current local startup
 
 Tested environment: **Node 24.21.0 / npm 11.19.0**. In a fresh checkout run `npm ci` in `studio/`. Current fixed Preview profile `arch-preview-cpu-integration` is bound to:
@@ -22,8 +32,8 @@ Tested environment: **Node 24.21.0 / npm 11.19.0**. In a fresh checkout run `npm
 | Managed source root | `/home/arch/projects/ARCH-phase2g-continuous-local-workflow` |
 | Existing CPU Debug build | `build-preview-audit` |
 | Build target / executable | `ARCH` / `build-preview-audit/bin/ARCH` |
-| Models | Sod / CellularDet |
-| Tracked inputs | 43 explicit inputs; incomplete full dependency graph |
+| Models | Binary registry: 11 inspectable; Sod / CellularDet field and initial AMR |
+| Tracked inputs | 75 explicit inputs; incomplete full dependency graph |
 
 From that checkout's `studio/`, in two terminals:
 
@@ -42,7 +52,7 @@ Open `http://127.0.0.1:4189/`; choose Real Config, Connect Local Host, Open Proj
 
 Cellular requires the Core reference 2D configuration and Helmholtz EOS table; see [Core API README](../src/api/README.md). Default sampling is 128×128, with Core capability limits; non-square Nx/Ny are supported. Protocol remains 1.3 and Core Preview schema 1.0 with independently versioned extensions.
 
-Checks: `npm test`, `npm run test:host`, `npm run lint`, `npm run typecheck`, `npm run build`, `git diff --check`. See [Phase 2G-A completion](PHASE2F_COMPLETION_REPORT.md) and [UI review closure](PHASE2F_UI_REVIEW_CLOSURE_REPORT.md). Desktop/workstation is the target; narrow-window checks only prevent broken layout and inaccessible controls. Phase 3 is not included.
+Checks: `npm test`, `npm run test:host`, `npm run lint`, `npm run typecheck`, `npm run build`, `git diff --check`. See [Phase 2G-B completion](PHASE2G_B_AMR_COMPLETION_REPORT.md) and [Phase 2G-A completion](PHASE2G_A_SESSION_COMPLETION_REPORT.md) and [UI review closure](PHASE2F_UI_REVIEW_CLOSURE_REPORT.md). Desktop/workstation is the target; narrow-window checks only prevent broken layout and inaccessible controls. Phase 3 is not included.
 
 ---
 

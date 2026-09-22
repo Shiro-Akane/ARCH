@@ -12,7 +12,8 @@ export class ConfigurationAdapter {
  private active=false;
  private schemaCache?:{buildId:string;sha:string;core:ConfigurationSchema};
  private preview:PreviewRunner;
- constructor(preview:PreviewRunner){this.preview=preview;}
+ private discover?:()=>Promise<{cases:{caseId:string}[]}>;
+ constructor(preview:PreviewRunner,discover?:()=>Promise<{cases:{caseId:string}[]}>){this.preview=preview;this.discover=discover;}
  private async ready(){
   const s=await this.preview.readiness();
   if(!s.ready||!s.build)throw new BuildError('Configuration inspection requires a current successful Preview build.',409);
@@ -42,7 +43,8 @@ export class ConfigurationAdapter {
  }
  async inspect(r:ConfigurationRequest){
   const keys=['projectId','caseId','configText','configRevision'];
-  if(Object.keys(r).length!==keys.length||Object.keys(r).some(k=>!keys.includes(k))||r.projectId!==this.preview.build.projectId||!['Sod','CellularDet'].includes(r.caseId)||typeof r.configText!=='string'||r.configText.includes('\0')||Buffer.byteLength(r.configText)>1024*1024||Buffer.from(r.configText).toString('utf8')!==r.configText||r.configRevision!==createHash('sha256').update(r.configText).digest('hex'))throw new BuildError('Invalid configuration inspection request.');
+  if(Object.keys(r).length!==keys.length||Object.keys(r).some(k=>!keys.includes(k))||r.projectId!==this.preview.build.projectId||typeof r.caseId!=='string'||typeof r.configText!=='string'||r.configText.includes('\0')||Buffer.byteLength(r.configText)>1024*1024||Buffer.from(r.configText).toString('utf8')!==r.configText||r.configRevision!==createHash('sha256').update(r.configText).digest('hex'))throw new BuildError('Invalid configuration inspection request.');
+  if(this.discover ? !(await this.discover()).cases.some(c=>c.caseId===r.caseId) : r.caseId!==this.preview.profile.caseId)throw new BuildError('Invalid configuration inspection request: case is not registered in selected binary.');
   const schema=await this.schema();
   const before=await this.ready();const requestId=randomUUID();
   if(schema.buildId!==before.buildId||schema.binarySha256!==before.outputBinary.fingerprint.sha256)throw new BuildError('Build changed after schema request.',409);

@@ -1095,3 +1095,13 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 .plot-setting-row label {display:flex;gap:5px;align-items:center;}
 .colormap-preview {display:inline-block;width:80px;height:12px;margin:0 8px;}
 .plot-error {color:#ffbf66;border:1px solid #84632c;padding:8px;}
+
+
+/* Initial workflow data tables stay readable within the desktop center pane. */
+.initialization-workflow { border-top: 1px solid var(--border, #35424e); margin-top: 1rem; padding-top: .6rem; }
+.initialization-workflow p { margin: .65rem 0; overflow-wrap: anywhere; }
+.initialization-workflow table { border-collapse: collapse; width: 100%; font-size: .8rem; }
+.initialization-workflow th, .initialization-workflow td { padding: .45rem .55rem; text-align: left; vertical-align: top; border-bottom: 1px solid #35424e; }
+.initialization-workflow input { max-width: 100%; }
+.initialization-workflow pre { max-height: 22rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.initialization-workflow > details { margin: .7rem 0; }

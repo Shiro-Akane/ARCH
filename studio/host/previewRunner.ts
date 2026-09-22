@@ -1,6 +1,6 @@
 import {spawn,execFile} from 'node:child_process';
 import {PreviewSession,sessionCapability} from './previewSession.ts';
-import type {SessionResult} from './previewSession.ts';
+import type {SessionResult,SessionRequest,SessionCapability,SessionProgress} from './previewSession.ts';
 import type {ChildProcessWithoutNullStreams} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {checkedPath} from './files.ts';
@@ -14,10 +14,12 @@ import {validateCorePreview,validateModelCapabilities} from '../src/host/preview
 export interface PreviewHooks {spawn?:typeof spawn;timeoutMs?:number;graceMs?:number}
 interface PendingPreview {text:string;count:number|number[];identity:PreviewIdentity;profile:PreviewProfile;queuedAt:number}
 export class PreviewRunner {
+ externalBusy?:()=>boolean;
  readonly build:BuildRunner; profile:PreviewProfile; private profiles:PreviewProfile[];
  private current:PreviewStatus; private child?:ChildProcessWithoutNullStreams; private cancelled=false;
  private session?:PreviewSession; private sessionKey?:string; private sessionGeneration=0;
  private reaping:Promise<void>=Promise.resolve();
+ private auxiliaryRequestId?:string;
  private pending?:PendingPreview; private replacedPending=0;
  private hooks:PreviewHooks; private killTimer?:ReturnType<typeof setTimeout>;
  constructor(build:BuildRunner,profile:PreviewProfile,hooks:PreviewHooks={},profiles:PreviewProfile[]=[profile]) {
@@ -25,7 +27,7 @@ export class PreviewRunner {
   this.build.beforeStart=()=>this.endSession('Build starting; retire Preview session.');
   this.current={protocolVersion:PROTOCOL_VERSION,projectId:build.projectId,profile:this.profile,profiles:this.profiles,ready:false,reason:'Build required before real preview.',state:'none'};
  }
- isActive(){return this.current.state==='generating';}
+ isActive(){return this.current.state==='generating'||!!this.auxiliaryRequestId;}
  snapshot(){return structuredClone(this.current);}
  async readiness(){
   const b=await this.build.validate();await this.build.refreshFreshness();const m=this.build.snapshot().lastSuccessfulBuild;
@@ -43,6 +45,7 @@ export class PreviewRunner {
   return this.snapshot();
  }
  async start(r:RealPreviewRequest){
+  if(this.auxiliaryRequestId||this.externalBusy?.())throw new BuildError('Initialization workflow is active; wait or cancel it.',409);
   const allowed=['projectId','profileId','configText','configRevision','requestedSampleCount','requestedShape'];
   const profile=this.profiles.find(p=>p.id===r.profileId);
   if(Object.keys(r).some(k=>!allowed.includes(k))||r.projectId!==this.build.projectId||!profile||typeof r.configText!=='string'||!r.configText||Buffer.byteLength(r.configText)>1024*1024||r.configText.includes('\0')||Buffer.from(r.configText,'utf8').toString('utf8')!==r.configText||r.configRevision!==createHash('sha256').update(r.configText).digest('hex'))throw new BuildError('Invalid Preview request or config revision.');
@@ -71,6 +74,37 @@ export class PreviewRunner {
   void this.run(r.configText,count,identity,performance.now());
   return {protocolVersion:PROTOCOL_VERSION,projectId:r.projectId,requestId,identity};
  }
+ /** B commands borrow the same Host-owned worker and exclusion boundary as field Preview. */
+ async auxiliary(request:SessionRequest,capability:SessionCapability,expected:{buildId:string;binarySha256:string},progress?:(event:SessionProgress)=>void){
+  if(this.isActive())throw new BuildError('Preview is already generating; cancel or wait.',409);
+  this.auxiliaryRequestId=request.requestId;
+  try{
+   const status=await this.readiness();
+   if(!status.ready||status.build?.buildId!==expected.buildId||status.build.outputBinary.fingerprint.sha256!==expected.binarySha256)throw new BuildError('Build changed before workflow.',409);
+   const binary=await checkedPath(this.build.root,this.build.profile.outputBinaryRelative);
+   const key=JSON.stringify([this.build.projectId,this.build.root,binary,expected.binarySha256,expected.buildId,this.build.profile.id]);
+   if(this.session&&(this.sessionKey!==key||!this.session.reusable))await this.endSession('Workflow session identity changed or request limit reached.');
+   if(this.auxiliaryRequestId!==request.requestId)throw new Error('Workflow cancelled.');
+   if(!this.session){
+    await this.reaping;
+    if(this.auxiliaryRequestId!==request.requestId)throw new Error('Workflow cancelled.');
+    this.sessionGeneration++;
+    this.session=new PreviewSession({binary,cwd:this.build.root,capability,spawn:this.hooks.spawn,timeoutMs:this.hooks.timeoutMs,graceMs:this.hooks.graceMs});
+    this.sessionKey=key;
+   }
+   const session=this.session,generation=this.sessionGeneration;
+   const result=await session.request(request,progress);
+   if(this.session!==session||generation!==this.sessionGeneration||this.auxiliaryRequestId!==request.requestId)throw new Error('Obsolete workflow session result.');
+   const after=await this.readiness();
+   if(!after.ready||after.build?.buildId!==expected.buildId||after.build.outputBinary.fingerprint.sha256!==expected.binarySha256)throw new Error('Build changed while inspecting.');
+   return result;
+  }finally{if(this.auxiliaryRequestId===request.requestId)this.auxiliaryRequestId=undefined;}
+ }
+ async cancelAuxiliary(requestId:string){
+  if(this.auxiliaryRequestId!==requestId)throw new BuildError('No matching workflow.',409);
+  this.auxiliaryRequestId=undefined;
+  await this.endSession('Initialization workflow cancelled.');
+ }
  private terminate(){
   const child=this.child;if(!child?.pid||this.killTimer)return;
   const kill=(signal:NodeJS.Signals)=>{try{process.kill(-child.pid!,signal);}catch{child.kill(signal);}};
@@ -85,7 +119,7 @@ export class PreviewRunner {
   if(session){this.sessionGeneration++;this.reaping=session.terminate(reason);}
   await this.reaping;
  }
- async shutdown(){this.pending=undefined;this.current.queue=undefined;this.cancelled=true;this.terminate();await this.endSession('Preview Host shutdown.');}
+ async shutdown(){this.auxiliaryRequestId=undefined;this.pending=undefined;this.current.queue=undefined;this.cancelled=true;this.terminate();await this.endSession('Preview Host shutdown.');}
  private async run(text:string,count:number|number[],identity:PreviewIdentity,queuedAt:number){
   const startedAt=performance.now();
   this.current.timing={hostQueueMilliseconds:startedAt-queuedAt};

@@ -17,7 +17,7 @@ export function StandardCatalog({schema,values,inspection,pathChecks,errors,onEd
   const path=pathChecks?.find(x=>x.key===p.key);
   const diagnostics=inspection?.diagnostics.filter(d=>d.parameterKey===p.key)??[];
   return <div className="parameter-field" key={p.key} onFocus={()=>onSelect(sourceKey)} onClick={()=>onSelect(sourceKey)}>
-   <span>{p.key}</span>
+   <span>{p.key}</span>{p.presentation&&<small title={p.presentation.description}>{p.presentation.displayName} · {p.presentation.description}</small>}
    <ConfigControl name={p.key} value={value} authoritative meta={{group:'Runtime',type:p.type==='string'?'text':p.type,evidence:'ARCH --config-schema',options:catalogOptions(p)}} error={errors[sourceKey]??errors[p.key]} onChange={v=>onEdit(sourceKey,v)}/>
    <small>{explicit?`Explicit Working Copy · ${sourceKey}`:'Schema Default · not written'}{aliases.length?` · alias: ${aliases.join(', ')}`:''}</small>
    <small>{parameterUnit(p,parsed,inspection?.coordinates)}</small>
@@ -31,6 +31,7 @@ export function StandardCatalog({schema,values,inspection,pathChecks,errors,onEd
  }
  const axisKeys=new Set(axes?.flatMap(a=>[a.blocksKey,a.minKey,a.maxKey,a.lowerBoundaryKey,a.upperBoundaryKey])??[1,2,3].flatMap(i=>[`nblockx${i}`,`x${i}_min`,`x${i}_max`,`x${i}l_boundary_type`,`x${i}r_boundary_type`]));
  const find=(key:string)=>rows.find(r=>r.parameter.key===key);
+ const isAmr=(row:typeof rows[number])=>row.parameter.presentation?.subgroup==='AMR';
  const advanced=(key:string)=>group==='Network'&&!['use_burn','network_name','use_nse'].includes(key);
  const filtered=rows.filter(r=>query?[r.parameter.key,...r.aliases,r.value,r.parameter.group].join(' ').toLowerCase().includes(query):r.parameter.group===group);
  return <section className="standard-catalog" aria-label="Standard parameter catalog">
@@ -42,7 +43,8 @@ export function StandardCatalog({schema,values,inspection,pathChecks,errors,onEd
    {group==='Grid'&&<><p>Dimension: {(coordinates??lastCoordinates)?.dimension??'Unavailable'} · {coordinates?'Core coordinate catalog':'Last valid layout; correct invalid input'} · 0 = off, ≥1 = on; x3 requires x2</p>
     {[1,2,3].map((n,i)=>{const axis=axes?.[i];const key=axis?.blocksKey??`nblockx${n}`;const blocks=find(key);const currentAxis=inspection?.coordinates?.axes[i];return <section className="grid-axis-block" key={n} aria-label={`Grid x${n} axis`}><h4>x{n} · {axis?.displayName??'Coordinate unavailable'} · {axis?.active?'active':'off'}</h4>{blocks&&render(blocks)}{axis?.active&&<><p>{currentAxis?.unit??'Unit unavailable until current inspection'}</p>{[axis.minKey,axis.maxKey,axis.lowerBoundaryKey,axis.upperBoundaryKey].map(k=>{const row=find(k);return row?render(row):null;})}</>}</section>;})}
    </>}
-   {filtered.filter(r=>!(group==='Grid'&&axisKeys.has(r.parameter.key))&&!advanced(r.parameter.key)).map(render)}
+   {filtered.filter(r=>!(group==='Grid'&&axisKeys.has(r.parameter.key))&&!advanced(r.parameter.key)&&!(group==='Grid'&&isAmr(r))).map(render)}
+   {group==='Grid'&&<section className="grid-axis-block" aria-label="Adaptive Mesh Refinement (AMR)"><h4>Adaptive Mesh Refinement (AMR)</h4>{filtered.filter(r=>isAmr(r)&&r.parameter.key!=='regrid_interval').map(render)}<details><summary>AMR Advanced</summary>{filtered.filter(r=>isAmr(r)&&r.parameter.key==='regrid_interval').map(render)}</details>{inspection?.amrIndicators&&<details><summary>Refinement field applicability</summary><p>{inspection.amrIndicators.speciesResolution}</p><ul>{inspection.amrIndicators.choices.map(c=><li key={c.value}>{c.value} · {c.available?'available':'unavailable'}{c.selected?' · selected':''}{c.reason?' · '+c.reason:''}</li>)}</ul></details>}</section>}
    {filtered.some(r=>advanced(r.parameter.key))&&<details className="advanced-parameters"><summary>Network ODE / Advanced</summary>{filtered.filter(r=>advanced(r.parameter.key)).map(render)}</details>}
   </>}
  </section>;

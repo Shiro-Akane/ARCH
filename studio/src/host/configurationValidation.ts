@@ -10,6 +10,7 @@ export function validateConfigurationSchema(v:unknown):ConfigurationSchema {
  for(const p of v.parameters){
   if(!record(p)||!strings(p,['key','type','group','defaultSource','applicability'])||!/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.key as string)||keys.has(p.key as string)||!['int','float','bool','string','expression'].includes(p.type as string)||!scalar(p.defaultValue)||!record(p.constraints)||!record(p.units)||(p.options!==null&&!record(p.options))||(p.path!==null&&!record(p.path))||(p.aliasOf!==undefined&&typeof p.aliasOf!=='string'))throw new Error('Malformed standard parameter schema.');
   for(const key of ['min','max','storageMin','storageMax'])if(p.constraints[key]!==undefined&&(typeof p.constraints[key]!=='number'||!Number.isFinite(p.constraints[key])))throw new Error('Malformed parameter constraint.');
+  if(p.presentation!==undefined&&(!record(p.presentation)||!strings(p.presentation,['displayName','description','subgroup'])))throw new Error('Invalid parameter presentation.');
   validateUnit(p.units);
   if(p.path!==null&&(!record(p.path)||p.path.checkOwner!=='local-host'||p.path.relativeTo!=='process-working-directory'||!['input-file','output-directory'].includes(String(p.path.role))))throw new Error('Invalid Core path authority.');
   keys.add(p.key as string);
@@ -22,6 +23,7 @@ export function validateConfigurationInspection(v:unknown,expected:{caseId:strin
  const keys=new Set<string>();
  for(const p of v.parameters){if(!record(p)||typeof p.key!=='string'||keys.has(p.key)||!scalar(p.parsedValue)||!scalar(p.defaultValue)||(p.rawValue!==null&&typeof p.rawValue!=='string')||!['explicit','default','alias'].includes(String(p.valueSource))||p.valueStage!=='typed-input-before-setup-and-policy-resolution'||(p.sourceKey!==undefined&&typeof p.sourceKey!=='string')||(p.applicable!==undefined&&typeof p.applicable!=='boolean')||(p.units!==undefined&&!record(p.units)))throw new Error('Malformed parsed parameter.');if(p.units!==undefined)validateUnit(p.units);keys.add(p.key);}
  for(const d of v.diagnostics)if(!record(d)||!strings(d,['severity','code','message'])||!['info','warning','error'].includes(d.severity as string)||(d.parameterKey!==null&&typeof d.parameterKey!=='string'))throw new Error('Malformed configuration diagnostic.');
+ if(v.amrIndicators!==undefined){const a=v.amrIndicators;if(!record(a)||!Array.isArray(a.choices)||a.choices.length>128||typeof a.speciesResolution!=='string'||a.choices.some(c=>!record(c)||typeof c.value!=='string'||typeof c.available!=='boolean'||typeof c.selected!=='boolean'||(c.reason!==null&&typeof c.reason!=='string')))throw new Error('Invalid AMR applicability.');}
  if(v.coordinates!==undefined&&v.coordinates!==null)validateCoordinates(v.coordinates);
  return v as unknown as ConfigurationInspection;
 }
