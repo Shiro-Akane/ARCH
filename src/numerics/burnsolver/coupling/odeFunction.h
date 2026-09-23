@@ -287,9 +287,20 @@ namespace OdeMath
                 rhs[Network::NONCONSERVATIVE_ENERGY_INDEX] =
                     network.eval_nonconservative_energy(state, rho, result.eta);
         }
-        result.cv = require_positive_cv(eos.get_cv(rho, state[temperature], state));
-        burn_energy_composition_gradient<Network::NUM_SPECIES + 1>(
-            state, rho, eos, result.energy_composition_gradient);
+        if constexpr (requires {
+            eos.template get_cv_and_energy_composition_gradient<Network::NUM_SPECIES + 1>(
+                rho, state[temperature], state, result.cv,
+                result.energy_composition_gradient);
+        }) {
+            eos.template get_cv_and_energy_composition_gradient<Network::NUM_SPECIES + 1>(
+                rho, state[temperature], state, result.cv,
+                result.energy_composition_gradient);
+            result.cv = require_positive_cv(result.cv);
+        } else {
+            result.cv = require_positive_cv(eos.get_cv(rho, state[temperature], state));
+            burn_energy_composition_gradient<Network::NUM_SPECIES + 1>(
+                state, rho, eos, result.energy_composition_gradient);
+        }
         // At fixed rho: de/dt = cv*T' + sum_i e_Xi*X_i'. The network supplies
         // de/dt; subtract the EOS composition term before recovering T'.
         rhs[temperature] = (result.energy - composition_energy_rate<Network::NUM_SPECIES>(
@@ -315,11 +326,27 @@ namespace OdeMath
         const double inverse_cv = 1.0 / evaluated.cv;
         // The auxiliary integral is not a species or a thermodynamic input.
         double cv_gradient[physical_equations]{};
-        if (rhs[species] != 0.0)
-            burn_cv_gradient<physical_equations>(state, rho, eos, evaluated.cv, cv_gradient);
         double energy_hessian_action[physical_equations]{};
-        burn_energy_composition_hessian_action<physical_equations>(state, rho, eos, rhs,
-            evaluated.energy_composition_gradient, energy_hessian_action);
+        if constexpr (requires {
+            eos.template get_cv_gradient_and_energy_composition_hessian_action<physical_equations>(
+                rho, state[species], state, rhs,
+                cv_gradient, energy_hessian_action);
+        }) {
+            if (rhs[species] != 0.0) {
+                eos.template get_cv_gradient_and_energy_composition_hessian_action<physical_equations>(
+                    rho, state[species], state, rhs,
+                    cv_gradient, energy_hessian_action);
+            } else {
+                burn_energy_composition_hessian_action<physical_equations>(
+                    state, rho, eos, rhs,
+                    evaluated.energy_composition_gradient, energy_hessian_action);
+            }
+        } else {
+            if (rhs[species] != 0.0)
+                burn_cv_gradient<physical_equations>(state, rho, eos, evaluated.cv, cv_gradient);
+            burn_energy_composition_hessian_action<physical_equations>(state, rho, eos, rhs,
+                evaluated.energy_composition_gradient, energy_hessian_action);
+        }
         for (int i = 0; i < species; ++i) {
             matrix.set(i + 1, physical_equations, rhs_t[i]);
             arch::math::CompensatedSum composition_jacobian;

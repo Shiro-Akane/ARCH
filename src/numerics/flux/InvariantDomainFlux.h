@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <stdexcept>
+
 #include "numerics/flux/FluxFunctions.h"
 
 // Conservative convex limiting against a local Lax-Friedrichs bar state.
@@ -18,6 +20,32 @@
 // update is a convex combination of its mean and these admissible bar states.
 // This is a sufficient Euler invariant-domain condition, not a table-EOS theorem.
 namespace FluxAdmissibility {
+// A high-order face is a trial state. The final conservative limiter always
+// queries the unchanged owning cell means through the required EOS contract.
+template <class Eos>
+ARCH_INLINE auto candidate_eos(const Eos& eos)
+{
+    if constexpr (requires { eos.candidate_view(); }) return eos.candidate_view();
+    else return eos;
+}
+
+// Host tabular EOS raises on an out-of-table high-order trial. Convert only
+// that documented physics failure to a rejected candidate; leave every other
+// exception and all required mean-state queries untouched.
+template <class Compute>
+inline void compute_candidate(Compute&& compute, FluidVector& high,
+                              double* species_flux, int species)
+{
+    try {
+        compute();
+    } catch (const std::runtime_error&) {
+        high = FluidVector(arch::state::invalid(), 0.0, 0.0, 0.0,
+                           arch::state::invalid());
+        for (int s = 0; s < species; ++s)
+            species_flux[s] = arch::state::invalid();
+    }
+}
+
 /** Test the recovered conserved state against the shared admissible domain. */
 ARCH_INLINE bool valid(const FluidVector& state)
 { return arch::state::recover(state).status == arch::state::Status::valid; }

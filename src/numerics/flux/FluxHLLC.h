@@ -94,8 +94,9 @@ struct FluxHLLC
         double ut2_L = get_ut2(U_L, dir);
         double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
 
-        double p_L = eos.get_pressure(U_L, Xi_L);
         double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
+        double p_L, c_L;
+        calc_endpoint_thermo(U_L, e_L, Xi_L, eos, p_L, c_L);
 
         // Right
         double rho_R = U_R.rho;
@@ -104,16 +105,15 @@ struct FluxHLLC
         double ut2_R = get_ut2(U_R, dir);
         double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
 
-        double p_R = eos.get_pressure(U_R, Xi_R);
         double e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
+        double p_R, c_R;
+        calc_endpoint_thermo(U_R, e_R, Xi_R, eos, p_R, c_R);
 
         // 3. Physical Fluxes (F_L, F_R)
         FluidVector F_L = get_flux(U_L, p_L, dir);
         FluidVector F_R = get_flux(U_R, p_R, dir);
 
         // 4. Wave Speed Estimates (S_L, S_R, S_*)
-        double c_L = calc_sound_speed_thermo(rho_L, p_L, e_L, Xi_L, eos);
-        double c_R = calc_sound_speed_thermo(rho_R, p_R, e_R, Xi_R, eos);
         double H_L = (U_L.eng + p_L) / rho_L;
         double H_R = (U_R.eng + p_R) / rho_R;
 
@@ -234,9 +234,11 @@ struct FluxHLLC
                         FluidVector U_L, U_R;
                         AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
 
-                        compute_face_flux(
-                            U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                            0.0, flux_out[idx + stride], face_species_flux.data());
+                        FluxAdmissibility::compute_candidate([&] {
+                            compute_face_flux(
+                                U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                                0.0, flux_out[idx + stride], face_species_flux.data());
+                        }, flux_out[idx + stride], face_species_flux.data(), n_spec);
                         state.get_species_to_buffer(idx, Xi_L.data());
                         state.get_species_to_buffer(idx + stride, Xi_R.data());
                         FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),

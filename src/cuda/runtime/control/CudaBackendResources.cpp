@@ -63,32 +63,35 @@ DeviceLayoutGeneration issue_device_layout_generation()
     return {value};
 }
 
+// A rectangle is contiguous within each row and uses the padded stride_y
+// pitch, which may exceed total_x.  Copying with total_x as the pitch would
+// silently place later rows in the wrong cells. Interior slabs and each
+// disjoint ghost band cover precisely the original cells, with no overlap
+// at corners or coarse-fine boundaries.
 template <class Function>
-void for_each_region_segment(
+void for_each_region_rectangle(
     const DeviceGridView& grid, state::StateRegion region,
     Function&& function)
 {
     if (region != state::StateRegion::Interior
         && region != state::StateRegion::Ghost)
         throw std::invalid_argument("invalid state region");
+    const auto emit = [&](int i, int j, int k, int width, int height) {
+        if (width > 0 && height > 0)
+            function(grid.index(i, j, k), width, height);
+    };
     for (int k = 0; k < grid.total_z; ++k) {
-        for (int j = 0; j < grid.total_y; ++j) {
-            const bool active_row =
-                k >= grid.ks && k < grid.ke
-                && j >= grid.js && j < grid.je;
-            if (region == state::StateRegion::Interior) {
-                if (active_row)
-                    function(grid.index(grid.is, j, k), grid.ie - grid.is);
-            } else if (!active_row) {
-                function(grid.index(0, j, k), grid.total_x);
-            } else {
-                if (grid.is > 0)
-                    function(grid.index(0, j, k), grid.is);
-                if (grid.ie < grid.total_x) {
-                    function(
-                        grid.index(grid.ie, j, k), grid.total_x - grid.ie);
-                }
-            }
+        const bool active_plane = k >= grid.ks && k < grid.ke;
+        if (region == state::StateRegion::Interior) {
+            if (active_plane)
+                emit(grid.is, grid.js, k, grid.ie - grid.is, grid.je - grid.js);
+        } else if (!active_plane) {
+            emit(0, 0, k, grid.total_x, grid.total_y);
+        } else {
+            emit(0, 0, k, grid.total_x, grid.js);
+            emit(0, grid.je, k, grid.total_x, grid.total_y - grid.je);
+            emit(0, grid.js, k, grid.is, grid.je - grid.js);
+            emit(grid.ie, grid.js, k, grid.total_x - grid.ie, grid.je - grid.js);
         }
     }
 }
@@ -438,9 +441,24 @@ std::uint64_t CudaBlockRuntime::copy_host_device_region(
     const std::array<double*, 6> host_fields{
         host.rho, host.mom_u, host.mom_v, host.mom_w,
         host.eng, host.enuc_rate};
-    for_each_region_segment(grid, region, [&](int offset, int count) {
+    const std::size_t pitch =
+        static_cast<std::size_t>(grid.stride_y) * sizeof(double);
+    for_each_region_rectangle(grid, region, [&](int offset, int width, int height) {
         const std::size_t bytes =
-            static_cast<std::size_t>(count) * sizeof(double);
+            static_cast<std::size_t>(width) * sizeof(double);
+        const auto enqueue = [&](void* destination, const void* source) {
+            if (height == 1) {
+                check_cuda(cudaMemcpyAsync(
+                    destination, source, bytes, direction, stream),
+                    "enqueue state transfer");
+            } else {
+                check_cuda(cudaMemcpy2DAsync(
+                    destination, pitch, source, pitch, bytes,
+                    static_cast<std::size_t>(height), direction, stream),
+                    "enqueue state rectangle transfer");
+            }
+            copied += bytes * static_cast<std::size_t>(height);
+        };
         for (std::size_t field = 0; field < device_fields.size(); ++field) {
             void* destination = direction == cudaMemcpyHostToDevice
                 ? static_cast<void*>(device_fields[field] + offset)
@@ -448,10 +466,7 @@ std::uint64_t CudaBlockRuntime::copy_host_device_region(
             const void* source = direction == cudaMemcpyHostToDevice
                 ? static_cast<const void*>(host_fields[field] + offset)
                 : static_cast<const void*>(device_fields[field] + offset);
-            check_cuda(cudaMemcpyAsync(
-                           destination, source, bytes, direction, stream),
-                       "enqueue state transfer");
-            copied += bytes;
+            enqueue(destination, source);
         }
         for (int species = 0; species < device.n_species; ++species) {
             double* device_pointer = device.mass_fractions
@@ -466,10 +481,7 @@ std::uint64_t CudaBlockRuntime::copy_host_device_region(
             const void* source = direction == cudaMemcpyHostToDevice
                 ? static_cast<const void*>(host_pointer)
                 : static_cast<const void*>(device_pointer);
-            check_cuda(cudaMemcpyAsync(
-                           destination, source, bytes, direction, stream),
-                       "enqueue species transfer");
-            copied += bytes;
+            enqueue(destination, source);
         }
     });
     return copied;

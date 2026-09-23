@@ -1,4 +1,11 @@
-# Matched control for the user-archive FLASH 4.8 Cellular 2D case; gravity/diffusion off.
+# FLASH 4.8 archive Cellular-style 2D helium detonation on 64 x 32 cm.
+# Its local pocket/ignition extension was run in pure-He planar mode.
+# The same physical initial state and finest cell width are used by the O5
+# comparison; this is an ARCH self-consistent-temperature burn, whereas the
+# archived FLASH burner holds temperature fixed inside each burner call.
+# FLASH input eos_coulombMult=0 omits a Helm term retained here; use
+# eos_coulombMult=1 on FLASH for a closer initial EOS alignment.
+# See validation/gravity/flash/O5OptimizationReport.zh-CN.md.
 geometry=cartesian
 nblockx1=4
 nblockx2=2
@@ -23,17 +30,17 @@ regrid_interval=2
 refine_var=DENS
 refine_threshold=0.8
 derefine_threshold=0.2
-tmax=4e-7
-max_steps=20
+tmax=1.0187727288607583e-08
+max_steps=1000
 dt_init=1e-16
 dt_min=1e-20
 tstep_change_factor=2.0
-out_dir=output/flash_cellular_arch_control
+out_dir=output/cellular_flash_2d
 base_name=CellularMatched2D
 plt_dt=-1
-plt_dstep=20
+plt_dstep=1000
 chk_dt=-1
-chk_dstep=20
+chk_dstep=1000
 plt_variables=ALL
 restart=false
 eos_type=helmholtz
@@ -57,3 +64,5 @@ velxPerturb=9.5e8
 radiusPerturb=12.8
 noiseAmplitude=0
 shock_dir=0
+
+compute_backend=cpu

@@ -88,8 +88,9 @@ __device__ inline void hydro_face_kernel_work(
         FluxAdmissibility::limit_reconstruction(state.load(cell), left);
         FluxAdmissibility::limit_reconstruction(state.load(cell + stride), right);
         FluidVector face_flux;
+        const auto trial_eos = FluxAdmissibility::candidate_eos(eos);
         Flux::compute(
-            left, right, species_left, species_right, state.n_species, eos,
+            left, right, species_left, species_right, state.n_species, trial_eos,
             direction, coefficient, face_flux, face_species_flux);
         for (int species = 0; species < state.n_species; ++species) {
             species_left[species] = state.species(species, cell);

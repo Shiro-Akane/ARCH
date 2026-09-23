@@ -146,8 +146,9 @@ struct NetAprox13 : timmes::TimmesNetworkSupport<NetAprox13> {
             Scalar abar, zbar, z2bar, ye;
             timmes::composition_moments<Scalar, NUM_SPECIES>(
                 y, zion_values, abar, zbar, z2bar, ye);
-            timmes::screen_heavy_rates<RateIds>(
-                rate, temperature, rho, zbar, abar, z2bar);
+            const auto screening = timmes::make_screen5_state(
+                temperature, rho, zbar, abar, z2bar);
+            timmes::screen_heavy_rates<RateIds>(rate, screening);
             timmes::form_alpha_branch_ratios<true, RateIds, Scalar>(rate);
         }
     }

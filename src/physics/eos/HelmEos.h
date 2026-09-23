@@ -591,12 +591,42 @@ struct BasicHelmEosView {
         return sound_speed(U.rho, T, cv, d);
     }
 
-    template <int Equations>
-    ARCH_INLINE void get_energy_composition_gradient(
-        double rho, double T, const double* X, double* gradient) const {
-        double P, E;
+    // One strict inverse supplies the pressure and acoustic derivative of the
+    // SAME (rho,e,X) endpoint. The general-EOS c^2 = chi + P*kappa/rho^2
+    // is algebraically identical to the two scalar derivative getters below,
+    // but avoids repeating the Helm temperature inversion three times.
+    ARCH_INLINE void get_pressure_and_sound_speed(
+        double rho, double e, const double* Xi,
+        double& pressure, double& speed) const
+    {
+        const double T = get_temperature(rho, e, Xi);
+        if (!std::isfinite(T)) {
+            pressure = speed = arch::state::invalid();
+            return;
+        }
+        double energy, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        calc_thermo_with_cv(rho, T, Xi, pressure, energy, &cv, &d);
+        if (!(cv > 0.0) || !std::isfinite(pressure)) {
+            speed = arch::state::invalid();
+            return;
+        }
+        const double energy_density =
+            (pressure - T * d.pressure_temperature) / (rho * rho);
+        const double chi = d.pressure_density
+            - d.pressure_temperature * energy_density / cv;
+        const double kappa = d.pressure_temperature / cv;
+        speed = std::sqrt(chi + (kappa / rho) * (pressure / rho));
+    }
+
+    // All composition and heat-capacity derivatives below come from the
+    // same Helm state jet. The grouped burn queries evaluate that jet once
+    // per unchanged (rho,T,X) trial state, while the scalar entry points keep
+    // their existing public contract.
+    template <int Equations>
+    ARCH_INLINE void energy_composition_gradient_from_derivatives(
+        const ThermodynamicDerivatives& d, double* gradient) const
+    {
         for (int i = 0; i < Equations - 1; ++i) {
             const double inverse_a = i < specs.count ? 1.0 / specs.get_A(i) : 0.0;
             const double charge = i < specs.count && d.charge_active ? specs.get_Z(i) : 0.0;
@@ -605,11 +635,10 @@ struct BasicHelmEosView {
     }
 
     template <int Equations>
-    ARCH_INLINE void get_energy_composition_hessian_action(
-        double rho, double T, const double* X, const double* flow, double* action) const {
-        double P, E;
-        ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+    ARCH_INLINE void energy_composition_hessian_from_derivatives(
+        const ThermodynamicDerivatives& d, const double* flow,
+        double* action) const
+    {
         arch::math::CompensatedSum y_flow, z_flow;
         for (int i = 0; i < Equations - 1 && i < specs.count; ++i) {
             y_flow.add(flow[i] / specs.get_A(i));
@@ -626,16 +655,69 @@ struct BasicHelmEosView {
     }
 
     template <int Equations>
-    ARCH_INLINE void get_cv_gradient(double rho, double T, const double* X, double* gradient) const {
-        double P, E;
-        ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+    ARCH_INLINE void cv_gradient_from_derivatives(
+        const ThermodynamicDerivatives& d, double* gradient) const
+    {
         for (int i = 0; i < Equations - 1; ++i) {
             const double inverse_a = i < specs.count ? 1.0 / specs.get_A(i) : 0.0;
             const double charge = i < specs.count && d.charge_active ? specs.get_Z(i) : 0.0;
             gradient[i] = inverse_a * (d.cv_y + charge * d.cv_z);
         }
         gradient[Equations - 1] = d.cv_temperature;
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_cv_and_energy_composition_gradient(
+        double rho, double T, const double* X, double& cv,
+        double* gradient) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, &cv, &d);
+        energy_composition_gradient_from_derivatives<Equations>(d, gradient);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_cv_gradient_and_energy_composition_hessian_action(
+        double rho, double T, const double* X, const double* flow,
+        double* cv_gradient, double* action) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        cv_gradient_from_derivatives<Equations>(d, cv_gradient);
+        energy_composition_hessian_from_derivatives<Equations>(d, flow, action);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_gradient(
+        double rho, double T, const double* X, double* gradient) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        energy_composition_gradient_from_derivatives<Equations>(d, gradient);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_hessian_action(
+        double rho, double T, const double* X, const double* flow,
+        double* action) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        energy_composition_hessian_from_derivatives<Equations>(d, flow, action);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_cv_gradient(
+        double rho, double T, const double* X, double* gradient) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        cv_gradient_from_derivatives<Equations>(d, gradient);
     }
 
     ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double* Xi) const {

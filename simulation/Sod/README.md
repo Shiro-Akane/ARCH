@@ -7,6 +7,8 @@ contacts and rarefactions through the common hydro driver.
 - [Sod_beginner.par](Sod_beginner.par): small introductory case used by the
   [simulation guide](../../docs/guides/SimulationCase.md).
 - [Sod.par](Sod.par): reusable standard example.
+- [SodFlash1D.par](SodFlash1D.par): 256-cell input used for the
+  [FLASH 4.8 comparison](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md).
 - [Hydro validation](../../validation/hydro/README.md): reference solution,
   convergence inputs and measured results.
 

@@ -1,4 +1,4 @@
-# Matched 3D control for the original FLASH 4.8 Cellular case; gravity/diffusion off.
+# Matched 3D control for the user-archive FLASH 4.8 Cellular case; gravity/diffusion off.
 geometry=cartesian
 nblockx1=4
 nblockx2=2

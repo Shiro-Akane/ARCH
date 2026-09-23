@@ -137,8 +137,10 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
         for (int i = 0; i < NUM_SPECIES; ++i) zion_values[i] = zion(i);
         timmes::composition_moments<Scalar, NUM_SPECIES>(
             y, zion_values, abar, zbar, z2bar, ye);
+        const auto screening = timmes::make_screen5_state(
+            temperature, rho, zbar, abar, z2bar);
         auto screen = [&](double z1, double a1, double z2, double a2) {
-            return timmes::screen5(temperature, rho, zbar, abar, z2bar, z1, a1, z2, a2);
+            return timmes::screen5(screening, z1, a1, z2, a2);
         };
 
         rate[ir3a] *= screen(2.0, 4.0, 2.0, 4.0) * screen(2.0, 4.0, 4.0, 8.0);

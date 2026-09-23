@@ -110,6 +110,18 @@ struct CudaPpmReconstruction
         PPMReconstruction::reconstruct_eos(
             rho, velocity_x, velocity_y, velocity_z, pressure,
             species_left, species_right, eos, left, right);
+        // Match the CPU fallback exactly, including material composition.
+        // Stencil and final endpoint pressure queries remain checked.
+        if (!std::isfinite(left.eng)) {
+            left = state.load(cell);
+            for (int species = 0; species < state.n_species; ++species)
+                species_left[species] = state.species(species, cell);
+        }
+        if (!std::isfinite(right.eng)) {
+            right = state.load(cell + stride);
+            for (int species = 0; species < state.n_species; ++species)
+                species_right[species] = state.species(species, cell + stride);
+        }
     }
 };
 } // namespace arch::cuda

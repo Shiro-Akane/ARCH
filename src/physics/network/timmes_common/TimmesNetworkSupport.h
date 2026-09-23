@@ -98,36 +98,65 @@ struct TimmesNetworkSupport {
                                         double* denuc_dX = nullptr)
     {
         constexpr int N = Derived::NUM_SPECIES;
-        using AD = Dual<N>;
-        AD y[N];
-        AD dydt[N];
-        for (int i = 0; i < N; ++i) {
-            AD x = AD::variable(state[i], i);
-            y[i] = clamp_by_value(x / Derived::aion(i), 1.0e-30, 1.0);
-        }
-        // Timmes' dfdy_isotopes_* differentiates the abundance algebra and
-        // explicit equilibrium closures while holding screened base rates
-        // fixed.  In particular, it does not differentiate the screening
-        // factor through abar/zbar/z2bar.
-        Derived::template molar_rhs_frozen_screening<AD>(
-            y, rho, eta, state[N], dydt);
-        for (int i = 0; i < N; ++i) {
-            const AD dXdt = dydt[i] * Derived::aion(i);
-#pragma omp simd
+        // Timmes' dfdy_isotopes_* holds screened base rates fixed while
+        // differentiating abundance algebra and equilibrium closures. Reuse
+        // the already present generated molar Jacobian when the network has
+        // one; iso7 retains the generic Dual path below.
+        if constexpr (requires(const double* y, double* rhs, double* derivatives) {
+            Derived::molar_rhs_jacobian_frozen_screening(
+                y, rho, eta, state[N], rhs, derivatives);
+        }) {
+            double y[N], dydt[N], molar_jacobian[N * N];
+            double dy_dX[N];
             for (int j = 0; j < N; ++j) {
-                jac.set(i + 1, j + 1, dXdt.deriv[j]);
+                const double raw = state[j] / Derived::aion(j);
+                y[j] = clamp_by_value(raw, 1.0e-30, 1.0);
+                // clamp_by_value returns a constant only OUTSIDE the closed
+                // interval. At an exact endpoint its derivative remains 1/A.
+                dy_dX[j] = (raw < 1.0e-30 || raw > 1.0)
+                           ? 0.0 : 1.0 / Derived::aion(j);
             }
-        }
-
-        if (denuc_dX != nullptr) {
-            for (int j = 0; j < N; ++j) {
-                arch::math::CompensatedSum mass_sum;
-                for (int i = 0; i < N; ++i) {
-                    mass_sum.add(
-                        dydt[i].deriv[j] * Derived::energy_weight(i));
+            Derived::molar_rhs_jacobian_frozen_screening(
+                y, rho, eta, state[N], dydt, molar_jacobian);
+            for (int i = 0; i < N; ++i) {
+                const double aion = Derived::aion(i);
+                for (int j = 0; j < N; ++j)
+                    jac.set(i + 1, j + 1,
+                            aion * molar_jacobian[i * N + j] * dy_dX[j]);
+            }
+            if (denuc_dX != nullptr) {
+                for (int j = 0; j < N; ++j) {
+                    arch::math::CompensatedSum mass_sum;
+                    for (int i = 0; i < N; ++i)
+                        mass_sum.add((molar_jacobian[i * N + j] * dy_dX[j])
+                                     * Derived::energy_weight(i));
+                    denuc_dX[j] = Derived::ENERGY_CONVERSION
+                                * mass_sum.value();
                 }
-                denuc_dX[j] = Derived::ENERGY_CONVERSION
-                            * mass_sum.value();
+            }
+        } else {
+            using AD = Dual<N>;
+            AD y[N];
+            AD dydt[N];
+            for (int i = 0; i < N; ++i) {
+                AD x = AD::variable(state[i], i);
+                y[i] = clamp_by_value(x / Derived::aion(i), 1.0e-30, 1.0);
+            }
+            Derived::template molar_rhs_frozen_screening<AD>(
+                y, rho, eta, state[N], dydt);
+            for (int i = 0; i < N; ++i) {
+                const AD dXdt = dydt[i] * Derived::aion(i);
+#pragma omp simd
+                for (int j = 0; j < N; ++j)
+                    jac.set(i + 1, j + 1, dXdt.deriv[j]);
+            }
+            if (denuc_dX != nullptr) {
+                for (int j = 0; j < N; ++j) {
+                    arch::math::CompensatedSum mass_sum;
+                    for (int i = 0; i < N; ++i)
+                        mass_sum.add(dydt[i].deriv[j] * Derived::energy_weight(i));
+                    denuc_dX[j] = Derived::ENERGY_CONVERSION * mass_sum.value();
+                }
             }
         }
     }

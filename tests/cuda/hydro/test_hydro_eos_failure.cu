@@ -38,16 +38,23 @@ template<class T> struct Buffer {
     Buffer& operator=(const Buffer&) = delete;
 };
 
-enum class Fault { None, GhostPressure, NegativeFinitePressure, FaceEnergy, FaceDerivative, GeometryPressure };
+enum class Fault { None, GhostPressure, NegativeFinitePressure, FaceEnergy, FaceDerivative, GeometryPressure, RoeCross, TrialPressure };
 struct ProbeEos : IdealGasView {
     Fault fault = Fault::None;
     ARCH_INLINE double get_pressure(const FluidVector& value, const double* x) const
     {
         if ((fault == Fault::GhostPressure && value.rho == 2.0)
+            || (fault == Fault::TrialPressure && value.rho == 1.5)
             || fault == Fault::GeometryPressure)
             return std::numeric_limits<double>::quiet_NaN();
         if (fault == Fault::NegativeFinitePressure) return -1.0;
         return IdealGasView::get_pressure(value, x);
+    }
+    ARCH_INLINE double get_pressure_from_rho_e(double rho, double energy, const double* x) const
+    {
+        if (fault == Fault::RoeCross && rho == 2.0 && energy == 1.0)
+            return std::numeric_limits<double>::quiet_NaN();
+        return IdealGasView::get_pressure_from_rho_e(rho, energy, x);
     }
     ARCH_INLINE double get_total_energy_primitive(
         double rho, double u, double v, double w, double pressure, const double* x) const
@@ -66,15 +73,15 @@ struct LeafResult {
     FluidVector left{}, right{}, plain_left{}, plain_right{};
     FluidVector geometric{}, plain_geometric{}, flux{};
     double floored_pressure = 0.0, valid_after_failure = 0.0;
+
     int status_after_operation = 0, status_after_valid_query = 0;
 };
 
-__global__ void leaf_kernel(Fault fault, int* status, LeafResult* result)
+__global__ void leaf_kernel(Fault fault, int* status, double* storage, LeafResult* result)
 {
     // A six-cell PPM stencil, with the far-left (ghost) cell distinguishable
     // from the two reconstructed interior states. No out-of-bounds fixture.
     constexpr int cells = 6;
-    double storage[6 * cells]{};
     arch::cuda::DeviceStateView state{storage, storage + cells, storage + 2 * cells,
         storage + 3 * cells, storage + 4 * cells, storage + 5 * cells,
         nullptr, cells, 0};
@@ -140,22 +147,23 @@ void test_hydro_leaves()
 {
     Buffer<int> status(1);
     Buffer<LeafResult> output(1);
+    Buffer<double> state(6 * 6);
     for (const auto fault : {Fault::None, Fault::GhostPressure, Fault::NegativeFinitePressure,
                             Fault::FaceEnergy, Fault::FaceDerivative, Fault::GeometryPressure}) {
         check(cudaMemset(status.data, 0, sizeof(int)));
         check(cudaMemset(output.data, 0, sizeof(LeafResult)));
-        leaf_kernel<<<1, 1>>>(fault, status.data, output.data);
+        leaf_kernel<<<1, 1>>>(fault, status.data, state.data, output.data);
         check(cudaGetLastError());
         LeafResult result;
         int final_status = -1;
         check(cudaMemcpy(&result, output.data, sizeof(result), cudaMemcpyDeviceToHost));
         check(cudaMemcpy(&final_status, status.data, sizeof(final_status), cudaMemcpyDeviceToHost));
-        const bool valid = fault == Fault::None;
+        const bool valid = fault == Fault::None || fault == Fault::FaceEnergy;
         require(result.status_after_operation == (valid ? 0 : 1)
             && result.status_after_valid_query == (valid ? 0 : 1)
             && final_status == (valid ? 0 : 1), "Hydro EOS failure was missed or cleared by a valid query");
         require(std::isfinite(result.valid_after_failure), "Valid control EOS returned nonfinite pressure");
-        if (valid) {
+        if (fault == Fault::None) {
             require(equal_bits(result.left, result.plain_left)
                 && equal_bits(result.right, result.plain_right)
                 && equal_bits(result.geometric, result.plain_geometric),
@@ -164,15 +172,105 @@ void test_hydro_leaves()
         if (fault == Fault::GhostPressure)
             require(result.floored_pressure == 1.0e-13,
                 "Test-only finite recovery erased a latched ghost EOS failure");
-        if (fault == Fault::NegativeFinitePressure)
-            require(std::isnan(result.left.eng) && std::isnan(result.right.eng),
-                    "Negative pressure was silently turned into a physical face");
         if (fault == Fault::FaceEnergy)
-            require(std::isnan(result.left.eng) && std::isnan(result.right.eng),
-                    "Reconstructed-face EOS failure fixture did not fire");
+            require(result.left.eng == 2.5 && result.right.eng == 2.5,
+                    "PPM optional face inversion did not restore valid owning means");
         if (fault == Fault::GeometryPressure)
             require(std::isnan(result.geometric.mom_u), "Geometric-stage EOS failure fixture did not fire");
     }
+}
+
+struct RoeProbeResult {
+    FluidVector hll{}, hllc{}, roe{};
+    int after_hll = -1, after_hllc = -1, after_roe = -1, after_required = -1;
+};
+
+// The endpoints are valid; only the rectangular Roe state (rho_L,e_R) is
+// unavailable. HLL/HLLC must use endpoint wave speeds and Roe must yield to
+// the conservative low-order limiter without poisoning the CUDA stage.
+__global__ void roe_optional_kernel(int* status, RoeProbeResult* result)
+{
+    ProbeEos eos;
+    eos.fault = Fault::RoeCross;
+    const auto checked = arch::cuda::make_checked_hydro_eos(eos, status);
+    const FluidVector left{2.0, 0.0, 0.0, 0.0, 8.0};
+    const FluidVector right{1.0, 0.0, 0.0, 0.0, 1.0};
+    double species_flux[1]{};
+    FluxHLL<PCMReconstruction>::compute_face_flux(left, right, nullptr, nullptr,
+        0, checked, 0, 0.1, result->hll, species_flux);
+    result->after_hll = *status;
+    FluxHLLC<PCMReconstruction>::compute_face_flux(left, right, nullptr, nullptr,
+        0, checked, 0, 0.1, result->hllc, species_flux);
+    result->after_hllc = *status;
+    FluxRoe<PCMReconstruction>::compute_face_flux(left, right, nullptr, nullptr,
+        0, checked, 0, 0.1, result->roe, species_flux);
+    FluxAdmissibility::limit_face(left, right, nullptr, nullptr, 0, checked,
+        0, result->roe, species_flux);
+    result->after_roe = *status;
+    static_cast<void>(checked.get_pressure_from_rho_e(2.0, 1.0, nullptr));
+    result->after_required = *status;
+}
+
+void test_roe_optional_recovery()
+{
+    Buffer<int> status(1);
+    Buffer<RoeProbeResult> output(1);
+    check(cudaMemset(status.data, 0, sizeof(int)));
+    roe_optional_kernel<<<1, 1>>>(status.data, output.data);
+    check(cudaGetLastError());
+    RoeProbeResult result;
+    check(cudaMemcpy(&result, output.data, sizeof(result), cudaMemcpyDeviceToHost));
+    require(result.after_hll == 0 && result.after_hllc == 0
+        && result.after_roe == 0 && result.after_required == 1,
+        "Optional Roe failure and required EOS failure crossed ownership boundaries");
+    require(std::isfinite(result.hll.eng) && std::isfinite(result.hllc.eng)
+        && std::isfinite(result.roe.eng),
+        "Roe auxiliary probe did not recover finite conservative face fluxes");
+}
+
+struct TrialFaceResult {
+    FluidVector high{}, final_flux{};
+    int after_candidate = -1, after_limiter = -1, after_required = -1;
+};
+
+// Invalid thermodynamics in a high-order face must select the conservative
+// mean-state flux. A required query of the same invalid state still rejects.
+__global__ void trial_face_kernel(int* status, TrialFaceResult* result)
+{
+    ProbeEos eos;
+    eos.fault = Fault::TrialPressure;
+    const auto checked = arch::cuda::make_checked_hydro_eos(eos, status);
+    const auto trial = FluxAdmissibility::candidate_eos(checked);
+    const FluidVector mean_left{1.0, 0.0, 0.0, 0.0, 2.5};
+    const FluidVector mean_right{2.0, 0.0, 0.0, 0.0, 5.0};
+    const FluidVector face{1.5, 0.0, 0.0, 0.0, 3.75};
+    double species_flux[1]{};
+    FluxHLLC<PCMReconstruction>::compute_face_flux(face, face, nullptr, nullptr,
+        0, trial, 0, 0.0, result->high, species_flux);
+    result->after_candidate = *status;
+    result->final_flux = result->high;
+    FluxAdmissibility::limit_face(mean_left, mean_right, nullptr, nullptr, 0,
+        checked, 0, result->final_flux, species_flux);
+    result->after_limiter = *status;
+    static_cast<void>(checked.get_pressure(face, nullptr));
+    result->after_required = *status;
+}
+
+void test_trial_face_recovery()
+{
+    Buffer<int> status(1);
+    Buffer<TrialFaceResult> output(1);
+    check(cudaMemset(status.data, 0, sizeof(int)));
+    trial_face_kernel<<<1, 1>>>(status.data, output.data);
+    check(cudaGetLastError());
+    TrialFaceResult result;
+    check(cudaMemcpy(&result, output.data, sizeof(result), cudaMemcpyDeviceToHost));
+    require(result.after_candidate == 0 && result.after_limiter == 0
+        && result.after_required == 1,
+        "Recoverable high-order face failure contaminated required EOS status");
+    require(std::isfinite(result.final_flux.rho)
+        && std::isfinite(result.final_flux.eng),
+        "Conservative mean-state fallback did not produce a finite face flux");
 }
 
 void test_host_exception_contract()
@@ -344,6 +442,8 @@ int main()
     }
     try {
         test_hydro_leaves();
+        test_roe_optional_recovery();
+        test_trial_face_recovery();
         test_cfl_reducer_latch();
         test_tabular_leaves();
         std::cout << "Hydro checked-EOS ghost/PPM/face/geometry/Tabular sticky failure controls passed\n";

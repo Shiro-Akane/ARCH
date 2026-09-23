@@ -118,9 +118,11 @@ struct FluxSW
                         FluidVector U_L, U_R;
                         AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
 
-                        compute_face_flux(
-                            U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                            smoothing_coeff, flux_out[idx + stride], face_species_flux.data());
+                        FluxAdmissibility::compute_candidate([&] {
+                            compute_face_flux(
+                                U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                                smoothing_coeff, flux_out[idx + stride], face_species_flux.data());
+                        }, flux_out[idx + stride], face_species_flux.data(), n_spec);
                         state.get_species_to_buffer(idx, Xi_L.data());
                         state.get_species_to_buffer(idx + stride, Xi_R.data());
                         FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),

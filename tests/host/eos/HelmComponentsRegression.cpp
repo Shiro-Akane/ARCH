@@ -188,6 +188,66 @@ void actual_table(const char* path)
                 && std::isnan(eos.get_temperature(rho,maximum+std::abs(maximum)*1e-8,fractions)),
                 "Helm inverse accepted target outside source bounds");
     }
+    // A hydro endpoint now recovers pressure and sound speed from one strict
+    // inverse. Match the original scalar derivative identity across the
+    // degenerate and radiation-dominated portions of the source table.
+    for (double rho : {1e-4, 1.0, 1e6, 1e9}) {
+        for (double T : {1e5, 1e8, 1e10}) {
+            const double energy = eos.get_eint_from_T(rho, T, fractions);
+            const double old_pressure = eos.get_pressure_from_rho_e(
+                rho, energy, fractions);
+            const double chi = eos.get_dp_drho_e(rho, energy, fractions);
+            const double kappa = eos.get_dp_de_rho(rho, energy, fractions);
+            const double old_speed =
+                std::sqrt(chi + (kappa / rho) * (old_pressure / rho));
+            double pressure = 0.0, speed = 0.0;
+            eos.get_pressure_and_sound_speed(
+                rho, energy, fractions, pressure, speed);
+            close(pressure, old_pressure, 1e-12,
+                  "grouped Helm endpoint pressure");
+            close(speed, old_speed, 1e-12,
+                  "grouped Helm endpoint sound speed");
+        }
+        const double minimum = eos.get_eint_from_T(rho, 1e3, fractions);
+        const double below = minimum - std::abs(minimum) * 1e-8;
+        double pressure = 0.0, speed = 0.0;
+        eos.get_pressure_and_sound_speed(
+            rho, below, fractions, pressure, speed);
+        require(std::isnan(pressure) && std::isnan(speed),
+                "grouped Helm endpoint crossed the strict source domain");
+    }
+    // Burn's first-law RHS and Jacobian must see the same derivatives as
+    // the independent scalar Helm queries, including degenerate states.
+    for (double rho : {1e-4, 1e6, 1e9}) {
+        for (double T : {1e8, 1e10}) {
+            double scalar_gradient[2]{}, grouped_gradient[2]{};
+            const double scalar_cv = eos.get_cv(rho, T, fractions);
+            eos.get_energy_composition_gradient<3>(
+                rho, T, fractions, scalar_gradient);
+            double grouped_cv = 0.0;
+            eos.get_cv_and_energy_composition_gradient<3>(
+                rho, T, fractions, grouped_cv, grouped_gradient);
+            close(grouped_cv, scalar_cv, 1e-15, "grouped burn heat capacity");
+            for (int i = 0; i < 2; ++i)
+                close(grouped_gradient[i], scalar_gradient[i], 1e-15,
+                      "grouped burn energy-composition gradient");
+            const double flow[]{0.01, -0.02};
+            double scalar_cv_gradient[3]{}, grouped_cv_gradient[3]{};
+            double scalar_hessian[3]{}, grouped_hessian[3]{};
+            eos.get_cv_gradient<3>(rho, T, fractions, scalar_cv_gradient);
+            eos.get_energy_composition_hessian_action<3>(
+                rho, T, fractions, flow, scalar_hessian);
+            eos.get_cv_gradient_and_energy_composition_hessian_action<3>(
+                rho, T, fractions, flow,
+                grouped_cv_gradient, grouped_hessian);
+            for (int i = 0; i < 3; ++i) {
+                close(grouped_cv_gradient[i], scalar_cv_gradient[i], 1e-15,
+                      "grouped burn heat-capacity gradient");
+                close(grouped_hessian[i], scalar_hessian[i], 1e-15,
+                      "grouped burn energy Hessian action");
+            }
+        }
+    }
     boundaries(eos);
 }
 } // namespace

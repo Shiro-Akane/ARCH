@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 #include <utility>
 
 #include "numerics/reconstruction/Limiters.h"
@@ -15,6 +16,27 @@
 #include "numerics/state/StateAdmissibility.h"
 
 namespace ReconstructionMath {
+// A reconstructed primitive face is a trial state. If its EOS inverse is
+// outside the physical table, the owner publishes its original cell mean
+// and matching composition. Required stencil/mean queries remain strict.
+template <class Eos>
+ARCH_INLINE double probe_face_energy(const Eos& eos, double rho, double u,
+    double v, double w, double pressure, const double* x)
+{
+#if defined(__CUDA_ARCH__)
+    if constexpr (requires { eos.probe_total_energy_primitive(rho, u, v, w, pressure, x); })
+        return eos.probe_total_energy_primitive(rho, u, v, w, pressure, x);
+    return eos.get_total_energy_primitive(rho, u, v, w, pressure, x);
+#else
+    try {
+        if constexpr (requires { eos.probe_total_energy_primitive(rho, u, v, w, pressure, x); })
+            return eos.probe_total_energy_primitive(rho, u, v, w, pressure, x);
+        return eos.get_total_energy_primitive(rho, u, v, w, pressure, x);
+    } catch (const std::runtime_error&) {
+        return arch::state::invalid();
+    }
+#endif
+}
 // One simplex normalization for all reconstructed face compositions. Applying
 // independent nonlinear limiters does not preserve sum(X)=1 even when all
 // stencil cells are normalized. The Riemann species flux must sum to the mass
@@ -380,16 +402,16 @@ public:
         left.mom_u = rho_left * face_velocity_x[0];
         left.mom_v = rho_left * face_velocity_y[0];
         left.mom_w = rho_left * face_velocity_z[0];
-        left.eng = eos.get_total_energy_primitive(
-            rho_left, face_velocity_x[0], face_velocity_y[0],
+        left.eng = ReconstructionMath::probe_face_energy(
+            eos, rho_left, face_velocity_x[0], face_velocity_y[0],
             face_velocity_z[0], pressure_left, X_left);
 
         right.rho = rho_right;
         right.mom_u = rho_right * face_velocity_x[1];
         right.mom_v = rho_right * face_velocity_y[1];
         right.mom_w = rho_right * face_velocity_z[1];
-        right.eng = eos.get_total_energy_primitive(
-            rho_right, face_velocity_x[1], face_velocity_y[1],
+        right.eng = ReconstructionMath::probe_face_energy(
+            eos, rho_right, face_velocity_x[1], face_velocity_y[1],
             face_velocity_z[1], pressure_right, X_right);
     }
 
@@ -484,7 +506,7 @@ public:
     template <typename EosType>
     static std::pair<FluidVector, FluidVector> run_eos(
         const FluidState &state, const EosType &eos, int i, int n_spec,
-        const double *X_left, const double *X_right, double *X_cell,
+        double *X_left, double *X_right, double *X_cell,
         int stride = 1)
     {
         const int indices[6] = {
@@ -507,6 +529,19 @@ public:
         reconstruct_eos(
             rho, velocity_x, velocity_y, velocity_z, pressure,
             X_left, X_right, eos, left, right);
+        // The first-order fallback is the owning conserved cell average.
+        // Restore its composition at the same time: an EOS-valid mean with
+        // reconstructed X could otherwise leave the material table domain.
+        if (!std::isfinite(left.eng)) {
+            left = state.get(i);
+            for (int species = 0; species < n_spec; ++species)
+                X_left[species] = state.X(species, i);
+        }
+        if (!std::isfinite(right.eng)) {
+            right = state.get(i + stride);
+            for (int species = 0; species < n_spec; ++species)
+                X_right[species] = state.X(species, i + stride);
+        }
         return {left, right};
     }
 

@@ -14,10 +14,69 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 #include <vector>
 
 #include "data/FluidState.h"
 #include "numerics/state/StateAdmissibility.h"
+
+// Roe's rectangular EOS states are auxiliary probes, not physical endpoints.
+// Tabular Host queries may throw and Device queries return NaN. Both select
+// the same documented two-wave or low-order fallback. Required queries remain
+// strict and never pass through this boundary.
+template <class Eos>
+ARCH_INLINE double probe_roe_pressure(const Eos& eos, double rho, double energy, const double* x)
+{
+#if defined(__CUDA_ARCH__)
+    if constexpr (requires { eos.probe_pressure_from_rho_e(rho, energy, x); })
+        return eos.probe_pressure_from_rho_e(rho, energy, x);
+    return eos.get_pressure_from_rho_e(rho, energy, x);
+#else
+    try {
+        if constexpr (requires { eos.probe_pressure_from_rho_e(rho, energy, x); })
+            return eos.probe_pressure_from_rho_e(rho, energy, x);
+        return eos.get_pressure_from_rho_e(rho, energy, x);
+    } catch (const std::runtime_error&) {
+        return arch::state::invalid();
+    }
+#endif
+}
+
+template <class Eos>
+ARCH_INLINE double probe_roe_dp_drho_e(const Eos& eos, double rho, double energy, const double* x)
+{
+#if defined(__CUDA_ARCH__)
+    if constexpr (requires { eos.probe_dp_drho_e(rho, energy, x); })
+        return eos.probe_dp_drho_e(rho, energy, x);
+    return eos.get_dp_drho_e(rho, energy, x);
+#else
+    try {
+        if constexpr (requires { eos.probe_dp_drho_e(rho, energy, x); })
+            return eos.probe_dp_drho_e(rho, energy, x);
+        return eos.get_dp_drho_e(rho, energy, x);
+    } catch (const std::runtime_error&) {
+        return arch::state::invalid();
+    }
+#endif
+}
+
+template <class Eos>
+ARCH_INLINE double probe_roe_dp_de_rho(const Eos& eos, double rho, double energy, const double* x)
+{
+#if defined(__CUDA_ARCH__)
+    if constexpr (requires { eos.probe_dp_de_rho(rho, energy, x); })
+        return eos.probe_dp_de_rho(rho, energy, x);
+    return eos.get_dp_de_rho(rho, energy, x);
+#else
+    try {
+        if constexpr (requires { eos.probe_dp_de_rho(rho, energy, x); })
+            return eos.probe_dp_de_rho(rho, energy, x);
+        return eos.get_dp_de_rho(rho, energy, x);
+    } catch (const std::runtime_error&) {
+        return arch::state::invalid();
+    }
+#endif
+}
 
 // Direction map: dir=0, 1, and 2 select the stored native momentum axes.
 // Flux formulas use local orthonormal normal/tangential components and map
@@ -388,11 +447,16 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
         Xi_avg = Xi_scratch;
     }
     const double p_ll = same_composition ? P_L
-        : eos.get_pressure_from_rho_e(rho_L, e_L, Xi_avg);
+        : probe_roe_pressure(eos, rho_L, e_L, Xi_avg);
     const double p_rr = same_composition ? P_R
-        : eos.get_pressure_from_rho_e(rho_R, e_R, Xi_avg);
-    const double p_rl = eos.get_pressure_from_rho_e(rho_R, e_L, Xi_avg);
-    const double p_lr = eos.get_pressure_from_rho_e(rho_L, e_R, Xi_avg);
+        : probe_roe_pressure(eos, rho_R, e_R, Xi_avg);
+    const double p_rl = probe_roe_pressure(eos, rho_R, e_L, Xi_avg);
+    const double p_lr = probe_roe_pressure(eos, rho_L, e_R, Xi_avg);
+    if (!std::isfinite(p_ll) || !std::isfinite(p_rr)
+        || !std::isfinite(p_rl) || !std::isfinite(p_lr)) {
+        res.c_hat = arch::state::invalid();
+        return res;
+    }
 
     // Both rectangular paths reproduce the fixed-mixture pressure jump.
     // Weight the e_L path by sqrt(rho_L), the e_R path by sqrt(rho_R).
@@ -414,8 +478,8 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     }
     else
     {
-        res.chi = (sq_rho_L * eos.get_dp_drho_e(rho_L, e_L, Xi_avg)
-                 + sq_rho_R * eos.get_dp_drho_e(rho_R, e_R, Xi_avg)) * inv_denom;
+        res.chi = (sq_rho_L * probe_roe_dp_drho_e(eos, rho_L, e_L, Xi_avg)
+                 + sq_rho_R * probe_roe_dp_drho_e(eos, rho_R, e_R, Xi_avg)) * inv_denom;
     }
 
     // kappa=(∂p/∂e)_rho. Pressure subtraction loses relative precision when
@@ -434,8 +498,8 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     }
     else
     {
-        res.kappa = (sq_rho_L * eos.get_dp_de_rho(rho_R, e_R, Xi_avg)
-                   + sq_rho_R * eos.get_dp_de_rho(rho_L, e_L, Xi_avg)) * inv_denom;
+        res.kappa = (sq_rho_L * probe_roe_dp_de_rho(eos, rho_R, e_R, Xi_avg)
+                   + sq_rho_R * probe_roe_dp_de_rho(eos, rho_L, e_L, Xi_avg)) * inv_denom;
     }
 
 
@@ -564,6 +628,26 @@ ARCH_INLINE double calc_sound_speed_thermo(
     double c2 = chi + term2;
 
     return std::sqrt(c2);
+}
+
+// Reuse a physical EOS endpoint evaluation where the view exposes a grouped
+// pressure/acoustic query. Other EOS models retain their original scalar path.
+template <class Eos>
+ARCH_INLINE void calc_endpoint_thermo(
+    const FluidVector& state, double energy, const double* composition,
+    const Eos& eos, double& pressure, double& sound_speed)
+{
+    if constexpr (requires {
+        eos.get_pressure_and_sound_speed(
+            state.rho, energy, composition, pressure, sound_speed);
+    }) {
+        eos.get_pressure_and_sound_speed(
+            state.rho, energy, composition, pressure, sound_speed);
+    } else {
+        pressure = eos.get_pressure(state, composition);
+        sound_speed = calc_sound_speed_thermo(
+            state.rho, pressure, energy, composition, eos);
+    }
 }
 
 /**

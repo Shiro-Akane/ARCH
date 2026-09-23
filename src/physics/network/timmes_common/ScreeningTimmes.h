@@ -9,13 +9,36 @@
 
 namespace timmes {
 
-// Timmes screen5, public_aprox21.f90:7602.  Scalar can carry either
-// composition derivatives or the analytic temperature derivative.  Keeping
-// temperature in the same scalar path restores the original screening
-// contribution to drate/dT instead of recovering it with a finite difference.
+// Timmes screen5, public_aprox21.f90:7602. The following state factors depend
+// on the same (T,rho,abar,zbar,z2bar) for every reaction pair in one rate
+// evaluation. Scalar retains the full temperature derivative when needed.
 template <typename Scalar>
-TIMMES_HD inline Scalar screen5(const Scalar& temp, double den,
-                      const Scalar& zbar, const Scalar& abar, const Scalar& z2bar,
+struct Screen5State {
+    Scalar qlam0z, taufac, gamp;
+};
+
+/** Form the common screen5 factors once for one trial thermodynamic state. */
+template <typename Scalar>
+TIMMES_HD inline Screen5State<Scalar> make_screen5_state(
+    const Scalar& temp, double den, const Scalar& zbar,
+    const Scalar& abar, const Scalar& z2bar)
+{
+    constexpr double x13 = 1.0 / 3.0;
+    constexpr double co2 = x13 * 4.248719e3;
+    const Scalar ytot = 1.0 / abar;
+    const Scalar rr_density = den * ytot;
+    const Scalar tempi = 1.0 / temp;
+    const Scalar pp = sqrt_value(rr_density * tempi * (z2bar + zbar));
+    const Scalar qlam0z = 1.88e8 * tempi * pp;
+    const Scalar taufac = co2 * pow_value(tempi, x13);
+    const Scalar xni = pow_value(rr_density * zbar, x13);
+    const Scalar gamp = 2.27493e5 * tempi * xni;
+    return {qlam0z, taufac, gamp};
+}
+
+/** Evaluate one reaction-pair screen factor with the original Timmes branches. */
+template <typename Scalar>
+TIMMES_HD inline Scalar screen5(const Screen5State<Scalar>& state,
                       double z1, double a1, double z2, double a2)
 {
     constexpr double x13 = 1.0 / 3.0;
@@ -24,7 +47,6 @@ TIMMES_HD inline Scalar screen5(const Scalar& temp, double den,
     constexpr double x532 = 5.0 / 32.0;
     constexpr double x512 = 5.0 / 12.0;
     constexpr double fact = 1.25992104989487;
-    constexpr double co2 = x13 * 4.248719e3;
     constexpr double gamefx = 0.1;
     constexpr double gamefs = 0.4;
     constexpr double dgamma = 1.0 / (gamefs - gamefx);
@@ -36,14 +58,9 @@ TIMMES_HD inline Scalar screen5(const Scalar& temp, double den,
     const double lzav = x53 * std::log(z1 * z2 / (z1 + z2));
     const double aznut = std::pow(z1 * z1 * z2 * z2 * a1 * a2 / (a1 + a2), x13);
 
-    const Scalar ytot = 1.0 / abar;
-    const Scalar rr_density = den * ytot;
-    const Scalar tempi = 1.0 / temp;
-    const Scalar pp = sqrt_value(rr_density * tempi * (z2bar + zbar));
-    const Scalar qlam0z = 1.88e8 * tempi * pp;
-    const Scalar taufac = co2 * pow_value(tempi, x13);
-    const Scalar xni = pow_value(rr_density * zbar, x13);
-    Scalar gamp = 2.27493e5 * tempi * xni;
+    const Scalar qlam0z = state.qlam0z;
+    const Scalar taufac = state.taufac;
+    Scalar gamp = state.gamp;
 
     const double bb = z1 * z2;
     const double qq = fact * bb * zs13inv;
@@ -88,6 +105,16 @@ TIMMES_HD inline Scalar screen5(const Scalar& temp, double den,
 
     h12 = clamp_by_value(h12, 0.0, 30.0);
     return exp_value(h12);
+}
+
+// Retain the scalar entry for callers that evaluate only one pair.
+template <typename Scalar>
+TIMMES_HD inline Scalar screen5(const Scalar& temp, double den,
+                      const Scalar& zbar, const Scalar& abar, const Scalar& z2bar,
+                      double z1, double a1, double z2, double a2)
+{
+    return screen5(make_screen5_state(temp, den, zbar, abar, z2bar),
+                   z1, a1, z2, a2);
 }
 
 template <typename Scalar, std::size_t N>

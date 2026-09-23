@@ -1,6 +1,6 @@
-"""Derive matched 2D/3D controls from the unmodified FLASH 4.8 Cellular input.
+"""Derive matched 2D/3D controls from the user-archive FLASH 4.8 Cellular input.
 
-Only existing FLASH runtime parameters are changed. The original Cellular
+Only existing FLASH runtime parameters are changed. The archive-contained Cellular
 Fortran implementation and the prebuilt 2D executable are left untouched.
 """
 

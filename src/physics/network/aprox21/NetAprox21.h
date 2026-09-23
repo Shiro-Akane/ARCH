@@ -185,12 +185,11 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
             Scalar abar, zbar, z2bar, ye;
             timmes::composition_moments<Scalar, NUM_SPECIES>(
                 y, zion_data, abar, zbar, z2bar, ye);
-            timmes::screen_heavy_rates<RateIds>(
-                rate, temperature, rho, zbar, abar, z2bar);
-            timmes::screen_extended_rates<RateIds>(
-                rate, temperature, rho, zbar, abar, z2bar);
-            timmes::screen_aprox21_extra_rates<RateIds>(
-                rate, temperature, rho, zbar, abar, z2bar);
+            const auto screening = timmes::make_screen5_state(
+                temperature, rho, zbar, abar, z2bar);
+            timmes::screen_heavy_rates<RateIds>(rate, screening);
+            timmes::screen_extended_rates<RateIds>(rate, screening);
+            timmes::screen_aprox21_extra_rates<RateIds>(rate, screening);
 
             // ecapnuc supplies the proton-electron and neutron-positron weak rates.
             Scalar rpen, rnep, spenc, snepc;

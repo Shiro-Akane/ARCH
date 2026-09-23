@@ -39,23 +39,17 @@ struct FluxHLL
         // Left State
         double rho_L = U_L.rho;
         double un_L = get_un(U_L, dir);
-        double ut1_L = get_ut1(U_L, dir);
-        double ut2_L = get_ut2(U_L, dir);
-        double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L;
         double e_L = arch::state::recover(U_L).internal;
-        // Pressure
-        double P_L = eos.get_pressure(U_L, Xi_L);
+        double P_L, c_L;
+        calc_endpoint_thermo(U_L, e_L, Xi_L, eos, P_L, c_L);
         double H_L = (U_L.eng + P_L) / rho_L;
 
         // Right State
         double rho_R = U_R.rho;
         double un_R = get_un(U_R, dir);
-        double ut1_R = get_ut1(U_R, dir);
-        double ut2_R = get_ut2(U_R, dir);
-        double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
         double e_R = arch::state::recover(U_R).internal;
-        // Pressure
-        double P_R = eos.get_pressure(U_R, Xi_R);
+        double P_R, c_R;
+        calc_endpoint_thermo(U_R, e_R, Xi_R, eos, P_R, c_R);
         double H_R = (U_R.eng + P_R) / rho_R;
 
         // Compute physical fluxes with the known-pressure overload.
@@ -63,9 +57,7 @@ struct FluxHLL
         FluidVector F_L = get_flux(U_L, P_L, dir);
         FluidVector F_R = get_flux(U_R, P_R, dir);
 
-        // Estimate the two HLL wave speeds.
-        double c_L = calc_sound_speed_thermo(rho_L, P_L, e_L, Xi_L, eos);
-        double c_R = calc_sound_speed_thermo(rho_R, P_R, e_R, Xi_R, eos);
+        // Endpoint sound speeds were recovered with their pressures.
 
         // Reuse the Roe average required by the Einfeldt bounds.
         RoeGlaisterState roe_state = calc_glaister_state(
@@ -136,9 +128,11 @@ struct FluxHLL
                         FluidVector U_L, U_R;
                         AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
 
-                        compute_face_flux(
-                            U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                            0.0, flux_out[idx + stride], face_species_flux.data());
+                        FluxAdmissibility::compute_candidate([&] {
+                            compute_face_flux(
+                                U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                                0.0, flux_out[idx + stride], face_species_flux.data());
+                        }, flux_out[idx + stride], face_species_flux.data(), n_spec);
                         state.get_species_to_buffer(idx, Xi_L.data());
                         state.get_species_to_buffer(idx + stride, Xi_R.data());
                         FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),

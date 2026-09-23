@@ -4,6 +4,12 @@ Start with [implementation ownership](ImplementationOwnership.md) before changin
 shared mathematics, backend storage, or execution paths. The map identifies the
 single maintained implementation and its CPU/CUDA consumers.
 
+The [ARCH–FLASH comparison and optimization plan (Chinese)](FlashComparisonOptimizationPlan.zh-CN.md)
+defines reusable cross-code models, separates common physics from ARCH's fuller
+coupling, and records the EOS recovery-contract audit and staged optimization
+gates. The [O5 evidence](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md)
+reports verified results and the remaining sign-off gaps.
+
 For the planned self-gravity work, use the
 [self-gravity, maintainability and GUI coordination plan (Chinese)](SelfGravityImplementationPlan.zh-CN.md)
 to track module boundaries, stage contracts, decisions, GUI/Core integration
