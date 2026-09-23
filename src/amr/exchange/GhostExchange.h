@@ -21,14 +21,14 @@
 #include <span>
 #include <vector>
 
+#include "amr/exchange/CoarseFineCellPlan.h"
+#include "amr/exchange/CoordinateSeamPlan.h"
+#include "amr/exchange/ExchangePlan.h"
+#include "amr/storage/Block.h"
 #include "amr/topology/AmrTree.h"
 #include "amr/transfer/AmrTransferPlans.h"
-#include "amr/storage/Block.h"
-#include "amr/exchange/CoarseFineCellPlan.h"
 #include "amr/transfer/ConservativeRestriction.h"
-#include "amr/exchange/ExchangePlan.h"
 #include "amr/transfer/LimitedLinearProlongation.h"
-
 #include "data/GlobalDefs.h"
 
 namespace amr {
@@ -40,6 +40,7 @@ public:
     struct CachedPlans {
         std::vector<SameLevelExchangePlan> same_level;
         CoarseFineTransferPlan coarse_fine;
+        CoordinateSeamPlan coordinate_seam;
         std::vector<std::vector<std::size_t>> level_indices;
     };
 
@@ -90,6 +91,8 @@ public:
         auto candidate = std::make_unique<CachedPlans>();
         candidate->same_level = BuildSameLevelPlans(pool, tree, dim, handles);
         candidate->coarse_fine = BuildCoarseFinePlan(pool, tree, dim, handles);
+        candidate->coordinate_seam = make_coordinate_seam_plan(
+            pool, active, dim);
         std::map<BlockHandle, std::size_t> indices;
         for (std::size_t i = 0; i < handles.size(); ++i)
             if (!indices.emplace(handles[i], i).second)
@@ -616,6 +619,7 @@ public:
         }
         ExecuteCoarseFinePlan(
             plans.coarse_fine, pool, tree, dim, state_ptr, handles);
+        execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 
 private:

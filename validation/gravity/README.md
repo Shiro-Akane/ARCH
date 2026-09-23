@@ -139,12 +139,12 @@ These data files support reproduction and independent review; they are not setup
 periodic 1D–3D and isolated 3D domains. Hydro, burning and thermal-diffusion
 combinations have been checked. CPU-only 1D isolated spherical/cylindrical gravity has passed elliptic,
 mixed-AMR, origin, hydrostatic, low-density and restart checks. CPU 2D polar
-and 3D cylindrical/spherical isolated gravity are now supported on full-azimuth
-domains away from the coordinate singularities; non-axisymmetric manufactured
-solutions, independent boundary and Gauss checks, and short AMR coupled runs
-are recorded in the [P11 record](results/p11-p12-20260923/README.md).
-Multidimensional origin/axis/pole fluid joins, curved CUDA gravity, external
-mass and a Jeans-specific refinement indicator remain unsupported. Start with [GravityBox](../../simulation/GravityBox/README.md)
+and 3D cylindrical/spherical isolated gravity are supported on full-azimuth
+domains, including tested origin, axis and pole joins on CPU. Manufactured
+solutions, independent boundary and Gauss checks, AMR coupling and restart
+are recorded in the [P11/P12 record](results/p11-p12-20260923/README.md).
+Curved CUDA gravity, external mass and a Jeans-specific refinement indicator
+remain unsupported. Start with [GravityBox](../../simulation/GravityBox/README.md)
 for reusable inputs. The [P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
 records numerical, coupling, restart and device checks. The [P8–P10 1D radial record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The earlier
 [P3/P4 record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
@@ -161,6 +161,6 @@ qualifies actual device gravity; `--benchmark-only` measures representative loca
 The [2D/3D four-module example](../../simulation/SNIaCoupled/README.md)
 checks Hydro/self-gravity/burn/thermal-diffusion execution with AMR. Its original
 [Cartesian CPU/CUDA smoke record](results/snia2d-20260923/README.md) and newer
-[P11 CPU curved record](results/p11-p12-20260923/README.md) do not constitute
+[P11/P12 CPU curved record](results/p11-p12-20260923/README.md) do not constitute
 analytic SN Ia validation. The latter also reports a controlled comparison
 against the original FLASH 4.8 Cellular case in 2D and 3D matched controls.

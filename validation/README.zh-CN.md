@@ -6,7 +6,7 @@ P1.5 调整了低密度状态契约、规范化 EOS 输入和检查点格式。�
 
 [引力摘要](gravity/README.zh-CN.md)现覆盖 CPU/CUDA 上的生产 Cartesian 自引力、
 复合 AMR，以及已验证的流体、燃烧和热扩散组合。支持一至三维全周期与三维孤立边界；
-CPU 一维球/柱对称 isolated 及避奇点域的二维极坐标、三维柱/球坐标 isolated 自引力和复合 AMR 已做验收；多维坐标奇点、曲线 CUDA 引力和域外质量源尚不支持。受测配置见 [P5–P7 验收](../docs/development/P5P7GravityAcceptance.zh-CN.md)、[P8–P10 一维记录](gravity/results/p8-p10-20260923/README.md)与 [P11/P12 多维记录](gravity/results/p11-p12-20260923/README.md)。
+CPU 一维球/柱对称以及完整方位角二维极坐标、三维柱/球坐标 isolated 自引力与复合 AMR 已按受测范围验收，包含原点、轴线和极点；曲线 CUDA 引力和域外质量源尚不支持。受测配置见 [P5–P7 验收](../docs/development/P5P7GravityAcceptance.zh-CN.md)、[P8–P10 一维记录](gravity/results/p8-p10-20260923/README.md)与 [P11/P12 多维记录](gravity/results/p11-p12-20260923/README.md)。
 早期 [P2 记录](gravity/results/p2-20260922/README.md)仍仅证明独立 CPU 场求解器。
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。

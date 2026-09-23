@@ -22,11 +22,12 @@ Hydro、自引力、aprox13 核反应及热扩散。算例源码只引用
 | `SNIaCoupled_3d_cylindrical_amr.par` | 三维柱坐标，避开轴线，完整方位角，混合 AMR |
 | `SNIaCoupled_3d_spherical_amr.par` | 三维球坐标，避开原点与两极，完整方位角，混合 AMR |
 
-其中二维极坐标的 Poisson 势对应沿第三方向平移不变的物质，使用单位长度质量
-和对数核；它不是三维孤立白矮星。三维曲线坐标使用有限质量 Newton 势。
-目前曲线坐标自引力仅开放 **CPU、完整方位角、避开坐标奇点的域**；
-原点、轴线和极点的流体/AMR 矢量接合仍未通过生产验收，相关输入会被配置校验拒绝。
-CUDA 曲线坐标路径留待单独验证。`rho0`、`temperature0`、`temperature_peak`、
+完整方位角且包含原点、轴线或两极的 CPU 输入见
+[P12 验证样例](../../validation/gravity/curved/inputs)；它们复用本算例，
+不另建一套物理实现。二维极坐标的 Poisson 势对应沿第三方向平移不变的物质，
+使用单位长度质量和对数核；它不是三维孤立白矮星。三维曲线坐标使用有限质量 Newton 势。
+曲线坐标自引力已按受测范围开放 **CPU、完整方位角及坐标奇点接合**，
+奇点流体面须 reflecting；部分方位角扇区及 CUDA 曲线引力仍被拒绝。`rho0`、`temperature0`、`temperature_peak`、
 `density_amplitude`、`hotspot_width` 和 `center_x/y/z` 均为 CGS 场景参数；
 热点在物理 Cartesian 坐标中定义：
 

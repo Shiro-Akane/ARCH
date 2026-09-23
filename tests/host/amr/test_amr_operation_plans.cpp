@@ -1127,6 +1127,247 @@ void test_mixed_level_and_coarse_fine_execution()
                + " expected_x0=" + std::to_string(expected_x0));
 }
 
+
+/** Independently project a constant Cartesian momentum into a native basis. */
+std::array<double, 3> projected_momentum(
+    const Grid& grid, double theta, double phi)
+{
+    const double c = std::cos(phi), s = std::sin(phi);
+    if (grid.dim == 2 || grid.geometry == "cylindrical")
+        return {c + 2. * s,
+                grid.dim == 3 ? 3. : -s + 2. * c,
+                grid.dim == 3 ? -s + 2. * c : 0.};
+    return {
+        std::sin(theta) * (c + 2. * s) + 3. * std::cos(theta),
+        std::cos(theta) * (c + 2. * s) - 3. * std::sin(theta),
+        -s + 2. * c};
+}
+
+/** Check true vector-basis continuation across each supported singular face. */
+void test_coordinate_seam_case(int dimension, bool spherical, bool mixed)
+{
+    SimConfig config{};
+    config.grid.dim = dimension;
+    config.grid.geometry = spherical ? "spherical" : "cylindrical";
+    config.grid.nblockx1 = 1;
+    config.grid.nblockx2 = spherical && dimension == 3 ? 2 :
+                            dimension == 2 ? 2 : 1;
+    config.grid.nblockx3 = dimension == 3 ? 2 : 0;
+    config.grid.x1_min = 0.;
+    config.grid.x1_max = 1.;
+    config.grid.x2_min = 0.;
+    config.grid.x2_max = spherical && dimension == 3
+        ? std::acos(-1.) : dimension == 2 ? 2. * std::acos(-1.) : 1.;
+    config.grid.x3_min = 0.;
+    config.grid.x3_max = dimension == 3 ? 2. * std::acos(-1.) : 0.;
+    config.grid.x1l_boundary_type = "reflecting";
+    if (dimension == 2) {
+        config.grid.x2l_boundary_type = "periodic";
+        config.grid.x2r_boundary_type = "periodic";
+    } else {
+        config.grid.x3l_boundary_type = "periodic";
+        config.grid.x3r_boundary_type = "periodic";
+        if (spherical) {
+            config.grid.x2l_boundary_type = "reflecting";
+            config.grid.x2r_boundary_type = "reflecting";
+        }
+    }
+    config.grid.amr_max_blocks = 24;
+    config.amr.lrefinemin = 0;
+    config.amr.lrefinemax = mixed ? 1 : 0;
+    amr::AMRControl control(24, dimension);
+    auto pool = control.pool;
+    auto tree = control.tree;
+    if (mixed && dimension == 2) {
+        tree->LoadLeafGrid(config, 2,
+            {1, 1, 1, 1, 0}, {0, 1, 0, 1, 0},
+            {0, 0, 1, 1, 1}, {0, 0, 0, 0, 0});
+    } else if (mixed) {
+        // Refine the lower-azimuth root. Spherical geometry retains the
+        // second coarse theta root so both pole seams cross AMR levels.
+        std::vector<int> levels;
+        std::vector<std::uint32_t> x1, x2, x3;
+        for (int k = 0; k < 2; ++k)
+            for (int j = 0; j < 2; ++j)
+                for (int i = 0; i < 2; ++i) {
+                    levels.push_back(1);
+                    x1.push_back(i);
+                    x2.push_back(j);
+                    x3.push_back(k);
+                }
+        levels.push_back(0);
+        x1.push_back(0);
+        x2.push_back(0);
+        x3.push_back(1);
+        if (spherical) {
+            levels.push_back(0);
+            x1.push_back(0);
+            x2.push_back(1);
+            x3.push_back(0);
+            levels.push_back(0);
+            x1.push_back(0);
+            x2.push_back(1);
+            x3.push_back(1);
+        }
+        tree->LoadLeafGrid(config, 2, levels, x1, x2, x3);
+    } else {
+        tree->InitRootGrid(config, 2);
+    }
+    const auto& active = tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles;
+    for (std::size_t block = 0; block < active.size(); ++block) {
+        handles.push_back({{1000 + block}, {51}});
+        auto& b = pool->GetBlock(active[block]);
+        const Grid& grid = b.grid;
+        for (int k = grid.Ks(); k < grid.Ke(); ++k)
+            for (int j = grid.Js(); j < grid.Je(); ++j)
+                for (int i = grid.Is(); i < grid.Ie(); ++i) {
+                    const int cell = grid.GetIndex(i, j, k);
+                    const double theta = dimension == 3 && spherical
+                        ? grid.GetCellCenterY(j) : 0.;
+                    const double phi = dimension == 2
+                        ? grid.GetCellCenterY(j) : grid.GetCellCenterZ(k);
+                    const auto momentum = projected_momentum(grid, theta, phi);
+                    b.fluid_state.rho[cell] = 2.;
+                    b.fluid_state.mom_u[cell] = momentum[0];
+                    b.fluid_state.mom_v[cell] = momentum[1];
+                    b.fluid_state.mom_w[cell] = momentum[2];
+                    b.fluid_state.eng[cell] = 10.;
+                    b.fluid_state.enuc_rate[cell] = 0.125;
+                    b.fluid_state.X(0, cell) = 0.6;
+                    b.fluid_state.X(1, cell) = 0.4;
+                }
+    }
+    const auto& plan = control.ghost_exchange.GetPlans(
+        pool, tree, dimension, handles).coordinate_seam;
+    expect(!plan.transfers.empty(), "singular geometry generated no seam ghosts");
+    control.ghost_exchange.ExecuteExchange(
+        pool, tree, dimension, &amr::Block::fluid_state, handles);
+    double largest_momentum_error = 0.;
+    bool crossed_block = false;
+    bool crossed_level = false;
+    bool saw_origin = false, saw_north = false, saw_south = false;
+    for (const auto& transfer : plan.transfers) {
+        const auto& destination = pool->GetBlock(transfer.destination_id);
+        const auto& source = pool->GetBlock(transfer.source_id);
+        const Grid& grid = destination.grid;
+        const int cell = transfer.destination_cell;
+        const int k = cell / grid.stride_z;
+        const int j = (cell - k * grid.stride_z) / grid.stride_y;
+        const int i = cell - k * grid.stride_z - j * grid.stride_y;
+        saw_origin |= i < grid.Is();
+        if (spherical && dimension == 3) {
+            saw_north |= j < grid.Js();
+            saw_south |= j >= grid.Je();
+        }
+        const double theta = spherical && dimension == 3
+            ? grid.GetCellCenterY(j) : 0.;
+        const double phi = dimension == 2
+            ? grid.GetCellCenterY(j) : grid.GetCellCenterZ(k);
+        const auto expected = projected_momentum(grid, theta, phi);
+        const std::array<double, 3> actual{
+            destination.fluid_state.mom_u[cell],
+            destination.fluid_state.mom_v[cell],
+            destination.fluid_state.mom_w[cell]};
+        for (int axis = 0; axis < dimension; ++axis)
+            largest_momentum_error = std::max(largest_momentum_error,
+                std::abs(actual[axis] - expected[axis]));
+        expect(destination.fluid_state.rho[cell] == 2.
+                && destination.fluid_state.eng[cell] == 10.
+                && destination.fluid_state.enuc_rate[cell] == 0.125
+                && destination.fluid_state.X(0, cell) == 0.6
+                && destination.fluid_state.X(1, cell) == 0.4,
+            "singular seam did not preserve scalar and species state");
+        crossed_block |= transfer.source_id != transfer.destination_id;
+        crossed_level |= source.level != destination.level;
+    }
+    expect(crossed_block, "singular seam never crossed an AMR block");
+    expect(saw_origin, "singular seam never filled the radial origin");
+    if (spherical && dimension == 3)
+        expect(saw_north && saw_south,
+            "spherical seam did not fill both polar faces");
+    if (mixed) expect(crossed_level,
+        "mixed AMR seam did not exercise a coarse/fine donor");
+    const double budget = mixed ? 0.035 : 2e-12;
+    expect(largest_momentum_error < budget,
+        "singular seam Cartesian-vector projection exceeded error budget: "
+        + std::to_string(largest_momentum_error));
+    if (dimension == 2 && mixed) {
+        // An AMR one-sided slope can cross a sharp density jump. The mapped
+        // ghost must fall back to the valid donor center, including its basis
+        // transform, instead of publishing a negative reconstructed density.
+        auto abrupt = plan.transfers.front();
+        expect(abrupt.source_neighbor[0] != abrupt.source_center,
+            "seam fallback fixture lacks a radial donor neighbor");
+        abrupt.neighbor_weight = {-0.5, 0., 0.};
+        auto& donor = pool->GetBlock(abrupt.source_id).fluid_state;
+        donor.rho[abrupt.source_neighbor[0]] = 100.;
+        donor.eng[abrupt.source_neighbor[0]] = 1000.;
+        amr::CoordinateSeamPlan fallback;
+        fallback.transfers.push_back(abrupt);
+        amr::execute_coordinate_seam_plan(fallback, pool,
+            &amr::Block::fluid_state);
+        const auto& result = pool->GetBlock(abrupt.destination_id).fluid_state;
+        expect(result.rho[abrupt.destination_cell]
+                == donor.rho[abrupt.source_center]
+                && result.eng[abrupt.destination_cell]
+                    == donor.eng[abrupt.source_center]
+                && result.mom_u[abrupt.destination_cell]
+                    == abrupt.momentum_sign[0]
+                        * donor.mom_u[abrupt.source_center]
+                && result.X(0, abrupt.destination_cell)
+                    == donor.X(0, abrupt.source_center)
+                && result.X(1, abrupt.destination_cell)
+                    == donor.X(1, abrupt.source_center),
+            "singular seam did not use admissible donor fallback");
+        donor.rho[abrupt.source_neighbor[0]] = 2.;
+        donor.eng[abrupt.source_neighbor[0]] = 10.;
+        donor.X(0, abrupt.source_center) = 0.1;
+        donor.X(1, abrupt.source_center) = 0.9;
+        donor.X(0, abrupt.source_neighbor[0]) = 1.;
+        donor.X(1, abrupt.source_neighbor[0]) = 0.;
+        amr::execute_coordinate_seam_plan(fallback, pool,
+            &amr::Block::fluid_state);
+        expect(result.X(0, abrupt.destination_cell) == 0.1
+                && result.X(1, abrupt.destination_cell) == 0.9,
+            "singular seam published an invalid reconstructed composition");
+    }
+}
+
+void test_coordinate_seam_mapping()
+{
+    // Ordinary curved Hydro may use a partial wedge with physical side
+    // boundaries. The new chart plan must not reject that existing topology.
+    SimConfig wedge{};
+    wedge.grid.dim = 2;
+    wedge.grid.geometry = "cylindrical";
+    wedge.grid.nblockx1 = 1;
+    wedge.grid.nblockx2 = 1;
+    wedge.grid.nblockx3 = 0;
+    wedge.grid.x1_min = 0.;
+    wedge.grid.x1_max = 1.;
+    wedge.grid.x2_min = 0.;
+    wedge.grid.x2_max = std::acos(-1.);
+    wedge.grid.x1l_boundary_type = "reflecting";
+    wedge.grid.x2l_boundary_type = "outflow";
+    wedge.grid.x2r_boundary_type = "outflow";
+    wedge.grid.amr_max_blocks = 4;
+    amr::AMRControl wedge_control(4, 2);
+    wedge_control.tree->InitRootGrid(wedge, 1);
+    const std::vector<amr::BlockHandle> wedge_handles{{{7}, {3}}};
+    expect(wedge_control.ghost_exchange.GetPlans(wedge_control.pool,
+            wedge_control.tree, 2, wedge_handles).coordinate_seam.transfers.empty(),
+        "partial-azimuth Hydro unexpectedly requires a coordinate seam");
+    test_coordinate_seam_case(2, false, false);
+    test_coordinate_seam_case(2, false, true);
+    test_coordinate_seam_case(2, true, false);
+    test_coordinate_seam_case(2, true, true);
+    test_coordinate_seam_case(3, false, false);
+    test_coordinate_seam_case(3, false, true);
+    test_coordinate_seam_case(3, true, false);
+    test_coordinate_seam_case(3, true, true);
+}
+
 } // namespace
 
 int main()
@@ -1143,6 +1384,7 @@ int main()
         test_curvilinear_host_restriction();
         test_host_exchange_cache_rebinding();
         test_mixed_level_and_coarse_fine_execution();
+        test_coordinate_seam_mapping();
         const auto ordinary = ordinary_plan();
         const auto migration = migration_plan();
         std::cout << "AMR_PLAN_CONTRACT_PASS ordinary="

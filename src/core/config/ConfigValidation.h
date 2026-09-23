@@ -94,20 +94,25 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
             require(c.grid.x1l_boundary_type=="reflecting","x1l_boundary_type",
                 "The radial inner boundary requires reflecting fluid flow.");
             if(c.grid.dim>1) {
-                // P11 opens full-azimuth domains away from coordinate joins.
-                // Axis, origin and poles remain gated until shared AMR vector
-                // basis mapping is validated in P12.
-                require(c.grid.x1_min>0.,"x1_min",
-                    "Multidimensional curved self-gravity currently requires a positive inner radius.");
+                // Full-azimuth singular faces use the shared AMR chart mapping;
+                // the radial inner face remains reflecting at the zero-area join.
                 const int azimuth=c.grid.dim-1;
                 const double phi_min=azimuth==1?c.grid.x2_min:c.grid.x3_min;
                 const double phi_max=azimuth==1?c.grid.x2_max:c.grid.x3_max;
                 const double turn=2.*std::acos(-1.);
                 require(std::abs((phi_max-phi_min)-turn)<=64.*std::numeric_limits<double>::epsilon()*turn,
                     azimuth==1?"x2_max":"x3_max","Curvilinear gravity requires a full azimuthal turn.");
-                if(c.grid.geometry=="spherical" && c.grid.dim==3)
-                    require(c.grid.x2_min>0. && c.grid.x2_max<std::acos(-1.),"x2_min",
-                        "Spherical 3D self-gravity currently requires a domain away from both poles.");
+                if(c.grid.geometry=="spherical" && c.grid.dim==3) {
+                    const double pi=std::acos(-1.);
+                    require(c.grid.x2_min>=0. && c.grid.x2_max<=pi,"x2_min",
+                        "Spherical polar bounds must remain within [0,pi].");
+                    if(c.grid.x2_min==0.)
+                        require(c.grid.x2l_boundary_type=="reflecting","x2l_boundary_type",
+                            "The north pole requires reflecting fluid flow with coordinate-seam mapping.");
+                    if(std::abs(c.grid.x2_max-pi)<=1e-12)
+                        require(c.grid.x2r_boundary_type=="reflecting","x2r_boundary_type",
+                            "The south pole requires reflecting fluid flow with coordinate-seam mapping.");
+                }
             }
         } else if(g.boundary=="isolated")
             require(c.grid.dim==3,"gravity_boundary","Cartesian isolated gravity requires a 3D Newtonian domain.");

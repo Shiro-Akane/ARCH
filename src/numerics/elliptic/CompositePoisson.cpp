@@ -17,6 +17,7 @@
 #include <limits>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 
 #include "numerics/elliptic/CompositePoisson.h"
 
@@ -249,12 +250,68 @@ void CompositePoisson::build_faces() {
             cells_[face.left].level!=cells_[face.right].level) fit_interface(face);
         if(base_.geometry!=Geometry::Cartesian)fit_curved_face_value(face);
     }
-    diagonal_.assign(size(),0.);
-    for (const auto& f:faces_) for (std::size_t k=0;k<f.samples.size();++k) {
-        if (f.samples[k]==f.left) diagonal_[f.left]-=f.area*f.coefficients[k]/volumes_[f.left];
-        if (f.samples[k]==f.right) diagonal_[f.right]+=f.area*f.coefficients[k]/volumes_[f.right];
+    // Quadratic reproduction may assign a negative self coefficient on a
+    // strongly anisotropic coarse/fine fragment next to a coordinate join.
+    // Recover a positive elliptic diagonal locally with the conservative
+    // two-point flux on only those incident fitted faces. The same fragment
+    // still owns one shared flux; no boundary budget or solver tolerance moves.
+    const auto assemble_diagonal=[&] {
+        diagonal_.assign(size(),0.);
+        for (const auto& f:faces_) for (std::size_t k=0;k<f.samples.size();++k) {
+            if (f.samples[k]==f.left) diagonal_[f.left]-=f.area*f.coefficients[k]/volumes_[f.left];
+            if (f.samples[k]==f.right) diagonal_[f.right]+=f.area*f.coefficients[k]/volumes_[f.right];
+        }
+    };
+    std::vector<unsigned char> recovered(faces_.size(),0);
+    for (std::size_t pass=0;pass<=faces_.size();++pass) {
+        assemble_diagonal();
+        std::vector<unsigned char> invalid_mask(size(),0);
+        int first_invalid=-1;
+        for (int i=0;i<size();++i)
+            if (!std::isfinite(diagonal_[i]) || diagonal_[i]<=0.) {
+                invalid_mask[i]=1;
+                if(first_invalid<0) first_invalid=i;
+            }
+        if (first_invalid<0) break;
+        bool changed=false;
+        for (std::size_t face_index=0;face_index<faces_.size();++face_index) {
+            auto& f=faces_[face_index];
+            if(recovered[face_index] ||
+                !((f.left>=0 && invalid_mask[f.left]) ||
+                  (f.right>=0 && invalid_mask[f.right]))) continue;
+            const bool fitted=f.boundary_side>=0 || kind_==BoundaryKind::RadialIsolated
+                || (f.left>=0 && f.right>=0 && cells_[f.left].level!=cells_[f.right].level);
+            if(!fitted) continue;
+            if(f.boundary_side>=0) {
+                // grad_f(phi) = (phi_B-phi_C)/(h_C/2), with the
+                // existing left/right orientation carried by sign.
+                const int anchor=f.left>=0?f.left:f.right;
+                const double inverse=2./(width(anchor,f.axis)*face_metric(f,f.axis));
+                const double sign=f.left>=0?-1.:1.;
+                f.samples.clear(); f.samples.push_back(anchor);
+                f.coefficients.clear(); f.coefficients.push_back(sign*inverse);
+                f.boundary_coefficient=-sign*inverse;
+            } else {
+                // grad_f(phi) = (phi_R-phi_L)/(h_L/2+h_R/2).
+                const double inverse=1./((0.5*width(f.left,f.axis)
+                    +0.5*width(f.right,f.axis))*face_metric(f,f.axis));
+                f.samples.clear(); f.samples.push_back(f.left);
+                f.samples.push_back(f.right);
+                f.coefficients.clear(); f.coefficients.push_back(-inverse);
+                f.coefficients.push_back(inverse);
+                f.boundary_coefficient=0.;
+            }
+            recovered[face_index]=1; changed=true;
+        }
+        if(changed) continue;
+        const int i=first_invalid;
+        throw std::invalid_argument("Invalid composite diagonal at cell "
+            +std::to_string(i)+" level "+std::to_string(cells_[i].level)
+            +" logical ("+std::to_string(cells_[i].index[0])+","
+            +std::to_string(cells_[i].index[1])+","
+            +std::to_string(cells_[i].index[2])+") value "
+            +std::to_string(diagonal_[i]));
     }
-    for (double x:diagonal_) if (!std::isfinite(x) || x<=0.) throw std::invalid_argument("Invalid composite diagonal");
 }
 
 namespace {

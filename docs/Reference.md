@@ -80,7 +80,7 @@ external provenance claim unless their file header or that notice says so.
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
 | Geometry | `cartesian`, `cylindrical`, `spherical` | supported on CPU and CUDA | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
 | AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
-| Self gravity | `gravity_type = self` | CPU, CUDA | Validated: Cartesian periodic 1D–3D or isolated 3D on CPU/CUDA. CPU: isolated spherical/cylindrical 1D and regular-domain 2D/3D curvilinear gravity with composite AMR; coordinate singularities remain gated. Euler/RK2/RK3 and Cartesian burn/thermal-diffusion coupling are validated. See [GravityBox](../simulation/GravityBox/README.md) and the [P5–P7 record](development/P5P7GravityAcceptance.zh-CN.md). |
+| Self gravity | `gravity_type = self` | CPU, CUDA | Validated: Cartesian periodic 1D–3D or isolated 3D on CPU/CUDA. CPU: isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity with composite AMR, including origin/axis/pole joins; curved CUDA gravity remains gated. Euler/RK2/RK3 and Cartesian burn/thermal-diffusion coupling, plus tested curved RK2 four-module runs, are validated. See [GravityBox](../simulation/GravityBox/README.md) and the [P5–P7 record](development/P5P7GravityAcceptance.zh-CN.md). |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
 
 CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, the registered
@@ -117,7 +117,7 @@ application results and release acceptance.
 | Hydro time | `Euler`, `RK1`; `RK2`, `SSPRK2`; `RK3`, `SSPRK3` | Euler, SSPRK2, SSPRK3 |
 | Diffusion time | `RKL2` (default), `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
 | EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and CUDA |
-| Gravity | `none`, `external`, `self` | Cartesian self gravity supports periodic or isolated 3D; CPU isolated radial 1D and regular-domain 2D/3D curved gravity are supported; curved azimuth spans a full turn |
+| Gravity | `none`, `external`, `self` | Cartesian self gravity supports periodic or isolated 3D; CPU isolated radial 1D and tested full-azimuth 2D/3D curved gravity, including coordinate joins, are supported |
 | Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
 | Linear solve | `Auto`, `DenseLU`, `SparseKLU`, `cuDSS` | Case-insensitive; aliases `dense_lu`, `sparse_klu`, and `cu_dss` are accepted. `Auto` selects DenseLU for up to 31 total ODE equations, including temperature and any auxiliary energy states. Larger systems use SparseKLU on CPU or cuDSS on CUDA. SparseKLU is CPU-only, cuDSS is CUDA-only, and incompatible explicit pairs are rejected before backend construction without solver substitution. Missing solver libraries or registered CUDA network code also cause rejection. |
@@ -417,7 +417,7 @@ and any other spelling are rejected with the parameter name in the error.
 | `eos_table_path` | string | empty | required for tabular/Helmholtz |
 | `eos_helm_table_path` | string | empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
 | `gamma` | double | `1.4` | ideal-gas model gamma |
-| `gravity_type` | string | `none` | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and regular-domain 2D/3D curvilinear gravity on CPU are supported |
+| `gravity_type` | string | `none` | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity, including coordinate joins, on CPU are supported |
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | CGS gravitational constant used by self gravity |
 | `gravity_boundary` | string | `periodic` | `periodic`: subtract volume-mean density; `isolated`: finite-domain 3D Newton boundary, 1D radial symmetry, or 2D polar logarithmic boundary; no background subtraction |
@@ -1187,12 +1187,11 @@ reconstruct missing mass fractions. A fresh simulation initializes its own
   a promise that every correct kinetic network admits an NSE bypass.
 - Validated self-gravity covers Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA.
   CPU-only isolated 1D spherical/cylindrical gravity includes radial AMR and restart.
-  CPU also supports isolated 2D full-azimuth polar and 3D cylindrical/spherical gravity
-  on domains with positive inner radius; 3D spherical domains avoid both poles.
-  The 2D potential uses the infinite-column logarithmic kernel and mass per unit length.
-  Multidimensional fluid/AMR runs through the origin, axis or poles remain rejected
-  pending shared vector-basis ghost mapping; curved CUDA gravity, external mass sources
-  and a Jeans refinement indicator remain unavailable. Root-cell extents must be powers of two.
+  CPU also supports isolated 2D full-azimuth polar and 3D cylindrical/spherical gravity,
+  including tested origin, axis and pole joins with composite AMR. Singular fluid faces
+  require reflecting flow; the azimuth must span a full turn. The 2D potential uses
+  the infinite-column logarithmic kernel and mass per unit length. Curved CUDA gravity,
+  external mass sources and a Jeans refinement indicator remain unavailable. Root-cell extents must be powers of two.
   See [GravityBox](../simulation/GravityBox/README.md) and the
   [P5–P7 acceptance](development/P5P7GravityAcceptance.zh-CN.md) for tested coupling and performance limits.
 - Runtime selection is string based, and several policy surfaces are compile-time

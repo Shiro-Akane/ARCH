@@ -62,7 +62,7 @@ ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩
 | 维度 | 正的 `nblockx1`；尾部 block 数可为零 | 支持 | `nblockx2=0,nblockx3=0` 为 1D；`nblockx3=0` 为 2D。 |
 | 几何 | `cartesian`、`cylindrical`、`spherical` | CPU 与 CUDA 均支持 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项。 |
 | AMR | `lrefinemax >= 0` | CPU 与 CUDA 均支持 | 每个活动维固定 16 个单元的 block 尺寸。topology/Morton 决策留在 Host；指标、守恒 migration、ghost 与 reflux 在 device 调用共用数值叶子。 |
-| 自重力 | `gravity_type = self` | CPU、CUDA | 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU 一维球/柱对称 isolated 及避开坐标奇点的二维极坐标、三维柱/球坐标 isolated 与复合 AMR 已完成相应验收；多维原点、轴线和极点仍拒绝。Euler/RK2/RK3 及 Cartesian 燃烧/热扩散耦合已验收。见 [GravityBox](../simulation/GravityBox/README.md) 与 [P5–P7 验收](development/P5P7GravityAcceptance.zh-CN.md)。 |
+| 自重力 | `gravity_type = self` | CPU、CUDA | 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU 一维球/柱对称及受测完整方位角二维极坐标、三维柱/球坐标 isolated 与复合 AMR 已完成验收，包含原点、轴线和极点；曲线 CUDA 引力仍拒绝。Euler/RK2/RK3、Cartesian 燃烧/热扩散耦合及受测曲线坐标 RK2 四模块运行已验收。见 [GravityBox](../simulation/GravityBox/README.md) 与 [P5–P7 验收](development/P5P7GravityAcceptance.zh-CN.md)。 |
 | Jeans 场 | `JENS` | 预留 | 解析器警告并关闭。 |
 
 CUDA 已实现笛卡尔、柱坐标和球坐标下的一维、二维与三维流体计算，支持已注册的通量、重构和时间推进组合，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
@@ -86,7 +86,7 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 流体时间推进 | `Euler`、`RK1`；`RK2`、`SSPRK2`；`RK3`、`SSPRK3` | Euler、SSPRK2、SSPRK3 |
 | 扩散时间推进 | `RKL2`（默认）、`RKL1` | 独立扩散算子中 RKL2 为二阶；RKL1 是可选一阶方法 |
 | EOS | `ideal`、`tabular`、`helmholtz` | CPU 与 CUDA 均已 dispatch |
-| 重力 | `none`、`external`、`self` | self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU 一维球/柱 isolated 与避奇点域的二维极坐标、三维柱/球坐标 isolated 已验收，内径向流体面须 reflecting |
+| 重力 | `none`、`external`、`self` | self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU 一维球/柱及受测完整方位角二维极坐标、三维柱/球坐标 isolated 已验收，奇点流体面须 reflecting |
 | 网络 | `aprox13`、`aprox19`、`aprox21`、`iso7`；`custom:<id>` | 内置网络及 CMake 自动发现的生成网络 |
 | 燃烧 ODE | `BE_NR`、`ROS4`、`BD` | 均已 dispatch，并由单区 CPU 回归覆盖 |
 | 线性求解 | `Auto`、`DenseLU`、`SparseKLU`、`cuDSS` | 不区分大小写；接受 `dense_lu`、`sparse_klu`、`cu_dss` 别名。`Auto` 对不超过 31 个总 ODE 方程选择 DenseLU，计数包含温度及可选辅助能量状态。更大系统在 CPU 上使用 SparseKLU，在 CUDA 上使用 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA；不兼容的显式组合会在后端构造前报错，不替换求解器。缺少求解库或已注册的 CUDA 网络执行代码时也会明确报错。 |
@@ -309,7 +309,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `eos_table_path` | string | 空 | tabular/Helmholtz 必需 |
 | `eos_helm_table_path` | string | 空 | 缺项补齐使用的辅助电子表；空值使用已有 Timmes 表 |
 | `gamma` | double | `1.4` | 理想气体模型 gamma |
-| `gravity_type` | string | `none` | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU 一维球/柱 isolated 与避奇点域的二维极坐标、三维柱/球坐标 isolated 已验收 |
+| `gravity_type` | string | `none` | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU 一维球/柱及受测完整方位角二维极坐标、三维柱/球坐标 isolated 已验收，包含原点、轴线和极点 |
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | CGS 引力常数 |
 | `gravity_boundary` | string | `periodic` | `periodic` 去除体积平均密度；`isolated` 为三维有限质量 Newton 势、一维径向对称势或二维极坐标单位长度质量的对数势；均不减背景密度 |
@@ -880,7 +880,7 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 
 - 验证结果对应[验证索引](../validation/README.zh-CN.md)注明的受测工作负载与配置；整体验收状态也由该索引统一记录。
 - CUDA 生成网络必须满足[设备数学包契约](../src/physics/network/custom/README.md)，包括声明 `device_callable_math=true`；通过检查的仅主机网络包在 CPU 上执行。生成网络 NSE 受平衡模型资格限制；正确的动力学网络不一定适合 NSE 旁路。
-- 自引力已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界。CPU 一维球/柱对称 isolated、径向 AMR、重启及严格椭圆测试已完成一维 CPU 验收；径向内流体面须 reflecting。根轴单元数须为二次幂；CPU 二维完整方位角极坐标、三维柱/球坐标在正内半径的避奇点域已做椭圆及短时 AMR 耦合验证。多维原点/轴线/极点流体接合、曲线 CUDA 引力、域外质量源及 Jeans 细化指标仍不可用。已验证的耦合和性能边界见 [GravityBox](../simulation/GravityBox/README.md) 与 [P5–P7 验收](development/P5P7GravityAcceptance.zh-CN.md)。
+- 自引力已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界。CPU 一维球/柱对称 isolated、径向 AMR、重启及严格椭圆测试已完成一维 CPU 验收；径向内流体面须 reflecting。根轴单元数须为二次幂；CPU 二维完整方位角极坐标、三维柱/球坐标在受测原点、轴线与极点域已做椭圆、AMR 和耦合验证，奇点流体面须 reflecting。曲线 CUDA 引力、域外质量源及 Jeans 细化指标仍不可用。已验证的耦合和性能边界见 [GravityBox](../simulation/GravityBox/README.md) 与 [P5–P7 验收](development/P5P7GravityAcceptance.zh-CN.md)。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
 - 单位元数据以及完整的构建/运行来源（参数文件、编译器、求解器设置、边界与 commit）位于 HDF5 外部。检查点内嵌重启关键的 EOS/表/网络/核素身份，但 Release flags 无法保证跨机器逐位复现。

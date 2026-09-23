@@ -6,10 +6,9 @@ identifies acceptance for that migration; the older records below retain their o
 source scope and are not automatic acceptance of the changed implementation.
 
 The [gravity summary](gravity/README.md) covers validated Cartesian
-self-gravity on CPU/CUDA and isolated 1D spherical/cylindrical plus regular-domain 2D/3D curvilinear self-gravity on
-CPU, including composite AMR. Cartesian hydro, burn and thermal-diffusion
-combinations have also been validated. Multidimensional coordinate singularities, curved CUDA gravity and
-external mass remain unsupported. See the [P5–P7 acceptance](../docs/development/P5P7GravityAcceptance.zh-CN.md)
+self-gravity on CPU/CUDA and isolated 1D spherical/cylindrical plus tested full-azimuth 2D/3D curvilinear self-gravity on
+CPU, including origin/axis/pole joins and composite AMR. Cartesian hydro, burn and thermal-diffusion
+combinations have also been validated. Curved CUDA gravity and external mass remain unsupported. See the [P5–P7 acceptance](../docs/development/P5P7GravityAcceptance.zh-CN.md)
 [P8–P10 radial record](gravity/results/p8-p10-20260923/README.md), and
 [P11/P12 curved record](gravity/results/p11-p12-20260923/README.md)
 for their respective tested configurations. The earlier [P2 record](gravity/results/p2-20260922/README.md)

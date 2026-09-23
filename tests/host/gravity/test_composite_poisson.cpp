@@ -31,6 +31,23 @@ std::vector<elliptic::CompositeCell> make_cells(const elliptic::CartesianMesh& b
     }
     return cells;
 }
+/** Reproduce the production origin topology: one azimuthal half refined. */
+std::vector<elliptic::CompositeCell> make_origin_seam_cells(
+    const elliptic::CartesianMesh& base) {
+    std::vector<elliptic::CompositeCell> cells;
+    for (int i=0;i<base.size();++i) {
+        const auto p=base.position(i);
+        if (p[1]>=base.cells[1]/2) {cells.push_back({0,p});continue;}
+        for (int child=0;child<4;++child) {
+            auto q=p;
+            for (int axis=0;axis<2;++axis)
+                q[axis]=2*p[axis]+((child>>axis)&1);
+            cells.push_back({1,q});
+        }
+    }
+    return cells;
+}
+
 double potential(const std::array<double,3>& x,int dim) {
     double result=1.;
     for (int a=0;a<dim;++a) result*=std::cos(2*pi*x[a]+0.17*(a+1));
@@ -548,10 +565,11 @@ void curved_domain_extension() {
 }
 
 /** Exercise nonaxisymmetric manufactured potentials on native curved meshes. */
-void curved_manufactured(bool singular=false) {
+void curved_manufactured(bool singular=false, bool seam_refined=false) {
     for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
         for(int dim:{2,3}) for(bool refined:{false,true}) {
-            double previous=0.,previous_force=0.;
+            if(seam_refined && (!singular || !refined || dim!=2)) continue;
+            double previous=0.,previous_force=0.,previous_interface=0.;
             for(int n:{8,16}) {
                 auto base=base_mesh(dim,n);
                 base.geometry=geometry;base.origin[0]=singular?0.:.5;base.spacing[0]=1./n;
@@ -571,7 +589,8 @@ void curved_manufactured(bool singular=false) {
                         return x[0]*x[0]*(1.+e*std::cos(2*x[2]))+x[1]*x[1];
                     return x[0]*x[0]*(1.+e*std::sin(x[1])*std::sin(x[1])*std::cos(2*x[2]));
                 };
-                multigrid::CompositeMultigrid solver(base,make_cells(base,refined),
+                multigrid::CompositeMultigrid solver(base,
+                    seam_refined ? make_origin_seam_cells(base) : make_cells(base,refined),
                     elliptic::BoundaryKind::CurvilinearIsolated);
                 const auto& op=solver.op();
                 std::vector<double> rhs(op.size(),dim==2?-4.:-6.),bc(op.faces().size()),error(op.size());
@@ -579,7 +598,7 @@ void curved_manufactured(bool singular=false) {
                     if(op.faces()[f].boundary_side>=0)bc[f]=exact(op.faces()[f].center);
                 const auto result=solver.solve(op.effective_rhs(rhs,bc),{1e-11,0.,300});
                 std::cout<<"curved manufactured singular="<<singular<<" geometry="<<static_cast<int>(geometry)
-                    <<" dim="<<dim<<" refined="<<refined<<" n="<<n
+                    <<" dim="<<dim<<" refined="<<refined<<" seam="<<seam_refined<<" n="<<n
                     <<" cycles="<<result.report.cycles<<" residual="<<result.report.residual
                     <<" target="<<result.report.target<<std::flush;
                 require(result.report.status==multigrid::SolveStatus::Converged,
@@ -589,6 +608,15 @@ void curved_manufactured(bool singular=false) {
                 double force_squared=0.,face_area=0.,interface_squared=0.,interface_area=0.;
                 for(const auto& face:op.faces()) {
                     const auto& x=face.center;
+                    require(face.area>0., "singular composite face has nonpositive area");
+                    if(singular) {
+                        require(!(face.axis==0 && std::abs(x[0])<1e-14),
+                            "zero-area origin emitted a face flux");
+                        if(dim==3 && geometry==elliptic::Geometry::Spherical)
+                            require(!(face.axis==1 &&
+                                (std::abs(x[1])<1e-14 || std::abs(x[1]-pi)<1e-14)),
+                                "zero-area spherical pole emitted a face flux");
+                    }
                     constexpr double e=.1;
                     const double phi=dim==2?x[1]:x[2];
                     double expected=0.;
@@ -612,8 +640,10 @@ void curved_manufactured(bool singular=false) {
                     }
                 }
                 const double force=std::sqrt(force_squared/face_area);
+                const double interface_force=interface_area>0.
+                    ? std::sqrt(interface_squared/interface_area) : 0.;
                 std::cout<<" error="<<norm<<" force="<<force;
-                if(interface_area>0.)std::cout<<" interface="<<std::sqrt(interface_squared/interface_area);
+                if(interface_area>0.)std::cout<<" interface="<<interface_force;
                 if(previous)std::cout<<" orders="<<std::log2(previous/norm)<<','
                     <<std::log2(previous_force/force);
                 std::cout<<'\n';
@@ -622,8 +652,12 @@ void curved_manufactured(bool singular=false) {
                         "curved manufactured potential order below 1.8");
                     require(std::log2(previous_force/force)>=1.8,
                         "curved manufactured face-force order below 1.8");
+                    if(singular && previous_interface>0. && interface_force>0.)
+                        require(std::log2(previous_interface/interface_force)>=1.8,
+                            "singular coarse/fine face-force order below 1.8");
                 }
                 previous=norm;previous_force=force;
+                previous_interface=interface_force;
             }
         }
 }
@@ -635,14 +669,14 @@ int main(int argc,char** argv) {
         if (argc>1 && std::string(argv[1])=="contract") { contract(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
         if(argc>1 && std::string(argv[1])=="curved") {curved_manufactured();curved_boundary_integral();return 0;}
-        if(argc>1 && std::string(argv[1])=="singular") {curved_manufactured(true);return 0;}
+        if(argc>1 && std::string(argv[1])=="singular") {curved_manufactured(true);curved_manufactured(true,true);return 0;}
         if(argc>1 && std::string(argv[1])=="gauss") {curved_gauss_law();return 0;}
         if(argc>1 && std::string(argv[1])=="domain") {curved_domain_extension();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary") {boundary_convergence();isolated_boundary();return 0;}
         if(argc>1 && std::string(argv[1])=="ci") {
             boundary_convergence(16);isolated_boundary();averaged_source_exactness();
             convergence(2);radial_convergence();curved_manufactured();
-            curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);return 0;
+            curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);curved_manufactured(true,true);return 0;
         }
         averaged_source_exactness();
         convergence(argc>1 ? std::stoi(argv[1]) : 3);

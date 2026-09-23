@@ -1,6 +1,6 @@
 # P11–P12 多维曲线坐标自引力：CPU 验证与 FLASH Cellular 对照
 
-状态（2026-09-24）：**P11 的避奇点 CPU 域已完成本轮椭圆与混合 AMR 验收；P12 仅完成标量椭圆奇点检查，尚未开放多维奇点生产运行。**
+状态（2026-09-24）：**P11 避奇点与 P12 完整方位角奇点域的受测 CPU 组合已完成数值、AMR 和运行验收；曲线 CUDA 自引力仍留待 P13。**
 源码为 `physics/selfgravity` 工作树，起点 `d9e61f88`；CPU 程序为
 `build-ci/cpu/bin/ARCH`，Release、OpenMP 16 线程。FLASH 数据来自用户现有的
 `/home/shiroakane/FLASH4.8_code.tar.gz`：二维使用归档自带的 Cellular `flash4`，
@@ -23,7 +23,7 @@ P11 开放的组合是 CPU、`gravity_boundary=isolated`、完整 `2π` 方位�
 | 独立孤立边界积分 | 各几何取 12 个物理边界面，与直接单元体积分比较；默认开角的最大相对差 `5.53e-5`（二维），三维最大 `1.26e-8`；开角减半后分别降至约 `1e-12` / `1e-15`。见 [明细](arch-p11-elliptic-curved.txt)。 |
 | 解析 Gauss 面力 | 二维圆柱与三维球径向分布，均匀/混合 AMR 的 `n=8→16` 面力阶 1.8878–1.9533。见 [明细](arch-p11-elliptic-gauss.txt)。 |
 | 固定物质、扩展外域 | 径向域 `[0.5,1.5]→[0.5,2.5]`，内部网格和紧支撑非轴对称密度保持不变；相同内部面的力 RMS 相对变化 0.089%–0.239%，低于预置 2% 预算。二维势的参考常数会随外半径变化，故比较力。见 [明细](arch-p11-elliptic-domain.txt)。 |
-| P12 标量奇点 | 二维原点、三维柱轴、三维球原点及两极，均匀/混合 AMR 制造解的势与面力阶均 ≥1.8；最大迭代 39。该结果**不**验证流体向量跨坐标接合。见 [明细](arch-p12-elliptic-singular.txt)。 |
+| P12 奇点椭圆 | 二维原点、三维柱轴、三维球原点及两极；原有均匀/混合 AMR 与新增不对称原点接合共 20 组制造解，势、面力及奇点粗细界面面力阶均 ≥1.8，最大迭代 39；零面积原点/极点不产生面通量。见 [明细](arch-p12-elliptic-singular.txt)。 |
 
 同一个 `SNIaCoupled` 示例在 CPU 上运行 Hydro、自引力、aprox13 燃烧、
 Helmholtz EOS 和 RKL2 热扩散；这是厘米尺度 C/O 热点的**运行与耦合检查**，
@@ -43,6 +43,47 @@ Helmholtz EOS 和 RKL2 热扩散；这是厘米尺度 C/O 热点的**运行与�
 时间和网格字段完全相同，23 个物理字段中 22 个逐位一致；只有 `VELY`
 的 11/2560 个单元出现近零值舍入差，最大绝对差 `2.07e-10 cm/s`，
 相对该场峰值 `1.16e-17`。见 [续算明细](restart-comparison.json)。
+
+## P12 完整坐标奇点的 CPU 验收
+
+共用 [坐标接合计划](../../../../src/amr/exchange/CoordinateSeamPlan.h)在常规同层与粗细交换后，
+把原点、柱轴和球两极的 ghost 中心映射到同一物理位置，跨 `φ+π` 查找实际 AMR 叶块，
+并变换原生动量基矢。源状态插值失去物理可容许性时，沿用共享状态检查，
+仅对该 ghost 回退到有效 donor 中心；活动单元不作隐式修复。
+不对称圆心粗细面曾让二次拟合给出非正泊松对角元；现只对受影响单元相邻的
+拟合面使用守恒双点梯度，同一面仍只拥有一份通量。新增制造解同时检查这类拓扑的
+势、物理面力和粗细界面收敛，且确认原点和极点没有虚构的有限面积面。
+所有容差和用户配置键保持原值。
+
+现有 `SNIaCoupled` 四模块算例使用 [P12 输入目录](../../curved/inputs)中的
+完整方位角、孤立边界样例。二维极坐标长程运行和二维球坐标原点、
+三维柱轴、三维球原点及两极的混合 AMR 短跑均由原有
+[`verify_coupled.py`](../../curved/verify_coupled.py)检查正密度/温度、非零核能率、
+有限扩散步长、零状态修复、初末粗细共存及每次泊松残差。
+[机器可读结果](arch-p12-coupled-summary.json)保留初末字段范围。
+
+| 原生几何与坐标接合 | 步数 | 末态粗/细叶块 | 泊松求解数 | 最大残差/目标 | 最大迭代 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 二维柱/极坐标原点 | 120 | 2 / 8 | 362 | 0.500 | 39 |
+| 二维球坐标原点（同一 `r,φ` 语义） | 3 | 2 / 8 | 11 | 0.498 | 39 |
+| 三维柱坐标轴线，跨方位角粗细接合 | 3 | 3 / 8 | 11 | 0.996 | 60 |
+| 三维球坐标原点与两极，跨方位角粗细接合 | 3 | 3 / 8 | 11 | 0.447 | 96 |
+
+二维原点同一 CPU 程序的 5 步连续运行与第 3 步检查点续算相比，
+最终密度、能量、组分及其余动量场逐位一致；角向动量只有 2 个单元有差异，
+折算最大速度差 `1.36e-10 cm/s`。两次独立连续运行也有 16 个相同类型的
+近零差异，最大 `6.34e-10 cm/s`；因此不声明 16 线程逐位重现。
+另用重启输入有意改变 AMR 阈值，二维叶块经历 `10→4→10`，
+三维球域经历 `16→2`；这只检验真实迁移、坐标接合和重启，
+不作为相同物理输入的逐场误差对照。所有续算均无状态修复，泊松残差达标。
+
+近真空诊断使用 [现有 GravityBox 输入](../../curved/inputs/p12_polar_low_density.par)：
+`ρ₀=1e-12 g/cm³`、现有 `sml_rho=1e-13 g/cm³` 与小 CFL，
+二维原点 AMR 两步无修复且泊松收敛。密度恰好贴着默认下限并取过大的首步时
+会发生下限修复；这组受控输入不意味着任意近真空流都无需选择合适的
+下限与时间步。圆心小单元带来的时间步缩小仍由 Grid 后续工作处理。
+三维短跑只证明所列运行路径和有限步稳定性，不能证明长期旋转、
+静水平衡或真实 SN Ia 精度；曲线 CUDA 自引力仍由 P13 验收。
 
 ## 以现成 FLASH 算例为行业对照
 
@@ -100,7 +141,9 @@ build-ci/cpu/arch_composite_poisson curved
 build-ci/cpu/arch_composite_poisson domain
 build-ci/cpu/arch_composite_poisson gauss
 build-ci/cpu/arch_composite_poisson singular
-./build-ci/cpu/bin/ARCH SNIaCoupled simulation/SNIaCoupled/SNIaCoupled_3d_spherical_amr.par
+./build-ci/cpu/arch_amr_operation_plans
+./build-ci/cpu/bin/ARCH SNIaCoupled validation/gravity/curved/inputs/p12_polar_origin.par
+./build-ci/cpu/bin/ARCH SNIaCoupled validation/gravity/curved/inputs/p12_spherical_3d_origin_poles_mixed.par
 ```
 
 其余示例输入在同一目录；验证脚本
@@ -113,16 +156,15 @@ build-ci/cpu/arch_composite_poisson singular
 由现有 `Cellular` 注册算例运行。用 `compare_cellular.py --help` 查看四个
 初末态 plot 路径参数，以及三维和 FLASH 末态重网格后输出的可选参数。
 
-P12 还必须在 **Grid/AMR 的共用边界和邻接层** 实现原点、轴线、极点的
-跨方位角/极角索引与动量基矢变换，然后验证 Hydro、扩散、reflux、
-重网格与重启。当前 `BoundaryPlan` 的 reflecting 仅翻转法向动量，
-`AmrTree` 仅作同轴周期 wrap；标量 Poisson 正则性不能代替这些条件。
-实际生产配置已验证拒绝二维原点、三维柱轴/球原点与极点、部分方位角扇区。
-P13 的 CUDA 曲线坐标数值与性能尚未进行；受影响的重力 NVCC 执行/控制
-编译单元已通过，只证明编译兼容。用户无需为 P11 增加新物理控制参数。
+P12 的完整域 CPU 能力仍要求完整 `2π` 方位角、孤立引力边界、
+原点处 reflecting 流体面以及球两极处 reflecting 流体面；
+部分方位角扇区和曲线 CUDA 自引力继续拒绝。普通流体的部分方位角输入仍沿用
+原有物理边界交换，不被新增坐标接合计划拦截。P13 的 CUDA 曲线坐标数值与
+加速验收尚未进行；新增 AMR 头文件通过 CUDA 12.3/GCC 12 的单元编译，
+只证明编译兼容。
+没有引入新的物理配置键、坐标专属重力源项或 FFT/全域稀疏直解路线。
 
-本轮相关的 10 项 CPU CTest（复合椭圆、原有 Poisson/MG、引力生命周期、
-物理 campaign、低密度与 AMR 操作）均通过。既有拒绝 campaign 中
-“所有曲线多维均禁止”的旧断言已按新能力改为**原点**与**非完整方位角**
-两条明确拒绝；Cartesian isolated 的两个负例也改为独立输出目录和准确原因。
-这些修改没有放宽残差、收敛阶、修复或运行误差预算。
+本轮完整 CPU 构建和 61/61 CTest 通过，另重跑一维径向 quick campaign，
+并运行新增的二维/三维混合 AMR 矢量接合、奇点粗细界面椭圆回归。
+旧“正内半径”拒绝断言改为真正无效的非完整方位角和流体周期面不匹配检查；
+未放宽残差、收敛阶、修复或运行误差预算。
