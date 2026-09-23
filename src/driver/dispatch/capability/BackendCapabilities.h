@@ -288,11 +288,12 @@ inline CapabilityResult query_support(
 
     const bool cpu_nse_requirements_valid = !requirements.use_nse
         || (requirements.burn && network_supports_nse(cpu_plan.network));
-    const bool radial_cpu_gravity = requirements.dimension == 1 &&
+    const bool curved_cpu_gravity = requirements.dimension >= 1 &&
+        requirements.dimension <= 3 &&
         (requirements.geometry == GeometryId::Cylindrical ||
          requirements.geometry == GeometryId::Spherical);
     if (result.cpu_supported && requirements.gravity == GravityId::Self
-        && requirements.geometry != GeometryId::Cartesian && !radial_cpu_gravity) {
+        && requirements.geometry != GeometryId::Cartesian && !curved_cpu_gravity) {
         result.cpu_supported = false;
         result.cpu_code = BackendCapabilityCode::UnsupportedGravity;
     } else if (result.cpu_supported && !cpu_nse_requirements_valid) {

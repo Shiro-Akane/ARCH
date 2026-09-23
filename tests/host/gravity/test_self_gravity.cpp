@@ -88,9 +88,18 @@ void lifecycle() {
     rejects([&]{gravity.prepare({f.identity,f.views});},"NaN density accepted");
     rejects([&]{gravity.potential();},"NaN failure publication");
     f.reset(1);
+    // The bounded coarse LU now solves this 64-cell periodic root in one
+    // Krylov step at the ordinary tolerance. Demand a residual below double
+    // precision roundoff to exercise the failed-solve publication contract.
     auto controls=f.config.physics.gravity;controls.max_cycles=1;
+    controls.relative_tolerance=1e-20;controls.absolute_tolerance=0.;
     SelfGravity limited(controls);limited.bind(amr::bind_elliptic_mesh(f.control,f.config.grid,f.handles));
-    rejects([&]{limited.prepare({f.identity,f.views});},"failed convergence accepted");
+    bool convergence_failed=false;
+    try { limited.prepare({f.identity,f.views}); }
+    catch (const std::runtime_error& error) {
+        convergence_failed=std::string_view(error.what()).find("Self-gravity Poisson solve failed:")!=std::string_view::npos;
+    }
+    require(convergence_failed,"failed convergence accepted");
     rejects([&]{limited.potential();},"nonconvergence publication");
     // Actual tree refinement, coarsening and identity turnover, not a synthetic
     // Cartesian replacement for the AMR adapter.

@@ -84,23 +84,41 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     require(g.max_cycles > 0, "gravity_max_cycles", "Iteration count must be positive.");
     require(g.boundary == "periodic" || g.boundary == "isolated", "gravity_boundary", "Expected periodic or isolated gravity boundary.");
     if (g.type == "self") {
-        const bool radial=c.grid.dim==1 &&
-            (c.grid.geometry=="spherical" || c.grid.geometry=="cylindrical");
-        require(c.grid.geometry=="cartesian" || radial, "geometry",
-            "Self-gravity supports Cartesian or 1D spherical/cylindrical geometry.");
-        if(radial) {
+        const bool curved=c.grid.geometry=="spherical" || c.grid.geometry=="cylindrical";
+        require(c.grid.geometry=="cartesian" || curved, "geometry",
+            "Self-gravity supports Cartesian, cylindrical and spherical geometry.");
+        if(curved) {
             require(g.boundary=="isolated","gravity_boundary",
-                "Radial self-gravity requires isolated gravity boundary.");
-            require(c.grid.x1_min>=0.,"x1_min","Radial self-gravity requires nonnegative radius.");
+                "Curvilinear self-gravity requires isolated gravity boundary.");
+            require(c.grid.x1_min>=0.,"x1_min","Curvilinear self-gravity requires nonnegative radius.");
             require(c.grid.x1l_boundary_type=="reflecting","x1l_boundary_type",
-                "The radial inner boundary requires reflecting fluid flow so no mass enters the unmodeled cavity.");
+                "The radial inner boundary requires reflecting fluid flow.");
+            if(c.grid.dim>1) {
+                // P11 opens full-azimuth domains away from coordinate joins.
+                // Axis, origin and poles remain gated until shared AMR vector
+                // basis mapping is validated in P12.
+                require(c.grid.x1_min>0.,"x1_min",
+                    "Multidimensional curved self-gravity currently requires a positive inner radius.");
+                const int azimuth=c.grid.dim-1;
+                const double phi_min=azimuth==1?c.grid.x2_min:c.grid.x3_min;
+                const double phi_max=azimuth==1?c.grid.x2_max:c.grid.x3_max;
+                const double turn=2.*std::acos(-1.);
+                require(std::abs((phi_max-phi_min)-turn)<=64.*std::numeric_limits<double>::epsilon()*turn,
+                    azimuth==1?"x2_max":"x3_max","Curvilinear gravity requires a full azimuthal turn.");
+                if(c.grid.geometry=="spherical" && c.grid.dim==3)
+                    require(c.grid.x2_min>0. && c.grid.x2_max<std::acos(-1.),"x2_min",
+                        "Spherical 3D self-gravity currently requires a domain away from both poles.");
+            }
         } else if(g.boundary=="isolated")
             require(c.grid.dim==3,"gravity_boundary","Cartesian isolated gravity requires a 3D Newtonian domain.");
         const std::string faces[]{c.grid.x1l_boundary_type,c.grid.x1r_boundary_type,
             c.grid.x2l_boundary_type,c.grid.x2r_boundary_type,c.grid.x3l_boundary_type,c.grid.x3r_boundary_type};
-        for (int a=0; a<2*c.grid.dim; ++a)
-            require(g.boundary=="periodic" ? faces[a]=="periodic" : faces[a]=="outflow" || faces[a]=="reflecting",
-                "gravity_boundary", "Periodic gravity requires periodic fluid boundaries; isolated gravity requires outflow or reflecting boundaries.");
+        const int azimuth=curved && c.grid.dim>1?c.grid.dim-1:-1;
+        for (int a=0; a<2*c.grid.dim; ++a) {
+            const bool periodic=g.boundary=="periodic" || a/2==azimuth;
+            require(periodic ? faces[a]=="periodic" : faces[a]=="outflow" || faces[a]=="reflecting",
+                "gravity_boundary", "Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).");
+        }
     }
     require(std::isfinite(g.g_x), "gravity_g_x", "Acceleration must be finite.");
     require(std::isfinite(g.g_y), "gravity_g_y", "Acceleration must be finite.");

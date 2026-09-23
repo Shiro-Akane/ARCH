@@ -1,0 +1,126 @@
+{
+  "comparison": "continuous 10 steps vs 5-step checkpoint plus 5 resumed steps",
+  "fields": {
+    "DENS": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "ENER": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "ENUC": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "GACX": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "GACY": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "GPOT": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "PRES": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "TEMP": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "VELX": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "VELY": {
+      "different_cells": 11,
+      "maximum_absolute_difference": 2.0734453849727974e-10,
+      "maximum_difference_over_field_peak": 1.1546004993701316e-17
+    },
+    "ar36": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "c12": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "ca40": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "cr48": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "fe52": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "he4": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "mg24": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "ne20": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "ni56": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "o16": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "s32": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "si28": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    },
+    "ti44": {
+      "different_cells": 0,
+      "maximum_absolute_difference": 0.0,
+      "maximum_difference_over_field_peak": 0.0
+    }
+  },
+  "grids_exact": true,
+  "steps": 10,
+  "time_seconds": [
+    4.067718224241094e-11,
+    4.067718224241094e-11
+  ]
+}

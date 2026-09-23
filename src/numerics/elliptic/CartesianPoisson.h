@@ -18,7 +18,7 @@
 #include "numerics/elliptic/EllipticMesh.h"
 
 namespace arch::elliptic {
-enum class BoundaryKind { Periodic, Dirichlet, RadialIsolated };
+enum class BoundaryKind { Periodic, Dirichlet, RadialIsolated, CurvilinearIsolated };
 
 struct BoundaryData {
     BoundaryKind kind = BoundaryKind::Periodic;

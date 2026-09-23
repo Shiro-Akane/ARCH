@@ -275,7 +275,21 @@ void test_all_requirement_codes()
     r.burn=false; r.diffusion=true;
     expect(query_support(plan, r, probe).cpu_supported, "self gravity and diffusion");
     r.diffusion=false; r.geometry=GeometryId::Spherical;
-    expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "non-Cartesian self gravity");
+    expect(query_support(plan, r, probe).cpu_supported,
+           "CPU spherical self gravity uses the shared curved operator");
+    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity,
+                     "curved self gravity remains gated on CUDA");
+    r.geometry=GeometryId::Cylindrical;
+    expect(query_support(plan, r, probe).cpu_supported,
+           "CPU cylindrical self gravity uses the shared curved operator");
+    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity,
+                     "cylindrical self gravity remains gated on CUDA");
+    r.dimension=2; r.root_blocks_x3=0;
+    expect(query_support(plan, r, probe).cpu_supported,
+           "CPU 2D polar self gravity");
+    r.dimension=1; r.root_blocks_x2=0;
+    expect(query_support(plan, r, probe).cpu_supported,
+           "CPU 1D radial self gravity");
     r=requirements; r.gravity=GravityId::Self; r.boundary_features=boundary_bit(BoundaryFeature::Periodic);
     expect(query_support(plan, r, probe).cuda_supported, "CUDA Cartesian self gravity");
     r = requirements; r.restart = true;

@@ -25,7 +25,7 @@ runtime name; the catalogue below gives the actual names.
 | [RTinstability](RTinstability/README.md) | `RT` | Rayleigh–Taylor stratification and mixing |
 | [Cellular](Cellular/README.md) | `CellularDet` | Reactive shock and cellular-detonation initial conditions |
 | [CooperativeHotspots](CooperativeHotspots/README.md) | `CooperativeHotspots` | Controlled helium-hotspot research experiment |
-| [SNIa2DCoupled](SNIa2DCoupled/README.md) | `SNIa2DCoupled` | Two-dimensional C/O hotspot with hydro, self-gravity, nuclear burning and thermal diffusion |
+| [SNIaCoupled](SNIaCoupled/README.md) | `SNIaCoupled` | 2D/3D C/O hotspot with hydro, self-gravity, nuclear burning, thermal diffusion and AMR |
 
 Canonical validation inputs, reference methods and budgets live under
 [validation/](../validation/README.md), even when they reuse these initializers.

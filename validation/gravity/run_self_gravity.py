@@ -200,10 +200,20 @@ def main():
             campaign.full()
         box.run_checks(quick=args.quick)
         radial.run_checks(quick=args.quick)
-        for changes, message in [({'gravity_rtol': 0}, 'gravity_rtol'), ({'gravity_atol': -1}, 'gravity_atol'),
-                ({'gravity_max_cycles': 0}, 'gravity_max_cycles'), ({'gravity_boundary':'isolated'}, 'gravity_boundary'),
-                ({'x1l_boundary_type':'outflow'}, 'periodic'), ({'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1}, 'isolated gravity requires')]:
-            campaign.reject('reject-'+next(iter(changes)), message, **changes)
+        # Each invalid contract gets a distinct output, so a later 3D case
+        # cannot overwrite the earlier 1D isolated-boundary evidence.
+        for name, changes, message in [
+                ('reject-gravity-rtol', {'gravity_rtol': 0}, 'gravity_rtol'),
+                ('reject-gravity-atol', {'gravity_atol': -1}, 'gravity_atol'),
+                ('reject-gravity-cycles', {'gravity_max_cycles': 0}, 'gravity_max_cycles'),
+                ('reject-1d-cartesian-isolated', {'gravity_boundary':'isolated'},
+                 'Cartesian isolated gravity requires a 3D'),
+                ('reject-periodic-fluid-face', {'x1l_boundary_type':'outflow'},
+                 'Fluid faces must match the gravity topology'),
+                ('reject-3d-isolated-fluid-faces',
+                 {'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1},
+                 'Fluid faces must match the gravity topology')]:
+            campaign.reject(name, message, **changes)
         status = 'passed'
     except Exception:
         status = 'failed'

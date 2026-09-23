@@ -16,15 +16,16 @@ public:
     void Setup(SimConfig& config,SpeciesManager& species) {
         const bool radial=config.grid.dim==1 &&
             (config.grid.geometry=="spherical" || config.grid.geometry=="cylindrical");
-        if(config.grid.geometry!="cartesian" && !radial)
-            throw std::invalid_argument("GravityBox supports Cartesian or 1D radial geometry");
+        const bool curved=config.grid.geometry=="spherical" || config.grid.geometry=="cylindrical";
+        if(config.grid.geometry!="cartesian" && !curved)
+            throw std::invalid_argument("GravityBox requires Cartesian, cylindrical or spherical geometry");
         isolated_=config.physics.gravity.boundary=="isolated";dimension_=config.grid.dim;
         radial_=radial;
         const auto hydrostatic=config.Get<std::string>("hydrostatic_radial","false");
         if(hydrostatic!="true" && hydrostatic!="false")
             throw std::invalid_argument("hydrostatic_radial expects true or false");
         hydrostatic_radial_=hydrostatic=="true";
-        if(isolated_&&dimension_!=3&&!radial)
+        if(isolated_&&dimension_!=3&&!curved)
             throw std::invalid_argument("Isolated Cartesian GravityBox requires 3D");
         rho_=config.Get<double>("rho0",1e7);temperature_=config.Get<double>("temperature0",1e7);
         amplitude_=config.Get<double>("amplitude",1e-3);
@@ -34,7 +35,9 @@ public:
         length_[0]=config.grid.x1_max-lower_[0];length_[1]=config.grid.x2_max-lower_[1];length_[2]=config.grid.x3_max-lower_[2];
         const char* keys[]{"center_x","center_y","center_z"};
         for(int a=0;a<dimension_;++a)
-            center_[a]=config.Get<double>(keys[a],radial?0.:lower_[a]+0.5*length_[a]);
+            center_[a]=config.Get<double>(keys[a],radial?0.:
+                curved?(a==0?lower_[0]+0.5*length_[0]:0.)
+                      :lower_[a]+0.5*length_[a]);
         width_=config.Get<double>("width",0.08*length_[0]);
         for(double v:{rho_,temperature_,amplitude_,temperature_amplitude_,velocity_,width_,center_[0],center_[1],center_[2]})
             if(!std::isfinite(v))throw std::invalid_argument("GravityBox parameters must be finite");

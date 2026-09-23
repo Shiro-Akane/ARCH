@@ -1,11 +1,14 @@
 /**
  * @file CompositeMultigrid.cpp
- * @brief Construct a composite hierarchy and solve with shared multigrid-preconditioned iterations.
+ * @brief Build and solve the shared composite-AMR Poisson hierarchy.
  *
  * Workflow:
- * 1. Receive an explicit mesh/operator and signed cell-centered fields.
- * 2. Construct a composite hierarchy and solve with shared multigrid-preconditioned iterations.
- * 3. Return corrections or fluxes through the shared numerical contract.
+ * 1. Construct the finest operator from active leaves and native geometry.
+ * 2. Remove one refinement level at a time, then selectively coarsen root
+ *    axes while retaining enough nodes for quadratic interface stencils.
+ * 3. Restrict by physical cell volume, assemble each actual coarse operator,
+ *    and factor a bounded final matrix with the shared DenseLU implementation.
+ * 4. Run the common V-cycle/FGMRES tasks and accept only a checked residual.
  */
 
 #include <algorithm>
@@ -79,9 +82,18 @@ CompositeMultigrid::CompositeMultigrid(elliptic::CartesianMesh base,std::vector<
         const auto& fine=levels_.back().op;
         const int maximum=fine.max_level();
         auto coarse_base=fine.base();
+        std::array<bool,3> coarsen_axis{};
         if (!maximum) {
-            if (*std::min_element(coarse_base.cells.begin(),coarse_base.cells.begin()+base.dimension)<=4) break;
-            for (int a=0;a<base.dimension;++a) { coarse_base.cells[a]/=2; coarse_base.spacing[a]*=2.; }
+            // Keep at least four nodes on every active axis so the shared
+            // quadratic face stencil stays full rank. Coarsen only axes that
+            // still exceed four; the resulting actual coarse matrix fits LU.
+            if (coarse_base.size()<=64) break;
+            for (int a=0;a<base.dimension;++a) if(coarse_base.cells[a]>4) {
+                coarsen_axis[a]=true;
+                coarse_base.cells[a]/=2;coarse_base.spacing[a]*=2.;
+            }
+            if(coarse_base.size()==fine.base().size())
+                throw std::invalid_argument("Composite root exceeds bounded coarse solve");
         }
         std::unordered_map<CompositeCell,int,CompositeCellHash> lookup;
         std::vector<CompositeCell> coarse;
@@ -89,7 +101,8 @@ CompositeMultigrid::CompositeMultigrid(elliptic::CartesianMesh base,std::vector<
         for (auto cell:fine.cells()) {
             if (cell.level==maximum) {
                 if (maximum) --cell.level;
-                for (int a=0;a<base.dimension;++a) cell.index[a]/=2;
+                for (int a=0;a<base.dimension;++a)
+                    if(maximum || coarsen_axis[a])cell.index[a]/=2;
             }
             auto [entry,added]=lookup.emplace(cell,static_cast<int>(coarse.size()));
             if (added) coarse.push_back(cell);

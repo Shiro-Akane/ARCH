@@ -1,7 +1,9 @@
 # SNIa2DCoupled：二维四模块联动冒烟与本机计时
 
+本页保留当时提交使用的 `SNIa2DCoupled` 注册名与原始数值。当前工作树已将示例扩为二维/三维的 [`SNIaCoupled`](../../../../simulation/SNIaCoupled/README.md)；历史命令仅适用于原提交，不作为现行运行入口。
+
 日期：2026-09-23；分支：`physics/selfgravity`。正式输入与算例说明见
-[SNIa2DCoupled](../../../../simulation/SNIa2DCoupled/README.md)。这里验证正常 Driver
+[SNIa2DCoupled](../../../../simulation/SNIaCoupled/README.md)。这里验证正常 Driver
 中的 Hydro、自引力、aprox13 核燃烧与**热**扩散同时开启，且 CPU/CUDA 完成同一终点；
 这是执行和后端对照记录，不是 SN Ia 解析解、爆轰收敛或三维白矮星认证。
 

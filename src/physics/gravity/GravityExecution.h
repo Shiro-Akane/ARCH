@@ -27,17 +27,21 @@ struct UpdateMoments {
     /** Compute a leaf mass moment or combine its child moments. */
     ARCH_INLINE void operator()(int i) const {
         const int n=indices[i],c=nodes[n].cell;
-        if(c>=0){moments[n]={};moments[n].value[0]=rho[c]*volumes[c];}
+        if(c>=0){for(int q=0;q<10;++q)
+            moments[n].value[q]=rho[c]*nodes[n].unit_moments.value[q];}
         else moments[n]=combine_boundary_moments(nodes,moments,n);
     }
 };
 struct BoundaryPoint {double position[3];int face;};
 struct EvaluateBoundary {
     int size;const BoundaryPoint* points;const BoundaryTreeNode* nodes;const BoundaryMoments* moments;
-    int node_count;double G;double* values;
+    int node_count,dimension;GridMetrics::Geometry geometry;
+    double G,reference_radius;double* values;
     /** Evaluate one isolated face value from the current multipole tree. */
     ARCH_INLINE void operator()(int i) const {
-        values[points[i].face]=isolated_potential(nodes,moments,node_count,points[i].position,G);
+        values[points[i].face]=dimension==2
+            ?isolated_log_potential(nodes,moments,node_count,points[i].position,G,reference_radius,.25,2,geometry)
+            :isolated_potential(nodes,moments,node_count,points[i].position,G,.25,2,geometry,dimension);
     }
 };
 struct CellAcceleration {

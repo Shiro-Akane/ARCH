@@ -264,4 +264,9 @@ class RadialCampaign:
             self.reject(geometry, 'requires isolated', gravity_boundary='periodic')
             self.reject(geometry, 'radial inner boundary', x1l_boundary_type='outflow')
             self.reject(geometry, 'nonnegative radius', x1_min=-1)
-        self.reject('spherical', 'Cartesian or 1D', nblockx2=1)
+        # Multidimensional curved gravity is now legal only away from a
+        # coordinate join and with a complete azimuth. The old blanket
+        # 'Cartesian or 1D' rejection is no longer the physical contract.
+        self.reject('spherical', 'positive inner radius', nblockx2=1)
+        self.reject('spherical', 'full azimuthal turn', nblockx2=1,
+                    x1_min=0.5, x1_max=RADIUS)

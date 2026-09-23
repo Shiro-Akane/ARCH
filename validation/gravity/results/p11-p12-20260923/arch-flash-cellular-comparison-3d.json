@@ -1,0 +1,191 @@
+{
+  "comparison_dx_cm": 0.5,
+  "domain_cm": [
+    64.0,
+    32.0,
+    16.0
+  ],
+  "initial": {
+    "arch_leaves_by_level": {
+      "0": 6,
+      "1": 16
+    },
+    "fields": {
+      "carbon_12": {
+        "absolute_L1": 9.999999999999996e-21,
+        "arch_max": 1e-20,
+        "arch_min": 1e-20,
+        "flash_max": 0.0,
+        "flash_min": 0.0,
+        "relative_L1": null
+      },
+      "density": {
+        "absolute_L1": 0.0,
+        "arch_max": 80000000.0,
+        "arch_min": 20000000.0,
+        "flash_max": 80000000.0,
+        "flash_min": 20000000.0,
+        "relative_L1": 0.0
+      },
+      "helium_4": {
+        "absolute_L1": 0.0,
+        "arch_max": 1.0,
+        "arch_min": 1.0,
+        "flash_max": 1.0,
+        "flash_min": 1.0,
+        "relative_L1": 0.0
+      },
+      "pressure": {
+        "absolute_L1": 1.4974464702401862e+22,
+        "arch_max": 2.53654798117401e+25,
+        "arch_min": 2.3632083529819804e+24,
+        "flash_max": 2.5394099180674813e+25,
+        "flash_min": 2.3747047048408517e+24,
+        "relative_L1": 0.0021238811300525497
+      },
+      "temperature": {
+        "absolute_L1": 9.792856872081757e-07,
+        "arch_max": 3500000000.0000014,
+        "arch_min": 199999999.99999914,
+        "flash_max": 3500000000.0,
+        "flash_min": 200000000.0,
+        "relative_L1": 1.1252115616036488e-15
+      },
+      "velocity_x": {
+        "absolute_L1": 0.0,
+        "arch_max": 950000000.0,
+        "arch_min": 0.0,
+        "flash_max": 950000000.0,
+        "flash_min": 0.0,
+        "relative_L1": 0.0
+      }
+    },
+    "flash_leaves_by_level": {
+      "1": 48,
+      "2": 128
+    },
+    "time_seconds": 0.0
+  },
+  "post_regrid": {
+    "arch_leaves_by_level": {
+      "0": 6,
+      "1": 16
+    },
+    "fields": {
+      "carbon_12": {
+        "absolute_L1": 2.8587011899890407e-08,
+        "arch_max": 4.496234780086809e-06,
+        "arch_min": 1e-20,
+        "flash_max": 4.412114321894478e-06,
+        "flash_min": 1.000000013351432e-10,
+        "relative_L1": 0.03213433430897286
+      },
+      "density": {
+        "absolute_L1": 107844.03967973473,
+        "arch_max": 80051580.29145488,
+        "arch_min": 20000000.0,
+        "flash_max": 80050912.0,
+        "flash_min": 20000000.0,
+        "relative_L1": 0.0033504944333990457
+      },
+      "helium_4": {
+        "absolute_L1": 2.860965696033918e-08,
+        "arch_max": 1.0,
+        "arch_min": 0.9999955015948734,
+        "flash_max": 1.0,
+        "flash_min": 0.9999955892562866,
+        "relative_L1": 2.8609682432809187e-08
+      },
+      "pressure": {
+        "absolute_L1": 8.211278826807468e+22,
+        "arch_max": 2.5388771167475755e+25,
+        "arch_min": 2.3632083529819804e+24,
+        "flash_max": 2.645359484407735e+25,
+        "flash_min": 2.3747047048408517e+24,
+        "relative_L1": 0.011587564324073412
+      },
+      "temperature": {
+        "absolute_L1": 8011357.777084747,
+        "arch_max": 3997972305.4867835,
+        "arch_min": 199999999.99999914,
+        "flash_max": 4486128128.0,
+        "flash_min": 200000016.0,
+        "relative_L1": 0.008887313167939746
+      },
+      "velocity_x": {
+        "absolute_L1": 885021.5825124416,
+        "arch_max": 950080821.067476,
+        "arch_min": -3.51843385344e-10,
+        "flash_max": 986129792.0,
+        "flash_min": -1.3626500106056483e-07,
+        "relative_L1": 0.004509341294374428
+      }
+    },
+    "flash_leaves_by_level": {
+      "1": 40,
+      "2": 192
+    },
+    "time_seconds": 1.0485749999999999e-10
+  },
+  "step_20": {
+    "arch_leaves_by_level": {
+      "0": 6,
+      "1": 16
+    },
+    "fields": {
+      "carbon_12": {
+        "absolute_L1": 2.8586386622282938e-08,
+        "arch_max": 4.496234780086809e-06,
+        "arch_min": 1e-20,
+        "flash_max": 4.412114321894478e-06,
+        "flash_min": 1.000000013351432e-10,
+        "relative_L1": 0.032133608855872575
+      },
+      "density": {
+        "absolute_L1": 107844.03967973473,
+        "arch_max": 80051580.29145488,
+        "arch_min": 20000000.0,
+        "flash_max": 80050912.0,
+        "flash_min": 20000000.0,
+        "relative_L1": 0.0033504944333990457
+      },
+      "helium_4": {
+        "absolute_L1": 2.907531824764692e-08,
+        "arch_max": 1.0,
+        "arch_min": 0.9999955015948734,
+        "flash_max": 1.0,
+        "flash_min": 0.9999955892562866,
+        "relative_L1": 2.907534412117693e-08
+      },
+      "pressure": {
+        "absolute_L1": 3.7209107751421847e+22,
+        "arch_max": 2.5388771167475755e+25,
+        "arch_min": 2.3632083529819804e+24,
+        "flash_max": 2.541783552861166e+25,
+        "flash_min": 2.3747047048408517e+24,
+        "relative_L1": 0.00524815000329686
+      },
+      "temperature": {
+        "absolute_L1": 4676625.808311273,
+        "arch_max": 3997972305.4867835,
+        "arch_min": 199999999.99999914,
+        "flash_max": 3846739456.0,
+        "flash_min": 200000016.0,
+        "relative_L1": 0.005177109453418464
+      },
+      "velocity_x": {
+        "absolute_L1": 791250.5723405832,
+        "arch_max": 950080821.067476,
+        "arch_min": -3.51843385344e-10,
+        "flash_max": 950000000.0,
+        "flash_min": -1.3626500106056483e-07,
+        "relative_L1": 0.004031561372079392
+      }
+    },
+    "flash_leaves_by_level": {
+      "1": 48,
+      "2": 128
+    },
+    "time_seconds": 1.0485749999999999e-10
+  }
+}

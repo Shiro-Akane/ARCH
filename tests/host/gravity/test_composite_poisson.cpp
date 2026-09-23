@@ -331,14 +331,319 @@ void radial_convergence() {
         }
 }
 
+/** Check independent enclosed-mass force with a hollow polar ring/spherical shell. */
+void curved_gauss_law() {
+    constexpr double G=1.,q=.2,rmin=.5;
+    for(int dim:{2,3})for(bool refined:{false,true}) {
+        double previous=0.;
+        for(int n:{8,16}) {
+            auto base=base_mesh(dim,n);
+            base.geometry=dim==2?elliptic::Geometry::Cylindrical:elliptic::Geometry::Spherical;
+            base.origin[0]=rmin;base.spacing[0]=1./n;
+            if(dim==2){base.origin[1]=0.;base.spacing[1]=2*pi/n;}
+            else {base.origin[1]=0.;base.spacing[1]=pi/n;
+                base.origin[2]=0.;base.spacing[2]=2*pi/n;}
+            multigrid::CompositeMultigrid solver(base,make_cells(base,refined),
+                elliptic::BoundaryKind::CurvilinearIsolated);
+            const auto& op=solver.op();
+            std::vector<double> rho(op.size()),rhs(op.size()),bc(op.faces().size());
+            for(int i=0;i<op.size();++i) {
+                const double r=op.center(i)[0],h=op.width(i,0);
+                const double lo=r-h/2,hi=r+h/2;
+                const double average_r2=dim==2?(hi*hi+lo*lo)/2
+                    :3.*(std::pow(hi,5)-std::pow(lo,5))
+                        /(5.*(std::pow(hi,3)-std::pow(lo,3)));
+                rho[i]=1.+q*average_r2;
+                rhs[i]=-4*pi*G*rho[i];
+            }
+            Physical::Gravity::GravityBoundary tree(op);tree.update(rho);
+            bc=tree.values(op,G);
+            const auto solved=solver.solve(op.effective_rhs(rhs,bc),{1e-10,0.,300});
+            require(solved.report.status==multigrid::SolveStatus::Converged,
+                "curved enclosed-mass solve failed");
+            double numerator=0.,denominator=0.;
+            for(std::size_t index=0;index<op.faces().size();++index) {
+                const auto& face=op.faces()[index];
+                const double r=face.center[0];
+                double expected=0.;
+                if(face.axis==0) {
+                    const double mass=dim==2
+                        ?2*pi*(.5*(r*r-rmin*rmin)+q*.25*(std::pow(r,4)-std::pow(rmin,4)))
+                        :4*pi*((std::pow(r,3)-std::pow(rmin,3))/3.
+                            +q*(std::pow(r,5)-std::pow(rmin,5))/5.);
+                    expected=dim==2?2*G*mass/r:G*mass/(r*r);
+                }
+                const double actual=op.face_gradient(solved.potential,face,
+                    face.boundary_side>=0?bc[index]:0.);
+                numerator+=face.area*(actual-expected)*(actual-expected);
+                denominator+=face.area;
+            }
+            const double error=std::sqrt(numerator/denominator);
+            std::cout<<"curved Gauss dimension="<<dim<<" refined="<<refined
+                <<" n="<<n<<" force="<<error<<" cycles="<<solved.report.cycles;
+            if(previous)std::cout<<" order="<<std::log2(previous/error);
+            std::cout<<'\n';
+            if(previous)require(std::log2(previous/error)>=1.8,
+                "curved enclosed-mass force order below 1.8");
+            previous=error;
+        }
+    }
+}
+
+/** Compare physical isolated boundary kernels against direct cell quadrature. */
+void curved_boundary_integral() {
+    constexpr double nodes[]{-0.7745966692414834,0.,0.7745966692414834};
+    constexpr double weights[]{5./9.,8./9.,5./9.};
+    for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
+        for(int dim:{2,3}) {
+            auto base=base_mesh(dim,8);base.geometry=geometry;
+            base.origin[0]=.5;base.spacing[0]=1./8;
+            if(dim==2){base.origin[1]=0.;base.spacing[1]=2*pi/8;}
+            else if(geometry==elliptic::Geometry::Cylindrical) {
+                base.origin[1]=-.5;base.spacing[1]=1./8;
+                base.origin[2]=0.;base.spacing[2]=2*pi/8;
+            } else {
+                base.origin[1]=.3;base.spacing[1]=(pi-.6)/8;
+                base.origin[2]=0.;base.spacing[2]=2*pi/8;
+            }
+            const auto position=[=](const std::array<double,3>& native) {
+                const double r=native[0],phi=native[dim-1];
+                if(dim==2)return std::array<double,3>{r*std::cos(phi),r*std::sin(phi),0.};
+                if(geometry==elliptic::Geometry::Cylindrical)
+                    return std::array<double,3>{r*std::cos(phi),r*std::sin(phi),native[1]};
+                return std::array<double,3>{r*std::sin(native[1])*std::cos(phi),
+                    r*std::sin(native[1])*std::sin(phi),r*std::cos(native[1])};
+            };
+            elliptic::CompositePoisson op(base,make_cells(base,true),
+                elliptic::BoundaryKind::CurvilinearIsolated);
+            std::vector<double> density(op.size());
+            for(int i=0;i<op.size();++i) {
+                const auto x=position(op.center(i));
+                const double a=(x[0]-.7)/.18,b=(x[1]-.4)/.18,c=x[2]/.18;
+                density[i]=std::exp(-.5*(a*a+b*b+(dim==3?c*c:0.)));
+            }
+            Physical::Gravity::GravityBoundary tree(op);tree.update(density);
+            const auto actual=tree.values(op,1.),tighter=tree.values(op,1.,.125);
+            double error=0.,tight_error=0.,scale=0.;int checked=0;
+            for(std::size_t f=0;f<op.faces().size() && checked<12;++f) {
+                if(op.faces()[f].boundary_side<0)continue;
+                const auto point=position(op.faces()[f].center);
+                double reference=0.;
+                for(int i=0;i<op.size();++i) {
+                    const auto center=op.center(i);
+                    double total=0.,potential=0.;
+                    for(int u=0;u<3;++u)for(int v=0;v<3;++v)
+                        for(int w=0;w<(dim==3?3:1);++w) {
+                            auto x=center;
+                            x[0]+=.5*op.width(i,0)*nodes[u];
+                            x[1]+=.5*op.width(i,1)*nodes[v];
+                            if(dim==3)x[2]+=.5*op.width(i,2)*nodes[w];
+                            const auto cart=position(x);
+                            const double jacobian=dim==3 && geometry==elliptic::Geometry::Spherical
+                                ?x[0]*x[0]*std::sin(x[1]):x[0];
+                            const double weight=weights[u]*weights[v]*(dim==3?weights[w]:1.)*jacobian;
+                            double distance=0.;
+                            for(int a=0;a<3;++a)distance+=std::pow(point[a]-cart[a],2);
+                            const double kernel=dim==2?2.*std::log(std::sqrt(distance)/1.5)
+                                :-1./std::sqrt(distance);
+                            total+=weight;potential+=weight*kernel;
+                        }
+                    reference+=density[i]*op.volumes()[i]*potential/total;
+                }
+                error+=std::pow(actual[f]-reference,2);
+                tight_error+=std::pow(tighter[f]-reference,2);
+                scale+=reference*reference;
+                ++checked;
+            }
+            const double relative=std::sqrt(error/scale),tight=std::sqrt(tight_error/scale);
+            std::cout<<"curved boundary geometry="<<static_cast<int>(geometry)
+                <<" dim="<<dim<<" faces="<<checked<<" relative="<<relative
+                <<" tighter="<<tight<<'\n';
+            require(checked>0 && relative<.03 && tight<relative,
+                "curved isolated multipole differs from direct physical quadrature");
+        }
+}
+
+/** Keep the same compact mass fixed while moving the outer radial boundary. */
+void curved_domain_extension() {
+    for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
+        for(int dim:{2,3}) {
+            std::vector<double> reference;
+            double reference_norm=0.,difference=0.;int compared=0;
+            for(int radial_cells:{8,16}) {
+                auto base=base_mesh(dim,8);
+                base.geometry=geometry;base.cells[0]=radial_cells;
+                base.origin[0]=.5;base.spacing[0]=.125;
+                if(dim==2){base.origin[1]=0.;base.spacing[1]=2*pi/8;}
+                else if(geometry==elliptic::Geometry::Cylindrical) {
+                    base.origin[1]=-.5;base.spacing[1]=.125;
+                    base.origin[2]=0.;base.spacing[2]=2*pi/8;
+                } else {
+                    base.origin[1]=.3;base.spacing[1]=(pi-.6)/8;
+                    base.origin[2]=0.;base.spacing[2]=2*pi/8;
+                }
+                multigrid::CompositeMultigrid solver(base,make_cells(base,false),
+                    elliptic::BoundaryKind::CurvilinearIsolated);
+                const auto& op=solver.op();
+                std::vector<double> density(op.size()),rhs(op.size());
+                for(int i=0;i<op.size();++i) {
+                    const auto x=op.center(i);
+                    const double radial=(x[0]-.85)/.25;
+                    const double envelope=std::abs(radial)<1.
+                        ?std::pow(1.-radial*radial,4):0.;
+                    density[i]=envelope*(1.+.1*std::cos(2*x[dim-1]));
+                    rhs[i]=-4*pi*density[i];
+                }
+                Physical::Gravity::GravityBoundary tree(op);tree.update(density);
+                const auto boundary=tree.values(op,1.);
+                const auto solved=solver.solve(op.effective_rhs(rhs,boundary),
+                    {1e-10,0.,300});
+                require(solved.report.status==multigrid::SolveStatus::Converged &&
+                        solved.report.residual<=solved.report.target,
+                        "curved expanded-domain solve failed");
+                // Compare only the same inner-domain physical faces. The 2D
+                // logarithmic gauge changes with Rref, but its gradient does not.
+                if(radial_cells==8) {
+                    for(std::size_t f=0;f<op.faces().size();++f) {
+                        const auto& face=op.faces()[f];
+                        if(face.center[0]>1.25)continue;
+                        reference.push_back(op.face_gradient(solved.potential,face,
+                            face.boundary_side>=0?boundary[f]:0.));
+                    }
+                } else {
+                    auto inner=base;inner.cells[0]=8;
+                    elliptic::CompositePoisson inner_op(inner,make_cells(inner,false),
+                        elliptic::BoundaryKind::CurvilinearIsolated);
+                    std::size_t reference_index=0;
+                    for(const auto& face:inner_op.faces()) {
+                        if(face.center[0]>1.25)continue;
+                        bool found=false;
+                        for(std::size_t f=0;f<op.faces().size();++f) {
+                            const auto& candidate=op.faces()[f];
+                            if(candidate.axis!=face.axis)continue;
+                            bool same=true;
+                            for(int a=0;a<dim;++a)
+                                same &= std::abs(candidate.center[a]-face.center[a])<1e-12;
+                            if(!same)continue;
+                            const double gradient=op.face_gradient(solved.potential,candidate,
+                                candidate.boundary_side>=0?boundary[f]:0.);
+                            const double expected=reference.at(reference_index);
+                            difference+=(gradient-expected)*(gradient-expected);
+                            reference_norm+=expected*expected;
+                            ++compared;found=true;break;
+                        }
+                        require(found,"curved expanded domain lost an inner physical face");
+                        ++reference_index;
+                    }
+                    require(reference_index==reference.size(),
+                        "curved expanded-domain face mapping mismatch");
+                }
+            }
+            const double relative=std::sqrt(difference/reference_norm);
+            std::cout<<"curved domain geometry="<<static_cast<int>(geometry)
+                <<" dim="<<dim<<" faces="<<compared<<" force_change="<<relative<<'\n';
+            require(compared>0 && relative<.02,
+                "curved isolated force changed with empty outer-domain extension");
+        }
+}
+
+/** Exercise nonaxisymmetric manufactured potentials on native curved meshes. */
+void curved_manufactured(bool singular=false) {
+    for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
+        for(int dim:{2,3}) for(bool refined:{false,true}) {
+            double previous=0.,previous_force=0.;
+            for(int n:{8,16}) {
+                auto base=base_mesh(dim,n);
+                base.geometry=geometry;base.origin[0]=singular?0.:.5;base.spacing[0]=1./n;
+                if(dim==2) {base.origin[1]=0.;base.spacing[1]=2*pi/n;}
+                else if(geometry==elliptic::Geometry::Cylindrical) {
+                    base.origin[1]=-.5;base.spacing[1]=1./n;
+                    base.origin[2]=0.;base.spacing[2]=2*pi/n;
+                } else {
+                    base.origin[1]=singular?0.:.3;
+                    base.spacing[1]=(singular?pi:pi-.6)/n;
+                    base.origin[2]=0.;base.spacing[2]=2*pi/n;
+                }
+                const auto exact=[=](const std::array<double,3>& x) {
+                    constexpr double e=.1;
+                    if(dim==2)return x[0]*x[0]*(1.+e*std::cos(2*x[1]));
+                    if(geometry==elliptic::Geometry::Cylindrical)
+                        return x[0]*x[0]*(1.+e*std::cos(2*x[2]))+x[1]*x[1];
+                    return x[0]*x[0]*(1.+e*std::sin(x[1])*std::sin(x[1])*std::cos(2*x[2]));
+                };
+                multigrid::CompositeMultigrid solver(base,make_cells(base,refined),
+                    elliptic::BoundaryKind::CurvilinearIsolated);
+                const auto& op=solver.op();
+                std::vector<double> rhs(op.size(),dim==2?-4.:-6.),bc(op.faces().size()),error(op.size());
+                for(std::size_t f=0;f<bc.size();++f)
+                    if(op.faces()[f].boundary_side>=0)bc[f]=exact(op.faces()[f].center);
+                const auto result=solver.solve(op.effective_rhs(rhs,bc),{1e-11,0.,300});
+                std::cout<<"curved manufactured singular="<<singular<<" geometry="<<static_cast<int>(geometry)
+                    <<" dim="<<dim<<" refined="<<refined<<" n="<<n
+                    <<" cycles="<<result.report.cycles<<" residual="<<result.report.residual
+                    <<" target="<<result.report.target<<std::flush;
+                require(result.report.status==multigrid::SolveStatus::Converged,
+                    "curved manufactured solve did not converge");
+                for(int i=0;i<op.size();++i)error[i]=result.potential[i]-exact(op.center(i));
+                const double norm=op.norm(error);
+                double force_squared=0.,face_area=0.,interface_squared=0.,interface_area=0.;
+                for(const auto& face:op.faces()) {
+                    const auto& x=face.center;
+                    constexpr double e=.1;
+                    const double phi=dim==2?x[1]:x[2];
+                    double expected=0.;
+                    if(face.axis==0)expected=2*x[0]*(1.+e*(dim==3 && geometry==elliptic::Geometry::Spherical
+                        ?std::sin(x[1])*std::sin(x[1]):1.)*std::cos(2*phi));
+                    else if(dim==3 && face.axis==1 && geometry==elliptic::Geometry::Cylindrical)
+                        expected=2*x[1];
+                    else if(dim==3 && face.axis==1)
+                        expected=2*e*x[0]*std::sin(x[1])*std::cos(x[1])*std::cos(2*phi);
+                    else expected=-2*e*x[0]*(dim==3 && geometry==elliptic::Geometry::Spherical
+                        ?std::sin(x[1]):1.)*std::sin(2*phi);
+                    const double value=op.face_gradient(result.potential,face,
+                        face.boundary_side>=0?bc[&face-&op.faces()[0]]:0.);
+                    const double mismatch=value-expected;
+                    force_squared+=face.area*mismatch*mismatch;
+                    face_area+=face.area;
+                    if(face.left>=0 && face.right>=0 &&
+                        op.cells()[face.left].level!=op.cells()[face.right].level) {
+                        interface_squared+=face.area*mismatch*mismatch;
+                        interface_area+=face.area;
+                    }
+                }
+                const double force=std::sqrt(force_squared/face_area);
+                std::cout<<" error="<<norm<<" force="<<force;
+                if(interface_area>0.)std::cout<<" interface="<<std::sqrt(interface_squared/interface_area);
+                if(previous)std::cout<<" orders="<<std::log2(previous/norm)<<','
+                    <<std::log2(previous_force/force);
+                std::cout<<'\n';
+                if(previous) {
+                    require(std::log2(previous/norm)>=1.8,
+                        "curved manufactured potential order below 1.8");
+                    require(std::log2(previous_force/force)>=1.8,
+                        "curved manufactured face-force order below 1.8");
+                }
+                previous=norm;previous_force=force;
+            }
+        }
+}
+
 }
 int main(int argc,char** argv) {
     try {
         std::cout<<std::setprecision(17);
         if (argc>1 && std::string(argv[1])=="contract") { contract(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
+        if(argc>1 && std::string(argv[1])=="curved") {curved_manufactured();curved_boundary_integral();return 0;}
+        if(argc>1 && std::string(argv[1])=="singular") {curved_manufactured(true);return 0;}
+        if(argc>1 && std::string(argv[1])=="gauss") {curved_gauss_law();return 0;}
+        if(argc>1 && std::string(argv[1])=="domain") {curved_domain_extension();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary") {boundary_convergence();isolated_boundary();return 0;}
-        if(argc>1 && std::string(argv[1])=="ci") {boundary_convergence(16);isolated_boundary();averaged_source_exactness();convergence(2);radial_convergence();return 0;}
+        if(argc>1 && std::string(argv[1])=="ci") {
+            boundary_convergence(16);isolated_boundary();averaged_source_exactness();
+            convergence(2);radial_convergence();curved_manufactured();
+            curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);return 0;
+        }
         averaged_source_exactness();
         convergence(argc>1 ? std::stoi(argv[1]) : 3);
         std::cout<<"Composite Poisson analytic validation passed\n";

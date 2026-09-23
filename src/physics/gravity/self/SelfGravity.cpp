@@ -1,11 +1,15 @@
 /**
  * @file SelfGravity.cpp
- * @brief Assemble the physical source, solve Poisson, derive force and publish stage fields.
+ * @brief Solve and publish one stage's self-gravitational potential and force.
  *
  * Workflow:
- * 1. Receive active density with mesh and generation identity.
- * 2. Assemble the physical source, solve Poisson, derive force and publish stage fields.
- * 3. Publish a checked potential/acceleration field for the requested stage.
+ * 1. Bind the active AMR topology and select periodic, Cartesian isolated,
+ *    radial symmetric or multidimensional curved isolated Poisson boundaries.
+ * 2. Gather the stage density, rebuild current mass moments and boundary
+ *    values, then solve A(phi) = -4*pi*G*rho to a checked residual.
+ * 3. Derive face gradients, cell acceleration, gravity timestep and face
+ *    mass-flux work coefficients before publishing the generation identity.
+ * 4. Invalidate the published field whenever density or topology changes.
  */
 
 #include <algorithm>
@@ -18,6 +22,7 @@
 #include "physics/gravity/self/SelfGravity.h"
 
 #include "amr/elliptic/EllipticMeshAdapter.h"
+#include "grid/GridGeometryView.h"
 #include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/constant/PhysicalConstants.h"
 #include "physics/gravity/GravityBoundary.h"
@@ -58,9 +63,10 @@ void SelfGravity::bind(amr::EllipticMeshBinding binding) const {
     if (cell!=binding.cells.size()) throw std::invalid_argument("Extra cells in gravity mesh binding");
     if(binding.base.geometry!=arch::elliptic::Geometry::Cartesian &&
         config_.boundary!="isolated")
-        throw std::invalid_argument("Radial self-gravity requires an isolated field boundary");
+        throw std::invalid_argument("Curvilinear self-gravity requires an isolated field boundary");
     const auto kind=binding.base.geometry!=arch::elliptic::Geometry::Cartesian
-        ? arch::elliptic::BoundaryKind::RadialIsolated
+        ? (binding.base.dimension==1 ? arch::elliptic::BoundaryKind::RadialIsolated
+                                     : arch::elliptic::BoundaryKind::CurvilinearIsolated)
         : (config_.boundary=="periodic" ? arch::elliptic::BoundaryKind::Periodic
                                         : arch::elliptic::BoundaryKind::Dirichlet);
     work_=std::make_unique<Workspace>(std::move(binding),kind,
@@ -103,7 +109,11 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     if(w.nodes.size){
         for(auto it=w.layers.rbegin();it!=w.layers.rend();++it)
             w.execution->run(UpdateMoments{it->size,it->data,w.nodes.data,w.moments.data,w.density.data,w.volumes.data});
-        w.execution->run(EvaluateBoundary{w.points.size,w.points.data,w.nodes.data,w.moments.data,w.nodes.size,config_.G_const,w.boundary_values.data});
+        w.execution->run(EvaluateBoundary{w.points.size,w.points.data,w.nodes.data,w.moments.data,w.nodes.size,op.base().dimension,
+            op.base().geometry==arch::elliptic::Geometry::Cartesian ? GridMetrics::Geometry::Cartesian
+                : (op.base().geometry==arch::elliptic::Geometry::Cylindrical
+                    ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical),
+            config_.G_const,op.base().origin[0]+op.base().cells[0]*op.base().spacing[0],w.boundary_values.data});
         w.solver.boundary_rhs(w.rhs,w.boundary_values);
     } else if(op.boundary_kind()==arch::elliptic::BoundaryKind::RadialIsolated) {
         // Spherical free-space outer value: Phi(R)=-G*M/R,
@@ -133,7 +143,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     w.solver.gradient(w.solver.resident_potential(),w.face_gradient,w.boundary_values);
     e.run(arch::multigrid::RowsWork{w.sides.size,w.side_gather.view(),w.face_gradient.data,w.sides.data});
     e.run(arch::multigrid::RowsWork{w.patch_faces.size,w.patch_gather.view(),w.sides.data,w.patch_faces.data});
-    if(op.boundary_kind()==arch::elliptic::BoundaryKind::RadialIsolated) {
+    if(op.base().geometry!=arch::elliptic::Geometry::Cartesian) {
         e.run(arch::multigrid::RowsWork{w.work_sides.size,w.work_phi_gather.view(),
             w.solver.resident_potential().data,w.work_sides.data});
         e.run(arch::multigrid::RowsWork{w.work_sides.size,w.work_boundary_gather.view(),

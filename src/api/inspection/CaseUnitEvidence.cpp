@@ -3,9 +3,11 @@
  * @brief Report case unit provenance separately from execution readiness.
  *
  * Workflow:
- * 1. Accept a bounded, verified request at the read-only API boundary.
- * 2. Report case unit provenance separately from execution readiness.
- * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ * 1. Match the compiled built-in case source to its reviewed SHA-256 before
+ *    making any claim about dimensional units.
+ * 2. Attach audited CGS units only to parameters actually read during Setup;
+ *    resolve dimension-dependent Sedov explosion energy after grid inspection.
+ * 3. Report source identity and evidence status without running the Driver.
  */
 
 #include <map>
@@ -27,7 +29,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"u_left", "cm/s"},
         {"u_right", "cm/s"},
     }}},
-    {"CellularDet", {"simulation/Cellular/Cellular.cpp", "3ef599e80f937dd475e415a0e66940699670c86ed4b3e289863dbf5d16e70cdd", {
+    {"CellularDet", {"simulation/Cellular/Cellular.cpp", "a6b8f5fb469aa7c73848ef765926fc3d02969be42e07186131079c00a3f5f54d", {
         {"rhoAmbient", "g/cm^3"},
         {"tempAmbient", "K"},
         {"rhoPerturb", "g/cm^3"},
@@ -51,7 +53,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"w_amplitude", "cm/s"},
         {"gas_cv", "erg/(g*K)"},
     }}},
-    {"Sedov", {"simulation/Sedov/Sedov.cpp", "0d4c85ef19949bdbf5ce438fdaf400b6ea982870429effe3cd07cbbe4188f21e", {
+    {"Sedov", {"simulation/Sedov/Sedov.cpp", "ba3da68337dba6ac0ef89674548f157ecb67819fc8d991eb93bd02eff15d0916", {
         {"center_x", "cm"},
         {"center_y", "cm"},
         {"center_z", "cm"},
@@ -60,26 +62,26 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"ambient_pressure", "erg/cm^3"},
         {"explosion_energy", "dimension-dependent-energy"},
     }}},
-    {"RT", {"simulation/RTinstability/RT_instab.cpp", "d9667916d79d36a0ffeeb97037478583a6596937829ae6241bd0944a3d855ca0", {
+    {"RT", {"simulation/RTinstability/RT_instab.cpp", "cc3d8c4185ed2ba44ab26e1c831ef0ac7ccadacb66af28cd1f0abf3ad7456c1e", {
         {"rho_heavy", "g/cm^3"},
         {"rho_light", "g/cm^3"},
         {"y_int", "cm"},
         {"p_int", "erg/cm^3"},
         {"amplitude", "cm/s"},
     }}},
-    {"SmoothAdvection", {"simulation/SmoothAdvection/SmoothAdvection.cpp", "6d13d6d0072c7c8ba133cc93429232683f6c0a23984beee54cde3acc851f74f1", {
+    {"SmoothAdvection", {"simulation/SmoothAdvection/SmoothAdvection.cpp", "dd9bf2b5d5a16ec24ab16cd7214aca16c447a2867766154731f487a56d24b80c", {
         {"rho_mean", "g/cm^3"},
         {"rho_amplitude", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
-    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "7cf0a449208b3ee8e8edd50bd125a20b25cbb2042b54ee85e6ba57fb44c432dc", {
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "5b7082c6f0778c4632dd7b3d2e55f06fdf8c789ed1fd240039003c582bf93477", {
         {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
     }}},
-    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "8e68d1d6d6e7e17a710e7e168385d77263c40f6e90046f685eccc91cf55d1e98", {
+    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "f8ff2133ec7ccc27b8cc333aed5493e7c7c4746986e0e614aa8c7a408ed8710d", {
         {"rho0", "g/cm^3"}, {"pressure0", "erg/cm^3"},
         {"amplitude", "1"}, {"phase", "rad"}, {"mode", "1"},
     }}},
@@ -88,7 +90,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"pressure0", "erg/cm^3"},
         {"velocity_x0", "cm/s"},
     }}},
-    {"DiffusionMode", {"simulation/DiffusionMode/DiffusionMode.cpp", "8e3ec0d70fd92f0f4a754968e151919931fc4ec45813b45b23cb02a3607ebdfa", {
+    {"DiffusionMode", {"simulation/DiffusionMode/DiffusionMode.cpp", "a5a806e03acfeff7d5cca6b8d65230b921e642340692103118eb86b7e1d0d90a", {
         {"rho0", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"tracer_mean", "1"},
@@ -114,6 +116,16 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"hotspot_center_y", "cm"},
         {"hotspot_radius", "cm"},
         {"hotspot_separation", "cm"},
+    }}},
+    {"SNIaCoupled", {"simulation/SNIaCoupled/SNIaCoupled.cpp", "291721c4a22fece17f6df95020386e912fc02f333e5d17110f5d10cf28182e15", {
+        {"rho0", "g/cm^3"},
+        {"temperature0", "K"},
+        {"temperature_peak", "K"},
+        {"density_amplitude", "1"},
+        {"hotspot_width", "cm"},
+        {"center_x", "cm"},
+        {"center_y", "cm"},
+        {"center_z", "cm"},
     }}},
 };
 }

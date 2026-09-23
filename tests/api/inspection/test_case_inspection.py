@@ -26,6 +26,7 @@ CASES = {
     'BurnOneZone': ('simulation/BurnOneZone/BurnOneZone.cpp', EOS),
     'BurnGradient': ('simulation/BurnGradient/BurnGradient.cpp', EOS),
     'CooperativeHotspots': ('simulation/CooperativeHotspots/CooperativeHotspots.cpp', EOS+'nblockx2=1\nx1_max=128\nx2_max=128\n'),
+    'SNIaCoupled': ('simulation/SNIaCoupled/SNIaCoupled.cpp', EOS+'nblockx2=1\ngravity_type=self\nx1l_boundary_type=periodic\nx1r_boundary_type=periodic\nx2l_boundary_type=periodic\nx2r_boundary_type=periodic\nuse_diffusion=true\nuse_thermal_diff=true\n'),
 }
 
 class Inspection(unittest.TestCase):

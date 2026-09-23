@@ -210,8 +210,8 @@ Their pass/fail decisions and compact CSV results are kept together in the
 [validation index](../../validation/README.md); this guide does not duplicate the
 analysis tables. For self-gravity, use the reusable periodic/isolated
 [GravityBox](../../simulation/GravityBox/README.md) inputs. The
-[SNIa2DCoupled](../../simulation/SNIa2DCoupled/README.md) C/O hotspot checks
-four-module execution on CPU/CUDA; it is not an analytic SN Ia validation case.
+[SNIaCoupled](../../simulation/SNIaCoupled/README.md) C/O hotspot checks
+four-module execution on Cartesian CPU/CUDA and curved CPU; it is not an analytic SN Ia validation case.
 
 ## 6. Create a new case
 

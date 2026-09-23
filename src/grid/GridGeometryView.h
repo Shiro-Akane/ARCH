@@ -7,6 +7,8 @@
 #include "core/ArchPortability.h"
 #include "physics/constant/PhysicalConstants.h"
 
+#include <array>
+#include <cmath>
 #include <type_traits>
 
 namespace GridMetrics {
@@ -76,6 +78,22 @@ ARCH_HOST_DEVICE inline Geometry geometry_kind(const GeometryView& grid)
 {
     return grid.geometry;
 }
+
+/** Convert native coordinates to the Cartesian position used by gravity kernels. */
+ARCH_HOST_DEVICE inline std::array<double,3> PhysicalPosition(
+    Geometry geometry, int dimension, const std::array<double,3>& native) {
+    if (geometry == Geometry::Cartesian) return native;
+    const double r = native[0];
+    if (dimension == 1) return {r,0.,0.};
+    if (dimension == 2) return {r*std::cos(native[1]), r*std::sin(native[1]), 0.};
+    if (geometry == Geometry::Cylindrical)
+        return {r*std::cos(native[2]), r*std::sin(native[2]), native[1]};
+    if (geometry == Geometry::Spherical)
+        return {r*std::sin(native[1])*std::cos(native[2]),
+                r*std::sin(native[1])*std::sin(native[2]), r*std::cos(native[1])};
+    return native;
+}
+
 
 static_assert(std::is_standard_layout_v<GeometryView>);
 static_assert(std::is_trivially_copyable_v<GeometryView>);

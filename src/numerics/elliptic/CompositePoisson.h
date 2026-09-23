@@ -44,6 +44,7 @@ struct CompositeCellHash {
 struct CompositeFace {
     int left = 0, right = 0, axis = 0;
     double area = 0.;
+    std::array<double,3> fragment_width{}; // Tangential subface widths in native coordinates.
     int boundary_side = -1; // Interior: -1; physical face: 2*axis+side.
     double boundary_coefficient = 0.;
     std::array<double,3> center{};
@@ -92,6 +93,8 @@ private:
     int max_level_ = 0;
     void build_faces();
     void fit_interface(CompositeFace& face) const;
-    void fit_radial_face_value(CompositeFace& face) const;
+    void fit_curved_face_value(CompositeFace& face) const;
+    double face_area(const CompositeFace& face) const;
+    double face_metric(const CompositeFace& face,int axis) const;
 };
 } // namespace arch::elliptic

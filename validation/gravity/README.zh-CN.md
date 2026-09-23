@@ -116,8 +116,10 @@ RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预�
 
 `gravity_type=self` 在 CPU/CUDA 上支持 Cartesian 一至三维全周期、三维孤立边界及
 复合 AMR 泊松求解。流体、燃烧与热扩散组合已做验证。CPU 一维球/柱对称 isolated 自引力已完成严格椭圆、原点、混合 AMR、
-静水参考、低密度及重启的一维 CPU 验收。多维曲线坐标、
-域外质量源和 Jeans 专用细化指标尚不支持。可从 [GravityBox](../../simulation/GravityBox/README.md)
+静水参考、低密度及重启验收。CPU 二维完整方位角极坐标、三维柱/球坐标 isolated
+已在避奇点域通过非轴对称制造解、独立边界/Gauss 检查和短时 AMR 耦合运行，
+详见 [P11 记录](results/p11-p12-20260923/README.md)。多维原点/轴线/极点流体接合、
+曲线 CUDA 引力、域外质量源和 Jeans 专用细化指标尚不支持。可从 [GravityBox](../../simulation/GravityBox/README.md)
 的示例输入开始。[P5–P7 验收](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
 记录数值、耦合、重启与设备检查；早期 [P3/P4 记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)
 保留其 CPU 周期范围；[P8–P10 一维径向记录](results/p8-p10-20260923/README.md)保存椭圆与 AMR 指标。
@@ -129,6 +131,7 @@ RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预�
 `check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <新目录>`
 检查实际设备引力；`--benchmark-only` 测量本机代表性工作负载。
 
-保留的[二维四模块算例](../../simulation/SNIa2DCoupled/README.md)检查 CPU/CUDA 上
-流体、自引力、燃烧与热扩散能否联动；其[冒烟记录](results/snia2d-20260923/README.md)
-不等于 SN Ia 解析精度验收。
+[二维/三维四模块算例](../../simulation/SNIaCoupled/README.md)检查带 AMR 的流体、
+自引力、燃烧与热扩散联动；原 [Cartesian CPU/CUDA 冒烟记录](results/snia2d-20260923/README.md)
+及新 [P11 CPU 曲线坐标记录](results/p11-p12-20260923/README.md)均不等于 SN Ia 解析精度验收。
+后者也报告原始 FLASH 4.8 Cellular 算例的二维/三维受控对照。

@@ -48,27 +48,30 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
         if (!is_valid(handles[b]) || handles[b].epoch!=handles.front().epoch)
             throw std::logic_error("Elliptic topology has invalid handles");
         const auto& block=control.pool->GetBlock(active[b]); const auto& grid=block.grid;
-        if (grid.geometry!=config.geometry || grid.dim!=base.dimension ||
-            (base.geometry!=arch::elliptic::Geometry::Cartesian && base.dimension!=1))
-            throw std::invalid_argument("Composite gravity geometry differs from native 1D binding");
+        if (grid.geometry!=config.geometry || grid.dim!=base.dimension)
+            throw std::invalid_argument("Composite gravity geometry differs from native binding");
         result.grids.push_back(&grid);
-        double volume=1.; for (int a=0;a<base.dimension;++a) volume*=std::ldexp(base.spacing[a],-block.level);
-        if(base.geometry!=arch::elliptic::Geometry::Cartesian) {
-            const double left=base.origin[0]+
-                static_cast<double>(block.logical_x1*BLOCK_NX)*std::ldexp(base.spacing[0],-block.level);
-            const double right=left+std::ldexp(base.spacing[0],-block.level);
-            volume=base.geometry==arch::elliptic::Geometry::Spherical
-                ? GridMetrics::radial_shell_volume(left,right)
-                : GridMetrics::cylindrical_annulus_volume(left,right);
-        }
-        const double native=GridMetrics::CellVolume(grid,grid.Is(),grid.Js(),grid.Ks());
-        if (std::abs(native-volume)>64*std::numeric_limits<double>::epsilon()*volume)
-            throw std::logic_error("Elliptic geometry differs from native cell metrics");
         for (int k=grid.Ks();k<grid.Ke();++k) for (int j=grid.Js();j<grid.Je();++j)
             for (int i=grid.Is();i<grid.Ie();++i) {
-                result.cells.push_back({block.level,{static_cast<int>(block.logical_x1)*BLOCK_NX+i-grid.Is(),
-                    base.dimension>=2 ? static_cast<int>(block.logical_x2)*BLOCK_NY+j-grid.Js() : 0,
-                    base.dimension==3 ? static_cast<int>(block.logical_x3)*BLOCK_NZ+k-grid.Ks() : 0}});
+                const arch::elliptic::CompositeCell cell{block.level,
+                    {static_cast<int>(block.logical_x1)*BLOCK_NX+i-grid.Is(),
+                     base.dimension>=2 ? static_cast<int>(block.logical_x2)*BLOCK_NY+j-grid.Js() : 0,
+                     base.dimension==3 ? static_cast<int>(block.logical_x3)*BLOCK_NZ+k-grid.Ks() : 0}};
+                std::array<double,3> lower=base.origin,widths=base.spacing;
+                for(int a=0;a<base.dimension;++a) {
+                    widths[a]=std::ldexp(base.spacing[a],-cell.level);
+                    lower[a]+=cell.index[a]*widths[a];
+                }
+                const auto geometry=base.geometry==arch::elliptic::Geometry::Cartesian
+                    ?GridMetrics::Geometry::Cartesian
+                    :(base.geometry==arch::elliptic::Geometry::Cylindrical
+                        ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
+                const double composite=GridMetrics::CellVolume(
+                    GridMetrics::make_geometry_view(geometry,base.dimension,lower,widths),0,0,0);
+                const double native=GridMetrics::CellVolume(grid,i,j,k);
+                if(std::abs(native-composite)>64*std::numeric_limits<double>::epsilon()*composite)
+                    throw std::logic_error("Elliptic cell volume differs from native metrics");
+                result.cells.push_back(cell);
                 result.storage.push_back({b,grid.GetIndex(i,j,k)});
             }
     }

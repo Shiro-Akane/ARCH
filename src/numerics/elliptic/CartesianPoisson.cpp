@@ -47,9 +47,24 @@ void validate_mesh(const CartesianMesh& m)
     if (!std::isfinite(diagonal_bound) ||
         (m.geometry == Geometry::Cartesian && largest / smallest > 2.))
         throw std::invalid_argument("Poisson prototype requires valid spacing and finite diagonal");
-    if (m.geometry != Geometry::Cartesian &&
-        (m.dimension != 1 || m.origin[0] < 0.))
-        throw std::invalid_argument("Composite curved gravity currently requires nonnegative 1D radius");
+    if (m.geometry != Geometry::Cartesian) {
+        if (m.origin[0] < 0.)
+            throw std::invalid_argument("Curvilinear gravity requires nonnegative radius");
+        if (m.dimension == 2) {
+            const double turn = 2. * std::acos(-1.);
+            if (std::abs(m.cells[1]*m.spacing[1]-turn) > 64.*std::numeric_limits<double>::epsilon()*turn)
+                throw std::invalid_argument("Polar gravity requires a full azimuthal turn");
+        }
+        if (m.dimension == 3) {
+            const int azimuth = 2;
+            const double turn = 2. * std::acos(-1.);
+            if (std::abs(m.cells[azimuth]*m.spacing[azimuth]-turn) > 64.*std::numeric_limits<double>::epsilon()*turn)
+                throw std::invalid_argument("Curvilinear gravity requires a full azimuthal turn");
+            if (m.geometry == Geometry::Spherical &&
+                (m.origin[1] < 0. || m.origin[1]+m.cells[1]*m.spacing[1] > std::acos(-1.)))
+                throw std::invalid_argument("Spherical polar angle must stay in [0, pi]");
+        }
+    }
 }
 
 /** Check the borrowed vector extent and finiteness before arithmetic. */
