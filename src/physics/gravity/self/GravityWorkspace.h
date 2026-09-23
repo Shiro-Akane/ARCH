@@ -1,9 +1,23 @@
+/**
+ * @file GravityWorkspace.h
+ * @brief Own bound geometry, resident arrays and validity for one topology epoch.
+ *
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Own bound geometry, resident arrays and validity for one topology epoch.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
+ */
+
 #pragma once
-#include "physics/gravity/GravityExecution.h"
-#include "physics/gravity/GravitySolveTypes.h"
+
+#include <unordered_map>
+
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "numerics/multigrid/HostCompositeMG.h"
-#include <unordered_map>
+#include "physics/gravity/GravityExecution.h"
+#include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/self/SelfGravity.h"
+
 namespace Physical::Gravity {
 struct SelfGravity::Workspace {
     using Vector=arch::multigrid::Vector;
@@ -35,15 +49,18 @@ struct SelfGravity::Workspace {
     Timings timings;
     double mean=0.,max_density=0.,max_acceleration_ratio=0.;
     Workspace(amr::EllipticMeshBinding,arch::elliptic::BoundaryKind,std::shared_ptr<GravityExecution>);
+    /** Reject access unless the workspace holds a matching completed gravity field. */
     void require() const {
         if(!ready||!validity.matches(source,generation))throw std::logic_error("Self-gravity field is not published for this input");
     }
+    /** Return a patch view only for the bound native density allocation. */
     const GravityPatchView& patch(const Grid& grid,const FluidState& state) const {
         require();auto it=lookup.find(&grid);
         if(it==lookup.end()||patches[it->second].density!=state.rho.data())
             throw std::logic_error("Self-gravity patch uses a different density allocation/slot");
         return patches[it->second];
     }
+    /** Materialize potential and acceleration lazily for host output. */
     void download() const {
         require();if(downloaded)return;
         auto& e=solver.execution();host_phi=e.download(solver.resident_potential());

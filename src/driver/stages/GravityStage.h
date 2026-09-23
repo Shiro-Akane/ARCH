@@ -1,11 +1,19 @@
 /** @file GravityStage.h
  * Domain solve lifecycle and explicit output/CFL preparation for the Driver.
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Declare gravity stage preparation, invalidation, plotting and timestep hooks.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
+
 #pragma once
-#include "driver/schedule/StageScheduler.h"
-#include "io/IO.h"
+
 #include <fstream>
 #include <limits>
+
+#include "driver/schedule/StageScheduler.h"
+#include "io/IO.h"
+
 namespace Physical::Gravity { class IGravityPolicy; class SelfGravity; }
 namespace arch::driver {
 class DriverRuntime;

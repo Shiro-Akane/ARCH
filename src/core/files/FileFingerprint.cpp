@@ -1,6 +1,10 @@
 /**
  * @file FileFingerprint.cpp
  * @brief Dependency-free streaming SHA-256 file fingerprints.
+ * Workflow:
+ * 1. Receive a path or buffer from a read-only inspection request.
+ * 2. Fingerprint or verify the underlying file identity.
+ * 3. Reject stale reads before producing inspection evidence.
  */
 
 #include "core/files/FileFingerprint.h"

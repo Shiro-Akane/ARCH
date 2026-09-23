@@ -1,26 +1,42 @@
-#include "numerics/elliptic/CompositePoisson.h"
-#include "numerics/linalg/DenseWrap.h"
-#include "core/CompensatedSum.h"
+/**
+ * @file CompositePoisson.cpp
+ * @brief Build conservative composite faces and apply their coarse-fine flux operator.
+ *
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Build conservative composite faces and apply their coarse-fine flux operator.
+ * 3. Return corrections or fluxes through the shared numerical contract.
+ */
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
 
+#include "numerics/elliptic/CompositePoisson.h"
+
+#include "core/CompensatedSum.h"
+#include "numerics/linalg/DenseWrap.h"
+
 namespace arch::elliptic {
+/** Hash a composite level and logical cell coordinate for leaf lookup. */
 std::size_t CompositeCellHash::operator()(const CompositeCell& c) const noexcept {
     std::size_t h = static_cast<std::size_t>(c.level);
     for (int i : c.index) h ^= static_cast<std::size_t>(i) + 0x9e3779b9u + (h<<6) + (h>>2);
     return h;
 }
+/** Return physical leaf width after dyadic refinement. */
 double CompositePoisson::width(int cell, int axis) const {
     return std::ldexp(base_.spacing[axis],-cells_[cell].level);
 }
+/** Return the physical center of an active composite leaf. */
 std::array<double,3> CompositePoisson::center(int cell) const {
     std::array<double,3> p{};
     for (int a=0;a<base_.dimension;++a) p[a]=base_.origin[a]+(cells_[cell].index[a]+0.5)*width(cell,a);
     return p;
 }
+/** Validate a nonoverlapping covering of the domain before constructing faces. */
 CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells, BoundaryKind kind)
     : base_(base), kind_(kind), cells_(std::move(cells)) {
     validate_mesh(base_);
@@ -61,6 +77,7 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
     }
     build_faces();
 }
+/** Find the unique active leaf covering a root-grid coordinate. */
 int CompositePoisson::locate(std::array<double,3> point) const {
     for (int a=0;a<base_.dimension;++a) {
         if (kind_ == BoundaryKind::Periodic) {
@@ -78,6 +95,7 @@ int CompositePoisson::locate(std::array<double,3> point) const {
     }
     throw std::invalid_argument("Composite mesh contains a hole");
 }
+/** Create one oriented conservative face contribution per cell interface. */
 void CompositePoisson::build_faces() {
     neighbors_.resize(size());
     for (int i=0;i<size();++i) for (int a=0;a<base_.dimension;++a) {
@@ -120,6 +138,7 @@ void CompositePoisson::build_faces() {
             }
             face.center[a]=base_.origin[a]+(c.index[a]+1.)*unit*base_.spacing[a];
             const double inverse=1./(0.5*width(i,a)+0.5*width(j,a));
+            // grad_f(phi) = (phi_R-phi_L)/(0.5*h_L+0.5*h_R).
             face.samples={i,j}; face.coefficients={-inverse,inverse};
             faces_.push_back(std::move(face));
             neighbors_[i].push_back(j); neighbors_[j].push_back(i);
@@ -140,6 +159,7 @@ void CompositePoisson::build_faces() {
 }
 
 namespace {
+/** Build the constant, linear and quadratic basis for interface reproduction. */
 std::array<double,10> polynomial(const std::array<double,3>& x,int dim) {
     std::array<double,10> p{}; p[0]=1.;
     for (int a=0;a<dim;++a) p[1+a]=x[a];
@@ -148,6 +168,7 @@ std::array<double,10> polynomial(const std::array<double,3>& x,int dim) {
     return p;
 }
 }
+/** Correct a coarse-fine face stencil to reproduce quadratic gradients. */
 void CompositePoisson::fit_interface(CompositeFace& f) const {
     // Minimum weighted correction of the normal two-point gradient, subject
     // to reproduction of every quadratic polynomial. Tangential offsets matter.
@@ -190,6 +211,8 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
             for (int c=0;c<terms;++c) gram.data[r][c]+=weight*p[r]*p[c];
         }
     }
+    // Minimize ||c-c0||_(W^-1)^2 subject to P*c=d. With
+    // G=P*W*P^T, lambda=G^-1(d-P*c0), c=c0+W*P^T*lambda.
     const bool solved=dim==1 ? DenseLUSolver::solve<3,10>(gram,right)
         : dim==2 ? DenseLUSolver::solve<6,10>(gram,right) : DenseLUSolver::solve<10,10>(gram,right);
     if (!solved) throw std::invalid_argument("Degenerate composite interface interpolation");
@@ -205,21 +228,25 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
     f.coefficients[anchor]=-sum-f.boundary_coefficient;
 }
 
+/** Apply the face stencil to a cell-centered field and boundary datum. */
 double CompositePoisson::face_gradient(std::span<const double> x,const CompositeFace& f,double boundary_value) const {
     const int anchor=f.left>=0 ? f.left : f.right;
     return composite_face_gradient(x.data(),anchor,f.samples.data(),f.coefficients.data(),
         f.samples.size(),f.boundary_coefficient,boundary_value);
 }
+/** Accumulate A u = -sum_f(area_f/V_i) grad_f(u) over oriented faces. */
 void CompositePoisson::apply(std::span<const double> x,std::span<double> out) const {
     if (x.size()!=cells_.size() || out.size()!=cells_.size() || x.data()==out.data())
         throw std::invalid_argument("Composite apply requires distinct matching arrays");
     std::fill(out.begin(),out.end(),0.);
     for (const auto& f:faces_) {
+        // (A phi)_cell = -sum(oriented area_f * grad_f(phi))/volume_cell.
         const double flux=f.area*face_gradient(x,f);
         if(f.left>=0) out[f.left]-=flux/volumes_[f.left];
         if(f.right>=0) out[f.right]+=flux/volumes_[f.right];
     }
 }
+/** Return the volume-weighted composite mean with scale-safe summation. */
 double CompositePoisson::mean(std::span<const double> x) const {
     if (x.size()!=cells_.size()) throw std::invalid_argument("Composite mean extent mismatch");
     double scale=0.;
@@ -229,12 +256,14 @@ double CompositePoisson::mean(std::span<const double> x) const {
     for (int i=0;i<size();++i) sum.add(weights_[i]*(x[i]/scale));
     return scale*sum.value();
 }
+/** Return the volume-weighted inner product of two fields. */
 double CompositePoisson::dot(std::span<const double> x,std::span<const double> y) const {
     if (x.size()!=cells_.size() || y.size()!=cells_.size()) throw std::invalid_argument("Composite dot extent mismatch");
     arch::math::CompensatedSum sum;
     for (int i=0;i<size();++i) sum.add(weights_[i]*x[i]*y[i]);
     return sum.value();
 }
+/** Return the volume-weighted RMS, scaling first to avoid overflow. */
 double CompositePoisson::norm(std::span<const double> x) const {
     if (x.size()!=cells_.size()) throw std::invalid_argument("Composite norm extent mismatch");
     double scale=0.;
@@ -244,11 +273,13 @@ double CompositePoisson::norm(std::span<const double> x) const {
     for (int i=0;i<size();++i) { const double q=x[i]/scale; sum.add(weights_[i]*q*q); }
     return scale*std::sqrt(sum.value());
 }
+/** Remove the periodic constant mode; leave Dirichlet fields unchanged. */
 void CompositePoisson::project(std::span<double> x) const {
     if(kind_!=BoundaryKind::Periodic) return;
     const double average=mean(x);
     for (double& v:x) v-=average;
 }
+/** Move isolated Dirichlet face values to the source of A phi = b. */
 std::vector<double> CompositePoisson::effective_rhs(std::span<const double> source,
                                                   std::span<const double> boundary_values) const {
     validate_values(source,size());

@@ -1,10 +1,22 @@
+/**
+ * @file InitialSampleCache.h
+ * @brief Retain only reusable initial-state samples keyed by verified setup identity.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Retain only reusable initial-state samples keyed by verified setup identity.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
-#include "data/UserTypes.h"
+
 #include <array>
 #include <bit>
 #include <cstdint>
 #include <map>
 #include <vector>
+
+#include "data/UserTypes.h"
 
 namespace arch::api {
 // One field request and one fixed EOS/species view only. Init still runs at
@@ -19,6 +31,7 @@ private:
     std::map<std::vector<std::uint64_t>,Row> entries_;
     std::size_t payload_bytes_=0;
 public:
+    /** Reuse an exact primitive sample or convert and cache it for the current identity. */
     template<class Convert>
     Row evaluate(const PrimitiveData& p, Convert&& convert) {
         if (p.mass_fractions.size()>max_payload_bytes/sizeof(std::uint64_t)-8) {

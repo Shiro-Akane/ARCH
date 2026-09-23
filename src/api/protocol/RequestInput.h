@@ -1,6 +1,19 @@
+/**
+ * @file RequestInput.h
+ * @brief Validate bounded request text before parsing and dispatch.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Validate bounded request text before parsing and dispatch.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
+
 #include <string_view>
+
 namespace arch::api::detail {
+/** Reject malformed, overlong, surrogate and embedded-NUL UTF-8 input. */
 inline bool ValidUtf8(std::string_view text) {
     for (std::size_t i = 0; i < text.size();) {
         const auto first = static_cast<unsigned char>(text[i++]);

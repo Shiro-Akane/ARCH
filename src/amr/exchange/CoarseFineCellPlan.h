@@ -6,6 +6,10 @@
  * performs all coarse/fine index mathematics on the Host; backends only map
  * the resulting relative cell coordinates to their own storage and execute
  * copies or averages.
+ * Workflow:
+ * 1. Borrow stable AMR topology and native cell/face storage.
+ * 2. Build or execute ghost, boundary and coarse-fine exchange plans.
+ * 3. Return filled ghost state without changing active-cell ownership.
  */
 
 #pragma once

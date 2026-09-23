@@ -1,10 +1,20 @@
+/**
+ * @file Json.h
+ * @brief Escape and emit JSON values without unbounded request serialization.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Escape and emit JSON values without unbounded request serialization.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
 
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
-#include <locale>
 #include <limits>
+#include <locale>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -36,6 +46,7 @@ public:
     bool contains(const std::string &key) const { return std::get<Object>(value_).contains(key); }
     void erase(const std::string &key) { std::get<Object>(value_).erase(key); }
     void push(Json value) { std::get<Array>(value_).push_back(std::move(value)); }
+    /** Serialize a JSON value under an explicit output byte limit. */
     std::string dump(std::size_t limit = std::numeric_limits<std::size_t>::max()) const {
         BoundedBuffer buffer(limit);
         std::ostream out(&buffer);
@@ -76,6 +87,7 @@ private:
         }
         out << '"';
     }
+    /** Write escaped JSON recursively using the classic locale. */
     void write(std::ostream &out) const {
         std::visit([&](const auto &value) {
             using T = std::decay_t<decltype(value)>;

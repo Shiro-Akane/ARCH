@@ -1,9 +1,20 @@
+/**
+ * @file ConfigValidation.h
+ * @brief Check cross-field physical and numerical invariants after typed parsing.
+ *
+ * Workflow:
+ * 1. Read validated configuration or a registered problem request.
+ * 2. Check cross-field physical and numerical invariants after typed parsing.
+ * 3. Return a single resolved value or state with explicit failure on invalid input.
+ */
+
 #pragma once
 
 #include <cmath>
+
+#include "amr/topology/Morton.h"
 #include "data/GlobalDefs.h"
 #include "io/ConfigParser.h"
-#include "amr/topology/Morton.h"
 
 namespace arch::config {
 // Shared by text parsing, direct C++ setup and runtime dispatch. Presentation

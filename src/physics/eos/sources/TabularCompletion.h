@@ -5,6 +5,10 @@
  * Format readers supply component declarations, CGS axes/potential and source
  * validity. This layer adds only missing electron/positron and photon terms;
  * it neither replaces baryons nor introduces an EOS-name-dependent model.
+ * Workflow:
+ * 1. Read a verified tabular EOS data source.
+ * 2. Load or complete interpolation inputs under EOS ownership.
+ * 3. Return immutable thermodynamic data to tabular evaluation.
  */
 #pragma once
 

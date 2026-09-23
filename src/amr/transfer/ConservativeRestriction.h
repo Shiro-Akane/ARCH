@@ -9,6 +9,10 @@
  * X_parent = sum(V_c rho_c X_c) / sum(V_c rho_c). Thus composition is
  * mass-weighted, not volume-weighted. The executor supplies valid positive
  * volume and density integrals before calling the division leaves.
+ * Workflow:
+ * 1. Receive a committed source topology and staged destination.
+ * 2. Build or apply conservative restriction and limited prolongation.
+ * 3. Validate transferred state before publishing new block ownership.
  */
 
 #pragma once

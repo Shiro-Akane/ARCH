@@ -1,11 +1,23 @@
+/**
+ * @file SessionInput.h
+ * @brief Parse a bounded flat JSON session envelope with unique string/integer members.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Parse a bounded flat JSON session envelope with unique string/integer members.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
-#include "api/protocol/RequestInput.h"
+
 #include <charconv>
 #include <cstdint>
 #include <map>
 #include <stdexcept>
 #include <string>
 #include <variant>
+
+#include "api/protocol/RequestInput.h"
 
 namespace arch::api::detail {
 // Strict flat JSON transport envelope, not a configuration parser. Only string
@@ -16,9 +28,13 @@ using SessionObject = std::map<std::string, SessionValue>;
 class SessionInput {
     std::string_view text_;
     std::size_t pos_ = 0;
+    /** Reject malformed or unsupported session syntax. */
     [[noreturn]] static void fail() { throw std::invalid_argument("Expected a flat JSON object with unique string/integer members"); }
+    /** Skip permitted horizontal whitespace without crossing a record. */
     void space() { while (pos_ < text_.size() && (text_[pos_]==' ' || text_[pos_]=='\t' || text_[pos_]=='\r')) ++pos_; }
+    /** Consume an expected delimiter after whitespace. */
     bool take(char c) { space(); if (pos_ < text_.size() && text_[pos_]==c) { ++pos_; return true; } return false; }
+    /** Parse exactly four hexadecimal digits for a JSON Unicode escape. */
     unsigned hex4() {
         unsigned v = 0;
         for (int i=0;i<4;++i) {
@@ -32,12 +48,14 @@ class SessionInput {
         }
         return v;
     }
+    /** Encode one validated Unicode scalar as UTF-8. */
     static void utf8(std::string& s, unsigned c) {
         if (c<0x80) s+=char(c);
         else if (c<0x800) { s+=char(0xc0|(c>>6)); s+=char(0x80|(c&63)); }
         else if (c<0x10000) { s+=char(0xe0|(c>>12)); s+=char(0x80|((c>>6)&63)); s+=char(0x80|(c&63)); }
         else { s+=char(0xf0|(c>>18)); s+=char(0x80|((c>>12)&63)); s+=char(0x80|((c>>6)&63)); s+=char(0x80|(c&63)); }
     }
+    /** Decode a JSON string, surrogate pair and escapes, then validate UTF-8. */
     std::string string() {
         if (!take('"')) fail();
         std::string result;
@@ -74,6 +92,7 @@ class SessionInput {
         }
         fail();
     }
+    /** Parse the protocol string or signed integer value. */
     SessionValue value() {
         space();
         if (pos_<text_.size() && text_[pos_]=='"') return string();
@@ -88,7 +107,9 @@ class SessionInput {
         return result;
     }
 public:
+    /** Borrow bounded request text for one parser lifetime. */
     explicit SessionInput(std::string_view text) : text_(text) {}
+    /** Return a flat object and reject duplicate keys or trailing text. */
     SessionObject parse() {
         SessionObject result;
         if (!take('{')) fail();

@@ -5,6 +5,10 @@
  * Descriptors name stage inputs, outputs and required ghost validity. Scheduler
  * transitions coordinate the residency tracker and backend operations; numerical
  * field storage and its lifetime remain outside the scheduler descriptors.
+ * Workflow:
+ * 1. Receive a stage descriptor and current state ledger.
+ * 2. Order hydro, gravity, burn, diffusion and output transitions.
+ * 3. Require completed publications before consuming a state.
  */
 
 #pragma once

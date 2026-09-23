@@ -1,6 +1,10 @@
 /**
  * @file TabularLoaderUtils.h
  * @brief Shared host-only validation helpers for normalized tabular EOS files.
+ * Workflow:
+ * 1. Read a verified tabular EOS data source.
+ * 2. Load or complete interpolation inputs under EOS ownership.
+ * 3. Return immutable thermodynamic data to tabular evaluation.
  */
 #pragma once
 

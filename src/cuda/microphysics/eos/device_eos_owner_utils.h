@@ -5,6 +5,10 @@
  * Concrete owners retain the staging vectors and device arrays. These helpers
  * check extents and presence, enqueue copies and support stream-ordered cleanup;
  * thermodynamic evaluation remains in physics/eos.
+ * Workflow:
+ * 1. Receive verified EOS tables and species metadata.
+ * 2. Prepare or bind EOS views for CUDA microphysics.
+ * 3. Expose owned device views without retaining caller buffers.
  */
 
 #pragma once

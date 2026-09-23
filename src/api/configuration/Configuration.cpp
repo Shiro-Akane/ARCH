@@ -1,25 +1,39 @@
+/**
+ * @file Configuration.cpp
+ * @brief Resolve a parameter file and serialize typed values, defaults and validation evidence.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Resolve a parameter file and serialize typed values, defaults and validation evidence.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
+#include <algorithm>
+#include <limits>
+#include <sstream>
+
 #include "api/Configuration.h"
+
+#include "amr/topology/Morton.h"
 #include "api/configuration/ParameterPresentation.h"
 #include "api/protocol/LogCapture.h"
 #include "api/protocol/Response.h"
 #include "core/config/RuntimeParams.h"
 #include "core/files/FileFingerprint.h"
 #include "driver/dispatch/PolicyDescriptor.h"
-#include "amr/topology/Morton.h"
-#include <algorithm>
-#include <limits>
-#include <sstream>
 
 namespace arch::api {
 namespace {
 using detail::Json;
 using config::ParameterDefinition;
+/** Serialize the parser fallback in its declared JSON type. */
 Json default_json(const ParameterDefinition& definition) {
     return std::visit([](auto value) -> Json {
         if constexpr (std::is_same_v<decltype(value), std::string_view>) return std::string(value);
         else return value;
     }, definition.fallback);
 }
+/** Attach a keyed configuration error to the inspection envelope. */
 Json diagnostic(const std::string& code, const std::string& key, const std::string& message,
                 const char* severity = "error") {
     return Json::object({{"severity", severity}, {"code", code},
@@ -45,11 +59,13 @@ struct Options<dispatch::TypeList<Id, Behavior, Registrations...>> {
             {"availability", "registration-only; build and runtime requirements not checked"}});
     }
 };
+/** Build canonical enum values for a simple choice list. */
 Json simple_options(std::initializer_list<const char*> names) {
     auto choices = Json::array();
     for (auto name : names) choices.push(Json::object({{"value", name}, {"displayName", OptionDisplayName(name)}, {"acceptedNames", Json::array({name})}}));
     return Json::object({{"caseSensitive", false}, {"choices", choices}, {"unknownBehavior", "error"}});
 }
+/** Expose accepted spellings and display names for one enum key. */
 Json options(const std::string& key) {
     if (key == "solver") return Options<dispatch::FluxPolicies>::get();
     if (key == "reconstruct") return Options<dispatch::ReconstructionPolicies>::get();
@@ -76,6 +92,7 @@ Json options(const std::string& key) {
             Json::object({{"value", "reflect"}, {"displayName", "Reflecting"}, {"acceptedNames", Json::array({"reflect", "reflecting"})}})})}});
     return Json();
 }
+/** Describe the typed range and cross-field conditions of one parameter. */
 Json constraints(const ParameterDefinition& d) {
     const std::string key(d.key);
     auto out = Json::object();
@@ -100,12 +117,14 @@ Json constraints(const ParameterDefinition& d) {
     out["complete"] = false;
     return out;
 }
+/** Classify path-valued parameters for client-side browsing. */
 Json path_role(const std::string& key) {
     if (key != "eos_table_path" && key != "eos_helm_table_path" && key != "restart_file" && key != "out_dir") return Json();
     return Json::object({{"role", key == "out_dir" ? "output-directory" : "input-file"},
         {"relativeTo", "process-working-directory"}, {"existenceChecked", false},
         {"checkOwner", "local-host"}, {"targetMayBeNew", key == "out_dir"}});
 }
+/** Describe the CGS unit and symbol of one parameter. */
 Json unit_info(const std::string& key, const std::string& system = "cgs") {
     if (key == "nuclearTempMin" || key == "smallt" || key == "nseTempThreshold")
         return Json::object({{"unit", "K"}, {"status", "known"}});
@@ -157,6 +176,7 @@ std::string condition(const ParameterDefinition& d) {
     if (d.group == "Network" && key != "use_burn" && key != "network_name") return "use_burn=true; thresholds are still parsed and validated when disabled";
     return "See parsed configuration; model Setup and simulation policies may impose further conditions.";
 }
+/** Determine whether a parameter is active under the resolved configuration. */
 bool applicable(const ParameterDefinition& d, const SimConfig& c, const ConfigParser& p) {
     const auto key = d.key;
     if (key == "ode_max_newton_iter") return c.physics.burn.use_burn && dispatch::ascii_iequals(c.physics.burn.odeconfig.ode_solver, "BE_NR");
@@ -182,6 +202,7 @@ bool applicable(const ParameterDefinition& d, const SimConfig& c, const ConfigPa
     if (key.size() > 2 && key[0] == 'x' && key[1] >= '1' && key[1] <= '3') return key[1]-'0' <= c.grid.dim;
     return true;
 }
+/** Preserve the raw input value and its provenance without applying policy. */
 Json input_value(const ParameterDefinition& d, const ConfigParser& p) {
     const std::string key(d.key);
     if (d.type == "int") return p.GetInt(key, config::DefaultInt(key));
@@ -195,11 +216,13 @@ Json input_value(const ParameterDefinition& d, const ConfigParser& p) {
 }
 } // namespace
 
+/** Describe case-specific extension points in the schema. */
 Json ConfigurationExtensions() {
     return Json::object({{"version", contract::configuration_version}, {"schemaCommand", "--config-schema"},
         {"inspectCommand", "--inspect-config"}, {"coverage", "standard-runtime-inputs"},
         {"presentationVersion", "1"}, {"standardParameterCount", std::int64_t(std::size(config::standard_parameters))}, {"customParameterCoverage", false}});
 }
+/** Build the versioned standard parameter schema from Core definitions. */
 Json ConfigurationSchema() {
     auto parameters = Json::array();
     for (const auto& d : config::standard_parameters) {
@@ -230,6 +253,7 @@ Json ConfigurationSchema() {
         {"pathChecks", "local-host; no filesystem access in schema or inspection"}});
 }
 
+/** Resolve a supplied parameter text and return typed/provenance evidence. */
 PreviewResponse InspectConfiguration(const PreviewRequest& request) {
     detail::CaptureLogs logs;
     auto result = Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::configuration_version}, {"kind", "configuration-inspection"},

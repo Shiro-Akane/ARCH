@@ -1,3 +1,13 @@
+/**
+ * @file StandardParameters.h
+ * @brief Keep parser defaults and schema descriptions tied to one canonical key list.
+ *
+ * Workflow:
+ * 1. Read validated configuration or a registered problem request.
+ * 2. Keep parser defaults and schema descriptions tied to one canonical key list.
+ * 3. Return a single resolved value or state with explicit failure on invalid input.
+ */
+
 #pragma once
 
 // Standard .par defaults shared by RuntimeParams and the local configuration API.
@@ -7,9 +17,10 @@
 #include <string>
 #include <string_view>
 #include <variant>
-#include "physics/constant/PhysicalConstants.h"
-#include "io/ConfigParser.h"
+
 #include "data/GlobalDefs.h"
+#include "io/ConfigParser.h"
+#include "physics/constant/PhysicalConstants.h"
 
 namespace arch::config {
 inline constexpr std::string_view time_integrator_default = "RK2";

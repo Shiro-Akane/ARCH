@@ -5,6 +5,10 @@
  * Parsed requests preserve automatic linear-solver selection until a concrete
  * backend candidate is chosen. These value types describe the selected policies
  * and state layout; they neither allocate backend resources nor probe a device.
+ * Workflow:
+ * 1. Read requested EOS, network, solver and backend capabilities.
+ * 2. Validate the combination before owning runtime resources.
+ * 3. Return an explicit supported plan or an actionable error.
  */
 
 #pragma once

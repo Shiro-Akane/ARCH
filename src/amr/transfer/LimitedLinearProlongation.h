@@ -1,6 +1,10 @@
 /**
  * @file LimitedLinearProlongation.h
  * @brief Shared conservative scalar reconstruction for 2:1 AMR prolongation.
+ * Workflow:
+ * 1. Receive a committed source topology and staged destination.
+ * 2. Build or apply conservative restriction and limited prolongation.
+ * 3. Validate transferred state before publishing new block ownership.
  */
 
 #pragma once

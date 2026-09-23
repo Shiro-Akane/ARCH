@@ -5,6 +5,10 @@
  * Host values are copied into retained staging, then uploaded on the borrowed
  * stream. Shared SpeciesPODView and IdealGasView use the resulting arrays;
  * move/release operations preserve the owner boundary.
+ * Workflow:
+ * 1. Receive a registered reaction network and species order.
+ * 2. Own immutable device network and species metadata.
+ * 3. Publish stable device views to burn kernels.
  */
 
 #include "cuda/microphysics/network/device_species_owner.h"

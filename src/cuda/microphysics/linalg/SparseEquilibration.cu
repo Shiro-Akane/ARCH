@@ -5,6 +5,10 @@
  * Row, column and vector kernels call LinearEquilibration for the arithmetic.
  * The provider supplies original inputs, private scaled outputs and an invalid
  * latch, and owns the stream fence before consuming the result.
+ * Workflow:
+ * 1. Receive compact or sparse ODE linear systems.
+ * 2. Prepare cuDSS or equilibration storage for repeated solves.
+ * 3. Return a checked solution through the shared ODE contract.
  */
 
 #include "cuda/microphysics/linalg/SparseEquilibration.h"

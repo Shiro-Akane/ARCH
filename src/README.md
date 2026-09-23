@@ -24,3 +24,15 @@ Note that build and run instructions are maintained in the central [project guid
 User cases start with the two [public headers](../include/README.md). Internal
 headers use paths relative to `src/`; tests use their own fixture root. See the
 [directory and include convention](../docs/development/layout/README.zh-CN.md).
+
+Source comments follow the pattern in `main.cpp` and the flux policies. New or
+split code units start with a short **Workflow** that identifies inputs, the
+operation owned by this file, and what is published to the next owner. Each
+new helper explains its purpose beside its declaration or definition; equations
+such as `A phi = -4 pi G rho` or `u_new = u + omega D^-1(b-Au)` appear next
+to the implementing arithmetic, including sign and boundary conventions.
+Comments describe contracts and non-obvious choices instead of paraphrasing
+each assignment. Order includes as standard-library headers, the unit's own
+header, then grouped cross-module dependencies; keep conditional CUDA/OpenMP
+headers within their explicit feature gates. A header should compile when
+included before its implementation's other dependencies.

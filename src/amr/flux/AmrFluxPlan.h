@@ -1,6 +1,10 @@
 /**
  * @file AmrFluxPlan.h
  * @brief Value-independent, topology-scoped AMR flux registration plans.
+ * Workflow:
+ * 1. Read oriented hydro face fluxes and AMR level interfaces.
+ * 2. Construct or apply conservative flux-register contributions.
+ * 3. Return coarse-fine corrections to the stage conservation update.
  */
 
 #pragma once

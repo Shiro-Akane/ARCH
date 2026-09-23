@@ -2,14 +2,22 @@
  * @brief Own run topology, residency, scheduler clock and backend storage.
  * AMR, configuration and output counters are borrowed for the duration of the run.
  * Physical algorithms and output serialization remain with their own modules.
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Expose the smallest runtime operations required by split Driver owners.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
+
 #pragma once
-#include "driver/runtime/ComputeBackend.h"
-#include "driver/schedule/StageScheduler.h"
-#include "driver/runtime/TopologyIdentityRegistry.h"
+
 #include <memory>
 #include <span>
 #include <vector>
+
+#include "driver/runtime/ComputeBackend.h"
+#include "driver/runtime/TopologyIdentityRegistry.h"
+#include "driver/schedule/StageScheduler.h"
+
 class BCHandler;
 struct SimulationController;
 struct SimConfig;

@@ -1,6 +1,16 @@
+/**
+ * @file PresentationMetadata.cpp
+ * @brief Combine stored parameter metadata with solver and geometry capabilities.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Combine stored parameter metadata with solver and geometry capabilities.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #include "api/Configuration.h"
-#include "grid/Grid.h"
 #include "driver/dispatch/PolicyDescriptor.h"
+#include "grid/Grid.h"
 
 namespace arch::api {
 using detail::Json;
@@ -27,6 +37,7 @@ std::string AxisUnit(const std::string& label, const std::string& system) {
     if (system == "cgs") return "cm";
     return {};
 }
+/** Describe active logical axes and physical coordinate units. */
 Json CoordinateMetadata(const GridConfig& g, const std::string& system) {
     Grid grid;
     grid.geometry = g.geometry;
@@ -54,6 +65,7 @@ Json CoordinateMetadata(const GridConfig& g, const std::string& system) {
         {"axes", axes}, {"activation", "positive-block-count"}, {"disabledBlockCount", 0},
         {"thirdAxisRequiresSecond", true}, {"unitSystem", system}});
 }
+/** Summarize AMR controls for the resolved configuration. */
 Json RefinementMetadata(const SimConfig& c) {
     const auto& a = c.amr;
     struct Item { const char* name; bool selected; const char* unavailable; };
@@ -75,6 +87,7 @@ Json RefinementMetadata(const SimConfig& c) {
     return Json::object({{"choices", choices}, {"namedSpecies", names},
         {"speciesResolution", "requires case Setup"}, {"separator", ","}, {"alternativeSeparator", "+"}});
 }
+/** Expose the applicable diffusion controls and their state. */
 Json DiffusionMetadata(const SimConfig& c) {
     const bool helm = dispatch::ascii_iequals(c.physics.eos_type, "helmholtz");
     const bool ideal = dispatch::ascii_iequals(c.physics.eos_type, "ideal");

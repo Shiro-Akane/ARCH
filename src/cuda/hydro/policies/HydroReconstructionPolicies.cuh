@@ -5,6 +5,10 @@
  * Adapters load state and species samples, then call the common reconstruction
  * and limiter helpers. The caller supplies face outputs and scratch storage;
  * this layer neither advances state nor owns device allocations.
+ * Workflow:
+ * 1. Receive a shared flux, reconstruction or integrator policy.
+ * 2. Bind CUDA-compatible state views to the same mathematical policy.
+ * 3. Return device work descriptors without a separate physics formula.
  */
 
 #pragma once

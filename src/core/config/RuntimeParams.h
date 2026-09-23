@@ -5,6 +5,10 @@
  * The loader converts typed sections, checks control values and preserves
  * problem-specific parameters. Enum-like tokens are case-normalized here;
  * policy registration and backend resolution validate their meanings later.
+ * Workflow:
+ * 1. Read a parameter file through typed parser keys.
+ * 2. Resolve defaults and validate cross-field configuration.
+ * 3. Return one SimConfig to case setup and runtime dispatch.
  */
 
 #pragma once

@@ -1,8 +1,16 @@
-/** Geometry and shared MG/FGMRES control; execution owns only arrays and loops. */
+/** Geometry and shared MG/FGMRES control; execution owns only arrays and loops.
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Declare composite hierarchy ownership, solve controls and resident result access.
+ * 3. Return corrections or fluxes through the shared numerical contract.
+ */
+
 #pragma once
+
 #include "numerics/elliptic/CompositePoisson.h"
-#include "numerics/multigrid/HostMultigrid.h"
 #include "numerics/multigrid/CompositeExecution.h"
+#include "numerics/multigrid/HostMultigrid.h"
+
 namespace arch::multigrid {
 class HostCompositeMG {
 public:

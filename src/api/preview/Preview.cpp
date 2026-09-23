@@ -1,16 +1,12 @@
-#include "api/protocol/Progress.h"
-#include "api/Preview.h"
-#include "api/PreviewSession.h"
-#include "api/session/InitialSampleCache.h"
-#include "api/protocol/Json.h"
-#include "api/configuration/ParameterMetadata.h"
-#include "api/protocol/Response.h"
-#include "api/preview/Sampling.h"
-#include "api/protocol/LogCapture.h"
-#include "api/Configuration.h"
-#include "api/preview/InitialMesh.h"
-#include "api/preview/StateSnapshot.h"
-#include "api/configuration/ValueDomain.h"
+/**
+ * @file Preview.cpp
+ * @brief Resolve and sample requested initial state on the CPU preview path.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Resolve and sample requested initial state on the CPU preview path.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
 
 #include <algorithm>
 #include <array>
@@ -19,11 +15,25 @@
 #include <limits>
 #include <streambuf>
 
+#include "api/Preview.h"
+
+#include "api/Configuration.h"
+#include "api/PreviewSession.h"
+#include "api/configuration/ParameterMetadata.h"
+#include "api/configuration/ValueDomain.h"
+#include "api/preview/InitialMesh.h"
+#include "api/preview/Sampling.h"
+#include "api/preview/StateSnapshot.h"
+#include "api/protocol/Json.h"
+#include "api/protocol/LogCapture.h"
+#include "api/protocol/Progress.h"
+#include "api/protocol/Response.h"
+#include "api/session/InitialSampleCache.h"
+#include "core/config/RuntimeParams.h"
 #include "core/files/FileFingerprint.h"
 #include "core/problem/InitialStateConversion.h"
 #include "core/problem/ProblemHelper.h"
 #include "core/problem/ProblemRegistry.h"
-#include "core/config/RuntimeParams.h"
 #include "grid/Grid.h"
 #include "physics/eos/eosdispatch.h"
 
@@ -32,9 +42,11 @@ namespace {
 using detail::Json;
 
 using detail::CaptureLogs;
+/** Create a structured preview diagnostic with severity and code. */
 Json diagnostic(const char *severity, const std::string &code, const std::string &message) {
     return Json::object({{"severity", severity}, {"code", code}, {"message", message}});
 }
+/** Initialize a versioned preview response with request identity and CPU-only status. */
 Json envelope(const PreviewRequest &request) {
     return Json::object({
         {"schemaVersion", preview_schema_version}, {"kind", request.initial_mesh ? "initial-amr-preview" : "initial-state-preview"},
@@ -48,6 +60,7 @@ Json envelope(const PreviewRequest &request) {
         {"data", Json()}, {"diagnostics", Json::array()}});
 }
 
+/** Reject invalid root blocks, domain bounds and AMR coordinate ranges. */
 void validate_grid(const SimConfig &config) {
     for (const auto &[key, value] : config.custom_params)
         if (!std::isfinite(value))
@@ -77,6 +90,7 @@ void validate_grid(const SimConfig &config) {
         throw std::invalid_argument("max_blocks cannot hold the configured root blocks");
 }
 
+/** Place distinct finite sampling coordinates at interior cell centers. */
 std::vector<double> sample_axis(double lo, double hi, int count) {
     std::vector<double> coordinates;
     coordinates.reserve(count);
@@ -89,12 +103,14 @@ std::vector<double> sample_axis(double lo, double hi, int count) {
     }
     return coordinates;
 }
+/** Serialize one coordinate axis and its CGS unit. */
 Json axis_json(const char *name, const std::vector<double> &coordinates, const std::string& system) {
     auto values = Json::array();
     for (double x : coordinates) values.push(x);
     return Json::object({{"name", name}, {"unit", AxisUnit("x", system)}, {"values", values}});
 }
 
+/** Serialize one sampled field with its finite range and unit. */
 Json field(const char *key, const char *name, const std::vector<double> &values, const std::string& system) {
     auto data = Json::array();
     ValueDomain domain;
@@ -105,6 +121,7 @@ Json field(const char *key, const char *name, const std::vector<double> &values,
 }
 } // namespace
 
+/** Run bounded case setup and initial-field sampling through CPU-owned resources. */
 PreviewResponse GeneratePreview(const PreviewRequest &request) {
     CaptureLogs logs;
     Json result = envelope(request);
@@ -345,6 +362,7 @@ std::string PreviewCapabilities() {
         {"modelCapabilities", models},
         {"extensions", extensions}}).dump();
 }
+/** Return an input-stage error envelope without starting setup. */
 PreviewResponse PreviewInputError(const std::string &message) {
     return {Json::object({{"schemaVersion", preview_schema_version}, {"kind", "initial-state-preview"},
         {"status", "error"}, {"stage", "input"}, {"identity", Json()}, {"state", Json()}, {"data", Json()},

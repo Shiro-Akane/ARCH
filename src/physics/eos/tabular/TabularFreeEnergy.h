@@ -6,6 +6,10 @@
  * are x=ln(rho) and y=ln(T), even when table coordinates are stored as log10.
  * A biquintic Hermite patch supplies a and its derivatives from one surface;
  * the EOS view owns composition interpolation and table-domain handling.
+ * Workflow:
+ * 1. Receive tabulated free energy and a requested thermodynamic state.
+ * 2. Interpolate or invert the shared EOS relation.
+ * 3. Return checked thermodynamic quantities without duplicating tables.
  */
 #pragma once
 

@@ -1,10 +1,22 @@
-#include "physics/gravity/UniformGravity.h"
+/**
+ * @file UniformGravity.cpp
+ * @brief Adapt the reusable uniform Poisson solver to standalone gravity requests.
+ *
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Adapt the reusable uniform Poisson solver to standalone gravity requests.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
+ */
+
 #include <cmath>
 #include <limits>
 #include <stdexcept>
 
+#include "physics/gravity/UniformGravity.h"
+
 namespace arch::gravity {
 namespace {
+/** Validate and gather a padded host density view into contiguous Cartesian order. */
 std::vector<double> read_density(const elliptic::CartesianMesh& mesh, grid::ConstScalarFieldView view)
 {
     const auto& l = view.layout;
@@ -42,6 +54,7 @@ std::vector<double> read_density(const elliptic::CartesianMesh& mesh, grid::Cons
 }
 }
 
+/** Build the physical Poisson source, solve, then derive checked face/cell acceleration. */
 UniformGravityResult solve_uniform_gravity(multigrid::HostMultigrid& solver,
     grid::ConstScalarFieldView view, const elliptic::BoundaryData& boundary,
     multigrid::SolveControl control, double gravitational_constant, std::span<const double> initial)
@@ -53,6 +66,7 @@ UniformGravityResult solve_uniform_gravity(multigrid::HostMultigrid& solver,
     UniformGravityResult result;
     if (boundary.kind == elliptic::BoundaryKind::Periodic)
         result.removed_density_mean = elliptic::mean(rhs);
+    // A=-Laplacian: A*Phi=-4*pi*G*(rho-<rho>) for periodic domains.
     const double coefficient = -4. * arch::constants::math::pi * gravitational_constant;
     if (!std::isfinite(coefficient)) return result;
     for (double& value : rhs) {
@@ -86,6 +100,7 @@ UniformGravityResult solve_uniform_gravity(multigrid::HostMultigrid& solver,
             const int side = p[a] == 0 ? 0 : (p[a] == mesh.cells[a] ? 1 : -1);
             const double value = boundary.kind == elliptic::BoundaryKind::Dirichlet && side >= 0
                 ? boundary.values[2*a+side][mesh.face_index(p,a)] : 0.;
+            // g_face = -d(Phi)/dx on the oriented face.
             faces[a][i] = -elliptic::face_gradient(mesh, boundary.kind, solution.potential.data(), a, p, value);
             if (!std::isfinite(faces[a][i])) {
                 result.report.status = multigrid::SolveStatus::NumericalFailure;

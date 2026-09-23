@@ -5,6 +5,10 @@
  * Host-side transactions assign generations to surviving and replacement
  * blocks before publication. Tree decisions and conservative field migration
  * remain with the AMR authorities and their backend consumers.
+ * Workflow:
+ * 1. Receive a resolved plan and active AMR topology.
+ * 2. Manage backend residency and stable state generations.
+ * 3. Expose stage data only through checked runtime leases.
  */
 
 #pragma once

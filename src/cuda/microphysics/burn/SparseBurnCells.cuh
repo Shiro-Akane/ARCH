@@ -2,6 +2,10 @@
  * @file SparseBurnCells.cuh
  * @brief Device packing and commit around the shared sparse ODE executor.
  * DriverBurn remains the sole source of activation/composition/energy physics.
+ * Workflow:
+ * 1. Receive active burning cells and their device EOS/network views.
+ * 2. Batch shared stiff-network or ODE work in device memory.
+ * 3. Return accepted chemistry and failure reports to the backend.
  */
 #pragma once
 

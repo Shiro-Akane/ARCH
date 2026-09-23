@@ -5,6 +5,10 @@
  * Access tokens identify a block, storage generation and logical state slot.
  * Concrete backends own execution resources and implement transfer/stage/regrid
  * operations; this interface keeps those mechanics separate from shared policy.
+ * Workflow:
+ * 1. Receive a resolved plan and active AMR topology.
+ * 2. Manage backend residency and stable state generations.
+ * 3. Expose stage data only through checked runtime leases.
  */
 
 #pragma once

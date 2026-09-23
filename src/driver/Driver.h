@@ -6,6 +6,10 @@
  * transaction coordination. It orders split burn, diffusion and hydro stages
  * through the selected interfaces; topology decisions and numerical policies
  * remain shared while backend owners manage execution and data visibility.
+ * Workflow:
+ * 1. Read the resolved run state and active AMR topology.
+ * 2. Order burn, diffusion, hydro and gravity through the shared stage scheduler.
+ * 3. Publish completed state, output and checkpoint evidence at accepted step boundaries.
  */
 
 #pragma once

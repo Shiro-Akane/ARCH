@@ -6,6 +6,10 @@
  * the shared view and synchronize before releasing storage. Construction queues
  * uploads on the borrowed stream; runtime control establishes their completion
  * before publishing the owner to numerical consumers.
+ * Workflow:
+ * 1. Receive immutable EOS source data and one device lease.
+ * 2. Upload and own the selected tabular or Helmholtz EOS data.
+ * 3. Release the device owner only after dependent work completes.
  */
 
 #include "cuda/microphysics/eos/owners/tabular3_eos_device_owner.h"

@@ -1,6 +1,10 @@
 /**
  * @file AmrFluxExecutionPlan.h
  * @brief Backend-neutral lowering of canonical AMR flux plans.
+ * Workflow:
+ * 1. Read oriented hydro face fluxes and AMR level interfaces.
+ * 2. Construct or apply conservative flux-register contributions.
+ * 3. Return coarse-fine corrections to the stage conservation update.
  */
 
 #pragma once

@@ -1,14 +1,25 @@
-#include "api/protocol/Progress.h"
+/**
+ * @file CaseInspection.cpp
+ * @brief Construct a case, inspect its setup and return the resulting evidence without integrating.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Construct a case, inspect its setup and return the resulting evidence without integrating.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #include "api/CaseInspection.h"
-#include "api/configuration/ParameterMetadata.h"
-#include "api/preview/StateSnapshot.h"
-#include "api/preview/ResourceEstimates.h"
+
 #include "amr/topology/Morton.h"
-#include "api/protocol/LogCapture.h"
-#include "api/protocol/Response.h"
+#include "api/configuration/ParameterMetadata.h"
 #include "api/configuration/ValueDomain.h"
-#include "core/files/FileFingerprint.h"
+#include "api/preview/ResourceEstimates.h"
+#include "api/preview/StateSnapshot.h"
+#include "api/protocol/LogCapture.h"
+#include "api/protocol/Progress.h"
+#include "api/protocol/Response.h"
 #include "core/config/RuntimeParams.h"
+#include "core/files/FileFingerprint.h"
 #include "physics/eos/eosdispatch.h"
 
 namespace arch::api {
@@ -18,6 +29,7 @@ struct SinkProbe final : preview::InitializationObserver {
     Json samples = Json::array();
     std::map<std::string, ValueDomain> domains;
     int count = 0;
+    /** Collect a bounded initial primitive sample from a registered case. */
     void initial_primitive(const PointCoords& point, const PrimitiveData& p) override {
         auto fields = Json::array();
         const auto add = [&](const std::string& key, double value, const std::string& unit, bool consumed = true) {
@@ -44,6 +56,7 @@ struct SinkProbe final : preview::InitializationObserver {
             {"fields", fields}, {"massFractions", fractions}, {"massFractionUnit", "1"}}));
         ++count;
     }
+    /** Serialize collected case samples and unit evidence. */
     Json result() const {
         auto domain = Json::object();
         for (const auto& [key, value] : domains) domain[key] = value.json();
@@ -54,6 +67,7 @@ struct SinkProbe final : preview::InitializationObserver {
             {"velocityBasis", "native orthonormal components"}});
     }
 };
+/** Check that the case probe domain admits finite sample coordinates. */
 void validate_probe_domain(const SimConfig& c) {
     if (c.amr.lrefinemin < 0 || c.amr.lrefinemax < c.amr.lrefinemin || c.amr.lrefinemax > amr::kMaxRefinementLevel)
         throw std::invalid_argument("Require 0 <= lrefinemin <= lrefinemax <= 15");
@@ -66,6 +80,7 @@ void validate_probe_domain(const SimConfig& c) {
         if (!std::isfinite(value)) throw std::invalid_argument("Non-finite parameter: " + key);
 }
 } // namespace
+/** Run setup and bounded CPU initial-state inspection without time integration. */
 PreviewResponse InspectCase(const PreviewRequest& request) {
     detail::CaptureLogs logs;
     auto out = Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::initialization_version},

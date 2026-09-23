@@ -1,8 +1,16 @@
-#include "api/resources/WorkerLimits.h"
-#include "api/ApplicationContract.h"
+/**
+ * @file WorkerLimits.cpp
+ * @brief Enforce process-local preview budgets before expensive setup.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Enforce process-local preview budgets before expensive setup.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #include <algorithm>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 #include <stdexcept>
 #ifdef __linux__
 #include <sys/resource.h>
@@ -10,7 +18,12 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+#include "api/resources/WorkerLimits.h"
+
+#include "api/ApplicationContract.h"
 namespace arch::api {
+/** Remember process limits for repeated local preview requests. */
 SessionProcessLimits::SessionProcessLimits() {
 #ifdef __linux__
     rlimit as{}, cpu{};
@@ -29,6 +42,7 @@ SessionProcessLimits::SessionProcessLimits() {
     throw std::runtime_error("Preview sessions are currently supported on Linux/WSL only");
 #endif
 }
+/** Apply a fresh CPU budget before serving one session request. */
 void SessionProcessLimits::begin_request(int cpu_seconds) {
 #ifdef __linux__
     rusage usage{}; rlimit cpu{};
@@ -45,6 +59,7 @@ void SessionProcessLimits::begin_request(int cpu_seconds) {
     (void)cpu_seconds;
 #endif
 }
+/** Constrain a one-shot inspection worker before expensive setup. */
 void ApplyInspectionProcessLimits(int cpu_seconds) {
 #ifdef __linux__
     // One request per worker. Tighten inherited limits; never raise them.

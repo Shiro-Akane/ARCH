@@ -1,14 +1,26 @@
-#include "driver/runtime/DriverRuntime.h"
-#include "driver/schedule/DriverControl.h"
-#include "driver/DriverUtils.h"
-#include "amr/AMRControl.h"
+/**
+ * @file DriverRegrid.cpp
+ * @brief Rebuild AMR topology and transfer state while invalidating stale stage views.
+ *
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Rebuild AMR topology and transfer state while invalidating stale stage views.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
+ */
+
 #include <algorithm>
-#include <stdexcept>
-#include <utility>
-#include "amr/topology/TopologyTransaction.h"
 #include <chrono>
 #include <limits>
+#include <stdexcept>
 #include <type_traits>
+#include <utility>
+
+#include "amr/AMRControl.h"
+#include "amr/topology/TopologyTransaction.h"
+#include "driver/DriverUtils.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/schedule/DriverControl.h"
+
 namespace arch::driver {
 using scheduler::StageExecutionContext;
 using state::ExecutionSide;
@@ -16,6 +28,7 @@ using state::StateResidencyLedger;
 using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
+/** Stage a topology transaction, migrate state, validate and publish only on success. */
 bool DriverRuntime::execute_regrid()
 {
     const auto make_regrid_ledger = [] (
@@ -347,6 +360,7 @@ bool DriverRuntime::execute_regrid()
     return true;
 }
 
+/** Apply the configured regrid cadence and record its outcome. */
 bool DriverRuntime::perform_regrid(int step, double time)
 {
     const auto started = std::chrono::steady_clock::now();

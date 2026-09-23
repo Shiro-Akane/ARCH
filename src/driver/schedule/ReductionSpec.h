@@ -5,6 +5,10 @@
  * CPU traversal and CUDA reductions use the same acceptance, empty-input and
  * tie rules. Logical keys define the required ordering; callers own candidate
  * storage and ensure values are visible before consuming the final result.
+ * Workflow:
+ * 1. Receive a stage descriptor and current state ledger.
+ * 2. Order hydro, gravity, burn, diffusion and output transitions.
+ * 3. Require completed publications before consuming a state.
  */
 
 #pragma once

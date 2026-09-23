@@ -1,11 +1,21 @@
+/**
+ * @file InitialStateConversion.h
+ * @brief Convert case primitive fields to solver conserved state using the shared EOS.
+ *
+ * Workflow:
+ * 1. Read validated configuration or a registered problem request.
+ * 2. Convert case primitive fields to solver conserved state using the shared EOS.
+ * 3. Return a single resolved value or state with explicit failure on invalid input.
+ */
+
 #pragma once
 
 #include <cmath>
 #include <stdexcept>
 
 #include "data/FluidState.h"
-#include "data/UserTypes.h"
 #include "data/GlobalDefs.h"
+#include "data/UserTypes.h"
 #include "numerics/state/StateAdmissibility.h"
 
 namespace ProblemHelper::detail {

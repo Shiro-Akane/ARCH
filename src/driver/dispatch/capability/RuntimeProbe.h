@@ -5,6 +5,10 @@
  * An injectable loader reports device and compiled-image compatibility before
  * backend construction. The probe does not choose a physics policy or own the
  * simulation's CUDA stream and device allocations.
+ * Workflow:
+ * 1. Read requested EOS, network, solver and backend capabilities.
+ * 2. Validate the combination before owning runtime resources.
+ * 3. Return an explicit supported plan or an actionable error.
  */
 
 #pragma once

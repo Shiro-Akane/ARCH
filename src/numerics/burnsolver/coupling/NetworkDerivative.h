@@ -9,6 +9,10 @@
  * Temperature is the last packed state coordinate, in kelvin. Central
  * differences use Richardson extrapolation (4*D_h - D_2h)/3; near the lower
  * temperature boundary, a fourth-order forward stencil stays in the domain.
+ * Workflow:
+ * 1. Receive density, temperature and network composition.
+ * 2. Form shared thermodynamic and reaction derivative terms.
+ * 3. Return one consistent RHS/Jacobian to the selected ODE method.
  */
 #pragma once
 #include "core/ArchPortability.h"

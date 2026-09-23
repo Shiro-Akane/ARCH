@@ -7,6 +7,10 @@
  * noexcept publication callback. A failed commit is not retried; explicit
  * abort supplies noexcept cleanup for uncommitted state. The guard enforces
  * ordering and scope while the caller owns data movement and cleanup.
+ * Workflow:
+ * 1. Receive current block identities and logical coordinates.
+ * 2. Construct or validate the AMR tree and topology epoch.
+ * 3. Publish changed topology only after a successful transaction.
  */
 
 #pragma once

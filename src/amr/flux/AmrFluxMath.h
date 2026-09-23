@@ -11,6 +11,10 @@
  * geometry and orientation supplied by the execution plan. Species follow
  * the same update for rho*X and are divided by the updated density, so the
  * correction conserves species mass rather than the mass fraction itself.
+ * Workflow:
+ * 1. Read oriented hydro face fluxes and AMR level interfaces.
+ * 2. Construct or apply conservative flux-register contributions.
+ * 3. Return coarse-fine corrections to the stage conservation update.
  */
 
 #pragma once

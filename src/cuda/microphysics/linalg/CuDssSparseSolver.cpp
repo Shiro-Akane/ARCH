@@ -6,6 +6,10 @@
  * symbolic metadata, scales through shared LinearEquilibration helpers and
  * checks completed library/device status before returning a linear response.
  * It never advances an ODE or downloads numerical cell states for a CPU solve.
+ * Workflow:
+ * 1. Receive compact or sparse ODE linear systems.
+ * 2. Prepare cuDSS or equilibration storage for repeated solves.
+ * 3. Return a checked solution through the shared ODE contract.
  */
 
 #include "cuda/microphysics/linalg/CuDssSparseSolver.h"

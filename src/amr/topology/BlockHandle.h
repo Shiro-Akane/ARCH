@@ -6,6 +6,10 @@
  * is valid. Neither value is a memory-pool index or a device address. Logical
  * keys describe topology/cell locations; backend stores resolve handles to
  * their own allocation slots and must reject stale epoch bindings.
+ * Workflow:
+ * 1. Receive current block identities and logical coordinates.
+ * 2. Construct or validate the AMR tree and topology epoch.
+ * 3. Publish changed topology only after a successful transaction.
  */
 
 #pragma once

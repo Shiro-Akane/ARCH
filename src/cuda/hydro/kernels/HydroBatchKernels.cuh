@@ -8,6 +8,10 @@
  * route order, adds sources and performs the common integrator update. Species
  * scratch shared between blocks requires single-block waves to prevent aliasing.
  * These launches do not publish state or alter the scheduler's stage weights.
+ * Workflow:
+ * 1. Receive stage views, face geometry and device state arrays.
+ * 2. Launch the shared hydro face, source or state work on CUDA.
+ * 3. Publish stage output only after the backend stream orders writes.
  */
 #pragma once
 

@@ -6,6 +6,10 @@
  * and the checked thermodynamic handoff before committing its state. Common
  * reduction semantics combine limiter candidates for later timestep selection;
  * CUDA kernels consume the same preparation and commit rules.
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Traverse active patches for burn half-steps through the shared burn policy.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
 
 #pragma once
@@ -15,16 +19,17 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-
-#include "driver/stages/DriverBurnPolicy.h"
-#include "data/FluidState.h"
-#include "grid/Grid.h"
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
+#include "driver/stages/DriverBurnPolicy.h"
 
+#include "data/FluidState.h"
+#include "grid/Grid.h"
+
+
+/** Traverse active host cells for one shared burn-policy half-step. */
 template <typename EosPolicy, typename BurnerPolicy>
 void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolicy &eos,
                        BurnerPolicy &burn, const Grid &grid, const SimConfig &config,

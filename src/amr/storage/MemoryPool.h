@@ -6,6 +6,10 @@
  * recycle slots without resizing the pool. A block ID is a pool index, not a
  * persistent topology identity: a freed index may later hold another block.
  * AmrTree owns the hierarchy; this class only owns and recycles its storage.
+ * Workflow:
+ * 1. Receive topology-owned block IDs and capacity bounds.
+ * 2. Manage native block or pool storage and its lifetime.
+ * 3. Expose storage only through checked active handles.
  */
 
 #pragma once

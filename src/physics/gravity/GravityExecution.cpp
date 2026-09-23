@@ -1,4 +1,15 @@
+/**
+ * @file GravityExecution.cpp
+ * @brief Execute shared gravity work on host while preserving the same task mathematics.
+ *
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Execute shared gravity work on host while preserving the same task mathematics.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
+ */
+
 #include "physics/gravity/GravityExecution.h"
+
 namespace Physical::Gravity {
 namespace {
 class HostGravityExecution final:public GravityExecution {

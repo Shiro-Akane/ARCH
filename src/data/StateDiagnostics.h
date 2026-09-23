@@ -1,3 +1,13 @@
+/**
+ * @file StateDiagnostics.h
+ * @brief Accumulate floor-repair and state-admissibility evidence across execution paths.
+ *
+ * Workflow:
+ * 1. Receive proposed state changes from host or device execution.
+ * 2. Accumulate floor-repair and state-admissibility evidence across execution paths.
+ * 3. Report repairs and conservation deltas without hiding them.
+ */
+
 #pragma once
 
 #include <algorithm>
@@ -6,6 +16,7 @@
 #include <exception>
 #include <mutex>
 #include <vector>
+
 #include "core/ArchPortability.h"
 
 namespace arch::state {
@@ -16,10 +27,12 @@ class HostFailure {
     std::mutex mutex_;
     std::exception_ptr error_;
 public:
+    /** Capture the first worker failure for rethrow after an OpenMP region. */
     void capture_current() {
         std::lock_guard<std::mutex> lock(mutex_);
         if (!error_) error_ = std::current_exception();
     }
+    /** Rethrow the captured failure on the calling thread. */
     void rethrow() const { if (error_) std::rethrow_exception(error_); }
 };
 
@@ -31,6 +44,7 @@ struct RepairView {
     double* values = nullptr;
     int species = 0;
     static constexpr int fixed_size = 10;
+    /** Accumulate one repair statistic on host or device. */
     ARCH_INLINE void add(int index, double value) const {
         if (!values) return;
 #if defined(__CUDA_ARCH__)
@@ -39,6 +53,7 @@ struct RepairView {
         values[index] += value;
 #endif
     }
+    /** Count a repaired cell and preserve the first triggering local index. */
     ARCH_INLINE void event(double volume, int cell) const {
         if (!values) return;
 #if defined(__CUDA_ARCH__)
@@ -49,11 +64,13 @@ struct RepairView {
         if (previous == 0.0) values[9] = cell;
         add(1, volume);
     }
+    /** Accumulate signed and absolute conserved-state changes. */
     ARCH_INLINE void conserved(double mass, double px, double py, double pz, double energy) const {
         add(2, mass); add(3, std::abs(mass));
         add(4, px); add(5, py); add(6, pz);
         add(7, energy); add(8, std::abs(energy));
     }
+    /** Accumulate signed and absolute change for one species. */
     ARCH_INLINE void species_mass(int index, double delta) const {
         add(fixed_size + 2 * index, delta);
         add(fixed_size + 2 * index + 1, std::abs(delta));
@@ -69,9 +86,13 @@ struct RepairBudget {
 
     RepairBudget() : RepairBudget(0) {}
     explicit RepairBudget(int species) : values(RepairView::fixed_size + 2 * species, 0.0) {}
+    /** Infer species count from the compact statistic row. */
     int species() const { return static_cast<int>((values.size() - RepairView::fixed_size) / 2); }
+    /** Clear the repair budget for a new species layout. */
     void reset(int species) { *this = RepairBudget(species); }
+    /** Borrow the compact accounting row for a worker or kernel. */
     RepairView view() { return {values.data(), species()}; }
+    /** Merge a block budget while retaining the first triggering location. */
     void combine(const RepairBudget& other, double weight = 1.0) {
         if (values.size() < other.values.size()) values.resize(other.values.size(), 0.0);
         if (values[0] == 0.0 && other.values[0] > 0.0) {

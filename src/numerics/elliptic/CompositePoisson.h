@@ -1,18 +1,26 @@
 /** @file CompositePoisson.h
  * Periodic cell-centered finite-volume operator on a dyadic Cartesian leaf mesh.
  * The owner contains geometry and local face stencils, never fluid/AMR storage.
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Describe composite leaf geometry, face stencils and operator queries.
+ * 3. Return corrections or fluxes through the shared numerical contract.
  */
+
 #pragma once
-#include "numerics/elliptic/CartesianPoisson.h"
-#include "core/CompensatedSum.h"
+
 #include <array>
 #include <span>
 #include <unordered_map>
 #include <vector>
 
+#include "core/CompensatedSum.h"
+#include "numerics/elliptic/CartesianPoisson.h"
+
 namespace arch::elliptic {
 // Shared cancellation-safe face derivative, used by scalar tests and both
 // production execution providers. Coefficients are built once on the Host.
+/** Apply a cancellation-safe face stencil to potential differences and boundary data. */
 ARCH_INLINE double composite_face_gradient(const double* x,int anchor,const int* samples,
     const double* coefficients,int count,double boundary_coefficient,double boundary_value) {
     arch::math::CompensatedSum sum;

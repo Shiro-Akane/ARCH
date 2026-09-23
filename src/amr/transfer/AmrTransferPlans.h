@@ -1,6 +1,10 @@
 /**
  * @file AmrTransferPlans.h
  * @brief Backend-neutral logical AMR transfer and reflux plans.
+ * Workflow:
+ * 1. Receive a committed source topology and staged destination.
+ * 2. Build or apply conservative restriction and limited prolongation.
+ * 3. Validate transferred state before publishing new block ownership.
  */
 
 #pragma once

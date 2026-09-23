@@ -5,6 +5,10 @@
  * The constructor borrows a stream and retains host staging for uploads.
  * Consumers must obey the stream/lifetime contract below; view() does not
  * transfer ownership or introduce a separate mixture model.
+ * Workflow:
+ * 1. Receive a registered reaction network and species order.
+ * 2. Own immutable device network and species metadata.
+ * 3. Publish stable device views to burn kernels.
  */
 
 #pragma once

@@ -1,9 +1,23 @@
-#include "amr/elliptic/EllipticMeshAdapter.h"
-#include "amr/AMRControl.h"
-#include "grid/GridMetrics.h"
+/**
+ * @file EllipticMeshAdapter.cpp
+ * @brief Snapshot active native AMR cells, native offsets and stable handles into one composite elliptic binding.
+ *
+ * Workflow:
+ * 1. Read active cells and topology from their AMR owner.
+ * 2. Snapshot active native AMR cells, native offsets and stable handles into one composite elliptic binding.
+ * 3. Expose only stable bindings or derived indicators to downstream solvers.
+ */
+
 #include <cmath>
 #include <limits>
+
+#include "amr/elliptic/EllipticMeshAdapter.h"
+
+#include "amr/AMRControl.h"
+#include "grid/GridMetrics.h"
+
 namespace amr {
+/** Bind every valid AMR leaf to one x-fast composite Poisson cell and native storage offset. */
 EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConfig& config,
                                      std::span<const BlockHandle> handles)
 {

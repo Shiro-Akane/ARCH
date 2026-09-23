@@ -1,6 +1,10 @@
 /**
  * @file ExchangePlan.h
  * @brief Backend-neutral same-level ghost exchange authority.
+ * Workflow:
+ * 1. Borrow stable AMR topology and native cell/face storage.
+ * 2. Build or execute ghost, boundary and coarse-fine exchange plans.
+ * 3. Return filled ghost state without changing active-cell ownership.
  */
 
 #pragma once

@@ -6,6 +6,10 @@
  * relations before grouping transfers. Child slots are ordered by the parity
  * bits of their logical coordinates. Backends consume these groups to move
  * complete cell states; they do not independently infer topology or field sets.
+ * Workflow:
+ * 1. Receive a committed source topology and staged destination.
+ * 2. Build or apply conservative restriction and limited prolongation.
+ * 3. Validate transferred state before publishing new block ownership.
  */
 #pragma once
 

@@ -1,11 +1,24 @@
-#include "numerics/elliptic/CartesianPoisson.h"
-#include "core/CompensatedSum.h"
+/**
+ * @file CartesianPoisson.cpp
+ * @brief Apply the uniform-grid finite-volume Poisson operator and boundary contributions.
+ *
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Apply the uniform-grid finite-volume Poisson operator and boundary contributions.
+ * 3. Return corrections or fluxes through the shared numerical contract.
+ */
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
 
+#include "numerics/elliptic/CartesianPoisson.h"
+
+#include "core/CompensatedSum.h"
+
 namespace arch::elliptic {
+/** Reject non-Cartesian mesh extents and spacing before building an operator. */
 void validate_mesh(const CartesianMesh& m)
 {
     if (m.dimension < 1 || m.dimension > 3) throw std::invalid_argument("Poisson dimension must be 1..3");
@@ -35,6 +48,7 @@ void validate_mesh(const CartesianMesh& m)
         throw std::invalid_argument("Poisson prototype requires spacing ratio <= 2 and finite diagonal");
 }
 
+/** Check the borrowed vector extent and finiteness before arithmetic. */
 void validate_values(std::span<const double> v, std::size_t size)
 {
     if (v.size() != size || (size != 0 && v.data() == nullptr))
@@ -42,6 +56,7 @@ void validate_values(std::span<const double> v, std::size_t size)
     for (double x : v) if (!std::isfinite(x)) throw std::invalid_argument("Poisson input contains nonfinite values");
 }
 
+/** Check the face-data shape and finite Dirichlet values. */
 void validate_boundary(const CartesianMesh& m, const BoundaryData& b)
 {
     if (b.kind != BoundaryKind::Periodic && b.kind != BoundaryKind::Dirichlet)
@@ -52,6 +67,7 @@ void validate_boundary(const CartesianMesh& m, const BoundaryData& b)
 }
 
 namespace {
+/** Scale a vector before RMS calculations to avoid overflow. */
 double magnitude(std::span<const double> v)
 {
     double scale = 0.;
@@ -62,6 +78,7 @@ double magnitude(std::span<const double> v)
     return scale;
 }
 }
+/** Return sqrt(sum(v_i^2)/N) with overflow-safe scaling. */
 double rms(std::span<const double> v)
 {
     const double scale = magnitude(v);
@@ -70,6 +87,7 @@ double rms(std::span<const double> v)
     for (double x : v) { const double q = x / scale; sum.add(q*q); }
     return scale * std::sqrt(sum.value() / static_cast<double>(v.size()));
 }
+/** Return the compensated arithmetic mean of active cells. */
 double mean(std::span<const double> v)
 {
     const double scale = magnitude(v);
@@ -78,12 +96,14 @@ double mean(std::span<const double> v)
     for (double x : v) sum.add(x / scale);
     return scale * (sum.value() / static_cast<double>(v.size()));
 }
+/** Remove the constant null mode from a periodic field. */
 void project_mean(std::span<double> v)
 {
     const double average = mean(v);
     for (double& x : v) x -= average;
 }
 
+/** Move inhomogeneous Dirichlet face terms to the Poisson RHS. */
 std::vector<double> effective_rhs(const CartesianMesh& m, const BoundaryData& b,
                                  std::span<const double> rhs)
 {

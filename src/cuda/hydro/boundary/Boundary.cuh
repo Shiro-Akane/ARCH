@@ -6,6 +6,10 @@
  * Phases are enqueued in order on the supplied stream so later phases can use
  * completed earlier-phase values. The runtime owns transfer/state storage and
  * fences completion before declaring the ghost region readable.
+ * Workflow:
+ * 1. Receive device-resident block state and boundary plans.
+ * 2. Launch CUDA ghost and boundary transport for the active stage.
+ * 3. Leave core hydro mathematics in the shared host/device policies.
  */
 
 #pragma once

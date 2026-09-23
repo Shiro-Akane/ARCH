@@ -1,6 +1,10 @@
 /**
  * @file GlobalDefs.h
  * @brief Global configuration parameters parsed from input files.
+ * Workflow:
+ * 1. Load typed grid, numerics, physics and IO configuration in CGS units.
+ * 2. Pass the same resolved SimConfig to case setup and every stage.
+ * 3. Lower only numeric views required by shared host/device mathematics.
  */
 
 /**

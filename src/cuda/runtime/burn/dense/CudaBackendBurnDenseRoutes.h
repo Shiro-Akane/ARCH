@@ -5,6 +5,10 @@
  * Network selection uses the common host launch request and these declarations
  * without importing numerical template bodies. The selected network/EOS route
  * instantiates the shared burn implementation in its own CUDA translation unit.
+ * Workflow:
+ * 1. Receive a selected dense burn route and device state.
+ * 2. Bind the compact network/ODE work to CUDA launch storage.
+ * 3. Return results through the shared burn-policy report.
  */
 #pragma once
 

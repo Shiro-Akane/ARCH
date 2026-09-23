@@ -1,6 +1,10 @@
 /**
  * @file CuDssSparseSolver.h
  * @brief Host-invoked CUDA sparse execution policy; no ODE or network physics.
+ * Workflow:
+ * 1. Receive compact or sparse ODE linear systems.
+ * 2. Prepare cuDSS or equilibration storage for repeated solves.
+ * 3. Return a checked solution through the shared ODE contract.
  */
 #pragma once
 

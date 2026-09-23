@@ -6,6 +6,10 @@
  * the block in the hierarchy. Transfer helpers use the shared prolongation
  * and conservative restriction mathematics rather than defining another
  * interpolation policy inside the storage record.
+ * Workflow:
+ * 1. Receive topology-owned block IDs and capacity bounds.
+ * 2. Manage native block or pool storage and its lifetime.
+ * 3. Expose storage only through checked active handles.
  */
 
 #pragma once

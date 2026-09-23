@@ -4,6 +4,10 @@
  *
  * Explicit nodes retain native nonuniform grids. Encoded fields are interpolated
  * before decoding; the same chain rule supplies composition/thermal derivatives.
+ * Workflow:
+ * 1. Receive tabulated free energy and a requested thermodynamic state.
+ * 2. Interpolate or invert the shared EOS relation.
+ * 3. Return checked thermodynamic quantities without duplicating tables.
  */
 #pragma once
 

@@ -1,25 +1,41 @@
+/**
+ * @file ResourceEstimates.cpp
+ * @brief Estimate bounded memory and cell counts from the resolved mesh plan.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Estimate bounded memory and cell counts from the resolved mesh plan.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
+#include <limits>
+
 #include "api/preview/ResourceEstimates.h"
+
 #include "amr/topology/AmrDefines.h"
 #include "api/protocol/LogCapture.h"
 #include "api/protocol/Response.h"
-#include "core/files/FileFingerprint.h"
 #include "core/config/RuntimeParams.h"
-#include <limits>
+#include "core/files/FileFingerprint.h"
 
 namespace arch::api {
 using detail::Json;
+/** Count native padded cells per block for the requested dimensionality. */
 std::int64_t PaddedCells(int dimension) {
     return std::int64_t(amr::PAD_NX) * (dimension >= 2 ? amr::BLOCK_NY + 2*amr::MAX_NG : 1)
         * (dimension == 3 ? amr::BLOCK_NZ + 2*amr::MAX_NG : 1);
 }
 namespace {
 using Count = std::optional<std::int64_t>;
+/** Multiply resource counts with overflow detection. */
 Count multiply(Count value, std::int64_t factor) {
     if (!value || factor < 0 || (factor && *value > std::numeric_limits<std::int64_t>::max()/factor)) return {};
     return *value * factor;
 }
+/** Represent an unavailable overflowed count as JSON null. */
 Json number(Count value) { return value ? Json(*value) : Json(); }
 }
+/** Estimate bounded active-cell and storage counts from AMR controls. */
 Json AmrResourceMetadata(const SimConfig& c, int species_count) {
     const auto dim = c.grid.dim;
     Count roots = c.grid.nblockx1;
@@ -49,6 +65,7 @@ Json AmrResourceMetadata(const SimConfig& c, int species_count) {
         {"excludes", Json::array({"EOS tables", "AMR tree and transfer plans", "temporary arrays", "allocator overhead", "output buffers", "MPI layout", "thread workspaces", "self-gravity potential/acceleration, face stencils and MG/FGMRES workspaces"})},
         {"oomPrediction", "not-provided"}});
 }
+/** Answer a resource-estimate request without allocating the full simulation. */
 PreviewResponse EstimateAmrResources(const PreviewRequest& request) {
     detail::CaptureLogs logs;
     auto out = Json::object({{"schemaVersion", "1.0"}, {"version", "1"}, {"kind", "amr-resource-estimate"},

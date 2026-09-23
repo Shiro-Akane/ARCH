@@ -5,6 +5,10 @@
  * The scheduler supplies old/current states and stage weights. The kernel calls
  * TimeIntegration::update_stage_cell for fluid and species values; it does not
  * rotate logical slots or publish ghosts. Runtime control owns those transitions.
+ * Workflow:
+ * 1. Receive stage views, face geometry and device state arrays.
+ * 2. Launch the shared hydro face, source or state work on CUDA.
+ * 3. Publish stage output only after the backend stream orders writes.
  */
 
 #pragma once

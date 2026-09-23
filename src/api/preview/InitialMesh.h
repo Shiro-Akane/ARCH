@@ -1,15 +1,28 @@
+/**
+ * @file InitialMesh.h
+ * @brief Create a bounded initial mesh snapshot for preview without entering the time loop.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Create a bounded initial mesh snapshot for preview without entering the time loop.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
-#include "api/preview/ResourceEstimates.h"
-#include "driver/initialization/InitialMesh.h"
-#include "driver/DriverUtils.h"
-#include "amr/refinement/RefinementThermodynamics.h"
+
 #include <chrono>
+
+#include "amr/refinement/RefinementThermodynamics.h"
+#include "api/preview/ResourceEstimates.h"
+#include "driver/DriverUtils.h"
+#include "driver/initialization/InitialMesh.h"
 
 namespace arch::api {
 struct MeshResult { detail::Json data; bool complete; bool constructed; };
 struct MeshBudgetStop : std::runtime_error { using std::runtime_error::runtime_error; };
 
 template<class Eos>
+/** Construct the requested bounded initial AMR mesh without entering Driver time stepping. */
 MeshResult BuildInitialMesh(ProblemGenerator& problem, const SimConfig& config,
                            const SpeciesManager& species, dispatch::EosId eos_id,
                            const Eos& eos, const PreviewRequest& request) {

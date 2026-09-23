@@ -6,6 +6,10 @@
  * and sparse executor. It borrows the containing runtime's EOS storage and stream;
  * destruction quiesces work before retiring dependent buffers and factor state.
  * Cell preparation, ODE continuation and energy handoff use the shared authorities.
+ * Workflow:
+ * 1. Receive a sparse burn route and resident ODE systems.
+ * 2. Bind network batches to the sparse CUDA linear solver.
+ * 3. Report convergence and errors through the common burn interface.
  */
 #pragma once
 

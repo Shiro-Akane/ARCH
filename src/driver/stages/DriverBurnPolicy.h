@@ -5,6 +5,10 @@
  * CPU iteration and CUDA launch/storage are consumers, not alternative physics.
  * Preparation and checked commit surround the selected ODE integration; this
  * header deliberately imports neither runtime parsing nor a host Grid.
+ * Workflow:
+ * 1. Receive the current stage time, state and physical policies.
+ * 2. Apply a configured split physical stage.
+ * 3. Publish accepted changes to the scheduler ledger.
  */
 #pragma once
 

@@ -1,7 +1,19 @@
+/**
+ * @file ApplicationContract.h
+ * @brief Bound external inspection requests before they can acquire simulation resources.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Bound external inspection requests before they can acquire simulation resources.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
+
 #include <array>
 #include <cstddef>
 #include <string_view>
+
 namespace arch::api::contract {
 inline constexpr auto schema_version = "1.0";
 inline constexpr auto configuration_version = "2";

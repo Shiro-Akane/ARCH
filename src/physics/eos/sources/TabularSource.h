@@ -5,6 +5,10 @@
  * Format families select data interpretation, not another runtime EOS type.
  * Nuclear-equilibrium tables already contain the nuclear binding contribution;
  * callers must not attach an independent kinetic nuclear-energy source.
+ * Workflow:
+ * 1. Read a verified tabular EOS data source.
+ * 2. Load or complete interpolation inputs under EOS ownership.
+ * 3. Return immutable thermodynamic data to tabular evaluation.
  */
 #pragma once
 

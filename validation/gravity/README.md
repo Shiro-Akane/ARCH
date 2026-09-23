@@ -149,3 +149,6 @@ The existing campaign now includes GravityBox isolated/coupled checks; `--quick`
 replaces the former Jeans-only CI subset without adding a test/job.
 `check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`
 qualifies actual device gravity; `--benchmark-only` runs the local repeated performance matrix.
+The [2D four-module smoke record](results/snia2d-20260923/README.md) adds a retained
+C/O hotspot example with 120 coupled Hydro/self-gravity/burn/thermal-diffusion steps
+on both backends. It checks execution and local timing, not analytic SN Ia accuracy.

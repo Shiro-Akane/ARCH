@@ -5,6 +5,10 @@
  * Allocation and asynchronous copy use the caller's stream. The concrete owner
  * must retain staging and device buffers through completion and release them
  * through its lifetime boundary; no table interpolation is performed here.
+ * Workflow:
+ * 1. Receive verified EOS tables and species metadata.
+ * 2. Prepare or bind EOS views for CUDA microphysics.
+ * 3. Expose owned device views without retaining caller buffers.
  */
 
 #include "cuda/microphysics/eos/device_eos_owner_utils.h"

@@ -1,6 +1,18 @@
+/**
+ * @file Discovery.cpp
+ * @brief Enumerate registered cases and capabilities through the same inspection contract.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Enumerate registered cases and capabilities through the same inspection contract.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #include "api/CaseInspection.h"
+
 namespace arch::api {
 using detail::Json;
+/** List registry entries and honest preview capabilities without constructing cases. */
 std::string RegisteredCases() {
     auto cases = Json::array();
     for (const auto& name : ProblemRegistry::Get().Names()) {

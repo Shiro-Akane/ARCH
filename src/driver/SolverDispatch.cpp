@@ -1,4 +1,3 @@
-#include "driver/initialization/InitialMesh.h"
 /**
  * @file SolverDispatch.cpp
  * @brief Resolve startup policies and launch the selected time-integrator driver.
@@ -6,6 +5,10 @@
  * Startup validates execution requirements and backend capability before
  * initialization or strict checkpoint restoration. Narrow integrator entries
  * select the typed driver; timestep execution remains in the common driver.
+ * Workflow:
+ * 1. Validate startup configuration, backend capability and restart provenance.
+ * 2. Resolve compile-time EOS, flux and integrator policy bindings.
+ * 3. Start one Driver runtime without placing numerical formulas in dispatch.
  */
 
 #include <cmath>
@@ -15,6 +18,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "driver/initialization/InitialMesh.h"
 #include "driver/SolverDispatch.h"
 
 #include "amr/AMRControl.h"

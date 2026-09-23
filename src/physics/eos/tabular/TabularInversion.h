@@ -6,6 +6,10 @@
  * turning points inside one table cell. Physical brackets and final residuals
  * are evaluated on the original interpolant; no extrapolation or ideal-gas
  * fallback is permitted. Invalid-mask cells are never bridged.
+ * Workflow:
+ * 1. Receive tabulated free energy and a requested thermodynamic state.
+ * 2. Interpolate or invert the shared EOS relation.
+ * 3. Return checked thermodynamic quantities without duplicating tables.
  */
 #pragma once
 

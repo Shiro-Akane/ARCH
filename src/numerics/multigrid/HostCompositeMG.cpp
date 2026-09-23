@@ -1,12 +1,25 @@
-#include "numerics/multigrid/HostCompositeMG.h"
+/**
+ * @file HostCompositeMG.cpp
+ * @brief Construct a composite hierarchy and solve with shared multigrid-preconditioned iterations.
+ *
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Construct a composite hierarchy and solve with shared multigrid-preconditioned iterations.
+ * 3. Return corrections or fluxes through the shared numerical contract.
+ */
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+
+#include "numerics/multigrid/HostCompositeMG.h"
+
 namespace arch::multigrid {
 using elliptic::CompositeCell;
 using elliptic::CompositeCellHash;
 using elliptic::CompositePoisson;
+/** Coarsen the active leaf hierarchy while preserving the sum of child volumes. */
 HostCompositeMG::HostCompositeMG(elliptic::CartesianMesh base,std::vector<CompositeCell> cells,
     elliptic::BoundaryKind kind,std::shared_ptr<CompositeExecution> execution)
     :execution_(execution?std::move(execution):make_host_composite_execution()) {
@@ -42,6 +55,7 @@ HostCompositeMG::HostCompositeMG(elliptic::CartesianMesh base,std::vector<Compos
     }
     setup();
 }
+/** Allocate resident level arrays and upload one shared face/row/transfer algebra. */
 void HostCompositeMG::setup() {
     auto& e=*execution_;
     for(auto& l:levels_) {
@@ -66,6 +80,7 @@ void HostCompositeMG::setup() {
         SparseStorage restrict,prolong;std::vector<std::vector<int>> children(c.op.size());
         std::vector<std::vector<double>> weights(c.op.size());
         for(int i=0;i<f.op.size();++i){const int p=f.parent[i];children[p].push_back(i);
+            // R(r)_p = sum_{i in child(p)} (V_i/V_p) r_i.
             weights[p].push_back(f.op.volumes()[i]/c.op.volumes()[p]);
             const double one=1.;prolong.row({&p,1},{&one,1});}
         for(int i=0;i<c.op.size();++i)restrict.row(children[i],weights[i]);
@@ -96,40 +111,49 @@ void HostCompositeMG::setup() {
     for(int i=0;i<20;++i)correction_.push_back(e.array<double>(size));
     e.fence();
 }
+/** Compute a scale-safe volume-weighted mean. */
 double HostCompositeMG::mean(const Vector& x,int level) {
     auto& e=*execution_;const double scale=e.maximum(x);if(scale==0.)return 0.;
     return scale*e.reduce({x.data,nullptr,levels_[level].weights.data,x.size,ReductionKind::Product,scale});
 }
+/** Compute the volume-weighted inner product for Krylov orthogonalization. */
 double HostCompositeMG::dot(const Vector& x,const Vector& y,int level) {
     return execution_->reduce({x.data,y.data,levels_[level].weights.data,x.size,ReductionKind::Product});
 }
+/** Compute the scale-safe volume-weighted RMS residual. */
 double HostCompositeMG::norm(const Vector& x,int level) {
     auto& e=*execution_;const double scale=e.maximum(x);if(scale==0.)return 0.;
     return scale*std::sqrt(e.reduce({x.data,x.data,levels_[level].weights.data,x.size,ReductionKind::Product,scale,scale}));
 }
+/** Remove the periodic nullspace on the selected composite level. */
 void HostCompositeMG::project(Vector& x,int level) {
     if(levels_[level].op.boundary_kind()==elliptic::BoundaryKind::Periodic)
         execution_->project(x,levels_[level].weights);
 }
+/** Apply the same face derivative coefficients on host or device. */
 void HostCompositeMG::gradient(const Vector& x,Vector& out,const Vector& boundary) {
     const auto& l=levels_.front();execution_->run(GradientWork{out.size,
         {l.faces.view(),l.anchors.data,l.boundary.data},x.data,boundary.data,out.data});
 }
+/** Subtract the inhomogeneous face contribution from the source. */
 void HostCompositeMG::boundary_rhs(Vector& rhs,const Vector& values) {
     auto& l=levels_.front();execution_->fill(l.scratch);
     gradient(l.scratch,l.face_values,values);
     execution_->run(RowsWork{rhs.size,l.rows.view(),l.face_values.data,rhs.data,-1.,1.});
 }
+/** Apply the conservative face divergence operator on a resident vector. */
 void HostCompositeMG::apply(int level,const Vector& x,Vector& out) {
     auto& l=levels_[level];auto& e=*execution_;
     e.run(GradientWork{l.face_values.size,{l.faces.view(),l.anchors.data,l.boundary.data},x.data,nullptr,l.face_values.data});
     e.run(RowsWork{out.size,l.rows.view(),l.face_values.data,out.data});
 }
+/** Run three damped Jacobi sweeps on one hierarchy level. */
 void HostCompositeMG::smooth(int level) {
     auto& l=levels_[level];
     for(int s=0;s<3;++s){apply(level,l.u,l.scratch);
         execution_->run(JacobiWork{l.u.size,l.u.data,l.rhs.data,l.scratch.data,l.diagonal.data});project(l.u,level);}
 }
+/** Apply one multigrid V-cycle, including signed residual transfer. */
 void HostCompositeMG::cycle(int level) {
     auto& f=levels_[level];auto& e=*execution_;
     if(level+1==static_cast<int>(levels_.size())) {
@@ -141,16 +165,19 @@ void HostCompositeMG::cycle(int level) {
     e.fill(c.u);cycle(level+1);
     e.run(RowsWork{f.u.size,f.prolongation.view(),c.u.data,f.u.data,1.,1.});project(f.u,level);smooth(level);
 }
+/** Use a zero-start V-cycle as an FGMRES preconditioner. */
 void HostCompositeMG::precondition(const Vector& rhs,Vector& out) {
     auto& f=levels_.front();auto& e=*execution_;
     e.linear(f.rhs,1.,rhs);project(f.rhs);e.fill(f.u);cycle(0);e.linear(out,1.,f.u);
 }
+/** Upload a host source and download the accepted potential. */
 SolveResult HostCompositeMG::solve(std::span<const double> rhs,SolveControl control) {
     elliptic::validate_values(rhs,op().size());auto input=execution_->upload(rhs);
     SolveResult result;result.report=solve(input,control);
     if(result.report.status==SolveStatus::Converged)result.potential=execution_->download(x_);
     return result;
 }
+/** Solve the resident Poisson system with restarted flexible GMRES and verify the original residual. */
 SolveReport HostCompositeMG::solve(const Vector& rhs,SolveControl control) {
     if(rhs.size!=op().size())throw std::invalid_argument("Composite source extent mismatch");
     if(!std::isfinite(control.relative_tolerance)||control.relative_tolerance<0.||control.relative_tolerance>=1.||
@@ -165,6 +192,7 @@ SolveReport HostCompositeMG::solve(const Vector& rhs,SolveControl control) {
     report.rhs_rms=scale;report.target=std::max(control.absolute_tolerance,control.relative_tolerance*scale);
     report.initial_residual=report.residual=scale;e.fill(x_);
     if(scale<=report.target){report.status=SolveStatus::Converged;return report;}
+    // Normalize b by ||b||_V; FGMRES solves A*(phi/||b||_V)=b/||b||_V.
     e.linear(source_,1./scale,source_);const double target=report.target/scale;
     constexpr int restart=20;
     for(;;) {
@@ -184,6 +212,7 @@ SolveReport HostCompositeMG::solve(const Vector& rhs,SolveControl control) {
         double h[restart+1][restart]{},cosine[restart]{},sine[restart]{},g[restart+1]{};g[0]=beta;int count=0;
         for(int j=0;j<restart&&report.cycles<control.max_cycles;++j) {
             ++report.cycles;precondition(basis_[j],correction_[j]);apply(0,correction_[j],work_);project(work_);
+            // Twice-iterated modified Gram-Schmidt: w <- w - sum_i h_ij*v_i.
             for(int pass=0;pass<2;++pass)for(int i=0;i<=j;++i){const double value=dot(work_,basis_[i]);h[i][j]+=value;e.linear(work_,1.,work_,-value,basis_[i]);}
             h[j+1][j]=norm(work_);const double next=h[j+1][j];if(!std::isfinite(next))return report;
             for(int i=0;i<j;++i){const double first=cosine[i]*h[i][j]+sine[i]*h[i+1][j];
@@ -195,6 +224,7 @@ SolveReport HostCompositeMG::solve(const Vector& rhs,SolveControl control) {
             e.linear(basis_[j+1],1./next,work_);
         }
         double y[restart]{};
+        // Solve upper-triangular H*y=g; phi <- phi + sum_j y_j*M_j^-1*v_j.
         for(int i=count-1;i>=0;--i){y[i]=g[i];for(int j=i+1;j<count;++j)y[i]-=h[i][j]*y[j];
             y[i]/=h[i][i];e.linear(x_,1.,x_,y[i],correction_[i]);}
         project(x_);

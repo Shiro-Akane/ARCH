@@ -1,7 +1,20 @@
+/**
+ * @file RefinementThermodynamics.h
+ * @brief Evaluate refinement thermodynamics through the existing EOS bridge without retaining transient state.
+ *
+ * Workflow:
+ * 1. Read active cells and topology from their AMR owner.
+ * 2. Evaluate refinement thermodynamics through the existing EOS bridge without retaining transient state.
+ * 3. Expose only stable bindings or derived indicators to downstream solvers.
+ */
+
 #pragma once
+
 #include "amr/topology/AmrTree.h"
+
 namespace amr {
 // One EOS batch adapter for the simulation driver and the CPU initial mesh preview.
+/** Bind the shared EOS evaluator for density, pressure, temperature and gamma1 refinement fields. */
 template<class EosPolicy>
 void BindRefinementThermodynamics(AmrTree& tree, const EosPolicy& eos) {
     tree.SetThermodynamicEvaluator([&eos](const FluidState& state,

@@ -8,6 +8,10 @@
  * Their printed density/nB pairs use the fixed rounded 1.66054e-24 g
  * convention, not the current CODATA mass. Retaining that fixed convention
  * avoids turning a constant rest-energy reference into a density function.
+ * Workflow:
+ * 1. Read a verified tabular EOS data source.
+ * 2. Load or complete interpolation inputs under EOS ownership.
+ * 3. Return immutable thermodynamic data to tabular evaluation.
  */
 #include "physics/eos/sources/TabularBaryonSource.h"
 

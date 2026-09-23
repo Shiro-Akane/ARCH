@@ -1,25 +1,40 @@
-#include "api/configuration/ParameterMetadata.h"
+/**
+ * @file ParameterMetadata.cpp
+ * @brief Publish names, types and provenance for recognized configuration parameters.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Publish names, types and provenance for recognized configuration parameters.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
 
 #include <cmath>
+
+#include "api/configuration/ParameterMetadata.h"
 
 namespace arch::api {
 namespace {
 using detail::Json;
+/** Serialize one observed case parameter value. */
 Json value(const preview::ParameterValue &v) {
     return std::visit([](const auto &item) { return Json(item); }, v);
 }
+/** Create a compact diagnostic annotation for a case parameter. */
 Json note(const char *code, const char *message) {
     return Json::object({{"severity", "warning"}, {"code", code}, {"message", message}});
 }
+/** Report range evidence collected for an axis-position parameter. */
 Json constraints(const preview::AxisPosition &p) {
     return Json::object({{"min", p.min}, {"max", p.max},
         {"minInclusive", p.min_inclusive}, {"maxInclusive", p.max_inclusive}});
 }
+/** Reject nonfinite or reversed case parameter bounds. */
 bool valid_bounds(const preview::AxisPosition &p) {
     return std::isfinite(p.min) && std::isfinite(p.max) && p.min < p.max;
 }
 } // namespace
 
+/** Attach observed case parameter metadata to the inspection result. */
 void PublishParameterMetadata(Json &response, const preview::ParameterReadTrace &trace,
                               const std::vector<preview::AxisPosition> &positions,
                               bool preview_succeeded) {

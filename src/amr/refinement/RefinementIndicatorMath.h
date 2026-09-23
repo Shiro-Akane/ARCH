@@ -1,3 +1,13 @@
+/**
+ * @file RefinementIndicatorMath.h
+ * @brief Refinement Indicator Math in the refinement owner.
+ *
+ * Workflow:
+ * 1. Read active-cell state and the configured refinement indicator.
+ * 2. Evaluate dimensionless refinement evidence without mutating topology.
+ * 3. Return flags to the staged AMR regrid transaction.
+ */
+
 #include "numerics/state/StateAdmissibility.h"
 /**
  * @file RefinementIndicatorMath.h

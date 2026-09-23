@@ -1,4 +1,15 @@
+/**
+ * @file VerifiedFileCache.h
+ * @brief Cache inspected bytes only under a matching file fingerprint.
+ *
+ * Workflow:
+ * 1. Read validated configuration or a registered problem request.
+ * 2. Cache inspected bytes only under a matching file fingerprint.
+ * 3. Return a single resolved value or state with explicit failure on invalid input.
+ */
+
 #pragma once
+
 #include <cstddef>
 #include <map>
 #include <memory>
@@ -17,7 +28,9 @@ public:
     const std::size_t max_bytes;
     std::size_t hits = 0, hashes = 0;
     explicit VerifiedFileCache(std::size_t limit) : max_bytes(limit) {}
+    /** Report the byte budget currently retained by the session cache. */
     std::size_t retained_bytes() const { return retained_; }
+    /** Release retained file bytes and reset the cache accounting. */
     void clear() { entries_.clear(); retained_=0; }
 };
 class VerifiedFileCacheScope {

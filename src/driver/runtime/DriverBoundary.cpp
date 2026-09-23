@@ -1,10 +1,22 @@
-#include "driver/runtime/DriverRuntime.h"
-#include "driver/schedule/DriverControl.h"
-#include "driver/DriverUtils.h"
-#include "amr/AMRControl.h"
+/**
+ * @file DriverBoundary.cpp
+ * @brief Apply boundary and ghost operations at the required stage state generation.
+ *
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Apply boundary and ghost operations at the required stage state generation.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
+ */
+
 #include <algorithm>
 #include <stdexcept>
 #include <utility>
+
+#include "amr/AMRControl.h"
+#include "driver/DriverUtils.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/schedule/DriverControl.h"
+
 namespace arch::driver {
 using scheduler::StageExecutionContext;
 using state::ExecutionSide;
@@ -12,6 +24,7 @@ using state::StateResidencyLedger;
 using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
+/** Publish the completed host ghost generation for current state. */
 void DriverRuntime::publish_current_ghost()
 {
     StageExecutionContext context{
@@ -23,6 +36,7 @@ void DriverRuntime::publish_current_ghost()
            arch::state::CompletionToken token) { return token; });
 }
 
+/** Launch the device boundary plan for the requested state version. */
 state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requested, state::StateVersion version, state::CompletionToken token)
 {
     auto& accesses = boundary_accesses;
@@ -49,6 +63,7 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
         accesses, plans.coarse_fine, requested, version, token);
 }
 
+/** Wait for and validate a device boundary publication. */
 void DriverRuntime::complete_device_boundary(StateSlot slot)
 {
     if (stage_handles.empty())
@@ -88,6 +103,7 @@ void DriverRuntime::complete_device_boundary(StateSlot slot)
         arch::backend::BackendOperation::PhysicalBoundary, slot, before);
 }
 
+/** Fill missing host or device ghosts before a stage reads the state. */
 void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
 {
     if (compute_backend) { complete_device_boundary(slot); return; }
@@ -106,6 +122,7 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
         publish_current_ghost();
 }
 
+/** Download accepted resident state only when host output needs it. */
 void DriverRuntime::materialize_current_for_host()
 {
     ensure_fluid_ghosts(StateSlot::Current);

@@ -5,6 +5,10 @@
  * Host compilation checks grid bounds and preserves the shared plan's phases,
  * ordinals and component signs. The resulting host vector is upload data, not
  * device allocation; runtime resources own its device copy.
+ * Workflow:
+ * 1. Receive device-resident block state and boundary plans.
+ * 2. Launch CUDA ghost and boundary transport for the active stage.
+ * 3. Leave core hydro mathematics in the shared host/device policies.
  */
 
 #pragma once

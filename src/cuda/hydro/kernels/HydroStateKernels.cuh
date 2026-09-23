@@ -6,6 +6,10 @@
  * shared metric caches. Reductions retain failure status. Borrowed buffers stay
  * owned by the runtime, which checks completion before reading results or
  * publishing the next stage.
+ * Workflow:
+ * 1. Receive stage views, face geometry and device state arrays.
+ * 2. Launch the shared hydro face, source or state work on CUDA.
+ * 3. Publish stage output only after the backend stream orders writes.
  */
 
 #pragma once

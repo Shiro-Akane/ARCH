@@ -5,6 +5,10 @@
  * This host-only factory checks the selected provider and requested capacity,
  * then delegates allocation to a typed owner. It does not instantiate ODE kernels
  * or provide an alternative network or linear-solver algorithm.
+ * Workflow:
+ * 1. Receive a sparse burn route and resident ODE systems.
+ * 2. Bind network batches to the sparse CUDA linear solver.
+ * 3. Report convergence and errors through the common burn interface.
  */
 #include "cuda/runtime/burn/sparse/CudaBackendBurnSparseRoutes.h"
 #include "physics/eos/IdealGas.h"

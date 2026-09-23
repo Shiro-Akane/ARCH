@@ -5,6 +5,10 @@
  * Interior and ghost regions are tracked independently for each block and
  * slot. Transfer completion and stage writes update this metadata explicitly;
  * the tracker performs neither data copies nor numerical evolution.
+ * Workflow:
+ * 1. Receive a resolved plan and active AMR topology.
+ * 2. Manage backend residency and stable state generations.
+ * 3. Expose stage data only through checked runtime leases.
  */
 
 #pragma once

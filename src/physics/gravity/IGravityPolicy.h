@@ -5,6 +5,10 @@
  * Host integrators use this interface without including concrete policies.
  * CUDA execution uses plain views and shared cell mathematics rather than
  * invoking these virtual methods over Host-owned vectors.
+ * Workflow:
+ * 1. Receive one native hydro patch and its stage fluxes.
+ * 2. Accumulate the selected gravity momentum and energy contributions.
+ * 3. Keep backend launch/storage and domain solves in their concrete owners.
  */
 
 #pragma once

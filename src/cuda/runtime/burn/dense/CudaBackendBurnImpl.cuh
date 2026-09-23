@@ -5,6 +5,10 @@
  * Cell preparation and thermodynamic commit use DriverBurnPolicy around the
  * selected shared ODE policy. The runtime supplies persistent workspaces and
  * owns stream completion; a common reduction reports cell failures and limits.
+ * Workflow:
+ * 1. Receive a selected dense burn route and device state.
+ * 2. Bind the compact network/ODE work to CUDA launch storage.
+ * 3. Return results through the shared burn-policy report.
  */
 
 #pragma once

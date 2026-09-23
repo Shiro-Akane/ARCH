@@ -5,6 +5,10 @@
  * Concrete owners retain bounded device pools and sparse provider state while
  * borrowing the supplied EOS views and stream. The containing runtime must keep
  * those dependencies alive and establish completion before consuming summaries.
+ * Workflow:
+ * 1. Receive a sparse burn route and resident ODE systems.
+ * 2. Bind network batches to the sparse CUDA linear solver.
+ * 3. Report convergence and errors through the common burn interface.
  */
 #pragma once
 

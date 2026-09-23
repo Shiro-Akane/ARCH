@@ -1,9 +1,19 @@
-#pragma once
+/**
+ * @file Sampling.h
+ * @brief Select bounded samples from cells without exposing Driver storage.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Select bounded samples from cells without exposing Driver storage.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
 
-#include "api/Preview.h"
+#pragma once
 
 #include <cstdint>
 #include <stdexcept>
+
+#include "api/Preview.h"
 
 namespace arch::api {
 class SamplingLimitError : public std::invalid_argument {
@@ -17,6 +27,7 @@ struct SamplingPlan {
 };
 
 // All products and sample budgets are checked before allocating field arrays.
+/** Resolve 1D/2D sample counts under the protocol budget before allocation. */
 inline SamplingPlan ResolveSampling(const PreviewRequest &request) {
     const bool two_d = request.case_id == "CellularDet";
     if (!two_d) {

@@ -9,6 +9,10 @@
  * uses this chain rule to convert the network energy rate into a temperature
  * rate. Specific energy and cv use the selected EOS's consistent units.
  * Composition derivatives use independent X_i, without renormalizing them.
+ * Workflow:
+ * 1. Receive density, temperature and network composition.
+ * 2. Form shared thermodynamic and reaction derivative terms.
+ * 3. Return one consistent RHS/Jacobian to the selected ODE method.
  */
 #pragma once
 

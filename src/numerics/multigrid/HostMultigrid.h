@@ -1,12 +1,19 @@
 /** @file HostMultigrid.h
  * Reusable single-domain CPU workspace for a constant-coefficient Poisson solve.
  * Synchronous and not thread-safe: one owner per concurrent solve.
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Own the reusable uniform-grid hierarchy and scratch arrays.
+ * 3. Return corrections or fluxes through the shared numerical contract.
  */
+
 #pragma once
-#include "numerics/elliptic/CartesianPoisson.h"
-#include "numerics/linalg/DenseWrap.h"
+
 #include <span>
 #include <vector>
+
+#include "numerics/elliptic/CartesianPoisson.h"
+#include "numerics/linalg/DenseWrap.h"
 
 namespace arch::multigrid {
 struct SolveControl {

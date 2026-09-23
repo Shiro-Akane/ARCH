@@ -1,11 +1,19 @@
 /** @file DriverIO.h
  * @brief Output scheduling adapters and run diagnostics for the shared Driver.
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Declare Driver output services and their narrow state-facing inputs.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
+
 #pragma once
-#include "io/IO.h"
-#include <span>
-#include <cstdint>
+
 #include <chrono>
+#include <cstdint>
+#include <span>
+
+#include "io/IO.h"
+
 struct SimulationController;
 namespace arch::driver {
 class DriverRuntime;

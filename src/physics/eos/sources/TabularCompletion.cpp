@@ -1,5 +1,9 @@
 /** @file TabularCompletion.cpp
  *  @brief Component-aware table assembly through existing Timmes math.
+ * Workflow:
+ * 1. Read a verified tabular EOS data source.
+ * 2. Load or complete interpolation inputs under EOS ownership.
+ * 3. Return immutable thermodynamic data to tabular evaluation.
  */
 #include "physics/eos/sources/TabularCompletion.h"
 #include "physics/eos/HelmEos.h"

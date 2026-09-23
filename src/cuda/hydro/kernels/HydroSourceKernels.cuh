@@ -5,6 +5,10 @@
  * Read the stage state and add source increments to its borrowed delta buffer.
  * GeometricSources and ExternalGravitySource remain the mathematical owners;
  * the runtime supplies the stream, scratch lifetime and completion boundary.
+ * Workflow:
+ * 1. Receive stage views, face geometry and device state arrays.
+ * 2. Launch the shared hydro face, source or state work on CUDA.
+ * 3. Publish stage output only after the backend stream orders writes.
  */
 
 #pragma once

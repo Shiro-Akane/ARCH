@@ -1,7 +1,17 @@
+/**
+ * @file Response.h
+ * @brief Assemble success and error envelopes consistently for the CLI protocol.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Assemble success and error envelopes consistently for the CLI protocol.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
 
-#include "api/protocol/Json.h"
 #include "api/Preview.h"
+#include "api/protocol/Json.h"
 
 namespace arch::api {
 // Include the terminating newline in the transport budget. Never emit a prefix

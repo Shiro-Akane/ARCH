@@ -2,17 +2,24 @@
  * @brief Domain-field identity and completion contracts for the gravity service.
  * These types do not enable a solver. Density has one dependency per active
  * block; the service cannot identify a whole domain by its first block alone.
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Describe density identity, completion and patch publication contracts.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
  */
+
 #pragma once
-#include "amr/topology/BlockHandle.h"
-#include "driver/runtime/StateResidency.h"
-#include "grid/ScalarFieldView.h"
+
 #include <cmath>
 #include <optional>
 #include <span>
 #include <stdexcept>
-#include <vector>
 #include <utility>
+#include <vector>
+
+#include "amr/topology/BlockHandle.h"
+#include "driver/runtime/StateResidency.h"
+#include "grid/ScalarFieldView.h"
 
 namespace Physical::Gravity {
 struct GravityInputIdentity {
@@ -51,6 +58,7 @@ struct GravityFieldStamp {
 // still require an exact source match before consuming any retained field.
 class GravityFieldValidity {
 public:
+    /** Publish a completed gravity stamp only after validating every density dependency. */
     void publish(GravityFieldStamp stamp) {
         if (!arch::state::is_complete(stamp.completion) || !stamp.storage_generation
             || !stamp.source.topology.value || stamp.source.inputs.empty()
@@ -70,10 +78,12 @@ public:
         }
         published_ = std::move(stamp);
     }
+    /** Require exact topology, time, operator settings and storage generation. */
     bool matches(const GravitySolveIdentity& source, std::uint64_t storage_generation) const {
         return published_ && published_->source == source
             && published_->storage_generation == storage_generation;
     }
+    /** Retire the publication before any state or topology mutation. */
     void invalidate() noexcept { published_.reset(); }
 private:
     std::optional<GravityFieldStamp> published_;

@@ -5,6 +5,10 @@
  * The EOS2/EOS4 author products share one file schema. This adapter preserves
  * their samples and energy references; component completion, interpolation,
  * positivity gauges and device storage belong to the consuming EOS owner.
+ * Workflow:
+ * 1. Read a verified tabular EOS data source.
+ * 2. Load or complete interpolation inputs under EOS ownership.
+ * 3. Return immutable thermodynamic data to tabular evaluation.
  */
 #pragma once
 

@@ -6,6 +6,10 @@
  * balanced refinement decision. Regridding prepares a candidate hierarchy
  * and logical transfer plans before committing the topology. Executors bind
  * those plans to storage without maintaining a second hierarchy algorithm.
+ * Workflow:
+ * 1. Receive current block identities and logical coordinates.
+ * 2. Construct or validate the AMR tree and topology epoch.
+ * 3. Publish changed topology only after a successful transaction.
  */
 
 #pragma once

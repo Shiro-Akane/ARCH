@@ -1,10 +1,23 @@
+/**
+ * @file ParameterPresentation.h
+ * @brief Map typed parameters to human-readable units and display descriptions.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Map typed parameters to human-readable units and display descriptions.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
+
+#include <map>
+
 #include "api/protocol/Json.h"
 #include "core/config/StandardParameters.h"
-#include <map>
 
 namespace arch::api {
 // Presentation strings only. Defaults, parsing and numerical rules stay in Core.
+/** Map a Core parameter to UI-facing text without changing its parser default. */
 inline detail::Json ParameterPresentation(const config::ParameterDefinition& definition) {
     static const std::map<std::string, std::pair<const char*, const char*>> text{
         {"geometry", {"Coordinate system", "Coordinate system used to interpret the three logical axes."}},
@@ -113,6 +126,7 @@ inline detail::Json ParameterPresentation(const config::ParameterDefinition& def
         result["enabledBy"] = key == "alpha_therm" ? "use_thermal_diff" : key == "nu_visc" ? "use_viscous_diff" : "use_species_diff";
     return result;
 }
+/** Return a stable short display label for a canonical option token. */
 inline std::string OptionDisplayName(std::string_view name) {
     if (name == "bd") return "Bader-Deuflhard (BD)";
     if (name == "be_nr") return "Backward Euler (Newton)";

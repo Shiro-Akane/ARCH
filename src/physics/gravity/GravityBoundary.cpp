@@ -1,9 +1,22 @@
-#include "physics/gravity/GravityBoundary.h"
+/**
+ * @file GravityBoundary.cpp
+ * @brief Compute isolated multipole boundary data from the current active mass distribution.
+ *
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Compute isolated multipole boundary data from the current active mass distribution.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
+ */
+
 #include <algorithm>
 #include <functional>
 #include <stdexcept>
 #include <unordered_map>
+
+#include "physics/gravity/GravityBoundary.h"
+
 namespace Physical::Gravity {
+/** Build an octree over every active leaf and cache evaluation geometry. */
 GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op):volumes_(op.volumes()) {
     using namespace arch::elliptic;
     if(op.base().dimension!=3) throw std::invalid_argument("Isolated gravity requires three dimensions");
@@ -47,6 +60,7 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op):vol
     flatten(lookup.at({root_level,{0,0,0}}),0);
     moments_.resize(nodes_.size());
 }
+/** Recompute monopole, dipole and quadrupole moments from current density. */
 void GravityBoundary::update(std::span<const double> density) {
     arch::elliptic::validate_values(density,volumes_.size());
     for(auto layer=layers_.rbegin();layer!=layers_.rend();++layer) for(int index:*layer) {
@@ -59,6 +73,7 @@ void GravityBoundary::update(std::span<const double> density) {
             if(!std::isfinite(value)) throw std::overflow_error("Nonfinite isolated mass moment");
     }
 }
+/** Evaluate isolated boundary potential at each exterior composite face. */
 std::vector<double> GravityBoundary::values(const arch::elliptic::CompositePoisson& op,
                                            double G,double theta,int order) const {
     if(!std::isfinite(G) || G<=0. || !std::isfinite(theta) || theta<0. || theta>=1.

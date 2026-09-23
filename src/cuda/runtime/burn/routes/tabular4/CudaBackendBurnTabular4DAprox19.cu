@@ -4,6 +4,10 @@
  *
  * The binding helper supplies ODE dispatch and shared numerical calls; this
  * translation unit selects types only and owns no runtime storage.
+ * Workflow:
+ * 1. Receive an EOS and network route selected at dispatch.
+ * 2. Instantiate the matching CUDA burn entry point once.
+ * 3. Pass all scalar chemistry through the common mathematical library.
  */
 
 #include "physics/eos/tabular/Tabular4DEOS.h"

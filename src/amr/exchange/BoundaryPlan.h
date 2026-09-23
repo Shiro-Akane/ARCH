@@ -5,6 +5,10 @@
  * Plans describe cell references, field classes, transfer weights, and axis
  * phases without embedding storage pointers. Host construction and validation
  * establish this contract before an executor binds the operations to memory.
+ * Workflow:
+ * 1. Borrow stable AMR topology and native cell/face storage.
+ * 2. Build or execute ghost, boundary and coarse-fine exchange plans.
+ * 3. Return filled ghost state without changing active-cell ownership.
  */
 #pragma once
 

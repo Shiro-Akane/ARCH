@@ -6,6 +6,10 @@
  * cells. Execution binds those cells to block storage, using direct same-level
  * copies or the shared coarse-fine prolongation/restriction rules. Ghost
  * synchronization changes field data, not hierarchy ownership.
+ * Workflow:
+ * 1. Borrow stable AMR topology and native cell/face storage.
+ * 2. Build or execute ghost, boundary and coarse-fine exchange plans.
+ * 3. Return filled ghost state without changing active-cell ownership.
  */
 
 #pragma once

@@ -6,6 +6,10 @@
  * on coarse-fine faces. Reflux converts those interface integrals into cell
  * corrections using GridMetrics and AmrFluxMath. Fluid and species share face
  * indexing, with species transported and corrected as conserved rho*X.
+ * Workflow:
+ * 1. Read oriented hydro face fluxes and AMR level interfaces.
+ * 2. Construct or apply conservative flux-register contributions.
+ * 3. Return coarse-fine corrections to the stage conservation update.
  */
 
 #pragma once

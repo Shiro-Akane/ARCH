@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendBurnNetworkRouteImpl.cuh
  * @brief Definition helper for one network x one EOS x all CUDA ODE routes.
+ * Workflow:
+ * 1. Read the resolved EOS, network and ODE route.
+ * 2. Choose the matching compiled CUDA burn launcher.
+ * 3. Fail explicitly when a route is unsupported.
  */
 
 #pragma once

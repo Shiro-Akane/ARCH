@@ -6,6 +6,10 @@
  * the constructor stream. Queries on that stream observe the preceding uploads;
  * cross-stream use needs explicit ordering. Returned views borrow this owner,
  * and the EOS formulas remain in physics/eos.
+ * Workflow:
+ * 1. Receive immutable EOS source data and one device lease.
+ * 2. Upload and own the selected tabular or Helmholtz EOS data.
+ * 3. Release the device owner only after dependent work completes.
  */
 
 #pragma once

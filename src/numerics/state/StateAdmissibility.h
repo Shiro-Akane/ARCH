@@ -1,8 +1,19 @@
+/**
+ * @file StateAdmissibility.h
+ * @brief Check and minimally repair conserved states using the configured physical floors.
+ *
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Check and minimally repair conserved states using the configured physical floors.
+ * 3. Return corrections or fluxes through the shared numerical contract.
+ */
+
 #pragma once
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
+
 #include "data/FluidState.h"
 
 // State recovery is independent of a density scale. Physical floors belong to
@@ -43,6 +54,7 @@ ARCH_INLINE Kinematics recover(const FluidVector& state)
     result.w = state.mom_w / state.rho;
     // m dot v avoids squaring tiny momenta or tiny density. Half each product
     // before adding to avoid an unnecessary intermediate factor-of-two overflow.
+    // e_kin density = (rho*u^2 + rho*v^2 + rho*w^2)/2.
     result.kinetic = (0.5 * state.mom_u) * result.u
                    + (0.5 * state.mom_v) * result.v
                    + (0.5 * state.mom_w) * result.w;
@@ -83,6 +95,7 @@ ARCH_INLINE Repair apply_bounds(FluidVector& state, double density_floor,
     state.mom_u = state.rho * k.u;
     state.mom_v = state.rho * k.v;
     state.mom_w = state.rho * k.w;
+    // E_new = rho_new*max(e_int,e_floor) + |momentum_new|^2/(2*rho_new).
     state.eng = state.rho * std::max(k.internal, energy_floor)
               + (0.5 * state.mom_u) * k.u + (0.5 * state.mom_v) * k.v
               + (0.5 * state.mom_w) * k.w;

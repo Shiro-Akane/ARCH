@@ -1,9 +1,21 @@
-#include "numerics/multigrid/HostMultigrid.h"
-#include "numerics/multigrid/MGTransfer.h"
+/**
+ * @file HostMultigrid.cpp
+ * @brief Solve uniform Cartesian Poisson systems with bounded V-cycles.
+ *
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Solve uniform Cartesian Poisson systems with bounded V-cycles.
+ * 3. Return corrections or fluxes through the shared numerical contract.
+ */
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+
+#include "numerics/multigrid/HostMultigrid.h"
+
+#include "numerics/multigrid/MGTransfer.h"
 
 namespace arch::multigrid {
 using elliptic::BoundaryKind;
@@ -11,6 +23,7 @@ using elliptic::project_mean;
 using elliptic::rms;
 namespace {
 // The validated bottom extent is a power of two, bounded independently of domain size.
+/** Dispatch a bounded bottom matrix dimension to compile-time DenseLU. */
 template<class F> bool with_bottom_size(int n, F&& operation)
 {
     switch (n) {
@@ -24,6 +37,7 @@ template<class F> bool with_bottom_size(int n, F&& operation)
     }
 }
 }
+/** Build factor-two Cartesian levels and factorize the coarsest operator once. */
 HostMultigrid::HostMultigrid(elliptic::CartesianMesh m, BoundaryKind kind) : kind_(kind)
 {
     elliptic::validate_mesh(m);
@@ -45,6 +59,7 @@ HostMultigrid::HostMultigrid(elliptic::CartesianMesh m, BoundaryKind kind) : kin
     if (!factor_bottom()) throw std::runtime_error("Multigrid bottom factorization failed");
 }
 
+/** Assemble the bottom matrix by operator columns and fix periodic gauge. */
 bool HostMultigrid::factor_bottom()
 {
     auto& bottom = levels_.back();
@@ -63,6 +78,7 @@ bool HostMultigrid::factor_bottom()
     });
 }
 
+/** Solve the cached bottom factorization and project periodic mean. */
 bool HostMultigrid::solve_bottom(Level& level)
 {
     double solution[bottom_capacity]{};
@@ -77,11 +93,13 @@ bool HostMultigrid::solve_bottom(Level& level)
     return std::isfinite(rms(level.u));
 }
 
+/** Recompute r = b - A u on the current mesh. */
 void HostMultigrid::residual(Level& l)
 {
     for (int i = 0; i < l.mesh.size(); ++i)
         l.residual[i] = l.rhs[i] - elliptic::apply_cell(l.mesh, kind_, l.u.data(), i);
 }
+/** Apply damped Jacobi relaxation to reduce high-frequency error. */
 void HostMultigrid::smooth(Level& l)
 {
     // Internal algorithm choices, not physical configuration controls.
@@ -90,12 +108,14 @@ void HostMultigrid::smooth(Level& l)
     for (int sweep = 0; sweep < sweeps; ++sweep) {
         for (int i = 0; i < l.mesh.size(); ++i) {
             const double r = l.rhs[i] - elliptic::apply_cell(l.mesh, kind_, l.u.data(), i);
+            // u_new = u + (2/3)*D^-1*(b-Au).
             l.scratch[i] = l.u[i] + weight * (r / elliptic::diagonal(l.mesh, kind_, i));
         }
         l.u.swap(l.scratch);
         if (kind_ == BoundaryKind::Periodic) project_mean(l.u);
     }
 }
+/** Perform one pre-smooth, residual restriction, coarse correction and post-smooth V-cycle. */
 bool HostMultigrid::cycle(std::size_t index)
 {
     auto& fine = levels_[index];
@@ -116,6 +136,7 @@ bool HostMultigrid::cycle(std::size_t index)
     return std::isfinite(rms(fine.u));
 }
 
+/** Validate the source and accept only a recomputed fine-grid residual below tolerance. */
 SolveResult HostMultigrid::solve(std::span<const double> rhs, const elliptic::BoundaryData& boundary,
                                 SolveControl c, std::span<const double> initial)
 {

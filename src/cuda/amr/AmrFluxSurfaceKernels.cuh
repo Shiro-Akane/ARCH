@@ -1,4 +1,3 @@
-#include "numerics/state/StateAdmissibility.h"
 /**
  * @file AmrFluxSurfaceKernels.cuh
  * @brief CUDA memory execution of shared AMR registration and reflux rules.
@@ -6,6 +5,10 @@
  * Compiled host plans supply target cells and geometric weights. Kernels use
  * AmrFluxMath to update borrowed compact surfaces and conservative cell values;
  * the runtime serializes contributors and owns stream completion.
+ * Workflow:
+ * 1. Receive compiled AMR face plans and resident surface buffers.
+ * 2. Launch shared flux-register math over CUDA indices.
+ * 3. Return conservative corrections after backend stream ordering.
  */
 
 #pragma once
@@ -13,6 +16,7 @@
 #include "amr/flux/AmrFluxMath.h"
 #include "amr/flux/AmrFluxExecutionPlan.h"
 #include "cuda/amr/AmrFluxSurfaceTypes.cuh"
+#include "numerics/state/StateAdmissibility.h"
 
 namespace arch::cuda::amr_flux_kernel_detail {
 

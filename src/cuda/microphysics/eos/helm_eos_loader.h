@@ -4,6 +4,10 @@
  *
  * This include-only entry provides no loading or thermodynamic implementation.
  * Individual owners expose the common EOS views with device-resident data.
+ * Workflow:
+ * 1. Receive verified EOS tables and species metadata.
+ * 2. Prepare or bind EOS views for CUDA microphysics.
+ * 3. Expose owned device views without retaining caller buffers.
  */
 
 #pragma once

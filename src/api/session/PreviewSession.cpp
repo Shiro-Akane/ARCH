@@ -1,23 +1,36 @@
-#include "api/PreviewSession.h"
-#include "api/CaseInspection.h"
-#include "api/Configuration.h"
-#include "api/preview/ResourceEstimates.h"
-#include "api/session/SessionInput.h"
-#include "api/session/InitialSampleCache.h"
-#include "api/resources/WorkerLimits.h"
-#include "core/files/FileFingerprint.h"
-#include "core/files/VerifiedFileCache.h"
-#include "physics/eos/eosdispatch.h"
+/**
+ * @file PreviewSession.cpp
+ * @brief Coordinate repeated preview requests with invalidation when input identity changes.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Coordinate repeated preview requests with invalidation when input identity changes.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #include <chrono>
 #include <iostream>
 #include <limits>
 #include <set>
+
+#include "api/PreviewSession.h"
+
+#include "api/CaseInspection.h"
+#include "api/Configuration.h"
+#include "api/preview/ResourceEstimates.h"
+#include "api/resources/WorkerLimits.h"
+#include "api/session/InitialSampleCache.h"
+#include "api/session/SessionInput.h"
+#include "core/files/FileFingerprint.h"
+#include "core/files/VerifiedFileCache.h"
+#include "physics/eos/eosdispatch.h"
 
 namespace arch::api {
 namespace {
 using detail::Json;
 using contract::Command;
 using Clock = std::chrono::steady_clock;
+/** Measure elapsed request time for session events. */
 double milliseconds(Clock::time_point start) {
     return std::chrono::duration<double, std::milli>(Clock::now()-start).count();
 }
@@ -27,6 +40,7 @@ std::string required(const detail::SessionObject& input, const std::string& name
         throw std::invalid_argument("Expected string member: " + name);
     return std::get<std::string>(it->second);
 }
+/** Lower a parsed session object to a typed preview request. */
 PreviewRequest request_from(const detail::SessionObject& input, Command command) {
     PreviewRequest request;
     request.case_id = required(input, "caseId");
@@ -60,6 +74,7 @@ PreviewRequest request_from(const detail::SessionObject& input, Command command)
 }
 // Bound before allocation. Oversize/truncated frames close the session rather
 // than attempting to resynchronize an arbitrarily large byte stream.
+/** Read one bounded protocol line while retaining malformed-input evidence. */
 bool line(std::string& out) {
     out.clear(); char c;
     while (std::cin.get(c)) {
@@ -71,9 +86,11 @@ bool line(std::string& out) {
     if (std::cin.bad() || !out.empty()) throw std::invalid_argument("Incomplete session frame: newline required");
     return false;
 }
+/** Build a sequenced session progress event. */
 Json event(const char* kind, int sequence, const Json& identity) {
     return Json::object({{"kind", kind}, {"version", "1"}, {"sequence", sequence}, {"identity", identity}});
 }
+/** Write one complete JSON line to the session output stream. */
 void emit(std::ostream& output, const Json& value) {
     output << value.dump(contract::session_max_response_bytes-1) << '\n' << std::flush;
     if (!output) throw std::runtime_error("Session output closed");
@@ -104,6 +121,7 @@ detail::Json PreviewSessionCapability() {
         {"binaryIdentity", "host-process-generation-required"}});
 }
 
+/** Serve repeated bounded inspection/preview requests with resource reuse. */
 int RunPreviewSession() {
     // This stream keeps the transport buffer even while scientific code's
     // cout/cerr are redirected by CaptureLogs. Progress never contaminates logs.

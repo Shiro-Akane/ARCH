@@ -1,3 +1,13 @@
+/**
+ * @file ProblemHelper.cpp
+ * @brief Problem Helper in the problem owner.
+ *
+ * Workflow:
+ * 1. Receive a registered case and resolved configuration.
+ * 2. Run setup and convert case initial fields with shared helpers.
+ * 3. Return a valid species registry and initial state to Driver.
+ */
+
 #include <exception>
 /**
  * @file ProblemHelper.cpp

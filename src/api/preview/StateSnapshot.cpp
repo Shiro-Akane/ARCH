@@ -1,9 +1,22 @@
+/**
+ * @file StateSnapshot.cpp
+ * @brief Materialize only requested state fields from a preview mesh.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Materialize only requested state fields from a preview mesh.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #include "api/preview/StateSnapshot.h"
-#include "grid/Grid.h"
+
 #include "driver/dispatch/PolicyDescriptor.h"
+#include "grid/Grid.h"
+
 namespace arch::api {
 using detail::Json;
 namespace {
+/** Serialize resolved root-grid geometry and units. */
 Json grid_snapshot(const SimConfig &config) {
     const auto &g = config.grid;
     const int blocks[] = {g.nblockx1, g.nblockx2, g.nblockx3};
@@ -30,6 +43,7 @@ Json grid_snapshot(const SimConfig &config) {
     return Json::object({{"status", "configured"}, {"geometry", g.geometry}, {"dimension", g.dim},
         {"axes", axes}, {"hierarchy", "not_constructed"}});
 }
+/** Serialize AMR level limits and capacity from configuration. */
 Json amr_snapshot(const SimConfig &config) {
     const auto &a = config.amr;
     auto indicators = Json::array();
@@ -52,6 +66,7 @@ Json amr_snapshot(const SimConfig &config) {
         {"effectiveMaxBlocks", config.grid.amr_max_blocks > 0 ? config.grid.amr_max_blocks : 10000},
         {"initialRefinement", "not_executed"}, {"actualHierarchy", Json()}});
 }
+/** Serialize selected EOS identity and source paths. */
 Json eos_snapshot(const SimConfig &config) {
     return Json::object({{"status", "not_loaded"}, {"requested", config.physics.eos_type},
         {"resolved", Json()}, {"configuredGamma", config.physics.gamma},
@@ -60,6 +75,7 @@ Json eos_snapshot(const SimConfig &config) {
         {"loadedTablePath", Json()}, {"sourceFingerprint", Json()}});
 }
 }
+/** Refresh the configuration snapshot after case setup may change effective values. */
 void PublishStateSnapshot(Json &state, const SimConfig &config) {
     state["configuration"] = "parsed";
     state["units"] = Json::object({{"system", UnitSystem(config)}, {"basis", "core-cgs-contract"}, {"valuesConverted", false}});
@@ -71,6 +87,7 @@ void PublishStateSnapshot(Json &state, const SimConfig &config) {
     state["diffusion"] = DiffusionMetadata(config);
     state["amrIndicators"] = RefinementMetadata(config);
 }
+/** Serialize the final ordered species registry. */
 Json SpeciesSnapshot(const SpeciesManager &specs) {
     auto species = Json::array();
     for (int i = 0; i < specs.count(); ++i)

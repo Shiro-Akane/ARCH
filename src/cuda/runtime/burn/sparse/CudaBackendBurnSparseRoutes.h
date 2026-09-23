@@ -4,6 +4,10 @@
  *
  * The host factory selects these specializations through the policy registry.
  * Generated CUDA translation units instantiate the common sparse owner body.
+ * Workflow:
+ * 1. Receive a sparse burn route and resident ODE systems.
+ * 2. Bind network batches to the sparse CUDA linear solver.
+ * 3. Report convergence and errors through the common burn interface.
  */
 #pragma once
 

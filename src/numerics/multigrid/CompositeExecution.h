@@ -1,16 +1,24 @@
 /** Backend storage and loop execution for the shared composite solver.
  * Work descriptors contain the ONLY scalar arithmetic used by both backends.
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Define backend-neutral vector, sparse-work and reduction contracts.
+ * 3. Return corrections or fluxes through the shared numerical contract.
  */
+
 #pragma once
-#include "core/CompensatedSum.h"
-#include "numerics/elliptic/CompositePoisson.h"
+
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <span>
+#include <stdexcept>
 #include <variant>
 #include <vector>
-#include <algorithm>
-#include <stdexcept>
-#include <limits>
+
+#include "core/CompensatedSum.h"
+#include "numerics/elliptic/CompositePoisson.h"
+
 namespace arch::multigrid {
 template<class T> struct Array {
     std::shared_ptr<void> owner;
@@ -21,6 +29,7 @@ using Vector=Array<double>;
 struct LinearWork {
     int size; double* out; const double* x; const double* y;
     double a=1.,b=0.,c=0.;
+    // y_i = a*x_i + b*z_i + c; absent inputs contribute zero.
     ARCH_INLINE void operator()(int i) const { out[i]=(x?a*x[i]:0.)+(y?b*y[i]:0.)+c; }
 };
 struct SparseView { const int* offsets; const int* columns; const double* values; };
@@ -29,6 +38,7 @@ struct RowsWork {
     ARCH_INLINE void operator()(int i) const {
         math::CompensatedSum sum;
         for(int k=rows.offsets[i];k<rows.offsets[i+1];++k) sum.add(rows.values[k]*x[rows.columns[k]]);
+        // y_i = alpha * sum_j A_ij*x_j + beta*y_i.
         out[i]=alpha*sum.value()+(beta?beta*out[i]:0.);
     }
 };
@@ -43,10 +53,12 @@ struct GradientWork {
 };
 struct JacobiWork {
     int size; double* u; const double* rhs; const double* applied; const double* diagonal;
+    // Damped Jacobi: u <- u + omega*D^-1*(b-Au), omega=0.6.
     ARCH_INLINE void operator()(int i) const { u[i]+=0.6*(rhs[i]-applied[i])/diagonal[i]; }
 };
 struct ProjectWork {
     int size;double* x;const double* scale;const double* sum;
+    // Periodic gauge: x_i <- x_i - <x>_volume.
     ARCH_INLINE void operator()(int i) const {x[i]-=(*scale)*(*sum);}
 };
 using CompositeWork=std::variant<LinearWork,RowsWork,GradientWork,JacobiWork,ProjectWork>;

@@ -5,6 +5,10 @@
  * Active block extents, ghost capacity, and the padded innermost stride define
  * a shared storage contract. Padding is allocation space, not an extra set of
  * physical cells; numerical loops use the grid's active and ghost extents.
+ * Workflow:
+ * 1. Receive current block identities and logical coordinates.
+ * 2. Construct or validate the AMR tree and topology epoch.
+ * 3. Publish changed topology only after a successful transaction.
  */
 
 #pragma once

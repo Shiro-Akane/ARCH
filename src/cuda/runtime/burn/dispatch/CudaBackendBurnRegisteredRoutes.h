@@ -4,6 +4,10 @@
  *
  * Policy visitors map the resolved network binding to a typed launch function.
  * ODE selection and cell evolution remain in the shared burn implementation.
+ * Workflow:
+ * 1. Read the resolved EOS, network and ODE route.
+ * 2. Choose the matching compiled CUDA burn launcher.
+ * 3. Fail explicitly when a route is unsupported.
  */
 #pragma once
 

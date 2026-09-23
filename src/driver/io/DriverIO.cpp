@@ -1,15 +1,29 @@
+/**
+ * @file DriverIO.cpp
+ * @brief Schedule plots, checkpoints and diagnostics from the current published state.
+ *
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Schedule plots, checkpoints and diagnostics from the current published state.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
+ */
+
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+
 #include "driver/io/DriverIO.h"
+
 #include "amr/AMRControl.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/state/StateAdmissibility.h"
 #include "physics/species/Species.h"
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
-#include <vector>
+
 namespace arch::driver {
 namespace {
+/** Reject invalid conserved, composition or EOS state before serializing any plot. */
 void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
                           TemperatureFunc temperature, Gamma1Func gamma1, const void* eos)
 {
@@ -40,6 +54,7 @@ void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
     }
 }
 }
+/** Materialize the accepted state and write a validated plot with gravity fields. */
 void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
 {
     const auto start = Clock::now();
@@ -53,6 +68,7 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
+/** Write restart state and provenance at a completed step boundary. */
 void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
 {
     const auto start = Clock::now();
@@ -69,6 +85,7 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
+/** Persist run timing and CUDA diffusion scheduling diagnostics. */
 void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule)
 {
     const auto& config = runtime.configuration();

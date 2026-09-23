@@ -1,4 +1,15 @@
+/**
+ * @file LogCapture.h
+ * @brief Capture scoped diagnostic text so protocol output stays machine-readable.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Capture scoped diagnostic text so protocol output stays machine-readable.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
+
 #include <iostream>
 #include <streambuf>
 #include <string>

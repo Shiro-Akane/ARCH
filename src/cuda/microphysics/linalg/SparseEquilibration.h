@@ -4,6 +4,10 @@
  *
  * Buffers and status are borrowed; LinearEquilibration owns the arithmetic.
  * The caller checks stream completion and the invalid latch before use.
+ * Workflow:
+ * 1. Receive compact or sparse ODE linear systems.
+ * 2. Prepare cuDSS or equilibration storage for repeated solves.
+ * 3. Return a checked solution through the shared ODE contract.
  */
 #pragma once
 #include <cuda_runtime_api.h>

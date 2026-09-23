@@ -1,11 +1,25 @@
-#include "driver/runtime/DriverRuntime.h"
-#include "driver/schedule/DriverControl.h"
-#include "driver/DriverUtils.h"
-#include "amr/AMRControl.h"
+/**
+ * @file DriverRuntime.cpp
+ * @brief Own live mesh, state residency and backend resources for the integration loop.
+ *
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Own live mesh, state residency and backend resources for the integration loop.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
+ */
+
 #include <algorithm>
 #include <stdexcept>
 #include <utility>
+
+#include "driver/runtime/DriverRuntime.h"
+
+#include "amr/AMRControl.h"
+#include "driver/DriverUtils.h"
+#include "driver/schedule/DriverControl.h"
+
 namespace arch::driver {
+/** Return the shared floor-repair budget for the active run. */
 state::RepairBudget& DriverRuntime::repair_budget() { return ctrl.repairs; }
 using scheduler::StageExecutionContext;
 using state::ExecutionSide;
@@ -13,6 +27,7 @@ using state::StateResidencyLedger;
 using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
+/** Borrow core run owners and initialize state/version bookkeeping. */
 DriverRuntime::DriverRuntime(amr::AMRControl& control, BCHandler& boundaries,
     const SimConfig& settings, const SpeciesManager& species, SimulationController& controller)
     : amr_ctrl(control), bc_handler(boundaries), config(settings), specs(species), ctrl(controller),
@@ -23,6 +38,7 @@ DriverRuntime::DriverRuntime(amr::AMRControl& control, BCHandler& boundaries,
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx3))},
           config.amr.lrefinemax}) {}
 DriverRuntime::~DriverRuntime() = default;
+/** Snapshot logical identities for the requested active block order. */
 std::vector<TopologyObservation> DriverRuntime::observe_blocks(std::span<const int> active) const
 {
     std::vector<TopologyObservation> observations;
@@ -38,12 +54,14 @@ std::vector<TopologyObservation> DriverRuntime::observe_blocks(std::span<const i
     return observations;
 }
 
+/** Snapshot the complete current AMR topology for reconciliation. */
 std::vector<TopologyObservation> DriverRuntime::observe_topology() const
 {
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     return observe_blocks(active);
 }
 
+/** Return the committed interior version of the current state. */
 state::StateVersion DriverRuntime::current_interior_version() const
 {
     if (!residency_ledger || stage_handles.empty())
@@ -60,6 +78,7 @@ state::StateVersion DriverRuntime::current_interior_version() const
     return version;
 }
 
+/** Lower one host fluid state to the backend transfer view. */
 backend::HostStateTransferView DriverRuntime::host_transfer_view(FluidState& state)
 {
     const std::size_t cells = state.rho.size();
@@ -72,6 +91,7 @@ backend::HostStateTransferView DriverRuntime::host_transfer_view(FluidState& sta
         species, species == 0 ? 0 : cells};
 }
 
+/** Lease one backend block and state slot with generation identity. */
 backend::BackendStateAccess DriverRuntime::backend_access(std::size_t block_index, StateSlot slot) const
 {
     if (!compute_backend)
@@ -83,6 +103,7 @@ backend::BackendStateAccess DriverRuntime::backend_access(std::size_t block_inde
         stage_handles[block_index], backend_storage[block_index], slot};
 }
 
+/** Record backend transfer/launch deltas for the requested stage. */
 void DriverRuntime::trace_backend_operation(backend::BackendOperation operation, StateSlot slot, const backend::BackendCounters& before)
 {
     const auto after = compute_backend->counters();
@@ -99,6 +120,7 @@ void DriverRuntime::trace_backend_operation(backend::BackendOperation operation,
     }
 }
 
+/** Register initial block identities and their state residency. */
 void DriverRuntime::initialize_topology()
 {
     auto initial_candidate =
@@ -148,6 +170,7 @@ void DriverRuntime::initialize_topology()
 
 }
 
+/** Build topology bindings for backend storage allocation. */
 std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bindings()
 {
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
@@ -182,12 +205,14 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
     return bindings;
 }
 
+/** Install a validated compute backend and its resident block views. */
 void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> backend)
 {
     if (compute_backend || !backend) throw std::logic_error("invalid backend installation");
     compute_backend = std::move(backend);
 }
 
+/** Upload accepted case initial state before device stepping. */
 void DriverRuntime::upload_initial_state()
 {
     const auto& active = amr_ctrl.tree->GetActiveBlocks();

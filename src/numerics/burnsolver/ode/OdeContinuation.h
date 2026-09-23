@@ -4,6 +4,10 @@
  * Continuations own numerical progress, not backend handles. A CPU executor
  * services requests synchronously; a GPU executor may keep contexts on device
  * while a host-API sparse provider works. Submission is never ODE completion.
+ * Workflow:
+ * 1. Receive one stiff ODE state and tolerance controls.
+ * 2. Advance or continue the selected implicit integration method.
+ * 3. Return an accepted state or explicit rejection status.
  */
 #pragma once
 

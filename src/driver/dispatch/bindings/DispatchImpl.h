@@ -5,6 +5,10 @@
  * Each integrator translation unit supplies its selected time integrator.
  * Registry visitors bind reconstruction and flux types to that driver while
  * erased EOS, gravity and burn interfaces retain their own shared authorities.
+ * Workflow:
+ * 1. Read resolved names and selected execution backend.
+ * 2. Instantiate the matching compile-time hydro and physics policies.
+ * 3. Hand one fully bound solver to the Driver runtime.
  */
 
 #pragma once

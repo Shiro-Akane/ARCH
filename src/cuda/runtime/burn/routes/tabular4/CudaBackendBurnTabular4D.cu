@@ -4,6 +4,10 @@
  *
  * Built-in and generated routes forward the same launch arguments. Numerical
  * work is instantiated by the selected network/EOS binding, not this switch.
+ * Workflow:
+ * 1. Receive an EOS and network route selected at dispatch.
+ * 2. Instantiate the matching CUDA burn entry point once.
+ * 3. Pass all scalar chemistry through the common mathematical library.
  */
 
 #include "physics/eos/tabular/Tabular4DEOS.h"

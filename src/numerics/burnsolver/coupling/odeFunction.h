@@ -1,6 +1,10 @@
 /**
  * @file odeFunction.h
  * @brief Common mathematical and physical toolkit for all ODE solvers.
+ * Workflow:
+ * 1. Receive density, temperature and network composition.
+ * 2. Form shared thermodynamic and reaction derivative terms.
+ * 3. Return one consistent RHS/Jacobian to the selected ODE method.
  */
 #pragma once
 

@@ -3,7 +3,6 @@
  */
 #include <UserInterface.h>
 #include <GlobalDefs.h>
-#include "physics/constant/PhysicalConstants.h"
 #include <cmath>
 #include <stdexcept>
 class GravityBoxProblem {

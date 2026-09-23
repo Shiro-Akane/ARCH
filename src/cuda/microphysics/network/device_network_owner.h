@@ -4,6 +4,10 @@
  *
  * Construction completes the upload before returning, so borrowed Host data
  * need only outlive construction. Device views borrow this owner and its stream.
+ * Workflow:
+ * 1. Receive a registered reaction network and species order.
+ * 2. Own immutable device network and species metadata.
+ * 3. Publish stable device views to burn kernels.
  */
 #pragma once
 #include "cuda/common/DeviceAllocation.h"

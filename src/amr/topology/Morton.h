@@ -7,6 +7,10 @@
  * positions 3n, 3n+1, 3n+2. Coordinates are nonnegative block indices, not
  * physical distances. Callers must validate the representable domain before
  * encoding, because the bit operations mask rather than reject overflow.
+ * Workflow:
+ * 1. Receive current block identities and logical coordinates.
+ * 2. Construct or validate the AMR tree and topology epoch.
+ * 3. Publish changed topology only after a successful transaction.
  */
 
 #pragma once

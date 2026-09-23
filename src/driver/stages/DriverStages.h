@@ -1,15 +1,20 @@
 /** @file DriverStages.h
  * @brief Bind split physical stages to the shared runtime and selected EOS.
  * Scratch lists retain capacity; topology and field versions belong to DriverRuntime.
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Bind hydro, diffusion, burn and gravity stage services to one scheduler.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
 #pragma once
-#include "driver/runtime/DriverRuntime.h"
-#include "driver/stages/DriverBurn.h"
-#include "driver/schedule/DriverControl.h"
-#include "driver/io/DriverIO.h"
 #include "driver/DriverUtils.h"
-#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "driver/dispatch/capability/BackendCapabilities.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
+#include "driver/io/DriverIO.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/schedule/DriverControl.h"
+#include "driver/stages/DriverBurn.h"
+
 #include "amr/AMRControl.h"
 #include "numerics/burnsolver/BurnerHandle.h"
 #include "numerics/diffusion/DiffDispatch.h"
@@ -28,6 +33,7 @@ struct DriverStageWorkspace {
     std::vector<CudaDiffusionScheduleRecord> cuda_diffusion_schedule;
     std::vector<reduction::ReductionCandidate> hydro_dt_candidates, diffusion_dt_candidates;
     std::vector<backend::BackendStateAccess> hydro_currents, microphysics_currents;
+    /** Build resident current-state leases for a microphysics batch. */
     std::span<const backend::BackendStateAccess> current_accesses(DriverRuntime& runtime) {
         microphysics_currents.clear();
         microphysics_currents.reserve(runtime.handles().size());
@@ -39,6 +45,7 @@ struct DriverStageWorkspace {
 struct TimestepCandidates {
     double hydro = 1e99, diffusion_forward_euler = 1e99, diffusion_sts = 1e99;
 };
+/** Reduce Hydro and diffusion stability limits over active blocks. */
 template<class EosPolicy>
 TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
     DriverStageWorkspace& workspace, const EosPolicy& eos,
@@ -143,6 +150,7 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
 
     return {dt_hydro, dt_diff_fe, dt_diff_sts_limit};
 }
+/** Advance one diffusion half-step through the selected CPU/CUDA route. */
 template<class EosPolicy>
 void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     StageExecutionContext& stage_context, const EosPolicy& eos,
@@ -283,6 +291,7 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     }
 }
 enum class BurnHalf { First, Second };
+/** Advance one burn half-step and reduce accepted burn timestep advice. */
 template<class EosPolicy>
 state::CompletionToken execute_burn_half(DriverRuntime& runtime,
     DriverStageWorkspace& workspace, const EosPolicy& eos,
@@ -375,6 +384,7 @@ state::CompletionToken execute_burn_half(DriverRuntime& runtime,
 }
 using IntegratorSolve = void (*)(amr::AMRControl&, double, BCHandler&,
     const Physical::Gravity::IGravityPolicy*, const Numerics::IHydroSolver*, const NumericsConfig&);
+/** Advance Hydro with per-stage gravity preparation and state repair accounting. */
 inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     StageExecutionContext& stage_context, const dispatch::ResolvedExecutionPlan* resolved_plan,
     double dt, IntegratorSolve integrator_solve,
@@ -486,6 +496,7 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     runtime.repair_budget().combine(pending);
 
 }
+/** Instantiate and bind the selected backend after configuration validation. */
 template<class EosPolicy>
 void start_compute_backend(DriverRuntime& runtime, const EosPolicy& eos,
     const dispatch::ResolvedExecutionPlan& plan,

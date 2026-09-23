@@ -5,6 +5,10 @@
  * This executor contains only launch/response/linear-provider scheduling. It
  * invokes the same selected shared ODE continuation as ordinary CPU execution; no RHS,
  * Jacobian, adaptive step, or energy-closure formula is duplicated here.
+ * Workflow:
+ * 1. Receive active burning cells and their device EOS/network views.
+ * 2. Batch shared stiff-network or ODE work in device memory.
+ * 3. Return accepted chemistry and failure reports to the backend.
  */
 #pragma once
 

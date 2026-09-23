@@ -1,5 +1,17 @@
-#include "numerics/multigrid/CompositeExecution.h"
+/**
+ * @file CompositeExecution.cpp
+ * @brief Provide host storage, loops and reductions for shared composite arithmetic.
+ *
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Provide host storage, loops and reductions for shared composite arithmetic.
+ * 3. Return corrections or fluxes through the shared numerical contract.
+ */
+
 #include <cstring>
+
+#include "numerics/multigrid/CompositeExecution.h"
+
 namespace arch::multigrid {
 namespace {
 class HostExecution final:public CompositeExecution {

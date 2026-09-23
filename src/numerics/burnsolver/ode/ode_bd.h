@@ -1,6 +1,10 @@
 /**
  * @file ode_bd.h
  * @brief Shared Bader-Deuflhard continuation and synchronous linear executor.
+ * Workflow:
+ * 1. Receive one stiff ODE state and tolerance controls.
+ * 2. Advance or continue the selected implicit integration method.
+ * 3. Return an accepted state or explicit rejection status.
  */
 #pragma once
 #include <algorithm>

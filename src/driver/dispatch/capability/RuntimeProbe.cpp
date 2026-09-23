@@ -5,6 +5,10 @@
  * Dynamically loaded APIs report the selected device, library versions and
  * primary-context state. Compiled SASS/PTX metadata is checked here; backend
  * resolution decides how to use the result, and simulation allocation occurs later.
+ * Workflow:
+ * 1. Read requested EOS, network, solver and backend capabilities.
+ * 2. Validate the combination before owning runtime resources.
+ * 3. Return an explicit supported plan or an actionable error.
  */
 
 #include "driver/dispatch/capability/RuntimeProbe.h"

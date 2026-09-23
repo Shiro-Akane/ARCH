@@ -2,8 +2,14 @@
  * @brief Borrowed scalar storage independent of fluid/species packing.
  * Device addresses are opaque on the host. The owner must outlive every
  * submitted consumer; a view never allocates, transfers or publishes data.
+ * Workflow:
+ * 1. Borrow the field storage and its native grid layout.
+ * 2. Describe borrowed host/device scalar storage with layout and generation identity.
+ * 3. Carry memory location and generation identity to the consumer.
  */
+
 #pragma once
+
 #include <array>
 #include <cstddef>
 #include <cstdint>

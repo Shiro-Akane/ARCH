@@ -1,13 +1,20 @@
 /** @file UniformGravity.h
  * P2 standalone CGS gravity adapter. No Driver field publication or AMR coupling.
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Declare the standalone uniform gravity adapter and its result.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
  */
+
 #pragma once
-#include "grid/ScalarFieldView.h"
-#include "numerics/multigrid/HostMultigrid.h"
-#include "physics/constant/PhysicalConstants.h"
+
 #include <array>
 #include <span>
 #include <vector>
+
+#include "grid/ScalarFieldView.h"
+#include "numerics/multigrid/HostMultigrid.h"
+#include "physics/constant/PhysicalConstants.h"
 
 namespace arch::gravity {
 struct UniformGravityResult {

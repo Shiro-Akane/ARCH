@@ -1,28 +1,45 @@
-#include "physics/gravity/GravitySolveTypes.h"
-#include "physics/gravity/GravityBoundary.h"
+/**
+ * @file SelfGravity.cpp
+ * @brief Assemble the physical source, solve Poisson, derive force and publish stage fields.
+ *
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Assemble the physical source, solve Poisson, derive force and publish stage fields.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
+ */
+
+#include <algorithm>
+#include <chrono>
+#include <iomanip>
+#include <limits>
+#include <sstream>
+#include <unordered_map>
+
+#include "physics/gravity/self/SelfGravity.h"
+
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "numerics/multigrid/HostCompositeMG.h"
-#include "physics/gravity/self/SelfGravity.h"
 #include "physics/constant/PhysicalConstants.h"
+#include "physics/gravity/GravityBoundary.h"
+#include "physics/gravity/GravitySolveTypes.h"
 #include "physics/gravity/self/GravityWorkspace.h"
-#include <algorithm>
-#include <limits>
-#include <unordered_map>
-#include <sstream>
-#include <iomanip>
-#include <chrono>
+
 namespace Physical::Gravity {
+/** Validate gravity boundary kind, G and convergence controls once. */
 SelfGravity::SelfGravity(GravityConfig config):config_(std::move(config)) {
     if ((config_.boundary!="periodic" && config_.boundary!="isolated") || !std::isfinite(config_.G_const) || config_.G_const<=0.
         || !std::isfinite(config_.relative_tolerance) || config_.relative_tolerance<=0. || config_.relative_tolerance>=1.
         || !std::isfinite(config_.absolute_tolerance) || config_.absolute_tolerance<0. || config_.max_cycles<1)
         throw std::invalid_argument("Invalid self-gravity physical or convergence controls");
 }
+/** Destroy the topology-bound resident workspace after its execution lease. */
 SelfGravity::~SelfGravity()=default;
+/** Return a bound workspace or fail before accessing unpublished fields. */
 SelfGravity::Workspace& SelfGravity::workspace() const {
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
     return *work_;
 }
+/** Bind one AMR topology epoch and establish native active-cell order. */
 void SelfGravity::bind(amr::EllipticMeshBinding binding) const {
     invalidate();
     if (binding.grids.empty() || binding.grids.size()!=binding.handles.size()
@@ -42,7 +59,9 @@ void SelfGravity::bind(amr::EllipticMeshBinding binding) const {
     work_=std::make_unique<Workspace>(std::move(binding),config_.boundary=="periodic"
         ? arch::elliptic::BoundaryKind::Periodic : arch::elliptic::BoundaryKind::Dirichlet,execution_?execution_:(execution_=make_host_gravity_execution()));
 }
+/** Retire a prior gravity publication whenever its density lease changes. */
 void SelfGravity::invalidate() const noexcept { if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate(); } }
+/** Gather current density, solve A phi = -4 pi G rho_source, and publish force. */
 arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& request) const {
     invalidate();
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
@@ -69,6 +88,8 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     w.max_density=e.maximum(w.density);
     if(!std::isfinite(w.max_density))throw std::invalid_argument("Self gravity requires finite positive active density");
     w.mean=w.solver.mean(w.density);
+    // A=-Laplacian: A*Phi=-4*pi*G*(rho-<rho>) for periodic gravity;
+    // isolated gravity keeps rho and supplies a finite-mass Dirichlet face.
     const double factor=-4.*arch::constants::math::pi*config_.G_const;
     e.linear(w.rhs,factor,w.density,0.,{},w.nodes.size?0.:-factor*w.mean);
     if(w.nodes.size){
@@ -102,23 +123,34 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     arch::state::CompletionToken token{w.generation,arch::state::CompletionState::Complete};
     w.validity.publish({identity,w.generation,token}); w.ready=true; return token;
 }
+/** Switch host/device execution and rebuild resident arrays on the same topology. */
 void SelfGravity::set_execution(std::shared_ptr<GravityExecution> execution) const {
     if(!execution||execution_==execution)return;
     invalidate();if(work_)work_->solver.execution().fence();execution_=std::move(execution);
     if(work_){auto binding=std::move(work_->binding);work_.reset();bind(std::move(binding));}
 }
+/** Return one published patch face field for hydro source application. */
 GravityPatchView SelfGravity::patch_view(std::size_t block) const {workspace().require();return work_->patches.at(block);}
+/** Return active composite leaf count for diagnostics. */
 std::size_t SelfGravity::cell_count() const {return workspace().solver.op().size();}
+/** Bound a macro step by local density and face-acceleration timescales. */
 double SelfGravity::timestep(double cfl) const {
     workspace().require();const auto& w=*work_;
     if(!std::isfinite(cfl)||cfl<=0.||cfl>1.)throw std::invalid_argument("Invalid gravity CFL");
+    // dt_g = CFL / sqrt(max(4*pi*G*rho_max, max_a |g_a|/dx_a)).
     return cfl/std::sqrt(std::max(4.*arch::constants::math::pi*config_.G_const*w.max_density,w.max_acceleration_ratio));
 }
+/** Download the accepted potential only when requested by output. */
 const std::vector<double>& SelfGravity::potential() const {workspace().download();return work_->host_phi;}
+/** Download accepted acceleration only when requested by output. */
 const std::array<std::vector<double>,3>& SelfGravity::acceleration() const {workspace().download();return work_->host_g;}
+/** Expose the accepted Poisson residual and iteration count. */
 const arch::multigrid::SolveReport& SelfGravity::report() const {workspace().require();return work_->report;}
+/** Expose the current volume-weighted density mean. */
 double SelfGravity::density_mean() const {workspace().require();return work_->mean;}
+/** Expose physical source, Poisson and force timings. */
 const SelfGravity::Timings& SelfGravity::timings() const {workspace().require();return work_->timings;}
+/** Add the midpoint face-acceleration momentum source to one native patch. */
 void SelfGravity::add_sources_on_patch(std::vector<FluidVector>& delta,const FluidState& state,
     const Grid& grid,double dt,void*) const {
     const auto& patch=workspace().patch(grid,state); const int stride[]{1,grid.stride_y,grid.stride_z};
@@ -127,6 +159,7 @@ void SelfGravity::add_sources_on_patch(std::vector<FluidVector>& delta,const Flu
         for(int a=0;a<grid.dim;++a) *momentum[a]+=gravity_momentum(patch.faces[a][c],patch.faces[a][c+stride[a]],state.rho[c],dt);
     }
 }
+/** Add conservative gravity work using the hydro face mass flux. */
 void SelfGravity::add_flux_work_on_patch(std::vector<FluidVector>& delta,const std::vector<FluidVector>& flux,
     const FluidState& state,const Grid& grid,double dt,int axis) const {
     const auto& patch=workspace().patch(grid,state); const int stride=axis==0?1:axis==1?grid.stride_y:grid.stride_z;

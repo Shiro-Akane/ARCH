@@ -4,6 +4,10 @@
  *
  * Queries delegate to the physical EOS without changing their returned values.
  * The launch owner keeps status storage alive until all consumers complete.
+ * Workflow:
+ * 1. Receive a shared flux, reconstruction or integrator policy.
+ * 2. Bind CUDA-compatible state views to the same mathematical policy.
+ * 3. Return device work descriptors without a separate physics formula.
  */
 
 #pragma once

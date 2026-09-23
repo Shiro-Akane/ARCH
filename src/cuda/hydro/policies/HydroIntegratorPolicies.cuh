@@ -5,6 +5,10 @@
  * Registry visitors select shared reconstruction, limiter and flux policies.
  * Launches accumulate directional fluxes and sources into borrowed stage
  * buffers; runtime control owns ghost readiness, completion and slot rotation.
+ * Workflow:
+ * 1. Receive a shared flux, reconstruction or integrator policy.
+ * 2. Bind CUDA-compatible state views to the same mathematical policy.
+ * 3. Return device work descriptors without a separate physics formula.
  */
 
 #pragma once

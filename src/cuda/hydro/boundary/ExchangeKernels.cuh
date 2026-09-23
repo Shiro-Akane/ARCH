@@ -5,6 +5,10 @@
  * Gather snapshots source values into borrowed scratch before same-stream
  * scatter writes any destination. The host plan defines phase ordering and
  * the runtime owns buffers, completion and publication of ghost validity.
+ * Workflow:
+ * 1. Receive device-resident block state and boundary plans.
+ * 2. Launch CUDA ghost and boundary transport for the active stage.
+ * 3. Leave core hydro mathematics in the shared host/device policies.
  */
 
 #pragma once

@@ -5,6 +5,10 @@
  * Inputs are already reconstructed face states. The PCM template argument only
  * binds the shared flux class; it does not replace the chosen reconstruction.
  * No flux formula or device storage is defined by these aliases.
+ * Workflow:
+ * 1. Receive a shared flux, reconstruction or integrator policy.
+ * 2. Bind CUDA-compatible state views to the same mathematical policy.
+ * 3. Return device work descriptors without a separate physics formula.
  */
 
 #pragma once

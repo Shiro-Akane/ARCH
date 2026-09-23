@@ -1,6 +1,17 @@
-#include "physics/gravity/self/SelfGravity.h"
+/**
+ * @file GravityWorkspace.cpp
+ * @brief Initialize and download topology-bound self-gravity workspace fields.
+ *
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Initialize and download topology-bound self-gravity workspace fields.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
+ */
+
 #include "physics/gravity/self/GravityWorkspace.h"
+
 namespace Physical::Gravity {
+/** Allocate resident density, face and force fields for one topology epoch. */
 SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic::BoundaryKind kind,
     std::shared_ptr<GravityExecution> runner):binding(std::move(value)),execution(std::move(runner)),
     solver(binding.base,binding.cells,kind,execution->numeric()) {
@@ -19,6 +30,7 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
     std::vector<BoundaryPoint> boundary_points;
     for(int i=0;i<static_cast<int>(op.faces().size());++i){const auto& f=op.faces()[i];
         for(int c:{f.left,f.right})if(c>=0){const int side=6*c+2*f.axis+(c==f.left?1:0);
+            // g_side = -sum_f (A_f * dx_cell / V_cell) * grad_f(Phi).
             columns[side].push_back(i);weights[side].push_back(-f.area*op.width(c,f.axis)/op.volumes()[c]);}
         if(f.boundary_side>=0)boundary_points.push_back({{f.center[0],f.center[1],f.center[2]},i});}
     arch::multigrid::SparseStorage side_rows,patch_rows;

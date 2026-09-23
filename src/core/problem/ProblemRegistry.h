@@ -3,6 +3,10 @@
  * @brief Singleton factory for registering and creating simulation problems.
  * Implements the Factory Design Pattern to decouple problem implementation
  * from the main execution loop.
+ * Workflow:
+ * 1. Receive a registered case and resolved configuration.
+ * 2. Run setup and convert case initial fields with shared helpers.
+ * 3. Return a valid species registry and initial state to Driver.
  */
 
 #pragma once

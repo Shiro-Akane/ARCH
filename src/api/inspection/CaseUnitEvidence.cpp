@@ -1,5 +1,17 @@
-#include "api/CaseInspection.h"
+/**
+ * @file CaseUnitEvidence.cpp
+ * @brief Report case unit provenance separately from execution readiness.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Report case unit provenance separately from execution readiness.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #include <map>
+
+#include "api/CaseInspection.h"
+
 namespace arch::api {
 namespace {
 struct ReviewedCase { const char* source; const char* sha256; std::map<std::string, std::string> units; };
@@ -121,6 +133,7 @@ detail::Json CaseInspectionCapability(const std::string& name, const ProblemRegi
         {"reviewedUnitEvidence", reviewed ? "current" : it == reviewed_cases.end() ? "unreviewed-case" : "source-changed-or-unstamped"},
         {"reviewedUnitKeys", keys}, {"coverage", "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads"}});
 }
+/** Attach unit claims only when the compiled case source matches audited evidence. */
 void AddAuditedCaseUnits(const std::string& name, const ProblemRegistration& registration,
                          int dimension, preview::ParameterReadTrace& reads) {
     const auto it = reviewed_cases.find(name);

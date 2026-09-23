@@ -1,3 +1,13 @@
+/**
+ * @file InvariantDomainFlux.h
+ * @brief Limit face fluxes when the high-order update leaves the admissible state domain.
+ *
+ * Workflow:
+ * 1. Receive an explicit mesh/operator and signed cell-centered fields.
+ * 2. Limit face fluxes when the high-order update leaves the admissible state domain.
+ * 3. Return corrections or fluxes through the shared numerical contract.
+ */
+
 #pragma once
 
 #include "numerics/flux/FluxFunctions.h"
@@ -8,9 +18,11 @@
 // update is a convex combination of its mean and these admissible bar states.
 // This is a sufficient Euler invariant-domain condition, not a table-EOS theorem.
 namespace FluxAdmissibility {
+/** Test the recovered conserved state against the shared admissible domain. */
 ARCH_INLINE bool valid(const FluidVector& state)
 { return arch::state::recover(state).status == arch::state::Status::valid; }
 
+/** Bisect the largest admissible fraction along a conserved-state segment. */
 ARCH_INLINE double segment_fraction(const FluidVector& mean, const FluidVector& offset)
 {
     if (valid(mean + offset)) return 1.0;
@@ -25,6 +37,7 @@ ARCH_INLINE double segment_fraction(const FluidVector& mean, const FluidVector& 
 
 // Reconstructed states are limited along the ray from their conserved mean.
 // The cell average itself is never replaced, so an invalid mean still fails.
+/** Limit one reconstructed face on a ray from its unchanged cell mean. */
 ARCH_INLINE void limit_reconstruction(const FluidVector& mean, FluidVector& face)
 {
     if (!valid(face)) {
@@ -35,6 +48,7 @@ ARCH_INLINE void limit_reconstruction(const FluidVector& mean, FluidVector& face
 }
 
 template<class Eos>
+/** Blend the high-order flux with Lax-Friedrichs using one conservative face theta. */
 ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
     const double* x_left, const double* x_right, int species, const Eos& eos,
     int direction, FluidVector& high, double* species_flux)
@@ -49,7 +63,9 @@ ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
         high = FluidVector(arch::state::invalid(), 0.0, 0.0, 0.0, arch::state::invalid());
         return;
     }
+    // Local Lax-Friedrichs: F_low=(F_L+F_R)/2-a*(U_R-U_L)/2.
     const auto low = 0.5 * fl + 0.5 * fr - (0.5 * a) * (right - left);
+    // Invariant-domain bar state: U_bar=(U_L+U_R)/2-(F_R-F_L)/(2a).
     const auto bar = 0.5 * left + 0.5 * right - (0.5 / a) * (fr - fl);
     if (!valid(bar)) {
         high = FluidVector(arch::state::invalid(), 0.0, 0.0, 0.0, arch::state::invalid());

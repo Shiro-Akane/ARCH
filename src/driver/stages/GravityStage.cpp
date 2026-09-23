@@ -1,15 +1,29 @@
-#include "physics/gravity/GravitySolveTypes.h"
-#include "amr/elliptic/EllipticMeshAdapter.h"
-#include "numerics/multigrid/HostCompositeMG.h"
-#include "driver/stages/GravityStage.h"
-#include "driver/runtime/DriverRuntime.h"
-#include "amr/AMRControl.h"
-#include "physics/gravity/self/SelfGravity.h"
-#include "physics/gravity/GravityExecution.h"
+/**
+ * @file GravityStage.cpp
+ * @brief Lease the correct density generation, solve domain gravity and publish fields.
+ *
+ * Workflow:
+ * 1. Receive a resolved configuration, stage request and current state identity.
+ * 2. Lease the correct density generation, solve domain gravity and publish fields.
+ * 3. Hand completed state and diagnostics to the next scheduled stage.
+ */
+
+#include <chrono>
 #include <filesystem>
 #include <iomanip>
-#include <chrono>
+
+#include "driver/stages/GravityStage.h"
+
+#include "amr/AMRControl.h"
+#include "amr/elliptic/EllipticMeshAdapter.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "numerics/multigrid/HostCompositeMG.h"
+#include "physics/gravity/GravityExecution.h"
+#include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/self/SelfGravity.h"
+
 namespace arch::driver {
+/** Open diagnostics for a configured self-gravity stage. */
 GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGravityPolicy* policy)
     :runtime_(runtime),gravity_(dynamic_cast<const Physical::Gravity::SelfGravity*>(policy)) {
     if (!gravity_) return;
@@ -19,6 +33,7 @@ GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGrav
     if (!diagnostics_) throw std::runtime_error("Cannot open gravity solve diagnostics");
     diagnostics_<<"time\tstage\tepoch\tgeneration\tcells\titerations\trhs_rms\tresidual\ttarget\trho_mean\tdevice\tsetup_seconds\tsolve_seconds\tkernels\tbytes_h2d\tbytes_d2h\tsynchronizations\tsource_boundary_seconds\tpoisson_seconds\tforce_seconds\n"<<std::setprecision(17);
 }
+/** Lease the exact RK input density generation and publish its solved field. */
 state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::StateResidencyLedger& ledger,double time,int stage) {
     const auto start=std::chrono::steady_clock::now();
     invalidate();
@@ -67,15 +82,20 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     if(backend)for(std::size_t b=0;b<handles.size();++b)backend->publish_gravity(runtime_.backend_access(b,slot),gravity_->patch_view(b));
     return token;
 }
+/** Prepare gravity for the requested hydro stage input. */
 state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparationRequest& request) {
     if (!gravity_) throw std::logic_error("No self-gravity stage service");
     return solve(request.descriptor.input_slot,request.ledger,request.input_time,request.descriptor.stage);
 }
+/** Prepare gravity on the accepted current state for output and timestep use. */
 void GravityStage::prepare_current(double time) {
     if (gravity_) { auto context=runtime_.stage_context(); solve(state::StateSlot::Current,context.ledger,time,0); }
 }
+/** Retire both host and device gravity views before changing state. */
 void GravityStage::invalidate() const { if(gravity_)gravity_->invalidate();if(runtime_.backend())runtime_.backend()->invalidate_gravity(); }
+/** Report the gravity stability cap to the Driver scheduler. */
 double GravityStage::timestep() const { return gravity_?gravity_->timestep(runtime_.configuration().numerics.cfl):std::numeric_limits<double>::infinity(); }
+/** Materialize accepted potential and acceleration for plot output. */
 std::vector<io::PlotScalarField> GravityStage::plot_fields() const {
     if (!gravity_) return {};
     std::vector<io::PlotScalarField> fields{{"GPOT",gravity_->potential()}};

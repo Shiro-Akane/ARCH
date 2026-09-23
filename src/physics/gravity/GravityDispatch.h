@@ -5,6 +5,10 @@
  * Runtime selection constructs a type-erased patch policy; it does not solve
  * a field or apply source terms. ExternalGravity delegates its cell update to
  * ExternalGravitySource.h, the mathematical owner also used by device code.
+ * Workflow:
+ * 1. Read the resolved gravity kind and CGS parameters.
+ * 2. Construct the disabled, external or self-gravity policy.
+ * 3. Return a type-erased policy; field solves begin only at stage preparation.
  */
 
 #pragma once

@@ -1,11 +1,19 @@
 /** @file SelfGravity.h
  * Backend-independent domain-field owner. Prepare is serial; patch consumers only read a fully
  * published field. No solve is hidden in patch callbacks or output routines.
+ * Workflow:
+ * 1. Receive active density with mesh and generation identity.
+ * 2. Declare the backend-independent self-gravity domain-field owner.
+ * 3. Publish a checked potential/acceleration field for the requested stage.
  */
+
 #pragma once
-#include "physics/gravity/IGravityPolicy.h"
+
 #include <array>
 #include <memory>
+
+#include "physics/gravity/IGravityPolicy.h"
+
 namespace amr { struct EllipticMeshBinding; }
 namespace arch::state { struct CompletionToken; }
 namespace arch::multigrid { struct SolveReport; }

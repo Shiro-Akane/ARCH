@@ -5,6 +5,10 @@
  * This is not a second burn API.  The public launch_cuda_burn_route overloads
  * remain the only backend entry points; these declarations merely keep their
  * runtime network switch separate from the network-specific NVCC templates.
+ * Workflow:
+ * 1. Read the resolved EOS, network and ODE route.
+ * 2. Choose the matching compiled CUDA burn launcher.
+ * 3. Fail explicitly when a route is unsupported.
  */
 
 #pragma once

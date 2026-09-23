@@ -1,10 +1,12 @@
-#include "api/Preview.h"
-#include "api/Configuration.h"
-#include "api/preview/ResourceEstimates.h"
-#include "api/resources/WorkerLimits.h"
-#include "api/CaseInspection.h"
-#include "api/protocol/RequestInput.h"
-#include "api/PreviewSession.h"
+/**
+ * @file PreviewCommand.cpp
+ * @brief Parse one preview CLI request and emit one protocol response.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Parse one preview CLI request and emit one protocol response.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
 
 #include <charconv>
 #include <iostream>
@@ -12,8 +14,17 @@
 #include <stdexcept>
 #include <string_view>
 
+#include "api/CaseInspection.h"
+#include "api/Configuration.h"
+#include "api/Preview.h"
+#include "api/PreviewSession.h"
+#include "api/preview/ResourceEstimates.h"
+#include "api/protocol/RequestInput.h"
+#include "api/resources/WorkerLimits.h"
+
 namespace arch::api {
 
+/** Parse a one-shot inspection/preview CLI command and emit its response. */
 int RunPreviewCommand(int argc, char **argv) {
     PreviewResponse response;
     using contract::Command;

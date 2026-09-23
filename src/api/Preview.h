@@ -1,10 +1,21 @@
+/**
+ * @file Preview.h
+ * @brief Declare CPU-only preview operations and their bounded request/response types.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Declare CPU-only preview operations and their bounded request/response types.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
 
-#include "api/ApplicationContract.h"
 #include <cstddef>
 #include <functional>
 #include <optional>
 #include <string>
+
+#include "api/ApplicationContract.h"
 
 namespace arch::api {
 inline constexpr const char *preview_schema_version = contract::schema_version;

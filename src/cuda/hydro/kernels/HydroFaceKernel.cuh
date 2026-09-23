@@ -6,6 +6,10 @@
  * coarse/fine interfaces. Each face writes hydro and species fluxes to borrowed
  * buffers; per-lane composition scratch belongs to the launch owner. Launch
  * success means work was queued, not that the output is host-visible.
+ * Workflow:
+ * 1. Receive stage views, face geometry and device state arrays.
+ * 2. Launch the shared hydro face, source or state work on CUDA.
+ * 3. Publish stage output only after the backend stream orders writes.
  */
 
 #pragma once

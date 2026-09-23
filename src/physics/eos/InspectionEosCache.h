@@ -1,12 +1,23 @@
+/**
+ * @file InspectionEosCache.h
+ * @brief Reuse immutable EOS tables for bounded inspection requests.
+ *
+ * Workflow:
+ * 1. Receive a resolved request at the owning module boundary.
+ * 2. Reuse immutable EOS tables for bounded inspection requests.
+ * 3. Return bounded data through the established interface.
+ */
+
 #pragma once
 
-#include "physics/eos/HelmEos.h"
-#include "physics/eos/tabular/Tabular3DEOS.h"
-#include "physics/eos/tabular/Tabular4DEOS.h"
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <variant>
+
+#include "physics/eos/HelmEos.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular4DEOS.h"
 
 // CPU inspection only. Retain one table owner, with an owned copy of its
 // species metadata. Request-local views are rebound to the live registry;
