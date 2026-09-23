@@ -1,0 +1,591 @@
+{
+  "binary_sha256": "6971d28b93561ede81c01162821cd5224cbd1feeb83341373724419db4d5db61",
+  "build": "Release double precision, CUDA Toolkit 12.3, GCC 12",
+  "comparisons": {
+    "cylindrical_3d_amr": {
+      "cuda_gravity_counters_median": {
+        "bytes_d2h": 123552,
+        "bytes_h2d": 968,
+        "kernels": 113850,
+        "maximum_iterations": 60,
+        "solve_count": 11,
+        "synchronizations": 15488
+      },
+      "field_parity": {
+        "final_acceleration_vector_normalized_linf": 1.5447121621729305e-08,
+        "final_potential_normalized_linf": 2.674992504681456e-10,
+        "max_residual_over_target_cpu": 0.9962062481814233,
+        "max_residual_over_target_cuda": 0.9973594585033302,
+        "state_repairs_cpu": 0,
+        "state_repairs_cuda": 0
+      },
+      "final_leaves": 11,
+      "mode": "amr",
+      "speedup": {
+        "driver_fastest_cpu_over_cuda_median": 1.5948364393319376,
+        "driver_ratio_of_medians": 1.6111404882687965,
+        "end_to_end_ratio_of_medians": 1.5817618256846853
+      },
+      "steps": 3,
+      "times": {
+        "cpu": {
+          "driver_seconds": {
+            "median": 76.659807449,
+            "samples": [
+              91.287229666,
+              76.659807449,
+              75.884043162
+            ]
+          },
+          "end_to_end_seconds": {
+            "median": 78.63132384499477,
+            "samples": [
+              93.4261082909943,
+              78.63132384499477,
+              78.04129904801084
+            ]
+          },
+          "gravity_force_seconds": {
+            "median": 0.044748672,
+            "samples": [
+              0.073729821,
+              0.044748672,
+              0.038371452
+            ]
+          },
+          "gravity_solve_seconds": {
+            "median": 10.444509305,
+            "samples": [
+              23.599601607,
+              10.439195445,
+              10.444509305
+            ]
+          },
+          "gravity_source_boundary_seconds": {
+            "median": 3.182808359,
+            "samples": [
+              3.49364422,
+              3.182808359,
+              3.066158647
+            ]
+          },
+          "poisson_seconds": {
+            "median": 7.33991965,
+            "samples": [
+              20.032164963,
+              7.2115773910000005,
+              7.33991965
+            ]
+          },
+          "regrid_seconds": {
+            "median": 0.223748039,
+            "samples": [
+              0.280649527,
+              0.223421896,
+              0.223748039
+            ]
+          }
+        },
+        "cuda": {
+          "driver_seconds": {
+            "median": 47.581081853,
+            "samples": [
+              47.734461191,
+              47.581081853,
+              47.152019231
+            ]
+          },
+          "end_to_end_seconds": {
+            "median": 49.71122868701059,
+            "samples": [
+              49.91959483800747,
+              49.71122868701059,
+              49.329109390993835
+            ]
+          },
+          "gravity_force_seconds": {
+            "median": 0.006711156,
+            "samples": [
+              0.007122691,
+              0.006569584,
+              0.006711156
+            ]
+          },
+          "gravity_solve_seconds": {
+            "median": 17.000373511,
+            "samples": [
+              17.288422014000002,
+              16.906717924,
+              17.000373511
+            ]
+          },
+          "gravity_source_boundary_seconds": {
+            "median": 11.013164859,
+            "samples": [
+              11.194482564,
+              10.984226843,
+              11.013164859
+            ]
+          },
+          "poisson_seconds": {
+            "median": 5.980442918,
+            "samples": [
+              6.086758002,
+              5.915865413000001,
+              5.980442918
+            ]
+          },
+          "regrid_seconds": {
+            "median": 0.159017188,
+            "samples": [
+              0.168882795,
+              0.159017188,
+              0.156038053
+            ]
+          }
+        }
+      },
+      "topology_changes": 1
+    },
+    "polar_2x2_amr": {
+      "cuda_gravity_counters_median": {
+        "bytes_d2h": 78384,
+        "bytes_h2d": 880,
+        "kernels": 62887,
+        "maximum_iterations": 39,
+        "solve_count": 11,
+        "synchronizations": 9842
+      },
+      "field_parity": {
+        "final_acceleration_vector_normalized_linf": 7.33848750276131e-12,
+        "final_potential_normalized_linf": 7.027523858771453e-13,
+        "max_residual_over_target_cpu": 0.49795407318918045,
+        "max_residual_over_target_cuda": 0.4988079832469123,
+        "state_repairs_cpu": 0,
+        "state_repairs_cuda": 0
+      },
+      "final_leaves": 10,
+      "mode": "amr",
+      "speedup": {
+        "driver_fastest_cpu_over_cuda_median": 1.4317984643194688,
+        "driver_ratio_of_medians": 1.4527187775748214,
+        "end_to_end_ratio_of_medians": 1.2868662959417934
+      },
+      "steps": 3,
+      "times": {
+        "cpu": {
+          "driver_seconds": {
+            "median": 5.780557558,
+            "samples": [
+              5.697312902,
+              5.780557558,
+              6.56032442
+            ]
+          },
+          "end_to_end_seconds": {
+            "median": 7.648706146996119,
+            "samples": [
+              7.583206741997856,
+              7.648706146996119,
+              8.433154058002401
+            ]
+          },
+          "gravity_force_seconds": {
+            "median": 0.002516817,
+            "samples": [
+              0.0025653580000000002,
+              0.002516367,
+              0.002516817
+            ]
+          },
+          "gravity_solve_seconds": {
+            "median": 0.359193432,
+            "samples": [
+              0.35615035100000003,
+              0.36089125,
+              0.359193432
+            ]
+          },
+          "gravity_source_boundary_seconds": {
+            "median": 0.012814934,
+            "samples": [
+              0.012814934,
+              0.012793746,
+              0.013441859
+            ]
+          },
+          "poisson_seconds": {
+            "median": 0.343192169,
+            "samples": [
+              0.340716186,
+              0.345537778,
+              0.343192169
+            ]
+          },
+          "regrid_seconds": {
+            "median": 0.010119791,
+            "samples": [
+              0.011733644,
+              0.009782494,
+              0.010119791
+            ]
+          }
+        },
+        "cuda": {
+          "driver_seconds": {
+            "median": 3.979130474,
+            "samples": [
+              4.039015201,
+              3.951880069,
+              3.979130474
+            ]
+          },
+          "end_to_end_seconds": {
+            "median": 5.9436680959915975,
+            "samples": [
+              6.040976200005389,
+              5.920945870995638,
+              5.9436680959915975
+            ]
+          },
+          "gravity_force_seconds": {
+            "median": 0.001579961,
+            "samples": [
+              0.001579961,
+              0.00164222,
+              0.001577134
+            ]
+          },
+          "gravity_solve_seconds": {
+            "median": 1.6406650360000001,
+            "samples": [
+              1.646904839,
+              1.622845195,
+              1.6406650360000001
+            ]
+          },
+          "gravity_source_boundary_seconds": {
+            "median": 0.08989106200000001,
+            "samples": [
+              0.08989106200000001,
+              0.089723414,
+              0.090158721
+            ]
+          },
+          "poisson_seconds": {
+            "median": 1.548876168,
+            "samples": [
+              1.555383386,
+              1.531427366,
+              1.548876168
+            ]
+          },
+          "regrid_seconds": {
+            "median": 0.006711321,
+            "samples": [
+              0.006711321,
+              0.006277194,
+              0.006724823
+            ]
+          }
+        }
+      },
+      "topology_changes": 1
+    },
+    "polar_4x4_amr": {
+      "cuda_gravity_counters_median": {
+        "bytes_d2h": 98912,
+        "bytes_h2d": 2464,
+        "kernels": 95634,
+        "maximum_iterations": 52,
+        "solve_count": 11,
+        "synchronizations": 12408
+      },
+      "field_parity": {
+        "final_acceleration_vector_normalized_linf": 2.5974823391747126e-11,
+        "final_potential_normalized_linf": 5.599993920931199e-12,
+        "max_residual_over_target_cpu": 0.3938298222771864,
+        "max_residual_over_target_cuda": 0.3938299515352574,
+        "state_repairs_cpu": 0,
+        "state_repairs_cuda": 0
+      },
+      "final_leaves": 28,
+      "mode": "amr",
+      "speedup": {
+        "driver_fastest_cpu_over_cuda_median": 1.894888318232164,
+        "driver_ratio_of_medians": 2.3007333856604855,
+        "end_to_end_ratio_of_medians": 2.0110584040176827
+      },
+      "steps": 3,
+      "times": {
+        "cpu": {
+          "driver_seconds": {
+            "median": 17.570662941,
+            "samples": [
+              14.471230851,
+              17.570662941,
+              19.230685034
+            ]
+          },
+          "end_to_end_seconds": {
+            "median": 19.448645896001835,
+            "samples": [
+              16.346382008006913,
+              19.448645896001835,
+              21.142212277991348
+            ]
+          },
+          "gravity_force_seconds": {
+            "median": 0.030303005,
+            "samples": [
+              0.007832768,
+              0.030303005,
+              0.040136708
+            ]
+          },
+          "gravity_solve_seconds": {
+            "median": 1.405806265,
+            "samples": [
+              1.350644732,
+              1.405806265,
+              1.469676149
+            ]
+          },
+          "gravity_source_boundary_seconds": {
+            "median": 0.023008992,
+            "samples": [
+              0.021185742,
+              0.023008992,
+              0.024735822
+            ]
+          },
+          "poisson_seconds": {
+            "median": 1.352437713,
+            "samples": [
+              1.3215716,
+              1.352437713,
+              1.404729913
+            ]
+          },
+          "regrid_seconds": {
+            "median": 0.022519929,
+            "samples": [
+              0.021208021,
+              0.025533841,
+              0.022519929
+            ]
+          }
+        },
+        "cuda": {
+          "driver_seconds": {
+            "median": 7.636983516,
+            "samples": [
+              7.547106983,
+              7.698883862,
+              7.636983516
+            ]
+          },
+          "end_to_end_seconds": {
+            "median": 9.670850859998609,
+            "samples": [
+              9.521396761003416,
+              9.70339631200477,
+              9.670850859998609
+            ]
+          },
+          "gravity_force_seconds": {
+            "median": 0.001798345,
+            "samples": [
+              0.001798345,
+              0.001807338,
+              0.001779101
+            ]
+          },
+          "gravity_solve_seconds": {
+            "median": 2.577384626,
+            "samples": [
+              2.558243827,
+              2.663152654,
+              2.577384626
+            ]
+          },
+          "gravity_source_boundary_seconds": {
+            "median": 0.096348084,
+            "samples": [
+              0.095644907,
+              0.096348084,
+              0.096392954
+            ]
+          },
+          "poisson_seconds": {
+            "median": 2.479145627,
+            "samples": [
+              2.46073926,
+              2.564930604,
+              2.479145627
+            ]
+          },
+          "regrid_seconds": {
+            "median": 0.012993911,
+            "samples": [
+              0.012993911,
+              0.012999498,
+              0.012973728
+            ]
+          }
+        }
+      },
+      "topology_changes": 1
+    },
+    "polar_4x4_regular": {
+      "cuda_gravity_counters_median": {
+        "bytes_d2h": 98912,
+        "bytes_h2d": 1408,
+        "kernels": 81895,
+        "maximum_iterations": 52,
+        "solve_count": 11,
+        "synchronizations": 12408
+      },
+      "field_parity": {
+        "final_acceleration_vector_normalized_linf": 3.725742910921959e-12,
+        "final_potential_normalized_linf": 4.204815227723269e-13,
+        "max_residual_over_target_cpu": 0.40947848642508533,
+        "max_residual_over_target_cuda": 0.4094171222463692,
+        "state_repairs_cpu": 0,
+        "state_repairs_cuda": 0
+      },
+      "final_leaves": 16,
+      "mode": "regular",
+      "speedup": {
+        "driver_fastest_cpu_over_cuda_median": 1.438533546408945,
+        "driver_ratio_of_medians": 1.4988890072081418,
+        "end_to_end_ratio_of_medians": 1.3524508010833867
+      },
+      "steps": 3,
+      "times": {
+        "cpu": {
+          "driver_seconds": {
+            "median": 8.056888964,
+            "samples": [
+              8.211683737,
+              8.056888964,
+              7.732463844
+            ]
+          },
+          "end_to_end_seconds": {
+            "median": 9.936912980003399,
+            "samples": [
+              10.090492211995297,
+              9.936912980003399,
+              9.613833088005777
+            ]
+          },
+          "gravity_force_seconds": {
+            "median": 0.010282371,
+            "samples": [
+              0.010282371,
+              0.009678633,
+              0.012342449
+            ]
+          },
+          "gravity_solve_seconds": {
+            "median": 0.653457274,
+            "samples": [
+              0.653457274,
+              0.651146753,
+              0.658037486
+            ]
+          },
+          "gravity_source_boundary_seconds": {
+            "median": 0.01968288,
+            "samples": [
+              0.01968288,
+              0.019816691,
+              0.019542618
+            ]
+          },
+          "poisson_seconds": {
+            "median": 0.623441404,
+            "samples": [
+              0.623441404,
+              0.621599292,
+              0.626103328
+            ]
+          },
+          "regrid_seconds": {
+            "median": 0.002536852,
+            "samples": [
+              0.005111871,
+              0.002536852,
+              0.002379132
+            ]
+          }
+        },
+        "cuda": {
+          "driver_seconds": {
+            "median": 5.375240545,
+            "samples": [
+              5.402740882,
+              5.337454966,
+              5.375240545
+            ]
+          },
+          "end_to_end_seconds": {
+            "median": 7.347337864004658,
+            "samples": [
+              7.374920982998447,
+              7.322809456993127,
+              7.347337864004658
+            ]
+          },
+          "gravity_force_seconds": {
+            "median": 0.001683695,
+            "samples": [
+              0.0018662639999999999,
+              0.0016141320000000001,
+              0.001683695
+            ]
+          },
+          "gravity_solve_seconds": {
+            "median": 2.237218027,
+            "samples": [
+              2.237218027,
+              2.174991156,
+              2.242127818
+            ]
+          },
+          "gravity_source_boundary_seconds": {
+            "median": 0.09540928,
+            "samples": [
+              0.09540928,
+              0.096656409,
+              0.095128878
+            ]
+          },
+          "poisson_seconds": {
+            "median": 2.139886942,
+            "samples": [
+              2.139886942,
+              2.07666369,
+              2.1452580980000002
+            ]
+          },
+          "regrid_seconds": {
+            "median": 0.001734266,
+            "samples": [
+              0.001734266,
+              0.001728076,
+              0.00190359
+            ]
+          }
+        }
+      },
+      "topology_changes": 0
+    }
+  },
+  "hardware": {
+    "cpu": "Intel Core i7-10700, 8 cores/16 threads",
+    "gpu": "NVIDIA GeForce RTX 3060 Ti, 8 GiB, SM86"
+  },
+  "method": "three paired CPU16/CUDA1 runs per input; ratio of medians; Driver excludes IO, end_to_end includes IO"
+}

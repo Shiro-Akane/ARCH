@@ -1,0 +1,110 @@
+{
+  "binary_sha256": "6971d28b93561ede81c01162821cd5224cbd1feeb83341373724419db4d5db61",
+  "cross_backend_restart": {
+    "directions": {
+      "cpu-to-cuda": {
+        "acceleration_vector_normalized_linf": 6.709918515344132e-12,
+        "final_leaves": 10
+      },
+      "cuda-to-cpu": {
+        "acceleration_vector_normalized_linf": 1.7288599919816106e-11,
+        "final_leaves": 10
+      }
+    },
+    "final_steps": 3,
+    "split_after_steps": 2
+  },
+  "polar_120_step_cuda": {
+    "accepted_steps": 120,
+    "final_acceleration_vector_normalized_linf_against_historical_p12_cpu": 1.4095780028618684e-11,
+    "gravity_solves": 362,
+    "historical_cpu_binary_differs": true,
+    "max_residual_over_target": 0.4988079832469123,
+    "state_repairs": 0,
+    "topology_changes": 1
+  },
+  "polar_near_vacuum": {
+    "acceleration_vector_normalized_linf": 1.813352170876471e-12,
+    "cpu_minimum_density": 9.999999999999998e-13,
+    "cuda_minimum_density": 9.999999999999998e-13,
+    "final_leaves": 16,
+    "gravity_solves_each_backend": 10,
+    "rho0_cgs": 1e-12
+  },
+  "radial_1d_cuda": [
+    {
+      "force_relative_error": 2.658561409468905e-14,
+      "geometry": "spherical",
+      "max_gauss_relative_error": 2.658561409468905e-14,
+      "name": "spherical-static-32",
+      "plots": 1,
+      "potential_relative_error": 6.295839953108262e-15,
+      "solves": 1
+    },
+    {
+      "energy_relative_drift": 1.2079071605743054e-05,
+      "final_leaves": 8,
+      "geometry": "spherical",
+      "initial_leaves": 4,
+      "mass_relative_drift": 6.41142954699303e-16,
+      "max_gauss_relative_error": 1.2130693729141864e-08,
+      "name": "spherical-dynamic-amr",
+      "plots": 7,
+      "restart_bitwise_equal": true,
+      "solves": 50
+    },
+    {
+      "geometry": "spherical",
+      "max_gauss_relative_error": 5.484793536775314e-09,
+      "name": "spherical-restart",
+      "plots": 4,
+      "solves": 34
+    },
+    {
+      "force_relative_error": 1.0540392825049832e-14,
+      "geometry": "cylindrical",
+      "max_gauss_relative_error": 1.0540392825049832e-14,
+      "name": "cylindrical-static-32",
+      "plots": 1,
+      "potential_relative_error": 1.0113146684682193e-14,
+      "solves": 1
+    },
+    {
+      "energy_relative_drift": 2.5731209475266317e-05,
+      "final_leaves": 8,
+      "geometry": "cylindrical",
+      "initial_leaves": 4,
+      "mass_relative_drift": 6.288372600415926e-16,
+      "max_gauss_relative_error": 3.855263809002864e-13,
+      "name": "cylindrical-dynamic-amr",
+      "plots": 7,
+      "restart_bitwise_equal": true,
+      "solves": 50
+    },
+    {
+      "geometry": "cylindrical",
+      "max_gauss_relative_error": 1.5366973698184957e-13,
+      "name": "cylindrical-restart",
+      "plots": 4,
+      "solves": 34
+    }
+  ],
+  "spherical_2d_3d_four_module_pairs": {
+    "spherical2d": {
+      "acceleration_vector_normalized_linf": 7.33848750276131e-12,
+      "final_leaves": 10,
+      "max_residual_over_target_cuda": 0.4988079832469123,
+      "state_repairs_cuda": 0,
+      "steps": 3,
+      "topology_changes": 1
+    },
+    "spherical3d": {
+      "acceleration_vector_normalized_linf": 1.747193148981566e-07,
+      "final_leaves": 11,
+      "max_residual_over_target_cuda": 0.44670543935593815,
+      "state_repairs_cuda": 0,
+      "steps": 3,
+      "topology_changes": 1
+    }
+  }
+}

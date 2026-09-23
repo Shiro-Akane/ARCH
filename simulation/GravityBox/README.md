@@ -63,10 +63,10 @@ outflow 的逸出物质此后不再是有限域内的引力源，必须单独考
 周期 1D/2D 表示相应平移不变 Poisson 模型，不是三维孤立天体的降维替代。
 
 Cartesian 已验收二进制 AMR、每个有效根轴单元数为二次幂、根网格间距比不超过 2。
-Cartesian 二维/一维 isolated 仍被拒绝；一维原生球/柱 isolated 的 CPU 路线如下。
-CPU 多维曲线坐标自引力已按受测范围支持包含原点、轴线和极点的完整方位角域；自适应层级子循环和网格外质量源仍不支持。
+Cartesian 二维/一维 isolated 仍被拒绝；一维原生球/柱 isolated 的 CPU/CUDA 路线如下。
+CPU/CUDA 多维曲线坐标自引力已按受测范围支持包含原点、轴线和极点的完整方位角域；自适应层级子循环和网格外质量源仍不支持。
 
-## 一维球/柱对称孤立域（已验收 CPU）
+## 一维球/柱对称孤立域（已验收 CPU/CUDA）
 
 以默认参数为底本，覆盖以下键即可运行包含原点的球对称域；把
 `geometry=spherical` 改为 `cylindrical` 即为沿轴无限延伸的柱对称模型：
@@ -96,8 +96,8 @@ tmax=0.04
 球对称外边界势取 `-G M/R`，其中单元径向体积积分乘 `4π` 得总质量；
 柱对称固定 `Phi(R)=0`，质量按单位轴向长度统计，积分乘 `2π`。
 原点按零通量正则面处理，内侧流体边界必须 reflecting；径向
-`gravity_boundary=periodic` 和此一维径向路线的 CUDA 执行会明确拒绝。
-严格径向椭圆单测、短时混合 AMR、原点、近真空、重网格与重启检查已通过；
+`gravity_boundary=periodic` 会明确拒绝；CUDA 可将上述 `compute_backend` 改为 `cuda`。
+严格径向椭圆单测、短时混合 AMR、原点、近真空、重网格与重启检查已通过；CUDA 另有独立 Gauss 场、动态 AMR 和重启验收；
 静水参考仅验证短时寄生速度随分辨率降低，不宣称长期静水平衡精确保持。
 
 静水参考算例设 `amplitude=0`、`hydrostatic_radial=true`、
@@ -132,5 +132,6 @@ Helmholtz 输运系数由状态决定，不应再填理想气体的常系数覆�
 `run_timings.tsv` 的输出耗时包含流体 Host materialization、输出验证和 HDF5 写入；
 调用输出函数之前的引力字段下载仍计入总时间，未计入该输出子项。
 
-完整使用边界、CPU/GPU 数值与性能记录见
-[P5–P7 验收文档](../../docs/development/P5P7GravityAcceptance.zh-CN.md)。
+Cartesian 使用边界与 CPU/GPU 记录见
+[P5–P7 验收文档](../../docs/development/P5P7GravityAcceptance.zh-CN.md)；曲线坐标的受测范围与性能见
+[曲线重力验证](../../validation/gravity/README.zh-CN.md)。

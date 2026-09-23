@@ -40,17 +40,21 @@ def leaf_levels(plot):
             "field_min_max": fields}
 
 
-def verify(label, directory, expected_steps):
-    """Require mixed leaves, completed stepping, active modules and converged solves."""
+def verify(label, directory, expected_steps, expect_mixed=True):
+    """Require completed four-module stepping and the requested AMR topology."""
     plots = sorted(directory.glob("*_plt_*.h5"))
     if len(plots) != 2:
         raise ValueError(f"{label}: expected initial and final plots")
     initial, final = [leaf_levels(path) for path in plots]
-    if not ("0" in initial["leaves_by_level"] and
-            "1" in initial["leaves_by_level"] and
-            "0" in final["leaves_by_level"] and
-            "1" in final["leaves_by_level"]):
-        raise ValueError(f"{label}: not a coarse/fine mixed AMR run")
+    if expect_mixed:
+        if not ("0" in initial["leaves_by_level"] and
+                "1" in initial["leaves_by_level"] and
+                "0" in final["leaves_by_level"] and
+                "1" in final["leaves_by_level"]):
+            raise ValueError(f"{label}: not a coarse/fine mixed AMR run")
+    elif (set(initial["leaves_by_level"]) != {"0"}
+          or set(final["leaves_by_level"]) != {"0"}):
+        raise ValueError(f"{label}: expected a regular root grid")
     if not final["time_seconds"] > initial["time_seconds"]:
         raise ValueError(f"{label}: time did not advance")
     if final["field_min_max"]["ENUC"][1] <= 0:
@@ -89,8 +93,10 @@ def verify(label, directory, expected_steps):
         ratios.append(ratio)
     with next(iter(directory.glob("*_regrid.tsv"))).open() as stream:
         regrids = list(csv.DictReader(stream, delimiter="\t"))
-    if not any(row["topology_changed"] == "1" for row in regrids):
+    if expect_mixed and not any(row["topology_changed"] == "1" for row in regrids):
         raise ValueError(f"{label}: no actual AMR refinement")
+    if not expect_mixed and any(row["topology_changed"] == "1" for row in regrids):
+        raise ValueError(f"{label}: regular grid changed topology")
     return {"directory": str(directory), "steps": expected_steps,
             "initial": initial, "final": final, "state_repairs": 0,
             "gravity_solves": len(solves),

@@ -80,7 +80,7 @@ external provenance claim unless their file header or that notice says so.
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
 | Geometry | `cartesian`, `cylindrical`, `spherical` | supported on CPU and CUDA | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
 | AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
-| Self gravity | `gravity_type = self` | CPU, CUDA | Validated: Cartesian periodic 1D–3D or isolated 3D on CPU/CUDA. CPU: isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity with composite AMR, including origin/axis/pole joins; curved CUDA gravity remains gated. Euler/RK2/RK3 and Cartesian burn/thermal-diffusion coupling, plus tested curved RK2 four-module runs, are validated. See [GravityBox](../simulation/GravityBox/README.md) and the [P5–P7 record](development/P5P7GravityAcceptance.zh-CN.md). |
+| Self gravity | `gravity_type = self` | CPU, CUDA | Validated: Cartesian periodic 1D–3D or isolated 3D on CPU/CUDA. CPU/CUDA: isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity with composite AMR, including origin/axis/pole joins. Euler/RK2/RK3 and Cartesian burn/thermal-diffusion coupling, plus tested curved RK2 four-module runs, are validated. See [GravityBox](../simulation/GravityBox/README.md) and the [P5–P7 record](development/P5P7GravityAcceptance.zh-CN.md). |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
 
 CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, the registered
@@ -417,7 +417,7 @@ and any other spelling are rejected with the parameter name in the error.
 | `eos_table_path` | string | empty | required for tabular/Helmholtz |
 | `eos_helm_table_path` | string | empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
 | `gamma` | double | `1.4` | ideal-gas model gamma |
-| `gravity_type` | string | `none` | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity, including coordinate joins, on CPU are supported |
+| `gravity_type` | string | `none` | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity, including coordinate joins, on CPU/CUDA are supported |
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | CGS gravitational constant used by self gravity |
 | `gravity_boundary` | string | `periodic` | `periodic`: subtract volume-mean density; `isolated`: finite-domain 3D Newton boundary, 1D radial symmetry, or 2D polar logarithmic boundary; no background subtraction |
@@ -1186,12 +1186,12 @@ reconstruct missing mass fractions. A fresh simulation initializes its own
   Generated NSE requires the documented equilibrium-model eligibility; it is not
   a promise that every correct kinetic network admits an NSE bypass.
 - Validated self-gravity covers Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA.
-  CPU-only isolated 1D spherical/cylindrical gravity includes radial AMR and restart.
-  CPU also supports isolated 2D full-azimuth polar and 3D cylindrical/spherical gravity,
-  including tested origin, axis and pole joins with composite AMR. Singular fluid faces
+  Isolated 1D spherical/cylindrical gravity on CPU/CUDA includes radial AMR and restart.
+  Both backends support tested isolated 2D full-azimuth polar and 3D cylindrical/spherical gravity,
+  including origin, axis and pole joins with composite AMR. Singular fluid faces
   require reflecting flow; the azimuth must span a full turn. The 2D potential uses
-  the infinite-column logarithmic kernel and mass per unit length. Curved CUDA gravity,
-  external mass sources and a Jeans refinement indicator remain unavailable. Root-cell extents must be powers of two.
+  the infinite-column logarithmic kernel and mass per unit length. External mass sources
+  and a Jeans refinement indicator remain unavailable. Root-cell extents must be powers of two.
   See [GravityBox](../simulation/GravityBox/README.md) and the
   [P5–P7 acceptance](development/P5P7GravityAcceptance.zh-CN.md) for tested coupling and performance limits.
 - Runtime selection is string based, and several policy surfaces are compile-time

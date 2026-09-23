@@ -32,7 +32,7 @@
 #include <vector>
 
 namespace Physical::Gravity { class GravityExecution; }
-namespace amr { struct AmrFluxTopologyPlan; struct Block; }
+namespace amr { struct AmrFluxTopologyPlan; struct Block; struct CoordinateSeamPlan; }
 namespace arch::boundary { class BoundaryPlan; }
 
 namespace arch::backend {
@@ -330,6 +330,14 @@ public:
         throw std::logic_error(
             "backend coarse-fine exchange is unavailable");
     }
+    /** Fill coordinate-singularity ghosts from the shared AMR donor plan. */
+    virtual state::CompletionToken execute_coordinate_seam_exchange(
+        std::span<const BackendStateAccess>, std::span<const int>,
+        const amr::CoordinateSeamPlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend coordinate seam exchange is unavailable");
+    }
     virtual void rotate_slots(BackendStateAccess current,
                               state::SlotRotation rotation) = 0;
     virtual double compute_diffusion_dt(BackendStateAccess current) = 0;
@@ -436,7 +444,10 @@ public:
     virtual void complete_staged_current_ghosts(
         BackendTopologyStoreTransaction&,
         std::span<const amr::SameLevelExchangePlan>,
-        const amr::CoarseFineTransferPlan&)
+        const amr::CoarseFineTransferPlan&,
+        std::span<const int> = {},
+        std::span<const amr::BlockHandle> = {},
+        const amr::CoordinateSeamPlan* = nullptr)
     {
         throw std::logic_error("backend staged device ghosts are unavailable");
     }

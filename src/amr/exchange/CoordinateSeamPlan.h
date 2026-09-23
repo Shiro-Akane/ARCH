@@ -7,13 +7,12 @@
  *    spherical pole on a full-azimuth domain.
  * 2. Map each singular-face ghost center through the regular coordinate chart
  *    and locate its active AMR donor. Record native-vector basis signs.
- * 3. On every Host stage, reconstruct conserved donor fields at that center
- *    and fill only singular-face ghosts after ordinary exchange. No source
- *    cell, active cell, or zero-area face flux changes ownership.
+ * 3. On every Host or CUDA stage, apply shared reconstruction after ordinary
+ *    exchange. No source cell, active cell, or zero-area face flux changes
+ *    ownership.
  *
  * This plan is independent of self-gravity: Hydro, diffusion, and regridding
- * consume the same ghost state. CUDA acceptance of curved coordinates remains
- * a separate stage.
+ * consume the same ghost state.
  */
 #pragma once
 
@@ -29,22 +28,11 @@
 #include <tuple>
 #include <vector>
 
+#include "amr/exchange/CoordinateSeamMath.h"
 #include "amr/storage/Block.h"
 #include "amr/storage/MemoryPool.h"
-#include "amr/transfer/RegridTransferMath.h"
-#include "numerics/state/StateAdmissibility.h"
 
 namespace amr {
-
-struct CoordinateSeamTransfer {
-    int source_id = -1;
-    int destination_id = -1;
-    int source_center = -1;
-    int destination_cell = -1;
-    std::array<int, 3> source_neighbor{};
-    std::array<double, 3> neighbor_weight{};
-    std::array<std::int8_t, 3> momentum_sign{1, 1, 1};
-};
 
 struct CoordinateSeamPlan {
     std::vector<CoordinateSeamTransfer> transfers;
@@ -258,61 +246,19 @@ inline void execute_coordinate_seam_plan(const CoordinateSeamPlan& plan,
         FluidState& destination = pool->GetBlock(transfer.destination_id).*state_ptr;
         if (source.GetNumSpecies() != destination.GetNumSpecies())
             throw std::invalid_argument("Coordinate seam species counts disagree");
-        // u_g = u_c + sum_a [(x_g-x_c)/(x_n-x_c)] (u_n-u_c).
-        // Indices and weights were lowered once from the AMR topology.
-        const auto sample = [&](const auto& field) {
-            double value = field[transfer.source_center];
-            for (int axis = 0; axis < 3; ++axis)
-                value += transfer.neighbor_weight[axis]
-                    * (field[transfer.source_neighbor[axis]]
-                       - field[transfer.source_center]);
-            return value;
-        };
-        const int cell = transfer.destination_cell;
-        const FluidVector candidate{
-            sample(source.rho),
-            transfer.momentum_sign[0] * sample(source.mom_u),
-            transfer.momentum_sign[1] * sample(source.mom_v),
-            transfer.momentum_sign[2] * sample(source.mom_w),
-            sample(source.eng)};
-        const double enuc = sample(source.enuc_rate);
-        bool admissible = arch::state::recover(candidate).status
-            == arch::state::Status::valid && std::isfinite(enuc);
-        double species_sum = 0.;
-        const double species_tolerance = regrid_math::composition_simplex_tolerance(
-            source.GetNumSpecies());
-        for (int species = 0; species < source.GetNumSpecies(); ++species) {
-            double value = source.X(species, transfer.source_center);
-            for (int axis = 0; axis < 3; ++axis)
-                value += transfer.neighbor_weight[axis]
-                    * (source.X(species, transfer.source_neighbor[axis])
-                       - source.X(species, transfer.source_center));
-            destination.X(species, cell) = value;
-            species_sum += value;
-            admissible &= std::isfinite(value) && value >= 0.
-                && value <= 1.;
-        }
-        if (source.GetNumSpecies() > 0)
-            admissible &= std::abs(species_sum - 1.) <= species_tolerance;
-        if (admissible) {
-            destination.set(cell, candidate);
-            destination.enuc_rate[cell] = enuc;
-            continue;
-        }
-        // The donor center is already a published active state. If a
-        // cross-level one-sided slope leaves the admissible domain, keep its
-        // chart transform and use piecewise-constant donor data as a local
-        // ghost-only fallback. No active conservative quantity is repaired.
-        FluidVector center = source.get(transfer.source_center);
-        center.mom_u *= transfer.momentum_sign[0];
-        center.mom_v *= transfer.momentum_sign[1];
-        center.mom_w *= transfer.momentum_sign[2];
-        if (arch::state::recover(center).status != arch::state::Status::valid)
+        const CoordinateSeamFields<const double> donor{
+            source.rho.data(), source.mom_u.data(), source.mom_v.data(),
+            source.mom_w.data(), source.eng.data(), source.enuc_rate.data(),
+            source.mass_fractions.data(), source.block_total_size_,
+            source.GetNumSpecies()};
+        const CoordinateSeamFields<double> ghost{
+            destination.rho.data(), destination.mom_u.data(),
+            destination.mom_v.data(), destination.mom_w.data(),
+            destination.eng.data(), destination.enuc_rate.data(),
+            destination.mass_fractions.data(), destination.block_total_size_,
+            destination.GetNumSpecies()};
+        if (!apply_coordinate_seam_transfer(transfer, donor, ghost))
             throw std::invalid_argument("Coordinate seam donor has invalid fluid state");
-        destination.set(cell, center);
-        destination.enuc_rate[cell] = source.enuc_rate[transfer.source_center];
-        for (int species = 0; species < source.GetNumSpecies(); ++species)
-            destination.X(species, cell) = source.X(species, transfer.source_center);
     }
 }
 

@@ -22,7 +22,7 @@ technical results and combined acceptance status.
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
 | Diffusion | Species, thermal and viscous modes; RKL1/RKL2 integration |
-| Gravity | External stage sources and Cartesian composite-AMR self-gravity: periodic 1D–3D or isolated 3D; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
+| Gravity | External stage sources and composite-AMR self-gravity: Cartesian periodic 1D–3D or isolated 3D, plus tested isolated 1D radial and full-azimuth 2D/3D curved domains including coordinate joins; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
 | Built-in burning | iso7, aprox13, aprox19, aprox21; BE_NR, BD, ROS4 and network-constrained NSE |
 | Generated burning | Registered networks with device-callable math, including recognized embedded weak tables stored read-only on each backend; dense or sparse solving as described below |
 | Output and restart | Shared HDF5/checkpoint facilities, with state transfers at IO boundaries and CPU/CUDA restart routes |
@@ -53,7 +53,7 @@ The CPU owns the mesh topology, Morton ordering, and all refinement/coarsening d
 - **Morton ordering** assigns a spatially contiguous index to those blocks.
 - **Refinement** splits cells into smaller ones for higher resolution, while **coarsening** merges them when configured indicators indicate that high resolution is no longer needed.
 
-Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration operates directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
+Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration and singular-coordinate ghost reconstruction operate directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
 
 ## Choosing a backend for performance
 
@@ -116,8 +116,10 @@ regrid measurements overlap that total and must not be added again.
 
 Use the same physical input, AMR criteria and output settings on both backends
 when timing them. Self-gravity uses a real device solve on CUDA, but its
-extra setup can make small grids slower than CPU; see the
-[gravity acceptance](../validation/gravity/README.md) before choosing a backend.
+extra setup can make small grids slower than CPU. The local RTX 3060 Ti
+[curved self-gravity record](../validation/gravity/results/p13-20260924/README.md)
+shows end-to-end coupled gains while separating the Poisson cost; use the
+[gravity acceptance](../validation/gravity/README.md) for tested limits.
 
 ### What the CUDA optimization changes
 

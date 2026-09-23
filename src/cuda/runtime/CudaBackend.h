@@ -125,6 +125,11 @@ public:
         const amr::CoarseFineTransferPlan& plan, state::StateSlot slot,
         state::StateVersion source_version,
         state::CompletionToken expected) override;
+    state::CompletionToken execute_coordinate_seam_exchange(
+        std::span<const backend::BackendStateAccess>,
+        std::span<const int>, const amr::CoordinateSeamPlan&,
+        state::StateSlot, state::StateVersion,
+        state::CompletionToken) override;
     void rotate_slots(backend::BackendStateAccess current,
                       state::SlotRotation rotation) override;
     double compute_diffusion_dt(
@@ -175,7 +180,10 @@ public:
     void complete_staged_current_ghosts(
         backend::BackendTopologyStoreTransaction&,
         std::span<const amr::SameLevelExchangePlan>,
-        const amr::CoarseFineTransferPlan&) override;
+        const amr::CoarseFineTransferPlan&,
+        std::span<const int> = {},
+        std::span<const amr::BlockHandle> = {},
+        const amr::CoordinateSeamPlan* = nullptr) override;
     void stage_amr_flux_plan(
         backend::BackendTopologyStoreTransaction& transaction,
         const amr::AmrFluxTopologyPlan& topology,
@@ -212,7 +220,10 @@ public:
         const amr::ProlongationPlan&, const amr::RestrictionPlan&);
     void complete_staged_current_ghosts(
         StoreTransaction&, std::span<const amr::SameLevelExchangePlan>,
-        const amr::CoarseFineTransferPlan&);
+        const amr::CoarseFineTransferPlan&,
+        std::span<const int> = {},
+        std::span<const amr::BlockHandle> = {},
+        const amr::CoordinateSeamPlan* = nullptr);
     void abort_store_transaction(StoreTransaction&& transaction);
     void publish_store_transaction(
         StoreTransaction&& transaction, DeviceRetirementFence fence);

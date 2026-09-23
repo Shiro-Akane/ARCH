@@ -76,7 +76,10 @@ def totals(data):
 
 
 class RadialCampaign:
-    def __init__(self, executable, output):
+    def __init__(self, executable, output, backend='cpu'):
+        if backend not in ('cpu', 'cuda'):
+            raise ValueError('radial campaign backend must be cpu or cuda')
+        self.backend = backend
         self.executable = Path(executable).resolve()
         self.output = Path(output).resolve()
         self.output.mkdir(parents=True, exist_ok=True)
@@ -87,7 +90,8 @@ class RadialCampaign:
 
     def config(self, geometry, folder, **changes):
         values = self.base | dict(
-            geometry=geometry, gravity_boundary='isolated', compute_backend='cpu',
+            geometry=geometry, gravity_boundary='isolated',
+            compute_backend=self.backend,
             x1l_boundary_type='reflecting', x1r_boundary_type='reflecting',
             x1_min=0, x1_max=RADIUS, nblockx2=0, nblockx3=0,
             rho0=RHO, temperature0=1e7, amplitude=0,

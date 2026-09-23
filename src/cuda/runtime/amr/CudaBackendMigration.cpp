@@ -7,9 +7,10 @@
  * are checked before candidate ghosts are completed and the runtime may publish
  * the new topology; these methods do not retire the old store.
  */
-#include "cuda/runtime/control/CudaBackendInternal.h"
-#include "cuda/amr/RegridMigration.h"
+#include "amr/exchange/CoordinateSeamPlan.h"
 #include "amr/transfer/RegridExecutionPlan.h"
+#include "cuda/amr/RegridMigration.h"
+#include "cuda/runtime/control/CudaBackendInternal.h"
 
 #include <set>
 
@@ -191,7 +192,10 @@ void CudaBackend::migrate_staged_current(
 void CudaBackend::complete_staged_current_ghosts(
     StoreTransaction& transaction,
     std::span<const amr::SameLevelExchangePlan> same_level,
-    const amr::CoarseFineTransferPlan& coarse_fine)
+    const amr::CoarseFineTransferPlan& coarse_fine,
+    std::span<const int> active_ids,
+    std::span<const amr::BlockHandle> active_handles,
+    const amr::CoordinateSeamPlan* coordinate_seam)
 {
     if (!transaction.impl_ || transaction.impl_->consumed
         || transaction.impl_->owner.get() != impl_.get())
@@ -243,6 +247,25 @@ void CudaBackend::complete_staged_current_ghosts(
             impl_->execute_same_level_exchange(level_accesses[index], same_level[index],
                 state::StateSlot::Current, resolve);
         impl_->execute_coarse_fine_exchange(accesses, coarse_fine, state::StateSlot::Current, resolve);
+        if (coordinate_seam && !coordinate_seam->transfers.empty()) {
+            if (active_ids.size() != active_handles.size()
+                || active_ids.size() != accesses.size())
+                throw std::invalid_argument(
+                    "staged CUDA coordinate seam bindings are incomplete");
+            std::map<amr::BlockHandle, int> id_by_handle;
+            for (std::size_t index = 0; index < active_ids.size(); ++index)
+                if (!id_by_handle.emplace(active_handles[index],
+                        active_ids[index]).second)
+                    throw std::invalid_argument(
+                        "duplicate staged CUDA coordinate seam handle");
+            std::vector<int> ids_for_access;
+            ids_for_access.reserve(accesses.size());
+            for (const auto& access : accesses)
+                ids_for_access.push_back(id_by_handle.at(access.block));
+            impl_->execute_coordinate_seam_exchange(
+                accesses, ids_for_access, *coordinate_seam,
+                state::StateSlot::Current, resolve);
+        }
         impl_->checked_quiesce("complete staged CUDA Current ghosts");
         guard.completed = true;
         for (auto& [arena, initialized] : staged.uploaded_current)

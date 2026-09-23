@@ -44,7 +44,7 @@ scientific checks are documented separately in Validation.
 | Dynamic block AMR | Conservative refinement, coarsening, ghost exchange and flux correction. CUDA computes indicators and transfers cell data on the GPU; the CPU manages the mesh tree. |
 | Equations of state (EOS) | Relations between density, temperature, pressure and energy: ideal gas, Helmholtz and 3D/4D tables |
 | Diffusion | Thermal, viscous and species diffusion with RKL1/RKL2 time stepping |
-| Gravity | External gravity and composite-AMR self-gravity on CPU/CUDA. Validated self-gravity covers Cartesian periodic 1D–3D or isolated 3D. CPU-only isolated spherical/cylindrical 1D and full-azimuth 2D/3D curvilinear gravity, including tested origin/axis/pole domains with composite AMR, have been checked; see the [gravity examples](simulation/GravityBox/README.md) and [supported limits](docs/Reference.md#known-limitations). |
+| Gravity | External gravity and composite-AMR self-gravity on CPU/CUDA. Validated self-gravity covers Cartesian periodic 1D–3D or isolated 3D. Isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curved domains, including origin/axis/pole joins and composite AMR, run on CPU/CUDA; see the [gravity examples](simulation/GravityBox/README.md) and [supported limits](docs/Reference.md#known-limitations). |
 | Nuclear burning | Four built-in networks and generated pynucastro networks. Built-in networks also support nuclear statistical equilibrium (NSE), which determines composition from equilibrium conditions. |
 | Linear solvers | Burning ODEs use DenseLU for small systems, KLU on CPU and cuDSS on CUDA for sparse systems; self-gravity uses composite multigrid. |
 | Output and restart | HDF5 plots and checkpoints use the same format on both backends, including the AMR hierarchy, burn energy and timestep-controller state. |
@@ -428,9 +428,7 @@ Physics:   Gravity model extensions? → MHD? → { BSSN? | Z4c? }
 Software:  MPI         → GNN? → { FP32/FP64 selection? | RT-core acceleration? }
 ```
 
-Self-gravity runs on CPU and CUDA for the validated Cartesian cases listed above.
-CPU also supports isolated 1D radial and tested full-azimuth multidimensional curvilinear gravity, including coordinate joins.
-CUDA curved gravity and mass outside the domain remain future work. Magnetohydrodynamics (MHD) would add magnetic fields to the fluid model.
+Self-gravity runs on CPU and CUDA for the validated Cartesian and full-azimuth curved domains listed above. Mass outside the domain remains future work. Magnetohydrodynamics (MHD) would add magnetic fields to the fluid model.
 BSSN and Z4c are possible future formulations for evolving spacetime in general
 relativity; they are alternatives under consideration, not implemented modules.
 

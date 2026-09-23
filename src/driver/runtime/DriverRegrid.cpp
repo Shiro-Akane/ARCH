@@ -173,8 +173,13 @@ bool DriverRuntime::execute_regrid()
             const auto staged_coarse_fine =
                 amr_ctrl.ghost_exchange.BuildCoarseFinePlan(amr_ctrl.pool, amr_ctrl.tree,
                     config.grid.dim, payload.handles);
+            const auto staged_coordinate_seam = amr::make_coordinate_seam_plan(
+                amr_ctrl.pool, amr_ctrl.tree->GetActiveBlocks(),
+                config.grid.dim);
             compute_backend->complete_staged_current_ghosts(
-                *payload.store_transaction, staged_same_level, staged_coarse_fine);
+                *payload.store_transaction, staged_same_level, staged_coarse_fine,
+                amr_ctrl.tree->GetActiveBlocks(), payload.handles,
+                &staged_coordinate_seam);
             prepared.CompleteDeviceMigration();
 
             // No field H2D transfer occurred: publish the actual authority of

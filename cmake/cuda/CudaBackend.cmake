@@ -267,6 +267,8 @@ arch_configure_cuda_host_object(arch_cuda_backend_indicators
     src/cuda/runtime/amr/CudaBackendIndicators.cpp -g1)
 arch_configure_cuda_host_object(arch_cuda_backend_migration
     src/cuda/runtime/amr/CudaBackendMigration.cpp -g1)
+arch_configure_cuda_host_object(arch_cuda_backend_coordinate_seam
+    src/cuda/runtime/amr/CudaBackendCoordinateSeam.cpp -g1)
 
 # Keep the host-owner phase ordered without repeating each adjacent edge.
 arch_order_cuda_targets(
@@ -294,6 +296,7 @@ add_library(arch_cuda_backend STATIC
     $<TARGET_OBJECTS:arch_cuda_gravity_control>
     $<TARGET_OBJECTS:arch_cuda_backend_grid_metrics>
     $<TARGET_OBJECTS:arch_cuda_backend_migration>
+    $<TARGET_OBJECTS:arch_cuda_backend_coordinate_seam>
     $<TARGET_OBJECTS:arch_cuda_backend_amr_migration>
     $<TARGET_OBJECTS:arch_cuda_backend_amr_indicators>
     $<TARGET_OBJECTS:arch_cuda_backend_indicators>

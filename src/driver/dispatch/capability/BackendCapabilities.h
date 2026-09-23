@@ -340,8 +340,6 @@ inline CapabilityResult query_support(
     if (!valid_root_topology
         || requirements.uniform_multiblock != is_uniform_multiblock)
         return reject_cuda(BackendCapabilityCode::UnsupportedRootTopology);
-    if (requirements.gravity == GravityId::Self && requirements.geometry != GeometryId::Cartesian)
-        return reject_cuda(BackendCapabilityCode::UnsupportedGravity);
     if (requirements.geometry != GeometryId::Cartesian
         && requirements.geometry != GeometryId::Cylindrical
         && requirements.geometry != GeometryId::Spherical)

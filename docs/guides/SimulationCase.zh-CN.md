@@ -175,7 +175,7 @@ simulation/
 其通过/失败结论及简洁 CSV 结果集中在[验证索引](../../validation/README.zh-CN.md)中，本指南不重复分析表。
 自引力可从支持周期/孤立输入的 [GravityBox](../../simulation/GravityBox/README.md) 开始；
 [SNIaCoupled](../../simulation/SNIaCoupled/README.md) C/O 热点检查 Cartesian CPU/CUDA 与
-曲线坐标 CPU 的四模块联动，不作为 SN Ia 解析精度验收。
+受测完整方位角曲线坐标 CPU/CUDA 的四模块联动，不作为 SN Ia 解析精度验收。
 
 ## 6. 创建新算例
 

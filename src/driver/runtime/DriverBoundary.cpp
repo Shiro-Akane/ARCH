@@ -59,8 +59,16 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
         (void)compute_backend->execute_same_level_exchange(
             level_accesses, plan, requested, version, token);
     }
-    return compute_backend->execute_coarse_fine_exchange(
+    const auto coarse_fine_completed = compute_backend->execute_coarse_fine_exchange(
         accesses, plans.coarse_fine, requested, version, token);
+    if (coarse_fine_completed != token)
+        throw std::logic_error("Device coarse-fine exchange returned incomplete work");
+    if (plans.coordinate_seam.transfers.empty()) return coarse_fine_completed;
+    // The same physical donor map serves Host and CUDA. Only the field
+    // storage and kernel launch differ; no whole-state Host staging occurs.
+    return compute_backend->execute_coordinate_seam_exchange(
+        accesses, amr_ctrl.tree->GetActiveBlocks(), plans.coordinate_seam,
+        requested, version, token);
 }
 
 /** Wait for and validate a device boundary publication. */

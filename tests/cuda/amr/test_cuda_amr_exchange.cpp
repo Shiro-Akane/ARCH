@@ -3,7 +3,8 @@
  * @brief Compare CUDA coarse-fine exchange with the CPU transfer path.
  *
  * The host test drives production GPU exchange across dimensions and
- * geometries, then checks the resulting fluid and species fields.
+ * geometries, then checks the resulting fluid and species fields. The
+ * singular-coordinate ghost comparison uses the same Host donor plan.
  */
 #include "amr/AMRControl.h"
 #include "amr/exchange/BoundaryPlan.h"
@@ -438,6 +439,117 @@ void run_dimension(int dimension, const std::string& geometry)
               << " operations=" << plan.operations.size() << '\n';
 }
 
+/** Compare the production device seam with the shared Host ghost oracle. */
+void run_coordinate_seam(int dimension, const std::string& geometry)
+{
+    SimConfig config{};
+    config.grid.dim = dimension;
+    config.grid.geometry = geometry;
+    config.grid.x1_min = 0.;
+    config.grid.x1_max = 1.;
+    config.grid.x2_min = 0.;
+    config.grid.x2_max = dimension == 2 ? 2. * std::acos(-1.) : std::acos(-1.);
+    config.grid.x3_min = 0.;
+    config.grid.x3_max = 2. * std::acos(-1.);
+    config.grid.nblockx1 = 1;
+    config.grid.nblockx2 = dimension == 2 ? 2 : 1;
+    config.grid.nblockx3 = dimension == 3 ? 2 : 0;
+    config.grid.amr_max_blocks = 16;
+    config.amr.lrefinemin = 0;
+    config.amr.lrefinemax = 0;
+
+    amr::AMRControl control(16, dimension);
+    const std::vector<int> level{0, 0};
+    const std::vector<std::uint32_t> x{0, 0};
+    const std::vector<std::uint32_t> y{0, static_cast<std::uint32_t>(dimension == 2)};
+    const std::vector<std::uint32_t> z{0, static_cast<std::uint32_t>(dimension == 3)};
+    control.tree->LoadLeafGrid(config, 2, level, x, y, z);
+    const auto& active = control.tree->GetActiveBlocks();
+    require(active.size() == 2, "coordinate seam fixture lost a leaf");
+    const auto plan = amr::make_coordinate_seam_plan(
+        control.pool, active, dimension);
+    require(!plan.transfers.empty(),
+            "coordinate seam fixture did not reach a singular face");
+    bool crossed_block = false;
+    for (const auto& transfer : plan.transfers)
+        crossed_block |= transfer.source_id != transfer.destination_id;
+    require(crossed_block,
+            "coordinate seam fixture did not cross the azimuth blocks");
+
+    SpeciesManager species;
+    species.add_species("light", 1.0, 1.0, 1.4, 1.0);
+    species.add_species("heavy", 4.0, 2.0, 1.4, 1.0);
+    IdealGas eos(1.4, species);
+    const auto boundary = make_boundary_plan(dimension);
+    std::vector<amr::BlockHandle> handles;
+    std::vector<arch::backend::StorageGeneration> storage;
+    std::vector<arch::cuda::CudaBlockBinding> bindings;
+    arch::backend::StorageGenerationIssuer issuer{3000};
+    for (std::size_t index = 0; index < active.size(); ++index) {
+        auto& block = control.pool->GetBlock(active[index]);
+        auto& state = block.fluid_state;
+        for (int cell = 0; cell < block.grid.GetTotalSize(); ++cell) {
+            const double value = 0.001 * cell + 0.1 * index;
+            state.rho[cell] = 1. + value;
+            state.mom_u[cell] = 0.2 + value;
+            state.mom_v[cell] = 0.3 + value;
+            state.mom_w[cell] = 0.4 + value;
+            state.eng[cell] = 30. + value;
+            state.enuc_rate[cell] = 0.5 + value;
+            state.X(0, cell) = 0.25;
+            state.X(1, cell) = 0.75;
+        }
+        handles.push_back({{3000 + index}, {43}});
+        storage.push_back(issuer.issue());
+        bindings.push_back({&block, handles.back(), storage.back(), &boundary});
+    }
+    auto backend = arch::cuda::make_cuda_backend(
+        bindings, 0, make_launch_config(), species, eos);
+    std::vector<arch::backend::BackendStateAccess> accesses;
+    for (std::size_t index = 0; index < active.size(); ++index) {
+        const arch::backend::BackendStateAccess access{
+            handles[index], storage[index], arch::state::StateSlot::Current};
+        accesses.push_back(access);
+        auto& state = control.pool->GetBlock(active[index]).fluid_state;
+        backend->enqueue_upload_slot(access, arch::state::StateRegion::Interior,
+                                     transfer_view(state));
+        backend->enqueue_upload_slot(access, arch::state::StateRegion::Ghost,
+                                     transfer_view(state));
+    }
+    const arch::state::CompletionToken completed{
+        1, arch::state::CompletionState::Complete};
+    const auto before = backend->counters();
+    require(backend->execute_coordinate_seam_exchange(
+                accesses, active, plan, arch::state::StateSlot::Current,
+                {1}, completed) == completed,
+            "CUDA coordinate seam completion token drifted");
+    const auto after = backend->counters();
+    require(after.bytes_d2h - before.bytes_d2h == sizeof(int)
+                && after.kernel_count - before.kernel_count == 1,
+            "CUDA coordinate seam must download one status and launch one kernel");
+
+    std::vector<FluidState> actual(active.size());
+    for (std::size_t index = 0; index < active.size(); ++index) {
+        actual[index] = control.pool->GetBlock(active[index]).fluid_state;
+        backend->enqueue_materialize_host_current(
+            accesses[index], arch::state::StateRegion::Interior,
+            transfer_view(actual[index]));
+        backend->enqueue_materialize_host_current(
+            accesses[index], arch::state::StateRegion::Ghost,
+            transfer_view(actual[index]));
+    }
+    backend->quiesce();
+    amr::execute_coordinate_seam_plan(
+        plan, control.pool, &amr::Block::fluid_state);
+    for (std::size_t index = 0; index < active.size(); ++index)
+        compare_state(control.pool->GetBlock(active[index]).fluid_state,
+                      actual[index], dimension,
+                      arch::state::StateSlot::Current, index);
+    std::cout << "CUDA_COORDINATE_SEAM_PASS dimension=" << dimension
+              << " geometry=" << geometry
+              << " ghosts=" << plan.transfers.size() << '\n';
+}
+
 } // namespace
 
 int main()
@@ -456,6 +568,9 @@ int main()
         for (const std::string geometry : {"cartesian", "cylindrical", "spherical"})
             for (int dimension = 1; dimension <= 3; ++dimension)
                 run_dimension(dimension, geometry);
+        run_coordinate_seam(2, "cylindrical");
+        run_coordinate_seam(3, "cylindrical");
+        run_coordinate_seam(3, "spherical");
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';

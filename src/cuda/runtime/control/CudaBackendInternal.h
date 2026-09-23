@@ -295,6 +295,7 @@ struct CudaBackend::Impl {
         };
         std::array<Phase, 3> phases;
         ReusableDeviceAllocation<DeviceCoarseFineTransfer> transfers;
+        ReusableDeviceAllocation<DeviceCoordinateSeamTransfer> seam_transfers;
         ReusableDeviceAllocation<double> coarse_values;
         ReusableDeviceAllocation<int> status;
     } exchange_scratch;
@@ -350,6 +351,10 @@ struct CudaBackend::Impl {
         std::span<const backend::BackendStateAccess>,
         const amr::CoarseFineTransferPlan&, state::StateSlot,
         const BlockResolver&);
+    void execute_coordinate_seam_exchange(
+        std::span<const backend::BackendStateAccess>,
+        std::span<const int>, const amr::CoordinateSeamPlan&,
+        state::StateSlot, const BlockResolver&);
     CudaBlockRuntime& first_block() noexcept;
     const CudaBlockRuntime& first_block() const noexcept;
 

@@ -4,7 +4,10 @@
 - [CudaBackendMigration.cpp](CudaBackendMigration.cpp) executes conservative
   device migration within a store transaction.
 - [CudaBackendExchange.h](CudaBackendExchange.h) and its `.cu` implementation
-  bind same-level and coarse/fine ghost exchange.
+  bind same-level, coarse/fine and singular-coordinate ghost exchange.
+- [CudaBackendCoordinateSeam.cpp](CudaBackendCoordinateSeam.cpp) binds the shared
+  origin/axis/pole donor stencils to active or staged device slots. Only compact
+  plan metadata and one status word cross the bus; fluid fields stay resident.
 - [CudaBackendAmrFlux.h](CudaBackendAmrFlux.h) and its `.cu` implementation
   bind flux registration and reflux.
 
