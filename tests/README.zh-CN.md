@@ -125,6 +125,13 @@ python3 tools/smoke_cuda_amr_runtime.py \
 mpmath 或 h5py，各 [Validation 模块](../validation/README.zh-CN.md)均列明要求。
 只有插桩检查需要 Compute Sanitizer。
 
+## 自引力检查
+
+CPU 锚点为 `composite_poisson_contract`、`composite_poisson_analytic`、
+`self_gravity_lifecycle` 和 `self_gravity_physics`。最后一项运行正式程序，需要
+CMake 所选 `Python3_EXECUTABLE` 环境中的 numpy/h5py；应配置对应解释器及依赖，
+而不是跳过。设备、耦合与性能证据见[引力验证](../validation/gravity/README.zh-CN.md)。
+
 ## 查找与扩展测试
 
 - [host/](host/README.md)：CPU 契约、AMR/几何、检查点、EOS 与燃烧。

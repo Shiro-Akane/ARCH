@@ -14,10 +14,11 @@ Driver 同时运行 Hydro、自引力、aprox13 核反应和热扩散。源文�
 从仓库根目录运行：
 
 ```sh
-./build/selfgravity-p1-gpu/bin/ARCH SNIa2DCoupled simulation/SNIa2DCoupled/SNIa2DCoupled.par
+./build-cpu/bin/ARCH SNIa2DCoupled simulation/SNIa2DCoupled/SNIa2DCoupled.par
 ```
 
-默认使用 CPU。若要用 CUDA，复制参数文件并将 `compute_backend=cuda` 加入副本，
+上例使用 `cpu-release` 预设的程序；CUDA 使用 `cuda-release` 的
+`./build-cuda/bin/ARCH`。默认使用 CPU。若要用 CUDA，复制参数文件并将 `compute_backend=cuda` 加入副本，
 同时为两次运行分别指定 `out_dir`。表格和重现实验记录见
 [`validation/gravity/results/snia2d-20260923/README.md`](../../validation/gravity/results/snia2d-20260923/README.md)。
 运行结束应看到 120 个接受步、`state_repairs.txt` 中 `events=0`、

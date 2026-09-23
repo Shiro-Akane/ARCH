@@ -2,18 +2,22 @@
 
 P1.5 changes the low-density state contract, normalized EOS inputs and checkpoint
 format. Its [implementation record](../docs/development/P1_5ImplementationReport.zh-CN.md)
-identifies current acceptance; the older records below retain their original
+identifies acceptance for that migration; the older records below retain their original
 source scope and are not automatic acceptance of the changed implementation.
 
-The [P2 Poisson/MG record](gravity/results/p2-20260922/README.md) separately
-verifies the standalone CPU field solver. Production self-gravity and AMR/hydro
-coupling remain unavailable; CUDA compile checks do not certify GPU gravity.
+The [gravity summary](gravity/README.md) now covers production Cartesian
+self-gravity on CPU/CUDA, including composite AMR and the validated hydro, burn
+and thermal-diffusion combinations. Periodic 1D–3D and isolated 3D boundaries
+are supported; curved geometry and external mass are not. See the
+[P5–P7 acceptance](../docs/development/P5P7GravityAcceptance.zh-CN.md) for tested
+configurations. The earlier [P2 record](gravity/results/p2-20260922/README.md)
+remains a standalone CPU solver result.
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
 This directory is the single entry point for quantitative verification records
-covering hydrodynamics, diffusion, external gravity, burning, AMR, EOS, restart
+covering hydrodynamics, diffusion, gravity, burning, AMR, EOS, restart
 and generated networks on CPU and CUDA. Each record identifies its tested
 sources, binaries and data.
 

@@ -22,7 +22,7 @@ To run your first calculation, follow the [Simulation case guide](guides/Simulat
   CPU/CUDA responsibilities, measured speedups by workload size, and backend selection.
 - [Release notes](releases/README.md): changes, measured benefits and source-package contents.
 - [Simulation catalogue](../simulation/README.md): reusable problems and their
-  example inputs.
+  example inputs, including self-gravity and a coupled C/O hotspot.
 - [Physics notes](physics/README.md): model provenance and maintained contracts.
 - [Verification and validation](../validation/README.md): what was tested,
   how errors were measured, and how CPU and GPU results compare.

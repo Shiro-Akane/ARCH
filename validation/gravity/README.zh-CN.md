@@ -4,7 +4,7 @@
 
 [P2 CPU Poisson 记录](results/p2-20260922/README.md)覆盖独立均匀网格场求解器的
 周期/Dirichlet 解析收敛、弱密度扰动、CGS 尺度与失败处理；不启用 `gravity_type=self`，
-不代表 AMR、流体能量耦合或 GPU 自引力已经通过。
+该 P2 记录本身不证明后续生产路径或 GPU 路径。
 固定的离散决定和预算见 [P2 契约](../../docs/development/P2PoissonMultigrid.zh-CN.md)。
 
 ## 常外部重力
@@ -112,15 +112,22 @@ RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预�
 
 </details>
 
-## P3/P4 composite CPU 自引力
+## 生产自引力
 
-`run_self_gravity.py --arch <ARCH> --output <新目录>` 执行 Jeans 波、总能量、时间阶、
-动态 AMR 和 restart 验证（需要 numpy/h5py）；`--quick` 为 CTest 的解析与拒绝子集。
-`arch_composite_poisson 3` 覆盖三维均匀/混合层级三档制造解，`contract` 覆盖失败与不变量。
-算法、预算与支持边界见 [P3/P4 记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)。
-Historical P3/P4 budgets remain unchanged. Current production support and results:
-[P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md).
-The existing campaign now includes GravityBox isolated/coupled checks; `--quick`
-replaces the former Jeans-only CI subset without adding a test/job.
-`check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`
-qualifies actual device gravity; `--benchmark-only` runs the local repeated performance matrix.
+`gravity_type=self` 在 CPU/CUDA 上支持 Cartesian 一至三维全周期、三维孤立边界及
+复合 AMR 泊松求解。流体、燃烧与热扩散组合已做验证；曲线坐标、域外质量源和
+Jeans 专用细化指标尚不支持。可从 [GravityBox](../../simulation/GravityBox/README.md)
+的示例输入开始。[P5–P7 验收](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
+记录数值、耦合、重启与设备检查；早期 [P3/P4 记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)
+保留其 CPU 周期范围。
+
+`run_self_gravity.py --arch <ARCH> --output <新目录>` 检查 Jeans 波、能量、时间阶、
+动态 AMR、重启、孤立边界和选定耦合（需要 numpy/h5py）；`--quick` 是既有 CTest
+解析与拒绝子集。`arch_composite_poisson 3` 检查三维均匀/混合层级制造解，
+`contract` 检查失败路径及层级不变量。
+`check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <新目录>`
+检查实际设备引力；`--benchmark-only` 测量本机代表性工作负载。
+
+保留的[二维四模块算例](../../simulation/SNIa2DCoupled/README.md)检查 CPU/CUDA 上
+流体、自引力、燃烧与热扩散能否联动；其[冒烟记录](results/snia2d-20260923/README.md)
+不等于 SN Ia 解析精度验收。

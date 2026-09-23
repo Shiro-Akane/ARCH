@@ -208,7 +208,10 @@ live under the owning `validation/<module>/inputs/` directory:
 
 Their pass/fail decisions and compact CSV results are kept together in the
 [validation index](../../validation/README.md); this guide does not duplicate the
-analysis tables.
+analysis tables. For self-gravity, use the reusable periodic/isolated
+[GravityBox](../../simulation/GravityBox/README.md) inputs. The
+[SNIa2DCoupled](../../simulation/SNIa2DCoupled/README.md) C/O hotspot checks
+four-module execution on CPU/CUDA; it is not an analytic SN Ia validation case.
 
 ## 6. Create a new case
 
@@ -236,7 +239,8 @@ headers may be added as needed, but a simulation case must not include concrete
 EOS headers, `eos_Utils.h`, or `eosdispatch.h`. `UserInterface.h` re-exports the
 stable registration, case types, and `ProblemHelper` operations; keeping
 `GlobalDefs.h` as the second explicit include exposes the typed runtime
-configuration without coupling a case to an EOS policy.
+configuration and shared `arch::constants` CGS constants without coupling a case
+to an EOS policy.
 
 `Setup` runs before grid allocation. Read case parameters, validate them, and register species there. The `Init` function is called under OpenMP to populate the allocated root-grid cells exactly once. Both the initial and any subsequent fine AMR blocks are constructed via conservative transfers rather than by calling `Init` again. Because of this, `Init` must be strictly deterministic, thread-safe, and free of any order-dependent side effects.
 

@@ -14,7 +14,8 @@ names and feature conditions.
 - [Poisson/MG](gravity/test_poisson_multigrid.cpp) checks the standalone P2
   CPU solver against discrete Fourier and continuum analytic solutions,
   including boundary force order, CGS scale invariance and rejected inputs.
-  It does not exercise a production self-gravity route.
+  The production route is covered separately by the composite operator,
+  lifecycle and `self_gravity_physics` anchors listed in the [test guide](../README.md).
 - [Generated NSE](network/test_generated_nse.cpp) executes shared analytic witnesses;
   [real generated NSE](network/test_generated_nse_network.cpp) checks the maintained
   `nse_light`/`nse_alpha` packages' detailed balance and three ODE handoffs.

@@ -80,7 +80,7 @@ external provenance claim unless their file header or that notice says so.
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
 | Geometry | `cartesian`, `cylindrical`, `spherical` | supported on CPU and CUDA | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
 | AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
-| Self gravity | `gravity_type = self` | CPU, CUDA | Cartesian periodic 1D–3D or isolated 3D; composite AMR MG, Euler/RK2/RK3, validated burn/diffusion coupling. See GravityBox and the P5–P7 record. |
+| Self gravity | `gravity_type = self` | CPU, CUDA | Cartesian periodic 1D–3D or isolated 3D; composite AMR MG, Euler/RK2/RK3, validated burn/thermal-diffusion coupling. See [GravityBox](../simulation/GravityBox/README.md) and the [P5–P7 record](development/P5P7GravityAcceptance.zh-CN.md). |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
 
 CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, the registered
@@ -915,9 +915,9 @@ vector evaluated inside every hydro RK stage. Self gravity prepares one composit
 Poisson solve from the actual density input of each RK stage. Momentum uses cell
 acceleration; energy work uses the actual Riemann mass flux and compatible face
 acceleration. This basic coupling has convergent total-energy error, not exact
-conservation of gas plus gravitational energy. See the [P3/P4 record](development/P3P4CompositeGravity.zh-CN.md).
+conservation of gas plus gravitational energy. See the [current P5–P7 acceptance](development/P5P7GravityAcceptance.zh-CN.md).
 
-The current CPU solver requires dyadic root cell extents, native spacing ratio
+The CPU/CUDA solver requires dyadic root cell extents, native spacing ratio
 at most two, 2:1 leaf balance and at most 64 unknowns at its smallest uniform
 coarse level. Unsupported geometry fails before field publication. Poisson caches
 are separate from fluid storage and are rebuilt on topology changes. Plot output

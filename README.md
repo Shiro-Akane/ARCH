@@ -32,7 +32,7 @@ To run your very first simulation, follow the [Build](#build) and [First run](#f
 See the [v1.1.0 release notes](docs/releases/V1.1.0.md) for the CUDA optimization,
 measured performance and source-package contents.
 
-The table distinguishes shared CPU/CUDA features from CPU-only self gravity. The release version has successfully passed rigorous numerical, application, device-safety, build, and resource checks. Detailed testing configurations and the final delivery-review status are documented in the [Validation](validation/README.md) suite.
+The table describes the capabilities of this checkout on CPU and CUDA. The v1.1.0 release results retain their own source scope; current self-gravity acceptance and its limits are recorded in [Validation](validation/README.md).
 
 [Continuous integration](tests/README.md#github-continuous-integration) checks
 the tooling and CPU build/regressions on new changes. GPU and independent
@@ -44,9 +44,9 @@ scientific checks are documented separately in Validation.
 | Dynamic block AMR | Conservative refinement, coarsening, ghost exchange and flux correction. CUDA computes indicators and transfers cell data on the GPU; the CPU manages the mesh tree. |
 | Equations of state (EOS) | Relations between density, temperature, pressure and energy: ideal gas, Helmholtz and 3D/4D tables |
 | Diffusion | Thermal, viscous and species diffusion with RKL1/RKL2 time stepping |
-| Gravity | External gravity on CPU/CUDA; periodic Cartesian self gravity with composite AMR multigrid on CPU (hydro without burn/diffusion). See the [P3/P4 scope](docs/development/P3P4CompositeGravity.zh-CN.md). |
+| Gravity | External gravity and composite-AMR self-gravity on CPU/CUDA. Self-gravity supports Cartesian periodic 1D–3D or isolated 3D, with validated hydro, burn and thermal-diffusion combinations; see the [gravity examples](simulation/GravityBox/README.md) and [supported limits](docs/Reference.md#known-limitations). |
 | Nuclear burning | Four built-in networks and generated pynucastro networks. Built-in networks also support nuclear statistical equilibrium (NSE), which determines composition from equilibrium conditions. |
-| Linear solvers | DenseLU for small systems; KLU on CPU and cuDSS on CUDA for sparse systems |
+| Linear solvers | Burning ODEs use DenseLU for small systems, KLU on CPU and cuDSS on CUDA for sparse systems; self-gravity uses composite multigrid. |
 | Output and restart | HDF5 plots and checkpoints use the same format on both backends, including the AMR hierarchy, burn energy and timestep-controller state. |
 
 Set `compute_backend = cpu`, `cuda`, or `auto` in your parameter file to choose where the simulation runs. Requesting `cuda` explicitly will trigger an error if the build or hardware doesn't support it. With `auto`, ARCH will gracefully fall back to the CPU at startup if CUDA is unavailable but the CPU supports the requested features. The backend remains fixed once the run begins. The [CUDA guide](docs/CudaBackendStatus.md) details these choices and explains how the CPU and GPU cooperate during AMR.
@@ -420,18 +420,17 @@ NSE implementation, Helmholtz EOS, or table data. The optional KLU backend retai
 ## Development roadmap
 
 The two tracks below show the development direction beyond the capabilities
-listed above. The first item in each track is the current focus. A `?` marks a
-later proposal whose scope and design remain open; the arrows indicate planning
-order, not a software or physical dependency.
+listed above. A `?` marks a proposal whose scope and design remain open; the
+arrows indicate planning order, not a software or physical dependency.
 
 ```text
-Physics:   Self-gravity isolated BC / GPU → MHD? → { BSSN? | Z4c? }
+Physics:   Gravity model extensions? → MHD? → { BSSN? | Z4c? }
 Software:  MPI         → GNN? → { FP32/FP64 selection? | RT-core acceleration? }
 ```
 
-Periodic CPU self-gravity calculates the field produced by the simulated matter;
-isolated boundaries and GPU solving remain planned. Magnetohydrodynamics (MHD)
-would add magnetic fields to the fluid model.
+Self-gravity now runs on CPU and CUDA for the Cartesian periodic and 3D isolated
+cases listed above. Curvilinear gravity and mass outside the domain remain possible
+future extensions. Magnetohydrodynamics (MHD) would add magnetic fields to the fluid model.
 BSSN and Z4c are possible future formulations for evolving spacetime in general
 relativity; they are alternatives under consideration, not implemented modules.
 

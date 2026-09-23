@@ -5,9 +5,8 @@ the authoritative source text.
 
 The [P2 CPU Poisson record](results/p2-20260922/README.md) covers the standalone
 uniform-grid field solver: periodic/Dirichlet analytic convergence, weak density
-contrast, CGS scale invariance and failure handling. It does not enable
-`gravity_type=self`, AMR coupling, hydro energy coupling or GPU gravity.
-The fixed numerical decisions are recorded in the
+contrast, CGS scale invariance and failure handling. That P2 record alone does not establish the later production or GPU route.
+Its fixed numerical decisions are recorded in the
 [P2 contract](../../docs/development/P2PoissonMultigrid.zh-CN.md).
 
 ## Constant external gravity
@@ -134,21 +133,25 @@ These data files support reproduction and independent review; they are not setup
 
 </details>
 
-## P3/P4 composite CPU gravity
+## Production self-gravity
 
-`run_self_gravity.py --arch <ARCH> --output <new directory>` executes independent
-Jeans-wave, total-energy, time-order, dynamic AMR and restart checks (numpy/h5py).
-`--quick` is the CTest analytic/rejection subset. `arch_composite_poisson 3` covers
-three-dimensional uniform and composite manufactured solutions at three resolutions;
-`contract` tests failure, scale, conservation and nested hierarchy behavior.
+`gravity_type=self` runs composite-AMR Poisson solves on CPU and CUDA for Cartesian
+periodic 1D–3D and isolated 3D domains. Hydro, burning and thermal-diffusion
+combinations have been checked; curved geometry, external mass and a Jeans-specific
+refinement indicator are not supported. Start with [GravityBox](../../simulation/GravityBox/README.md)
+for reusable inputs. The [P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
+records numerical, coupling, restart and device checks. The earlier
+[P3/P4 record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
+periodic scope.
 
-The [P3/P4 implementation record](../../docs/development/P3P4CompositeGravity.zh-CN.md)
-Historical P3/P4 budgets remain unchanged. Current production support and results:
-[P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md).
-The existing campaign now includes GravityBox isolated/coupled checks; `--quick`
-replaces the former Jeans-only CI subset without adding a test/job.
+`run_self_gravity.py --arch <ARCH> --output <new directory>` checks Jeans waves,
+energy, time order, dynamic AMR, restart, isolated boundaries and selected coupling
+(numpy/h5py). `--quick` is the existing CTest analytic/rejection subset.
+`arch_composite_poisson 3` checks three-dimensional uniform and composite
+manufactured solutions; `contract` checks failure and hierarchy invariants.
 `check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`
-qualifies actual device gravity; `--benchmark-only` runs the local repeated performance matrix.
-The [2D four-module smoke record](results/snia2d-20260923/README.md) adds a retained
-C/O hotspot example with 120 coupled Hydro/self-gravity/burn/thermal-diffusion steps
-on both backends. It checks execution and local timing, not analytic SN Ia accuracy.
+qualifies actual device gravity; `--benchmark-only` measures representative local workloads.
+
+The retained [2D four-module example](../../simulation/SNIa2DCoupled/README.md)
+checks Hydro/self-gravity/burn/thermal-diffusion execution on both backends. Its
+[smoke record](results/snia2d-20260923/README.md) is not analytic SN Ia validation.

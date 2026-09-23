@@ -62,7 +62,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 失败通过 `diagnostics` 返回 code、parameterKey、message、severity。完整数值错误和主要坐标/选项错误可定位字段；部分既有 RuntimeParams 交叉检查仍只给整体信息，此时 parameterKey 为 null。错误结果可能只包含已确认的部分参数，不要将其当作完整有效配置。
 
-检查包括标准类型、表达式、现有 RuntimeParams 校验，以及轴 blocks/范围、AMR 层级和适用的注册选项；仍不替代模型 Setup、EOS 适用区间或完整求解器/设备验证。self gravity 不再统一产生 unavailable 警告；CPU Cartesian 全周期且无 burn/diffusion 是当前运行边界，配置合法仍不等于设备/求解就绪。Helmholtz + diffusion 显式传入 alpha_therm/nu_visc/D_spec 返回字段错误，不再从库内部直接退出进程。
+检查包括标准类型、表达式、现有 RuntimeParams 校验，以及轴 blocks/范围、AMR 层级和适用的注册选项；仍不替代模型 Setup、EOS 适用区间或完整求解器/设备验证。self gravity 不再统一产生 unavailable 警告；当前生产路径支持 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界及已验证的燃烧/热扩散组合，配置合法仍不等于设备/求解就绪。Helmholtz + diffusion 显式传入 alpha_therm/nu_visc/D_spec 返回字段错误，不再从库内部直接退出进程。
 
 ## 坐标与单位
 

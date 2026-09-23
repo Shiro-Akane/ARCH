@@ -22,7 +22,7 @@ technical results and combined acceptance status.
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
 | Diffusion | Species, thermal and viscous modes; RKL1/RKL2 integration |
-| Gravity | External gravity using common stage source terms |
+| Gravity | External stage sources and Cartesian composite-AMR self-gravity: periodic 1D–3D or isolated 3D; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
 | Built-in burning | iso7, aprox13, aprox19, aprox21; BE_NR, BD, ROS4 and network-constrained NSE |
 | Generated burning | Registered networks with device-callable math, including recognized embedded weak tables stored read-only on each backend; dense or sparse solving as described below |
 | Output and restart | Shared HDF5/checkpoint facilities, with state transfers at IO boundaries and CPU/CUDA restart routes |
@@ -115,7 +115,9 @@ benchmark your problem. End-to-end time includes initialization and output;
 regrid measurements overlap that total and must not be added again.
 
 Use the same physical input, AMR criteria and output settings on both backends
-when timing them.
+when timing them. Self-gravity uses a real device solve on CUDA, but its
+extra setup can make small grids slower than CPU; see the
+[gravity acceptance](../validation/gravity/README.md) before choosing a backend.
 
 ### What the CUDA optimization changes
 
@@ -174,10 +176,7 @@ requirements grow with the network and mesh workload.
   CPU-only packages execute on CPU. The exact manifest fields are documented
   in the [network contract](Reference.md). Independent
   Urca trajectory results are available in [network validation](../validation/network/README.md).
-- Self-gravity is available on CPU for periodic Cartesian hydro with AMR; CUDA
-  self-gravity remains explicitly unavailable (P6). This CPU addition does not
-  imply a GPU gravity speedup. Generated
-  networks that pass the nuclear-data and equilibrium-model checks can use
+- Generated networks that pass the nuclear-data and equilibrium-model checks can use
   shared NSE math, covered by focused CPU/CUDA tests rather than a new full
   application qualification.
   See the [model limits](../src/physics/nse/README.md). Both built-in and generated

@@ -18,6 +18,8 @@ runtime name; the catalogue below gives the actual names.
 | [GaussianPulse](GaussianPulse/README.md) | `Gaussian` | Species pulse with optional pressure and velocity perturbations |
 | [DiffusionMode](DiffusionMode/README.md) | `DiffusionMode` | Periodic cosine mode for species diffusion |
 | [ExternalGravity](ExternalGravity/README.md) | `ExternalGravity` | Uniform state under constant external acceleration |
+| [JeansWave](JeansWave/README.md) | `JeansWave` | Periodic stable Jeans-wave convergence example |
+| [GravityBox](GravityBox/README.md) | `GravityBox` | Reusable periodic or isolated self-gravitating gas inputs with optional coupling |
 | [BurnOneZone](BurnOneZone/README.md) | `BurnOneZone` | Uniform network evolution through the production burn driver |
 | [BurnGradient](BurnGradient/README.md) | `BurnGradient` | Spatial burn pulse for energy-driven AMR and restart |
 | [RTinstability](RTinstability/README.md) | `RT` | Rayleigh–Taylor stratification and mixing |

@@ -16,7 +16,7 @@ CUDA 后端会在 GPU 上执行流体动力学与自适应网格的数值计算�
 | 动态 AMR | 细化指标、守恒插值与限制、跨层交换、流体／扩散通量修正和事务式状态迁移 |
 | EOS | 理想气体、Helmholtz、规范化 Tabular3D/Tabular4D 数据布局 |
 | 扩散 | 组分、热、黏性模式及 RKL1/RKL2 |
-| 重力 | 使用共用分阶段源项的外部重力 |
+| 重力 | 外部阶段源项，以及 Cartesian 复合 AMR 自引力：一至三维全周期或三维孤立边界；已验证燃烧与热扩散组合。见[引力验证](../validation/gravity/README.zh-CN.md)。 |
 | 内置燃烧 | iso7、aprox13、aprox19、aprox21；BE_NR、BD、ROS4 和网络受限 NSE |
 | 生成网络燃烧 | 已注册且数学实现可在设备端运行的网络；支持已识别的内嵌弱反应率表，各后端分别保存只读数据；按下述规则执行稠密或稀疏求解 |
 | 输出与恢复 | 共用 HDF5/checkpoint 设施，在 IO 边界同步状态，并提供 CPU/CUDA 重启路径 |
@@ -91,7 +91,8 @@ CPU8 的 5.0–10.3 倍**，对应加速比约为 0.10–0.20。其数值对照�
 `compute_backend = auto` 选择可用且支持当前配置的后端，不会替用户测速。
 端到端时间包括初始化和输出；重网格耗时已包含在其中，不能重复相加。
 
-测速时，两端应使用相同的物理输入、AMR 判据和输出设置。
+测速时，两端应使用相同的物理输入、AMR 判据和输出设置。CUDA 自引力在设备上实际求解，
+但小网格的额外开销可能使其慢于 CPU；选择后端前可查阅[引力验收](../validation/gravity/README.zh-CN.md)。
 
 ### CUDA 优化具体改变了什么
 
@@ -136,8 +137,6 @@ ARCH 支持 pynucastro 生成的反应网络，并通过 CPU KLU / GPU cuDSS 提
   配置时会根据清单检查这些能力。仅提供 CPU 接口的包在 CPU 上执行；准确的
   清单字段见[网络契约](Reference.zh-CN.md)。
   独立 Urca 轨迹结果见[网络验证](../validation/network/README.zh-CN.md)。
-- CPU 已支持周期 Cartesian 自引力和 composite AMR（无 burn/diffusion）；
-  CUDA 自引力仍明确拒绝，属于 P6。该 CPU 增量不代表 GPU 引力加速已实现。
 - 通过核数据与平衡模型检查的生成网络可使用
   共用的 NSE 数学实现，并完成定点 CPU／CUDA 检查；这不等于新增完整应用级资格验收。详见
   [模型边界](../src/physics/nse/README.md)。内置与生成 NSE 都受所选核素集合限制，

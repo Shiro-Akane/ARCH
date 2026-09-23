@@ -173,6 +173,9 @@ simulation/
 | `BurnOneZone/` | aprox13/Helmholtz ODE 求解器比较 |
 
 其通过/失败结论及简洁 CSV 结果集中在[验证索引](../../validation/README.zh-CN.md)中，本指南不重复分析表。
+自引力可从支持周期/孤立输入的 [GravityBox](../../simulation/GravityBox/README.md) 开始；
+[SNIa2DCoupled](../../simulation/SNIa2DCoupled/README.md) C/O 热点检查 CPU/CUDA
+四模块联动，不作为 SN Ia 解析精度验收。
 
 ## 6. 创建新算例
 
@@ -192,7 +195,7 @@ void Init(const PointCoords &point, PrimitiveData &out) const;
 
 CMake 自动提供 `include/` 与 `src/` 搜索路径，因此算例不需要知道内部目录层级或本机路径；换机器后重新配置工程即可。两个公开头见 [include/](../../include/README.md)。
 
-这两个文件构成完整的算例侧 ARCH 头文件表面。可以按需加入 C++ 标准库头文件，但算例不得直接包含具体 EOS 头文件、`eos_Utils.h` 或 `eosdispatch.h`。`UserInterface.h` 重新导出稳定的注册宏、算例类型和 `ProblemHelper` 操作；第二个显式头文件 `GlobalDefs.h` 提供有类型的运行时配置，同时避免算例依赖具体 EOS 策略。
+这两个文件构成完整的算例侧 ARCH 头文件表面。可以按需加入 C++ 标准库头文件，但算例不得直接包含具体 EOS 头文件、`eos_Utils.h` 或 `eosdispatch.h`。`UserInterface.h` 重新导出稳定的注册宏、算例类型和 `ProblemHelper` 操作；第二个显式头文件 `GlobalDefs.h` 提供有类型的运行时配置与共用的 `arch::constants` CGS 常数，同时避免算例依赖具体 EOS 策略。
 
 `Setup` 在网格分配前运行，你应该在其中读取、验证算例参数并注册所需的核素。`Init` 函数会在 OpenMP 并行环境下被调用，用于精确地将初始数据填充到已分配的根网格单元中（且仅调用一次）。初始以及后续生成的任何细网格 block 都是通过守恒的 AMR 传递操作构造的，而不会再次调用 `Init`。正因如此，`Init` 必须是严格确定的、线程安全的，并且没有任何依赖于执行顺序的副作用。
 

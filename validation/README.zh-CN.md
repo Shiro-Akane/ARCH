@@ -1,15 +1,17 @@
 # ARCH Verification 与 Validation
 
-P1.5 调整了低密度状态契约、规范化 EOS 输入和检查点格式。当前验收以
-[实施记录](../docs/development/P1_5ImplementationReport.zh-CN.md)为准；下方旧记录保留
-原始源码范围，不能直接作为本轮实现的通过证据。
+P1.5 调整了低密度状态契约、规范化 EOS 输入和检查点格式。该阶段的验收见
+[实施记录](../docs/development/P1_5ImplementationReport.zh-CN.md)；下方旧记录保留
+原始源码范围，不能直接作为当前实现的通过证据。
 
-[P2 Poisson/MG 记录](gravity/results/p2-20260922/README.md)单独验证 CPU 场求解原型；
-生产自引力及 AMR/流体耦合尚未启用，CUDA 编译检查不代表 GPU 引力已经验证。
+[引力摘要](gravity/README.zh-CN.md)现覆盖 CPU/CUDA 上的生产 Cartesian 自引力、
+复合 AMR，以及已验证的流体、燃烧和热扩散组合。支持一至三维全周期与三维孤立边界；
+曲线坐标和域外质量源尚不支持。受测配置见 [P5–P7 验收](../docs/development/P5P7GravityAcceptance.zh-CN.md)。
+早期 [P2 记录](gravity/results/p2-20260922/README.md)仍仅证明独立 CPU 场求解器。
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-本目录是定量验证记录的统一入口，覆盖 CPU 与 CUDA 上的流体、扩散、外部重力、燃烧、AMR、EOS、重启和生成网络。各项记录注明实际测试的源码、程序与数据版本。
+本目录是定量验证记录的统一入口，覆盖 CPU 与 CUDA 上的流体、扩散、重力、燃烧、AMR、EOS、重启和生成网络。各项记录注明实际测试的源码、程序与数据版本。
 
 建议先阅读计划使用的物理模块摘要。摘要先说明测试问题、参考答案和允许误差，
 再链接完整记录。收敛检查回答网格或时间步细化后误差是否减小；守恒检查则把

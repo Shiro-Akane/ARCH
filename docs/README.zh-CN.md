@@ -16,7 +16,7 @@
 - [CUDA 与 GPU-AMR 指南](CudaBackendStatus.zh-CN.md)：支持的功能、CPU/CUDA 的
   共同职责、不同规模的实测加速比，以及后端选择；
 - [版本更新说明](releases/README.md)：各版本的改动、实测收益与源码包内容；
-- [算例目录](../simulation/README.md)：可复用的问题定义和示例输入；
+- [算例目录](../simulation/README.md)：可复用的问题定义和示例输入，包括自引力与 C/O 热点耦合算例；
 - [物理说明](physics/README.md)：模型来源与维护中的模型契约；
 - [Verification 与 Validation](../validation/README.zh-CN.md)：测了什么、如何衡量误差，以及 CPU 与 GPU 结果如何比较；
 - [EOS 运行时表](../EOS_toolkit/README.zh-CN.md)：表目录、来源和完整性要求；

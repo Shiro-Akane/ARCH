@@ -3,7 +3,7 @@
 从仓库根目录运行已构建的程序：
 
 ```sh
-./build/cpu-release/bin/ARCH GravityBox simulation/GravityBox/GravityBox.par
+./build-cpu/bin/ARCH GravityBox simulation/GravityBox/GravityBox.par
 ```
 
 请将程序路径替换为实际构建位置。所有输入与 EOS 均使用 **CGS**：长度 cm、
