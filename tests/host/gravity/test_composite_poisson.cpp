@@ -1,4 +1,4 @@
-#include "numerics/multigrid/HostCompositeMG.h"
+#include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/GravityBoundary.h"
 #include "physics/constant/PhysicalConstants.h"
 #include <cmath>
@@ -62,7 +62,7 @@ void convergence(int maximum_dimension) {
         double previous_force=0.;
         for (int n:{16,32,64}) {
             const auto base=base_mesh(dim,n);
-            multigrid::HostCompositeMG solver(base,make_cells(base,refined));
+            multigrid::CompositeMultigrid solver(base,make_cells(base,refined));
             const auto& op=solver.op();
             std::vector<double> rhs(op.size()),exact(op.size()),error(op.size());
             for (int i=0;i<op.size();++i) {
@@ -108,7 +108,7 @@ void convergence(int maximum_dimension) {
 void averaged_source_exactness() {
     for (int n:{16,32,64}) {
         const auto base=base_mesh(1,n);
-        multigrid::HostCompositeMG solver(base,make_cells(base,false));
+        multigrid::CompositeMultigrid solver(base,make_cells(base,false));
         const auto& op=solver.op();
         std::vector<double> rhs(op.size());
         for (int i=0;i<op.size();++i)
@@ -124,7 +124,7 @@ void averaged_source_exactness() {
 void contract() {
     const auto base=base_mesh(2,16);
     auto cells=make_cells(base,true);
-    multigrid::HostCompositeMG solver(base,cells); const auto& op=solver.op();
+    multigrid::CompositeMultigrid solver(base,cells); const auto& op=solver.op();
     std::vector<double> input(op.size(),-7.),applied(op.size());
     op.apply(input,applied);
     for(double x:applied) require(x==0.,"constant nullspace");
@@ -166,7 +166,7 @@ void contract() {
             for(int child=0;child<4;++child) nested.push_back({2,{2*cell.index[0]+(child&1),2*cell.index[1]+((child>>1)&1),0}});
         } else ++i;
     }
-    multigrid::HostCompositeMG hierarchy(base,nested);
+    multigrid::CompositeMultigrid hierarchy(base,nested);
     std::vector<double> nested_rhs(hierarchy.op().size());
     for(int i=0;i<hierarchy.op().size();++i) nested_rhs[i]=potential(hierarchy.op().center(i),2);
     hierarchy.op().project(nested_rhs);
@@ -181,7 +181,7 @@ void boundary_convergence(int largest=32) {
         for(int n:{8,16,32}) {
             if(n>largest)continue;
             auto base=base_mesh(3,n);
-            multigrid::HostCompositeMG solver(base,make_cells(base,refined),elliptic::BoundaryKind::Dirichlet);
+            multigrid::CompositeMultigrid solver(base,make_cells(base,refined),elliptic::BoundaryKind::Dirichlet);
             const auto& op=solver.op();
             const auto exact=[](const std::array<double,3>& p) {return std::exp(.3*p[0]+.2*p[1]+.1*p[2]);};
             std::vector<double> rhs(op.size()),bc(op.faces().size()),error(op.size());
@@ -247,13 +247,98 @@ void isolated_boundary() {
     }
 }
 
+
+/** Check radial geometry, regular origin, mixed AMR and independent Gauss law. */
+void radial_convergence() {
+    for(auto geometry:{elliptic::Geometry::Spherical,elliptic::Geometry::Cylindrical})
+        for(bool refined:{false,true}) {
+            const int d=geometry==elliptic::Geometry::Spherical?3:2;
+            double previous_phi=0.,previous_face=0.;
+            for(int n:{16,32,64}) {
+                auto base=base_mesh(1,n);base.geometry=geometry;
+                multigrid::CompositeMultigrid solver(base,make_cells(base,refined),
+                    elliptic::BoundaryKind::RadialIsolated);
+                const auto& op=solver.op();
+                constexpr double q=.2, G=1.;
+                std::vector<double> rho(op.size()),rhs(op.size()),exact(op.size()),error(op.size());
+                double mass=0.;
+                for(int i=0;i<op.size();++i) {
+                    const double r=op.center(i)[0],h=op.width(i,0),left=r-.5*h,right=r+.5*h;
+                    const double average_r2=(double(d)/(d+2))*
+                        (std::pow(right,d+2)-std::pow(left,d+2))/
+                        (std::pow(right,d)-std::pow(left,d));
+                    rho[i]=1.+q*average_r2;
+                    rhs[i]=-4*pi*G*rho[i];
+                    mass+=rho[i]*op.volumes()[i];
+                    const double radial=4*pi*G*(r*r/(2*d)+q*std::pow(r,4)/(4*(d+2)));
+                    const double at_outer=geometry==elliptic::Geometry::Spherical
+                        ?-4*pi*G*(1./d+q/(d+2)):0.;
+                    const double radial_outer=4*pi*G*(1./(2*d)+q/(4*(d+2)));
+                    exact[i]=at_outer+radial-radial_outer;
+                }
+                // Outer spherical value is -G*M/R; cylindrical value fixes
+                // the additive logarithmic-potential gauge to Phi(R)=0.
+                const double boundary=geometry==elliptic::Geometry::Spherical?-4*pi*G*mass:0.;
+                std::vector<double> bc(op.faces().size());
+                for(std::size_t f=0;f<bc.size();++f)
+                    if(op.faces()[f].boundary_side==1)bc[f]=boundary;
+                // At the finest mixed cylindrical level, A has O(h^-2)
+                // coefficients. Multiplying one FP64 ulp in Phi by that
+                // scale gives an O(1e-12) residual floor. Keep the physical
+                // residual check while setting its relative request above
+                // that floor; potential order and independent Gauss checks
+                // below remain unchanged.
+                const auto result=solver.solve(op.effective_rhs(rhs,bc),{3e-13,0.,300});
+                if(result.report.status!=multigrid::SolveStatus::Converged)
+                    std::cout<<"radial solve failed geometry="<<d<<" refined="<<refined
+                        <<" n="<<n<<" cycles="<<result.report.cycles
+                        <<" residual="<<result.report.residual
+                        <<" target="<<result.report.target<<'\n';
+                require(result.report.status==multigrid::SolveStatus::Converged,
+                    "radial composite solve failed");
+                for(int i=0;i<op.size();++i)error[i]=result.potential[i]-exact[i];
+                const double phi_error=op.norm(error);
+                double gradient_error=0.,area=0.;
+                for(const auto& f:op.faces()) {
+                    const double r=f.center[0];
+                    const double expected=4*pi*G*(r/d+q*r*r*r/(d+2));
+                    const double actual=op.face_gradient(result.potential,f,
+                        f.boundary_side==1?boundary:0.);
+                    gradient_error+=f.area*std::pow(actual-expected,2);
+                    area+=f.area;
+                }
+                gradient_error=std::sqrt(gradient_error/area);
+                std::cout<<"radial geometry="<<d<<" refined="<<refined<<" n="<<n
+                    <<" phi="<<phi_error<<" face="<<gradient_error
+                    <<" cycles="<<result.report.cycles<<'\n';
+                if(previous_phi) {
+                    require(std::log2(previous_phi/phi_error)>=1.8,
+                        "radial potential order below 1.8");
+                    // With exact volume-average rho, summing A*Phi=b from
+                    // the regular origin gives A_f*grad(Phi)_f =
+                    // 4*pi*G*sum_inside(rho_i*V_i). The analytic polynomial
+                    // has this identical enclosed mass at every face, so
+                    // face error is controlled by solve residual, not h^2.
+                    // Require a stronger absolute Gauss-law bound instead
+                    // of an undefined quotient of residual-floor errors.
+                    require(gradient_error<1e-9,
+                        "radial face violates the exact discrete Gauss-law budget");
+                }
+                previous_phi=phi_error;previous_face=gradient_error;
+                require(std::abs(mass-(1./d+q/(d+2)))<1e-13,
+                    "radial physical mass integral mismatch");
+            }
+        }
+}
+
 }
 int main(int argc,char** argv) {
     try {
         std::cout<<std::setprecision(17);
-        if (argc>1 && std::string(argv[1])=="contract") { contract(); return 0; }
+        if (argc>1 && std::string(argv[1])=="contract") { contract(); radial_convergence(); return 0; }
+        if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary") {boundary_convergence();isolated_boundary();return 0;}
-        if(argc>1 && std::string(argv[1])=="ci") {boundary_convergence(16);isolated_boundary();averaged_source_exactness();convergence(2);return 0;}
+        if(argc>1 && std::string(argv[1])=="ci") {boundary_convergence(16);isolated_boundary();averaged_source_exactness();convergence(2);radial_convergence();return 0;}
         averaged_source_exactness();
         convergence(argc>1 ? std::stoi(argv[1]) : 3);
         std::cout<<"Composite Poisson analytic validation passed\n";

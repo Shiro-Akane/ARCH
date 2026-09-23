@@ -14,8 +14,7 @@
 #include "driver/schedule/StageScheduler.h"
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "physics/eos/eos.h"
-#include "physics/gravity/ExternalGravitySource.h"
-#include "physics/gravity/GravityPatchView.h"
+#include "physics/gravity/GravitySource.h"
 
 #include <cuda_runtime.h>
 #include <array>

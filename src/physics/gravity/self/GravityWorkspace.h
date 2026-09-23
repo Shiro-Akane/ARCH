@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 #include "amr/elliptic/EllipticMeshAdapter.h"
-#include "numerics/multigrid/HostCompositeMG.h"
+#include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/GravityExecution.h"
 #include "physics/gravity/GravitySolveTypes.h"
 #include "physics/gravity/self/SelfGravity.h"
@@ -24,11 +24,11 @@ struct SelfGravity::Workspace {
     template<class T> using Array=arch::multigrid::Array<T>;
     amr::EllipticMeshBinding binding;
     std::shared_ptr<GravityExecution> execution;
-    arch::multigrid::HostCompositeMG solver;
-    Vector density,rhs,boundary_values,face_gradient,sides,g,patch_faces,inverse_dt_squared;
+    arch::multigrid::CompositeMultigrid solver;
+    Vector density,rhs,boundary_values,face_gradient,sides,work_sides,g,patch_faces,patch_work_faces,inverse_dt_squared;
     Array<GravityCell> cells;
     Array<const double*> density_pointers;
-    arch::multigrid::SparseArray side_gather,patch_gather;
+    arch::multigrid::SparseArray side_gather,work_phi_gather,work_boundary_gather,patch_gather;
     Array<BoundaryTreeNode> nodes;
     Array<BoundaryMoments> moments;
     Array<BoundaryPoint> points;

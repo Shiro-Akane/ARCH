@@ -1,7 +1,7 @@
 #include "physics/gravity/GravitySolveTypes.h"
 #include "physics/gravity/GravityExecution.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
-#include "numerics/multigrid/HostCompositeMG.h"
+#include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/self/SelfGravity.h"
 #include "amr/AMRControl.h"
 #include "physics/constant/PhysicalConstants.h"

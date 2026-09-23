@@ -137,16 +137,18 @@ These data files support reproduction and independent review; they are not setup
 
 `gravity_type=self` runs composite-AMR Poisson solves on CPU and CUDA for Cartesian
 periodic 1D–3D and isolated 3D domains. Hydro, burning and thermal-diffusion
-combinations have been checked; curved geometry, external mass and a Jeans-specific
-refinement indicator are not supported. Start with [GravityBox](../../simulation/GravityBox/README.md)
+combinations have been checked. CPU-only 1D isolated spherical/cylindrical gravity
+has passed the 1D CPU elliptic, mixed-AMR, origin, hydrostatic,
+low-density and restart checks in the existing gravity campaign. Multidimensional curved gravity, external mass and
+a Jeans-specific refinement indicator are not supported. Start with [GravityBox](../../simulation/GravityBox/README.md)
 for reusable inputs. The [P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
-records numerical, coupling, restart and device checks. The earlier
+records numerical, coupling, restart and device checks. The [P8–P10 1D radial record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The earlier
 [P3/P4 record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
 periodic scope.
 
 `run_self_gravity.py --arch <ARCH> --output <new directory>` checks Jeans waves,
-energy, time order, dynamic AMR, restart, isolated boundaries and selected coupling
-(numpy/h5py). `--quick` is the existing CTest analytic/rejection subset.
+energy, time order, dynamic AMR, restart, isolated boundaries, radial 1D
+field/domain checks and selected coupling (numpy/h5py). `--quick` is the existing CTest analytic/rejection subset.
 `arch_composite_poisson 3` checks three-dimensional uniform and composite
 manufactured solutions; `contract` checks failure and hierarchy invariants.
 `check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`

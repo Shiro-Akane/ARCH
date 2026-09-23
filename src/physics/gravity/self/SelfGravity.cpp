@@ -18,7 +18,7 @@
 #include "physics/gravity/self/SelfGravity.h"
 
 #include "amr/elliptic/EllipticMeshAdapter.h"
-#include "numerics/multigrid/HostCompositeMG.h"
+#include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/constant/PhysicalConstants.h"
 #include "physics/gravity/GravityBoundary.h"
 #include "physics/gravity/GravitySolveTypes.h"
@@ -56,8 +56,15 @@ void SelfGravity::bind(amr::EllipticMeshBinding binding) const {
                 throw std::invalid_argument("Gravity cells do not match native active storage order");
     }
     if (cell!=binding.cells.size()) throw std::invalid_argument("Extra cells in gravity mesh binding");
-    work_=std::make_unique<Workspace>(std::move(binding),config_.boundary=="periodic"
-        ? arch::elliptic::BoundaryKind::Periodic : arch::elliptic::BoundaryKind::Dirichlet,execution_?execution_:(execution_=make_host_gravity_execution()));
+    if(binding.base.geometry!=arch::elliptic::Geometry::Cartesian &&
+        config_.boundary!="isolated")
+        throw std::invalid_argument("Radial self-gravity requires an isolated field boundary");
+    const auto kind=binding.base.geometry!=arch::elliptic::Geometry::Cartesian
+        ? arch::elliptic::BoundaryKind::RadialIsolated
+        : (config_.boundary=="periodic" ? arch::elliptic::BoundaryKind::Periodic
+                                        : arch::elliptic::BoundaryKind::Dirichlet);
+    work_=std::make_unique<Workspace>(std::move(binding),kind,
+        execution_?execution_:(execution_=make_host_gravity_execution()));
 }
 /** Retire a prior gravity publication whenever its density lease changes. */
 void SelfGravity::invalidate() const noexcept { if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate(); } }
@@ -91,11 +98,27 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     // A=-Laplacian: A*Phi=-4*pi*G*(rho-<rho>) for periodic gravity;
     // isolated gravity keeps rho and supplies a finite-mass Dirichlet face.
     const double factor=-4.*arch::constants::math::pi*config_.G_const;
-    e.linear(w.rhs,factor,w.density,0.,{},w.nodes.size?0.:-factor*w.mean);
+    e.linear(w.rhs,factor,w.density,0.,{},
+        op.has_constant_nullspace()?-factor*w.mean:0.);
     if(w.nodes.size){
         for(auto it=w.layers.rbegin();it!=w.layers.rend();++it)
             w.execution->run(UpdateMoments{it->size,it->data,w.nodes.data,w.moments.data,w.density.data,w.volumes.data});
         w.execution->run(EvaluateBoundary{w.points.size,w.points.data,w.nodes.data,w.moments.data,w.nodes.size,config_.G_const,w.boundary_values.data});
+        w.solver.boundary_rhs(w.rhs,w.boundary_values);
+    } else if(op.boundary_kind()==arch::elliptic::BoundaryKind::RadialIsolated) {
+        // Spherical free-space outer value: Phi(R)=-G*M/R,
+        // M=4*pi*sum_i rho_i*integral_i(r^2 dr).
+        // Cylindrical Phi(R)=0 fixes the logarithmic potential gauge.
+        e.fill(w.boundary_values);
+        if(op.base().geometry==arch::elliptic::Geometry::Spherical) {
+            const double unit_mass=e.reduce({w.density.data,nullptr,w.volumes.data,
+                op.size(),arch::multigrid::ReductionKind::Product});
+            const double outer=op.base().origin[0]+op.base().cells[0]*op.base().spacing[0];
+            const double value=-4.*arch::constants::math::pi*config_.G_const*unit_mass/outer;
+            for(std::size_t f=0;f<op.faces().size();++f)
+                if(op.faces()[f].boundary_side==1)
+                    e.copy(w.boundary_values.data+f,&value,sizeof(value),arch::multigrid::Transfer::Upload);
+        }
         w.solver.boundary_rhs(w.rhs,w.boundary_values);
     }
     w.solver.project(w.rhs);
@@ -110,6 +133,13 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     w.solver.gradient(w.solver.resident_potential(),w.face_gradient,w.boundary_values);
     e.run(arch::multigrid::RowsWork{w.sides.size,w.side_gather.view(),w.face_gradient.data,w.sides.data});
     e.run(arch::multigrid::RowsWork{w.patch_faces.size,w.patch_gather.view(),w.sides.data,w.patch_faces.data});
+    if(op.boundary_kind()==arch::elliptic::BoundaryKind::RadialIsolated) {
+        e.run(arch::multigrid::RowsWork{w.work_sides.size,w.work_phi_gather.view(),
+            w.solver.resident_potential().data,w.work_sides.data});
+        e.run(arch::multigrid::RowsWork{w.work_sides.size,w.work_boundary_gather.view(),
+            w.boundary_values.data,w.work_sides.data,1.,1.});
+        e.run(arch::multigrid::RowsWork{w.patch_work_faces.size,w.patch_gather.view(),w.work_sides.data,w.patch_work_faces.data});
+    }
     w.execution->run(CellAcceleration{op.size(),op.base().dimension,w.cells.data,w.sides.data,w.g.data,w.inverse_dt_squared.data});
     w.max_acceleration_ratio=e.maximum(w.inverse_dt_squared);
     if(!std::isfinite(w.max_acceleration_ratio))throw std::runtime_error("Nonfinite self-gravity force");
@@ -165,7 +195,7 @@ void SelfGravity::add_flux_work_on_patch(std::vector<FluidVector>& delta,const s
     const auto& patch=workspace().patch(grid,state); const int stride=axis==0?1:axis==1?grid.stride_y:grid.stride_z;
     for (int k=grid.Ks();k<grid.Ke();++k) for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
         const int c=grid.GetIndex(i,j,k);
-        delta[c].eng+=gravity_flux_work(patch.faces[axis][c],patch.faces[axis][c+stride],flux[c].rho,flux[c+stride].rho,dt);
+        delta[c].eng+=gravity_flux_work(patch.work_faces[axis][c],patch.work_faces[axis][c+stride],flux[c].rho,flux[c+stride].rho,dt);
     }
 }
 }

@@ -84,8 +84,18 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     require(g.max_cycles > 0, "gravity_max_cycles", "Iteration count must be positive.");
     require(g.boundary == "periodic" || g.boundary == "isolated", "gravity_boundary", "Expected periodic or isolated gravity boundary.");
     if (g.type == "self") {
-        require(c.grid.geometry == "cartesian", "geometry", "Self-gravity currently requires Cartesian geometry.");
-        if(g.boundary=="isolated")require(c.grid.dim==3,"gravity_boundary","Isolated Newtonian self-gravity requires 3D.");
+        const bool radial=c.grid.dim==1 &&
+            (c.grid.geometry=="spherical" || c.grid.geometry=="cylindrical");
+        require(c.grid.geometry=="cartesian" || radial, "geometry",
+            "Self-gravity supports Cartesian or 1D spherical/cylindrical geometry.");
+        if(radial) {
+            require(g.boundary=="isolated","gravity_boundary",
+                "Radial self-gravity requires isolated gravity boundary.");
+            require(c.grid.x1_min>=0.,"x1_min","Radial self-gravity requires nonnegative radius.");
+            require(c.grid.x1l_boundary_type=="reflecting","x1l_boundary_type",
+                "The radial inner boundary requires reflecting fluid flow so no mass enters the unmodeled cavity.");
+        } else if(g.boundary=="isolated")
+            require(c.grid.dim==3,"gravity_boundary","Cartesian isolated gravity requires a 3D Newtonian domain.");
         const std::string faces[]{c.grid.x1l_boundary_type,c.grid.x1r_boundary_type,
             c.grid.x2l_boundary_type,c.grid.x2r_boundary_type,c.grid.x3l_boundary_type,c.grid.x3r_boundary_type};
         for (int a=0; a<2*c.grid.dim; ++a)

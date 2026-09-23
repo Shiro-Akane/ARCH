@@ -24,6 +24,10 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
     EllipticMeshBinding result;
     auto& base=result.base;
     base.dimension=config.dim;
+    if(config.geometry=="cartesian")base.geometry=arch::elliptic::Geometry::Cartesian;
+    else if(config.geometry=="cylindrical")base.geometry=arch::elliptic::Geometry::Cylindrical;
+    else if(config.geometry=="spherical")base.geometry=arch::elliptic::Geometry::Spherical;
+    else throw std::invalid_argument("Unsupported elliptic geometry");
     if (base.dimension<1 || base.dimension>3) throw std::invalid_argument("Invalid elliptic dimension");
     const int roots[]{config.nblockx1,config.nblockx2,config.nblockx3};
     const int block_cells[]{BLOCK_NX,BLOCK_NY,BLOCK_NZ};
@@ -44,10 +48,19 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
         if (!is_valid(handles[b]) || handles[b].epoch!=handles.front().epoch)
             throw std::logic_error("Elliptic topology has invalid handles");
         const auto& block=control.pool->GetBlock(active[b]); const auto& grid=block.grid;
-        if (grid.geometry!="cartesian" || grid.dim!=base.dimension)
-            throw std::invalid_argument("Composite gravity requires Cartesian native grids");
+        if (grid.geometry!=config.geometry || grid.dim!=base.dimension ||
+            (base.geometry!=arch::elliptic::Geometry::Cartesian && base.dimension!=1))
+            throw std::invalid_argument("Composite gravity geometry differs from native 1D binding");
         result.grids.push_back(&grid);
         double volume=1.; for (int a=0;a<base.dimension;++a) volume*=std::ldexp(base.spacing[a],-block.level);
+        if(base.geometry!=arch::elliptic::Geometry::Cartesian) {
+            const double left=base.origin[0]+
+                static_cast<double>(block.logical_x1*BLOCK_NX)*std::ldexp(base.spacing[0],-block.level);
+            const double right=left+std::ldexp(base.spacing[0],-block.level);
+            volume=base.geometry==arch::elliptic::Geometry::Spherical
+                ? GridMetrics::radial_shell_volume(left,right)
+                : GridMetrics::cylindrical_annulus_volume(left,right);
+        }
         const double native=GridMetrics::CellVolume(grid,grid.Is(),grid.Js(),grid.Ks());
         if (std::abs(native-volume)>64*std::numeric_limits<double>::epsilon()*volume)
             throw std::logic_error("Elliptic geometry differs from native cell metrics");

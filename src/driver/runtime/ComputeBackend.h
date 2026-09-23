@@ -17,7 +17,7 @@
 #include "amr/topology/BlockHandle.h"
 #include "data/GlobalDefs.h"
 #include "grid/ScalarFieldView.h"
-#include "physics/gravity/GravityPatchView.h"
+#include "physics/gravity/GravitySource.h"
 #include "driver/schedule/StageScheduler.h"
 
 #include <cstddef>

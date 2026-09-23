@@ -15,7 +15,7 @@
 
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "numerics/integrator/GeometricSources.h"
-#include "physics/gravity/ExternalGravitySource.h"
+#include "physics/gravity/GravitySource.h"
 
 namespace arch::cuda {
 namespace detail {

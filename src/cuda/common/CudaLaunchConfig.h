@@ -9,7 +9,7 @@
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "data/GlobalDefs.h"
 #include "driver/dispatch/PolicyDescriptor.h"
-#include "physics/gravity/ExternalGravitySource.h"
+#include "physics/gravity/GravitySource.h"
 
 #include <type_traits>
 #include <cmath>

@@ -176,7 +176,7 @@ ODE 控制器安全系数、迭代细节、预条件/平滑器的小参数继续
 | LD-04 | `numerics/reconstruction/{Reconstruction,AMRInterfaceReconstruction}.h` | 斜率和光滑极值判断随场量尺度变化；界面状态使用同一有效约束，以守恒均值为基准限制偏差。保留 PCM/MUSCL/PPM 功能。 |
 | LD-05 | `numerics/flux/FluxFunctions.h`、各 flux policy | 原始态速度除法与局部 floor 不再不一致；移除固定 kappa、压力、声速截断和无状态的 gamma=1.4 替换；给出相同 EOS 下的受控退化路线。 |
 | LD-06 | `numerics/flux/`、`numerics/integrator/TimeIntegratorHelper.h`、`amr/flux/` | 界面正性控制、保守通量限制/回退、阶段接受检查；最终面通量供两侧更新与 AMR register 使用。审查固定 `max_vel=1e10` 的静默动量裁剪，不把它作为低密度修复的隐含步骤。 |
-| LD-07 | `driver/DriverUtils.h`、`physics/gravity/ExternalGravitySource.h`、`numerics/diffusion/DiffFlux.h` | 合法正密度一律参与相应已启用的物理项和稳定性约束；明确零传输系数/无约束步长，取消固定密度停用线；非有限输入返回失败。 |
+| LD-07 | `driver/DriverUtils.h`、`physics/gravity/GravitySource.h`（原 `ExternalGravitySource.h`）、`numerics/diffusion/DiffFlux.h` | 合法正密度一律参与相应已启用的物理项和稳定性约束；明确零传输系数/无约束步长，取消固定密度停用线；非有限输入返回失败。 |
 | LD-08 | `numerics/integrator/GeometricSources.h`、`grid/`、`physics/diagnostics/` | 统一密度读取；审查轴心/极点的来源与几何极限，不批量替换角度容差。相关曲坐标回归必须保持。 |
 | LD-09 | `amr/refinement/RefinementIndicatorMath.h`、`io/plot/PlotIO.cpp`、`core/problem/InitialStateConversion.h`、API 预览 | floor 等值状态、速度、压力、温度、细化指标和初始预览读同一合法状态；不把有效低值显示为零。Löhner 的无量纲正则保留。 |
 | LD-10 | `numerics/burnsolver/coupling/BurnThermodynamics.h`、燃烧 ODE 的物理状态接入、`numerics/diffusion/DiffFlux.h` | 无效 cv 不自动抬为正值；可靠小 cv 与异常 cv 分开，热力学失败进入接受状态。复核 PC-02 的激活温度/阶段 floor 混用及 PC-08 的热扩散物理定义；维持 first-law 耦合，不全面调节 ODE 小参数。 |

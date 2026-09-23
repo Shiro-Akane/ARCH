@@ -6,7 +6,7 @@ This directory provides the configured gravity policy and its source coupling.
 - [GravityDispatch.h](GravityDispatch.h) binds the resolved `GravityId` through
   `make_gravity(config, GravityId)` and owns the compact disabled policy; names are parsed by the shared resolver.
 - [ExternalGravity.h](ExternalGravity.h) traverses host patches;
-  [ExternalGravitySource.h](ExternalGravitySource.h) owns the shared cell update.
+  [GravitySource.h](GravitySource.h) owns the shared cell update.
 
 The external constant-acceleration source uses the same mathematics on CPU and
 CUDA; device kernels handle traversal and state access. Hydro stage scheduling
@@ -25,13 +25,15 @@ caches native leaf mappings, hierarchy plans, resident fields and boundary trees
 the finite-domain mass/dipole/quadrupole tree. `GravityPatchView` contains borrowed
 source pointers and shared momentum/face-mass-flux energy work.
 
-The generic operator and MG/FGMRES stay in `numerics`. Despite its historical
-name, `HostCompositeMG` now uses a replaceable execution provider, with one
-mathematical flow on both backends. The CPU-built small coarse inverse reuses P2;
+The generic operator and MG/FGMRES stay in `numerics`. `CompositeMultigrid`
+uses one mathematical flow on both backends. The bounded coarse inverse factors
+the actual composite operator with shared DenseLU for Cartesian and radial geometry;
 no whole-domain KLU/cuDSS or FFT route is introduced.
 
-Supported production models are Cartesian periodic 1D–3D and isolated 3D, with
-validated burning/diffusion coupling. The driver solves at each actual RK input,
+Validated production models are Cartesian periodic 1D–3D and isolated 3D, with
+burning/diffusion coupling. CPU 1D isolated spherical/cylindrical gravity is
+validated in the 1D CPU elliptic and AMR campaign; higher-dimensional curved
+gravity remains rejected. The driver solves at each actual RK input,
 invalidates after state changes and explicitly materializes fields for output.
 CUDA allocation and launches live together in `cuda/runtime/gravity`.
 

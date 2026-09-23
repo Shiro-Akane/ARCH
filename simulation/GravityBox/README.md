@@ -22,11 +22,12 @@
 | `temperature_amplitude` | 温度相对扰动，默认 0，绝对值须小于 1 |
 | `velocity0` | x 方向正弦速度幅度，默认 0 |
 | `width` | 孤立高斯标准差，默认 x 域长的 0.08 倍 |
-| `center_x/y/z` | 孤立源中心，默认各方向域中心 |
+| `center_x/y/z` | 孤立源中心；Cartesian 默认域中心，一维径向默认原点 |
 | `gas_cv` | 无核网络时单组分理想气体的比热，默认 `1.2471693927e8` erg/g/K |
+| `hydrostatic_radial` | 算例专用的一维均匀密度静水平衡参考开关，默认 `false`；不属于全局引力求解参数 |
 
 周期模式为 `rho=rho0*(1+amplitude*cos(2*pi*x/L))`；坐标从域左侧计。
-孤立模式将余弦替换为三维高斯。两者温度使用同一形状函数。
+孤立模式将余弦替换为高斯：Cartesian 三维按三轴半径，一维球/柱按原生径向坐标。默认温度使用同一形状函数；静水参考模式改用下述独立温度剖面。
 启用核网络时复用标准 `network_name`、`xhe4`、`xc12`、`xo16` 等组分入口，
 不用 `gas_cv` 代替核物质 EOS；已验收的燃烧示例使用 Helmholtz。
 
@@ -61,8 +62,51 @@ tmax=10
 outflow 的逸出物质此后不再是有限域内的引力源，必须单独考虑边界质量/能量收支。
 周期 1D/2D 表示相应平移不变 Poisson 模型，不是三维孤立天体的降维替代。
 
-当前支持 Cartesian、二进制 AMR、每个有效根轴单元数为二次幂、根网格间距比不超过 2。
-不支持曲线坐标、自适应层级子循环或网格外质量源。二维/一维 isolated 会被拒绝。
+Cartesian 已验收二进制 AMR、每个有效根轴单元数为二次幂、根网格间距比不超过 2。
+Cartesian 二维/一维 isolated 仍被拒绝；一维原生球/柱 isolated 的 CPU 路线如下。
+多维曲线坐标自引力、自适应层级子循环和网格外质量源尚不支持。
+
+## 一维球/柱对称孤立域（已验收 CPU）
+
+以默认参数为底本，覆盖以下键即可运行包含原点的球对称域；把
+`geometry=spherical` 改为 `cylindrical` 即为沿轴无限延伸的柱对称模型：
+
+```ini
+geometry=spherical
+compute_backend=cpu
+nblockx1=4
+nblockx2=0
+nblockx3=0
+x1_min=0
+x1_max=1e8
+x1l_boundary_type=reflecting
+x1r_boundary_type=reflecting
+gravity_boundary=isolated
+rho0=1e7
+amplitude=0.2
+width=2e7
+lrefinemax=1
+refine_threshold=0.004
+derefine_threshold=0.001
+regrid_interval=2
+max_steps=12
+tmax=0.04
+```
+
+球对称外边界势取 `-G M/R`，其中单元径向体积积分乘 `4π` 得总质量；
+柱对称固定 `Phi(R)=0`，质量按单位轴向长度统计，积分乘 `2π`。
+原点按零通量正则面处理，内侧流体边界必须 reflecting；径向
+`gravity_boundary=periodic`、多维曲线自引力和此路线的 CUDA 执行会明确拒绝。
+严格径向椭圆单测、短时混合 AMR、原点、近真空、重网格与重启检查已通过；
+静水参考仅验证短时寄生速度随分辨率降低，不宣称长期静水平衡精确保持。
+
+静水参考算例设 `amplitude=0`、`hydrostatic_radial=true`、
+`temperature0=5e8`、`tmax=0.02`。它只适用于从原点开始的单组分
+IdealGas，构造 `T(r)=T(0)-2πG rho0 r²/[d(gamma-1)gas_cv]`，
+球对称 `d=3`、柱对称 `d=2`。这是用于测量寄生速度的初值，
+没有额外的 well-balanced 流体算法。验证入口为
+[`radial_1d.py`](../../validation/gravity/radial_1d.py)，已并入现有
+`run_self_gravity.py`，不另加 CI 任务。
 
 ## 扩散和燃烧
 

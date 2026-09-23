@@ -123,7 +123,7 @@ target_link_libraries(arch_diffusion_math PUBLIC arch_build_contract)
 # One compiled owner for domain gravity; also available to policy/lifecycle tests.
 set(ARCH_GRAVITY_CPU_SOURCES
     src/numerics/elliptic/CartesianPoisson.cpp src/numerics/elliptic/CompositePoisson.cpp
-    src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/HostCompositeMG.cpp
+    src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/CompositeMultigrid.cpp
     src/numerics/multigrid/CompositeExecution.cpp
     src/physics/gravity/GravityBoundary.cpp
     src/physics/gravity/GravityExecution.cpp

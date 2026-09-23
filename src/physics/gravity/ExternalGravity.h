@@ -3,12 +3,12 @@
  * @brief Host patch traversal for a spatially constant external acceleration.
  *
  * No field solve is needed. Interior cells call the common source leaf in
- * ExternalGravitySource.h, which also defines the device-side mathematics.
+ * GravitySource.h, which also defines the device-side mathematics.
  */
 
 #pragma once
 #include "physics/gravity/IGravityPolicy.h"
-#include "physics/gravity/ExternalGravitySource.h"
+#include "physics/gravity/GravitySource.h"
 
 #include "data/FluidState.h"
 #include "grid/Grid.h"

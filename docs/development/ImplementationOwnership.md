@@ -33,7 +33,7 @@ The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host cont
 | Roe-Glaister thermodynamic average | `src/numerics/flux/FluxFunctions.h::calc_glaister_state` | HLL/HLLC/Roe on both backends use the same symmetric fixed-composition pressure secants, derivative limits and enthalpy-consistent acoustic relation. Existing face species output supplies temporary averaged-composition storage; no new allocation or EOS implementation. |
 | HLLC star-region flux | `src/numerics/flux/FluxHLLC.h::calc_star_flux` | One Rankine-Hugoniot state and contact pressure give mass/energy fluxes factored by contact speed. CPU/CUDA use the same expression; the prior subtractive star-state assembly is retired except for its unchanged guarded degenerate limit. |
 | Velocity derivatives | `src/physics/diagnostics/VelocityDiagnostics.h` | CPU/device refinement and diffusion |
-| External gravity | `src/physics/gravity/ExternalGravitySource.h` | CPU `ExternalGravity.h`, CUDA source kernel; same per-stage update |
+| External gravity | `src/physics/gravity/GravitySource.h` | CPU `ExternalGravity.h`, CUDA source kernel; same per-stage update |
 | Uniform Poisson operator and MG (P2) | `src/numerics/elliptic/CartesianPoisson.h/.cpp`, `src/numerics/multigrid/MGTransfer.h`, `HostMultigrid.h/.cpp` | Backend-neutral stencil/transfer leaves; Host workspace owns levels, V-cycle and bounded existing dense LU. No AMR, EOS, Driver or fluid packing. CUDA leaf compilation is separate from device execution qualification. |
 | Standalone density-to-gravity adapter (P2) | `src/physics/gravity/UniformGravity.h/.cpp` | Borrowed Host scalar view, CGS source, periodic mean accounting, compatible face/cell acceleration. No production field publication or self capability enabled. |
 | ODE algorithms and continuations | `src/numerics/burnsolver/ode/ode_be-nr.h`, `ode_bd.h`, `ode_ros4.h`, `OdeContinuation.h` | CPU executor and CUDA `SparseOdeBatch.cuh` invoke the same begin/advance/linear-response continuations. The unconsumed `SparseBeNrBatch.cuh` alias header was retired in P1.5. |
@@ -411,7 +411,7 @@ inputs and outputs follow the existing CGS contract, including IdealGas.
 | Owner | Consumers and boundary |
 | --- | --- |
 | `numerics/elliptic/CompositePoisson` | Dyadic leaf geometry, shared coarse/fine subfaces, quadratic interface gradients, volume norms; no fluid state or AMR tree. |
-| `numerics/multigrid/HostCompositeMG` | Shared CPU/CUDA hierarchy and MG/FGMRES flow through `CompositeExecution`; P2 builds a cached coarse inverse. |
+| `numerics/multigrid/CompositeMultigrid` | Shared CPU/CUDA hierarchy and MG/FGMRES flow through `CompositeExecution`; P2 builds a cached coarse inverse. |
 | `physics/gravity/GravityBoundary`, `GravityExecution` | Shared isolated boundary moments and physical work descriptors; no CUDA kernel math copy. |
 | `cuda/runtime/gravity` | Backend allocation, stream/kernel/reduction adapters and generation-stamped patch publication. |
 | `amr/elliptic/EllipticMeshAdapter` | Native active-cell order, handles, grid metrics and padded scalar views; no numerical solve. |

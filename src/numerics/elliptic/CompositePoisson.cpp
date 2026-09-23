@@ -17,9 +17,32 @@
 #include "numerics/elliptic/CompositePoisson.h"
 
 #include "core/CompensatedSum.h"
+#include "grid/GridMetrics.h"
 #include "numerics/linalg/DenseWrap.h"
 
 namespace arch::elliptic {
+namespace {
+/** Resolve a physical policy into per-side scalar boundary conditions. */
+CompositeBoundary resolve_boundary(const EllipticMesh& mesh,BoundaryKind kind) {
+    CompositeBoundary result;
+    result.sides.fill(FaceBoundaryKind::Neumann);
+    if(kind==BoundaryKind::Periodic) {
+        result.sides.fill(FaceBoundaryKind::Periodic);
+        result.constant_nullspace=true;
+    } else if(kind==BoundaryKind::Dirichlet) {
+        for(int axis=0;axis<mesh.dimension;++axis)
+            for(int side=0;side<2;++side)
+                result.sides[2*axis+side]=FaceBoundaryKind::Dirichlet;
+    } else if(kind==BoundaryKind::RadialIsolated) {
+        // The low Neumann side is a zero-area regular origin when r_min=0.
+        // A nonzero r_min represents an empty reflecting inner cavity.
+        result.sides[0]=FaceBoundaryKind::Neumann;
+        result.sides[1]=FaceBoundaryKind::Dirichlet;
+    } else throw std::invalid_argument("Invalid composite boundary kind");
+    return result;
+}
+}
+
 /** Hash a composite level and logical cell coordinate for leaf lookup. */
 std::size_t CompositeCellHash::operator()(const CompositeCell& c) const noexcept {
     std::size_t h = static_cast<std::size_t>(c.level);
@@ -38,10 +61,15 @@ std::array<double,3> CompositePoisson::center(int cell) const {
 }
 /** Validate a nonoverlapping covering of the domain before constructing faces. */
 CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells, BoundaryKind kind)
-    : base_(base), kind_(kind), cells_(std::move(cells)) {
+    : base_(base), kind_(kind), boundary_(resolve_boundary(base,kind)),
+      cells_(std::move(cells)) {
     validate_mesh(base_);
-    if (kind != BoundaryKind::Periodic && kind != BoundaryKind::Dirichlet)
+    if (kind != BoundaryKind::Periodic && kind != BoundaryKind::Dirichlet &&
+        kind != BoundaryKind::RadialIsolated)
         throw std::invalid_argument("Invalid composite boundary kind");
+    if ((base_.geometry == Geometry::Cartesian && kind == BoundaryKind::RadialIsolated) ||
+        (base_.geometry != Geometry::Cartesian && kind != BoundaryKind::RadialIsolated))
+        throw std::invalid_argument("Composite gravity geometry/boundary mismatch");
     if (cells_.empty() || cells_.size()>static_cast<std::size_t>(std::numeric_limits<int>::max()))
         throw std::invalid_argument("Composite mesh has invalid cell count");
     double base_volume=1.;
@@ -59,10 +87,17 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
         if (!lookup_.emplace(c,i).second) throw std::invalid_argument("Duplicate composite leaf");
         max_level_=std::max(max_level_,c.level);
         const double fraction=std::ldexp(1.,-base_.dimension*c.level);
-        const double volume=base_volume*fraction;
+        double volume=base_volume*fraction;
+        if (base_.geometry != Geometry::Cartesian) {
+            const double left=base_.origin[0]+c.index[0]*std::ldexp(base_.spacing[0],-c.level);
+            const double right=left+std::ldexp(base_.spacing[0],-c.level);
+            volume=base_.geometry==Geometry::Spherical
+                ? GridMetrics::radial_shell_volume(left,right)
+                : GridMetrics::cylindrical_annulus_volume(left,right);
+        }
         if (!std::isfinite(volume) || volume<=0.) throw std::invalid_argument("Composite leaf volume out of range");
         volumes_.push_back(volume);
-        weights_.push_back(fraction/base_.size());
+        weights_.push_back(volume);
         covered.add(fraction);
     }
     // Dyadic volumes are exactly representable; overlap and holes are rejected.
@@ -75,12 +110,16 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
             if (lookup_.contains(parent)) throw std::invalid_argument("Composite leaves overlap an ancestor");
         }
     }
+    arch::math::CompensatedSum total_volume;
+    for (double volume:volumes_) total_volume.add(volume);
+    for (double& weight:weights_) weight/=total_volume.value();
     build_faces();
 }
 /** Find the unique active leaf covering a root-grid coordinate. */
 int CompositePoisson::locate(std::array<double,3> point) const {
     for (int a=0;a<base_.dimension;++a) {
-        if (kind_ == BoundaryKind::Periodic) {
+        if (boundary_.sides[2*a]==FaceBoundaryKind::Periodic &&
+            boundary_.sides[2*a+1]==FaceBoundaryKind::Periodic) {
             point[a]=std::fmod(point[a],base_.cells[a]);
             if (point[a]<0.) point[a]+=base_.cells[a];
         } else if (point[a]<0. || point[a]>=base_.cells[a]) {
@@ -101,20 +140,27 @@ void CompositePoisson::build_faces() {
     for (int i=0;i<size();++i) for (int a=0;a<base_.dimension;++a) {
         const auto& c=cells_[i];
         const double unit=std::ldexp(1.,-c.level);
-        if (kind_ == BoundaryKind::Dirichlet) {
+        if (kind_ != BoundaryKind::Periodic) {
             for (int side=0;side<2;++side) {
                 const int edge=side ? (base_.cells[a]<<c.level)-1 : 0;
                 if (c.index[a]!=edge) continue;
+                // A radial low face has the regular zero-flux condition. Its
+                // area is zero at the origin; a hollow cavity also has no
+                // enclosed mass in this first 1D physical contract.
+                if (boundary_.sides[2*a+side]==FaceBoundaryKind::Neumann) continue;
                 CompositeFace f;
                 f.left=side ? i : -1; f.right=side ? -1 : i;
                 f.axis=a; f.boundary_side=2*a+side; f.center=center(i); f.area=1.;
                 f.center[a]+=(side ? 0.5 : -0.5)*width(i,a);
                 for(int t=0;t<base_.dimension;++t) if(t!=a) f.area*=width(i,t);
+                if (kind_==BoundaryKind::RadialIsolated)
+                    f.area=base_.geometry==Geometry::Spherical ? f.center[0]*f.center[0] : f.center[0];
                 f.samples.push_back(i); f.coefficients.push_back((side ? -2. : 2.)/width(i,a));
                 f.boundary_coefficient=-f.coefficients[0];
                 faces_.push_back(std::move(f));
             }
-            if (c.index[a]==(base_.cells[a]<<c.level)-1) continue;
+            if (c.index[a]==(base_.cells[a]<<c.level)-1 &&
+                boundary_.sides[2*a+1]!=FaceBoundaryKind::Periodic) continue;
         }
         std::array<double,3> point{};
         for (int t=0;t<base_.dimension;++t) point[t]=(c.index[t]+0.5)*unit;
@@ -137,6 +183,9 @@ void CompositePoisson::build_faces() {
                 if (t!=a) face.area*=std::min(width(i,t),width(j,t));
             }
             face.center[a]=base_.origin[a]+(c.index[a]+1.)*unit*base_.spacing[a];
+            if (kind_==BoundaryKind::RadialIsolated)
+                face.area=base_.geometry==Geometry::Spherical
+                    ? face.center[0]*face.center[0] : face.center[0];
             const double inverse=1./(0.5*width(i,a)+0.5*width(j,a));
             // grad_f(phi) = (phi_R-phi_L)/(0.5*h_L+0.5*h_R).
             face.samples={i,j}; face.coefficients={-inverse,inverse};
@@ -148,8 +197,11 @@ void CompositePoisson::build_faces() {
         std::sort(neighbors.begin(),neighbors.end());
         neighbors.erase(std::unique(neighbors.begin(),neighbors.end()),neighbors.end());
     }
-    for (auto& face:faces_)
-        if (face.boundary_side>=0 || cells_[face.left].level!=cells_[face.right].level) fit_interface(face);
+    for (auto& face:faces_) {
+        if (kind_==BoundaryKind::RadialIsolated || face.boundary_side>=0 ||
+            cells_[face.left].level!=cells_[face.right].level) fit_interface(face);
+        if(kind_==BoundaryKind::RadialIsolated)fit_radial_face_value(face);
+    }
     diagonal_.assign(size(),0.);
     for (const auto& f:faces_) for (std::size_t k=0;k<f.samples.size();++k) {
         if (f.samples[k]==f.left) diagonal_[f.left]-=f.area*f.coefficients[k]/volumes_[f.left];
@@ -174,7 +226,7 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
     // to reproduction of every quadratic polynomial. Tangential offsets matter.
     const int anchor_cell=f.left>=0 ? f.left : f.right;
     std::vector<int> samples=f.samples;
-    for (int depth=0;depth<2;++depth) {
+    for (int depth=0;depth<(kind_==BoundaryKind::RadialIsolated?3:2);++depth) {
         const auto current=samples;
         for (int i:current) samples.insert(samples.end(),neighbors_[i].begin(),neighbors_[i].end());
         std::sort(samples.begin(),samples.end());
@@ -182,7 +234,9 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
     }
     const double scale=f.boundary_side>=0 ? width(anchor_cell,f.axis)
         : std::max(width(f.left,f.axis),width(f.right,f.axis));
-    const int dim=base_.dimension, terms=1+dim+dim*(dim+1)/2;
+    const int dim=base_.dimension;
+    const bool radial=kind_==BoundaryKind::RadialIsolated;
+    const int terms=radial?4:1+dim+dim*(dim+1)/2;
     std::vector<std::array<double,10>> basis;
     std::vector<double> weights, initial;
     DenseMatrixData<10> gram;
@@ -197,10 +251,12 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
         for (int a=0;a<dim;++a) {
             const double length=base_.cells[a]*base_.spacing[a];
             delta[a]-=f.center[a];
-            if(kind_==BoundaryKind::Periodic) delta[a]-=std::floor(delta[a]/length+0.5)*length;
+            if(boundary_.sides[2*a]==FaceBoundaryKind::Periodic)
+                delta[a]-=std::floor(delta[a]/length+0.5)*length;
             delta[a]/=scale; distance+=delta[a]*delta[a];
         }
-        const auto p=polynomial(delta,dim);
+        auto p=polynomial(delta,dim);
+        if(radial)p[3]=delta[0]*delta[0]*delta[0];
         const double weight=1./((1.+distance)*(1.+distance));
         double value=0.;
         for(std::size_t j=0;j<f.samples.size();++j)
@@ -213,7 +269,8 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
     }
     // Minimize ||c-c0||_(W^-1)^2 subject to P*c=d. With
     // G=P*W*P^T, lambda=G^-1(d-P*c0), c=c0+W*P^T*lambda.
-    const bool solved=dim==1 ? DenseLUSolver::solve<3,10>(gram,right)
+    const bool solved=radial ? DenseLUSolver::solve<4,10>(gram,right)
+        : dim==1 ? DenseLUSolver::solve<3,10>(gram,right)
         : dim==2 ? DenseLUSolver::solve<6,10>(gram,right) : DenseLUSolver::solve<10,10>(gram,right);
     if (!solved) throw std::invalid_argument("Degenerate composite interface interpolation");
     if(f.boundary_side>=0) f.boundary_coefficient+=right[0]/scale;
@@ -226,6 +283,33 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
         if (f.samples[i]==anchor_cell) anchor=i; else sum+=f.coefficients[i];
     }
     f.coefficients[anchor]=-sum-f.boundary_coefficient;
+}
+
+/** Fit a unique face potential used by both sides of the radial work flux. */
+void CompositePoisson::fit_radial_face_value(CompositeFace& face) const {
+    if(face.boundary_side>=0) {
+        face.value_boundary_coefficient=1.;
+        return;
+    }
+    auto candidates=face.samples;
+    const double position=face.center[0];
+    std::sort(candidates.begin(),candidates.end(),[&](int left,int right) {
+        const double a=std::abs(center(left)[0]-position);
+        const double b=std::abs(center(right)[0]-position);
+        return a==b?left<right:a<b;
+    });
+    candidates.resize(std::min<std::size_t>(4,candidates.size()));
+    face.value_samples=candidates;
+    // Lagrange interpolation reproduces cubic Phi at a shared physical
+    // face. Coarse/fine neighbors consume the same Phi_f, so the resulting
+    // work is a single conservative face contribution.
+    for(int cell:candidates) {
+        const double xi=center(cell)[0];
+        double coefficient=1.;
+        for(int other:candidates) if(other!=cell)
+            coefficient*=(position-center(other)[0])/(xi-center(other)[0]);
+        face.value_coefficients.push_back(coefficient);
+    }
 }
 
 /** Apply the face stencil to a cell-centered field and boundary datum. */
@@ -275,7 +359,7 @@ double CompositePoisson::norm(std::span<const double> x) const {
 }
 /** Remove the periodic constant mode; leave Dirichlet fields unchanged. */
 void CompositePoisson::project(std::span<double> x) const {
-    if(kind_!=BoundaryKind::Periodic) return;
+    if(!boundary_.constant_nullspace) return;
     const double average=mean(x);
     for (double& v:x) v-=average;
 }
@@ -283,7 +367,7 @@ void CompositePoisson::project(std::span<double> x) const {
 std::vector<double> CompositePoisson::effective_rhs(std::span<const double> source,
                                                   std::span<const double> boundary_values) const {
     validate_values(source,size());
-    if(boundary_values.empty() && kind_==BoundaryKind::Periodic)
+    if(boundary_values.empty() && boundary_.constant_nullspace)
         return {source.begin(),source.end()};
     validate_values(boundary_values,faces_.size());
     std::vector<double> rhs(source.begin(),source.end());

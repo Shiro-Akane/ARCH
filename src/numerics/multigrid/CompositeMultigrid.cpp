@@ -1,5 +1,5 @@
 /**
- * @file HostCompositeMG.cpp
+ * @file CompositeMultigrid.cpp
  * @brief Construct a composite hierarchy and solve with shared multigrid-preconditioned iterations.
  *
  * Workflow:
@@ -13,14 +13,65 @@
 #include <limits>
 #include <stdexcept>
 
-#include "numerics/multigrid/HostCompositeMG.h"
+#include "numerics/multigrid/CompositeMultigrid.h"
+
+#include "numerics/linalg/DenseWrap.h"
 
 namespace arch::multigrid {
 using elliptic::CompositeCell;
 using elliptic::CompositeCellHash;
 using elliptic::CompositePoisson;
+namespace {
+/** Factor the actual bounded composite coarse operator once and invert its columns. */
+template<int N>
+std::vector<std::vector<double>> composite_coarse_inverse(const CompositePoisson& op) {
+    DenseMatrixData<64> matrix;
+    const int n=op.size();
+    if(n!=N)throw std::logic_error("Invalid composite coarse extent");
+    std::vector<double> basis(n),applied(n);
+    for(int col=0;col<n;++col) {
+        basis[col]=1.;op.apply(basis,applied);basis[col]=0.;
+        for(int row=0;row<n;++row)matrix.data[row][col]=applied[row];
+    }
+    std::vector<double> weights(n);
+    if(op.has_constant_nullspace()) {
+        double total=0.;
+        for(double volume:op.volumes())total+=volume;
+        for(int i=0;i<n;++i) {
+            weights[i]=op.volumes()[i]/total;
+            matrix.data[0][i]=weights[i]; // Weighted zero-mean gauge.
+        }
+    }
+    int pivots[64]{};
+    if(!DenseLUSolver::factorize<N,64>(matrix,pivots))
+        throw std::runtime_error("Composite coarse factorization failed");
+    std::vector<std::vector<double>> inverse(n,std::vector<double>(n));
+    for(int col=0;col<n;++col) {
+        double rhs[64]{};rhs[col]=1.;
+        if(op.has_constant_nullspace()) {
+            for(int row=0;row<n;++row)rhs[row]-=weights[col];
+            rhs[0]=0.; // Gauge row replaces one redundant equation.
+        }
+        DenseLUSolver::solve_with_factors<N,64>(matrix,pivots,rhs);
+        for(int row=0;row<n;++row)inverse[row][col]=rhs[row];
+    }
+    return inverse;
+}
+/** Dispatch the shared fixed-capacity DenseLU at the actual coarse size. */
+std::vector<std::vector<double>> composite_coarse_inverse(const CompositePoisson& op) {
+    switch(op.size()) {
+    case 2:return composite_coarse_inverse<2>(op);
+    case 4:return composite_coarse_inverse<4>(op);
+    case 8:return composite_coarse_inverse<8>(op);
+    case 16:return composite_coarse_inverse<16>(op);
+    case 32:return composite_coarse_inverse<32>(op);
+    case 64:return composite_coarse_inverse<64>(op);
+    default:throw std::invalid_argument("Composite coarse operator exceeds bounded DenseLU");
+    }
+}
+}
 /** Coarsen the active leaf hierarchy while preserving the sum of child volumes. */
-HostCompositeMG::HostCompositeMG(elliptic::CartesianMesh base,std::vector<CompositeCell> cells,
+CompositeMultigrid::CompositeMultigrid(elliptic::CartesianMesh base,std::vector<CompositeCell> cells,
     elliptic::BoundaryKind kind,std::shared_ptr<CompositeExecution> execution)
     :execution_(execution?std::move(execution):make_host_composite_execution()) {
     levels_.emplace_back(CompositePoisson(base,std::move(cells),kind));
@@ -56,7 +107,7 @@ HostCompositeMG::HostCompositeMG(elliptic::CartesianMesh base,std::vector<Compos
     setup();
 }
 /** Allocate resident level arrays and upload one shared face/row/transfer algebra. */
-void HostCompositeMG::setup() {
+void CompositeMultigrid::setup() {
     auto& e=*execution_;
     for(auto& l:levels_) {
         const auto& a=l.op;const int n=a.size();
@@ -86,23 +137,11 @@ void HostCompositeMG::setup() {
         for(int i=0;i<c.op.size();++i)restrict.row(children[i],weights[i]);
         f.restriction=SparseArray(e,restrict);f.prolongation=SparseArray(e,prolong);
     }
-    // Reuse the validated P2 solve to build a bounded coarse inverse ONCE per
-    // topology. Both backends apply exactly these coefficients; no host trips
-    // or vendor sparse factorization occur inside a device V-cycle.
+    // Factor the actual coarse composite operator ONCE per topology. Upload
+    // its bounded inverse for the same Host/CUDA V-cycle; no solve-time host
+    // transfer or whole-domain vendor sparse factorization is required.
     const auto& a=levels_.back().op;const int n=a.size();
-    HostMultigrid bottom(a.base(),a.boundary_kind());
-    elliptic::BoundaryData boundary;boundary.kind=a.boundary_kind();
-    if(boundary.kind==elliptic::BoundaryKind::Dirichlet)
-        for(int axis=0;axis<a.base().dimension;++axis)for(int s=0;s<2;++s)
-            boundary.values[2*axis+s].assign(n/a.base().cells[axis],0.);
-    std::vector<std::vector<double>> inverse(n,std::vector<double>(n));
-    for(int col=0;col<n;++col) {
-        std::vector<double> rhs(n,0.);rhs[a.base().index(a.cells()[col].index)]=1.;
-        if(boundary.kind==elliptic::BoundaryKind::Periodic)elliptic::project_mean(rhs);
-        const auto solution=bottom.solve(rhs,boundary,{1e-13,1e-15,100});
-        if(solution.report.status!=SolveStatus::Converged)throw std::runtime_error("Composite coarse inverse failed");
-        for(int row=0;row<n;++row)inverse[row][col]=solution.potential[a.base().index(a.cells()[row].index)];
-    }
+    const auto inverse=composite_coarse_inverse(a);
     SparseStorage matrix;std::vector<int> indices(n);for(int i=0;i<n;++i)indices[i]=i;
     for(const auto& row:inverse)matrix.row(indices,row);bottom_=SparseArray(e,matrix);
     const int size=op().size();source_=e.array<double>(size);x_=e.array<double>(size);
@@ -112,49 +151,49 @@ void HostCompositeMG::setup() {
     e.fence();
 }
 /** Compute a scale-safe volume-weighted mean. */
-double HostCompositeMG::mean(const Vector& x,int level) {
+double CompositeMultigrid::mean(const Vector& x,int level) {
     auto& e=*execution_;const double scale=e.maximum(x);if(scale==0.)return 0.;
     return scale*e.reduce({x.data,nullptr,levels_[level].weights.data,x.size,ReductionKind::Product,scale});
 }
 /** Compute the volume-weighted inner product for Krylov orthogonalization. */
-double HostCompositeMG::dot(const Vector& x,const Vector& y,int level) {
+double CompositeMultigrid::dot(const Vector& x,const Vector& y,int level) {
     return execution_->reduce({x.data,y.data,levels_[level].weights.data,x.size,ReductionKind::Product});
 }
 /** Compute the scale-safe volume-weighted RMS residual. */
-double HostCompositeMG::norm(const Vector& x,int level) {
+double CompositeMultigrid::norm(const Vector& x,int level) {
     auto& e=*execution_;const double scale=e.maximum(x);if(scale==0.)return 0.;
     return scale*std::sqrt(e.reduce({x.data,x.data,levels_[level].weights.data,x.size,ReductionKind::Product,scale,scale}));
 }
 /** Remove the periodic nullspace on the selected composite level. */
-void HostCompositeMG::project(Vector& x,int level) {
-    if(levels_[level].op.boundary_kind()==elliptic::BoundaryKind::Periodic)
+void CompositeMultigrid::project(Vector& x,int level) {
+    if(levels_[level].op.has_constant_nullspace())
         execution_->project(x,levels_[level].weights);
 }
 /** Apply the same face derivative coefficients on host or device. */
-void HostCompositeMG::gradient(const Vector& x,Vector& out,const Vector& boundary) {
+void CompositeMultigrid::gradient(const Vector& x,Vector& out,const Vector& boundary) {
     const auto& l=levels_.front();execution_->run(GradientWork{out.size,
         {l.faces.view(),l.anchors.data,l.boundary.data},x.data,boundary.data,out.data});
 }
 /** Subtract the inhomogeneous face contribution from the source. */
-void HostCompositeMG::boundary_rhs(Vector& rhs,const Vector& values) {
+void CompositeMultigrid::boundary_rhs(Vector& rhs,const Vector& values) {
     auto& l=levels_.front();execution_->fill(l.scratch);
     gradient(l.scratch,l.face_values,values);
     execution_->run(RowsWork{rhs.size,l.rows.view(),l.face_values.data,rhs.data,-1.,1.});
 }
 /** Apply the conservative face divergence operator on a resident vector. */
-void HostCompositeMG::apply(int level,const Vector& x,Vector& out) {
+void CompositeMultigrid::apply(int level,const Vector& x,Vector& out) {
     auto& l=levels_[level];auto& e=*execution_;
     e.run(GradientWork{l.face_values.size,{l.faces.view(),l.anchors.data,l.boundary.data},x.data,nullptr,l.face_values.data});
     e.run(RowsWork{out.size,l.rows.view(),l.face_values.data,out.data});
 }
 /** Run three damped Jacobi sweeps on one hierarchy level. */
-void HostCompositeMG::smooth(int level) {
+void CompositeMultigrid::smooth(int level) {
     auto& l=levels_[level];
     for(int s=0;s<3;++s){apply(level,l.u,l.scratch);
         execution_->run(JacobiWork{l.u.size,l.u.data,l.rhs.data,l.scratch.data,l.diagonal.data});project(l.u,level);}
 }
 /** Apply one multigrid V-cycle, including signed residual transfer. */
-void HostCompositeMG::cycle(int level) {
+void CompositeMultigrid::cycle(int level) {
     auto& f=levels_[level];auto& e=*execution_;
     if(level+1==static_cast<int>(levels_.size())) {
         e.run(RowsWork{f.u.size,bottom_.view(),f.rhs.data,f.u.data});project(f.u,level);return;
@@ -166,25 +205,25 @@ void HostCompositeMG::cycle(int level) {
     e.run(RowsWork{f.u.size,f.prolongation.view(),c.u.data,f.u.data,1.,1.});project(f.u,level);smooth(level);
 }
 /** Use a zero-start V-cycle as an FGMRES preconditioner. */
-void HostCompositeMG::precondition(const Vector& rhs,Vector& out) {
+void CompositeMultigrid::precondition(const Vector& rhs,Vector& out) {
     auto& f=levels_.front();auto& e=*execution_;
     e.linear(f.rhs,1.,rhs);project(f.rhs);e.fill(f.u);cycle(0);e.linear(out,1.,f.u);
 }
 /** Upload a host source and download the accepted potential. */
-SolveResult HostCompositeMG::solve(std::span<const double> rhs,SolveControl control) {
+SolveResult CompositeMultigrid::solve(std::span<const double> rhs,SolveControl control) {
     elliptic::validate_values(rhs,op().size());auto input=execution_->upload(rhs);
     SolveResult result;result.report=solve(input,control);
     if(result.report.status==SolveStatus::Converged)result.potential=execution_->download(x_);
     return result;
 }
 /** Solve the resident Poisson system with restarted flexible GMRES and verify the original residual. */
-SolveReport HostCompositeMG::solve(const Vector& rhs,SolveControl control) {
+SolveReport CompositeMultigrid::solve(const Vector& rhs,SolveControl control) {
     if(rhs.size!=op().size())throw std::invalid_argument("Composite source extent mismatch");
     if(!std::isfinite(control.relative_tolerance)||control.relative_tolerance<0.||control.relative_tolerance>=1.||
        !std::isfinite(control.absolute_tolerance)||control.absolute_tolerance<0.||control.max_cycles<1||
        (control.relative_tolerance==0.&&control.absolute_tolerance==0.))throw std::invalid_argument("Invalid composite convergence controls");
     auto& e=*execution_;SolveReport report;
-    report.rhs_rms=norm(rhs);report.removed_rhs_mean=op().boundary_kind()==elliptic::BoundaryKind::Periodic?mean(rhs):0.;
+    report.rhs_rms=norm(rhs);report.removed_rhs_mean=op().has_constant_nullspace()?mean(rhs):0.;
     if(!std::isfinite(report.rhs_rms))return report;
     if(report.rhs_rms!=0.&&std::abs(report.removed_rhs_mean/report.rhs_rms)>64.*std::numeric_limits<double>::epsilon())
         throw std::invalid_argument("Incompatible periodic composite RHS");
@@ -195,15 +234,32 @@ SolveReport HostCompositeMG::solve(const Vector& rhs,SolveControl control) {
     // Normalize b by ||b||_V; FGMRES solves A*(phi/||b||_V)=b/||b||_V.
     e.linear(source_,1./scale,source_);const double target=report.target/scale;
     constexpr int restart=20;
+    bool refine_physical_residual=false;
     for(;;) {
-        apply(0,x_,work_);e.linear(residual_,1.,source_,-1.,work_);
+        if(refine_physical_residual) {
+            // The normalized Krylov residual can be below target while
+            // rescaling and evaluating A*x in physical units loses digits.
+            // Refine from the independently checked physical residual,
+            // rather than publishing an iterate that misses its contract.
+            e.linear(residual_,1./scale,work_);
+            e.linear(x_,1./scale,x_);
+            refine_physical_residual=false;
+        } else {
+            apply(0,x_,work_);e.linear(residual_,1.,source_,-1.,work_);
+        }
         const double residual_norm=norm(residual_);report.residual=residual_norm*scale;
         if(!std::isfinite(residual_norm))return report;
         if(residual_norm<=target) {
             e.linear(x_,scale,x_);project(x_);apply(0,x_,work_);
             e.linear(work_,1.,rhs,-1.,work_,-report.removed_rhs_mean);report.residual=norm(work_);
-            if(std::isfinite(report.residual)&&report.residual<=report.target)report.status=SolveStatus::Converged;
-            return report;
+            if(std::isfinite(report.residual)&&report.residual<=report.target) {
+                report.status=SolveStatus::Converged;
+                return report;
+            }
+            if(!std::isfinite(report.residual)||report.cycles>=control.max_cycles)
+                return report;
+            refine_physical_residual=true;
+            continue;
         }
         if(report.cycles>=control.max_cycles){report.status=SolveStatus::MaxCycles;return report;}
         project(residual_);const double beta=norm(residual_);

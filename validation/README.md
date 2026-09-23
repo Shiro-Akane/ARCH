@@ -5,12 +5,13 @@ format. Its [implementation record](../docs/development/P1_5ImplementationReport
 identifies acceptance for that migration; the older records below retain their original
 source scope and are not automatic acceptance of the changed implementation.
 
-The [gravity summary](gravity/README.md) now covers production Cartesian
-self-gravity on CPU/CUDA, including composite AMR and the validated hydro, burn
-and thermal-diffusion combinations. Periodic 1D–3D and isolated 3D boundaries
-are supported; curved geometry and external mass are not. See the
-[P5–P7 acceptance](../docs/development/P5P7GravityAcceptance.zh-CN.md) for tested
-configurations. The earlier [P2 record](gravity/results/p2-20260922/README.md)
+The [gravity summary](gravity/README.md) covers validated Cartesian
+self-gravity on CPU/CUDA and isolated 1D spherical/cylindrical self-gravity on
+CPU, including composite AMR. Cartesian hydro, burn and thermal-diffusion
+combinations have also been validated. Multidimensional curved gravity and
+external mass remain unsupported. See the [P5–P7 acceptance](../docs/development/P5P7GravityAcceptance.zh-CN.md)
+and [P8–P10 record](../docs/development/CurvilinearGravityPlan.zh-CN.md)
+for the respective tested configurations. The earlier [P2 record](gravity/results/p2-20260922/README.md)
 remains a standalone CPU solver result.
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is

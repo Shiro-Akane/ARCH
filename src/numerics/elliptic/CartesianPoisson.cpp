@@ -44,8 +44,12 @@ void validate_mesh(const CartesianMesh& m)
             largest = std::max(largest, m.spacing[a]);
         }
     }
-    if (!std::isfinite(diagonal_bound) || largest / smallest > 2.)
-        throw std::invalid_argument("Poisson prototype requires spacing ratio <= 2 and finite diagonal");
+    if (!std::isfinite(diagonal_bound) ||
+        (m.geometry == Geometry::Cartesian && largest / smallest > 2.))
+        throw std::invalid_argument("Poisson prototype requires valid spacing and finite diagonal");
+    if (m.geometry != Geometry::Cartesian &&
+        (m.dimension != 1 || m.origin[0] < 0.))
+        throw std::invalid_argument("Composite curved gravity currently requires nonnegative 1D radius");
 }
 
 /** Check the borrowed vector extent and finiteness before arithmetic. */

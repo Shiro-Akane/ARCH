@@ -14,25 +14,9 @@
 
 #include "numerics/elliptic/CartesianPoisson.h"
 #include "numerics/linalg/DenseWrap.h"
+#include "numerics/multigrid/MultigridTypes.h"
 
 namespace arch::multigrid {
-struct SolveControl {
-    double relative_tolerance;
-    double absolute_tolerance; // RHS units; positive even for zero source.
-    int max_cycles;
-};
-enum class SolveStatus { Converged, MaxCycles, NumericalFailure };
-struct SolveReport {
-    SolveStatus status = SolveStatus::NumericalFailure;
-    int cycles = 0;
-    double rhs_rms = 0., initial_residual = 0., residual = 0., target = 0.;
-    double removed_rhs_mean = 0.; // Roundoff only; incompatible RHS is rejected.
-};
-struct SolveResult {
-    SolveReport report;
-    std::vector<double> potential; // Empty unless converged.
-};
-
 class HostMultigrid {
 public:
     HostMultigrid(elliptic::CartesianMesh mesh, elliptic::BoundaryKind kind);

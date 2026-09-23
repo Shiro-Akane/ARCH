@@ -13,7 +13,7 @@
  */
 
 #pragma once
-#include "physics/gravity/GravityPatchView.h"
+#include "physics/gravity/GravitySource.h"
 
 #include <cstddef>
 
@@ -108,7 +108,7 @@ static __device__ inline void hydro_divergence_kernel_work(
         cell_delta,
         delta.n_species > 0 ? delta.mass_fractions + cell : nullptr);
     if(gravity.enabled()) cell_delta.eng+=Physical::Gravity::gravity_flux_work(
-        gravity.faces[direction][cell],gravity.faces[direction][cell+stride],flux.rho[cell],flux.rho[cell+stride],dt);
+        gravity.work_faces[direction][cell],gravity.work_faces[direction][cell+stride],flux.rho[cell],flux.rho[cell+stride],dt);
     delta.store(cell, cell_delta);
 }
 

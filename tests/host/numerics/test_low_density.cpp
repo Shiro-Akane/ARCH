@@ -1,6 +1,6 @@
 // Scale invariance and independent analytic references; no tolerance has units.
 #include "physics/eos/IdealGas.h"
-#include "physics/gravity/ExternalGravitySource.h"
+#include "physics/gravity/GravitySource.h"
 #include "numerics/flux/FluxHLL.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "numerics/flux/FluxRoe.h"

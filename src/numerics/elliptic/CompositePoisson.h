@@ -28,6 +28,11 @@ ARCH_INLINE double composite_face_gradient(const double* x,int anchor,const int*
     sum.add(boundary_coefficient*(boundary_value-x[anchor]));
     return sum.value();
 }
+enum class FaceBoundaryKind { Periodic, Dirichlet, Neumann };
+struct CompositeBoundary {
+    std::array<FaceBoundaryKind,6> sides{};
+    bool constant_nullspace=false;
+};
 struct CompositeCell {
     int level = 0;
     std::array<int,3> index{}; // Cell coordinate at this refinement level.
@@ -44,12 +49,17 @@ struct CompositeFace {
     std::array<double,3> center{};
     std::vector<int> samples;
     std::vector<double> coefficients; // Normal derivative, increasing coordinate.
+    std::vector<int> value_samples;    // Radial face-potential interpolation.
+    std::vector<double> value_coefficients;
+    double value_boundary_coefficient = 0.;
 };
 class CompositePoisson {
 public:
     CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
                      BoundaryKind kind = BoundaryKind::Periodic);
     BoundaryKind boundary_kind() const { return kind_; }
+    const CompositeBoundary& boundary() const { return boundary_; }
+    bool has_constant_nullspace() const { return boundary_.constant_nullspace; }
     const CartesianMesh& base() const { return base_; }
     const auto& cells() const { return cells_; }
     const auto& volumes() const { return volumes_; }
@@ -73,6 +83,7 @@ public:
 private:
     CartesianMesh base_;
     BoundaryKind kind_;
+    CompositeBoundary boundary_;
     std::vector<CompositeCell> cells_;
     std::unordered_map<CompositeCell,int,CompositeCellHash> lookup_;
     std::vector<double> volumes_, diagonal_, weights_;
@@ -81,5 +92,6 @@ private:
     int max_level_ = 0;
     void build_faces();
     void fit_interface(CompositeFace& face) const;
+    void fit_radial_face_value(CompositeFace& face) const;
 };
 } // namespace arch::elliptic

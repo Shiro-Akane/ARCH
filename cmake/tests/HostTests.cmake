@@ -379,7 +379,7 @@ set_tests_properties(poisson_multigrid_analytic PROPERTIES TIMEOUT 600)
 # Composite leaf mathematics is independent of AMR fluid storage and dispatch.
 add_executable(arch_composite_poisson tests/host/gravity/test_composite_poisson.cpp
     src/numerics/elliptic/CartesianPoisson.cpp src/numerics/elliptic/CompositePoisson.cpp
-    src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/HostCompositeMG.cpp
+    src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/CompositeMultigrid.cpp
     src/numerics/multigrid/CompositeExecution.cpp
     src/physics/gravity/GravityBoundary.cpp)
 arch_configure_host_test(arch_composite_poisson)

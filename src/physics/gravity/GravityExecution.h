@@ -9,7 +9,7 @@
 
 #include "numerics/multigrid/CompositeExecution.h"
 #include "physics/gravity/GravityBoundary.h"
-#include "physics/gravity/GravityPatchView.h"
+#include "physics/gravity/GravitySource.h"
 
 namespace Physical::Gravity {
 struct GravityCell {int block,offset;double width[3];};

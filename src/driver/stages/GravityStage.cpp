@@ -17,7 +17,7 @@
 #include "amr/AMRControl.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "driver/runtime/DriverRuntime.h"
-#include "numerics/multigrid/HostCompositeMG.h"
+#include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/GravityExecution.h"
 #include "physics/gravity/GravitySolveTypes.h"
 #include "physics/gravity/self/SelfGravity.h"

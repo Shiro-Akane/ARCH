@@ -175,7 +175,7 @@
 | S-071 | [src/physics/eos/eos.h](../../src/physics/eos/eos.h) | 55 | 保留：规范的 EOS 前置声明/别名与 marker；可收窄无必要的 STL/FluidState includes。 |
 | S-072 | [src/physics/eos/eos_state.h](../../src/physics/eos/eos_state.h) | 35 | 保留：热力学输入输出 POD，与拥有数据的 EOS 分开。 |
 | S-073 | [src/physics/gravity/ExternalGravity.h](../../src/physics/gravity/ExternalGravity.h) | 50 | 保留：Host patch adapter；物理 cell 数学已共享。 |
-| S-074 | [src/physics/gravity/ExternalGravitySource.h](../../src/physics/gravity/ExternalGravitySource.h) | 39 | 保留：CPU/CUDA 共用外引力源项权威。 |
+| S-074 | 原 `src/physics/gravity/ExternalGravitySource.h`，现并入 [GravitySource.h](../../src/physics/gravity/GravitySource.h) | 39（原 main 快照） | P8 合并同职责的小源项头；CPU/CUDA 共用数学仍由一个文件负责。 |
 | S-075 | [src/physics/gravity/GravityDispatch.h](../../src/physics/gravity/GravityDispatch.h) | 49 | 保留：resolved gravity factory；未来依主计划增加 self。 |
 | S-076 | `src/physics/gravity/GravityNone.h`（原路径） | 29 | P1.5 保留 none 行为，将紧凑策略并入唯一构造入口 `GravityDispatch.h`，移除独立文件。 |
 | S-077 | [src/physics/gravity/IGravityPolicy.h](../../src/physics/gravity/IGravityPolicy.h) | 46 | 保留实际 patch 源项接口；P1.5 删除无调用 update_field，未来场更新归 domain service，见 DC-03。 |

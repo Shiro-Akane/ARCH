@@ -1,0 +1,12 @@
+radial geometry=3 refined=0 n=16 phi=2.125710222604822e-06 face=1.3831559970445626e-11 cycles=6
+radial geometry=3 refined=0 n=32 phi=1.4457985530193021e-07 face=1.925164191863562e-13 cycles=7
+radial geometry=3 refined=0 n=64 phi=9.4310924871889376e-09 face=5.4126867602522586e-13 cycles=7
+radial geometry=3 refined=1 n=16 phi=1.126495795051347e-06 face=5.8042282340609726e-13 cycles=7
+radial geometry=3 refined=1 n=32 phi=9.8527940226622885e-08 face=3.1278425527077576e-11 cycles=6
+radial geometry=3 refined=1 n=64 phi=7.0228928372920102e-09 face=1.6645304380770712e-11 cycles=6
+radial geometry=2 refined=0 n=16 phi=2.7632724726158984e-06 face=5.5389710201520955e-15 cycles=7
+radial geometry=2 refined=0 n=32 phi=1.8521393421009922e-07 face=1.1874289733065503e-13 cycles=7
+radial geometry=2 refined=0 n=64 phi=1.1947620559411025e-08 face=1.3530825512178535e-14 cycles=8
+radial geometry=2 refined=1 n=16 phi=1.3281869765484693e-06 face=7.8332440296028917e-15 cycles=8
+radial geometry=2 refined=1 n=32 phi=1.1607546559006649e-07 face=1.5567009067587756e-14 cycles=8
+radial geometry=2 refined=1 n=64 phi=8.2281558438760165e-09 face=2.1282680303088033e-14 cycles=38

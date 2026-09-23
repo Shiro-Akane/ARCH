@@ -15,33 +15,10 @@
 #include <vector>
 
 #include "core/ArchPortability.h"
+#include "numerics/elliptic/EllipticMesh.h"
 
 namespace arch::elliptic {
-enum class BoundaryKind { Periodic, Dirichlet };
-
-struct CartesianMesh {
-    int dimension = 1;
-    std::array<int, 3> cells{2, 1, 1};
-    std::array<double, 3> spacing{1., 1., 1.};
-    std::array<double, 3> origin{};
-    /** Return the product of active Cartesian cell extents. */
-    ARCH_HOST_DEVICE int size() const { return cells[0] * cells[1] * cells[2]; }
-    /** Flatten x-fast logical cell coordinates. */
-    ARCH_HOST_DEVICE int index(const std::array<int, 3>& p) const {
-        return p[0] + cells[0] * (p[1] + cells[1] * p[2]);
-    }
-    /** Recover x-fast logical coordinates from a cell index. */
-    ARCH_HOST_DEVICE std::array<int, 3> position(int i) const {
-        return {i % cells[0], (i / cells[0]) % cells[1], i / (cells[0] * cells[1])};
-    }
-    // Face vectors use the same x-fast ordering with the normal extent set to 1.
-    /** Flatten a face index with normal extent one. */
-    ARCH_HOST_DEVICE int face_index(std::array<int, 3> p, int axis) const {
-        p[axis] = 0;
-        return p[0] + (axis == 0 ? 1 : cells[0]) *
-            (p[1] + (axis == 1 ? 1 : cells[1]) * p[2]);
-    }
-};
+enum class BoundaryKind { Periodic, Dirichlet, RadialIsolated };
 
 struct BoundaryData {
     BoundaryKind kind = BoundaryKind::Periodic;

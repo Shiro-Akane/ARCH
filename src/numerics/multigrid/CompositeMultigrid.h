@@ -9,12 +9,12 @@
 
 #include "numerics/elliptic/CompositePoisson.h"
 #include "numerics/multigrid/CompositeExecution.h"
-#include "numerics/multigrid/HostMultigrid.h"
+#include "numerics/multigrid/MultigridTypes.h"
 
 namespace arch::multigrid {
-class HostCompositeMG {
+class CompositeMultigrid {
 public:
-    HostCompositeMG(elliptic::CartesianMesh base,std::vector<elliptic::CompositeCell> cells,
+    CompositeMultigrid(elliptic::CartesianMesh base,std::vector<elliptic::CompositeCell> cells,
         elliptic::BoundaryKind kind=elliptic::BoundaryKind::Periodic,
         std::shared_ptr<CompositeExecution> execution={});
     const elliptic::CompositePoisson& op() const { return levels_.front().op; }

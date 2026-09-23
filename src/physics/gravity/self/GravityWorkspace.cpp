@@ -18,23 +18,60 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
     auto& e=solver.execution();const auto& op=solver.op();const int n=op.size();
     density=e.array<double>(n);rhs=e.array<double>(n);boundary_values=e.array<double>(op.faces().size());
     face_gradient=e.array<double>(op.faces().size());sides=e.array<double>(6*n);g=e.array<double>(3*n);
+    const bool radial=kind==arch::elliptic::BoundaryKind::RadialIsolated;
+    if(radial)work_sides=e.array<double>(6*n);else work_sides=sides;
     inverse_dt_squared=e.array<double>(n);density_pointers=e.array<const double*>(binding.grids.size());
     std::vector<GravityCell> locations;
     for(int i=0;i<n;++i){const auto b=binding.storage[i];GravityCell c{static_cast<int>(b.block),b.offset,{}};
         for(int a=0;a<op.base().dimension;++a)c.width[a]=op.width(i,a);locations.push_back(c);}
     cells=e.upload(locations);volumes=e.upload(op.volumes());
     for(std::size_t b=0;b<binding.grids.size();++b){lookup.emplace(binding.grids[b],b);patch_offsets.push_back(native_size);native_size+=binding.grids[b]->GetTotalSize();}
-    patch_faces=e.array<double>(3*native_size);patches.resize(binding.grids.size());
-    for(std::size_t b=0;b<patches.size();++b)for(int a=0;a<3;++a)patches[b].faces[a]=patch_faces.data+a*native_size+patch_offsets[b];
-    std::vector<std::vector<int>> columns(6*n);std::vector<std::vector<double>> weights(6*n);
+    patch_faces=e.array<double>(3*native_size);
+    if(radial)patch_work_faces=e.array<double>(3*native_size);else patch_work_faces=patch_faces;
+    patches.resize(binding.grids.size());
+    for(std::size_t b=0;b<patches.size();++b)for(int a=0;a<3;++a){
+        patches[b].faces[a]=patch_faces.data+a*native_size+patch_offsets[b];
+        patches[b].work_faces[a]=patch_work_faces.data+a*native_size+patch_offsets[b];
+    }
+    std::vector<std::vector<int>> columns(6*n),work_phi_columns(6*n),work_boundary_columns(6*n);
+    std::vector<std::vector<double>> weights(6*n),work_phi_weights(6*n),work_boundary_weights(6*n);
     std::vector<BoundaryPoint> boundary_points;
     for(int i=0;i<static_cast<int>(op.faces().size());++i){const auto& f=op.faces()[i];
         for(int c:{f.left,f.right})if(c>=0){const int side=6*c+2*f.axis+(c==f.left?1:0);
-            // g_side = -sum_f (A_f * dx_cell / V_cell) * grad_f(Phi).
-            columns[side].push_back(i);weights[side].push_back(-f.area*op.width(c,f.axis)/op.volumes()[c]);}
+            // Momentum consumes physical g=-grad(Phi). Cartesian keeps its
+            // established area-averaged face behavior at coarse/fine sides.
+            const double weighted=-f.area*op.width(c,f.axis)/op.volumes()[c];
+            columns[side].push_back(i);
+            weights[side].push_back(radial?-1.:weighted);
+            if(radial) {
+                // Delta E_i = -dt/V_i sum_f A_f F_out,f (Phi_f-Phi_i).
+                // gravity_flux_work multiplies each side by dt/2, so the
+                // low/high coefficient is respectively +/-2*A_f/V_i.
+                const double factor=(c==f.left?-2.:2.)*f.area/op.volumes()[c];
+                work_phi_columns[side].push_back(c);
+                work_phi_weights[side].push_back(-factor);
+                for(std::size_t k=0;k<f.value_samples.size();++k) {
+                    work_phi_columns[side].push_back(f.value_samples[k]);
+                    work_phi_weights[side].push_back(factor*f.value_coefficients[k]);
+                }
+                if(f.value_boundary_coefficient!=0.) {
+                    work_boundary_columns[side].push_back(i);
+                    work_boundary_weights[side].push_back(factor*f.value_boundary_coefficient);
+                }
+            }}
         if(f.boundary_side>=0)boundary_points.push_back({{f.center[0],f.center[1],f.center[2]},i});}
     arch::multigrid::SparseStorage side_rows,patch_rows;
-    for(int i=0;i<6*n;++i)side_rows.row(columns[i],weights[i]);side_gather={e,side_rows};
+    for(int i=0;i<6*n;++i)side_rows.row(columns[i],weights[i]);
+    side_gather={e,side_rows};
+    if(radial) {
+        arch::multigrid::SparseStorage phi_rows,boundary_rows;
+        for(int i=0;i<6*n;++i) {
+            phi_rows.row(work_phi_columns[i],work_phi_weights[i]);
+            boundary_rows.row(work_boundary_columns[i],work_boundary_weights[i]);
+        }
+        work_phi_gather={e,phi_rows};
+        work_boundary_gather={e,boundary_rows};
+    }
     // One writer per native face, including block boundaries and coarse/fine
     // area averages. A gather avoids CUDA races between adjacent cells.
     std::vector<int> owner(3*native_size,-1);

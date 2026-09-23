@@ -7,7 +7,9 @@ single maintained implementation and its CPU/CUDA consumers.
 For the planned self-gravity work, use the
 [self-gravity, maintainability and GUI coordination plan (Chinese)](SelfGravityImplementationPlan.zh-CN.md)
 to track module boundaries, stage contracts, decisions, GUI/Core integration
-order and validation gates.
+order and validation gates. The [curvilinear gravity plan (Chinese)](CurvilinearGravityPlan.zh-CN.md)
+defines the P8–P13 extension, shared source mathematics, file consolidation
+and staged geometry validation; it does not expand current supported capabilities.
 The [P1 handoff (Chinese)](SelfGravityP1Handoff.zh-CN.md) records the integrated
 GUI Core baseline, implemented boundaries and scoped CPU/CUDA evidence.
 The [low-density and near-vacuum robustness plan (Chinese)](LowDensityRobustnessPlan.zh-CN.md)

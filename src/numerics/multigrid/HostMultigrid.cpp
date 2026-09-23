@@ -41,6 +41,8 @@ template<class F> bool with_bottom_size(int n, F&& operation)
 HostMultigrid::HostMultigrid(elliptic::CartesianMesh m, BoundaryKind kind) : kind_(kind)
 {
     elliptic::validate_mesh(m);
+    if (m.geometry != elliptic::Geometry::Cartesian)
+        throw std::invalid_argument("Standalone multigrid requires Cartesian geometry");
     if (kind != BoundaryKind::Periodic && kind != BoundaryKind::Dirichlet)
         throw std::invalid_argument("Unsupported multigrid boundary kind");
     std::vector<elliptic::CartesianMesh> meshes{m};

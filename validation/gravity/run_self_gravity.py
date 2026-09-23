@@ -16,6 +16,7 @@ import subprocess
 import h5py
 import numpy as np
 from gravity_box import BoxCampaign
+from radial_1d import RadialCampaign
 
 ROOT = Path(__file__).resolve().parents[2]
 RHO, PRESSURE, AMPLITUDE, G = 1e7, 6e6, 1e-4, 6.67430e-8
@@ -190,6 +191,7 @@ def main():
     args = parser.parse_args()
     campaign = Campaign(args.arch.resolve(), args.output.resolve())
     box = BoxCampaign(campaign.executable, campaign.output/'box')
+    radial = RadialCampaign(campaign.executable, campaign.output/'radial')
     try:
         if args.quick:
             _, _, record = campaign.run('jeans-64')
@@ -197,6 +199,7 @@ def main():
         else:
             campaign.full()
         box.run_checks(quick=args.quick)
+        radial.run_checks(quick=args.quick)
         for changes, message in [({'gravity_rtol': 0}, 'gravity_rtol'), ({'gravity_atol': -1}, 'gravity_atol'),
                 ({'gravity_max_cycles': 0}, 'gravity_max_cycles'), ({'gravity_boundary':'isolated'}, 'gravity_boundary'),
                 ({'x1l_boundary_type':'outflow'}, 'periodic'), ({'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1}, 'isolated gravity requires')]:
@@ -208,7 +211,7 @@ def main():
     finally:
         report = dict(status=status, executable=str(campaign.executable),
                       executable_sha256=hashlib.sha256(campaign.executable.read_bytes()).hexdigest(),
-                      results=campaign.results + box.results)
+                      results=campaign.results + box.results + radial.results)
         (campaign.output/'summary.json').write_text(json.dumps(report, indent=2)+'\n')
     print(f'Self-gravity {status}: {len(report["results"])} acceptance records')
 
