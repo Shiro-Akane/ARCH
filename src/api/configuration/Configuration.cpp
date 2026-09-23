@@ -67,7 +67,7 @@ Json options(const std::string& key) {
     if (key == "eos_type") return simple_options({"ideal", "helmholtz", "tabular"});
     if (key == "compute_backend") return simple_options({"cpu", "cuda", "auto"});
     if (key == "gravity_type") return simple_options({"none", "external", "self"});
-    if (key == "gravity_boundary") return simple_options({"periodic"});
+    if (key == "gravity_boundary") return simple_options({"periodic", "isolated"});
     if (key == "use_nse") return simple_options({"true", "false", "auto"});
     if (key.ends_with("_boundary_type")) return Json::object({{"caseSensitive", false}, {"unknownBehavior", "error"},
         {"choices", Json::array({
@@ -149,7 +149,7 @@ std::string condition(const ParameterDefinition& d) {
     if (key == "eos_table_path") return "eos_type=helmholtz or tabular";
     if (key == "eos_helm_table_path") return "eos_type=tabular; need depends on table policy";
     if (key.starts_with("gravity_g_")) return "gravity_type=external";
-    if (d.group == "Gravity" && key != "gravity_type") return "gravity_type=self; CPU Cartesian periodic hydro";
+    if (d.group == "Gravity" && key != "gravity_type") return "gravity_type=self; Cartesian periodic or 3D isolated gravity";
     if (d.group == "Diffusion" && key != "use_diffusion") {
         if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec") return "use_diffusion=true; explicit coefficient forbidden with Helmholtz";
         return "use_diffusion=true";

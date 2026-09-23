@@ -62,6 +62,11 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "7cf0a449208b3ee8e8edd50bd125a20b25cbb2042b54ee85e6ba57fb44c432dc", {
+        {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
+        {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
+        {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
+    }}},
     {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "8e68d1d6d6e7e17a710e7e168385d77263c40f6e90046f685eccc91cf55d1e98", {
         {"rho0", "g/cm^3"}, {"pressure0", "erg/cm^3"},
         {"amplitude", "1"}, {"phase", "rad"}, {"mode", "1"},

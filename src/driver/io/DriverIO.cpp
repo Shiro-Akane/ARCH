@@ -42,6 +42,7 @@ void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
 }
 void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
 {
+    const auto start = Clock::now();
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
     const auto& specs = runtime.species();
@@ -49,9 +50,12 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
     write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index++,
               ctrl.t_current, config, specs, extra_fields);
+    output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
+    ++output_calls_;
 }
 void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
 {
+    const auto start = Clock::now();
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
     const auto& specs = runtime.species();
@@ -62,6 +66,8 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
               ctrl.step_count, ctrl.t_current, ctrl.dt_old,
               dt_burn_global, resume_after_regrid, config, specs,
               checkpoint_provenance, ctrl.repairs);
+    output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
+    ++output_calls_;
 }
 void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule)
 {
@@ -69,6 +75,13 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
     const auto* compute_backend = runtime.backend();
     const auto& regrid_measurements = runtime.regrid_records();
     const bool has_diff = config.physics.diffusion.use_diffusion;
+    {
+        std::ofstream timing(config.io.out_dir + "/run_timings.tsv");
+        timing << "driver_seconds\toutput_seconds\toutput_calls\n" << std::setprecision(17)
+               << std::chrono::duration<double>(Clock::now()-started_).count() << '\t'
+               << output_seconds_ << '\t' << output_calls_ << '\n';
+        if (!timing) throw std::runtime_error("cannot write run timings");
+    }
     {
         std::ofstream report(config.io.out_dir + "/state_repairs.txt");
         if (!report) throw std::runtime_error("cannot write state repair diagnostics");

@@ -124,7 +124,10 @@ target_link_libraries(arch_diffusion_math PUBLIC arch_build_contract)
 set(ARCH_GRAVITY_CPU_SOURCES
     src/numerics/elliptic/CartesianPoisson.cpp src/numerics/elliptic/CompositePoisson.cpp
     src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/HostCompositeMG.cpp
-    src/physics/gravity/self/SelfGravity.cpp)
+    src/numerics/multigrid/CompositeExecution.cpp
+    src/physics/gravity/GravityBoundary.cpp
+    src/physics/gravity/GravityExecution.cpp
+    src/physics/gravity/self/GravityWorkspace.cpp src/physics/gravity/self/SelfGravity.cpp)
 foreach(source IN LISTS ARCH_GRAVITY_CPU_SOURCES)
     list(REMOVE_ITEM ARCH_APPLICATION_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
 endforeach()

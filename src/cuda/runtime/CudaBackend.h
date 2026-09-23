@@ -93,6 +93,10 @@ public:
     amr::BlockHandle block_handle() const noexcept override;
     backend::StorageGeneration storage_generation() const noexcept override;
     bool contains(backend::BackendStateAccess access) const noexcept override;
+    std::shared_ptr<Physical::Gravity::GravityExecution> gravity_execution() override;
+    const double* gravity_density(backend::BackendStateAccess) override;
+    void publish_gravity(backend::BackendStateAccess,Physical::Gravity::GravityPatchView) override;
+    void invalidate_gravity() override;
     double compute_hydro_dt(backend::BackendStateAccess current,
                             double cfl) override;
     std::vector<double> compute_hydro_dt_batch(
@@ -224,6 +228,8 @@ public:
     }
 
 private:
+    bool gravity_ready_=false;
+    std::uint64_t gravity_generation_=0;
     std::shared_ptr<Impl> impl_;
 };
 

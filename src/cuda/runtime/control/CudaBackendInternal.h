@@ -166,6 +166,8 @@ struct CudaBlockRuntime {
     DeviceAllocation<double> cell_volume;
     std::array<DeviceAllocation<double>, 3> face_area_lower;
     std::array<DeviceAllocation<double>, 3> face_area_upper;
+    Physical::Gravity::GravityPatchView self_gravity{};
+    std::uint64_t gravity_generation=0;
     DeviceGridView grid{};
     DeviceCompiledBoundaryPlan boundary;
     DeviceAllocation<DeviceBoundaryTransfer> boundary_transfers;
@@ -236,6 +238,7 @@ struct CudaBackend::Impl {
         std::unique_ptr<CudaAmrFluxPlanRuntime> amr_flux;
     };
 
+    std::weak_ptr<Physical::Gravity::GravityExecution> gravity_execution;
     int device_ordinal;
     CudaLaunchConfig launch;
     StreamOwner stream;

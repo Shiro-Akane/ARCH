@@ -71,15 +71,15 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     require(g.relative_tolerance < 1.0, "gravity_rtol", "Relative tolerance must be smaller than one.");
     nonnegative(g.absolute_tolerance, "gravity_atol");
     require(g.max_cycles > 0, "gravity_max_cycles", "Iteration count must be positive.");
-    require(g.boundary == "periodic", "gravity_boundary", "Only periodic self-gravity is available.");
+    require(g.boundary == "periodic" || g.boundary == "isolated", "gravity_boundary", "Expected periodic or isolated gravity boundary.");
     if (g.type == "self") {
         require(c.grid.geometry == "cartesian", "geometry", "Self-gravity currently requires Cartesian geometry.");
-        require(!c.physics.burn.use_burn && !c.physics.diffusion.use_diffusion,
-                "gravity_type", "Self-gravity with burn or diffusion has not been qualified.");
+        if(g.boundary=="isolated")require(c.grid.dim==3,"gravity_boundary","Isolated Newtonian self-gravity requires 3D.");
         const std::string faces[]{c.grid.x1l_boundary_type,c.grid.x1r_boundary_type,
             c.grid.x2l_boundary_type,c.grid.x2r_boundary_type,c.grid.x3l_boundary_type,c.grid.x3r_boundary_type};
         for (int a=0; a<2*c.grid.dim; ++a)
-            require(faces[a] == "periodic", "gravity_boundary", "Self-gravity requires periodic fluid boundaries on every active axis.");
+            require(g.boundary=="periodic" ? faces[a]=="periodic" : faces[a]=="outflow" || faces[a]=="reflecting",
+                "gravity_boundary", "Periodic gravity requires periodic fluid boundaries; isolated gravity requires outflow or reflecting boundaries.");
     }
     require(std::isfinite(g.g_x), "gravity_g_x", "Acceleration must be finite.");
     require(std::isfinite(g.g_y), "gravity_g_y", "Acceleration must be finite.");

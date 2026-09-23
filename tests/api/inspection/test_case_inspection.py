@@ -19,6 +19,7 @@ CASES = {
     'Sedov': ('simulation/Sedov/Sedov.cpp', ''),
     'RT': ('simulation/RTinstability/RT_instab.cpp', 'nblockx2=1\n'),
     'SmoothAdvection': ('simulation/SmoothAdvection/SmoothAdvection.cpp', ''),
+    'GravityBox': ('simulation/GravityBox/GravityBox.cpp', 'eos_type=ideal\n'),
     'JeansWave': ('simulation/JeansWave/JeansWave.cpp', 'eos_type=ideal\ngravity_type=self\nx1l_boundary_type=periodic\nx1r_boundary_type=periodic\n'),
     'ExternalGravity': ('simulation/ExternalGravity/ExternalGravity.cpp', 'gravity_type=external\n'),
     'DiffusionMode': ('simulation/DiffusionMode/DiffusionMode.cpp', 'use_diffusion=true\nuse_species_diff=true\n'),

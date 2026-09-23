@@ -9,6 +9,7 @@ import sys
 
 
 _CUDA_DEVICE_OBJECT_SOURCES = {
+    "arch_cuda_gravity_execution": "src/cuda/runtime/gravity/cudagravityexecution.cu",
     "arch_cuda_backend_burn_ideal":
         "src/cuda/runtime/burn/routes/cudabackendburnideal.cu",
     "arch_cuda_backend_burn_helm":
@@ -56,6 +57,7 @@ _CUDA_DEVICE_OBJECT_SOURCES = {
 }
 
 _CUDA_HOST_OBJECT_SPECS = {
+    "arch_cuda_gravity_control": ("src/cuda/runtime/gravity/cudabackendgravity.cpp", "-g1"),
     "arch_cuda_backend_eos_utils": (
         "src/cuda/microphysics/eos/device_eos_owner_utils.cpp", "-g0"),
     "arch_cuda_backend_eos_species": (

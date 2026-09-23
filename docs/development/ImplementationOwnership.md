@@ -406,12 +406,14 @@ functional subdirectories. Case sources consume `<UserInterface.h>` and
 Internal includes are relative to `src/`, test helpers to `tests/`. All physics
 inputs and outputs follow the existing CGS contract, including IdealGas.
 
-## Composite self gravity (P3/P4)
+## Composite self gravity (P3–P7)
 
 | Owner | Consumers and boundary |
 | --- | --- |
 | `numerics/elliptic/CompositePoisson` | Dyadic leaf geometry, shared coarse/fine subfaces, quadratic interface gradients, volume norms; no fluid state or AMR tree. |
-| `numerics/multigrid/HostCompositeMG` | Independent coarsened levels, volume restriction, signed correction, Jacobi and FGMRES; existing P2 uniform solver at the bottom. |
+| `numerics/multigrid/HostCompositeMG` | Shared CPU/CUDA hierarchy and MG/FGMRES flow through `CompositeExecution`; P2 builds a cached coarse inverse. |
+| `physics/gravity/GravityBoundary`, `GravityExecution` | Shared isolated boundary moments and physical work descriptors; no CUDA kernel math copy. |
+| `cuda/runtime/gravity` | Backend allocation, stream/kernel/reduction adapters and generation-stamped patch publication. |
 | `amr/elliptic/EllipticMeshAdapter` | Native active-cell order, handles, grid metrics and padded scalar views; no numerical solve. |
 | `physics/gravity/self/SelfGravity` | CGS density source, periodic background, potential/force ownership, publication/failure, momentum and face-flux work. Serial preparation, concurrent read-only patch consumption. |
 | `driver/stages/GravityStage` | Actual slot/version/epoch leases, one solve per RK input, explicit Current preparation for outputs/CFL, stage invalidation and diagnostics. |
@@ -419,6 +421,6 @@ inputs and outputs follow the existing CGS contract, including IdealGas.
 
 `arch_gravity_cpu` owns compiled CPU solver sources once. The Host policy header
 uses a private workspace and forward declarations to avoid propagating MG templates
-into the hydro dispatch matrix. P6 must reuse the numerical contract and implement
-device residency/acceleration; the current CPU implementation is not a CUDA fallback
-inside a GPU run.
+into the hydro dispatch matrix. The same control and math execute through Host or CUDA loop providers.
+The target name records compilation by the Host compiler, not a Host field fallback:
+CUDA runs keep iteration vectors resident and use the existing stream/allocation owners.

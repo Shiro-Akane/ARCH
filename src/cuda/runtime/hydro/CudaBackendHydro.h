@@ -15,6 +15,7 @@
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "physics/eos/eos.h"
 #include "physics/gravity/ExternalGravitySource.h"
+#include "physics/gravity/GravityPatchView.h"
 
 #include <cuda_runtime.h>
 #include <array>
@@ -29,6 +30,7 @@ struct DeviceHydroBatchBlock {
     int* eos_status = nullptr;
     std::array<CudaAmrFluxDirectionRouteView, 3> routes{};
     state::RepairView repairs{};
+    Physical::Gravity::GravityPatchView self_gravity{};
 };
 static_assert(std::is_trivially_copyable_v<DeviceHydroBatchBlock>);
 

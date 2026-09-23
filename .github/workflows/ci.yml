@@ -144,7 +144,7 @@ jobs:
           ctest --test-dir build-ci/cpu --show-only=json-v1 > build-ci/reports/inventory.json
           python3 tools/check_ci_results.py --inventory build-ci/reports/inventory.json
 
-      - name: Build the application and all configured CPU tests
+      - name: Build the application and existing CPU validation suite
         run: |
           python3 tools/run_memory_guarded.py \
             --min-available-mib 1536 --max-swap-growth-mib 512 --pressure-guard \
@@ -192,6 +192,9 @@ jobs:
             build-ci/low-density/PASS
             build-ci/low-density/**/*.par
             build-ci/low-density/**/*.log
+            build-ci/cpu/self-gravity-jeans/summary.json
+            build-ci/cpu/self-gravity-jeans/**/*.par
+            build-ci/cpu/self-gravity-jeans/**/*.log
             build-ci/cpu/Testing/Temporary/LastTest.log
             build-ci/cpu/Testing/Temporary/LastTestsFailed.log
           retention-days: 14

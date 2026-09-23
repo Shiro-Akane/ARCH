@@ -140,6 +140,9 @@ function(arch_configure_cuda_backend_object target source)
     endif()
 endfunction()
 
+arch_configure_cuda_backend_object(arch_cuda_gravity_execution
+    src/cuda/runtime/gravity/CudaGravityExecution.cu)
+
 arch_configure_cuda_backend_object(arch_cuda_backend_burn_ideal
     src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_burn_helm
@@ -246,6 +249,8 @@ arch_configure_cuda_host_object(arch_cuda_backend_eos_tabular3
     src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.cpp -g0)
 arch_configure_cuda_host_object(arch_cuda_backend_eos_tabular4
     src/cuda/microphysics/eos/owners/tabular4_eos_device_owner.cpp -g0)
+arch_configure_cuda_host_object(arch_cuda_gravity_control
+    src/cuda/runtime/gravity/CudaBackendGravity.cpp -g1)
 arch_configure_cuda_host_object(arch_cuda_backend_resources
     src/cuda/runtime/control/CudaBackendResources.cpp -g1)
 arch_configure_cuda_host_object(arch_cuda_backend_core
@@ -285,6 +290,8 @@ add_dependencies(arch_cuda_backend_burn_ideal
     arch_cuda_backend_store)
 
 add_library(arch_cuda_backend STATIC
+    $<TARGET_OBJECTS:arch_cuda_gravity_execution>
+    $<TARGET_OBJECTS:arch_cuda_gravity_control>
     $<TARGET_OBJECTS:arch_cuda_backend_grid_metrics>
     $<TARGET_OBJECTS:arch_cuda_backend_migration>
     $<TARGET_OBJECTS:arch_cuda_backend_amr_migration>

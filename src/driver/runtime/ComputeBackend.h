@@ -12,6 +12,8 @@
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/topology/BlockHandle.h"
 #include "data/GlobalDefs.h"
+#include "grid/ScalarFieldView.h"
+#include "physics/gravity/GravityPatchView.h"
 #include "driver/schedule/StageScheduler.h"
 
 #include <cstddef>
@@ -25,6 +27,7 @@
 #include <type_traits>
 #include <vector>
 
+namespace Physical::Gravity { class GravityExecution; }
 namespace amr { struct AmrFluxTopologyPlan; struct Block; }
 namespace arch::boundary { class BoundaryPlan; }
 
@@ -249,6 +252,15 @@ public:
     virtual amr::BlockHandle block_handle() const noexcept = 0;
     virtual StorageGeneration storage_generation() const noexcept = 0;
     virtual bool contains(BackendStateAccess access) const noexcept = 0;
+
+    virtual std::shared_ptr<Physical::Gravity::GravityExecution> gravity_execution() { return {}; }
+    virtual const double* gravity_density(BackendStateAccess) {
+        throw std::logic_error("backend gravity density unavailable");
+    }
+    virtual void publish_gravity(BackendStateAccess,Physical::Gravity::GravityPatchView) {
+        throw std::logic_error("backend gravity publication unavailable");
+    }
+    virtual void invalidate_gravity() {}
 
     virtual double compute_hydro_dt(BackendStateAccess current,
                                     double cfl) = 0;

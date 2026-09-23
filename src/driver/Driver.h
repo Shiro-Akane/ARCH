@@ -108,6 +108,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     bool has_burn = config.physics.burn.use_burn;
     bool has_diff = config.physics.diffusion.use_diffusion;
 
+    start_compute_backend(runtime, eos, *resolved_plan, *backend_resolution, *startup_order);
     GravityStage gravity_stage(runtime, gravity);
     gravity_stage.prepare_current(ctrl.t_current);
     double dt_burn_global = start_state.has_timestep_state
@@ -120,7 +121,6 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         output.write_checkpoint(dt_burn_global, false);
     }
     ctrl.print_header(has_burn, has_diff);
-    start_compute_backend(runtime, eos, *resolved_plan, *backend_resolution, *startup_order);
     DriverStageWorkspace workspace;
     bool skip_regrid_once = start_state.resume_after_regrid;
     bool advanced_any_step = false;

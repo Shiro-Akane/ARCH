@@ -15,6 +15,7 @@ import subprocess
 
 import h5py
 import numpy as np
+from gravity_box import BoxCampaign
 
 ROOT = Path(__file__).resolve().parents[2]
 RHO, PRESSURE, AMPLITUDE, G = 1e7, 6e6, 1e-4, 6.67430e-8
@@ -188,15 +189,17 @@ def main():
     parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     campaign = Campaign(args.arch.resolve(), args.output.resolve())
+    box = BoxCampaign(campaign.executable, campaign.output/'box')
     try:
         if args.quick:
             _, _, record = campaign.run('jeans-64')
             require(record['density_relative_rms'] <= .02, 'Jeans analytic budget')
         else:
             campaign.full()
+        box.run_checks(quick=args.quick)
         for changes, message in [({'gravity_rtol': 0}, 'gravity_rtol'), ({'gravity_atol': -1}, 'gravity_atol'),
                 ({'gravity_max_cycles': 0}, 'gravity_max_cycles'), ({'gravity_boundary':'isolated'}, 'gravity_boundary'),
-                ({'x1l_boundary_type':'outflow'}, 'periodic'), ({'use_diffusion':'true'}, 'not been qualified')]:
+                ({'x1l_boundary_type':'outflow'}, 'periodic'), ({'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1}, 'isolated gravity requires')]:
             campaign.reject('reject-'+next(iter(changes)), message, **changes)
         status = 'passed'
     except Exception:
@@ -205,9 +208,9 @@ def main():
     finally:
         report = dict(status=status, executable=str(campaign.executable),
                       executable_sha256=hashlib.sha256(campaign.executable.read_bytes()).hexdigest(),
-                      results=campaign.results)
+                      results=campaign.results + box.results)
         (campaign.output/'summary.json').write_text(json.dumps(report, indent=2)+'\n')
-    print(f'Self-gravity {status}: {len(campaign.results)} acceptance records')
+    print(f'Self-gravity {status}: {len(report["results"])} acceptance records')
 
 
 if __name__ == '__main__':

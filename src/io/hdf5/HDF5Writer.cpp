@@ -115,7 +115,7 @@ bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
     const auto& gravity=provenance.gravity_controls;
     if (!std::all_of(gravity.begin(),gravity.end(),[](double x){return std::isfinite(x);})) return false;
     if (provenance.gravity_type=="self") {
-        if (provenance.gravity_boundary!="periodic" || gravity.size()!=4 || gravity[0]<=0.
+        if ((provenance.gravity_boundary!="periodic" && provenance.gravity_boundary!="isolated") || gravity.size()!=4 || gravity[0]<=0.
             || gravity[1]<=0. || gravity[1]>=1. || gravity[2]<0. || gravity[3]<1. || std::floor(gravity[3])!=gravity[3]) return false;
     } else if (provenance.gravity_type=="external") {
         if (gravity.size()!=3 || provenance.gravity_boundary!="none") return false;

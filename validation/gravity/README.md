@@ -143,5 +143,9 @@ three-dimensional uniform and composite manufactured solutions at three resoluti
 `contract` tests failure, scale, conservation and nested hierarchy behavior.
 
 The [P3/P4 implementation record](../../docs/development/P3P4CompositeGravity.zh-CN.md)
-defines numerical budgets, supported combinations and evidence. GPU gravity remains
-P6 work; compiling or running existing CUDA hydro does not qualify GPU self gravity.
+Historical P3/P4 budgets remain unchanged. Current production support and results:
+[P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md).
+The existing campaign now includes GravityBox isolated/coupled checks; `--quick`
+replaces the former Jeans-only CI subset without adding a test/job.
+`check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`
+qualifies actual device gravity; `--benchmark-only` runs the local repeated performance matrix.

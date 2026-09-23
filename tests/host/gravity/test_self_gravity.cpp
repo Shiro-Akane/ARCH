@@ -1,4 +1,5 @@
 #include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/GravityExecution.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "numerics/multigrid/HostCompositeMG.h"
 #include "physics/gravity/self/SelfGravity.h"
@@ -43,6 +44,12 @@ struct Fixture {
     }
 };
 void lifecycle() {
+    // Nonfinite face forces must fail before publishing a seemingly finite CFL.
+    GravityCell cell{0,0,{1.,1.,1.}};
+    double sides[6]{},g[3]{},inverse_dt=0.;
+    sides[0]=std::numeric_limits<double>::quiet_NaN();
+    CellAcceleration{1,1,&cell,sides,g,&inverse_dt}(0);
+    require(!std::isfinite(inverse_dt),"nonfinite force hidden by CFL reduction");
     Fixture f;SelfGravity gravity(f.config.physics.gravity);
     rejects([&]{gravity.potential();},"unbound field read accepted");
     gravity.bind(amr::bind_elliptic_mesh(f.control,f.config.grid,f.handles));

@@ -122,7 +122,7 @@ class ConfigurationContract(unittest.TestCase):
             'tstep_change_factor': '.99', 'diff_cfl': '1.01', 'diff_max_stages': '1',
             'nu_visc': '-1', 'alpha_therm': '-1', 'D_spec': '-1', 'gravity_G': '0',
             'gravity_rtol': '1', 'gravity_atol': '-1', 'gravity_max_cycles': '0',
-            'gravity_boundary': 'isolated',
+            'gravity_boundary': 'unknown',
             'tmax': '-1', 'max_steps': '-2', 'cuda_device': '-1',
         }
         for key, value in invalid.items():

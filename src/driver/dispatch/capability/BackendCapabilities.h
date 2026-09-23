@@ -285,8 +285,7 @@ inline CapabilityResult query_support(
     const bool cpu_nse_requirements_valid = !requirements.use_nse
         || (requirements.burn && network_supports_nse(cpu_plan.network));
     if (result.cpu_supported && requirements.gravity == GravityId::Self
-        && (requirements.geometry != GeometryId::Cartesian || requirements.burn || requirements.diffusion
-            || requirements.boundary_features != boundary_bit(BoundaryFeature::Periodic))) {
+        && requirements.geometry != GeometryId::Cartesian) {
         result.cpu_supported = false;
         result.cpu_code = BackendCapabilityCode::UnsupportedGravity;
     } else if (result.cpu_supported && !cpu_nse_requirements_valid) {
@@ -333,7 +332,7 @@ inline CapabilityResult query_support(
     if (!valid_root_topology
         || requirements.uniform_multiblock != is_uniform_multiblock)
         return reject_cuda(BackendCapabilityCode::UnsupportedRootTopology);
-    if (requirements.gravity != GravityId::None && requirements.gravity != GravityId::External)
+    if (requirements.gravity == GravityId::Self && requirements.geometry != GeometryId::Cartesian)
         return reject_cuda(BackendCapabilityCode::UnsupportedGravity);
     if (requirements.geometry != GeometryId::Cartesian
         && requirements.geometry != GeometryId::Cylindrical

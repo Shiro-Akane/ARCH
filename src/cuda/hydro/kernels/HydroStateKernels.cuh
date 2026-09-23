@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#include "physics/gravity/GravityPatchView.h"
 
 #include <cstddef>
 
@@ -85,7 +86,7 @@ static __global__ void hydro_cfl_reduce_kernel(
 
 static __device__ inline void hydro_divergence_kernel_work(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
-    double dt, int direction)
+    double dt, int direction, Physical::Gravity::GravityPatchView gravity = {})
 {
     const int linear = blockIdx.x * blockDim.x + threadIdx.x;
     if (linear >= grid.active_cell_count())
@@ -102,6 +103,8 @@ static __device__ inline void hydro_divergence_kernel_work(
         grid.face_area_upper[direction][cell], grid.cell_volume[cell], dt,
         cell_delta,
         delta.n_species > 0 ? delta.mass_fractions + cell : nullptr);
+    if(gravity.enabled()) cell_delta.eng+=Physical::Gravity::gravity_flux_work(
+        gravity.faces[direction][cell],gravity.faces[direction][cell+stride],flux.rho[cell],flux.rho[cell+stride],dt);
     delta.store(cell, cell_delta);
 }
 

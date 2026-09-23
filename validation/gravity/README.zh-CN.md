@@ -118,4 +118,9 @@ RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预�
 动态 AMR 和 restart 验证（需要 numpy/h5py）；`--quick` 为 CTest 的解析与拒绝子集。
 `arch_composite_poisson 3` 覆盖三维均匀/混合层级三档制造解，`contract` 覆盖失败与不变量。
 算法、预算与支持边界见 [P3/P4 记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)。
-GPU 自引力仍是 P6 内容；CUDA 编译或既有 GPU 流体测试不等于 GPU 自引力验收。
+Historical P3/P4 budgets remain unchanged. Current production support and results:
+[P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md).
+The existing campaign now includes GravityBox isolated/coupled checks; `--quick`
+replaces the former Jeans-only CI subset without adding a test/job.
+`check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`
+qualifies actual device gravity; `--benchmark-only` runs the local repeated performance matrix.

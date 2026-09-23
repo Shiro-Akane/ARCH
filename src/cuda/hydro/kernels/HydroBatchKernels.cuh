@@ -47,7 +47,7 @@ static __global__ void hydro_batch_divergence(const DeviceHydroBatchBlock* block
 {
     const auto& b = blocks[blockIdx.y];
     if (direction < b.grid.dim)
-        hydro_divergence_kernel_work(b.face_flux, b.delta, b.grid, dt, direction);
+        hydro_divergence_kernel_work(b.face_flux, b.delta, b.grid, dt, direction,b.self_gravity);
 }
 
 template<class Eos>
@@ -58,6 +58,14 @@ __global__ void hydro_batch_sources(const DeviceHydroBatchBlock* blocks, Eos eos
     if (b.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || gravity.enabled)
         hydro_source_kernel_work(b.input, b.delta, b.grid,
             make_checked_hydro_eos(eos, b.eos_status), dt, workspace, gravity);
+    const int linear=blockIdx.x*blockDim.x+threadIdx.x;
+    if(b.self_gravity.enabled() && linear<b.grid.active_cell_count()) {
+        const int c=b.grid.active_cell(linear);FluidVector delta=b.delta.load(c);
+        double* momentum[]{&delta.mom_u,&delta.mom_v,&delta.mom_w};
+        for(int a=0;a<b.grid.dim;++a)*momentum[a]+=Physical::Gravity::gravity_momentum(
+            b.self_gravity.faces[a][c],b.self_gravity.faces[a][c+b.grid.stride(a)],b.input.rho[c],dt);
+        b.delta.store(c,delta);
+    }
 }
 
 static __global__ void hydro_batch_update(const DeviceHydroBatchBlock* blocks,
@@ -119,7 +127,7 @@ CudaBackendLaunchResult launch_hydro_batch(
             cells = std::max(cells, b.grid.active_cell_count());
             storage = std::max(storage, b.grid.total_size);
             dimension = std::max(dimension, b.grid.dim);
-            sources |= b.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian);
+            sources |= b.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || b.self_gravity.enabled();
             for (int d = 0; d < b.grid.dim; ++d) {
                 const int extent[]{b.grid.ie - b.grid.is, b.grid.je - b.grid.js, b.grid.ke - b.grid.ks};
                 faces = std::max(faces, (extent[0] + (d == 0))

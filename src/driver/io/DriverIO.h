@@ -5,6 +5,7 @@
 #include "io/IO.h"
 #include <span>
 #include <cstdint>
+#include <chrono>
 struct SimulationController;
 namespace arch::driver {
 class DriverRuntime;
@@ -26,6 +27,10 @@ public:
     void write_checkpoint(double dt_burn_global, bool resume_after_regrid);
     void write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule);
 private:
+    using Clock = std::chrono::steady_clock;
+    Clock::time_point started_ = Clock::now();
+    double output_seconds_ = 0.;
+    std::size_t output_calls_ = 0;
     DriverRuntime& runtime;
     SimulationController& ctrl;
     const io::CheckpointProvenance& checkpoint_provenance;

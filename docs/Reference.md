@@ -80,7 +80,7 @@ external provenance claim unless their file header or that notice says so.
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
 | Geometry | `cartesian`, `cylindrical`, `spherical` | supported on CPU and CUDA | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
 | AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
-| Self gravity | `gravity_type = self` | CPU | Cartesian, periodic boundaries on every active axis, hydro without burn/diffusion; composite AMR MG, Euler/RK2/RK3. CUDA remains unavailable. |
+| Self gravity | `gravity_type = self` | CPU, CUDA | Cartesian periodic 1D–3D or isolated 3D; composite AMR MG, Euler/RK2/RK3, validated burn/diffusion coupling. See GravityBox and the P5–P7 record. |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
 
 CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, the registered
@@ -117,7 +117,7 @@ application results and release acceptance.
 | Hydro time | `Euler`, `RK1`; `RK2`, `SSPRK2`; `RK3`, `SSPRK3` | Euler, SSPRK2, SSPRK3 |
 | Diffusion time | `RKL2` (default), `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
 | EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and CUDA |
-| Gravity | `none`, `external`; CPU `self` | self requires Cartesian, periodic hydro/gravity boundaries and no burn/diffusion; CUDA self is rejected |
+| Gravity | `none`, `external`, `self` | self requires Cartesian; periodic potential needs periodic fluid faces, isolated 3D needs reflecting/outflow fluid faces |
 | Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
 | Linear solve | `Auto`, `DenseLU`, `SparseKLU`, `cuDSS` | Case-insensitive; aliases `dense_lu`, `sparse_klu`, and `cu_dss` are accepted. `Auto` selects DenseLU for up to 31 total ODE equations, including temperature and any auxiliary energy states. Larger systems use SparseKLU on CPU or cuDSS on CUDA. SparseKLU is CPU-only, cuDSS is CUDA-only, and incompatible explicit pairs are rejected before backend construction without solver substitution. Missing solver libraries or registered CUDA network code also cause rejection. |
@@ -417,10 +417,10 @@ and any other spelling are rejected with the parameter name in the error.
 | `eos_table_path` | string | empty | required for tabular/Helmholtz |
 | `eos_helm_table_path` | string | empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
 | `gamma` | double | `1.4` | ideal-gas model gamma |
-| `gravity_type` | string | `none` | `none`, `external`, `self`; self requires CPU Cartesian periodic hydro without burn/diffusion |
+| `gravity_type` | string | `none` | `none`, `external`, `self`; self supports Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA |
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | CGS gravitational constant used by self gravity |
-| `gravity_boundary` | string | `periodic` | Full periodic domain; volume-mean density is removed |
+| `gravity_boundary` | string | `periodic` | `periodic`: subtract volume-mean density; `isolated`: 3D finite-domain mass boundary without background subtraction |
 | `gravity_rtol` | float | `1e-10` | Positive relative volume RMS residual target, smaller than one; advanced GUI option |
 | `gravity_atol` | float | `0` | Nonnegative absolute residual in `s^-2`; zero keeps relative accuracy; advanced GUI option |
 | `gravity_max_cycles` | int | `200` | Positive outer MG/FGMRES iteration limit; failure stops evolution; advanced GUI option |
@@ -1185,8 +1185,11 @@ reconstruct missing mass fractions. A fresh simulation initializes its own
   CPU execution only.
   Generated NSE requires the documented equilibrium-model eligibility; it is not
   a promise that every correct kinetic network admits an NSE bypass.
-- Self-gravity is limited to CPU Cartesian periodic hydro without burn/diffusion.
-  GPU self-gravity, isolated boundaries and the Jeans refinement indicator remain unavailable.
+- Self-gravity supports Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA.
+  Root-cell extents must be powers of two and root spacing ratio at most 2.
+  Curvilinear gravity, external mass sources and a Jeans refinement indicator remain unavailable.
+  See [GravityBox](../simulation/GravityBox/README.md) and the
+  [P5–P7 acceptance](development/P5P7GravityAcceptance.zh-CN.md) for tested coupling and performance limits.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict

@@ -5,8 +5,10 @@
 #include "driver/runtime/DriverRuntime.h"
 #include "amr/AMRControl.h"
 #include "physics/gravity/self/SelfGravity.h"
+#include "physics/gravity/GravityExecution.h"
 #include <filesystem>
 #include <iomanip>
+#include <chrono>
 namespace arch::driver {
 GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGravityPolicy* policy)
     :runtime_(runtime),gravity_(dynamic_cast<const Physical::Gravity::SelfGravity*>(policy)) {
@@ -15,10 +17,13 @@ GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGrav
     std::filesystem::create_directories(config.io.out_dir);
     diagnostics_.open(config.io.out_dir+"/gravity_solves.tsv");
     if (!diagnostics_) throw std::runtime_error("Cannot open gravity solve diagnostics");
-    diagnostics_<<"time\tstage\tepoch\tgeneration\tcells\titerations\trhs_rms\tresidual\ttarget\trho_mean\n"<<std::setprecision(17);
+    diagnostics_<<"time\tstage\tepoch\tgeneration\tcells\titerations\trhs_rms\tresidual\ttarget\trho_mean\tdevice\tsetup_seconds\tsolve_seconds\tkernels\tbytes_h2d\tbytes_d2h\tsynchronizations\tsource_boundary_seconds\tpoisson_seconds\tforce_seconds\n"<<std::setprecision(17);
 }
 state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::StateResidencyLedger& ledger,double time,int stage) {
-    gravity_->invalidate();
+    const auto start=std::chrono::steady_clock::now();
+    invalidate();
+    auto* backend=runtime_.backend();
+    if(backend)gravity_->set_execution(backend->gravity_execution());
     const auto& handles=runtime_.handles(); const auto& config=runtime_.configuration();
     if (handles.empty()) throw std::logic_error("Gravity requires active topology");
     if (epoch_!=handles.front().epoch) {
@@ -35,29 +40,41 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     const auto& active=runtime_.control().tree->GetActiveBlocks();
     for (std::size_t b=0;b<handles.size();++b) {
         const auto version=ledger.inspect({handles[b],slot}).interior.version;
-        ledger.require_readable({handles[b],slot},{state::ExecutionSide::Host,version,true,false});
+        ledger.require_readable({handles[b],slot},{backend?state::ExecutionSide::Device:state::ExecutionSide::Host,version,true,false});
         const auto& block=runtime_.control().pool->GetBlock(active[b]);
         const auto& fluid=slot==state::StateSlot::Current?block.fluid_state:slot==state::StateSlot::Next?block.state_next:block.state_scratch;
         const auto& grid=block.grid;
         Physical::Gravity::GravityInputIdentity input{handles[b],slot,version,generation_};
         identity.inputs.push_back(input);
         const auto layout=amr::native_scalar_layout(grid);
-        views.push_back({input,{fluid.rho.data(),fluid.rho.size(),layout,arch::grid::FieldMemory::Host,generation_}});
+        views.push_back({input,{backend?backend->gravity_density(runtime_.backend_access(b,slot)):fluid.rho.data(),
+            fluid.rho.size(),layout,backend?arch::grid::FieldMemory::Device:arch::grid::FieldMemory::Host,generation_}});
     }
+    const auto prepared=std::chrono::steady_clock::now();
+    auto execution=backend?backend->gravity_execution():nullptr;
+    const auto before=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
     const auto token=gravity_->prepare({identity,views}); const auto& report=gravity_->report();
-    diagnostics_<<time<<'\t'<<stage<<'\t'<<epoch_.value<<'\t'<<generation_<<'\t'<<gravity_->potential().size()<<'\t'
-        <<report.cycles<<'\t'<<report.rhs_rms<<'\t'<<report.residual<<'\t'<<report.target<<'\t'<<gravity_->density_mean()<<'\n';
+    const auto finished=std::chrono::steady_clock::now();
+    const auto after=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
+    diagnostics_<<time<<'\t'<<stage<<'\t'<<epoch_.value<<'\t'<<generation_<<'\t'<<gravity_->cell_count()<<'\t'
+        <<report.cycles<<'\t'<<report.rhs_rms<<'\t'<<report.residual<<'\t'<<report.target<<'\t'<<gravity_->density_mean()<<'\t'
+        <<(backend?1:0)<<'\t'<<std::chrono::duration<double>(prepared-start).count()<<'\t'
+        <<std::chrono::duration<double>(finished-prepared).count()<<'\t'<<after.kernels-before.kernels<<'\t'
+        <<after.bytes_h2d-before.bytes_h2d<<'\t'<<after.bytes_d2h-before.bytes_d2h<<'\t'
+        <<after.synchronizations-before.synchronizations<<'\t'<<gravity_->timings().source_boundary<<'\t'
+        <<gravity_->timings().poisson<<'\t'<<gravity_->timings().force<<'\n';
     if (!diagnostics_) throw std::runtime_error("Cannot write gravity diagnostics");
+    if(backend)for(std::size_t b=0;b<handles.size();++b)backend->publish_gravity(runtime_.backend_access(b,slot),gravity_->patch_view(b));
     return token;
 }
 state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparationRequest& request) {
-    if (!gravity_ || request.side!=state::ExecutionSide::Host) throw std::logic_error("Self-gravity requires the CPU stage route");
+    if (!gravity_) throw std::logic_error("No self-gravity stage service");
     return solve(request.descriptor.input_slot,request.ledger,request.input_time,request.descriptor.stage);
 }
 void GravityStage::prepare_current(double time) {
     if (gravity_) { auto context=runtime_.stage_context(); solve(state::StateSlot::Current,context.ledger,time,0); }
 }
-void GravityStage::invalidate() const { if(gravity_) gravity_->invalidate(); }
+void GravityStage::invalidate() const { if(gravity_)gravity_->invalidate();if(runtime_.backend())runtime_.backend()->invalidate_gravity(); }
 double GravityStage::timestep() const { return gravity_?gravity_->timestep(runtime_.configuration().numerics.cfl):std::numeric_limits<double>::infinity(); }
 std::vector<io::PlotScalarField> GravityStage::plot_fields() const {
     if (!gravity_) return {};

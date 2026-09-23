@@ -1,4 +1,5 @@
 #include "numerics/multigrid/HostCompositeMG.h"
+#include "physics/gravity/GravityBoundary.h"
 #include "physics/constant/PhysicalConstants.h"
 #include <cmath>
 #include <iomanip>
@@ -174,11 +175,85 @@ void contract() {
     std::cout<<"Composite contracts passed\n";
 }
 
+void boundary_convergence(int largest=32) {
+    for(bool refined:{false,true}) {
+        double previous_phi=0.,previous_face=0.,previous_boundary=0.;
+        for(int n:{8,16,32}) {
+            if(n>largest)continue;
+            auto base=base_mesh(3,n);
+            multigrid::HostCompositeMG solver(base,make_cells(base,refined),elliptic::BoundaryKind::Dirichlet);
+            const auto& op=solver.op();
+            const auto exact=[](const std::array<double,3>& p) {return std::exp(.3*p[0]+.2*p[1]+.1*p[2]);};
+            std::vector<double> rhs(op.size()),bc(op.faces().size()),error(op.size());
+            for(int i=0;i<op.size();++i) rhs[i]=-.14*exact(op.center(i));
+            for(std::size_t i=0;i<bc.size();++i) if(op.faces()[i].boundary_side>=0) bc[i]=exact(op.faces()[i].center);
+            rhs=op.effective_rhs(rhs,bc);
+            const auto result=solver.solve(rhs,{1e-11,0.,300});
+            require(result.report.status==multigrid::SolveStatus::Converged,"Dirichlet composite convergence failed");
+            for(int i=0;i<op.size();++i) error[i]=result.potential[i]-exact(op.center(i));
+            double face_error=0.,face_area=0.,boundary_error=0.,boundary_area=0.;
+            for(std::size_t i=0;i<bc.size();++i) {
+                const auto& f=op.faces()[i];
+                const double coefficient[]={.3,.2,.1};
+                const double e=op.face_gradient(result.potential,f,bc[i])-coefficient[f.axis]*exact(f.center);
+                face_error+=f.area*e*e;face_area+=f.area;
+                if(f.boundary_side>=0) {boundary_error+=f.area*e*e;boundary_area+=f.area;}
+            }
+            const double ep=op.norm(error),ef=std::sqrt(face_error/face_area),eb=std::sqrt(boundary_error/boundary_area);
+            std::cout<<"Dirichlet refined="<<refined<<" n="<<n<<" phi="<<ep<<" face="<<ef<<" boundary="<<eb<<" iterations="<<result.report.cycles;
+            if(previous_phi) {
+                const double qp=std::log2(previous_phi/ep),qf=std::log2(previous_face/ef),qb=std::log2(previous_boundary/eb);
+                std::cout<<" orders="<<qp<<','<<qf<<','<<qb;
+                require(qp>=1.8 && qf>=1.8 && qb>=1.8,"Dirichlet second order budget");
+            }
+            std::cout<<'\n';previous_phi=ep;previous_face=ef;previous_boundary=eb;
+        }
+    }
+}
+
+void isolated_boundary() {
+    for(bool elongated:{false,true}) for(bool refined:{false,true}) {
+        auto base=base_mesh(3,16);
+        if(elongated) {base.cells[1]=8;base.cells[2]=8;}
+        elliptic::CompositePoisson op(base,make_cells(base,refined),elliptic::BoundaryKind::Dirichlet);
+        Physical::Gravity::GravityBoundary boundary(op);
+        std::vector<double> rho(op.size());
+        for(int i=0;i<op.size();++i) {
+            const auto x=op.center(i);
+            const double r2=std::pow((x[0]-.37)/.09,2)+std::pow((x[1]-.43)/.07,2)+std::pow((x[2]-.56)/.11,2);
+            rho[i]=std::exp(-.5*r2)+.01;
+        }
+        boundary.update(rho);
+        const auto direct=boundary.values(op,1.,0.),standard=boundary.values(op,1.),
+            tighter=boundary.values(op,1.,.125),monopole=boundary.values(op,1.,.25,0);
+        double norm=0.,error=0.,tight_error=0.,low_order_error=0.;
+        for(std::size_t i=0;i<direct.size();++i) {
+            norm+=direct[i]*direct[i];error+=std::pow(standard[i]-direct[i],2);
+            tight_error+=std::pow(tighter[i]-direct[i],2);low_order_error+=std::pow(monopole[i]-direct[i],2);
+        }
+        error=std::sqrt(error/norm);tight_error=std::sqrt(tight_error/norm);low_order_error=std::sqrt(low_order_error/norm);
+        std::cout<<"Isolated boundary elongated="<<elongated<<" refined="<<refined<<" relative="<<error<<" theta/2="<<tight_error<<" monopole="<<low_order_error<<'\n';
+        require(error<2e-3 && tight_error<error && error<low_order_error,"isolated boundary approximation budget");
+        // An explicit independent source sum validates tree indexing and moments.
+        const auto point=op.faces().front().center;
+        double exact=0.;
+        for(int i=0;i<op.size();++i) {
+            const auto x=op.center(i);double distance=0.;for(int a=0;a<3;++a) distance+=std::pow(x[a]-point[a],2);
+            exact-=rho[i]*op.volumes()[i]/std::sqrt(distance);
+        }
+        const double actual=Physical::Gravity::isolated_potential(boundary.nodes().data(),boundary.moments().data(),
+            static_cast<int>(boundary.nodes().size()),point.data(),1.,0.);
+        require(std::abs(actual/exact-1.)<1e-12,"direct boundary source sum mismatch");
+    }
+}
+
 }
 int main(int argc,char** argv) {
     try {
         std::cout<<std::setprecision(17);
         if (argc>1 && std::string(argv[1])=="contract") { contract(); return 0; }
+        if(argc>1 && std::string(argv[1])=="boundary") {boundary_convergence();isolated_boundary();return 0;}
+        if(argc>1 && std::string(argv[1])=="ci") {boundary_convergence(16);isolated_boundary();averaged_source_exactness();convergence(2);return 0;}
         averaged_source_exactness();
         convergence(argc>1 ? std::stoi(argv[1]) : 3);
         std::cout<<"Composite Poisson analytic validation passed\n";

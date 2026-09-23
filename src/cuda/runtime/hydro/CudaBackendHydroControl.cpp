@@ -145,13 +145,17 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
         const auto current = currents[index];
         auto& block = impl_->require_block(current);
         static_cast<void>(block.require_access(current));
+        const bool self=impl_->launch.self_gravity;
+        if(self && (!gravity_ready_ || block.gravity_generation!=gravity_generation_ || block.self_gravity.density!=block.slots[slot_index(descriptor.input_slot)].rho))
+            throw std::logic_error("CUDA Hydro self-gravity field is stale or missing");
         blocks.push_back({block.slots[slot_index(descriptor.old_slot)],
             block.slots[slot_index(descriptor.input_slot)],
             block.slots[slot_index(descriptor.output_slot)],
             block.hydro_delta.view(), block.face_flux.view(), block.grid,
             scratch.status->get() + index,
             make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block),
-            {scratch.repairs->get() + index * repair_stride, species_count}});
+            {scratch.repairs->get() + index * repair_stride, species_count},
+            self?block.self_gravity:Physical::Gravity::GravityPatchView{}});
     }
     auto& device_blocks = impl_->hydro_bindings;
     device_blocks.reserve(blocks.size());
