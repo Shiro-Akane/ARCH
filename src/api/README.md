@@ -2,9 +2,11 @@
 
 本目录集中管理 GUI 等本地工具调用 ARCH 的接口。当前提供 **1.0 版初始状态预览**，由现有 `ARCH` 可执行程序提供，不需要单独的服务进程。
 
-新增的标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。它们在生成预览前提供 90 个标准参数、默认值、约束和坐标信息；本轮交接与同步方式见 [Core UI 交接](CORE_UI_HANDOFF.md)。
+新增的标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。它们在生成预览前提供当前 92 个标准参数、默认值、约束和坐标信息；早期接口交接见 [Core UI 交接](CORE_UI_HANDOFF.md)。
 
-最新增量交接见 [本地工作流 API 交接](LOCAL_WORKFLOW_HANDOFF.md)：90 项标准说明、统一 CGS、模型查询、逐级资源估算，以及有界 CPU 实际初始 AMR 网格。旧 `--preview` 点采样接口保持独立；新命令见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。全部现有模型的统一参数与初始化检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，该入口与完整场/网格渲染能力分别查询。
+本地工作流提供标准参数说明、统一 CGS、模型查询、逐级资源估算，以及有界 CPU 实际初始 AMR 网格；早期增量记录见 [本地工作流 API 交接](LOCAL_WORKFLOW_HANDOFF.md)。旧 `--preview` 点采样接口保持独立；新命令见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。全部现有模型的统一参数与初始化检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，该入口与完整场/网格渲染能力分别查询。
+
+2026-09-24 主线同步与本轮验证见 [当前接口交接](MAIN_SYNC_HANDOFF.md)。标准键和模型数量以当前 binary 的能力查询结果为准；历史交接记录中的旧数量不作为界面常量。
 
 持续编辑的资源复用见 [本地预览会话](PREVIEW_SESSION_API.md) 和 [本次交接](PREVIEW_SESSION_HANDOFF.md)。新增 `--preview-session` 通过逐行 JSON 接收多份请求，保留 EOS 资源；每份请求仍完整初始化。下文单次 CLI 的输入输出保持兼容。
 
@@ -19,7 +21,7 @@
 - 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制模型公式。
 - 旧 `--preview` 不建立 AMR 层级；`--preview-amr` 建立真实初始层级。两者均不进入时间推进，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
 
-新 `--preview-amr` 提供 Linux/WSL 上的真实初始 AMR 布局。旧场采样入口的参数 metadata 仍只覆盖 Sod `x_pos`；新增 `--inspect-case` 独立提供所有注册模型的 Setup/Get 与少量 Init 检查，当前 11 个内置模型均有与编译源码关联的单位证据。未观察到的参数不表示未使用。完整场图和 AMR 网格仍以各自能力列表为准；CellularDet 尚无可编辑分界线。任意 C++ 表达式的自动单位反推未提供。
+新 `--preview-amr` 提供 Linux/WSL 上的真实初始 AMR 布局。旧场采样入口的参数 metadata 仍只覆盖 Sod `x_pos`；新增 `--inspect-case` 独立提供所有注册模型的 Setup/Get 与少量 Init 检查，当前 14 个内置模型均有与编译源码关联的单位证据。完整场图和 AMR 网格仍只支持 Sod 1D 与 CellularDet 2D。未观察到的参数不表示未使用；应以各自能力列表为准。CellularDet 尚无可编辑分界线。任意 C++ 表达式的自动单位反推未提供。
 
 旧 `--preview` 中的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
 
@@ -284,9 +286,9 @@ ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 
 各阶段基线与验证结果见 [Core A 交接](CORE_A_HANDOFF.md) 和 [Core B 交接](CORE_B_HANDOFF.md)。CPU 预览的验证范围不包括 CUDA、完整模拟或 Studio UAT。
 
-## P1.5 配置与物理下限契约
+## 当前配置与物理下限契约
 
-当前标准目录为 88 项；GUI 以 `--config-schema` 的实际响应为准。已退役的五个旧键返回
+当前标准目录为 92 项；GUI 以 `--config-schema` 的实际响应为准。已退役的五个旧键返回
 `RETIRED_PARAMETER`，不能重新写入编辑器。`dt_init/dt_min/tstep_change_factor` 已登记，
 参数仍按物理模块归属，不在 Core 或文本输入中添加 `AdvancedConfig`/高级标签。
 GUI 的高级选项显示由前端负责。
