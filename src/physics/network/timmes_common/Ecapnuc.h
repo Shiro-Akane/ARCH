@@ -5,7 +5,7 @@
 #include <cmath>
 #include <type_traits>
 
-#include "TimmesNetworkSupport.h"
+#include "physics/network/timmes_common/TimmesNetworkSupport.h"
 
 namespace timmes {
 

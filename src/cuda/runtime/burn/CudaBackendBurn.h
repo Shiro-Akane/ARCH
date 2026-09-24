@@ -12,8 +12,9 @@
 #include "cuda/runtime/CudaBackendTypes.h"
 #include "cuda/common/CudaCommon.cuh"
 #include "data/GlobalDefs.h"
-#include "driver/dispatch/ResolvedExecutionPlan.h"
-#include "driver/ReductionSpec.h"
+#include "numerics/state/StateAdmissibility.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
+#include "driver/schedule/ReductionSpec.h"
 #include "physics/eos/eos.h"
 
 #include <cuda_runtime.h>
@@ -35,6 +36,7 @@ struct DeviceBurnBatchBlock {
     reduction::ReductionCandidate* candidates;
     int* statuses;
     DeviceBurnSummary* summary;
+    state::Bounds bounds{};
 };
 static_assert(std::is_trivially_copyable_v<DeviceBurnBatchBlock>);
 inline constexpr std::size_t BURN_BATCH_WAVE_LIMIT = 1024;

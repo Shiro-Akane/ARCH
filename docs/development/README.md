@@ -4,6 +4,44 @@ Start with [implementation ownership](ImplementationOwnership.md) before changin
 shared mathematics, backend storage, or execution paths. The map identifies the
 single maintained implementation and its CPU/CUDA consumers.
 
+The [ARCH–FLASH comparison and optimization plan (Chinese)](FlashComparisonOptimizationPlan.zh-CN.md)
+defines reusable cross-code models, separates common physics from ARCH's fuller
+coupling, and records the EOS recovery-contract audit and staged optimization
+gates. The [O5 evidence](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md)
+reports verified results, the FLASH face-EOS control, differences in thermal
+coupling, and the remaining sign-off gaps. User-facing combination boundaries
+live in the [Reference](../Reference.md#combining-methods-and-physics); registration
+is not acceptance of every physical or numerical permutation.
+
+For the planned self-gravity work, use the
+[self-gravity, maintainability and GUI coordination plan (Chinese)](SelfGravityImplementationPlan.zh-CN.md)
+to track module boundaries, stage contracts, decisions, GUI/Core integration
+order and validation gates. The [curvilinear gravity plan (Chinese)](CurvilinearGravityPlan.zh-CN.md)
+defines the P8–P13 extension, shared source mathematics, file consolidation
+and staged geometry validation; it does not expand current supported capabilities.
+The [P1 handoff (Chinese)](SelfGravityP1Handoff.zh-CN.md) records the integrated
+GUI Core baseline, implemented boundaries and scoped CPU/CUDA evidence.
+The [low-density and near-vacuum robustness plan (Chinese)](LowDensityRobustnessPlan.zh-CN.md)
+defines the numerical repairs, reuse of existing physical controls, internal
+safeguards, conservation diagnostics and CPU/CUDA validation required before
+the formal P2 baseline. P1.5 adds no physical degrees of freedom or algorithm
+micro-tuning controls; three already effective time-step keys are registered
+in the standard catalogue. Advanced visibility belongs to the GUI. The
+[parameter and legacy EOS retirement audit (Chinese)](ParameterRetirementAudit.zh-CN.md)
+accounts for all 90 standard keys, identifies inactive settings and superseded EOS
+paths, and defines their removal without legacy compatibility. Retained physics
+keeps its scientific acceptance requirements. Implementation and current test
+evidence are tracked in the [P1.5 report (Chinese)](P1_5ImplementationReport.zh-CN.md);
+this numerical change is separate from P1's behavior-preserving refactor.
+Its [main maintainability audit (Chinese)](MainMaintainabilityAudit.zh-CN.md)
+records file-size reviews, source-math exemptions, dependency findings and
+directory proposals. Size thresholds trigger review rather than mandatory
+splitting or merging; keep related responsibilities together and preserve
+supported behavior. The explicitly authorized retirements in the newer parameter
+audit supersede earlier compatibility-preservation recommendations.
+The [P3/P4 record](P3P4CompositeGravity.zh-CN.md) describes the CPU periodic
+composite solver, coupling, accepted scope, evidence and remaining P5/P6 work.
+
 The *owner* of an implementation is the specific file or module where its core behavior is defined and maintained. A caller might supply data to this implementation or decide *how* it should execute, but it must never introduce a duplicate copy of the same formula. *Memory owners*, on the other hand, serve a different purpose: they allocate system resources and guarantee they remain alive until all consumers have finished using them.
 
 When changing a module, identify its owner and callers, explain the inputs and
@@ -83,3 +121,6 @@ summaries link to detailed results, input identities and hardware metadata.
 Keep reusable helpers in their owning module and run-specific evidence under
 `validation/**/results/`. Link the existing user contract rather than copying a
 second feature or acceptance checklist into a working note.
+
+P1.5 implementation and validation progress is tracked in
+[the implementation report (Chinese)](P1_5ImplementationReport.zh-CN.md).

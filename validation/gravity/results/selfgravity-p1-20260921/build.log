@@ -1,0 +1,34 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===================================================================
+-- Configuring ARCH Framework
+-- C++ Standard: C++20 Required
+-- ===================================================================
+-- [OPT] Found ccache: /usr/bin/ccache
+-- [OPT] Build Type: Debug
+-- [OPT] LTO enabled for optimized configurations
+-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed
+-- [DEP] OpenMP enabled for target ARCH
+-- [DEP] HDF5 C++ libraries linked successfully
+-- [DEP] HighFive headers configured via FetchContent
+-- [DEP] SuiteSparse KLU disabled; SparseKLU selection will be unavailable
+-- ===================================================================
+-- [SUCCESS] ARCH Framework build environment configured successfully!
+-- [SUCCESS] Executable : /home/shiroakane/ARCH/build/selfgravity-p1/bin/ARCH
+-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/
+-- ===================================================================
+-- Configuring done (2.7s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/shiroakane/ARCH/build/selfgravity-p1
+[0/2] Re-checking globbed directories...
+[1/9] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/DriverBoundary.cpp.o
+[2/9] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/DriverRuntime.cpp.o
+[3/9] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/DriverIO.cpp.o
+[4/9] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/DriverRegrid.cpp.o
+[5/9] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_Euler.cpp.o
+[6/9] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK2.cpp.o
+[7/9] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK3.cpp.o
+[8/9] Linking CXX static library libarch_solver_dispatch.a
+[9/9] Linking CXX executable bin/ARCH
+MEMORY_GUARD_RESULT min_available_kib=5443524 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=1968760 elapsed_seconds=46.884 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.028 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=47 complete=True

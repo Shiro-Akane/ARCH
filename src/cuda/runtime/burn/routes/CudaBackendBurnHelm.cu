@@ -7,7 +7,7 @@
  */
 
 #include "physics/eos/HelmEos.h"
-#include "cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h"
+#include "cuda/runtime/burn/dispatch/CudaBackendBurnRegisteredRoutes.h"
 
 namespace arch::cuda {
 cudaError_t launch_cuda_burn_route(

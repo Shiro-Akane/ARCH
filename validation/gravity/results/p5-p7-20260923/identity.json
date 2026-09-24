@@ -1,0 +1,15 @@
+{
+  "parent": "253e1c51ab3ffcbd926df78a3a2098432ddf3882",
+  "branch": "physics/selfgravity",
+  "executables": {
+    "cpu-debug": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1/bin/ARCH",
+      "sha256": "ef0b2e978aa0ca4138b83458e9c9adf6237a029558bb5d491d7b4b90bbbbe0c1"
+    },
+    "cuda-release": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+      "sha256": "2087ad2ba2d4af9901febfcead64756443b6f14957ad9cb397ad4d5410c07549"
+    }
+  },
+  "gpu": "NVIDIA GeForce RTX 3060 Ti, 8.6, 610.47, 8192 MiB"
+}

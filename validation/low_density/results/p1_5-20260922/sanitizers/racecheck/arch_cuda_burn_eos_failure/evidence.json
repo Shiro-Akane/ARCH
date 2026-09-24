@@ -1,0 +1,18 @@
+{
+  "tool": "racecheck",
+  "executable": {
+    "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+    "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+  },
+  "report": {
+    "path": "/tmp/arch-p15-lazy-sanitizers/arch_cuda_burn_eos_failure-racecheck/sanitizer.log",
+    "sha256": "2fc090799b460dbe9150ae948623a08c9f4b057b38c268c07d1fb69cc03fb6b3"
+  },
+  "summaries": [
+    "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+  ],
+  "application": {
+    "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_burn_eos_failure",
+    "sha256": "64e4ba1a934633a99c9fe3e61c469d1d1289f9535b84b0be09cc72981b22c4ae"
+  }
+}

@@ -1,0 +1,1199 @@
+{
+  "schema": 1,
+  "scope": "coupled-gravity fixed-time mass/species conservation and analytic source balance",
+  "focused_gate_pass": true,
+  "release_qualified": false,
+  "application_report": {
+    "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/backend-validation-evidence.json",
+    "sha256": "5c3278e5e0ce9d0869afb76ea772c522a06a83233636954a52962f82d2dcb0c3"
+  },
+  "manifest": {
+    "path": "/home/shiroakane/ARCH/validation/gravity/coupled_cases.json",
+    "sha256": "ff9f397b44a281b6b69f170fbf1eae99a4a4643a9223763f42ba104a652183f7"
+  },
+  "recipe": {
+    "path": "/home/shiroakane/ARCH/validation/gravity/results/coupled-final-20260907/check_terminal.py",
+    "sha256": "c15f852dbf477fa71c98060919ed1b0b58589683dec36336b4c917907f75c0ba"
+  },
+  "runtime_inputs": {
+    "gravity_amr_rk2": {
+      "schema": 1,
+      "parameter_file": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
+      "parameter_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
+      "scientific_overrides": {
+        "gravity_g_x": "1.0",
+        "gravity_g_y": "0.0",
+        "gravity_g_z": "0.0",
+        "gravity_type": "external",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "p0": "1.0",
+        "pressure0": "1.0",
+        "pressure_amplitude": "0.0",
+        "refine_var": "SPECIES",
+        "regrid_interval": "1",
+        "rho0": "1.0",
+        "time_integrator": "RK2",
+        "u_amplitude": "0.0",
+        "use_diffusion": "false",
+        "use_species_diff": "false",
+        "v_amplitude": "0.0",
+        "velocity_x0": "0.0",
+        "w_amplitude": "0.0",
+        "x1l_boundary_type": "periodic",
+        "x1r_boundary_type": "periodic"
+      },
+      "eos_type": "ideal",
+      "dependencies": []
+    },
+    "gravity_amr_rk3": {
+      "schema": 1,
+      "parameter_file": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
+      "parameter_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
+      "scientific_overrides": {
+        "gravity_g_x": "1.0",
+        "gravity_g_y": "0.0",
+        "gravity_g_z": "0.0",
+        "gravity_type": "external",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "p0": "1.0",
+        "pressure0": "1.0",
+        "pressure_amplitude": "0.0",
+        "refine_var": "SPECIES",
+        "regrid_interval": "1",
+        "rho0": "1.0",
+        "time_integrator": "RK3",
+        "u_amplitude": "0.0",
+        "use_diffusion": "false",
+        "use_species_diff": "false",
+        "v_amplitude": "0.0",
+        "velocity_x0": "0.0",
+        "w_amplitude": "0.0",
+        "x1l_boundary_type": "periodic",
+        "x1r_boundary_type": "periodic"
+      },
+      "eos_type": "ideal",
+      "dependencies": []
+    },
+    "gravity_species_diffusion_amr_rk3_rkl2": {
+      "schema": 1,
+      "parameter_file": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
+      "parameter_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
+      "scientific_overrides": {
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "gravity_g_x": "1.0",
+        "gravity_g_y": "0.0",
+        "gravity_g_z": "0.0",
+        "gravity_type": "external",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "p0": "1.0",
+        "pressure0": "1.0",
+        "pressure_amplitude": "0.0",
+        "refine_var": "SPECIES",
+        "regrid_interval": "1",
+        "rho0": "1.0",
+        "time_integrator": "RK3",
+        "u_amplitude": "0.0",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "false",
+        "use_viscous_diff": "false",
+        "v_amplitude": "0.0",
+        "velocity_x0": "0.0",
+        "w_amplitude": "0.0",
+        "x1l_boundary_type": "periodic",
+        "x1r_boundary_type": "periodic"
+      },
+      "eos_type": "ideal",
+      "dependencies": []
+    }
+  },
+  "inputs": {
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific.par": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific.par",
+      "sha256": "bb72998cd4b585dd51ea4b7b662291a8d4c7725790eafe6428cb92698f851525"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific_chk_0000.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific_chk_0000.h5",
+      "sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific_chk_0001.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific_chk_0001.h5",
+      "sha256": "c6db5e0229024429b0d075bd9c46877d9f614b0d8d47f0d12c4ad759ca007e78"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific.par": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific.par",
+      "sha256": "29ff96aadf1f602a360bd8eaedcc1d42dec40a8a3f6d27bfe442309f2f91cc9e"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific_chk_0000.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific_chk_0000.h5",
+      "sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific_chk_0001.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific_chk_0001.h5",
+      "sha256": "c6db5e0229024429b0d075bd9c46877d9f614b0d8d47f0d12c4ad759ca007e78"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific.par": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific.par",
+      "sha256": "53294dd2c4e67b6d85fcd600dc79ad8cd2de002283f3e4c5c5203941cf05ae8a"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0000.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0000.h5",
+      "sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0001.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0001.h5",
+      "sha256": "cd8b021afb96d025703bf335700d5e0ceaec1238a50dea2495dd4a57c404ab6d"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific.par": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific.par",
+      "sha256": "5700ab7a4432af2d25735926e4539534f3fc0e06b282e16d319c442d7015833a"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific_chk_0000.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific_chk_0000.h5",
+      "sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific_chk_0001.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific_chk_0001.h5",
+      "sha256": "cd8b021afb96d025703bf335700d5e0ceaec1238a50dea2495dd4a57c404ab6d"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific.par": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific.par",
+      "sha256": "828b51e607ca21b3411472a947ed869a7c2d4121a76f7c24674a14d424e3a7e5"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific_chk_0000.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific_chk_0000.h5",
+      "sha256": "4755c3a221c99e6ac8ef4f0cb52561d44a7b9e42be0557329346202b2762ba82"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific_chk_0001.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific_chk_0001.h5",
+      "sha256": "63cbe379855daa1e4b059bab4736eb5228af0d4f55f5ad691cc5fa33cb3fcb7b"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific.par": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific.par",
+      "sha256": "07da9bf09772670ef111f81b9c5093b3001887e12d3f8407fc66358cd4851f86"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific_chk_0000.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific_chk_0000.h5",
+      "sha256": "4755c3a221c99e6ac8ef4f0cb52561d44a7b9e42be0557329346202b2762ba82"
+    },
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific_chk_0001.h5": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific_chk_0001.h5",
+      "sha256": "d8b8dad5e5cb9e4cce831f18964d3dd1c31c882006b96a20392a5847a0cc8277"
+    }
+  },
+  "command": [
+    "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/tooling-env/bin/python",
+    "-B",
+    "/home/shiroakane/ARCH/validation/gravity/results/coupled-final-20260907/check_terminal.py",
+    "--build-dir",
+    "build/selfgravity-p1-gpu",
+    "--report",
+    "build/selfgravity-p1-gpu/verification/gravity-amr/backend-validation-evidence.json",
+    "--output-dir",
+    "build/selfgravity-p1-gpu/verification/gravity-endpoints"
+  ],
+  "cases": [
+    {
+      "case": "gravity_amr_rk2",
+      "backend": "cpu",
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "rhoX"
+        ]
+      },
+      "initial_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific_chk_0000.h5",
+        "sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245"
+      },
+      "initial_metadata": {
+        "step": 0,
+        "time": 0,
+        "resume_after_regrid": false,
+        "chk_file_index": 0,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "bb72998cd4b585dd51ea4b7b662291a8d4c7725790eafe6428cb92698f851525",
+        "checkpoint_sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific_chk_0000.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific.par"
+        ]
+      },
+      "terminal_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific_chk_0001.h5",
+        "sha256": "c6db5e0229024429b0d075bd9c46877d9f614b0d8d47f0d12c4ad759ca007e78"
+      },
+      "terminal_metadata": {
+        "step": 40,
+        "time": 0.1,
+        "resume_after_regrid": false,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "bb72998cd4b585dd51ea4b7b662291a8d4c7725790eafe6428cb92698f851525",
+        "checkpoint_sha256": "c6db5e0229024429b0d075bd9c46877d9f614b0d8d47f0d12c4ad759ca007e78",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cpu/gravity_amr_rk2_cpu_scientific.par"
+        ]
+      },
+      "conservation": {
+        "before": {
+          "step": 0,
+          "time": 0,
+          "resume_after_regrid": false,
+          "chk_file_index": 0,
+          "plt_file_index": 1,
+          "blocks": 6,
+          "mass": 64,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.00000000000003,
+          "rhoX": [
+            59.462518141681876,
+            4.537481858318121
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "after": {
+          "step": 40,
+          "time": 0.1,
+          "resume_after_regrid": false,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "blocks": 7,
+          "mass": 64,
+          "mom_u": 6.3999999999999995,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.3200000000001,
+          "rhoX": [
+            59.46251814168188,
+            4.537481858318121
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "errors": {
+          "mass": {
+            "absolute": 0.0,
+            "relative": 0.0
+          },
+          "rhoX": [
+            {
+              "absolute": 7.105427357601002e-15,
+              "relative": 1.1949422223712147e-16
+            },
+            {
+              "absolute": 0.0,
+              "relative": 0.0
+            }
+          ]
+        }
+      },
+      "source_balance": {
+        "status": "pass",
+        "mode": "gravity",
+        "step": 40,
+        "time": 0.1,
+        "min_rho": 1,
+        "min_eng": 2.5050000000000017,
+        "rho_linf": 0,
+        "velocity_linf": 1.3877787807814457e-17,
+        "pressure_linf": 4.440892098500626e-16,
+        "energy_linf": 1.3322676295501878e-15
+      }
+    },
+    {
+      "case": "gravity_amr_rk2",
+      "backend": "cuda",
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "rhoX"
+        ]
+      },
+      "initial_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific_chk_0000.h5",
+        "sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245"
+      },
+      "initial_metadata": {
+        "step": 0,
+        "time": 0,
+        "resume_after_regrid": false,
+        "chk_file_index": 0,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "29ff96aadf1f602a360bd8eaedcc1d42dec40a8a3f6d27bfe442309f2f91cc9e",
+        "checkpoint_sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific_chk_0000.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific.par"
+        ]
+      },
+      "terminal_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific_chk_0001.h5",
+        "sha256": "c6db5e0229024429b0d075bd9c46877d9f614b0d8d47f0d12c4ad759ca007e78"
+      },
+      "terminal_metadata": {
+        "step": 40,
+        "time": 0.1,
+        "resume_after_regrid": false,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "29ff96aadf1f602a360bd8eaedcc1d42dec40a8a3f6d27bfe442309f2f91cc9e",
+        "checkpoint_sha256": "c6db5e0229024429b0d075bd9c46877d9f614b0d8d47f0d12c4ad759ca007e78",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk2/scientific/cuda/gravity_amr_rk2_cuda_scientific.par"
+        ]
+      },
+      "conservation": {
+        "before": {
+          "step": 0,
+          "time": 0,
+          "resume_after_regrid": false,
+          "chk_file_index": 0,
+          "plt_file_index": 1,
+          "blocks": 6,
+          "mass": 64,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.00000000000003,
+          "rhoX": [
+            59.462518141681876,
+            4.537481858318121
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "after": {
+          "step": 40,
+          "time": 0.1,
+          "resume_after_regrid": false,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "blocks": 7,
+          "mass": 64,
+          "mom_u": 6.3999999999999995,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.3200000000001,
+          "rhoX": [
+            59.46251814168188,
+            4.537481858318121
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "errors": {
+          "mass": {
+            "absolute": 0.0,
+            "relative": 0.0
+          },
+          "rhoX": [
+            {
+              "absolute": 7.105427357601002e-15,
+              "relative": 1.1949422223712147e-16
+            },
+            {
+              "absolute": 0.0,
+              "relative": 0.0
+            }
+          ]
+        }
+      },
+      "source_balance": {
+        "status": "pass",
+        "mode": "gravity",
+        "step": 40,
+        "time": 0.1,
+        "min_rho": 1,
+        "min_eng": 2.5050000000000017,
+        "rho_linf": 0,
+        "velocity_linf": 1.3877787807814457e-17,
+        "pressure_linf": 4.440892098500626e-16,
+        "energy_linf": 1.3322676295501878e-15
+      }
+    },
+    {
+      "case": "gravity_amr_rk3",
+      "backend": "cpu",
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "rhoX"
+        ]
+      },
+      "initial_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0000.h5",
+        "sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245"
+      },
+      "initial_metadata": {
+        "step": 0,
+        "time": 0,
+        "resume_after_regrid": false,
+        "chk_file_index": 0,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "53294dd2c4e67b6d85fcd600dc79ad8cd2de002283f3e4c5c5203941cf05ae8a",
+        "checkpoint_sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0000.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific.par"
+        ]
+      },
+      "terminal_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0001.h5",
+        "sha256": "cd8b021afb96d025703bf335700d5e0ceaec1238a50dea2495dd4a57c404ab6d"
+      },
+      "terminal_metadata": {
+        "step": 40,
+        "time": 0.1,
+        "resume_after_regrid": false,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "53294dd2c4e67b6d85fcd600dc79ad8cd2de002283f3e4c5c5203941cf05ae8a",
+        "checkpoint_sha256": "cd8b021afb96d025703bf335700d5e0ceaec1238a50dea2495dd4a57c404ab6d",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific.par"
+        ]
+      },
+      "conservation": {
+        "before": {
+          "step": 0,
+          "time": 0,
+          "resume_after_regrid": false,
+          "chk_file_index": 0,
+          "plt_file_index": 1,
+          "blocks": 6,
+          "mass": 64,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.00000000000003,
+          "rhoX": [
+            59.462518141681876,
+            4.537481858318121
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "after": {
+          "step": 40,
+          "time": 0.1,
+          "resume_after_regrid": false,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "blocks": 7,
+          "mass": 64,
+          "mom_u": 6.399999999999987,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.3199999999997,
+          "rhoX": [
+            59.46251814168188,
+            4.53748185831812
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "errors": {
+          "mass": {
+            "absolute": 0.0,
+            "relative": 0.0
+          },
+          "rhoX": [
+            {
+              "absolute": 7.105427357601002e-15,
+              "relative": 1.1949422223712147e-16
+            },
+            {
+              "absolute": 8.881784197001252e-16,
+              "relative": 1.957425830963742e-16
+            }
+          ]
+        }
+      },
+      "source_balance": {
+        "status": "pass",
+        "mode": "gravity",
+        "step": 40,
+        "time": 0.1,
+        "min_rho": 1,
+        "min_eng": 2.5049999999999955,
+        "rho_linf": 0,
+        "velocity_linf": 2.0816681711721685e-16,
+        "pressure_linf": 1.9984014443252818e-15,
+        "energy_linf": 4.884981308350689e-15
+      }
+    },
+    {
+      "case": "gravity_amr_rk3",
+      "backend": "cuda",
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "rhoX"
+        ]
+      },
+      "initial_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific_chk_0000.h5",
+        "sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245"
+      },
+      "initial_metadata": {
+        "step": 0,
+        "time": 0,
+        "resume_after_regrid": false,
+        "chk_file_index": 0,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "5700ab7a4432af2d25735926e4539534f3fc0e06b282e16d319c442d7015833a",
+        "checkpoint_sha256": "c51bb6ee0a713a46aa76ab162b1033cbf7b36d92c90f0d7c61dfe3c91d456245",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific_chk_0000.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific.par"
+        ]
+      },
+      "terminal_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific_chk_0001.h5",
+        "sha256": "cd8b021afb96d025703bf335700d5e0ceaec1238a50dea2495dd4a57c404ab6d"
+      },
+      "terminal_metadata": {
+        "step": 40,
+        "time": 0.1,
+        "resume_after_regrid": false,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "5700ab7a4432af2d25735926e4539534f3fc0e06b282e16d319c442d7015833a",
+        "checkpoint_sha256": "cd8b021afb96d025703bf335700d5e0ceaec1238a50dea2495dd4a57c404ab6d",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_amr_rk3/scientific/cuda/gravity_amr_rk3_cuda_scientific.par"
+        ]
+      },
+      "conservation": {
+        "before": {
+          "step": 0,
+          "time": 0,
+          "resume_after_regrid": false,
+          "chk_file_index": 0,
+          "plt_file_index": 1,
+          "blocks": 6,
+          "mass": 64,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.00000000000003,
+          "rhoX": [
+            59.462518141681876,
+            4.537481858318121
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "after": {
+          "step": 40,
+          "time": 0.1,
+          "resume_after_regrid": false,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "blocks": 7,
+          "mass": 64,
+          "mom_u": 6.399999999999987,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.3199999999997,
+          "rhoX": [
+            59.46251814168188,
+            4.53748185831812
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "errors": {
+          "mass": {
+            "absolute": 0.0,
+            "relative": 0.0
+          },
+          "rhoX": [
+            {
+              "absolute": 7.105427357601002e-15,
+              "relative": 1.1949422223712147e-16
+            },
+            {
+              "absolute": 8.881784197001252e-16,
+              "relative": 1.957425830963742e-16
+            }
+          ]
+        }
+      },
+      "source_balance": {
+        "status": "pass",
+        "mode": "gravity",
+        "step": 40,
+        "time": 0.1,
+        "min_rho": 1,
+        "min_eng": 2.5049999999999955,
+        "rho_linf": 0,
+        "velocity_linf": 2.0816681711721685e-16,
+        "pressure_linf": 1.9984014443252818e-15,
+        "energy_linf": 4.884981308350689e-15
+      }
+    },
+    {
+      "case": "gravity_species_diffusion_amr_rk3_rkl2",
+      "backend": "cpu",
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "rhoX"
+        ]
+      },
+      "initial_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific_chk_0000.h5",
+        "sha256": "4755c3a221c99e6ac8ef4f0cb52561d44a7b9e42be0557329346202b2762ba82"
+      },
+      "initial_metadata": {
+        "step": 0,
+        "time": 0,
+        "resume_after_regrid": false,
+        "chk_file_index": 0,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "828b51e607ca21b3411472a947ed869a7c2d4121a76f7c24674a14d424e3a7e5",
+        "checkpoint_sha256": "4755c3a221c99e6ac8ef4f0cb52561d44a7b9e42be0557329346202b2762ba82",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific_chk_0000.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific.par"
+        ]
+      },
+      "terminal_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific_chk_0001.h5",
+        "sha256": "63cbe379855daa1e4b059bab4736eb5228af0d4f55f5ad691cc5fa33cb3fcb7b"
+      },
+      "terminal_metadata": {
+        "step": 164,
+        "time": 0.1,
+        "resume_after_regrid": false,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "828b51e607ca21b3411472a947ed869a7c2d4121a76f7c24674a14d424e3a7e5",
+        "checkpoint_sha256": "63cbe379855daa1e4b059bab4736eb5228af0d4f55f5ad691cc5fa33cb3fcb7b",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cpu/gravity_species_diffusion_amr_rk3_rkl2_cpu_scientific.par"
+        ]
+      },
+      "conservation": {
+        "before": {
+          "step": 0,
+          "time": 0,
+          "resume_after_regrid": false,
+          "chk_file_index": 0,
+          "plt_file_index": 1,
+          "blocks": 6,
+          "mass": 64,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.00000000000003,
+          "rhoX": [
+            59.462518141681876,
+            4.537481858318121
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "after": {
+          "step": 164,
+          "time": 0.1,
+          "resume_after_regrid": false,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "blocks": 4,
+          "mass": 64,
+          "mom_u": 6.3999999999999595,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.31999999999613,
+          "rhoX": [
+            59.4625181416819,
+            4.537481858318107
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "errors": {
+          "mass": {
+            "absolute": 0.0,
+            "relative": 0.0
+          },
+          "rhoX": [
+            {
+              "absolute": 2.1316282072803006e-14,
+              "relative": 3.5848266671136444e-16
+            },
+            {
+              "absolute": 1.4210854715202004e-14,
+              "relative": 3.131881329541987e-15
+            }
+          ]
+        }
+      },
+      "source_balance": {
+        "status": "pass",
+        "mode": "gravity",
+        "step": 164,
+        "time": 0.1,
+        "min_rho": 1,
+        "min_eng": 2.5049999999999395,
+        "rho_linf": 0,
+        "velocity_linf": 6.38378239159465e-16,
+        "pressure_linf": 2.4424906541753444e-14,
+        "energy_linf": 6.084022174945858e-14
+      }
+    },
+    {
+      "case": "gravity_species_diffusion_amr_rk3_rkl2",
+      "backend": "cuda",
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "rhoX"
+        ]
+      },
+      "initial_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific_chk_0000.h5",
+        "sha256": "4755c3a221c99e6ac8ef4f0cb52561d44a7b9e42be0557329346202b2762ba82"
+      },
+      "initial_metadata": {
+        "step": 0,
+        "time": 0,
+        "resume_after_regrid": false,
+        "chk_file_index": 0,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "07da9bf09772670ef111f81b9c5093b3001887e12d3f8407fc66358cd4851f86",
+        "checkpoint_sha256": "4755c3a221c99e6ac8ef4f0cb52561d44a7b9e42be0557329346202b2762ba82",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific_chk_0000.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific.par"
+        ]
+      },
+      "terminal_checkpoint": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific_chk_0001.h5",
+        "sha256": "d8b8dad5e5cb9e4cce831f18964d3dd1c31c882006b96a20392a5847a0cc8277"
+      },
+      "terminal_metadata": {
+        "step": 164,
+        "time": 0.1,
+        "resume_after_regrid": false,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "07da9bf09772670ef111f81b9c5093b3001887e12d3f8407fc66358cd4851f86",
+        "checkpoint_sha256": "d8b8dad5e5cb9e4cce831f18964d3dd1c31c882006b96a20392a5847a0cc8277",
+        "command": [
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr/gravity_species_diffusion_amr_rk3_rkl2/scientific/cuda/gravity_species_diffusion_amr_rk3_rkl2_cuda_scientific.par"
+        ]
+      },
+      "conservation": {
+        "before": {
+          "step": 0,
+          "time": 0,
+          "resume_after_regrid": false,
+          "chk_file_index": 0,
+          "plt_file_index": 1,
+          "blocks": 6,
+          "mass": 64,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.00000000000003,
+          "rhoX": [
+            59.462518141681876,
+            4.537481858318121
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "after": {
+          "step": 164,
+          "time": 0.1,
+          "resume_after_regrid": false,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "blocks": 4,
+          "mass": 64,
+          "mom_u": 6.3999999999999595,
+          "mom_v": 0,
+          "mom_w": 0,
+          "energy": 160.31999999999613,
+          "rhoX": [
+            59.46251814168189,
+            4.537481858318112
+          ],
+          "measure": "legacy_level_normalized"
+        },
+        "errors": {
+          "mass": {
+            "absolute": 0.0,
+            "relative": 0.0
+          },
+          "rhoX": [
+            {
+              "absolute": 1.4210854715202004e-14,
+              "relative": 2.3898844447424294e-16
+            },
+            {
+              "absolute": 8.881784197001252e-15,
+              "relative": 1.9574258309637418e-15
+            }
+          ]
+        }
+      },
+      "source_balance": {
+        "status": "pass",
+        "mode": "gravity",
+        "step": 164,
+        "time": 0.1,
+        "min_rho": 1,
+        "min_eng": 2.5049999999999395,
+        "rho_linf": 0,
+        "velocity_linf": 6.38378239159465e-16,
+        "pressure_linf": 2.4424906541753444e-14,
+        "energy_linf": 6.084022174945858e-14
+      }
+    }
+  ],
+  "started_utc": "2026-09-21T15:21:23.960389+00:00",
+  "finished_utc": "2026-09-21T15:21:24.207672+00:00",
+  "note": "Conservation uses the manifest measure and original absolute/relative budgets; the independent gravity oracle checks sourced momentum/energy. This supplemental Cartesian coupling audit is not a full release certificate.",
+  "provenance": {
+    "schema": 1,
+    "source": {
+      "commit": "74a755e596a29dce7f13ac7864ee3692553d7166",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "22e2f15c1e6bc753793f98e8ace99218a0ef65836c1a155066a5e2edb291653c",
+      "dirty": false,
+      "modified_files": [],
+      "untracked_source_files": []
+    },
+    "build": {
+      "source_directory": "/home/shiroakane/ARCH",
+      "configuration": "Release",
+      "multi_config": false,
+      "cmake_cache_sha256": "f915b28f6a0f008ff35f1db602408ae98886d28cd04eaf655cdb3a336747ec1f",
+      "compile_commands_sha256": "15d8e64db9dc10bc7d1753cd9376a4e0ba40fa0a0c7d7dd8af4ef212952c6f46",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "2",
+        "ARCH_CUDSS_IR_STEPS": "2",
+        "ARCH_CUSTOM_NETWORKS": "",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/home/shiroakane/ARCH/src/physics/network/custom",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "ON",
+        "ARCH_ENABLE_KLU": "ON",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_FETCH_SUITESPARSE": "ON",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin",
+        "ARCH_SOURCE_DIR": "/home/shiroakane/ARCH",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "86",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-12",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-12",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/CMakeFiles/pkgRedirects",
+        "CMAKE_INSTALL_BINDIR": "bin",
+        "CMAKE_INSTALL_DATADIR": "",
+        "CMAKE_INSTALL_DATAROOTDIR": "share",
+        "CMAKE_INSTALL_DOCDIR": "",
+        "CMAKE_INSTALL_INCLUDEDIR": "include",
+        "CMAKE_INSTALL_INFODIR": "",
+        "CMAKE_INSTALL_LIBDIR": "lib",
+        "CMAKE_INSTALL_LIBEXECDIR": "libexec",
+        "CMAKE_INSTALL_LOCALEDIR": "",
+        "CMAKE_INSTALL_LOCALSTATEDIR": "var",
+        "CMAKE_INSTALL_MANDIR": "",
+        "CMAKE_INSTALL_OLDINCLUDEDIR": "/usr/include",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_INSTALL_RUNSTATEDIR": "",
+        "CMAKE_INSTALL_SBINDIR": "sbin",
+        "CMAKE_INSTALL_SHAREDSTATEDIR": "com",
+        "CMAKE_INSTALL_SYSCONFDIR": "etc",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_PROJECT_VERSION": "7.13.0",
+        "CMAKE_PROJECT_VERSION_MAJOR": "7",
+        "CMAKE_PROJECT_VERSION_MINOR": "13",
+        "CMAKE_PROJECT_VERSION_PATCH": "0",
+        "CMAKE_PROJECT_VERSION_TWEAK": "",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "",
+        "CuDSS_INCLUDE_DIR": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include",
+        "CuDSS_LIBRARY": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+        "KLU_BINARY_DIR": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/KLU",
+        "KLU_DIR": "KLU_DIR-NOTFOUND",
+        "KLU_IS_TOP_LEVEL": "OFF",
+        "KLU_SOURCE_DIR": "/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU",
+        "KLU_USE_CHOLMOD": "OFF",
+        "KLU_VERSION_MAJOR": "2",
+        "KLU_VERSION_MINOR": "3",
+        "KLU_VERSION_SUB": "6",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "registered_networks": [],
+      "sparse_link": {
+        "required_providers": [
+          "cudss",
+          "klu"
+        ],
+        "link_command_sha256": "9eb3f163448dc1bdff0c420d08505b4047651e87b23003f88e881fa1870faa78",
+        "libraries": [
+          {
+            "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+            "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/AMD/libamd.a",
+            "sha256": "b9b81b7c8e633e18f7cd4f933be642fcad6b13a0eeef2a2630f075a0e5b278ae"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/BTF/libbtf.a",
+            "sha256": "046c4bb47a89f16c8bf6b9b77fbaca4ea39b0ae2e10176c2456b26f5b91c6da6"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/COLAMD/libcolamd.a",
+            "sha256": "efc47fe477163b11bc9b428d56a378334cb232b035372e5d06c1ab511c0aab61"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/KLU/libklu.a",
+            "sha256": "bf3e6617696950c8751e2d7b3635195dde36bd8c07d4d4be72628576b2e47fab"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+            "sha256": "b7e7ca036fcb1cf9c68e704c37f0b9ffcb8bc2dacee626f7312757c939061f8a"
+          },
+          {
+            "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublas.so.12.3.4.1",
+            "sha256": "8bdbda040980c430fc07dd853fdebc578e51951015284e4f109de5ee345a22e6"
+          },
+          {
+            "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublasLt.so.12.3.4.1",
+            "sha256": "4776affac4b3d78f1e5076d39bd046637672f54682bd2b3f40824f9dfac37708"
+          }
+        ]
+      },
+      "configured_sparse_libraries": {
+        "CuDSS_LIBRARY": {
+          "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+          "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+        }
+      },
+      "artifact_paths": {
+        "arch": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+        "checkpoint_validator": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation"
+      }
+    },
+    "execution_environment": {
+      "OMP_NUM_THREADS": "2",
+      "OMP_DYNAMIC": "FALSE",
+      "OMP_PROC_BIND": null,
+      "OMP_PLACES": null,
+      "OMP_SCHEDULE": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "CUDA_MODULE_LOADING": null
+    },
+    "artifacts": {
+      "arch_sha256": "21c269c656b2a4c9d7c8399e52d036ab498957b3a208366fee7429fc754c4243",
+      "checkpoint_validator_sha256": "cb7bed130fd168b63ac211396ce56e91b8f0500fd0fa5a2dda74c1fb1f5dcbb5"
+    },
+    "artifact_observation": {
+      "arch": [
+        2096,
+        577072,
+        297127480,
+        1790003664257641038,
+        1790003664274536768
+      ],
+      "checkpoint_validator": [
+        2096,
+        851004,
+        382664,
+        1790003722305154743,
+        1790003722305154743
+      ]
+    }
+  },
+  "binary_sha256": "21c269c656b2a4c9d7c8399e52d036ab498957b3a208366fee7429fc754c4243",
+  "identity_verified_after_run": true
+}

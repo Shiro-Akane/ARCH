@@ -11,7 +11,7 @@
 
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/DeviceBlockStore.h"
-#include "driver/ComputeBackend.h"
+#include "driver/runtime/ComputeBackend.h"
 
 #include <cstdint>
 #include <memory>
@@ -93,6 +93,10 @@ public:
     amr::BlockHandle block_handle() const noexcept override;
     backend::StorageGeneration storage_generation() const noexcept override;
     bool contains(backend::BackendStateAccess access) const noexcept override;
+    std::shared_ptr<Physical::Gravity::GravityExecution> gravity_execution() override;
+    const double* gravity_density(backend::BackendStateAccess) override;
+    void publish_gravity(backend::BackendStateAccess,Physical::Gravity::GravityPatchView) override;
+    void invalidate_gravity() override;
     double compute_hydro_dt(backend::BackendStateAccess current,
                             double cfl) override;
     std::vector<double> compute_hydro_dt_batch(
@@ -121,6 +125,11 @@ public:
         const amr::CoarseFineTransferPlan& plan, state::StateSlot slot,
         state::StateVersion source_version,
         state::CompletionToken expected) override;
+    state::CompletionToken execute_coordinate_seam_exchange(
+        std::span<const backend::BackendStateAccess>,
+        std::span<const int>, const amr::CoordinateSeamPlan&,
+        state::StateSlot, state::StateVersion,
+        state::CompletionToken) override;
     void rotate_slots(backend::BackendStateAccess current,
                       state::SlotRotation rotation) override;
     double compute_diffusion_dt(
@@ -171,7 +180,10 @@ public:
     void complete_staged_current_ghosts(
         backend::BackendTopologyStoreTransaction&,
         std::span<const amr::SameLevelExchangePlan>,
-        const amr::CoarseFineTransferPlan&) override;
+        const amr::CoarseFineTransferPlan&,
+        std::span<const int> = {},
+        std::span<const amr::BlockHandle> = {},
+        const amr::CoordinateSeamPlan* = nullptr) override;
     void stage_amr_flux_plan(
         backend::BackendTopologyStoreTransaction& transaction,
         const amr::AmrFluxTopologyPlan& topology,
@@ -208,7 +220,10 @@ public:
         const amr::ProlongationPlan&, const amr::RestrictionPlan&);
     void complete_staged_current_ghosts(
         StoreTransaction&, std::span<const amr::SameLevelExchangePlan>,
-        const amr::CoarseFineTransferPlan&);
+        const amr::CoarseFineTransferPlan&,
+        std::span<const int> = {},
+        std::span<const amr::BlockHandle> = {},
+        const amr::CoordinateSeamPlan* = nullptr);
     void abort_store_transaction(StoreTransaction&& transaction);
     void publish_store_transaction(
         StoreTransaction&& transaction, DeviceRetirementFence fence);
@@ -224,6 +239,8 @@ public:
     }
 
 private:
+    bool gravity_ready_=false;
+    std::uint64_t gravity_generation_=0;
     std::shared_ptr<Impl> impl_;
 };
 

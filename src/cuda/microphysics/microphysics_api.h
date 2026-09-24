@@ -47,7 +47,7 @@ ARCH_INLINE void execute_burn_policy_cell(
     }
 
     cell.disposition = DriverBurn::check_burn_density(cell.fluid, burn_cfg);
-    if (cell.disposition == DriverBurn::BurnCellDisposition::BelowDensity)
+    if (cell.disposition != DriverBurn::BurnCellDisposition::Ready)
         return;
 
     const auto prepared = DriverBurn::prepare_burn_cell(

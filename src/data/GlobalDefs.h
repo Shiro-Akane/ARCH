@@ -1,6 +1,10 @@
 /**
  * @file GlobalDefs.h
  * @brief Global configuration parameters parsed from input files.
+ * Workflow:
+ * 1. Load typed grid, numerics, physics and IO configuration in CGS units.
+ * 2. Pass the same resolved SimConfig to case setup and every stage.
+ * 3. Lower only numeric views required by shared host/device mathematics.
  */
 
 /**
@@ -13,12 +17,15 @@
 #include <cstdint>
 #include <limits>
 #include <map>
+#include <memory>
 #include <string>
 #include <type_traits>
 #include <vector>
 
-#include "../core/ArchPortability.h"
-#include "../physics/constant/PhysicalConstants.h"
+#include "core/ArchPortability.h"
+#include "data/StateDiagnostics.h"
+#include "interface/PreviewMetadata.h"
+#include "physics/constant/PhysicalConstants.h"
 
 // Grid and domain configuration.
 struct GridConfig
@@ -30,7 +37,7 @@ struct GridConfig
     int dim = 3;      ///< Dimensionality (1, 2, or 3)
     int amr_max_blocks = 2000; ///< Maximum number of AMR blocks
 
-    // Physical domain bounds in code units.
+    // Physical domain bounds: CGS lengths in cm, angular coordinates in radians.
     double x1_min = 0.0;
     double x1_max = 1.0;
     double x2_min = 0.0;
@@ -51,20 +58,24 @@ struct GridConfig
 // Hydrodynamic discretization and stability controls.
 struct NumericsConfig
 {
-    std::string solver_name;    ///< Numerical flux: SW, VL, HLL, HLLC, or Roe.
+    std::string solver_name = "SW";    ///< Numerical flux: SW, VL, HLL, HLLC, or Roe.
 
     // Runtime dispatch maps these names to compile-time reconstruction policies.
     std::string reconstruction = "pcm";  ///< "pcm" (1st), "plm" (2nd), "ppm" (3rd)
     std::string limiter = "minmod";      ///< "minmod", "mc", "superbee"
     std::string time_integrator = "RK2"; ///< "RK2","RK3"
 
+    double dt_init = 1e-16; ///< Initial burning macro-step cap, s.
+    double dt_min = 1e-20; ///< Minimum accepted macro step, s.
+    double tstep_change_factor = 1.2; ///< Maximum macro-step growth factor.
+
     double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL < 1).
 
     double entropy_fix_coeff = 0.1; ///< Roe entropy-fix width relative to the local sound speed.
 
-    double sml_rho = 1e-12; ///< Positive density floor in code units.
-    double min_eint = 1e-10; ///< Positive specific internal-energy floor in code units.
-    double max_eint = 1e21; ///< Specific internal-energy ceiling in code units.
+    double sml_rho = 1e-12; ///< Positive density floor in g/cm^3.
+    double min_eint = 1e-10; ///< Positive specific internal-energy floor in erg/g.
+    double max_eint = 1e21; ///< Specific internal-energy ceiling in erg/g.
 };
 
 // Execution backend selection.
@@ -87,15 +98,13 @@ struct OdeConfig
     double atol = 1e-8; ///< Absolute tolerance for ODE integration
 
     int max_newton_iter = 50; ///< Maximum Newton-Raphson iterations per ODE step
-    int max_substeps = 100;   ///< Maximum adaptive sub-steps for stiff ODEs
+    int max_substeps = 10000;   ///< Maximum adaptive sub-steps for stiff ODEs
 
     double dt_safe_factor = 0.9;    ///< Safety factor for adaptive time-stepping
     double dt_fac_max = 2.0;        ///< Maximum factor to increase dt
     double dt_fac_min = 0.1;        ///< Minimum factor to decrease dt
-    double initial_dt_frac = 1e-14; ///< Initial fraction of the global time step for the first ODE sub-step
+    double initial_dt_frac = 1e-3; ///< Initial fraction of the global time step for the first ODE sub-step
 
-    bool use_numerical_jacobian = false; ///< Whether to compute Jacobian numerically (default: false, use analytical)
-    bool freeze_jacobian = false;        ///< Whether to freeze the Jacobian for multiple Newton iterations (default: false)
 };
 
 struct BurnLimits
@@ -131,8 +140,6 @@ struct OdeConfigView
     double dt_fac_max;
     double dt_fac_min;
     double initial_dt_frac;
-    bool use_numerical_jacobian;
-    bool freeze_jacobian;
 };
 
 /**
@@ -149,7 +156,6 @@ struct BurnConfigView
     bool use_nse;
     double nseTempThreshold;
     double nseDensThreshold;
-    bool enforce_mass_conservation;
     OdeConfigView odeconfig;
 };
 
@@ -185,8 +191,6 @@ struct BurnOdeReport
 
 struct BurnConfig
 {
-    double ignition_temp = 1e9; ///< Ignition temperature threshold for burning (in Kelvin)
-    double burn_tol = 1e-6;     ///< Tolerance for burn convergence
 
     bool use_burn = false;                ///< Master switch for the burn module
     std::string network_name = "aprox19"; ///< Built-in network: aprox13, aprox19, aprox21, or iso7.
@@ -203,9 +207,7 @@ struct BurnConfig
     double nseTempThreshold = 4.5e9; ///< Temperature threshold for NSE projection
     double nseDensThreshold = 1.0e6; ///< Density threshold for NSE projection
 
-    bool enforce_mass_conservation = true; ///< Whether to enforce mass fraction conservation after each burn step
 
-    int verbose_level = 0; ///< Verbosity level for burn diagnostics (0: silent, 1: basic, 2: detailed)
 
     OdeConfig odeconfig; ///< ODE solver configuration for the burn module
 };
@@ -222,7 +224,6 @@ inline BurnConfigView make_burn_config_view(const BurnConfig& config)
         config.use_nse,
         config.nseTempThreshold,
         config.nseDensThreshold,
-        config.enforce_mass_conservation,
         {
             config.odeconfig.rtol,
             config.odeconfig.atol,
@@ -232,8 +233,6 @@ inline BurnConfigView make_burn_config_view(const BurnConfig& config)
             config.odeconfig.dt_fac_max,
             config.odeconfig.dt_fac_min,
             config.odeconfig.initial_dt_frac,
-            config.odeconfig.use_numerical_jacobian,
-            config.odeconfig.freeze_jacobian,
         },
     };
 }
@@ -251,6 +250,10 @@ struct GravityConfig
     double g_y = 0.0;
     double g_z = 0.0;
     double G_const = arch::constants::gravity::cgs::gravitational_constant;
+    std::string boundary = "periodic";
+    double relative_tolerance = 1e-10;
+    double absolute_tolerance = 0.0; // Poisson RHS units (s^-2); relative control is active by default.
+    int max_cycles = 200;
 };
 
 // Diffusion configuration.
@@ -269,7 +272,7 @@ struct DiffusionConfig
     // Constant IdealGas coefficients or explicit transport overrides. A zero
     // value delegates to an EOS transport interface when one is available.
     double nu_visc = 0.0;     ///< Constant kinematic viscosity (nu)
-    double alpha_therm = 0.0; ///< Constant thermal diffusivity (alpha = k / (rho * cp))
+    double alpha_therm = 0.0; ///< Constant thermal diffusivity (alpha = k / (rho * cv))
     double D_spec = 0.0;      ///< Constant species diffusivity
 };
 
@@ -354,6 +357,7 @@ struct IOConfig
 
 struct RunState
 {
+    arch::state::RepairBudget repairs;
     double time = 0.0; ///< Current physical time
     int step = 0;      ///< Current iteration step count
     int plt_idx = 0;   ///< Current plot file index
@@ -380,12 +384,14 @@ struct SimConfig
      * @brief Stores problem-specific parameters not represented by a core field.
      * Typical keys include:
      * - "prob_rho_L" (Shock tube specific)
-     * - "burn_ignition_temp" (Burn module specific)
      * - "stiff_p_inf" (Stiffened Gas EOS parameter)
      */
     std::map<std::string, double> custom_params;
 
     std::map<std::string, std::string> custom_string_params;
+
+    // Enabled only in the isolated initialization inspector; no global logger or UI state.
+    std::shared_ptr<arch::preview::ParameterReadTrace> parameter_reads;
 
     // Return a typed custom parameter or the caller-provided default.
     template <typename T>
@@ -395,6 +401,10 @@ struct SimConfig
         if constexpr (std::is_same_v<T, std::string>)
         {
             auto it = custom_string_params.find(key);
+            if (parameter_reads)
+                parameter_reads->observe(key, default_val,
+                    it != custom_string_params.end() ? it->second : default_val,
+                    it != custom_string_params.end());
             if (it != custom_string_params.end())
                 return it->second;
             return default_val;
@@ -403,6 +413,12 @@ struct SimConfig
         else
         {
             auto it = custom_params.find(key);
+            if (parameter_reads && it != custom_params.end())
+                parameter_reads->validate_numeric<T>(key, it->second);
+            if (parameter_reads)
+                parameter_reads->observe(key, default_val,
+                    it != custom_params.end() ? static_cast<T>(it->second) : default_val,
+                    it != custom_params.end());
             if (it != custom_params.end())
                 return static_cast<T>(it->second);
             return default_val;

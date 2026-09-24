@@ -1,0 +1,16 @@
+{
+  "scenario": "Sod --inspect-case, CUDA_VISIBLE_DEVICES empty, OMP_NUM_THREADS=1",
+  "measurement": "/proc/<pid>/status at first RLIMIT_AS setrlimit call under gdb",
+  "address_space_limit_mib": 1024,
+  "before": {
+    "VmSize_KiB": 1124072,
+    "VmRSS_KiB": 112384,
+    "VmLib_KiB": 753972
+  },
+  "after": {
+    "VmSize_KiB": 300780,
+    "VmRSS_KiB": 12672,
+    "VmLib_KiB": 17032
+  },
+  "change": "Load configured cuDSS/cuBLAS on first sparse solver construction; budget unchanged"
+}

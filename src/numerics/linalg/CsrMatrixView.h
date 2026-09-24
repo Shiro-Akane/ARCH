@@ -9,8 +9,8 @@
  */
 #pragma once
 
-#include "../../core/ArchPortability.h"
-#include "SparseResidual.h"
+#include "core/ArchPortability.h"
+#include "numerics/linalg/SparseResidual.h"
 #include <cmath>
 
 template <int N>

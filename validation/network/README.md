@@ -219,7 +219,7 @@ existing packages without the eligibility metadata retain their ordinary ODE rou
 
 The real generated [nse_light](inputs/nse_light.py) and
 [nse_alpha](inputs/nse_alpha.py) packages passed the focused CPU
-[equilibrium and burn-handoff test](../../tests/host/test_generated_nse_network.cpp).
+[equilibrium and burn-handoff test](../../tests/host/network/test_generated_nse_network.cpp).
 Each uses nine states: `T={4.5,5,7}e9 K` and `rho={1e6,1e7,1e9} g/cm³`.
 The test isolates each forward/reverse pair through the package's actual rate
 and RHS code, independently requires equal opposing flows, and also checks the

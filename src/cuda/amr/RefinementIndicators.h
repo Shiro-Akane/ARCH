@@ -15,13 +15,13 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "amr/RefinementIndicatorMath.h"
+#include "amr/refinement/RefinementIndicatorMath.h"
 #include "cuda/common/CudaCommon.cuh"
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"
-#include "physics/eos/Tabular3DEOS.h"
-#include "physics/eos/Tabular4DEOS.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular4DEOS.h"
 
 namespace arch::cuda {
 

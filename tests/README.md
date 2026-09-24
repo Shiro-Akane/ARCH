@@ -57,6 +57,12 @@ Full resource-guard coverage needs Linux `/proc`, child-process ownership suppor
 and Python's `os.pidfd_open`. An unsupported Python build or kernel may skip those
 controls. Read the summary: a skip does not verify that feature.
 
+The architecture audit prunes configured CMake build trees and auxiliary Git
+worktrees before scanning. It still reads new/untracked source and user modules
+under source directories; it does not rely on a clean Git index or ignore a
+broad `build*` prefix. Running from a normal development checkout therefore does
+not require exporting a temporary source snapshot.
+
 ## Build and run CPU regressions
 
 Prepare the dependencies in the [build guide](../docs/guides/Build.md). Default
@@ -77,6 +83,19 @@ configured tests. For a quick checkpoint-only check, build
 `arch_checkpoint_compatibility` and select `-R '^checkpoint_compatibility$'`.
 It checks complete ARCH state restoration and rejected input through the same
 reader used by both backends.
+
+`arch_cuda_single_level_validation` is also available in CPU-only builds. The
+historical target name is retained for runner compatibility, but the utility
+uses ordinary C++ and the Host HDF5 reader and does not link the CUDA backend.
+Its comparison rules and `checkpoint_temporal_comparison` test are unchanged.
+
+For a scoped Driver CUDA check, `tools/check_ci_results.py --profile driver-cuda`
+requires scheduler, gravity preparation, checkpoint and CUDA AMR/batch/reduction
+coverage anchors. Supply inventory and JUnit files from the same CTest selection;
+every selected test must pass without skips. This does not certify the full CUDA
+inventory, application-level numerics, restart or sanitizer checks. Hosted CPU CI
+continues to check its complete configured inventory.
+Build this target to compare CPU artifacts without a CUDA build.
 
 ## Add CUDA and its sparse provider
 
@@ -148,3 +167,13 @@ and conditions live in [HostTests.cmake](../cmake/tests/HostTests.cmake) and
 [CudaTests.cmake](../cmake/tests/CudaTests.cmake).
 Keep one copy of shared test data and place production algorithms
 in `src/`. Derive reference results independently of the routines being tested.
+
+
+### Self-gravity checks
+
+The CPU anchors are `composite_poisson_contract`, `composite_poisson_analytic`,
+`self_gravity_lifecycle` and `self_gravity_physics`. The last test runs the real
+executable and requires numpy/h5py in CMake's selected `Python3_EXECUTABLE`
+environment (CI installs both). Configure that interpreter with the matching
+packages rather than skipping the test. Device, coupling and performance evidence
+is in [gravity validation](../validation/gravity/README.md).

@@ -14,20 +14,20 @@
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
-#include "amr/AmrFluxExecutionPlan.h"
+#include "amr/flux/AmrFluxExecutionPlan.h"
 #include "cuda/runtime/CudaBackendTypes.h"
-#include "cuda/runtime/burn/CudaBackendBurnSparse.h"
+#include "cuda/runtime/burn/sparse/CudaBackendBurnSparse.h"
 #include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 
-#include "cuda/hydro/BoundaryPlan.h"
+#include "cuda/hydro/boundary/BoundaryPlan.h"
 #include "cuda/common/DeviceAllocation.h"
-#include "cuda/microphysics/helm_eos_loader.h"
-#include "cuda/microphysics/device_network_owner.h"
+#include "cuda/microphysics/eos/helm_eos_loader.h"
+#include "cuda/microphysics/network/device_network_owner.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"
-#include "physics/eos/Tabular3DEOS.h"
-#include "physics/eos/Tabular4DEOS.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular4DEOS.h"
 
 #include <cuda_runtime.h>
 
@@ -166,6 +166,8 @@ struct CudaBlockRuntime {
     DeviceAllocation<double> cell_volume;
     std::array<DeviceAllocation<double>, 3> face_area_lower;
     std::array<DeviceAllocation<double>, 3> face_area_upper;
+    Physical::Gravity::GravityPatchView self_gravity{};
+    std::uint64_t gravity_generation=0;
     DeviceGridView grid{};
     DeviceCompiledBoundaryPlan boundary;
     DeviceAllocation<DeviceBoundaryTransfer> boundary_transfers;
@@ -207,6 +209,7 @@ struct CudaAmrFluxPlanRuntime {
     std::vector<std::unique_ptr<CudaAmrFluxRouteStorage>> routes;
     std::map<std::pair<amr::BlockHandle, int>, std::size_t> route_index;
     amr::AmrCompiledRefluxPlan compiled_reflux{};
+    DeviceAllocation<int> reflux_status;
     DeviceAllocation<amr::AmrRefluxTarget> reflux_targets;
     DeviceAllocation<amr::AmrRefluxContribution> reflux_contributions;
     std::vector<amr::AmrFluxSurfaceRequirement> surface_requirements;
@@ -235,6 +238,7 @@ struct CudaBackend::Impl {
         std::unique_ptr<CudaAmrFluxPlanRuntime> amr_flux;
     };
 
+    std::weak_ptr<Physical::Gravity::GravityExecution> gravity_execution;
     int device_ordinal;
     CudaLaunchConfig launch;
     StreamOwner stream;
@@ -254,6 +258,16 @@ struct CudaBackend::Impl {
         std::unique_ptr<DeviceAllocation<int>> status;
         std::vector<int> host_status;
 
+        std::unique_ptr<DeviceAllocation<double>> repairs;
+        std::vector<double> host_repairs;
+        void ensure_repairs(std::size_t count, int species) {
+            const auto size = count * (state::RepairView::fixed_size + 2 * species);
+            host_repairs.resize(size);
+            if (!repairs || repairs->size() < size) {
+                auto next = std::make_unique<DeviceAllocation<double>>();
+                next->allocate(size); repairs.swap(next);
+            }
+        }
         void ensure_capacity(std::size_t count)
         {
             host_status.resize(count);
@@ -281,6 +295,7 @@ struct CudaBackend::Impl {
         };
         std::array<Phase, 3> phases;
         ReusableDeviceAllocation<DeviceCoarseFineTransfer> transfers;
+        ReusableDeviceAllocation<DeviceCoordinateSeamTransfer> seam_transfers;
         ReusableDeviceAllocation<double> coarse_values;
         ReusableDeviceAllocation<int> status;
     } exchange_scratch;
@@ -336,6 +351,10 @@ struct CudaBackend::Impl {
         std::span<const backend::BackendStateAccess>,
         const amr::CoarseFineTransferPlan&, state::StateSlot,
         const BlockResolver&);
+    void execute_coordinate_seam_exchange(
+        std::span<const backend::BackendStateAccess>,
+        std::span<const int>, const amr::CoordinateSeamPlan&,
+        state::StateSlot, const BlockResolver&);
     CudaBlockRuntime& first_block() noexcept;
     const CudaBlockRuntime& first_block() const noexcept;
 

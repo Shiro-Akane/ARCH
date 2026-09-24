@@ -16,11 +16,11 @@
 #include <string>
 #include <type_traits>
 
-#include "RKL1TimeIntegrator.h"
-#include "RKL2TimeIntegrator.h"
+#include "numerics/diffusion/RKL1TimeIntegrator.h"
+#include "numerics/diffusion/RKL2TimeIntegrator.h"
 
-#include "../../data/GlobalDefs.h"
-#include "../../driver/dispatch/PolicyDescriptor.h"
+#include "data/GlobalDefs.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 
 namespace Numerics
 {

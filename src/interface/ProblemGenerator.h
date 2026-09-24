@@ -15,12 +15,15 @@
 
 #pragma once
 
-#include "../amr/AMRControl.h"
-#include "../data/GlobalDefs.h"
-#include "../grid/Grid.h"
-#include "../physics/eos/IdealGas.h"
-#include "../physics/species/Species.h"
-#include "../driver/dispatch/ResolvedExecutionPlan.h"
+#include <stdexcept>
+
+#include "amr/AMRControl.h"
+#include "data/GlobalDefs.h"
+#include "data/UserTypes.h"
+#include "grid/Grid.h"
+#include "physics/eos/IdealGas.h"
+#include "physics/species/Species.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 
 struct ProblemInitializationContext
 {
@@ -31,6 +34,22 @@ class ProblemGenerator
 {
 public:
     virtual ~ProblemGenerator() = default;
+
+    // Explicit inspection boundary. Production InitializeData has no observer
+    // or extra per-cell branch. Restore the caller's observer even on failure.
+    void InspectSetup(SimConfig& config, SpeciesManager& species,
+                      const std::shared_ptr<arch::preview::ParameterReadTrace>& reads) {
+        const auto previous = config.parameter_reads;
+        config.parameter_reads = reads;
+        try { Setup(config, species); }
+        catch (...) { config.parameter_reads = previous; throw; }
+        config.parameter_reads = previous;
+    }
+    void InspectInitialPrimitive(const PointCoords& point, PrimitiveData& data,
+                                 arch::preview::InitializationObserver& observer) const {
+        SampleInitialPrimitive(point, data);
+        observer.initial_primitive(point, data);
+    }
 
     /**
      * @brief Global Setup Routine.
@@ -43,6 +62,19 @@ public:
      * @param specs  Output: The species manager to populate.
      */
     virtual void Setup(SimConfig &config, SpeciesManager &specs) = 0;
+
+    virtual std::vector<arch::preview::AxisPosition> PreviewPositions(const SimConfig &) const
+    {
+        return {};
+    }
+
+    // Optional pointwise initialization seam. Call Setup first and supply a
+    // zeroed PrimitiveData with the registered composition extent. Existing
+    // mesh-only generators remain valid and explicitly reject point sampling.
+    virtual void SampleInitialPrimitive(const PointCoords &, PrimitiveData &) const
+    {
+        throw std::logic_error("This problem does not support pointwise initialization");
+    }
 
     /**
      * @brief Populates the mesh with initial physical conditions.

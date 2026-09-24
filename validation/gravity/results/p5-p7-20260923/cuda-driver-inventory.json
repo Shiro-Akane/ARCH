@@ -1,0 +1,896 @@
+{
+  "backtraceGraph": {
+    "commands": [
+      "add_test",
+      "include",
+      "arch_register_io_regression_tests"
+    ],
+    "files": [
+      "/home/shiroakane/ARCH/cmake/tests/HostTests.cmake",
+      "/home/shiroakane/ARCH/CMakeLists.txt",
+      "/home/shiroakane/ARCH/cmake/tests/CudaTests.cmake"
+    ],
+    "nodes": [
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 17,
+        "parent": 0
+      },
+      {
+        "file": 0,
+        "parent": 1
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 22,
+        "parent": 2
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 17,
+        "parent": 4
+      },
+      {
+        "file": 0,
+        "parent": 5
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 178,
+        "parent": 6
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 17,
+        "parent": 8
+      },
+      {
+        "file": 0,
+        "parent": 9
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 182,
+        "parent": 10
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 12
+      },
+      {
+        "file": 2,
+        "parent": 13
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 91,
+        "parent": 14
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 16
+      },
+      {
+        "file": 2,
+        "parent": 17
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 137,
+        "parent": 18
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 20
+      },
+      {
+        "file": 2,
+        "parent": 21
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 163,
+        "parent": 22
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 24
+      },
+      {
+        "file": 2,
+        "parent": 25
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 184,
+        "parent": 26
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 28
+      },
+      {
+        "file": 2,
+        "parent": 29
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 409,
+        "parent": 30
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 32
+      },
+      {
+        "file": 2,
+        "parent": 33
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 419,
+        "parent": 34
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 36
+      },
+      {
+        "file": 2,
+        "parent": 37
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 425,
+        "parent": 38
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 40
+      },
+      {
+        "file": 2,
+        "parent": 41
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 432,
+        "parent": 42
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 44
+      },
+      {
+        "file": 2,
+        "parent": 45
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 434,
+        "parent": 46
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 48
+      },
+      {
+        "file": 2,
+        "parent": 49
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 436,
+        "parent": 50
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 52
+      },
+      {
+        "file": 2,
+        "parent": 53
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 442,
+        "parent": 54
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 56
+      },
+      {
+        "file": 2,
+        "parent": 57
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 442,
+        "parent": 58
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 60
+      },
+      {
+        "file": 2,
+        "parent": 61
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 442,
+        "parent": 62
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 64
+      },
+      {
+        "file": 2,
+        "parent": 65
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 442,
+        "parent": 66
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 68
+      },
+      {
+        "file": 2,
+        "parent": 69
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 442,
+        "parent": 70
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 72
+      },
+      {
+        "file": 2,
+        "parent": 73
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 442,
+        "parent": 74
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 76
+      },
+      {
+        "file": 2,
+        "parent": 77
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 448,
+        "parent": 78
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 80
+      },
+      {
+        "file": 2,
+        "parent": 81
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 452,
+        "parent": 82
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 1,
+        "file": 1,
+        "line": 23,
+        "parent": 84
+      },
+      {
+        "file": 2,
+        "parent": 85
+      },
+      {
+        "command": 0,
+        "file": 2,
+        "line": 456,
+        "parent": 86
+      },
+      {
+        "file": 1
+      },
+      {
+        "command": 2,
+        "file": 1,
+        "line": 29,
+        "parent": 88
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 338,
+        "parent": 89
+      }
+    ]
+  },
+  "kind": "ctestInfo",
+  "tests": [
+    {
+      "backtrace": 3,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+        "--test-time-comparison"
+      ],
+      "name": "checkpoint_temporal_comparison",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 7,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_shared_stage_scheduler"
+      ],
+      "name": "shared_stage_scheduler",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 11,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_gravity_stage_contract"
+      ],
+      "name": "gravity_stage_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 15,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_regrid_transaction"
+      ],
+      "name": "cuda_regrid_transaction",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 19,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_regrid_migration"
+      ],
+      "name": "cuda_regrid_migration",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 23,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_hydro_dispatch"
+      ],
+      "name": "cuda_hydro_dispatch",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 27,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_amr_composition"
+      ],
+      "name": "cuda_amr_composition",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 31,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_compile_probe"
+      ],
+      "name": "cuda_compile_probe",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 35,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_diffusion_rkl_parity"
+      ],
+      "name": "diffusion_rkl_parity",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 39,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_reduction_contract"
+      ],
+      "name": "cuda_reduction_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 43,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_hydro"
+      ],
+      "name": "cuda_multiblock_hydro",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 47,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_diffusion"
+      ],
+      "name": "cuda_multiblock_diffusion",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 51,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_burn"
+      ],
+      "name": "cuda_multiblock_burn",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 55,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_burn",
+        "3"
+      ],
+      "name": "cuda_multiblock_burn_b3",
+      "properties": [
+        {
+          "name": "LABELS",
+          "value": [
+            "batch-boundary",
+            "cuda",
+            "microphysics"
+          ]
+        },
+        {
+          "name": "RUN_SERIAL",
+          "value": true
+        },
+        {
+          "name": "TIMEOUT",
+          "value": 600.0
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 59,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_diffusion",
+        "3"
+      ],
+      "name": "cuda_multiblock_diffusion_b3",
+      "properties": [
+        {
+          "name": "LABELS",
+          "value": [
+            "batch-boundary",
+            "cuda",
+            "microphysics"
+          ]
+        },
+        {
+          "name": "RUN_SERIAL",
+          "value": true
+        },
+        {
+          "name": "TIMEOUT",
+          "value": 600.0
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 63,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_burn",
+        "1024"
+      ],
+      "name": "cuda_multiblock_burn_b1024",
+      "properties": [
+        {
+          "name": "LABELS",
+          "value": [
+            "batch-boundary",
+            "cuda",
+            "microphysics"
+          ]
+        },
+        {
+          "name": "RUN_SERIAL",
+          "value": true
+        },
+        {
+          "name": "TIMEOUT",
+          "value": 600.0
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 67,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_diffusion",
+        "1024"
+      ],
+      "name": "cuda_multiblock_diffusion_b1024",
+      "properties": [
+        {
+          "name": "LABELS",
+          "value": [
+            "batch-boundary",
+            "cuda",
+            "microphysics"
+          ]
+        },
+        {
+          "name": "RUN_SERIAL",
+          "value": true
+        },
+        {
+          "name": "TIMEOUT",
+          "value": 600.0
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 71,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_burn",
+        "1025"
+      ],
+      "name": "cuda_multiblock_burn_b1025",
+      "properties": [
+        {
+          "name": "LABELS",
+          "value": [
+            "batch-boundary",
+            "cuda",
+            "microphysics"
+          ]
+        },
+        {
+          "name": "RUN_SERIAL",
+          "value": true
+        },
+        {
+          "name": "TIMEOUT",
+          "value": 600.0
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 75,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_diffusion",
+        "1025"
+      ],
+      "name": "cuda_multiblock_diffusion_b1025",
+      "properties": [
+        {
+          "name": "LABELS",
+          "value": [
+            "batch-boundary",
+            "cuda",
+            "microphysics"
+          ]
+        },
+        {
+          "name": "RUN_SERIAL",
+          "value": true
+        },
+        {
+          "name": "TIMEOUT",
+          "value": 600.0
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 79,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_multiblock_diffusion",
+        "3",
+        "33"
+      ],
+      "name": "cuda_multiblock_diffusion_global_species",
+      "properties": [
+        {
+          "name": "LABELS",
+          "value": [
+            "batch-boundary",
+            "cuda",
+            "microphysics"
+          ]
+        },
+        {
+          "name": "RUN_SERIAL",
+          "value": true
+        },
+        {
+          "name": "TIMEOUT",
+          "value": 600.0
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 83,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_store_lifecycle"
+      ],
+      "name": "cuda_store_lifecycle",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 87,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_amr_exchange"
+      ],
+      "name": "cuda_amr_exchange",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    },
+    {
+      "backtrace": 90,
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/sparse_klu_regression"
+      ],
+      "name": "sparse_klu_161_equations",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 1,
+    "minor": 0
+  }
+}

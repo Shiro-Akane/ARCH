@@ -386,11 +386,15 @@ void CudaBackend::migrate_staged_current(
 void CudaBackend::complete_staged_current_ghosts(
     backend::BackendTopologyStoreTransaction& transaction,
     std::span<const amr::SameLevelExchangePlan> same_level,
-    const amr::CoarseFineTransferPlan& coarse_fine)
+    const amr::CoarseFineTransferPlan& coarse_fine,
+    std::span<const int> active_ids,
+    std::span<const amr::BlockHandle> active_handles,
+    const amr::CoordinateSeamPlan* coordinate_seam)
 {
     complete_staged_current_ghosts(
         require_cuda_topology_transaction(transaction).transaction,
-        same_level, coarse_fine);
+        same_level, coarse_fine, active_ids, active_handles,
+        coordinate_seam);
 }
 
 void CudaBackend::prepare_amr_flux_plan(

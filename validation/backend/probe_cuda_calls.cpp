@@ -88,6 +88,18 @@ extern "C" cudaError_t cudaMemcpyAsync(void* destination,const void* source,size
     const auto end=Clock::now();
     add("memcpy_async:"+std::to_string(static_cast<int>(kind)),start,end,bytes); return result;
 }
+extern "C" cudaError_t cudaMemcpy2DAsync(void* destination,size_t destination_pitch,
+    const void* source,size_t source_pitch,size_t width,size_t height,
+    cudaMemcpyKind kind,cudaStream_t stream) {
+    static auto native=symbol<decltype(&cudaMemcpy2DAsync)>("cudaMemcpy2DAsync");
+    const auto start=Clock::now();
+    const auto result=native(destination,destination_pitch,source,source_pitch,
+                             width,height,kind,stream);
+    const auto end=Clock::now();
+    add("memcpy_2d_async:"+std::to_string(static_cast<int>(kind)),start,end,
+        static_cast<unsigned long long>(width)*height);
+    return result;
+}
 extern "C" cudaError_t cudaMalloc(void** pointer,size_t bytes) {
     static auto native=symbol<decltype(&cudaMalloc)>("cudaMalloc");
     const auto start=Clock::now(); const auto result=native(pointer,bytes);

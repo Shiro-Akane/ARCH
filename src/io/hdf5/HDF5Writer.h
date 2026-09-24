@@ -9,6 +9,7 @@
 
 #pragma once
 #include <cstdint>
+#include "data/StateDiagnostics.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -16,12 +17,14 @@
 namespace io {
 
 // On-disk layout discriminator, independent of the ARCH software release.
-inline constexpr int checkpoint_format_version = 4;
+inline constexpr int checkpoint_format_version = 6;
 
 /** Scientific/state-layout identity required for a verified restart. */
 struct CheckpointProvenance {
     bool available = false;
     std::string eos_type;
+    std::string gravity_type = "none", gravity_boundary = "none";
+    std::vector<double> gravity_controls; // external: gx,gy,gz; self: G,rtol,atol,max_cycles
     double ideal_gamma = 0.0;
     bool burn_enabled = false;
     std::string active_network = "none";
@@ -37,6 +40,8 @@ struct CheckpointProvenance {
 
 /** Complete restart payload in Morton-sorted AMR leaf and interior-cell order. */
 struct CheckpointData {
+    arch::state::RepairBudget repairs;
+    std::vector<double> state_controls;
     double time = 0.0;
     double dt_old = 0.0;
     double dt_burn = 0.0;

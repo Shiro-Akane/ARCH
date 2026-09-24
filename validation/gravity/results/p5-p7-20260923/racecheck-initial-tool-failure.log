@@ -1,0 +1,4 @@
+========= COMPUTE-SANITIZER
+========= Error: Device not supported. Please refer to the "Supported Devices" section of the sanitizer documentation
+========= 
+========= RACECHECK SUMMARY: 1 hazard displayed (1 error, 0 warnings)

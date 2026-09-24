@@ -3,9 +3,10 @@
  * @brief HDF5 rank inspection kept out of the templated EOS dispatcher.
  */
 
-#include "eosdispatch.h"
-#include "TabularSource.h"
-#include "TabularBaryonSource.h"
+#include "physics/eos/eosdispatch.h"
+#include "physics/eos/sources/TabularSource.h"
+#include "physics/eos/sources/TabularLoaderUtils.h"
+#include "physics/eos/sources/TabularBaryonSource.h"
 
 #include <algorithm>
 #include <set>
@@ -41,17 +42,7 @@ int normalized_rank(const HighFive::File& file)
         return rank;
     }
 
-    const bool has_A = file.exist("n_A");
-    const bool has_Z = file.exist("n_Z");
-    const bool has_X = file.exist("n_X");
-    if (has_A != has_Z || (has_X && has_A)) {
-        throw std::runtime_error(
-            "Tabular EOS without table_rank has incomplete or ambiguous composition axes");
-    }
-    if (has_A && has_Z) return 4;
-    if (has_X) return 3;
-    throw std::runtime_error(
-        "Cannot infer tabular EOS rank: provide table_rank or n_X/n_A/n_Z composition-axis datasets");
+    throw std::runtime_error("Normalized EOS requires explicit table_rank");
 }
 } // namespace
 
@@ -112,6 +103,13 @@ TabularSourceInfo inspect_tabular_source(const std::string& path)
             "energy=source-shifted;fields=native-log-linear;"
             "axes=native;domain=valid-cells;thermal-acoustic=interpolant-first-law"};
     }
+    tabular_eos::loader::validate_schema_version(file);
+    if (!components.declared || !file.exist("nuclear_equilibrium"))
+        throw std::runtime_error("Normalized EOS requires eos_components and nuclear_equilibrium");
+    std::string model;
+    tabular_eos::loader::read_required(file,"thermodynamic_model",model);
+    if (model != "free_energy")
+        throw std::runtime_error("Normalized direct EOS is retired; supply a strict free_energy potential");
     bool equilibrium=false;
     if (file.exist("nuclear_equilibrium")) {
         const auto data=file.getDataSet("nuclear_equilibrium");
@@ -138,9 +136,8 @@ TabularSourceInfo inspect_tabular_source(const std::string& path)
             throw std::runtime_error("baryon_mass_g must be finite and positive");
     }
     return {normalized_rank(file), TabularSourceFormat::Normalized, equilibrium,
-        components.declared || equilibrium
-            ? std::string("declared-physics;constraints=F-with-optional-log-derivatives")
-                + completion_interpretation : std::string{}, components,baryon_mass};
+        std::string("normalized-v2;declared-physics;constraints=F-with-optional-log-derivatives")
+                + completion_interpretation, components,baryon_mass};
 }
 
 int inspect_eos_table_rank(const std::string& path)
@@ -156,7 +153,6 @@ void EOSDispatcher::validate_coupling(const SimConfig& config,
             "This EOS source already includes nuclear-equilibrium binding energy. "
             "Independent kinetic burning/NSE would double-count nuclear energy; "
             "use_burn must be false until a consistent coupled model is supplied.");
-    if (!source.components.declared && !source.nuclear_equilibrium) return;
     if (requires_composition_gamma)
         throw std::invalid_argument(
             "Steger-Warming requires a composition-only gamma and is not compatible "
@@ -178,7 +174,6 @@ std::string tabular_source_fingerprint(const std::string& path,const std::string
     if (H5Fis_hdf5(path.c_str()) <= 0
         && !tabular_eos::source::is_baryon_ascii_table(path)) return digest;
     const auto source = inspect_tabular_source(path);
-    if (source.interpretation.empty()) return digest;
     std::string identity=source.interpretation+"\n"+digest;
     if (!source.components.electrons_positrons)
         identity+="\nhelm-electrons="+arch::core::file_sha256(

@@ -1,0 +1,10 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build
+Test project /home/shiroakane/ARCH/build
+    Start 49: ui_expansion_contract
+    Start  4: configuration_api_contract
+1/2 Test  #4: configuration_api_contract .......   Passed    4.02 sec
+2/2 Test #49: ui_expansion_contract ............   Passed   72.65 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =  72.65 sec

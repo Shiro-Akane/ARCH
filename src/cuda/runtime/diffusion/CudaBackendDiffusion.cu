@@ -14,8 +14,8 @@
 #include "cuda/diffusion/DiffusionBatchKernels.cuh"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"
-#include "physics/eos/Tabular3DEOS.h"
-#include "physics/eos/Tabular4DEOS.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular4DEOS.h"
 
 namespace arch::cuda {
 namespace {

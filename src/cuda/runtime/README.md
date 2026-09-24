@@ -11,6 +11,7 @@ stable; implementation files are grouped by responsibility:
 | [hydro](hydro/README.md) | Hydro launch declarations, stage control and EOS bindings |
 | [burn](burn/README.md) | Dense/sparse burn launch contracts and registered network binding |
 | [amr](amr/README.md) | Indicator, migration, ghost exchange and flux-correction orchestration |
+| [gravity](gravity/README.md) | Resident gravity fields, shared-work launches, reductions and publication |
 | [diffusion](diffusion/README.md) | Diffusion launch interface and device execution |
 
 These groups separate execution responsibilities; their numerical operations

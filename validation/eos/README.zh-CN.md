@@ -13,7 +13,18 @@ EOS 验证结合独立热力学参考与实际流体、燃烧应用。Ideal、He
 规范化 Tabular3D/Tabular4D 在 CPU 与 CUDA 上共用数学实现；后端负责表格
 存储及其生命周期管理。
 
-## 耦合应用结果
+## P1.5 当前契约
+
+规范化表格现在要求 schema 2、自由能势及明确物理声明；规范化 direct、缺失元数据
+猜测与静默越域回退已经退役。原生 EOSDriver 与重子来源格式仍受支持。
+当前实施和验收状态见 [P1.5 记录](../../docs/development/P1_5ImplementationReport.zh-CN.md)。
+
+下方应用结果与重放脚本仅为历史证据：来源为 `2226456c1f87415a317dd6a2a96053a7e154b949`
+加报告记录的未提交源码身份，单独检出该提交不能复现。旧 direct 制表脚本不能作为
+P1.5 验证入口，旧通过数也不能代表本轮结果。当前规范化夹具和拒绝测试位于
+`tests/host/eos` 与 `tests/cuda/microphysics/eos`，通过下方 CTest 目标运行。
+
+## 历史耦合应用结果
 
 Release 应用记录
 通过了十二个案例、96 次 CPU/CUDA 执行。
@@ -55,7 +66,7 @@ CPU/CUDA 场通过 `rtol=2e-8`、`atol=1e-12` 的对比；燃烧质量分数满�
 
 ## 复现
 
-运行[应用脚本](results/application-native-20260907/replay.py)，指定 `--build-dir`
+仅针对上方注明的历史源码，运行[应用脚本](results/application-native-20260907/replay.py)，指定 `--build-dir`
 和新的 `--output-dir`。它生成验证表格，再通过共用应用验证器运行两个后端。
 随后运行[端点检查器](results/application-native-20260907/check_terminal.py)，使用
 相同的 `--build-dir`，以 `--report` 指向应用的 `evidence.json`，并选择另一个新的
@@ -94,7 +105,7 @@ EOSDriver 文件。当前源码还支持 EOS2/EOS4 共用的有限温重子 ASCI
 ### 原生接口定向检查
 
 基于 `e799640b` 加未提交修改的本地工作树，通过
-[NativeTabularRegression.cpp](../../tests/host/NativeTabularRegression.cpp)
+[NativeTabularRegression.cpp](../../tests/host/eos/NativeTabularRegression.cpp)
 检查了原始 EOSDriver `HShenEOS.h5`。400 个确定性内部样本中，395 个具有
 可用的唯一反解：391 个满足固定 `2e-8` 相对温度容差的分辨率要求，另有 4 个
 单独归为来源精度受限。4 个样本触及无效单元，1 个存在多个有效温度根；这些

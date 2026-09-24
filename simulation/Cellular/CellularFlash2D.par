@@ -1,0 +1,68 @@
+# FLASH 4.8 archive Cellular-style 2D helium detonation on 64 x 32 cm.
+# Its local pocket/ignition extension was run in pure-He planar mode.
+# The same physical initial state and finest cell width are used by the O5
+# comparison; this is an ARCH self-consistent-temperature burn, whereas the
+# archived FLASH burner holds temperature fixed inside each burner call.
+# FLASH input eos_coulombMult=0 omits a Helm term retained here; use
+# eos_coulombMult=1 on FLASH for a closer initial EOS alignment.
+# See validation/gravity/flash/O5OptimizationReport.zh-CN.md.
+geometry=cartesian
+nblockx1=4
+nblockx2=2
+nblockx3=0
+max_blocks=128
+x1_min=0
+x1_max=64
+x2_min=0
+x2_max=32
+x1l_boundary_type=reflecting
+x1r_boundary_type=reflecting
+x2l_boundary_type=periodic
+x2r_boundary_type=periodic
+solver=HLLC
+reconstruct=muscl
+limiter=mc
+time_integrator=RK2
+cfl=0.8
+lrefinemin=0
+lrefinemax=1
+regrid_interval=2
+refine_var=DENS
+refine_threshold=0.8
+derefine_threshold=0.2
+tmax=1.0187727288607583e-08
+max_steps=1000
+dt_init=1e-16
+dt_min=1e-20
+tstep_change_factor=2.0
+out_dir=output/cellular_flash_2d
+base_name=CellularMatched2D
+plt_dt=-1
+plt_dstep=1000
+chk_dt=-1
+chk_dstep=1000
+plt_variables=ALL
+restart=false
+eos_type=helmholtz
+eos_table_path=EOS_toolkit/tables/helmholtz/helm_table.dat
+gravity_type=none
+use_burn=true
+network_name=aprox19
+xhe4=1
+xc12=0
+xo16=0
+nuclearTempMin=1e9
+use_nse=false
+ode_solver=bd
+linear_solver=DenseLU
+use_diffusion=false
+rhoAmbient=2e7
+tempAmbient=2e8
+rhoPerturb=8e7
+tempPerturb=3.5e9
+velxPerturb=9.5e8
+radiusPerturb=12.8
+noiseAmplitude=0
+shock_dir=0
+
+compute_backend=cpu

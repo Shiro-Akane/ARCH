@@ -1,0 +1,19 @@
+{
+  "tool": "memcheck",
+  "executable": {
+    "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+    "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+  },
+  "report": {
+    "path": "/tmp/arch-p15-sanitizers/arch_cuda_hydro_eos_failure-memcheck/sanitizer.log",
+    "sha256": "160c807f7e12d562eaadb8536a221c9f44edc20b90baed5225ae8501bcd54513"
+  },
+  "summaries": [
+    "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+    "ERROR SUMMARY: 0 errors"
+  ],
+  "application": {
+    "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_hydro_eos_failure",
+    "sha256": "d2a75abcfc6ea9e8c218c0721230369162e5a7e0859da37ee429e9c53f5bb8af"
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "data": null,
+  "diagnostics": [
+    {
+      "code": "SETUP_FAILED",
+      "message": "Sod requires an interior interface and positive densities/pressures.",
+      "severity": "error"
+    },
+    {
+      "code": "CORE_LOG",
+      "message": "[Info] Loaded 50 parameters from <memory>\n",
+      "severity": "info"
+    }
+  ],
+  "execution": {
+    "previewBackend": "cpu",
+    "scientificOutput": "not_created",
+    "simulationReadiness": "not_checked",
+    "timeStepping": "not_executed"
+  },
+  "graphicalBindings": {
+    "items": [],
+    "version": "1"
+  },
+  "identity": {
+    "caseId": "Sod",
+    "configRevision": "b0cb58d09cabbb7d4000148239f5e4745a545198c5a32b6598d95c95340d2464",
+    "requestId": "core-a-outside"
+  },
+  "kind": "initial-state-preview",
+  "parameterMetadata": {
+    "complete": false,
+    "coverage": "observed-case-setup-reads",
+    "parameters": [
+      {
+        "constraints": {
+          "max": 5,
+          "maxInclusive": false,
+          "min": -3,
+          "minInclusive": false
+        },
+        "defaultValue": 0.5,
+        "description": null,
+        "diagnostics": [],
+        "effectiveValue": 5,
+        "explicitValue": 5,
+        "key": "x_pos",
+        "rawValue": "5",
+        "sourceReason": null,
+        "type": "float",
+        "unit": null,
+        "valueSource": "explicit"
+      }
+    ],
+    "version": "1"
+  },
+  "schemaVersion": "1.0",
+  "stage": "setup",
+  "state": {
+    "amr": {
+      "actualHierarchy": null,
+      "derefineThreshold": 0.2,
+      "effectiveMaxBlocks": 32,
+      "enabled": false,
+      "indicatorEvaluation": "not_executed",
+      "initialRefinement": "not_executed",
+      "maxBlocks": 32,
+      "maxLevel": 0,
+      "minLevel": 0,
+      "parsedIndicators": [
+        "DENS"
+      ],
+      "refineThreshold": 0.8,
+      "regridInterval": 2,
+      "requestedIndicators": "DENS",
+      "status": "configured"
+    },
+    "computeBackendRequested": "cpu",
+    "configuration": "parsed",
+    "eos": {
+      "componentTablePath": "",
+      "configuredGamma": 1.4,
+      "loadedTablePath": null,
+      "requested": "ideal",
+      "resolved": null,
+      "sourceFingerprint": null,
+      "status": "not_loaded",
+      "tablePath": ""
+    },
+    "grid": {
+      "axes": [
+        {
+          "activeCellsPerBlock": 16,
+          "coordinateSpacing": 0.0625,
+          "lowerBoundary": "outflow",
+          "max": 5,
+          "min": -3,
+          "name": "x1",
+          "rootBlocks": 8,
+          "rootCells": 128,
+          "unit": null,
+          "upperBoundary": "outflow"
+        }
+      ],
+      "dimension": 1,
+      "geometry": "cartesian",
+      "hierarchy": "not_constructed",
+      "status": "configured"
+    },
+    "setup": "error",
+    "species": null
+  },
+  "status": "error"
+}

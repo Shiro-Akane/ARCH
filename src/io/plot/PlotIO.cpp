@@ -16,16 +16,16 @@
 #include <sstream>
 #include <vector>
 
-#include "../../amr/AMRControl.h"
-#include "../../core/RuntimeParams.h" // For SimConfig
-#include "../../data/FluidState.h"
-#include "../../data/GlobalDefs.h"
-#include "../../grid/Grid.h"
-#include "../../physics/diagnostics/VelocityDiagnostics.h"
-#include "../../physics/species/Species.h"
+#include "amr/AMRControl.h"
+#include "core/config/RuntimeParams.h" // For SimConfig
+#include "data/FluidState.h"
+#include "data/GlobalDefs.h"
+#include "grid/Grid.h"
+#include "physics/diagnostics/VelocityDiagnostics.h"
+#include "physics/species/Species.h"
 
-#include "../IO.h"
-#include "../hdf5/HDF5Writer.h"
+#include "io/IO.h"
+#include "io/hdf5/HDF5Writer.h"
 
 namespace fs = std::filesystem;
 
@@ -45,7 +45,8 @@ inline std::vector<size_t> get_hdf5_dims(const Grid &grid)
 void write_plt(amr::AMRControl &amr_ctrl,
                PressureFunc p_func, TemperatureFunc t_func, Gamma1Func gamma1_func, const void* p_context,
                int file_index, double current_time,
-               const SimConfig &config, const SpeciesManager &specs)
+               const SimConfig &config, const SpeciesManager &specs,
+               std::span<const io::PlotScalarField> extra_fields)
 {
     if (!fs::exists(config.io.out_dir))
         fs::create_directories(config.io.out_dir);
@@ -133,7 +134,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
             std::vector<double> vel_z(state_size, 0.0);
             for (int index = 0; index < state_size; ++index) {
                 const double rho = state.rho[index];
-                if (rho > config.numerics.sml_rho) {
+                if (rho > 0.0) {
                     vel_x[index] = state.mom_u[index] / rho;
                     vel_y[index] = state.mom_v[index] / rho;
                     vel_z[index] = state.mom_w[index] / rho;
@@ -177,19 +178,19 @@ void write_plt(amr::AMRControl &amr_ctrl,
         extract_and_store("ENER", [](const FluidState &s, int idx) { return s.get(idx).eng; });
 
     if (vars.u)
-        extract_and_store("VELX", [](const FluidState &s, int idx) { auto U = s.get(idx); return U.rho > 1e-12 ? U.mom_u / U.rho : 0.0; });
+        extract_and_store("VELX", [](const FluidState &s, int idx) { auto U = s.get(idx); return arch::state::recover(U).u; });
 
     if (vars.v && dim >= 2)
-        extract_and_store("VELY", [](const FluidState &s, int idx) { auto U = s.get(idx); return U.rho > 1e-12 ? U.mom_v / U.rho : 0.0; });
+        extract_and_store("VELY", [](const FluidState &s, int idx) { auto U = s.get(idx); return arch::state::recover(U).v; });
 
     if (vars.w && dim == 3)
-        extract_and_store("VELZ", [](const FluidState &s, int idx) { auto U = s.get(idx); return U.rho > 1e-12 ? U.mom_w / U.rho : 0.0; });
+        extract_and_store("VELZ", [](const FluidState &s, int idx) { auto U = s.get(idx); return arch::state::recover(U).w; });
 
     if (vars.entr) {
         std::vector<double> Xi_temp(specs.count());
         extract_and_store("ENTR", [&](const FluidState& state, int index) {
             for (int species = 0; species < state.GetNumSpecies(); ++species) Xi_temp[species] = state.X(species, index);
-            const double rho = std::max(state.rho[index], config.numerics.sml_rho);
+            const double rho = state.rho[index];
             const FluidVector U = state.get(index);
             const double gamma1 = gamma1_func(U, Xi_temp.data(), p_context);
             return p_func(U, Xi_temp.data(), p_context) / std::pow(rho, gamma1);
@@ -224,5 +225,12 @@ void write_plt(amr::AMRControl &amr_ctrl,
         });
     }
 
+    for (const auto& field : extra_fields) {
+        if (field.name.empty() || field.values.size()!=total_cells || data_map.contains(std::string(field.name)))
+            throw std::invalid_argument("Invalid additional plot field");
+        if (!std::all_of(field.values.begin(),field.values.end(),[](double x){return std::isfinite(x);}))
+            throw std::invalid_argument("Nonfinite additional plot field");
+        data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
+    }
     io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map);
 }

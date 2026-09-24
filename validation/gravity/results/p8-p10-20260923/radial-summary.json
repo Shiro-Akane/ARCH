@@ -1,0 +1,212 @@
+[
+  {
+    "name": "spherical-static-16",
+    "geometry": "spherical",
+    "plots": 1,
+    "max_gauss_relative_error": 8.687420801392273e-10,
+    "solves": 1,
+    "potential_relative_error": 6.586274488571054e-11,
+    "force_relative_error": 8.687420801392271e-10
+  },
+  {
+    "name": "spherical-static-32",
+    "geometry": "spherical",
+    "plots": 1,
+    "max_gauss_relative_error": 2.5675795902846953e-09,
+    "solves": 1,
+    "potential_relative_error": 9.084145367201427e-10,
+    "force_relative_error": 2.5675795902846953e-09
+  },
+  {
+    "name": "spherical-static-64",
+    "geometry": "spherical",
+    "plots": 1,
+    "max_gauss_relative_error": 2.4865672011580743e-09,
+    "solves": 1,
+    "potential_relative_error": 3.177509159640723e-10,
+    "force_relative_error": 2.4865670937190575e-09
+  },
+  {
+    "name": "spherical-dynamic-amr",
+    "geometry": "spherical",
+    "plots": 7,
+    "max_gauss_relative_error": 5.677448344005032e-09,
+    "solves": 50,
+    "mass_relative_drift": 6.851073527935903e-16,
+    "energy_relative_drift": 1.2078580732198063e-05,
+    "initial_leaves": 4,
+    "final_leaves": 8,
+    "restart_bitwise_equal": true
+  },
+  {
+    "name": "spherical-restart",
+    "geometry": "spherical",
+    "plots": 4,
+    "max_gauss_relative_error": 5.677448344005032e-09,
+    "solves": 34
+  },
+  {
+    "name": "spherical-refine-coarsen",
+    "geometry": "spherical",
+    "plots": 3,
+    "max_gauss_relative_error": 5.402710508392174e-10,
+    "solves": 162,
+    "mass_relative_drift": 2.180222148651101e-15,
+    "energy_relative_drift": 2.3875216040303293e-15,
+    "refined_and_coarsened": true
+  },
+  {
+    "name": "spherical-hydrostatic-16",
+    "geometry": "spherical",
+    "plots": 2,
+    "max_gauss_relative_error": 8.690184972035999e-10,
+    "solves": 38,
+    "parasitic_velocity_rms": 1108090.242049271,
+    "relative_to_center_sound_speed": 0.0042096758985983645
+  },
+  {
+    "name": "spherical-hydrostatic-32",
+    "geometry": "spherical",
+    "plots": 2,
+    "max_gauss_relative_error": 2.56780577515223e-09,
+    "solves": 70,
+    "parasitic_velocity_rms": 556222.6361368503,
+    "relative_to_center_sound_speed": 0.0021131104099155413
+  },
+  {
+    "name": "spherical-hydrostatic-64",
+    "geometry": "spherical",
+    "plots": 2,
+    "max_gauss_relative_error": 2.486596459703097e-09,
+    "solves": 138,
+    "parasitic_velocity_rms": 223203.6371306494,
+    "relative_to_center_sound_speed": 0.000847958890036512
+  },
+  {
+    "name": "spherical-near-vacuum",
+    "geometry": "spherical",
+    "plots": 2,
+    "max_gauss_relative_error": 2.547588404172839e-09,
+    "solves": 10,
+    "minimum_density": 1.00000091834698e-12
+  },
+  {
+    "name": "spherical-reject-requires-isolated",
+    "rejected": true
+  },
+  {
+    "name": "spherical-reject-radial-inner-boundary",
+    "rejected": true
+  },
+  {
+    "name": "spherical-reject-nonnegative-radius",
+    "rejected": true
+  },
+  {
+    "name": "cylindrical-static-16",
+    "geometry": "cylindrical",
+    "plots": 1,
+    "max_gauss_relative_error": 5.639465311623892e-13,
+    "solves": 1,
+    "potential_relative_error": 2.0031072650633764e-13,
+    "force_relative_error": 5.639465311623891e-13
+  },
+  {
+    "name": "cylindrical-static-32",
+    "geometry": "cylindrical",
+    "plots": 1,
+    "max_gauss_relative_error": 4.063583139015552e-12,
+    "solves": 1,
+    "potential_relative_error": 2.114220099363749e-12,
+    "force_relative_error": 4.063583139015552e-12
+  },
+  {
+    "name": "cylindrical-static-64",
+    "geometry": "cylindrical",
+    "plots": 1,
+    "max_gauss_relative_error": 1.2021530621160715e-13,
+    "solves": 1,
+    "potential_relative_error": 5.0747253143093664e-14,
+    "force_relative_error": 1.2021530621160712e-13
+  },
+  {
+    "name": "cylindrical-dynamic-amr",
+    "geometry": "cylindrical",
+    "plots": 7,
+    "max_gauss_relative_error": 1.4993637993409685e-13,
+    "solves": 50,
+    "mass_relative_drift": 6.447208218685052e-16,
+    "energy_relative_drift": 2.573120960118919e-05,
+    "initial_leaves": 4,
+    "final_leaves": 8,
+    "restart_bitwise_equal": true
+  },
+  {
+    "name": "cylindrical-restart",
+    "geometry": "cylindrical",
+    "plots": 4,
+    "max_gauss_relative_error": 1.4993637993409685e-13,
+    "solves": 34
+  },
+  {
+    "name": "cylindrical-refine-coarsen",
+    "geometry": "cylindrical",
+    "plots": 3,
+    "max_gauss_relative_error": 2.8643313313802103e-13,
+    "solves": 162,
+    "mass_relative_drift": 2.2245118073971337e-15,
+    "energy_relative_drift": 2.5087354069142087e-15,
+    "refined_and_coarsened": true
+  },
+  {
+    "name": "cylindrical-hydrostatic-16",
+    "geometry": "cylindrical",
+    "plots": 2,
+    "max_gauss_relative_error": 5.649414205728205e-13,
+    "solves": 38,
+    "parasitic_velocity_rms": 1441964.22776649,
+    "relative_to_center_sound_speed": 0.0054780755446808506
+  },
+  {
+    "name": "cylindrical-hydrostatic-32",
+    "geometry": "cylindrical",
+    "plots": 2,
+    "max_gauss_relative_error": 4.065300456706149e-12,
+    "solves": 70,
+    "parasitic_velocity_rms": 746296.6907218905,
+    "relative_to_center_sound_speed": 0.00283520878798242
+  },
+  {
+    "name": "cylindrical-hydrostatic-64",
+    "geometry": "cylindrical",
+    "plots": 2,
+    "max_gauss_relative_error": 1.2021530621160715e-13,
+    "solves": 138,
+    "parasitic_velocity_rms": 314925.3061054262,
+    "relative_to_center_sound_speed": 0.001196412909944005
+  },
+  {
+    "name": "cylindrical-near-vacuum",
+    "geometry": "cylindrical",
+    "plots": 2,
+    "max_gauss_relative_error": 1.39265834332656e-13,
+    "solves": 10,
+    "minimum_density": 1.000000918448964e-12
+  },
+  {
+    "name": "cylindrical-reject-requires-isolated",
+    "rejected": true
+  },
+  {
+    "name": "cylindrical-reject-radial-inner-boundary",
+    "rejected": true
+  },
+  {
+    "name": "cylindrical-reject-nonnegative-radius",
+    "rejected": true
+  },
+  {
+    "name": "spherical-reject-Cartesian-or-1D",
+    "rejected": true
+  }
+]

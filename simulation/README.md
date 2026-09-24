@@ -18,11 +18,14 @@ runtime name; the catalogue below gives the actual names.
 | [GaussianPulse](GaussianPulse/README.md) | `Gaussian` | Species pulse with optional pressure and velocity perturbations |
 | [DiffusionMode](DiffusionMode/README.md) | `DiffusionMode` | Periodic cosine mode for species diffusion |
 | [ExternalGravity](ExternalGravity/README.md) | `ExternalGravity` | Uniform state under constant external acceleration |
+| [JeansWave](JeansWave/README.md) | `JeansWave` | Periodic stable Jeans-wave convergence example |
+| [GravityBox](GravityBox/README.md) | `GravityBox` | Reusable periodic or isolated self-gravitating gas inputs with optional coupling |
 | [BurnOneZone](BurnOneZone/README.md) | `BurnOneZone` | Uniform network evolution through the production burn driver |
 | [BurnGradient](BurnGradient/README.md) | `BurnGradient` | Spatial burn pulse for energy-driven AMR and restart |
 | [RTinstability](RTinstability/README.md) | `RT` | Rayleigh–Taylor stratification and mixing |
 | [Cellular](Cellular/README.md) | `CellularDet` | Reactive shock and cellular-detonation initial conditions |
 | [CooperativeHotspots](CooperativeHotspots/README.md) | `CooperativeHotspots` | Controlled helium-hotspot research experiment |
+| [SNIaCoupled](SNIaCoupled/README.md) | `SNIaCoupled` | 2D/3D C/O hotspot with hydro, self-gravity, nuclear burning, thermal diffusion and AMR |
 
 Canonical validation inputs, reference methods and budgets live under
 [validation/](../validation/README.md), even when they reuse these initializers.
@@ -33,3 +36,9 @@ results; follow each problem's links for its intended use.
 To add a problem, follow the guide's registration workflow and add it to this
 catalogue. Keep reusable initial conditions here, simulation output under the
 chosen output directory, and run-specific evidence in the owning Validation module.
+
+Example switches remain subject to the [combination rules](../docs/Reference.md#combining-methods-and-physics).
+`SNIaCoupled` requires its four modules and demonstrates one thermal-coupling
+configuration; it is not a complete white-dwarf explosion model or a template
+for arbitrary module removal. `CellularFlash2D` and `SodFlash1D` preserve
+controlled comparison inputs, with differences documented in their case guides.

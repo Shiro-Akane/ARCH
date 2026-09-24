@@ -5,6 +5,10 @@
  * Startup validates execution requirements and backend capability before
  * initialization or strict checkpoint restoration. Narrow integrator entries
  * select the typed driver; timestep execution remains in the common driver.
+ * Workflow:
+ * 1. Validate startup configuration, backend capability and restart provenance.
+ * 2. Resolve compile-time EOS, flux and integrator policy bindings.
+ * 3. Start one Driver runtime without placing numerical formulas in dispatch.
  */
 
 #include <cmath>
@@ -14,18 +18,19 @@
 #include <stdexcept>
 #include <string>
 
-#include "SolverDispatch.h"
+#include "driver/initialization/InitialMesh.h"
+#include "driver/SolverDispatch.h"
 
-#include "../amr/AMRControl.h"
-#include "../core/RuntimeParams.h"
-#include "../data/FluidState.h"
-#include "../grid/Grid.h"
-#include "../interface/ProblemGenerator.h"
-#include "../io/IO.h"
-#include "../io/chk/CheckpointCompatibility.h"
-#include "../physics/eos/eosdispatch.h"
-#include "dispatch/BackendCapabilities.h"
-#include "dispatch/PolicyDescriptor.h"
+#include "amr/AMRControl.h"
+#include "core/config/RuntimeParams.h"
+#include "data/FluidState.h"
+#include "grid/Grid.h"
+#include "interface/ProblemGenerator.h"
+#include "io/IO.h"
+#include "io/chk/CheckpointCompatibility.h"
+#include "physics/eos/eosdispatch.h"
+#include "driver/dispatch/capability/BackendCapabilities.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 
 #ifndef ARCH_CUDA_BUILD_ENABLED
 #define ARCH_CUDA_BUILD_ENABLED 0
@@ -209,6 +214,8 @@ void DispatchSolver(const std::string &solver_name,
         EOSDispatcher::validate_coupling(
             config, source, parsed_plan.value.flux == FluxId::Sw);
     }
+    if (parsed_plan.value.eos == EosId::Helmholtz && parsed_plan.value.flux == FluxId::Sw)
+        throw std::invalid_argument("Steger-Warming requires a composition-only gamma; select HLL, HLLC, Roe or VL for Helmholtz EOS.");
     resolve_nse_request(config.physics.burn, parsed_plan.value.network);
     if (config.physics.burn.nse_auto && config.physics.burn.use_burn) {
         std::cout << "[Dispatch] use_nse=auto resolved to "
@@ -286,9 +293,7 @@ void DispatchSolver(const std::string &solver_name,
     else
     {
         std::cout << "[Dispatch] Initializing Root Grid (Level 0)..." << std::endl;
-        amr_ctrl.tree->InitRootGrid(config, specs.count());
-        std::cout << "[Dispatch] Initializing Data via Problem Generator..." << std::endl;
-        problem.InitializeData(amr_ctrl, config, specs, initialization);
+        arch::driver::InitializeRootState(amr_ctrl, problem, config, specs, initialization);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim
                   << " | Geometry: " << config.grid.geometry << std::endl;
         print_amr_resolution_summary(config);

@@ -1,0 +1,113 @@
+{
+  "best_cpu_threads": 4,
+  "records": [
+    {
+      "backend": "cpu",
+      "driver_seconds": 7.486563073,
+      "measured_elapsed": 8.729561290001584,
+      "output": "/tmp/arch-snia2d-20260923/tune-cpu-1",
+      "output_seconds": 0.044570469,
+      "peak_kib": 37568,
+      "steps": 10,
+      "threads": 1,
+      "trial": "tune-cpu-1",
+      "wall_seconds": 8.71
+    },
+    {
+      "backend": "cpu",
+      "driver_seconds": 7.401764791,
+      "measured_elapsed": 8.630443829999422,
+      "output": "/tmp/arch-snia2d-20260923/tune-cpu-4",
+      "output_seconds": 0.043111794,
+      "peak_kib": 38044,
+      "steps": 10,
+      "threads": 4,
+      "trial": "tune-cpu-4",
+      "wall_seconds": 8.6
+    },
+    {
+      "backend": "cpu",
+      "driver_seconds": 7.504132969,
+      "measured_elapsed": 8.728448514000775,
+      "output": "/tmp/arch-snia2d-20260923/tune-cpu-8",
+      "output_seconds": 0.042804611,
+      "peak_kib": 38888,
+      "steps": 10,
+      "threads": 8,
+      "trial": "tune-cpu-8",
+      "wall_seconds": 8.7
+    },
+    {
+      "backend": "cpu",
+      "driver_seconds": 7.888608883,
+      "measured_elapsed": 9.17793531300049,
+      "output": "/tmp/arch-snia2d-20260923/tune-cpu-16",
+      "output_seconds": 0.04594653,
+      "peak_kib": 40268,
+      "steps": 10,
+      "threads": 16,
+      "trial": "tune-cpu-16",
+      "wall_seconds": 10.27
+    },
+    {
+      "backend": "cuda",
+      "driver_seconds": 3.327271817,
+      "measured_elapsed": 4.7234103990012954,
+      "output": "/tmp/arch-snia2d-20260923/warm-cuda",
+      "output_seconds": 0.075137423,
+      "peak_kib": 219132,
+      "steps": 5,
+      "threads": 1,
+      "trial": "warm-cuda",
+      "wall_seconds": 4.68
+    },
+    {
+      "backend": "cpu",
+      "driver_seconds": 90.225265802,
+      "measured_elapsed": 91.44575111000086,
+      "output": "/tmp/arch-snia2d-20260923/cpu-1",
+      "output_seconds": 0.044476031,
+      "peak_kib": 38584,
+      "steps": 120,
+      "threads": 4,
+      "trial": "cpu-1",
+      "wall_seconds": 94.75
+    },
+    {
+      "backend": "cuda",
+      "driver_seconds": 68.494574107,
+      "measured_elapsed": 69.87989727199965,
+      "output": "/tmp/arch-snia2d-20260923/cuda-1",
+      "output_seconds": 0.075161618,
+      "peak_kib": 219496,
+      "steps": 120,
+      "threads": 1,
+      "trial": "cuda-1",
+      "wall_seconds": 71.92
+    },
+    {
+      "backend": "cpu",
+      "driver_seconds": 91.107750301,
+      "measured_elapsed": 92.46795274800388,
+      "output": "/tmp/arch-snia2d-20260923/cpu-2",
+      "output_seconds": 0.045646811999999995,
+      "peak_kib": 38140,
+      "steps": 120,
+      "threads": 4,
+      "trial": "cpu-2",
+      "wall_seconds": 95.44
+    },
+    {
+      "backend": "cuda",
+      "driver_seconds": 69.102500068,
+      "measured_elapsed": 70.52648567299912,
+      "output": "/tmp/arch-snia2d-20260923/cuda-2",
+      "output_seconds": 0.07836409700000001,
+      "peak_kib": 219584,
+      "steps": 120,
+      "threads": 1,
+      "trial": "cuda-2",
+      "wall_seconds": 72.45
+    }
+  ]
+}

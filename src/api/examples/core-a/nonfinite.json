@@ -1,0 +1,84 @@
+{
+  "data": null,
+  "diagnostics": [
+    {
+      "code": "INVALID_CONFIGURATION",
+      "message": "Non-finite numeric configuration value: x_pos",
+      "severity": "error"
+    },
+    {
+      "code": "CORE_LOG",
+      "message": "[Info] Loaded 50 parameters from <memory>\n",
+      "severity": "info"
+    }
+  ],
+  "execution": {
+    "previewBackend": "cpu",
+    "scientificOutput": "not_created",
+    "simulationReadiness": "not_checked",
+    "timeStepping": "not_executed"
+  },
+  "identity": {
+    "caseId": "Sod",
+    "configRevision": "d1382bc722f6669a50d55dda0e59999f74824d62e007f227aefdb6628978646d",
+    "requestId": "core-a-nonfinite"
+  },
+  "kind": "initial-state-preview",
+  "schemaVersion": "1.0",
+  "stage": "configuration",
+  "state": {
+    "amr": {
+      "actualHierarchy": null,
+      "derefineThreshold": 0.2,
+      "effectiveMaxBlocks": 32,
+      "enabled": false,
+      "indicatorEvaluation": "not_executed",
+      "initialRefinement": "not_executed",
+      "maxBlocks": 32,
+      "maxLevel": 0,
+      "minLevel": 0,
+      "parsedIndicators": [
+        "DENS"
+      ],
+      "refineThreshold": 0.8,
+      "regridInterval": 2,
+      "requestedIndicators": "DENS",
+      "status": "configured"
+    },
+    "computeBackendRequested": "cpu",
+    "configuration": "parsed",
+    "eos": {
+      "componentTablePath": "",
+      "configuredGamma": 1.4,
+      "loadedTablePath": null,
+      "requested": "ideal",
+      "resolved": null,
+      "sourceFingerprint": null,
+      "status": "not_loaded",
+      "tablePath": ""
+    },
+    "grid": {
+      "axes": [
+        {
+          "activeCellsPerBlock": 16,
+          "coordinateSpacing": 0.0078125,
+          "lowerBoundary": "outflow",
+          "max": 1,
+          "min": 0,
+          "name": "x1",
+          "rootBlocks": 8,
+          "rootCells": 128,
+          "unit": null,
+          "upperBoundary": "outflow"
+        }
+      ],
+      "dimension": 1,
+      "geometry": "cartesian",
+      "hierarchy": "not_constructed",
+      "status": "configured"
+    },
+    "setup": "not_executed",
+    "species": null
+  },
+  "status": "error"
+}

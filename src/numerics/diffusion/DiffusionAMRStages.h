@@ -21,10 +21,11 @@
 #include <stdexcept>
 #include <vector>
 
-#include "DiffFlux.h"
-#include "DiffFunction.h"
-#include "../../amr/AMRFluxRegistering.h"
-#include "../../driver/StageScheduler.h"
+#include "numerics/diffusion/DiffFlux.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
+#include "numerics/diffusion/DiffFunction.h"
+#include "amr/flux/AMRFluxRegistering.h"
+#include "driver/schedule/StageScheduler.h"
 
 namespace Numerics::Diffusion {
 
@@ -638,8 +639,12 @@ inline void advance_single_rkl(
                 return token;
             };
     const auto reflux =
-            [](const RklPlan&, const RklStageDescriptor&,
-               arch::state::CompletionToken token) { return token; };
+            [&](const RklPlan&, const RklStageDescriptor& descriptor,
+                arch::state::CompletionToken token) {
+                TimeIntegration::validate_stage_state(state_for(block, descriptor.output_slot),
+                    grid, config.numerics);
+                return token;
+            };
     const auto boundary =
             [&](StateSlot output, arch::state::StateVersion,
                 arch::state::CompletionToken token) {
@@ -781,6 +786,8 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                 arch::state::CompletionToken token) {
                 amr_ctrl.ApplyReflux(
                     dt, detail::member_for(descriptor.output_slot));
+                TimeIntegration::validate_reflux_state(amr_ctrl,config.numerics,
+                    detail::member_for(descriptor.output_slot));
                 return token;
             };
     const auto boundary =

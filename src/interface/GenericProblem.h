@@ -13,15 +13,15 @@
 #include <functional>
 #include <vector>
 
-#include "ProblemGenerator.h"
+#include "interface/ProblemGenerator.h"
 
-#include "../amr/AMRControl.h"
-#include "../core/ProblemHelper.h"
-#include "../data/FluidState.h"
-#include "../data/GlobalDefs.h"
-#include "../data/UserTypes.h"
-#include "../grid/Grid.h"
-#include "../physics/species/Species.h"
+#include "amr/AMRControl.h"
+#include "core/problem/ProblemHelper.h"
+#include "data/FluidState.h"
+#include "data/GlobalDefs.h"
+#include "data/UserTypes.h"
+#include "grid/Grid.h"
+#include "physics/species/Species.h"
 
 class GenericProblemGenerator : public ProblemGenerator
 {
@@ -36,6 +36,12 @@ public:
      * @param i The user's initialization function (sets initial values per point).
      */
     GenericProblemGenerator(SetupFunc s, InitFunc i) : user_setup(s), user_init(i) {}
+
+    void SampleInitialPrimitive(const PointCoords &point, PrimitiveData &data) const override
+    {
+        if (!user_init) throw std::logic_error("Missing problem initializer");
+        user_init(point, data);
+    }
 
     /**
      * @brief Invokes the registered callback to configure the simulation and species.
@@ -78,6 +84,19 @@ class TypedProblemGenerator : public ProblemGenerator
 
 public:
     TypedProblemGenerator() = default;
+
+    std::vector<arch::preview::AxisPosition> PreviewPositions(const SimConfig &config) const override
+    {
+        if constexpr (requires { user_model.PreviewPositions(config); })
+            return user_model.PreviewPositions(config);
+        else
+            return {};
+    }
+
+    void SampleInitialPrimitive(const PointCoords &point, PrimitiveData &data) const override
+    {
+        user_model.Init(point, data);
+    }
 
     void Setup(SimConfig &config, SpeciesManager &specs) override
     {

@@ -16,15 +16,15 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "../common/CudaCommon.cuh"
-#include "../common/DeviceEosStatus.h"
-#include "../hydro/HydroStateKernels.cuh"
-#include "../hydro/GridGeometryAdapter.cuh"
+#include "cuda/common/CudaCommon.cuh"
+#include "cuda/common/DeviceEosStatus.h"
+#include "cuda/hydro/kernels/HydroStateKernels.cuh"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
-#include "../../numerics/diffusion/DiffFlux.h"
-#include "../../numerics/diffusion/DiffusionAMRStages.h"
-#include "../../physics/species/Species.h"
+#include "numerics/diffusion/DiffFlux.h"
+#include "numerics/diffusion/DiffusionAMRStages.h"
+#include "physics/species/Species.h"
 
 namespace arch::cuda
 {
@@ -372,6 +372,17 @@ static __global__ void first_rkl_stage_kernel(
         state_n.n_species, state_n.total_size, coefficient, updated,
         destination.n_species > 0
             ? destination.mass_fractions + cell : nullptr);
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        const auto status = state::validate(updated,
+            destination.n_species ? destination.mass_fractions + cell : nullptr,
+            destination.n_species, destination.total_size,
+            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max);
+        if (status != state::Status::valid) {
+            atomicExch(b.workspace.status, 100 + static_cast<int>(status));
+            return;
+        }
+    }
     destination.store(cell, updated);
 }
 
@@ -429,6 +440,17 @@ static __global__ void recursive_rkl_stage_kernel(
         dt, increments_are_scaled, updated,
         destination.n_species > 0
             ? destination.mass_fractions + cell : nullptr);
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        const auto status = state::validate(updated,
+            destination.n_species ? destination.mass_fractions + cell : nullptr,
+            destination.n_species, destination.total_size,
+            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max);
+        if (status != state::Status::valid) {
+            atomicExch(b.workspace.status, 100 + static_cast<int>(status));
+            return;
+        }
+    }
     destination.store(cell, updated);
 }
 

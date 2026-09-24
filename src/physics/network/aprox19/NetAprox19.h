@@ -5,11 +5,11 @@
 
 #include <array>
 
-#include "TimmesRateLibrary.h"
+#include "physics/network/aprox19/TimmesRateLibrary.h"
 
-#include "../timmes_common/AproxRateAssembly.h"
-#include "../timmes_common/Ecapnuc.h"
-#include "../timmes_common/TimmesNetworkSupport.h"
+#include "physics/network/timmes_common/AproxRateAssembly.h"
+#include "physics/network/timmes_common/Ecapnuc.h"
+#include "physics/network/timmes_common/TimmesNetworkSupport.h"
 
 namespace timmes_aprox19_detail {
 
@@ -51,8 +51,8 @@ struct RateIds {
 inline constexpr double sixth = 1.0 / 6.0;
 inline constexpr double c54 = 56.0 / 54.0;
 
-#include "TimmesRhs.inc"
-#include "TimmesJacobian.inc"
+#include "physics/network/aprox19/TimmesRhs.inc"
+#include "physics/network/aprox19/TimmesJacobian.inc"
 
 #undef TIMMES_APROX19_RATES
 
@@ -182,10 +182,10 @@ struct NetAprox19 : timmes::TimmesNetworkSupport<NetAprox19> {
             Scalar abar, zbar, z2bar, ye;
             timmes::composition_moments<Scalar, NUM_SPECIES>(
                 y, zion_data, abar, zbar, z2bar, ye);
-            timmes::screen_heavy_rates<RateIds>(
-                rate, temperature, rho, zbar, abar, z2bar);
-            timmes::screen_extended_rates<RateIds>(
-                rate, temperature, rho, zbar, abar, z2bar);
+            const auto screening = timmes::make_screen5_state(
+                temperature, rho, zbar, abar, z2bar);
+            timmes::screen_heavy_rates<RateIds>(rate, screening);
+            timmes::screen_extended_rates<RateIds>(rate, screening);
 
             // ecapnuc supplies the proton-electron and neutron-positron weak rates.
             Scalar rpen, rnep, spenc, snepc;

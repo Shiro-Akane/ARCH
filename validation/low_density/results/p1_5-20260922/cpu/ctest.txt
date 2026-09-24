@@ -1,0 +1,116 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build
+Test project /home/shiroakane/ARCH/build
+      Start 23: burn_mainline_reference
+      Start 50: preview_cellular_2d
+ 1/55 Test #23: burn_mainline_reference ..............   Passed  206.22 sec
+      Start 45: preview_session_contract
+ 2/55 Test #45: preview_session_contract .............   Passed   91.06 sec
+      Start 49: ui_expansion_contract
+ 3/55 Test #50: preview_cellular_2d ..................   Passed  347.15 sec
+      Start 44: case_inspection_contract
+ 4/55 Test #49: ui_expansion_contract ................   Passed   77.12 sec
+      Start 54: tabular_component_completion
+ 5/55 Test #54: tabular_component_completion .........   Passed   29.64 sec
+      Start  3: preview_api_contract
+ 6/55 Test #44: case_inspection_contract .............   Passed   60.83 sec
+      Start 52: tabular_eos_ideal_gas
+ 7/55 Test #52: tabular_eos_ideal_gas ................   Passed   17.88 sec
+      Start  4: configuration_api_contract
+ 8/55 Test  #4: configuration_api_contract ...........   Passed    3.69 sec
+      Start 18: curvilinear_metrics
+ 9/55 Test #18: curvilinear_metrics ..................   Passed    1.84 sec
+      Start  7: preview_sampling_limits
+10/55 Test  #7: preview_sampling_limits ..............   Passed    1.53 sec
+      Start 14: validation_provenance_contract
+11/55 Test #14: validation_provenance_contract .......   Passed    1.38 sec
+      Start  8: portable_network_generator
+12/55 Test  #8: portable_network_generator ...........   Passed    0.74 sec
+      Start 27: helm_components
+13/55 Test #27: helm_components ......................   Passed    0.87 sec
+      Start 12: backend_validation_contract
+14/55 Test #12: backend_validation_contract ..........   Passed    0.43 sec
+      Start  6: preview_parameter_metadata
+15/55 Test  #6: preview_parameter_metadata ...........   Passed    0.22 sec
+      Start  9: cuda_amr_smoke_runner_contract
+16/55 Test  #9: cuda_amr_smoke_runner_contract .......   Passed    0.16 sec
+      Start 15: runtime_validation_inputs_contract
+17/55 Test #15: runtime_validation_inputs_contract ...   Passed    0.13 sec
+      Start 33: boundary_plan
+18/55 Test #33: boundary_plan ........................   Passed    0.09 sec
+      Start 10: curvilinear_manifest_contract
+19/55 Test #10: curvilinear_manifest_contract ........   Passed    0.09 sec
+      Start 11: memory_guard_contract
+20/55 Test #11: memory_guard_contract ................   Passed    0.10 sec
+      Start 13: sparse_validation_contract
+21/55 Test #13: sparse_validation_contract ...........   Passed    0.08 sec
+      Start 37: topology_transaction
+22/55 Test #37: topology_transaction .................   Passed    0.07 sec
+      Start 51: checkpoint_compatibility
+23/55 Test #51: checkpoint_compatibility .............   Passed    0.07 sec
+      Start 46: preview_verified_resources
+24/55 Test #46: preview_verified_resources ...........   Passed    0.05 sec
+      Start 25: tabular_strict_math
+25/55 Test #25: tabular_strict_math ..................   Passed    0.04 sec
+      Start 20: sparse_ode_continuation
+26/55 Test #20: sparse_ode_continuation ..............   Passed    0.05 sec
+      Start 31: shared_stage_scheduler
+27/55 Test #31: shared_stage_scheduler ...............   Passed    0.02 sec
+      Start 53: native_tabular_eos
+28/55 Test #53: native_tabular_eos ...................   Passed    0.02 sec
+      Start 28: mainline_authority
+29/55 Test #28: mainline_authority ...................   Passed    0.02 sec
+      Start 26: baryon_source_format
+30/55 Test #26: baryon_source_format .................   Passed    0.02 sec
+      Start 36: amr_flux_surface_plan
+31/55 Test #36: amr_flux_surface_plan ................   Passed    0.01 sec
+      Start 40: reduction_contract
+32/55 Test #40: reduction_contract ...................   Passed    0.00 sec
+      Start 47: preview_exact_sample_cache
+33/55 Test #47: preview_exact_sample_cache ...........   Passed    0.01 sec
+      Start  1: checkpoint_temporal_comparison
+34/55 Test  #1: checkpoint_temporal_comparison .......   Passed    0.01 sec
+      Start 22: checkpoint_conservation_metrics
+35/55 Test #22: checkpoint_conservation_metrics ......   Passed    0.01 sec
+      Start 35: amr_operation_plans
+36/55 Test #35: amr_operation_plans ..................   Passed    0.01 sec
+      Start 43: initialization_probe
+37/55 Test #43: initialization_probe .................   Passed    0.00 sec
+      Start 55: sparse_klu_161_equations
+38/55 Test #55: sparse_klu_161_equations .............   Passed    0.00 sec
+      Start  5: preview_parameter_reads
+39/55 Test  #5: preview_parameter_reads ..............   Passed    0.00 sec
+      Start 34: same_level_exchange_plan
+40/55 Test #34: same_level_exchange_plan .............   Passed    0.00 sec
+      Start 29: block_handle
+41/55 Test #29: block_handle .........................   Passed    0.00 sec
+      Start 38: resolved_execution_plan
+42/55 Test #38: resolved_execution_plan ..............   Passed    0.00 sec
+      Start 30: state_residency
+43/55 Test #30: state_residency ......................   Passed    0.00 sec
+      Start 32: gravity_stage_contract
+44/55 Test #32: gravity_stage_contract ...............   Passed    0.00 sec
+      Start 24: generated_nse
+45/55 Test #24: generated_nse ........................   Passed    0.00 sec
+      Start 19: compensated_sum
+46/55 Test #19: compensated_sum ......................   Passed    0.00 sec
+      Start  2: preview_initial_conversion
+47/55 Test  #2: preview_initial_conversion ...........   Passed    0.00 sec
+      Start 48: low_density_math
+48/55 Test #48: low_density_math .....................   Passed    0.00 sec
+      Start 21: sparse_residual
+49/55 Test #21: sparse_residual ......................   Passed    0.00 sec
+      Start 41: compute_backend
+50/55 Test #41: compute_backend ......................   Passed    0.00 sec
+      Start 39: runtime_probe_and_capabilities
+51/55 Test #39: runtime_probe_and_capabilities .......   Passed    0.00 sec
+      Start 17: refinement_indicator_math
+52/55 Test #17: refinement_indicator_math ............   Passed    0.00 sec
+      Start 42: device_block_store_lifecycle
+53/55 Test #42: device_block_store_lifecycle .........   Passed    0.00 sec
+      Start 16: physical_constants
+54/55 Test #16: physical_constants ...................   Passed    0.00 sec
+55/55 Test  #3: preview_api_contract .................   Passed   34.07 sec
+
+100% tests passed, 0 tests failed out of 55
+
+Total Test time (real) = 438.10 sec

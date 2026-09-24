@@ -10,13 +10,38 @@
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 
 #include "cuda/amr/CoarseFineExchangeKernels.cuh"
-#include "cuda/hydro/Boundary.cuh"
-#include "cuda/hydro/ExchangeKernels.cuh"
+#include "cuda/hydro/boundary/Boundary.cuh"
+#include "cuda/hydro/boundary/ExchangeKernels.cuh"
 #include <algorithm>
+#include <limits>
 
 namespace arch::cuda {
 
 namespace {
+/** Apply one immutable physical donor stencil per singular-face ghost. */
+__global__ void coordinate_seam_kernel(
+    const DeviceExchangeBlock* blocks,
+    const DeviceCoordinateSeamTransfer* transfers,
+    int transfer_count, int* status)
+{
+    const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (index >= transfer_count) return;
+    const auto& transfer = transfers[index];
+    const DeviceStateView source = blocks[transfer.source_block].state;
+    const DeviceStateView destination = blocks[transfer.destination_block].state;
+    const amr::CoordinateSeamFields<const double> donor{
+        source.rho, source.mom_u, source.mom_v, source.mom_w,
+        source.eng, source.enuc_rate, source.mass_fractions,
+        source.total_size, source.n_species};
+    const amr::CoordinateSeamFields<double> ghost{
+        destination.rho, destination.mom_u, destination.mom_v,
+        destination.mom_w, destination.eng, destination.enuc_rate,
+        destination.mass_fractions, destination.total_size,
+        destination.n_species};
+    if (!amr::apply_coordinate_seam_transfer(transfer.stencil, donor, ghost))
+        atomicExch(status, 1);
+}
+
 __global__ void boundary_batch_phase_kernel(const DeviceBoundaryBatchBlock* blocks, int phase)
 {
     const auto& b = blocks[blockIdx.y];
@@ -46,6 +71,27 @@ cudaError_t launch_cuda_backend_boundary_batch(
         first += count;
     }
     return cudaSuccess;
+}
+
+/** Queue shared seam arithmetic after same-level/coarse-fine exchange. */
+cudaError_t launch_cuda_backend_coordinate_seam(
+    const DeviceExchangeBlock* blocks,
+    const DeviceCoordinateSeamTransfer* transfers,
+    int transfer_count, int* status, cudaStream_t stream)
+{
+    if (transfer_count == 0) return cudaSuccess;
+    if (!blocks || !transfers || !status || transfer_count < 0)
+        return cudaErrorInvalidValue;
+    constexpr int threads = 128;
+    const std::uint64_t count = (static_cast<std::uint64_t>(transfer_count)
+        + threads - 1) / threads;
+    if (count > std::numeric_limits<unsigned int>::max())
+        return cudaErrorInvalidValue;
+    cudaError_t result = cudaMemsetAsync(status, 0, sizeof(int), stream);
+    if (result != cudaSuccess) return result;
+    coordinate_seam_kernel<<<static_cast<unsigned int>(count), threads, 0, stream>>>(
+        blocks, transfers, transfer_count, status);
+    return cudaGetLastError();
 }
 
 cudaError_t launch_cuda_backend_exchange_phase(

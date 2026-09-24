@@ -11,10 +11,10 @@
 
 #include "cuda/common/CudaCommon.cuh"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
-#include "driver/StageScheduler.h"
-#include "driver/dispatch/ResolvedExecutionPlan.h"
+#include "driver/schedule/StageScheduler.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "physics/eos/eos.h"
-#include "physics/gravity/ExternalGravitySource.h"
+#include "physics/gravity/GravitySource.h"
 
 #include <cuda_runtime.h>
 #include <array>
@@ -28,6 +28,8 @@ struct DeviceHydroBatchBlock {
     DeviceGridView grid;
     int* eos_status = nullptr;
     std::array<CudaAmrFluxDirectionRouteView, 3> routes{};
+    state::RepairView repairs{};
+    Physical::Gravity::GravityPatchView self_gravity{};
 };
 static_assert(std::is_trivially_copyable_v<DeviceHydroBatchBlock>);
 

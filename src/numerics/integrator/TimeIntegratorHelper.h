@@ -14,17 +14,48 @@
 
 #include <algorithm>
 #include <vector>
+#include "numerics/state/StateAdmissibility.h"
 
-#include "../../amr/AMRControl.h"
-#include "../../amr/AMRFluxRegistering.h"
-#include "../../data/FluidState.h"
-#include "../../grid/Grid.h"
-#include "../../grid/GridMetrics.h"
-#include "../../physics/gravity/IGravityPolicy.h"
-#include "GeometricSources.h"
+#include "amr/AMRControl.h"
+#include "amr/flux/AMRFluxRegistering.h"
+#include "data/FluidState.h"
+#include "grid/Grid.h"
+#include "grid/GridMetrics.h"
+#include "physics/gravity/IGravityPolicy.h"
+#include "numerics/integrator/GeometricSources.h"
 
 namespace TimeIntegration
 {
+    inline void validate_stage_state(const FluidState& state, const Grid& grid,
+                                     const NumericsConfig& config)
+    {
+        for (int k = grid.Ks(); k < grid.Ke(); ++k)
+            for (int j = grid.Js(); j < grid.Je(); ++j)
+                for (int i = grid.Is(); i < grid.Ie(); ++i) {
+                    const int cell = grid.GetIndex(i, j, k);
+                    const auto status = arch::state::validate(state.get(cell),
+                        state.GetNumSpecies() ? state.mass_fractions.data() + cell : nullptr,
+                        state.GetNumSpecies(), grid.GetTotalSize(),
+                        config.sml_rho, config.min_eint, config.max_eint);
+                    if (status != arch::state::Status::valid)
+                        throw std::runtime_error("Invalid accepted state: cell=" + std::to_string(cell)
+                            + " status=" + std::to_string(static_cast<int>(status)));
+                }
+    }
+
+    inline void validate_reflux_state(const amr::AMRControl& control,
+                                      const NumericsConfig& config,
+                                      FluidState amr::Block::* slot = &amr::Block::fluid_state)
+    {
+        for (int id : control.tree->GetActiveBlocks()) {
+            const auto& block = control.pool->GetBlock(id);
+            try { validate_stage_state(block.*slot, block.grid, config); }
+            catch (const std::exception& error) {
+                throw std::runtime_error("AMR block=" + std::to_string(id) + ": " + error.what());
+            }
+        }
+    }
+
     ARCH_INLINE void accumulate_cell_divergence(
         const FluidVector& lower_flux, const FluidVector& upper_flux,
         const double* lower_species_flux, const double* upper_species_flux,
@@ -93,6 +124,7 @@ namespace TimeIntegration
         const Grid &grid,
         double dt)
     {
+        arch::state::HostFailure failure;
         if (grid.geometry == "cartesian")
             return;
 
@@ -108,17 +140,22 @@ namespace TimeIntegration
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
-                int k = ks + kj / nj;
-                int j = js + kj % nj;
-                for (int i = grid.Is(); i < grid.Ie(); ++i)
-                {
-                    int idx = grid.GetIndex(i, j, k);
-                    state.get_species_to_buffer(idx, Xi.data());
-                    add_geometric_source_cell(
-                        state.get(idx), Xi.data(), eos, geometry, i, j, dt, dU[idx]);
-                }
+                try {
+                    int k = ks + kj / nj;
+                    int j = js + kj % nj;
+                    for (int i = grid.Is(); i < grid.Ie(); ++i)
+                    {
+                        int idx = grid.GetIndex(i, j, k);
+                        state.get_species_to_buffer(idx, Xi.data());
+                        add_geometric_source_cell(
+                            state.get(idx), Xi.data(), eos, geometry, i, j, dt, dU[idx]);
+                    }
+
+                } catch (...) { failure.capture_current(); }
             }
         }
+
+        failure.rethrow();
     }
 
     // Helper: Physical Source Terms (Gravity)
@@ -135,83 +172,62 @@ namespace TimeIntegration
             gravity->add_sources_on_patch(dU, state, grid, dt, nullptr);
         }
     }    // ---------------------------------------------------------
-    ARCH_INLINE void update_stage_cell(
+    ARCH_INLINE arch::state::Status update_stage_cell(
         const FluidVector& U_old, const FluidVector& U_curr,
         const FluidVector& delta,
         const double* Xi_old, const double* Xi_curr, const double* d_spec,
         int n_spec, int species_stride,
         double weight_n, double weight_flux,
         double sml_rho, double min_eint, double max_eint,
-        FluidVector& U_new, double* Xi_new)
+        FluidVector& U_new, double* Xi_new, arch::state::RepairView repairs = {},
+        double cell_volume = 1.0, int cell = 0)
     {
         U_new = weight_n * U_old + weight_flux * (U_curr + delta);
 
-        if (U_new.rho < sml_rho)
-        {
-            U_new.rho = sml_rho;
-            U_new.mom_u = 0.0;
-            U_new.mom_v = 0.0;
-            U_new.mom_w = 0.0;
-            // Keep the device and host repair paths on the configured floor.
-            U_new.eng = sml_rho * min_eint;
+        const double raw_density = U_new.rho;
+        const auto repair = arch::state::apply_bounds(U_new, sml_rho, min_eint, max_eint);
+        if (!arch::state::accepted(repair.status)) {
+            U_new.eng = arch::state::invalid();
+            return repair.status;
         }
-        else
-        {
-            // Kinetic-energy density removed before applying the internal-energy bounds.
-            double e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
-
-            // Limit repaired states to 1e10 cm/s so vanishing density
-            // cannot inject an unbounded kinetic-energy density.
-            double max_vel = 1e10;
-            double v_sq = 2.0 * e_kin / U_new.rho;
-            if (v_sq > max_vel * max_vel) {
-                double scale = max_vel / std::sqrt(v_sq);
-                U_new.mom_u *= scale;
-                U_new.mom_v *= scale;
-                U_new.mom_w *= scale;
-                e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
+        double sum = 0.0;
+        bool composition_repaired = false;
+        for (int s = 0; s < n_spec; ++s) {
+            const int off = s * species_stride;
+            const double density = weight_n * U_old.rho * Xi_old[off]
+                + weight_flux * (U_curr.rho * Xi_curr[off] + d_spec[off]);
+            double fraction = density / raw_density;
+            if (!std::isfinite(fraction) || fraction < -64.0 * std::numeric_limits<double>::epsilon()) {
+                U_new.eng = arch::state::invalid();
+                return arch::state::Status::invalid_composition;
             }
-
-            // Configured bounds prevent EOS calls at invalid internal energy.
-            double current_eint = (U_new.eng - e_kin) / U_new.rho;
-
-            if (current_eint < min_eint || current_eint > max_eint)
-            {
-                current_eint = std::max(min_eint, std::min(current_eint, max_eint));
-                U_new.eng = U_new.rho * current_eint + e_kin;
+            composition_repaired = composition_repaired || fraction < 0.0;
+            fraction = std::max(0.0, fraction);
+            Xi_new[off] = fraction;
+            sum += fraction;
+        }
+        if (n_spec && (!std::isfinite(sum) || std::abs(sum - 1.0)
+                > 512.0 * n_spec * std::numeric_limits<double>::epsilon())) {
+            U_new.eng = arch::state::invalid();
+            return arch::state::Status::invalid_composition;
+        }
+        if (composition_repaired && !arch::state::normalize_composition(Xi_new,n_spec,species_stride)) {
+            U_new.eng = arch::state::invalid();
+            return arch::state::Status::invalid_composition;
+        }
+        if (repair.status == arch::state::Status::repaired || composition_repaired) {
+            repairs.event(cell_volume, cell);
+            const auto delta = cell_volume * repair.delta;
+            repairs.conserved(delta.rho,delta.mom_u,delta.mom_v,delta.mom_w,delta.eng);
+            for (int s = 0; s < n_spec; ++s) {
+                const int off = s * species_stride;
+                const double before = weight_n * U_old.rho * Xi_old[off]
+                    + weight_flux * (U_curr.rho * Xi_curr[off] + d_spec[off]);
+                repairs.species_mass(s, cell_volume * (U_new.rho * Xi_new[off] - before));
             }
+            return arch::state::Status::repaired;
         }
-
-        double rho_new = std::max(U_new.rho, sml_rho);
-        double sum_X = 0.0;
-        for (int s = 0; s < n_spec; ++s)
-        {
-            int off = s * species_stride;
-            double rhoX_old = U_old.rho * Xi_old[off];
-            double rhoX_curr = U_curr.rho * Xi_curr[off];
-            double rhoX_comb = weight_n * rhoX_old + weight_flux * (rhoX_curr + d_spec[off]);
-
-            double X_k = std::max(0.0, rhoX_comb / rho_new);
-            Xi_new[off] = X_k;
-            sum_X += X_k;
-        }
-
-        if (n_spec == 0)
-        {
-            return;
-        }
-        if (sum_X > 1e-13)
-        {
-            double inv_sum = 1.0 / sum_X;
-            for (int s = 0; s < n_spec; ++s)
-                Xi_new[s * species_stride] *= inv_sum;
-        }
-        else
-        {
-            double inv_n = 1.0 / n_spec;
-            for (int s = 0; s < n_spec; ++s)
-                Xi_new[s * species_stride] = inv_n;
-        }
+        return arch::state::Status::valid;
     }
 
     // Helper 2: Generalized Weighted RK Update
@@ -231,7 +247,12 @@ namespace TimeIntegration
         const int nk = ke - ks;
         const int nj = je - js;
 
-#pragma omp parallel for schedule(static)
+        u_dest.stage_repairs.reset(n_spec);
+        int invalid_count = 0;
+#pragma omp parallel reduction(+:invalid_count)
+        {
+        arch::state::RepairBudget local(n_spec);
+#pragma omp for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
         {
             int k = ks + kj / nj;
@@ -251,13 +272,19 @@ namespace TimeIntegration
                     ? d_spec.data() + idx : nullptr;
                 double* Xi_new = n_spec > 0
                     ? u_dest.mass_fractions.data() + idx : nullptr;
-                update_stage_cell(
+                const auto status = update_stage_cell(
                     U_old, U_curr, dU[idx], Xi_old, Xi_curr, species_delta,
                     n_spec, total_size, weight_n, weight_flux,
-                    sml_rho, min_eint, max_eint, U_new, Xi_new);
+                    sml_rho, min_eint, max_eint, U_new, Xi_new, local.view(),
+                    GridMetrics::CellVolume(grid, i, j, k), idx);
+                if (!arch::state::accepted(status)) ++invalid_count;
                 u_dest.set(idx, U_new);
             }
         }
+#pragma omp critical(arch_state_repairs)
+        u_dest.stage_repairs.combine(local);
+        }
+        if (invalid_count) throw std::runtime_error("Hydro candidate rejected: invalid density, composition or unresolved/internal energy");
     }
 
     // Helper 3: Evaluate fluxes in every active dimension.
@@ -282,6 +309,8 @@ namespace TimeIntegration
             FluxSchemePolicy::compute_fluxes(state, eos, grid, flux_buffer, spec_flux_buffer, dir, entropy_fix_coeff);
 
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
+
+            if (gravity) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
 
             // Flux registration has one shared face-index convention for all AMR operators.
             if (amr_ctrl && block_id >= 0) {

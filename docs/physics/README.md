@@ -20,6 +20,8 @@ This directory explains model origins and links the maintained model contracts.
   conservative transfers, coordinate measures and refinement checks.
 - [Diffusion validation](../../validation/diffusion/README.md) describes transport
   reference problems, convergence and measured errors.
+- [Gravity validation](../../validation/gravity/README.md) covers external sources
+  and the supported self-gravity boundaries, coupling and device checks.
 
 Implementation ownership remains in the
 [shared-authority map](../development/ImplementationOwnership.md); these notes

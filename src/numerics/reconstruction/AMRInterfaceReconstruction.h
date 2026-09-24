@@ -13,10 +13,11 @@
 #pragma once
 
 #include <type_traits>
+#include "numerics/flux/InvariantDomainFlux.h"
 
-#include "AMRInterfaceStencil.h"
-#include "Reconstruction.h"
-#include "../../grid/Grid.h"
+#include "numerics/reconstruction/AMRInterfaceStencil.h"
+#include "numerics/reconstruction/Reconstruction.h"
+#include "grid/Grid.h"
 
 /**
  * Faces marked as 2:1 coarse-fine interfaces use conservative second-order
@@ -53,9 +54,8 @@ inline void reconstruct_face(const FluidState& state, const EosType& eos, const 
             MusclReconstruction<MinMod>::run_species(
                 state, idx, n_spec, Xi_L, Xi_R, stride);
         }
-        return;
     }
-
+    else {
     if (n_spec > 0)
     {
         ReconstructPolicy::run_species(state, idx, n_spec, Xi_L, Xi_R, stride);
@@ -74,5 +74,8 @@ inline void reconstruct_face(const FluidState& state, const EosType& eos, const 
         U_L = reconstructed.first;
         U_R = reconstructed.second;
     }
+    }
+    FluxAdmissibility::limit_reconstruction(state.get(idx), U_L);
+    FluxAdmissibility::limit_reconstruction(state.get(idx + stride), U_R);
 }
 } // namespace AMRInterfaceReconstruction

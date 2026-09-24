@@ -52,7 +52,6 @@ use_diffusion = false
 
 use_burn = true
 network_name = aprox13
-burn_verbose_level = 0
 nuclearTempMin = 1e8
 nuclearDensMin = 1e-10
 smallt = 1e5

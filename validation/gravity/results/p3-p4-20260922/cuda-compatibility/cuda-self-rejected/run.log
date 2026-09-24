@@ -1,0 +1,10 @@
+[Info] Loaded 45 parameters from /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-self-rejected/input.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-self-rejected/compat_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-self-rejected/input.par
+[Main] Problem created: JeansWave
+[Main] Configuration:
+       Grid: 32 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Fatal Error] gravity unsupported

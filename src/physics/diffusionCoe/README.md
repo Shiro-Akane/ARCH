@@ -13,3 +13,10 @@ Preserve its source attribution and the applicable
 
 See the [Reference](../../../docs/Reference.md) and
 [diffusion validation](../../../validation/diffusion/README.md).
+
+The current stellar closure supplies thermal conductivity only. Its caller in
+[DiffFlux.h](../../numerics/diffusion/DiffFlux.h) leaves stellar viscosity and
+species diffusivity at zero. Enabling those channel flags does not supply a
+material law; Helmholtz constant-coefficient overrides are also rejected by the
+current input contract. Nonstellar constant-coefficient transport remains a
+separate available closure. See the [combination rules](../../../docs/Reference.md#combining-methods-and-physics).

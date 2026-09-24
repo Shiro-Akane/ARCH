@@ -9,4 +9,4 @@ compilation responsibilities separate from numerical implementation.
 - [CudaBurnSparseOwner.cu.in](CudaBurnSparseOwner.cu.in): specialize construction
   of the sparse burn owner for the selected network and EOS.
 
-The [dense registration](../CudaBurnDenseRoutes.cmake) and [sparse registration](../CudaBurnSparseRoutes.cmake) scripts supply the necessary substitutions and explicitly write the generated files into the build tree. Note that the separate [custom dense delegate](../CudaCustomDenseRoute.cu.in) strictly adheres to the same binding-only contract. As always, any mathematical changes firmly belong to their production owners, rather than within these binding templates.
+The [dense registration](../cuda/CudaBurnDenseRoutes.cmake) and [sparse registration](../cuda/CudaBurnSparseRoutes.cmake) scripts supply the necessary substitutions and explicitly write the generated files into the build tree. Note that the separate [custom dense delegate](CudaCustomDenseRoute.cu.in) strictly adheres to the same binding-only contract. As always, any mathematical changes firmly belong to their production owners, rather than within these binding templates.

@@ -75,6 +75,8 @@ cudaError_t launch_cuda_amr_reflux(
     const DeviceAmrFluxBlockView* device_blocks, int block_count,
     const amr::AmrRefluxTarget* device_targets, int target_count,
     const amr::AmrRefluxContribution* device_contributions,
-    int contribution_count, double dt, cudaStream_t stream);
+    int contribution_count, double dt, cudaStream_t stream, int* status = nullptr,
+    double density_floor = 0.0, double energy_floor = 0.0,
+    double energy_ceiling = std::numeric_limits<double>::max());
 
 } // namespace arch::cuda

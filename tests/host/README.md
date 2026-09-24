@@ -11,21 +11,26 @@ names and feature conditions.
 - Checkpoint checks use the common HDF5 reader and host restoration entry point.
 - Burn, EOS and linear-solver tests use production policies and the reference
   data in [fixtures/](../fixtures/README.md).
-- [Generated NSE](test_generated_nse.cpp) executes shared analytic witnesses;
-  [real generated NSE](test_generated_nse_network.cpp) checks the maintained
+- [Poisson/MG](gravity/test_poisson_multigrid.cpp) checks the standalone P2
+  CPU solver against discrete Fourier and continuum analytic solutions,
+  including boundary force order, CGS scale invariance and rejected inputs.
+  The production route is covered separately by the composite operator,
+  lifecycle and `self_gravity_physics` anchors listed in the [test guide](../README.md).
+- [Generated NSE](network/test_generated_nse.cpp) executes shared analytic witnesses;
+  [real generated NSE](network/test_generated_nse_network.cpp) checks the maintained
   `nse_light`/`nse_alpha` packages' detailed balance and three ODE handoffs.
-- [Native tabular EOS](NativeTabularRegression.cpp) checks native source axes,
+- [Native tabular EOS](eos/NativeTabularRegression.cpp) checks native source axes,
   shifted energy, derivative closure, inverse uniqueness and failure controls.
-- [Baryon format](BaryonSourceRegression.cpp) independently checks source units,
-  reference alignment, coordinates and malformed input; [real-table EOS](BaryonEosRegression.cpp)
+- [Baryon format](eos/BaryonSourceRegression.cpp) independently checks source units,
+  reference alignment, coordinates and malformed input; [real-table EOS](eos/BaryonEosRegression.cpp)
   checks fixed source-node budgets and bounded interior inversions with explicit
   rejection counts. The latter takes table paths and is not a skipped CI test.
-- [Helm components](HelmComponentsRegression.cpp) checks the shared isolated
-  electron/positron and photon formulas; [component assembly](TabularCompletionRegression.cpp)
+- [Helm components](eos/HelmComponentsRegression.cpp) checks the shared isolated
+  electron/positron and photon formulas; [component assembly](eos/TabularCompletionRegression.cpp)
   checks both table ranks, component subsets, source mass conventions, metadata,
   single-potential identities and component-dependent fingerprints.
 
-[test_generated_network_reference.cpp](test_generated_network_reference.cpp)
+[test_generated_network_reference.cpp](network/test_generated_network_reference.cpp)
 is a developer reference-output tool, not a CTest target. It requires an explicit
 generated network type and header when compiled; ordinary verification commands
 do not need it.

@@ -11,9 +11,9 @@
 
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 
-#include "cuda/hydro/CheckedHydroEos.cuh"
-#include "cuda/hydro/HydroIntegratorPolicies.cuh"
-#include "cuda/hydro/HydroBatchKernels.cuh"
+#include "cuda/hydro/policies/CheckedHydroEos.cuh"
+#include "cuda/hydro/policies/HydroIntegratorPolicies.cuh"
+#include "cuda/hydro/kernels/HydroBatchKernels.cuh"
 
 #ifndef ARCH_CUDA_HYDRO_EOS_TYPE
 #error "a CUDA Hydro EOS owner must define ARCH_CUDA_HYDRO_EOS_TYPE"
@@ -61,7 +61,7 @@ struct HydroStageLaunchVisitor {
             make_checked_hydro_eos(eos, eos_status),
             entropy_fix_coefficient, density_floor,
             minimum_internal_energy, maximum_internal_energy,
-            amr_routes, descriptor, dt, stream,
+            amr_routes, descriptor, dt, eos_status, stream,
             result.kernels_launched, species_workspace, gravity);
     }
 };

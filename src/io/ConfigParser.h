@@ -10,12 +10,24 @@
 
 #include <algorithm>
 #include <cctype>
+#include <charconv>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include "physics/constant/PhysicalConstants.h"
+
+class ConfigValueError : public std::invalid_argument {
+public:
+    std::string key, code;
+    ConfigValueError(std::string parameter, std::string error_code, const std::string& detail)
+        : std::invalid_argument("Config parameter '" + parameter + "': " + detail),
+          key(std::move(parameter)), code(std::move(error_code)) {}
+};
 
 class ConfigParser
 {
@@ -38,6 +50,45 @@ private:
     }
 
 public:
+    static int ParseInteger(const std::string& key, const std::string& text) {
+        const char* begin = text.data();
+        const char* end = begin + text.size();
+        if (begin != end && *begin == '+') ++begin;
+        int value = 0;
+        const auto result = std::from_chars(begin, end, value);
+        if (begin == end || (begin != text.data() && *begin == '-')
+            || result.ec != std::errc{} || result.ptr != end)
+            throw ConfigValueError(key, "INVALID_INTEGER", "Expected a complete 32-bit integer.");
+        return value;
+    }
+
+    static double ParseNumber(const std::string& key, const std::string& text) {
+        const char* begin = text.data();
+        const char* end = begin + text.size();
+        if (begin != end && *begin == '+') ++begin;
+        double value = 0;
+        const auto result = std::from_chars(begin, end, value, std::chars_format::general);
+        if (begin == end || (begin != text.data() && *begin == '-')
+            || result.ec != std::errc{} || result.ptr != end || !std::isfinite(value))
+            throw ConfigValueError(key, "INVALID_NUMBER", "Expected a complete finite decimal or scientific-notation number.");
+        return value;
+    }
+
+    static double ParseExpression(const std::string& key, std::string text) {
+        text.erase(std::remove_if(text.begin(), text.end(),
+            [](unsigned char c) { return std::isspace(c); }), text.end());
+        constexpr double pi = arch::constants::math::pi;
+        double value;
+        if (text == "pi") value = pi;
+        else if (text == "-pi") value = -pi;
+        else if (text.starts_with("pi*")) value = pi * ParseNumber(key, text.substr(3));
+        else if (text.starts_with("pi/")) value = pi / ParseNumber(key, text.substr(3));
+        else if (text.ends_with("*pi")) value = ParseNumber(key, text.substr(0, text.size()-3)) * pi;
+        else value = ParseNumber(key, text);
+        if (!std::isfinite(value))
+            throw ConfigValueError(key, "INVALID_EXPRESSION", "Expression must produce a finite value.");
+        return value;
+    }
     /**
      * @brief Loads and parses the specified configuration file.
      * Parsing Rules:
@@ -57,8 +108,16 @@ public:
             return false;
         }
 
+        return Load(file, filename);
+    }
+
+    // The application API uses the same parser for an unsaved working copy.
+    bool Load(std::istream &input, const std::string &source = "<memory>")
+    {
+        parameters.clear();
+
         std::string line;
-        while (std::getline(file, line))
+        while (std::getline(input, line))
         {
             // 1. Strip comments (content after '#')
             size_t commentPos = line.find('#');
@@ -81,7 +140,7 @@ public:
                 parameters[key] = value;
             }
         }
-        std::cout << "[Info] Loaded " << parameters.size() << " parameters from " << filename << std::endl;
+        std::cout << "[Info] Loaded " << parameters.size() << " parameters from " << source << std::endl;
         return true;
     }
 
@@ -105,9 +164,8 @@ public:
         if (value == "false")
             return false;
 
-        throw std::invalid_argument(
-            "Config parameter '" + key + "' expects true or false "
-            "(case-insensitive), got '" + it->second + "'.");
+        throw ConfigValueError(key, "INVALID_BOOLEAN",
+            "Expected true or false (case-insensitive).");
     }
 
     /**
@@ -119,7 +177,7 @@ public:
     {
         if (parameters.find(key) != parameters.end())
         {
-            return std::stoi(parameters.at(key));
+            return ParseInteger(key, parameters.at(key));
         }
         return defaultVal;
     }
@@ -133,7 +191,7 @@ public:
     {
         if (parameters.find(key) != parameters.end())
         {
-            return std::stod(parameters.at(key));
+            return ParseNumber(key, parameters.at(key));
         }
         return defaultVal;
     }

@@ -1,0 +1,99 @@
+[Info] Loaded 45 parameters from /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-external/input.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-external/compat_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-external/input.par
+[Main] Problem created: ExternalGravity
+[Problem] Uniform external-gravity state: rho=1, p=10, u0=0.2, gx=0.7
+[Main] Configuration:
+       Grid: 32 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 32 | Finest Level: 0
+    Level 0   | dx1(x): 0.03125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: external | g = (0.7, 0, 0)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=1)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-external/compat_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-external/compat_chk_0000.h5 at step 0 with 2 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       1.45943e-03    1.45943e-03    1.45943e-03    
+2       2.91852e-03    1.45909e-03    1.45909e-03    
+3       4.37726e-03    1.45874e-03    1.45874e-03    
+4       5.83565e-03    1.45839e-03    1.45839e-03    
+5       7.29369e-03    1.45804e-03    1.45804e-03    
+6       8.75139e-03    1.45770e-03    1.45770e-03    
+7       1.02087e-02    1.45735e-03    1.45735e-03    
+8       1.16657e-02    1.45700e-03    1.45700e-03    
+9       1.31224e-02    1.45666e-03    1.45666e-03    
+10      1.45787e-02    1.45631e-03    1.45631e-03    
+11      1.60347e-02    1.45596e-03    1.45596e-03    
+12      1.74903e-02    1.45562e-03    1.45562e-03    
+13      1.89456e-02    1.45527e-03    1.45527e-03    
+14      2.04005e-02    1.45493e-03    1.45493e-03    
+15      2.18551e-02    1.45458e-03    1.45458e-03    
+16      2.33093e-02    1.45424e-03    1.45424e-03    
+17      2.47632e-02    1.45389e-03    1.45389e-03    
+18      2.62168e-02    1.45355e-03    1.45355e-03    
+19      2.76700e-02    1.45321e-03    1.45321e-03    
+20      2.91228e-02    1.45286e-03    1.45286e-03    
+21      3.05753e-02    1.45252e-03    1.45252e-03    
+22      3.20275e-02    1.45218e-03    1.45218e-03    
+23      3.34794e-02    1.45183e-03    1.45183e-03    
+24      3.49308e-02    1.45149e-03    1.45149e-03    
+25      3.63820e-02    1.45115e-03    1.45115e-03    
+26      3.78328e-02    1.45081e-03    1.45081e-03    
+27      3.92833e-02    1.45046e-03    1.45046e-03    
+28      4.07334e-02    1.45012e-03    1.45012e-03    
+29      4.21832e-02    1.44978e-03    1.44978e-03    
+30      4.36326e-02    1.44944e-03    1.44944e-03    
+31      4.50817e-02    1.44910e-03    1.44910e-03    
+32      4.65305e-02    1.44876e-03    1.44876e-03    
+33      4.79789e-02    1.44842e-03    1.44842e-03    
+34      4.94270e-02    1.44808e-03    1.44808e-03    
+35      5.08747e-02    1.44774e-03    1.44774e-03    
+36      5.23221e-02    1.44740e-03    1.44740e-03    
+37      5.37691e-02    1.44706e-03    1.44706e-03    
+38      5.52159e-02    1.44672e-03    1.44672e-03    
+39      5.66622e-02    1.44638e-03    1.44638e-03    
+40      5.81083e-02    1.44604e-03    1.44604e-03    
+41      5.95540e-02    1.44570e-03    1.44570e-03    
+42      6.09994e-02    1.44536e-03    1.44536e-03    
+43      6.24444e-02    1.44503e-03    1.44503e-03    
+44      6.38891e-02    1.44469e-03    1.44469e-03    
+45      6.53334e-02    1.44435e-03    1.44435e-03    
+46      6.67774e-02    1.44401e-03    1.44401e-03    
+47      6.82211e-02    1.44368e-03    1.44368e-03    
+48      6.96644e-02    1.44334e-03    1.44334e-03    
+49      7.11074e-02    1.44300e-03    1.44300e-03    
+50      7.25501e-02    1.44267e-03    1.44267e-03    
+51      7.39924e-02    1.44233e-03    1.44233e-03    
+52      7.54344e-02    1.44199e-03    1.44199e-03    
+53      7.68761e-02    1.44166e-03    1.44166e-03    
+54      7.83174e-02    1.44132e-03    1.44132e-03    
+55      7.97584e-02    1.44099e-03    1.44099e-03    
+56      8.11991e-02    1.44065e-03    1.44065e-03    
+57      8.26394e-02    1.44032e-03    1.44032e-03    
+58      8.40794e-02    1.43998e-03    1.43998e-03    
+59      8.55190e-02    1.43965e-03    1.43965e-03    
+60      8.69583e-02    1.43931e-03    1.43931e-03    
+61      8.83973e-02    1.43898e-03    1.43898e-03    
+62      8.98359e-02    1.43865e-03    1.43865e-03    
+63      9.12743e-02    1.43831e-03    1.43831e-03    
+64      9.27122e-02    1.43798e-03    1.43798e-03    
+65      9.41499e-02    1.43765e-03    1.43765e-03    
+66      9.55872e-02    1.43731e-03    1.43731e-03    
+67      9.70242e-02    1.43698e-03    1.43698e-03    
+68      9.84608e-02    1.43665e-03    1.43665e-03    
+69      9.98971e-02    1.43632e-03    1.43632e-03    
+70      1.00000e-01    1.02855e-04    1.43599e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-external/compat_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/cuda-compatibility/cuda-external/compat_chk_0001.h5 at step 70 with 2 AMR leaves.
+[State] floor repairs=0.00000e+00 delta_mass=0.00000e+00 delta_energy=0.00000e+00
+>>> Simulation Done. Total Steps: 70 | Final Time: 1.00000e-01

@@ -5,9 +5,9 @@
 #include <array>
 #include <cstddef>
 
-#include "RatePair.h"
-#include "ScreeningTimmes.h"
-#include "TfactorsData.h"
+#include "physics/network/timmes_common/RatePair.h"
+#include "physics/network/timmes_common/ScreeningTimmes.h"
+#include "physics/network/timmes_common/TfactorsData.h"
 
 namespace timmes {
 
@@ -102,11 +102,10 @@ TIMMES_HD inline void multiply_rates(Array& rates, const Scalar& factor,
 }
 
 template <typename Ids, typename Scalar, typename Array>
-TIMMES_HD inline void screen_heavy_rates(Array& r, const Scalar& temperature, double density,
-                               const Scalar& zbar, const Scalar& abar, const Scalar& z2bar)
+TIMMES_HD inline void screen_heavy_rates(Array& r, const Screen5State<Scalar>& state)
 {
     auto factor = [&](double z1, double a1, double z2, double a2) {
-        return screen5(temperature, density, zbar, abar, z2bar, z1, a1, z2, a2);
+        return screen5(state, z1, a1, z2, a2);
     };
 
     const Scalar screen_aa = factor(2.0, 4.0, 2.0, 4.0);
@@ -146,11 +145,10 @@ TIMMES_HD inline void screen_heavy_rates(Array& r, const Scalar& temperature, do
 }
 
 template <typename Ids, typename Scalar, typename Array>
-TIMMES_HD inline void screen_extended_rates(Array& r, const Scalar& temperature, double density,
-                                  const Scalar& zbar, const Scalar& abar, const Scalar& z2bar)
+TIMMES_HD inline void screen_extended_rates(Array& r, const Screen5State<Scalar>& state)
 {
     auto factor = [&](double z1, double a1, double z2, double a2) {
-        return screen5(temperature, density, zbar, abar, z2bar, z1, a1, z2, a2);
+        return screen5(state, z1, a1, z2, a2);
     };
     multiply_rates(r, factor(1.0, 2.0, 1.0, 1.0), {Ids::irdpg, Ids::irhegp});
     multiply_rates(r, factor(1.0, 1.0, 1.0, 1.0), {Ids::irpp});
@@ -164,11 +162,10 @@ TIMMES_HD inline void screen_extended_rates(Array& r, const Scalar& temperature,
 }
 
 template <typename Ids, typename Scalar, typename Array>
-TIMMES_HD inline void screen_aprox21_extra_rates(Array& r, const Scalar& temperature, double density,
-                                       const Scalar& zbar, const Scalar& abar, const Scalar& z2bar)
+TIMMES_HD inline void screen_aprox21_extra_rates(Array& r, const Screen5State<Scalar>& state)
 {
     auto factor = [&](double z1, double a1, double z2, double a2) {
-        return screen5(temperature, density, zbar, abar, z2bar, z1, a1, z2, a2);
+        return screen5(state, z1, a1, z2, a2);
     };
     multiply_rates(r, factor(26.0, 54.0, 2.0, 4.0), {Ids::irfe54ap, Ids::irco57pa});
     multiply_rates(r, factor(26.0, 56.0, 1.0, 1.0), {Ids::irfe56pg, Ids::irco57gp});

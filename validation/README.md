@@ -1,10 +1,27 @@
 # ARCH Verification and Validation
 
+P1.5 changes the low-density state contract, normalized EOS inputs and checkpoint
+format. Its [implementation record](../docs/development/P1_5ImplementationReport.zh-CN.md)
+identifies acceptance for that migration; the older records below retain their original
+source scope and are not automatic acceptance of the changed implementation.
+
+The [gravity summary](gravity/README.md) covers validated Cartesian
+self-gravity on CPU/CUDA and tested isolated 1D radial and full-azimuth 2D/3D
+curvilinear self-gravity on both backends, including origin/axis/pole joins and
+composite AMR. Hydro, burn and thermal-diffusion coupling have also been checked.
+Partial azimuth and external mass remain unsupported. See the
+[P5–P7 acceptance](../docs/development/P5P7GravityAcceptance.zh-CN.md),
+[P8–P10 radial record](gravity/results/p8-p10-20260923/README.md),
+[P11/P12 curved record](gravity/results/p11-p12-20260923/README.md), and
+[P13 CUDA record](gravity/results/p13-20260924/README.md)
+for their respective tested configurations. The earlier [P2 record](gravity/results/p2-20260922/README.md)
+remains a standalone CPU solver result.
+
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
 This directory is the single entry point for quantitative verification records
-covering hydrodynamics, diffusion, external gravity, burning, AMR, EOS, restart
+covering hydrodynamics, diffusion, gravity, burning, AMR, EOS, restart
 and generated networks on CPU and CUDA. Each record identifies its tested
 sources, binaries and data.
 
@@ -16,7 +33,7 @@ transport. CPU/CUDA agreement checks backend consistency, while the independent
 references check the numerical answer itself. Neither comparison substitutes
 for the other.
 
-The CPU/CUDA release profile has passed its numerical, application, regression,
+The historical CPU/CUDA release profile below passed its numerical, application, regression,
 device-safety, sustained-run and resource checks. The results below preserve
 the tested source, binary and scientific-data identities. Detailed evidence is
 grouped at the end of each page; the module links lead to readable explanations
@@ -43,6 +60,16 @@ comparison. Time your own representative case before choosing a backend.
 Timmes materials are explicitly authorized for free use and redistribution, as recorded
 in the [third-party notices](../THIRD_PARTY_NOTICES.md). This administrative
 release item is separate from the completed technical tests.
+
+The current [ARCH–FLASH assessment](gravity/flash/O5OptimizationReport.zh-CN.md)
+separates confirmed work reductions in the tested FLASH configuration from
+remaining ARCH implementation cost. It also distinguishes total-process Sod
+time from advancement time. The comparison has not established equal-error
+cross-code efficiency. Current four-module evidence applies to the selected
+Helmholtz/aprox13/thermal/MG/AMR combinations; it does not qualify all policy
+permutations or Helmholtz viscosity/species transport. The
+[Reference combination rules](../docs/Reference.md#combining-methods-and-physics)
+include physical exclusions and the open tabular burn/NSE trial-error audit.
 
 ## Directory contract
 

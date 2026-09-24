@@ -9,10 +9,10 @@
 #include <cmath>
 #include <vector>
 
-#include "eos_state.h"
+#include "physics/eos/eos_state.h"
 
-#include "../../data/FluidState.h"
-#include "../species/Species.h"
+#include "data/FluidState.h"
+#include "physics/species/Species.h"
 
 // Canonical view declarations for runtime ABIs. Declaring a function that
 // accepts a view does not require any interpolation or thermodynamic body.

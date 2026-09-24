@@ -1,15 +1,28 @@
 # ARCH Verification 与 Validation
 
+P1.5 调整了低密度状态契约、规范化 EOS 输入和检查点格式。该阶段的验收见
+[实施记录](../docs/development/P1_5ImplementationReport.zh-CN.md)；下方旧记录保留
+原始源码范围，不能直接作为当前实现的通过证据。
+
+[引力摘要](gravity/README.zh-CN.md)覆盖 CPU/CUDA 上的生产 Cartesian 自引力、
+复合 AMR，以及受测一维球/柱对称、完整方位角二维极坐标和三维柱/球坐标 isolated
+自引力，包含原点、轴线和极点接合。流体、燃烧和热扩散组合已有验收；部分方位角与
+域外质量源仍不支持。受测配置见 [P5–P7 验收](../docs/development/P5P7GravityAcceptance.zh-CN.md)、
+[P8–P10 一维记录](gravity/results/p8-p10-20260923/README.md)、
+[P11/P12 多维记录](gravity/results/p11-p12-20260923/README.md)和
+[P13 CUDA 记录](gravity/results/p13-20260924/README.md)。
+早期 [P2 记录](gravity/results/p2-20260922/README.md)仍仅证明独立 CPU 场求解器。
+
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-本目录是定量验证记录的统一入口，覆盖 CPU 与 CUDA 上的流体、扩散、外部重力、燃烧、AMR、EOS、重启和生成网络。各项记录注明实际测试的源码、程序与数据版本。
+本目录是定量验证记录的统一入口，覆盖 CPU 与 CUDA 上的流体、扩散、重力、燃烧、AMR、EOS、重启和生成网络。各项记录注明实际测试的源码、程序与数据版本。
 
 建议先阅读计划使用的物理模块摘要。摘要先说明测试问题、参考答案和允许误差，
 再链接完整记录。收敛检查回答网格或时间步细化后误差是否减小；守恒检查则把
 物理源项和边界输运计入收支。CPU/CUDA 对照检查两种后端是否一致，独立参考检查
 数值答案本身是否正确，两类比较各有作用，不能互相替代。
 
-CPU/CUDA 发布范围已通过数值、应用、回归、设备安全、持续运行和资源检查。
+下方历史 CPU/CUDA 发布范围通过了数值、应用、回归、设备安全、持续运行和资源检查。
 下表保留实际受测的源码、程序及科学数据身份。详细证据集中放在各页末尾；
 模块链接首先展示测试问题、方法和结果的说明，不直接打开原始数据。
 
@@ -28,6 +41,13 @@ v1.1.0 发布整理通过了 350 项工具测试、7 项 CPU/CUDA 定向测试�
 
 Timmes 材料已明确获得自由使用与重新分发授权，具体见
 [第三方说明](../THIRD_PARTY_NOTICES.zh-CN.md)。这项发布行政事项与已完成的技术测试分别记录。
+
+当前 [ARCH–FLASH 评估](gravity/flash/O5OptimizationReport.zh-CN.md)区分受测 FLASH
+配置中已确认的计算简化与 ARCH 尚存实现开销，也区分 Sod 总进程时间与推进时间；
+尚未建立跨软件等误差效率结论。当前四模块证据仅适用于所列 Helmholtz、aprox13、
+热传导、MG 与 AMR 组合，不覆盖所有策略排列或 Helmholtz 黏性／组分输运。
+[参考手册组合规则](../docs/Reference.zh-CN.md#方法与物理模块的组合)说明物理排除项
+以及未关闭的表 EOS 燃烧／NSE 试探错误审计。
 
 ## 目录契约
 

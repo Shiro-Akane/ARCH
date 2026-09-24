@@ -2,7 +2,7 @@
  * @file TimeIntegratorEuler.h
  * @brief 1st Order Forward Euler Time Integrator.
  *
- * Host block execution binds the shared driver/StageScheduler.h descriptors
+ * Host block execution binds the shared driver/schedule/StageScheduler.h descriptors
  * to concrete state slots. The scheduler owns stage order and weights; the
  * hydro interface performs patch updates, and callbacks synchronize halos,
  * rotate storage, and apply reflux at the prescribed completion boundary.
@@ -10,15 +10,16 @@
 #pragma once
 
 #include <algorithm>
+#include <exception>
 #include <string>
 #include <vector>
 
-#include "IHydroSolver.h"
-#include "TimeIntegratorHelper.h"
+#include "numerics/integrator/IHydroSolver.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 
-#include "../../amr/AMRControl.h"
-#include "../../data/FluidState.h"
-#include "../../driver/StageScheduler.h"
+#include "amr/AMRControl.h"
+#include "data/FluidState.h"
+#include "driver/schedule/StageScheduler.h"
 
 struct SolverEuler
 {
@@ -58,6 +59,7 @@ struct SolverEuler
             binding.context, binding.handles,
             [&](const StageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
+                std::exception_ptr stage_failure;
 #pragma omp parallel
                 {
                     int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
@@ -66,14 +68,20 @@ struct SolverEuler
 
 #pragma omp for schedule(dynamic)
                     for (size_t i = 0; i < active_blocks.size(); ++i) {
+                        try {
                         amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
                         FluidState& old_state = state_for(b, descriptor.old_slot);
                         FluidState& input_state = state_for(b, descriptor.input_slot);
                         FluidState& output_state = state_for(b, descriptor.output_slot);
                         hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state, b.grid, dt, dU, d_spec, gravity, num_cfg, descriptor.flux_register_weight, nullptr);
                         hydro->update_patch(old_state, input_state, output_state, dU, d_spec, b.grid, descriptor.old_weight, descriptor.update_weight, num_cfg, nullptr);
+                        } catch (...) {
+#pragma omp critical(arch_hydro_failure)
+                            { if (!stage_failure) stage_failure = std::current_exception(); }
+                        }
                     }
                 }
+                if (stage_failure) std::rethrow_exception(stage_failure);
                 return token;
             },
             [&](arch::state::StateSlot output, arch::state::StateVersion,
@@ -111,6 +119,7 @@ struct SolverEuler
             [&](const HydroPlan&, arch::state::StateSlot,
                 arch::state::CompletionToken token) {
                 amr_ctrl.ApplyReflux(dt);
+                TimeIntegration::validate_reflux_state(amr_ctrl,num_cfg);
                 return token;
             });
     }

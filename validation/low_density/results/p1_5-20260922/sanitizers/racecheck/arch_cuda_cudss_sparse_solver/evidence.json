@@ -1,0 +1,18 @@
+{
+  "tool": "racecheck",
+  "executable": {
+    "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+    "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+  },
+  "report": {
+    "path": "/tmp/arch-p15-lazy-sanitizers/arch_cuda_cudss_sparse_solver-racecheck/sanitizer.log",
+    "sha256": "a1f27040b28a5df886d644824aa47bfaa82aad762696680fdfb7320aee863dfb"
+  },
+  "summaries": [
+    "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+  ],
+  "application": {
+    "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_cudss_sparse_solver",
+    "sha256": "cce97e24ac9f31a592085a7f4b52fbfcf7b9c791a17e0bf046abf6a8fd46e582"
+  }
+}

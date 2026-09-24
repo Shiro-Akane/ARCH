@@ -11,10 +11,11 @@
 
 #pragma once
 
+#include <array>
 #include <cmath>
 
-#include "Grid.h"
-#include "GridGeometryView.h"
+#include "grid/Grid.h"
+#include "grid/GridGeometryView.h"
 
 namespace GridMetrics {
 
@@ -33,6 +34,13 @@ inline GeometryView make_geometry_view(const Grid& grid) {
     return {geometry_kind(grid), grid.dim, grid.ng, grid.stride_y,
             grid.stride_z, grid.GetTotalSize(), grid.dx1, grid.dx2, grid.dx3,
             grid.x1_min, grid.x2_min, grid.x3_min};
+}
+
+/** Describe one logical finite-volume fragment without allocating a native Grid. */
+inline GeometryView make_geometry_view(Geometry geometry, int dimension,
+    const std::array<double,3>& lower, const std::array<double,3>& width) {
+    return {geometry, dimension, 0, 0, 0, 0, width[0], width[1], width[2],
+            lower[0], lower[1], lower[2]};
 }
 
 ARCH_HOST_DEVICE inline double radial_shell_volume(double r_left, double r_right) {

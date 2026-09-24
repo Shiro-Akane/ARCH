@@ -11,6 +11,7 @@
  */
 
 #pragma once
+#include <limits>
 
 #include <algorithm>
 #include <cctype>
@@ -18,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "../../core/ArchPortability.h"
+#include "core/ArchPortability.h"
 
 #ifndef EOS_INLINE
 #define EOS_INLINE inline
@@ -33,7 +34,7 @@ struct GasProperty
     double A;         ///< Mass number
     double Z;         ///< Atomic number
     double gamma_ref; ///< Specific Heat Ratio (Cp/Cv), also known as Adiabatic Index.
-    double Cv_ref;    ///< Heat capacity (J/kg.K)
+    double Cv_ref;    ///< Specific heat capacity (erg/(g K))
 };
 
 struct SpeciesHostView;
@@ -54,7 +55,7 @@ ARCH_INLINE double species_calc_Abar(const SpeciesAccessor &species, const doubl
     double sum_X_over_A = 0.0;
     for (int k = 0; k < species.size(); ++k)
         sum_X_over_A += Xi[k] / species.get_A(k);
-    return (sum_X_over_A > 1e-16) ? (1.0 / sum_X_over_A) : 1.0;
+    return (sum_X_over_A > 0.0) ? (1.0 / sum_X_over_A) : std::numeric_limits<double>::quiet_NaN();
 }
 
 template <class SpeciesAccessor>

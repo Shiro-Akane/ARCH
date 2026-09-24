@@ -15,8 +15,8 @@
 #include <cmath>
 #include <vector>
 
-#include "../../grid/Grid.h"
-#include "../../grid/GridMetrics.h"
+#include "grid/Grid.h"
+#include "grid/GridMetrics.h"
 
 namespace VelocityDiagnostics {
 

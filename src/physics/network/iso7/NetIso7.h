@@ -6,11 +6,11 @@
 #include <array>
 #include <cmath>
 
-#include "TimmesRateLibrary.h"
+#include "physics/network/iso7/TimmesRateLibrary.h"
 
-#include "../timmes_common/AproxRateAssembly.h"
-#include "../timmes_common/TimmesNetworkSupport.h"
-#include "../timmes_common/TfactorsData.h"
+#include "physics/network/timmes_common/AproxRateAssembly.h"
+#include "physics/network/timmes_common/TimmesNetworkSupport.h"
+#include "physics/network/timmes_common/TfactorsData.h"
 
 namespace timmes_iso7_detail {
 
@@ -23,7 +23,7 @@ enum Rates : int {
 
 inline constexpr double sixth = 1.0 / 6.0;
 
-#include "TimmesRhs.inc"
+#include "physics/network/iso7/TimmesRhs.inc"
 
 } // namespace timmes_iso7_detail
 
@@ -137,8 +137,10 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
         for (int i = 0; i < NUM_SPECIES; ++i) zion_values[i] = zion(i);
         timmes::composition_moments<Scalar, NUM_SPECIES>(
             y, zion_values, abar, zbar, z2bar, ye);
+        const auto screening = timmes::make_screen5_state(
+            temperature, rho, zbar, abar, z2bar);
         auto screen = [&](double z1, double a1, double z2, double a2) {
-            return timmes::screen5(temperature, rho, zbar, abar, z2bar, z1, a1, z2, a2);
+            return timmes::screen5(screening, z1, a1, z2, a2);
         };
 
         rate[ir3a] *= screen(2.0, 4.0, 2.0, 4.0) * screen(2.0, 4.0, 4.0, 8.0);

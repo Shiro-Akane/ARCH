@@ -1,0 +1,14 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+Test project /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+    Start  44: case_inspection_contract
+1/4 Test  #44: case_inspection_contract .........   Passed    4.49 sec
+    Start  45: preview_session_contract
+2/4 Test  #45: preview_session_contract .........   Passed    8.80 sec
+    Start  53: cuda_cudss_sparse_solver
+3/4 Test  #53: cuda_cudss_sparse_solver .........   Passed    0.65 sec
+    Start 123: ui_expansion_contract
+4/4 Test #123: ui_expansion_contract ............   Passed    5.31 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Total Test time (real) =  19.26 sec

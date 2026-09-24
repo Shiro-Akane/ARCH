@@ -19,14 +19,15 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include "api/Preview.h"
 
 // Application control and public problem interface.
-#include "core/ProblemRegistry.h"
-#include "core/RuntimeParams.h"
+#include "core/problem/ProblemRegistry.h"
+#include "core/config/RuntimeParams.h"
 #include "interface/ProblemGenerator.h"
 
 // Runtime data required for startup reporting and dispatch.
-#include "amr/AmrDefines.h"
+#include "amr/topology/AmrDefines.h"
 #include "data/GlobalDefs.h"
 #include "physics/species/Species.h"
 
@@ -36,6 +37,11 @@
 
 int main(int argc, char **argv)
 {
+    // Isolated application request: branch before logs, directories, backend
+    // resolution or the simulation driver can acquire resources.
+    if (argc > 1 && arch::api::contract::find(argv[1]))
+        return arch::api::RunPreviewCommand(argc, argv);
+
     // The CLI contract has three entries: executable, problem name, and
     // parameter file. Therefore argc must be at least three.
     if (argc < 3)

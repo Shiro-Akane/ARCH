@@ -3,7 +3,7 @@
 Chinese translation: [CudaBackendStatus.zh-CN.md](CudaBackendStatus.zh-CN.md).
 The English file is authoritative.
 
-A *backend* refers to the specific execution engine in ARCH responsible for performing calculations on your chosen hardware. CUDA serves as our GPU backend. Selecting it alters how execution and memory management are handled under the hood, but it strictly retains the exact same physical models and logic as the CPU backend. *Adaptive mesh refinement (AMR)* dynamically adjusts cell sizes during a simulation, ensuring that complex regions receive higher spatial resolution. This guide details the division of labor between processors and helps you select a compatible configuration.
+A *backend* refers to the specific execution engine in ARCH responsible for performing calculations on your chosen hardware. CUDA serves as our GPU backend. Selecting it changes execution, memory management and solver-library access while reusing the common mathematical and physical implementations. Backend agreement is established for the configurations identified by validation. *Adaptive mesh refinement (AMR)* dynamically adjusts cell sizes during a simulation, ensuring that complex regions receive higher spatial resolution. This guide details the division of labor between processors and helps you select a compatible configuration.
 
 The CUDA backend executes hydrodynamics and adaptive-mesh numerical work on the
 GPU. CPU and CUDA share the same mathematical and physical implementations;
@@ -21,11 +21,17 @@ technical results and combined acceptance status.
 | Boundaries | Periodic, outflow and reflecting boundaries |
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
-| Diffusion | Species, thermal and viscous modes; RKL1/RKL2 integration |
-| Gravity | External gravity using common stage source terms |
+| Diffusion | Species, thermal and viscous operators with RKL1/RKL2; the material closure determines active channels. The current Helmholtz stellar closure supplies thermal conduction only. |
+| Gravity | External stage sources and composite-AMR self-gravity: Cartesian periodic 1D–3D or isolated 3D, plus tested isolated 1D radial and full-azimuth 2D/3D curved domains including coordinate joins; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
 | Built-in burning | iso7, aprox13, aprox19, aprox21; BE_NR, BD, ROS4 and network-constrained NSE |
 | Generated burning | Registered networks with device-callable math, including recognized embedded weak tables stored read-only on each backend; dense or sparse solving as described below |
 | Output and restart | Shared HDF5/checkpoint facilities, with state transfers at IO boundaries and CPU/CUDA restart routes |
+
+These are component routes, subject to the [combination rules](Reference.md#combining-methods-and-physics).
+The HLLC/MUSCL/RK2, BD, RKL2 thermal, self-gravity MG and AMR combination has
+representative CPU/CUDA application checks. This is not acceptance of every
+EOS/network/geometry substitution. Tabular burn/NSE recoverable-trial error
+handling remains an open audit item; shared formulas alone do not resolve it.
 
 Policy names, aliases and supported combinations share one registration system.
 The equation of state (EOS) relates pressure, density, energy and composition;
@@ -53,9 +59,15 @@ The CPU owns the mesh topology, Morton ordering, and all refinement/coarsening d
 - **Morton ordering** assigns a spatially contiguous index to those blocks.
 - **Refinement** splits cells into smaller ones for higher resolution, while **coarsening** merges them when configured indicators indicate that high resolution is no longer needed.
 
-Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration operates directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
+Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration and singular-coordinate ghost reconstruction operate directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
 
 ## Choosing a backend for performance
+
+The server measurements below retain their original source identity and
+transport configuration; they precede the current self-gravity work and do not
+establish that every present Helmholtz transport channel is active. Current
+workstation evidence and the controlled FLASH comparison are recorded in the
+[comparison assessment](../validation/gravity/flash/O5OptimizationReport.zh-CN.md).
 
 **Measured end-to-end acceleration reaches about 5× for coupled AMR workloads.**
 The highest result was 5.08× for hydrodynamics, BD burning, RKL2 full transport
@@ -115,7 +127,11 @@ benchmark your problem. End-to-end time includes initialization and output;
 regrid measurements overlap that total and must not be added again.
 
 Use the same physical input, AMR criteria and output settings on both backends
-when timing them.
+when timing them. Self-gravity uses a real device solve on CUDA, but its
+extra setup can make small grids slower than CPU. The local RTX 3060 Ti
+[curved self-gravity record](../validation/gravity/results/p13-20260924/README.md)
+shows end-to-end coupled gains while separating the Poisson cost; use the
+[gravity acceptance](../validation/gravity/README.md) for tested limits.
 
 ### What the CUDA optimization changes
 
@@ -174,8 +190,7 @@ requirements grow with the network and mesh workload.
   CPU-only packages execute on CPU. The exact manifest fields are documented
   in the [network contract](Reference.md). Independent
   Urca trajectory results are available in [network validation](../validation/network/README.md).
-- Self-gravity is not a production capability of either backend. Generated
-  networks that pass the nuclear-data and equilibrium-model checks can use
+- Generated networks that pass the nuclear-data and equilibrium-model checks can use
   shared NSE math, covered by focused CPU/CUDA tests rather than a new full
   application qualification.
   See the [model limits](../src/physics/nse/README.md). Both built-in and generated

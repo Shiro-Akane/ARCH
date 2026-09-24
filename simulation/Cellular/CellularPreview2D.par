@@ -1,0 +1,39 @@
+# CellularDet: independent CPU initial-preview reference (x1-x2 Cartesian).
+# Invoke from the repository root so the EOS table path below resolves.
+# This file is for --preview CellularDet; it is not a detonation evolution test.
+geometry = cartesian
+nblockx1 = 2
+nblockx2 = 1
+nblockx3 = 0
+max_blocks = 2000
+x1_min = 0.0
+x1_max = 25.6
+x2_min = 0.0
+x2_max = 12.8
+x3_min = 0.0
+x3_max = 1.0
+x1l_boundary_type = outflow
+x1r_boundary_type = outflow
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+lrefinemin = 0
+lrefinemax = 2
+refine_var = DENS
+refine_threshold = 0.8
+derefine_threshold = 0.2
+restart = false
+eos_type = helmholtz
+eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
+use_burn = true
+network_name = aprox19
+xhe4 = 0.4
+xc12 = 0.6
+xo16 = 0.0
+shock_dir = 0
+radiusPerturb = 6.4
+noiseAmplitude = 0.02
+rhoAmbient = 1.0e7
+tempAmbient = 2.0e8
+rhoPerturb = 4.322e7
+tempPerturb = 4.670e9
+velxPerturb = 1.011e9

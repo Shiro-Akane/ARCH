@@ -1,0 +1,4 @@
+curved domain geometry=1 dim=2 faces=104 force_change=0.0023872089831120341
+curved domain geometry=1 dim=3 faces=1264 force_change=0.00088998042548040814
+curved domain geometry=2 dim=2 faces=104 force_change=0.0023872089831120341
+curved domain geometry=2 dim=3 faces=1264 force_change=0.0022120017073012188

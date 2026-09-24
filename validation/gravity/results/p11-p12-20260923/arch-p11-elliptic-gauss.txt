@@ -1,0 +1,8 @@
+curved Gauss dimension=2 refined=0 n=8 force=0.14578344974335231 cycles=1
+curved Gauss dimension=2 refined=0 n=16 force=0.03884228131208569 cycles=6 order=1.9081271033868505
+curved Gauss dimension=2 refined=1 n=8 force=0.14312753239109807 cycles=12
+curved Gauss dimension=2 refined=1 n=16 force=0.03867606973167801 cycles=22 order=1.8877881189204755
+curved Gauss dimension=3 refined=0 n=8 force=0.29970956975971702 cycles=11
+curved Gauss dimension=3 refined=0 n=16 force=0.077394142742426272 cycles=20 order=1.9532688588296248
+curved Gauss dimension=3 refined=1 n=8 force=0.29885904056994955 cycles=18
+curved Gauss dimension=3 refined=1 n=16 force=0.077675288568796463 cycles=26 order=1.9439375841774718

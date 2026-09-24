@@ -1,0 +1,244 @@
+{
+  "id": 35613817405,
+  "head_sha": "74a755e596a29dce7f13ac7864ee3692553d7166",
+  "status": "completed",
+  "conclusion": "success",
+  "html_url": "https://github.com/Shiro-Akane/ARCH/actions/runs/35613817405",
+  "created_at": "2026-09-21T14:41:11Z",
+  "updated_at": "2026-09-21T14:49:55Z",
+  "jobs": [
+    {
+      "id": 106379323893,
+      "name": "Tooling",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/Shiro-Akane/ARCH/actions/runs/35613817405/job/106379323893",
+      "started_at": "2026-09-21T14:41:15Z",
+      "completed_at": "2026-09-21T14:42:19Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-21T14:41:16Z",
+          "completed_at": "2026-09-21T14:41:17Z"
+        },
+        {
+          "name": "Check out the tested revision",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-21T14:41:17Z",
+          "completed_at": "2026-09-21T14:41:22Z"
+        },
+        {
+          "name": "Prepare host tools",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-21T14:41:22Z",
+          "completed_at": "2026-09-21T14:41:51Z"
+        },
+        {
+          "name": "Validate workflow syntax",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-21T14:41:51Z",
+          "completed_at": "2026-09-21T14:41:53Z"
+        },
+        {
+          "name": "Audit shared implementation and header boundaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-21T14:41:53Z",
+          "completed_at": "2026-09-21T14:41:54Z"
+        },
+        {
+          "name": "Run the existing Python suite without skips",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-21T14:41:54Z",
+          "completed_at": "2026-09-21T14:42:16Z"
+        },
+        {
+          "name": "Retain tooling diagnostics",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-09-21T14:42:16Z",
+          "completed_at": "2026-09-21T14:42:17Z"
+        },
+        {
+          "name": "Post Check out the tested revision",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-09-21T14:42:17Z",
+          "completed_at": "2026-09-21T14:42:17Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-09-21T14:42:17Z",
+          "completed_at": "2026-09-21T14:42:17Z"
+        }
+      ]
+    },
+    {
+      "id": 106379324560,
+      "name": "CPU Release",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/Shiro-Akane/ARCH/actions/runs/35613817405/job/106379324560",
+      "started_at": "2026-09-21T14:41:15Z",
+      "completed_at": "2026-09-21T14:49:48Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-21T14:41:16Z",
+          "completed_at": "2026-09-21T14:41:17Z"
+        },
+        {
+          "name": "Check out source and the required EOS table",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-21T14:41:17Z",
+          "completed_at": "2026-09-21T14:41:25Z"
+        },
+        {
+          "name": "Prepare the CPU toolchain",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-21T14:41:25Z",
+          "completed_at": "2026-09-21T14:41:39Z"
+        },
+        {
+          "name": "Identify native compiler targets for the cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-21T14:41:39Z",
+          "completed_at": "2026-09-21T14:41:42Z"
+        },
+        {
+          "name": "Restore compiler cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-21T14:41:42Z",
+          "completed_at": "2026-09-21T14:41:43Z"
+        },
+        {
+          "name": "Configure the existing CPU Release preset with tests and KLU",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-21T14:41:43Z",
+          "completed_at": "2026-09-21T14:42:20Z"
+        },
+        {
+          "name": "Build the application and all configured CPU tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-09-21T14:42:20Z",
+          "completed_at": "2026-09-21T14:46:22Z"
+        },
+        {
+          "name": "Run every configured CPU test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-09-21T14:46:22Z",
+          "completed_at": "2026-09-21T14:49:45Z"
+        },
+        {
+          "name": "Report cache use",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-09-21T14:49:45Z",
+          "completed_at": "2026-09-21T14:49:45Z"
+        },
+        {
+          "name": "Save cache after a successful main or V1 push",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2026-09-21T14:49:45Z",
+          "completed_at": "2026-09-21T14:49:45Z"
+        },
+        {
+          "name": "Retain CPU diagnostics, not build products or checkpoints",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-09-21T14:49:45Z",
+          "completed_at": "2026-09-21T14:49:46Z"
+        },
+        {
+          "name": "Post Check out source and the required EOS table",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-09-21T14:49:46Z",
+          "completed_at": "2026-09-21T14:49:46Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-09-21T14:49:46Z",
+          "completed_at": "2026-09-21T14:49:46Z"
+        }
+      ]
+    },
+    {
+      "id": 106382574981,
+      "name": "CI required",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/Shiro-Akane/ARCH/actions/runs/35613817405/job/106382574981",
+      "started_at": "2026-09-21T14:49:51Z",
+      "completed_at": "2026-09-21T14:49:55Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-21T14:49:52Z",
+          "completed_at": "2026-09-21T14:49:52Z"
+        },
+        {
+          "name": "Require both jobs to succeed",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-21T14:49:52Z",
+          "completed_at": "2026-09-21T14:49:52Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-21T14:49:52Z",
+          "completed_at": "2026-09-21T14:49:52Z"
+        }
+      ]
+    }
+  ]
+}

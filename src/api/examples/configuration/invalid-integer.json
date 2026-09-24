@@ -1,0 +1,726 @@
+{
+  "coordinates": null,
+  "diagnostics": [
+    {
+      "code": "INVALID_INTEGER",
+      "message": "Config parameter 'nblockx2': Expected a complete 32-bit integer.",
+      "parameterKey": "nblockx2",
+      "severity": "error"
+    }
+  ],
+  "execution": {
+    "caseRegistration": "not_checked",
+    "cuda": "not_initialized",
+    "eos": "not_loaded",
+    "filesystem": "not_accessed",
+    "setup": "not_executed",
+    "simulationReadiness": "not_checked"
+  },
+  "identity": {
+    "caseId": "Sod",
+    "configRevision": "3d7f3934bbf6d5ac94c45deccbbb18c5b27e97459c4d632ef350a052aae51aa7",
+    "requestId": ""
+  },
+  "kind": "configuration-inspection",
+  "parameters": [
+    {
+      "defaultValue": "cartesian",
+      "key": "geometry",
+      "parsedValue": "cartesian",
+      "rawValue": "cartesian",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1,
+      "key": "nblockx1",
+      "parsedValue": 8,
+      "rawValue": "8",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1,
+      "key": "nblockx3",
+      "parsedValue": 0,
+      "rawValue": "0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 2000,
+      "key": "max_blocks",
+      "parsedValue": 32,
+      "rawValue": "32",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "0.0",
+      "key": "x1_min",
+      "parsedValue": 0,
+      "rawValue": "0.0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "1.0",
+      "key": "x1_max",
+      "parsedValue": 1,
+      "rawValue": "1.0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "0.0",
+      "key": "x2_min",
+      "parsedValue": 0,
+      "rawValue": "0.0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "1.0",
+      "key": "x2_max",
+      "parsedValue": 1,
+      "rawValue": "1.0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "0.0",
+      "key": "x3_min",
+      "parsedValue": 0,
+      "rawValue": "0.0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "1.0",
+      "key": "x3_max",
+      "parsedValue": 1,
+      "rawValue": "1.0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "outflow",
+      "key": "x1l_boundary_type",
+      "parsedValue": "outflow",
+      "rawValue": "outflow",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "outflow",
+      "key": "x1r_boundary_type",
+      "parsedValue": "outflow",
+      "rawValue": "outflow",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "outflow",
+      "key": "x2l_boundary_type",
+      "parsedValue": "outflow",
+      "rawValue": "outflow",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "outflow",
+      "key": "x2r_boundary_type",
+      "parsedValue": "outflow",
+      "rawValue": "outflow",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "outflow",
+      "key": "x3l_boundary_type",
+      "parsedValue": "outflow",
+      "rawValue": "outflow",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "outflow",
+      "key": "x3r_boundary_type",
+      "parsedValue": "outflow",
+      "rawValue": "outflow",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "SW",
+      "key": "solver",
+      "parsedValue": "HLLC",
+      "rawValue": "HLLC",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e-16,
+      "key": "dt_init",
+      "parsedValue": 1e-16,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e-20,
+      "key": "dt_min",
+      "parsedValue": 1e-20,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1.2,
+      "key": "tstep_change_factor",
+      "parsedValue": 1.2,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.8,
+      "key": "cfl",
+      "parsedValue": 0.4,
+      "rawValue": "0.4",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "minmod",
+      "key": "limiter",
+      "parsedValue": "mc",
+      "rawValue": "mc",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "pcm",
+      "key": "reconstruct",
+      "parsedValue": "muscl",
+      "rawValue": "muscl",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": true,
+      "key": "EntropyFix",
+      "parsedValue": true,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.1,
+      "key": "EntropyFixCoefficient",
+      "parsedValue": 0.1,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e-12,
+      "key": "sml_rho",
+      "parsedValue": 1e-12,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e-10,
+      "key": "min_eint",
+      "parsedValue": 1e-10,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e+21,
+      "key": "max_eint",
+      "parsedValue": 1e+21,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "cpu",
+      "key": "compute_backend",
+      "parsedValue": "cpu",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0,
+      "key": "cuda_device",
+      "parsedValue": 0,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "ideal",
+      "key": "eos_type",
+      "parsedValue": "ideal",
+      "rawValue": "ideal",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "",
+      "key": "eos_table_path",
+      "parsedValue": "",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "",
+      "key": "eos_helm_table_path",
+      "parsedValue": "",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1.4,
+      "key": "gamma",
+      "parsedValue": 1.4,
+      "rawValue": "1.4",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": false,
+      "key": "use_burn",
+      "parsedValue": false,
+      "rawValue": "false",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "aprox19",
+      "key": "network_name",
+      "parsedValue": "aprox19",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1000000000,
+      "key": "nuclearTempMin",
+      "parsedValue": 1000000000,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e-10,
+      "key": "nuclearDensMin",
+      "parsedValue": 1e-10,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 100000,
+      "key": "smallt",
+      "parsedValue": 100000,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e-20,
+      "key": "smallx",
+      "parsedValue": 1e-20,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e+30,
+      "key": "enucDtFactor",
+      "parsedValue": 1e+30,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "true",
+      "key": "use_nse",
+      "parsedValue": "true",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 4500000000,
+      "key": "nseTempThreshold",
+      "parsedValue": 4500000000,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1000000,
+      "key": "nseDensThreshold",
+      "parsedValue": 1000000,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "BE_NR",
+      "key": "ode_solver",
+      "parsedValue": "BE_NR",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "Auto",
+      "key": "linear_solver",
+      "parsedValue": "Auto",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.0001,
+      "key": "ode_rtol",
+      "parsedValue": 0.0001,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e-08,
+      "key": "ode_atol",
+      "parsedValue": 1e-08,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 50,
+      "key": "ode_max_newton_iter",
+      "parsedValue": 50,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 10000,
+      "key": "ode_max_substeps",
+      "parsedValue": 10000,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.9,
+      "key": "ode_dt_safe_fac",
+      "parsedValue": 0.9,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 2,
+      "key": "ode_dt_fac_max",
+      "parsedValue": 2,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.1,
+      "key": "ode_dt_fac_min",
+      "parsedValue": 0.1,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.001,
+      "key": "ode_initial_dt_frac",
+      "parsedValue": 0.001,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": false,
+      "key": "use_diffusion",
+      "parsedValue": false,
+      "rawValue": "false",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "RKL2",
+      "key": "diff_integrator",
+      "parsedValue": "RKL2",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.8,
+      "key": "diff_cfl",
+      "parsedValue": 0.8,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 256,
+      "key": "diff_max_stages",
+      "parsedValue": 256,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": false,
+      "key": "use_thermal_diff",
+      "parsedValue": false,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": false,
+      "key": "use_viscous_diff",
+      "parsedValue": false,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": false,
+      "key": "use_species_diff",
+      "parsedValue": false,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0,
+      "key": "nu_visc",
+      "parsedValue": 0,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0,
+      "key": "alpha_therm",
+      "parsedValue": 0,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0,
+      "key": "D_spec",
+      "parsedValue": 0,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "none",
+      "key": "gravity_type",
+      "parsedValue": "none",
+      "rawValue": "none",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "0.0",
+      "key": "gravity_g_x",
+      "parsedValue": 0,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "0.0",
+      "key": "gravity_g_y",
+      "parsedValue": 0,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "0.0",
+      "key": "gravity_g_z",
+      "parsedValue": 0,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 6.6743e-08,
+      "key": "gravity_G",
+      "parsedValue": 6.6743e-08,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0,
+      "key": "lrefinemin",
+      "parsedValue": 0,
+      "rawValue": "0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0,
+      "key": "lrefinemax",
+      "parsedValue": 0,
+      "rawValue": "0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 2,
+      "key": "regrid_interval",
+      "parsedValue": 2,
+      "rawValue": "2",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "DENS",
+      "key": "refine_var",
+      "parsedValue": "DENS",
+      "rawValue": "DENS",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.8,
+      "key": "refine_threshold",
+      "parsedValue": 0.8,
+      "rawValue": "0.8",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0.2,
+      "key": "derefine_threshold",
+      "parsedValue": 0.2,
+      "rawValue": "0.2",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 0,
+      "key": "tmax",
+      "parsedValue": 0.2,
+      "rawValue": "0.2",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": -1,
+      "key": "max_steps",
+      "parsedValue": -1,
+      "rawValue": "-1",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "data",
+      "key": "out_dir",
+      "parsedValue": "output/sod_standard",
+      "rawValue": "output/sod_standard",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "arch",
+      "key": "base_name",
+      "parsedValue": "Sod",
+      "rawValue": "Sod",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": -1,
+      "key": "plt_dt",
+      "parsedValue": 0.05,
+      "rawValue": "0.05",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": -1,
+      "key": "plt_dstep",
+      "parsedValue": -1,
+      "rawValue": "-1",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": -1,
+      "key": "chk_dt",
+      "parsedValue": -1,
+      "rawValue": "-1.0",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": -1,
+      "key": "chk_dstep",
+      "parsedValue": -1,
+      "rawValue": "-1",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": false,
+      "key": "restart",
+      "parsedValue": false,
+      "rawValue": "false",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "",
+      "key": "restart_file",
+      "parsedValue": "",
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "ALL",
+      "key": "plt_variables",
+      "parsedValue": "DENS, PRES, VELX, ENER",
+      "rawValue": "DENS, PRES, VELX, ENER",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": "RK2",
+      "key": "time_integrator",
+      "parsedValue": "RK2",
+      "rawValue": "RK2",
+      "valueSource": "explicit",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    }
+  ],
+  "schemaVersion": "1.0",
+  "status": "error",
+  "version": "2"
+}

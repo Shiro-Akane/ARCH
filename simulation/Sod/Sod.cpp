@@ -10,8 +10,8 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 
 class SodProblem
 {
@@ -25,6 +25,12 @@ class SodProblem
     int gas_id_ = -1;
 
 public:
+    std::vector<arch::preview::AxisPosition> PreviewPositions(const SimConfig &config) const
+    {
+        return {{"Sod.x_pos", "x_pos", "x1", interface_x_,
+                 config.grid.x1_min, config.grid.x1_max, false, false}};
+    }
+
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         if (config.grid.geometry != "cartesian" || config.grid.dim != 1) {
@@ -41,7 +47,7 @@ public:
         pressure_right_ = config.Get<double>("p_right", 0.1);
         velocity_right_ = config.Get<double>("u_right", 0.0);
 
-        if (interface_x_ <= config.grid.x1_min || interface_x_ >= config.grid.x1_max ||
+        if (PreviewPositions(config).front().outside(interface_x_) ||
             rho_left_ <= 0.0 || rho_right_ <= 0.0 ||
             pressure_left_ <= 0.0 || pressure_right_ <= 0.0) {
             throw std::invalid_argument(

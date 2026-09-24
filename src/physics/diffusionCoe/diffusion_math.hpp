@@ -22,8 +22,8 @@
 #include <cmath>
 #include <vector>
 
-#include "../../core/ArchPortability.h"
-#include "../constant/PhysicalConstants.h"
+#include "core/ArchPortability.h"
+#include "physics/constant/PhysicalConstants.h"
 
 namespace ConductivityMath {
 

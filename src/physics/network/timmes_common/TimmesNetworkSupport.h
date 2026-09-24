@@ -1,6 +1,7 @@
 // ARCH-owned generic policy adapter for the Timmes-derived network equations.
 // Upstream/source boundaries: docs/physics/TimmesNetworks.md.
 #pragma once
+#include "numerics/state/StateAdmissibility.h"
 
 #include <algorithm>
 #include <array>
@@ -9,13 +10,13 @@
 #include <string>
 #include <vector>
 
-#include "Dual.h"
-#include "NuclearConstants.h"
-#include "RatePair.h"
+#include "physics/network/timmes_common/Dual.h"
+#include "physics/network/timmes_common/NuclearConstants.h"
+#include "physics/network/timmes_common/RatePair.h"
 
-#include "../../../data/GlobalDefs.h"
-#include "../../../core/CompensatedSum.h"
-#include "../../species/Species.h"
+#include "data/GlobalDefs.h"
+#include "core/CompensatedSum.h"
+#include "physics/species/Species.h"
 
 namespace timmes {
 
@@ -36,26 +37,35 @@ struct TimmesNetworkSupport {
     static void SetupInitialFractions(SimConfig& config, const SpeciesManager& specs,
                                       std::vector<double>& x_out)
     {
-        x_out.assign(specs.count(), 1.0e-20);
+        x_out.assign(specs.count(), 0.0);
         double sum = 0.0;
         for (int i = 0; i < specs.count(); ++i) {
             std::string target = "x" + specs.get_name(i);
             std::transform(target.begin(), target.end(), target.begin(),
                            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            bool observed = false;
             for (const auto& entry : config.custom_params) {
                 std::string key = entry.first;
                 std::transform(key.begin(), key.end(), key.begin(),
                                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
                 if (key == target) {
-                    x_out[i] += entry.second;
+                    if (config.parameter_reads) {
+                        config.parameter_reads->observe(entry.first, 0.0, entry.second, true);
+                        config.parameter_reads->record_unit(entry.first, "1", "core-composition-input-before-normalization");
+                    }
+                    observed = true;
+                    x_out[i] = entry.second;
                     break;
                 }
             }
+            if (config.parameter_reads && !observed) {
+                config.parameter_reads->observe(target, 0.0, 0.0, false);
+                config.parameter_reads->record_unit(target, "1", "core-composition-input-before-normalization");
+            }
             sum += x_out[i];
         }
-        if (sum > 0.0) {
-            for (double& value : x_out) value /= sum;
-        }
+        if (!arch::state::normalize_composition(x_out.data(), specs.count(), 1, config.physics.burn.smallx))
+            throw std::invalid_argument("Initial network composition must contain finite nonnegative fractions with a positive sum");
     }
 
     ARCH_HEAVY_INLINE static void eval_rhs(const double* state, double rho, double eta,
@@ -88,36 +98,65 @@ struct TimmesNetworkSupport {
                                         double* denuc_dX = nullptr)
     {
         constexpr int N = Derived::NUM_SPECIES;
-        using AD = Dual<N>;
-        AD y[N];
-        AD dydt[N];
-        for (int i = 0; i < N; ++i) {
-            AD x = AD::variable(state[i], i);
-            y[i] = clamp_by_value(x / Derived::aion(i), 1.0e-30, 1.0);
-        }
-        // Timmes' dfdy_isotopes_* differentiates the abundance algebra and
-        // explicit equilibrium closures while holding screened base rates
-        // fixed.  In particular, it does not differentiate the screening
-        // factor through abar/zbar/z2bar.
-        Derived::template molar_rhs_frozen_screening<AD>(
-            y, rho, eta, state[N], dydt);
-        for (int i = 0; i < N; ++i) {
-            const AD dXdt = dydt[i] * Derived::aion(i);
-#pragma omp simd
+        // Timmes' dfdy_isotopes_* holds screened base rates fixed while
+        // differentiating abundance algebra and equilibrium closures. Reuse
+        // the already present generated molar Jacobian when the network has
+        // one; iso7 retains the generic Dual path below.
+        if constexpr (requires(const double* y, double* rhs, double* derivatives) {
+            Derived::molar_rhs_jacobian_frozen_screening(
+                y, rho, eta, state[N], rhs, derivatives);
+        }) {
+            double y[N], dydt[N], molar_jacobian[N * N];
+            double dy_dX[N];
             for (int j = 0; j < N; ++j) {
-                jac.set(i + 1, j + 1, dXdt.deriv[j]);
+                const double raw = state[j] / Derived::aion(j);
+                y[j] = clamp_by_value(raw, 1.0e-30, 1.0);
+                // clamp_by_value returns a constant only OUTSIDE the closed
+                // interval. At an exact endpoint its derivative remains 1/A.
+                dy_dX[j] = (raw < 1.0e-30 || raw > 1.0)
+                           ? 0.0 : 1.0 / Derived::aion(j);
             }
-        }
-
-        if (denuc_dX != nullptr) {
-            for (int j = 0; j < N; ++j) {
-                arch::math::CompensatedSum mass_sum;
-                for (int i = 0; i < N; ++i) {
-                    mass_sum.add(
-                        dydt[i].deriv[j] * Derived::energy_weight(i));
+            Derived::molar_rhs_jacobian_frozen_screening(
+                y, rho, eta, state[N], dydt, molar_jacobian);
+            for (int i = 0; i < N; ++i) {
+                const double aion = Derived::aion(i);
+                for (int j = 0; j < N; ++j)
+                    jac.set(i + 1, j + 1,
+                            aion * molar_jacobian[i * N + j] * dy_dX[j]);
+            }
+            if (denuc_dX != nullptr) {
+                for (int j = 0; j < N; ++j) {
+                    arch::math::CompensatedSum mass_sum;
+                    for (int i = 0; i < N; ++i)
+                        mass_sum.add((molar_jacobian[i * N + j] * dy_dX[j])
+                                     * Derived::energy_weight(i));
+                    denuc_dX[j] = Derived::ENERGY_CONVERSION
+                                * mass_sum.value();
                 }
-                denuc_dX[j] = Derived::ENERGY_CONVERSION
-                            * mass_sum.value();
+            }
+        } else {
+            using AD = Dual<N>;
+            AD y[N];
+            AD dydt[N];
+            for (int i = 0; i < N; ++i) {
+                AD x = AD::variable(state[i], i);
+                y[i] = clamp_by_value(x / Derived::aion(i), 1.0e-30, 1.0);
+            }
+            Derived::template molar_rhs_frozen_screening<AD>(
+                y, rho, eta, state[N], dydt);
+            for (int i = 0; i < N; ++i) {
+                const AD dXdt = dydt[i] * Derived::aion(i);
+#pragma omp simd
+                for (int j = 0; j < N; ++j)
+                    jac.set(i + 1, j + 1, dXdt.deriv[j]);
+            }
+            if (denuc_dX != nullptr) {
+                for (int j = 0; j < N; ++j) {
+                    arch::math::CompensatedSum mass_sum;
+                    for (int i = 0; i < N; ++i)
+                        mass_sum.add(dydt[i].deriv[j] * Derived::energy_weight(i));
+                    denuc_dX[j] = Derived::ENERGY_CONVERSION * mass_sum.value();
+                }
             }
         }
     }

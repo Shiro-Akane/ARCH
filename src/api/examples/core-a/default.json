@@ -1,0 +1,233 @@
+{
+  "data": {
+    "axes": [
+      {
+        "name": "x1",
+        "unit": null,
+        "values": [
+          0.125,
+          0.375,
+          0.625,
+          0.875
+        ]
+      }
+    ],
+    "dimension": 1,
+    "fields": [
+      {
+        "displayName": "Density",
+        "key": "DENS",
+        "max": 1,
+        "min": 0.125,
+        "unit": null,
+        "values": [
+          1,
+          1,
+          0.125,
+          0.125
+        ]
+      },
+      {
+        "displayName": "Pressure",
+        "key": "PRES",
+        "max": 1,
+        "min": 0.1,
+        "unit": null,
+        "values": [
+          1,
+          1,
+          0.1,
+          0.1
+        ]
+      },
+      {
+        "displayName": "Temperature",
+        "key": "TEMP",
+        "max": 2.5000000000000004,
+        "min": 2.0000000000000004,
+        "unit": null,
+        "values": [
+          2.5000000000000004,
+          2.5000000000000004,
+          2.0000000000000004,
+          2.0000000000000004
+        ]
+      },
+      {
+        "displayName": "X velocity",
+        "key": "VELX",
+        "max": 0,
+        "min": 0,
+        "unit": null,
+        "values": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "displayName": "Total energy density",
+        "key": "ENER",
+        "max": 2.5000000000000004,
+        "min": 0.25000000000000006,
+        "unit": null,
+        "values": [
+          2.5000000000000004,
+          2.5000000000000004,
+          0.25000000000000006,
+          0.25000000000000006
+        ]
+      },
+      {
+        "displayName": "Specific internal energy",
+        "key": "EINT",
+        "max": 2.5000000000000004,
+        "min": 2.0000000000000004,
+        "unit": null,
+        "values": [
+          2.5000000000000004,
+          2.5000000000000004,
+          2.0000000000000004,
+          2.0000000000000004
+        ]
+      }
+    ],
+    "kind": "line",
+    "sampling": {
+      "count": 4,
+      "kind": "uniform",
+      "order": "x1-fastest",
+      "position": "bin-center",
+      "shape": [
+        4
+      ],
+      "valueLocation": "init-sample"
+    }
+  },
+  "diagnostics": [
+    {
+      "code": "CORE_LOG",
+      "message": "[Info] Loaded 49 parameters from <memory>\n[Problem] Sod shock tube: x0=0.5, left=(1, 1), right=(0.125, 0.1)\n[EOS Dispatch] Resolving EOS Policy: ideal\n",
+      "severity": "info"
+    }
+  ],
+  "execution": {
+    "previewBackend": "cpu",
+    "scientificOutput": "not_created",
+    "simulationReadiness": "not_checked",
+    "timeStepping": "not_executed"
+  },
+  "graphicalBindings": {
+    "items": [
+      {
+        "axis": "x1",
+        "clamping": "none",
+        "coordinate": 0.5,
+        "editable": true,
+        "id": "Sod.x_pos",
+        "invalidBehavior": "retain-input-and-report",
+        "kind": "axis-position",
+        "max": 1,
+        "maxInclusive": false,
+        "min": 0,
+        "minInclusive": false,
+        "parameterKey": "x_pos"
+      }
+    ],
+    "version": "1"
+  },
+  "identity": {
+    "caseId": "Sod",
+    "configRevision": "0db9a83c908d1a84072425a71d3a050e1d6989feeca8a6badef0e682d702ca78",
+    "requestId": "core-a-default"
+  },
+  "kind": "initial-state-preview",
+  "parameterMetadata": {
+    "complete": false,
+    "coverage": "observed-case-setup-reads",
+    "parameters": [
+      {
+        "constraints": {
+          "max": 1,
+          "maxInclusive": false,
+          "min": 0,
+          "minInclusive": false
+        },
+        "defaultValue": 0.5,
+        "description": null,
+        "diagnostics": [],
+        "effectiveValue": 0.5,
+        "explicitValue": null,
+        "key": "x_pos",
+        "sourceReason": "missing-key",
+        "type": "float",
+        "unit": null,
+        "valueSource": "default"
+      }
+    ],
+    "version": "1"
+  },
+  "schemaVersion": "1.0",
+  "stage": "complete",
+  "state": {
+    "amr": {
+      "actualHierarchy": null,
+      "derefineThreshold": 0.2,
+      "effectiveMaxBlocks": 32,
+      "enabled": false,
+      "indicatorEvaluation": "not_executed",
+      "initialRefinement": "not_executed",
+      "maxBlocks": 32,
+      "maxLevel": 0,
+      "minLevel": 0,
+      "parsedIndicators": [
+        "DENS"
+      ],
+      "refineThreshold": 0.8,
+      "regridInterval": 2,
+      "requestedIndicators": "DENS",
+      "status": "configured"
+    },
+    "computeBackendRequested": "cpu",
+    "configuration": "parsed",
+    "eos": {
+      "componentTablePath": "",
+      "configuredGamma": 1.4,
+      "loadedTablePath": null,
+      "requested": "ideal",
+      "resolved": "ideal",
+      "sourceFingerprint": null,
+      "status": "ready",
+      "tablePath": ""
+    },
+    "grid": {
+      "axes": [
+        {
+          "activeCellsPerBlock": 16,
+          "coordinateSpacing": 0.0078125,
+          "lowerBoundary": "outflow",
+          "max": 1,
+          "min": 0,
+          "name": "x1",
+          "rootBlocks": 8,
+          "rootCells": 128,
+          "unit": null,
+          "upperBoundary": "outflow"
+        }
+      ],
+      "dimension": 1,
+      "geometry": "cartesian",
+      "hierarchy": "not_constructed",
+      "status": "configured"
+    },
+    "setup": "ready",
+    "species": [
+      {
+        "index": 0,
+        "name": "SodGas"
+      }
+    ]
+  },
+  "status": "ok"
+}

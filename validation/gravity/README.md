@@ -1,9 +1,17 @@
-# Constant external gravity
+# Gravity verification
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-These tests apply a prescribed gravitational acceleration; they do not solve
+The [P2 CPU Poisson record](results/p2-20260922/README.md) covers the standalone
+uniform-grid field solver: periodic/Dirichlet analytic convergence, weak density
+contrast, CGS scale invariance and failure handling. That P2 record alone does not establish the later production or GPU route.
+Its fixed numerical decisions are recorded in the
+[P2 contract](../../docs/development/P2PoissonMultigrid.zh-CN.md).
+
+## Constant external gravity
+
+The external-source tests below apply a prescribed acceleration; they do not solve
 for the gravity produced by the fluid itself. The force should change momentum
 and energy by the expected amounts without changing total mass. Coupled cases
 check that this balance survives mesh refinement and species diffusion.
@@ -124,3 +132,43 @@ These data files support reproduction and independent review; they are not setup
 - [metrics.csv (CSV)](metrics.csv)
 
 </details>
+
+## Production self-gravity
+
+`gravity_type=self` runs composite-AMR Poisson solves on CPU and CUDA for Cartesian
+periodic 1D–3D and isolated 3D domains. Tested isolated spherical/cylindrical
+1D and full-azimuth 2D polar and 3D cylindrical/spherical domains, including
+origin, axis and pole joins, also run on both backends. Hydro, burning and
+thermal-diffusion combinations have been checked. CPU manufactured solutions,
+independent boundary and Gauss checks, AMR coupling and restart are recorded in
+the [P11/P12 record](results/p11-p12-20260923/README.md); CUDA analytic radial
+checks, same-input curved four-module parity, bidirectional restart and local
+performance are in the [P13 record](results/p13-20260924/README.md). Partial
+azimuth domains, external mass and a Jeans-specific refinement indicator remain
+unsupported for self-gravity. Start with [GravityBox](../../simulation/GravityBox/README.md)
+for reusable inputs. The [P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
+records numerical, coupling, restart and device checks. The [P8–P10 1D radial record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The earlier
+[P3/P4 record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
+periodic scope.
+
+`run_self_gravity.py --arch <ARCH> --output <new directory>` checks Jeans waves,
+energy, time order, dynamic AMR, restart, isolated boundaries, radial 1D
+field/domain checks and selected coupling (numpy/h5py). `--quick` is the existing CTest analytic/rejection subset.
+`arch_composite_poisson 3` checks three-dimensional uniform and composite
+manufactured solutions; `contract` checks failure and hierarchy invariants.
+`check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`
+qualifies actual device gravity; `--benchmark-only` measures representative local workloads.
+
+The [2D/3D four-module example](../../simulation/SNIaCoupled/README.md)
+checks Hydro/self-gravity/burn/thermal-diffusion execution with AMR. Its original
+[Cartesian CPU/CUDA smoke record](results/snia2d-20260923/README.md),
+[P11/P12 CPU curved record](results/p11-p12-20260923/README.md) and
+[P13 curved CUDA record](results/p13-20260924/README.md) do not constitute
+analytic SN Ia validation. The P11/P12 record also reports a controlled comparison
+against the user-provided FLASH 4.8 archive's Cellular case in 2D and 3D matched controls.
+The archive contains local initialization extensions. The current
+[comparison assessment](flash/O5OptimizationReport.zh-CN.md) records its
+fixed-temperature burn, optional face-EOS work, workload differences and
+remaining qualification gaps. The representative four-module route is
+HLLC/MUSCL/MC + RK2 + RKL2 thermal + BD/DenseLU + MG + AMR with
+Helmholtz/aprox13 and NSE disabled; this is not an all-policy coupling matrix.

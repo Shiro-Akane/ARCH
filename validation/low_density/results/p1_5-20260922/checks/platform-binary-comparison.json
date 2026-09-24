@@ -1,0 +1,5 @@
+{
+  "executables_compared": 77,
+  "changed_executables": [],
+  "note": "Final Windows guard preserves import-library linking; Linux executable identity comparison after rebuild."
+}

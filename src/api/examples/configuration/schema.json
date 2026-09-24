@@ -1,0 +1,3290 @@
+{
+  "constraintsComplete": false,
+  "coordinateSystems": [
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "x",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "x",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx2",
+          "displayName": "x2",
+          "key": "x2",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "x2",
+          "unit": null,
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx3",
+          "displayName": "x3",
+          "key": "x3",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "x3",
+          "unit": null,
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 1,
+      "disabledBlockCount": 0,
+      "geometry": "cartesian",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "x",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "x",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx2",
+          "displayName": "y",
+          "key": "x2",
+          "kind": "length",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "y",
+          "unit": "cm",
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx3",
+          "displayName": "x3",
+          "key": "x3",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "x3",
+          "unit": null,
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 2,
+      "disabledBlockCount": 0,
+      "geometry": "cartesian",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "x",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "x",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx2",
+          "displayName": "y",
+          "key": "x2",
+          "kind": "length",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "y",
+          "unit": "cm",
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx3",
+          "displayName": "z",
+          "key": "x3",
+          "kind": "length",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "z",
+          "unit": "cm",
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 3,
+      "disabledBlockCount": 0,
+      "geometry": "cartesian",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "r",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "r_cy",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx2",
+          "displayName": "x2",
+          "key": "x2",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "x2",
+          "unit": null,
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx3",
+          "displayName": "x3",
+          "key": "x3",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "x3",
+          "unit": null,
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 1,
+      "disabledBlockCount": 0,
+      "geometry": "cylindrical",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "r",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "r_cy",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx2",
+          "displayName": "phi",
+          "key": "x2",
+          "kind": "angle",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "phi_cy",
+          "unit": "rad",
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx3",
+          "displayName": "x3",
+          "key": "x3",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "x3",
+          "unit": null,
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 2,
+      "disabledBlockCount": 0,
+      "geometry": "cylindrical",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "r",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "r_cy",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx2",
+          "displayName": "z",
+          "key": "x2",
+          "kind": "length",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "z_cy",
+          "unit": "cm",
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx3",
+          "displayName": "phi",
+          "key": "x3",
+          "kind": "angle",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "phi_cy",
+          "unit": "rad",
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 3,
+      "disabledBlockCount": 0,
+      "geometry": "cylindrical",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "r",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "r",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx2",
+          "displayName": "x2",
+          "key": "x2",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "x2",
+          "unit": null,
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx3",
+          "displayName": "x3",
+          "key": "x3",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "x3",
+          "unit": null,
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 1,
+      "disabledBlockCount": 0,
+      "geometry": "spherical",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "r",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "r",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx2",
+          "displayName": "phi",
+          "key": "x2",
+          "kind": "angle",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "phi",
+          "unit": "rad",
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx3",
+          "displayName": "x3",
+          "key": "x3",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "x3",
+          "unit": null,
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 2,
+      "disabledBlockCount": 0,
+      "geometry": "spherical",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx1",
+          "displayName": "r",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "r",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx2",
+          "displayName": "theta",
+          "key": "x2",
+          "kind": "angle",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "theta",
+          "unit": "rad",
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx3",
+          "displayName": "phi",
+          "key": "x3",
+          "kind": "angle",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "phi",
+          "unit": "rad",
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 3,
+      "disabledBlockCount": 0,
+      "geometry": "spherical",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    }
+  ],
+  "coverage": "standard-runtime-inputs",
+  "crossConstraints": [
+    "x3 enabled requires x2 enabled",
+    "active axis max > min",
+    "0 <= lrefinemin <= lrefinemax <= 15",
+    "0 <= derefine_threshold < refine_threshold <= 1",
+    "max_eint >= min_eint",
+    "Helmholtz diffusion forbids explicit alpha_therm/nu_visc/D_spec"
+  ],
+  "customParametersComplete": false,
+  "fieldUnits": [
+    {
+      "cgs": "g/cm^3",
+      "code": "",
+      "key": "DENS"
+    },
+    {
+      "cgs": "K",
+      "code": "",
+      "key": "TEMP"
+    },
+    {
+      "cgs": "erg/cm^3",
+      "code": "",
+      "key": "PRES"
+    },
+    {
+      "cgs": "erg/cm^3",
+      "code": "",
+      "key": "ENER"
+    },
+    {
+      "cgs": "erg/g",
+      "code": "",
+      "key": "EINT"
+    },
+    {
+      "cgs": "cm/s",
+      "code": "",
+      "key": "VELX"
+    },
+    {
+      "cgs": "cm/s",
+      "code": "",
+      "key": "VELY"
+    },
+    {
+      "cgs": "cm/s",
+      "code": "",
+      "key": "VELZ"
+    }
+  ],
+  "kind": "configuration-schema",
+  "parameters": [
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "cartesian",
+      "group": "Grid",
+      "key": "geometry",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "cartesian"
+            ],
+            "displayName": "cartesian",
+            "value": "cartesian"
+          },
+          {
+            "acceptedNames": [
+              "cylindrical"
+            ],
+            "displayName": "cylindrical",
+            "value": "cylindrical"
+          },
+          {
+            "acceptedNames": [
+              "spherical"
+            ],
+            "displayName": "spherical",
+            "value": "spherical"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Coordinate system used to interpret the three logical axes.",
+        "displayName": "Coordinate system",
+        "subgroup": "Grid"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "min": 1,
+        "minInclusive": true,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1,
+      "group": "Grid",
+      "key": "nblockx1",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Root block count. Axis 1 must be positive; axes 2 and 3 use zero to disable the axis. Any positive integer enables it.",
+        "displayName": "Axis 1 blocks",
+        "subgroup": "Grid"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "min": 0,
+        "minInclusive": true,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1,
+      "group": "Grid",
+      "key": "nblockx2",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Root block count. Axis 1 must be positive; axes 2 and 3 use zero to disable the axis. Any positive integer enables it.",
+        "displayName": "Axis 2 blocks",
+        "subgroup": "Grid"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "min": 0,
+        "minInclusive": true,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1,
+      "group": "Grid",
+      "key": "nblockx3",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Root block count. Axis 1 must be positive; axes 2 and 3 use zero to disable the axis. Any positive integer enables it.",
+        "displayName": "Axis 3 blocks",
+        "subgroup": "Grid"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 2000,
+      "group": "Grid",
+      "key": "max_blocks",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Positive capacity of the simulation block pool; insufficient capacity rejects refinement.",
+        "displayName": "Block pool capacity",
+        "subgroup": "AMR"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "0.0",
+      "group": "Grid",
+      "key": "x1_min",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 1 minimum",
+        "subgroup": "Grid"
+      },
+      "type": "expression",
+      "units": {
+        "axis": "x1",
+        "status": "coordinate-dependent",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "1.0",
+      "group": "Grid",
+      "key": "x1_max",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 1 maximum",
+        "subgroup": "Grid"
+      },
+      "type": "expression",
+      "units": {
+        "axis": "x1",
+        "status": "coordinate-dependent",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "0.0",
+      "group": "Grid",
+      "key": "x2_min",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 2 minimum",
+        "subgroup": "Grid"
+      },
+      "type": "expression",
+      "units": {
+        "axis": "x2",
+        "status": "coordinate-dependent",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "1.0",
+      "group": "Grid",
+      "key": "x2_max",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 2 maximum",
+        "subgroup": "Grid"
+      },
+      "type": "expression",
+      "units": {
+        "axis": "x2",
+        "status": "coordinate-dependent",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "0.0",
+      "group": "Grid",
+      "key": "x3_min",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 3 minimum",
+        "subgroup": "Grid"
+      },
+      "type": "expression",
+      "units": {
+        "axis": "x3",
+        "status": "coordinate-dependent",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "1.0",
+      "group": "Grid",
+      "key": "x3_max",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm.",
+        "displayName": "Axis 3 maximum",
+        "subgroup": "Grid"
+      },
+      "type": "expression",
+      "units": {
+        "axis": "x3",
+        "status": "coordinate-dependent",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "outflow",
+      "group": "Grid",
+      "key": "x1l_boundary_type",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "outflow"
+            ],
+            "displayName": "Outflow",
+            "value": "outflow"
+          },
+          {
+            "acceptedNames": [
+              "periodic"
+            ],
+            "displayName": "Periodic",
+            "value": "periodic"
+          },
+          {
+            "acceptedNames": [
+              "reflect",
+              "reflecting"
+            ],
+            "displayName": "Reflecting",
+            "value": "reflect"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the lower end of this active axis.",
+        "displayName": "Axis 1 lower boundary",
+        "subgroup": "Grid"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "outflow",
+      "group": "Grid",
+      "key": "x1r_boundary_type",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "outflow"
+            ],
+            "displayName": "Outflow",
+            "value": "outflow"
+          },
+          {
+            "acceptedNames": [
+              "periodic"
+            ],
+            "displayName": "Periodic",
+            "value": "periodic"
+          },
+          {
+            "acceptedNames": [
+              "reflect",
+              "reflecting"
+            ],
+            "displayName": "Reflecting",
+            "value": "reflect"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the upper end of this active axis.",
+        "displayName": "Axis 1 upper boundary",
+        "subgroup": "Grid"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "outflow",
+      "group": "Grid",
+      "key": "x2l_boundary_type",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "outflow"
+            ],
+            "displayName": "Outflow",
+            "value": "outflow"
+          },
+          {
+            "acceptedNames": [
+              "periodic"
+            ],
+            "displayName": "Periodic",
+            "value": "periodic"
+          },
+          {
+            "acceptedNames": [
+              "reflect",
+              "reflecting"
+            ],
+            "displayName": "Reflecting",
+            "value": "reflect"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the lower end of this active axis.",
+        "displayName": "Axis 2 lower boundary",
+        "subgroup": "Grid"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "outflow",
+      "group": "Grid",
+      "key": "x2r_boundary_type",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "outflow"
+            ],
+            "displayName": "Outflow",
+            "value": "outflow"
+          },
+          {
+            "acceptedNames": [
+              "periodic"
+            ],
+            "displayName": "Periodic",
+            "value": "periodic"
+          },
+          {
+            "acceptedNames": [
+              "reflect",
+              "reflecting"
+            ],
+            "displayName": "Reflecting",
+            "value": "reflect"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the upper end of this active axis.",
+        "displayName": "Axis 2 upper boundary",
+        "subgroup": "Grid"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "outflow",
+      "group": "Grid",
+      "key": "x3l_boundary_type",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "outflow"
+            ],
+            "displayName": "Outflow",
+            "value": "outflow"
+          },
+          {
+            "acceptedNames": [
+              "periodic"
+            ],
+            "displayName": "Periodic",
+            "value": "periodic"
+          },
+          {
+            "acceptedNames": [
+              "reflect",
+              "reflecting"
+            ],
+            "displayName": "Reflecting",
+            "value": "reflect"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the lower end of this active axis.",
+        "displayName": "Axis 3 lower boundary",
+        "subgroup": "Grid"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "outflow",
+      "group": "Grid",
+      "key": "x3r_boundary_type",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "outflow"
+            ],
+            "displayName": "Outflow",
+            "value": "outflow"
+          },
+          {
+            "acceptedNames": [
+              "periodic"
+            ],
+            "displayName": "Periodic",
+            "value": "periodic"
+          },
+          {
+            "acceptedNames": [
+              "reflect",
+              "reflecting"
+            ],
+            "displayName": "Reflecting",
+            "value": "reflect"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Boundary behavior at the upper end of this active axis.",
+        "displayName": "Axis 3 upper boundary",
+        "subgroup": "Grid"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "SW",
+      "group": "Runtime",
+      "key": "solver",
+      "options": {
+        "availability": "registration-only; build and runtime requirements not checked",
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "vl",
+              "vanleer"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "vl",
+            "value": "vl"
+          },
+          {
+            "acceptedNames": [
+              "sw",
+              "stegerwarming"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "sw",
+            "value": "sw"
+          },
+          {
+            "acceptedNames": [
+              "roe"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "roe",
+            "value": "roe"
+          },
+          {
+            "acceptedNames": [
+              "hll"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "hll",
+            "value": "hll"
+          },
+          {
+            "acceptedNames": [
+              "hllc"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "hllc",
+            "value": "hllc"
+          }
+        ],
+        "unknownBehavior": "core-fallback"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Numerical flux used to advance the fluid state.",
+        "displayName": "Flux solver",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-16,
+      "group": "Runtime",
+      "key": "dt_init",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Initial macro-step cap when burning is enabled, in seconds.",
+        "displayName": "Initial burning step",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-20,
+      "group": "Runtime",
+      "key": "dt_min",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Abort below this positive macro-step size, in seconds.",
+        "displayName": "Minimum time step",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1.2,
+      "group": "Runtime",
+      "key": "tstep_change_factor",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Maximum growth factor between consecutive macro steps.",
+        "displayName": "Time-step growth",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.8,
+      "group": "Runtime",
+      "key": "cfl",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Safety factor for the fluid time step.",
+        "displayName": "CFL factor",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "minmod",
+      "group": "Runtime",
+      "key": "limiter",
+      "options": {
+        "availability": "registration-only; build and runtime requirements not checked",
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "minmod"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "minmod",
+            "value": "minmod"
+          },
+          {
+            "acceptedNames": [
+              "mc"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "mc",
+            "value": "mc"
+          },
+          {
+            "acceptedNames": [
+              "superbee"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "superbee",
+            "value": "superbee"
+          },
+          {
+            "acceptedNames": [
+              "vanleer"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "vanleer",
+            "value": "vanleer"
+          }
+        ],
+        "unknownBehavior": "core-fallback"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Limits reconstructed slopes near sharp changes.",
+        "displayName": "Slope limiter",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "pcm",
+      "group": "Runtime",
+      "key": "reconstruct",
+      "options": {
+        "availability": "registration-only; build and runtime requirements not checked",
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "pcm",
+              "donor_cell"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "pcm",
+            "value": "pcm"
+          },
+          {
+            "acceptedNames": [
+              "plm",
+              "muscl"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "plm",
+            "value": "plm"
+          },
+          {
+            "acceptedNames": [
+              "ppm"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "ppm",
+            "value": "ppm"
+          }
+        ],
+        "unknownBehavior": "core-fallback"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Reconstructs the state at cell faces.",
+        "displayName": "Reconstruction",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": true,
+      "group": "Runtime",
+      "key": "EntropyFix",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Enables the solver entropy correction where supported.",
+        "displayName": "Entropy correction",
+        "subgroup": "Runtime"
+      },
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "EntropyFix=true",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.1,
+      "group": "Runtime",
+      "key": "EntropyFixCoefficient",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Strength of the correction when EntropyFix is enabled.",
+        "displayName": "Entropy correction strength",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "min": 0,
+        "minInclusive": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-12,
+      "group": "Runtime",
+      "key": "sml_rho",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Minimum permitted density used by numerical state repairs.",
+        "displayName": "Density floor",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "min": 0,
+        "minInclusive": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-10,
+      "group": "Runtime",
+      "key": "min_eint",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Lower bound on specific internal energy.",
+        "displayName": "Internal energy floor",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/g"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e+21,
+      "group": "Runtime",
+      "key": "max_eint",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Upper bound on specific internal energy.",
+        "displayName": "Internal energy ceiling",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/g"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "cpu",
+      "group": "Runtime",
+      "key": "compute_backend",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "cpu"
+            ],
+            "displayName": "cpu",
+            "value": "cpu"
+          },
+          {
+            "acceptedNames": [
+              "cuda"
+            ],
+            "displayName": "cuda",
+            "value": "cuda"
+          },
+          {
+            "acceptedNames": [
+              "auto"
+            ],
+            "displayName": "auto",
+            "value": "auto"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Requested backend for simulation. Initial previews always use CPU.",
+        "displayName": "Compute backend",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "compute_backend=cuda or auto; no device probing in configuration inspection",
+      "constraints": {
+        "complete": false,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0,
+      "group": "Runtime",
+      "key": "cuda_device",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Device index for a CUDA simulation; configuration inspection does not probe devices.",
+        "displayName": "CUDA device",
+        "subgroup": "Runtime"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "ideal",
+      "group": "EOS",
+      "key": "eos_type",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "ideal"
+            ],
+            "displayName": "ideal",
+            "value": "ideal"
+          },
+          {
+            "acceptedNames": [
+              "helmholtz"
+            ],
+            "displayName": "helmholtz",
+            "value": "helmholtz"
+          },
+          {
+            "acceptedNames": [
+              "tabular"
+            ],
+            "displayName": "tabular",
+            "value": "tabular"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Converts between density, pressure, temperature and internal energy.",
+        "displayName": "Equation of state",
+        "subgroup": "EOS"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "eos_type=helmholtz or tabular",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "",
+      "group": "EOS",
+      "key": "eos_table_path",
+      "options": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "presentation": {
+        "description": "Main table used by Helmholtz or Tabular. Relative paths use the worker working directory.",
+        "displayName": "Main EOS table",
+        "subgroup": "EOS"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "eos_type=tabular; need depends on table policy",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "",
+      "group": "EOS",
+      "key": "eos_helm_table_path",
+      "options": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "presentation": {
+        "description": "Optional electron and positron table for Tabular tables that need this component. This is not an alias of the main table.",
+        "displayName": "Supplementary EOS table",
+        "subgroup": "EOS"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1.4,
+      "group": "EOS",
+      "key": "gamma",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Global ideal-gas gamma; a case can supply species-specific values.",
+        "displayName": "Heat capacity ratio",
+        "subgroup": "EOS"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": false,
+      "group": "Network",
+      "key": "use_burn",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Enables reaction evolution; case composition setup can still need the selected network when disabled.",
+        "displayName": "Enable reactions",
+        "subgroup": "Network"
+      },
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "aprox19",
+      "group": "Network",
+      "key": "network_name",
+      "options": {
+        "availability": "registration-only; build and runtime requirements not checked",
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "none"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "none",
+            "value": "none"
+          },
+          {
+            "acceptedNames": [
+              "aprox13"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "aprox13",
+            "value": "aprox13"
+          },
+          {
+            "acceptedNames": [
+              "aprox19"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "aprox19",
+            "value": "aprox19"
+          },
+          {
+            "acceptedNames": [
+              "aprox21"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "aprox21",
+            "value": "aprox21"
+          },
+          {
+            "acceptedNames": [
+              "iso7"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "iso7",
+            "value": "iso7"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Registered network used for species and reaction data.",
+        "displayName": "Reaction network",
+        "subgroup": "Network"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1000000000,
+      "group": "Network",
+      "key": "nuclearTempMin",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Minimum temperature at which reaction evolution is attempted.",
+        "displayName": "Reaction temperature threshold",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-10,
+      "group": "Network",
+      "key": "nuclearDensMin",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Minimum density at which reaction evolution is attempted.",
+        "displayName": "Reaction density threshold",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 100000,
+      "group": "Network",
+      "key": "smallt",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Temperature floor used by the reaction solver.",
+        "displayName": "Temperature floor",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-20,
+      "group": "Network",
+      "key": "smallx",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Small abundance cutoff used by the reaction solver.",
+        "displayName": "Abundance floor",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e+30,
+      "group": "Network",
+      "key": "enucDtFactor",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Controls the reaction energy based time step restriction.",
+        "displayName": "Energy time step factor",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "true",
+      "group": "Network",
+      "key": "use_nse",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "true"
+            ],
+            "displayName": "true",
+            "value": "true"
+          },
+          {
+            "acceptedNames": [
+              "false"
+            ],
+            "displayName": "false",
+            "value": "false"
+          },
+          {
+            "acceptedNames": [
+              "auto"
+            ],
+            "displayName": "auto",
+            "value": "auto"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Enables, disables or automatically selects the nuclear equilibrium shortcut.",
+        "displayName": "Equilibrium mode",
+        "subgroup": "Network"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "min": 0,
+        "minInclusive": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 4500000000,
+      "group": "Network",
+      "key": "nseTempThreshold",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Temperature threshold for the equilibrium shortcut.",
+        "displayName": "Equilibrium temperature threshold",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "min": 0,
+        "minInclusive": true,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1000000,
+      "group": "Network",
+      "key": "nseDensThreshold",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Density threshold for the equilibrium shortcut.",
+        "displayName": "Equilibrium density threshold",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "BE_NR",
+      "group": "Network",
+      "key": "ode_solver",
+      "options": {
+        "availability": "registration-only; build and runtime requirements not checked",
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "none"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "none",
+            "value": "none"
+          },
+          {
+            "acceptedNames": [
+              "be_nr",
+              "be-nr"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "Backward Euler (Newton)",
+            "value": "be_nr"
+          },
+          {
+            "acceptedNames": [
+              "bd"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "Bader-Deuflhard (BD)",
+            "value": "bd"
+          },
+          {
+            "acceptedNames": [
+              "ros4"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "ROS4",
+            "value": "ros4"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "ODE integration method for reactions.",
+        "displayName": "Reaction integrator",
+        "subgroup": "Network"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "Auto",
+      "group": "Network",
+      "key": "linear_solver",
+      "options": {
+        "availability": "registration-only; build and runtime requirements not checked",
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "none"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "none",
+            "value": "none"
+          },
+          {
+            "acceptedNames": [
+              "denselu",
+              "dense_lu"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "denselu",
+            "value": "denselu"
+          },
+          {
+            "acceptedNames": [
+              "sparseklu",
+              "sparse_klu"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": false,
+            "displayName": "sparseklu",
+            "value": "sparseklu"
+          },
+          {
+            "acceptedNames": [
+              "cudss",
+              "cu_dss"
+            ],
+            "cpuSupported": false,
+            "cudaSupported": false,
+            "displayName": "cudss",
+            "value": "cudss"
+          },
+          {
+            "acceptedNames": [
+              "auto"
+            ],
+            "displayName": "Automatic",
+            "value": "auto"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Linear system solver used by implicit reaction integration.",
+        "displayName": "Linear solver",
+        "subgroup": "Network"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.0001,
+      "group": "Network",
+      "key": "ode_rtol",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Relative component error tolerance for reaction integration.",
+        "displayName": "Relative tolerance",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-08,
+      "group": "Network",
+      "key": "ode_atol",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Absolute component error tolerance for the mixed temperature and abundance state; there is no single scalar unit.",
+        "displayName": "Absolute tolerance",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "reason": "Absolute tolerance for temperature and abundance components; no single scalar unit.",
+        "status": "mixed-state",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 50,
+      "group": "Network",
+      "key": "ode_max_newton_iter",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Iteration limit for an implicit reaction substep.",
+        "displayName": "Maximum Newton iterations",
+        "subgroup": "Network"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 10000,
+      "group": "Network",
+      "key": "ode_max_substeps",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Maximum substeps allowed in one reaction advance.",
+        "displayName": "Maximum reaction substeps",
+        "subgroup": "Network"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.9,
+      "group": "Network",
+      "key": "ode_dt_safe_fac",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Safety factor used when choosing the next reaction substep.",
+        "displayName": "Reaction step safety factor",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 2,
+      "group": "Network",
+      "key": "ode_dt_fac_max",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Upper multiplier for reaction substep adaptation.",
+        "displayName": "Maximum step growth",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.1,
+      "group": "Network",
+      "key": "ode_dt_fac_min",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Lower multiplier for reaction substep adaptation.",
+        "displayName": "Minimum step shrink factor",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.001,
+      "group": "Network",
+      "key": "ode_initial_dt_frac",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Fraction of the requested reaction interval used for the first substep.",
+        "displayName": "Initial substep fraction",
+        "subgroup": "Network"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": false,
+      "group": "Diffusion",
+      "key": "use_diffusion",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Enables diffusion evolution and reveals diffusion settings.",
+        "displayName": "Enable diffusion",
+        "subgroup": "Diffusion"
+      },
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_diffusion=true",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "RKL2",
+      "group": "Diffusion",
+      "key": "diff_integrator",
+      "options": {
+        "availability": "registration-only; build and runtime requirements not checked",
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "none"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "none",
+            "value": "none"
+          },
+          {
+            "acceptedNames": [
+              "rkl1"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "rkl1",
+            "value": "rkl1"
+          },
+          {
+            "acceptedNames": [
+              "rkl2"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "rkl2",
+            "value": "rkl2"
+          }
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Time integration method used for diffusion.",
+        "displayName": "Diffusion integrator",
+        "subgroup": "Diffusion"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_diffusion=true",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.8,
+      "group": "Diffusion",
+      "key": "diff_cfl",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Safety factor used by diffusion time step estimates.",
+        "displayName": "Diffusion CFL factor",
+        "subgroup": "Diffusion"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_diffusion=true",
+      "constraints": {
+        "complete": false,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 256,
+      "group": "Diffusion",
+      "key": "diff_max_stages",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Stage limit for diffusion integration.",
+        "displayName": "Maximum diffusion stages",
+        "subgroup": "Diffusion"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "use_diffusion=true",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": false,
+      "group": "Diffusion",
+      "key": "use_thermal_diff",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Enables heat transport. Constant thermal diffusivity is entered only on the constant coefficient path.",
+        "displayName": "Thermal diffusion",
+        "subgroup": "Diffusion"
+      },
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_diffusion=true",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": false,
+      "group": "Diffusion",
+      "key": "use_viscous_diff",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Enables momentum diffusion. The stellar model currently supplies no viscosity.",
+        "displayName": "Viscous diffusion",
+        "subgroup": "Diffusion"
+      },
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_diffusion=true",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": false,
+      "group": "Diffusion",
+      "key": "use_species_diff",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Enables composition diffusion. The stellar model currently supplies no species diffusivity.",
+        "displayName": "Species diffusion",
+        "subgroup": "Diffusion"
+      },
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "use_diffusion=true; explicit coefficient forbidden with Helmholtz",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0,
+      "group": "Diffusion",
+      "key": "nu_visc",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Constant kinematic viscosity on the constant coefficient path.",
+        "displayName": "Kinematic viscosity",
+        "enabledBy": "use_viscous_diff",
+        "subgroup": "Diffusion"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      }
+    },
+    {
+      "applicability": "use_diffusion=true; explicit coefficient forbidden with Helmholtz",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0,
+      "group": "Diffusion",
+      "key": "alpha_therm",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Constant thermal diffusivity, not thermal conductivity.",
+        "displayName": "Thermal diffusivity",
+        "enabledBy": "use_thermal_diff",
+        "subgroup": "Diffusion"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      }
+    },
+    {
+      "applicability": "use_diffusion=true; explicit coefficient forbidden with Helmholtz",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0,
+      "group": "Diffusion",
+      "key": "D_spec",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Constant composition diffusivity on the constant coefficient path.",
+        "displayName": "Species diffusivity",
+        "enabledBy": "use_species_diff",
+        "subgroup": "Diffusion"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "none",
+      "group": "Gravity",
+      "key": "gravity_type",
+      "options": {
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "none"
+            ],
+            "displayName": "none",
+            "value": "none"
+          },
+          {
+            "acceptedNames": [
+              "external"
+            ],
+            "displayName": "external",
+            "value": "external"
+          },
+          {
+            "acceptedNames": [
+              "self"
+            ],
+            "displayName": "self",
+            "value": "self"
+          }
+        ],
+        "unavailableReason": "Self gravity is not implemented.",
+        "unavailableValues": [
+          "self"
+        ],
+        "unknownBehavior": "error"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Selects no gravity or an external acceleration. Self gravity is not implemented.",
+        "displayName": "Gravity model",
+        "subgroup": "Gravity"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "gravity_type=external",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "0.0",
+      "group": "Gravity",
+      "key": "gravity_g_x",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Constant acceleration component used by external gravity.",
+        "displayName": "External x acceleration",
+        "subgroup": "Gravity"
+      },
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      }
+    },
+    {
+      "applicability": "gravity_type=external",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "0.0",
+      "group": "Gravity",
+      "key": "gravity_g_y",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Constant acceleration component used by external gravity.",
+        "displayName": "External y acceleration",
+        "subgroup": "Gravity"
+      },
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      }
+    },
+    {
+      "applicability": "gravity_type=external",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "0.0",
+      "group": "Gravity",
+      "key": "gravity_g_z",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Constant acceleration component used by external gravity.",
+        "displayName": "External z acceleration",
+        "subgroup": "Gravity"
+      },
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      }
+    },
+    {
+      "applicability": "gravity_type=self; unavailable in this build",
+      "constraints": {
+        "complete": false,
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 6.6743e-08,
+      "group": "Gravity",
+      "key": "gravity_G",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Gravitational constant reserved for self gravity; that module is not implemented.",
+        "displayName": "Gravitational constant",
+        "subgroup": "Gravity"
+      },
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm^3/(g*s^2)"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "max": 15,
+        "maxInclusive": true,
+        "min": 0,
+        "minInclusive": true,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0,
+      "group": "Grid",
+      "key": "lrefinemin",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Prevents coarsening below this level; it does not force uniform initial refinement.",
+        "displayName": "Minimum refinement level",
+        "subgroup": "AMR"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "max": 15,
+        "maxInclusive": true,
+        "min": 0,
+        "minInclusive": true,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0,
+      "group": "Grid",
+      "key": "lrefinemax",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Highest allowed refinement level; each active direction is halved per level.",
+        "displayName": "Maximum refinement level",
+        "subgroup": "AMR"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "min": 1,
+        "minInclusive": true,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 2,
+      "group": "Grid",
+      "key": "regrid_interval",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Number of simulation steps between regrids. Must be positive; it is not an initial preview iteration count.",
+        "displayName": "Regrid interval",
+        "subgroup": "AMR"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "DENS",
+      "group": "Grid",
+      "key": "refine_var",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Fields used by the refinement indicators, separated by commas or plus signs; species names are resolved after Setup.",
+        "displayName": "Refinement fields",
+        "subgroup": "AMR"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "max": 1,
+        "maxInclusive": true,
+        "min": 0,
+        "minInclusive": true,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.8,
+      "group": "Grid",
+      "key": "refine_threshold",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Refines blocks when their indicator exceeds this threshold.",
+        "displayName": "Refinement threshold",
+        "subgroup": "AMR"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "max": 1,
+        "maxInclusive": true,
+        "min": 0,
+        "minInclusive": true,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0.2,
+      "group": "Grid",
+      "key": "derefine_threshold",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Coarsens eligible block families when their indicators fall below this threshold.",
+        "displayName": "Coarsening threshold",
+        "subgroup": "AMR"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 0,
+      "group": "Runtime",
+      "key": "tmax",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Requested simulation end time.",
+        "displayName": "End time",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": -1,
+      "group": "Runtime",
+      "key": "max_steps",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Stops after this many steps when positive; zero or -1 disables this limit.",
+        "displayName": "Step limit",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "data",
+      "group": "Runtime",
+      "key": "out_dir",
+      "options": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "output-directory",
+        "targetMayBeNew": true
+      },
+      "presentation": {
+        "description": "Directory for simulation output. Preview does not create it.",
+        "displayName": "Output directory",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "arch",
+      "group": "Runtime",
+      "key": "base_name",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Prefix for simulation output files.",
+        "displayName": "Output base name",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": -1,
+      "group": "Runtime",
+      "key": "plt_dt",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Writes plot output at this positive time interval; -1 disables this trigger.",
+        "displayName": "Plot time interval",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": -1,
+      "group": "Runtime",
+      "key": "plt_dstep",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Writes plot output every this many steps when positive; -1 disables this trigger.",
+        "displayName": "Plot step interval",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": -1,
+      "group": "Runtime",
+      "key": "chk_dt",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Writes recovery checkpoints at this positive time interval; -1 disables this trigger.",
+        "displayName": "Checkpoint time interval",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "storageMax": 2147483647,
+        "storageMin": -2147483648,
+        "syntax": "[+-]?[0-9]+"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": -1,
+      "group": "Runtime",
+      "key": "chk_dstep",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Writes recovery checkpoints every this many steps when positive; -1 disables this trigger.",
+        "displayName": "Checkpoint step interval",
+        "subgroup": "Runtime",
+        "toggle": {
+          "enabledValueRequired": true,
+          "enabledWhen": "value > 0",
+          "offValue": -1,
+          "preserveUneditedInput": true
+        }
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": false,
+      "group": "Runtime",
+      "key": "restart",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Loads a saved simulation state instead of creating initial conditions.",
+        "displayName": "Resume from checkpoint",
+        "subgroup": "Runtime"
+      },
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "restart=true",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "",
+      "group": "Runtime",
+      "key": "restart_file",
+      "options": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "presentation": {
+        "description": "Input checkpoint used when restart is enabled.",
+        "displayName": "Checkpoint file",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "ALL",
+      "group": "Runtime",
+      "key": "plt_variables",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Selects the fields written to plot output; ALL selects the default complete set.",
+        "displayName": "Plot fields",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": "RK2",
+      "group": "Runtime",
+      "key": "time_integrator",
+      "options": {
+        "availability": "registration-only; build and runtime requirements not checked",
+        "caseSensitive": false,
+        "choices": [
+          {
+            "acceptedNames": [
+              "euler",
+              "rk1"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "euler",
+            "value": "euler"
+          },
+          {
+            "acceptedNames": [
+              "rk2",
+              "ssprk2"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "RK2",
+            "value": "rk2"
+          },
+          {
+            "acceptedNames": [
+              "rk3",
+              "ssprk3"
+            ],
+            "cpuSupported": true,
+            "cudaSupported": true,
+            "displayName": "RK3",
+            "value": "rk3"
+          }
+        ],
+        "unknownBehavior": "core-fallback"
+      },
+      "path": null,
+      "presentation": {
+        "description": "Time stepping method for fluid evolution.",
+        "displayName": "Time integrator",
+        "subgroup": "Runtime"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      }
+    }
+  ],
+  "pathChecks": "local-host; no filesystem access in schema or inspection",
+  "schemaVersion": "1.0",
+  "standardParametersComplete": true,
+  "status": "ok",
+  "unitSystem": "cgs",
+  "version": "2"
+}
