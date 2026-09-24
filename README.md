@@ -29,10 +29,12 @@ To run your very first simulation, follow the [Build](#build) and [First run](#f
 
 ## Project status
 
-See the [v1.1.0 release notes](docs/releases/V1.1.0.md) for the CUDA optimization,
-measured performance and source-package contents.
+The [v1.2.0 update notes](docs/releases/V1.2.0.md) describe self-gravity, source
+refactoring and migration from v1.1.0. The [v1.1.0 release notes](docs/releases/V1.1.0.md)
+retain their original CUDA performance and package scope.
 
-The table describes the capabilities of this checkout on CPU and CUDA. The v1.1.0 release results retain their own source scope; current self-gravity acceptance and its limits are recorded in [Validation](validation/README.md).
+The table describes the capabilities of this checkout on CPU and CUDA. Current
+self-gravity acceptance and its limits are recorded in [Validation](validation/README.md).
 
 [Continuous integration](tests/README.md#github-continuous-integration) checks
 the tooling and CPU build/regressions on new changes. GPU and independent

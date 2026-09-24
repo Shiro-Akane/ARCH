@@ -84,6 +84,8 @@ _CUDA_HOST_OBJECT_SPECS = {
         "src/cuda/runtime/amr/cudabackendindicators.cpp", "-g1"),
     "arch_cuda_backend_migration": (
         "src/cuda/runtime/amr/cudabackendmigration.cpp", "-g1"),
+    "arch_cuda_backend_coordinate_seam": (
+        "src/cuda/runtime/amr/cudabackendcoordinateseam.cpp", "-g1"),
     "arch_cuda_backend_sparse_factory": (
         "src/cuda/runtime/burn/sparse/cudabackendburnsparsefactory.cpp", "-g1"),
 }
