@@ -1,0 +1,310 @@
+{
+  "schema": 1,
+  "date": "2026-09-24",
+  "kind": "implementation_cost_diagnostic",
+  "release_qualified": false,
+  "scope": "FLASH archive Cellular 2D no-burn; only EOSforRiemann and output paths differ; no production code changed",
+  "arch_review_commit": "fb422f22c3c4e51256e545faf3175d2893357bf1",
+  "hardware": "Intel i7-10700, FLASH MPI size 1, OMP_NUM_THREADS=1, serial runs off/on repeated three times",
+  "flash_binary_sha256": "d36b252f35bfc9c17c4571d6bb8e855c55a153b40104e6b324e70ca8a984975a",
+  "flash_binary_origin": "User archive precompiled object/flash4; build stamp 2025-12-13; O2; NXB=8 NYB=8 NZB=1; not rebuilt for this diagnostic",
+  "base_parameters": {
+    "lrefine_max": "2",
+    "lrefine_min": "1",
+    "refine_var_1": "\"pres\"",
+    "refine_var_2": "\"dens\"",
+    "refine_var_3": "\"c12\"",
+    "refine_var_4": "\"enuc\"",
+    "restart": ".false.",
+    "checkpointFileNumber": "0",
+    "plotFileNumber": "0",
+    "plot_var_1": "\"pres\"",
+    "plot_var_2": "\"si28\"",
+    "plot_var_3": "\"enuc\"",
+    "plot_var_4": "\"temp\"",
+    "plot_var_5": "\"c12\"",
+    "plot_var_6": "\"dens\"",
+    "plot_var_7": "\"ni56\"",
+    "plot_var_8": "\"velx\"",
+    "plot_var_9": "\"vely\"",
+    "plot_var_10": "\"shok\"",
+    "plot_var_11": "\"ti44\"",
+    "plot_var_12": "\"cr48\"",
+    "plot_var_13": "\"vort\"",
+    "plot_var_14": "\"magp\"",
+    "plot_var_15": "\"he4\"",
+    "checkpointFileIntervalStep": "20",
+    "plotFileIntervalStep": "20",
+    "nend": "1000",
+    "tmax": "1.0e-8",
+    "dtinit": "1.0e-16",
+    "dtmin": "1.0e-20",
+    "cfl": ".8",
+    "nuclearNI56Max": "1.0",
+    "cvisc": "0.1",
+    "smlrho": "1.e-2",
+    "smallt": "1.e5",
+    "odeStepper": "1",
+    "algebra": "2",
+    "nuclearTempMin": "1.0e9",
+    "nuclearTempMax": "1.0e12",
+    "nuclearDensMin": "1.0e-10",
+    "nuclearDensMax": "1.0e14",
+    "xhe4": "1.0",
+    "xc12": "0.0",
+    "xo16": "0.0",
+    "tempAmbient": "2.0e8",
+    "rhoAmbient": "2.0e7",
+    "velxAmbient": "0.0e0",
+    "tempPerturb": "3.5e9",
+    "rhoPerturb": "8.0e7",
+    "velxPerturb": "9.5E+08",
+    "noiseAmplitude": "0.0",
+    "noiseDistance": "10.0",
+    "xmin": "0.0",
+    "xmax": "64.",
+    "ymin": "0.0",
+    "ymax": "32.",
+    "zmin": "0.0",
+    "zmax": "12.8",
+    "nblockx": "8",
+    "nblocky": "4",
+    "nblockz": "1",
+    "radiusPerturb": "12.8",
+    "xCenterPerturb": "0.",
+    "yCenterPerturb": "16.",
+    "zCenterPerturb": "0.",
+    "usePseudo1d": ".true.",
+    "geometry": "\"cartesian\"",
+    "xl_boundary_type": "\"reflect\"",
+    "xr_boundary_type": "\"reflect\"",
+    "yl_boundary_type": "\"periodic\"",
+    "yr_boundary_type": "\"periodic\"",
+    "zl_boundary_type": "\"periodic\"",
+    "zr_boundary_type": "\"periodic\"",
+    "useBurn": ".false.",
+    "useShockBurn": ".false.",
+    "eintSwitch": "1.e-4",
+    "eos_coulombMult": "0",
+    "order": "2",
+    "slopeLimiter": "\"mc\"",
+    "LimitedSlopeBeta": "1.",
+    "charLimiting": ".true.",
+    "use_avisc": ".false.",
+    "use_flattening": ".false.",
+    "use_steepening": ".false.",
+    "use_upwindTVD": ".false.",
+    "RiemannSolver": "\"HLLC\"",
+    "entropy": ".false.",
+    "shockDetect": ".false.",
+    "useSTS": ".false.",
+    "nstepTotalSTS": "5",
+    "nuSTS": "0.2",
+    "ignition_mode": "1",
+    "pocket_mode": "4",
+    "pocket_r_min": "1.5",
+    "pocket_r_max": "5.0",
+    "pocket_N": "20",
+    "pocket_manual_x_1": "210",
+    "pocket_manual_y_1": "16",
+    "pocket_manual_r_1": "7",
+    "pocket_r_fixed": "3.0",
+    "pocket_vol_frac_he": "1.0",
+    "pocket_avoid_radius": "50",
+    "pocket_overlap_margin": "0.5"
+  },
+  "reproduction": "Use a separate directory per run with archive flash4, SpeciesList.txt, helm_table.dat and a private helm_table.bdat copy. Write the listed base_parameters as flash.par, set basenm and log_file to that directory, and set EOSforRiemann=.false. or .true. Run ./flash4 with OMP_NUM_THREADS=1. Whole-process time is monotonic elapsed time; component times and counts are the first process timing block of cellular_.log.",
+  "measurement_notes": [
+    "Both modes complete 62 advances and 4168 block face-flux calls. Each block has 64 active cells.",
+    "Checkpoint nstep=63 names the next step, not 63 completed advances.",
+    "Actual end times differ by about 5.05e-5 relatively; not an equal-end-time accuracy acceptance.",
+    "Driver/evolution/component timers have different scopes across ARCH and FLASH. No cross-code pure-kernel speedup is inferred.",
+    "The archived FLASH input retains eos_coulombMult=0; this diagnostic does not align the ARCH EOS or burn coupling."
+  ],
+  "runs": [
+    {
+      "run": "off1",
+      "exit_code": 0,
+      "total_seconds": 3.573094334002235,
+      "steps": 62,
+      "evolution": [
+        2.088,
+        1
+      ],
+      "hydro": [
+        1.437,
+        62
+      ],
+      "face_flux": [
+        0.079,
+        4168
+      ],
+      "physical_time": 1.0188072904401767e-08,
+      "final_active_cells": 5120,
+      "active_cell_macrosteps": 266752,
+      "parameter_sha256": "a781ccb0bde81e85056ccc40ec76c9f0ac08db56faff3bad6133f2e18f688c66",
+      "face_eos_enabled": false
+    },
+    {
+      "run": "on1",
+      "exit_code": 0,
+      "total_seconds": 4.7758102219959255,
+      "steps": 62,
+      "evolution": [
+        3.844,
+        1
+      ],
+      "hydro": [
+        3.192,
+        62
+      ],
+      "face_flux": [
+        1.794,
+        4168
+      ],
+      "physical_time": 1.0188587340640404e-08,
+      "final_active_cells": 5120,
+      "active_cell_macrosteps": 266752,
+      "parameter_sha256": "1b6002ea069cbd21ee6c781b1a5b371efb7fa63e8ad13b6c7d94273cdcd81b89",
+      "face_eos_enabled": true
+    },
+    {
+      "run": "off2",
+      "exit_code": 0,
+      "total_seconds": 3.2218916959973285,
+      "steps": 62,
+      "evolution": [
+        2.125,
+        1
+      ],
+      "hydro": [
+        1.461,
+        62
+      ],
+      "face_flux": [
+        0.08,
+        4168
+      ],
+      "physical_time": 1.0188072904401767e-08,
+      "final_active_cells": 5120,
+      "active_cell_macrosteps": 266752,
+      "parameter_sha256": "d243f690d978258c7acfba29020ca82d12308bc96e45fca9386756ccd4fc0dae",
+      "face_eos_enabled": false
+    },
+    {
+      "run": "on2",
+      "exit_code": 0,
+      "total_seconds": 4.876074692001566,
+      "steps": 62,
+      "evolution": [
+        3.824,
+        1
+      ],
+      "hydro": [
+        3.172,
+        62
+      ],
+      "face_flux": [
+        1.786,
+        4168
+      ],
+      "physical_time": 1.0188587340640404e-08,
+      "final_active_cells": 5120,
+      "active_cell_macrosteps": 266752,
+      "parameter_sha256": "288e1cc3fd250019a281b720a4921c803dc93175b466b311ac0e304c76f641fc",
+      "face_eos_enabled": true
+    },
+    {
+      "run": "off3",
+      "exit_code": 0,
+      "total_seconds": 2.9714511769998353,
+      "steps": 62,
+      "evolution": [
+        2.076,
+        1
+      ],
+      "hydro": [
+        1.433,
+        62
+      ],
+      "face_flux": [
+        0.079,
+        4168
+      ],
+      "physical_time": 1.0188072904401767e-08,
+      "final_active_cells": 5120,
+      "active_cell_macrosteps": 266752,
+      "parameter_sha256": "20ca8db491de864194d914a9144271c0b33e87e57be4d4c204e2710c16be487e",
+      "face_eos_enabled": false
+    },
+    {
+      "run": "on3",
+      "exit_code": 0,
+      "total_seconds": 4.82663379200676,
+      "steps": 62,
+      "evolution": [
+        3.92,
+        1
+      ],
+      "hydro": [
+        3.253,
+        62
+      ],
+      "face_flux": [
+        1.831,
+        4168
+      ],
+      "physical_time": 1.0188587340640404e-08,
+      "final_active_cells": 5120,
+      "active_cell_macrosteps": 266752,
+      "parameter_sha256": "a7076f950ddf18f745ff49866e78dfe65bd2d5c6c9609aa6d87caece24010320",
+      "face_eos_enabled": true
+    }
+  ],
+  "summary": {
+    "off": {
+      "total_seconds_median": 3.2218916959973285,
+      "evolution_median": 2.088,
+      "hydro_median": 1.437,
+      "face_flux_median": 0.079
+    },
+    "on": {
+      "total_seconds_median": 4.82663379200676,
+      "evolution_median": 3.844,
+      "hydro_median": 3.192,
+      "face_flux_median": 1.794
+    }
+  },
+  "corrected_existing_workloads": {
+    "flash_burn": {
+      "completed_steps": 62,
+      "active_cell_macrosteps": 269824
+    },
+    "arch_burn": {
+      "completed_steps": 138,
+      "active_cell_macrosteps": 651264
+    },
+    "flash_no_burn": {
+      "completed_steps": 62,
+      "active_cell_macrosteps": 266752
+    },
+    "arch_no_burn": {
+      "completed_steps": 120,
+      "active_cell_macrosteps": 589824
+    },
+    "flash_sod": {
+      "completed_steps": 302
+    },
+    "arch_sod": {
+      "completed_steps": 562
+    }
+  },
+  "timer_tuple_order": [
+    "seconds",
+    "calls"
+  ],
+  "eos_data_sha256": {
+    "helm_table.dat": "3aa310212fdfc765a79a59fa951a9a2178d99970c34ae8321148ab2968108110",
+    "helm_table.bdat": "c33538f1841f97068b8de10f5e6fe26fb42fd9f5166f3e734d2308496417d508"
+  }
+}

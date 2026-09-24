@@ -23,7 +23,7 @@ the intended solution. Positive-state repairs are recorded, while zero/negative 
 nonfinite values and unresolved thermal energy fail explicitly. See the
 [P1.5 migration record](docs/development/P1_5ImplementationReport.zh-CN.md).
 
-Under the hood, ARCH uses the finite-volume method: it divides the fluid domain into distinct cells and accurately tracks the exchange of mass, momentum, and energy between them. To capture fine details efficiently, adaptive mesh refinement (AMR) dynamically inserts smaller cells only where they are truly needed, cleverly avoiding the massive computational cost of a uniformly fine mesh. Furthermore, both CPU and CUDA execution share the exact same mathematical and physical core; their respective backends simply handle how calculations are scheduled and where data is stored, ensuring robust consistency and ease of maintenance.
+Under the hood, ARCH uses the finite-volume method: it divides the fluid domain into distinct cells and accurately tracks the exchange of mass, momentum, and energy between them. To capture fine details efficiently, adaptive mesh refinement (AMR) dynamically inserts smaller cells only where they are truly needed, cleverly avoiding the massive computational cost of a uniformly fine mesh. CPU and CUDA share the mathematical and physical core; their backends manage execution, storage and solver-library access. Validation checks agreement for identified configurations, including coupled AMR runs.
 
 To run your very first simulation, follow the [Build](#build) and [First run](#first-run) sections below. Once you have it running, the [Simulation Case Guide](docs/guides/SimulationCase.md) will step-by-step walk you through reading the output, tweaking parameters, and creating your own unique scenarios. Rest assured, the beginner example is designed to be highly accessible—it doesn't require a GPU or any complex nuclear reaction networks to get started.
 
@@ -43,7 +43,7 @@ scientific checks are documented separately in Validation.
 | Hydrodynamics | 1D, 2D and 3D Cartesian, cylindrical and spherical grids |
 | Dynamic block AMR | Conservative refinement, coarsening, ghost exchange and flux correction. CUDA computes indicators and transfers cell data on the GPU; the CPU manages the mesh tree. |
 | Equations of state (EOS) | Relations between density, temperature, pressure and energy: ideal gas, Helmholtz and 3D/4D tables |
-| Diffusion | Thermal, viscous and species diffusion with RKL1/RKL2 time stepping |
+| Diffusion | RKL1/RKL2 thermal, viscous and species operators. Available channels depend on the material closure; the current Helmholtz stellar model supplies thermal conduction only. |
 | Gravity | External gravity and composite-AMR self-gravity on CPU/CUDA. Validated self-gravity covers Cartesian periodic 1D–3D or isolated 3D. Isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curved domains, including origin/axis/pole joins and composite AMR, run on CPU/CUDA; see the [gravity examples](simulation/GravityBox/README.md) and [supported limits](docs/Reference.md#known-limitations). |
 | Nuclear burning | Four built-in networks and generated pynucastro networks. Built-in networks also support nuclear statistical equilibrium (NSE), which determines composition from equilibrium conditions. |
 | Linear solvers | Burning ODEs use DenseLU for small systems, KLU on CPU and cuDSS on CUDA for sparse systems; self-gravity uses composite multigrid. |
@@ -56,19 +56,19 @@ simulation. CPU and CUDA share the checkpoint format, allowing a run to restart
 on either supported backend. The [Reference Manual](docs/Reference.md) lists
 the saved fields and the physical settings that must remain consistent.
 
-**GPU acceleration reaches about 5× in measured coupled AMR workloads.**
-The highest reported end-to-end speedup was 5.08× for Hydro, nuclear burning and
-full transport with dynamic AMR, using aprox13 and the Helmholtz EOS on an
-H100-20C 20 GiB vGPU versus the fastest tested CPU configuration. Speedup depends
-on workload size and physics; small cases and the tested 150/200-isotope sparse
-networks can be faster on CPU. See the [backend performance guide](docs/CudaBackendStatus.md#choosing-a-backend-for-performance)
-for timings, scaling and backend recommendations.
+CUDA provides measured acceleration in selected coupled AMR workloads. The
+benefit depends on problem size, physics and hardware; small cases and some
+sparse networks can favor CPU. The [backend performance guide](docs/CudaBackendStatus.md#choosing-a-backend-for-performance)
+separates historical server measurements from current workstation checks.
+Cross-code comparisons also require matched equations, physical end time and
+accuracy; the [ARCH–FLASH assessment](validation/gravity/flash/O5OptimizationReport.zh-CN.md)
+records the remaining differences.
 
 ## Implemented capabilities
 
-ARCH offers SW and VL flux-vector splitting alongside Roe, HLL, and HLLC Riemann solvers to estimate transport across cell boundaries. For spatial reconstruction at cell faces, it supports PCM, MUSCL/PLM, and PPM. Time integration is handled by Euler, SSPRK2, or SSPRK3 schemes, while diffusion uses RKL1 or RKL2 super-time stepping. All of these numerical choices are completely independent of the selected CPU/CUDA backend.
+ARCH offers SW and VL flux-vector splitting alongside Roe, HLL, and HLLC Riemann solvers to estimate transport across cell boundaries. For spatial reconstruction at cell faces, it supports PCM, MUSCL/PLM, and PPM. Time integration is handled by Euler, SSPRK2, or SSPRK3 schemes, while diffusion uses RKL1 or RKL2 super-time stepping. These methods have shared CPU/CUDA implementations, subject to EOS, material-model, geometry and build constraints. HLLC + MUSCL + RK2 + RKL2 + BD + composite multigrid + AMR has representative four-module CPU/CUDA checks with Helmholtz, aprox13 and thermal conduction; this does not qualify every substitution of EOS, network or numerical policy.
 
-Our included teaching cases are pre-configured with appropriate methods, so you can safely start there. The [Simulation Case Guide](docs/guides/SimulationCase.md) explains the role of each method before diving into individual parameters. For a complete list of valid combinations, see the [Reference Manual](docs/Reference.md).
+Our included teaching cases are pre-configured with appropriate methods, so you can safely start there. The [Simulation Case Guide](docs/guides/SimulationCase.md) explains the role of each method before diving into individual parameters. See the [Reference Manual](docs/Reference.md#combining-methods-and-physics) for combination rules and verification limits.
 
 ## Build
 

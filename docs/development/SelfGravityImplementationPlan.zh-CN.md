@@ -485,7 +485,7 @@ topology/storage generation、exchange/reflux、完成凭证、设备资源退�
 
 - [x] 曲线坐标规划：完成 P8–P13 复用、唯一源项、文件拆并及验收方案，基准 `6c0cb929`。
 - [x] P8–P10 一维 CPU：球/柱对称 isolated 严格椭圆、解析力、AMR、静水参考、低密度和重启验收完成。
-- [x] P11 避奇点多维 CPU：解析椭圆、独立边界、混合 AMR 联动和原始 FLASH 二维/三维受控对照，见[验证记录](../../validation/gravity/results/p11-p12-20260923/README.md)。
+- [x] P11 避奇点多维 CPU：解析椭圆、独立边界、混合 AMR 联动和用户 FLASH 归档二维/三维受控对照，见[验证记录](../../validation/gravity/results/p11-p12-20260923/README.md)。
 - [x] P12 多维原点/轴线/极点 CPU 接合：共用 AMR 矢量映射、奇点椭圆、混合 AMR 四模块运行、重启/重网格及 61 项 CPU 回归按受测范围通过，见[验证记录](../../validation/gravity/results/p11-p12-20260923/README.md)。
 - [x] P13 CUDA 曲线联合验收：共用坐标接合数学、设备常驻 ghost、1D 解析与动态 AMR、2D/3D 四模块对照、跨后端续算、设备插桩和 RTX 3060 Ti 计时按受测范围完成，见[P13 记录](../../validation/gravity/results/p13-20260924/README.md)。
 

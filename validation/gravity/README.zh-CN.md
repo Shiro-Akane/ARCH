@@ -137,4 +137,8 @@ CPU 制造解、独立边界/Gauss、AMR 与重启证据见
 自引力、燃烧与热扩散联动；原 [Cartesian CPU/CUDA 冒烟记录](results/snia2d-20260923/README.md)、
 [P11/P12 CPU 曲线坐标记录](results/p11-p12-20260923/README.md)和
 [P13 曲线 CUDA 记录](results/p13-20260924/README.md)均不等于 SN Ia 解析精度验收。
-P11/P12 记录也报告原始 FLASH 4.8 Cellular 算例的二维/三维受控对照。
+P11/P12 记录也报告用户提供的 FLASH 4.8 归档中 Cellular 算例的二维/三维受控对照，
+归档包含本地初值扩展。[当前比较评估](flash/O5OptimizationReport.zh-CN.md)记录了
+固定温度燃烧、可选面 EOS 工作、计算量差异和未关闭项。代表性四模块路径为
+HLLC/MUSCL/MC＋RK2＋RKL2 热扩散＋BD/DenseLU＋MG＋AMR，采用
+Helmholtz/aprox13 并关闭 NSE，不能据此宣称全部策略组合已验收。

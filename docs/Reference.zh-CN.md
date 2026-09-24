@@ -65,7 +65,7 @@ ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩
 | 自重力 | `gravity_type = self` | CPU、CUDA | 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU/CUDA 一维球/柱对称及受测完整方位角二维极坐标、三维柱/球坐标 isolated 与复合 AMR 已完成验收，包含原点、轴线和极点。Euler/RK2/RK3、Cartesian 燃烧/热扩散耦合及受测曲线坐标 RK2 四模块运行已验收。见 [GravityBox](../simulation/GravityBox/README.md) 与 [P5–P7 验收](development/P5P7GravityAcceptance.zh-CN.md)。 |
 | Jeans 场 | `JENS` | 预留 | 解析器警告并关闭。 |
 
-CUDA 已实现笛卡尔、柱坐标和球坐标下的一维、二维与三维流体计算，支持已注册的通量、重构和时间推进组合，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
+CUDA 已实现笛卡尔、柱坐标和球坐标下的一维、二维与三维流体计算，提供已注册的通量、重构和时间推进路径，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
 
 四个内置燃烧网络支持 DenseLU、可选的 cuDSS 求解及 NSE。生成网络包通过 CMake 的
 [设备数学包契约检查](../src/physics/network/custom/README.md)，且清单声明
@@ -93,6 +93,35 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 
 策略名称按 ASCII 大小写不敏感；但不同 dispatcher 接受的 alias 与 fallback 行为仍不一致。
 
+### 方法与物理模块的组合
+
+策略表列出可用组件，不代表其全部排列组合都已验收。配置在启动时解析为执行方案；
+为下一次运行更换方法时，仍须满足 EOS、材料模型、计算域和构建条件。程序没有运行中
+动态切换策略的接口，重启也须遵守下文的物理身份检查。部分未知策略名会回退为默认值，
+因此需要检查实际解析后的方案。
+
+`HLLC + MUSCL/MC + RK2 + RKL2 + BD + self-gravity MG + AMR` 已通过普通共享
+Driver 联动。[SNIaCoupled](../simulation/SNIaCoupled/README.md)以 Helmholtz、
+aprox13、DenseLU、热传导及关闭 NSE 的配置做了 CPU/CUDA 检查。Cartesian 和曲线
+坐标运行证明了执行、场一致性及所记录的引力检查，不代表完整 SN Ia 模型或每个耦合场
+的收敛验收。改用 PPM、RK3、ROS4、其他网络或输运模型后，仍需相应数值与耦合检查。
+
+| 组合 | 当前边界 |
+| --- | --- |
+| 通量＋EOS | SW 需要只依赖组分的理想气体 gamma；Helmholtz 和 tabular 的 SW 会被拒绝。HLL/HLLC/Roe/VL 有一般 EOS 路径，并检查状态可接受性。 |
+| 扩散＋材料 | RKL1/RKL2 推进开启的算子；非恒星模型使用配置的常系数。当前 Helmholtz 恒星分支只提供热传导，黏度和组分扩散率仍为零，即使相应通道开关为真。Helmholtz 扩散拒绝显式常数覆盖。 |
+| Tabular＋燃烧 | 平衡表要求关闭燃烧，避免重复计算核结合能。非平衡表仍须具备合适的组分轴与弱过程热力学量；缺少电子 `eta` 时，不能宣称已普遍兼容 aprox19/aprox21 弱过程。 |
+| Tabular＋热扩散 | 不支持自动恒星热传导；需要选择有物理依据的正 `alpha_therm`，或关闭热扩散。 |
+| 燃烧＋NSE | 网络必须提供所声明的平衡模型；生成动力学网络不自动获得 NSE 能力。 |
+| 燃烧＋后端 | DenseLU 最多 31 个总 ODE 方程；KLU 仅 CPU，cuDSS 仅 CUDA 且为可选依赖。生成 CUDA 网络须通过设备数学包契约。这些求解器与引力 MG 分开。 |
+| 自引力＋计算域 | Cartesian 一至三维全周期或三维 isolated；曲线 isolated 遵循“已知限制”中的径向、完整方位角及奇点面规则。MG 要求根网格单元数为二的幂。 |
+| 重构／时间推进＋AMR | PPM 在粗细面使用 MUSCL-MinMod；RK3 不会使分裂多物理整体达到三阶，RKL1 和 BE_NR 还有各自的精度限制。 |
+
+能力查询成功或单策略设备测试通过，只说明路径已注册，不能证明耦合物理精度。
+尤其是 Tabular3D/4D 燃烧／NSE 的可恢复试探失败，仍可能污染整个设备批次错误状态；
+“试探失败后成功接受”的成对轨迹尚未关闭该审计项。详见[表 EOS 契约](../src/physics/eos/TabularEOS.zh-CN.md)、
+[验证范围](../validation/README.zh-CN.md)和[当前耦合审计](../validation/gravity/flash/O5OptimizationReport.zh-CN.md#arch-组合能力与缺口)。
+
 ## 运行时架构
 
 可执行程序遵循以下生命周期：
@@ -116,7 +145,7 @@ main(argc, argv)
             -> advance time
 ```
 
-多维流体 RHS 在一次 RK stage 更新前累加所有活动方向的面散度。几何源项和外部重力源项共享流体 stage 计算。
+多维流体 RHS 在一次 RK stage 更新前累加所有活动方向的面散度。几何与引力源项共享流体 stage 计算；自引力为所需阶段准备复合场，在状态或拓扑变化后使旧场失效。
 
 AMR 拥有拓扑、block 内存、ghost exchange 和 flux register。流体与多 block 扩散都会登记粗细通量，并在各自组合更新后执行 reflux。
 
@@ -404,7 +433,7 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 | `alpha_therm` | double | `0` | 非 Helm 下的常热扩散率 |
 | `D_spec` | double | `0` | 非 Helm 下的常组分扩散率 |
 
-使用 Helmholtz 扩散时，省略三个常数 override 键以选择 `diffusionCoe` 输运。只要 override 键存在就会拒绝，包括零值。
+使用 Helmholtz 扩散时，省略三个常数 override 键以选择 `diffusionCoe` 输运。只要 override 键存在就会拒绝，包括零值。该材料模型目前仅提供热传导；开启黏性／组分通道不会产生非零系数。
 
 ### 时间、输出与重启
 
@@ -422,7 +451,9 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 | `restart` | bool | `false` | 启用 checkpoint 重启 |
 | `restart_file` | string | 空 | `restart = true` 时必须为非空路径 |
 
-在第零步，ARCH 写入初始 PLT 和 CHK。达到目标时间会强制最终输出；`max_steps` 停止遵循已配置输出调度。
+在第零步，ARCH 写入初始 PLT 和 CHK。至少推进一步后，无论到达目标时间还是 `max_steps`，都会强制最终输出；已完成的 restart 不重复写出这些文件。
+
+控制台 `dt_burn` 列表示实际执行的燃烧半步（`dt/2`），不是下一步燃烧限制。检查 ENUC 限步是否生效需读取检查点的时间步控制器状态。`run_timings.tsv` 中的 `driver_seconds` 包含 `output_seconds`，以及 Driver 内部准备和推进开销；扣掉输出仍不是纯流体内核计时。
 
 ## AMR 与 plot 变量词汇
 
@@ -869,7 +900,7 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 
 `Data/X` 保存两端实际演化的原始质量分数。读取器检查它与保存的 `rhoX` 是否一致，并直接恢复质量分数，避免先乘密度再除密度造成的舍入损失。写入器同时保存两种表示。
 
-重启兼容性检查维度、几何、每 block 单元数、EOS 策略、适用时的理想气体 gamma、反应网络身份、EOS 表内容、燃烧与 NSE 开关，以及每个按顺序排列的核素名称和热力学属性。`ENUC` 在驱动动态细化时属于重启相关状态，因此会被持久化。结构错误或物理配置身份不匹配会在发布层次结构前抛出异常。step-zero 与已经到达终点的 restart 不会重复写初始/最终文件。CPU/CUDA 读写完全相同的 Host schema；后端名称刻意不参与兼容性判断。
+重启兼容性检查维度、几何、每 block 单元数、EOS 策略、适用时的理想气体 gamma、反应网络身份、EOS 表内容、引力策略／边界及控制量（自引力的 G、求解容差与循环上限，或外引力的加速度）、燃烧与 NSE 开关，以及每个按顺序排列的核素名称和热力学属性。`ENUC` 在驱动动态细化时属于重启相关状态，因此会被持久化。结构错误或物理配置身份不匹配会在发布层次结构前抛出异常。step-zero 与已经到达终点的 restart 不会重复写初始/最终文件。CPU/CUDA 读写完全相同的 Host schema；后端名称刻意不参与兼容性判断。
 
 物理配置身份、`Data/enuc_rate`、时间步控制元数据以及活动核素的原始 `Data/X`
 均为必需内容。字段缺失、形状或数值无效、`Data/X` 与 `Data/rhoX` 不一致都会报错；

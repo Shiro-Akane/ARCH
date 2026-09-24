@@ -165,4 +165,10 @@ checks Hydro/self-gravity/burn/thermal-diffusion execution with AMR. Its origina
 [P11/P12 CPU curved record](results/p11-p12-20260923/README.md) and
 [P13 curved CUDA record](results/p13-20260924/README.md) do not constitute
 analytic SN Ia validation. The P11/P12 record also reports a controlled comparison
-against the original FLASH 4.8 Cellular case in 2D and 3D matched controls.
+against the user-provided FLASH 4.8 archive's Cellular case in 2D and 3D matched controls.
+The archive contains local initialization extensions. The current
+[comparison assessment](flash/O5OptimizationReport.zh-CN.md) records its
+fixed-temperature burn, optional face-EOS work, workload differences and
+remaining qualification gaps. The representative four-module route is
+HLLC/MUSCL/MC + RK2 + RKL2 thermal + BD/DenseLU + MG + AMR with
+Helmholtz/aprox13 and NSE disabled; this is not an all-policy coupling matrix.

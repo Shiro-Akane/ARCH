@@ -65,8 +65,9 @@ and columns. Changing it requires an explicit data migration and new baselines.
 - `<network>/TimmesRhs.inc`: RHS composition for the original network equations;
 - `<network>/Net*.h`: species tables, network interface, screening and branch
   logic, and energy conventions;
-- `aprox13/TimmesJacobian.inc`: mechanically extracted and adapted composition
-  Jacobian from the explicit Jacobian section of `public_aprox13.f90`.
+- `aprox13`, `aprox19` and `aprox21` explicit composition Jacobians are adapted
+  from their Timmes sources and selected through `TimmesNetworkSupport.h`;
+  `iso7` retains the common automatic-differentiation route.
 
 Each network exposes three interfaces to the burn solvers:
 
@@ -109,6 +110,19 @@ numerical adapter supports other duck-typed EOS views. Reaction-rate derivatives
 keep their network's declared screening convention. Generated weak networks
 also carry a signed energy-source integral, used with the accepted composition
 change when handing energy back to hydrodynamics.
+
+These interfaces do not establish that every EOS/network pair is physically
+compatible. Equilibrium tables exclude independent burning; tabular weak-process
+diagnostics and recoverable device-trial errors have the limits described in
+[the combination rules](../Reference.md#combining-methods-and-physics).
+
+ARCH updates rates, screening and thermodynamics at the ODE trial temperature.
+The archived FLASH Cellular burner used in the [comparison](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md)
+freezes temperature and prepares rates/screening once per burn call, then
+recovers temperature after the energy update. These have different thermal
+feedback and cost; a shared network name or ODE name does not make their
+trajectories equally accurate. The benefit of stronger coupling still needs
+time-convergence and energy checks for the problem being studied.
 
 For each accepted substep, the solver contracts its composition increment with
 the network's nuclear-energy weights and adds any signed external-source

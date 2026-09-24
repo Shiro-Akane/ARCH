@@ -42,3 +42,10 @@ from the [central Validation index](../README.md) for the combined status and
 the selected evidence; directory names alone do not establish acceptance.
 Maintenance checks retain their own source identity and do not relabel an
 earlier scientific run.
+
+The current [ARCH–FLASH work and coupling audit](../gravity/flash/O5OptimizationReport.zh-CN.md)
+separates route registration, active material channels, coupled agreement and
+independent accuracy. Its four-module runs do not certify the full policy
+Cartesian product. Historical Helmholtz "full transport" timing rows retain
+their source scope; the current stellar closure supplies thermal conduction
+only. Tabular burn/NSE recoverable-trial error handling remains unqualified.

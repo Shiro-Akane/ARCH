@@ -8,6 +8,9 @@
 各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
 [验证总览](../README.zh-CN.md)中。
 
+这些检查采用理想气体常系数模型，不代表 Helmholtz 组分／黏性输运已验收；
+其当前恒星材料分支只提供热传导。见[组合规则](../../docs/Reference.zh-CN.md#方法与物理模块的组合)。
+
 CPU 与 CUDA 均通过相同的解析误差、有界性和守恒检验。
 
 `DiffusionMode` 实现仍位于 `simulation/DiffusionMode/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们在静态、周期一维理想气体状态中推进有界 tracer 质量分数：

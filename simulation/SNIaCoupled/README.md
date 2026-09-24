@@ -40,5 +40,12 @@ q=\exp\left(-\frac{|\mathbf{x}-\mathbf{x}_c|^2}{2\sigma^2}\right),\quad
 `gravity_solves.tsv` 中每次求解的 `residual <= target`，以及最终 plot 的
 `GPOT/GAC*`、温度、能量和物种场。`dt_diff` 有限表示热扩散参与步长估计；
 单靠此算例不能证明独立扩散误差。Helmholtz 表只用于已支持的热扩散路径，
-不据此声明物种扩散。详细验证、与原始 FLASH Cellular 算例的受控比较及限制见
+不据此声明物种扩散。详细验证、与用户 FLASH 归档中 Cellular 算例的受控比较及限制见
 [重力验证记录](../../validation/gravity/README.zh-CN.md)。
+
+这些输入实际采用 HLLC、MUSCL/MC、RK2、RKL2 热扩散、BD/DenseLU、复合
+多重网格和 AMR，配 Helmholtz/aprox13 并关闭 NSE；固定网格输入单独标注。
+它们是该组合的 CPU/CUDA 执行证据，不覆盖全部方法替换。`Setup` 要求四模块
+同时开启，不能直接关掉一个开关做消融；独立算子检查使用对应验证入口。
+Helmholtz 的当前恒星输运只提供热传导，不能靠打开黏性或组分扩散开关获得完整
+输运。其他适用条件见[组合规则](../../docs/Reference.zh-CN.md#方法与物理模块的组合)。

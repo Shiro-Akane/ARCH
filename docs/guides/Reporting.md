@@ -26,6 +26,14 @@ and failed numerical checks normally belong in this public discussion, provided
 the example contains no private data. The [Validation guide](../../validation/README.md)
 explains the existing reference problems and acceptance criteria.
 
+For performance reports, distinguish total-process time from advancement and
+output timers, and report actual completed steps, physical end time, active
+AMR cells, hardware and thread/process counts. Include the effective physics
+and material coefficients, not just enabled switches. A checkpoint counter may
+name the next step; verify its meaning against the evolution log. Cross-code
+comparisons also need a common accuracy target; see the
+[comparison assessment](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md).
+
 ## Research data and private reports
 
 Remove access tokens, account details, personal information and unpublished

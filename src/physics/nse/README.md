@@ -31,3 +31,10 @@ attribution and [third-party notices](../../../THIRD_PARTY_NOTICES.md).
 See the [NSE discussion](../../../docs/physics/TimmesNetworks.md),
 [Reference](../../../docs/Reference.md) and
 [burn validation](../../../validation/burn/README.md).
+
+The intended failed-projection fallback still needs paired host/device
+qualification for strict tabular EOS trial errors: a recoverable query may
+latch the device batch error before retry. This open
+[coupling audit](../../../validation/gravity/flash/O5OptimizationReport.zh-CN.md#arch-组合能力与缺口)
+limits current claims; it does not justify clearing errors from other cells or
+accepting an invalid final state.

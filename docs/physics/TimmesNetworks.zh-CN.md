@@ -46,7 +46,7 @@
 - `<network>/TimmesRateLibrary.h`：对应原 Fortran 的反应率公式及温度导数。
 - `<network>/TimmesRhs.inc`：对应原 Fortran 网络方程的 RHS 组合关系。
 - `<network>/Net*.h`：核素表、网络接口、筛选/分支逻辑和能量约定。
-- `aprox13/TimmesJacobian.inc`：由原 `public_aprox13.f90` 的显式 Jacobian 段机械抽取并适配的组分 Jacobian。
+- `aprox13`、`aprox19`、`aprox21` 的显式组分 Jacobian 来自相应 Timmes 源码，由 `TimmesNetworkSupport.h` 选择；`iso7` 保留通用自动微分路径。
 
 网络对燃烧求解器提供以下接口：
 
@@ -84,6 +84,15 @@ J(T,j) = (partial_j enuc - sum_i e_i * J(i,j)
 热力学/组分导数；其他 duck-typed EOS 可使用同一数值求导适配器。
 反应率导数保留网络声明的筛选约定。生成式弱网络另携带有符号能量源积分，
 与接受步的组分变化共同决定交回流体模块的能量。
+
+这些接口不保证每种 EOS／网络组合都具有物理适用性。核平衡表排除独立燃烧；表 EOS
+的弱过程诊断与设备可恢复试探错误仍有[组合规则](../Reference.zh-CN.md#方法与物理模块的组合)
+中说明的限制。
+
+ARCH 在 ODE 试算温度处更新反应率、屏蔽和热力学量。[对照](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md)
+所用归档 FLASH Cellular 在一次燃烧调用内固定温度，预先计算率／屏蔽，再在能量更新后
+恢复温度。两者热反馈与计算成本不同，相同网络或 ODE 名称不等于等精度轨迹；更强
+耦合的收益仍需在目标问题上通过时间收敛和能量检查确认。
 
 每个被接受的子步都用网络的核反应能量权重计算组分增量对应的释能，再加上有符号
 的外部能量源增量，累计得到比内能变化 `delta_e`。流体模块向守恒能量加入

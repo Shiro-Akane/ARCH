@@ -100,6 +100,13 @@ qualified with an arbitrary tabular EOS. The existing Helmholtz routes retain
 their electron diagnostics; this change does not add a second diagnostic table
 or silently substitute a model for missing weak-process inputs.
 
+Coupled CPU/CUDA qualification also remains limited by recoverable trial errors:
+a failed ODE trial or NSE line-search query can set the device batch EOS error
+state before an accepted retry. The current audit has not closed this behavior
+with paired host/device trajectories. Strict final-state rejection remains
+required; table interpolation tests alone do not qualify arbitrary tabular
+burn/NSE combinations. See the [coupling audit](../../../validation/gravity/flash/O5OptimizationReport.zh-CN.md#arch-组合能力与缺口).
+
 All free-energy tables use a strict finite-domain policy, whether completed automatically or supplied already total.
 Source/component invalidity is propagated through all derivative stencils;
 queries cannot interpolate across a masked vertex or extrapolate past the source

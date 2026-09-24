@@ -11,6 +11,10 @@ resolutions shows how the spatial error decreases.
 Each detailed record identifies its tested source, executable and inputs.
 The [validation overview](../README.md) brings together the module results.
 
+These checks use an ideal-gas constant-coefficient model. They do not qualify
+Helmholtz species or viscous transport: its current stellar material branch
+supplies thermal conduction only. See the [combination rules](../../docs/Reference.md#combining-methods-and-physics).
+
 CPU and CUDA pass the same analytic-error, boundedness and conservation checks.
 
 The `DiffusionMode` implementation remains in `simulation/DiffusionMode/`; the

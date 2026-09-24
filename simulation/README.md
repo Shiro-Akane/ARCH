@@ -36,3 +36,9 @@ results; follow each problem's links for its intended use.
 To add a problem, follow the guide's registration workflow and add it to this
 catalogue. Keep reusable initial conditions here, simulation output under the
 chosen output directory, and run-specific evidence in the owning Validation module.
+
+Example switches remain subject to the [combination rules](../docs/Reference.md#combining-methods-and-physics).
+`SNIaCoupled` requires its four modules and demonstrates one thermal-coupling
+configuration; it is not a complete white-dwarf explosion model or a template
+for arbitrary module removal. `CellularFlash2D` and `SodFlash1D` preserve
+controlled comparison inputs, with differences documented in their case guides.

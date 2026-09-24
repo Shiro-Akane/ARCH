@@ -83,8 +83,8 @@ external provenance claim unless their file header or that notice says so.
 | Self gravity | `gravity_type = self` | CPU, CUDA | Validated: Cartesian periodic 1D–3D or isolated 3D on CPU/CUDA. CPU/CUDA: isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity with composite AMR, including origin/axis/pole joins. Euler/RK2/RK3 and Cartesian burn/thermal-diffusion coupling, plus tested curved RK2 four-module runs, are validated. See [GravityBox](../simulation/GravityBox/README.md) and the [P5–P7 record](development/P5P7GravityAcceptance.zh-CN.md). |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
 
-CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, the registered
-flux/reconstruction/time-integrator matrix, Ideal/Helmholtz/Tabular3D/Tabular4D
+CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, registered
+flux, reconstruction and time-integrator routes, Ideal/Helmholtz/Tabular3D/Tabular4D
 EOS, and RKL1/RKL2 diffusion through the common geometry definitions. Two-dimensional
 spherical grids use ARCH's polar `(r,phi)` convention. Runtime
 species scratch is sized to the configured composition for passive transport
@@ -117,13 +117,49 @@ application results and release acceptance.
 | Hydro time | `Euler`, `RK1`; `RK2`, `SSPRK2`; `RK3`, `SSPRK3` | Euler, SSPRK2, SSPRK3 |
 | Diffusion time | `RKL2` (default), `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
 | EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and CUDA |
-| Gravity | `none`, `external`, `self` | Cartesian self gravity supports periodic or isolated 3D; CPU isolated radial 1D and tested full-azimuth 2D/3D curved gravity, including coordinate joins, are supported |
+| Gravity | `none`, `external`, `self` | CPU/CUDA self gravity supports Cartesian periodic 1D–3D or isolated 3D, isolated radial 1D and tested full-azimuth 2D/3D curved domains, including coordinate joins |
 | Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
 | Linear solve | `Auto`, `DenseLU`, `SparseKLU`, `cuDSS` | Case-insensitive; aliases `dense_lu`, `sparse_klu`, and `cu_dss` are accepted. `Auto` selects DenseLU for up to 31 total ODE equations, including temperature and any auxiliary energy states. Larger systems use SparseKLU on CPU or cuDSS on CUDA. SparseKLU is CPU-only, cuDSS is CUDA-only, and incompatible explicit pairs are rejected before backend construction without solver substitution. Missing solver libraries or registered CUDA network code also cause rejection. |
 
 Policy names are ASCII case-insensitive, but accepted aliases and fallback
 behavior still vary by dispatcher.
+
+### Combining methods and physics
+
+The policy tables list available components, not a verified Cartesian product.
+Configuration resolves a plan at startup. Switching methods for another run
+requires a compatible EOS, material model, domain and build; there is no live
+policy-switching interface. Restart also retains the scientific identity checks
+listed below. Inspect the resolved plan because some unknown policy names use
+fallback defaults.
+
+`HLLC + MUSCL/MC + RK2 + RKL2 + BD + self-gravity MG + AMR` runs through the
+ordinary shared driver. The [SNIaCoupled example](../simulation/SNIaCoupled/README.md)
+checks this combination with Helmholtz, aprox13, DenseLU, thermal conduction and
+NSE disabled on CPU/CUDA. Its Cartesian and curved runs establish execution,
+field agreement and the recorded gravity checks, not a complete SN Ia model or
+convergence of every coupled field. Changing to PPM, RK3, ROS4, another network
+or a different transport closure needs the relevant numerical and coupled checks.
+
+| Combination | Current boundary |
+| --- | --- |
+| Flux + EOS | SW needs a composition-only ideal-gas gamma; Helmholtz and tabular SW are rejected. HLL/HLLC/Roe/VL have general-EOS routes with state-admissibility checks. |
+| Diffusion + material | RKL1/RKL2 advance enabled operators. Nonstellar closures use configured constant coefficients. The current Helmholtz stellar branch supplies thermal conductivity only: viscosity and species diffusivity remain zero even if their channel flags are enabled. Explicit constant overrides with Helmholtz diffusion are rejected. |
+| Tabular + burning | Equilibrium tables require burning off to avoid double-counting binding energy. Nonequilibrium tables still need appropriate composition axes and weak-process thermodynamics; missing electron `eta` prevents a general aprox19/aprox21 weak-coupling claim. |
+| Tabular + thermal diffusion | Automatic stellar conductivity is unavailable; choose a physically appropriate positive `alpha_therm` or disable thermal diffusion. |
+| Burn + NSE | The network must supply the declared equilibrium model; generated kinetic networks are not automatically NSE-capable. |
+| Burn + backend | DenseLU is limited to 31 total ODE equations; KLU is CPU-only, cuDSS is CUDA-only and optional. Generated CUDA networks need an accepted device-math package. These solvers are separate from the gravity MG solver. |
+| Self gravity + domain | Cartesian periodic 1D–3D or isolated 3D; curved isolated domains follow the radial/full-azimuth and singular-face rules in Known limitations. MG needs power-of-two root-cell extents. |
+| Reconstruction/time + AMR | PPM uses MUSCL-MinMod at coarse/fine faces. RK3 does not make the split multiphysics method third order; RKL1 and BE_NR introduce their own accuracy limits. |
+
+A successful capability query or a single-policy device test establishes a
+registered route, not coupled physical accuracy. In particular, recoverable
+Tabular3D/4D burn/NSE trial failures may still contaminate the device batch error
+state; a paired failure-then-acceptance trajectory has not closed this audit item.
+See the [table-EOS contract](../src/physics/eos/TabularEOS.md),
+[validation scope](../validation/README.md) and
+[current coupling audit](../validation/gravity/flash/O5OptimizationReport.zh-CN.md#arch-组合能力与缺口).
 
 ## Runtime architecture
 
@@ -149,8 +185,10 @@ main(argc, argv)
 ```
 
 The multidimensional hydro RHS accumulates every active-direction face
-divergence before an RK stage update. Geometric and external-gravity sources
-share the hydro stage evaluation.
+divergence before an RK stage update. Geometric and gravity sources share the
+hydro stage evaluation; self-gravity
+prepares a composite field for each required stage and invalidates it after
+state or topology changes.
 
 AMR owns topology, block memory, ghost exchange, and flux registers. Hydro and
 multi-block diffusion register coarse/fine fluxes and apply reflux after their
@@ -555,7 +593,8 @@ network setup implementation.
 
 With Helmholtz diffusion, omit all three constant override keys to select
 `diffusionCoe` transport. Presence of an override key is rejected, including a
-zero value.
+zero value. This material closure currently supplies thermal conduction only;
+viscous/species flags do not create nonzero coefficients.
 
 ### Time, output, and restart
 
@@ -573,8 +612,15 @@ zero value.
 | `restart` | bool | `false` | enables checkpoint restart |
 | `restart_file` | string | empty | must be non-empty when `restart = true` |
 
-At step zero, ARCH writes an initial PLT and CHK. Reaching target time forces
-final output; a `max_steps` stop follows the configured output schedule.
+At step zero, ARCH writes an initial PLT and CHK. After advancing at least one
+step, reaching either target time or `max_steps` forces final output. An already
+finished restart does not duplicate those files.
+
+The console column `dt_burn` reports the executed burn half-step (`dt/2`), not
+the next-step burn limiter. Use checkpoint timestep-controller state when
+checking an active ENUC limit. In `run_timings.tsv`, `driver_seconds` includes
+`output_seconds` as well as driver setup and stepping; subtracting output does
+not produce a pure hydro-kernel timer.
 
 ## AMR and plot variable vocabulary
 
@@ -1159,7 +1205,9 @@ representations.
 
 Restart compatibility checks dimension, geometry, cells per block, EOS policy,
 ideal-gas gamma where applicable, reaction-network identity, EOS-table content,
-burn and NSE enablement, and every ordered species name and thermodynamic
+gravity policy/boundary and controls (G, solve tolerances and cycle limit for
+self gravity, or acceleration for external gravity), burn and NSE enablement,
+and every ordered species name and thermodynamic
 property. `ENUC` is persisted
 because it is restart-relevant when it drives dynamic refinement. Structural
 or scientific-identity mismatches throw before hierarchy publication.

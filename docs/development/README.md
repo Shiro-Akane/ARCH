@@ -8,7 +8,10 @@ The [ARCH–FLASH comparison and optimization plan (Chinese)](FlashComparisonOpt
 defines reusable cross-code models, separates common physics from ARCH's fuller
 coupling, and records the EOS recovery-contract audit and staged optimization
 gates. The [O5 evidence](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md)
-reports verified results and the remaining sign-off gaps.
+reports verified results, the FLASH face-EOS control, differences in thermal
+coupling, and the remaining sign-off gaps. User-facing combination boundaries
+live in the [Reference](../Reference.md#combining-methods-and-physics); registration
+is not acceptance of every physical or numerical permutation.
 
 For the planned self-gravity work, use the
 [self-gravity, maintainability and GUI coordination plan (Chinese)](SelfGravityImplementationPlan.zh-CN.md)

@@ -16,3 +16,11 @@ Network selection and optional generated-network preparation follow the
 [custom-network guide](../../src/physics/network/custom/README.md).
 
 This example defines the starting state for a focused research calculation. All qualified burn and hydro comparisons are maintained within the [Validation](../../validation/README.md) module, strictly separate from any particular standalone detonation study.
+
+In the measured FLASH input, `EOSforRiemann=false` also omits EOS recovery at
+reconstructed faces, and `algebra=2` selects the network-specific GIFT solver.
+The rate-table shortcut is disabled and burning is active. Together with
+different stage counts and AMR histories, these choices prevent interpreting
+the total time ratio as equal-work solver efficiency. The linked assessment
+includes a face-EOS control experiment; it does not establish equal-error
+cross-code performance.

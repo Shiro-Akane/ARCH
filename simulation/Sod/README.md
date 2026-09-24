@@ -13,3 +13,9 @@ contacts and rarefactions through the common hydro driver.
   convergence inputs and measured results.
 
 Note that the parameter files are solely responsible for selecting the reconstruction method, flux calculation, and time-integration scheme; this problem definition itself does not contain any separate numerical solver logic.
+
+The archived FLASH comparison found competitive ARCH total-process time for
+this small ideal-gas case. Process startup materially affects that result;
+advancement timers have different scopes and do not establish a faster ARCH
+hydro kernel. Use the independent Riemann errors and size/convergence studies
+when drawing a broader efficiency conclusion.
