@@ -4,6 +4,15 @@ Start with [implementation ownership](ImplementationOwnership.md) before changin
 shared mathematics, backend storage, or execution paths. The map identifies the
 single maintained implementation and its CPU/CUDA consumers.
 
+The [compute optimization plan (Chinese)](ComputeOptimizationPlan.zh-CN.md)
+continues from the v1.2.0 main baseline on `compute/optim`: shared CPU/CUDA
+mathematics and execution costs first, then cylindrical axisymmetry, user
+boundary interfaces, frozen-version timing and long-duration validation.
+Nonuniform grid design remains a later discussion. The
+[current diagnosis (Chinese)](../../validation/gravity/flash/CurrentDiagnosis.zh-CN.md)
+records the earlier module comparison and focused FLASH parameter evidence;
+these plans do not expand the currently accepted capability matrix.
+
 The [ARCH–FLASH comparison and optimization plan (Chinese)](FlashComparisonOptimizationPlan.zh-CN.md)
 defines reusable cross-code models, separates common physics from ARCH's fuller
 coupling, and records the EOS recovery-contract audit and staged optimization
