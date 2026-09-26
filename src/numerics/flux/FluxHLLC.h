@@ -87,7 +87,10 @@ struct FluxHLLC
         const FluidVector& U_L, const FluidVector& U_R,
         const double* Xi_L, const double* Xi_R, int n_spec,
         const EosType& eos, int dir, double /* coefficient */,
-        FluidVector& flux_out, double* species_flux_out)
+        FluidVector& flux_out, double* species_flux_out,
+        const FluxAdmissibility::MeanThermoCache* mean_cache = nullptr,
+        const FluidState* mean_state = nullptr, int left_cell = -1,
+        int right_cell = -1)
     {
         // 2. Thermodynamics Preparation
         // Left
@@ -98,6 +101,59 @@ struct FluxHLLC
         double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
 
         double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
+
+        // Consistency of the Riemann problem: F_HLLC(U,U) = F(U). Compare
+        // every conservative component and species before using this exact
+        // identity. Still evaluate the required endpoint EOS (including its
+        // acoustic validity); invalid states retain the ordinary failure path.
+        bool identical = U_L.rho == U_R.rho && U_L.mom_u == U_R.mom_u
+            && U_L.mom_v == U_R.mom_v && U_L.mom_w == U_R.mom_w
+            && U_L.eng == U_R.eng;
+        if (identical) {
+            for (int s = 0; s < n_spec; ++s)
+                identical = identical && Xi_L[s] == Xi_R[s];
+        }
+        if (identical && rho_L > 0.0 && e_L > 0.0
+            && std::isfinite(e_L)) {
+            double pressure = 0.0, sound_speed = 0.0;
+            bool reused_mean = false;
+#if !defined(__CUDA_ARCH__)
+            // CUDA calls the same face formula without a host patch cache.
+            // Keep FluidState/vector cache access out of device compilation.
+            if (mean_cache && mean_state) {
+                const auto matches_mean = [&](int cell) {
+                    if (cell < 0 || !mean_cache->ready[cell]) return false;
+                    const auto mean = mean_state->get(cell);
+                    if (mean.rho != U_L.rho || mean.mom_u != U_L.mom_u
+                        || mean.mom_v != U_L.mom_v || mean.mom_w != U_L.mom_w
+                        || mean.eng != U_L.eng) return false;
+                    for (int s = 0; s < n_spec; ++s)
+                        if (mean_state->X(s, cell) != Xi_L[s]) return false;
+                    return true;
+                };
+                const int matched = matches_mean(left_cell) ? left_cell
+                    : matches_mean(right_cell) ? right_cell : -1;
+                if (matched >= 0) {
+                    // The patch-stage mean cache has already validated this
+                    // exact (rho,e,X); no interpolation or approximation.
+                    pressure = mean_cache->pressure[matched];
+                    sound_speed = mean_cache->sound_speed[matched];
+                    reused_mean = true;
+                }
+            }
+#endif
+            if (!reused_mean)
+                calc_endpoint_thermo(U_L, e_L, Xi_L, eos,
+                                     pressure, sound_speed);
+            if (pressure > 0.0 && sound_speed > 0.0
+                && std::isfinite(pressure) && std::isfinite(sound_speed)) {
+                flux_out = get_flux(U_L, pressure, dir);
+                for (int s = 0; s < n_spec; ++s)
+                    species_flux_out[s] = flux_out.rho * Xi_L[s];
+                return;
+            }
+        }
+
         double p_L, c_L;
         calc_endpoint_thermo(U_L, e_L, Xi_L, eos, p_L, c_L);
 
@@ -261,7 +317,8 @@ struct FluxHLLC
                         FluxAdmissibility::compute_candidate([&] {
                             compute_face_flux(
                                 U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                                0.0, flux_out[idx + stride], face_species_flux.data());
+                                0.0, flux_out[idx + stride], face_species_flux.data(),
+                                mean_cache, &state, idx, idx + stride);
                         }, flux_out[idx + stride], face_species_flux.data(), n_spec);
                         state.get_species_to_buffer(idx, Xi_L.data());
                         state.get_species_to_buffer(idx + stride, Xi_R.data());
