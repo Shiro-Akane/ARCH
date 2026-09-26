@@ -768,6 +768,24 @@ struct BasicHelmEosView {
         return d.pressure_temperature / cv;
     }
 
+    // Roe's two derivatives at one unchanged (rho,e,X) state share the same
+    // strict temperature inversion and Helm derivative jet. Keep the scalar
+    // formulas and public scalar entries above for all other callers.
+    ARCH_INLINE void get_dp_drho_e_and_dp_de_rho(
+        double rho, double e, const double* Xi,
+        double& chi, double& kappa) const
+    {
+        const double T = get_temperature(rho, e, Xi);
+        double P, E, cv;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d);
+        const double energy_density =
+            (P - T * d.pressure_temperature) / (rho * rho);
+        chi = d.pressure_density
+            - d.pressure_temperature * energy_density / cv;
+        kappa = d.pressure_temperature / cv;
+    }
+
     // Pipeline: evaluate_state
     ARCH_INLINE void evaluate_state(eos_state_t& state) const {
         // 1. Core Thermodynamics (P, E, cv)

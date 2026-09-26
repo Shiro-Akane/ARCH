@@ -1,0 +1,280 @@
+{
+  "date": "2026-09-27",
+  "host": "Intel i7-10700; RTX 3060 Ti",
+  "scope": "separate complete process runs, including startup and final output",
+  "cpu8_affinity": "0,2,4,6,8,10,12,14",
+  "cfl": 0.8,
+  "notes": "FLASH fast path EOSforRiemann=false; Jeans mg_maxResidualNorm=1e-10. Scientific budgets for Cellular remain open.",
+  "models": {
+    "a": {
+      "terminal_physical_time_s": 1.0192286463896491e-08,
+      "arch_cpu8_wall_s": [
+        35.397753179000574,
+        35.36113675600063,
+        35.35236613499728
+      ],
+      "flash_mpi8_wall_s": [
+        5.24567178000143,
+        6.296811215001071,
+        4.919028124000761
+      ],
+      "ratio_of_medians": 6.741012064615105,
+      "flash_mpi8_face_eos_true_wall_s": [
+        5.581912297002418,
+        9.233616733999952,
+        6.894551432997105
+      ],
+      "arch_cpu16_wall_s": [
+        29.821497457000078,
+        29.626759573999152,
+        29.96280479699999
+      ],
+      "arch_cuda_wall_s": [
+        33.92347533299835,
+        33.942351822999626,
+        34.28157037799974
+      ],
+      "cuda_vs_fastest_cpu_speedup": 0.8785925504664877
+    },
+    "b": {
+      "terminal_physical_time_s": 1.029419223692258e-08,
+      "arch_cpu8_wall_s": [
+        38.72268795800119,
+        38.93133514100191,
+        38.5227004820008
+      ],
+      "flash_mpi8_wall_s": [
+        5.194610482001735,
+        8.960984430003009,
+        5.002149157997337
+      ],
+      "ratio_of_medians": 7.454396839217761,
+      "flash_mpi8_face_eos_true_wall_s": [
+        5.703654918997927,
+        5.448935017997428,
+        8.94608237400098
+      ],
+      "arch_cpu16_wall_s": [
+        32.98093032700126,
+        32.92662125100105,
+        32.8503823989995
+      ],
+      "arch_cuda_wall_s": [
+        35.999912339997536,
+        36.75948122599948,
+        36.144760450999456
+      ],
+      "cuda_vs_fastest_cpu_speedup": 0.9109652641255942
+    },
+    "noburn": {
+      "terminal_physical_time_s": 1.0192633413281536e-08,
+      "arch_cpu8_wall_s": [
+        17.842794423999294,
+        18.54053360100079,
+        18.1112837590008
+      ],
+      "flash_mpi8_wall_s": [
+        4.226078388997848,
+        10.172349788001156,
+        4.234018290000677
+      ],
+      "ratio_of_medians": 4.277563892856472,
+      "flash_mpi8_face_eos_true_wall_s": [
+        6.163288241998089,
+        5.468151273998956,
+        9.881274253999436
+      ]
+    },
+    "sod": {
+      "terminal_physical_time_s": 0.20004197244290714,
+      "arch_cpu8_wall_s": [
+        5.684853263999685,
+        5.559994457998982,
+        5.702224355998624
+      ],
+      "flash_mpi8_wall_s": [
+        2.7875285019981675,
+        2.9305443250013923,
+        2.875103669000964
+      ],
+      "ratio_of_medians": 1.9772689678264879,
+      "independent_repeat": {
+        "arch_cpu8_wall_s": [
+          5.419810213999881,
+          5.4573604079996585,
+          5.463249225002073
+        ],
+        "flash_mpi8_wall_s": [
+          2.699088286000915,
+          2.630369859998609,
+          2.6563015340034326
+        ],
+        "ratio_of_medians": 2.054495823662995,
+        "all_exit_codes_zero": true,
+        "all_checkpoint_physical_times_s": [
+          0.20004197244290714,
+          0.20004197244290714,
+          0.20004197244290714,
+          0.20004197244290714,
+          0.20004197244290714,
+          0.20004197244290714
+        ],
+        "output_prefix": "output/o6plus_borderline_sod_",
+        "status": "exceeds_2x"
+      }
+    },
+    "jeans_64": {
+      "terminal_physical_time_s": 0.1,
+      "arch_cpu8_wall_s": [
+        0.7211650930003088,
+        0.7468191469997691,
+        0.7021657020013663
+      ],
+      "flash_mpi8_wall_s": [
+        1.4055477149995568,
+        1.322677902997384,
+        1.2672606730011466
+      ],
+      "ratio_of_medians": 0.5452310735410654,
+      "field_comparison": {
+        "n": 64,
+        "arch_time": 0.1,
+        "flash_time": 0.1,
+        "analytic_density_mode": 2949.2377328261905,
+        "omega": 13.728911309513387,
+        "arch_density_mode": 2872.7374285406704,
+        "arch_density_mode_relative_error": -0.025939009064627525,
+        "flash_density_mode": 2952.8349905011555,
+        "flash_density_mode_relative_error": 0.0012197245528653424,
+        "density_relative_l1": 6.0111070349218605e-06,
+        "density_max_absolute_difference": 221.60093449428678,
+        "pressure_relative_l1": 1.0025195056587503e-05,
+        "pressure_max_absolute_difference": 368.9305710028857,
+        "velocity_x_relative_l1": 0.0016483202652862912,
+        "velocity_x_max_absolute_difference": 3.816528441546183e-06
+      }
+    },
+    "jeans_128": {
+      "terminal_physical_time_s": 0.1,
+      "arch_cpu8_wall_s": [
+        5.446082668000599,
+        5.45096472199657,
+        5.543470651999087
+      ],
+      "flash_mpi8_wall_s": [
+        2.747799646000203,
+        2.8306716610022704,
+        2.8000659579993226
+      ],
+      "ratio_of_medians": 1.946727257057667,
+      "field_comparison": {
+        "n": 128,
+        "arch_time": 0.1,
+        "flash_time": 0.1,
+        "analytic_density_mode": 2949.2377328261905,
+        "omega": 13.728911309513387,
+        "arch_density_mode": 2930.313697388074,
+        "arch_density_mode_relative_error": -0.006416585284897275,
+        "flash_density_mode": 2951.0016639169903,
+        "flash_density_mode_relative_error": 0.0005980972883828793,
+        "density_relative_l1": 1.1365836188679698e-06,
+        "density_max_absolute_difference": 25.292854936793447,
+        "pressure_relative_l1": 1.9010246124115155e-06,
+        "pressure_max_absolute_difference": 41.47726694494486,
+        "velocity_x_relative_l1": 0.00034033170233006014,
+        "velocity_x_max_absolute_difference": 2.1154870279672337e-06
+      },
+      "arch_cpu16_wall_s": [
+        5.629320173000451,
+        5.825666225999157,
+        5.673276981997333
+      ],
+      "arch_cuda_wall_s": [
+        8.373005861998536,
+        8.17238684699987,
+        8.389609797002777
+      ],
+      "cuda_vs_fastest_cpu_speedup": 0.6510164702900961,
+      "independent_repeat": {
+        "arch_cpu8_wall_s": [
+          5.4720293909995235,
+          5.486998132997542,
+          5.470593671998358
+        ],
+        "flash_mpi8_wall_s": [
+          2.863273612001649,
+          3.0322879740015196,
+          2.806361435999861
+        ],
+        "ratio_of_medians": 1.9111094965088415,
+        "all_exit_codes_zero": true,
+        "all_checkpoint_physical_times_s": [
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1
+        ],
+        "output_prefix": "output/o6plus_borderline_jeans128_",
+        "status": "within_2x"
+      }
+    },
+    "cellular_dx025": {
+      "terminal_physical_time_s": 1.0222428325150896e-08,
+      "scientific_comparison_file": "o6plus_dx025_science.json",
+      "cpu_cuda_field_parity_file": "o6plus_backend_field_parity.json",
+      "arch_macrosteps": 258,
+      "flash_macrosteps": 103,
+      "finest_dx_cm": 0.25,
+      "arch_cpu8_wall_s": [
+        212.32338604100005,
+        209.47734110300007,
+        210.13755201800086
+      ],
+      "flash_mpi8_wall_s": [
+        9.20168885699968,
+        10.17792484200254,
+        8.943094131998805
+      ],
+      "arch_cpu16_wall_s": [
+        154.14932514300017,
+        152.0149495270016,
+        152.61891350699807
+      ],
+      "arch_cuda_wall_s": [
+        160.41718837600274,
+        161.18419299699963,
+        160.18238225700043
+      ],
+      "ratio_of_medians": 22.836846070724313,
+      "cuda_vs_fastest_cpu_speedup": 0.9513875355381105
+    }
+  },
+  "backend_field_parity_file": "o6plus_backend_field_parity.json",
+  "discarded_jeans_gpu_samples": "Three initial Jeans runs used the CUDA binary but resolved=cpu; excluded and rerun with explicit compute_backend=cuda.",
+  "binary_identity": {
+    "arch_cpu_release": {
+      "path": "/tmp/arch_o6plus_cpu_final",
+      "sha256": "8d90214d06735baf927c1a8533d99648c9c9597724585b23992714dee3e7a614",
+      "build": "Release -O3 -DNDEBUG, ARCH_ENABLE_CUDA=OFF"
+    },
+    "arch_cuda_release": {
+      "path": "build-cuda/bin/ARCH",
+      "sha256": "cc6929744fb62b9de57e950598869a0f19fc14bb48c2e6929d915d24242b7747",
+      "build": "Release -O3 -DNDEBUG, ARCH_ENABLE_CUDA=ON, CMAKE_CUDA_ARCHITECTURES=86"
+    },
+    "flash_cellular": {
+      "path": "/home/shiroakane/FLASH4.8/object/flash4",
+      "sha256": "d36b252f35bfc9c17c4571d6bb8e855c55a153b40104e6b324e70ca8a984975a"
+    },
+    "flash_sod": {
+      "path": "/home/shiroakane/FLASH4.8/object_sod/flash4",
+      "sha256": "c00c9adc716e53207cb13e495746081d3e4ed8f334b3fd95c82bf1db9257667c"
+    },
+    "flash_jeans": {
+      "path": "/home/shiroakane/FLASH4.8/object_jeans/flash4",
+      "sha256": "28fe8c7959a3d7ee11fde42dc9099986b5833ebec448502a814a67cedb8cbe23"
+    }
+  }
+}

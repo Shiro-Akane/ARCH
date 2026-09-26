@@ -78,6 +78,25 @@ ARCH_INLINE double probe_roe_dp_de_rho(const Eos& eos, double rho, double energy
 #endif
 }
 
+// Candidate Roe derivative probes retain the same recoverable failure
+// boundary as the scalar entries. A bad auxiliary state selects the existing
+// two-wave fallback; required endpoint EOS failures still propagate.
+template <class Eos>
+ARCH_INLINE void probe_roe_derivative_pair(
+    const Eos& eos, double rho, double energy, const double* x,
+    double& chi, double& kappa)
+{
+#if defined(__CUDA_ARCH__)
+    eos.get_dp_drho_e_and_dp_de_rho(rho, energy, x, chi, kappa);
+#else
+    try {
+        eos.get_dp_drho_e_and_dp_de_rho(rho, energy, x, chi, kappa);
+    } catch (const std::runtime_error&) {
+        chi = kappa = arch::state::invalid();
+    }
+#endif
+}
+
 // Direction map: dir=0, 1, and 2 select the stored native momentum axes.
 // Flux formulas use local orthonormal normal/tangential components and map
 // the result back afterward; curved-coordinate metrics belong to GridMetrics.
@@ -446,12 +465,53 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
             Xi_scratch[s] = (sq_rho_L * Xi_L[s] + sq_rho_R * Xi_R[s]) * inv_denom;
         Xi_avg = Xi_scratch;
     }
+    // For a calorically perfect ideal-gas mixture, freezing Xi at the Roe
+    // face mixture makes the four rectangular pressure probes algebraically
+    // redundant: chi=(gamma-1)*e_hat and kappa=(gamma-1)*rho_hat. This is the
+    // exact limit of the generic Glaister construction, with the same
+    // endpoint validity and sound-speed fallback checks.
+    if constexpr (requires(const EosType& candidate) {
+        candidate.roe_gamma_minus_one(Xi_avg);
+    }) {
+        const double gm1 = eos.roe_gamma_minus_one(Xi_avg);
+        if (!(gm1 > 0.0) || !std::isfinite(gm1)
+            || !(rho_L > 0.0) || !(rho_R > 0.0)
+            || !(e_L > 0.0) || !(e_R > 0.0)
+            || !std::isfinite(P_L) || !std::isfinite(P_R)) {
+            res.c_hat = arch::state::invalid();
+            return res;
+        }
+        const double e_hat =
+            (sq_rho_L * e_L + sq_rho_R * e_R) * inv_denom;
+        const double kinetic_hat = 0.5 * (res.u_hat * res.u_hat
+            + res.v_hat * res.v_hat + res.w_hat * res.w_hat);
+        const double pressure_over_density =
+            res.H_hat - e_hat - kinetic_hat;
+        res.chi = gm1 * e_hat;
+        res.kappa = gm1 * res.rho_hat;
+        res.c_hat = std::sqrt(res.chi
+            + res.kappa * pressure_over_density / res.rho_hat);
+        return res;
+    }
+
     const double p_ll = same_composition ? P_L
         : probe_roe_pressure(eos, rho_L, e_L, Xi_avg);
     const double p_rr = same_composition ? P_R
         : probe_roe_pressure(eos, rho_R, e_R, Xi_avg);
-    const double p_rl = probe_roe_pressure(eos, rho_R, e_L, Xi_avg);
-    const double p_lr = probe_roe_pressure(eos, rho_L, e_R, Xi_avg);
+    const bool equal_density = rho_L == rho_R;
+    const bool equal_energy = e_L == e_R;
+    const bool identical_thermo_inputs = equal_density && equal_energy;
+    // A rectangular Roe probe is identical to an endpoint whenever one
+    // coordinate agrees. Equal composition then lets it consume the already
+    // validated endpoint pressure; otherwise only identical cross probes
+    // share their candidate result. No EOS value is approximated here.
+    const double p_rl = same_composition && equal_density ? p_ll
+        : same_composition && equal_energy ? p_rr
+        : probe_roe_pressure(eos, rho_R, e_L, Xi_avg);
+    const double p_lr = same_composition && equal_density ? p_rr
+        : same_composition && equal_energy ? p_ll
+        : identical_thermo_inputs ? p_rl
+        : probe_roe_pressure(eos, rho_L, e_R, Xi_avg);
     if (!std::isfinite(p_ll) || !std::isfinite(p_rr)
         || !std::isfinite(p_rl) || !std::isfinite(p_lr)) {
         res.c_hat = arch::state::invalid();
@@ -470,6 +530,37 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     // pressure subtraction would amplify roundoff.
     double epsilon = 1e-7 * (rho_L + rho_R);
 
+    // Pressure probes above still use the original candidate boundary.
+    // When both derivative branches are required, Helm can evaluate the
+    // identical (rho,e,X) endpoint jet once for chi and kappa.
+    const double relative_energy_resolution =
+        std::sqrt(std::numeric_limits<double>::epsilon());
+    const double energy_resolution = (relative_energy_resolution * std::abs(e_L)
+        + relative_energy_resolution * std::abs(e_R));
+    double grouped_chi_left = 0.0, grouped_chi_right = 0.0;
+    double grouped_kappa_left = 0.0, grouped_kappa_right = 0.0;
+    bool grouped_derivatives = false;
+    if constexpr (requires(const EosType& candidate, double& chi, double& kappa) {
+        candidate.get_dp_drho_e_and_dp_de_rho(
+            rho_L, e_L, Xi_avg, chi, kappa);
+    }) {
+        if (std::abs(d_rho) <= epsilon
+            && std::abs(d_e) <= energy_resolution) {
+            probe_roe_derivative_pair(
+                eos, rho_L, e_L, Xi_avg,
+                grouped_chi_left, grouped_kappa_left);
+            if (identical_thermo_inputs) {
+                grouped_chi_right = grouped_chi_left;
+                grouped_kappa_right = grouped_kappa_left;
+            } else {
+                probe_roe_derivative_pair(
+                    eos, rho_R, e_R, Xi_avg,
+                    grouped_chi_right, grouped_kappa_right);
+            }
+            grouped_derivatives = true;
+        }
+    }
+
     // chi=(∂p/∂rho)_e.
     if (std::abs(d_rho) > epsilon)
     {
@@ -478,8 +569,12 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     }
     else
     {
-        res.chi = (sq_rho_L * probe_roe_dp_drho_e(eos, rho_L, e_L, Xi_avg)
-                 + sq_rho_R * probe_roe_dp_drho_e(eos, rho_R, e_R, Xi_avg)) * inv_denom;
+        const double left = grouped_derivatives ? grouped_chi_left
+            : probe_roe_dp_drho_e(eos, rho_L, e_L, Xi_avg);
+        const double right = grouped_derivatives ? grouped_chi_right
+            : identical_thermo_inputs ? left
+            : probe_roe_dp_drho_e(eos, rho_R, e_R, Xi_avg);
+        res.chi = (sq_rho_L * left + sq_rho_R * right) * inv_denom;
     }
 
     // kappa=(∂p/∂e)_rho. Pressure subtraction loses relative precision when
@@ -487,10 +582,6 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     // the absolute energy itself is representable.
     // sqrt(machine epsilon) balances subtraction error against the local
     // derivative limit; retain that limit instead of dividing rounded ulps.
-    const double relative_energy_resolution =
-        std::sqrt(std::numeric_limits<double>::epsilon());
-    const double energy_resolution = (relative_energy_resolution * std::abs(e_L)
-        + relative_energy_resolution * std::abs(e_R));
     if (std::abs(d_e) > energy_resolution)
     { // Use a finite difference only when the energy interval is resolvable.
         res.kappa = (sq_rho_L * ((p_rr - p_rl) / d_e)
@@ -498,8 +589,12 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     }
     else
     {
-        res.kappa = (sq_rho_L * probe_roe_dp_de_rho(eos, rho_R, e_R, Xi_avg)
-                   + sq_rho_R * probe_roe_dp_de_rho(eos, rho_L, e_L, Xi_avg)) * inv_denom;
+        const double right = grouped_derivatives ? grouped_kappa_right
+            : probe_roe_dp_de_rho(eos, rho_R, e_R, Xi_avg);
+        const double left = grouped_derivatives ? grouped_kappa_left
+            : identical_thermo_inputs ? right
+            : probe_roe_dp_de_rho(eos, rho_L, e_L, Xi_avg);
+        res.kappa = (sq_rho_L * right + sq_rho_R * left) * inv_denom;
     }
 
 

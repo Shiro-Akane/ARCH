@@ -11,6 +11,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <vector>
 
 #include "numerics/flux/FluxFunctions.h"
 
@@ -95,15 +96,26 @@ ARCH_INLINE void required_mean_thermo(const FluidVector& mean,
     }
 }
 
-template<class Eos>
-/** Blend the high-order flux with Lax-Friedrichs using one conservative face theta. */
-ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
-    const double* x_left, const double* x_right, int species, const Eos& eos,
+// One host patch-stage owns this cache. A value is published only after the
+// complete EOS query succeeds; the caller resets validity on every RK stage.
+struct MeanThermoCache {
+    std::vector<double> pressure;
+    std::vector<double> sound_speed;
+    std::vector<unsigned char> ready;
+
+    void reset(int cells) {
+        pressure.resize(cells);
+        sound_speed.resize(cells);
+        ready.assign(cells, 0);
+    }
+};
+
+/** Blend a face flux using already validated thermodynamics of both cell means. */
+ARCH_INLINE void limit_face_with_thermo(const FluidVector& left, const FluidVector& right,
+    const double* x_left, const double* x_right, int species,
+    double p_left, double c_left, double p_right, double c_right,
     int direction, FluidVector& high, double* species_flux)
 {
-    double p_left, p_right, c_left, c_right;
-    required_mean_thermo(left, x_left, eos, p_left, c_left);
-    required_mean_thermo(right, x_right, eos, p_right, c_right);
     const double a = std::max(std::abs(get_un(left, direction)) + c_left,
                               std::abs(get_un(right, direction)) + c_right);
     const auto fl = get_flux(left, p_left, direction);
@@ -139,5 +151,19 @@ ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
             - 0.5 * a * (right.rho * x_right[s] - left.rho * x_left[s]);
         species_flux[s] = theta == 0.0 ? low_species : low_species + theta * (species_flux[s] - low_species);
     }
+}
+
+/** Blend the high-order flux with Lax-Friedrichs using one conservative face theta. */
+template<class Eos>
+ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
+    const double* x_left, const double* x_right, int species, const Eos& eos,
+    int direction, FluidVector& high, double* species_flux)
+{
+    double p_left, p_right, c_left, c_right;
+    required_mean_thermo(left, x_left, eos, p_left, c_left);
+    required_mean_thermo(right, x_right, eos, p_right, c_right);
+    limit_face_with_thermo(left, right, x_left, x_right, species,
+                           p_left, c_left, p_right, c_right, direction,
+                           high, species_flux);
 }
 } // namespace FluxAdmissibility

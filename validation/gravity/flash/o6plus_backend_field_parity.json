@@ -1,0 +1,406 @@
+{
+  "a": {
+    "physical_time_s": 1.0192286463896491e-08,
+    "block_count": 20,
+    "topology_identical": true,
+    "fields": {
+      "DENS": {
+        "relative_l1": 1.0710209608078003e-15,
+        "max_absolute_difference": 2.980232238769531e-07
+      },
+      "DIVV": {
+        "relative_l1": 1.3472173198410346e-14,
+        "max_absolute_difference": 3.993511199951172e-06
+      },
+      "ENER": {
+        "relative_l1": 1.142769889991054e-15,
+        "max_absolute_difference": 326417514496.0
+      },
+      "ENTR": {
+        "relative_l1": 6.544988561990245e-14,
+        "max_absolute_difference": 51.5
+      },
+      "ENUC": {
+        "relative_l1": 3.344097927822117e-13,
+        "max_absolute_difference": 21881683968.0
+      },
+      "PRES": {
+        "relative_l1": 1.0707143375863454e-15,
+        "max_absolute_difference": 96636764160.0
+      },
+      "TEMP": {
+        "relative_l1": 2.136300706721542e-15,
+        "max_absolute_difference": 3.9577484130859375e-05
+      },
+      "VELX": {
+        "relative_l1": 1.3791974207862727e-15,
+        "max_absolute_difference": 3.933906555175781e-06
+      },
+      "VELY": {
+        "relative_l1": 0.0,
+        "max_absolute_difference": 0.0
+      },
+      "VORT": {
+        "relative_l1": 0.0,
+        "max_absolute_difference": 0.0
+      },
+      "ar36": {
+        "relative_l1": 7.670369735833966e-15,
+        "max_absolute_difference": 2.9434394917086937e-20
+      },
+      "c12": {
+        "relative_l1": 1.9097397767936786e-15,
+        "max_absolute_difference": 3.0899761915836876e-18
+      },
+      "ca40": {
+        "relative_l1": 9.07070069131685e-15,
+        "max_absolute_difference": 4.531626267810507e-20
+      },
+      "cr48": {
+        "relative_l1": 7.785541073124139e-15,
+        "max_absolute_difference": 3.494010907423989e-21
+      },
+      "fe52": {
+        "relative_l1": 8.280567495016277e-15,
+        "max_absolute_difference": 8.801201717564214e-22
+      },
+      "fe54": {
+        "relative_l1": 9.600868923736572e-15,
+        "max_absolute_difference": 1.3234889800848443e-22
+      },
+      "h1": {
+        "relative_l1": 1.3165536729207546e-17,
+        "max_absolute_difference": 1.504632769052528e-36
+      },
+      "he3": {
+        "relative_l1": 2.0312541202546982e-16,
+        "max_absolute_difference": 1.504632769052528e-35
+      },
+      "he4": {
+        "relative_l1": 9.71618621344327e-18,
+        "max_absolute_difference": 2.220446049250313e-16
+      },
+      "mg24": {
+        "relative_l1": 4.784534419880352e-15,
+        "max_absolute_difference": 1.4081922748102743e-20
+      },
+      "n14": {
+        "relative_l1": 0.0,
+        "max_absolute_difference": 0.0
+      },
+      "ne20": {
+        "relative_l1": 3.043438921580016e-15,
+        "max_absolute_difference": 4.0234064994579266e-21
+      },
+      "neut": {
+        "relative_l1": 2.0561945881173932e-14,
+        "max_absolute_difference": 9.071900410041636e-30
+      },
+      "ni56": {
+        "relative_l1": 8.775477830796756e-15,
+        "max_absolute_difference": 1.1914955112458162e-26
+      },
+      "o16": {
+        "relative_l1": 4.779768734776136e-15,
+        "max_absolute_difference": 2.202285662861181e-19
+      },
+      "prot": {
+        "relative_l1": 9.423734901434912e-15,
+        "max_absolute_difference": 4.652890945610781e-24
+      },
+      "s32": {
+        "relative_l1": 5.544529236873479e-15,
+        "max_absolute_difference": 3.239901023247699e-20
+      },
+      "si28": {
+        "relative_l1": 3.585014435959041e-15,
+        "max_absolute_difference": 4.404571325722362e-20
+      },
+      "ti44": {
+        "relative_l1": 8.860573227316745e-15,
+        "max_absolute_difference": 1.0376153603865179e-20
+      }
+    }
+  },
+  "b": {
+    "physical_time_s": 1.029419223692258e-08,
+    "block_count": 24,
+    "topology_identical": true,
+    "fields": {
+      "DENS": {
+        "relative_l1": 1.1031355323462648e-15,
+        "max_absolute_difference": 3.5762786865234375e-07
+      },
+      "DIVV": {
+        "relative_l1": 1.5259922192263683e-14,
+        "max_absolute_difference": 4.76837158203125e-06
+      },
+      "ENER": {
+        "relative_l1": 1.2392450358317391e-15,
+        "max_absolute_difference": 373662154752.0
+      },
+      "ENTR": {
+        "relative_l1": 7.077648085937595e-14,
+        "max_absolute_difference": 85.03125
+      },
+      "ENUC": {
+        "relative_l1": 2.9990586456353675e-13,
+        "max_absolute_difference": 25966936064.0
+      },
+      "PRES": {
+        "relative_l1": 1.3600499136386218e-15,
+        "max_absolute_difference": 109521666048.0
+      },
+      "TEMP": {
+        "relative_l1": 2.2043857731107486e-15,
+        "max_absolute_difference": 4.3392181396484375e-05
+      },
+      "VELX": {
+        "relative_l1": 1.41958686523053e-15,
+        "max_absolute_difference": 4.470348358154297e-06
+      },
+      "VELY": {
+        "relative_l1": 0.0,
+        "max_absolute_difference": 0.0
+      },
+      "VORT": {
+        "relative_l1": 0.0,
+        "max_absolute_difference": 0.0
+      },
+      "ar36": {
+        "relative_l1": 1.2140985093149901e-14,
+        "max_absolute_difference": 1.9587636905255695e-20
+      },
+      "c12": {
+        "relative_l1": 2.290065392438948e-15,
+        "max_absolute_difference": 2.3852447794681098e-18
+      },
+      "ca40": {
+        "relative_l1": 1.344160302467185e-14,
+        "max_absolute_difference": 4.1504614415460717e-20
+      },
+      "cr48": {
+        "relative_l1": 2.1126763755900204e-14,
+        "max_absolute_difference": 4.791030107907136e-21
+      },
+      "fe52": {
+        "relative_l1": 2.6438243074232606e-14,
+        "max_absolute_difference": 1.287093033132511e-21
+      },
+      "fe54": {
+        "relative_l1": 3.7444147315031925e-14,
+        "max_absolute_difference": 1.9935052762527967e-22
+      },
+      "h1": {
+        "relative_l1": 3.761581922630631e-17,
+        "max_absolute_difference": 4.513898307157584e-36
+      },
+      "he3": {
+        "relative_l1": 1.3479001317053016e-16,
+        "max_absolute_difference": 1.504632769052528e-35
+      },
+      "he4": {
+        "relative_l1": 9.253456569625483e-18,
+        "max_absolute_difference": 1.1102230246251565e-16
+      },
+      "mg24": {
+        "relative_l1": 4.3537001774315104e-15,
+        "max_absolute_difference": 5.929230630780102e-21
+      },
+      "n14": {
+        "relative_l1": 3.1346516021927658e-18,
+        "max_absolute_difference": 3.009265538105056e-36
+      },
+      "ne20": {
+        "relative_l1": 3.850261820930651e-15,
+        "max_absolute_difference": 3.917527381051139e-21
+      },
+      "neut": {
+        "relative_l1": 9.095030458191694e-14,
+        "max_absolute_difference": 1.027984367116131e-29
+      },
+      "ni56": {
+        "relative_l1": 3.567285040002383e-14,
+        "max_absolute_difference": 1.9790942390184744e-26
+      },
+      "o16": {
+        "relative_l1": 7.819689094156787e-15,
+        "max_absolute_difference": 2.1006417091906648e-19
+      },
+      "prot": {
+        "relative_l1": 3.75152771466493e-14,
+        "max_absolute_difference": 7.418776118834967e-24
+      },
+      "s32": {
+        "relative_l1": 9.782085148425409e-15,
+        "max_absolute_difference": 2.583450489125616e-20
+      },
+      "si28": {
+        "relative_l1": 6.3582890338245905e-15,
+        "max_absolute_difference": 3.6422416731934915e-20
+      },
+      "ti44": {
+        "relative_l1": 1.4566775238601285e-14,
+        "max_absolute_difference": 9.423241538204091e-21
+      }
+    }
+  },
+  "jeans128": {
+    "physical_time_s": 0.1,
+    "block_count": 64,
+    "topology_identical": true,
+    "fields": {
+      "DENS": {
+        "relative_l1": 3.73953904878969e-16,
+        "max_absolute_difference": 3.3527612686157227e-08
+      },
+      "ENER": {
+        "relative_l1": 1.0530938273474542e-16,
+        "max_absolute_difference": 1.4901161193847656e-08
+      },
+      "GACX": {
+        "relative_l1": 1.8062351611990657e-13,
+        "max_absolute_difference": 1.2977900004651488e-16
+      },
+      "GACY": {
+        "relative_l1": 0.5813088656842613,
+        "max_absolute_difference": 1.5673933391815685e-16
+      },
+      "GPOT": {
+        "relative_l1": 2.499966546709684e-13,
+        "max_absolute_difference": 9.192001543603667e-18
+      },
+      "PRES": {
+        "relative_l1": 1.4111571988819735e-16,
+        "max_absolute_difference": 1.1175870895385742e-08
+      },
+      "VELX": {
+        "relative_l1": 8.89158733028722e-14,
+        "max_absolute_difference": 3.9914902980053846e-16
+      }
+    }
+  },
+  "dx025": {
+    "physical_time_s": 1.0222428325150896e-08,
+    "block_count": 68,
+    "topology_identical": true,
+    "fields": {
+      "DENS": {
+        "relative_l1": 1.6794239267947428e-15,
+        "max_absolute_difference": 5.21540641784668e-07
+      },
+      "DIVV": {
+        "relative_l1": 2.924704438620745e-14,
+        "max_absolute_difference": 1.1265277862548828e-05
+      },
+      "ENER": {
+        "relative_l1": 2.45314897832191e-15,
+        "max_absolute_difference": 532575944704.0
+      },
+      "ENTR": {
+        "relative_l1": 5.446396502876594e-14,
+        "max_absolute_difference": 55.15625
+      },
+      "ENUC": {
+        "relative_l1": 3.147009975398945e-13,
+        "max_absolute_difference": 31402754048.0
+      },
+      "PRES": {
+        "relative_l1": 2.581551304675657e-15,
+        "max_absolute_difference": 244813135872.0
+      },
+      "TEMP": {
+        "relative_l1": 3.62683799387407e-15,
+        "max_absolute_difference": 4.1484832763671875e-05
+      },
+      "VELX": {
+        "relative_l1": 1.50322973847288e-15,
+        "max_absolute_difference": 5.632638931274414e-06
+      },
+      "VELY": {
+        "relative_l1": 0.0,
+        "max_absolute_difference": 0.0
+      },
+      "VORT": {
+        "relative_l1": 0.0,
+        "max_absolute_difference": 0.0
+      },
+      "ar36": {
+        "relative_l1": 2.0634253979434772e-14,
+        "max_absolute_difference": 1.0566736016997397e-19
+      },
+      "c12": {
+        "relative_l1": 4.309246800018259e-15,
+        "max_absolute_difference": 5.5294310796760726e-18
+      },
+      "ca40": {
+        "relative_l1": 2.627715364943836e-14,
+        "max_absolute_difference": 1.6983010592448722e-19
+      },
+      "cr48": {
+        "relative_l1": 2.7127766078211796e-14,
+        "max_absolute_difference": 2.1175823681357508e-20
+      },
+      "fe52": {
+        "relative_l1": 3.20748132865564e-14,
+        "max_absolute_difference": 9.26442286059391e-21
+      },
+      "fe54": {
+        "relative_l1": 3.7741656611452673e-14,
+        "max_absolute_difference": 1.164670302474663e-21
+      },
+      "h1": {
+        "relative_l1": 2.876503823188602e-17,
+        "max_absolute_difference": 4.513898307157584e-36
+      },
+      "he3": {
+        "relative_l1": 9.569906755893229e-17,
+        "max_absolute_difference": 1.6550960459577808e-35
+      },
+      "he4": {
+        "relative_l1": 1.1022278030008382e-17,
+        "max_absolute_difference": 2.220446049250313e-16
+      },
+      "mg24": {
+        "relative_l1": 6.2704152996351825e-15,
+        "max_absolute_difference": 1.3129010682441655e-20
+      },
+      "n14": {
+        "relative_l1": 1.1063476243033294e-18,
+        "max_absolute_difference": 1.504632769052528e-36
+      },
+      "ne20": {
+        "relative_l1": 7.650238184533666e-15,
+        "max_absolute_difference": 1.0905549195899117e-20
+      },
+      "neut": {
+        "relative_l1": 6.258964400229247e-14,
+        "max_absolute_difference": 5.748823846798124e-29
+      },
+      "ni56": {
+        "relative_l1": 3.6067740548663155e-14,
+        "max_absolute_difference": 1.134949961559574e-25
+      },
+      "o16": {
+        "relative_l1": 1.3218382716758801e-14,
+        "max_absolute_difference": 5.353248226647178e-19
+      },
+      "prot": {
+        "relative_l1": 3.7934715613027866e-14,
+        "max_absolute_difference": 4.290999427618831e-23
+      },
+      "s32": {
+        "relative_l1": 1.3893740117635388e-14,
+        "max_absolute_difference": 8.258571235729428e-20
+      },
+      "si28": {
+        "relative_l1": 8.912968168089894e-15,
+        "max_absolute_difference": 9.740878893424454e-20
+      },
+      "ti44": {
+        "relative_l1": 2.4723448634230052e-14,
+        "max_absolute_difference": 2.583450489125616e-20
+      }
+    }
+  }
+}

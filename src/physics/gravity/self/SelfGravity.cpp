@@ -74,6 +74,10 @@ void SelfGravity::bind(amr::EllipticMeshBinding binding) const {
 }
 /** Retire a prior gravity publication whenever its density lease changes. */
 void SelfGravity::invalidate() const noexcept { if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate(); } }
+/** Restart and uninterrupted runs must start each macro-step solve identically. */
+void SelfGravity::clear_solver_initial_guess() const noexcept {
+    if(work_) work_->solver.clear_initial_guess();
+}
 /** Gather current density, solve A phi = -4 pi G rho_source, and publish force. */
 arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& request) const {
     invalidate();

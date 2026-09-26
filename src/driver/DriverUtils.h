@@ -521,9 +521,10 @@ ARCH_INLINE double finalize_cfl_dt(double cfl_number, double minimum)
  * The two-face bound supports the shared conservative positivity limiter.
  */
 template <typename EosType>
-inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number)
+inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number,
+                          bool parallel_rows = true)
 {
-        arch::state::HostFailure failure;
+    arch::state::HostFailure failure;
     int n_species = state.GetNumSpecies();
     const auto reduction_spec = arch::reduction::minimum_spec(
         cfl_inactive_cell_dt());
@@ -536,47 +537,58 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
     const int nk = ke - ks;
     const int nj = je - js;
 
+    const auto scan_row = [&](int kj, auto& local_reduction,
+                              std::vector<double>& Xi_cache) {
+        try {
+            const int k = ks + kj / nj;
+            const int j = js + kj % nj;
+            for (int i = grid.Is(); i < grid.Ie(); ++i) {
+                const int idx = grid.GetIndex(i, j, k);
+                const FluidVector U = state.get(idx);
+                double cell_dt = std::numeric_limits<double>::quiet_NaN();
+                if (is_cfl_cell_active(U)) {
+                    for (int s = 0; s < n_species; ++s)
+                        Xi_cache[s] = state.X(s, idx);
+                    cell_dt = evaluate_cfl_cell_dt(
+                        U, Xi_cache.data(), eos,
+                        GridMetrics::make_geometry_view(grid), i, j);
+                }
+                amr::CellLogicalKey cell_key{};
+                cell_key.logical_i = i;
+                cell_key.logical_j = j;
+                cell_key.logical_k = k;
+                cell_key.component = static_cast<int>(
+                    DriverReduction::BlockReductionComponent::Hydro);
+                arch::reduction::combine_candidate(
+                    reduction_spec, local_reduction,
+                    {cell_dt, cell_key, true});
+            }
+        } catch (...) { failure.capture_current(); }
+    };
+
+    // A large block set is parallelized by the caller. Avoid launching a
+    // mostly idle inner team for every one-dimensional or small patch.
+    if (parallel_rows) {
 #pragma omp parallel
-    {
+        {
+            std::vector<double> Xi_cache(n_species);
+            auto local_reduction = arch::reduction::begin_reduction(reduction_spec);
+#pragma omp for schedule(static)
+            for (int kj = 0; kj < nk * nj; ++kj)
+                scan_row(kj, local_reduction, Xi_cache);
+#pragma omp critical(hydro_cfl_reduction)
+            {
+                arch::reduction::combine_state(
+                    reduction_spec, global_reduction, local_reduction);
+            }
+        }
+    } else {
         std::vector<double> Xi_cache(n_species);
         auto local_reduction = arch::reduction::begin_reduction(reduction_spec);
-
-#pragma omp for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
-        {
-            try {
-                int k = ks + kj / nj;
-                int j = js + kj % nj;
-                for (int i = grid.Is(); i < grid.Ie(); ++i)
-                {
-                    int idx = grid.GetIndex(i, j, k);
-                    FluidVector U = state.get(idx);
-                    double cell_dt = std::numeric_limits<double>::quiet_NaN();
-                    if (is_cfl_cell_active(U)) {
-                        for (int s = 0; s < n_species; ++s)
-                            Xi_cache[s] = state.X(s, idx);
-                        cell_dt = evaluate_cfl_cell_dt(
-                            U, Xi_cache.data(), eos, GridMetrics::make_geometry_view(grid), i, j);
-                    }
-                    amr::CellLogicalKey cell_key{};
-                    cell_key.logical_i = i;
-                    cell_key.logical_j = j;
-                    cell_key.logical_k = k;
-                    cell_key.component = static_cast<int>(
-                        DriverReduction::BlockReductionComponent::Hydro);
-                    arch::reduction::combine_candidate(
-                        reduction_spec, local_reduction,
-                        {cell_dt, cell_key, true});
-                }
-
-            } catch (...) { failure.capture_current(); }
-            }
-
-#pragma omp critical(hydro_cfl_reduction)
-        {
-            arch::reduction::combine_state(
-                reduction_spec, global_reduction, local_reduction);
-        }
+            scan_row(kj, local_reduction, Xi_cache);
+        arch::reduction::combine_state(
+            reduction_spec, global_reduction, local_reduction);
     }
 
     failure.rethrow();

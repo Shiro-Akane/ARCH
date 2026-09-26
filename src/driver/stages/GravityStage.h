@@ -21,7 +21,7 @@ class GravityStage final : public scheduler::HydroStagePreparation {
 public:
     GravityStage(DriverRuntime&, const Physical::Gravity::IGravityPolicy*);
     state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest&) override;
-    void prepare_current(double time);
+    void prepare_current(double time, bool reset_solver_history);
     void invalidate() const override;
     double timestep() const;
     std::vector<io::PlotScalarField> plot_fields() const;

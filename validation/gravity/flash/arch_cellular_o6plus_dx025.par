@@ -1,14 +1,17 @@
-# O6 holdout: 96 x 32 cm Cartesian He detonation, with a distinct thermal state.
-# Registered before performance changes; retain this physical input across revisions.
-# FLASH reference uses the archive Cellular implementation with Coulomb multiplier 1.
-# See O6OptimizationReport.zh-CN.md for the matched verification protocol.
+# O6+ larger-scale A: 64 x 32 cm, aligned 13 cm ignition radius and dx=0.25 cm.
+# Its local pocket/ignition extension was run in pure-He planar mode.
+# The same physical initial state and finest cell width are used by the O5
+# comparison; this is an ARCH self-consistent-temperature burn, whereas the
+# archived FLASH burner holds temperature fixed inside each burner call.
+# FLASH reference uses eos_coulombMult=1 to retain the Helm Coulomb term.
+# See validation/gravity/flash/O5OptimizationReport.zh-CN.md.
 geometry=cartesian
-nblockx1=6
-nblockx2=2
+nblockx1=8
+nblockx2=4
 nblockx3=0
-max_blocks=128
+max_blocks=512
 x1_min=0
-x1_max=96
+x1_max=64
 x2_min=0
 x2_max=32
 x1l_boundary_type=reflecting
@@ -26,13 +29,13 @@ regrid_interval=2
 refine_var=PRES,DENS,c12,ENUC
 refine_threshold=0.8
 derefine_threshold=0.2
-tmax=1.029419223692258e-08
+tmax=1.0222428325150896e-08
 max_steps=1000
 dt_init=1e-16
 dt_min=1e-20
 tstep_change_factor=2.0
-out_dir=output/cellular_o6_holdout
-base_name=CellularO6Holdout
+out_dir=output/cellular_o6plus_dx025
+base_name=CellularMatched2D
 plt_dt=-1
 plt_dstep=1000
 chk_dt=-1
@@ -53,11 +56,11 @@ ode_solver=bd
 linear_solver=DenseLU
 use_diffusion=false
 rhoAmbient=2e7
-tempAmbient=2.5e8
+tempAmbient=2e8
 rhoPerturb=8e7
-tempPerturb=3.2e9
+tempPerturb=3.5e9
 velxPerturb=9.5e8
-radiusPerturb=12.8
+radiusPerturb=13.0
 noiseAmplitude=0
 shock_dir=0
 

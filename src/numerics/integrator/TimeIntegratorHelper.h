@@ -14,7 +14,11 @@
 
 #include <algorithm>
 #include <vector>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "numerics/state/StateAdmissibility.h"
+#include "numerics/flux/InvariantDomainFlux.h"
 
 #include "amr/AMRControl.h"
 #include "amr/flux/AMRFluxRegistering.h"
@@ -85,9 +89,7 @@ namespace TimeIntegration
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
 
-#pragma omp parallel for schedule(static)
-        for (int kj = 0; kj < nk * nj; ++kj)
-        {
+        const auto accumulate_row = [&](int kj) {
             int k = ks + kj / nj;
             int j = js + kj % nj;
             for (int i = grid.Is(); i < grid.Ie(); ++i)
@@ -110,6 +112,18 @@ namespace TimeIntegration
                     n_spec, total_size, area_l, area_r, volume, dt,
                     dU[idx], species_delta);
             }
+        };
+        bool parallel_rows = nk * nj > 1;
+#ifdef _OPENMP
+        parallel_rows = parallel_rows && !omp_in_parallel();
+#endif
+        if (parallel_rows) {
+#pragma omp parallel for schedule(static)
+            for (int kj = 0; kj < nk * nj; ++kj)
+                accumulate_row(kj);
+        } else {
+            for (int kj = 0; kj < nk * nj; ++kj)
+                accumulate_row(kj);
         }
     }
 
@@ -249,12 +263,8 @@ namespace TimeIntegration
 
         u_dest.stage_repairs.reset(n_spec);
         int invalid_count = 0;
-#pragma omp parallel reduction(+:invalid_count)
-        {
-        arch::state::RepairBudget local(n_spec);
-#pragma omp for schedule(static)
-        for (int kj = 0; kj < nk * nj; ++kj)
-        {
+        const auto update_row = [&](int kj, arch::state::RepairBudget& local,
+                                    int& local_invalid) {
             int k = ks + kj / nj;
             int j = js + kj % nj;
             for (int i = grid.Is(); i < grid.Ie(); ++i)
@@ -277,12 +287,29 @@ namespace TimeIntegration
                     n_spec, total_size, weight_n, weight_flux,
                     sml_rho, min_eint, max_eint, U_new, Xi_new, local.view(),
                     GridMetrics::CellVolume(grid, i, j, k), idx);
-                if (!arch::state::accepted(status)) ++invalid_count;
+                if (!arch::state::accepted(status)) ++local_invalid;
                 u_dest.set(idx, U_new);
             }
-        }
+        };
+        bool parallel_rows = nk * nj > 1;
+#ifdef _OPENMP
+        parallel_rows = parallel_rows && !omp_in_parallel();
+#endif
+        if (parallel_rows) {
+#pragma omp parallel reduction(+:invalid_count)
+            {
+                arch::state::RepairBudget local(n_spec);
+#pragma omp for schedule(static)
+                for (int kj = 0; kj < nk * nj; ++kj)
+                    update_row(kj, local, invalid_count);
 #pragma omp critical(arch_state_repairs)
-        u_dest.stage_repairs.combine(local);
+                u_dest.stage_repairs.combine(local);
+            }
+        } else {
+            arch::state::RepairBudget local(n_spec);
+            for (int kj = 0; kj < nk * nj; ++kj)
+                update_row(kj, local, invalid_count);
+            u_dest.stage_repairs.combine(local);
         }
         if (invalid_count) throw std::runtime_error("Hydro candidate rejected: invalid density, composition or unresolved/internal energy");
     }
@@ -302,11 +329,35 @@ namespace TimeIntegration
         std::fill(dU.begin(), dU.end(), FluidVector());
         std::fill(d_spec.begin(), d_spec.end(), 0.0);
 
+        // Reset at every patch-stage: no result crosses RK, AMR, or restart
+        // state versions. The cache only removes duplicate exact mean queries
+        // for flux policies and EOS views that support the grouped path.
+        static thread_local FluxAdmissibility::MeanThermoCache mean_cache;
+        constexpr bool grouped_mean_eos = requires(
+            const EosType& candidate, double& pressure, double& sound) {
+            candidate.get_pressure_and_sound_speed(
+                1.0, 1.0, static_cast<const double*>(nullptr), pressure, sound);
+        };
+        if constexpr (grouped_mean_eos)
+            mean_cache.reset(grid.GetTotalSize());
+
         for (int dir = 0; dir < grid.dim; ++dir)
         {
             std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector());
             std::fill(spec_flux_buffer.begin(), spec_flux_buffer.end(), 0.0);
-            FluxSchemePolicy::compute_fluxes(state, eos, grid, flux_buffer, spec_flux_buffer, dir, entropy_fix_coeff);
+            if constexpr (grouped_mean_eos && requires {
+                FluxSchemePolicy::compute_fluxes(
+                    state, eos, grid, flux_buffer, spec_flux_buffer,
+                    dir, entropy_fix_coeff, &mean_cache);
+            }) {
+                FluxSchemePolicy::compute_fluxes(
+                    state, eos, grid, flux_buffer, spec_flux_buffer,
+                    dir, entropy_fix_coeff, &mean_cache);
+            } else {
+                FluxSchemePolicy::compute_fluxes(
+                    state, eos, grid, flux_buffer, spec_flux_buffer,
+                    dir, entropy_fix_coeff);
+            }
 
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
 

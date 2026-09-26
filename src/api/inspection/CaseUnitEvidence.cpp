@@ -81,9 +81,10 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
     }}},
-    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "f8ff2133ec7ccc27b8cc333aed5493e7c7c4746986e0e614aa8c7a408ed8710d", {
+    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "1d705de8cab39b7b0c42c729245f5175b84e0bd99e94a24c1a576e7e578c387d", {
         {"rho0", "g/cm^3"}, {"pressure0", "erg/cm^3"},
         {"amplitude", "1"}, {"phase", "rad"}, {"mode", "1"},
+        {"standing_wave", "1"},
     }}},
     {"ExternalGravity", {"simulation/ExternalGravity/ExternalGravity.cpp", "c2983a892091924f3a5a5abe5152eb091a5eb2d492c38913ca5867ad438899ee", {
         {"rho0", "g/cm^3"},

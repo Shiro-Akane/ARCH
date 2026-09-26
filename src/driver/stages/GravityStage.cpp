@@ -88,8 +88,15 @@ state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparat
     return solve(request.descriptor.input_slot,request.ledger,request.input_time,request.descriptor.stage);
 }
 /** Prepare gravity on the accepted current state for output and timestep use. */
-void GravityStage::prepare_current(double time) {
-    if (gravity_) { auto context=runtime_.stage_context(); solve(state::StateSlot::Current,context.ledger,time,0); }
+void GravityStage::prepare_current(double time, bool reset_solver_history) {
+    if (gravity_) {
+        // A checkpoint stores accepted fluid fields but no iterative Poisson
+        // history. The Driver resets only at durable restart boundaries so
+        // direct and resumed paths begin from the same accepted state.
+        if (reset_solver_history) gravity_->clear_solver_initial_guess();
+        auto context=runtime_.stage_context();
+        solve(state::StateSlot::Current,context.ledger,time,0);
+    }
 }
 /** Retire both host and device gravity views before changing state. */
 void GravityStage::invalidate() const { if(gravity_)gravity_->invalidate();if(runtime_.backend())runtime_.backend()->invalidate_gravity(); }

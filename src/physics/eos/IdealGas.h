@@ -58,6 +58,12 @@ struct IdealGasView
         return (sum_Xi_Cv_gm1 / sum_Xi_Cv) + 1.0;
     }
 
+    /** Exact coefficient for Roe's fixed-composition ideal-gas derivatives. */
+    ARCH_INLINE double roe_gamma_minus_one(const double *Xi) const
+    {
+        return get_gamma(Xi) - 1.0;
+    }
+
     ARCH_INLINE double get_mixture_Cv(const double *Xi) const
     {
         if (species.count == 0)
@@ -251,6 +257,8 @@ public:
     }
 
     double get_gamma(const double *Xi) const { return get_view().get_gamma(Xi); }
+    double roe_gamma_minus_one(const double *Xi) const
+    { return get_view().roe_gamma_minus_one(Xi); }
     double get_mixture_Cv(const double *Xi) const { return get_view().get_mixture_Cv(Xi); }
     double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
     { return get_view().get_pressure_from_rho_T(rho, T, Xi); }

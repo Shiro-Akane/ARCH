@@ -17,6 +17,9 @@
 
 #include <algorithm>
 #include <vector>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include "numerics/flux/FluxFunctions.h"
 #include "numerics/flux/InvariantDomainFlux.h"
@@ -189,7 +192,8 @@ struct FluxHLLC
                                std::vector<FluidVector> &flux_out,
                                std::vector<double> &spec_flux_out,
                                int dir, // 0=x, 1=y, 2=z
-                               double /* unused_entropy_coeff */ = 0.0)
+                               double /* unused_entropy_coeff */ = 0.0,
+                               FluxAdmissibility::MeanThermoCache* mean_cache = nullptr)
     {
         arch::state::HostFailure failure;
         int n_spec = state.GetNumSpecies();
@@ -214,16 +218,36 @@ struct FluxHLLC
         const int nk = k_end - k_start;
         const int nj = j_end - j_start;
 
-#pragma omp parallel
-        {
-            std::vector<double> Xi_L(n_spec);
-            std::vector<double> Xi_R(n_spec);
-            std::vector<double> Xi_cell(n_spec);
-            std::vector<double> face_species_flux(n_spec);
+        // Exact cell-mean EOS results are reused by all faces and dimensions
+        // of this patch-stage. Only the host execution schedule owns the
+        // cache; reconstructed face states and the shared limiter are unchanged.
+        if (mean_cache) {
+            if (mean_cache->ready.size() != static_cast<std::size_t>(total_size))
+                throw std::logic_error("HLLC mean EOS cache has wrong patch size");
+            std::vector<double> mean_species(n_spec);
+            const auto ensure_mean = [&](int cell) {
+                if (mean_cache->ready[cell]) return;
+                state.get_species_to_buffer(cell, mean_species.data());
+                FluxAdmissibility::required_mean_thermo(
+                    state.get(cell), mean_species.data(), eos,
+                    mean_cache->pressure[cell], mean_cache->sound_speed[cell]);
+                mean_cache->ready[cell] = 1;
+            };
+            for (int kj = 0; kj < nk * nj; ++kj) {
+                const int k = k_start + kj / nj;
+                const int j = j_start + kj % nj;
+                for (int i = i_start; i < i_end; ++i) {
+                    const int left = grid.GetIndex(i, j, k);
+                    ensure_mean(left);
+                    ensure_mean(left + stride);
+                }
+            }
+        }
 
-#pragma omp for schedule(static)
-            for (int kj = 0; kj < nk * nj; ++kj)
-            {
+        const auto process_row = [&](int kj, std::vector<double>& Xi_L,
+                                     std::vector<double>& Xi_R,
+                                     std::vector<double>& Xi_cell,
+                                     std::vector<double>& face_species_flux) {
                 try {
                     int k = k_start + kj / nj;
                     int j = j_start + kj % nj;
@@ -241,9 +265,20 @@ struct FluxHLLC
                         }, flux_out[idx + stride], face_species_flux.data(), n_spec);
                         state.get_species_to_buffer(idx, Xi_L.data());
                         state.get_species_to_buffer(idx + stride, Xi_R.data());
-                        FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),
-                            Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                            flux_out[idx + stride], face_species_flux.data());
+                        if (mean_cache) {
+                            FluxAdmissibility::limit_face_with_thermo(
+                                state.get(idx), state.get(idx + stride),
+                                Xi_L.data(), Xi_R.data(), n_spec,
+                                mean_cache->pressure[idx], mean_cache->sound_speed[idx],
+                                mean_cache->pressure[idx + stride],
+                                mean_cache->sound_speed[idx + stride], dir,
+                                flux_out[idx + stride], face_species_flux.data());
+                        } else {
+                            FluxAdmissibility::limit_face(
+                                state.get(idx), state.get(idx + stride),
+                                Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                                flux_out[idx + stride], face_species_flux.data());
+                        }
                         for (int s = 0; s < n_spec; ++s)
                         {
                             spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
@@ -251,8 +286,30 @@ struct FluxHLLC
                     }
 
                 } catch (...) { failure.capture_current(); }
+        };
+
+        // RK stages already distribute independent blocks among workers.
+        // A nested team for one small patch repeats launch costs without
+        // additional useful parallelism. Keep the same face mathematics.
+        bool parallel_rows = nk * nj > 1;
+#ifdef _OPENMP
+        parallel_rows = parallel_rows && !omp_in_parallel();
+#endif
+        if (parallel_rows) {
+#pragma omp parallel
+            {
+                std::vector<double> Xi_L(n_spec), Xi_R(n_spec);
+                std::vector<double> Xi_cell(n_spec), face_species_flux(n_spec);
+#pragma omp for schedule(static)
+                for (int kj = 0; kj < nk * nj; ++kj)
+                    process_row(kj, Xi_L, Xi_R, Xi_cell, face_species_flux);
             }
-        } // end omp parallel
+        } else {
+            std::vector<double> Xi_L(n_spec), Xi_R(n_spec);
+            std::vector<double> Xi_cell(n_spec), face_species_flux(n_spec);
+            for (int kj = 0; kj < nk * nj; ++kj)
+                process_row(kj, Xi_L, Xi_R, Xi_cell, face_species_flux);
+        }
 
         failure.rethrow();
     }

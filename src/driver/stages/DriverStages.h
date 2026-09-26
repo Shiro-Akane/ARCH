@@ -7,6 +7,9 @@
  * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
 #pragma once
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "driver/DriverUtils.h"
 #include "driver/dispatch/capability/BackendCapabilities.h"
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
@@ -84,16 +87,42 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
                 true});
         }
     } else {
-        for (int block_id : active_blocks) {
-            amr::Block& b = amr_ctrl.pool->GetBlock(block_id);
-            double dt_b = adaptive_dt(b.fluid_state, eos, b.grid, cfl);
-            workspace.hydro_dt_candidates.push_back({
+        const auto candidate_for = [&](std::size_t index, bool parallel_rows) {
+            const amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[index]);
+            const double dt_b = adaptive_dt(
+                b.fluid_state, eos, b.grid, cfl, parallel_rows);
+            return reduction::ReductionCandidate{
                 dt_b,
                 DriverReduction::make_block_reduction_key(
                     b.level, b.morton_code, b.logical_x1, b.logical_x2,
                     b.logical_x3,
                     DriverReduction::BlockReductionComponent::Hydro),
-                true});
+                true};
+        };
+        bool parallel_blocks = false;
+#ifdef _OPENMP
+        parallel_blocks = omp_get_max_threads() > 1
+            && active_blocks.size() >=
+                static_cast<std::size_t>(omp_get_max_threads());
+#endif
+        if (parallel_blocks) {
+            // Preserve the same ordered block reduction; only independent
+            // block scans move to workers. Small 1D patches otherwise launch
+            // an OpenMP team with one useful row for every block and step.
+            arch::state::HostFailure failure;
+            workspace.hydro_dt_candidates.resize(active_blocks.size());
+#pragma omp parallel for schedule(dynamic)
+            for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+                try {
+                    workspace.hydro_dt_candidates[index] =
+                        candidate_for(index, false);
+                } catch (...) { failure.capture_current(); }
+            }
+            failure.rethrow();
+        } else {
+            for (std::size_t index = 0; index < active_blocks.size(); ++index)
+                workspace.hydro_dt_candidates.push_back(
+                    candidate_for(index, true));
         }
     }
     double dt_hydro = DriverReduction::reduce_block_minimum(

@@ -120,7 +120,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     GravityStage gravity_stage(runtime, gravity);
     {
         CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);
-        gravity_stage.prepare_current(ctrl.t_current);
+        gravity_stage.prepare_current(ctrl.t_current, true);
     }
     double dt_burn_global = start_state.has_timestep_state
         ? start_state.dt_burn
@@ -134,20 +134,27 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     ctrl.print_header(has_burn, has_diff);
     DriverStageWorkspace workspace;
     bool skip_regrid_once = start_state.resume_after_regrid;
+    const bool dynamic_amr_enabled =
+        config.amr.lrefinemax > config.amr.lrefinemin;
     bool advanced_any_step = false;
     while (!ctrl.is_finished()) {
         if (skip_regrid_once) skip_regrid_once = false;
-        else if (ctrl.step_count % config.amr.regrid_interval == 0) {
+        else if (dynamic_amr_enabled
+                 && ctrl.step_count % config.amr.regrid_interval == 0) {
             CpuStageTimer timed(cpu_stages, CpuStage::Regrid, time_cpu_stages);
             (void)runtime.perform_regrid(ctrl.step_count, ctrl.t_current);
         }
 
-        {
-            CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);
-            gravity_stage.prepare_current(ctrl.t_current);
-        }
         bool do_plt, do_chk;
         ctrl.check_io(do_plt, do_chk);
+        {
+            CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);
+            // First advance and each checkpoint boundary must be independent
+            // of solver history absent from the checkpoint. Between durable
+            // boundaries, reuse only accepted potentials as initial guesses.
+            gravity_stage.prepare_current(ctrl.t_current,
+                                          !advanced_any_step || do_chk);
+        }
         if (do_plt) output.write_plot(gravity_stage.plot_fields());
         if (do_chk) output.write_checkpoint(dt_burn_global, true);
 
@@ -206,7 +213,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     if (advanced_any_step && (ctrl.reached_target_time() || ctrl.reached_step_limit())) {
         {
             CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);
-            gravity_stage.prepare_current(ctrl.t_current);
+            gravity_stage.prepare_current(ctrl.t_current, false);
         }
         std::cout << ">>> Terminal time/step limit reached. Forcing final output..." << std::endl;
         output.write_plot(gravity_stage.plot_fields());
