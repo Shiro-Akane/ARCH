@@ -6,9 +6,12 @@ single maintained implementation and its CPU/CUDA consumers.
 
 The [compute optimization plan (Chinese)](ComputeOptimizationPlan.zh-CN.md)
 continues from the v1.2.0 main baseline on `compute/optim`: shared CPU/CUDA
-mathematics and execution costs first, then cylindrical axisymmetry, user
-boundary interfaces, frozen-version timing and long-duration validation.
-Nonuniform grid design remains a later discussion. The
+mathematics and execution costs first. O6 requires the registered Cellular CPU
+completion times to reach at most 10 times FLASH, with explicit resource,
+scientific-error and generality checks; this is a target, not a measured result.
+O7 cylindrical axisymmetry and O8 user boundary interfaces preserve that gate.
+O9 rechecks the final version before long-duration validation; it is not the first
+performance acceptance stage. Nonuniform grid design remains a later discussion. The
 [current diagnosis (Chinese)](../../validation/gravity/flash/CurrentDiagnosis.zh-CN.md)
 records the earlier module comparison and focused FLASH parameter evidence;
 these plans do not expand the currently accepted capability matrix.
