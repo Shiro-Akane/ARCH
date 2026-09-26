@@ -103,7 +103,9 @@ struct OdeConfig
     double dt_safe_factor = 0.9;    ///< Safety factor for adaptive time-stepping
     double dt_fac_max = 2.0;        ///< Maximum factor to increase dt
     double dt_fac_min = 0.1;        ///< Minimum factor to decrease dt
-    double initial_dt_frac = 1e-3; ///< Initial fraction of the global time step for the first ODE sub-step
+    // Try the full requested interval first; each stiff integrator must still
+    // reject inaccurate trials and reduce its internal step before acceptance.
+    double initial_dt_frac = 1.0; ///< Initial fraction of the first ODE trial interval
 
 };
 

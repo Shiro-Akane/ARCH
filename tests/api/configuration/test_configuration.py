@@ -52,7 +52,7 @@ class ConfigurationContract(unittest.TestCase):
         self.assertEqual(specs['ode_rtol']['defaultValue'], 1e-4)
         self.assertEqual(specs['ode_atol']['defaultValue'], 1e-8)
         self.assertEqual(specs['ode_max_substeps']['defaultValue'], 10000)
-        self.assertEqual(specs['ode_initial_dt_frac']['defaultValue'], .001)
+        self.assertEqual(specs['ode_initial_dt_frac']['defaultValue'], 1.0)
         self.assertNotIn('timeintegrator', specs)
         self.assertEqual(specs['use_nse']['defaultValue'], 'true')
         self.assertEqual(specs['gravity_G']['defaultValue'], 6.67430e-8)

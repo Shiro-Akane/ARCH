@@ -2342,7 +2342,7 @@
         "syntax": "finite decimal or scientific notation; full token"
       },
       "defaultSource": "shared-runtime-definition",
-      "defaultValue": 0.001,
+      "defaultValue": 1,
       "group": "Network",
       "key": "ode_initial_dt_frac",
       "options": null,

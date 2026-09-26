@@ -407,7 +407,7 @@ E/F 常数基准差，不拟合零点。打印的来源 E 保留为独立一致�
 | `ode_dt_safe_fac` | double | `0.9` | 自适应 controller 安全系数 |
 | `ode_dt_fac_max` | double | `2.0` | 增长系数 |
 | `ode_dt_fac_min` | double | `0.1` | 缩小系数 |
-| `ode_initial_dt_frac` | double | `1e-3` | 初始内部子步比例 |
+| `ode_initial_dt_frac` | double | `1` | 首个内部试步比例；误差不合格仍会拒绝并缩步 |
 | `dt_init` | double | `1e-16` | 启用燃烧时的首个宏时间步 |
 | `dt_min` | double | `1e-20` | 宏时间步终止阈值 |
 | `tstep_change_factor` | double | `1.2` | 第一步后的最大宏步增长 |

@@ -549,7 +549,7 @@ also requires the exact checksum above.
 | `ode_dt_safe_fac` | double | `0.9` | adaptive controller safety factor |
 | `ode_dt_fac_max` | double | `2.0` | growth factor |
 | `ode_dt_fac_min` | double | `0.1` | shrink factor |
-| `ode_initial_dt_frac` | double | `1e-3` | initial internal substep fraction |
+| `ode_initial_dt_frac` | double | `1` | fraction for the first internal trial; adaptive rejection still applies |
 | `dt_init` | double | `1e-16` | first macro step when burn is enabled |
 | `dt_min` | double | `1e-20` | abort threshold for macro step |
 | `tstep_change_factor` | double | `1.2` | maximum macro-step growth after first step |

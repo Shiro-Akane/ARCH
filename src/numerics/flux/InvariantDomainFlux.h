@@ -75,16 +75,37 @@ ARCH_INLINE void limit_reconstruction(const FluidVector& mean, FluidVector& face
     }
 }
 
+/** Recover both required mean-state thermodynamic values from one EOS state. */
+template<class Eos>
+ARCH_INLINE void required_mean_thermo(const FluidVector& mean,
+    const double* composition, const Eos& eos, double& pressure, double& speed)
+{
+    if constexpr (requires {
+        eos.get_pressure_and_sound_speed(
+            mean.rho, 0.0, composition, pressure, speed);
+    }) {
+        // The limiter queries the unchanged cell means for every face. Helm's
+        // grouped path preserves the strict inversion and acoustic derivatives,
+        // while avoiding a second inverse for the same (rho, e, X) state.
+        calc_endpoint_thermo(mean, arch::state::recover(mean).internal,
+                             composition, eos, pressure, speed);
+    } else {
+        pressure = eos.get_pressure(mean, composition);
+        speed = eos.get_sound_speed(mean, pressure, composition);
+    }
+}
+
 template<class Eos>
 /** Blend the high-order flux with Lax-Friedrichs using one conservative face theta. */
 ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
     const double* x_left, const double* x_right, int species, const Eos& eos,
     int direction, FluidVector& high, double* species_flux)
 {
-    const double p_left = eos.get_pressure(left, x_left);
-    const double p_right = eos.get_pressure(right, x_right);
-    const double a = std::max(std::abs(get_un(left, direction)) + eos.get_sound_speed(left, p_left, x_left),
-                              std::abs(get_un(right, direction)) + eos.get_sound_speed(right, p_right, x_right));
+    double p_left, p_right, c_left, c_right;
+    required_mean_thermo(left, x_left, eos, p_left, c_left);
+    required_mean_thermo(right, x_right, eos, p_right, c_right);
+    const double a = std::max(std::abs(get_un(left, direction)) + c_left,
+                              std::abs(get_un(right, direction)) + c_right);
     const auto fl = get_flux(left, p_left, direction);
     const auto fr = get_flux(right, p_right, direction);
     if (!(a > 0.0) || !std::isfinite(a)) {

@@ -86,7 +86,8 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
     ++output_calls_;
 }
 /** Persist run timing and CUDA diffusion scheduling diagnostics. */
-void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule)
+void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule,
+                                  const CpuStageTimings& cpu_stages)
 {
     const auto& config = runtime.configuration();
     const auto* compute_backend = runtime.backend();
@@ -98,6 +99,20 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                << std::chrono::duration<double>(Clock::now()-started_).count() << '\t'
                << output_seconds_ << '\t' << output_calls_ << '\n';
         if (!timing) throw std::runtime_error("cannot write run timings");
+    }
+    // Stage clocks are wall intervals around synchronous CPU calls. They do
+    // not include setup, output or miscellaneous Driver work; the existing
+    // driver_seconds column remains the complete Driver elapsed interval.
+    if (!compute_backend) {
+        static constexpr std::array<const char*, CpuStageTimings::size> names{
+            "regrid", "gravity", "timestep", "burn_first", "diffusion",
+            "hydro", "burn_second"};
+        std::ofstream timing(config.io.out_dir + "/cpu_stage_timings.tsv");
+        timing << "stage\twall_seconds\tcalls\n" << std::setprecision(17);
+        for (std::size_t i = 0; i < names.size(); ++i)
+            timing << names[i] << '\t' << cpu_stages.seconds[i]
+                   << '\t' << cpu_stages.calls[i] << '\n';
+        if (!timing) throw std::runtime_error("cannot write CPU stage timings");
     }
     {
         std::ofstream report(config.io.out_dir + "/state_repairs.txt");

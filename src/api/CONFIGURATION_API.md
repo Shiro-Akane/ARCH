@@ -40,7 +40,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 `standardParametersComplete=true` 仅指上述标准键覆盖；`customParametersComplete=false`、`constraintsComplete=false`。结构体报告、缓存和未开放的字段不在目录中。自定义网络选项来自本次编译的注册表。
 
-目录和结构体共用 `ode_max_substeps=10000`、`ode_initial_dt_frac=0.001`，不再保存另一套未对齐默认值。NSE 的输入是字符串 true/false/auto，不是单纯 bool。
+目录和结构体共用 `ode_max_substeps=10000`、`ode_initial_dt_frac=1`，不再保存另一套未对齐默认值。NSE 的输入是字符串 true/false/auto，不是单纯 bool。
 
 ## 配置检查：configuration-inspection
 

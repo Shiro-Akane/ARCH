@@ -1162,9 +1162,9 @@
     {
       "applicabilityScope": "configured-modules; model usage not traced",
       "applicable": true,
-      "defaultValue": 0.001,
+      "defaultValue": 1,
       "key": "ode_initial_dt_frac",
-      "parsedValue": 0.001,
+      "parsedValue": 1,
       "path": null,
       "rawValue": null,
       "sourceKey": "ode_initial_dt_frac",
