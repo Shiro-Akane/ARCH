@@ -19,6 +19,7 @@
 
 #include "cuda/microphysics/microphysics_api.h"
 #include "cuda/common/DeviceEosStatus.h"
+#include "cuda/common/ExactWarpGroup.cuh"
 #include "cuda/microphysics/network/device_network_owner.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "numerics/burnsolver/ode/ode_bd.h"
@@ -72,15 +73,49 @@ __global__ void burn_cells_kernel(
     // owns it until the final disposition replaces the latch below.
     statuses[linear] = 0;
     const auto checked_eos = bind_device_eos_status(eos, statuses + linear);
-    execute_burn_policy_cell<Network, Ode::template solver>(
-        cell, workspaces[shared_workspace ? 0 : linear], checked_eos, config, network);
+    // A kernel fixes the network, EOS tables, controls and interval. Include
+    // every remaining physical input before delegating once to the same policy.
+    ExactWarpGroup group;
+    group.match(cell.fluid.rho); group.match(cell.fluid.mom_u);
+    group.match(cell.fluid.mom_v); group.match(cell.fluid.mom_w);
+    group.match(cell.fluid.eng); group.match(cell.burn_dt);
+    for (int species = 0; species < Network::NUM_SPECIES; ++species)
+        group.match(cell.state[species]);
+    if (group.leader())
+        execute_burn_policy_cell<Network, Ode::template solver>(
+            cell, workspaces[shared_workspace ? 0 : linear], checked_eos, config, network);
+    // Preserve the original failure latch before each lane publishes its own
+    // disposition. Never let a finite fallback erase the leader's EOS failure.
+    const int eos_failed = group.broadcast(statuses[linear]);
+    cell.fluid.rho = group.broadcast(cell.fluid.rho);
+    cell.fluid.mom_u = group.broadcast(cell.fluid.mom_u);
+    cell.fluid.mom_v = group.broadcast(cell.fluid.mom_v);
+    cell.fluid.mom_w = group.broadcast(cell.fluid.mom_w);
+    cell.fluid.eng = group.broadcast(cell.fluid.eng);
+    for (int component = 0; component < Network::ODE_NEQ; ++component)
+        cell.state[component] = group.broadcast(cell.state[component]);
+    cell.dt_recommended = group.broadcast(cell.dt_recommended);
+    cell.eint_old = group.broadcast(cell.eint_old); cell.eint_new = group.broadcast(cell.eint_new);
+    cell.enuc_rate = group.broadcast(cell.enuc_rate);
+    cell.limiter_candidate = group.broadcast(cell.limiter_candidate);
+    cell.ode.status = static_cast<BurnOdeStatus>(group.broadcast(static_cast<int>(cell.ode.status)));
+    cell.ode.attempted_substeps = group.broadcast(cell.ode.attempted_substeps);
+    cell.ode.rejected_substeps = group.broadcast(cell.ode.rejected_substeps);
+    cell.ode.nse_attempts = group.broadcast(cell.ode.nse_attempts);
+    cell.ode.nse_failures = group.broadcast(cell.ode.nse_failures);
+    cell.ode.dt_recommended = group.broadcast(cell.ode.dt_recommended);
+    cell.ode.energy_change = group.broadcast(cell.ode.energy_change);
+    cell.disposition = static_cast<DriverBurn::BurnCellDisposition>(
+        group.broadcast(static_cast<int>(cell.disposition)));
+    cell.interior_effect.interior_written = group.broadcast(
+        static_cast<int>(cell.interior_effect.interior_written)) != 0;
     bool invalid_state = false;
     if (blocks && cell.interior_effect.interior_written) {
         const auto bounds = blocks[blockIdx.y].bounds;
         invalid_state = arch::state::validate(cell.fluid, cell.state, Network::NUM_SPECIES, 1,
             bounds.density, bounds.internal_min, bounds.internal_max) != arch::state::Status::valid;
     }
-    if (statuses[linear] != 0 || invalid_state) {
+    if (eos_failed != 0 || invalid_state) {
         cell.ode.status = BurnOdeStatus::EosFailure;
         cell.disposition = DriverBurn::BurnCellDisposition::SolverFailed;
         cell.interior_effect.interior_written = false;

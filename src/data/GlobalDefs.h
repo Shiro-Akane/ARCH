@@ -69,7 +69,7 @@ struct NumericsConfig
     double dt_min = 1e-20; ///< Minimum accepted macro step, s.
     double tstep_change_factor = 1.2; ///< Maximum macro-step growth factor.
 
-    double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL < 1).
+    double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL <= 1).
 
     double entropy_fix_coeff = 0.1; ///< Roe entropy-fix width relative to the local sound speed.
 

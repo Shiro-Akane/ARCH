@@ -27,16 +27,25 @@ void BindRefinementThermodynamics(AmrTree& tree, const EosPolicy& eos) {
         if (temperature) temperature->assign(total_size, 0.0);
         if (gamma1) gamma1->assign(total_size, std::numeric_limits<double>::quiet_NaN());
         std::vector<double> Xi(n_species, 0.0);
-        for (int index = 0; index < total_size; ++index) {
-            for (int species = 0; species < n_species; ++species)
-                Xi[species] = state.X(species, index);
-            const auto values = amr::indicator::thermodynamics(
-                state.get(index), Xi.data(), eos,
-                pressure != nullptr, temperature != nullptr, gamma1 != nullptr);
-            if (pressure) (*pressure)[index] = values.pressure;
-            if (temperature) (*temperature)[index] = values.temperature;
-            if (gamma1) (*gamma1)[index] = values.gamma1;
-        }
+        const auto evaluate = [&] {
+            for (int index = 0; index < total_size; ++index) {
+                for (int species = 0; species < n_species; ++species)
+                    Xi[species] = state.X(species, index);
+                const auto values = amr::indicator::thermodynamics(
+                    state.get(index), Xi.data(), eos,
+                    pressure != nullptr, temperature != nullptr, gamma1 != nullptr);
+                if (pressure) (*pressure)[index] = values.pressure;
+                if (temperature) (*temperature)[index] = values.temperature;
+                if (gamma1) (*gamma1)[index] = values.gamma1;
+            }
+        };
+        if constexpr (requires { typename EosPolicy::HostHydroScope; }) {
+            // This callback borrows a fixed EOS and immutable patch. Its
+            // exact inverse workspace expires before the next AMR callback;
+            // failed roots and changed composition/energy are never reused.
+            typename EosPolicy::HostHydroScope inverse_workspace(eos);
+            evaluate();
+        } else evaluate();
     });
 }
 } // namespace amr

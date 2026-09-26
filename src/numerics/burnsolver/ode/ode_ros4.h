@@ -208,7 +208,13 @@ struct Solver_ROS4
                     for (int i = 0; i < NEQ; ++i) c.X_k[i] = stage_state_sum(c, i, a41, a42, a43).value();
                 }
                 sanitize_state(c.X_k, burn_cfg);
-                OdeMath::eval_burn_rhs<NetType>(c.X_k, c.rho, eos, c.RHS, c.network);
+                if (!OdeMath::evaluate_eos_trial(eos, [&](const auto& candidate) {
+                    OdeMath::eval_burn_rhs<NetType>(c.X_k, c.rho, candidate, c.RHS, c.network);
+                })) {
+                    c.solve_failed = true;
+                    finish_trial(c, X_ODE, eos, burn_cfg);
+                    continue;
+                }
                 if (c.stage == 0) {
 #pragma omp simd
                     for (int i = 0; i < NEQ; ++i) c.b[i] = gamma * (c.dt * c.RHS[i] + c21 * c.u1[i]);
@@ -390,7 +396,7 @@ private:
                         trial_energy = OdeMath::integrated_burn_increment_energy<NetType>(X_err);
                         const double integrated_enuc = trial_energy;
                         const double old_eint = eos.get_eint_from_T(rho, X_old[NUM_SPEC], X_old);
-                        const double new_eint = eos.get_eint_from_T(rho, X_trial[NUM_SPEC], X_trial);
+                        const double new_eint = OdeMath::trial_internal_energy(eos, rho, X_trial[NUM_SPEC], X_trial);
                         step_converged = OdeMath::energy_closure_acceptable(
                             old_eint,new_eint,integrated_enuc,rtol);
                     }

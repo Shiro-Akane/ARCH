@@ -69,12 +69,37 @@ void check_rejection_contract(const Ref::Reference& reference)
     }, "1% integrated burn-energy drift");
 }
 
+// The generated Jacobian computes species rates at the same state used by
+// its derivatives. Reusing those rates must preserve the ordinary network
+// RHS and integrated source, including a post-burn composition.
+template<class Net>
+void check_combined_rate_reuse(int variant, const HelmEos& eos)
+{
+    constexpr int species = Net::NUM_SPECIES;
+    const auto& reference = BurnTimeReference::find(Net::NETWORK_NAME);
+    for (const auto& state : {
+             Ref::make_state<Net>(variant), reference.state}) {
+        std::array<double, species> ordinary{}, combined{}, derivative{};
+        double old_energy = 0.0, combined_energy = 0.0;
+        const double eta = eos.get_eta(Ref::kRho, state[species], state.data());
+        Net::eval_rhs(state.data(), Ref::kRho, eta,
+                      ordinary.data(), old_energy);
+        DenseMatrixData<Net::ODE_NEQ> jacobian{};
+        Net::eval_jacobian(state.data(), Ref::kRho, eta, jacobian,
+                           derivative.data(), combined.data(), &combined_energy);
+        if (ordinary != combined || old_energy != combined_energy)
+            throw std::runtime_error(
+                std::string(Net::NETWORK_NAME) + " combined rate RHS drift");
+    }
+}
+
 template<class Net>
 void check_network(const std::string& name, int variant, const std::string& path)
 {
     SpeciesManager species;
     Net::RegisterSpecies(species);
     HelmEos eos(path, &species);
+    check_combined_rate_reuse<Net>(variant, eos);
     BurnTimeReference::check_route<Net, Solver_BE_NR>((name + ".be_nr").c_str(), variant, eos);
     BurnTimeReference::check_route<Net, Solver_BD>((name + ".bd").c_str(), variant, eos);
     BurnTimeReference::check_route<Net, Solver_ROS4>((name + ".ros4").c_str(), variant, eos);

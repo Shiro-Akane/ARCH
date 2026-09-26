@@ -265,6 +265,34 @@ namespace OdeMath
         double energy_composition_gradient[Species]{};
     };
 
+    // Finish the first-law thermal row from one already evaluated network RHS.
+    // Both the ordinary RHS and Jacobian assembly consume this exact formula.
+    template <class Network, class EOS>
+    ARCH_HEAVY_INLINE void finish_burn_rhs_thermodynamics(
+        const double* state, double rho, const EOS& eos, double* rhs,
+        BurnRhsState<Network::NUM_SPECIES>& result)
+    {
+        constexpr int temperature = Network::NUM_SPECIES;
+        if constexpr (requires {
+            eos.template get_cv_and_energy_composition_gradient<Network::NUM_SPECIES + 1>(
+                rho, state[temperature], state, result.cv,
+                result.energy_composition_gradient);
+        }) {
+            eos.template get_cv_and_energy_composition_gradient<Network::NUM_SPECIES + 1>(
+                rho, state[temperature], state, result.cv,
+                result.energy_composition_gradient);
+            result.cv = require_positive_cv(result.cv);
+        } else {
+            result.cv = require_positive_cv(eos.get_cv(rho, state[temperature], state));
+            burn_energy_composition_gradient<Network::NUM_SPECIES + 1>(
+                state, rho, eos, result.energy_composition_gradient);
+        }
+        // At fixed rho: de/dt = cv*T' + sum_i e_Xi*X_i'. The network supplies
+        // de/dt; subtract the EOS composition term before recovering T'.
+        rhs[temperature] = (result.energy - composition_energy_rate<Network::NUM_SPECIES>(
+            result.energy_composition_gradient, rhs)) / result.cv;
+    }
+
     template <class Network, class EOS>
     ARCH_HEAVY_INLINE BurnRhsState<Network::NUM_SPECIES> eval_burn_rhs(
         const double* state, double rho, const EOS& eos, double* rhs,
@@ -287,24 +315,7 @@ namespace OdeMath
                 rhs[Network::NONCONSERVATIVE_ENERGY_INDEX] =
                     network.eval_nonconservative_energy(state, rho, result.eta);
         }
-        if constexpr (requires {
-            eos.template get_cv_and_energy_composition_gradient<Network::NUM_SPECIES + 1>(
-                rho, state[temperature], state, result.cv,
-                result.energy_composition_gradient);
-        }) {
-            eos.template get_cv_and_energy_composition_gradient<Network::NUM_SPECIES + 1>(
-                rho, state[temperature], state, result.cv,
-                result.energy_composition_gradient);
-            result.cv = require_positive_cv(result.cv);
-        } else {
-            result.cv = require_positive_cv(eos.get_cv(rho, state[temperature], state));
-            burn_energy_composition_gradient<Network::NUM_SPECIES + 1>(
-                state, rho, eos, result.energy_composition_gradient);
-        }
-        // At fixed rho: de/dt = cv*T' + sum_i e_Xi*X_i'. The network supplies
-        // de/dt; subtract the EOS composition term before recovering T'.
-        rhs[temperature] = (result.energy - composition_energy_rate<Network::NUM_SPECIES>(
-            result.energy_composition_gradient, rhs)) / result.cv;
+        finish_burn_rhs_thermodynamics<Network>(state, rho, eos, rhs, result);
         return result;
     }
 
@@ -320,31 +331,44 @@ namespace OdeMath
         constexpr int physical_equations = species + 1;
         double energy_x[species]{}, rhs_t[species]{}, energy_t = 0.0;
         matrix.zero();
-        const auto evaluated = eval_burn_rhs<Network>(state, rho, eos, rhs, network);
-        network.eval_jacobian(state, rho, evaluated.eta, matrix, energy_x);
+        decltype(auto) thermo = burn_thermodynamics_at(eos, rho, state[species], state);
+        BurnRhsState<species> evaluated{};
+        if constexpr (!has_nonconservative_energy<Network> && requires {
+            network.eval_jacobian(state, rho, evaluated.eta, matrix,
+                                  energy_x, rhs, &evaluated.energy);
+        }) {
+            evaluated.eta = eos.get_eta(rho, state[species], state);
+            network.eval_jacobian(state, rho, evaluated.eta, matrix,
+                                  energy_x, rhs, &evaluated.energy);
+            finish_burn_rhs_thermodynamics<Network>(
+                state, rho, thermo, rhs, evaluated);
+        } else {
+            evaluated = eval_burn_rhs<Network>(state, rho, thermo, rhs, network);
+            network.eval_jacobian(state, rho, evaluated.eta, matrix, energy_x);
+        }
         network.eval_temperature_derivative(state, rho, evaluated.eta, rhs_t, energy_t);
         const double inverse_cv = 1.0 / evaluated.cv;
         // The auxiliary integral is not a species or a thermodynamic input.
         double cv_gradient[physical_equations]{};
         double energy_hessian_action[physical_equations]{};
         if constexpr (requires {
-            eos.template get_cv_gradient_and_energy_composition_hessian_action<physical_equations>(
+            thermo.template get_cv_gradient_and_energy_composition_hessian_action<physical_equations>(
                 rho, state[species], state, rhs,
                 cv_gradient, energy_hessian_action);
         }) {
             if (rhs[species] != 0.0) {
-                eos.template get_cv_gradient_and_energy_composition_hessian_action<physical_equations>(
+                thermo.template get_cv_gradient_and_energy_composition_hessian_action<physical_equations>(
                     rho, state[species], state, rhs,
                     cv_gradient, energy_hessian_action);
             } else {
                 burn_energy_composition_hessian_action<physical_equations>(
-                    state, rho, eos, rhs,
+                    state, rho, thermo, rhs,
                     evaluated.energy_composition_gradient, energy_hessian_action);
             }
         } else {
             if (rhs[species] != 0.0)
-                burn_cv_gradient<physical_equations>(state, rho, eos, evaluated.cv, cv_gradient);
-            burn_energy_composition_hessian_action<physical_equations>(state, rho, eos, rhs,
+                burn_cv_gradient<physical_equations>(state, rho, thermo, evaluated.cv, cv_gradient);
+            burn_energy_composition_hessian_action<physical_equations>(state, rho, thermo, rhs,
                 evaluated.energy_composition_gradient, energy_hessian_action);
         }
         for (int i = 0; i < species; ++i) {
@@ -411,7 +435,7 @@ namespace OdeMath
                                            candidate.x, candidate.enuc)) {
                 return false;
             }
-            const double new_eint = eos.get_eint_from_T(rho, temperature, candidate.x);
+            const double new_eint = trial_internal_energy(eos, rho, temperature, candidate.x);
             candidate.residual = new_eint - old_eint - candidate.enuc;
             candidate.scale = max4(std::abs(new_eint), std::abs(old_eint),
                                    std::abs(candidate.enuc), 1.0);
@@ -456,7 +480,10 @@ namespace OdeMath
         bool have_previous = false;
         // Twenty safeguarded Newton attempts bound work before bracketing fallback.
         for (int iter = 0; iter < 20; ++iter) {
-            double derivative = eos.get_cv(rho, current.temperature, current.x);
+            double derivative = std::numeric_limits<double>::quiet_NaN();
+            if (!evaluate_eos_trial(eos, [&](const auto& trial) {
+                derivative = trial.get_cv(rho, current.temperature, current.x);
+            })) break;
             if (have_previous && current.temperature != previous.temperature) {
                 const double secant = (current.residual - previous.residual) / (current.temperature - previous.temperature);
                 if (std::isfinite(secant) && secant > 0.0) derivative = secant;

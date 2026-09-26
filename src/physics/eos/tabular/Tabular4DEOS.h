@@ -55,6 +55,9 @@ struct BasicTabular4DEOSView
     // Optional non-owning device error latch, bound only on a per-launch view
     // copy.  Owners and Host views leave this null; Host failures still throw.
     int* device_error_status = nullptr;
+    // Borrowed only by a single optional ODE/NSE candidate query. Persistent
+    // owners and required preparation/commit queries always leave this null.
+    bool* trial_error_status = nullptr;
 
     ARCH_INLINE std::size_t free_energy_index(
         int irho, int itemperature, int ia, int iz) const
@@ -83,7 +86,7 @@ struct BasicTabular4DEOSView
     ARCH_INLINE double strict_failure(tabular_eos::FreeEnergyStatus status) const
     {
         return tabular_eos::checked_thermodynamics(
-            tabular_eos::free_energy_failure(status), device_error_status).energy;
+            tabular_eos::free_energy_failure(status), device_error_status, trial_error_status).energy;
     }
 
     ARCH_INLINE tabular_eos::FreeEnergyStatus strict_support(
@@ -254,7 +257,7 @@ struct BasicTabular4DEOSView
         double rho, double T, double A, double Z) const
     {
         const auto result = free_energy_result(rho, T, A, Z);
-        return tabular_eos::checked_thermodynamics(result, device_error_status);
+        return tabular_eos::checked_thermodynamics(result, device_error_status, trial_error_status);
     }
 
     // Composition coordinates Abar and Zbar.
@@ -300,7 +303,7 @@ struct BasicTabular4DEOSView
         for (int i = 0; i < specs.count; ++i) y += Xi[i] / specs.get_A(i);
         const auto f = interpolate_free_energy(rho, T, A, Z, &d);
         const auto state = tabular_eos::checked_thermodynamics(
-            tabular_eos::evaluate_thermodynamics(f, rho, T, energy_reference_shift), device_error_status);
+            tabular_eos::evaluate_thermodynamics(f, rho, T, energy_reference_shift), device_error_status, trial_error_status);
         if (!std::isfinite(state.energy)) d.energy.fill(state.energy);
         const auto table = d;
         const double a_y = y > 0.0 ? -A * A : 0.0;

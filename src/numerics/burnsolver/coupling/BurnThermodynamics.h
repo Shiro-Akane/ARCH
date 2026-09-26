@@ -24,6 +24,49 @@
 
 namespace OdeMath {
 
+/** Evaluate an uncommitted EOS candidate without clearing required failures.
+ * Only EOS views that explicitly expose a candidate latch opt into recovery.
+ * Preserve the concrete view type, including policy overrides; other EOS
+ * policies are borrowed unchanged, with no owner/table copy.
+ */
+template<class EOS, class Evaluate>
+ARCH_INLINE bool evaluate_eos_trial(const EOS& eos, Evaluate evaluate)
+{
+    if constexpr (requires { eos.trial_error_status; }) {
+        bool failed = false;
+        auto candidate = eos;
+        candidate.trial_error_status = &failed;
+        evaluate(candidate);
+        return !failed;
+    } else {
+        evaluate(eos);
+        return true;
+    }
+}
+
+/** Query the thermal energy of an optional state; the caller still checks closure. */
+template<class EOS>
+ARCH_INLINE double trial_internal_energy(
+    const EOS& eos, double rho, double temperature, const double* composition)
+{
+    double result = std::numeric_limits<double>::quiet_NaN();
+    const bool valid = evaluate_eos_trial(eos, [&](const auto& candidate) {
+        result = candidate.get_eint_from_T(rho, temperature, composition);
+    });
+    return valid ? result : std::numeric_limits<double>::quiet_NaN();
+}
+
+// Optional EOS-owned local derivative workspace. Other EOS policies remain
+// borrowed references, so neither tables nor owners are copied by this adapter.
+template<class EOS>
+ARCH_INLINE decltype(auto) burn_thermodynamics_at(
+    const EOS& eos, double rho, double temperature, const double* composition)
+{
+    if constexpr (requires { eos.burn_thermodynamics(rho, temperature, composition); })
+        return eos.burn_thermodynamics(rho, temperature, composition);
+    else return (eos);
+}
+
 ARCH_INLINE double require_positive_cv(double cv)
 {
     return std::isfinite(cv) && cv > 0.0 ? cv : std::numeric_limits<double>::quiet_NaN();

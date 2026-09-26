@@ -10,6 +10,7 @@
 #include "core/config/ConfigValidation.h"
 #include "driver/DriverUtils.h"
 #include "numerics/diffusion/DiffFlux.h"
+#include "fixtures/hydro/MeanThermoCases.h"
 #include <iostream>
 #include <stdexcept>
 
@@ -42,6 +43,7 @@ template<class Flux> void check_flux(const IdealGasView& eos) {
     }
 }
 void leaves() {
+    require(MeanThermoCases::evaluate(),"shared mean thermodynamic view contract");
     IdealGasView eos;
     check_flux<FluxHLL<PCMReconstruction>>(eos); check_flux<FluxHLLC<PCMReconstruction>>(eos);
     check_flux<FluxRoe<PCMReconstruction>>(eos); check_flux<FluxSW<PCMReconstruction>>(eos);

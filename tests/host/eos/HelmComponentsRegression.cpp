@@ -169,6 +169,33 @@ void actual_table(const char* path)
         close(cv, point.values[2], 32*std::numeric_limits<double>::epsilon(),
               "unchanged complete Helmholtz cv");
     }
+    // A temperature inverse may reuse only its unchanged density/composition
+    // factors. Compare fresh and prepared evaluations across temperatures and
+    // ensure that skipping unused derivative outputs preserves P/e/cv exactly.
+    for (double rho : {1e-4, 1.0, 1e6, 1e9}) {
+        const auto fixed = eos.prepare_fixed_density(rho, fractions);
+        for (double T : {1e3, 1e5, 1e8, 1.23456789e8, 1e10, 1e13}) {
+            double p, e, cv, prepared_p, prepared_e, prepared_cv;
+            View::ThermodynamicDerivatives d;
+            eos.calc_thermo_with_cv(rho, T, fractions, p, e, &cv, &d);
+            eos.calc_thermo_with_cv(rho, T, fractions,
+                                   prepared_p, prepared_e, &prepared_cv, nullptr, &fixed);
+            require(p == prepared_p && e == prepared_e && cv == prepared_cv,
+                    "prepared Helm inverse factors changed thermodynamics");
+            for (auto request : {View::JetRequest::Acoustic,View::JetRequest::FirstLaw}) {
+                View::ThermodynamicDerivatives selective;
+                eos.calc_thermo_with_cv(rho,T,fractions,prepared_p,prepared_e,
+                                       &prepared_cv,&selective,&fixed,request);
+                require(p==prepared_p && e==prepared_e && cv==prepared_cv
+                    && d.pressure_density==selective.pressure_density
+                    && d.pressure_temperature==selective.pressure_temperature,
+                    "selective Helm acoustic jet changed retained values");
+                if(request==View::JetRequest::FirstLaw)
+                    require(d.energy_y==selective.energy_y && d.energy_z==selective.energy_z,
+                            "selective Helm first-law jet changed retained values");
+            }
+        }
+    }
     // Inverse recovery spans ideal, degenerate and radiation-dominated states.
     // Energy rounding limits temperature accuracy by e/(Cv*T); it must not
     // cause a spurious failure or justify extrapolation beyond source bounds.
@@ -248,6 +275,29 @@ void actual_table(const char* path)
             }
         }
     }
+    // Exercise exact inverse hits, slot collisions, key changes and nested
+    // lexical scope restoration against the original uncached root solve.
+    {
+        View::HostHydroScope scope(eos);
+        for (int repeat=0;repeat<2;++repeat) for (int index=0;index<300;++index) {
+            const double rho=1e5+1000*index, temperature=1e7+12345*index;
+            const double x[]{.2+index*.001, .8-index*.001};
+            for (bool pressure : {false,true}) {
+                const double target=pressure ? eos.get_pressure_from_rho_T(rho,temperature,x)
+                                             : eos.get_eint_from_T(rho,temperature,x);
+                const double expected=eos.invert_temperature_uncached(rho,target,x,pressure);
+                require(eos.invert_temperature(rho,target,x,pressure)==expected
+                    && eos.invert_temperature(rho,target,x,pressure)==expected,
+                    "host inverse memo changed strict root");
+            }
+        }
+        require(std::isnan(eos.get_temperature(1e6,-1.,fractions)),
+                "host inverse memo hid invalid energy");
+        { View::HostHydroScope nested(eos); }
+        require(View::host_inverse_workspace && View::host_inverse_workspace->owner==&eos,
+                "nested inverse scope did not restore its caller");
+    }
+    require(View::host_inverse_workspace==nullptr,"inverse cache escaped hydro scope");
     boundaries(eos);
 }
 } // namespace

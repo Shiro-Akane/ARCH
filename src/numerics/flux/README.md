@@ -12,3 +12,9 @@ Each flux policy is defined by a single mathematical body that is shared between
 
 See the [Reference](../../../docs/Reference.md) for the policy interfaces and
 [hydro validation](../../../validation/hydro/README.md) for their checks.
+
+HLLC's identical-state path can borrow `MeanThermoView`, the same read-only SoA
+view on host and device. The stage owner publishes required mean P/c first;
+reuse checks every conserved component and species against one owning mean.
+Changed face states still evaluate the selected EOS. This preserves the shared
+flux identity and removes the former host-container dependency from this path.

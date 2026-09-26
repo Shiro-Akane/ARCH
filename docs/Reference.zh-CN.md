@@ -118,9 +118,9 @@ aprox13、DenseLU、热传导及关闭 NSE 的配置做了 CPU/CUDA 检查。Car
 | 重构／时间推进＋AMR | PPM 在粗细面使用 MUSCL-MinMod；RK3 不会使分裂多物理整体达到三阶，RKL1 和 BE_NR 还有各自的精度限制。 |
 
 能力查询成功或单策略设备测试通过，只说明路径已注册，不能证明耦合物理精度。
-尤其是 Tabular3D/4D 燃烧／NSE 的可恢复试探失败，仍可能污染整个设备批次错误状态；
-“试探失败后成功接受”的成对轨迹尚未关闭该审计项。详见[表 EOS 契约](../src/physics/eos/TabularEOS.zh-CN.md)、
-[验证范围](../validation/README.zh-CN.md)和[当前耦合审计](../validation/gravity/flash/O5OptimizationReport.zh-CN.md#arch-组合能力与缺口)。
+Tabular3D/4D 的未提交 ODE/NSE 查询使用局部试探失败状态；CPU/CUDA 成对检查
+覆盖拒步后成功接受，必要查询的失败仍会阻止提交。这只验收恢复合同，不代表任意表／网络组合均已验证。详见[表 EOS 契约](../src/physics/eos/TabularEOS.zh-CN.md)、
+[验证范围](../validation/README.zh-CN.md)和[当前耦合审计](../validation/gravity/flash/O6AcceptanceReport.zh-CN.md)。
 
 ## 运行时架构
 
@@ -308,7 +308,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `reconstruct` | string | `pcm` | `pcm`、`donor_cell`、`muscl`、`plm`、`ppm` |
 | `limiter` | string | `minmod` | 仅 MUSCL：`minmod`、`superbee`、`vanleer`、`mc` |
 | `time_integrator` | string | `RK2` | `Euler/RK1`、`RK2/SSPRK2`、`RK3/SSPRK3` |
-| `cfl` | double | `0.8` | 显式流体 CFL；加载时不检查范围 |
+| `cfl` | double | `0.8` | 显式流体 CFL；有限且 `0 < cfl <= 1`，加载时校验 |
 | `EntropyFix` | bool | `true` | 启用 entropy-fix 平滑 |
 | `EntropyFixCoefficient` | double | `0.1` | 启用 entropy fix 时使用 |
 | `sml_rho` | double | `1e-12` | 密度修复阈值 |
@@ -383,6 +383,11 @@ E/F 常数基准差，不拟合零点。打印的来源 E 保留为独立一致�
 [EOS 验证记录](../validation/eos/README.zh-CN.md)和[表来源](../THIRD_PARTY_NOTICES.zh-CN.md)。
 
 维护中的 Helmholtz 验证资源是从 [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。它通过 Git LFS 实体化在 `EOS_toolkit/tables/helmholtz/helm_table.dat`，大小为 60,242,514 bytes，SHA-256 为 `c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1`。原始表成员是验证权威。loader 使用固定 541×201 Timmes 布局并要求全部四个数据块；燃烧基线还要求上述精确 checksum。
+
+Helmholtz 保留来源的 Coulomb 非正状态保护。在低温、强耦合状态附近，修正项的
+切换可能使能量反解不唯一；残差很小不等于温度根唯一，也不代表该材料区域已获
+科学验收。目前保留原受保护固定初猜反解。这与明确拒绝多个有效温度根的规范化
+自由能表反演属于不同合同。
 
 ### 燃烧、网络与 ODE
 

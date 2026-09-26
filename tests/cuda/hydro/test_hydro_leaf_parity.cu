@@ -31,6 +31,7 @@
 #include "numerics/flux/FluxVL.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 #include "numerics/reconstruction/Reconstruction.h"
+#include "fixtures/hydro/MeanThermoCases.h"
 #include "fixtures/hydro/RoeFluxReference.h"
 #include "math/RoeThermodynamicCases.h"
 
@@ -173,7 +174,8 @@ ARCH_INLINE void evaluate_low_density(DeviceLeafResult& result)
 
 ARCH_INLINE void evaluate_device_leaves(DeviceLeafResult* output)
 {
-    output->low_density_error=0.; output->low_density_valid=true;
+    output->low_density_error=0.;
+    output->low_density_valid=MeanThermoCases::evaluate();
     evaluate_low_density(*output);
     output->roe_identities = RoeThermodynamicCases::evaluate();
     const FluidVector left{1.0, 0.75, -0.2, 0.1, 2.80625};

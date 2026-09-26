@@ -20,6 +20,9 @@ template <typename EosPolicy>
 class BurnerHandle
 {
 public:
+    // Bound policies are stateless, with all physical inputs in integrate().
+    // Driver-local exact reuse is valid only for this explicit contract.
+    static constexpr bool exact_input_reusable = true;
     using IntegrateFn = bool (*)(double *, double, double,
                                  const EosPolicy &, const BurnConfig &, double &, double *);
 

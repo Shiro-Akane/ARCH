@@ -73,21 +73,26 @@ std::vector<double> CudaBackend::compute_hydro_dt_batch(
     scratch.ensure_capacity(currents.size());
     // Result and owner staging outlive the guard, including a failed second
     // download. No Host pointer escapes this synchronous batch operation.
-    CudaQuiescenceGuard work_guard{*impl_};
+    std::vector<DeviceHydroDtBatchBlock> bindings;
+    bindings.reserve(blocks.size());
     for (std::size_t index = 0; index < blocks.size(); ++index) {
         auto& block = *blocks[index];
-        const CudaHydroWorkspaceView workspace{
-            block.face_flux.view(), block.hydro_delta.view(),
+        bindings.push_back({block.require_access(currents[index]), block.grid,
             block.cfl_candidates.get(), scratch.dt->get() + index,
-            scratch.status->get() + index, impl_->species_workspace};
-        cudaError_t launch_error = cudaSuccess;
-        visit_eos(impl_->eos, [&](const auto& eos) {
-            launch_error = launch_cuda_backend_hydro_dt(
-                block.require_access(currents[index]), block.grid, eos,
-                cfl, workspace, impl_->stream.get());
-        });
-        check_cuda(launch_error, "launch Hydro dt batch");
+            scratch.status->get() + index});
     }
+    auto& device = impl_->hydro_dt_bindings;
+    device.reserve(bindings.size());
+    CudaQuiescenceGuard work_guard{*impl_};
+    enqueue_cuda_metadata_upload(device.get(), bindings.data(),
+        bindings.size() * sizeof(DeviceHydroDtBatchBlock), impl_->stream.get(),
+        impl_->runtime_counters, "upload Hydro CFL bindings");
+    CudaBackendLaunchResult launch{};
+    visit_eos(impl_->eos, [&](const auto& eos) {
+        launch = launch_cuda_backend_hydro_dt_batch(bindings, device.get(), eos,
+            cfl, impl_->species_workspace, impl_->stream.get());
+    });
+    check_cuda(launch.error, "launch Hydro dt batch");
     // Pageable staging is sufficient: transfers occur AFTER every launch,
     // and this API intentionally returns synchronously. Two bulk D2H calls,
     // not two tiny transfers per block; no pinned buffers/events are needed.
@@ -99,7 +104,7 @@ std::vector<double> CudaBackend::compute_hydro_dt_batch(
                    impl_->stream.get()), "download Hydro CFL batch status");
     quiesce();
     work_guard.completed = true;
-    impl_->runtime_counters.kernel_count += 2 * currents.size();
+    impl_->runtime_counters.kernel_count += launch.kernels_launched;
     impl_->runtime_counters.bytes_d2h += currents.size() * (sizeof(double) + sizeof(int));
     for (std::size_t index = 0; index < currents.size(); ++index) {
         if (scratch.host_status[index] != static_cast<int>(reduction::ReductionStatus::Ok))
@@ -155,7 +160,8 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
             scratch.status->get() + index,
             make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block),
             {scratch.repairs->get() + index * repair_stride, species_count},
-            self?block.self_gravity:Physical::Gravity::GravityPatchView{}});
+            self?block.self_gravity:Physical::Gravity::GravityPatchView{},
+            block.mean_pressure.get(), block.mean_sound_speed.get()});
     }
     auto& device_blocks = impl_->hydro_bindings;
     device_blocks.reserve(blocks.size());

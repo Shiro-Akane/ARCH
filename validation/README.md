@@ -69,7 +69,10 @@ cross-code efficiency. Current four-module evidence applies to the selected
 Helmholtz/aprox13/thermal/MG/AMR combinations; it does not qualify all policy
 permutations or Helmholtz viscosity/species transport. The
 [Reference combination rules](../docs/Reference.md#combining-methods-and-physics)
-include physical exclusions and the open tabular burn/NSE trial-error audit.
+include physical exclusions and the validated scope of tabular ODE/NSE trial
+recovery. The [O6 acceptance record](gravity/flash/O6AcceptanceReport.zh-CN.md)
+tracks shared-math and execution changes, complete-task timings and remaining
+performance limits against a faster CPU baseline.
 
 ## Directory contract
 

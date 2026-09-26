@@ -1,0 +1,97 @@
+{
+  "base_commit": "1bd91d4cf6d1795e3dc6c30babc4b5fce7b656ce",
+  "branch": "compute/optim",
+  "changed_runtime_and_test_files": [
+    "cmake/tests/CudaTests.cmake",
+    "src/amr/refinement/RefinementThermodynamics.h",
+    "src/cuda/common/ExactWarpGroup.cuh",
+    "src/cuda/hydro/kernels/HydroBatchKernels.cuh",
+    "src/cuda/hydro/kernels/HydroFaceKernel.cuh",
+    "src/cuda/hydro/kernels/HydroStateKernels.cuh",
+    "src/cuda/hydro/policies/CheckedHydroEos.cuh",
+    "src/cuda/hydro/policies/HydroFluxPolicies.cuh",
+    "src/cuda/runtime/burn/dense/CudaBackendBurnImpl.cuh",
+    "src/cuda/runtime/control/CudaBackendInternal.h",
+    "src/cuda/runtime/control/CudaBackendResources.cpp",
+    "src/cuda/runtime/gravity/CudaGravityExecution.cu",
+    "src/cuda/runtime/hydro/CudaBackendHydro.h",
+    "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+    "src/cuda/runtime/hydro/CudaBackendHydroInstantiation.cuh",
+    "src/data/GlobalDefs.h",
+    "src/driver/DriverUtils.h",
+    "src/driver/stages/DriverBurn.h",
+    "src/driver/stages/DriverStages.h",
+    "src/numerics/burnsolver/BurnerHandle.h",
+    "src/numerics/burnsolver/coupling/BurnThermodynamics.h",
+    "src/numerics/burnsolver/coupling/odeFunction.h",
+    "src/numerics/burnsolver/ode/ode_bd.h",
+    "src/numerics/burnsolver/ode/ode_be-nr.h",
+    "src/numerics/burnsolver/ode/ode_ros4.h",
+    "src/numerics/flux/FluxHLLC.h",
+    "src/numerics/flux/InvariantDomainFlux.h",
+    "src/numerics/integrator/HydroSolverImpl.h",
+    "src/physics/eos/HelmEos.h",
+    "src/physics/eos/tabular/Tabular3DEOS.h",
+    "src/physics/eos/tabular/Tabular4DEOS.h",
+    "src/physics/eos/tabular/TabularFreeEnergy.h",
+    "src/physics/network/timmes_common/TimmesNetworkSupport.h",
+    "tests/cuda/hydro/test_cuda_multiblock_hydro.cu",
+    "tests/cuda/hydro/test_hydro_leaf_parity.cu",
+    "tests/cuda/microphysics/burn/test_burn_eos_failure.cu",
+    "tests/cuda/microphysics/eos/test_eos_host_device_parity.cu",
+    "tests/cuda/runtime/test_cuda_reduction_contract.cu",
+    "tests/fixtures/burn/TabularTrialRecovery.h",
+    "tests/fixtures/hydro/MeanThermoCases.h",
+    "tests/host/burn/test_burn_mainline_reference.cpp",
+    "tests/host/burn/test_sparse_ode_continuation.cpp",
+    "tests/host/driver/test_reduction_contract.cpp",
+    "tests/host/eos/HelmComponentsRegression.cpp",
+    "tests/host/numerics/test_low_density.cpp"
+  ],
+  "changed_source_content_sha256": "f6dff9a439dae49a3f00cfde286ad33438fb87148bbd74e977a0c6e232ed15c1",
+  "cpu_binary": {
+    "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+    "sha256": "bbf730f92443b44abdcb3e00b17d99002747500862fbce9d1f342681cc422785"
+  },
+  "cuda_binary": {
+    "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/bin/ARCH",
+    "sha256": "77dc2d157a2e6250fe0ea730f50a44ec227d947e6205a34be286bd86f7625e05"
+  },
+  "correctness": {
+    "cpu_ctest": [
+      61,
+      61
+    ],
+    "cuda_ctest": [
+      132,
+      132
+    ],
+    "production_compatibility": [
+      42,
+      42
+    ],
+    "memcheck_runs": 4,
+    "synccheck_runs": 2,
+    "sanitizer_errors": 0
+  },
+  "formal_process_samples": {
+    "cpu_flash_same_resource": 42,
+    "cpu16": 21,
+    "cpu1": 21,
+    "cpu8_coupled": 6,
+    "cuda": 21
+  },
+  "release_status": "open: fine-grid CPU ratio above 2; common cross-code burn scientific budget and candidate-parameter contracts not delivered",
+  "hardware_scope": "RTX 3060 Ti; eight physical CPU cores, sixteen SMT threads; see manifests for affinity",
+  "environment": {
+    "cpu": "Intel Core i7-10700 @ 2.90 GHz",
+    "physical_cores": 8,
+    "logical_threads": 16,
+    "python": "conda work 3.12.14",
+    "cpu_compiler": "GCC 13.3",
+    "cuda_toolchain": "NVCC 12.3.107 / GCC 12.4",
+    "cuda_driver": "610.47",
+    "gpu": "RTX 3060 Ti, 8 GiB",
+    "floating_point": "binary64; no fast-math; FMA contraction disabled"
+  }
+}

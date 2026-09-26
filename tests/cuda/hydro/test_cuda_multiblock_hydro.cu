@@ -498,7 +498,7 @@ void run_hydro_batch_contract()
         require(values == std::vector<double>({reference_dt[1], reference_dt[0]}),
                 "CFL batch result order/value drifted");
         require(after.stream_sync_count - before.stream_sync_count == 1
-            && after.kernel_count - before.kernel_count == 4
+            && after.kernel_count - before.kernel_count == 3
             && after.bytes_d2h - before.bytes_d2h == 2 * (sizeof(double) + sizeof(int)),
             "CFL batch did not use one completion boundary");
         require(batch->compute_hydro_dt(accesses[1], 0.8) == reference_dt[1], "CFL capacity reuse drifted");

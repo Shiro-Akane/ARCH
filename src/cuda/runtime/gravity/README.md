@@ -23,3 +23,10 @@ once per rebuild; each solve uploads only borrowed patch pointers. Krylov decisi
 read scalar reductions; mean projection stays on device. Output explicitly
 materializes potential/acceleration, while checkpoint restart recomputes them.
 The backend cannot silently substitute a Host gravity solve.
+
+When a reduction's original 64-element partials fit within one 128-thread
+block, its final pass runs in that same block. Small periodic projections also
+combine maximum, normalized mean and subtraction using block barriers. The
+shared reduction/compensation order and `ProjectWork` arithmetic are unchanged;
+larger vectors keep the multi-kernel path. This scheduling choice adds no
+physical parameter and does not move a solve to the host.

@@ -10,6 +10,7 @@
 
 #include "cuda/microphysics/eos/helm_eos_loader.h"
 #include "cuda/common/DeviceAllocation.h"
+#include "cuda/hydro/policies/CheckedHydroEos.cuh"
 #include "physics/eos/HelmEos.h"
 #include "physics/eos/tabular/Tabular3DEOS.h"
 #include "physics/eos/tabular/Tabular4DEOS.h"
@@ -1139,6 +1140,96 @@ __global__ void helm_differentials_kernel(HelmEosView view, double rho, double t
     *result = helm_differentials(view, rho, temperature);
 }
 
+// Multiple exact groups and a partial final warp exercise the adapter against
+// original device mathematics without host/device rounding differences.
+template<class View>
+__global__ void helm_group_kernel(View plain, int* status, int* passed, bool invalid)
+{
+    const int lane = threadIdx.x;
+    if (lane >= 70) return;
+    const int family = lane % 3;
+    const double x[]{.25 + .125 * family, .75 - .125 * family};
+    const double rho = 1.e6 * (1. + .25 * family);
+    const double energy = plain.get_eint_from_T(rho, 1.e8, x);
+    const FluidVector state{rho, 0., 0., 0., rho * energy};
+    const auto checked = arch::cuda::make_checked_hydro_eos(plain, status);
+    const auto identical = [](double a, double b) {
+        return __double_as_longlong(a) == __double_as_longlong(b);
+    };
+    const double pressure = plain.get_pressure(state, x);
+    bool ok = identical(checked.get_pressure(state, x), pressure);
+    ok = identical(checked.get_sound_speed(state, x), plain.get_sound_speed(state, x)) && ok;
+    ok = identical(checked.get_pressure_from_rho_e(rho, energy, x),
+                   plain.get_pressure_from_rho_e(rho, energy, x)) && ok;
+    ok = identical(checked.get_total_energy_primitive(rho, 0., 0., 0., pressure, x),
+                   plain.get_total_energy_primitive(rho, 0., 0., 0., pressure, x)) && ok;
+    double p, c, expected_p, expected_c;
+    checked.get_dp_drho_e_and_dp_de_rho(rho, energy, x, p, c);
+    plain.get_dp_drho_e_and_dp_de_rho(rho, energy, x, expected_p, expected_c);
+    ok = identical(p, expected_p) && identical(c, expected_c) && ok;
+    ok = identical(checked.probe_pressure_from_rho_e(rho, energy, x),
+                   plain.get_pressure_from_rho_e(rho, energy, x)) && ok;
+    // This combined entry rejects null X before derivative evaluation.
+    const bool bad = invalid && lane % 7 == 0;
+    checked.get_pressure_and_sound_speed(rho, energy, bad ? nullptr : x, p, c);
+    if (bad) ok = std::isnan(p) && std::isnan(c) && ok;
+    else {
+        plain.get_pressure_and_sound_speed(rho, energy, x, expected_p, expected_c);
+        ok = identical(p, expected_p) && identical(c, expected_c) && ok;
+    }
+    // Borrow real mean thermodynamics, then perturb every input category to
+    // prove reconstructed states still receive their own original EOS query.
+    double densities[]{rho, 1.25*rho}, zeros[2]{}, energies[2], unused[2]{};
+    double fractions[]{x[0], x[0], x[1], x[1]}, mean_p[2], mean_c[2];
+    arch::cuda::DeviceStateView means{densities, zeros, zeros, zeros, energies,
+        unused, fractions, 2, 2};
+    for (int cell = 0; cell < 2; ++cell) {
+        energies[cell] = densities[cell]*plain.get_eint_from_T(densities[cell], 1.e8, x);
+        plain.get_pressure_and_sound_speed(densities[cell],
+            arch::state::recover(means.load(cell)).internal, x, mean_p[cell], mean_c[cell]);
+    }
+    auto cached = checked;
+    cached.bind_mean_thermodynamics(means, 0, 1, mean_p, mean_c);
+    for (int query = 0; query < 5; ++query) {
+        const int cell = query == 1 ? 1 : 0;
+        const double query_rho = densities[cell]*(query == 2 && lane % 2 ? 1.01 : 1.);
+        const double query_e = arch::state::recover(means.load(cell)).internal
+            * (query == 3 && lane % 3 ? 1.001 : 1.);
+        const double query_x[]{x[0] + (query == 4 ? .03125 : 0.),
+                               x[1] - (query == 4 ? .03125 : 0.)};
+        cached.get_pressure_and_sound_speed(query_rho, query_e, query_x, p, c);
+        plain.get_pressure_and_sound_speed(query_rho, query_e, query_x, expected_p, expected_c);
+        ok = identical(p, expected_p) && identical(c, expected_c) && ok;
+        cached.candidate_view().get_pressure_and_sound_speed(query_rho, query_e, query_x, p, c);
+        ok = identical(p, expected_p) && identical(c, expected_c) && ok;
+    }
+    // Later valid queries must preserve the required failure latch.
+    ok = identical(checked.get_pressure(state, x), pressure) && ok;
+    passed[lane] = ok;
+}
+
+template<class View>
+void test_helm_groups(View view, cudaStream_t stream)
+{
+    arch::cuda::DeviceAllocation<int> status, passed;
+    status.allocate(1); passed.allocate(70);
+    for (const bool invalid : {false, true}) {
+        cuda_check(cudaMemsetAsync(status.get(), 0, sizeof(int), stream), "clear group status");
+        helm_group_kernel<<<1, 96, 0, stream>>>(view, status.get(), passed.get(), invalid);
+        cuda_check(cudaGetLastError(), "Helm exact group launch");
+        std::array<int, 70> results{};
+        int failed = -1;
+        cuda_check(cudaMemcpyAsync(results.data(), passed.get(), sizeof(results),
+            cudaMemcpyDeviceToHost, stream), "copy group results");
+        cuda_check(cudaMemcpyAsync(&failed, status.get(), sizeof(failed),
+            cudaMemcpyDeviceToHost, stream), "copy group status");
+        cuda_check(cudaStreamSynchronize(stream), "complete group queries");
+        require(std::all_of(results.begin(), results.end(), [](int x) { return x == 1; }),
+                "exact Helm warp groups changed a result or invalid-query behavior");
+        require(failed == static_cast<int>(invalid), "Helm group lost required failure latch");
+    }
+}
+
 void test_helm(cudaStream_t stream)
 {
     SpeciesManager species;
@@ -1247,6 +1338,7 @@ void test_helm(cudaStream_t stream)
         [&] { arch::cuda::HelmEosDeviceOwner rejected(missing_species, stream); },
         "Helm descriptor without species metadata owner was accepted");
     arch::cuda::HelmEosDeviceOwner owner(host, stream);
+    test_helm_groups(owner.view(), stream);
     assert_device_pointer(owner.view().density_nodes, "Helm density node pointer");
     assert_device_pointer(owner.view().temperature_nodes, "Helm temperature node pointer");
     for (int axis = 0; axis < 2; ++axis) {

@@ -5,11 +5,18 @@
  * the Helmholtz package at https://cococubed.com/code_pages/eos.shtml. The
  * runtime table is helm_table.dat from the project's downloaded
  * helmholtz.tar.xz archive; ARCH supplies the EOS policy and table checks.
+ * Workflow:
+ * 1. Prepare composition and density interpolation factors for one query.
+ * 2. Evaluate the shared electron/positron, ion, photon and Coulomb terms.
+ * 3. Recover thermodynamic derivatives or a bounded temperature inverse;
+ *    reuse work only while its complete state identity remains unchanged.
  */
 #pragma once
 
 #include <algorithm>
 #include <array>
+#include <bit>
+#include <cstdint>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -61,6 +68,10 @@ struct BasicHelmEosView {
         bool charge_active = true;
     };
 
+    // Callers request only derivatives they consume. Every retained field
+    // uses the same interpolation/contraction; Full remains the public default.
+    enum class JetRequest { Acoustic, FirstLaw, Full };
+
     // One additive component in cgs units. Energy/free energy are specific
     // (erg/g); density and temperature derivatives hold Ye fixed. These
     // queries contain neither ideal ions nor ion-background Coulomb terms.
@@ -101,6 +112,56 @@ struct BasicHelmEosView {
         while (index < count - 2 && value >= nodes[index + 1]) ++index;
         const double spacing = nodes[index + 1] - nodes[index];
         return {index, spacing, std::max((value - nodes[index]) / spacing, 0.0)};
+    }
+
+    // One inverse keeps rho and X fixed while only T changes. This local
+    // workspace belongs to that call; it never survives an RK/ODE stage,
+    // regrid, table replacement or checkpoint boundary.
+    struct FixedDensityState {
+        double ytot, ye, n_ion, mean_ion_spacing;
+        bool charge_active;
+        int index;
+        double weights[6], first[6], second[6];
+    };
+
+    /** Prepare composition and density-axis factors for an unchanged rho,X. */
+    ARCH_INLINE FixedDensityState prepare_fixed_density(double rho, const double* X) const
+    {
+        FixedDensityState state{};
+        for (int k = 0; k < specs.count; ++k) {
+            const double inverse_a = 1.0 / specs.get_A(k);
+            state.ytot += X[k] * inverse_a;
+            state.ye += X[k] * specs.get_Z(k) * inverse_a;
+        }
+        state.charge_active = state.ye > 1.0e-16;
+        state.ye = std::max(1.0e-16, state.ye);
+        state.n_ion = rho * state.ytot * avo;
+        state.mean_ion_spacing = 1.0 / std::cbrt(
+            (4.0 / 3.0) * arch::constants::math::pi * state.n_ion);
+        prepare_density_axis(rho * state.ye, state);
+        return state;
+    }
+
+    /** Form the same quintic density basis once for a fixed table coordinate. */
+    ARCH_INLINE void prepare_density_axis(double density, FixedDensityState& state) const
+    {
+        const auto axis = locate_axis(density, density_nodes, imax, dlo, dstpi);
+        state.index = axis.index;
+        const double dd = axis.spacing, ddi = 1.0 / dd, xd = axis.coordinate;
+        const double value[6]{1.0, psi0(1.0 - xd),
+            psi1(xd) * dd, -psi1(1.0 - xd) * dd,
+            psi2(xd) * dd * dd, psi2(1.0 - xd) * dd * dd};
+        const double first[6]{0.0, -dpsi0(1.0 - xd) * ddi,
+            dpsi1(xd), dpsi1(1.0 - xd),
+            dpsi2(xd) * dd, -dpsi2(1.0 - xd) * dd};
+        const double second[6]{0.0, ddpsi0(1.0 - xd) * ddi * ddi,
+            ddpsi1(xd) * ddi, -ddpsi1(1.0 - xd) * ddi,
+            ddpsi2(xd), ddpsi2(1.0 - xd)};
+        for (int k = 0; k < 6; ++k) {
+            state.weights[k] = value[k];
+            state.first[k] = first[k];
+            state.second[k] = second[k];
+        }
     }
 
     // Quintic Hermite polynomials
@@ -223,24 +284,22 @@ struct BasicHelmEosView {
                              double* cv_ele = nullptr,
                              ThermodynamicDerivatives* derivatives = nullptr,
                              double* specific_free_energy = nullptr,
-                             double* specific_entropy = nullptr) const {
+                             double* specific_entropy = nullptr,
+                             const FixedDensityState* fixed = nullptr,
+                             JetRequest request = JetRequest::Full) const {
         double din = rho * ye;
-        const auto density = locate_axis(din, density_nodes, imax, dlo, dstpi);
+        FixedDensityState local{};
+        if (fixed == nullptr) {
+            prepare_density_axis(din, local);
+            fixed = &local;
+        }
         const auto temperature = locate_axis(T, temperature_nodes, jmax, tlo, tstpi);
-        const int i = density.index, j = temperature.index;
-        const double dd = density.spacing, dth = temperature.spacing;
-        const double ddi = 1.0 / dd, dti = 1.0 / dth;
-        const double xd = density.coordinate, xt = temperature.coordinate;
-
-        const double wd[6]{1.0, psi0(1.0 - xd),
-            psi1(xd) * dd, -psi1(1.0 - xd) * dd,
-            psi2(xd) * dd * dd, psi2(1.0 - xd) * dd * dd};
-        const double wd_d[6]{0.0, -dpsi0(1.0 - xd) * ddi,
-            dpsi1(xd), dpsi1(1.0 - xd),
-            dpsi2(xd) * dd, -dpsi2(1.0 - xd) * dd};
-        const double wd_dd[6]{0.0, ddpsi0(1.0 - xd) * ddi * ddi,
-            ddpsi1(xd) * ddi, -ddpsi1(1.0 - xd) * ddi,
-            ddpsi2(xd), ddpsi2(1.0 - xd)};
+        const int i = fixed->index, j = temperature.index;
+        const double dth = temperature.spacing, dti = 1.0 / dth;
+        const double xt = temperature.coordinate;
+        const auto& wd = fixed->weights;
+        const auto& wd_d = fixed->first;
+        const auto& wd_dd = fixed->second;
         const double wt[6]{1.0, psi0(1.0 - xt),
             psi1(xt) * dth, -psi1(1.0 - xt) * dth,
             psi2(xt) * dth * dth, psi2(1.0 - xt) * dth * dth};
@@ -280,7 +339,7 @@ struct BasicHelmEosView {
                 row_t[slot] = hermite_row(values, wt_t);
                 if (cv_ele != nullptr || derivatives != nullptr)
                     row_tt[slot] = hermite_row(values, wt_tt);
-                if (derivatives != nullptr)
+                if (derivatives != nullptr && request == JetRequest::Full)
                     row_ttt[slot] = hermite_row(values, wt_ttt);
             }
         }
@@ -300,47 +359,50 @@ struct BasicHelmEosView {
         if (derivatives != nullptr) {
             const double df_dd = hermite_row(row, wd_dd, true);
             const double df_dt = hermite_row(row_t, wd_d, true);
-            const double df_ddt = hermite_row(row_t, wd_dd, true);
-            const double df_tt = hermite_row(row_tt, wd, true);
-            // Differentiate z*F_TT as one linear functional. Separately
-            // rounding F_TT and d*F_dTT loses their small residual when
-            // electron/positron pairs dominate the heat capacity.
-            double density_product_weights[6];
-            for (int k = 0; k < 6; ++k)
-                density_product_weights[k] = std::fma(din, wd_d[k], wd[k]);
             *derivatives = {};
             derivatives->pressure_density = ye * (2.0 * din * df_d + din * din * df_dd);
             derivatives->pressure_temperature = din * din * df_dt;
-            derivatives->energy_z = free_energy - T * df_t + din * (df_d - T * df_dt);
-            derivatives->energy_zz = rho * (2.0 * (df_d - T * df_dt)
-                                          + din * (df_dd - T * df_ddt));
-            derivatives->cv_z = -T * hermite_row(row_tt, density_product_weights, true);
-            derivatives->cv_temperature = -ye * (df_tt + T * hermite_row(row_ttt, wd, true));
+            if (request != JetRequest::Acoustic)
+                derivatives->energy_z = free_energy - T * df_t + din * (df_d - T * df_dt);
+            if (request == JetRequest::Full) {
+                const double df_ddt = hermite_row(row_t, wd_dd, true);
+                const double df_tt = hermite_row(row_tt, wd, true);
+                // Differentiate z*F_TT as one linear functional; subtracting
+                // separately rounded terms loses pair-dominated residuals.
+                double density_product_weights[6];
+                for (int k = 0; k < 6; ++k)
+                    density_product_weights[k] = std::fma(din, wd_d[k], wd[k]);
+                derivatives->energy_zz = rho * (2.0 * (df_d - T * df_dt)
+                                              + din * (df_dd - T * df_ddt));
+                derivatives->cv_z = -T * hermite_row(row_tt, density_product_weights, true);
+                derivatives->cv_temperature = -ye * (df_tt + T * hermite_row(row_ttt, wd, true));
+            }
         }
     }
 
     ARCH_HEAVY_INLINE void calc_thermo_with_cv(double rho, double T, const double* X,
                              double& P, double& E, double* cv,
-                             ThermodynamicDerivatives* derivatives = nullptr) const {
+                             ThermodynamicDerivatives* derivatives = nullptr,
+                             const FixedDensityState* fixed = nullptr,
+                             JetRequest request = JetRequest::Full) const {
         // Timmes variables: ytot = sum(X/A), Abar = 1/ytot,
         // Zbar = sum(X Z/A)/ytot, and Ye = Zbar/Abar = sum(X Z/A).
-        double ytot = 0.0;
-        double ye = 0.0;
-        for (int k = 0; k < specs.count; ++k) {
-            const double inv_A = 1.0 / specs.get_A(k);
-            ytot += X[k] * inv_A;
-            ye += X[k] * specs.get_Z(k) * inv_A;
+        FixedDensityState local{};
+        if (fixed == nullptr) {
+            local = prepare_fixed_density(rho, X);
+            fixed = &local;
         }
-        const bool charge_active = ye > 1.0e-16;
-        ye = std::max(1.0e-16, ye);
+        const double ytot = fixed->ytot, ye = fixed->ye;
+        const bool charge_active = fixed->charge_active;
 
         // 1. Electron/Positron from table
         double P_ele, E_ele, cv_ele = 0.0;
         interpolate_ele_pos(rho, T, ye, P_ele, E_ele,
-                            cv != nullptr ? &cv_ele : nullptr, derivatives);
+                            cv != nullptr ? &cv_ele : nullptr, derivatives,
+                            nullptr, nullptr, fixed, request);
 
         // 2. Ions (Ideal Gas)
-        double n_ion = rho * ytot * avo;
+        double n_ion = fixed->n_ion;
         double P_ion = n_ion * kerg * T;
         double E_ion = 1.5 * P_ion / rho; // Specific internal energy
 
@@ -352,7 +414,6 @@ struct BasicHelmEosView {
         // 4. Timmes uniform-background Coulomb correction (Yakovlev &
         // Shalybkov 1989).  This is part of the original Helmholtz support
         // system and contributes to pressure, energy, and cv.
-        constexpr double pi = arch::constants::math::pi;
         constexpr double qe_squared =
             arch::constants::electromagnetic::cgs::elementary_charge_squared;
         constexpr double a1 = -0.898004;
@@ -365,8 +426,7 @@ struct BasicHelmEosView {
         constexpr double third = 1.0 / 3.0;
 
         const double zbar = ye / ytot;
-        const double mean_ion_spacing =
-            1.0 / std::cbrt((4.0 / 3.0) * pi * n_ion);
+        const double mean_ion_spacing = fixed->mean_ion_spacing;
         const double coupling = zbar * zbar * qe_squared
                               / (kerg * T * mean_ion_spacing);
         const double dcoupling_dT = -coupling / T;
@@ -386,7 +446,8 @@ struct BasicHelmEosView {
             dE_coul_dT = dE_dg * dcoupling_dT + E_coul / T;
             if (derivatives != nullptr) {
                 coupling_f_first = a1 * coupling + 0.25 * (b1 * g14 - c1 / g14);
-                coupling_squared_f_second = (-3.0 * b1 * g14 + 5.0 * c1 / g14) / 16.0;
+                if (request == JetRequest::Full)
+                    coupling_squared_f_second = (-3.0 * b1 * g14 + 5.0 * c1 / g14) / 16.0;
             }
         } else {
             const double g32 = coupling * std::sqrt(coupling);
@@ -403,7 +464,8 @@ struct BasicHelmEosView {
             dE_coul_dT = 3.0 * dP_coul_dT / rho;
             if (derivatives != nullptr) {
                 coupling_f_first = -4.5 * c2 * g32 + b2 * a2 * gb2;
-                coupling_squared_f_second = -2.25 * c2 * g32 + b2 * (b2 - 1.0) * a2 * gb2;
+                if (request == JetRequest::Full)
+                    coupling_squared_f_second = -2.25 * c2 * g32 + b2 * (b2 - 1.0) * a2 * gb2;
             }
         }
 
@@ -432,14 +494,18 @@ struct BasicHelmEosView {
             d.pressure_density += P_ion / rho + E_coul / 3.0 + first_energy / 9.0;
             d.pressure_temperature += P_ion / T + radiation.pressure_temperature + rho * dE_coul_dT / 3.0;
             // Gamma is proportional to z^2 y^(-5/3) / T at fixed rho.
-            d.energy_y = 1.5 * coefficient * T + (E_coul - (5.0 / 3.0) * first_energy) / ytot;
-            d.energy_z += 2.0 * first_energy / ye;
-            d.energy_yy = (10.0 * first_energy + 25.0 * second_energy) / (9.0 * ytot * ytot);
-            d.energy_yz = -(4.0 * first_energy + 10.0 * second_energy) / (3.0 * ytot * ye);
-            d.energy_zz += (2.0 * first_energy + 4.0 * second_energy) / (ye * ye);
-            d.cv_y = 1.5 * coefficient + (E_coul - first_energy + (5.0 / 3.0) * second_energy) / (T * ytot);
-            d.cv_z -= 2.0 * second_energy / (T * ye);
-            d.cv_temperature += radiation.cv_temperature + second_energy / (T * T);
+            if (request != JetRequest::Acoustic) {
+                d.energy_y = 1.5 * coefficient * T + (E_coul - (5.0 / 3.0) * first_energy) / ytot;
+                d.energy_z += 2.0 * first_energy / ye;
+            }
+            if (request == JetRequest::Full) {
+                d.energy_yy = (10.0 * first_energy + 25.0 * second_energy) / (9.0 * ytot * ytot);
+                d.energy_yz = -(4.0 * first_energy + 10.0 * second_energy) / (3.0 * ytot * ye);
+                d.energy_zz += (2.0 * first_energy + 4.0 * second_energy) / (ye * ye);
+                d.cv_y = 1.5 * coefficient + (E_coul - first_energy + (5.0 / 3.0) * second_energy) / (T * ytot);
+                d.cv_z -= 2.0 * second_energy / (T * ye);
+                d.cv_temperature += radiation.cv_temperature + second_energy / (T * T);
+            }
             d.charge_active = charge_active;
         }
     }
@@ -518,19 +584,92 @@ struct BasicHelmEosView {
         return get_temperature(U.rho, eos_utils::extract_specific_internal_energy(U), Xi);
     }
 
-    // Monotone bracket inversion on the actual source temperature domain.
-    // This is the ARCH adapter, not a modification of the Timmes formulas.
+    // A host patch-stage may lend bounded inverse-result storage. The EOS
+    // owner and all table/species data remain fixed for this lexical scope.
+    // Other host workers (including nested flux teams) do not inherit it.
+    // Device evaluation calls the identical uncached inverse below.
+    struct HostInverseWorkspace {
+        struct Entry {
+            std::array<std::uint64_t, 5> key{};
+            double temperature = 0.0;
+            bool ready = false;
+        };
+        const BasicHelmEosView* owner;
+        std::array<Entry, 256> entries{};
+        explicit HostInverseWorkspace(const BasicHelmEosView* value) : owner(value) {}
+
+        /** Select a slot; every key word is still compared before a hit. */
+        Entry& entry(const std::array<std::uint64_t, 5>& key) {
+            std::uint64_t hash = 0;
+            for (auto word : key) {
+                hash ^= word;
+                hash ^= hash >> 30; hash *= 0xbf58476d1ce4e5b9ULL;
+                hash ^= hash >> 27; hash *= 0x94d049bb133111ebULL;
+                hash ^= hash >> 31;
+            }
+            return entries[hash % entries.size()];
+        }
+    };
+    inline static thread_local HostInverseWorkspace* host_inverse_workspace = nullptr;
+
+    /** Keep exact reuse inside one host hydro evaluation, including exceptions. */
+    class HostHydroScope {
+        HostInverseWorkspace workspace_;
+        HostInverseWorkspace* previous_;
+    public:
+        explicit HostHydroScope(const BasicHelmEosView& eos)
+            : workspace_(&eos), previous_(host_inverse_workspace)
+        { host_inverse_workspace = &workspace_; }
+        ~HostHydroScope() { host_inverse_workspace = previous_; }
+        HostHydroScope(const HostHydroScope&) = delete;
+        HostHydroScope& operator=(const HostHydroScope&) = delete;
+    };
+
+    /** Recover T from the original root solve, reusing only identical inputs. */
     ARCH_HEAVY_INLINE double invert_temperature(double rho, double target,
                                                 const double* Xi, bool pressure) const {
+#if !defined(__CUDA_ARCH__)
+        if (host_inverse_workspace && host_inverse_workspace->owner == this
+            && rho > 0.0 && target > 0.0 && std::isfinite(target)
+            && Xi && specs.count > 0 && temperature_nodes) {
+            const auto fixed = prepare_fixed_density(rho, Xi);
+            // Helm's complete fixed-composition inverse depends on X only
+            // through the original ordered sums y=sum(X/A), z=sum(X*Z/A).
+            // These are exact floating-point keys, not rounded composition bins.
+            const std::array<std::uint64_t, 5> key{
+                std::bit_cast<std::uint64_t>(rho), std::bit_cast<std::uint64_t>(target),
+                std::bit_cast<std::uint64_t>(fixed.ytot), std::bit_cast<std::uint64_t>(fixed.ye),
+                static_cast<std::uint64_t>(pressure)};
+            auto& slot = host_inverse_workspace->entry(key);
+            if (slot.ready && slot.key == key) return slot.temperature;
+            const double result = invert_temperature_uncached(rho, target, Xi, pressure, &fixed);
+            // A failed query never overwrites success with a reusable sentinel.
+            if (std::isfinite(result) && result > 0.0) slot = {key, result, true};
+            return result;
+        }
+#endif
+        return invert_temperature_uncached(rho, target, Xi, pressure);
+    }
+
+    // Monotone bracket inversion on the actual source temperature domain.
+    // This is the ARCH adapter, not a modification of the Timmes formulas.
+    ARCH_HEAVY_INLINE double invert_temperature_uncached(double rho, double target,
+        const double* Xi, bool pressure, const FixedDensityState* prepared = nullptr) const {
         if (!(rho > 0.0) || !(target > 0.0) || !std::isfinite(target)
             || !temperature_nodes || specs.count == 0 || Xi == nullptr)
             return arch::state::invalid();
         double lower = temperature_nodes[0];
         double upper = temperature_nodes[jmax - 1];
+        const auto fixed = prepared ? *prepared : prepare_fixed_density(rho, Xi);
         const auto value = [&](double T, double& derivative) {
             double P, E, cv;
             ThermodynamicDerivatives d;
-            calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d);
+            // An energy inverse needs only e(T) and cv=de/dT. Request the
+            // full thermodynamic jet only for the pressure inverse, whose
+            // Newton derivative is dP/dT. This keeps the same bracket,
+            // residual and cv arithmetic without unused third derivatives.
+            calc_thermo_with_cv(rho, T, Xi, P, E, &cv,
+                                pressure ? &d : nullptr, &fixed, JetRequest::Acoustic);
             derivative = pressure ? d.pressure_temperature : cv;
             return pressure ? P : E;
         };
@@ -583,12 +722,18 @@ struct BasicHelmEosView {
             + T * (d.pressure_temperature / rho) * (d.pressure_temperature / rho) / cv);
     }
 
-    ARCH_INLINE double get_sound_speed(const FluidVector& U, double, const double* Xi) const {
+    // Helm derives c_s directly from rho,e,X; a separately computed pressure
+    // is unnecessary for CFL queries. Both public signatures use this leaf.
+    ARCH_INLINE double get_sound_speed(const FluidVector& U, const double* Xi) const {
         const double T = get_temperature(U, Xi);
         double P, E, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(U.rho, T, Xi, P, E, &cv, &d);
+        calc_thermo_with_cv(U.rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
         return sound_speed(U.rho, T, cv, d);
+    }
+
+    ARCH_INLINE double get_sound_speed(const FluidVector& U, double, const double* Xi) const {
+        return get_sound_speed(U, Xi);
     }
 
     // One strict inverse supplies the pressure and acoustic derivative of the
@@ -606,7 +751,7 @@ struct BasicHelmEosView {
         }
         double energy, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, Xi, pressure, energy, &cv, &d);
+        calc_thermo_with_cv(rho, T, Xi, pressure, energy, &cv, &d, nullptr, JetRequest::Acoustic);
         if (!(cv > 0.0) || !std::isfinite(pressure)) {
             speed = arch::state::invalid();
             return;
@@ -666,6 +811,59 @@ struct BasicHelmEosView {
         gradient[Equations - 1] = d.cv_temperature;
     }
 
+    // Borrowed for ONE ODE Jacobian assembly. The derivative jet has exactly
+    // the caller's rho,T,X identity; no accepted-state or temporal cache exists.
+    struct BurnThermodynamics {
+        const BasicHelmEosView* owner;
+        ThermodynamicDerivatives derivatives;
+        double capacity;
+
+        /** Supply eta through the original EOS rate-input query. */
+        ARCH_INLINE double get_eta(double rho, double T, const double* X) const
+        { return owner->get_eta(rho, T, X); }
+
+        /** Reuse cv and e_X from the same trial-state derivative jet. */
+        template<int Equations>
+        ARCH_INLINE void get_cv_and_energy_composition_gradient(
+            double, double, const double*, double& cv, double* gradient) const
+        {
+            cv = capacity;
+            owner->template energy_composition_gradient_from_derivatives<Equations>(
+                derivatives, gradient);
+        }
+
+        /** Contract the existing Hessian with X' without another interpolation. */
+        template<int Equations>
+        ARCH_INLINE void get_energy_composition_hessian_action(
+            double, double, const double*, const double* flow, double* action) const
+        {
+            owner->template energy_composition_hessian_from_derivatives<Equations>(
+                derivatives, flow, action);
+        }
+
+        /** Supply cv gradients and the e_X Hessian action from one jet. */
+        template<int Equations>
+        ARCH_INLINE void get_cv_gradient_and_energy_composition_hessian_action(
+            double, double, const double*, const double* flow,
+            double* gradient, double* action) const
+        {
+            owner->template cv_gradient_from_derivatives<Equations>(derivatives, gradient);
+            owner->template energy_composition_hessian_from_derivatives<Equations>(
+                derivatives, flow, action);
+        }
+    };
+
+    /** Prepare derivatives once for the RHS and thermal Jacobian at one state. */
+    ARCH_INLINE BurnThermodynamics burn_thermodynamics(
+        double rho, double T, const double* X) const
+    {
+        BurnThermodynamics result{this, {}, 0.0};
+        double pressure, energy;
+        calc_thermo_with_cv(rho, T, X, pressure, energy,
+                            &result.capacity, &result.derivatives);
+        return result;
+    }
+
     template <int Equations>
     ARCH_INLINE void get_cv_and_energy_composition_gradient(
         double rho, double T, const double* X, double& cv,
@@ -673,7 +871,7 @@ struct BasicHelmEosView {
     {
         double P, E;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, X, P, E, &cv, &d);
+        calc_thermo_with_cv(rho, T, X, P, E, &cv, &d, nullptr, JetRequest::FirstLaw);
         energy_composition_gradient_from_derivatives<Equations>(d, gradient);
     }
 
@@ -695,7 +893,7 @@ struct BasicHelmEosView {
     {
         double P, E;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d, nullptr, JetRequest::FirstLaw);
         energy_composition_gradient_from_derivatives<Equations>(d, gradient);
     }
 
@@ -755,7 +953,7 @@ struct BasicHelmEosView {
         const double T = get_temperature(rho, e, Xi);
         double P, E, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d);
+        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
         const double energy_density = (P - T * d.pressure_temperature) / (rho * rho);
         return d.pressure_density - d.pressure_temperature * energy_density / cv;
     }
@@ -764,7 +962,7 @@ struct BasicHelmEosView {
         const double T = get_temperature(rho, e, Xi);
         double P, E, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d);
+        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
         return d.pressure_temperature / cv;
     }
 
@@ -778,7 +976,7 @@ struct BasicHelmEosView {
         const double T = get_temperature(rho, e, Xi);
         double P, E, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d);
+        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
         const double energy_density =
             (P - T * d.pressure_temperature) / (rho * rho);
         chi = d.pressure_density

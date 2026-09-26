@@ -88,9 +88,8 @@ struct FluxHLLC
         const double* Xi_L, const double* Xi_R, int n_spec,
         const EosType& eos, int dir, double /* coefficient */,
         FluidVector& flux_out, double* species_flux_out,
-        const FluxAdmissibility::MeanThermoCache* mean_cache = nullptr,
-        const FluidState* mean_state = nullptr, int left_cell = -1,
-        int right_cell = -1)
+        const FluxAdmissibility::MeanThermoView* mean_view = nullptr,
+        int left_cell = -1, int right_cell = -1)
     {
         // 2. Thermodynamics Preparation
         // Left
@@ -116,32 +115,11 @@ struct FluxHLLC
         if (identical && rho_L > 0.0 && e_L > 0.0
             && std::isfinite(e_L)) {
             double pressure = 0.0, sound_speed = 0.0;
-            bool reused_mean = false;
-#if !defined(__CUDA_ARCH__)
-            // CUDA calls the same face formula without a host patch cache.
-            // Keep FluidState/vector cache access out of device compilation.
-            if (mean_cache && mean_state) {
-                const auto matches_mean = [&](int cell) {
-                    if (cell < 0 || !mean_cache->ready[cell]) return false;
-                    const auto mean = mean_state->get(cell);
-                    if (mean.rho != U_L.rho || mean.mom_u != U_L.mom_u
-                        || mean.mom_v != U_L.mom_v || mean.mom_w != U_L.mom_w
-                        || mean.eng != U_L.eng) return false;
-                    for (int s = 0; s < n_spec; ++s)
-                        if (mean_state->X(s, cell) != Xi_L[s]) return false;
-                    return true;
-                };
-                const int matched = matches_mean(left_cell) ? left_cell
-                    : matches_mean(right_cell) ? right_cell : -1;
-                if (matched >= 0) {
-                    // The patch-stage mean cache has already validated this
-                    // exact (rho,e,X); no interpolation or approximation.
-                    pressure = mean_cache->pressure[matched];
-                    sound_speed = mean_cache->sound_speed[matched];
-                    reused_mean = true;
-                }
-            }
-#endif
+            // Both execution backends borrow the same stage-mean contract.
+            // State equality is the original identity path, independent of
+            // how directional primitive recovery rounds intermediate energy.
+            const bool reused_mean = mean_view && mean_view->query(
+                U_L, Xi_L, n_spec, left_cell, right_cell, pressure, sound_speed);
             if (!reused_mean)
                 calc_endpoint_thermo(U_L, e_L, Xi_L, eos,
                                      pressure, sound_speed);
@@ -300,6 +278,13 @@ struct FluxHLLC
             }
         }
 
+        const FluxAdmissibility::MeanThermoView mean_view{
+            state.rho.data(), state.mom_u.data(), state.mom_v.data(),
+            state.mom_w.data(), state.eng.data(), state.mass_fractions.data(),
+            mean_cache ? mean_cache->pressure.data() : nullptr,
+            mean_cache ? mean_cache->sound_speed.data() : nullptr,
+            mean_cache ? mean_cache->ready.data() : nullptr, total_size, n_spec};
+
         const auto process_row = [&](int kj, std::vector<double>& Xi_L,
                                      std::vector<double>& Xi_R,
                                      std::vector<double>& Xi_cell,
@@ -318,7 +303,7 @@ struct FluxHLLC
                             compute_face_flux(
                                 U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
                                 0.0, flux_out[idx + stride], face_species_flux.data(),
-                                mean_cache, &state, idx, idx + stride);
+                                mean_cache ? &mean_view : nullptr, idx, idx + stride);
                         }, flux_out[idx + stride], face_species_flux.data(), n_spec);
                         state.get_species_to_buffer(idx, Xi_L.data());
                         state.get_species_to_buffer(idx + stride, Xi_R.data());

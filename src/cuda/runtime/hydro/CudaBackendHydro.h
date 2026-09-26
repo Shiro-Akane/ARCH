@@ -30,8 +30,21 @@ struct DeviceHydroBatchBlock {
     std::array<CudaAmrFluxDirectionRouteView, 3> routes{};
     state::RepairView repairs{};
     Physical::Gravity::GravityPatchView self_gravity{};
+    // Required mean-state thermodynamics, rebuilt for every stage input.
+    double* mean_pressure = nullptr;
+    double* mean_sound_speed = nullptr;
 };
 static_assert(std::is_trivially_copyable_v<DeviceHydroBatchBlock>);
+
+// Per-block CFL storage remains owned by the runtime; grid y selects a block.
+struct DeviceHydroDtBatchBlock {
+    DeviceStateView input;
+    DeviceGridView grid;
+    double* candidates;
+    double* result;
+    int* status;
+};
+static_assert(std::is_trivially_copyable_v<DeviceHydroDtBatchBlock>);
 
 struct CudaBackendLaunchResult {
     cudaError_t error = cudaSuccess;
@@ -40,6 +53,10 @@ struct CudaBackendLaunchResult {
 };
 
 #define ARCH_DECLARE_BACKEND_HYDRO(EOS) \
+    CudaBackendLaunchResult launch_cuda_backend_hydro_dt_batch( \
+        std::span<const DeviceHydroDtBatchBlock> host, \
+        const DeviceHydroDtBatchBlock* device, EOS eos, double cfl, \
+        SpeciesWorkspaceView workspace, cudaStream_t stream); \
     cudaError_t launch_cuda_backend_hydro_dt( \
         DeviceStateView state, DeviceGridView grid, EOS eos, double cfl, \
         CudaHydroWorkspaceView workspace, cudaStream_t stream); \

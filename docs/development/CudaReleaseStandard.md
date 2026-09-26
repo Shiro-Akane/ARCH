@@ -5,22 +5,27 @@ contract, not a user guide or a development diary. User-facing capabilities are
 described in the [backend guide](../CudaBackendStatus.md); measured accuracy and
 performance are summarized in [Validation](../../validation/README.md).
 
-## Active execution contract
+## Current execution contract
 
-The accepted optimization delivery is based on
-`3dab4e25f9877b6eb2112bbf59a8264618e8862a`. The independent
-`codex/hpc-cuda-integration` worktree contains the bounded cleanup and local
-integration fixes described in the [integration record](HpcCudaIntegration.md).
-The owner has authorized committing this work and pushing it to the original
-`origin/codex/hpc-cuda-optimization` branch. Do not merge main, update the frozen
-branch, publish a tag or create a hosted release as part of this handoff.
+The implementation invariants below apply to current work. Validation and
+publication decisions must use the current source, changed paths and authorized
+work branch. The [compute optimization plan](ComputeOptimizationPlan.zh-CN.md)
+and [O6 acceptance record](../../validation/gravity/flash/O6AcceptanceReport.zh-CN.md)
+track the present CPU/CUDA optimization gates; historical pass counts and GPU
+speedups do not sign off a newer executable.
 
 Trust source-identified collaborator measurements. Repeat a check when an edit
 affects it or a concrete inconsistency makes it unreliable, not merely because
-it was run on another machine. Release preparation removes the optional
-predictive-AMR data recorder and its dedicated configuration/diagnostic state.
-It must not change numerical implementations, compiler settings, ordinary AMR
-decisions or the generic topology-transaction interfaces.
+it was run on another machine. Keep scientific budgets, ordinary AMR decisions,
+shared numerical ownership and topology transactions explicit. A stage report
+must distinguish correctness, performance and any unmet release gate.
+
+The historical HPC integration used
+`3dab4e25f9877b6eb2112bbf59a8264618e8862a` and the
+`codex/hpc-cuda-integration` worktree. Its recorder-removal scope and original
+branch handoff are retained in the [integration record](HpcCudaIntegration.md).
+That completed handoff does not select a branch or authorize a release for
+subsequent work.
 
 ## Implementation contract
 
@@ -49,7 +54,7 @@ Consult [implementation ownership](ImplementationOwnership.md) before introducin
 a helper, wrapper or new file. Split code by responsibility and include only the
 types needed at that boundary; avoid parallel CPU/CUDA formula implementations.
 
-## Verification required for this handoff
+## Historical integration verification
 
 | Responsibility | Recorded result |
 | --- | --- |
@@ -68,7 +73,7 @@ correctness is accepted for the tested configurations; further acceleration,
 experimental sparse-provider promotion and distributed execution remain separate
 work. None is implied by the approximately 5× aprox13 coupled-AMR result.
 
-The local cleanup gates above ran on the rebuilt recorder-removal tree. Earlier
+The historical cleanup gates above ran on the rebuilt recorder-removal tree. Earlier
 broader integration and device-instrumentation results retain their own source
 identity in the linked baseline record; they are not new runs of this binary.
 The current compact record is updated in place, with a fixed Git reference to

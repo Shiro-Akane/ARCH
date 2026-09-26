@@ -155,7 +155,15 @@ struct Solver_BE_NR
                     c.phase = Phase::FinishSubstep;
                     continue;
                 }
-                assemble(c, A, eos);
+                // Iteration zero belongs to the accepted initial state and
+                // remains a required query. Later Newton iterates may reject.
+                if (c.newton_iter == 0) assemble(c, A, eos);
+                else if (!OdeMath::evaluate_eos_trial(eos, [&](const auto& candidate) {
+                    assemble(c, A, candidate);
+                })) {
+                    c.phase = Phase::FinishSubstep;
+                    continue;
+                }
                 c.phase = Phase::AwaitLinear;
                 return OdeLinearRequest::FactorizeAndSolve;
             case Phase::ApplyCorrection:
@@ -272,7 +280,9 @@ private:
         const double newton_error = OdeMath::wrms_norm<NEQ>(c.b, c.W);
         if (newton_error < newton_error_fraction) {
             if (!OdeMath::project_burn_composition(c.X_trial, NUM_SPEC, cfg.smallx)) return false;
-            OdeMath::eval_burn_rhs<NetType>(c.X_trial, c.rho, eos, c.RHS, c.network);
+            if (!OdeMath::evaluate_eos_trial(eos, [&](const auto& candidate) {
+                OdeMath::eval_burn_rhs<NetType>(c.X_trial, c.rho, candidate, c.RHS, c.network);
+            })) return false;
             // Backward Euler minus the trapezoidal update, evaluated with the
             // same endpoint states, estimates the leading O(dt^2) local error.
             // No second solve or copied reaction/EOS implementation is needed.
@@ -282,7 +292,7 @@ private:
             if (!std::isfinite(c.current_err) || c.current_err >= 1.0) return false;
             const double integrated_enuc = OdeMath::integrated_burn_increment_energy<NetType>(c.increment);
             const double old_eint = eos.get_eint_from_T(c.rho, c.X_old[NUM_SPEC], c.X_old);
-            const double new_eint = eos.get_eint_from_T(c.rho, c.X_trial[NUM_SPEC], c.X_trial);
+            const double new_eint = OdeMath::trial_internal_energy(eos, c.rho, c.X_trial[NUM_SPEC], c.X_trial);
             if (!OdeMath::energy_closure_acceptable(old_eint,new_eint,integrated_enuc,rtol)) return false;
             c.step_converged = true;
         }

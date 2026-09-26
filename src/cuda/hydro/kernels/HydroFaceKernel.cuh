@@ -52,7 +52,8 @@ template <typename Reconstruction, typename Flux, typename EosView>
 __device__ inline void hydro_face_kernel_work(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
     EosView eos, int direction, double coefficient,
-    SpeciesWorkspaceView workspace = {})
+    SpeciesWorkspaceView workspace = {}, const double* mean_pressure = nullptr,
+    const double* mean_sound_speed = nullptr)
 {
     int i_begin = grid.is;
     int j_begin = grid.js;
@@ -72,6 +73,10 @@ __device__ inline void hydro_face_kernel_work(
     double* species_right = scratch.array(1);
     double* species_cell = scratch.array(2);
     double* face_species_flux = scratch.array(3);
+    const FluxAdmissibility::MeanThermoView means{
+        state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng,
+        state.mass_fractions, mean_pressure, mean_sound_speed, nullptr,
+        state.total_size, state.n_species};
     for (int linear = lane; linear < ni * nj * nk;
          linear += blockDim.x * gridDim.x) {
         const int i = i_begin + linear % ni;
@@ -88,17 +93,32 @@ __device__ inline void hydro_face_kernel_work(
         FluxAdmissibility::limit_reconstruction(state.load(cell), left);
         FluxAdmissibility::limit_reconstruction(state.load(cell + stride), right);
         FluidVector face_flux;
+        if constexpr (requires {
+            eos.bind_mean_thermodynamics(state, cell, cell + stride,
+                                         mean_pressure, mean_sound_speed);
+        }) eos.bind_mean_thermodynamics(state, cell, cell + stride,
+                                        mean_pressure, mean_sound_speed);
         const auto trial_eos = FluxAdmissibility::candidate_eos(eos);
         Flux::compute(
             left, right, species_left, species_right, state.n_species, trial_eos,
-            direction, coefficient, face_flux, face_species_flux);
+            direction, coefficient, face_flux, face_species_flux,
+            mean_pressure && mean_sound_speed ? &means : nullptr, cell, cell + stride);
         for (int species = 0; species < state.n_species; ++species) {
             species_left[species] = state.species(species, cell);
             species_right[species] = state.species(species, cell + stride);
         }
-        FluxAdmissibility::limit_face(state.load(cell), state.load(cell + stride),
-            species_left, species_right, state.n_species, eos, direction,
-            face_flux, face_species_flux);
+        if (mean_pressure && mean_sound_speed) {
+            // Same limiter, with the unchanged means evaluated once per stage.
+            FluxAdmissibility::limit_face_with_thermo(
+                state.load(cell), state.load(cell + stride), species_left,
+                species_right, state.n_species, mean_pressure[cell],
+                mean_sound_speed[cell], mean_pressure[cell + stride],
+                mean_sound_speed[cell + stride], direction, face_flux, face_species_flux);
+        } else {
+            FluxAdmissibility::limit_face(state.load(cell), state.load(cell + stride),
+                species_left, species_right, state.n_species, eos, direction,
+                face_flux, face_species_flux);
+        }
         const int face = cell + stride;
         flux.store(face, face_flux);
         for (int species = 0; species < state.n_species; ++species)

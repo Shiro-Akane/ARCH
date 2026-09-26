@@ -114,6 +114,11 @@ struct HydroBatchLaunchVisitor {
 } // namespace
 
 #define ARCH_DEFINE_BACKEND_HYDRO(EOS) \
+    CudaBackendLaunchResult launch_cuda_backend_hydro_dt_batch( \
+        std::span<const DeviceHydroDtBatchBlock> host, \
+        const DeviceHydroDtBatchBlock* device, EOS eos, double cfl, \
+        SpeciesWorkspaceView workspace, cudaStream_t stream) \
+    { return launch_hydro_dt_batch(host, device, eos, cfl, workspace, stream); } \
     cudaError_t launch_cuda_backend_hydro_dt( \
         DeviceStateView state, DeviceGridView grid, EOS eos, double cfl, \
         CudaHydroWorkspaceView workspace, cudaStream_t stream) \

@@ -6,9 +6,10 @@ single maintained implementation and its CPU/CUDA consumers.
 
 The [compute optimization plan (Chinese)](ComputeOptimizationPlan.zh-CN.md)
 continues from the v1.2.0 main baseline on `compute/optim`: shared CPU/CUDA
-mathematics and execution costs first. O6 requires the registered Cellular CPU
-completion times to reach at most 10 times FLASH, with explicit resource,
-scientific-error and generality checks; this is a target, not a measured result.
+mathematics and execution costs first. O6/O6+ now target complete-task CPU times within two times FLASH for the
+registered comparable models, with explicit resource, scientific-error and
+generality checks. The earlier ten-times line is an intermediate cost target;
+individual speed improvements do not close the combined acceptance gate.
 O7 cylindrical axisymmetry and O8 user boundary interfaces preserve that gate.
 O9 rechecks the final version before long-duration validation; it is not the first
 performance acceptance stage. Nonuniform grid design remains a later discussion. The

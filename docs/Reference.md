@@ -154,12 +154,13 @@ or a different transport closure needs the relevant numerical and coupled checks
 | Reconstruction/time + AMR | PPM uses MUSCL-MinMod at coarse/fine faces. RK3 does not make the split multiphysics method third order; RKL1 and BE_NR introduce their own accuracy limits. |
 
 A successful capability query or a single-policy device test establishes a
-registered route, not coupled physical accuracy. In particular, recoverable
-Tabular3D/4D burn/NSE trial failures may still contaminate the device batch error
-state; a paired failure-then-acceptance trajectory has not closed this audit item.
+registered route, not coupled physical accuracy. Tabular3D/4D uncommitted
+ODE/NSE queries now use local trial-failure status; paired CPU/CUDA checks cover
+rejection followed by acceptance while required failures remain fatal. This
+qualifies the recovery contract, not arbitrary table/network combinations.
 See the [table-EOS contract](../src/physics/eos/TabularEOS.md),
 [validation scope](../validation/README.md) and
-[current coupling audit](../validation/gravity/flash/O5OptimizationReport.zh-CN.md#arch-组合能力与缺口).
+[current coupling audit](../validation/gravity/flash/O6AcceptanceReport.zh-CN.md).
 
 ## Runtime architecture
 
@@ -425,7 +426,7 @@ and any other spelling are rejected with the parameter name in the error.
 | `reconstruct` | string | `pcm` | `pcm`, `donor_cell`, `muscl`, `plm`, `ppm` |
 | `limiter` | string | `minmod` | MUSCL only: `minmod`, `superbee`, `vanleer`, `mc` |
 | `time_integrator` | string | `RK2` | `Euler/RK1`, `RK2/SSPRK2`, `RK3/SSPRK3` |
-| `cfl` | double | `0.8` | explicit hydro CFL; range unchecked at load time |
+| `cfl` | double | `0.8` | explicit hydro CFL; finite and `0 < cfl <= 1`, checked at load time |
 | `EntropyFix` | bool | `true` | enables entropy-fix smoothing |
 | `EntropyFixCoefficient` | double | `0.1` | used when entropy fix is enabled |
 | `sml_rho` | double | `1e-12` | density repair threshold |
@@ -525,6 +526,12 @@ SHA-256
 The original table member is the validation authority. The loader uses the
 fixed 541×201 Timmes layout and requires all four data blocks; the burn baseline
 also requires the exact checksum above.
+
+Helmholtz retains the source Coulomb positivity safeguard. Near cold, strongly
+coupled states its cutoff can make energy inversion non-unique; a small residual
+does not establish a unique temperature or qualify that material regime. The
+protected fixed-seed inverse is retained. This is separate from normalized
+free-energy table inversion, which explicitly rejects multiple valid roots.
 
 ### Burning, network, and ODE
 

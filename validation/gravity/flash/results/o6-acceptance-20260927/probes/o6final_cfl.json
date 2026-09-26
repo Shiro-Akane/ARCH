@@ -1,0 +1,100 @@
+{
+  "scope": "CFL diagnostic only; fixed grid separates timestep from AMR cadence; single samples",
+  "binary_sha256": "c82bd53e3fcf267e9654f6a48e11d0452bfa78cc0e9ef0b763dcde1e0ddf35ef",
+  "records": [
+    {
+      "case": "fixed01",
+      "cfl": 0.1,
+      "amr": false,
+      "wall_seconds": 10.38455365900154,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6final_cfl_fixed01",
+      "time": 1.0192286463896491e-08,
+      "repair_report": "revision=P1.5-v1 units=CGS\nevents=0\naffected_volume=0\nmass_signed=0\nmass_absolute=0\nmomentum_x=0\nmomentum_y=0\nmomentum_z=0\nenergy_signed=0\nenergy_absolute=0\nlocal_cell=0\nspecies_0_signed=0\nspecies_0_absolute=0\nspecies_1_signed=0\nspecies_1_absolute=0\nspecies_2_signed=0\nspecies_2_absolute=0\nspecies_3_signed=0\nspecies_3_absolute=0\nspecies_4_signed=0\nspecies_4_absolute=0\nspecies_5_signed=0\nspecies_5_absolute=0\nspecies_6_signed=0\nspecies_6_absolute=0\nspecies_7_signed=0\nspecies_7_absolute=0\nspecies_8_signed=0\nspecies_8_absolute=0\nspecies_9_signed=0\nspecies_9_absolute=0\nspecies_10_signed=0\nspecies_10_absolute=0\nspecies_11_signed=0\nspecies_11_absolute=0\nspecies_12_signed=0\nspecies_12_absolute=0\nspecies_13_signed=0\nspecies_13_absolute=0\nspecies_14_signed=0\nspecies_14_absolute=0\nspecies_15_signed=0\nspecies_15_absolute=0\nspecies_16_signed=0\nspecies_16_absolute=0\nspecies_17_signed=0\nspecies_17_absolute=0\nspecies_18_signed=0\nspecies_18_absolute=0\nblock_uid=0\nstage=0\ntime=0\nposition=0,0,0",
+      "steps": 491
+    },
+    {
+      "case": "fixed02",
+      "cfl": 0.2,
+      "amr": false,
+      "wall_seconds": 6.298181423997448,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6final_cfl_fixed02",
+      "time": 1.0192286463896491e-08,
+      "relative_l1_to_cfl01": {
+        "DENS": 0.0005585738068168502,
+        "TEMP": 0.001891575279664874,
+        "PRES": 0.0008248883842333981,
+        "VELX": 0.0015333217982465882,
+        "c12": 0.0013479839507982922
+      },
+      "repair_report": "revision=P1.5-v1 units=CGS\nevents=0\naffected_volume=0\nmass_signed=0\nmass_absolute=0\nmomentum_x=0\nmomentum_y=0\nmomentum_z=0\nenergy_signed=0\nenergy_absolute=0\nlocal_cell=0\nspecies_0_signed=0\nspecies_0_absolute=0\nspecies_1_signed=0\nspecies_1_absolute=0\nspecies_2_signed=0\nspecies_2_absolute=0\nspecies_3_signed=0\nspecies_3_absolute=0\nspecies_4_signed=0\nspecies_4_absolute=0\nspecies_5_signed=0\nspecies_5_absolute=0\nspecies_6_signed=0\nspecies_6_absolute=0\nspecies_7_signed=0\nspecies_7_absolute=0\nspecies_8_signed=0\nspecies_8_absolute=0\nspecies_9_signed=0\nspecies_9_absolute=0\nspecies_10_signed=0\nspecies_10_absolute=0\nspecies_11_signed=0\nspecies_11_absolute=0\nspecies_12_signed=0\nspecies_12_absolute=0\nspecies_13_signed=0\nspecies_13_absolute=0\nspecies_14_signed=0\nspecies_14_absolute=0\nspecies_15_signed=0\nspecies_15_absolute=0\nspecies_16_signed=0\nspecies_16_absolute=0\nspecies_17_signed=0\nspecies_17_absolute=0\nspecies_18_signed=0\nspecies_18_absolute=0\nblock_uid=0\nstage=0\ntime=0\nposition=0,0,0",
+      "steps": 255
+    },
+    {
+      "case": "fixed04",
+      "cfl": 0.4,
+      "amr": false,
+      "wall_seconds": 4.172445386000618,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6final_cfl_fixed04",
+      "time": 1.0192286463896491e-08,
+      "relative_l1_to_cfl01": {
+        "DENS": 0.0006078255686714349,
+        "TEMP": 0.001820773002367568,
+        "PRES": 0.0009663216454567138,
+        "VELX": 0.0012446546055859442,
+        "c12": 0.0007967613472277848
+      },
+      "repair_report": "revision=P1.5-v1 units=CGS\nevents=0\naffected_volume=0\nmass_signed=0\nmass_absolute=0\nmomentum_x=0\nmomentum_y=0\nmomentum_z=0\nenergy_signed=0\nenergy_absolute=0\nlocal_cell=0\nspecies_0_signed=0\nspecies_0_absolute=0\nspecies_1_signed=0\nspecies_1_absolute=0\nspecies_2_signed=0\nspecies_2_absolute=0\nspecies_3_signed=0\nspecies_3_absolute=0\nspecies_4_signed=0\nspecies_4_absolute=0\nspecies_5_signed=0\nspecies_5_absolute=0\nspecies_6_signed=0\nspecies_6_absolute=0\nspecies_7_signed=0\nspecies_7_absolute=0\nspecies_8_signed=0\nspecies_8_absolute=0\nspecies_9_signed=0\nspecies_9_absolute=0\nspecies_10_signed=0\nspecies_10_absolute=0\nspecies_11_signed=0\nspecies_11_absolute=0\nspecies_12_signed=0\nspecies_12_absolute=0\nspecies_13_signed=0\nspecies_13_absolute=0\nspecies_14_signed=0\nspecies_14_absolute=0\nspecies_15_signed=0\nspecies_15_absolute=0\nspecies_16_signed=0\nspecies_16_absolute=0\nspecies_17_signed=0\nspecies_17_absolute=0\nspecies_18_signed=0\nspecies_18_absolute=0\nblock_uid=0\nstage=0\ntime=0\nposition=0,0,0",
+      "steps": 138
+    },
+    {
+      "case": "fixed08",
+      "cfl": 0.8,
+      "amr": false,
+      "wall_seconds": 3.2838082050002413,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6final_cfl_fixed08",
+      "time": 1.0192286463896491e-08,
+      "relative_l1_to_cfl01": {
+        "DENS": 0.0009314864081978705,
+        "TEMP": 0.002317760016130748,
+        "PRES": 0.0020681249962596513,
+        "VELX": 0.0028581623636760012,
+        "c12": 0.0020253337594515353
+      },
+      "repair_report": "revision=P1.5-v1 units=CGS\nevents=0\naffected_volume=0\nmass_signed=0\nmass_absolute=0\nmomentum_x=0\nmomentum_y=0\nmomentum_z=0\nenergy_signed=0\nenergy_absolute=0\nlocal_cell=0\nspecies_0_signed=0\nspecies_0_absolute=0\nspecies_1_signed=0\nspecies_1_absolute=0\nspecies_2_signed=0\nspecies_2_absolute=0\nspecies_3_signed=0\nspecies_3_absolute=0\nspecies_4_signed=0\nspecies_4_absolute=0\nspecies_5_signed=0\nspecies_5_absolute=0\nspecies_6_signed=0\nspecies_6_absolute=0\nspecies_7_signed=0\nspecies_7_absolute=0\nspecies_8_signed=0\nspecies_8_absolute=0\nspecies_9_signed=0\nspecies_9_absolute=0\nspecies_10_signed=0\nspecies_10_absolute=0\nspecies_11_signed=0\nspecies_11_absolute=0\nspecies_12_signed=0\nspecies_12_absolute=0\nspecies_13_signed=0\nspecies_13_absolute=0\nspecies_14_signed=0\nspecies_14_absolute=0\nspecies_15_signed=0\nspecies_15_absolute=0\nspecies_16_signed=0\nspecies_16_absolute=0\nspecies_17_signed=0\nspecies_17_absolute=0\nspecies_18_signed=0\nspecies_18_absolute=0\nblock_uid=0\nstage=0\ntime=0\nposition=0,0,0",
+      "steps": 79
+    },
+    {
+      "case": "fixed10",
+      "cfl": 1.0,
+      "amr": false,
+      "wall_seconds": 2.987062683001568,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6final_cfl_fixed10",
+      "time": 1.0192286463896491e-08,
+      "relative_l1_to_cfl01": {
+        "DENS": 0.001459009151124046,
+        "TEMP": 0.002114188457797813,
+        "PRES": 0.001942047126631179,
+        "VELX": 0.00311665808026275,
+        "c12": 0.0026212655397994844
+      },
+      "repair_report": "revision=P1.5-v1 units=CGS\nevents=0\naffected_volume=0\nmass_signed=0\nmass_absolute=0\nmomentum_x=0\nmomentum_y=0\nmomentum_z=0\nenergy_signed=0\nenergy_absolute=0\nlocal_cell=0\nspecies_0_signed=0\nspecies_0_absolute=0\nspecies_1_signed=0\nspecies_1_absolute=0\nspecies_2_signed=0\nspecies_2_absolute=0\nspecies_3_signed=0\nspecies_3_absolute=0\nspecies_4_signed=0\nspecies_4_absolute=0\nspecies_5_signed=0\nspecies_5_absolute=0\nspecies_6_signed=0\nspecies_6_absolute=0\nspecies_7_signed=0\nspecies_7_absolute=0\nspecies_8_signed=0\nspecies_8_absolute=0\nspecies_9_signed=0\nspecies_9_absolute=0\nspecies_10_signed=0\nspecies_10_absolute=0\nspecies_11_signed=0\nspecies_11_absolute=0\nspecies_12_signed=0\nspecies_12_absolute=0\nspecies_13_signed=0\nspecies_13_absolute=0\nspecies_14_signed=0\nspecies_14_absolute=0\nspecies_15_signed=0\nspecies_15_absolute=0\nspecies_16_signed=0\nspecies_16_absolute=0\nspecies_17_signed=0\nspecies_17_absolute=0\nspecies_18_signed=0\nspecies_18_absolute=0\nblock_uid=0\nstage=0\ntime=0\nposition=0,0,0",
+      "steps": 68
+    },
+    {
+      "case": "fine10",
+      "cfl": 1.0,
+      "amr": true,
+      "wall_seconds": 30.983610811999824,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6final_cfl_fine10",
+      "time": 1.0222428325150896e-08,
+      "repair_report": "revision=P1.5-v1 units=CGS\nevents=0\naffected_volume=0\nmass_signed=0\nmass_absolute=0\nmomentum_x=0\nmomentum_y=0\nmomentum_z=0\nenergy_signed=0\nenergy_absolute=0\nlocal_cell=0\nspecies_0_signed=0\nspecies_0_absolute=0\nspecies_1_signed=0\nspecies_1_absolute=0\nspecies_2_signed=0\nspecies_2_absolute=0\nspecies_3_signed=0\nspecies_3_absolute=0\nspecies_4_signed=0\nspecies_4_absolute=0\nspecies_5_signed=0\nspecies_5_absolute=0\nspecies_6_signed=0\nspecies_6_absolute=0\nspecies_7_signed=0\nspecies_7_absolute=0\nspecies_8_signed=0\nspecies_8_absolute=0\nspecies_9_signed=0\nspecies_9_absolute=0\nspecies_10_signed=0\nspecies_10_absolute=0\nspecies_11_signed=0\nspecies_11_absolute=0\nspecies_12_signed=0\nspecies_12_absolute=0\nspecies_13_signed=0\nspecies_13_absolute=0\nspecies_14_signed=0\nspecies_14_absolute=0\nspecies_15_signed=0\nspecies_15_absolute=0\nspecies_16_signed=0\nspecies_16_absolute=0\nspecies_17_signed=0\nspecies_17_absolute=0\nspecies_18_signed=0\nspecies_18_absolute=0\nblock_uid=0\nstage=0\ntime=0\nposition=0,0,0",
+      "steps": 211
+    }
+  ]
+}

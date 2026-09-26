@@ -468,9 +468,17 @@ ARCH_INLINE double evaluate_cfl_cell_dt(
 {
     if (!is_cfl_cell_active(U))
         return std::numeric_limits<double>::quiet_NaN();
-    const double pressure = eos.get_pressure(U, composition);
-    const double sound_speed = eos.get_sound_speed(U, pressure, composition);
-    return compute_cfl_cell_dt(U, sound_speed, dim, dx1, dx2, dx3);
+    // Some EOS policies derive the acoustic speed from rho,e,X directly.
+    // Use that owner-provided query rather than recovering an unused pressure
+    // through a second inverse; other EOS keep their pressure-based contract.
+    if constexpr (requires { eos.get_sound_speed(U, composition); }) {
+        return compute_cfl_cell_dt(U, eos.get_sound_speed(U, composition),
+                                   dim, dx1, dx2, dx3);
+    } else {
+        const double pressure = eos.get_pressure(U, composition);
+        const double sound_speed = eos.get_sound_speed(U, pressure, composition);
+        return compute_cfl_cell_dt(U, sound_speed, dim, dx1, dx2, dx3);
+    }
 }
 
 template <typename EosType>

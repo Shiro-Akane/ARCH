@@ -1,0 +1,162 @@
+{
+  "scope": "single-run resource attribution after all formal timing; does not replace medians",
+  "binary_identity": {
+    "arch": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+      "sha256": "bbf730f92443b44abdcb3e00b17d99002747500862fbce9d1f342681cc422785"
+    }
+  },
+  "records": [
+    {
+      "label": "resource",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6view_fine_resource_probe",
+      "threads": 8,
+      "affinity": "0,2,4,6,8,10,12,14",
+      "omp_wait_policy": "default",
+      "gomp_spincount": "default",
+      "wall_seconds": 31.92,
+      "user_cpu_seconds": 198.87,
+      "system_cpu_seconds": 0.47,
+      "mean_cores": 6.244987468671679,
+      "peak_rss_kib": 157296.0,
+      "state_comparison": {
+        "same_topology_and_time": true,
+        "checkpoint_errors": {
+          "X": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "eng": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "enuc_rate": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "mom_u": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "mom_v": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "mom_w": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "rho": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "rhoX": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          }
+        }
+      },
+      "resource_log": [
+        "\tCommand being timed: \"bin/ARCH CellularDet output/o6view_fine_resource_probe/input.par\"",
+        "\tUser time (seconds): 198.87",
+        "\tSystem time (seconds): 0.47",
+        "\tPercent of CPU this job got: 624%",
+        "\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:31.92",
+        "\tAverage shared text size (kbytes): 0",
+        "\tAverage unshared data size (kbytes): 0",
+        "\tAverage stack size (kbytes): 0",
+        "\tAverage total size (kbytes): 0",
+        "\tMaximum resident set size (kbytes): 157296",
+        "\tAverage resident set size (kbytes): 0",
+        "\tMajor (requiring I/O) page faults: 5",
+        "\tMinor (reclaiming a frame) page faults: 37764",
+        "\tVoluntary context switches: 9662",
+        "\tInvoluntary context switches: 22957",
+        "\tSwaps: 0",
+        "\tFile system inputs: 0",
+        "\tFile system outputs: 34448",
+        "\tSocket messages sent: 0",
+        "\tSocket messages received: 0",
+        "\tSignals delivered: 0",
+        "\tPage size (bytes): 4096",
+        "\tExit status: 0"
+      ]
+    },
+    {
+      "label": "passive",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6view_fine_passive_probe",
+      "threads": 8,
+      "affinity": "0,2,4,6,8,10,12,14",
+      "omp_wait_policy": "PASSIVE",
+      "gomp_spincount": 0,
+      "wall_seconds": 31.69,
+      "user_cpu_seconds": 182.01,
+      "system_cpu_seconds": 1.11,
+      "mean_cores": 5.778479015462291,
+      "peak_rss_kib": 160960.0,
+      "state_comparison": {
+        "same_topology_and_time": true,
+        "checkpoint_errors": {
+          "X": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "eng": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "enuc_rate": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "mom_u": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "mom_v": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "mom_w": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "rho": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          },
+          "rhoX": {
+            "absolute_linf": 0.0,
+            "scaled_linf": 0.0
+          }
+        }
+      },
+      "resource_log": [
+        "\tCommand being timed: \"bin/ARCH CellularDet output/o6view_fine_passive_probe/input.par\"",
+        "\tUser time (seconds): 182.01",
+        "\tSystem time (seconds): 1.11",
+        "\tPercent of CPU this job got: 577%",
+        "\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:31.69",
+        "\tAverage shared text size (kbytes): 0",
+        "\tAverage unshared data size (kbytes): 0",
+        "\tAverage stack size (kbytes): 0",
+        "\tAverage total size (kbytes): 0",
+        "\tMaximum resident set size (kbytes): 160960",
+        "\tAverage resident set size (kbytes): 0",
+        "\tMajor (requiring I/O) page faults: 0",
+        "\tMinor (reclaiming a frame) page faults: 38636",
+        "\tVoluntary context switches: 48011",
+        "\tInvoluntary context switches: 20234",
+        "\tSwaps: 0",
+        "\tFile system inputs: 0",
+        "\tFile system outputs: 34432",
+        "\tSocket messages sent: 0",
+        "\tSocket messages received: 0",
+        "\tSignals delivered: 0",
+        "\tPage size (bytes): 4096",
+        "\tExit status: 0"
+      ]
+    }
+  ],
+  "conclusion": "disabling OpenMP spin changes wall time by less than one percent; CPU time is not a proof of irreducible physical cost"
+}

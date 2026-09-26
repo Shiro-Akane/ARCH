@@ -1,0 +1,387 @@
+{
+  "date": "2026-09-27",
+  "scope": "complete process wall clock, paired serial runs, same actual checkpoint physical time",
+  "arch_binary": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+  "arch_sha256": "5f5b4ebadfd44b5865475c0aae4da2fd0957d12c25cd364b2891a807336a2f80",
+  "cpu8_affinity": "0,2,4,6,8,10,12,14",
+  "records": [
+    {
+      "case": "sod",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 2.66910362100316,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_sod_flash_1",
+      "input_fixture": "flash_sod_o6plus.par"
+    },
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 5.073668177996296,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_sod_arch_1",
+      "input_fixture": "arch_sod_o6plus.par"
+    },
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.180153972003609,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_sod_arch_2",
+      "input_fixture": "arch_sod_o6plus.par"
+    },
+    {
+      "case": "sod",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 2.622333029998117,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_sod_flash_2",
+      "input_fixture": "flash_sod_o6plus.par"
+    },
+    {
+      "case": "sod",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 2.7244098739975016,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_sod_flash_3",
+      "input_fixture": "flash_sod_o6plus.par"
+    },
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.100336666000658,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_sod_arch_3",
+      "input_fixture": "arch_sod_o6plus.par"
+    },
+    {
+      "case": "jeans64",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 1.322747445999994,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans64_flash_1",
+      "input_fixture": "flash_jeans_o6plus.par"
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 0.7207316790008917,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans64_arch_1",
+      "input_fixture": "arch_jeans_o6plus.par"
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 0.7211607770004775,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans64_arch_2",
+      "input_fixture": "arch_jeans_o6plus.par"
+    },
+    {
+      "case": "jeans64",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 1.326849281002069,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans64_flash_2",
+      "input_fixture": "flash_jeans_o6plus.par"
+    },
+    {
+      "case": "jeans64",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 1.2759805679961573,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans64_flash_3",
+      "input_fixture": "flash_jeans_o6plus.par"
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 0.7215558509997209,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans64_arch_3",
+      "input_fixture": "arch_jeans_o6plus.par"
+    },
+    {
+      "case": "jeans128",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 2.781292041996494,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans128_flash_1",
+      "input_fixture": "flash_jeans_o6plus_128.par"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 5.173341588000767,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans128_arch_1",
+      "input_fixture": "arch_jeans_o6plus_128.par"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.3742539919985575,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans128_arch_2",
+      "input_fixture": "arch_jeans_o6plus_128.par"
+    },
+    {
+      "case": "jeans128",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 2.724430565998773,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans128_flash_2",
+      "input_fixture": "flash_jeans_o6plus_128.par"
+    },
+    {
+      "case": "jeans128",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 2.730376063998847,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans128_flash_3",
+      "input_fixture": "flash_jeans_o6plus_128.par"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.303096510004252,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_jeans128_arch_3",
+      "input_fixture": "arch_jeans_o6plus_128.par"
+    },
+    {
+      "case": "a",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 5.817396534999716,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_a_flash_1",
+      "input_fixture": "flash_cellular_o6plus_a.par"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 8.283670703996904,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_a_arch_1",
+      "input_fixture": "arch_cellular_o6_matched.par"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 8.29755381099676,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_a_arch_2",
+      "input_fixture": "arch_cellular_o6_matched.par"
+    },
+    {
+      "case": "a",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 5.410856146998412,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_a_flash_2",
+      "input_fixture": "flash_cellular_o6plus_a.par"
+    },
+    {
+      "case": "a",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 4.322758943002555,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_a_flash_3",
+      "input_fixture": "flash_cellular_o6plus_a.par"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 8.555543113005115,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_a_arch_3",
+      "input_fixture": "arch_cellular_o6_matched.par"
+    },
+    {
+      "case": "b",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 5.00204774300073,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_b_flash_1",
+      "input_fixture": "flash_cellular_o6plus_b.par"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 8.997879328999261,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_b_arch_1",
+      "input_fixture": "arch_cellular_o6_holdout.par"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 8.916729919001227,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_b_arch_2",
+      "input_fixture": "arch_cellular_o6_holdout.par"
+    },
+    {
+      "case": "b",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 5.561474984002416,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_b_flash_2",
+      "input_fixture": "flash_cellular_o6plus_b.par"
+    },
+    {
+      "case": "b",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 4.734912648003956,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_b_flash_3",
+      "input_fixture": "flash_cellular_o6plus_b.par"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 8.854475638006988,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_b_arch_3",
+      "input_fixture": "arch_cellular_o6_holdout.par"
+    },
+    {
+      "case": "noburn",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 5.547854440999799,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_noburn_flash_1",
+      "input_fixture": "flash_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 5.208308460001717,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_noburn_arch_1",
+      "input_fixture": "arch_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.175470207999751,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_noburn_arch_2",
+      "input_fixture": "arch_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "noburn",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 10.602666350998334,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_noburn_flash_2",
+      "input_fixture": "flash_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "noburn",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 11.47258752900234,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_noburn_flash_3",
+      "input_fixture": "flash_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.710965038000722,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_noburn_arch_3",
+      "input_fixture": "arch_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "fine",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 17.26113777199498,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_fine_flash_1",
+      "input_fixture": "flash_cellular_o6plus_dx025.par"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 41.17422853699827,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_fine_arch_1",
+      "input_fixture": "arch_cellular_o6plus_dx025.par"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 41.24953210700187,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_fine_arch_2",
+      "input_fixture": "arch_cellular_o6plus_dx025.par"
+    },
+    {
+      "case": "fine",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 9.224284314004763,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_fine_flash_2",
+      "input_fixture": "flash_cellular_o6plus_dx025.par"
+    },
+    {
+      "case": "fine",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 8.55332222400466,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_fine_flash_3",
+      "input_fixture": "flash_cellular_o6plus_dx025.par"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 41.217433871999674,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6accept_fine_arch_3",
+      "input_fixture": "arch_cellular_o6plus_dx025.par"
+    }
+  ]
+}

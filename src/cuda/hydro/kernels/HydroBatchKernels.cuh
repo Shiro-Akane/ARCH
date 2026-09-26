@@ -36,6 +36,66 @@ static __global__ void hydro_batch_clear(const DeviceHydroBatchBlock* blocks)
     b.output.enuc_rate[cell] = 0.0;
 }
 
+/** Evaluate only the union of means consumed by directional face limiters.
+ * One normal ghost layer is required; unused corner/edge ghosts are not queried.
+ * The launch follows latch clearing and precedes every face consumer.
+ */
+template<class Eos>
+__global__ void hydro_batch_mean_thermo(const DeviceHydroBatchBlock* blocks,
+    Eos eos, SpeciesWorkspaceView workspace)
+{
+    const auto& b = blocks[blockIdx.y];
+    if (!b.mean_pressure || !b.mean_sound_speed) return;
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
+    SpeciesLaneScratch<1> scratch(workspace, lane);
+    double* composition = scratch.array(0);
+    const auto checked = make_checked_hydro_eos(eos, b.eos_status);
+    for (int cell = lane; cell < b.grid.total_size; cell += blockDim.x * gridDim.x) {
+        const int k = cell / b.grid.stride_z;
+        const int j = (cell - k * b.grid.stride_z) / b.grid.stride_y;
+        const int i = cell - k * b.grid.stride_z - j * b.grid.stride_y;
+        const int position[]{i,j,k};
+        const int begin[]{b.grid.is,b.grid.js,b.grid.ks};
+        const int end[]{b.grid.ie,b.grid.je,b.grid.ke};
+        int outside = 0;
+        bool needed = true;
+        for (int axis = 0; axis < 3; ++axis) {
+            if (position[axis] >= begin[axis] && position[axis] < end[axis]) continue;
+            ++outside;
+            needed &= axis < b.grid.dim
+                && (position[axis] == begin[axis]-1 || position[axis] == end[axis]);
+        }
+        if (!needed || outside > 1) continue;
+        for (int s = 0; s < b.input.n_species; ++s)
+            composition[s] = b.input.species(s, cell);
+        FluxAdmissibility::required_mean_thermo(b.input.load(cell),
+            b.input.n_species > 0 ? composition : nullptr, checked,
+            b.mean_pressure[cell], b.mean_sound_speed[cell]);
+    }
+}
+
+/** Reset each block's required-query latch before any CFL candidate runs. */
+static __global__ void hydro_batch_cfl_clear(const DeviceHydroDtBatchBlock* blocks)
+{ if (threadIdx.x == 0) *blocks[blockIdx.y].status = 0; }
+
+/** Map grid y to blocks and reuse the scalar candidate computation verbatim. */
+template<class Eos>
+__global__ void hydro_batch_cfl_candidates(const DeviceHydroDtBatchBlock* blocks,
+    Eos eos, SpeciesWorkspaceView workspace)
+{
+    const auto& b = blocks[blockIdx.y];
+    hydro_cfl_candidates_work(b.input, b.grid,
+        make_checked_hydro_eos(eos, b.status), b.candidates, workspace);
+}
+
+/** Reduce each block in its original cell order; no cross-block state is shared. */
+static __global__ void hydro_batch_cfl_reduce(const DeviceHydroDtBatchBlock* blocks,
+    double cfl)
+{
+    const auto& b = blocks[blockIdx.y];
+    hydro_cfl_reduce_work(b.candidates, b.grid.active_cell_count(), cfl, b.result, b.status);
+}
+
 template<class Reconstruction, class Flux, class Eos>
 __global__ void hydro_batch_faces(const DeviceHydroBatchBlock* blocks, Eos eos,
     int direction, double coefficient, SpeciesWorkspaceView workspace)
@@ -43,7 +103,8 @@ __global__ void hydro_batch_faces(const DeviceHydroBatchBlock* blocks, Eos eos,
     const auto& b = blocks[blockIdx.y];
     if (direction >= b.grid.dim) return;
     hydro_face_kernel_work<Reconstruction, Flux>(b.input, b.face_flux, b.grid,
-        make_checked_hydro_eos(eos, b.eos_status), direction, coefficient, workspace);
+        make_checked_hydro_eos(eos, b.eos_status), direction, coefficient, workspace,
+        b.mean_pressure, b.mean_sound_speed);
 }
 
 static __global__ void hydro_batch_divergence(const DeviceHydroBatchBlock* blocks,
@@ -151,6 +212,14 @@ CudaBackendLaunchResult launch_hydro_batch(
         const auto* bindings = device + first;
         detail::hydro_batch_clear<<<storage_grid, 128, 0, stream>>>(bindings);
         if (!record()) return result;
+        const bool means = std::any_of(wave.begin(), wave.end(),
+            [](const auto& b) { return b.mean_pressure && b.mean_sound_speed; });
+        if (means) {
+            const dim3 mean_grid(detail::species_launch_blocks(storage, workspace),
+                                 static_cast<unsigned>(count));
+            detail::hydro_batch_mean_thermo<<<mean_grid, threads, 0, stream>>>(bindings, eos, workspace);
+            if (!record()) return result;
+        }
         for (int direction = 0; direction < dimension; ++direction) {
             detail::hydro_batch_faces<Reconstruction, Flux><<<face_grid, threads, 0, stream>>>(
                 bindings, eos, direction, coefficient, workspace);
@@ -174,6 +243,49 @@ CudaBackendLaunchResult launch_hydro_batch(
         }
         detail::hydro_batch_update<<<cell_grid, 128, 0, stream>>>(bindings,
             descriptor.old_weight, descriptor.update_weight, density_floor, min_e, max_e);
+        if (!record()) return result;
+    }
+    return result;
+}
+
+/** Batch CFL work without changing candidate, NaN, reduction or CFL formulas.
+ * Global species scratch remains bounded and therefore uses single-block waves.
+ * Local per-thread scratch permits independent blocks in the same launch.
+ */
+template<class Eos>
+CudaBackendLaunchResult launch_hydro_dt_batch(
+    std::span<const DeviceHydroDtBatchBlock> host, const DeviceHydroDtBatchBlock* device,
+    Eos eos, double cfl, SpeciesWorkspaceView workspace, cudaStream_t stream)
+{
+    CudaBackendLaunchResult result{};
+    if (host.empty()) return result;
+    if (!device) return {cudaErrorInvalidValue, 0, true};
+    for (const auto& b : host)
+        if (!valid_hydro_view(b.input) || !valid_hydro_grid(b.grid)
+            || b.input.total_size != b.grid.total_size || b.grid.active_cell_count() <= 0
+            || !b.candidates || !b.result || !b.status
+            || !valid_species_workspace(workspace, b.input.n_species, 1))
+            return {cudaErrorInvalidValue, 0, true};
+    const std::size_t wave_limit = workspace.values ? 1 : 1024;
+    for (std::size_t first = 0; first < host.size(); first += wave_limit) {
+        const auto count = std::min(wave_limit, host.size() - first);
+        int cells = 0;
+        for (const auto& b : host.subspan(first, count))
+            cells = std::max(cells, b.grid.active_cell_count());
+        const dim3 one(1, static_cast<unsigned>(count));
+        const dim3 grid(detail::species_launch_blocks(cells, workspace),
+                        static_cast<unsigned>(count));
+        const auto record = [&] {
+            result.error = cudaGetLastError();
+            if (result.error == cudaSuccess) ++result.kernels_launched;
+            return result.error == cudaSuccess;
+        };
+        detail::hydro_batch_cfl_clear<<<one, 1, 0, stream>>>(device + first);
+        if (!record()) return result;
+        detail::hydro_batch_cfl_candidates<<<grid, detail::species_launch_threads(workspace), 0, stream>>>(
+            device + first, eos, workspace);
+        if (!record()) return result;
+        detail::hydro_batch_cfl_reduce<<<one, 1, 0, stream>>>(device + first, cfl);
         if (!record()) return result;
     }
     return result;

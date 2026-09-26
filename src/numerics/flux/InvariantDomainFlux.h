@@ -96,6 +96,42 @@ ARCH_INLINE void required_mean_thermo(const FluidVector& mean,
     }
 }
 
+/** Borrow already validated mean thermodynamics from one immutable stage.
+ * Host and device owners provide the same SoA layout; no allocation or EOS
+ * approximation lives here. A null ready array means the launch owner has
+ * completed all means used by this face. Input lifetime ends with the stage.
+ */
+struct MeanThermoView {
+    const double *rho = nullptr, *mom_u = nullptr, *mom_v = nullptr;
+    const double *mom_w = nullptr, *eng = nullptr, *mass_fractions = nullptr;
+    const double *pressure = nullptr, *sound_speed = nullptr;
+    const unsigned char* ready = nullptr;
+    int cells = 0, species = 0;
+
+    /** Apply the original complete conserved-state/composition equality test. */
+    ARCH_INLINE bool matches(int cell, const FluidVector& state,
+                             const double* composition, int count) const {
+        if (cell < 0 || cell >= cells || count != species || !pressure
+            || !sound_speed || (ready && !ready[cell])) return false;
+        if (rho[cell] != state.rho || mom_u[cell] != state.mom_u
+            || mom_v[cell] != state.mom_v || mom_w[cell] != state.mom_w
+            || eng[cell] != state.eng) return false;
+        for (int s = 0; s < count; ++s)
+            if (mass_fractions[s * cells + cell] != composition[s]) return false;
+        return true;
+    }
+
+    /** Reuse a face endpoint only when it is the unchanged owning mean. */
+    ARCH_INLINE bool query(const FluidVector& state, const double* composition,
+                           int count, int left, int right, double& p, double& c) const {
+        const int cell = matches(left,state,composition,count) ? left
+            : matches(right,state,composition,count) ? right : -1;
+        if (cell < 0) return false;
+        p = pressure[cell]; c = sound_speed[cell];
+        return true;
+    }
+};
+
 // One host patch-stage owns this cache. A value is published only after the
 // complete EOS query succeeds; the caller resets validity on every RK stage.
 struct MeanThermoCache {

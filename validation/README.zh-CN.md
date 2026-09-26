@@ -47,7 +47,8 @@ Timmes 材料已明确获得自由使用与重新分发授权，具体见
 尚未建立跨软件等误差效率结论。当前四模块证据仅适用于所列 Helmholtz、aprox13、
 热传导、MG 与 AMR 组合，不覆盖所有策略排列或 Helmholtz 黏性／组分输运。
 [参考手册组合规则](../docs/Reference.zh-CN.md#方法与物理模块的组合)说明物理排除项
-以及未关闭的表 EOS 燃烧／NSE 试探错误审计。
+以及表 EOS 燃烧／NSE 试探恢复的已验收范围。[O6 验收记录](gravity/flash/O6AcceptanceReport.zh-CN.md)
+集中保存共享数学和执行优化、完整任务计时，以及相对新版 CPU 的剩余性能限制。
 
 ## 目录契约
 

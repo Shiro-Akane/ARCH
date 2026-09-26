@@ -44,6 +44,7 @@ def paint(fields, cover, start, extent, values):
 def arch_plot(path, shape, dx):
     """Rasterize active ARCH blocks, using the stored native cell centres."""
     fields, cover = blank(shape)
+    refined = np.zeros(shape, dtype=bool)
     with h5py.File(path) as handle:
         time = float(handle.attrs["time"])
         levels = handle["Grid/level"][()]
@@ -63,16 +64,18 @@ def arch_plot(path, shape, dx):
                     row = round((y[block, j, i] - width / 2) / dx)
                     paint(fields, cover, (row, col), (factor, factor),
                           {name: array[block, j, i] for name, array in values.items()})
+                    refined[row:row + factor, col:col + factor] = level == 1
         histogram = {str(int(level)): int(count) for level, count in
                      zip(*np.unique(levels, return_counts=True))}
     if not np.all(cover):
         raise ValueError(f"ARCH plot leaves {int(np.count_nonzero(cover == 0))} pixels empty")
-    return fields, histogram, time
+    return fields, histogram, time, refined
 
 
 def flash_plot(path, shape, dx):
     """Rasterize only FLASH leaf blocks from its original HDF5 output."""
     fields, cover = blank(shape)
+    refined = np.zeros(shape, dtype=bool)
     with h5py.File(path) as handle:
         time_values = [float(row["value"]) for row in handle["real scalars"][()]
                        if row["name"].decode().strip() == "time"]
@@ -96,16 +99,18 @@ def flash_plot(path, shape, dx):
                     row = round((bounds[1, 0] + j * width_y) / dx)
                     paint(fields, cover, (row, col), (fy, fx),
                           {name: array[block, 0, j, i] for name, array in values.items()})
+                    refined[row:row + fy, col:col + fx] = levels[block] == 2
         histogram = {str(int(level)): int(count) for level, count in
                      zip(*np.unique(levels[active], return_counts=True))}
     if not np.all(cover):
         raise ValueError(f"FLASH plot leaves {int(np.count_nonzero(cover == 0))} pixels empty")
-    return fields, histogram, time
+    return fields, histogram, time, refined
 
 
 def arch_plot_3d(path, shape, dx):
     """Rasterize the active ARCH 3D hierarchy in z/y/x array order."""
     fields, cover = blank(shape)
+    refined = np.zeros(shape, dtype=bool)
     with h5py.File(path) as handle:
         time = float(handle.attrs["time"])
         levels = handle["Grid/level"][()]
@@ -124,16 +129,18 @@ def arch_plot_3d(path, shape, dx):
                               for coord in reversed(xyz))
                 paint(fields, cover, start, (factor,) * 3,
                       {name: array[block, k, j, i] for name, array in values.items()})
+                refined[tuple(slice(first, first + size) for first, size in zip(start, (factor,) * 3))] = level == 1
         histogram = {str(int(level)): int(count) for level, count in
                      zip(*np.unique(levels, return_counts=True))}
     if not np.all(cover):
         raise ValueError(f"ARCH plot leaves {int(np.count_nonzero(cover == 0))} pixels empty")
-    return fields, histogram, time
+    return fields, histogram, time, refined
 
 
 def flash_plot_3d(path, shape, dx):
     """Rasterize only active FLASH 3D leaf blocks at the common pixel scale."""
     fields, cover = blank(shape)
+    refined = np.zeros(shape, dtype=bool)
     with h5py.File(path) as handle:
         time_values = [float(row["value"]) for row in handle["real scalars"][()]
                        if row["name"].decode().strip() == "time"]
@@ -156,25 +163,34 @@ def flash_plot_3d(path, shape, dx):
                          round((bounds[0, 0] + i * width[0]) / dx))
                 paint(fields, cover, start, factor,
                       {name: array[block, k, j, i] for name, array in values.items()})
+                refined[tuple(slice(first, first + size) for first, size in zip(start, factor))] = levels[block] == 2
         histogram = {str(int(level)): int(count) for level, count in
                      zip(*np.unique(levels[active], return_counts=True))}
     if not np.all(cover):
         raise ValueError(f"FLASH plot leaves {int(np.count_nonzero(cover == 0))} pixels empty")
-    return fields, histogram, time
+    return fields, histogram, time, refined
 
 
 def compare(arch_path, flash_path, shape, dx):
     """Compute volume-weighted L1 errors and extrema at one matched time."""
     read_arch, read_flash = ((arch_plot, flash_plot) if len(shape) == 2
                              else (arch_plot_3d, flash_plot_3d))
-    arch, arch_levels, arch_time = read_arch(arch_path, shape, dx)
-    flash, flash_levels, flash_time = read_flash(flash_path, shape, dx)
+    arch, arch_levels, arch_time, arch_refined = read_arch(arch_path, shape, dx)
+    flash, flash_levels, flash_time, flash_refined = read_flash(flash_path, shape, dx)
     if not (math.isfinite(arch_time) and math.isfinite(flash_time)
             and math.isclose(arch_time, flash_time, rel_tol=1e-12, abs_tol=1e-25)):
         raise ValueError(f"Plots have different physical times: ARCH={arch_time}, FLASH={flash_time}")
     result = {"time_seconds": arch_time,
               "arch_leaves_by_level": arch_levels,
-              "flash_leaves_by_level": flash_levels, "fields": {}}
+              "flash_leaves_by_level": flash_levels,
+              "refined_area_pixels": {
+                  "arch": int(np.count_nonzero(arch_refined)),
+                  "flash": int(np.count_nonzero(flash_refined)),
+                  "both": int(np.count_nonzero(arch_refined & flash_refined)),
+                  "arch_only": int(np.count_nonzero(arch_refined & ~flash_refined)),
+                  "flash_only": int(np.count_nonzero(flash_refined & ~arch_refined)),
+              },
+              "fields": {}}
     for name in FIELDS:
         a, f = arch[name], flash[name]
         if not np.all(np.isfinite(a)) or not np.all(np.isfinite(f)):
@@ -201,6 +217,8 @@ def main():
     parser.add_argument("--flash-post-regrid", type=Path,
                         help="optional FLASH final plot after its step-20 AMR update")
     parser.add_argument("--dx", type=float, default=0.5)
+    parser.add_argument("--final-label", default="step_20",
+                        help="label for the second matched output pair")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     shape = (round(args.height / args.dx), round(args.width / args.dx))
@@ -210,7 +228,7 @@ def main():
         domain.append(args.depth)
     report = {"domain_cm": domain, "comparison_dx_cm": args.dx,
               "initial": compare(args.arch_initial, args.flash_initial, shape, args.dx),
-              "step_20": compare(args.arch_final, args.flash_final, shape, args.dx)}
+              args.final_label: compare(args.arch_final, args.flash_final, shape, args.dx)}
     if args.flash_post_regrid:
         report["post_regrid"] = compare(args.arch_final, args.flash_post_regrid,
                                         shape, args.dx)
