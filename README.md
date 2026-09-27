@@ -180,7 +180,10 @@ four total jobs. The guide also covers compiler selection, builds for other
 GPUs and the test suite. Release optimization remains enabled.
 
 The first Sod example needs no EOS table. For Helmholtz or other LFS-managed
-table data, install Git LFS and run `git lfs pull` from the repository root.
+table data in a Git checkout, install Git LFS and run `git lfs pull` from the
+repository root. Downloaded ZIP/tar source archives may contain LFS pointers
+instead of the tables; follow the [archive instructions](docs/guides/Build.md#source-archives-and-eos-tables)
+before running a table-based case.
 ARCH itself does not need Python to run a simulation.
 
 To verify a checkout, follow the [test guide](tests/README.md): start with the

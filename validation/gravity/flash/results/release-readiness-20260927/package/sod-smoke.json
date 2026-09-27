@@ -1,0 +1,104 @@
+{
+  "manifest": {
+    "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+    "routes": [
+      "arch"
+    ],
+    "route_order": "reverse selected routes on even repeats",
+    "binary_identity": {
+      "arch": {
+        "path": "/tmp/arch-release-source-package/Shiro-Akane-ARCH-51f982a/build-cpu/bin/ARCH",
+        "sha256": "1b6fdb3252977322e0a2e14c13994ec3f908a4e1cb0aa5fede8f25a6bd5aa9ca"
+      }
+    },
+    "mpi_launcher": null,
+    "cpu_threads": 2,
+    "flash_ranks": 8,
+    "cpu_affinity": "",
+    "cuda_affinity": "",
+    "inherited_cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "records": [
+      {
+        "case": "sod",
+        "backend": "arch",
+        "repeat": 1,
+        "wall_seconds": 9.546373568999115,
+        "exit_code": 0,
+        "output": "/tmp/arch-release-source-package/Shiro-Akane-ARCH-51f982a/output/reproduce/archive_smoke_sod_arch_1",
+        "input_fixture": "arch_sod_o6plus.par",
+        "physical_time_seconds": 0.20004197244290714,
+        "resolved_backend": "cpu"
+      }
+    ],
+    "arch_parameter_overrides": {},
+    "comparison_kind": "original strict fixture"
+  },
+  "science": {
+    "scope": "clean archive default-path smoke, not performance claim",
+    "record": {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 9.546373568999115,
+      "exit_code": 0,
+      "output": "/tmp/arch-release-source-package/Shiro-Akane-ARCH-51f982a/output/reproduce/archive_smoke_sod_arch_1",
+      "input_fixture": "arch_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714,
+      "resolved_backend": "cpu"
+    },
+    "science": {
+      "same_topology_and_time": true,
+      "checkpoint_errors": {
+        "X": {
+          "absolute_linf": 0.0,
+          "scaled_linf": 0.0
+        },
+        "eng": {
+          "absolute_linf": 0.0,
+          "scaled_linf": 0.0
+        },
+        "enuc_rate": {
+          "absolute_linf": 0.0,
+          "scaled_linf": 0.0
+        },
+        "mom_u": {
+          "absolute_linf": 0.0,
+          "scaled_linf": 0.0
+        },
+        "mom_v": {
+          "absolute_linf": 0.0,
+          "scaled_linf": 0.0
+        },
+        "mom_w": {
+          "absolute_linf": 0.0,
+          "scaled_linf": 0.0
+        },
+        "rho": {
+          "absolute_linf": 0.0,
+          "scaled_linf": 0.0
+        },
+        "rhoX": {
+          "absolute_linf": 0.0,
+          "scaled_linf": 0.0
+        }
+      }
+    }
+  }
+}

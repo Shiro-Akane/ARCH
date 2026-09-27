@@ -68,6 +68,9 @@ CTest 不会编译缺失的程序；上述默认构建包含已配置的测试�
 可只构建 `arch_checkpoint_compatibility`，再用 `-R '^checkpoint_compatibility$'`
 选择它。该测试通过两种后端共用的读取器检查完整状态恢复，并拒绝不完整或不匹配输入。
 
+当前格式的正常往返、旧控制身份拒绝和损坏数据拒绝均由现有检查点测试覆盖；
+拒绝读取后活跃 AMR 状态不变，写入前验证失败也不会截断已有检查点。
+
 历史命名的 `arch_cuda_single_level_validation` 现在也可在 CPU-only 构建中单独编译。
 它只使用普通 C++ 与 Host HDF5 读取器，不再链接 CUDA 后端；比较源码、CLI 和容差不变。
 `checkpoint_temporal_comparison` 同样进入 CPU CTest，避免仅为比较检查点而编译整套 CUDA。

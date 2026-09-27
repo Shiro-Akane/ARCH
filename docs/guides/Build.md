@@ -94,6 +94,35 @@ Python **3.10 or newer** is needed for the build guard and test tooling, not for
 running the ARCH executable. Generated reaction networks have a separate Python
 setup described in the [network guide](../../validation/network/README.md).
 
+## Source archives and EOS tables
+
+A source ZIP/tar without `.git` can be built normally, but `git lfs pull` cannot
+populate that directory. A file beginning with
+`version https://git-lfs.github.com/spec/v1` is a pointer, not an EOS table.
+Do not infer table availability from a successful CPU build or Sod run.
+
+Prefer a Git checkout of the selected release with Git LFS. To keep an existing
+archive, fetch only the required table from a separate checkout of **the same
+tag or full commit** and copy it to the corresponding archive path. Run the
+following from the extracted ARCH root, replacing `YOUR_RELEASE_TAG_OR_COMMIT`
+with the identity of that archive:
+
+```bash
+git clone --no-checkout https://github.com/Shiro-Akane/ARCH.git ../ARCH-tables
+GIT_LFS_SKIP_SMUDGE=1 git -C ../ARCH-tables checkout --detach YOUR_RELEASE_TAG_OR_COMMIT
+git -C ../ARCH-tables lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat" --exclude=""
+cp ../ARCH-tables/EOS_toolkit/tables/helmholtz/helm_table.dat EOS_toolkit/tables/helmholtz/
+```
+
+The temporary checkout may be removed after copying. For other tables, select
+the corresponding tracked path instead. Check the required size and checksum
+against [table provenance](../../THIRD_PARTY_NOTICES.md) or that revision's LFS
+pointer. A release smoke check should build from a clean extracted tree, run
+Sod, and run the existing Helmholtz test with the actual table; only the latter
+exercises the table dependency. Presets put the applications in
+`build-cpu/bin/ARCH` and `build-cuda/bin/ARCH`; explicit custom build paths must
+also be supplied to the comparison scripts.
+
 ## cuDSS and sparse burning
 
 `ARCH_ENABLE_CUDSS=ON` enables optional discovery in a CUDA build. The adapter

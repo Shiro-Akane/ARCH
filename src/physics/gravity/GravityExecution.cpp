@@ -6,8 +6,8 @@
  * 1. Reuse CompositeExecution for allocations, row operations and Poisson.
  * 2. Visit density gathers, moment updates, boundary evaluations and force
  *    tasks without duplicating the host/device mathematical formulas.
- * 3. Parallelize boundary-heavy work above a smaller task threshold while
- *    leaving inexpensive tasks serial until they can amortize scheduling.
+ * 3. Balance variable-cost boundary traversals with dynamic chunks; keep
+ *    simple cell work static and small tasks serial to amortize scheduling.
  */
 
 #include "physics/gravity/GravityExecution.h"
@@ -27,8 +27,17 @@ public:
             // integrate nearby leaves; it has much more work per item than
             // simple gather/acceleration tasks.
             constexpr int parallel_threshold=std::is_same_v<Task,EvaluateBoundary>?256:32768;
-            #pragma omp parallel for if(task.size>parallel_threshold) schedule(static)
-            for(int i=0;i<task.size;++i)task(i);
+            if constexpr (std::is_same_v<Task,EvaluateBoundary>) {
+                // Equal face counts do not imply equal tree/near-leaf work.
+                // Small contiguous chunks share that work among available
+                // workers. Each face owns its output, and its traversal and
+                // compensated summation order remain entirely unchanged.
+                #pragma omp parallel for if(task.size>parallel_threshold) schedule(dynamic,16)
+                for(int i=0;i<task.size;++i)task(i);
+            } else {
+                #pragma omp parallel for if(task.size>parallel_threshold) schedule(static)
+                for(int i=0;i<task.size;++i)task(i);
+            }
         },work);
     }
 };

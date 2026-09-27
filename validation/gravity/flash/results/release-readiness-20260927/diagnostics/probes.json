@@ -1,0 +1,3269 @@
+{
+  "scope": "diagnosis and rejected screens only; not the final release timing batch",
+  "science": {
+    "comp-auto8": [
+      {
+        "case": "snia3d",
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/comp_auto8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.7615751690104147e-11,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 7.61882398176702e-16,
+                "absolute_linf": 1.928711412801931e-09
+              },
+              "VELY": {
+                "normalized_linf": 1.33870529996297e-25,
+                "absolute_linf": 4.429982314139991e-19
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "case": "fine",
+        "science": {
+          "same_topology_and_time": true,
+          "checkpoint_errors": {
+            "X": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "eng": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "enuc_rate": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_u": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_v": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_w": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "rho": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "rhoX": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            }
+          }
+        }
+      }
+    ],
+    "comp-auto16": [
+      {
+        "case": "snia3d",
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/comp_auto16_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.7615751690104147e-11,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 7.61882398176702e-16,
+                "absolute_linf": 1.928711412801931e-09
+              },
+              "VELY": {
+                "normalized_linf": 1.33870529996297e-25,
+                "absolute_linf": 4.429982314139991e-19
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      }
+    ],
+    "boundary_static8": [
+      {
+        "case": "snia3d",
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_static8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.7615751690104147e-11,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 7.61882398176702e-16,
+                "absolute_linf": 1.928711412801931e-09
+              },
+              "VELY": {
+                "normalized_linf": 1.33870529996297e-25,
+                "absolute_linf": 4.429982314139991e-19
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      }
+    ],
+    "boundary_dynamic8": [
+      {
+        "case": "snia3d",
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_dynamic8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.7615751690104147e-11,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 7.61882398176702e-16,
+                "absolute_linf": 1.928711412801931e-09
+              },
+              "VELY": {
+                "normalized_linf": 1.33870529996297e-25,
+                "absolute_linf": 4.429982314139991e-19
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      }
+    ],
+    "boundary_static16": [
+      {
+        "case": "snia3d",
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_static16_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.7615751690104147e-11,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 7.61882398176702e-16,
+                "absolute_linf": 1.928711412801931e-09
+              },
+              "VELY": {
+                "normalized_linf": 1.33870529996297e-25,
+                "absolute_linf": 4.429982314139991e-19
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      }
+    ],
+    "boundary_dynamic16": [
+      {
+        "case": "snia3d",
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_dynamic16_snia3d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999998,
+                  10163246.644630685
+                ],
+                "PRES": [
+                  9.904083939896118e+23,
+                  1.212353821103541e+24
+                ],
+                "TEMP": [
+                  999999999.9999989,
+                  1652986578.5227444
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  2.3968844568188424e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -4.304701595218987,
+                  -2.9672615319293403
+                ],
+                "GACX": [
+                  -2.613556246433329,
+                  0.9074437919992555
+                ],
+                "GACY": [
+                  -2.4633283303792357,
+                  2.4633283303792797
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ],
+                "GACZ": [
+                  -0.0045934663845844026,
+                  0.004593466372180392
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.7615751690104147e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 8
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999999996,
+                  10161853.943626337
+                ],
+                "PRES": [
+                  9.904083939896117e+23,
+                  1.2108339459367512e+24
+                ],
+                "TEMP": [
+                  999999999.9999968,
+                  1652368510.785994
+                ],
+                "ENER": [
+                  1.8918575146348674e+24,
+                  2.3937228378983916e+24
+                ],
+                "ENUC": [
+                  3161951501311.906,
+                  4.702884725483401e+17
+                ],
+                "GPOT": [
+                  -4.304612480730196,
+                  -2.9672618057127376
+                ],
+                "GACX": [
+                  -2.6135469377267952,
+                  0.9072683041426366
+                ],
+                "GACY": [
+                  -2.4633054393173737,
+                  2.463305439317391
+                ],
+                "c12": [
+                  0.499999999955173,
+                  0.4999999999999999
+                ],
+                "o16": [
+                  0.49999999999999434,
+                  0.5000000000000006
+                ],
+                "GACZ": [
+                  -0.0039632235913188,
+                  0.003963223589823574
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.4619088106400944,
+            "maximum_iterations": 29,
+            "minimum_diffusion_dt_seconds": 1.28808e-08,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.7615751690104147e-11,
+            "leaves": 9,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GACZ": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 7.61882398176702e-16,
+                "absolute_linf": 1.928711412801931e-09
+              },
+              "VELY": {
+                "normalized_linf": 1.33870529996297e-25,
+                "absolute_linf": 4.429982314139991e-19
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "runs": {
+    "comp-auto8": {
+      "manifest": {
+        "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+        "routes": [
+          "arch"
+        ],
+        "route_order": "reverse selected routes on even repeats",
+        "binary_identity": {
+          "arch": {
+            "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/ARCH-comp-auto",
+            "sha256": "6b6e1d191c6b02ef044e22f5e4c80450207c0549fba1cf9ab62175d2ba615240"
+          }
+        },
+        "mpi_launcher": null,
+        "cpu_threads": 8,
+        "flash_ranks": 8,
+        "cpu_affinity": "0,2,4,6,8,10,12,14",
+        "cuda_affinity": "",
+        "inherited_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "records": [
+          {
+            "case": "snia3d",
+            "backend": "arch",
+            "repeat": 1,
+            "wall_seconds": 49.79327837598976,
+            "exit_code": 0,
+            "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/comp_auto8_snia3d_arch_1",
+            "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+            "physical_time_seconds": 1.7615751690104147e-11,
+            "resolved_backend": "cpu"
+          },
+          {
+            "case": "fine",
+            "backend": "arch",
+            "repeat": 1,
+            "wall_seconds": 34.98209196700191,
+            "exit_code": 0,
+            "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/comp_auto8_fine_arch_1",
+            "input_fixture": "arch_cellular_o6plus_dx025.par",
+            "physical_time_seconds": 1.0222428325150896e-08,
+            "resolved_backend": "cpu"
+          }
+        ],
+        "arch_parameter_overrides": {},
+        "comparison_kind": "original strict fixture"
+      },
+      "traces": [
+        {
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/comp_auto8_snia3d_arch_1",
+          "worker_trace_lines": [],
+          "cpu_stage_timings": [
+            {
+              "stage": "regrid",
+              "wall_seconds": "0.186831091",
+              "calls": "4"
+            },
+            {
+              "stage": "gravity",
+              "wall_seconds": "10.699484689",
+              "calls": "7"
+            },
+            {
+              "stage": "timestep",
+              "wall_seconds": "2.9277704309999999",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_first",
+              "wall_seconds": "0.76892902500000004",
+              "calls": "5"
+            },
+            {
+              "stage": "diffusion",
+              "wall_seconds": "10.300587263000001",
+              "calls": "10"
+            },
+            {
+              "stage": "hydro",
+              "wall_seconds": "18.042589196000002",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_second",
+              "wall_seconds": "0.81280138700000004",
+              "calls": "5"
+            }
+          ]
+        },
+        {
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/comp_auto8_fine_arch_1",
+          "worker_trace_lines": [],
+          "cpu_stage_timings": [
+            {
+              "stage": "regrid",
+              "wall_seconds": "1.6597809910000003",
+              "calls": "130"
+            },
+            {
+              "stage": "gravity",
+              "wall_seconds": "6.2998000000000145e-05",
+              "calls": "260"
+            },
+            {
+              "stage": "timestep",
+              "wall_seconds": "0.80371090599999995",
+              "calls": "258"
+            },
+            {
+              "stage": "burn_first",
+              "wall_seconds": "5.0182126240000011",
+              "calls": "258"
+            },
+            {
+              "stage": "diffusion",
+              "wall_seconds": "0.00012501800000000042",
+              "calls": "516"
+            },
+            {
+              "stage": "hydro",
+              "wall_seconds": "18.820208277999981",
+              "calls": "258"
+            },
+            {
+              "stage": "burn_second",
+              "wall_seconds": "4.8060720400000028",
+              "calls": "258"
+            }
+          ]
+        }
+      ]
+    },
+    "comp-auto16": {
+      "manifest": {
+        "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+        "routes": [
+          "arch"
+        ],
+        "route_order": "reverse selected routes on even repeats",
+        "binary_identity": {
+          "arch": {
+            "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/ARCH-comp-auto",
+            "sha256": "6b6e1d191c6b02ef044e22f5e4c80450207c0549fba1cf9ab62175d2ba615240"
+          }
+        },
+        "mpi_launcher": null,
+        "cpu_threads": 16,
+        "flash_ranks": 8,
+        "cpu_affinity": "0-15",
+        "cuda_affinity": "",
+        "inherited_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "records": [
+          {
+            "case": "snia3d",
+            "backend": "arch",
+            "repeat": 1,
+            "wall_seconds": 38.38743322099617,
+            "exit_code": 0,
+            "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/comp_auto16_snia3d_arch_1",
+            "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+            "physical_time_seconds": 1.7615751690104147e-11,
+            "resolved_backend": "cpu"
+          }
+        ],
+        "arch_parameter_overrides": {},
+        "comparison_kind": "original strict fixture"
+      },
+      "traces": [
+        {
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/comp_auto16_snia3d_arch_1",
+          "worker_trace_lines": [],
+          "cpu_stage_timings": [
+            {
+              "stage": "regrid",
+              "wall_seconds": "0.18811900300000001",
+              "calls": "4"
+            },
+            {
+              "stage": "gravity",
+              "wall_seconds": "8.0669713730000012",
+              "calls": "7"
+            },
+            {
+              "stage": "timestep",
+              "wall_seconds": "1.9537967270000001",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_first",
+              "wall_seconds": "0.55668225699999996",
+              "calls": "5"
+            },
+            {
+              "stage": "diffusion",
+              "wall_seconds": "8.2799692490000005",
+              "calls": "10"
+            },
+            {
+              "stage": "hydro",
+              "wall_seconds": "12.579486142",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_second",
+              "wall_seconds": "0.58681641200000001",
+              "calls": "5"
+            }
+          ]
+        }
+      ]
+    },
+    "boundary_static8": {
+      "manifest": {
+        "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+        "routes": [
+          "arch"
+        ],
+        "route_order": "reverse selected routes on even repeats",
+        "binary_identity": {
+          "arch": {
+            "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+            "sha256": "50e672d9019962119485c7a7d9a31fb59dbfb8a12e32addcacce7f42395511ba"
+          }
+        },
+        "mpi_launcher": null,
+        "cpu_threads": 8,
+        "flash_ranks": 8,
+        "cpu_affinity": "0,2,4,6,8,10,12,14",
+        "cuda_affinity": "",
+        "inherited_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "records": [
+          {
+            "case": "snia3d",
+            "backend": "arch",
+            "repeat": 1,
+            "wall_seconds": 44.93154450900329,
+            "exit_code": 0,
+            "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_static8_snia3d_arch_1",
+            "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+            "physical_time_seconds": 1.7615751690104147e-11,
+            "resolved_backend": "cpu"
+          }
+        ],
+        "arch_parameter_overrides": {},
+        "comparison_kind": "original strict fixture"
+      },
+      "traces": [
+        {
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_static8_snia3d_arch_1",
+          "worker_trace_lines": [
+            "BOUNDARY_PROBE static 3840 480:0.574541963 480:0.820356464 480:1.163403068 480:1.195057716 480:1.185604183 480:1.364163550 480:1.254256955 480:1.320474565",
+            "BOUNDARY_PROBE static 3840 480:0.605359298 480:0.896615558 480:1.232578808 480:1.192161887 480:1.245848167 480:1.331336235 480:1.302768816 480:1.232852436",
+            "BOUNDARY_PROBE static 3840 480:0.546034204 480:0.903677326 480:1.177729468 480:1.195001387 480:1.302455943 480:1.373474370 480:1.369513955 480:1.236118746",
+            "BOUNDARY_PROBE static 3840 480:0.599401572 480:0.908255830 480:1.199506908 480:1.319089234 480:1.270308458 480:1.363750300 480:1.603468409 480:1.253253652",
+            "BOUNDARY_PROBE static 3840 480:0.615017155 480:0.848422005 480:1.155821140 480:1.227419208 480:1.216686939 480:1.435929308 480:1.330440947 480:1.303100370",
+            "BOUNDARY_PROBE static 3840 480:0.654481699 480:0.878872261 480:1.302443764 480:1.312978309 480:1.226962088 480:1.442913117 480:1.337050346 480:1.372470481",
+            "BOUNDARY_PROBE static 3840 480:0.664276113 480:0.904172076 480:1.199192634 480:1.232293068 480:1.290096961 480:1.442779668 480:1.378239953 480:1.276981594",
+            "BOUNDARY_PROBE static 3840 480:0.573921151 480:0.898621658 480:1.208414466 480:1.252453196 480:1.200856883 480:1.363215025 480:1.366458900 480:1.286471496",
+            "BOUNDARY_PROBE static 3840 480:0.599156171 480:0.918191600 480:1.215225360 480:1.234761753 480:1.224212983 480:1.327588434 480:1.350716186 480:1.314267673",
+            "BOUNDARY_PROBE static 3840 480:0.550288242 480:0.913854137 480:1.204811620 480:1.305005788 480:1.177350259 480:1.352038064 480:1.340026529 480:1.249510517",
+            "BOUNDARY_PROBE static 3840 480:0.618101361 480:0.867466121 480:1.284132968 480:1.270687197 480:1.204303372 480:1.426781617 480:1.281568477 480:1.246081959",
+            "BOUNDARY_PROBE static 3840 480:0.650029080 480:0.895085086 480:1.169461950 480:1.224509032 480:1.211092049 480:1.378670372 480:1.344247829 480:1.381988935",
+            "BOUNDARY_PROBE static 3840 480:0.575401500 480:0.900821408 480:1.228104107 480:1.165531193 480:1.221077766 480:1.361126169 480:1.292447201 480:1.283847541",
+            "BOUNDARY_PROBE static 3840 480:0.597118769 480:0.885652415 480:1.239958443 480:1.222007507 480:1.200986843 480:1.365631181 480:1.324597788 480:1.283627699",
+            "BOUNDARY_PROBE static 3840 480:0.636008715 480:0.813783991 480:1.237188113 480:1.285339833 480:1.225895563 480:1.341342118 480:1.308705139 480:1.318713067",
+            "BOUNDARY_PROBE static 3840 480:0.682168321 480:0.929965133 480:1.267432198 480:1.224825681 480:1.212142617 480:1.357666521 480:1.355547838 480:1.260413713",
+            "BOUNDARY_PROBE static 3840 480:0.608321098 480:0.968193397 480:1.230641939 480:1.251357516 480:1.322333649 480:1.453743036 480:1.341477834 480:1.289046879"
+          ],
+          "cpu_stage_timings": [
+            {
+              "stage": "regrid",
+              "wall_seconds": "0.15975508599999999",
+              "calls": "4"
+            },
+            {
+              "stage": "gravity",
+              "wall_seconds": "10.525482984",
+              "calls": "7"
+            },
+            {
+              "stage": "timestep",
+              "wall_seconds": "2.262450447",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_first",
+              "wall_seconds": "0.72946485299999997",
+              "calls": "5"
+            },
+            {
+              "stage": "diffusion",
+              "wall_seconds": "8.4477957379999999",
+              "calls": "10"
+            },
+            {
+              "stage": "hydro",
+              "wall_seconds": "17.282308389000001",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_second",
+              "wall_seconds": "0.79473914099999998",
+              "calls": "5"
+            }
+          ]
+        }
+      ]
+    },
+    "boundary_dynamic8": {
+      "manifest": {
+        "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+        "routes": [
+          "arch"
+        ],
+        "route_order": "reverse selected routes on even repeats",
+        "binary_identity": {
+          "arch": {
+            "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+            "sha256": "50e672d9019962119485c7a7d9a31fb59dbfb8a12e32addcacce7f42395511ba"
+          }
+        },
+        "mpi_launcher": null,
+        "cpu_threads": 8,
+        "flash_ranks": 8,
+        "cpu_affinity": "0,2,4,6,8,10,12,14",
+        "cuda_affinity": "",
+        "inherited_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "records": [
+          {
+            "case": "snia3d",
+            "backend": "arch",
+            "repeat": 1,
+            "wall_seconds": 41.31470625200018,
+            "exit_code": 0,
+            "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_dynamic8_snia3d_arch_1",
+            "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+            "physical_time_seconds": 1.7615751690104147e-11,
+            "resolved_backend": "cpu"
+          }
+        ],
+        "arch_parameter_overrides": {},
+        "comparison_kind": "original strict fixture"
+      },
+      "traces": [
+        {
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_dynamic8_snia3d_arch_1",
+          "worker_trace_lines": [
+            "BOUNDARY_PROBE dynamic 3840 480:1.165784969 496:1.167071511 528:1.168489836 480:1.145792133 480:1.139547093 464:1.171118256 464:1.163371018 448:1.154091882",
+            "BOUNDARY_PROBE dynamic 3840 464:1.220880316 480:1.239752477 528:1.233771120 448:1.214306744 496:1.231256688 496:1.228271915 464:1.218758974 464:1.210879513",
+            "BOUNDARY_PROBE dynamic 3840 480:1.271984128 496:1.262813003 496:1.284751963 448:1.262480450 480:1.271086706 464:1.260765347 464:1.269506271 512:1.256598670",
+            "BOUNDARY_PROBE dynamic 3840 480:1.185606404 480:1.186962360 464:1.176993383 496:1.189410277 480:1.165578404 480:1.181473771 512:1.197827459 448:1.171606321",
+            "BOUNDARY_PROBE dynamic 3840 496:1.203852314 480:1.179676360 496:1.202361232 448:1.198706111 480:1.191072419 480:1.182432744 480:1.173360145 480:1.173343392",
+            "BOUNDARY_PROBE dynamic 3840 464:1.172537525 480:1.177054730 496:1.152000618 496:1.184246031 496:1.157210980 512:1.179963774 432:1.162487156 464:1.149696025",
+            "BOUNDARY_PROBE dynamic 3840 496:1.163486652 464:1.148227638 448:1.136264509 496:1.151165378 496:1.145509027 480:1.176048557 480:1.157736163 480:1.163000679",
+            "BOUNDARY_PROBE dynamic 3840 464:1.145479535 464:1.129537734 496:1.149747004 496:1.151978483 480:1.158021025 480:1.123714687 496:1.153901424 464:1.124106342",
+            "BOUNDARY_PROBE dynamic 3840 496:1.171221415 512:1.183129019 480:1.152882565 480:1.179075750 480:1.163445442 480:1.172104250 448:1.161008202 464:1.165069213",
+            "BOUNDARY_PROBE dynamic 3840 464:1.169945965 480:1.167407145 496:1.182224740 480:1.191328354 480:1.177373429 496:1.190197273 448:1.157737207 496:1.176548174",
+            "BOUNDARY_PROBE dynamic 3840 496:1.227335082 480:1.240156563 384:1.233620540 448:1.231398778 496:1.228991363 528:1.239797828 496:1.208209206 512:1.228643454",
+            "BOUNDARY_PROBE dynamic 3840 512:1.175119826 448:1.157058275 464:1.184819342 512:1.192280381 464:1.182607726 448:1.182512282 480:1.157421314 512:1.161815109",
+            "BOUNDARY_PROBE dynamic 3840 480:1.204773061 512:1.184387441 480:1.179005226 496:1.179412278 480:1.182881677 496:1.194995325 464:1.208102347 432:1.199908189",
+            "BOUNDARY_PROBE dynamic 3840 432:1.172888260 464:1.165905078 512:1.188005203 480:1.177239303 512:1.189967628 480:1.162682046 480:1.184400162 480:1.178539725",
+            "BOUNDARY_PROBE dynamic 3840 464:1.160102999 496:1.186686739 464:1.175943187 464:1.150055648 528:1.177782062 464:1.149326661 480:1.155128900 480:1.180476299",
+            "BOUNDARY_PROBE dynamic 3840 464:1.204024022 512:1.188288787 480:1.195291416 464:1.182675125 480:1.175462790 464:1.187145714 464:1.193514888 512:1.200096473",
+            "BOUNDARY_PROBE dynamic 3840 496:1.214565409 480:1.212212320 480:1.230782359 464:1.231974157 496:1.220176603 464:1.212345971 464:1.219255354 496:1.242863074"
+          ],
+          "cpu_stage_timings": [
+            {
+              "stage": "regrid",
+              "wall_seconds": "0.16079185900000001",
+              "calls": "4"
+            },
+            {
+              "stage": "gravity",
+              "wall_seconds": "9.1865896599999992",
+              "calls": "7"
+            },
+            {
+              "stage": "timestep",
+              "wall_seconds": "2.295032425",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_first",
+              "wall_seconds": "0.73369384699999995",
+              "calls": "5"
+            },
+            {
+              "stage": "diffusion",
+              "wall_seconds": "8.1828607340000001",
+              "calls": "10"
+            },
+            {
+              "stage": "hydro",
+              "wall_seconds": "15.294358374",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_second",
+              "wall_seconds": "0.77904447899999996",
+              "calls": "5"
+            }
+          ]
+        }
+      ]
+    },
+    "boundary_static16": {
+      "manifest": {
+        "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+        "routes": [
+          "arch"
+        ],
+        "route_order": "reverse selected routes on even repeats",
+        "binary_identity": {
+          "arch": {
+            "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+            "sha256": "50e672d9019962119485c7a7d9a31fb59dbfb8a12e32addcacce7f42395511ba"
+          }
+        },
+        "mpi_launcher": null,
+        "cpu_threads": 16,
+        "flash_ranks": 8,
+        "cpu_affinity": "0-15",
+        "cuda_affinity": "",
+        "inherited_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "records": [
+          {
+            "case": "snia3d",
+            "backend": "arch",
+            "repeat": 1,
+            "wall_seconds": 33.53148377900652,
+            "exit_code": 0,
+            "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_static16_snia3d_arch_1",
+            "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+            "physical_time_seconds": 1.7615751690104147e-11,
+            "resolved_backend": "cpu"
+          }
+        ],
+        "arch_parameter_overrides": {},
+        "comparison_kind": "original strict fixture"
+      },
+      "traces": [
+        {
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_static16_snia3d_arch_1",
+          "worker_trace_lines": [
+            "BOUNDARY_PROBE static 3840 240:0.384797436 240:0.427809084 240:0.452214074 240:0.782035913 240:0.856868293 240:0.813087630 240:0.823464691 240:0.844127192 240:0.823080326 240:0.848837425 240:0.927449171 240:0.891650196 240:0.856223099 240:0.929430289 240:0.953290426 240:0.810232818",
+            "BOUNDARY_PROBE static 3840 240:0.387593896 240:0.441207925 240:0.440417918 240:0.738025467 240:0.840384548 240:0.797429495 240:0.815783663 240:0.793189420 240:0.799618409 240:0.812544051 240:0.903120232 240:0.866239935 240:0.834277207 240:0.892965449 240:0.877860864 240:0.791722664",
+            "BOUNDARY_PROBE static 3840 240:0.397092185 240:0.430366150 240:0.437633330 240:0.736121812 240:0.835141583 240:0.764000953 240:0.801982678 240:0.830118358 240:0.784378210 240:0.810213702 240:0.873114235 240:0.850069776 240:0.812515287 240:0.875989121 240:0.850985165 240:0.755593849",
+            "BOUNDARY_PROBE static 3840 240:0.390242794 240:0.437947959 240:0.436664707 240:0.754414830 240:0.831312477 240:0.765092632 240:0.805728980 240:0.811524981 240:0.782517994 240:0.791641410 240:0.894759207 240:0.847174433 240:0.779697089 240:0.885396505 240:0.854716244 240:0.777673050",
+            "BOUNDARY_PROBE static 3840 240:0.386740327 240:0.423993053 240:0.455709602 240:0.715305170 240:0.805058969 240:0.782599709 240:0.787444807 240:0.825538480 240:0.786401677 240:0.804493397 240:0.873399255 240:0.842304434 240:0.814447732 240:0.889697343 240:0.851526718 240:0.792103834",
+            "BOUNDARY_PROBE static 3840 240:0.385550826 240:0.462502901 240:0.474790404 240:0.737800594 240:0.808911830 240:0.821012718 240:0.766221590 240:0.815953492 240:0.779291996 240:0.819306182 240:0.901577600 240:0.858187813 240:0.785842047 240:0.900452201 240:0.855462766 240:0.788743449",
+            "BOUNDARY_PROBE static 3840 240:0.425571853 240:0.458398398 240:0.453228033 240:0.786256288 240:0.857837912 240:0.777790143 240:0.836990098 240:0.864114245 240:0.856099724 240:0.942238360 240:0.925317286 240:0.904668649 240:0.870590409 240:0.915049001 240:0.903778973 240:0.803833616",
+            "BOUNDARY_PROBE static 3840 240:0.419276521 240:0.469627432 240:0.454998385 240:0.787681235 240:0.859472056 240:0.927130642 240:0.824815066 240:0.853236607 240:0.853164846 240:0.858697413 240:0.924184895 240:0.903219506 240:0.878106943 240:0.919241324 240:0.900087545 240:0.829191962",
+            "BOUNDARY_PROBE static 3840 240:0.379930729 240:0.419410729 240:0.434059549 240:0.708565362 240:0.838718559 240:0.758815362 240:0.775499562 240:0.810418676 240:0.767039152 240:0.782773567 240:0.878193214 240:0.853548610 240:0.810655923 240:0.875711307 240:0.844529534 240:0.770323003",
+            "BOUNDARY_PROBE static 3840 240:0.378215206 240:0.422150099 240:0.432064113 240:0.714328586 240:0.797042666 240:0.784809512 240:0.761347181 240:0.816459643 240:0.779317744 240:0.796135811 240:0.895121553 240:0.851114184 240:0.802499836 240:0.884212627 240:0.878752819 240:0.765604540",
+            "BOUNDARY_PROBE static 3840 240:0.377479330 240:0.423998291 240:0.436803226 240:0.712064321 240:0.814522289 240:0.756173729 240:0.776002075 240:0.791892578 240:0.787962471 240:0.799450770 240:0.880907162 240:0.828942077 240:0.792955261 240:0.870924446 240:0.868020141 240:0.764038029",
+            "BOUNDARY_PROBE static 3840 240:0.383756749 240:0.439643350 240:0.445258280 240:0.722711617 240:0.804398086 240:0.780557946 240:0.781532502 240:0.822643579 240:0.796788923 240:0.822262179 240:0.884562747 240:0.872984377 240:0.801195987 240:0.889465888 240:0.848274589 240:0.789874433",
+            "BOUNDARY_PROBE static 3840 240:0.383624836 240:0.427259243 240:0.433615432 240:0.726049986 240:0.796920227 240:0.749760695 240:0.779909035 240:0.816875498 240:0.791746701 240:0.823594505 240:0.871693104 240:0.839073498 240:0.809353940 240:0.883758547 240:0.852221582 240:0.770739702",
+            "BOUNDARY_PROBE static 3840 240:0.386760032 240:0.421341566 240:0.431760016 240:0.718778987 240:0.817256775 240:0.740115501 240:0.759513134 240:0.809368159 240:0.792498173 240:0.797877143 240:0.869956863 240:0.836996174 240:0.835083858 240:0.907375241 240:0.868432924 240:0.771351868",
+            "BOUNDARY_PROBE static 3840 240:0.403930001 240:0.439299840 240:0.454477211 240:0.748258122 240:0.857164493 240:0.786038728 240:0.803942862 240:0.818139510 240:0.839006886 240:0.819918967 240:0.917546982 240:0.866313815 240:0.818187584 240:0.919428277 240:0.907664854 240:0.801731332",
+            "BOUNDARY_PROBE static 3840 240:0.406406170 240:0.438376049 240:0.450272330 240:0.739265811 240:0.817896577 240:0.770457407 240:0.780966612 240:0.853507018 240:0.826484224 240:0.854979660 240:0.920110177 240:0.882517994 240:0.797882036 240:0.909832378 240:0.881385553 240:0.785320465",
+            "BOUNDARY_PROBE static 3840 240:0.388818664 240:0.434087123 240:0.445785865 240:0.735336184 240:0.840680119 240:0.788684760 240:0.798535585 240:0.830647662 240:0.833229135 240:0.806660575 240:0.918559708 240:0.899997521 240:0.819412287 240:0.908303098 240:0.858728319 240:0.783621450"
+          ],
+          "cpu_stage_timings": [
+            {
+              "stage": "regrid",
+              "wall_seconds": "0.16384501600000001",
+              "calls": "4"
+            },
+            {
+              "stage": "gravity",
+              "wall_seconds": "7.276906523000001",
+              "calls": "7"
+            },
+            {
+              "stage": "timestep",
+              "wall_seconds": "1.6258650120000002",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_first",
+              "wall_seconds": "0.52968590500000001",
+              "calls": "5"
+            },
+            {
+              "stage": "diffusion",
+              "wall_seconds": "7.0343438990000005",
+              "calls": "10"
+            },
+            {
+              "stage": "hydro",
+              "wall_seconds": "11.70766044",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_second",
+              "wall_seconds": "0.55750487999999998",
+              "calls": "5"
+            }
+          ]
+        }
+      ]
+    },
+    "boundary_dynamic16": {
+      "manifest": {
+        "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+        "routes": [
+          "arch"
+        ],
+        "route_order": "reverse selected routes on even repeats",
+        "binary_identity": {
+          "arch": {
+            "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+            "sha256": "50e672d9019962119485c7a7d9a31fb59dbfb8a12e32addcacce7f42395511ba"
+          }
+        },
+        "mpi_launcher": null,
+        "cpu_threads": 16,
+        "flash_ranks": 8,
+        "cpu_affinity": "0-15",
+        "cuda_affinity": "",
+        "inherited_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "records": [
+          {
+            "case": "snia3d",
+            "backend": "arch",
+            "repeat": 1,
+            "wall_seconds": 32.072083619001205,
+            "exit_code": 0,
+            "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_dynamic16_snia3d_arch_1",
+            "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+            "physical_time_seconds": 1.7615751690104147e-11,
+            "resolved_backend": "cpu"
+          }
+        ],
+        "arch_parameter_overrides": {},
+        "comparison_kind": "original strict fixture"
+      },
+      "traces": [
+        {
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/boundary_dynamic16_snia3d_arch_1",
+          "worker_trace_lines": [
+            "BOUNDARY_PROBE dynamic 3840 240:0.787054906 224:0.783560105 240:0.803536540 240:0.773874142 240:0.803281541 240:0.792550149 224:0.777326049 256:0.795863546 256:0.805351928 256:0.802147229 240:0.787095259 240:0.792419716 240:0.797221485 240:0.785257710 240:0.803959976 224:0.784116805",
+            "BOUNDARY_PROBE dynamic 3840 240:0.787275964 240:0.797833196 240:0.770461229 240:0.807381443 240:0.811029972 240:0.784464512 240:0.809977060 240:0.796775287 224:0.802457451 240:0.808128991 256:0.812563332 240:0.790511612 240:0.779126768 240:0.807377431 240:0.806886417 240:0.805667336",
+            "BOUNDARY_PROBE dynamic 3840 224:0.799871423 240:0.805608812 240:0.784630554 240:0.802725871 224:0.807577734 256:0.818076391 256:0.802237050 256:0.821561318 224:0.811703293 224:0.781080606 240:0.774764131 256:0.821336056 224:0.777408594 256:0.813894513 240:0.815487525 240:0.792513009",
+            "BOUNDARY_PROBE dynamic 3840 240:0.785902564 256:0.803791821 240:0.786754667 240:0.797882532 240:0.804131815 240:0.799849519 224:0.775803101 240:0.776122173 240:0.809621736 240:0.808923779 240:0.770805118 256:0.796817908 240:0.813354089 240:0.806739050 240:0.782679051 224:0.777816557",
+            "BOUNDARY_PROBE dynamic 3840 240:0.869814243 192:0.858399332 240:0.862025906 224:0.842439503 240:0.867270851 240:0.842159477 240:0.838882948 256:0.861188722 240:0.833376425 256:0.863387369 256:0.871600033 240:0.850327423 240:0.848420324 256:0.864252456 256:0.871676540 224:0.854696415",
+            "BOUNDARY_PROBE dynamic 3840 240:0.831272003 240:0.864843673 240:0.862051689 240:0.832566472 256:0.851820160 256:0.851002032 192:0.861073173 256:0.841441458 224:0.824692528 240:0.863837814 256:0.851223937 240:0.870316678 224:0.839939926 240:0.823469489 256:0.843855426 240:0.831185244",
+            "BOUNDARY_PROBE dynamic 3840 240:0.835096432 240:0.863851455 240:0.854774029 240:0.845075518 256:0.845120585 240:0.836147045 240:0.826385742 224:0.829015714 256:0.841188277 224:0.863242603 224:0.828850901 256:0.871738039 256:0.847774038 240:0.842552394 224:0.831526630 240:0.826553714",
+            "BOUNDARY_PROBE dynamic 3840 224:0.772464089 240:0.793531781 240:0.780209352 240:0.800161535 256:0.802785839 240:0.782823617 240:0.796214605 256:0.810218585 240:0.781177004 224:0.776718124 256:0.804663289 256:0.789082855 240:0.800184300 224:0.793773300 240:0.768492979 224:0.776528759",
+            "BOUNDARY_PROBE dynamic 3840 240:0.778181589 240:0.767178275 240:0.791023295 240:0.787286480 240:0.789280381 240:0.799253044 240:0.796170323 240:0.764328296 240:0.778860878 240:0.799209650 240:0.796999970 240:0.795568196 240:0.775132544 240:0.801837407 240:0.778390609 240:0.785150835",
+            "BOUNDARY_PROBE dynamic 3840 208:0.774421992 256:0.803499171 240:0.798895679 256:0.790885961 240:0.797801356 240:0.792694263 240:0.776012582 240:0.776956467 256:0.801845463 240:0.783007953 240:0.805127410 240:0.783285907 240:0.805780454 224:0.784452563 256:0.796299074 224:0.777599601",
+            "BOUNDARY_PROBE dynamic 3840 240:0.790034545 256:0.795960547 240:0.788877135 240:0.789035071 256:0.800249607 240:0.768526689 256:0.797603954 240:0.766174730 240:0.772210005 240:0.796317276 240:0.786310255 240:0.774445668 224:0.756955309 224:0.786207710 240:0.796339644 224:0.791235637",
+            "BOUNDARY_PROBE dynamic 3840 240:0.778140912 240:0.770237171 240:0.791127997 240:0.792059697 240:0.793769570 240:0.781387244 224:0.755147571 240:0.777373150 256:0.792030865 240:0.793776694 240:0.785442270 240:0.787267300 256:0.796751461 240:0.768634072 224:0.775733007 240:0.788987759",
+            "BOUNDARY_PROBE dynamic 3840 240:0.793965863 224:0.771079155 240:0.778071003 256:0.789725280 240:0.776642065 256:0.785776980 240:0.765411499 256:0.792029777 240:0.794325237 224:0.800049340 240:0.794973295 224:0.756554457 240:0.793907552 224:0.782894533 256:0.791274348 240:0.771190583",
+            "BOUNDARY_PROBE dynamic 3840 224:0.796121287 256:0.800253448 256:0.798128569 240:0.778883118 240:0.808328435 256:0.815239255 240:0.816672819 240:0.791072068 224:0.792588133 224:0.795410887 240:0.779863065 240:0.818663391 240:0.801178653 240:0.820172877 240:0.771092485 240:0.804486996",
+            "BOUNDARY_PROBE dynamic 3840 224:0.819250183 240:0.830404578 240:0.807407661 240:0.808902882 240:0.810622415 224:0.797000960 240:0.789272883 240:0.798869756 256:0.826794265 256:0.829244811 256:0.824310095 224:0.819921852 240:0.805347575 240:0.817945304 240:0.804451452 240:0.817610076",
+            "BOUNDARY_PROBE dynamic 3840 224:0.804450975 224:0.785569063 240:0.786134673 256:0.819022992 224:0.789705719 240:0.813390715 240:0.807713269 256:0.826298309 240:0.807906295 240:0.819754237 256:0.818737928 240:0.806445914 224:0.795457040 240:0.798164935 240:0.824866967 256:0.812853942",
+            "BOUNDARY_PROBE dynamic 3840 208:0.782165905 256:0.813964243 240:0.807262588 256:0.814086423 240:0.808132572 240:0.813896589 240:0.795642140 240:0.784486393 256:0.819230359 256:0.821365701 224:0.796327257 224:0.818505203 240:0.817760458 240:0.803871460 240:0.782349508 240:0.796925511"
+          ],
+          "cpu_stage_timings": [
+            {
+              "stage": "regrid",
+              "wall_seconds": "0.16214393699999999",
+              "calls": "4"
+            },
+            {
+              "stage": "gravity",
+              "wall_seconds": "6.6091067779999992",
+              "calls": "7"
+            },
+            {
+              "stage": "timestep",
+              "wall_seconds": "1.632360536",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_first",
+              "wall_seconds": "0.54565312300000002",
+              "calls": "5"
+            },
+            {
+              "stage": "diffusion",
+              "wall_seconds": "6.9465761740000005",
+              "calls": "10"
+            },
+            {
+              "stage": "hydro",
+              "wall_seconds": "10.987870754999999",
+              "calls": "5"
+            },
+            {
+              "stage": "burn_second",
+              "wall_seconds": "0.57860153300000006",
+              "calls": "5"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "initial_harness_failure": {
+    "reason": "The original backend comparator correctly rejected a CPU candidate where CUDA was required. Reused the valid completed sample with a CPU-to-CPU checker; no error budget or CUDA identity guard changed.",
+    "log": "{\"case\": \"snia3d\", \"backend\": \"arch\", \"repeat\": 1, \"wall_seconds\": 46.45277685500332, \"exit_code\": 0, \"output\": \"/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/attribution_old_8_1_snia3d_arch_1\", \"input_fixture\": \"../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par\", \"physical_time_seconds\": 1.7615751690104147e-11, \"resolved_backend\": \"cpu\"}\nTraceback (most recent call last):\n  File \"/tmp/arch_release_cpu_attribution.py\", line 29, in <module>\n    row['science']=comparison.compare_saved_backend(reference,folder,'snia3d')\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/shiroakane/.codex/worktrees/compute-optim/ARCH/validation/gravity/flash/run_comparison.py\", line 104, in compare_saved_backend\n    return compare_pair(case, reference, candidate, 5)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/shiroakane/.codex/worktrees/compute-optim/ARCH/validation/gravity/curved/compare_backends.py\", line 123, in compare_pair\n    raise ValueError(f\"{label}: CUDA run did not resolve to the device\")\nValueError: snia3d: CUDA run did not resolve to the device\n"
+  },
+  "withdrawn_source_patches": {
+    "probe-comp-auto.diff": "diff --git a/src/core/CompensatedSum.h b/src/core/CompensatedSum.h\nindex 63015307..b9b66975 100644\n--- a/src/core/CompensatedSum.h\n+++ b/src/core/CompensatedSum.h\n@@ -20,7 +20,7 @@ public:\n     // Neumaier compensation, in one fixed order on Host and device.  The\n     // build contract forbids reassociation and implicit FMA contraction.\n     // Supported inputs and their accumulated result must remain finite.\n-    ARCH_HOST_DEVICE ARCH_FORCE_INLINE void add(double term)\n+    ARCH_INLINE void add(double term)\n     {\n         const double next = sum_ + term;\n         if (std::abs(sum_) >= std::abs(term))\n@@ -30,13 +30,13 @@ public:\n         sum_ = next;\n     }\n \n-    ARCH_HOST_DEVICE ARCH_FORCE_INLINE double value() const { return sum_ + correction_; }\n+    ARCH_INLINE double value() const { return sum_ + correction_; }\n \n     // Explicit FMA recovers the multiplication residual; it is intentional\n     // arithmetic, not compiler reassociation/contraction. Inputs, products and\n     // the accumulated result must be finite. Useful for nearly cancelling\n     // nuclear mass/production dot products.\n-    ARCH_HOST_DEVICE ARCH_FORCE_INLINE void add_product(double left, double right)\n+    ARCH_INLINE void add_product(double left, double right)\n     {\n         const double product = left * right;\n         const double residual = std::fma(left, right, -product);\n",
+    "probe-boundary-diagnostic.diff": "diff --git a/src/physics/gravity/GravityExecution.cpp b/src/physics/gravity/GravityExecution.cpp\nindex 287a42a2..26017183 100644\n--- a/src/physics/gravity/GravityExecution.cpp\n+++ b/src/physics/gravity/GravityExecution.cpp\n@@ -13,6 +13,11 @@\n #include \"physics/gravity/GravityExecution.h\"\n \n #include <type_traits>\n+#include <chrono>\n+#include <cstdio>\n+#include <cstdlib>\n+#include <omp.h>\n+#include <vector>\n \n namespace Physical::Gravity {\n namespace {\n@@ -27,8 +32,30 @@ public:\n             // integrate nearby leaves; it has much more work per item than\n             // simple gather/acceleration tasks.\n             constexpr int parallel_threshold=std::is_same_v<Task,EvaluateBoundary>?256:32768;\n-            #pragma omp parallel for if(task.size>parallel_threshold) schedule(static)\n-            for(int i=0;i<task.size;++i)task(i);\n+            if constexpr (std::is_same_v<Task,EvaluateBoundary>) {\n+                std::vector<double> seconds(omp_get_max_threads());\n+                std::vector<int> counts(omp_get_max_threads());\n+                omp_sched_t previous; int chunk;\n+                omp_get_schedule(&previous,&chunk);\n+                const bool dynamic=std::getenv(\"ARCH_BOUNDARY_PROBE_DYNAMIC\")!=nullptr;\n+                omp_set_schedule(dynamic?omp_sched_dynamic:omp_sched_static,dynamic?16:0);\n+                #pragma omp parallel if(task.size>parallel_threshold)\n+                {\n+                    const int worker=omp_get_thread_num();\n+                    const auto started=std::chrono::steady_clock::now();\n+                    #pragma omp for schedule(runtime) nowait\n+                    for(int i=0;i<task.size;++i){task(i);++counts[worker];}\n+                    seconds[worker]=std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count();\n+                }\n+                omp_set_schedule(previous,chunk);\n+                std::fprintf(stderr,\"BOUNDARY_PROBE %s %d\",dynamic?\"dynamic\":\"static\",task.size);\n+                for(std::size_t worker=0;worker<seconds.size();++worker)\n+                    std::fprintf(stderr,\" %d:%.9f\",counts[worker],seconds[worker]);\n+                std::fprintf(stderr,\"\\n\");\n+            } else {\n+                #pragma omp parallel for if(task.size>parallel_threshold) schedule(static)\n+                for(int i=0;i<task.size;++i)task(i);\n+            }\n         },work);\n     }\n };\n"
+  }
+}

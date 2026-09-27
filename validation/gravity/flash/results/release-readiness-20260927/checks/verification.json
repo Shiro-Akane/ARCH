@@ -1,0 +1,92 @@
+{
+  "base_commit": "51f982ab005bcb4d725c19ee4dc0d133d4c18e7f",
+  "source_identity": "base_commit plus the release follow-up changes in the containing Git commit",
+  "changed_executable_sources": [
+    "src/io/hdf5/HDF5Writer.cpp",
+    "src/physics/gravity/GravityExecution.cpp"
+  ],
+  "checked_source_sha256": {
+    "src/io/hdf5/HDF5Writer.cpp": "8d62568d84d8040bbd694b7f898d05ee20d34b8b44694d5d7381e2a299cc9cb9",
+    "src/physics/gravity/GravityExecution.cpp": "ea8e184588095a84bbbcadc94db87c4eac42900ca51fee55733e76b6b77ec71b",
+    "tests/host/io/test_checkpoint_compatibility.cpp": "8f99f55a8619e0da5dce78e9127bc84d2fb579fa74fdba0b4ee686a9bf724b8c",
+    "validation/gravity/flash/run_comparison.py": "c16535f48de2c3eb01a6f10fd3c7aeef2afad25308246723d3adb18a3faba9da"
+  },
+  "binaries": {
+    "cpu_sha256": "947efa12dd641d235ffcbb12ef851a03ef13b2a2b3213fedb4a390bdb1c838c9",
+    "cuda_sha256": "34194e794132eee88374aefa97cdb988755ef7b7f1314b8150f424ba30f2e2d4"
+  },
+  "checks": {
+    "cpu_ctest": {
+      "passed": 61,
+      "failed": 0,
+      "elapsed_seconds": 116.55
+    },
+    "cuda_ctest": {
+      "passed": 135,
+      "failed": 0,
+      "elapsed_seconds": 271.39
+    },
+    "production_compatibility": {
+      "passed_records": 42,
+      "status": "passed"
+    },
+    "architecture": {
+      "command": "python tools/audit_architecture.py .",
+      "exit_code": 0,
+      "output": "empty"
+    },
+    "tooling": {
+      "conda_discovered": 359,
+      "conda_passed": 346,
+      "conda_skipped": 13,
+      "system_python_retested_exact_skips": 13,
+      "system_passed": 13,
+      "total_actual_coverage": 359,
+      "detail": {
+        "conda_summary": [
+          "",
+          "----------------------------------------------------------------------",
+          "Ran 359 tests in 19.058s",
+          "",
+          "OK (skipped=13)"
+        ],
+        "system_test_ids": [
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_bounded_swap_growth_allows_command_to_finish",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_command_failure_reaps_setsid_adopted_descendant",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_command_success_does_not_leave_daemon",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_external_term_cleans_owned_tree",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_identity_mismatch_never_signals_reused_pid",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_interrupted_launch_without_popen_handle_cleans_owned_tree",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_memory_breach_reaps_setsid_adopted_descendant",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_pidfd_einval_ignores_only_verified_stale_snapshot",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_pressure_counter_failure_reaps_owned_tree",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_pressure_stop_reaps_owned_tree_and_leaves_sibling",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_stale_parent_identity_never_claims_unrelated_child",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_swap_growth_ceiling_stops_only_owned_tree",
+          "resources.test_run_memory_guarded.MemoryGuardTests.test_telemetry_failure_reaps_owned_tree_and_reports_incomplete"
+        ]
+      }
+    },
+    "archive_ctest": {
+      "passed": 2,
+      "failed": 0
+    },
+    "archive_sod_field_comparison": "passed"
+  },
+  "environment": {
+    "cpu": "Intel Core i7-10700, 8 cores / 16 logical CPUs",
+    "os": "WSL2 Linux on Microsoft hypervisor",
+    "gpu_before": "name, utilization.gpu [%], memory.used [MiB], temperature.gpu, power.draw [W]\nNVIDIA GeForce RTX 3060 Ti, 0 %, 2172 MiB, 33, 28.22 W",
+    "gpu_after": "name, utilization.gpu [%], memory.used [MiB], temperature.gpu, power.draw [W]\nNVIDIA GeForce RTX 3060 Ti, 0 %, 2172 MiB, 43, 59.68 W",
+    "cpu_build": "GNU 13.3.0; Release O3, LTO, no-fast-math, no-math-errno, ffp-contract=off, OpenMP",
+    "cuda_build": "CUDA 12.3; registered Release build-cuda configuration",
+    "conda_python": "3.12.14 (main, Sep  2 2026, 23:27:36) [GCC 15.3.0]"
+  },
+  "qualification_limits": [
+    "Formal timings did not overlap compilation, tests, profiling or another simulation.",
+    "The 3D fixture is a five-step coupled regression, not long-duration accuracy validation.",
+    "CPU8 and CPU16 are the measured CPU candidates; this is not an exhaustive thread search.",
+    "Existing frozen device sanitizer evidence was not rerun; no device math/storage change in this follow-up.",
+    "No FLASH or H100 measurement was rerun in this follow-up."
+  ]
+}

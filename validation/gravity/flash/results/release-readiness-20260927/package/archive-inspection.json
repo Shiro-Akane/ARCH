@@ -1,0 +1,28 @@
+{
+  "archive_url": "https://api.github.com/repos/Shiro-Akane/ARCH/tarball/51f982ab005bcb4d725c19ee4dc0d133d4c18e7f",
+  "source_commit": "51f982ab005bcb4d725c19ee4dc0d133d4c18e7f",
+  "archive_bytes": 109148845,
+  "helm_member": "Shiro-Akane-ARCH-51f982a/EOS_toolkit/tables/helmholtz/helm_table.dat",
+  "helm_size": 60242514,
+  "helm_is_pointer": false,
+  "helm_header": null,
+  "extracted_root": "/tmp/arch-release-source-package/Shiro-Akane-ARCH-51f982a",
+  "has_git_metadata": false,
+  "helm_sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+  "overlay_from_release_worktree": [
+    "README.md",
+    "README.zh-CN.md",
+    "docs/development/ComputeOptimizationPlan.zh-CN.md",
+    "docs/development/CudaReleaseStandard.md",
+    "docs/guides/Build.md",
+    "docs/guides/Build.zh-CN.md",
+    "src/io/hdf5/HDF5Writer.cpp",
+    "src/physics/gravity/GravityExecution.cpp",
+    "tests/README.md",
+    "tests/README.zh-CN.md",
+    "tests/host/io/test_checkpoint_compatibility.cpp",
+    "validation/gravity/flash/results/o6-controls-20260927/README.md",
+    "validation/gravity/flash/run_comparison.py"
+  ],
+  "build_scope": "clean extracted source archive plus release fix; existing dependency source trees reused, no existing ARCH object files"
+}

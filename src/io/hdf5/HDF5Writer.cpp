@@ -3,14 +3,21 @@
  * @brief Read and write the common HDF5 datasets and attributes.
  *
  * Checkpoint serialization checks payload lengths, native composition and
- * restart metadata using the declared format. Higher-level IO code gathers or
- * restores AMR state; this layer consumes and returns host-side payloads.
+ * restart metadata using the declared format.
+ *
+ * Workflow:
+ * 1. Reject unsupported format/control identities before reading live state.
+ * 2. Validate finite control values, repair accounting and scientific payloads.
+ * 3. Return a complete host payload; ChkIO alone replaces the live AMR state.
+ * Writers apply the same checks before opening/truncating the destination.
  */
 
-#include <iostream>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <limits>
+#include <stdexcept>
+#include <string>
 
 #include "io/hdf5/HDF5Writer.h"
 #include "core/config/ConfigValidation.h"
@@ -25,15 +32,31 @@ namespace io {
 
 namespace {
 
-bool has_valid_state_diagnostics(const CheckpointData& c)
+/** Explain identity/payload failures without changing reader/writer exception types. */
+std::string state_control_error(const std::vector<double>& controls)
+{
+    if (controls.empty() || !std::all_of(controls.begin(), controls.end(),
+                                      [](double value) { return std::isfinite(value); }))
+        return "Invalid checkpoint state controls: missing or nonfinite values.";
+    if (controls.front() != arch::config::StateControlRevision)
+        return "Unsupported checkpoint state-control revision " + std::to_string(controls.front())
+            + "; expected " + std::to_string(arch::config::StateControlRevision)
+            + ". Continue with the original executable or start from new initial data; "
+              "old controls are not migrated.";
+    if (controls.size() != arch::config::StateControlCount)
+        return "Invalid checkpoint state-control length: expected "
+            + std::to_string(arch::config::StateControlCount) + ", got "
+            + std::to_string(controls.size()) + ".";
+    return {};
+}
+
+/** Validate repair magnitudes and locations after checking control identity. */
+bool has_valid_repair_ledger(const CheckpointData& c)
 {
     const auto finite = [](double value) { return std::isfinite(value); };
     const auto& v = c.repairs.values;
     if (c.num_species < 0 || v.size() != arch::state::RepairView::fixed_size + 2 * c.num_species
         || !std::all_of(v.begin(), v.end(), finite)
-        || c.state_controls.size() != arch::config::StateControlCount
-        || c.state_controls.front() != arch::config::StateControlRevision
-        || !std::all_of(c.state_controls.begin(), c.state_controls.end(), finite)
         || !std::all_of(c.repairs.position, c.repairs.position + 3, finite)
         || !finite(c.repairs.time) || c.repairs.time < 0.0 || c.repairs.time > c.time
         || c.repairs.stage < 0 || c.repairs.stage > 3)
@@ -218,8 +241,10 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         throw std::invalid_argument(
             "Checkpoint scientific provenance is inconsistent.");
     }
-    if (!has_valid_state_diagnostics(checkpoint))
-        throw std::invalid_argument("Checkpoint state controls or repair ledger are invalid.");
+    if (const auto error = state_control_error(checkpoint.state_controls); !error.empty())
+        throw std::invalid_argument(error);
+    if (!has_valid_repair_ledger(checkpoint))
+        throw std::invalid_argument("Checkpoint repair ledger is invalid.");
     try {
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
         file.createAttribute("checkpoint_version", checkpoint_format_version);
@@ -306,6 +331,8 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
             throw std::runtime_error("Unsupported checkpoint format version.");
         file.getDataSet("state_repairs").read(checkpoint.repairs.values);
         file.getDataSet("state_controls").read(checkpoint.state_controls);
+        if (const auto error = state_control_error(checkpoint.state_controls); !error.empty())
+            throw std::runtime_error(error);
         file.getAttribute("repair_block_uid").read(checkpoint.repairs.block_uid);
         file.getAttribute("repair_stage").read(checkpoint.repairs.stage);
         file.getAttribute("repair_time").read(checkpoint.repairs.time);
@@ -420,8 +447,8 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
             throw std::runtime_error(
                 "Checkpoint scientific provenance is inconsistent.");
         }
-        if (!has_valid_state_diagnostics(checkpoint))
-            throw std::runtime_error("Checkpoint state controls or repair ledger are invalid.");
+        if (!has_valid_repair_ledger(checkpoint))
+            throw std::runtime_error("Checkpoint repair ledger is invalid.");
         return checkpoint;
     } catch (const Exception& err) {
         throw std::runtime_error("Checkpoint read failed: " + std::string(err.what()));

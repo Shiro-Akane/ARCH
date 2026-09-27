@@ -37,7 +37,7 @@ CASES = {
 
 def argument_parser():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--arch-cpu', type=Path, default=ROOT / 'bin/ARCH')
+    parser.add_argument('--arch-cpu', type=Path, default=ROOT / 'build-cpu/bin/ARCH')
     parser.add_argument('--arch-cuda', type=Path, default=ROOT / 'build-cuda/bin/ARCH')
     parser.add_argument('--flash-root', type=Path, default=Path.home() / 'FLASH4.8')
     parser.add_argument('--mpirun', type=Path, default=Path('/usr/bin/mpirun'),
@@ -49,8 +49,10 @@ def argument_parser():
                         default=[name for name, fixture in CASES.items() if fixture[2]])
     parser.add_argument('--threads', type=int, default=8)
     parser.add_argument('--ranks', type=int, default=8)
-    parser.add_argument('--affinity', default='0,2,4,6,8,10,12,14')
-    parser.add_argument('--cuda-affinity', default='0')
+    parser.add_argument('--affinity', default='',
+                        help='taskset CPU list for ARCH/FLASH; default inherits this process affinity')
+    parser.add_argument('--cuda-affinity', default='',
+                        help='taskset host CPU list for CUDA; choose from this machine, not archived records')
     parser.add_argument('--repeats', type=int, default=3)
     parser.add_argument('--timeout', type=float, default=900.)
     parser.add_argument('--arch-parameter', action='append', default=[], metavar='KEY=VALUE',
@@ -237,7 +239,9 @@ def main():
               'routes': args.routes, 'route_order': 'reverse selected routes on even repeats',
               'binary_identity': identities, 'mpi_launcher': launcher_identity,
               'cpu_threads': args.threads, 'flash_ranks': args.ranks,
-              'cpu_affinity': args.affinity, 'cuda_affinity': args.cuda_affinity, 'records': []}
+              'cpu_affinity': args.affinity, 'cuda_affinity': args.cuda_affinity,
+              'inherited_cpu_affinity': sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None,
+              'records': []}
     variants = {}
     allowed = {'hll_wave_speed', 'eos_coulomb_mult', 'dt_max'}
     for assignment in args.arch_parameter:

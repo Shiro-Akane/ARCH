@@ -9,8 +9,9 @@ performance are summarized in [Validation](../../validation/README.md).
 
 The implementation invariants below apply to current work. Validation and
 publication decisions must use the current source, changed paths and authorized
-work branch. The [compute optimization plan](ComputeOptimizationPlan.zh-CN.md)
-and [O6 acceptance record](../../validation/gravity/flash/O6AcceptanceReport.zh-CN.md)
+work branch. The [compute optimization plan](ComputeOptimizationPlan.zh-CN.md),
+[current O6 acceptance record](../../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)
+and [release follow-up](../../validation/gravity/flash/results/release-readiness-20260927/README.md)
 track the present CPU/CUDA optimization gates; historical pass counts and GPU
 speedups do not sign off a newer executable.
 

@@ -82,7 +82,10 @@ CTest does not compile missing executables. The default build above includes
 configured tests. For a quick checkpoint-only check, build
 `arch_checkpoint_compatibility` and select `-R '^checkpoint_compatibility$'`.
 It checks complete ARCH state restoration and rejected input through the same
-reader used by both backends.
+reader used by both backends. Current-format round trips, explicit old-control
+identity rejection and corrupt-payload rejection are tested together; rejected
+reads preserve the live AMR state, and validation failures before a write
+preserve the previous checkpoint file.
 
 `arch_cuda_single_level_validation` is also available in CPU-only builds. The
 historical target name is retained for runner compatibility, but the utility

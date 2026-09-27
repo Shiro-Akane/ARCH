@@ -83,6 +83,30 @@ Python 运行。生成反应网络使用独立的 Python 环境，配置方法�
 不要在 WSL 内安装 Linux 显示驱动。具体步骤见
 [NVIDIA 的 WSL 安装指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
 
+## 源码包与 EOS 表
+
+不含 `.git` 的 ZIP／tar 源码目录可以正常构建，但不能直接用 `git lfs pull`
+补齐数据。首行是 `version https://git-lfs.github.com/spec/v1` 的文件是指针，
+不是 EOS 表。CPU 构建或 Sod 运行成功也不代表表数据已经可用。
+
+建议使用所选发行版本的 Git 检出并拉取 LFS 数据。若保留已经解压的源码包，
+从**同一标签或完整提交**的独立检出取得所需表，再复制到包内对应位置。
+从解压后的 ARCH 根目录运行以下示例；把 `YOUR_RELEASE_TAG_OR_COMMIT`
+替换为该源码包的版本身份：
+
+```bash
+git clone --no-checkout https://github.com/Shiro-Akane/ARCH.git ../ARCH-tables
+GIT_LFS_SKIP_SMUDGE=1 git -C ../ARCH-tables checkout --detach YOUR_RELEASE_TAG_OR_COMMIT
+git -C ../ARCH-tables lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat" --exclude=""
+cp ../ARCH-tables/EOS_toolkit/tables/helmholtz/helm_table.dat EOS_toolkit/tables/helmholtz/
+```
+
+复制完成后可以移除临时检出。其他表使用各自的受控路径，并按
+[表格来源说明](../../THIRD_PARTY_NOTICES.zh-CN.md)或该版本的 LFS 指针核对大小与摘要。
+发布冒烟检查应从干净解压目录构建，运行 Sod，再用实际表运行已有 Helmholtz
+测试；只有后者会检查表格依赖。preset 的程序路径分别是 `build-cpu/bin/ARCH`
+和 `build-cuda/bin/ARCH`；自定义构建输出路径也须显式传给比较脚本。
+
 ## cuDSS 与稀疏燃烧
 
 CUDA 构建中的 `ARCH_ENABLE_CUDSS=ON` 启用可选库发现。适配器使用 **cuDSS 0.8

@@ -28,11 +28,45 @@ The stored script references this workstation's raw output directories. Tooling
 coverage is split between conda work and system Python only because the conda
 interpreter lacks Linux pidfd; `checks/validation_status.json` records both runs.
 
-Reproduction uses the existing `run_comparison.py` entry point: run the seven
-strict CUDA cases (`a b noburn jeans128 fine snia2d snia3d`) three times with
-`--routes cuda`, then run `fine` with `--arch-parameter hll_wave_speed=davis`.
-Use `--report-only` with the corresponding frozen CPU8 and CPU16 manifests;
-the report compares every saved GPU sample's endpoint, fields and AMR topology.
+Reproduction uses the existing `run_comparison.py` entry point. From the
+repository root after building the CPU and CUDA presets, the following produces
+new local references and checks every GPU sample against them. `conda work`
+provides the required Python/h5py/numpy environment on the original workstation.
+Choose thread counts and optional `--affinity` / `--cuda-affinity` lists for the
+current machine; omitted masks inherit the caller's allowed CPUs. The original
+i7 masks in archived records must not be copied blindly to another host.
+
+```bash
+python validation/gravity/flash/run_comparison.py \
+  --routes arch --cases a b noburn jeans128 fine snia2d snia3d \
+  --threads 8 --repeats 3 --prefix cpu8 --output output/reproduce \
+  --manifest output/reproduce/cpu8.json
+python validation/gravity/flash/run_comparison.py \
+  --routes arch --cases a b noburn jeans128 fine snia2d snia3d \
+  --threads 16 --repeats 3 --prefix cpu16 --output output/reproduce \
+  --manifest output/reproduce/cpu16.json
+python validation/gravity/flash/run_comparison.py \
+  --routes cuda --cases a b noburn jeans128 fine snia2d snia3d \
+  --repeats 3 --prefix cuda --output output/reproduce \
+  --manifest output/reproduce/cuda.json
+python validation/gravity/flash/run_comparison.py --report-only \
+  --manifest output/reproduce/cuda.json \
+  --reference-manifest output/reproduce/cpu8.json \
+  --reference-manifest output/reproduce/cpu16.json
+```
+
+The default executable paths match the presets: `build-cpu/bin/ARCH` and
+`build-cuda/bin/ARCH`. For a custom build pass `--arch-cpu /path/to/ARCH` and/or
+`--arch-cuda /path/to/ARCH`. Use a fresh output/prefix/manifest for every run;
+existing evidence is never overwritten. The eight/sixteen-thread choices above
+are examples, not a requirement or a claim that SMT is always faster. The
+Davis variant uses `--cases fine --arch-parameter hll_wave_speed=davis` on all
+three runs with separate prefixes/manifests and matching variant CPU references.
+Do not use the archived manifests as local field references: their HDF5 paths
+belong to the original workstation. This sequence compares ARCH backends;
+FLASH comparisons additionally require its separately prepared reference build,
+matching MPI launcher and, for Cellular, `--helm-binary`.
+
 Formal timings are serial and begin after the relevant correctness checks;
 there is no concurrent build, profiling or other simulation.
 

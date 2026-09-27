@@ -154,7 +154,9 @@ CMake 会自动查找它；如果安装在自定义目录，可在配置命令�
 这些设置保留 Release 优化。
 
 首次运行的 Sod 算例不需要 EOS 表。使用 Helmholtz 或其他由 LFS 管理的表数据时，
-安装 Git LFS，并在仓库根目录执行 `git lfs pull` 即可。ARCH 运行模拟本身不需要 Python。
+Git 检出需安装 Git LFS，并在仓库根目录执行 `git lfs pull`。下载的 ZIP／tar
+源码包可能只包含表的 LFS 指针；运行依赖表格的算例前，按[源码包说明](docs/guides/Build.zh-CN.md#源码包与-eos-表)
+取得实际表文件。ARCH 运行模拟本身不需要 Python。
 
 拉取源码后，可按[测试指南](tests/README.zh-CN.md)先运行无需 GPU 的工具检查，再编译
 CPU 或 CUDA 测试，并执行对应配置的完整程序与重启检查。测试源码和小型参考数据

@@ -1,0 +1,18 @@
+test_bounded_swap_growth_allows_command_to_finish (resources.test_run_memory_guarded.MemoryGuardTests.test_bounded_swap_growth_allows_command_to_finish) ... ok
+test_command_failure_reaps_setsid_adopted_descendant (resources.test_run_memory_guarded.MemoryGuardTests.test_command_failure_reaps_setsid_adopted_descendant) ... ok
+test_command_success_does_not_leave_daemon (resources.test_run_memory_guarded.MemoryGuardTests.test_command_success_does_not_leave_daemon) ... ok
+test_external_term_cleans_owned_tree (resources.test_run_memory_guarded.MemoryGuardTests.test_external_term_cleans_owned_tree) ... ok
+test_identity_mismatch_never_signals_reused_pid (resources.test_run_memory_guarded.MemoryGuardTests.test_identity_mismatch_never_signals_reused_pid) ... ok
+test_interrupted_launch_without_popen_handle_cleans_owned_tree (resources.test_run_memory_guarded.MemoryGuardTests.test_interrupted_launch_without_popen_handle_cleans_owned_tree) ... ok
+test_memory_breach_reaps_setsid_adopted_descendant (resources.test_run_memory_guarded.MemoryGuardTests.test_memory_breach_reaps_setsid_adopted_descendant) ... ok
+test_pidfd_einval_ignores_only_verified_stale_snapshot (resources.test_run_memory_guarded.MemoryGuardTests.test_pidfd_einval_ignores_only_verified_stale_snapshot) ... ok
+test_pressure_counter_failure_reaps_owned_tree (resources.test_run_memory_guarded.MemoryGuardTests.test_pressure_counter_failure_reaps_owned_tree) ... ok
+test_pressure_stop_reaps_owned_tree_and_leaves_sibling (resources.test_run_memory_guarded.MemoryGuardTests.test_pressure_stop_reaps_owned_tree_and_leaves_sibling) ... ok
+test_stale_parent_identity_never_claims_unrelated_child (resources.test_run_memory_guarded.MemoryGuardTests.test_stale_parent_identity_never_claims_unrelated_child) ... ok
+test_swap_growth_ceiling_stops_only_owned_tree (resources.test_run_memory_guarded.MemoryGuardTests.test_swap_growth_ceiling_stops_only_owned_tree) ... ok
+test_telemetry_failure_reaps_owned_tree_and_reports_incomplete (resources.test_run_memory_guarded.MemoryGuardTests.test_telemetry_failure_reaps_owned_tree_and_reports_incomplete) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 2.048s
+
+OK

@@ -25,6 +25,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -37,17 +38,22 @@ void expect(bool condition, const std::string& message)
 }
 
 template <class Function>
-void expect_rejected(Function&& function, const std::string& message)
+void expect_rejected(Function&& function, const std::string& message,
+                     std::string_view diagnostic = {})
 {
     bool rejected = false;
+    std::string error;
     try {
         function();
-    } catch (const std::runtime_error&) {
+    } catch (const std::runtime_error& exception) {
         rejected = true;
-    } catch (const std::logic_error&) {
+        error = exception.what();
+    } catch (const std::logic_error& exception) {
         rejected = true;
+        error = exception.what();
     }
     expect(rejected, message);
+    expect(error.find(diagnostic) != std::string::npos, message + ": " + error);
 }
 
 void write_bytes(const std::filesystem::path& path, const std::string& bytes)
@@ -347,6 +353,10 @@ void test_hdf5_round_trip(const std::filesystem::path& directory)
            "checkpoint did not preserve ENUC state");
     expect(restored.rhoX == checkpoint.rhoX,
            "checkpoint changed species conserved state");
+    expect(restored.state_controls == checkpoint.state_controls
+               && restored.state_controls.size() == arch::config::StateControlCount
+               && restored.state_controls.front() == arch::config::StateControlRevision,
+           "checkpoint did not preserve the current control identity");
     expect(restored.has_mass_fractions
                && restored.mass_fractions == checkpoint.mass_fractions,
            "checkpoint changed native composition");
@@ -595,11 +605,66 @@ void test_host_restart(const std::filesystem::path& directory)
     };
     const auto before = snapshot();
     const auto reject_unchanged = [&](const io::CheckpointProvenance& expected,
-                                      const std::string& reason) {
+                                      const std::string& reason,
+                                      std::string_view diagnostic = {}) {
         expect_rejected([&] { read_chk(path.string(), protected_tree, protected_state,
-                                      config, species, expected); }, reason);
+                                      config, species, expected); }, reason, diagnostic);
         expect(snapshot() == before, "rejected restart modified live state: " + reason);
     };
+    // Format v6 predates controls revision 2. Exercise an actual v6/15-value
+    // payload instead of merely changing the currently active configuration.
+    auto legacy_controls = checkpoint.state_controls;
+    legacy_controls.resize(15);
+    legacy_controls[0] = 1.0;
+    auto future_controls = checkpoint.state_controls;
+    future_controls[0] = arch::config::StateControlRevision + 1.0;
+    auto short_controls = checkpoint.state_controls;
+    short_controls.pop_back();
+    auto nonfinite_controls = checkpoint.state_controls;
+    nonfinite_controls[1] = std::numeric_limits<double>::quiet_NaN();
+    for (const auto& [controls, diagnostic] : std::vector<std::pair<std::vector<double>, std::string>>{
+             {legacy_controls, "Unsupported checkpoint state-control revision"},
+             {future_controls, "Unsupported checkpoint state-control revision"},
+             {short_controls, "Invalid checkpoint state-control length"},
+             {nonfinite_controls, "missing or nonfinite values"},
+             {{}, "missing or nonfinite values"}}) {
+        io::write_hdf5_chk_impl(path.string(), checkpoint);
+        const auto original_digest = arch::core::file_sha256(path.string());
+        auto rejected_payload = checkpoint;
+        rejected_payload.state_controls = controls;
+        expect_rejected([&] { io::write_hdf5_chk_impl(path.string(), rejected_payload); },
+                        "writer accepted invalid controls", diagnostic);
+        expect(arch::core::file_sha256(path.string()) == original_digest,
+               "rejected writer truncated the previous checkpoint");
+        {
+            HighFive::File file(path.string(), HighFive::File::ReadWrite);
+            file.unlink("state_controls");
+            file.createDataSet("state_controls", controls);
+        }
+        reject_unchanged(identity, "invalid or incompatible checkpoint controls", diagnostic);
+    }
+    // Damage the repair ledger independently of the now-valid control identity.
+    for (int corruption = 0; corruption < 3; ++corruption) {
+        io::write_hdf5_chk_impl(path.string(), checkpoint);
+        auto ledger = checkpoint.repairs.values;
+        if (corruption == 0) ledger[0] = -1.0;
+        if (corruption == 1) ledger[0] = std::numeric_limits<double>::quiet_NaN();
+        if (corruption == 2) ledger.pop_back();
+        auto rejected_payload = checkpoint;
+        rejected_payload.repairs.values = ledger;
+        const auto original_digest = arch::core::file_sha256(path.string());
+        expect_rejected([&] { io::write_hdf5_chk_impl(path.string(), rejected_payload); },
+                        "writer accepted corrupt repair accounting", "repair ledger is invalid");
+        expect(arch::core::file_sha256(path.string()) == original_digest,
+               "invalid repair ledger truncated the previous checkpoint");
+        {
+            HighFive::File file(path.string(), HighFive::File::ReadWrite);
+            file.unlink("state_repairs");
+            file.createDataSet("state_repairs", ledger);
+        }
+        reject_unchanged(identity, "corrupt repair accounting", "repair ledger is invalid");
+    }
+    io::write_hdf5_chk_impl(path.string(), checkpoint);
     for (const int version : {0, 1, 2, 3, io::checkpoint_format_version + 1}) {
         {
             HighFive::File file(path.string(), HighFive::File::ReadWrite);
@@ -615,7 +680,7 @@ void test_host_restart(const std::filesystem::path& directory)
         }
         reject_unchanged(identity, std::string("missing required attribute ") + attribute);
     }
-    for (const char* dataset : {"Data/enuc_rate", "Data/X", "Species/name"}) {
+    for (const char* dataset : {"Data/enuc_rate", "Data/X", "Species/name", "state_controls", "state_repairs"}) {
         io::write_hdf5_chk_impl(path.string(), checkpoint);
         {
             HighFive::File file(path.string(), HighFive::File::ReadWrite);
