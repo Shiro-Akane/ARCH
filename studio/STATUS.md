@@ -679,3 +679,14 @@ Target A1–A17 rechecked. Session integration, latest-pending scheduling, real 
 - Real native Windows UAT: root/nested/space paths, missing prerequisites/binary, picker recovery, Build, Save/Save As, warm Preview, AMR, close/relaunch/no orphans.
 - Reports: PHASE2G_DESKTOP_LAUNCH_REPORT.md and PHASE2G_COMPLETION_REPORT.md; A/B summaries linked.
 - Checkpoint studio-phase2g-v0.16.0. A/B tags unchanged. STOP: no Phase3 or automatic push.
+
+## Phase 2H-A — Mainline sync / CPU revalidation checkpoint
+- Active target fully re-read: PHASE2H_TARGET.md. Only A authorized; B/C unstarted.
+- Disposable exact-tree audit passed before implementation. All 18,928 non-Studio tracked entries match authoritative 502eadcb33a9e2d3c8bd079a10dbdc8af208ef10.
+- Pure Core sync commit 86f999bafccf5868cef4e4258ff0e166048a35ae; separate Studio build/path changes. No main merge or local scientific patch.
+- New independent CPU Debug build succeeded: CUDA OFF, KLU OFF, OpenMP ON, BUILD_TESTING ON.
+- Current Core targeted gate 13/13 PASS, 231.54s; schema extension version 2 / 92 parameters / 14 registered cases, with raw ignored snapshots.
+- All 75 prior Manifest inputs migrated, 2 public wrappers added; new fixed Profile and real Host Build Manifest. dependenciesComplete=false.
+- Build regressions 10/10, lint/typecheck/diff PASS. Full B regression and C desktop UAT are not claimed.
+- Reports: PHASE2H_MAINLINE_SYNC_AUDIT.md and PHASE2H_A_MAINLINE_SYNC_REPORT.md.
+- Local checkpoint studio-phase2h-a-v0.17.0. Original Phase 2G checkout/tag unchanged. STOP; no B/C, Phase3 or automatic push.

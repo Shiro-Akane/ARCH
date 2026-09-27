@@ -12,3 +12,16 @@ test('freshness tracks explicit inputs, not runtime config/repository dirt; prof
 test('inputs changing while a build runs never receive a current-input claim',async()=>{const {root,p}=await fixture();await mkdir(root+'/studio');try{const runner=new BuildRunner(root,'p',p,{spawn:fakeSpawn(root,0,true,100)});await runner.start('p',p.id);await new Promise(r=>setTimeout(r,50));await writeFile(root+'/case.cpp','// changed during compilation');const s=await finished(runner);assert.equal(s.state,'succeeded');assert.equal(s.lastSuccessfulBuild?.inputsStableDuringBuild,false);assert.equal(s.binaryState,'needs-build');}finally{await rm(root,{recursive:true,force:true});}});
 
 test('runner command and environment come only from the Host profile',async()=>{const {root,p}=await fixture();await mkdir(root+'/studio');try{const runFake=fakeSpawn(root) as (...args:unknown[])=>unknown;const runner=new BuildRunner(root,'p',p,{spawn:((program:unknown,args:unknown,options:unknown)=>{assert.equal(program,'/usr/bin/cmake');assert.deepEqual(args,['--build',root+'/build','--target','ARCH','--parallel','4']);const o=options as {cwd:string;shell:boolean;env:Record<string,string>};assert.equal(o.cwd,root);assert.equal(o.shell,false);assert.deepEqual(Object.keys(o.env).sort(),['HOME','LANG','PATH']);return runFake(program,args,options);}) as never});await runner.start('p',p.id);assert.equal((await finished(runner)).state,'succeeded');}finally{await rm(root,{recursive:true,force:true});}});
+
+test('missing migrated tracked input invalidates the profile before any process starts',async()=>{
+ const {root,p}=await fixture();
+ try{
+  const profile={...p,trackedInputs:[...p.trackedInputs,'removed/core/header.h']};
+  await assert.rejects(validateProfile(root,profile),/profile migration required: removed\/core\/header\.h/);
+  let spawned=false;
+  const runner=new BuildRunner(root,'project',profile,{spawn:(()=>{spawned=true;throw new Error('must not spawn');}) as never});
+  await assert.rejects(runner.start('project',profile.id),/profile migration required/);
+  assert.equal(spawned,false);
+  assert.equal(runner.snapshot().configured,false);
+ }finally{await rm(root,{recursive:true,force:true});}
+});

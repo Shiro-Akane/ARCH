@@ -15,6 +15,10 @@ export async function validateProfile(root:string,p:BuildProfile,cmake=CMAKE){
  if(!Number.isInteger(p.parallelism)||p.parallelism<1||p.parallelism>28)throw new Error('Invalid fixed parallelism.');
  for(const rel of [p.buildDirRelative,p.outputBinaryRelative,...p.trackedInputs,...(p.sourceRelativePath?[p.sourceRelativePath]:[])])selectedPath(rel);
  if(p.trackedInputs.length>128||p.trackedInputs.some(x=>x.endsWith('.par')))throw new Error('Invalid tracked build inputs; runtime config is not compiled.');
+ for(const rel of new Set([...p.trackedInputs,...(p.sourceRelativePath?[p.sourceRelativePath]:[])])){
+  try{if(!(await stat(await checkedPath(root,rel))).isFile())throw new Error('Not a file');}
+  catch{throw new Error('Tracked input unavailable; profile migration required: '+rel);}
+ }
  const dir=await checkedPath(root,p.buildDirRelative);if(!(await stat(dir)).isDirectory())throw new Error('Build directory is not configured.');
  const cachePath=await checkedPath(root,p.buildDirRelative+'/CMakeCache.txt');if((await stat(cachePath)).size>2*1024*1024)throw new Error('CMake cache exceeds limit.');
  const cache=await readFile(cachePath,'utf8');
@@ -25,6 +29,98 @@ export async function validateProfile(root:string,p:BuildProfile,cmake=CMAKE){
  return dir;
 }
 
-// Separate fixed integration project. This never rebinds the existing CUDA tree.
-export const PREVIEW_BUILD_PROFILE:BuildProfile={...ARCH_PROFILE,id:'arch-preview-cpu-integration',displayName:'ARCH Preview CPU integration (Debug)',managedSourceRoot:'/home/arch/projects/ARCH-phase2g-continuous-local-workflow',registeredCases:['Sod','CellularDet'],caseId:'CellularDet',sourceRelativePath:'simulation/Cellular/Cellular.cpp',buildDirRelative:'build-preview-audit',outputBinaryRelative:'build-preview-audit/bin/ARCH',trackedInputs:ARCH_PROFILE.trackedInputs.filter(p=>p!=='build-cuda/CMakeCache.txt').concat(['build-preview-audit/CMakeCache.txt','src/core/StandardParameters.h','src/api/Configuration.h','src/api/Configuration.cpp','src/api/PresentationMetadata.cpp','src/api/LogCapture.h','src/driver/dispatch/PolicyDescriptor.h','src/driver/dispatch/ResolvedExecutionPlan.h','src/api/Preview.cpp','src/api/PreviewCommand.cpp','src/api/Preview.h','src/api/Json.h','src/core/InitialStateConversion.h','src/core/ProblemHelper.cpp','src/core/RuntimeParams.h','src/core/FileFingerprint.cpp','src/core/FileFingerprint.h','src/interface/GenericProblem.h','src/interface/ProblemGenerator.h','src/data/UserTypes.h','src/io/ConfigParser.h','cmake/tests/HostTests.cmake','src/api/ParameterMetadata.cpp','src/api/ParameterMetadata.h','src/interface/PreviewMetadata.h','src/data/GlobalDefs.h','src/api/Sampling.h','src/api/Response.h','src/core/ProblemHelper.h','src/grid/Grid.h','src/physics/constant/PhysicalConstants.h','src/amr/AmrDefines.h','simulation/Cellular/Cellular.cpp',"src/amr/RefinementThermodynamics.h","src/api/ApplicationContract.h","src/api/CaseInspection.cpp","src/api/CaseInspection.h","src/api/CaseUnitEvidence.cpp","src/api/Discovery.cpp","src/api/InitialMesh.h","src/api/InitialSampleCache.h","src/api/ParameterPresentation.h","src/api/PreviewSession.cpp","src/api/PreviewSession.h","src/api/Progress.h","src/api/RequestInput.h","src/api/ResourceEstimates.cpp","src/api/ResourceEstimates.h","src/api/SessionInput.h","src/api/StateSnapshot.cpp","src/api/StateSnapshot.h","src/api/ValueDomain.h","src/api/WorkerLimits.cpp","src/api/WorkerLimits.h","src/core/InspectionSources.h","src/core/UserInterface.h","src/core/VerifiedFileCache.h","src/driver/Driver.h","src/driver/InitialMesh.h","src/driver/SolverDispatch.cpp","src/physics/eos/IdealGas.h","src/physics/eos/InspectionEosCache.h","src/physics/eos/eosdispatch.h","src/physics/network/timmes_common/TimmesNetworkSupport.h","src/physics/species/Species.h"]) };
+// Fixed Phase 2H CPU project. Legacy CUDA and sealed Phase 2G trees stay separate.
+// Explicit reviewed inputs are not a complete transitive dependency graph.
+export const PREVIEW_BUILD_PROFILE:BuildProfile={
+ ...ARCH_PROFILE,
+ id:'arch-mainline-cpu-integration',
+ displayName:'ARCH mainline CPU integration (Debug)',
+ managedSourceRoot:'/home/arch/projects/ARCH-phase2h-mainline-capability-sync',
+ registeredCases:['Sod','CellularDet'],
+ caseId:'CellularDet',
+ sourceRelativePath:'simulation/Cellular/Cellular.cpp',
+ buildDirRelative:'build-phase2h-cpu',
+ outputBinaryRelative:'build-phase2h-cpu/bin/ARCH',
+ parallelism:8,
+ dependenciesComplete:false,
+ trackedInputs:[
+  'simulation/Sod/Sod.cpp',
+  'src/main.cpp',
+  'src/core/problem/ProblemRegistry.h',
+  'CMakeLists.txt',
+  'CMakePresets.json',
+  'cmake/project/Application.cmake',
+  'cmake/project/BuildOptions.cmake',
+  'cmake/cuda/CudaBackend.cmake',
+  'cmake/dependencies/Dependencies.cmake',
+  'cmake/CustomNetworks.cmake',
+  'build-phase2h-cpu/CMakeCache.txt',
+  'src/core/config/StandardParameters.h',
+  'src/api/Configuration.h',
+  'src/api/configuration/Configuration.cpp',
+  'src/api/configuration/PresentationMetadata.cpp',
+  'src/api/protocol/LogCapture.h',
+  'src/driver/dispatch/PolicyDescriptor.h',
+  'src/driver/dispatch/capability/ResolvedExecutionPlan.h',
+  'src/api/preview/Preview.cpp',
+  'src/api/preview/PreviewCommand.cpp',
+  'src/api/Preview.h',
+  'src/api/protocol/Json.h',
+  'src/core/problem/InitialStateConversion.h',
+  'src/core/problem/ProblemHelper.cpp',
+  'src/core/config/RuntimeParams.h',
+  'src/core/files/FileFingerprint.cpp',
+  'src/core/files/FileFingerprint.h',
+  'src/interface/GenericProblem.h',
+  'src/interface/ProblemGenerator.h',
+  'src/data/UserTypes.h',
+  'src/io/ConfigParser.h',
+  'cmake/tests/HostTests.cmake',
+  'src/api/configuration/ParameterMetadata.cpp',
+  'src/api/configuration/ParameterMetadata.h',
+  'src/interface/PreviewMetadata.h',
+  'src/data/GlobalDefs.h',
+  'src/api/preview/Sampling.h',
+  'src/api/protocol/Response.h',
+  'src/core/problem/ProblemHelper.h',
+  'src/grid/Grid.h',
+  'src/physics/constant/PhysicalConstants.h',
+  'src/amr/topology/AmrDefines.h',
+  'simulation/Cellular/Cellular.cpp',
+  'src/amr/refinement/RefinementThermodynamics.h',
+  'src/api/ApplicationContract.h',
+  'src/api/inspection/CaseInspection.cpp',
+  'src/api/CaseInspection.h',
+  'src/api/inspection/CaseUnitEvidence.cpp',
+  'src/api/inspection/Discovery.cpp',
+  'src/api/preview/InitialMesh.h',
+  'src/api/session/InitialSampleCache.h',
+  'src/api/configuration/ParameterPresentation.h',
+  'src/api/session/PreviewSession.cpp',
+  'src/api/PreviewSession.h',
+  'src/api/protocol/Progress.h',
+  'src/api/protocol/RequestInput.h',
+  'src/api/preview/ResourceEstimates.cpp',
+  'src/api/preview/ResourceEstimates.h',
+  'src/api/session/SessionInput.h',
+  'src/api/preview/StateSnapshot.cpp',
+  'src/api/preview/StateSnapshot.h',
+  'src/api/configuration/ValueDomain.h',
+  'src/api/resources/WorkerLimits.cpp',
+  'src/api/resources/WorkerLimits.h',
+  'src/core/files/InspectionSources.h',
+  'src/core/config/UserInterface.h',
+  'src/core/files/VerifiedFileCache.h',
+  'src/driver/Driver.h',
+  'src/driver/initialization/InitialMesh.h',
+  'src/driver/SolverDispatch.cpp',
+  'src/physics/eos/IdealGas.h',
+  'src/physics/eos/InspectionEosCache.h',
+  'src/physics/eos/eosdispatch.h',
+  'src/physics/network/timmes_common/TimmesNetworkSupport.h',
+  'src/physics/species/Species.h',
+  'include/UserInterface.h',
+  'include/GlobalDefs.h',
+ ],
+};
 export const BUILD_PROFILES=[ARCH_PROFILE,PREVIEW_BUILD_PROFILE];
