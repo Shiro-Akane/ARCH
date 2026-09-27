@@ -335,13 +335,18 @@ Probe run_device(View view, const std::vector<double>& Xi, double rho, double T,
     return result;
 }
 
-void compare(const Probe& device, const Probe& host, const char *eos)
+void compare(const Probe& device, const Probe& host, const char *eos,
+             double extended_helm_roundoff = 0.0)
 {
     const std::string prefix = std::string(eos) + ".";
     // Frozen from the original H100 run; each is the observed per-field maximum
     // plus a 20-25% rounding margin, rather than a shared wide tolerance bucket.
     close(device.gamma, host.gamma, 0.0, prefix + "gamma");
-    close(device.cv, host.cv, 3.0e-16, prefix + "cv");
+    // These added weak/strong Coulomb states permit 8*epsilon of roundoff
+    // in cv, recovered T and dP/dT only. A zero default keeps
+    // every original reference-state gate unchanged; this is not an EOS
+    // stopping tolerance or a shared replacement for derivative budgets.
+    close(device.cv, host.cv, std::max(3.0e-16, extended_helm_roundoff), prefix + "cv");
     close(device.pressure_rho_T, host.pressure_rho_T, 4.1e-14,
           prefix + "pressure_rho_T");
     close(device.eint, host.eint, 6.0e-16, prefix + "eint");
@@ -351,7 +356,8 @@ void compare(const Probe& device, const Probe& host, const char *eos)
         std::string(eos).find("iteration identity") != std::string::npos
             ? 8.0e-15
             : 5.0e-16;
-    close(device.temperature, host.temperature, temperature_tolerance,
+    close(device.temperature, host.temperature,
+          std::max(temperature_tolerance, extended_helm_roundoff),
           prefix + "temperature");
     close(device.pressure_rho_e, host.pressure_rho_e, 4.1e-14,
           prefix + "pressure_rho_e");
@@ -369,12 +375,12 @@ void compare(const Probe& device, const Probe& host, const char *eos)
           prefix + "total_energy");
     close(device.state_P, host.state_P, 4.1e-14, prefix + "state.P");
     close(device.state_E, host.state_E, 6.0e-16, prefix + "state.E");
-    close(device.state_cv, host.state_cv, 3.0e-16, prefix + "state.cv");
+    close(device.state_cv, host.state_cv, std::max(3.0e-16, extended_helm_roundoff), prefix + "state.cv");
     close(device.state_sound_speed, host.state_sound_speed, 5.0e-10,
           prefix + "state.sound_speed");
     close(device.state_dp_drho, host.state_dp_drho, 1.1e-9,
           prefix + "state.dp_drho");
-    close(device.state_dp_dT, host.state_dp_dT, 0.0, prefix + "state.dp_dT");
+    close(device.state_dp_dT, host.state_dp_dT, extended_helm_roundoff, prefix + "state.dp_dT");
     close(device.state_pele, host.state_pele, 4.5e-14, prefix + "state.pele");
     close(device.state_xne, host.state_xne, 0.0, prefix + "state.xne");
     close(device.state_eta, host.state_eta, 0.0, prefix + "state.eta");
@@ -1239,6 +1245,33 @@ void test_helm(cudaStream_t stream)
     HelmEos host(std::string(ARCH_SOURCE_DIR) +
                      "/EOS_toolkit/tables/helmholtz/helm_table.dat", &species);
     const auto host_view = host.get_view();
+    // New physical control crosses owner upload unchanged; compare every
+    // thermal/composition derivative at weak and strong coupling. Host
+    // component tests independently check the scaled thermodynamic potential.
+    for (double fraction : {0.0,0.5}) {
+        auto scaled=host_view; scaled.coulomb_mult=fraction;
+        arch::cuda::HelmEosDeviceOwner scaled_owner(scaled,stream);
+        require(scaled_owner.view().coulomb_mult==fraction,"Coulomb fraction lost on upload");
+        for (const auto point : {std::array<double,2>{1e2,1.73e8}, std::array<double,2>{1e9,2.37e7}}) {
+            compare(run_device(scaled_owner.view(),Xi,point[0],point[1],stream),
+                    probe_leaf(scaled,Xi.data(),point[0],point[1]),"scaled Helm",
+                    8 * std::numeric_limits<double>::epsilon());
+            arch::cuda::DeviceAllocation<HelmDifferentialsSample> allocation;
+            allocation.allocate(1);
+            helm_differentials_kernel<<<1,1,0,stream>>>(scaled_owner.view(),point[0],point[1],allocation.get());
+            cuda_check(cudaGetLastError(),"scaled Helm derivatives");
+            HelmDifferentialsSample gpu{};
+            cuda_check(cudaMemcpyAsync(&gpu,allocation.get(),sizeof(gpu),cudaMemcpyDeviceToHost,stream),"scaled derivative copy");
+            cuda_check(cudaStreamSynchronize(stream),"scaled derivative completion");
+            const auto cpu=helm_differentials(scaled,point[0],point[1]);
+            for(int i=0;i<10;++i) close(gpu.values[i],cpu.values[i],2e-9,"scaled derivative parity");
+            for(int i=0;i<2;++i) close(gpu.energy_gradient[i],cpu.energy_gradient[i],2e-9,"scaled energy gradient");
+            for(int i=0;i<3;++i) {
+                close(gpu.cv_gradient[i],cpu.cv_gradient[i],2e-9,"scaled cv gradient");
+                close(gpu.hessian_action[i],cpu.hessian_action[i],2e-9,"scaled Hessian action");
+            }
+        }
+    }
     test_helm_polynomials(host_view, stream);
     eos_state_t frozen{};
     frozen.rho = 1.0e6; frozen.T = 1.0e8; frozen.Xi = Xi.data();

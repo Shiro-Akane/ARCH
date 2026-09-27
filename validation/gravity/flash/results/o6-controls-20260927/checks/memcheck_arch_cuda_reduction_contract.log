@@ -1,0 +1,4 @@
+========= COMPUTE-SANITIZER
+D2_CUDA_REDUCTION_CONTRACT_PASS edge_cases=36
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors

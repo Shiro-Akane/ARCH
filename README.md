@@ -29,6 +29,9 @@ To run your very first simulation, follow the [Build](#build) and [First run](#f
 
 ## Project status
 
+The [v1.2.1 candidate notes](docs/releases/V1.2.1.md) describe the current performance
+patch, physical controls, validated scope and remaining performance limits.
+
 The [v1.2.0 update notes](docs/releases/V1.2.0.md) describe self-gravity, source
 refactoring and migration from v1.1.0. The [v1.1.0 release notes](docs/releases/V1.1.0.md)
 retain their original CUDA performance and package scope.

@@ -111,7 +111,11 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
 #else
     std::cout << " | OpenMP: OFF";
 #endif
-    std::cout << std::endl;
+    if (arch::dispatch::ascii_iequals(config.numerics.solver_name,"HLLC")
+        || arch::dispatch::ascii_iequals(config.numerics.solver_name,"HLL"))
+        std::cout << " | HLL speeds: " << (config.numerics.hll_roe_wave_speed ? "Roe-Glaister" : "Davis");
+    std::cout << " | Coulomb fraction: " << config.physics.eos_coulomb_mult
+              << " | dt_max: " << config.numerics.dt_max << std::endl;
 
     bool has_burn = config.physics.burn.use_burn;
     bool has_diff = config.physics.diffusion.use_diffusion;

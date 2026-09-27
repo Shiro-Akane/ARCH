@@ -1,0 +1,34 @@
+========= COMPUTE-SANITIZER
+CUDA_HYDRO_ROUTE index=0 flux=0 reconstruction=0 limiter=0 hash=0x7515c35b369f3979
+CUDA_HYDRO_ROUTE index=1 flux=0 reconstruction=2 limiter=0 hash=0xfc2e45ca639c33b7
+CUDA_HYDRO_ROUTE index=2 flux=0 reconstruction=1 limiter=0 hash=0xcd949534921fe218
+CUDA_HYDRO_ROUTE index=3 flux=0 reconstruction=1 limiter=1 hash=0x616db897ee1e83b2
+CUDA_HYDRO_ROUTE index=4 flux=0 reconstruction=1 limiter=2 hash=0x8a22dba81df8335
+CUDA_HYDRO_ROUTE index=5 flux=0 reconstruction=1 limiter=3 hash=0x7b7cd7dcd669762e
+CUDA_HYDRO_ROUTE index=6 flux=1 reconstruction=0 limiter=0 hash=0x3dc226828b7ba9dd
+CUDA_HYDRO_ROUTE index=7 flux=1 reconstruction=2 limiter=0 hash=0x5fb05a4b3cf32f17
+CUDA_HYDRO_ROUTE index=8 flux=1 reconstruction=1 limiter=0 hash=0xb23d7e317363e42b
+CUDA_HYDRO_ROUTE index=9 flux=1 reconstruction=1 limiter=1 hash=0xec3ad7f53821b3c
+CUDA_HYDRO_ROUTE index=10 flux=1 reconstruction=1 limiter=2 hash=0xa68379b36dafe645
+CUDA_HYDRO_ROUTE index=11 flux=1 reconstruction=1 limiter=3 hash=0x51265d470e571178
+CUDA_HYDRO_ROUTE index=12 flux=2 reconstruction=0 limiter=0 hash=0xc4e3977a153f7e10
+CUDA_HYDRO_ROUTE index=13 flux=2 reconstruction=2 limiter=0 hash=0x4bb64c4ca434b76f
+CUDA_HYDRO_ROUTE index=14 flux=2 reconstruction=1 limiter=0 hash=0xa4c012448f9c0642
+CUDA_HYDRO_ROUTE index=15 flux=2 reconstruction=1 limiter=1 hash=0x7c4795f2b5b30cd0
+CUDA_HYDRO_ROUTE index=16 flux=2 reconstruction=1 limiter=2 hash=0x2cd1be8417c21be6
+CUDA_HYDRO_ROUTE index=17 flux=2 reconstruction=1 limiter=3 hash=0x57651e4cd97ebbc
+CUDA_HYDRO_ROUTE index=18 flux=3 reconstruction=0 limiter=0 hash=0xb99dec6af3942acf
+CUDA_HYDRO_ROUTE index=19 flux=3 reconstruction=2 limiter=0 hash=0x4bb64c4ca434b76f
+CUDA_HYDRO_ROUTE index=20 flux=3 reconstruction=1 limiter=0 hash=0xa43275cfb13c617e
+CUDA_HYDRO_ROUTE index=21 flux=3 reconstruction=1 limiter=1 hash=0x1551367493d168ab
+CUDA_HYDRO_ROUTE index=22 flux=3 reconstruction=1 limiter=2 hash=0xf9cb804189818275
+CUDA_HYDRO_ROUTE index=23 flux=3 reconstruction=1 limiter=3 hash=0x2d617d515a1fad53
+CUDA_HYDRO_ROUTE index=24 flux=4 reconstruction=0 limiter=0 hash=0x5eb1d112b799146a
+CUDA_HYDRO_ROUTE index=25 flux=4 reconstruction=2 limiter=0 hash=0x4bb64c4ca434b76f
+CUDA_HYDRO_ROUTE index=26 flux=4 reconstruction=1 limiter=0 hash=0x62c0fc6fcdaad4fe
+CUDA_HYDRO_ROUTE index=27 flux=4 reconstruction=1 limiter=1 hash=0x306a291729bc4159
+CUDA_HYDRO_ROUTE index=28 flux=4 reconstruction=1 limiter=2 hash=0x13a162c3d197dd63
+CUDA_HYDRO_ROUTE index=29 flux=4 reconstruction=1 limiter=3 hash=0x2ad9923fde0a1347
+CUDA_HYDRO_ROUTE_MATRIX_PASS routes=30 davis_routes=12
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors

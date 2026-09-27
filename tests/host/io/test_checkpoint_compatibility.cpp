@@ -522,6 +522,18 @@ void test_host_restart(const std::filesystem::path& directory)
     const auto path = directory / "host-restart.h5";
     io::write_hdf5_chk_impl(path.string(), checkpoint);
 
+    // A control change must fail before replacing the live AMR state.
+    for(int control=0;control<3;++control) {
+        auto changed=config;
+        if(control==0) changed.numerics.dt_max=1.;
+        if(control==1) changed.physics.eos_coulomb_mult=.5;
+        if(control==2) changed.numerics.hll_roe_wave_speed=false;
+        amr::AMRControl untouched(config.grid.amr_max_blocks,config.grid.dim);
+        RunState unchanged;
+        expect_rejected([&] { read_chk(path.string(),untouched,unchanged,changed,species,identity); },
+                        "restart accepted a changed Coulomb/face/timestep control");
+    }
+
     amr::AMRControl restored(config.grid.amr_max_blocks, config.grid.dim);
     RunState state;
     read_chk(path.string(), restored, state, config, species, identity);

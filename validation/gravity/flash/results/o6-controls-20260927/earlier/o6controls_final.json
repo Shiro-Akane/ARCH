@@ -1,0 +1,474 @@
+{
+  "scope": "complete process wall clock; serial alternating runs; actual checkpoint endpoint",
+  "binary_identity": {
+    "arch": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+      "sha256": "c426f642feebc331862c188c9aef533635e69a69f490febf48cb9cf967bec8e5"
+    },
+    "flash_object_sod": {
+      "path": "/home/shiroakane/FLASH4.8/object_sod/flash4",
+      "sha256": "c00c9adc716e53207cb13e495746081d3e4ed8f334b3fd95c82bf1db9257667c"
+    },
+    "flash_object_jeans": {
+      "path": "/home/shiroakane/FLASH4.8/object_jeans/flash4",
+      "sha256": "28fe8c7959a3d7ee11fde42dc9099986b5833ebec448502a814a67cedb8cbe23"
+    },
+    "flash_object": {
+      "path": "/home/shiroakane/FLASH4.8/object/flash4",
+      "sha256": "d36b252f35bfc9c17c4571d6bb8e855c55a153b40104e6b324e70ca8a984975a"
+    }
+  },
+  "mpi_launcher": {
+    "path": "/usr/bin/orterun",
+    "version": "orterun (OpenRTE) 4.1.6\n\nReport bugs to http://www.open-mpi.org/community/help/"
+  },
+  "cpu_threads": 8,
+  "flash_ranks": 8,
+  "cpu_affinity": "0,2,4,6,8,10,12,14",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "sod",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 2.8215456350008026,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_sod_flash_1",
+      "input_fixture": "flash_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714
+    },
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 4.9765836730002775,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_sod_arch_1",
+      "input_fixture": "arch_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.277216075999604,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_sod_arch_2",
+      "input_fixture": "arch_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "sod",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 2.771313833996828,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_sod_flash_2",
+      "input_fixture": "flash_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714
+    },
+    {
+      "case": "sod",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 2.8215522970058373,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_sod_flash_3",
+      "input_fixture": "flash_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714
+    },
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 4.926626232001581,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_sod_arch_3",
+      "input_fixture": "arch_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans64",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 1.3181385830030194,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans64_flash_1",
+      "input_fixture": "flash_jeans_o6plus.par",
+      "physical_time_seconds": 0.1
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 0.7164973280014237,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans64_arch_1",
+      "input_fixture": "arch_jeans_o6plus.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 0.7164744249967043,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans64_arch_2",
+      "input_fixture": "arch_jeans_o6plus.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans64",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 1.318009726004675,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans64_flash_2",
+      "input_fixture": "flash_jeans_o6plus.par",
+      "physical_time_seconds": 0.1
+    },
+    {
+      "case": "jeans64",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 1.3682098040007986,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans64_flash_3",
+      "input_fixture": "flash_jeans_o6plus.par",
+      "physical_time_seconds": 0.1
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 0.7166147319949232,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans64_arch_3",
+      "input_fixture": "arch_jeans_o6plus.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 2.97307512700354,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans128_flash_1",
+      "input_fixture": "flash_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 5.427691600998514,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans128_arch_1",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.527537467001821,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans128_arch_2",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 3.023562829999719,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans128_flash_2",
+      "input_fixture": "flash_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1
+    },
+    {
+      "case": "jeans128",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 2.923195454000961,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans128_flash_3",
+      "input_fixture": "flash_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.4778431430022465,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_jeans128_arch_3",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "a",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 8.869102821001434,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_a_flash_1",
+      "input_fixture": "flash_cellular_o6plus_a.par",
+      "physical_time_seconds": 1.0192286463896491e-08
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 7.155724256001122,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_a_arch_1",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 7.48519246000069,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_a_arch_2",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "a",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 5.300242530996911,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_a_flash_2",
+      "input_fixture": "flash_cellular_o6plus_a.par",
+      "physical_time_seconds": 1.0192286463896491e-08
+    },
+    {
+      "case": "a",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 8.178070160000061,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_a_flash_3",
+      "input_fixture": "flash_cellular_o6plus_a.par",
+      "physical_time_seconds": 1.0192286463896491e-08
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 6.909923967003124,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_a_arch_3",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 10.454414197003643,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_b_flash_1",
+      "input_fixture": "flash_cellular_o6plus_b.par",
+      "physical_time_seconds": 1.029419223692258e-08
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 7.200552148002316,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_b_arch_1",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 7.181832418005797,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_b_arch_2",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 10.27349567199417,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_b_flash_2",
+      "input_fixture": "flash_cellular_o6plus_b.par",
+      "physical_time_seconds": 1.029419223692258e-08
+    },
+    {
+      "case": "b",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 9.481888220005203,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_b_flash_3",
+      "input_fixture": "flash_cellular_o6plus_b.par",
+      "physical_time_seconds": 1.029419223692258e-08
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 7.801981756994792,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_b_arch_3",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 10.200007357001596,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_noburn_flash_1",
+      "input_fixture": "flash_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 4.442278718001035,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_noburn_arch_1",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 4.274897269002395,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_noburn_arch_2",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 8.857726966998598,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_noburn_flash_2",
+      "input_fixture": "flash_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08
+    },
+    {
+      "case": "noburn",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 9.023327866998443,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_noburn_flash_3",
+      "input_fixture": "flash_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 4.440701904000889,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_noburn_arch_3",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 16.12419084800058,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_fine_flash_1",
+      "input_fixture": "flash_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 31.005515470002138,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_fine_arch_1",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 30.038121809004224,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_fine_arch_2",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "flash",
+      "repeat": 2,
+      "wall_seconds": 9.59601461400598,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_fine_flash_2",
+      "input_fixture": "flash_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08
+    },
+    {
+      "case": "fine",
+      "backend": "flash",
+      "repeat": 3,
+      "wall_seconds": 8.579617904993938,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_fine_flash_3",
+      "input_fixture": "flash_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 32.11597117999918,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_final_fine_arch_3",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    }
+  ],
+  "arch_parameter_overrides": {},
+  "comparison_kind": "original strict fixture"
+}

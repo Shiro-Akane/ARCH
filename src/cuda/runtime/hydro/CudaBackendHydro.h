@@ -33,6 +33,7 @@ struct DeviceHydroBatchBlock {
     // Required mean-state thermodynamics, rebuilt for every stage input.
     double* mean_pressure = nullptr;
     double* mean_sound_speed = nullptr;
+    bool roe_wave_speed = true;
 };
 static_assert(std::is_trivially_copyable_v<DeviceHydroBatchBlock>);
 

@@ -104,7 +104,7 @@ __global__ void hydro_batch_faces(const DeviceHydroBatchBlock* blocks, Eos eos,
     if (direction >= b.grid.dim) return;
     hydro_face_kernel_work<Reconstruction, Flux>(b.input, b.face_flux, b.grid,
         make_checked_hydro_eos(eos, b.eos_status), direction, coefficient, workspace,
-        b.mean_pressure, b.mean_sound_speed);
+        b.mean_pressure, b.mean_sound_speed, b.roe_wave_speed);
 }
 
 static __global__ void hydro_batch_divergence(const DeviceHydroBatchBlock* blocks,

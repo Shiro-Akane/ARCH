@@ -33,21 +33,9 @@ struct CudaOriginalFluxPolicy
         const FluxAdmissibility::MeanThermoView* means = nullptr,
         int left_cell = -1, int right_cell = -1)
     {
-        // Forward optional execution data to the shared policy that consumes
-        // it; other fluxes keep their original interface and mathematics.
-        if constexpr (requires {
-            OriginalFlux<PCMReconstruction>::compute_face_flux(
-                left, right, species_left, species_right, n_species, eos,
-                direction, coefficient, flux, species_flux, means, left_cell, right_cell);
-        }) {
-            OriginalFlux<PCMReconstruction>::compute_face_flux(
-                left, right, species_left, species_right, n_species, eos,
-                direction, coefficient, flux, species_flux, means, left_cell, right_cell);
-        } else {
-            OriginalFlux<PCMReconstruction>::compute_face_flux(
-                left, right, species_left, species_right, n_species, eos,
-                direction, coefficient, flux, species_flux);
-        }
+        OriginalFlux<PCMReconstruction>::compute_face_flux(
+            left,right,species_left,species_right,n_species,eos,direction,coefficient,
+            flux,species_flux,means,left_cell,right_cell);
     }
 };
 

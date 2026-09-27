@@ -56,6 +56,7 @@ struct BasicHelmEosView {
     const double *density_nodes = nullptr;
     const double *temperature_nodes = nullptr;
     SpeciesView specs{};
+    double coulomb_mult = 1.0; ///< Constant Helm correction fraction for this EOS owner.
 
     // Fixed-composition pressure derivatives and composition coordinates
     // y=sum(X/A), z=sum(X Z/A). These are derivatives of the SAME energy
@@ -206,7 +207,7 @@ struct BasicHelmEosView {
     // energies when evaluating a small temperature derivative. Values are
     // ordered as lower/upper value, first derivative, second derivative;
     // weights[0] is one for a value query and zero for a derivative query.
-    ARCH_INLINE double hermite_row(const double (&values)[6],
+    ARCH_HOST_DEVICE ARCH_FORCE_INLINE double hermite_row(const double (&values)[6],
                                    const double (&weights)[6],
                                    bool upper_is_difference = false) const {
         arch::math::CompensatedSum sum;
@@ -468,6 +469,16 @@ struct BasicHelmEosView {
                     coupling_squared_f_second = -2.25 * c2 * g32 + b2 * (b2 - 1.0) * a2 * gb2;
             }
         }
+
+        // A constant physical correction fraction scales the SAME free-energy
+        // contribution and every derivative: Q = Q_ideal+electron+radiation
+        // + f_C Q_C. Apply it before the inherited nonpositive-state guard.
+        // f_C=1 preserves the original arithmetic; f_C=0 removes only Coulomb.
+        P_coul *= coulomb_mult;
+        E_coul *= coulomb_mult;
+        dE_coul_dT *= coulomb_mult;
+        coupling_f_first *= coulomb_mult;
+        coupling_squared_f_second *= coulomb_mult;
 
         // Match Timmes' bomb-proofing: disable the correction if it would
         // make pressure or internal energy non-positive.
@@ -1037,8 +1048,12 @@ class HelmEos : public EOSBase, public HelmEosHostView
     std::array<double, jmax> host_temperature_nodes{};
 
 public:
-    HelmEos(const std::string &table_path, const SpeciesManager *species_owner)
+    HelmEos(const std::string &table_path, const SpeciesManager *species_owner,
+            double correction_fraction = 1.0)
     {
+        if (!std::isfinite(correction_fraction) || correction_fraction < 0.0 || correction_fraction > 1.0)
+            throw std::invalid_argument("Helm Coulomb fraction must be in [0,1]");
+        coulomb_mult = correction_fraction;
         std::cout << "[HelmEos] Loading 2D Helmholtz table from "
                   << table_path << "..." << std::endl;
         std::ifstream file(table_path);

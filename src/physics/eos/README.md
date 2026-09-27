@@ -50,3 +50,10 @@ Start with the [tabular EOS guide](TabularEOS.md), configuration
 [Reference](../../../docs/Reference.md) and [EOS validation](../../../validation/eos/README.md).
 The Helmholtz implementation and table retain their
 [Timmes provenance](../../../THIRD_PARTY_NOTICES.md).
+
+`eos_coulomb_mult` is a Helmholtz physical model control: the default 1 retains
+all inherited ion Coulomb corrections, while a finite value in [0,1] scales
+pressure, energy and every corresponding derivative consistently. It is copied
+to the device view and included in owner-cache and restart identities. The
+existing nonpositive pressure/energy cutoff remains in force. This control is
+independent of the missing-electron/positron completion for tabular EOS sources.

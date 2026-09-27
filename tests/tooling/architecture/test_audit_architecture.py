@@ -186,7 +186,7 @@ target_sources(arch_cuda_backend PRIVATE $<TARGET_OBJECTS:${{route_target}}>)
             "one strict Host/CUDA build contract")
 
     def test_accepts_shared_strict_floating_point_contract(self):
-        self.assert_accepted({"CMakeLists.txt": """
+        contract = """
 add_library(arch_build_contract INTERFACE)
 target_compile_options(arch_build_contract INTERFACE
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-ffp-contract=off>
@@ -194,7 +194,16 @@ target_compile_options(arch_build_contract INTERFACE
 target_link_options(arch_build_contract INTERFACE
     $<$<LINK_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-ffp-contract=off>
     $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:$<HOST_LINK:-fno-fast-math;-ffp-contract=off>>)
-"""})
+"""
+        original = "-Xcompiler=-fno-fast-math,-ffp-contract=off"
+        for flags in ("-fno-fast-math,-ffp-contract=off",
+                      "-fno-fast-math,-fno-math-errno,-ffp-contract=off",
+                      "-ffp-contract=off,-fno-math-errno,-fno-fast-math"):
+            self.assert_accepted({"CMakeLists.txt": contract.replace(original,"-Xcompiler="+flags)})
+        for flags in ("-fno-math-errno,-ffp-contract=off",
+                      "-fno-fast-math,-fno-math-errno"):
+            self.assert_rejected_with({"CMakeLists.txt": contract.replace(original,"-Xcompiler="+flags)},
+                                      "one strict Host/CUDA build contract")
 
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
@@ -503,6 +512,17 @@ arch_configure_cuda_backend_object(arch_cuda_backend_grid_metrics
             "cmake/Tests.cmake": """add_executable(arch_cuda_grid_metrics_cache
     tests/cuda/grid/test_grid_metrics_cache.cu src/cuda/common/GridMetricsCache.cu)""",
         }, "multiple target owners")
+
+    def test_reduction_contract_reuses_only_its_gravity_object(self):
+        definition = ("add_executable(arch_cuda_reduction_contract "
+                      "tests/cuda/runtime/test_cuda_reduction_contract.cu)\n")
+        linkage = "target_link_libraries(arch_cuda_reduction_contract PRIVATE arch_cuda_gravity_execution)"
+        self.assert_accepted({"CMakeLists.txt": definition+linkage})
+        for invalid in (
+                definition.replace("test_cuda_reduction_contract.cu","other.cu")+linkage,
+                definition+linkage.replace("arch_cuda_gravity_execution","arch_cuda_backend_core"),
+                definition+linkage.replace("arch_cuda_reduction_contract","other_test")):
+            self.assert_rejected_with({"CMakeLists.txt":invalid},"canonical owner")
 
     def test_accepts_exact_burn_resource_object_links(self):
         for name, extra in (("policy", " src/core/files/FileFingerprint.cpp"),
@@ -984,7 +1004,7 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "double CudaBackend::compute_hydro_dt() {\n"
                 "return compute_hydro_dt_batch({&current, 1}, cfl).front(); }\n"
                 "auto CudaBackend::compute_hydro_dt_batch() {\n"
-                "launch_cuda_backend_hydro_dt(); quiesce();\n"
+                "launch_cuda_backend_hydro_dt_batch(); quiesce();\n"
                 "impl_->runtime_counters.kernel_count += 2; }\n"
                 "auto CudaBackend::execute_hydro_stage() {\n"
                 "return execute_hydro_stage_batch({&current, 1}, descriptor, dt, expected); }\n"
@@ -992,6 +1012,17 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "launch_cuda_backend_hydro_stage_batch(); quiesce();\n"
                 "impl_->runtime_counters.kernel_count += 1; }\n",
         })
+
+    def test_hydro_cfl_batch_requires_its_launch_before_fence_and_publication(self):
+        prefix="auto CudaBackend::compute_hydro_dt_batch() {"
+        launch="launch_cuda_backend_hydro_dt_batch();"
+        count="impl_->runtime_counters.kernel_count += 2;"
+        for body in (launch+count, "quiesce();"+launch+count,
+                     launch+count+"quiesce();",
+                     "launch_cuda_backend_hydro_dt(); quiesce();"+count):
+            self.assert_rejected_with({
+                "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp":prefix+body+"}"},
+                "CUDA bounded work must quiesce before completion: compute_hydro_dt_batch")
 
     def test_accepts_exact_microphysics_batch_delegates(self):
         self.assert_accepted({

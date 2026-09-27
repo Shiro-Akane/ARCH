@@ -1,0 +1,98 @@
+{
+  "build-cpu": {
+    "example_compile_command": "/usr/bin/ccache /usr/bin/c++ -DARCH_CUDA_BUILD_ENABLED=0 -DARCH_HAS_KLU=1 -DARCH_OPENMP_ENABLED=1 -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/src -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/cases -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cpu/generated -I/usr/include/hdf5/serial -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cpu/_deps/highfive-src/include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cpu/_deps/suitesparse-src/KLU/Include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cpu/_deps/suitesparse-src/AMD/Include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cpu/_deps/suitesparse-src/SuiteSparse_config -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cpu/_deps/suitesparse-src/COLAMD/Include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cpu/_deps/suitesparse-src/BTF/Include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -fno-math-errno -ffp-contract=off -fopenmp -Winvalid-pch -include /home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cpu/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -MD -MT CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o -MF CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o.d -o CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o -c /home/shiroakane/.codex/worktrees/compute-optim/ARCH/src/driver/SolverDispatch.cpp",
+    "strict_fast_math_disabled": true,
+    "math_errno_disabled": true,
+    "implicit_fp_contraction_disabled": true
+  },
+  "build-cuda": {
+    "example_compile_command": "/usr/bin/ccache /usr/local/cuda/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-12 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_CUDSS_PROVIDER=1 -DARCH_HAS_KLU=1 -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/src -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/cases -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/generated -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/_deps/suitesparse-src/KLU/Include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/_deps/suitesparse-src/AMD/Include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/_deps/suitesparse-src/SuiteSparse_config -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/_deps/suitesparse-src/COLAMD/Include -I/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/_deps/suitesparse-src/BTF/Include -O3 -DNDEBUG -std=c++20 \"--generate-code=arch=compute_86,code=[compute_86,sm_86]\" --expt-relaxed-constexpr -Xcompiler=-march=native --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-fno-math-errno,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_hydro_helm.dir/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu.o -MF CMakeFiles/arch_cuda_backend_hydro_helm.dir/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu.o.d -x cu -c /home/shiroakane/.codex/worktrees/compute-optim/ARCH/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu -o CMakeFiles/arch_cuda_backend_hydro_helm.dir/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu.o",
+    "strict_fast_math_disabled": true,
+    "math_errno_disabled": true,
+    "implicit_fp_contraction_disabled": true
+  },
+  "source_identity": {
+    "base_commit": "ca1fdcd383033e749c9788ac39d0972a767337f8",
+    "tracked_code_diff_sha256": "3d8c335dae8b3237ea986ca44574a8c332bf69a1428eb45428132cd6055aaae6",
+    "tracked_files": [
+      "cmake/project/Application.cmake",
+      "src/api/configuration/Configuration.cpp",
+      "src/api/configuration/ParameterPresentation.h",
+      "src/api/preview/StateSnapshot.cpp",
+      "src/core/ArchPortability.h",
+      "src/core/CompensatedSum.h",
+      "src/core/config/ConfigValidation.h",
+      "src/core/config/RuntimeParams.h",
+      "src/core/config/StandardParameters.h",
+      "src/cuda/common/CudaLaunchConfig.h",
+      "src/cuda/hydro/kernels/HydroBatchKernels.cuh",
+      "src/cuda/hydro/kernels/HydroFaceKernel.cuh",
+      "src/cuda/hydro/policies/HydroFluxPolicies.cuh",
+      "src/cuda/microphysics/eos/owners/helm_eos_device_owner.cpp",
+      "src/cuda/runtime/hydro/CudaBackendHydro.h",
+      "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+      "src/data/GlobalDefs.h",
+      "src/driver/Driver.h",
+      "src/driver/schedule/DriverControl.h",
+      "src/numerics/flux/FluxHLL.h",
+      "src/numerics/flux/FluxHLLC.h",
+      "src/numerics/flux/FluxRoe.h",
+      "src/numerics/flux/FluxSW.h",
+      "src/numerics/flux/FluxVL.h",
+      "src/numerics/flux/InvariantDomainFlux.h",
+      "src/numerics/integrator/HydroSolverImpl.h",
+      "src/numerics/integrator/TimeIntegratorHelper.h",
+      "src/physics/eos/HelmEos.h",
+      "src/physics/eos/eosdispatch.h",
+      "src/physics/network/timmes_common/ScreeningTimmes.h"
+    ],
+    "new_sources": {
+      "src/numerics/flux/FluxSweep.h": "ec567349ba38e70b85d8f9b173c19452b2213b0854504d879df483199874c6a1"
+    },
+    "scope": "Snapshot used for completed CPU validation/timings; CUDA-only argument-binding correction recorded separately."
+  },
+  "cuda_final_source_identity": {
+    "base_commit": "ca1fdcd383033e749c9788ac39d0972a767337f8",
+    "tracked_code_diff_sha256": "9a39fc6a98c0eb1d6ba392f1a7541b76b9385d89d93434ed3b88137884eccfc4",
+    "tracked_files": [
+      "cmake/project/Application.cmake",
+      "src/api/configuration/Configuration.cpp",
+      "src/api/configuration/ParameterPresentation.h",
+      "src/api/preview/StateSnapshot.cpp",
+      "src/core/ArchPortability.h",
+      "src/core/CompensatedSum.h",
+      "src/core/config/ConfigValidation.h",
+      "src/core/config/RuntimeParams.h",
+      "src/core/config/StandardParameters.h",
+      "src/cuda/common/CudaLaunchConfig.h",
+      "src/cuda/hydro/kernels/HydroBatchKernels.cuh",
+      "src/cuda/hydro/kernels/HydroFaceKernel.cuh",
+      "src/cuda/hydro/policies/HydroFluxPolicies.cuh",
+      "src/cuda/microphysics/eos/owners/helm_eos_device_owner.cpp",
+      "src/cuda/runtime/hydro/CudaBackendHydro.h",
+      "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+      "src/data/GlobalDefs.h",
+      "src/driver/Driver.h",
+      "src/driver/schedule/DriverControl.h",
+      "src/numerics/flux/FluxHLL.h",
+      "src/numerics/flux/FluxHLLC.h",
+      "src/numerics/flux/FluxRoe.h",
+      "src/numerics/flux/FluxSW.h",
+      "src/numerics/flux/FluxVL.h",
+      "src/numerics/flux/InvariantDomainFlux.h",
+      "src/numerics/integrator/HydroSolverImpl.h",
+      "src/numerics/integrator/TimeIntegratorHelper.h",
+      "src/physics/eos/HelmEos.h",
+      "src/physics/eos/eosdispatch.h",
+      "src/physics/network/timmes_common/ScreeningTimmes.h"
+    ],
+    "new_sources": {
+      "src/numerics/flux/FluxSweep.h": "ec567349ba38e70b85d8f9b173c19452b2213b0854504d879df483199874c6a1"
+    },
+    "post_cpu_change_scope": [
+      "src/cuda/hydro/kernels/HydroBatchKernels.cuh",
+      "src/cuda/hydro/kernels/HydroFaceKernel.cuh"
+    ],
+    "change_reason": "Pass the HLL method choice even when optional mean-EOS buffers are absent (IdealGas). Shared mathematical leaves and CPU code unchanged."
+  }
+}

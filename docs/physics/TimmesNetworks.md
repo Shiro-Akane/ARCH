@@ -142,6 +142,11 @@ LHS = I - dt * J
 LHS * delta_U = U_old - U_k + dt * RHS(U_k)
 ```
 
+The shared `ScreeningTimmes.h` separates fixed reaction-pair charge/mass factors
+from the thermodynamic screening state. The small setup wrapper permits compiler
+constant folding for literal pairs; scalar and differentiated evaluation retain
+the same screening formulas, branch limits and CPU/CUDA source.
+
 The screened composition Jacobian uses the original frozen-screening
 convention. Any change to screening-factor differentiation must update the
 Jacobian, LHS, and validation baseline together.

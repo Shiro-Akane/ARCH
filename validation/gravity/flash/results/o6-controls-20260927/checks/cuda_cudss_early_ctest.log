@@ -1,0 +1,10 @@
+Internal ctest changing into directory: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda
+Test project /home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda
+    Start 58: cuda_sparse_be_nr_batch
+1/2 Test #58: cuda_sparse_be_nr_batch ..........   Passed    7.55 sec
+    Start 59: cuda_cudss_sparse_solver
+2/2 Test #59: cuda_cudss_sparse_solver .........   Passed    0.68 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   8.26 sec

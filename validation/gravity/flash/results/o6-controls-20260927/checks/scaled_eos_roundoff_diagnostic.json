@@ -1,0 +1,32 @@
+{
+  "status": "diagnostic only; not an acceptance pass",
+  "production_math_modified": false,
+  "gate_behavior": "Only newly added scaled-state field mismatches accumulated; every pre-existing comparison and independent reference retained its gate.",
+  "affected_point": {
+    "coulomb_fraction": 0.5,
+    "rho_g_cm3": 1000000000.0,
+    "temperature_kelvin": 23700000.0
+  },
+  "mismatches": [
+    {
+      "field": "cv and state.cv",
+      "ulp": 2,
+      "relative_error": 4.4070169068094644e-16,
+      "original_budget": 3e-16
+    },
+    {
+      "field": "recovered temperature",
+      "ulp": 5,
+      "relative_error": 7.859262233041431e-16,
+      "original_budget": 5e-16
+    },
+    {
+      "field": "state.dp_dT",
+      "ulp": 1,
+      "relative_error": 1.964129426701396e-16,
+      "original_budget": 0.0
+    }
+  ],
+  "proposed_new_state_roundoff_window": 1.7763568394002505e-15,
+  "approval": "User explicitly approved the proposed new-state roundoff window; all pre-existing gates remain unchanged."
+}

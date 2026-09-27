@@ -14,6 +14,7 @@
 
 #include "amr/topology/Morton.h"
 #include "data/GlobalDefs.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 #include "io/ConfigParser.h"
 
 namespace arch::config {
@@ -40,6 +41,16 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     nonnegative(n.entropy_fix_coeff, "EntropyFixCoefficient");
     positive(n.dt_init, "dt_init");
     positive(n.dt_min, "dt_min");
+    require(n.dt_max == -1.0 || (std::isfinite(n.dt_max) && n.dt_max >= n.dt_min),
+            "dt_max", "Use -1 for no cap, or a finite cap at least dt_min.");
+    const bool hll_family = arch::dispatch::ascii_iequals(n.solver_name,"HLL")
+                         || arch::dispatch::ascii_iequals(n.solver_name,"HLLC");
+    require(hll_family || n.hll_roe_wave_speed, "hll_wave_speed",
+            "A nondefault signal-speed estimator requires HLL or HLLC; other solvers have their own spectra.");
+    require(std::isfinite(c.physics.eos_coulomb_mult) && c.physics.eos_coulomb_mult >= 0.0
+            && c.physics.eos_coulomb_mult <= 1.0, "eos_coulomb_mult", "Requires a finite value in [0,1].");
+    require(c.physics.eos_coulomb_mult == 1.0 || arch::dispatch::ascii_iequals(c.physics.eos_type, "helmholtz"), "eos_coulomb_mult",
+            "A nondefault Coulomb factor requires eos_type=helmholtz.");
     require(n.dt_init >= n.dt_min, "dt_init", "Must be at least dt_min.");
     require(std::isfinite(n.tstep_change_factor) && n.tstep_change_factor >= 1.0,
             "tstep_change_factor", "Requires a finite growth factor of at least one.");
@@ -159,13 +170,14 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
 }
 // Restart identity for state recovery and the physical/temporal limits that
 // determine accepted trajectories. The format revision fixes algorithm policy.
-inline constexpr std::size_t StateControlCount = 15;
-inline constexpr double StateControlRevision = 1.0;
+inline constexpr std::size_t StateControlCount = 18;
+inline constexpr double StateControlRevision = 2.0;
 inline std::vector<double> StateControlIdentity(const SimConfig& c)
 {
     const auto& n=c.numerics; const auto& b=c.physics.burn;
     return {StateControlRevision,n.sml_rho,n.min_eint,n.max_eint,n.cfl,n.dt_init,n.dt_min,n.tstep_change_factor,
         b.smallt,b.smallx,b.nuclearTempMin,b.nuclearDensMin,b.enucDtFactor,
-        b.odeconfig.rtol,b.odeconfig.atol};
+        b.odeconfig.rtol,b.odeconfig.atol,n.dt_max,c.physics.eos_coulomb_mult,
+        double(n.hll_roe_wave_speed)};
 }
 } // namespace arch::config

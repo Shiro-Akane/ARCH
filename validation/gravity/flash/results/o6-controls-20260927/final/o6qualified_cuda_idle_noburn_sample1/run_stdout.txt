@@ -1,0 +1,158 @@
+[Info] Loaded 59 parameters from /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_noburn_cuda_1/input.par
+[Main] Console output is being recorded to log file: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_noburn_cuda_1/CellularMatched2D_log.dat
+[Main] Parameters loaded from: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_noburn_cuda_1/input.par
+[Main] Problem created: CellularDet
+[EOS Dispatch] Resolving EOS Policy: helmholtz
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Problem] Cellular Detonation Setup Complete.
+          Shock Dir  : 0 (0=X, 1=Y, 2=Z)
+          Spike Dist : 12.8
+          Amb Press  : 2.36321e+24 erg/cm^3
+          VN Press   : 2.53655e+25 erg/cm^3
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.8
+       Solver: HLLC
+       Species Count: 19
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+>>> Grid Config | Dim: 2 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 1, dx2(y): 1
+    Level 1   | dx1(x): 0.5, dx2(y): 0.5
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+[Dispatch] Performing initial AMR refinement loop...
+           -> Refining initial condition (Pass 1)...
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=1) | HLL speeds: Roe-Glaister | Coulomb fraction: 1 | dt_max: -1
+[IO] Saved PLT: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_noburn_cuda_1/CellularMatched2D_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_noburn_cuda_1/CellularMatched2D_chk_0000.h5 at step 0 with 14 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       8.74480e-11    8.74480e-11    8.74480e-11    
+2       1.74896e-10    8.74480e-11    8.74480e-11    
+3       2.62344e-10    8.74477e-11    8.74477e-11    
+4       3.49791e-10    8.74471e-11    8.74471e-11    
+5       4.37238e-10    8.74471e-11    8.74471e-11    
+6       5.24685e-10    8.74468e-11    8.74468e-11    
+7       6.11799e-10    8.71148e-11    8.71148e-11    
+8       6.98773e-10    8.69735e-11    8.69735e-11    
+9       7.85735e-10    8.69618e-11    8.69618e-11    
+10      8.72737e-10    8.70022e-11    8.70022e-11    
+11      9.59797e-10    8.70600e-11    8.70600e-11    
+12      1.04666e-09    8.68642e-11    8.68642e-11    
+13      1.13343e-09    8.67660e-11    8.67660e-11    
+14      1.22020e-09    8.67777e-11    8.67777e-11    
+15      1.30704e-09    8.68353e-11    8.68353e-11    
+16      1.39390e-09    8.68579e-11    8.68579e-11    
+17      1.48054e-09    8.66424e-11    8.66424e-11    
+18      1.56715e-09    8.66068e-11    8.66068e-11    
+19      1.65381e-09    8.66601e-11    8.66601e-11    
+20      1.74056e-09    8.67495e-11    8.67495e-11    
+21      1.82699e-09    8.64349e-11    8.64349e-11    
+22      1.91333e-09    8.63388e-11    8.63388e-11    
+23      1.99972e-09    8.63875e-11    8.63875e-11    
+24      2.08622e-09    8.64982e-11    8.64982e-11    
+25      2.17260e-09    8.63871e-11    8.63871e-11    
+26      2.25873e-09    8.61305e-11    8.61305e-11    
+27      2.34485e-09    8.61174e-11    8.61174e-11    
+28      2.43107e-09    8.62207e-11    8.62207e-11    
+29      2.51745e-09    8.63767e-11    8.63767e-11    
+30      2.60348e-09    8.60276e-11    8.60276e-11    
+31      2.68935e-09    8.58742e-11    8.58742e-11    
+32      2.77526e-09    8.59101e-11    8.59101e-11    
+33      2.86130e-09    8.60348e-11    8.60348e-11    
+34      2.94749e-09    8.61934e-11    8.61934e-11    
+35      3.03338e-09    8.58869e-11    8.58869e-11    
+36      3.11916e-09    8.57852e-11    8.57852e-11    
+37      3.20499e-09    8.58259e-11    8.58259e-11    
+38      3.29093e-09    8.59384e-11    8.59384e-11    
+39      3.37668e-09    8.57579e-11    8.57579e-11    
+40      3.46216e-09    8.54740e-11    8.54740e-11    
+41      3.54757e-09    8.54175e-11    8.54175e-11    
+42      3.63305e-09    8.54776e-11    8.54776e-11    
+43      3.71865e-09    8.55954e-11    8.55954e-11    
+44      3.80438e-09    8.57352e-11    8.57352e-11    
+45      3.88991e-09    8.55280e-11    8.55280e-11    
+46      3.97539e-09    8.54773e-11    8.54773e-11    
+47      4.06090e-09    8.55133e-11    8.55133e-11    
+48      4.14650e-09    8.56024e-11    8.56024e-11    
+49      4.23198e-09    8.54808e-11    8.54808e-11    
+50      4.31731e-09    8.53218e-11    8.53218e-11    
+51      4.40260e-09    8.52971e-11    8.52971e-11    
+52      4.48795e-09    8.53423e-11    8.53423e-11    
+53      4.57338e-09    8.54297e-11    8.54297e-11    
+54      4.65875e-09    8.53723e-11    8.53723e-11    
+55      4.74400e-09    8.52471e-11    8.52471e-11    
+56      4.82922e-09    8.52253e-11    8.52253e-11    
+57      4.91448e-09    8.52645e-11    8.52645e-11    
+58      4.99983e-09    8.53430e-11    8.53430e-11    
+59      5.08508e-09    8.52570e-11    8.52570e-11    
+60      5.17025e-09    8.51651e-11    8.51651e-11    
+61      5.25541e-09    8.51586e-11    8.51586e-11    
+62      5.34061e-09    8.52017e-11    8.52017e-11    
+63      5.42589e-09    8.52769e-11    8.52769e-11    
+64      5.51098e-09    8.50897e-11    8.50897e-11    
+65      5.59599e-09    8.50121e-11    8.50121e-11    
+66      5.68100e-09    8.50095e-11    8.50095e-11    
+67      5.76605e-09    8.50543e-11    8.50543e-11    
+68      5.85118e-09    8.51274e-11    8.51274e-11    
+69      5.93625e-09    8.50682e-11    8.50682e-11    
+70      6.02126e-09    8.50102e-11    8.50102e-11    
+71      6.10627e-09    8.50113e-11    8.50113e-11    
+72      6.19132e-09    8.50517e-11    8.50517e-11    
+73      6.27644e-09    8.51173e-11    8.51173e-11    
+74      6.36146e-09    8.50234e-11    8.50234e-11    
+75      6.44644e-09    8.49787e-11    8.49787e-11    
+76      6.53143e-09    8.49873e-11    8.49873e-11    
+77      6.61646e-09    8.50281e-11    8.50281e-11    
+78      6.70154e-09    8.50874e-11    8.50874e-11    
+79      6.78652e-09    8.49790e-11    8.49790e-11    
+80      6.87147e-09    8.49446e-11    8.49446e-11    
+81      6.95642e-09    8.49540e-11    8.49540e-11    
+82      7.04141e-09    8.49905e-11    8.49905e-11    
+83      7.12643e-09    8.50143e-11    8.50143e-11    
+84      7.21135e-09    8.49273e-11    8.49273e-11    
+85      7.29626e-09    8.49021e-11    8.49021e-11    
+86      7.38117e-09    8.49108e-11    8.49108e-11    
+87      7.46611e-09    8.49425e-11    8.49425e-11    
+88      7.55104e-09    8.49333e-11    8.49333e-11    
+89      7.63589e-09    8.48525e-11    8.48525e-11    
+90      7.72072e-09    8.48237e-11    8.48237e-11    
+91      7.80555e-09    8.48286e-11    8.48286e-11    
+92      7.89040e-09    8.48551e-11    8.48551e-11    
+93      7.97530e-09    8.48959e-11    8.48959e-11    
+94      8.06015e-09    8.48550e-11    8.48550e-11    
+95      8.14499e-09    8.48323e-11    8.48323e-11    
+96      8.22982e-09    8.48364e-11    8.48364e-11    
+97      8.31468e-09    8.48592e-11    8.48592e-11    
+98      8.39957e-09    8.48941e-11    8.48941e-11    
+99      8.48442e-09    8.48490e-11    8.48490e-11    
+100     8.56925e-09    8.48287e-11    8.48287e-11    
+101     8.65408e-09    8.48318e-11    8.48318e-11    
+102     8.73893e-09    8.48501e-11    8.48501e-11    
+103     8.82381e-09    8.48789e-11    8.48789e-11    
+104     8.90869e-09    8.48745e-11    8.48745e-11    
+105     8.99355e-09    8.48596e-11    8.48596e-11    
+106     9.07841e-09    8.48646e-11    8.48646e-11    
+107     9.16329e-09    8.48814e-11    8.48814e-11    
+108     9.24818e-09    8.48829e-11    8.48829e-11    
+109     9.33302e-09    8.48413e-11    8.48413e-11    
+110     9.41785e-09    8.48279e-11    8.48279e-11    
+111     9.50268e-09    8.48302e-11    8.48302e-11    
+112     9.58752e-09    8.48423e-11    8.48423e-11    
+113     9.67235e-09    8.48300e-11    8.48300e-11    
+114     9.75713e-09    8.47853e-11    8.47853e-11    
+115     9.84190e-09    8.47631e-11    8.47631e-11    
+116     9.92665e-09    8.47573e-11    8.47573e-11    
+117     1.00114e-08    8.47628e-11    8.47628e-11    
+118     1.00962e-08    8.47781e-11    8.47781e-11    
+119     1.01810e-08    8.47988e-11    8.47988e-11    
+120     1.01926e-08    1.16399e-11    8.47775e-11    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_noburn_cuda_1/CellularMatched2D_HLLC_plt_0001.h5 at t=1.01926e-08
+[IO] Saved CHK: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_noburn_cuda_1/CellularMatched2D_chk_0001.h5 at step 120 with 20 AMR leaves.
+[State] floor repairs=0.00000e+00 delta_mass=0.00000e+00 delta_energy=0.00000e+00
+>>> Simulation Done. Total Steps: 120 | Final Time: 1.01926e-08

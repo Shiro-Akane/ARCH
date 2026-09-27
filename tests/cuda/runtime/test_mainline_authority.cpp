@@ -46,7 +46,7 @@ ARCH_INLINE int ordinary_cxx_portability_witness(int value)
     return value + 7;
 }
 
-ARCH_FORCEINLINE int ordinary_cxx_forceinline_witness(int value)
+ARCH_FORCE_INLINE int ordinary_cxx_forceinline_witness(int value)
 {
     return value * 2;
 }

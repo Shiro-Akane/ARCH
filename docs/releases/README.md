@@ -1,5 +1,8 @@
 # Release notes
 
+- [v1.2.1 candidate](V1.2.1.md) · [中文](V1.2.1.zh-CN.md): shared execution
+  optimizations, explicit physical/numerical controls and documented cost/accuracy limits.
+
 - [v1.2.0](V1.2.0.md) · [中文](V1.2.0.zh-CN.md): composite AMR self-gravity,
   Driver and source layout refactoring, low-density and EOS migration.
 - [v1.1.0](V1.1.0.md) · [中文](V1.1.0.zh-CN.md): CUDA batching, device-resident

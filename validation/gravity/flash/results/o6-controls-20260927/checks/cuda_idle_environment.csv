@@ -1,0 +1,2 @@
+timestamp, name, driver_version, pstate, utilization.gpu [%], temperature.gpu, power.draw [W], memory.used [MiB]
+2026/09/27 17:44:05.376, NVIDIA GeForce RTX 3060 Ti, 610.47, P8, 11 %, 39, 36.16 W, 1929 MiB

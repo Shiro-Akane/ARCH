@@ -206,6 +206,10 @@ struct SimulationController
             }
         }
 
+        // Physical-time resolution cap: applied to the shared CPU/CUDA proposal
+        // before saving controller history and aligning output/final times.
+        if (config.numerics.dt_max > 0.0)
+            dt_computed = std::min(dt_computed, config.numerics.dt_max);
         dt_old = dt_computed;
 
         double dt_min = config.numerics.dt_min;

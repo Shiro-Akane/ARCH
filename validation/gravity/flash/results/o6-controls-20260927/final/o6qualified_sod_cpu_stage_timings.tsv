@@ -1,0 +1,8 @@
+stage	wall_seconds	calls
+regrid	0	0
+gravity	0.00031380000000000671	4499
+timestep	0.19055106700000002	4497
+burn_first	0	0
+diffusion	0.00063739999999994177	8994
+hydro	4.7716165809999973	4497
+burn_second	0	0

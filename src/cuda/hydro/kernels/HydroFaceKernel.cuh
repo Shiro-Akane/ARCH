@@ -23,6 +23,7 @@ namespace arch::cuda
 {
 namespace detail
 {
+/** Apply the common coarse-fine stencil rule to resident stage inputs. */
 template <typename Reconstruction, typename EosView>
 ARCH_INLINE void reconstruct_amr_face(
     DeviceStateView state, DeviceGridView grid, int direction,
@@ -53,7 +54,7 @@ __device__ inline void hydro_face_kernel_work(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
     EosView eos, int direction, double coefficient,
     SpeciesWorkspaceView workspace = {}, const double* mean_pressure = nullptr,
-    const double* mean_sound_speed = nullptr)
+    const double* mean_sound_speed = nullptr, bool roe_wave_speed = true)
 {
     int i_begin = grid.is;
     int j_begin = grid.js;
@@ -76,7 +77,7 @@ __device__ inline void hydro_face_kernel_work(
     const FluxAdmissibility::MeanThermoView means{
         state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng,
         state.mass_fractions, mean_pressure, mean_sound_speed, nullptr,
-        state.total_size, state.n_species};
+        state.total_size, state.n_species, roe_wave_speed};
     for (int linear = lane; linear < ni * nj * nk;
          linear += blockDim.x * gridDim.x) {
         const int i = i_begin + linear % ni;
@@ -99,10 +100,13 @@ __device__ inline void hydro_face_kernel_work(
         }) eos.bind_mean_thermodynamics(state, cell, cell + stride,
                                         mean_pressure, mean_sound_speed);
         const auto trial_eos = FluxAdmissibility::candidate_eos(eos);
+        // The method choice is valid even without cached thermodynamics (the
+        // inexpensive ideal EOS needs no mean buffers). A view with null P/c
+        // safely declines reuse and still carries the configured wave bounds.
         Flux::compute(
             left, right, species_left, species_right, state.n_species, trial_eos,
             direction, coefficient, face_flux, face_species_flux,
-            mean_pressure && mean_sound_speed ? &means : nullptr, cell, cell + stride);
+            &means, cell, cell + stride);
         for (int species = 0; species < state.n_species; ++species) {
             species_left[species] = state.species(species, cell);
             species_right[species] = state.species(species, cell + stride);

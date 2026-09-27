@@ -23,7 +23,7 @@
 #include "numerics/flux/FluxFunctions.h"
 #include "numerics/flux/InvariantDomainFlux.h"
 
-#include "numerics/reconstruction/AMRInterfaceReconstruction.h"
+#include "numerics/flux/FluxSweep.h"
 
 template <typename ReconstructPolicy>
 struct FluxRoe
@@ -36,7 +36,9 @@ struct FluxRoe
         const FluidVector& U_L, const FluidVector& U_R,
         const double* Xi_L, const double* Xi_R, int n_spec,
         const EosType& eos, int dir, double coefficient,
-        FluidVector& flux_out, double* species_flux_out)
+        FluidVector& flux_out, double* species_flux_out,
+        const FluxAdmissibility::MeanThermoView* mean_view = nullptr,
+        int left_cell = -1, int right_cell = -1)
     {
         // Recover thermodynamic values before Roe averaging.
         // Left State
@@ -45,7 +47,7 @@ struct FluxRoe
         double ut1_L = get_ut1(U_L, dir);
         double ut2_L = get_ut2(U_L, dir);
         double e_L = arch::state::recover(U_L).internal;
-        double P_L = eos.get_pressure(U_L, Xi_L);
+        double P_L=eos.get_pressure(U_L,Xi_L);
         double H_L = (U_L.eng + P_L) / rho_L;
 
         // Right State
@@ -54,7 +56,7 @@ struct FluxRoe
         double ut1_R = get_ut1(U_R, dir);
         double ut2_R = get_ut2(U_R, dir);
         double e_R = arch::state::recover(U_R).internal;
-        double P_R = eos.get_pressure(U_R, Xi_R);
+        double P_R=eos.get_pressure(U_R,Xi_R);
         double H_R = (U_R.eng + P_R) / rho_R;
 
         // Compute physical fluxes with the known-pressure overload.
@@ -81,74 +83,13 @@ struct FluxRoe
         }
     }
 
+    /** Bind this mathematical policy to the common host face sweep. */
     template <typename EosType>
-    static void compute_fluxes(const FluidState &state, const EosType &eos, const Grid &grid,
-                               std::vector<FluidVector> &flux_out,
-                               std::vector<double> &spec_flux_out,
-                               int dir, double entropy_fix_coeff = 0.1) // Shared entropy-fix interface; 0.1 scales the local spectral radius.
+    static void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& grid,
+        std::vector<FluidVector>& flux, std::vector<double>& species_flux,
+        int dir, double coefficient = 0.1, FluxAdmissibility::MeanThermoCache* means = nullptr)
     {
-        arch::state::HostFailure failure;
-        int n_spec = state.GetNumSpecies();
-        int total_size = grid.GetTotalSize();
-        int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
-
-        int i_start = grid.Is();
-        int i_end = grid.Ie();
-        int j_start = grid.Js();
-        int j_end = grid.Je();
-        int k_start = grid.Ks();
-        int k_end = grid.Ke();
-
-        if (dir == 0)
-            i_start -= 1;
-        else if (dir == 1)
-            j_start -= 1;
-        else if (dir == 2)
-            k_start -= 1;
-
-        const int nk = k_end - k_start;
-        const int nj = j_end - j_start;
-
-#pragma omp parallel
-        {
-            std::vector<double> Xi_L(n_spec);
-            std::vector<double> Xi_R(n_spec);
-            std::vector<double> Xi_cell(n_spec);
-            std::vector<double> face_species_flux(n_spec);
-
-#pragma omp for schedule(static)
-            for (int kj = 0; kj < nk * nj; ++kj)
-            {
-                try {
-                    int k = k_start + kj / nj;
-                    int j = j_start + kj % nj;
-                    for (int i = i_start; i < i_end; ++i)
-                    {
-                        int idx = grid.GetIndex(i, j, k);
-                        // 1. Reconstruction
-                        FluidVector U_L, U_R;
-                        AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
-
-                        FluxAdmissibility::compute_candidate([&] {
-                            compute_face_flux(
-                                U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                                entropy_fix_coeff, flux_out[idx + stride], face_species_flux.data());
-                        }, flux_out[idx + stride], face_species_flux.data(), n_spec);
-                        state.get_species_to_buffer(idx, Xi_L.data());
-                        state.get_species_to_buffer(idx + stride, Xi_R.data());
-                        FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),
-                            Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                            flux_out[idx + stride], face_species_flux.data());
-                        for (int s = 0; s < n_spec; ++s)
-                        {
-                            spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
-                        }
-                    }
-
-                } catch (...) { failure.capture_current(); }
-            }
-        } // end omp parallel
-
-        failure.rethrow();
+        FluxTraversal::compute_fluxes<FluxRoe,ReconstructPolicy>(
+            state,eos,grid,flux,species_flux,dir,coefficient,means);
     }
 };

@@ -53,6 +53,8 @@ def argument_parser():
     parser.add_argument('--cuda-affinity', default='0')
     parser.add_argument('--repeats', type=int, default=3)
     parser.add_argument('--timeout', type=float, default=900.)
+    parser.add_argument('--arch-parameter', action='append', default=[], metavar='KEY=VALUE',
+                        help='explicit ARCH numerical/physical variant, recorded separately from unchanged fixtures')
     parser.add_argument('--prefix')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--manifest', type=Path, required=True)
@@ -231,10 +233,20 @@ def main():
             binaries['flash_' + directory] = (args.flash_root / directory / 'flash4').resolve()
     identities = {key: {'path': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
                   for key, path in binaries.items() if key in args.routes or key.startswith('flash_')}
-    record = {'scope': 'complete process wall clock; serial alternating runs; actual checkpoint endpoint',
+    record = {'scope': 'complete process wall clock; serial runs; actual checkpoint endpoint',
+              'routes': args.routes, 'route_order': 'reverse selected routes on even repeats',
               'binary_identity': identities, 'mpi_launcher': launcher_identity,
               'cpu_threads': args.threads, 'flash_ranks': args.ranks,
               'cpu_affinity': args.affinity, 'cuda_affinity': args.cuda_affinity, 'records': []}
+    variants = {}
+    allowed = {'hll_wave_speed', 'eos_coulomb_mult', 'dt_max'}
+    for assignment in args.arch_parameter:
+        key, sep, value = assignment.partition('=')
+        if not sep or key not in allowed or not value or '\n' in value or key in variants:
+            raise ValueError('invalid or duplicate explicit ARCH parameter override')
+        variants[key] = value
+    record['arch_parameter_overrides'] = variants
+    record['comparison_kind'] = 'explicit ARCH physical or numerical variant' if variants else 'original strict fixture'
     expected_times = {}
     for name in args.cases:
         problem, cpu_input, flash_input, flash_directory = CASES[name]
@@ -263,6 +275,8 @@ def main():
                 else:
                     params = replace_parameter((FIXTURES / cpu_input).read_text(), 'out_dir', folder)
                     params = replace_parameter(params, 'compute_backend', 'cpu' if route == 'arch' else 'cuda')
+                    for key, value in variants.items():
+                        params = replace_parameter(params, key, value)
                     (folder / 'input.par').write_text(params)
                     command = [str(binaries[route]), problem, str(folder / 'input.par')]
                     cwd = ROOT

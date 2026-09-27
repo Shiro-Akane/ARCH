@@ -142,9 +142,10 @@ arch::cuda::CudaLaunchConfig make_hydro_route_config(
     arch::dispatch::ReconstructionId reconstruction,
     arch::dispatch::LimiterId limiter,
     arch::dispatch::TimeIntegratorId time_integrator =
-        arch::dispatch::TimeIntegratorId::Euler)
+        arch::dispatch::TimeIntegratorId::Euler, bool roe_wave_speed=true)
 {
     SimConfig config{};
+    config.numerics.hll_roe_wave_speed=roe_wave_speed;
     config.numerics.sml_rho = 1.0e-20;
     config.numerics.max_eint = 1.0e30;
     config.numerics.cfl = 0.8;
@@ -196,7 +197,7 @@ std::uint64_t run_hydro_route(
     arch::dispatch::ReconstructionId reconstruction,
     arch::dispatch::LimiterId limiter,
     arch::dispatch::TimeIntegratorId time_integrator =
-        arch::dispatch::TimeIntegratorId::Euler)
+        arch::dispatch::TimeIntegratorId::Euler, bool roe_wave_speed=true)
 {
     amr::Block block = make_route_block();
     SpeciesManager species;
@@ -208,7 +209,7 @@ std::uint64_t run_hydro_route(
     auto backend = arch::cuda::make_cuda_backend(
         block, handle, storage, 0,
         make_hydro_route_config(
-            flux, reconstruction, limiter, time_integrator), species,
+            flux, reconstruction, limiter, time_integrator, roe_wave_speed), species,
         make_boundary_plan(), eos);
     const arch::backend::BackendStateAccess current{
         handle, storage, arch::state::StateSlot::Current};
@@ -335,7 +336,19 @@ void run_hydro_route_matrix()
     }
     require(route == static_cast<int>(hashes.size()),
             "CUDA Hydro route count drifted");
-    std::cout << "CUDA_HYDRO_ROUTE_MATRIX_PASS routes=" << route << '\n';
+    int davis_routes=0;
+    for(const FluxId flux : {FluxId::Hll,FluxId::Hllc})
+        for(const auto reconstruction : reconstructions) {
+            const int id=60+davis_routes;
+            const auto once=run_hydro_route(id,flux,reconstruction.reconstruction,
+                reconstruction.limiter,arch::dispatch::TimeIntegratorId::Euler,false);
+            const auto repeat=run_hydro_route(id,flux,reconstruction.reconstruction,
+                reconstruction.limiter,arch::dispatch::TimeIntegratorId::Euler,false);
+            require(once==repeat,"Davis device route is not deterministic");
+            ++davis_routes;
+        }
+    std::cout << "CUDA_HYDRO_ROUTE_MATRIX_PASS routes=" << route
+              << " davis_routes=" << davis_routes << '\n';
 }
 
 void run_hydro_integrator_matrix()

@@ -1,0 +1,1258 @@
+{
+  "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+  "routes": [
+    "cuda"
+  ],
+  "route_order": "reverse selected routes on even repeats",
+  "binary_identity": {
+    "cuda": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/bin/ARCH",
+      "sha256": "45b15226196a051cdeb54f58df1f6fe7c0b4126386c86f439380b8bba693c1b5"
+    }
+  },
+  "mpi_launcher": null,
+  "cpu_threads": 8,
+  "flash_ranks": 8,
+  "cpu_affinity": "0,2,4,6,8,10,12,14",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "snia2d",
+      "backend": "cuda",
+      "repeat": 1,
+      "wall_seconds": 3.3226577900059056,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_repeat2d_snia2d_cuda_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008238e-11,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "snia2d",
+      "backend": "cuda",
+      "repeat": 2,
+      "wall_seconds": 3.6732679289998487,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_repeat2d_snia2d_cuda_2",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008238e-11,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "snia2d",
+      "backend": "cuda",
+      "repeat": 3,
+      "wall_seconds": 3.1721305420069257,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_repeat2d_snia2d_cuda_3",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008238e-11,
+      "resolved_backend": "cuda"
+    }
+  ],
+  "arch_parameter_overrides": {},
+  "comparison_kind": "original strict fixture",
+  "analysis": {
+    "snia2d": {
+      "physical_time_seconds": 1.1555193003008238e-11,
+      "groups": {
+        "cuda": {
+          "samples": 3,
+          "median_seconds": 3.3226577900059056,
+          "minimum_seconds": 3.1721305420069257,
+          "maximum_seconds": 3.6732679289998487
+        }
+      },
+      "cpu_median_seconds": {
+        "8": 5.076628057002381,
+        "16": 6.533259547999478
+      },
+      "best_cpu_threads": 8,
+      "gpu_vs_best_cpu_speedup": 1.5278817073103872,
+      "gpu_vs_cpu8_speedup": 1.5278817073103872,
+      "backend_checks": [
+        {
+          "cpu": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "cuda": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_repeat2d_snia2d_cuda_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008238e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9243150963041205e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.2839956
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.1864720055586513e+24
+                ],
+                "ENUC": [
+                  3161951457120.1626,
+                  3.585209052045252e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.001307463730153073
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574092
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574106
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890617,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 1.0656939170113544e-15,
+                "absolute_linf": 1.1175870895385742e-08
+              },
+              "ENER": {
+                "normalized_linf": 8.976762245179546e-16,
+                "absolute_linf": 3758096384.0
+              },
+              "ENUC": {
+                "normalized_linf": 2.444838326564539e-12,
+                "absolute_linf": 87652564992.0
+              },
+              "GACX": {
+                "absolute_linf": 5.551115123125783e-17
+              },
+              "GACY": {
+                "absolute_linf": 4.597017211338539e-17
+              },
+              "GPOT": {
+                "normalized_linf": 1.0600195911266357e-15,
+                "absolute_linf": 4.228388472693467e-18
+              },
+              "PRES": {
+                "normalized_linf": 9.76476355462231e-16,
+                "absolute_linf": 1879048192.0
+              },
+              "TEMP": {
+                "normalized_linf": 3.7564119922216e-15,
+                "absolute_linf": 1.1086463928222656e-05
+              },
+              "VELX": {
+                "normalized_linf": 1.36384027351496e-14,
+                "absolute_linf": 1.0477378964424133e-07
+              },
+              "VELY": {
+                "normalized_linf": 1.36384027351496e-14,
+                "absolute_linf": 1.0477378964424133e-07
+              },
+              "ar36": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "c12": {
+                "absolute_linf": 5.551115123125783e-16
+              },
+              "ca40": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "cr48": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "fe52": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "he4": {
+                "absolute_linf": 1.641126335305207e-21
+              },
+              "mg24": {
+                "absolute_linf": 3.226004388956808e-23
+              },
+              "ne20": {
+                "absolute_linf": 9.105604182983729e-21
+              },
+              "ni56": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "o16": {
+                "absolute_linf": 5.551115123125783e-16
+              },
+              "s32": {
+                "absolute_linf": 4.089454932665725e-27
+              },
+              "si28": {
+                "absolute_linf": 3.7223127564886245e-23
+              },
+              "ti44": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 3.5035900372218806e-15,
+                "absolute_linf": 5.887846720064156e-17
+              }
+            }
+          }
+        },
+        {
+          "cpu": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "cuda": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_repeat2d_snia2d_cuda_2",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008238e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9243150963041205e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.2839956
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.1864720055586513e+24
+                ],
+                "ENUC": [
+                  3161951457120.1626,
+                  3.585209052045252e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.001307463730153073
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574092
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574106
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890617,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 1.0656939170113544e-15,
+                "absolute_linf": 1.1175870895385742e-08
+              },
+              "ENER": {
+                "normalized_linf": 8.976762245179546e-16,
+                "absolute_linf": 3758096384.0
+              },
+              "ENUC": {
+                "normalized_linf": 2.444838326564539e-12,
+                "absolute_linf": 87652564992.0
+              },
+              "GACX": {
+                "absolute_linf": 5.551115123125783e-17
+              },
+              "GACY": {
+                "absolute_linf": 4.597017211338539e-17
+              },
+              "GPOT": {
+                "normalized_linf": 1.0600195911266357e-15,
+                "absolute_linf": 4.228388472693467e-18
+              },
+              "PRES": {
+                "normalized_linf": 9.76476355462231e-16,
+                "absolute_linf": 1879048192.0
+              },
+              "TEMP": {
+                "normalized_linf": 3.7564119922216e-15,
+                "absolute_linf": 1.1086463928222656e-05
+              },
+              "VELX": {
+                "normalized_linf": 1.36384027351496e-14,
+                "absolute_linf": 1.0477378964424133e-07
+              },
+              "VELY": {
+                "normalized_linf": 1.36384027351496e-14,
+                "absolute_linf": 1.0477378964424133e-07
+              },
+              "ar36": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "c12": {
+                "absolute_linf": 5.551115123125783e-16
+              },
+              "ca40": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "cr48": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "fe52": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "he4": {
+                "absolute_linf": 1.641126335305207e-21
+              },
+              "mg24": {
+                "absolute_linf": 3.226004388956808e-23
+              },
+              "ne20": {
+                "absolute_linf": 9.105604182983729e-21
+              },
+              "ni56": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "o16": {
+                "absolute_linf": 5.551115123125783e-16
+              },
+              "s32": {
+                "absolute_linf": 4.089454932665725e-27
+              },
+              "si28": {
+                "absolute_linf": 3.7223127564886245e-23
+              },
+              "ti44": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 3.5035900372218806e-15,
+                "absolute_linf": 5.887846720064156e-17
+              }
+            }
+          }
+        },
+        {
+          "cpu": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "cuda": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_repeat2d_snia2d_cuda_3",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008238e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9243150963041205e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.2839956
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.1864720055586513e+24
+                ],
+                "ENUC": [
+                  3161951457120.1626,
+                  3.585209052045252e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.001307463730153073
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574092
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574106
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890617,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 1.0656939170113544e-15,
+                "absolute_linf": 1.1175870895385742e-08
+              },
+              "ENER": {
+                "normalized_linf": 8.976762245179546e-16,
+                "absolute_linf": 3758096384.0
+              },
+              "ENUC": {
+                "normalized_linf": 2.444838326564539e-12,
+                "absolute_linf": 87652564992.0
+              },
+              "GACX": {
+                "absolute_linf": 5.551115123125783e-17
+              },
+              "GACY": {
+                "absolute_linf": 4.597017211338539e-17
+              },
+              "GPOT": {
+                "normalized_linf": 1.0600195911266357e-15,
+                "absolute_linf": 4.228388472693467e-18
+              },
+              "PRES": {
+                "normalized_linf": 9.76476355462231e-16,
+                "absolute_linf": 1879048192.0
+              },
+              "TEMP": {
+                "normalized_linf": 3.7564119922216e-15,
+                "absolute_linf": 1.1086463928222656e-05
+              },
+              "VELX": {
+                "normalized_linf": 1.36384027351496e-14,
+                "absolute_linf": 1.0477378964424133e-07
+              },
+              "VELY": {
+                "normalized_linf": 1.36384027351496e-14,
+                "absolute_linf": 1.0477378964424133e-07
+              },
+              "ar36": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "c12": {
+                "absolute_linf": 5.551115123125783e-16
+              },
+              "ca40": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "cr48": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "fe52": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "he4": {
+                "absolute_linf": 1.641126335305207e-21
+              },
+              "mg24": {
+                "absolute_linf": 3.226004388956808e-23
+              },
+              "ne20": {
+                "absolute_linf": 9.105604182983729e-21
+              },
+              "ni56": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "o16": {
+                "absolute_linf": 5.551115123125783e-16
+              },
+              "s32": {
+                "absolute_linf": 4.089454932665725e-27
+              },
+              "si28": {
+                "absolute_linf": 3.7223127564886245e-23
+              },
+              "ti44": {
+                "absolute_linf": 1.2037062152420224e-35
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 3.5035900372218806e-15,
+                "absolute_linf": 5.887846720064156e-17
+              }
+            }
+          }
+        }
+      ],
+      "endpoint_contract": "existing coupled compare_pair time budget"
+    }
+  },
+  "analysis_reference_manifests": [
+    "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8.json",
+    "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16.json"
+  ]
+}

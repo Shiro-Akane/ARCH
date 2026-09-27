@@ -98,6 +98,11 @@ API**，并检查运行时加载的库与编译头文件的主、次版本一致
 cmake -S . -B build-cuda -DCUDSS_ROOT="$HOME/.local/cudss"
 ```
 
+pip 或项目内的安装不一定在系统搜索路径上。将 `CUDSS_ROOT` 指向同时包含
+`include/cudss.h` 和 `lib` 的前缀（`nvidia-cudss-cu12` 可以是包内的 `nvidia/cu12`
+目录）；新建构建目录或切换环境时重新显式传入。若 `PATH` 中没有 `nvcc`，可用
+`-DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc` 指定已有编译器，二者均无需重新安装。
+
 自动发现成功时无需设置此选项。配置输出会显示 `[DEP] cuDSS found:` 及选中的
 库路径，或说明稀疏求解提供者不可用。`ARCH_ENABLE_CUDSS=OFF` 可主动关闭发现。
 如果同一个可执行文件还要在 CPU 上运行稀疏燃烧，保留默认的
@@ -123,7 +128,9 @@ python3 tools/run_memory_guarded.py --min-available-mib 1536 \
 不等于预留内存。
 
 监控要求可读的 `/proc`、Linux 内存和 I/O PSI `full` 计数，以及可用的 Python
-pidfd 和 Linux 子进程收养（child-subreaper）支持。启动前会检查这些能力。
+pidfd 和 Linux 子进程收养（child-subreaper）支持。部分新版 Python 构建也不包含
+pidfd；此时可用具备该能力的系统 Python 运行保护器，科学工具仍使用其配置的
+环境。启动前会检查这些能力。
 如果 WSL／内核环境缺少支持，应先更新环境再使用这套监控流程。`Ctrl+C` 或
 `SIGTERM` 会停止所启动的构建及其编译子进程。在 `--` 前加入
 `--log build-cuda/build-memory.log` 可以保存输出与测量结果，日志路径须尚未存在。
@@ -148,7 +155,7 @@ Windows 的全部物理内存都算作 Linux 可用空间，并给 Windows 和�
 
 ## 优化、编译器与目标显卡
 
-Release 构建保留了完整的 CPU 优化，并在工具链支持时启用 LTO／IPO。请确保为 `CMAKE_C_COMPILER` 与 `CMAKE_CXX_COMPILER` 选择相同主版本的 GCC，并将 `CMAKE_CUDA_HOST_COMPILER` 也指向那个相同的 C++ 编译器。你应该在一个全新构建目录进行首次配置时就设定好这些选项；任何本地编译的依赖也都必须使用兼容的 LTO 工具链。请注意，你不需要为了调整构建并发数而去关闭 LTO。最后，为了严格保持数值行为的一致性，我们共用的浮点契约会故意在所有受支持的工具链上关闭 fast-math 和浮点收缩。
+Release 应用及 dispatch 目标均使用 `-O3`，工具链支持时启用 LTO／IPO。`-fno-math-errno` 移除未使用的 libm 副作用，保留显式定义域／有限数检查、补偿算术与非正规数；它不是 `-ffast-math`。请确保为 `CMAKE_C_COMPILER` 与 `CMAKE_CXX_COMPILER` 选择相同主版本的 GCC，并将 `CMAKE_CUDA_HOST_COMPILER` 也指向那个相同的 C++ 编译器。你应该在一个全新构建目录进行首次配置时就设定好这些选项；任何本地编译的依赖也都必须使用兼容的 LTO 工具链。请注意，你不需要为了调整构建并发数而去关闭 LTO。最后，为了严格保持数值行为的一致性，我们共用的浮点契约会故意在所有受支持的工具链上关闭 fast-math 和浮点收缩。
 
 CMake 找到 `ccache` 后会自动使用，包括 CUDA 编译。它有助于缩短重复构建；
 所引用的冷构建测量关闭了编译缓存。修改被广泛包含的头文件仍可能触发较多

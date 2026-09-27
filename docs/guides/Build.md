@@ -111,6 +111,13 @@ prefix explicitly. For example, **after installing it at this location**:
 cmake -S . -B build-cuda -DCUDSS_ROOT="$HOME/.local/cudss"
 ```
 
+A pip or project-local installation is not necessarily on the system search
+path. Point `CUDSS_ROOT` to its prefix containing `include/cudss.h` and `lib`
+(for `nvidia-cudss-cu12`, this may be the package's `nvidia/cu12` directory).
+Pass it again when creating a fresh build directory or changing environments.
+If `nvcc` is absent from `PATH`, select its installed absolute path with
+`-DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc`; neither case requires reinstalling.
+
 Omit this option when discovery already finds the library. Configuration prints
 `[DEP] cuDSS found:` with the selected library, or states that the sparse provider
 is unavailable. `ARCH_ENABLE_CUDSS=OFF` deliberately disables discovery. Keep
@@ -139,7 +146,9 @@ The default pressure limits are 20% memory full-stall or 50% I/O full-stall for
 utilization percentages. Sampling is a safety aid, not a reservation of RAM.
 
 The guard needs readable `/proc` data, Linux memory and I/O PSI `full` counters,
-and working Python pidfd and Linux child-subreaper support. It checks these
+and working Python pidfd and Linux child-subreaper support. Some Python builds
+omit pidfd even at a recent version; on Linux, use a system Python with this
+support for the guard while keeping scientific tooling in its configured environment. It checks these
 before launching work. If a WSL/kernel environment lacks them, update that
 environment before using this guarded workflow. `Ctrl+C` or `SIGTERM` stops the
 owned build and compiler descendants. Add `--log build-cuda/build-memory.log`
@@ -167,7 +176,7 @@ the simulation's numerical parameters or reserve runtime GPU memory.
 
 ## Optimization, compilers and target GPUs
 
-Release builds retain full CPU optimization and enable LTO/IPO when supported. Ensure you select matching GCC major versions for both `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER`, and point `CMAKE_CUDA_HOST_COMPILER` to that same C++ compiler. You should set these during the very first configuration of a fresh build tree; any locally compiled dependencies must also be built with compatible LTO toolchains. Note that you don't need to disable LTO just to change build parallelism. Finally, to strictly preserve numerical behavior, our shared floating-point contract deliberately disables fast-math and contraction across all supported toolchains.
+Release builds use `-O3` for the application and dispatch targets and enable LTO/IPO when supported. `-fno-math-errno` avoids an unused libm side effect while preserving explicit domain/finite checks, compensated arithmetic and subnormal values; it is not `-ffast-math`. Ensure you select matching GCC major versions for both `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER`, and point `CMAKE_CUDA_HOST_COMPILER` to that same C++ compiler. You should set these during the very first configuration of a fresh build tree; any locally compiled dependencies must also be built with compatible LTO toolchains. Note that you don't need to disable LTO just to change build parallelism. Finally, to strictly preserve numerical behavior, our shared floating-point contract deliberately disables fast-math and contraction across all supported toolchains.
 
 CMake automatically uses `ccache` when found, including for CUDA compilation.
 It can shorten repeated builds; the recorded cold-build measurements disabled

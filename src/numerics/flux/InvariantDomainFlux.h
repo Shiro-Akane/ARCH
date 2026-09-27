@@ -107,6 +107,7 @@ struct MeanThermoView {
     const double *pressure = nullptr, *sound_speed = nullptr;
     const unsigned char* ready = nullptr;
     int cells = 0, species = 0;
+    bool roe_wave_speed = true;
 
     /** Apply the original complete conserved-state/composition equality test. */
     ARCH_INLINE bool matches(int cell, const FluidVector& state,
@@ -132,9 +133,28 @@ struct MeanThermoView {
     }
 };
 
+/** Recover required endpoint thermodynamics, reusing only an identical mean. */
+template<class Eos>
+ARCH_INLINE void face_thermo(const FluidVector& state, double energy,
+    const double* composition, int count, const Eos& eos,
+    const MeanThermoView* means, int cell, double& pressure, double& sound)
+{
+    if constexpr (requires {
+        eos.get_pressure_and_sound_speed(state.rho,energy,composition,pressure,sound);
+    }) {
+        // Required means use recover(state).internal. Directional primitive
+        // arithmetic can round an equal conserved state to a different e;
+        // reuse only the same (rho,e,X) query, not merely the same U and X.
+        if (means && means->query(state,composition,count,cell,cell,pressure,sound)
+            && energy == arch::state::recover(state).internal) return;
+    }
+    calc_endpoint_thermo(state,energy,composition,eos,pressure,sound);
+}
+
 // One host patch-stage owns this cache. A value is published only after the
 // complete EOS query succeeds; the caller resets validity on every RK stage.
 struct MeanThermoCache {
+    bool roe_wave_speed = true;
     std::vector<double> pressure;
     std::vector<double> sound_speed;
     std::vector<unsigned char> ready;

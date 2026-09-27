@@ -6,13 +6,17 @@ single maintained implementation and its CPU/CUDA consumers.
 
 The [compute optimization plan (Chinese)](ComputeOptimizationPlan.zh-CN.md)
 continues from the v1.2.0 main baseline on `compute/optim`: shared CPU/CUDA
-mathematics and execution costs first. O6/O6+ now target complete-task CPU times within two times FLASH for the
-registered comparable models, with explicit resource, scientific-error and
-generality checks. The earlier ten-times line is an intermediate cost target;
-individual speed improvements do not close the combined acceptance gate.
-O7 cylindrical axisymmetry and O8 user boundary interfaces preserve that gate.
-O9 rechecks the final version before long-duration validation; it is not the first
-performance acceptance stage. Nonuniform grid design remains a later discussion. The
+mathematics and execution costs first. The latest O6/O6+ scope closes the current
+implementation, backend validation and documented results. The original uniform
+two-times-FLASH target remains a recorded unmet goal, not a claim of acceptance
+or an instruction to continue changing numerical methods.
+The [current cost/accuracy record](../../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)
+tracks accepted controls, rejected face approximations, compiler measurements
+and scientific limits. Further numerical-method optimization is discussion only.
+O7 cylindrical axisymmetry and O8 user boundary interfaces remain unstarted;
+future changes must preserve verified correctness and assess performance regressions.
+O9 covers long-duration scientific validation. Nonuniform grid design remains
+a later discussion. The
 [current diagnosis (Chinese)](../../validation/gravity/flash/CurrentDiagnosis.zh-CN.md)
 records the earlier module comparison and focused FLASH parameter evidence;
 these plans do not expand the currently accepted capability matrix.

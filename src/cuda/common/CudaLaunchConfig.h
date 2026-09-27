@@ -30,6 +30,7 @@ struct CudaLaunchConfig {
     int diffusion_max_stages = 0;
     Physical::Gravity::ExternalGravityView gravity{};
     bool self_gravity=false;
+    bool roe_wave_speed = true;
 };
 
 inline CudaLaunchConfig make_cuda_launch_config(
@@ -55,6 +56,7 @@ inline CudaLaunchConfig make_cuda_launch_config(
         config.physics.diffusion.max_stages,
         {g.g_x, g.g_y, g.g_z, external},
         gravity.value == dispatch::GravityId::Self,
+        config.numerics.hll_roe_wave_speed,
     };
 }
 

@@ -1,0 +1,22 @@
+{
+  "pressure": {
+    "same_time": true,
+    "leaves": {
+      "0": 20,
+      "1": 48
+    },
+    "l1": {
+      "density": 0.004165112137417791,
+      "temperature": 0.01577942677930424,
+      "pressure": 0.0049448807579236835,
+      "velocity_x": 0.010363431710370238,
+      "helium_4": 1.4779571124844215e-06,
+      "carbon_12": 0.013480016076053473,
+      "energy": 0.0049584518529624776
+    },
+    "mass_relative": 0.0,
+    "energy_relative": 8.205215605910955e-07,
+    "helium_4_mass_relative": 9.684150350769423e-07,
+    "carbon_12_mass_relative": 0.004808663784476369
+  }
+}

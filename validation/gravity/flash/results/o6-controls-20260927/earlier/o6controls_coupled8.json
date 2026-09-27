@@ -1,0 +1,84 @@
+{
+  "scope": "complete process wall clock; serial alternating runs; actual checkpoint endpoint",
+  "binary_identity": {
+    "arch": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+      "sha256": "c426f642feebc331862c188c9aef533635e69a69f490febf48cb9cf967bec8e5"
+    }
+  },
+  "mpi_launcher": null,
+  "cpu_threads": 8,
+  "flash_ranks": 8,
+  "cpu_affinity": "0,2,4,6,8,10,12,14",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 5.0779989330039825,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_coupled8_snia2d_arch_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.077967399003683,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_coupled8_snia2d_arch_2",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.177743043001101,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_coupled8_snia2d_arch_3",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 46.22907041700091,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_coupled8_snia3d_arch_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 44.67221207200055,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_coupled8_snia3d_arch_2",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 44.7206639099968,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6controls_coupled8_snia3d_arch_3",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    }
+  ],
+  "arch_parameter_overrides": {},
+  "comparison_kind": "original strict fixture"
+}

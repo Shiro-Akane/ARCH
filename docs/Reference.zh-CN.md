@@ -191,9 +191,9 @@ B(dt/2) -> D(dt/2) -> H(dt) -> D(dt/2) -> B(dt/2)
 
 ### 构建复现性与编译期妥协
 
-Release 保留优化和 `-march=native`，但共用构建契约在支持的 GNU/Clang host 编译器上显式关闭 fast-math 与浮点收缩（`-fno-fast-math -ffp-contract=off`），NVIDIA CUDA 则使用 `--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`。Host 的链接选项也被精心配置，以防止 `fast-math` 的行为泄漏到启动状态中。这些设计选择刻意保留了精确的补偿求和与严格的浮点求值顺序。然而，它们并不能保证跨机器的逐位复现（bitwise reproducibility）。正因如此，我们的[验证](../validation/README.zh-CN.md)记录必须详尽登记每次验证运行所使用的编译器版本、编译参数、OpenMP 线程数、硬件配置以及所接受的数值容差。
+Release 保留优化和 `-march=native`，但共用构建契约在支持的 GNU/Clang host 编译器上显式关闭 fast-math 与浮点收缩（`-fno-fast-math -fno-math-errno -ffp-contract=off`），NVIDIA CUDA 则使用 `--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`。Host 的链接选项也被精心配置，以防止 `fast-math` 的行为泄漏到启动状态中。这些设计选择刻意保留了精确的补偿求和与严格的浮点求值顺序。然而，它们并不能保证跨机器的逐位复现（bitwise reproducibility）。正因如此，我们的[验证](../validation/README.zh-CN.md)记录必须详尽登记每次验证运行所使用的编译器版本、编译参数、OpenMP 线程数、硬件配置以及所接受的数值容差。
 
-CPU dispatch 翻译单元使用 `-O1` 和 `-fno-inline-functions-called-once`，控制积分器、通量、重构与 EOS 组合带来的编译内存开销。工具链支持时，Release 仍启用 LTO。燃烧策略在进入完整通量矩阵前通过 `BurnerHandle` 类型擦除，减少各流体路径重复实例化网络和 ODE 的开销。CUDA 按同样的功能职责拆分，并单独控制后端编译任务的并发数。
+CPU dispatch 翻译单元与应用共用 Release 的 `-O3` 优化，工具链支持时启用 LTO／IPO。`-fno-math-errno` 仅移除未使用的数学库 errno 副作用；ARCH 显式检查定义域和有限结果，继续禁止重结合、有限数假设及非正规数清零。编译内存通过任务并发限制控制。燃烧策略在进入完整通量矩阵前通过 `BurnerHandle` 类型擦除，减少各流体路径重复实例化网络和 ODE 的开销。CUDA 按同样的功能职责拆分，并单独控制后端编译任务的并发数。
 
 ## 构建、注册和命令行
 
@@ -305,6 +305,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | 键 | 类型 | 加载默认值 | 契约 |
 | --- | --- | --- | --- |
 | `solver` | string | `SW` | `SW`、`VL`、`Roe`、`HLL`、`HLLC` |
+| `hll_wave_speed` | string | `roe` | HLL/HLLC 的 Roe–Glaister 或 `davis` 端点波速；其他通量拒绝非默认选择 |
 | `reconstruct` | string | `pcm` | `pcm`、`donor_cell`、`muscl`、`plm`、`ppm` |
 | `limiter` | string | `minmod` | 仅 MUSCL：`minmod`、`superbee`、`vanleer`、`mc` |
 | `time_integrator` | string | `RK2` | `Euler/RK1`、`RK2/SSPRK2`、`RK3/SSPRK3` |
@@ -316,6 +317,12 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `max_eint` | double | `1e21` | 比内能上限 |
 | `compute_backend` | string | `cpu` | `cpu`、`cuda` 或 `auto`；显式 CUDA fail-closed，`auto` 只能在构造前回退 |
 | `cuda_device` | int | `0` | CUDA probe、构造与生命周期操作使用的 runtime device ordinal |
+
+所有通量使用完整物理面 EOS，目前不提供面热力学近似开关。`hll_wave_speed=davis` 同时适用于 HLL 与 HLLC，改变波速
+估计而不近似热力学；它与 PCM/MUSCL/PPM 的重构选择独立。
+`eos_coulomb_mult` 同时缩放 Helm 的 Coulomb 压力、能量与导数，并保留原有非正
+压力/能量保护；不影响表格 EOS 的缺项识别与电子补齐。以上选项在文本中按物理
+归属配置；GUI 可将其折叠为高级选项，Core 不引入 Advanced 配置组。
 
 ### AMR
 
@@ -337,6 +344,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `eos_type` | string | `ideal` | `ideal`、`tabular`、`helmholtz` |
 | `eos_table_path` | string | 空 | tabular/Helmholtz 必需 |
 | `eos_helm_table_path` | string | 空 | 缺项补齐使用的辅助电子表；空值使用已有 Timmes 表 |
+| `eos_coulomb_mult` | double | `1` | Helmholtz 离子 Coulomb 修正比例，有限 `[0,1]`；非默认值仅限 Helmholtz；不是电子补齐开关 |
 | `gamma` | double | `1.4` | 理想气体模型 gamma |
 | `gravity_type` | string | `none` | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU/CUDA 一维球/柱及受测完整方位角二维极坐标、三维柱/球坐标 isolated 已验收，包含原点、轴线和极点 |
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
@@ -415,6 +423,7 @@ Helmholtz 保留来源的 Coulomb 非正状态保护。在低温、强耦合状�
 | `ode_initial_dt_frac` | double | `1` | 首个内部试步比例；误差不合格仍会拒绝并缩步 |
 | `dt_init` | double | `1e-16` | 启用燃烧时的首个宏时间步 |
 | `dt_min` | double | `1e-20` | 宏时间步终止阈值 |
+| `dt_max` | double | `-1` | 最大宏步，单位 s；`-1` 不另设上限，否则必须有限且不小于 `dt_min`；不能放宽 CFL/燃烧限制 |
 | `tstep_change_factor` | double | `1.2` | 第一步后的最大宏步增长 |
 
 `ROS4` 使用匹配的四 stage、四阶、L-stable tableau。每个内部步计算一次 Jacobian，分解一次 `I - gamma*dt*J` 并由全部 stage 复用。在 aprox13/Helmholtz 单区测试中，它通过当前 BE_NR 跨求解器容差。生产研究仍需给出子步/容差收敛序列，并比较核素和能量历史，尤其是在扩展网络或 EOS 耦合时。
@@ -911,6 +920,10 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 均为必需内容。字段缺失、形状或数值无效、`Data/X` 与 `Data/rhoX` 不一致都会报错；
 读取器不会补造未经核实的身份、将缺失燃烧能量置零，或重建缺失的质量分数。
 全新模拟自行初始化 `RunState`，不使用这些重启规则。
+
+状态控制身份现为修订 2（18 项），纳入 `dt_max`、Coulomb 比例及波速
+选择。旧修订检查点和改变这些控制的重启会在替换网格前拒绝；本轮不提供旧身份
+补默认值的兼容层。需要继续旧轨迹时使用产生它的版本，或重新初始化当前算例。
 
 ## 已知限制
 

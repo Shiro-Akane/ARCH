@@ -323,7 +323,7 @@ namespace TimeIntegration
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         std::vector<FluidVector> &flux_buffer, std::vector<double> &spec_flux_buffer,
         const Physical::Gravity::IGravityPolicy* gravity,
-        double entropy_fix_coeff, double flux_weight = 1.0)
+        double entropy_fix_coeff, double flux_weight = 1.0, bool roe_wave_speed = true)
     {
         int n_spec = state.GetNumSpecies();
         std::fill(dU.begin(), dU.end(), FluidVector());
@@ -331,33 +331,18 @@ namespace TimeIntegration
 
         // Reset at every patch-stage: no result crosses RK, AMR, or restart
         // state versions. The cache only removes duplicate exact mean queries
-        // for flux policies and EOS views that support the grouped path.
+        // for every flux policy; grouped EOS queries remain optional at the EOS leaf.
         static thread_local FluxAdmissibility::MeanThermoCache mean_cache;
-        constexpr bool grouped_mean_eos = requires(
-            const EosType& candidate, double& pressure, double& sound) {
-            candidate.get_pressure_and_sound_speed(
-                1.0, 1.0, static_cast<const double*>(nullptr), pressure, sound);
-        };
-        if constexpr (grouped_mean_eos)
-            mean_cache.reset(grid.GetTotalSize());
+        mean_cache.reset(grid.GetTotalSize());
+        mean_cache.roe_wave_speed = roe_wave_speed;
 
         for (int dir = 0; dir < grid.dim; ++dir)
         {
             std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector());
             std::fill(spec_flux_buffer.begin(), spec_flux_buffer.end(), 0.0);
-            if constexpr (grouped_mean_eos && requires {
-                FluxSchemePolicy::compute_fluxes(
-                    state, eos, grid, flux_buffer, spec_flux_buffer,
-                    dir, entropy_fix_coeff, &mean_cache);
-            }) {
-                FluxSchemePolicy::compute_fluxes(
-                    state, eos, grid, flux_buffer, spec_flux_buffer,
-                    dir, entropy_fix_coeff, &mean_cache);
-            } else {
-                FluxSchemePolicy::compute_fluxes(
-                    state, eos, grid, flux_buffer, spec_flux_buffer,
-                    dir, entropy_fix_coeff);
-            }
+            FluxSchemePolicy::compute_fluxes(
+                state, eos, grid, flux_buffer, spec_flux_buffer,
+                dir, entropy_fix_coeff, &mean_cache);
 
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
 

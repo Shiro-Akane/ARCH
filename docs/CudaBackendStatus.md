@@ -68,7 +68,7 @@ The server measurements below retain their original source identity and
 transport configuration; they precede the current self-gravity work and do not
 establish that every present Helmholtz transport channel is active. Current
 workstation evidence and the controlled FLASH comparison are recorded in the
-[O6 acceptance record](../validation/gravity/flash/O6AcceptanceReport.zh-CN.md).
+[current acceptance record](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md).
 Shared CPU optimizations change the comparison baseline. The current RTX
 workstation shows an end-to-end gain for the tested 2D four-module AMR case;
 Cellular, Jeans and the 3D curved coupled case remain faster on CPU. Use the

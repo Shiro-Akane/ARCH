@@ -52,7 +52,7 @@ CPU 掌握网格拓扑、Morton 排序以及所有的细化/粗化决策。
 
 下方服务器数据保留原始源码身份和输运配置，早于当前自引力工作，不能证明当前
 Helmholtz 的每个输运通道均有效。当前工作站证据和 FLASH 受控对照另见
-[O6 验收记录](../validation/gravity/flash/O6AcceptanceReport.zh-CN.md)。
+[当前验收记录](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)。
 共享 CPU 优化会改变比较基线。本轮 RTX 工作站的二维四模块 AMR 已有整程正收益；
 受测 Cellular、Jeans 和三维曲线耦合仍由 CPU 占优，不能外推为普遍 GPU 加速。
 选择后端应以相同输入和实际规模的完整任务用时为准。

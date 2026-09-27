@@ -161,7 +161,7 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
             make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block),
             {scratch.repairs->get() + index * repair_stride, species_count},
             self?block.self_gravity:Physical::Gravity::GravityPatchView{},
-            block.mean_pressure.get(), block.mean_sound_speed.get()});
+            block.mean_pressure.get(), block.mean_sound_speed.get(), impl_->launch.roe_wave_speed});
     }
     auto& device_blocks = impl_->hydro_bindings;
     device_blocks.reserve(blocks.size());

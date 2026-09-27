@@ -66,6 +66,8 @@ struct NumericsConfig
     std::string time_integrator = "RK2"; ///< "RK2","RK3"
 
     double dt_init = 1e-16; ///< Initial burning macro-step cap, s.
+    double dt_max = -1.0; ///< Optional macro-step cap, s; -1 means unlimited.
+    bool hll_roe_wave_speed = true; ///< HLL/HLLC Roe-Glaister speeds; false selects Davis endpoints.
     double dt_min = 1e-20; ///< Minimum accepted macro step, s.
     double tstep_change_factor = 1.2; ///< Maximum macro-step growth factor.
 
@@ -283,6 +285,7 @@ struct PhysicsConfig
     std::string eos_type = "ideal";  ///< Equation of state: ideal, tabular, or helmholtz.
     std::string eos_table_path = ""; ///< Selected EOS source table.
     std::string eos_helm_table_path = ""; ///< Optional electron-completion dependency; empty selects bundled data.
+    double eos_coulomb_mult = 1.0; ///< Helm ion Coulomb correction fraction [0,1].
     double gamma = 1.4;              ///< Default adiabatic index
 
     GravityConfig gravity;

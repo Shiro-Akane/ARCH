@@ -243,7 +243,7 @@ Zero/negative density, nonfinite states, unresolved thermal energy and invalid c
 The fixed velocity cap and all-zero-to-uniform composition fallback have been removed.
 
 Volume-weighted repairs use the final RK weights and are recorded in `state_repairs.txt`
-and format-5 checkpoints. Low-density research must set the existing `sml_rho` below the intended solution.
+and format-6 checkpoints. Low-density research must set the existing `sml_rho` below the intended solution.
 Leaf functions use actual positive density; this control never disables force, CFL or flux evaluation.
 Reconstruction and shared face fluxes use conservative limiting, followed by acceptance/reflux checks.
 There is no separate absolute pressure floor or general positivity claim for arbitrary AMR/source/table-EOS combinations.
@@ -253,13 +253,15 @@ See the [P1.5 implementation record](development/P1_5ImplementationReport.zh-CN.
 
 Release compilation uses optimization and `-march=native`, but the shared
 build contract explicitly disables fast-math and contraction for supported
-GNU/Clang host compilers (`-fno-fast-math -ffp-contract=off`) and NVIDIA CUDA
+GNU/Clang host compilers (`-fno-fast-math -fno-math-errno -ffp-contract=off`) and NVIDIA CUDA
 (`--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`). Host link options are also carefully configured to prevent `fast-math` from leaking into the startup state. These choices intentionally preserve exact compensated sums and strict floating-point evaluation order. However, they do not guarantee cross-machine bitwise reproducibility. For this reason, our [Validation](../validation/README.md) records meticulously document the compiler versions, flags, OpenMP thread counts, hardware, and accepted numerical tolerances used for each verified run.
 
-The CPU dispatch translation units use `-O1` and
-`-fno-inline-functions-called-once` to limit compiler memory for the
-integrator, flux, reconstruction and EOS combinations. Release LTO remains
-enabled when the toolchain supports it. Burner policies are type-erased behind
+CPU dispatch translation units use the same Release `-O3` optimization as the
+application. Release LTO/IPO remains enabled when the toolchain supports it.
+`-fno-math-errno` removes unused mathematical-library errno side effects;
+ARCH checks domains and finite results explicitly. It does not enable algebraic
+reassociation, finite-only assumptions or flushing subnormal values to zero.
+Bound compiler memory with build-job limits rather than lower runtime optimization. Burner policies are type-erased behind
 `BurnerHandle` before the full flux matrix, limiting repeated network/ODE
 instantiation across hydro routes. CUDA splits follow the same functional
 boundaries, with separate backend compile pools.
@@ -423,6 +425,7 @@ and any other spelling are rejected with the parameter name in the error.
 | Key | Type | Load default | Contract |
 | --- | --- | --- | --- |
 | `solver` | string | `SW` | `SW`, `VL`, `Roe`, `HLL`, `HLLC` |
+| `hll_wave_speed` | string | `roe` | HLL/HLLC Roe–Glaister or `davis` endpoint signal speeds; other fluxes reject a nondefault choice |
 | `reconstruct` | string | `pcm` | `pcm`, `donor_cell`, `muscl`, `plm`, `ppm` |
 | `limiter` | string | `minmod` | MUSCL only: `minmod`, `superbee`, `vanleer`, `mc` |
 | `time_integrator` | string | `RK2` | `Euler/RK1`, `RK2/SSPRK2`, `RK3/SSPRK3` |
@@ -434,6 +437,16 @@ and any other spelling are rejected with the parameter name in the error.
 | `max_eint` | double | `1e21` | specific internal-energy ceiling |
 | `compute_backend` | string | `cpu` | `cpu`, `cuda`, or `auto`; explicit CUDA is fail-closed and `auto` may fall back only before construction |
 | `cuda_device` | int | `0` | CUDA runtime device ordinal used by probing, construction, and lifecycle operations |
+
+All fluxes use the full physical face EOS; approximate face thermodynamics is
+not a supported runtime option.
+`hll_wave_speed=davis` applies to both HLL and HLLC independently of the
+PCM/MUSCL/PPM reconstruction choice; it changes signal estimates, not the EOS.
+`eos_coulomb_mult` scales Helm Coulomb pressure, energy and derivatives together
+and retains the original nonpositive pressure/energy guard. It does not change
+tabular component discovery or electron completion. These controls belong to
+their physical configuration groups; advanced presentation belongs to the GUI,
+without an Advanced group in text input or Core.
 
 ### AMR
 
@@ -455,6 +468,7 @@ and any other spelling are rejected with the parameter name in the error.
 | `eos_type` | string | `ideal` | `ideal`, `tabular`, `helmholtz` |
 | `eos_table_path` | string | empty | required for tabular/Helmholtz |
 | `eos_helm_table_path` | string | empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
+| `eos_coulomb_mult` | double | `1` | Helmholtz ion Coulomb correction fraction, finite `[0,1]`; nondefault values require Helmholtz; independent of electron completion |
 | `gamma` | double | `1.4` | ideal-gas model gamma |
 | `gravity_type` | string | `none` | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity, including coordinate joins, on CPU/CUDA are supported |
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
@@ -559,6 +573,7 @@ free-energy table inversion, which explicitly rejects multiple valid roots.
 | `ode_initial_dt_frac` | double | `1` | fraction for the first internal trial; adaptive rejection still applies |
 | `dt_init` | double | `1e-16` | first macro step when burn is enabled |
 | `dt_min` | double | `1e-20` | abort threshold for macro step |
+| `dt_max` | double | `-1` | macro-step cap in s; `-1` disables this extra cap, otherwise finite and at least `dt_min`; never relaxes CFL/burn limits |
 | `tstep_change_factor` | double | `1.2` | maximum macro-step growth after first step |
 
 `ROS4` uses a matched four-stage, fourth-order, L-stable tableau. Each internal
@@ -1201,7 +1216,7 @@ Data/rhoX, Data/X    [species, block, interior cell]
 Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 ```
 
-Format 5 also requires `state_controls`, `state_repairs`, and the triggering
+Format 6 also requires `state_controls`, `state_repairs`, and the triggering
 block, position, stage and time attributes. Older formats are rejected. All restored states
 and diagnostics are validated before replacing the AMR mesh.
 
@@ -1228,6 +1243,12 @@ values, and disagreement between `Data/X` and `Data/rhoX` are errors; the reader
 does not synthesize an unverified identity, zero-fill missing burn energy or
 reconstruct missing mass fractions. A fresh simulation initializes its own
 `RunState` and does not use these restart rules.
+
+State-control identity is now revision 2 (18 entries), including `dt_max`,
+Coulomb fraction and wave-speed choices. Old identities or
+restarts changing these controls are rejected before mesh replacement. There
+is no compatibility path that silently supplies missing defaults: continue an
+old trajectory with its originating executable, or initialize the current case.
 
 ## Known limitations
 

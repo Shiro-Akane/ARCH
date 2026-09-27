@@ -43,6 +43,8 @@ SpeciesHostView validate_helm_upload(const HelmEosHostView &host)
     if (host.specs.host_owner == nullptr)
         throw std::invalid_argument(
             "Helm upload requires species metadata ownership.");
+    if (!std::isfinite(host.coulomb_mult) || host.coulomb_mult < 0.0 || host.coulomb_mult > 1.0)
+        throw std::invalid_argument("Helm upload requires a Coulomb fraction in [0,1]");
     owner_detail::validate_species_upload(host.specs);
     return host.specs;
 }
@@ -89,6 +91,7 @@ HelmEosDeviceOwner::HelmEosDeviceOwner(const HelmEosHostView &source,
         device_view_.density_nodes = device_nodes_[0];
         device_view_.temperature_nodes = device_nodes_[1];
         device_view_.specs = species_.view();
+        device_view_.coulomb_mult = source.coulomb_mult;
     } catch (...) {
         release_after_sync();
         throw;

@@ -70,7 +70,7 @@ Helmholtz/aprox13/thermal/MG/AMR combinations; it does not qualify all policy
 permutations or Helmholtz viscosity/species transport. The
 [Reference combination rules](../docs/Reference.md#combining-methods-and-physics)
 include physical exclusions and the validated scope of tabular ODE/NSE trial
-recovery. The [O6 acceptance record](gravity/flash/O6AcceptanceReport.zh-CN.md)
+recovery. The [shared-controls and strict-build acceptance record](gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)
 tracks shared-math and execution changes, complete-task timings and remaining
 performance limits against a faster CPU baseline.
 

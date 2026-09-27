@@ -29,7 +29,7 @@ struct ParameterDefinition {
     std::string_view key, type, group;
     DefaultValue fallback;
 };
-inline const std::array<ParameterDefinition, 92> standard_parameters{{
+inline const std::array<ParameterDefinition, 95> standard_parameters{{
     {"geometry", "string", "Grid", std::string_view("cartesian")},
     {"nblockx1", "int", "Grid", GridConfig{}.nblockx1},
     {"nblockx2", "int", "Grid", GridConfig{}.nblockx2},
@@ -49,6 +49,8 @@ inline const std::array<ParameterDefinition, 92> standard_parameters{{
     {"x3r_boundary_type", "string", "Grid", std::string_view("outflow")},
     {"solver", "string", "Runtime", std::string_view("SW")},
     {"dt_init", "float", "Runtime", NumericsConfig{}.dt_init},
+    {"dt_max", "float", "Runtime", NumericsConfig{}.dt_max},
+    {"hll_wave_speed", "string", "Runtime", std::string_view("roe")},
     {"dt_min", "float", "Runtime", NumericsConfig{}.dt_min},
     {"tstep_change_factor", "float", "Runtime", NumericsConfig{}.tstep_change_factor},
     {"cfl", "float", "Runtime", NumericsConfig{}.cfl},
@@ -64,6 +66,7 @@ inline const std::array<ParameterDefinition, 92> standard_parameters{{
     {"eos_type", "string", "EOS", std::string_view("ideal")},
     {"eos_table_path", "string", "EOS", std::string_view("")},
     {"eos_helm_table_path", "string", "EOS", std::string_view("")},
+    {"eos_coulomb_mult", "float", "EOS", PhysicsConfig{}.eos_coulomb_mult},
     {"gamma", "float", "EOS", PhysicsConfig{}.gamma},
     {"use_burn", "bool", "Network", PhysicsConfig{}.burn.use_burn},
     {"network_name", "string", "Network", std::string_view("aprox19")},

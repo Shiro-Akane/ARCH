@@ -1,0 +1,412 @@
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/.codex/worktrees/compute-optim/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+DIAGNOSTIC_ONLY fraction=0 rho=100 T=1.73e+08
+SCALED_PROBE field=scaled Helm.cv actual=1704858650.4931254 reference=1704858650.4931254 ulp=0
+SCALED_PROBE field=scaled Helm.pressure_rho_T actual=3.7877947213133e+18 reference=3.7877947213133e+18 ulp=0
+SCALED_PROBE field=scaled Helm.eint actual=91179823982333664 reference=91179823982333664 ulp=0
+SCALED_PROBE field=scaled Helm.temperature actual=173000000 reference=173000000 ulp=0
+SCALED_PROBE field=scaled Helm.pressure_rho_e actual=3.7877947213133e+18 reference=3.7877947213133e+18 ulp=0
+SCALED_PROBE field=scaled Helm.sound_speed actual=230500036.23966452 reference=230500036.23966452 ulp=0
+SCALED_PROBE field=scaled Helm.dp_drho actual=39563414068606528 reference=39563414068606528 ulp=0
+SCALED_PROBE field=scaled Helm.dp_de actual=35.817285877562682 reference=35.817285877562682 ulp=0
+SCALED_PROBE field=scaled Helm.total_energy actual=9.1179823982333665e+18 reference=9.1179823982333665e+18 ulp=0
+SCALED_PROBE field=scaled Helm.state.P actual=3.7877947213133e+18 reference=3.7877947213133e+18 ulp=0
+SCALED_PROBE field=scaled Helm.state.E actual=91179823982333664 reference=91179823982333664 ulp=0
+SCALED_PROBE field=scaled Helm.state.cv actual=1704858650.4931254 reference=1704858650.4931254 ulp=0
+SCALED_PROBE field=scaled Helm.state.sound_speed actual=230500036.23966452 reference=230500036.23966452 ulp=0
+SCALED_PROBE field=scaled Helm.state.dp_drho actual=15292993815247596 reference=15292993815247596 ulp=0
+SCALED_PROBE field=scaled Helm.state.dp_dT actual=61063409665.547997 reference=61063409665.547997 ulp=0
+SCALED_PROBE field=scaled Helm.state.pele actual=8.995044850794519e+17 reference=8.995044850794519e+17 ulp=0
+SCALED_PROBE field=scaled Helm.state.xne actual=3.7638379749999997e+25 reference=3.7638379749999997e+25 ulp=0
+SCALED_PROBE field=scaled Helm.state.eta actual=-5.7294277057247145 reference=-5.7294277057247145 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=15292993815247596 reference=15292993815247596 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=61063409665.547997 reference=61063409665.547997 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=21576030494107660 reference=21576030494107660 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=22365694612634452 reference=22365694612634452 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=40592408487418.141 reference=40592408487418.141 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=124716939.2722986 reference=124716939.2722986 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=133346632.77164884 reference=133346632.77164884 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=27.202533424815353 reference=27.202533424815353 ulp=0
+SCALED_PROBE field=scaled energy gradient actual=43941725106742112 reference=43941725106742112 ulp=0
+SCALED_PROBE field=scaled energy gradient actual=16576854929844140 reference=16576854929844140 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=258063572.04394746 reference=258063572.04394746 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-8118481697483.6289 reference=-8118481697483.6289 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=97852551.203899071 reference=97852551.203899071 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-4059240848741.8145 reference=-4059240848741.8145 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=27.202533424815353 reference=27.202533424815353 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-64084408.336019352 reference=-64084408.336019352 ulp=0
+DIAGNOSTIC_ONLY fraction=0 rho=1000000000 T=23700000
+SCALED_PROBE field=scaled Helm.cv actual=54802900.080174573 reference=54802900.080174573 ulp=0
+SCALED_PROBE field=scaled Helm.pressure_rho_T actual=6.5682540221372711e+26 reference=6.5682540221372711e+26 ulp=0
+SCALED_PROBE field=scaled Helm.eint actual=1.7129269923356375e+18 reference=1.7129269923356375e+18 ulp=0
+SCALED_PROBE field=scaled Helm.temperature actual=23700000.000001568 reference=23700000.000001568 ulp=0
+SCALED_PROBE field=scaled Helm.pressure_rho_e actual=6.5682540221372711e+26 reference=6.5682540221372711e+26 ulp=0
+SCALED_PROBE field=scaled Helm.sound_speed actual=938893064.60508013 reference=938893064.60508013 ulp=0
+SCALED_PROBE field=scaled Helm.dp_drho actual=4.4457968733291872e+17 reference=4.4457968733291872e+17 ulp=0
+SCALED_PROBE field=scaled Helm.dp_de actual=665230817.74541771 reference=665230817.74541771 ulp=0
+SCALED_PROBE field=scaled Helm.total_energy actual=1.7129269923356374e+27 reference=1.7129269923356374e+27 ulp=0
+SCALED_PROBE field=scaled Helm.state.P actual=6.5682540221372711e+26 reference=6.5682540221372711e+26 ulp=0
+SCALED_PROBE field=scaled Helm.state.E actual=1.7129269923356375e+18 reference=1.7129269923356375e+18 ulp=0
+SCALED_PROBE field=scaled Helm.state.cv actual=54802900.080174573 reference=54802900.080174573 ulp=0
+SCALED_PROBE field=scaled Helm.state.sound_speed actual=938893064.60508013 reference=938893064.60508013 ulp=0
+SCALED_PROBE field=scaled Helm.state.dp_drho actual=8.8094541343404006e+17 reference=8.8094541343404006e+17 ulp=0
+SCALED_PROBE field=scaled Helm.state.dp_dT actual=36456578035154960 reference=36456578035154960 ulp=0
+SCALED_PROBE field=scaled Helm.state.pele actual=6.5596329637021169e+26 reference=6.5596329637021169e+26 ulp=0
+SCALED_PROBE field=scaled Helm.state.xne actual=3.7638379749999997e+32 reference=3.7638379749999997e+32 ulp=0
+SCALED_PROBE field=scaled Helm.state.eta actual=1922.378705304684 reference=1922.378705304684 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=8.8094541343404006e+17 reference=8.8094541343404006e+17 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=36456578035154960 reference=36456578035154960 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=2955791460753477 reference=2955791460753477 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=3.7881523438173629e+18 reference=3.7881523438173629e+18 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=2.253010062744546e+18 reference=2.253010062744546e+18 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=124716939.2722986 reference=124716939.2722986 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=253494.2835675544 reference=253494.2835675544 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=0.010094307328746522 reference=0.010094307328746522 ulp=0
+SCALED_PROBE field=scaled energy gradient actual=3.7911081352781164e+18 reference=3.7911081352781164e+18 ulp=0
+SCALED_PROBE field=scaled energy gradient actual=1.8948151197738698e+18 reference=1.8948151197738698e+18 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=124970433.55586615 reference=124970433.55586615 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-4.5060201254890925e+17 reference=-4.5060201254890925e+17 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=31305981.959858429 reference=31305981.959858429 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-2.2530100627445462e+17 reference=-2.2530100627445462e+17 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=0.010094307328746522 reference=0.010094307328746522 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-37465780.638403095 reference=-37465780.638403095 ulp=0
+DIAGNOSTIC_ONLY fraction=0.5 rho=100 T=173000000
+SCALED_PROBE field=scaled Helm.cv actual=1704865390.1461866 reference=1704865390.1461866 ulp=0
+SCALED_PROBE field=scaled Helm.pressure_rho_T actual=3.7877141333710193e+18 reference=3.7877141333710193e+18 ulp=0
+SCALED_PROBE field=scaled Helm.eint actual=91177406344065232 reference=91177406344065232 ulp=0
+SCALED_PROBE field=scaled Helm.temperature actual=172999999.99999997 reference=172999999.99999997 ulp=0
+SCALED_PROBE field=scaled Helm.pressure_rho_e actual=3.7877141333710177e+18 reference=3.7877141333710177e+18 ulp=0
+SCALED_PROBE field=scaled Helm.sound_speed actual=230497703.85232183 reference=230497703.85232183 ulp=0
+SCALED_PROBE field=scaled Helm.dp_drho actual=39562631206806864 reference=39562631206806864 ulp=0
+SCALED_PROBE field=scaled Helm.dp_de actual=35.81727605803168 reference=35.81727605803168 ulp=0
+SCALED_PROBE field=scaled Helm.total_energy actual=9.1177406344065229e+18 reference=9.1177406344065229e+18 ulp=0
+SCALED_PROBE field=scaled Helm.state.P actual=3.7877141333710193e+18 reference=3.7877141333710193e+18 ulp=0
+SCALED_PROBE field=scaled Helm.state.E actual=91177406344065232 reference=91177406344065232 ulp=0
+SCALED_PROBE field=scaled Helm.state.cv actual=1704865390.1461866 reference=1704865390.1461866 ulp=0
+SCALED_PROBE field=scaled Helm.state.sound_speed actual=230497703.85232207 reference=230497703.85232207 ulp=0
+SCALED_PROBE field=scaled Helm.state.dp_drho actual=15291789758241676 reference=15291789758241676 ulp=0
+SCALED_PROBE field=scaled Helm.state.dp_dT actual=61063634320.65004 reference=61063634320.65004 ulp=0
+SCALED_PROBE field=scaled Helm.state.pele actual=8.995044850794519e+17 reference=8.995044850794519e+17 ulp=0
+SCALED_PROBE field=scaled Helm.state.xne actual=3.7638379749999997e+25 reference=3.7638379749999997e+25 ulp=0
+SCALED_PROBE field=scaled Helm.state.eta actual=-5.7294277057247145 reference=-5.7294277057247145 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=15291789758241676 reference=15291789758241676 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=61063634320.65004 reference=61063634320.65004 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=21584156266629404 reference=21584156266629404 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=22354227098240812 reference=22354227098240812 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=-45569349576253.461 reference=-45569349576253.461 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=38278253644052.906 reference=38278253644052.906 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=4769070820448.4531 reference=4769070820448.4531 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=124694764.81136206 reference=124694764.81136206 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=133378199.45271304 reference=133378199.45271304 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=27.202476404076435 reference=27.202476404076435 ulp=0
+SCALED_PROBE field=scaled energy gradient actual=43938383364870216 reference=43938383364870216 ulp=0
+SCALED_PROBE field=scaled energy gradient actual=16573152615777756 reference=16573152615777756 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=258072964.2640751 reference=258072964.2640751 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-6422136113240.1055 reference=-6422136113240.1055 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=97862790.929197043 reference=97862790.929197043 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-4714856592636.418 reference=-4714856592636.418 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=27.202476404076435 reference=27.202476404076435 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-64084069.333951235 reference=-64084069.333951235 ulp=0
+DIAGNOSTIC_ONLY fraction=0.5 rho=1000000000 T=23700000
+SCALED_PROBE field=scaled Helm.cv actual=67624706.276135504 reference=67624706.276135474 ulp=2
+scaled Helm.cv actual=67624706.276135504 reference=67624706.276135474 absolute_error=2.9802322387695312e-08 relative_error=4.4070169068094644e-16 tolerance=2.9999999999999999e-16
+SCALED_PROBE field=scaled Helm.pressure_rho_T actual=6.5507228369264216e+26 reference=6.5507228369264216e+26 ulp=0
+SCALED_PROBE field=scaled Helm.eint actual=1.7076676367723825e+18 reference=1.7076676367723825e+18 ulp=0
+SCALED_PROBE field=scaled Helm.temperature actual=23700000.000001736 reference=23700000.000001755 ulp=5
+scaled Helm.temperature actual=23700000.000001736 reference=23700000.000001755 absolute_error=1.862645149230957e-08 relative_error=7.8592622330414314e-16 tolerance=5.0000000000000004e-16
+SCALED_PROBE field=scaled Helm.pressure_rho_e actual=6.5507228369264216e+26 reference=6.5507228369264216e+26 ulp=0
+SCALED_PROBE field=scaled Helm.sound_speed actual=937632960.3240478 reference=937632960.3240478 ulp=0
+SCALED_PROBE field=scaled Helm.dp_drho actual=4.8460405123974906e+17 reference=4.8460405123974918e+17 ulp=2
+SCALED_PROBE field=scaled Helm.dp_de actual=602302260.17532218 reference=602302260.17532206 ulp=1
+SCALED_PROBE field=scaled Helm.total_energy actual=1.7076676367723826e+27 reference=1.7076676367723826e+27 ulp=0
+SCALED_PROBE field=scaled Helm.state.P actual=6.5507228369264216e+26 reference=6.5507228369264216e+26 ulp=0
+SCALED_PROBE field=scaled Helm.state.E actual=1.7076676367723825e+18 reference=1.7076676367723825e+18 ulp=0
+SCALED_PROBE field=scaled Helm.state.cv actual=67624706.276135504 reference=67624706.276135474 ulp=2
+scaled Helm.state.cv actual=67624706.276135504 reference=67624706.276135474 absolute_error=2.9802322387695312e-08 relative_error=4.4070169068094644e-16 tolerance=2.9999999999999999e-16
+SCALED_PROBE field=scaled Helm.state.sound_speed actual=937632960.32404757 reference=937632960.32404757 ulp=0
+SCALED_PROBE field=scaled Helm.state.dp_drho actual=8.78574157982944e+17 reference=8.78574157982944e+17 ulp=0
+SCALED_PROBE field=scaled Helm.state.dp_dT actual=40730513433808608 reference=40730513433808600 ulp=1
+scaled Helm.state.dp_dT actual=40730513433808608 reference=40730513433808600 absolute_error=8 relative_error=1.9641294267013961e-16 tolerance=0
+SCALED_PROBE field=scaled Helm.state.pele actual=6.5596329637021169e+26 reference=6.5596329637021169e+26 ulp=0
+SCALED_PROBE field=scaled Helm.state.xne actual=3.7638379749999997e+32 reference=3.7638379749999997e+32 ulp=0
+SCALED_PROBE field=scaled Helm.state.eta actual=1922.378705304684 reference=1922.378705304684 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=8.78574157982944e+17 reference=8.78574157982944e+17 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=40730513433808608 reference=40730513433808600 ulp=1
+SCALED_PROBE field=scaled derivative parity actual=12127673487977380 reference=12127673487977376 ulp=2
+SCALED_PROBE field=scaled derivative parity actual=3.7703500002330455e+18 reference=3.7703500002330455e+18 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=-34304058320695752 reference=-34304058320695748 ulp=1
+SCALED_PROBE field=scaled derivative parity actual=28815408989384432 reference=28815408989384428 ulp=1
+SCALED_PROBE field=scaled derivative parity actual=2.2231083692464814e+18 reference=2.2231083692464814e+18 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=131766167.88163479 reference=131766167.88163479 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=18950010.147970062 reference=18950010.147970062 ulp=0
+SCALED_PROBE field=scaled derivative parity actual=-0.23643148202255235 reference=-0.23643148202255235 ulp=0
+SCALED_PROBE field=scaled energy gradient actual=3.782477673721023e+18 reference=3.782477673721023e+18 ulp=0
+SCALED_PROBE field=scaled energy gradient actual=1.8882069184885171e+18 reference=1.8882069184885171e+18 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=150716178.02960485 reference=150716178.02960485 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-4.4873816084777984e+17 reference=-4.4873816084777984e+17 ulp=0
+SCALED_PROBE field=scaled cv gradient actual=42416547.044393726 reference=42416547.044393726 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-2.2550111434847286e+17 reference=-2.255011143484729e+17 ulp=1
+SCALED_PROBE field=scaled cv gradient actual=-0.23643148202255235 reference=-0.23643148202255235 ulp=0
+SCALED_PROBE field=scaled Hessian action actual=-43319852.394084454 reference=-43319852.394084454 ulp=0
+helm_polynomials degrees=36 constant_background=exact points_per_case=9 maximum_scaled_error=2.25209e-11
+tabular_composition dimension=3 strict free-energy CPU/CUDA analytic derivatives PASS
+tabular_composition dimension=4 strict free-energy CPU/CUDA analytic derivatives PASS
+tabular_polynomials degrees=36 constant_background=exact points_per_case=25 max_scaled=0
+eos_host_device_parity max_abs=9.4447329657392904e+21 max_rel=6.8400344185969613e-10
+field=Helm ef final element max_abs=0 max_rel=0
+field=Helm exact lower bound max_abs=0 max_rel=0
+field=Helm exact upper bound max_abs=0 max_rel=0
+field=Helm f final element max_abs=0 max_rel=0
+field=Helm immediate destruction did not synchronize consumer stream max_abs=0 max_rel=0
+field=Helm move-assigned target.cv max_abs=0 max_rel=0
+field=Helm move-assigned target.dp_de max_abs=0 max_rel=0
+field=Helm move-assigned target.dp_drho max_abs=0 max_rel=0
+field=Helm move-assigned target.eint max_abs=0 max_rel=0
+field=Helm move-assigned target.pressure_rho_T max_abs=0 max_rel=0
+field=Helm move-assigned target.pressure_rho_e max_abs=0 max_rel=0
+field=Helm move-assigned target.sound_speed max_abs=0 max_rel=0
+field=Helm move-assigned target.state.E max_abs=0 max_rel=0
+field=Helm move-assigned target.state.P max_abs=0 max_rel=0
+field=Helm move-assigned target.state.cv max_abs=0 max_rel=0
+field=Helm move-assigned target.state.dp_dT max_abs=0 max_rel=0
+field=Helm move-assigned target.state.dp_drho max_abs=0 max_rel=0
+field=Helm move-assigned target.state.eta max_abs=0 max_rel=0
+field=Helm move-assigned target.state.pele max_abs=0 max_rel=0
+field=Helm move-assigned target.state.sound_speed max_abs=0 max_rel=0
+field=Helm move-assigned target.state.xne max_abs=0 max_rel=0
+field=Helm move-assigned target.temperature max_abs=0 max_rel=0
+field=Helm move-assigned target.total_energy max_abs=0 max_rel=0
+field=Helm moved.cv max_abs=0 max_rel=0
+field=Helm moved.dp_de max_abs=0 max_rel=0
+field=Helm moved.dp_drho max_abs=0 max_rel=0
+field=Helm moved.eint max_abs=0 max_rel=0
+field=Helm moved.pressure_rho_T max_abs=0 max_rel=0
+field=Helm moved.pressure_rho_e max_abs=0 max_rel=0
+field=Helm moved.sound_speed max_abs=0 max_rel=0
+field=Helm moved.state.E max_abs=0 max_rel=0
+field=Helm moved.state.P max_abs=0 max_rel=0
+field=Helm moved.state.cv max_abs=0 max_rel=0
+field=Helm moved.state.dp_dT max_abs=0 max_rel=0
+field=Helm moved.state.dp_drho max_abs=0 max_rel=0
+field=Helm moved.state.eta max_abs=0 max_rel=0
+field=Helm moved.state.pele max_abs=0 max_rel=0
+field=Helm moved.state.sound_speed max_abs=0 max_rel=0
+field=Helm moved.state.xne max_abs=0 max_rel=0
+field=Helm moved.temperature max_abs=0 max_rel=0
+field=Helm moved.total_energy max_abs=0 max_rel=0
+field=Helm.cv max_abs=0 max_rel=0
+field=Helm.dp_de max_abs=0 max_rel=0
+field=Helm.dp_drho max_abs=0 max_rel=0
+field=Helm.eint max_abs=0 max_rel=0
+field=Helm.pressure_rho_T max_abs=0 max_rel=0
+field=Helm.pressure_rho_e max_abs=0 max_rel=0
+field=Helm.sound_speed max_abs=0 max_rel=0
+field=Helm.state.E max_abs=0 max_rel=0
+field=Helm.state.P max_abs=0 max_rel=0
+field=Helm.state.cv max_abs=0 max_rel=0
+field=Helm.state.dp_dT max_abs=0 max_rel=0
+field=Helm.state.dp_drho max_abs=0 max_rel=0
+field=Helm.state.eta max_abs=0 max_rel=0
+field=Helm.state.pele max_abs=0 max_rel=0
+field=Helm.state.sound_speed max_abs=0 max_rel=0
+field=Helm.state.xne max_abs=0 max_rel=0
+field=Helm.temperature max_abs=0 max_rel=0
+field=Helm.total_energy max_abs=0 max_rel=0
+field=Ideal default.cv max_abs=0 max_rel=0
+field=Ideal default.dp_de max_abs=0 max_rel=0
+field=Ideal default.dp_drho max_abs=0 max_rel=0
+field=Ideal default.eint max_abs=0 max_rel=0
+field=Ideal default.gamma max_abs=0 max_rel=0
+field=Ideal default.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal default.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal default.sound_speed max_abs=0 max_rel=0
+field=Ideal default.state.E max_abs=0 max_rel=0
+field=Ideal default.state.P max_abs=0 max_rel=0
+field=Ideal default.state.cv max_abs=0 max_rel=0
+field=Ideal default.state.dp_dT max_abs=0 max_rel=0
+field=Ideal default.state.dp_drho max_abs=0 max_rel=0
+field=Ideal default.state.sound_speed max_abs=0 max_rel=0
+field=Ideal default.temperature max_abs=0 max_rel=0
+field=Ideal default.total_energy max_abs=0 max_rel=0
+field=Ideal move-assigned target.cv max_abs=0 max_rel=0
+field=Ideal move-assigned target.dp_de max_abs=0 max_rel=0
+field=Ideal move-assigned target.dp_drho max_abs=0 max_rel=0
+field=Ideal move-assigned target.eint max_abs=0 max_rel=0
+field=Ideal move-assigned target.gamma max_abs=0 max_rel=0
+field=Ideal move-assigned target.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal move-assigned target.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal move-assigned target.sound_speed max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.E max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.P max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.cv max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.dp_dT max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.dp_drho max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.sound_speed max_abs=0 max_rel=0
+field=Ideal move-assigned target.temperature max_abs=0 max_rel=0
+field=Ideal move-assigned target.total_energy max_abs=0 max_rel=0
+field=Ideal moved.cv max_abs=0 max_rel=0
+field=Ideal moved.dp_de max_abs=0 max_rel=0
+field=Ideal moved.dp_drho max_abs=0 max_rel=0
+field=Ideal moved.eint max_abs=0 max_rel=0
+field=Ideal moved.gamma max_abs=0 max_rel=0
+field=Ideal moved.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal moved.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal moved.sound_speed max_abs=0 max_rel=0
+field=Ideal moved.state.E max_abs=0 max_rel=0
+field=Ideal moved.state.P max_abs=0 max_rel=0
+field=Ideal moved.state.cv max_abs=0 max_rel=0
+field=Ideal moved.state.dp_dT max_abs=0 max_rel=0
+field=Ideal moved.state.dp_drho max_abs=0 max_rel=0
+field=Ideal moved.state.sound_speed max_abs=0 max_rel=0
+field=Ideal moved.temperature max_abs=0 max_rel=0
+field=Ideal moved.total_energy max_abs=0 max_rel=0
+field=Ideal nonfinite/threshold pressure policy max_abs=0 max_rel=0
+field=Ideal repeated.cv max_abs=0 max_rel=0
+field=Ideal repeated.dp_de max_abs=0 max_rel=0
+field=Ideal repeated.dp_drho max_abs=0 max_rel=0
+field=Ideal repeated.eint max_abs=0 max_rel=0
+field=Ideal repeated.gamma max_abs=0 max_rel=0
+field=Ideal repeated.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal repeated.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal repeated.sound_speed max_abs=0 max_rel=0
+field=Ideal repeated.state.E max_abs=0 max_rel=0
+field=Ideal repeated.state.P max_abs=0 max_rel=0
+field=Ideal repeated.state.cv max_abs=0 max_rel=0
+field=Ideal repeated.state.dp_dT max_abs=0 max_rel=0
+field=Ideal repeated.state.dp_drho max_abs=0 max_rel=0
+field=Ideal repeated.state.sound_speed max_abs=0 max_rel=0
+field=Ideal repeated.temperature max_abs=0 max_rel=0
+field=Ideal repeated.total_energy max_abs=0 max_rel=0
+field=Ideal.cv max_abs=0 max_rel=0
+field=Ideal.dp_de max_abs=0 max_rel=0
+field=Ideal.dp_drho max_abs=0 max_rel=0
+field=Ideal.eint max_abs=0 max_rel=0
+field=Ideal.gamma max_abs=0 max_rel=0
+field=Ideal.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal.sound_speed max_abs=0 max_rel=0
+field=Ideal.state.E max_abs=0 max_rel=0
+field=Ideal.state.P max_abs=0 max_rel=0
+field=Ideal.state.cv max_abs=0 max_rel=0
+field=Ideal.state.dp_dT max_abs=0 max_rel=0
+field=Ideal.state.dp_drho max_abs=0 max_rel=0
+field=Ideal.state.sound_speed max_abs=0 max_rel=0
+field=Ideal.temperature max_abs=0 max_rel=0
+field=Ideal.total_energy max_abs=0 max_rel=0
+field=finite comparison policy max_abs=0 max_rel=0
+field=free-energy Cv oracle max_abs=3.7525538232330291e-14 max_rel=2.0503721219233899e-14
+field=free-energy bounded energy inversion max_abs=7.1054273576010019e-15 max_rel=5.5337123901566434e-15
+field=free-energy energy oracle max_abs=1.4210854715202004e-14 max_rel=1.4100693050743074e-16
+field=free-energy in-flight destruction max_abs=1.9761969838327786e-14 max_rel=1.9761969838327786e-14
+field=free-energy pressure oracle max_abs=3.9968028886505635e-15 max_rel=1.6073141360734404e-15
+field=free-energy thermal derivative oracle max_abs=1.9761969838327786e-14 max_rel=1.9761969838327786e-14
+field=helm.independent_composition_hessian max_abs=15255723835392 max_rel=3.0228715193911539e-14
+field=helm.independent_composition_hessian_temperature max_abs=402.33935546875 max_rel=4.1299838826488815e-10
+field=helm.independent_cv_gradient max_abs=2011.697265625 max_rel=4.1299320132721256e-10
+field=helm.independent_cv_temperature max_abs=0.008514404296875 max_rel=8.8151708155237429e-14
+field=helm.independent_differential.0 max_abs=5710001733632 max_rel=6.8400344185969613e-10
+field=helm.independent_differential.1 max_abs=160 max_rel=2.4673395384030853e-15
+field=helm.independent_differential.2 max_abs=16 max_rel=1.426900371554524e-16
+field=helm.independent_differential.3 max_abs=536870912000 max_rel=1.7521735353725168e-14
+field=helm.independent_differential.4 max_abs=16 max_rel=4.0019190877957026e-16
+field=helm.independent_differential.5 max_abs=8 max_rel=5.5693949619570253e-16
+field=helm.independent_differential.6 max_abs=75866302316544 max_rel=3.1046972163451065e-14
+field=helm.independent_differential.7 max_abs=7.7486038208007812e-07 max_rel=3.6348807070494609e-15
+field=helm.independent_differential.8 max_abs=2011.697265625 max_rel=4.1298262737112358e-10
+field=helm.independent_differential.9 max_abs=0.008514404296875 max_rel=8.8151708155237429e-14
+field=helm.independent_domain.0 max_abs=137438953472 max_rel=4.0842192902063371e-16
+field=helm.independent_domain.1 max_abs=1099511627776 max_rel=1.2609214323786692e-16
+field=helm.independent_domain.2 max_abs=4.76837158203125e-07 max_rel=3.4065215732923679e-15
+field=helm.independent_domain.3 max_abs=137438953472 max_rel=2.2301260093828415e-16
+field=helm.independent_domain.4 max_abs=64 max_rel=1.7003920047860191e-16
+field=helm.independent_domain.5 max_abs=7.2759576141834259e-12 max_rel=1.5969736805725397e-16
+field=helm.independent_energy_gradient max_abs=536870912000 max_rel=1.7521735318065294e-14
+field=helm.independent_isentrope.pressure max_abs=8388608 max_rel=2.0400695755276409e-16
+field=helm.independent_isentrope.rho max_abs=0 max_rel=0
+field=helm.independent_isentrope.sound_speed max_abs=3.1888484954833984e-06 max_rel=1.2580733489640444e-14
+field=helm.independent_isentrope.temperature max_abs=3.5762786865234375e-07 max_rel=3.5748451133614028e-15
+field=helm.independent_lower_bound_P max_abs=0 max_rel=0
+field=helm.independent_probe.cv max_abs=1.4901161193847656e-08 max_rel=2.0756044694097839e-16
+field=helm.independent_probe.dp_de max_abs=1.1641532182693481e-10 max_rel=1.8561907253997216e-16
+field=helm.independent_probe.dp_drho max_abs=1760 max_rel=4.5759047194009914e-14
+field=helm.independent_probe.eint max_abs=0 max_rel=0
+field=helm.independent_probe.pressure_rho_T max_abs=16777216 max_rel=4.0842192902063371e-16
+field=helm.independent_probe.pressure_rho_e max_abs=16777216 max_rel=4.0842192902063371e-16
+field=helm.independent_probe.sound_speed max_abs=3.4570693969726562e-06 max_rel=1.3641260478691958e-14
+field=helm.independent_probe.state.E max_abs=0 max_rel=0
+field=helm.independent_probe.state.P max_abs=16777216 max_rel=4.0842192902063371e-16
+field=helm.independent_probe.state.cv max_abs=1.4901161193847656e-08 max_rel=2.0756044694097839e-16
+field=helm.independent_probe.state.dp_dT max_abs=0.0078125 max_rel=1.7351098294045199e-16
+field=helm.independent_probe.state.dp_drho max_abs=1744 max_rel=2.8403193215243267e-14
+field=helm.independent_probe.state.eta max_abs=0 max_rel=0
+field=helm.independent_probe.state.pele max_abs=8388608 max_rel=2.2301260093828415e-16
+field=helm.independent_probe.state.sound_speed max_abs=3.4570693969726562e-06 max_rel=1.3641260478691958e-14
+field=helm.independent_probe.state.xne max_abs=0 max_rel=0
+field=helm.independent_probe.temperature max_abs=0 max_rel=0
+field=helm.independent_probe.total_energy max_abs=0 max_rel=0
+field=helm.independent_state.0 max_abs=16777216 max_rel=4.0842192902063371e-16
+field=helm.independent_state.1 max_abs=0 max_rel=0
+field=helm.independent_state.2 max_abs=1.4901161193847656e-08 max_rel=2.0756044694097839e-16
+field=helm.independent_state.3 max_abs=3.4570693969726562e-06 max_rel=1.3641260478691958e-14
+field=helm.independent_state.4 max_abs=1744 max_rel=2.8403193215243267e-14
+field=helm.independent_state.5 max_abs=0.0078125 max_rel=1.7351098294045199e-16
+field=helm.independent_state.6 max_abs=8388608 max_rel=2.2301260093828415e-16
+field=helm.independent_state.7 max_abs=0 max_rel=0
+field=helm.independent_state.8 max_abs=0 max_rel=0
+field=helm.independent_upper_bound_P max_abs=9.4447329657392904e+21 max_rel=1.3503327778371503e-16
+field=ideal BASE nonfinite/threshold pressure max_abs=6.9388939039072284e-18 max_rel=6.9388939039072284e-18
+field=ideal.default.probe.cv max_abs=0 max_rel=0
+field=ideal.default.probe.dp_de max_abs=2.2204460492503131e-16 max_rel=2.2204460492503131e-16
+field=ideal.default.probe.dp_drho max_abs=0.001953125 max_rel=1.7001436281337046e-16
+field=ideal.default.probe.eint max_abs=0 max_rel=0
+field=ideal.default.probe.gamma max_abs=0 max_rel=0
+field=ideal.default.probe.pressure_rho_T max_abs=0.0078125 max_rel=2.7202298050139278e-16
+field=ideal.default.probe.pressure_rho_e max_abs=0.0078125 max_rel=2.7202298050139278e-16
+field=ideal.default.probe.sound_speed max_abs=9.3132257461547852e-10 max_rel=2.3222763469885004e-16
+field=ideal.default.probe.state.E max_abs=0 max_rel=0
+field=ideal.default.probe.state.P max_abs=0.0078125 max_rel=2.7202298050139278e-16
+field=ideal.default.probe.state.cv max_abs=0 max_rel=0
+field=ideal.default.probe.state.dp_dT max_abs=1.862645149230957e-09 max_rel=2.5942132997645639e-16
+field=ideal.default.probe.state.dp_drho max_abs=0.001953125 max_rel=1.7001436281337046e-16
+field=ideal.default.probe.state.sound_speed max_abs=9.3132257461547852e-10 max_rel=2.3222763469885004e-16
+field=ideal.default.probe.temperature max_abs=0 max_rel=0
+field=ideal.default.probe.total_energy max_abs=0 max_rel=0
+field=ideal.strict.probe.cv max_abs=0 max_rel=0
+field=ideal.strict.probe.dp_de max_abs=0 max_rel=0
+field=ideal.strict.probe.dp_drho max_abs=0 max_rel=0
+field=ideal.strict.probe.eint max_abs=0 max_rel=0
+field=ideal.strict.probe.gamma max_abs=0 max_rel=0
+field=ideal.strict.probe.pressure_rho_T max_abs=0 max_rel=0
+field=ideal.strict.probe.pressure_rho_e max_abs=0 max_rel=0
+field=ideal.strict.probe.sound_speed max_abs=0 max_rel=0
+field=ideal.strict.probe.state.E max_abs=0 max_rel=0
+field=ideal.strict.probe.state.P max_abs=0 max_rel=0
+field=ideal.strict.probe.state.cv max_abs=0 max_rel=0
+field=ideal.strict.probe.state.dp_dT max_abs=0 max_rel=0
+field=ideal.strict.probe.state.dp_drho max_abs=0 max_rel=0
+field=ideal.strict.probe.state.sound_speed max_abs=0 max_rel=0
+field=ideal.strict.probe.temperature max_abs=0 max_rel=0
+field=ideal.strict.probe.total_energy max_abs=0 max_rel=0
+field=owner destruction did not synchronize pending kernel max_abs=0 max_rel=0
+field=scaled Helm.cv max_abs=2.9802322387695312e-08 max_rel=4.4070169068094644e-16
+field=scaled Helm.dp_de max_abs=1.1920928955078125e-07 max_rel=1.9792270000129344e-16
+field=scaled Helm.dp_drho max_abs=128 max_rel=2.6413316123243526e-16
+field=scaled Helm.eint max_abs=0 max_rel=0
+field=scaled Helm.pressure_rho_T max_abs=0 max_rel=0
+field=scaled Helm.pressure_rho_e max_abs=0 max_rel=0
+field=scaled Helm.sound_speed max_abs=0 max_rel=0
+field=scaled Helm.state.E max_abs=0 max_rel=0
+field=scaled Helm.state.P max_abs=0 max_rel=0
+field=scaled Helm.state.cv max_abs=2.9802322387695312e-08 max_rel=4.4070169068094644e-16
+field=scaled Helm.state.dp_dT max_abs=8 max_rel=1.9641294267013961e-16
+field=scaled Helm.state.dp_drho max_abs=0 max_rel=0
+field=scaled Helm.state.eta max_abs=0 max_rel=0
+field=scaled Helm.state.pele max_abs=0 max_rel=0
+field=scaled Helm.state.sound_speed max_abs=0 max_rel=0
+field=scaled Helm.state.xne max_abs=0 max_rel=0
+field=scaled Helm.temperature max_abs=1.862645149230957e-08 max_rel=7.8592622330414314e-16
+field=scaled Helm.total_energy max_abs=0 max_rel=0
+field=scaled Hessian action max_abs=32 max_rel=1.4190617235952788e-16
+field=scaled cv gradient max_abs=0 max_rel=0
+field=scaled derivative parity max_abs=8 max_rel=3.2982418301130487e-16
+field=scaled energy gradient max_abs=0 max_rel=0

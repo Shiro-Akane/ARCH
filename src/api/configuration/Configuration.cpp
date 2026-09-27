@@ -67,6 +67,7 @@ Json simple_options(std::initializer_list<const char*> names) {
 }
 /** Expose accepted spellings and display names for one enum key. */
 Json options(const std::string& key) {
+    if (key == "hll_wave_speed") return simple_options({"roe", "davis"});
     if (key == "solver") return Options<dispatch::FluxPolicies>::get();
     if (key == "reconstruct") return Options<dispatch::ReconstructionPolicies>::get();
     if (key == "limiter") return Options<dispatch::LimiterPolicies>::get();
@@ -108,11 +109,15 @@ Json constraints(const ParameterDefinition& d) {
         out["min"] = 0; out["minInclusive"] = true;
     }
     if (key == "lrefinemin" || key == "lrefinemax") { out["max"] = amr::kMaxRefinementLevel; out["maxInclusive"] = true; }
-    if (key == "refine_threshold" || key == "derefine_threshold") {
+    if (key == "eos_coulomb_mult" || key == "refine_threshold" || key == "derefine_threshold") {
         out["min"] = 0; out["max"] = 1; out["minInclusive"] = true; out["maxInclusive"] = true;
     }
     if (key == "sml_rho" || key == "min_eint" || key == "nseTempThreshold") {
         out["min"] = 0; out["minInclusive"] = false;
+    }
+    if (key == "dt_max") {
+        out["disabledValue"] = -1;
+        out["crossField"] = "Otherwise finite and at least dt_min";
     }
     out["complete"] = false;
     return out;
@@ -136,7 +141,7 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
         return Json::object({{"unit", system == "cgs" ? Json("cm/s^2") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec")
         return Json::object({{"unit", system == "cgs" ? Json("cm^2/s") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
-    if (key == "tstep_change_factor" || key == "gamma" || key == "smallx" || key == "cfl" || key == "diff_cfl"
+    if (key == "eos_coulomb_mult" || key == "tstep_change_factor" || key == "gamma" || key == "smallx" || key == "cfl" || key == "diff_cfl"
         || key == "gravity_rtol" || key == "ode_rtol" || key == "refine_threshold" || key == "derefine_threshold"
         || key == "enucDtFactor" || key == "EntropyFixCoefficient" || key.starts_with("ode_dt_") || key == "ode_initial_dt_frac")
         return Json::object({{"unit", "1"}, {"status", "dimensionless"}});
@@ -147,7 +152,7 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
         const auto unit = FieldUnit(field, system);
         return Json::object({{"unit", unit.empty() ? Json() : Json(unit)}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     }
-    if (key == "tmax" || key == "plt_dt" || key == "chk_dt" || key == "dt_init" || key == "dt_min")
+    if (key == "tmax" || key == "plt_dt" || key == "chk_dt" || key == "dt_init" || key == "dt_min" || key == "dt_max")
         return Json::object({{"unit", system == "cgs" ? Json("s") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     if (key == "ode_atol")
         return Json::object({{"unit", Json()}, {"status", "mixed-state"},
@@ -162,6 +167,8 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
 }
 std::string condition(const ParameterDefinition& d) {
     const auto key = d.key;
+    if (key == "eos_coulomb_mult") return "eos_type=helmholtz; scales ion Coulomb terms, not electron/positron completion";
+    if (key == "hll_wave_speed") return "solver=HLL or HLLC";
     if (key == "EntropyFixCoefficient") return "EntropyFix=true";
     if (key == "cuda_device") return "compute_backend=cuda or auto; no device probing in configuration inspection";
     if (key == "restart_file") return "restart=true";
@@ -179,6 +186,8 @@ std::string condition(const ParameterDefinition& d) {
 /** Determine whether a parameter is active under the resolved configuration. */
 bool applicable(const ParameterDefinition& d, const SimConfig& c, const ConfigParser& p) {
     const auto key = d.key;
+    if (key == "eos_coulomb_mult") return dispatch::ascii_iequals(c.physics.eos_type, "helmholtz");
+    if (key == "hll_wave_speed") return dispatch::ascii_iequals(c.numerics.solver_name, "HLLC") || dispatch::ascii_iequals(c.numerics.solver_name, "HLL");
     if (key == "ode_max_newton_iter") return c.physics.burn.use_burn && dispatch::ascii_iequals(c.physics.burn.odeconfig.ode_solver, "BE_NR");
     if (key == "ode_dt_safe_fac") return c.physics.burn.use_burn && !dispatch::ascii_iequals(c.physics.burn.odeconfig.ode_solver, "BD");
     if (key == "EntropyFixCoefficient") return (dispatch::ascii_iequals(c.numerics.solver_name, "SW") || dispatch::ascii_iequals(c.numerics.solver_name, "Roe")) && p.GetBool("EntropyFix", config::DefaultBool("EntropyFix"));

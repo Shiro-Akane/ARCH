@@ -1,0 +1,1 @@
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
