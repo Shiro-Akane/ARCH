@@ -700,3 +700,13 @@ Target A1–A17 rechecked. Session integration, latest-pending scheduling, real 
 - Studio171/171, Host70/70, Core13/13 (231.18s), lint/typecheck/build/diff PASS.
 - Report: PHASE2H_B_CAPABILITY_MIGRATION_REPORT.md. Local checkpoint studio-phase2h-b-v0.18.0.
 - STOP: no 2H-C, Phase3 or automatic push.
+
+## Phase 2H-C / final compatibility checkpoint (2026-09-27)
+- Target C sections 28–35 rechecked; only desktop/workstation regression. No implementation or Core changes, repeated A/B migration/build/tests, or main merge.
+- Tested unchanged B af3c94aee31d748e4dbc9ecc8deb85728dafc3a6 in a fresh Windows Electron package. Package dist/host/src match B; current CPU binary SHA remains 53fdf7939cf4d68c806b206f1e7cf2f4d0e6d3724682a203af6e01250375fcf7.
+- Native desktop UAT: 92-key/14-model discovery, Sod x_pos/inspection/warm/AMR, Cellular field/warm/AMR, GravityBox inspection-only/self schema, retired removal/Undo/Save/Reopen, native Save As disk verification and JENS no-fallback.
+- Packaged Host cancellation/recovery instrumented through existing API; native idle/active Preview/active AMR window closes leave no Node/ARCH/launcher orphans. B request-limit/recycle evidence retained.
+- B gates retained: Studio171/171, Host70/70, Core13/13; lint/typecheck/build PASS. C packaging, identity audit and final diff-check PASS.
+- Reports: PHASE2H_COMPLETION_REPORT.md and PHASE2H_MAINLINE_COMPATIBILITY_REPORT.md. PASS WITH NON-BLOCKING ISSUES (inherited package version/docs examples and low-contrast action labels).
+- A/B tag objects unchanged. Final local annotated checkpoint studio-phase2h-v0.19.0; resolve tag for final report commit. Root STATUS unchanged.
+- STOP. No Phase3 or automatic push.
