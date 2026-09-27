@@ -1,0 +1,15 @@
+========= COMPUTE-SANITIZER
+Tabular3: dense/batched EOS failure no-commit and valid reuse passed
+Tabular3: cuDSS sparse handoff and failure checks passed
+Tabular3: dense/batched EOS failure no-commit and valid reuse passed
+Tabular3: cuDSS sparse handoff and failure checks passed
+Tabular3: dense/batched EOS failure no-commit and valid reuse passed
+Tabular3: cuDSS sparse handoff and failure checks passed
+Tabular4: dense/batched EOS failure no-commit and valid reuse passed
+Tabular4: cuDSS sparse handoff and failure checks passed
+Tabular4: dense/batched EOS failure no-commit and valid reuse passed
+Tabular4: cuDSS sparse handoff and failure checks passed
+Tabular4: dense/batched EOS failure no-commit and valid reuse passed
+Tabular4: cuDSS sparse handoff and failure checks passed
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors

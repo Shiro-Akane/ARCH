@@ -1,0 +1,275 @@
+Internal ctest changing into directory: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda
+Test project /home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda
+        Start   1: checkpoint_temporal_comparison
+  1/132 Test   #1: checkpoint_temporal_comparison .............   Passed    0.01 sec
+        Start   2: preview_initial_conversion
+  2/132 Test   #2: preview_initial_conversion .................   Passed    0.00 sec
+        Start   3: preview_api_contract
+  3/132 Test   #3: preview_api_contract .......................   Passed    2.71 sec
+        Start   4: configuration_api_contract
+  4/132 Test   #4: configuration_api_contract .................   Passed    0.97 sec
+        Start   5: preview_parameter_reads
+  5/132 Test   #5: preview_parameter_reads ....................   Passed    0.00 sec
+        Start   6: preview_parameter_metadata
+  6/132 Test   #6: preview_parameter_metadata .................   Passed    0.16 sec
+        Start   7: preview_sampling_limits
+  7/132 Test   #7: preview_sampling_limits ....................   Passed    0.24 sec
+        Start   8: portable_network_generator
+  8/132 Test   #8: portable_network_generator .................   Passed    0.66 sec
+        Start   9: cuda_amr_smoke_runner_contract
+  9/132 Test   #9: cuda_amr_smoke_runner_contract .............   Passed    0.12 sec
+        Start  10: curvilinear_manifest_contract
+ 10/132 Test  #10: curvilinear_manifest_contract ..............   Passed    0.09 sec
+        Start  11: memory_guard_contract
+ 11/132 Test  #11: memory_guard_contract ......................   Passed    0.08 sec
+        Start  12: backend_validation_contract
+ 12/132 Test  #12: backend_validation_contract ................   Passed    0.35 sec
+        Start  13: sparse_validation_contract
+ 13/132 Test  #13: sparse_validation_contract .................   Passed    0.07 sec
+        Start  14: validation_provenance_contract
+ 14/132 Test  #14: validation_provenance_contract .............   Passed    1.34 sec
+        Start  15: runtime_validation_inputs_contract
+ 15/132 Test  #15: runtime_validation_inputs_contract .........   Passed    0.11 sec
+        Start  16: physical_constants
+ 16/132 Test  #16: physical_constants .........................   Passed    0.00 sec
+        Start  17: refinement_indicator_math
+ 17/132 Test  #17: refinement_indicator_math ..................   Passed    0.00 sec
+        Start  18: curvilinear_metrics
+ 18/132 Test  #18: curvilinear_metrics ........................   Passed    0.21 sec
+        Start  19: compensated_sum
+ 19/132 Test  #19: compensated_sum ............................   Passed    0.00 sec
+        Start  20: sparse_ode_continuation
+ 20/132 Test  #20: sparse_ode_continuation ....................   Passed    0.01 sec
+        Start  21: sparse_residual
+ 21/132 Test  #21: sparse_residual ............................   Passed    0.00 sec
+        Start  22: checkpoint_conservation_metrics
+ 22/132 Test  #22: checkpoint_conservation_metrics ............   Passed    0.00 sec
+        Start  23: burn_mainline_reference
+ 23/132 Test  #23: burn_mainline_reference ....................   Passed   64.56 sec
+        Start  24: generated_nse
+ 24/132 Test  #24: generated_nse ..............................   Passed    0.01 sec
+        Start  25: tabular_strict_math
+ 25/132 Test  #25: tabular_strict_math ........................   Passed    0.01 sec
+        Start  26: baryon_source_format
+ 26/132 Test  #26: baryon_source_format .......................   Passed    0.01 sec
+        Start  27: helm_components
+ 27/132 Test  #27: helm_components ............................   Passed    0.64 sec
+        Start  28: mainline_authority
+ 28/132 Test  #28: mainline_authority .........................   Passed    0.01 sec
+        Start  29: block_handle
+ 29/132 Test  #29: block_handle ...............................   Passed    0.00 sec
+        Start  30: state_residency
+ 30/132 Test  #30: state_residency ............................   Passed    0.00 sec
+        Start  31: shared_stage_scheduler
+ 31/132 Test  #31: shared_stage_scheduler .....................   Passed    0.00 sec
+        Start  32: gravity_stage_contract
+ 32/132 Test  #32: gravity_stage_contract .....................   Passed    0.00 sec
+        Start  33: boundary_plan
+ 33/132 Test  #33: boundary_plan ..............................   Passed    0.02 sec
+        Start  34: same_level_exchange_plan
+ 34/132 Test  #34: same_level_exchange_plan ...................   Passed    0.00 sec
+        Start  35: amr_operation_plans
+ 35/132 Test  #35: amr_operation_plans ........................   Passed    0.14 sec
+        Start  36: amr_flux_surface_plan
+ 36/132 Test  #36: amr_flux_surface_plan ......................   Passed    0.00 sec
+        Start  37: topology_transaction
+ 37/132 Test  #37: topology_transaction .......................   Passed    0.02 sec
+        Start  38: resolved_execution_plan
+ 38/132 Test  #38: resolved_execution_plan ....................   Passed    0.00 sec
+        Start  39: runtime_probe_and_capabilities
+ 39/132 Test  #39: runtime_probe_and_capabilities .............   Passed    0.06 sec
+        Start  40: reduction_contract
+ 40/132 Test  #40: reduction_contract .........................   Passed    0.00 sec
+        Start  41: compute_backend
+ 41/132 Test  #41: compute_backend ............................   Passed    0.00 sec
+        Start  42: device_block_store_lifecycle
+ 42/132 Test  #42: device_block_store_lifecycle ...............   Passed    0.00 sec
+        Start  43: initialization_probe
+ 43/132 Test  #43: initialization_probe .......................   Passed    0.00 sec
+        Start  44: case_inspection_contract
+ 44/132 Test  #44: case_inspection_contract ...................   Passed    4.09 sec
+        Start  45: preview_session_contract
+ 45/132 Test  #45: preview_session_contract ...................   Passed    7.91 sec
+        Start  46: preview_verified_resources
+ 46/132 Test  #46: preview_verified_resources .................   Passed    0.01 sec
+        Start  47: preview_exact_sample_cache
+ 47/132 Test  #47: preview_exact_sample_cache .................   Passed    0.00 sec
+        Start  48: low_density_math
+ 48/132 Test  #48: low_density_math ...........................   Passed    0.00 sec
+        Start  49: poisson_multigrid_contract
+ 49/132 Test  #49: poisson_multigrid_contract .................   Passed    0.68 sec
+        Start  50: poisson_multigrid_analytic
+ 50/132 Test  #50: poisson_multigrid_analytic .................   Passed    5.64 sec
+        Start  51: composite_poisson_analytic
+ 51/132 Test  #51: composite_poisson_analytic .................   Passed    6.39 sec
+        Start  52: self_gravity_lifecycle
+ 52/132 Test  #52: self_gravity_lifecycle .....................   Passed    0.31 sec
+        Start  53: composite_poisson_contract
+ 53/132 Test  #53: composite_poisson_contract .................   Passed    0.05 sec
+        Start  54: self_gravity_physics
+ 54/132 Test  #54: self_gravity_physics .......................   Passed    3.97 sec
+        Start  55: cuda_regrid_transaction
+ 55/132 Test  #55: cuda_regrid_transaction ....................   Passed    0.32 sec
+        Start  56: cuda_grid_metrics_cache
+ 56/132 Test  #56: cuda_grid_metrics_cache ....................   Passed    0.30 sec
+        Start  57: cuda_burn_eos_failure
+ 57/132 Test  #57: cuda_burn_eos_failure ......................   Passed   14.64 sec
+        Start  58: cuda_regrid_migration
+ 58/132 Test  #58: cuda_regrid_migration ......................   Passed    0.29 sec
+        Start  59: cuda_curvilinear_geometry_smoke
+ 59/132 Test  #59: cuda_curvilinear_geometry_smoke ............   Passed    0.87 sec
+        Start  60: cuda_hydro_eos_failure
+ 60/132 Test  #60: cuda_hydro_eos_failure .....................   Passed    0.19 sec
+        Start  61: cuda_hydro_dispatch
+ 61/132 Test  #61: cuda_hydro_dispatch ........................   Passed    0.00 sec
+        Start  62: cuda_refinement_indicators
+ 62/132 Test  #62: cuda_refinement_indicators .................   Passed    0.42 sec
+        Start  63: cuda_compensated_sum
+ 63/132 Test  #63: cuda_compensated_sum .......................   Passed    0.17 sec
+        Start  64: cuda_amr_composition
+ 64/132 Test  #64: cuda_amr_composition .......................   Passed    0.22 sec
+        Start  65: generated_nse_device
+ 65/132 Test  #65: generated_nse_device .......................   Passed    0.17 sec
+        Start  66: native_tabular_device
+ 66/132 Test  #66: native_tabular_device ......................   Passed    0.18 sec
+        Start 131: tabular_component_completion
+ 67/132 Test #131: tabular_component_completion ...............   Passed    6.82 sec
+        Start  67: tabular_completion_device
+ 68/132 Test  #67: tabular_completion_device ..................   Passed    2.30 sec
+        Start  68: burn_controller_parity
+ 69/132 Test  #68: burn_controller_parity .....................   Passed    1.55 sec
+        Start  69: cuda_network_derivative
+ 70/132 Test  #69: cuda_network_derivative ....................   Passed    0.17 sec
+        Start  70: cuda_burn_thermal_math
+ 71/132 Test  #70: cuda_burn_thermal_math .....................   Passed    1.33 sec
+        Start  71: cuda_compile_probe
+ 72/132 Test  #71: cuda_compile_probe .........................   Passed    0.00 sec
+        Start  72: hydro_leaf_parity
+ 73/132 Test  #72: hydro_leaf_parity ..........................   Passed    0.19 sec
+        Start  73: eos_host_device_parity
+ 74/132 Test  #73: eos_host_device_parity .....................   Passed    1.17 sec
+        Start  74: tabular_free_energy_owner
+ 75/132 Test  #74: tabular_free_energy_owner ..................   Passed    0.17 sec
+        Start  75: network_nse_device
+ 76/132 Test  #75: network_nse_device .........................   Passed    0.45 sec
+        Start  76: burn_policy_parity_helpers
+ 77/132 Test  #76: burn_policy_parity_helpers .................   Passed    0.21 sec
+        Start  77: diffusion_rkl_parity
+ 78/132 Test  #77: diffusion_rkl_parity .......................   Passed    0.73 sec
+        Start  78: boundary_plan_parity
+ 79/132 Test  #78: boundary_plan_parity .......................   Passed    0.22 sec
+        Start  79: cuda_policy_resolution
+ 80/132 Test  #79: cuda_policy_resolution .....................   Passed    0.24 sec
+        Start  80: cuda_reduction_contract
+ 81/132 Test  #80: cuda_reduction_contract ....................   Passed    0.21 sec
+        Start  81: cuda_single_level_smoke
+ 82/132 Test  #81: cuda_single_level_smoke ....................   Passed    0.22 sec
+        Start  82: cuda_multiblock_hydro
+ 83/132 Test  #82: cuda_multiblock_hydro ......................   Passed    0.28 sec
+        Start  83: cuda_multiblock_diffusion
+ 84/132 Test  #83: cuda_multiblock_diffusion ..................   Passed    0.20 sec
+        Start  84: cuda_multiblock_burn
+ 85/132 Test  #84: cuda_multiblock_burn .......................   Passed    4.13 sec
+        Start  85: cuda_multiblock_burn_b3
+ 86/132 Test  #85: cuda_multiblock_burn_b3 ....................   Passed    4.17 sec
+        Start  86: cuda_multiblock_diffusion_b3
+ 87/132 Test  #86: cuda_multiblock_diffusion_b3 ...............   Passed    0.20 sec
+        Start  87: cuda_multiblock_burn_b1024
+ 88/132 Test  #87: cuda_multiblock_burn_b1024 .................   Passed   27.65 sec
+        Start  88: cuda_multiblock_diffusion_b1024
+ 89/132 Test  #88: cuda_multiblock_diffusion_b1024 ............   Passed    6.66 sec
+        Start  89: cuda_multiblock_burn_b1025
+ 90/132 Test  #89: cuda_multiblock_burn_b1025 .................   Passed   27.45 sec
+        Start  90: cuda_multiblock_diffusion_b1025
+ 91/132 Test  #90: cuda_multiblock_diffusion_b1025 ............   Passed    6.93 sec
+        Start  91: cuda_multiblock_diffusion_global_species
+ 92/132 Test  #91: cuda_multiblock_diffusion_global_species ...   Passed    0.26 sec
+        Start  92: cuda_store_lifecycle
+ 93/132 Test  #92: cuda_store_lifecycle .......................   Passed    0.19 sec
+        Start  93: cuda_amr_exchange
+ 94/132 Test  #93: cuda_amr_exchange ..........................   Passed    8.93 sec
+        Start  94: cuda_hydro_route_matrix
+ 95/132 Test  #94: cuda_hydro_route_matrix ....................   Passed    0.33 sec
+        Start  95: cuda_hydro_integrator_matrix
+ 96/132 Test  #95: cuda_hydro_integrator_matrix ...............   Passed    0.21 sec
+        Start  96: cuda_backend_eos_owner_matrix
+ 97/132 Test  #96: cuda_backend_eos_owner_matrix ..............   Passed    1.14 sec
+        Start  97: cuda_backend_diffusion_rkl1
+ 98/132 Test  #97: cuda_backend_diffusion_rkl1 ................   Passed    0.18 sec
+        Start  98: cuda_backend_diffusion_rkl2
+ 99/132 Test  #98: cuda_backend_diffusion_rkl2 ................   Passed    0.19 sec
+        Start  99: cuda_backend_burn_aprox13_be_nr
+100/132 Test  #99: cuda_backend_burn_aprox13_be_nr ............   Passed    0.85 sec
+        Start 100: cuda_backend_burn_aprox13_bd
+101/132 Test #100: cuda_backend_burn_aprox13_bd ...............   Passed    0.84 sec
+        Start 101: cuda_backend_burn_aprox13_ros4
+102/132 Test #101: cuda_backend_burn_aprox13_ros4 .............   Passed    0.82 sec
+        Start 102: cuda_backend_burn_aprox19_be_nr
+103/132 Test #102: cuda_backend_burn_aprox19_be_nr ............   Passed    0.85 sec
+        Start 103: cuda_backend_burn_aprox19_bd
+104/132 Test #103: cuda_backend_burn_aprox19_bd ...............   Passed    0.86 sec
+        Start 104: cuda_backend_burn_aprox19_ros4
+105/132 Test #104: cuda_backend_burn_aprox19_ros4 .............   Passed    0.87 sec
+        Start 105: cuda_backend_burn_aprox21_be_nr
+106/132 Test #105: cuda_backend_burn_aprox21_be_nr ............   Passed    0.85 sec
+        Start 106: cuda_backend_burn_aprox21_bd
+107/132 Test #106: cuda_backend_burn_aprox21_bd ...............   Passed    0.87 sec
+        Start 107: cuda_backend_burn_aprox21_ros4
+108/132 Test #107: cuda_backend_burn_aprox21_ros4 .............   Passed    0.85 sec
+        Start 108: cuda_backend_burn_iso7_be_nr
+109/132 Test #108: cuda_backend_burn_iso7_be_nr ...............   Passed    0.82 sec
+        Start 109: cuda_backend_burn_iso7_bd
+110/132 Test #109: cuda_backend_burn_iso7_bd ..................   Passed    0.84 sec
+        Start 110: cuda_backend_burn_iso7_ros4
+111/132 Test #110: cuda_backend_burn_iso7_ros4 ................   Passed    0.83 sec
+        Start 111: burn_policy_parity_status_be_nr
+112/132 Test #111: burn_policy_parity_status_be_nr ............   Passed    0.23 sec
+        Start 112: burn_policy_parity_status_bd
+113/132 Test #112: burn_policy_parity_status_bd ...............   Passed    0.21 sec
+        Start 113: burn_policy_parity_status_ros4
+114/132 Test #113: burn_policy_parity_status_ros4 .............   Passed    0.22 sec
+        Start 114: burn_policy_parity_aprox13_be_nr
+115/132 Test #114: burn_policy_parity_aprox13_be_nr ...........   Passed    1.12 sec
+        Start 115: burn_policy_parity_aprox13_bd
+116/132 Test #115: burn_policy_parity_aprox13_bd ..............   Passed    1.10 sec
+        Start 116: burn_policy_parity_aprox13_ros4
+117/132 Test #116: burn_policy_parity_aprox13_ros4 ............   Passed    1.10 sec
+        Start 117: burn_policy_parity_aprox19_be_nr
+118/132 Test #117: burn_policy_parity_aprox19_be_nr ...........   Passed    1.15 sec
+        Start 118: burn_policy_parity_aprox19_bd
+119/132 Test #118: burn_policy_parity_aprox19_bd ..............   Passed    1.12 sec
+        Start 119: burn_policy_parity_aprox19_ros4
+120/132 Test #119: burn_policy_parity_aprox19_ros4 ............   Passed    1.11 sec
+        Start 120: burn_policy_parity_aprox21_be_nr
+121/132 Test #120: burn_policy_parity_aprox21_be_nr ...........   Passed    1.11 sec
+        Start 121: burn_policy_parity_aprox21_bd
+122/132 Test #121: burn_policy_parity_aprox21_bd ..............   Passed    1.13 sec
+        Start 122: burn_policy_parity_aprox21_ros4
+123/132 Test #122: burn_policy_parity_aprox21_ros4 ............   Passed    1.12 sec
+        Start 123: burn_policy_parity_iso7_be_nr
+124/132 Test #123: burn_policy_parity_iso7_be_nr ..............   Passed    1.12 sec
+        Start 124: burn_policy_parity_iso7_bd
+125/132 Test #124: burn_policy_parity_iso7_bd .................   Passed    1.08 sec
+        Start 125: burn_policy_parity_iso7_ros4
+126/132 Test #125: burn_policy_parity_iso7_ros4 ...............   Passed    1.07 sec
+        Start 126: ui_expansion_contract
+127/132 Test #126: ui_expansion_contract ......................   Passed    4.64 sec
+        Start 127: preview_cellular_2d
+128/132 Test #127: preview_cellular_2d ........................   Passed   22.87 sec
+        Start 128: checkpoint_compatibility
+129/132 Test #128: checkpoint_compatibility ...................   Passed    0.04 sec
+        Start 129: tabular_eos_ideal_gas
+130/132 Test #129: tabular_eos_ideal_gas ......................   Passed    4.32 sec
+        Start 130: native_tabular_eos
+131/132 Test #130: native_tabular_eos .........................   Passed    0.01 sec
+        Start 132: sparse_klu_161_equations
+132/132 Test #132: sparse_klu_161_equations ...................   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 132
+
+Label Time Summary:
+batch-boundary    =  73.32 sec*proc (7 tests)
+cuda              =  73.32 sec*proc (7 tests)
+microphysics      =  73.32 sec*proc (7 tests)
+
+Total Test time (real) = 280.63 sec

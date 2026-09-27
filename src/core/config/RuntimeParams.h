@@ -47,9 +47,9 @@ private:
     }
 
     /**
-     * @brief Parse a restricted numeric expression containing an optional pi.
+     * @brief Parse a restricted numeric expression for selected grid and gravity fields.
      * Supported forms are a plain number, pi, -pi, coefficient*pi,
-     * pi*coefficient, and pi/coefficient. This is not a general parser.
+     * pi*coefficient, pi/coefficient, and exp(number). This is not a general parser.
      */
     static double ParseMathExpr(const std::string& str, const std::string& key)
     {
@@ -136,6 +136,11 @@ private:
         // Numerical-method configuration.
         cfg.numerics.solver_name = parser.GetString("solver", arch::config::DefaultString("solver"));
         cfg.numerics.dt_init = parser.GetDouble("dt_init", arch::config::DefaultDouble("dt_init"));
+        cfg.numerics.dt_max = parser.GetDouble("dt_max", arch::config::DefaultDouble("dt_max"));
+        const auto hll_speed = CanonicalizeEnumToken(parser.GetString("hll_wave_speed", arch::config::DefaultString("hll_wave_speed")));
+        if (hll_speed != "roe" && hll_speed != "davis")
+            throw ConfigValueError("hll_wave_speed", "INVALID_VALUE", "Expected roe or davis.");
+        cfg.numerics.hll_roe_wave_speed = hll_speed == "roe";
         cfg.numerics.dt_min = parser.GetDouble("dt_min", arch::config::DefaultDouble("dt_min"));
         cfg.numerics.tstep_change_factor = parser.GetDouble("tstep_change_factor", arch::config::DefaultDouble("tstep_change_factor"));
         cfg.numerics.cfl = parser.GetDouble("cfl", arch::config::DefaultDouble("cfl"));
@@ -167,6 +172,7 @@ private:
         cfg.physics.eos_type = parser.GetString("eos_type", arch::config::DefaultString("eos_type"));
         cfg.physics.eos_table_path = parser.GetString("eos_table_path", arch::config::DefaultString("eos_table_path"));
         cfg.physics.eos_helm_table_path = parser.GetString("eos_helm_table_path", arch::config::DefaultString("eos_helm_table_path"));
+        cfg.physics.eos_coulomb_mult = parser.GetDouble("eos_coulomb_mult", arch::config::DefaultDouble("eos_coulomb_mult"));
         cfg.physics.gamma = parser.GetDouble("gamma", arch::config::DefaultDouble("gamma"));
 
         // Nuclear reaction and NSE configuration.
@@ -407,8 +413,8 @@ private:
         {
             try
             {
-                // Store numeric custom parameters directly.
-                double val = std::stod(val_str);
+                // Require the complete numeric token; expressions remain strings.
+                double val = ConfigParser::ParseNumber(key, val_str);
                 cfg.custom_params[key] = val;
             }
             catch (...)

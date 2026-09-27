@@ -138,12 +138,49 @@ void polynomial_components()
     boundaries(view);
 }
 
+void coulomb_controls(const HelmEos& owner)
+{
+    const double x[]{.25,.75};
+    constexpr double y=.25+.75/4., ye=.625;
+    for (const auto point : {std::array<double,2>{1e2,1.73e8}, {2.345e6,7.36e7}, {1e9,2.37e7}}) {
+        const double rho=point[0], T=point[1];
+        std::array<std::array<double,13>,3> result{};
+        for (int index=0;index<3;++index) {
+            auto view=owner.get_view(); view.coulomb_mult=.5*index;
+            auto& v=result[index]; View::ThermodynamicDerivatives d;
+            view.calc_thermo_with_cv(rho,T,x,v[0],v[1],&v[2],&d);
+            const double fields[]{d.pressure_density,d.pressure_temperature,d.energy_y,d.energy_z,
+                d.energy_yy,d.energy_yz,d.energy_zz,d.cv_y,d.cv_z,d.cv_temperature};
+            std::copy(std::begin(fields),std::end(fields),v.begin()+3);
+            close(view.get_temperature(rho,v[1],x),T,1e-10,"Coulomb energy inverse");
+            close(view.invert_temperature(rho,v[0],x,true),T,1e-10,"Coulomb pressure inverse");
+            double pp,ep,cp,pm,em,cm; constexpr double h=1e-4;
+            view.calc_thermo_with_cv(rho,T*(1+h),x,pp,ep,&cp);
+            view.calc_thermo_with_cv(rho,T*(1-h),x,pm,em,&cm);
+            close((ep-em)/(2*h*T),v[2],3e-5,"scaled Coulomb cv finite difference");
+            close((pp-pm)/(2*h*T),d.pressure_temperature,3e-5,"scaled Coulomb p_T finite difference");
+            close((cp-cm)/(2*h*T),d.cv_temperature,3e-5,"scaled Coulomb cv_T finite difference");
+        }
+        Component electron, photon;
+        require(owner.electron_positron_component(rho,T,ye,electron),"electron reference component");
+        require(View::photon_component(rho,T,photon),"photon reference component");
+        const double ion=View::avo*View::kerg*y;
+        close(result[0][0],electron.pressure+photon.pressure+rho*ion*T,2e-15,"zero Coulomb pressure component sum");
+        close(result[0][1],electron.energy+photon.energy+1.5*ion*T,2e-15,"zero Coulomb energy component sum");
+        close(result[0][2],electron.cv+photon.cv+1.5*ion,2e-15,"zero Coulomb cv component sum");
+        for(int field=0;field<13;++field)
+            close(result[1][field],.5*(result[0][field]+result[2][field]),3e-13,
+                  "Coulomb fraction scales all derivatives consistently");
+    }
+}
+
 void actual_table(const char* path)
 {
     SpeciesManager species;
     species.add_species("h1", 1, 1, 5.0/3.0, 0.0);
     species.add_species("he4", 4, 2, 5.0/3.0, 0.0);
     HelmEos eos(path, &species);
+    coulomb_controls(eos);
     const double fractions[]{0.25, 0.75};
     constexpr double ye = 0.625;
     for (const auto& point : HelmReference::points) {
@@ -168,6 +205,33 @@ void actual_table(const char* path)
         close(energy, point.values[1], 1.5e-15, "unchanged complete Helmholtz energy");
         close(cv, point.values[2], 32*std::numeric_limits<double>::epsilon(),
               "unchanged complete Helmholtz cv");
+    }
+    // A temperature inverse may reuse only its unchanged density/composition
+    // factors. Compare fresh and prepared evaluations across temperatures and
+    // ensure that skipping unused derivative outputs preserves P/e/cv exactly.
+    for (double rho : {1e-4, 1.0, 1e6, 1e9}) {
+        const auto fixed = eos.prepare_fixed_density(rho, fractions);
+        for (double T : {1e3, 1e5, 1e8, 1.23456789e8, 1e10, 1e13}) {
+            double p, e, cv, prepared_p, prepared_e, prepared_cv;
+            View::ThermodynamicDerivatives d;
+            eos.calc_thermo_with_cv(rho, T, fractions, p, e, &cv, &d);
+            eos.calc_thermo_with_cv(rho, T, fractions,
+                                   prepared_p, prepared_e, &prepared_cv, nullptr, &fixed);
+            require(p == prepared_p && e == prepared_e && cv == prepared_cv,
+                    "prepared Helm inverse factors changed thermodynamics");
+            for (auto request : {View::JetRequest::Acoustic,View::JetRequest::FirstLaw}) {
+                View::ThermodynamicDerivatives selective;
+                eos.calc_thermo_with_cv(rho,T,fractions,prepared_p,prepared_e,
+                                       &prepared_cv,&selective,&fixed,request);
+                require(p==prepared_p && e==prepared_e && cv==prepared_cv
+                    && d.pressure_density==selective.pressure_density
+                    && d.pressure_temperature==selective.pressure_temperature,
+                    "selective Helm acoustic jet changed retained values");
+                if(request==View::JetRequest::FirstLaw)
+                    require(d.energy_y==selective.energy_y && d.energy_z==selective.energy_z,
+                            "selective Helm first-law jet changed retained values");
+            }
+        }
     }
     // Inverse recovery spans ideal, degenerate and radiation-dominated states.
     // Energy rounding limits temperature accuracy by e/(Cv*T); it must not
@@ -248,6 +312,29 @@ void actual_table(const char* path)
             }
         }
     }
+    // Exercise exact inverse hits, slot collisions, key changes and nested
+    // lexical scope restoration against the original uncached root solve.
+    {
+        View::HostHydroScope scope(eos);
+        for (int repeat=0;repeat<2;++repeat) for (int index=0;index<300;++index) {
+            const double rho=1e5+1000*index, temperature=1e7+12345*index;
+            const double x[]{.2+index*.001, .8-index*.001};
+            for (bool pressure : {false,true}) {
+                const double target=pressure ? eos.get_pressure_from_rho_T(rho,temperature,x)
+                                             : eos.get_eint_from_T(rho,temperature,x);
+                const double expected=eos.invert_temperature_uncached(rho,target,x,pressure);
+                require(eos.invert_temperature(rho,target,x,pressure)==expected
+                    && eos.invert_temperature(rho,target,x,pressure)==expected,
+                    "host inverse memo changed strict root");
+            }
+        }
+        require(std::isnan(eos.get_temperature(1e6,-1.,fractions)),
+                "host inverse memo hid invalid energy");
+        { View::HostHydroScope nested(eos); }
+        require(View::host_inverse_workspace && View::host_inverse_workspace->owner==&eos,
+                "nested inverse scope did not restore its caller");
+    }
+    require(View::host_inverse_workspace==nullptr,"inverse cache escaped hydro scope");
     boundaries(eos);
 }
 } // namespace

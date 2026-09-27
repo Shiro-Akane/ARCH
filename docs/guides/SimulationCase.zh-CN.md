@@ -36,15 +36,15 @@ export OMP_NUM_THREADS=4
 
 ARCH 推进守恒状态的单元平均值
 
-\[
+$$
 U=(\rho,\rho u,\rho v,\rho w,E,\rho X_1,\ldots,\rho X_N).
-\]
+$$
 
 算例作者在初始时刻提供更便于表达的原始变量
 
-\[
+$$
 W=(\rho,u,v,w,p,X_1,\ldots,X_N),
-\]
+$$
 
 再由选定的 EOS 计算动量和总能量。
 
@@ -260,7 +260,9 @@ cmake --build build-cpu --target ARCH --parallel 1
 
 ### `SimConfig`
 
-用 `config.Get<double/int/string>(key, default)` 读取算例自定义参数。数值通过 `std::stod` 解析；`2*pi` 等表达式应写成已求值的十进制数。未知键会作为自定义参数保留，但不会进行拼写验证。
+用 `config.Get<double/int/string>(key, default)` 读取算例自定义参数。自定义数值在 `.par` 中填写完整的十进制数或科学记数法，例如 `1e8`；不完整的数值在被算例作为数字读取时会报错。标准网格边界和引力表达式参数可直接使用小写 `pi`、`2*pi` 和 `exp(1)`、`exp(-2)` 等形式。`exp(number)` 是自然指数函数；`1e8` 或 `1E8` 中的 `e/E` 是科学记数法的十进制指数标记，独立的 `e` 或 `E` 不是参数常数。
+
+算例 `.cpp` 中的数学计算使用 C++ 标准库：按需加入 `<cmath>` 并调用 `std::exp`、`std::sin`、`std::cos`、`std::log`；自然常数可从 `<numbers>` 读取 `std::numbers::e`，圆周率也可用公开头文件提供的 `arch::constants::math::pi`。这些计算发生在 `Setup` 或 `Init` 中，不由 `config.Get` 求值。未知键会作为自定义参数保留，但不会进行拼写验证。
 
 当你需要访问核心设置时，应该直接读取它们严格按类型定义的成员。例如：
 
@@ -289,7 +291,40 @@ point.r_cy, point.phi_cy, point.z_cy
 | Spherical | r | r, phi（极平面） | r, theta, phi |
 | Cylindrical | r | r, phi（极平面） | r, z, phi |
 
-转换坐标使用原点 `(0,0,0)`。算例特有的中心偏移应在 `Init` 内应用。
+以原点为球心的三维球对称密度分布为例，沿用上方算例中的 `rho0_`、`amplitude_` 和 `width_`。在 `Init` 中，可以先用笛卡尔坐标写：
+
+```cpp
+const double radius2 = point.x * point.x + point.y * point.y + point.z * point.z;
+out.rho = rho0_ + amplitude_ * std::exp(-radius2 / (width_ * width_));
+```
+
+同一分布也可以用球坐标写：
+
+```cpp
+const double radius2 = point.r * point.r;
+out.rho = rho0_ + amplitude_ * std::exp(-radius2 / (width_ * width_));
+```
+
+这两段是 `Init` 中密度赋值的可选写法；压力、速度和组分仍需按上方完整示例设置。对于同一个物理位置，`point.r` 与 `point.x/y/z` 描述的是同一个到原点的距离，两个表达式给出相同的球对称初态（浮点舍入范围内）。这些坐标字段在每次调用时同时存在，也可以在同一个算例中并用。
+
+`geometry=cartesian` 指定的是计算网格的坐标、单元体积和面面积，不限制 `Init` 使用哪组坐标字段：笛卡尔网格可以读取 `point.r`，球坐标网格也可以读取 `point.x/y/z`。更换网格几何会改变离散方式；上面的等价性指同一物理位置处的初态定义。
+
+使用曲线坐标描述物理场时，要先确定场的中心与坐标原点。`PointCoords` 的转换坐标以全局 `(0,0,0)` 为原点；`point.r` 不会随 `x1_min` 改变球心。若二维笛卡尔计算域只取正坐标区域，希望把圆形分布的中心放在左下边界（例如 `x1_min > 0`），可直接使用系统已有的网格边界。先在算例类中声明 `double center_x_ = 0.0, center_y_ = 0.0;`，再在 `Setup` 中读取边界并写入这些成员：
+
+```cpp
+center_x_ = config.grid.x1_min;
+center_y_ = config.grid.x2_min;
+```
+
+`Setup` 完成后，同一个算例对象的 `Init` 会读取这两个成员。`Init(const PointCoords&, PrimitiveData&)` 没有 `config` 参数，不能直接写 `config.grid.x1_min`。圆心因此位于 `(x1_min,x2_min)`，无需硬编码坐标或新增自定义参数。在 `Init` 中计算到该圆心的局部半径：
+
+```cpp
+const double dx = point.x - center_x_;
+const double dy = point.y - center_y_;
+const double local_r2 = dx * dx + dy * dy;
+```
+
+三维时再声明 `center_z_` 成员，并在 `Setup` 中保存 `center_z_ = config.grid.x3_min;`，再加上 `(point.z - center_z_)` 的平方。这里平移的是初始物理分布；曲线网格的坐标原点、轴线和度量仍按所选 `geometry` 定义。在曲线网格中，`x1_min` 是原生径向轴的下界，应按该几何的物理坐标含义选择分布中心。
 
 ### `PrimitiveData`
 

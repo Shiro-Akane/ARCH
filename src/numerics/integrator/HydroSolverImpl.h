@@ -36,8 +36,17 @@ public:
         std::vector<FluidVector> flux_buffer(total_size);
         std::vector<double> spec_flux_buffer(n_spec * total_size);
 
-        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy, EosType>(
-            amr_ctrl, block_id, state, eos_, grid, dt, dU, d_spec, flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight);
+        const auto evaluate = [&] {
+            TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy, EosType>(
+                amr_ctrl, block_id, state, eos_, grid, dt, dU, d_spec,
+                flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed);
+        };
+        if constexpr (requires { typename EosType::HostHydroScope; }) {
+            // The EOS owns the complete key. Storage is local to this worker
+            // and expires before another patch, RK stage or table can enter.
+            typename EosType::HostHydroScope workspace(eos_);
+            evaluate();
+        } else evaluate();
     }
 
     virtual void update_patch(const FluidState& state_old, const FluidState& state_curr, FluidState& state_new,

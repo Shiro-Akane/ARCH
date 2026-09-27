@@ -1,0 +1,107 @@
+{
+  "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+  "routes": [
+    "arch"
+  ],
+  "route_order": "reverse selected routes on even repeats",
+  "binary_identity": {
+    "arch": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/ARCH-fixed",
+      "sha256": "947efa12dd641d235ffcbb12ef851a03ef13b2a2b3213fedb4a390bdb1c838c9"
+    }
+  },
+  "mpi_launcher": null,
+  "cpu_threads": 16,
+  "flash_ranks": 8,
+  "cpu_affinity": "0-15",
+  "cuda_affinity": "",
+  "inherited_cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "records": [
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 5.162915476001217,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.302479632999166,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_2",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.461760288992082,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_3",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 31.531198127995594,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/final_fixed_16_1_snia3d_arch_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 31.477804127993295,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/final_fixed_16_2_snia3d_arch_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 31.56411392899463,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/final_fixed_16_3_snia3d_arch_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    }
+  ],
+  "arch_parameter_overrides": {},
+  "comparison_kind": "original strict fixture",
+  "aggregation_note": "All six samples use the same fixed CPU executable; 3D fixed rows are from the alternating version-pair batch. CPU medians remain per case and thread count."
+}

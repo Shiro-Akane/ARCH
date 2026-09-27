@@ -23,5 +23,3 @@ bin/ARCH --preview CellularDet --config-stdin \
 使用 `--request-id` 可以替换示例请求标识；configRevision 是输入原始字节的 SHA-256。配置检查不需要 EOS 表；Cellular 实际预览需要先准备 `EOS_toolkit/tables/helmholtz/helm_table.dat` 的 Git LFS 实体文件。
 
 Sod 与 Cellular 当前响应均使用 CGS。invalid-integer.par 最后加入 `nblockx2=1.5`，用于演示带参数键的错误。本目录是最新扩展的响应示例，旧 core-a/core-b 目录保留当时的接口快照。
-
-P1.5 已按当前 CPU 响应刷新：标准参数 88 项，旧键明确拒绝；高级选项的显示由 GUI 决定。

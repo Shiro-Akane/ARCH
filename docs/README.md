@@ -1,59 +1,24 @@
-# ARCH documentation overview
+# ARCH documentation
 
-Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
-the authoritative source text.
+[中文](README.zh-CN.md) · [Project homepage](../README.md)
 
-Start here if you are new to ARCH or to computational fluid dynamics (CFD).
-CFD represents a fluid on a mesh of small cells and advances quantities such as
-density, velocity and energy through time. An ARCH case supplies the initial
-state and settings; the program applies the chosen physical and numerical models.
+Begin with [build and first run](../README.md#build), then use the [case guide](guides/SimulationCase.md) to inspect output or write a problem. Inputs, outputs and physical constants use CGS.
 
-To run your first calculation, follow the [Simulation case guide](guides/SimulationCase.md) from start to finish. Use the [Reference](Reference.md) whenever you need to look up a specific setting, and consult the [Validation](../validation/README.md) section to understand exactly how the calculation's accuracy is verified.
+## Choose features and settings
 
-## Start here
+- [Feature list](Features.md): available modules, coordinates, boundaries and self-gravity domains.
+- [Parameter and API reference](Reference.md): settings, method combinations, case interfaces and restart rules.
+- [CUDA guide](CudaBackendStatus.md): backend choice and AMR execution.
+- [Build guide](guides/Build.md): dependencies, presets, EOS tables and compile resources.
+- [Simulation catalogue](../simulation/README.md): runnable problems and example inputs.
 
-- [Build guide](guides/Build.md): dependencies, CPU/CUDA build choices and
-  memory-aware compilation.
-- [Simulation case guide](guides/SimulationCase.md): build, configure, run, and
-  extend a case.
-- [Research and API reference](Reference.md): parameter meanings, numerical
-  method choices, and the interfaces used to extend the code.
-- [CUDA and GPU-AMR guide](CudaBackendStatus.md): supported features, shared
-  CPU/CUDA responsibilities, measured speedups by workload size, and backend selection.
-- [Release notes](releases/README.md): changes, measured benefits and source-package contents.
-- [Simulation catalogue](../simulation/README.md): reusable problems and their
-  example inputs, including self-gravity and a coupled C/O hotspot.
-- [Physics notes](physics/README.md): model provenance and maintained contracts.
-- [Verification and validation](../validation/README.md): what was tested,
-  how errors were measured, and how CPU and GPU results compare.
-- [EOS runtime tables](../EOS_toolkit/README.md): table layout, provenance, and
-  integrity requirements.
-- [Legal and provenance index](legal/README.md): project and third-party
-  licensing pointers.
-- [Research computing and issue reporting](guides/Reporting.md): what to include in
-  a build, runtime or numerical report, and how to protect research data when
-  asking for help.
+## Interpret results
 
-## For contributors and reviewers
+- [Validation index](../validation/README.md): module errors, conservation, coupling and backend checks.
+- [Physics notes](physics/README.md) and [EOS tables](../EOS_toolkit/README.md): model and data provenance.
+- [Release notes](releases/README.md): changes in identified source versions.
+- [Legal and provenance index](legal/README.md): licenses for code, models and data.
 
-- [Contributor index](development/README.md): Implementation ownership, code review and testing workflows, as well as the archive of development records.
-- [Tests](../tests/README.md) and [tools](../tools/README.md): focused regression
-  checks and shared build, generation, and validation utilities.
-- [Validation index](../validation/README.md): the combined acceptance decision;
-  module summaries explain scientific methods and link the recorded evidence.
+## Develop and discuss
 
-## Directory contract
-
-- [guides/](guides/README.md) contains task-oriented workflows.
-- `physics/` provides maintained physics model notes.
-- `releases/` describes identified release snapshots and their scope.
-- `development/` maintains contributor contracts; its `archive/` holds intermediate reviews and superseded plans outside the user guide sequence.
-- `legal/` serves as an index; the canonical license and notice files are kept at the repository root for compatibility with standard tooling.
-- `validation/` is located outside of `docs/` because its records substantiate explicit pass/fail claims, and it independently manages its own immutable inputs, metrics, and generated figures.
-- Source and simulation directories house the actual implementations and reusable example inputs, supplemented only by the brief local contracts needed immediately next to the code.
-
-Add new documents to this index and link them from the owning module when
-appropriate. Do not create a second general documentation or validation tree.
-Validation pages present methods and conclusions first. Machine-readable records
-and historical review notes are available through labeled, expandable sections
-for readers who want to reproduce or audit a result.
+The [contributor guide](development/README.md) covers implementation ownership, ongoing gravity/GUI work and historical records. Use the [test guide](../tests/README.md) and [tool index](../tools/README.md) when editing source. The [reporting guide](guides/Reporting.md) helps prepare a reproducible build, runtime or numerical question.

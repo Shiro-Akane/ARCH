@@ -102,15 +102,18 @@ target_compile_definitions(arch_build_contract INTERFACE
 # In particular, reassociation can optimize compensated sums back into naive
 # sums.  CUDA host compilation must obey the same contract as ordinary C++;
 # these flags change compilation semantics, not the mathematical implementation.
+# ARCH validates domains/results explicitly and never consumes libm errno.
+# Disable only that side effect; retain finite checks, subnormals, compensation
+# and explicit operation order (no fast-math or implicit FMA contraction).
 target_compile_options(arch_build_contract INTERFACE
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-ffp-contract=off>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-fno-math-errno;-ffp-contract=off>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-Xptxas=-O${ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL}>
-    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-fno-fast-math,-ffp-contract=off>)
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-fno-fast-math,-fno-math-errno,-ffp-contract=off>)
 # Global/toolchain fast-math flags can also cause GCC to link crtfastmath.o,
 # enabling process-wide FTZ/DAZ even when individual files compiled strictly.
 target_link_options(arch_build_contract INTERFACE
-    $<$<LINK_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-ffp-contract=off>
-    $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:$<HOST_LINK:-fno-fast-math;-ffp-contract=off>>)
+    $<$<LINK_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-fno-math-errno;-ffp-contract=off>
+    $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:$<HOST_LINK:-fno-fast-math;-fno-math-errno;-ffp-contract=off>>)
 # Every ARCH target declared below consumes headers whose policy layout depends
 # on this generated registry and the build-feature macros populated later.
 # Keep one directory-wide contract instead of maintaining a fragile target list.
@@ -159,22 +162,8 @@ target_precompile_headers(arch_solver_dispatch PRIVATE
     <sstream> <stdexcept> <algorithm> <iomanip> <array>
 )
 
-# ==============================================================================
-# Dispatch Target: Memory-aware compile flags
-# ==============================================================================
-# Each Dispatch_*.cpp TU instantiates a large policy matrix. Preserve main's
-# reduced frontend optimization here; the numerical and Release IPO contracts
-# remain shared. Measure actual compile/link commands and runtime before changing
-# this boundary rather than inferring cost from the number of source files.
-target_compile_options(arch_solver_dispatch PRIVATE
-    $<$<CONFIG:Release>:-O1>           # Intentionally lower than main -O3 flags
-    -fno-inline-functions-called-once  # Prevents explosive inline expansion
-)
-# Preserve the unsuffixed baseline property. Configuration-specific Release /
-# RelWithDebInfo IPO above takes precedence when supported, so these optimized
-# dispatch objects still carry LTO; this is not a no-LTO compilation boundary.
-set_target_properties(arch_solver_dispatch PROPERTIES
-    INTERPROCEDURAL_OPTIMIZATION FALSE
-)
+# Dispatch uses the same Release optimization and configuration-specific IPO
+# as the application. There is no lower-optimization policy matrix override;
+# build concurrency, rather than runtime optimization, bounds build memory.
 
 set_target_properties(ARCH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ARCH_RUNTIME_OUTPUT_DIRECTORY}")

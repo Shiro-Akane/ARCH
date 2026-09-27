@@ -1,0 +1,10 @@
+Internal ctest changing into directory: /tmp/arch-release-source-package/Shiro-Akane-ARCH-51f982a/build-cpu
+Test project /tmp/arch-release-source-package/Shiro-Akane-ARCH-51f982a/build-cpu
+    Start 27: helm_components
+1/2 Test #27: helm_components ..................   Passed    0.70 sec
+    Start 57: checkpoint_compatibility
+2/2 Test #57: checkpoint_compatibility .........   Passed    0.07 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.77 sec

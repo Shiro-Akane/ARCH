@@ -5,7 +5,7 @@ returned nonzero after three completed routes, and the memory guard ended the
 campaign with `stop_reason=monitor_error`. This is a monitoring failure, not a
 scientific or sanitizer verdict for the interrupted workload.
 
-The [original guard log](../../../../../build/memcheck-final-916.log) records
+The locally retained guard log `build/memcheck-final-916.log` records
 10.027 seconds of execution, minimum available RAM of 6,747,692 KiB, peak owned
 RSS of 500,476 KiB, and unchanged swap at 242,944 KiB. GPU telemetry has ten
 samples and `complete=False`; system-pressure telemetry is also incomplete.

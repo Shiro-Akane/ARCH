@@ -1,95 +1,18 @@
 # ARCH Verification and Validation
 
-P1.5 changes the low-density state contract, normalized EOS inputs and checkpoint
-format. Its [implementation record](../docs/development/P1_5ImplementationReport.zh-CN.md)
-identifies acceptance for that migration; the older records below retain their original
-source scope and are not automatic acceptance of the changed implementation.
+Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is the authoritative source text.
 
-The [gravity summary](gravity/README.md) covers validated Cartesian
-self-gravity on CPU/CUDA and tested isolated 1D radial and full-azimuth 2D/3D
-curvilinear self-gravity on both backends, including origin/axis/pole joins and
-composite AMR. Hydro, burn and thermal-diffusion coupling have also been checked.
-Partial azimuth and external mass remain unsupported. See the
-[P5–P7 acceptance](../docs/development/P5P7GravityAcceptance.zh-CN.md),
-[P8–P10 radial record](gravity/results/p8-p10-20260923/README.md),
-[P11/P12 curved record](gravity/results/p11-p12-20260923/README.md), and
-[P13 CUDA record](gravity/results/p13-20260924/README.md)
-for their respective tested configurations. The earlier [P2 record](gravity/results/p2-20260922/README.md)
-remains a standalone CPU solver result.
+This directory collects quantitative validation for fluid dynamics, diffusion, gravity, burning, AMR, EOS, restart and generated networks on CPU and CUDA. Choose a module summary below to see its test problem, independent reference, error budget and detailed record. The [feature list](../docs/Features.md) describes available capabilities; the [reference](../docs/Reference.md) gives configuration and combination rules.
 
-Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
-the authoritative source text.
+A convergence check asks whether error decreases with a finer mesh or timestep. Conservation checks account for sources and boundary transport. CPU/CUDA comparisons test consistency between backends; independent references test the numerical answer. Each result retains the source, executable, input and data identities actually used. Earlier results remain evidence for those identities and do not automatically qualify a changed implementation.
 
-This directory is the single entry point for quantitative verification records
-covering hydrodynamics, diffusion, gravity, burning, AMR, EOS, restart
-and generated networks on CPU and CUDA. Each record identifies its tested
-sources, binaries and data.
-
-Start with the module for the physics you plan to use. Its summary explains the
-test problem, the reference answer and the allowed error before linking the full
-records. A convergence check asks whether error decreases as the mesh or timestep
-is refined; a conservation check accounts for physical sources and boundary
-transport. CPU/CUDA agreement checks backend consistency, while the independent
-references check the numerical answer itself. Neither comparison substitutes
-for the other.
-
-The historical CPU/CUDA release profile below passed its numerical, application, regression,
-device-safety, sustained-run and resource checks. The results below preserve
-the tested source, binary and scientific-data identities. Detailed evidence is
-grouped at the end of each page; the module links lead to readable explanations
-of the test problems, methods and results.
-
-The [CPU/CUDA performance report](backend/results/hpc-cuda-optimization/README.md)
-records 1,188 microphysics runs and 1,155 passing comparisons, alongside
-Hydro/AMR and large-network measurements. Coupled aprox13 AMR reaches 5.08×
-end-to-end acceleration on the tested H100-20C vGPU; small workloads and the
-tested 150/200-isotope applications still favor CPU. The
-[backend guide](../docs/CudaBackendStatus.md#choosing-a-backend-for-performance)
-explains how the measured benefit changes with workload size.
-
-The v1.1.0 preparation passes 350 tooling tests, seven focused CPU/CUDA tests,
-24 AMR application runs with 12 exact before/after or checkpoint-continuation
-comparisons, a 12-route active-ENUC AMR/restart check and four focused AMR
-memory/race checks. These checks confirm that removing the experimental data
-recorder leaves ordinary AMR unchanged. The current integration record replaces
-its predecessor in place and retains a fixed reference to the earlier evidence.
-Scientific and performance measurements keep their original source identities.
-Different source versions and machines are not a controlled performance
-comparison. Time your own representative case before choosing a backend.
-
-Timmes materials are explicitly authorized for free use and redistribution, as recorded
-in the [third-party notices](../THIRD_PARTY_NOTICES.md). This administrative
-release item is separate from the completed technical tests.
-
-The current [ARCH–FLASH assessment](gravity/flash/O5OptimizationReport.zh-CN.md)
-separates confirmed work reductions in the tested FLASH configuration from
-remaining ARCH implementation cost. It also distinguishes total-process Sod
-time from advancement time. The comparison has not established equal-error
-cross-code efficiency. Current four-module evidence applies to the selected
-Helmholtz/aprox13/thermal/MG/AMR combinations; it does not qualify all policy
-permutations or Helmholtz viscosity/species transport. The
-[Reference combination rules](../docs/Reference.md#combining-methods-and-physics)
-include physical exclusions and the open tabular burn/NSE trial-error audit.
-
-## Directory contract
-
-Each module owns one subdirectory containing a curated README, machine-readable metrics,
-immutable baseline parameter files under `inputs/`, and optional `figures/`. Each
-validation `.par` file names its owning record and must change together with the
-relevant metrics and acceptance decision. Reusable teaching and example inputs
-remain under `simulation/`; runtime data remain under `EOS_toolkit/`. Do not create
-a parallel validation tree. Raw logs, hardware metadata and historical records
-belong under each module's `results/`, separate from the user-facing summary.
-Generated HDF5 checkpoints and plot outputs remain in the local result directory
-and are excluded from new Git additions. Keep the JSON/CSV results, parameters,
-logs and artifact hashes in Git; distribute a full binary-data archive separately
-when needed. Existing tracked reference data and EOS inputs are unaffected.
+The [gravity summary](gravity/README.md) covers external and self gravity, including tested Cartesian and curved-coordinate AMR and selected coupled problems. The [low-density suite](low_density/README.md) checks near-vacuum state acceptance and repair accounting; the [EOS suite](eos/README.md) separates current table checks from historical application data. The [backend guide](../docs/CudaBackendStatus.md) explains how to assess performance for a representative workload.
 
 <a id="completed-results-on-the-release-candidate"></a>
 
-## Accepted CPU/CUDA results
+## Source-identified CPU/CUDA results
 
-| Area | Passing CPU/CUDA checks | Record |
+| Area | Recorded CPU/CUDA checks | Record |
 | --- | --- | --- |
 | Smooth hydro | PCM/MUSCL/PPM spatial convergence at 64/128/256 cells; independent Euler/RK2/RK3 time accuracy; 1,016-step periodic advection | [hydro](hydro/README.md) |
 | Riemann and strong shocks | Sod and planar Sedov analytic profiles, three-resolution convergence and shock positions | [hydro](hydro/README.md#sod-shock-tube) |
@@ -136,19 +59,35 @@ published physical data will be labeled separately.
 
 For cell-volume-weighted field error,
 
-\[
+$$
 L_1(q)=\frac{\sum_i V_i\lvert q_i-q_i^{ref}\rvert}{\sum_i V_i},
 \qquad
 L_2(q)=\sqrt{\frac{\sum_i V_i(q_i-q_i^{ref})^2}{\sum_i V_i}}.
-\]
+$$
 
-The observed rate between resolutions \(N\) and \(2N\) is
-\(p=\log_2(E_N/E_{2N})\). Each record states any different norm or
+The observed rate between resolutions $N$ and $2N$ is
+$p=\log_2(E_N/E_{2N})$. Each record states any different norm or
 normalization. Machine-readable results are retained as CSV or JSON; a committed data
 processing script is optional when the formula, sampled outputs, commands, and
 metrics are sufficient to reproduce the decision.
 
 ## Record requirements
+
+### Directory layout and retained artifacts
+
+Each module owns one subdirectory containing a curated README, machine-readable metrics,
+immutable baseline parameter files under `inputs/`, and optional `figures/`. Each
+validation `.par` file names its owning record and must change together with the
+relevant metrics and acceptance decision. Reusable teaching and example inputs
+remain under `simulation/`; runtime data remain under `EOS_toolkit/`. Do not create
+a parallel validation tree. Raw logs, hardware metadata and historical records
+belong under each module's `results/`, separate from the user-facing summary.
+Generated HDF5 checkpoints and plot outputs remain in the local result directory
+and are excluded from new Git additions. Keep the JSON/CSV results, parameters,
+logs and artifact hashes in Git; distribute a full binary-data archive separately
+when needed. Existing tracked reference data and EOS inputs are unaffected.
+
+### Result identity and evidence
 
 Each case has one effective result set. Rerun in a temporary working directory,
 then update the existing result, summary and dependent index together after

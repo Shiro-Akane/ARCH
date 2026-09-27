@@ -1,0 +1,22 @@
+{
+  "strict": {
+    "flags": [],
+    "result": "sum=1 finite_nan=0 half_tiny=5.0000000000002318e-311"
+  },
+  "no_math_errno": {
+    "flags": [
+      "-fno-math-errno"
+    ],
+    "result": "sum=1 finite_nan=0 half_tiny=5.0000000000002318e-311"
+  },
+  "fast_math": {
+    "flags": [
+      "-ffast-math"
+    ],
+    "result": "sum=0 finite_nan=1 half_tiny=0"
+  },
+  "production_guard": {
+    "exit_code": 1,
+    "diagnostic": "In file included from <stdin>:1:\nsrc/core/CompensatedSum.h:12:2: error: #error \"ARCH compensated summation requires strict floating-point semantics; use arch_build_contract (no fast-math).\"\n   12 | #error \"ARCH compensated summation requires strict floating-point semantics; use arch_build_contract (no fast-math).\"\n      |  ^~~~~\n"
+  }
+}

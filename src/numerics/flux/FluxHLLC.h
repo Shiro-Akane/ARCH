@@ -17,11 +17,14 @@
 
 #include <algorithm>
 #include <vector>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include "numerics/flux/FluxFunctions.h"
 #include "numerics/flux/InvariantDomainFlux.h"
 
-#include "numerics/reconstruction/AMRInterfaceReconstruction.h"
+#include "numerics/flux/FluxSweep.h"
 
 template <typename ReconstructPolicy>
 struct FluxHLLC
@@ -84,7 +87,9 @@ struct FluxHLLC
         const FluidVector& U_L, const FluidVector& U_R,
         const double* Xi_L, const double* Xi_R, int n_spec,
         const EosType& eos, int dir, double /* coefficient */,
-        FluidVector& flux_out, double* species_flux_out)
+        FluidVector& flux_out, double* species_flux_out,
+        const FluxAdmissibility::MeanThermoView* mean_view = nullptr,
+        int left_cell = -1, int right_cell = -1)
     {
         // 2. Thermodynamics Preparation
         // Left
@@ -95,8 +100,40 @@ struct FluxHLLC
         double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
 
         double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
+
+        // Consistency of the Riemann problem: F_HLLC(U,U) = F(U). Compare
+        // every conservative component and species before using this exact
+        // identity. Still evaluate the required endpoint EOS (including its
+        // acoustic validity); invalid states retain the ordinary failure path.
+        bool identical = U_L.rho == U_R.rho && U_L.mom_u == U_R.mom_u
+            && U_L.mom_v == U_R.mom_v && U_L.mom_w == U_R.mom_w
+            && U_L.eng == U_R.eng;
+        if (identical) {
+            for (int s = 0; s < n_spec; ++s)
+                identical = identical && Xi_L[s] == Xi_R[s];
+        }
+        if (identical && rho_L > 0.0 && e_L > 0.0
+            && std::isfinite(e_L)) {
+            double pressure = 0.0, sound_speed = 0.0;
+            // Both execution backends borrow the same stage-mean contract.
+            // State equality is the original identity path, independent of
+            // how directional primitive recovery rounds intermediate energy.
+            const bool reused_mean = mean_view && mean_view->query(
+                U_L, Xi_L, n_spec, left_cell, right_cell, pressure, sound_speed);
+            if (!reused_mean)
+                calc_endpoint_thermo(U_L, e_L, Xi_L, eos,
+                                     pressure, sound_speed);
+            if (pressure > 0.0 && sound_speed > 0.0
+                && std::isfinite(pressure) && std::isfinite(sound_speed)) {
+                flux_out = get_flux(U_L, pressure, dir);
+                for (int s = 0; s < n_spec; ++s)
+                    species_flux_out[s] = flux_out.rho * Xi_L[s];
+                return;
+            }
+        }
+
         double p_L, c_L;
-        calc_endpoint_thermo(U_L, e_L, Xi_L, eos, p_L, c_L);
+        FluxAdmissibility::face_thermo(U_L,e_L,Xi_L,n_spec,eos,mean_view,left_cell,p_L,c_L);
 
         // Right
         double rho_R = U_R.rho;
@@ -107,7 +144,7 @@ struct FluxHLLC
 
         double e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
         double p_R, c_R;
-        calc_endpoint_thermo(U_R, e_R, Xi_R, eos, p_R, c_R);
+        FluxAdmissibility::face_thermo(U_R,e_R,Xi_R,n_spec,eos,mean_view,right_cell,p_R,c_R);
 
         // 3. Physical Fluxes (F_L, F_R)
         FluidVector F_L = get_flux(U_L, p_L, dir);
@@ -117,13 +154,17 @@ struct FluxHLLC
         double H_L = (U_L.eng + p_L) / rho_L;
         double H_R = (U_R.eng + p_R) / rho_R;
 
-        // Roe Average (Used for S_L, S_R estimates)
-        RoeGlaisterState roe_state = calc_glaister_state(
-            U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R,
-            Xi_L, Xi_R, n_spec, species_flux_out, eos);
-
-        double S_L, S_R;
-        calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);
+        // Davis uses endpoint acoustic bounds S_L=min(u_L-c_L,u_R-c_R),
+        // S_R=max(u_L+c_L,u_R+c_R). The default additionally includes the
+        // Roe-Glaister state, preserving the established general-EOS route.
+        double S_L = std::min(un_L - c_L, un_R - c_R);
+        double S_R = std::max(un_L + c_L, un_R + c_R);
+        if (!mean_view || mean_view->roe_wave_speed) {
+            const RoeGlaisterState roe_state = calc_glaister_state(
+                U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R,
+                Xi_L, Xi_R, n_spec, species_flux_out, eos);
+            calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);
+        }
 
         // Contact-wave speed.
         double S_star = calc_hllc_star_speed(un_L, rho_L, p_L, S_L,
@@ -184,76 +225,13 @@ struct FluxHLLC
         }
     }
 
+    /** Bind this mathematical policy to the common host face sweep. */
     template <typename EosType>
-    static void compute_fluxes(const FluidState &state, const EosType &eos, const Grid &grid,
-                               std::vector<FluidVector> &flux_out,
-                               std::vector<double> &spec_flux_out,
-                               int dir, // 0=x, 1=y, 2=z
-                               double /* unused_entropy_coeff */ = 0.0)
+    static void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& grid,
+        std::vector<FluidVector>& flux, std::vector<double>& species_flux,
+        int dir, double coefficient = 0.0, FluxAdmissibility::MeanThermoCache* means = nullptr)
     {
-        arch::state::HostFailure failure;
-        int n_spec = state.GetNumSpecies();
-        int total_size = grid.GetTotalSize();
-
-        int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
-
-        int i_start = grid.Is();
-        int i_end = grid.Ie();
-        int j_start = grid.Js();
-        int j_end = grid.Je();
-        int k_start = grid.Ks();
-        int k_end = grid.Ke();
-
-        if (dir == 0)
-            i_start -= 1;
-        else if (dir == 1)
-            j_start -= 1;
-        else if (dir == 2)
-            k_start -= 1;
-
-        const int nk = k_end - k_start;
-        const int nj = j_end - j_start;
-
-#pragma omp parallel
-        {
-            std::vector<double> Xi_L(n_spec);
-            std::vector<double> Xi_R(n_spec);
-            std::vector<double> Xi_cell(n_spec);
-            std::vector<double> face_species_flux(n_spec);
-
-#pragma omp for schedule(static)
-            for (int kj = 0; kj < nk * nj; ++kj)
-            {
-                try {
-                    int k = k_start + kj / nj;
-                    int j = j_start + kj % nj;
-                    for (int i = i_start; i < i_end; ++i)
-                    {
-                        int idx = grid.GetIndex(i, j, k);
-                        // 1. Reconstruction
-                        FluidVector U_L, U_R;
-                        AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
-
-                        FluxAdmissibility::compute_candidate([&] {
-                            compute_face_flux(
-                                U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                                0.0, flux_out[idx + stride], face_species_flux.data());
-                        }, flux_out[idx + stride], face_species_flux.data(), n_spec);
-                        state.get_species_to_buffer(idx, Xi_L.data());
-                        state.get_species_to_buffer(idx + stride, Xi_R.data());
-                        FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),
-                            Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                            flux_out[idx + stride], face_species_flux.data());
-                        for (int s = 0; s < n_spec; ++s)
-                        {
-                            spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
-                        }
-                    }
-
-                } catch (...) { failure.capture_current(); }
-            }
-        } // end omp parallel
-
-        failure.rethrow();
+        FluxTraversal::compute_fluxes<FluxHLLC,ReconstructPolicy>(
+            state,eos,grid,flux,species_flux,dir,coefficient,means);
     }
 };

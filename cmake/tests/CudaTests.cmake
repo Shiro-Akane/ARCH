@@ -120,15 +120,22 @@ if(TARGET arch_cuda_sparse_provider)
     target_link_libraries(arch_cuda_cudss_sparse_solver PRIVATE arch_cuda_sparse_provider)
     add_test(NAME cuda_cudss_sparse_solver COMMAND arch_cuda_cudss_sparse_solver)
     set_tests_properties(cuda_cudss_sparse_solver PROPERTIES SKIP_RETURN_CODE 77)
-    add_executable(arch_cuda_burn_eos_failure tests/cuda/microphysics/burn/test_burn_eos_failure.cu)
-    target_link_libraries(arch_cuda_burn_eos_failure PRIVATE arch_cuda_sparse_provider)
-    arch_configure_cuda_leaf_test(arch_cuda_burn_eos_failure)
-    if(ARCH_CUDA_HEAVY_JOB_POOL)
-        set_property(TARGET arch_cuda_burn_eos_failure PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
-    endif()
-    add_test(NAME cuda_burn_eos_failure COMMAND arch_cuda_burn_eos_failure)
-    set_tests_properties(cuda_burn_eos_failure PROPERTIES SKIP_RETURN_CODE 77)
+
 endif()
+# Shared dense/ODE EOS recovery must run in ordinary CUDA builds too.
+# The existing sparse-provider checks join the same entry when cuDSS is present.
+add_executable(arch_cuda_burn_eos_failure tests/cuda/microphysics/burn/test_burn_eos_failure.cu)
+target_link_libraries(arch_cuda_burn_eos_failure PRIVATE arch_cuda_backend)
+if(TARGET arch_cuda_sparse_provider)
+    target_link_libraries(arch_cuda_burn_eos_failure PRIVATE arch_cuda_sparse_provider)
+    target_compile_definitions(arch_cuda_burn_eos_failure PRIVATE ARCH_TEST_CUDSS=1)
+endif()
+arch_configure_cuda_leaf_test(arch_cuda_burn_eos_failure)
+if(ARCH_CUDA_HEAVY_JOB_POOL)
+    set_property(TARGET arch_cuda_burn_eos_failure PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+endif()
+add_test(NAME cuda_burn_eos_failure COMMAND arch_cuda_burn_eos_failure)
+set_tests_properties(cuda_burn_eos_failure PROPERTIES SKIP_RETURN_CODE 77)
 add_executable(arch_cuda_regrid_migration
     tests/cuda/amr/test_cuda_regrid_migration.cu
     $<TARGET_OBJECTS:arch_cuda_backend_amr_migration>)
@@ -251,6 +258,7 @@ target_link_libraries(arch_cuda_hydro_leaf_parity PRIVATE
 add_executable(arch_cuda_reduction_contract
     tests/cuda/runtime/test_cuda_reduction_contract.cu)
 arch_configure_cuda_math_test(arch_cuda_reduction_contract)
+target_link_libraries(arch_cuda_reduction_contract PRIVATE arch_cuda_gravity_execution)
 add_executable(arch_cuda_burn_policy_parity
     tests/cuda/microphysics/burn/test_burn_policy_parity.cu
     src/core/files/FileFingerprint.cpp)

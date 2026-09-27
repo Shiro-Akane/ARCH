@@ -72,6 +72,7 @@ Json eos_snapshot(const SimConfig &config) {
         {"resolved", Json()}, {"configuredGamma", config.physics.gamma},
         {"tablePath", config.physics.eos_table_path},
         {"componentTablePath", config.physics.eos_helm_table_path},
+        {"coulombFraction", config.physics.eos_coulomb_mult},
         {"loadedTablePath", Json()}, {"sourceFingerprint", Json()}});
 }
 }

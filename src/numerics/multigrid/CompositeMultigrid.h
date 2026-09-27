@@ -21,6 +21,8 @@ public:
     SolveResult solve(std::span<const double> rhs,SolveControl control);
     SolveReport solve(const Vector& rhs,SolveControl control);
     const Vector& resident_potential() const { return x_; }
+    // Break the iterative-history dependency at a durable macro-step boundary.
+    void clear_initial_guess() noexcept { has_accepted_potential_ = false; }
     CompositeExecution& execution() const { return *execution_; }
     std::size_t level_count() const { return levels_.size(); }
     double mean(const Vector& x,int level=0);
@@ -42,6 +44,9 @@ private:
     SparseArray bottom_;
     Vector source_,x_,residual_,work_;
     std::vector<Vector> basis_,correction_;
+    // The topology-owned solver may use only its last accepted solution as a
+    // starting vector. Failed solves never publish a warm start.
+    bool has_accepted_potential_ = false;
     void setup();
     void smooth(int level);
     void cycle(int level);

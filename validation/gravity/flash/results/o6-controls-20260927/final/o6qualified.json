@@ -1,0 +1,249 @@
+{
+  "scope": "complete process wall clock; serial alternating runs; actual checkpoint endpoint",
+  "binary_identity": {
+    "arch": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+      "sha256": "09b5925c1708c124e34097bb1a2c89045e8f1a921027294a06f767820b3ed931"
+    }
+  },
+  "mpi_launcher": null,
+  "cpu_threads": 8,
+  "flash_ranks": 8,
+  "cpu_affinity": "0,2,4,6,8,10,12,14",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 5.077983030998439,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_sod_arch_1",
+      "input_fixture": "arch_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.027826040000946,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_sod_arch_2",
+      "input_fixture": "arch_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "sod",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.0270389360011905,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_sod_arch_3",
+      "input_fixture": "arch_sod_o6plus.par",
+      "physical_time_seconds": 0.20004197244290714,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 0.7169365259978804,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_jeans64_arch_1",
+      "input_fixture": "arch_jeans_o6plus.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 0.7669504360019346,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_jeans64_arch_2",
+      "input_fixture": "arch_jeans_o6plus.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans64",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 0.7168994140010909,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_jeans64_arch_3",
+      "input_fixture": "arch_jeans_o6plus.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 5.6290008630021475,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_jeans128_arch_1",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.980317451998417,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_jeans128_arch_2",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.780389984000067,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_jeans128_arch_3",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 7.283612797997193,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_a_arch_1",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 6.931913763997727,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_a_arch_2",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 7.081626489001792,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_a_arch_3",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 6.931351642000664,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_b_arch_1",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 7.182393494003918,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_b_arch_2",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 7.785191401999327,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_b_arch_3",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 4.526732930004073,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_noburn_arch_1",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 4.626279996999074,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_noburn_arch_2",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 4.426377651994699,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_noburn_arch_3",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 32.80382422099501,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_fine_arch_1",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 32.35029783799837,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_fine_arch_2",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 30.692526081002143,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_fine_arch_3",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    }
+  ],
+  "arch_parameter_overrides": {},
+  "comparison_kind": "original strict fixture"
+}

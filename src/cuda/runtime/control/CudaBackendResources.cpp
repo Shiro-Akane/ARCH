@@ -367,6 +367,10 @@ CudaBlockRuntime::CudaBlockRuntime(
         if (active <= 0)
             throw std::invalid_argument("CUDA block has no active cells");
         cfl_candidates.allocate(active);
+        if (launch.plan.eos != dispatch::EosId::Ideal) {
+            mean_pressure.allocate(total);
+            mean_sound_speed.allocate(total);
+        }
         cfl_status.allocate(1);
         diffusion_dt_candidates.allocate(active);
         diffusion_dt_result.allocate(1);

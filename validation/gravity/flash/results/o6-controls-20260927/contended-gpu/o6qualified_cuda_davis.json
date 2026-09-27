@@ -1,0 +1,195 @@
+{
+  "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+  "routes": [
+    "cuda"
+  ],
+  "route_order": "reverse selected routes on even repeats",
+  "binary_identity": {
+    "cuda": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/bin/ARCH",
+      "sha256": "45b15226196a051cdeb54f58df1f6fe7c0b4126386c86f439380b8bba693c1b5"
+    }
+  },
+  "mpi_launcher": null,
+  "cpu_threads": 8,
+  "flash_ranks": 8,
+  "cpu_affinity": "0,2,4,6,8,10,12,14",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "fine",
+      "backend": "cuda",
+      "repeat": 1,
+      "wall_seconds": 110.73761124399607,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_davis_fine_cuda_1",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "fine",
+      "backend": "cuda",
+      "repeat": 2,
+      "wall_seconds": 180.8814031439979,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_davis_fine_cuda_2",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "fine",
+      "backend": "cuda",
+      "repeat": 3,
+      "wall_seconds": 256.27427136899496,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_davis_fine_cuda_3",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cuda"
+    }
+  ],
+  "arch_parameter_overrides": {
+    "hll_wave_speed": "davis"
+  },
+  "comparison_kind": "explicit ARCH physical or numerical variant",
+  "analysis": {
+    "fine": {
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "groups": {
+        "cuda": {
+          "samples": 3,
+          "median_seconds": 180.8814031439979,
+          "minimum_seconds": 110.73761124399607,
+          "maximum_seconds": 256.27427136899496
+        }
+      },
+      "cpu_median_seconds": {
+        "8": 24.176278923994687,
+        "16": 25.2941714960034
+      },
+      "best_cpu_threads": 8,
+      "gpu_vs_best_cpu_speedup": 0.13365817880541425,
+      "gpu_vs_cpu8_speedup": 0.13365817880541425,
+      "backend_checks": [
+        {
+          "same_topology_and_time": true,
+          "checkpoint_errors": {
+            "X": {
+              "absolute_linf": 1.1102230246251565e-16,
+              "scaled_linf": 1.1102230246251565e-16
+            },
+            "eng": {
+              "absolute_linf": 1473173782528.0,
+              "scaled_linf": 1.5997736313022843e-14
+            },
+            "enuc_rate": {
+              "absolute_linf": 26143096832.0,
+              "scaled_linf": 8.555621095550486e-13
+            },
+            "mom_u": {
+              "absolute_linf": 1232.0,
+              "scaled_linf": 1.6095153115973314e-14
+            },
+            "mom_v": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_w": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "rho": {
+              "absolute_linf": 9.238719940185547e-07,
+              "scaled_linf": 1.1286978388098438e-14
+            },
+            "rhoX": {
+              "absolute_linf": 9.238719940185547e-07,
+              "scaled_linf": 1.1292126160861009e-14
+            }
+          }
+        },
+        {
+          "same_topology_and_time": true,
+          "checkpoint_errors": {
+            "X": {
+              "absolute_linf": 1.1102230246251565e-16,
+              "scaled_linf": 1.1102230246251565e-16
+            },
+            "eng": {
+              "absolute_linf": 1473173782528.0,
+              "scaled_linf": 1.5997736313022843e-14
+            },
+            "enuc_rate": {
+              "absolute_linf": 26143096832.0,
+              "scaled_linf": 8.555621095550486e-13
+            },
+            "mom_u": {
+              "absolute_linf": 1232.0,
+              "scaled_linf": 1.6095153115973314e-14
+            },
+            "mom_v": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_w": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "rho": {
+              "absolute_linf": 9.238719940185547e-07,
+              "scaled_linf": 1.1286978388098438e-14
+            },
+            "rhoX": {
+              "absolute_linf": 9.238719940185547e-07,
+              "scaled_linf": 1.1292126160861009e-14
+            }
+          }
+        },
+        {
+          "same_topology_and_time": true,
+          "checkpoint_errors": {
+            "X": {
+              "absolute_linf": 1.1102230246251565e-16,
+              "scaled_linf": 1.1102230246251565e-16
+            },
+            "eng": {
+              "absolute_linf": 1473173782528.0,
+              "scaled_linf": 1.5997736313022843e-14
+            },
+            "enuc_rate": {
+              "absolute_linf": 26143096832.0,
+              "scaled_linf": 8.555621095550486e-13
+            },
+            "mom_u": {
+              "absolute_linf": 1232.0,
+              "scaled_linf": 1.6095153115973314e-14
+            },
+            "mom_v": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_w": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "rho": {
+              "absolute_linf": 9.238719940185547e-07,
+              "scaled_linf": 1.1286978388098438e-14
+            },
+            "rhoX": {
+              "absolute_linf": 9.238719940185547e-07,
+              "scaled_linf": 1.1292126160861009e-14
+            }
+          }
+        }
+      ],
+      "endpoint_contract": "equal checkpoint time"
+    }
+  },
+  "analysis_reference_manifests": [
+    "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_davis.json",
+    "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_davis16.json"
+  ]
+}

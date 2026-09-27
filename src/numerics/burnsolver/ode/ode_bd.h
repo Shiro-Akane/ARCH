@@ -250,7 +250,10 @@ struct Solver_BD
                 }
                 // Midpoint updates and endpoint smoothing share h*f-delta.
                 // Only consumption of the solved correction differs.
-                midpoint_rhs(c, eos);
+                if (!midpoint_rhs(c, eos)) {
+                    c.phase = Phase::FinishMacro;
+                    continue;
+                }
                 c.stage = c.j < c.m ? 1 : 2;
                 c.phase = Phase::AwaitSolve;
                 return OdeLinearRequest::SolveWithFactors;
@@ -346,12 +349,15 @@ private:
     }
 
     template <typename EOSType>
-    ARCH_HOST_DEVICE static void midpoint_rhs(Continuation& c, const EOSType& eos)
+    ARCH_HOST_DEVICE static bool midpoint_rhs(Continuation& c, const EOSType& eos)
     {
         double stage_RHS[MAX_N];
-        OdeMath::eval_burn_rhs<NetType>(c.X_j, c.rho, eos, stage_RHS, c.network);
+        if (!OdeMath::evaluate_eos_trial(eos, [&](const auto& candidate) {
+            OdeMath::eval_burn_rhs<NetType>(c.X_j, c.rho, candidate, stage_RHS, c.network);
+        })) return false;
 #pragma omp simd
         for (int i = 0; i < NEQ; ++i) c.b[i] = c.h * stage_RHS[i] - c.delta[i];
+        return true;
     }
 
     template <typename EOSType>
@@ -400,7 +406,7 @@ private:
                         const double integrated_enuc = OdeMath::integrated_burn_increment_energy<NetType>(
                             T_extrap[k][k]);
                         const double old_eint = eos.get_eint_from_T(rho, X_ODE[NUM_SPEC], X_ODE);
-                        const double new_eint = eos.get_eint_from_T(rho, X_trial[NUM_SPEC], X_trial);
+                        const double new_eint = OdeMath::trial_internal_energy(eos, rho, X_trial[NUM_SPEC], X_trial);
                         step_converged = OdeMath::energy_closure_acceptable(
                             old_eint,new_eint,integrated_enuc,rtol);
                     }

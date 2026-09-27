@@ -560,10 +560,12 @@ struct HostExchangeWorkspace {
     std::vector<double> values;
 };
 
-inline void execute_host_exchange_plan(
+namespace exchange_detail {
+
+// Validate an immutable lowering once before publishing it in GhostExchange.
+inline void validate_compiled_host_exchange_plan(
     const HostCompiledSameLevelExchangePlan& compiled,
-    std::span<const HostExchangeBlockView> views,
-    HostExchangeWorkspace& workspace)
+    std::span<const HostExchangeBlockView> views)
 {
     if (compiled.logical_fingerprint == 0
         || views.size() != compiled.blocks.size()
@@ -623,7 +625,16 @@ inline void execute_host_exchange_plan(
     }
     if (validated_first != compiled.operations.size())
         throw std::invalid_argument("Host exchange phases do not cover plan");
+}
 
+// Execute a plan already validated at construction and kept private by the
+// topology owner. Current pointers, layout, species and handles are checked by
+// that owner before reaching this function.
+inline void execute_prevalidated_host_exchange_plan(
+    const HostCompiledSameLevelExchangePlan& compiled,
+    std::span<const HostExchangeBlockView> views,
+    HostExchangeWorkspace& workspace)
+{
     std::size_t expected_first = 0;
     for (std::size_t phase_index = 0;
          phase_index < compiled.phases.size(); ++phase_index) {
@@ -703,6 +714,18 @@ inline void execute_host_exchange_plan(
     }
     if (expected_first != compiled.operations.size())
         throw std::invalid_argument("Host exchange phases omit operations");
+}
+
+} // namespace exchange_detail
+
+inline void execute_host_exchange_plan(
+    const HostCompiledSameLevelExchangePlan& compiled,
+    std::span<const HostExchangeBlockView> views,
+    HostExchangeWorkspace& workspace)
+{
+    exchange_detail::validate_compiled_host_exchange_plan(compiled, views);
+    exchange_detail::execute_prevalidated_host_exchange_plan(
+        compiled, views, workspace);
 }
 
 inline void execute_host_exchange_plan(

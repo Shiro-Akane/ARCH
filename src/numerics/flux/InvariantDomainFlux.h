@@ -11,6 +11,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <vector>
 
 #include "numerics/flux/FluxFunctions.h"
 
@@ -75,16 +76,104 @@ ARCH_INLINE void limit_reconstruction(const FluidVector& mean, FluidVector& face
     }
 }
 
+/** Recover both required mean-state thermodynamic values from one EOS state. */
 template<class Eos>
-/** Blend the high-order flux with Lax-Friedrichs using one conservative face theta. */
-ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
-    const double* x_left, const double* x_right, int species, const Eos& eos,
+ARCH_INLINE void required_mean_thermo(const FluidVector& mean,
+    const double* composition, const Eos& eos, double& pressure, double& speed)
+{
+    if constexpr (requires {
+        eos.get_pressure_and_sound_speed(
+            mean.rho, 0.0, composition, pressure, speed);
+    }) {
+        // The limiter queries the unchanged cell means for every face. Helm's
+        // grouped path preserves the strict inversion and acoustic derivatives,
+        // while avoiding a second inverse for the same (rho, e, X) state.
+        calc_endpoint_thermo(mean, arch::state::recover(mean).internal,
+                             composition, eos, pressure, speed);
+    } else {
+        pressure = eos.get_pressure(mean, composition);
+        speed = eos.get_sound_speed(mean, pressure, composition);
+    }
+}
+
+/** Borrow already validated mean thermodynamics from one immutable stage.
+ * Host and device owners provide the same SoA layout; no allocation or EOS
+ * approximation lives here. A null ready array means the launch owner has
+ * completed all means used by this face. Input lifetime ends with the stage.
+ */
+struct MeanThermoView {
+    const double *rho = nullptr, *mom_u = nullptr, *mom_v = nullptr;
+    const double *mom_w = nullptr, *eng = nullptr, *mass_fractions = nullptr;
+    const double *pressure = nullptr, *sound_speed = nullptr;
+    const unsigned char* ready = nullptr;
+    int cells = 0, species = 0;
+    bool roe_wave_speed = true;
+
+    /** Apply the original complete conserved-state/composition equality test. */
+    ARCH_INLINE bool matches(int cell, const FluidVector& state,
+                             const double* composition, int count) const {
+        if (cell < 0 || cell >= cells || count != species || !pressure
+            || !sound_speed || (ready && !ready[cell])) return false;
+        if (rho[cell] != state.rho || mom_u[cell] != state.mom_u
+            || mom_v[cell] != state.mom_v || mom_w[cell] != state.mom_w
+            || eng[cell] != state.eng) return false;
+        for (int s = 0; s < count; ++s)
+            if (mass_fractions[s * cells + cell] != composition[s]) return false;
+        return true;
+    }
+
+    /** Reuse a face endpoint only when it is the unchanged owning mean. */
+    ARCH_INLINE bool query(const FluidVector& state, const double* composition,
+                           int count, int left, int right, double& p, double& c) const {
+        const int cell = matches(left,state,composition,count) ? left
+            : matches(right,state,composition,count) ? right : -1;
+        if (cell < 0) return false;
+        p = pressure[cell]; c = sound_speed[cell];
+        return true;
+    }
+};
+
+/** Recover required endpoint thermodynamics, reusing only an identical mean. */
+template<class Eos>
+ARCH_INLINE void face_thermo(const FluidVector& state, double energy,
+    const double* composition, int count, const Eos& eos,
+    const MeanThermoView* means, int cell, double& pressure, double& sound)
+{
+    if constexpr (requires {
+        eos.get_pressure_and_sound_speed(state.rho,energy,composition,pressure,sound);
+    }) {
+        // Required means use recover(state).internal. Directional primitive
+        // arithmetic can round an equal conserved state to a different e;
+        // reuse only the same (rho,e,X) query, not merely the same U and X.
+        if (means && means->query(state,composition,count,cell,cell,pressure,sound)
+            && energy == arch::state::recover(state).internal) return;
+    }
+    calc_endpoint_thermo(state,energy,composition,eos,pressure,sound);
+}
+
+// One host patch-stage owns this cache. A value is published only after the
+// complete EOS query succeeds; the caller resets validity on every RK stage.
+struct MeanThermoCache {
+    bool roe_wave_speed = true;
+    std::vector<double> pressure;
+    std::vector<double> sound_speed;
+    std::vector<unsigned char> ready;
+
+    void reset(int cells) {
+        pressure.resize(cells);
+        sound_speed.resize(cells);
+        ready.assign(cells, 0);
+    }
+};
+
+/** Blend a face flux using already validated thermodynamics of both cell means. */
+ARCH_INLINE void limit_face_with_thermo(const FluidVector& left, const FluidVector& right,
+    const double* x_left, const double* x_right, int species,
+    double p_left, double c_left, double p_right, double c_right,
     int direction, FluidVector& high, double* species_flux)
 {
-    const double p_left = eos.get_pressure(left, x_left);
-    const double p_right = eos.get_pressure(right, x_right);
-    const double a = std::max(std::abs(get_un(left, direction)) + eos.get_sound_speed(left, p_left, x_left),
-                              std::abs(get_un(right, direction)) + eos.get_sound_speed(right, p_right, x_right));
+    const double a = std::max(std::abs(get_un(left, direction)) + c_left,
+                              std::abs(get_un(right, direction)) + c_right);
     const auto fl = get_flux(left, p_left, direction);
     const auto fr = get_flux(right, p_right, direction);
     if (!(a > 0.0) || !std::isfinite(a)) {
@@ -118,5 +207,19 @@ ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
             - 0.5 * a * (right.rho * x_right[s] - left.rho * x_left[s]);
         species_flux[s] = theta == 0.0 ? low_species : low_species + theta * (species_flux[s] - low_species);
     }
+}
+
+/** Blend the high-order flux with Lax-Friedrichs using one conservative face theta. */
+template<class Eos>
+ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
+    const double* x_left, const double* x_right, int species, const Eos& eos,
+    int direction, FluidVector& high, double* species_flux)
+{
+    double p_left, p_right, c_left, c_right;
+    required_mean_thermo(left, x_left, eos, p_left, c_left);
+    required_mean_thermo(right, x_right, eos, p_right, c_right);
+    limit_face_with_thermo(left, right, x_left, x_right, species,
+                           p_left, c_left, p_right, c_right, direction,
+                           high, species_flux);
 }
 } // namespace FluxAdmissibility

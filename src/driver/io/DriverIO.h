@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <span>
@@ -23,6 +24,44 @@ struct CudaDiffusionScheduleRecord {
     bool captures_initial_operator = false;
     double diffusion_dt = 0.0, dt_forward_euler = 0.0;
 };
+
+// Non-overlapping host stage intervals. Output has its existing independent
+// timer and is not added to these values a second time.
+enum class CpuStage : std::size_t {
+    Regrid, Gravity, Timestep, BurnFirst, Diffusion, Hydro, BurnSecond, Count
+};
+struct CpuStageTimings {
+    static constexpr std::size_t size = static_cast<std::size_t>(CpuStage::Count);
+    std::array<double, size> seconds{};
+    std::array<std::uint64_t, size> calls{};
+    void add(CpuStage stage, double elapsed) noexcept {
+        const auto index = static_cast<std::size_t>(stage);
+        seconds[index] += elapsed;
+        ++calls[index];
+    }
+};
+
+// Time only CPU work. CUDA launches can be asynchronous, so host enqueue
+// intervals must not be mislabeled as device execution time.
+class CpuStageTimer {
+public:
+    CpuStageTimer(CpuStageTimings& timings, CpuStage stage, bool enabled) noexcept
+        : timings_(timings), stage_(stage), enabled_(enabled),
+          started_(enabled ? Clock::now() : Clock::time_point{}) {}
+    ~CpuStageTimer() noexcept {
+        if (enabled_)
+            timings_.add(stage_, std::chrono::duration<double>(Clock::now() - started_).count());
+    }
+    CpuStageTimer(const CpuStageTimer&) = delete;
+    CpuStageTimer& operator=(const CpuStageTimer&) = delete;
+private:
+    using Clock = std::chrono::steady_clock;
+    CpuStageTimings& timings_;
+    CpuStage stage_;
+    bool enabled_;
+    Clock::time_point started_;
+};
+
 class DriverIO {
 public:
     DriverIO(DriverRuntime& runtime, SimulationController& controller,
@@ -33,7 +72,8 @@ public:
           p_func(pressure), t_func(temperature), gamma1_func(gamma1), eos(eos) {}
     void write_plot(std::span<const io::PlotScalarField> extra_fields = {});
     void write_checkpoint(double dt_burn_global, bool resume_after_regrid);
-    void write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule);
+    void write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule,
+                            const CpuStageTimings& cpu_stages);
 private:
     using Clock = std::chrono::steady_clock;
     Clock::time_point started_ = Clock::now();

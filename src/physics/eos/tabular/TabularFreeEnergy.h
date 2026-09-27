@@ -345,14 +345,18 @@ inline ThermodynamicState require_thermodynamics(const FreeEnergyResult& result)
     throw std::runtime_error("Tabular EOS free energy produced an unknown error");
 }
 
-// The mathematical failure boundary is shared by every tabular query, including
-// intermediate temperature-inversion iterations.  A device caller may supply a
-// launch-owned sticky status: later clamps/fallbacks must not erase a failure
-// that throws immediately on the Host.  This does not change returned values or
-// the Host exception contract; an unbound device view retains its NaN sentinel.
+// Required queries retain their host exception / device sticky-latch contract.
+// An adaptive ODE or NSE trial may instead lend a local bool. Such a trial
+// produces NaN and a rejection without poisoning an unrelated accepted state;
+// no path clears the required-query latch. The bool belongs to this call only.
 ARCH_INLINE ThermodynamicState checked_thermodynamics(
-    const FreeEnergyResult& result, int* device_error_status = nullptr)
+    const FreeEnergyResult& result, int* device_error_status = nullptr,
+    bool* trial_error_status = nullptr)
 {
+    if (result.status != FreeEnergyStatus::success && trial_error_status) {
+        *trial_error_status = true;
+        return invalid_thermodynamic_state();
+    }
 #if defined(__CUDA_ARCH__)
     if (result.status != FreeEnergyStatus::success) {
         if (device_error_status != nullptr) atomicExch(device_error_status, 1);

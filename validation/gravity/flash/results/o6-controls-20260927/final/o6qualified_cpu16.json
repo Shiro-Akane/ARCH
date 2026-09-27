@@ -1,0 +1,249 @@
+{
+  "scope": "complete process wall clock; serial alternating runs; actual checkpoint endpoint",
+  "binary_identity": {
+    "arch": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+      "sha256": "09b5925c1708c124e34097bb1a2c89045e8f1a921027294a06f767820b3ed931"
+    }
+  },
+  "mpi_launcher": null,
+  "cpu_threads": 16,
+  "flash_ranks": 8,
+  "cpu_affinity": "0-15",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 7.883639874002256,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_a_arch_1",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 7.63209594500222,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_a_arch_2",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "a",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 7.61273797499598,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_a_arch_3",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 7.9947864770001615,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_b_arch_1",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 8.10821223200037,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_b_arch_2",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "b",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 7.933722837995447,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_b_arch_3",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 4.961298754999007,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_noburn_arch_1",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.378035893001652,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_noburn_arch_2",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "noburn",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 4.966942014994856,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_noburn_arch_3",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 6.045203041001514,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_jeans128_arch_1",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 5.750725288999092,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_jeans128_arch_2",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "jeans128",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 5.847101593994012,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_jeans128_arch_3",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 32.42480510799942,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_fine_arch_1",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 31.051028977999522,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_fine_arch_2",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 30.91184262200113,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_fine_arch_3",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 6.022600435993809,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_snia2d_arch_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 6.533259547999478,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_snia2d_arch_2",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia2d",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 6.573326725003426,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_snia2d_arch_3",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "physical_time_seconds": 1.1555193003008242e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 40.82715942199866,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_snia3d_arch_1",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 2,
+      "wall_seconds": 36.780349208995176,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_snia3d_arch_2",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    },
+    {
+      "case": "snia3d",
+      "backend": "arch",
+      "repeat": 3,
+      "wall_seconds": 37.177974831996835,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cpu16_snia3d_arch_3",
+      "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par",
+      "physical_time_seconds": 1.7615751690104147e-11,
+      "resolved_backend": "cpu"
+    }
+  ],
+  "arch_parameter_overrides": {},
+  "comparison_kind": "original strict fixture"
+}

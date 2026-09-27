@@ -108,6 +108,10 @@ LHS = I - dt * J
 LHS * delta_U = U_old - U_k + dt * RHS(U_k)
 ```
 
+共享 `ScreeningTimmes.h` 将固定核素对的电荷／质量因子与热力学筛选状态分开，
+让编译器在字面量核素对处折叠常量；标量和自动微分仍共用原筛选公式、分支
+限值及 CPU/CUDA 源码，不引入独立近似或用户调节参数。
+
 屏蔽修正的组分 Jacobian 采用与原 Fortran 一致的 frozen-screening 约定。修改筛选因子的组分求导方式时，需同步更新 Jacobian、LHS 和验证基准。
 
 ## 5. 原 Fortran 数值验证

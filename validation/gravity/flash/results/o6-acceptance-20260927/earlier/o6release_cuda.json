@@ -1,0 +1,313 @@
+{
+  "scope": "complete process wall clock; serial alternating runs; actual checkpoint endpoint",
+  "binary_identity": {
+    "cuda": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/bin/ARCH",
+      "sha256": "3d2127f20d88baa5e8cc15f5323f84a2a5c0b970fd5c754d3c292f385f9704db"
+    }
+  },
+  "cpu_threads": 8,
+  "flash_ranks": 8,
+  "cpu_affinity": "0,2,4,6,8,10,12,14",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "a",
+      "backend": "cuda",
+      "repeat": 1,
+      "wall_seconds": 13.596289080000133,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_a_cuda_1",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "a",
+      "backend": "cuda",
+      "repeat": 2,
+      "wall_seconds": 13.564709509999375,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_a_cuda_2",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "a",
+      "backend": "cuda",
+      "repeat": 3,
+      "wall_seconds": 13.565781422003056,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_a_cuda_3",
+      "input_fixture": "arch_cellular_o6_matched.par",
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "b",
+      "backend": "cuda",
+      "repeat": 1,
+      "wall_seconds": 13.982273102999898,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_b_cuda_1",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "b",
+      "backend": "cuda",
+      "repeat": 2,
+      "wall_seconds": 13.900940943000023,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_b_cuda_2",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "b",
+      "backend": "cuda",
+      "repeat": 3,
+      "wall_seconds": 14.047986584999308,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_b_cuda_3",
+      "input_fixture": "arch_cellular_o6_holdout.par",
+      "physical_time_seconds": 1.029419223692258e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "noburn",
+      "backend": "cuda",
+      "repeat": 1,
+      "wall_seconds": 9.484778621997975,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_noburn_cuda_1",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "noburn",
+      "backend": "cuda",
+      "repeat": 2,
+      "wall_seconds": 9.585865922002995,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_noburn_cuda_2",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "noburn",
+      "backend": "cuda",
+      "repeat": 3,
+      "wall_seconds": 9.672030663001351,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_noburn_cuda_3",
+      "input_fixture": "arch_cellular_o6plus_noburn.par",
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "jeans128",
+      "backend": "cuda",
+      "repeat": 1,
+      "wall_seconds": 7.4515149040016695,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_jeans128_cuda_1",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "jeans128",
+      "backend": "cuda",
+      "repeat": 2,
+      "wall_seconds": 7.378266823005106,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_jeans128_cuda_2",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "jeans128",
+      "backend": "cuda",
+      "repeat": 3,
+      "wall_seconds": 7.590134430000035,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_jeans128_cuda_3",
+      "input_fixture": "arch_jeans_o6plus_128.par",
+      "physical_time_seconds": 0.1,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "fine",
+      "backend": "cuda",
+      "repeat": 1,
+      "wall_seconds": 51.4980150880001,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_fine_cuda_1",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "fine",
+      "backend": "cuda",
+      "repeat": 2,
+      "wall_seconds": 51.60495890099992,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_fine_cuda_2",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cuda"
+    },
+    {
+      "case": "fine",
+      "backend": "cuda",
+      "repeat": 3,
+      "wall_seconds": 51.64490396800102,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6releasegpu_fine_cuda_3",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cuda"
+    }
+  ],
+  "summary": {
+    "a": {
+      "best_cpu_threads": 8,
+      "best_cpu_median_seconds": 8.257626142003573,
+      "gpu_vs_best_cpu_speedup": 0.6087099508038729,
+      "cuda_seconds": [
+        13.596289080000133,
+        13.564709509999375,
+        13.565781422003056
+      ],
+      "cuda_median_seconds": 13.565781422003056,
+      "cpu8_median_seconds": 8.257626142003573,
+      "gpu_vs_cpu8_speedup": 0.6087099508038729,
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 1.0710209608078003e-15,
+        "eng": 1.142769889991054e-15,
+        "mom_u": 1.6729241701843588e-15
+      },
+      "plot_relative_l1": {
+        "DENS": 1.0710209608078003e-15,
+        "PRES": 1.0707143375863454e-15,
+        "TEMP": 2.136300706721542e-15,
+        "c12": 1.9097397767936786e-15,
+        "ENUC": 3.344097927822117e-13
+      }
+    },
+    "b": {
+      "best_cpu_threads": 16,
+      "best_cpu_median_seconds": 9.005944664000708,
+      "gpu_vs_best_cpu_speedup": 0.644097322206393,
+      "cuda_seconds": [
+        13.982273102999898,
+        13.900940943000023,
+        14.047986584999308
+      ],
+      "cuda_median_seconds": 13.982273102999898,
+      "cpu8_median_seconds": 9.138630239001941,
+      "gpu_vs_cpu8_speedup": 0.6535868790204968,
+      "physical_time_seconds": 1.029419223692258e-08,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 1.1031355323462648e-15,
+        "eng": 1.2392450358317391e-15,
+        "mom_u": 2.0077832769767642e-15
+      },
+      "plot_relative_l1": {
+        "DENS": 1.1031355323462648e-15,
+        "PRES": 1.3600499136386218e-15,
+        "TEMP": 2.2043857731107486e-15,
+        "c12": 2.290065392438948e-15,
+        "ENUC": 2.9990586456353675e-13
+      }
+    },
+    "noburn": {
+      "best_cpu_threads": 16,
+      "best_cpu_median_seconds": 5.05011697000009,
+      "gpu_vs_best_cpu_speedup": 0.5268295020075613,
+      "cuda_seconds": [
+        9.484778621997975,
+        9.585865922002995,
+        9.672030663001351
+      ],
+      "cuda_median_seconds": 9.585865922002995,
+      "cpu8_median_seconds": 5.149391306003963,
+      "gpu_vs_cpu8_speedup": 0.5371858262887097,
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 1.311514385138886e-15,
+        "eng": 1.5110946665141414e-15,
+        "mom_u": 1.5968450126653849e-15
+      },
+      "plot_relative_l1": {
+        "DENS": 1.311514385138886e-15,
+        "PRES": 1.4527257169584196e-15,
+        "TEMP": 1.660945084766594e-15,
+        "c12": 3.7427740130181634e-16
+      }
+    },
+    "jeans128": {
+      "best_cpu_threads": 8,
+      "best_cpu_median_seconds": 5.300426654001058,
+      "gpu_vs_best_cpu_speedup": 0.7113220227412526,
+      "cuda_seconds": [
+        7.4515149040016695,
+        7.378266823005106,
+        7.590134430000035
+      ],
+      "cuda_median_seconds": 7.4515149040016695,
+      "cpu8_median_seconds": 5.300426654001058,
+      "gpu_vs_cpu8_speedup": 0.7113220227412526,
+      "physical_time_seconds": 0.1,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 0.0,
+        "eng": 0.0,
+        "mom_u": 0.0
+      },
+      "plot_relative_l1": {
+        "DENS": 0.0,
+        "PRES": 0.0
+      }
+    },
+    "fine": {
+      "best_cpu_threads": 16,
+      "best_cpu_median_seconds": 36.34066302899737,
+      "gpu_vs_best_cpu_speedup": 0.7042087389065476,
+      "cuda_seconds": [
+        51.4980150880001,
+        51.60495890099992,
+        51.64490396800102
+      ],
+      "cuda_median_seconds": 51.60495890099992,
+      "cpu8_median_seconds": 41.21176599399769,
+      "gpu_vs_cpu8_speedup": 0.7986008878150497,
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 1.6794239267947428e-15,
+        "eng": 2.45314897832191e-15,
+        "mom_u": 2.425832523999199e-15
+      },
+      "plot_relative_l1": {
+        "DENS": 1.6794239267947428e-15,
+        "PRES": 2.581551304675657e-15,
+        "TEMP": 3.62683799387407e-15,
+        "c12": 4.309246800018259e-15,
+        "ENUC": 3.147009975398945e-13
+      }
+    }
+  }
+}

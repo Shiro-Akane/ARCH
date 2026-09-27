@@ -27,7 +27,7 @@ namespace arch::cuda
 namespace detail
 {
 template <typename EosView>
-__global__ void hydro_cfl_candidates_kernel(
+__device__ inline void hydro_cfl_candidates_work(
     DeviceStateView state, DeviceGridView grid, EosView eos,
     double* candidates, SpeciesWorkspaceView workspace = {})
 {
@@ -53,7 +53,7 @@ __global__ void hydro_cfl_candidates_kernel(
     }
 }
 
-static __global__ void hydro_cfl_reduce_kernel(
+static __device__ inline void hydro_cfl_reduce_work(
     const double* candidates, int count, double cfl, double* result,
     int* status)
 {
@@ -86,6 +86,22 @@ static __global__ void hydro_cfl_reduce_kernel(
     *result = reduced.status == arch::reduction::ReductionStatus::Ok
         ? finalize_cfl_dt(cfl, reduced.value)
         : std::numeric_limits<double>::quiet_NaN();
+}
+
+/** Keep scalar launches and batched launches on the identical CFL leaves. */
+template <typename EosView>
+__global__ void hydro_cfl_candidates_kernel(
+    DeviceStateView state, DeviceGridView grid, EosView eos,
+    double* candidates, SpeciesWorkspaceView workspace = {})
+{
+    hydro_cfl_candidates_work(state, grid, eos, candidates, workspace);
+}
+
+/** Preserve the serial cell order and required-query latch in the reduction. */
+static __global__ void hydro_cfl_reduce_kernel(
+    const double* candidates, int count, double cfl, double* result, int* status)
+{
+    hydro_cfl_reduce_work(candidates, count, cfl, result, status);
 }
 
 static __device__ inline void hydro_divergence_kernel_work(

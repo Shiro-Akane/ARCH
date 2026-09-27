@@ -11,6 +11,10 @@ This directory supplies common support for the maintained built-in networks.
   and nuclear-data conventions.
 - [Dual.h](Dual.h) supplies automatic-differentiation support.
 
+`ScreeningTimmes.h` builds one thermodynamic state per rate evaluation and
+separates fixed charge/mass factors so literal pairs can be folded by the
+compiler. Scalar and differentiated screening retain the original branches.
+
 Host and device compilation use the same helpers. ODE algorithms, solver-library
 handles and table allocation belong to their respective numerical/backend owners.
 ARCH adapters and Timmes-derived equations retain their individual attribution;

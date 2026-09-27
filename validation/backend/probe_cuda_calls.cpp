@@ -1,9 +1,11 @@
 // Test-only LD_PRELOAD diagnostic. Native Host API latency is NOT GPU kernel
 // time and is never mixed into formal speedup samples. No extra fences or
-// kernel work; one successful function-name query is required per new kernel.
+// kernel work by default. ARCH_CUDA_OBSERVER_EVENTS=1 adds a per-launch
+// event fence for device attribution only; those runs are never timing samples.
 #include <cuda_runtime_api.h>
 #include <chrono>
 #include <cstdio>
+#include <cstdint>
 #include <cstdlib>
 #include <dlfcn.h>
 #include <map>
@@ -12,7 +14,7 @@
 
 namespace {
 using Clock=std::chrono::steady_clock;
-struct Row { unsigned long long calls=0,bytes=0,blocks=0,threads=0; double seconds=0,first_seconds=0; };
+struct Row { unsigned long long calls=0,bytes=0,blocks=0,threads=0; double seconds=0,first_seconds=0,device_seconds=0; };
 struct Registry {
     std::mutex mutex;
     std::map<std::string,Row> rows;
@@ -38,7 +40,18 @@ std::string kernel_name(const void* function) {
     auto found=r.names.find(function);
     if (found!=r.names.end()) return found->second;
     using Query=cudaError_t (*)(const char**,const void*);
-    static auto query=symbol<Query>("cudaFuncGetName");
+    static auto query=reinterpret_cast<Query>(dlsym(RTLD_NEXT,"cudaFuncGetName"));
+    // CUDA 12.x may not export the name query. A PIE-relative host stub
+    // address can instead be resolved against the exact executable with nm.
+    if (!query) {
+        Dl_info info{};
+        if (!dladdr(function,&info)) std::abort();
+        char label[96];
+        std::snprintf(label,sizeof(label),"stub@0x%llx",
+            static_cast<unsigned long long>(reinterpret_cast<std::uintptr_t>(function)
+                - reinterpret_cast<std::uintptr_t>(info.dli_fbase)));
+        return r.names.emplace(function,label).first->second;
+    }
     const char* name=nullptr;
     const auto start=Clock::now();
     const auto status=query(&name,function);
@@ -53,10 +66,10 @@ std::string kernel_name(const void* function) {
 }
 __attribute__((destructor)) void report() {
     auto& r=registry(); std::lock_guard<std::mutex> lock(r.mutex);
-    std::fprintf(stderr,"CUDA_OBSERVER_HEADER,key,calls,host_seconds,first_host_seconds,bytes,blocks,threads\n");
+    std::fprintf(stderr,"CUDA_OBSERVER_HEADER,key,calls,host_seconds,first_host_seconds,bytes,blocks,threads,device_seconds\n");
     for (const auto& [key,row]:r.rows)
-        std::fprintf(stderr,"CUDA_OBSERVER,%s,%llu,%.9f,%.9f,%llu,%llu,%llu\n",key.c_str(),
-            row.calls,row.seconds,row.first_seconds,row.bytes,row.blocks,row.threads);
+        std::fprintf(stderr,"CUDA_OBSERVER,%s,%llu,%.9f,%.9f,%llu,%llu,%llu,%.9f\n",key.c_str(),
+            row.calls,row.seconds,row.first_seconds,row.bytes,row.blocks,row.threads,row.device_seconds);
 }
 }
 
@@ -66,11 +79,30 @@ extern "C" cudaError_t cudaLaunchKernel(const void* function,dim3 grid,dim3 bloc
     static auto native=symbol<Fn>("cudaLaunchKernel");
     const auto name=kernel_name(function);
     { auto& r=registry(); std::lock_guard<std::mutex> lock(r.mutex); r.last_kernel[stream]=name; }
+    static const bool events=std::getenv("ARCH_CUDA_OBSERVER_EVENTS") != nullptr;
+    cudaEvent_t begin{},end_event{};
+    auto require=[](cudaError_t status) {
+        if (status != cudaSuccess) {
+            std::fprintf(stderr,"CUDA_OBSERVER_UNAVAILABLE,event_status_%d\n",int(status));
+            std::abort();
+        }
+    };
+    if (events) {
+        require(cudaEventCreate(&begin)); require(cudaEventCreate(&end_event));
+        require(cudaEventRecord(begin,stream));
+    }
     const auto start=Clock::now();
     const auto result=native(function,grid,block,arguments,shared,stream);
     const auto end=Clock::now();
     add("launch:"+name,start,end,0,static_cast<unsigned long long>(grid.x)*grid.y*grid.z,
         static_cast<unsigned long long>(grid.x)*grid.y*grid.z*block.x*block.y*block.z);
+    if (events && result == cudaSuccess) {
+        require(cudaEventRecord(end_event,stream)); require(cudaEventSynchronize(end_event));
+        float milliseconds=0; require(cudaEventElapsedTime(&milliseconds,begin,end_event));
+        auto& r=registry(); std::lock_guard<std::mutex> lock(r.mutex);
+        r.rows["launch:"+name].device_seconds += milliseconds*1.e-3;
+    }
+    if (events) { cudaEventDestroy(begin); cudaEventDestroy(end_event); }
     return result;
 }
 extern "C" cudaError_t cudaStreamSynchronize(cudaStream_t stream) {

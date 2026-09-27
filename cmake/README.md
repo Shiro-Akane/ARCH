@@ -29,6 +29,11 @@ and keeps FetchContent in the caller's scope. The
 [build-output guide](../docs/guides/Build.md#build-output) describes how to request
 full logs without changing compiler or linker settings.
 
+Release application and dispatch targets share `-O3` and supported LTO/IPO.
+The build contract disables fast-math and implicit contraction, and removes
+unused host libm errno side effects. Keep this contract on both compilation
+and final linking; limit concurrent jobs to control build memory.
+
 ## CUDA helpers
 
 - [CudaBurnNetworks.cmake](cuda/CudaBurnNetworks.cmake): one compilation inventory

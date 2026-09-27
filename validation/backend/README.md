@@ -32,6 +32,15 @@ restart retains strict controller-state and output-history comparisons. The
 endpoint must follow the three-step source run. The console's `dt_burn` is the
 executed Strang half-step, so the ENUC witness reads checkpoint controller state.
 
+[probe_cuda_calls.cpp](probe_cuda_calls.cpp) is an optional, test-only preload
+observer. By default it reports host CUDA API latency, which may include waiting
+for earlier work and must not be interpreted as PCIe or kernel time. Setting
+`ARCH_CUDA_OBSERVER_EVENTS=1` also measures each launch with CUDA events and a
+completion wait. This changes overlap and launch pacing: use it to attribute
+cost, never as a formal speedup sample. Older runtimes without `cudaFuncGetName`
+report executable-relative stub addresses; resolve them against the exact timed
+binary's symbol table and retain that binary identity.
+
 Install NumPy and h5py for these Python checks. Use a new output directory for
 each run. Short integration checks do not repeat the formal scientific or
 timing campaign.
@@ -48,4 +57,7 @@ separates route registration, active material channels, coupled agreement and
 independent accuracy. Its four-module runs do not certify the full policy
 Cartesian product. Historical Helmholtz "full transport" timing rows retain
 their source scope; the current stellar closure supplies thermal conduction
-only. Tabular burn/NSE recoverable-trial error handling remains unqualified.
+only. Tabular ODE/NSE candidate recovery now has paired host/device error-contract
+checks, with strict required failures retained; see the
+[O6 acceptance record](../gravity/flash/O6AcceptanceReport.zh-CN.md). It does not
+qualify missing material or weak-process closures.

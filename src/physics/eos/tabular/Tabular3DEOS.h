@@ -69,6 +69,9 @@ struct BasicTabular3DEOSView
     // Optional non-owning device error latch, bound only on a per-launch view
     // copy.  Owners and Host views leave this null; Host failures still throw.
     int* device_error_status = nullptr;
+    // Borrowed only by a single optional ODE/NSE candidate query. Persistent
+    // owners and required preparation/commit queries always leave this null.
+    bool* trial_error_status = nullptr;
 
     // Strict domains apply to both native and free-energy sources.
 
@@ -88,7 +91,7 @@ struct BasicTabular3DEOSView
     ARCH_INLINE double native_failure(tabular_eos::FreeEnergyStatus status) const
     {
         return tabular_eos::checked_thermodynamics(
-            tabular_eos::free_energy_failure(status), device_error_status).energy;
+            tabular_eos::free_energy_failure(status), device_error_status, trial_error_status).energy;
     }
 
     ARCH_INLINE bool valid_cell(int i, int j, int k) const
@@ -429,7 +432,7 @@ struct BasicTabular3DEOSView
         double rho, double T, double composition) const
     {
         const auto result = free_energy_result(rho, T, composition);
-        return tabular_eos::checked_thermodynamics(result, device_error_status);
+        return tabular_eos::checked_thermodynamics(result, device_error_status, trial_error_status);
     }
 
     // Composition-coordinate query used by generated network interfaces.

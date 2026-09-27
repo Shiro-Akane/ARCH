@@ -1,10 +1,15 @@
 // C++ translation of Frank Timmes's screen5 Coulomb-screening routine.
 // Upstream index: https://cococubed.com/code_pages/burn.shtml.
+// Workflow: build one thermodynamic state per rate evaluation, form the fixed
+// nuclear-pair geometry, then evaluate the original weak/intermediate/strong
+// screening branches. Scalar/Dual and host/device share every formula; only
+// the small pair wrapper is forced inline so literal reaction pairs can fold.
 #pragma once
 
 #include <algorithm>
 #include <cmath>
 
+#include "core/ArchPortability.h"
 #include "physics/network/timmes_common/Dual.h"
 
 namespace timmes {
@@ -36,33 +41,50 @@ TIMMES_HD inline Screen5State<Scalar> make_screen5_state(
     return {qlam0z, taufac, gamp};
 }
 
-/** Evaluate one reaction-pair screen factor with the original Timmes branches. */
-template <typename Scalar>
-TIMMES_HD inline Scalar screen5(const Screen5State<Scalar>& state,
-                      double z1, double a1, double z2, double a2)
+/** Charge/mass-only factors; independent of density, temperature and abundances. */
+struct Screen5Pair {
+    double zs13, zs13inv, zhat, zhat2, lzav, aznut, charge_product;
+};
+
+/** Form the unchanged Timmes pair geometry at a literal or runtime call site. */
+ARCH_HOST_DEVICE ARCH_FORCE_INLINE Screen5Pair make_screen5_pair(
+    double z1, double a1, double z2, double a2)
 {
     constexpr double x13 = 1.0 / 3.0;
-    constexpr double x14 = 1.0 / 4.0;
     constexpr double x53 = 5.0 / 3.0;
-    constexpr double x532 = 5.0 / 32.0;
     constexpr double x512 = 5.0 / 12.0;
-    constexpr double fact = 1.25992104989487;
-    constexpr double gamefx = 0.1;
-    constexpr double gamefs = 0.4;
-    constexpr double dgamma = 1.0 / (gamefs - gamefx);
-
     const double zs13 = std::pow(z1 + z2, x13);
     const double zs13inv = 1.0 / zs13;
     const double zhat = std::pow(z1 + z2, x53) - std::pow(z1, x53) - std::pow(z2, x53);
     const double zhat2 = std::pow(z1 + z2, x512) - std::pow(z1, x512) - std::pow(z2, x512);
     const double lzav = x53 * std::log(z1 * z2 / (z1 + z2));
     const double aznut = std::pow(z1 * z1 * z2 * z2 * a1 * a2 / (a1 + a2), x13);
+    return {zs13, zs13inv, zhat, zhat2, lzav, aznut, z1 * z2};
+}
+
+/** Evaluate exp(h12), with the original Timmes branches and derivative clipping. */
+template <typename Scalar>
+TIMMES_HD inline Scalar screen5(const Screen5State<Scalar>& state,
+                               const Screen5Pair& pair)
+{
+    constexpr double x14 = 1.0 / 4.0;
+    constexpr double x532 = 5.0 / 32.0;
+    constexpr double fact = 1.25992104989487;
+    constexpr double gamefx = 0.1;
+    constexpr double gamefs = 0.4;
+    constexpr double dgamma = 1.0 / (gamefs - gamefx);
+    const double zs13 = pair.zs13;
+    const double zs13inv = pair.zs13inv;
+    const double zhat = pair.zhat;
+    const double zhat2 = pair.zhat2;
+    const double lzav = pair.lzav;
+    const double aznut = pair.aznut;
 
     const Scalar qlam0z = state.qlam0z;
     const Scalar taufac = state.taufac;
     Scalar gamp = state.gamp;
 
-    const double bb = z1 * z2;
+    const double bb = pair.charge_product;
     const double qq = fact * bb * zs13inv;
     Scalar gamef = qq * gamp;
     const Scalar tau12 = taufac * aznut;
@@ -107,7 +129,15 @@ TIMMES_HD inline Scalar screen5(const Screen5State<Scalar>& state,
     return exp_value(h12);
 }
 
-// Retain the scalar entry for callers that evaluate only one pair.
+/** Inline only constant-pair setup; retain one state-dependent mathematical body. */
+template <typename Scalar>
+ARCH_HOST_DEVICE ARCH_FORCE_INLINE Scalar screen5(const Screen5State<Scalar>& state,
+    double z1, double a1, double z2, double a2)
+{
+    return screen5(state, make_screen5_pair(z1, a1, z2, a2));
+}
+
+/** Evaluate an isolated pair when a shared rate-evaluation state is unavailable. */
 template <typename Scalar>
 TIMMES_HD inline Scalar screen5(const Scalar& temp, double den,
                       const Scalar& zbar, const Scalar& abar, const Scalar& z2bar,

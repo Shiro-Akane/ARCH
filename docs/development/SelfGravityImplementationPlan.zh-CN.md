@@ -16,19 +16,19 @@
 用户后续明确指令优先；据此调整计划时，应同步记录受影响的约束、阶段和验收。
 文中的新文件名与接口名是建议落点，语义边界具有约束性；合理更名应更新本文，不能借更名改变职责。
 
-P1 历史基线见 [P1 交接记录](SelfGravityP1Handoff.zh-CN.md)；本轮实际实现与验收见 [P1.5 实施记录](P1_5ImplementationReport.zh-CN.md)。
+P1 历史基线见 [P1 交接记录](SelfGravityP1Handoff.zh-CN.md)；本轮实际实现与验收见 [P1.5 实施记录](archive/low-density/ImplementationReport.zh-CN.md)。
 P1 当时只提供准备接口；P3/P4 是 CPU 周期历史基线；当前 CPU/CUDA 周期/孤立与耦合边界见 P5–P7 记录。
 
 [曲线坐标自引力计划](CurvilinearGravityPlan.zh-CN.md)以 `6c0cb929` 为源码基准，定义 P8–P13 的
 原生几何、唯一源项数学、文件拆并、边界、粗层求解与验收；其第 9–11 节分别记录一维、多维 CPU 与 P13 CUDA 结果。
 
-[低密度与近真空可靠性修复计划](LowDensityRobustnessPlan.zh-CN.md)定义新增 P1.5 的参数语义、
+[低密度与近真空可靠性修复计划](archive/low-density/RobustnessPlan.zh-CN.md)定义新增 P1.5 的参数语义、
 唯一实现归属、保守通量/可追踪兜底、CPU/CUDA 验收及 P2 接续门槛。
 P1.5 不新增物理自由度或算法微调项，优先复用 `sml_rho/min_eint/max_eint/smallx/smallt` 等既有语义；
 其第 3.4–3.5 节记录现有物理配置清点和后续新增参数的准入规则。
 它属于数值行为修复，不得并入 P1 的“行为保持”历史验收。
 
-[物理配置与旧 EOS 退役清单](ParameterRetirementAudit.zh-CN.md)补充全部 90 个标准键的处置、
+[物理配置与旧 EOS 退役清单](archive/low-density/ParameterRetirementAudit.zh-CN.md)补充全部 90 个标准键的处置、
 5 个拟删标准键、2 个未接入成员、3 个既有时间步键的标准登记，以及 EOS/配套设施清理范围。
 按最新用户要求，明确退役项不保留旧输入、旧接口或旧表兼容；保留特性的科学验收标准不变。
 此决定覆盖本文及历史审查中针对这些项目的“默认保留兼容”建议；删除已按 P1.5 退役清单实施，历史清点文字不代表现行代码仍保留这些实现。
@@ -314,7 +314,7 @@ CPU/GPU 使用相同输入、边界、精度与相当的初值策略；CPU 线�
 |---|---|---|
 | P0 基准与决策 | 实施工作区、输入/证据索引、本计划记录 | 锁定 main/GUI/CUDA 工作提交，确认未提交改动；按第 10.4 节整合共享 Core 基线，按阶段冻结决策与预算。 |
 | P1 Driver 与契约 | 第 4.2 节文件、构建接入、窄阶段准备入口、标量接口声明 | 先 IO/Burn，后 Runtime/Boundary/Regrid，再 Hydro/Diffusion；no-op prepare 通过 none/external 回归。主循环顺序、slot、reflux、重启相位与资源语义不变。 |
-| P1.5 低密度可靠性修复 | [专项计划](LowDensityRobustnessPlan.zh-CN.md)的 LD-01–14、共享状态语义、正性/失败与修复报告；退役清单 PR/ER/CR 与已有控制登记 | 完成 N0–N5：独立参考、低密度/近真空、尺度、守恒、保留 EOS 域、AMR/restart、CPU 后集中 CUDA 验收；不凭 floor 或后端相等证明正确。旧路线拒绝与当前能力覆盖分别核对。精确真空/dual-energy/通用重试单列扩展。 |
+| P1.5 低密度可靠性修复 | [专项计划](archive/low-density/RobustnessPlan.zh-CN.md)的 LD-01–14、共享状态语义、正性/失败与修复报告；退役清单 PR/ER/CR 与已有控制登记 | 完成 N0–N5：独立参考、低密度/近真空、尺度、守恒、保留 EOS 域、AMR/restart、CPU 后集中 CUDA 验收；不凭 floor 或后端相等证明正确。旧路线拒绝与当前能力覆盖分别核对。精确真空/dual-energy/通用重试单列扩展。 |
 | P2 单层 CPU 椭圆/MG | grid view、elliptic、multigrid、独立小测试 | 周期/制造解 Dirichlet、零空间、残差、transfer 和失败路径通过；不提前启用 self 生产路由。 |
 | P3 CPU composite AMR | EllipticMeshAdapter、覆盖/邻接、粗细算子与独立 MG 层次 | 多块与静态 AMR 解、界面通量、复合残差和内存生命周期通过。 |
 | P4 CPU 自引力闭环 | GravityStage、SelfGravity、源项、阶段时间、capability/配置、IO/restart | RK 阶段密度匹配，动态 regrid/reflux/restart、引力步长、动量/能量/时间精度通过；只启用已验证组合。 |
@@ -517,7 +517,7 @@ P1 实现为 `95b858fc`；[验证证据](../../validation/gravity/results/selfgr
 当前 P1/P1.5/P2 已完成并推送；P2 独立原型的历史边界见 [P2 专项记录](P2PoissonMultigrid.zh-CN.md)。
 P3/P4 CPU 基本验收、实际开放范围和限制见 [专项记录](P3P4CompositeGravity.zh-CN.md)；
 1D 动态演化、3D 算子及短步混合层级验收不等于所有长期三维科学场景已通过。
-P1.5 的已推送基线为 `780794b6`；新数值基线的验收见 [实施记录](P1_5ImplementationReport.zh-CN.md)，不能用 P1 行为保持证据替代。
+P1.5 的已推送基线为 `780794b6`；新数值基线的验收见 [实施记录](archive/low-density/ImplementationReport.zh-CN.md)，不能用 P1 行为保持证据替代。
 P2 不要求先完成全仓 R2–R4；P1 GPU 验证不代表 P6 自引力 CUDA 已完成。
 
 每个阶段使用以下格式更新本节，详细测量保存在现有 validation 树中：

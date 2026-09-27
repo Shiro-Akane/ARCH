@@ -21,7 +21,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
-#include <set>
+#include <unordered_map>
 #include <stdexcept>
 
 namespace arch::state {
@@ -164,31 +164,25 @@ public:
         if (!is_complete(completed_initialization))
             throw std::invalid_argument(
                 "initial state publication requires a completed token");
-        if (active_blocks_.contains(block) || tombstones_.contains(block))
+        if (blocks_.contains(block.uid.value))
             throw std::invalid_argument(
                 "block is already registered or permanently retired");
 
-        active_blocks_.insert(block);
-        for (StateSlot slot : all_slots()) {
-            Entry entry{};
-            if (slot == StateSlot::Current) {
-                entry.coherence.interior = {
-                    residency_for(initial_side),
-                    current_version,
-                    completed_initialization,
-                    PendingTransferPhase::None};
-                entry.interior_last_token_id = completed_initialization.value;
-            }
-            entries_.emplace(StateKey{block, slot}, entry);
-        }
+        BlockRecord record{};
+        record.active = true;
+        Entry& current = record.slots[slot_index(StateSlot::Current)];
+        current.coherence.interior = {
+            residency_for(initial_side), current_version,
+            completed_initialization, PendingTransferPhase::None};
+        current.interior_last_token_id = completed_initialization.value;
+        blocks_.emplace(block.uid.value, std::move(record));
     }
 
     void retire_block(amr::BlockHandle block)
     {
-        require_active_block(block);
+        BlockRecord& record = require_record(block);
         quiesce(block);
-        active_blocks_.erase(block);
-        tombstones_.insert(block);
+        record.active = false; // Keep the UID as a same-epoch tombstone.
     }
 
     SlotCoherence inspect(StateKey key) const
@@ -327,15 +321,18 @@ public:
 
     void quiesce() const
     {
-        for (const amr::BlockHandle block : active_blocks_)
-            quiesce(block);
+        for (const auto& [uid, record] : blocks_) {
+            if (!record.active) continue;
+            for (const Entry& entry : record.slots)
+                validate_quiescent(entry.coherence);
+        }
     }
 
     void quiesce(amr::BlockHandle block) const
     {
-        require_active_block(block);
-        for (StateSlot slot : all_slots())
-            validate_quiescent(require_entry({block, slot}).coherence);
+        const BlockRecord& record = require_record(block);
+        for (const Entry& entry : record.slots)
+            validate_quiescent(entry.coherence);
     }
 
     void materialize_host_current(amr::BlockHandle block,
@@ -372,20 +369,18 @@ public:
 
     void rotate_slots(amr::BlockHandle block, SlotRotation rotation)
     {
-        require_active_block(block);
+        BlockRecord& record = require_record(block);
         validate_rotation(rotation);
-        quiesce(block);
+        for (const Entry& entry : record.slots)
+            validate_quiescent(entry.coherence);
 
-        std::array<Entry, 3> old{};
-        for (std::size_t index = 0; index < old.size(); ++index)
-            old[index] = require_entry({block, all_slots()[index]});
-
+        const auto old = record.slots;
         const std::array<StateSlot, 3> sources{
             rotation.current_from, rotation.next_from, rotation.scratch_from};
         for (std::size_t destination = 0; destination < old.size();
              ++destination) {
             const std::size_t source = slot_index(sources[destination]);
-            Entry& output = require_entry({block, all_slots()[destination]});
+            Entry& output = record.slots[destination];
             output.coherence = old[source].coherence;
             output.interior_last_token_id = merged_high_watermark(
                 old[destination].interior_last_token_id,
@@ -403,6 +398,13 @@ private:
         SlotCoherence coherence = invalid_slot();
         std::uint64_t interior_last_token_id = 0;
         std::uint64_t ghost_last_token_id = 0;
+    };
+
+    // One epoch owns each UID and all three slots. Retired records remain
+    // tombstones, while hot stage lookups need only one hash probe per block.
+    struct BlockRecord {
+        std::array<Entry, 3> slots{};
+        bool active = false;
     };
 
     static constexpr std::array<StateSlot, 3> all_slots() noexcept
@@ -550,31 +552,34 @@ private:
             throw std::invalid_argument("invalid or stale block handle");
     }
 
-    void require_active_block(amr::BlockHandle block) const
+    BlockRecord& require_record(amr::BlockHandle block)
     {
         validate_handle_epoch(block);
-        if (!active_blocks_.contains(block))
+        const auto found = blocks_.find(block.uid.value);
+        if (found == blocks_.end() || !found->second.active)
             throw std::invalid_argument("block is unknown or retired");
+        return found->second;
+    }
+
+    const BlockRecord& require_record(amr::BlockHandle block) const
+    {
+        validate_handle_epoch(block);
+        const auto found = blocks_.find(block.uid.value);
+        if (found == blocks_.end() || !found->second.active)
+            throw std::invalid_argument("block is unknown or retired");
+        return found->second;
     }
 
     Entry& require_entry(StateKey key)
     {
-        require_active_block(key.block);
-        (void) slot_index(key.slot);
-        const auto found = entries_.find(key);
-        if (found == entries_.end())
-            throw std::logic_error("registered block is missing a state slot");
-        return found->second;
+        const std::size_t index = slot_index(key.slot);
+        return require_record(key.block).slots[index];
     }
 
     const Entry& require_entry(StateKey key) const
     {
-        require_active_block(key.block);
-        (void) slot_index(key.slot);
-        const auto found = entries_.find(key);
-        if (found == entries_.end())
-            throw std::logic_error("registered block is missing a state slot");
-        return found->second;
+        const std::size_t index = slot_index(key.slot);
+        return require_record(key.block).slots[index];
     }
 
     void require_direction(StateKey key, StateRegion region,
@@ -588,9 +593,7 @@ private:
     }
 
     amr::TopologyEpoch active_epoch_{};
-    std::map<StateKey, Entry> entries_;
-    std::set<amr::BlockHandle> active_blocks_;
-    std::set<amr::BlockHandle> tombstones_;
+    std::unordered_map<std::uint64_t, BlockRecord> blocks_;
 };
 
 } // namespace arch::state

@@ -682,7 +682,7 @@
       "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "0.0",
@@ -706,7 +706,7 @@
       "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "1.0",
@@ -730,7 +730,7 @@
       "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "0.0",
@@ -754,7 +754,7 @@
       "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "1.0",
@@ -778,7 +778,7 @@
       "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "0.0",
@@ -802,7 +802,7 @@
       "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "1.0",
@@ -2342,7 +2342,7 @@
         "syntax": "finite decimal or scientific notation; full token"
       },
       "defaultSource": "shared-runtime-definition",
-      "defaultValue": 0.001,
+      "defaultValue": 1,
       "group": "Network",
       "key": "ode_initial_dt_frac",
       "options": null,
@@ -2677,7 +2677,7 @@
       "applicability": "gravity_type=external",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "0.0",
@@ -2700,7 +2700,7 @@
       "applicability": "gravity_type=external",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "0.0",
@@ -2723,7 +2723,7 @@
       "applicability": "gravity_type=external",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": "0.0",
@@ -2746,7 +2746,7 @@
       "applicability": "gravity_type=self; unavailable in this build",
       "constraints": {
         "complete": false,
-        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number; finite result"
+        "syntax": "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result"
       },
       "defaultSource": "shared-runtime-definition",
       "defaultValue": 6.6743e-08,

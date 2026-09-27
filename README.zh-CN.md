@@ -9,100 +9,36 @@
 [![CUDA](https://img.shields.io/badge/CUDA-supported-success.svg)](docs/CudaBackendStatus.zh-CN.md)
 [![ARCH code: MIT](https://img.shields.io/badge/ARCH_code-MIT-yellow.svg)](LICENSE)
 
-ARCH 是一个用于模拟可压缩流体运动、传热与反应的计算框架。无论是初学者想要入门计算流体力学（CFD），还是研究人员需要直接在源码中深度扩展底层的物理方程与数值方法，ARCH 都能为您提供坚实而友好的基础。
+ARCH 用于模拟可压缩流体运动、传热与核反应。它以有限体积法推进流体状态，并用自适应网格细化（AMR）增加局部空间分辨率。CPU 与 CUDA 共用物理和数学实现。
 
-**单位约定：ARCH 全系统采用 CGS，包括 IdealGas、输入输出和 GUI。** 长度用 `cm`，时间用 `s`，密度用 `g/cm³`，压力和能量密度用 `erg/cm³`，比内能用 `erg/g`，温度用 `K`，比热用 `erg/(g·K)`；角度用 `rad`，比例等仍为无量纲。用户输入须遵循这套约定，ARCH 不会自动换算单位。详见[算例指南的单位说明](docs/guides/SimulationCase.zh-CN.md#单位)。
+**ARCH 的输入、输出和物理常数统一使用 CGS**：长度为 `cm`，时间为 `s`，密度为 `g/cm³`，压力和能量密度为 `erg/cm³`，比内能为 `erg/g`，温度为 `K`。角度使用 `rad`。输入不会自动换算单位；更多量纲见[算例指南](docs/guides/SimulationCase.zh-CN.md#单位)。
 
-低密度算例复用 `sml_rho`、`min_eint/max_eint`；应把密度下限设到目标解范围以下。ARCH 记录正值兜底的守恒量改变量，并拒绝零/负密度、非有限量或无法解析的热能。参数与旧 EOS 输入的迁移见 [P1.5 实施记录](docs/development/P1_5ImplementationReport.zh-CN.md)。
+从下方的[构建](#构建)与[首次运行](#首次运行)开始。完成第一个算例后，按[ARCH 模拟算例指南](docs/guides/SimulationCase.zh-CN.md)继续学习；需要查找模块范围或具体参数时，再使用[功能清单](docs/Features.zh-CN.md)和[参考手册](docs/Reference.zh-CN.md)。
 
-在底层设计上，ARCH 采用有限体积法：通过将流体区域划分为网格单元，精确追踪它们之间质量、动量和能量的交换。为了更高效地捕捉局部细节，我们引入了自适应网格细化（AMR）技术。它只会在真正需要的地方动态插入更小的单元，巧妙地避开了全局极细网格带来的高昂计算成本。CPU 与 CUDA 共用数学与物理核心，后端负责执行、存储和求解库接入。后端一致性通过明确配置的验证确认，其中包括耦合 AMR 运行。
+## 功能与文档
 
-想要快速上手并运行您的第一个模拟，请直接跳转到下方的[构建](#构建)与[首次运行](#首次运行)章节。跑通之后，[模拟算例指南](docs/guides/SimulationCase.zh-CN.md)会手把手带您了解如何读取输出结果、修改参数，乃至创建属于您自己的仿真场景。请放心，为初学者准备的入门示例经过了精心设计，既不需要您拥有 GPU，也无需配置复杂的核反应网络，只要有一台普通的电脑就可以轻松开始。
+ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应及外部／自引力计算，并可在 CPU 或 CUDA 后端运行。[独立功能清单](docs/Features.zh-CN.md)列出各模块、几何与边界的适用范围。[验证索引](validation/README.zh-CN.md)说明经过检查的模型组合；[版本说明](docs/releases/README.md)记录各源码版本的变化。
 
-## 项目状态
-
-[v1.2.0 更新说明](docs/releases/V1.2.0.zh-CN.md)概述自引力、源码重构和从 v1.1.0
-迁移时需要注意的变化。[v1.1.0 更新说明](docs/releases/V1.1.0.zh-CN.md)保留该版
-CUDA 性能与源码包的原有范围。
-
-下表说明当前检出版本在 CPU 与 CUDA 上的能力；现行自引力的验收与限制见
-[Validation](validation/README.zh-CN.md)。
-
-[持续集成](tests/README.zh-CN.md#github-持续集成)检查新改动的工具行为、CPU 构建和
-回归结果；GPU 与独立科学验证的结果另见 Validation。
-
-| 功能 | 共用行为与后端选择 |
-| --- | --- |
-| 流体力学 | 一维、二维和三维的笛卡尔、柱坐标及球坐标网格 |
-| 动态块 AMR | 守恒细化与粗化、边界数据交换及通量修正。使用 CUDA 时，GPU 计算细化指标并迁移网格数据，CPU 管理网格树。 |
-| 状态方程（EOS） | 描述密度、温度、压力与能量之间的关系，支持理想气体、Helmholtz 及三维／四维表格 |
-| 扩散 | 热、黏性及组分扩散算子采用 RKL1/RKL2；实际可用通道取决于材料模型。目前 Helmholtz 恒星输运模型只提供热传导。 |
-| 重力 | CPU/CUDA 均支持外部重力与复合 AMR 自引力。自引力已验收 Cartesian 一至三维全周期或三维孤立边界，涵盖流体、燃烧与热扩散组合；CPU/CUDA 一维球/柱对称以及受测完整方位角二维/三维曲线坐标 isolated 已验收，包含原点、轴线、极点与复合 AMR；见[引力算例](simulation/GravityBox/README.md)和[支持边界](docs/Reference.zh-CN.md#已知限制)。 |
-| 核燃烧 | 四个内置网络及 pynucastro 生成网络；内置网络还支持核统计平衡（NSE），可根据平衡条件确定组分。 |
-| 线性求解 | 燃烧 ODE 的小系统使用 DenseLU，稀疏系统在 CPU 上使用 KLU、CUDA 上使用 cuDSS；自引力使用复合多重网格。 |
-| 输出与重启 | 两侧使用相同的 HDF5 可视化数据和检查点格式，保存 AMR 层级、燃烧能量及时间步控制器状态。 |
-
-你可以在参数文件中设置 `compute_backend = cpu`、`cuda` 或 `auto` 来选择模拟运行的硬件。如果明确请求 `cuda` 但构建或硬件不支持，程序将报错。若设为 `auto`，当 CUDA 不可用且 CPU 支持所需功能时，ARCH 会在启动时平滑回退到 CPU。一旦模拟开始，后端将保持固定。[CUDA 指南](docs/CudaBackendStatus.zh-CN.md)详细说明了这些选项以及 CPU 和 GPU 在 AMR 过程中的协作方式。
-
-检查点（Checkpoint）保存了无缝恢复模拟所需的所有状态信息（包括网格和流体组分）。由于 CPU 和 CUDA 后端使用完全相同的文件格式，对目标后端也支持的物理组合，可以在不同的后端之间进行重启。[参考手册](docs/Reference.zh-CN.md)详细列出了保存的字段，以及恢复模拟时必须保持一致的物理设置。
-
-CUDA 在选定的耦合 AMR 工作负载上已有正向加速证据；收益取决于规模、物理模型
-和硬件，小算例及部分稀疏网络仍可能更适合 CPU。[后端性能指南](docs/CudaBackendStatus.zh-CN.md#按性能选择后端)
-分别记录历史服务器测量和当前工作站检查。跨软件比较还须对齐方程、物理终点及
-精度；[ARCH–FLASH 评估](validation/gravity/flash/O5OptimizationReport.zh-CN.md)说明尚存差异。
-
-## 已实现功能
-
-ARCH 提供 SW 和 VL 通量矢量分裂，以及 Roe、HLL 和 HLLC 黎曼求解器，用于估计跨越单元边界的输运。在单元面的空间重构方面，支持 PCM、MUSCL/PLM 和 PPM。时间积分由 Euler、SSPRK2 或 SSPRK3 方案处理，而扩散过程则采用 RKL1 或 RKL2 超时间步方法。这些方法有共用的 CPU/CUDA 实现，但组合仍受 EOS、材料模型、几何和构建条件限制。HLLC＋MUSCL＋RK2＋RKL2＋BD＋复合多重网格＋AMR 已在 Helmholtz、aprox13 和热传导配置下完成代表性四模块 CPU/CUDA 检查；这不等于替换任意 EOS、网络或数值策略都已验收。
-
-内置的教学算例已经预先配置了合适的方法，你可以放心从这些设置开始。[算例指南](docs/guides/SimulationCase.zh-CN.md)会在深入各个参数前，先解释每种方法的作用。组合规则和验证边界见[参考手册](docs/Reference.zh-CN.md#方法与物理模块的组合)。
+在参数文件中用 `compute_backend = cpu`、`cuda` 或 `auto` 选择后端。自动选择只发生在启动阶段；细节见[CUDA 指南](docs/CudaBackendStatus.zh-CN.md)。
 
 ## 构建
 
-ARCH 必须在 Linux 环境中编译；Windows 用户请使用 WSL2 Linux 终端。你可以在下方选择构建纯 CPU 版本或 CPU/CUDA 双支持版本。由于 CUDA 可执行程序同时也支持在 CPU 上运行，因此不需要将两者都编译一遍。
+在 Linux 或 WSL2 终端中构建。按所选后端准备依赖：
 
-第一次运行建议从 `cpu-release` 开始，需要 GPU 执行时再选择 `cuda-release`。
-**启用 `ARCH_ENABLE_CUDA=ON` 会显著拉长编译时间**：除了 CPU 应用，还需要 NVCC
-编译设备代码，增加模板实例化与链接工作。编译压力主要落在**主机内存，而非显存**。
-较大的生成网络、更多目标 GPU 架构会进一步增加工作量。在 `.par` 中设置
-`compute_backend = cpu` 只选择运行后端，不会消除已启用 CUDA 的构建成本。
+- **基础工具：** 支持 C++20 的编译器、CMake 3.22+、Ninja 和 Git。
+- **两种后端共用的库：** HDF5 C++/HL 和 OpenMP。
+- **CUDA 构建另需：** CMake 3.25.2+、CUDA Toolkit 12.0+ 和兼容的 GPU 驱动。
+
+依赖安装、编译内存限制及源码包中的 EOS 表处理见[构建指南](docs/guides/Build.zh-CN.md)。
 
 ### 获取源码
-
-推荐用户拉取 `main` 分支：
 
 ```bash
 git clone --branch main --single-branch https://github.com/Shiro-Akane/ARCH.git
 cd ARCH
 ```
 
-更新已有的 `main` 工作目录时，先保存自己的修改，再在仓库目录内运行
-`git pull --ff-only`。如果不能直接更新，Git 会停止，不会重置你的工作。
-
-### 准备工具
-
-先在 Linux 环境中安装以下工具及开发库：
-
-- 支持 C++20 的编译器、CMake 3.22 或更高版本、Ninja 和 Git。
-- HDF5 的 C++ 与高层接口库，以及用于 CPU 并行计算的 OpenMP。
-- 使用 CUDA 时，还需要 CMake 3.25.2 或更高版本、CUDA Toolkit 12.0 或更高版本、
-  该工具链支持的宿主编译器及可用的 NVIDIA 驱动。下方带内存监控的编译命令还
-  需要 Python 3.10 或更高版本。
-
-使用 WSL2 时，NVIDIA 驱动安装在 **Windows**，CUDA Toolkit 安装在 WSL 内；
-不要在 WSL 内安装 Linux 显示驱动。安装步骤见
-[NVIDIA 的 WSL 指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
-
-CMake 会在配置时下载 HighFive。CPU 稀疏求解器 KLU 默认启用：程序优先使用
-已安装的库，否则下载固定版本的 SuiteSparse v7.13.0。因此，配置阶段需要联网。
-
-下方命令都在仓库根目录执行。`cmake --preset ...` 使用项目保存的配置检查依赖
-并准备构建目录，`cmake --build ...` 才开始编译。预设使用 Ninja 执行编译任务，
-不需要再运行 `make`。如果同名构建目录已配置过其他编译器或构建工具，请换一个空目录。
-
-配置时会保留 ARCH 的依赖摘要，并收起随源码构建的依赖库反复打印的参数。
-Debug 和 Release 都会保留警告与错误；需要完整配置或编译命令时，参见
-[构建输出](docs/guides/Build.zh-CN.md#构建输出)。
+已有检出可以在保存本地修改后用 `git pull --ff-only` 更新。
 
 ### 方案 A：使用 CPU
 
@@ -111,51 +47,20 @@ cmake --preset cpu-release
 cmake --build build-cpu --target ARCH --parallel 1
 ```
 
-这会将可执行程序生成在 **`build-cpu/bin/ARCH`**。现在你可以跳至[首次运行](#首次运行)部分。
-两个 Release 预设均设置 `BUILD_TESTING=OFF`，不影响模拟功能。
-改为 `ON` 会注册额外测试目标；构建默认目标集合时，会编译更多可执行程序，增加
-耗时与主机内存压力，CUDA 测试尤其明显。`--target ARCH` 只构建应用及其依赖，
-不会构建独立测试套件。需要[自验证](tests/README.zh-CN.md)时再启用测试即可。
-`--parallel 1` 标志将编译任务限制为单线程，以节省内存。
+程序位于 `build-cpu/bin/ARCH`，可以直接进行[首次运行](#首次运行)。
 
 ### 方案 B：同时支持 CPU 与 CUDA
 
-请在将要运行 ARCH 的 GPU 所在机器上执行。预设通过
-`CMAKE_CUDA_ARCHITECTURES=native` 为本机 GPU 编译，启用 `ARCH_ENABLE_CUDA=ON`，
-并将重型编译任务限制为一个。
+在将要运行计算的 GPU 机器上执行：
 
 ```bash
 cmake --preset cuda-release
-python3 tools/run_memory_guarded.py --min-available-mib 1536 \
-  --max-swap-growth-mib 256 --pressure-guard -- \
-  cmake --build build-cuda --target ARCH --parallel 1
+cmake --build build-cuda --target ARCH --parallel 1
 ```
 
-编译完成后，程序位于 **`build-cuda/bin/ARCH`**。外层 Python 工具负责监测内存
-和磁盘压力，实际编译仍由 CMake 启动。按这里的设置，工具会在可用内存低于
-1.5 GiB、swap 新增超过 256 MiB，或者内存与 I/O 中任一等待指标持续超限时停止编译。
-它不改变编译出的数值算法。
+程序位于 `build-cuda/bin/ARCH`，也可以执行 CPU 算例。CUDA 编译需要更多主机内存与时间；资源受限时按[构建指南](docs/guides/Build.zh-CN.md)使用编译保护工具和选择并行数。稀疏 CUDA 燃烧需要可选的 cuDSS 库，配置方法也在该指南中。
 
-如果需要在 CUDA 上进行**稀疏核燃烧求解**，请在配置前另行安装 cuDSS 0.8。
-CMake 会自动查找它；如果安装在自定义目录，可在配置命令中追加
-`-DCUDSS_ROOT=/your/installed/cudss`，并将路径替换为实际安装位置。
-未安装 cuDSS 时，程序可以使用其他 CUDA 功能及稠密燃烧求解，但会拒绝 CUDA
-稀疏燃烧请求。KLU 负责 CPU 稀疏求解，不能在 CUDA 上代替 cuDSS。
-
-### 加快编译与获取可选数据
-
-上述命令从单任务编译开始。希望加快编译时，可按[构建指南](docs/guides/Build.zh-CN.md)
-调整并行数并监测内存。指南中的中等配置实测参考为 WSL2、i7-10700、16 GB
-系统内存和 RTX 3060 Ti 8 GB 显卡，采用两个重型编译任务、四个总任务。
-指南也说明了如何选择编译器、为其他 GPU 构建，以及运行测试套件。
-这些设置保留 Release 优化。
-
-首次运行的 Sod 算例不需要 EOS 表。使用 Helmholtz 或其他由 LFS 管理的表数据时，
-安装 Git LFS，并在仓库根目录执行 `git lfs pull` 即可。ARCH 运行模拟本身不需要 Python。
-
-拉取源码后，可按[测试指南](tests/README.zh-CN.md)先运行无需 GPU 的工具检查，再编译
-CPU 或 CUDA 测试，并执行对应配置的完整程序与重启检查。测试源码和小型参考数据
-均随仓库提供，测试程序在本机编译。
+首次运行的 Sod 算例无需 EOS 表。Helmholtz 等算例需要真实表数据；Git 检出可运行 `git lfs pull`，源码归档的处理见[表格说明](docs/guides/Build.zh-CN.md#源码包与-eos-表)。
 
 ## 首次运行
 
@@ -185,188 +90,83 @@ SodBeginner_chk_0000.h5
 ```
 
 日志是可以直接阅读的文本；名称包含 `_plt_` 的文件保存供查看的流体场，
-`_chk_` 文件则是用于重启的检查点。HDF5 是这些二进制数据文件采用的格式。
-[算例指南](docs/guides/SimulationCase.zh-CN.md)会介绍如何读取场数据并比较结果。
-这个示例使用 64 个单元；`simulation/Sod/Sod.par` 提供 128 单元的标准激波管，
+`_chk_` 文件则是用于重启的检查点。HDF5 是这些二进制数据文件采用的格式。这个示例使用 64 个单元；
+`simulation/Sod/Sod.par` 提供 128 单元的标准激波管，
 `simulation/Sedov/` 则提供爆炸波示例。
 
-## Tabular EOS 与自定义网络
+**初学者下一步：** 请从[ARCH 模拟算例指南](docs/guides/SimulationCase.zh-CN.md)继续。它以刚运行的 Sod 算例为起点，按顺序解释网格与参数、如何检查输出和进行受控实验，最后带你编写自己的算例。
 
-当理想气体或内置反应网络不足以描述目标问题时，可以使用这些扩展。首次运行
-不需要配置它们。
+## 扩展模型
 
-Tabular EOS 参数提供来源路径，文件内容负责格式与维数选择：
-
-~~~text
-eos_type = tabular
-eos_table_path = /path/to/model.h5
-~~~
-
-支持的来源包括规范化 3D/4D HDF5、EOSDriver 总 EOS HDF5，以及原始 Shen
-EOS2/EOS4 主表使用的正温度重子 ASCII 格式。自由能表可声明已包含的物理分量，
-ARCH 在加载时只补齐缺失的电子／正电子和光子，之后两个后端查询同一个总自由能势。
-这不会重复叠加离子模型，也不会改写来源文件。`eos_helm_table_path` 可选指定电子表，
-默认使用已有的 Timmes `helm_table.dat`，仅在需要补电子时读取。
-
-核平衡表要求 `use_burn = false`，避免重复计入核结合能。未识别的格式，包括任意
-CompOSE 布局，仍需要有明确契约的适配器；可以读入不代表整个表域都有效。
-[表格契约](src/physics/eos/TabularEOS.zh-CN.md)说明成分声明、固定质量／能量基准与
-严格有效域；科学边界见 [EOS 验证](validation/eos/README.zh-CN.md)，原始 Shen
-数据的来源与许可见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)。加工后的 HShen 表不随附。
-
-本文的网络生成流程使用 pynucastro 2.12.0，Python 环境与完整构建步骤见
-[网络验证指南](validation/network/README.zh-CN.md#复现这些记录)。复制并编辑示例生成脚本，
-选择唯一的 `NETWORK_ID` 和所需核素，然后运行：
-
-~~~bash
-cp examples/network/CustomNetworkRecipe.py MyNetwork.py
-python3 tools/network/GenerateNetwork.py MyNetwork.py --check
-python3 tools/network/GenerateNetwork.py MyNetwork.py
-cmake -S . -B build
-cmake --build build --parallel 1
-~~~
-
-每个生成网络包位于 `src/physics/network/custom/<id>/`。CMake 注册该目录内
-实际存在的 ID，并允许多个 ID 共存；`aprox*`/`iso*` 命名空间保留给内置网络。
-生成器会检查并备份已有网络，再执行替换。每次运行选择一个网络包：
-
-~~~text
-network_name = custom:<id>
-use_burn = true
-use_nse = false
-linear_solver = Auto
-~~~
-
-使用 CUDA 时，通过随附生成器创建具备设备端数学能力的网络包。清单会声明
-这项能力，CMake 在注册 CUDA 执行组合前检查所需的包接口。两个后端使用同一个
-生成数学头文件及清单声明的 Jacobian 结构。对于已识别的内嵌弱反应率表，各后端
-分别管理只读数据，共用插值、导数和有符号能量积分。仅提供 CPU 接口的网络包
-仍可在 CPU 上运行。生成器还会检查网络包是否支持与其反应数据一致的基态 NSE 模型。
-`use_nse = auto` 仅对已认证的包启用，否则保持动力学积分；显式 `true` 则要求
-该能力。两种模式使用相同的温度／密度阈值，不会把任意网络投影到内置 Timmes
-核素集合。详见 [NSE 模型边界](src/physics/nse/README.md)。
-
-线性求解器名称不区分大小写。`Auto` 在 ODE 方程总数不超过 31 时选择 DenseLU，
-计数包含核素、温度和可选辅助状态。更大系统在 CPU 上使用 SparseKLU，在 CUDA
-上使用 cuDSS，前提是相应求解库与网络／EOS 执行代码已构建。显式 SparseKLU
-仅适用于 CPU，显式 cuDSS 仅适用于 CUDA；不兼容的组合会在后端构造前报错，
-不会静默替换求解器。cuDSS 是可选依赖，但 CUDA 稀疏燃烧必须链接该库。
-独立弱反应轨迹、真实生成网络的应用运行及不同网络规模的检查记录统一见
-[网络验证](validation/network/README.zh-CN.md)。完整契约和生成器要求见
-[研究与 API 参考](docs/Reference.zh-CN.md)。
+表格 EOS 可以加载符合[数据契约](src/physics/eos/TabularEOS.zh-CN.md)的表。自定义反应网络通过[生成网络指南](src/physics/network/custom/README.md)建立，并在构建时注册。它们各自有物理数据、材料与求解器条件；[参考手册](docs/Reference.zh-CN.md)列出配置参数与组合规则。
 
 ## 文档总览
 
-[文档总览](docs/README.zh-CN.md)按读者和主题归纳学习指南、物理说明、API 参考与许可信息。
-
-[模拟算例指南](docs/guides/SimulationCase.zh-CN.md)提供从首次运行、核心 CFD 参数到新建 `Setup`/`Init` 算例的连续学生学习路径。
-
-参数名、可接受取值、API 签名、输出格式和扩展要求统一收录在可搜索的
-[研究与 API 参考](docs/Reference.zh-CN.md)中。
-
-[CUDA 与 GPU-AMR 指南](docs/CudaBackendStatus.zh-CN.md)介绍支持的功能、后端职责与求解器选择。
-
-[验证索引](validation/README.zh-CN.md)解释测试了什么，以及如何理解结果。
-各模块页面先介绍科学检查，再链接详细报告、日志和实测硬件配置。这些记录供
-复现与审阅使用，不是首次运行前必须完成的额外配置步骤。修改源码的开发者还应
-阅读[贡献者指南](docs/development/README.md)。
-
-构建、运行和数值问题可以在 [GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues) 中讨论。
-[科研计算与问题反馈指南](docs/guides/Reporting.zh-CN.md)说明了反馈时应提供的信息，
-以及涉及研究数据或需要私下协调的问题如何处理。
+[文档入口](docs/README.zh-CN.md)按学习、配置、验证和开发任务组织内容。[算例指南](docs/guides/SimulationCase.zh-CN.md)介绍如何查看输出与编写 `Setup`／`Init`；[参考手册](docs/Reference.zh-CN.md)提供参数与接口；[验证索引](validation/README.zh-CN.md)说明已测范围。问题反馈见[科研计算指南](docs/guides/Reporting.zh-CN.md)。
 
 ## 仓库结构
 
-[源码导览](src/README.md)按功能连接各实现模块。各模块 README 介绍职责与主要入口，
-[贡献者指南](docs/development/README.md)说明实现归属和审阅流程。
-[构建模块指南](cmake/README.md)解释 CMake 如何组合应用、可选后端和测试组。
+[源码导览](src/README.md)说明模块职责和入口。本图方便首次定位；接口与审阅规则见[开发者指南](docs/development/README.md)。
 
 ```text
 ARCH/
-├── README.md                 # 英文入口与首次运行，规范文本
-├── README.zh-CN.md           # 中文辅助入口
-├── .gitleaks.toml            # 共用凭据扫描规则
-├── .github/                  # 审阅归属、维护说明与持续集成
-│   ├── CODEOWNERS            # 默认代码审阅负责人
-│   ├── MAINTENANCE.md        # 维护职责与 CI 设置入口
-│   └── workflows/            # CPU／工具工作流及说明
-├── LICENSE                   # ARCH 自有内容的 MIT 许可证
-├── THIRD_PARTY_NOTICES.md    # 科学软件来源与第三方条款
-├── LICENSES/                 # 保留的第三方许可证文本
-├── CMakeLists.txt            # 构建顺序与模块启用条件
-├── CMakePresets.json         # CPU/CUDA 应用及开发预设
-├── cmake/                    # 构建模块与 CUDA 绑定辅助工具
-│   ├── BuildOptions.cmake    # 用户选项、编译器和优化策略
-│   ├── Application.cmake     # 应用与共用数值目标
-│   ├── CustomNetworks.cmake  # 生成包契约及注册
-│   ├── CudaBackend.cmake     # CUDA/cuDSS 发现与后端目标
-│   ├── Dependencies.cmake    # OpenMP、HDF5、HighFive 与 KLU
-│   ├── tests/
-│   │   ├── HostTests.cmake   # 宿主与 IO 回归目标
-│   │   └── CudaTests.cmake   # CUDA 回归目标
-│   └── templates/            # 生成的轻量绑定，不复制物理实现
-├── simulation/               # 算例实现与可复用示例输入
-├── docs/                     # 指南、参考、物理说明和法律索引
-│   ├── README.md             # 文档总览
-├── tests/                    # 本地编译的检查与小型参考
-│   ├── host/                 # 宿主契约与共用接口
-│   ├── cuda/                 # 设备执行与 CPU/CUDA 一致性
-│   ├── math/                 # 共用数值检查
-│   ├── fixtures/             # 独立参考与受控输入
-│   ├── tooling/              # 验证和构建工具的 Python 测试
-│   └── smoke/                # 短时完整程序检查
-├── tools/                    # 验证、源码审查与资源保护
-│   └── network/              # pynucastro 包生成
-├── EOS_toolkit/              # 按模型归类的运行时 EOS 表
+├── include/                 # 用户算例所需的两个公开头文件
+├── simulation/              # 可运行算例与示例输入
 ├── src/
-│   ├── core/                 # 参数加载、算例注册、公共门面
-│   ├── interface/            # ProblemGenerator 适配器
-│   ├── data/                 # 守恒量和算例侧状态类型
-│   ├── grid/                 # 坐标和有限体积度量
-│   ├── amr/                  # 层次、内存池、交换、通量寄存器
-│   ├── driver/               # 运行时 dispatch 和算子顺序
-│   ├── cuda/                 # 设备计算核、存储与求解库适配
-│   ├── numerics/             # 通量、重构、积分、燃烧、扩散
-│   ├── physics/              # EOS、重力、核素、网络、NSE、诊断
-│   ├── io/                   # 参数、日志、HDF5 plot/checkpoint IO
-│   └── main.cpp
-├── build/                    # 生成目录，已忽略
-├── bin/                      # 生成目录，已忽略
-└── output/                   # 生成目录，已忽略
+│   ├── api/                 # GUI 所用配置检查与 CPU 预览接口
+│   ├── core/                # 参数定义、解析与算例注册
+│   ├── interface/           # 算例设置和初态适配
+│   ├── data/                # 场、状态与配置数据类型
+│   ├── grid/                # 坐标与有限体积几何
+│   ├── amr/                 # 网格层次、迁移、交换与通量修正
+│   ├── driver/              # 运行时选择、阶段调度和状态生命周期
+│   ├── cuda/                # 设备存储、计算核与后端适配
+│   ├── numerics/            # 共用数值方法
+│   │   ├── flux/            # Riemann 与通量分裂策略
+│   │   ├── reconstruction/  # 面状态与斜率限制
+│   │   ├── integrator/      # 流体时间推进
+│   │   ├── diffusion/       # 扩散算子与 RKL 推进
+│   │   ├── burnsolver/      # 反应网络 ODE 积分
+│   │   ├── linalg/          # 线性系统视图与求解器
+│   │   ├── elliptic/        # 泊松算子与边界离散
+│   │   ├── multigrid/       # 多重网格层次、迁移与循环
+│   │   └── state/           # 状态可接受性检查
+│   ├── physics/             # 共用物理模型与材料数据
+│   │   ├── eos/             # 热力学闭合与表格读取
+│   │   ├── gravity/         # 外部引力与自引力物理
+│   │   ├── network/         # 内置与生成的反应网络
+│   │   ├── nse/             # 核统计平衡
+│   │   ├── species/         # 组分与混合物性质
+│   │   ├── diffusionCoe/    # 输运系数
+│   │   ├── constant/        # 物理常数与单位
+│   │   └── diagnostics/     # 派生物理诊断
+│   ├── io/                  # 日志、HDF5 场输出与检查点
+│   └── main.cpp             # 程序入口
+├── EOS_toolkit/             # 运行时 EOS 表
+├── docs/                    # 指南、功能清单和参考手册
+├── validation/              # 科学验证与结果
+├── tests/                   # 回归测试
+├── tools/                   # 构建和验证工具
+└── cmake/                   # 构建配置
 ```
 
-## 当前数值边界
+## 数值适用范围
 
-选择更高阶的流体积分器，并不能自动提升所有耦合物理过程的精度。燃烧、扩散和流体运动采用对称的算子分裂顺序进行积分：`B(dt/2)-D(dt/2)-H(dt)-D(dt/2)-B(dt/2)`，其中每个字母代表将该过程推进指定的时间跨度。由于这种耦合机制，组合方法的最高精度被限制为二阶，即使流体子步本身使用的是 SSPRK3。请注意，这一限制并不适用于纯流体计算。此外，在 AMR 粗细网格的交界处，程序会安全地回退使用 MUSCL-MinMod 重构，而不是需要更宽模板的 PPM。
-
-进行收敛研究时，还应检查密度、速度、内能或组分保护是否被触发，因为这些
-保护可能改变无效或近真空状态下的更新。[参考手册](docs/Reference.zh-CN.md)
-解释这些数值选择，验证页面则展示误差与守恒量的测量方法。
-
-Release 构建保留 CPU 优化和 LTO。为维持所需的数值行为，共用构建设置会在
-支持的 GNU、Clang 和 NVIDIA 工具链上关闭 fast-math 与浮点收缩；不过这不意味着
-不同机器会产生逐位相同的结果。目前扩展功能使用源码接口，而非已安装的
-二进制库接口。
-
-## 许可证
-
-ARCH 自有内容采用 [MIT License](LICENSE)。第三方衍生科学代码和数据保留其上游来源与条款，详见[第三方来源与说明](THIRD_PARTY_NOTICES.zh-CN.md)。MIT 许可证尤其不会重新许可 Timmes 衍生的反应网络、NSE 实现、Helmholtz EOS 或表数据。 可选 KLU 后端的 SuiteSparse LGPL/BSD 条款保留在 [LICENSES](LICENSES/) 与[第三方说明](THIRD_PARTY_NOTICES.zh-CN.md)中。
+耦合计算同时受流体、燃烧、扩散与自引力各自的时间精度和物理模型限制。具体的组合条件、状态修复与守恒诊断见[参考手册](docs/Reference.zh-CN.md)；受测配置及误差见[验证索引](validation/README.zh-CN.md)。
 
 ## 后续开发方向
 
-下面两条路线展示已有功能之外的开发方向。带 `?` 的项目是候选方向，
-具体范围与设计仍可调整。箭头表示计划顺序，
-不表示软件或物理上的依赖关系。
+下面是[现行功能](docs/Features.zh-CN.md)之外的候选路线。问号表示设计范围仍可调整；箭头表示规划顺序，不表示软件依赖。
 
 ```text
 物理：引力模型扩展? → MHD? → { BSSN? | Z4c? }
-软件：MPI    → GNN? → { FP32/FP64 切换? | RT Core 加速? }
+软件：MPI → GNN? → { FP32/FP64 切换? | RT Core 加速? }
 ```
 
-当前自引力已在 CPU/CUDA 上支持上述 Cartesian 周期、三维孤立及受测完整方位角曲线坐标场景，包含原点、轴线和极点。域外质量源仍属后续扩展。磁流体力学（MHD）则把磁场加入流体模型。BSSN 和 Z4c
-是未来可能考虑的广义相对论时空演化形式，目前作为候选方案列出，并非已实现模块。
+自引力已覆盖[功能清单中的受测计算域](docs/Features.zh-CN.md#自引力计算域)；域外质量源仍是可能的扩展。磁流体力学（MHD）会把磁场加入流体模型。BSSN 和 Z4c 是未来时空演化的候选形式。
 
-MPI 的方向是把模拟分配到多个进程和多台机器。后续还会探索图神经网络（GNN）、
-32 位与 64 位浮点精度的选择，以及在适合的算法中利用 GPU 光线追踪核心
-（RT Core）。这些计划与当前支持的功能分开列示。性能、内存使用、编译效率、
-文档和验证也会持续优化，同时保持 CPU 与 GPU 共用一套数学和物理实现。
+MPI 用于将计算分配到多个进程和机器。后续探索还可能包括图神经网络（GNN）、浮点精度选择，以及在适合的算法中使用 GPU 光线追踪核心（RT Core）。数值精度、性能、内存、编译效率和文档也会随项目持续改进。
+
+## 许可证
+
+ARCH 自有代码采用 [MIT License](LICENSE)。第三方科学代码和数据保留其来源与条款，见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)及[许可证目录](LICENSES/)。

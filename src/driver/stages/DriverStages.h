@@ -7,6 +7,9 @@
  * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
 #pragma once
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "driver/DriverUtils.h"
 #include "driver/dispatch/capability/BackendCapabilities.h"
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
@@ -84,16 +87,52 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
                 true});
         }
     } else {
-        for (int block_id : active_blocks) {
-            amr::Block& b = amr_ctrl.pool->GetBlock(block_id);
-            double dt_b = adaptive_dt(b.fluid_state, eos, b.grid, cfl);
-            workspace.hydro_dt_candidates.push_back({
+        const auto candidate_for = [&](std::size_t index, bool parallel_rows) {
+            const amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[index]);
+            const auto scan = [&] {
+                return adaptive_dt(b.fluid_state, eos, b.grid, cfl, parallel_rows);
+            };
+            const double dt_b = [&] {
+                if constexpr (requires { typename EosPolicy::HostHydroScope; }) {
+                    // The block scan owns immutable input and one EOS. Inner
+                    // row teams retain their independent uncached fallback;
+                    // outer block workers can reuse exactly repeated states.
+                    typename EosPolicy::HostHydroScope inverse_workspace(eos);
+                    return scan();
+                } else return scan();
+            }();
+            return reduction::ReductionCandidate{
                 dt_b,
                 DriverReduction::make_block_reduction_key(
                     b.level, b.morton_code, b.logical_x1, b.logical_x2,
                     b.logical_x3,
                     DriverReduction::BlockReductionComponent::Hydro),
-                true});
+                true};
+        };
+        bool parallel_blocks = false;
+#ifdef _OPENMP
+        parallel_blocks = omp_get_max_threads() > 1
+            && active_blocks.size() >=
+                static_cast<std::size_t>(omp_get_max_threads());
+#endif
+        if (parallel_blocks) {
+            // Preserve the same ordered block reduction; only independent
+            // block scans move to workers. Small 1D patches otherwise launch
+            // an OpenMP team with one useful row for every block and step.
+            arch::state::HostFailure failure;
+            workspace.hydro_dt_candidates.resize(active_blocks.size());
+#pragma omp parallel for schedule(dynamic)
+            for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+                try {
+                    workspace.hydro_dt_candidates[index] =
+                        candidate_for(index, false);
+                } catch (...) { failure.capture_current(); }
+            }
+            failure.rethrow();
+        } else {
+            for (std::size_t index = 0; index < active_blocks.size(); ++index)
+                workspace.hydro_dt_candidates.push_back(
+                    candidate_for(index, true));
         }
     }
     double dt_hydro = DriverReduction::reduce_block_minimum(
@@ -349,16 +388,18 @@ state::CompletionToken execute_burn_half(DriverRuntime& runtime,
         return token;
     }
     std::vector<double> dt_burn_by_block(active_blocks.size(), 1e99);
+    std::vector<DriverBurn::HostBurnPatch> patches(active_blocks.size());
     state::HostFailure failure;
     #pragma omp parallel for schedule(dynamic, 1)
     for (size_t i = 0; i < active_blocks.size(); ++i) {
         amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[i]);
         try {
             bc_handler.apply(b.fluid_state, b.grid);
-            execute_burn_step(b.fluid_state, burn_dt, eos, burn, b.grid, config, dt_burn_by_block[i]);
+            patches[i] = {&b.fluid_state, &b.grid};
         } catch (...) { failure.capture_current(); }
     }
     failure.rethrow();
+    DriverBurn::execute_host_burn_batch(patches, burn_dt, eos, burn, config, dt_burn_by_block);
     std::vector<arch::reduction::ReductionCandidate>
         burn_dt_candidates;
     burn_dt_candidates.reserve(active_blocks.size() + 1);

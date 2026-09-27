@@ -1,5 +1,12 @@
-// ARCH-owned generic policy adapter for the Timmes-derived network equations.
-// Upstream/source boundaries: docs/physics/TimmesNetworks.md.
+/**
+ * @file TimmesNetworkSupport.h
+ * @brief ARCH policy adapter for the unchanged Timmes-derived network equations.
+ * Workflow:
+ * 1. Convert mass fractions into bounded molar abundances.
+ * 2. Evaluate shared screened rates and the requested RHS/Jacobian/thermal row.
+ * 3. Convert back to mass-fraction rates and compensated nuclear energy.
+ * Source boundaries: docs/physics/TimmesNetworks.md.
+ */
 #pragma once
 #include "numerics/state/StateAdmissibility.h"
 
@@ -95,7 +102,8 @@ struct TimmesNetworkSupport {
     template <typename MatrixType>
     ARCH_HEAVY_INLINE static void eval_jacobian(const double* state, double rho,
                                         double eta, MatrixType& jac,
-                                        double* denuc_dX = nullptr)
+                                        double* denuc_dX = nullptr,
+                                        double* rhs = nullptr, double* enuc = nullptr)
     {
         constexpr int N = Derived::NUM_SPECIES;
         // Timmes' dfdy_isotopes_* holds screened base rates fixed while
@@ -118,6 +126,18 @@ struct TimmesNetworkSupport {
             }
             Derived::molar_rhs_jacobian_frozen_screening(
                 y, rho, eta, state[N], dydt, molar_jacobian);
+            // The generated Jacobian already computes the screened species
+            // RHS at this same state. Reuse it for the coupled ODE assembly.
+            if (rhs != nullptr) {
+                for (int i = 0; i < N; ++i)
+                    rhs[i] = dydt[i] * Derived::aion(i);
+            }
+            if (enuc != nullptr) {
+                arch::math::CompensatedSum mass_sum;
+                for (int i = 0; i < N; ++i)
+                    mass_sum.add(dydt[i] * Derived::energy_weight(i));
+                *enuc = Derived::ENERGY_CONVERSION * mass_sum.value();
+            }
             for (int i = 0; i < N; ++i) {
                 const double aion = Derived::aion(i);
                 for (int j = 0; j < N; ++j)
@@ -135,6 +155,13 @@ struct TimmesNetworkSupport {
                 }
             }
         } else {
+            // iso7 has a separate frozen-rate Dual path; preserve its
+            // ordinary RHS as the value authority.
+            if (rhs != nullptr || enuc != nullptr) {
+                double unused_rhs[N], unused_energy;
+                eval_rhs(state, rho, eta, rhs != nullptr ? rhs : unused_rhs,
+                         enuc != nullptr ? *enuc : unused_energy);
+            }
             using AD = Dual<N>;
             AD y[N];
             AD dydt[N];

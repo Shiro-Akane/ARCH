@@ -106,6 +106,9 @@ _CUDA_FOCUSED_OBJECT_CONSUMERS = {
 }
 
 _CUDA_FOCUSED_LINK_OBJECT_CONSUMERS = {
+    "arch_cuda_reduction_contract": (
+        ("tests/cuda/runtime/test_cuda_reduction_contract.cu",),
+        ("arch_cuda_gravity_execution",)),
     "arch_cuda_burn_policy_parity": (
         ("tests/cuda/microphysics/burn/test_burn_policy_parity.cu", "src/core/files/filefingerprint.cpp"),
         ("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_species",
@@ -179,7 +182,7 @@ _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
 
 _CUDA_COMPLETION_LAUNCHES = {
     "execute_physical_boundary_batch": r"\blaunch_cuda_backend_boundary_batch\s*\(",
-    "compute_hydro_dt_batch": r"\blaunch_cuda_backend_hydro_dt\s*\(",
+    "compute_hydro_dt_batch": r"\blaunch_cuda_backend_hydro_dt_batch\s*\(",
     "execute_hydro_stage_batch": r"\blaunch_cuda_backend_hydro_stage_batch\s*\(",
     "compute_hydro_dt": r"\blaunch_cuda_backend_hydro_dt\s*\(",
     "execute_hydro_stage": r"\blaunch_cuda_backend_hydro_stage\s*\(",
@@ -809,11 +812,17 @@ def audit_tree(root: pathlib.Path):
                 required_flags = (
                     "compile_lang_and_id:cxx", "-fno-fast-math",
                     "-ffp-contract=off", "compile_lang_and_id:cuda",
-                    "--fmad=false", "--ftz=false", "--prec-div=true", "--prec-sqrt=true",
-                    "-xcompiler=-fno-fast-math,-ffp-contract=off")
-                if strict_contract is None or any(
+                    "--fmad=false", "--ftz=false", "--prec-div=true", "--prec-sqrt=true")
+                # Additional safe host flags and argument ordering must not hide
+                # removal of either required NVCC-host numerical protection.
+                cuda_host_flags = {
+                    flag for argument in re.findall(r"-xcompiler=([^\s>]+)",
+                        strict_contract.group(1) if strict_contract else "")
+                    for flag in argument.split(",")}
+                if (strict_contract is None or any(
                         flag not in strict_contract.group(1)
-                        for flag in required_flags):
+                        for flag in required_flags) or not
+                        {"-fno-fast-math", "-ffp-contract=off"} <= cuda_host_flags):
                     violations.append(
                         "shared mathematics needs one strict Host/CUDA build contract")
                 link_contract = re.search(

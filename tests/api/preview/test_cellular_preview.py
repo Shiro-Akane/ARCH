@@ -154,7 +154,7 @@ class CellularPreviewContract(unittest.TestCase):
             ({'x2_max': 0}, 3, 'INVALID_CONFIGURATION'),
             ({'max_blocks': 1}, 3, 'INVALID_CONFIGURATION'),
             ({'shock_dir': '1e100'}, 3, 'INVALID_CONFIGURATION'),
-            ({'noiseAmplitude': 'nan'}, 3, 'INVALID_CONFIGURATION'),
+            ({'noiseAmplitude': 'nan'}, 5, 'SETUP_FAILED'),
             ({'network_name': 'unknown'}, 5, 'SETUP_FAILED'),
         ]:
             with self.subTest(values=values):

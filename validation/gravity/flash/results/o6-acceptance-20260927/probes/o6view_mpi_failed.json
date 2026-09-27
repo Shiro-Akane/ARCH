@@ -1,0 +1,36 @@
+{
+  "scope": "complete process wall clock; serial alternating runs; actual checkpoint endpoint",
+  "binary_identity": {
+    "arch": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+      "sha256": "bbf730f92443b44abdcb3e00b17d99002747500862fbce9d1f342681cc422785"
+    },
+    "flash_object_sod": {
+      "path": "/home/shiroakane/FLASH4.8/object_sod/flash4",
+      "sha256": "c00c9adc716e53207cb13e495746081d3e4ed8f334b3fd95c82bf1db9257667c"
+    },
+    "flash_object_jeans": {
+      "path": "/home/shiroakane/FLASH4.8/object_jeans/flash4",
+      "sha256": "28fe8c7959a3d7ee11fde42dc9099986b5833ebec448502a814a67cedb8cbe23"
+    },
+    "flash_object": {
+      "path": "/home/shiroakane/FLASH4.8/object/flash4",
+      "sha256": "d36b252f35bfc9c17c4571d6bb8e855c55a153b40104e6b324e70ca8a984975a"
+    }
+  },
+  "cpu_threads": 8,
+  "flash_ranks": 8,
+  "cpu_affinity": "0,2,4,6,8,10,12,14",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "sod",
+      "backend": "flash",
+      "repeat": 1,
+      "wall_seconds": 7.783191829999851,
+      "exit_code": 1,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6view_sod_flash_1",
+      "input_fixture": "flash_sod_o6plus.par"
+    }
+  ]
+}

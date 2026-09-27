@@ -1,0 +1,46 @@
+[
+  {
+    "tool": "memcheck",
+    "executable": "arch_cuda_hydro_leaf_parity",
+    "arguments": [],
+    "status": "passed",
+    "log": "memcheck_arch_cuda_hydro_leaf_parity.log"
+  },
+  {
+    "tool": "memcheck",
+    "executable": "arch_cuda_hydro_block",
+    "arguments": [
+      "hydro-matrix"
+    ],
+    "status": "passed",
+    "log": "memcheck_arch_cuda_hydro_block.log"
+  },
+  {
+    "tool": "memcheck",
+    "executable": "arch_cuda_reduction_contract",
+    "arguments": [],
+    "status": "passed",
+    "log": "memcheck_arch_cuda_reduction_contract.log"
+  },
+  {
+    "tool": "memcheck",
+    "executable": "arch_cuda_burn_eos_failure",
+    "arguments": [],
+    "status": "passed",
+    "log": "memcheck_arch_cuda_burn_eos_failure.log"
+  },
+  {
+    "tool": "synccheck",
+    "executable": "arch_cuda_hydro_leaf_parity",
+    "arguments": [],
+    "status": "passed",
+    "log": "synccheck_arch_cuda_hydro_leaf_parity.log"
+  },
+  {
+    "tool": "synccheck",
+    "executable": "arch_cuda_reduction_contract",
+    "arguments": [],
+    "status": "passed",
+    "log": "synccheck_arch_cuda_reduction_contract.log"
+  }
+]

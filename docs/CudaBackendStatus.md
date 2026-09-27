@@ -30,8 +30,9 @@ technical results and combined acceptance status.
 These are component routes, subject to the [combination rules](Reference.md#combining-methods-and-physics).
 The HLLC/MUSCL/RK2, BD, RKL2 thermal, self-gravity MG and AMR combination has
 representative CPU/CUDA application checks. This is not acceptance of every
-EOS/network/geometry substitution. Tabular burn/NSE recoverable-trial error
-handling remains an open audit item; shared formulas alone do not resolve it.
+EOS/network/geometry substitution. Tabular burn/NSE trial-error recovery has
+paired CPU/CUDA checks for rejected candidates and required-query failures;
+material and weak-process compatibility still require their own evidence.
 
 Policy names, aliases and supported combinations share one registration system.
 The equation of state (EOS) relates pressure, density, energy and composition;
@@ -67,7 +68,11 @@ The server measurements below retain their original source identity and
 transport configuration; they precede the current self-gravity work and do not
 establish that every present Helmholtz transport channel is active. Current
 workstation evidence and the controlled FLASH comparison are recorded in the
-[comparison assessment](../validation/gravity/flash/O5OptimizationReport.zh-CN.md).
+[current acceptance record](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md).
+Shared CPU optimizations change the comparison baseline. The current RTX
+workstation shows an end-to-end gain for the tested 2D four-module AMR case;
+Cellular, Jeans and the 3D curved coupled case remain faster on CPU. Use the
+measured complete-task time for the actual input and scale.
 
 **Measured end-to-end acceleration reaches about 5× for coupled AMR workloads.**
 The highest result was 5.08× for hydrodynamics, BD burning, RKL2 full transport

@@ -1,4 +1,7 @@
 #include "fixtures/eos/FreeEnergyFixture.h"
+#include "fixtures/burn/TabularTrialRecovery.h"
+#include "cuda/microphysics/eos/owners/tabular3_eos_device_owner.h"
+#include "cuda/microphysics/eos/owners/tabular4_eos_device_owner.h"
 /** Burn's original Tabular failure boundary must survive finite recovery.
  * This is a focused production-kernel test, not a second burn implementation.
  */
@@ -87,12 +90,22 @@ void run(View table, const char* name)
     using Mapping = arch::cuda::burn_detail::OdeType<Binding>;
     using Ode = arch::cuda::SparseOdePolicy<Network, Mapping::template solver>;
     using Batch = arch::cuda::SparseOdeBatchView<Network, Mapping::template solver>;
-    constexpr int cells = 2, extent = Network::ODE_NEQ, nnz = extent * extent;
-    // Two cells reuse one sparse lane, so every case also checks chunk reset.
+    constexpr int cells = 7, extent = Network::ODE_NEQ, nnz = extent * extent;
+    // A partial warp with repeated and distinct states checks grouping and sparse-lane reset.
     constexpr double dt = 1.0e-3;
-    const std::array<double, 8 * cells> original{
-        1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        100.0, 100.0, -7.0, -7.0, 0.8, 0.8, 0.2, 0.2};
+    const auto original = [] {
+        std::array<double, 8 * cells> values{};
+        for (int i=0; i<cells; ++i) {
+            const int group=i%3;
+            values[i]=1.0+.125*group;
+            values[cells+i]=.01*group;
+            values[4*cells+i]=100.+group;
+            values[5*cells+i]=-7.;
+            values[6*cells+i]=.8-.1*group;
+            values[7*cells+i]=1.-values[6*cells+i];
+        }
+        return values;
+    }();
     Buffer<double> flow(original.size());
     arch::cuda::DeviceStateView state{flow.data, flow.data + cells,
         flow.data + 2 * cells, flow.data + 3 * cells, flow.data + 4 * cells,
@@ -114,6 +127,7 @@ void run(View table, const char* name)
             candidates.data + i, statuses.data + i, nullptr};
     }
     check(cudaMemcpy(dense_bindings.data, host_bindings.data(), sizeof(host_bindings), cudaMemcpyHostToDevice));
+#if defined(ARCH_TEST_CUDSS)
     Buffer<arch::cuda::SparseBurnCellRecord> records(1);
     Buffer<typename Ode::Continuation> contexts(1);
     Buffer<double> values(nnz), jacobians(nnz), packed(extent), densities(1), intervals(1), solutions(extent);
@@ -124,6 +138,7 @@ void run(View table, const char* name)
         packed.data, densities.data, intervals.data, solutions.data, requests.data,
         responses.data, jacobians.data, eos_status.data};
     arch::cuda::SparseOdeBatchExecutor<Network, Mapping::template solver> executor(batch, nullptr);
+#endif
     BurnConfig config{};
     config.use_burn = true; config.use_nse = false;
     config.nuclearDensMin = config.nuclearTempMin = 0.0;
@@ -134,6 +149,7 @@ void run(View table, const char* name)
     RecoveringTableEos<View> eos{};
     static_cast<View&>(eos) = table;
     std::array<double, original.size()> dense_valid{};
+    bool have_dense_reference = false;
     auto reset = [&] {
         check(cudaMemcpy(flow.data, original.data(), sizeof(original), cudaMemcpyHostToDevice));
         // Production must clear its own latch even after a previous failure.
@@ -154,13 +170,20 @@ void run(View table, const char* name)
             require(actual[6 * cells] < original[6 * cells]
                 && actual[7 * cells] > original[7 * cells], "Valid control did not actually burn");
             for (double value : actual) require(std::isfinite(value), "Valid burn is nonfinite");
-            if (dense) dense_valid = actual;
-            else for (std::size_t i = 0; i < actual.size(); ++i)
+            if (dense && !have_dense_reference) {
+                dense_valid = actual;
+                have_dense_reference = true;
+            } else for (std::size_t i = 0; i < actual.size(); ++i)
                 require(std::abs(actual[i] - dense_valid[i]) < 1.0e-12,
-                        "EOS latch changed valid dense/sparse physics");
+                        "EOS latch changed valid grouped/batched/sparse physics");
         }
     };
-    for (int route : {0, 1, 2}) {
+#if defined(ARCH_TEST_CUDSS)
+    constexpr std::array routes{0, 1, 2};
+#else
+    constexpr std::array routes{0, 2};
+#endif
+    for (int route : routes) {
         const bool dense = route != 1;
         // Valid -> failures -> valid verifies sticky failure and reuse, without
         // depending on a production table's iterative recovery by accident.
@@ -174,6 +197,7 @@ void run(View table, const char* name)
                         dt, eos, cfg, Network{}, route == 2 ? dense_bindings.data : nullptr);
                 check(cudaGetLastError());
             } else {
+#if defined(ARCH_TEST_CUDSS)
                 arch::cuda::execute_sparse_burn_cells(executor, records.data, state, grid,
                     dt, eos, cfg, candidates.data, statuses.data);
                 typename Ode::Continuation completed{};
@@ -183,10 +207,12 @@ void run(View table, const char* name)
                 if (fault != Fault::None)
                     require(completed.report.status == BurnOdeStatus::EosFailure,
                             "Sparse EOS failure lacks an explicit failed ODE report");
+#endif
             }
             verify(fault != Fault::None, dense);
         }
     }
+#if defined(ARCH_TEST_CUDSS)
     // Isolate failure *only* in the final energy handoff, after a real successful
     // ODE. Earlier EOS calls are valid, so pre-commit-only checks cannot pass.
     reset();
@@ -215,7 +241,64 @@ void run(View table, const char* name)
     try { unchecked.execute(1, eos, cfg); }
     catch (const std::invalid_argument&) { rejected = true; }
     require(rejected, "Table EOS accepted a sparse pool without failure storage");
-    std::cout << name << ": dense/sparse/batched EOS failure no-commit and valid reuse passed\n";
+#endif
+    std::cout << name << ": dense/batched EOS failure no-commit and valid reuse passed\n";
+#if defined(ARCH_TEST_CUDSS)
+    std::cout << name << ": cuDSS sparse handoff and failure checks passed\n";
+#endif
+}
+
+template<class View>
+__global__ void trial_recovery_kernel(View view, arch::test::TabularTrialResult* results,
+                                      int* statuses, bool inject, bool required_failure, bool* nse_results)
+{
+    const int method=threadIdx.x;
+    if(method>=3) return;
+    statuses[method]=0;
+    const auto eos=arch::cuda::bind_device_eos_status(view,statuses+method);
+    if(method==0) results[method]=arch::test::tabular_trial_recovery<Solver_BE_NR>(eos,inject);
+    else if(method==1) results[method]=arch::test::tabular_trial_recovery<Solver_BD>(eos,inject);
+    else results[method]=arch::test::tabular_trial_recovery<Solver_ROS4>(eos,inject);
+    nse_results[method]=arch::test::tabular_nse_trial_recovery(eos);
+    if(required_failure) {
+        const double composition[]{.8,.2};
+        static_cast<void>(eos.get_eint_from_T(1.5,12.,composition));
+        static_cast<void>(eos.get_eint_from_T(1.5,1.4,composition));
+    }
+}
+
+template<bool Four>
+void test_trial_recovery()
+{
+    SpeciesManager species;
+    species.add_species("a",2.,1.,1.4,1.);
+    species.add_species("b",4.,2.,1.4,1.);
+    arch::test::FreeEnergyFixture<Four> fixture(species);
+    using Owner=std::conditional_t<Four,arch::cuda::Tabular4DEOSDeviceOwner,
+                                      arch::cuda::Tabular3DEOSDeviceOwner>;
+    Owner owner(fixture.host,nullptr);
+    Buffer<arch::test::TabularTrialResult> device_results(3);
+    Buffer<int> device_statuses(3);
+    Buffer<bool> device_nse_results(3);
+    for(bool inject : {false,true}) for(bool required_failure : {false,true}) {
+        trial_recovery_kernel<<<1,3>>>(owner.view(),device_results.data,device_statuses.data,
+                                      inject,required_failure,device_nse_results.data);
+        check(cudaGetLastError());
+        std::array<arch::test::TabularTrialResult,3> results{};
+        std::array<int,3> statuses{};
+        std::array<bool,3> nse_results{};
+        check(cudaMemcpy(nse_results.data(),device_nse_results.data,sizeof(nse_results),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(results.data(),device_results.data,sizeof(results),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(statuses.data(),device_statuses.data,sizeof(statuses),cudaMemcpyDeviceToHost));
+        for(int i=0;i<3;++i) {
+            require(results[i].complete && (!inject || results[i].rejected)
+                && results[i].unchanged_temperature && results[i].species_error<2e-7,
+                "device table-domain candidate failed to reject and recover");
+            require(nse_results[i],"device NSE thermal line search did not recover");
+            require(statuses[i]==static_cast<int>(required_failure),
+                "candidate or later finite query changed required-query failure latch");
+        }
+    }
 }
 
 template<class View> void test_table(View view, int knots, const char* name)
@@ -246,6 +329,8 @@ int main()
         return 1;
     }
     try {
+        test_trial_recovery<false>();
+        test_trial_recovery<true>();
         BasicTabular3DEOSView<arch::test::FixedTableComposition> table3{};
         table3.n_rho = table3.n_T = table3.n_X = 2;
         table3.log_rho_max = table3.log_T_max = 1.0;

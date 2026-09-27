@@ -1,0 +1,328 @@
+{
+  "cuda_binary": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/build-cuda/bin/ARCH",
+  "cuda_sha256": "25bf1382423b55f4c74098c9450618500ab712ae741253716f2d6f6307b24521",
+  "gpu": "RTX 3060 Ti",
+  "records": [
+    {
+      "case": "a",
+      "repeat": 1,
+      "wall_seconds": 30.97563850900042,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_a_cuda_1",
+      "input_fixture": "arch_cellular_o6_matched.par"
+    },
+    {
+      "case": "a",
+      "repeat": 2,
+      "wall_seconds": 31.129015059996163,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_a_cuda_2",
+      "input_fixture": "arch_cellular_o6_matched.par"
+    },
+    {
+      "case": "a",
+      "repeat": 3,
+      "wall_seconds": 31.37887210599729,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_a_cuda_3",
+      "input_fixture": "arch_cellular_o6_matched.par"
+    },
+    {
+      "case": "b",
+      "repeat": 1,
+      "wall_seconds": 33.83810987499601,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_b_cuda_1",
+      "input_fixture": "arch_cellular_o6_holdout.par"
+    },
+    {
+      "case": "b",
+      "repeat": 2,
+      "wall_seconds": 33.21031219599536,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_b_cuda_2",
+      "input_fixture": "arch_cellular_o6_holdout.par"
+    },
+    {
+      "case": "b",
+      "repeat": 3,
+      "wall_seconds": 33.16094848499779,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_b_cuda_3",
+      "input_fixture": "arch_cellular_o6_holdout.par"
+    },
+    {
+      "case": "noburn",
+      "repeat": 1,
+      "wall_seconds": 24.722903601003054,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_noburn_cuda_1",
+      "input_fixture": "arch_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "noburn",
+      "repeat": 2,
+      "wall_seconds": 24.62886473200342,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_noburn_cuda_2",
+      "input_fixture": "arch_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "noburn",
+      "repeat": 3,
+      "wall_seconds": 24.616022059999523,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_noburn_cuda_3",
+      "input_fixture": "arch_cellular_o6plus_noburn.par"
+    },
+    {
+      "case": "jeans128",
+      "repeat": 1,
+      "wall_seconds": 8.436078357000952,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_jeans128_cuda_1",
+      "input_fixture": "arch_jeans_o6plus_128.par"
+    },
+    {
+      "case": "jeans128",
+      "repeat": 2,
+      "wall_seconds": 8.34578977899946,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_jeans128_cuda_2",
+      "input_fixture": "arch_jeans_o6plus_128.par"
+    },
+    {
+      "case": "jeans128",
+      "repeat": 3,
+      "wall_seconds": 8.10354605300381,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_jeans128_cuda_3",
+      "input_fixture": "arch_jeans_o6plus_128.par"
+    },
+    {
+      "case": "fine",
+      "repeat": 1,
+      "wall_seconds": 145.57294158799778,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_fine_cuda_1",
+      "input_fixture": "arch_cellular_o6plus_dx025.par"
+    },
+    {
+      "case": "fine",
+      "repeat": 2,
+      "wall_seconds": 146.13005049099593,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_fine_cuda_2",
+      "input_fixture": "arch_cellular_o6plus_dx025.par"
+    },
+    {
+      "case": "fine",
+      "repeat": 3,
+      "wall_seconds": 145.422956016002,
+      "exit_code": 0,
+      "resolved_backend": "cuda",
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6second_fine_cuda_3",
+      "input_fixture": "arch_cellular_o6plus_dx025.par"
+    }
+  ],
+  "summary": {
+    "a": {
+      "cuda_seconds": [
+        30.97563850900042,
+        31.129015059996163,
+        31.37887210599729
+      ],
+      "cuda_median_seconds": 31.129015059996163,
+      "cpu8_median_seconds": 29.074073608000617,
+      "gpu_vs_cpu8_speedup": 0.9339863003042346,
+      "physical_time_seconds": 1.0192286463896491e-08,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 1.0710209608078003e-15,
+        "eng": 1.142769889991054e-15,
+        "mom_u": 1.6729241701843588e-15
+      },
+      "plot_relative_l1": {
+        "DENS": 1.0710209608078003e-15,
+        "PRES": 1.0707143375863454e-15,
+        "TEMP": 2.136300706721542e-15,
+        "c12": 1.9097397767936786e-15,
+        "ENUC": 3.344097927822117e-13
+      },
+      "gpu_vs_fastest_cpu_speedup_upper_bound": 0.9339863003042346,
+      "cpu8_already_faster_than_gpu": true,
+      "backend_trace_first_repeat": {
+        "bytes_h2d": 38540736,
+        "bytes_d2h": 4412076,
+        "kernel_count": 8418,
+        "stream_sync_count": 2242
+      },
+      "all_three_terminal_time_and_topology_match_cpu8": true,
+      "max_density_relative_l1_across_three": 1.0710209608078003e-15,
+      "max_selected_plot_relative_l1_across_three": 3.344097927822117e-13
+    },
+    "b": {
+      "cuda_seconds": [
+        33.83810987499601,
+        33.21031219599536,
+        33.16094848499779
+      ],
+      "cuda_median_seconds": 33.21031219599536,
+      "cpu8_median_seconds": 30.589731052998104,
+      "gpu_vs_cpu8_speedup": 0.921091342727177,
+      "physical_time_seconds": 1.029419223692258e-08,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 1.1031355323462648e-15,
+        "eng": 1.2392450358317391e-15,
+        "mom_u": 2.0077832769767642e-15
+      },
+      "plot_relative_l1": {
+        "DENS": 1.1031355323462648e-15,
+        "PRES": 1.3600499136386218e-15,
+        "TEMP": 2.2043857731107486e-15,
+        "c12": 2.290065392438948e-15,
+        "ENUC": 2.9990586456353675e-13
+      },
+      "gpu_vs_fastest_cpu_speedup_upper_bound": 0.921091342727177,
+      "cpu8_already_faster_than_gpu": true,
+      "backend_trace_first_repeat": {
+        "bytes_h2d": 41991168,
+        "bytes_d2h": 5327724,
+        "kernel_count": 8418,
+        "stream_sync_count": 2250
+      },
+      "all_three_terminal_time_and_topology_match_cpu8": true,
+      "max_density_relative_l1_across_three": 1.1031355323462648e-15,
+      "max_selected_plot_relative_l1_across_three": 2.9990586456353675e-13
+    },
+    "noburn": {
+      "cuda_seconds": [
+        24.722903601003054,
+        24.62886473200342,
+        24.616022059999523
+      ],
+      "cuda_median_seconds": 24.62886473200342,
+      "cpu8_median_seconds": 12.38438834399858,
+      "gpu_vs_cpu8_speedup": 0.5028404061152671,
+      "physical_time_seconds": 1.0192633413281536e-08,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 1.311514385138886e-15,
+        "eng": 1.5110946665141414e-15,
+        "mom_u": 1.5968450126653849e-15
+      },
+      "plot_relative_l1": {
+        "DENS": 1.311514385138886e-15,
+        "PRES": 1.4527257169584196e-15,
+        "TEMP": 1.660945084766594e-15,
+        "c12": 3.7427740130181634e-16
+      },
+      "gpu_vs_fastest_cpu_speedup_upper_bound": 0.5028404061152671,
+      "cpu8_already_faster_than_gpu": true,
+      "backend_trace_first_repeat": {
+        "bytes_h2d": 27643392,
+        "bytes_d2h": 4093344,
+        "kernel_count": 6120,
+        "stream_sync_count": 1474
+      },
+      "all_three_terminal_time_and_topology_match_cpu8": true,
+      "max_density_relative_l1_across_three": 1.311514385138886e-15,
+      "max_selected_plot_relative_l1_across_three": 1.660945084766594e-15
+    },
+    "jeans128": {
+      "cuda_seconds": [
+        8.436078357000952,
+        8.34578977899946,
+        8.10354605300381
+      ],
+      "cuda_median_seconds": 8.34578977899946,
+      "cpu8_median_seconds": 5.361874555001123,
+      "gpu_vs_cpu8_speedup": 0.6424646075429825,
+      "physical_time_seconds": 0.1,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 3.73953904878969e-16,
+        "eng": 1.0530938273474542e-16,
+        "mom_u": 8.891858322209737e-14
+      },
+      "plot_relative_l1": {
+        "DENS": 3.73953904878969e-16,
+        "PRES": 1.4111571988819735e-16
+      },
+      "gpu_vs_fastest_cpu_speedup_upper_bound": 0.6424646075429825,
+      "cpu8_already_faster_than_gpu": true,
+      "backend_trace_first_repeat": {
+        "bytes_h2d": 14851072,
+        "bytes_d2h": 2554368,
+        "kernel_count": 1898,
+        "stream_sync_count": 566
+      },
+      "all_three_terminal_time_and_topology_match_cpu8": true,
+      "max_density_relative_l1_across_three": 3.73953904878969e-16,
+      "max_selected_plot_relative_l1_across_three": 3.73953904878969e-16
+    },
+    "fine": {
+      "cuda_seconds": [
+        145.57294158799778,
+        146.13005049099593,
+        145.422956016002
+      ],
+      "cuda_median_seconds": 145.57294158799778,
+      "cpu8_median_seconds": 171.62124622600095,
+      "gpu_vs_cpu8_speedup": 1.178936444876723,
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "same_topology": true,
+      "checkpoint_relative_l1": {
+        "rho": 1.6794239267947428e-15,
+        "eng": 2.45314897832191e-15,
+        "mom_u": 2.425832523999199e-15
+      },
+      "plot_relative_l1": {
+        "DENS": 1.6794239267947428e-15,
+        "PRES": 2.581551304675657e-15,
+        "TEMP": 3.62683799387407e-15,
+        "c12": 4.309246800018259e-15,
+        "ENUC": 3.147009975398945e-13
+      },
+      "cpu16_median_seconds": 125.36111841399543,
+      "gpu_vs_fastest_cpu_speedup": 0.8611567304093772,
+      "backend_trace_first_repeat": {
+        "bytes_h2d": 205355904,
+        "bytes_d2h": 21799068,
+        "kernel_count": 21006,
+        "stream_sync_count": 4240
+      },
+      "all_three_terminal_time_and_topology_match_cpu8": true,
+      "max_density_relative_l1_across_three": 1.6794239267947428e-15,
+      "max_selected_plot_relative_l1_across_three": 3.147009975398945e-13
+    }
+  },
+  "unbound_a_probe": {
+    "case": "a",
+    "wall_seconds": 30.510944055000436,
+    "resolved_backend": "cuda",
+    "output": "output/o6second_a_cuda_unbound_probe"
+  },
+  "validation": {
+    "cpu_ctest": "61/61 passed on final source",
+    "cuda_ctest": "5/5 selected rebuilt flux/EOS/geometry tests passed",
+    "cuda_compatibility": "42/42 passed",
+    "cuda_compatibility_output": "output/o6second_cuda_compat/summary.json",
+    "all_cuda_production_floor_repairs_zero": true
+  }
+}

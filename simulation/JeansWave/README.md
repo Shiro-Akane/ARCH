@@ -8,7 +8,9 @@ amplitude introduces nonlinear error; this is a convergence example, not an exac
 finite-amplitude nonlinear solution.
 
 Case controls are `rho0`, `pressure0`, `amplitude`, integer `mode` and phase in
-radians (`phase`). Global gravity controls remain in GravityConfig. The root-cell
+radians (`phase`) and `standing_wave=true|false` (default `false`). A standing
+wave starts with zero velocity and can be used with the FLASH Jeans reference.
+Global gravity controls remain in GravityConfig. The root-cell
 sinc factor initializes volume averages. Initial AMR uses the shared conservative
 hydro transfer; it does not re-evaluate an analytic state on every refined cell.
 

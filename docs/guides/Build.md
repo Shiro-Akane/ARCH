@@ -94,6 +94,35 @@ Python **3.10 or newer** is needed for the build guard and test tooling, not for
 running the ARCH executable. Generated reaction networks have a separate Python
 setup described in the [network guide](../../validation/network/README.md).
 
+## Source archives and EOS tables
+
+A source ZIP/tar without `.git` can be built normally, but `git lfs pull` cannot
+populate that directory. A file beginning with
+`version https://git-lfs.github.com/spec/v1` is a pointer, not an EOS table.
+Do not infer table availability from a successful CPU build or Sod run.
+
+Prefer a Git checkout of the selected release with Git LFS. To keep an existing
+archive, fetch only the required table from a separate checkout of **the same
+tag or full commit** and copy it to the corresponding archive path. Run the
+following from the extracted ARCH root, replacing `YOUR_RELEASE_TAG_OR_COMMIT`
+with the identity of that archive:
+
+```bash
+git clone --no-checkout https://github.com/Shiro-Akane/ARCH.git ../ARCH-tables
+GIT_LFS_SKIP_SMUDGE=1 git -C ../ARCH-tables checkout --detach YOUR_RELEASE_TAG_OR_COMMIT
+git -C ../ARCH-tables lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat" --exclude=""
+cp ../ARCH-tables/EOS_toolkit/tables/helmholtz/helm_table.dat EOS_toolkit/tables/helmholtz/
+```
+
+The temporary checkout may be removed after copying. For other tables, select
+the corresponding tracked path instead. Check the required size and checksum
+against [table provenance](../../THIRD_PARTY_NOTICES.md) or that revision's LFS
+pointer. A release smoke check should build from a clean extracted tree, run
+Sod, and run the existing Helmholtz test with the actual table; only the latter
+exercises the table dependency. Presets put the applications in
+`build-cpu/bin/ARCH` and `build-cuda/bin/ARCH`; explicit custom build paths must
+also be supplied to the comparison scripts.
+
 ## cuDSS and sparse burning
 
 `ARCH_ENABLE_CUDSS=ON` enables optional discovery in a CUDA build. The adapter
@@ -110,6 +139,13 @@ prefix explicitly. For example, **after installing it at this location**:
 ```bash
 cmake -S . -B build-cuda -DCUDSS_ROOT="$HOME/.local/cudss"
 ```
+
+A pip or project-local installation is not necessarily on the system search
+path. Point `CUDSS_ROOT` to its prefix containing `include/cudss.h` and `lib`
+(for `nvidia-cudss-cu12`, this may be the package's `nvidia/cu12` directory).
+Pass it again when creating a fresh build directory or changing environments.
+If `nvcc` is absent from `PATH`, select its installed absolute path with
+`-DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc`; neither case requires reinstalling.
 
 Omit this option when discovery already finds the library. Configuration prints
 `[DEP] cuDSS found:` with the selected library, or states that the sparse provider
@@ -139,7 +175,9 @@ The default pressure limits are 20% memory full-stall or 50% I/O full-stall for
 utilization percentages. Sampling is a safety aid, not a reservation of RAM.
 
 The guard needs readable `/proc` data, Linux memory and I/O PSI `full` counters,
-and working Python pidfd and Linux child-subreaper support. It checks these
+and working Python pidfd and Linux child-subreaper support. Some Python builds
+omit pidfd even at a recent version; on Linux, use a system Python with this
+support for the guard while keeping scientific tooling in its configured environment. It checks these
 before launching work. If a WSL/kernel environment lacks them, update that
 environment before using this guarded workflow. `Ctrl+C` or `SIGTERM` stops the
 owned build and compiler descendants. Add `--log build-cuda/build-memory.log`
@@ -167,7 +205,7 @@ the simulation's numerical parameters or reserve runtime GPU memory.
 
 ## Optimization, compilers and target GPUs
 
-Release builds retain full CPU optimization and enable LTO/IPO when supported. Ensure you select matching GCC major versions for both `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER`, and point `CMAKE_CUDA_HOST_COMPILER` to that same C++ compiler. You should set these during the very first configuration of a fresh build tree; any locally compiled dependencies must also be built with compatible LTO toolchains. Note that you don't need to disable LTO just to change build parallelism. Finally, to strictly preserve numerical behavior, our shared floating-point contract deliberately disables fast-math and contraction across all supported toolchains.
+Release builds use `-O3` for the application and dispatch targets and enable LTO/IPO when supported. `-fno-math-errno` avoids an unused libm side effect while preserving explicit domain/finite checks, compensated arithmetic and subnormal values; it is not `-ffast-math`. Ensure you select matching GCC major versions for both `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER`, and point `CMAKE_CUDA_HOST_COMPILER` to that same C++ compiler. You should set these during the very first configuration of a fresh build tree; any locally compiled dependencies must also be built with compatible LTO toolchains. Note that you don't need to disable LTO just to change build parallelism. Finally, to strictly preserve numerical behavior, our shared floating-point contract deliberately disables fast-math and contraction across all supported toolchains.
 
 CMake automatically uses `ccache` when found, including for CUDA compilation.
 It can shorten repeated builds; the recorded cold-build measurements disabled

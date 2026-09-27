@@ -34,7 +34,7 @@ four stages resume at macro step 268.
 This follows the existing shared stage-selection function in
 [src/numerics/diffusion/DiffFunction.cpp](../../../../../src/numerics/diffusion/DiffFunction.cpp)
 and step-growth control in
-[src/driver/DriverControl.h](../../../../../src/driver/DriverControl.h).
+[src/driver/schedule/DriverControl.h](../../../../../src/driver/schedule/DriverControl.h).
 The fixed-stage validator does not support an adaptive stage policy. No parser,
 formula, production code or tolerance was changed to reinterpret that failure.
 

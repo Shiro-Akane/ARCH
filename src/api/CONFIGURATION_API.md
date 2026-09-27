@@ -1,6 +1,6 @@
 # Studio 标准配置接口
 
-P3/P4 的目录为 92 项：在 P1.5 的 88 项基础上，Gravity 增加 `gravity_boundary/rtol/atol/max_cycles`。P1.5 已登记 `dt_init`、`dt_min`、`tstep_change_factor`，物理下限仍用现有参数。Core 不发布 Advanced 标签，GUI 按自己的显示层策略折叠选项。
+当前 O6 目录为 95 项：在 P3/P4 的 92 项基础上，新增 `eos_coulomb_mult/hll_wave_speed/dt_max`。P1.5 已登记 `dt_init`、`dt_min`、`tstep_change_factor`，物理下限仍用现有参数。Core 不发布 Advanced 标签，GUI 按自己的显示层策略折叠选项。
 
 配置扩展版本 `2`，外层 `schemaVersion="1.0"`。沿用 ARCH 的进程 + stdin/JSON 通道。无需运行 simulation、加载 EOS 表或启动 CUDA，也不写 `.par`、输出目录或数据文件。
 
@@ -21,7 +21,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 ## 参数目录：configuration-schema
 
-`parameters` 恰含当前 `RuntimeParams` 的 92 个标准配置键，不包含已退役旧键。默认值来自 `src/core/config/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
+`parameters` 恰含当前 `RuntimeParams` 的 95 个标准配置键，不包含已退役旧键。默认值来自 `src/core/config/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
 
 | 字段 | 含义 |
 |---|---|
@@ -32,7 +32,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 | applicability | 适用条件的解释；本次配置的布尔结果由检查接口提供 |
 | path | 输入文件或输出目录、相对路径基准；普通字符串为 null |
 | units | 单位及状态；坐标相关项通过 axis 指向坐标描述 |
-| presentation | displayName、description、subgroup；92 键全覆盖。含指定参数的 toggle / enabledBy |
+| presentation | displayName、description、subgroup；95 键全覆盖。含指定参数的 toggle / enabledBy |
 
 `presentation.toggle` 仅出现在 max_steps、plt_dt、plt_dstep、chk_dt、chk_dstep，启用条件 value > 0，关闭写入值 -1，未编辑原文保留。enabledBy 给出三个常量扩散系数对应的通道开关键。options.choices 的 displayName 用于显示，value 用于写回，acceptedNames 用于识别输入别名；不按别名逐个生成选项。
 
@@ -40,13 +40,13 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 `standardParametersComplete=true` 仅指上述标准键覆盖；`customParametersComplete=false`、`constraintsComplete=false`。结构体报告、缓存和未开放的字段不在目录中。自定义网络选项来自本次编译的注册表。
 
-目录和结构体共用 `ode_max_substeps=10000`、`ode_initial_dt_frac=0.001`，不再保存另一套未对齐默认值。NSE 的输入是字符串 true/false/auto，不是单纯 bool。
+目录和结构体共用 `ode_max_substeps=10000`、`ode_initial_dt_frac=1`，不再保存另一套未对齐默认值。NSE 的输入是字符串 true/false/auto，不是单纯 bool。
 
 ## 配置检查：configuration-inspection
 
 `identity` 包含传入的 caseId、requestId，以及原始输入字节的 configRevision SHA-256。Host 应继续给结果关联自己的项目和 binary/build 身份。caseId 在本接口是上下文标识，**不验证模型注册、不执行 Setup、不判断文件本来属于哪个模型**。
 
-成功结果提供全部 92 个标准参数：
+成功结果提供全部 95 个标准参数：
 
 - `parsedValue`：类型转换后的配置输入。表达式返回求值后的数；这是 `typed-input-before-setup-and-policy-resolution`，不是完整 simulation 的最终有效值。
 - `rawValue`：文件显式输入，否则 null；重复键仍以最后一项为准。
@@ -122,3 +122,13 @@ P3/P4 的新参数仍属于 GravityConfig，文本输入没有 advanced 标签�
 单位分别为 cm²/s²、cm/s²；普通 Init/AMR 预览不求解这些场。流体内存提示明确排除
 势、加速度、面 stencil 与 MG/FGMRES workspace。完整范围见
 [实现与验收记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)。
+
+## O6 物理与时间控制
+
+三个新键 `eos_coulomb_mult/hll_wave_speed/dt_max` 复用现有 EOS/Runtime 分组、
+typed defaults、选项、单位、适用性与校验。HLL 波速选项同时适用 HLL/HLLC，
+独立于重构选择；非默认 Coulomb 比例只适用 Helmholtz。`dt_max` 使用秒，`-1`
+关闭额外上限。默认值分别为 1/roe/-1；表格有效域仍需实际运行检查。
+StateSnapshot 中 `eos.coulombFraction` 记录实际模型比例，预览 EOS owner 缓存
+身份也包含该比例。GUI 决定高级折叠；Core 不新增 Advanced 分组。
+未通过科学门槛的面 EOS 近似已撤除，目录不发布失效开关或旧键别名。

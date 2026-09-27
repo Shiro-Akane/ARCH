@@ -36,7 +36,7 @@ ARCH_INLINE int arch_cuda_inline_probe_value(int value)
     return value * 2;
 }
 
-ARCH_FORCEINLINE int arch_cuda_forceinline_probe_value(int value)
+ARCH_FORCE_INLINE int arch_cuda_forceinline_probe_value(int value)
 {
     return value - 42;
 }

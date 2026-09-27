@@ -9,6 +9,7 @@
 
 #include "cuda/diffusion/DiffusionKernels.cuh"
 #include "cuda/hydro/kernels/HydroStateKernels.cuh"
+#include "cuda/runtime/gravity/CudaGravityExecution.h"
 #include "driver/schedule/ReductionSpec.h"
 #include "physics/eos/IdealGas.h"
 
@@ -577,6 +578,54 @@ void verify_real_diffusion_owner()
 }
 } // namespace
 
+// Use the production executor and the unchanged host-callable leaves. Sizes
+// straddle both compensated chunks and the one-block execution boundary.
+void verify_composite_reductions()
+{
+    using namespace arch::multigrid;
+    auto owner = arch::cuda::make_cuda_gravity_execution(nullptr, 0, {});
+    auto execution = owner->numeric();
+    const auto equal = [](double a, double b) {
+        return (std::isnan(a) && std::isnan(b))
+            || std::bit_cast<std::uint64_t>(a) == std::bit_cast<std::uint64_t>(b);
+    };
+    const auto host_reduce = [](const Reduction& task) {
+        const int count = (task.size + Reduction::chunk - 1)/Reduction::chunk;
+        std::vector<double> partials(count);
+        for (int i = 0; i < count; ++i) partials[i] = task.partial(i);
+        return task.finish(partials.data(), count);
+    };
+    for (const int size : {1,63,64,65,8192,8193}) {
+        std::vector<double> weights(size);
+        double total = 0.;
+        for (int i = 0; i < size; ++i) total += weights[i] = 1. + i%5;
+        for (auto& weight : weights) weight /= total;
+        auto device_weights = execution->upload(weights);
+        for (int fixture = 0; fixture < 5; ++fixture) {
+            const double factor = fixture == 0 ? 0. : fixture == 2 ? 1.e150
+                : fixture == 3 ? 1.e-250 : 1.;
+            std::vector<double> input(size);
+            for (int i = 0; i < size; ++i) input[i] = factor * (i%11 - 5);
+            if (fixture == 4) input[size/2] = std::numeric_limits<double>::quiet_NaN();
+            auto device = execution->upload(input);
+            for (const auto kind : {ReductionKind::Maximum, ReductionKind::Product}) {
+                const Reduction reference{input.data(),nullptr,weights.data(),size,kind};
+                const double actual = execution->reduce({device.data,nullptr,device_weights.data,size,kind});
+                if (!equal(actual,host_reduce(reference))) fail("composite scalar reduction changed shared bits");
+            }
+            const double scale = host_reduce({input.data(),nullptr,nullptr,size,ReductionKind::Maximum});
+            const double sum = host_reduce({input.data(),nullptr,weights.data(),size,
+                ReductionKind::Product,1.,1.,&scale});
+            const ProjectWork reference{size,input.data(),&scale,&sum};
+            for (int i = 0; i < size; ++i) reference(i);
+            execution->project(device,device_weights);
+            const auto actual = execution->download(device);
+            for (int i = 0; i < size; ++i)
+                if (!equal(actual[i],input[i])) { fail("composite projection changed shared bits"); break; }
+        }
+    }
+}
+
 int main()
 {
     int device_count = 0;
@@ -590,6 +639,7 @@ int main()
     verify_device_edges();
     verify_real_hydro_owner();
     verify_real_diffusion_owner();
+    verify_composite_reductions();
     if (edge_cases != 36) fail("device edge case count");
     if (failures == 0)
         std::cout << "D2_CUDA_REDUCTION_CONTRACT_PASS edge_cases="

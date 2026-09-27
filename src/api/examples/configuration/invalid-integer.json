@@ -448,9 +448,9 @@
       "valueStage": "typed-input-before-setup-and-policy-resolution"
     },
     {
-      "defaultValue": 0.001,
+      "defaultValue": 1,
       "key": "ode_initial_dt_frac",
-      "parsedValue": 0.001,
+      "parsedValue": 1,
       "rawValue": null,
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"

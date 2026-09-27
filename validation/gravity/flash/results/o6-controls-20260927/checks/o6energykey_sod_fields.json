@@ -1,0 +1,37 @@
+{
+  "same_topology_and_time": true,
+  "checkpoint_errors": {
+    "X": {
+      "absolute_linf": 0.0,
+      "scaled_linf": 0.0
+    },
+    "eng": {
+      "absolute_linf": 0.0,
+      "scaled_linf": 0.0
+    },
+    "enuc_rate": {
+      "absolute_linf": 0.0,
+      "scaled_linf": 0.0
+    },
+    "mom_u": {
+      "absolute_linf": 0.0,
+      "scaled_linf": 0.0
+    },
+    "mom_v": {
+      "absolute_linf": 0.0,
+      "scaled_linf": 0.0
+    },
+    "mom_w": {
+      "absolute_linf": 0.0,
+      "scaled_linf": 0.0
+    },
+    "rho": {
+      "absolute_linf": 0.0,
+      "scaled_linf": 0.0
+    },
+    "rhoX": {
+      "absolute_linf": 0.0,
+      "scaled_linf": 0.0
+    }
+  }
+}

@@ -611,11 +611,16 @@ public:
             }
             if (!reusable) {
                 auto candidate = compile_host_exchange_plan(plan, level_views);
+                exchange_detail::validate_compiled_host_exchange_plan(
+                    candidate, level_views);
                 compiled = std::move(candidate);
                 ++host_cache_builds_;
             }
-            // Keep the executor's complete fail-before-scatter validation.
-            execute_host_exchange_plan(*compiled, level_views, host_workspace_);
+            // The private compiled plan has passed complete fail-before-scatter
+            // validation once. Above, every current view and topology identity
+            // is still checked on each exchange before any destination write.
+            exchange_detail::execute_prevalidated_host_exchange_plan(
+                *compiled, level_views, host_workspace_);
         }
         ExecuteCoarseFinePlan(
             plans.coarse_fine, pool, tree, dim, state_ptr, handles);

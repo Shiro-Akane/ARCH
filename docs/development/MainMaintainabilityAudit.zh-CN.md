@@ -8,7 +8,7 @@
 主计划第 10 节的 GUI/Core 集成顺序优先于本表的局部提取/搬迁建议。
 
 **后续决定（2026-09-22）：** 用户已明确不要求旧输入及已退役 EOS 兼容。
-[物理配置与旧 EOS 退役清单](ParameterRetirementAudit.zh-CN.md)的 PR/ER/CR 集合覆盖本表对这些项目的
+[物理配置与旧 EOS 退役清单](archive/low-density/ParameterRetirementAudit.zh-CN.md)的 PR/ER/CR 集合覆盖本表对这些项目的
 “默认保留兼容”建议，特别是 DC-01 的旧别名头及 DC-08 的旧配置/规范化 EOS 路线。
 本表其余历史证据与来源数学豁免保留；有实际用途的 native/strict EOS 不属于笼统删除对象。
 此补充是当前规划，删除尚未实施。
@@ -217,7 +217,7 @@
 | DC-02 | `aprox13/19/21/Net*.h` 定义 frozen-screening 手工 Jacobian 包装并 include `TimmesJacobian.inc`；生产 `TimmesNetworkSupport::eval_jacobian` 使用 Dual 与 `molar_rhs_frozen_screening`。 | 已确认不在现行生产 Jacobian 路径；处于转译数学豁免范围，保留并更新说明，禁止以死代码清理名义删除。 |
 | DC-03 | `IGravityPolicy::update_field` 只有声明及 None/External 空覆写，tracked 源码未发现调用。 | 未完成的 patch field 生命周期，不是自引力实现；按 SG-03/04 接入 domain service 后审查接口，不直接删整个 gravity policy。 |
 | DC-04 | 四个 `Net*.cpp` 各 6 行，但包含 NUM_SPECIES/ODE_NEQ 的 static_assert，且应用 CMake 递归收集它们。 | 有默认编译检查用途，不是空死文件；若整合检查 TU，需保留默认构建覆盖并量测编译资源。 |
-| DC-05 | `ARCH_FORCE_INLINE`/`ARCH_FORCEINLINE` 在 src 内仅见定义；tests/cuda/test_cuda_compile_probe.cu 和 test_mainline_authority.cpp 实际消费。 | 非死宏；仅搜生产 src 会误判。 |
+| DC-05 | `ARCH_FORCE_INLINE`/`ARCH_FORCEINLINE` 在 src 内仅见定义；tests/cuda/test_cuda_compile_probe.cu 和 test_mainline_authority.cpp 实际消费。 | 当时非死宏；仅搜生产 src 会误判。O6 后统一使用 `ARCH_FORCE_INLINE`，移除重复拼写并同步两个测试。 |
 | DC-06 | `GravityNone`、AbsentBinding、generated/network 无能力路径与异常拒绝分支。 | 表示可选关闭或明确不支持，不是可删空实现；不能把错误路径改成静默 fallback。 |
 | DC-07 | `helm_eos_loader.h` 是 include 聚合，但 CudaBackendInternal 和 EOS owner 测试仍消费。 | 有消费者；可改善命名/缩小 include，但不将其当无用文件。 |
 | DC-08 | 当前 tracked src 未见 predictive_amr、GetSolverName、riemann_solver 的旧实现；旧记录仍有相关文字。 | 已退休功能的历史文字不构成生产死代码，保留原 evidence。Tabular native/normalized/free-energy、配置别名和旧生成包格式仍可能是受支持能力，不能顺手删除。 |

@@ -37,6 +37,7 @@
 #include "amr/topology/Morton.h"
 
 #include "data/GlobalDefs.h"
+#include "data/StateDiagnostics.h"
 #include "grid/Grid.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
 #include "physics/species/Species.h"
@@ -329,41 +330,50 @@ public:
             throw std::runtime_error(
                 "EOS-backed AMR indicators require the thermodynamic evaluator before regridding.");
 
-        for (int block_id : active_blocks) {
-            Block& block = pool->GetBlock(block_id);
-            const Grid& grid = block.grid;
-            const FluidState& state = block.fluid_state;
-            const int total = grid.GetTotalSize();
-            std::vector<double> pressure, temperature, gamma1;
-            if (needs_thermodynamics) {
-                thermodynamic_evaluator(state, needs_pressure ? &pressure : nullptr,
-                    needs_temperature ? &temperature : nullptr, needs_gamma1 ? &gamma1 : nullptr);
-                if ((needs_pressure && pressure.size() != static_cast<std::size_t>(total))
-                    || (needs_temperature && temperature.size() != static_cast<std::size_t>(total))
-                    || (needs_gamma1 && gamma1.size() != static_cast<std::size_t>(total)))
-                    throw std::runtime_error("EOS evaluator returned an invalid AMR buffer.");
-            }
-            const indicator::StateView view{
-                state.rho.data(), {state.mom_u.data(), state.mom_v.data(), state.mom_w.data()},
-                state.eng.data(), state.enuc_rate.data(), state.mass_fractions.data(),
-                pressure.data(), temperature.data(), gamma1.data(), total,
-                grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(),
-                config.numerics.sml_rho, state.GetNumSpecies()};
-            const auto geometry = GridMetrics::make_geometry_view(grid);
-            double maximum = 0.0;
-            for (int k = grid.Ks(); k < grid.Ke(); ++k)
-                for (int j = grid.Js(); j < grid.Je(); ++j)
-                    for (int i = grid.Is(); i < grid.Ie(); ++i) {
-                        const double error = indicator::cell_error(view, geometry,
-                            selection.data(), static_cast<int>(selection.size()), i, j, k);
-                        if (!std::isfinite(error))
-                            throw std::runtime_error("Non-finite AMR indicator value encountered.");
-                        maximum = std::max(maximum, error);
-                    }
-            block.refine_flag = indicator::refinement_flag(maximum, block.level,
-                config.amr.lrefinemin, config.amr.lrefinemax,
-                config.amr.refine_threshold, config.amr.derefine_threshold);
+        // EOS-backed block indicators are independent until RippleCheck.
+        // Distribute their unchanged per-cell mathematics among Host workers;
+        // publish no topology decision until every worker has succeeded.
+        arch::state::HostFailure failure;
+#pragma omp parallel for schedule(dynamic) if(active_blocks.size() >= 4)
+        for (std::size_t block_index = 0;
+             block_index < active_blocks.size(); ++block_index) {
+            try {
+                Block& block = pool->GetBlock(active_blocks[block_index]);
+                const Grid& grid = block.grid;
+                const FluidState& state = block.fluid_state;
+                const int total = grid.GetTotalSize();
+                std::vector<double> pressure, temperature, gamma1;
+                if (needs_thermodynamics) {
+                    thermodynamic_evaluator(state, needs_pressure ? &pressure : nullptr,
+                        needs_temperature ? &temperature : nullptr, needs_gamma1 ? &gamma1 : nullptr);
+                    if ((needs_pressure && pressure.size() != static_cast<std::size_t>(total))
+                        || (needs_temperature && temperature.size() != static_cast<std::size_t>(total))
+                        || (needs_gamma1 && gamma1.size() != static_cast<std::size_t>(total)))
+                        throw std::runtime_error("EOS evaluator returned an invalid AMR buffer.");
+                }
+                const indicator::StateView view{
+                    state.rho.data(), {state.mom_u.data(), state.mom_v.data(), state.mom_w.data()},
+                    state.eng.data(), state.enuc_rate.data(), state.mass_fractions.data(),
+                    pressure.data(), temperature.data(), gamma1.data(), total,
+                    grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(),
+                    config.numerics.sml_rho, state.GetNumSpecies()};
+                const auto geometry = GridMetrics::make_geometry_view(grid);
+                double maximum = 0.0;
+                for (int k = grid.Ks(); k < grid.Ke(); ++k)
+                    for (int j = grid.Js(); j < grid.Je(); ++j)
+                        for (int i = grid.Is(); i < grid.Ie(); ++i) {
+                            const double error = indicator::cell_error(view, geometry,
+                                selection.data(), static_cast<int>(selection.size()), i, j, k);
+                            if (!std::isfinite(error))
+                                throw std::runtime_error("Non-finite AMR indicator value encountered.");
+                            maximum = std::max(maximum, error);
+                        }
+                block.refine_flag = indicator::refinement_flag(maximum, block.level,
+                    config.amr.lrefinemin, config.amr.lrefinemax,
+                    config.amr.refine_threshold, config.amr.derefine_threshold);
+            } catch (...) { failure.capture_current(); }
         }
+        failure.rethrow();
     }
     void RippleCheck() {
         bool changed = true;

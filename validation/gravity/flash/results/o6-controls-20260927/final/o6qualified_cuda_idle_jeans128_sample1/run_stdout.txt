@@ -1,0 +1,101 @@
+[Info] Loaded 52 parameters from /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_jeans128_cuda_1/input.par
+[Main] Console output is being recorded to log file: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_jeans128_cuda_1/JeansWave_log.dat
+[Main] Parameters loaded from: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_jeans128_cuda_1/input.par
+[Main] Problem created: JeansWave
+[Main] Configuration:
+       Grid: 128 cells, CFL: 0.8
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 2 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 256 | Finest Level: 0
+    Level 0   | dx1(x): 0.00893836, dx2(y): 0.00893836
+[Dispatch] Resolving Gravity Policy...
+           -> Type: self | G_const = 6.67408e-08
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=1) | HLL speeds: Roe-Glaister | Coulomb fraction: 1 | dt_max: -1
+[IO] Saved PLT: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_jeans128_cuda_1/JeansWave_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_jeans128_cuda_1/JeansWave_chk_0000.h5 at step 0 with 64 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       1.38426e-03    1.38426e-03    1.38426e-03    
+2       2.76853e-03    1.38426e-03    1.38426e-03    
+3       4.15279e-03    1.38426e-03    1.38426e-03    
+4       5.53705e-03    1.38426e-03    1.38426e-03    
+5       6.92132e-03    1.38426e-03    1.38426e-03    
+6       8.30558e-03    1.38426e-03    1.38426e-03    
+7       9.68984e-03    1.38426e-03    1.38426e-03    
+8       1.10741e-02    1.38426e-03    1.38426e-03    
+9       1.24584e-02    1.38426e-03    1.38426e-03    
+10      1.38426e-02    1.38426e-03    1.38426e-03    
+11      1.52269e-02    1.38425e-03    1.38425e-03    
+12      1.66111e-02    1.38425e-03    1.38425e-03    
+13      1.79954e-02    1.38425e-03    1.38425e-03    
+14      1.93796e-02    1.38425e-03    1.38425e-03    
+15      2.07639e-02    1.38425e-03    1.38425e-03    
+16      2.21481e-02    1.38424e-03    1.38424e-03    
+17      2.35323e-02    1.38424e-03    1.38424e-03    
+18      2.49166e-02    1.38424e-03    1.38424e-03    
+19      2.63008e-02    1.38424e-03    1.38424e-03    
+20      2.76851e-02    1.38423e-03    1.38423e-03    
+21      2.90693e-02    1.38423e-03    1.38423e-03    
+22      3.04535e-02    1.38423e-03    1.38423e-03    
+23      3.18377e-02    1.38422e-03    1.38422e-03    
+24      3.32219e-02    1.38422e-03    1.38422e-03    
+25      3.46062e-02    1.38422e-03    1.38422e-03    
+26      3.59904e-02    1.38421e-03    1.38421e-03    
+27      3.73746e-02    1.38421e-03    1.38421e-03    
+28      3.87588e-02    1.38421e-03    1.38421e-03    
+29      4.01430e-02    1.38420e-03    1.38420e-03    
+30      4.15272e-02    1.38420e-03    1.38420e-03    
+31      4.29114e-02    1.38419e-03    1.38419e-03    
+32      4.42956e-02    1.38419e-03    1.38419e-03    
+33      4.56798e-02    1.38419e-03    1.38419e-03    
+34      4.70639e-02    1.38418e-03    1.38418e-03    
+35      4.84481e-02    1.38418e-03    1.38418e-03    
+36      4.98323e-02    1.38417e-03    1.38417e-03    
+37      5.12165e-02    1.38417e-03    1.38417e-03    
+38      5.26006e-02    1.38417e-03    1.38417e-03    
+39      5.39848e-02    1.38416e-03    1.38416e-03    
+40      5.53690e-02    1.38416e-03    1.38416e-03    
+41      5.67531e-02    1.38415e-03    1.38415e-03    
+42      5.81373e-02    1.38415e-03    1.38415e-03    
+43      5.95214e-02    1.38415e-03    1.38415e-03    
+44      6.09055e-02    1.38414e-03    1.38414e-03    
+45      6.22897e-02    1.38414e-03    1.38414e-03    
+46      6.36738e-02    1.38413e-03    1.38413e-03    
+47      6.50579e-02    1.38413e-03    1.38413e-03    
+48      6.64421e-02    1.38413e-03    1.38413e-03    
+49      6.78262e-02    1.38412e-03    1.38412e-03    
+50      6.92103e-02    1.38412e-03    1.38412e-03    
+51      7.05944e-02    1.38412e-03    1.38412e-03    
+52      7.19786e-02    1.38411e-03    1.38411e-03    
+53      7.33627e-02    1.38411e-03    1.38411e-03    
+54      7.47468e-02    1.38411e-03    1.38411e-03    
+55      7.61309e-02    1.38410e-03    1.38410e-03    
+56      7.75150e-02    1.38410e-03    1.38410e-03    
+57      7.88991e-02    1.38410e-03    1.38410e-03    
+58      8.02832e-02    1.38409e-03    1.38409e-03    
+59      8.16673e-02    1.38409e-03    1.38409e-03    
+60      8.30513e-02    1.38409e-03    1.38409e-03    
+61      8.44354e-02    1.38409e-03    1.38409e-03    
+62      8.58195e-02    1.38408e-03    1.38408e-03    
+63      8.72036e-02    1.38408e-03    1.38408e-03    
+64      8.85877e-02    1.38408e-03    1.38408e-03    
+65      8.99717e-02    1.38408e-03    1.38408e-03    
+66      9.13558e-02    1.38407e-03    1.38407e-03    
+67      9.27399e-02    1.38407e-03    1.38407e-03    
+68      9.41240e-02    1.38407e-03    1.38407e-03    
+69      9.55080e-02    1.38407e-03    1.38407e-03    
+70      9.68921e-02    1.38407e-03    1.38407e-03    
+71      9.82762e-02    1.38406e-03    1.38406e-03    
+72      9.96602e-02    1.38406e-03    1.38406e-03    
+73      1.00000e-01    3.39774e-04    1.38406e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_jeans128_cuda_1/JeansWave_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_cuda_idle_jeans128_cuda_1/JeansWave_chk_0001.h5 at step 73 with 64 AMR leaves.
+[State] floor repairs=0.00000e+00 delta_mass=0.00000e+00 delta_energy=0.00000e+00
+>>> Simulation Done. Total Steps: 73 | Final Time: 1.00000e-01

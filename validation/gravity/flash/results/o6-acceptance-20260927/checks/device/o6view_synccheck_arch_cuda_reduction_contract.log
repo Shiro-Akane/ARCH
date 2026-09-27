@@ -1,0 +1,3 @@
+========= COMPUTE-SANITIZER
+D2_CUDA_REDUCTION_CONTRACT_PASS edge_cases=36
+========= ERROR SUMMARY: 0 errors

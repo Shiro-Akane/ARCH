@@ -11,6 +11,8 @@
 #pragma once
 
 #include <algorithm>
+#include <bit>
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -195,19 +197,21 @@ struct EOSDispatcher
             const std::string path = table_path(config, "Helmholtz");
             const std::string before = inspected_source("helm:" + path, [path] { return arch::core::file_sha256(path); });
             if (inspection_cache) {
-                auto& owner = inspection_cache->owner<HelmEos>(path, before, specs,
-                    [&](const SpeciesManager* owned) { return std::make_unique<HelmEos>(path, owned); },
+                auto& owner = inspection_cache->owner<HelmEos>(path + ":coulomb:" +
+                    std::to_string(std::bit_cast<std::uint64_t>(config.physics.eos_coulomb_mult)), before, specs,
+                    [&](const SpeciesManager* owned) { return std::make_unique<HelmEos>(path, owned, config.physics.eos_coulomb_mult); },
                     [&] { return arch::core::file_sha256(path); });
                 InspectionEosCache::HelmBinding binding(owner, specs);
                 invoke_callback(std::forward<Func>(func), owner, before);
                 break;
             }
             const auto species_before = species_identity(specs);
-            if (!cached_helm || cached_helm_path != path
+            if (!cached_helm || cached_helm->coulomb_mult != config.physics.eos_coulomb_mult
+                || cached_helm_path != path
                 || cached_helm_sha256 != before
                 || !same_species_identity(
                     cached_helm_species, species_before)) {
-                auto replacement = std::make_unique<HelmEos>(path, &specs);
+                auto replacement = std::make_unique<HelmEos>(path, &specs, config.physics.eos_coulomb_mult);
                 const std::string after = arch::core::file_sha256(path);
                 const auto species_after = species_identity(specs);
                 if (before != after) {

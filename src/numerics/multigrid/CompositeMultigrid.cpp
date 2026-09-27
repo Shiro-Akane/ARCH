@@ -242,10 +242,24 @@ SolveReport CompositeMultigrid::solve(const Vector& rhs,SolveControl control) {
         throw std::invalid_argument("Incompatible periodic composite RHS");
     e.linear(source_,1.,rhs);project(source_);const double scale=norm(source_);
     report.rhs_rms=scale;report.target=std::max(control.absolute_tolerance,control.relative_tolerance*scale);
-    report.initial_residual=report.residual=scale;e.fill(x_);
-    if(scale<=report.target){report.status=SolveStatus::Converged;return report;}
+    const bool use_initial = has_accepted_potential_;
+    has_accepted_potential_ = false;
+    report.initial_residual=report.residual=scale;
+    if(scale<=report.target){
+        e.fill(x_);
+        report.status=SolveStatus::Converged;
+        has_accepted_potential_ = true;
+        return report;
+    }
     // Normalize b by ||b||_V; FGMRES solves A*(phi/||b||_V)=b/||b||_V.
-    e.linear(source_,1./scale,source_);const double target=report.target/scale;
+    // The previous accepted potential is an initial guess, never a substitute
+    // for the new source or for the independently checked physical residual.
+    e.linear(source_,1./scale,source_);
+    if(use_initial) e.linear(x_,1./scale,x_);
+    else e.fill(x_);
+    project(x_);
+    const double target=report.target/scale;
+    bool first_residual = true;
     constexpr int restart=20;
     bool refine_physical_residual=false;
     for(;;) {
@@ -261,12 +275,17 @@ SolveReport CompositeMultigrid::solve(const Vector& rhs,SolveControl control) {
             apply(0,x_,work_);e.linear(residual_,1.,source_,-1.,work_);
         }
         const double residual_norm=norm(residual_);report.residual=residual_norm*scale;
+        if(first_residual) {
+            report.initial_residual=report.residual;
+            first_residual=false;
+        }
         if(!std::isfinite(residual_norm))return report;
         if(residual_norm<=target) {
             e.linear(x_,scale,x_);project(x_);apply(0,x_,work_);
             e.linear(work_,1.,rhs,-1.,work_,-report.removed_rhs_mean);report.residual=norm(work_);
             if(std::isfinite(report.residual)&&report.residual<=report.target) {
                 report.status=SolveStatus::Converged;
+                has_accepted_potential_ = true;
                 return report;
             }
             if(!std::isfinite(report.residual)||report.cycles>=control.max_cycles)

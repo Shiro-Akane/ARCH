@@ -1,0 +1,62 @@
+{
+  "scope": "bounded host inversion diagnostic only; temporary header copy; no production mathematics changed",
+  "source": "src/physics/eos/HelmEos.h",
+  "source_sha256": "48212b2203422f55c11fe10396b5d29bf12f2c5b1723905109f458112b0c10e7",
+  "method": "count the existing inverse value(T, derivative) calls, retaining both endpoint checks, 96 iterations, residual and bracket gates; replace only fixed 1e8 K initial guess by the estimate below",
+  "temperature_guess": {
+    "energy": "min(e / (1.5 * N_A * k_B * (ytot + Ye)), (rho * e / a)^0.25)",
+    "pressure": "min(P / (rho * N_A * k_B * (ytot + Ye)), (3 * P / a)^0.25)"
+  },
+  "inputs": {
+    "rho_cgs": [
+      1e-08,
+      0.01,
+      100.0,
+      10000.0,
+      1000000.0,
+      20000000.0,
+      80000000.0,
+      1000000000.0,
+      100000000000.0
+    ],
+    "temperature_kelvin": [
+      10000.0,
+      1000000.0,
+      10000000.0,
+      100000000.0,
+      200000000.0,
+      1000000000.0,
+      3500000000.0,
+      10000000000.0
+    ],
+    "X_he4": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "X_c12_X_o16": "each (1-X_he4)/2",
+    "target": "forward Helm pressure and specific internal energy"
+  },
+  "queries": 432,
+  "fixed_seed_failures": 2,
+  "estimated_seed_failures": 2,
+  "newly_failed_queries": 0,
+  "fixed_seed_value_calls": 5151,
+  "estimated_seed_value_calls": 3851,
+  "hot_subset": {
+    "condition": "1e6 <= rho <= 1e9 and 1e8 <= T <= 3.5e9",
+    "fixed_seed_value_calls": 770,
+    "estimated_seed_value_calls": 911
+  },
+  "max_temperature_difference_relative": 0.8700054389750089,
+  "max_successful_target_relative_residual": 1.4171246561657686e-15,
+  "decision": "not adopted: extra calls in the target hot-density subset and root-selection changes near the existing Coulomb positivity cutoff",
+  "log": [
+    "[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...",
+    "[HelmEos] Loaded complete 541x201 electron/positron table.",
+    "temperature_branch rho=0.01 requestedT=10000 he=0.0 pressure=0 fixedT=76926.295386139478 seededT=10000.000000000002 rel=0.870005439",
+    "temperature_branch rho=0.01 requestedT=10000 he=0.5 pressure=0 fixedT=42323.828851690101 seededT=10000 rel=0.763726481",
+    "temperature_branch rho=0.01 requestedT=10000 he=1.0 pressure=0 fixedT=30430.408438237875 seededT=10000.000000000004 rel=0.671381341",
+    "queries=432 old_fail=2 new_fail=2 old_evaluations=5151 new_evaluations=3851 hot_old=770 hot_new=911 max_T_relative=0.87000543897500893 max_residual=1.4171246561657686e-15"
+  ]
+}

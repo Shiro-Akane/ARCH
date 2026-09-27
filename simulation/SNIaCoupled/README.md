@@ -23,7 +23,7 @@ Hydro、自引力、aprox13 核反应及热扩散。算例源码只引用
 | `SNIaCoupled_3d_spherical_amr.par` | 三维球坐标，避开原点与两极，完整方位角，混合 AMR |
 
 完整方位角且包含原点、轴线或两极的 CPU/CUDA 输入见
-[P12 验证样例](../../validation/gravity/curved/inputs)；它们复用本算例，
+[曲线坐标验证输入](../../validation/gravity/curved/inputs)；它们复用本算例，
 不另建一套物理实现。二维极坐标的 Poisson 势对应沿第三方向平移不变的物质，
 使用单位长度质量和对数核；它不是三维孤立白矮星。三维曲线坐标使用有限质量 Newton 势。
 曲线坐标自引力已按受测范围开放 **CPU/CUDA、完整方位角及坐标奇点接合**，
@@ -31,10 +31,10 @@ Hydro、自引力、aprox13 核反应及热扩散。算例源码只引用
 `density_amplitude`、`hotspot_width` 和 `center_x/y/z` 均为 CGS 场景参数；
 热点在物理 Cartesian 坐标中定义：
 
-\[
+$$
 q=\exp\left(-\frac{|\mathbf{x}-\mathbf{x}_c|^2}{2\sigma^2}\right),\quad
 \rho=\rho_0(1+Aq),\quad T=T_0+(T_{\rm peak}-T_0)q.
-\]
+$$
 
 验收时检查接受步数、`state_repairs.txt` 的 `events=0`、
 `gravity_solves.tsv` 中每次求解的 `residual <= target`，以及最终 plot 的

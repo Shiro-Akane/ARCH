@@ -16,6 +16,7 @@ results, start with [Validation](../../../validation/README.md). The maintained
 | Geometry derivation and correction review | [Curvilinear metric review](CurvilinearMetricReview.md) |
 | Refinement-indicator roundoff analysis | [AMR indicator review](AmrIndicatorNoiseReview.md) |
 | Physical transport coefficient comparison | [Diffusion coefficient review](DiffusionCoefficientAlignment.md) ([中文](DiffusionCoefficientAlignment.zh-CN.md)) |
+| Low-density and configuration migration | [Implementation record](low-density/ImplementationReport.zh-CN.md), [robustness design](low-density/RobustnessPlan.zh-CN.md), [retired parameter audit](low-density/ParameterRetirementAudit.zh-CN.md) |
 
 Moving a note here changes its location, not the source identity of its
 measurements. Inputs, machine-readable results and failed-attempt records keep

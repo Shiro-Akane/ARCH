@@ -1,0 +1,32 @@
+{
+  "scope": "complete process wall clock; serial alternating runs; actual checkpoint endpoint",
+  "binary_identity": {
+    "arch": {
+      "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/bin/ARCH",
+      "sha256": "565a63e5ee3830609eeeab9a251d9c8d5aa1de1e89da1e8c4dbdc9095e5aaef6"
+    }
+  },
+  "mpi_launcher": null,
+  "cpu_threads": 8,
+  "flash_ranks": 8,
+  "cpu_affinity": "0,2,4,6,8,10,12,14",
+  "cuda_affinity": "0",
+  "records": [
+    {
+      "case": "fine",
+      "backend": "arch",
+      "repeat": 1,
+      "wall_seconds": 25.522988904995145,
+      "exit_code": 0,
+      "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6consistent_O3_probe_fine_arch_1",
+      "input_fixture": "arch_cellular_o6plus_dx025.par",
+      "physical_time_seconds": 1.0222428325150896e-08,
+      "resolved_backend": "cpu"
+    }
+  ],
+  "arch_parameter_overrides": {
+    "eos_for_riemann": "false",
+    "hll_wave_speed": "davis"
+  },
+  "comparison_kind": "explicit alternative numerical route"
+}

@@ -1,0 +1,333 @@
+{
+  "date": "2026-09-24",
+  "arch_commit": "abb547a523c122156bc3fcf6984d3a6a6886aaeb",
+  "scope": "Diagnostic only; no production source, tolerance default, test or CI changes; not release qualification.",
+  "hardware": "Intel i7-10700; 8 physical cores / 16 logical threads; WSL Linux",
+  "flash_eos_tolerance": {
+    "binary": "User FLASH4.8 archive object/flash4; original prebuilt 2D Cellular; one MPI process and OMP_NUM_THREADS=1",
+    "baseline_input": "/tmp/arch-cellular-extended-20260924/flash_noburn/flash.par",
+    "raw_directory": "/tmp/arch-eos24",
+    "driver_script": "/tmp/arch-flash-eos-tolerance-diagnosis.py",
+    "method": "Four face-EOS/tolerance combinations, two repeats; second sweep in reverse order. Only EOSforRiemann, eos_tolerance and output paths differ. Separate writable Helm binary-table cache per run.",
+    "limits": [
+      "No new accuracy qualification or CPU/GPU comparison.",
+      "Background GUI development was present; small timing differences are approximate diagnostic evidence.",
+      "FLASH last-step endpoints differ between face-EOS choices; within each face choice the tolerance pairs agree to roundoff.",
+      "An initial attempt with longer output paths aborted in the archived HDF5 file initialization before evolution; shortened paths succeeded. This failed setup is excluded from the eight timing samples. No Fortran source was changed."
+    ],
+    "runs": [
+      {
+        "run": "r1_face0_tol8",
+        "face_eos": false,
+        "eos_tolerance": 1e-08,
+        "exit_code": 0,
+        "whole_seconds": 3.371623967002961,
+        "steps": 62,
+        "final_time": 1.0188072904401767e-08,
+        "leaf_blocks": 80,
+        "initialization": {
+          "seconds": 0.94,
+          "calls": 1
+        },
+        "evolution": {
+          "seconds": 2.019,
+          "calls": 1
+        },
+        "hydro": {
+          "seconds": 1.402,
+          "calls": 62
+        },
+        "face_flux": {
+          "seconds": 0.078,
+          "calls": 4168
+        }
+      },
+      {
+        "run": "r1_face0_tol12",
+        "face_eos": false,
+        "eos_tolerance": 1e-12,
+        "exit_code": 0,
+        "whole_seconds": 3.070883856009459,
+        "steps": 62,
+        "final_time": 1.0188072904401772e-08,
+        "leaf_blocks": 80,
+        "initialization": {
+          "seconds": 0.569,
+          "calls": 1
+        },
+        "evolution": {
+          "seconds": 2.078,
+          "calls": 1
+        },
+        "hydro": {
+          "seconds": 1.455,
+          "calls": 62
+        },
+        "face_flux": {
+          "seconds": 0.078,
+          "calls": 4168
+        }
+      },
+      {
+        "run": "r1_face1_tol8",
+        "face_eos": true,
+        "eos_tolerance": 1e-08,
+        "exit_code": 0,
+        "whole_seconds": 4.7745828309998615,
+        "steps": 62,
+        "final_time": 1.0188587340640404e-08,
+        "leaf_blocks": 80,
+        "initialization": {
+          "seconds": 0.595,
+          "calls": 1
+        },
+        "evolution": {
+          "seconds": 3.76,
+          "calls": 1
+        },
+        "hydro": {
+          "seconds": 3.135,
+          "calls": 62
+        },
+        "face_flux": {
+          "seconds": 1.802,
+          "calls": 4168
+        }
+      },
+      {
+        "run": "r1_face1_tol12",
+        "face_eos": true,
+        "eos_tolerance": 1e-12,
+        "exit_code": 0,
+        "whole_seconds": 4.774470995995216,
+        "steps": 62,
+        "final_time": 1.0188587340640386e-08,
+        "leaf_blocks": 80,
+        "initialization": {
+          "seconds": 0.529,
+          "calls": 1
+        },
+        "evolution": {
+          "seconds": 3.845,
+          "calls": 1
+        },
+        "hydro": {
+          "seconds": 3.213,
+          "calls": 62
+        },
+        "face_flux": {
+          "seconds": 1.846,
+          "calls": 4168
+        }
+      },
+      {
+        "run": "r2_face1_tol12",
+        "face_eos": true,
+        "eos_tolerance": 1e-12,
+        "exit_code": 0,
+        "whole_seconds": 4.8248028730013175,
+        "steps": 62,
+        "final_time": 1.0188587340640386e-08,
+        "leaf_blocks": 80,
+        "initialization": {
+          "seconds": 0.582,
+          "calls": 1
+        },
+        "evolution": {
+          "seconds": 3.854,
+          "calls": 1
+        },
+        "hydro": {
+          "seconds": 3.216,
+          "calls": 62
+        },
+        "face_flux": {
+          "seconds": 1.855,
+          "calls": 4168
+        }
+      },
+      {
+        "run": "r2_face1_tol8",
+        "face_eos": true,
+        "eos_tolerance": 1e-08,
+        "exit_code": 0,
+        "whole_seconds": 4.724400724997395,
+        "steps": 62,
+        "final_time": 1.0188587340640404e-08,
+        "leaf_blocks": 80,
+        "initialization": {
+          "seconds": 0.611,
+          "calls": 1
+        },
+        "evolution": {
+          "seconds": 3.707,
+          "calls": 1
+        },
+        "hydro": {
+          "seconds": 3.084,
+          "calls": 62
+        },
+        "face_flux": {
+          "seconds": 1.754,
+          "calls": 4168
+        }
+      },
+      {
+        "run": "r2_face0_tol12",
+        "face_eos": false,
+        "eos_tolerance": 1e-12,
+        "exit_code": 0,
+        "whole_seconds": 3.0706675819965312,
+        "steps": 62,
+        "final_time": 1.0188072904401772e-08,
+        "leaf_blocks": 80,
+        "initialization": {
+          "seconds": 0.598,
+          "calls": 1
+        },
+        "evolution": {
+          "seconds": 2.096,
+          "calls": 1
+        },
+        "hydro": {
+          "seconds": 1.452,
+          "calls": 62
+        },
+        "face_flux": {
+          "seconds": 0.078,
+          "calls": 4168
+        }
+      },
+      {
+        "run": "r2_face0_tol8",
+        "face_eos": false,
+        "eos_tolerance": 1e-08,
+        "exit_code": 0,
+        "whole_seconds": 2.9705748340056743,
+        "steps": 62,
+        "final_time": 1.0188072904401767e-08,
+        "leaf_blocks": 80,
+        "initialization": {
+          "seconds": 0.549,
+          "calls": 1
+        },
+        "evolution": {
+          "seconds": 2.011,
+          "calls": 1
+        },
+        "hydro": {
+          "seconds": 1.397,
+          "calls": 62
+        },
+        "face_flux": {
+          "seconds": 0.077,
+          "calls": 4168
+        }
+      }
+    ],
+    "medians": [
+      {
+        "face_eos": false,
+        "eos_tolerance": 1e-08,
+        "repeats": 2,
+        "whole_seconds_median": 3.1710994005043176,
+        "initialization_seconds_median": 0.7444999999999999,
+        "evolution_seconds_median": 2.015,
+        "hydro_seconds_median": 1.3995,
+        "face_flux_seconds_median": 0.0775
+      },
+      {
+        "face_eos": false,
+        "eos_tolerance": 1e-12,
+        "repeats": 2,
+        "whole_seconds_median": 3.070775719002995,
+        "initialization_seconds_median": 0.5834999999999999,
+        "evolution_seconds_median": 2.0869999999999997,
+        "hydro_seconds_median": 1.4535,
+        "face_flux_seconds_median": 0.078
+      },
+      {
+        "face_eos": true,
+        "eos_tolerance": 1e-08,
+        "repeats": 2,
+        "whole_seconds_median": 4.749491777998628,
+        "initialization_seconds_median": 0.603,
+        "evolution_seconds_median": 3.7335,
+        "hydro_seconds_median": 3.1094999999999997,
+        "face_flux_seconds_median": 1.778
+      },
+      {
+        "face_eos": true,
+        "eos_tolerance": 1e-12,
+        "repeats": 2,
+        "whole_seconds_median": 4.799636934498267,
+        "initialization_seconds_median": 0.5555,
+        "evolution_seconds_median": 3.8495,
+        "hydro_seconds_median": 3.2145,
+        "face_flux_seconds_median": 1.8505
+      }
+    ]
+  },
+  "grid_spacing": {
+    "source": "src/grid/GridMetrics.h::PhysicalSpacing",
+    "probe_source": "/tmp/arch-grid-spacing-diagnosis.cpp",
+    "method": "Compile against current shared geometry header. r in [0,1], polar phi in [0,2pi], spherical theta in [0,pi] and phi in [0,2pi]; evaluate innermost cell and first polar row. Cartesian reference is [0,1]^2. u=0, c=1, CFL=0.8; evaluate 0.4/sum(1/h_d) from DriverUtils.h.",
+    "limits": "Local static metric/CFL calculation, not a hydrodynamic run or a performance measurement.",
+    "rows": [
+      {
+        "geometry": "cartesian2d",
+        "cells_per_active_coordinate": 16,
+        "minimum_physical_spacing": 0.0625,
+        "local_cfl_step": 0.0125
+      },
+      {
+        "geometry": "polar2d",
+        "cells_per_active_coordinate": 16,
+        "minimum_physical_spacing": 0.01227184630308513,
+        "local_cfl_step": 0.004103097258472668
+      },
+      {
+        "geometry": "spherical3d",
+        "cells_per_active_coordinate": 16,
+        "minimum_physical_spacing": 0.0012028512811922947,
+        "local_cfl_step": 0.0003959092156616568
+      },
+      {
+        "geometry": "cartesian2d",
+        "cells_per_active_coordinate": 32,
+        "minimum_physical_spacing": 0.03125,
+        "local_cfl_step": 0.00625
+      },
+      {
+        "geometry": "polar2d",
+        "cells_per_active_coordinate": 32,
+        "minimum_physical_spacing": 0.0030679615757712823,
+        "local_cfl_step": 0.0011174766197132192
+      },
+      {
+        "geometry": "spherical3d",
+        "cells_per_active_coordinate": 32,
+        "minimum_physical_spacing": 0.00015053773944897746,
+        "local_cfl_step": 5.4594456882761366e-05
+      },
+      {
+        "geometry": "cartesian2d",
+        "cells_per_active_coordinate": 64,
+        "minimum_physical_spacing": 0.015625,
+        "local_cfl_step": 0.003125
+      },
+      {
+        "geometry": "polar2d",
+        "cells_per_active_coordinate": 64,
+        "minimum_physical_spacing": 0.0007669903939428206,
+        "local_cfl_step": 0.00029244099385965943
+      },
+      {
+        "geometry": "spherical3d",
+        "cells_per_active_coordinate": 64,
+        "minimum_physical_spacing": 1.882288653262928e-05,
+        "local_cfl_step": 7.168663174945383e-06
+      }
+    ]
+  }
+}

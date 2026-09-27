@@ -1,0 +1,28 @@
+{
+  "compiler": {
+    "o6weights_O1_davis": 27.327657175999775,
+    "o6weights_O3_davis": 26.875655453004583,
+    "o6weights_O3_errno_davis": 26.32278219699947
+  },
+  "default_regression": [
+    "sod",
+    "jeans64",
+    "jeans128",
+    "a",
+    "b",
+    "noburn",
+    "fine",
+    "snia2d",
+    "snia3d"
+  ],
+  "davis_max_temperature_l1": 4.8835433032571305e-09,
+  "cpu_thread_parity": [
+    "a",
+    "b",
+    "noburn",
+    "jeans128",
+    "fine",
+    "snia2d",
+    "snia3d"
+  ]
+}

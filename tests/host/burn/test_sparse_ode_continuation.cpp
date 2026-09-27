@@ -1,3 +1,5 @@
+#include "fixtures/burn/TabularTrialRecovery.h"
+#include "fixtures/eos/FreeEnergyFixture.h"
 /** Focused backend-independent sparse storage and ODE suspension contracts. */
 #include "numerics/linalg/CsrPattern.h"
 #include "numerics/linalg/DenseWrap.h"
@@ -234,9 +236,40 @@ void continuation_contract(bool fail_first)
 }
 } // namespace
 
+template<bool Four>
+void tabular_recovery_contract()
+{
+    SpeciesManager species;
+    species.add_species("a", 2.0, 1.0, 1.4, 1.0);
+    species.add_species("b", 4.0, 2.0, 1.4, 1.0);
+    arch::test::FreeEnergyFixture<Four> fixture(species);
+    for (bool inject : {false, true}) {
+        const arch::test::TabularTrialResult results[]{
+            arch::test::tabular_trial_recovery<Solver_BE_NR>(fixture.host, inject),
+            arch::test::tabular_trial_recovery<Solver_BD>(fixture.host, inject),
+            arch::test::tabular_trial_recovery<Solver_ROS4>(fixture.host, inject)};
+        for (const auto& result : results) {
+            require(result.complete && (!inject || result.rejected)
+                && result.unchanged_temperature && result.species_error < 2e-7,
+                "optional real-table ODE candidate did not reject and recover");
+        }
+    }
+    require(arch::test::tabular_nse_trial_recovery(fixture.host),
+            "NSE thermal line search did not recover from a real table-domain failure");
+    const double x[]{.8,.2};
+    bool required_failed = false;
+    try { fixture.host.get_eint_from_T(1.5, 12.0, x); }
+    catch (const std::runtime_error&) { required_failed = true; }
+    require(required_failed, "required EOS query lost its strict failure");
+    require(std::isfinite(fixture.host.get_eint_from_T(1.5,1.4,x)),
+            "failed candidate poisoned a later valid host query");
+}
+
 int main()
 {
     try {
+        tabular_recovery_contract<false>();
+        tabular_recovery_contract<true>();
         matrix_contract();
         require(DenseLuCases::mixed_units(), "Dense LU lost componentwise mixed-unit accuracy");
         require(DenseLuCases::failure_controls(), "Dense LU accepted a singular/nonfinite matrix");

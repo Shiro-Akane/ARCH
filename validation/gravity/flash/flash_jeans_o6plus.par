@@ -1,0 +1,112 @@
+# O6+ matched 64x64 standing Jeans wave; run from an isolated FLASH directory.
+#  Sample runtime parameter file for the Jeans instability problem.
+
+#  Simulation parameters
+
+run_comment                    =  "2D Jeans instability"
+
+p0                             =  1.5E7
+rho0                           =  1.5E7
+lambdax                        =  0.572055
+lambday                        = 1.e99
+lambdaz                        = 1.e99
+amplitude                      =  0.001
+
+#  Computational domain
+
+xmin                           =  0.
+xmax                           =  1.14411
+ymin                           =  0.
+ymax                           =  1.14411
+zmin                           =  0.
+zmax                           =  1.
+
+ geometry                       = "cartesian"
+
+xl_boundary_type               =  "periodic" 
+xr_boundary_type               =  "periodic"
+yl_boundary_type               =  "periodic"
+yr_boundary_type               =  "periodic"
+zl_boundary_type               =  "periodic"
+zr_boundary_type               =  "periodic"
+
+#  Refinement criteria
+
+nblockx                        =  1
+nblocky                        =  1
+nblockz                        =  1
+lrefine_max                    =  4
+lrefine_min                    =  4
+reference_density              =  1.5E7
+delta_ref                      =  0.01
+delta_deref                    =  -0.01
+refine_var_1                   =  "dens"
+refine_var_2                   =  "none"
+refine_var_3                   =  "none"
+refine_var_4                   =  "none"
+
+
+#  I/O and timestep control
+
+checkpointFileNumber           =  0
+plotFileNumber                 =  0
+basenm                         =  "jeans_"
+log_file                       =  "jeans.log"
+plot_var_1                     = "dens"
+plot_var_2                     = "pres"
+plot_var_3                     = "velx"
+plot_var_4                     = "gpot"
+restart                        =  .false.
+ 
+wall_clock_checkpoint          =  3500.
+tmax                           = 0.1
+dr_shortenLastStepBeforeTmax    = .true.
+nend                           = 1000
+checkpointFileIntervalTime     = 9999.
+checkpointFileIntervalStep     = 1000
+plotFileIntervalTime           = 9999.
+dtinit                         =  1.0E-10
+dtmin                          = 1.e-20
+dtmax                          =  1.0E-2
+
+#  Hydrodynamics
+
+gamma                          =  1.66666666667
+eintSwitch                     =  1.0E-4
+cfl                            =  0.8
+cvisc                          =  0.1
+
+small                          =  1.0E-10 
+smlrho                         =  1.0E-10
+smallp                         =  1.0E-10
+smalle                         =  1.0E-10
+smallt                         =  1.0E-10
+smallu                         =  1.0E-10
+smallx                         =  1.0E-10
+
+#  Gravity
+
+useGravity                     = .TRUE.
+grav_boundary_type             = "periodic"
+mg_maxResidualNorm             = 1.e-10
+
+## -------------------------------------------------------------##
+##  SWITCHES SPECIFIC TO THE UNSPLIT HYDRO SOLVER               ##
+#       I. INTERPOLATION SCHEME:
+order           = 2
+slopeLimiter    = "mc"   # Slope limiters (minmod, mc, vanLeer, hybrid, limited)
+LimitedSlopeBeta= 1.     # Slope parameter for the "limited" slope by Toro
+charLimiting    = .true. # Characteristic limiting vs. Primitive limiting
+use_steepening	= .true. # Contact Steepening for Third order PPM
+
+#       II. RIEMANN SOLVERS:
+RiemannSolver   = "hllc"       # Roe, HLL, HLLC, LF
+EOSforRiemann	= .true.
+entropy		= .false.
+
+#       III. STRONG SHOCK HANDELING SCHEME:
+shockDetect     = .false.     # Shock Detect for numerical stability
+
+#       IV. GRAVITY COUPLING WITH UNSPLIT HYDRO
+use_gravHalfUpdate = .true.
+## -------------------------------------------------------------##

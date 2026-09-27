@@ -90,6 +90,9 @@ Frozen results, failed attempts and signed review records retain their original
 text, inputs and identities. Explain later work in a new record or a maintained
 summary; do not rewrite historical evidence to match a newer implementation.
 
+Use `$...$` for inline mathematics and standalone `$$` lines for display
+mathematics in Markdown. Preview both language pages after changing a formula.
+
 Update English and Chinese user pages together. Preserve commands, parameter
 spelling, units, numerical budgets, compatibility rules and linked heading
 anchors. Check local links after edits. Language-only changes do not establish

@@ -9,7 +9,9 @@
 #include "numerics/linalg/DenseWrap.h"
 #include "core/config/ConfigValidation.h"
 #include "driver/DriverUtils.h"
+#include "driver/schedule/DriverControl.h"
 #include "numerics/diffusion/DiffFlux.h"
+#include "fixtures/hydro/MeanThermoCases.h"
 #include <iostream>
 #include <stdexcept>
 
@@ -41,7 +43,28 @@ template<class Flux> void check_flux(const IdealGasView& eos) {
         compare(f,{0.3,1.09,0,0,0.3*(left.eng+1.0)},scale,"uniform analytic flux");
     }
 }
+void timestep_controls() {
+    SimConfig config; config.io.tmax=1.; config.numerics.dt_max=.125;
+    SimulationController controller(config,{});
+    close(controller.calculate_next_dt(1.,1.),.125,"physical dt cap on first step");
+    controller.advance(.125);
+    close(controller.calculate_next_dt(.25,1.),.125,"physical dt cap on later step");
+    close(controller.dt_old,.125,"cap retained in restart controller state");
+    config.io.plt_dt=.1;
+    SimulationController aligned(config,{});
+    close(aligned.sync_dt(aligned.calculate_next_dt(1.,1.)),.1,"output alignment after cap");
+    const auto identity=arch::config::StateControlIdentity(config);
+    for(int control=0;control<3;++control) {
+        auto changed=config;
+        if(control==0) changed.numerics.dt_max=.2;
+        if(control==1) changed.physics.eos_coulomb_mult=.5;
+        if(control==2) changed.numerics.hll_roe_wave_speed=false;
+        require(identity!=arch::config::StateControlIdentity(changed),"new control missing from restart identity");
+    }
+}
 void leaves() {
+    timestep_controls();
+    require(MeanThermoCases::evaluate(),"shared mean thermodynamic view contract");
     IdealGasView eos;
     check_flux<FluxHLL<PCMReconstruction>>(eos); check_flux<FluxHLLC<PCMReconstruction>>(eos);
     check_flux<FluxRoe<PCMReconstruction>>(eos); check_flux<FluxSW<PCMReconstruction>>(eos);

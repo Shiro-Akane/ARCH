@@ -154,6 +154,8 @@ struct CudaBlockRuntime {
     std::array<DeviceAmrFluxSurfaceStorage, 6> amr_flux_register;
     std::array<DeviceAmrFluxSurfaceStorage, 6> amr_initial_flux;
     DeviceAllocation<double> cfl_candidates;
+    // EOS-derived scratch has no checkpoint/state identity beyond one stage.
+    DeviceAllocation<double> mean_pressure, mean_sound_speed;
     // Refinement indicators still own a separate per-block EOS latch.
     DeviceAllocation<int> cfl_status;
     DeviceAllocation<double> diffusion_dt_candidates;
@@ -286,6 +288,7 @@ struct CudaBackend::Impl {
     ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;
     ReusableDeviceAllocation<DeviceBurnBatchBlock> burn_bindings;
     ReusableDeviceAllocation<DeviceHydroBatchBlock> hydro_bindings;
+    ReusableDeviceAllocation<DeviceHydroDtBatchBlock> hydro_dt_bindings;
     ReusableDeviceAllocation<DeviceBoundaryBatchBlock> boundary_bindings;
     struct ExchangeScratch {
         ReusableDeviceAllocation<DeviceExchangeBlock> blocks;

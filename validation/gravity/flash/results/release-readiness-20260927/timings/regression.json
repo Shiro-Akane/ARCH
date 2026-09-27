@@ -1,0 +1,2545 @@
+{
+  "extra_cpu_science": {
+    "passed": true,
+    "checks": [
+      {
+        "threads": 8,
+        "record": {
+          "case": "snia2d",
+          "backend": "arch",
+          "repeat": 1,
+          "wall_seconds": 4.89803361200029,
+          "exit_code": 0,
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu8_snia2d_arch_1",
+          "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+          "physical_time_seconds": 1.1555193003008242e-11,
+          "resolved_backend": "cpu"
+        },
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 9.707890835783569e-17,
+                "absolute_linf": 7.457856554538012e-10
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "threads": 8,
+        "record": {
+          "case": "snia2d",
+          "backend": "arch",
+          "repeat": 2,
+          "wall_seconds": 4.791290081004263,
+          "exit_code": 0,
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu8_snia2d_arch_2",
+          "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+          "physical_time_seconds": 1.1555193003008242e-11,
+          "resolved_backend": "cpu"
+        },
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu8_snia2d_arch_2",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 9.707890835783569e-17,
+                "absolute_linf": 7.457856554538012e-10
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "threads": 8,
+        "record": {
+          "case": "snia2d",
+          "backend": "arch",
+          "repeat": 3,
+          "wall_seconds": 4.72403062300873,
+          "exit_code": 0,
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu8_snia2d_arch_3",
+          "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+          "physical_time_seconds": 1.1555193003008242e-11,
+          "resolved_backend": "cpu"
+        },
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu8_snia2d_arch_3",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 6.467734283200013e-17,
+                "absolute_linf": 4.968683242623229e-10
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "threads": 16,
+        "record": {
+          "case": "snia2d",
+          "backend": "arch",
+          "repeat": 1,
+          "wall_seconds": 5.162915476001217,
+          "exit_code": 0,
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_1",
+          "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+          "physical_time_seconds": 1.1555193003008242e-11,
+          "resolved_backend": "cpu"
+        },
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 1.2905557373504978e-16,
+                "absolute_linf": 9.914387921750034e-10
+              },
+              "VELY": {
+                "normalized_linf": 1.2904391476834257e-16,
+                "absolute_linf": 9.913492249324918e-10
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "threads": 16,
+        "record": {
+          "case": "snia2d",
+          "backend": "arch",
+          "repeat": 2,
+          "wall_seconds": 5.302479632999166,
+          "exit_code": 0,
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_2",
+          "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+          "physical_time_seconds": 1.1555193003008242e-11,
+          "resolved_backend": "cpu"
+        },
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_2",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 1.2905557373504978e-16,
+                "absolute_linf": 9.914387921750034e-10
+              },
+              "VELY": {
+                "normalized_linf": 6.467086843834061e-17,
+                "absolute_linf": 4.968185862708197e-10
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "threads": 16,
+        "record": {
+          "case": "snia2d",
+          "backend": "arch",
+          "repeat": 3,
+          "wall_seconds": 5.461760288992082,
+          "exit_code": 0,
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_3",
+          "input_fixture": "../../../simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+          "physical_time_seconds": 1.1555193003008242e-11,
+          "resolved_backend": "cpu"
+        },
+        "science": {
+          "reference": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/o6qualified_coupled8_snia2d_arch_1",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "candidate": {
+            "directory": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_cpu16_snia2d_arch_3",
+            "steps": 5,
+            "initial": {
+              "time_seconds": 0.0,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  10000000.0,
+                  10487940.77506783
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.9253436801452571e+24
+                ],
+                "TEMP": [
+                  999999999.9999999,
+                  2951763100.271317
+                ],
+                "ENER": [
+                  1.891857514634868e+24,
+                  4.188809194499221e+24
+                ],
+                "ENUC": [
+                  0.0,
+                  0.0
+                ],
+                "GPOT": [
+                  -0.004048290953388921,
+                  0.0013102812783388445
+                ],
+                "GACX": [
+                  -0.016822675323625566,
+                  0.016968488731002027
+                ],
+                "GACY": [
+                  -0.016822675323625566,
+                  0.016968488731002013
+                ],
+                "c12": [
+                  0.5,
+                  0.5
+                ],
+                "o16": [
+                  0.5,
+                  0.5
+                ]
+              }
+            },
+            "final": {
+              "time_seconds": 1.1555193003008242e-11,
+              "leaves_by_level": {
+                "0": 1,
+                "1": 12
+              },
+              "field_min_max": {
+                "DENS": [
+                  9999999.999973882,
+                  10486942.561075602
+                ],
+                "PRES": [
+                  9.904083939896121e+23,
+                  1.924315096304121e+24
+                ],
+                "TEMP": [
+                  999999999.999999,
+                  2951343982.283996
+                ],
+                "ENER": [
+                  1.8918575146348676e+24,
+                  4.186472005558649e+24
+                ],
+                "ENUC": [
+                  3161951457119.6787,
+                  3.5852090520508345e+22
+                ],
+                "GPOT": [
+                  -0.003988972003997916,
+                  0.0013074637301530734
+                ],
+                "GACX": [
+                  -0.016592911954680836,
+                  0.016742790966574078
+                ],
+                "GACY": [
+                  -0.016592911954680822,
+                  0.016742790966574078
+                ],
+                "c12": [
+                  0.4999977858259017,
+                  0.5
+                ],
+                "o16": [
+                  0.4999999928890618,
+                  0.5000000000000004
+                ]
+              }
+            },
+            "state_repairs": 0,
+            "gravity_solves": 17,
+            "maximum_residual_over_target": 0.26755376975021755,
+            "maximum_iterations": 8,
+            "minimum_diffusion_dt_seconds": 4.01388e-09,
+            "topology_changes": 1
+          },
+          "initial": {
+            "time_seconds": 0.0,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELY": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          },
+          "final": {
+            "time_seconds": 1.1555193003008242e-11,
+            "leaves": 13,
+            "errors": {
+              "DENS": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENER": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "ENUC": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "GACX": {
+                "absolute_linf": 0.0
+              },
+              "GACY": {
+                "absolute_linf": 0.0
+              },
+              "GPOT": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "PRES": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "TEMP": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              },
+              "VELX": {
+                "normalized_linf": 1.291438054133754e-16,
+                "absolute_linf": 9.921166110871127e-10
+              },
+              "VELY": {
+                "normalized_linf": 1.2907351199650043e-16,
+                "absolute_linf": 9.91576598607935e-10
+              },
+              "ar36": {
+                "absolute_linf": 0.0
+              },
+              "c12": {
+                "absolute_linf": 0.0
+              },
+              "ca40": {
+                "absolute_linf": 0.0
+              },
+              "cr48": {
+                "absolute_linf": 0.0
+              },
+              "fe52": {
+                "absolute_linf": 0.0
+              },
+              "he4": {
+                "absolute_linf": 0.0
+              },
+              "mg24": {
+                "absolute_linf": 0.0
+              },
+              "ne20": {
+                "absolute_linf": 0.0
+              },
+              "ni56": {
+                "absolute_linf": 0.0
+              },
+              "o16": {
+                "absolute_linf": 0.0
+              },
+              "s32": {
+                "absolute_linf": 0.0
+              },
+              "si28": {
+                "absolute_linf": 0.0
+              },
+              "ti44": {
+                "absolute_linf": 0.0
+              },
+              "GAC_VECTOR": {
+                "normalized_linf": 0.0,
+                "absolute_linf": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "scope": "single regression screen, not repeated performance claim",
+        "record": {
+          "case": "fine",
+          "backend": "arch",
+          "repeat": 1,
+          "wall_seconds": 29.197051401992212,
+          "exit_code": 0,
+          "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_fine_fine_arch_1",
+          "input_fixture": "arch_cellular_o6plus_dx025.par",
+          "physical_time_seconds": 1.0222428325150896e-08,
+          "resolved_backend": "cpu"
+        },
+        "science": {
+          "same_topology_and_time": true,
+          "checkpoint_errors": {
+            "X": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "eng": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "enuc_rate": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_u": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_v": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "mom_w": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "rho": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            },
+            "rhoX": {
+              "absolute_linf": 0.0,
+              "scaled_linf": 0.0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "fine_single_screen": {
+    "scope": "complete process wall clock; serial runs; actual checkpoint endpoint",
+    "routes": [
+      "arch"
+    ],
+    "route_order": "reverse selected routes on even repeats",
+    "binary_identity": {
+      "arch": {
+        "path": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/ARCH-fixed",
+        "sha256": "947efa12dd641d235ffcbb12ef851a03ef13b2a2b3213fedb4a390bdb1c838c9"
+      }
+    },
+    "mpi_launcher": null,
+    "cpu_threads": 8,
+    "flash_ranks": 8,
+    "cpu_affinity": "0,2,4,6,8,10,12,14",
+    "cuda_affinity": "",
+    "inherited_cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "records": [
+      {
+        "case": "fine",
+        "backend": "arch",
+        "repeat": 1,
+        "wall_seconds": 29.197051401992212,
+        "exit_code": 0,
+        "output": "/home/shiroakane/.codex/worktrees/compute-optim/ARCH/output/release-readiness-20260927/release_fine_fine_arch_1",
+        "input_fixture": "arch_cellular_o6plus_dx025.par",
+        "physical_time_seconds": 1.0222428325150896e-08,
+        "resolved_backend": "cpu"
+      }
+    ],
+    "arch_parameter_overrides": {},
+    "comparison_kind": "original strict fixture"
+  }
+}

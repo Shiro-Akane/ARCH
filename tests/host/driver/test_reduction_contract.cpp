@@ -523,6 +523,7 @@ void characterize_burn()
     config.physics.burn.smallx = 1.0e-20;
     config.physics.burn.enucDtFactor = 0.5;
     ScriptedBurner burner;
+    FluidState batch_first = state, batch_second = state;
     double global_dt = 99.0;
     execute_burn_step(
         state, 2.0, DriverEos{}, burner, grid, config, global_dt);
@@ -531,6 +532,75 @@ void characterize_burn()
                 state.enuc_rate[grid.Is() + 2], 0x4004400000000000ULL);
     expect_bits("production.burn.high.enuc",
                 state.enuc_rate[grid.Is() + 3], 0xc006400000000000ULL);
+    // Two independent patches share one worker team and must retain the
+    // literal single-cell energy/limiter reference above on both patches.
+    const DriverBurn::HostBurnPatch patches[]{
+        {&batch_first, &grid}, {&batch_second, &grid}};
+    double limits[]{99.0, 99.0};
+    DriverBurn::execute_host_burn_batch(patches, 2.0, DriverEos{}, burner, config, limits);
+    for (int patch = 0; patch < 2; ++patch) {
+        expect_bits("production.burn.batch-limit", limits[patch], 0x4006ebdd7baf75efULL);
+        const auto& actual = *patches[patch].state;
+        expect(actual.eng == state.eng && actual.mass_fractions == state.mass_fractions
+            && actual.enuc_rate == state.enuc_rate, "production.burn.batch-state");
+    }
+}
+
+// The counter is observational only; accepted outputs depend on the full key.
+struct CountingBurner {
+    static constexpr bool exact_input_reusable = true;
+    int calls = 0;
+    bool fail_next = false;
+    template<class Eos>
+    bool integrate(double* values, double rho, double dt, const Eos&,
+        const BurnConfig&, double& recommended, double* energy)
+    {
+        ++calls;
+        if (fail_next) { fail_next = false; return false; }
+        *energy = values[0] + 2*values[1] + values[2] + values[3] + rho + dt;
+        recommended = dt / (1+rho);
+        for (int i=0; i<4; ++i) values[i] += (i+1)*dt;
+        return true;
+    }
+};
+
+void verify_burn_memo()
+{
+    DriverBurn::HostBurnMemo memo(4);
+    CountingBurner burner;
+    const BurnConfig controls{};
+    const std::vector<double> input{.75,.25,100.,0.};
+    auto solve = [&](std::vector<double> values, double rho, double dt) {
+        const auto initial = values;
+        double recommended=dt, energy=0;
+        expect(memo.integrate(values,rho,dt,DriverEos{},burner,controls,recommended,energy),
+               "memo.accepted");
+        expect(energy == initial[0]+2*initial[1]+initial[2]+initial[3]+rho+dt
+            && recommended == dt/(1+rho), "memo.complete-output");
+        for(int i=0;i<4;++i) expect(values[i]==initial[i]+(i+1)*dt,"memo.packed-output");
+    };
+    solve(input,2.,.125); solve(input,2.,.125);
+    expect(burner.calls==1,"memo.exact-hit");
+    solve(input,3.,.125); solve(input,3.,.25);
+    expect(burner.calls==3,"memo.rho-interval-key");
+    for(int i=0;i<4;++i) { auto changed=input; changed[i]=std::nextafter(changed[i],1.);
+        solve(changed,2.,.125); }
+    expect(burner.calls==7,"memo.every-packed-bit-key");
+    // More distinct keys than slots force collisions without assuming a hash.
+    for(int round=0;round<2;++round) for(int i=0;i<600;++i) {
+        auto changed=input; changed[3]=i*.125; solve(changed,2.,.125);
+    }
+    auto failed=input; failed[2]=777.; double dt=.125, energy=0;
+    burner.fail_next=true;
+    expect(!memo.integrate(failed,2.,.125,DriverEos{},burner,controls,dt,energy),"memo.failure");
+    const int after_failure=burner.calls;
+    solve(failed,2.,.125);
+    expect(burner.calls==after_failure+1,"memo.failure-not-cached");
+    DriverBurn::HostBurnMemo next_half(4);
+    auto again=input;
+    const int previous=burner.calls;
+    next_half.integrate(again,2.,.125,DriverEos{},burner,controls,dt,energy);
+    expect(burner.calls==previous+1,"memo.no-cross-half-reuse");
 }
 
 void verify_block_minimum_helper()
@@ -584,6 +654,7 @@ int main()
     characterize_hydro();
     characterize_diffusion();
     characterize_burn();
+    verify_burn_memo();
     verify_block_minimum_helper();
     expect(edge_cases == 36, "edge.case.count");
     if (failures == 0) {

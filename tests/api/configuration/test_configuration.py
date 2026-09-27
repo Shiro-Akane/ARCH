@@ -1,6 +1,7 @@
 """Real CPU configuration contract: no Setup, EOS I/O, simulation, or file writes."""
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -47,22 +48,23 @@ class ConfigurationContract(unittest.TestCase):
         keys = set(re.findall(r'parser\.Get(?:Int|Double|String|Bool)\(\s*"([^"]+)"',
                               (ROOT/'src/core/config/RuntimeParams.h').read_text()))
         self.assertEqual(set(specs), keys)
-        self.assertEqual(len(specs), 92)
+        self.assertEqual(len(specs), 95)
         self.assertEqual({p['group'] for p in specs.values()}, {'Grid','EOS','Network','Gravity','Diffusion','Runtime'})
         self.assertEqual(specs['ode_rtol']['defaultValue'], 1e-4)
         self.assertEqual(specs['ode_atol']['defaultValue'], 1e-8)
         self.assertEqual(specs['ode_max_substeps']['defaultValue'], 10000)
-        self.assertEqual(specs['ode_initial_dt_frac']['defaultValue'], .001)
+        self.assertEqual(specs['ode_initial_dt_frac']['defaultValue'], 1.0)
         self.assertNotIn('timeintegrator', specs)
         self.assertEqual(specs['use_nse']['defaultValue'], 'true')
         self.assertEqual(specs['gravity_G']['defaultValue'], 6.67430e-8)
+        self.assertIn('exp(number)', specs['x1_max']['constraints']['syntax'])
         self.assertTrue(any(p['value']=='auto' for p in specs['linear_solver']['options']['choices']))
         self.assertTrue(any(p['value']=='aprox19' for p in specs['network_name']['options']['choices']))
         self.assertIn('self', [choice['value'] for choice in specs['gravity_type']['options']['choices']])
         self.assertEqual(specs['gravity_rtol']['defaultValue'], 1e-10)
         self.assertEqual(specs['gravity_atol']['defaultValue'], 0.0)
         caps = self.run_api(['--preview-capabilities'])
-        self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], 92)
+        self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], 95)
         self.assertEqual(caps['cases'], ['Sod'])
 
     def test_defaults_and_explicit_values_with_no_eos_or_device_access(self):
@@ -82,7 +84,30 @@ class ConfigurationContract(unittest.TestCase):
         self.assertEqual(result['unitSystem'], 'cgs')
         empty = self.inspect()
         self.assertEqual(empty['resolved']['dimension'], 3)
-        self.assertEqual(len(empty['parameters']), 92)
+        self.assertEqual(len(empty['parameters']), 95)
+
+    def test_explicit_eos_face_and_time_controls(self):
+        result = self.inspect('solver=hLlC\neos_type=HeLmHoLtZ\neos_coulomb_mult=0.5\n'
+                              'hll_wave_speed=DaViS\ndt_max=1e-9\n')
+        values = {p['key']: p for p in result['parameters']}
+        for key, expected in [('eos_coulomb_mult', .5), ('dt_max', 1e-9)]:
+            self.assertEqual(values[key]['parsedValue'], expected)
+            self.assertTrue(values[key]['applicable'])
+        schema = {p['key']: p for p in self.run_api(['--config-schema'])['parameters']}
+        self.assertEqual(schema['eos_coulomb_mult']['group'], 'EOS')
+        self.assertEqual(values['dt_max']['units']['unit'], 's')
+        for text, key in [
+            ('eos_coulomb_mult=-0.1', 'eos_coulomb_mult'),
+            ('eos_coulomb_mult=1.1', 'eos_coulomb_mult'),
+            ('eos_coulomb_mult=nan', 'eos_coulomb_mult'),
+            ('eos_type=ideal\neos_coulomb_mult=0', 'eos_coulomb_mult'),
+            ('dt_max=0', 'dt_max'), ('dt_max=-2', 'dt_max'),
+            ('dt_max=1e-30', 'dt_max'),
+            ('hll_wave_speed=guess', 'hll_wave_speed'),
+            ('solver=Roe\nhll_wave_speed=davis', 'hll_wave_speed')]:
+            with self.subTest(text=text):
+                bad = self.inspect(text+'\n', 3)
+                self.assertTrue(any(d.get('parameterKey') == key for d in bad['diagnostics']))
 
     def test_integer_tokens_reject_fractions_suffixes_and_overflow(self):
         for token in ['1.5','1.0','1e2','12suffix','2147483648','-2147483649','+-1','', 'nan']:
@@ -100,7 +125,9 @@ class ConfigurationContract(unittest.TestCase):
             with self.subTest(token=token):
                 out = self.inspect(f'ode_rtol={token}', 3)
                 self.assertTrue(any(d['parameterKey']=='ode_rtol' for d in out['diagnostics']))
-        for token in ['pi/0','2*pi*garbage','garbage','1.0suffix','pi*1e999']:
+        for token in ['pi/0','2*pi*garbage','garbage','1.0suffix','pi*1e999',
+                      'E','e','exp()','exp(pi)','exp(1000)','exp(1)junk',
+                      '2*exp(1)','sin(0)','cos(0)','log(10)']:
             with self.subTest(token=token):
                 out = self.inspect(f'x1_max={token}', 3)
                 self.assertTrue(any(d['parameterKey']=='x1_max' for d in out['diagnostics']))
@@ -108,6 +135,12 @@ class ConfigurationContract(unittest.TestCase):
         p = {p['key']:p for p in result['parameters']}
         self.assertAlmostEqual(p['x1_max']['parsedValue'], 6.283185307179586)
         self.assertFalse(p['use_diffusion']['parsedValue'])
+        result = self.inspect('x1_max=exp(1)\nx2_max=exp(-2)\n')
+        p = {p['key']:p for p in result['parameters']}
+        self.assertAlmostEqual(p['x1_max']['parsedValue'], math.e)
+        self.assertAlmostEqual(p['x2_max']['parsedValue'], math.exp(-2))
+        bad = self.inspect('dt_max=exp(1)', code=3)
+        self.assertTrue(any(d['parameterKey']=='dt_max' for d in bad['diagnostics']))
 
     def test_physical_ranges_and_cross_parameter_bounds(self):
         invalid = {

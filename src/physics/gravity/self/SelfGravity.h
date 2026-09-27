@@ -28,6 +28,7 @@ public:
     void bind(amr::EllipticMeshBinding binding) const;
     arch::state::CompletionToken prepare(const GravitySolveRequest&) const;
     void invalidate() const noexcept;
+    void clear_solver_initial_guess() const noexcept;
     void set_execution(std::shared_ptr<GravityExecution>) const;
     GravityPatchView patch_view(std::size_t block) const;
     std::size_t cell_count() const;

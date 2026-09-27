@@ -18,6 +18,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -66,10 +67,12 @@ struct NumericsConfig
     std::string time_integrator = "RK2"; ///< "RK2","RK3"
 
     double dt_init = 1e-16; ///< Initial burning macro-step cap, s.
+    double dt_max = -1.0; ///< Optional macro-step cap, s; -1 means unlimited.
+    bool hll_roe_wave_speed = true; ///< HLL/HLLC Roe-Glaister speeds; false selects Davis endpoints.
     double dt_min = 1e-20; ///< Minimum accepted macro step, s.
     double tstep_change_factor = 1.2; ///< Maximum macro-step growth factor.
 
-    double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL < 1).
+    double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL <= 1).
 
     double entropy_fix_coeff = 0.1; ///< Roe entropy-fix width relative to the local sound speed.
 
@@ -103,7 +106,9 @@ struct OdeConfig
     double dt_safe_factor = 0.9;    ///< Safety factor for adaptive time-stepping
     double dt_fac_max = 2.0;        ///< Maximum factor to increase dt
     double dt_fac_min = 0.1;        ///< Minimum factor to decrease dt
-    double initial_dt_frac = 1e-3; ///< Initial fraction of the global time step for the first ODE sub-step
+    // Try the full requested interval first; each stiff integrator must still
+    // reject inaccurate trials and reduce its internal step before acceptance.
+    double initial_dt_frac = 1.0; ///< Initial fraction of the first ODE trial interval
 
 };
 
@@ -281,6 +286,7 @@ struct PhysicsConfig
     std::string eos_type = "ideal";  ///< Equation of state: ideal, tabular, or helmholtz.
     std::string eos_table_path = ""; ///< Selected EOS source table.
     std::string eos_helm_table_path = ""; ///< Optional electron-completion dependency; empty selects bundled data.
+    double eos_coulomb_mult = 1.0; ///< Helm ion Coulomb correction fraction [0,1].
     double gamma = 1.4;              ///< Default adiabatic index
 
     GravityConfig gravity;
@@ -413,6 +419,8 @@ struct SimConfig
         else
         {
             auto it = custom_params.find(key);
+            if (it == custom_params.end() && custom_string_params.contains(key))
+                throw std::invalid_argument("Custom parameter '" + key + "' is not a complete numeric value.");
             if (parameter_reads && it != custom_params.end())
                 parameter_reads->validate_numeric<T>(key, it->second);
             if (parameter_reads)

@@ -6,6 +6,7 @@ shared driver. Choose a directory by responsibility:
 | Directory | Responsibility |
 | --- | --- |
 | [core](core/README.md) | Configuration, case registration and portability helpers |
+| [api](api/README.md) | Configuration schema, inspection and bounded CPU preview for GUI clients |
 | [interface](interface/README.md) | Problem setup and initialization contracts |
 | [data](data/README.md) | State records and configuration types |
 | [grid](grid/README.md) | Grid layout and shared physical geometry |

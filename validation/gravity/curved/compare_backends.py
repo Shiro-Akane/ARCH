@@ -50,14 +50,19 @@ def ordered_fields(path):
         }
 
 
+def physical_times_agree(left, right):
+    """Apply the existing coupled-run endpoint budget without changing it."""
+    scale = max(abs(left), abs(right), 1e-30)
+    return abs(left - right) <= max(1e-20, 2e-10 * scale)
+
+
 def compare_plot(cpu_path, cuda_path, label):
     """Check topology, physical time, finite fields, and fixed parity budgets."""
     cpu = ordered_fields(cpu_path)
     gpu = ordered_fields(cuda_path)
     if cpu["dimension"] != gpu["dimension"] or cpu["leaf_keys"] != gpu["leaf_keys"]:
         raise ValueError(f"{label}: CPU/CUDA AMR topology differs")
-    scale = max(abs(cpu["time"]), abs(gpu["time"]), 1e-30)
-    if abs(cpu["time"] - gpu["time"]) > max(1e-20, 2e-10 * scale):
+    if not physical_times_agree(cpu["time"], gpu["time"]):
         raise ValueError(f"{label}: CPU/CUDA physical time differs")
     if cpu["fields"].keys() != gpu["fields"].keys():
         raise ValueError(f"{label}: CPU/CUDA plot fields differ")

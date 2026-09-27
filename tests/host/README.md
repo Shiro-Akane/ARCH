@@ -11,7 +11,7 @@ names and feature conditions.
 - Checkpoint checks use the common HDF5 reader and host restoration entry point.
 - Burn, EOS and linear-solver tests use production policies and the reference
   data in [fixtures/](../fixtures/README.md).
-- [Poisson/MG](gravity/test_poisson_multigrid.cpp) checks the standalone P2
+- [Poisson/MG](gravity/test_poisson_multigrid.cpp) checks the standalone
   CPU solver against discrete Fourier and continuum analytic solutions,
   including boundary force order, CGS scale invariance and rejected inputs.
   The production route is covered separately by the composite operator,

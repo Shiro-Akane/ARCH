@@ -3,11 +3,13 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-The [P2 CPU Poisson record](results/p2-20260922/README.md) covers the standalone
-uniform-grid field solver: periodic/Dirichlet analytic convergence, weak density
-contrast, CGS scale invariance and failure handling. That P2 record alone does not establish the later production or GPU route.
-Its fixed numerical decisions are recorded in the
-[P2 contract](../../docs/development/P2PoissonMultigrid.zh-CN.md).
+This module covers prescribed external forces and density-driven self gravity.
+The [self-gravity domain reference](../../docs/Reference.md#self-gravity-domains)
+defines the supported geometries and boundary conditions. The
+[standalone CPU field record](results/p2-20260922/README.md) covers uniform-grid
+periodic/Dirichlet convergence and solver failure handling; its
+[discretization record](../../docs/development/P2PoissonMultigrid.zh-CN.md)
+preserves the original budgets. Production AMR and device evidence are linked below.
 
 ## Constant external gravity
 
@@ -20,9 +22,9 @@ Each detailed record identifies its tested source, executable and inputs.
 The [validation overview](../README.md) brings together the module results.
 
 CPU and CUDA use the same external-gravity stage operator. Verification starts
-from a periodic state with \(\rho=1\), \(p=1\), \(u=0\) and constant \(g_x=1\).
-At \(t=0.1\), the exact solution has \(u=g_xt=0.1\), unchanged density and
-pressure, and \(E=p/(\gamma-1)+\rho u^2/2\). Gravity supplies momentum and
+from a periodic state with $\rho=1$, $p=1$, $u=0$ and constant $g_x=1$.
+At $t=0.1$, the exact solution has $u=g_xt=0.1$, unchanged density and
+pressure, and $E=p/(\gamma-1)+\rho u^2/2$. Gravity supplies momentum and
 energy; their changes are checked against this analytic solution, while mass
 and passive species are conserved.
 
@@ -141,14 +143,14 @@ periodic 1D–3D and isolated 3D domains. Tested isolated spherical/cylindrical
 origin, axis and pole joins, also run on both backends. Hydro, burning and
 thermal-diffusion combinations have been checked. CPU manufactured solutions,
 independent boundary and Gauss checks, AMR coupling and restart are recorded in
-the [P11/P12 record](results/p11-p12-20260923/README.md); CUDA analytic radial
+the [curved-coordinate CPU record](results/p11-p12-20260923/README.md); CUDA analytic radial
 checks, same-input curved four-module parity, bidirectional restart and local
-performance are in the [P13 record](results/p13-20260924/README.md). Partial
+performance are in the [curved-coordinate CUDA record](results/p13-20260924/README.md). Partial
 azimuth domains, external mass and a Jeans-specific refinement indicator remain
 unsupported for self-gravity. Start with [GravityBox](../../simulation/GravityBox/README.md)
-for reusable inputs. The [P5–P7 acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
-records numerical, coupling, restart and device checks. The [P8–P10 1D radial record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The earlier
-[P3/P4 record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
+for reusable inputs. The [Cartesian gravity acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
+records numerical, coupling, restart and device checks. The [radial field and AMR record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The
+[earlier periodic solver record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
 periodic scope.
 
 `run_self_gravity.py --arch <ARCH> --output <new directory>` checks Jeans waves,
@@ -162,9 +164,9 @@ qualifies actual device gravity; `--benchmark-only` measures representative loca
 The [2D/3D four-module example](../../simulation/SNIaCoupled/README.md)
 checks Hydro/self-gravity/burn/thermal-diffusion execution with AMR. Its original
 [Cartesian CPU/CUDA smoke record](results/snia2d-20260923/README.md),
-[P11/P12 CPU curved record](results/p11-p12-20260923/README.md) and
-[P13 curved CUDA record](results/p13-20260924/README.md) do not constitute
-analytic SN Ia validation. The P11/P12 record also reports a controlled comparison
+[curved-coordinate CPU record](results/p11-p12-20260923/README.md) and
+[curved-coordinate CUDA record](results/p13-20260924/README.md) do not constitute
+analytic SN Ia validation. The curved-coordinate CPU record also reports a controlled comparison
 against the user-provided FLASH 4.8 archive's Cellular case in 2D and 3D matched controls.
 The archive contains local initialization extensions. The current
 [comparison assessment](flash/O5OptimizationReport.zh-CN.md) records its
