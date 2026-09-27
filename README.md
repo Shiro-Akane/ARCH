@@ -105,23 +105,66 @@ The [documentation index](docs/README.md) organizes learning, configuration, val
 
 ## Repository map
 
+The [source guide](src/README.md) explains module ownership and entry points. This map shows where to look first; the [contributor guide](docs/development/README.md) covers interfaces and review work.
+
 ```text
 ARCH/
-├── simulation/  # runnable cases and example inputs
-├── src/         # fluid, physics, numerics and backends
-├── EOS_toolkit/ # runtime table data
-├── docs/        # guides, feature list and reference
-├── validation/  # scientific checks and results
-├── tests/       # regression tests
-├── tools/       # build and validation utilities
-└── cmake/       # build configuration
+├── include/                 # Two public headers for user cases
+├── simulation/              # Runnable cases and example inputs
+├── src/
+│   ├── api/                 # Configuration inspection and CPU preview for GUI clients
+│   ├── core/                # Parameter definitions, parsing and case registration
+│   ├── interface/           # Case setup and initial-state adapters
+│   ├── data/                # Field, state and configuration records
+│   ├── grid/                # Coordinates and finite-volume geometry
+│   ├── amr/                 # Mesh hierarchy, transfers, exchange and reflux
+│   ├── driver/              # Runtime selection, stage schedule and state lifetime
+│   ├── cuda/                # Device storage, kernels and backend adapters
+│   ├── numerics/            # Shared numerical algorithms
+│   │   ├── flux/            # Riemann and flux-splitting policies
+│   │   ├── reconstruction/  # Face states and slope limiting
+│   │   ├── integrator/      # Fluid time integration
+│   │   ├── diffusion/       # Diffusion operators and RKL stepping
+│   │   ├── burnsolver/      # Reaction-network ODE integration
+│   │   ├── linalg/          # Linear-system views and solvers
+│   │   ├── elliptic/        # Poisson operators and boundary discretization
+│   │   ├── multigrid/       # Multigrid levels, transfers and cycles
+│   │   └── state/           # State admissibility checks
+│   ├── physics/             # Shared physical models and material data
+│   │   ├── eos/             # Thermodynamic closures and table readers
+│   │   ├── gravity/         # External and self-gravity physics
+│   │   ├── network/         # Built-in and generated reaction networks
+│   │   ├── nse/             # Nuclear statistical equilibrium
+│   │   ├── species/         # Composition and mixture properties
+│   │   ├── diffusionCoe/    # Transport coefficients
+│   │   ├── constant/        # Physical constants and units
+│   │   └── diagnostics/     # Derived physical diagnostics
+│   ├── io/                  # Logs, HDF5 plots and checkpoints
+│   └── main.cpp             # Application entry point
+├── EOS_toolkit/             # Runtime EOS tables
+├── docs/                    # Guides, feature list and reference
+├── validation/              # Scientific checks and recorded results
+├── tests/                   # Regression tests
+├── tools/                   # Build and validation utilities
+└── cmake/                   # Build configuration
 ```
-
-Browse the [source map](src/README.md) for module entry points.
 
 ## Numerical scope
 
 Coupled calculations inherit the temporal and physical limits of their fluid, burning, diffusion and gravity components. The [reference](docs/Reference.md) explains combination rules, state repairs and conservation diagnostics; the [validation index](validation/README.md) identifies tested inputs and errors.
+
+## Development roadmap
+
+These proposed directions extend the [current feature set](docs/Features.md). A question mark marks an open design; arrows show planning order rather than a software dependency.
+
+```text
+Physics:  Gravity model extensions? → MHD? → { BSSN? | Z4c? }
+Software: MPI → GNN? → { FP32/FP64 selection? | RT-core acceleration? }
+```
+
+Self-gravity already covers the validated domains listed in the [feature list](docs/Features.md#self-gravity-domains); external mass sources remain a possible extension. MHD would add magnetic fields to the fluid model. BSSN and Z4c are candidate formulations for evolving spacetime.
+
+MPI would distribute calculations across processes and machines. Later exploration may consider graph neural networks, selectable floating-point precision, and GPU ray-tracing hardware where it fits an algorithm. Numerical accuracy, performance, memory use, build efficiency and documentation remain ongoing work alongside these proposals.
 
 ## License
 

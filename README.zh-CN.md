@@ -99,23 +99,66 @@ SodBeginner_chk_0000.h5
 
 ## 仓库结构
 
+[源码导览](src/README.md)说明模块职责和入口。本图方便首次定位；接口与审阅规则见[开发者指南](docs/development/README.md)。
+
 ```text
 ARCH/
-├── simulation/  # 可运行算例与示例输入
-├── src/         # 流体、物理、数值方法和后端实现
-├── EOS_toolkit/ # 运行时表数据
-├── docs/        # 指南、功能清单和参考手册
-├── validation/  # 科学验证与结果
-├── tests/       # 回归测试
-├── tools/       # 构建和验证工具
-└── cmake/       # 构建配置
+├── include/                 # 用户算例所需的两个公开头文件
+├── simulation/              # 可运行算例与示例输入
+├── src/
+│   ├── api/                 # GUI 所用配置检查与 CPU 预览接口
+│   ├── core/                # 参数定义、解析与算例注册
+│   ├── interface/           # 算例设置和初态适配
+│   ├── data/                # 场、状态与配置数据类型
+│   ├── grid/                # 坐标与有限体积几何
+│   ├── amr/                 # 网格层次、迁移、交换与通量修正
+│   ├── driver/              # 运行时选择、阶段调度和状态生命周期
+│   ├── cuda/                # 设备存储、计算核与后端适配
+│   ├── numerics/            # 共用数值方法
+│   │   ├── flux/            # Riemann 与通量分裂策略
+│   │   ├── reconstruction/  # 面状态与斜率限制
+│   │   ├── integrator/      # 流体时间推进
+│   │   ├── diffusion/       # 扩散算子与 RKL 推进
+│   │   ├── burnsolver/      # 反应网络 ODE 积分
+│   │   ├── linalg/          # 线性系统视图与求解器
+│   │   ├── elliptic/        # 泊松算子与边界离散
+│   │   ├── multigrid/       # 多重网格层次、迁移与循环
+│   │   └── state/           # 状态可接受性检查
+│   ├── physics/             # 共用物理模型与材料数据
+│   │   ├── eos/             # 热力学闭合与表格读取
+│   │   ├── gravity/         # 外部引力与自引力物理
+│   │   ├── network/         # 内置与生成的反应网络
+│   │   ├── nse/             # 核统计平衡
+│   │   ├── species/         # 组分与混合物性质
+│   │   ├── diffusionCoe/    # 输运系数
+│   │   ├── constant/        # 物理常数与单位
+│   │   └── diagnostics/     # 派生物理诊断
+│   ├── io/                  # 日志、HDF5 场输出与检查点
+│   └── main.cpp             # 程序入口
+├── EOS_toolkit/             # 运行时 EOS 表
+├── docs/                    # 指南、功能清单和参考手册
+├── validation/              # 科学验证与结果
+├── tests/                   # 回归测试
+├── tools/                   # 构建和验证工具
+└── cmake/                   # 构建配置
 ```
-
-模块入口见[源码导览](src/README.md)。
 
 ## 数值适用范围
 
 耦合计算同时受流体、燃烧、扩散与自引力各自的时间精度和物理模型限制。具体的组合条件、状态修复与守恒诊断见[参考手册](docs/Reference.zh-CN.md)；受测配置及误差见[验证索引](validation/README.zh-CN.md)。
+
+## 后续开发方向
+
+下面是[现行功能](docs/Features.zh-CN.md)之外的候选路线。问号表示设计范围仍可调整；箭头表示规划顺序，不表示软件依赖。
+
+```text
+物理：引力模型扩展? → MHD? → { BSSN? | Z4c? }
+软件：MPI → GNN? → { FP32/FP64 切换? | RT Core 加速? }
+```
+
+自引力已覆盖[功能清单中的受测计算域](docs/Features.zh-CN.md#自引力计算域)；域外质量源仍是可能的扩展。磁流体力学（MHD）会把磁场加入流体模型。BSSN 和 Z4c 是未来时空演化的候选形式。
+
+MPI 用于将计算分配到多个进程和机器。后续探索还可能包括图神经网络（GNN）、浮点精度选择，以及在适合的算法中使用 GPU 光线追踪核心（RT Core）。数值精度、性能、内存、编译效率和文档也会随项目持续改进。
 
 ## 许可证
 
