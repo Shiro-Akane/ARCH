@@ -3,8 +3,9 @@
 These CGS inputs run the existing `SNIaCoupled` and `GravityBox` cases from the
 repository root. They exercise full-azimuth, isolated self-gravity through the
 coordinate origin, axis, and poles; singular fluid faces are reflecting.
-P12 established the CPU field and coupled baselines. P13 executes the same
-physical configurations on CUDA and compares actual GPU/CPU fields and AMR.
+The CPU field and coupled baselines are accompanied by same-input CUDA
+comparisons of physical fields and AMR. Filenames retain the identifiers used in
+the recorded runs so their inputs can be traced directly.
 
 | Input | Case | Purpose |
 | --- | --- | --- |
@@ -22,7 +23,7 @@ For example:
 ./build-ci/cpu/bin/ARCH SNIaCoupled validation/gravity/curved/inputs/p12_polar_origin.par
 ```
 
-The [P11/P12 acceptance](../../results/p11-p12-20260923/README.md) distinguishes
+The [curved-coordinate CPU acceptance](../../results/p11-p12-20260923/README.md) distinguishes
 manufactured field accuracy, short coupled runs, long evolution, restart and
-regridding checks. The [P13 record](../../results/p13-20260924/README.md) adds device parity and performance. These
+regridding checks. The [curved-coordinate CUDA record](../../results/p13-20260924/README.md) adds device parity and performance. These
 inputs do not model a complete white dwarf.

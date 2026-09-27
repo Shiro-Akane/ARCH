@@ -9,8 +9,8 @@
 | 本轮范围 | 执行 N0–N5：状态/数值修复、旧实现退役、配置验证、CPU/CUDA 验收和封包；不启用 self |
 | 目的 | 消除合法低值被静默忽略、异常状态被静默掩盖、绝对阈值破坏尺度一致性等问题，为科研算例和后续自引力提供可复核基线 |
 
-与[自引力主计划](SelfGravityImplementationPlan.zh-CN.md)、
-[实现归属](ImplementationOwnership.md)、[测试指南](../../tests/README.md)一起使用。
+与[自引力主计划](../../SelfGravityImplementationPlan.zh-CN.md)、
+[实现归属](../../ImplementationOwnership.md)、[测试指南](../../../../tests/README.md)一起使用。
 P1 的历史验收继续成立，但不能覆盖本计划将改变的数值行为。
 本计划的子阶段和测试编号用于实施追踪，不要求为每个编号创建文件。
 
@@ -127,8 +127,8 @@ Riemann 分母、斜率退化、矩阵主元、Newton 进展等由各方法所�
 
 本次参数审查重点是物理含义和配置权威，不全面重整 ODE 控制器或罗列所有算法小常数。
 已核对链路为 `StandardParameters` → `RuntimeParams` → `SimConfig` → Setup/dispatch → 实际物理消费者，
-并对照配置 API、[当前参数参考](../Reference.zh-CN.md)及
-[GUI/Core 审查](../../src/api/STUDIO_UI_REVIEW_2026-09-20.zh-CN.md)。以下是静态检查，不是新的运行验证。
+并对照配置 API、[当前参数参考](../../../Reference.zh-CN.md)及
+[GUI/Core 审查](../../../../src/api/STUDIO_UI_REVIEW_2026-09-20.zh-CN.md)。以下是静态检查，不是新的运行验证。
 标准参数表已供解析和 API 复用；应在此基础上补缺口，不能再建第三套注册/默认值系统。
 
 | 编号 | 现有内容及证据位置（以 `src/` 为根） | 计划处理 |
@@ -381,4 +381,4 @@ P4 的推荐方向是与 Hydro 质量通量一致的引力功，并冻结 RK 阶
 - [x] N5 CUDA 验收、支持矩阵与源码/证据封包：129/129 CTest、72 个 GPU 实际推进及 CPU 对照、16 次 sanitizer 检查。
 - [ ] 前置门槛通过后进入 P2；self 生产 capability 仍待 P4 对应组合通过。
 
-当前实施与证据范围见 [P1.5 实施记录](P1_5ImplementationReport.zh-CN.md)。正文中的问题清点保留原审计时点，不能作为当前代码仍含旧实现的结论。
+当前实施与证据范围见 [P1.5 实施记录](ImplementationReport.zh-CN.md)。正文中的问题清点保留原审计时点，不能作为当前代码仍含旧实现的结论。

@@ -62,7 +62,7 @@ ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩
 | 维度 | 正的 `nblockx1`；尾部 block 数可为零 | 支持 | `nblockx2=0,nblockx3=0` 为 1D；`nblockx3=0` 为 2D。 |
 | 几何 | `cartesian`、`cylindrical`、`spherical` | CPU 与 CUDA 均支持 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项。 |
 | AMR | `lrefinemax >= 0` | CPU 与 CUDA 均支持 | 每个活动维固定 16 个单元的 block 尺寸。topology/Morton 决策留在 Host；指标、守恒 migration、ghost 与 reflux 在 device 调用共用数值叶子。 |
-| 自重力 | `gravity_type = self` | CPU、CUDA | 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU/CUDA 一维球/柱对称及受测完整方位角二维极坐标、三维柱/球坐标 isolated 与复合 AMR 已完成验收，包含原点、轴线和极点。Euler/RK2/RK3、Cartesian 燃烧/热扩散耦合及受测曲线坐标 RK2 四模块运行已验收。见 [GravityBox](../simulation/GravityBox/README.md) 与 [P5–P7 验收](development/P5P7GravityAcceptance.zh-CN.md)。 |
+| 自重力 | `gravity_type = self` | CPU、CUDA | 周期笛卡尔、孤立三维笛卡尔，以及受测径向和完整方位角曲线坐标域；具体条件见[自引力计算域](#自引力计算域)。 |
 | Jeans 场 | `JENS` | 预留 | 解析器警告并关闭。 |
 
 CUDA 已实现笛卡尔、柱坐标和球坐标下的一维、二维与三维流体计算，提供已注册的通量、重构和时间推进路径，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
@@ -86,12 +86,26 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 流体时间推进 | `Euler`、`RK1`；`RK2`、`SSPRK2`；`RK3`、`SSPRK3` | Euler、SSPRK2、SSPRK3 |
 | 扩散时间推进 | `RKL2`（默认）、`RKL1` | 独立扩散算子中 RKL2 为二阶；RKL1 是可选一阶方法 |
 | EOS | `ideal`、`tabular`、`helmholtz` | CPU 与 CUDA 均已 dispatch |
-| 重力 | `none`、`external`、`self` | self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU/CUDA 一维球/柱及受测完整方位角二维极坐标、三维柱/球坐标 isolated 已验收，奇点流体面须 reflecting |
+| 重力 | `none`、`external`、`self` | 自引力域与流体边界条件见[自引力计算域](#自引力计算域) |
 | 网络 | `aprox13`、`aprox19`、`aprox21`、`iso7`；`custom:<id>` | 内置网络及 CMake 自动发现的生成网络 |
 | 燃烧 ODE | `BE_NR`、`ROS4`、`BD` | 均已 dispatch，并由单区 CPU 回归覆盖 |
 | 线性求解 | `Auto`、`DenseLU`、`SparseKLU`、`cuDSS` | 不区分大小写；接受 `dense_lu`、`sparse_klu`、`cu_dss` 别名。`Auto` 对不超过 31 个总 ODE 方程选择 DenseLU，计数包含温度及可选辅助能量状态。更大系统在 CPU 上使用 SparseKLU，在 CUDA 上使用 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA；不兼容的显式组合会在后端构造前报错，不替换求解器。缺少求解库或已注册的 CUDA 网络执行代码时也会明确报错。 |
 
-策略名称按 ASCII 大小写不敏感；但不同 dispatcher 接受的 alias 与 fallback 行为仍不一致。
+策略名称按 ASCII 大小写不敏感；不同 dispatcher 接受的 alias 与 fallback 行为仍须按上表核对。
+
+### 自引力计算域
+
+外部重力由参数给出加速度；自引力在流体 RK 阶段用当前密度求解复合 AMR 泊松场，输出势与加速度。CPU/CUDA 对下列几何使用共用数学。
+
+| 几何 | 引力边界 | 流体边界与网格条件 |
+| --- | --- | --- |
+| 笛卡尔一至三维 | `periodic` | 所有活动轴的流体面周期；泊松方程去除体积平均密度 |
+| 笛卡尔三维 | `isolated` | 物理流体面可流出或反射；引力由有限质量分布设边界 |
+| 柱／球坐标一维径向 | `isolated` | 半径非负，径向内流体面反射 |
+| 柱／球坐标二维极坐标 `(r,phi)` | `isolated` | 方位角覆盖完整一周且流体面周期，径向内面反射 |
+| 三维柱 `(r,z,phi)`／球 `(r,theta,phi)` | `isolated` | 完整方位角；径向内面及受测轴线／极点奇点面反射 |
+
+所有自引力域的根网格各轴单元数须为二的幂，根网格间距比不超过 2，AMR 叶子保持 2:1 平衡。`gravity_boundary` 应与流体面拓扑匹配；曲线坐标使用孤立引力边界。周期势只由密度偏离体积平均值的部分驱动；孤立势不减去密度背景。二维极坐标孤立势采用单位轴向长度质量的对数核。误差控制见[引力参数](#eos-与重力)，受测轨迹见[引力验证](../validation/gravity/README.zh-CN.md)。
 
 ### 方法与物理模块的组合
 
@@ -114,7 +128,7 @@ aprox13、DenseLU、热传导及关闭 NSE 的配置做了 CPU/CUDA 检查。Car
 | Tabular＋热扩散 | 不支持自动恒星热传导；需要选择有物理依据的正 `alpha_therm`，或关闭热扩散。 |
 | 燃烧＋NSE | 网络必须提供所声明的平衡模型；生成动力学网络不自动获得 NSE 能力。 |
 | 燃烧＋后端 | DenseLU 最多 31 个总 ODE 方程；KLU 仅 CPU，cuDSS 仅 CUDA 且为可选依赖。生成 CUDA 网络须通过设备数学包契约。这些求解器与引力 MG 分开。 |
-| 自引力＋计算域 | Cartesian 一至三维全周期或三维 isolated；曲线 isolated 遵循“已知限制”中的径向、完整方位角及奇点面规则。MG 要求根网格单元数为二的幂。 |
+| 自引力＋计算域 | 网格与流体面须满足[自引力计算域](#自引力计算域)；复合 MG 在受测 AMR 配置下运行。 |
 | 重构／时间推进＋AMR | PPM 在粗细面使用 MUSCL-MinMod；RK3 不会使分裂多物理整体达到三阶，RKL1 和 BE_NR 还有各自的精度限制。 |
 
 能力查询成功或单策略设备测试通过，只说明路径已注册，不能证明耦合物理精度。
@@ -177,17 +191,11 @@ B(dt/2) -> D(dt/2) -> H(dt) -> D(dt/2) -> B(dt/2)
 - 2:1 粗细界面处，ARCH 使用 `AMRInterfaceReconstruction.h` 中的二阶 MUSCL-MinMod 面重构。
 - 激波收敛使用相应范数和激波问题阶数；间断会降低局部阶数。
 
-### 会改变守恒性的保护机制
+### 低密度状态与修复记账
 
-接受阶段共用状态恢复和校验。正且可解析的低密度状态使用 `sml_rho` 兜底，保持速度和组分；
-`min_eint` 可补足正比内能。`max_eint` 是拒绝上界，不作静默截断。零/负密度、非有限量、
-无法从总能量中解析的热能及无效组成明确失败。已移除固定速度上限和全零组分的均匀混合回退。
+正且可解析的密度低于 `sml_rho` 时，状态恢复保持速度与组分并施加正值下限。`min_eint` 对正且可解析的比内能提供下限；超过 `max_eint` 的状态直接失败。零/负密度、非有限量、无法解析的热能及无效组成同样失败。用于低密度研究时，应将 `sml_rho` 设在预期解的密度范围以下。
 
-修复贡献按体积与 RK 权重记账，输出到 `state_repairs.txt` 并随格式 6 检查点保存。
-低密度研究应把已有 `sml_rho` 设置到目标解范围以下；叶函数不以此关闭力、CFL 或通量。
-压力不设另一套绝对 floor；重构与共享面通量使用保守限制，reflux 后再次检查状态。
-这些措施不构成任意 AMR/源项/表格 EOS 组合的全局正性证明。
-详见 [P1.5 实施记录](development/P1_5ImplementationReport.zh-CN.md)。
+接受的修复按物理体积和 RK 权重累计守恒量改变量，写入 `state_repairs.txt` 并随检查点保存。计算叶子仍使用实际的正密度推进力、CFL 和通量；重构与共享面通量采用保守限制，AMR 通量修正后再次检查状态。压力有效性由所选 EOS 判定。可复现的解析与近真空检查见[低密度验证](../validation/low_density/README.md)。
 
 ### 构建复现性与编译期妥协
 
@@ -234,7 +242,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 ./bin/ARCH <ProblemType> <ParFile>
 ```
 
-可执行程序接受这两个位置参数。目前没有 list、dry-run、参数覆盖、schema dump 或 validation 子命令。
+常规模拟使用这两个位置参数。`ARCH --config-schema` 输出标准配置目录；
+`ARCH --inspect-config <ProblemType> --config-stdin` 从标准输入读取尚未保存的参数文本，返回解析值、来源与诊断。配置检查发生在算例 Setup 和后端构造之前，适合编辑器展示；完整算例可运行性仍由实际初始化与执行验证。协议细节见[配置检查接口](../src/api/CONFIGURATION_API.md)。
 
 ## 参数解析
 
@@ -263,7 +272,13 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | EOS、network、ODE、linear solver | 抛出异常 |
 | diffusion integrator | 在统一解析配置时抛出异常 |
 
-科研工作流必须检查启动时的 Strategy 行，并将 fallback 警告视为配置失败。
+科研工作流应检查启动时的 Strategy 行，并核对 fallback 警告。
+
+### 输入迁移
+
+现行输入使用 `time_integrator` 选择流体时间推进。`timeintegrator`、`enforce_mass_conservation`、`burn_verbose_level`、`ode_use_numerical_jac` 和 `ode_freeze_jacobian` 是已退役的标准键；配置解析会报告 `RETIRED_PARAMETER`。修改旧算例时，应移除这些键，并按下文当前参数表重新选择所需的物理与数值设置。
+
+规范化表格 EOS 使用明确的自由能势、物理分量和核平衡声明；原生 EOSDriver 总表及受支持的原始重子表保留各自的数据契约。早期规范化 direct 表应根据[表格式契约](../src/physics/eos/TabularEOS.zh-CN.md)重新准备数据。检查点按保存的科学身份恢复；旧格式或不一致的控制身份须用生成它的程序续算，或从当前算例的新初态开始。完成这次迁移时的验证结果保存在[历史实施记录](development/archive/low-density/ImplementationReport.zh-CN.md)。
 
 ## 参数参考
 
@@ -312,9 +327,9 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `cfl` | double | `0.8` | 显式流体 CFL；有限且 `0 < cfl <= 1`，加载时校验 |
 | `EntropyFix` | bool | `true` | 启用 entropy-fix 平滑 |
 | `EntropyFixCoefficient` | double | `0.1` | 启用 entropy fix 时使用 |
-| `sml_rho` | double | `1e-12` | 密度修复阈值 |
-| `min_eint` | double | `1e-10` | 正比内能下限 |
-| `max_eint` | double | `1e21` | 比内能上限 |
+| `sml_rho` | double | `1e-12` | 正且可解析密度的修复下限；低密度研究按目标解设置 |
+| `min_eint` | double | `1e-10` | 正且可解析比内能的修复下限 |
+| `max_eint` | double | `1e21` | 比内能拒绝上界，不静默裁剪 |
 | `compute_backend` | string | `cpu` | `cpu`、`cuda` 或 `auto`；显式 CUDA fail-closed，`auto` 只能在构造前回退 |
 | `cuda_device` | int | `0` | CUDA probe、构造与生命周期操作使用的 runtime device ordinal |
 
@@ -739,12 +754,11 @@ virtual void add_sources_on_patch(
 内计算的常逻辑向量。自重力由 `GravityStage` 在全域阶段输入上准备 `SelfGravity` 场，
 动量回调消费已发布的场；`add_flux_work_on_patch` 使用实际 Riemann 质量通量计算能量功。
 输出 `GPOT`（cm²/s²）和 `GACX/Y/Z`（cm/s²）匹配接受态。AMR 总能量按误差预算验收，
-不宣称机器精度守恒；见[当前 P5–P7 验收](development/P5P7GravityAcceptance.zh-CN.md)。
+不宣称机器精度守恒；见[引力验证](../validation/gravity/README.zh-CN.md)。
 
 CPU/CUDA 求解器要求根轴单元数为二次幂、根网格间距比不超过 2、有效叶子保持
 2:1 平衡，最粗均匀层未知量不超过 64。拓扑变化会重建与流体存储分离的 Poisson
-缓存。不支持的几何在场发布前报错；配置和 AMR 预览不会求解引力。检查点 v6 保存
-引力类型、边界与控制参数；重启后由密度重新构造势和加速度，不把它们当作检查点状态。
+缓存。不支持的几何在场发布前报错；配置和 AMR 预览不会求解引力。检查点保存引力类型、边界与控制参数；重启后由密度重新构造势和加速度，不把它们当作检查点状态。
 
 ### 网络、ODE 和线性求解器 — Source extension
 
@@ -894,10 +908,10 @@ ARCH 检查点保存继续模拟所需的完整状态，两个后端共用读取
 
 属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species`、`cells_per_block`、`dt_old`、`dt_burn`、`resume_after_regrid`、`eos_type`、`ideal_gamma`、`burn_enabled`、`active_network`、`nse_enabled`、`eos_table_path` 和 `eos_table_sha256`。checkpoint 中的 `eos_type` 记录已解析的规范策略（`ideal`、`helmholtz`、`tabular3d` 或 `tabular4d`），因此自动识别出的表 rank 属于 restart 身份，而不是沿用配置中的原始 `tabular` 拼写。燃烧关闭时 `active_network` 必须为 `none`。时间步字段分别恢复增长控制、下一宏步携带的燃烧限制及循环阶段，避免重复执行已完成的 regrid 或按步输出。表路径仅用于审计；兼容性按 SHA-256 内容身份判断，因此同一份表可以在不同安装位置之间移动。表加载器会在加载前后计算摘要，并将缓存 owner 绑定到该摘要；传给每次 checkpoint 的不可变身份描述的是 EOS owner 实际驻留的字节，而不是稍后重新读取路径的结果。
 
-格式 6 另外要求 `state_controls`（状态下限与时间控制身份）、`state_repairs`、
+现行检查点还要求 `state_controls`（状态下限与时间控制身份）、`state_repairs`、
 触发位置/块/阶段/时间属性；另保存 `gravity_type`、`gravity_boundary` 和
 `gravity_controls`（self 为 G/rtol/atol/max_cycles，external 为三轴加速度）。
-phi/g 不保存，恢复后由密度冷启动重建。旧 v5 不兼容；恢复前校验全部状态和账本，再替换 AMR 网格。
+势与加速度在恢复后由密度重建；读取器先校验状态和修复账本，再替换 AMR 网格。
 
 对补齐组件后的 EOS，该身份还包含来源解释与实际使用的电子补充表，不只是主表
 文件的散列值。加载前后核对的是整个有效来源身份；更换辅助表也会使身份改变。
@@ -921,15 +935,13 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 读取器不会补造未经核实的身份、将缺失燃烧能量置零，或重建缺失的质量分数。
 全新模拟自行初始化 `RunState`，不使用这些重启规则。
 
-状态控制身份现为修订 2（18 项），纳入 `dt_max`、Coulomb 比例及波速
-选择。旧修订检查点和改变这些控制的重启会在替换网格前拒绝；本轮不提供旧身份
-补默认值的兼容层。需要继续旧轨迹时使用产生它的版本，或重新初始化当前算例。
+状态控制身份包含状态下限、时间控制、Coulomb 比例和波速选择。旧身份或控制值不一致的检查点在替换网格前被拒绝。继续原轨迹可使用生成该检查点的程序；当前程序可从新初态开始。
 
 ## 已知限制
 
 - 验证结果对应[验证索引](../validation/README.zh-CN.md)注明的受测工作负载与配置；整体验收状态也由该索引统一记录。
 - CUDA 生成网络必须满足[设备数学包契约](../src/physics/network/custom/README.md)，包括声明 `device_callable_math=true`；通过检查的仅主机网络包在 CPU 上执行。生成网络 NSE 受平衡模型资格限制；正确的动力学网络不一定适合 NSE 旁路。
-- 自引力已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界。CPU/CUDA 一维球/柱对称 isolated、径向 AMR、重启及严格椭圆测试已完成受测验收；径向内流体面须 reflecting。根轴单元数须为二次幂；CPU/CUDA 二维完整方位角极坐标、三维柱/球坐标在受测原点、轴线与极点域已做椭圆、AMR 和耦合验证，奇点流体面须 reflecting。域外质量源及 Jeans 细化指标仍不可用。已验证的耦合和性能边界见 [GravityBox](../simulation/GravityBox/README.md) 与 [P5–P7 验收](development/P5P7GravityAcceptance.zh-CN.md)。
+- 自引力的几何、边界与根网格限制见[自引力计算域](#自引力计算域)；域外质量源及 Jeans 专用细化指标尚未进入该能力范围。具体耦合与性能见[引力验证](../validation/gravity/README.zh-CN.md)。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
 - 单位元数据以及完整的构建/运行来源（参数文件、编译器、求解器设置、边界与 commit）位于 HDF5 外部。检查点内嵌重启关键的 EOS/表/网络/核素身份，但 Release flags 无法保证跨机器逐位复现。

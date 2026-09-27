@@ -7,9 +7,9 @@
 | 范围 | 完成低值修复和退役清单；不启用 self，不进入 P2 |
 | 验收 | N0–N5 已通过：CPU 55/55、CUDA 构建 129/129、各 72 个实际 CPU/GPU 推进、357 工具测试、16 次 sanitizer 检查 |
 
-本记录配合 [低密度计划](LowDensityRobustnessPlan.zh-CN.md)、
+本记录配合 [低密度计划](RobustnessPlan.zh-CN.md)、
 [退役清单](ParameterRetirementAudit.zh-CN.md) 和
-[自引力主计划](SelfGravityImplementationPlan.zh-CN.md) 使用。完整证据见 [P1.5 验收封包](../../validation/low_density/results/p1_5-20260922/README.md)；结论仅覆盖明确列出的模型、输入域和设备。
+[自引力主计划](../../SelfGravityImplementationPlan.zh-CN.md) 使用。完整证据见 [P1.5 验收封包](../../../../validation/low_density/results/p1_5-20260922/README.md)；结论仅覆盖明确列出的模型、输入域和设备。
 
 ## 控制参数与输入迁移
 

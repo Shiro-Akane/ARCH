@@ -1,63 +1,10 @@
 # Contributor guide and working records
 
-Start with [implementation ownership](ImplementationOwnership.md) before changing
-shared mathematics, backend storage, or execution paths. The map identifies the
-single maintained implementation and its CPU/CUDA consumers.
+Start with [implementation ownership](ImplementationOwnership.md) before changing shared mathematics, backend storage or execution. The map identifies the maintained owner and its CPU/CUDA consumers. The [acceptance checklist](CudaReleaseStandard.md) describes validation and publication requirements; [comment and documentation style](CommentAndDocumentationStyle.md) covers source comments and reader-facing documentation.
 
-The [compute optimization plan (Chinese)](ComputeOptimizationPlan.zh-CN.md)
-continues from the v1.2.0 main baseline on `compute/optim`: shared CPU/CUDA
-mathematics and execution costs first. The latest O6/O6+ scope closes the current
-implementation, backend validation and documented results. The original uniform
-two-times-FLASH target remains a recorded unmet goal, not a claim of acceptance
-or an instruction to continue changing numerical methods.
-The [current cost/accuracy record](../../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)
-tracks accepted controls, rejected face approximations, compiler measurements
-and scientific limits. Further numerical-method optimization is discussion only.
-O7 cylindrical axisymmetry and O8 user boundary interfaces remain unstarted;
-future changes must preserve verified correctness and assess performance regressions.
-O9 covers long-duration scientific validation. Nonuniform grid design remains
-a later discussion. The
-[current diagnosis (Chinese)](../../validation/gravity/flash/CurrentDiagnosis.zh-CN.md)
-records the earlier module comparison and focused FLASH parameter evidence;
-these plans do not expand the currently accepted capability matrix.
+The [self-gravity implementation plan](SelfGravityImplementationPlan.zh-CN.md) and [curvilinear gravity plan](CurvilinearGravityPlan.zh-CN.md) remain active references for field ownership, AMR coupling and geometry. GUI and Core contracts remain with the [API module](../../src/api/README.md). The [compute optimization plan](ComputeOptimizationPlan.zh-CN.md) records completed performance work and the still-open geometry, boundary-interface and long-duration validation tasks. The [FLASH comparison plan](FlashComparisonOptimizationPlan.zh-CN.md) and [validation index](../../validation/README.md) distinguish comparable models from measured results.
 
-The [ARCH–FLASH comparison and optimization plan (Chinese)](FlashComparisonOptimizationPlan.zh-CN.md)
-defines reusable cross-code models, separates common physics from ARCH's fuller
-coupling, and records the EOS recovery-contract audit and staged optimization
-gates. The [O5 evidence](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md)
-reports verified results, the FLASH face-EOS control, differences in thermal
-coupling, and the remaining sign-off gaps. User-facing combination boundaries
-live in the [Reference](../Reference.md#combining-methods-and-physics); registration
-is not acceptance of every physical or numerical permutation.
-
-For the planned self-gravity work, use the
-[self-gravity, maintainability and GUI coordination plan (Chinese)](SelfGravityImplementationPlan.zh-CN.md)
-to track module boundaries, stage contracts, decisions, GUI/Core integration
-order and validation gates. The [curvilinear gravity plan (Chinese)](CurvilinearGravityPlan.zh-CN.md)
-defines the P8–P13 extension, shared source mathematics, file consolidation
-and staged geometry validation; it does not expand current supported capabilities.
-The [P1 handoff (Chinese)](SelfGravityP1Handoff.zh-CN.md) records the integrated
-GUI Core baseline, implemented boundaries and scoped CPU/CUDA evidence.
-The [low-density and near-vacuum robustness plan (Chinese)](LowDensityRobustnessPlan.zh-CN.md)
-defines the numerical repairs, reuse of existing physical controls, internal
-safeguards, conservation diagnostics and CPU/CUDA validation required before
-the formal P2 baseline. P1.5 adds no physical degrees of freedom or algorithm
-micro-tuning controls; three already effective time-step keys are registered
-in the standard catalogue. Advanced visibility belongs to the GUI. The
-[parameter and legacy EOS retirement audit (Chinese)](ParameterRetirementAudit.zh-CN.md)
-accounts for all 90 standard keys, identifies inactive settings and superseded EOS
-paths, and defines their removal without legacy compatibility. Retained physics
-keeps its scientific acceptance requirements. Implementation and current test
-evidence are tracked in the [P1.5 report (Chinese)](P1_5ImplementationReport.zh-CN.md);
-this numerical change is separate from P1's behavior-preserving refactor.
-Its [main maintainability audit (Chinese)](MainMaintainabilityAudit.zh-CN.md)
-records file-size reviews, source-math exemptions, dependency findings and
-directory proposals. Size thresholds trigger review rather than mandatory
-splitting or merging; keep related responsibilities together and preserve
-supported behavior. The explicitly authorized retirements in the newer parameter
-audit supersede earlier compatibility-preservation recommendations.
-The [P3/P4 record](P3P4CompositeGravity.zh-CN.md) describes the CPU periodic
-composite solver, coupling, accepted scope, evidence and remaining P5/P6 work.
+The [historical archive](archive/README.md) preserves completed low-density/EOS migration, implementation decisions and earlier backend reviews. Current user-facing behavior is described by the [feature list](../Features.md) and [reference](../Reference.md).
 
 The *owner* of an implementation is the specific file or module where its core behavior is defined and maintained. A caller might supply data to this implementation or decide *how* it should execute, but it must never introduce a duplicate copy of the same formula. *Memory owners*, on the other hand, serve a different purpose: they allocate system resources and guarantee they remain alive until all consumers have finished using them.
 
@@ -138,6 +85,3 @@ summaries link to detailed results, input identities and hardware metadata.
 Keep reusable helpers in their owning module and run-specific evidence under
 `validation/**/results/`. Link the existing user contract rather than copying a
 second feature or acceptance checklist into a working note.
-
-P1.5 implementation and validation progress is tracked in
-[the implementation report (Chinese)](P1_5ImplementationReport.zh-CN.md).

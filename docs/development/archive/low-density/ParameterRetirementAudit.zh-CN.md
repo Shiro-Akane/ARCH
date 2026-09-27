@@ -8,8 +8,8 @@
 | 范围 | 全部 90 个标准运行参数；4 个共享 custom-map 控制项；2 个裸配置成员；关联旧入口及 Tabular 新旧路径 |
 | 不计入固定参数总数 | case 专有参数、动态核素初始分数、生成网络配方、构建选项和环境变量；它们有自己的登记/读取入口，不能仅因不在标准表中就删除 |
 
-本清单补充[低密度修复计划](LowDensityRobustnessPlan.zh-CN.md)及[自引力主计划](SelfGravityImplementationPlan.zh-CN.md)。
-最新用户要求取代此前“为了兼容而保留失效键/旧 EOS”的安排。下文的“当前/拟”保留审计时点口径；实施现状以 [P1.5 实施记录](P1_5ImplementationReport.zh-CN.md) 为准。
+本清单补充[低密度修复计划](RobustnessPlan.zh-CN.md)及[自引力主计划](../../SelfGravityImplementationPlan.zh-CN.md)。
+最新用户要求取代此前“为了兼容而保留失效键/旧 EOS”的安排。下文的“当前/拟”保留审计时点口径；实施现状以 [P1.5 实施记录](ImplementationReport.zh-CN.md) 为准。
 “无消费者”指当前仓内生产路径未消费；有消费者但不再维护的路线明确记为主动退役，不能称为死代码。
 
 ## 1. 数量与结论

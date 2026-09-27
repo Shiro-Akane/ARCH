@@ -133,5 +133,5 @@ Helmholtz 输运系数由状态决定，不应再填理想气体的常系数覆�
 调用输出函数之前的引力字段下载仍计入总时间，未计入该输出子项。
 
 Cartesian 使用边界与 CPU/GPU 记录见
-[P5–P7 验收文档](../../docs/development/P5P7GravityAcceptance.zh-CN.md)；曲线坐标的受测范围与性能见
+[笛卡尔自引力验收记录](../../docs/development/P5P7GravityAcceptance.zh-CN.md)；曲线坐标的受测范围与性能见
 [曲线重力验证](../../validation/gravity/README.zh-CN.md)。

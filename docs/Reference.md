@@ -80,7 +80,7 @@ external provenance claim unless their file header or that notice says so.
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
 | Geometry | `cartesian`, `cylindrical`, `spherical` | supported on CPU and CUDA | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
 | AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
-| Self gravity | `gravity_type = self` | CPU, CUDA | Validated: Cartesian periodic 1D–3D or isolated 3D on CPU/CUDA. CPU/CUDA: isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity with composite AMR, including origin/axis/pole joins. Euler/RK2/RK3 and Cartesian burn/thermal-diffusion coupling, plus tested curved RK2 four-module runs, are validated. See [GravityBox](../simulation/GravityBox/README.md) and the [P5–P7 record](development/P5P7GravityAcceptance.zh-CN.md). |
+| Self gravity | `gravity_type = self` | CPU, CUDA | Periodic Cartesian, isolated 3D Cartesian, and tested radial/full-azimuth curvilinear domains; see [self-gravity domains](#self-gravity-domains). |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
 
 CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, registered
@@ -117,13 +117,26 @@ application results and release acceptance.
 | Hydro time | `Euler`, `RK1`; `RK2`, `SSPRK2`; `RK3`, `SSPRK3` | Euler, SSPRK2, SSPRK3 |
 | Diffusion time | `RKL2` (default), `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
 | EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and CUDA |
-| Gravity | `none`, `external`, `self` | CPU/CUDA self gravity supports Cartesian periodic 1D–3D or isolated 3D, isolated radial 1D and tested full-azimuth 2D/3D curved domains, including coordinate joins |
+| Gravity | `none`, `external`, `self` | See [self-gravity domains](#self-gravity-domains) for mesh and fluid-face constraints. |
 | Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
 | Linear solve | `Auto`, `DenseLU`, `SparseKLU`, `cuDSS` | Case-insensitive; aliases `dense_lu`, `sparse_klu`, and `cu_dss` are accepted. `Auto` selects DenseLU for up to 31 total ODE equations, including temperature and any auxiliary energy states. Larger systems use SparseKLU on CPU or cuDSS on CUDA. SparseKLU is CPU-only, cuDSS is CUDA-only, and incompatible explicit pairs are rejected before backend construction without solver substitution. Missing solver libraries or registered CUDA network code also cause rejection. |
 
-Policy names are ASCII case-insensitive, but accepted aliases and fallback
-behavior still vary by dispatcher.
+Policy names are ASCII case-insensitive; check the accepted aliases and fallback behavior for each dispatcher.
+
+### Self-gravity domains
+
+External gravity supplies an acceleration. Self gravity solves a composite AMR Poisson field from the current density at each required hydro RK stage. CPU and CUDA use shared mathematics for the following geometries.
+
+| Geometry | Gravity boundary | Fluid faces and mesh conditions |
+| --- | --- | --- |
+| Cartesian 1D–3D | `periodic` | Every active fluid face is periodic; the Poisson source removes volume-mean density |
+| Cartesian 3D | `isolated` | Physical fluid faces may be outflow or reflecting; gravity uses a finite-mass boundary |
+| Cylindrical/spherical radial 1D | `isolated` | Nonnegative radius and reflecting inner radial fluid face |
+| Cylindrical/spherical polar 2D `(r,phi)` | `isolated` | Full azimuth with periodic fluid faces; reflecting inner radial face |
+| Cylindrical `(r,z,phi)` / spherical `(r,theta,phi)` 3D | `isolated` | Full azimuth; inner radial and tested axis/pole singular faces reflect |
+
+Every self-gravity root axis needs a power-of-two cell extent. Native root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology; curvilinear gravity uses isolated boundaries. A periodic potential responds to density relative to its volume mean, while isolated gravity uses the full density. The isolated two-dimensional polar potential uses a logarithmic kernel with mass per unit axial length. See [gravity parameters](#eos-and-gravity) for solver controls and [gravity validation](../validation/gravity/README.md) for tested trajectories.
 
 ### Combining methods and physics
 
@@ -150,7 +163,7 @@ or a different transport closure needs the relevant numerical and coupled checks
 | Tabular + thermal diffusion | Automatic stellar conductivity is unavailable; choose a physically appropriate positive `alpha_therm` or disable thermal diffusion. |
 | Burn + NSE | The network must supply the declared equilibrium model; generated kinetic networks are not automatically NSE-capable. |
 | Burn + backend | DenseLU is limited to 31 total ODE equations; KLU is CPU-only, cuDSS is CUDA-only and optional. Generated CUDA networks need an accepted device-math package. These solvers are separate from the gravity MG solver. |
-| Self gravity + domain | Cartesian periodic 1D–3D or isolated 3D; curved isolated domains follow the radial/full-azimuth and singular-face rules in Known limitations. MG needs power-of-two root-cell extents. |
+| Self gravity + domain | See [self-gravity domains](#self-gravity-domains) for the geometry and fluid-face conditions; composite MG runs on tested AMR layouts. |
 | Reconstruction/time + AMR | PPM uses MUSCL-MinMod at coarse/fine faces. RK3 does not make the split multiphysics method third order; RKL1 and BE_NR introduce their own accuracy limits. |
 
 A successful capability query or a single-policy device test establishes a
@@ -233,21 +246,11 @@ and geometric sources. The composition gives:
 - Shock convergence uses norms and shock-problem rates; discontinuities reduce
   local order.
 
-### Safeguards that alter conservation
+### Low-density states and repair accounting
 
-`perform_stage_update` applies robustness repairs after a hydro stage:
+A positive, thermally resolvable density below `sml_rho` is bounded while preserving velocity and composition. `min_eint` bounds positive, resolvable specific internal energy; a state above `max_eint` fails. Zero/negative density, nonfinite values, unresolved thermal energy and invalid composition also fail. For a low-density study, set `sml_rho` below the density range the solution is intended to resolve.
 
-Positive, resolvable states below `sml_rho` are bounded while preserving velocity and composition.
-`min_eint` can raise positive internal energy; exceeding `max_eint` is rejected, not clipped.
-Zero/negative density, nonfinite states, unresolved thermal energy and invalid composition fail explicitly.
-The fixed velocity cap and all-zero-to-uniform composition fallback have been removed.
-
-Volume-weighted repairs use the final RK weights and are recorded in `state_repairs.txt`
-and format-6 checkpoints. Low-density research must set the existing `sml_rho` below the intended solution.
-Leaf functions use actual positive density; this control never disables force, CFL or flux evaluation.
-Reconstruction and shared face fluxes use conservative limiting, followed by acceptance/reflux checks.
-There is no separate absolute pressure floor or general positivity claim for arbitrary AMR/source/table-EOS combinations.
-See the [P1.5 implementation record](development/P1_5ImplementationReport.zh-CN.md).
+Accepted repairs accumulate changes to conserved quantities with physical cell volumes and final RK weights. The changes appear in `state_repairs.txt` and checkpoints. Numerical leaves still use the actual positive density for forces, CFL and fluxes. Reconstruction and shared face fluxes use conservative limiting, followed by state checks after AMR reflux. Pressure admissibility follows the selected EOS. See [low-density validation](../validation/low_density/README.md) for analytic and near-vacuum cases.
 
 ### Build reproducibility and compile-time compromise
 
@@ -340,8 +343,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 ./bin/ARCH <ProblemType> <ParFile>
 ```
 
-The executable accepts these two positional arguments. List, dry-run,
-parameter-override, schema-dump, and validation subcommands are unavailable.
+Ordinary simulations use these two positional arguments. `ARCH --config-schema` emits the standard configuration catalogue. `ARCH --inspect-config <ProblemType> --config-stdin` reads unsaved parameter text from standard input and returns parsed values, provenance and diagnostics. Inspection runs before case Setup and backend construction, so actual initialization and execution determine whether a case can run. See the [configuration inspection API](../src/api/CONFIGURATION_API.md) for the protocol.
 
 ## Parameter parsing
 
@@ -379,8 +381,13 @@ Invalid selections are handled as follows:
 | EOS, network, ODE, linear solver | exception |
 | diffusion integrator | exception during configuration resolution |
 
-Always inspect the startup “Strategy” line and treat fallback warnings as a
-failed configuration in research workflows.
+Inspect the startup “Strategy” line and resolve fallback warnings in research workflows.
+
+### Migrating input files
+
+Current inputs use `time_integrator` for hydro stepping. The former standard keys `timeintegrator`, `enforce_mass_conservation`, `burn_verbose_level`, `ode_use_numerical_jac` and `ode_freeze_jacobian` produce a `RETIRED_PARAMETER` diagnostic. Remove them from older case files and choose the intended physical and numerical settings from the current tables below.
+
+Normalized tabular EOS data require an explicit free-energy potential, physical component declarations and nuclear-equilibrium metadata. Native EOSDriver total tables and supported original baryon tables retain their own contracts. Earlier normalized direct tables should be prepared to the current [table data contract](../src/physics/eos/TabularEOS.md). Checkpoints resume only with matching scientific identity; use the originating executable for an earlier trajectory or initialize a new current case. The completed migration evidence remains in the [historical implementation record](development/archive/low-density/ImplementationReport.zh-CN.md).
 
 ## Parameter reference
 
@@ -432,9 +439,9 @@ and any other spelling are rejected with the parameter name in the error.
 | `cfl` | double | `0.8` | explicit hydro CFL; finite and `0 < cfl <= 1`, checked at load time |
 | `EntropyFix` | bool | `true` | enables entropy-fix smoothing |
 | `EntropyFixCoefficient` | double | `0.1` | used when entropy fix is enabled |
-| `sml_rho` | double | `1e-12` | density repair threshold |
-| `min_eint` | double | `1e-10` | positive specific internal-energy floor |
-| `max_eint` | double | `1e21` | specific internal-energy ceiling |
+| `sml_rho` | double | `1e-12` | positive, resolvable density repair floor; set with the intended low-density solution in mind |
+| `min_eint` | double | `1e-10` | positive, resolvable specific internal-energy repair floor |
+| `max_eint` | double | `1e21` | rejection ceiling for specific internal energy, without clipping |
 | `compute_backend` | string | `cpu` | `cpu`, `cuda`, or `auto`; explicit CUDA is fail-closed and `auto` may fall back only before construction |
 | `cuda_device` | int | `0` | CUDA runtime device ordinal used by probing, construction, and lifecycle operations |
 
@@ -983,7 +990,7 @@ vector evaluated inside every hydro RK stage. Self gravity prepares one composit
 Poisson solve from the actual density input of each RK stage. Momentum uses cell
 acceleration; energy work uses the actual Riemann mass flux and compatible face
 acceleration. This basic coupling has convergent total-energy error, not exact
-conservation of gas plus gravitational energy. See the [current P5–P7 acceptance](development/P5P7GravityAcceptance.zh-CN.md).
+conservation of gas plus gravitational energy. See [gravity validation](../validation/gravity/README.md).
 
 The CPU/CUDA solver requires dyadic root cell extents, native spacing ratio
 at most two, 2:1 leaf balance and at most 64 unknowns at its smallest uniform
@@ -993,8 +1000,7 @@ adds cell-centered `GPOT` (`cm^2/s^2`) and `GACX/Y/Z` (`cm/s^2`) for active axes
 `gravity_solves.tsv` records every domain solve. Configuration/case/AMR preview
 does not solve gravity, and the fluid resource estimate excludes gravity workspaces.
 
-Checkpoint format **v6** records gravity type, boundary and active physical/solver
-controls. It rejects incompatible gravity settings and older checkpoint formats.
+Checkpoints record gravity type, boundary and active physical/solver controls. Incompatible gravity settings or unsupported checkpoint formats are rejected.
 Potential and acceleration are reconstructed from the saved density after restart;
 they are not checkpoint state. A cold solve preserves deterministic restart behavior.
 
@@ -1216,7 +1222,7 @@ Data/rhoX, Data/X    [species, block, interior cell]
 Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 ```
 
-Format 6 also requires `state_controls`, `state_repairs`, and the triggering
+Current checkpoints also require `state_controls`, `state_repairs`, and the triggering
 block, position, stage and time attributes. Older formats are rejected. All restored states
 and diagnostics are validated before replacing the AMR mesh.
 
@@ -1244,11 +1250,7 @@ does not synthesize an unverified identity, zero-fill missing burn energy or
 reconstruct missing mass fractions. A fresh simulation initializes its own
 `RunState` and does not use these restart rules.
 
-State-control identity is now revision 2 (18 entries), including `dt_max`,
-Coulomb fraction and wave-speed choices. Old identities or
-restarts changing these controls are rejected before mesh replacement. There
-is no compatibility path that silently supplies missing defaults: continue an
-old trajectory with its originating executable, or initialize the current case.
+State-control identity includes state bounds, timestep controls, Coulomb fraction and wave-speed choice. An older identity or different control values cause rejection before mesh replacement. Continue an earlier trajectory with its originating executable, or initialize a new current case.
 
 ## Known limitations
 
@@ -1261,15 +1263,7 @@ old trajectory with its originating executable, or initialize the current case.
   CPU execution only.
   Generated NSE requires the documented equilibrium-model eligibility; it is not
   a promise that every correct kinetic network admits an NSE bypass.
-- Validated self-gravity covers Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA.
-  Isolated 1D spherical/cylindrical gravity on CPU/CUDA includes radial AMR and restart.
-  Both backends support tested isolated 2D full-azimuth polar and 3D cylindrical/spherical gravity,
-  including origin, axis and pole joins with composite AMR. Singular fluid faces
-  require reflecting flow; the azimuth must span a full turn. The 2D potential uses
-  the infinite-column logarithmic kernel and mass per unit length. External mass sources
-  and a Jeans refinement indicator remain unavailable. Root-cell extents must be powers of two.
-  See [GravityBox](../simulation/GravityBox/README.md) and the
-  [P5–P7 acceptance](development/P5P7GravityAcceptance.zh-CN.md) for tested coupling and performance limits.
+- See [self-gravity domains](#self-gravity-domains) for geometry, boundary and root-grid constraints. External mass sources and the Jeans-specific refinement indicator remain outside this capability. [Gravity validation](../validation/gravity/README.md) records coupled and performance scope.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict

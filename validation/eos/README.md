@@ -15,20 +15,20 @@ hydrodynamic and burning applications. Ideal gas, Helmholtz and normalized
 Tabular3D/Tabular4D share their mathematics between CPU and CUDA; backend owners
 provide table storage and lifetime management.
 
-## Current P1.5 contract
+## Current table contract
 
-Normalized tables now require schema 2, a free-energy potential and explicit
-physical declarations. Normalized direct tables, missing-metadata guesses and
-silent domain fallbacks are retired. Native EOSDriver and baryon source formats
-remain supported. Current implementation and acceptance status are recorded in
-[P1.5](../../docs/development/P1_5ImplementationReport.zh-CN.md).
+Normalized tables require schema 2, a free-energy potential and explicit
+physical declarations. The supported native EOSDriver and baryon formats retain
+their own data contracts. Current normalized fixtures and rejection checks live
+in `tests/host/eos` and `tests/cuda/microphysics/eos`; use the CTest targets below.
+The [data reference](../../src/physics/eos/TabularEOS.md) specifies inputs and
+the [migration record](../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)
+preserves implementation and acceptance history.
 
-The application results and replay scripts below are historical: their recorded
-source starts at `2226456c1f87415a317dd6a2a96053a7e154b949` **with the dirty source
-identity listed in the evidence**. That commit alone does not reproduce them.
-Do not run the old direct-table recipe against P1.5 or treat its old pass counts
-as current validation. Current normalized fixtures and rejection checks live in
-`tests/host/eos` and `tests/cuda/microphysics/eos`; use the CTest targets below.
+The application results and replay scripts below belong to the source identified
+by `2226456c1f87415a317dd6a2a96053a7e154b949` **plus the dirty source
+identity listed in their evidence**. The commit alone cannot reproduce them.
+Their direct-table inputs and pass counts describe that historical implementation.
 
 ## Historical coupled application results
 

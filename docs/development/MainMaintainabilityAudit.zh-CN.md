@@ -8,7 +8,7 @@
 主计划第 10 节的 GUI/Core 集成顺序优先于本表的局部提取/搬迁建议。
 
 **后续决定（2026-09-22）：** 用户已明确不要求旧输入及已退役 EOS 兼容。
-[物理配置与旧 EOS 退役清单](ParameterRetirementAudit.zh-CN.md)的 PR/ER/CR 集合覆盖本表对这些项目的
+[物理配置与旧 EOS 退役清单](archive/low-density/ParameterRetirementAudit.zh-CN.md)的 PR/ER/CR 集合覆盖本表对这些项目的
 “默认保留兼容”建议，特别是 DC-01 的旧别名头及 DC-08 的旧配置/规范化 EOS 路线。
 本表其余历史证据与来源数学豁免保留；有实际用途的 native/strict EOS 不属于笼统删除对象。
 此补充是当前规划，删除尚未实施。

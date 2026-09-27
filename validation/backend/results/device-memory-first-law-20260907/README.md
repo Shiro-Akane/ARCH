@@ -50,8 +50,7 @@ grew from 197,664 to 200,480 KiB. Whole-device GPU usage rose from 1,527 to
 2,306 MiB. This separate device-wide observation includes the desktop, context
 and driver allocations; it must not be equated with the table above. The
 instrumented campaign took 293.606 seconds; this is not a runtime benchmark.
-The original guard output is retained locally in
-[capacity-final-926.log](../../../../build/capacity-final-926.log).
+The original guard output was kept locally as `build/capacity-final-926.log`; it is not bundled with this repository.
 
 ## Identity and reproducibility
 

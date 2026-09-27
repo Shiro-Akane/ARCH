@@ -1,9 +1,11 @@
 # Low-density state validation
 
-This P1.5 suite tests finite, positive-density IdealGas states. It does not
-certify exact vacuum, cancellation-dominated thermal energy or extrapolation
-outside a table EOS domain. The implementation and current acceptance record
-are in [P1.5](../../docs/development/P1_5ImplementationReport.zh-CN.md).
+This suite tests finite, positive-density IdealGas states. Its scientific
+scope excludes exact vacuum, cancellation-dominated thermal energy and
+extrapolation beyond a table EOS domain. The current state and repair contract
+is in the [reference](../../docs/Reference.md#low-density-states-and-repair-accounting);
+the [migration record](../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)
+preserves implementation history.
 
 `manifest.json` fixes density scales and scientific budgets. `run.py` executes
 72 actual ARCH runs, reads their checkpoints and checks analytic entropy-wave

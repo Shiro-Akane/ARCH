@@ -7,7 +7,7 @@
 `0ad8f470b9dc9835318044b56dade33cf63f0c31`，日期 2026-09-24。
 FLASH 对象是本机 4.8 源码归档中带本地初值扩展的 Cellular 配置，
 不代表上游原版或所有 FLASH 配置。受测扩展设为纯氦平面初值。
-本计划接续 [P1.5 记录](P1_5ImplementationReport.zh-CN.md)、
+本计划接续 [P1.5 记录](archive/low-density/ImplementationReport.zh-CN.md)、
 [自引力计划](SelfGravityImplementationPlan.zh-CN.md) 和
 [曲线坐标计划](CurvilinearGravityPlan.zh-CN.md)；不改变现行能力声明。
 
