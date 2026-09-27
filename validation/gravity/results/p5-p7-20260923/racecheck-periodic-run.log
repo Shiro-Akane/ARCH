@@ -1,0 +1,30 @@
+[Info] Loaded 44 parameters from /tmp/arch-p57-sanitizer-cases/periodic.par
+[Main] Console output is being recorded to log file: /tmp/arch-p57-sanitizer-cases/periodic/GravityBox_log.dat
+[Main] Parameters loaded from: /tmp/arch-p57-sanitizer-cases/periodic.par
+[Main] Problem created: GravityBox
+[Main] Configuration:
+       Grid: 32 cells, CFL: 0.2
+       Solver: HLLC
+       Species Count: 1
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 64 | Finest Level: 0
+    Level 0   | dx1(x): 3.125e+06
+[Dispatch] Resolving Gravity Policy...
+           -> Type: self | G_const = 6.6743e-08
+[Dispatch] Strategy: SSPRK3 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK3 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=1)
+[IO] Saved PLT: /tmp/arch-p57-sanitizer-cases/periodic/GravityBox_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /tmp/arch-p57-sanitizer-cases/periodic/GravityBox_chk_0000.h5 at step 0 with 2 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       8.39477e-03    8.39477e-03    8.39477e-03    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /tmp/arch-p57-sanitizer-cases/periodic/GravityBox_HLLC_plt_0001.h5 at t=8.39477e-03
+[IO] Saved CHK: /tmp/arch-p57-sanitizer-cases/periodic/GravityBox_chk_0001.h5 at step 1 with 2 AMR leaves.
+[State] floor repairs=0.00000e+00 delta_mass=0.00000e+00 delta_energy=0.00000e+00
+>>> Simulation Done. Total Steps: 1 | Final Time: 8.39477e-03

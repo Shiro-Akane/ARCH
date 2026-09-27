@@ -1,0 +1,53 @@
+{
+  "cpu": {
+    "before": 53,
+    "after": 53,
+    "missing": [],
+    "added": [],
+    "contract_changes": [],
+    "newly_built_executables_visible_to_ctest": [
+      "amr_flux_surface_plan",
+      "amr_operation_plans",
+      "baryon_source_format",
+      "block_handle",
+      "boundary_plan",
+      "burn_mainline_reference",
+      "checkpoint_compatibility",
+      "checkpoint_conservation_metrics",
+      "compensated_sum",
+      "curvilinear_metrics",
+      "device_block_store_lifecycle",
+      "generated_nse",
+      "helm_components",
+      "initialization_probe",
+      "mainline_authority",
+      "native_tabular_eos",
+      "physical_constants",
+      "preview_exact_sample_cache",
+      "preview_initial_conversion",
+      "preview_parameter_reads",
+      "preview_sampling_limits",
+      "preview_verified_resources",
+      "reduction_contract",
+      "refinement_indicator_math",
+      "resolved_execution_plan",
+      "runtime_probe_and_capabilities",
+      "same_level_exchange_plan",
+      "sparse_ode_continuation",
+      "sparse_residual",
+      "tabular_component_completion",
+      "tabular_eos_ideal_gas",
+      "tabular_strict_math"
+    ],
+    "note": "Compare names, all test properties, and commands previously present. CTest omits command when the executable has not been built."
+  },
+  "cuda": {
+    "before": 128,
+    "after": 128,
+    "missing": [],
+    "added": [],
+    "contract_changes": [],
+    "newly_built_executables_visible_to_ctest": [],
+    "note": "Compare names, all test properties, and commands previously present. CTest omits command when the executable has not been built."
+  }
+}

@@ -1,0 +1,586 @@
+{
+  "runs": [
+    {
+      "name": "wave-pcm-64-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.07203011299861828,
+      "cuda_seconds": 0.4270795209959033
+    },
+    {
+      "name": "wave-pcm-64-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03533978999621468,
+      "cuda_seconds": 0.37328825300210156
+    },
+    {
+      "name": "wave-pcm-64-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.034562116001325194,
+      "cuda_seconds": 0.3731548619980458
+    },
+    {
+      "name": "wave-pcm-64-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03538252900034422,
+      "cuda_seconds": 0.3786442869968596
+    },
+    {
+      "name": "wave-pcm-128-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06852106699807337,
+      "cuda_seconds": 0.5707214930007467
+    },
+    {
+      "name": "wave-pcm-128-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06696122499852208,
+      "cuda_seconds": 0.4816172999999253
+    },
+    {
+      "name": "wave-pcm-128-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06916163999994751,
+      "cuda_seconds": 0.5219501680039684
+    },
+    {
+      "name": "wave-pcm-128-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06829461899906164,
+      "cuda_seconds": 0.5284481810012949
+    },
+    {
+      "name": "wave-pcm-256-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.16857620800146833,
+      "cuda_seconds": 0.8438988950001658
+    },
+    {
+      "name": "wave-pcm-256-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.1192794460002915,
+      "cuda_seconds": 0.8967265269966447
+    },
+    {
+      "name": "wave-pcm-256-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.12045578000106616,
+      "cuda_seconds": 0.8903829170012614
+    },
+    {
+      "name": "wave-pcm-256-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.11927798199758399,
+      "cuda_seconds": 0.8972283120019711
+    },
+    {
+      "name": "wave-muscl-64-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.034752928993839305,
+      "cuda_seconds": 0.3766226160005317
+    },
+    {
+      "name": "wave-muscl-64-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03471290600282373,
+      "cuda_seconds": 0.42600815699552186
+    },
+    {
+      "name": "wave-muscl-64-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03482032999454532,
+      "cuda_seconds": 0.3784199660003651
+    },
+    {
+      "name": "wave-muscl-64-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03459210599976359,
+      "cuda_seconds": 0.3716803799979971
+    },
+    {
+      "name": "wave-muscl-128-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06863810500362888,
+      "cuda_seconds": 0.52942186799919
+    },
+    {
+      "name": "wave-muscl-128-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06815417400503065,
+      "cuda_seconds": 0.48170791000302415
+    },
+    {
+      "name": "wave-muscl-128-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06728130199917359,
+      "cuda_seconds": 0.5217151069955435
+    },
+    {
+      "name": "wave-muscl-128-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06659997500537429,
+      "cuda_seconds": 0.5240225870002178
+    },
+    {
+      "name": "wave-muscl-256-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.11727653099660529,
+      "cuda_seconds": 0.8798954049998429
+    },
+    {
+      "name": "wave-muscl-256-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.1196697459963616,
+      "cuda_seconds": 0.877438211995468
+    },
+    {
+      "name": "wave-muscl-256-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.12180140199779999,
+      "cuda_seconds": 0.8387188380002044
+    },
+    {
+      "name": "wave-muscl-256-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.12033320399496006,
+      "cuda_seconds": 0.8298110290052136
+    },
+    {
+      "name": "wave-ppm-64-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03593793600157369,
+      "cuda_seconds": 0.3730067809956381
+    },
+    {
+      "name": "wave-ppm-64-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03592351599945687,
+      "cuda_seconds": 0.3731829440002912
+    },
+    {
+      "name": "wave-ppm-64-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03523539599700598,
+      "cuda_seconds": 0.3774626199956401
+    },
+    {
+      "name": "wave-ppm-64-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.034187594006652944,
+      "cuda_seconds": 0.42182832099933876
+    },
+    {
+      "name": "wave-ppm-128-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06638721600029385,
+      "cuda_seconds": 0.5814107390033314
+    },
+    {
+      "name": "wave-ppm-128-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06727064300503116,
+      "cuda_seconds": 0.4766859429946635
+    },
+    {
+      "name": "wave-ppm-128-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06793817700236104,
+      "cuda_seconds": 0.5279650669981493
+    },
+    {
+      "name": "wave-ppm-128-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06702287799998885,
+      "cuda_seconds": 0.4779771159955999
+    },
+    {
+      "name": "wave-ppm-256-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.16958283900021343,
+      "cuda_seconds": 0.9508141010010149
+    },
+    {
+      "name": "wave-ppm-256-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.1689016160016763,
+      "cuda_seconds": 0.8446859710020362
+    },
+    {
+      "name": "wave-ppm-256-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.17155785300565185,
+      "cuda_seconds": 0.8857230889989296
+    },
+    {
+      "name": "wave-ppm-256-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.1712692290020641,
+      "cuda_seconds": 0.8984515949996421
+    },
+    {
+      "name": "rarefaction-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.11987466699793003,
+      "cuda_seconds": 0.6381951000003028
+    },
+    {
+      "name": "rarefaction-1e-12",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.12002775599830784,
+      "cuda_seconds": 0.6773629260060261
+    },
+    {
+      "name": "rarefaction-1e-20",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.1203272470011143,
+      "cuda_seconds": 0.6291828079993138
+    },
+    {
+      "name": "rarefaction-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.12090292799985036,
+      "cuda_seconds": 0.6367984630051069
+    },
+    {
+      "name": "gravity-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.034836318001907784,
+      "cuda_seconds": 0.36995419800223317
+    },
+    {
+      "name": "gravity-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.034154885994212236,
+      "cuda_seconds": 0.37344573799782665
+    },
+    {
+      "name": "floor",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06834227099898271,
+      "cuda_seconds": 0.5887554330038256
+    },
+    {
+      "name": "restart",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.06883194900001399,
+      "cuda_seconds": 0.4326885390037205
+    },
+    {
+      "name": "amr-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.12172658200142905,
+      "cuda_seconds": 0.9886914239978069
+    },
+    {
+      "name": "amr-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.11945406199811259,
+      "cuda_seconds": 1.0295058820047416
+    },
+    {
+      "name": "contact-1e+06-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03634589699504431,
+      "cuda_seconds": 0.3196143189998111
+    },
+    {
+      "name": "contact-1e+06-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03497007500118343,
+      "cuda_seconds": 0.323144180001691
+    },
+    {
+      "name": "contact-1e+12-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03580188000341877,
+      "cuda_seconds": 0.32025368100585183
+    },
+    {
+      "name": "contact-1e+12-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03507812600582838,
+      "cuda_seconds": 0.32603185799962375
+    },
+    {
+      "name": "contact-1e+18-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03459179300261894,
+      "cuda_seconds": 0.3219672109989915
+    },
+    {
+      "name": "contact-1e+18-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.035027549994993024,
+      "cuda_seconds": 0.3199034950011992
+    },
+    {
+      "name": "flux-HLL-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.035318472000653856,
+      "cuda_seconds": 0.3259192389959935
+    },
+    {
+      "name": "flux-HLL-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03498460099945078,
+      "cuda_seconds": 0.3254012719989987
+    },
+    {
+      "name": "flux-HLLC-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03472952100128168,
+      "cuda_seconds": 0.32301818799896864
+    },
+    {
+      "name": "flux-HLLC-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03557982200436527,
+      "cuda_seconds": 0.3223516629950609
+    },
+    {
+      "name": "flux-Roe-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.034422087999701034,
+      "cuda_seconds": 0.3224995950004086
+    },
+    {
+      "name": "flux-Roe-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03607806899526622,
+      "cuda_seconds": 0.32561961600003997
+    },
+    {
+      "name": "flux-SW-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.034816358995158225,
+      "cuda_seconds": 0.32117072500113863
+    },
+    {
+      "name": "flux-SW-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.0343151859997306,
+      "cuda_seconds": 0.32453176099807024
+    },
+    {
+      "name": "flux-VL-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03468908099603141,
+      "cuda_seconds": 0.3199583419991541
+    },
+    {
+      "name": "flux-VL-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03451341899926774,
+      "cuda_seconds": 0.3714383309998084
+    },
+    {
+      "name": "active-floor-6e-31",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03493747200263897,
+      "cuda_seconds": 0.3232222200022079
+    },
+    {
+      "name": "active-floor-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03482001699740067,
+      "cuda_seconds": 0.3257652059983229
+    },
+    {
+      "name": "active-floor-2e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.034762123999826144,
+      "cuda_seconds": 0.3779625359966303
+    },
+    {
+      "name": "floor-sensitivity-1e-35",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03528628699859837,
+      "cuda_seconds": 0.31926969200139865
+    },
+    {
+      "name": "floor-sensitivity-1e-40",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03470935299992561,
+      "cuda_seconds": 0.3209809780018986
+    },
+    {
+      "name": "floor-sensitivity-1e-50",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03470381499937503,
+      "cuda_seconds": 0.3733198429981712
+    },
+    {
+      "name": "diffusion-RKL1-1",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.035008426995773334,
+      "cuda_seconds": 0.32382406199758407
+    },
+    {
+      "name": "diffusion-RKL1-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 0.0,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.035146572001394816,
+      "cuda_seconds": 0.319908340999973
+    },
+    {
+      "name": "diffusion-RKL2-1",
+      "state_difference": 0.0,
+      "species_difference": 1.5543122344752192e-15,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03480214699811768,
+      "cuda_seconds": 0.3264965599955758
+    },
+    {
+      "name": "diffusion-RKL2-1e-30",
+      "state_difference": 0.0,
+      "species_difference": 1.5543122344752192e-15,
+      "repair_difference": 0.0,
+      "cpu_seconds": 0.03545870900416048,
+      "cuda_seconds": 0.322563697998703
+    }
+  ],
+  "max_state_difference": 0.0,
+  "max_species_difference": 1.5543122344752192e-15,
+  "max_repair_difference": 0.0,
+  "timing_scope": "Per-process wall time including CUDA startup and I/O; shared workstation, CUDA test compilation running during physical matrix. Correctness witnesses, not a controlled throughput or before/after benchmark.",
+  "all_same_end_time_and_topology": true,
+  "ignored_repair_field": "first cell index only; any concurrently repaired cell is valid"
+}

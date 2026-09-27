@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "IHydroSolver.h"
-#include "TimeIntegratorHelper.h"
+#include "numerics/integrator/IHydroSolver.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 
 namespace Numerics {
 

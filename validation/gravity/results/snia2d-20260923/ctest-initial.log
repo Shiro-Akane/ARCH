@@ -1,0 +1,27 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+Test project /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+    Start  3: preview_api_contract
+    Start  4: configuration_api_contract
+    Start 32: gravity_stage_contract
+    Start 52: self_gravity_lifecycle
+1/6 Test #32: gravity_stage_contract ...........   Passed    0.00 sec
+    Start 53: composite_poisson_contract
+2/6 Test #53: composite_poisson_contract .......   Passed    0.02 sec
+    Start 54: self_gravity_physics
+3/6 Test #54: self_gravity_physics .............***Failed    0.15 sec
+Traceback (most recent call last):
+  File "/home/shiroakane/ARCH/validation/gravity/run_self_gravity.py", line 16, in <module>
+    import h5py
+ModuleNotFoundError: No module named 'h5py'
+
+4/6 Test #52: self_gravity_lifecycle ...........   Passed    0.37 sec
+5/6 Test  #4: configuration_api_contract .......   Passed    1.13 sec
+6/6 Test  #3: preview_api_contract .............   Passed    2.96 sec
+
+83% tests passed, 1 tests failed out of 6
+
+Total Test time (real) =   2.96 sec
+
+The following tests FAILED:
+	 54 - self_gravity_physics (Failed)
+Errors while running CTest

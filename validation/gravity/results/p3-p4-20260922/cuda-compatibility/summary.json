@@ -1,0 +1,40 @@
+{
+  "status": "passed",
+  "scope": "existing CUDA external gravity/checkpoint compatibility; no GPU self solve",
+  "cpu_sha256": "cfb2f516284de83807055ef61ac803820f46364f520da056c8c3895c1494a3a6",
+  "cuda_sha256": "a3ee367e75acfe3688882d35b0c8e31afa739b3e3e3b4acfb21c045b389cf7c9",
+  "results": [
+    {
+      "name": "cpu-external",
+      "time": 0.1,
+      "max_relative_error": 2.362734341417356e-16,
+      "device_kernels": 0
+    },
+    {
+      "name": "cuda-external",
+      "time": 0.1,
+      "max_relative_error": 2.362734341417356e-16,
+      "device_kernels": 1120
+    },
+    {
+      "name": "cpu-checkpoint",
+      "time": 0.005835647491542896,
+      "max_relative_error": 1.182596029108406e-16,
+      "device_kernels": 0
+    },
+    {
+      "name": "cuda-resumed",
+      "time": 0.1,
+      "max_relative_error": 2.362734341417356e-16,
+      "device_kernels": 1056
+    },
+    {
+      "name": "cuda-self-rejected",
+      "rejected": true
+    },
+    {
+      "name": "auto-self-cpu",
+      "resolved": "cpu"
+    }
+  ]
+}

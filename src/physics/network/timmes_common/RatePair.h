@@ -2,7 +2,7 @@
 // no upstream reaction formula is defined in this file.
 #pragma once
 
-#include "Dual.h"
+#include "physics/network/timmes_common/Dual.h"
 
 namespace timmes {
 

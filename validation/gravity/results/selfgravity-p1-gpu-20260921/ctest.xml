@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Linux-g++-12"
+	tests="22"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="Shiro-Akane"
+	time="192"
+	timestamp="2026-09-22T00:15:22"
+	>
+	<testcase name="checkpoint_temporal_comparison" classname="checkpoint_temporal_comparison" time="0.0064342" status="run">
+		<properties/>
+		<system-out>checkpoint temporal comparison controls passed
+</system-out>
+	</testcase>
+	<testcase name="shared_stage_scheduler" classname="shared_stage_scheduler" time="0.00410124" status="run">
+		<properties/>
+		<system-out>LANE_TRACE	physical	euler	stage:1:old=Current:input=Current:output=Next	rotate:Current&lt;-Next:Next&lt;-Current:Scratch&lt;-Scratch	reflux:Current
+LANE_TRACE	bookkeeping	euler	stage:1:output=Next:version=2:token=3:ghost-token=0	reflux:version=3:token=4	Current:interior=3:ghost=Invalid:status=success
+LANE_TRACE	physical	rk2	stage:1:old=Current:input=Current:output=Scratch	boundary:Scratch	stage:2:old=Current:input=Scratch:output=Next	rotate:Current&lt;-Next:Next&lt;-Current:Scratch&lt;-Scratch	reflux:Current
+LANE_TRACE	bookkeeping	rk2	stage:1:output=Scratch:version=2:token=3:ghost-token=4	stage:2:output=Next:version=3:token=5:ghost-token=0	reflux:version=4:token=6	Current:interior=4:ghost=Invalid:status=success
+LANE_TRACE	physical	rk3	stage:1:old=Current:input=Current:output=Scratch	boundary:Scratch	stage:2:old=Current:input=Scratch:output=Next	boundary:Next	stage:3:old=Current:input=Next:output=Scratch	rotate:Current&lt;-Scratch:Next&lt;-Next:Scratch&lt;-Current	reflux:Current
+LANE_TRACE	bookkeeping	rk3	stage:1:output=Scratch:version=...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="gravity_stage_contract" classname="gravity_stage_contract" time="0.00220811" status="run">
+		<properties/>
+		<system-out>Gravity stage preparation and field identity contracts passed
+</system-out>
+	</testcase>
+	<testcase name="cuda_regrid_transaction" classname="cuda_regrid_transaction" time="0.534028" status="run">
+		<properties/>
+		<system-out>REGRID_STORAGE species=4 refine=1 rollback=1 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=4 refine=1 rollback=0 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=4 refine=0 rollback=0 old_blocks=3 new_blocks=2
+CUDA_REGRID_TRANSACTION_PASS species=4 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1
+REGRID_STORAGE species=41 refine=1 rollback=1 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=41 refine=1 rollback=0 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=41 refine=0 rollback=0 old_blocks=3 new_blocks=2
+CUDA_REGRID_TRANSACTION_PASS species=41 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1
+</system-out>
+	</testcase>
+	<testcase name="cuda_regrid_migration" classname="cuda_regrid_migration" time="0.321865" status="run">
+		<properties/>
+		<system-out>CUDA_REGRID_MIGRATION_PASS dim=1 species=4 geometry=cartesian
+CUDA_REGRID_MIGRATION_PASS dim=2 species=4 geometry=cartesian
+CUDA_REGRID_MIGRATION_PASS dim=3 species=4 geometry=cartesian
+CUDA_REGRID_MIGRATION_PASS dim=1 species=4 geometry=cylindrical
+CUDA_REGRID_MIGRATION_PASS dim=2 species=4 geometry=cylindrical
+CUDA_REGRID_MIGRATION_PASS dim=3 species=4 geometry=cylindrical
+CUDA_REGRID_MIGRATION_PASS dim=1 species=4 geometry=spherical
+CUDA_REGRID_MIGRATION_PASS dim=2 species=4 geometry=spherical
+CUDA_REGRID_MIGRATION_PASS dim=3 species=4 geometry=spherical
+CUDA_REGRID_MIGRATION_PASS dim=1 species=0 geometry=cartesian
+CUDA_REGRID_MIGRATION_PASS dim=2 species=21 geometry=cartesian
+CUDA_REGRID_MIGRATION_PASS dim=2 species=41 geometry=cartesian
+</system-out>
+	</testcase>
+	<testcase name="cuda_hydro_dispatch" classname="cuda_hydro_dispatch" time="0.00222461" status="run">
+		<properties/>
+		<system-out>CUDA Hydro registry combinations=60 unknown-ID controls=3 limiter-independent controls=2 passed
+</system-out>
+	</testcase>
+	<testcase name="cuda_amr_composition" classname="cuda_amr_composition" time="0.235363" status="run">
+		<properties/>
+		<system-out>CUDA_AMR_COMPOSITION_PASS valid=21 invalid_no_scatter=24
+</system-out>
+	</testcase>
+	<testcase name="cuda_compile_probe" classname="cuda_compile_probe" time="0.00129048" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="diffusion_rkl_parity" classname="diffusion_rkl_parity" time="0.483601" status="run">
+		<properties/>
+		<system-out>C4_OPERATOR_ENVELOPE field=rho max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=mom_u max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=mom_v max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=mom_w max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=eng max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=X0 max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=X1 max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=ENUC max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=first field=rho max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=first field=mom_u max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=first field=mom_v max_abs=1.3877787807814457e-17 abs_cell=17 max_rel=1.305408104629182e-16 rel_cell=17
+C4_RKL_ENVELOPE stage=first field=mom_w max_abs=6.9388939039072284e-18 abs_cell=17 max_rel=1.305408104629182e-16 rel_cell=17
+C4_...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="cuda_reduction_contract" classname="cuda_reduction_contract" time="0.220222" status="run">
+		<properties/>
+		<system-out>D2_CUDA_REDUCTION_CONTRACT_PASS edge_cases=36
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_hydro" classname="cuda_multiblock_hydro" time="0.353582" status="run">
+		<properties/>
+		<system-out>CUDA_MULTIBLOCK_EXCHANGE_PASS blocks=2 operations=2
+CUDA_MULTIBLOCK_CORNER_PASS blocks=4 operations=8
+CUDA_HYDRO_BATCH_CONTRACT_PASS methods=3 blocks=2
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_diffusion" classname="cuda_multiblock_diffusion" time="0.257174" status="run">
+		<properties/>
+		<system-out>CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=2 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=2 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=2 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=2 species=2
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_burn" classname="cuda_multiblock_burn" time="4.45292" status="run">
+		<properties/>
+		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=sequential blocks=2 limiter=0.000257764
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=batched blocks=2 limiter=0.000257764
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=sequential blocks=2 limiter=0.000257764
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=batched blocks=2 limiter=0.000257764
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARC...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_burn_b3" classname="cuda_multiblock_burn_b3" time="4.4677" status="run">
+		<properties>
+			<property name="cmake_labels" value="batch-boundary;cuda;microphysics"/>
+		</properties>
+		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=sequential blocks=3 limiter=0.000182921
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=batched blocks=3 limiter=0.000182921
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=sequential blocks=3 limiter=0.000182921
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=batched blocks=3 limiter=0.000182921
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARC...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_diffusion_b3" classname="cuda_multiblock_diffusion_b3" time="0.258497" status="run">
+		<properties>
+			<property name="cmake_labels" value="batch-boundary;cuda;microphysics"/>
+		</properties>
+		<system-out>CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=3 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=3 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=3 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=3 species=2
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_burn_b1024" classname="cuda_multiblock_burn_b1024" time="33.2977" status="run">
+		<properties>
+			<property name="cmake_labels" value="batch-boundary;cuda;microphysics"/>
+		</properties>
+		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=sequential blocks=1024 limiter=4.33579e-05
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=batched blocks=1024 limiter=4.33579e-05
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=sequential blocks=1024 limiter=4.33579e-05
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=batched blocks=1024 limiter=4.33579e-05
+[HelmEos] Loading 2D Helmholtz table from /home/sh...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_diffusion_b1024" classname="cuda_multiblock_diffusion_b1024" time="7.29918" status="run">
+		<properties>
+			<property name="cmake_labels" value="batch-boundary;cuda;microphysics"/>
+		</properties>
+		<system-out>CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=1024 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=1024 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=1024 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=1024 species=2
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_burn_b1025" classname="cuda_multiblock_burn_b1025" time="33.9127" status="run">
+		<properties>
+			<property name="cmake_labels" value="batch-boundary;cuda;microphysics"/>
+		</properties>
+		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=sequential blocks=1025 limiter=4.33575e-05
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=batched blocks=1025 limiter=4.33575e-05
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=sequential blocks=1025 limiter=4.33575e-05
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_MULTIBLOCK_BURN_PASS route=batched blocks=1025 limiter=4.33575e-05
+[HelmEos] Loading 2D Helmholtz table from /home/sh...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_diffusion_b1025" classname="cuda_multiblock_diffusion_b1025" time="7.27885" status="run">
+		<properties>
+			<property name="cmake_labels" value="batch-boundary;cuda;microphysics"/>
+		</properties>
+		<system-out>CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=1025 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=1025 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=1025 species=2
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=1025 species=2
+</system-out>
+	</testcase>
+	<testcase name="cuda_multiblock_diffusion_global_species" classname="cuda_multiblock_diffusion_global_species" time="0.317062" status="run">
+		<properties>
+			<property name="cmake_labels" value="batch-boundary;cuda;microphysics"/>
+		</properties>
+		<system-out>CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=3 species=33
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2 blocks=3 species=33
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=3 species=33
+CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3 blocks=3 species=33
+</system-out>
+	</testcase>
+	<testcase name="cuda_store_lifecycle" classname="cuda_store_lifecycle" time="0.22585" status="run">
+		<properties/>
+		<system-out>CUDA store lifecycle passed
+</system-out>
+	</testcase>
+	<testcase name="cuda_amr_exchange" classname="cuda_amr_exchange" time="98.3009" status="run">
+		<properties/>
+		<system-out>CUDA_AMR_REJECTION_PASS dimension=1
+CUDA_AMR_EXCHANGE_PASS dimension=1 geometry=cartesian blocks=3 operations=20
+CUDA_AMR_REJECTION_PASS dimension=2
+CUDA_AMR_EXCHANGE_PASS dimension=2 geometry=cartesian blocks=7 operations=80
+CUDA_AMR_REJECTION_PASS dimension=3
+CUDA_AMR_EXCHANGE_PASS dimension=3 geometry=cartesian blocks=15 operations=240
+CUDA_AMR_REJECTION_PASS dimension=1
+CUDA_AMR_EXCHANGE_PASS dimension=1 geometry=cylindrical blocks=3 operations=20
+CUDA_AMR_REJECTION_PASS dimension=2
+CUDA_AMR_EXCHANGE_PASS dimension=2 geometry=cylindrical blocks=7 operations=80
+CUDA_AMR_REJECTION_PASS dimension=3
+CUDA_AMR_EXCHANGE_PASS dimension=3 geometry=cylindrical blocks=15 operations=240
+CUDA_AMR_REJECTION_PASS dimension=1
+CUDA_AMR_EXCHANGE_PASS dimension=1 geometry=spherical blocks=3 operations=20
+CUDA_AMR_REJECTION_PASS dimension=2
+CUDA_AMR_EXCHANGE_PASS dimension=2 geometry=spherical blocks=7 operations=80
+CUDA_AMR_REJECTION_PASS dimension=3
+CUDA_AMR_EXCHANGE_PASS dimension=3 geometry=spherical blocks=15 operations...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+</testsuite>

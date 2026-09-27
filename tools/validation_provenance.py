@@ -231,7 +231,8 @@ def sparse_link_identity(build_dir: Path, options: dict[str, str], selected: str
 
     Includes fetched KLU's separately linked static dependencies, which are
     absent from KLU_LIBRARY. No build command is executed. This describes the
-    CMake link closure, not all runtime-loaded OS/driver libraries.
+    CMake link closure and configured lazy sparse dependencies, not every
+    runtime-loaded OS/driver library.
     """
     enabled = lambda name: options.get(name, "").upper() in {"ON", "TRUE", "1", "YES"}
     required = set()
@@ -262,10 +263,16 @@ def sparse_link_identity(build_dir: Path, options: dict[str, str], selected: str
         link_command = (build_dir / "CMakeFiles/ARCH.dir/link.txt").read_text(encoding="utf-8").strip()
     else:
         raise RuntimeError("sparse link qualification currently requires Ninja or Unix Makefiles")
-    return sparse_link_command_identity(build_dir, link_command, required)
+    runtime = {}
+    if "cudss" in required and "libarch_cuda_sparse_provider.a" in link_command:
+        runtime = {"cudss": cudss_library, "cublas": options.get("CUDA_cublas_LIBRARY", "")}
+        if not runtime["cublas"]:
+            raise RuntimeError("configured lazy cuDSS provider is missing its cuBLAS artifact")
+    return sparse_link_command_identity(build_dir, link_command, required, runtime)
 
 
-def sparse_link_command_identity(build_dir: Path, command: str, required: set[str]) -> dict[str, Any]:
+def sparse_link_command_identity(build_dir: Path, command: str, required: set[str],
+                                 runtime: dict[str, str] | None = None) -> dict[str, Any]:
     libraries, observed = {}, set()
     pattern = re.compile(r'lib(klu|amd|btf|colamd|suitesparseconfig|cudss|cublas|cublasLt)\.(?:a|so(?:\.\d+)*)$')
     for argument in shlex.split(command):
@@ -277,9 +284,29 @@ def sparse_link_command_identity(build_dir: Path, command: str, required: set[st
             identity = file_identity(path)
             libraries[identity["path"]] = identity
             observed.add(match.group(1))
+    runtime_libraries = []
+    if runtime:
+        # Lazy loading changes the link closure, not artifact accountability.
+        # Require the actual provider archive on the final link before accepting
+        # its configured runtime dependencies, and hash both kinds of inputs.
+        providers = [Path(arg) for arg in shlex.split(command)
+                     if Path(arg).name == "libarch_cuda_sparse_provider.a"]
+        if len(providers) != 1:
+            raise RuntimeError("final link does not name the required sparse provider archive")
+        provider = providers[0]
+        identity = file_identity(provider if provider.is_absolute() else build_dir / provider)
+        libraries[identity["path"]] = identity
+        for name, artifact in sorted(runtime.items()):
+            path = Path(artifact)
+            if not artifact or not path.is_absolute():
+                raise RuntimeError("runtime sparse provider artifact must be an absolute configured path")
+            identity = file_identity(path)
+            runtime_libraries.append({"provider": name, **identity})
+            observed.add(name)
     if not required.issubset(observed):
         raise RuntimeError("final link does not name all required sparse provider artifacts")
     return {"required_providers": sorted(required),
+            "runtime_libraries": runtime_libraries,
             "link_command_sha256": hashlib.sha256(command.encode()).hexdigest(),
             "libraries": [libraries[path] for path in sorted(libraries)]}
 
@@ -298,7 +325,7 @@ def build_identity(build_dir: Path, configuration: str | None = None) -> dict[st
         key, kind = key_type.split(":", 1)
         if key == "CMAKE_HOME_DIRECTORY":
             source_directory = value
-        if (kind != "INTERNAL" or key == "CMAKE_GENERATOR") and (key.startswith(("CMAKE_", "ARCH_", "CuDSS_", "KLU_", "CUDSS_"))
+        if (kind != "INTERNAL" or key == "CMAKE_GENERATOR") and (key.startswith(("CMAKE_", "ARCH_", "CuDSS_", "KLU_", "CUDSS_", "CUDA_cublas"))
                                    or key == "BUILD_TESTING"):
             entries[key] = value
     configurations = entries.get("CMAKE_CONFIGURATION_TYPES", "")

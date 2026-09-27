@@ -5,13 +5,18 @@
  * Compiled host plans supply target cells and geometric weights. Kernels use
  * AmrFluxMath to update borrowed compact surfaces and conservative cell values;
  * the runtime serializes contributors and owns stream completion.
+ * Workflow:
+ * 1. Receive compiled AMR face plans and resident surface buffers.
+ * 2. Launch shared flux-register math over CUDA indices.
+ * 3. Return conservative corrections after backend stream ordering.
  */
 
 #pragma once
 
-#include "amr/AmrFluxMath.h"
-#include "amr/AmrFluxExecutionPlan.h"
+#include "amr/flux/AmrFluxMath.h"
+#include "amr/flux/AmrFluxExecutionPlan.h"
 #include "cuda/amr/AmrFluxSurfaceTypes.cuh"
+#include "numerics/state/StateAdmissibility.h"
 
 namespace arch::cuda::amr_flux_kernel_detail {
 
@@ -145,7 +150,8 @@ __global__ void reflux_kernel(
     const DeviceAmrFluxBlockView* blocks,
     const amr::AmrRefluxTarget* targets,
     const amr::AmrRefluxContribution* contributions,
-    int target_count, double dt)
+    int target_count, double dt, int* status,
+    double density_floor, double energy_floor, double energy_ceiling)
 {
     const int target_index = static_cast<int>(
         blockIdx.x * blockDim.x + threadIdx.x);
@@ -180,6 +186,12 @@ __global__ void reflux_kernel(
                     rho_before, state.species(species, state_cell),
                     correction, flux.species_flux(species, flux_cell),
                     rho_after));
+    }
+    if (status) {
+        const auto outcome=arch::state::validate(state.load(state_cell),
+            state.n_species?state.mass_fractions+state_cell:nullptr,
+            state.n_species,state.total_size,density_floor,energy_floor,energy_ceiling);
+        if (outcome!=arch::state::Status::valid) atomicExch(status,100+static_cast<int>(outcome));
     }
 }
 

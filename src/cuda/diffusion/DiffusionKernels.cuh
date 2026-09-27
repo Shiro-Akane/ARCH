@@ -16,14 +16,15 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "../common/CudaCommon.cuh"
-#include "../common/DeviceEosStatus.h"
-#include "../hydro/HydroStateKernels.cuh"
-#include "../hydro/GridGeometryAdapter.cuh"
+#include "cuda/common/CudaCommon.cuh"
+#include "cuda/common/DeviceEosStatus.h"
+#include "cuda/hydro/kernels/HydroStateKernels.cuh"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
-#include "../../numerics/diffusion/DiffFlux.h"
-#include "../../numerics/diffusion/DiffusionAMRStages.h"
-#include "../../physics/species/Species.h"
+#include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
+#include "numerics/diffusion/DiffFlux.h"
+#include "numerics/diffusion/DiffusionAMRStages.h"
+#include "physics/species/Species.h"
 
 namespace arch::cuda
 {
@@ -176,8 +177,15 @@ __global__ void diffusion_face_kernel(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
     EosView eos, SpeciesPODView species,
     DiffFlux::DiffusionConfigView config, int direction, int* status,
-    SpeciesWorkspaceView workspace = {})
+    SpeciesWorkspaceView workspace = {}, const DeviceDiffusionBatchBlock* blocks = nullptr)
 {
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        state = b.input; flux = b.workspace.face_flux; grid = b.grid;
+        status = b.workspace.status; workspace = b.workspace.species_workspace;
+        eos = bind_device_eos_status(eos, status);
+    }
+    if (direction >= grid.dim) return;
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     const int count = diffusion_face_count(grid, direction);
     SpeciesLaneScratch<5> scratch(workspace, lane);
@@ -233,8 +241,15 @@ template <typename EosView>
 __global__ void diffusion_dt_candidates_kernel(
     DeviceStateView state, DeviceGridView grid, EosView eos,
     SpeciesPODView species, DiffFlux::DiffusionConfigView config,
-    double* candidates, int* status, SpeciesWorkspaceView workspace = {})
+    double* candidates, int* status, SpeciesWorkspaceView workspace = {},
+    const DeviceDiffusionBatchBlock* blocks = nullptr)
 {
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        state = b.input; grid = b.grid; candidates = b.workspace.candidates;
+        status = b.workspace.status; workspace = b.workspace.species_workspace;
+        eos = bind_device_eos_status(eos, status);
+    }
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     const int count = grid.active_cell_count();
     SpeciesLaneScratch<5> scratch(workspace, lane);
@@ -268,8 +283,16 @@ template <typename EosView>
 __global__ void diffusion_geometric_source_kernel(
     DeviceStateView state, DeviceStateView output, DeviceGridView grid,
     EosView eos, SpeciesPODView species, DiffFlux::DiffusionConfigView config,
-    int* status, SpeciesWorkspaceView workspace = {})
+    int* status, SpeciesWorkspaceView workspace = {},
+    const DeviceDiffusionBatchBlock* blocks = nullptr)
 {
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        state = b.input; output = b.delta; grid = b.grid;
+        status = b.workspace.status; workspace = b.workspace.species_workspace;
+        eos = bind_device_eos_status(eos, status);
+        if (grid.geometry == static_cast<int>(DeviceGeometry::Cartesian)) return;
+    }
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     SpeciesLaneScratch<3> scratch(workspace, lane);
     double* composition = scratch.array(0);
@@ -299,9 +322,15 @@ __global__ void diffusion_geometric_source_kernel(
 }
 
 static __global__ void diffusion_dt_reduce_kernel(
-    const double* candidates, int count, double* result)
+    const double* candidates, int count, double* result,
+    const DeviceDiffusionBatchBlock* blocks = nullptr)
 {
     if (blockIdx.x != 0 || threadIdx.x != 0) return;
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        candidates = b.workspace.candidates; result = b.workspace.result;
+        count = b.grid.active_cell_count();
+    }
     const auto spec = arch::reduction::minimum_spec(
         DiffFlux::diffusion_dt_sentinel());
     auto state = arch::reduction::begin_reduction(spec);
@@ -324,8 +353,13 @@ static __global__ void diffusion_dt_reduce_kernel(
 
 static __global__ void first_rkl_stage_kernel(
     DeviceStateView state_n, DeviceStateView increment,
-    DeviceStateView destination, DeviceGridView grid, double coefficient)
+    DeviceStateView destination, DeviceGridView grid, double coefficient,
+    const DeviceDiffusionBatchBlock* blocks = nullptr)
 {
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        state_n = b.state_n; increment = b.delta; destination = b.output; grid = b.grid;
+    }
     const int linear = blockIdx.x * blockDim.x + threadIdx.x;
     if (linear >= grid.active_cell_count()) return;
     const int cell = grid.active_cell(linear);
@@ -338,6 +372,17 @@ static __global__ void first_rkl_stage_kernel(
         state_n.n_species, state_n.total_size, coefficient, updated,
         destination.n_species > 0
             ? destination.mass_fractions + cell : nullptr);
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        const auto status = state::validate(updated,
+            destination.n_species ? destination.mass_fractions + cell : nullptr,
+            destination.n_species, destination.total_size,
+            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max);
+        if (status != state::Status::valid) {
+            atomicExch(b.workspace.status, 100 + static_cast<int>(status));
+            return;
+        }
+    }
     destination.store(cell, updated);
 }
 
@@ -363,8 +408,15 @@ static __global__ void recursive_rkl_stage_kernel(
     DeviceStateView state_older, DeviceStateView increment_previous,
     DeviceStateView increment_initial, DeviceStateView destination,
     DeviceGridView grid, DiffFunction::RKLCoeffs coefficients,
-    bool second_order, double dt, bool increments_are_scaled)
+    bool second_order, double dt, bool increments_are_scaled,
+    const DeviceDiffusionBatchBlock* blocks = nullptr)
 {
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        state_n = b.state_n; state_previous = b.previous; state_older = b.older;
+        increment_previous = b.delta; increment_initial = b.initial_delta;
+        destination = b.output; grid = b.grid;
+    }
     const int linear = blockIdx.x * blockDim.x + threadIdx.x;
     if (linear >= grid.active_cell_count()) return;
     const int cell = grid.active_cell(linear);
@@ -388,6 +440,17 @@ static __global__ void recursive_rkl_stage_kernel(
         dt, increments_are_scaled, updated,
         destination.n_species > 0
             ? destination.mass_fractions + cell : nullptr);
+    if (blocks) {
+        const auto& b = blocks[blockIdx.y];
+        const auto status = state::validate(updated,
+            destination.n_species ? destination.mass_fractions + cell : nullptr,
+            destination.n_species, destination.total_size,
+            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max);
+        if (status != state::Status::valid) {
+            atomicExch(b.workspace.status, 100 + static_cast<int>(status));
+            return;
+        }
+    }
     destination.store(cell, updated);
 }
 
@@ -402,6 +465,54 @@ inline bool valid_stage_views(
         && state_n.total_size == grid.total_size
         && matching_state_shape(state_n, increment)
         && matching_state_shape(state_n, destination);
+}
+
+inline bool valid_operator_views(DeviceStateView state, DeviceStateView output,
+    SpeciesPODView species, DeviceGridView grid, DiffusionWorkspaceView workspace)
+{
+    return valid_hydro_view(state) && valid_hydro_view(output)
+        && valid_species_workspace(workspace.species_workspace, state.n_species, 5)
+        && valid_hydro_view(workspace.face_flux) && valid_diffusion_grid(grid)
+        && state.total_size == grid.total_size
+        && matching_state_shape(state, output)
+        && matching_state_shape(state, workspace.face_flux)
+        && species.size() == state.n_species && workspace.status != nullptr
+        && !any_state_storage_alias(output, state)
+        && !any_state_storage_alias(workspace.face_flux, state)
+        && !any_state_storage_alias(workspace.face_flux, output);
+}
+
+inline bool valid_dt_views(DeviceStateView state, SpeciesPODView species,
+    DeviceGridView grid, DiffusionWorkspaceView workspace)
+{
+    return valid_hydro_view(state)
+        && valid_species_workspace(workspace.species_workspace, state.n_species, 5)
+        && valid_diffusion_grid(grid) && state.total_size == grid.total_size
+        && species.size() == state.n_species && workspace.dt_candidates
+        && workspace.dt_result && workspace.status;
+}
+
+inline bool valid_first_stage_views(DeviceStateView state_n, DeviceStateView increment,
+    DeviceStateView destination, DeviceGridView grid)
+{
+    return valid_stage_views(state_n, increment, destination, grid)
+        && !any_state_storage_alias(destination, state_n)
+        && !any_state_storage_alias(destination, increment);
+}
+
+inline bool valid_recursive_stage_views(DeviceStateView state_n, DeviceStateView previous,
+    DeviceStateView older, DeviceStateView increment, DeviceStateView initial,
+    DeviceStateView destination, DeviceGridView grid)
+{
+    return valid_stage_views(state_n, increment, destination, grid)
+        && valid_hydro_view(previous) && valid_hydro_view(older) && valid_hydro_view(initial)
+        && matching_state_shape(state_n, previous) && matching_state_shape(state_n, older)
+        && matching_state_shape(state_n, initial)
+        && !any_state_storage_alias(destination, state_n)
+        && !any_state_storage_alias(destination, previous)
+        && !any_state_storage_alias(destination, increment)
+        && !any_state_storage_alias(destination, initial)
+        && (same_state_storage(destination, older) || !any_state_storage_alias(destination, older));
 }
 
 } // namespace detail
@@ -419,18 +530,7 @@ inline DiffusionLaunchResult launch_diffusion_operator(
     DiffusionLaunchResult result{};
     if (!config.use_diffusion || !DiffFlux::diffusion_routes_enabled(config))
         return result;
-    if (!valid_hydro_view(state) || !valid_hydro_view(output)
-        || !valid_species_workspace(workspace.species_workspace, state.n_species, 5)
-        || !valid_hydro_view(workspace.face_flux)
-        || !detail::valid_diffusion_grid(grid)
-        || state.total_size != grid.total_size
-        || !detail::matching_state_shape(state, output)
-        || !detail::matching_state_shape(state, workspace.face_flux)
-        || species.size() != state.n_species
-        || workspace.status == nullptr
-        || detail::any_state_storage_alias(output, state)
-        || detail::any_state_storage_alias(workspace.face_flux, state)
-        || detail::any_state_storage_alias(workspace.face_flux, output)) {
+    if (!detail::valid_operator_views(state, output, species, grid, workspace)) {
         result.error = cudaErrorInvalidValue;
         return result;
     }
@@ -515,13 +615,7 @@ inline DiffusionLaunchResult launch_raw_diffusion_dt(
         result.error = detail::write_dt_sentinel(workspace.dt_result, stream);
         return result;
     }
-    if (!valid_hydro_view(state)
-        || !valid_species_workspace(workspace.species_workspace, state.n_species, 5)
-        || !detail::valid_diffusion_grid(grid)
-        || state.total_size != grid.total_size
-        || species.size() != state.n_species
-        || workspace.dt_candidates == nullptr
-        || workspace.dt_result == nullptr || workspace.status == nullptr) {
+    if (!detail::valid_dt_views(state, species, grid, workspace)) {
         result.error = cudaErrorInvalidValue;
         return result;
     }
@@ -552,9 +646,7 @@ inline DiffusionLaunchResult launch_first_rkl_stage(
     DiffusionLaunchResult result{};
     if (!config.use_diffusion || !DiffFlux::diffusion_routes_enabled(config))
         return result;
-    if (!detail::valid_stage_views(state_n, increment, destination, grid)
-        || detail::any_state_storage_alias(destination, state_n)
-        || detail::any_state_storage_alias(destination, increment)) {
+    if (!detail::valid_first_stage_views(state_n, increment, destination, grid)) {
         result.error = cudaErrorInvalidValue;
         return result;
     }
@@ -582,20 +674,8 @@ inline DiffusionLaunchResult launch_recursive_rkl_stage(
     DiffusionLaunchResult result{};
     if (!config.use_diffusion || !DiffFlux::diffusion_routes_enabled(config))
         return result;
-    if (!detail::valid_stage_views(
-            state_n, increment_previous, destination, grid)
-        || !valid_hydro_view(state_previous)
-        || !valid_hydro_view(state_older)
-        || !valid_hydro_view(increment_initial)
-        || !detail::matching_state_shape(state_n, state_previous)
-        || !detail::matching_state_shape(state_n, state_older)
-        || !detail::matching_state_shape(state_n, increment_initial)
-        || detail::any_state_storage_alias(destination, state_n)
-        || detail::any_state_storage_alias(destination, state_previous)
-        || detail::any_state_storage_alias(destination, increment_previous)
-        || detail::any_state_storage_alias(destination, increment_initial)
-        || (!detail::same_state_storage(destination, state_older)
-            && detail::any_state_storage_alias(destination, state_older))) {
+    if (!detail::valid_recursive_stage_views(state_n, state_previous, state_older,
+            increment_previous, increment_initial, destination, grid)) {
         result.error = cudaErrorInvalidValue;
         return result;
     }

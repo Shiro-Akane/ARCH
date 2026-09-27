@@ -1,0 +1,211 @@
+{
+  "comparisons": [
+    {
+      "case": "external_euler",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "external_euler",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "external_euler",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "external_euler",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_euler",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_euler",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_euler",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_euler",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "external_rk2",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "external_rk2",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "external_rk2",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "external_rk2",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_rk2",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_rk2",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_rk2",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_rk2",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "external_rk3",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "external_rk3",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "external_rk3",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "external_rk3",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_rk3",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_rk3",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_rk3",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "none_amr_rk3",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "gravity_amr_rk2",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "gravity_amr_rk2",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "gravity_amr_rk2",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "gravity_amr_rk2",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "external_amr_rkl1",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "external_amr_rkl1",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "external_amr_rkl1",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "external_amr_rkl1",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "external_amr_rkl2",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "external_amr_rkl2",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "external_amr_rkl2",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "external_amr_rkl2",
+      "step": 5,
+      "max_abs": 0
+    },
+    {
+      "case": "burn_enuc_amr",
+      "step": 0,
+      "max_abs": 0
+    },
+    {
+      "case": "burn_enuc_amr",
+      "step": 2,
+      "max_abs": 0
+    },
+    {
+      "case": "burn_enuc_amr",
+      "step": 4,
+      "max_abs": 0
+    },
+    {
+      "case": "burn_enuc_amr",
+      "step": 5,
+      "max_abs": 0
+    }
+  ],
+  "negative": {
+    "passed": false,
+    "first_mismatch": {
+      "field": "checkpoint",
+      "reason": "checkpoint validation failed: checkpoint accepted-step mismatch"
+    }
+  }
+}

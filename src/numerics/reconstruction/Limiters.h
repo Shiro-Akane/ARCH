@@ -11,7 +11,7 @@
 #include <cmath>
 #include <string>
 
-#include "../../core/ArchPortability.h"
+#include "core/ArchPortability.h"
 
 /**
  * @struct NoLimiter
@@ -87,7 +87,7 @@ struct VanLeer
         // Opposite-sign slopes require phi=0 to preserve monotonicity.
         if (r <= 0.0)
             return 0.0;
-        return (2.0 * r) / (1.0 + r);
+        return r <= 1.0 ? (2.0 * r) / (1.0 + r) : 2.0 / (1.0 + 1.0 / r);
     }
 };
 

@@ -73,8 +73,9 @@ GPU 指标仅在显式请求时采集，不会预留显存。
 [validation_sanitizer.py](validation_sanitizer.py)管理 Compute Sanitizer 及报告核查。
 扩展这些已有职责，不再复制运行器、进程管理或证据格式。
 
-顶层工具只使用 Python 标准库，HDF5 读取交给 C++ 比较器。独立参考可能需要 NumPy、
-SciPy、mpmath 或 h5py，各验证模块均有说明。Compute Sanitizer 和 Nsight 只在对应
+大多数工具使用 Python 标准库，主要后端比较器将 HDF5 场数据比较交给 C++ 程序。
+耦合微物理检查还需要 NumPy 和 h5py。独立参考可能需要 SciPy、mpmath 或 h5py，
+各验证模块均有说明。Compute Sanitizer 和 Nsight 只在对应
 插桩流程中需要。
 
 [网络生成](network/README.md)需要 pynucastro。`GenerateNetwork.py --check` 会执行

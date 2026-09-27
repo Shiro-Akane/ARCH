@@ -1,5 +1,17 @@
 # Core 参数编辑接口交接
 
+> P3/P4 更新（2026-09-22）：当前标准目录为 92 项，CPU 周期 self 已接入。
+> 新键、能力边界、GPOT/GAC 单位、资源排除项与 checkpoint v6 见
+> [P3/P4 交接](../../docs/development/P3P4CompositeGravity.zh-CN.md#gui--cuda-分支交接)。
+> 下方 P1/P1.5 的计数和验收是历史记录；GUI 不应硬编码历史键数。
+
+
+> P1.5 接入更新：下文是 2026-09-20 的交付快照。当前 Core 已统一 CGS（包括 IdealGas），
+> 标准目录为 88 项，删除五个退役键并登记三个已有宏步控制；最新契约见
+> [配置接口](CONFIGURATION_API.md) 和 [P1.5 记录](../../docs/development/P1_5ImplementationReport.zh-CN.md)。
+> GUI 应重新读取目录，保留物理分组，并由 GUI 自行标记高级选项；本次没有修改 studio。
+
+
 > 历史交接记录：本文保留当时的功能和测试范围。本轮新增能力与单位变更请以 [LOCAL_WORKFLOW_HANDOFF.md](LOCAL_WORKFLOW_HANDOFF.md) 为准，当前响应示例见 examples/local-workflow 与 examples/configuration。
 
 ## 分支与同步
@@ -28,7 +40,7 @@
 - 三轴 blocks 控件保持同级、位置稳定；0 关闭第二/第三轴，正整数（包括 1）启用；按状态展开范围/边界。第三轴依赖第二轴。非法输入保持原文并提示。
 - 按 Core 坐标与单位显示标签。角度为 rad；普通未知字符串不能自动当作文件路径。
 - Host 接通新命令、检查响应身份和版本；文件存在性、读写条件与输出目录预检由 Host 根据实际工作目录处理。目录标注了哪些字符串是路径。
-- 编译输入跟踪增加 `src/core/StandardParameters.h`、`src/api/Configuration.h`、`src/api/Configuration.cpp`、`src/api/PresentationMetadata.cpp`、`src/api/LogCapture.h`。继续跟踪已有 RuntimeParams、ConfigParser、Preview、Response、main，以及策略注册/坐标定义依赖；新增枚举来自策略注册表，更新注册表后也需使旧 binary 失效。
+- 编译输入跟踪增加 `src/core/config/StandardParameters.h`、`src/api/Configuration.h`、`src/api/configuration/Configuration.cpp`、`src/api/configuration/PresentationMetadata.cpp`、`src/api/protocol/LogCapture.h`。继续跟踪已有 RuntimeParams、ConfigParser、Preview、Response、main，以及策略注册/坐标定义依赖；新增枚举来自策略注册表，更新注册表后也需使旧 binary 失效。
 - 左上角常驻模型名称和 `.par` 完整文件名。文件名前缀或目录差异作为配对疑点提示；不强制命名、同目录规则，也不据此禁止编辑。覆盖保存时明确目标文件；配对提示不能替代实际参数校验。
 - 修复缩放时图形、坐标轴、标记和 Inspector 不一致；空间轴比例与场值比例分开设置，分别提供 Linear/Log；Advanced 提供范围和截断，另提供少量颜色表。显示设置不改写科学参数或响应数组。
 - 切换模型时隔离旧 metadata、图形绑定与异步响应，关联 Source 与 Preview Model，并更新启动和能力说明。

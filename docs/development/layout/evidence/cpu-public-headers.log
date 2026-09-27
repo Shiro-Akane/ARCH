@@ -1,0 +1,204 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===================================================================
+-- Configuring ARCH Framework
+-- C++ Standard: C++20 Required
+-- ===================================================================
+-- [OPT] Found ccache: /usr/bin/ccache
+-- [OPT] Build Type: Debug
+-- [OPT] LTO enabled for optimized configurations
+-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed
+-- [DEP] OpenMP enabled for target ARCH
+-- [DEP] HDF5 C++ libraries linked successfully
+-- [DEP] HighFive headers configured via FetchContent
+-- [DEP] SuiteSparse KLU disabled; SparseKLU selection will be unavailable
+-- ===================================================================
+-- [SUCCESS] ARCH Framework build environment configured successfully!
+-- [SUCCESS] Executable : /home/shiroakane/ARCH/build/selfgravity-p1/bin/ARCH
+-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/
+-- ===================================================================
+-- Configuring done (2.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/shiroakane/ARCH/build/selfgravity-p1
+[0/2] Re-checking globbed directories...
+[1/179] Building CXX object CMakeFiles/arch_diffusion_math.dir/src/numerics/diffusion/DiffFunction.cpp.o
+[2/179] Linking CXX static library libarch_diffusion_math.a
+[3/179] Building CXX object CMakeFiles/ARCH.dir/src/api/configuration/Configuration.cpp.o
+[4/179] Building CXX object CMakeFiles/ARCH.dir/src/main.cpp.o
+[5/179] Building CXX object CMakeFiles/ARCH.dir/src/api/configuration/ParameterMetadata.cpp.o
+[6/179] Building CXX object CMakeFiles/ARCH.dir/src/api/configuration/PresentationMetadata.cpp.o
+[7/179] Building CXX object CMakeFiles/ARCH.dir/src/api/inspection/CaseInspection.cpp.o
+[8/179] Building CXX object CMakeFiles/ARCH.dir/src/api/inspection/Discovery.cpp.o
+[9/179] Building CXX object CMakeFiles/ARCH.dir/src/api/preview/Preview.cpp.o
+[10/179] Building CXX object CMakeFiles/ARCH.dir/src/api/preview/PreviewCommand.cpp.o
+[11/179] Building CXX object CMakeFiles/ARCH.dir/src/api/preview/ResourceEstimates.cpp.o
+[12/179] Building CXX object CMakeFiles/ARCH.dir/src/api/preview/StateSnapshot.cpp.o
+[13/179] Building CXX object CMakeFiles/ARCH.dir/src/api/resources/WorkerLimits.cpp.o
+[14/179] Building CXX object CMakeFiles/ARCH.dir/src/core/files/FileFingerprint.cpp.o
+[15/179] Building CXX object CMakeFiles/ARCH.dir/src/api/session/PreviewSession.cpp.o
+[16/179] Building CXX object CMakeFiles/ARCH.dir/src/core/problem/ProblemHelper.cpp.o
+[17/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/eos/eosdispatch.cpp.o
+[18/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/eos/sources/Tabular3DEOS.cpp.o
+[19/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/eos/sources/Tabular4DEOS.cpp.o
+[20/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/eos/sources/TabularBaryonSource.cpp.o
+[21/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/eos/sources/TabularCompletion.cpp.o
+[22/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/network/aprox13/NetAprox13.cpp.o
+[23/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/network/aprox19/NetAprox19.cpp.o
+[24/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/network/aprox21/NetAprox21.cpp.o
+[25/179] Building CXX object CMakeFiles/ARCH.dir/src/physics/network/iso7/NetIso7.cpp.o
+[26/179] Building CXX object CMakeFiles/ARCH.dir/src/io/chk/CheckpointCompatibility.cpp.o
+[27/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.gch
+[28/179] Building CXX object CMakeFiles/ARCH.dir/src/io/chk/ChkIO.cpp.o
+[29/179] Building CXX object CMakeFiles/ARCH.dir/src/io/hdf5/HDF5Writer.cpp.o
+[30/179] Building CXX object CMakeFiles/ARCH.dir/src/api/inspection/CaseUnitEvidence.cpp.o
+[31/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o
+[32/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/runtime/DriverBoundary.cpp.o
+[33/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/io/DriverIO.cpp.o
+[34/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/runtime/DriverRuntime.cpp.o
+[35/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/runtime/DriverRegrid.cpp.o
+[36/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/capability/RuntimeProbe.cpp.o
+[37/179] Building CXX object CMakeFiles/ARCH.dir/src/io/plot/PlotIO.cpp.o
+[38/179] Building CXX object CMakeFiles/ARCH.dir/simulation/BurnGradient/BurnGradient.cpp.o
+[39/179] Building CXX object CMakeFiles/ARCH.dir/simulation/BurnOneZone/BurnOneZone.cpp.o
+[40/179] Building CXX object CMakeFiles/ARCH.dir/simulation/Cellular/Cellular.cpp.o
+[41/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/bindings/Dispatch_Euler.cpp.o
+[42/179] Building CXX object CMakeFiles/ARCH.dir/simulation/CooperativeHotspots/CooperativeHotspots.cpp.o
+[43/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/bindings/Dispatch_RK2.cpp.o
+[44/179] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/bindings/Dispatch_RK3.cpp.o
+[45/179] Linking CXX static library libarch_solver_dispatch.a
+[46/179] Building CXX object CMakeFiles/ARCH.dir/simulation/DiffusionMode/DiffusionMode.cpp.o
+[47/179] Building CXX object CMakeFiles/ARCH.dir/simulation/ExternalGravity/ExternalGravity.cpp.o
+[48/179] Building CXX object CMakeFiles/ARCH.dir/simulation/GaussianPulse/Gaussian.cpp.o
+[49/179] Building CXX object CMakeFiles/ARCH.dir/simulation/RTinstability/RT_instab.cpp.o
+[50/179] Building CXX object CMakeFiles/arch_cuda_single_level_validation.dir/tests/host/io/test_cuda_single_level_validation.cpp.o
+[51/179] Building CXX object CMakeFiles/arch_cuda_single_level_validation.dir/src/io/hdf5/HDF5Writer.cpp.o
+[52/179] Linking CXX executable arch_cuda_single_level_validation
+[53/179] Building CXX object CMakeFiles/arch_preview_initial_conversion.dir/tests/api/preview/test_initial_conversion.cpp.o
+[54/179] Linking CXX executable arch_preview_initial_conversion
+[55/179] Building CXX object CMakeFiles/arch_preview_parameter_reads.dir/tests/api/configuration/test_parameter_reads.cpp.o
+[56/179] Building CXX object CMakeFiles/arch_preview_parameter_reads.dir/src/api/configuration/ParameterMetadata.cpp.o
+[57/179] Linking CXX executable arch_preview_parameter_reads
+[58/179] Building CXX object CMakeFiles/arch_preview_sampling_limits.dir/tests/api/preview/test_sampling_limits.cpp.o
+[59/179] Linking CXX executable arch_preview_sampling_limits
+[60/179] Building CXX object CMakeFiles/arch_physical_constants.dir/tests/host/core/test_physical_constants.cpp.o
+[61/179] Linking CXX executable arch_physical_constants
+[62/179] Building CXX object CMakeFiles/arch_refinement_indicator_math.dir/tests/host/amr/test_refinement_indicator_math.cpp.o
+[63/179] Linking CXX executable arch_refinement_indicator_math
+[64/179] Building CXX object CMakeFiles/arch_curvilinear_metrics.dir/tests/host/grid/test_curvilinear_metrics.cpp.o
+[65/179] Building CXX object CMakeFiles/ARCH.dir/simulation/Sedov/Sedov.cpp.o
+[66/179] Linking CXX executable arch_curvilinear_metrics
+[67/179] Building CXX object CMakeFiles/arch_compensated_sum.dir/tests/host/numerics/test_compensated_sum.cpp.o
+[68/179] Linking CXX executable arch_compensated_sum
+[69/179] Building CXX object CMakeFiles/arch_sparse_ode_continuation.dir/tests/host/burn/test_sparse_ode_continuation.cpp.o
+[70/179] Building CXX object CMakeFiles/arch_sparse_residual.dir/tests/host/numerics/test_sparse_residual.cpp.o
+[71/179] Linking CXX executable arch_sparse_ode_continuation
+[72/179] Linking CXX executable arch_sparse_residual
+[73/179] Building CXX object CMakeFiles/arch_checkpoint_conservation_metrics.dir/tests/host/io/test_checkpoint_conservation_metrics.cpp.o
+[74/179] Building CXX object CMakeFiles/arch_burn_mainline_reference.dir/tests/host/burn/test_burn_mainline_reference.cpp.o
+[75/179] Linking CXX executable arch_checkpoint_conservation_metrics
+[76/179] Building CXX object CMakeFiles/arch_burn_mainline_reference.dir/src/core/files/FileFingerprint.cpp.o
+[77/179] Building CXX object CMakeFiles/arch_generated_nse.dir/tests/host/network/test_generated_nse.cpp.o
+[78/179] Linking CXX executable arch_burn_mainline_reference
+[79/179] Linking CXX executable arch_generated_nse
+[80/179] Building CXX object CMakeFiles/arch_tabular_strict.dir/tests/math/microphysics/test_tabular_strict.cpp.o
+[81/179] Building CXX object CMakeFiles/ARCH.dir/simulation/SmoothAdvection/SmoothAdvection.cpp.o
+[82/179] Building CXX object CMakeFiles/arch_baryon_source.dir/tests/host/eos/BaryonSourceRegression.cpp.o
+[83/179] Linking CXX executable arch_tabular_strict
+[84/179] Building CXX object CMakeFiles/arch_baryon_source.dir/src/physics/eos/sources/TabularBaryonSource.cpp.o
+[85/179] Building CXX object CMakeFiles/arch_helm_components.dir/tests/host/eos/HelmComponentsRegression.cpp.o
+[86/179] Linking CXX executable arch_baryon_source
+[87/179] Building CXX object CMakeFiles/arch_mainline_authority.dir/tests/cuda/runtime/test_mainline_authority.cpp.o
+[88/179] Linking CXX executable arch_helm_components
+[89/179] Building CXX object CMakeFiles/ARCH.dir/simulation/Sod/Sod.cpp.o
+[90/179] Building CXX object CMakeFiles/arch_block_handle.dir/tests/host/amr/test_block_handle.cpp.o
+[91/179] Linking CXX executable arch_mainline_authority
+[92/179] Building CXX object CMakeFiles/arch_state_residency.dir/tests/host/driver/test_state_residency.cpp.o
+[93/179] Linking CXX executable arch_block_handle
+[94/179] Building CXX object CMakeFiles/arch_shared_stage_scheduler.dir/tests/host/driver/test_shared_stage_scheduler.cpp.o
+[95/179] Linking CXX executable arch_state_residency
+[96/179] Linking CXX executable bin/ARCH
+[97/179] Building CXX object CMakeFiles/arch_gravity_stage_contract.dir/tests/host/gravity/test_gravity_stage_contract.cpp.o
+[98/179] Linking CXX executable arch_shared_stage_scheduler
+[99/179] Building CXX object CMakeFiles/arch_same_level_exchange_plan.dir/tests/host/amr/test_same_level_exchange_plan.cpp.o
+[100/179] Linking CXX executable arch_gravity_stage_contract
+[101/179] Building CXX object CMakeFiles/arch_boundary_plan.dir/tests/host/amr/test_boundary_plan.cpp.o
+[102/179] Linking CXX executable arch_same_level_exchange_plan
+[103/179] Linking CXX executable arch_boundary_plan
+[104/179] Building CXX object CMakeFiles/arch_amr_operation_plans.dir/tests/host/amr/test_amr_operation_plans.cpp.o
+[105/179] Building CXX object CMakeFiles/arch_amr_flux_surface_plan.dir/tests/host/amr/test_amr_flux_surface_plan.cpp.o
+[106/179] Linking CXX executable arch_amr_operation_plans
+[107/179] Building CXX object CMakeFiles/arch_topology_transaction.dir/tests/host/amr/test_topology_transaction.cpp.o
+[108/179] Linking CXX executable arch_amr_flux_surface_plan
+[109/179] Building CXX object CMakeFiles/arch_resolved_execution_plan.dir/tests/host/driver/test_resolved_execution_plan.cpp.o
+[110/179] Linking CXX executable arch_topology_transaction
+[111/179] Building CXX object CMakeFiles/arch_runtime_probe_capabilities.dir/tests/host/driver/test_runtime_probe_and_capabilities.cpp.o
+[112/179] Linking CXX executable arch_resolved_execution_plan
+[113/179] Building CXX object CMakeFiles/arch_reduction_contract.dir/tests/host/driver/test_reduction_contract.cpp.o
+[114/179] Linking CXX executable arch_runtime_probe_capabilities
+[115/179] Building CXX object CMakeFiles/arch_compute_backend.dir/tests/host/driver/test_compute_backend.cpp.o
+[116/179] Linking CXX executable arch_reduction_contract
+[117/179] Building CXX object CMakeFiles/arch_initialization_probe.dir/src/api/configuration/ParameterMetadata.cpp.o
+[118/179] Building CXX object CMakeFiles/arch_device_block_store_lifecycle.dir/tests/host/driver/test_device_block_store_lifecycle.cpp.o
+[119/179] Linking CXX executable arch_compute_backend
+[120/179] Linking CXX executable arch_device_block_store_lifecycle
+[121/179] Building CXX object CMakeFiles/arch_initialization_probe.dir/tests/api/inspection/test_initialization_probe.cpp.o
+[122/179] Building CXX object CMakeFiles/arch_verified_file_cache.dir/tests/api/session/test_verified_file_cache.cpp.o
+[123/179] Building CXX object CMakeFiles/arch_verified_file_cache.dir/src/core/files/FileFingerprint.cpp.o
+[124/179] Building CXX object CMakeFiles/arch_verified_file_cache.dir/src/api/resources/WorkerLimits.cpp.o
+[125/179] Building CXX object CMakeFiles/arch_initial_sample_cache.dir/tests/api/session/test_initial_sample_cache.cpp.o
+[126/179] Linking CXX executable arch_verified_file_cache
+[127/179] Linking CXX executable arch_initial_sample_cache
+[128/179] Building CXX object CMakeFiles/arch_preview_mesh_checkpoint.dir/tests/api/preview/read_mesh_checkpoint.cpp.o
+[129/179] Linking CXX executable arch_preview_mesh_checkpoint
+[130/179] Building CXX object CMakeFiles/arch_preview_cellular_reference.dir/src/core/files/FileFingerprint.cpp.o
+[131/179] Building CXX object CMakeFiles/arch_preview_cellular_reference.dir/src/core/problem/ProblemHelper.cpp.o
+[132/179] Building CXX object CMakeFiles/arch_preview_cellular_reference.dir/src/physics/eos/eosdispatch.cpp.o
+[133/179] Building CXX object CMakeFiles/arch_preview_cellular_reference.dir/src/physics/eos/sources/Tabular3DEOS.cpp.o
+[134/179] Building CXX object CMakeFiles/arch_preview_cellular_reference.dir/src/physics/eos/sources/TabularBaryonSource.cpp.o
+[135/179] Building CXX object CMakeFiles/arch_preview_cellular_reference.dir/src/physics/eos/sources/Tabular4DEOS.cpp.o
+[136/179] Building CXX object CMakeFiles/arch_preview_cellular_reference.dir/src/physics/eos/sources/TabularCompletion.cpp.o
+[137/179] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/core/files/FileFingerprint.cpp.o
+[138/179] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/tests/host/io/test_checkpoint_compatibility.cpp.o
+[139/179] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/physics/eos/sources/TabularBaryonSource.cpp.o
+[140/179] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/physics/eos/eosdispatch.cpp.o
+[141/179] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/io/chk/CheckpointCompatibility.cpp.o
+[142/179] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/io/hdf5/HDF5Writer.cpp.o
+[143/179] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/io/chk/ChkIO.cpp.o
+[144/179] Building CXX object CMakeFiles/tabular_eos_regression.dir/tests/host/eos/TabularEOSRegression.cpp.o
+[145/179] Building CXX object CMakeFiles/tabular_eos_regression.dir/src/core/files/FileFingerprint.cpp.o
+[146/179] Linking CXX executable arch_checkpoint_compatibility
+[147/179] Building CXX object CMakeFiles/tabular_eos_regression.dir/src/physics/eos/sources/Tabular3DEOS.cpp.o
+[148/179] Building CXX object CMakeFiles/tabular_eos_regression.dir/src/physics/eos/sources/Tabular4DEOS.cpp.o
+[149/179] Building CXX object CMakeFiles/tabular_eos_regression.dir/src/physics/eos/sources/TabularBaryonSource.cpp.o
+[150/179] Building CXX object CMakeFiles/tabular_eos_regression.dir/src/physics/eos/eosdispatch.cpp.o
+[151/179] Building CXX object CMakeFiles/tabular_eos_regression.dir/src/physics/eos/sources/TabularCompletion.cpp.o
+[152/179] Building CXX object CMakeFiles/arch_native_tabular.dir/tests/host/eos/NativeTabularRegression.cpp.o
+[153/179] Building CXX object CMakeFiles/arch_native_tabular.dir/src/core/files/FileFingerprint.cpp.o
+[154/179] Building CXX object CMakeFiles/arch_native_tabular.dir/src/physics/eos/sources/Tabular3DEOS.cpp.o
+[155/179] Building CXX object CMakeFiles/arch_native_tabular.dir/src/physics/eos/eosdispatch.cpp.o
+[156/179] Building CXX object CMakeFiles/arch_native_tabular.dir/src/physics/eos/sources/TabularBaryonSource.cpp.o
+[157/179] Building CXX object CMakeFiles/arch_native_tabular.dir/src/physics/eos/sources/TabularCompletion.cpp.o
+[158/179] Linking CXX executable tabular_eos_regression
+[159/179] Linking CXX executable arch_native_tabular
+[160/179] Building CXX object CMakeFiles/arch_tabular_completion.dir/src/core/files/FileFingerprint.cpp.o
+[161/179] Building CXX object CMakeFiles/arch_tabular_completion.dir/src/physics/eos/eosdispatch.cpp.o
+[162/179] Building CXX object CMakeFiles/arch_tabular_completion.dir/src/physics/eos/sources/Tabular3DEOS.cpp.o
+[163/179] Building CXX object CMakeFiles/arch_tabular_completion.dir/src/physics/eos/sources/Tabular4DEOS.cpp.o
+[164/179] Building CXX object CMakeFiles/arch_tabular_completion.dir/src/physics/eos/sources/TabularBaryonSource.cpp.o
+[165/179] Building CXX object CMakeFiles/arch_tabular_completion.dir/src/physics/eos/sources/TabularCompletion.cpp.o
+[166/179] Building CXX object CMakeFiles/arch_tabular_completion.dir/tests/host/eos/TabularCompletionRegression.cpp.o
+[167/179] Building CXX object CMakeFiles/arch_baryon_eos.dir/tests/host/eos/BaryonEosRegression.cpp.o
+[168/179] Building CXX object CMakeFiles/arch_baryon_eos.dir/src/core/files/FileFingerprint.cpp.o
+[169/179] Building CXX object CMakeFiles/arch_baryon_eos.dir/src/physics/eos/eosdispatch.cpp.o
+[170/179] Linking CXX executable arch_tabular_completion
+[171/179] Building CXX object CMakeFiles/arch_baryon_eos.dir/src/physics/eos/sources/Tabular3DEOS.cpp.o
+[172/179] Building CXX object CMakeFiles/arch_baryon_eos.dir/src/physics/eos/sources/TabularBaryonSource.cpp.o
+[173/179] Building CXX object CMakeFiles/arch_baryon_eos.dir/src/physics/eos/sources/Tabular4DEOS.cpp.o
+[174/179] Building CXX object CMakeFiles/arch_baryon_eos.dir/src/physics/eos/sources/TabularCompletion.cpp.o
+[175/179] Linking CXX executable arch_baryon_eos
+[176/179] Building CXX object CMakeFiles/arch_initialization_probe.dir/src/api/inspection/CaseUnitEvidence.cpp.o
+[177/179] Linking CXX executable arch_initialization_probe
+[178/179] Building CXX object CMakeFiles/arch_preview_cellular_reference.dir/tests/api/preview/cellular_reference.cpp.o
+[179/179] Linking CXX executable arch_preview_cellular_reference
+MEMORY_GUARD_RESULT min_available_kib=4188532 baseline_swap_kib=268 peak_swap_kib=268 guard_stopped=False peak_owned_rss_kib=3294952 elapsed_seconds=45.707 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.295 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=46 complete=True

@@ -52,8 +52,8 @@ def references(digits):
                           else (value*value + width*width)/(2*width)
                           for value in eigenvalues]
             roe = (fl + fr - basis * mp.diag(magnitudes) * amplitudes) / 2
-            sl = min(vl[0] - mp.sqrt(gamma*pl/rl), u-c)
-            sr = max(vr[0] + mp.sqrt(gamma*pr/rr), u+c)
+            sl = min(vl[0] - mp.sqrt(gamma*pl/rl), vr[0] - mp.sqrt(gamma*pr/rr), u-c)
+            sr = max(vl[0] + mp.sqrt(gamma*pl/rl), vr[0] + mp.sqrt(gamma*pr/rr), u+c)
             assert sl < 0 < sr
             hll = (sr*fl - sl*fr + sl*sr*(qr-ql)) / (sr-sl)
             # Solve the two momentum jumps for the common contact state.
@@ -68,8 +68,35 @@ def references(digits):
             star = mp.matrix([star_density, star_density*contact,
                               star_density*velocity[1], star_density*velocity[2], star_energy])
             hllc = f + speed*(star-q)
+            def split(q, sign, scheme):
+                density, velocity, p, h, physical = thermodynamics(q)
+                u, v, w = velocity
+                c = mp.sqrt(gamma*p/density)
+                if scheme == 'sw':
+                    # Spectral projection A^{+/-} U, evaluated by a linear
+                    # solve independently of production's explicit weights.
+                    basis = mp.matrix([[1,u-c,v,w,h-u*c],
+                                       [1,u,v,w,mp.fdot(velocity,velocity)/2],
+                                       [0,0,1,0,v], [0,0,0,1,w],
+                                       [1,u+c,v,w,h+u*c]]).T
+                    eigenvalues=[u-c,u,u,u,u+c]
+                    width=mp.mpf('.1')*c
+                    smooth=[abs(z) if abs(z)>=width else (z*z+width*width)/(2*width)
+                            for z in eigenvalues]
+                    return basis*mp.diag([(z+sign*a)/2 for z,a in zip(eigenvalues,smooth)])*mp.lu_solve(basis,q)
+                mach=u/c
+                if sign*mach>=1: return physical
+                if sign*mach<=-1: return mp.zeros(5,1)
+                mass=sign*density*c*(mach+sign)**2/4
+                # Ideal-gas Van Leer Mach polynomial; real-EOS correction
+                # vanishes identically for this independent gamma-law oracle.
+                normal=((gamma-1)*u+2*sign*c)/gamma
+                energy=gamma**2*normal**2/(2*(gamma**2-1))+(v*v+w*w)/2
+                return mass*mp.matrix([1,normal,v,w,energy])
+            vl=split(ql,1,'vl')+split(qr,-1,'vl')
+            sw=split(ql,1,'sw')+split(qr,-1,'sw')
             result = {}
-            for name, flux in (('hll', hll), ('hllc', hllc), ('roe', roe)):
+            for name, flux in (('hll', hll), ('hllc', hllc), ('roe', roe), ('vl',vl), ('sw',sw)):
                 fractions = composition[0 if flux[0] >= 0 else 1]
                 result[name] = [mp.nstr(value, 60) for value in flux]
                 result[name + '_species'] = [mp.nstr(flux[0]*mp.mpf(x), 60) for x in fractions]
@@ -121,7 +148,7 @@ def main():
             with mp.workdps(90):
                 assert max(abs(mp.mpf(a)-mp.mpf(b)) for a, b in
                            zip(low[case][field], high[case][field])) < mp.mpf('1e-55')
-    fixture = Path(__file__).resolve().parents[2] / 'tests/fixtures/RoeFluxReference.h'
+    fixture = Path(__file__).resolve().parents[2] / 'tests/fixtures/hydro/RoeFluxReference.h'
     declarations = dict(re.findall(r'double (\w+)\[7\] = \{([^}]+)\}', fixture.read_text()))
     assert set(declarations) == {'hll', 'hllc', 'roe', 'linear_pcm'}
     for name, declaration in declarations.items():
@@ -132,7 +159,8 @@ def main():
             assert len(actual) == 7 and all(abs(mp.mpf(a)-mp.mpf(b)) < mp.mpf('1e-29')
                                           for a, b in zip(actual, expected))
     for name, fields, extent in (('route_flux', ('roe', 'hll', 'hllc'), 3),
-                                 ('route_state', ('left', 'right'), 2)):
+                                 ('route_state', ('left', 'right'), 2),
+                                 ('split_route_flux', ('vl','sw'), 2)):
         match = re.search(r'double ' + name + r'\[4\]\[' + str(extent)
                           + r'\]\[5\] = \{(.*?)\};', fixture.read_text(), re.S)
         assert match is not None

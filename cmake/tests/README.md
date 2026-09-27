@@ -6,6 +6,10 @@ dependency discovery for checkpoint, tabular-EOS and KLU regressions.
 [CudaTests.cmake](CudaTests.cmake) adds device checks and application witnesses
 when both `ARCH_ENABLE_CUDA` and `BUILD_TESTING` are enabled.
 
+The historical `arch_cuda_single_level_validation` comparison utility is a Host
+test target, available without CUDA. `Dependencies.cmake` attaches the existing
+HDF5 reader; comparison algorithms and CLI names remain shared with GPU runners.
+
 Register related cases together and reuse settings only when their compiler,
 linkage and test behavior really match. Some `.cu` fixtures deliberately compile
 as ordinary C++ and call the production backend; others instantiate shared

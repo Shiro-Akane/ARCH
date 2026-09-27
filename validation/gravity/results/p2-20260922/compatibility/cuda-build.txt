@@ -1,0 +1,6 @@
+[0/2] Re-checking globbed directories...
+[1/5] Building CXX object CMakeFiles/ARCH.dir/src/physics/gravity/UniformGravity.cpp.o
+[2/5] Building CXX object CMakeFiles/arch_poisson_multigrid.dir/src/physics/gravity/UniformGravity.cpp.o
+[3/5] Building CXX object CMakeFiles/arch_poisson_multigrid.dir/tests/host/gravity/test_poisson_multigrid.cpp.o
+[4/5] Linking CXX executable arch_poisson_multigrid
+[5/5] Linking CXX executable bin/ARCH

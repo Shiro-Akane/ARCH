@@ -1,0 +1,16 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/selfgravity-p1
+Test project /home/shiroakane/ARCH/build/selfgravity-p1
+    Start 29: state_residency
+1/5 Test #29: state_residency ..................   Passed    0.00 sec
+    Start 30: shared_stage_scheduler
+2/5 Test #30: shared_stage_scheduler ...........   Passed    0.02 sec
+    Start 31: gravity_stage_contract
+3/5 Test #31: gravity_stage_contract ...........   Passed    0.00 sec
+    Start 36: topology_transaction
+4/5 Test #36: topology_transaction .............   Passed    0.09 sec
+    Start 40: compute_backend
+5/5 Test #40: compute_backend ..................   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Total Test time (real) =   0.12 sec

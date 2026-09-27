@@ -29,7 +29,7 @@ def integral_reference(inputs, digits):
 
 
 def check_metric_references():
-    path = Path(__file__).resolve().parents[2] / "tests/math/CurvilinearMetricCases.h"
+    path = Path(__file__).resolve().parents[2] / "tests/math/geometry/CurvilinearMetricCases.h"
     source = path.read_text()
     data = source.split("// BEGIN INDEPENDENT MEASURE DATA", 1)[1].split(
         "// END INDEPENDENT MEASURE DATA", 1)[0]

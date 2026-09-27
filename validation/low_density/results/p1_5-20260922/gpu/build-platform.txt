@@ -1,0 +1,43 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===================================================================
+-- Configuring ARCH Framework
+-- C++ Standard: C++20 Required
+-- ===================================================================
+-- [OPT] Found ccache: /usr/bin/ccache
+-- [OPT] Build Type: Release
+-- [OPT] LTO enabled for optimized configurations
+-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed
+-- [CUDA] Compiled code images: 86
+-- [DEP] cuDSS found: /home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0
+-- [OPT] CUDA compiler cache enabled: /usr/bin/ccache
+-- [DEP] OpenMP enabled for target ARCH
+-- [DEP] HDF5 C++ libraries linked successfully
+-- [DEP] HighFive headers configured via FetchContent
+-- [DEP] SuiteSparse KLU enabled for sparse reaction networks
+-- ===================================================================
+-- [SUCCESS] ARCH Framework build environment configured successfully!
+-- [SUCCESS] Executable : /home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH
+-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/
+-- ===================================================================
+-- Configuring done (6.7s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+[0/2] Re-checking globbed directories...
+[1/17] Building CXX object CMakeFiles/arch_cuda_sparse_provider.dir/src/cuda/microphysics/linalg/CuDssSparseSolver.cpp.o
+[2/17] Linking CXX static library libarch_cuda_sparse_provider.a
+[3/17] Linking CXX executable arch_cuda_sparse_be_nr_batch
+[4/17] Linking CXX executable arch_cuda_sparse_burn_factory
+[5/17] Linking CXX executable arch_cuda_cudss_sparse_solver
+[6/17] Linking CXX executable arch_cuda_regrid_transaction
+[7/17] Linking CXX executable arch_cuda_burn_eos_failure
+[8/17] Linking CXX executable arch_cuda_eos_host_device_parity
+[9/17] Linking CXX executable arch_cuda_tabular_free_energy_owner
+[10/17] Linking CXX executable arch_cuda_diffusion_rkl_parity
+[11/17] Linking CXX executable arch_cuda_multiblock_hydro
+[12/17] Linking CXX executable arch_cuda_hydro_block
+[13/17] Linking CXX executable arch_cuda_multiblock_burn
+[14/17] Linking CXX executable arch_cuda_multiblock_diffusion
+[15/17] Linking CXX executable arch_cuda_store_lifecycle
+[16/17] Linking CXX executable arch_cuda_amr_exchange
+[17/17] Linking CXX executable bin/ARCH

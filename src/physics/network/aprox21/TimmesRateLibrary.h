@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <cmath>
 
-#include "../timmes_common/RatePair.h"
-#include "../timmes_common/TfactorsData.h"
+#include "physics/network/timmes_common/RatePair.h"
+#include "physics/network/timmes_common/TfactorsData.h"
 
 namespace timmes {
 struct Aprox21RateLibrary {

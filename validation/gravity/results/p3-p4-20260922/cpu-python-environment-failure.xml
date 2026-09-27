@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Linux-g++-12"
+	tests="61"
+	failures="1"
+	disabled="0"
+	skipped="0"
+	hostname="Shiro-Akane"
+	time="329"
+	timestamp="2026-09-22T07:29:11"
+	>
+	<testcase name="checkpoint_temporal_comparison" classname="checkpoint_temporal_comparison" time="0.00493978" status="run">
+		<properties/>
+		<system-out>checkpoint temporal comparison controls passed
+</system-out>
+	</testcase>
+	<testcase name="preview_initial_conversion" classname="preview_initial_conversion" time="0.00168107" status="run">
+		<properties/>
+		<system-out>[Info] Loaded 4 parameters from &lt;memory&gt;
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+Initial conversion and in-memory parser passed
+</system-out>
+	</testcase>
+	<testcase name="preview_api_contract" classname="preview_api_contract" time="33.0742" status="run">
+		<properties/>
+		<system-out>.......s....
+----------------------------------------------------------------------
+Ran 12 tests in 33.023s
+
+OK (skipped=1)
+</system-out>
+	</testcase>
+	<testcase name="configuration_api_contract" classname="configuration_api_contract" time="3.51279" status="run">
+		<properties/>
+		<system-out>...........
+----------------------------------------------------------------------
+Ran 11 tests in 3.458s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="preview_parameter_reads" classname="preview_parameter_reads" time="0.00245627" status="run">
+		<properties/>
+		<system-out>[Info] Loaded 3 parameters from &lt;memory&gt;
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+[Info] Loaded 3 parameters from &lt;memory&gt;
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+[Info] Loaded 3 parameters from &lt;memory&gt;
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+Parameter observations...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="preview_parameter_metadata" classname="preview_parameter_metadata" time="0.21118" status="run">
+		<properties/>
+		<system-out>.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.156s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="preview_sampling_limits" classname="preview_sampling_limits" time="1.49541" status="run">
+		<properties/>
+		<system-out>Sampling budgets, shared coordinates and bounded responses passed
+</system-out>
+	</testcase>
+	<testcase name="portable_network_generator" classname="portable_network_generator" time="0.653256" status="run">
+		<properties/>
+		<system-out>...........................................
+----------------------------------------------------------------------
+Ran 43 tests in 0.580s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="cuda_amr_smoke_runner_contract" classname="cuda_amr_smoke_runner_contract" time="0.119759" status="run">
+		<properties/>
+		<system-out>......failed: unit-only
+Development smoke only: failed; report: /tmp/tmpmy3vmnls/output/smoke-report.json
+......
+----------------------------------------------------------------------
+Ran 12 tests in 0.025s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="curvilinear_manifest_contract" classname="curvilinear_manifest_contract" time="0.0922482" status="run">
+		<properties/>
+		<system-out>........
+----------------------------------------------------------------------
+Ran 8 tests in 0.021s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="memory_guard_contract" classname="memory_guard_contract" time="0.0944979" status="run">
+		<properties/>
+		<system-out>....sssssssssssss.....
+----------------------------------------------------------------------
+Ran 22 tests in 0.007s
+
+OK (skipped=13)
+</system-out>
+	</testcase>
+	<testcase name="backend_validation_contract" classname="backend_validation_contract" time="0.365295" status="run">
+		<properties/>
+		<system-out>..............................
+----------------------------------------------------------------------
+Ran 30 tests in 0.286s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="sparse_validation_contract" classname="sparse_validation_contract" time="0.0867189" status="run">
+		<properties/>
+		<system-out>.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.007s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="validation_provenance_contract" classname="validation_provenance_contract" time="1.22252" status="run">
+		<properties/>
+		<system-out>........................................
+----------------------------------------------------------------------
+Ran 40 tests in 1.114s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="runtime_validation_inputs_contract" classname="runtime_validation_inputs_contract" time="0.129684" status="run">
+		<properties/>
+		<system-out>.....................
+----------------------------------------------------------------------
+Ran 21 tests in 0.022s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="physical_constants" classname="physical_constants" time="0.00164851" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="refinement_indicator_math" classname="refinement_indicator_math" time="0.00160582" status="run">
+		<properties/>
+		<system-out>REFINEMENT_INDICATOR_MATH_PASS
+</system-out>
+	</testcase>
+	<testcase name="curvilinear_metrics" classname="curvilinear_metrics" time="1.6653" status="run">
+		<properties/>
+		<system-out>INDEPENDENT_METRIC_MAX_RELATIVE_ERROR=3.03178e-16
+CURVILINEAR_METRICS_PASS
+VISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cartesian dim=1 uniform=0 density_slope=0 h=0.05 error=0.000625026
+VISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cartesian dim=1 uniform=0 density_slope=0 h=0.025 error=0.000156252
+VISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cartesian dim=1 uniform=0 density_slope=0 h=0.0125 error=3.90626e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cartesian dim=1 uniform=0 density_slope=0.1 h=0.05 error=0.000672081
+VISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cartesian dim=1 uniform=0 density_slope=0.1 h=0.025 error=0.000168013
+VISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cartesian dim=1 uniform=0 density_slope=0.1 h=0.0125 error=4.20028e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cartesian dim=2 uniform=0 density_slope=0 h=0.05 error=0.000129938
+VISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cartesian dim=2 uniform=0 density_slope=0 h=0.025 error=3.24844e-05
+VISCOUS_...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="compensated_sum" classname="compensated_sum" time="0.00167366" status="run">
+		<properties/>
+		<system-out>COMPENSATED_SUM_PASS
+</system-out>
+	</testcase>
+	<testcase name="sparse_ode_continuation" classname="sparse_ode_continuation" time="0.0524719" status="run">
+		<properties/>
+		<system-out>[ROS4] Fatal Error: Stiff ODE stalled. time increment is not representable
+[ROS4] Fatal Error: Exceeded max substeps (2)
+[ROS4] Fatal Error: Stiff ODE stalled. time increment is not representable
+[ROS4] Fatal Error: Stiff ODE stalled. time increment is not representable
+[BE-NR] Fatal Error: Exceeded max substeps (1)
+[BD] Fatal Error: Exceeded max substeps.
+[ROS4] Fatal Error: Exceeded max substeps (1)
+Sparse matrix and all three shared ODE continuation contracts passed
+</system-out>
+	</testcase>
+	<testcase name="sparse_residual" classname="sparse_residual" time="0.00181039" status="run">
+		<properties/>
+		<system-out>Shared sparse residual contracts passed
+</system-out>
+	</testcase>
+	<testcase name="checkpoint_conservation_metrics" classname="checkpoint_conservation_metrics" time="0.00525406" status="run">
+		<properties/>
+		<system-out>checkpoint conservation metrics: shared geometry and legacy/negative controls PASS
+</system-out>
+	</testcase>
+	<testcase name="burn_mainline_reference" classname="burn_mainline_reference" time="199.883" status="run">
+		<properties/>
+		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+BURN_TIME_PASS aprox13.be_nr species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+BURN_TIME_PASS aprox13.bd species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+BURN_TIME_PASS aprox13.ros4 species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+aprox13: independent time reference and historical checker controls passed
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+BURN_TIME_PASS aprox19.be_nr species_linf=1.6863115070986368e-09 relative_temperature=1.167438368199214e-09 relative_energy=2.6852620127471027e-09 mass_closure=0
+BURN_TIME_PASS aprox19.bd species_linf=2.4980018054066022e-16 relative_temperature=6.661...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="generated_nse" classname="generated_nse" time="0.00200224" status="run">
+		<properties/>
+		<system-out>rank_two=1 rank_one=1 partition=1 energy=1 rejection=1 gauge=1 builtins=1
+</system-out>
+	</testcase>
+	<testcase name="tabular_strict_math" classname="tabular_strict_math" time="0.0439345" status="run">
+		<properties/>
+		<system-out>strict free-energy 3D/4D exact states, endpoint/domain/mask and all-root inverses PASS
+</system-out>
+	</testcase>
+	<testcase name="baryon_source_format" classname="baryon_source_format" time="0.0142702" status="run">
+		<properties/>
+		<system-out>baryon ASCII analytic units/reference, header aliases and rejection controls PASS
+</system-out>
+	</testcase>
+	<testcase name="helm_components" classname="helm_components" time="0.705265" status="run">
+		<properties/>
+		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+Helmholtz electron/photon components: independent fields, strict domain and complete-EOS reference PASS
+</system-out>
+	</testcase>
+	<testcase name="mainline_authority" classname="mainline_authority" time="0.015201" status="run">
+		<properties/>
+		<system-out>[Info] Loaded 9 parameters from /tmp/arch-mainline-authority-652-45127126196550-0/bool.par
+[Info] Loaded 1 parameters from /tmp/arch-mainline-authority-652-45127134494511-25/fallback.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[Info] Loaded 2 parameters from /tmp/arch-mainline-authority-652-45127134494511-25/override.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[Info] Loaded 14 parameters from /tmp/arch-mainline-authority-652-45127135209379-26/lowercase-enums.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[Info] Loaded 14 parameters from /tmp/arch-mainline-authority-652-45127135209379-26/mixed-case-enums.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[Info] Loaded 6 parameters from /tmp/arch-mainline-authority-652-45127135209379-26/unknown-enums.par
+[RuntimeParams] Warning: PLT va...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="block_handle" classname="block_handle" time="0.00210202" status="run">
+		<properties/>
+		<system-out>block handle contract: PASS
+</system-out>
+	</testcase>
+	<testcase name="state_residency" classname="state_residency" time="0.00183304" status="run">
+		<properties/>
+		<system-out>state residency contract passed
+</system-out>
+	</testcase>
+	<testcase name="shared_stage_scheduler" classname="shared_stage_scheduler" time="0.0258898" status="run">
+		<properties/>
+		<system-out>LANE_TRACE	physical	euler	stage:1:old=Current:input=Current:output=Next	rotate:Current&lt;-Next:Next&lt;-Current:Scratch&lt;-Scratch	reflux:Current
+LANE_TRACE	bookkeeping	euler	stage:1:output=Next:version=2:token=3:ghost-token=0	reflux:version=3:token=4	Current:interior=3:ghost=Invalid:status=success
+LANE_TRACE	physical	rk2	stage:1:old=Current:input=Current:output=Scratch	boundary:Scratch	stage:2:old=Current:input=Scratch:output=Next	rotate:Current&lt;-Next:Next&lt;-Current:Scratch&lt;-Scratch	reflux:Current
+LANE_TRACE	bookkeeping	rk2	stage:1:output=Scratch:version=2:token=3:ghost-token=4	stage:2:output=Next:version=3:token=5:ghost-token=0	reflux:version=4:token=6	Current:interior=4:ghost=Invalid:status=success
+LANE_TRACE	physical	rk3	stage:1:old=Current:input=Current:output=Scratch	boundary:Scratch	stage:2:old=Current:input=Scratch:output=Next	boundary:Next	stage:3:old=Current:input=Next:output=Scratch	rotate:Current&lt;-Scratch:Next&lt;-Next:Scratch&lt;-Current	reflux:Current
+LANE_TRACE	bookkeeping	rk3	stage:1:output=Scratch:version=...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="gravity_stage_contract" classname="gravity_stage_contract" time="0.00177543" status="run">
+		<properties/>
+		<system-out>Gravity stage preparation and field identity contracts passed
+</system-out>
+	</testcase>
+	<testcase name="boundary_plan" classname="boundary_plan" time="0.0864685" status="run">
+		<properties/>
+		<system-out>boundary plan contract passed
+</system-out>
+	</testcase>
+	<testcase name="same_level_exchange_plan" classname="same_level_exchange_plan" time="0.00159288" status="run">
+		<properties/>
+		<system-out>same-level exchange plan contract passed
+</system-out>
+	</testcase>
+	<testcase name="amr_operation_plans" classname="amr_operation_plans" time="0.00489302" status="run">
+		<properties/>
+		<system-out>AMR_PLAN_CONTRACT_PASS ordinary=534e24ea68b3f6bf migration=f6c7dabb6721000d
+</system-out>
+	</testcase>
+	<testcase name="amr_flux_surface_plan" classname="amr_flux_surface_plan" time="0.0109065" status="run">
+		<properties/>
+		<system-out>AMR_FLUX_SURFACE_PLAN_PASS
+</system-out>
+	</testcase>
+	<testcase name="topology_transaction" classname="topology_transaction" time="0.0688368" status="run">
+		<properties/>
+		<system-out>TOPOLOGY_TRANSACTION_PASS
+</system-out>
+	</testcase>
+	<testcase name="resolved_execution_plan" classname="resolved_execution_plan" time="0.00195287" status="run">
+		<properties/>
+		<system-out>[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BE_NR | Linear Solver: DenseLU
+[Burn Dispatch] Online network-consistent NSE solver enabled above T=4.5e+09 K and rho=1e+06 g/cm^3.
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BD | Linear Solver: DenseLU
+[Burn Dispatch] Online network-consistent NSE solver enabled above T=4.5e+09 K and rho=1e+06 g/cm^3.
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: ROS4 | Linear Solver: DenseLU
+[Burn Dispatch] Online network-consistent NSE solver enabled above T=4.5e+09 K and rho=1e+06 g/cm^3.
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Burn Dispatch] Resolving Network: aprox19 | ODE Solver: BE_NR | Linear Solver: DenseLU
+[Burn Dispatch] Online network-consistent NSE solver enabled above T=4.5e+09 K and rho=1e+06 g/cm^3.
+[Burn Dispatch] Matrix backend: DenseLU (N=20)
+[Burn Dispatch] Resolving Ne...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="runtime_probe_and_capabilities" classname="runtime_probe_and_capabilities" time="0.00165059" status="run">
+		<properties/>
+		<system-out>runtime_probe_and_capabilities: ok
+</system-out>
+	</testcase>
+	<testcase name="reduction_contract" classname="reduction_contract" time="0.00387129" status="run">
+		<properties/>
+		<system-out>D2_REDUCTION_CONTRACT_PASS edge_cases=36
+</system-out>
+	</testcase>
+	<testcase name="compute_backend" classname="compute_backend" time="0.00185204" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="device_block_store_lifecycle" classname="device_block_store_lifecycle" time="0.00163421" status="run">
+		<properties/>
+		<system-out>device block store lifecycle contract passed
+</system-out>
+	</testcase>
+	<testcase name="initialization_probe" classname="initialization_probe" time="0.00282597" status="run">
+		<properties/>
+		<system-out>[Info] Loaded 4 parameters from &lt;memory&gt;
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+[Info] Loaded 4 parameters from &lt;memory&gt;
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+[Info] Loaded 2 parameters from &lt;memory&gt;
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+Initialization boundary, source guards, strict integers, evidence conflicts and log domains passed
+</system-out>
+	</testcase>
+	<testcase name="case_inspection_contract" classname="case_inspection_contract" time="60.3791" status="run">
+		<properties/>
+		<system-out>......
+----------------------------------------------------------------------
+Ran 6 tests in 60.323s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="preview_session_contract" classname="preview_session_contract" time="90.6307" status="run">
+		<properties/>
+		<system-out>........
+----------------------------------------------------------------------
+Ran 8 tests in 90.576s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="preview_verified_resources" classname="preview_verified_resources" time="0.0458885" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="preview_exact_sample_cache" classname="preview_exact_sample_cache" time="0.00802836" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="low_density_math" classname="low_density_math" time="0.00165394" status="run">
+		<properties/>
+		<system-out>Low-density analytic leaves passed through rho=1e-100
+</system-out>
+	</testcase>
+	<testcase name="poisson_multigrid_contract" classname="poisson_multigrid_contract" time="8.74031" status="run">
+		<properties/>
+		<system-out>P2 contract validation passed
+</system-out>
+	</testcase>
+	<testcase name="poisson_multigrid_analytic" classname="poisson_multigrid_analytic" time="73.5236" status="run">
+		<properties/>
+		<system-out>boundary,dimension,n,cycles,residual,target,phi_rms,cell_force_rms,face_force_rms,boundary_force_rms,phi_order,cell_order,face_order,boundary_order
+periodic,1,16,10,8.8938665352286307e-12,2.7915456798555513e-11,0.0091575608282424923,0.05724298803128744,0.027820561179125895,1.267243467597971e-15,0,0,0,0
+periodic,1,32,10,1.8102447282828617e-11,2.7915456798555513e-11,0.0022761515835191897,0.014283104978916944,0.0070359055275417311,1.0881924738404062e-15,2.0083667397815028,2.0027893430002006,1.9833435046158494,0
+periodic,1,64,10,2.1243217898969597e-11,2.7915456798555513e-11,0.00056821522575603535,0.0035690545701387846,0.0017709603043243535,1.0881924738404062e-15,2.0020872438901796,2.0006957731930113,1.9902042368274111,0
+periodic,2,16,14,3.206260441243955e-11,6.2420859024528788e-11,0.020476928519737467,0.090509111127620764,0.043988169553755299,2.4424188637106094e-15,0,0,0,0
+periodic,2,32,14,4.3927393403813721e-11,6.2420859024528775e-11,0.0050896296677885051,0.022583571896573753,0.011124743434163486,3.2832321601949...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="composite_poisson_analytic" classname="composite_poisson_analytic" time="0.589633" status="run">
+		<properties/>
+		<system-out>dimension,refined,n,cells,iterations,residual,target,phi_rms,face_rms,interface_rms,phi_order,face_order,interface_order,net_force
+1,0,16,16,3,2.1008909611623076e-10,2.7915456798555517e-09,0.0091575608284701748,0.028676778077794909,0,0,0,0,2.5463994715677828e-17
+1,0,32,32,4,2.2648206197288671e-12,2.7915456798555517e-09,0.0022761515839785024,0.0071449958425236744,0,2.0083667395262457,2.0048778650515269,0,1.7851238738991297e-17
+1,0,64,64,4,9.495662762886408e-10,2.7915456798555517e-09,0.00056821522629411036,0.0017847423078129567,0,2.0020872428151368,2.0012173878424186,0,7.8947539218087649e-18
+1,1,16,24,5,2.3173588335551967e-10,2.7915392268256565e-09,0.0049426154516530136,0.017495752937795841,0.025148000998129007,0,0,0,0.0011866326321492442
+1,1,32,48,6,3.2504720682629164e-12,2.7915452799348256e-09,0.0013306861139881407,0.0043708087153531442,0.0062745597744637664,1.8931043610298612,2.001032606637692,2.0028575778042135,0.00030293879130726184
+1,1,64,96,6,7.4154019384971719e-12,2.7915456549131755e-09,0.00034580062812...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="self_gravity_lifecycle" classname="self_gravity_lifecycle" time="0.0104781" status="run">
+		<properties/>
+		<system-out>Self-gravity lifecycle validation passed
+</system-out>
+	</testcase>
+	<testcase name="composite_poisson_contract" classname="composite_poisson_contract" time="0.122497" status="run">
+		<properties/>
+		<system-out>Composite contracts passed
+</system-out>
+	</testcase>
+	<testcase name="self_gravity_jeans" classname="self_gravity_jeans" time="0.0396842" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>Traceback (most recent call last):
+  File "/home/shiroakane/ARCH/validation/gravity/run_self_gravity.py", line 16, in &lt;module&gt;
+    import h5py
+  File "/tmp/arch-p15-python/h5py/__init__.py", line 25, in &lt;module&gt;
+    from . import _errors
+ImportError: cannot import name '_errors' from partially initialized module 'h5py' (most likely due to a circular import) (/tmp/arch-p15-python/h5py/__init__.py)
+</system-out>
+	</testcase>
+	<testcase name="ui_expansion_contract" classname="ui_expansion_contract" time="73.2354" status="run">
+		<properties/>
+		<system-out>.........
+----------------------------------------------------------------------
+Ran 9 tests in 73.176s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="preview_cellular_2d" classname="preview_cellular_2d" time="329.266" status="run">
+		<properties/>
+		<system-out>..........
+----------------------------------------------------------------------
+Ran 10 tests in 329.205s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="checkpoint_compatibility" classname="checkpoint_compatibility" time="0.0529644" status="run">
+		<properties/>
+		<system-out>[Info] Loaded 3 parameters from /home/shiroakane/ARCH/build/checkpoint-compatibility-data/nse-controls.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[Info] Loaded 3 parameters from /home/shiroakane/ARCH/build/checkpoint-compatibility-data/nse-controls.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[Info] Loaded 3 parameters from /home/shiroakane/ARCH/build/checkpoint-compatibility-data/nse-controls.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[Info] Loaded 3 parameters from /home/shiroakane/ARCH/build/checkpoint-compatibility-data/nse-controls.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+[Info] Loaded 3 parameters from /home/shiroakane/ARCH/build/checkpoint-compatibility-data/nse-controls.par
+[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is n...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="tabular_eos_ideal_gas" classname="tabular_eos_ideal_gas" time="16.8977" status="run">
+		<properties/>
+		<system-out>[Tabular3DEOS] Loading validated 3D HDF5 table: /home/shiroakane/ARCH/build/tabular-eos-test-data/ideal_gas_3d.h5
+[Tabular3DEOS] Loaded strict free-energy table with automatic rank validation.
+[Tabular4DEOS] Loading validated 4D HDF5 table: /home/shiroakane/ARCH/build/tabular-eos-test-data/ideal_gas_4d.h5
+[Tabular4DEOS] Loaded strict free-energy table with automatic rank validation.
+ideal-gas free-energy table max relative error: 3D=0.000361253, 4D=0.000361253
+[EOS Dispatch] Resolving EOS Policy: ideal
+[Tabular3DEOS] Loading validated 3D HDF5 table: /home/shiroakane/ARCH/build/tabular-eos-test-data/species_cache_3d.h5
+[Tabular3DEOS] Loaded strict free-energy table with automatic rank validation.
+[Tabular3DEOS] Loading validated 3D HDF5 table: /home/shiroakane/ARCH/build/tabular-eos-test-data/species_cache_3d.h5
+[Tabular3DEOS] Loaded strict free-energy table with automatic rank validation.
+[Tabular3DEOS] Loading validated 3D HDF5 table: /home/shiroakane/ARCH/build/tabular-eos-test-data/species_cache_3d.h5
+[Tab...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native_tabular_eos" classname="native_tabular_eos" time="0.0144771" status="run">
+		<properties/>
+		<system-out>[Tabular3DEOS] Loaded EOSDriver total equilibrium EOS, native axes/fields; 0 invalid nodes excluded from the query domain. Conserved energy includes the source reference shift 1e+18 erg/g.
+[Tabular3DEOS] Loaded EOSDriver total equilibrium EOS, native axes/fields; 1 invalid nodes excluded from the query domain. Conserved energy includes the source reference shift 1e+18 erg/g.
+[Tabular3DEOS] Loaded EOSDriver total equilibrium EOS, native axes/fields; 0 invalid nodes excluded from the query domain. Conserved energy includes the source reference shift 1e+18 erg/g.
+[Tabular3DEOS] Loaded EOSDriver total equilibrium EOS, native axes/fields; 0 invalid nodes excluded from the query domain. Conserved energy includes the source reference shift 1e+18 erg/g.
+[Tabular3DEOS] Loaded EOSDriver total equilibrium EOS, native axes/fields; 0 invalid nodes excluded from the query domain. Conserved energy includes the source reference shift 1e+18 erg/g.
+native EOSDriver: analytic values/derivatives/inverse and strict rejection PASS...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="tabular_component_completion" classname="tabular_component_completion" time="28.9985" status="run">
+		<properties/>
+		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Tabular3DEOS] Loading validated 3D HDF5 table: /home/shiroakane/ARCH/build/component-completion-test-data/partial-3d-00.h5
+[Tabular3DEOS] Warning: thermodynamic spacing exceeds 0.02 dex; refine and run the error analyzer before production use.
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Tabular EOS] Completing missing components: electrons/positrons=1, photons=1; 0 source nodes outside component support. Affected derivative stencils are excluded, never extrapolated.
+[Tabular3DEOS] Loaded strict free-energy table with automatic rank validation.
+[Tabular3DEOS] Loading validated 3D HDF5 table: /home/shiroakane/ARCH/build/component-completion-test-data/total-3d.h5
+[Tabular3DEOS] Warning: thermodynamic spacing exceeds 0.0...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="sparse_klu_161_equations" classname="sparse_klu_161_equations" time="0.00215003" status="run">
+		<properties/>
+		<system-out>KLU 161x161 sparse solve max absolute error: 2.22045e-16, structural nnz=481
+</system-out>
+	</testcase>
+</testsuite>

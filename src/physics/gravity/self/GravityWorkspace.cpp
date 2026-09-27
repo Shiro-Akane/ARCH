@@ -1,0 +1,112 @@
+/**
+ * @file GravityWorkspace.cpp
+ * @brief Bind self-gravity data and gather plans to one AMR topology epoch.
+ *
+ * Workflow:
+ * 1. Allocate resident density, source, boundary, potential and force arrays.
+ * 2. Upload native leaf positions, physical lengths and conservative volumes;
+ *    build one owner for each patch face and each coarse-fine fragment.
+ * 3. Separate physical face acceleration from the curved mass-flux work
+ *    coefficient, and cache physical-space boundary evaluation points.
+ */
+
+#include "physics/gravity/self/GravityWorkspace.h"
+
+#include "grid/GridMetrics.h"
+
+namespace Physical::Gravity {
+/** Allocate resident density, face and force fields for one topology epoch. */
+SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic::BoundaryKind kind,
+    std::shared_ptr<GravityExecution> runner):binding(std::move(value)),execution(std::move(runner)),
+    solver(binding.base,binding.cells,kind,execution->numeric()) {
+    auto& e=solver.execution();const auto& op=solver.op();const int n=op.size();
+    density=e.array<double>(n);rhs=e.array<double>(n);boundary_values=e.array<double>(op.faces().size());
+    face_gradient=e.array<double>(op.faces().size());sides=e.array<double>(6*n);g=e.array<double>(3*n);
+    const bool curved=op.base().geometry!=arch::elliptic::Geometry::Cartesian;
+    if(curved)work_sides=e.array<double>(6*n);else work_sides=sides;
+    inverse_dt_squared=e.array<double>(n);density_pointers=e.array<const double*>(binding.grids.size());
+    std::vector<GravityCell> locations;
+    for(int i=0;i<n;++i){const auto b=binding.storage[i];GravityCell c{static_cast<int>(b.block),b.offset,{}};
+        const auto native=op.center(i);
+        const auto geometry=op.base().geometry==arch::elliptic::Geometry::Cartesian
+            ?GridMetrics::Geometry::Cartesian
+            :(op.base().geometry==arch::elliptic::Geometry::Cylindrical
+                ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
+        for(int a=0;a<op.base().dimension;++a)
+            c.width[a]=GridMetrics::PhysicalSpacing(geometry,op.base().dimension,a,
+                op.width(i,0),op.width(i,1),op.width(i,2),native[0],native[1]);
+        locations.push_back(c);}
+    cells=e.upload(locations);volumes=e.upload(op.volumes());
+    for(std::size_t b=0;b<binding.grids.size();++b){lookup.emplace(binding.grids[b],b);patch_offsets.push_back(native_size);native_size+=binding.grids[b]->GetTotalSize();}
+    patch_faces=e.array<double>(3*native_size);
+    if(curved)patch_work_faces=e.array<double>(3*native_size);else patch_work_faces=patch_faces;
+    patches.resize(binding.grids.size());
+    for(std::size_t b=0;b<patches.size();++b)for(int a=0;a<3;++a){
+        patches[b].faces[a]=patch_faces.data+a*native_size+patch_offsets[b];
+        patches[b].work_faces[a]=patch_work_faces.data+a*native_size+patch_offsets[b];
+    }
+    std::vector<std::vector<int>> columns(6*n),work_phi_columns(6*n),work_boundary_columns(6*n);
+    std::vector<std::vector<double>> weights(6*n),work_phi_weights(6*n),work_boundary_weights(6*n);
+    std::vector<BoundaryPoint> boundary_points;
+    for(int i=0;i<static_cast<int>(op.faces().size());++i){const auto& f=op.faces()[i];
+        for(int c:{f.left,f.right})if(c>=0){const int side=6*c+2*f.axis+(c==f.left?1:0);
+            // Momentum consumes physical g=-grad(Phi). Cartesian keeps its
+            // established area-averaged face behavior at coarse/fine sides.
+            const double weighted=-f.area*op.width(c,f.axis)/op.volumes()[c];
+            columns[side].push_back(i);
+            weights[side].push_back(curved?-f.area:weighted);
+            if(curved) {
+                // Delta E_i = -dt/V_i sum_f A_f F_out,f (Phi_f-Phi_i).
+                // gravity_flux_work multiplies each side by dt/2, so the
+                // low/high coefficient is respectively +/-2*A_f/V_i.
+                const double factor=(c==f.left?-2.:2.)*f.area/op.volumes()[c];
+                work_phi_columns[side].push_back(c);
+                work_phi_weights[side].push_back(-factor);
+                for(std::size_t k=0;k<f.value_samples.size();++k) {
+                    work_phi_columns[side].push_back(f.value_samples[k]);
+                    work_phi_weights[side].push_back(factor*f.value_coefficients[k]);
+                }
+                if(f.value_boundary_coefficient!=0.) {
+                    work_boundary_columns[side].push_back(i);
+                    work_boundary_weights[side].push_back(factor*f.value_boundary_coefficient);
+                }
+            }}
+        if(f.boundary_side>=0) {
+            const auto geometry=op.base().geometry==arch::elliptic::Geometry::Cartesian
+                ?GridMetrics::Geometry::Cartesian
+                :(op.base().geometry==arch::elliptic::Geometry::Cylindrical
+                    ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
+            const auto point=GridMetrics::PhysicalPosition(geometry,op.base().dimension,f.center);
+            boundary_points.push_back({{point[0],point[1],point[2]},i});
+        }}
+    // Multiple refined fragments share one coarse native face. A physical
+    // acceleration is its area-weighted normal gradient, not the sum of
+    // fragment gradients; the work rows above retain their own A_f/V_i.
+    if(curved)for(auto& side:weights) {
+        double area=0.;for(double weight:side)area-=weight;
+        if(area>0.)for(double& weight:side)weight/=area;
+    }
+    arch::multigrid::SparseStorage side_rows,patch_rows;
+    for(int i=0;i<6*n;++i)side_rows.row(columns[i],weights[i]);
+    side_gather={e,side_rows};
+    if(curved) {
+        arch::multigrid::SparseStorage phi_rows,boundary_rows;
+        for(int i=0;i<6*n;++i) {
+            phi_rows.row(work_phi_columns[i],work_phi_weights[i]);
+            boundary_rows.row(work_boundary_columns[i],work_boundary_weights[i]);
+        }
+        work_phi_gather={e,phi_rows};
+        work_boundary_gather={e,boundary_rows};
+    }
+    // One writer per native face, including block boundaries and coarse/fine
+    // area averages. A gather avoids CUDA races between adjacent cells.
+    std::vector<int> owner(3*native_size,-1);
+    for(int i=0;i<n;++i){const auto b=binding.storage[i];const auto& grid=*binding.grids[b.block];const int stride[]{1,grid.stride_y,grid.stride_z};
+        for(int a=0;a<grid.dim;++a)for(int s=0;s<2;++s)owner[a*native_size+patch_offsets[b.block]+b.offset+s*stride[a]]=6*i+2*a+s;}
+    const double one=1.;for(int i:owner){if(i<0)patch_rows.row({},{});else patch_rows.row({&i,1},{&one,1});}patch_gather={e,patch_rows};
+    if(kind==arch::elliptic::BoundaryKind::Dirichlet ||
+       kind==arch::elliptic::BoundaryKind::CurvilinearIsolated){GravityBoundary tree(op);nodes=e.upload(tree.nodes());moments=e.array<BoundaryMoments>(nodes.size);
+        for(const auto& layer:tree.layers())layers.push_back(e.upload(layer));points=e.upload(boundary_points);}
+    e.fill(boundary_values);e.fence();
+}
+}

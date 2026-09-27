@@ -7,8 +7,8 @@
 
 #include <string_view>
 
-#include "../../driver/dispatch/ResolvedExecutionPlan.h"
-#include "../hdf5/HDF5Writer.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
+#include "io/hdf5/HDF5Writer.h"
 
 struct SimConfig;
 struct SpeciesManager;
@@ -31,7 +31,7 @@ CheckpointProvenance inspect_checkpoint_provenance(
 /**
  * Validate a saved identity against the running executable/configuration.
  *
- * @return false only for a v1/v2 checkpoint without identity metadata.
+ * @return true after mandatory identity metadata matches.
  * @throws std::runtime_error for a present but incompatible identity.
  */
 bool require_checkpoint_provenance_compatible(

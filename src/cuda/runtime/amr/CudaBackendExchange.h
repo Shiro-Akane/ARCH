@@ -9,8 +9,9 @@
 
 #pragma once
 
+#include "amr/exchange/CoordinateSeamMath.h"
 #include "cuda/common/CudaCommon.cuh"
-#include "cuda/hydro/BoundaryPlan.h"
+#include "cuda/hydro/boundary/BoundaryPlan.h"
 
 #include <cuda_runtime.h>
 
@@ -22,6 +23,17 @@ struct DeviceExchangeBlock {
     DeviceStateView state{};
     DeviceGridView grid{};
 };
+
+struct DeviceBoundaryBatchBlock {
+    DeviceStateView state;
+    const DeviceBoundaryTransfer* transfers = nullptr;
+    std::array<boundary::BoundaryPhase, 3> phases{};
+};
+static_assert(std::is_trivially_copyable_v<DeviceBoundaryBatchBlock>);
+
+cudaError_t launch_cuda_backend_boundary_batch(
+    const DeviceBoundaryBatchBlock* blocks, int block_count,
+    const std::array<int, 3>& phase_counts, cudaStream_t stream, int& kernels);
 
 struct DeviceExchangeOperation {
     int source_block = 0;
@@ -47,6 +59,19 @@ struct DeviceCoarseFineTransfer {
 
 static_assert(std::is_standard_layout_v<DeviceCoarseFineTransfer>);
 static_assert(std::is_trivially_copyable_v<DeviceCoarseFineTransfer>);
+
+/** A shared physical donor stencil bound to device block-view indices. */
+struct DeviceCoordinateSeamTransfer {
+    amr::CoordinateSeamTransfer stencil{};
+    int source_block = -1;
+    int destination_block = -1;
+};
+static_assert(std::is_trivially_copyable_v<DeviceCoordinateSeamTransfer>);
+
+cudaError_t launch_cuda_backend_coordinate_seam(
+    const DeviceExchangeBlock* blocks,
+    const DeviceCoordinateSeamTransfer* transfers,
+    int transfer_count, int* status, cudaStream_t stream);
 
 cudaError_t launch_cuda_backend_exchange_phase(
     const DeviceExchangeBlock* blocks,

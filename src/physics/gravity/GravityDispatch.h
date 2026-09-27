@@ -4,7 +4,11 @@
  *
  * Runtime selection constructs a type-erased patch policy; it does not solve
  * a field or apply source terms. ExternalGravity delegates its cell update to
- * ExternalGravitySource.h, the mathematical owner also used by device code.
+ * GravitySource.h, the mathematical owner also used by device code.
+ * Workflow:
+ * 1. Read the resolved gravity kind and CGS parameters.
+ * 2. Construct the disabled, external or self-gravity policy.
+ * 3. Return a type-erased policy; field solves begin only at stage preparation.
  */
 
 #pragma once
@@ -13,16 +17,22 @@
 #include <stdexcept>
 #include <string>
 
-#include "ExternalGravity.h"
-#include "GravityNone.h"
+#include "physics/gravity/ExternalGravity.h"
+#include "physics/gravity/self/SelfGravity.h"
 
-#include "../../data/GlobalDefs.h"
-#include "../../driver/dispatch/ResolvedExecutionPlan.h"
+#include "data/GlobalDefs.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 
 namespace Physical
 {
     namespace Gravity
     {
+        // The disabled policy is owned by its only construction site.
+        struct GravityNone final : IGravityPolicy {
+            void add_sources_on_patch(std::vector<FluidVector>&, const FluidState&,
+                const Grid&, double, void* = nullptr) const override {}
+        };
+
         /**
          * @brief Factory for gravity policy
          * @return std::unique_ptr<IGravityPolicy>
@@ -40,7 +50,7 @@ namespace Physical
                     config.physics.gravity.g_y,
                     config.physics.gravity.g_z);
             case GravityId::Self:
-                throw std::runtime_error("Self gravity is not yet implemented!");
+                return std::make_unique<SelfGravity>(config.physics.gravity);
             }
             throw std::logic_error("resolved gravity has no CPU binding");
         }

@@ -12,8 +12,9 @@
 #include <array>
 #include <vector>
 
-#include "../amr/AmrDefines.h"
-#include "../core/ArchPortability.h"
+#include "amr/topology/AmrDefines.h"
+#include "core/ArchPortability.h"
+#include "data/StateDiagnostics.h"
 
 /**
  * @brief Represents the conserved variables at a single point.
@@ -62,6 +63,7 @@ ARCH_INLINE FluidVector operator*(double s, const FluidVector &v)
  */
 struct FluidState
 {
+    arch::state::RepairBudget stage_repairs; // Ephemeral; consumed before slot publication.
     // Host arrays use the active-dimension block extent.
     std::vector<double> rho;
     std::vector<double> mom_u;

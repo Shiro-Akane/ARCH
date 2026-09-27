@@ -9,13 +9,12 @@
  */
 
 #include <cmath>
-#include "physics/constant/PhysicalConstants.h"
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 
 class CellularDetonation
 {

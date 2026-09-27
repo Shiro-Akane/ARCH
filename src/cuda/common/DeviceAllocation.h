@@ -12,6 +12,7 @@
 #include <cuda_runtime.h>
 #include <cstddef>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -77,6 +78,28 @@ private:
 
     T* pointer_ = nullptr;
     std::size_t count_ = 0;
+};
+
+/**
+ * @brief Reuse allocation capacity without caching topology-dependent views.
+ * The stream owner must finish consumers before growth, reuse or destruction.
+ * Growth allocates before replacing storage, preserving the old allocation if
+ * allocation fails. A zero-size reservation is a no-op, not a deallocation.
+ */
+template <class T>
+class ReusableDeviceAllocation {
+public:
+    void reserve(std::size_t count)
+    {
+        if (count <= size()) return;
+        auto replacement = std::make_unique<DeviceAllocation<T>>();
+        replacement->allocate(count);
+        allocation_.swap(replacement); // Allocation failure preserves old capacity.
+    }
+    T* get() const noexcept { return allocation_ ? allocation_->get() : nullptr; }
+    std::size_t size() const noexcept { return allocation_ ? allocation_->size() : 0; }
+private:
+    std::unique_ptr<DeviceAllocation<T>> allocation_;
 };
 
 } // namespace arch::cuda

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Linux-g++-12"
+	tests="6"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="Shiro-Akane"
+	time="4"
+	timestamp="2026-09-23T16:45:03"
+	>
+	<testcase name="preview_api_contract" classname="preview_api_contract" time="2.69721" status="run">
+		<properties/>
+		<system-out>.......s....
+----------------------------------------------------------------------
+Ran 12 tests in 2.643s
+
+OK (skipped=1)
+</system-out>
+	</testcase>
+	<testcase name="configuration_api_contract" classname="configuration_api_contract" time="1.0221" status="run">
+		<properties/>
+		<system-out>...........
+----------------------------------------------------------------------
+Ran 11 tests in 0.972s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="gravity_stage_contract" classname="gravity_stage_contract" time="0.00223775" status="run">
+		<properties/>
+		<system-out>Gravity stage preparation and field identity contracts passed
+</system-out>
+	</testcase>
+	<testcase name="self_gravity_lifecycle" classname="self_gravity_lifecycle" time="0.339498" status="run">
+		<properties/>
+		<system-out>2D native vector components passed
+3D native vector components passed
+Self-gravity lifecycle validation passed
+</system-out>
+	</testcase>
+	<testcase name="composite_poisson_contract" classname="composite_poisson_contract" time="0.0179386" status="run">
+		<properties/>
+		<system-out>Composite contracts passed
+</system-out>
+	</testcase>
+	<testcase name="self_gravity_physics" classname="self_gravity_physics" time="4.2088" status="run">
+		<properties/>
+		<system-out>Self-gravity passed: 11 acceptance records
+</system-out>
+	</testcase>
+</testsuite>

@@ -3,7 +3,7 @@
 Chinese translation: [CudaBackendStatus.zh-CN.md](CudaBackendStatus.zh-CN.md).
 The English file is authoritative.
 
-A *backend* refers to the specific execution engine in ARCH responsible for performing calculations on your chosen hardware. CUDA serves as our GPU backend. Selecting it alters how execution and memory management are handled under the hood, but it strictly retains the exact same physical models and logic as the CPU backend. *Adaptive mesh refinement (AMR)* dynamically adjusts cell sizes during a simulation, ensuring that complex regions receive higher spatial resolution. This guide details the division of labor between processors and helps you select a compatible configuration.
+A *backend* refers to the specific execution engine in ARCH responsible for performing calculations on your chosen hardware. CUDA serves as our GPU backend. Selecting it changes execution, memory management and solver-library access while reusing the common mathematical and physical implementations. Backend agreement is established for the configurations identified by validation. *Adaptive mesh refinement (AMR)* dynamically adjusts cell sizes during a simulation, ensuring that complex regions receive higher spatial resolution. This guide details the division of labor between processors and helps you select a compatible configuration.
 
 The CUDA backend executes hydrodynamics and adaptive-mesh numerical work on the
 GPU. CPU and CUDA share the same mathematical and physical implementations;
@@ -21,11 +21,17 @@ technical results and combined acceptance status.
 | Boundaries | Periodic, outflow and reflecting boundaries |
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
-| Diffusion | Species, thermal and viscous modes; RKL1/RKL2 integration |
-| Gravity | External gravity using common stage source terms |
+| Diffusion | Species, thermal and viscous operators with RKL1/RKL2; the material closure determines active channels. The current Helmholtz stellar closure supplies thermal conduction only. |
+| Gravity | External stage sources and composite-AMR self-gravity: Cartesian periodic 1D–3D or isolated 3D, plus tested isolated 1D radial and full-azimuth 2D/3D curved domains including coordinate joins; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
 | Built-in burning | iso7, aprox13, aprox19, aprox21; BE_NR, BD, ROS4 and network-constrained NSE |
 | Generated burning | Registered networks with device-callable math, including recognized embedded weak tables stored read-only on each backend; dense or sparse solving as described below |
 | Output and restart | Shared HDF5/checkpoint facilities, with state transfers at IO boundaries and CPU/CUDA restart routes |
+
+These are component routes, subject to the [combination rules](Reference.md#combining-methods-and-physics).
+The HLLC/MUSCL/RK2, BD, RKL2 thermal, self-gravity MG and AMR combination has
+representative CPU/CUDA application checks. This is not acceptance of every
+EOS/network/geometry substitution. Tabular burn/NSE recoverable-trial error
+handling remains an open audit item; shared formulas alone do not resolve it.
 
 Policy names, aliases and supported combinations share one registration system.
 The equation of state (EOS) relates pressure, density, energy and composition;
@@ -53,26 +59,100 @@ The CPU owns the mesh topology, Morton ordering, and all refinement/coarsening d
 - **Morton ordering** assigns a spatially contiguous index to those blocks.
 - **Refinement** splits cells into smaller ones for higher resolution, while **coarsening** merges them when configured indicators indicate that high resolution is no longer needed.
 
-Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration operates directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
+Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration and singular-coordinate ghost reconstruction operate directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
 
 ## Choosing a backend for performance
 
-Shared features and numerical agreement do not guarantee that CUDA will run
-faster. In the local dynamic-AMR Sedov comparison on an i7-10700 and RTX 3060 Ti
-under WSL2, CUDA end-to-end time was 3.30 and 3.43 times the eight-thread CPU
-time at the two measured sizes. Both backends passed the same field,
-conservation and runtime-topology checks. CPU is the faster choice for these
-workloads; compare a representative run when selecting a backend for your own
-model. `auto` selects an available supported backend, not the fastest one by
-benchmarking it.
+The server measurements below retain their original source identity and
+transport configuration; they precede the current self-gravity work and do not
+establish that every present Helmholtz transport channel is active. Current
+workstation evidence and the controlled FLASH comparison are recorded in the
+[comparison assessment](../validation/gravity/flash/O5OptimizationReport.zh-CN.md).
 
-The [timing record](../validation/backend/results/maintenance-freeze-20260908/README.md#matched-local-amr-timing)
-gives the two mesh sizes, one warmup and three measured runs per backend,
-reproduction command and complete reports. End-to-end measurements include
-initialization and output. Runtime regrid transactions are reported separately;
-they are not an additional cost to add to those totals or an isolated solver
-timer. This source release provides CPU/CUDA functional equivalence; execution
-performance remains workload-dependent and is a separate optimization task.
+**Measured end-to-end acceleration reaches about 5× for coupled AMR workloads.**
+The highest result was 5.08× for hydrodynamics, BD burning, RKL2 full transport
+and dynamic AMR at 128 initial mesh blocks: 423.55 seconds on CPU16 versus
+83.35 seconds on CUDA. This compares the two backends running the same physical
+problem from startup through completion.
+
+These measurements used an H100-20C **20 GiB vGPU** and a Xeon Gold 6338
+**32-vCPU virtual machine**, not a dedicated full H100 or 32 dedicated physical
+CPU cores. Burning and coupled cases use aprox13, the Helmholtz EOS and
+DenseLU; diffusion-only cases use the ideal-gas EOS. The CPU reference is
+the fastest median among 1, 8 and 16 threads, with one warm-up
+and five formal runs per configuration. CPU/CUDA samples were alternated.
+
+The table shows `speedup = CPU time / CUDA time`: above 1 means CUDA is faster,
+below 1 means CPU is faster. Block counts refer to **initial AMR mesh blocks**,
+not CUDA thread blocks or final refined cell counts. "Coupled" includes
+hydrodynamics, burning, species/thermal/viscous diffusion and dynamic AMR.
+
+| Workload | 8 blocks | 32 blocks | 128 blocks |
+| --- | ---: | ---: | ---: |
+| Diffusion, RKL1 | 0.099× | 0.392× | 1.004× |
+| Diffusion, RKL2 | 0.116× | 0.489× | 1.347× |
+| Burning, BE_NR | 0.964× | 1.325× | 1.978× |
+| Burning, BD | 1.046× | 1.519× | 2.612× |
+| Burning, ROS4 | 0.975× | 1.300× | 1.997× |
+| Coupled, BE_NR + RKL1 | 1.183× | 1.460× | 2.876× |
+| Coupled, BE_NR + RKL2 | 1.293× | 1.962× | 3.999× |
+| Coupled, BD + RKL1 | 1.378× | 3.179× | 3.924× |
+| Coupled, BD + RKL2 | 1.460× | 2.856× | **5.082×** |
+| Coupled, ROS4 + RKL1 | 1.248× | 2.245× | 3.681× |
+| Coupled, ROS4 + RKL2 | 1.363× | 2.868× | **5.007×** |
+
+The separate two-dimensional Sedov test with dynamic AMR measured 1.588× and
+1.667× at initial block layouts of 4×4 and 8×8. Those are combined Hydro/AMR
+times, not isolated AMR speedups. The
+[campaign summary](../validation/backend/results/hpc-cuda-optimization/README.md)
+provides absolute times, acceptance counts and source-pinned reports.
+
+More mesh work allows CUDA to amortize kernel launches and synchronization.
+Small diffusion cases still favor CPU; RKL1 at 128 blocks is effectively at
+parity. Increasing the isotope count is a different scaling problem and does
+not, by itself, improve GPU utilization.
+
+**Large-network performance warning:** the tested production 150/200-isotope
+sparse applications still take approximately **5.0–10.3 times as long on CUDA
+as on CPU8** (speedup about 0.10–0.20×). Their numerical comparisons passed,
+but the current host-controlled cuDSS route remains a performance limitation
+for those small full-application workloads. Choose CPU for these workloads
+unless timing on your representative case demonstrates a GPU benefit. Larger
+mesh/network combinations need their own measurements; the 5× result above
+does not apply to them. Experimental sparse providers are not production options.
+
+Use a representative input to compare end-to-end time on your machine.
+`compute_backend = auto` selects an available supported backend; it does not
+benchmark your problem. End-to-end time includes initialization and output;
+regrid measurements overlap that total and must not be added again.
+
+Use the same physical input, AMR criteria and output settings on both backends
+when timing them. Self-gravity uses a real device solve on CUDA, but its
+extra setup can make small grids slower than CPU. The local RTX 3060 Ti
+[curved self-gravity record](../validation/gravity/results/p13-20260924/README.md)
+shows end-to-end coupled gains while separating the Poisson cost; use the
+[gravity acceptance](../validation/gravity/README.md) for tested limits.
+
+### What the CUDA optimization changes
+
+- Hydro, diffusion and small-network burning process multiple mesh blocks per
+  launch where their workspace layout permits. They still call the common
+  cell/face mathematics and registered physical policies.
+- AMR field migration stays on the device, with compact indicator summaries
+  returned to the CPU for shared mesh-tree decisions.
+- Device workspaces and host exchange buffers reuse allocated capacity. A
+  topology change rebuilds the affected views rather than duplicating their
+  physical models or retaining stale mesh references.
+- Completion and field-version checks coordinate ghost updates, exchanges and
+  publication of results. Reusing already completed boundaries avoids redundant
+  refreshes before host consumers read the accepted state.
+- Sparse corrections use one shared original-system residual check. cuDSS
+  factor storage and its bounded cache remain backend-specific; further
+  large-network acceleration is a separate optimization task.
+
+Together these changes reduce launch, allocation and transfer overhead without
+changing the physical equations or acceptance tolerances. The measured speedups
+describe complete workloads; they do not assign a separate gain to each change.
 
 ## Dense and sparse burning
 
@@ -110,8 +190,7 @@ requirements grow with the network and mesh workload.
   CPU-only packages execute on CPU. The exact manifest fields are documented
   in the [network contract](Reference.md). Independent
   Urca trajectory results are available in [network validation](../validation/network/README.md).
-- Self-gravity is not a production capability of either backend. Generated
-  networks that pass the nuclear-data and equilibrium-model checks can use
+- Generated networks that pass the nuclear-data and equilibrium-model checks can use
   shared NSE math, covered by focused CPU/CUDA tests rather than a new full
   application qualification.
   See the [model limits](../src/physics/nse/README.md). Both built-in and generated

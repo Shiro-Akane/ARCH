@@ -1,0 +1,1 @@
+Periodic Poisson RHS has incompatible nonzero mean

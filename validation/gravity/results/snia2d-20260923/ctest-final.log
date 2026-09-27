@@ -1,0 +1,18 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+Test project /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+    Start 54: self_gravity_physics
+    Start  3: preview_api_contract
+    Start  4: configuration_api_contract
+    Start 52: self_gravity_lifecycle
+1/6 Test #52: self_gravity_lifecycle ...........   Passed    0.34 sec
+    Start 53: composite_poisson_contract
+2/6 Test #53: composite_poisson_contract .......   Passed    0.02 sec
+    Start 32: gravity_stage_contract
+3/6 Test #32: gravity_stage_contract ...........   Passed    0.00 sec
+4/6 Test  #4: configuration_api_contract .......   Passed    1.02 sec
+5/6 Test  #3: preview_api_contract .............   Passed    2.70 sec
+6/6 Test #54: self_gravity_physics .............   Passed    4.21 sec
+
+100% tests passed, 0 tests failed out of 6
+
+Total Test time (real) =   4.21 sec

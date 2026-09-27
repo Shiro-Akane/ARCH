@@ -1,0 +1,2 @@
+[Info] Loaded 43 parameters from /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/reject-gravity_rtol/input.par
+[Fatal Error] Config parameter 'gravity_rtol': Requires a finite positive value.

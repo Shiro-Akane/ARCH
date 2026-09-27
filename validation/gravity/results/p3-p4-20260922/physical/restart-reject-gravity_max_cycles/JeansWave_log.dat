@@ -1,0 +1,10 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/restart-reject-gravity_max_cycles/JeansWave_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/restart-reject-gravity_max_cycles/input.par
+[Main] Problem created: JeansWave
+[Main] Configuration:
+       Grid: 128 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Restarting from checkpoint: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/restart-continuous/JeansWave_chk_0001.h5

@@ -35,5 +35,5 @@ The supporting modules have separate responsibilities:
 Generated network packages are build outputs, not files to maintain by hand.
 Keep the recipe and generation metadata so others can reproduce a package, and
 retain the upstream notices. When changing the generator, run
-[test_portable_network_generator.py](../../tests/tooling/test_portable_network_generator.py)
+[test_portable_network_generator.py](../../tests/tooling/network/test_portable_network_generator.py)
 to check its output contract.

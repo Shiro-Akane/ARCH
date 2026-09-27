@@ -4,4 +4,7 @@
 [GenericProblem.h](GenericProblem.h) adapts registered initialization callbacks
 to that interface.
 
-Specific case implementations are maintained in the [simulation](../../simulation/README.md) directory, while their registration helpers reside in [core](../core/README.md). The initialization phase strictly produces a common state prior to any backend execution; therefore, you must not embed duplicate CPU or GPU physical models within a problem adapter. For more information, follow the [case guide](../../docs/guides/SimulationCase.md).
+Cases live in [simulation](../../simulation/README.md), with registration helpers
+in [core](../core/README.md). Initialization produces the common state before
+backend execution. Problem adapters should use shared physical models rather
+than supply separate CPU/GPU formulas. See the [case guide](../../docs/guides/SimulationCase.md).

@@ -1,0 +1,8 @@
+REGRID_STORAGE species=4 refine=1 rollback=1 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=4 refine=1 rollback=0 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=4 refine=0 rollback=0 old_blocks=3 new_blocks=2
+CUDA_REGRID_TRANSACTION_PASS species=4 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1
+REGRID_STORAGE species=41 refine=1 rollback=1 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=41 refine=1 rollback=0 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=41 refine=0 rollback=0 old_blocks=3 new_blocks=2
+CUDA_REGRID_TRANSACTION_PASS species=41 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1

@@ -1,0 +1,19 @@
+{
+  "tool": "memcheck",
+  "executable": {
+    "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+    "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+  },
+  "report": {
+    "path": "/tmp/arch-p15-sanitizers/arch_cuda_hydro_leaf_parity-memcheck/sanitizer.log",
+    "sha256": "a7efd87aa4285f3df99bb2d9dac7fd7322fa64f316c1884250ccaddbb0188311"
+  },
+  "summaries": [
+    "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+    "ERROR SUMMARY: 0 errors"
+  ],
+  "application": {
+    "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_hydro_leaf_parity",
+    "sha256": "b687516ccd3852b2e562075267561d90b804695a0e4e151529029b21c0880e48"
+  }
+}

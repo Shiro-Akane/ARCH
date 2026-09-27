@@ -20,9 +20,10 @@
 
 #include <vector>
 
-#include "FluxFunctions.h"
+#include "numerics/flux/FluxFunctions.h"
+#include "numerics/flux/InvariantDomainFlux.h"
 
-#include "../reconstruction/AMRInterfaceReconstruction.h"
+#include "numerics/reconstruction/AMRInterfaceReconstruction.h"
 
 template <typename ReconstructPolicy>
 struct FluxRoe
@@ -39,20 +40,20 @@ struct FluxRoe
     {
         // Recover thermodynamic values before Roe averaging.
         // Left State
-        double rho_L = std::max(U_L.rho, 1e-12);
+        double rho_L = U_L.rho;
         double un_L = get_un(U_L, dir);
         double ut1_L = get_ut1(U_L, dir);
         double ut2_L = get_ut2(U_L, dir);
-        double e_L = std::max((U_L.eng / rho_L) - 0.5 * (un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L), 1e-8);
+        double e_L = arch::state::recover(U_L).internal;
         double P_L = eos.get_pressure(U_L, Xi_L);
         double H_L = (U_L.eng + P_L) / rho_L;
 
         // Right State
-        double rho_R = std::max(U_R.rho, 1e-12);
+        double rho_R = U_R.rho;
         double un_R = get_un(U_R, dir);
         double ut1_R = get_ut1(U_R, dir);
         double ut2_R = get_ut2(U_R, dir);
-        double e_R = std::max((U_R.eng / rho_R) - 0.5 * (un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R), 1e-8);
+        double e_R = arch::state::recover(U_R).internal;
         double P_R = eos.get_pressure(U_R, Xi_R);
         double H_R = (U_R.eng + P_R) / rho_R;
 
@@ -86,6 +87,7 @@ struct FluxRoe
                                std::vector<double> &spec_flux_out,
                                int dir, double entropy_fix_coeff = 0.1) // Shared entropy-fix interface; 0.1 scales the local spectral radius.
     {
+        arch::state::HostFailure failure;
         int n_spec = state.GetNumSpecies();
         int total_size = grid.GetTotalSize();
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
@@ -117,24 +119,36 @@ struct FluxRoe
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
-                int k = k_start + kj / nj;
-                int j = j_start + kj % nj;
-                for (int i = i_start; i < i_end; ++i)
-                {
-                    int idx = grid.GetIndex(i, j, k);
-                    // 1. Reconstruction
-                    FluidVector U_L, U_R;
-                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
-
-                    compute_face_flux(
-                        U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                        entropy_fix_coeff, flux_out[idx + stride], face_species_flux.data());
-                    for (int s = 0; s < n_spec; ++s)
+                try {
+                    int k = k_start + kj / nj;
+                    int j = j_start + kj % nj;
+                    for (int i = i_start; i < i_end; ++i)
                     {
-                        spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
+                        int idx = grid.GetIndex(i, j, k);
+                        // 1. Reconstruction
+                        FluidVector U_L, U_R;
+                        AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
+
+                        FluxAdmissibility::compute_candidate([&] {
+                            compute_face_flux(
+                                U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                                entropy_fix_coeff, flux_out[idx + stride], face_species_flux.data());
+                        }, flux_out[idx + stride], face_species_flux.data(), n_spec);
+                        state.get_species_to_buffer(idx, Xi_L.data());
+                        state.get_species_to_buffer(idx + stride, Xi_R.data());
+                        FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),
+                            Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                            flux_out[idx + stride], face_species_flux.data());
+                        for (int s = 0; s < n_spec; ++s)
+                        {
+                            spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
+                        }
                     }
-                }
+
+                } catch (...) { failure.capture_current(); }
             }
         } // end omp parallel
+
+        failure.rethrow();
     }
 };

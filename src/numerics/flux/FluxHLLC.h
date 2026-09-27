@@ -18,9 +18,10 @@
 #include <algorithm>
 #include <vector>
 
-#include "FluxFunctions.h"
+#include "numerics/flux/FluxFunctions.h"
+#include "numerics/flux/InvariantDomainFlux.h"
 
-#include "../reconstruction/AMRInterfaceReconstruction.h"
+#include "numerics/reconstruction/AMRInterfaceReconstruction.h"
 
 template <typename ReconstructPolicy>
 struct FluxHLLC
@@ -41,7 +42,7 @@ struct FluxHLLC
     {
         // scaling factor: omega = (S_K - u_K) / (S_K - S_*)
         double denom = S_K - S_star;
-        if (std::abs(denom) < 1e-12)
+        if (std::abs(denom) <= 16.0 * std::numeric_limits<double>::epsilon() * std::max(std::abs(S_K), std::abs(S_star)))
             return get_flux(U_K, p_K, dir); // Existing degenerate-state fallback.
 
         double omega = (S_K - un_K) / denom;
@@ -57,7 +58,7 @@ struct FluxHLLC
 
         double sk_minus_u = S_K - un_K;
         double p_term = 0.0;
-        if (std::abs(sk_minus_u) > 1e-12)
+        if (sk_minus_u != 0.0)
         {
             p_term = p_K / (rho_K * sk_minus_u);
         }
@@ -65,7 +66,7 @@ struct FluxHLLC
 
         double eng_star = rho_star * (specific_E_K + term);
 
-        if (std::abs(sk_minus_u) <= 1e-12) {
+        if (sk_minus_u == 0.0) {
             // Retain the existing guarded pressure-term limit; that modified
             // state need not satisfy the unmodified contact-pressure identity.
             const auto star = set_flux_vector(rho_star, rho_star * un_star,
@@ -87,32 +88,32 @@ struct FluxHLLC
     {
         // 2. Thermodynamics Preparation
         // Left
-        double rho_L = std::max(U_L.rho, 1e-12);
+        double rho_L = U_L.rho;
         double un_L = get_un(U_L, dir);
         double ut1_L = get_ut1(U_L, dir);
         double ut2_L = get_ut2(U_L, dir);
         double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
 
-        double p_L = eos.get_pressure(U_L, Xi_L);
         double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
+        double p_L, c_L;
+        calc_endpoint_thermo(U_L, e_L, Xi_L, eos, p_L, c_L);
 
         // Right
-        double rho_R = std::max(U_R.rho, 1e-12);
+        double rho_R = U_R.rho;
         double un_R = get_un(U_R, dir);
         double ut1_R = get_ut1(U_R, dir);
         double ut2_R = get_ut2(U_R, dir);
         double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
 
-        double p_R = eos.get_pressure(U_R, Xi_R);
         double e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
+        double p_R, c_R;
+        calc_endpoint_thermo(U_R, e_R, Xi_R, eos, p_R, c_R);
 
         // 3. Physical Fluxes (F_L, F_R)
         FluidVector F_L = get_flux(U_L, p_L, dir);
         FluidVector F_R = get_flux(U_R, p_R, dir);
 
         // 4. Wave Speed Estimates (S_L, S_R, S_*)
-        double c_L = calc_sound_speed_thermo(rho_L, p_L, e_L, Xi_L, eos);
-        double c_R = calc_sound_speed_thermo(rho_R, p_R, e_R, Xi_R, eos);
         double H_L = (U_L.eng + p_L) / rho_L;
         double H_R = (U_R.eng + p_R) / rho_R;
 
@@ -190,6 +191,7 @@ struct FluxHLLC
                                int dir, // 0=x, 1=y, 2=z
                                double /* unused_entropy_coeff */ = 0.0)
     {
+        arch::state::HostFailure failure;
         int n_spec = state.GetNumSpecies();
         int total_size = grid.GetTotalSize();
 
@@ -222,24 +224,36 @@ struct FluxHLLC
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
-                int k = k_start + kj / nj;
-                int j = j_start + kj % nj;
-                for (int i = i_start; i < i_end; ++i)
-                {
-                    int idx = grid.GetIndex(i, j, k);
-                    // 1. Reconstruction
-                    FluidVector U_L, U_R;
-                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
-
-                    compute_face_flux(
-                        U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                        0.0, flux_out[idx + stride], face_species_flux.data());
-                    for (int s = 0; s < n_spec; ++s)
+                try {
+                    int k = k_start + kj / nj;
+                    int j = j_start + kj % nj;
+                    for (int i = i_start; i < i_end; ++i)
                     {
-                        spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
+                        int idx = grid.GetIndex(i, j, k);
+                        // 1. Reconstruction
+                        FluidVector U_L, U_R;
+                        AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
+
+                        FluxAdmissibility::compute_candidate([&] {
+                            compute_face_flux(
+                                U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                                0.0, flux_out[idx + stride], face_species_flux.data());
+                        }, flux_out[idx + stride], face_species_flux.data(), n_spec);
+                        state.get_species_to_buffer(idx, Xi_L.data());
+                        state.get_species_to_buffer(idx + stride, Xi_R.data());
+                        FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),
+                            Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                            flux_out[idx + stride], face_species_flux.data());
+                        for (int s = 0; s < n_spec; ++s)
+                        {
+                            spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
+                        }
                     }
-                }
+
+                } catch (...) { failure.capture_current(); }
             }
         } // end omp parallel
+
+        failure.rethrow();
     }
 };

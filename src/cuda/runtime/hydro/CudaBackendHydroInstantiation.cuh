@@ -11,8 +11,9 @@
 
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 
-#include "cuda/hydro/CheckedHydroEos.cuh"
-#include "cuda/hydro/HydroIntegratorPolicies.cuh"
+#include "cuda/hydro/policies/CheckedHydroEos.cuh"
+#include "cuda/hydro/policies/HydroIntegratorPolicies.cuh"
+#include "cuda/hydro/kernels/HydroBatchKernels.cuh"
 
 #ifndef ARCH_CUDA_HYDRO_EOS_TYPE
 #error "a CUDA Hydro EOS owner must define ARCH_CUDA_HYDRO_EOS_TYPE"
@@ -60,7 +61,7 @@ struct HydroStageLaunchVisitor {
             make_checked_hydro_eos(eos, eos_status),
             entropy_fix_coefficient, density_floor,
             minimum_internal_energy, maximum_internal_energy,
-            amr_routes, descriptor, dt, stream,
+            amr_routes, descriptor, dt, eos_status, stream,
             result.kernels_launched, species_workspace, gravity);
     }
 };
@@ -87,6 +88,28 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
     result.route_found = visit_cuda_hydro_route(plan, visitor);
     return result;
 }
+
+template <class Eos>
+struct HydroBatchLaunchVisitor {
+    std::span<const DeviceHydroBatchBlock> host;
+    const DeviceHydroBatchBlock* device;
+    Eos eos;
+    double coefficient, density_floor, min_e, max_e;
+    const scheduler::StageDescriptor& descriptor;
+    double dt;
+    cudaStream_t stream;
+    SpeciesWorkspaceView workspace;
+    Physical::Gravity::ExternalGravityView gravity;
+    CudaBackendLaunchResult& result;
+
+    template <class Reconstruction, class Flux>
+    void operator()()
+    {
+        result = launch_hydro_batch<Reconstruction, Flux>(host, device, eos,
+            coefficient, density_floor, min_e, max_e, descriptor, dt,
+            stream, workspace, gravity);
+    }
+};
 
 } // namespace
 
@@ -118,6 +141,23 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
     }
 
 ARCH_DEFINE_BACKEND_HYDRO(ARCH_CUDA_HYDRO_EOS_TYPE)
+
+CudaBackendLaunchResult launch_cuda_backend_hydro_stage_batch(
+    const dispatch::ResolvedExecutionPlan& plan,
+    std::span<const DeviceHydroBatchBlock> host_blocks,
+    const DeviceHydroBatchBlock* device_blocks, ARCH_CUDA_HYDRO_EOS_TYPE eos,
+    double coefficient, double density_floor, double min_e, double max_e,
+    const scheduler::StageDescriptor& descriptor, double dt, cudaStream_t stream,
+    SpeciesWorkspaceView workspace, Physical::Gravity::ExternalGravityView gravity)
+{
+    CudaBackendLaunchResult result{cudaErrorInvalidValue, 0, false};
+    HydroBatchLaunchVisitor<ARCH_CUDA_HYDRO_EOS_TYPE> visitor{host_blocks,
+        device_blocks, eos, coefficient, density_floor, min_e, max_e,
+        descriptor, dt, stream, workspace, gravity, result};
+    const bool found = visit_cuda_hydro_route(plan, visitor);
+    result.route_found = found;
+    return result;
+}
 
 #undef ARCH_DEFINE_BACKEND_HYDRO
 

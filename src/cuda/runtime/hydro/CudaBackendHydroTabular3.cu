@@ -6,6 +6,6 @@
  * remain shared with host execution. This file supplies only the EOS type.
  */
 
-#include "physics/eos/Tabular3DEOS.h"
+#include "physics/eos/tabular/Tabular3DEOS.h"
 #define ARCH_CUDA_HYDRO_EOS_TYPE Tabular3DEOSView
 #include "cuda/runtime/hydro/CudaBackendHydroInstantiation.cuh"

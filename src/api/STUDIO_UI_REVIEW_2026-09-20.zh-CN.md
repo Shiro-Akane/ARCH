@@ -2,6 +2,8 @@
 
 记录日期：2026-09-20。
 
+本快照中的 90 项目录和五个已退役键不作为当前要求；P1.5 的 88 项目录、CGS 和 GUI 接入边界见 [配置接口](CONFIGURATION_API.md)。
+
 本文件保存 Studio 人工验看需求快照；本分支已交付的 Core 内容与尚由 Studio 处理的内容，见 [Core UI 交接](CORE_UI_HANDOFF.md)。
 
 检查基线：`studio/phase2e-b-cellular-2d`，tag `studio-phase2e-b-v0.10.0`，commit `fb22178fe578b17120597633f427e38d2a2be582`。本地验看环境已作启动路径适配，并包含用户当前的 `.par` 编辑。
@@ -365,7 +367,7 @@ CGS 场景下的目标显示表：
 
 ## 附录 A：当前标准配置覆盖清单
 
-以下按本次读取的 `src/core/RuntimeParams.h` 归组，共 90 个不同配置键。兼容别名不需要展示为两个独立功能。详细默认值和约束以 Core 实际解析为准。
+以下按本次读取的 `src/core/config/RuntimeParams.h` 归组，共 90 个不同配置键。兼容别名不需要展示为两个独立功能。详细默认值和约束以 Core 实际解析为准。
 
 | 分块 | 小组 | 配置键 |
 |---|---|---|
@@ -394,7 +396,7 @@ CGS 场景下的目标显示表：
 
 | 复核内容 | 位置 |
 |---|---|
-| 当前配置入口、解析回退值、模块限制 | `src/core/RuntimeParams.h` |
+| 当前配置入口、解析回退值、模块限制 | `src/core/config/RuntimeParams.h` |
 | 配置结构、结构体初值、状态与报告字段 | `src/data/GlobalDefs.h` |
 | UI 分类与文件条目驱动的展示 | `studio/src/data/parSchema.ts`；`studio/src/components/ParameterPanel/ConfigPanel.tsx`；`panelPresentation.ts` |
 | 输入与新增项校验、轴分组 | `studio/src/state/parState.ts`；`studio/src/components/ParameterPanel/NumericInput.tsx`；`panelPresentation.ts` |

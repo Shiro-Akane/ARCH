@@ -4,4 +4,7 @@
 diffusion operators; [DiffusionSolver.cuh](DiffusionSolver.cuh) supplies device
 execution helpers.
 
-All fundamental thermal, species, and viscous formulas remain correctly located in [numerics/diffusion](../../numerics/diffusion/README.md). The associated [runtime interface](../runtime/diffusion/README.md) takes full ownership of launch binding and connects seamlessly to the shared RKL scheduling system. You must absolutely refrain from duplicating numerical coefficients, stability criteria, or any geometric corrections within this backend.
+[Numerics/diffusion](../../numerics/diffusion/README.md) owns thermal, species and
+viscous formulas. The [runtime interface](../runtime/diffusion/README.md) binds
+launches to the shared RKL schedule. Numerical coefficients, stability criteria
+and geometric corrections remain in those shared owners.

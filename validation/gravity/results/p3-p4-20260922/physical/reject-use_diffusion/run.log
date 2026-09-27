@@ -1,0 +1,2 @@
+[Info] Loaded 42 parameters from /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/reject-use_diffusion/input.par
+[Fatal Error] Config parameter 'gravity_type': Self-gravity with burn or diffusion has not been qualified.

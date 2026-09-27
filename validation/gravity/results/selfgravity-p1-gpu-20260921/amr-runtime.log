@@ -1,0 +1,6 @@
+passed: cartesian_dynamic_sedov_cuda_source
+passed: cylindrical_amr_diffusion_cuda_source
+passed: cylindrical_amr_diffusion_cuda_resume
+passed: spherical_amr_diffusion_cuda_source
+passed: spherical_amr_diffusion_cuda_resume
+Development smoke only: passed; report: /home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/amr-runtime/smoke-report.json

@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "GlobalDefs.h"
+#include "data/GlobalDefs.h"
 
 // Forward declaration to avoid circular dependency
 struct SpeciesManager;

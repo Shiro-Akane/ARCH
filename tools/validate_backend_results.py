@@ -769,10 +769,20 @@ def validate_cuda_diffusion_schedule(
     if len(rows) != expected_steps * lanes_per_step:
         raise RuntimeError("CUDA diffusion schedule lane count drifted")
     expected_order = int(policy["order"])
-    expected_stages = int(policy["stages"])
+    if ("stages" in policy) == ("allowed_stages" in policy):
+        raise RuntimeError("diffusion policy requires exactly one fixed or allowed stage set")
+    expected_stages = int(policy["stages"]) if "stages" in policy else None
+    allowed_stages = policy.get("allowed_stages", [expected_stages])
+    if not allowed_stages or any(type(s) is not int or s < (2 if expected_order == 2 else 1)
+                                 for s in allowed_stages):
+        raise RuntimeError("invalid diffusion stage set")
     generations: list[int] = []
+    stage_counts: list[int] = []
+    first_step = policy.get("first_macro_step", 0)
+    if type(first_step) is not int or first_step < 0:
+        raise RuntimeError("invalid diffusion restart macro-step offset")
     expected_macro_steps = [
-        step for step in range(expected_steps)
+        step for step in range(first_step, first_step + expected_steps)
         for _ in range(lanes_per_step)
     ]
     observed_macro_steps: list[int] = []
@@ -785,7 +795,7 @@ def validate_cuda_diffusion_schedule(
         generation = int(row["cache_generation"])
         diffusion_dt = float(row["diffusion_dt"])
         dt_forward_euler = float(row["dt_forward_euler"])
-        if order != expected_order or stages != expected_stages:
+        if order != expected_order or stages not in allowed_stages:
             raise RuntimeError(
                 "CUDA diffusion schedule order/stage count drifted")
         if not math.isfinite(diffusion_dt) or diffusion_dt <= 0.0 \
@@ -799,6 +809,7 @@ def validate_cuda_diffusion_schedule(
         elif negative != 0 or captures != 0:
             raise RuntimeError("RKL1 unexpectedly used the RKL2 F(Y0) cache")
         generations.append(generation)
+        stage_counts.append(stages)
     if generations != list(range(1, len(rows) + 1)):
         raise RuntimeError(
             "CUDA diffusion F(Y0) cache generation crossed a lane boundary")
@@ -816,6 +827,8 @@ def validate_cuda_diffusion_schedule(
         "valid_timestep_records": len(rows),
         "initial_operator_records": sum(int(row["captures_initial_operator"]) for row in rows),
     }
+    if expected_stages is None:
+        summary["stage_counts"] = stage_counts
     validate_cuda_diffusion_summary(summary, expected_steps, policy)
     return summary
 
@@ -826,13 +839,24 @@ def validate_cuda_diffusion_summary(
     lanes = int(policy.get("lanes_per_step", 2))
     records = expected_steps * lanes
     order = int(policy["order"])
+    first_step = policy.get("first_macro_step", 0)
+    if type(first_step) is not int or first_step < 0:
+        raise RuntimeError("invalid diffusion restart macro-step offset")
+    if "stages" in policy:
+        stages_match = summary["stages"] == int(policy["stages"]) and "allowed_stages" not in policy
+    else:
+        counts = summary.get("stage_counts", [])
+        allowed = policy.get("allowed_stages", [])
+        stages_match = summary["stages"] is None and len(counts) == records and bool(allowed) \
+            and all(type(s) is int and s >= (2 if order == 2 else 1) for s in allowed) \
+            and all(type(s) is int and s in allowed for s in counts)
     if summary["records"] != records or summary["order"] != order \
-            or summary["stages"] != int(policy["stages"]) \
+            or not stages_match \
             or summary["valid_timestep_records"] != records \
             or summary["negative_gamma_records"] != (records if order == 2 else 0) \
             or summary["initial_operator_records"] != (records if order == 2 else 0) \
             or summary["cache_generations"] != list(range(1, records + 1)) \
-            or summary["macro_steps"] != [step for step in range(expected_steps) for _ in range(lanes)]:
+            or summary["macro_steps"] != [step for step in range(first_step, first_step + expected_steps) for _ in range(lanes)]:
         raise RuntimeError("CUDA diffusion summary failed schedule/cache/timestep gates")
 
 

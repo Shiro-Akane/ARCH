@@ -13,8 +13,8 @@
 #include <stdexcept>
 #include <vector>
 
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
+#include <UserInterface.h>
+#include <GlobalDefs.h>
 
 // Gaussian species-pulse benchmark.
 

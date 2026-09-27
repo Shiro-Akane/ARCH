@@ -1,0 +1,4 @@
+[0/2] Re-checking globbed directories...
+[1/3] Building CXX object CMakeFiles/arch_cuda_single_level_validation.dir/tests/cuda/test_cuda_single_level_validation.cpp.o
+[2/3] Building CXX object CMakeFiles/arch_cuda_single_level_validation.dir/src/io/hdf5/HDF5Writer.cpp.o
+[3/3] Linking CXX executable arch_cuda_single_level_validation

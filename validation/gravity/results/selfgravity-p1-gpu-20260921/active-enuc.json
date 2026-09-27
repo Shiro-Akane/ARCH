@@ -1,0 +1,596 @@
+{
+  "status": "passed",
+  "release_qualified": false,
+  "started_utc": "2026-09-21T15:18:49.024948+00:00",
+  "recipe": {
+    "path": "/home/shiroakane/ARCH/validation/backend/verify_microphysics_coupling.py",
+    "sha256": "4f84d9caf86a47919383786606e512f2cecebf51dccba00469ee408d0d3a3681"
+  },
+  "cases": [
+    {
+      "id": "coupled_bd_rkl2_all_transport",
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/tooling-env/bin/python",
+        "/home/shiroakane/ARCH/tools/validate_cuda_amr_restart.py",
+        "--arch",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/shiroakane/ARCH",
+        "--build-dir",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu",
+        "--problem",
+        "BurnGradient",
+        "--input",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/active-enuc/coupled_bd_rkl2_all_transport/coupled.par",
+        "--output-root",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/active-enuc/coupled_bd_rkl2_all_transport/runs",
+        "--terminal-time",
+        "4.5e-16"
+      ],
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/active-enuc/coupled_bd_rkl2_all_transport/coupled.par",
+        "sha256": "bb1bbe95bd1150e2942fd030614781ca224c23c03824a83a18d3a8689dff46e3"
+      },
+      "status": "passed",
+      "returncode": 0,
+      "schedules": [
+        {
+          "lane": "cuda_continuous",
+          "summary": {
+            "records": 10,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 10,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2,
+              3,
+              3,
+              4,
+              4
+            ],
+            "valid_timestep_records": 10,
+            "initial_operator_records": 10,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_source",
+          "summary": {
+            "records": 6,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 6,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 6,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "summary": {
+            "records": 6,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 6,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3,
+              4,
+              4
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 6,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "summary": {
+            "records": 6,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 6,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3,
+              4,
+              4
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 6,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "summary": {
+            "records": 4,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 4,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              3,
+              3,
+              4,
+              4
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 4,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "summary": {
+            "records": 4,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 4,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              3,
+              3,
+              4,
+              4
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 4,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        }
+      ],
+      "active_enuc": [
+        {
+          "lane": "cpu_continuous",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cuda_continuous",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cpu_source",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cuda_source",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cpu_to_cpu",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cuda_to_cpu",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cpu_to_cpu_terminal",
+          "steps": [
+            4
+          ]
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "steps": [
+            4
+          ]
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "steps": [
+            4
+          ]
+        },
+        {
+          "lane": "cuda_to_cpu_terminal",
+          "steps": [
+            4
+          ]
+        }
+      ],
+      "active_regrids": {
+        "cpu": {
+          "file": {
+            "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/active-enuc/coupled_bd_rkl2_all_transport/runs/cpu_continuous/RestartAMR_cpu_continuous_regrid.tsv",
+            "sha256": "0afb2cb8a02b5be2df2adb79527ce9466b26555c09d363b304eda930abf5b43d"
+          },
+          "records": [
+            {
+              "macro_step": 0,
+              "physical_time": 0.0,
+              "backend": "cpu",
+              "old_blocks": 5,
+              "new_blocks": 5,
+              "topology_changed": 0,
+              "wall_seconds": 4.6657e-05,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0
+            },
+            {
+              "macro_step": 0,
+              "physical_time": 0.0,
+              "backend": "cpu",
+              "old_blocks": 5,
+              "new_blocks": 5,
+              "topology_changed": 0,
+              "wall_seconds": 0.000102075,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0
+            },
+            {
+              "macro_step": 1,
+              "physical_time": 1e-16,
+              "backend": "cpu",
+              "old_blocks": 5,
+              "new_blocks": 8,
+              "topology_changed": 1,
+              "wall_seconds": 0.000353197,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0
+            },
+            {
+              "macro_step": 2,
+              "physical_time": 1.999950737311473e-16,
+              "backend": "cpu",
+              "old_blocks": 8,
+              "new_blocks": 8,
+              "topology_changed": 0,
+              "wall_seconds": 8.9407e-05,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0
+            },
+            {
+              "macro_step": 3,
+              "physical_time": 2.999901651986306e-16,
+              "backend": "cpu",
+              "old_blocks": 8,
+              "new_blocks": 8,
+              "topology_changed": 0,
+              "wall_seconds": 8.8036e-05,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0
+            },
+            {
+              "macro_step": 4,
+              "physical_time": 3.999852566549005e-16,
+              "backend": "cpu",
+              "old_blocks": 8,
+              "new_blocks": 8,
+              "topology_changed": 0,
+              "wall_seconds": 8.888e-05,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0
+            }
+          ],
+          "summary": {
+            "records": 6,
+            "topology_changes": 1,
+            "wall_seconds": 0.0007682520000000001,
+            "bytes_h2d": 0,
+            "bytes_d2h": 0,
+            "kernel_count": 0,
+            "stream_sync_count": 0,
+            "overlaps_backend_trace": true
+          }
+        },
+        "cuda": {
+          "file": {
+            "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/active-enuc/coupled_bd_rkl2_all_transport/runs/cuda_continuous/RestartAMR_cuda_continuous_regrid.tsv",
+            "sha256": "30c2dcf506664cecd6b7b34b6568225cf478ec20e1ef960aa2f3eb27095c733f"
+          },
+          "records": [
+            {
+              "macro_step": 0,
+              "physical_time": 0.0,
+              "backend": "cuda",
+              "old_blocks": 5,
+              "new_blocks": 5,
+              "topology_changed": 0,
+              "wall_seconds": 4.6023e-05,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0
+            },
+            {
+              "macro_step": 0,
+              "physical_time": 0.0,
+              "backend": "cuda",
+              "old_blocks": 5,
+              "new_blocks": 5,
+              "topology_changed": 0,
+              "wall_seconds": 0.002598207,
+              "bytes_h2d": 1688,
+              "bytes_d2h": 40,
+              "kernel_count": 3,
+              "stream_sync_count": 1
+            },
+            {
+              "macro_step": 1,
+              "physical_time": 1e-16,
+              "backend": "cuda",
+              "old_blocks": 5,
+              "new_blocks": 8,
+              "topology_changed": 1,
+              "wall_seconds": 0.007980932,
+              "bytes_h2d": 21800,
+              "bytes_d2h": 48,
+              "kernel_count": 34,
+              "stream_sync_count": 12
+            },
+            {
+              "macro_step": 2,
+              "physical_time": 1.999950737310305e-16,
+              "backend": "cuda",
+              "old_blocks": 8,
+              "new_blocks": 8,
+              "topology_changed": 0,
+              "wall_seconds": 0.000632399,
+              "bytes_h2d": 11560,
+              "bytes_d2h": 68,
+              "kernel_count": 10,
+              "stream_sync_count": 5
+            },
+            {
+              "macro_step": 3,
+              "physical_time": 2.9999016519840073e-16,
+              "backend": "cuda",
+              "old_blocks": 8,
+              "new_blocks": 8,
+              "topology_changed": 0,
+              "wall_seconds": 0.00073859,
+              "bytes_h2d": 11560,
+              "bytes_d2h": 68,
+              "kernel_count": 10,
+              "stream_sync_count": 5
+            },
+            {
+              "macro_step": 4,
+              "physical_time": 3.999852566546666e-16,
+              "backend": "cuda",
+              "old_blocks": 8,
+              "new_blocks": 8,
+              "topology_changed": 0,
+              "wall_seconds": 0.000585004,
+              "bytes_h2d": 11560,
+              "bytes_d2h": 68,
+              "kernel_count": 10,
+              "stream_sync_count": 5
+            }
+          ],
+          "summary": {
+            "records": 6,
+            "topology_changes": 1,
+            "wall_seconds": 0.012581155,
+            "bytes_h2d": 58168,
+            "bytes_d2h": 292,
+            "kernel_count": 67,
+            "stream_sync_count": 28,
+            "overlaps_backend_trace": true
+          }
+        }
+      }
+    }
+  ],
+  "derived_cases": [
+    {
+      "id": "coupled_bd_rkl2_all_transport",
+      "problem": "BurnGradient",
+      "input": "validation/amr/inputs/burn_enuc_amr.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1800,
+      "overrides": {
+        "ode_solver": "bd",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true",
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "diff_cfl": "0.8",
+        "lrefinemin": "0",
+        "lrefinemax": "1",
+        "enucDtFactor": "1e-11"
+      },
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "bd",
+        "linear": "denselu",
+        "diffusion": "rkl2"
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    }
+  ],
+  "restart": true,
+  "runtime_inputs": {
+    "coupled_bd_rkl2_all_transport": {
+      "schema": 1,
+      "parameter_file": "/home/shiroakane/ARCH/validation/amr/inputs/burn_enuc_amr.par",
+      "parameter_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+      "scientific_overrides": {
+        "diff_cfl": "0.8",
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "enucDtFactor": "1e-11",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "ode_solver": "bd",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true"
+      },
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    }
+  },
+  "finished_utc": "2026-09-21T15:19:19.045857+00:00"
+}

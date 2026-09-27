@@ -483,47 +483,46 @@
   "fieldUnits": [
     {
       "cgs": "g/cm^3",
-      "code": "code_density",
+      "code": "",
       "key": "DENS"
     },
     {
       "cgs": "K",
-      "code": "code_temperature",
+      "code": "",
       "key": "TEMP"
     },
     {
       "cgs": "erg/cm^3",
-      "code": "code_pressure",
+      "code": "",
       "key": "PRES"
     },
     {
       "cgs": "erg/cm^3",
-      "code": "code_energy_density",
+      "code": "",
       "key": "ENER"
     },
     {
       "cgs": "erg/g",
-      "code": "code_specific_energy",
+      "code": "",
       "key": "EINT"
     },
     {
       "cgs": "cm/s",
-      "code": "code_velocity",
+      "code": "",
       "key": "VELX"
     },
     {
       "cgs": "cm/s",
-      "code": "code_velocity",
+      "code": "",
       "key": "VELY"
     },
     {
       "cgs": "cm/s",
-      "code": "code_velocity",
+      "code": "",
       "key": "VELZ"
     }
   ],
   "kind": "configuration-schema",
-  "legacyCodeUnits": "deprecated; no current preview selects them",
   "parameters": [
     {
       "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
@@ -669,7 +668,7 @@
       "options": null,
       "path": null,
       "presentation": {
-        "description": "Capacity of the simulation block pool. Nonpositive values use 10000; this is not an off switch.",
+        "description": "Positive capacity of the simulation block pool; insufficient capacity rejects refinement.",
         "displayName": "Block pool capacity",
         "subgroup": "AMR"
       },
@@ -1199,6 +1198,75 @@
         "syntax": "finite decimal or scientific notation; full token"
       },
       "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-16,
+      "group": "Runtime",
+      "key": "dt_init",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Initial macro-step cap when burning is enabled, in seconds.",
+        "displayName": "Initial burning step",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1e-20,
+      "group": "Runtime",
+      "key": "dt_min",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Abort below this positive macro-step size, in seconds.",
+        "displayName": "Minimum time step",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
+      "defaultValue": 1.2,
+      "group": "Runtime",
+      "key": "tstep_change_factor",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Maximum growth factor between consecutive macro steps.",
+        "displayName": "Time-step growth",
+        "subgroup": "Runtime"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      }
+    },
+    {
+      "applicability": "See parsed configuration; model Setup and simulation policies may impose further conditions.",
+      "constraints": {
+        "complete": false,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "defaultSource": "shared-runtime-definition",
       "defaultValue": 0.8,
       "group": "Runtime",
       "key": "cfl",
@@ -1328,65 +1396,6 @@
       "presentation": {
         "description": "Reconstructs the state at cell faces.",
         "displayName": "Reconstruction",
-        "subgroup": "Runtime"
-      },
-      "type": "string",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      }
-    },
-    {
-      "aliasOf": "time_integrator",
-      "applicability": "Alias of time_integrator; canonical key takes precedence.",
-      "constraints": {
-        "complete": false
-      },
-      "defaultSource": "shared-runtime-definition",
-      "defaultValue": "RK2",
-      "group": "Runtime",
-      "key": "timeintegrator",
-      "options": {
-        "availability": "registration-only; build and runtime requirements not checked",
-        "caseSensitive": false,
-        "choices": [
-          {
-            "acceptedNames": [
-              "euler",
-              "rk1"
-            ],
-            "cpuSupported": true,
-            "cudaSupported": true,
-            "displayName": "euler",
-            "value": "euler"
-          },
-          {
-            "acceptedNames": [
-              "rk2",
-              "ssprk2"
-            ],
-            "cpuSupported": true,
-            "cudaSupported": true,
-            "displayName": "RK2",
-            "value": "rk2"
-          },
-          {
-            "acceptedNames": [
-              "rk3",
-              "ssprk3"
-            ],
-            "cpuSupported": true,
-            "cudaSupported": true,
-            "displayName": "RK3",
-            "value": "rk3"
-          }
-        ],
-        "unknownBehavior": "core-fallback"
-      },
-      "path": null,
-      "presentation": {
-        "description": "Legacy alias of time_integrator; the canonical key takes precedence.",
-        "displayName": "Time integrator",
         "subgroup": "Runtime"
       },
       "type": "string",
@@ -2027,53 +2036,6 @@
         "complete": false
       },
       "defaultSource": "shared-runtime-definition",
-      "defaultValue": true,
-      "group": "Network",
-      "key": "enforce_mass_conservation",
-      "options": null,
-      "path": null,
-      "presentation": {
-        "description": "Enables mass conservation handling in reaction integration.",
-        "displayName": "Conserve composition mass",
-        "subgroup": "Network"
-      },
-      "type": "bool",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      }
-    },
-    {
-      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
-      "constraints": {
-        "complete": false,
-        "storageMax": 2147483647,
-        "storageMin": -2147483648,
-        "syntax": "[+-]?[0-9]+"
-      },
-      "defaultSource": "shared-runtime-definition",
-      "defaultValue": 0,
-      "group": "Network",
-      "key": "burn_verbose_level",
-      "options": null,
-      "path": null,
-      "presentation": {
-        "description": "Detail level of reaction solver diagnostics.",
-        "displayName": "Reaction logging level",
-        "subgroup": "Network"
-      },
-      "type": "int",
-      "units": {
-        "status": "dimensionless",
-        "unit": "1"
-      }
-    },
-    {
-      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
-      "constraints": {
-        "complete": false
-      },
-      "defaultSource": "shared-runtime-definition",
       "defaultValue": "BE_NR",
       "group": "Network",
       "key": "ode_solver",
@@ -2170,7 +2132,7 @@
               "sparseklu",
               "sparse_klu"
             ],
-            "cpuSupported": false,
+            "cpuSupported": true,
             "cudaSupported": false,
             "displayName": "sparseklu",
             "value": "sparseklu"
@@ -2394,50 +2356,6 @@
       "units": {
         "status": "dimensionless",
         "unit": "1"
-      }
-    },
-    {
-      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
-      "constraints": {
-        "complete": false
-      },
-      "defaultSource": "shared-runtime-definition",
-      "defaultValue": false,
-      "group": "Network",
-      "key": "ode_use_numerical_jac",
-      "options": null,
-      "path": null,
-      "presentation": {
-        "description": "Uses numerical derivatives where supported by the selected integrator.",
-        "displayName": "Numerical Jacobian",
-        "subgroup": "Network"
-      },
-      "type": "bool",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      }
-    },
-    {
-      "applicability": "use_burn=true; thresholds are still parsed and validated when disabled",
-      "constraints": {
-        "complete": false
-      },
-      "defaultSource": "shared-runtime-definition",
-      "defaultValue": false,
-      "group": "Network",
-      "key": "ode_freeze_jacobian",
-      "options": null,
-      "path": null,
-      "presentation": {
-        "description": "Reuses the Jacobian within iterations where supported.",
-        "displayName": "Reuse Jacobian",
-        "subgroup": "Network"
-      },
-      "type": "bool",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
       }
     },
     {
@@ -3015,7 +2933,7 @@
         "syntax": "finite decimal or scientific notation; full token"
       },
       "defaultSource": "shared-runtime-definition",
-      "defaultValue": 0.1,
+      "defaultValue": 0,
       "group": "Runtime",
       "key": "tmax",
       "options": null,
@@ -3046,7 +2964,7 @@
       "options": null,
       "path": null,
       "presentation": {
-        "description": "Stops after this many steps when positive; nonpositive values disable this limit.",
+        "description": "Stops after this many steps when positive; zero or -1 disables this limit.",
         "displayName": "Step limit",
         "subgroup": "Runtime",
         "toggle": {
@@ -3125,7 +3043,7 @@
       "options": null,
       "path": null,
       "presentation": {
-        "description": "Writes plot output at this positive time interval; nonpositive disables this trigger.",
+        "description": "Writes plot output at this positive time interval; -1 disables this trigger.",
         "displayName": "Plot time interval",
         "subgroup": "Runtime",
         "toggle": {
@@ -3156,7 +3074,7 @@
       "options": null,
       "path": null,
       "presentation": {
-        "description": "Writes plot output every this many steps when positive; nonpositive disables this trigger.",
+        "description": "Writes plot output every this many steps when positive; -1 disables this trigger.",
         "displayName": "Plot step interval",
         "subgroup": "Runtime",
         "toggle": {
@@ -3185,7 +3103,7 @@
       "options": null,
       "path": null,
       "presentation": {
-        "description": "Writes recovery checkpoints at this positive time interval; nonpositive disables this trigger.",
+        "description": "Writes recovery checkpoints at this positive time interval; -1 disables this trigger.",
         "displayName": "Checkpoint time interval",
         "subgroup": "Runtime",
         "toggle": {
@@ -3216,7 +3134,7 @@
       "options": null,
       "path": null,
       "presentation": {
-        "description": "Writes recovery checkpoints every this many steps when positive; nonpositive disables this trigger.",
+        "description": "Writes recovery checkpoints every this many steps when positive; -1 disables this trigger.",
         "displayName": "Checkpoint step interval",
         "subgroup": "Runtime",
         "toggle": {

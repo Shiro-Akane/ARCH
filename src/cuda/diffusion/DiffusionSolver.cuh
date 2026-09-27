@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "DiffusionKernels.cuh"
+#include "cuda/diffusion/DiffusionKernels.cuh"
 
 namespace arch::cuda {
 

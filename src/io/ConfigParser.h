@@ -19,7 +19,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include "../physics/constant/PhysicalConstants.h"
+#include "physics/constant/PhysicalConstants.h"
 
 class ConfigValueError : public std::invalid_argument {
 public:

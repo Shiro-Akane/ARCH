@@ -1,0 +1,33 @@
+{
+  "source_commit": "74a755e596a29dce7f13ac7864ee3692553d7166",
+  "build_cache": {
+    "ARCH_CUDA_HEAVY_COMPILE_JOBS": "2",
+    "ARCH_ENABLE_CUDA": "ON",
+    "ARCH_ENABLE_CUDSS": "ON",
+    "ARCH_ENABLE_KLU": "ON",
+    "ARCH_ENABLE_OPENMP": "ON",
+    "BUILD_TESTING": "ON",
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CUDA_ARCHITECTURES": "86",
+    "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+    "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-12",
+    "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+    "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+    "CuDSS_INCLUDE_DIR": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include",
+    "CuDSS_LIBRARY": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0"
+  },
+  "compiler": "g++-12 (Ubuntu 12.4.0-2ubuntu1~24.04.1) 12.4.0",
+  "cuda_toolkit": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2023 NVIDIA Corporation\nBuilt on Wed_Nov_22_10:17:15_PST_2023\nCuda compilation tools, release 12.3, V12.3.107\nBuild cuda_12.3.r12.3/compiler.33567101_0\n",
+  "gpu": "NVIDIA GeForce RTX 3060 Ti, 610.47, 8192 MiB",
+  "total_jobs": 3,
+  "heavy_cuda_jobs": 2,
+  "guard": {
+    "min_available_mib": 512,
+    "max_swap_growth_mib": 1536,
+    "pressure_guard": true
+  },
+  "build_observations": [
+    "MEMORY_GUARD_RESULT min_available_kib=1900392 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=5447864 elapsed_seconds=3044.938 stop_reason=none",
+    "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=1.927 peak_io_full_percent=56.421 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2973 complete=True"
+  ]
+}

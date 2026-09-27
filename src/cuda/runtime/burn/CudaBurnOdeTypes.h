@@ -7,9 +7,9 @@
  */
 #pragma once
 #include "driver/dispatch/PolicyDescriptor.h"
-#include "numerics/burnsolver/ode_be-nr.h"
-#include "numerics/burnsolver/ode_bd.h"
-#include "numerics/burnsolver/ode_ros4.h"
+#include "numerics/burnsolver/ode/ode_be-nr.h"
+#include "numerics/burnsolver/ode/ode_bd.h"
+#include "numerics/burnsolver/ode/ode_ros4.h"
 namespace arch::cuda::burn_detail {
 template <class Binding>
 struct OdeType;

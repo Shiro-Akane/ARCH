@@ -5,14 +5,10 @@
         "name": "x1",
         "unit": "cm",
         "values": [
-          0.0625,
-          0.1875,
-          0.3125,
-          0.4375,
-          0.5625,
-          0.6875,
-          0.8125,
-          0.9375
+          0.125,
+          0.375,
+          0.625,
+          0.875
         ]
       }
     ],
@@ -27,7 +23,7 @@
           "minPositive": 0.125,
           "negativeCount": 0,
           "nonFiniteCount": 0,
-          "positiveCount": 8,
+          "positiveCount": 4,
           "zeroCount": 0
         },
         "max": 1,
@@ -36,10 +32,6 @@
         "values": [
           1,
           1,
-          1,
-          1,
-          0.125,
-          0.125,
           0.125,
           0.125
         ]
@@ -53,7 +45,7 @@
           "minPositive": 0.1,
           "negativeCount": 0,
           "nonFiniteCount": 0,
-          "positiveCount": 8,
+          "positiveCount": 4,
           "zeroCount": 0
         },
         "max": 1,
@@ -62,10 +54,6 @@
         "values": [
           1,
           1,
-          1,
-          1,
-          0.1,
-          0.1,
           0.1,
           0.1
         ]
@@ -79,7 +67,7 @@
           "minPositive": 2.0000000000000004,
           "negativeCount": 0,
           "nonFiniteCount": 0,
-          "positiveCount": 8,
+          "positiveCount": 4,
           "zeroCount": 0
         },
         "max": 2.5000000000000004,
@@ -88,10 +76,6 @@
         "values": [
           2.5000000000000004,
           2.5000000000000004,
-          2.5000000000000004,
-          2.5000000000000004,
-          2.0000000000000004,
-          2.0000000000000004,
           2.0000000000000004,
           2.0000000000000004
         ]
@@ -106,16 +90,12 @@
           "negativeCount": 0,
           "nonFiniteCount": 0,
           "positiveCount": 0,
-          "zeroCount": 8
+          "zeroCount": 4
         },
         "max": 0,
         "min": 0,
         "unit": "cm/s",
         "values": [
-          0,
-          0,
-          0,
-          0,
           0,
           0,
           0,
@@ -131,7 +111,7 @@
           "minPositive": 0.25000000000000006,
           "negativeCount": 0,
           "nonFiniteCount": 0,
-          "positiveCount": 8,
+          "positiveCount": 4,
           "zeroCount": 0
         },
         "max": 2.5000000000000004,
@@ -140,10 +120,6 @@
         "values": [
           2.5000000000000004,
           2.5000000000000004,
-          2.5000000000000004,
-          2.5000000000000004,
-          0.25000000000000006,
-          0.25000000000000006,
           0.25000000000000006,
           0.25000000000000006
         ]
@@ -157,7 +133,7 @@
           "minPositive": 2.0000000000000004,
           "negativeCount": 0,
           "nonFiniteCount": 0,
-          "positiveCount": 8,
+          "positiveCount": 4,
           "zeroCount": 0
         },
         "max": 2.5000000000000004,
@@ -166,10 +142,6 @@
         "values": [
           2.5000000000000004,
           2.5000000000000004,
-          2.5000000000000004,
-          2.5000000000000004,
-          2.0000000000000004,
-          2.0000000000000004,
           2.0000000000000004,
           2.0000000000000004
         ]
@@ -177,12 +149,12 @@
     ],
     "kind": "line",
     "sampling": {
-      "count": 8,
+      "count": 4,
       "kind": "uniform",
       "order": "x1-fastest",
       "position": "bin-center",
       "shape": [
-        8
+        4
       ],
       "valueLocation": "init-sample"
     }

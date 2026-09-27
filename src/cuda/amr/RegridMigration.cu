@@ -8,7 +8,7 @@
  * completion fence and the transaction status before publishing destinations.
  */
 
-#include "RegridMigration.h"
+#include "cuda/amr/RegridMigration.h"
 
 #include <cmath>
 #include <cstdint>

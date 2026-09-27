@@ -1,0 +1,12 @@
+{
+  "baseline": "c95f606f5805b42f92611847e00d1fa282c82fbe",
+  "files_checked": 393,
+  "project_include_edges_checked": 1320,
+  "non_path_changes": [],
+  "include_identity_changes": [],
+  "permitted_metadata": "11 reviewed built-in case hashes; each old hash and unchanged non-include body verified",
+  "new_facades": [
+    "include/UserInterface.h",
+    "include/GlobalDefs.h"
+  ]
+}

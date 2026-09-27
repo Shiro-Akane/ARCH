@@ -84,15 +84,12 @@ gravity_type = none
 use_burn         = true
 # Runtime-selectable built-in networks: aprox13, aprox19, aprox21, and iso7.
 network_name     = aprox19
-# burn_verbose_level: 0 = fatal errors only, 1 = initialization summary,
-# 2 = detailed stiff-integrator diagnostics.
-burn_verbose_level = 2
 
 nuclearTempMin   = 1e9       # Minimum burn temperature (K); typical range 5e8-1e9.
 nuclearDensMin   = 1e-10     # Minimum burn density (g/cm^3).
 
 dt_init          = 1e-16     # Initial step for ignition transients; typical range 1e-16-1e-12 s.
-dt_min           = 1e-20     # Smallest ODE substep; typical range 1e-22-1e-20 s.
+dt_min           = 1e-20     # Minimum accepted macro step; internal ODE steps use representability checks.
 tstep_change_factor = 1.2    # Maximum macro-step growth; 1.1-1.2 limits post-ignition jumps.
 enucDtFactor     = 0.05      # Maximum fractional nuclear-energy change; 1e30 effectively disables it.
 

@@ -84,10 +84,10 @@ Git and network access are needed when configuration first fetches HighFive
 2.9.0. KLU is enabled by default: CMake uses an installed KLU package or fetches
 SuiteSparse 7.13.0. If dependencies are already prepared locally, CMake's
 FetchContent source overrides can point to them; the OpenMP, HDF5, HighFive and
-KLU declarations are in [cmake/Dependencies.cmake](../../cmake/Dependencies.cmake).
+KLU declarations are in [cmake/dependencies/Dependencies.cmake](../../cmake/dependencies/Dependencies.cmake).
 CUDA-specific provider discovery, including cuDSS, remains in
-[cmake/CudaBackend.cmake](../../cmake/CudaBackend.cmake), using
-[FindCuDSS.cmake](../../cmake/FindCuDSS.cmake). Git LFS supplies the EOS assets
+[cmake/cuda/CudaBackend.cmake](../../cmake/cuda/CudaBackend.cmake), using
+[FindCuDSS.cmake](../../cmake/dependencies/FindCuDSS.cmake). Git LFS supplies the EOS assets
 tracked through LFS; run `git lfs pull` before using those tables.
 
 Python **3.10 or newer** is needed for the build guard and test tooling, not for

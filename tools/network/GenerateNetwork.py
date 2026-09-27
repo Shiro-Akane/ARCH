@@ -222,7 +222,7 @@ def write_adapter(stage, network_id, network, *, nse_metadata=None):
 #include "core/ArchPortability.h"
 #include "data/GlobalDefs.h"
 #include "physics/species/Species.h"
-#include "numerics/burnsolver/NetworkDerivative.h"
+#include "numerics/burnsolver/coupling/NetworkDerivative.h"
 
 namespace {detail} {{
 void eval_rhs(const double*, double, double*, double&);

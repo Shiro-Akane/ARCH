@@ -1,0 +1,77 @@
+{
+  "base_commit": "780794b69afb118249d9bed9de44c547fcedd222",
+  "candidate_identity": "cpu-release/report.json named sources, verified unchanged after all checks",
+  "status": "passed",
+  "commands": {
+    "cpu_build": "CCACHE_DISABLE=1 cmake --build build -j4",
+    "cuda_enabled_build": "CCACHE_DISABLE=1 cmake --build build/selfgravity-p1-gpu --target ARCH arch_poisson_multigrid -j4",
+    "cpu_ctest": "PYTHONPATH=/tmp/arch-p15-python OMP_NUM_THREADS=4 ctest --test-dir build --parallel 2 --output-on-failure --output-junit validation/gravity/results/p2-20260922/integration/ctest.xml",
+    "numerical_archive": "python3 validation/gravity/p2_cpu_poisson.py --build-dir build/selfgravity-p1-gpu --output-dir validation/gravity/results/p2-20260922/cpu-release",
+    "sanitizer_build": "g++-12 -std=c++20 -O1 -g -fno-fast-math -ffp-contract=off -fsanitize=address,undefined -fno-omit-frame-pointer -Isrc tests/host/gravity/test_poisson_multigrid.cpp src/numerics/elliptic/CartesianPoisson.cpp src/numerics/multigrid/HostMultigrid.cpp src/physics/gravity/UniformGravity.cpp -o /tmp/arch-p2-sanitized",
+    "sanitizer_contract": "ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 /tmp/arch-p2-sanitized contract",
+    "sanitizer_analytic": "ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 /tmp/arch-p2-sanitized analytic",
+    "nvcc_compile": "/usr/local/cuda/bin/nvcc -std=c++20 -ccbin /usr/bin/g++-12 -arch=sm_86 --expt-relaxed-constexpr --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Isrc --cubin validation/gravity/results/p2-20260922/compatibility/poisson_leaves.cu -o /tmp/arch-p2-leaves.cubin",
+    "warning_check": "g++-12 -std=c++20 -Wall -Wextra -Wpedantic -Wno-unknown-pragmas -fno-fast-math -ffp-contract=off -Isrc -fsyntax-only tests/host/gravity/test_poisson_multigrid.cpp src/numerics/elliptic/CartesianPoisson.cpp src/numerics/multigrid/HostMultigrid.cpp src/physics/gravity/UniformGravity.cpp",
+    "architecture": "python3 tools/audit_architecture.py .",
+    "ci_tool_tests": "python3 -m unittest discover -s tests/tooling/build_tools -p test_ci_results.py",
+    "completion": "python3 tools/check_ci_results.py --inventory validation/gravity/results/p2-20260922/integration/inventory.json --junit validation/gravity/results/p2-20260922/integration/ctest.xml"
+  },
+  "artifacts": {
+    "cpu_application": {
+      "path": "/home/shiroakane/ARCH/bin/ARCH",
+      "sha256": "3a4e5e8fb80a99a37905d3d36d60950bd56264a1daf0bf4253138ab5545260e0"
+    },
+    "cuda_enabled_application": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+      "sha256": "856db78182480614ce66ceb5b942467a4de27993ecabee46ee24a9b8e6764606"
+    },
+    "cpu_debug_tests": {
+      "path": "/home/shiroakane/ARCH/build/arch_poisson_multigrid",
+      "sha256": "741ea323dcee775680fb2218b0d7ef9251f33a4e570e83ca751786fda7f70310"
+    },
+    "cpu_release_tests": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_poisson_multigrid",
+      "sha256": "e48779a972d7f2a5ad808e3303475b5f990c9ab0e880f62cb0af5ed577510228"
+    },
+    "sanitized_tests": {
+      "path": "/tmp/arch-p2-sanitized",
+      "sha256": "3a7c3d04bb2627ae45fa1314a2e3be75b7bd3c6102c887f81ddacf497fa00518"
+    },
+    "cuda_compile_probe": {
+      "path": "/tmp/arch-p2-leaves.cubin",
+      "sha256": "da7a67fbebc7a38b2b369ab5e480242f602b2761e56ccb0fc1b52930052850ed"
+    },
+    "ci_completion_tool": {
+      "path": "/home/shiroakane/ARCH/tools/check_ci_results.py",
+      "sha256": "609d38b99769f92edfd793856735d0edfc20114bff1b43002e588f5cdff29d22"
+    },
+    "ci_completion_tests": {
+      "path": "/home/shiroakane/ARCH/tests/tooling/build_tools/test_ci_results.py",
+      "sha256": "8a207a10f590a0c0bce7d6c11c3f48c65d2555ba79a8a8f32fe13bc5c5cd3684"
+    }
+  },
+  "versions": {
+    "cpu_cxx": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+    "release_sanitizer_cxx": "g++-12 (Ubuntu 12.4.0-2ubuntu1~24.04.1) 12.4.0\nCopyright (C) 2022 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+    "cmake": "cmake version 3.28.3\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+    "cuda": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2023 NVIDIA Corporation\nBuilt on Wed_Nov_22_10:17:15_PST_2023\nCuda compilation tools, release 12.3, V12.3.107\nBuild cuda_12.3.r12.3/compiler.33567101_0"
+  },
+  "cpu_ctest": {
+    "passed": 57,
+    "failed": 0,
+    "skipped": 0,
+    "elapsed_seconds": 470.42
+  },
+  "ci_tool_tests": {
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0
+  },
+  "sanitizers": {
+    "contract": "passed",
+    "analytic": "passed",
+    "leak_detection": true,
+    "sandbox_attempt": "LeakSanitizer ptrace environment failure; retained log, rerun directly with same options and binary"
+  },
+  "cuda_scope": "application build and math-leaf compile only; no device gravity execution or performance qualification"
+}

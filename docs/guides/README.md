@@ -8,6 +8,10 @@ through building, running and extending a small Sod problem. Start there for a
 first calculation, then use the [simulation catalogue](../../simulation/README.md)
 to choose another problem.
 
+[Reporting.md](Reporting.md) ([Chinese](Reporting.zh-CN.md)) explains how to
+report build, runtime and numerical problems, share reproducible examples and
+protect research data on workstations and shared computing systems.
+
 The [Reference](../Reference.md) owns the complete parameter and extension
 contracts; the [CUDA guide](../CudaBackendStatus.md) explains backend selection.
 Generated-network preparation lives with the

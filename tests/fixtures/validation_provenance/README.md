@@ -1,7 +1,7 @@
 # Qualification protocol fixtures
 
 These four fixed files are inputs to
-[the provenance tests](../../tooling/test_validation_provenance.py). They exercise
+[the provenance tests](../../tooling/validation/test_validation_provenance.py). They exercise
 matrix/restart record shape and rejection of an application hash that differs
 from the final artifact inventory. They are not scientific acceptance records
 for the current source or a published binary.
@@ -21,5 +21,5 @@ changing these files.
 To execute these checks, run the following command directly from the repository root:
 
 ```sh
-python3 -B tests/tooling/test_validation_provenance.py
+python3 -B tests/tooling/validation/test_validation_provenance.py
 ```

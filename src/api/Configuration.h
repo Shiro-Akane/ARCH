@@ -1,7 +1,18 @@
+/**
+ * @file Configuration.h
+ * @brief Declare configuration schema and resolved-input inspection responses.
+ *
+ * Workflow:
+ * 1. Accept a bounded, verified request at the read-only API boundary.
+ * 2. Declare configuration schema and resolved-input inspection responses.
+ * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
+ */
+
 #pragma once
-#include "Json.h"
-#include "Preview.h"
-#include "../data/GlobalDefs.h"
+
+#include "api/Preview.h"
+#include "api/protocol/Json.h"
+#include "data/GlobalDefs.h"
 
 namespace arch::api {
 detail::Json ConfigurationSchema();

@@ -1,13 +1,20 @@
-# 常外部重力
+# 引力验证
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-这些测试施加预先给定的重力加速度，不求解流体自身产生的重力。外力应按预期
+[P2 CPU Poisson 记录](results/p2-20260922/README.md)覆盖独立均匀网格场求解器的
+周期/Dirichlet 解析收敛、弱密度扰动、CGS 尺度与失败处理；不启用 `gravity_type=self`，
+该 P2 记录本身不证明后续生产路径或 GPU 路径。
+固定的离散决定和预算见 [P2 契约](../../docs/development/P2PoissonMultigrid.zh-CN.md)。
+
+## 常外部重力
+
+下方外部源项测试施加预先给定的重力加速度，不求解流体自身产生的重力。外力应按预期
 改变动量与能量，而不改变总质量。耦合案例进一步检查网格细化和组分扩散时
 能否保持这项收支平衡。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
-构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
+[验证总览](../README.zh-CN.md)中。
 
 CPU 与 CUDA 共用逐阶段外部重力源项。验证从周期状态开始，其中 \(\rho=1\)、
 \(p=1\)、\(u=0\)，常加速度为 \(g_x=1\)。在 \(t=0.1\) 时，精确解为
@@ -16,9 +23,9 @@ CPU 与 CUDA 共用逐阶段外部重力源项。验证从周期状态开始，�
 
 ## AMR 与组分扩散耦合
 
-[Release 应用记录](results/coupled-final-20260907/runtime-893/backend-validation-evidence.json)
+Release 应用记录
 通过了三个案例、24 次 CPU/CUDA 执行和十二次后端对比。
-[端点检查](results/coupled-final-20260907/endpoints-894/evidence.json)在全部六个物理
+端点检查在全部六个物理
 时刻端点重新核对了解析源项平衡及质量／组分守恒。两份报告使用相同的源码、程序、
 比较工具和依赖库，并检查它们在执行期间保持不变。
 
@@ -73,8 +80,8 @@ python3 validation/gravity/results/coupled-final-20260907/check_terminal.py \
 
 `simulation/ExternalGravity/` 中的 `ExternalGravity` 算例和 [`inputs/`](inputs/)
 中的不可变参数，在均匀网格上单独验证重力源项。
-[应用记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
-复现了下表及 [metrics.csv](metrics.csv) 中的数值，两个后端均到达指定物理终点。
+应用记录
+复现了下表及 metrics.csv 中的数值，两个后端均到达指定物理终点。
 
 RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预算。
 密度误差为零；由于状态空间均匀，下列每个 Linf 也等于其 L1 和 L2。
@@ -90,3 +97,48 @@ RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预�
 
 这些测试验证给定的常加速度，不涉及静水平衡或自重力。保留的 Euler 输入展示预期的
 一阶源项能量误差；独立时间收敛检验见[流体验证](../hydro/README.zh-CN.md)。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [Release 应用记录 (JSON)](results/coupled-final-20260907/runtime-893/backend-validation-evidence.json)
+- [端点检查 (JSON)](results/coupled-final-20260907/endpoints-894/evidence.json)
+- [应用记录 (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+- [metrics.csv (CSV)](metrics.csv)
+
+</details>
+
+## 生产自引力
+
+`gravity_type=self` 在 CPU/CUDA 上支持 Cartesian 一至三维全周期、三维孤立边界及
+复合 AMR 泊松求解。受测一维球/柱对称 isolated、完整方位角二维极坐标和三维柱/球坐标
+也在两种后端运行，包含原点、轴线与极点接合；流体、燃烧和热扩散联动已有验证。
+CPU 制造解、独立边界/Gauss、AMR 与重启证据见
+[P11/P12 记录](results/p11-p12-20260923/README.md)；CUDA 一维解析场、同输入四模块
+对照、双向跨后端续算与本机性能见 [P13 记录](results/p13-20260924/README.md)。
+部分方位角扇区、域外质量源和 Jeans 专用细化指标仍不支持自引力。
+可从 [GravityBox](../../simulation/GravityBox/README.md)
+的示例输入开始。[P5–P7 验收](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
+记录数值、耦合、重启与设备检查；早期 [P3/P4 记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)
+保留其 CPU 周期范围；[P8–P10 一维径向记录](results/p8-p10-20260923/README.md)保存椭圆与 AMR 指标。
+
+`run_self_gravity.py --arch <ARCH> --output <新目录>` 检查 Jeans 波、能量、时间阶、
+动态 AMR、重启、孤立边界、一维径向场及选定耦合（需要 numpy/h5py）；`--quick` 是既有 CTest
+解析与拒绝子集。`arch_composite_poisson 3` 检查三维均匀/混合层级制造解，
+`contract` 检查失败路径、层级不变量与径向椭圆门槛。
+`check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <新目录>`
+检查实际设备引力；`--benchmark-only` 测量本机代表性工作负载。
+
+[二维/三维四模块算例](../../simulation/SNIaCoupled/README.md)检查带 AMR 的流体、
+自引力、燃烧与热扩散联动；原 [Cartesian CPU/CUDA 冒烟记录](results/snia2d-20260923/README.md)、
+[P11/P12 CPU 曲线坐标记录](results/p11-p12-20260923/README.md)和
+[P13 曲线 CUDA 记录](results/p13-20260924/README.md)均不等于 SN Ia 解析精度验收。
+P11/P12 记录也报告用户提供的 FLASH 4.8 归档中 Cellular 算例的二维/三维受控对照，
+归档包含本地初值扩展。[当前比较评估](flash/O5OptimizationReport.zh-CN.md)记录了
+固定温度燃烧、可选面 EOS 工作、计算量差异和未关闭项。代表性四模块路径为
+HLLC/MUSCL/MC＋RK2＋RKL2 热扩散＋BD/DenseLU＋MG＋AMR，采用
+Helmholtz/aprox13 并关闭 NSE，不能据此宣称全部策略组合已验收。

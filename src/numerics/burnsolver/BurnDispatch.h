@@ -11,18 +11,18 @@
 #include <type_traits>
 #include <utility>
 
-#include "BurnerHandle.h"
-#include "Networks.h"
-#include "ode_bd.h"
-#include "ode_be-nr.h"
-#include "ode_ros4.h"
+#include "numerics/burnsolver/BurnerHandle.h"
+#include "numerics/burnsolver/Networks.h"
+#include "numerics/burnsolver/ode/ode_bd.h"
+#include "numerics/burnsolver/ode/ode_be-nr.h"
+#include "numerics/burnsolver/ode/ode_ros4.h"
 
-#include "../../data/GlobalDefs.h" // Defines SimConfig and its burn configuration.
-#include "../../driver/dispatch/BackendCapabilities.h"
-#include "../../driver/dispatch/PolicyDescriptor.h"
+#include "data/GlobalDefs.h" // Defines SimConfig and its burn configuration.
+#include "driver/dispatch/capability/BackendCapabilities.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 
-#include "../linalg/DenseWrap.h"  // Dense matrix and LU policy.
-#include "../linalg/SparseWrap.h" // Reserved sparse-matrix policy.
+#include "numerics/linalg/DenseWrap.h"  // Dense matrix and LU policy.
+#include "numerics/linalg/SparseWrap.h" // Reserved sparse-matrix policy.
 
 // No-op policy used when burning is disabled. It keeps the driver pipeline
 // branch-free after runtime dispatch.

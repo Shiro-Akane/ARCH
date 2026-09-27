@@ -1,0 +1,6 @@
+{
+  "source": "tests/cuda/microphysics/burn/test_burn_policy_parity.cu",
+  "edit_precedes_estimated_compile_seconds": 0.171528662,
+  "sequence": "The source patch command completed before launching the guarded CMake build in the same sequential shell invocation. No source edit was made during that build.",
+  "audit_note": "The optional five-second timing cushion flagged this immediately preceding edit; the actual interval audit is empty."
+}

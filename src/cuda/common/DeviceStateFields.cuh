@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "CudaCommon.cuh"
+#include "cuda/common/CudaCommon.cuh"
 
 #include <cstddef>
 

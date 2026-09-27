@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Linux-c++"
+	tests="8"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="Shiro-Akane"
+	time="64"
+	timestamp="2026-09-23T08:46:08"
+	>
+	<testcase name="configuration_api_contract" classname="configuration_api_contract" time="4.67506" status="run">
+		<properties/>
+		<system-out>...........
+----------------------------------------------------------------------
+Ran 11 tests in 4.604s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="gravity_stage_contract" classname="gravity_stage_contract" time="0.00972423" status="run">
+		<properties/>
+		<system-out>Gravity stage preparation and field identity contracts passed
+</system-out>
+	</testcase>
+	<testcase name="runtime_probe_and_capabilities" classname="runtime_probe_and_capabilities" time="0.0150645" status="run">
+		<properties/>
+		<system-out>runtime_probe_and_capabilities: ok
+</system-out>
+	</testcase>
+	<testcase name="case_inspection_contract" classname="case_inspection_contract" time="64.1956" status="run">
+		<properties/>
+		<system-out>......
+----------------------------------------------------------------------
+Ran 6 tests in 64.074s
+
+OK
+</system-out>
+	</testcase>
+	<testcase name="composite_poisson_analytic" classname="composite_poisson_analytic" time="6.3088" status="run">
+		<properties/>
+		<system-out>Dirichlet refined=0 n=8 phi=2.9096750562324093e-06 face=1.8081617003634523e-05 boundary=3.389935614967397e-05 iterations=11
+Dirichlet refined=0 n=16 phi=3.7626866851051492e-07 face=3.4841867685057556e-06 boundary=6.3805602319827071e-06 iterations=13 orders=2.9510229784349007,2.3756298346765381,2.4095028649827315
+Dirichlet refined=1 n=8 phi=2.7189848983699025e-06 face=2.1054027016525741e-05 boundary=3.382627743479869e-05 iterations=11
+Dirichlet refined=1 n=16 phi=3.4557663323883409e-07 face=3.8745971062446278e-06 boundary=6.3054845963041903e-06 iterations=12 orders=2.9759905628568939,2.4419779978687139,2.4234652624134414
+Isolated boundary elongated=0 refined=0 relative=1.109801780877474e-05 theta/2=4.9042044725331404e-07 monopole=0.0040949296192404581
+Isolated boundary elongated=0 refined=1 relative=1.0752703426601108e-05 theta/2=5.2336351295069552e-07 monopole=0.0041067049282308673
+Isolated boundary elongated=1 refined=0 relative=1.9791678838668977e-05 theta/2=1.830479738558001e-07 monopole=0.0028593453141663...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="self_gravity_lifecycle" classname="self_gravity_lifecycle" time="2.27736" status="run">
+		<properties/>
+		<system-out>2D native vector components passed
+3D native vector components passed
+Self-gravity lifecycle validation passed
+</system-out>
+	</testcase>
+	<testcase name="composite_poisson_contract" classname="composite_poisson_contract" time="0.10194" status="run">
+		<properties/>
+		<system-out>Composite contracts passed
+</system-out>
+	</testcase>
+	<testcase name="self_gravity_physics" classname="self_gravity_physics" time="49.2682" status="run">
+		<properties/>
+		<system-out>Self-gravity passed: 7 acceptance records
+</system-out>
+	</testcase>
+</testsuite>

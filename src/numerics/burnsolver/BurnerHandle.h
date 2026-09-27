@@ -6,7 +6,7 @@
 
 #include <type_traits>
 
-#include "../../data/GlobalDefs.h"
+#include "data/GlobalDefs.h"
 
 /**
  * @brief Coarse-grained, host-only type erasure for one configured CPU burner.

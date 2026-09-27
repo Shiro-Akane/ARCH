@@ -7,7 +7,15 @@ contacts and rarefactions through the common hydro driver.
 - [Sod_beginner.par](Sod_beginner.par): small introductory case used by the
   [simulation guide](../../docs/guides/SimulationCase.md).
 - [Sod.par](Sod.par): reusable standard example.
+- [SodFlash1D.par](SodFlash1D.par): 256-cell input used for the
+  [FLASH 4.8 comparison](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md).
 - [Hydro validation](../../validation/hydro/README.md): reference solution,
   convergence inputs and measured results.
 
 Note that the parameter files are solely responsible for selecting the reconstruction method, flux calculation, and time-integration scheme; this problem definition itself does not contain any separate numerical solver logic.
+
+The archived FLASH comparison found competitive ARCH total-process time for
+this small ideal-gas case. Process startup materially affects that result;
+advancement timers have different scopes and do not establish a faster ARCH
+hydro kernel. Use the independent Riemann errors and size/convergence studies
+when drawing a broader efficiency conclusion.

@@ -14,13 +14,13 @@
 #include <mutex>
 #include <span>
 
-#include "AmrFluxPlan.h"
-#include "AmrTree.h"
-#include "FluxRegister.h"
-#include "GhostExchange.h"
-#include "MemoryPool.h"
+#include "amr/flux/AmrFluxPlan.h"
+#include "amr/topology/AmrTree.h"
+#include "amr/flux/FluxRegister.h"
+#include "amr/exchange/GhostExchange.h"
+#include "amr/storage/MemoryPool.h"
 
-#include "../grid/GridMetrics.h"
+#include "grid/GridMetrics.h"
 
 namespace amr {
 

@@ -10,9 +10,10 @@
 #include <limits>
 #include <stdexcept>
 
-#include "../../core/ArchPortability.h"
-#include "../../core/CompensatedSum.h"
-#include "eos.h" // Provides FluidVector through the EOS policy surface.
+#include "core/ArchPortability.h"
+#include "numerics/state/StateAdmissibility.h"
+#include "core/CompensatedSum.h"
+#include "physics/eos/eos.h" // Provides FluidVector through the EOS policy surface.
 
 #ifndef EOS_INLINE
 #define EOS_INLINE inline
@@ -92,86 +93,13 @@ namespace eos_utils
     // Shared kinetic/internal-energy conversions.
     ARCH_INLINE double calc_kinetic_energy(double rho, double u, double v, double w)
     {
-        return 0.5 * rho * (u * u + v * v + w * w);
+        return (0.5 * rho * u) * u + (0.5 * rho * v) * v + (0.5 * rho * w) * w;
     }
 
     // Extract specific internal energy from a conservative state.
     ARCH_INLINE double extract_specific_internal_energy(const FluidVector &U)
     {
-        if (U.rho < 1e-12)
-            return 0.0;
-        double kinetic_density = 0.5 * (U.mom_u * U.mom_u + U.mom_v * U.mom_v + U.mom_w * U.mom_w) / U.rho;
-        return (U.eng - kinetic_density) / U.rho;
-    }
-
-    /** Estimate (dP/drho)_e without accidentally holding temperature fixed. */
-    template <typename TEOSView>
-    ARCH_INLINE double finite_difference_dp_drho_e(
-        const TEOSView &eos_view, double rho, double specific_energy,
-        const double *mass_fractions, double rho_min, double rho_max)
-    {
-        const double delta = std::max(1.0e-3 * std::abs(rho), 1.0e-300);
-        const double lower = std::max(rho - delta, rho_min);
-        const double upper = std::min(rho + delta, rho_max);
-        if (!(upper > lower)) {
-#if defined(__CUDA_ARCH__)
-            return std::numeric_limits<double>::quiet_NaN();
-#else
-            throw std::runtime_error(
-                "Tabular EOS cannot difference density at constant energy.");
-#endif
-        }
-        const double pressure_lower = eos_view.get_pressure_from_rho_e(
-            lower, specific_energy, mass_fractions);
-        const double pressure_upper = eos_view.get_pressure_from_rho_e(
-            upper, specific_energy, mass_fractions);
-        const double derivative =
-            (pressure_upper - pressure_lower) / (upper - lower);
-        if (!std::isfinite(derivative)) {
-#if defined(__CUDA_ARCH__)
-            return std::numeric_limits<double>::quiet_NaN();
-#else
-            throw std::runtime_error(
-                "Tabular EOS produced a non-finite constant-energy derivative.");
-#endif
-        }
-        return derivative;
-    }
-
-    // Generic Newton pressure inversion for three- and four-dimensional tables.
-    // TEOSView must provide get_pressure_from_rho_e and get_dp_de_rho.
-    template <typename TEOSView>
-    ARCH_INLINE double solve_total_energy(const TEOSView &eos_view,
-                                         double rho, double u, double v, double w,
-                                         double target_p, const double *Xi)
-    {
-        // Initialize with the gamma=1.4 ideal-gas estimate. This is a numerical
-        // seed only; all accepted iterates use the selected tabular EOS.
-        double e_guess = target_p / ((1.4 - 1.0) * rho);
-
-        for (int iter = 0; iter < 20; ++iter)
-        {
-            double p_guess = eos_view.get_pressure_from_rho_e(rho, e_guess, Xi);
-            double dp_de = eos_view.get_dp_de_rho(rho, e_guess, Xi);
-
-            if (std::abs(dp_de) < 1e-12)
-                break;
-
-            double delta_e = (target_p - p_guess) / dp_de;
-
-            // Backtrack until the trial specific internal energy remains above
-            // the 1e-12 positivity floor.
-            while (e_guess + delta_e <= 1e-12)
-            {
-                delta_e *= 0.5;
-            }
-            e_guess += delta_e;
-
-            if (std::abs(delta_e) < 1e-6 * e_guess)
-                break;
-        }
-
-        return rho * e_guess + calc_kinetic_energy(rho, u, v, w);
+        return arch::state::recover(U).internal;
     }
 
     /**

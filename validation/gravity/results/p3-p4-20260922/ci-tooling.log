@@ -1,0 +1,15 @@
+test_cli_propagates_missing_or_malformed_reports (test_ci_results.CiResultTests.test_cli_propagates_missing_or_malformed_reports) ... ok
+test_complete_report_accepts_new_tests_without_a_fixed_total (test_ci_results.CiResultTests.test_complete_report_accepts_new_tests_without_a_fixed_total) ... ok
+test_disabled_klu_cannot_produce_a_complete_cpu_profile (test_ci_results.CiResultTests.test_disabled_klu_cannot_produce_a_complete_cpu_profile) ... ok
+test_driver_cuda_requires_real_device_coverage_and_rejects_skips (test_ci_results.CiResultTests.test_driver_cuda_requires_real_device_coverage_and_rejects_skips) ... ok
+test_empty_malformed_and_duplicate_inventories_fail (test_ci_results.CiResultTests.test_empty_malformed_and_duplicate_inventories_fail) ... ok
+test_failed_or_skipped_entries_fail_even_with_zero_summary_counters (test_ci_results.CiResultTests.test_failed_or_skipped_entries_fail_even_with_zero_summary_counters) ... ok
+test_inconsistent_or_nonzero_summary_counters_fail (test_ci_results.CiResultTests.test_inconsistent_or_nonzero_summary_counters_fail) ... ok
+test_invalid_xml_root_fails (test_ci_results.CiResultTests.test_invalid_xml_root_fails) ... ok
+test_low_density_math_cannot_disappear_from_the_cpu_gate (test_ci_results.CiResultTests.test_low_density_math_cannot_disappear_from_the_cpu_gate) ... ok
+test_missing_extra_and_duplicate_results_fail (test_ci_results.CiResultTests.test_missing_extra_and_duplicate_results_fail) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.005s
+
+OK

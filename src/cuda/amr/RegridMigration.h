@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#include "amr/RegridTransferMath.h"
+#include "amr/transfer/RegridTransferMath.h"
 #include "cuda/common/CudaCommon.cuh"
 
 #include <cuda_runtime.h>

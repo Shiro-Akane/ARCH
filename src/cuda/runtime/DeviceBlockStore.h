@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "amr/AmrTransferPlans.h"
-#include "driver/ComputeBackend.h"
+#include "amr/transfer/AmrTransferPlans.h"
+#include "driver/runtime/ComputeBackend.h"
 
 #include <algorithm>
 #include <compare>

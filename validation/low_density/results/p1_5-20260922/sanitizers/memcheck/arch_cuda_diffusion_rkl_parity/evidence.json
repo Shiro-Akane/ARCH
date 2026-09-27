@@ -1,0 +1,19 @@
+{
+  "tool": "memcheck",
+  "executable": {
+    "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+    "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+  },
+  "report": {
+    "path": "/tmp/arch-p15-lazy-sanitizers/arch_cuda_diffusion_rkl_parity-memcheck/sanitizer.log",
+    "sha256": "546cc03075e2d022256b1c6be5235563126aab0361675b50171791d8e2e8295e"
+  },
+  "summaries": [
+    "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+    "ERROR SUMMARY: 0 errors"
+  ],
+  "application": {
+    "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_diffusion_rkl_parity",
+    "sha256": "6bf0cf89a2ae15d26bfd0895301e81038ef5ea1f1e40faa84e1239871bc62513"
+  }
+}

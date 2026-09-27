@@ -20,9 +20,10 @@
 
 #include <vector>
 
-#include "FluxFunctions.h"
+#include "numerics/flux/FluxFunctions.h"
+#include "numerics/flux/InvariantDomainFlux.h"
 
-#include "../reconstruction/AMRInterfaceReconstruction.h"
+#include "numerics/reconstruction/AMRInterfaceReconstruction.h"
 
 /**
  * @struct FluxSW
@@ -73,6 +74,7 @@ struct FluxSW
                                std::vector<FluidVector> &flux_out,
                                std::vector<double> &spec_flux_out, int dir, double smoothing_coeff = 0.1)
     {
+        arch::state::HostFailure failure;
         int n_spec = state.GetNumSpecies();
         int total_size = grid.GetTotalSize();
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
@@ -104,26 +106,38 @@ struct FluxSW
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
-                int k = k_start + kj / nj;
-                int j = j_start + kj % nj;
-                for (int i = i_start; i < i_end; ++i)
-                {
-                    int idx = grid.GetIndex(i, j, k);
-                    // 1. Reconstruction (Delegate to Policy)
-                    // U_L is at left side of interface i+1/2
-                    // U_R is at right side of interface i+1/2
-                    FluidVector U_L, U_R;
-                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
-
-                    compute_face_flux(
-                        U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
-                        smoothing_coeff, flux_out[idx + stride], face_species_flux.data());
-                    for (int s = 0; s < n_spec; ++s)
+                try {
+                    int k = k_start + kj / nj;
+                    int j = j_start + kj % nj;
+                    for (int i = i_start; i < i_end; ++i)
                     {
-                        spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
+                        int idx = grid.GetIndex(i, j, k);
+                        // 1. Reconstruction (Delegate to Policy)
+                        // U_L is at left side of interface i+1/2
+                        // U_R is at right side of interface i+1/2
+                        FluidVector U_L, U_R;
+                        AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
+
+                        FluxAdmissibility::compute_candidate([&] {
+                            compute_face_flux(
+                                U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                                smoothing_coeff, flux_out[idx + stride], face_species_flux.data());
+                        }, flux_out[idx + stride], face_species_flux.data(), n_spec);
+                        state.get_species_to_buffer(idx, Xi_L.data());
+                        state.get_species_to_buffer(idx + stride, Xi_R.data());
+                        FluxAdmissibility::limit_face(state.get(idx), state.get(idx + stride),
+                            Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                            flux_out[idx + stride], face_species_flux.data());
+                        for (int s = 0; s < n_spec; ++s)
+                        {
+                            spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
+                        }
                     }
-                }
+
+                } catch (...) { failure.capture_current(); }
             }
         } // end omp parallel
+
+        failure.rethrow();
     }
 };

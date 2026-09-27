@@ -1,0 +1,43 @@
+{
+  "phase": "P1.5",
+  "baseline": "99793b49887418d3fa4f151f9ad6b571b528f708",
+  "units": "CGS",
+  "density_scales": [
+    1.0,
+    1e-12,
+    1e-20,
+    1e-30,
+    1e-60,
+    1e-100
+  ],
+  "evolution_scales": [
+    1.0,
+    1e-12,
+    1e-20,
+    1e-30
+  ],
+  "component_relative_error": 1e-11,
+  "evolution_scaled_difference": 1e-09,
+  "closed_conservation_error": 1e-10,
+  "smooth_minimum_orders": {
+    "pcm": 0.9,
+    "muscl": 1.8,
+    "ppm": 2.7
+  },
+  "requirements": [
+    "All flux and reconstruction leaves preserve well-conditioned Euler density scaling",
+    "Positive-density double rarefaction uses an independent ideal-gas Riemann reference",
+    "Zero-repair cases require zero repair accounting",
+    "Floor repairs preserve velocity and composition and record conserved changes",
+    "Zero density, nonfinite states and unresolved thermal energy fail before publication",
+    "Current EOS contracts retain independent scientific oracles; retired inputs fail",
+    "CPU validation precedes CUDA validation of the same mathematical leaves",
+    "AMR, restart and normal-domain regression remain mandatory"
+  ],
+  "active_density_floors": [
+    6e-31,
+    1e-30,
+    2e-30
+  ],
+  "active_floor_accounting_error": 1e-11
+}

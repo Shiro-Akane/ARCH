@@ -7,9 +7,9 @@
  * reaction formula or solver algorithm. Noncompact systems use a sparse owner.
  */
 #include "@ARCH_DENSE_EOS_HEADER@"
-#include "cuda/runtime/burn/CudaBackendBurnDenseRoutes.h"
+#include "cuda/runtime/burn/dense/CudaBackendBurnDenseRoutes.h"
 #include "@ARCH_DENSE_NETWORK_HEADER@"
-#include "cuda/runtime/burn/CudaBackendBurnImpl.cuh"
+#include "cuda/runtime/burn/dense/CudaBackendBurnImpl.cuh"
 
 namespace arch::cuda::burn_detail {
 namespace {

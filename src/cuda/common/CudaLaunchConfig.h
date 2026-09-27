@@ -6,10 +6,10 @@
 #pragma once
 
 #include "numerics/diffusion/DiffusionTypes.h"
-#include "driver/dispatch/ResolvedExecutionPlan.h"
+#include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "data/GlobalDefs.h"
 #include "driver/dispatch/PolicyDescriptor.h"
-#include "physics/gravity/ExternalGravitySource.h"
+#include "physics/gravity/GravitySource.h"
 
 #include <type_traits>
 #include <cmath>
@@ -29,14 +29,15 @@ struct CudaLaunchConfig {
     double diffusion_cfl = 0.0;
     int diffusion_max_stages = 0;
     Physical::Gravity::ExternalGravityView gravity{};
+    bool self_gravity=false;
 };
 
 inline CudaLaunchConfig make_cuda_launch_config(
     const dispatch::ResolvedExecutionPlan& plan, const SimConfig& config)
 {
     const auto gravity = dispatch::parse_gravity(config.physics.gravity.type);
-    if (!gravity.ok || gravity.value == dispatch::GravityId::Self)
-        throw std::invalid_argument("CUDA launch requires none or external gravity");
+    if (!gravity.ok)
+        throw std::invalid_argument("Unknown CUDA gravity policy");
     const bool external = gravity.value == dispatch::GravityId::External;
     const auto& g = config.physics.gravity;
     if (external && (!std::isfinite(g.g_x) || !std::isfinite(g.g_y) || !std::isfinite(g.g_z)))
@@ -53,6 +54,7 @@ inline CudaLaunchConfig make_cuda_launch_config(
         config.physics.diffusion.diff_cfl,
         config.physics.diffusion.max_stages,
         {g.g_x, g.g_y, g.g_z, external},
+        gravity.value == dispatch::GravityId::Self,
     };
 }
 

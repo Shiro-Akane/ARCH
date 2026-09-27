@@ -6,4 +6,6 @@ and stage completion. [CudaBackendHydroInstantiation.cuh](CudaBackendHydroInstan
 supplies the common typed instantiation, bound by the Ideal, Helm and Tabular
 translation units in this directory.
 
-While cell and face kernels reside in [cuda/hydro](../../hydro/README.md), the mathematical definitions for fluxes, reconstruction, and time-integration remain firmly in the common [numerics](../../../numerics/README.md) modules. You must rigorously preserve this clear include boundary whenever you add a new policy, explicitly avoiding the temptation to blindly import every EOS into each individual binding.
+Cell and face kernels live in [cuda/hydro](../../hydro/README.md). Flux,
+reconstruction and integration methods remain in shared [numerics](../../../numerics/README.md).
+Each binding includes its selected EOS implementation, not the whole catalog.

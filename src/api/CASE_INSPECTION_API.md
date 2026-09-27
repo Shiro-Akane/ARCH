@@ -42,7 +42,7 @@ Units have two concrete evidence sources:
 - **Core composition reader:** mass-fraction input is dimensionless, reported as `1`.
 - **Reviewed built-in case expressions:** centralized in `CaseUnitEvidence.cpp`, guarded by the exact compiled case `.cpp` SHA-256. CMake stamps the source at compilation; editing it invalidates the old unit conclusions. Core must review changed expressions before updating the expected hash. Header dependencies and build options remain part of Host's full build manifest; a case-source hash alone is not full build freshness.
 
-The 11 current built-in models have reviewed units for their numeric inputs: Sod, CellularDet, Gaussian, Sedov, RT, SmoothAdvection, ExternalGravity, DiffusionMode, BurnOneZone, BurnGradient, CooperativeHotspots. Returned parameters are still only those actually read in the current configuration. Examples: `x_pos`/`radiusPerturb` use cm; CellularDet `noiseAmplitude` is dimensionless; RT `amplitude` uses cm/s; Sedov `explosion_energy` uses erg/cm², erg/cm or erg for 1D, 2D or 3D.
+The 14 current built-in models have reviewed units for their numeric inputs: Sod, CellularDet, Gaussian, Sedov, RT, SmoothAdvection, GravityBox, JeansWave, ExternalGravity, DiffusionMode, BurnOneZone, BurnGradient, CooperativeHotspots, SNIaCoupled. Returned parameters are still only those actually read in the current configuration. Examples: `x_pos`/`radiusPerturb` use cm; CellularDet `noiseAmplitude` is dimensionless; RT `amplitude` uses cm/s; Sedov `explosion_energy` uses erg/cm², erg/cm or erg for 1D, 2D or 3D.
 
 `unitEvidence.status`: `known`, `dimensionless`, `not-applicable`, `uncovered`, `conflict`. `unit=null` for uncovered/conflicting inputs. Strings and switches need no unit label. `automaticExpressionInference=false`: reviewed evidence must not be presented as automatic inference for arbitrary C++. A regression demonstrates identical read/sink observations from `rho=a` and `rho=a*b` with `b=1`; boundary observation cannot uniquely determine the two input units. New/changed cases remain inspectable and report evidence coverage; they do not require a frontend-specific adapter or a user declaration form.
 
@@ -62,7 +62,7 @@ Initial field responses add `fields[].logDomain` with `positiveCount`, `zeroCoun
 | CaseUnitEvidence.cpp | Source-guarded reviewed model units; no parser, copied defaults or numerical model |
 | ResourceEstimates.cpp / InitialMesh.h | Allocation-free level estimates / real bounded initial hierarchy |
 | WorkerLimits.cpp | Shared Linux worker resource guard |
-| ../core/InspectionSources.h / EOSDispatcher::InspectionScope | One verified EOS source generation per inspection request, with final content verification |
+| ../core/files/InspectionSources.h / EOSDispatcher::InspectionScope | One verified EOS source generation per inspection request, with final content verification |
 | ValueDomain.h | Zero/negative/nonfinite separation for Log presentation |
 
 `case_inspection_contract` checks all compiled built-in cases, source stamps, numeric unit coverage, composition reads, defaults/explicit values, 1D/2D/3D Sedov units, curvilinear coordinate conversion, strict integers, partial errors and no scientific output. `initialization_probe` checks the ProblemGenerator boundary, observer restoration, ambiguous dimensional inference, stale evidence, unit conflicts and Log statistics. Existing field, configuration and AMR regression groups remain required.

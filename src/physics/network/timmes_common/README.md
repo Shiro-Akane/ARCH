@@ -11,7 +11,10 @@ This directory supplies common support for the maintained built-in networks.
   and nuclear-data conventions.
 - [Dual.h](Dual.h) supplies automatic-differentiation support.
 
-These identical helpers are used for both host and device compilation. It is crucial to remember that ODE algorithms, provider handles, and table allocation logic absolutely do not belong in this directory. Furthermore, ARCH-authored adapters and the Timmes-derived equations carry distinct attribution; always preserve the individual file headers as well as the [third-party notices](../../../../THIRD_PARTY_NOTICES.md).
+Host and device compilation use the same helpers. ODE algorithms, solver-library
+handles and table allocation belong to their respective numerical/backend owners.
+ARCH adapters and Timmes-derived equations retain their individual attribution;
+preserve the file headers and [third-party notices](../../../../THIRD_PARTY_NOTICES.md).
 
 See the [network guide](../../../../docs/physics/TimmesNetworks.md),
 [Reference](../../../../docs/Reference.md) and

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "DiffusionAMRStages.h"
+#include "numerics/diffusion/DiffusionAMRStages.h"
 
 struct RKL2TimeIntegrator
 {

@@ -42,12 +42,12 @@ is not defined to be exactly one gram per mole in the present SI.
 Microphysics uses rho in g/cm^3, T in K, specific energy in erg/g, pressure in
 erg/cm^3, conductivity in erg/(cm K s), and mass fractions without units.
 Nuclear binding energies use the network's declared MeV conversion convention.
-Ideal-gas problems may use consistent arbitrary code units and supplied species
-Cv values. The framework does not rescale those inputs implicitly. In
-particular, the air-like 718 J/(kg K) fallback is a model default owned by
-`IdealGasView`, not a universal constant or an implicit cgs conversion. Future
-geometrized-unit calculations must explicitly convert to G=c=1, not overwrite
-the dimensional constants above.
+ARCH uses CGS throughout, including IdealGas, initialization, output and GUI.
+Supplied species Cv values use erg/(g K) and are not rescaled implicitly.
+The air-like fallback is 7.18e6 erg/(g K), owned by `IdealGasView` as a model
+default rather than a universal constant. ARCH does not expose an arbitrary
+code-unit mode. Any future geometrized-unit extension would need a separate
+conversion contract instead of changing the dimensional constants above.
 
 `physics/network/**`, generated pynucastro math, Timmes reaction constants,
 nuclear masses and reaction/screening fit data retain their model-specific

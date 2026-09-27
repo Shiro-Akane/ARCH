@@ -141,7 +141,7 @@ EOS 文件变化发生在一次请求中时，原接口返回 EOS_SOURCE_CHANGED
 - `SessionInput.h` / `RequestInput.h`：严格信封解析与共用 UTF-8 校验；不解析 `.par` 科学语义。
 - `WorkerLimits`：单次工作进程和持续会话的独立预算策略。
 - `physics/eos/InspectionEosCache.h`：只读表 owner 与请求视图绑定；普通 EOS 路径保持原行为。
-- `core/VerifiedFileCache.h` / `FileFingerprint.cpp`：有界内容比较与统一 SHA-256 权威。
+- `core/files/VerifiedFileCache.h` / `FileFingerprint.cpp`：有界内容比较与统一 SHA-256 权威。
 - `InitialSampleCache.h`：仅在当前场采样中复用逐位相同输入的转换结果；数值转换仍使用原 Core 实现。
 - `Progress.h`：既有模型检查、场图与 AMR 阶段发布。
 

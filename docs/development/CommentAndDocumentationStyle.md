@@ -52,6 +52,20 @@ a restriction matters instead of repeating general warnings. Use the established
 function and module names; conversational labels such as “the previous fix” or
 “the new workaround” lose their meaning as the code evolves.
 
+Name work by its function, not by an internal milestone code. A reader should
+understand labels such as “coupled burning and diffusion measurements” or
+“workspace reuse” without consulting a project plan. Use these names in headings,
+tables and link text throughout maintained documentation. Keep immutable report
+paths, source hashes and actual parameter names intact for traceability; a
+historical filename need not become the title shown to readers. Numerical
+integration stages are algorithmic concepts, not project milestones.
+
+Keep intermediate reviews and superseded acceptance plans in the contributor
+archive. Public indexes should open readable summaries, not raw JSON or logs.
+Place machine-readable evidence behind a clearly labeled, expandable section
+for reproduction and review. Preserve data and original identities when
+reorganizing its presentation; do not hide a failed result or alter a measurement.
+
 Keep discussions, machine-specific observations and dated repair history in
 development records. Source comments describe the resulting behavior. A future
 task should name the unresolved condition and its owner, not imply that a planned
@@ -59,9 +73,9 @@ feature already exists.
 
 Write user-facing pages for someone encountering ARCH for the first time.
 Describe what the interface accepts and how to use it, without assuming an
-earlier public release or a migration the reader must perform. Prefer “the
-`timeintegrator` alias is used when `time_integrator` is absent” to “legacy
-fallback,” and “the direct-field EOS model” to “the old table path.”
+earlier public release or a migration the reader must perform. Prefer “use `time_integrator` to select the integration method” to an
+ambiguous compatibility claim, and name the supported source/table representation
+rather than calling it “the old table path.”
 
 Separate data-format identifiers from software release versions. Document the
 accepted fields, defaults and validation rules when multiple formats can be

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "CsrMatrixView.h"
+#include "numerics/linalg/CsrMatrixView.h"
 
 #include <algorithm>
 #include <limits>

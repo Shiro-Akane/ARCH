@@ -18,3 +18,10 @@ CUDA readers and kernels manage state access, kernel launches, and storage handl
 See the [Reference](../../../docs/Reference.md),
 [diffusion validation](../../../validation/diffusion/README.md) and
 [AMR validation](../../../validation/amr/README.md).
+
+An operator being enabled does not establish a nonzero material coefficient.
+The current Helmholtz stellar closure supplies thermal conduction, with zero
+viscosity and species diffusivity; the corresponding flags cannot extend that
+model. Constant-coefficient nonstellar tests qualify their own closures. See
+[combination rules](../../../docs/Reference.md#combining-methods-and-physics)
+before extending a coupled capability claim.

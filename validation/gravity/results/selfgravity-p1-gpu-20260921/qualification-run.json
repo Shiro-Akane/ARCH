@@ -1,0 +1,285 @@
+{
+  "head": "74a755e596a29dce7f13ac7864ee3692553d7166",
+  "started_utc": "2026-09-21T15:15:22.453610+00:00",
+  "status": "passed",
+  "commands": [
+    {
+      "name": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu",
+        "-R",
+        "^(checkpoint_temporal_comparison|cuda_amr_composition|cuda_amr_exchange|cuda_compile_probe|cuda_hydro_dispatch|cuda_multiblock_burn|cuda_multiblock_diffusion|cuda_multiblock_hydro|cuda_reduction_contract|cuda_regrid_migration|cuda_regrid_transaction|cuda_store_lifecycle|diffusion_rkl_parity|gravity_stage_contract|shared_stage_scheduler|cuda_multiblock_(burn|diffusion)_b(3|1024|1025)|cuda_multiblock_diffusion_global_species)$",
+        "--parallel",
+        "1",
+        "--timeout",
+        "600",
+        "--no-tests=error",
+        "--output-on-failure",
+        "--output-junit",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/ctest.xml"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 192.29080150500158
+    },
+    {
+      "name": "ctest-coverage",
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/tooling-env/bin/python",
+        "tools/check_ci_results.py",
+        "--profile",
+        "driver-cuda",
+        "--inventory",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/inventory.json",
+        "--junit",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/ctest.xml"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.03216690399858635
+    },
+    {
+      "name": "none-external-parity",
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/tooling-env/bin/python",
+        "tools/validate_backend_results.py",
+        "--arch",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/shiroakane/ARCH",
+        "--build-dir",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu",
+        "--manifest",
+        "validation/backend/cases.json",
+        "--case",
+        "hydro_muscl_n64",
+        "--case",
+        "external_gravity_rk2",
+        "--case",
+        "external_gravity_rk3",
+        "--output-root",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/none-external"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 9.036387959000422
+    },
+    {
+      "name": "gravity-amr-parity",
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/tooling-env/bin/python",
+        "tools/validate_backend_results.py",
+        "--arch",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/shiroakane/ARCH",
+        "--build-dir",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu",
+        "--manifest",
+        "validation/gravity/coupled_cases.json",
+        "--output-root",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-amr"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 11.502431523000268
+    },
+    {
+      "name": "amr-runtime",
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/tooling-env/bin/python",
+        "tools/smoke_cuda_amr_runtime.py",
+        "--arch",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/shiroakane/ARCH",
+        "--output-root",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/amr-runtime",
+        "--backend",
+        "cuda",
+        "--timeout",
+        "120",
+        "--threads",
+        "2"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 2.8723725179988833
+    },
+    {
+      "name": "active-enuc",
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/tooling-env/bin/python",
+        "validation/backend/verify_microphysics_coupling.py",
+        "--build-dir",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu",
+        "--output-dir",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/active-enuc",
+        "--restart",
+        "--all-transport",
+        "--active-enuc-factor",
+        "1e-11",
+        "--terminal-time",
+        "4.5e-16",
+        "--case",
+        "coupled_bd_rkl2_all_transport"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 34.49439998000162
+    },
+    {
+      "name": "arch_cuda_amr_composition-memcheck",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_amr_composition-memcheck/sanitizer.log",
+        "--leak-check",
+        "full",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_amr_composition"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5191301890008617
+    },
+    {
+      "name": "arch_cuda_amr_composition-racecheck",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_amr_composition-racecheck/sanitizer.log",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_amr_composition"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5175528769977973
+    },
+    {
+      "name": "arch_cuda_regrid_transaction-memcheck",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_regrid_transaction-memcheck/sanitizer.log",
+        "--leak-check",
+        "full",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_regrid_transaction"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5745407819995307
+    },
+    {
+      "name": "arch_cuda_regrid_transaction-racecheck",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_regrid_transaction-racecheck/sanitizer.log",
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_regrid_transaction"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.6766397789979237
+    }
+  ],
+  "sanitizer": [
+    {
+      "target": "arch_cuda_amr_composition",
+      "tool": "memcheck",
+      "executable": {
+        "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+      },
+      "report": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_amr_composition-memcheck/sanitizer.log",
+        "sha256": "e6212e7a527212944a2ea41f857084a393463cd19680de7957b179ee12caa2fc"
+      },
+      "summaries": [
+        "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+        "ERROR SUMMARY: 0 errors"
+      ]
+    },
+    {
+      "target": "arch_cuda_amr_composition",
+      "tool": "racecheck",
+      "executable": {
+        "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+      },
+      "report": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_amr_composition-racecheck/sanitizer.log",
+        "sha256": "fa9cfc3f503caa66201bd239fd11b14a2bf49a2f1c862319382182f8a358b117"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "target": "arch_cuda_regrid_transaction",
+      "tool": "memcheck",
+      "executable": {
+        "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+      },
+      "report": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_regrid_transaction-memcheck/sanitizer.log",
+        "sha256": "586017fab5c7345011a247d815621f128df7d8c030e8e31b526041fb187c37ff"
+      },
+      "summaries": [
+        "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+        "ERROR SUMMARY: 0 errors"
+      ]
+    },
+    {
+      "target": "arch_cuda_regrid_transaction",
+      "tool": "racecheck",
+      "executable": {
+        "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+      },
+      "report": {
+        "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_regrid_transaction-racecheck/sanitizer.log",
+        "sha256": "9b2f6fc5330f853d3368bfb36f3fa0fbd7ad889ec40382757baf5193c77753ce"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    }
+  ],
+  "finished_utc": "2026-09-21T15:19:21.391637+00:00"
+}

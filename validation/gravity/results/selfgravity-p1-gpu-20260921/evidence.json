@@ -1,0 +1,429 @@
+{
+  "schema": 1,
+  "scope": "P1 Driver refactor GPU verification; no self-gravity implementation or speedup qualification",
+  "status": "passed",
+  "source": {
+    "commit": "74a755e596a29dce7f13ac7864ee3692553d7166",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "22e2f15c1e6bc753793f98e8ace99218a0ef65836c1a155066a5e2edb291653c",
+    "dirty": false,
+    "modified_files": [],
+    "untracked_source_files": []
+  },
+  "binaries": {
+    "ARCH": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+      "sha256": "21c269c656b2a4c9d7c8399e52d036ab498957b3a208366fee7429fc754c4243"
+    },
+    "checkpoint_validator": {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_cuda_single_level_validation",
+      "sha256": "cb7bed130fd168b63ac211396ce56e91b8f0500fd0fa5a2dda74c1fb1f5dcbb5"
+    }
+  },
+  "ctest": {
+    "profile": "driver-cuda",
+    "passed": 22,
+    "skipped": 0,
+    "names": [
+      "checkpoint_temporal_comparison",
+      "shared_stage_scheduler",
+      "gravity_stage_contract",
+      "cuda_regrid_transaction",
+      "cuda_regrid_migration",
+      "cuda_hydro_dispatch",
+      "cuda_amr_composition",
+      "cuda_compile_probe",
+      "diffusion_rkl_parity",
+      "cuda_reduction_contract",
+      "cuda_multiblock_hydro",
+      "cuda_multiblock_diffusion",
+      "cuda_multiblock_burn",
+      "cuda_multiblock_burn_b3",
+      "cuda_multiblock_diffusion_b3",
+      "cuda_multiblock_burn_b1024",
+      "cuda_multiblock_diffusion_b1024",
+      "cuda_multiblock_burn_b1025",
+      "cuda_multiblock_diffusion_b1025",
+      "cuda_multiblock_diffusion_global_species",
+      "cuda_store_lifecycle",
+      "cuda_amr_exchange"
+    ]
+  },
+  "regular_cases": [
+    {
+      "id": "external_gravity_rk2",
+      "comparisons": 3,
+      "application_runs": 6,
+      "max_abs": 0,
+      "max_rel": 0,
+      "oracle": {
+        "cpu": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 20,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.505,
+          "rho_linf": 0,
+          "velocity_linf": 0,
+          "pressure_linf": 2.220446049250313e-16,
+          "energy_linf": 4.440892098500626e-16
+        },
+        "cuda": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 20,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.505,
+          "rho_linf": 0,
+          "velocity_linf": 0,
+          "pressure_linf": 2.220446049250313e-16,
+          "energy_linf": 4.440892098500626e-16
+        }
+      }
+    },
+    {
+      "id": "external_gravity_rk3",
+      "comparisons": 3,
+      "application_runs": 6,
+      "max_abs": 0,
+      "max_rel": 0,
+      "oracle": {
+        "cpu": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 20,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.5049999999999994,
+          "rho_linf": 0,
+          "velocity_linf": 8.326672684688674e-17,
+          "pressure_linf": 4.440892098500626e-16,
+          "energy_linf": 8.881784197001252e-16
+        },
+        "cuda": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 20,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.5049999999999994,
+          "rho_linf": 0,
+          "velocity_linf": 8.326672684688674e-17,
+          "pressure_linf": 4.440892098500626e-16,
+          "energy_linf": 8.881784197001252e-16
+        }
+      }
+    },
+    {
+      "id": "hydro_muscl_n64",
+      "comparisons": 3,
+      "application_runs": 6,
+      "max_abs": 0,
+      "max_rel": 0,
+      "oracle": {
+        "cpu": {
+          "status": "pass",
+          "mode": "smooth",
+          "step": 50,
+          "time": 0.1,
+          "l1": 0.00015528998954181424,
+          "l2": 0.00026704504232958557,
+          "linf": 0.0009368729594856351,
+          "mean": 0.9999999999999973,
+          "mass": 0.9999999999999973,
+          "mom_u": 0.9999999999999971,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.9999999999999902,
+          "min_rho": 0.8009166247075179,
+          "min_eng": 2.900458312353755,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "cuda": {
+          "status": "pass",
+          "mode": "smooth",
+          "step": 50,
+          "time": 0.1,
+          "l1": 0.00015528998954181424,
+          "l2": 0.00026704504232958557,
+          "linf": 0.0009368729594856351,
+          "mean": 0.9999999999999973,
+          "mass": 0.9999999999999973,
+          "mom_u": 0.9999999999999971,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.9999999999999902,
+          "min_rho": 0.8009166247075179,
+          "min_eng": 2.900458312353755,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        }
+      }
+    },
+    {
+      "id": "gravity_amr_rk2",
+      "comparisons": 4,
+      "application_runs": 8,
+      "max_abs": 0,
+      "max_rel": 0,
+      "oracle": {
+        "cpu": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 40,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.5050000000000017,
+          "rho_linf": 0,
+          "velocity_linf": 1.3877787807814457e-17,
+          "pressure_linf": 4.440892098500626e-16,
+          "energy_linf": 1.3322676295501878e-15
+        },
+        "cuda": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 40,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.5050000000000017,
+          "rho_linf": 0,
+          "velocity_linf": 1.3877787807814457e-17,
+          "pressure_linf": 4.440892098500626e-16,
+          "energy_linf": 1.3322676295501878e-15
+        }
+      }
+    },
+    {
+      "id": "gravity_amr_rk3",
+      "comparisons": 4,
+      "application_runs": 8,
+      "max_abs": 0,
+      "max_rel": 0,
+      "oracle": {
+        "cpu": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 40,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.5049999999999955,
+          "rho_linf": 0,
+          "velocity_linf": 2.0816681711721685e-16,
+          "pressure_linf": 1.9984014443252818e-15,
+          "energy_linf": 4.884981308350689e-15
+        },
+        "cuda": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 40,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.5049999999999955,
+          "rho_linf": 0,
+          "velocity_linf": 2.0816681711721685e-16,
+          "pressure_linf": 1.9984014443252818e-15,
+          "energy_linf": 4.884981308350689e-15
+        }
+      }
+    },
+    {
+      "id": "gravity_species_diffusion_amr_rk3_rkl2",
+      "comparisons": 4,
+      "application_runs": 8,
+      "max_abs": 1.4432899320127035e-15,
+      "max_rel": 4.950693750282658e-15,
+      "oracle": {
+        "cpu": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 164,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.5049999999999395,
+          "rho_linf": 0,
+          "velocity_linf": 6.38378239159465e-16,
+          "pressure_linf": 2.4424906541753444e-14,
+          "energy_linf": 6.084022174945858e-14
+        },
+        "cuda": {
+          "status": "pass",
+          "mode": "gravity",
+          "step": 164,
+          "time": 0.1,
+          "min_rho": 1,
+          "min_eng": 2.5049999999999395,
+          "rho_linf": 0,
+          "velocity_linf": 6.38378239159465e-16,
+          "pressure_linf": 2.4424906541753444e-14,
+          "energy_linf": 6.084022174945858e-14
+        }
+      }
+    }
+  ],
+  "regular_comparisons": 21,
+  "regular_application_runs": 42,
+  "endpoints": {
+    "passed": 6,
+    "max_mass_relative_drift": 0.0,
+    "max_species_relative_drift": 3.131881329541987e-15
+  },
+  "restart": {
+    "application_runs": 12,
+    "comparisons": 9,
+    "resume_after_regrid_phases": [
+      true,
+      false
+    ],
+    "routes": [
+      "cpu_vs_cuda_continuous",
+      "cpu_to_cpu",
+      "cuda_to_cuda",
+      "cpu_to_cuda",
+      "cuda_to_cpu",
+      "cpu_to_cpu_terminal",
+      "cuda_to_cuda_terminal",
+      "cpu_to_cuda_terminal",
+      "cuda_to_cpu_terminal"
+    ],
+    "max_field_normalized": 5.733420634790574e-12,
+    "max_enuc_normalized": 7.893567164934631e-13,
+    "max_dt_burn_relative": 7.893926911153437e-13,
+    "active_enuc_lanes": 12,
+    "same_backend_zero_field_error": true
+  },
+  "smoke": {
+    "cases": 3,
+    "application_runs": 5,
+    "scientific_validation": false
+  },
+  "sanitizer": {
+    "runs": 4,
+    "reports": [
+      {
+        "target": "arch_cuda_amr_composition",
+        "tool": "memcheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_amr_composition-memcheck/sanitizer.log",
+          "sha256": "e6212e7a527212944a2ea41f857084a393463cd19680de7957b179ee12caa2fc"
+        },
+        "summaries": [
+          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+          "ERROR SUMMARY: 0 errors"
+        ]
+      },
+      {
+        "target": "arch_cuda_amr_composition",
+        "tool": "racecheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_amr_composition-racecheck/sanitizer.log",
+          "sha256": "fa9cfc3f503caa66201bd239fd11b14a2bf49a2f1c862319382182f8a358b117"
+        },
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      {
+        "target": "arch_cuda_regrid_transaction",
+        "tool": "memcheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_regrid_transaction-memcheck/sanitizer.log",
+          "sha256": "586017fab5c7345011a247d815621f128df7d8c030e8e31b526041fb187c37ff"
+        },
+        "summaries": [
+          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+          "ERROR SUMMARY: 0 errors"
+        ]
+      },
+      {
+        "target": "arch_cuda_regrid_transaction",
+        "tool": "racecheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/sanitizer/arch_cuda_regrid_transaction-racecheck/sanitizer.log",
+          "sha256": "9b2f6fc5330f853d3368bfb36f3fa0fbd7ad889ec40382757baf5193c77753ce"
+        },
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      }
+    ]
+  },
+  "tooling": {
+    "passed": 355,
+    "skipped": 0
+  },
+  "host_comparator": {
+    "comparisons": 40,
+    "wrong_step_rejected": true
+  },
+  "hosted_ci": {
+    "head_sha": "74a755e596a29dce7f13ac7864ee3692553d7166",
+    "conclusion": "success",
+    "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/35613817405"
+  }
+}

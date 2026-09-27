@@ -5,19 +5,19 @@
 #pragma once
 
 // Linear algebra backends shared by all networks.
-#include "../linalg/DenseWrap.h"
-#include "../linalg/SparseWrap.h"
+#include "numerics/linalg/DenseWrap.h"
+#include "numerics/linalg/SparseWrap.h"
 
 // Nuclear reaction-network policies.
-#include "../../physics/network/aprox13/NetAprox13.h"
-#include "../../physics/network/aprox19/NetAprox19.h"
-#include "../../physics/network/aprox21/NetAprox21.h"
-#include "../../physics/network/iso7/NetIso7.h"
+#include "physics/network/aprox13/NetAprox13.h"
+#include "physics/network/aprox19/NetAprox19.h"
+#include "physics/network/aprox21/NetAprox21.h"
+#include "physics/network/iso7/NetIso7.h"
 
 // Generated at CMake configure time from custom/*/network.cmake packages.
 #include "CustomNetworks.generated.h"
 
-#include "../../driver/dispatch/PolicyDescriptor.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 
 template <class Binding>
 struct CpuNetworkType;

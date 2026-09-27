@@ -1,6 +1,6 @@
 // ARCH compilation unit for the Timmes-derived aprox19 network.
 // Source details: docs/physics/TimmesNetworks.md.
-#include "NetAprox19.h"
+#include "physics/network/aprox19/NetAprox19.h"
 
 static_assert(NetAprox19::NUM_SPECIES == 19);
 static_assert(NetAprox19::ODE_NEQ == 20);

@@ -1,0 +1,29 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===================================================================
+-- Configuring ARCH Framework
+-- C++ Standard: C++20 Required
+-- ===================================================================
+-- [OPT] Found ccache: /usr/bin/ccache
+-- [OPT] Build Type: Release
+-- [OPT] LTO enabled for optimized configurations
+-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed
+-- [CUDA] Compiled code images: 86
+-- [DEP] cuDSS found: /home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0
+-- [OPT] CUDA compiler cache enabled: /usr/bin/ccache
+-- [DEP] OpenMP enabled for target ARCH
+-- [DEP] HDF5 C++ libraries linked successfully
+-- [DEP] HighFive headers configured via FetchContent
+-- [DEP] SuiteSparse KLU enabled for sparse reaction networks
+-- ===================================================================
+-- [SUCCESS] ARCH Framework build environment configured successfully!
+-- [SUCCESS] Executable : /home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH
+-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/
+-- ===================================================================
+-- Configuring done (6.4s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+[0/2] Re-checking globbed directories...
+[1/1] Linking CXX executable arch_cuda_single_level_validation
+MEMORY_GUARD_RESULT min_available_kib=7156292 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=273104 elapsed_seconds=8.206 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.817 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=9 complete=True

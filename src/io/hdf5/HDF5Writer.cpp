@@ -12,7 +12,8 @@
 #include <cmath>
 #include <limits>
 
-#include "HDF5Writer.h"
+#include "io/hdf5/HDF5Writer.h"
+#include "core/config/ConfigValidation.h"
 
 #include <highfive/H5DataSet.hpp>
 #include <highfive/H5DataSpace.hpp>
@@ -23,6 +24,27 @@ using namespace HighFive;
 namespace io {
 
 namespace {
+
+bool has_valid_state_diagnostics(const CheckpointData& c)
+{
+    const auto finite = [](double value) { return std::isfinite(value); };
+    const auto& v = c.repairs.values;
+    if (c.num_species < 0 || v.size() != arch::state::RepairView::fixed_size + 2 * c.num_species
+        || !std::all_of(v.begin(), v.end(), finite)
+        || c.state_controls.size() != arch::config::StateControlCount
+        || c.state_controls.front() != arch::config::StateControlRevision
+        || !std::all_of(c.state_controls.begin(), c.state_controls.end(), finite)
+        || !std::all_of(c.repairs.position, c.repairs.position + 3, finite)
+        || !finite(c.repairs.time) || c.repairs.time < 0.0 || c.repairs.time > c.time
+        || c.repairs.stage < 0 || c.repairs.stage > 3)
+        return false;
+    if (v[0] < 0.0 || std::floor(v[0]) != v[0] || v[1] < 0.0
+        || v[3] < std::abs(v[2]) || v[8] < std::abs(v[7])
+        || v[9] < 0.0 || std::floor(v[9]) != v[9]) return false;
+    for (int species = 0; species < c.num_species; ++species)
+        if (v[11 + 2 * species] < std::abs(v[10 + 2 * species])) return false;
+    return true;
+}
 
 bool has_valid_timestep_state(const CheckpointData& checkpoint)
 {
@@ -90,6 +112,14 @@ bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
             return character >= 'A' && character <= 'Z';
         });
     };
+    const auto& gravity=provenance.gravity_controls;
+    if (!std::all_of(gravity.begin(),gravity.end(),[](double x){return std::isfinite(x);})) return false;
+    if (provenance.gravity_type=="self") {
+        if ((provenance.gravity_boundary!="periodic" && provenance.gravity_boundary!="isolated") || gravity.size()!=4 || gravity[0]<=0.
+            || gravity[1]<=0. || gravity[1]>=1. || gravity[2]<0. || gravity[3]<1. || std::floor(gravity[3])!=gravity[3]) return false;
+    } else if (provenance.gravity_type=="external") {
+        if (gravity.size()!=3 || provenance.gravity_boundary!="none") return false;
+    } else if (provenance.gravity_type!="none" || !gravity.empty() || provenance.gravity_boundary!="none") return false;
     if (!provenance.available || provenance.eos_type.empty()
         || provenance.active_network.empty()
         || !is_canonical_identity(provenance.eos_type)
@@ -188,9 +218,17 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         throw std::invalid_argument(
             "Checkpoint scientific provenance is inconsistent.");
     }
+    if (!has_valid_state_diagnostics(checkpoint))
+        throw std::invalid_argument("Checkpoint state controls or repair ledger are invalid.");
     try {
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
         file.createAttribute("checkpoint_version", checkpoint_format_version);
+        file.createDataSet("state_repairs", checkpoint.repairs.values);
+        file.createDataSet("state_controls", checkpoint.state_controls);
+        file.createAttribute("repair_block_uid", checkpoint.repairs.block_uid);
+        file.createAttribute("repair_stage", checkpoint.repairs.stage);
+        file.createAttribute("repair_time", checkpoint.repairs.time);
+        file.createDataSet("repair_position", std::vector<double>(checkpoint.repairs.position, checkpoint.repairs.position+3));
         file.createAttribute("time", checkpoint.time);
         file.createAttribute("dt_old", checkpoint.dt_old);
         file.createAttribute("dt_burn", checkpoint.dt_burn);
@@ -203,6 +241,9 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
         file.createAttribute("eos_type", checkpoint.provenance.eos_type);
+        file.createAttribute("gravity_type", checkpoint.provenance.gravity_type);
+        file.createAttribute("gravity_boundary", checkpoint.provenance.gravity_boundary);
+        file.createDataSet("gravity_controls", checkpoint.provenance.gravity_controls);
         file.createAttribute("ideal_gamma", checkpoint.provenance.ideal_gamma);
         file.createAttribute(
             "burn_enabled", checkpoint.provenance.burn_enabled ? 1 : 0);
@@ -263,6 +304,18 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         file.getAttribute("checkpoint_version").read(version);
         if (version != checkpoint_format_version)
             throw std::runtime_error("Unsupported checkpoint format version.");
+        file.getDataSet("state_repairs").read(checkpoint.repairs.values);
+        file.getDataSet("state_controls").read(checkpoint.state_controls);
+        file.getAttribute("repair_block_uid").read(checkpoint.repairs.block_uid);
+        file.getAttribute("repair_stage").read(checkpoint.repairs.stage);
+        file.getAttribute("repair_time").read(checkpoint.repairs.time);
+        std::vector<double> position;
+        file.getDataSet("repair_position").read(position);
+        if (position.size()!=3 || !std::all_of(position.begin(),position.end(),[](double v){return std::isfinite(v);})
+            || !std::isfinite(checkpoint.repairs.time) || checkpoint.repairs.time < 0.0
+            || checkpoint.repairs.stage < 0 || checkpoint.repairs.stage > 3)
+            throw std::runtime_error("Invalid checkpoint repair location");
+        std::copy_n(position.begin(),3,checkpoint.repairs.position);
         file.getAttribute("time").read(checkpoint.time);
         int resume_after_regrid = 0;
         file.getAttribute("dt_old").read(checkpoint.dt_old);
@@ -284,6 +337,9 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         int nse_enabled = 0;
         checkpoint.provenance.available = true;
         file.getAttribute("eos_type").read(checkpoint.provenance.eos_type);
+        file.getAttribute("gravity_type").read(checkpoint.provenance.gravity_type);
+        file.getAttribute("gravity_boundary").read(checkpoint.provenance.gravity_boundary);
+        file.getDataSet("gravity_controls").read(checkpoint.provenance.gravity_controls);
         file.getAttribute("ideal_gamma").read(
             checkpoint.provenance.ideal_gamma);
         file.getAttribute("burn_enabled").read(burn_enabled);
@@ -364,6 +420,8 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
             throw std::runtime_error(
                 "Checkpoint scientific provenance is inconsistent.");
         }
+        if (!has_valid_state_diagnostics(checkpoint))
+            throw std::runtime_error("Checkpoint state controls or repair ledger are invalid.");
         return checkpoint;
     } catch (const Exception& err) {
         throw std::runtime_error("Checkpoint read failed: " + std::string(err.what()));

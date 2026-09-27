@@ -11,9 +11,14 @@ stable; implementation files are grouped by responsibility:
 | [hydro](hydro/README.md) | Hydro launch declarations, stage control and EOS bindings |
 | [burn](burn/README.md) | Dense/sparse burn launch contracts and registered network binding |
 | [amr](amr/README.md) | Indicator, migration, ghost exchange and flux-correction orchestration |
+| [gravity](gravity/README.md) | Resident gravity fields, shared-work launches, reductions and publication |
 | [diffusion](diffusion/README.md) | Diffusion launch interface and device execution |
 
-These directories represent functional boundaries, not isolated implementations of physical models; all numerical leaves remain strictly shared with the CPU. You must keep heavy EOS and network bodies out of declaration-only launch headers, though complete owners are permitted to include the specific types they construct. For cross-group includes, always use the explicit `cuda/runtime/...` path starting from the existing `src` root, completely avoiding any extra global search paths.
+These groups separate execution responsibilities; their numerical operations
+are shared with CPU. Declaration-only launch headers should not include complete
+EOS or network implementations. The owning translation unit includes the types
+it constructs. Cross-group includes use `cuda/runtime/...` from the existing
+`src` include root, without additional global search paths.
 
 CMake continues to name each translation unit explicitly. Generated policy
 bindings belong in the build directory and are produced by

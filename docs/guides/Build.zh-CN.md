@@ -70,9 +70,9 @@ NVIDIA CUDA 工具链、该工具链支持的宿主编译器及兼容的 NVIDIA 
 首次配置会通过 Git 获取 HighFive 2.9.0，因此需要网络。KLU 默认启用：CMake
 优先使用已安装的 KLU，否则获取 SuiteSparse 7.13.0。已有本地依赖源码时，可以
 用 CMake 的 FetchContent 源码覆盖选项指定位置。OpenMP、HDF5、HighFive 和 KLU
-声明位于 [cmake/Dependencies.cmake](../../cmake/Dependencies.cmake)；CUDA 专用
-求解库（包括 cuDSS）的发现仍由 [cmake/CudaBackend.cmake](../../cmake/CudaBackend.cmake)
-通过 [FindCuDSS.cmake](../../cmake/FindCuDSS.cmake)等查找逻辑处理。
+声明位于 [cmake/dependencies/Dependencies.cmake](../../cmake/dependencies/Dependencies.cmake)；CUDA 专用
+求解库（包括 cuDSS）的发现仍由 [cmake/cuda/CudaBackend.cmake](../../cmake/cuda/CudaBackend.cmake)
+通过 [FindCuDSS.cmake](../../cmake/dependencies/FindCuDSS.cmake)等查找逻辑处理。
 通过 Git LFS 管理的 EOS 资源需要先执行 `git lfs pull`，再使用相应表格。
 
 构建监控和测试工具需要 **Python 3.10 或更高版本**，ARCH 可执行文件本身不依赖

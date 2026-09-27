@@ -1,0 +1,447 @@
+{
+  "scope": "P2 single-domain CPU Poisson; no production self route or GPU execution",
+  "base_commit": "780794b69afb118249d9bed9de44c547fcedd222",
+  "candidate_sources": {
+    "src/numerics/elliptic/CartesianPoisson.h": {
+      "path": "/home/shiroakane/ARCH/src/numerics/elliptic/CartesianPoisson.h",
+      "sha256": "01aaa44abf73430dd3d02d06cf0d16a6fa6afda535add5a1271c5e1f8ab1d41b"
+    },
+    "src/numerics/elliptic/CartesianPoisson.cpp": {
+      "path": "/home/shiroakane/ARCH/src/numerics/elliptic/CartesianPoisson.cpp",
+      "sha256": "296ae0c9d0f99f597ca8634a1e456475f3538cb42e12cff8f2f3bbc8369f785a"
+    },
+    "src/numerics/multigrid/HostMultigrid.h": {
+      "path": "/home/shiroakane/ARCH/src/numerics/multigrid/HostMultigrid.h",
+      "sha256": "6cc121bf199df9cf7b755cefb756c95b1b7763e891cdd297b36d41a25dd23c28"
+    },
+    "src/numerics/multigrid/HostMultigrid.cpp": {
+      "path": "/home/shiroakane/ARCH/src/numerics/multigrid/HostMultigrid.cpp",
+      "sha256": "5978a90fe5f57253b29dbbbb11b1cfc8126cce73da68cb42c931cc7db2b17172"
+    },
+    "src/numerics/multigrid/MGTransfer.h": {
+      "path": "/home/shiroakane/ARCH/src/numerics/multigrid/MGTransfer.h",
+      "sha256": "b882a6998f0011f71b662553e9b7fab51d41aba86efc17e36b1931a53818be94"
+    },
+    "src/numerics/linalg/DenseWrap.h": {
+      "path": "/home/shiroakane/ARCH/src/numerics/linalg/DenseWrap.h",
+      "sha256": "b26f83191a53d5affeea6b9421f52a932911157a235ad3adf0d9bf2124312634"
+    },
+    "src/physics/gravity/UniformGravity.h": {
+      "path": "/home/shiroakane/ARCH/src/physics/gravity/UniformGravity.h",
+      "sha256": "d4f6b6cd4db383e8884be124f0c06dd1e8161575b96f35a2a89238548b61a50c"
+    },
+    "src/physics/gravity/UniformGravity.cpp": {
+      "path": "/home/shiroakane/ARCH/src/physics/gravity/UniformGravity.cpp",
+      "sha256": "dc5a7db1af884daf8a44f75f2fee3aa32c3e75f1268b594e5c644f832f761e3f"
+    },
+    "src/physics/constant/PhysicalConstants.h": {
+      "path": "/home/shiroakane/ARCH/src/physics/constant/PhysicalConstants.h",
+      "sha256": "fbac1db45fb0301fefc4a547ea2c5957182c680ea7ea6ed7a57742714f81734e"
+    },
+    "src/grid/ScalarFieldView.h": {
+      "path": "/home/shiroakane/ARCH/src/grid/ScalarFieldView.h",
+      "sha256": "7b69078069e07931cc34f4a4aa4612a4735b83871ead70bcea549fcee0fd1fe7"
+    },
+    "src/core/CompensatedSum.h": {
+      "path": "/home/shiroakane/ARCH/src/core/CompensatedSum.h",
+      "sha256": "f643c8864587f427f12e05ec6c6f3f1ecdf1c86d202134650c4edfca6818ba2e"
+    },
+    "src/core/ArchPortability.h": {
+      "path": "/home/shiroakane/ARCH/src/core/ArchPortability.h",
+      "sha256": "4bb1e0e6f7b2bb56a5a92f88a93fe444e33d1a8fb3fe8b50067b1ad07a7db204"
+    },
+    "tests/host/gravity/test_poisson_multigrid.cpp": {
+      "path": "/home/shiroakane/ARCH/tests/host/gravity/test_poisson_multigrid.cpp",
+      "sha256": "984d9fd9d05bb99dd06bfa756aee553fb6de9964f663010ce9615d432049eb98"
+    },
+    "cmake/tests/HostTests.cmake": {
+      "path": "/home/shiroakane/ARCH/cmake/tests/HostTests.cmake",
+      "sha256": "2ad92e51f5907d90bdc924e3ee32290f1e2e9fb06cf909efb32e7b3bdf026a38"
+    },
+    "validation/gravity/p2_cpu_poisson.py": {
+      "path": "/home/shiroakane/ARCH/validation/gravity/p2_cpu_poisson.py",
+      "sha256": "e62503ecb92d5f2756dc134a86af7f94950a6c4c5767e64d069584fcc28486b2"
+    },
+    "tools/validation_provenance.py": {
+      "path": "/home/shiroakane/ARCH/tools/validation_provenance.py",
+      "sha256": "eb351e67ea8dfa6de7ee5deed394c4e0e5002cee8d9cf4f11a2811b41c91500a"
+    },
+    "tools/validate_backend_results.py": {
+      "path": "/home/shiroakane/ARCH/tools/validate_backend_results.py",
+      "sha256": "3445154e6041310af2321b34e5fed130cac2401b34d685d53a647968a8452ca8"
+    },
+    "tools/validation_sanitizer.py": {
+      "path": "/home/shiroakane/ARCH/tools/validation_sanitizer.py",
+      "sha256": "da08eceb2ae6b1f9abf1955e202ed2dda09975d749e3b566cebe3cbf0656026f"
+    }
+  },
+  "executable": {
+    "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_poisson_multigrid",
+    "sha256": "e48779a972d7f2a5ad808e3303475b5f990c9ab0e880f62cb0af5ed577510228"
+  },
+  "build_cache": [
+    "ARCH_ENABLE_CUDA:BOOL=ON",
+    "ARCH_ENABLE_KLU:BOOL=ON",
+    "CMAKE_BUILD_TYPE:STRING=Release",
+    "CMAKE_CXX_COMPILER:STRING=/usr/bin/g++-12"
+  ],
+  "tests": [
+    {
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_poisson_multigrid",
+        "contract"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.7730141979991458
+    },
+    {
+      "command": [
+        "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/arch_poisson_multigrid",
+        "analytic"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.6108817599961185
+    }
+  ],
+  "convergence": [
+    {
+      "boundary": "periodic",
+      "dimension": "1",
+      "n": "16",
+      "cycles": "10",
+      "residual": "8.8938665352286307e-12",
+      "target": "2.7915456798555513e-11",
+      "phi_rms": "0.0091575608282424923",
+      "cell_force_rms": "0.05724298803128744",
+      "face_force_rms": "0.027820561179125895",
+      "boundary_force_rms": "1.267243467597971e-15",
+      "phi_order": "0",
+      "cell_order": "0",
+      "face_order": "0",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "periodic",
+      "dimension": "1",
+      "n": "32",
+      "cycles": "10",
+      "residual": "1.8102447282828617e-11",
+      "target": "2.7915456798555513e-11",
+      "phi_rms": "0.0022761515835191897",
+      "cell_force_rms": "0.014283104978916944",
+      "face_force_rms": "0.0070359055275417311",
+      "boundary_force_rms": "1.0881924738404062e-15",
+      "phi_order": "2.0083667397815028",
+      "cell_order": "2.0027893430002006",
+      "face_order": "1.9833435046158494",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "periodic",
+      "dimension": "1",
+      "n": "64",
+      "cycles": "10",
+      "residual": "2.1243217898969597e-11",
+      "target": "2.7915456798555513e-11",
+      "phi_rms": "0.00056821522575603535",
+      "cell_force_rms": "0.0035690545701387846",
+      "face_force_rms": "0.0017709603043243535",
+      "boundary_force_rms": "1.0881924738404062e-15",
+      "phi_order": "2.0020872438901796",
+      "cell_order": "2.0006957731930113",
+      "face_order": "1.9902042368274111",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "periodic",
+      "dimension": "2",
+      "n": "16",
+      "cycles": "14",
+      "residual": "3.206260441243955e-11",
+      "target": "6.2420859024528788e-11",
+      "phi_rms": "0.020476928519737467",
+      "cell_force_rms": "0.090509111127620764",
+      "face_force_rms": "0.043988169553755299",
+      "boundary_force_rms": "2.4424188637106094e-15",
+      "phi_order": "0",
+      "cell_order": "0",
+      "face_order": "0",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "periodic",
+      "dimension": "2",
+      "n": "32",
+      "cycles": "14",
+      "residual": "4.3927393403813721e-11",
+      "target": "6.2420859024528775e-11",
+      "phi_rms": "0.0050896296677885051",
+      "cell_force_rms": "0.022583571896573753",
+      "face_force_rms": "0.011124743434163486",
+      "boundary_force_rms": "3.2832321601949764e-15",
+      "phi_order": "2.0083667397755853",
+      "cell_order": "2.002789343005754",
+      "face_order": "1.9833435046041281",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "periodic",
+      "dimension": "2",
+      "n": "64",
+      "cycles": "14",
+      "residual": "4.8190958804231515e-11",
+      "target": "6.2420859024528775e-11",
+      "phi_rms": "0.0012705678706776866",
+      "cell_force_rms": "0.0056431707673726249",
+      "face_force_rms": "0.0028001341038671247",
+      "boundary_force_rms": "5.537308409308118e-15",
+      "phi_order": "2.0020872438330302",
+      "cell_order": "2.0006957732500359",
+      "face_order": "1.9902042367131543",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "periodic",
+      "dimension": "3",
+      "n": "16",
+      "cycles": "20",
+      "residual": "4.5631736981789596e-11",
+      "target": "1.0445007513548409e-10",
+      "phi_rms": "0.034264455117629281",
+      "cell_force_rms": "0.12365898741163864",
+      "face_force_rms": "0.060099281028017072",
+      "boundary_force_rms": "3.312181046932736e-15",
+      "phi_order": "0",
+      "cell_order": "0",
+      "face_order": "0",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "periodic",
+      "dimension": "3",
+      "n": "32",
+      "cycles": "20",
+      "residual": "4.708327167555654e-11",
+      "target": "1.0445007513548408e-10",
+      "phi_rms": "0.008516579386610346",
+      "cell_force_rms": "0.030855033242909995",
+      "face_force_rms": "0.015199293103393617",
+      "boundary_force_rms": "4.8688913153308032e-15",
+      "phi_order": "2.008366739651529",
+      "cell_order": "2.0027893431293649",
+      "face_order": "1.9833435043561449",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "periodic",
+      "dimension": "3",
+      "n": "64",
+      "cycles": "20",
+      "residual": "4.6505843980649759e-11",
+      "target": "1.0445007513548408e-10",
+      "phi_rms": "0.0021260666977723332",
+      "cell_force_rms": "0.007710039065394878",
+      "face_force_rms": "0.003825711510259208",
+      "boundary_force_rms": "7.2335781377232565e-15",
+      "phi_order": "2.0020872433029009",
+      "cell_order": "2.0006957737800066",
+      "face_order": "1.9902042356530005",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "1",
+      "n": "16",
+      "cycles": "11",
+      "residual": "4.0747290441935014e-11",
+      "target": "3.1030947366657743e-10",
+      "phi_rms": "0.0018621736120677508",
+      "cell_force_rms": "0.0080537927281253922",
+      "face_force_rms": "0.0037607266399667825",
+      "boundary_force_rms": "0.0051142014677784302",
+      "phi_order": "0",
+      "cell_order": "0",
+      "face_order": "0",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "1",
+      "n": "32",
+      "cycles": "11",
+      "residual": "7.8402728865568559e-11",
+      "target": "8.7995658573972158e-10",
+      "phi_rms": "0.00051565315354838866",
+      "cell_force_rms": "0.0020233715415628279",
+      "face_force_rms": "0.0009324215691018273",
+      "boundary_force_rms": "0.0012812513822268912",
+      "phi_order": "1.8525146933403829",
+      "cell_order": "1.9929070845851757",
+      "face_order": "2.0119571605519377",
+      "boundary_order": "1.9969554339115863"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "1",
+      "n": "64",
+      "cycles": "10",
+      "residual": "1.9100725306738028e-09",
+      "target": "2.4908039141275684e-09",
+      "phi_rms": "0.00013538751612777916",
+      "cell_force_rms": "0.00050715063393086282",
+      "face_force_rms": "0.00023216129677740304",
+      "boundary_force_rms": "0.00032075317524641564",
+      "phi_order": "1.9293062680486335",
+      "cell_order": "1.996275033658653",
+      "face_order": "2.0058548948145125",
+      "boundary_order": "1.9980181087783004"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "2",
+      "n": "16",
+      "cycles": "15",
+      "residual": "1.255028101488466e-09",
+      "target": "1.3509741389450391e-09",
+      "phi_rms": "0.0025157759352352868",
+      "cell_force_rms": "0.015802019757080298",
+      "face_force_rms": "0.0061010140144252319",
+      "boundary_force_rms": "0.01083213938635795",
+      "phi_order": "0",
+      "cell_order": "0",
+      "face_order": "0",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "2",
+      "n": "32",
+      "cycles": "15",
+      "residual": "2.9425930167034777e-09",
+      "target": "3.7298263836160669e-09",
+      "phi_rms": "0.0006962425643401006",
+      "cell_force_rms": "0.0040101206207130372",
+      "face_force_rms": "0.0014878276811183392",
+      "boundary_force_rms": "0.0027073688243957465",
+      "phi_order": "1.8533415158204893",
+      "cell_order": "1.9783914328807146",
+      "face_order": "2.0358416001814308",
+      "boundary_order": "2.000354864375494"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "2",
+      "n": "64",
+      "cycles": "15",
+      "residual": "5.963194007327797e-09",
+      "target": "1.0421605728797407e-08",
+      "phi_rms": "0.00018291046267925455",
+      "cell_force_rms": "0.0010097295211449937",
+      "face_force_rms": "0.00036832189354642203",
+      "boundary_force_rms": "0.00067781517052719058",
+      "phi_order": "1.9284524138014796",
+      "cell_order": "1.989676745981583",
+      "face_order": "2.0141683838384168",
+      "boundary_order": "1.9979276070522414"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "3",
+      "n": "16",
+      "cycles": "19",
+      "residual": "1.2920711688303115e-09",
+      "target": "3.5036877823958711e-09",
+      "phi_rms": "0.0030232874642953083",
+      "cell_force_rms": "0.023688889842803568",
+      "face_force_rms": "0.0085424719364574526",
+      "boundary_force_rms": "0.016662134643643644",
+      "phi_order": "0",
+      "cell_order": "0",
+      "face_order": "0",
+      "boundary_order": "0"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "3",
+      "n": "32",
+      "cycles": "18",
+      "residual": "4.8957395907943998e-09",
+      "target": "9.4469791353859546e-09",
+      "phi_rms": "0.00083736746832319489",
+      "cell_force_rms": "0.0060258590142221839",
+      "face_force_rms": "0.0020524523930791037",
+      "boundary_force_rms": "0.0041366927531896868",
+      "phi_order": "1.8521853861006092",
+      "cell_order": "1.9749717656350085",
+      "face_order": "2.0573048442745252",
+      "boundary_order": "2.0100235285922374"
+    },
+    {
+      "boundary": "dirichlet",
+      "dimension": "3",
+      "n": "64",
+      "cycles": "17",
+      "residual": "1.4150362817390103e-08",
+      "target": "2.6059711463684828e-08",
+      "phi_rms": "0.00022027800449705737",
+      "cell_force_rms": "0.0015185031290323575",
+      "face_force_rms": "0.00050512677042072087",
+      "boundary_force_rms": "0.0010316906650294322",
+      "phi_order": "1.9265354262928178",
+      "cell_order": "1.9885170375591683",
+      "face_order": "2.0226313508399927",
+      "boundary_order": "2.0034673395595015"
+    }
+  ],
+  "cgs": [
+    {
+      "rho0": "1",
+      "length": "1",
+      "cycles": "10",
+      "relative_phi_error": "0.003218964439429749",
+      "relative_force_error": "0.0025221618988703152",
+      "removed_density_mean": "0.99999999999999989"
+    },
+    {
+      "rho0": "1",
+      "length": "1000000",
+      "cycles": "10",
+      "relative_phi_error": "0.0032189644394302144",
+      "relative_force_error": "0.0025221618988701803",
+      "removed_density_mean": "1"
+    },
+    {
+      "rho0": "1.0000000000000001e-30",
+      "length": "1",
+      "cycles": "10",
+      "relative_phi_error": "0.0032189644394298679",
+      "relative_force_error": "0.0025221618988702445",
+      "removed_density_mean": "1.0000000000000001e-30"
+    },
+    {
+      "rho0": "1.0000000000000001e-30",
+      "length": "1000000",
+      "cycles": "10",
+      "relative_phi_error": "0.0032189644394299741",
+      "relative_force_error": "0.0025221618988702258",
+      "removed_density_mean": "1.0000000000000001e-30"
+    },
+    {
+      "rho0": "1e-100",
+      "length": "1",
+      "cycles": "10",
+      "relative_phi_error": "0.003218964439429589",
+      "relative_force_error": "0.0025221618988703507",
+      "removed_density_mean": "1e-100"
+    },
+    {
+      "rho0": "1e-100",
+      "length": "1000000",
+      "cycles": "10",
+      "relative_phi_error": "0.0032189644394296489",
+      "relative_force_error": "0.0025221618988703486",
+      "removed_density_mean": "1e-100"
+    }
+  ],
+  "status": "passed"
+}

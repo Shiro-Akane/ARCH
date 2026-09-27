@@ -1,0 +1,55 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+Test project /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+      Start  1: checkpoint_temporal_comparison
+ 1/22 Test  #1: checkpoint_temporal_comparison .............   Passed    0.01 sec
+      Start 31: shared_stage_scheduler
+ 2/22 Test #31: shared_stage_scheduler .....................   Passed    0.00 sec
+      Start 32: gravity_stage_contract
+ 3/22 Test #32: gravity_stage_contract .....................   Passed    0.00 sec
+      Start 48: cuda_regrid_transaction
+ 4/22 Test #48: cuda_regrid_transaction ....................   Passed    0.53 sec
+      Start 54: cuda_regrid_migration
+ 5/22 Test #54: cuda_regrid_migration ......................   Passed    0.32 sec
+      Start 57: cuda_hydro_dispatch
+ 6/22 Test #57: cuda_hydro_dispatch ........................   Passed    0.00 sec
+      Start 60: cuda_amr_composition
+ 7/22 Test #60: cuda_amr_composition .......................   Passed    0.24 sec
+      Start 67: cuda_compile_probe
+ 8/22 Test #67: cuda_compile_probe .........................   Passed    0.00 sec
+      Start 73: diffusion_rkl_parity
+ 9/22 Test #73: diffusion_rkl_parity .......................   Passed    0.48 sec
+      Start 76: cuda_reduction_contract
+10/22 Test #76: cuda_reduction_contract ....................   Passed    0.22 sec
+      Start 78: cuda_multiblock_hydro
+11/22 Test #78: cuda_multiblock_hydro ......................   Passed    0.35 sec
+      Start 79: cuda_multiblock_diffusion
+12/22 Test #79: cuda_multiblock_diffusion ..................   Passed    0.26 sec
+      Start 80: cuda_multiblock_burn
+13/22 Test #80: cuda_multiblock_burn .......................   Passed    4.45 sec
+      Start 81: cuda_multiblock_burn_b3
+14/22 Test #81: cuda_multiblock_burn_b3 ....................   Passed    4.47 sec
+      Start 82: cuda_multiblock_diffusion_b3
+15/22 Test #82: cuda_multiblock_diffusion_b3 ...............   Passed    0.26 sec
+      Start 83: cuda_multiblock_burn_b1024
+16/22 Test #83: cuda_multiblock_burn_b1024 .................   Passed   33.30 sec
+      Start 84: cuda_multiblock_diffusion_b1024
+17/22 Test #84: cuda_multiblock_diffusion_b1024 ............   Passed    7.30 sec
+      Start 85: cuda_multiblock_burn_b1025
+18/22 Test #85: cuda_multiblock_burn_b1025 .................   Passed   33.91 sec
+      Start 86: cuda_multiblock_diffusion_b1025
+19/22 Test #86: cuda_multiblock_diffusion_b1025 ............   Passed    7.28 sec
+      Start 87: cuda_multiblock_diffusion_global_species
+20/22 Test #87: cuda_multiblock_diffusion_global_species ...   Passed    0.32 sec
+      Start 88: cuda_store_lifecycle
+21/22 Test #88: cuda_store_lifecycle .......................   Passed    0.23 sec
+      Start 89: cuda_amr_exchange
+22/22 Test #89: cuda_amr_exchange ..........................   Passed   98.30 sec
+
+100% tests passed, 0 tests failed out of 22
+
+Label Time Summary:
+batch-boundary    =  86.83 sec*proc (7 tests)
+cuda              =  86.83 sec*proc (7 tests)
+microphysics      =  86.83 sec*proc (7 tests)
+
+Total Test time (real) = 192.24 sec

@@ -8,10 +8,8 @@ The smooth-wave tests measure how accurately a profile travels; Sod and Sedov
 test sharp waves and shock positions. Read the errors against each problem's
 reference solution before using CPU/CUDA agreement to assess backend consistency.
 
-The results on this page belong to the scientific acceptance snapshot identified
-in the [central Validation index](../README.md). Source organization and build
-verification have a separate
-[maintenance record](../backend/results/maintenance-freeze-20260908/).
+Each detailed record identifies its tested source, executable and inputs.
+The [validation overview](../README.md) brings together the module results.
 
 CPU and CUDA pass the smooth-wave spatial and temporal accuracy,
 Sod, sustained periodic-advection and planar Sedov checks.
@@ -28,7 +26,7 @@ are fixed while PCM, MUSCL-MC, and PPM are run at 64, 128, and 256 cells.
 
 ### Reproduce
 
-The [application evidence](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+The application evidence
 records the tested source, binaries, dependencies and build settings. Its
 fixed-time runs compare both backends with the analytic wave, then with each
 other. Use a testing-enabled CUDA build and run from the repository root:
@@ -44,7 +42,7 @@ python3 tools/validate_backend_results.py \
 ```
 
 The final density cell averages are compared with the analytic wave translated
-by \(ut\). [metrics.csv](metrics.csv) retains both backends' L1/L2/Linf, observed L1 rate, and relative mass
+by \(ut\). metrics.csv retains both backends' L1/L2/Linf, observed L1 rate, and relative mass
 drift. All 18 fixed-time results pass. Acceptance is final-pair L1 rate at least
 0.9 for PCM, 1.8 for MUSCL, and 2.7 for PPM, with mass drift at most
 \(10^{-12}\). PPM additionally requires positive density and energy and L1 no
@@ -66,7 +64,7 @@ fourth-order claim. No positivity or species repair is expected for this state.
 
 ## Sod shock tube
 
-The [same application record](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+The same application record
 passes the Sod checks on both backends at \(t=0.2\), using HLLC, PPM and
 SSPRK3 on 64, 128 and 256 uniform Cartesian cells. The ideal gas has
 \(\gamma=1.4\); the initial left/right states are
@@ -112,7 +110,7 @@ PCM and compares actual ARCH output with the exact Fourier exponential of its
 semi-discrete upwind operator. Holding the mesh fixed separates time error from
 spatial error. No production time integrator supplies the expected solution.
 
-The [18-run temporal-accuracy record](results/time-native-20260907/release-879/evidence.json)
+The 18-run temporal-accuracy record
 passes with CFL values 0.4, 0.2 and 0.1 at the same physical end time,
 \(t=0.1\). CPU and CUDA give the same temporal errors and orders:
 
@@ -134,7 +132,7 @@ python3 validation/hydro/time_reference.py --build-dir build-cuda \
 
 ## Planar Sedov blast
 
-The [acceptance record](results/sedov-first-law-20260907/release-889/evidence.json)
+The acceptance record
 passes the same independent strong-shock checks on both backends. It covers a
 one-dimensional, two-sided blast on uniform Cartesian grids of 128, 256 and
 512 cells, using HLLC, PPM, SSPRK3 and an ideal gas with \(\gamma=1.4\). In the
@@ -188,3 +186,17 @@ python3 validation/hydro/sedov_reference.py --oracle-only
 python3 validation/hydro/sedov_reference.py --build-dir build-cuda \
   --output-dir validation/hydro/results/sedov-new
 ```
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [application evidence (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+- [metrics.csv (CSV)](metrics.csv)
+- [18-run temporal-accuracy record (JSON)](results/time-native-20260907/release-879/evidence.json)
+- [acceptance record (JSON)](results/sedov-first-law-20260907/release-889/evidence.json)
+
+</details>

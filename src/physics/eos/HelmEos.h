@@ -19,13 +19,13 @@
 #include <string>
 #include <vector>
 
-#include "eos.h"
-#include "eos_Utils.h"
+#include "physics/eos/eos.h"
+#include "physics/eos/eos_Utils.h"
 
-#include "../../data/FluidState.h"
-#include "../../core/CompensatedSum.h"
-#include "../species/Species.h"
-#include "../constant/PhysicalConstants.h"
+#include "data/FluidState.h"
+#include "core/CompensatedSum.h"
+#include "physics/species/Species.h"
+#include "physics/constant/PhysicalConstants.h"
 
 
 // Timmes Helmholtz EOS leaf parameterized by host or device species metadata.
@@ -505,7 +505,7 @@ struct BasicHelmEosView {
     }
 
     ARCH_INLINE double get_gamma(const double* Xi) const {
-        return 1.4; // Not strictly used for full real EOS formulation, but provided for interface
+        return arch::state::invalid(); // Real-EOS gamma requires a thermodynamic state.
     }
 
     ARCH_INLINE double get_pressure(const FluidVector& U, const double* Xi) const {
@@ -515,33 +515,64 @@ struct BasicHelmEosView {
     }
 
     ARCH_INLINE double get_temperature(const FluidVector& U, const double* Xi) const {
-        double rho = U.rho;
-        double e = eos_utils::extract_specific_internal_energy(U);
-        return get_temperature(rho, e, Xi);
+        return get_temperature(U.rho, eos_utils::extract_specific_internal_energy(U), Xi);
+    }
+
+    // Monotone bracket inversion on the actual source temperature domain.
+    // This is the ARCH adapter, not a modification of the Timmes formulas.
+    ARCH_HEAVY_INLINE double invert_temperature(double rho, double target,
+                                                const double* Xi, bool pressure) const {
+        if (!(rho > 0.0) || !(target > 0.0) || !std::isfinite(target)
+            || !temperature_nodes || specs.count == 0 || Xi == nullptr)
+            return arch::state::invalid();
+        double lower = temperature_nodes[0];
+        double upper = temperature_nodes[jmax - 1];
+        const auto value = [&](double T, double& derivative) {
+            double P, E, cv;
+            ThermodynamicDerivatives d;
+            calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d);
+            derivative = pressure ? d.pressure_temperature : cv;
+            return pressure ? P : E;
+        };
+        double derivative;
+        const double lo_value = value(lower, derivative);
+        const double hi_value = value(upper, derivative);
+        if (!std::isfinite(lo_value) || !std::isfinite(hi_value)
+            || target < lo_value || target > hi_value) return arch::state::invalid();
+        if (target == lo_value) return lower;
+        if (target == hi_value) return upper;
+        double T = std::max(lower, std::min(1e8, upper));
+        for (int iteration = 0; iteration < 96; ++iteration) {
+            const double current = value(T, derivative);
+            const double residual = current - target;
+            if (!std::isfinite(current) || !(derivative > 0.0)
+                || !std::isfinite(derivative)) return arch::state::invalid();
+            const double correction = residual / derivative;
+            // Iterate directly in temperature: exp(log(T)) loses low bits even
+            // when T already solves the equation. Require both a small residual
+            // and a resolved temperature correction, especially for degeneracy.
+            if (std::abs(residual) <= 64.0 * std::numeric_limits<double>::epsilon()
+                                      * std::max(std::abs(target), std::abs(current))
+                && std::abs(correction) <= std::numeric_limits<double>::epsilon()*T)
+                return T;
+            if (residual < 0.0) lower = T; else upper = T;
+            const double trial = T - correction;
+            const double next = trial > lower && trial < upper ? trial
+                : std::sqrt(lower)*std::sqrt(upper);
+            if (next == T || upper-lower <= 4.0*std::numeric_limits<double>::epsilon()*T) {
+                // EOS evaluation itself may round across a root. A collapsed
+                // bracket is accepted only with the same residual gate.
+                if (std::abs(residual) <= 64.0*std::numeric_limits<double>::epsilon()
+                        * std::max(std::abs(target),std::abs(current))) return T;
+                break;
+            }
+            T = next;
+        }
+        return arch::state::invalid();
     }
 
     ARCH_HEAVY_INLINE double get_temperature(double rho, double e, const double* Xi) const {
-        double T_guess = 1e8;
-        for (int i = 0; i < 50; ++i) {
-            double P, E;
-            calc_thermo(rho, T_guess, Xi, P, E);
-
-            const double cv = get_cv(rho, T_guess, Xi);
-
-            if (std::abs(cv) < 1e-12) break;
-
-            double dT_update = (e - E) / cv;
-
-            // Limit the temperature update to prevent overshoot and divergence
-            double dT_limited = std::max(-0.5 * T_guess, std::min(dT_update, 0.5 * T_guess));
-            T_guess += dT_limited;
-
-            if (T_guess < 1e3) T_guess = 1e3;
-            if (T_guess > 1e11) T_guess = 1e11;
-
-            if (std::abs(dT_limited) / T_guess < 1e-6) break;
-        }
-        return T_guess;
+        return invert_temperature(rho, e, Xi, false);
     }
 
     ARCH_INLINE double sound_speed(double rho, double T, double cv,
@@ -549,7 +580,7 @@ struct BasicHelmEosView {
         // Fixed-composition first law: c_s^2 = P_rho + T P_T^2/(rho^2 cv).
         if (!(cv > 0.0)) return std::numeric_limits<double>::quiet_NaN();
         return std::sqrt(d.pressure_density
-            + T * d.pressure_temperature * d.pressure_temperature / (rho * rho * cv));
+            + T * (d.pressure_temperature / rho) * (d.pressure_temperature / rho) / cv);
     }
 
     ARCH_INLINE double get_sound_speed(const FluidVector& U, double, const double* Xi) const {
@@ -560,12 +591,42 @@ struct BasicHelmEosView {
         return sound_speed(U.rho, T, cv, d);
     }
 
-    template <int Equations>
-    ARCH_INLINE void get_energy_composition_gradient(
-        double rho, double T, const double* X, double* gradient) const {
-        double P, E;
+    // One strict inverse supplies the pressure and acoustic derivative of the
+    // SAME (rho,e,X) endpoint. The general-EOS c^2 = chi + P*kappa/rho^2
+    // is algebraically identical to the two scalar derivative getters below,
+    // but avoids repeating the Helm temperature inversion three times.
+    ARCH_INLINE void get_pressure_and_sound_speed(
+        double rho, double e, const double* Xi,
+        double& pressure, double& speed) const
+    {
+        const double T = get_temperature(rho, e, Xi);
+        if (!std::isfinite(T)) {
+            pressure = speed = arch::state::invalid();
+            return;
+        }
+        double energy, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        calc_thermo_with_cv(rho, T, Xi, pressure, energy, &cv, &d);
+        if (!(cv > 0.0) || !std::isfinite(pressure)) {
+            speed = arch::state::invalid();
+            return;
+        }
+        const double energy_density =
+            (pressure - T * d.pressure_temperature) / (rho * rho);
+        const double chi = d.pressure_density
+            - d.pressure_temperature * energy_density / cv;
+        const double kappa = d.pressure_temperature / cv;
+        speed = std::sqrt(chi + (kappa / rho) * (pressure / rho));
+    }
+
+    // All composition and heat-capacity derivatives below come from the
+    // same Helm state jet. The grouped burn queries evaluate that jet once
+    // per unchanged (rho,T,X) trial state, while the scalar entry points keep
+    // their existing public contract.
+    template <int Equations>
+    ARCH_INLINE void energy_composition_gradient_from_derivatives(
+        const ThermodynamicDerivatives& d, double* gradient) const
+    {
         for (int i = 0; i < Equations - 1; ++i) {
             const double inverse_a = i < specs.count ? 1.0 / specs.get_A(i) : 0.0;
             const double charge = i < specs.count && d.charge_active ? specs.get_Z(i) : 0.0;
@@ -574,11 +635,10 @@ struct BasicHelmEosView {
     }
 
     template <int Equations>
-    ARCH_INLINE void get_energy_composition_hessian_action(
-        double rho, double T, const double* X, const double* flow, double* action) const {
-        double P, E;
-        ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+    ARCH_INLINE void energy_composition_hessian_from_derivatives(
+        const ThermodynamicDerivatives& d, const double* flow,
+        double* action) const
+    {
         arch::math::CompensatedSum y_flow, z_flow;
         for (int i = 0; i < Equations - 1 && i < specs.count; ++i) {
             y_flow.add(flow[i] / specs.get_A(i));
@@ -595,10 +655,9 @@ struct BasicHelmEosView {
     }
 
     template <int Equations>
-    ARCH_INLINE void get_cv_gradient(double rho, double T, const double* X, double* gradient) const {
-        double P, E;
-        ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+    ARCH_INLINE void cv_gradient_from_derivatives(
+        const ThermodynamicDerivatives& d, double* gradient) const
+    {
         for (int i = 0; i < Equations - 1; ++i) {
             const double inverse_a = i < specs.count ? 1.0 / specs.get_A(i) : 0.0;
             const double charge = i < specs.count && d.charge_active ? specs.get_Z(i) : 0.0;
@@ -607,8 +666,64 @@ struct BasicHelmEosView {
         gradient[Equations - 1] = d.cv_temperature;
     }
 
+    template <int Equations>
+    ARCH_INLINE void get_cv_and_energy_composition_gradient(
+        double rho, double T, const double* X, double& cv,
+        double* gradient) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, &cv, &d);
+        energy_composition_gradient_from_derivatives<Equations>(d, gradient);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_cv_gradient_and_energy_composition_hessian_action(
+        double rho, double T, const double* X, const double* flow,
+        double* cv_gradient, double* action) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        cv_gradient_from_derivatives<Equations>(d, cv_gradient);
+        energy_composition_hessian_from_derivatives<Equations>(d, flow, action);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_gradient(
+        double rho, double T, const double* X, double* gradient) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        energy_composition_gradient_from_derivatives<Equations>(d, gradient);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_hessian_action(
+        double rho, double T, const double* X, const double* flow,
+        double* action) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        energy_composition_hessian_from_derivatives<Equations>(d, flow, action);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_cv_gradient(
+        double rho, double T, const double* X, double* gradient) const
+    {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        cv_gradient_from_derivatives<Equations>(d, gradient);
+    }
+
     ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double* Xi) const {
-        return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
+        const double T = invert_temperature(rho, p, Xi, true);
+        if (!std::isfinite(T)) return T;
+        return rho * get_eint_from_T(rho, T, Xi) + eos_utils::calc_kinetic_energy(rho, u, v, w);
     }
 
     ARCH_INLINE double get_pressure_from_rho_e(double rho, double e, const double* Xi) const {

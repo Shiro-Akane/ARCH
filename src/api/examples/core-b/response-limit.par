@@ -26,7 +26,6 @@ eos_type = helmholtz
 eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
 use_burn = true
 network_name = aprox19
-burn_verbose_level = 0
 xhe4 = 0.4
 xc12 = 0.6
 xo16 = 0.0

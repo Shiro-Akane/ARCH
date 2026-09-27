@@ -1,0 +1,22 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/selfgravity-p1
+Test project /home/shiroakane/ARCH/build/selfgravity-p1
+    Start 44: case_inspection_contract
+    Start 54: self_gravity_physics
+1/8 Test #54: self_gravity_physics .............   Passed   49.27 sec
+    Start 51: composite_poisson_analytic
+2/8 Test #51: composite_poisson_analytic .......   Passed    6.31 sec
+    Start  4: configuration_api_contract
+3/8 Test  #4: configuration_api_contract .......   Passed    4.68 sec
+    Start 52: self_gravity_lifecycle
+4/8 Test #52: self_gravity_lifecycle ...........   Passed    2.28 sec
+    Start 53: composite_poisson_contract
+5/8 Test #53: composite_poisson_contract .......   Passed    0.10 sec
+    Start 32: gravity_stage_contract
+6/8 Test #32: gravity_stage_contract ...........   Passed    0.01 sec
+    Start 39: runtime_probe_and_capabilities
+7/8 Test #39: runtime_probe_and_capabilities ...   Passed    0.02 sec
+8/8 Test #44: case_inspection_contract .........   Passed   64.20 sec
+
+100% tests passed, 0 tests failed out of 8
+
+Total Test time (real) =  64.20 sec

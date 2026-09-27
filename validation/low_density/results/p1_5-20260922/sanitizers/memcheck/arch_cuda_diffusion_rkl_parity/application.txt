@@ -1,0 +1,48 @@
+C4_OPERATOR_ENVELOPE field=rho max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=mom_u max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=mom_v max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=mom_w max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=eng max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=X0 max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=X1 max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_OPERATOR_ENVELOPE field=ENUC max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=first field=rho max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=first field=mom_u max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=first field=mom_v max_abs=1.3877787807814457e-17 abs_cell=17 max_rel=1.305408104629182e-16 rel_cell=17
+C4_RKL_ENVELOPE stage=first field=mom_w max_abs=6.9388939039072284e-18 abs_cell=17 max_rel=1.305408104629182e-16 rel_cell=17
+C4_RKL_ENVELOPE stage=first field=eng max_abs=3.5527136788005009e-15 abs_cell=11 max_rel=2.6166171932620751e-16 rel_cell=11
+C4_RKL_ENVELOPE stage=first field=X0 max_abs=5.5511151231257827e-17 abs_cell=2 max_rel=1.5861474152524068e-16 rel_cell=2
+C4_RKL_ENVELOPE stage=first field=X1 max_abs=2.2204460492503131e-16 abs_cell=11 max_rel=3.4263299616461479e-16 rel_cell=11
+C4_RKL_ENVELOPE stage=first field=ENUC max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=scaled_rkl1 field=rho max_abs=2.2204460492503131e-16 abs_cell=2 max_rel=1.8595596888221928e-16 rel_cell=2
+C4_RKL_ENVELOPE stage=scaled_rkl1 field=mom_u max_abs=2.7755575615628914e-17 abs_cell=4 max_rel=1.3344420581748365e-16 rel_cell=4
+C4_RKL_ENVELOPE stage=scaled_rkl1 field=mom_v max_abs=1.3877787807814457e-17 abs_cell=2 max_rel=1.3665791687571887e-16 rel_cell=17
+C4_RKL_ENVELOPE stage=scaled_rkl1 field=mom_w max_abs=6.9388939039072284e-18 abs_cell=2 max_rel=1.3267837688580738e-16 rel_cell=16
+C4_RKL_ENVELOPE stage=scaled_rkl1 field=eng max_abs=5.3290705182007514e-15 abs_cell=11 max_rel=3.8077527472016452e-16 rel_cell=11
+C4_RKL_ENVELOPE stage=scaled_rkl1 field=X0 max_abs=1.1102230246251565e-16 abs_cell=8 max_rel=3.1799268189637111e-16 rel_cell=8
+C4_RKL_ENVELOPE stage=scaled_rkl1 field=X1 max_abs=2.2204460492503131e-16 abs_cell=3 max_rel=3.4459917287325597e-16 rel_cell=17
+C4_RKL_ENVELOPE stage=scaled_rkl1 field=ENUC max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=scaled_rkl2 field=rho max_abs=4.4408920985006262e-16 abs_cell=6 max_rel=3.5923639223133419e-16 rel_cell=6
+C4_RKL_ENVELOPE stage=scaled_rkl2 field=mom_u max_abs=8.3266726846886741e-17 abs_cell=11 max_rel=4.1286863820130586e-16 rel_cell=11
+C4_RKL_ENVELOPE stage=scaled_rkl2 field=mom_v max_abs=4.163336342344337e-17 abs_cell=2 max_rel=4.6687863263775568e-16 rel_cell=17
+C4_RKL_ENVELOPE stage=scaled_rkl2 field=mom_w max_abs=2.0816681711721685e-17 abs_cell=14 max_rel=4.658722350138955e-16 rel_cell=14
+C4_RKL_ENVELOPE stage=scaled_rkl2 field=eng max_abs=3.5527136788005009e-15 abs_cell=2 max_rel=2.5939706580766998e-16 rel_cell=2
+C4_RKL_ENVELOPE stage=scaled_rkl2 field=X0 max_abs=1.6653345369377348e-16 abs_cell=12 max_rel=4.8156448975439117e-16 rel_cell=12
+C4_RKL_ENVELOPE stage=scaled_rkl2 field=X1 max_abs=2.2204460492503131e-16 abs_cell=3 max_rel=3.4800665517713617e-16 rel_cell=12
+C4_RKL_ENVELOPE stage=scaled_rkl2 field=ENUC max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=unscaled_rkl1 field=rho max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=unscaled_rkl1 field=mom_u max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=unscaled_rkl1 field=mom_v max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=unscaled_rkl1 field=mom_w max_abs=6.9388939039072284e-18 abs_cell=17 max_rel=1.3079233692085545e-16 rel_cell=17
+C4_RKL_ENVELOPE stage=unscaled_rkl1 field=eng max_abs=5.3290705182007514e-15 abs_cell=11 max_rel=3.8103149827500982e-16 rel_cell=11
+C4_RKL_ENVELOPE stage=unscaled_rkl1 field=X0 max_abs=5.5511151231257827e-17 abs_cell=4 max_rel=1.5856751605292887e-16 rel_cell=4
+C4_RKL_ENVELOPE stage=unscaled_rkl1 field=X1 max_abs=1.1102230246251565e-16 abs_cell=3 max_rel=1.7156225389941019e-16 rel_cell=16
+C4_RKL_ENVELOPE stage=unscaled_rkl1 field=ENUC max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
+C4_RKL_ENVELOPE stage=unscaled_rkl2 field=rho max_abs=2.2204460492503131e-16 abs_cell=2 max_rel=1.8303664350905558e-16 rel_cell=2
+C4_RKL_ENVELOPE stage=unscaled_rkl2 field=mom_u max_abs=5.5511151231257827e-17 abs_cell=4 max_rel=2.6942367030010263e-16 rel_cell=4
+C4_RKL_ENVELOPE stage=unscaled_rkl2 field=mom_v max_abs=2.7755575615628914e-17 abs_cell=2 max_rel=2.7792180492128165e-16 rel_cell=17
+C4_RKL_ENVELOPE stage=unscaled_rkl2 field=mom_w max_abs=2.0816681711721685e-17 abs_cell=3 max_rel=3.9535706476580846e-16 rel_cell=3
+C4_RKL_ENVELOPE stage=unscaled_rkl2 field=eng max_abs=5.3290705182007514e-15 abs_cell=4 max_rel=3.8701697899940669e-16 rel_cell=4
+C4_RKL_ENVELOPE stage=unscaled_rkl2 field=X0 max_abs=1.1102230246251565e-16 abs_cell=9 max_rel=3.1736326022676699e-16 rel_cell=9
+C4_RKL_ENVELOPE stage=unscaled_rkl2 field=X1 max_abs=1.1102230246251565e-16 abs_cell=5 max_rel=1.719936194564133e-16 rel_cell=16
+C4_RKL_ENVELOPE stage=unscaled_rkl2 field=ENUC max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
