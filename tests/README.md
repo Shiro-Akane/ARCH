@@ -8,6 +8,11 @@ executables locally. Generated packages, external libraries, large simulation
 outputs and profiler data are not bundled as prebuilt dependencies. Run
 `git lfs pull` before tests or cases that use the tracked EOS table.
 
+ARCH tests use repository-owned analytical/independent references and ordinary
+build dependencies. Configuring tests, running them and completing release
+acceptance require no FLASH or other simulation program. Cross-code comparisons
+are optional, separate manual work for maintainers.
+
 All commands below run from the repository root in Linux or WSL2. Tool tests,
 numerical regressions and application smoke have different purposes;
 [Validation](../validation/README.md) records scientific comparisons and budgets.

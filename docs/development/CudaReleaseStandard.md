@@ -12,8 +12,15 @@ publication decisions must use the current source, changed paths and authorized
 work branch. The [compute optimization plan](ComputeOptimizationPlan.zh-CN.md),
 [current O6 acceptance record](../../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)
 and [release follow-up](../../validation/gravity/flash/results/release-readiness-20260927/README.md)
-track the present CPU/CUDA optimization gates; historical pass counts and GPU
-speedups do not sign off a newer executable.
+separate upcoming requirements from the released CPU/CUDA optimization evidence;
+historical pass counts and GPU speedups do not sign off a newer executable.
+
+ARCH build, test, CI and release acceptance use self-contained scientific checks.
+FLASH and other simulation programs are optional developer comparisons, with no
+required installation, build, run or reference-output dependency. Consolidate
+new coverage into existing test owners and review measured CI runtime before
+stage delivery, as defined in the compute plan. External comparisons and long
+performance campaigns stay outside the required workflow.
 
 Trust source-identified collaborator measurements. Repeat a check when an edit
 affects it or a concrete inconsistency makes it unreliable, not merely because

@@ -53,6 +53,12 @@ measurements are available in the detailed records below.
 
 ## Error conventions
 
+Required ARCH verification uses analytical/manufactured solutions, independent
+references, conservation, convergence and backend comparisons. Comparisons with
+FLASH or other simulation programs are optional developer work; installing,
+building or obtaining results from those programs is not a prerequisite for
+ARCH tests, CI or release acceptance.
+
 Verification compares the implementation with analytic, manufactured, or
 independently converged references. Validation against experimental or
 published physical data will be labeled separately.

@@ -6,7 +6,9 @@
 acceptance tolerances remain in their existing source and test owners. Its
 jobs run on disposable GitHub-hosted `ubuntu-24.04` machines, not a maintainer's
 workstation. No personal access token, SSH key, CUDA installation or paid GPU
-runner is required for this workflow.
+runner is required for this workflow. FLASH and other simulation programs are
+not build, test or workflow dependencies; maintainers run external comparisons
+separately when useful.
 
 ## What runs
 
@@ -81,6 +83,11 @@ inventory and JUnit results for 14 days. Only the named diagnostic paths are
 uploaded, not executables, object files, EOS tables or HDF5 checkpoints. These
 short-lived CI artifacts do not overwrite the reviewed records in
 `validation/` and are not formal release archives.
+
+Future physics work follows the [compute plan](../../docs/development/ComputeOptimizationPlan.zh-CN.md):
+record actual build/test duration, map each scientific requirement to its test,
+and consolidate repeated coverage before delivery. This is a planned review of
+coverage and cost; the current complete-inventory checks remain in force.
 
 ## Maintainer setup
 
