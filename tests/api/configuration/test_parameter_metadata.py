@@ -54,8 +54,6 @@ class ParameterMetadataContract(unittest.TestCase):
         for payload, explicit, effective, source, reason in [
             (base.config(x_pos=.35), .35, .35, 'explicit', None),
             (without_position(), None, .5, 'default', 'missing-key'),
-            (base.config(x_pos='bad'), None, .5, 'default', 'parse-failure'),
-            (base.config(x_pos='1e9999'), None, .5, 'default', 'parse-failure'),
         ]:
             with self.subTest(source=source, reason=reason):
                 result = self.invoke(payload, '--samples', '20', '--request-id', 'metadata-a')
@@ -77,8 +75,6 @@ class ParameterMetadataContract(unittest.TestCase):
                 density = next(f['values'] for f in result['data']['fields'] if f['key'] == 'DENS')
                 for x, rho in zip(result['data']['axes'][0]['values'], density):
                     self.assertEqual(rho, 1 if x < marker['coordinate'] else .125)
-                if reason == 'parse-failure':
-                    self.assertEqual(p['diagnostics'][0]['code'], 'PARAMETER_DEFAULT_FALLBACK')
 
     def test_current_domain_open_bounds_and_literal_default(self):
         result = self.invoke(base.config(x1_min=-3, x1_max=5, x_pos=1), '--samples', '16')
@@ -108,15 +104,30 @@ class ParameterMetadataContract(unittest.TestCase):
         self.assertEqual(self.parameter(result)['effectiveValue'], .5)
         self.assertEqual(self.parameter(result)['sourceReason'], 'missing-key')
 
-    def test_last_duplicate_and_numeric_prefix_keep_parser_semantics(self):
-        payload = without_position() + b'x_pos=.2\r\nx_pos = 0.65suffix # preserved input\r\n'
+    def test_last_duplicate_valid_numeric_value(self):
+        payload = without_position() + b'x_pos=.2\r\nx_pos = 0.65 # preserved input\r\n'
         result = self.invoke(payload)
         p = self.parameter(result)
         self.assertEqual(p['effectiveValue'], .65)
         self.assertEqual(p['explicitValue'], .65)
-        self.assertEqual(p['rawValue'], '0.65suffix')
+        self.assertEqual(p['rawValue'], '0.65')
         self.assertEqual(p['valueSource'], 'explicit')
         self.assertEqual(result['identity']['configRevision'], hashlib.sha256(payload).hexdigest())
+
+    def test_malformed_custom_number_rejected_without_fallback(self):
+        payloads = [base.config(x_pos=raw) for raw in
+                    ('bad', '1e9999', 'nan', '0.65suffix', '2*pi', 'exp(1)')]
+        payloads.append(without_position() + b'x_pos=.2\nx_pos=.65suffix\n')
+        for payload in payloads:
+            with self.subTest(payload=payload[-80:]):
+                result = self.invoke(payload, expected=5)
+                self.assertEqual(result['stage'], 'setup')
+                self.assertEqual(result['state']['setup'], 'error')
+                self.assertIsNone(result['data'])
+                self.assertEqual(result['parameterMetadata']['parameters'], [])
+                self.assertEqual(result['graphicalBindings']['items'], [])
+                self.assertTrue(any(d['code'] == 'SETUP_FAILED' and 'x_pos' in d['message']
+                                    for d in result['diagnostics']))
 
     def test_later_failures_keep_reads_without_a_success_binding(self):
         result = self.invoke(base.config(x_pos=.4, eos_type='helmholtz', eos_table_path='absent.dat'), expected=5)
@@ -132,8 +143,7 @@ class ParameterMetadataContract(unittest.TestCase):
         self.assertEqual(result['graphicalBindings']['items'], [])
 
     def test_before_setup_failure_does_not_invent_a_read(self):
-        for payload, status in [(base.config(x_pos='nan'), 3),
-                                (base.config(nblockx2=1), 4),
+        for payload, status in [(base.config(nblockx2=1), 4),
                                 (base.config(restart='maybe'), 3)]:
             with self.subTest(status=status):
                 result = self.invoke(payload, expected=status)

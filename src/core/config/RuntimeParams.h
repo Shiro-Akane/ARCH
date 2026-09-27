@@ -47,9 +47,9 @@ private:
     }
 
     /**
-     * @brief Parse a restricted numeric expression containing an optional pi.
+     * @brief Parse a restricted numeric expression for selected grid and gravity fields.
      * Supported forms are a plain number, pi, -pi, coefficient*pi,
-     * pi*coefficient, and pi/coefficient. This is not a general parser.
+     * pi*coefficient, pi/coefficient, and exp(number). This is not a general parser.
      */
     static double ParseMathExpr(const std::string& str, const std::string& key)
     {
@@ -413,8 +413,8 @@ private:
         {
             try
             {
-                // Store numeric custom parameters directly.
-                double val = std::stod(val_str);
+                // Require the complete numeric token; expressions remain strings.
+                double val = ConfigParser::ParseNumber(key, val_str);
                 cfg.custom_params[key] = val;
             }
             catch (...)

@@ -59,14 +59,14 @@ published physical data will be labeled separately.
 
 For cell-volume-weighted field error,
 
-\[
+$$
 L_1(q)=\frac{\sum_i V_i\lvert q_i-q_i^{ref}\rvert}{\sum_i V_i},
 \qquad
 L_2(q)=\sqrt{\frac{\sum_i V_i(q_i-q_i^{ref})^2}{\sum_i V_i}}.
-\]
+$$
 
-The observed rate between resolutions \(N\) and \(2N\) is
-\(p=\log_2(E_N/E_{2N})\). Each record states any different norm or
+The observed rate between resolutions $N$ and $2N$ is
+$p=\log_2(E_N/E_{2N})$. Each record states any different norm or
 normalization. Machine-readable results are retained as CSV or JSON; a committed data
 processing script is optional when the formula, sampled outputs, commands, and
 metrics are sufficient to reproduce the decision.

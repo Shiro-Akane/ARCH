@@ -20,7 +20,7 @@ Overall acceptance is tracked in the [validation index](../README.md).
 The `SmoothAdvection` implementation remains in `simulation/SmoothAdvection/`;
 the immutable parameter files owned by this record are in [`inputs/`](inputs/).
 They advect a periodic entropy wave with
-\(\rho=1+0.2\sin(2\pi x)\), \(u=1\), and \(p=1\) to \(t=0.1\). The initial and
+$\rho=1+0.2\sin(2\pi x)$, $u=1$, and $p=1$ to $t=0.1$. The initial and
 translated references are exact finite-volume cell averages. HLLC and SSPRK3
 are fixed while PCM, MUSCL-MC, and PPM are run at 64, 128, and 256 cells.
 
@@ -42,12 +42,12 @@ python3 tools/validate_backend_results.py \
 ```
 
 The final density cell averages are compared with the analytic wave translated
-by \(ut\). metrics.csv retains both backends' L1/L2/Linf, observed L1 rate, and relative mass
+by $ut$. metrics.csv retains both backends' L1/L2/Linf, observed L1 rate, and relative mass
 drift. All 18 fixed-time results pass. Acceptance is final-pair L1 rate at least
 0.9 for PCM, 1.8 for MUSCL, and 2.7 for PPM, with mass drift at most
-\(10^{-12}\). PPM additionally requires positive density and energy and L1 no
-larger than \(10^{-4}\) at every resolution. The CPU/CUDA comparisons pass with
-relative and absolute tolerances of \(2\times10^{-10}\) and \(2\times10^{-12}\).
+$10^{-12}$. PPM additionally requires positive density and energy and L1 no
+larger than $10^{-4}$ at every resolution. The CPU/CUDA comparisons pass with
+relative and absolute tolerances of $2\times10^{-10}$ and $2\times10^{-12}$.
 
 | Method (CPU and CUDA) | L1 at N=256 | Final L1 rate | Max mass drift | Result |
 | --- | ---: | ---: | ---: | --- |
@@ -65,10 +65,10 @@ fourth-order claim. No positivity or species repair is expected for this state.
 ## Sod shock tube
 
 The same application record
-passes the Sod checks on both backends at \(t=0.2\), using HLLC, PPM and
+passes the Sod checks on both backends at $t=0.2$, using HLLC, PPM and
 SSPRK3 on 64, 128 and 256 uniform Cartesian cells. The ideal gas has
-\(\gamma=1.4\); the initial left/right states are
-\((\rho,u,p)=(1,0,1)\) and \((0.125,0,0.1)\), separated at \(x=0.5\)
+$\gamma=1.4$; the initial left/right states are
+$(\rho,u,p)=(1,0,1)$ and $(0.125,0,0.1)$, separated at $x=0.5$
 in the unit interval with outflow boundaries.
 
 An independent exact Euler Riemann solution supplies the reference. Quadrature
@@ -87,17 +87,17 @@ density L1 orders of 0.897 and 1.107, and L2 orders of 0.569 and 0.652,
 exceeding the original minima of 0.7 and 0.3. Both backends retain positive
 density and energy and meet the 2.5-cell shock-position budget at the prescribed
 end time. Their field comparison passes with relative/absolute tolerances of
-\(5\times10^{-9}\)/\(5\times10^{-12}\). The uniform-matrix command above
+$5\times10^{-9}$/$5\times10^{-12}$. The uniform-matrix command above
 reproduces this series and the sustained test below.
 
 ## Sustained periodic advection
 
 The record's `hydro_periodic_1000` case advances the 64-cell HLLC/PPM/SSPRK3
-entropy wave to \(t=2.05\), completing 1,016 steps on each backend. Density
-L1 is \(5.071\times10^{-6}\), within the original \(10^{-3}\) budget.
+entropy wave to $t=2.05$, completing 1,016 steps on each backend. Density
+L1 is $5.071\times10^{-6}$, within the original $10^{-3}$ budget.
 Absolute mass, longitudinal momentum and total-energy drifts are
-\(6.273\times10^{-14}\), \(6.284\times10^{-14}\) and
-\(1.821\times10^{-13}\), each below \(10^{-11}\); transverse momentum
+$6.273\times10^{-14}$, $6.284\times10^{-14}$ and
+$1.821\times10^{-13}$, each below $10^{-11}$; transverse momentum
 remains zero. Density and energy stay positive. CPU/CUDA field comparisons
 pass at the same tolerances as Sod, and the recorded CUDA publications have
 no unfinished transfers or stale ghost data. This checks accumulated error and
@@ -112,7 +112,7 @@ spatial error. No production time integrator supplies the expected solution.
 
 The 18-run temporal-accuracy record
 passes with CFL values 0.4, 0.2 and 0.1 at the same physical end time,
-\(t=0.1\). CPU and CUDA give the same temporal errors and orders:
+$t=0.1$. CPU and CUDA give the same temporal errors and orders:
 
 | Integrator | Observed L1 orders | Required minimum | Result |
 | --- | --- | ---: | --- |
@@ -121,8 +121,8 @@ passes with CFL values 0.4, 0.2 and 0.1 at the same physical end time,
 | SSPRK3 | 3.000604, 2.999841 | 2.7 | pass |
 
 The largest mass drift, pressure error and velocity error are
-\(9.215\times10^{-15}\), \(1.288\times10^{-14}\) and
-\(2.887\times10^{-15}\), respectively, within their original \(10^{-12}\)
+$9.215\times10^{-15}$, $1.288\times10^{-14}$ and
+$2.887\times10^{-15}$, respectively, within their original $10^{-12}$
 invariant budgets. Reproduce with a Python environment containing NumPy and h5py:
 
 ```bash
@@ -135,8 +135,8 @@ python3 validation/hydro/time_reference.py --build-dir build-cuda \
 The acceptance record
 passes the same independent strong-shock checks on both backends. It covers a
 one-dimensional, two-sided blast on uniform Cartesian grids of 128, 256 and
-512 cells, using HLLC, PPM, SSPRK3 and an ideal gas with \(\gamma=1.4\). In the
-test's units, ambient density is 1, ambient pressure is \(10^{-5}\), deposited
+512 cells, using HLLC, PPM, SSPRK3 and an ideal gas with $\gamma=1.4$. In the
+test's units, ambient density is 1, ambient pressure is $10^{-5}$, deposited
 energy is 1, and the comparison time is 0.1. The initial energy occupies two
 cells at each resolution, so refinement approaches the point-explosion limit.
 
@@ -150,15 +150,15 @@ and total-energy density, as well as shock position, reflection symmetry,
 mass and energy conservation, and the initially deposited energy.
 
 Profile errors are normalized by post-shock density, shock speed,
-\(\rho_0 D_s^2\) and \(E_0/(2R_s)\), respectively, where \(D_s\) and \(R_s\)
+$\rho_0 D_s^2$ and $E_0/(2R_s)$, respectively, where $D_s$ and $R_s$
 are the similarity shock speed and radius. The original acceptance limits
 are L1 at most 0.04 and L2 at most 0.10 for every field and resolution, shock
 position error at most three cells, and L1 convergence order at least 0.5
 between 256 and 512 cells. Relative mass, energy and deposition errors,
 scaled symmetry error, and reference quadrature error must each be at most
-\(10^{-10}\). Density and pressure must stay positive, with zero transverse
+$10^{-10}$. Density and pressure must stay positive, with zero transverse
 momentum. CPU/CUDA comparisons additionally use relative and absolute
-tolerances of \(2\times10^{-8}\) and \(10^{-12}\).
+tolerances of $2\times10^{-8}$ and $10^{-12}$.
 
 All checks pass. CPU and CUDA give the same values at the reported precision:
 
@@ -170,10 +170,10 @@ All checks pass. CPU and CUDA give the same values at the reported precision:
 | Total-energy density | 7.399e-3 | 5.420e-2 | 0.615 |
 
 Across all three resolutions, the largest shock-position error is 0.253
-cells. Relative mass and energy drifts stay below \(1.80\times10^{-14}\) and
-\(6.53\times10^{-14}\); deposition error is below \(10^{-15}\). The measured
+cells. Relative mass and energy drifts stay below $1.80\times10^{-14}$ and
+$6.53\times10^{-14}$; deposition error is below $10^{-15}$. The measured
 reflection error is zero, and the reference quadrature check is below
-\(2.22\times10^{-12}\). These convergence orders describe a blast with a
+$2.22\times10^{-12}$. These convergence orders describe a blast with a
 shock and a shrinking deposition region, separately from the smooth-wave
 accuracy measured above.
 

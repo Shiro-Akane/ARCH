@@ -1,6 +1,7 @@
 #include "api/configuration/ParameterMetadata.h"
 #include "core/config/RuntimeParams.h"
 
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 
@@ -34,8 +35,27 @@ int main() {
     arch::api::PublishParameterMetadata(output, *changed, {{"Sod.x_pos", "x_pos", "x1", .4, 0, 1}}, true);
     require(output.dump().find("\"items\":[]") != std::string::npos, "unattributed value cannot bind");
 
+    auto expressions = RuntimeParams::LoadText(
+        "nblockx2=0\nnblockx3=0\nx1_max=exp(1)\ngravity_G=exp(-17)\n");
+    require(std::abs(expressions.grid.x1_max - std::exp(1.0)) < 1e-14,
+            "runtime grid expression evaluates exp");
+    require(std::abs(expressions.physics.gravity.G_const - std::exp(-17.0)) < 1e-20,
+            "runtime gravity expression evaluates exp");
     auto plain = RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\nx_pos=.2\n");
     require(!plain.parameter_reads && plain.Get<double>("x_pos", .5) == .2, "ordinary config has no observer");
+    require(RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\nx_pos=1e2\n")
+                .Get<double>("x_pos", .5) == 100.0,
+            "custom numeric scientific notation");
+    for (const std::string raw : {"2*pi", "exp(1)", "1.0suffix", "nan"}) {
+        auto invalid = RuntimeParams::LoadText(
+            "nblockx2=0\nnblockx3=0\nx_pos=" + raw + "\n");
+        require(!invalid.custom_params.contains("x_pos"),
+                "unsupported custom expression must not be truncated to a number");
+        bool rejected = false;
+        try { (void)invalid.Get<double>("x_pos", .5); }
+        catch (const std::invalid_argument&) { rejected = true; }
+        require(rejected, "numeric read of malformed custom parameter must fail");
+    }
     require(arch::preview::AxisPosition{"", "", "x1", .5, 0, 1}.outside(0), "strict lower bound");
     require(arch::preview::AxisPosition{"", "", "x1", .5, 0, 1}.outside(1), "strict upper bound");
     std::cout << "Parameter observations, ambiguity, provenance and open bounds passed\n";

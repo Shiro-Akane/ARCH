@@ -22,9 +22,9 @@ Each detailed record identifies its tested source, executable and inputs.
 The [validation overview](../README.md) brings together the module results.
 
 CPU and CUDA use the same external-gravity stage operator. Verification starts
-from a periodic state with \(\rho=1\), \(p=1\), \(u=0\) and constant \(g_x=1\).
-At \(t=0.1\), the exact solution has \(u=g_xt=0.1\), unchanged density and
-pressure, and \(E=p/(\gamma-1)+\rho u^2/2\). Gravity supplies momentum and
+from a periodic state with $\rho=1$, $p=1$, $u=0$ and constant $g_x=1$.
+At $t=0.1$, the exact solution has $u=g_xt=0.1$, unchanged density and
+pressure, and $E=p/(\gamma-1)+\rho u^2/2$. Gravity supplies momentum and
 energy; their changes are checked against this analytic solution, while mass
 and passive species are conserved.
 

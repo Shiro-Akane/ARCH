@@ -84,6 +84,8 @@ public:
         else if (text.starts_with("pi*")) value = pi * ParseNumber(key, text.substr(3));
         else if (text.starts_with("pi/")) value = pi / ParseNumber(key, text.substr(3));
         else if (text.ends_with("*pi")) value = ParseNumber(key, text.substr(0, text.size()-3)) * pi;
+        else if (text.starts_with("exp(") && text.ends_with(")"))
+            value = std::exp(ParseNumber(key, text.substr(4, text.size()-5)));
         else value = ParseNumber(key, text);
         if (!std::isfinite(value))
             throw ConfigValueError(key, "INVALID_EXPRESSION", "Expression must produce a finite value.");

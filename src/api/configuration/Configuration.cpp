@@ -103,7 +103,7 @@ Json constraints(const ParameterDefinition& d) {
         out["syntax"] = "[+-]?[0-9]+";
     }
     if (d.type == "float") out["syntax"] = "finite decimal or scientific notation; full token";
-    if (d.type == "expression") out["syntax"] = "number, pi, -pi, number*pi, pi*number, pi/number; finite result";
+    if (d.type == "expression") out["syntax"] = "number, pi, -pi, number*pi, pi*number, pi/number, exp(number); finite result";
     if (key == "nblockx1" || key == "regrid_interval") { out["min"] = 1; out["minInclusive"] = true; }
     if (key == "nblockx2" || key == "nblockx3" || key == "lrefinemin" || key == "lrefinemax" || key == "nseDensThreshold") {
         out["min"] = 0; out["minInclusive"] = true;

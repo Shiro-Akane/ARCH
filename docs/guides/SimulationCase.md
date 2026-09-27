@@ -44,15 +44,15 @@ the mass fractions describe its composition.
 
 ARCH evolves cell averages of the conservative state
 
-\[
+$$
 U=(\rho,\rho u,\rho v,\rho w,E,\rho X_1,\ldots,\rho X_N).
-\]
+$$
 
 A case author supplies the easier primitive state
 
-\[
+$$
 W=(\rho,u,v,w,p,X_1,\ldots,X_N)
-\]
+$$
 
 at the initial time. The selected EOS derives momentum and total energy.
 
@@ -306,9 +306,19 @@ cmake --build build-cpu --target ARCH --parallel 1
 ### `SimConfig`
 
 Use `config.Get<double/int/string>(key, default)` for case-specific parameters.
-Numeric values use `std::stod`; write evaluated decimal values for expressions
-such as `2*pi`. Unknown keys are retained as custom parameters without spelling
-validation.
+Custom numeric values in `.par` must be complete decimal or scientific-notation
+numbers, such as `1e8`; an incomplete value fails when the case reads it as a
+number. Standard grid-bound and gravity expression fields accept lowercase
+`pi`, `2*pi`, and forms such as `exp(1)` or `exp(-2)`. `exp(number)` denotes the
+natural exponential function. The `e/E` in `1e8` or `1E8` is a base-10
+scientific-notation exponent marker, not a standalone constant.
+
+For mathematics in a case `.cpp`, include `<cmath>` as needed and use
+`std::exp`, `std::sin`, `std::cos`, and `std::log`. The natural constant is
+`std::numbers::e` from `<numbers>`; the public ARCH headers also provide
+`arch::constants::math::pi`. These calculations belong in `Setup` or `Init`;
+`config.Get` does not evaluate C++ expressions. Unknown keys are retained as
+custom parameters without spelling validation.
 
 When you need access to core settings, you should read them directly from their strictly-typed members. For example:
 
@@ -337,8 +347,66 @@ Logical axes depend on geometry and dimension:
 | Spherical | r | r, phi (polar plane) | r, theta, phi |
 | Cylindrical | r | r, phi (polar plane) | r, z, phi |
 
-Converted coordinates use origin `(0,0,0)`. Apply case-specific center offsets
-inside `Init`.
+For a 3D spherical density profile centered at the origin, reuse `rho0_`,
+`amplitude_`, and `width_` from the case above. In `Init`, the Cartesian form is:
+
+```cpp
+const double radius2 = point.x * point.x + point.y * point.y + point.z * point.z;
+out.rho = rho0_ + amplitude_ * std::exp(-radius2 / (width_ * width_));
+```
+
+The same profile in spherical coordinates is:
+
+```cpp
+const double radius2 = point.r * point.r;
+out.rho = rho0_ + amplitude_ * std::exp(-radius2 / (width_ * width_));
+```
+
+These are alternative density assignments inside `Init`; set pressure, velocity,
+and composition as in the complete example above. At a given physical position,
+`point.r` and `point.x/y/z` express the same distance from the origin, so the
+profiles agree up to floating-point rounding. Both coordinate views are
+available on every call and may also be used together in one case.
+
+`geometry=cartesian` selects the computational grid coordinates, cell volumes,
+and face areas; it does not restrict which coordinate fields `Init` reads. A
+Cartesian grid provides `point.r`, and a spherical grid provides `point.x/y/z`.
+Changing grid geometry changes the discretization; the equivalence above refers
+to the initial field at the same physical position.
+
+When describing a physical field with curved coordinates, establish the
+field's center relative to the coordinate origin first. Converted `PointCoords`
+use the global origin `(0,0,0)`; changing `x1_min` does not shift the center
+used by `point.r`. For a 2D Cartesian domain restricted to positive coordinates,
+center a circular profile at the lower-left boundary (for example, with
+`x1_min > 0`). First declare `double center_x_ = 0.0, center_y_ = 0.0;` in the case class.
+Then read the existing grid bounds directly in `Setup` and save them in those
+members:
+
+```cpp
+center_x_ = config.grid.x1_min;
+center_y_ = config.grid.x2_min;
+```
+
+After `Setup`, `Init` on the same case object reads these members.
+`Init(const PointCoords&, PrimitiveData&)` has no `config` parameter, so
+`config.grid.x1_min` cannot be read there directly. The center is now
+`(x1_min,x2_min)`, with no hardcoded coordinates or new custom parameters.
+Calculate the local radius in `Init`:
+
+```cpp
+const double dx = point.x - center_x_;
+const double dy = point.y - center_y_;
+const double local_r2 = dx * dx + dy * dy;
+```
+
+In 3D, also declare a `center_z_` member and save
+`center_z_ = config.grid.x3_min;` during `Setup` and add
+the square of `(point.z - center_z_)`. This shifts the initial physical
+profile; the origin, axis, and metric of a curved computational grid remain
+set by the selected `geometry`. On a curved grid, `x1_min` is a native radial
+bound, so choose the profile center according to that geometry's physical
+coordinates.
 
 ### `PrimitiveData`
 

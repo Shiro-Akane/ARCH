@@ -22,8 +22,8 @@ Whole-project acceptance is tracked in the [validation index](../README.md).
 The `BurnOneZone` implementation remains in `simulation/BurnOneZone/`; the
 immutable parameter files owned by this record are in [`inputs/`](inputs/).
 They run the production burn driver at
-\(\rho=10^7\,\mathrm{g\,cm^{-3}}\), \(T=3\times10^9\,\mathrm{K}\), initial
-`C12=0.5`, `O16=0.5`, and \(t=10^{-10}\,\mathrm{s}\). The strict BE_NR input
+$\rho=10^7\,\mathrm{g\,cm^{-3}}$, $T=3\times10^9\,\mathrm{K}$, initial
+`C12=0.5`, `O16=0.5`, and $t=10^{-10}\,\mathrm{s}$. The strict BE_NR input
 (`rtol=1e-10`, `atol=1e-14`) supplies an internal converged reference; BD and
 ROS4 use `rtol=1e-6`, `atol=1e-10`. This is solver cross-verification, not an
 independent physical validation of aprox13 rates.
@@ -60,10 +60,10 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
 ```
 
 Acceptance relative to BE_NR requires species Linf and relative total-energy
-error at most \(10^{-8}\), plus abundance-sum residual at most \(10^{-12}\).
+error at most $10^{-8}$, plus abundance-sum residual at most $10^{-12}$.
 Across the 13 species, L1 is the mean absolute difference and L2 is the root
 mean-square difference; Linf is the maximum absolute difference. Thermodynamic
-quantities use \(\lvert q-q_{ref}\rvert/\lvert q_{ref}\rvert\).
+quantities use $\lvert q-q_{ref}\rvert/\lvert q_{ref}\rvert$.
 
 | Backend | Solver | Species L1 | Species L2 | Species Linf | Relative energy | Result |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
@@ -97,9 +97,9 @@ high-precision Helmholtz monomial-fit model. Reaction rates still come from the
 shared ARCH RHS; this is independent **time integration**, not independent
 nuclear-data validation. The sixteen reviewed trajectories cover two independent
 integrators and two step ceilings for each network. The largest species Linf
-difference is \(1.666\times10^{-16}\), relative temperature difference
-\(2.121\times10^{-14}\), and independent endpoint EOS discrepancy
-\(2.221\times10^{-16}\). Every first-law check passes its original budget.
+difference is $1.666\times10^{-16}$, relative temperature difference
+$2.121\times10^{-14}$, and independent endpoint EOS discrepancy
+$2.221\times10^{-16}$. Every first-law check passes its original budget.
 The complete Release regression
 includes all twelve Host network/ODE controls, their negative controls and the
 separate CUDA policy checks. Built-in NSE application results

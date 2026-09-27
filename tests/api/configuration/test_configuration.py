@@ -1,6 +1,7 @@
 """Real CPU configuration contract: no Setup, EOS I/O, simulation, or file writes."""
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -56,6 +57,7 @@ class ConfigurationContract(unittest.TestCase):
         self.assertNotIn('timeintegrator', specs)
         self.assertEqual(specs['use_nse']['defaultValue'], 'true')
         self.assertEqual(specs['gravity_G']['defaultValue'], 6.67430e-8)
+        self.assertIn('exp(number)', specs['x1_max']['constraints']['syntax'])
         self.assertTrue(any(p['value']=='auto' for p in specs['linear_solver']['options']['choices']))
         self.assertTrue(any(p['value']=='aprox19' for p in specs['network_name']['options']['choices']))
         self.assertIn('self', [choice['value'] for choice in specs['gravity_type']['options']['choices']])
@@ -123,7 +125,9 @@ class ConfigurationContract(unittest.TestCase):
             with self.subTest(token=token):
                 out = self.inspect(f'ode_rtol={token}', 3)
                 self.assertTrue(any(d['parameterKey']=='ode_rtol' for d in out['diagnostics']))
-        for token in ['pi/0','2*pi*garbage','garbage','1.0suffix','pi*1e999']:
+        for token in ['pi/0','2*pi*garbage','garbage','1.0suffix','pi*1e999',
+                      'E','e','exp()','exp(pi)','exp(1000)','exp(1)junk',
+                      '2*exp(1)','sin(0)','cos(0)','log(10)']:
             with self.subTest(token=token):
                 out = self.inspect(f'x1_max={token}', 3)
                 self.assertTrue(any(d['parameterKey']=='x1_max' for d in out['diagnostics']))
@@ -131,6 +135,12 @@ class ConfigurationContract(unittest.TestCase):
         p = {p['key']:p for p in result['parameters']}
         self.assertAlmostEqual(p['x1_max']['parsedValue'], 6.283185307179586)
         self.assertFalse(p['use_diffusion']['parsedValue'])
+        result = self.inspect('x1_max=exp(1)\nx2_max=exp(-2)\n')
+        p = {p['key']:p for p in result['parameters']}
+        self.assertAlmostEqual(p['x1_max']['parsedValue'], math.e)
+        self.assertAlmostEqual(p['x2_max']['parsedValue'], math.exp(-2))
+        bad = self.inspect('dt_max=exp(1)', code=3)
+        self.assertTrue(any(d['parameterKey']=='dt_max' for d in bad['diagnostics']))
 
     def test_physical_ranges_and_cross_parameter_bounds(self):
         invalid = {

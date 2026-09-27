@@ -18,6 +18,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -418,6 +419,8 @@ struct SimConfig
         else
         {
             auto it = custom_params.find(key);
+            if (it == custom_params.end() && custom_string_params.contains(key))
+                throw std::invalid_argument("Custom parameter '" + key + "' is not a complete numeric value.");
             if (parameter_reads && it != custom_params.end())
                 parameter_reads->validate_numeric<T>(key, it->second);
             if (parameter_reads)

@@ -115,7 +115,7 @@ application results and release acceptance.
 | Reconstruction | `pcm`, `donor_cell`; `muscl`, `plm`; `ppm` | dispatched aliases shown; `weno5` appears only in ghost-count code |
 | MUSCL limiter | `minmod`, `superbee`, `vanleer`, `mc` | dispatched; unknown values, including `none`, fall back to MinMod |
 | Hydro time | `Euler`, `RK1`; `RK2`, `SSPRK2`; `RK3`, `SSPRK3` | Euler, SSPRK2, SSPRK3 |
-| Diffusion time | `RKL2` (default), `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
+| Diffusion time | `RKL2`, `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
 | EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and CUDA |
 | Gravity | `none`, `external`, `self` | See [self-gravity domains](#self-gravity-domains) for mesh and fluid-face constraints. |
 | Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
@@ -353,7 +353,7 @@ case-sensitive.
 
 Important behavior:
 
-- integer and double core values use `std::stoi`/`std::stod`;
+- standard integer and floating-point values require complete numeric tokens; floating-point values accept decimal or scientific notation;
 - Boolean values accept only `true` or `false`, case-insensitively; numeric
   `0`/`1` and `on`/`off` are rejected;
 - geometry, boundary, gravity, and compute-backend tokens are normalized to
@@ -361,10 +361,13 @@ Important behavior:
 - unknown keys are retained in `SimConfig::custom_params` or
   `custom_string_params`; spelling validation is unavailable;
 - `SimConfig::Get<T>` returns its caller-supplied default when a custom key is
-  absent;
-- the lightweight `pi` expression parser serves domain bounds and external
-  gravity components, with forms such as `pi`, `-pi`, `2*pi`, `pi*2`, and
-  `pi/2`;
+  absent; a present custom value that is not a complete number fails when read
+  as numeric;
+- grid bounds `x1/x2/x3_min/max` and gravity fields `gravity_g_x/y/z` and
+  `gravity_G` use a restricted expression parser: lowercase `pi`, `-pi`,
+  `2*pi`, `pi*2`, `pi/2`, and `exp(number)` such as `exp(1)`. Results must be
+  finite. Standalone `e/E`, `sin`, `cos`, and `log` are outside `.par` syntax;
+  `e/E` in `1e8` or `1E8` is only a scientific-notation exponent marker;
 - paths are interpreted relative to the process working directory;
 - quotes are stripped from `eos_table_path` by EOS dispatch, but general strings
   retain parser text.
@@ -451,9 +454,7 @@ not a supported runtime option.
 PCM/MUSCL/PPM reconstruction choice; it changes signal estimates, not the EOS.
 `eos_coulomb_mult` scales Helm Coulomb pressure, energy and derivatives together
 and retains the original nonpositive pressure/energy guard. It does not change
-tabular component discovery or electron completion. These controls belong to
-their physical configuration groups; advanced presentation belongs to the GUI,
-without an Advanced group in text input or Core.
+tabular component discovery or electron completion.
 
 ### AMR
 
@@ -481,9 +482,9 @@ without an Advanced group in text input or Core.
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | CGS gravitational constant used by self gravity |
 | `gravity_boundary` | string | `periodic` | `periodic`: subtract volume-mean density; `isolated`: finite-domain 3D Newton boundary, 1D radial symmetry, or 2D polar logarithmic boundary; no background subtraction |
-| `gravity_rtol` | float | `1e-10` | Positive relative volume RMS residual target, smaller than one; advanced GUI option |
-| `gravity_atol` | float | `0` | Nonnegative absolute residual in `s^-2`; zero keeps relative accuracy; advanced GUI option |
-| `gravity_max_cycles` | int | `200` | Positive outer MG/FGMRES iteration limit; failure stops evolution; advanced GUI option |
+| `gravity_rtol` | float | `1e-10` | Positive relative volume RMS residual target, smaller than one |
+| `gravity_atol` | float | `0` | Nonnegative absolute residual in `s^-2`; zero keeps relative accuracy |
+| `gravity_max_cycles` | int | `200` | Positive outer MG/FGMRES iteration limit; failure stops evolution |
 
 For `eos_type=tabular`, EOSDispatcher recognizes normalized HDF5 with rank 3 or
 4, EOSDriver total-EOS HDF5, and the original positive-temperature 16-column
@@ -753,8 +754,49 @@ struct PointCoords {
 };
 ```
 
-`Grid::GetPhysicalCoords` populates every representation. In 2D spherical and
-cylindrical geometry, the second logical coordinate is planar azimuth `phi`.
+`Grid::GetPhysicalCoords` populates every representation. For a 3D spherical
+density profile centered at the origin, let `rho_bg > 0`, `rho_peak > 0`, and
+`width > 0` be case parameters in CGS units. Inside `Init`, the Cartesian form is:
+
+```cpp
+const double r2 = point.x * point.x + point.y * point.y + point.z * point.z;
+out.rho = rho_bg + rho_peak / (1.0 + r2 / (width * width));
+```
+
+The same profile in spherical coordinates is:
+
+```cpp
+const double r2 = point.r * point.r;
+out.rho = rho_bg + rho_peak / (1.0 + r2 / (width * width));
+```
+
+These are alternative density assignments that give the same initial field at
+a physical position up to floating-point rounding. `point.r` and `point.x/y/z`
+are always available and can be used together in one case. Settings such as
+`geometry=cartesian` select the computational grid and its metric; they do not
+restrict which coordinate fields `Init` reads. A Cartesian grid provides
+`point.r`, while a spherical grid provides `point.x/y/z`. Changing grid geometry
+changes the discretization.
+
+When describing a physical field in curved coordinates, distinguish the field
+center from the global coordinate origin. For a 2D Cartesian domain restricted
+to positive coordinates, place a circular profile at the lower-left boundary.
+Declare `double center_x_ = 0.0, center_y_ = 0.0;` in the case class, then
+read the existing grid bounds directly in `Setup`:
+
+```cpp
+center_x_ = config.grid.x1_min;
+center_y_ = config.grid.x2_min;
+```
+
+`Setup` writes these members, and `Init` on the same object reads them;
+`Init` has no `config` parameter. In `Init`, use $r_{\mathrm{local}}^2=(x-x_c)^2+(y-y_c)^2$, where `x/y` are
+`point.x/y` and `x_c/y_c` are the saved center coordinates. `point.r` still
+measures from the global `(0,0,0)` origin. Shifting the physical profile does
+not shift the origin or axis of the curved grid metric; on a curved grid,
+`x1_min` is a native radial bound. See the [case guide](guides/SimulationCase.md#pointcoords)
+for a complete example. In 2D spherical and cylindrical geometry, the second
+logical coordinate is planar azimuth `phi`.
 
 ### `PrimitiveData`
 

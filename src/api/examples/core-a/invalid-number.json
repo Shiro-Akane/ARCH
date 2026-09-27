@@ -24,8 +24,8 @@
   },
   "identity": {
     "caseId": "Sod",
-    "configRevision": "d1382bc722f6669a50d55dda0e59999f74824d62e007f227aefdb6628978646d",
-    "requestId": "core-a-nonfinite"
+    "configRevision": "5e32a00344b42381d7598a1029b6ae280ca446b696f6a35ab468c504c3f2ec14",
+    "requestId": "core-a-invalid-number"
   },
   "kind": "initial-state-preview",
   "parameterMetadata": {

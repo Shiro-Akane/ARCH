@@ -31,10 +31,10 @@ Hydro、自引力、aprox13 核反应及热扩散。算例源码只引用
 `density_amplitude`、`hotspot_width` 和 `center_x/y/z` 均为 CGS 场景参数；
 热点在物理 Cartesian 坐标中定义：
 
-\[
+$$
 q=\exp\left(-\frac{|\mathbf{x}-\mathbf{x}_c|^2}{2\sigma^2}\right),\quad
 \rho=\rho_0(1+Aq),\quad T=T_0+(T_{\rm peak}-T_0)q.
-\]
+$$
 
 验收时检查接受步数、`state_repairs.txt` 的 `events=0`、
 `gravity_solves.tsv` 中每次求解的 `residual <= target`，以及最终 plot 的

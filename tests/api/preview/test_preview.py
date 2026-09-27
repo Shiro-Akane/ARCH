@@ -116,7 +116,7 @@ class PreviewContract(unittest.TestCase):
             (config(geometry='spherical'), 'Sod', 4, 'support'),
             (config(restart='true', restart_file='missing.h5'), 'Sod', 4, 'support'),
             (config(x_pos=2), 'Sod', 5, 'setup'),
-            (config(x_pos='nan'), 'Sod', 3, 'configuration'),
+            (config(x_pos='nan'), 'Sod', 5, 'setup'),
             (config(nblockx1=0), 'Sod', 3, 'configuration'),
             (config(lrefinemax=16), 'Sod', 3, 'configuration'),
             (config(eos_type='unknown'), 'Sod', 5, 'eos'),

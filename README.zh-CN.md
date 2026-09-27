@@ -13,7 +13,7 @@ ARCH 用于模拟可压缩流体运动、传热与核反应。它以有限体积
 
 **ARCH 的输入、输出和物理常数统一使用 CGS**：长度为 `cm`，时间为 `s`，密度为 `g/cm³`，压力和能量密度为 `erg/cm³`，比内能为 `erg/g`，温度为 `K`。角度使用 `rad`。输入不会自动换算单位；更多量纲见[算例指南](docs/guides/SimulationCase.zh-CN.md#单位)。
 
-从下方的[构建](#构建)与[首次运行](#首次运行)开始；了解可用模块及组合条件时，阅读[功能清单](docs/Features.zh-CN.md)和[参考手册](docs/Reference.zh-CN.md)。
+从下方的[构建](#构建)与[首次运行](#首次运行)开始。完成第一个算例后，按[ARCH 模拟算例指南](docs/guides/SimulationCase.zh-CN.md)继续学习；需要查找模块范围或具体参数时，再使用[功能清单](docs/Features.zh-CN.md)和[参考手册](docs/Reference.zh-CN.md)。
 
 ## 功能与文档
 
@@ -23,7 +23,13 @@ ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应�
 
 ## 构建
 
-在 Linux 或 WSL2 终端中构建。CPU 需要支持 C++20 的编译器、CMake 3.22+、Ninja、HDF5 C++/HL、OpenMP 和 Git；CUDA 还需要 CMake 3.25.2+、CUDA Toolkit 12.0+ 与兼容的驱动。依赖安装、内存限制和源码包中的 EOS 表处理见[构建指南](docs/guides/Build.zh-CN.md)。
+在 Linux 或 WSL2 终端中构建。按所选后端准备依赖：
+
+- **基础工具：** 支持 C++20 的编译器、CMake 3.22+、Ninja 和 Git。
+- **两种后端共用的库：** HDF5 C++/HL 和 OpenMP。
+- **CUDA 构建另需：** CMake 3.25.2+、CUDA Toolkit 12.0+ 和兼容的 GPU 驱动。
+
+依赖安装、编译内存限制及源码包中的 EOS 表处理见[构建指南](docs/guides/Build.zh-CN.md)。
 
 ### 获取源码
 
@@ -84,10 +90,11 @@ SodBeginner_chk_0000.h5
 ```
 
 日志是可以直接阅读的文本；名称包含 `_plt_` 的文件保存供查看的流体场，
-`_chk_` 文件则是用于重启的检查点。HDF5 是这些二进制数据文件采用的格式。
-[算例指南](docs/guides/SimulationCase.zh-CN.md)会介绍如何读取场数据并比较结果。
-这个示例使用 64 个单元；`simulation/Sod/Sod.par` 提供 128 单元的标准激波管，
+`_chk_` 文件则是用于重启的检查点。HDF5 是这些二进制数据文件采用的格式。这个示例使用 64 个单元；
+`simulation/Sod/Sod.par` 提供 128 单元的标准激波管，
 `simulation/Sedov/` 则提供爆炸波示例。
+
+**初学者下一步：** 请从[ARCH 模拟算例指南](docs/guides/SimulationCase.zh-CN.md)继续。它以刚运行的 Sod 算例为起点，按顺序解释网格与参数、如何检查输出和进行受控实验，最后带你编写自己的算例。
 
 ## 扩展模型
 

@@ -84,7 +84,7 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 重构 | `pcm`、`donor_cell`；`muscl`、`plm`；`ppm` | 所列 alias 已 dispatch；`weno5` 只出现在 ghost 数计算中 |
 | MUSCL limiter | `minmod`、`superbee`、`vanleer`、`mc` | 已 dispatch；包括 `none` 在内的未知值回退到 MinMod |
 | 流体时间推进 | `Euler`、`RK1`；`RK2`、`SSPRK2`；`RK3`、`SSPRK3` | Euler、SSPRK2、SSPRK3 |
-| 扩散时间推进 | `RKL2`（默认）、`RKL1` | 独立扩散算子中 RKL2 为二阶；RKL1 是可选一阶方法 |
+| 扩散时间推进 | `RKL2`、`RKL1` | 独立扩散算子中 RKL2 为二阶；RKL1 是可选一阶方法 |
 | EOS | `ideal`、`tabular`、`helmholtz` | CPU 与 CUDA 均已 dispatch |
 | 重力 | `none`、`external`、`self` | 自引力域与流体边界条件见[自引力计算域](#自引力计算域) |
 | 网络 | `aprox13`、`aprox19`、`aprox21`、`iso7`；`custom:<id>` | 内置网络及 CMake 自动发现的生成网络 |
@@ -251,12 +251,12 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 重要行为：
 
-- 整数和浮点核心值使用 `std::stoi`/`std::stod`；
+- 标准整数和浮点数值要求完整的数值记号；浮点数可用十进制或科学记数法；
 - Boolean 只接受不区分大小写的 `true` 或 `false`；数字 `0`/`1` 与 `on`/`off` 会被拒绝；
 - geometry、boundary、gravity 与 compute-backend token 在参数加载时统一规范为 ASCII 小写；
 - 未知键保留在 `SimConfig::custom_params` 或 `custom_string_params`，不提供拼写验证；
-- 自定义键缺失时，`SimConfig::Get<T>` 返回调用者提供的默认值；
-- 轻量 `pi` 表达式解析器用于域边界和外部重力分量，支持 `pi`、`-pi`、`2*pi`、`pi*2` 和 `pi/2` 等形式；
+- 自定义键缺失时，`SimConfig::Get<T>` 返回调用者提供的默认值；自定义数值须是完整数值记号，存在但不可作为数值解析的键在数值读取时会报错；
+- 网格边界 `x1/x2/x3_min/max` 及引力参数 `gravity_g_x/y/z`、`gravity_G` 使用轻量表达式解析器，支持小写 `pi`、`-pi`、`2*pi`、`pi*2`、`pi/2` 和 `exp(number)`，例如 `exp(1)`；结果必须有限。独立的 `e/E` 常数及 `sin`、`cos`、`log` 不属于 `.par` 表达式语法；`1e8`/`1E8` 中的 `e/E` 仅是科学记数法的指数标记；
 - 路径相对于进程工作目录解释；
 - EOS dispatch 会移除 `eos_table_path` 的引号，普通字符串则保留解析器文本。
 
@@ -336,8 +336,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 所有通量使用完整物理面 EOS，目前不提供面热力学近似开关。`hll_wave_speed=davis` 同时适用于 HLL 与 HLLC，改变波速
 估计而不近似热力学；它与 PCM/MUSCL/PPM 的重构选择独立。
 `eos_coulomb_mult` 同时缩放 Helm 的 Coulomb 压力、能量与导数，并保留原有非正
-压力/能量保护；不影响表格 EOS 的缺项识别与电子补齐。以上选项在文本中按物理
-归属配置；GUI 可将其折叠为高级选项，Core 不引入 Advanced 配置组。
+压力/能量保护；不影响表格 EOS 的缺项识别与电子补齐。
 
 ### AMR
 
@@ -365,9 +364,9 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | CGS 引力常数 |
 | `gravity_boundary` | string | `periodic` | `periodic` 去除体积平均密度；`isolated` 为三维有限质量 Newton 势、一维径向对称势或二维极坐标单位长度质量的对数势；均不减背景密度 |
-| `gravity_rtol` | float | `1e-10` | 大于零且小于一的体积 RMS 相对残差；GUI 高级选项 |
-| `gravity_atol` | float | `0` | 非负绝对残差，单位 `s^-2`；零代表相对精度主导；GUI 高级选项 |
-| `gravity_max_cycles` | int | `200` | 正整数，MG/FGMRES 外迭代上限；不收敛停止推进；GUI 高级选项 |
+| `gravity_rtol` | float | `1e-10` | 大于零且小于一的体积 RMS 相对残差 |
+| `gravity_atol` | float | `0` | 非负绝对残差，单位 `s^-2`；零代表相对精度主导 |
+| `gravity_max_cycles` | int | `200` | 正整数，MG/FGMRES 外迭代上限；不收敛停止推进 |
 
 对 `eos_type=tabular`，EOSDispatcher 可识别 3D/4D 规范化 HDF5、EOSDriver 总
 EOS HDF5，以及原始 Shen EOS2/EOS4 使用的正温度 16 列重子 ASCII 主表。
@@ -568,7 +567,30 @@ struct PointCoords {
 };
 ```
 
-`Grid::GetPhysicalCoords` 填充所有表示。二维 spherical 和 cylindrical 几何中，第二个逻辑坐标是平面方位角 `phi`。
+`Grid::GetPhysicalCoords` 填充所有表示。以原点为球心的三维球对称密度分布为例，设 `rho_bg > 0`、`rho_peak > 0` 和 `width > 0` 为算例采用的 CGS 参数。在 `Init` 中，先用笛卡尔坐标写：
+
+```cpp
+const double r2 = point.x * point.x + point.y * point.y + point.z * point.z;
+out.rho = rho_bg + rho_peak / (1.0 + r2 / (width * width));
+```
+
+同一分布用球坐标写：
+
+```cpp
+const double r2 = point.r * point.r;
+out.rho = rho_bg + rho_peak / (1.0 + r2 / (width * width));
+```
+
+两段是可替换的密度赋值，在同一物理位置给出相同的球对称初态（浮点舍入范围内）。`point.r` 与 `point.x/y/z` 始终同时提供，也可在一个算例中并用。`geometry=cartesian` 等设置决定计算网格及其度量，不限定 `Init` 中采用的坐标表达；笛卡尔网格可读取 `point.r`，球坐标网格也可读取 `point.x/y/z`。更换网格几何会改变离散结果。
+
+以曲线坐标描述物理场时，场的中心须与全局坐标原点区分。例如只取正坐标区域的二维笛卡尔网格，可以把圆心设在左下边界。先在算例类中声明 `double center_x_ = 0.0, center_y_ = 0.0;`，再在 `Setup` 中直接读取系统网格边界：
+
+```cpp
+center_x_ = config.grid.x1_min;
+center_y_ = config.grid.x2_min;
+```
+
+`Setup` 写入后，同一对象的 `Init` 读取这些成员；`Init` 没有 `config` 参数。在 `Init` 中使用 $r_{\mathrm{local}}^2=(x-x_c)^2+(y-y_c)^2$，其中 `x/y` 是 `point.x/y`，`x_c/y_c` 是上面保存的中心坐标。`point.r` 仍表示到全局 `(0,0,0)` 的距离；平移物理分布不会平移曲线网格的度量原点和轴线。在曲线网格中，`x1_min` 是原生径向轴下界。完整算例见[模拟算例指南的 `PointCoords` 小节](guides/SimulationCase.zh-CN.md#pointcoords)。二维 spherical 和 cylindrical 几何中，第二个逻辑坐标是平面方位角 `phi`。
 
 ### `PrimitiveData`
 

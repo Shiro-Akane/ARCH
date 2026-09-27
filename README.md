@@ -13,7 +13,7 @@ ARCH models compressible fluid motion, heat transfer and nuclear reactions. It a
 
 **ARCH uses CGS for inputs, outputs and physical constants**: length in `cm`, time in `s`, density in `g/cm³`, pressure and energy density in `erg/cm³`, specific internal energy in `erg/g`, and temperature in `K`. Angles use `rad`. Inputs are not converted automatically; see the [case guide](docs/guides/SimulationCase.md#units) for more units.
 
-Begin with [Build](#build) and [First run](#first-run). The [feature list](docs/Features.md) and [reference](docs/Reference.md) describe available models and their combination rules.
+Begin with [Build](#build) and [First run](#first-run). After the first case, follow the [ARCH Simulation Case Guide](docs/guides/SimulationCase.md) in order. Use the [feature list](docs/Features.md) or [reference](docs/Reference.md) when you need module scope or a specific setting.
 
 ## Features and documentation
 
@@ -23,7 +23,13 @@ Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automati
 
 ## Build
 
-Build in Linux or a WSL2 terminal. CPU builds need a C++20 compiler, CMake 3.22+, Ninja, HDF5 C++/HL, OpenMP and Git. CUDA adds CMake 3.25.2+, CUDA Toolkit 12.0+ and a compatible driver. See the [build guide](docs/guides/Build.md) for dependency setup, memory limits and EOS tables in source archives.
+Build in a Linux or WSL2 terminal. Prepare the dependencies for your backend:
+
+- **Core tools:** a C++20 compiler, CMake 3.22+, Ninja and Git.
+- **Libraries used by both builds:** HDF5 C++/HL and OpenMP.
+- **CUDA builds also need:** CMake 3.25.2+, CUDA Toolkit 12.0+ and a compatible GPU driver.
+
+The [build guide](docs/guides/Build.md) covers installation, compilation memory limits and EOS tables in source archives.
 
 ### Get the source
 
@@ -89,11 +95,11 @@ SodBeginner_chk_0000.h5
 
 The log is readable text. Files containing `_plt_` hold fluid fields for
 inspection, while `_chk_` files are checkpoints for restarting a run. HDF5 is
-the data format used for these binary files. The
-[case guide](docs/guides/SimulationCase.md) explains how to inspect the fields
-and compare runs. This example uses 64 cells; `simulation/Sod/Sod.par` provides
-the 128-cell standard shock tube, and `simulation/Sedov/` contains a blast-wave
-example.
+the data format used for these binary files. This example uses 64 cells;
+`simulation/Sod/Sod.par` provides the 128-cell standard shock tube, and
+`simulation/Sedov/` contains a blast-wave example.
+
+**New to ARCH? Continue with the [ARCH Simulation Case Guide](docs/guides/SimulationCase.md).** It starts from the Sod case you just ran, then explains the mesh and settings, output checks, controlled experiments and writing your own case.
 
 ## Extended models
 

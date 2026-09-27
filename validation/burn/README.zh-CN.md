@@ -15,7 +15,7 @@ CPU 与 CUDA 均通过原定的跨求解器误差和组分闭合检查。
 原生燃烧恢复验证。
 整个项目的验收状态统一见[验证索引](../README.zh-CN.md)。
 
-`BurnOneZone` 实现仍位于 `simulation/BurnOneZone/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们使用生产 burn driver，在 \(\rho=10^7\,\mathrm{g\,cm^{-3}}\)、\(T=3\times10^9\,\mathrm{K}\)、初始 `C12=0.5`、`O16=0.5` 条件下推进至 \(t=10^{-10}\,\mathrm{s}\)。严格 BE_NR 输入（`rtol=1e-10`、`atol=1e-14`）提供内部收敛参考；BD 和 ROS4 使用 `rtol=1e-6`、`atol=1e-10`。这是求解器交叉 verification，不是对 aprox13 反应率的独立物理 validation。
+`BurnOneZone` 实现仍位于 `simulation/BurnOneZone/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们使用生产 burn driver，在 $\rho=10^7\,\mathrm{g\,cm^{-3}}$、$T=3\times10^9\,\mathrm{K}$、初始 `C12=0.5`、`O16=0.5` 条件下推进至 $t=10^{-10}\,\mathrm{s}$。严格 BE_NR 输入（`rtol=1e-10`、`atol=1e-14`）提供内部收敛参考；BD 和 ROS4 使用 `rtol=1e-6`、`atol=1e-10`。这是求解器交叉 verification，不是对 aprox13 反应率的独立物理 validation。
 
 ## Helmholtz 表身份
 
@@ -42,7 +42,7 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
   --output-dir validation/burn/results/application-new
 ```
 
-相对 BE_NR 的验收要求：核素 Linf 和总能量相对误差均不超过 \(10^{-8}\)，丰度和残差不超过 \(10^{-12}\)。在 13 个核素上，L1 为平均绝对差，L2 为均方根差，Linf 为最大绝对差。热力学量使用 \(\lvert q-q_{ref}\rvert/\lvert q_{ref}\rvert\)。
+相对 BE_NR 的验收要求：核素 Linf 和总能量相对误差均不超过 $10^{-8}$，丰度和残差不超过 $10^{-12}$。在 13 个核素上，L1 为平均绝对差，L2 为均方根差，Linf 为最大绝对差。热力学量使用 $\lvert q-q_{ref}\rvert/\lvert q_{ref}\rvert$。
 
 | 后端 | 求解器 | 核素 L1 | 核素 L2 | 核素 Linf | 相对能量误差 | 结果 |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
@@ -63,9 +63,9 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
 覆盖四个网络，端点能量还使用已有高精度 Helmholtz 单项式拟合模型独立检查。
 反应率仍来自 ARCH 共用 RHS；这里独立的是**时间积分**，不是核反应数据。
 十六条复核轨迹覆盖每个网络的两种独立积分器和两档最大时间步。核素 Linf
-差异最大为 \(1.666\times10^{-16}\)，温度相对差最大为
-\(2.121\times10^{-14}\)，独立端点 EOS 相对差最大为
-\(2.221\times10^{-16}\)，所有第一定律检查均满足原定预算。
+差异最大为 $1.666\times10^{-16}$，温度相对差最大为
+$2.121\times10^{-14}$，独立端点 EOS 相对差最大为
+$2.221\times10^{-16}$，所有第一定律检查均满足原定预算。
 完整 Release 回归
 包含十二种 Host 网络/ODE 检查、相应反例和独立的 CUDA 策略检查。
 同一受测构建的内置 NSE 应用验证

@@ -127,19 +127,19 @@ graphicalBindings?: { version: "1", items }
 | 参数字段 | 含义 |
 |---|---|
 | key / type | `x_pos` / `float`；数值为 double 精度，不表示 float32 |
-| explicitValue | 由原有解析器得到的显式值；缺失或该类型解析失败为 null |
+| explicitValue | 成功读取的显式值；键缺失时为 null，存在但格式错误的数值会使 Setup 失败 |
 | effectiveValue | Setup 实际读取值；无法归并时为 null |
 | defaultValue | 该次 Get 调用传入的默认值；本例为 0.5，不是域中点 |
 | rawValue | 存在时返回原解析器保留的有效 token；重复 key 采用最后一项 |
 | valueSource | `explicit`、`default` 或 `unknown` |
-| sourceReason | 显式值为 null；默认值为 `missing-key` 或 `parse-failure`；其他见下文 |
+| sourceReason | 显式值为 null；键缺失而采用默认值时为 `missing-key`；其他见下文 |
 | unit / unitEvidence / description | Sod x_pos 为 cm，附显式轴绑定依据；不自动解释 custom 含义，description 仍为 null |
 | constraints | 本次域的 min/max；两个 Inclusive 字段均为 false |
 | diagnostics | 参数级 severity/code/message 列表 |
 
-读取行为保持原解析器的含义。例如 `x_pos=bad` 与超出 double 表示范围的 token 会采用 0.5，来源为 `default/parse-failure`；`x_pos=0.35suffix` 当前解析器接受数值前缀，故实际值为 0.35、来源为 explicit。`nan/inf` 则在预览基础检查阶段拒绝，尚未发生 Setup 读取，不返回参数扩展。
+缺失 `x_pos` 时，Sod Setup 使用调用者提供的默认值 0.5。显式 `x_pos=bad`、`x_pos=0.35suffix`、`x_pos=nan` 和超出 double 表示范围的数值均作为错误拒绝，不会退回 0.5；Setup 阶段返回错误、空参数读取记录和空位置绑定。重复键取最后一次赋值，若最后的值无效也会报错。
 
-重复读取若类型、默认值、值或来源不一致，报告 `AMBIGUOUS_PARAMETER_READ`，type/explicitValue/effectiveValue/defaultValue 为 null，来源为 `unknown/ambiguous-reads`。若程序改写参数值而无法归因于原输入，报告 `PARAMETER_SOURCE_UNKNOWN` 和 `unknown/untracked-value`。两者均不提供可编辑绑定。解析失败后回退提供 `PARAMETER_DEFAULT_FALLBACK`。这些参数级诊断使用 warning，不改变原有 Setup 的成功/失败决定。
+重复读取若类型、默认值、值或来源不一致，报告 `AMBIGUOUS_PARAMETER_READ`，type/explicitValue/effectiveValue/defaultValue 为 null，来源为 `unknown/ambiguous-reads`。若程序改写参数值而无法归因于原输入，报告 `PARAMETER_SOURCE_UNKNOWN` 和 `unknown/untracked-value`。两者均不提供可编辑绑定。参数级诊断使用 warning；无效的显式数值通过顶层错误响应报告。
 
 `graphicalBindings.items` 在完整成功响应中提供 `Sod.x_pos`：
 
@@ -278,7 +278,7 @@ ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 
 `preview_initial_conversion` 检查压力和温度两种初始化输入共用的转换，以及内存参数解析。测试源位于 `tests/api/`。
 
-`preview_parameter_reads` 检查重复读取歧义、程序改值后的未知来源、普通配置不启用记录及严格开区间。`preview_parameter_metadata` 通过实际 CLI 检查来源、真实字段与绑定一致、动态域、越界、重复 key、数值前缀、EOS 失败和 Setup 前的错误。
+`preview_parameter_reads` 检查重复读取歧义、程序改值后的未知来源、普通配置不启用记录及严格开区间。`preview_parameter_metadata` 通过实际 CLI 检查来源、真实字段与绑定一致、动态域、越界、重复 key、无效数值拒绝、EOS 失败和 Setup 前的错误。
 
 `preview_sampling_limits` 检查分配前数量限制、真实网格的非活动坐标、JSON 字节边界及超限状态保留。`preview_cellular_2d` 检查真实 CLI 的二维排列、两个方向、噪声影响、直接 Init/EOS 对照、实际 Helmholtz 输入、采样/响应限制、错误、取消及无文件输出。直接对照程序仅供测试，不是 Host 需要管理的另一个生产程序。
 
@@ -288,9 +288,8 @@ ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 
 GUI 以 `--config-schema` 的实际响应取得标准参数目录。已退役的五个旧键返回
 `RETIRED_PARAMETER`，不能重新写入编辑器。`dt_init/dt_min/tstep_change_factor` 已登记，
-参数仍按物理模块归属，不在 Core 或文本输入中添加 `AdvancedConfig`/高级标签。
-GUI 的高级选项显示由前端负责。
+参数按物理模块归属。
 
 状态下限、EOS 与检查点格式见[参考手册](../../docs/Reference.zh-CN.md)；
 [迁移记录](../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)保留实施历史。
-[配置示例](examples/configuration/README.md)已刷新；旧 core-a/core-b 是历史快照。
+[配置示例](examples/configuration/README.md)与 Core A 的无效数值响应已同步当前解析规则；其余 Core A/B 场景保留对应阶段的响应快照。

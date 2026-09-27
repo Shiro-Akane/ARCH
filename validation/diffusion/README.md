@@ -22,13 +22,13 @@ immutable parameter files owned by this record are in [`inputs/`](inputs/).
 They evolve a bounded tracer mass fraction on a static,
 periodic, one-dimensional ideal-gas state:
 
-\[
+$$
 X(x,t)=0.5+0.25\exp[-D(2\pi)^2t]\cos(2\pi x),\qquad D=0.01.
-\]
+$$
 
 The reference includes the exact cell-average sinc factor. Only species
 diffusion is enabled; the background fraction is `1-tracer`. The committed RKL1
-and RKL2 inputs use 64, 128, and 256 cells and end at \(t=0.1\).
+and RKL2 inputs use 64, 128, and 256 cells and end at $t=0.1$.
 
 ## Reproduce
 
@@ -49,16 +49,16 @@ python3 tools/validate_backend_results.py \
 ```
 
 RKL2 acceptance requires a final-pair tracer L1 rate of at least 1.8 and mean
-tracer drift at most \(10^{-12}\). RKL1 acceptance requires finite bounded
-fractions, Linf error at most \(10^{-5}\), and the same drift bound. Results are
+tracer drift at most $10^{-12}$. RKL1 acceptance requires finite bounded
+fractions, Linf error at most $10^{-5}$, and the same drift bound. Results are
 measured from the final HDF5 cell averages.
 
 The values below represent both backends at the displayed precision;
 metrics.csv retains their separate full-precision observations.
 The acceptance run reproduces these values. At the physical endpoint,
-the largest CPU/CUDA field difference is \(9.992\times10^{-16}\), within the
-unchanged relative/absolute comparison budget of \(5\times10^{-10}\) and
-\(2\times10^{-12}\).
+the largest CPU/CUDA field difference is $9.992\times10^{-16}$, within the
+unchanged relative/absolute comparison budget of $5\times10^{-10}$ and
+$2\times10^{-12}$.
 
 | Integrator | Cells | L1 | L2 | L1 rate | Mean drift |
 | --- | ---: | ---: | ---: | ---: | ---: |
