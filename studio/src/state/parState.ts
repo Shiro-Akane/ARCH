@@ -1,3 +1,4 @@
+import {isRetiredParameter} from '../data/retiredParameters.ts';
 import type {StandardParameter} from '../host/configurationContracts.ts';
 import {standardValueError} from '../data/standardValidation.ts';
 import { parSchema } from '../data/parSchema.ts';
@@ -14,7 +15,7 @@ function validExpression(value: string): boolean {
   if(right) return Number.isFinite(right[1]==='*' ? Math.PI*Number(right[2]) : Math.PI/Number(right[2]));
   return false;
 }
-export interface ParState { filename: string; document: ParDocument; changes: Record<string,string> }
+export interface ParState { filename: string; document: ParDocument; changes: Record<string,string>; removedKeys?:string[] }
 export function loadPar(filename: string, raw: string): ParState {
   const document = parsePar(raw);
   if (!document.entries.length) throw new Error('No ARCH key=value entries found.');
@@ -22,7 +23,8 @@ export function loadPar(filename: string, raw: string): ParState {
 }
 export function parErrors(state: ParState, schema?:readonly StandardParameter[]): Record<string,string> {
   const errors: Record<string,string> = Object.create(null);
-  for (const entry of [...effectiveEntries(state.document),...Object.keys(state.changes).filter(key=>!state.document.entries.some(e=>e.key===key)).map(key=>({key,value:state.changes[key]}))]) {
+  for (const entry of [...effectiveEntries(state.document).filter(e=>!state.removedKeys?.includes(e.key)),...Object.keys(state.changes).filter(key=>!state.document.entries.some(e=>e.key===key)).map(key=>({key,value:state.changes[key]}))]) {
+    if(isRetiredParameter(entry.key)){errors[entry.key]='RETIRED_PARAMETER: explicit removal required; not a custom parameter or alias.';continue;}
     const value = state.changes[entry.key] ?? entry.value;
     const meta = parSchema[entry.key];
     if (meta?.range && (!value.trim() || !Number.isFinite(Number(value)) || Number(value)<meta.range[0] || Number(value)>meta.range[1])) errors[entry.key] = 'Must be a finite number in [0, 1]; value was not clamped.';
@@ -37,7 +39,7 @@ export function parErrors(state: ParState, schema?:readonly StandardParameter[])
     if (/[\r\n#\0]/.test(value) || value !== value.trim()) errors[entry.key] = 'Value must not contain comments, newlines or surrounding whitespace.';
   }
   for(const [key,value] of Object.entries(state.changes))if(/[\r\n#\0]/.test(value)||value!==value.trim())errors[key]='Value must not contain comments, newlines or surrounding whitespace.';
-  const values = {...Object.fromEntries(effectiveEntries(state.document).map(e => [e.key,e.value])),...state.changes};
+  const values = {...Object.fromEntries(effectiveEntries(state.document).filter(e=>!state.removedKeys?.includes(e.key)).map(e => [e.key,e.value])),...state.changes};
   const refine = Number(values.refine_threshold ?? '0.8'), derefine = Number(values.derefine_threshold ?? '0.2');
   if (derefine < 0 || derefine >= refine) errors.derefine_threshold = 'Requires 0 <= derefine_threshold < refine_threshold (including defaults 0.2 / 0.8).';
   if (values.regrid_interval !== undefined && Number(values.regrid_interval)<1) errors.regrid_interval='Must be positive.';
@@ -50,12 +52,18 @@ export function parErrors(state: ParState, schema?:readonly StandardParameter[])
 }
 export function parStatus(state: ParState, schema?:readonly StandardParameter[]): 'saved'|'dirty'|'invalid' {
   if (Object.keys(parErrors(state,schema)).length) return 'invalid';
-  return serializePar(state.document,state.changes) === state.document.raw ? 'saved' : 'dirty';
+  return serializePar(state.document,state.changes,state.removedKeys) === state.document.raw ? 'saved' : 'dirty';
 }
-export function editPar(state: ParState, key: string, value: string): ParState { return { ...state, changes: Object.assign(Object.create(null), state.changes, { [key]: value }) }; }
-export function revertPar(state: ParState): ParState { return { ...state, changes: Object.create(null) }; }
+export function editPar(state: ParState, key: string, value: string): ParState { if(isRetiredParameter(key))throw new Error('Retired parameter cannot be edited or inserted.'); return { ...state, changes: Object.assign(Object.create(null), state.changes, { [key]: value }) }; }
+export function revertPar(state: ParState): ParState { return { ...state, changes: Object.create(null), removedKeys:[] }; }
 
 export function exportPar(state: ParState, schema?:readonly StandardParameter[]): { filename: string; text: string } {
   if (parStatus(state,schema) === 'invalid') throw new Error('Correct invalid parameters before exporting.');
-  return { filename: state.filename.replace(/\.par$/i,'') + '_modified.par', text: serializePar(state.document,state.changes) };
+  return { filename: state.filename.replace(/\.par$/i,'') + '_modified.par', text: serializePar(state.document,state.changes,state.removedKeys) };
+}
+
+export function removeRetiredParameter(state:ParState,key:string):ParState{
+ if(!isRetiredParameter(key))throw new Error('Only retired parameters can use this migration action.');
+ const changes=Object.assign(Object.create(null),state.changes);delete changes[key];
+ return {...state,changes,removedKeys:[...new Set([...(state.removedKeys??[]),key])]};
 }

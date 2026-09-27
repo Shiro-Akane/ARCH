@@ -8,7 +8,6 @@ export const enumControls: Record<string, readonly string[]> = Object.assign(Obj
   reconstruct: ['pcm', 'donor_cell', 'plm', 'muscl', 'ppm'],
   limiter: ['minmod', 'mc', 'superbee', 'vanleer'],
   time_integrator: ['euler', 'rk1', 'rk2', 'ssprk2', 'rk3', 'ssprk3'],
-  timeintegrator: ['euler', 'rk1', 'rk2', 'ssprk2', 'rk3', 'ssprk3'],
   eos_type: ['ideal', 'helmholtz', 'tabular'],
   x1l_boundary_type: boundary, x1r_boundary_type: boundary,
   x2l_boundary_type: boundary, x2r_boundary_type: boundary,

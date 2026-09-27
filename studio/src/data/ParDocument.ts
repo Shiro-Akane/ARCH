@@ -30,7 +30,7 @@ export function effectiveEntries(doc: ParDocument): ParEntry[] {
   for (const entry of doc.entries) last.set(entry.key, entry);
   return [...last.values()].sort((a,b) => a.line - b.line);
 }
-export function serializePar(doc: ParDocument, changes: Record<string,string> = {}): string {
+export function serializePar(doc: ParDocument, changes: Record<string,string> = {}, removedKeys:readonly string[] = []): string {
   let result = doc.raw;
   for (const entry of effectiveEntries(doc).reverse()) {
     if (!Object.hasOwn(changes, entry.key)) continue;
@@ -45,6 +45,15 @@ export function serializePar(doc: ParDocument, changes: Record<string,string> = 
     const eol=doc.raw.match(/\r\n|\n|\r/)?.[0]??'\n';
     const ended=/[\r\n]$/.test(result);
     result+=(result&&!ended?eol:'')+key+' = '+value+(ended?eol:'');
+  }
+  if(removedKeys.length){
+    const removed=new Set(removedKeys);
+    result=(result.match(/[^\r\n]*(?:\r\n|\n|\r|$)/g)??[]).map(line=>{
+      const entry=parsePar(line).entries[0];
+      if(!entry||!removed.has(entry.key))return line;
+      const comment=line.indexOf('#');
+      return comment<0?'':(line.match(/^[ \t]*/)?.[0]??'')+line.slice(comment);
+    }).join('');
   }
   return result;
 }

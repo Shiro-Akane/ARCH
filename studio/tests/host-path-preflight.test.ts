@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,writeFile,mkdir,chmod,rm,stat,readFile,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';import {join} from 'node:path';
 import {pathPreflight} from '../host/pathPreflight.ts';
-const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration/schema.json',import.meta.url),'utf8'));
+const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'));
 const fixture=JSON.parse(await readFile(new URL('../../src/api/examples/configuration/inspect-sod.json',import.meta.url),'utf8'));
 test('Host paths use process cwd, schema-only authority and never create output targets',async()=>{
  const root=await mkdtemp(join(tmpdir(),'arch-path-'));

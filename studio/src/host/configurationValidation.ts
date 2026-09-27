@@ -5,7 +5,7 @@ import {sameBuildScope} from './configurationContracts.ts';
 const scalar=(v:unknown)=>typeof v==='string'||typeof v==='boolean'||typeof v==='number'&&Number.isFinite(v);
 const strings=(v:Record<string,unknown>,keys:string[])=>keys.every(k=>typeof v[k]==='string');
 export function validateConfigurationSchema(v:unknown):ConfigurationSchema {
- if(!record(v)||v.schemaVersion!=='1.0'||(v.version!=='1'&&v.version!=='2')||v.kind!=='configuration-schema'||v.status!=='ok'||v.standardParametersComplete!==true||v.customParametersComplete!==false||v.constraintsComplete!==false||!Array.isArray(v.parameters)||v.parameters.length!==90)throw new Error('Unsupported Core configuration schema.');
+ if(!record(v)||v.schemaVersion!=='1.0'||(v.version!=='1'&&v.version!=='2')||v.kind!=='configuration-schema'||v.status!=='ok'||v.standardParametersComplete!==true||v.customParametersComplete!==false||v.constraintsComplete!==false||!Array.isArray(v.parameters)||v.parameters.length<1||v.parameters.length>4096)throw new Error('Unsupported Core configuration schema.');
  const keys=new Set<string>();
  for(const p of v.parameters){
   if(!record(p)||!strings(p,['key','type','group','defaultSource','applicability'])||!/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.key as string)||keys.has(p.key as string)||!['int','float','bool','string','expression'].includes(p.type as string)||!scalar(p.defaultValue)||!record(p.constraints)||!record(p.units)||(p.options!==null&&!record(p.options))||(p.path!==null&&!record(p.path))||(p.aliasOf!==undefined&&typeof p.aliasOf!=='string'))throw new Error('Malformed standard parameter schema.');
@@ -15,11 +15,11 @@ export function validateConfigurationSchema(v:unknown):ConfigurationSchema {
   if(p.path!==null&&(!record(p.path)||p.path.checkOwner!=='local-host'||p.path.relativeTo!=='process-working-directory'||!['input-file','output-directory'].includes(String(p.path.role))))throw new Error('Invalid Core path authority.');
   keys.add(p.key as string);
  }
- if(v.coordinateSystems!==undefined){if(!Array.isArray(v.coordinateSystems)||v.coordinateSystems.length!==9)throw new Error('Invalid coordinate catalog.');v.coordinateSystems.forEach(validateCoordinates);}
+ if(v.coordinateSystems!==undefined){if(!Array.isArray(v.coordinateSystems)||v.coordinateSystems.length>64)throw new Error('Invalid coordinate catalog.');v.coordinateSystems.forEach(validateCoordinates);}
  return v as unknown as ConfigurationSchema;
 }
 export function validateConfigurationInspection(v:unknown,expected:{caseId:string;configRevision:string;requestId:string}):ConfigurationInspection {
- if(!record(v)||v.schemaVersion!=='1.0'||(v.version!=='1'&&v.version!=='2')||v.kind!=='configuration-inspection'||!['ok','error'].includes(String(v.status))||!record(v.identity)||!Object.entries(expected).every(([k,x])=>v.identity&&record(v.identity)&&v.identity[k]===x)||!record(v.execution)||v.execution.setup!=='not_executed'||v.execution.simulationReadiness!=='not_checked'||v.execution.eos!=='not_loaded'||v.execution.filesystem!=='not_accessed'||v.execution.cuda!=='not_initialized'||!Array.isArray(v.parameters)||v.parameters.length>90||!Array.isArray(v.diagnostics))throw new Error('Invalid Core inspection contract or identity.');
+ if(!record(v)||v.schemaVersion!=='1.0'||(v.version!=='1'&&v.version!=='2')||v.kind!=='configuration-inspection'||!['ok','error'].includes(String(v.status))||!record(v.identity)||!Object.entries(expected).every(([k,x])=>v.identity&&record(v.identity)&&v.identity[k]===x)||!record(v.execution)||v.execution.setup!=='not_executed'||v.execution.simulationReadiness!=='not_checked'||v.execution.eos!=='not_loaded'||v.execution.filesystem!=='not_accessed'||v.execution.cuda!=='not_initialized'||!Array.isArray(v.parameters)||v.parameters.length>4096||!Array.isArray(v.diagnostics))throw new Error('Invalid Core inspection contract or identity.');
  const keys=new Set<string>();
  for(const p of v.parameters){if(!record(p)||typeof p.key!=='string'||keys.has(p.key)||!scalar(p.parsedValue)||!scalar(p.defaultValue)||(p.rawValue!==null&&typeof p.rawValue!=='string')||!['explicit','default','alias'].includes(String(p.valueSource))||p.valueStage!=='typed-input-before-setup-and-policy-resolution'||(p.sourceKey!==undefined&&typeof p.sourceKey!=='string')||(p.applicable!==undefined&&typeof p.applicable!=='boolean')||(p.units!==undefined&&!record(p.units)))throw new Error('Malformed parsed parameter.');if(p.units!==undefined)validateUnit(p.units);keys.add(p.key);}
  for(const d of v.diagnostics)if(!record(d)||!strings(d,['severity','code','message'])||!['info','warning','error'].includes(d.severity as string)||(d.parameterKey!==null&&typeof d.parameterKey!=='string'))throw new Error('Malformed configuration diagnostic.');
@@ -42,7 +42,7 @@ function validateCoordinates(v:unknown){
  for(const [i,a] of v.axes.entries())if(!record(a)||!strings(a,['key','displayName','nativeName','kind','blocksKey','minKey','maxKey','lowerBoundaryKey','upperBoundaryKey'])||a.key!==`x${i+1}`||typeof a.active!=='boolean'||typeof a.blocks!=='number'||(a.unit!==null&&typeof a.unit!=='string'))throw new Error('Invalid Core axis.');
 }
 function validatePathChecks(v:unknown):NonNullable<InspectionResponse['pathChecks']>{
- if(!Array.isArray(v)||v.length>90)throw new Error('Invalid Host path checks.');
+ if(!Array.isArray(v)||v.length>4096)throw new Error('Invalid Host path checks.');
  for(const p of v)if(!record(p)||!strings(p,['key','cwd','role','status','message'])||!['input-file','output-directory'].includes(String(p.role))||!['ok','error','not-set','unable-to-check'].includes(String(p.status))||(p.resolvedPath!==null&&typeof p.resolvedPath!=='string'))throw new Error('Invalid Host path check.');
  return v as NonNullable<InspectionResponse['pathChecks']>;
 }

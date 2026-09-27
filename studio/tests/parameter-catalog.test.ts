@@ -4,20 +4,26 @@ import {readFile} from 'node:fs/promises';
 import {catalog,catalogCoordinates,parameterUnit} from '../src/data/parameterCatalog.ts';
 import {validateConfigurationSchema} from '../src/host/configurationValidation.ts';
 import {loadPar,editPar,exportPar} from '../src/state/parState.ts';
-const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration/schema.json',import.meta.url),'utf8')));
+const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8')));
 const requirelessFixture=await readFile(new URL('../../src/api/examples/configuration/inspect-sod.json',import.meta.url),'utf8');
-test('all 90 schema keys are represented, aliases share one edit destination and defaults do not serialize',()=>{
+test('current 92-key snapshot is dynamic, retired alias is not a destination, defaults stay virtual',()=>{
  const rows=catalog(schema.parameters,{timeintegrator:'RK1'});
- assert.equal(rows.flatMap(r=>[r.parameter.key,...r.aliases]).length,90);
- assert.equal(rows.find(r=>r.parameter.key==='time_integrator')?.sourceKey,'timeintegrator');
- assert.equal(catalog(schema.parameters,{time_integrator:'RK2',timeintegrator:'RK1'}).find(r=>r.parameter.key==='time_integrator')?.sourceKey,'time_integrator');
- const raw='# retained\r\ntimeintegrator = RK1 # alias\r\nunknown = untouched\r\n';const state=loadPar('a.par',raw);
- assert.equal(exportPar(state,schema.parameters).text,raw);
- const row=rows.find(r=>r.parameter.key==='time_integrator')!;
- const output=exportPar(editPar(state,row.sourceKey,'RK3'),schema.parameters).text;
- assert.match(output,/timeintegrator = RK3 # alias/);assert.doesNotMatch(output,/time_integrator =/);assert.match(output,/unknown = untouched\r\n/);
- const inserted=exportPar(editPar(state,'ode_max_substeps','44'),schema.parameters).text;
- assert.match(inserted,/ode_max_substeps = 44/);assert.doesNotMatch(inserted,/ode_rtol/);
+ assert.equal(rows.length,92);
+ assert.equal(rows.find(r=>r.parameter.key==='time_integrator')?.sourceKey,'time_integrator');
+ assert.ok(!rows.some(r=>r.aliases.includes('timeintegrator')));
+ const raw='# retained\r\nnblockx2 = 0\r\nnblockx3 = 0\r\nunknown = untouched\r\n';
+ const state=loadPar('a.par',raw);assert.equal(exportPar(state,schema.parameters).text,raw);
+ for(const key of ['gravity_boundary','gravity_rtol','gravity_atol','gravity_max_cycles','dt_init','dt_min','tstep_change_factor']){
+  const row=rows.find(r=>r.parameter.key===key)!;
+  assert.ok(row);assert.equal(row.value,String(row.parameter.defaultValue));assert.ok(row.parameter.presentation?.description);
+  const output=exportPar(editPar(state,key,String(row.parameter.defaultValue)),schema.parameters).text;
+  assert.ok(output.startsWith(raw));assert.ok(output.includes(key+' = '));
+  for(const other of rows.filter(r=>r.parameter.key!==key&&!raw.includes(r.parameter.key)))assert.ok(!output.includes(other.parameter.key+' = '));
+ }
+ const smaller=structuredClone(schema);smaller.parameters=smaller.parameters.slice(0,12);
+ assert.equal(validateConfigurationSchema(smaller).parameters.length,12);
+ const larger=structuredClone(schema);larger.parameters.push({...larger.parameters[0],key:'future_parameter'});
+ assert.equal(validateConfigurationSchema(larger).parameters.length,93);
 });
 test('coordinate layout follows all nine Core conventions and never consumes transient invalid block tokens',()=>{
  for(const geometry of ['cartesian','cylindrical','spherical'])for(const dimension of [1,2,3]){

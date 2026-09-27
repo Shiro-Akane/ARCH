@@ -690,3 +690,13 @@ Target A1–A17 rechecked. Session integration, latest-pending scheduling, real 
 - Build regressions 10/10, lint/typecheck/diff PASS. Full B regression and C desktop UAT are not claimed.
 - Reports: PHASE2H_MAINLINE_SYNC_AUDIT.md and PHASE2H_A_MAINLINE_SYNC_REPORT.md.
 - Local checkpoint studio-phase2h-a-v0.17.0. Original Phase 2G checkout/tag unchanged. STOP; no B/C, Phase3 or automatic push.
+
+## Phase 2H-B — capability / parameter migration checkpoint
+- A tag stays at 01860f291d5348531eb84cbb6a505ca7a21a9d1b; no repeated Core sync or ARCH rebuild.
+- Dynamic schema acceptance replaces historical count gates. Actual binary: configuration v2, 92 standard parameters, 14 registered cases.
+- New Gravity/timing schema controls; retired keys excluded from Custom/alias, explicit removal with raw preservation, one Undo, explicit Save. JENS retained and rejected, no fallback.
+- Real Host: 14-model inspection/source hashes, retired/default semantics, Session cold/warm/latest-only/cancel/restart, Sod complete/limited and Cellular AMR, field/AMR/EOS identity checks passed.
+- B production-browser UAT passed, including retired removal/Undo/Save/Reopen and GravityBox inspection-only boundary. C packaged desktop UAT not performed.
+- Studio171/171, Host70/70, Core13/13 (231.18s), lint/typecheck/build/diff PASS.
+- Report: PHASE2H_B_CAPABILITY_MIGRATION_REPORT.md. Local checkpoint studio-phase2h-b-v0.18.0.
+- STOP: no 2H-C, Phase3 or automatic push.

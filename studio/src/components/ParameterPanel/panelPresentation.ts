@@ -34,7 +34,7 @@ export function advancedKey(key: string, group: CoreGroup, dimension: 1|2|3|null
  if(group==='Grid') return inactiveAxisKey(key,dimension) || ['max_blocks','regrid_interval','refine_var','refine_threshold','derefine_threshold'].includes(key);
  if(group==='EOS')return ['eos_table_path','eos_helm_table_path'].includes(key);
  if(group==='Network')return !['use_burn','network_name','use_nse'].includes(key);
- return !['compute_backend','tmax','max_steps','solver','reconstruct','limiter','time_integrator','timeintegrator','cfl'].includes(key);
+ return !['compute_backend','tmax','max_steps','solver','reconstruct','limiter','time_integrator','cfl'].includes(key);
 }
 export function matchesParameter(key: string, value: string, query: string): boolean {
  const needle=query.trim().toLowerCase();

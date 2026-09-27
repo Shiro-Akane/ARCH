@@ -26,12 +26,12 @@ import {pairingSuspicion,previewMetadataMatches} from '../src/data/configuration
 import {loadPar,editPar,parErrors,exportPar} from '../src/state/parState.ts';
 test('actual Core schema and successful/failed inspection fixtures are accepted, malformed identity rejected',async()=>{
  const fixture=async(name:string)=>JSON.parse(await readFile(new URL('../../src/api/examples/configuration/'+name,import.meta.url),'utf8'));
- const schema=validateConfigurationSchema(await fixture('schema.json'));assert.equal(schema.parameters.length,90);
+ const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8')));assert.equal(schema.parameters.length,92);
  for(const name of ['inspect-sod.json','inspect-cellular.json','invalid-integer.json']){const v=await fixture(name);validateConfigurationInspection(v,v.identity);assert.throws(()=>validateConfigurationInspection(v,{...v.identity,requestId:'late'}));}
  const broken=await fixture('schema.json');broken.parameters[1].key=broken.parameters[0].key;assert.throws(()=>validateConfigurationSchema(broken));
 });
 test('loaded and safely inserted standard integers share validation without rewriting unrelated bytes',async()=>{
- const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration/schema.json',import.meta.url),'utf8'))).parameters;
+ const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'))).parameters;
  const absent=loadPar('1.par','# preserve\r\nnblockx2 = 0\r\nnblockx3 = 0\r\nunknown = keep\r\n');
  const present=loadPar('1.par',absent.document.raw+'ode_max_substeps = 10000\r\n');
  for(const raw of ['1.5','1.0','1e2','12abc','2147483648'])for(const state of [absent,present]){const edited=editPar(state,'ode_max_substeps',raw);assert.ok(parErrors(edited,schema).ode_max_substeps);assert.throws(()=>exportPar(edited,schema));}
@@ -69,6 +69,6 @@ test('path checks travel with inspection identity and cannot validate a newer re
  assert.equal(gate.accept(ticket,response,request,scope)?.pathChecks?.[0].resolvedPath,'/managed/data');
  assert.throws(()=>gate.accept(ticket,response,{...request,configRevision:'new'},scope),/identity/);
  gate.invalidate();assert.equal(gate.accept(ticket,response,request,scope),null);
- const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration/schema.json',import.meta.url),'utf8'));
+ const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'));
  schema.parameters[0].units={status:'guessed',unit:'cm'};assert.throws(()=>validateConfigurationSchema(schema),/unit metadata/);
 });
