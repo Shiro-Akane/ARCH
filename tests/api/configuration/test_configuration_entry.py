@@ -64,6 +64,13 @@ class ConfigurationEntry(unittest.TestCase):
         for key in ("cfl", "gamma", "tmax", "dt_min", "ode_rtol"):
             self.assertIn(f"INVALID_RANGE [{key}]", result.stderr)
 
+    def test_cli_aggregates_relation_errors(self):
+        text = edit(edit(BASE, "max_eint", "1e-11"), "x1_max", "-1")
+        text += "\ndt_min=0.1\ndt_init=0.01\ndt_max=0.05\n"
+        result = self.cli(text)
+        for key in ("max_eint", "x1_max", "dt_init", "dt_max"):
+            self.assertIn(f"INVALID_RANGE [{key}]", result.stderr)
+
     def test_cli_syntax_unknown_and_setup_failure(self):
         result = self.cli(BASE + "\nbroken line\nx_pos=0.3\nnot_a_parameter=1\n")
         for code in ("MALFORMED_LINE", "DUPLICATE_PARAMETER", "UNKNOWN_PARAMETER"):

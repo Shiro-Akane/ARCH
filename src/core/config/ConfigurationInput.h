@@ -80,15 +80,21 @@ inline ConfigurationInput AnalyzeConfigurationInput(
     // all source positions while emitting one diagnostic for the same key/code.
     const auto append = [&](const ConfigInputDiagnostic& diagnostic) {
         auto it = std::find_if(result.diagnostics.begin(), result.diagnostics.end(),
-            [&](const auto& item) { return item.key == diagnostic.key && item.code == diagnostic.code; });
+            [&](const auto& item) { return item.key == diagnostic.key && item.code == diagnostic.code
+                    && (item.code == "DUPLICATE_PARAMETER" || item.message == diagnostic.message); });
         if (it == result.diagnostics.end()) result.diagnostics.push_back(diagnostic);
-        else for (const auto& location : diagnostic.locations) {
+        else {
+            for (const auto& key : diagnostic.related_keys)
+                if (std::find(it->related_keys.begin(), it->related_keys.end(), key) == it->related_keys.end())
+                    it->related_keys.push_back(key);
+            for (const auto& location : diagnostic.locations) {
             const auto same = [&](const auto& item) {
                 return item.source == location.source && item.line == location.line
                     && item.column == location.column && item.end_column == location.end_column;
             };
             if (std::none_of(it->locations.begin(), it->locations.end(), same))
                 it->locations.push_back(location);
+            }
         }
     };
     for (const auto& diagnostic : result.model.diagnostics) append(diagnostic);

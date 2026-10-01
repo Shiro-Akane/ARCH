@@ -14,6 +14,7 @@
 
 #include "core/config/StandardParameters.h"
 #include "core/config/ScalarControlValidation.h"
+#include "core/config/ControlRelations.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 
 namespace arch::config {
@@ -218,6 +219,85 @@ inline bool valid_option(const std::string& key, const std::string& text) {
     if (key == "hll_wave_speed") return ascii_iequals(text, "roe") || ascii_iequals(text, "davis");
     return true;
 }
+// Read the same valid snapshot for every relation. Invalidate participants
+// afterwards so one failed relation does not suppress another independent error.
+inline void validate_relations(StandardInputResolution& result) {
+    std::vector<ConfigInputDiagnostic> failures;
+    const auto fail = [&](const std::string& key, const char* message,
+                          std::vector<std::string> dependencies) {
+        failures.push_back({key, "INVALID_RANGE", message,
+            result.parameters.at(key).locations, std::move(dependencies)});
+    };
+    const auto pair = [&](const char* key, const char* other, auto valid, const char* message) {
+        const auto* value = get<double>(result, key);
+        const auto* dependency = get<double>(result, other);
+        if (value && dependency && !valid(*value, *dependency))
+            fail(key, message, {other});
+    };
+    pair("max_eint", "min_eint", relations::AtLeast, "Must be at least min_eint.");
+    pair("dt_init", "dt_min", relations::AtLeast, "Must be at least dt_min.");
+    pair("dt_max", "dt_min", relations::TimeCap, "Use -1 for no cap, or a finite cap at least dt_min.");
+    pair("refine_threshold", "derefine_threshold", relations::CurvatureThresholds,
+         "Require 0 <= derefine_threshold < refine_threshold <= 1.");
+    const auto* solver = get<std::string>(result, "solver");
+    const auto* speed = get<std::string>(result, "hll_wave_speed");
+    if (solver && speed && !relations::HllSpeed(*solver, dispatch::ascii_iequals(*speed, "roe")))
+        fail("hll_wave_speed", "A nondefault signal-speed estimator requires HLL or HLLC.", {"solver"});
+    const auto* eos = get<std::string>(result, "eos_type");
+    const auto* coulomb = get<double>(result, "eos_coulomb_mult");
+    if (eos && coulomb && !relations::Coulomb(*coulomb, *eos))
+        fail("eos_coulomb_mult", "A nondefault Coulomb factor requires eos_type=helmholtz.", {"eos_type"});
+    const auto* second = get<int>(result, "nblockx2");
+    const auto* third = get<int>(result, "nblockx3");
+    if (second && third && !relations::AxisTopology(*second, *third))
+        fail("nblockx3", "Third axis requires an active second axis.", {"nblockx2"});
+    const auto* lower = get<int>(result, "lrefinemin");
+    const auto* upper = get<int>(result, "lrefinemax");
+    if (lower && upper && !relations::RefinementLevels(*lower, *upper))
+        fail("lrefinemax", "Require ordered refinement levels within the Morton range.", {"lrefinemin"});
+    for (int axis = 1; axis <= 3; ++axis) {
+        const auto name = "x" + std::to_string(axis);
+        const auto count_key = "nblock" + name;
+        const auto min_key = name + "_min", max_key = name + "_max";
+        const auto* count = get<int>(result, count_key.c_str());
+        const auto* min = get<double>(result, min_key.c_str());
+        const auto* max = get<double>(result, max_key.c_str());
+        if (count && *count > 0 && min && max && !relations::ActiveExtent(*min, *max))
+            fail(max_key, "Active axis must have finite positive extent.", {count_key, min_key});
+    }
+    if (choice(result, "gravity_type", {"self"}).value == true) {
+        relations::GravityTopology topology;
+        const auto text = [&](const char* key) -> std::optional<std::string> {
+            const auto* raw = get<std::string>(result, key);
+            if (!raw) return {};
+            std::string value = *raw;
+            std::transform(value.begin(), value.end(), value.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            return value;
+        };
+        topology.geometry = text("geometry");
+        topology.boundary = text("gravity_boundary");
+        const auto* first = get<int>(result, "nblockx1");
+        if (first && second && third && relations::AxisTopology(*second, *third))
+            topology.dimension = *second == 0 ? 1 : *third == 0 ? 2 : 3;
+        for (int axis = 0; axis < 3; ++axis) {
+            const auto name = "x" + std::to_string(axis + 1);
+            if (const auto* v = get<double>(result, (name + "_min").c_str())) topology.lower[axis] = *v;
+            if (const auto* v = get<double>(result, (name + "_max").c_str())) topology.upper[axis] = *v;
+            topology.faces[2 * axis] = text((name + "l_boundary_type").c_str());
+            topology.faces[2 * axis + 1] = text((name + "r_boundary_type").c_str());
+        }
+        relations::CheckGravityTopology(topology, fail);
+    }
+    for (auto& error : failures) {
+        auto& record = result.parameters.at(error.key);
+        record.state = InputState::Invalid;
+        record.resolved.reset();
+        record.source.reset();
+        record.source_evidence.reset();
+        result.diagnostics.push_back(std::move(error));
+    }
+}
 } // namespace input_detail
 
 inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
@@ -278,6 +358,7 @@ inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
             result.diagnostics.push_back({key, "INVALID_RANGE", error, record.locations});
         }
     }
+    input_detail::validate_relations(result);
     for (const auto retired : retired_input_keys) {
         const std::string key(retired);
         if (parser.HasKey(key))

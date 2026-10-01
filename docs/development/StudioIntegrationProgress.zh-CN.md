@@ -20,7 +20,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
 | 1 3B 源码接收与复验 | 封箱源码已引入；Linux 打开/另存/重开复验通过 | npm ci、177 tests、lint/typecheck/build PASS；Linux 原生打开、Host Save As、重开 PASS（范围见报告） | 不适用 |
-| 2 O7.0 + 配置 v3/Host/Studio | 候选规范与共享 schema/Sod/缺项/语法 fixture 已整理；运行实现待迁移 | 候选一致性检查通过；生产 v3 未验证 | 科学条件按唯一计划；疑点交维护者 |
+| 2 O7.0 + 配置 v3/Host/Studio | 候选契约、14模型声明、部分输入共同检查及CLI/初态前置门已实现；v3序列化/受控构造/客户端在迁移 | 相关Core单元和真实入口检查通过；完整v3/Host/Studio未验证 | 科学条件按唯一计划；疑点交维护者 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 待实施 | 待执行 | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 待实施，依赖新配置契约 | 待执行 | 小型有效输入 |
 | 5 全模型初态/AMR | 待实施 | 待逐模型验收 | 真实域/预算需明确 |
@@ -230,3 +230,26 @@ CPU ARCH重链PASS；28任务内存保护最低可用内存约14.1 GiB，无swap
 这是v3部分输入inspection迁移的前置收束。当前--inspect-config仍为旧v2，
 尚需迁移跨字段判断、序列化、schema和客户端；不将单参数规则完备称为
 全部配置检查完备，也不提前宣告阶段完成。
+
+### O7.0 跨字段与自引力拓扑共同检查
+
+ControlRelations提取原有步长/能量上下界、HLL信号速度、Coulomb选项、
+活动轴域、轴拓扑、AMR层级/曲率阈值及自引力边界契约，供运行与部分输入共用。
+自引力保持当前Cartesian/cylindrical/spherical定义、完整方位角、极点和面规则；
+没有提前实现RZ、改动64*epsilon方位角容差或1e-12极点容差。
+
+部分输入仅在依赖值真实有效时判断；检查同一输入快照后才统一清空失败值的
+resolved/source，避免前一错误遮蔽后续独立错误。保留parsed/raw、位置和related_keys。
+缺少几何/边界/活动轴信息不猜测；未知维度不会被填为可运行维度。
+汇总层保留同键不同关系错误，并合并重复诊断的相关键证据。
+
+本地对照原/新完整运行判定657组一致，其中156组接受，排除了全失败的空验证；
+临时对照程序和结果留studio/.local/integration/relation-parity。
+相关5项CTest全部PASS（真实入口组含6个测试，不重复加总）；
+真实CLI能同时返回网格、能量和步长关系错误且不创建输出。
+CPU ARCH重链PASS，28任务内存保护最低可用内存约14.5 GiB，无swap增长；
+git diff --check PASS。没有时间演化、CUDA或原始科学输出提交。
+
+仍未宣告完整性整改完成：case的具体物理域检查、Setup赋值来源/重新验证、
+受控只读构造与旧fallback清理仍待收束。下一步直接迁移v3 schema/inspection序列化，
+以当前共同解析结果返回nullable值及诊断，随后迁移Host/Studio。

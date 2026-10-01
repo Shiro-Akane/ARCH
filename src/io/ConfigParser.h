@@ -44,6 +44,7 @@ struct ConfigSourceLocation {
 struct ConfigInputDiagnostic {
     std::string key, code, message;
     std::vector<ConfigSourceLocation> locations;
+    std::vector<std::string> related_keys;
 };
 class ConfigInputError : public ConfigValueError {
     static std::string describe(const std::vector<ConfigInputDiagnostic>& errors) {

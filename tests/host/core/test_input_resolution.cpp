@@ -160,6 +160,51 @@ int main(int argc, char** argv) {
                               "ode_dt_fac_min", "ode_initial_dt_frac", "ode_dt_fac_max",
                               "plt_dt", "chk_dt", "max_steps", "cuda_device"})
             require(!error(boundary_values, key, "INVALID_RANGE"), "legal scalar boundary rejected");
+        const auto bad_relations = resolve(
+            "min_eint=2\nmax_eint=1\ndt_min=0.1\ndt_init=0.01\ndt_max=0.05\n"
+            "nblockx1=1\nx1_min=2\nx1_max=1\nnblockx2=0\nnblockx3=1\n"
+            "lrefinemin=2\nlrefinemax=1\nrefine_threshold=0.2\nderefine_threshold=0.3\n"
+            "solver=Roe\nhll_wave_speed=davis\neos_type=ideal\neos_coulomb_mult=0.5", sod);
+        for (const auto key : {"max_eint", "dt_init", "dt_max", "x1_max", "nblockx3",
+                              "lrefinemax", "refine_threshold", "hll_wave_speed", "eos_coulomb_mult"}) {
+            require(error(bad_relations, key, "INVALID_RANGE"), "cross-control error not aggregated");
+            const auto& record = bad_relations.parameters.at(key);
+            require(record.parsed && !record.resolved && !record.source,
+                    "relation failure hid raw value or retained effective value");
+        }
+        for (const auto& diagnostic : bad_relations.diagnostics)
+            if (diagnostic.code == "INVALID_RANGE")
+                require(!diagnostic.related_keys.empty(), "relation lacks dependency evidence");
+        const auto unknown_relation = resolve("max_eint=1\nx1_max=-1", sod);
+        require(!error(unknown_relation, "max_eint", "INVALID_RANGE")
+                && !error(unknown_relation, "x1_max", "INVALID_RANGE"),
+                "missing relation dependency was replaced by a default");
+        require(!resolve("nblockx1=1\nx1_min=-1e308\nx1_max=1e308", sod)
+                    .parameters.at("x1_max").resolved, "overflowed active extent accepted");
+        const auto valid_relations = resolve(
+            "min_eint=1\nmax_eint=1\ndt_min=0.1\ndt_init=0.1\ndt_max=-1\n"
+            "nblockx1=1\nx1_min=0\nx1_max=1\nnblockx2=0\nnblockx3=0\n"
+            "lrefinemin=0\nlrefinemax=15\nrefine_threshold=1\nderefine_threshold=0\n"
+            "solver=HLLC\nhll_wave_speed=Davis\neos_type=Helmholtz\neos_coulomb_mult=0", sod);
+        for (const auto& diagnostic : valid_relations.diagnostics)
+            require(diagnostic.code != "INVALID_RANGE", "legal relation boundary rejected");
+        const auto bad_gravity = resolve(
+            "gravity_type=self\ngeometry=cylindrical\ngravity_boundary=periodic\n"
+            "nblockx1=1\nnblockx2=1\nnblockx3=0\nx1_min=-1\nx1_max=1\n"
+            "x2_min=0\nx2_max=1\nx1l_boundary_type=outflow\n"
+            "x1r_boundary_type=outflow\nx2l_boundary_type=outflow\nx2r_boundary_type=outflow", sod);
+        for (const auto key : {"gravity_boundary", "x1_min", "x1l_boundary_type", "x2_max"})
+            require(error(bad_gravity, key, "INVALID_RANGE"), "gravity topology error not aggregated");
+        const auto valid_gravity = resolve(
+            "gravity_type=self\ngeometry=cylindrical\ngravity_boundary=isolated\n"
+            "nblockx1=1\nnblockx2=1\nnblockx3=0\nx1_min=0\nx1_max=1\n"
+            "x2_min=0\nx2_max=2*pi\nx1l_boundary_type=reflecting\n"
+            "x1r_boundary_type=outflow\nx2l_boundary_type=periodic\nx2r_boundary_type=periodic", sod);
+        for (const auto& diagnostic : valid_gravity.diagnostics)
+            require(diagnostic.code != "INVALID_RANGE", "existing cylindrical chart contract changed");
+        const auto unknown_gravity = resolve("gravity_type=self\nx1_min=-1", sod);
+        require(!error(unknown_gravity, "x1_min", "INVALID_RANGE"),
+                "unknown geometry guessed a radial domain");
         std::cout << "PASS: standard presence, allowed defaults and conditional requirements\n";
         return 0;
     } catch (const std::exception& error) {
