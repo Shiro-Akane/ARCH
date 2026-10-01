@@ -273,7 +273,7 @@ function(arch_register_io_regression_tests)
         set_tests_properties(ui_expansion_contract PROPERTIES TIMEOUT 300)
     endif()
     add_executable(arch_preview_cellular_reference
-        tests/api/preview/cellular_reference.cpp
+        tests/api/preview/cellular_reference.cpp src/core/config/CompositionInput.cpp
         src/core/problem/ProblemHelper.cpp src/core/files/FileFingerprint.cpp
         src/physics/eos/eosdispatch.cpp src/physics/eos/sources/Tabular3DEOS.cpp
         src/physics/eos/sources/Tabular4DEOS.cpp src/physics/eos/sources/TabularBaryonSource.cpp

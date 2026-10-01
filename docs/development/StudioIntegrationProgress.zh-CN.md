@@ -366,3 +366,25 @@ git diff --check PASS。没有时间演化、CUDA、科学输出上传、push或
 这只消除标准参数的第二份可变读取来源；SimConfig仍可变、RuntimeParams仍有
 transitional fallback、Setup后来源/冻结和动态partial metadata尚未完成。
 不以本次窄回归宣称完整O7.0或全Core测试完成。后续继续既定联合交付目标。
+
+### O7.0 清理测试对无case默认loader的依赖
+
+CaseParameterValues提取原RuntimeParams的custom词法/数值捕获逻辑，生产加载器和
+Get/observer单元测试共用，不增加另一份科学默认或完整配置校验器。
+该辅助函数明确只填case值存储，不授予Setup/Preview/evolution资格。
+初始化观察单元显式给定a/b，状态转换测试只构造实际数学视图；
+网格加载和exp表达式检查转入完整声明的configuration_input fixture。
+旧gravity_G覆盖表达式断言改为合法external acceleration字段；共享G删除仍待后续。
+
+真实Cellular参考程序改用CellularDet InitialState声明入口并链接共同组分声明。
+CPU ARCH、相关单元及参考程序构建PASS；最低可用内存约14.8GiB，无swap增长。
+最终6项CTest PASS：preview_initial_conversion、configuration_entry_contract、
+configuration_v3_contract、preview_parameter_reads、configuration_input、
+initialization_probe。补充表达式断言后仅重编受影响目标，再执行最终检查。
+git diff --check PASS。未改科学公式、转换误差预算或执行时间演化。
+
+实际运行参考程序验证旧CellularPreview2D.par被聚合MISSING_PARAMETER拒绝，
+退出1且无stdout科学数组；该旧fixture需要迁移显式控制项及避免重复赋值。
+本次未把二维全组或该参考正向场比较声称为PASS。其他checkpoint/CUDA测试
+仍有旧无case loader调用，RuntimeParams的fallback和公开构造尚待完成迁移；
+不新增legacy mode，不宣告O7.0完成。未push或建立完成tag。

@@ -95,6 +95,24 @@ int main(int argc, char** argv) {
         require(config.io.out_dir == output.string() && config.io.tmax == 0.2,
                 "declared loading changed valid controls");
         require(!std::filesystem::exists(output), "loading created scientific output");
+        const auto memory = RuntimeParams::LoadText(
+            without(text, "nblockx1") + "nblockx1=2\n", "declared-test",
+            ConfigurationPurpose::InitialState);
+        require(memory.grid.dim == 1 && memory.grid.nblockx1 == 2,
+                "in-memory grid configuration changed");
+        const auto expressions = RuntimeParams::LoadText(
+            without(text, "x1_max") + "x1_max=exp(1)\n", "declared-test",
+            ConfigurationPurpose::InitialState);
+        require(std::abs(expressions.grid.x1_max - std::exp(1.0)) < 1e-14,
+                "runtime grid expression evaluates exp");
+        const auto acceleration = RuntimeParams::LoadText(
+            without(text, "gravity_type") +
+                "gravity_type=external\ngravity_g_x=exp(-17)\ngravity_g_y=0\ngravity_g_z=0\n",
+            "declared-test", ConfigurationPurpose::InitialState);
+        require(std::abs(acceleration.physics.gravity.g_x - std::exp(-17.0)) < 1e-20,
+                "runtime external acceleration expression evaluates exp");
+
+
         for (const auto& definition : standard_parameters) {
             require(!config.custom_params.contains(std::string(definition.key))
                     && !config.custom_string_params.contains(std::string(definition.key)),

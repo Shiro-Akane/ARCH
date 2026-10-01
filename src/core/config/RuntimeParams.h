@@ -25,6 +25,7 @@
 #include "core/config/StandardParameters.h"
 #include "core/config/ConfigValidation.h"
 #include "core/config/ConfigurationInput.h"
+#include "core/config/CaseParameterValues.h"
 
 class RuntimeParams
 {
@@ -440,25 +441,7 @@ private:
         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
         if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.io.vars.w = false; }
         if (cfg.io.vars.jens) { warn_plot_disabled("JENS", "the Jeans refinement/plot diagnostic is not implemented"); cfg.io.vars.jens = false; }
-        // Preserve untyped parameters for problem-specific setup.
-        for (const auto &[key, val_str] : parser.GetAllParams())
-        {
-            // Standard values live only in their typed Core sections. Retain
-            // raw input in the parser/trace, never as a second mutable authority.
-            if (arch::config::IsStandardInputKey(key)) continue;
-            // Preserve lexical identity for every case read, also outside Preview.
-            cfg.custom_string_params[key] = val_str;
-            try
-            {
-                // Require the complete numeric token; expressions remain strings.
-                double val = ConfigParser::ParseNumber(key, val_str);
-                cfg.custom_params[key] = val;
-            }
-            catch (...)
-            {
-                // Non-numeric tokens remain available for strict typed/string reads.
-            }
-        }
+        arch::config::CaptureCaseParameterValues(parser, cfg);
 
         arch::config::ValidateControls(cfg);
         return cfg;

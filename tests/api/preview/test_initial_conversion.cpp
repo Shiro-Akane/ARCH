@@ -1,5 +1,4 @@
 #include "core/problem/InitialStateConversion.h"
-#include "core/config/RuntimeParams.h"
 #include "physics/eos/IdealGas.h"
 #include <cmath>
 #include <iostream>
@@ -53,9 +52,5 @@ int main() {
     try { (void)ProblemHelper::detail::InitialConservedState(data, eos); }
     catch (const std::runtime_error &) { rejected = true; }
     require(rejected, "invalid temperature conversion must fail");
-    const auto config = RuntimeParams::LoadText("nblockx1=2\nnblockx2=0\nnblockx3=0\nx_pos=.3\n");
-    require(config.grid.dim == 1 && config.grid.nblockx1 == 2, "memory configuration");
-    require(config.Get<double>("x_pos", .5) == .3, "custom memory parameter");
-    require(config.Get<double>("absent", .7) == .7, "custom fallback");
-    std::cout << "Initial conversion and in-memory parser passed\n";
+    std::cout << "Initial state conversion passed\n";
 }

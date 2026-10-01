@@ -1,5 +1,6 @@
 #include "api/configuration/ParameterMetadata.h"
-#include "core/config/RuntimeParams.h"
+#include "core/config/CaseParameterValues.h"
+#include <sstream>
 
 #include <cmath>
 #include <iostream>
@@ -9,9 +10,25 @@ static void require(bool good, const char *message) {
     if (!good) throw std::runtime_error(message);
 }
 
+
+// Only the custom-value/observer boundary is under test here. This does not
+// construct a science problem from an incomplete parameter file.
+static SimConfig case_values(const std::string& text,
+    std::shared_ptr<arch::preview::ParameterReadTrace> reads = {}) {
+    ConfigParser parser;
+    std::istringstream stream(text);
+    parser.Load(stream);
+    SimConfig config;
+    arch::config::CaptureCaseParameterValues(parser, config);
+    if (reads) reads->capture_input(parser.GetAllParams(), config.custom_params,
+                                    config.custom_string_params);
+    config.parameter_reads = std::move(reads);
+    return config;
+}
+
 int main() {
     auto trace = std::make_shared<arch::preview::ParameterReadTrace>(std::set<std::string>{"x_pos"});
-    auto config = RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\nx_pos=.35\n", trace);
+    auto config = case_values("x_pos=.35\n", trace);
     require(config.Get<double>("x_pos", .5) == .35, "observer must preserve Get result");
     require(config.Get<double>("uncovered", 7) == 7 && trace->reads().size() == 1, "bounded coverage");
     (void)config.Get<double>("x_pos", .5);
@@ -26,7 +43,7 @@ int main() {
     require(json.find("\"items\":[]") != std::string::npos, "ambiguous read cannot bind");
 
     auto changed = std::make_shared<arch::preview::ParameterReadTrace>(std::set<std::string>{"x_pos"});
-    config = RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\nx_pos=.35\n", changed);
+    config = case_values("x_pos=.35\n", changed);
     config.custom_params["x_pos"] = .4;
     require(config.Get<double>("x_pos", .5) == .4, "programmatic override remains effective");
     require(changed->reads().at("x_pos").source == "unknown", "override is not falsely attributed to input");
@@ -35,20 +52,14 @@ int main() {
     arch::api::PublishParameterMetadata(output, *changed, {{"Sod.x_pos", "x_pos", "x1", .4, 0, 1}}, true);
     require(output.dump().find("\"items\":[]") != std::string::npos, "unattributed value cannot bind");
 
-    auto expressions = RuntimeParams::LoadText(
-        "nblockx2=0\nnblockx3=0\nx1_max=exp(1)\ngravity_G=exp(-17)\n");
-    require(std::abs(expressions.grid.x1_max - std::exp(1.0)) < 1e-14,
-            "runtime grid expression evaluates exp");
-    require(std::abs(expressions.physics.gravity.G_const - std::exp(-17.0)) < 1e-20,
-            "runtime gravity expression evaluates exp");
-    auto plain = RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\nx_pos=.2\n");
+    auto plain = case_values("x_pos=.2\n");
     require(!plain.parameter_reads && plain.Get<double>("x_pos", .5) == .2, "ordinary config has no observer");
-    require(RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\nx_pos=1e2\n")
+    require(case_values("x_pos=1e2\n")
                 .Get<double>("x_pos", .5) == 100.0,
             "custom numeric scientific notation");
     for (const std::string raw : {"2*pi", "exp(1)", "1.0suffix", "nan"}) {
-        auto invalid = RuntimeParams::LoadText(
-            "nblockx2=0\nnblockx3=0\nx_pos=" + raw + "\n");
+        auto invalid = case_values(
+            "x_pos=" + raw + "\n");
         require(!invalid.custom_params.contains("x_pos"),
                 "unsupported custom expression must not be truncated to a number");
         bool rejected = false;
@@ -61,7 +72,7 @@ int main() {
         const auto make_config = [&](const std::string& token) {
             auto observer = observed ? std::make_shared<arch::preview::ParameterReadTrace>(
                 std::set<std::string>{"value"}) : nullptr;
-            return RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\nvalue=" + token + "\n", observer);
+            return case_values("value=" + token + "\n", observer);
         };
         for (const std::string token : {"1.5", "1.0", "1e0", "2147483648", "-2147483649", "1suffix", "nan"}) {
             auto invalid = make_config(token);

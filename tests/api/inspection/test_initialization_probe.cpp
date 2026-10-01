@@ -1,7 +1,7 @@
 #include "api/CaseInspection.h"
 #include "api/configuration/ParameterMetadata.h"
 #include "api/configuration/ValueDomain.h"
-#include "core/config/RuntimeParams.h"
+#include "data/GlobalDefs.h"
 #include "core/files/InspectionSources.h"
 #include <iostream>
 #include <stdexcept>
@@ -28,7 +28,10 @@ int main() {
     using namespace arch;
     const auto observe = [](bool product) {
         auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true);
-        auto config = RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\na=2\nb=1\n", reads);
+        SimConfig config;
+        config.custom_params = {{"a", 2}, {"b", 1}};
+        config.custom_string_params = {{"a", "2"}, {"b", "1"}};
+        reads->capture_input(config.custom_string_params, config.custom_params, config.custom_string_params);
         config.parameter_reads.reset();
         SpeciesManager species; ProbeProblem model(product); Sink sink; PrimitiveData primitive;
         model.InspectSetup(config, species, reads);
@@ -44,7 +47,11 @@ int main() {
     // b=1. In the latter expression a's unit depends on b, absent from IO.
     require(observe(false) == observe(true), "boundary is observationally identical without expression provenance");
     auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true);
-    auto config = RuntimeParams::LoadText("a=2\nb=1\n", reads);
+    SimConfig config;
+    config.custom_params = {{"a", 2}, {"b", 1}};
+    config.custom_string_params = {{"a", "2"}, {"b", "1"}};
+    reads->capture_input(config.custom_string_params, config.custom_params, config.custom_string_params);
+    config.parameter_reads = reads;
     auto original = config.parameter_reads;
     SpeciesManager species; ProbeProblem failing(false, true);
     bool caught = false;
