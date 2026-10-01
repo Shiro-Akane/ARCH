@@ -468,3 +468,30 @@ configuration_entry_contract、configuration_v3_contract。diff-check PASS，
 冻结bd.par diff为空。无科学时间演化、原始输出上传、push或完成tag。
 RuntimeParams内部仍有transitional fallback，SimConfig/Setup只读生命周期
 与来源追踪仍未完成；后续继续受控构造，不能据本提交宣布O7.0完成。
+
+### O7.0 Runtime直接消费resolved records，删除关键字段fallback
+
+RuntimeParams现在将AnalyzeConfigurationInput的StandardInputResolution
+直接映射到typed字段，不再重新调用parser.GetInt/Double/Bool/String或表达式
+解析并使用Default*回填。映射遇到未解析且仍必需/未知的字段明确失败；
+不适用且缺失的字段只保留内部存储初始化，不产生input/source记录。
+表达式仅由共同解析器求值；NSE/entropy/HLL选择从已检查的typed record转换。
+Helm禁止显式输运系数规则继续由共同聚合检查负责，不重复另一份入口判定。
+
+注册表required/conditional/retired条目改为无declared_default；只保留批准的
+25项optional默认，逐项与提交前定义比较完全一致。删除DefaultInt/Double/
+Bool/String、ValidateStandardTokens和loader中gravity_G写入路径。
+GlobalDefs仍有可变存储及G_const，完整受控只读构造/常数迁移尚未完成；
+不能将这次数据映射改动宣称为最终运行生命周期完成。
+
+CPU ARCH及受影响目标构建PASS，28并发内存保护最低可用约13.8GiB，
+无swap增长。9项CTest全部PASS：配置入口/v3、input_resolution、
+case_configuration、configuration_input、mainline_authority、checkpoint
+指标/时间比较和真实preview_cellular_2d（该组10项）。NSE/表达式/显式零/
+默认来源/BD实际控制值与Cellular直接Init对比保持通过，科学容差未改。
+diff-check PASS；没有时间演化、CUDA、原始数据上传、push或完成tag。
+
+中英文Reference的90行分组参数表同步必填/条件/允许默认/退役，覆盖原95键；
+删除关键字段旧加载默认的误导说明，负轴计数不再写成关闭轴。
+尚待Setup派生来源和修改后校验、只读运行边界、partial动态metadata、
+其余有效输入/全回归及后续Studio/3C/模型/Jeans/RZ工作，整体目标继续。

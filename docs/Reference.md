@@ -394,27 +394,26 @@ Normalized tabular EOS data require an explicit free-energy potential, physical 
 
 ## Parameter reference
 
-Defaults below are the values used by `RuntimeParams::Load`, which takes
-precedence over default member initializers in `GlobalDefs.h`.
+Configuration extension 3 preserves missing input separately from zero/false. Only entries marked Default below have an approved missing-value default; required and conditional inputs have none. A conditional input is required only when its Core-declared consumer is active. Unknown dependencies remain unresolved. Storage initialization and template recommendations do not supply missing inputs. The runtime binary schema and [configuration contract](development/ConfigurationContractPlan.zh-CN.md) define the full conditions.
 
 ### Grid and geometry
 
-| Key | Type | Load default | Contract |
+| Key | Type | Missing-input policy | Contract |
 | --- | --- | --- | --- |
-| `geometry` | string | `cartesian` | `cartesian`, `cylindrical`, `spherical` |
-| `nblockx1` | int | `1` | positive root blocks |
-| `nblockx2` | int | `1` | `<=0` removes axis 2 |
-| `nblockx3` | int | `1` | `<=0` removes axis 3; axis 3 requires active axis 2 |
-| `max_blocks` | int | `2000` | strict AMR memory-pool capacity |
-| `x1_min/max` | expression | `0/1` | active axis must have max > min |
-| `x2_min/max` | expression | `0/1` | angular restrictions depend on geometry/dimension |
-| `x3_min/max` | expression | `0/1` | angular restrictions depend on geometry/dimension |
-| `x1l_boundary_type` | string | `outflow` | `outflow`, `reflect`, `periodic` |
-| `x1r_boundary_type` | string | `outflow` | same |
-| `x2l_boundary_type` | string | `outflow` | same |
-| `x2r_boundary_type` | string | `outflow` | same |
-| `x3l_boundary_type` | string | `outflow` | same |
-| `x3r_boundary_type` | string | `outflow` | same |
+| `geometry` | string | Required | `cartesian`, `cylindrical`, `spherical` |
+| `nblockx1` | int | Required | positive root blocks |
+| `nblockx2` | int | Required | `0` removes axis 2 |
+| `nblockx3` | int | Required | `0` removes axis 3; axis 3 requires active axis 2 |
+| `max_blocks` | int | Default: `2000` | strict AMR memory-pool capacity |
+| `x1_min/max` | expression | Required: active x1 | active axis must have max > min |
+| `x2_min/max` | expression | Required: active x2 | angular restrictions depend on geometry/dimension |
+| `x3_min/max` | expression | Required: active x3 | angular restrictions depend on geometry/dimension |
+| `x1l_boundary_type` | string | Required: active x1 | `outflow`, `reflect`, `periodic` |
+| `x1r_boundary_type` | string | Required: active x1 | same |
+| `x2l_boundary_type` | string | Required: active x2 | same |
+| `x2r_boundary_type` | string | Required: active x2 | same |
+| `x3l_boundary_type` | string | Required: active x3 | same |
+| `x3r_boundary_type` | string | Required: active x3 | same |
 
 Logical coordinate meanings are:
 
@@ -432,21 +431,21 @@ and any other spelling are rejected with the parameter name in the error.
 
 ### Hydro numerics and execution
 
-| Key | Type | Load default | Contract |
+| Key | Type | Missing-input policy | Contract |
 | --- | --- | --- | --- |
-| `solver` | string | `SW` | `SW`, `VL`, `Roe`, `HLL`, `HLLC` |
-| `hll_wave_speed` | string | `roe` | HLL/HLLC Roe–Glaister or `davis` endpoint signal speeds; other fluxes reject a nondefault choice |
-| `reconstruct` | string | `pcm` | `pcm`, `donor_cell`, `muscl`, `plm`, `ppm` |
-| `limiter` | string | `minmod` | MUSCL only: `minmod`, `superbee`, `vanleer`, `mc` |
-| `time_integrator` | string | `RK2` | `Euler/RK1`, `RK2/SSPRK2`, `RK3/SSPRK3` |
-| `cfl` | double | `0.8` | explicit hydro CFL; finite and `0 < cfl <= 1`, checked at load time |
-| `EntropyFix` | bool | `true` | enables entropy-fix smoothing |
-| `EntropyFixCoefficient` | double | `0.1` | used when entropy fix is enabled |
-| `sml_rho` | double | `1e-12` | positive, resolvable density repair floor; set with the intended low-density solution in mind |
-| `min_eint` | double | `1e-10` | positive, resolvable specific internal-energy repair floor |
-| `max_eint` | double | `1e21` | rejection ceiling for specific internal energy, without clipping |
-| `compute_backend` | string | `cpu` | `cpu`, `cuda`, or `auto`; explicit CUDA is fail-closed and `auto` may fall back only before construction |
-| `cuda_device` | int | `0` | CUDA runtime device ordinal used by probing, construction, and lifecycle operations |
+| `solver` | string | Required | `SW`, `VL`, `Roe`, `HLL`, `HLLC` |
+| `hll_wave_speed` | string | Required: HLL/HLLC | HLL/HLLC Roe–Glaister or `davis` endpoint signal speeds; other fluxes reject a nondefault choice |
+| `reconstruct` | string | Required | `pcm`, `donor_cell`, `muscl`, `plm`, `ppm` |
+| `limiter` | string | Required: selected reconstruction consumes a limiter | MUSCL only: `minmod`, `superbee`, `vanleer`, `mc` |
+| `time_integrator` | string | Required | `Euler/RK1`, `RK2/SSPRK2`, `RK3/SSPRK3` |
+| `cfl` | double | Required | explicit hydro CFL; finite and `0 < cfl <= 1`, checked at load time |
+| `EntropyFix` | bool | Required: selected flux consumes entropy fix | enables entropy-fix smoothing |
+| `EntropyFixCoefficient` | double | Default: `0.1` | used when entropy fix is enabled |
+| `sml_rho` | double | Required | positive, resolvable density repair floor; set with the intended low-density solution in mind |
+| `min_eint` | double | Required | positive, resolvable specific internal-energy repair floor |
+| `max_eint` | double | Required | rejection ceiling for specific internal energy, without clipping |
+| `compute_backend` | string | Required | `cpu`, `cuda`, or `auto`; explicit CUDA is fail-closed and `auto` may fall back only before construction |
+| `cuda_device` | int | Default: `0` | CUDA runtime device ordinal used by probing, construction, and lifecycle operations |
 
 All fluxes use the full physical face EOS; approximate face thermodynamics is
 not a supported runtime option.
@@ -458,33 +457,33 @@ tabular component discovery or electron completion.
 
 ### AMR
 
-| Key | Type | Load default | Contract |
+| Key | Type | Missing-input policy | Contract |
 | --- | --- | --- | --- |
-| `lrefinemin` | int | `0` | stored; current hierarchy behavior should be verified before relying on a nonzero minimum |
-| `lrefinemax` | int | `0` | maximum refinement level; zero disables refinement |
-| `regrid_interval` | int | `2` | must be positive |
-| `refine_var` | string list | `DENS` | comma or `+`; canonical fields or registered species |
-| `refine_threshold` | double | `0.8` | Lohner indicator, `[0,1]` |
-| `derefine_threshold` | double | `0.2` | must be `>=0` and less than refine threshold |
+| `lrefinemin` | int | Required | stored; current hierarchy behavior should be verified before relying on a nonzero minimum |
+| `lrefinemax` | int | Required | maximum refinement level; zero disables refinement |
+| `regrid_interval` | int | Required: dynamic AMR | must be positive |
+| `refine_var` | string list | Required: dynamic AMR | comma or `+`; canonical fields or registered species |
+| `refine_threshold` | double | Required: active curvature AMR indicator | Lohner indicator, `[0,1]` |
+| `derefine_threshold` | double | Required: active curvature AMR indicator | must be `>=0` and less than refine threshold |
 
 `refine_var` is validated even when `lrefinemax = 0`.
 
 ### EOS and gravity
 
-| Key | Type | Load default | Contract |
+| Key | Type | Missing-input policy | Contract |
 | --- | --- | --- | --- |
-| `eos_type` | string | `ideal` | `ideal`, `tabular`, `helmholtz` |
-| `eos_table_path` | string | empty | required for tabular/Helmholtz |
-| `eos_helm_table_path` | string | empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
-| `eos_coulomb_mult` | double | `1` | Helmholtz ion Coulomb correction fraction, finite `[0,1]`; nondefault values require Helmholtz; independent of electron completion |
-| `gamma` | double | `1.4` | ideal-gas model gamma |
-| `gravity_type` | string | `none` | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity, including coordinate joins, on CPU/CUDA are supported |
-| `gravity_g_x/y/z` | expression | `0` | used for external gravity |
-| `gravity_G` | expression | `6.6743e-8` | CGS gravitational constant used by self gravity |
-| `gravity_boundary` | string | `periodic` | `periodic`: subtract volume-mean density; `isolated`: finite-domain 3D Newton boundary, 1D radial symmetry, or 2D polar logarithmic boundary; no background subtraction |
-| `gravity_rtol` | float | `1e-10` | Positive relative volume RMS residual target, smaller than one |
-| `gravity_atol` | float | `0` | Nonnegative absolute residual in `s^-2`; zero keeps relative accuracy |
-| `gravity_max_cycles` | int | `200` | Positive outer MG/FGMRES iteration limit; failure stops evolution |
+| `eos_type` | string | Required | `ideal`, `tabular`, `helmholtz` |
+| `eos_table_path` | string | Required: selected EOS requires a table | required for tabular/Helmholtz |
+| `eos_helm_table_path` | string | Default: empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
+| `eos_coulomb_mult` | double | Required: Helmholtz | Helmholtz ion Coulomb correction fraction, finite `[0,1]`; nondefault values require Helmholtz; independent of electron completion |
+| `gamma` | double | Required: IdealGas | ideal-gas model gamma |
+| `gravity_type` | string | Required | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity, including coordinate joins, on CPU/CUDA are supported |
+| `gravity_g_x/y/z` | expression | Required: external gravity; all components | used for external gravity |
+| `gravity_G` | expression | Retired; rejected | Reports RETIRED_PARAMETER; no input override |
+| `gravity_boundary` | string | Required: self gravity | `periodic`: subtract volume-mean density; `isolated`: finite-domain 3D Newton boundary, 1D radial symmetry, or 2D polar logarithmic boundary; no background subtraction |
+| `gravity_rtol` | float | Required: self gravity | Positive relative volume RMS residual target, smaller than one |
+| `gravity_atol` | float | Required: self gravity | Nonnegative absolute residual in `s^-2`; zero keeps relative accuracy |
+| `gravity_max_cycles` | int | Default: `200` | Positive outer MG/FGMRES iteration limit; failure stops evolution |
 
 For `eos_type=tabular`, EOSDispatcher recognizes normalized HDF5 with rank 3 or
 4, EOSDriver total-EOS HDF5, and the original positive-temperature 16-column
@@ -557,32 +556,32 @@ free-energy table inversion, which explicitly rejects multiple valid roots.
 
 ### Burning, network, and ODE
 
-| Key | Type | Load default | Contract |
+| Key | Type | Missing-input policy | Contract |
 | --- | --- | --- | --- |
-| `use_burn` | bool | `false` | enables the burn module |
-| `network_name` | string | `aprox19` | built-ins above or any compiled `custom:<id>`; NSE availability follows package metadata |
-| `nuclearTempMin` | double | `1e9` | K; burn activation threshold |
-| `nuclearDensMin` | double | `1e-10` | g/cm3; burn activation threshold |
-| `smallt` | double | `1e5` | K; burn state floor |
-| `smallx` | double | `1e-20` | composition floor |
-| `enucDtFactor` | double | `1e30` | energy-release time-step limiter; huge default is effectively off |
-| `use_nse` | bool or `auto` | `true` | `true` requires NSE support; `false` disables it; `auto` enables it only for a capable network |
-| `nseTempThreshold` | double | `4.5e9` | finite positive K; the same strict `T > threshold` for true and auto |
-| `nseDensThreshold` | double | `1e6` | finite nonnegative g/cm3; the same strict `rho > threshold` for true and auto |
-| `ode_solver` | string | `BE_NR` | `BE_NR`, `ROS4`, or `BD` |
-| `linear_solver` | string | `Auto` | Case-insensitive `Auto`, `DenseLU`, `SparseKLU`, or `cuDSS` (`dense_lu`, `sparse_klu`, `cu_dss` aliases accepted); see backend-dependent selection below |
-| `ode_rtol` | double | `1e-4` | relative ODE tolerance |
-| `ode_atol` | double | `1e-8` | absolute ODE tolerance |
-| `ode_max_newton_iter` | int | `50` | Newton limit where used |
-| `ode_max_substeps` | int | `10000` | adaptive substep limit |
-| `ode_dt_safe_fac` | double | `0.9` | adaptive controller safety factor |
-| `ode_dt_fac_max` | double | `2.0` | growth factor |
-| `ode_dt_fac_min` | double | `0.1` | shrink factor |
-| `ode_initial_dt_frac` | double | `1` | fraction for the first internal trial; adaptive rejection still applies |
-| `dt_init` | double | `1e-16` | first macro step when burn is enabled |
-| `dt_min` | double | `1e-20` | abort threshold for macro step |
-| `dt_max` | double | `-1` | macro-step cap in s; `-1` disables this extra cap, otherwise finite and at least `dt_min`; never relaxes CFL/burn limits |
-| `tstep_change_factor` | double | `1.2` | maximum macro-step growth after first step |
+| `use_burn` | bool | Required | enables the burn module |
+| `network_name` | string | Required: case/EOS/burn consumes a network | built-ins above or any compiled `custom:<id>`; NSE availability follows package metadata |
+| `nuclearTempMin` | double | Required: burn enabled | K; burn activation threshold |
+| `nuclearDensMin` | double | Required: burn enabled | g/cm3; burn activation threshold |
+| `smallt` | double | Required: temperature floor consumed | K; burn state floor |
+| `smallx` | double | Required: composition floor consumed | composition floor |
+| `enucDtFactor` | double | Required: burn enabled | energy-release time-step limiter; an explicitly huge value is effectively off |
+| `use_nse` | bool or `auto` | Required: burn enabled | `true` requires NSE support; `false` disables it; `auto` enables it only for a capable network |
+| `nseTempThreshold` | double | Required: NSE true/auto enables it | finite positive K; the same strict `T > threshold` for true and auto |
+| `nseDensThreshold` | double | Required: NSE true/auto enables it | finite nonnegative g/cm3; the same strict `rho > threshold` for true and auto |
+| `ode_solver` | string | Required: burn enabled | `BE_NR`, `ROS4`, or `BD` |
+| `linear_solver` | string | Default: `Auto` | Case-insensitive `Auto`, `DenseLU`, `SparseKLU`, or `cuDSS` (`dense_lu`, `sparse_klu`, `cu_dss` aliases accepted); see backend-dependent selection below |
+| `ode_rtol` | double | Required: burn enabled | relative ODE tolerance |
+| `ode_atol` | double | Required: burn enabled | absolute ODE tolerance |
+| `ode_max_newton_iter` | int | Default: `50` | Newton limit where used |
+| `ode_max_substeps` | int | Default: `10000` | adaptive substep limit |
+| `ode_dt_safe_fac` | double | Default: `0.9` | adaptive controller safety factor |
+| `ode_dt_fac_max` | double | Default: `2.0` | growth factor |
+| `ode_dt_fac_min` | double | Default: `0.1` | shrink factor |
+| `ode_initial_dt_frac` | double | Default: `1` | fraction for the first internal trial; adaptive rejection still applies |
+| `dt_init` | double | Required: burn enabled | first macro step when burn is enabled |
+| `dt_min` | double | Default: `1e-20` | abort threshold for macro step |
+| `dt_max` | double | Default: `-1` | macro-step cap in s; `-1` disables this extra cap, otherwise finite and at least `dt_min`; never relaxes CFL/burn limits |
+| `tstep_change_factor` | double | Default: `1.2` | maximum macro-step growth after first step |
 
 `ROS4` uses a matched four-stage, fourth-order, L-stable tableau. Each internal
 step evaluates one Jacobian, factors `I - gamma*dt*J` once, and reuses the
@@ -608,18 +607,18 @@ network setup implementation.
 
 ### Diffusion
 
-| Key | Type | Load default | Contract |
+| Key | Type | Missing-input policy | Contract |
 | --- | --- | --- | --- |
-| `use_diffusion` | bool | `false` | enables the diffusion module |
-| `diff_integrator` | string | `RKL2` | `RKL1` or `RKL2` |
-| `diff_cfl` | double | `0.8` | fraction used in RKL stage/step selection |
-| `diff_max_stages` | int | `256` | caps the STS polynomial and macro step |
-| `use_thermal_diff` | bool | `false` | thermal conduction |
-| `use_viscous_diff` | bool | `false` | momentum diffusion |
-| `use_species_diff` | bool | `false` | composition diffusion |
-| `nu_visc` | double | `0` | constant non-Helm kinematic viscosity |
-| `alpha_therm` | double | `0` | constant non-Helm thermal diffusivity |
-| `D_spec` | double | `0` | constant non-Helm species diffusivity |
+| `use_diffusion` | bool | Required | enables the diffusion module |
+| `diff_integrator` | string | Required: diffusion enabled | `RKL1` or `RKL2` |
+| `diff_cfl` | double | Required: diffusion enabled | fraction used in RKL stage/step selection |
+| `diff_max_stages` | int | Default: `256` | caps the STS polynomial and macro step |
+| `use_thermal_diff` | bool | Required: diffusion enabled | thermal conduction |
+| `use_viscous_diff` | bool | Required: diffusion enabled | momentum diffusion |
+| `use_species_diff` | bool | Required: diffusion enabled | composition diffusion |
+| `nu_visc` | double | Required: constant viscous transport required | constant non-Helm kinematic viscosity |
+| `alpha_therm` | double | Required: constant thermal transport required | constant non-Helm thermal diffusivity |
+| `D_spec` | double | Required: constant species transport required | constant non-Helm species diffusivity |
 
 With Helmholtz diffusion, omit all three constant override keys to select
 `diffusionCoe` transport. Presence of an override key is rejected, including a
@@ -628,19 +627,19 @@ viscous/species flags do not create nonzero coefficients.
 
 ### Time, output, and restart
 
-| Key | Type | Load default | Contract |
+| Key | Type | Missing-input policy | Contract |
 | --- | --- | --- | --- |
-| `tmax` | double | `0.1` | target physical time |
-| `max_steps` | int | `-1` | positive value enables step stop |
-| `out_dir` | string | `data` | created before logging |
-| `base_name` | string | `arch` | output filename prefix |
-| `plt_dt` | double | `-1` | positive physical-time interval |
-| `plt_dstep` | int | `-1` | positive step interval |
-| `chk_dt` | double | `-1` | positive physical-time interval |
-| `chk_dstep` | int | `-1` | positive step interval |
-| `plt_variables` | string list | `ALL` | comma or `+`, canonical fields/species |
-| `restart` | bool | `false` | enables checkpoint restart |
-| `restart_file` | string | empty | must be non-empty when `restart = true` |
+| `tmax` | double | Required: evolution; initial-only requests may omit | target physical time |
+| `max_steps` | int | Default: `-1` | positive value enables step stop |
+| `out_dir` | string | Default: `data` | created before logging |
+| `base_name` | string | Default: `arch` | output filename prefix |
+| `plt_dt` | double | Default: `-1` | positive physical-time interval |
+| `plt_dstep` | int | Default: `-1` | positive step interval |
+| `chk_dt` | double | Default: `-1` | positive physical-time interval |
+| `chk_dstep` | int | Default: `-1` | positive step interval |
+| `plt_variables` | string list | Default: `ALL` | comma or `+`, canonical fields/species |
+| `restart` | bool | Default: `false` | enables checkpoint restart |
+| `restart_file` | string | Required: restart=true | must be non-empty when `restart = true` |
 
 At step zero, ARCH writes an initial PLT and CHK. After advancing at least one
 step, reaching either target time or `max_steps` forces final output. An already

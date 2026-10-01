@@ -58,6 +58,11 @@ int main(int argc, char** argv) {
                 {"u_right", "float", "cm/s"}};
             return declaration;
         }});
+        for (const auto& definition : standard_parameters) {
+            require(definition.declared_default.has_value()
+                        == (definition.requirement == RequirementKind::Optional),
+                    "unapproved standard runtime default exists");
+        }
         auto input = inspect(fixture);
         input.RequireDeclaredInputs();
         require(input.requirements_known(), "complete input retained unknown requirements");
