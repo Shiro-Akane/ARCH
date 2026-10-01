@@ -25,7 +25,6 @@
 #include "core/config/StandardParameters.h"
 #include "core/config/ConfigValidation.h"
 #include "core/config/ConfigurationInput.h"
-#include "core/config/CaseParameterValues.h"
 
 class RuntimeParams
 {
@@ -62,7 +61,7 @@ public:
         auto input = arch::config::AnalyzeConfigurationInput(parser, case_id);
         input.RequireDeclaredInputs();
         input.raw_tokens = parser.GetAllParams();
-        auto config = Resolve(parser, input.standard);
+        auto config = Resolve(input.standard);
         CaptureResolvedCaseValues(config, input);
         config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
         config.loaded_values_ = std::make_shared<const SimConfig>(config);
@@ -79,15 +78,32 @@ public:
         auto input = arch::config::AnalyzeConfigurationInput(parser, case_id, purpose);
         input.RequireDeclaredInputs();
         input.raw_tokens = parser.GetAllParams();
-        auto config = Resolve(parser, input.standard);
+        auto config = Resolve(input.standard);
         CaptureResolvedCaseValues(config, input);
         config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
         config.loaded_values_ = std::make_shared<const SimConfig>(config);
         if (reads) {
-            reads->capture_input(parser.GetAllParams(), config.custom_params, config.custom_string_params);
+            CaptureReads(config, reads);
             config.parameter_reads = std::move(reads);
         }
         return config;
+    }
+
+    static void CaptureReads(const SimConfig& config,
+                             const std::shared_ptr<arch::preview::ParameterReadTrace>& reads) {
+        config.RequireLoadedValues();
+        if (!reads) return;
+        std::map<std::string, double> numeric;
+        for (const auto& [key, record] : config.resolved_case_values_) {
+            if (!record.explicit_input || !record.value) continue;
+            std::visit([&](const auto& value) {
+                using T = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<T, double> || std::is_same_v<T, std::int64_t>)
+                    numeric[record.input_key] = static_cast<double>(value);
+            }, *record.value);
+        }
+        const auto& raw = config.LoadedInput()->raw_tokens;
+        reads->capture_input(raw, numeric, raw);
     }
 
 private:
@@ -122,8 +138,7 @@ private:
         capture(input.auxiliary);
     }
 
-    static SimConfig Resolve(const ConfigParser &parser,
-                             const arch::config::StandardInputResolution& inputs)
+    static SimConfig Resolve(const arch::config::StandardInputResolution& inputs)
     {
 
         SimConfig cfg;
@@ -425,7 +440,6 @@ private:
         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
         if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.io.vars.w = false; }
         if (cfg.io.vars.jens) { warn_plot_disabled("JENS", "the Jeans refinement/plot diagnostic is not implemented"); cfg.io.vars.jens = false; }
-        arch::config::CaptureCaseParameterValues(parser, cfg);
 
         arch::config::ValidateControls(cfg);
         return cfg;

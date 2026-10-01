@@ -8,8 +8,8 @@
  */
 
 /**
- * Configuration is divided into typed core sections plus custom parameter maps
- * for problem-specific values that do not belong to the solver-wide contract.
+ * Configuration is divided into typed core sections and private resolved model
+ * records. Input presence and source identity are retained by the loader.
  */
 
 #pragma once
@@ -405,8 +405,7 @@ private:
         bool explicit_input = false;
         bool operator==(const ResolvedCaseValue&) const = default;
     };
-    // Populated only by the checked loader. Legacy lexical/numeric maps below
-    // remain adapters for consumers awaiting migration, not Get authority.
+    // The checked loader is the only writer of model values and lexical identity.
     std::map<std::string, ResolvedCaseValue> resolved_case_values_;
 
 
@@ -429,8 +428,6 @@ public:
         else if (amr != expected.amr) changed = "amr";
         else if (io != expected.io) changed = "output";
         else if (resolved_case_values_ != expected.resolved_case_values_) changed = "case";
-        else if (custom_params != expected.custom_params
-                 || custom_string_params != expected.custom_string_params) changed = "case";
         if (changed)
             throw ConfigValueError(changed, "UNDECLARED_CONFIGURATION_CHANGE",
                 "Preparation changed loaded values without a declared source.");
@@ -449,17 +446,6 @@ public:
     AmrConfig amr;
     IOConfig io;
 
-    /**
-     * @brief Stores problem-specific parameters not represented by a core field.
-     * Typical keys include:
-     * - "prob_rho_L" (Shock tube specific)
-     * - "stiff_p_inf" (Stiffened Gas EOS parameter)
-     */
-    std::map<std::string, double> custom_params;
-
-    // Original trimmed tokens, including numeric tokens for lexical checks.
-    std::map<std::string, std::string> custom_string_params;
-
     // Enabled only in the isolated initialization inspector; no global logger or UI state.
     std::shared_ptr<arch::preview::ParameterReadTrace> parameter_reads;
 
@@ -468,7 +454,8 @@ public:
         return found == resolved_case_values_.end() ? key : found->second.input_key;
     }
 
-    // Return a typed custom parameter or the caller-provided default.
+    // Read a resolved declared value. The legacy fallback argument is observed
+    // for API compatibility but never supplies a missing scientific input.
     template <typename T>
     T Get(const std::string &key, T default_val) const
     {
@@ -506,46 +493,10 @@ public:
                 parameter_reads->observe(found->second.input_key, default_val, value, found->second.explicit_input);
             return value;
         }
-        // Unloaded narrow test/value adapters retain strict lexical access.
-        // They cannot enter SetupChecked or produce a PreparedConfiguration.
-        // Return the preserved string value when requested explicitly.
-        if constexpr (std::is_same_v<T, std::string>)
-        {
-            auto it = custom_string_params.find(key);
-            if (parameter_reads)
-                parameter_reads->observe(key, default_val,
-                    it != custom_string_params.end() ? it->second : default_val,
-                    it != custom_string_params.end());
-            if (it != custom_string_params.end())
-                return it->second;
-            return default_val;
-        }
-        // Numeric requests use the typed custom-parameter map.
-        else
-        {
-            auto it = custom_params.find(key);
-            const auto raw = custom_string_params.find(key);
-            if constexpr (std::is_same_v<T, bool>) {
-                if (it == custom_params.end() && raw != custom_string_params.end()) {
-                    const auto value = ConfigParser::ParseBoolean(key, raw->second);
-                    if (parameter_reads) parameter_reads->observe(key, default_val, value, true);
-                    return value;
-                }
-            }
-            if (it == custom_params.end() && raw != custom_string_params.end())
-                throw std::invalid_argument("Custom parameter '" + key + "' is not a complete numeric value.");
-            if (it != custom_params.end())
-                ConfigParser::ValidateNumeric<T>(key, it->second,
-                    raw == custom_string_params.end() ? nullptr : &raw->second);
-            if (parameter_reads)
-                parameter_reads->observe(key, default_val,
-                    it != custom_params.end() ? static_cast<T>(it->second) : default_val,
-                    it != custom_params.end());
-            if (it != custom_params.end())
-                return static_cast<T>(it->second);
-            return default_val;
-        }
+        throw ConfigValueError(key, "INCOMPLETE_CONFIGURATION",
+            "Model reads require case-aware declared input loading.");
     }
+
     double GetCustomParam(const std::string &key, double default_val) const
     {
         return Get<double>(key, default_val);

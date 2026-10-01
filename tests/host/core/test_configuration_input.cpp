@@ -13,6 +13,8 @@
 #include "physics/network/aprox19/NetAprox19.h"
 
 namespace {
+template<class T> concept HasMutableCaseMaps = requires(T value) { value.custom_params; value.custom_string_params; };
+static_assert(!HasMutableCaseMaps<SimConfig>);
 void require(bool value, const char* message) {
     if (!value) throw std::runtime_error(message);
 }
@@ -170,7 +172,6 @@ int main(int argc, char** argv) {
                 "case or auxiliary origin was lost");
         auto edited = config;
         edited.numerics.cfl = 0.3;
-        edited.custom_params["x_pos"] = 0.75;
         require(edited.LoadedInput() == origin
                 && std::get<double>(*origin->standard.parameters.at("cfl").resolved) == 0.4
                 && std::get<double>(*origin->model.parameters.at("x_pos").resolved) == 0.5,
@@ -201,19 +202,12 @@ int main(int argc, char** argv) {
                 "runtime external acceleration expression evaluates exp");
 
 
-        for (const auto& definition : standard_parameters) {
-            require(!config.custom_params.contains(std::string(definition.key))
-                    && !config.custom_string_params.contains(std::string(definition.key)),
-                    "standard input retained a mutable custom-map copy");
-        }
         require(config.Get<double>("x_pos", -1.0) == 0.5,
                 "case parameter lost its authoritative lexical value");
         require(config.Get<std::string>("log_dir", "missing") == output.string()
-                && !config.custom_string_params.contains("log_dir"),
+                && !config.LoadedInput()->raw_tokens.contains("log_dir"),
                 "derived auxiliary value did not use its resolved source");
         auto injected = config;
-        injected.custom_params["cfl"] = 0.99;
-        injected.custom_string_params["network_name"] = "untrusted";
         for (const auto key : {"cfl", "network_name", "timeintegrator"}) {
             bool access_rejected = false;
             try { (void)injected.Get<std::string>(key, "fallback"); }
@@ -221,11 +215,6 @@ int main(int argc, char** argv) {
             require(access_rejected, "standard/retired key bypassed typed ownership through Get");
         }
 
-        auto case_edit = config;
-        case_edit.custom_params["x_pos"] = 0.75;
-        case_edit.custom_string_params["x_pos"] = "not-a-number";
-        require(case_edit.Get<double>("x_pos", -1) == 0.5,
-                "mutable adapter replaced the declared case value");
         for (const bool observed : {false, true}) {
             auto checked = config;
             if (observed) checked.parameter_reads =
@@ -427,11 +416,11 @@ int main(int argc, char** argv) {
         try { (void)arch::network::ReadInitialComposition(unprepared, network_species); }
         catch (const ConfigValueError& error) { composition_rejected = error.code == "INCOMPLETE_CONFIGURATION"; }
         require(composition_rejected, "network accepted default-constructed configuration");
-        network_input.custom_params["xc12"] = 0.9;
+        network_input.physics.burn.smallx = 1e-15;
         composition_rejected = false;
         try { (void)arch::network::ReadInitialComposition(network_input, network_species); }
         catch (const ConfigValueError& error) { composition_rejected = error.code == "UNDECLARED_CONFIGURATION_CHANGE"; }
-        require(composition_rejected, "network accepted a modified composition adapter");
+        require(composition_rejected, "network accepted modified preparation controls");
 
         std::cout << "PASS: aggregate declared loading without model or scientific resources\n";
         return 0;

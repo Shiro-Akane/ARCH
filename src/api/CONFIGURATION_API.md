@@ -140,11 +140,12 @@ MISSING_PARAMETER. A conflicting read type raises PARAMETER_TYPE_MISMATCH.
 The caller's fallback argument is not an approved default and cannot satisfy
 these errors. Declared integer conversion still uses the preserved input token.
 
-Mutable custom numeric/string maps remain transitional adapters for existing
-network/inspection consumers. Editing those maps cannot override Get's resolved
-value or lexical identity, and preparation rejects adapter mutations. Narrow
-unloaded lexical tests may still use the adapters, but cannot enter SetupChecked
-or create a PreparedConfiguration. Removal of the remaining adapters is pending.
+Public mutable custom numeric/string maps and the partial custom-value capture
+helper have been removed. Model values are private resolved records. Get on
+default-constructed storage raises INCOMPLETE_CONFIGURATION. Parameter-read
+observers receive transient snapshots from those records and immutable raw input;
+they cannot change scientific values. Numeric/boolean parser unit tests use the
+narrow scalar functions; application reads use a named complete input fixture.
 
 Network initialization now reads the resolved composition records through the
 shared InitialComposition input reader. Default-constructed or modified

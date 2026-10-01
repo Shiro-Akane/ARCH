@@ -46,9 +46,11 @@ add_test(NAME configuration_v3_contract
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(configuration_v3_contract PROPERTIES TIMEOUT 180)
 
-add_executable(arch_preview_parameter_reads tests/api/configuration/test_parameter_reads.cpp src/api/configuration/ParameterMetadata.cpp)
+add_executable(arch_preview_parameter_reads tests/api/configuration/test_parameter_reads.cpp
+    src/api/configuration/ParameterMetadata.cpp src/core/config/CompositionInput.cpp)
 arch_configure_host_test(arch_preview_parameter_reads)
-add_test(NAME preview_parameter_reads COMMAND arch_preview_parameter_reads)
+add_test(NAME preview_parameter_reads COMMAND arch_preview_parameter_reads
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3/sod-valid.par)
 add_test(NAME preview_parameter_metadata
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_parameter_metadata.py

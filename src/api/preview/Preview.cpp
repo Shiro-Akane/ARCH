@@ -62,9 +62,7 @@ Json envelope(const PreviewRequest &request) {
 
 /** Reject invalid root blocks, domain bounds and AMR coordinate ranges. */
 void validate_grid(const SimConfig &config) {
-    for (const auto &[key, value] : config.custom_params)
-        if (!std::isfinite(value))
-            throw std::invalid_argument("Non-finite numeric configuration value: " + key);
+    config.RequireLoadedValues();
     const auto &g = config.grid;
     if (config.amr.lrefinemin < 0 || config.amr.lrefinemax < config.amr.lrefinemin
         || config.amr.lrefinemax > amr::kMaxRefinementLevel)
@@ -156,11 +154,6 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
         validate_grid(config);
         if (sampling.two_dimensional) {
-            auto it = config.custom_params.find("shock_dir");
-            if (it != config.custom_params.end()
-                && (std::trunc(it->second) != it->second || it->second < std::numeric_limits<int>::min()
-                    || it->second > std::numeric_limits<int>::max()))
-                throw std::invalid_argument("shock_dir must be a whole number within the integer range");
             ReportStage(request, result, "support");
             exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
             const int direction = config.Get<int>("shock_dir", 0);

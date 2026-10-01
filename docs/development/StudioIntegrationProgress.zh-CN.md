@@ -628,3 +628,25 @@ CPU ARCH及相关目标构建PASS，28并发最低可用约14.5GiB，无swap增�
 修正测试网络后仅重编译并复测configuration_input，PASS；diff-check PASS。
 没有重复已通过未受修改的检查。没有演化、CUDA、raw上传、push或完成tag。
 材料登记来源、剩余inspection适配表及配置/Studio/Jeans/RZ整体任务仍继续。
+
+### O7.0 删除旧custom双表及未加载Get回填
+
+生产源码盘点后删除SimConfig公开custom_params/custom_string_params及
+CaseParameterValues.h。模型参数只有loader写入的private resolved记录；
+未加载Get返回INCOMPLETE_CONFIGURATION，无法再由调用处fallback组成模型值。
+RuntimeParams从不可变原始输入和resolved值为观察器临时生成快照，
+不是另一份可写运行配置。Preview/inspection改为加载身份检查，
+shock_dir使用已严格解析的声明int，不再从double适配表重复推断。
+
+参数观察测试迁移到具名完整fixture和注册case，保留普通/observed严格数值、
+整数/布尔、来源歧义、未知约束和不可绑定路径。未归属的观察值直接测试
+observer，不再把任意config override当成受支持行为。数值转换单测直接检查
+原Parse/ValidateNumeric函数；初始化/加载测试同步删除双表修改假设。
+源码搜索确认仅测试中的禁止声明/生成字符串检查仍提到旧字段。
+
+CPU ARCH及六个相关可执行目标构建PASS，28并发最低可用约14.1GiB，
+无swap增长。七项CTest（入口、v3、parameter_reads、configuration_input、
+mainline_authority、initialization_probe、preview_cellular_2d）全部PASS，
+18.07秒；diff-check PASS。未运行演化/CUDA，未push/tag或上传raw。
+材料来源、case提供值/其余输入迁移、完整Core/Studio及后续3C/Jeans/RZ
+仍未完成；整体目标继续。

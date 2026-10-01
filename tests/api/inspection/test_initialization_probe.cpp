@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     const auto observe = [](bool product) {
         auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true);
         auto config = load_probe();
-        reads->capture_input(config.custom_string_params, config.custom_params, config.custom_string_params);
+        RuntimeParams::CaptureReads(config, reads);
         config.parameter_reads.reset();
         SpeciesManager species; ProbeProblem model(product); Sink sink; PrimitiveData primitive;
         model.InspectSetup(config, species, reads);
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
     require(observe(false) == observe(true), "boundary is observationally identical without expression provenance");
     auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true);
     auto config = load_probe();
-    reads->capture_input(config.custom_string_params, config.custom_params, config.custom_string_params);
+    RuntimeParams::CaptureReads(config, reads);
     config.parameter_reads = reads;
     auto original = config.parameter_reads;
     SpeciesManager species; ProbeProblem failing(false, true);
@@ -144,7 +144,6 @@ int main(int argc, char** argv) {
         static_assert(std::is_same_v<decltype(frozen.config()), const SimConfig&>);
         static_assert(std::is_same_v<decltype(frozen.species()), const SpeciesManager&>);
         input.numerics.cfl = 0.25;
-        input.custom_params["a"] = 99;
         specs.species_list.clear();
         require(frozen.config().numerics.cfl == 0.4
                 && frozen.config().Get<double>("a", -1) == 2
@@ -158,18 +157,17 @@ int main(int argc, char** argv) {
         catch (const ConfigValueError& e) { rejected = e.code == "UNDECLARED_CONFIGURATION_CHANGE"; }
         require(rejected && !blocked.entered, "mutated loaded input entered Setup");
     }
-    for (int kind = 0; kind < 7; ++kind) {
+    for (int kind = 0; kind < 6; ++kind) {
         struct Mutator final : ProblemGenerator {
             int kind;
             explicit Mutator(int value) : kind(value) {}
             void Setup(SimConfig& input, SpeciesManager&) override {
                 if (kind == 0) input.numerics.cfl = 0.25;
-                if (kind == 1) input.custom_params["x_pos"] = 0.75;
-                if (kind == 2) input.io.out_dir = "other";
-                if (kind == 3) input.numerics.dt_max = 10;
-                if (kind == 4) input.amr.refine_on_p = true;
-                if (kind == 5) input.physics.gravity.G_const = 1;
-                if (kind == 6) input = load_probe();
+                if (kind == 1) input.io.out_dir = "other";
+                if (kind == 2) input.numerics.dt_max = 10;
+                if (kind == 3) input.amr.refine_on_p = true;
+                if (kind == 4) input.physics.gravity.G_const = 1;
+                if (kind == 5) input = load_probe();
             }
             void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
                                 ProblemInitializationContext) override {}
@@ -184,9 +182,9 @@ int main(int argc, char** argv) {
                 "valid undeclared Setup mutation escaped or broke observer restoration");
     }
     for (double n : {1.25, 1e30, std::numeric_limits<double>::infinity()}) {
-        SimConfig numeric_view; // Narrow lexical conversion check, never preparation.
-        numeric_view.custom_params["mode"] = n; caught = false;
-        try { (void)numeric_view.Get<int>("mode", 0); } catch (const std::invalid_argument&) { caught = true; }
+        caught = false;
+        try { ConfigParser::ValidateNumeric<int>("mode", n); }
+        catch (const std::invalid_argument&) { caught = true; }
         require(caught, "refuse fractional/out-of-range/nonfinite integer before conversion");
     }
     reads->observe("x_pos", 0.5, 0.5, false);
