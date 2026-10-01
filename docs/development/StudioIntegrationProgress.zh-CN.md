@@ -751,3 +751,23 @@ Gaussian未通过的问题已定位：Setup调用SetupNetworkAndFractions，
 后续应分离network species登记与外部初始组分读取，声明模型自产组分来源；
 不能给Gaussian.par随意补xhe4/xc12来绕过，也不能全局放宽其他模型正sum。
 Gaussian实际修复、完整模型检查/后续整体目标尚未完成。
+
+### O7.0 Gaussian 模型自产空间组分契约修复
+
+CompositionDeclaration新增consumes_input（默认true），Gaussian显式false。
+其网络键仍有所有权和严格解析/重复/负值检查；缺失不生成虚假零值来源，
+API applicability=not-applicable。其他模型的正有限组分sum规则不变。
+共享helper拆出SetupNetworkSpecies，复用同一注册分派；Gaussian不再读取
+随后被丢弃的外部组分。Init高斯表达式、物种顺序和材料数值均未改变。
+正式Gaussian输入仅补原cpu/EOS/floor/模块控制值，无人为补造质量分数。
+Gaussian cpp单位证据在逐行检查后更新，真实capability报告current。
+
+CPU增量构建28并发通过，最低可用14097252KiB、无swap增长，
+主构建29.421秒；单位证据单文件后续增量链接通过。
+配置v3最终19/19 PASS（1.865秒）：含静态缺失null/显式不适用、
+非法值与重复拒绝、Cellular缺组分仍拒绝；真实Gaussian 9点Init精确匹配
+原高斯组分公式，外部组分变化不改data并明确unobserved，无文件/时间步。
+configuration_input、parameter metadata、Preview session、Cellular2D四项
+CTest全部PASS（21.60秒）。不据此宣称完整演化/EOS科学验收。
+API文档同步；diff-check PASS。完整模型/Studio回归仍待完成，
+未运行CUDA、push/tag或上传raw，整体目标继续。

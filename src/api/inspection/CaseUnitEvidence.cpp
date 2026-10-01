@@ -39,7 +39,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"noiseAmplitude", "1"},
         {"shock_dir", "1"},
     }}},
-    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "b853316d7300ccd7fc69c5b5290d95c53055451837185073d0ea54c1a81028ff", {
+    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9", {
         {"rho0", "g/cm^3"},
         {"p0", "erg/cm^3"},
         {"amp", "1"},

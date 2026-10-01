@@ -40,8 +40,10 @@
 
 namespace ProblemHelper
 {
-    void SetupNetworkAndFractions(SimConfig &config, SpeciesManager &specs, std::vector<double> &default_X)
+    static void SetupNetwork(SimConfig &config, SpeciesManager &specs,
+                             std::vector<double>* fractions)
     {
+        config.RequireLoadedValues();
         using namespace arch::dispatch;
         const std::string &net_type = config.physics.burn.network_name;
         const auto selected = parse_registered_policy<NetworkPolicies>(
@@ -66,13 +68,24 @@ namespace ProblemHelper
                                                  CpuNoNetworkBinding>) {
                     using Network = typename CpuNetworkType<Binding>::type;
                     if (specs.count() == 0) Network::RegisterSpecies(specs);
-                    Network::SetupInitialFractions(
-                        config, specs, default_X);
+                    if (fractions) Network::SetupInitialFractions(
+                        config, specs, *fractions);
                     setup = true;
                 }
             });
         if (!registered || !setup)
             throw std::logic_error("registered network has no CPU setup binding");
+    }
+
+    void SetupNetworkSpecies(SimConfig& config, SpeciesManager& specs)
+    {
+        SetupNetwork(config, specs, nullptr);
+    }
+
+    void SetupNetworkAndFractions(SimConfig& config, SpeciesManager& specs,
+                                  std::vector<double>& fractions)
+    {
+        SetupNetwork(config, specs, &fractions);
     }
 
     double GetPressureFromRhoT(const SimConfig &config, const SpeciesManager &specs, double rho, double T, const double *X)

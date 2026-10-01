@@ -15,6 +15,8 @@ struct CompositionDeclaration {
     bool complete = false;
     std::string network;
     std::vector<std::string> keys;
+    // False when the model constructs its spatial composition in Init.
+    bool consumes_input = true;
 };
 
 // Implemented beside the network binding, using its actual species metadata.
@@ -72,7 +74,7 @@ inline CompositionInputResolution ResolveCompositionInput(
                 invalid = true;
                 result.diagnostics.push_back({key, error.code, error.what(), record.locations});
             }
-        } else {
+        } else if (declaration.consumes_input) {
             record.resolved = 0.0;
             record.source = InputValueSource::CaseDefined;
             record.source_evidence = InputSourceEvidence{
@@ -80,7 +82,7 @@ inline CompositionInputResolution ResolveCompositionInput(
         }
         result.parameters.emplace(key, std::move(record));
     }
-    if (!declaration.keys.empty() && !invalid && (!(sum > 0.0) || !std::isfinite(sum)))
+    if (declaration.consumes_input && !declaration.keys.empty() && !invalid && (!(sum > 0.0) || !std::isfinite(sum)))
         result.diagnostics.push_back({"composition", "INVALID_COMPOSITION",
             "Network composition requires a positive finite supplied sum; omitted species do not seed material.", {}});
     return result;

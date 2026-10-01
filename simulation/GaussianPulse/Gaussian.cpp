@@ -42,6 +42,7 @@ public:
         result.consumers.needs_network = true;
         result.consumers.needs_temperature_floor = false;
         result.composition = arch::config::DescribeNetworkComposition(inputs);
+        result.composition->consumes_input = false; // Init owns the spatial fractions.
         if (result.composition->complete)
             result.consumers.needs_composition_floor = !result.composition->keys.empty();
         result.parameters = {
@@ -91,7 +92,7 @@ public:
         // A passive pulse has no reaction network by default. Explicit nuclear
         // network selections (e.g. with Helmholtz) use the common factory.
         // network_name is the already resolved standard input; Setup does not override it.
-        ProblemHelper::SetupNetworkAndFractions(config, specs, default_X);
+        ProblemHelper::SetupNetworkSpecies(config, specs);
 
         if (specs.count() >= 2) {
             m_bg_id = 0;

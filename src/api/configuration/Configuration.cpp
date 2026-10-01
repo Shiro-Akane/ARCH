@@ -401,7 +401,8 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
     if (analysis.model.composition)
         for (const auto& [key, record] : analysis.model.composition->parameters)
             add(key, record, request.case_id, "float", "Composition", "simulation",
-                case_units("1", "float"), "sparse-composition-member", "composition-consumer", {true, {}});
+                case_units("1", "float"), "sparse-composition-member", "composition-consumer",
+                {analysis.declaration.composition->consumes_input, {}});
     for (const auto& [key, record] : analysis.auxiliary)
         add(key, record, Json(), "string", "Runtime", "simulation", case_units("", "string"),
             "optional", "always", {true, {}});

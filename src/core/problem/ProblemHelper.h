@@ -46,6 +46,10 @@ struct IsentropicState {
  * With network_name=none and burning disabled, leaves gas definitions to the
  * problem. Unknown networks and burning without a network are rejected.
  */
+// Register network material without reading fractions. Use only when Init
+// constructs the composition and the case declares consumes_input=false.
+void SetupNetworkSpecies(SimConfig& config, SpeciesManager& specs);
+
 void SetupNetworkAndFractions(SimConfig& config, SpeciesManager& specs,
                               std::vector<double>& default_X);
 

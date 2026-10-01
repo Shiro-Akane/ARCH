@@ -105,3 +105,14 @@ pressure_amplitude = 0.0
 u_amplitude = 0.0
 v_amplitude = 0.0
 w_amplitude = 0.0
+
+# Explicit previous controls. Init owns the spatial species fractions.
+compute_backend = cpu
+eos_coulomb_mult = 1.0
+gravity_type = none
+hll_wave_speed = roe
+max_eint = 1e21
+min_eint = 1e-10
+smallx = 1e-20
+sml_rho = 1e-12
+use_burn = false

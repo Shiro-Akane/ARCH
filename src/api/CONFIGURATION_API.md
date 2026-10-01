@@ -171,3 +171,16 @@ checked configuration. Numeric species views remain unchanged. Network owner
 labels do not assert that an external package or complete build manifest has
 been verified. The current JSON species snapshot still reports index/name only;
 full material provenance presentation is not implemented by this change.
+
+### Model-generated spatial composition
+
+A case that constructs fractions in Init (currently Gaussian) declares that it
+does not consume external composition. Its registered network species keys remain
+known: explicit values retain their raw/parsed input and strict type/range/
+duplicate validation, but applicability is not-applicable. Missing members have
+null resolvedValue/valueSource, rather than synthetic zero fractions.
+There is no positive-input-sum requirement for this declared path. Cases that
+consume external fractions keep the positive finite sum requirement.
+Inspection reports these unused explicit keys as unobserved, never as Init reads.
+Network material registration uses SetupNetworkSpecies; the existing
+SetupNetworkAndFractions path retains external composition resolution.

@@ -1,6 +1,7 @@
 """Actual-binary v3 checks: partial input is not a default-filled runtime config."""
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -256,6 +257,51 @@ class ConfigurationV3(unittest.TestCase):
                 for key, value in explicit.items():
                     self.assertEqual(values[key]["valueSource"], "input")
                     self.assertEqual(values[key]["resolvedValue"], value)
+
+    def test_model_generated_composition_does_not_require_external_fractions(self):
+        text = (ROOT / "simulation/GaussianPulse/Gaussian.par").read_text()
+        data = self.inspect(text, case="Gaussian")
+        fractions = [p for p in data["parameters"] if p["group"] == "Composition"]
+        self.assertEqual(len(fractions), 19)
+        for p in fractions:
+            self.assertEqual(p["applicability"]["state"], "not-applicable")
+            self.assertIsNone(p["parsedValue"])
+            self.assertIsNone(p["resolvedValue"])
+            self.assertIsNone(p["valueSource"])
+        data = self.inspect(edit(text, "xhe4", .4), case="Gaussian")
+        self.assertEqual(records(data)["xhe4"]["parsedValue"], .4)
+        self.assertEqual(records(data)["xhe4"]["applicability"]["state"], "not-applicable")
+        for raw in ["-1", "nan", "bad"]:
+            self.inspect(edit(text, "xhe4", raw), case="Gaussian", expected=3)
+        self.inspect(text + "\nxhe4=.2\nxhe4=.3\n", case="Gaussian", expected=3)
+        # A model that actually consumes composition must still reject no seed.
+        cellular = (ROOT / "simulation/Cellular/CellularPreview2D.par").read_text()
+        for key in ["xhe4", "xc12", "xo16"]:
+            cellular = edit(cellular, key)
+        data = self.inspect(cellular, case="CellularDet", expected=3)
+        self.assertIn("INVALID_COMPOSITION", {d["code"] for d in data["diagnostics"]})
+
+    def test_gaussian_init_owns_spatial_fractions(self):
+        text = (ROOT / "simulation/GaussianPulse/Gaussian.par").read_text()
+        text = edit(text, "eos_table_path", ROOT / "EOS_toolkit/tables/helmholtz/helm_table.dat")
+        responses = []
+        for payload in [text, text + "\nxhe4=.9\nxc12=.1\n"]:
+            p = subprocess.run([str(ARCH), "--inspect-case", "Gaussian", "--config-stdin"],
+                               input=payload, text=True, capture_output=True, cwd=self.cwd,
+                               env=ENV, timeout=30)
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            data = json.loads(p.stdout)
+            self.assertEqual(data["identity"]["configRevision"], hashlib.sha256(payload.encode()).hexdigest())
+            self.assertEqual(data["execution"]["timeStepping"], "not_executed")
+            self.assertEqual(list(self.cwd.iterdir()), [])
+            responses.append(data)
+        self.assertEqual(responses[0]["data"], responses[1]["data"])
+        self.assertTrue({"xhe4", "xc12"} <= set(responses[1]["parameterMetadata"]["unobservedInputKeys"]))
+        for sample in responses[0]["data"]["samples"]:
+            x, y, z = sample["cartesianPosition"]
+            pulse = .5 * math.exp(-((x/.1)**2 + (y/.1)**2 + (z/.1)**2))
+            # Same frozen initializer formula, independent of external fractions.
+            self.assertEqual(sample["massFractions"], [1-pulse, pulse] + [0]*17)
 
     def test_bounded_error_keeps_identity(self):
         text = BASE + "".join(f"unknown_key_{i}=0\n" for i in range(30000))
