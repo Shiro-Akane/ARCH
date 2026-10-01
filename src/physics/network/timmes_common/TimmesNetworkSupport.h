@@ -24,6 +24,7 @@
 #include "data/GlobalDefs.h"
 #include "core/CompensatedSum.h"
 #include "physics/species/Species.h"
+#include "physics/network/InitialComposition.h"
 
 namespace timmes {
 
@@ -44,33 +45,7 @@ struct TimmesNetworkSupport {
     static void SetupInitialFractions(SimConfig& config, const SpeciesManager& specs,
                                       std::vector<double>& x_out)
     {
-        x_out.assign(specs.count(), 0.0);
-        double sum = 0.0;
-        for (int i = 0; i < specs.count(); ++i) {
-            std::string target = "x" + specs.get_name(i);
-            std::transform(target.begin(), target.end(), target.begin(),
-                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-            bool observed = false;
-            for (const auto& entry : config.custom_params) {
-                std::string key = entry.first;
-                std::transform(key.begin(), key.end(), key.begin(),
-                               [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                if (key == target) {
-                    if (config.parameter_reads) {
-                        config.parameter_reads->observe(entry.first, 0.0, entry.second, true);
-                        config.parameter_reads->record_unit(entry.first, "1", "core-composition-input-before-normalization");
-                    }
-                    observed = true;
-                    x_out[i] = entry.second;
-                    break;
-                }
-            }
-            if (config.parameter_reads && !observed) {
-                config.parameter_reads->observe(target, 0.0, 0.0, false);
-                config.parameter_reads->record_unit(target, "1", "core-composition-input-before-normalization");
-            }
-            sum += x_out[i];
-        }
+        x_out = arch::network::ReadInitialComposition(config, specs);
         if (!arch::state::normalize_composition(x_out.data(), specs.count(), 1, config.physics.burn.smallx))
             throw std::invalid_argument("Initial network composition must contain finite nonnegative fractions with a positive sum");
     }

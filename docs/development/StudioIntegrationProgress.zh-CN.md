@@ -606,3 +606,25 @@ mainline_authority、initialization_probe、preview_cellular_2d六项CTest PASS
 （18.36秒），diff-check PASS。未执行演化/CUDA、raw上传、push或完成tag。
 网络/inspection直接遍历custom adapter的剩余路径、材料来源及其余配置迁移
 仍待完成；当前不宣称已删除所有重复适配存储。整体目标继续。
+
+### O7.0 网络组分读取已解析输入
+
+内置Timmes与新生成网络统一调用InitialComposition原始输入读取器，
+要求完整且未改写的加载状态，读取声明的组分值；不再遍历可变custom数值表。
+大小写核素名仍按Core声明匹配，读取/单位观察保留原始输入拼写及token。
+缺失稀疏成员仍是声明零值。共享步骤不进行floor或归一化。
+
+审计发现生成网络原算法与Timmes不同：本次分别原样保留smallx加法/除以sum
+和normalize_composition，不借配置迁移统一数值算法。已有外部生成包需再生成，
+本次不改写历史包或科学数据。
+
+配置测试新增真实BD aprox13的原始比例、稀疏零值、原归一化逐值一致、
+大写XC12观察身份、默认构造与改写拒绝。首次测试误配aprox19，
+被xh1未声明拒绝；已按fixture原network_name修正为aprox13，同时保留
+错误网络含额外核素时不得静默补零的拒绝用例。原物理输入未改。
+
+CPU ARCH及相关目标构建PASS，28并发最低可用约14.5GiB，无swap增长。
+七项所选CTest中入口/v3/运行策略/初始化/真实Cellular/网络生成器六项先通过，
+修正测试网络后仅重编译并复测configuration_input，PASS；diff-check PASS。
+没有重复已通过未受修改的检查。没有演化、CUDA、raw上传、push或完成tag。
+材料登记来源、剩余inspection适配表及配置/Studio/Jeans/RZ整体任务仍继续。

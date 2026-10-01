@@ -9,6 +9,8 @@
 #include <sstream>
 #include "core/config/RuntimeParams.h"
 #include "fixtures/config/burn_controller_input.h"
+#include "physics/network/aprox13/NetAprox13.h"
+#include "physics/network/aprox19/NetAprox19.h"
 
 namespace {
 void require(bool value, const char* message) {
@@ -385,6 +387,52 @@ int main(int argc, char** argv) {
                 && std::get<double>(*composition.at("xc12").resolved) == 0.5
                 && !composition.at("xc12").locations.front().source.empty(),
                 "file composition lost explicit input or filename");
+        SpeciesManager network_species;
+        NetAprox13::RegisterSpecies(network_species);
+        auto network_input = bd;
+        const auto raw_fractions = arch::network::ReadInitialComposition(network_input, network_species);
+        std::vector<double> expected(network_species.count(), 0.0);
+        expected[network_species.GetSpeciesID("c12")] = 0.5;
+        expected[network_species.GetSpeciesID("o16")] = 0.5;
+        require(raw_fractions == expected, "declared sparse input changed raw fractions");
+        require(arch::state::normalize_composition(expected.data(), network_species.count(), 1,
+                network_input.physics.burn.smallx), "reference normalization failed");
+        std::vector<double> normalized;
+        NetAprox13::SetupInitialFractions(network_input, network_species, normalized);
+        require(normalized == expected, "network normalization changed after input migration");
+
+        std::ifstream bd_file(std::string(ARCH_SOURCE_DIR) + "/validation/burn/inputs/bd-config-v3.par");
+        const std::string bd_text((std::istreambuf_iterator<char>(bd_file)), {});
+        auto trace = std::make_shared<arch::preview::ParameterReadTrace>(std::set<std::string>{}, true);
+        auto capitalized = RuntimeParams::LoadText(without(bd_text, "xc12") + "XC12=0.5\n",
+            "BurnOneZone", ConfigurationPurpose::InitialState, trace);
+        require(arch::network::ReadInitialComposition(capitalized, network_species) == raw_fractions,
+                "case-insensitive species input changed values");
+        require(trace->reads().at("XC12").source == "explicit"
+                && trace->reads().at("XC12").raw_value == std::optional<std::string>("0.5")
+                && trace->units.at("XC12").unit == "1",
+                "canonical species lookup lost original input observation");
+        require(capitalized.Get<double>("XC12", -1) == 0.5,
+                "explicit species spelling did not resolve");
+        SpeciesManager wrong_network_species;
+        NetAprox19::RegisterSpecies(wrong_network_species);
+        bool wrong_network_rejected = false;
+        try { (void)arch::network::ReadInitialComposition(network_input, wrong_network_species); }
+        catch (const ConfigValueError& error) {
+            wrong_network_rejected = error.code == "UNDECLARED_PARAMETER_ACCESS";
+        }
+        require(wrong_network_rejected, "unregistered species were silently initialized to zero");
+        SimConfig unprepared;
+        bool composition_rejected = false;
+        try { (void)arch::network::ReadInitialComposition(unprepared, network_species); }
+        catch (const ConfigValueError& error) { composition_rejected = error.code == "INCOMPLETE_CONFIGURATION"; }
+        require(composition_rejected, "network accepted default-constructed configuration");
+        network_input.custom_params["xc12"] = 0.9;
+        composition_rejected = false;
+        try { (void)arch::network::ReadInitialComposition(network_input, network_species); }
+        catch (const ConfigValueError& error) { composition_rejected = error.code == "UNDECLARED_CONFIGURATION_CHANGE"; }
+        require(composition_rejected, "network accepted a modified composition adapter");
+
         std::cout << "PASS: aggregate declared loading without model or scientific resources\n";
         return 0;
     } catch (const std::exception& error) {

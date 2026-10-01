@@ -222,6 +222,7 @@ def write_adapter(stage, network_id, network, *, nse_metadata=None):
 #include "core/ArchPortability.h"
 #include "data/GlobalDefs.h"
 #include "physics/species/Species.h"
+#include "physics/network/InitialComposition.h"
 #include "numerics/burnsolver/coupling/NetworkDerivative.h"
 
 namespace {detail} {{
@@ -252,18 +253,11 @@ struct {cls} {{
     }}
     static void SetupInitialFractions(SimConfig& config, const SpeciesManager& specs,
                                       std::vector<double>& output) {{
+        const auto input = arch::network::ReadInitialComposition(config, specs);
         output.assign(specs.count(), config.physics.burn.smallx);
         double sum = 0.0;
         for (int i = 0; i < specs.count(); ++i) {{
-            std::string target = "x" + specs.get_name(i);
-            std::transform(target.begin(), target.end(), target.begin(),
-                [](unsigned char c) {{ return static_cast<char>(std::tolower(c)); }});
-            for (const auto& entry : config.custom_params) {{
-                std::string key = entry.first;
-                std::transform(key.begin(), key.end(), key.begin(),
-                    [](unsigned char c) {{ return static_cast<char>(std::tolower(c)); }});
-                if (key == target) {{ output[i] += entry.second; break; }}
-            }}
+            output[i] += input[i];
             sum += output[i];
         }}
         if (!(sum > 0.0)) throw std::runtime_error("custom network initial composition has zero sum");

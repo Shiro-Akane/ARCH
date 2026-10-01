@@ -401,6 +401,7 @@ private:
     struct ResolvedCaseValue {
         std::optional<arch::preview::ParameterValue> value;
         std::optional<std::string> raw;
+        std::string input_key;
         bool explicit_input = false;
         bool operator==(const ResolvedCaseValue&) const = default;
     };
@@ -462,6 +463,11 @@ public:
     // Enabled only in the isolated initialization inspector; no global logger or UI state.
     std::shared_ptr<arch::preview::ParameterReadTrace> parameter_reads;
 
+    std::string CaseInputKey(const std::string& key) const {
+        const auto found = resolved_case_values_.find(key);
+        return found == resolved_case_values_.end() ? key : found->second.input_key;
+    }
+
     // Return a typed custom parameter or the caller-provided default.
     template <typename T>
     T Get(const std::string &key, T default_val) const
@@ -497,7 +503,7 @@ public:
                         "Model read type conflicts with the declared resolved value.");
             }, *found->second.value);
             if (parameter_reads)
-                parameter_reads->observe(key, default_val, value, found->second.explicit_input);
+                parameter_reads->observe(found->second.input_key, default_val, value, found->second.explicit_input);
             return value;
         }
         // Unloaded narrow test/value adapters retain strict lexical access.

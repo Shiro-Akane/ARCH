@@ -145,3 +145,13 @@ network/inspection consumers. Editing those maps cannot override Get's resolved
 value or lexical identity, and preparation rejects adapter mutations. Narrow
 unloaded lexical tests may still use the adapters, but cannot enter SetupChecked
 or create a PreparedConfiguration. Removal of the remaining adapters is pending.
+
+Network initialization now reads the resolved composition records through the
+shared InitialComposition input reader. Default-constructed or modified
+preparation state is rejected before fractions are read. Species keys are matched
+case-insensitively by the declared composition contract; observations retain the
+original input spelling, token and unit. Missing sparse members retain their
+declared zero. Built-in and newly generated network adapters share only this
+input step; their existing floor/normalization calculations are unchanged.
+Previously generated external packages require regeneration before claiming
+this input boundary. Full material-registration provenance remains separate.

@@ -93,21 +93,32 @@ public:
 private:
     static void CaptureResolvedCaseValues(SimConfig& config,
                                           const arch::config::ConfigurationInput& input) {
-        const auto capture = [&](const auto& records) {
+        const auto capture = [&](const auto& records, bool composition = false) {
             for (const auto& [key, record] : records) {
                 SimConfig::ResolvedCaseValue value;
+                value.input_key = key;
                 if (record.resolved)
                     value.value = std::visit([](const auto& v) {
                         return arch::preview::parameter_value(v);
                     }, *record.resolved);
                 if (const auto raw = input.raw_tokens.find(key); raw != input.raw_tokens.end())
                     value.raw = raw->second;
+                if (composition) {
+                    for (const auto& [raw_key, token] : input.raw_tokens)
+                        if (arch::config::CompositionKey(raw_key) == key) {
+                            value.raw = token;
+                            value.input_key = raw_key;
+                            break;
+                        }
+                }
                 value.explicit_input = record.state == arch::config::InputState::Present;
+                if (value.input_key != key)
+                    config.resolved_case_values_.emplace(value.input_key, value);
                 config.resolved_case_values_.emplace(key, std::move(value));
             }
         };
         capture(input.model.parameters);
-        if (input.model.composition) capture(input.model.composition->parameters);
+        if (input.model.composition) capture(input.model.composition->parameters, true);
         capture(input.auxiliary);
     }
 
