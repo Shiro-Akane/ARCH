@@ -203,8 +203,11 @@ class ConfigurationContract(unittest.TestCase):
             with self.subTest(text=text):
                 out=self.inspect(text,3)
                 self.assertTrue(any(d['severity']=='error' and d['parameterKey']==key for d in out['diagnostics']), out['diagnostics'])
-        out=self.inspect('solver=unknown')
-        self.assertTrue(any(d['code']=='POLICY_FALLBACK' for d in out['diagnostics']))
+        for key in ['solver', 'reconstruct', 'limiter', 'time_integrator']:
+            with self.subTest(unknown_policy=key):
+                out=self.inspect(f'{key}=unknown',3)
+                self.assertTrue(any(d['code']=='INVALID_OPTION' and d['parameterKey']==key
+                                    for d in out['diagnostics']), out['diagnostics'])
         out=self.inspect('gravity_type=self',3)
         self.assertTrue(any(d['parameterKey']=='gravity_boundary' for d in out['diagnostics']))
         out=self.inspect('gravity_type=self\nx1l_boundary_type=periodic\nx1r_boundary_type=periodic\nx2l_boundary_type=periodic\nx2r_boundary_type=periodic\nx3l_boundary_type=periodic\nx3r_boundary_type=periodic')

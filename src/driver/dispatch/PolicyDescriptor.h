@@ -23,7 +23,7 @@
 namespace arch::dispatch
 {
 
-enum class UnknownPolicyBehavior : std::uint8_t { Error, UseDefault };
+enum class UnknownPolicyBehavior : std::uint8_t { Error };
 
 template <class Id, UnknownPolicyBehavior Behavior, class... Registrations>
 struct TypeList
@@ -363,13 +363,13 @@ ARCH_REGISTER_POLICY(Rkl2Policy, DiffusionIntegratorId, DiffusionIntegratorId::R
 
 #undef ARCH_REGISTER_POLICY
 
-using FluxPolicies = TypeList<FluxId, UnknownPolicyBehavior::UseDefault,
+using FluxPolicies = TypeList<FluxId, UnknownPolicyBehavior::Error,
     VlPolicy, SwPolicy, RoePolicy, HllPolicy, HllcPolicy>;
-using ReconstructionPolicies = TypeList<ReconstructionId, UnknownPolicyBehavior::UseDefault,
+using ReconstructionPolicies = TypeList<ReconstructionId, UnknownPolicyBehavior::Error,
     PcmPolicy, MusclPolicy, PpmPolicy>;
-using LimiterPolicies = TypeList<LimiterId, UnknownPolicyBehavior::UseDefault,
+using LimiterPolicies = TypeList<LimiterId, UnknownPolicyBehavior::Error,
     MinModPolicy, McPolicy, SuperBeePolicy, VanLeerLimiterPolicy>;
-using TimeIntegratorPolicies = TypeList<TimeIntegratorId, UnknownPolicyBehavior::UseDefault,
+using TimeIntegratorPolicies = TypeList<TimeIntegratorId, UnknownPolicyBehavior::Error,
     EulerPolicy, Rk2Policy, Rk3Policy>;
 using EosPolicies = TypeList<EosId, UnknownPolicyBehavior::Error,
     IdealPolicy, HelmholtzPolicy, Tabular3DPolicy, Tabular4DPolicy>;
@@ -449,7 +449,6 @@ struct ParseResult
 {
     T value{};
     bool ok = false;
-    bool defaulted = false;
     std::string_view error{};
 };
 
@@ -492,18 +491,6 @@ struct PolicyParser<TypeList<Id, Behavior, Registrations...>>
             return false;
         }() || ...);
         if (matched) return result;
-        if constexpr (Behavior == UnknownPolicyBehavior::UseDefault) {
-            const bool found_default = ([&] {
-                if (PolicyRegistration<Registrations>::is_default) {
-                    result.value = PolicyRegistration<Registrations>::id;
-                    result.ok = true;
-                    result.defaulted = true;
-                    return true;
-                }
-                return false;
-            }() || ...);
-            if (found_default) return result;
-        }
         result.error = "unknown registered policy";
         return result;
     }
@@ -601,56 +588,56 @@ constexpr StaticRequirements static_requirements_for(typename List::id_type id) 
 
 inline ParseResult<ComputeBackend> parse_compute_backend(std::string_view value) noexcept
 {
-    if (ascii_iequals(value, "cpu")) return {ComputeBackend::Cpu, true, false, {}};
-    if (ascii_iequals(value, "cuda")) return {ComputeBackend::Cuda, true, false, {}};
-    if (ascii_iequals(value, "auto")) return {ComputeBackend::Auto, true, false, {}};
-    return {{}, false, false, "unknown compute backend"};
+    if (ascii_iequals(value, "cpu")) return {ComputeBackend::Cpu, true, {}};
+    if (ascii_iequals(value, "cuda")) return {ComputeBackend::Cuda, true, {}};
+    if (ascii_iequals(value, "auto")) return {ComputeBackend::Auto, true, {}};
+    return {{}, false, "unknown compute backend"};
 }
 
 inline ParseResult<LinearSolverRequest> parse_linear_solver_request(
     std::string_view value) noexcept
 {
     if (ascii_iequals(value, "auto"))
-        return {LinearSolverRequest::Auto, true, false, {}};
+        return {LinearSolverRequest::Auto, true, {}};
     const auto parsed = parse_registered_policy<LinearSolverPolicies>(value);
     if (!parsed.ok)
-        return {{}, false, false, "unknown linear solver"};
+        return {{}, false, "unknown linear solver"};
     switch (parsed.value) {
     case LinearSolverId::None:
-        return {LinearSolverRequest::None, true, false, {}};
+        return {LinearSolverRequest::None, true, {}};
     case LinearSolverId::DenseLu:
-        return {LinearSolverRequest::DenseLu, true, false, {}};
+        return {LinearSolverRequest::DenseLu, true, {}};
     case LinearSolverId::SparseKlu:
-        return {LinearSolverRequest::SparseKlu, true, false, {}};
+        return {LinearSolverRequest::SparseKlu, true, {}};
     case LinearSolverId::CuDss:
-        return {LinearSolverRequest::CuDss, true, false, {}};
+        return {LinearSolverRequest::CuDss, true, {}};
     }
-    return {{}, false, false, "unknown linear solver"};
+    return {{}, false, "unknown linear solver"};
 }
 
 inline ParseResult<GeometryId> parse_geometry(std::string_view value) noexcept
 {
-    if (ascii_iequals(value, "cartesian")) return {GeometryId::Cartesian, true, false, {}};
-    if (ascii_iequals(value, "cylindrical")) return {GeometryId::Cylindrical, true, false, {}};
-    if (ascii_iequals(value, "spherical")) return {GeometryId::Spherical, true, false, {}};
-    return {{}, false, false, "unknown geometry"};
+    if (ascii_iequals(value, "cartesian")) return {GeometryId::Cartesian, true, {}};
+    if (ascii_iequals(value, "cylindrical")) return {GeometryId::Cylindrical, true, {}};
+    if (ascii_iequals(value, "spherical")) return {GeometryId::Spherical, true, {}};
+    return {{}, false, "unknown geometry"};
 }
 
 inline ParseResult<GravityId> parse_gravity(std::string_view value) noexcept
 {
-    if (ascii_iequals(value, "none")) return {GravityId::None, true, false, {}};
-    if (ascii_iequals(value, "external")) return {GravityId::External, true, false, {}};
-    if (ascii_iequals(value, "self")) return {GravityId::Self, true, false, {}};
-    return {{}, false, false, "unknown gravity"};
+    if (ascii_iequals(value, "none")) return {GravityId::None, true, {}};
+    if (ascii_iequals(value, "external")) return {GravityId::External, true, {}};
+    if (ascii_iequals(value, "self")) return {GravityId::Self, true, {}};
+    return {{}, false, "unknown gravity"};
 }
 
 inline ParseResult<BoundaryFeature> parse_boundary(std::string_view value) noexcept
 {
-    if (ascii_iequals(value, "periodic")) return {BoundaryFeature::Periodic, true, false, {}};
-    if (ascii_iequals(value, "outflow")) return {BoundaryFeature::Outflow, true, false, {}};
+    if (ascii_iequals(value, "periodic")) return {BoundaryFeature::Periodic, true, {}};
+    if (ascii_iequals(value, "outflow")) return {BoundaryFeature::Outflow, true, {}};
     if (ascii_iequals(value, "reflect") || ascii_iequals(value, "reflecting"))
-        return {BoundaryFeature::Reflecting, true, false, {}};
-    return {BoundaryFeature::Unknown, false, false, "unknown boundary"};
+        return {BoundaryFeature::Reflecting, true, {}};
+    return {BoundaryFeature::Unknown, false, "unknown boundary"};
 }
 
 template <class TableRankResolver>
@@ -727,8 +714,6 @@ ParseResult<ExecutionPlanRequest> resolve_execution_plan(
         result.value.diffusion_integrator = diffusion.value;
     }
     result.ok = true;
-    result.defaulted = flux.defaulted || reconstruction.defaulted
-        || limiter.defaulted || time.defaulted;
     return result;
 }
 
@@ -844,7 +829,6 @@ inline ParseResult<ExecutionRequirements> resolve_execution_requirements(
         layout,
         boundaries};
     result.ok = true;
-    result.defaulted = reconstruction.defaulted;
     return result;
 }
 

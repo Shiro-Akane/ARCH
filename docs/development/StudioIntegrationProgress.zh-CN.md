@@ -68,3 +68,17 @@ ConfigParser 现在共用 Read 收集与 Load 拒绝路径：原文/字节位置
 UTF-8列号、CRLF、无末尾换行、空字符串及重复加载清理。已登记 config_input_records
 到现有 Host CTest；本次直接编译执行，尚未运行完整 CMake/Core/Host 迁移回归。
 解析器改动不等于完成 v3：必填/条件解析、受控构造、API 聚合序列化及客户端仍待迁移。
+
+### O7.0 显式未知方法拒绝
+
+方法注册表移除 UseDefault 分支与 defaulted 标记。未知 solver/reconstruct/limiter/
+time_integrator 在共同解析及运行工厂均失败；目录不再发布 core-fallback，配置 API
+删除 POLICY_FALLBACK 警告路径。合法别名、backend auto、linear-solver auto 保留。
+
+独立 build-cpu 由 cpu-release preset + BUILD_TESTING=ON 配置，CUDA=OFF；
+HighFive 使用已核对 clean v2.9.0 源码覆盖，KLU 来自系统库，不复用原项目缓存。
+受影响目标采用内存保护器（2 GiB 余量、swap 增长上限256 MiB、PSI保护）及
+28任务上限编译。两项 CTest：config_input_records / resolved_execution_plan PASS；
+API Configuration.cpp 对象定向编译 PASS。构建最低可用内存约20.9 GiB，swap无增长。
+完整 ARCH 链接及 configuration_api_contract 尚未执行，留待配置生命周期接线后运行；
+不将对象编译或两项测试称为 v3 全回归。原3B基线与 tag 未改，未启动 CUDA或模拟。

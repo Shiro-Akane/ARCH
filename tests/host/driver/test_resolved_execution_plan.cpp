@@ -2,7 +2,7 @@
  * @file test_resolved_execution_plan.cpp
  * @brief Verify configuration-to-policy resolution before backend creation.
  *
- * Aliases, defaults, capability requirements and factory routing must agree
+ * Aliases, explicit rejection, capability requirements and factory routing must agree
  * with the selected physical configuration and linear-solver backend.
  */
 #include "driver/dispatch/capability/BackendCapabilities.h"
@@ -210,27 +210,28 @@ void test_plain_cpp_contracts()
     expect_supported.template operator()<DiffusionIntegratorPolicies>();
 }
 
-void test_aliases_defaults_and_plan()
+void test_aliases_rejection_and_plan()
 {
     for (const auto& [name, id] : {
              std::pair{"VL", FluxId::Vl}, {"vanleer", FluxId::Vl},
              {"SW", FluxId::Sw}, {"StegerWarming", FluxId::Sw},
              {"Roe", FluxId::Roe}, {"HLL", FluxId::Hll}, {"hllc", FluxId::Hllc}}) {
         const auto result = parse_registered_policy<FluxPolicies>(name);
-        expect(result.ok && result.value == id && !result.defaulted, "flux alias");
+        expect(result.ok && result.value == id, "flux alias");
     }
-    auto fallback = parse_registered_policy<FluxPolicies>("unknown");
-    expect(fallback.ok && fallback.defaulted && fallback.value == FluxId::Hllc,
-           "unknown flux defaults HLLC");
+    for (const auto token : {"unknown", "", "HLLC_typo", "auto"}) {
+        expect(!parse_registered_policy<FluxPolicies>(token).ok, "unknown flux rejected");
+        expect(!parse_registered_policy<ReconstructionPolicies>(token).ok, "unknown reconstruction rejected");
+        expect(!parse_registered_policy<LimiterPolicies>(token).ok, "unknown limiter rejected");
+        expect(!parse_registered_policy<TimeIntegratorPolicies>(token).ok, "unknown time integrator rejected");
+    }
     expect(parse_registered_policy<ReconstructionPolicies>("donor_cell").value
                == ReconstructionId::Pcm,
            "donor_cell alias");
     expect(parse_registered_policy<ReconstructionPolicies>("PLM").value
                == ReconstructionId::Muscl,
            "PLM alias");
-    expect(parse_registered_policy<ReconstructionPolicies>("unknown").value
-               == ReconstructionId::Pcm,
-           "unknown reconstruction defaults PCM");
+
     expect(parse_registered_policy<LimiterPolicies>("MC").value == LimiterId::Mc,
            "MC alias");
     expect(parse_registered_policy<LimiterPolicies>("SuperBee").value
@@ -239,9 +240,7 @@ void test_aliases_defaults_and_plan()
     expect(parse_registered_policy<LimiterPolicies>("VanLeer").value
                == LimiterId::VanLeer,
            "VanLeer alias");
-    expect(parse_registered_policy<LimiterPolicies>("unknown").value
-               == LimiterId::MinMod,
-           "unknown limiter defaults MinMod");
+
     expect(parse_registered_policy<TimeIntegratorPolicies>("Euler").value
                == TimeIntegratorId::Euler,
            "Euler alias");
@@ -254,9 +253,7 @@ void test_aliases_defaults_and_plan()
     expect(parse_registered_policy<TimeIntegratorPolicies>("SSPRK3").value
                == TimeIntegratorId::Rk3,
            "SSPRK3 alias");
-    expect(parse_registered_policy<TimeIntegratorPolicies>("unknown").value
-               == TimeIntegratorId::Rk2,
-           "unknown time integrator defaults RK2");
+
     SimConfig factory_config{};
     factory_config.numerics.reconstruction = "pcm";
     factory_config.numerics.limiter = "minmod";
@@ -266,14 +263,24 @@ void test_aliases_defaults_and_plan()
     };
     factory_config.numerics.solver_name = "Roe";
     const auto factory_alias = resolve_execution_plan(factory_config, no_table);
-    expect(factory_alias.ok && !factory_alias.defaulted
+    expect(factory_alias.ok
                && factory_alias.value.flux == FluxId::Roe,
            "resolved factory plan consumes registration alias");
     factory_config.numerics.solver_name = "unknown";
-    const auto factory_default = resolve_execution_plan(factory_config, no_table);
-    expect(factory_default.ok && factory_default.defaulted
-               && factory_default.value.flux == FluxId::Hllc,
-           "resolved factory plan consumes registration default");
+    expect(!resolve_execution_plan(factory_config, no_table).ok,
+           "resolved factory plan rejects unknown flux before resources");
+    factory_config.numerics.solver_name = "Roe";
+    for (auto* field : {&factory_config.numerics.reconstruction,
+                        &factory_config.numerics.limiter,
+                        &factory_config.numerics.time_integrator}) {
+        const auto saved = *field;
+        *field = "unknown";
+        expect(!resolve_execution_plan(factory_config, no_table).ok,
+               "resolved factory plan rejects unknown hydro method");
+        *field = saved;
+    }
+    expect(parse_compute_backend("auto").ok, "explicit backend auto remains supported");
+    expect(parse_linear_solver_request("auto").ok, "explicit linear auto remains supported");
     expect(parse_registered_policy<EosPolicies>("Ideal").value == EosId::Ideal,
            "Ideal EOS alias");
     expect(parse_registered_policy<EosPolicies>("Helmholtz").value
@@ -908,7 +915,7 @@ int main()
 {
     test_plain_cpp_contracts();
     test_nse_auto_resolution();
-    test_aliases_defaults_and_plan();
+    test_aliases_rejection_and_plan();
     test_requirements();
     test_factory_routes_preserved();
     test_backend_aware_host_burn_handle();

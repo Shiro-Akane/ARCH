@@ -1,6 +1,7 @@
 # Studio 标准配置接口
 
-本文说明已实现的版本 2 行为。计划中的缺项拒绝、可空值和版本 3 迁移见
+本文说明配置扩展版本 2 的结构；当前集成分支已先收紧语法和未知方法拒绝。
+完整缺项拒绝、可空值和版本 3 迁移仍在进行，见
 [配置完整性计划](../../docs/development/ConfigurationContractPlan.zh-CN.md) 与
 [Core／Studio 联合交付计划](../../docs/development/StudioConfigurationHandoff.zh-CN.md)；
 实现前不把候选契约当作现有响应。
@@ -41,7 +42,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 `presentation.toggle` 仅出现在 max_steps、plt_dt、plt_dstep、chk_dt、chk_dstep，启用条件 value > 0，关闭写入值 -1，未编辑原文保留。enabledBy 给出三个常量扩散系数对应的通道开关键。options.choices 的 displayName 用于显示，value 用于写回，acceptedNames 用于识别输入别名；不按别名逐个生成选项。
 
-`options` 的 CPU/CUDA 标记仅描述注册的实现，不能用来认定当前 binary/device/依赖或组合已可运行。未知 solver 等选项原先会回退到默认策略，这一行为以 `unknownBehavior=core-fallback` 保留，不伪装成输入已经改写；严格报错选项使用 `error`。
+`options` 的 CPU/CUDA 标记仅描述注册的实现，不能用来认定当前 binary/device/依赖或组合已可运行。未知 solver、reconstruct、limiter、time_integrator 已统一拒绝，目录发布 unknownBehavior=error。合法别名和显式 backend/linear solver 的 auto 不受影响。
 
 `standardParametersComplete=true` 仅指上述标准键覆盖；`customParametersComplete=false`、`constraintsComplete=false`。结构体报告、缓存和未开放的字段不在目录中。自定义网络选项来自本次编译的注册表。
 
@@ -54,7 +55,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 成功结果提供全部 95 个标准参数：
 
 - `parsedValue`：类型转换后的配置输入。表达式返回求值后的数；这是 `typed-input-before-setup-and-policy-resolution`，不是完整 simulation 的最终有效值。
-- `rawValue`：文件显式输入，否则 null；重复键仍以最后一项为准。
+- `rawValue`：文件显式输入，否则 null；重复键拒绝，不选择第一项或最后一项；原始位置记录在共同解析器中，完整 API 位置封套随 v3 迁移。
 - `valueSource`：explicit 或 default。`sourceKey` 指明当前标准键，`defaultValue` 单独保留。
 - `applicable`：依据当前模块开关等判断。范围明确为 configured-modules，不表示追踪到了模型实际使用它。即使不适用，文件显式提供的标准数值也要满足类型要求。
 - `path` / `units`：路径用途及单位说明，不执行文件存在性检查。

@@ -55,7 +55,7 @@ struct Options<dispatch::TypeList<Id, Behavior, Registrations...>> {
         };
         (add.template operator()<Registrations>(), ...);
         return Json::object({{"caseSensitive", false}, {"choices", values},
-            {"unknownBehavior", Behavior == dispatch::UnknownPolicyBehavior::UseDefault ? "core-fallback" : "error"},
+            {"unknownBehavior", "error"},
             {"availability", "registration-only; build and runtime requirements not checked"}});
     }
 };
@@ -294,8 +294,6 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
         const auto config = RuntimeParams::LoadText(request.config_text);
         const auto check_option = [&](const std::string& key, const auto& parsed) {
             if (!parsed.ok) throw ConfigValueError(key, "INVALID_OPTION", "Unknown registered option.");
-            if (parsed.defaulted) result["diagnostics"].push(diagnostic("POLICY_FALLBACK", key,
-                "Unknown option; the existing simulation policy parser selects its default. Input has not been rewritten.", "warning"));
         };
         check_option("compute_backend", dispatch::parse_compute_backend(config.execution.compute_backend));
         check_option("gravity_type", dispatch::parse_gravity(config.physics.gravity.type));
