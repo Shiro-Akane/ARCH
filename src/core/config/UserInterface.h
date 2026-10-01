@@ -59,7 +59,7 @@
         {                                                                                                                                 \
             ProxyRegistererClass()                                                                                                        \
             {                                                                                                                             \
-                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<TypedProblemGenerator<CLASS_TYPE>>(); }, {__FILE__, ARCH_CASE_SOURCE_SHA256, true});            \
+                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<TypedProblemGenerator<CLASS_TYPE>>(); }, {__FILE__, ARCH_CASE_SOURCE_SHA256, true, &arch::config::DescribeRegisteredCase<CLASS_TYPE>});            \
             }                                                                                                                             \
         };                                                                                                                                \
         static ProxyRegistererClass global_proxy_class_instance;                                                                          \

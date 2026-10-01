@@ -93,6 +93,10 @@ target_link_libraries(arch_input_resolution PRIVATE arch_build_contract)
 add_test(NAME input_resolution COMMAND arch_input_resolution
     "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
 
+add_executable(arch_case_configuration tests/host/core/test_case_configuration.cpp)
+target_link_libraries(arch_case_configuration PRIVATE arch_build_contract)
+add_test(NAME case_configuration COMMAND arch_case_configuration)
+
 # Numerical leaves and independent reference authorities.
 foreach(contract IN ITEMS core/physical_constants amr/refinement_indicator_math grid/curvilinear_metrics)
     get_filename_component(contract_directory "${contract}" DIRECTORY)

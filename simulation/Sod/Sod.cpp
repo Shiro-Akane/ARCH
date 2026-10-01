@@ -25,6 +25,23 @@ class SodProblem
     int gas_id_ = -1;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        // Sod registers its own material and does not consume network floors.
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"x_pos", "float", "cm"}, {"rho_left", "float", "g/cm^3"},
+            {"p_left", "float", "erg/cm^3"}, {"u_left", "float", "cm/s"},
+            {"rho_right", "float", "g/cm^3"}, {"p_right", "float", "erg/cm^3"},
+            {"u_right", "float", "cm/s"}};
+        return result;
+    }
+
     std::vector<arch::preview::AxisPosition> PreviewPositions(const SimConfig &config) const
     {
         return {{"Sod.x_pos", "x_pos", "x1", interface_x_,

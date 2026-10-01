@@ -20,7 +20,7 @@ struct ReviewedCase { const char* source; const char* sha256; std::map<std::stri
 // Audited against built-in Setup/Init expressions, NOT inferred from scalar
 // observations. Re-review after source edits; never auto-refresh these hashes.
 const std::map<std::string, ReviewedCase> reviewed_cases{
-    {"Sod", {"simulation/Sod/Sod.cpp", "b5b74d29684f858a1bf11283faaef211125e009370a89032ba75c5a545248c5b", {
+    {"Sod", {"simulation/Sod/Sod.cpp", "f079c8272918dd02b39c3f3ad890abdb453523012a98edf94938fdf131337238", {
         {"x_pos", "cm"},
         {"rho_left", "g/cm^3"},
         {"rho_right", "g/cm^3"},

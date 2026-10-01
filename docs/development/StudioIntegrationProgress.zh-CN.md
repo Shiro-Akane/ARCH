@@ -117,3 +117,20 @@ ConfigParser 提供共同 Boolean/数值可表示性检查；SimConfig::Get 无�
 零值/符号整数/大小写布尔及 programmatic 非有限/截断拒绝，并保留旧歧义/来源回归。
 使用相同CPU构建与内存保护器，swap无增长；日志留在studio/.local/integration。
 完整二进制/CLI/Host回归仍待生命周期和v3接口接线后执行；此项不代表整体v3完成。
+
+### O7.0 注册模型的静态声明入口
+
+ProblemRegistry 的 registration 增加静态 configuration_declaration callback；
+DescribeConfiguration 不调用 creator，也不构造模型或执行 Setup。typed注册宏只转发
+模型自己的 DescribeConfiguration；未实现该方法的模型保持 complete=false。
+Sod 首先声明现有七个可编辑 primitive 输入为 required，并声明自己的材料/组分消费。
+CaseInputResolution 汇总缺项/坏类型/重复源位置，不依赖通过默认值执行 Setup 来探测。
+
+case_configuration CTest PASS（工厂/构造函数设计为一旦调用就抛错）；真实 Sod 对象
+编译PASS。Sod改动经diff核对仅插入静态声明，移除该块后与父提交文件逐字节一致，
+Setup/Init/单位表达式未改。按此审阅更新该模型的unit evidence与候选schema源码SHA，
+没有批量自动刷新其他模型的单位审计身份。
+
+当前仅Sod已声明，其余模型未覆盖；声明callback尚未接进正式Load/API入口。
+case范围/派生值/未知键与species归属检查、完整受控构造、v3序列化和Host仍未完成。
+不以此测试证明可运行性，不建立阶段完成tag；其余注册模型继续沿同一接口迁移。
