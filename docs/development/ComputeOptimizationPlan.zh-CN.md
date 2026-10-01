@@ -68,7 +68,8 @@ O7.0 可由同一位合作者负责 Core 配置、API、Studio／Host 接入及�
 执行边界见[联合交付计划](StudioConfigurationHandoff.zh-CN.md)。维护者冻结必填／默认规则、
 G 迁移的科学输入及误差预算，并 review Core 改动；双方不并行改写同一配置逻辑。
 先取得可复验的 Studio checkpoint，再以配置扩展版本 3 同步可空值、来源和完整示例。
-Linux／WSL 启动器与构建可并行推进；Run／Restart 在新契约接入后验收，
+按联合入口先收尾 Studio 3B，再完成 Linux／WSL 3C；启动／构建可与 O7.0 并行，Run／Restart 待新契约。
+本轮明确排除原生 Windows 适配、启动器／打包及 Windows CI，不作为任何阶段前置。
 全模型初始视图与 plt 各有独立出口。此次委托进一步包括 O7.1–O7.5 实现，
 按[Jeans／RZ 与第二平台执行细则](JeansRZPlatformHandoff.zh-CN.md)分阶段 review；
 O7.4 环体边界路线、独立参考及科学预算由维护者确认。O8／O10 不随本次分配实施。
