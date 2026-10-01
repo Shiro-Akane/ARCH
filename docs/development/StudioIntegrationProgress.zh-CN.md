@@ -785,3 +785,18 @@ cpu/roe/floors/引力rtol/atol均保留已追溯旧值，无新增G覆盖或物�
 温度1e7、速度0和单气体fraction=[1]一致，输入hash匹配、无文件输出。
 此检查不执行Poisson或演化，不代表自引力科学验收。
 diff-check PASS；无重编译/CUDA/push/tag/raw上传。其余输入与整体目标继续。
+
+### O7.0 Cellular/SNIa 正式输入迁移
+
+Cellular.par显式补原左边界outflow，NSE true/4.5e9/1e6及CPU、
+EOS、ODE、floor、关闭diffusion等登记值；修正“未填使用默认”的旧说明。
+SNIa二维Cartesian保留原热扩散，显式关闭原未开的species/viscous通道，
+补原diff_cfl、ODE、Coulomb、floor、引力容差、enucDtFactor=1e30；
+center_z=0.5来自Setup成员原值。未改各文件已有物理数值/终点/步数。
+
+正式输入矩阵新增上述两项，配置v3 19/19 PASS（1.911秒）。
+真实CPU inspect-case：Cellular 3点、SNIa 9点均成功，输入hash匹配、
+无文件/时间步。为临时cwd显式映射本地EOS路径，未改正式相对路径。
+此证据只覆盖声明和初始化，不替代四模块演化或独立科学参考。
+其他SNIa几何/AMR变体、全模型检查和完整后续目标仍待迁移/验证。
+未重编译、CUDA、push/tag或上传raw。
