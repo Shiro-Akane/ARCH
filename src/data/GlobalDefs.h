@@ -398,6 +398,16 @@ private:
     friend class RuntimeParams;
     std::shared_ptr<const arch::config::ConfigurationInput> loaded_input_;
     std::shared_ptr<const SimConfig> loaded_values_;
+    struct ResolvedCaseValue {
+        std::optional<arch::preview::ParameterValue> value;
+        std::optional<std::string> raw;
+        bool explicit_input = false;
+        bool operator==(const ResolvedCaseValue&) const = default;
+    };
+    // Populated only by the checked loader. Legacy lexical/numeric maps below
+    // remain adapters for consumers awaiting migration, not Get authority.
+    std::map<std::string, ResolvedCaseValue> resolved_case_values_;
+
 
 public:
     // Immutable evidence of the load boundary, not certification of subsequent
@@ -417,6 +427,7 @@ public:
         else if (physics != expected.physics) changed = "physics";
         else if (amr != expected.amr) changed = "amr";
         else if (io != expected.io) changed = "output";
+        else if (resolved_case_values_ != expected.resolved_case_values_) changed = "case";
         else if (custom_params != expected.custom_params
                  || custom_string_params != expected.custom_string_params) changed = "case";
         if (changed)
@@ -461,6 +472,36 @@ public:
         for (const auto retired : arch::config::retired_input_keys)
             if (key == retired)
                 throw ConfigValueError(key, "RETIRED_PARAMETER", "Retired input cannot be read as a custom value.");
+        if (loaded_input_) {
+            const auto found = resolved_case_values_.find(key);
+            if (found == resolved_case_values_.end())
+                throw ConfigValueError(key, "UNDECLARED_PARAMETER_ACCESS",
+                    "Model read has no registered case, composition or auxiliary declaration.");
+            if (!found->second.value)
+                throw ConfigValueError(key, "MISSING_PARAMETER",
+                    "Model consumed an unresolved input; a Get fallback is not an approved value.");
+            const auto value = std::visit([&](const auto& resolved) -> T {
+                using V = std::decay_t<decltype(resolved)>;
+                if constexpr (std::is_same_v<T, std::string> && std::is_same_v<V, std::string>)
+                    return resolved;
+                else if constexpr (std::is_same_v<T, bool> && std::is_same_v<V, bool>)
+                    return resolved;
+                else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>
+                                   && std::is_arithmetic_v<V> && !std::is_same_v<V, bool>) {
+                    const double number = static_cast<double>(resolved);
+                    const auto& raw = found->second.raw;
+                    ConfigParser::ValidateNumeric<T>(key, number, raw ? &*raw : nullptr);
+                    return static_cast<T>(resolved);
+                } else
+                    throw ConfigValueError(key, "PARAMETER_TYPE_MISMATCH",
+                        "Model read type conflicts with the declared resolved value.");
+            }, *found->second.value);
+            if (parameter_reads)
+                parameter_reads->observe(key, default_val, value, found->second.explicit_input);
+            return value;
+        }
+        // Unloaded narrow test/value adapters retain strict lexical access.
+        // They cannot enter SetupChecked or produce a PreparedConfiguration.
         // Return the preserved string value when requested explicitly.
         if constexpr (std::is_same_v<T, std::string>)
         {

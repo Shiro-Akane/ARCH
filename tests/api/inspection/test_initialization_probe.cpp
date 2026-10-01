@@ -184,8 +184,9 @@ int main(int argc, char** argv) {
                 "valid undeclared Setup mutation escaped or broke observer restoration");
     }
     for (double n : {1.25, 1e30, std::numeric_limits<double>::infinity()}) {
-        config.custom_params["mode"] = n; caught = false;
-        try { (void)config.Get<int>("mode", 0); } catch (const std::invalid_argument&) { caught = true; }
+        SimConfig numeric_view; // Narrow lexical conversion check, never preparation.
+        numeric_view.custom_params["mode"] = n; caught = false;
+        try { (void)numeric_view.Get<int>("mode", 0); } catch (const std::invalid_argument&) { caught = true; }
         require(caught, "refuse fractional/out-of-range/nonfinite integer before conversion");
     }
     reads->observe("x_pos", 0.5, 0.5, false);

@@ -130,3 +130,18 @@ analysis. The current production cases have not gained new implicit values.
 This implementation covers standard-input provisions. Arbitrary Setup field
 assignment, custom-parameter provisions and material registration provenance are
 not made valid by this mechanism; their remaining migration is tracked separately.
+
+### Model reads after loading
+
+For a successfully loaded configuration, SimConfig.Get reads the checked case,
+composition or auxiliary records. A missing declaration raises
+UNDECLARED_PARAMETER_ACCESS; consuming a declared but unresolved value raises
+MISSING_PARAMETER. A conflicting read type raises PARAMETER_TYPE_MISMATCH.
+The caller's fallback argument is not an approved default and cannot satisfy
+these errors. Declared integer conversion still uses the preserved input token.
+
+Mutable custom numeric/string maps remain transitional adapters for existing
+network/inspection consumers. Editing those maps cannot override Get's resolved
+value or lexical identity, and preparation rejects adapter mutations. Narrow
+unloaded lexical tests may still use the adapters, but cannot enter SetupChecked
+or create a PreparedConfiguration. Removal of the remaining adapters is pending.

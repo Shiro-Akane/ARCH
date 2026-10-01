@@ -206,8 +206,9 @@ int main(int argc, char** argv) {
         }
         require(config.Get<double>("x_pos", -1.0) == 0.5,
                 "case parameter lost its authoritative lexical value");
-        require(config.Get<std::string>("log_dir", "missing") == "missing",
-                "absent auxiliary input was synthesized into custom storage");
+        require(config.Get<std::string>("log_dir", "missing") == output.string()
+                && !config.custom_string_params.contains("log_dir"),
+                "derived auxiliary value did not use its resolved source");
         auto injected = config;
         injected.custom_params["cfl"] = 0.99;
         injected.custom_string_params["network_name"] = "untrusted";
@@ -216,6 +217,29 @@ int main(int argc, char** argv) {
             try { (void)injected.Get<std::string>(key, "fallback"); }
             catch (const ConfigValueError&) { access_rejected = true; }
             require(access_rejected, "standard/retired key bypassed typed ownership through Get");
+        }
+
+        auto case_edit = config;
+        case_edit.custom_params["x_pos"] = 0.75;
+        case_edit.custom_string_params["x_pos"] = "not-a-number";
+        require(case_edit.Get<double>("x_pos", -1) == 0.5,
+                "mutable adapter replaced the declared case value");
+        for (const bool observed : {false, true}) {
+            auto checked = config;
+            if (observed) checked.parameter_reads =
+                std::make_shared<arch::preview::ParameterReadTrace>(std::set<std::string>{}, true);
+            bool undeclared = false;
+            try { (void)checked.Get<double>("not_declared", 123.0); }
+            catch (const ConfigValueError& error) {
+                undeclared = error.code == "UNDECLARED_PARAMETER_ACCESS";
+            }
+            require(undeclared, "undeclared read accepted a caller fallback");
+            bool wrong_type = false;
+            try { (void)checked.Get<std::string>("x_pos", "fallback"); }
+            catch (const ConfigValueError& error) {
+                wrong_type = error.code == "PARAMETER_TYPE_MISMATCH";
+            }
+            require(wrong_type, "case reader changed the declared type");
         }
 
         bool rejected = false;
@@ -241,6 +265,19 @@ int main(int argc, char** argv) {
             }, {"provision-test.cpp", "test-source-identity", true,
                 [declaration](const StandardInputResolution&) { return declaration; }});
         };
+        auto conditional_declaration = base_declaration;
+        conditional_declaration.parameters.push_back({"inactive_case_value", "float", "",
+            "simulation", {false, {}}});
+        registry.Register("inactive-case", []() -> std::unique_ptr<ProblemGenerator> {
+            throw std::runtime_error("conditional analysis constructed a model");
+        }, {"test.cpp", "source", true,
+            [conditional_declaration](const StandardInputResolution&) { return conditional_declaration; }});
+        const auto conditional = RuntimeParams::LoadText(text, "inactive-case",
+            ConfigurationPurpose::Evolution);
+        bool missing_read = false;
+        try { (void)conditional.Get<double>("inactive_case_value", 123.0); }
+        catch (const ConfigValueError& error) { missing_read = error.code == "MISSING_PARAMETER"; }
+        require(missing_read, "inactive-but-consumed case value accepted caller fallback");
         register_values("provided", {
             {"cfl", 0.4, InputValueSource::CaseDefined, {"test:fixed-control", {}}},
             {"dt_max", 0.1, InputValueSource::Derived, {"test:half-endpoint", {"tmax"}}}});

@@ -63,6 +63,7 @@ public:
         input.RequireDeclaredInputs();
         input.raw_tokens = parser.GetAllParams();
         auto config = Resolve(parser, input.standard);
+        CaptureResolvedCaseValues(config, input);
         config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
         config.loaded_values_ = std::make_shared<const SimConfig>(config);
         return config;
@@ -79,6 +80,7 @@ public:
         input.RequireDeclaredInputs();
         input.raw_tokens = parser.GetAllParams();
         auto config = Resolve(parser, input.standard);
+        CaptureResolvedCaseValues(config, input);
         config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
         config.loaded_values_ = std::make_shared<const SimConfig>(config);
         if (reads) {
@@ -89,6 +91,26 @@ public:
     }
 
 private:
+    static void CaptureResolvedCaseValues(SimConfig& config,
+                                          const arch::config::ConfigurationInput& input) {
+        const auto capture = [&](const auto& records) {
+            for (const auto& [key, record] : records) {
+                SimConfig::ResolvedCaseValue value;
+                if (record.resolved)
+                    value.value = std::visit([](const auto& v) {
+                        return arch::preview::parameter_value(v);
+                    }, *record.resolved);
+                if (const auto raw = input.raw_tokens.find(key); raw != input.raw_tokens.end())
+                    value.raw = raw->second;
+                value.explicit_input = record.state == arch::config::InputState::Present;
+                config.resolved_case_values_.emplace(key, std::move(value));
+            }
+        };
+        capture(input.model.parameters);
+        if (input.model.composition) capture(input.model.composition->parameters);
+        capture(input.auxiliary);
+    }
+
     static SimConfig Resolve(const ConfigParser &parser,
                              const arch::config::StandardInputResolution& inputs)
     {

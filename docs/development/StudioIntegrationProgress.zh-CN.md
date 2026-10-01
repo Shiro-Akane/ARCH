@@ -585,3 +585,24 @@ mainline_authority、initialization_probe、preview_cellular_2d 六项CTest PASS
 （18.39秒），diff-check PASS。没有演化、CUDA、raw上传、push或完成tag。
 自定义case输入提供值、材料来源及剩余只读/入口/样例迁移仍待完成；
 整体配置/Studio/Jeans/RZ目标继续。
+
+### O7.0 模型Get消费已解析记录
+
+检查发现加载来源记录尚未决定实际Get结果，模型仍读取可变custom数值/字符串
+并接受调用处fallback。现已将正式加载配置的Get接到loader私有记录：
+模型/组分/辅助输入的resolved值和加载token；未声明读取拒绝，
+声明但无resolved值拒绝，类型不一致拒绝。调用处fallback不再提供物理初值。
+derived log_dir从其resolved来源读取，不写入原始custom map。
+
+回归覆盖普通/observed读取同样严格，条件不适用却被消费时不得使用fallback，
+可变数值和token被改写后Get仍返回原解析值。Setup前快照仍拒绝这些适配表改写。
+初始化探针中严格整数测试继续使用单独的狭义词法视图，避免测试仅因
+未声明读取而通过；该视图不能进入SetupChecked/PreparedConfiguration。
+API文档说明metadata中的caller fallback不是批准默认。
+
+最终CPU ARCH及受影响目标构建 PASS，28并发最低可用约14.0GiB、无swap增长；
+configuration_input、configuration_entry_contract、configuration_v3_contract、
+mainline_authority、initialization_probe、preview_cellular_2d六项CTest PASS
+（18.36秒），diff-check PASS。未执行演化/CUDA、raw上传、push或完成tag。
+网络/inspection直接遍历custom adapter的剩余路径、材料来源及其余配置迁移
+仍待完成；当前不宣称已删除所有重复适配存储。整体目标继续。
