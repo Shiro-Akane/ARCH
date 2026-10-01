@@ -312,6 +312,21 @@ class ConfigurationV3(unittest.TestCase):
             # Same frozen initializer formula, independent of external fractions.
             self.assertEqual(sample["massFractions"], [1-pulse, pulse] + [0]*17)
 
+    def test_snia_geometry_examples_keep_complete_explicit_inputs(self):
+        paths = sorted((ROOT / "simulation/SNIaCoupled").glob("*.par"))
+        self.assertEqual(len(paths), 6, "update the explicit coverage when examples change")
+        for path in paths:
+            with self.subTest(path=path.name):
+                data = self.inspect(path.read_text(), case="SNIaCoupled")
+                values = records(data)
+                self.assertEqual(data["completeness"]["state"], "complete")
+                for key in ["compute_backend", "eos_coulomb_mult", "ode_rtol",
+                            "ode_atol", "gravity_rtol", "gravity_atol", "center_z"]:
+                    self.assertEqual(values[key]["valueSource"], "input")
+                self.assertTrue(values["use_thermal_diff"]["resolvedValue"])
+                self.assertFalse(values["use_species_diff"]["resolvedValue"])
+                self.assertFalse(values["use_viscous_diff"]["resolvedValue"])
+
     def test_bounded_error_keeps_identity(self):
         text = BASE + "".join(f"unknown_key_{i}=0\n" for i in range(30000))
         self.assertLess(len(text.encode()), 1024 * 1024)

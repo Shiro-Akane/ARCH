@@ -800,3 +800,17 @@ center_z=0.5来自Setup成员原值。未改各文件已有物理数值/终点/�
 此证据只覆盖声明和初始化，不替代四模块演化或独立科学参考。
 其他SNIa几何/AMR变体、全模型检查和完整后续目标仍待迁移/验证。
 未重编译、CUDA、push/tag或上传raw。
+
+### O7.0 SNIa 几何/AMR 变体显式输入迁移
+
+五个AMR变体仅补静态检查确认缺失且前次已核实的旧控制值；
+保留各自geometry、domain、blocks、refinement、gravity_rtol、输入场与终点。
+二维center_z补原Setup 0.5，三维已有center_z不覆盖。
+未更改物理函数、独立参考、预算或AMR参数。
+
+配置v3新增SNIa六份正式输入矩阵及显式来源/热扩散通道检查，
+全20/20 PASS（1.950秒）。五个真实CPU inspect-case均ok：
+二维Cartesian/polar各9点，三维Cartesian/cylindrical/spherical各27点，
+请求hash一致、临时cwd无文件、timeStepping未执行。
+未运行实际AMR层次、Poisson、演化或CUDA，不能据此宣称几何科学验收。
+diff-check PASS；未编译/push/tag/raw上传。剩余输入/API和整体目标继续。
