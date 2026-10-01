@@ -83,7 +83,7 @@ public:
         if(hydrostatic_radial_ && (!radial_ || !isolated_ || lower_[0]!=0. ||
             amplitude_!=0. || velocity_!=0. || temperature_amplitude_!=0.))
             throw std::invalid_argument("Radial hydrostatic reference requires an origin-centered uniform resting gas");
-        config.physics.burn.network_name=config.Get<std::string>("network_name",config.physics.burn.use_burn?"aprox13":"none");
+        // network_name is the already resolved standard input; Setup does not override it.
         ProblemHelper::SetupNetworkAndFractions(config,species,fractions_);
         if(species.count()==0){const double cv=config.Get<double>("gas_cv",1.2471693927e8);
             if(!std::isfinite(cv)||cv<=0.)throw std::invalid_argument("GravityBox gas_cv must be finite and positive");

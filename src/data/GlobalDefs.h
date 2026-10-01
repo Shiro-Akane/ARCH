@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "core/ArchPortability.h"
+#include "core/config/ParameterKeys.h"
 #include "data/StateDiagnostics.h"
 #include "interface/PreviewMetadata.h"
 #include "physics/constant/PhysicalConstants.h"
@@ -404,6 +405,12 @@ struct SimConfig
     template <typename T>
     T Get(const std::string &key, T default_val) const
     {
+        if (arch::config::IsStandardInputKey(key))
+            throw ConfigValueError(key, "STANDARD_PARAMETER_ACCESS",
+                "Standard inputs have one typed configuration owner; do not read them through Get.");
+        for (const auto retired : arch::config::retired_input_keys)
+            if (key == retired)
+                throw ConfigValueError(key, "RETIRED_PARAMETER", "Retired input cannot be read as a custom value.");
         // Return the preserved string value when requested explicitly.
         if constexpr (std::is_same_v<T, std::string>)
         {

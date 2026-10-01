@@ -95,6 +95,25 @@ int main(int argc, char** argv) {
         require(config.io.out_dir == output.string() && config.io.tmax == 0.2,
                 "declared loading changed valid controls");
         require(!std::filesystem::exists(output), "loading created scientific output");
+        for (const auto& definition : standard_parameters) {
+            require(!config.custom_params.contains(std::string(definition.key))
+                    && !config.custom_string_params.contains(std::string(definition.key)),
+                    "standard input retained a mutable custom-map copy");
+        }
+        require(config.Get<double>("x_pos", -1.0) == 0.5,
+                "case parameter lost its authoritative lexical value");
+        require(config.Get<std::string>("log_dir", "missing") == "missing",
+                "absent auxiliary input was synthesized into custom storage");
+        auto injected = config;
+        injected.custom_params["cfl"] = 0.99;
+        injected.custom_string_params["network_name"] = "untrusted";
+        for (const auto key : {"cfl", "network_name", "timeintegrator"}) {
+            bool access_rejected = false;
+            try { (void)injected.Get<std::string>(key, "fallback"); }
+            catch (const ConfigValueError&) { access_rejected = true; }
+            require(access_rejected, "standard/retired key bypassed typed ownership through Get");
+        }
+
         bool rejected = false;
         try { (void)RuntimeParams::LoadText(without(text, "rho_left"), "declared-test",
                                            ConfigurationPurpose::Evolution); }

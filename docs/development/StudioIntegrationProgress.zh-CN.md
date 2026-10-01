@@ -344,3 +344,25 @@ git diff --check PASS。API源码已无旧无case loader调用。
 本次只关闭真实资源API的默认构造绕路，不能宣告受控只读配置完成。
 后续继续完成共同配置构造/Setup来源、partial metadata、输入迁移及全目标，
 没有推进CUDA、Jeans/RZ或科学benchmark，没有push或新增完成tag。
+
+### O7.0 标准参数单一读取所有权
+
+标准目录提取到同一 StandardParameterEntries.inc；schema/解析定义与轻量键分类
+共同展开，95项原定义逐项保持不变，不建立第二套前端或Core键表。
+RuntimeParams不再向custom数值/字符串map复制标准输入；原文仍由parser/trace保留。
+SimConfig::Get拒绝标准及历史退役键，即使C++调用方手动注入同名custom项也不能绕过。
+GaussianPulse/GravityBox的Setup移除network_name二次Get，沿用已解析的标准字段；
+没有改写物理计算或给network追加默认。两份模型来源SHA证据随源码更新。
+
+扫描src/simulation/include未发现剩余以标准键字面量调用Get的生产读取。
+新增configuration_input回归核对全部标准键无custom副本、x_pos正常读取、
+缺失辅助log_dir不伪造显式输入，以及手动注入cfl/network_name/退役键仍拒绝。
+CPU ARCH及受影响测试构建PASS，28并发内存保护最低可用约14.5GiB，无swap增长；
+6项相关CTest PASS：configuration_entry_contract、configuration_v3_contract、
+preview_parameter_reads、input_resolution、case_configuration、configuration_input。
+实际API组分别包含6/16项Python检查，不与CTest条目重复加总。
+git diff --check PASS。没有时间演化、CUDA、科学输出上传、push或完成tag。
+
+这只消除标准参数的第二份可变读取来源；SimConfig仍可变、RuntimeParams仍有
+transitional fallback、Setup后来源/冻结和动态partial metadata尚未完成。
+不以本次窄回归宣称完整O7.0或全Core测试完成。后续继续既定联合交付目标。

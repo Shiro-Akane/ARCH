@@ -39,7 +39,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"noiseAmplitude", "1"},
         {"shock_dir", "1"},
     }}},
-    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "e15ea53dc5827bea7303dfb525a0c84a54cbb97d0790d5e04f2a1dd1d3431bea", {
+    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "f65735ace4bfc7b7e8e4ce69602b1527099c5e50147b5bf803dce592636f324d", {
         {"rho0", "g/cm^3"},
         {"p0", "erg/cm^3"},
         {"amp", "1"},
@@ -76,7 +76,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
-    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "136961ab3ac27bb95b7bdae8e8b89347ee645c3bed2cb6a3ccb92a7b479f78e5", {
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "fd990ae21c9349b4e4d78d1de33dfdd94160d01cdf823af375be0c7e5b43cb59", {
         {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},

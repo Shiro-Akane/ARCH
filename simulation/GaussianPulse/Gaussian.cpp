@@ -90,7 +90,7 @@ public:
                 "Gaussian requires positive rho0, p0, width and pressure_amplitude > -1");
         // A passive pulse has no reaction network by default. Explicit nuclear
         // network selections (e.g. with Helmholtz) use the common factory.
-        config.physics.burn.network_name = config.Get<std::string>("network_name", "none");
+        // network_name is the already resolved standard input; Setup does not override it.
         ProblemHelper::SetupNetworkAndFractions(config, specs, default_X);
 
         if (specs.count() >= 2) {

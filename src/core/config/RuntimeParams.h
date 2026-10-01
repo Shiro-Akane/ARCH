@@ -443,6 +443,9 @@ private:
         // Preserve untyped parameters for problem-specific setup.
         for (const auto &[key, val_str] : parser.GetAllParams())
         {
+            // Standard values live only in their typed Core sections. Retain
+            // raw input in the parser/trace, never as a second mutable authority.
+            if (arch::config::IsStandardInputKey(key)) continue;
             // Preserve lexical identity for every case read, also outside Preview.
             cfg.custom_string_params[key] = val_str;
             try
