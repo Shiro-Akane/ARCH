@@ -76,3 +76,11 @@ hotspot_mode = single
 xhe4 = 0.8
 xc12 = 0.2
 xo16 = 0.0
+
+# Explicit migration of previous registered controls; physical inputs unchanged.
+compute_backend = cpu
+eos_coulomb_mult = 1.0
+hll_wave_speed = roe
+min_eint = 1e-10
+smallt = 1e5
+smallx = 1e-20

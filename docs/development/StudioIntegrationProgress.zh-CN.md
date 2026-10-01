@@ -700,3 +700,19 @@ ConfigurationInput 的 UNKNOWN_CASE 及已有 v3 覆盖后迁移为 configuratio
 其他成功/失败 Preview 均核对不创建文件或目录。无 Core 实现变更、无需重编译。
 尚未完成其他 canonical inputs/API tests、完整回归及后续整体目标；
 没有运行 CUDA、上传 raw、push 或创建完成 tag。
+
+### O7.0 持久 Preview Session 显式输入回归
+
+CooperativeHotspots 正式输入补齐六个旧有效控制值；逐项核对集成基线
+8fc0dd25 的 StandardParameters/GlobalDefs，保留 cpu、Coulomb=1、
+roe、min_eint=1e-10、smallt=1e5、smallx=1e-20，不改热点定义或收敛预算。
+会话测试读取完整 Sod/Cellular/Hotspots 输入，编辑替换唯一赋值。
+取消测试若请求在 Setup 前失败立即给出失败响应，避免等待不存在的事件。
+
+迁移 helper 首次误写 literal backslash-n 导致配置缺项；修正换行后原8项PASS。
+新增真实 warm-session 配置失败/恢复：缺失、重复及非法 x_pos 均配置阶段
+退出3，无旧 field/metadata/binding回放，输入hash正确，资源清理后下一有效请求
+与首个成功响应一致。最终9/9 PASS，5.444秒，diff-check PASS。
+保留原 cold/warm 完整结果比较、EOS同size/mtime内容变化、热点重新Setup、
+真实初始AMR、transport边界、request-limit和process termination/restart检查。
+无时间演化、CUDA、Core重编译、raw上传、push/tag；完整其他模型回归仍待迁移。
