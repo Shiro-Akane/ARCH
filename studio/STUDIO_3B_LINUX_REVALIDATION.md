@@ -1,6 +1,6 @@
 # Studio 3B independent Linux revalidation
 
-Status: automatic checks passed; Linux native file-dialog UAT pending.
+Status: automatic checks and the scoped Linux open / Save As / reopen UAT passed.
 This is an evidence update, not a new 3B release or a completed Linux launcher.
 
 ## Exact inputs
@@ -41,10 +41,33 @@ and isolated ignored configuration studio/.local/integration-3b/sod.par.
 Its fixed Build Profile still reports dependenciesComplete=false; this is
 not complete dependency-based freshness evidence.
 
-Computer Use application access to the WSLg window timed out. Open-file,
-Save As and Reopen are therefore NOT signed off in this Linux run.
-The permission question remains pending; no substitute automated assertion
-is presented as native-dialog UAT.
+The initial application-access timeout was followed by a WSLg display failure.
+Weston logged shared-memory EIO and use_gfxredir=0; the window was transparent
+and carried WARN:COPY MODE. With explicit user authorization, Weston was
+restarted; use_gfxredir=1 and a visible Studio window returned. No project
+source or permanent system setting was changed.
+
+Computer Use then exercised the actual Linux GUI:
+- Connect Local Host; enter Real Config; open the native GTK file picker.
+- Load the isolated project configuration through Open Project Config.
+- Save Working Copy As using the project-relative form.
+- Confirm the new current path and disk in-sync state.
+- Use native Open File to reopen sod_copy.par; observe its name, successful
+  input inspection and 95 current standard controls. Browser import correctly
+  loses trusted Host-path association.
+
+The saved file is studio/.local/integration-3b/sod_copy.par under the managed
+project. It is 951 bytes and byte-identical to sod.par, SHA-256
+cd54c4000a8bd3917f5b3fb658c2614f91bddc7ebd84e7e076f6c3bb79489284.
+No shell command created the copy; the read-only filesystem check verified
+the UI write. Save As used the existing browser-mode form, not a claimed
+3C native Save dialog. Existing automatic preview behavior was observed;
+no simulation or formal scientific output was requested.
+
+Non-blocking UX observation: the Save As form opens near the top of the
+scrollable parameter pane while its trigger is at the bottom; it requires
+scrolling back to see. Several action labels also have weak contrast in the
+Linux theme. These observations are not recorded as repaired.
 
 Local process handles and logs are in studio/.local/integration/uat-processes.json.
 PIDs are observations, not durable process identities; verify command/cwd
@@ -65,5 +88,5 @@ The checked-in configuration API still documents implemented extension v2.
 The new O7.0 plan requires v3 nullable parsed values, explicit presence,
 conditional requirements and allowed-default provenance. Passing the checks
 above does not certify v3, G retirement, Run/Restart, JENS or RZ.
-Complete the Linux UAT, then deliver the candidate contract and shared
+The scoped Linux UAT is complete. Next deliver the candidate contract and shared
 fixtures before changing implementations, following the joint handoff.

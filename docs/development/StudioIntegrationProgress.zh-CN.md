@@ -19,7 +19,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
-| 1 3B 源码接收与复验 | 封箱源码已引入；Linux 文件选择/保存待复验 | npm ci、177 tests、lint/typecheck/build PASS；Linux 原生文件对话框 UAT 待授权 | 不适用 |
+| 1 3B 源码接收与复验 | 封箱源码已引入；Linux 打开/另存/重开复验通过 | npm ci、177 tests、lint/typecheck/build PASS；Linux 原生打开、Host Save As、重开 PASS（范围见报告） | 不适用 |
 | 2 O7.0 + 配置 v3/Host/Studio | 待实施，先规范和共用候选 fixture | 待执行 | 科学条件按唯一计划；疑点交维护者 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 待实施 | 待执行 | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 待实施，依赖新配置契约 | 待执行 | 小型有效输入 |

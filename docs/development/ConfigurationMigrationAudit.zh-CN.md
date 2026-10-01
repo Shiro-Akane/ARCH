@@ -2,7 +2,7 @@
 
 审计源码基线：8fc0dd25eefd2243e8c36f85440bac46994e2e73；
 Studio 子树来源：c96e9da0a6d114fd0323102b73dba4a3cd8da9ba。
-本文件是迁移影响记录，不是已实现的 v3 contract，也不解除 Linux 3B UAT 待办。
+本文件是迁移影响记录，不是已实现的 v3 contract，3B Linux UAT 后续完成记录见 studio/STUDIO_3B_LINUX_REVALIDATION.md。
 
 ## 已确认的责任与差异
 
@@ -23,7 +23,7 @@ Studio 子树来源：c96e9da0a6d114fd0323102b73dba4a3cd8da9ba。
 
 ## 实施前约束
 
-1. 先完成 Linux 3B 文件选择、Save As、Reopen 的真实验收；当前自动检查通过不替代该项。
+1. Linux 3B 文件选择、Save As、Reopen 已完成真实验收，证据另记；自动检查不替代该项。
 2. 首个契约交付应包含候选规范和 Core/Host 共用完整 fixtures，明确标为候选，不能伪称当前 binary 输出。
 3. 按 ConfigurationContractPlan 的 19 必需、50 条件、25 允许默认、1 个 G 退役分类审查；该计数是当前审计，不是前端生产常量。
 4. 不靠反复执行部分 Setup 才发现第一个缺项。case 声明/派生阶段需在完整 Setup 和物理资源构造前明确。
@@ -38,4 +38,4 @@ Studio 子树来源：c96e9da0a6d114fd0323102b73dba4a3cd8da9ba。
 - case 声明、实际 Setup、网络组分注册与直接 C++ 构造消费者的完整清单。
 - Preview / inspection / AMR / session 入口共享新完整性检查的位置。
 - v3 完整 fixtures 的合法、缺失、坏值、重复、未知依赖和退役键覆盖。
-- Linux 原生文件对话框 UAT：Computer Use 窗口访问授权仍待用户回复。
+- Linux 文件对话框 UAT 已完成；不再阻塞候选契约交付。
