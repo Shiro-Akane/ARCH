@@ -152,3 +152,30 @@ Setup/Init/科学公式未改；只更新这两个已审阅模型的单位证据
 目前共3个模型具有静态声明，另外11个尚未迁移。静态完整性只表示该模型声明
 覆盖其读取项，不能替代范围、组合、稳定性检查或模拟就绪判定。
 普通加载/API仍未接线，生产v3和跨入口一致性尚待实现，本次不建立完成tag。
+
+### O7.0 全部内置模型声明与稀疏组分输入
+
+剩余11个模型补入静态声明，现有14个内置模型均有入口（数量仅为本次源码证据）。
+声明按真实Setup读取项登记；Gaussian/GravityBox的gas_cv按所选网络物种数量判定，
+GravityBox非活动中心坐标不要求；Sedov能量单位按已有维度语义解析。
+CooperativeHotspots选项保留原大小写不敏感语义；没有为其他模型推断别名。
+动态组分声明未解析时，整体coverage保持不完整，不把未知网络当none。
+
+新增CompositionInput从实际CPU网络SPECIES_NAMES取得核素键，不构造模型、不执行Setup
+或EOS。稀疏输入保留原值不归一化；未提供物种记录missing/parsed=null、case-defined零
+及network来源依赖。拒绝坏类型、负输入、大小写重复和非正/非有限总和。
+消费归属检查共用标准目录、retired目录、case声明及实际核素名单；辅助键须调用方
+明确登记。拼错核素和未登记辅助键报UNKNOWN_PARAMETER，声明未知时不猜测。
+log_dir派生来源/辅助解析、未知键建议及生产接线仍待后续完成。
+
+实际检查：config_input_records/input_resolution/case_configuration三项CTest PASS；
+四个内置网络的元数据、稀疏原值、来源、坏值、大小写重复、缺失network、未知核素
+和不完整coverage均有针对性回归。全部14个模型对象与新增CompositionInput对象编译
+PASS；最终对象编译最低可用内存约17.7 GiB，无swap增长。diff-check PASS。
+这不是全部模型运行/CLI/API回归：本步未调用模型Setup或运行simulation。
+
+逐个核对11个模型diff：去掉新增静态方法后与HEAD原文件逐字节一致，
+仅按该审阅更新相应unit evidence SHA，没有改变初始化公式或物理阈值。
+内置Timmes与生成网络当前归一化实现不同；本次未修改任何归一化/网络数学。
+新原始输入拒绝层尚未接入旧RuntimeParams；后续必须统一入口才能称配置整改生效。
+下一步迁移正式加载/资源边界、受控运行配置和v3 API，再接Host/Studio。

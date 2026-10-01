@@ -18,7 +18,7 @@
 namespace arch::config {
 using InputValue = std::variant<int, double, bool, std::string>;
 enum class InputState { Missing, Present, Invalid, Duplicate };
-enum class InputValueSource { Input, DocumentedDefault };
+enum class InputValueSource { Input, CaseDefined, DocumentedDefault };
 enum class ConfigurationPurpose { Evolution, InitialState };
 
 // Supplied by registered case/closure declarations, never by a browser guess.
@@ -33,12 +33,17 @@ struct ConditionResult {
     std::optional<bool> value;
     std::vector<std::string> missing_dependencies;
 };
+struct InputSourceEvidence {
+    std::string owner;
+    std::vector<std::string> dependencies;
+};
 struct InputRecord {
     const ParameterDefinition* definition = nullptr;
     InputState state = InputState::Missing;
     std::optional<InputValue> parsed;
     std::optional<InputValue> resolved;
     std::optional<InputValueSource> source;
+    std::optional<InputSourceEvidence> source_evidence;
     ConditionResult requirement;
     std::vector<ConfigSourceLocation> locations;
 };
@@ -257,8 +262,8 @@ inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
         }
         result.parameters.emplace(key, std::move(record));
     }
-    for (const auto key : {"enforce_mass_conservation", "burn_verbose_level",
-                           "ode_use_numerical_jac", "ode_freeze_jacobian", "timeintegrator"}) {
+    for (const auto retired : retired_input_keys) {
+        const std::string key(retired);
         if (parser.HasKey(key))
             result.diagnostics.push_back({key, "RETIRED_PARAMETER",
                 "This input is retired; remove it explicitly.", parser.Locations(key)});

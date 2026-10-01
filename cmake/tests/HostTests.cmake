@@ -93,7 +93,8 @@ target_link_libraries(arch_input_resolution PRIVATE arch_build_contract)
 add_test(NAME input_resolution COMMAND arch_input_resolution
     "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
 
-add_executable(arch_case_configuration tests/host/core/test_case_configuration.cpp)
+add_executable(arch_case_configuration tests/host/core/test_case_configuration.cpp
+    src/core/config/CompositionInput.cpp)
 target_link_libraries(arch_case_configuration PRIVATE arch_build_contract)
 add_test(NAME case_configuration COMMAND arch_case_configuration)
 

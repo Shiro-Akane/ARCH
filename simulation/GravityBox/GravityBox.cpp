@@ -13,6 +13,43 @@ class GravityBoxProblem {
     int dimension_=1;double hydrostatic_drop_=0.;
     std::vector<double> fractions_;
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"},
+            {"temperature0", "float", "K"},
+            {"amplitude", "float", "1"},
+            {"temperature_amplitude", "float", "1"},
+            {"velocity0", "float", "cm/s"},
+            {"width", "float", "cm"},
+            {"center_x", "float", "cm"},
+            {"center_y", "float", "cm"},
+            {"center_z", "float", "cm"},
+            {"gas_cv", "float", "erg/(g*K)"},
+            {"hydrostatic_radial", "string", "1", "simulation", {true, {}}, {"true", "false"}}};
+        for (auto& parameter : result.parameters) {
+            if (parameter.key == "gas_cv")
+                parameter.requirement = result.composition->complete
+                    ? arch::config::ConditionResult{result.composition->keys.size() < 1, {}}
+                    : arch::config::ConditionResult{std::nullopt, {"network_name"}};
+            if (parameter.key == "center_y")
+                parameter.requirement = arch::config::input_detail::condition(
+                    arch::config::InputCondition::Axis2, inputs, result.consumers);
+            if (parameter.key == "center_z")
+                parameter.requirement = arch::config::input_detail::condition(
+                    arch::config::InputCondition::Axis3, inputs, result.consumers);
+        }
+        return result;
+    }
+
     void Setup(SimConfig& config,SpeciesManager& species) {
         const bool radial=config.grid.dim==1 &&
             (config.grid.geometry=="spherical" || config.grid.geometry=="cylindrical");

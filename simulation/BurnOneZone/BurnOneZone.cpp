@@ -22,6 +22,22 @@ class BurnOneZoneProblem
     std::vector<double> mass_fractions_;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"},
+            {"temperature0", "float", "K"}};
+        return result;
+    }
+
     void Setup(SimConfig& config, SpeciesManager& species)
     {
         if (config.grid.dim != 1 || config.grid.geometry != "cartesian") {

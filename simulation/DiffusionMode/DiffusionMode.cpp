@@ -30,6 +30,23 @@ class DiffusionModeProblem
     int tracer_id_ = -1;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"},
+            {"pressure0", "float", "erg/cm^3"},
+            {"tracer_mean", "float", "1"},
+            {"tracer_amplitude", "float", "1"},
+            {"mode", "int", "1"}};
+        return result;
+    }
+
     void Setup(SimConfig& config, SpeciesManager& species)
     {
         if (config.grid.dim != 1 || config.grid.geometry != "cartesian") {

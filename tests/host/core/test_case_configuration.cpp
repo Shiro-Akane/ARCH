@@ -104,6 +104,80 @@ int main() {
         require(result.diagnostics.size() == 1
                 && result.diagnostics.front().code == "MISSING_PARAMETER",
                 "case option list must not supply a default");
+        auto insensitive = choices;
+        insensitive.parameters[0].options_ignore_case = true;
+        std::istringstream upper("standing_wave=TRUE");
+        parser.Read(upper);
+        require(ResolveCaseInput(parser, insensitive).diagnostics.empty(),
+                "owner-declared case-insensitive option rejected");
+        for (const auto network : {"iso7", "aprox13", "aprox19", "aprox21"}) {
+            std::istringstream selection(std::string("network_name=") + network);
+            parser.Read(selection);
+            const auto inputs = ResolveStandardInput(parser, {});
+            const auto species = DescribeNetworkComposition(inputs);
+            require(species.complete && !species.keys.empty(), "registered species metadata missing");
+            require(std::find(species.keys.begin(), species.keys.end(), "xc12") != species.keys.end(),
+                    "actual network lacks expected carbon input");
+            std::istringstream carbon("XC12=0.75");
+            parser.Read(carbon);
+            auto fractions = ResolveCompositionInput(parser, species);
+            require(fractions.diagnostics.empty(), "valid sparse composition rejected");
+            require(std::get<double>(*fractions.parameters.at("xc12").resolved) == 0.75,
+                    "composition inspection normalized raw input");
+            const auto& omitted = fractions.parameters.at("xhe4");
+            require(omitted.state == InputState::Missing && !omitted.parsed
+                    && omitted.source == InputValueSource::CaseDefined
+                    && std::get<double>(*omitted.resolved) == 0.0 && omitted.source_evidence,
+                    "omitted species lost model-defined zero provenance");
+            for (const auto bad : {"XC12=0.5\nxc12=0.5", "xc12=nan", "xc12=-0.1",
+                                   "xc12=0", "", "xc12=1e308\nxhe4=1e308"}) {
+                std::istringstream invalid_fractions(bad);
+                parser.Read(invalid_fractions);
+                fractions = ResolveCompositionInput(parser, species);
+                require(!fractions.diagnostics.empty(), "invalid sparse composition accepted");
+            }
+            std::istringstream duplicates("xc12=0.5\nXC12=0.5");
+            parser.Read(duplicates);
+            fractions = ResolveCompositionInput(parser, species);
+            require(fractions.parameters.at("xc12").state == InputState::Duplicate
+                    && fractions.parameters.at("xc12").locations.size() == 2
+                    && !fractions.parameters.at("xc12").resolved,
+                    "case-insensitive duplicate selected a fraction");
+        }
+        std::istringstream none("network_name=none");
+        parser.Read(none);
+        auto species = DescribeNetworkComposition(ResolveStandardInput(parser, {}));
+        require(species.complete && species.keys.empty(), "none acquired network species");
+        std::istringstream missing_network;
+        parser.Read(missing_network);
+        species = DescribeNetworkComposition(ResolveStandardInput(parser, {}));
+        require(!species.complete, "missing network treated as none");
+        require(!ResolveCompositionInput(parser, species).declarations_complete,
+                "unresolved network claimed composition coverage");
+        auto composite = declaration;
+        composite.composition = species;
+        require(!ResolveCaseInput(parser, composite).declarations_complete,
+                "case hid incomplete composition coverage");
+        std::istringstream owned_network("network_name=iso7");
+        parser.Read(owned_network);
+        composite.composition = DescribeNetworkComposition(ResolveStandardInput(parser, {}));
+        std::istringstream ownership(
+            "network_name=iso7\nXC12=1\nxc122=0.2\ndensity=1\n"
+            "log_dir=logs\ntimeintegrator=RK2\n");
+        parser.Read(ownership);
+        auto owners = ResolveInputOwnership(parser, composite, {"log_dir"});
+        require(owners.complete && owners.diagnostics.size() == 1
+                && owners.diagnostics.front().key == "xc122"
+                && owners.diagnostics.front().code == "UNKNOWN_PARAMETER",
+                "unknown isotope bypassed declared input ownership");
+        require(owners.diagnostics.front().locations.front().line == 3,
+                "unknown isotope lost source line");
+        require(ResolveInputOwnership(parser, composite).diagnostics.size() == 2,
+                "unregistered auxiliary key implicitly accepted");
+        composite.complete = false;
+        owners = ResolveInputOwnership(parser, composite);
+        require(!owners.complete && owners.diagnostics.empty(),
+                "incomplete declarations guessed unknown input");
         std::cout << "PASS: static case declarations and partial typed case resolution\n";
         return 0;
     } catch (const std::exception& error) {

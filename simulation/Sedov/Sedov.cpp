@@ -29,6 +29,31 @@ class SedovProblem
     int gas_id_ = -1;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"center_x", "float", "cm"},
+            {"center_y", "float", "cm"},
+            {"center_z", "float", "cm"},
+            {"deposit_radius", "float", "cm"},
+            {"ambient_density", "float", "g/cm^3"},
+            {"ambient_pressure", "float", "erg/cm^3"},
+            {"explosion_energy", "float", ""}};
+        const auto* x2 = arch::config::input_detail::get<int>(inputs, "nblockx2");
+        const auto* x3 = arch::config::input_detail::get<int>(inputs, "nblockx3");
+        if (x2 && x3)
+            for (auto& parameter : result.parameters)
+                if (parameter.key == "explosion_energy")
+                    parameter.unit = *x3 > 0 ? "erg" : *x2 > 0 ? "erg/cm" : "erg/cm^2";
+        return result;
+    }
+
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         if (config.grid.geometry != "cartesian") {

@@ -248,6 +248,7 @@ public:
     }
     const std::vector<ConfigInputDiagnostic>& Diagnostics() const { return diagnostics; }
     const std::string& InputText() const { return input_text; }
+    const auto& Occurrences() const { return occurrences; }
     const std::vector<ConfigSourceLocation>& Locations(const std::string& key) const {
         static const std::vector<ConfigSourceLocation> empty;
         const auto it = occurrences.find(key);

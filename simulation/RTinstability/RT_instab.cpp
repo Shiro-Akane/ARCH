@@ -38,6 +38,23 @@ class RTInstability
     int g_sp_heavy, g_sp_light;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho_heavy", "float", "g/cm^3"},
+            {"rho_light", "float", "g/cm^3"},
+            {"y_int", "float", "cm"},
+            {"p_int", "float", "erg/cm^3"},
+            {"amplitude", "float", "cm/s"}};
+        return result;
+    }
+
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         // 1. Grid bounds for wave number calculation

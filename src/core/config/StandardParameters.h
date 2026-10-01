@@ -155,10 +155,14 @@ inline bool DefaultBool(std::string_view key) {
 inline std::string DefaultString(std::string_view key) {
     return std::string(std::get<std::string_view>(Definition(key).fallback));
 }
+// Historical keys are recognized as retired, never as user extensions.
+inline constexpr std::array<std::string_view, 5> retired_input_keys{
+    "enforce_mass_conservation", "burn_verbose_level", "ode_use_numerical_jac",
+    "ode_freeze_jacobian", "timeintegrator"};
 // Validate even explicitly supplied inactive settings; never truncate bad tokens.
 inline void ValidateStandardTokens(const ConfigParser& parser) {
-    for (const auto key : {"enforce_mass_conservation", "burn_verbose_level",
-                           "ode_use_numerical_jac", "ode_freeze_jacobian", "timeintegrator"}) {
+    for (const auto retired : retired_input_keys) {
+        const std::string key(retired);
         if (parser.HasKey(key)) throw ConfigValueError(key, "RETIRED_PARAMETER",
             "This Core parameter has been retired; remove it from the input.");
     }

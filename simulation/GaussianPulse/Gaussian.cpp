@@ -34,6 +34,38 @@ class GaussianPulse
     std::vector<double> default_X;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"},
+            {"p0", "float", "erg/cm^3"},
+            {"amp", "float", "1"},
+            {"width", "float", "cm"},
+            {"xc", "float", "cm"},
+            {"yc", "float", "cm"},
+            {"zc", "float", "cm"},
+            {"pressure_amplitude", "float", "1"},
+            {"u_amplitude", "float", "cm/s"},
+            {"v_amplitude", "float", "cm/s"},
+            {"w_amplitude", "float", "cm/s"},
+            {"gas_cv", "float", "erg/(g*K)"}};
+        for (auto& parameter : result.parameters) {
+            if (parameter.key == "gas_cv")
+                parameter.requirement = result.composition->complete
+                    ? arch::config::ConditionResult{result.composition->keys.size() < 2, {}}
+                    : arch::config::ConditionResult{std::nullopt, {"network_name"}};
+        }
+        return result;
+    }
+
     // 1. Setup Phase (Parameter Extraction)
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
