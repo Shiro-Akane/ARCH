@@ -880,3 +880,18 @@ Host校验choices唯一键/bool/reason并规范化null，既有UI摘要重新接
 （7.88秒；随后仅inspection错误报告修改），真实Core/Host四类请求PASS。
 最终Studio180/180、lint/typecheck及diff-check PASS。受控构建无swap增长。
 未演化/CUDA/push/tag/raw上传。旧API测试迁移、完整配置目标与后续工作未完成。
+
+### O7.0 原 configuration_api_contract 整套迁移
+
+旧套件改为明确overlay完整Sod输入，empty单独以partial输入检查；
+无运行默认回填、无重复覆盖。schema目录从StandardParameterEntries核对
+94 active并排除退役G，allowedDefault/input/source/condition字段按v3验证。
+保留数值全token/整数/浮点/expression边界、范围/跨参数、九种几何单位、
+未知策略、六退役键、无EOS/设备/文件访问和90k键预算拒绝覆盖。
+Preview非法输入使用唯一赋值，避免被duplicate错误提前掩盖数值错误。
+
+新增非活动输入保留测试首次误选Core明令禁止的Coulomb/HLL组合而失败；
+恢复原两项拒绝断言，用burn=false的合法ode_rtol和diffusion=false的
+合法D_spec验证保留/不适用。不改Core约束或为通过而删除原覆盖。
+最终13/13 PASS（10.671秒），diff-check PASS。无Core修改/重编译、
+演化/CUDA/push/tag/raw上传。ui_expansion及更广泛配置/运行边界仍待完成。
