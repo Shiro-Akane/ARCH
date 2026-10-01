@@ -47,6 +47,57 @@ class ConfigurationV3(unittest.TestCase):
         self.assertEqual(data["status"], "ok" if expected == 0 else "error")
         return data
 
+    def resources(self, text, expected=0):
+        result = subprocess.run([str(ARCH), "--amr-resources", "count-context", "--config-stdin"],
+                                input=text, text=True, capture_output=True,
+                                cwd=self.cwd, env=ENV, timeout=30)
+        self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+        self.assertEqual(list(self.cwd.iterdir()), [])
+        data = json.loads(result.stdout)
+        self.assertEqual(data["identity"]["configRevision"], hashlib.sha256(text.encode()).hexdigest())
+        self.assertEqual(data["execution"]["configurationScope"], "resource-count-inputs")
+        self.assertEqual(data["execution"]["simulationReadiness"], "not_checked")
+        return data
+
+    def test_resources_require_explicit_counts_not_physical_defaults(self):
+        data = self.resources("", 3)
+        self.assertIsNone(data["data"])
+        self.assertEqual({d["parameterKey"] for d in data["diagnostics"]},
+                         {"nblockx1", "nblockx2", "nblockx3", "lrefinemin", "lrefinemax"})
+        text = "nblockx1=4\nnblockx2=0\nnblockx3=0\nlrefinemin=0\nlrefinemax=3\nmax_blocks=128\n"
+        data = self.resources(text)["data"]
+        reference = json.loads((ROOT / "src/api/examples/local-workflow/sod-resources.json").read_text())["data"]
+        for key in ["rootBlocks", "dimension", "paddedCellsPerBlock", "configuredPoolCapacity",
+                    "poolPreallocatedBaseBytes", "levels", "speciesCount", "oomPrediction"]:
+            self.assertEqual(data[key], reference[key], key)
+        # Counting a mesh does not require inventing EOS, burn, case or endpoint.
+        for key in ["nblockx1", "nblockx2", "nblockx3", "lrefinemin", "lrefinemax"]:
+            with self.subTest(key=key):
+                bad = self.resources(edit(text, key), 3)
+                self.assertIn(key, {d["parameterKey"] for d in bad["diagnostics"]})
+
+    def test_resource_invalid_topology_and_explicit_bad_fields(self):
+        text = "nblockx1=2\nnblockx2=0\nnblockx3=0\nlrefinemin=0\nlrefinemax=0\n"
+        for bad in [edit(text, "nblockx3", "1"), edit(text, "nblockx1", "1.5"),
+                    edit(text, "lrefinemax", "16"), text+"cfl=oops\n",
+                    text+"bad line\n", text+"nblockx1=3\n"]:
+            with self.subTest(bad=bad):
+                self.assertIsNone(self.resources(bad, 3)["data"])
+        self.assertEqual(self.resources(text)["data"]["dimension"], 1)
+        self.assertEqual(self.resources(edit(text, "nblockx2", "3"))["data"]["rootBlocks"], 6)
+        three = edit(edit(text, "nblockx2", "3"), "nblockx3", "4")
+        self.assertEqual(self.resources(three)["data"]["rootBlocks"], 24)
+
+    def test_resource_overflow_stays_unknown_and_advisory(self):
+        text = "nblockx1=2147483647\nnblockx2=2147483647\nnblockx3=2147483647\nlrefinemin=0\nlrefinemax=15\n"
+        data = self.resources(text)["data"]
+        self.assertIsNone(data["rootBlocks"])
+        self.assertTrue(all(x["overflow"] for x in data["levels"]))
+        self.assertTrue(all(x["activeCells"] is None for x in data["levels"]))
+        self.assertIsNone(data["speciesCount"])
+        self.assertTrue(data["advisoryOnly"])
+        self.assertEqual(data["oomPrediction"], "not-provided")
+
     def test_schema(self):
         data = self.call(["--config-schema"])
         p = records(data)

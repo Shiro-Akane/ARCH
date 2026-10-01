@@ -18,6 +18,13 @@ ARCH --list-cases
 ARCH --amr-resources Sod --config-stdin < simulation/Sod/Sod.par
 ```
 
+当前集成分支的资源估算直接消费共同输入解析记录，不再经带默认物理配置的
+RuntimeParams。必须显式提供nblockx1/nblockx2/nblockx3与lrefinemin/lrefinemax；
+max_blocks仍使用已登记的资源默认。缺项逐键报错，明确的零轴计数不等于缺失。
+仅需规模估算输入，不要求补写EOS、case初态或演化终点；显式的语法/类型/范围
+错误仍拒绝。execution.configurationScope=resource-count-inputs，
+simulationReadiness=not_checked，不能将规模成功当成整个配置可运行。
+
 不调用 Setup、不加载 EOS、不构建网格。caseId 仅为请求上下文；用于一般 1/2/3D 配置的规模提示。返回 `kind=amr-resource-estimate`，`data.levels` 列出 0 到 lrefinemax：
 
 - `fullDomainLeafBlocks`：全域升至此级的块数，B0 × 2^(dimension × level)。

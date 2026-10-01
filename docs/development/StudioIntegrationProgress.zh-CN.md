@@ -319,3 +319,28 @@ tests/configuration-core-v3.integration.ts ../build-cpu/bin/ARCH。
 完整production UAT未执行；不可把本次render/协议测试写作真实桌面验收。
 受控只读运行构造、Setup后校验/来源、G_const清理、旧Core输入与全套检查迁移
 仍待完成。3C及后续模型/Jeans/RZ/CPU-CUDA与冻结benchmark目标保持不变。
+
+### O7.0 资源估算入口移除旧默认 loader
+
+审查真实调用链发现--amr-resources仍调用无case的RuntimeParams::LoadText。
+现改为ConfigParser + ResolveStandardInput，直接读取估算所需的三轴blocks、
+lrefinemin/lrefinemax及登记max_blocks；不构造SimConfig，不猜EOS、case初态或tmax。
+缺少五项mesh输入时逐键拒绝，零轴计数保留。显式语法/类型/范围错误仍聚合拒绝。
+caseId继续是资源估算上下文，未知case参数覆盖不在该入口声明范围内。
+
+原资源公式抽为同文件函数，真实运行包装仍使用原有效grid.dim和相同blocks、
+层级/容量/组分数量；没有改动存储估算或OOM语义。API新增明确
+configurationScope=resource-count-inputs与simulationReadiness=not_checked。
+这不是完整科学配置或运行就绪检查，INITIAL_AMR_API文档同步。
+
+CPU重链PASS，28并发内存保护最低可用约20.7GiB，无swap增长。
+6项相关CTest全PASS，configuration_v3_contract现含16项：
+新增mesh缺项/1D-2D-3D计数/非法显式输入/overflow检查，并逐项对比既有
+sod-resources.json的计数/内存字段；无需生成真实AMR或科学输出。
+git diff --check PASS。API源码已无旧无case loader调用。
+无源文件变更涉及Studio，不重复其已通过的180项回归。
+
+完整RuntimeParams仍有旧字段fallback、测试用无case入口和公共SimConfig构造；
+本次只关闭真实资源API的默认构造绕路，不能宣告受控只读配置完成。
+后续继续完成共同配置构造/Setup来源、partial metadata、输入迁移及全目标，
+没有推进CUDA、Jeans/RZ或科学benchmark，没有push或新增完成tag。
