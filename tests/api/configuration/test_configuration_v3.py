@@ -238,6 +238,7 @@ class ConfigurationV3(unittest.TestCase):
     def test_migrated_formal_examples_are_explicit_and_complete(self):
         examples = {
             "Sod": ("Sod/Sod.par", {"compute_backend": "cpu", "x_pos": .5}),
+            "RT": ("RTinstability/RT_instab.par", {"limiter": "minmod", "gravity_g_x": 0.0, "gravity_g_z": 0.0}),
             "Sedov": ("Sedov/Sedov.par", {"center_z": .5, "explosion_energy": 1.0}),
             "JeansWave": ("JeansWave/JeansWave.par",
                           {"phase": 0.0, "mode": 1, "standing_wave": "false",

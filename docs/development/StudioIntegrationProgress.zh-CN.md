@@ -734,3 +734,20 @@ Sedov center_z显式为原域中点0.5；Jeans phase=0/mode=1/standing_wave=fals
 Jeans 3个采样均ok/Setup ready，输入SHA匹配；临时cwd无文件，
 无timeStepping、CUDA或Driver输出。该检查不等于完整场预览/演化验收。
 无需重编译；未push/tag或上传raw，其他模型迁移及整体目标仍未完成。
+
+### O7.0 RT 原策略迁移与 Gaussian 声明问题定位
+
+追溯8fc0dd25 PolicyDescriptor：LimiterPolicies为UseDefault，MinModPolicy
+标记default=true；RT旧limiter=none不是NoLimiter，而是静默回退MinMod。
+现将正式输入显式化minmod，保留PPM及原科学参数；补齐cpu/roe/floor、
+external x/z零分量、burn/diffusion=false，均来自原登记默认。
+没有扩充策略或恢复未知值fallback。配置v3全17项PASS（1.821秒），
+其中正式样例矩阵新增RT；真实RT inspect-case成功、9采样，无文件/演化/CUDA。
+diff-check PASS，无编译/push/tag/raw上传。
+
+Gaussian未通过的问题已定位：Setup调用SetupNetworkAndFractions，
+但随后default_X.assign(...,0)，Init仅用前两个species及高斯分布构造组分。
+本轮引入的统一正组分sum要求因此把被丢弃的中间读错误当成物理输入必需。
+后续应分离network species登记与外部初始组分读取，声明模型自产组分来源；
+不能给Gaussian.par随意补xhe4/xc12来绕过，也不能全局放宽其他模型正sum。
+Gaussian实际修复、完整模型检查/后续整体目标尚未完成。
