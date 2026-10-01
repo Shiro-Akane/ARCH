@@ -29,6 +29,9 @@
 #include "interface/PreviewMetadata.h"
 #include "physics/constant/PhysicalConstants.h"
 
+class RuntimeParams;
+namespace arch::config { struct ConfigurationInput; }
+
 // Grid and domain configuration.
 struct GridConfig
 {
@@ -377,9 +380,20 @@ struct RunState
     std::string verified_eos_table_sha256; ///< Saved table identity rechecked after the EOS owner loads
 };
 
-// Complete runtime configuration.
+// Mutable preparation storage; default construction is not scientific readiness.
 struct SimConfig
 {
+private:
+    friend class RuntimeParams;
+    std::shared_ptr<const arch::config::ConfigurationInput> loaded_input_;
+
+public:
+    // Immutable evidence of the load boundary, not certification of subsequent
+    // mutable fields, Setup results, resources or simulation readiness.
+    std::shared_ptr<const arch::config::ConfigurationInput> LoadedInput() const {
+        return loaded_input_;
+    }
+
     GridConfig grid;
     NumericsConfig numerics;
     ExecutionConfig execution;

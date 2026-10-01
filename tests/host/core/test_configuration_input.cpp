@@ -143,6 +143,42 @@ int main(int argc, char** argv) {
         require(config.io.out_dir == output.string() && config.io.tmax == 0.2,
                 "declared loading changed valid controls");
         require(!std::filesystem::exists(output), "loading created scientific output");
+        const auto origin = config.LoadedInput();
+        static_assert(std::is_const_v<std::remove_reference_t<decltype(*origin)>>);
+        require(origin && origin->case_id == "declared-test"
+                && origin->purpose == ConfigurationPurpose::Evolution,
+                "loaded input lost case or purpose identity");
+        require(!SimConfig{}.LoadedInput(), "default storage claimed inspected inputs");
+        const auto& loaded_cfl = origin->standard.parameters.at("cfl");
+        require(loaded_cfl.source == InputValueSource::Input
+                && std::get<double>(*loaded_cfl.resolved) == 0.4
+                && !loaded_cfl.locations.empty()
+                && origin->raw_tokens.at("cfl") == "0.4",
+                "explicit input lost lexical value, location or typed origin");
+        const auto& default_steps = origin->standard.parameters.at("ode_max_substeps");
+        require(default_steps.state == InputState::Missing
+                && default_steps.source == InputValueSource::DocumentedDefault
+                && !default_steps.parsed && default_steps.resolved,
+                "approved default was relabelled explicit");
+        const auto& absent_restart = origin->standard.parameters.at("restart_file");
+        require(absent_restart.state == InputState::Missing && !absent_restart.resolved
+                && !absent_restart.source, "inactive absent input acquired a source");
+        require(origin->model.parameters.at("x_pos").source == InputValueSource::Input
+                && origin->auxiliary.at("log_dir").source == InputValueSource::Derived,
+                "case or auxiliary origin was lost");
+        auto edited = config;
+        edited.numerics.cfl = 0.3;
+        edited.custom_params["x_pos"] = 0.75;
+        require(edited.LoadedInput() == origin
+                && std::get<double>(*origin->standard.parameters.at("cfl").resolved) == 0.4
+                && std::get<double>(*origin->model.parameters.at("x_pos").resolved) == 0.5,
+                "mutable preparation rewrote the original inspection evidence");
+        const auto retained = RuntimeParams::LoadText(text, "declared-test",
+            ConfigurationPurpose::InitialState).LoadedInput();
+        require(retained && retained->purpose == ConfigurationPurpose::InitialState
+                && retained->raw_tokens.at("x_pos") == "0.5",
+                "origin lifetime depended on parser or configuration storage");
+
         const auto memory = RuntimeParams::LoadText(
             without(text, "nblockx1") + "nblockx1=2\n", "declared-test",
             ConfigurationPurpose::InitialState);
@@ -151,6 +187,8 @@ int main(int argc, char** argv) {
         const auto expressions = RuntimeParams::LoadText(
             without(text, "x1_max") + "x1_max=exp(1)\n", "declared-test",
             ConfigurationPurpose::InitialState);
+        require(expressions.LoadedInput()->raw_tokens.at("x1_max") == "exp(1)",
+                "expression origin was replaced by its evaluated number");
         require(std::abs(expressions.grid.x1_max - std::exp(1.0)) < 1e-14,
                 "runtime grid expression evaluates exp");
         const auto acceleration = RuntimeParams::LoadText(
@@ -200,6 +238,15 @@ int main(int argc, char** argv) {
                 && bd.Get<double>("rho0", -1.0) == 1e7
                 && bd.Get<double>("temperature0", -1.0) == 3e9,
                 "actual BD controller input values changed");
+        const auto bd_origin = bd.LoadedInput();
+        require(bd_origin && bd_origin->case_id == "BurnOneZone"
+                && bd_origin->model.composition.has_value(),
+                "file loader discarded composition input evidence");
+        const auto& composition = bd_origin->model.composition->parameters;
+        require(composition.at("xc12").source == InputValueSource::Input
+                && std::get<double>(*composition.at("xc12").resolved) == 0.5
+                && !composition.at("xc12").locations.front().source.empty(),
+                "file composition lost explicit input or filename");
         std::cout << "PASS: aggregate declared loading without model or scientific resources\n";
         return 0;
     } catch (const std::exception& error) {

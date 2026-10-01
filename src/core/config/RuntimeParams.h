@@ -61,7 +61,10 @@ public:
         parser.Read(file, filename);
         auto input = arch::config::AnalyzeConfigurationInput(parser, case_id);
         input.RequireDeclaredInputs();
-        return Resolve(parser, input.standard);
+        input.raw_tokens = parser.GetAllParams();
+        auto config = Resolve(parser, input.standard);
+        config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
+        return config;
     }
 
     static SimConfig LoadText(const std::string& text, const std::string& case_id,
@@ -73,7 +76,9 @@ public:
         parser.Read(stream);
         auto input = arch::config::AnalyzeConfigurationInput(parser, case_id, purpose);
         input.RequireDeclaredInputs();
+        input.raw_tokens = parser.GetAllParams();
         auto config = Resolve(parser, input.standard);
+        config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
         if (reads) {
             reads->capture_input(parser.GetAllParams(), config.custom_params, config.custom_string_params);
             config.parameter_reads = std::move(reads);

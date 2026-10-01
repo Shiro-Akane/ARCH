@@ -516,3 +516,25 @@ PASS（二维组内10项真实CPU init-only检查），diff-check PASS。
 数值合法但未声明的改写、Setup派生值、最终运行身份仍需下一步收束。
 现有内置simulation cpp未发现直接typed配置赋值，不能据此保证任意用户模型不修改。
 整体配置/Studio/Jeans/RZ目标继续，未push或建立完成tag。
+
+### O7.0 保留加载边界来源证据
+
+RuntimeParams 的文件和内存入口在完整聚合检查成功后，保留不可变的
+ConfigurationInput：case、purpose、原 token、标准/模型/组分/辅助参数记录，
+包含来源、位置、允许默认和派生证据。SimConfig 私有持有该快照；
+调用方只能取得 const 记录，复制配置共享其生命周期。默认构造不产生快照。
+此快照仅代表加载时的输入；后续可变字段并不因此获得有效/就绪认证。
+
+新增回归核对 explicit/default/absent/derived 的区别，表达式原 token、
+文件组分位置、parser/临时配置销毁后的生命周期，以及修改 cfl/x_pos
+不改写原加载证据。首次测试发现 GetAllParams 对坏语法提前抛错；
+已将快照采集移到 RequireDeclaredInputs 之后，保留聚合诊断语义。
+修复后 configuration_input、configuration_entry_contract、
+configuration_v3_contract、mainline_authority、initialization_probe、
+preview_cellular_2d 六项 CTest 全部 PASS（18.37 秒）。
+CPU 增量构建 28 并发 PASS，最低可用约14.4 GiB，无 swap 增长，
+git diff --check PASS。未修改科学公式/容差，未执行演化/CUDA或上传 raw data。
+
+Setup 合法数值改写的来源核对、受控最终只读构造及直接 C++ 运行边界
+仍未完成；后续必须使用本记录核对，而不是将非空快照当作 validated 标记。
+整体目标继续，未建立完成 tag 或 push。

@@ -11,6 +11,10 @@
 
 namespace arch::config {
 struct ConfigurationInput {
+    std::string case_id;
+    ConfigurationPurpose purpose = ConfigurationPurpose::Evolution;
+    // Filled only at successful loading; partial analysis must not demand a valid parser.
+    std::map<std::string, std::string> raw_tokens;
     StandardInputResolution standard;
     CaseConfiguration declaration;
     CaseInputResolution model;
@@ -38,6 +42,8 @@ inline ConfigurationInput AnalyzeConfigurationInput(
     const ConfigParser& parser, const std::string& case_id,
     ConfigurationPurpose purpose = ConfigurationPurpose::Evolution) {
     ConfigurationInput result;
+    result.case_id = case_id;
+    result.purpose = purpose;
     InputContext context;
     context.purpose = purpose;
     result.standard = ResolveStandardInput(parser, context);
