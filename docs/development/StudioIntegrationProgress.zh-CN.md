@@ -179,3 +179,32 @@ PASS；最终对象编译最低可用内存约17.7 GiB，无swap增长。diff-ch
 内置Timmes与生成网络当前归一化实现不同；本次未修改任何归一化/网络数学。
 新原始输入拒绝层尚未接入旧RuntimeParams；后续必须统一入口才能称配置整改生效。
 下一步迁移正式加载/资源边界、受控运行配置和v3 API，再接Host/Studio。
+
+### O7.0 真实 CLI / 初态入口前置检查
+
+ConfigurationInput 汇总标准、静态case、组分、辅助和消费归属检查；
+log_dir缺失时保留parsed=null并记录从out_dir派生的来源。重复诊断合并但保留
+源位置；CLI聚合错误逐项显示键名。声明查询不调用模型工厂或Setup。
+
+CLI普通运行、Preview和inspect-case已接入case-aware检查：正式演化要求tmax，
+初态用途不要求演化终点。CLI将Setup和其后控制检查置于统一异常边界，
+在输出/日志目录创建之前拒绝失败；没有改变积分器或初始化公式。
+参数文件一次读取后在同一parser上检查和构造，避免检查后重新读取引入身份竞态。
+
+验证：四项定向CTest（configuration_input / case_configuration / input_resolution /
+config_input_records）PASS，覆盖标准+case缺项聚合、语法/重复/未知组合、
+derived log_dir、未知case和加载无资源副作用。CPU ARCH实际链接PASS，28任务上限
+内存保护下最低可用内存约14.7 GiB，无swap增长，未编译CUDA。
+
+tests/api/configuration/test_configuration_entry.py真实二进制4/4 PASS：
+CLI缺tmax/cfl/rho_left聚合；语法/未知case/Setup失败不创建输出或日志；
+Preview和inspect-case共享缺项拒绝；省tmax的有效Sod初态保留DENS/PRES数值。
+只做4点初态/初始化检查，没有时间演化，没有生成科学H5/plt/checkpoint。
+测试授权按当前联合交付文件6.1节核对；旧3B范围导致的一次自动审批拦截已解除。
+本轮验证binary SHA-256：c1328e1beee862e7eaae9e0c6227ac1e23a33f1b0a7c269046876310c58cfa15。
+
+过渡状态仍明确未完成：配置inspection/resource-estimate及直接测试加载仍有旧v2入口；
+新case-aware路径后的字段构造也仍用旧Resolve，尚需删除关键fallback和第二权威映射，
+收束直接C++构造、追踪Setup更改并建立最终只读配置。v3序列化、活动.par/旧测试迁移、
+Host/Studio尚未完成，不能把本次真实入口检查称为整体配置验收通过。
+下一步接入部分输入inspection并迁移共同字段构造；不发布阶段tag、不push。

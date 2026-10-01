@@ -18,7 +18,7 @@
 namespace arch::config {
 using InputValue = std::variant<int, double, bool, std::string>;
 enum class InputState { Missing, Present, Invalid, Duplicate };
-enum class InputValueSource { Input, CaseDefined, DocumentedDefault };
+enum class InputValueSource { Input, CaseDefined, Derived, DocumentedDefault };
 enum class ConfigurationPurpose { Evolution, InitialState };
 
 // Supplied by registered case/closure declarations, never by a browser guess.

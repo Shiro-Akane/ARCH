@@ -140,7 +140,8 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         std::shared_ptr<preview::ParameterReadTrace> reads;
         if (request.case_id == "Sod")
             reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{"x_pos"});
-        SimConfig config = RuntimeParams::LoadText(request.config_text, reads);
+        SimConfig config = RuntimeParams::LoadText(request.config_text, request.case_id,
+            arch::config::ConfigurationPurpose::InitialState, reads);
         auto &state = result["state"];
         PublishStateSnapshot(state, config);
         ReportStage(request, result, "support");

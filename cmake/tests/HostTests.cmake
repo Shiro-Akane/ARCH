@@ -35,6 +35,11 @@ add_test(NAME configuration_api_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_configuration.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(configuration_api_contract PROPERTIES TIMEOUT 180)
+add_test(NAME configuration_entry_contract
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_configuration_entry.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(configuration_entry_contract PROPERTIES TIMEOUT 180)
 add_executable(arch_preview_parameter_reads tests/api/configuration/test_parameter_reads.cpp src/api/configuration/ParameterMetadata.cpp)
 arch_configure_host_test(arch_preview_parameter_reads)
 add_test(NAME preview_parameter_reads COMMAND arch_preview_parameter_reads)
@@ -97,6 +102,11 @@ add_executable(arch_case_configuration tests/host/core/test_case_configuration.c
     src/core/config/CompositionInput.cpp)
 target_link_libraries(arch_case_configuration PRIVATE arch_build_contract)
 add_test(NAME case_configuration COMMAND arch_case_configuration)
+
+add_executable(arch_configuration_input tests/host/core/test_configuration_input.cpp)
+target_link_libraries(arch_configuration_input PRIVATE arch_build_contract)
+add_test(NAME configuration_input COMMAND arch_configuration_input
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
 
 # Numerical leaves and independent reference authorities.
 foreach(contract IN ITEMS core/physical_constants amr/refinement_indicator_math grid/curvilinear_metrics)

@@ -50,7 +50,9 @@ class ConfigInputError : public ConfigValueError {
         std::string text;
         for (const auto& error : errors) {
             if (!text.empty()) text += "; ";
-            text += error.code + ": " + error.message;
+            text += error.code;
+            if (!error.key.empty()) text += " [" + error.key + "]";
+            text += ": " + error.message;
         }
         return text;
     }

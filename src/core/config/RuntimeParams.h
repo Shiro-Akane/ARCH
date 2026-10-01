@@ -24,6 +24,7 @@
 #include "io/ConfigParser.h"
 #include "core/config/StandardParameters.h"
 #include "core/config/ConfigValidation.h"
+#include "core/config/ConfigurationInput.h"
 
 class RuntimeParams
 {
@@ -57,6 +58,37 @@ private:
     }
 
 public:
+    // Case-aware production entry: aggregate declarations before constructing
+    // the mutable preparation configuration. No model or resource is created.
+    static SimConfig Load(const std::string& filename, const std::string& case_id)
+    {
+        ConfigParser parser;
+        std::ifstream file(filename, std::ios::binary);
+        if (!file.is_open())
+            throw std::runtime_error("RuntimeParams::Load failed: Could not open " + filename);
+        parser.Read(file, filename);
+        auto input = arch::config::AnalyzeConfigurationInput(parser, case_id);
+        input.RequireDeclaredInputs();
+        return Resolve(parser);
+    }
+
+    static SimConfig LoadText(const std::string& text, const std::string& case_id,
+                             arch::config::ConfigurationPurpose purpose,
+                             std::shared_ptr<arch::preview::ParameterReadTrace> reads = {})
+    {
+        std::istringstream stream(text);
+        ConfigParser parser;
+        parser.Read(stream);
+        auto input = arch::config::AnalyzeConfigurationInput(parser, case_id, purpose);
+        input.RequireDeclaredInputs();
+        auto config = Resolve(parser);
+        if (reads) {
+            reads->capture_input(parser.GetAllParams(), config.custom_params, config.custom_string_params);
+            config.parameter_reads = std::move(reads);
+        }
+        return config;
+    }
+
     /**
      * @brief Parses the parameter file and populates the SimConfig struct.
      * @param filename Path to the .par file.
