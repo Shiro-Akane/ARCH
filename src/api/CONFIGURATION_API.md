@@ -1,5 +1,10 @@
 # Studio 标准配置接口
 
+本文说明已实现的版本 2 行为。计划中的缺项拒绝、可空值和版本 3 迁移见
+[配置完整性计划](../../docs/development/ConfigurationContractPlan.zh-CN.md) 与
+[Core／Studio 联合交付计划](../../docs/development/StudioConfigurationHandoff.zh-CN.md)；
+实现前不把候选契约当作现有响应。
+
 当前 O6 目录为 95 项：在 P3/P4 的 92 项基础上，新增 `eos_coulomb_mult/hll_wave_speed/dt_max`。P1.5 已登记 `dt_init`、`dt_min`、`tstep_change_factor`，物理下限仍用现有参数。Core 不发布 Advanced 标签，GUI 按自己的显示层策略折叠选项。
 
 配置扩展版本 `2`，外层 `schemaVersion="1.0"`。沿用 ARCH 的进程 + stdin/JSON 通道。无需运行 simulation、加载 EOS 表或启动 CUDA，也不写 `.par`、输出目录或数据文件。

@@ -2,9 +2,11 @@
 
 本目录集中管理 GUI 等本地工具调用 ARCH 的接口。当前提供 **1.0 版初始状态预览**，由现有 `ARCH` 可执行程序提供，不需要单独的服务进程。
 
-新增的标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。它们在生成预览前提供 90 个标准参数、默认值、约束和坐标信息；本轮交接与同步方式见 [Core UI 交接](CORE_UI_HANDOFF.md)。
+标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。v1.2.1 的目录含 95 个标准参数；客户端从当前程序查询实际键、默认、约束和坐标信息。配置扩展现为版本 2。
 
-最新增量交接见 [本地工作流 API 交接](LOCAL_WORKFLOW_HANDOFF.md)：90 项标准说明、统一 CGS、模型查询、逐级资源估算，以及有界 CPU 实际初始 AMR 网格。旧 `--preview` 点采样接口保持独立；新命令见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。全部现有模型的统一参数与初始化检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，该入口与完整场/网格渲染能力分别查询。
+后续完整性整改与客户端迁移见 [Core／Studio 联合交付计划](../../docs/development/StudioConfigurationHandoff.zh-CN.md)，包括缺项诊断、版本 3、Linux／WSL 工作流及平台验证；这些计划项尚未实现。[Core UI 交接](CORE_UI_HANDOFF.md) 和 [本地工作流交接](LOCAL_WORKFLOW_HANDOFF.md) 保留各历史提交的实现与测试记录。
+
+现有本地接口提供统一 CGS、模型查询、逐级资源估算及有界 CPU 初始 AMR 网格。`--preview` 点采样独立于网格接口，命令见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。全部注册模型的参数与初始化检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，该入口与完整场／网格渲染能力分别查询。
 
 持续编辑的资源复用见 [本地预览会话](PREVIEW_SESSION_API.md) 和 [本次交接](PREVIEW_SESSION_HANDOFF.md)。新增 `--preview-session` 通过逐行 JSON 接收多份请求，保留 EOS 资源；每份请求仍完整初始化。下文单次 CLI 的输入输出保持兼容。
 
@@ -19,7 +21,7 @@
 - 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制模型公式。
 - 旧 `--preview` 不建立 AMR 层级；`--preview-amr` 建立真实初始层级。两者均不进入时间推进，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
 
-新 `--preview-amr` 提供 Linux/WSL 上的真实初始 AMR 布局。旧场采样入口的参数 metadata 仍只覆盖 Sod `x_pos`；新增 `--inspect-case` 独立提供所有注册模型的 Setup/Get 与少量 Init 检查，当前 11 个内置模型均有与编译源码关联的单位证据。未观察到的参数不表示未使用。完整场图和 AMR 网格仍以各自能力列表为准；CellularDet 尚无可编辑分界线。任意 C++ 表达式的自动单位反推未提供。
+新 `--preview-amr` 提供 Linux/WSL 上的真实初始 AMR 布局。旧场采样入口的参数 metadata 仍只覆盖 Sod `x_pos`；`--inspect-case` 独立提供注册模型的 Setup/Get 与少量 Init 检查。v1.2.1 注册 14 个模型；具体检查能力、单位证据及覆盖范围以当前程序响应为准。未观察到的参数不表示未使用。完整场图和 AMR 网格仍以各自能力列表为准；CellularDet 尚无可编辑分界线。任意 C++ 表达式的自动单位反推未提供。
 
 旧 `--preview` 中的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
 

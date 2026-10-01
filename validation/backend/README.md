@@ -13,6 +13,15 @@ Related coverage is kept with its module:
 - [Network](../network/README.md): generated packages, weak rates and sparse solves.
 - [Restart](../restart/README.md): native restore and continuation across backends.
 
+## Configuration and application integration
+
+The [Core/Studio configuration audit](results/studio-config-contract-audit-20261001/README.md)
+records the inspected main and locally available Studio checkpoints, exact-input
+identity checks, and the current client migration gap. It is CPU contract evidence,
+not a simulation, GPU, or performance qualification. The
+[delivery plan](../../docs/development/StudioConfigurationHandoff.zh-CN.md)
+defines the subsequent interface and platform acceptance work.
+
 ## Optimization and coupled checks
 
 The [HPC-CUDA evidence index](results/hpc-cuda-optimization/README.md) summarizes
