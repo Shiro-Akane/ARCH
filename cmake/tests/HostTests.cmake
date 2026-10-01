@@ -81,6 +81,13 @@ add_test(NAME runtime_validation_inputs_contract
 set_tests_properties(runtime_validation_inputs_contract PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
+
+# Syntax is checked before any model, EOS or device resource is constructed.
+add_executable(arch_config_input_records tests/host/io/test_config_input_records.cpp)
+target_link_libraries(arch_config_input_records PRIVATE arch_build_contract)
+add_test(NAME config_input_records COMMAND arch_config_input_records
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
+
 # Numerical leaves and independent reference authorities.
 foreach(contract IN ITEMS core/physical_constants amr/refinement_indicator_math grid/curvilinear_metrics)
     get_filename_component(contract_directory "${contract}" DIRECTORY)

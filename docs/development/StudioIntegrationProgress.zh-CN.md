@@ -54,3 +54,17 @@ Sod 成功样例覆盖 94 标准项、7 case 项及 log_dir；完整性限于静
 此检查只证明候选数据内部一致，不证明 ARCH 已执行 v3。接下来迁移 Core 输入记录、
 共同条件解析及受控构造，再将真实输出接入 Host/Studio；不重复已通过的未变更 3B 检查。
 其余模型声明、case-defined 例子、错误/预算/身份矩阵随实现补齐并运行真实契约回归。
+
+### O7.0 输入记录基础
+
+ConfigParser 现在共用 Read 收集与 Load 拒绝路径：原文/字节位置/多次赋值均保留，
+坏行、空键、重复键汇总。重复键仍是 present，不读取第一/最后值，也不变成缺项后回填。
+静态调用可保留有效记录；运行 Load 在 Resolve/Setup 前拒绝语法错误。文件打不开时
+移除误导的 Using defaults 文案。数值解析和科学公式未改。
+
+轻量验证：g++ -std=c++20 -O2 -Wall -Wextra -pedantic -Isrc 编译
+ tests/host/io/test_config_input_records.cpp（输出留在 studio/.local/integration）；
+使用共享候选目录运行 PASS，无编译告警。覆盖零/false、坏数值、重复2/3次、聚合错误、
+UTF-8列号、CRLF、无末尾换行、空字符串及重复加载清理。已登记 config_input_records
+到现有 Host CTest；本次直接编译执行，尚未运行完整 CMake/Core/Host 迁移回归。
+解析器改动不等于完成 v3：必填/条件解析、受控构造、API 聚合序列化及客户端仍待迁移。
