@@ -95,8 +95,13 @@ inline ConfigurationInput AnalyzeConfigurationInput(
             ResolveRefinementSelection(selection, *x3 > 0 ? 3 : *x2 > 0 ? 2 : 1, *burn, false);
             result.refinement_selection = std::move(selection);
         } catch (const std::invalid_argument& error) {
+            auto& record = result.standard.parameters.at("refine_var");
             result.standard.diagnostics.push_back({"refine_var", "INVALID_REFINEMENT_SELECTION",
-                error.what(), result.standard.parameters.at("refine_var").locations});
+                error.what(), record.locations});
+            record.state = InputState::Invalid;
+            record.resolved.reset();
+            record.source.reset();
+            record.source_evidence.reset();
         }
     }
     result.diagnostics = result.standard.diagnostics;

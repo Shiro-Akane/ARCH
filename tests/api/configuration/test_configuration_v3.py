@@ -385,6 +385,19 @@ class ConfigurationV3(unittest.TestCase):
         self.assertIsNone(empty["amrIndicators"])
         self.assertIn("INVALID_REFINEMENT_SELECTION", {d["code"] for d in empty["diagnostics"]})
         self.assertEqual(records(empty)["refine_var"]["parsedValue"], "JENS")
+        record = records(empty)["refine_var"]
+        self.assertEqual(record["inputState"], "invalid")
+        for key in ["resolvedValue", "valueSource", "sourceEvidence"]:
+            self.assertIsNone(record[key])
+        for selection in ["RHO", "VELY", "ENUC", ""]:
+            with self.subTest(selection=selection):
+                rejected = self.inspect(edit(BASE, "refine_var", selection), expected=3)
+                record = records(rejected)["refine_var"]
+                self.assertEqual(record["parsedValue"], selection)
+                self.assertEqual(record["inputState"], "invalid")
+                self.assertIsNone(record["resolvedValue"])
+                self.assertIsNone(record["valueSource"])
+
 
     def test_bounded_error_keeps_identity(self):
         text = BASE + "".join(f"unknown_key_{i}=0\n" for i in range(30000))

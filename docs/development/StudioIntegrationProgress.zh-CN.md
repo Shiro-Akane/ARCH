@@ -944,3 +944,13 @@ configuration_input、configuration_api_contract、configuration_v3_contract
 e6c60aa3ae9dcc7bf1c1bd7b7e2ba745bb815739b92f0b02a05117d983809719。
 Host 集成使用隔离 test Build Profile，不代表真实项目构建 provenance/UAT 已完成。
 未执行生产 AMR checkpoint 对照、演化、CUDA、push/tag；完整 O7.0 仍未完成。
+
+### O7.0 rejected AMR selection record consistency
+
+共用选择诊断发现无可用 indicator 时，refine_var 现标为 invalid，
+保留 raw/parsed/location，清除 resolvedValue/valueSource/sourceEvidence。
+避免 rejected selection 仍以可用配置值形式呈现；不改变选择规则。
+inspection 回归覆盖 JENS、旧别名 RHO、1D VELY、burn-off ENUC 和空选择。
+受控 CPU 增量构建 25.262 秒，无 swap；configuration_v3_contract 和
+configuration_input 2/2 PASS（2.33 秒），diff-check PASS。
+未执行生产 AMR、simulation、CUDA 或上传原始结果；完整目标未完成。
