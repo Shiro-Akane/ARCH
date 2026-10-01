@@ -411,3 +411,29 @@ INVALID_CONFIGURATION；不保留旧绕到Setup才失败的路径。
 未重复无关Studio测试，git diff --check PASS。
 该结果替代上一节中旧Cellular参考输入的未迁移状态；其他旧Core输入和
 session/full suite尚未全部迁移，不据此宣告O7.0完成。未push或新建tag。
+
+### O7.0 后处理与NSE测试移除无case loader
+
+checkpoint后处理不再调用RuntimeParams或默认构造完整SimConfig。
+局部Inputs复用Core的原文/类型/范围/重复键检查，只要求所选指标消费的
+显式几何/轴域或外力/初态字段；缺少无关演化参数不冒充完整科学配置。
+物理体积积分要求全部活动轴域及三个blocks计数，几何大小写保持兼容；
+Cartesian无参数的旧归一化报告模式保持原有标记和数学。
+external gravity解析参考不再为rho0/pressure0/velocity_x0填隐含值。
+未改动GridMetrics、体积积分、参考公式或误差预算。
+
+九种几何/维度测试现覆盖实际解析到积分路径；补充缺失轴域/计数、
+重复键、坏行、非法显式值、合法零值和缺失参考密度拒绝检查。
+checkpoint_conservation_metrics与checkpoint_temporal_comparison PASS。
+
+NSE参数测试从checkpoint序列化组移到完整声明configuration_input入口；
+原true/false/auto大小写、显式阈值及非法数值覆盖保留。
+删除旧空文件默认成功断言，新增缺use_nse及两项NSE阈值必须报缺项。
+configuration_input及checkpoint_compatibility PASS，原checkpoint指纹/
+兼容身份/HDF5往返/原生组分恢复检查保留。
+两次受影响CPU构建PASS，内存保护均无swap增长；最终diff-check PASS。
+测试临时HDF5仅在本机，不提交/上传原始科学数据。
+
+仍有CUDA测试的旧无case loader调用，尚未统一CUDA验证；运行构造、Setup
+来源/只读边界及其他旧输入/完整回归仍未完成。本步不宣告O7.0完成，
+不重复已通过无关Studio检查，不push、不建立tag。

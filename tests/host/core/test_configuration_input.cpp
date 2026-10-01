@@ -87,6 +87,48 @@ int main(int argc, char** argv) {
         require(has(inspect(no_endpoint), "tmax", "MISSING_PARAMETER"), "evolution omitted endpoint");
         inspect(no_endpoint, ConfigurationPurpose::InitialState).RequireDeclaredInputs();
 
+
+        // NSE parsing belongs to the complete input boundary, not checkpoint
+        // serialization. Missing burn controls must not re-create old defaults.
+        const auto burn_input = without(without(fixture, "use_burn"), "network_name")
+            + "use_burn=true\nnetwork_name=aprox19\ndt_init=1e-16\n"
+              "nuclearTempMin=1e9\nnuclearDensMin=1e-10\nsmallt=1e5\nsmallx=1e-20\n"
+              "enucDtFactor=1e30\node_solver=BE_NR\node_rtol=1e-4\node_atol=1e-8\n";
+        for (const std::string request : {"true", "false", "auto", "AuTo", "TRUE"}) {
+            const auto config = RuntimeParams::LoadText(burn_input + "use_nse=" + request
+                + "\nnseTempThreshold=5.25e9\nnseDensThreshold=2.75e6\n",
+                "declared-test", ConfigurationPurpose::Evolution);
+            const auto& burn = config.physics.burn;
+            require(burn.nse_auto == (request == "auto" || request == "AuTo"),
+                    "NSE auto parsing must be case-insensitive");
+            require(burn.use_nse == (request != "false"), "NSE explicit boolean changed");
+            require(burn.nseTempThreshold == 5.25e9 && burn.nseDensThreshold == 2.75e6,
+                    "NSE mode changed explicit activation thresholds");
+        }
+        require(has(inspect(burn_input), "use_nse", "MISSING_PARAMETER"),
+                "missing NSE selection was defaulted");
+        const auto missing_thresholds = inspect(burn_input + "use_nse=true\n");
+        require(has(missing_thresholds, "nseTempThreshold", "MISSING_PARAMETER")
+                && has(missing_thresholds, "nseDensThreshold", "MISSING_PARAMETER"),
+                "missing NSE thresholds were defaulted");
+        for (const std::string request : {"sometimes", "1"}) {
+            require(has(inspect(burn_input + "use_nse=" + request + "\n"),
+                        "use_nse", "INVALID_OPTION"), "invalid NSE option accepted");
+        }
+        for (const auto& [key, token] : {
+                std::pair{"nseTempThreshold", "nan"}, {"nseTempThreshold", "0"},
+                {"nseDensThreshold", "-1"}, {"nseDensThreshold", "inf"}}) {
+            auto invalid = burn_input + "use_nse=auto\nnseTempThreshold=5.25e9\nnseDensThreshold=2.75e6\n";
+            invalid = without(invalid, key) + key + "=" + token + "\n";
+            bool rejected = false;
+            try { (void)RuntimeParams::LoadText(invalid, "declared-test", ConfigurationPurpose::Evolution); }
+            catch (const ConfigInputError& error) {
+                rejected = std::any_of(error.diagnostics.begin(), error.diagnostics.end(),
+                    [&](const auto& item) { return item.key == key && item.code != "MISSING_PARAMETER"; });
+            }
+            require(rejected, "invalid explicit NSE threshold accepted or misreported as missing");
+        }
+
         const auto unique = std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
         const auto output = std::filesystem::temp_directory_path() / ("arch-input-no-output-" + unique);
         const auto text = without(fixture, "out_dir") + "out_dir=" + output.string() + "\n";
