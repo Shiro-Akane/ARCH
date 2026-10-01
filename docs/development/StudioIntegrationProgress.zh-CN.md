@@ -650,3 +650,14 @@ mainline_authority、initialization_probe、preview_cellular_2d）全部PASS，
 18.07秒；diff-check PASS。未运行演化/CUDA，未push/tag或上传raw。
 材料来源、case提供值/其余输入迁移、完整Core/Studio及后续3C/Jeans/RZ
 仍未完成；整体目标继续。
+
+### O7.0 材料来源实际路径审计
+
+新增MaterialInputProvenance.zh-CN.md：以b523e0ee源码与当前CPU binary核对
+14个注册模型的编译cpp SHA，全数一致；逐字段记录直接add_species常数和
+gamma/gas_cv输入，以及内置/生成网络各自属性所有者和共享源码SHA。
+确认三个模型当前不登记species，不能添加统一非空门槛或伪材料；
+内置1.6667与生成器5.0/3.0的既有差异不得顺手统一。
+本轮只读审计加来源记录，不是材料运行时provenance实现或科学验收。
+下一步按所有者提供逐属性来源并接准备边界，保持现有实际材料数值。
+未重复编译/已通过回归，无Setup/EOS/演化/CUDA、raw上传、push或完成tag。
