@@ -21,7 +21,16 @@ FIELDS = ['DENS', 'PRES', 'TEMP', 'VELX', 'ENER', 'EINT', 'VELY']
 def config(**values):
     # Use the real reference EOS: nuclear species have zero IdealGas Cv.
     values = {'eos_table_path': ROOT / 'EOS_toolkit/tables/helmholtz/helm_table.dat', **values}
-    return BASE + ('\n' + '\n'.join(f'{k} = {v}' for k, v in values.items()) + '\n').encode()
+    # Replace the assigned token instead of relying on last-duplicate-wins.
+    lines = []
+    for line in BASE.decode().splitlines():
+        key = line.split('=', 1)[0].strip() if '=' in line and not line.lstrip().startswith('#') else None
+        if key in values:
+            lines.append(f'{key} = {values.pop(key)}')
+        else:
+            lines.append(line)
+    lines.extend(f'{key} = {value}' for key, value in values.items())
+    return ('\n'.join(lines) + '\n').encode()
 
 
 class CellularPreviewContract(unittest.TestCase):
@@ -149,13 +158,13 @@ class CellularPreviewContract(unittest.TestCase):
             ({'shock_dir': 2}, 4, 'UNSUPPORTED_PREVIEW'),
             ({'shock_dir': -1}, 4, 'UNSUPPORTED_PREVIEW'),
             ({'nblockx2': 0}, 4, 'UNSUPPORTED_PREVIEW'),
-            ({'nblockx3': 1}, 4, 'UNSUPPORTED_PREVIEW'),
+            ({'nblockx3': 1, 'x3l_boundary_type': 'outflow', 'x3r_boundary_type': 'outflow'}, 4, 'UNSUPPORTED_PREVIEW'),
             ({'geometry': 'cylindrical'}, 4, 'UNSUPPORTED_PREVIEW'),
             ({'x2_max': 0}, 3, 'INVALID_CONFIGURATION'),
             ({'max_blocks': 1}, 3, 'INVALID_CONFIGURATION'),
             ({'shock_dir': '1e100'}, 3, 'INVALID_CONFIGURATION'),
-            ({'noiseAmplitude': 'nan'}, 5, 'SETUP_FAILED'),
-            ({'network_name': 'unknown'}, 5, 'SETUP_FAILED'),
+            ({'noiseAmplitude': 'nan'}, 3, 'INVALID_CONFIGURATION'),
+            ({'network_name': 'unknown'}, 3, 'INVALID_CONFIGURATION'),
         ]:
             with self.subTest(values=values):
                 result = self.invoke(config(**values), expected=code)
@@ -168,7 +177,7 @@ class CellularPreviewContract(unittest.TestCase):
         self.assertEqual(result['diagnostics'][0]['code'], 'EOS_FAILED')
         self.assertEqual(result['state']['eos']['status'], 'error')
         self.assertEqual(len(result['state']['species']), 19)
-        for values in [{'noiseAmplitude': 100}, {'velxPerturb': '1e308'}, {'eos_type': 'ideal'}]:
+        for values in [{'noiseAmplitude': 100}, {'velxPerturb': '1e308'}, {'eos_type': 'ideal', 'gamma': 1.4}]:
             result = self.invoke(config(**values), expected=6)
             self.assertEqual(result['stage'], 'sampling')
             self.assertIsNone(result['data'])
@@ -188,7 +197,7 @@ class CellularPreviewContract(unittest.TestCase):
 
     def test_real_reference_helmholtz_default_grid_and_cpu_only(self):
         table = ROOT / 'EOS_toolkit/tables/helmholtz/helm_table.dat'
-        payload = BASE + f'\neos_table_path = {table}\ncompute_backend = cuda\ncuda_device = 999\n'.encode()
+        payload = config(compute_backend='cuda', cuda_device=999)
         result = self.invoke(payload, [])
         self.validate_data(result, 128, 128)
         self.assertEqual(result['execution'], {'previewBackend': 'cpu', 'simulationReadiness': 'not_checked',

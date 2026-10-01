@@ -388,3 +388,26 @@ git diff --check PASS。未改科学公式、转换误差预算或执行时间�
 本次未把二维全组或该参考正向场比较声称为PASS。其他checkpoint/CUDA测试
 仍有旧无case loader调用，RuntimeParams的fallback和公开构造尚待完成迁移；
 不新增legacy mode，不宣告O7.0完成。未push或建立完成tag。
+
+### O7.0 Cellular 二维参考输入/回归迁移
+
+CellularPreview2D.par显式写入原loader提供的25个控制值，保留原Helmholtz、
+aprox19、burn、初态密度/温度/速度/扰动及网格。数值来源为原标准参数注册表
+及GlobalDefs所有者；GridConfig至SimConfig前的存储定义与8fc0dd25逐字一致。
+没有新增模板物理值、修改容差或给该init-only样例补演化终点。
+
+二维测试变体改为替换原赋值，不再依靠追加重复键覆盖。
+3D不支持测试补齐第三轴显式边界后测试真正的维度限制；
+IdealGas失败样例显式给出原gamma=1.4后仍验证采样失败。
+NaN和未知network按共同配置检查在Setup之前失败，错误预期同步为
+INVALID_CONFIGURATION；不保留旧绕到Setup才失败的路径。
+
+真实CPU preview_cellular_2d全部10项PASS（15.89s），含shock_dir=0/1、
+5x3与真实独立Init参考逐字段比较、扰动内外区、128x128默认及256x256上限、
+参数/采样失败、EOS/采样错误状态、8MiB响应预算、CPU-only和终止无输出。
+原比较rel_tol=2e-12、abs_tol=1e-12保持不变；这证明采样/转换链一致，
+不是独立物理真值验收。无timestep、Plotfile或checkpoint生成。
+此次只改输入、Python测试与文档，复用上一提交已构建的真实CPU程序；
+未重复无关Studio测试，git diff --check PASS。
+该结果替代上一节中旧Cellular参考输入的未迁移状态；其他旧Core输入和
+session/full suite尚未全部迁移，不据此宣告O7.0完成。未push或新建tag。
