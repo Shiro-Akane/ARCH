@@ -730,6 +730,9 @@ double SimConfig::GetCustomParam(
 Maintained case-facing operations are:
 
 ```cpp
+int add_species(std::string name, arch::config::MaterialValue A,
+                arch::config::MaterialValue Z, arch::config::MaterialValue gamma,
+                arch::config::MaterialValue Cv);
 int add_species(std::string name, double A, double Z, double gamma, double Cv);
 int GetSpeciesID(const std::string &name) const;
 int count() const;
@@ -739,6 +742,14 @@ double get_Z(int id) const;
 double get_gamma_ref(int id) const;
 double get_Cv_ref(int id) const;
 ```
+
+Application Setup registers provenance-bearing values using
+config.MaterialConstant(value, fieldOwner) for model definitions and
+config.MaterialInput(key) for resolved numeric inputs. The raw-double overload
+remains available for isolated mathematical species views, but its records do
+not pass application preparation provenance checks. No species are invented for
+cases that legitimately do not register them.
+
 
 IDs are registration-order indices. `GetSpeciesID` is case-insensitive and
 returns `-1` when absent. Property getters use unchecked IDs.

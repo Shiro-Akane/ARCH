@@ -46,6 +46,7 @@ public:
         Setup(config, species);
         arch::config::ValidateControls(config, species.count());
         config.RequireSamePreparation(before);
+        species.ValidateRegistrationSources();
         return arch::config::PreparedConfiguration(config, species, *this);
     }
 

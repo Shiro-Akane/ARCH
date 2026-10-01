@@ -100,8 +100,8 @@ public:
             const double cv = config.Get<double>("gas_cv", 717.5);
             if (!std::isfinite(cv) || cv <= 0.0)
                 throw std::invalid_argument("Gaussian gas_cv must be finite and positive");
-            m_bg_id = specs.add_species("BgGas", 1.0, 1.0, config.physics.gamma, cv);
-            m_ps_id = specs.add_species("PassiveGas", 1.0, 1.0, config.physics.gamma, cv);
+            m_bg_id = specs.add_species("BgGas", config.MaterialConstant(1.0, "BgGas.A"), config.MaterialConstant(1.0, "BgGas.Z"), config.MaterialInput("gamma"), config.MaterialInput("gas_cv"));
+            m_ps_id = specs.add_species("PassiveGas", config.MaterialConstant(1.0, "PassiveGas.A"), config.MaterialConstant(1.0, "PassiveGas.Z"), config.MaterialInput("gamma"), config.MaterialInput("gas_cv"));
         }
 
         default_X.assign(specs.count(), 0.0);

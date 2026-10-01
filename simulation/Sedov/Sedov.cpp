@@ -95,7 +95,7 @@ public:
         deposit_pressure_ = ambient_pressure_ +
             (config.physics.gamma - 1.0) * explosion_energy / injection_measure;
         gas_id_ = specs.add_species(
-            "SedovGas", 1.0, 1.0, config.physics.gamma, 1.0);
+            "SedovGas", config.MaterialConstant(1.0, "SedovGas.A"), config.MaterialConstant(1.0, "SedovGas.Z"), config.MaterialInput("gamma"), config.MaterialConstant(1.0, "SedovGas.Cv"));
 
         std::cout << "[Problem] Sedov regularized blast: dim=" << dim_
                   << ", radius=" << deposit_radius_

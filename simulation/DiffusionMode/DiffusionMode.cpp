@@ -70,10 +70,8 @@ public:
         const double half_cell_phase = arch::constants::math::pi * mode_ * cell_width / length_;
         cell_average_factor_ = std::sin(half_cell_phase) / half_cell_phase;
 
-        background_id_ = species.add_species("background", 1.0, 1.0,
-                                             config.physics.gamma, 717.5);
-        tracer_id_ = species.add_species("tracer", 1.0, 1.0,
-                                         config.physics.gamma, 717.5);
+        background_id_ = species.add_species("background", config.MaterialConstant(1.0, "background.A"), config.MaterialConstant(1.0, "background.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "background.Cv"));
+        tracer_id_ = species.add_species("tracer", config.MaterialConstant(1.0, "tracer.A"), config.MaterialConstant(1.0, "tracer.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "tracer.Cv"));
 
         std::cout << "[Problem] Diffusion cosine mode: X=" << mean_ << "+"
                   << amplitude_ << " cos(2*pi*" << mode_ << "*x/L)" << std::endl;

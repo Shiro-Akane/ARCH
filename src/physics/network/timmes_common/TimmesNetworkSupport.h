@@ -37,8 +37,13 @@ struct TimmesNetworkSupport {
     static void RegisterSpecies(SpeciesManager& specs)
     {
         for (int i = 0; i < Derived::NUM_SPECIES; ++i) {
-            specs.add_species(Derived::SPECIES_NAMES[i], Derived::AION[i],
-                              Derived::ZION[i], 1.6667, 0.0);
+            using arch::config::MaterialValue;
+            const std::string field = Derived::SPECIES_NAMES[i];
+            specs.add_species(field,
+                MaterialValue::Network(Derived::AION[i], Derived::NETWORK_NAME, field + ".AION"),
+                MaterialValue::Network(Derived::ZION[i], Derived::NETWORK_NAME, field + ".ZION"),
+                MaterialValue::NetworkConstant(1.6667, Derived::NETWORK_NAME, "adapter.gamma_ref"),
+                MaterialValue::NetworkConstant(0.0, Derived::NETWORK_NAME, "adapter.Cv_ref"));
         }
     }
 

@@ -23,7 +23,9 @@ struct ProbeProblem final : ProblemGenerator {
     void Setup(SimConfig& c, SpeciesManager& species) override {
         a = c.Get<double>("a", 0); b = c.Get<double>("b", 0);
         if (fail) throw std::runtime_error("setup error");
-        species.add_species("probe", 1, 1, c.physics.gamma, 1);
+        species.add_species("probe", c.MaterialConstant(1, "probe.A"),
+            c.MaterialConstant(1, "probe.Z"), c.MaterialInput("gamma"),
+            c.MaterialConstant(1, "probe.Cv"));
     }
     void SampleInitialPrimitive(const PointCoords&, PrimitiveData& p) const override {
         p.rho = product ? a*b : a;

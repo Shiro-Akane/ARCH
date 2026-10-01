@@ -87,7 +87,7 @@ public:
         ProblemHelper::SetupNetworkAndFractions(config,species,fractions_);
         if(species.count()==0){const double cv=config.Get<double>("gas_cv",1.2471693927e8);
             if(!std::isfinite(cv)||cv<=0.)throw std::invalid_argument("GravityBox gas_cv must be finite and positive");
-            species.add_species("gas",1.,0.,config.physics.gamma,cv);fractions_={1.};
+            species.add_species("gas",config.MaterialConstant(1., "gas.A"),config.MaterialConstant(0., "gas.Z"),config.MaterialInput("gamma"),config.MaterialInput("gas_cv"));fractions_={1.};
             if(hydrostatic_radial_) {
                 const double dimension=config.grid.geometry=="spherical"?3.:2.;
                 // dP/dr=-rho*4*pi*G*rho*r/d and

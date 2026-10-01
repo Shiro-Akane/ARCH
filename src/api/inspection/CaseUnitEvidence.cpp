@@ -20,7 +20,7 @@ struct ReviewedCase { const char* source; const char* sha256; std::map<std::stri
 // Audited against built-in Setup/Init expressions, NOT inferred from scalar
 // observations. Re-review after source edits; never auto-refresh these hashes.
 const std::map<std::string, ReviewedCase> reviewed_cases{
-    {"Sod", {"simulation/Sod/Sod.cpp", "f079c8272918dd02b39c3f3ad890abdb453523012a98edf94938fdf131337238", {
+    {"Sod", {"simulation/Sod/Sod.cpp", "7867565cdbe801769c0860de8d4a41254aaaa7be354951bcab69dd042a242738", {
         {"x_pos", "cm"},
         {"rho_left", "g/cm^3"},
         {"rho_right", "g/cm^3"},
@@ -39,7 +39,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"noiseAmplitude", "1"},
         {"shock_dir", "1"},
     }}},
-    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "f65735ace4bfc7b7e8e4ce69602b1527099c5e50147b5bf803dce592636f324d", {
+    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "b853316d7300ccd7fc69c5b5290d95c53055451837185073d0ea54c1a81028ff", {
         {"rho0", "g/cm^3"},
         {"p0", "erg/cm^3"},
         {"amp", "1"},
@@ -53,7 +53,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"w_amplitude", "cm/s"},
         {"gas_cv", "erg/(g*K)"},
     }}},
-    {"Sedov", {"simulation/Sedov/Sedov.cpp", "f9574da9e9ab762b55d7b128e28dfc7aadfed881c4bae838a2a6eaf07cc63be2", {
+    {"Sedov", {"simulation/Sedov/Sedov.cpp", "4f91941fabb5183233b7b211f1ff61eccaefa1496c4d1e161fe214b2ce3bbae6", {
         {"center_x", "cm"},
         {"center_y", "cm"},
         {"center_z", "cm"},
@@ -62,7 +62,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"ambient_pressure", "erg/cm^3"},
         {"explosion_energy", "dimension-dependent-energy"},
     }}},
-    {"RT", {"simulation/RTinstability/RT_instab.cpp", "1bf4351f7508ad08780f4eed73f2722a7ae42ed4f32888be5205ecd3f69f2bba", {
+    {"RT", {"simulation/RTinstability/RT_instab.cpp", "d0fcfcc78136d34dea31fff799892ac2c4ddaefcf1f60d5e4be33307b63b515a", {
         {"rho_heavy", "g/cm^3"},
         {"rho_light", "g/cm^3"},
         {"y_int", "cm"},
@@ -76,7 +76,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
-    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "fd990ae21c9349b4e4d78d1de33dfdd94160d01cdf823af375be0c7e5b43cb59", {
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "c594aed5e0a2bb24f09e351a0874e8fe4eac0a39747d0bd05e85c51800971b14", {
         {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
@@ -91,7 +91,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"pressure0", "erg/cm^3"},
         {"velocity_x0", "cm/s"},
     }}},
-    {"DiffusionMode", {"simulation/DiffusionMode/DiffusionMode.cpp", "b8e876946ba5d42e9110d4c80d672318a82c37b7120ea2a327e20c47cb19db77", {
+    {"DiffusionMode", {"simulation/DiffusionMode/DiffusionMode.cpp", "6f8cff66d7f5c995e6617260182b5997b3d82d5cb4daddb96b2b9811aa791c4b", {
         {"rho0", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"tracer_mean", "1"},

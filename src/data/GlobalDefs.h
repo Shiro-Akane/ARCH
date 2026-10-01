@@ -26,6 +26,7 @@
 #include "core/ArchPortability.h"
 #include "core/config/ParameterKeys.h"
 #include "data/StateDiagnostics.h"
+#include "data/MaterialValue.h"
 #include "interface/PreviewMetadata.h"
 #include "physics/constant/PhysicalConstants.h"
 
@@ -407,6 +408,9 @@ private:
     };
     // The checked loader is the only writer of model values and lexical identity.
     std::map<std::string, ResolvedCaseValue> resolved_case_values_;
+    std::map<std::string, arch::config::MaterialValue> material_inputs_;
+    std::string material_model_owner_, material_model_identity_;
+
 
 
 public:
@@ -448,6 +452,23 @@ public:
 
     // Enabled only in the isolated initialization inspector; no global logger or UI state.
     std::shared_ptr<arch::preview::ParameterReadTrace> parameter_reads;
+
+    arch::config::MaterialValue MaterialInput(const std::string& key) const {
+        RequireLoadedValues();
+        const auto found = material_inputs_.find(key);
+        if (found == material_inputs_.end())
+            throw ConfigValueError(key, "MISSING_MATERIAL_INPUT",
+                "Material registration requires a resolved numeric input.");
+        return found->second;
+    }
+    arch::config::MaterialValue MaterialConstant(double value, const std::string& field) const {
+        RequireLoadedValues();
+        if (material_model_owner_.empty() || material_model_identity_.empty() || field.empty())
+            throw ConfigValueError(field, "MISSING_MATERIAL_SOURCE",
+                "Model constants require registered source identity and a field owner.");
+        return {value, arch::config::MaterialOrigin::ModelDefinition,
+                material_model_owner_ + ":" + field, material_model_identity_, {}};
+    }
 
     std::string CaseInputKey(const std::string& key) const {
         const auto found = resolved_case_values_.find(key);

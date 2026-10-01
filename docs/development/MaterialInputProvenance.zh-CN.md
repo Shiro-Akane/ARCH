@@ -86,3 +86,17 @@ GenerateNetwork.py 当前固定传入 gamma_ref=5.0/3.0、Cv_ref=0.0。
   species。纯数学单元的临时 SpeciesManager 与完整应用准备应保持边界。
 - 本记录不宣称材料/EOS 科学验证完成；所有物理定义、输入缩放和误差门槛
   继续由维护者确认。整体配置、Studio、Jeans/RZ 交付仍未完成。
+
+## 运行时接线进展
+
+上述表格保留其明确的审计基线。随后实现 MaterialValue 和准备边界检查：
+模型固定值保留其加载的注册源码身份，输入值引用解析记录的键，
+网络表与网络适配器常数分别记录。登记数值被改写或来源遗漏时准备失败；
+不登记species的既有模型仍合法。所有原数值保留，未修改归一化。
+
+六个直接材料模型仅将原实参包装成来源值；在逐项确认数值/输入对应后，
+更新CaseUnitEvidence绑定的cpp SHA。CPU binary的14个编译来源均匹配源码，
+reviewed unit evidence均为current。此代码审阅不等于维护者的科学验收。
+
+网络owner label不是实际网络包SHA或完整构建manifest的验证声明。
+完整JSON/UI来源显示、网络包身份以及更下层直接C++入口仍有后续工作。

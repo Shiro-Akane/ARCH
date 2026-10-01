@@ -248,8 +248,15 @@ struct {cls} {{
     static double energy_weight(int index) {{ return ENERGY_WEIGHTS[index]; }}
     static std::string get_network_name() {{ return NETWORK_NAME; }}
     static void RegisterSpecies(SpeciesManager& specs) {{
-        for (int i = 0; i < NUM_SPECIES; ++i)
-            specs.add_species(SPECIES_NAMES[i], AION[i], ZION[i], 5.0/3.0, 0.0);
+        for (int i = 0; i < NUM_SPECIES; ++i) {{
+            using arch::config::MaterialValue;
+            const std::string field = SPECIES_NAMES[i];
+            specs.add_species(field,
+                MaterialValue::Network(AION[i], NETWORK_NAME, field + ".AION"),
+                MaterialValue::Network(ZION[i], NETWORK_NAME, field + ".ZION"),
+                MaterialValue::NetworkConstant(5.0/3.0, NETWORK_NAME, "adapter.gamma_ref"),
+                MaterialValue::NetworkConstant(0.0, NETWORK_NAME, "adapter.Cv_ref"));
+        }}
     }}
     static void SetupInitialFractions(SimConfig& config, const SpeciesManager& specs,
                                       std::vector<double>& output) {{

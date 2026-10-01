@@ -109,6 +109,22 @@ public:
 private:
     static void CaptureResolvedCaseValues(SimConfig& config,
                                           const arch::config::ConfigurationInput& input) {
+        config.material_model_owner_ = input.case_id + ":" + input.case_source_file;
+        config.material_model_identity_ = input.case_source_sha256;
+        const auto material_inputs = [&](const auto& records) {
+            for (const auto& [key, record] : records) {
+                if (!record.resolved) continue;
+                std::visit([&](const auto& value) {
+                    using T = std::decay_t<decltype(value)>;
+                    if constexpr (std::is_same_v<T, int> || std::is_same_v<T, double>)
+                        config.material_inputs_.emplace(key, arch::config::MaterialValue{
+                            static_cast<double>(value), arch::config::MaterialOrigin::ResolvedInput,
+                            "resolved:" + input.case_id, {}, key});
+                }, *record.resolved);
+            }
+        };
+        material_inputs(input.standard.parameters);
+        material_inputs(input.model.parameters);
         const auto capture = [&](const auto& records, bool composition = false) {
             for (const auto& [key, record] : records) {
                 SimConfig::ResolvedCaseValue value;

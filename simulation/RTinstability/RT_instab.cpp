@@ -75,8 +75,8 @@ public:
 
         // 4. Setup pseudo-species to track the mixing interfaces
         // Using the global gamma (e.g., 1.4). CV is arbitrary for ideal gas tracking.
-        g_sp_light = specs.add_species("LightFluid", 1.0, 1.0, config.physics.gamma, 717.5);
-        g_sp_heavy = specs.add_species("HeavyFluid", 4.0, 2.0, config.physics.gamma, 717.5);
+        g_sp_light = specs.add_species("LightFluid", config.MaterialConstant(1.0, "LightFluid.A"), config.MaterialConstant(1.0, "LightFluid.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "LightFluid.Cv"));
+        g_sp_heavy = specs.add_species("HeavyFluid", config.MaterialConstant(4.0, "HeavyFluid.A"), config.MaterialConstant(2.0, "HeavyFluid.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "HeavyFluid.Cv"));
 
         std::cout << "[Problem] Rayleigh-Taylor Instability Setup Complete.\n"
                   << "          Interface at y=" << g_y_int << "\n"

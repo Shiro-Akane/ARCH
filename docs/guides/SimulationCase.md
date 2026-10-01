@@ -272,7 +272,9 @@ public:
             throw std::invalid_argument("GaussianDensity parameters must be positive.");
         }
         gas_id_ = specs.add_species(
-            "Gas", 1.0, 1.0, config.physics.gamma, 1.0);
+            "Gas", config.MaterialConstant(1.0, "Gas.A"),
+            config.MaterialConstant(1.0, "Gas.Z"), config.MaterialInput("gamma"),
+            config.MaterialConstant(1.0, "Gas.Cv"));
     }
 
     void Init(const PointCoords &point, PrimitiveData &out) const

@@ -156,3 +156,18 @@ declared zero. Built-in and newly generated network adapters share only this
 input step; their existing floor/normalization calculations are unchanged.
 Previously generated external packages require regeneration before claiming
 this input boundary. Full material-registration provenance remains separate.
+
+### Material registration provenance
+
+Application preparation now validates Host-side property provenance for every
+registered species. ModelDefinition records the loaded case source identity;
+ResolvedInput references its numeric configuration key; NetworkTable and
+NetworkDefinition distinguish tabulated nuclear properties from adapter constants.
+The record keeps the registered numeric value and rejects later mismatches.
+An empty species registry remains valid for existing species-free models.
+
+MaterialInput and MaterialConstant construct the input/model records from the
+checked configuration. Numeric species views remain unchanged. Network owner
+labels do not assert that an external package or complete build manifest has
+been verified. The current JSON species snapshot still reports index/name only;
+full material provenance presentation is not implemented by this change.

@@ -72,7 +72,7 @@ public:
         }
 
         gas_id_ = specs.add_species(
-            "SodGas", 1.0, 1.0, config.physics.gamma, 1.0);
+            "SodGas", config.MaterialConstant(1.0, "SodGas.A"), config.MaterialConstant(1.0, "SodGas.Z"), config.MaterialInput("gamma"), config.MaterialConstant(1.0, "SodGas.Cv"));
 
         std::cout << "[Problem] Sod shock tube: x0=" << interface_x_
                   << ", left=(" << rho_left_ << ", " << pressure_left_

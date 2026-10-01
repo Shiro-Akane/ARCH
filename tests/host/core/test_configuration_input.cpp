@@ -376,8 +376,34 @@ int main(int argc, char** argv) {
                 && std::get<double>(*composition.at("xc12").resolved) == 0.5
                 && !composition.at("xc12").locations.front().source.empty(),
                 "file composition lost explicit input or filename");
+        SpeciesManager material;
+        material.add_species("checked", config.MaterialConstant(1.0, "checked.A"),
+            config.MaterialConstant(1.0, "checked.Z"), config.MaterialInput("gamma"),
+            config.MaterialConstant(1.0, "checked.Cv"));
+        material.ValidateRegistrationSources();
+        require(material.species_list.front().provenance[2].parameter_key == "gamma"
+                && material.species_list.front().provenance[0].source_identity == "test",
+                "material lost input key or registered model identity");
+        material.species_list.front().Cv_ref = 2.0;
+        bool material_rejected = false;
+        try { material.ValidateRegistrationSources(); }
+        catch (const std::invalid_argument&) { material_rejected = true; }
+        require(material_rejected, "material mutation retained old provenance");
+        SpeciesManager unattributed;
+        unattributed.add_species("unattributed", 1, 1, 1.4, 1);
+        material_rejected = false;
+        try { unattributed.ValidateRegistrationSources(); }
+        catch (const std::invalid_argument&) { material_rejected = true; }
+        require(material_rejected, "raw mathematical species claimed application provenance");
+        SpeciesManager{}.ValidateRegistrationSources(); // Existing species-free cases remain legal.
         SpeciesManager network_species;
         NetAprox13::RegisterSpecies(network_species);
+        network_species.ValidateRegistrationSources();
+        require(network_species.species_list.front().provenance[0].origin
+                    == MaterialOrigin::NetworkTable
+                && network_species.species_list.front().provenance[2].origin
+                    == MaterialOrigin::NetworkDefinition,
+                "network table and adapter constant origins were conflated");
         auto network_input = bd;
         const auto raw_fractions = arch::network::ReadInitialComposition(network_input, network_species);
         std::vector<double> expected(network_species.count(), 0.0);

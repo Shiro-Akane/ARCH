@@ -661,3 +661,24 @@ gamma/gas_cv输入，以及内置/生成网络各自属性所有者和共享源�
 本轮只读审计加来源记录，不是材料运行时provenance实现或科学验收。
 下一步按所有者提供逐属性来源并接准备边界，保持现有实际材料数值。
 未重复编译/已通过回归，无Setup/EOS/演化/CUDA、raw上传、push或完成tag。
+
+### O7.0 材料来源接入准备结果
+
+新增Host侧MaterialValue，区分ModelDefinition、ResolvedInput、NetworkTable
+与NetworkDefinition。六个直接材料模型保留原常数与gamma/gas_cv数值，
+经MaterialConstant/MaterialInput附带注册源码身份或解析键；
+内置/生成网络的AION/ZION和适配器常数分别标记。未改任何原材料数值、
+归一化或设备数值视图。网络owner仍不是已验证网络包hash。
+
+SetupChecked在发布PreparedConfiguration前核对登记来源与数值；
+缺少来源/登记后改值拒绝，零species的原模型保留。数学单元的raw double
+重载不再被当成有应用provenance。测试覆盖数值改写、未归属登记、输入键/
+模型identity、网络table/constant区分；原失败与实际Cellular初始化继续通过。
+公开中英文Reference及材料示例更新，API/UI完整来源显示仍未实现。
+
+CPU构建PASS，28并发最低可用约14.1GiB，无swap增长；
+八项CTest（入口/v3/parameter_reads/生成器/configuration_input/
+mainline_authority/initialization_probe/真实Cellular）全PASS，18.78秒。
+逐项review仅包装材料实参后更新六个cpp单位证据SHA；
+真实--list-cases确认14个compiledSourceSha一致且单位证据均current。
+diff-check PASS。未演化/CUDA/raw上传/push/tag；整体目标继续。

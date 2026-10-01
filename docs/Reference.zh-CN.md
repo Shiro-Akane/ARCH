@@ -545,6 +545,9 @@ double SimConfig::GetCustomParam(
 维护中的算例侧操作为：
 
 ```cpp
+int add_species(std::string name, arch::config::MaterialValue A,
+                arch::config::MaterialValue Z, arch::config::MaterialValue gamma,
+                arch::config::MaterialValue Cv);
 int add_species(std::string name, double A, double Z, double gamma, double Cv);
 int GetSpeciesID(const std::string &name) const;
 int count() const;
@@ -554,6 +557,12 @@ double get_Z(int id) const;
 double get_gamma_ref(int id) const;
 double get_Cv_ref(int id) const;
 ```
+
+应用 Setup 使用带来源的值登记材料：模型定义使用
+config.MaterialConstant(value, fieldOwner)，已解析数值输入使用
+config.MaterialInput(key)。原 double 重载保留给独立数学组分视图，
+其记录不能通过应用准备的来源检查。合法的不登记 species 的模型不会被补造组分。
+
 
 ID 是注册顺序索引。`GetSpeciesID` 不区分大小写，缺失时返回 `-1`；属性 getter 不检查 ID。
 
