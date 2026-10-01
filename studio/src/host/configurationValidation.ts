@@ -64,7 +64,7 @@ export function validateConfigurationSchema(v:unknown):ConfigurationSchema {
 export function validateConfigurationInspection(v:unknown,expected:{caseId:string;configRevision:string;requestId:string}):ConfigurationInspection {
  version(v);
  if(!record(v)||v.kind!=='configuration-inspection'||!['ok','error'].includes(String(v.status))||!record(v.identity)||!Object.entries(expected).every(([k,x])=>record(v.identity)&&v.identity[k]===x)||!record(v.execution)||v.execution.setup!=='not_executed'||v.execution.simulationReadiness!=='not_checked'||v.execution.eos!=='not_loaded'||v.execution.filesystem!=='not_accessed'||v.execution.cuda!=='not_initialized'||!record(v.coverage)||!['standardParametersComplete','auxiliaryParametersComplete','caseParametersComplete','conditionsComplete','diagnosticsComplete'].every(k=>typeof (v.coverage as Record<string,unknown>)[k]==='boolean')||!record(v.completeness)||v.completeness.scope!=='declared-configuration-before-setup'||!['complete','incomplete','invalid','undetermined'].includes(String(v.completeness.state))||!Array.isArray(v.diagnostics)||v.diagnostics.length>65536)fail('Invalid Core inspection contract or identity.');
- if(v.amrIndicators!==undefined)fail('Unsupported configuration derived metadata; update the matching Core/Studio contract.');
+ if(v.amrIndicators!==undefined&&v.amrIndicators!==null)validateAmrIndicators(v.amrIndicators);
  if(v.diffusion!==undefined&&v.diffusion!==null)validateDiffusion(v.diffusion);
  if(!['syntax','typed-input','conditional-resolution'].includes(String(v.execution.validationStage))||!['checked','not_checked'].includes(String(v.execution.caseRegistration))||!['checked','not_checked'].includes(String(v.execution.caseDeclarations)))fail('Invalid configuration execution coverage.');
  const omitted=v.parameters===undefined&&v.status==='error'&&Object.values(v.coverage).every(x=>x===false)&&v.diagnostics.some(d=>record(d)&&d.code==='RESPONSE_TOO_LARGE');
@@ -93,7 +93,7 @@ export function validateConfigurationInspection(v:unknown,expected:{caseId:strin
  if(v.status==='ok'&&(v.completeness.state!=='complete'||!Object.values(v.coverage).every(x=>x===true)||v.diagnostics.some(d=>record(d)&&d.severity==='error')))fail('Incomplete inspection claimed success.');
  if(v.status==='error'&&v.completeness.state==='complete')fail('Error inspection claimed completeness.');
  if(v.coordinates!==undefined&&v.coordinates!==null)validateCoordinates(v.coordinates);
- return {...v,parameters,coordinates:v.coordinates??undefined,diffusion:v.diffusion??undefined} as unknown as ConfigurationInspection;
+ return {...v,parameters,coordinates:v.coordinates??undefined,diffusion:v.diffusion??undefined,amrIndicators:v.amrIndicators??undefined} as unknown as ConfigurationInspection;
 }
 export function validateSchemaResponse(v:unknown,scope:ConfigurationBuildScope):SchemaResponse {
  if(!record(v)||v.protocolVersion!==PROTOCOL_VERSION||!sameBuildScope(v as unknown as ConfigurationBuildScope,scope))throw new Error('Schema build identity mismatch.');
@@ -130,5 +130,16 @@ function validateDiffusion(v:unknown){
   if(!record(c)||c.coefficientKey!==coefficients[i]||c.toggleKey!==toggles[i]
    ||c.unit!=='cm^2/s'||typeof c.constantInputAllowed!=='boolean')
    throw new Error('Invalid Core diffusion channel.');
+ }
+}
+
+function validateAmrIndicators(v:unknown){
+ if(!record(v)||typeof v.speciesResolution!=='string'||!Array.isArray(v.choices)||v.choices.length>64)
+  throw new Error('Invalid Core AMR metadata.');
+ const seen=new Set<string>();
+ for(const c of v.choices){
+  if(!record(c)||typeof c.value!=='string'||seen.has(c.value)||typeof c.available!=='boolean'
+   ||typeof c.selected!=='boolean'||!nullableText(c.reason))throw new Error('Invalid Core AMR indicator.');
+  seen.add(c.value);
  }
 }

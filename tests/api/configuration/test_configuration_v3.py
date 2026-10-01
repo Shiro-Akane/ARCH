@@ -370,6 +370,22 @@ class ConfigurationV3(unittest.TestCase):
         self.assertFalse(off["diffusion"]["enabled"])
         self.assertEqual(off["diffusion"]["forbiddenExplicitKeys"], [])
 
+    def test_amr_summary_shares_runtime_filtering_without_default_selection(self):
+        text = edit(BASE, "refine_var", "DENS+VELY+JENS+ENUC+He4")
+        data = self.inspect(text)
+        choices = {x["value"]: x for x in data["amrIndicators"]["choices"]}
+        self.assertTrue(choices["DENS"]["selected"])
+        for key in ["VELY", "JENS", "ENUC"]:
+            self.assertFalse(choices[key]["available"])
+            self.assertFalse(choices[key]["selected"])
+        self.assertEqual(data["amrIndicators"]["namedSpecies"], ["he4"])
+        for key in ["geometry", "nblockx2", "use_burn"]:
+            self.assertIsNone(self.inspect(edit(text, key), expected=3)["amrIndicators"])
+        empty = self.inspect(edit(BASE, "refine_var", "JENS"), expected=3)
+        self.assertIsNone(empty["amrIndicators"])
+        self.assertIn("INVALID_REFINEMENT_SELECTION", {d["code"] for d in empty["diagnostics"]})
+        self.assertEqual(records(empty)["refine_var"]["parsedValue"], "JENS")
+
     def test_bounded_error_keeps_identity(self):
         text = BASE + "".join(f"unknown_key_{i}=0\n" for i in range(30000))
         self.assertLess(len(text.encode()), 1024 * 1024)

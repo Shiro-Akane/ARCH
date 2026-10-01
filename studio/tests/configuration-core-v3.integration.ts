@@ -33,11 +33,13 @@ try{
    assert.equal(result.core.coordinates?.dimension,1);
    assert.equal(result.core.diffusion?.enabled,false);
    assert.equal(result.core.diffusion?.source,'constant');
+   assert.equal(result.core.amrIndicators?.choices.find(c=>c.value==='DENS')?.selected,true);
    assert.equal(result.core.coordinates?.axes[0].unit,'cm');
   }
   if(kind==='incomplete'){
    assert.equal(result.core.coordinates,undefined);
    assert.equal(result.core.diffusion,undefined);
+   assert.equal(result.core.amrIndicators,undefined);
    const value=result.core.parameters.find(p=>p.key==='cfl')!;
    assert.equal(value.parsedValue,null);assert.equal(value.resolvedValue,null);
   }

@@ -203,3 +203,12 @@ A forbidden coefficient remains in the input records with its diagnostic; the
 summary does not remove or normalize it. State-dependent source is not an EOS
 evaluation or proof of transport readiness. Host validates the summary before
 exposing it and maps null to an absent optional object.
+
+### Partial AMR selection summary
+
+Inspection amrIndicators uses the same host-only selection parser and conditional
+filtering as RuntimeParams. It requires resolved topology, use_burn and refine_var;
+otherwise the summary is null. It does not construct a hierarchy or resolve case
+species. With known dependencies, an alias or selection containing no usable
+indicator returns INVALID_REFINEMENT_SELECTION and preserves the input token.
+Current JENS unavailability is retained; no substitute indicator is selected.

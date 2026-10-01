@@ -66,16 +66,15 @@ Json CoordinateMetadata(const GridConfig& g, const std::string& system) {
         {"thirdAxisRequiresSecond", true}, {"unitSystem", system}});
 }
 /** Summarize AMR controls for the resolved configuration. */
-Json RefinementMetadata(const SimConfig& c) {
-    const auto& a = c.amr;
+Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled) {
     struct Item { const char* name; bool selected; const char* unavailable; };
     const Item items[] = {{"DENS", a.refine_on_rho, ""}, {"PRES", a.refine_on_p, ""},
         {"TEMP", a.refine_on_temp, ""}, {"VELX", a.refine_on_velx, ""},
-        {"VELY", a.refine_on_vely, c.grid.dim < 2 ? "requires at least 2D" : ""},
-        {"VELZ", a.refine_on_velz, c.grid.dim < 3 ? "requires 3D" : ""},
+        {"VELY", a.refine_on_vely, dimension < 2 ? "requires at least 2D" : ""},
+        {"VELZ", a.refine_on_velz, dimension < 3 ? "requires 3D" : ""},
         {"ENER", a.refine_on_eng, ""}, {"VORT", a.refine_on_vorticity, ""},
         {"DIVV", a.refine_on_div_v, ""}, {"ENTR", a.refine_on_entropy, ""},
-        {"ENUC", a.refine_on_enuc, !c.physics.burn.use_burn ? "requires reactions" : ""},
+        {"ENUC", a.refine_on_enuc, !burn_enabled ? "requires reactions" : ""},
         {"JENS", a.refine_on_jeans, "Jeans diagnostic is not implemented"},
         {"SPECIES", a.refine_all_species, ""}};
     auto choices = Json::array();
@@ -86,6 +85,9 @@ Json RefinementMetadata(const SimConfig& c) {
     for (const auto& name : a.refine_species_names) names.push(name);
     return Json::object({{"choices", choices}, {"namedSpecies", names},
         {"speciesResolution", "requires case Setup"}, {"separator", ","}, {"alternativeSeparator", "+"}});
+}
+Json RefinementMetadata(const SimConfig& c) {
+    return RefinementMetadata(c.amr, c.grid.dim, c.physics.burn.use_burn);
 }
 /** Expose the applicable diffusion controls and their state. */
 Json DiffusionMetadata(const std::string& eos_type, bool enabled) {

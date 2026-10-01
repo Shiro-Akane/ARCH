@@ -25,6 +25,7 @@
 #include "core/config/StandardParameters.h"
 #include "core/config/ConfigValidation.h"
 #include "core/config/ConfigurationInput.h"
+#include "core/config/RefinementSelection.h"
 
 class RuntimeParams
 {
@@ -303,70 +304,7 @@ private:
         if (cfg.amr.regrid_interval < 1)
             throw std::invalid_argument("regrid_interval must be positive.");
         assign(cfg.amr.refine_var, "refine_var");
-        std::replace(cfg.amr.refine_var.begin(), cfg.amr.refine_var.end(), '+', ',');
-        cfg.amr.refine_on_rho = false;
-        cfg.amr.refine_on_p = false;
-        cfg.amr.refine_on_temp = false;
-        cfg.amr.refine_on_velx = false;
-        cfg.amr.refine_on_vely = false;
-        cfg.amr.refine_on_velz = false;
-        cfg.amr.refine_on_eng = false;
-        cfg.amr.refine_on_vorticity = false;
-        cfg.amr.refine_on_div_v = false;
-        cfg.amr.refine_on_entropy = false;
-        cfg.amr.refine_on_enuc = false;
-        cfg.amr.refine_on_jeans = false;
-        cfg.amr.refine_on_species = false;
-        cfg.amr.refine_all_species = false;
-        cfg.amr.refine_species_names.clear();
-        std::stringstream refine_stream(cfg.amr.refine_var);
-        std::string refine_token;
-        while (std::getline(refine_stream, refine_token, ',')) {
-            const size_t first = refine_token.find_first_not_of(" \t");
-            const size_t last = refine_token.find_last_not_of(" \t");
-            if (first == std::string::npos) continue;
-            refine_token = refine_token.substr(first, last - first + 1);
-            std::string canonical = refine_token;
-            std::transform(canonical.begin(), canonical.end(), canonical.begin(),
-                [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
-            if (canonical == "DENS") cfg.amr.refine_on_rho = true;
-            else if (canonical == "PRES") cfg.amr.refine_on_p = true;
-            else if (canonical == "TEMP") cfg.amr.refine_on_temp = true;
-            else if (canonical == "VELX") cfg.amr.refine_on_velx = true;
-            else if (canonical == "VELY") cfg.amr.refine_on_vely = true;
-            else if (canonical == "VELZ") cfg.amr.refine_on_velz = true;
-            else if (canonical == "ENER") cfg.amr.refine_on_eng = true;
-            else if (canonical == "VORT") cfg.amr.refine_on_vorticity = true;
-            else if (canonical == "DIVV") cfg.amr.refine_on_div_v = true;
-            else if (canonical == "ENTR") cfg.amr.refine_on_entropy = true;
-            else if (canonical == "ENUC") cfg.amr.refine_on_enuc = true;
-            else if (canonical == "JENS") cfg.amr.refine_on_jeans = true;
-            else if (canonical == "SPECIES") { cfg.amr.refine_on_species = true; cfg.amr.refine_all_species = true; }
-            else if (canonical == "VORTICITY" || canonical == "DIV_V" || canonical == "ENTROPY" || canonical == "JEANS" ||
-                     canonical == "RHO" || canonical == "P" || canonical == "U" || canonical == "V" || canonical == "W" || canonical == "ENG" || canonical == "ALL")
-                throw std::invalid_argument("Use a canonical AMR indicator name instead of: " + refine_token);
-            else {
-                std::transform(refine_token.begin(), refine_token.end(), refine_token.begin(),
-                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                cfg.amr.refine_on_species = true;
-                cfg.amr.refine_species_names.push_back(refine_token);
-            }
-        }
-        const auto warn_amr_disabled = [](const std::string& name, const std::string& reason) {
-            std::cerr << "[RuntimeParams] Warning: AMR indicator " << name << " is disabled: " << reason << std::endl;
-        };
-        if (cfg.amr.refine_on_enuc && !cfg.physics.burn.use_burn) {
-            warn_amr_disabled("ENUC", "the nuclear reaction network is not enabled"); cfg.amr.refine_on_enuc = false;
-        }
-        if (cfg.amr.refine_on_vely && cfg.grid.dim < 2) { warn_amr_disabled("VELY", "the simulation is one-dimensional"); cfg.amr.refine_on_vely = false; }
-        if (cfg.amr.refine_on_velz && cfg.grid.dim < 3) { warn_amr_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.amr.refine_on_velz = false; }
-        if (cfg.amr.refine_on_jeans) { warn_amr_disabled("JENS", "the Jeans refinement/plot diagnostic is not implemented"); cfg.amr.refine_on_jeans = false; }
-        const auto has_amr_indicator = [&] {
-            return cfg.amr.refine_on_rho || cfg.amr.refine_on_p || cfg.amr.refine_on_temp || cfg.amr.refine_on_velx ||
-                cfg.amr.refine_on_vely || cfg.amr.refine_on_velz || cfg.amr.refine_on_eng || cfg.amr.refine_on_vorticity ||
-                cfg.amr.refine_on_div_v || cfg.amr.refine_on_entropy || cfg.amr.refine_on_enuc || cfg.amr.refine_on_jeans || cfg.amr.refine_on_species;
-        };
-        if (!has_amr_indicator()) throw std::invalid_argument("refine_var has no usable AMR indicator for this configuration.");
+        arch::config::ResolveRefinementSelection(cfg.amr, cfg.grid.dim, cfg.physics.burn.use_burn);
         assign(cfg.amr.refine_threshold, "refine_threshold");
         assign(cfg.amr.derefine_threshold, "derefine_threshold");
         // Time limits and output configuration.

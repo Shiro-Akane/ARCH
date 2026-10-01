@@ -864,3 +864,19 @@ lint/typecheck、diff-check PASS。受共享helper影响的普通Preview与
 PreviewSession两个CTest PASS（7.31秒，原演化oracle保持opt-in跳过）。
 未运行演化/CUDA/push/tag/raw上传。动态AMR及旧API套件仍待收敛，
 这些局部成功不代表配置阶段或整体目标已完成。
+
+### O7.0 部分输入 AMR 指标摘要与运行解析统一
+
+将RuntimeParams原指标token解析/过滤原样抽到RefinementSelection.h；
+运行和inspection共享，Preview/inspection共用RefinementMetadata重载。
+缺拓扑/use_burn/refine_var依赖返回null，不创建默认SimConfig或网格。
+alias/无可用指标现返回INVALID_REFINEMENT_SELECTION，保留原输入；
+只选JENS不回退DENS。namedSpecies仍明确需要case Setup，不冒充已验证。
+Host校验choices唯一键/bool/reason并规范化null，既有UI摘要重新接通。
+
+首编因项目Json无is_null接口失败；改为直接检查typed依赖后增量通过。
+最终配置v3 23/23 PASS（2.246秒），含过滤、缺依赖、JENS-only明确失败。
+抽取后configuration_input、普通Preview、PreviewSession三CTest PASS
+（7.88秒；随后仅inspection错误报告修改），真实Core/Host四类请求PASS。
+最终Studio180/180、lint/typecheck及diff-check PASS。受控构建无swap增长。
+未演化/CUDA/push/tag/raw上传。旧API测试迁移、完整配置目标与后续工作未完成。
