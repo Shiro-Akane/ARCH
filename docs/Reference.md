@@ -181,7 +181,7 @@ The executable follows this lifecycle:
 
 ```text
 main(argc, argv)
-  -> RuntimeParams::Load(.par)
+  -> RuntimeParams::Load(.par, case_id)
   -> ProblemRegistry::Create(problem name)
   -> case.Setup(config, species)
   -> DispatchSolver

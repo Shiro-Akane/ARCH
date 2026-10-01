@@ -437,3 +437,34 @@ configuration_input及checkpoint_compatibility PASS，原checkpoint指纹/
 仍有CUDA测试的旧无case loader调用，尚未统一CUDA验证；运行构造、Setup
 来源/只读边界及其他旧输入/完整回归仍未完成。本步不宣告O7.0完成，
 不重复已通过无关Studio检查，不push、不建立tag。
+
+### O7.0 删除无case RuntimeParams入口
+
+删除Load(filename)及LoadText(text, reads)重载；活动生产/测试加载均必须
+提供case ID，并经过AnalyzeConfigurationInput/RequireDeclaredInputs。
+不增加strict/legacy模式。历史results中的源码快照保留原貌，不能当成
+新接口可直接编译的活动调用方；文档加载链签名同步。
+
+CPU mainline_authority现在以具名完整runtime-authority.par构造测试变体，
+不由loader补齐科学输入；保留合法大小写/别名/活动边界要求与数值helper预算。
+非法选项在加载时拒绝，非活动轴的非法显式边界同样拒绝；
+另外保留程序化坏配置在dispatch被拒绝的测试。合法非活动边界仍不进入
+活动执行要求。log_dir派生/显式覆盖检查仍使用实际加载后的配置。
+
+BurnOneZone声明抽到同目录Configuration.h，生产模型和controller fixture
+复用同一声明/组分来源，无模型构造或Setup执行。更新该case源码SHA证据。
+最后一个CUDA witness源码调用改为case-aware完整配置，并通过typed
+numerics读取tstep_change_factor，不再用标准键Get。CUDA目标的声明链接/
+include同步，但本轮未编译或运行CUDA，不将其标为GPU通过。
+
+冻结bd.par保持逐字不变。新增bd-config-v3.par，显式记录原有效
+min_eint=1e-10、hll_wave_speed=roe、eos_coulomb_mult=1.0；
+CPU configuration_input从该真实文件核对BD/rtol/atol/步长增长/密度/温度。
+验证README中英文说明迁移状态，不改写历史科学结果或预算。
+
+最终CPU ARCH及相关目标构建PASS；28并发最低可用约15GiB，无swap增长。
+4项CTest PASS：mainline_authority、configuration_input、
+configuration_entry_contract、configuration_v3_contract。diff-check PASS，
+冻结bd.par diff为空。无科学时间演化、原始输出上传、push或完成tag。
+RuntimeParams内部仍有transitional fallback，SimConfig/Setup只读生命周期
+与来源追踪仍未完成；后续继续受控构造，不能据本提交宣布O7.0完成。

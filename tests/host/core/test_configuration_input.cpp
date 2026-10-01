@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include "core/config/RuntimeParams.h"
+#include "fixtures/config/burn_controller_input.h"
 
 namespace {
 void require(bool value, const char* message) {
@@ -186,6 +187,14 @@ int main(int argc, char** argv) {
                 [](const auto& item) { return item.code == "UNKNOWN_CASE"; });
         }
         require(rejected, "unknown case accepted");
+        const auto bd = burn_controller_fixture::load(ARCH_SOURCE_DIR);
+        require(bd.numerics.tstep_change_factor == 2.0
+                && bd.physics.burn.odeconfig.ode_solver == "BD"
+                && bd.physics.burn.odeconfig.rtol == 1e-6
+                && bd.physics.burn.odeconfig.atol == 1e-10
+                && bd.Get<double>("rho0", -1.0) == 1e7
+                && bd.Get<double>("temperature0", -1.0) == 3e9,
+                "actual BD controller input values changed");
         std::cout << "PASS: aggregate declared loading without model or scientific resources\n";
         return 0;
     } catch (const std::exception& error) {

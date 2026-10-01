@@ -2,7 +2,7 @@
 // Strang-half-step controller. The full-program matrix remains authoritative
 // for hydro, block reduction and persistence; this test localizes its first
 // divergence without introducing another mathematical implementation.
-#include "core/config/RuntimeParams.h"
+#include "fixtures/config/burn_controller_input.h"
 #include "cuda/microphysics/eos/owners/helm_eos_device_owner.h"
 #include "cuda/microphysics/microphysics_api.h"
 #include "numerics/burnsolver/ode/ode_bd.h"
@@ -71,8 +71,8 @@ int main() {
     if (cudaGetDeviceCount(&count) != cudaSuccess || count == 0) return 77;
     try {
         const std::string root = ARCH_SOURCE_DIR;
-        auto cfg = RuntimeParams::Load(root + "/validation/burn/inputs/bd.par");
-        if (cfg.Get<double>("tstep_change_factor", 2.0) != 2.0)
+        auto cfg = burn_controller_fixture::load(root);
+        if (cfg.numerics.tstep_change_factor != 2.0)
             throw std::runtime_error("canonical BD timestep progression changed");
         const auto config = make_burn_config_view(cfg.physics.burn);
         SpeciesManager species;

@@ -90,36 +90,6 @@ public:
         return config;
     }
 
-    /**
-     * @brief Parses the parameter file and populates the SimConfig struct.
-     * @param filename Path to the .par file.
-     * @return A fully initialized SimConfig object.
-     */
-    static SimConfig Load(const std::string &filename)
-    {
-        ConfigParser parser;
-        if (!parser.Load(filename))
-        {
-            throw std::runtime_error("RuntimeParams::Load failed: Could not open " + filename);
-        }
-
-        return Resolve(parser);
-    }
-
-    static SimConfig LoadText(const std::string &text,
-                             std::shared_ptr<arch::preview::ParameterReadTrace> reads = {})
-    {
-        std::istringstream input(text);
-        ConfigParser parser;
-        parser.Load(input);
-        auto config = Resolve(parser);
-        if (reads) {
-            reads->capture_input(parser.GetAllParams(), config.custom_params, config.custom_string_params);
-            config.parameter_reads = std::move(reads);
-        }
-        return config;
-    }
-
 private:
     static SimConfig Resolve(const ConfigParser &parser)
     {

@@ -98,7 +98,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"tracer_amplitude", "1"},
         {"mode", "1"},
     }}},
-    {"BurnOneZone", {"simulation/BurnOneZone/BurnOneZone.cpp", "3982c61be73ae02fe32fb01c040f078c19b4f71780ba97a288f086adf552ee36", {
+    {"BurnOneZone", {"simulation/BurnOneZone/BurnOneZone.cpp", "52cb9928a8afcd8437d6c3b99149112bd310bbb9cbe47ea7d034bd6e41b503c3", {
         {"rho0", "g/cm^3"},
         {"temperature0", "K"},
     }}},

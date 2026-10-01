@@ -17,6 +17,15 @@ CPU 与 CUDA 均通过原定的跨求解器误差和组分闭合检查。
 
 `BurnOneZone` 实现仍位于 `simulation/BurnOneZone/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们使用生产 burn driver，在 $\rho=10^7\,\mathrm{g\,cm^{-3}}$、$T=3\times10^9\,\mathrm{K}$、初始 `C12=0.5`、`O16=0.5` 条件下推进至 $t=10^{-10}\,\mathrm{s}$。严格 BE_NR 输入（`rtol=1e-10`、`atol=1e-14`）提供内部收敛参考；BD 和 ROS4 使用 `rtol=1e-6`、`atol=1e-10`。这是求解器交叉 verification，不是对 aprox13 反应率的独立物理 validation。
 
+## 配置 v3 迁移进行中
+
+历史冻结输入和既有科学结果保持不变。新增
+[bd-config-v3.par](inputs/bd-config-v3.par) 显式记录原 bd.par 生效的
+min_eint=1e-10、hll_wave_speed=roe、eos_coulomb_mult=1.0。
+focused controller 使用此文件与生产 BurnOneZone 声明；本轮只在 CPU
+验证配置加载，尚无新的燃烧轨迹或 CUDA 结果。其他历史输入及 runner
+仍需迁移，不能直接将旧回放说明当成新 loader 已通过的证据。
+
 ## Helmholtz 表身份
 
 本记录唯一使用的表来源是从 [Timmes EOS 网站](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。运行时路径为 `EOS_toolkit/tables/helmholtz/helm_table.dat`，运行前必须由 Git LFS 实体化。

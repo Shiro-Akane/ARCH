@@ -276,8 +276,11 @@ target_link_libraries(arch_cuda_burn_policy_parity PRIVATE
     arch_cuda_backend_eos_utils
     arch_build_contract CUDA::cudart)
 add_executable(arch_cuda_burn_controller_parity
-    tests/cuda/microphysics/burn/test_burn_controller_parity.cu)
+    tests/cuda/microphysics/burn/test_burn_controller_parity.cu
+    src/core/config/CompositionInput.cpp)
 arch_configure_cuda_math_test(arch_cuda_burn_controller_parity)
+target_include_directories(arch_cuda_burn_controller_parity PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/simulation")
 target_compile_definitions(arch_cuda_burn_controller_parity PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(arch_cuda_burn_controller_parity PRIVATE

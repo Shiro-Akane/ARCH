@@ -142,7 +142,7 @@ Tabular3D/4D 的未提交 ODE/NSE 查询使用局部试探失败状态；CPU/CUD
 
 ```text
 main(argc, argv)
-  -> RuntimeParams::Load(.par)
+  -> RuntimeParams::Load(.par, case_id)
   -> ProblemRegistry::Create(problem name)
   -> case.Setup(config, species)
   -> DispatchSolver
