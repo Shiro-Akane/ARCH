@@ -20,7 +20,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
 | 1 3B 源码接收与复验 | 封箱源码已引入；Linux 打开/另存/重开复验通过 | npm ci、177 tests、lint/typecheck/build PASS；Linux 原生打开、Host Save As、重开 PASS（范围见报告） | 不适用 |
-| 2 O7.0 + 配置 v3/Host/Studio | 待实施，先规范和共用候选 fixture | 待执行 | 科学条件按唯一计划；疑点交维护者 |
+| 2 O7.0 + 配置 v3/Host/Studio | 候选规范与共享 schema/Sod/缺项/语法 fixture 已整理；运行实现待迁移 | 候选一致性检查通过；生产 v3 未验证 | 科学条件按唯一计划；疑点交维护者 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 待实施 | 待执行 | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 待实施，依赖新配置契约 | 待执行 | 小型有效输入 |
 | 5 全模型初态/AMR | 待实施 | 待逐模型验收 | 真实域/预算需明确 |
@@ -40,3 +40,17 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 导入检查：旧 target、第三方许可证和 round-trip fixture 自带尾随空白；整棵新增子树的 diff-check 报出这些历史字节。为保持封箱子树及测试原文，未格式化它们。相对 c96e9da0 的 Studio diff-check 与本轮新增清单的 diff-check 分别通过。
 
 本轮详细证据及未完成项见 [3B Linux 复验](../../studio/STUDIO_3B_LINUX_REVALIDATION.md)。
+
+## 配置 v3 候选契约（非运行实现）
+
+入口为 src/api/CONFIGURATION_V3_CANDIDATE.md；共享样例位于
+src/api/examples/configuration-v3-candidate/。94-key 目标目录继承现有 Core 的
+单位/选项/展示元数据，按唯一计划限制默认集合；当前生产 binary 仍发布 v2 和 95 keys。
+四组完整 JSON 封套覆盖有效 Sod、空输入、缺少 burn 开关、语法/重复错误。
+Sod 成功样例覆盖 94 标准项、7 case 项及 log_dir；完整性限于静态声明检查。
+缺少开关不解析为 false；解析值、默认解析结果、派生值分开记录。
+
+检查命令：python3 src/api/examples/configuration-v3-candidate/verify_candidates.py。
+此检查只证明候选数据内部一致，不证明 ARCH 已执行 v3。接下来迁移 Core 输入记录、
+共同条件解析及受控构造，再将真实输出接入 Host/Studio；不重复已通过的未变更 3B 检查。
+其余模型声明、case-defined 例子、错误/预算/身份矩阵随实现补齐并运行真实契约回归。
