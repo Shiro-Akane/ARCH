@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "core/config/StandardParameters.h"
+#include "core/config/ScalarControlValidation.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 
 namespace arch::config {
@@ -261,6 +262,21 @@ inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
             record.source = InputValueSource::DocumentedDefault;
         }
         result.parameters.emplace(key, std::move(record));
+    }
+    for (auto& [key, record] : result.parameters) {
+        if (!record.resolved) continue;
+        const auto number = std::visit([](const auto& value) -> std::optional<double> {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, double>) return value;
+            else return {};
+        }, *record.resolved);
+        if (!number) continue;
+        if (const auto* error = ScalarControlError(key, *number)) {
+            record.state = InputState::Invalid;
+            record.resolved.reset();
+            record.source.reset();
+            result.diagnostics.push_back({key, "INVALID_RANGE", error, record.locations});
+        }
     }
     for (const auto retired : retired_input_keys) {
         const std::string key(retired);

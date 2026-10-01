@@ -208,3 +208,25 @@ Preview和inspect-case共享缺项拒绝；省tmax的有效Sod初态保留DENS/P
 收束直接C++构造、追踪Setup更改并建立最终只读配置。v3序列化、活动.par/旧测试迁移、
 Host/Studio尚未完成，不能把本次真实入口检查称为整体配置验收通过。
 下一步接入部分输入inspection并迁移共同字段构造；不发布阶段tag、不push。
+
+### O7.0 部分输入范围检查的共同所有者
+
+为移除inspection对带默认SimConfig的依赖，将既有单参数范围规则提取为
+ScalarControlValidation，并由原ValidateControls和StandardInputResolution共用。
+不改变上下限、允许零/禁用值或科学误差预算；跨字段、材料、拓扑与资源规则
+仍保留在原所有者，尚未完成部分输入版的所有跨字段检查。
+
+部分输入现在聚合所有已提供单参数范围错误，包括inactive模块中的显式坏值；
+parsedValue保留类型正确的原数值，resolved/source清空且保留源位置，不回退默认。
+没有提供的关键参数仍保持missing，不为执行校验构造虚拟数值。
+
+验证：本地提取前/后390组runtime范围判断一致（包括边界、NaN和Inf），对照程序
+和输出留studio/.local/integration/scalar-parity，不作为另一套生产规则提交。
+5项相关CTest PASS（configuration_entry_contract内含5项真实入口检查，不重复相加），
+新增CLI同时报告cfl/gamma/tmax/dt_min/ode_rtol错误并确认无科学输出目录。
+CPU ARCH重链PASS；28任务内存保护最低可用内存约14.1 GiB，无swap增长；diff-check PASS。
+本次未修改运行公式、未执行时间演化、未编译CUDA。
+
+这是v3部分输入inspection迁移的前置收束。当前--inspect-config仍为旧v2，
+尚需迁移跨字段判断、序列化、schema和客户端；不将单参数规则完备称为
+全部配置检查完备，也不提前宣告阶段完成。

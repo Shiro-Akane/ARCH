@@ -142,6 +142,24 @@ int main(int argc, char** argv) {
         require(!tabular.parameters.at("alpha_therm").requirement.value, "unknown material transport guessed");
         require(error(resolve("timeintegrator=RK2\ngravity_G=1"), "gravity_G", "RETIRED_PARAMETER"), "G not retired");
         require(error(resolve("timeintegrator=RK2"), "timeintegrator", "RETIRED_PARAMETER"), "old alias restored");
+        const auto bad_ranges = resolve(
+            "use_burn=false\ncfl=2\ngamma=1\ntmax=-1\ndt_min=0\node_rtol=2", sod);
+        for (const auto key : {"cfl", "gamma", "tmax", "dt_min", "ode_rtol"}) {
+            require(error(bad_ranges, key, "INVALID_RANGE"), "partial scalar range error lost");
+            const auto& record = bad_ranges.parameters.at(key);
+            require(record.state == InputState::Invalid && record.parsed
+                    && !record.resolved && !record.source,
+                    "range-invalid explicit value was hidden or rescued by default");
+            require(record.locations.size() == 1, "range error lost original location");
+        }
+        const auto boundary_values = resolve(
+            "cfl=1\ntmax=0\ngravity_atol=0\node_dt_safe_fac=1\n"
+            "ode_dt_fac_min=1\node_initial_dt_frac=1\node_dt_fac_max=1\n"
+            "plt_dt=-1\nchk_dt=-1\nmax_steps=0\ncuda_device=0", sod);
+        for (const auto key : {"cfl", "tmax", "gravity_atol", "ode_dt_safe_fac",
+                              "ode_dt_fac_min", "ode_initial_dt_frac", "ode_dt_fac_max",
+                              "plt_dt", "chk_dt", "max_steps", "cuda_device"})
+            require(!error(boundary_values, key, "INVALID_RANGE"), "legal scalar boundary rejected");
         std::cout << "PASS: standard presence, allowed defaults and conditional requirements\n";
         return 0;
     } catch (const std::exception& error) {
