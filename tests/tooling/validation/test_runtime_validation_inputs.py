@@ -86,10 +86,24 @@ class RuntimeInputTests(unittest.TestCase):
             parameter_file=self.parameter, working_directory=self.cwd,
             parameter_reader=read_parameter_map, **kwargs)
 
-    def test_default_and_explicit_ideal_do_not_consume_unused_tables(self):
-        for text in ("", "eos_type = IDEAL\neos_table_path = absent.tbl\n"):
+    def test_explicit_ideal_does_not_consume_unused_tables(self):
+        for text in ("eos_type=ideal\n", "eos_type = IDEAL\neos_table_path = absent.tbl\n"):
             self.parameter.write_text(text)
             self.assertEqual(self.capture()["dependencies"], [])
+
+    def test_missing_empty_or_unknown_eos_cannot_create_validation_identity(self):
+        for text in ("", "eos_type=\n", "eos_type=typo\n"):
+            self.parameter.write_text(text)
+            with self.subTest(text=text), self.assertRaisesRegex(
+                    RuntimeError, "explicit valid eos_type"):
+                self.capture()
+
+    def test_explicit_override_can_supply_required_eos(self):
+        self.parameter.write_text("")
+        identity = self.capture(scientific_overrides={"eos_type": "ideal"})
+        self.assertEqual(identity["eos_type"], "ideal")
+        self.assertEqual(identity["scientific_overrides"], {"eos_type": "ideal"})
+        self.assertEqual(identity["dependencies"], [])
 
     def test_relative_path_is_resolved_from_arch_cwd_not_parameter_directory(self):
         self.parameter.write_text("eos_type = tabular\neos_table_path = table.h5\n")

@@ -895,3 +895,17 @@ Preview非法输入使用唯一赋值，避免被duplicate错误提前掩盖数�
 合法D_spec验证保留/不适用。不改Core约束或为通过而删除原覆盖。
 最终13/13 PASS（10.671秒），diff-check PASS。无Core修改/重编译、
 演化/CUDA/push/tag/raw上传。ui_expansion及更广泛配置/运行边界仍待完成。
+
+### O7.0 validation runtime EOS identity fail-closed
+
+核对 StandardParameterEntries 的 eos_type required/no-default 与 EOS API 枚举后，
+移除 validation_provenance.runtime_inputs 对缺失 eos_type 的 implicit ideal。
+缺失/空/未知值拒绝生成 runtime identity；显式 scientific override 可提供 EOS，
+且原参数 SHA 与 override 均保留。未修改物理定义、阈值或 Core。
+
+runtime_validation_inputs 23/23、validation_provenance 40/40 和 diff-check PASS。
+这些是 Python mock/临时文本 fixture 测试，不是 CPU/CUDA 科学验证。
+Tabular 可能按源表组分条件加载辅助 eos_helm_table_path，而验证工具当前
+仅记录主 eos_table_path；该依赖覆盖缺口尚未修复，不能宣称完整 provenance。
+AMR 生产 t=0 checkpoint 对照仍因自动审批边界拒绝而未重试。
+无 ARCH 运行/重编译、科学输出、push/tag。
