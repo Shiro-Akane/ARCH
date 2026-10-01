@@ -12,6 +12,7 @@
 namespace arch::config {
 struct ConfigurationInput {
     std::string case_id;
+    std::string case_source_file, case_source_sha256;
     ConfigurationPurpose purpose = ConfigurationPurpose::Evolution;
     // Filled only at successful loading; partial analysis must not demand a valid parser.
     std::map<std::string, std::string> raw_tokens;
@@ -50,10 +51,29 @@ inline ConfigurationInput AnalyzeConfigurationInput(
     const auto& registry = ProblemRegistry::Get();
     const auto* registration = registry.Registration(case_id);
     if (registration) {
+        result.case_source_file = registration->source_file;
+        result.case_source_sha256 = registration->source_sha256;
         result.declaration = registry.DescribeConfiguration(case_id, result.standard);
         context = result.declaration.consumers;
         context.purpose = purpose;
-        result.standard = ResolveStandardInput(parser, context);
+        result.standard = ResolveStandardInput(parser, context, result.declaration.standard_values);
+        // Re-evaluate consumer conditions with model-provided switches resolved.
+        // Values themselves must be stable; do not silently chase a declaration
+        // which invents a different source/value on each pass.
+        const auto completed = registry.DescribeConfiguration(case_id, result.standard);
+        if (completed.standard_values != result.declaration.standard_values) {
+            result.standard.diagnostics.push_back({"case", "UNSTABLE_MODEL_PROVISION",
+                "Model-provided values changed while resolving their consumers.", {}});
+        } else {
+            result.declaration = completed;
+            context = completed.consumers;
+            context.purpose = purpose;
+            result.standard = ResolveStandardInput(parser, context, completed.standard_values);
+        }
+        if (!result.declaration.standard_values.empty()
+            && (result.case_source_file.empty() || result.case_source_sha256.empty()))
+            result.standard.diagnostics.push_back({"case", "MISSING_MODEL_SOURCE",
+                "Model-provided inputs require registered source identity.", {}});
         result.model = ResolveCaseInput(parser, result.declaration);
         result.ownership = ResolveInputOwnership(parser, result.declaration, {"log_dir"});
     }

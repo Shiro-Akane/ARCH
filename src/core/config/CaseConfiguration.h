@@ -24,6 +24,7 @@ struct CaseConfiguration {
     InputContext consumers;
     std::vector<CaseParameter> parameters;
     std::optional<CompositionDeclaration> composition;
+    std::vector<ModelInputValue> standard_values;
 };
 
 // The registration stores this static callback; querying it never constructs T.

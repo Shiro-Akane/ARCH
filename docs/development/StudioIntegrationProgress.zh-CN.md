@@ -565,3 +565,23 @@ preview_cellular_2d，18.47秒），diff-check PASS。
 更下层 Driver/Preview 数值消费迁移、所有直接C++入口以及完整输入/回归迁移。
 目前拒绝未登记改写是安全的中间状态，不替代计划要求的合法派生支持。
 未运行演化/CUDA、未改科学门槛、未上传raw data、未push/建立完成tag。
+
+### O7.0 注册模型的标准输入提供值
+
+CaseConfiguration.standard_values 可在 Setup 前提供具名 CaseDefined/Derived
+标准输入，复用原类型/选项/标量/关联/必填检查。显式输入优先且非法输入不回退；
+原始缺失保持 Missing/null parsed/无伪造行号，允许默认仍是独立来源。
+派生要求依赖和 owner；拒绝循环/缺失/无效依赖、错误类型/键及伪装为
+DocumentedDefault。加载快照保留注册源码文件和SHA，缺少来源身份时拒绝。
+
+模型提供开关后再次解析消费者条件，提供值本身必须保持稳定；
+不执行任意Setup以探测需求。没有给当前生产case添加物理默认或改公式。
+合成声明测试验证typed映射、source/raw区别、显式值不被覆盖、错误值不回退、
+完整来源、EOS控制消费者重算和不稳定声明拒绝。API文档同步范围。
+
+最终CPU构建 PASS，28并发最低可用约14.0GiB，无swap增长；
+configuration_input、configuration_entry_contract、configuration_v3_contract、
+mainline_authority、initialization_probe、preview_cellular_2d 六项CTest PASS
+（18.39秒），diff-check PASS。没有演化、CUDA、raw上传、push或完成tag。
+自定义case输入提供值、材料来源及剩余只读/入口/样例迁移仍待完成；
+整体配置/Studio/Jeans/RZ目标继续。

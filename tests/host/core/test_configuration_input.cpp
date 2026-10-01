@@ -230,6 +230,107 @@ int main(int argc, char** argv) {
                 [](const auto& item) { return item.code == "UNKNOWN_CASE"; });
         }
         require(rejected, "unknown case accepted");
+        // Model-provided controls use the same typed checks and source records;
+        // these synthetic declarations do not alter any production model.
+        const auto base_declaration = registry.DescribeConfiguration("declared-test", inspect(fixture).standard);
+        const auto register_values = [&](const std::string& name, std::vector<ModelInputValue> values) {
+            auto declaration = base_declaration;
+            declaration.standard_values = std::move(values);
+            registry.Register(name, []() -> std::unique_ptr<ProblemGenerator> {
+                throw std::runtime_error("provision analysis constructed a model");
+            }, {"provision-test.cpp", "test-source-identity", true,
+                [declaration](const StandardInputResolution&) { return declaration; }});
+        };
+        register_values("provided", {
+            {"cfl", 0.4, InputValueSource::CaseDefined, {"test:fixed-control", {}}},
+            {"dt_max", 0.1, InputValueSource::Derived, {"test:half-endpoint", {"tmax"}}}});
+        const auto provided = RuntimeParams::LoadText(without(text, "cfl"), "provided",
+            ConfigurationPurpose::Evolution);
+        provided.RequireLoadedValues();
+        require(provided.numerics.cfl == 0.4 && provided.numerics.dt_max == 0.1,
+                "model controls did not reach typed storage");
+        const auto supplied = provided.LoadedInput();
+        const auto& supplied_cfl = supplied->standard.parameters.at("cfl");
+        require(supplied_cfl.state == InputState::Missing && !supplied_cfl.parsed
+                && supplied_cfl.source == InputValueSource::CaseDefined
+                && supplied_cfl.locations.empty() && !supplied->raw_tokens.contains("cfl")
+                && supplied->case_source_sha256 == "test-source-identity",
+                "model value was forged into explicit input or lost source identity");
+        require(supplied->standard.parameters.at("dt_max").source == InputValueSource::Derived,
+                "derivation became a documented default");
+        const auto explicit_value = RuntimeParams::LoadText(without(text, "cfl") + "cfl=0.3\n",
+            "provided", ConfigurationPurpose::Evolution);
+        require(explicit_value.numerics.cfl == 0.3
+                && explicit_value.LoadedInput()->standard.parameters.at("cfl").source == InputValueSource::Input,
+                "model provision silently overrode explicit input");
+        const auto rejects = [&](const std::string& name, const std::string& input_text,
+                                 const std::string& code) {
+            try { (void)RuntimeParams::LoadText(input_text, name, ConfigurationPurpose::Evolution); }
+            catch (const ConfigInputError& error) {
+                return std::any_of(error.diagnostics.begin(), error.diagnostics.end(),
+                    [&](const auto& item) { return item.code == code; });
+            }
+            return false;
+        };
+        require(rejects("provided", without(text, "cfl") + "cfl=broken\n", "INVALID_NUMBER"),
+                "invalid explicit value fell back to the model");
+        register_values("bad-type", {{"cfl", 1, InputValueSource::CaseDefined, {"test", {}}}});
+        require(rejects("bad-type", without(text, "cfl"), "INVALID_MODEL_PROVISION"),
+                "wrong typed provision accepted");
+        register_values("bad-value", {{"cfl", 2.0, InputValueSource::CaseDefined, {"test", {}}}});
+        require(rejects("bad-value", without(text, "cfl"), "INVALID_RANGE"),
+                "model value bypassed scalar range checks");
+        register_values("bad-source", {{"cfl", 0.4, InputValueSource::DocumentedDefault, {"test", {}}}});
+        require(rejects("bad-source", text, "INVALID_MODEL_PROVISION"),
+                "model declaration expanded the allowed default catalog");
+        register_values("bad-key", {{"gravity_G", 1.0, InputValueSource::CaseDefined, {"test", {}}}});
+        require(rejects("bad-key", text, "INVALID_MODEL_PROVISION"), "retired key provision accepted");
+        register_values("cycle", {
+            {"dt_max", 0.1, InputValueSource::Derived, {"test", {"cfl"}}},
+            {"cfl", 0.4, InputValueSource::Derived, {"test", {"dt_max"}}}});
+        require(rejects("cycle", without(text, "cfl"), "UNRESOLVED_MODEL_DEPENDENCY"),
+                "cyclic derivation accepted");
+        register_values("unknown-dependency", {
+            {"dt_max", 0.1, InputValueSource::Derived, {"test", {"unknown"}}}});
+        require(rejects("unknown-dependency", text, "UNRESOLVED_MODEL_DEPENDENCY"),
+                "unknown derivation dependency accepted");
+        require(rejects("provided", without(text, "tmax"), "UNRESOLVED_MODEL_DEPENDENCY"),
+                "missing derivation input retained a usable value");
+
+        registry.Register("provided-consumers", []() -> std::unique_ptr<ProblemGenerator> {
+            throw std::runtime_error("consumer analysis constructed a model");
+        }, {"test.cpp", "source", true, [base_declaration](const StandardInputResolution& values) {
+            auto declaration = base_declaration;
+            declaration.standard_values = {{"eos_type", std::string("ideal"),
+                InputValueSource::CaseDefined, {"test:ideal-model", {}}}};
+            declaration.consumers.needs_network = input_detail::get<std::string>(values, "eos_type")
+                ? std::optional<bool>(false) : std::nullopt;
+            return declaration;
+        }});
+        const auto completed_consumers = RuntimeParams::LoadText(without(text, "eos_type"),
+            "provided-consumers", ConfigurationPurpose::Evolution);
+        require(completed_consumers.LoadedInput()->requirements_known()
+                && completed_consumers.physics.eos_type == "ideal",
+                "model-provided switch did not resolve consumer conditions");
+        registry.Register("unstable-provision", []() -> std::unique_ptr<ProblemGenerator> {
+            throw std::runtime_error("unstable analysis constructed a model");
+        }, {"test.cpp", "source", true, [base_declaration](const StandardInputResolution& values) {
+            auto declaration = base_declaration;
+            declaration.standard_values = {{"cfl",
+                input_detail::get<double>(values, "cfl") ? 0.3 : 0.4,
+                InputValueSource::CaseDefined, {"test", {}}}};
+            return declaration;
+        }});
+        require(rejects("unstable-provision", without(text, "cfl"), "UNSTABLE_MODEL_PROVISION"),
+                "unstable model values silently converged or changed identity");
+        auto missing_source = base_declaration;
+        missing_source.standard_values = {{"cfl", 0.4, InputValueSource::CaseDefined, {"test", {}}}};
+        registry.Register("no-provision-source", []() -> std::unique_ptr<ProblemGenerator> {
+            throw std::runtime_error("source analysis constructed a model");
+        }, {"", "", true, [missing_source](const StandardInputResolution&) { return missing_source; }});
+        require(rejects("no-provision-source", text, "MISSING_MODEL_SOURCE"),
+                "model-provided input lost mandatory registered source identity");
+
         const auto bd = burn_controller_fixture::load(ARCH_SOURCE_DIR);
         require(bd.numerics.tstep_change_factor == 2.0
                 && bd.physics.burn.odeconfig.ode_solver == "BD"

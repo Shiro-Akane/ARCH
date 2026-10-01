@@ -8,6 +8,7 @@
 #pragma once
 
 #include <optional>
+#include <set>
 #include <string>
 #include <variant>
 #include <vector>
@@ -36,8 +37,18 @@ struct ConditionResult {
     std::vector<std::string> missing_dependencies;
 };
 struct InputSourceEvidence {
+    bool operator==(const InputSourceEvidence&) const = default;
     std::string owner;
     std::vector<std::string> dependencies;
+};
+// A registered model can supply an absent standard input before Setup.
+// These are model definitions/derivations, not another runtime default catalog.
+struct ModelInputValue {
+    bool operator==(const ModelInputValue&) const = default;
+    std::string key;
+    InputValue value;
+    InputValueSource source;
+    InputSourceEvidence evidence;
 };
 struct InputRecord {
     const ParameterDefinition* definition = nullptr;
@@ -301,7 +312,8 @@ inline void validate_relations(StandardInputResolution& result) {
 } // namespace input_detail
 
 inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
-                                                     const InputContext& context) {
+                                                     const InputContext& context,
+                                                     const std::vector<ModelInputValue>& model_values = {}) {
     StandardInputResolution result;
     result.diagnostics = parser.Diagnostics();
     for (const auto& definition : standard_parameters) {
@@ -345,6 +357,51 @@ inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
         }
         result.parameters.emplace(key, std::move(record));
     }
+    std::set<std::string> provided;
+    for (const auto& model : model_values) {
+        const auto found = result.parameters.find(model.key);
+        const auto reject = [&](const std::string& reason) {
+            result.diagnostics.push_back({model.key, "INVALID_MODEL_PROVISION", reason, {}});
+        };
+        if (!provided.insert(model.key).second) {
+            reject("More than one model provision names this input.");
+            continue;
+        }
+        if (found == result.parameters.end()) {
+            reject("Model provision must name an active standard parameter.");
+            continue;
+        }
+        const auto& type = found->second.definition->type;
+        const bool type_ok = (type == "int" && std::holds_alternative<int>(model.value))
+            || ((type == "float" || type == "expression") && std::holds_alternative<double>(model.value))
+            || (type == "bool" && std::holds_alternative<bool>(model.value))
+            || (type == "string" && std::holds_alternative<std::string>(model.value));
+        if (!type_ok || model.evidence.owner.empty()
+            || (model.source != InputValueSource::CaseDefined && model.source != InputValueSource::Derived)
+            || (model.source == InputValueSource::Derived && model.evidence.dependencies.empty())) {
+            reject("Model provision requires the registered type and named case-defined/derived evidence.");
+            continue;
+        }
+        // Explicit input remains authoritative, including explicit invalid input.
+        // A declaration must never turn a bad token into a model-supplied value.
+        if (parser.HasKey(model.key)) continue;
+        auto& record = found->second;
+        record.resolved = model.value;
+        record.source = model.source;
+        record.source_evidence = model.evidence;
+        const auto* word = std::get_if<std::string>(&model.value);
+        const auto* number = std::get_if<double>(&model.value);
+        const auto* integer = std::get_if<int>(&model.value);
+        if ((word && !input_detail::valid_option(model.key, *word))
+            || (number && !std::isfinite(*number))
+            || (integer && (model.key == "nblockx1" || model.key == "nblockx2" || model.key == "nblockx3")
+                && *integer < (model.key == "nblockx1" ? 1 : 0))) {
+            record.state = InputState::Invalid;
+            record.resolved.reset();
+            record.source.reset();
+            reject("Model-provided value violates its option, finite value or topology contract.");
+        }
+    }
     for (auto& [key, record] : result.parameters) {
         if (!record.resolved) continue;
         const auto number = std::visit([](const auto& value) -> std::optional<double> {
@@ -379,11 +436,43 @@ inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
                     "Helmholtz transport forbids explicit constant coefficients.", record.locations});
             }
     }
+    // Reject unresolved or cyclic derivation evidence after scalar/relational
+    // checks. Dependents cannot keep a value whose prerequisite was invalidated.
+    std::map<std::string, int> visited;
+    const auto dependencies_ready = [&](auto&& self, const std::string& key) -> bool {
+        const auto found = result.parameters.find(key);
+        if (found == result.parameters.end() || !found->second.resolved) return false;
+        auto& state = visited[key];
+        if (state == 1) return false;
+        if (state >= 2) return state == 2;
+        state = 1;
+        const auto& record = found->second;
+        bool valid = true;
+        if (record.source_evidence
+            && (record.source == InputValueSource::Derived || record.source == InputValueSource::CaseDefined)) {
+            for (const auto& dependency : record.source_evidence->dependencies)
+                if (!self(self, dependency)) valid = false;
+        }
+        state = valid ? 2 : 3;
+        return valid;
+    };
+    std::vector<std::string> invalid_dependencies;
+    for (const auto& [key, record] : result.parameters)
+        if ((record.source == InputValueSource::Derived || record.source == InputValueSource::CaseDefined)
+            && !dependencies_ready(dependencies_ready, key)) invalid_dependencies.push_back(key);
+    for (const auto& key : invalid_dependencies) {
+        auto& record = result.parameters.at(key);
+        record.state = InputState::Invalid;
+        record.resolved.reset();
+        record.source.reset();
+        result.diagnostics.push_back({key, "UNRESOLVED_MODEL_DEPENDENCY",
+            "Model provision has missing, invalid or cyclic input dependencies.", {}});
+    }
     for (auto& [key, record] : result.parameters) {
         const auto& definition = *record.definition;
         record.requirement = definition.requirement == RequirementKind::Optional
             ? input_detail::known(false) : input_detail::condition(definition.condition, result, context);
-        if (record.requirement.value == true && record.state == InputState::Missing)
+        if (record.requirement.value == true && record.state == InputState::Missing && !record.resolved)
             result.diagnostics.push_back({key, "MISSING_PARAMETER",
                 "Required input has no declared value.", {}});
     }

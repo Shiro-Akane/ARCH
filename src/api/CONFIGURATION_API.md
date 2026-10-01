@@ -104,3 +104,29 @@ config_input_records、configuration_entry_contract。不能把这些局部通�
 称为全部 Core/Host/Studio 回归通过。旧 v2 fixtures 和调用方待迁移。
 实际 v3 配置响应存于 examples/configuration-v3；原 examples/configuration
 为历史 v2 证据，不应再作为新客户端协议期望。
+
+### Registered model values during configuration preparation
+
+A Core case declaration may supply absent standard inputs in
+CaseConfiguration.standard_values. Each ModelInputValue names an active key,
+an exactly typed value, CaseDefined or Derived source, and named owner evidence.
+Derived values additionally list their standard-input dependencies. The registered
+case source file and source SHA must be present; the loaded input snapshot retains
+them. This is a C++ model contract, not browser input or a new user defaults file.
+
+These values go through the existing scalar, option, relation and requirement
+checks before Setup. Explicit tokens remain authoritative, including invalid
+tokens: a provision cannot replace invalid input. An absent provided key retains
+Missing raw state, null parsed value and no fabricated source line, while its
+resolved value and case-defined/derived source are available. Approved optional
+defaults retain their separate documented-default source.
+
+Consumer conditions are evaluated again after model values resolve. Provisions
+must remain stable across that evaluation; changing declarations, unknown/retired
+keys, duplicate provisions, wrong types, missing source evidence, and missing or
+cyclic dependencies fail. No Setup, EOS or filesystem resources are used for this
+analysis. The current production cases have not gained new implicit values.
+
+This implementation covers standard-input provisions. Arbitrary Setup field
+assignment, custom-parameter provisions and material registration provenance are
+not made valid by this mechanism; their remaining migration is tracked separately.
