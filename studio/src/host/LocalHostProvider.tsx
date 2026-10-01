@@ -1,0 +1,4 @@
+import {desktop} from './desktop';
+import {HttpLocalHostAdapter} from './LocalHostAdapter';
+import {useEffect,useState} from 'react';import type {ReactNode} from 'react';import type {ProjectSnapshot} from './contracts';import {HostContext} from './hostContext';
+export function LocalHostProvider({children}:{children:ReactNode}){const [snapshot,setSnapshot]=useState<ProjectSnapshot|null>(null);const [connected,setConnected]=useState(false);useEffect(()=>{if(!desktop)return;let alive=true;void new HttpLocalHostAdapter().connect().then(s=>{if(alive){setSnapshot(s);setConnected(true);}}).catch(()=>{});return()=>{alive=false;};},[]);return <HostContext.Provider value={{snapshot,connected,update:s=>{setSnapshot(s);setConnected(true);},failed:()=>setConnected(false)}}>{children}</HostContext.Provider>;}

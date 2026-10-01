@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# WSL entrypoint: preserve Linux cwd; packaged executable stays on Windows.
+set -eu
+here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+exec "$here/arch-studio.exe" --cwd "$PWD" --distro "$WSL_DISTRO_NAME" "$@"

@@ -1,0 +1,65 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import ts from 'typescript';
+import {createElement} from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {initialState} from '../src/state/studioState.ts';
+const cache=new Map<string,string>();
+async function moduleUrl(url:URL):Promise<string>{
+ const key=url.href;if(cache.has(key))return cache.get(key)!;
+ const compiled=ts.transpileModule(await readFile(url,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
+ let text=compiled;
+ for(const match of compiled.matchAll(/from ["']([^"']+)["']/g)){
+  const spec=match[1];let target:string;
+  if(spec.startsWith('.')){let child=new URL(spec,url);if(!existsSync(fileURLToPath(child)))child=new URL(spec+'.tsx',url);if(!existsSync(fileURLToPath(child)))child=new URL(spec+'.ts',url);target=await moduleUrl(child);}else target=import.meta.resolve(spec);
+  text=text.replaceAll(`from "${spec}"`,`from "${target}"`).replaceAll(`from '${spec}'`,`from '${target}'`);
+ }
+ const result='data:text/javascript;base64,'+Buffer.from(text).toString('base64');cache.set(key,result);return result;
+}
+async function component(path:string,name:string){return (await import(await moduleUrl(new URL('../src/'+path,import.meta.url))))[name];}
+test('contextual Inspectors show only relevant data and parameter details',async()=>{
+ const Inspector=await component('components/Inspector/Inspector.tsx','Inspector');
+ const html=renderToStaticMarkup(createElement(Inspector,{state:initialState()}));assert.doesNotMatch(html,/>Composition</);assert.doesNotMatch(html,/>AMR level</);
+ const Param=await component('components/Inspector/ParameterInspector.tsx','ParameterInspector');
+ assert.match(renderToStaticMarkup(createElement(Param,{parameter:null})),/Select a parameter/);
+ const real=renderToStaticMarkup(createElement(Param,{parameter:{key:'solver',label:'solver',value:'HLLC',raw:'HLLC',line:4,type:'text',options:['hllc']}}));
+ assert.match(real,/Source line/);assert.match(real,/HLLC/);assert.match(real,/Allowed values/);assert.doesNotMatch(real,/Density/);
+});
+test('controls preserve raw fallback, bool tri-state and exact numeric values',async()=>{
+ const Control=await component('components/ParameterPanel/ConfigControl.tsx','ConfigControl');
+ const render=(props:object)=>renderToStaticMarkup(createElement(Control,{name:'custom',value:'',onChange:()=>{},...props}));
+ assert.match(render({name:'solver',value:'future'}),/Unknown \/ raw value/);
+ assert.match(render({name:'use_burn',value:'true',meta:{type:'bool'}}),/type="checkbox"/);
+ assert.match(render({name:'use_nse',value:'auto',meta:{type:'text',options:['true','false','auto']}}),/<select/);
+ assert.match(render({name:'tmax',value:'1.23456789e-8',meta:{type:'float'}}),/value="1.23456789e-8"/);
+ const ranged=render({name:'refine_threshold',value:'0.7654321',meta:{type:'float',range:[0,1]}});assert.match(ranged,/type="range"/);assert.match(ranged,/value="0.7654321"/);
+ assert.doesNotMatch(render({value:'0.5'}),/type="range"/);
+});
+
+test('Local Host area is optional and disconnected without changing existing modes',async()=>{
+ const Panel=await component('host/ProjectPanel.tsx','ProjectPanel');const html=renderToStaticMarkup(createElement(Panel));assert.match(html,/Connect Local Host/);assert.match(html,/Not connected/);assert.match(html,/Refresh Project State/);assert.doesNotMatch(html,/Connected/);assert.match(html,/Config lifecycle/);
+});
+
+test('runtime schema sections cover all standard controls and keep separate EOS paths',async()=>{
+ const Catalog=await component('components/ParameterPanel/StandardCatalog.tsx','StandardCatalog');
+ const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'));
+ const props={schema,values:{},inspection:undefined,pathChecks:undefined,errors:{},onEdit:()=>{},onSelect:()=>{}};
+ const html=renderToStaticMarkup(createElement(Catalog,props));
+ const rendered=[...html.matchAll(/data-standard-key="([^"]+)"/g)].map(m=>m[1]);
+ assert.deepEqual(rendered.sort(),schema.parameters.filter((p:{aliasOf?:string})=>!p.aliasOf).map((p:{key:string})=>p.key).sort());
+ assert.equal(new Set(rendered).size,rendered.length);
+ for(const text of ['Network ODE / Advanced','Adaptive Mesh Refinement (AMR)','Checkpoint / Restart','eos_helm_table_path','eos_table_path'])assert.ok(html.includes(text),text);
+ assert.doesNotMatch(html,/Unit not provided · not-applicable/);
+});
+test('workflow bar exposes availability without Run/Restart execution and retains terminal',async()=>{
+ const Provider=await component('host/BuildProvider.tsx','BuildProvider');
+ const Bar=await component('components/WorkflowBar.tsx','WorkflowBar');
+ const html=renderToStaticMarkup(createElement(Provider,null,createElement(Bar)));
+ for(const name of ['Configure','Build','Update Preview','Run','Restart from checkpoint'])assert.match(html,new RegExp('<button disabled=""[^>]*>'+name+'</button>'));
+ assert.match(html,/closing this drawer does not cancel tasks/);
+ assert.match(html,/No build output/);
+ assert.match(html,/id="workflow-terminal"[^>]*hidden/);
+});
