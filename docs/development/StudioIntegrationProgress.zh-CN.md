@@ -771,3 +771,17 @@ configuration_input、parameter metadata、Preview session、Cellular2D四项
 CTest全部PASS（21.60秒）。不据此宣称完整演化/EOS科学验收。
 API文档同步；diff-check PASS。完整模型/Studio回归仍待完成，
 未运行CUDA、push/tag或上传raw，整体目标继续。
+
+### O7.0 GravityBox 正式输入显式迁移
+
+对照8fc0dd25 Setup确认burn=false时network_name由case选none，
+不能误用旧全局aprox19。正式输入补显式none与原gas_cv=1.2471693927e8，
+原temperature_amplitude/velocity0=0、hydrostatic_radial=false；
+center_x=5e7和width=8e6来自此固定域中点/0.08域宽。
+cpu/roe/floors/引力rtol/atol均保留已追溯旧值，无新增G覆盖或物理变更。
+
+配置v3正式样例矩阵加入GravityBox，全19项PASS（1.881秒）。
+真实CPU inspect-case成功、3采样；逐点密度精确匹配原周期公式，
+温度1e7、速度0和单气体fraction=[1]一致，输入hash匹配、无文件输出。
+此检查不执行Poisson或演化，不代表自引力科学验收。
+diff-check PASS；无重编译/CUDA/push/tag/raw上传。其余输入与整体目标继续。

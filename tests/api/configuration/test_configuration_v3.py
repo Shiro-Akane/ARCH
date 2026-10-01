@@ -239,6 +239,9 @@ class ConfigurationV3(unittest.TestCase):
     def test_migrated_formal_examples_are_explicit_and_complete(self):
         examples = {
             "Sod": ("Sod/Sod.par", {"compute_backend": "cpu", "x_pos": .5}),
+            "GravityBox": ("GravityBox/GravityBox.par",
+                           {"network_name": "none", "gas_cv": 1.2471693927e8,
+                            "width": 8e6, "center_x": 5e7, "hydrostatic_radial": "false"}),
             "RT": ("RTinstability/RT_instab.par", {"limiter": "minmod", "gravity_g_x": 0.0, "gravity_g_z": 0.0}),
             "Sedov": ("Sedov/Sedov.par", {"center_z": .5, "explosion_energy": 1.0}),
             "JeansWave": ("JeansWave/JeansWave.par",
