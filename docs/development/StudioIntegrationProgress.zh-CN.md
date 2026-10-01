@@ -134,3 +134,21 @@ Setup/Init/单位表达式未改。按此审阅更新该模型的unit evidence�
 当前仅Sod已声明，其余模型未覆盖；声明callback尚未接进正式Load/API入口。
 case范围/派生值/未知键与species归属检查、完整受控构造、v3序列化和Host仍未完成。
 不以此测试证明可运行性，不建立阶段完成tag；其余注册模型继续沿同一接口迁移。
+
+### O7.0 ExternalGravity / JeansWave 静态输入声明
+
+核对真实 Setup 后，ExternalGravity 声明 rho0/pressure0/velocity_x0；
+JeansWave 声明 rho0/pressure0/amplitude/phase/mode/standing_wave，均无隐式默认。
+后者的 standing_wave 当前由模型按字符串读取，且只接受小写 true/false；
+CaseParameter 因而增加精确 options，拒绝未知 token，不自行引入大小写别名。
+这两个模型均不初始化网络或消费网络 floors；共同 burn 需求仍由标准解析层处理。
+
+case_configuration CTest PASS：选项合法值、大小写差异、数值布尔、未知 token、
+缺项不补默认及错误源位置。两个真实模型对象编译 PASS；28任务上限/内存保护下
+最低可用内存约21.2 GiB，无swap增长。git diff --check PASS。
+模型变更仅插入静态声明，移除插入块后文件与父提交逐字节相同，
+Setup/Init/科学公式未改；只更新这两个已审阅模型的单位证据SHA。
+
+目前共3个模型具有静态声明，另外11个尚未迁移。静态完整性只表示该模型声明
+覆盖其读取项，不能替代范围、组合、稳定性检查或模拟就绪判定。
+普通加载/API仍未接线，生产v3和跨入口一致性尚待实现，本次不建立完成tag。

@@ -23,6 +23,23 @@ class JeansWaveProblem {
     double x_min_ = 0.0, wave_number_ = 0.0, average_ = 1.0;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        // This model does not initialize a network or consume network floors.
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"}, {"pressure0", "float", "erg/cm^3"},
+            {"amplitude", "float", "1"}, {"phase", "float", "rad"},
+            {"mode", "int", "1"},
+            {"standing_wave", "string", "1", "simulation", {true, {}}, {"true", "false"}}};
+        return result;
+    }
+
     /** Resolve one stable periodic wave without altering the production gravity solver. */
     void Setup(SimConfig& config, SpeciesManager&) {
         if (config.grid.geometry != "cartesian"

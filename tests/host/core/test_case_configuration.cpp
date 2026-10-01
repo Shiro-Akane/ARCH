@@ -77,6 +77,33 @@ int main() {
         result = ResolveCaseInput(parser, conditional);
         require(result.diagnostics.empty() && !result.parameters.at("density").requirement.value,
                 "unknown condition guessed missing physical input");
+        CaseConfiguration choices;
+        choices.complete = true;
+        choices.parameters = {
+            {"standing_wave", "string", "1", "simulation", {true, {}}, {"true", "false"}}};
+        for (const auto token : {"true", "false", "TRUE", "False", "0", "1", "other"}) {
+            std::istringstream input(std::string("standing_wave=") + token);
+            parser.Read(input);
+            const auto checked = ResolveCaseInput(parser, choices);
+            const bool valid = std::string(token) == "true" || std::string(token) == "false";
+            const auto& value = checked.parameters.at("standing_wave");
+            require(checked.diagnostics.empty() == valid, "case options differ from owner tokens");
+            if (valid) {
+                require(value.source == InputValueSource::Input
+                        && std::get<std::string>(*value.resolved) == token, "explicit option lost");
+            } else {
+                require(checked.diagnostics.front().code == "INVALID_OPTION"
+                        && value.state == InputState::Invalid && !value.parsed && !value.resolved,
+                        "unknown case option acquired a value");
+                require(value.locations.size() == 1, "invalid option lost source location");
+            }
+        }
+        std::istringstream no_choice;
+        parser.Read(no_choice);
+        result = ResolveCaseInput(parser, choices);
+        require(result.diagnostics.size() == 1
+                && result.diagnostics.front().code == "MISSING_PARAMETER",
+                "case option list must not supply a default");
         std::cout << "PASS: static case declarations and partial typed case resolution\n";
         return 0;
     } catch (const std::exception& error) {

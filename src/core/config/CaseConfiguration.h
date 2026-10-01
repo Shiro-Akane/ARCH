@@ -14,6 +14,8 @@ struct CaseParameter {
     std::string key, type, unit;
     std::string usage = "simulation";
     ConditionResult requirement{true, {}};
+    // Exact owner-defined tokens; no aliases or case folding are inferred.
+    std::vector<std::string> options;
 };
 struct CaseConfiguration {
     bool complete = false;
@@ -63,10 +65,15 @@ inline CaseInputResolution ResolveCaseInput(const ConfigParser& parser,
                 else if (definition.type == "bool") record.parsed = ConfigParser::ParseBoolean(key, raw);
                 else if (definition.type == "string") record.parsed = raw;
                 else throw std::logic_error("Unsupported case input type: " + definition.type);
+                if (!definition.options.empty()
+                    && std::find(definition.options.begin(), definition.options.end(), raw)
+                        == definition.options.end())
+                    throw ConfigValueError(key, "INVALID_OPTION", "Unknown case parameter option.");
                 record.resolved = record.parsed;
                 record.source = InputValueSource::Input;
             } catch (const ConfigValueError& error) {
                 record.state = InputState::Invalid;
+                record.parsed.reset();
                 result.diagnostics.push_back({key, error.code, error.what(), record.locations});
             }
         } else if (record.requirement.value == true) {

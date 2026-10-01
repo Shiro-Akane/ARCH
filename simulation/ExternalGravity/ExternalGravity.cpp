@@ -20,6 +20,21 @@ class ExternalGravityProblem
     double velocity_x_ = 0.0;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        // This model does not initialize a network or consume network floors.
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"}, {"pressure0", "float", "erg/cm^3"},
+            {"velocity_x0", "float", "cm/s"}};
+        return result;
+    }
+
     void Setup(SimConfig& config, SpeciesManager&)
     {
         if (config.grid.dim != 1 || config.grid.geometry != "cartesian") {

@@ -81,12 +81,12 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
     }}},
-    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "1d705de8cab39b7b0c42c729245f5175b84e0bd99e94a24c1a576e7e578c387d", {
+    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "5f29312fa5cf0d729ee8be9bf99c89e10c71eabc8c8ef0255cbd730ddc44aa9b", {
         {"rho0", "g/cm^3"}, {"pressure0", "erg/cm^3"},
         {"amplitude", "1"}, {"phase", "rad"}, {"mode", "1"},
         {"standing_wave", "1"},
     }}},
-    {"ExternalGravity", {"simulation/ExternalGravity/ExternalGravity.cpp", "c2983a892091924f3a5a5abe5152eb091a5eb2d492c38913ca5867ad438899ee", {
+    {"ExternalGravity", {"simulation/ExternalGravity/ExternalGravity.cpp", "198e1be5635176864163fa27ea14dcaa383f10f4173f44fa23b2559e7eae4d71", {
         {"rho0", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"velocity_x0", "cm/s"},
