@@ -18,7 +18,7 @@
 #include "api/configuration/ParameterPresentation.h"
 #include "api/protocol/LogCapture.h"
 #include "api/protocol/Response.h"
-#include "core/config/RuntimeParams.h"
+#include "core/config/ConfigurationInput.h"
 #include "core/files/FileFingerprint.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 
@@ -26,19 +26,6 @@ namespace arch::api {
 namespace {
 using detail::Json;
 using config::ParameterDefinition;
-/** Serialize the parser fallback in its declared JSON type. */
-Json default_json(const ParameterDefinition& definition) {
-    return std::visit([](auto value) -> Json {
-        if constexpr (std::is_same_v<decltype(value), std::string_view>) return std::string(value);
-        else return value;
-    }, definition.fallback);
-}
-/** Attach a keyed configuration error to the inspection envelope. */
-Json diagnostic(const std::string& code, const std::string& key, const std::string& message,
-                const char* severity = "error") {
-    return Json::object({{"severity", severity}, {"code", code},
-        {"parameterKey", key.empty() ? Json() : Json(key)}, {"message", message}});
-}
 template<class List> struct Options;
 template<class Id, dispatch::UnknownPolicyBehavior Behavior, class... Registrations>
 struct Options<dispatch::TypeList<Id, Behavior, Registrations...>> {
@@ -124,10 +111,10 @@ Json constraints(const ParameterDefinition& d) {
 }
 /** Classify path-valued parameters for client-side browsing. */
 Json path_role(const std::string& key) {
-    if (key != "eos_table_path" && key != "eos_helm_table_path" && key != "restart_file" && key != "out_dir") return Json();
-    return Json::object({{"role", key == "out_dir" ? "output-directory" : "input-file"},
+    if (key != "eos_table_path" && key != "eos_helm_table_path" && key != "restart_file" && key != "out_dir" && key != "log_dir") return Json();
+    return Json::object({{"role", (key == "out_dir" || key == "log_dir") ? "output-directory" : "input-file"},
         {"relativeTo", "process-working-directory"}, {"existenceChecked", false},
-        {"checkOwner", "local-host"}, {"targetMayBeNew", key == "out_dir"}});
+        {"checkOwner", "local-host"}, {"targetMayBeNew", key == "out_dir" || key == "log_dir"}});
 }
 /** Describe the CGS unit and symbol of one parameter. */
 Json unit_info(const std::string& key, const std::string& system = "cgs") {
@@ -165,83 +152,194 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
     if (type == "bool" || type == "string") return Json::object({{"unit", Json()}, {"status", "not-applicable"}});
     return Json::object({{"unit", Json()}, {"status", "not-specified"}});
 }
-std::string condition(const ParameterDefinition& d) {
-    const auto key = d.key;
-    if (key == "eos_coulomb_mult") return "eos_type=helmholtz; scales ion Coulomb terms, not electron/positron completion";
-    if (key == "hll_wave_speed") return "solver=HLL or HLLC";
-    if (key == "EntropyFixCoefficient") return "EntropyFix=true";
-    if (key == "cuda_device") return "compute_backend=cuda or auto; no device probing in configuration inspection";
-    if (key == "restart_file") return "restart=true";
-    if (key == "eos_table_path") return "eos_type=helmholtz or tabular";
-    if (key == "eos_helm_table_path") return "eos_type=tabular; need depends on table policy";
-    if (key.starts_with("gravity_g_")) return "gravity_type=external";
-    if (d.group == "Gravity" && key != "gravity_type") return "gravity_type=self; Cartesian periodic or 3D isolated gravity";
-    if (d.group == "Diffusion" && key != "use_diffusion") {
-        if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec") return "use_diffusion=true; explicit coefficient forbidden with Helmholtz";
-        return "use_diffusion=true";
-    }
-    if (d.group == "Network" && key != "use_burn" && key != "network_name") return "use_burn=true; thresholds are still parsed and validated when disabled";
-    return "See parsed configuration; model Setup and simulation policies may impose further conditions.";
+/** Transport helpers serialize partial records without constructing SimConfig. */
+Json strings(const std::vector<std::string>& values) {
+    auto out = Json::array();
+    for (const auto& value : values) out.push(value);
+    return out;
 }
-/** Determine whether a parameter is active under the resolved configuration. */
-bool applicable(const ParameterDefinition& d, const SimConfig& c, const ConfigParser& p) {
-    const auto key = d.key;
-    if (key == "eos_coulomb_mult") return dispatch::ascii_iequals(c.physics.eos_type, "helmholtz");
-    if (key == "hll_wave_speed") return dispatch::ascii_iequals(c.numerics.solver_name, "HLLC") || dispatch::ascii_iequals(c.numerics.solver_name, "HLL");
-    if (key == "ode_max_newton_iter") return c.physics.burn.use_burn && dispatch::ascii_iequals(c.physics.burn.odeconfig.ode_solver, "BE_NR");
-    if (key == "ode_dt_safe_fac") return c.physics.burn.use_burn && !dispatch::ascii_iequals(c.physics.burn.odeconfig.ode_solver, "BD");
-    if (key == "EntropyFixCoefficient") return (dispatch::ascii_iequals(c.numerics.solver_name, "SW") || dispatch::ascii_iequals(c.numerics.solver_name, "Roe")) && p.GetBool("EntropyFix", config::DefaultBool("EntropyFix"));
-    if (key == "cuda_device") return c.execution.compute_backend != "cpu";
-    if (key == "restart_file") return c.io.restart;
-    if (key == "eos_table_path") return !dispatch::ascii_iequals(c.physics.eos_type, "ideal");
-    if (key == "eos_helm_table_path") return dispatch::ascii_iequals(c.physics.eos_type, "tabular");
-    if (key.starts_with("gravity_g_")) return c.physics.gravity.type == "external";
-    if (d.group == "Gravity" && key != "gravity_type") return c.physics.gravity.type == "self";
-    if (d.group == "Diffusion" && key != "use_diffusion") {
-        if (!c.physics.diffusion.use_diffusion) return false;
-        if (key == "alpha_therm" || key == "nu_visc" || key == "D_spec") {
-            if (dispatch::ascii_iequals(c.physics.eos_type, "helmholtz")) return false;
-            if (key == "alpha_therm") return c.physics.diffusion.use_thermal_diffusion;
-            if (key == "nu_visc") return c.physics.diffusion.use_viscous_diffusion;
-            return c.physics.diffusion.use_species_diffusion;
+Json scalar(const std::optional<config::InputValue>& value) {
+    if (!value) return Json();
+    return std::visit([](const auto& item) -> Json { return item; }, *value);
+}
+Json locations(const std::vector<ConfigSourceLocation>& values) {
+    auto out = Json::array();
+    for (const auto& value : values)
+        out.push(Json::object({{"source", value.source}, {"line", std::int64_t(value.line)},
+            {"column", std::int64_t(value.column)}, {"endColumn", std::int64_t(value.end_column)},
+            {"rawValue", value.raw_value ? Json(*value.raw_value) : Json()}}));
+    return out;
+}
+std::string condition_id(const ParameterDefinition& d, bool applicability = false) {
+    if (d.requirement == config::RequirementKind::Optional)
+        return applicability ? "consumes:" + std::string(d.key) : "optional";
+    if (d.condition == config::InputCondition::Always) return "always";
+    if (d.condition == config::InputCondition::Evolution) return "formal-evolution";
+    return "requires:" + std::string(d.key);
+}
+Json condition_state(const std::string& id, const config::ConditionResult& state,
+                     bool requirement = false) {
+    auto result = Json::object({{"conditionId", id},
+        {"state", !state.value ? "unknown-dependency" : *state.value ? "satisfied" : "not-applicable"},
+        {"missingDependencies", strings(state.missing_dependencies)}});
+    if (requirement) result["required"] = state.value ? Json(*state.value) : Json();
+    return result;
+}
+Json condition_schema(const std::string& id, const std::vector<std::string>& deps,
+                      const std::string& description) {
+    return Json::object({{"id", id}, {"dependencies", strings(deps)}, {"description", description}});
+}
+// Dependency names document the Core predicate, including optional controlling
+// inputs whose registered default would otherwise hide the dependency in an empty query.
+Json standard_condition(const ParameterDefinition& d, bool applicability) {
+    using C = config::InputCondition;
+    std::vector<std::string> deps;
+    switch (d.condition) {
+    case C::Always: case C::Evolution: break;
+    case C::Axis1: deps = {"nblockx1"}; break;
+    case C::Axis2: deps = {"nblockx2"}; break;
+    case C::Axis3: deps = {"nblockx3"}; break;
+    case C::Limiter: deps = {"reconstruct"}; break;
+    case C::Roe: case C::Hll: deps = {"solver"}; break;
+    case C::Ideal: case C::Tabular: case C::Helm: deps = {"eos_type"}; break;
+    case C::Network: deps = {"use_burn", "case:network-consumer"}; break;
+    case C::Burn: deps = {"use_burn"}; break;
+    case C::TemperatureFloor: deps = {"use_burn", "case:temperature-floor-consumer"}; break;
+    case C::CompositionFloor: deps = {"use_burn", "case:composition-floor-consumer"}; break;
+    case C::Nse: deps = {"use_burn", "use_nse", "network_name"}; break;
+    case C::Diffusion: deps = {"use_diffusion"}; break;
+    case C::Thermal: case C::Viscous: case C::Species:
+        deps = {"use_diffusion", d.condition == C::Thermal ? "use_thermal_diff"
+            : d.condition == C::Viscous ? "use_viscous_diff" : "use_species_diff",
+            "eos_type", "material:constant-transport"}; break;
+    case C::SelfGravity: case C::ExternalGravity: deps = {"gravity_type"}; break;
+    case C::DynamicAmr: deps = {"lrefinemin", "lrefinemax"}; break;
+    case C::CurvatureAmr: deps = {"lrefinemin", "lrefinemax", "refine_var"}; break;
+    case C::Restart: deps = {"restart"}; break;
+    }
+    if (d.requirement == config::RequirementKind::Optional && applicability) {
+        if (d.key == "cuda_device") deps = {"compute_backend"};
+        else if (d.key == "eos_helm_table_path") deps = {"eos_type"};
+        else if (d.key == "gravity_max_cycles") deps = {"gravity_type"};
+        else if (d.key == "diff_max_stages") deps = {"use_diffusion"};
+        else if (d.key == "EntropyFixCoefficient") deps = {"solver", "EntropyFix"};
+        else if (d.key == "linear_solver" || d.key.starts_with("ode_")) {
+            deps = {"use_burn"};
+            if (d.key == "ode_max_newton_iter" || d.key == "ode_dt_safe_fac")
+                deps.push_back("ode_solver");
         }
-        return true;
     }
-    if (d.group == "Network" && key != "use_burn" && key != "network_name") return c.physics.burn.use_burn;
-    if (key.size() > 2 && key[0] == 'x' && key[1] >= '1' && key[1] <= '3') return key[1]-'0' <= c.grid.dim;
-    return true;
+    return condition_schema(condition_id(d, applicability), deps,
+        applicability ? "Core-owned consumer condition; inspection evaluates supplied input."
+                      : "Core-owned presence requirement; inspection evaluates supplied input.");
 }
-/** Preserve the raw input value and its provenance without applying policy. */
-Json input_value(const ParameterDefinition& d, const ConfigParser& p) {
-    const std::string key(d.key);
-    if (d.type == "int") return p.GetInt(key, config::DefaultInt(key));
-    if (d.type == "float") return p.GetDouble(key, config::DefaultDouble(key));
-    if (d.type == "bool") return p.GetBool(key, config::DefaultBool(key));
-    if (d.type == "expression") {
-        if (!p.HasKey(key) && key == "gravity_G") return config::DefaultDouble(key);
-        return ConfigParser::ParseExpression(key, p.GetString(key, key == "gravity_G" ? "" : config::DefaultString(key)));
+Json case_units(const std::string& unit, const std::string& type) {
+    return Json::object({{"unit", unit.empty() ? Json() : Json(unit)},
+        {"status", unit == "1" ? "dimensionless" : !unit.empty() ? "known"
+                   : type == "string" || type == "bool" ? "not-applicable" : "not-specified"}});
+}
+Json record_json(const std::string& key, const config::InputRecord& record,
+                 const Json& case_id, const std::string& type, const std::string& group,
+                 const std::string& usage, const Json& units,
+                 const std::string& requirement_id, const std::string& applicability_id,
+                 const config::ConditionResult& applicable) {
+    const char* state = record.state == config::InputState::Missing ? "missing"
+        : record.state == config::InputState::Present ? "present"
+        : record.state == config::InputState::Invalid ? "invalid" : "duplicate";
+    Json source;
+    if (record.source) {
+        switch (*record.source) {
+        case config::InputValueSource::Input: source = "input"; break;
+        case config::InputValueSource::CaseDefined: source = "case-defined"; break;
+        case config::InputValueSource::Derived: source = "derived"; break;
+        case config::InputValueSource::DocumentedDefault: source = "documented-default"; break;
+        }
     }
-    return p.GetString(key, config::DefaultString(key));
+    Json raw;
+    if (record.locations.size() == 1 && record.locations.front().raw_value)
+        raw = *record.locations.front().raw_value;
+    Json evidence;
+    if (record.source && record.source_evidence)
+        evidence = Json::object({{"owner", record.source_evidence->owner},
+            {"dependencies", strings(record.source_evidence->dependencies)}});
+    return Json::object({{"key", key}, {"caseId", case_id}, {"type", type},
+        {"group", group}, {"usage", usage}, {"inputState", state},
+        {"rawValue", raw}, {"locations", locations(record.locations)},
+        {"parsedValue", scalar(record.parsed)}, {"resolvedValue", scalar(record.resolved)},
+        {"valueSource", source}, {"sourceEvidence", evidence},
+        {"valueStage", "configuration-resolution-before-setup"},
+        {"requirement", condition_state(requirement_id, record.requirement, true)},
+        {"applicability", condition_state(applicability_id, applicable)}, {"units", units},
+        {"path", group == "Case" || group == "Composition" ? Json() : path_role(key)}});
+}
+Json coverage(bool cases, bool conditions, bool diagnostics = true) {
+    return Json::object({{"standardParametersComplete", true},
+        {"auxiliaryParametersComplete", true}, {"caseParametersComplete", cases},
+        {"conditionsComplete", conditions}, {"diagnosticsComplete", diagnostics}});
+}
+Json case_schema(const config::CaseParameter& d, const std::string& case_id) {
+    auto choices = Json::array();
+    for (const auto& value : d.options)
+        choices.push(Json::object({{"value", value}, {"acceptedNames", Json::array({value})},
+            {"displayName", value}}));
+    const auto predicate = condition_schema("case:" + case_id + ":" + d.key,
+        d.requirement.missing_dependencies, "Registered model declaration; no Setup execution.");
+    return Json::object({{"key", d.key}, {"caseId", case_id}, {"type", d.type},
+        {"group", "Case"}, {"usage", d.usage}, {"units", case_units(d.unit, d.type)},
+        {"requirement", Json::object({{"kind", d.requirement.value == true ? "required" : "conditional"},
+            {"condition", predicate}})}, {"applicability", predicate},
+        {"allowedDefault", Json()}, {"templateRecommendations", Json::array()},
+        {"constraints", Json::object({{"complete", false}})}, {"path", Json()},
+        {"options", d.options.empty() ? Json() : Json::object({
+            {"caseSensitive", !d.options_ignore_case}, {"unknownBehavior", "error"}, {"choices", choices}})}});
 }
 } // namespace
 
-/** Describe case-specific extension points in the schema. */
+/** Describe the versioned configuration boundary, not simulation readiness. */
 Json ConfigurationExtensions() {
+    const auto active = std::count_if(config::standard_parameters.begin(), config::standard_parameters.end(),
+        [](const auto& d) { return d.requirement != config::RequirementKind::Retired; });
     return Json::object({{"version", contract::configuration_version}, {"schemaCommand", "--config-schema"},
-        {"inspectCommand", "--inspect-config"}, {"coverage", "standard-runtime-inputs"},
-        {"presentationVersion", "1"}, {"standardParameterCount", std::int64_t(std::size(config::standard_parameters))}, {"customParameterCoverage", false}});
+        {"inspectCommand", "--inspect-config"}, {"coverage", "declared-configuration-before-setup"},
+        {"presentationVersion", "1"}, {"standardParameterCount", std::int64_t(active)},
+        {"customParameterCoverage", "registered-case-declarations"}});
 }
-/** Build the versioned standard parameter schema from Core definitions. */
 Json ConfigurationSchema() {
     auto parameters = Json::array();
+    auto retired = Json::array();
+    for (const auto key : config::retired_input_keys) retired.push(std::string(key));
     for (const auto& d : config::standard_parameters) {
         const std::string key(d.key);
-        auto item = Json::object({{"key", key}, {"type", std::string(d.type)},
-            {"group", std::string(d.group)}, {"presentation", ParameterPresentation(d)}, {"defaultValue", default_json(d)},
-            {"defaultSource", "shared-runtime-definition"}, {"constraints", constraints(d)},
-            {"options", options(key)}, {"path", path_role(key)}, {"units", unit_info(key)},
-            {"applicability", condition(d)}});
-        parameters.push(std::move(item));
+        if (d.requirement == config::RequirementKind::Retired) { retired.push(key); continue; }
+        Json allowed;
+        if (const auto* value = config::AllowedDefault(d))
+            allowed = Json::object({{"value", scalar(config::input_detail::copy_default(*value))},
+                {"source", "documented-default"}, {"evidence", "ConfigurationContractPlan:allowed-default:" + key}});
+        parameters.push(Json::object({{"key", key}, {"caseId", Json()}, {"type", std::string(d.type)},
+            {"group", std::string(d.group)}, {"usage", "simulation"}, {"presentation", ParameterPresentation(d)},
+            {"allowedDefault", allowed}, {"templateRecommendations", Json::array()},
+            {"requirement", Json::object({{"kind", d.requirement == config::RequirementKind::Required ? "required"
+                : d.requirement == config::RequirementKind::Conditional ? "conditional" : "optional"},
+                {"condition", standard_condition(d, false)}})},
+            {"applicability", standard_condition(d, true)}, {"constraints", constraints(d)},
+            {"options", options(key)}, {"path", path_role(key)}, {"units", unit_info(key)}}));
+    }
+    ConfigParser empty;
+    const auto inputs = config::ResolveStandardInput(empty, {});
+    auto cases = Json::array();
+    bool complete = true;
+    const auto& registry = ProblemRegistry::Get();
+    for (const auto& name : registry.Names()) {
+        const auto declaration = registry.DescribeConfiguration(name, inputs);
+        const auto* registration = registry.Registration(name);
+        auto items = Json::array();
+        for (const auto& d : declaration.parameters) items.push(case_schema(d, name));
+        complete &= declaration.complete;
+        cases.push(Json::object({{"caseId", name}, {"source", registration->source_file},
+            {"sourceSha256", registration->source_sha256}, {"parameters", items},
+            {"declarationsComplete", declaration.complete},
+            {"composition", Json::object({{"status", declaration.composition ? "selected-network-dependent" : "not-consumed"},
+                {"inspectionRequired", bool(declaration.composition)}})}}));
     }
     auto coordinates = Json::array();
     for (const auto geometry : {"cartesian", "cylindrical", "spherical"}) {
@@ -254,121 +352,104 @@ Json ConfigurationSchema() {
     auto fields = Json::array();
     for (const auto key : {"DENS", "TEMP", "PRES", "ENER", "EINT", "VELX", "VELY", "VELZ", "GPOT", "GACX", "GACY", "GACZ"})
         fields.push(Json::object({{"key", key}, {"cgs", FieldUnit(key, "cgs")}, {"code", FieldUnit(key, "code")}}));
-    return Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::configuration_version}, {"kind", "configuration-schema"}, {"status", "ok"},
-        {"coverage", "standard-runtime-inputs"}, {"standardParametersComplete", true},
-        {"customParametersComplete", false}, {"constraintsComplete", false},
-        {"parameters", parameters}, {"coordinateSystems", coordinates}, {"fieldUnits", fields}, {"unitSystem", "cgs"},
-        {"crossConstraints", Json::array({"x3 enabled requires x2 enabled", "active axis max > min", "0 <= lrefinemin <= lrefinemax <= 15", "0 <= derefine_threshold < refine_threshold <= 1", "max_eint >= min_eint", "Helmholtz diffusion forbids explicit alpha_therm/nu_visc/D_spec"})},
+    auto auxiliary = case_schema({"log_dir", "string", ""}, "");
+    auxiliary["caseId"] = Json(); auxiliary["group"] = "Runtime";
+    auxiliary["requirement"] = Json::object({{"kind", "optional"},
+        {"condition", condition_schema("optional", {}, "May derive from resolved out_dir.")}});
+    auxiliary["applicability"] = condition_schema("always", {}, "Main logging directory.");
+    auxiliary["path"] = Json::object({{"role", "output-directory"}, {"relativeTo", "process-working-directory"},
+        {"existenceChecked", false}, {"checkOwner", "local-host"}, {"targetMayBeNew", true}});
+    return Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::configuration_version},
+        {"kind", "configuration-schema"}, {"status", "ok"}, {"parameters", parameters},
+        {"auxiliaryParameters", Json::array({auxiliary})}, {"caseDeclarations", cases},
+        {"caseDeclarationsComplete", complete}, {"retiredKeys", retired},
+        {"standardParametersComplete", true}, {"constraintsComplete", false},
+        {"coordinateSystems", coordinates}, {"fieldUnits", fields}, {"unitSystem", "cgs"},
         {"pathChecks", "local-host; no filesystem access in schema or inspection"}});
 }
 
-/** Resolve a supplied parameter text and return typed/provenance evidence. */
+/** Analyze exact input bytes without executing Setup or constructing runtime defaults. */
 PreviewResponse InspectConfiguration(const PreviewRequest& request) {
-    detail::CaptureLogs logs;
-    auto result = Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::configuration_version}, {"kind", "configuration-inspection"},
-        {"status", "error"}, {"identity", Json::object({{"requestId", request.request_id}, {"caseId", request.case_id},
-            {"configRevision", core::string_sha256(request.config_text)}})},
-        {"execution", Json::object({{"simulationReadiness", "not_checked"}, {"setup", "not_executed"},
-            {"eos", "not_loaded"}, {"caseRegistration", "not_checked"}, {"filesystem", "not_accessed"}, {"cuda", "not_initialized"}})},
-        {"parameters", Json::array()}, {"coordinates", Json()}, {"diagnostics", Json::array()}});
-    int code = 3;
-    try {
-        ConfigParser parser;
-        std::istringstream stream(request.config_text);
-        parser.Load(stream);
-        bool invalid = false;
-        for (const auto& d : config::standard_parameters) {
-            const std::string key(d.key);
-            try {
-                const auto value = input_value(d, parser);
-                auto item = Json::object({{"key", key}, {"parsedValue", value},
-                    {"valueStage", "typed-input-before-setup-and-policy-resolution"},
-                    {"valueSource", parser.HasKey(key) ? "explicit" : "default"},
-                    {"defaultValue", default_json(d)}, {"rawValue", parser.HasKey(key) ? Json(parser.GetString(key, "")) : Json()}});
-                result["parameters"].push(std::move(item));
-            } catch (const ConfigValueError& e) {
-                invalid = true; result["diagnostics"].push(diagnostic(e.code, e.key, e.what()));
-            }
-        }
-        if (invalid) return SerializePreviewResponse(result, code);
-        const auto config = RuntimeParams::LoadText(request.config_text);
-        const auto check_option = [&](const std::string& key, const auto& parsed) {
-            if (!parsed.ok) throw ConfigValueError(key, "INVALID_OPTION", "Unknown registered option.");
-        };
-        check_option("compute_backend", dispatch::parse_compute_backend(config.execution.compute_backend));
-        check_option("gravity_type", dispatch::parse_gravity(config.physics.gravity.type));
-        check_option("solver", dispatch::parse_registered_policy<dispatch::FluxPolicies>(config.numerics.solver_name));
-        check_option("reconstruct", dispatch::parse_registered_policy<dispatch::ReconstructionPolicies>(config.numerics.reconstruction));
-        check_option("limiter", dispatch::parse_registered_policy<dispatch::LimiterPolicies>(config.numerics.limiter));
-        check_option("time_integrator", dispatch::parse_registered_policy<dispatch::TimeIntegratorPolicies>(config.numerics.time_integrator));
-        if (!dispatch::ascii_iequals(config.physics.eos_type, "ideal")
-            && !dispatch::ascii_iequals(config.physics.eos_type, "helmholtz")
-            && !dispatch::ascii_iequals(config.physics.eos_type, "tabular")) throw ConfigValueError("eos_type", "INVALID_OPTION", "Use ideal, helmholtz or tabular.");
-        if (config.physics.burn.use_burn) {
-            check_option("network_name", dispatch::parse_registered_policy<dispatch::NetworkPolicies>(config.physics.burn.network_name));
-            check_option("ode_solver", dispatch::parse_registered_policy<dispatch::OdeSolverPolicies>(config.physics.burn.odeconfig.ode_solver));
-            check_option("linear_solver", dispatch::parse_linear_solver_request(config.physics.burn.odeconfig.linear_solver));
-        }
-        if (config.physics.diffusion.use_diffusion)
-            check_option("diff_integrator", dispatch::parse_registered_policy<dispatch::DiffusionIntegratorPolicies>(config.physics.diffusion.integrator));
-        // These checks describe editable grid configuration, without constructing Grid/AMR.
-        if (!dispatch::parse_geometry(config.grid.geometry).ok)
-            throw ConfigValueError("geometry", "INVALID_OPTION", "Unknown coordinate geometry.");
-        const int blocks[] = {config.grid.nblockx1, config.grid.nblockx2, config.grid.nblockx3};
-        const double lo[] = {config.grid.x1_min, config.grid.x2_min, config.grid.x3_min};
-        const double hi[] = {config.grid.x1_max, config.grid.x2_max, config.grid.x3_max};
-        for (int i = 0; i < 3; ++i) {
-            const auto axis = "x" + std::to_string(i+1);
-            if (blocks[i] < (i == 0 ? 1 : 0)) throw ConfigValueError("nblock"+axis, "INVALID_RANGE", "Use positive blocks for an active axis, or 0 for an inactive second/third axis.");
-            if (i < config.grid.dim) {
-                for (const auto suffix : {"l_boundary_type", "r_boundary_type"}) {
-                    const auto key = axis + suffix;
-                    check_option(key, dispatch::parse_boundary(parser.GetString(key, config::DefaultString(key))));
-                }
-            }
-            if (i < config.grid.dim && (!(hi[i] > lo[i]) || !std::isfinite(hi[i]-lo[i])))
-                throw ConfigValueError(axis+"_max", "INVALID_RANGE", "Active axis maximum must exceed its minimum with a finite extent.");
-        }
-        if (config.amr.lrefinemin < 0 || config.amr.lrefinemax < config.amr.lrefinemin
-            || config.amr.lrefinemax > amr::kMaxRefinementLevel)
-            throw ConfigValueError("lrefinemax", "INVALID_RANGE", "Require 0 <= lrefinemin <= lrefinemax <= 15.");
-        auto parameters = Json::array();
-        for (const auto& d : config::standard_parameters) {
-            const std::string key(d.key);
-            auto value = input_value(d, parser);
-            auto item = Json::object({{"key", key}, {"parsedValue", value},
-                {"valueStage", "typed-input-before-setup-and-policy-resolution"},
-                {"valueSource", parser.HasKey(key) ? "explicit" : "default"},
-                {"sourceKey", key}, {"defaultValue", default_json(d)},
-                {"rawValue", parser.HasKey(key) ? Json(parser.GetString(key, "")) : Json()},
-                {"applicable", applicable(d, config, parser)}, {"applicabilityScope", "configured-modules; model usage not traced"},
-                {"units", unit_info(key, UnitSystem(config))}, {"path", path_role(key)}});
-            parameters.push(std::move(item));
-        }
-        result["parameters"] = parameters;
-        result["coordinates"] = CoordinateMetadata(config.grid, UnitSystem(config));
-        result["unitSystem"] = UnitSystem(config);
-        result["diffusion"] = DiffusionMetadata(config);
-        result["amrIndicators"] = RefinementMetadata(config);
-        result["resolved"] = Json::object({{"geometry", config.grid.geometry}, {"dimension", config.grid.dim},
-            {"timeIntegrator", config.numerics.time_integrator}, {"eosRequested", config.physics.eos_type},
-            {"burnEnabled", config.physics.burn.use_burn}, {"networkRequested", config.physics.burn.network_name},
-            {"nseAutoRequested", config.physics.burn.nse_auto}, {"gravityType", config.physics.gravity.type},
-            {"diffusionEnabled", config.physics.diffusion.use_diffusion}, {"restart", config.io.restart}});
-        auto unknown = Json::array();
-        for (const auto& [key, raw] : parser.GetAllParams()) {
-            const bool known = std::any_of(config::standard_parameters.begin(), config::standard_parameters.end(),
-                [&](const auto& d) { return d.key == key; });
-            if (!known) unknown.push(Json::object({{"key", key}, {"rawValue", raw}, {"type", Json()}, {"unit", Json()}, {"status", "uninspected-model-parameter"}}));
-        }
-        result["customParameters"] = unknown;
-        result["status"] = "ok"; code = 0;
-    } catch (const ConfigValueError& e) {
-        result["diagnostics"].push(diagnostic(e.code, e.key, e.what()));
-    } catch (const std::exception& e) {
-        result["diagnostics"].push(diagnostic("INVALID_CONFIGURATION", "", e.what()));
+    ConfigParser parser;
+    std::istringstream stream(request.config_text);
+    parser.Read(stream, "stdin");
+    const auto analysis = config::AnalyzeConfigurationInput(parser, request.case_id);
+    auto parameters = Json::array();
+    std::map<std::string, Json> units;
+    std::map<std::string, std::string> types, groups, predicates;
+    bool conditions_known = analysis.requirements_known();
+    const auto add = [&](const std::string& key, const config::InputRecord& record,
+                         const Json& case_id, const std::string& type, const std::string& group,
+                         const std::string& usage, const Json& unit, const std::string& predicate,
+                         const std::string& applicable_id, const config::ConditionResult& applicable) {
+        parameters.push(record_json(key, record, case_id, type, group, usage, unit,
+                                    predicate, applicable_id, applicable));
+        units[key] = unit; types[key] = type; groups[key] = group; predicates[key] = predicate;
+        conditions_known &= applicable.value.has_value();
+    };
+    for (const auto& [key, record] : analysis.standard.parameters) {
+        const auto& d = *record.definition;
+        add(key, record, Json(), std::string(d.type), std::string(d.group), "simulation", unit_info(key),
+            condition_id(d), condition_id(d, true),
+            config::InputApplicability(d, analysis.standard, analysis.declaration.consumers));
     }
-    if (!logs.warning.text.empty()) result["diagnostics"].push(diagnostic("CORE_LOG", "", logs.warning.message(), "warning"));
-    return SerializePreviewResponse(result, code);
+    for (const auto& d : analysis.declaration.parameters) {
+        const auto id = "case:" + request.case_id + ":" + d.key;
+        add(d.key, analysis.model.parameters.at(d.key), request.case_id, d.type, "Case", d.usage,
+            case_units(d.unit, d.type), id, id, d.requirement);
+    }
+    if (analysis.model.composition)
+        for (const auto& [key, record] : analysis.model.composition->parameters)
+            add(key, record, request.case_id, "float", "Composition", "simulation",
+                case_units("1", "float"), "sparse-composition-member", "composition-consumer", {true, {}});
+    for (const auto& [key, record] : analysis.auxiliary)
+        add(key, record, Json(), "string", "Runtime", "simulation", case_units("", "string"),
+            "optional", "always", {true, {}});
+    auto diagnostics = Json::array();
+    bool missing = false, invalid = false;
+    for (const auto& d : analysis.diagnostics) {
+        missing |= d.code == "MISSING_PARAMETER";
+        invalid |= d.code != "MISSING_PARAMETER";
+        diagnostics.push(Json::object({{"code", d.code}, {"severity", "error"},
+            {"parameterKey", d.key.empty() ? Json() : Json(d.key)},
+            {"module", groups.contains(d.key) ? Json(groups.at(d.key)) : Json()},
+            {"conditionId", predicates.contains(d.key) ? Json(predicates.at(d.key)) : Json()},
+            {"message", d.message}, {"expected", Json::object({
+                {"type", types.contains(d.key) ? Json(types.at(d.key)) : Json()},
+                {"units", units.contains(d.key) ? units.at(d.key) : Json()}})},
+            {"locations", locations(d.locations)}, {"relatedKeys", strings(d.related_keys)}}));
+    }
+    // A dependent missing requirement is not an error on the dependent value.
+    // Preserve its unknown condition and identify what must be resolved first.
+    const auto unresolved = [&](const auto& records) {
+        for (const auto& [key, record] : records) {
+            if (record.requirement.value) continue;
+            diagnostics.push(Json::object({{"code", "UNRESOLVED_DEPENDENCY"}, {"severity", "error"},
+                {"parameterKey", key}, {"module", groups.at(key)}, {"conditionId", predicates.at(key)},
+                {"message", "Requirement cannot be evaluated until its dependencies are resolved."},
+                {"expected", Json::object({{"type", types.at(key)}, {"units", units.at(key)}})},
+                {"locations", locations(record.locations)},
+                {"relatedKeys", strings(record.requirement.missing_dependencies)}}));
+        }
+    };
+    unresolved(analysis.standard.parameters);
+    unresolved(analysis.model.parameters);
+    const bool complete = !missing && !invalid && conditions_known;
+    const bool declarations = analysis.model.declarations_complete && analysis.ownership.complete;
+    auto result = Json::object({{"schemaVersion", contract::schema_version},
+        {"version", contract::configuration_version}, {"kind", "configuration-inspection"},
+        {"status", complete ? "ok" : "error"},
+        {"identity", Json::object({{"requestId", request.request_id}, {"caseId", request.case_id},
+            {"configRevision", core::string_sha256(request.config_text)}})},
+        {"coverage", coverage(declarations, conditions_known, analysis.ownership.complete)},
+        {"completeness", Json::object({{"state", invalid ? "invalid" : missing ? "incomplete"
+            : complete ? "complete" : "undetermined"}, {"scope", "declared-configuration-before-setup"}})},
+        {"execution", Json::object({{"simulationReadiness", "not_checked"}, {"setup", "not_executed"},
+            {"eos", "not_loaded"}, {"caseRegistration", "checked"}, {"caseDeclarations",
+                ProblemRegistry::Get().Registration(request.case_id) ? "checked" : "not_checked"},
+            {"filesystem", "not_accessed"}, {"cuda", "not_initialized"},
+            {"validationStage", "conditional-resolution"}})},
+        {"parameters", parameters}, {"diagnostics", diagnostics}, {"unitSystem", "cgs"}});
+    return SerializePreviewResponse(result, complete ? 0 : 3);
 }
 } // namespace arch::api

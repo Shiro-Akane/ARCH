@@ -1,140 +1,106 @@
-# Studio 标准配置接口
+# Studio 配置接口 v3
 
-本文说明配置扩展版本 2 的结构；当前集成分支已先收紧语法和未知方法拒绝。
-完整缺项拒绝、可空值和版本 3 迁移仍在进行，见
-[配置完整性计划](../../docs/development/ConfigurationContractPlan.zh-CN.md) 与
-[Core／Studio 联合交付计划](../../docs/development/StudioConfigurationHandoff.zh-CN.md)；
-实现前不把候选契约当作现有响应。
+当前集成分支的 Core 已实现配置扩展版本 3，外层仍为 schemaVersion="1.0"。
+这是 O7.0 进行中的迁移，尚未完成 Host/Studio 配套升级、受控只读运行配置和
+全部旧输入迁移，不能作为阶段发布声明。v2 的 defaultValue/defaultSource、
+缺项回填和 custom 未检查列表不再是本接口。
 
-当前 O6 目录为 95 项：在 P3/P4 的 92 项基础上，新增 `eos_coulomb_mult/hll_wave_speed/dt_max`。P1.5 已登记 `dt_init`、`dt_min`、`tstep_change_factor`，物理下限仍用现有参数。Core 不发布 Advanced 标签，GUI 按自己的显示层策略折叠选项。
+完整字段定义见 [v3 协议](CONFIGURATION_V3_CANDIDATE.md)；
+必填／默认规则唯一来源仍是
+[配置完整性计划](../../docs/development/ConfigurationContractPlan.zh-CN.md)。
 
-配置扩展版本 `2`，外层 `schemaVersion="1.0"`。沿用 ARCH 的进程 + stdin/JSON 通道。无需运行 simulation、加载 EOS 表或启动 CUDA，也不写 `.par`、输出目录或数据文件。
+## 入口与边界
 
-## 两个入口
+调用 build-cpu/bin/ARCH --config-schema 查询目录。
+调用 build-cpu/bin/ARCH --inspect-config Sod --config-stdin --request-id editor-001
+并通过 stdin 提供原始参数文件。可用输入见
+[迁移后的 Sod](examples/configuration-v3-candidate/sod-valid.par)。
 
-```sh
-# 从当前可执行文件查询标准参数目录；不需要已有 .par。
-build-studio-core-ui/bin/ARCH --config-schema
+stdin 限制 1 MiB、stdout JSON 含换行限制 8 MiB。退出码 0 表示本层声明检查
+完成，2 为请求错误，3 为无效／不完整／条件未定，7 为响应超限。
+空输入是缺失配置，不是默认配置。精确原文字节参与 SHA-256 identity；
+caseId 和 requestId 保留，Host 还须关联项目、binary/build、会话与编辑版本。
 
-# 检查内存中的参数文本；这里用重定向演示，不要求 GUI 先保存。
-build-studio-core-ui/bin/ARCH --inspect-config Sod --config-stdin \
-  --request-id editor-001 < simulation/Sod/Sod.par
-```
+inspection 仅调用共同输入解析及登记的静态 case 声明：
+**不构造 SimConfig、不执行 Setup/Init、不加载 EOS、不检查路径、
+不初始化 CUDA、不创建输出或推进时间。**
+模型的动态物理域、Setup 修改和运行资源仍需后续检查；例如 Sod x_pos
+的 Setup 物理域拒绝不由本层冒充完成。simulationReadiness 永远为 not_checked。
 
-Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 Preview 相同的配置 1 MiB、响应 8 MiB、UTF-8/NUL 和标识符 128 字节限制；不接受采样参数。空 stdin 表示检查默认配置。退出码：0 成功；2 请求格式错误；3 配置错误；7 响应超限。stdout 为单个 JSON，底层日志不会混入它。
+## Schema
 
-`--preview-capabilities.extensions.configuration` 发布入口和版本。现有 Preview、Core A 参数读取来源及 Sod 图形绑定保持独立。
+parameters 是当前活动标准目录；本 binary 为 94 项，gravity_G 进入 retiredKeys。
+25 个允许登记默认通过 allowedDefault 发布，其他项为 null。
+这些数量仅是本次 binary 证据，客户端不得固定数量。
 
-## 参数目录：configuration-schema
+每项保留 key/type/group/presentation/options/path/units/constraints，
+增加 usage、requirement、applicability、allowedDefault、templateRecommendations。
+条件由 Core 发布 ID 和 dependencies，由 inspection 返回三态结果；
+前端不能执行 description，也不能用缺少开关推断关闭。
+推荐模板与允许默认分离；目前 templateRecommendations 为空。
+constraints.complete=false，不代表全部模型物理规则已在 schema 枚举。
 
-`parameters` 恰含当前 `RuntimeParams` 的 95 个标准配置键，不包含已退役旧键。默认值来自 `src/core/config/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
+caseDeclarations 包含当前注册模型的来源路径、源码 SHA 和静态参数声明。
+本 binary 包含 14 个模型；网络组分目录依赖选定 network，在 inspection 展开。
+动态依赖未知时不宣称所选模型全部可验证。auxiliaryParameters 当前含 log_dir，
+缺失时沿现有 main 所有者从 out_dir 派生，不是新的物理默认。
 
-| 字段 | 含义 |
-|---|---|
-| key / type / group | 原始键、int/float/bool/string/expression、Grid/EOS/Network/Gravity/Diffusion/Runtime |
-| defaultValue / defaultSource | 缺省输入；不是模型 Setup 或求解策略最终采用值。表达式默认输入可以是字符串 |
-| constraints | 数值存储范围、语法和已确认的部分范围；`complete=false`，交叉约束及运行要求另检查 |
-| options | 枚举选项、acceptedNames、大小写及未知值行为；策略列表从现有注册表生成 |
-| applicability | 适用条件的解释；本次配置的布尔结果由检查接口提供 |
-| path | 输入文件或输出目录、相对路径基准；普通字符串为 null |
-| units | 单位及状态；坐标相关项通过 axis 指向坐标描述 |
-| presentation | displayName、description、subgroup；95 键全覆盖。含指定参数的 toggle / enabledBy |
+required/conditional 参数不得因旧 Get 的 fallback 参数而获得默认许可。
+合法显式 false、0 和空字符串都保留，typed 值不会规范化回原文。
 
-`presentation.toggle` 仅出现在 max_steps、plt_dt、plt_dstep、chk_dt、chk_dstep，启用条件 value > 0，关闭写入值 -1，未编辑原文保留。enabledBy 给出三个常量扩散系数对应的通道开关键。options.choices 的 displayName 用于显示，value 用于写回，acceptedNames 用于识别输入别名；不按别名逐个生成选项。
+## Inspection
 
-`options` 的 CPU/CUDA 标记仅描述注册的实现，不能用来认定当前 binary/device/依赖或组合已可运行。未知 solver、reconstruct、limiter、time_integrator 已统一拒绝，目录发布 unknownBehavior=error。合法别名和显式 backend/linear solver 的 auto 不受影响。
+parameters 展开标准、所选 case、组分和辅助输入，并保留 caseId。
+每条记录包含：
 
-`standardParametersComplete=true` 仅指上述标准键覆盖；`customParametersComplete=false`、`constraintsComplete=false`。结构体报告、缓存和未开放的字段不在目录中。自定义网络选项来自本次编译的注册表。
+- inputState：missing / present / invalid / duplicate。
+- rawValue、locations：原始未 trim 值跨度与 UTF-8 字节行列；缺失无伪造位置。
+- parsedValue：仅显式输入的严格转换；缺失为 null。
+- resolvedValue：Setup 之前共同解析层结果；不等于 Preview model-read 值。
+- valueSource：input / case-defined / derived / documented-default 或 null。
+- sourceEvidence：登记默认、模型定义与派生依赖的 owner/dependencies。
+- requirement/applicability：satisfied / not-applicable / unknown-dependency。
+- units/path：Core 声明，文件存在性始终未检查。
 
-目录和结构体共用 `ode_max_substeps=10000`、`ode_initial_dt_frac=1`，不再保存另一套未对齐默认值。NSE 的输入是字符串 true/false/auto，不是单纯 bool。
+格式错误保持 raw、parsed/resolved 为 null；范围错误保留已转换 parsed，
+清空 resolved/source。重复键保留所有位置，但不选第一或最后一项。
+稀疏组分保留原始比例，不执行归一化；省略组分的零由网络声明提供，
+source 为 case-defined，parsed 仍是 null。整个组分的正有限和仍校验。
 
-## 配置检查：configuration-inspection
+缺项、无效类型、退役、未知方法、未知键和跨字段问题聚合到 diagnostics。
+每项含 code/severity/parameterKey/module/conditionId/expected/locations/relatedKeys。
+条件未定使用 UNRESOLVED_DEPENDENCY，不能伪装成依赖字段缺项。
+模型／组分声明未完成时不进行猜测式 unknown-key 判断，并降低 coverage。
+gravity_G 与历史五个退役键均不能落入 custom。
 
-`identity` 包含传入的 caseId、requestId，以及原始输入字节的 configRevision SHA-256。Host 应继续给结果关联自己的项目和 binary/build 身份。caseId 在本接口是上下文标识，**不验证模型注册、不执行 Setup、不判断文件本来属于哪个模型**。
+coverage 分别声明标准、辅助、case、条件和诊断覆盖。
+completeness.scope 为 declared-configuration-before-setup，state 为
+complete/incomplete/invalid/undetermined；不等于 simulation ready。
+响应过大时保留已确认 identity，返回完整受限 JSON、RESPONSE_TOO_LARGE
+和 false coverage，而非截断的成功文档。
 
-成功结果提供全部 95 个标准参数：
+## 坐标、单位和派生展示
 
-- `parsedValue`：类型转换后的配置输入。表达式返回求值后的数；这是 `typed-input-before-setup-and-policy-resolution`，不是完整 simulation 的最终有效值。
-- `rawValue`：文件显式输入，否则 null；重复键拒绝，不选择第一项或最后一项；原始位置记录在共同解析器中，完整 API 位置封套随 v3 迁移。
-- `valueSource`：explicit 或 default。`sourceKey` 指明当前标准键，`defaultValue` 单独保留。
-- `applicable`：依据当前模块开关等判断。范围明确为 configured-modules，不表示追踪到了模型实际使用它。即使不适用，文件显式提供的标准数值也要满足类型要求。
-- `path` / `units`：路径用途及单位说明，不执行文件存在性检查。
+schema.coordinateSystems 继续从 Core 网格轴定义发布各几何/维数模板；
+fieldUnits 来自 Core 物理单位。标准输入为 CGS，包括 IdealGas，不自动换算。
+units.status 区分 known、dimensionless、not-applicable、coordinate-dependent、
+mixed-state、not-specified；未知单位为 null。
 
-`resolved` 提供维数、geometry、时间积分标准输入等已解析摘要；`coordinates` 提供轴映射。`execution` 明确 Setup、EOS、CUDA、文件访问均未执行，simulationReadiness 未检查。
+v3 inspection 不再通过带默认值的 SimConfig 构造 coordinates、diffusion、
+amrIndicators 或旧 resolved 摘要。依赖未解析时必须保持未知。
+相关动态展示需基于共同解析结果进一步接线，Host/Studio 迁移尚未完成；
+不能从 v2 快照恢复虚假默认摘要。现有 Preview 的实际状态响应不因此成为
+当前未完成配置的替代值。
 
-五个已退役键 `enforce_mass_conservation`、`burn_verbose_level`、`ode_use_numerical_jac`、`ode_freeze_jacobian`、`timeintegrator` 返回 `RETIRED_PARAMETER`，不能作为 custom 输入绕过。
+## 客户端与验证
 
-其他未识别标准键列入 `customParameters`，仅保留 rawValue，类型/单位为 null，状态为 `uninspected-model-parameter`。缺少 metadata 不表示参数未使用。
+不兼容版本明确提示更新并保留 Working Copy，禁止 null 转 0/false 或旧默认。
+草稿保存与运行资格独立；保存、inspection 都不能自动插入缺项或删除退役键。
+未知／错误输入保持可定位，显式删除可 Undo。
 
-失败通过 `diagnostics` 返回 code、parameterKey、message、severity。完整数值错误和主要坐标/选项错误可定位字段；部分既有 RuntimeParams 交叉检查仍只给整体信息，此时 parameterKey 为 null。错误结果可能只包含已确认的部分参数，不要将其当作完整有效配置。
-
-检查包括标准类型、表达式、现有 RuntimeParams 校验，以及轴 blocks/范围、AMR 层级和适用的注册选项；仍不替代模型 Setup、EOS 适用区间或完整求解器/设备验证。self gravity 不再统一产生 unavailable 警告；当前生产路径支持 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界及已验证的燃烧/热扩散组合，配置合法仍不等于设备/求解就绪。Helmholtz + diffusion 显式传入 alpha_therm/nu_visc/D_spec 返回字段错误，不再从库内部直接退出进程。
-
-## 坐标与单位
-
-`coordinateSystems` 列出三种 geometry 在 1/2/3D 下的对应关系，来源为 `Grid::GetAxisNames()`。`coordinates.axes` 固定三项，包含：
-
-- `key`：稳定的 x1/x2/x3。
-- `displayName` / `nativeName`：易读名称及 Core 原始名称；r_cy/phi_cy 的显示名为 r/phi。
-- `active`、kind、unit：活动状态、length/angle/inactive 等语义与单位。
-- blocksKey、minKey、maxKey、lowerBoundaryKey、upperBoundaryKey：对应 `.par` 的原始键。
-
-正整数 blocks（包括 1）启用该轴；第二/第三轴用 0 关闭，第三轴依赖第二轴。非活动轴显示名保留 x2/x3，其单位不猜测；GUI 可以使用目录中的目标维度模板提供启用提示。二维 cylindrical/spherical 为 r–phi，三维分别为 r–z–phi / r–theta–phi。
-
-标准输入和输出统一采用 CGS，包括 IdealGas。单位字段不对用户数据做自动换算。
-
-| 字段 | 单位 |
-|---|---|
-| 坐标长度 / 角度 | cm / rad |
-| DENS | g/cm^3 |
-| TEMP | K |
-| PRES / ENER | erg/cm^3 |
-| EINT | erg/g |
-| VELX/VELY/VELZ | cm/s |
-
-`state.units.system=cgs`、`basis=core-cgs-contract`、`valuesConverted=false`。当前目录不提供 code 单位分支；历史响应只作为旧接口记录。IdealGas 无组分回退比热修正为 7.18e6 erg/(g K)，显式 Cv 不自动换算；Sod 显式 Cv=1 的数值保持不变。
-
-units.status 区分 known、dimensionless、not-applicable、coordinate-dependent、mixed-state 等。ode_atol 用于温度/丰度混合状态，没有一个统一标量单位；不显示为“单位不清楚”。未知 custom 单位仍为 null。Sod x_pos 通过已有明确 Cartesian 坐标绑定返回 cm 和 unitEvidence；没有通用 C++ 自动推断。
-
-## Diffusion 与 AMR 展示状态
-
-成功检查响应新增 `diffusion`：enabled、modeEditable=false、source、possibleSources、sourceScope、selectionRule、forbiddenExplicitKeys 和 channels。IdealGas 常量路径可按通道开关显示对应 cm^2/s 数值。Helmholtz 启用扩散时，三个常量键即使等于零也不得显式出现；普通关闭模块/通道则保留原值。物理系数最终取决于实际 EOS 状态，配置检查不会假装加载 EOS；stellar 分支目前只给出热扩散率。
-
-`amrIndicators` 给出规范名字、Core 解析后 selected、当前 available 和不可用原因，以及需要 Setup 解析的组分名字。字段使用逗号分隔（兼容加号）；不能把未知文本自动当密度指标。Preview 状态也带该结构，实际网格和资源接口见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。
-
-## Host / Studio 接入边界
-
-- 先读取目录构造编辑器；在需要检查当前副本时调用检查入口。失败时保留用户输入，旧结果按身份隔离。
-- 默认项只有在用户编辑时才插入 `.par`；applicable=false 不意味着自动删除已有值。
-- 路径的 relativeTo 是进程工作目录。Host 提供实际路径、文件类型、存在性、读写权限预检；Core 不调用文件系统完成此检查。
-- EOS 输入表通常要在使用时存在；未启用的模块可以保留空路径。`eos_helm_table_path` 为空可选择 Core 已有的默认组件表，最终需要哪些表取决于加载策略。输出目录可以尚未创建。路径字段原始引号沿用实际加载器处理，Host 预检应使用相同规则。
-- 使用配置身份和 Host 的 build/binary 身份淘汰旧响应；不要让另一模型的旧 metadata 驱动当前编辑器。
-- 比例、颜色、上下限和截断是 Studio 的显示设置，不传回 `.par` 或 Core 数据数组。
-- 配对警告、常驻名称、确认与覆盖保存由 Studio / Host 实现。本轮不增加声明文件或强制文件命名规则。
-
-## 有意收紧的输入行为
-
-标准 int 拒绝小数、科学计数文本、后缀和溢出；标准 float 拒绝非法后缀、非有限值和转换越界。坐标表达式只接受已有文档列出的形式，并拒绝不能得到有限结果的表达式。旧的数字前缀截断和表达式错误回退不再用于标准键。未填写的标准键默认值保持原值。
-
-Custom 数值读取现在要求完整数值；普通 Get 与 Preview 共用整数范围/词法和布尔检查。整数不接受小数/科学计数 token，布尔文本只接受 true/false（大小写不敏感），不把 0/1 当布尔文本。模型缺项声明和完整组合校验仍待 v3 迁移；接入方不能把标准检查标为“已验证全部 custom 参数”。
-
-## 示例与验证
-
-完整实际响应、输入和复现方式见 [examples/configuration](examples/configuration/README.md)。CPU 接口测试入口为 `configuration_api_contract`，旧六组 Preview 测试继续运行；交付结果及冻结基线见 [CORE_UI_HANDOFF.md](CORE_UI_HANDOFF.md)。
-
-
-P3/P4 的新参数仍属于 GravityConfig，文本输入没有 advanced 标签。rtol/atol/max_cycles
-建议由 GUI 折叠为高级选项。生产 self plot 自动附加 GPOT 与有效轴的 GACX/Y/Z，
-单位分别为 cm²/s²、cm/s²；普通 Init/AMR 预览不求解这些场。流体内存提示明确排除
-势、加速度、面 stencil 与 MG/FGMRES workspace。完整范围见
-[实现与验收记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)。
-
-## O6 物理与时间控制
-
-三个新键 `eos_coulomb_mult/hll_wave_speed/dt_max` 复用现有 EOS/Runtime 分组、
-typed defaults、选项、单位、适用性与校验。HLL 波速选项同时适用 HLL/HLLC，
-独立于重构选择；非默认 Coulomb 比例只适用 Helmholtz。`dt_max` 使用秒，`-1`
-关闭额外上限。默认值分别为 1/roe/-1；表格有效域仍需实际运行检查。
-StateSnapshot 中 `eos.coulombFraction` 记录实际模型比例，预览 EOS owner 缓存
-身份也包含该比例。GUI 决定高级折叠；Core 不新增 Advanced 分组。
-未通过科学门槛的面 EOS 近似已撤除，目录不发布失效开关或旧键别名。
+当前真实二进制回归为 configuration_v3_contract；共同解析与实际入口
+分别有 configuration_input、input_resolution、case_configuration、
+config_input_records、configuration_entry_contract。不能把这些局部通过
+称为全部 Core/Host/Studio 回归通过。旧 v2 fixtures 和调用方待迁移。
+实际 v3 配置响应存于 examples/configuration-v3；原 examples/configuration
+为历史 v2 证据，不应再作为新客户端协议期望。

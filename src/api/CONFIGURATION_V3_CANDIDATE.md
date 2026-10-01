@@ -1,7 +1,9 @@
 # Configuration extension v3 — candidate contract
 
-Status: proposed wire contract, NOT implemented by the current executable.
-The implemented v2 reference remains CONFIGURATION_API.md. Required/default
+Status: implemented by the current integration Core for schema/inspection;
+Host/Studio migration and end-to-end activation gates remain incomplete.
+The filename is retained for existing fixture links. CONFIGURATION_API.md
+describes the current boundary and known migration gaps. Required/default
 classification remains owned by ConfigurationContractPlan.zh-CN.md; this
 document defines transport, not another scientific parameter catalogue.
 
@@ -124,7 +126,7 @@ frontend expectation table. The initial syntax fixture deliberately reports
 partial coverage. It preserves valid explicit zero/false alongside malformed
 and duplicate inputs, proving error envelopes are still useful to an editor.
 
-Before enabling v3, complete actual-response regression for: valid declared case, empty input, missing switches, each required
+Before releasing the integrated v3 workflow, complete actual-response regression for: valid declared case, empty input, missing switches, each required
 class, documented defaults, case-defined/derived values, inactive explicit bad
 tokens, retired/unknown keys, unknown methods, missing path vs unchecked path,
 raw whitespace identity, unknown case, response limit and stale Host identity.
@@ -142,8 +144,8 @@ The schema's parameters array is the standard catalogue. auxiliaryParameters
 declares shared nonstandard input such as log_dir; caseDeclarations contains
 (caseId, source, sourceSha256, parameters). caseDeclarationsComplete says whether
 all registered models are represented, not whether one selected case is complete.
-The candidate includes Sod only; implementation must register the other models
-before claiming their declaration coverage. All seven editable Sod primitive
+The hand-authored candidate includes Sod only; the current Core schema enumerates
+all registered declarations. Dynamic composition still requires selected input. All seven editable Sod primitive
 inputs are required; old Get fallback arguments are not published as defaults.
 
 Inspection parameters flatten the selected declarations with caseId retained.

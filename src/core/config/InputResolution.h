@@ -340,6 +340,8 @@ inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
         } else if (const auto* value = AllowedDefault(definition)) {
             record.resolved = input_detail::copy_default(*value);
             record.source = InputValueSource::DocumentedDefault;
+            record.source_evidence = InputSourceEvidence{
+                "ConfigurationContractPlan:allowed-default:" + key, {}};
         }
         result.parameters.emplace(key, std::move(record));
     }
@@ -386,5 +388,33 @@ inline StandardInputResolution ResolveStandardInput(const ConfigParser& parser,
                 "Required input has no declared value.", {}});
     }
     return result;
+}
+// Applicability describes a consumer, independently of permission to omit input.
+// Unknown controlling values remain unknown; defaults never stand in for a switch.
+inline ConditionResult InputApplicability(const ParameterDefinition& definition,
+                                          const StandardInputResolution& values,
+                                          const InputContext& context) {
+    using namespace input_detail;
+    const auto key = definition.key;
+    if (definition.requirement != RequirementKind::Optional)
+        return condition(definition.condition, values, context);
+    if (key == "cuda_device") return choice(values, "compute_backend", {"cuda", "auto"});
+    if (key == "eos_helm_table_path") return choice(values, "eos_type", {"tabular"});
+    if (key == "gravity_max_cycles") return choice(values, "gravity_type", {"self"});
+    if (key == "diff_max_stages") return flag(values, "use_diffusion");
+    if (key == "EntropyFixCoefficient")
+        return combine(choice(values, "solver", {"roe", "sw"}), flag(values, "EntropyFix"), true);
+    if (key == "linear_solver" || key.starts_with("ode_")) {
+        auto active = flag(values, "use_burn");
+        if (key == "ode_max_newton_iter")
+            active = combine(active, choice(values, "ode_solver", {"BE_NR"}), true);
+        if (key == "ode_dt_safe_fac") {
+            auto bd = choice(values, "ode_solver", {"BD"});
+            if (bd.value) bd.value = !*bd.value;
+            active = combine(active, bd, true);
+        }
+        return active;
+    }
+    return known(true);
 }
 } // namespace arch::config

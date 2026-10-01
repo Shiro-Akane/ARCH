@@ -253,3 +253,30 @@ git diff --check PASS。没有时间演化、CUDA或原始科学输出提交。
 仍未宣告完整性整改完成：case的具体物理域检查、Setup赋值来源/重新验证、
 受控只读构造与旧fallback清理仍待收束。下一步直接迁移v3 schema/inspection序列化，
 以当前共同解析结果返回nullable值及诊断，随后迁移Host/Studio。
+
+### O7.0 v3 schema / inspection 实际响应迁移
+
+配置扩展改为3。inspection删除默认SimConfig构造与旧input_value回填，
+直接消费AnalyzeConfigurationInput，返回nullable parsed/resolved、原文位置、
+input/case-defined/derived/documented-default来源、条件三态和聚合诊断。
+schema发布94活动标准项、25允许默认、14模型声明及辅助log_dir；这些是当前
+binary证据，不是前端固定数量。gravity_G归入retiredKeys。
+响应超限保留identity，明确降低coverage与completeness。
+
+13项configuration_v3_contract真实binary测试PASS，覆盖声明/来源、空输入、
+缺失条件、重复/非法/退役/未知、原文字节身份、路径不访问、稀疏组分不归一化、
+Setup物理域不冒充已检查、8MiB预算。最终6项相关CTest全部PASS，v3组含13项实际响应检查，不重复加总。
+最终审查补齐超限错误诊断schema，重新编译后完成该最终测试，四份配置样例与最终binary响应逐份一致。
+configuration_entry_contract仍含6项实际入口检查，不与CTest条目相加。
+CPU重链PASS；首次漏传InputContext导致编译失败，修正后构建及测试通过。
+最后构建最低可用内存约20.8GiB，无swap增长；git diff --check PASS。
+
+实际配置JSON证据在src/api/examples/configuration-v3，capture.json记录binary
+SHA、base commit和修改实现指纹；没有科学数组或H5/plt/checkpoint提交。
+CONFIGURATION_API及API入口说明同步为当前v3，旧v2样例标明历史用途。
+
+边界仍明确：Host/Studio未迁移，旧全套v2用例未宣称通过；动态coordinates/
+diffusion/amr摘要需从partial inputs安全接线，不能恢复默认SimConfig。
+case物理域与Setup后重新验证、受控只读构造、旧fallback/G_const清理及
+后续3C/全模型/Jeans/RZ/CPU-CUDA验证尚未完成。本提交是集成中的可审阅步骤，
+不建立完成tag、不push、不进入物理性能测试。

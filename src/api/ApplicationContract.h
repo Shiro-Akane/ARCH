@@ -16,7 +16,7 @@
 
 namespace arch::api::contract {
 inline constexpr auto schema_version = "1.0";
-inline constexpr auto configuration_version = "2";
+inline constexpr auto configuration_version = "3";
 inline constexpr auto initialization_version = "1";
 enum class Command { Fields, Capabilities, Schema, Configuration, Cases, Resources, Mesh, InspectCase, Session };
 struct CommandDefinition { Command command; std::string_view flag, kind, version; bool takes_configuration; };

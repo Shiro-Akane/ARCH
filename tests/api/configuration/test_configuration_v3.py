@@ -1,0 +1,198 @@
+"""Actual-binary v3 checks: partial input is not a default-filled runtime config."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+import unittest
+
+ARCH = Path(sys.argv.pop(1)).resolve()
+ROOT = Path(sys.argv.pop(1)).resolve()
+BASE = (ROOT / "src/api/examples/configuration-v3-candidate/sod-valid.par").read_text()
+ENV = dict(os.environ, OMP_NUM_THREADS="1", CUDA_VISIBLE_DEVICES="")
+
+def edit(text, key, value=None):
+    text = re.sub(rf"^{re.escape(key)}\s*=.*\n?", "", text, flags=re.MULTILINE)
+    return text if value is None else text + f"\n{key}={value}\n"
+
+def records(data):
+    return {d["key"]: d for d in data["parameters"]}
+
+class ConfigurationV3(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="arch-config-v3-")
+        self.addCleanup(self.tmp.cleanup)
+        self.cwd = Path(self.tmp.name)
+
+    def call(self, args, text=None, expected=0):
+        p = subprocess.run([str(ARCH), *args], input=text, text=True, capture_output=True,
+                           cwd=self.cwd, env=ENV, timeout=30)
+        self.assertEqual(p.returncode, expected, (p.stdout[:4000], p.stderr))
+        self.assertEqual(list(self.cwd.iterdir()), [], "static API wrote files")
+        self.assertLessEqual(len(p.stdout.encode()), 8 * 1024 * 1024)
+        data = json.loads(p.stdout)
+        self.assertEqual(data["version"], "3")
+        return data
+
+    def inspect(self, text=BASE, case="Sod", expected=0):
+        data = self.call(["--inspect-config", case, "--config-stdin"], text, expected)
+        self.assertEqual(data["identity"]["configRevision"], hashlib.sha256(text.encode()).hexdigest())
+        self.assertEqual(data["identity"]["caseId"], case)
+        for key, value in dict(setup="not_executed", eos="not_loaded", cuda="not_initialized",
+                               filesystem="not_accessed", simulationReadiness="not_checked").items():
+            self.assertEqual(data["execution"][key], value)
+        self.assertEqual(data["status"], "ok" if expected == 0 else "error")
+        return data
+
+    def test_schema(self):
+        data = self.call(["--config-schema"])
+        p = records(data)
+        self.assertEqual(len(p), 94)
+        self.assertEqual(sum(v["allowedDefault"] is not None for v in p.values()), 25)
+        self.assertIsNone(p["cfl"]["allowedDefault"])
+        self.assertEqual(p["restart_file"]["requirement"]["condition"]["dependencies"], ["restart"])
+        self.assertEqual(p["gravity_max_cycles"]["applicability"]["dependencies"], ["gravity_type"])
+        self.assertIn("gravity_G", data["retiredKeys"])
+        self.assertNotIn("gravity_G", p)
+        cases = {c["caseId"]: c for c in data["caseDeclarations"]}
+        self.assertEqual(len(cases), 14)
+        self.assertEqual(len(cases["Sod"]["parameters"]), 7)
+        self.assertRegex(cases["Sod"]["sourceSha256"], r"^[0-9a-f]{64}$")
+        for v in [*p.values(), *cases["Sod"]["parameters"]]:
+            self.assertNotIn("defaultValue", v)
+            self.assertNotIn("defaultSource", v)
+
+    def test_valid_provenance(self):
+        data = self.inspect()
+        self.assertEqual(data["completeness"]["state"], "complete")
+        self.assertTrue(all(data["coverage"].values()))
+        p = records(data)
+        self.assertIsNone(p["dt_min"]["parsedValue"])
+        self.assertIsNotNone(p["dt_min"]["resolvedValue"])
+        self.assertEqual(p["dt_min"]["inputState"], "missing")
+        self.assertEqual(p["dt_min"]["valueSource"], "documented-default")
+        self.assertIsNotNone(p["dt_min"]["sourceEvidence"])
+        self.assertEqual(p["log_dir"]["resolvedValue"], p["out_dir"]["resolvedValue"])
+        self.assertEqual(p["log_dir"]["valueSource"], "derived")
+        self.assertEqual(p["log_dir"]["sourceEvidence"]["dependencies"], ["out_dir"])
+        self.assertEqual(p["x_pos"]["caseId"], "Sod")
+
+    def test_empty_and_unknown_conditions(self):
+        data = self.inspect("", expected=3)
+        p = records(data)
+        self.assertEqual(data["completeness"]["state"], "incomplete")
+        self.assertFalse(data["coverage"]["conditionsComplete"])
+        for key in ["geometry", "nblockx1", "eos_type", "use_burn", "cfl", "x_pos"]:
+            self.assertEqual(p[key]["inputState"], "missing")
+            for field in ["rawValue", "parsedValue", "resolvedValue", "valueSource"]:
+                self.assertIsNone(p[key][field])
+            self.assertEqual(p[key]["locations"], [])
+        self.assertEqual(p["gamma"]["requirement"]["state"], "unknown-dependency")
+        self.assertIsNone(p["gamma"]["requirement"]["required"])
+        codes = {(d["code"], d["parameterKey"]) for d in data["diagnostics"]}
+        self.assertIn(("UNRESOLVED_DEPENDENCY", "gamma"), codes)
+        self.assertNotIn(("MISSING_PARAMETER", "gamma"), codes)
+
+    def test_missing_required_classes(self):
+        for key in ["compute_backend", "cfl", "tmax", "gamma", "rho_left", "x1_min", "use_burn"]:
+            with self.subTest(key=key):
+                data = self.inspect(edit(BASE, key), expected=3)
+                self.assertIn(("MISSING_PARAMETER", key),
+                              {(d["code"], d["parameterKey"]) for d in data["diagnostics"]})
+        p = records(self.inspect(edit(BASE, "use_burn"), expected=3))
+        self.assertEqual(p["ode_solver"]["requirement"]["state"], "unknown-dependency")
+
+    def test_raw_identity_zero_false(self):
+        a = self.inspect(edit(BASE, "x_pos", "   0.50  "))
+        b = self.inspect(edit(BASE, "x_pos", "0.5"))
+        p = records(a)
+        self.assertEqual(p["x_pos"]["rawValue"], "   0.50  ")
+        self.assertEqual(p["x_pos"]["parsedValue"], 0.5)
+        self.assertEqual(p["nblockx2"]["parsedValue"], 0)
+        self.assertIs(p["use_burn"]["parsedValue"], False)
+        self.assertNotEqual(a["identity"]["configRevision"], b["identity"]["configRevision"])
+        self.assertEqual(p["x_pos"]["locations"][0]["source"], "stdin")
+
+    def test_duplicate_syntax_inactive_bad_token(self):
+        data = self.inspect(BASE + "\nx_pos=0.25\nbroken line\node_rtol=oops\n", expected=3)
+        p = records(data)
+        self.assertEqual(p["x_pos"]["inputState"], "duplicate")
+        self.assertEqual(len(p["x_pos"]["locations"]), 2)
+        for key in ["parsedValue", "resolvedValue", "rawValue", "valueSource"]:
+            self.assertIsNone(p["x_pos"][key])
+        self.assertEqual(p["ode_rtol"]["inputState"], "invalid")
+        self.assertIsNone(p["ode_rtol"]["parsedValue"])
+        self.assertIsNone(p["ode_rtol"]["resolvedValue"])
+        self.assertEqual(p["ode_rtol"]["applicability"]["state"], "not-applicable")
+        self.assertTrue({"MALFORMED_LINE", "DUPLICATE_PARAMETER", "INVALID_NUMBER"}
+                        <= {d["code"] for d in data["diagnostics"]})
+        for d in data["diagnostics"]:
+            self.assertTrue({"expected", "conditionId", "module", "locations", "relatedKeys"} <= d.keys())
+
+    def test_range_invalid_keeps_parsed(self):
+        p = records(self.inspect(edit(BASE, "cfl", "2"), expected=3))["cfl"]
+        self.assertEqual(p["inputState"], "invalid")
+        self.assertEqual(p["parsedValue"], 2)
+        for key in ["resolvedValue", "valueSource", "sourceEvidence"]:
+            self.assertIsNone(p[key])
+
+    def test_retired_unknown_and_method(self):
+        data = self.inspect(edit(BASE, "solver", "bogus") +
+                            "\ntimeintegrator=RK2\ngravity_G=1\ntypo_parameter=3\n", expected=3)
+        errors = {(d["code"], d["parameterKey"]) for d in data["diagnostics"]}
+        self.assertTrue({("INVALID_OPTION", "solver"), ("RETIRED_PARAMETER", "gravity_G"),
+                         ("RETIRED_PARAMETER", "timeintegrator"),
+                         ("UNKNOWN_PARAMETER", "typo_parameter")} <= errors)
+
+    def test_path_missing_vs_unchecked(self):
+        text = edit(BASE, "restart", "true")
+        self.assertIsNone(records(self.inspect(text, expected=3))["restart_file"]["resolvedValue"])
+        p = records(self.inspect(text + "\nrestart_file=/not/a/checkpoint.h5\n"))["restart_file"]
+        self.assertFalse(p["path"]["existenceChecked"])
+        self.assertEqual(p["valueSource"], "input")
+
+    def test_sparse_case_defined_composition(self):
+        text = edit(BASE, "network_name", "aprox13")
+        for key in ["x_pos", "rho_left", "p_left", "u_left", "rho_right", "p_right", "u_right"]:
+            text = edit(text, key)
+        text += '\nrho0=1e7\ntemperature0=3e9\nsmallx=1e-20\nxhe4=0.75\n'
+        data = self.inspect(text, case="BurnOneZone")
+        p = records(data)
+        self.assertEqual(p["xhe4"]["parsedValue"], 0.75)
+        self.assertEqual(p["xhe4"]["resolvedValue"], 0.75)  # no normalization
+        self.assertEqual(p["xc12"]["inputState"], "missing")
+        self.assertIsNone(p["xc12"]["parsedValue"])
+        self.assertEqual(p["xc12"]["resolvedValue"], 0)
+        self.assertEqual(p["xc12"]["valueSource"], "case-defined")
+        self.assertEqual(p["xc12"]["sourceEvidence"]["dependencies"], ["network_name"])
+        # Setup additionally requires burn=true; static declarations do not
+        # certify model physical/runtime preconditions or execute that owner.
+        self.assertEqual(data["execution"]["simulationReadiness"], "not_checked")
+
+    def test_setup_domain_is_not_claimed_by_static_inspection(self):
+        data = self.inspect(edit(BASE, "x_pos", "2"))
+        self.assertEqual(data["completeness"]["scope"], "declared-configuration-before-setup")
+        self.assertEqual(data["execution"]["setup"], "not_executed")
+
+    def test_unknown_case(self):
+        data = self.inspect(BASE, case="not-registered", expected=3)
+        self.assertFalse(data["coverage"]["caseParametersComplete"])
+        self.assertFalse(data["coverage"]["diagnosticsComplete"])
+        self.assertEqual(data["execution"]["caseDeclarations"], "not_checked")
+        self.assertIn("UNKNOWN_CASE", {d["code"] for d in data["diagnostics"]})
+
+    def test_bounded_error_keeps_identity(self):
+        text = BASE + "".join(f"unknown_key_{i}=0\n" for i in range(30000))
+        self.assertLess(len(text.encode()), 1024 * 1024)
+        data = self.inspect(text, expected=7)
+        self.assertEqual(data["completeness"]["state"], "undetermined")
+        self.assertFalse(any(data["coverage"].values()))
+        self.assertIn("RESPONSE_TOO_LARGE", {d["code"] for d in data["diagnostics"]})
+        for d in data["diagnostics"]:
+            self.assertTrue({"expected", "conditionId", "module", "locations", "relatedKeys"} <= d.keys())
+
+if __name__ == "__main__":
+    unittest.main()

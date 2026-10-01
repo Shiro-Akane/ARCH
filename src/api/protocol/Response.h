@@ -19,6 +19,15 @@ namespace arch::api {
 inline PreviewResponse SerializePreviewResponse(detail::Json &response, int exit_code) {
     try { return {response.dump(max_response_bytes - 1), exit_code}; }
     catch (const std::length_error &) {}
+    // Truncated configuration evidence cannot certify coverage or completeness.
+    if (response.contains("coverage")) {
+        response["coverage"] = detail::Json::object({
+            {"standardParametersComplete", false}, {"auxiliaryParametersComplete", false},
+            {"caseParametersComplete", false}, {"conditionsComplete", false},
+            {"diagnosticsComplete", false}});
+        response["completeness"] = detail::Json::object({{"state", "undetermined"},
+            {"scope", "declared-configuration-before-setup"}});
+    }
     response["status"] = "error";
     response["stage"] = "response";
     response["data"] = detail::Json();
@@ -27,6 +36,15 @@ inline PreviewResponse SerializePreviewResponse(detail::Json &response, int exit
     response["diagnostics"] = detail::Json::array({detail::Json::object({
         {"severity", "error"}, {"code", "RESPONSE_TOO_LARGE"},
         {"message", "Response exceeds 8 MiB; reduce the request size or preview sample count."}})});
+    if (response.contains("coverage")) {
+        response["diagnostics"] = detail::Json::array({detail::Json::object({
+            {"severity", "error"}, {"code", "RESPONSE_TOO_LARGE"},
+            {"message", "Configuration evidence exceeds 8 MiB; reduce the input size."},
+            {"parameterKey", detail::Json()}, {"module", detail::Json()},
+            {"conditionId", detail::Json()},
+            {"expected", detail::Json::object({{"type", detail::Json()}, {"units", detail::Json()}})},
+            {"locations", detail::Json::array()}, {"relatedKeys", detail::Json::array()}})});
+    }
     // Configuration inspection may echo many short custom keys. Its metadata
     // can exceed the transport budget even though stdin was bounded to 1 MiB.
     if (response.contains("customParameters")) response.erase("customParameters");
@@ -35,7 +53,7 @@ inline PreviewResponse SerializePreviewResponse(detail::Json &response, int exit
     response.erase("parameterMetadata");
     if (response.contains("parameters")) response.erase("parameters");
     response["state"] = detail::Json();
-    response["diagnostics"].push(detail::Json::object({{"severity", "warning"},
+    if (!response.contains("coverage")) response["diagnostics"].push(detail::Json::object({{"severity", "warning"},
         {"code", "STATE_OMITTED_FOR_SIZE"}, {"message", "The state/metadata alone exceeds the response budget and was omitted."}}));
     return {response.dump(max_response_bytes - 1), 7};
 }

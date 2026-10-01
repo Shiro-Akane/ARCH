@@ -40,6 +40,12 @@ add_test(NAME configuration_entry_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_configuration_entry.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(configuration_entry_contract PROPERTIES TIMEOUT 180)
+add_test(NAME configuration_v3_contract
+    COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_configuration_v3.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(configuration_v3_contract PROPERTIES TIMEOUT 180)
+
 add_executable(arch_preview_parameter_reads tests/api/configuration/test_parameter_reads.cpp src/api/configuration/ParameterMetadata.cpp)
 arch_configure_host_test(arch_preview_parameter_reads)
 add_test(NAME preview_parameter_reads COMMAND arch_preview_parameter_reads)
