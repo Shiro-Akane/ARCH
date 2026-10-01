@@ -716,3 +716,21 @@ roe、min_eint=1e-10、smallt=1e5、smallx=1e-20，不改热点定义或收敛�
 保留原 cold/warm 完整结果比较、EOS同size/mtime内容变化、热点重新Setup、
 真实初始AMR、transport边界、request-limit和process termination/restart检查。
 无时间演化、CUDA、Core重编译、raw上传、push/tag；完整其他模型回归仍待迁移。
+
+### O7.0 正式模型输入静态审计及 Sedov/Jeans 迁移
+
+审计7个正式输入（Sedov/Gaussian/RT/GravityBox/JeansWave/Cellular/SNIa）。
+全部仍有缺项；Gaussian还存在INVALID_COMPOSITION，RT limiter存在
+INVALID_OPTION，保留失败待追溯原行为，不替换物理值使其通过。
+其余包括条件依赖未知、旧case Get隐含值，不把静态缺项当作物理失败。
+
+Sedov/Jeans补入基线StandardParameters/GlobalDefs的cpu/roe及原数值floor。
+Sedov center_z显式为原域中点0.5；Jeans phase=0/mode=1/standing_wave=false
+保留既有Setup有效值，引力periodic/rtol=1e-10/atol=0来自基线登记默认。
+没有修改Jeans公式、G、波态或误差门槛，不代表O7 Jeans新功能完成。
+
+配置v3新增正式Sod/Sedov/Jeans/Hotspots输入完整性与input来源检查，
+全套17/17 PASS（1.863秒）。实际CPU inspect-case：Sedov 9个采样、
+Jeans 3个采样均ok/Setup ready，输入SHA匹配；临时cwd无文件，
+无timeStepping、CUDA或Driver输出。该检查不等于完整场预览/演化验收。
+无需重编译；未push/tag或上传raw，其他模型迁移及整体目标仍未完成。

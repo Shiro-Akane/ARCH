@@ -235,6 +235,27 @@ class ConfigurationV3(unittest.TestCase):
         self.assertEqual(data["execution"]["caseDeclarations"], "not_checked")
         self.assertIn("UNKNOWN_CASE", {d["code"] for d in data["diagnostics"]})
 
+    def test_migrated_formal_examples_are_explicit_and_complete(self):
+        examples = {
+            "Sod": ("Sod/Sod.par", {"compute_backend": "cpu", "x_pos": .5}),
+            "Sedov": ("Sedov/Sedov.par", {"center_z": .5, "explosion_energy": 1.0}),
+            "JeansWave": ("JeansWave/JeansWave.par",
+                          {"phase": 0.0, "mode": 1, "standing_wave": "false",
+                           "gravity_boundary": "periodic", "gravity_rtol": 1e-10}),
+            "CooperativeHotspots": ("CooperativeHotspots/CooperativeHotspots.par",
+                                    {"smallt": 1e5, "smallx": 1e-20,
+                                     "eos_coulomb_mult": 1.0}),
+        }
+        for case, (path, explicit) in examples.items():
+            with self.subTest(case=case):
+                text = (ROOT / "simulation" / path).read_text()
+                data = self.inspect(text, case=case)
+                self.assertEqual(data["completeness"]["state"], "complete")
+                values = records(data)
+                for key, value in explicit.items():
+                    self.assertEqual(values[key]["valueSource"], "input")
+                    self.assertEqual(values[key]["resolvedValue"], value)
+
     def test_bounded_error_keeps_identity(self):
         text = BASE + "".join(f"unknown_key_{i}=0\n" for i in range(30000))
         self.assertLess(len(text.encode()), 1024 * 1024)
