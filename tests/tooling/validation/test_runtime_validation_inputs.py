@@ -105,6 +105,31 @@ class RuntimeInputTests(unittest.TestCase):
         self.assertEqual(identity["scientific_overrides"], {"eos_type": "ideal"})
         self.assertEqual(identity["dependencies"], [])
 
+    def test_ambiguous_or_malformed_input_cannot_create_identity(self):
+        for text, code in (
+                ("eos_type=ideal\neos_type=ideal\n", "DUPLICATE_PARAMETER"),
+                ("eos_type=ideal\ngamma=1.4\ngamma=1.6\n", "DUPLICATE_PARAMETER"),
+                ("eos_type=ideal\nbroken line\n", "MALFORMED_LINE"),
+                ("eos_type=ideal\n=unused\n", "EMPTY_KEY")):
+            self.parameter.write_text(text)
+            with self.subTest(text=text), self.assertRaisesRegex(RuntimeError, code):
+                self.capture(scientific_overrides={"eos_type": "ideal"})
+
+    def test_raw_parser_retains_empty_and_expression_values(self):
+        self.parameter.write_text(
+            "# comment\neos_type = ideal # chosen\noptional =\n"
+            "x1_max=2*pi\npath=file=name\n")
+        self.assertEqual(read_parameter_map(self.parameter), {
+            "eos_type": "ideal", "optional": "", "x1_max": "2*pi", "path": "file=name"})
+
+    def test_renderer_rejects_duplicate_source_before_writing(self):
+        self.parameter.write_text("eos_type=ideal\ncompute_backend=cpu\ncompute_backend=cuda\n")
+        output = self.root / "not-created" / "rendered.par"
+        with self.assertRaisesRegex(RuntimeError, "DUPLICATE_PARAMETER"):
+            restart_validation.backend_validation._render_parameter_overrides(
+                self.parameter, output, {"compute_backend": "cpu"})
+        self.assertFalse(output.parent.exists())
+
     def test_relative_path_is_resolved_from_arch_cwd_not_parameter_directory(self):
         self.parameter.write_text("eos_type = tabular\neos_table_path = table.h5\n")
         (self.cwd / "table.h5").write_bytes(b"actually loaded table")

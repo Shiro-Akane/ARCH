@@ -909,3 +909,19 @@ Tabular 可能按源表组分条件加载辅助 eos_helm_table_path，而验证�
 仅记录主 eos_table_path；该依赖覆盖缺口尚未修复，不能宣称完整 provenance。
 AMR 生产 t=0 checkpoint 对照仍因自动审批边界拒绝而未重试。
 无 ARCH 运行/重编译、科学输出、push/tag。
+
+### O7.0 validation input ambiguity rejection
+
+对照 ConfigParser 的首个 # 注释、首个 = 分隔及 trim 规则，验证工具
+read_parameter_map 不再静默 last-value-wins 或忽略 malformed line。
+重复键（含相同值）、空键及无等号行拒绝，错误带文件/行号；
+空值、表达式和含额外 = 的值保留为 raw，不在 Python 重做 Core 语义解析。
+参数 renderer 写目录/文件前检查 canonical source，不能用执行 override
+掩盖重复输入。runtime identity 的 scientific override 也不能掩盖该问题。
+
+runtime_validation_inputs 26/26、validation_provenance 40/40、
+validate_backend_results 30/30、diff-check PASS；均为工具单元测试。
+另已核实 tabular_source_fingerprint 由 Core inspect_tabular_source 决定
+是否绑定电子表 hash，涵盖源格式和 interpretation。Python 依赖记录仍未
+接入此权威信息，不能仅凭存在 eos_helm_table_path 认定实际消费；该项未完成。
+无生产运行/科学输出/重编译/push/tag，AMR checkpoint 对照未重试。
