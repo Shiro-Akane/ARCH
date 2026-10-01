@@ -18,6 +18,7 @@ namespace arch::api {
 detail::Json ConfigurationSchema();
 detail::Json RefinementMetadata(const SimConfig& config);
 detail::Json DiffusionMetadata(const SimConfig& config);
+detail::Json DiffusionMetadata(const std::string& eos_type, bool enabled);
 PreviewResponse InspectConfiguration(const PreviewRequest& request);
 detail::Json ConfigurationExtensions();
 detail::Json CoordinateMetadata(const GridConfig& grid, const std::string& unit_system);

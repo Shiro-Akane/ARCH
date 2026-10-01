@@ -466,6 +466,9 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
             {"validationStage", "conditional-resolution"}})},
         {"parameters", parameters}, {"diagnostics", diagnostics}, {"unitSystem", "cgs"},
         {"coordinates", InspectionCoordinates(analysis.standard)}});
+    const auto* eos = config::input_detail::get<std::string>(analysis.standard, "eos_type");
+    const auto* diffusion = config::input_detail::get<bool>(analysis.standard, "use_diffusion");
+    result["diffusion"] = eos && diffusion ? DiffusionMetadata(*eos, *diffusion) : Json();
     return SerializePreviewResponse(result, complete ? 0 : 3);
 }
 } // namespace arch::api

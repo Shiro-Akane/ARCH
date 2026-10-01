@@ -193,3 +193,13 @@ inactive x2) returns null, never a default dimension. Valid topology can remain
 available when unrelated physical inputs are incomplete. Names and units use the
 same Core CoordinateMetadata mapping as preview; this is not a constructed mesh.
 Host normalizes null to an absent optional coordinate object, not a fallback.
+
+### Partial diffusion summary
+
+Inspection returns diffusion only when EOS and use_diffusion are resolved;
+otherwise it is null. The version 1 summary reuses preview's Core-owned channel,
+transport-source and forbidden-explicit-key rules. Disabled is not unknown.
+A forbidden coefficient remains in the input records with its diagnostic; the
+summary does not remove or normalize it. State-dependent source is not an EOS
+evaluation or proof of transport readiness. Host validates the summary before
+exposing it and maps null to an absent optional object.

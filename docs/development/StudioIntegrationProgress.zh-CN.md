@@ -848,3 +848,19 @@ optional类型；改为路径检查和响应复用同一已校验对象，null�
 此Host证据使用隔离测试Build Profile，不冒充真实工程Build provenance。
 剩余旧configuration_api/ui_expansion回归和动态diffusion/AMR摘要仍待收敛；
 无演化/CUDA/push/tag/raw上传，整体目标未完成。
+
+### O7.0 部分输入 diffusion 摘要恢复
+
+共用DiffusionMetadata增加EOS/enable显式重载，Preview仍走原字段/规则，
+inspection仅在两者resolved时提供摘要，否则null。没有默认SimConfig
+或默认开关。Host接受并校验version/source/channel/conflict keys，null
+转缺省；Studio既有冲突Remove路径重新取得真实Core摘要。
+测试覆盖未知、关闭、Ideal常系数、Helm状态相关来源、显式零系数冲突
+仍保留parsedValue及diagnostic，不以隐藏/删除消除错误。
+
+CPU增量PASS（14.169秒，无swap增长）。配置v3 22/22 PASS，
+真实Core/ConfigurationAdapter四类请求PASS；Studio180/180、
+lint/typecheck、diff-check PASS。受共享helper影响的普通Preview与
+PreviewSession两个CTest PASS（7.31秒，原演化oracle保持opt-in跳过）。
+未运行演化/CUDA/push/tag/raw上传。动态AMR及旧API套件仍待收敛，
+这些局部成功不代表配置阶段或整体目标已完成。

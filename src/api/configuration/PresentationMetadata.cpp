@@ -88,9 +88,9 @@ Json RefinementMetadata(const SimConfig& c) {
         {"speciesResolution", "requires case Setup"}, {"separator", ","}, {"alternativeSeparator", "+"}});
 }
 /** Expose the applicable diffusion controls and their state. */
-Json DiffusionMetadata(const SimConfig& c) {
-    const bool helm = dispatch::ascii_iequals(c.physics.eos_type, "helmholtz");
-    const bool ideal = dispatch::ascii_iequals(c.physics.eos_type, "ideal");
+Json DiffusionMetadata(const std::string& eos_type, bool enabled) {
+    const bool helm = dispatch::ascii_iequals(eos_type, "helmholtz");
+    const bool ideal = dispatch::ascii_iequals(eos_type, "ideal");
     auto channels = Json::array();
     const char* toggles[] = {"use_thermal_diff", "use_viscous_diff", "use_species_diff"};
     const char* coefficients[] = {"alpha_therm", "nu_visc", "D_spec"};
@@ -98,12 +98,15 @@ Json DiffusionMetadata(const SimConfig& c) {
         channels.push(Json::object({{"toggleKey", toggles[i]}, {"coefficientKey", coefficients[i]},
             {"unit", "cm^2/s"}, {"constantInputAllowed", !helm},
             {"stellarModelSuppliesCoefficient", i == 0}}));
-    return Json::object({{"version", "1"}, {"enabled", c.physics.diffusion.use_diffusion},
+    return Json::object({{"version", "1"}, {"enabled", enabled},
         {"modeEditable", false}, {"source", ideal ? "constant" : "state-dependent"},
         {"sourceScope", "configuration; EOS state not evaluated"},
         {"possibleSources", ideal ? Json::array({"constant"}) : Json::array({"constant", "stellar-conductivity"})},
         {"selectionRule", "species_count > 0 and EOS electron density > 0 selects stellar transport; positive viscosity/thermal overrides then fail"},
-        {"forbiddenExplicitKeys", helm && c.physics.diffusion.use_diffusion ? Json::array({"alpha_therm", "nu_visc", "D_spec"}) : Json::array()},
+        {"forbiddenExplicitKeys", helm && enabled ? Json::array({"alpha_therm", "nu_visc", "D_spec"}) : Json::array()},
         {"channels", channels}, {"conflictResolution", "explicit reversible removal from working text; hiding fields is insufficient"}});
+}
+Json DiffusionMetadata(const SimConfig& c) {
+    return DiffusionMetadata(c.physics.eos_type, c.physics.diffusion.use_diffusion);
 }
 } // namespace arch::api

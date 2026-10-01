@@ -349,6 +349,27 @@ class ConfigurationV3(unittest.TestCase):
         data = self.inspect(edit(BASE, "eos_type"), expected=3)
         self.assertEqual(data["coordinates"]["dimension"], 1)
 
+    def test_diffusion_summary_preserves_unknown_disabled_and_conflicts(self):
+        data = self.inspect(BASE)
+        self.assertFalse(data["diffusion"]["enabled"])
+        self.assertEqual(data["diffusion"]["source"], "constant")
+        self.assertEqual(data["diffusion"]["forbiddenExplicitKeys"], [])
+        for key in ["eos_type", "use_diffusion"]:
+            self.assertIsNone(self.inspect(edit(BASE, key), expected=3)["diffusion"])
+        text = (ROOT / "simulation/GaussianPulse/Gaussian.par").read_text()
+        data = self.inspect(text, case="Gaussian")
+        self.assertTrue(data["diffusion"]["enabled"])
+        self.assertEqual(data["diffusion"]["source"], "state-dependent")
+        self.assertEqual(data["diffusion"]["forbiddenExplicitKeys"], ["alpha_therm", "nu_visc", "D_spec"])
+        self.assertEqual([c["stellarModelSuppliesCoefficient"] for c in data["diffusion"]["channels"]],
+                         [True, False, False])
+        bad = self.inspect(edit(text, "alpha_therm", 0), case="Gaussian", expected=3)
+        self.assertIn("alpha_therm", bad["diffusion"]["forbiddenExplicitKeys"])
+        self.assertEqual(records(bad)["alpha_therm"]["parsedValue"], 0)
+        off = self.inspect(edit(text, "use_diffusion", "false"), case="Gaussian")
+        self.assertFalse(off["diffusion"]["enabled"])
+        self.assertEqual(off["diffusion"]["forbiddenExplicitKeys"], [])
+
     def test_bounded_error_keeps_identity(self):
         text = BASE + "".join(f"unknown_key_{i}=0\n" for i in range(30000))
         self.assertLess(len(text.encode()), 1024 * 1024)
