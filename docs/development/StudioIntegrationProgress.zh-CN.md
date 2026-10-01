@@ -682,3 +682,21 @@ mainline_authority/initialization_probe/真实Cellular）全PASS，18.78秒。
 逐项review仅包装材料实参后更新六个cpp单位证据SHA；
 真实--list-cases确认14个compiledSourceSha一致且单位证据均current。
 diff-check PASS。未演化/CUDA/raw上传/push/tag；整体目标继续。
+
+### O7.0 Sod 正式输入与 Preview / metadata 回归迁移
+
+Sod.par 采用已验证的 configuration-v3/sod-valid.par 所登记的六个显式
+旧有效控制值；原 Riemann 输入、EOS 数值、离散与科学阈值不变。
+Preview 测试 override 改为替换唯一赋值，重复键仍由专门失败测试覆盖，
+不再依赖 last-wins。缺失 x_pos 不使用 Get 字面量作为物理默认；
+非法数值、未知 EOS、未知 case 在配置阶段失败，不伪造 Setup read/binding。
+Helm 测试显式提供原 eos_coulomb_mult=1，保留原 EOS 源身份、范围拒绝
+及场值判据。
+
+首次回归仅未知 case 的旧 support-stage 断言失败；核对
+ConfigurationInput 的 UNKNOWN_CASE 及已有 v3 覆盖后迁移为 configuration。
+最终真实 CPU Preview 11 PASS / 1 明确跳过，metadata 8 PASS，diff-check PASS。
+跳过项为原 opt-in production simulation oracle，本轮未运行演化；
+其他成功/失败 Preview 均核对不创建文件或目录。无 Core 实现变更、无需重编译。
+尚未完成其他 canonical inputs/API tests、完整回归及后续整体目标；
+没有运行 CUDA、上传 raw、push 或创建完成 tag。
