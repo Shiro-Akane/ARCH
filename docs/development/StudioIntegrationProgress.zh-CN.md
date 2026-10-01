@@ -814,3 +814,20 @@ center_z=0.5来自Setup成员原值。未改各文件已有物理数值/终点/�
 请求hash一致、临时cwd无文件、timeStepping未执行。
 未运行实际AMR层次、Poisson、演化或CUDA，不能据此宣称几何科学验收。
 diff-check PASS；未编译/push/tag/raw上传。剩余输入/API和整体目标继续。
+
+### O7.0 14模型 inspect-case 回归迁移
+
+检查测试改用已迁移正式输入；没有正式simulation par的模型使用完整公共
+控制及原Setup有效case值。BurnOneZone复用bd-config-v3，BurnGradient沿
+原初始化温度形状显式输入。只在测试副本映射EOS绝对路径/CPU检查CUDA请求。
+unique edit替代重复追加；unknown future_knob改为配置失败覆盖，
+非法integer在配置阶段拒绝，命令错误封套配置版本更新为3。
+旧network_name Setup read已移除，string metadata检查改为真实读取hotspot_mode。
+
+初次仅UNKNOWN_CASE旧support退出4断言失败；迁移为统一配置退出3后，
+完整6个测试方法PASS（3.908秒），其中注册矩阵实际遍历14模型：
+逐模型compiledSourceSHA/单位evidence current、3^dimension Init样本、
+DENS正值/字段单位、无CUDA/科学输出均验证；Sedov1/2/3维单位、
+Gaussian曲线坐标、错误metadata、整数拒绝和log零值检查保留。
+这是inspect-case初始化覆盖，不是全模型full field Preview或演化认证。
+diff-check PASS。未重编译/演化/CUDA/raw上传/push/tag，其他完整回归继续。
