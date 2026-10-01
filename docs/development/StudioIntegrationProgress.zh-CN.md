@@ -103,3 +103,17 @@ Helm禁止系数、旧alias和G退役。API对象对新增目录字段编译PASS
 
 此提交是解析基础，不是v3发布：尚未接入RuntimeParams/inspection/Host，未构造只读
 完整运行配置，尚缺case声明、完整范围/组合检查与post-Setup重新验证；不生成checkpoint。
+
+### O7.0 普通 case 读取与 Preview 严格性统一
+
+ConfigParser 提供共同 Boolean/数值可表示性检查；SimConfig::Get 无论有无观察器均
+检查整数词法/范围、布尔 true/false、浮点有限性。既有 custom_string_params 保留全部
+原 token（包括数值），普通运行不再依赖只有 Preview 才持有的词法证据。
+旧程序化数值覆盖仍返回覆盖值并在观察记录标为 unknown；不冒充原输入，后续受控
+构造/来源迁移仍须收束该可变路径。没有新增物理默认，也未完成 case 声明。
+
+三项受影响 CTest PASS：preview_parameter_reads、config_input_records、input_resolution。
+参数读取测试对 observer on/off 分别覆盖小数/科学计数整数、溢出、非法布尔、合法
+零值/符号整数/大小写布尔及 programmatic 非有限/截断拒绝，并保留旧歧义/来源回归。
+使用相同CPU构建与内存保护器，swap无增长；日志留在studio/.local/integration。
+完整二进制/CLI/Host回归仍待生命周期和v3接口接线后执行；此项不代表整体v3完成。

@@ -19,6 +19,8 @@
 #include <optional>
 #include <vector>
 #include <iterator>
+#include <limits>
+#include <type_traits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -97,6 +99,44 @@ private:
     }
 
 public:
+    static bool ParseBoolean(const std::string& key, std::string text) {
+        std::transform(text.begin(), text.end(), text.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (text == "true") return true;
+        if (text == "false") return false;
+        throw ConfigValueError(key, "INVALID_BOOLEAN", "Expected true or false (case-insensitive).");
+    }
+
+    // Common production/inspection conversion check for typed programmatic values.
+    // Raw tokens, when present, also enforce lexical integer/boolean semantics.
+    template<class T>
+    static void ValidateNumeric(const std::string& key, double number,
+                                const std::string* raw = nullptr) {
+        if constexpr (std::is_same_v<T, bool>) {
+            if (raw) (void)ParseBoolean(key, *raw);
+            if (!std::isfinite(number) || (number != 0.0 && number != 1.0))
+                throw ConfigValueError(key, "INVALID_BOOLEAN", "Requires an exact boolean value.");
+        } else if constexpr (std::is_integral_v<T>) {
+            if (raw) {
+                const auto first = !raw->empty() && (raw->front() == '+' || raw->front() == '-') ? 1u : 0u;
+                bool whole = first < raw->size();
+                for (std::size_t i = first; i < raw->size(); ++i)
+                    whole &= (*raw)[i] >= '0' && (*raw)[i] <= '9';
+                if (!whole) throw ConfigValueError(key, "INVALID_INTEGER", "Requires an integer token.");
+            }
+            if (!std::isfinite(number) || std::trunc(number) != number
+                || static_cast<long double>(number) < std::numeric_limits<T>::lowest()
+                || static_cast<long double>(number) > std::numeric_limits<T>::max())
+                throw ConfigValueError(key, "INVALID_INTEGER", "Not representable as the requested integer.");
+        } else {
+            static_assert(std::is_floating_point_v<T>);
+            if (!std::isfinite(number)
+                || static_cast<long double>(number) < std::numeric_limits<T>::lowest()
+                || static_cast<long double>(number) > std::numeric_limits<T>::max())
+                throw ConfigValueError(key, "INVALID_NUMBER", "Requires a finite representable number.");
+        }
+    }
+
     static int ParseInteger(const std::string& key, const std::string& text) {
         const char* begin = text.data();
         const char* end = begin + text.size();
@@ -236,16 +276,7 @@ public:
         if (it == parameters.end())
             return defaultVal;
 
-        std::string value = it->second;
-        std::transform(value.begin(), value.end(), value.begin(),
-                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-        if (value == "true")
-            return true;
-        if (value == "false")
-            return false;
-
-        throw ConfigValueError(key, "INVALID_BOOLEAN",
-            "Expected true or false (case-insensitive).");
+        return ParseBoolean(key, it->second);
     }
 
     /**

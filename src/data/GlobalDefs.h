@@ -394,6 +394,7 @@ struct SimConfig
      */
     std::map<std::string, double> custom_params;
 
+    // Original trimmed tokens, including numeric tokens for lexical checks.
     std::map<std::string, std::string> custom_string_params;
 
     // Enabled only in the isolated initialization inspector; no global logger or UI state.
@@ -419,10 +420,19 @@ struct SimConfig
         else
         {
             auto it = custom_params.find(key);
-            if (it == custom_params.end() && custom_string_params.contains(key))
+            const auto raw = custom_string_params.find(key);
+            if constexpr (std::is_same_v<T, bool>) {
+                if (it == custom_params.end() && raw != custom_string_params.end()) {
+                    const auto value = ConfigParser::ParseBoolean(key, raw->second);
+                    if (parameter_reads) parameter_reads->observe(key, default_val, value, true);
+                    return value;
+                }
+            }
+            if (it == custom_params.end() && raw != custom_string_params.end())
                 throw std::invalid_argument("Custom parameter '" + key + "' is not a complete numeric value.");
-            if (parameter_reads && it != custom_params.end())
-                parameter_reads->validate_numeric<T>(key, it->second);
+            if (it != custom_params.end())
+                ConfigParser::ValidateNumeric<T>(key, it->second,
+                    raw == custom_string_params.end() ? nullptr : &raw->second);
             if (parameter_reads)
                 parameter_reads->observe(key, default_val,
                     it != custom_params.end() ? static_cast<T>(it->second) : default_val,

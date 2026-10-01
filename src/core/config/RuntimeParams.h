@@ -411,6 +411,8 @@ private:
         // Preserve untyped parameters for problem-specific setup.
         for (const auto &[key, val_str] : parser.GetAllParams())
         {
+            // Preserve lexical identity for every case read, also outside Preview.
+            cfg.custom_string_params[key] = val_str;
             try
             {
                 // Require the complete numeric token; expressions remain strings.
@@ -419,8 +421,7 @@ private:
             }
             catch (...)
             {
-                // Retain values such as solver names that are not valid doubles.
-                cfg.custom_string_params[key] = val_str;
+                // Non-numeric tokens remain available for strict typed/string reads.
             }
         }
 

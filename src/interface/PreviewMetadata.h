@@ -23,6 +23,8 @@
 #include <variant>
 #include <vector>
 
+#include "io/ConfigParser.h"
+
 struct PointCoords;
 struct PrimitiveData;
 
@@ -74,19 +76,8 @@ public:
     }
     /** Check exact integer spelling and representability of an observed value. */
     template<class T> void validate_numeric(const std::string& key, double number) const {
-        if constexpr (std::is_integral_v<T>) {
-            if (auto it = raw_.find(key); it != raw_.end()) {
-                const auto& token = it->second;
-                const auto first = !token.empty() && (token.front() == '+' || token.front() == '-') ? 1u : 0u;
-                bool whole = first < token.size();
-                for (std::size_t i = first; i < token.size(); ++i) whole &= token[i] >= '0' && token[i] <= '9';
-                if (!whole) throw std::invalid_argument("Parameter '"+key+"' requires an integer token");
-            }
-            if (!std::isfinite(number) || std::trunc(number) != number
-                || static_cast<long double>(number) < std::numeric_limits<T>::lowest()
-                || static_cast<long double>(number) > std::numeric_limits<T>::max())
-                throw std::invalid_argument("Parameter '"+key+"' is not representable as the requested integer/boolean type");
-        }
+        const auto it = raw_.find(key);
+        ConfigParser::ValidateNumeric<T>(key, number, it == raw_.end() ? nullptr : &it->second);
     }
     /** Expose the captured parser tokens for provenance reporting. */
     const auto& raw_input() const { return raw_; }
@@ -114,6 +105,9 @@ public:
             if (auto it = numeric_.find(key); it != numeric_.end()) {
                 validate_numeric<T>(key, it->second);
                 read.explicit_value = parameter_value(static_cast<T>(it->second));
+            } else if constexpr (std::is_same_v<T, bool>) {
+                if (auto raw = raw_.find(key); raw != raw_.end())
+                    read.explicit_value = ConfigParser::ParseBoolean(key, raw->second);
             }
         }
         if (found && read.explicit_value == std::optional<ParameterValue>(read.effective_value)) {
