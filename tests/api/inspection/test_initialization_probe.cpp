@@ -2,18 +2,28 @@
 #include "api/configuration/ParameterMetadata.h"
 #include "api/configuration/ValueDomain.h"
 #include "data/GlobalDefs.h"
+#include "core/config/RuntimeParams.h"
+#include <fstream>
+#include <type_traits>
 #include "core/files/InspectionSources.h"
 #include <iostream>
 #include <stdexcept>
 
 static void require(bool ok, const char* why) { if (!ok) throw std::runtime_error(why); }
+
+static std::string declared_input;
+static SimConfig load_probe(const std::string& extra = "") {
+    return RuntimeParams::LoadText(declared_input + extra, "probe",
+        arch::config::ConfigurationPurpose::InitialState);
+}
 struct ProbeProblem final : ProblemGenerator {
     bool product, fail;
     double a{}, b{};
     ProbeProblem(bool product, bool fail = false) : product(product), fail(fail) {}
-    void Setup(SimConfig& c, SpeciesManager&) override {
+    void Setup(SimConfig& c, SpeciesManager& species) override {
         a = c.Get<double>("a", 0); b = c.Get<double>("b", 0);
         if (fail) throw std::runtime_error("setup error");
+        species.add_species("probe", 1, 1, c.physics.gamma, 1);
     }
     void SampleInitialPrimitive(const PointCoords&, PrimitiveData& p) const override {
         p.rho = product ? a*b : a;
@@ -38,13 +48,33 @@ struct Sink final : arch::preview::InitializationObserver {
     double rho = 0;
     void initial_primitive(const PointCoords&, const PrimitiveData& p) override { rho = p.rho; }
 };
-int main() {
+int main(int argc, char** argv) {
     using namespace arch;
+    require(argc == 2, "named complete input fixture required");
+    std::ifstream file(argv[1]);
+    require(file.good(), "fixture not readable");
+    declared_input.assign(std::istreambuf_iterator<char>(file), {});
+    declared_input += "\na=2\nb=1\n";
+    ProblemRegistry::Get().Register("probe", []() -> std::unique_ptr<ProblemGenerator> {
+        throw std::runtime_error("input loader must not construct probe");
+    }, {"probe", "test", true, [](const config::StandardInputResolution&) {
+        config::CaseConfiguration declaration;
+        declaration.complete = true;
+        declaration.consumers.needs_network = false;
+        declaration.consumers.needs_temperature_floor = false;
+        declaration.consumers.needs_composition_floor = false;
+        for (const auto* key : {"x_pos", "rho_left", "rho_right", "p_left",
+                                "p_right", "u_left", "u_right", "a", "b"})
+            declaration.parameters.push_back({key, "float", ""});
+        return declaration;
+    }});
+    static_assert(!std::is_default_constructible_v<config::PreparedConfiguration>);
+    static_assert(!std::is_constructible_v<config::PreparedConfiguration,
+        const SimConfig&, const SpeciesManager&, const ProblemGenerator&>);
+
     const auto observe = [](bool product) {
         auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true);
-        SimConfig config;
-        config.custom_params = {{"a", 2}, {"b", 1}};
-        config.custom_string_params = {{"a", "2"}, {"b", "1"}};
+        auto config = load_probe();
         reads->capture_input(config.custom_string_params, config.custom_params, config.custom_string_params);
         config.parameter_reads.reset();
         SpeciesManager species; ProbeProblem model(product); Sink sink; PrimitiveData primitive;
@@ -61,9 +91,7 @@ int main() {
     // b=1. In the latter expression a's unit depends on b, absent from IO.
     require(observe(false) == observe(true), "boundary is observationally identical without expression provenance");
     auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true);
-    SimConfig config;
-    config.custom_params = {{"a", 2}, {"b", 1}};
-    config.custom_string_params = {{"a", "2"}, {"b", "1"}};
+    auto config = load_probe();
     reads->capture_input(config.custom_string_params, config.custom_params, config.custom_string_params);
     config.parameter_reads = reads;
     auto original = config.parameter_reads;
@@ -73,7 +101,7 @@ int main() {
     catch (const std::runtime_error&) { caught = true; }
     require(caught && config.parameter_reads == original, "restore observer on Setup failure");
     for (const bool observed : {false, true}) {
-        SimConfig prepared;
+        auto prepared = load_probe();
         prepared.parameter_reads = original;
         SpeciesManager prepared_species;
         InvalidSetupProblem mutation;
@@ -90,8 +118,7 @@ int main() {
         require(!before.entered, "invalid pre-Setup controls reached the model");
     }
     {
-        SimConfig prepared;
-        prepared.physics.burn.smallx = 0.6;
+        auto prepared = load_probe("smallx=0.6\n");
         SpeciesManager prepared_species;
         InvalidSetupProblem population(true);
         bool rejected = false;
@@ -99,6 +126,62 @@ int main() {
         catch (const ConfigValueError& error) { rejected = error.key == "smallx"; }
         require(rejected && population.entered && prepared_species.count() == 2,
                 "post-Setup controls ignored the actual species count");
+    }
+    {
+        SimConfig missing;
+        SpeciesManager specs;
+        InvalidSetupProblem model;
+        bool rejected = false;
+        try { model.SetupChecked(missing, specs); }
+        catch (const ConfigValueError& e) { rejected = e.code == "INCOMPLETE_CONFIGURATION"; }
+        require(rejected && !model.entered, "default storage entered Setup");
+    }
+    {
+        auto input = load_probe();
+        SpeciesManager specs;
+        ProbeProblem model(false), other(false);
+        const auto frozen = model.SetupChecked(input, specs);
+        static_assert(std::is_same_v<decltype(frozen.config()), const SimConfig&>);
+        static_assert(std::is_same_v<decltype(frozen.species()), const SpeciesManager&>);
+        input.numerics.cfl = 0.25;
+        input.custom_params["a"] = 99;
+        specs.species_list.clear();
+        require(frozen.config().numerics.cfl == 0.4
+                && frozen.config().Get<double>("a", -1) == 2
+                && frozen.species().count() == 1,
+                "later preparation edit altered read-only snapshot");
+        require(frozen.belongs_to(model) && !frozen.belongs_to(other),
+                "prepared state lost model instance identity");
+        InvalidSetupProblem blocked;
+        bool rejected = false;
+        try { blocked.SetupChecked(input, specs); }
+        catch (const ConfigValueError& e) { rejected = e.code == "UNDECLARED_CONFIGURATION_CHANGE"; }
+        require(rejected && !blocked.entered, "mutated loaded input entered Setup");
+    }
+    for (int kind = 0; kind < 7; ++kind) {
+        struct Mutator final : ProblemGenerator {
+            int kind;
+            explicit Mutator(int value) : kind(value) {}
+            void Setup(SimConfig& input, SpeciesManager&) override {
+                if (kind == 0) input.numerics.cfl = 0.25;
+                if (kind == 1) input.custom_params["x_pos"] = 0.75;
+                if (kind == 2) input.io.out_dir = "other";
+                if (kind == 3) input.numerics.dt_max = 10;
+                if (kind == 4) input.amr.refine_on_p = true;
+                if (kind == 5) input.physics.gravity.G_const = 1;
+                if (kind == 6) input = load_probe();
+            }
+            void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                                ProblemInitializationContext) override {}
+        } mutation(kind);
+        auto input = load_probe();
+        const auto observer = input.parameter_reads;
+        SpeciesManager specs;
+        bool rejected = false;
+        try { mutation.InspectSetup(input, specs, reads); }
+        catch (const ConfigValueError& e) { rejected = e.code == "UNDECLARED_CONFIGURATION_CHANGE"; }
+        require(rejected && input.parameter_reads == observer,
+                "valid undeclared Setup mutation escaped or broke observer restoration");
     }
     for (double n : {1.25, 1e30, std::numeric_limits<double>::infinity()}) {
         config.custom_params["mode"] = n; caught = false;

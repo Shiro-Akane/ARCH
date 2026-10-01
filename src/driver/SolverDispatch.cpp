@@ -183,11 +183,15 @@ void print_amr_resolution_summary(const SimConfig& config)
 
 // The Public Dispatch Function
 
-void DispatchSolver(const std::string &solver_name,
-                    ProblemGenerator &problem,
-                    const SimConfig &requested_config,
-                    const SpeciesManager &specs)
+void DispatchSolver(ProblemGenerator &problem,
+                    const arch::config::PreparedConfiguration &prepared)
 {
+    if (!prepared.belongs_to(problem))
+        throw std::invalid_argument("Prepared configuration belongs to another model instance.");
+    const auto& requested_config = prepared.config();
+    if (requested_config.LoadedInput()->purpose != arch::config::ConfigurationPurpose::Evolution)
+        throw std::invalid_argument("Initial-state preparation cannot start time evolution.");
+    const auto& specs = prepared.species();
     // Own the effective configuration for the complete driver lifetime. Auto
     // selection must reach CPU and device views, initialisation and restart IO.
     SimConfig config = requested_config;

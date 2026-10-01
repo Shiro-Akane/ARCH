@@ -379,9 +379,11 @@ endfunction()
 
 # Observed inputs and real Init sinks, separate from reviewed dimensional evidence.
 add_executable(arch_initialization_probe tests/api/inspection/test_initialization_probe.cpp
-    src/api/configuration/ParameterMetadata.cpp src/api/inspection/CaseUnitEvidence.cpp)
+    src/api/configuration/ParameterMetadata.cpp src/api/inspection/CaseUnitEvidence.cpp
+    src/core/config/CompositionInput.cpp)
 arch_configure_host_test(arch_initialization_probe)
-add_test(NAME initialization_probe COMMAND arch_initialization_probe)
+add_test(NAME initialization_probe COMMAND arch_initialization_probe
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3/sod-valid.par)
 add_test(NAME case_inspection_contract
     COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/inspection/test_case_inspection.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})

@@ -20,6 +20,7 @@
 #include "amr/AMRControl.h"
 #include "data/GlobalDefs.h"
 #include "core/config/ConfigValidation.h"
+#include "core/config/PreparedConfiguration.h"
 #include "data/UserTypes.h"
 #include "grid/Grid.h"
 #include "physics/eos/IdealGas.h"
@@ -36,13 +37,16 @@ class ProblemGenerator
 public:
     virtual ~ProblemGenerator() = default;
 
-    // Application preparation boundary. Both input and model-produced controls
-    // are checked before callers can publish a ready state or allocate a mesh.
-    // This is control validation, not proof of input provenance or final freezing.
-    void SetupChecked(SimConfig& config, SpeciesManager& species) {
+    // Input completeness and provenance precede model code. A successful
+    // preparation owns an immutable copy; no stale mutable storage is certified.
+    arch::config::PreparedConfiguration SetupChecked(SimConfig& config, SpeciesManager& species) {
         arch::config::ValidateControls(config, species.count());
+        config.RequireLoadedValues();
+        const auto before = config;
         Setup(config, species);
         arch::config::ValidateControls(config, species.count());
+        config.RequireSamePreparation(before);
+        return arch::config::PreparedConfiguration(config, species, *this);
     }
 
     // Explicit inspection boundary. Production InitializeData has no observer
@@ -67,8 +71,8 @@ public:
      * 1. Read problem-specific parameters from 'config' (e.g., shock_position).
      * 2. Register necessary species into 'specs'.
      *
-     * @param config Input/Output: The simulation configuration.
-     * (Can be read for params, or modified if enforcing BCs).
+     * @param config Loaded preparation configuration. Application checks reject
+     * undeclared changes; record model state in members and register species.
      * @param specs  Output: The species manager to populate.
      */
     virtual void Setup(SimConfig &config, SpeciesManager &specs) = 0;

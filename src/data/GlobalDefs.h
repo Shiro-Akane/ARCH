@@ -35,6 +35,7 @@ namespace arch::config { struct ConfigurationInput; }
 // Grid and domain configuration.
 struct GridConfig
 {
+    bool operator==(const GridConfig&) const = default;
     // Root-block topology and active dimensionality.
     int nblockx1 = 1; ///< Number of root blocks in X
     int nblockx2 = 1; ///< Number of root blocks in Y
@@ -63,6 +64,7 @@ struct GridConfig
 // Hydrodynamic discretization and stability controls.
 struct NumericsConfig
 {
+    bool operator==(const NumericsConfig&) const = default;
     std::string solver_name = "SW";    ///< Numerical flux: SW, VL, HLL, HLLC, or Roe.
 
     // Runtime dispatch maps these names to compile-time reconstruction policies.
@@ -88,6 +90,7 @@ struct NumericsConfig
 // Execution backend selection.
 struct ExecutionConfig
 {
+    bool operator==(const ExecutionConfig&) const = default;
     // "cpu" always selects the host implementation.  "cuda" is strict and
     // must fail when the binary/device/selected physics combination cannot
     // provide a CUDA launcher.  "auto" may choose either, but must log it.
@@ -98,6 +101,7 @@ struct ExecutionConfig
 // Stiff ODE integration controls.
 struct OdeConfig
 {
+    bool operator==(const OdeConfig&) const = default;
     std::string ode_solver = "BE_NR";      ///< Default ODE solver: Backward Euler with Newton-Raphson
     std::string linear_solver = "Auto";    ///< DenseLU through 31 total ODE equations; larger CPU/CUDA systems use KLU/cuDSS.
 
@@ -200,6 +204,7 @@ struct BurnOdeReport
 
 struct BurnConfig
 {
+    bool operator==(const BurnConfig&) const = default;
 
     bool use_burn = false;                ///< Master switch for the burn module
     std::string network_name = "aprox19"; ///< Built-in network: aprox13, aprox19, aprox21, or iso7.
@@ -249,6 +254,7 @@ inline BurnConfigView make_burn_config_view(const BurnConfig& config)
 // Gravity configuration.
 struct GravityConfig
 {
+    bool operator==(const GravityConfig&) const = default;
     std::string type = "none"; // "none", "external", "self"
 
     // External Gravity Components (Logical Dimensions)
@@ -268,6 +274,7 @@ struct GravityConfig
 // Diffusion configuration.
 struct DiffusionConfig
 {
+    bool operator==(const DiffusionConfig&) const = default;
     bool use_diffusion = false;          ///< Master switch for the diffusion module
     std::string integrator = "RKL2";     ///< Time integrator: "RKL1", "RKL2"
     double diff_cfl = 0.8;                    ///< CFL condition for explicit diffusion integrator
@@ -287,6 +294,7 @@ struct DiffusionConfig
 
 struct PhysicsConfig
 {
+    bool operator==(const PhysicsConfig&) const = default;
     std::string eos_type = "ideal";  ///< Equation of state: ideal, tabular, or helmholtz.
     std::string eos_table_path = ""; ///< Selected EOS source table.
     std::string eos_helm_table_path = ""; ///< Optional electron-completion dependency; empty selects bundled data.
@@ -301,6 +309,7 @@ struct PhysicsConfig
 // Adaptive mesh refinement controls.
 struct AmrConfig
 {
+    bool operator==(const AmrConfig&) const = default;
     int lrefinemin = 0;            ///< Minimum refinement level
     int lrefinemax = 0;            ///< Maximum refinement level (0 = AMR disabled)
     int regrid_interval = 2;       ///< Number of steps between regridding
@@ -327,6 +336,7 @@ struct AmrConfig
 // Plot-variable selection.
 struct OutputVariables
 {
+    bool operator==(const OutputVariables&) const = default;
     bool rho = true;     ///< DENS
     bool temp = false;   ///< TEMP
     bool u = true;       ///< VELX
@@ -344,6 +354,7 @@ struct OutputVariables
 
 struct IOConfig
 {
+    bool operator==(const IOConfig&) const = default;
     double tmax = 0.0;  ///< Simulation end time
     int max_steps = -1; ///< Maximum number of steps (-1 for no limit)
 
@@ -386,12 +397,37 @@ struct SimConfig
 private:
     friend class RuntimeParams;
     std::shared_ptr<const arch::config::ConfigurationInput> loaded_input_;
+    std::shared_ptr<const SimConfig> loaded_values_;
 
 public:
     // Immutable evidence of the load boundary, not certification of subsequent
     // mutable fields, Setup results, resources or simulation readiness.
     std::shared_ptr<const arch::config::ConfigurationInput> LoadedInput() const {
         return loaded_input_;
+    }
+
+    // Preparation checks compare values, never object bytes/padding. Derived
+    // storage (dimension, selected fields, etc.) is guarded with input fields.
+    void RequireSamePreparation(const SimConfig& expected) const {
+        const char* changed = nullptr;
+        if (loaded_input_ != expected.loaded_input_) changed = "configuration";
+        else if (grid != expected.grid) changed = "grid";
+        else if (numerics != expected.numerics) changed = "numerics";
+        else if (execution != expected.execution) changed = "execution";
+        else if (physics != expected.physics) changed = "physics";
+        else if (amr != expected.amr) changed = "amr";
+        else if (io != expected.io) changed = "output";
+        else if (custom_params != expected.custom_params
+                 || custom_string_params != expected.custom_string_params) changed = "case";
+        if (changed)
+            throw ConfigValueError(changed, "UNDECLARED_CONFIGURATION_CHANGE",
+                "Preparation changed loaded values without a declared source.");
+    }
+    void RequireLoadedValues() const {
+        if (!loaded_input_ || !loaded_values_)
+            throw ConfigValueError("configuration", "INCOMPLETE_CONFIGURATION",
+                "Preparation requires case-aware declared input loading.");
+        RequireSamePreparation(*loaded_values_);
     }
 
     GridConfig grid;

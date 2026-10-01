@@ -60,12 +60,14 @@ int main(int argc, char **argv)
     {
         // Declared inputs are checked before constructing the model. Setup and
         // its errors stay inside this boundary, before scientific output/logs.
-        SimConfig config = RuntimeParams::Load(par_file, problem_type);
+        SimConfig input = RuntimeParams::Load(par_file, problem_type);
         auto problem_ptr = ProblemRegistry::Get().Create(problem_type);
         if (!problem_ptr)
             throw std::invalid_argument("Unknown problem type: " + problem_type);
-        SpeciesManager specs;
-        problem_ptr->SetupChecked(config, specs);
+        SpeciesManager species;
+        const auto prepared = problem_ptr->SetupChecked(input, species);
+        const auto& config = prepared.config();
+        const auto& specs = prepared.species();
 
         std::filesystem::create_directories(config.io.out_dir);
         const std::string log_dir =
@@ -82,7 +84,7 @@ int main(int argc, char **argv)
         std::cout << "       Grid: " << config.grid.nblockx1 * amr::BLOCK_NX << " cells, CFL: " << config.numerics.cfl << std::endl;
         std::cout << "       Solver: " << solver_name << std::endl;
         std::cout << "       Species Count: " << specs.count() << std::endl;
-        DispatchSolver(solver_name, *problem_ptr, config, specs);
+        DispatchSolver(*problem_ptr, prepared);
     }
     catch (const std::exception &e)
     {

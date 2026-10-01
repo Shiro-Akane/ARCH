@@ -538,3 +538,30 @@ git diff --check PASS。未修改科学公式/容差，未执行演化/CUDA或�
 Setup 合法数值改写的来源核对、受控最终只读构造及直接 C++ 运行边界
 仍未完成；后续必须使用本记录核对，而不是将非空快照当作 validated 标记。
 整体目标继续，未建立完成 tag 或 push。
+
+### O7.0 准备快照与CLI只读分发边界
+
+加载成功后保留 typed 值快照。SetupChecked 在调用前要求来自完整 case-aware
+加载且值未被改写，调用后重新检查数值和所有配置分组/自定义映射。
+合法数值的未登记改写返回 UNDECLARED_CONFIGURATION_CHANGE；
+比较包含 dim、AMR/plot 派生选择和可写 G_const，不采用内存字节比较。
+观察器不属于科学输入比较，原失败恢复逻辑保持。
+
+成功准备产生私有构造 PreparedConfiguration，拥有 const 配置/组分副本。
+CLI 输出与日志使用该副本，DispatchSolver 不再接受任意 SimConfig 或独立 species，
+同时检查 model 实例身份和 Evolution purpose。现有 auto backend/NSE 内部分发
+仍按原实现处理；本次没有改变科学公式或策略，不能据此宣布最终所有层均只读。
+
+初始化探针改用具名完整 Sod 输入加声明的 a/b，不再默认构造科学问题。
+测试覆盖缺少加载证据、Setup前改值、Setup后数值合法但无来源的 cfl/case/out_dir/
+允许默认/AMR派生/G/整体替换，以及只读副本不受随后可变配置或组分修改影响。
+原非法值/species-count/观察器恢复/真实Init观察检查保留。
+CPU ARCH 和受影响目标编译 PASS，28并发最低可用约14.8GiB，无swap增长。
+六项CTest PASS（configuration_input、configuration_entry_contract、
+configuration_v3_contract、mainline_authority、initialization_probe、
+preview_cellular_2d，18.47秒），diff-check PASS。
+
+尚待：模型提供值/派生值的正式登记与来源传播、实际材料来源、
+更下层 Driver/Preview 数值消费迁移、所有直接C++入口以及完整输入/回归迁移。
+目前拒绝未登记改写是安全的中间状态，不替代计划要求的合法派生支持。
+未运行演化/CUDA、未改科学门槛、未上传raw data、未push/建立完成tag。

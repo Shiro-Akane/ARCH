@@ -64,6 +64,7 @@ public:
         input.raw_tokens = parser.GetAllParams();
         auto config = Resolve(parser, input.standard);
         config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
+        config.loaded_values_ = std::make_shared<const SimConfig>(config);
         return config;
     }
 
@@ -79,6 +80,7 @@ public:
         input.raw_tokens = parser.GetAllParams();
         auto config = Resolve(parser, input.standard);
         config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
+        config.loaded_values_ = std::make_shared<const SimConfig>(config);
         if (reads) {
             reads->capture_input(parser.GetAllParams(), config.custom_params, config.custom_string_params);
             config.parameter_reads = std::move(reads);
