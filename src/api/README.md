@@ -4,7 +4,7 @@
 
 标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。v1.2.1 的目录含 95 个标准参数；客户端从当前程序查询实际键、默认、约束和坐标信息。配置扩展现为版本 2。
 
-后续完整性整改与客户端迁移见 [Core／Studio 联合交付计划](../../docs/development/StudioConfigurationHandoff.zh-CN.md)，包括缺项诊断、版本 3、Linux／WSL 工作流及平台验证；这些计划项尚未实现。[Core UI 交接](CORE_UI_HANDOFF.md) 和 [本地工作流交接](LOCAL_WORKFLOW_HANDOFF.md) 保留各历史提交的实现与测试记录。
+后续完整性整改与客户端迁移见 [联合交付入口](../../docs/development/StudioConfigurationHandoff.zh-CN.md)，包括缺项诊断、版本 3、Linux／WSL 工作流、Jeans／RZ 接入和平台验证；入口附阅读顺序与分支使用方法。这些计划项尚未实现。[Core UI 交接](CORE_UI_HANDOFF.md) 和 [本地工作流交接](LOCAL_WORKFLOW_HANDOFF.md) 保留各历史提交的实现与测试记录。
 
 现有本地接口提供统一 CGS、模型查询、逐级资源估算及有界 CPU 初始 AMR 网格。`--preview` 点采样独立于网格接口，命令见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。全部注册模型的参数与初始化检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，该入口与完整场／网格渲染能力分别查询。
 

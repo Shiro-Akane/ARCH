@@ -20,7 +20,12 @@ records the inspected main and locally available Studio checkpoints, exact-input
 identity checks, and the current client migration gap. It is CPU contract evidence,
 not a simulation, GPU, or performance qualification. The
 [delivery plan](../../docs/development/StudioConfigurationHandoff.zh-CN.md)
-defines the subsequent interface and platform acceptance work.
+defines the subsequent interface and platform acceptance work. Its
+[Jeans/RZ and second-platform guide](../../docs/development/JeansRZPlatformHandoff.zh-CN.md)
+scopes implementation and the approved long-duration subset. Process new raw
+outputs locally before submitting evidence: upload concise metrics, timing tables,
+figures and diagnostic extracts, not HDF5, plotfiles, checkpoints or full arrays.
+Keep the originals on the producing machine with an identifiable local index.
 
 ## Optimization and coupled checks
 
