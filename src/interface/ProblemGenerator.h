@@ -19,6 +19,7 @@
 
 #include "amr/AMRControl.h"
 #include "data/GlobalDefs.h"
+#include "core/config/ConfigValidation.h"
 #include "data/UserTypes.h"
 #include "grid/Grid.h"
 #include "physics/eos/IdealGas.h"
@@ -35,13 +36,22 @@ class ProblemGenerator
 public:
     virtual ~ProblemGenerator() = default;
 
+    // Application preparation boundary. Both input and model-produced controls
+    // are checked before callers can publish a ready state or allocate a mesh.
+    // This is control validation, not proof of input provenance or final freezing.
+    void SetupChecked(SimConfig& config, SpeciesManager& species) {
+        arch::config::ValidateControls(config, species.count());
+        Setup(config, species);
+        arch::config::ValidateControls(config, species.count());
+    }
+
     // Explicit inspection boundary. Production InitializeData has no observer
     // or extra per-cell branch. Restore the caller's observer even on failure.
     void InspectSetup(SimConfig& config, SpeciesManager& species,
                       const std::shared_ptr<arch::preview::ParameterReadTrace>& reads) {
         const auto previous = config.parameter_reads;
         config.parameter_reads = reads;
-        try { Setup(config, species); }
+        try { SetupChecked(config, species); }
         catch (...) { config.parameter_reads = previous; throw; }
         config.parameter_reads = previous;
     }

@@ -495,3 +495,24 @@ diff-check PASS；没有时间演化、CUDA、原始数据上传、push或完成
 删除关键字段旧加载默认的误导说明，负轴计数不再写成关闭轴。
 尚待Setup派生来源和修改后校验、只读运行边界、partial动态metadata、
 其余有效输入/全回归及后续Studio/3C/模型/Jeans/RZ工作，整体目标继续。
+
+### O7.0 统一Setup前后控制校验
+
+审查发现main在Setup后调用ValidateControls，而Preview和inspect-case没有
+同一保证。ProblemGenerator增加SetupChecked作为应用准备边界，main与
+Preview直接调用，InspectSetup在观察器保护内调用；Setup前检查已有controls，
+Setup后以实际species.count重新检查，再允许上层发布ready/继续初始化。
+不改模型Setup/Init的物理公式或虚接口，不在单元循环中增加存在性检查。
+
+新增单元覆盖：Setup改出非法cfl时普通/observed路径均拒绝、失败后恢复原观察器；
+初始非法controls不进入模型；Setup新增两种组分后smallx总量约束重新检查。
+原Setup主动抛错、观察器恢复及初态观察测试保留。
+CPU ARCH及受影响目标构建PASS，28并发最低可用约13.6GiB，无swap增长。
+initialization_probe、configuration_entry_contract、preview_cellular_2d三项CTest
+PASS（二维组内10项真实CPU init-only检查），diff-check PASS。
+无演化、CUDA或科学原始输出上传；API说明同步普通读取严格性与检查边界。
+
+这只是共同数值检查入口，不是最终只读配置，也未证明任意Setup修改的来源；
+数值合法但未声明的改写、Setup派生值、最终运行身份仍需下一步收束。
+现有内置simulation cpp未发现直接typed配置赋值，不能据此保证任意用户模型不修改。
+整体配置/Studio/Jeans/RZ目标继续，未push或建立完成tag。

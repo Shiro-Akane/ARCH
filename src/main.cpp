@@ -65,8 +65,7 @@ int main(int argc, char **argv)
         if (!problem_ptr)
             throw std::invalid_argument("Unknown problem type: " + problem_type);
         SpeciesManager specs;
-        problem_ptr->Setup(config, specs);
-        arch::config::ValidateControls(config, specs.count());
+        problem_ptr->SetupChecked(config, specs);
 
         std::filesystem::create_directories(config.io.out_dir);
         const std::string log_dir =

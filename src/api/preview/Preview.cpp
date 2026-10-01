@@ -174,7 +174,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         if (!problem) throw std::runtime_error("The selected problem is not registered in this binary");
         SpeciesManager specs;
         try {
-            problem->Setup(config, specs);
+            problem->SetupChecked(config, specs);
         } catch (const ProblemHelper::InitialEosError &) {
             config.parameter_reads.reset();
             state["species"] = SpeciesSnapshot(specs);

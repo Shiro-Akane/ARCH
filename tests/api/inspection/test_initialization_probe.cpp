@@ -20,6 +20,20 @@ struct ProbeProblem final : ProblemGenerator {
     }
     void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&, ProblemInitializationContext) override {}
 };
+struct InvalidSetupProblem final : ProblemGenerator {
+    bool entered = false;
+    bool change_population;
+    explicit InvalidSetupProblem(bool population = false) : change_population(population) {}
+    void Setup(SimConfig& config, SpeciesManager& species) override {
+        entered = true;
+        if (change_population) {
+            species.add_species("first", 1, 1, 1.4, 1);
+            species.add_species("second", 1, 1, 1.4, 1);
+        } else config.numerics.cfl = -0.5;
+    }
+    void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                        ProblemInitializationContext) override {}
+};
 struct Sink final : arch::preview::InitializationObserver {
     double rho = 0;
     void initial_primitive(const PointCoords&, const PrimitiveData& p) override { rho = p.rho; }
@@ -58,6 +72,34 @@ int main() {
     try { failing.InspectSetup(config, species, std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true)); }
     catch (const std::runtime_error&) { caught = true; }
     require(caught && config.parameter_reads == original, "restore observer on Setup failure");
+    for (const bool observed : {false, true}) {
+        SimConfig prepared;
+        prepared.parameter_reads = original;
+        SpeciesManager prepared_species;
+        InvalidSetupProblem mutation;
+        bool rejected = false;
+        try {
+            if (observed) mutation.InspectSetup(prepared, prepared_species, reads);
+            else mutation.SetupChecked(prepared, prepared_species);
+        } catch (const ConfigValueError& error) { rejected = error.key == "cfl"; }
+        require(rejected && mutation.entered && prepared.parameter_reads == original,
+                "post-Setup invalid controls escaped or observer was not restored");
+        prepared.numerics.cfl = -1;
+        InvalidSetupProblem before;
+        try { before.SetupChecked(prepared, prepared_species); } catch (const ConfigValueError&) {}
+        require(!before.entered, "invalid pre-Setup controls reached the model");
+    }
+    {
+        SimConfig prepared;
+        prepared.physics.burn.smallx = 0.6;
+        SpeciesManager prepared_species;
+        InvalidSetupProblem population(true);
+        bool rejected = false;
+        try { population.SetupChecked(prepared, prepared_species); }
+        catch (const ConfigValueError& error) { rejected = error.key == "smallx"; }
+        require(rejected && population.entered && prepared_species.count() == 2,
+                "post-Setup controls ignored the actual species count");
+    }
     for (double n : {1.25, 1e30, std::numeric_limits<double>::infinity()}) {
         config.custom_params["mode"] = n; caught = false;
         try { (void)config.Get<int>("mode", 0); } catch (const std::invalid_argument&) { caught = true; }
