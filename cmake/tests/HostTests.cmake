@@ -88,6 +88,11 @@ target_link_libraries(arch_config_input_records PRIVATE arch_build_contract)
 add_test(NAME config_input_records COMMAND arch_config_input_records
     "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
 
+add_executable(arch_input_resolution tests/host/core/test_input_resolution.cpp)
+target_link_libraries(arch_input_resolution PRIVATE arch_build_contract)
+add_test(NAME input_resolution COMMAND arch_input_resolution
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
+
 # Numerical leaves and independent reference authorities.
 foreach(contract IN ITEMS core/physical_constants amr/refinement_indicator_math grid/curvilinear_metrics)
     get_filename_component(contract_directory "${contract}" DIRECTORY)

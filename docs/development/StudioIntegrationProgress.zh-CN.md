@@ -82,3 +82,24 @@ HighFive 使用已核对 clean v2.9.0 源码覆盖，KLU 来自系统库，不�
 API Configuration.cpp 对象定向编译 PASS。构建最低可用内存约20.9 GiB，swap无增长。
 完整 ARCH 链接及 configuration_api_contract 尚未执行，留待配置生命周期接线后运行；
 不将对象编译或两项测试称为 v3 全回归。原3B基线与 tag 未改，未启动 CUDA或模拟。
+
+### O7.0 共同需求解析基础
+
+现有 StandardParameters 唯一目录增加 RequirementKind/InputCondition，不建立第二份
+生产键表。AllowedDefault 仅开放计划允许的25项；旧fallback字段暂供未迁移的v2加载器，
+不是v3许可，必须在生产接线阶段移除关键参数回填。InputResolution 保留nullable parsed/
+resolved/source、显式缺失/无效/重复状态和三态需求；空输入只报告可确定的19项必填，
+缺少开关不会当成false。初态用途可省tmax，正式演化不能省。模型/材料消费声明未知时
+保持unknown，不能把按标准项检查通过等同于全部case或模拟就绪。
+
+实现核对：只有MUSCL消费所选limiter，PCM/PPM不要求；Tabular输运不能按EOS名称
+猜测，须由真实材料声明判定。Helm显式扩散常量即使0仍报错。新解析层识别gravity_G
+退役，但旧运行路径/G_const尚未迁移；没有改变共享物理常数或科学数学。
+
+CTest input_resolution PASS：19项逐项删除、条件需求各组、合法0/false、未知依赖、
+关闭模块坏token、未知方法、重复项、NSE auto capability、外部引力完整向量、
+Helm禁止系数、旧alias和G退役。API对象对新增目录字段编译PASS；diff-check PASS。
+证据日志在studio/.local/integration/input-resolution-check.log，不提交构建产物。
+
+此提交是解析基础，不是v3发布：尚未接入RuntimeParams/inspection/Host，未构造只读
+完整运行配置，尚缺case声明、完整范围/组合检查与post-Setup重新验证；不生成checkpoint。
