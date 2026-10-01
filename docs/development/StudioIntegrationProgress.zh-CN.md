@@ -925,3 +925,22 @@ validate_backend_results 30/30、diff-check PASS；均为工具单元测试。
 是否绑定电子表 hash，涵盖源格式和 interpretation。Python 依赖记录仍未
 接入此权威信息，不能仅凭存在 eos_helm_table_path 认定实际消费；该项未完成。
 无生产运行/科学输出/重编译/push/tag，AMR checkpoint 对照未重试。
+
+### O7.0 shared AMR selection diagnostics before Setup
+
+将既有 ResolveRefinementSelection 放入 AnalyzeConfigurationInput 的已知输入分析，
+结果以 optional selection 保留供 inspection 消费；无可用 indicator 或旧别名
+的错误现在进入共用诊断，可与其他缺项一次汇总。inspection 不再独立追加相同规则。
+维度/geometry/burn 未解析时不猜值；named species 的运行期登记检查仍不冒充完成。
+不修改 indicator 过滤规则、AMR 数学或 JENS 可用性，不构造网格/模型。
+
+新增 C++ 无资源断言覆盖 JENS 与缺失 cfl 聚合、parsed token 保留、
+RequireDeclaredInputs 拒绝和未知维度不推断。编译前发现断言误写旧错误码名称，
+修正为实际 MISSING_PARAMETER 后测试通过，没有更改 Core 错误码。
+受控增量构建 23.233 秒，最低 available 16346100 KiB，swap 峰值 0。
+configuration_input、configuration_api_contract、configuration_v3_contract
+3/3 CTest PASS（13.75 秒）；Studio 180/180 PASS。
+真实 Core/Host v3 四类请求 PASS，CPU binary SHA256
+e6c60aa3ae9dcc7bf1c1bd7b7e2ba745bb815739b92f0b02a05117d983809719。
+Host 集成使用隔离 test Build Profile，不代表真实项目构建 provenance/UAT 已完成。
+未执行生产 AMR checkpoint 对照、演化、CUDA、push/tag；完整 O7.0 仍未完成。

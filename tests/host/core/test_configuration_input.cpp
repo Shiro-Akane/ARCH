@@ -67,6 +67,22 @@ int main(int argc, char** argv) {
                         == (definition.requirement == RequirementKind::Optional),
                     "unapproved standard runtime default exists");
         }
+        const auto invalid_amr = inspect(without(without(fixture, "refine_var"), "cfl")
+            + "refine_var=JENS\n");
+        require(has(invalid_amr, "refine_var", "INVALID_REFINEMENT_SELECTION")
+                && has(invalid_amr, "cfl", "MISSING_PARAMETER"),
+                "shared analysis failed to aggregate AMR selection with missing input");
+        require(!invalid_amr.refinement_selection
+                && std::get<std::string>(*invalid_amr.standard.parameters.at("refine_var").parsed) == "JENS",
+                "invalid selection lost raw parsed input or produced a selection");
+        bool amr_rejected = false;
+        try { invalid_amr.RequireDeclaredInputs(); }
+        catch (const ConfigInputError&) { amr_rejected = true; }
+        require(amr_rejected, "invalid AMR selection passed the shared loading gate");
+        const auto unknown_amr = inspect(without(fixture, "nblockx2"));
+        require(!unknown_amr.refinement_selection
+                && !has(unknown_amr, "refine_var", "INVALID_REFINEMENT_SELECTION"),
+                "unknown dimension was guessed for AMR selection");
         auto input = inspect(fixture);
         input.RequireDeclaredInputs();
         require(input.requirements_known(), "complete input retained unknown requirements");

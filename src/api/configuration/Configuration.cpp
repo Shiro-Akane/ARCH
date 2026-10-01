@@ -470,36 +470,14 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
     const auto* eos = config::input_detail::get<std::string>(analysis.standard, "eos_type");
     const auto* diffusion = config::input_detail::get<bool>(analysis.standard, "use_diffusion");
     result["diffusion"] = eos && diffusion ? DiffusionMetadata(*eos, *diffusion) : Json();
-    const auto* indicators = config::input_detail::get<std::string>(analysis.standard, "refine_var");
-    const auto* burn = config::input_detail::get<bool>(analysis.standard, "use_burn");
     result["amrIndicators"] = Json();
-    bool invalid_selection = false;
-    const auto* x2 = config::input_detail::get<int>(analysis.standard, "nblockx2");
-    const auto* x3 = config::input_detail::get<int>(analysis.standard, "nblockx3");
-    const auto* x1 = config::input_detail::get<int>(analysis.standard, "nblockx1");
-    const auto* geometry = config::input_detail::get<std::string>(analysis.standard, "geometry");
-    if (indicators && burn && geometry && x1 && x2 && x3 && *x1 > 0
-        && *x2 >= 0 && *x3 >= 0 && !(*x3 > 0 && *x2 == 0)) {
-        AmrConfig selection;
-        selection.refine_var = *indicators;
-        try {
-            const int dimension = *x3 > 0 ? 3 : *x2 > 0 ? 2 : 1;
-            config::ResolveRefinementSelection(selection, dimension, *burn, false);
-            result["amrIndicators"] = RefinementMetadata(selection, dimension, *burn);
-        } catch (const std::invalid_argument& error) {
-            invalid_selection = true;
-            result["status"] = "error";
-            result["completeness"]["state"] = "invalid";
-            const auto& record = analysis.standard.parameters.at("refine_var");
-            result["diagnostics"].push(Json::object({
-                {"code", "INVALID_REFINEMENT_SELECTION"}, {"severity", "error"},
-                {"parameterKey", "refine_var"}, {"module", "Grid"},
-                {"conditionId", "resolved-amr-selection"}, {"message", error.what()},
-                {"expected", Json::object({{"type", "string"},
-                    {"units", case_units("", "string")}})},
-                {"locations", locations(record.locations)}, {"relatedKeys", Json::array()}}));
-        }
+    if (analysis.refinement_selection) {
+        const int x2 = *config::input_detail::get<int>(analysis.standard, "nblockx2");
+        const int x3 = *config::input_detail::get<int>(analysis.standard, "nblockx3");
+        const bool burn = *config::input_detail::get<bool>(analysis.standard, "use_burn");
+        result["amrIndicators"] = RefinementMetadata(
+            *analysis.refinement_selection, x3 > 0 ? 3 : x2 > 0 ? 2 : 1, burn);
     }
-    return SerializePreviewResponse(result, complete && !invalid_selection ? 0 : 3);
+    return SerializePreviewResponse(result, complete ? 0 : 3);
 }
 } // namespace arch::api

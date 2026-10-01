@@ -8,6 +8,7 @@
 #pragma once
 
 #include "core/problem/ProblemRegistry.h"
+#include "core/config/RefinementSelection.h"
 
 namespace arch::config {
 struct ConfigurationInput {
@@ -17,6 +18,7 @@ struct ConfigurationInput {
     // Filled only at successful loading; partial analysis must not demand a valid parser.
     std::map<std::string, std::string> raw_tokens;
     StandardInputResolution standard;
+    std::optional<AmrConfig> refinement_selection;
     CaseConfiguration declaration;
     CaseInputResolution model;
     std::map<std::string, InputRecord> auxiliary;
@@ -76,6 +78,26 @@ inline ConfigurationInput AnalyzeConfigurationInput(
                 "Model-provided inputs require registered source identity.", {}});
         result.model = ResolveCaseInput(parser, result.declaration);
         result.ownership = ResolveInputOwnership(parser, result.declaration, {"log_dir"});
+    }
+    // Resolve only known selection inputs, without a mesh, model or species
+    // registry. All loading/inspection entries receive the same diagnostic.
+    const auto* indicators = input_detail::get<std::string>(result.standard, "refine_var");
+    const auto* burn = input_detail::get<bool>(result.standard, "use_burn");
+    const auto* x1 = input_detail::get<int>(result.standard, "nblockx1");
+    const auto* x2 = input_detail::get<int>(result.standard, "nblockx2");
+    const auto* x3 = input_detail::get<int>(result.standard, "nblockx3");
+    const auto* geometry = input_detail::get<std::string>(result.standard, "geometry");
+    if (indicators && burn && geometry && x1 && x2 && x3 && *x1 > 0
+        && *x2 >= 0 && *x3 >= 0 && !(*x3 > 0 && *x2 == 0)) {
+        AmrConfig selection;
+        selection.refine_var = *indicators;
+        try {
+            ResolveRefinementSelection(selection, *x3 > 0 ? 3 : *x2 > 0 ? 2 : 1, *burn, false);
+            result.refinement_selection = std::move(selection);
+        } catch (const std::invalid_argument& error) {
+            result.standard.diagnostics.push_back({"refine_var", "INVALID_REFINEMENT_SELECTION",
+                error.what(), result.standard.parameters.at("refine_var").locations});
+        }
     }
     result.diagnostics = result.standard.diagnostics;
     if (!registration)
