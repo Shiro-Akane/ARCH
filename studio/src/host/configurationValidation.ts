@@ -92,7 +92,7 @@ export function validateConfigurationInspection(v:unknown,expected:{caseId:strin
  if(v.status==='ok'&&(v.completeness.state!=='complete'||!Object.values(v.coverage).every(x=>x===true)||v.diagnostics.some(d=>record(d)&&d.severity==='error')))fail('Incomplete inspection claimed success.');
  if(v.status==='error'&&v.completeness.state==='complete')fail('Error inspection claimed completeness.');
  if(v.coordinates!==undefined&&v.coordinates!==null)validateCoordinates(v.coordinates);
- return {...v,parameters} as unknown as ConfigurationInspection;
+ return {...v,parameters,coordinates:v.coordinates??undefined} as unknown as ConfigurationInspection;
 }
 export function validateSchemaResponse(v:unknown,scope:ConfigurationBuildScope):SchemaResponse {
  if(!record(v)||v.protocolVersion!==PROTOCOL_VERSION||!sameBuildScope(v as unknown as ConfigurationBuildScope,scope))throw new Error('Schema build identity mismatch.');

@@ -327,6 +327,28 @@ class ConfigurationV3(unittest.TestCase):
                 self.assertFalse(values["use_species_diff"]["resolvedValue"])
                 self.assertFalse(values["use_viscous_diff"]["resolvedValue"])
 
+    def test_coordinates_use_only_valid_explicit_topology(self):
+        labels = {"cartesian": [["x"], ["x", "y"], ["x", "y", "z"]],
+                  "cylindrical": [["r"], ["r", "phi"], ["r", "z", "phi"]],
+                  "spherical": [["r"], ["r", "phi"], ["r", "theta", "phi"]]}
+        for geometry, dimensions in labels.items():
+            for dim, expected in enumerate(dimensions, 1):
+                text = edit(edit(edit(BASE, "geometry", geometry),
+                                 "nblockx2", int(dim >= 2)), "nblockx3", int(dim == 3))
+                data = self.inspect(text)
+                axes = data["coordinates"]["axes"]
+                self.assertEqual([a["key"] for a in axes], ["x1", "x2", "x3"])
+                self.assertEqual([a["displayName"] for a in axes if a["active"]], expected)
+                self.assertEqual([a["unit"] for a in axes if a["active"]],
+                                 ["rad" if x in ["phi", "theta"] else "cm" for x in expected])
+        for text in [edit(BASE, "geometry"), edit(BASE, "nblockx2"),
+                     edit(BASE, "nblockx2", "bad"), edit(BASE, "nblockx3", 1),
+                     edit(BASE, "geometry", "bad")]:
+            self.assertIsNone(self.inspect(text, expected=3)["coordinates"])
+        # Unrelated missing physical parameters must not erase valid topology.
+        data = self.inspect(edit(BASE, "eos_type"), expected=3)
+        self.assertEqual(data["coordinates"]["dimension"], 1)
+
     def test_bounded_error_keeps_identity(self):
         text = BASE + "".join(f"unknown_key_{i}=0\n" for i in range(30000))
         self.assertLess(len(text.encode()), 1024 * 1024)

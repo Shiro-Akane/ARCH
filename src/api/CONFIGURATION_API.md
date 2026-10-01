@@ -184,3 +184,12 @@ consume external fractions keep the positive finite sum requirement.
 Inspection reports these unused explicit keys as unobserved, never as Init reads.
 Network material registration uses SetupNetworkSpecies; the existing
 SetupNetworkAndFractions path retains external composition resolution.
+
+### Inspection coordinates with partial input
+
+Version 3 inspection includes coordinates derived only from resolved geometry and
+all three block counts. Missing/invalid topology (including active x3 with
+inactive x2) returns null, never a default dimension. Valid topology can remain
+available when unrelated physical inputs are incomplete. Names and units use the
+same Core CoordinateMetadata mapping as preview; this is not a constructed mesh.
+Host normalizes null to an absent optional coordinate object, not a fallback.

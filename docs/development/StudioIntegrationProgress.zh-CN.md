@@ -831,3 +831,20 @@ DENS正值/字段单位、无CUDA/科学输出均验证；Sedov1/2/3维单位、
 Gaussian曲线坐标、错误metadata、整数拒绝和log零值检查保留。
 这是inspect-case初始化覆盖，不是全模型full field Preview或演化认证。
 diff-check PASS。未重编译/演化/CUDA/raw上传/push/tag，其他完整回归继续。
+
+### O7.0 部分输入坐标摘要恢复及 Host 接线
+
+旧配置回归审计发现inspection缺少当前坐标摘要，不只是测试默认值过时。
+现在仅以resolved geometry/nblockx1/2/3调用共用CoordinateMetadata；
+缺失/非法/拓扑不合法返回null，不构造默认SimConfig；
+其他物理缺项不抹去已知拓扑。保留现有九种几何/维度语义，不提前改RZ。
+
+真实Core/Host检查首次暴露Host校验后丢弃返回对象，导致null仍穿透
+optional类型；改为路径检查和响应复用同一已校验对象，null映射缺省，
+没有任何默认坐标/维度回填。API说明和真实集成断言同步。
+单文件CPU增量编译PASS；配置v3 21/21 PASS（2.064秒），
+覆盖九映射/单位/缺项/非法/非拓扑缺项。实际ConfigurationAdapter四类
+请求PASS，typecheck/lint及完整Studio180/180 PASS，diff-check PASS。
+此Host证据使用隔离测试Build Profile，不冒充真实工程Build provenance。
+剩余旧configuration_api/ui_expansion回归和动态diffusion/AMR摘要仍待收敛；
+无演化/CUDA/push/tag/raw上传，整体目标未完成。

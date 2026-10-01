@@ -293,6 +293,20 @@ Json case_schema(const config::CaseParameter& d, const std::string& case_id) {
         {"options", d.options.empty() ? Json() : Json::object({
             {"caseSensitive", !d.options_ignore_case}, {"unknownBehavior", "error"}, {"choices", choices}})}});
 }
+// A display snapshot needs only resolved topology, not a default-filled SimConfig.
+Json InspectionCoordinates(const config::StandardInputResolution& input) {
+    const auto* geometry = config::input_detail::get<std::string>(input, "geometry");
+    const auto* x1 = config::input_detail::get<int>(input, "nblockx1");
+    const auto* x2 = config::input_detail::get<int>(input, "nblockx2");
+    const auto* x3 = config::input_detail::get<int>(input, "nblockx3");
+    if (!geometry || !x1 || !x2 || !x3 || *x1 < 1 || *x2 < 0 || *x3 < 0
+        || (*x3 > 0 && *x2 == 0)) return Json();
+    GridConfig grid;
+    grid.geometry = *geometry;
+    grid.nblockx1 = *x1; grid.nblockx2 = *x2; grid.nblockx3 = *x3;
+    grid.dim = *x3 > 0 ? 3 : *x2 > 0 ? 2 : 1;
+    return CoordinateMetadata(grid, "cgs");
+}
 } // namespace
 
 /** Describe the versioned configuration boundary, not simulation readiness. */
@@ -450,7 +464,8 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
                 ProblemRegistry::Get().Registration(request.case_id) ? "checked" : "not_checked"},
             {"filesystem", "not_accessed"}, {"cuda", "not_initialized"},
             {"validationStage", "conditional-resolution"}})},
-        {"parameters", parameters}, {"diagnostics", diagnostics}, {"unitSystem", "cgs"}});
+        {"parameters", parameters}, {"diagnostics", diagnostics}, {"unitSystem", "cgs"},
+        {"coordinates", InspectionCoordinates(analysis.standard)}});
     return SerializePreviewResponse(result, complete ? 0 : 3);
 }
 } // namespace arch::api

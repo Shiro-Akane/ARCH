@@ -48,11 +48,10 @@ export class ConfigurationAdapter {
   const schema=await this.schema();
   const before=await this.ready();const requestId=randomUUID();
   if(schema.buildId!==before.buildId||schema.binarySha256!==before.outputBinary.fingerprint.sha256)throw new BuildError('Build changed after schema request.',409);
-  const core=await this.run(['--inspect-config',r.caseId,'--config-stdin','--request-id',requestId],r.configText);
-  const pathChecks=await pathPreflight(validateConfigurationSchema(schema.core),validateConfigurationInspection(core,{caseId:r.caseId,configRevision:r.configRevision,requestId}),this.preview.build.root);
+  const core=validateConfigurationInspection(await this.run(['--inspect-config',r.caseId,'--config-stdin','--request-id',requestId],r.configText),{caseId:r.caseId,configRevision:r.configRevision,requestId});
+  const pathChecks=await pathPreflight(validateConfigurationSchema(schema.core),core,this.preview.build.root);
   const after=await this.ready();
   if(before.buildId!==after.buildId||before.outputBinary.fingerprint.sha256!==after.outputBinary.fingerprint.sha256)throw new BuildError('Build changed during inspection.',409);
-  validateConfigurationInspection(core,{caseId:r.caseId,configRevision:r.configRevision,requestId});
   return {protocolVersion:PROTOCOL_VERSION,identity:{projectId:r.projectId,caseId:r.caseId,configRevision:r.configRevision,requestId,buildId:before.buildId,binarySha256:before.outputBinary.fingerprint.sha256},core,pathChecks};
  }
 }

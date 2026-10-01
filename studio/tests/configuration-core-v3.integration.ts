@@ -29,7 +29,12 @@ try{
   assert.equal(result.identity.binarySha256,schema.binarySha256);
   assert.equal(result.core.identity.configRevision,result.identity.configRevision);
   assert.equal(result.core.execution.setup,'not_executed');
+  if(kind==='complete'){
+   assert.equal(result.core.coordinates?.dimension,1);
+   assert.equal(result.core.coordinates?.axes[0].unit,'cm');
+  }
   if(kind==='incomplete'){
+   assert.equal(result.core.coordinates,undefined);
    const value=result.core.parameters.find(p=>p.key==='cfl')!;
    assert.equal(value.parsedValue,null);assert.equal(value.resolvedValue,null);
   }
