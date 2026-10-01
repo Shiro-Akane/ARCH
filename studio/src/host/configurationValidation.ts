@@ -4,37 +4,95 @@ import type {ConfigurationBuildScope,ConfigurationInspection,ConfigurationSchema
 import {sameBuildScope} from './configurationContracts.ts';
 const scalar=(v:unknown)=>typeof v==='string'||typeof v==='boolean'||typeof v==='number'&&Number.isFinite(v);
 const strings=(v:Record<string,unknown>,keys:string[])=>keys.every(k=>typeof v[k]==='string');
-export function validateConfigurationSchema(v:unknown):ConfigurationSchema {
- if(!record(v)||v.schemaVersion!=='1.0'||(v.version!=='1'&&v.version!=='2')||v.kind!=='configuration-schema'||v.status!=='ok'||v.standardParametersComplete!==true||v.customParametersComplete!==false||v.constraintsComplete!==false||!Array.isArray(v.parameters)||v.parameters.length<1||v.parameters.length>4096)throw new Error('Unsupported Core configuration schema.');
+const nullableText=(v:unknown)=>v===null||typeof v==='string';
+const stringArray=(v:unknown):v is string[]=>Array.isArray(v)&&v.length<=65536&&v.every(x=>typeof x==='string');
+function typedValue(value:unknown,type:unknown){
+ return value===null||type==='string'&&typeof value==='string'||type==='bool'&&typeof value==='boolean'
+  ||(type==='float'||type==='expression')&&typeof value==='number'&&Number.isFinite(value)
+  ||type==='int'&&typeof value==='number'&&Number.isInteger(value)&&value>=-2147483648&&value<=2147483647;
+}
+function fail(message:string):never {throw new Error(message);}
+function version(v:unknown){
+ if(!record(v)||v.schemaVersion!=='1.0'||v.version!=='3')
+  fail('Incompatible Core configuration version. Update Core and Studio together; Working Copy is retained.');
+}
+function condition(v:unknown){
+ if(!record(v)||!strings(v,['id','description'])||!stringArray(v.dependencies))fail('Malformed Core condition.');
+}
+function state(v:unknown,requirement=false){
+ if(!record(v)||typeof v.conditionId!=='string'||!['satisfied','not-applicable','unknown-dependency'].includes(String(v.state))||!stringArray(v.missingDependencies))fail('Malformed condition state.');
+ if(v.state==='unknown-dependency'?v.missingDependencies.length===0:v.missingDependencies.length!==0)fail('Inconsistent condition dependencies.');
+ if(requirement&&(v.required!==(v.state==='unknown-dependency'?null:v.state==='satisfied')))fail('Inconsistent required state.');
+}
+function locations(v:unknown){
+ if(!Array.isArray(v)||v.length>65536)fail('Malformed source locations.');
+ for(const p of v)if(!record(p)||typeof p.source!=='string'||!['line','column','endColumn'].every(k=>typeof p[k]==='number'&&Number.isSafeInteger(p[k])&&(p[k] as number)>0)||Number(p.endColumn)<Number(p.column)||!nullableText(p.rawValue))fail('Malformed source location.');
+}
+function path(v:unknown){
+ if(v!==null&&(!record(v)||v.checkOwner!=='local-host'||v.relativeTo!=='process-working-directory'||v.existenceChecked!==false||typeof v.targetMayBeNew!=='boolean'||!['input-file','output-directory'].includes(String(v.role))))fail('Invalid Core path authority.');
+}
+function parameterList(v:unknown,caseId:string|null){
+ if(!Array.isArray(v)||v.length>4096)fail('Malformed parameter catalog.');
  const keys=new Set<string>();
- for(const p of v.parameters){
-  if(!record(p)||!strings(p,['key','type','group','defaultSource','applicability'])||!/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.key as string)||keys.has(p.key as string)||!['int','float','bool','string','expression'].includes(p.type as string)||!scalar(p.defaultValue)||!record(p.constraints)||!record(p.units)||(p.options!==null&&!record(p.options))||(p.path!==null&&!record(p.path))||(p.aliasOf!==undefined&&typeof p.aliasOf!=='string'))throw new Error('Malformed standard parameter schema.');
-  for(const key of ['min','max','storageMin','storageMax'])if(p.constraints[key]!==undefined&&(typeof p.constraints[key]!=='number'||!Number.isFinite(p.constraints[key])))throw new Error('Malformed parameter constraint.');
-  if(p.presentation!==undefined&&(!record(p.presentation)||!strings(p.presentation,['displayName','description','subgroup'])))throw new Error('Invalid parameter presentation.');
+ for(const p of v){
+  if(!record(p)||!strings(p,['key','type','group','usage'])||!/^[A-Za-z_][A-Za-z0-9_]*$/.test(String(p.key))||keys.has(String(p.key))||p.caseId!==caseId||!['simulation','verification'].includes(String(p.usage))||!['int','float','bool','string','expression'].includes(String(p.type))||!record(p.constraints)||!record(p.units)||(p.options!==null&&!record(p.options))||!record(p.requirement)||!['required','conditional','optional'].includes(String(p.requirement.kind))||'defaultValue' in p||'defaultSource' in p||'aliasOf' in p)fail('Malformed standard parameter schema.');
+  condition(p.requirement.condition);condition(p.applicability);
+  if(p.allowedDefault!==null&&(!record(p.allowedDefault)||!scalar(p.allowedDefault.value)||p.allowedDefault.source!=='documented-default'||typeof p.allowedDefault.evidence!=='string'||p.requirement.kind!=='optional'))fail('Invalid allowed default.');
+  if(!Array.isArray(p.templateRecommendations)||p.templateRecommendations.some(x=>!record(x)||!scalar(x.value)||typeof x.evidence!=='string'))fail('Invalid template recommendation.');
+  for(const key of ['min','max','storageMin','storageMax'])if(p.constraints[key]!==undefined&&(typeof p.constraints[key]!=='number'||!Number.isFinite(p.constraints[key])))fail('Malformed parameter constraint.');
+  if(p.presentation!==undefined&&(!record(p.presentation)||!strings(p.presentation,['displayName','description','subgroup'])))fail('Invalid parameter presentation.');
   if(record(p.presentation)){
-   if(p.presentation.enabledBy!==undefined&&typeof p.presentation.enabledBy!=='string')throw new Error('Invalid parameter enablement.');
-   const toggle=p.presentation.toggle;
-   if(toggle!==undefined&&(!record(toggle)||toggle.enabledWhen!=='value > 0'||typeof toggle.offValue!=='number'||!Number.isFinite(toggle.offValue)||toggle.enabledValueRequired!==true||toggle.preserveUneditedInput!==true))throw new Error('Unsupported parameter toggle.');
+   if(p.presentation.enabledBy!==undefined&&typeof p.presentation.enabledBy!=='string')fail('Invalid parameter enablement.');
+   const t=p.presentation.toggle;
+   if(t!==undefined&&(!record(t)||t.enabledWhen!=='value > 0'||typeof t.offValue!=='number'||!Number.isFinite(t.offValue)||t.enabledValueRequired!==true||t.preserveUneditedInput!==true))fail('Unsupported parameter toggle.');
   }
-  validateUnit(p.units);
-  if(p.path!==null&&(!record(p.path)||p.path.checkOwner!=='local-host'||p.path.relativeTo!=='process-working-directory'||!['input-file','output-directory'].includes(String(p.path.role))))throw new Error('Invalid Core path authority.');
-  keys.add(p.key as string);
+  validateUnit(p.units);path(p.path);keys.add(String(p.key));
  }
- if(v.coordinateSystems!==undefined){if(!Array.isArray(v.coordinateSystems)||v.coordinateSystems.length>64)throw new Error('Invalid coordinate catalog.');v.coordinateSystems.forEach(validateCoordinates);}
+}
+export function validateConfigurationSchema(v:unknown):ConfigurationSchema {
+ version(v);
+ if(!record(v)||v.kind!=='configuration-schema'||v.status!=='ok'||v.standardParametersComplete!==true||v.constraintsComplete!==false||!Array.isArray(v.parameters)||v.parameters.length<1||typeof v.caseDeclarationsComplete!=='boolean'||!stringArray(v.retiredKeys)||!Array.isArray(v.caseDeclarations)||v.caseDeclarations.length>4096)fail('Unsupported Core configuration schema.');
+ parameterList(v.parameters,null);parameterList(v.auxiliaryParameters,null);
+ const ids=new Set<string>();
+ for(const c of v.caseDeclarations){
+  if(!record(c)||!strings(c,['caseId','source','sourceSha256'])||ids.has(String(c.caseId))||!/^[0-9a-f]{64}$/.test(String(c.sourceSha256))||typeof c.declarationsComplete!=='boolean'||!record(c.composition)||typeof c.composition.status!=='string'||typeof c.composition.inspectionRequired!=='boolean')fail('Malformed case declaration.');
+  parameterList(c.parameters,String(c.caseId));ids.add(String(c.caseId));
+ }
+ if(v.coordinateSystems!==undefined){if(!Array.isArray(v.coordinateSystems)||v.coordinateSystems.length>64)fail('Invalid coordinate catalog.');v.coordinateSystems.forEach(validateCoordinates);}
  return v as unknown as ConfigurationSchema;
 }
 export function validateConfigurationInspection(v:unknown,expected:{caseId:string;configRevision:string;requestId:string}):ConfigurationInspection {
- if(!record(v)||v.schemaVersion!=='1.0'||(v.version!=='1'&&v.version!=='2')||v.kind!=='configuration-inspection'||!['ok','error'].includes(String(v.status))||!record(v.identity)||!Object.entries(expected).every(([k,x])=>v.identity&&record(v.identity)&&v.identity[k]===x)||!record(v.execution)||v.execution.setup!=='not_executed'||v.execution.simulationReadiness!=='not_checked'||v.execution.eos!=='not_loaded'||v.execution.filesystem!=='not_accessed'||v.execution.cuda!=='not_initialized'||!Array.isArray(v.parameters)||v.parameters.length>4096||!Array.isArray(v.diagnostics))throw new Error('Invalid Core inspection contract or identity.');
+ version(v);
+ if(!record(v)||v.kind!=='configuration-inspection'||!['ok','error'].includes(String(v.status))||!record(v.identity)||!Object.entries(expected).every(([k,x])=>record(v.identity)&&v.identity[k]===x)||!record(v.execution)||v.execution.setup!=='not_executed'||v.execution.simulationReadiness!=='not_checked'||v.execution.eos!=='not_loaded'||v.execution.filesystem!=='not_accessed'||v.execution.cuda!=='not_initialized'||!record(v.coverage)||!['standardParametersComplete','auxiliaryParametersComplete','caseParametersComplete','conditionsComplete','diagnosticsComplete'].every(k=>typeof (v.coverage as Record<string,unknown>)[k]==='boolean')||!record(v.completeness)||v.completeness.scope!=='declared-configuration-before-setup'||!['complete','incomplete','invalid','undetermined'].includes(String(v.completeness.state))||!Array.isArray(v.diagnostics)||v.diagnostics.length>65536)fail('Invalid Core inspection contract or identity.');
+ if(v.diffusion!==undefined||v.amrIndicators!==undefined)fail('Unsupported configuration derived metadata; update the matching Core/Studio contract.');
+ if(!['syntax','typed-input','conditional-resolution'].includes(String(v.execution.validationStage))||!['checked','not_checked'].includes(String(v.execution.caseRegistration))||!['checked','not_checked'].includes(String(v.execution.caseDeclarations)))fail('Invalid configuration execution coverage.');
+ const omitted=v.parameters===undefined&&v.status==='error'&&Object.values(v.coverage).every(x=>x===false)&&v.diagnostics.some(d=>record(d)&&d.code==='RESPONSE_TOO_LARGE');
+ const parameters=omitted?[]:v.parameters;
+ if(!Array.isArray(parameters)||parameters.length>4096)fail('Malformed inspection parameters.');
  const keys=new Set<string>();
- for(const p of v.parameters){if(!record(p)||typeof p.key!=='string'||keys.has(p.key)||!scalar(p.parsedValue)||!scalar(p.defaultValue)||(p.rawValue!==null&&typeof p.rawValue!=='string')||!['explicit','default','alias'].includes(String(p.valueSource))||p.valueStage!=='typed-input-before-setup-and-policy-resolution'||(p.sourceKey!==undefined&&typeof p.sourceKey!=='string')||(p.applicable!==undefined&&typeof p.applicable!=='boolean')||(p.units!==undefined&&!record(p.units)))throw new Error('Malformed parsed parameter.');if(p.units!==undefined)validateUnit(p.units);keys.add(p.key);}
- for(const d of v.diagnostics)if(!record(d)||!strings(d,['severity','code','message'])||!['info','warning','error'].includes(d.severity as string)||(d.parameterKey!==null&&typeof d.parameterKey!=='string'))throw new Error('Malformed configuration diagnostic.');
- if(v.amrIndicators!==undefined){const a=v.amrIndicators;if(!record(a)||!Array.isArray(a.choices)||a.choices.length>128||typeof a.speciesResolution!=='string'||a.choices.some(c=>!record(c)||typeof c.value!=='string'||typeof c.available!=='boolean'||typeof c.selected!=='boolean'||(c.reason!==null&&typeof c.reason!=='string')))throw new Error('Invalid AMR applicability.');}
- if(v.diffusion!==undefined){
-  const d=v.diffusion;
-  if(!record(d)||d.version!=='1'||typeof d.enabled!=='boolean'||d.modeEditable!==false||!strings(d,['source','sourceScope'])||!Array.isArray(d.forbiddenExplicitKeys)||!d.forbiddenExplicitKeys.every(k=>typeof k==='string')||!Array.isArray(d.channels)||d.channels.length>32||d.channels.some(c=>!record(c)||!strings(c,['coefficientKey','toggleKey','unit'])||typeof c.constantInputAllowed!=='boolean'))throw new Error('Invalid diffusion presentation contract.');
+ for(const p of parameters){
+  if(!record(p)||!strings(p,['key','type','group','usage'])||(p.caseId!==null&&p.caseId!==expected.caseId)||!['simulation','verification'].includes(String(p.usage))||!['int','float','bool','string','expression'].includes(String(p.type))||keys.has(String(p.key))||!['missing','present','invalid','duplicate'].includes(String(p.inputState))||!nullableText(p.rawValue)||(p.parsedValue!==null&&!scalar(p.parsedValue))||(p.resolvedValue!==null&&!scalar(p.resolvedValue))||(p.valueSource!==null&&!['input','case-defined','derived','documented-default'].includes(String(p.valueSource)))||p.valueStage!=='configuration-resolution-before-setup'||'defaultValue'in p||'applicable'in p)fail('Malformed parsed parameter.');
+  if(!typedValue(p.parsedValue,p.type)||!typedValue(p.resolvedValue,p.type))fail('Value disagrees with Core parameter type.');
+  locations(p.locations);state(p.requirement,true);state(p.applicability);validateUnit(p.units);path(p.path);
+  if(p.sourceEvidence!==null&&(!record(p.sourceEvidence)||typeof p.sourceEvidence.owner!=='string'||!stringArray(p.sourceEvidence.dependencies)))fail('Malformed value source evidence.');
+  const loc=p.locations as unknown[];
+  if((p.resolvedValue===null)!==(p.valueSource===null))fail('Unresolved value has a false source.');
+  if(p.valueSource===null&&p.sourceEvidence!==null)fail('Unresolved value has source evidence.');
+  if(['case-defined','derived','documented-default'].includes(String(p.valueSource))&&p.sourceEvidence===null)fail('Missing authoritative source evidence.');
+  if(p.inputState==='missing'&&(p.rawValue!==null||p.parsedValue!==null||loc.length!==0||p.valueSource==='input'))fail('Missing input was filled as parsed data.');
+  if(p.inputState==='duplicate'&&(p.rawValue!==null||p.parsedValue!==null||p.resolvedValue!==null||loc.length<2))fail('Duplicate input selected an occurrence.');
+  if(p.inputState==='invalid'&&p.resolvedValue!==null)fail('Invalid input has an effective value.');
+  if(p.inputState==='present'&&(typeof p.rawValue!=='string'||p.parsedValue===null||loc.length!==1||p.valueSource!=='input'))fail('Malformed explicit input.');
+  keys.add(String(p.key));
  }
+ for(const d of v.diagnostics){
+  if(!record(d)||!strings(d,['severity','code','message'])||!['info','warning','error'].includes(String(d.severity))||!nullableText(d.parameterKey)||!nullableText(d.module)||!nullableText(d.conditionId)||!record(d.expected)||!nullableText(d.expected.type)||!stringArray(d.relatedKeys))fail('Malformed configuration diagnostic.');
+  locations(d.locations);if(d.expected.units!==null)validateUnit(d.expected.units);
+ }
+ if(v.status==='ok'&&(v.completeness.state!=='complete'||!Object.values(v.coverage).every(x=>x===true)||v.diagnostics.some(d=>record(d)&&d.severity==='error')))fail('Incomplete inspection claimed success.');
+ if(v.status==='error'&&v.completeness.state==='complete')fail('Error inspection claimed completeness.');
  if(v.coordinates!==undefined&&v.coordinates!==null)validateCoordinates(v.coordinates);
- return v as unknown as ConfigurationInspection;
+ return {...v,parameters} as unknown as ConfigurationInspection;
 }
 export function validateSchemaResponse(v:unknown,scope:ConfigurationBuildScope):SchemaResponse {
  if(!record(v)||v.protocolVersion!==PROTOCOL_VERSION||!sameBuildScope(v as unknown as ConfigurationBuildScope,scope))throw new Error('Schema build identity mismatch.');
@@ -57,5 +115,5 @@ function validatePathChecks(v:unknown):NonNullable<InspectionResponse['pathCheck
 }
 
 function validateUnit(v:unknown){
- if(!record(v)||!['known','dimensionless','unknown','not-applicable','coordinate-dependent','model-dependent','mixed-state'].includes(String(v.status))||(v.unit!==null&&typeof v.unit!=='string')||(v.axis!==undefined&&!['x1','x2','x3'].includes(String(v.axis))))throw new Error('Invalid Core unit metadata.');
+ if(!record(v)||!['known','dimensionless','unknown','not-applicable','coordinate-dependent','model-dependent','mixed-state','not-specified'].includes(String(v.status))||(v.unit!==null&&typeof v.unit!=='string')||(v.axis!==undefined&&!['x1','x2','x3'].includes(String(v.axis))))throw new Error('Invalid Core unit metadata.');
 }

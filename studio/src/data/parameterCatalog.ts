@@ -5,7 +5,7 @@ export function catalog(schema:StandardParameter[],values:Record<string,string>)
  return schema.filter(p=>!p.aliasOf&&!isRetiredParameter(p.key)).map(parameter=>{
   const aliases=schema.filter(p=>p.aliasOf===parameter.key&&!isRetiredParameter(p.key)).map(p=>p.key);
   const sourceKey=Object.hasOwn(values,parameter.key)?parameter.key:aliases.find(k=>Object.hasOwn(values,k))??parameter.key;
-  return {parameter,aliases,sourceKey,explicit:Object.hasOwn(values,sourceKey),value:values[sourceKey]??String(parameter.defaultValue)};
+  return {parameter,aliases,sourceKey,explicit:Object.hasOwn(values,sourceKey),value:values[sourceKey]??''};
  });
 }
 export function catalogCoordinates(schema:ConfigurationSchema,values:Record<string,string>):CoordinateSystem|undefined {
@@ -17,7 +17,7 @@ export function catalogCoordinates(schema:ConfigurationSchema,values:Record<stri
 }
 export function parameterUnit(p:StandardParameter,parsed?:InspectionParameter,coordinates?:CoordinateSystem){
  const u=parsed?.units??p.units;
- if(u.status==='not-applicable')return '';
+ if(u.status==='not-applicable')return 'Unit: not applicable';
  const unit=u.unit??(typeof u.axis==='string'?coordinates?.axes.find(a=>a.key===u.axis)?.unit:undefined);
  return `${unit??'Unit not provided'} · ${u.status??'unknown'}${u.reason?' · '+u.reason:''}`;
 }

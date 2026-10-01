@@ -1,7 +1,7 @@
 # Studio 配置接口 v3
 
 当前集成分支的 Core 已实现配置扩展版本 3，外层仍为 schemaVersion="1.0"。
-这是 O7.0 进行中的迁移，尚未完成 Host/Studio 配套升级、受控只读运行配置和
+这是 O7.0 进行中的迁移，Host/Studio 传输与nullable表单已迁移；尚未完成动态摘要接线、受控只读运行配置和
 全部旧输入迁移，不能作为阶段发布声明。v2 的 defaultValue/defaultSource、
 缺项回填和 custom 未检查列表不再是本接口。
 
@@ -88,7 +88,7 @@ mixed-state、not-specified；未知单位为 null。
 
 v3 inspection 不再通过带默认值的 SimConfig 构造 coordinates、diffusion、
 amrIndicators 或旧 resolved 摘要。依赖未解析时必须保持未知。
-相关动态展示需基于共同解析结果进一步接线，Host/Studio 迁移尚未完成；
+Host/Studio已校验v3传输和显示nullable记录；相关动态展示仍需从共同解析结果接线，端到端迁移尚未完成；
 不能从 v2 快照恢复虚假默认摘要。现有 Preview 的实际状态响应不因此成为
 当前未完成配置的替代值。
 

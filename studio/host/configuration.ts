@@ -27,8 +27,8 @@ export class ConfigurationAdapter {
    const binary=await checkedPath(build.root,build.profile.outputBinaryRelative);
    return await new Promise((resolve,reject)=>{
     const child=execFile(binary,args,{cwd:build.root,shell:false,encoding:'utf8',timeout:10000,maxBuffer:8*1024*1024,env:{PATH:'/usr/bin:/bin',LANG:'C.UTF-8',OMP_NUM_THREADS:'1',CUDA_VISIBLE_DEVICES:''}},(error,stdout)=>{
-     // Core uses exit 3 for structured field validation failures.
-     if(error&&error.code!==3){reject(new BuildError('Configuration command failed or exceeded its limits.',502));return;}
+     // Core uses exit 3 for invalid/incomplete input and 7 for bounded evidence errors.
+     if(error&&error.code!==3&&error.code!==7){reject(new BuildError('Configuration command failed or exceeded its limits.',502));return;}
      try{const value:unknown=JSON.parse(stdout);if(!value||typeof value!=='object'||Array.isArray(value))throw new Error();resolve(value as Record<string,unknown>);}catch{reject(new BuildError('Invalid Core configuration response.',502));}
     });
     child.stdin?.on('error',()=>undefined);child.stdin?.end(text??'');

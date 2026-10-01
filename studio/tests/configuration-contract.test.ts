@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {standardValueError} from '../src/data/standardValidation.ts';
 import {sameConfigurationIdentity} from '../src/host/configurationContracts.ts';
 import type {StandardParameter,ConfigurationIdentity} from '../src/host/configurationContracts.ts';
-const parameter=(type:StandardParameter['type']):StandardParameter=>({key:'test',type,group:'Grid',defaultValue:0,defaultSource:'shared-runtime-definition',constraints:{},options:null,units:{},path:null,applicability:'all'});
+const parameter=(type:StandardParameter['type']):StandardParameter=>({key:'test',type,group:'Grid',caseId:null,usage:'simulation',allowedDefault:null,templateRecommendations:[],requirement:{kind:'required',condition:{id:'always',dependencies:[],description:'Required'}},constraints:{},options:null,units:{status:'not-specified',unit:null},path:null,applicability:{id:'always',dependencies:[],description:'Always'}});
 test('standard integer matches Core full-token and 32-bit contract',()=>{
  for(const s of ['1.5','1.0','1e2','12abc','2147483648','-2147483649','+-1',''])assert.ok(standardValueError(parameter('int'),s),s);
  for(const s of ['0','+1','-2147483648','2147483647'])assert.equal(standardValueError(parameter('int'),s),undefined,s);
@@ -25,13 +25,13 @@ import {validateConfigurationSchema,validateConfigurationInspection} from '../sr
 import {pairingSuspicion,previewMetadataMatches} from '../src/data/configurationIdentity.ts';
 import {loadPar,editPar,parErrors,exportPar} from '../src/state/parState.ts';
 test('actual Core schema and successful/failed inspection fixtures are accepted, malformed identity rejected',async()=>{
- const fixture=async(name:string)=>JSON.parse(await readFile(new URL('../../src/api/examples/configuration/'+name,import.meta.url),'utf8'));
- const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8')));assert.equal(schema.parameters.length,95);
- for(const name of ['inspect-sod.json','inspect-cellular.json','invalid-integer.json']){const v=await fixture(name);validateConfigurationInspection(v,v.identity);assert.throws(()=>validateConfigurationInspection(v,{...v.identity,requestId:'late'}));}
+ const fixture=async(name:string)=>JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/'+name,import.meta.url),'utf8'));
+ const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8')));assert.equal(schema.parameters.length,94);
+ for(const name of ['sod-valid.json','empty.json','invalid.json']){const v=await fixture(name);validateConfigurationInspection(v,v.identity);assert.throws(()=>validateConfigurationInspection(v,{...v.identity,requestId:'late'}));}
  const broken=await fixture('schema.json');broken.parameters[1].key=broken.parameters[0].key;assert.throws(()=>validateConfigurationSchema(broken));
 });
 test('loaded and safely inserted standard integers share validation without rewriting unrelated bytes',async()=>{
- const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'))).parameters;
+ const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8'))).parameters;
  const absent=loadPar('1.par','# preserve\r\nnblockx2 = 0\r\nnblockx3 = 0\r\nunknown = keep\r\n');
  const present=loadPar('1.par',absent.document.raw+'ode_max_substeps = 10000\r\n');
  for(const raw of ['1.5','1.0','1e2','12abc','2147483648'])for(const state of [absent,present]){const edited=editPar(state,'ode_max_substeps',raw);assert.ok(parErrors(edited,schema).ode_max_substeps);assert.throws(()=>exportPar(edited,schema));}
@@ -47,7 +47,7 @@ test('pairing suspicion is advisory; generic filenames never become verified',()
 import {InspectionRequests} from '../src/data/inspectionRequests.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 test('late inspection cannot replace a newer model or a newer request for the same text',async()=>{
- const core=JSON.parse(await readFile(new URL('../../src/api/examples/configuration/inspect-sod.json',import.meta.url),'utf8'));
+ const core=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/sod-valid.json',import.meta.url),'utf8'));
  const scope={projectId:'p',buildId:'b',binarySha256:'sha'};
  const request={projectId:'p',caseId:'Sod' as const,configText:'unsaved',configRevision:core.identity.configRevision};
  core.identity.requestId='00000000-0000-0000-0000-000000000001';
@@ -60,7 +60,7 @@ test('late inspection cannot replace a newer model or a newer request for the sa
 });
 
 test('path checks travel with inspection identity and cannot validate a newer revision',async()=>{
- const core=JSON.parse(await readFile(new URL('../../src/api/examples/configuration/inspect-sod.json',import.meta.url),'utf8'));
+ const core=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/sod-valid.json',import.meta.url),'utf8'));
  const scope={projectId:'p',buildId:'b',binarySha256:'sha'};
  core.identity.requestId='00000000-0000-0000-0000-000000000001';
  const request={projectId:'p',caseId:'Sod' as const,configText:'old',configRevision:core.identity.configRevision};
@@ -69,6 +69,36 @@ test('path checks travel with inspection identity and cannot validate a newer re
  assert.equal(gate.accept(ticket,response,request,scope)?.pathChecks?.[0].resolvedPath,'/managed/data');
  assert.throws(()=>gate.accept(ticket,response,{...request,configRevision:'new'},scope),/identity/);
  gate.invalidate();assert.equal(gate.accept(ticket,response,request,scope),null);
- const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'));
+ const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8'));
  schema.parameters[0].units={status:'guessed',unit:'cm'};assert.throws(()=>validateConfigurationSchema(schema),/unit metadata/);
+});
+
+test('v3 rejects legacy fallback and false nullable/provenance/condition claims',async()=>{
+ const fixture=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/empty.json',import.meta.url),'utf8'));
+ validateConfigurationInspection(fixture,fixture.identity);
+ for(const mutate of [
+  (v:typeof fixture)=>v.version='2',
+  (v:typeof fixture)=>v.parameters.find((p:{key:string})=>p.key==='cfl').parsedValue=0,
+  (v:typeof fixture)=>v.parameters.find((p:{key:string})=>p.key==='cfl').valueSource='documented-default',
+  (v:typeof fixture)=>v.parameters.find((p:{key:string})=>p.key==='cfl').resolvedValue=false,
+  (v:typeof fixture)=>v.parameters.find((p:{key:string})=>p.key==='gamma').requirement.required=false,
+  (v:typeof fixture)=>v.parameters.find((p:{key:string})=>p.key==='gamma').requirement.missingDependencies=[],
+  (v:typeof fixture)=>v.status='ok',
+  (v:typeof fixture)=>v.diagnostics[0].locations=[{source:'stdin',line:0,column:1,endColumn:2,rawValue:'x'}],
+ ]){
+  const bad=structuredClone(fixture);mutate(bad);assert.throws(()=>validateConfigurationInspection(bad,bad.identity));
+ }
+ const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8'));
+ schema.version='2';assert.throws(()=>validateConfigurationSchema(schema),/Incompatible.*Update Core and Studio/);
+ schema.version='3';schema.parameters[0].defaultValue='cartesian';assert.throws(()=>validateConfigurationSchema(schema),/schema/);
+});
+
+test('draft persistence preserves empty, invalid, retired and duplicate text without granting validity',async()=>{
+ const {exportDraft}=await import('../src/state/parState.ts');
+ for(const raw of ['', '# incomplete\r\n', 'gravity_G = 1\r\nbad line\r\ncfl = nope\r\ncfl = 2\r\n']){
+  const state=loadPar('draft.par',raw);assert.equal(exportDraft(state).text,raw);
+ }
+ const state=editPar(loadPar('draft.par','# original\n'),'cfl','nope');
+ assert.ok(parErrors(state).cfl);assert.match(exportDraft(state).text,/cfl = nope/);
+ assert.throws(()=>exportDraft(editPar(state,'cfl','1\ninjected=2')),/Value|Unsafe/);
 });

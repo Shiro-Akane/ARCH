@@ -280,3 +280,42 @@ diffusion/amr摘要需从partial inputs安全接线，不能恢复默认SimConfi
 case物理域与Setup后重新验证、受控只读构造、旧fallback/G_const清理及
 后续3C/全模型/Jeans/RZ/CPU-CUDA验证尚未完成。本提交是集成中的可审阅步骤，
 不建立完成tag、不push、不进入物理性能测试。
+
+### O7.0 Host / 参数工作台 v3 接入
+
+Host与React共享类型/运行时校验迁移为配置扩展3，旧1/2版本明确不兼容。
+直接消费Core同一目录下的实际v3 fixture，没有复制前端默认目录。
+校验nullable标量类型、missing/invalid/duplicate、来源证据、条件三态、
+位置、诊断与coverage；成功不得掩盖不完整或错误。exit7受限错误保留身份。
+未知旧derived metadata不能未经验证流入UI。
+
+Parameter Catalog缺失文本保持空白；允许默认单列展示，不成为Working Copy。
+Inspector分开parsed、resolved和Preview model-read。标准、辅助和当前case声明
+可在首次Preview之前编辑；未知坐标布局仍保留轴参数可达。外部加速度三个分量
+保持可填写，不再凭维度隐藏Core要求的显式零。gravity_G加入退役显式删除路径。
+Path preflight仅查Core标记的standard/auxiliary路径，用resolved值并保持真实cwd。
+
+显式草稿Save/Save As/Download不再被科学检查错误阻止；仍经无损序列化、
+路径所有权/覆盖确认/外部修改检查，保存不授予Preview或Run资格。
+空配置和非法原文可以重新打开；结构性注入仍被serializer拒绝。
+去除本地AMR阈值/轴拓扑/能量比较中的缺项默认补值。
+
+验证：npm test 180/180 PASS（Host是其中子集，不相加）、lint PASS、
+typecheck PASS、production build PASS、git diff --check PASS。
+首次回归4个失败：三个旧v2/G编辑期望已按v3迁移；一个大型schema测试脚本
+process.exit导致stdout未刷完，改为write完成后退出，未放宽生产校验。
+原有Vite大chunk提示仍存在，不因本阶段顺手调整打包。
+
+真实CPU binary经ConfigurationAdapter的独立集成测试PASS：
+valid/empty/duplicate+syntax/bounded-overflow四类；精确stdin/configRevision、
+binary身份、错误保留、原磁盘文件不变。binary SHA-256：
+870594c98e894823a07711e0a141123aec4a9d3a96a578cde02b7520a5c28ee3。
+测试使用隔离fixture Build Profile，仅用于验证真实命令传输，不声称正式工程
+Build provenance已验收。复现：在studio下运行node
+tests/configuration-core-v3.integration.ts ../build-cpu/bin/ARCH。
+没有执行Setup/Preview/timestep、CUDA或科学输出。
+
+仍在O7.0：partial-input的动态坐标/Diffusion/AMR摘要尚待Core接线，
+完整production UAT未执行；不可把本次render/协议测试写作真实桌面验收。
+受控只读运行构造、Setup后校验/来源、G_const清理、旧Core输入与全套检查迁移
+仍待完成。3C及后续模型/Jeans/RZ/CPU-CUDA与冻结benchmark目标保持不变。

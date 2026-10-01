@@ -2,7 +2,7 @@
 
 本目录集中管理 GUI 等本地工具调用 ARCH 的接口。当前提供 **1.0 版初始状态预览**，由现有 `ARCH` 可执行程序提供，不需要单独的服务进程。
 
-标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。当前集成 Core 的配置扩展为版本 3，活动目录 94 项；客户端须查询当前程序的实际键、必填条件、允许默认及约束。Host/Studio 配套迁移尚未完成，不能沿用 v2 缺项回填。v1.2.1 的 95 项目录属于历史基线。
+标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。当前集成 Core 的配置扩展为版本 3，活动目录 94 项；客户端须查询当前程序的实际键、必填条件、允许默认及约束。Host/Studio已迁移nullable传输与表单，动态摘要和完整验收仍在进行，不能沿用v2缺项回填。v1.2.1 的 95 项目录属于历史基线。
 
 后续完整性整改与客户端迁移见 [联合交付入口](../../docs/development/StudioConfigurationHandoff.zh-CN.md)，包括缺项诊断、版本 3、Linux／WSL 工作流、Jeans／RZ 接入和平台验证；入口附阅读顺序与分支使用方法。这些计划项尚未实现。[Core UI 交接](CORE_UI_HANDOFF.md) 和 [本地工作流交接](LOCAL_WORKFLOW_HANDOFF.md) 保留各历史提交的实现与测试记录。
 

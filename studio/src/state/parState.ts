@@ -10,7 +10,6 @@ function validExpression(value: string): boolean {
 export interface ParState { filename: string; document: ParDocument; changes: Record<string,string>; removedKeys?:string[] }
 export function loadPar(filename: string, raw: string): ParState {
   const document = parsePar(raw);
-  if (!document.entries.length) throw new Error('No ARCH key=value entries found.');
   return { filename, document, changes: Object.create(null) };
 }
 export function parErrors(state: ParState, schema?:readonly StandardParameter[]): Record<string,string> {
@@ -32,14 +31,14 @@ export function parErrors(state: ParState, schema?:readonly StandardParameter[])
   }
   for(const [key,value] of Object.entries(state.changes))if(/[\r\n#\0]/.test(value)||value!==value.trim())errors[key]='Value must not contain comments, newlines or surrounding whitespace.';
   const values = {...Object.fromEntries(effectiveEntries(state.document).filter(e=>!state.removedKeys?.includes(e.key)).map(e => [e.key,e.value])),...state.changes};
-  const refine = Number(values.refine_threshold ?? '0.8'), derefine = Number(values.derefine_threshold ?? '0.2');
-  if (derefine < 0 || derefine >= refine) errors.derefine_threshold = 'Requires 0 <= derefine_threshold < refine_threshold (including defaults 0.2 / 0.8).';
+  const refine = values.refine_threshold===undefined?undefined:Number(values.refine_threshold), derefine = values.derefine_threshold===undefined?undefined:Number(values.derefine_threshold);
+  if (derefine!==undefined && (derefine < 0 || refine!==undefined && derefine >= refine)) errors.derefine_threshold = 'Requires 0 <= derefine_threshold < refine_threshold.';
   if (values.regrid_interval !== undefined && Number(values.regrid_interval)<1) errors.regrid_interval='Must be positive.';
-  if (Number(values.nblockx2 ?? 1)<=0 && Number(values.nblockx3 ?? 1)>0) errors.nblockx3='nblockx3 must be <= 0 when nblockx2 <= 0.';
+  if (values.nblockx2!==undefined && values.nblockx3!==undefined && Number(values.nblockx2)<=0 && Number(values.nblockx3)>0) errors.nblockx3='nblockx3 must be <= 0 when nblockx2 <= 0.';
   if (values.restart?.toLowerCase()==='true' && !(values.restart_file ?? '').trim()) errors.restart_file='restart_file is required when restart=true.';
   for (const key of ['sml_rho','min_eint','nseTempThreshold']) if (values[key]!==undefined && !(Number(values[key])>0)) errors[key]='Must be positive.';
   if (values.nseDensThreshold!==undefined && Number(values.nseDensThreshold)<0) errors.nseDensThreshold='Must be nonnegative.';
-  if (Number(values.max_eint ?? '1e21') < Number(values.min_eint ?? '1e-10')) errors.max_eint='Must not be smaller than min_eint.';
+  if (values.max_eint!==undefined && values.min_eint!==undefined && Number(values.max_eint) < Number(values.min_eint)) errors.max_eint='Must not be smaller than min_eint.';
   return errors;
 }
 export function parStatus(state: ParState, schema?:readonly StandardParameter[]): 'saved'|'dirty'|'invalid' {
@@ -64,4 +63,12 @@ export function removeForbiddenParameter(state:ParState,key:string,authorizedKey
  if(!authorizedKeys.has(key))throw new Error('Matching Core diagnostic required for removal.');
  const changes=Object.assign(Object.create(null),state.changes);delete changes[key];
  return {...state,changes,removedKeys:[...new Set([...(state.removedKeys??[]),key])]};
+}
+
+/** Persist an explicit draft without granting scientific execution eligibility.
+ * The lossless serializer still rejects structurally unsafe edits.
+ */
+export function exportDraft(state:ParState):{filename:string;text:string}{
+ return {filename:state.filename.replace(/\.par$/i,'')+'_modified.par',
+         text:serializePar(state.document,state.changes,state.removedKeys)};
 }

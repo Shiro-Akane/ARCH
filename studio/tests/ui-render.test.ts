@@ -45,7 +45,7 @@ test('Local Host area is optional and disconnected without changing existing mod
 
 test('runtime schema sections cover all standard controls and keep separate EOS paths',async()=>{
  const Catalog=await component('components/ParameterPanel/StandardCatalog.tsx','StandardCatalog');
- const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'));
+ const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8'));
  const props={schema,values:{},inspection:undefined,pathChecks:undefined,errors:{},onEdit:()=>{},onSelect:()=>{}};
  const html=renderToStaticMarkup(createElement(Catalog,props));
  const rendered=[...html.matchAll(/data-standard-key="([^"]+)"/g)].map(m=>m[1]);

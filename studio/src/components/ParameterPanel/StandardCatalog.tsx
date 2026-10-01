@@ -21,7 +21,7 @@ export function StandardCatalog({schema,values,inspection,pathChecks,errors,onEd
   const diagnostics=inspection?.diagnostics.filter(d=>d.parameterKey===p.key)??[];
   const unit=parameterUnit(p,parsed,inspection?.coordinates),toggle=p.presentation?.toggle;
   const unavailable=forbidden.has(p.key);
-  const coefficientBlocked=!!p.presentation?.enabledBy&&!inspection?.diffusion?.channels.find(c=>c.coefficientKey===p.key)?.constantInputAllowed;
+  const coefficientBlocked=false; // Unknown applicability must not prevent filling required input.
   const labels=Object.fromEntries(Array.isArray(p.options?.choices)?p.options.choices.flatMap(c=>c&&typeof c==='object'&&typeof c.value==='string'&&typeof c.displayName==='string'?[[c.value,c.displayName]]:[]):[]);
   const choices=p.options?.choices;
   const choice=Array.isArray(choices)?choices.find(c=>c&&typeof c==='object'&&Array.isArray(c.acceptedNames)&&c.acceptedNames.some((n:unknown)=>typeof n==='string'&&(p.options?.caseSensitive===false?n.toLowerCase()===value.toLowerCase():n===value))):undefined;
@@ -34,20 +34,21 @@ export function StandardCatalog({schema,values,inspection,pathChecks,errors,onEd
     <ConfigControl optionLabels={labels} name={p.key} value={shown} authoritative meta={{group:'Runtime',type:p.type==='string'?'text':p.type,evidence:'ARCH --config-schema',options:catalogOptions(p)}} error={errors[sourceKey]??errors[p.key]} onChange={v=>onEdit(sourceKey,v)}/>
    </fieldset>
    {toggle&&value===''&&<small>Enter a positive value to enable; no value is invented.</small>}
+   {parsed?.applicability.state==='unknown-dependency'&&<small>Applicability unresolved: {parsed.applicability.missingDependencies.join(', ')}</small>}
    {unit&&<small className="parameter-unit">{unit}</small>}
    {p.presentation?.description&&<p className="parameter-description">{p.presentation.description}</p>}
-   <small>{explicit?'Explicit Working Copy':'Schema Default · not written'}</small>
-   {parsed?.applicable===false&&<small>Not applicable in current inspection. Existing text retained.</small>}
+   <small>{explicit?'Explicit Working Copy':'Missing from Working Copy · not written'}</small>
+   {parsed?.applicability.state==='not-applicable'&&<small>Not applicable in current inspection. Existing text retained.</small>}
    {errors[sourceKey]&&<small className="validation-error">{errors[sourceKey]}</small>}
    {diagnostics.map((d,i)=><small key={i} className={d.severity==='error'?'validation-error':''}>{d.code}: {d.message}</small>)}
    {unavailable&&explicit&&onRemove&&<button type="button" onClick={()=>onRemove(sourceKey)}>Remove forbidden parameter {sourceKey}</button>}
    {coefficientBlocked&&!unavailable&&<small>Constant coefficient editing requires matching Core permission; existing text retained.</small>}
    {unavailable&&<small>Core forbids this explicit parameter in the current configuration. Removal is one Undo-able edit; Save remains explicit.</small>}
    <details className="parameter-help"><summary>Details · {p.key}</summary>
-    <p>Type: {p.type} · Schema Default: {String(p.defaultValue)} · Source: {p.defaultSource}</p>
+    <p>Type: {p.type} · Schema Default: {p.allowedDefault?String(p.allowedDefault.value):'None permitted'} · Source: {p.allowedDefault?.source??'No default'}</p>
     <p>Working token: {explicit?value:'not present'}{aliases.length?' · Aliases: '+aliases.join(', '):''}</p>
-    {parsed&&<p>Inspection Parsed Value: {String(parsed.parsedValue)} · {parsed.valueSource} · before Setup</p>}
-    <p>{p.applicability}</p>
+    {parsed&&<p>Inspection Parsed Value: {parsed.parsedValue===null?'Not supplied / invalid':String(parsed.parsedValue)} · {parsed.valueSource} · before Setup</p>}
+    <p>{p.applicability.description}</p><p>Requirement: {parsed?.requirement.state??p.requirement.kind}</p>
     {!!p.options?.availability&&<p>{String(p.options.availability)}</p>}
     {!!p.options?.unavailableReason&&<p>{String(p.options.unavailableReason)} · {String(p.options.unavailableValues)}</p>}
    </details>
@@ -60,7 +61,7 @@ export function StandardCatalog({schema,values,inspection,pathChecks,errors,onEd
   const placed=(kind:'common'|'advanced'|'inactive')=>members.filter(r=>parameterPlacement(r,rows,inspection,layout,errors)===kind);
   if(group==='Grid')return <>
    <p>Dimension: {layout?.dimension??'Unavailable'} · {coordinates?'Core coordinate catalog':'Last valid layout; correct invalid input'} · 0 = off, ≥1 = on; x3 requires x2</p>
-   {[1,2,3].map((n,i)=>{const axis=axes?.[i],blocks=find(axis?.blocksKey??'nblockx'+n);return <section className="grid-axis-block" key={n} aria-label={'Grid x'+n+' axis'}><h4>x{n} · {axis?.displayName??'Coordinate unavailable'} · {axis?.active?'active':'off'}</h4>{blocks&&render(blocks)}{axis&&<div hidden={!axis.active}>{[axis.minKey,axis.maxKey,axis.lowerBoundaryKey,axis.upperBoundaryKey].map(k=>{const row=find(k);return row?render(row):null;})}</div>}</section>;})}
+   {[1,2,3].map((n,i)=>{const axis=axes?.[i],blocks=find(axis?.blocksKey??'nblockx'+n);return <section className="grid-axis-block" key={n} aria-label={'Grid x'+n+' axis'}><h4>x{n} · {axis?.displayName??'Coordinate unavailable'} · {axis?(axis.active?'active':'off'):'unknown'}</h4>{blocks&&render(blocks)}{<div hidden={axis?!axis.active:false}>{(axis?[axis.minKey,axis.maxKey,axis.lowerBoundaryKey,axis.upperBoundaryKey]:['x'+n+'_min','x'+n+'_max','x'+n+'l_boundary_type','x'+n+'r_boundary_type']).map(k=>{const row=find(k);return row?render(row):null;})}</div>}</section>;})}
    {members.filter(r=>!axisKeys.has(r.parameter.key)&&r.parameter.presentation?.subgroup!=='AMR').map(render)}
    <section className="grid-axis-block" aria-label="Adaptive Mesh Refinement (AMR)"><h4>Adaptive Mesh Refinement (AMR)</h4>{members.filter(r=>r.parameter.presentation?.subgroup==='AMR'&&r.parameter.key!=='regrid_interval').map(render)}
     <details><summary>AMR Advanced</summary>{members.filter(r=>r.parameter.presentation?.subgroup==='AMR'&&r.parameter.key==='regrid_interval').map(render)}</details>

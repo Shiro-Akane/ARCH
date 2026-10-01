@@ -17,7 +17,7 @@ export function runtimeOrder(a:CatalogRow,b:CatalogRow){
 export function forbiddenParameters(inspection:ConfigurationInspection|undefined):Set<string>{
  return new Set([...(inspection?.diffusion?.forbiddenExplicitKeys??[]),...(inspection?.diagnostics.filter(d=>d.severity==='error'&&d.code==='INAPPLICABLE_PARAMETER'&&d.parameterKey).map(d=>d.parameterKey!)??[])]);
 }
-export function parameterPlacement(row:CatalogRow,rows:CatalogRow[],inspection:ConfigurationInspection|undefined,coordinates:CoordinateSystem|undefined,errors:Record<string,string>):'common'|'advanced'|'inactive'{
+export function parameterPlacement(row:CatalogRow,rows:CatalogRow[],inspection:ConfigurationInspection|undefined,_coordinates:CoordinateSystem|undefined,errors:Record<string,string>):'common'|'advanced'|'inactive'{
  const p=row.parameter,key=p.key;
  if(errors[key]||errors[row.sourceKey]||inspection?.diagnostics.some(d=>d.parameterKey===key&&d.severity==='error'))return 'common';
  const value=(k:string)=>rows.find(r=>r.parameter.key===k)?.value.toLowerCase();
@@ -27,19 +27,19 @@ export function parameterPlacement(row:CatalogRow,rows:CatalogRow[],inspection:C
   if(mode==='none')return 'inactive';
   if(mode==='external'){
    const axis=['gravity_g_x','gravity_g_y','gravity_g_z'].indexOf(key);
-   if(axis>=0)return coordinates?.axes[axis]?.active?'common':'inactive';
-   if(['gravity_boundary','gravity_G','gravity_rtol','gravity_atol','gravity_max_cycles'].includes(key)||inspection?.parameters.find(x=>x.key===key)?.applicable===false)return 'inactive';
+   if(axis>=0)return 'common'; // Core requires all external acceleration components, including explicit zeros.
+   if(['gravity_boundary','gravity_G','gravity_rtol','gravity_atol','gravity_max_cycles'].includes(key)||inspection?.parameters.find(x=>x.key===key)?.applicability.state==='not-applicable')return 'inactive';
   }
   if(mode==='self'&&['gravity_g_x','gravity_g_y','gravity_g_z'].includes(key))return 'inactive';
   if(mode==='self'&&['gravity_rtol','gravity_atol','gravity_max_cycles'].includes(key))return 'advanced';
-  if(inspection?.parameters.find(x=>x.key===key)?.applicable===false)return 'inactive';
+  if(inspection?.parameters.find(x=>x.key===key)?.applicability.state==='not-applicable')return 'inactive';
  }
  if(p.group==='Diffusion'){
   if(key==='use_diffusion')return 'common';
   if(value('use_diffusion')==='false')return 'inactive';
   if(p.presentation?.enabledBy){
-   const channel=inspection?.diffusion?.channels.find(c=>c.coefficientKey===key);
-   if(!channel?.constantInputAllowed||value(p.presentation.enabledBy)!=='true')return 'inactive';
+   const state=inspection?.parameters.find(p=>p.key===key)?.applicability.state;
+   if(state==='not-applicable')return 'inactive';
   }
   if(['diff_cfl','diff_max_stages'].includes(key))return 'advanced';
  }

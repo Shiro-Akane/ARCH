@@ -4,9 +4,9 @@ import {resolve,dirname} from 'node:path';
 import type {ConfigurationInspection,ConfigurationSchema,PathCheck} from '../src/host/configurationContracts.ts';
 /** Metadata-only preflight. Never creates a directory or opens file contents. */
 export async function pathPreflight(schema:ConfigurationSchema,inspection:ConfigurationInspection,cwd:string):Promise<PathCheck[]> {
- return Promise.all(schema.parameters.filter(p=>p.path?.checkOwner==='local-host'&&p.path.relativeTo==='process-working-directory'&&['input-file','output-directory'].includes(String(p.path.role))).map(async p=>{
-  const role=p.path!.role as PathCheck['role'];const value=inspection.parameters.find(x=>x.key===p.key)?.parsedValue;
-  const base:PathCheck={key:p.key,role,cwd,resolvedPath:null,status:'unable-to-check',message:'No current parsed path.'};
+ return Promise.all([...schema.parameters,...schema.auxiliaryParameters].filter(p=>p.path?.checkOwner==='local-host'&&p.path.relativeTo==='process-working-directory'&&['input-file','output-directory'].includes(String(p.path.role))).map(async p=>{
+  const role=p.path!.role as PathCheck['role'];const value=inspection.parameters.find(x=>x.key===p.key)?.resolvedValue;
+  const base:PathCheck={key:p.key,role,cwd,resolvedPath:null,status:'unable-to-check',message:'No current resolved path; input remains missing or invalid.'};
   if(typeof value!=='string')return base;
   if(!value)return {...base,status:'not-set',message:'Path not set.'};
   if(value.includes('\0'))return {...base,status:'error',message:'Invalid path token.'};
