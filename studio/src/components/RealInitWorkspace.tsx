@@ -42,7 +42,8 @@ export function RealInitWorkspace({copy,active,parameter,onSample}:{copy:Working
  useEffect(()=>{alive.current=true;const api=provider.current;return()=>{alive.current=false;if(request.current)void api.cancel(request.current).catch(()=>{});};},[]);
  useEffect(()=>{if(!projectId)return;let disposed=false;let pending=false;const refresh=async()=>{if(pending)return;pending=true;try{const s=await provider.current.status(projectId);if(!disposed)setStatus(s);}catch(e){if(!disposed){setStatus(null);setMessage(e instanceof Error?e.message:'Preview unavailable');}}finally{pending=false;}};void refresh();const timer=setInterval(()=>void refresh(),1500);return()=>{disposed=true;clearInterval(timer);};},[projectId]);
  const currentStatus=status?.projectId===projectId?status:null;
- const buildId=currentStatus?.ready?currentStatus.build?.buildId:undefined;const binarySha256=currentStatus?.ready?currentStatus.build?.outputBinary.fingerprint.sha256:undefined;const setBuildScope=coreParameters.setBuildScope;
+ const selectedSha=host.snapshot?.session.executable?.sha256;
+ const buildId=currentStatus?.ready?currentStatus.build?.buildId:selectedSha?'selected-binary:'+selectedSha:undefined;const binarySha256=currentStatus?.ready?currentStatus.build?.outputBinary.fingerprint.sha256:selectedSha;const setBuildScope=coreParameters.setBuildScope;
  useEffect(()=>{setBuildScope(projectId&&buildId&&binarySha256?{projectId,buildId,binarySha256}:null);},[projectId,buildId,binarySha256,setBuildScope]);
  const result=saved?.result;const fields=result?.core.data?.fields??[];
  const fieldKey=fields.some(f=>f.key===field)?field:fields[0]?.key??'';

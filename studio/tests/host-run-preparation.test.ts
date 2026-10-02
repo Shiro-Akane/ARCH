@@ -110,7 +110,11 @@ test('project run preparation reads the current associated saved file without a 
   const project=await openProject({project:f.root,binary:'ARCH',config:'saved.par'});
   assert.equal(project.preview,undefined);assert.ok(project.runPreparation);
   assert.ok(project.configuration);
+  const discovered=await project.configuration.discovery();
+  assert.deepEqual(discovered.cases.map(c=>c.caseId),['Sod']);
+  assert.deepEqual(discovered.fieldModels,[]);assert.equal(discovered.amr,null);
   const schema=await project.configuration.schema();
+  assert.equal(discovered.binarySha256,schema.binarySha256);
   assert.match(schema.buildId,/^selected-binary:[a-f0-9]{64}$/);
   const bytes=await project.readConfig();
   const inspected=await project.configuration.inspect({projectId:bytes.projectId,caseId:'Sod',configText:bytes.text,configRevision:bytes.fingerprint.sha256});

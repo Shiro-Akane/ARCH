@@ -1372,3 +1372,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 无 Preview profile 的项目现在装配静态 ConfigurationAdapter，执行固定 config-schema/list-cases/inspect-config，基于选定 executable SHA 前后核验。selected-binary:SHA 是内容 scope，不是成功 Build/current 证明；现有 Preview readiness 路径不放宽。
 - 无 Preview 项目的真实子进程 fixture 验证 schema/inspection 与未知模型拒绝；与旧配置和 Run 回归14/14 PASS，lint/typecheck PASS。前端 ConfigurationBridge/buildScope 与 discovery 仍待迁移，因此尚不宣称 local CPU 参数面板端到端可用。
+
+### 2026-10-02 — Selected binary configuration scope and registry
+
+- 前端在没有 ready Preview build 时使用当前项目 executable SHA 的 selected-binary scope，读取静态 schema/inspection；真实 Preview 仍要求原 readiness。Host /api/cases 在无 WorkflowRunner 时读取真实注册表，fieldModels 为空且 AMR execution capability=null，不以注册冒充已接入执行。
+- 完整218/218 tests、lint、typecheck/production build PASS。真实 build-studio-cpu binary 返回94标准参数/14注册模型，未保存 SmoothAdvection 文本 inspection status=ok/no diagnostics；摘要见 StudioSelectedBinaryConfigurationSummary.json。未运行 Setup/Preview/simulation，未改变 build freshness。
+- Linux production UI UAT 和 selected CPU Preview/AMR profile 接入仍待完成；不能将静态接线通过当作整个工作流验收。

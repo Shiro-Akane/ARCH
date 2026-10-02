@@ -45,6 +45,15 @@ export class ConfigurationAdapter {
    });
   }finally{this.active=false;}
  }
+ async discovery(){
+  const before=await this.ready();
+  const cases=validateRegistry(await this.run(['--list-cases']));
+  const after=await this.ready();
+  if(before.buildId!==after.buildId||before.outputBinary.fingerprint.sha256!==after.outputBinary.fingerprint.sha256)throw new BuildError('Binary changed during registry request.',409);
+  // Registration is available independently. No Host field/AMR execution profile
+  // has been negotiated on this static-only path.
+  return {protocolVersion:PROTOCOL_VERSION,projectId:this.target.projectId,buildId:before.buildId,binarySha256:before.outputBinary.fingerprint.sha256,cases,fieldModels:[],amr:null};
+ }
  async schema(){
   const before=await this.ready();const cache=this.schemaCache;const core=cache?.buildId===before.buildId&&cache.sha===before.outputBinary.fingerprint.sha256?cache.core:await this.run(['--config-schema']);const after=await this.ready();
   if(before.buildId!==after.buildId||before.outputBinary.fingerprint.sha256!==after.outputBinary.fingerprint.sha256)throw new BuildError('Build changed during schema request.',409);

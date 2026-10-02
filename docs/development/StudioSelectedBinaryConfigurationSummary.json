@@ -1,0 +1,26 @@
+{
+  "scope": "selected CPU binary static configuration only; no Setup or Preview",
+  "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+  "identityScope": "selected-binary:ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+  "parameterCount": 94,
+  "cases": [
+    "BurnGradient",
+    "BurnOneZone",
+    "CellularDet",
+    "CooperativeHotspots",
+    "DiffusionMode",
+    "ExternalGravity",
+    "Gaussian",
+    "GravityBox",
+    "JeansWave",
+    "RT",
+    "SNIaCoupled",
+    "Sedov",
+    "SmoothAdvection",
+    "Sod"
+  ],
+  "inspectionStatus": "ok",
+  "diagnostics": [],
+  "configRevision": "29cacdebf3e9baf9767a905c4f2d377e8357b798d3f907ca54613685fda1fc6f",
+  "previewAvailable": false
+}
