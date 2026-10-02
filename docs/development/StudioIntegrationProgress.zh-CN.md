@@ -1419,3 +1419,8 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - CoreParameter context新增configurationScope；ConfigurationBridge从项目选定binary SHA生成静态scope，schema/inspection与参数catalog只匹配此scope。Preview metadata/marker/AMR仍匹配原buildScope，不将静态检查充作Preview provenance。
 - 项目装配的ConfigurationAdapter始终选择当前binary，Preview readiness变化不撤销静态配置能力；discovery读取与schema请求分开。完整219/219 tests、lint、typecheck/production build PASS。
 - 本地CPU Preview profile尚未启用；下一步验证manifest缺失/Build后的双scope状态切换和真实Preview。桌面UAT仍未完成。
+
+### 2026-10-02 — Local CPU Preview profiles
+
+- 本地CPU profile绑定现有Sod/CellularDet Preview，保持原manifest/input/binary核验及full freshness unknown；配置适配器独立。缺manifest时registry回退静态binary scope，不因此隐藏所有注册模型。
+- Configure/Preview/Run相关28/28 PASS，lint/typecheck PASS；真实Build与warm Preview仍待刷新profile身份后验证。本次不扩展模型支持，不修改科学Core。

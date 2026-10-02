@@ -40,7 +40,8 @@ export async function openProject(options:ProjectOptions) {
  let build:BuildRunner|undefined;
  if(options.buildProfile){if(!selectedProfile)throw new Error('Unknown Host build profile');build=new BuildRunner(root,result.session.projectId,selectedProfile!);result.host.capabilities.build=(await build.initialize()).configured;}
  const configure=options.configureProfile?new ConfigureRunner(options.configureProfile):undefined;
- const preview=build?.profile.id===SOD_PREVIEW_PROFILE.buildProfileId?new PreviewRunner(build,SOD_PREVIEW_PROFILE,{},PREVIEW_PROFILES):undefined;
+ const previewProfiles=local?PREVIEW_PROFILES.map(profile=>({...profile,buildProfileId:LOCAL_CPU_PROFILE_ID})):PREVIEW_PROFILES;
+ const preview=build&&(local||build.profile.id===SOD_PREVIEW_PROFILE.buildProfileId)?new PreviewRunner(build,previewProfiles[0],{},previewProfiles):undefined;
  const workflow=preview?new WorkflowRunner(preview):undefined;
  if(preview)preview.externalBusy=()=>(workflow?.isActive()??false)||(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);
  if(preview&&build){build.executionBlocked=()=>preview.isActive()||(workflow?.isActive()??false)||(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);result.host.capabilities.preview=(await preview.readiness()).ready;}

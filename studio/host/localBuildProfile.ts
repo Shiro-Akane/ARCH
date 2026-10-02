@@ -6,7 +6,7 @@ export function localCpuProfile(sourceRoot:string):{build:BuildProfile;configure
  const buildDirRelative='build-studio-cpu';
  return {
   build:{id:LOCAL_CPU_PROFILE_ID,displayName:'Local CPU Release',managedSourceRoot:sourceRoot,
-   buildDirRelative,target:'ARCH',outputBinaryRelative:buildDirRelative+'/bin/ARCH',
+   registeredCases:['Sod','CellularDet'],buildDirRelative,target:'ARCH',outputBinaryRelative:buildDirRelative+'/bin/ARCH',
    parallelism:4,compilerDependencyMode:'ninja',linkDependencyFile:'ARCH.link.d',dependenciesComplete:false,trackedInputs:['CMakeLists.txt','CMakePresets.json',buildDirRelative+'/CMakeCache.txt']},
   configure:{id:LOCAL_CPU_PROFILE_ID,sourceRoot,buildDirRelative,generator:'Ninja',
    definitions:{CMAKE_BUILD_TYPE:'Release',ARCH_ENABLE_CUDA:'OFF',ARCH_ENABLE_OPENMP:'ON',

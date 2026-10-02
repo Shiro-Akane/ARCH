@@ -64,7 +64,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
        if(reader.configure.snapshot().operationId!==configureOperation[1])throw new BuildError('Unknown Configure operation.',404);
        if(configureOperation[2]==='cancel'){reader.configure.cancelOperation(configureOperation[1]);send(200,configureSnapshot());}else send(200,reader.configure.events(configureOperation[1]));return;
       }
-      if(req.url==='/api/cases'){if(!reader.workflow&&!reader.configuration)throw new BuildError('Case discovery unavailable',404);send(200,await (reader.workflow?reader.workflow.discovery():reader.configuration!.discovery()));return;}
+      if(req.url==='/api/cases'){if(!reader.workflow&&!reader.configuration)throw new BuildError('Case discovery unavailable',404);send(200,await (reader.workflow&&(!reader.configuration||(await reader.preview?.readiness())?.ready)?reader.workflow.discovery():reader.configuration!.discovery()));return;}
       if(req.url==='/api/workflow/status'){if(!reader.workflow)throw new BuildError('Workflow unavailable',404);send(200,reader.workflow.snapshot());return;}
       if(workflowCancel){if(!reader.workflow)throw new BuildError('Workflow unavailable',404);send(200,await reader.workflow.cancel(workflowCancel[1]));return;}
       if(req.url==='/api/configuration/schema'){if(!reader.configuration)throw new BuildError('Configuration schema unavailable',404);send(200,await reader.configuration.schema());return;}

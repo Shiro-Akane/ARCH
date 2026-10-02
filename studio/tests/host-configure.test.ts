@@ -101,7 +101,9 @@ test('local CPU workflow owns a separate build tree and exposes Configure before
   await writeFile(root+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(Local NONE)\nfile(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/bin")\n');
   await writeFile(root+'/CMakePresets.json','{"version":1}');
   const reader=await openProject({project:root,buildProfile:LOCAL_CPU_PROFILE_ID});
-  assert.ok(reader.configure);assert.ok(reader.build);
+  assert.ok(reader.configure);assert.ok(reader.build);assert.ok(reader.preview);assert.ok(reader.configuration);
+  assert.equal((await reader.preview.readiness()).ready,false);
+  assert.equal(reader.preview.profile.buildProfileId,LOCAL_CPU_PROFILE_ID);
   assert.equal(reader.build.profile.buildDirRelative,'build-studio-cpu');
   assert.equal(reader.build.snapshot().configured,false);
   assert.equal(reader.configure.profile.definitions.ARCH_ENABLE_CUDA,'OFF');
