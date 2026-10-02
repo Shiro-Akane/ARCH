@@ -1487,3 +1487,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 同 production 资产的浏览器诊断显示 React 可渲染；因没有 Electron preload/bootstrap 默认显示 demo，不能将此作为 managed项目或原生desktop UAT。临时浏览器页已关闭。
 - 当前原生窗口保留供用户核对实际显示，已请求“正常显示/空白/未看到窗口”反馈。本地 desktop-current-diagnostic.json 记录本次 PID/start ticks/端口；不能把活跃进程状态当长期静态验收。
 - O7执行细则再次确认数值实现依赖3C主链路及现有模型预览；待图形观测判定期间只读核对，未提前实施 JENS/RZ 或开展 Windows 适配。
+
+### 2026-10-02 — User-confirmed missing desktop window and local X11 comparison
+
+- 用户确认默认启动没有看到窗口，故该路径桌面可见性验收失败，不能只解释为截图限制。Linux/WSLg仍建立了RDP窗口及Host readiness，但这些证据不足。
+- 按本轮记录的PID/start ticks终止默认launcher，旧Host414正常退出/clean shutdown。仅局部参数 --disable-gpu --ozone-platform=x11 对照启动，Host1310 readiness成功；没有修改源码或WSLg全局配置。
+- Computer Use仍返回无关像素，停止输入。已请求用户确认软件X11窗口是否出现；对照保持运行供核对。本地desktop-software-x11-summary.json登记精确进程身份与结果，不标桌面UAT通过。
