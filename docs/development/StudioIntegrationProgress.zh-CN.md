@@ -1293,3 +1293,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - freshness 比较链接输入内容、symlink 目标和依赖集合；库变化判 needs-build，证据缺失保持 unknown。未提升 dependenciesComplete。
 - 实际 build-studio-cpu 只读采集 75 个现存文件、119779535 bytes，包含 libm.so.6；另 98 个缺失项。原始身份留 .local/integration/link-inputs-20261002T041128Z.json。
 - 受影响 Build/link suites 12/12 PASS，typecheck/lint PASS。尚待真实 Host Build 持久化验证；完整工具链、Linux UI UAT、Run/Restart 与后续科学阶段未完成。
+
+### 2026-10-02 — Actual linker-aware Host Build
+
+- clean bb036640d10e5294a0e92b0cd7ca046e7161c940：真实 Host Build succeeded，buildId=a48d762c-e99c-4368-87e2-eb49ca76e313；Manifest 保存 75 个链接文件、98 个明确缺失项。guard 2.014s、peak owned RSS 145008 KiB、swap 0。
+- StudioLinkManifestBuildSummary.json 记录 source/binary/depfile 身份及本地证据索引。freshness 保持 unknown，未执行模拟，不等同 UI 或演化验收。
+- 回查联合计划 4.2：允许单独确认“按已编译版本运行”，但不能声称覆盖当前源码。因此后续继续 3C 的显式 binary/input 确认与独立终端 Run/Restart 生命周期；完整 current 证明仍作为构建出口保留，不将工具链审计扩张为其他工作绝对前置。
