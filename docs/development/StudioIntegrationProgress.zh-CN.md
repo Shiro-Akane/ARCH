@@ -1339,3 +1339,8 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - npm test 216/216 PASS（包含 Host，不能重复累计），lint PASS，production build/typecheck PASS；git diff --check PASS。日志与哈希见 StudioRunUiRegressionSummary.json；原始日志保留本机。
 - 尚缺 Linux 交互 UAT、重开后的运行恢复及真实 Restart 继续演化验收；当前工程检查不替代这些出口。先前 t=0 只覆盖初始化/输出/终端交接，不覆盖后续演化或性能。
 - 当前授权以 compute/optim 联合计划为准：O7.0 G 接线及明确 t=0 AMR 对照已获准且已实施；历史非物理 G 等效换算仍待维护者确认，冻结物理定义/阈值不变。后续只推进 Linux/WSL，不开展 Windows 适配。
+
+### 2026-10-02 — Restart input contract migration
+
+- 既有 SmoothAdvection source/resumed 样例在 config v3 下缺 hll_wave_speed/min_eint；执行前静态检查明确拒绝。核对发布基线 25adec4224497981a0c124a3485f786194975be4 的 StandardParameters/GlobalDefs，显式保留 roe/1e-10，未改物理终点或容差。
+- 两份样例当前 CPU binary inspect-config 均 exit 0/status ok，无 diagnostics。仅证明静态配置完整；尚未生成 source checkpoint 或进行真实续算，路径/布局/继续演化仍待验证。
