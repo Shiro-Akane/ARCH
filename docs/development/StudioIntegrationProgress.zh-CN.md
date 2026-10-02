@@ -1164,3 +1164,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 可选 ProjectReader Configure 接入 POST /api/configure 与 GET /api/configure/status；继承精确 origin/host/protocol，POST 仅允许 projectId/profileId，拒绝过期项目/未知 profile/命令参数。配置期间拒绝冲突项目操作，状态保存真实终态。
 - 真实 HTTP→CMake 成功与注入拒绝、旧 Build 安全回归合计 5/5 PASS；typecheck/lint PASS。未默认启用生产 profile，项目装配/UI/退出接线仍待完成；不宣称 3C 已完成。
+
+
+### 2026-10-02 — Configure operation-scoped controls
+
+- Configure 状态公开 operationId；events/cancel 仅作用于匹配任务，旧 ID 返回 404，取消仅 POST 且无请求体。日志复用 BuildLog 有界缓冲。
+- Configure 实际 CMake/取消/HTTP 回归 3/3 PASS，typecheck/lint PASS；新增日志可读、过期取消 ID、错误 HTTP 方法和请求体拒绝断言。尚待生产 profile/项目装配/UI，不宣称端到端完成。

@@ -70,6 +70,10 @@ test('HTTP Configure rejects browser authority and publishes actual completion',
   for(let i=0;i<200&&configure.isActive();i++)await new Promise(r=>setTimeout(r,10));
   assert.equal(configure.isActive(),false);
   const response=await fetch(url+'/api/configure/status',{headers});
-  assert.equal(response.status,200);assert.equal((await response.json()).latest.state,'succeeded');
+  assert.equal(response.status,200);const status=await response.json();assert.equal(status.latest.state,'succeeded');
+  assert.equal((await fetch(url+'/api/configure/'+status.operationId+'/events',{headers})).status,200);
+  assert.equal((await fetch(url+'/api/configure/00000000-0000-0000-0000-000000000000/cancel',{method:'POST',headers})).status,404);
+  assert.equal((await fetch(url+'/api/configure/'+status.operationId+'/cancel',{headers})).status,405);
+  assert.equal((await fetch(url+'/api/configure/'+status.operationId+'/cancel',{method:'POST',headers,body:'{}'})).status,400);
  }finally{configure.cancel();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true});}
 });

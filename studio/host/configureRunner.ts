@@ -28,7 +28,7 @@ async function directory(root:string,relative:string){
 export class ConfigureRunner {
  readonly profile:ConfigureProfile;private active=false;private log?:BuildLog;private child?:ChildProcess;private cancelled=false;private killTimer?:ReturnType<typeof setTimeout>;private latest?:ConfigureResult;
  constructor(profile:ConfigureProfile){this.profile=structuredClone(profile);}
- snapshot(){return {profileId:this.profile.id,active:this.active,processId:this.processId,latest:this.latest?structuredClone(this.latest):undefined};}
+ snapshot(){return {operationId:this.log?.buildId,profileId:this.profile.id,active:this.active,processId:this.processId,latest:this.latest?structuredClone(this.latest):undefined};}
  isActive(){return this.active;}
  get processId(){return this.child?.pid;}
  cancel(){
@@ -42,7 +42,8 @@ export class ConfigureRunner {
    },2000);
   }
  }
- events(){return this.log?.snapshot();}
+ events(operationId?:string){if(operationId!==undefined&&operationId!==this.log?.buildId)throw new Error('Unknown Configure operation.');return this.log?.snapshot();}
+ cancelOperation(operationId:string){if(operationId!==this.log?.buildId)throw new Error('Unknown Configure operation.');this.cancel();return this.snapshot();}
  async run(projectId:string,profileId:string):Promise<ConfigureResult>{
   if(this.active)throw new Error('Configure already active.');
   if(profileId!==this.profile.id)throw new Error('Unknown Host Configure profile.');

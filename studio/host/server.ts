@@ -29,9 +29,10 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
     const workflowStart=req.url==='/api/workflow';
     const workflowCancel=/^\/api\/workflow\/([a-f0-9-]{36})\/cancel$/.exec(req.url??'');
     const inspectConfig=req.url==='/api/configuration/inspect';
+    const configureOperation=/^\/api\/configure\/([a-f0-9-]{36})\/(events|cancel)$/.exec(req.url??'');
     const eventMatch=/^\/api\/build\/([a-f0-9-]{36})\/events$/.exec(req.url??'');
     const routes = ['/api/configure','/api/configure/status','/api/cases','/api/workflow','/api/workflow/status','/api/configuration/schema','/api/configuration/inspect','/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
-    if (!routes.includes(req.url ?? '')&&!eventMatch&&!previewCancel&&!workflowCancel) {send(404,{error:'Unknown endpoint'});return;}
+    if (!routes.includes(req.url ?? '')&&!eventMatch&&!configureOperation&&!previewCancel&&!workflowCancel) {send(404,{error:'Unknown endpoint'});return;}
     if (req.method === 'OPTIONS') {res.setHeader('Access-Control-Allow-Methods','GET, POST');res.setHeader('Access-Control-Allow-Headers','X-ARCH-Studio, X-ARCH-Protocol, Content-Type');send(200,{});return;}
     if (req.headers['x-arch-studio'] !== '1') {send(403,{error:'Studio request header required'});return;}
     if(req.headers['x-arch-protocol']!==PROTOCOL_VERSION){send(426,{error:{code:'protocol-error',message:'Local Host version is incompatible with this Studio build.'}});return;}
@@ -39,10 +40,15 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
     const buildRequest=req.url==='/api/build';
     const configureRequest=req.url==='/api/configure';
     const write=req.url==='/api/config/save'||req.url==='/api/config/save-as';
-    if (req.method !== (refresh||write||buildRequest||configureRequest||previewStart||inspectConfig||previewCancel||workflowStart||workflowCancel ? 'POST' : 'GET')) {send(405,{error:'Method not allowed'});return;}
+    if (req.method !== (refresh||write||buildRequest||configureRequest||configureOperation?.[2]==='cancel'||previewStart||inspectConfig||previewCancel||workflowStart||workflowCancel ? 'POST' : 'GET')) {send(405,{error:'Method not allowed'});return;}
     // All endpoints are argument-free. Reject command/path fields rather than ignoring them.
     if (!write && !buildRequest && !configureRequest && !previewStart && !inspectConfig && !workflowStart && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) {req.resume();send(400,{error:'Request bodies are forbidden'});return;}
     try {
+      if(configureOperation){
+       if(!reader.configure)throw new BuildError('Configure unavailable',404);
+       if(reader.configure.snapshot().operationId!==configureOperation[1])throw new BuildError('Unknown Configure operation.',404);
+       send(200,configureOperation[2]==='cancel'?reader.configure.cancelOperation(configureOperation[1]):reader.configure.events(configureOperation[1]));return;
+      }
       if(req.url==='/api/cases'){if(!reader.workflow)throw new BuildError('Case discovery unavailable',404);send(200,await reader.workflow.discovery());return;}
       if(req.url==='/api/workflow/status'){if(!reader.workflow)throw new BuildError('Workflow unavailable',404);send(200,reader.workflow.snapshot());return;}
       if(workflowCancel){if(!reader.workflow)throw new BuildError('Workflow unavailable',404);send(200,await reader.workflow.cancel(workflowCancel[1]));return;}
