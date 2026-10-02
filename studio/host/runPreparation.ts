@@ -1,3 +1,4 @@
+import {stat,realpath} from 'node:fs/promises';
 import {execFile} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {checkedPath,fingerprint} from './files.ts';
@@ -13,7 +14,7 @@ export type {PrepareRunRequest,ConfirmRunRequest,RunPreparation} from '../src/ho
 /** Static run preflight on the selected binary, independent of Preview capability/freshness. */
 export class RunPreparationRunner {
  private active=false;
- private prepared?:{plan:RunPreparation;schema:ConfigurationSchema};
+ private prepared?:{plan:RunPreparation;schema:ConfigurationSchema;checkpointIdentity?:string};
  readonly root:string;readonly projectId:string;readonly binaryRelativePath:string;
  private config:()=>Promise<ConfigReadResponse>;
  constructor(root:string,projectId:string,binaryRelativePath:string,config:()=>Promise<ConfigReadResponse>){
@@ -35,6 +36,12 @@ export class RunPreparationRunner {
     });
    child.stdin?.on('error',()=>undefined);child.stdin?.end(text);
   });
+ }
+ private async checkpointIdentity(filename:string){
+  const resolved=await realpath(filename),info=await stat(resolved,{bigint:true});
+  if(!info.isFile())throw new BuildError('Restart checkpoint is not a regular file.',409);
+  // Filesystem identity detects replacement/in-place writes; not HDF5 compatibility.
+  return JSON.stringify([resolved,...[info.dev,info.ino,info.size,info.mtimeNs,info.ctimeNs].map(String)]);
  }
  async prepare(request:PrepareRunRequest):Promise<RunPreparation>{
   const keys=['projectId','caseId','configRevision','mode'];
@@ -80,7 +87,8 @@ export class RunPreparationRunner {
     canConfirm:issues.length===0,simulationReadiness:'core-startup-pending',checkpointPath,
     pendingChecks:['Authoritative Core Setup and runtime configuration','EOS and network resource loading','Execution backend availability',
      ...(request.mode==='restart'?['Core checkpoint identity/layout and continuation compatibility']:[])]};
-   this.prepared={plan:structuredClone(plan),schema};
+   const checkpointIdentity=checkpointPath&&plan.canConfirm?await this.checkpointIdentity(checkpointPath):undefined;
+   this.prepared={plan:structuredClone(plan),schema,checkpointIdentity};
    return plan;
   }finally{this.active=false;}
  }
@@ -105,6 +113,12 @@ export class RunPreparationRunner {
     if(p?.applicability.state==='not-applicable')continue;
     if(check.status==='error'||check.status==='unable-to-check'||(check.status==='not-set'&&p?.requirement.required===true))
      throw new BuildError('Resource preflight changed: '+check.key+': '+check.message,409);
+   }
+   if(plan.checkpointPath){
+    let identity:string|undefined;
+    try{identity=await this.checkpointIdentity(plan.checkpointPath);}catch{/* reject disappeared/unreadable checkpoint */}
+    if(!prepared.checkpointIdentity||identity!==prepared.checkpointIdentity)
+     throw new BuildError('Restart checkpoint changed after preparation; prepare again.',409);
    }
    return {plan:structuredClone(plan),configText:saved.text};
   }finally{this.active=false;}

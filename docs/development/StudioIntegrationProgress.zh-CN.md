@@ -1474,3 +1474,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 既有 Manifest 已记录 compilerDrivers，但 refreshFreshness 未消费。现在比较 CMake 选定驱动 language/path/resolvedPath/SHA/size/id/version；已知变化给 needs-build，缺失/不可读取给 freshness-unknown，保持已知源码变更优先。
 - Build/CMake evidence 14/14 PASS，lint/typecheck PASS；fixture 覆盖同路径驱动内容变更与驱动缺失。未替换本机编译器、未重新编译 ARCH。
 - 这仅补齐 driver 变化检测；compiler subprogram/linker/implicit libraries 完整身份仍未证明，dependenciesComplete=false 保留。不据此宣布干净构建或完整 freshness 通过。
+
+### 2026-10-02 — Restart preparation/confirmation checkpoint identity
+
+- Host-held plan 记录 checkpoint realpath/dev/inode/size/mtimeNs/ctimeNs，确认时重读并拒绝替换/修改；不读取或解释 HDF5、不写 checkpoint。Core 仍执行权威身份/布局兼容检查。
+- Run preparation 12/12 PASS（包含同长度 checkpoint 替换后拒绝、重新准备成功），lint/typecheck PASS。
+- 这是 prepare→confirm 的文件系统身份边界，不是内容 SHA，也不消除 confirm→Core open 的竞态；不宣称完整 immutable checkpoint handoff。输出目录并发隔离仍待设计与验证，未在本轮修改。

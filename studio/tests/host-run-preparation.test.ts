@@ -217,3 +217,17 @@ test('checkpoint disappearance after preparation is rejected before confirmation
   await assert.rejects(f.runner.consume({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'}),/Resource preflight changed/);
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
+
+test('Restart confirmation rejects a checkpoint replaced after preparation',async()=>{
+ const f=await fixture();
+ try{
+  await writeFile(f.root+'/saved.par','restart-fixture');
+  await writeFile(f.root+'/restart.h5','checkpoint fixture one');
+  const request={projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'restart' as const};
+  const plan=await f.runner.prepare(request);assert.equal(plan.canConfirm,true);
+  await rm(f.root+'/restart.h5');await writeFile(f.root+'/restart.h5','checkpoint fixture two');
+  await assert.rejects(f.runner.consume({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'}),/checkpoint changed/);
+  const renewed=await f.runner.prepare(request);
+  assert.ok(await f.runner.consume({projectId:'project',planId:renewed.planId,confirmation:'run-saved-input-with-compiled-binary'}));
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
