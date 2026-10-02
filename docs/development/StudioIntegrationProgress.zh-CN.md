@@ -1344,3 +1344,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 既有 SmoothAdvection source/resumed 样例在 config v3 下缺 hll_wave_speed/min_eint；执行前静态检查明确拒绝。核对发布基线 25adec4224497981a0c124a3485f786194975be4 的 StandardParameters/GlobalDefs，显式保留 roe/1e-10，未改物理终点或容差。
 - 两份样例当前 CPU binary inspect-config 均 exit 0/status ok，无 diagnostics。仅证明静态配置完整；尚未生成 source checkpoint 或进行真实续算，路径/布局/继续演化仍待验证。
+
+### 2026-10-02 — Real CPU terminal Restart continuation
+
+- clean f840c4999a8ea55ccd2c64c6e1a2ab1ef0822194：沿既有 SmoothAdvection 输入与 tmax=0.1，源运行及 Restart 均通过真实 RunPreparation/RunController/xterm/worker，exit 0。只重定位本地输出及真实 checkpoint 路径，不改变物理控制。
+- checkpoint 第25步/time=0.025227987917244142 恢复至第100步/time=0.1。最终根属性、4块拓扑、密度/动量/能量/ENUC 及控制数组逐值相同；处理摘要见 StudioTerminalRestartSummary.json。原始 H5、输入与完整日志留本机持久目录。
+- 本次 terminal/worker/Core owned process 均无残留；不是视觉 UAT、CUDA、燃烧或动态 AMR 验收。短任务 guard 采样不足，不作性能声明。重开运行恢复、完整 Linux UI 工作流与后续科学计划仍未完成。
