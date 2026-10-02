@@ -1208,3 +1208,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 修复工作流 Build 按钮同时依赖连接时旧 capabilities.build 的问题；改用当前已校验 Build status.configured 和任务 busy 状态。
 - 真实微型 CMake 验证无 tree→Configure→Build configured，binary 仍 missing；未编译时不作成功声明。Configure+UI 回归 11/11 PASS，typecheck PASS。
+
+
+### 2026-10-02 — Actual local CPU Configure/Build
+
+- 在 clean 8987eb69 经 openProject/ConfigureRunner 实际配置 build-studio-cpu，随后经 BuildRunner 编译 ARCH 成功。旧 build-cpu/build-cuda 保留。
+- 内存 guard 41.162s、peak owned RSS 3723316 KiB、swap 0；未停止。manifest 输入稳定，binary 身份见 StudioLocalCpuBuildSummary.json；完整日志留 studio/.local/integration。
+- binaryState 诚实保持 freshness-unknown（完整编译依赖仍未覆盖），不冒充 current。此次未执行 simulation/Preview，也不代替 Linux UI UAT 或 Run/Restart 验收。

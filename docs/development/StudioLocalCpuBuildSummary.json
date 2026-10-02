@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "8987eb69d65b4d176b7aa8c342cd84a7d8b6952f",
+  "profileId": "studio-cpu-release",
+  "buildId": "da22c82f-e2a1-4ef6-a7f1-087384eb8896",
+  "state": "succeeded",
+  "binaryState": "freshness-unknown",
+  "binary": {
+    "relativePath": "build-studio-cpu/bin/ARCH",
+    "absolutePath": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu/bin/ARCH",
+    "fingerprint": {
+      "sha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+      "size": 7174432,
+      "modifiedTime": "2026-10-02T03:41:46.376Z"
+    }
+  },
+  "inputsStableDuringBuild": true,
+  "dependenciesComplete": false,
+  "guardSeconds": 41.162,
+  "peakOwnedRssKiB": 3723316,
+  "peakSwapKiB": 0,
+  "localEvidence": "studio/.local/integration/host-build-result.json",
+  "coverage": "CPU Configure/Build only; no scientific execution"
+}
