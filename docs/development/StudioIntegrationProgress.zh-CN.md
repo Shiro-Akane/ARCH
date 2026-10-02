@@ -1076,3 +1076,11 @@ domain, grid, terminal time and output schedule unchanged.
 Real ARCH --inspect-config returned status ok, declared completeness complete,
 no diagnostics for both. Setup/EOS/filesystem/CUDA not executed; simulation readiness
 not checked. This is input migration evidence, not a rerun of FLASH or evolution.
+
+### O7.0 first-run documentation duplicate-key correction
+
+Updated both root READMEs: GPU selection replaces the explicit CPU assignment
+in a copied Sod input, rather than appending a duplicate. Added existing stdin
+--inspect-config usage and declared-only/no-Setup/no-EOS/no-path/readiness limits.
+Command/fixture verified in preceding input migration; no redundant execution.
+Case authoring guide still needs declaration migration; public docs not complete.

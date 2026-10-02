@@ -79,9 +79,13 @@ export OMP_NUM_THREADS=4
 Here `Sod` selects the problem definition, and the `.par` file supplies its
 parameters. `OMP_NUM_THREADS` controls the number of CPU worker threads; it is
 not a numerical accuracy setting. For Option B, the
-executable is `./build-cuda/bin/ARCH`. To request GPU execution, add
-`compute_backend = cuda` to a copy of the example parameter file and run that
-copy.
+executable is `./build-cuda/bin/ARCH`. To request GPU execution, copy the example and replace its existing `compute_backend = cpu` assignment with `compute_backend = cuda`, then run that copy. Do not append a duplicate assignment.
+
+The example explicitly supplies required configuration controls. Inspect an edited input before running it:
+
+    ./build-cpu/bin/ARCH --inspect-config Sod --config-stdin < simulation/Sod/Sod_beginner.par
+
+This checks declared configuration only; it does not execute Setup, load EOS tables, check paths or establish simulation readiness. Missing or invalid values must be corrected, not silently filled from runtime defaults.
 
 A successful run prints the selected methods and a table of time steps, then
 writes files under `output/first_sod/`:

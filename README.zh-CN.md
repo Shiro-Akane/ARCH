@@ -78,7 +78,13 @@ export OMP_NUM_THREADS=4
 其中，`Sod` 选择算例定义，`.par` 文件提供参数，`OMP_NUM_THREADS` 控制 CPU
 工作线程数，不影响数值精度设置。如果使用方案 B，可执行文件
 路径应换成 `./build-cuda/bin/ARCH`。需要 GPU 执行时，先复制示例参数文件，
-在副本中加入 `compute_backend = cuda`，再运行该副本。
+将副本中已有的 `compute_backend = cpu` 替换为 `compute_backend = cuda`，再运行该副本。不要追加第二次赋值：重复键会明确报错。
+
+示例已显式提供必需配置。修改后可先进行只读检查：
+
+    ./build-cpu/bin/ARCH --inspect-config Sod --config-stdin < simulation/Sod/Sod_beginner.par
+
+该检查仅覆盖已声明配置，不执行 Setup、不加载 EOS、不检查路径存在性，也不代表已经具备模拟运行条件。缺失或非法值需要补齐或修正，不会从运行默认值静默回填。
 
 成功运行后，程序会打印所选方法和时间步表，并在 `output/first_sod/` 下写入：
 
