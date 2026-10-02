@@ -1355,3 +1355,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - Run worker 记录 Linux boot ID 与自身 /proc start ticks；Host 对 starting/running 读取核验仍是原 supervisor，拒绝旧记录、重启、PID 复用或已退出 supervisor。拒绝时明确 computation outcome unknown，不虚构 failed/succeeded，不按进程名终止或自动重试。完成记录仍可读取。
 - Run preparation/HTTP/worker/supervisor 18/18 PASS，typecheck/lint PASS。旧活跃记录缺身份时需人工核对日志；持久运行列表及 UI 重开恢复仍待接入。当前 selected local CPU 配置目录仍受旧 Preview profile 绑定，是后续需解开的独立缺口。
+
+### 2026-10-02 — Persistent Run history Host endpoint
+
+- 新增只读 GET /api/runs，按项目本地 job/state 恢复原 case、config SHA/path 和时间，不依赖旧 project session ID。活跃状态沿 supervisor 身份核验；损坏或未知状态保留记录及诊断，不伪造结束状态。
+- 读取 job 有16 KiB预算，历史超过1000条明确拒绝而非静默截断；继承现有 HTTP Origin/protocol 和无 body 约束。新 controller 读取完成记录及损坏状态测试通过，Run suite 11/11、lint/typecheck PASS。
+- UI 历史展示/重开后 Stop 尚待接入；此提交只完成 Host 恢复入口，不宣称端到端恢复验收。

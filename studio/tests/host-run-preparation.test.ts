@@ -158,6 +158,14 @@ test('confirmed handoff stores exact bytes, retains status and completes indepen
   for(let n=0;n<50&&!state.finishedAt;n++){await new Promise(r=>setTimeout(r,20));state=await run.status(launched.runId);}
   assert.equal(state.state,'succeeded');assert.equal(state.exitCode,0);
   await assert.rejects(run.stop(launched.runId),/already finished/);
+  const reopened=new RunController(f.runner);
+  const records=await reopened.history();
+  assert.equal(records.length,1);assert.equal(records[0].runId,launched.runId);
+  assert.equal(records[0].state?.state,'succeeded');assert.equal(records[0].configPath,'saved.par');
+  await writeFile(f.root+'/studio/.local/runs/'+launched.runId+'/state.json','corrupt');
+  const unavailable=await reopened.history();
+  assert.equal(unavailable[0].state,null);assert.ok(unavailable[0].diagnostic);
+  assert.equal(unavailable[0].configSha,plan.config.fingerprint.sha256);
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
 

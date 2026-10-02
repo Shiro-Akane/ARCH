@@ -38,7 +38,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
     const inspectConfig=req.url==='/api/configuration/inspect';
     const configureOperation=/^\/api\/configure\/([a-f0-9-]{36})\/(events|cancel)$/.exec(req.url??'');
     const eventMatch=/^\/api\/build\/([a-f0-9-]{36})\/events$/.exec(req.url??'');
-    const routes = ['/api/run','/api/run/prepare','/api/configure','/api/configure/status','/api/cases','/api/workflow','/api/workflow/status','/api/configuration/schema','/api/configuration/inspect','/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
+    const routes = ['/api/runs','/api/run','/api/run/prepare','/api/configure','/api/configure/status','/api/cases','/api/workflow','/api/workflow/status','/api/configuration/schema','/api/configuration/inspect','/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
     if (!routes.includes(req.url ?? '')&&!eventMatch&&!configureOperation&&!previewCancel&&!workflowCancel&&!runOperation) {send(404,{error:'Unknown endpoint'});return;}
     if (req.method === 'OPTIONS') {res.setHeader('Access-Control-Allow-Methods','GET, POST');res.setHeader('Access-Control-Allow-Headers','X-ARCH-Studio, X-ARCH-Protocol, Content-Type');send(200,{});return;}
     if (req.headers['x-arch-studio'] !== '1') {send(403,{error:'Studio request header required'});return;}
@@ -51,6 +51,10 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
     // All endpoints are argument-free. Reject command/path fields rather than ignoring them.
     if (!runStart && !prepareRun && !write && !buildRequest && !configureRequest && !previewStart && !inspectConfig && !workflowStart && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) {req.resume();send(400,{error:'Request bodies are forbidden'});return;}
     try {
+      if(req.url==='/api/runs'){
+       if(!reader.runs)throw new BuildError('Run controller unavailable.',404);
+       send(200,{protocolVersion:PROTOCOL_VERSION,projectId:reader.snapshot().session.projectId,records:await reader.runs.history()});return;
+      }
       if(runOperation){
        if(!reader.runs)throw new BuildError('Run controller unavailable.',404);
        send(200,{protocolVersion:PROTOCOL_VERSION,projectId:reader.snapshot().session.projectId,...await (runOperation[2]?reader.runs.stop(runOperation[1]):reader.runs.status(runOperation[1]))});return;

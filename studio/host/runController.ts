@@ -1,6 +1,6 @@
 import {verifyRunSupervisor} from './runSupervisor.ts';
 import {spawn} from 'node:child_process';
-import {access,mkdir,open,readFile,writeFile} from 'node:fs/promises';
+import {access,mkdir,open,opendir,readFile,writeFile} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
@@ -87,6 +87,33 @@ export class RunController {
    await verifyRunSupervisor(state);
    return state;
   }finally{await file.close();}
+ }
+ async history(){
+  const root=this.preparing.root,entries:string[]=[];
+  let directory:string;
+  try{directory=await checkedPath(root,'studio/.local/runs');}
+  catch(e){if((e as NodeJS.ErrnoException).code==='ENOENT')return [];throw e;}
+  const handle=await opendir(directory);
+  for await(const entry of handle){
+   if(!entry.isDirectory()||!/^[a-f0-9]{8}-[a-f0-9-]{27}$/.test(entry.name))continue;
+   entries.push(entry.name);
+   if(entries.length>1000)throw new BuildError('Run history exceeds 1000 records; history is unavailable rather than silently truncated.',413);
+  }
+  const records=[];
+  for(const runId of entries){
+   try{
+    const file=await open(await checkedPath(root,'studio/.local/runs/'+runId+'/job.json'),constants.O_RDONLY|constants.O_NOFOLLOW);
+    let job:RunJob;
+    try{if((await file.stat()).size>16384)throw new Error('Oversized run job');job=JSON.parse(await file.readFile('utf8')) as RunJob;}
+    finally{await file.close();}
+    if(job.runId!==runId||job.projectRoot!==root||job.version!=='1'||typeof job.caseId!=='string'||typeof job.configRelativePath!=='string'||typeof job.createdAt!=='string'||!job.configFingerprint||!/^[a-f0-9]{64}$/.test(job.configFingerprint.sha256))
+     throw new Error('Invalid saved run identity');
+    let state:RunState|null=null,diagnostic:string|null=null;
+    try{state=await this.status(runId);}catch(e){diagnostic=e instanceof Error?e.message:'Run status unavailable';}
+    records.push({runId,caseId:job.caseId,configPath:job.configRelativePath,configSha:job.configFingerprint.sha256,createdAt:job.createdAt,state,diagnostic});
+   }catch(e){records.push({runId,diagnostic:e instanceof Error?e.message:'Run record unreadable',state:null});}
+  }
+  return records.sort((a,b)=>(b.createdAt??'').localeCompare(a.createdAt??'')||a.runId.localeCompare(b.runId));
  }
  async stop(runId:string){
   const state=await this.status(runId);
