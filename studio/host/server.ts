@@ -15,6 +15,7 @@ import type { Server } from 'node:http';
 import type { ProjectSnapshot } from '../src/host/contracts.ts';
 export interface ProjectReader { configure?:ConfigureRunner; workflow?:WorkflowRunner; configuration?:ConfigurationAdapter; preview?:PreviewRunner; readSource?():Promise<unknown>; build?:BuildRunner; saveConfig?(request:SaveConfigRequest):Promise<ConfigWriteResponse>; saveConfigAs?(request:SaveConfigAsRequest):Promise<ConfigWriteResponse>; readConfig?(): Promise<ConfigReadResponse>; snapshot(): ProjectSnapshot; refresh(): Promise<ProjectSnapshot> }
 export function createHostServer(reader: ProjectReader, origin: string, desktop?:{token:string}): Server {
+  const configureSnapshot=()=>({protocolVersion:PROTOCOL_VERSION,projectId:reader.snapshot().session.projectId,...(reader.configure?.snapshot()??{active:false,available:false})});
   const allowed = new URL(origin);
   if (allowed.protocol !== 'http:' || allowed.hostname !== '127.0.0.1' || allowed.origin !== origin) throw new Error('UI origin must be an exact http://127.0.0.1:PORT origin');
   return createServer(async (req, res) => {
@@ -47,7 +48,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
       if(configureOperation){
        if(!reader.configure)throw new BuildError('Configure unavailable',404);
        if(reader.configure.snapshot().operationId!==configureOperation[1])throw new BuildError('Unknown Configure operation.',404);
-       send(200,configureOperation[2]==='cancel'?reader.configure.cancelOperation(configureOperation[1]):reader.configure.events(configureOperation[1]));return;
+       if(configureOperation[2]==='cancel'){reader.configure.cancelOperation(configureOperation[1]);send(200,configureSnapshot());}else send(200,reader.configure.events(configureOperation[1]));return;
       }
       if(req.url==='/api/cases'){if(!reader.workflow)throw new BuildError('Case discovery unavailable',404);send(200,await reader.workflow.discovery());return;}
       if(req.url==='/api/workflow/status'){if(!reader.workflow)throw new BuildError('Workflow unavailable',404);send(200,reader.workflow.snapshot());return;}
@@ -58,7 +59,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
       if(req.url==='/api/source'){if(!reader.readSource)throw new BuildError('Selected source unavailable',404);send(200,await reader.readSource());return;}
       if(eventMatch){if(!reader.build)throw new BuildError('Build unavailable',404);send(200,reader.build.events(eventMatch[1]));return;}
       if(req.url==='/api/build/profile'||req.url==='/api/build/status'){send(200,reader.build?.snapshot()??{protocolVersion:PROTOCOL_VERSION,projectId:reader.snapshot().session.projectId,configured:false,state:'not-configured',reason:'No Host-owned Build Profile selected.',mappingState:'unknown',binaryState:'freshness-unknown',freshnessReason:'No build provenance.',changedInputs:[]});return;}
-      if(req.url==='/api/configure/status'){send(200,reader.configure?.snapshot()??{active:false,available:false});return;}
+      if(req.url==='/api/configure/status'){send(200,configureSnapshot());return;}
       if(write||buildRequest||configureRequest||previewStart||inspectConfig||workflowStart){
        if(write&&(!reader.snapshot().host.capabilities.writeConfig||!reader.saveConfig||!reader.saveConfigAs)){send(403,{error:{code:'write-failed',message:'This host does not support configuration writes.'}});return;}
        if(req.headers['content-type']!=='application/json'){send(400,{error:{code:'protocol-error',message:'Expected application/json.'}});return;}
@@ -78,7 +79,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
         if(r.profileId!==reader.configure.profile.id)throw new BuildError('Unknown Configure profile.');
         // run claims its active slot synchronously; no browser argv or env is forwarded.
         void reader.configure.run(r.projectId,r.profileId);
-        send(202,reader.configure.snapshot());return;
+        send(202,configureSnapshot());return;
        }
        if(buildRequest){if(Object.keys(r).length!==2||typeof r.projectId!=='string'||typeof r.profileId!=='string')throw new BuildError('Build accepts only projectId and profileId.');if(!reader.build)throw new BuildError('Build not configured.');send(202,await reader.build.start(r.projectId,r.profileId));return;}
        const save=req.url==='/api/config/save';const keys=save?['projectId','relativePath','expectedFingerprint','text']:['projectId','destinationRelativePath','text'];

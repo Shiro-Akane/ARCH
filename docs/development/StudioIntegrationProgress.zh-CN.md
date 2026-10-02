@@ -1189,3 +1189,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 现有 CLI --build-profile studio-cpu-release 现在选择 Host-owned Configure+Build 配对；source root 来自已验证项目，独立 build-studio-cpu，不修改 build-cpu/CUDA 验证树。Release/CPU/OpenMP、输出位置和 CMake 参数由 Host 决定。
 - 首次无 build tree 时 Configure 对象仍可用；Build 诚实保持未配置，dependenciesComplete=false。默认暂用 4 jobs，后续资源策略/完整依赖证据仍需接入。
 - Configure/profile/project/HTTP suite 5/5 PASS，typecheck/lint PASS。未执行正式 ARCH Configure/Build，Preview 关联、UI 和真实端到端验证仍待完成。
+
+
+### 2026-10-02 — Configure client response identity
+
+- Configure status/start/cancel 响应补齐协议与当前项目身份；前端运行时校验拒绝旧项目、旧协议、无任务 ID 的 active、错误 operation/result 配对和非零 exit 的虚假成功。
+- 新客户端负向测试及真实 Host Configure 回归 6/6 PASS，typecheck PASS。UI polling/button 仍待接入，不以 adapter 通过代替用户操作验收。
