@@ -1,0 +1,189 @@
+{
+  "independent_verification_pilot": {
+    "baseline": {
+      "commit": "d96e929903da4e327ac79f53dde60018bdf8593c",
+      "snapshot": {
+        "src/numerics/elliptic/CompositePoisson.h": "2e1e6759e7ecb3768e5fc805f50ca9afb1277b3a065587303c0fa61bf9abec33",
+        "src/numerics/elliptic/CompositePoisson.cpp": "52fc26e18bae24a8b9e15c087296ce26d8797ffbdbe24754b12051c7b6406159",
+        "src/core/CompensatedSum.h": "cee83b23fbcaaca2ad65bbc679a3e047db48acef4f582db4c23a7daa1d50bc92"
+      }
+    },
+    "objective": "Independently assess cancellation safety of the frozen shared Neumann/Robin elimination/evaluation and supply a valid minimal counterexample or supported pass",
+    "pilot_status": "EXECUTED_INCOMPLETE",
+    "reason": "New boundary affine evaluation has an independently testable extreme-value invariant and can overlap compile recovery; no additional full test matrix.",
+    "worker_delivery_verdict": "FAIL",
+    "target_algorithm_acceptance": "FROZEN_FORMULA_FAIL_MANAGER_CONFIRMED; corrected production Host/packed Host/CUDA paths PASS existing mathematical and full runtime acceptance",
+    "findings": {
+      "worker_new_confirmed_ids": [],
+      "worker_duplicate_ids": [],
+      "worker_unconfirmed_ids": [],
+      "worker_false_positive_ids": [],
+      "manager_new_confirmed_ids": [
+        "BC-FP-001"
+      ],
+      "notes": "No reviewable final worker response; duplicate/false-positive rates cannot be assessed."
+    },
+    "time_seconds": {
+      "manager_dispatch_measured": null,
+      "manager_review_measured": null,
+      "worker_elapsed_measured": 14.76,
+      "overlap_with_independent_work_measured": 0.0,
+      "main_task_blocking_wait_measured": null,
+      "added_repair_measured": null,
+      "manager_solo_verification_estimate": null,
+      "overlap_scope": "Only the recorded CUDA selection interval was measurable; total unrecorded overlap is unknown."
+    },
+    "cost": {
+      "worker_tokens_and_usd_source": "run.json; no extra requests",
+      "leader_tokens_or_cost": null,
+      "reported_worker_tokens": {
+        "input_tokens": 1960,
+        "cached_input_tokens": 128,
+        "output_tokens": 3072,
+        "noncached_input_tokens": 1832
+      },
+      "estimated_worker_usd": {
+        "currency": "USD",
+        "off_peak": 0.00211838,
+        "peak": 0.00423677,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "actual_billed_usd": null,
+      "provider_http_attempts": 1,
+      "manager_cost": null
+    },
+    "speedup_proven": false,
+    "limitations": [
+      "Single bounded mathematical verification, not full target or milestone acceptance.",
+      "Output allowance was exhausted without a final result.",
+      "One trial; elapsed API time is not a scientific acceptance or general speedup measure.",
+      "Manager review and blocking-wait durations were not separately measured."
+    ],
+    "next_action": "No pilot retry. Conditional independent verification remains distinct from manager scientific acceptance.",
+    "recommendation": "Adjust: retain conditional bounded independent checks; use a smaller single question or a reasoning-aware output budget when another valuable check arises. This trial supplies no evidence of overall speedup.",
+    "rework": {
+      "worker_retries": 0,
+      "worker_repairs": 0,
+      "manager_algorithm_repairs": 1,
+      "manager_repair_status": "accepted",
+      "causation": "Required correction of a real O8 defect; not a response to a worker finding or stylistic review."
+    }
+  },
+  "production_workers": [
+    {
+      "role": "test organization",
+      "provider": "DeepSeek",
+      "model": "Flash",
+      "effort": "high",
+      "transport": "CLI",
+      "attempts": 1,
+      "formal_repairs": 0,
+      "manager_verdict": "PASS",
+      "elapsed_worker_seconds": 147.73,
+      "reported_tokens": {
+        "input_tokens": 1010484,
+        "cached_input_tokens": 978432,
+        "noncached_input_tokens": 32052,
+        "output_tokens": 32965
+      },
+      "estimated_usd": {
+        "off_peak": 0.0275221,
+        "peak": 0.05504419
+      },
+      "actual_billed_usd": null,
+      "manager_cost": null,
+      "measured_overlap_seconds": null,
+      "blocking_wait_seconds": null,
+      "manager_changes": [],
+      "initial_delivery_defect": null
+    },
+    {
+      "role": "legacy dispatch",
+      "provider": "DeepSeek",
+      "model": "Flash",
+      "effort": "high",
+      "transport": "CLI",
+      "attempts": 1,
+      "formal_repairs": 0,
+      "manager_verdict": "PASS",
+      "elapsed_worker_seconds": 142.09,
+      "reported_tokens": {
+        "input_tokens": 603444,
+        "cached_input_tokens": 580224,
+        "noncached_input_tokens": 23220,
+        "output_tokens": 30952
+      },
+      "estimated_usd": {
+        "off_peak": 0.02379487,
+        "peak": 0.04758974
+      },
+      "actual_billed_usd": null,
+      "manager_cost": null,
+      "measured_overlap_seconds": null,
+      "blocking_wait_seconds": null,
+      "manager_changes": [],
+      "initial_delivery_defect": null
+    },
+    {
+      "role": "exact region transfer",
+      "provider": "DeepSeek",
+      "model": "Flash",
+      "effort": "high",
+      "transport": "CLI",
+      "attempts": 2,
+      "formal_repairs": 1,
+      "manager_verdict": "PASS",
+      "elapsed_worker_seconds": 336.47,
+      "reported_tokens": {
+        "input_tokens": 2466788,
+        "cached_input_tokens": 2409728,
+        "noncached_input_tokens": 57060,
+        "output_tokens": 63201
+      },
+      "estimated_usd": {
+        "off_peak": 0.05370879,
+        "peak": 0.10741757
+      },
+      "actual_billed_usd": null,
+      "manager_cost": null,
+      "measured_overlap_seconds": null,
+      "blocking_wait_seconds": null,
+      "manager_changes": [],
+      "initial_delivery_defect": "Repeated 3D origin offset and incorrect xsize units; detected before integration, repaired once"
+    },
+    {
+      "role": "Host surface evaluation",
+      "provider": "DeepSeek",
+      "model": "Flash",
+      "effort": "high",
+      "transport": "CLI",
+      "attempts": 1,
+      "formal_repairs": 0,
+      "manager_verdict": "PASS",
+      "elapsed_worker_seconds": 116.9,
+      "reported_tokens": {
+        "input_tokens": 722116,
+        "cached_input_tokens": 696704,
+        "noncached_input_tokens": 25412,
+        "output_tokens": 22046
+      },
+      "estimated_usd": {
+        "off_peak": 0.01912951,
+        "peak": 0.03825902
+      },
+      "actual_billed_usd": null,
+      "manager_cost": null,
+      "measured_overlap_seconds": null,
+      "blocking_wait_seconds": null,
+      "manager_changes": [
+        "Added parallel failure-before-scatter/parity test and clarified join comment"
+      ],
+      "initial_delivery_defect": null
+    }
+  ],
+  "fixture_correction": "A new region sentinel fixture initially initialized padding as valid logical cells; manager corrected its logical footprint. Production code and padding/sentinel/error gates unchanged.",
+  "extra_rework_duration_measured": null,
+  "workflow_recommendation": "Retain bounded implementation workers with independent scope and runtime review. Adjust the conditional text-verification question/output budget; do not add routine reviewers or infer universal speedup from this trial.",
+  "statistics_collection": "Passive local records, no extra API requests; token-based prices are estimates, API billing is authoritative"
+}

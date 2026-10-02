@@ -465,6 +465,58 @@ namespace DiffFlux
         D_spec = coefficients.D_spec;
     }
 
+/**
+ * Observe the final oriented diffusion flux on physical outer faces.
+ * Heat follows the shared DiffFlux convention: F_E minus the momentum flux
+ * projected on the average face velocity. Only owned planes are written.
+ */
+inline void capture_diffusion_surface_flux(
+    const FluidState& state, const Grid& grid, int dir,
+    const std::vector<FluidVector>& flux_buffer,
+    const std::vector<double>& spec_flux_buffer)
+{
+    const auto storage = state.boundary_flux_capture;
+    if (!storage) return;
+    const arch::boundary::BoundaryFluxCaptureView view = storage->view();
+    const int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
+    const int species = state.GetNumSpecies();
+    const int total_size = grid.GetTotalSize();
+    const int lower[3]{grid.Is(), grid.Js(), grid.Ks()};
+    const int upper[3]{grid.Ie(), grid.Je(), grid.Ke()};
+    const int tangent_a = (dir + 1) % 3, tangent_b = (dir + 2) % 3;
+    for (int side = 0; side < 2; ++side) {
+        if (!view.stage[2 * dir + side]) continue;
+        int face[3]{lower[0], lower[1], lower[2]};
+        int cell[3]{lower[0], lower[1], lower[2]};
+        face[dir] = side == 0 ? lower[dir] : upper[dir];
+        cell[dir] = side == 0 ? lower[dir] : upper[dir] - 1;
+        for (int ib = lower[tangent_b]; ib < upper[tangent_b]; ++ib) {
+            cell[tangent_b] = face[tangent_b] = ib;
+            for (int ia = lower[tangent_a]; ia < upper[tangent_a]; ++ia) {
+                cell[tangent_a] = face[tangent_a] = ia;
+                const int index = grid.GetIndex(cell[0], cell[1], cell[2])
+                    + (side == 1 ? stride : 0);
+                const FluidVector& lef = state.get(index - stride);
+                const FluidVector& rig = state.get(index);
+                const double velocity[3]{
+                    .5 * (lef.mom_u / lef.rho + rig.mom_u / rig.rho),
+                    .5 * (lef.mom_v / lef.rho + rig.mom_v / rig.rho),
+                    .5 * (lef.mom_w / lef.rho + rig.mom_w / rig.rho)};
+                const FluidVector& flux = flux_buffer[index];
+                const double heat = flux.eng - flux.mom_u * velocity[0]
+                    - flux.mom_v * velocity[1] - flux.mom_w * velocity[2];
+                arch::boundary::CaptureBoundaryFlux(view, dir,
+                    face[0], face[1], face[2],
+                    lower[0], upper[0], lower[1], upper[1], lower[2], upper[2],
+                    flux,
+                    species > 0 ? spec_flux_buffer.data() + index : nullptr,
+                    species, total_size, heat);
+            }
+        }
+    }
+}
+
+
     // 2. Flux Computation
 
     /**
@@ -474,7 +526,7 @@ namespace DiffFlux
     static void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& grid, const SimConfig& config,
                                std::vector<FluidVector>& flux_out,
                                std::vector<double>& spec_flux_out,
-                               int dir)
+                               int dir, bool capture_budget = true)
     {
         arch::state::HostFailure failure;
         int n_species = state.GetNumSpecies();
@@ -539,6 +591,14 @@ namespace DiffFlux
                                 throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
                             }
                             if (!status.active) continue;
+                            if (state.diffusion_boundary) {
+                                const auto* controls = state.diffusion_boundary->view().at(dir, i, j, k,
+                                    grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(), n_species);
+                                const int coordinate[3]{i,j,k}, lower[3]{grid.Is(),grid.Js(),grid.Ks()};
+                                arch::boundary::ApplyDiffusionBoundaryFlux(controls,
+                                    coordinate[dir] == lower[dir] ? -1. : 1., U_L, U_R, F_diff,
+                                    n_species ? spec_flux_out.data() + idx_R : nullptr, n_species, grid.GetTotalSize());
+                            }
                             flux_out[idx_R] = F_diff;
                         }
                     }
@@ -548,6 +608,7 @@ namespace DiffFlux
         }
 
         failure.rethrow();
+        if (capture_budget) capture_diffusion_surface_flux(state, grid, dir, flux_out, spec_flux_out);
     }
 
     // 3. Geometric Source Terms

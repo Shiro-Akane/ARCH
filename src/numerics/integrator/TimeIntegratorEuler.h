@@ -89,12 +89,7 @@ struct SolverEuler
                 if (output != arch::state::StateSlot::Next)
                     throw std::logic_error(
                         "Euler ghost exchange requires Next output");
-#pragma omp parallel for schedule(dynamic)
-                for (size_t i = 0; i < active_blocks.size(); ++i) {
-                    amr::Block& block =
-                        amr_ctrl.pool->GetBlock(active_blocks[i]);
-                    boundary_condition.apply(block.state_next, block.grid);
-                }
+                TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition, &amr::Block::state_next);
                 amr_ctrl.ghost_exchange.ExecuteExchange(
                     amr_ctrl.pool, amr_ctrl.tree, dim,
                     &amr::Block::state_next, binding.handles);

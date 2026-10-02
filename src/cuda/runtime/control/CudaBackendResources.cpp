@@ -63,37 +63,46 @@ DeviceLayoutGeneration issue_device_layout_generation()
     return {value};
 }
 
-// A rectangle is contiguous within each row and uses the padded stride_y
-// pitch, which may exceed total_x.  Copying with total_x as the pitch would
-// silently place later rows in the wrong cells. Interior slabs and each
-// disjoint ghost band cover precisely the original cells, with no overlap
-// at corners or coarse-fine boundaries.
+// Region transfer geometry is a disjoint cuboid decomposition of the whole
+// padded block. The Interior cuboid is exactly [is,ie)x[js,je)x[ks,ke); its
+// Ghost complement is emitted as six pairwise-disjoint boxes:
+//   lower/upper z over the full x/y extent,
+//   lower/upper y over the ACTIVE z slab and the full x extent,
+//   lower/upper x over the ACTIVE y/z slab.
+// Every cell of the block belongs to exactly one emitted box, so a region
+// transfer touches each owned cell once and never writes a cell owned by the
+// other region: Ghost never writes active interior cells, and Interior never
+// writes ghost cells. Boxes with an empty extent (zero ghost margin,
+// degenerate interior extent, or an inactive ny/nz dimension whose slabs
+// collapse) are skipped instead of copied as empty rectangles.
 template <class Function>
-void for_each_region_rectangle(
+void for_each_region_cuboid(
     const DeviceGridView& grid, state::StateRegion region,
     Function&& function)
 {
     if (region != state::StateRegion::Interior
         && region != state::StateRegion::Ghost)
         throw std::invalid_argument("invalid state region");
-    const auto emit = [&](int i, int j, int k, int width, int height) {
-        if (width > 0 && height > 0)
-            function(grid.index(i, j, k), width, height);
-    };
-    for (int k = 0; k < grid.total_z; ++k) {
-        const bool active_plane = k >= grid.ks && k < grid.ke;
-        if (region == state::StateRegion::Interior) {
-            if (active_plane)
-                emit(grid.is, grid.js, k, grid.ie - grid.is, grid.je - grid.js);
-        } else if (!active_plane) {
-            emit(0, 0, k, grid.total_x, grid.total_y);
-        } else {
-            emit(0, 0, k, grid.total_x, grid.js);
-            emit(0, grid.je, k, grid.total_x, grid.total_y - grid.je);
-            emit(0, grid.js, k, grid.is, grid.je - grid.js);
-            emit(grid.ie, grid.js, k, grid.total_x - grid.ie, grid.je - grid.js);
-        }
+    // Emitted in cell space (origin plus counts); the copy path converts the
+    // x extent to bytes and the y/z extents to rows/planes.
+    const auto emit =
+        [&](int i, int j, int k, int cells_x, int cells_y, int cells_z) {
+            if (cells_x > 0 && cells_y > 0 && cells_z > 0)
+                function(i, j, k, cells_x, cells_y, cells_z);
+        };
+    const int active_x = grid.ie - grid.is;
+    const int active_y = grid.je - grid.js;
+    const int active_z = grid.ke - grid.ks;
+    if (region == state::StateRegion::Interior) {
+        emit(grid.is, grid.js, grid.ks, active_x, active_y, active_z);
+        return;
     }
+    emit(0, 0, 0, grid.total_x, grid.total_y, grid.ks);
+    emit(0, 0, grid.ke, grid.total_x, grid.total_y, grid.total_z - grid.ke);
+    emit(0, 0, grid.ks, grid.total_x, grid.js, active_z);
+    emit(0, grid.je, grid.ks, grid.total_x, grid.total_y - grid.je, active_z);
+    emit(0, grid.js, grid.ks, grid.is, active_y, active_z);
+    emit(grid.ie, grid.js, grid.ks, grid.total_x - grid.ie, active_y, active_z);
 }
 
 struct BurnWorkspaceBindingVisitor {
@@ -273,8 +282,10 @@ void DeviceStateStorage::allocate(int total, int count)
 
 DeviceStateView DeviceStateStorage::view() const noexcept
 {
-    return {rho.get(), mom_u.get(), mom_v.get(), mom_w.get(), eng.get(),
-            enuc_rate.get(), species.get(), total_size, species_count};
+    DeviceStateView result{rho.get(), mom_u.get(), mom_v.get(), mom_w.get(),
+        eng.get(), enuc_rate.get(), species.get(), total_size, species_count};
+    result.capture = capture;
+    return result;
 }
 
 void DeviceAmrFluxSurfaceStorage::allocate(int cells, int species)
@@ -429,6 +440,13 @@ DeviceStateView CudaBlockRuntime::require_access(
     return slots[slot_index(access.slot)];
 }
 
+// Copies exactly one region of the block between host staging and the device
+// buffers. Every field plane and every species plane is transferred box by
+// box over the disjoint cuboids emitted above, so the two regions partition
+// the padding-free block cells with no double copy. Copies are enqueued on
+// the caller's stream and only recorded here; the caller's completion fence
+// (stream synchronize through checked_quiesce or the owning guard) must
+// retire them before staged host memory is reused or released.
 std::uint64_t CudaBlockRuntime::copy_host_device_region(
     DeviceStateView device, const backend::HostStateTransferView& host,
     state::StateRegion region, cudaMemcpyKind direction,
@@ -445,49 +463,100 @@ std::uint64_t CudaBlockRuntime::copy_host_device_region(
     const std::array<double*, 6> host_fields{
         host.rho, host.mom_u, host.mom_v, host.mom_w,
         host.eng, host.enuc_rate};
+    // Padded layout of every field/species plane, derived from the block
+    // strides: nx = stride_y cells per row, ny = stride_z / stride_y rows per
+    // plane, nz = total_size / stride_z planes per field. stride_y may exceed
+    // total_x, so host and device rows both use the stride_y pitch. The plane
+    // pitch is stride_z, which a 3D copy derives from pitch * ysize, so ysize
+    // carries the full row count of a plane rather than the copied height.
     const std::size_t pitch =
         static_cast<std::size_t>(grid.stride_y) * sizeof(double);
-    for_each_region_rectangle(grid, region, [&](int offset, int width, int height) {
-        const std::size_t bytes =
-            static_cast<std::size_t>(width) * sizeof(double);
-        const auto enqueue = [&](void* destination, const void* source) {
-            if (height == 1) {
-                check_cuda(cudaMemcpyAsync(
-                    destination, source, bytes, direction, stream),
-                    "enqueue state transfer");
-            } else {
-                check_cuda(cudaMemcpy2DAsync(
-                    destination, pitch, source, pitch, bytes,
-                    static_cast<std::size_t>(height), direction, stream),
-                    "enqueue state rectangle transfer");
+    // Layout documentation only: cudaPitchedPtr.xsize is the full logical row
+    // width in bytes (== pitch here), never the cell count nx.
+    [[maybe_unused]] const int nx = grid.stride_y;
+    const int ny = grid.stride_z / grid.stride_y;
+    // Derived for layout documentation; no copy parameter consumes the count.
+    [[maybe_unused]] const int nz = grid.total_size / grid.stride_z;
+    for_each_region_cuboid(
+        grid, region,
+        [&](int i, int j, int k, int cells_x, int cells_y, int cells_z) {
+            const std::size_t bytes =
+                static_cast<std::size_t>(cells_x) * sizeof(double);
+            // Padded linear offset of the box origin. The depth-1 1D/2D copies
+            // add it to the base pointer exactly once; the depth>1 path instead
+            // keeps the untouched base pointer and reports the same origin
+            // through srcPos/dstPos (x in bytes, y and z in rows/planes), so no
+            // box origin is ever applied twice.
+            const std::size_t offset =
+                static_cast<std::size_t>(grid.index(i, j, k));
+            const auto enqueue = [&](void* destination_base,
+                                     const void* source_base) {
+                if (cells_z > 1) {
+                    // Full field/species-plane base pointers with only the box
+                    // origin as srcPos/dstPos; the runtime derives the plane
+                    // pitch as pitch * ysize == stride_z * sizeof(double).
+                    cudaMemcpy3DParms parameters{};
+                    parameters.srcPtr = make_cudaPitchedPtr(
+                        const_cast<void*>(source_base), pitch, pitch, ny);
+                    parameters.dstPtr = make_cudaPitchedPtr(
+                        destination_base, pitch, pitch, ny);
+                    parameters.extent = make_cudaExtent(
+                        bytes, static_cast<std::size_t>(cells_y),
+                        static_cast<std::size_t>(cells_z));
+                    const cudaPos origin = make_cudaPos(
+                        static_cast<std::size_t>(i) * sizeof(double),
+                        static_cast<std::size_t>(j),
+                        static_cast<std::size_t>(k));
+                    parameters.srcPos = origin;
+                    parameters.dstPos = origin;
+                    parameters.kind = direction;
+                    check_cuda(cudaMemcpy3DAsync(&parameters, stream),
+                        "enqueue state cuboid transfer");
+                } else if (cells_y > 1) {
+                    check_cuda(cudaMemcpy2DAsync(
+                        static_cast<double*>(destination_base) + offset,
+                        pitch,
+                        static_cast<const double*>(source_base) + offset,
+                        pitch, bytes,
+                        static_cast<std::size_t>(cells_y), direction, stream),
+                        "enqueue state rectangle transfer");
+                } else {
+                    check_cuda(cudaMemcpyAsync(
+                        static_cast<double*>(destination_base) + offset,
+                        static_cast<const double*>(source_base) + offset,
+                        bytes, direction, stream),
+                        "enqueue state transfer");
+                }
+                copied += bytes * static_cast<std::size_t>(cells_y)
+                    * static_cast<std::size_t>(cells_z);
+            };
+            for (std::size_t field = 0;
+                 field < device_fields.size(); ++field) {
+                // Base pointers only; the box origin is applied by `enqueue`.
+                void* destination_base = direction == cudaMemcpyHostToDevice
+                    ? static_cast<void*>(device_fields[field])
+                    : static_cast<void*>(host_fields[field]);
+                const void* source_base = direction == cudaMemcpyHostToDevice
+                    ? static_cast<const void*>(host_fields[field])
+                    : static_cast<const void*>(device_fields[field]);
+                enqueue(destination_base, source_base);
             }
-            copied += bytes * static_cast<std::size_t>(height);
-        };
-        for (std::size_t field = 0; field < device_fields.size(); ++field) {
-            void* destination = direction == cudaMemcpyHostToDevice
-                ? static_cast<void*>(device_fields[field] + offset)
-                : static_cast<void*>(host_fields[field] + offset);
-            const void* source = direction == cudaMemcpyHostToDevice
-                ? static_cast<const void*>(host_fields[field] + offset)
-                : static_cast<const void*>(device_fields[field] + offset);
-            enqueue(destination, source);
-        }
-        for (int species = 0; species < device.n_species; ++species) {
-            double* device_pointer = device.mass_fractions
-                + static_cast<std::size_t>(species) * device.total_size
-                + offset;
-            double* host_pointer = host.species
-                + static_cast<std::size_t>(species) * host.species_stride
-                + offset;
-            void* destination = direction == cudaMemcpyHostToDevice
-                ? static_cast<void*>(device_pointer)
-                : static_cast<void*>(host_pointer);
-            const void* source = direction == cudaMemcpyHostToDevice
-                ? static_cast<const void*>(host_pointer)
-                : static_cast<const void*>(device_pointer);
-            enqueue(destination, source);
-        }
-    });
+            for (int species = 0; species < device.n_species; ++species) {
+                // Species-plane bases (device plane size, host stride) with the
+                // same untouched-base rule as the conserved fields.
+                double* device_base = device.mass_fractions
+                    + static_cast<std::size_t>(species) * device.total_size;
+                double* host_base = host.species
+                    + static_cast<std::size_t>(species) * host.species_stride;
+                void* destination_base = direction == cudaMemcpyHostToDevice
+                    ? static_cast<void*>(device_base)
+                    : static_cast<void*>(host_base);
+                const void* source_base = direction == cudaMemcpyHostToDevice
+                    ? static_cast<const void*>(host_base)
+                    : static_cast<const void*>(device_base);
+                enqueue(destination_base, source_base);
+            }
+        });
     return copied;
 }
 
@@ -879,6 +948,15 @@ const CudaBlockRuntime& CudaBackend::Impl::require_block(
     if (found == active_resources.end())
         throw std::logic_error("active CUDA arena resource is missing");
     return *found->second;
+}
+
+CudaBlockRuntime* CudaBackend::Impl::find_block(amr::BlockHandle handle) noexcept
+{
+    for (auto& entry : active_resources) {
+        if (entry.second && entry.second->handle == handle)
+            return entry.second.get();
+    }
+    return nullptr;
 }
 
 CudaBlockRuntime& CudaBackend::Impl::first_block() noexcept

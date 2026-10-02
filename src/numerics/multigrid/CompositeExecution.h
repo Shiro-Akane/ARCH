@@ -42,15 +42,45 @@ struct RowsWork {
         out[i]=alpha*sum.value()+(beta?beta*out[i]:0.);
     }
 };
-struct FaceView { SparseView stencil; const int* anchor; const double* boundary; };
-struct GradientWork {
+struct FaceView {
+    SparseView stencil; const int* anchor; const double* boundary;
+    // Explicit anchor weight of an eliminated Dirichlet/Neumann/Robin row;
+    // absent (null) for legacy periodic and interior faces.
+    const double* anchor_weight=nullptr;
+    // Existing Neumann/Robin side policies select direct boundary-data
+    // evaluation. Absent for a hierarchy containing only legacy side kinds.
+    const unsigned char* flux_boundary=nullptr;
+};
+/** Shared face-derivative work, instantiated once per level outside the face
+ *  loop. Both specializations call the SAME composite_face_gradient kernel
+ *  with the SAME field/coefficient arguments; only the eliminated-row anchor
+ *  weight and the flux-boundary selector differ.
+ *  FluxBoundary=true keeps the mixed Neumann/Robin evaluation exactly as
+ *  before: the per-face anchor weight and flux flag are read from FaceView.
+ *  FluxBoundary=false is the legacy periodic/Dirichlet specialization: it
+ *  passes compile-time constant zero anchor weight and flux_boundary=false, so
+ *  the compiler removes those branches and restores the ORIGINAL subtraction/
+ *  multiply/CompensatedSum sequence, including its zero terms. */
+template<bool FluxBoundary> struct GradientWorkImpl {
     int size; FaceView faces; const double* x; const double* boundary; double* out;
     ARCH_INLINE void operator()(int f) const {
         const int start=faces.stencil.offsets[f];
-        out[f]=elliptic::composite_face_gradient(x,faces.anchor[f],faces.stencil.columns+start,
-            faces.stencil.values+start,faces.stencil.offsets[f+1]-start,faces.boundary[f],boundary?boundary[f]:0.);
+        if constexpr(FluxBoundary) {
+            out[f]=elliptic::composite_face_gradient(x,faces.anchor[f],faces.stencil.columns+start,
+                faces.stencil.values+start,faces.stencil.offsets[f+1]-start,faces.boundary[f],
+                boundary?boundary[f]:0.,faces.anchor_weight?faces.anchor_weight[f]:0.,
+                faces.flux_boundary && faces.flux_boundary[f]);
+        } else {
+            out[f]=elliptic::composite_face_gradient(x,faces.anchor[f],faces.stencil.columns+start,
+                faces.stencil.values+start,faces.stencil.offsets[f+1]-start,faces.boundary[f],
+                boundary?boundary[f]:0.,0.,false);
+        }
     }
 };
+/** Retained mixed-flux name/aggregate for the existing boundary tests. */
+using GradientWork=GradientWorkImpl<true>;
+/** Legacy branch-free face work for a level without any flux-boundary data. */
+using LegacyGradientWork=GradientWorkImpl<false>;
 struct JacobiWork {
     int size; double* u; const double* rhs; const double* applied; const double* diagonal;
     // Damped Jacobi: u <- u + omega*D^-1*(b-Au), omega=0.6.
@@ -61,7 +91,9 @@ struct ProjectWork {
     // Periodic gauge: x_i <- x_i - <x>_volume.
     ARCH_INLINE void operator()(int i) const {x[i]-=(*scale)*(*sum);}
 };
-using CompositeWork=std::variant<LinearWork,RowsWork,GradientWork,JacobiWork,ProjectWork>;
+// Legacy face work is appended last so every existing alternative keeps its
+// index for the current Host/CUDA visitors.
+using CompositeWork=std::variant<LinearWork,RowsWork,GradientWork,JacobiWork,ProjectWork,LegacyGradientWork>;
 enum class ReductionKind { Maximum, Product };
 struct Reduction {
     const double* x; const double* y; const double* weights; int size;

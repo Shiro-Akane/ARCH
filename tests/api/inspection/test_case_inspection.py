@@ -14,6 +14,8 @@ BASE = 'geometry=cartesian\nnblockx1=1\nnblockx2=0\nnblockx3=0\nnetwork_name=non
 EOS = f'eos_type=helmholtz\neos_table_path={ROOT}/EOS_toolkit/tables/helmholtz/helm_table.dat\nnetwork_name=aprox19\nxhe4=.4\nxc12=.6\nuse_burn=true\n'
 CASES = {
     'Sod': ('simulation/Sod/Sod.cpp', ''),
+    'UserBoundary': ('simulation/UserBoundary/case.cpp', 'eos_type=ideal\ngravity_type=self\ngravity_boundary=user\nx1l_boundary_type=user\nx1r_boundary_type=user\n'),
+    'UserGravity': ('simulation/UserGravity/case.cpp', 'eos_type=ideal\ngravity_type=self\ngravity_boundary=user\nx1l_boundary_type=user\nx1r_boundary_type=user\n'),
     'CellularDet': ('simulation/Cellular/Cellular.cpp', EOS+'nblockx2=1\n'),
     'Gaussian': ('simulation/GaussianPulse/Gaussian.cpp', ''),
     'Sedov': ('simulation/Sedov/Sedov.cpp', ''),

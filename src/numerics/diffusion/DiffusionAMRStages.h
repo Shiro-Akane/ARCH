@@ -283,7 +283,8 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
                                          const Grid& grid, const SimConfig& config,
                                          double dt, double flux_weight,
                                          std::vector<FluidVector>& dU,
-                                         std::vector<double>& d_species)
+                                         std::vector<double>& d_species,
+                                         bool capture_budget = true)
 {
     const int n_species = state.GetNumSpecies();
     const int total_size = grid.GetTotalSize();
@@ -295,7 +296,7 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
     for (int dir = 0; dir < grid.dim; ++dir) {
         std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector{});
         std::fill(species_flux_buffer.begin(), species_flux_buffer.end(), 0.0);
-        DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir);
+        DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir, capture_budget);
         TimeIntegration::accumulate_divergence(dU, d_species, flux_buffer, species_flux_buffer,
                                                grid, dt, dir, n_species);
         amr::RegisterCoarseFineFluxes(amr_ctrl, block_id, grid, dir, flux_buffer,
@@ -391,11 +392,7 @@ inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (binding.handles.size() != active_blocks.size())
         throw std::logic_error("RKL exchange handle count mismatch");
-#pragma omp parallel for schedule(dynamic, 1)
-    for (size_t index = 0; index < active_blocks.size(); ++index) {
-        amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks[index]);
-        boundary_condition.apply(block.*state_ptr, block.grid);
-    }
+    TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition, state_ptr);
     amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
                                             amr_ctrl.tree->GetRootGridDim(),
                                             state_ptr, binding.handles);
@@ -764,7 +761,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         detail::evaluate_diffusion_increment(
                             amr_ctrl, block_id, state_n, eos, block.grid,
                             config, dt, coefficients.gamma, d_initial,
-                            d_species_initial);
+                            d_species_initial, /*capture_budget=*/false);
                     } else {
                         d_initial.assign(block.grid.GetTotalSize(),
                                          FluidVector{});

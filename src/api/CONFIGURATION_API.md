@@ -9,6 +9,12 @@
 
 配置扩展版本 `2`，外层 `schemaVersion="1.0"`。沿用 ARCH 的进程 + stdin/JSON 通道。无需运行 simulation、加载 EOS 表或启动 CUDA，也不写 `.par`、输出目录或数据文件。
 
+边界选项由既有 `options/applicability` 字段发布：物理面可选 `user/neumann`，
+势边界可选 `dirichlet/neumann/user`。两类回调使用同目录的
+`physical_boundary.cpp`、`gravity_boundary.cpp`，说明其 Host 执行和边界传输成本。
+客户端应读取目录中的选项；配置 inspection 不执行回调，也不证明该算例已编译或可运行。
+本次扩展保留 95 键与现有响应结构；配置完整性版本升级按其单独契约推进。
+
 ## 两个入口
 
 ```sh

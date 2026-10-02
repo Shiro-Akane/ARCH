@@ -63,6 +63,7 @@ std::vector<std::vector<double>> composite_coarse_inverse(const CompositePoisson
 /** Dispatch the shared fixed-capacity DenseLU at the actual coarse size. */
 std::vector<std::vector<double>> composite_coarse_inverse(const CompositePoisson& op) {
     switch(op.size()) {
+    case 1:return composite_coarse_inverse<1>(op);
     case 2:return composite_coarse_inverse<2>(op);
     case 4:return composite_coarse_inverse<4>(op);
     case 8:return composite_coarse_inverse<8>(op);
@@ -77,7 +78,25 @@ std::vector<std::vector<double>> composite_coarse_inverse(const CompositePoisson
 CompositeMultigrid::CompositeMultigrid(elliptic::CartesianMesh base,std::vector<CompositeCell> cells,
     elliptic::BoundaryKind kind,std::shared_ptr<CompositeExecution> execution)
     :execution_(execution?std::move(execution):make_host_composite_execution()) {
-    levels_.emplace_back(CompositePoisson(base,std::move(cells),kind));
+    build_levels(base,std::move(cells),nullptr,kind);
+    setup();
+}
+/** Build the hierarchy from an explicit per-side Dirichlet/Neumann/Robin policy.
+ *  Coarse levels keep the same side conditions and the correct nullspace. */
+CompositeMultigrid::CompositeMultigrid(elliptic::CartesianMesh base,std::vector<CompositeCell> cells,
+    elliptic::CompositeBoundary boundary,std::shared_ptr<CompositeExecution> execution)
+    :execution_(execution?std::move(execution):make_host_composite_execution()) {
+    build_levels(base,std::move(cells),&boundary,elliptic::BoundaryKind::User);
+    setup();
+}
+/** Coarsen the active leaf hierarchy while preserving the sum of child volumes. */
+void CompositeMultigrid::build_levels(elliptic::CartesianMesh base,std::vector<CompositeCell> cells,
+    const elliptic::CompositeBoundary* boundary,elliptic::BoundaryKind kind) {
+    const auto make_level=[&](const elliptic::CartesianMesh& mesh,std::vector<CompositeCell> leaves) {
+        return boundary ? CompositePoisson(mesh,std::move(leaves),*boundary)
+                        : CompositePoisson(mesh,std::move(leaves),kind);
+    };
+    levels_.emplace_back(make_level(base,std::move(cells)));
     for (;;) {
         const auto& fine=levels_.back().op;
         const int maximum=fine.max_level();
@@ -109,7 +128,7 @@ CompositeMultigrid::CompositeMultigrid(elliptic::CartesianMesh base,std::vector<
             parents.push_back(entry->second);
         }
         levels_.back().parent=std::move(parents);
-        levels_.emplace_back(CompositePoisson(coarse_base,std::move(coarse),kind));
+        levels_.emplace_back(make_level(coarse_base,std::move(coarse)));
         const auto& child=levels_[levels_.size()-2]; const auto& parent=levels_.back();
         std::vector<double> volume(parent.op.size());
         for(int cell=0;cell<child.op.size();++cell) volume[child.parent[cell]]+=child.op.volumes()[cell];
@@ -117,7 +136,6 @@ CompositeMultigrid::CompositeMultigrid(elliptic::CartesianMesh base,std::vector<
             if (std::abs(volume[cell]-parent.op.volumes()[cell])>32.*std::numeric_limits<double>::epsilon()*parent.op.volumes()[cell])
                 throw std::logic_error("Composite restriction does not preserve cell volume");
     }
-    setup();
 }
 /** Allocate resident level arrays and upload one shared face/row/transfer algebra. */
 void CompositeMultigrid::setup() {
@@ -128,16 +146,32 @@ void CompositeMultigrid::setup() {
         l.face_values=e.array<double>(a.faces().size());l.diagonal=e.upload(a.diagonal());
         auto weights=a.volumes(); math::CompensatedSum volume;for(double v:weights)volume.add(v);
         for(double& v:weights)v/=volume.value();l.weights=e.upload(weights);
-        SparseStorage faces,rows;std::vector<int> anchors;std::vector<double> boundary;
+        SparseStorage faces,rows;std::vector<int> anchors;
+        std::vector<double> boundary,anchor_weights;
+        std::vector<unsigned char> flux_boundaries;
+        bool has_flux_boundary=false;
         std::vector<std::vector<int>> adjacency(n);std::vector<std::vector<double>> signs(n);
         for(int f=0;f<static_cast<int>(a.faces().size());++f) {
             const auto& face=a.faces()[f];faces.row(face.samples,face.coefficients);
             anchors.push_back(face.left>=0?face.left:face.right);boundary.push_back(face.boundary_coefficient);
+            anchor_weights.push_back(face.anchor_coefficient);
+            const bool flux_boundary=a.has_flux_boundary(face);
+            flux_boundaries.push_back(flux_boundary);
+            has_flux_boundary|=flux_boundary;
             if(face.left>=0){adjacency[face.left].push_back(f);signs[face.left].push_back(-face.area/a.volumes()[face.left]);}
             if(face.right>=0){adjacency[face.right].push_back(f);signs[face.right].push_back(face.area/a.volumes()[face.right]);}
         }
         for(int c=0;c<n;++c)rows.row(adjacency[c],signs[c]);
         l.faces=SparseArray(e,faces);l.rows=SparseArray(e,rows);l.anchors=e.upload(anchors);l.boundary=e.upload(boundary);
+        // Dirichlet/periodic-only hierarchies need no additional metadata.
+        // A hierarchy with flux sides uploads one anchor weight and one byte
+        // per face per topology; without a flux policy every anchor
+        // coefficient is zero by construction, so the legacy specialization
+        // and the null pointer agree.
+        if(has_flux_boundary) {
+            l.anchor_weights=e.upload(anchor_weights);
+            l.flux_boundaries=e.upload(flux_boundaries);
+        }
     }
     for(std::size_t level=0;level+1<levels_.size();++level) {
         auto& f=levels_[level];const auto& c=levels_[level+1];
@@ -184,8 +218,14 @@ void CompositeMultigrid::project(Vector& x,int level) {
 }
 /** Apply the same face derivative coefficients on host or device. */
 void CompositeMultigrid::gradient(const Vector& x,Vector& out,const Vector& boundary) {
-    const auto& l=levels_.front();execution_->run(GradientWork{out.size,
-        {l.faces.view(),l.anchors.data,l.boundary.data},x.data,boundary.data,out.data});
+    const auto& l=levels_.front();
+    const FaceView faces{l.faces.view(),l.anchors.data,l.boundary.data,l.anchor_weights.data,l.flux_boundaries.data};
+    // Select the face work ONCE per level, outside the face loop: a level with
+    // no flux-boundary datum takes the branch-free legacy specialization.
+    if(l.flux_boundaries.data)
+        execution_->run(GradientWork{out.size,faces,x.data,boundary.data,out.data});
+    else
+        execution_->run(LegacyGradientWork{out.size,faces,x.data,boundary.data,out.data});
 }
 /** Subtract the inhomogeneous face contribution from the source. */
 void CompositeMultigrid::boundary_rhs(Vector& rhs,const Vector& values) {
@@ -196,7 +236,12 @@ void CompositeMultigrid::boundary_rhs(Vector& rhs,const Vector& values) {
 /** Apply the conservative face divergence operator on a resident vector. */
 void CompositeMultigrid::apply(int level,const Vector& x,Vector& out) {
     auto& l=levels_[level];auto& e=*execution_;
-    e.run(GradientWork{l.face_values.size,{l.faces.view(),l.anchors.data,l.boundary.data},x.data,nullptr,l.face_values.data});
+    const FaceView faces{l.faces.view(),l.anchors.data,l.boundary.data,l.anchor_weights.data,l.flux_boundaries.data};
+    // Same once-per-level selection as the public gradient path.
+    if(l.flux_boundaries.data)
+        e.run(GradientWork{l.face_values.size,faces,x.data,nullptr,l.face_values.data});
+    else
+        e.run(LegacyGradientWork{l.face_values.size,faces,x.data,nullptr,l.face_values.data});
     e.run(RowsWork{out.size,l.rows.view(),l.face_values.data,out.data});
 }
 /** Run three damped Jacobi sweeps on one hierarchy level. */
@@ -238,8 +283,12 @@ SolveReport CompositeMultigrid::solve(const Vector& rhs,SolveControl control) {
     auto& e=*execution_;SolveReport report;
     report.rhs_rms=norm(rhs);report.removed_rhs_mean=op().has_constant_nullspace()?mean(rhs):0.;
     if(!std::isfinite(report.rhs_rms))return report;
-    if(report.rhs_rms!=0.&&std::abs(report.removed_rhs_mean/report.rhs_rms)>64.*std::numeric_limits<double>::epsilon())
-        throw std::invalid_argument("Incompatible periodic composite RHS");
+    // Same documented FP64 roundoff bound as CompositePoisson::validate_compatibility:
+    // a genuine volume-weighted mass imbalance (for example nonzero mass with
+    // homogeneous Neumann data) is rejected before any projection.
+    if(report.rhs_rms!=0.&&std::abs(report.removed_rhs_mean/report.rhs_rms)>
+        CompositePoisson::compatibility_roundoff)
+        throw std::invalid_argument("Incompatible composite RHS for a constant-nullspace boundary");
     e.linear(source_,1.,rhs);project(source_);const double scale=norm(source_);
     report.rhs_rms=scale;report.target=std::max(control.absolute_tolerance,control.relative_tolerance*scale);
     const bool use_initial = has_accepted_potential_;

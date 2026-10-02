@@ -22,6 +22,7 @@
 #include "numerics/elliptic/CompositePoisson.h"
 
 #include "core/CompensatedSum.h"
+#include "grid/CoordinateBoundary.h"
 #include "grid/GridMetrics.h"
 #include "numerics/linalg/DenseWrap.h"
 
@@ -57,7 +58,18 @@ CompositeBoundary resolve_boundary(const EllipticMesh& mesh,BoundaryKind kind) {
         const int azimuth=mesh.dimension-1;
         result.sides[2*azimuth]=FaceBoundaryKind::Periodic;
         result.sides[2*azimuth+1]=FaceBoundaryKind::Periodic;
-    } else throw std::invalid_argument("Invalid composite boundary kind");
+    } else if(kind==BoundaryKind::User)
+        throw std::invalid_argument("User boundary requires explicit conditions");
+    else throw std::invalid_argument("Invalid composite boundary kind");
+    // Every resolved legacy side publishes a consistent scalar policy so the
+    // shared eliminated row can be read from one place for legacy and user data.
+    for(int index=0;index<6;++index) {
+        FaceBoundaryCondition condition;
+        condition.kind=result.sides[index];
+        if(condition.kind==FaceBoundaryKind::Dirichlet) {condition.a=1.;condition.b=0.;}
+        else {condition.a=0.;condition.b=1.;}
+        result.conditions[index]=condition;
+    }
     return result;
 }
 }
@@ -78,18 +90,28 @@ std::array<double,3> CompositePoisson::center(int cell) const {
     for (int a=0;a<base_.dimension;++a) p[a]=base_.origin[a]+(cells_[cell].index[a]+0.5)*width(cell,a);
     return p;
 }
-/** Validate a nonoverlapping covering of the domain before constructing faces. */
+/** Construct from a legacy named boundary policy; existing behavior is retained. */
 CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells, BoundaryKind kind)
-    : base_(base), kind_(kind), boundary_(resolve_boundary(base,kind)),
+    : CompositePoisson(base,std::move(cells),kind,resolve_boundary(base,kind)) {}
+/** Construct an operator from an explicit per-side Dirichlet/Neumann/Robin policy. */
+CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
+                                   CompositeBoundary boundary)
+    : CompositePoisson(base,std::move(cells),BoundaryKind::User,std::move(boundary)) {}
+/** Shared assembly: validate the mesh, the per-side policy and the leaf cover. */
+CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
+                                   BoundaryKind kind, CompositeBoundary boundary)
+    : base_(base), kind_(kind), boundary_(std::move(boundary)),
       cells_(std::move(cells)) {
-    validate_mesh(base_);
+    validate_mesh(base_,kind==BoundaryKind::CurvilinearIsolated);
     if (kind != BoundaryKind::Periodic && kind != BoundaryKind::Dirichlet &&
-        kind != BoundaryKind::RadialIsolated && kind != BoundaryKind::CurvilinearIsolated)
+        kind != BoundaryKind::RadialIsolated && kind != BoundaryKind::CurvilinearIsolated &&
+        kind != BoundaryKind::User)
         throw std::invalid_argument("Invalid composite boundary kind");
-    if (base_.geometry == Geometry::Cartesian
+    prepare_boundary();
+    if (kind != BoundaryKind::User && (base_.geometry == Geometry::Cartesian
             ? (kind != BoundaryKind::Periodic && kind != BoundaryKind::Dirichlet)
             : (base_.dimension == 1 ? kind != BoundaryKind::RadialIsolated
-                                    : kind != BoundaryKind::CurvilinearIsolated))
+                                    : kind != BoundaryKind::CurvilinearIsolated)))
         throw std::invalid_argument("Composite gravity geometry/boundary mismatch");
     if (cells_.empty() || cells_.size()>static_cast<std::size_t>(std::numeric_limits<int>::max()))
         throw std::invalid_argument("Composite mesh has invalid cell count");
@@ -140,6 +162,53 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
     for (double& weight:weights_) weight/=total_volume.value();
     build_faces();
 }
+/** Validate the per-side policy and derive its nullspace and fit-shape flags.
+ *  Dirichlet keeps a=1,b=0, Neumann a=0,b=1, Robin finite a>=0,b>0 and every
+ *  periodic pair is mandatory. Periodicity is carried by sides; the matching
+ *  coefficient pair of a periodic side is unused and never scanned below. */
+void CompositePoisson::prepare_boundary() {
+    for(int axis=0;axis<3;++axis) for(int side=0;side<2;++side) {
+        const int index=2*axis+side;
+        if(axis>=base_.dimension) continue;
+        if(boundary_.sides[index]==FaceBoundaryKind::Periodic) continue;
+        const auto& condition=boundary_.conditions[index];
+        if(condition.kind!=boundary_.sides[index])
+            throw std::invalid_argument("Composite boundary conditions disagree with sides");
+        if(!std::isfinite(condition.a) || !std::isfinite(condition.b))
+            throw std::invalid_argument("Composite boundary coefficients are not finite");
+        if(condition.kind==FaceBoundaryKind::Dirichlet) {
+            if(condition.a!=1. || condition.b!=0.)
+                throw std::invalid_argument("Dirichlet boundary requires a=1,b=0");
+        } else if(condition.kind==FaceBoundaryKind::Neumann) {
+            if(condition.a!=0. || condition.b!=1.)
+                throw std::invalid_argument("Neumann boundary requires a=0,b=1");
+        } else if(condition.kind==FaceBoundaryKind::Robin) {
+            if(!(condition.a>=0.) || !(condition.b>0.))
+                throw std::invalid_argument("Robin boundary requires a>=0,b>0");
+        } else throw std::invalid_argument("Composite boundary requires a known face kind");
+    }
+    for(int axis=0;axis<base_.dimension;++axis)
+        if((boundary_.sides[2*axis]==FaceBoundaryKind::Periodic) !=
+           (boundary_.sides[2*axis+1]==FaceBoundaryKind::Periodic))
+            throw std::invalid_argument("Composite periodic boundary requires paired sides");
+    periodic_only_=true;
+    bool positive_a=false;
+    for(int axis=0;axis<base_.dimension;++axis) for(int side=0;side<2;++side) {
+        if(boundary_.sides[2*axis+side]==FaceBoundaryKind::Periodic) continue;
+        periodic_only_=false;
+        if(boundary_.conditions[2*axis+side].a>0.) positive_a=true;
+    }
+    // A positive Dirichlet/Robin weight makes the operator nonsingular; a pure
+    // flux/periodic policy always leaves the constant mode free.
+    if(positive_a && boundary_.constant_nullspace)
+        throw std::invalid_argument("Composite positive boundary weight contradicts the constant nullspace");
+    if(!positive_a) boundary_.constant_nullspace=true;
+    // The 1D radial isolated fit needs its cubic regularity basis for the
+    // legacy kind and for an equivalent explicit user policy.
+    radial_=base_.geometry!=Geometry::Cartesian && base_.dimension==1 &&
+        boundary_.sides[0]==FaceBoundaryKind::Neumann &&
+        boundary_.sides[1]==FaceBoundaryKind::Dirichlet;
+}
 /** Find the unique active leaf covering a root-grid coordinate. */
 int CompositePoisson::locate(std::array<double,3> point) const {
     for (int a=0;a<base_.dimension;++a) {
@@ -164,14 +233,17 @@ double CompositePoisson::face_area(const CompositeFace& face) const {
     if(base_.geometry==Geometry::Cartesian) return face.area;
     const int anchor=face.left>=0?face.left:face.right;
     std::array<double,3> lower=face.center,widths=base_.spacing;
+    // A lower physical face is already its fragment's lower endpoint. Do not
+    // subtract/add one width: that cancellation can erase a tiny positive r.
+    const bool high_face=face.boundary_side<0 || (face.boundary_side%2)!=0;
     for(int a=0;a<base_.dimension;++a) {
         widths[a]=face.fragment_width[a]>0.?face.fragment_width[a]:width(anchor,a);
-        lower[a]-=a==face.axis?widths[a]:0.5*widths[a];
+        lower[a]-=a==face.axis?(high_face?widths[a]:0.):0.5*widths[a];
     }
     const auto geometry=base_.geometry==Geometry::Cylindrical
         ? GridMetrics::Geometry::Cylindrical : GridMetrics::Geometry::Spherical;
     return GridMetrics::FaceArea(GridMetrics::make_geometry_view(
-        geometry,base_.dimension,lower,widths),face.axis,0,0,0,true);
+        geometry,base_.dimension,lower,widths),face.axis,0,0,0,high_face);
 }
 
 /** Return physical length per native coordinate at a face center. */
@@ -193,17 +265,25 @@ void CompositePoisson::build_faces() {
             for (int side=0;side<2;++side) {
                 const int edge=side ? (base_.cells[a]<<c.level)-1 : 0;
                 if (c.index[a]!=edge) continue;
-                // Periodic seams are internal faces; zero-area coordinate
-                // limits carry no face contribution.
-                if (boundary_.sides[2*a+side]!=FaceBoundaryKind::Dirichlet) continue;
+                // Periodic seams are internal faces. Every nonzero-area
+                // Dirichlet/Neumann/Robin side publishes one physical record;
+                // zero-area coordinate limits (origin/pole) stay regular.
+                if (boundary_.sides[2*a+side]==FaceBoundaryKind::Periodic) continue;
+                const double coordinate=base_.origin[a]+(side ? base_.cells[a]*base_.spacing[a] : 0.);
+                if(GridMetrics::IsCoordinateJoin(base_.geometry,base_.dimension,a,coordinate)) continue;
                 CompositeFace f;
                 f.left=side ? i : -1; f.right=side ? -1 : i;
                 f.axis=a; f.boundary_side=2*a+side; f.center=center(i); f.area=1.;
-                f.center[a]+=(side ? 0.5 : -0.5)*width(i,a);
+                // Preserve the configured physical endpoint, including a
+                // positive radius smaller than a cell-center rounding unit.
+                f.center[a]=coordinate;
                 for(int t=0;t<base_.dimension;++t) if(t!=a) f.area*=width(i,t);
                 for(int t=0;t<base_.dimension;++t) f.fragment_width[t]=width(i,t);
                 f.area=face_area(f);
+                if(!(f.area>0.)) continue;
                 const double spacing=width(i,a)*face_metric(f,a);
+                // Start from the legacy Dirichlet two-point row; the per-side
+                // policy is applied once, after the shared quadratic fit.
                 f.samples.push_back(i); f.coefficients.push_back((side ? -2. : 2.)/spacing);
                 f.boundary_coefficient=-f.coefficients[0];
                 faces_.push_back(std::move(f));
@@ -246,9 +326,16 @@ void CompositePoisson::build_faces() {
         neighbors.erase(std::unique(neighbors.begin(),neighbors.end()),neighbors.end());
     }
     for (auto& face:faces_) {
-        if (kind_==BoundaryKind::RadialIsolated || face.boundary_side>=0 ||
+        if (radial_ || face.boundary_side>=0 ||
             cells_[face.left].level!=cells_[face.right].level) fit_interface(face);
-        if(base_.geometry!=Geometry::Cartesian)fit_curved_face_value(face);
+        if(face.boundary_side>=0) {
+            // Fit the original Dirichlet row first, then transform it into the
+            // eliminated a*Phi+b*dPhi/dn=c row exactly once on the Host.
+            const std::vector<double> fitted=face.coefficients;
+            const double fitted_qB=face.boundary_coefficient;
+            fit_boundary_face_value(face,fitted.data(),fitted_qB);
+            eliminate_boundary(face,fitted.data(),fitted_qB);
+        } else if(base_.geometry!=Geometry::Cartesian) fit_curved_face_value(face);
     }
     // Quadratic reproduction may assign a negative self coefficient on a
     // strongly anisotropic coarse/fine fragment next to a coordinate join.
@@ -279,7 +366,7 @@ void CompositePoisson::build_faces() {
             if(recovered[face_index] ||
                 !((f.left>=0 && invalid_mask[f.left]) ||
                   (f.right>=0 && invalid_mask[f.right]))) continue;
-            const bool fitted=f.boundary_side>=0 || kind_==BoundaryKind::RadialIsolated
+            const bool fitted=f.boundary_side>=0 || radial_
                 || (f.left>=0 && f.right>=0 && cells_[f.left].level!=cells_[f.right].level);
             if(!fitted) continue;
             if(f.boundary_side>=0) {
@@ -291,6 +378,9 @@ void CompositePoisson::build_faces() {
                 f.samples.clear(); f.samples.push_back(anchor);
                 f.coefficients.clear(); f.coefficients.push_back(sign*inverse);
                 f.boundary_coefficient=-sign*inverse;
+                // The recovered fragment is a Dirichlet row again, so the
+                // side policy is eliminated on top of it.
+                eliminate_boundary(f,f.coefficients.data(),f.boundary_coefficient);
             } else {
                 // grad_f(phi) = (phi_R-phi_L)/(h_L/2+h_R/2).
                 const double inverse=1./((0.5*width(f.left,f.axis)
@@ -426,11 +516,58 @@ void CompositePoisson::fit_curved_face_value(CompositeFace& face) const {
     }
 }
 
+/** Eliminate one physical side policy into an exact linear face row.
+ *  With s=-1 on the lower side and s=+1 on the upper side the fitted Dirichlet
+ *  row g=Q*x+qB*Phi_B and a*Phi_B+b*dPhi/dn=c give the contract elimination
+ *  Phi_B=(c-b*s*Q*x)/(a+b*s*qB) and g=(a*Q*x+qB*c)/(a+b*s*qB). Storing
+ *  alpha=a/D and beta=qB/D produces the difference row
+ *  g=sum_i alpha*Q_i*(Phi_i-Phi_A)+beta*c-alpha*qB*Phi_A.
+ *  Flux sides store the last weight directly; computing beta-alpha*qB and
+ *  cancelling beta*Phi_A later would erase a small prescribed Neumann flux.
+ *  Dirichlet retains its legacy difference row and zero anchor weight. */
+void CompositePoisson::eliminate_boundary(CompositeFace& face,const double* fitted_coefficients,
+                                          double fitted_qB) const {
+    const int side=face.boundary_side&1;
+    const auto& condition=boundary_.conditions[face.boundary_side];
+    const double s=side?1.:-1.;
+    const double denominator=condition.a+condition.b*s*fitted_qB;
+    if(!std::isfinite(denominator) || denominator<=0.)
+        throw std::invalid_argument("Composite boundary elimination denominator is not positive");
+    const double alpha=condition.a/denominator,beta=fitted_qB/denominator;
+    for(std::size_t k=0;k<face.coefficients.size();++k)
+        face.coefficients[k]=alpha*fitted_coefficients[k];
+    face.boundary_coefficient=beta;
+    face.anchor_coefficient=condition.kind==FaceBoundaryKind::Dirichlet
+        ?0.:-alpha*fitted_qB;
+}
+
+/** Interpolate the eliminated boundary potential used by the mass-flux work.
+ *  Dirichlet keeps the legacy unit map; every flux side publishes
+ *  Phi_B=(c-b*s*Q*x)/D through samples/coefficients/value_boundary_coefficient. */
+void CompositePoisson::fit_boundary_face_value(CompositeFace& face,
+    const double* fitted_coefficients,double fitted_qB) const {
+    const int side=face.boundary_side&1;
+    const auto& condition=boundary_.conditions[face.boundary_side];
+    if(condition.kind==FaceBoundaryKind::Dirichlet) {
+        face.value_samples.clear(); face.value_coefficients.clear();
+        face.value_boundary_coefficient=1.;
+        return;
+    }
+    const double s=side?1.:-1.;
+    const double denominator=condition.a+condition.b*s*fitted_qB;
+    face.value_samples=face.samples;
+    face.value_coefficients.assign(face.samples.size(),0.);
+    for(std::size_t k=0;k<face.samples.size();++k)
+        face.value_coefficients[k]=-condition.b*s*fitted_coefficients[k]/denominator;
+    face.value_boundary_coefficient=1./denominator;
+}
+
 /** Apply the face stencil to a cell-centered field and boundary datum. */
 double CompositePoisson::face_gradient(std::span<const double> x,const CompositeFace& f,double boundary_value) const {
     const int anchor=f.left>=0 ? f.left : f.right;
     return composite_face_gradient(x.data(),anchor,f.samples.data(),f.coefficients.data(),
-        f.samples.size(),f.boundary_coefficient,boundary_value);
+        f.samples.size(),f.boundary_coefficient,boundary_value,f.anchor_coefficient,
+        has_flux_boundary(f));
 }
 /** Accumulate A u = -sum_f(area_f/V_i) grad_f(u) over oriented faces. */
 void CompositePoisson::apply(std::span<const double> x,std::span<double> out) const {
@@ -477,7 +614,26 @@ void CompositePoisson::project(std::span<double> x) const {
     const double average=mean(x);
     for (double& v:x) v-=average;
 }
-/** Move isolated Dirichlet face values to the source of A phi = b. */
+/** Reject a source that no pure flux boundary can balance.
+ *  The volume-weighted mean is compared against the documented FP64 roundoff
+ *  bound, so accumulated roundoff is accepted while a genuine mass imbalance
+ *  (in particular nonzero mass with homogeneous Neumann data) is rejected
+ *  before any projection. Periodic sources keep their legacy projection. */
+void CompositePoisson::validate_compatibility(std::span<const double> rhs) const {
+    validate_values(rhs,cells_.size());
+    if(!boundary_.constant_nullspace || periodic_only_) return;
+    double scale=0.;
+    for(double value:rhs) {
+        if(!std::isfinite(value)) throw std::invalid_argument("Nonfinite composite source");
+        scale=std::max(scale,std::abs(value));
+    }
+    if(scale==0.) return;
+    if(std::abs(mean(rhs))>compatibility_roundoff*scale)
+        throw std::invalid_argument("Composite source violates the pure flux compatibility condition");
+}
+/** Move the oriented boundary datum flux of every physical side to the source.
+ *  The stored boundary_coefficient is beta=qB/D, so area*beta*c is exactly the
+ *  datum part of the eliminated Dirichlet/Neumann/Robin row. */
 std::vector<double> CompositePoisson::effective_rhs(std::span<const double> source,
                                                   std::span<const double> boundary_values) const {
     validate_values(source,size());

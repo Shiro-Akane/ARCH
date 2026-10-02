@@ -91,11 +91,8 @@ struct SolverRK3
                 },
                 [&](StateSlot output, arch::state::StateVersion,
                     arch::state::CompletionToken token) {
-#pragma omp parallel for schedule(dynamic)
-                    for (size_t i = 0; i < active_blocks.size(); ++i) {
-                        amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-                        boundary_condition.apply(state_for(b, output), b.grid);
-                    }
+                    TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition,
+                        output == StateSlot::Scratch ? &amr::Block::state_scratch : &amr::Block::state_next);
                     FluidState amr::Block::* output_member = nullptr;
                     if (output == StateSlot::Scratch)
                         output_member = &amr::Block::state_scratch;

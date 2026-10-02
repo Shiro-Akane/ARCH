@@ -19,6 +19,10 @@ Begin with [Build](#build) and [First run](#first-run). After the first case, fo
 
 ARCH provides one- to three-dimensional fluid dynamics, dynamic AMR, equations of state, diffusion, nuclear reactions and external/self gravity on CPU and CUDA. The [separate feature list](docs/Features.md) shows the applicable modules, geometries and boundaries. The [validation index](validation/README.md) identifies tested combinations; [release notes](docs/releases/README.md) describe changes in each source version.
 
+Physical and potential user boundaries use separate sibling sources and the
+existing two public headers. See [user boundaries](docs/guides/UserBoundaries.md)
+for inflow, transport flux and potential conditions.
+
 Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automatic selection occurs at startup; see the [CUDA guide](docs/CudaBackendStatus.md) for details.
 
 ## Build

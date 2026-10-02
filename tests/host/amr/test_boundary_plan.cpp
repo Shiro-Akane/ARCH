@@ -21,6 +21,10 @@
 #include <type_traits>
 #include <utility>
 
+void test_user_boundary_registry();
+void test_user_physical_boundary();
+void test_user_boundary_diagnostics();
+
 namespace
 {
 using namespace arch::boundary;
@@ -748,6 +752,9 @@ void test_e0_e1_boundary_completion_contract()
 int main()
 {
     try {
+        test_user_boundary_registry();
+        test_user_physical_boundary();
+        test_user_boundary_diagnostics();
         test_public_numeric_contract();
         test_frozen_plan_fingerprints();
         test_sources_and_components();

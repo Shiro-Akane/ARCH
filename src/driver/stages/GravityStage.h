@@ -10,9 +10,11 @@
 
 #include <fstream>
 #include <limits>
+#include <optional>
 
 #include "driver/schedule/StageScheduler.h"
 #include "io/IO.h"
+#include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 
 namespace Physical::Gravity { class IGravityPolicy; class SelfGravity; }
 namespace arch::driver {
@@ -32,6 +34,8 @@ private:
     const Physical::Gravity::SelfGravity* gravity_;
     amr::TopologyEpoch epoch_{};
     std::uint64_t generation_=0;
-    std::ofstream diagnostics_;
+    std::ofstream diagnostics_,boundary_diagnostics_;
+    std::optional<Physical::Gravity::GravityBoundarySnapshot> boundary_snapshot_;
+    double boundary_exchange_=0.;
 };
 }

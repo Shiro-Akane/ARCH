@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <array>
 #include <memory>
 #include <span>
 #include <vector>
@@ -67,6 +68,11 @@ public:
     const SpeciesManager& species() const { return specs; }
     state::RepairBudget& repair_budget();
     const std::vector<RegridMeasurement>& regrid_records() const { return regrid_measurements; }
+    /** Observe actual surface fluxes only for selected case boundary callbacks. */
+    void bind_boundary_accounting(scheduler::StageExecutionContext&);
+    const std::vector<double>& hydro_boundary_budget() const { return hydro_boundary_budget_; }
+    const std::vector<double>& diffusion_boundary_budget() const { return diffusion_boundary_budget_; }
+    const backend::BackendCounters& boundary_observer_operations() const { return boundary_observer_operations_; }
 private:
     std::vector<topology::TopologyObservation> observe_blocks(std::span<const int>) const;
     std::vector<topology::TopologyObservation> observe_topology() const;
@@ -90,6 +96,22 @@ private:
     backend::StorageGenerationIssuer storage_generation_issuer;
     std::vector<backend::StorageGeneration> backend_storage;
     std::vector<backend::BackendStateAccess> boundary_accesses, boundary_level_accesses;
+    // Ghost field versions remain in the residency ledger. This extra stamp
+    // identifies only the immutable callback time/purpose and topology.
+    struct UserBoundaryStamp {
+        amr::TopologyEpoch epoch{};
+        std::uint64_t revision = 0;
+    };
+    std::array<UserBoundaryStamp, 3> user_boundary_stamps_{};
     std::vector<RegridMeasurement> regrid_measurements;
+    // Surface records are rebuilt after a topology epoch changes. Integrated
+    // budgets retain their since-process-start scope across AMR regrids.
+    amr::TopologyEpoch boundary_budget_epoch_{};
+    std::vector<backend::BoundaryFluxPlanes> boundary_surface_layout_;
+    std::vector<double> hydro_boundary_budget_, diffusion_boundary_budget_;
+    std::vector<double> boundary_rkl_previous_, boundary_rkl_older_;
+    backend::BackendCounters boundary_observer_operations_{};
+    void prepare_boundary_capture(double weight, double initial_weight, bool save_initial);
+    std::vector<double> integrate_boundary_capture();
 };
 } // namespace arch::driver

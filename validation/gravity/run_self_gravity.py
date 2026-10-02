@@ -17,6 +17,7 @@ import h5py
 import numpy as np
 from gravity_box import BoxCampaign
 from radial_1d import RadialCampaign
+from user_boundaries import UserBoundaryCampaign
 
 ROOT = Path(__file__).resolve().parents[2]
 RHO, PRESSURE, AMPLITUDE, G = 1e7, 6e6, 1e-4, 6.67430e-8
@@ -192,6 +193,7 @@ def main():
     campaign = Campaign(args.arch.resolve(), args.output.resolve())
     box = BoxCampaign(campaign.executable, campaign.output/'box')
     radial = RadialCampaign(campaign.executable, campaign.output/'radial')
+    boundary = UserBoundaryCampaign(campaign.executable, campaign.output/'user-boundaries')
     try:
         if args.quick:
             _, _, record = campaign.run('jeans-64')
@@ -200,6 +202,7 @@ def main():
             campaign.full()
         box.run_checks(quick=args.quick)
         radial.run_checks(quick=args.quick)
+        boundary.run_checks(quick=args.quick)
         # Each invalid contract gets a distinct output, so a later 3D case
         # cannot overwrite the earlier 1D isolated-boundary evidence.
         for name, changes, message in [
@@ -221,7 +224,7 @@ def main():
     finally:
         report = dict(status=status, executable=str(campaign.executable),
                       executable_sha256=hashlib.sha256(campaign.executable.read_bytes()).hexdigest(),
-                      results=campaign.results + box.results + radial.results)
+                      results=campaign.results + box.results + radial.results + boundary.results)
         (campaign.output/'summary.json').write_text(json.dumps(report, indent=2)+'\n')
     print(f'Self-gravity {status}: {len(report["results"])} acceptance records')
 

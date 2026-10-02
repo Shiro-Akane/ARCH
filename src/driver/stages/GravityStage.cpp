@@ -31,6 +31,15 @@ GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGrav
     std::filesystem::create_directories(config.io.out_dir);
     diagnostics_.open(config.io.out_dir+"/gravity_solves.tsv");
     if (!diagnostics_) throw std::runtime_error("Cannot open gravity solve diagnostics");
+    if(config.physics.gravity.boundary=="user") {
+        boundary_diagnostics_.open(config.io.out_dir+"/gravity_boundary_exchange.tsv");
+        if(!boundary_diagnostics_) throw std::runtime_error("Cannot open gravity boundary diagnostics");
+        boundary_diagnostics_ << "# scope=since-process-start; fields=successive-publications; "
+            "energy=half-integral-rho-Phi; exchange=Green-boundary-term; gauge=solver-policy; "
+            "time-may-follow-RK-stage-order; units=CGS-with-GridMetrics-measure\n"
+            "time\tprevious_time\tstage\tpotential_energy\tdelta_potential_energy\tboundary_exchange\tcumulative_exchange\tfaces\tobserver_seconds\tkernels\tbytes_h2d\tbytes_d2h\tsynchronizations\n"
+            <<std::setprecision(17);
+    }
     diagnostics_<<"time\tstage\tepoch\tgeneration\tcells\titerations\trhs_rms\tresidual\ttarget\trho_mean\tdevice\tsetup_seconds\tsolve_seconds\tkernels\tbytes_h2d\tbytes_d2h\tsynchronizations\tsource_boundary_seconds\tpoisson_seconds\tforce_seconds\n"<<std::setprecision(17);
 }
 /** Lease the exact RK input density generation and publish its solved field. */
@@ -42,7 +51,7 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     const auto& handles=runtime_.handles(); const auto& config=runtime_.configuration();
     if (handles.empty()) throw std::logic_error("Gravity requires active topology");
     if (epoch_!=handles.front().epoch) {
-        gravity_->bind(amr::bind_elliptic_mesh(runtime_.control(),config.grid,handles));
+        gravity_->bind(amr::bind_elliptic_mesh(runtime_.control(),config.grid,handles),time);
         epoch_=handles.front().epoch;
     }
     // A new borrowed storage lease is issued for every solve, even if slots or
@@ -79,6 +88,24 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
         <<after.synchronizations-before.synchronizations<<'\t'<<gravity_->timings().source_boundary<<'\t'
         <<gravity_->timings().poisson<<'\t'<<gravity_->timings().force<<'\n';
     if (!diagnostics_) throw std::runtime_error("Cannot write gravity diagnostics");
+    if(boundary_diagnostics_.is_open()) {
+        auto next=gravity_->boundary_snapshot();
+        const auto observed=std::chrono::steady_clock::now();
+        const auto observer_counters=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
+        const double exchange=boundary_snapshot_ ? Physical::Gravity::gravity_boundary_exchange(*boundary_snapshot_,next) : 0.;
+        const double change=boundary_snapshot_ ? next.potential_energy-boundary_snapshot_->potential_energy : 0.;
+        boundary_exchange_+=exchange;
+        boundary_diagnostics_ << time << '\t' << (boundary_snapshot_?boundary_snapshot_->time:time)
+            << '\t' << stage << '\t' << next.potential_energy << '\t' << change << '\t' << exchange
+            << '\t' << boundary_exchange_ << '\t' << next.faces.size()
+            << '\t' << std::chrono::duration<double>(observed-finished).count()
+            << '\t' << observer_counters.kernels-after.kernels
+            << '\t' << observer_counters.bytes_h2d-after.bytes_h2d
+            << '\t' << observer_counters.bytes_d2h-after.bytes_d2h
+            << '\t' << observer_counters.synchronizations-after.synchronizations << '\n';
+        if(!boundary_diagnostics_) throw std::runtime_error("Cannot write gravity boundary diagnostics");
+        boundary_snapshot_=std::move(next);
+    }
     if(backend)for(std::size_t b=0;b<handles.size();++b)backend->publish_gravity(runtime_.backend_access(b,slot),gravity_->patch_view(b));
     return token;
 }

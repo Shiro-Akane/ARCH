@@ -104,8 +104,9 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 柱／球坐标一维径向 | `isolated` | 半径非负，径向内流体面反射 |
 | 柱／球坐标二维极坐标 `(r,phi)` | `isolated` | 方位角覆盖完整一周且流体面周期，径向内面反射 |
 | 三维柱 `(r,z,phi)`／球 `(r,theta,phi)` | `isolated` | 完整方位角；径向内面及受测轴线／极点奇点面反射 |
+| 三类几何一至三维 | `dirichlet`、`neumann`、`user` | 逐面指定势／外梯度／线性 Robin；周期方向成对匹配，奇点保持正则性 |
 
-所有自引力域的根网格各轴单元数须为二的幂，根网格间距比不超过 2，AMR 叶子保持 2:1 平衡。`gravity_boundary` 应与流体面拓扑匹配；曲线坐标使用孤立引力边界。周期势只由密度偏离体积平均值的部分驱动；孤立势不减去密度背景。二维极坐标孤立势采用单位轴向长度质量的对数核。误差控制见[引力参数](#eos-与重力)，受测轨迹见[引力验证](../validation/gravity/README.zh-CN.md)。
+所有自引力域的根网格各轴单元数须为二的幂，根网格间距比不超过 2，AMR 叶子保持 2:1 平衡。`gravity_boundary` 应与流体面拓扑匹配。显式 `dirichlet`、`neumann` 和 `user` 适用于三类几何的一至三维；`user` 可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，并支持有效的环域／扇区／楔域。坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势只由密度偏离体积平均值的部分驱动；孤立势不减去密度背景。二维极坐标孤立势采用单位轴向长度质量的对数核。误差控制见[引力参数](#eos-与重力)，受测轨迹见[引力验证](../validation/gravity/README.zh-CN.md)。
 
 ### 方法与物理模块的组合
 
@@ -296,7 +297,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `x1_min/max` | expression | `0/1` | 活动轴必须 max > min |
 | `x2_min/max` | expression | `0/1` | 角度限制取决于几何/维度 |
 | `x3_min/max` | expression | `0/1` | 角度限制取决于几何/维度 |
-| `x1l_boundary_type` | string | `outflow` | `outflow`、`reflect`、`periodic` |
+| `x1l_boundary_type` | string | `outflow` | `outflow`、`reflect`、`periodic`、`neumann`、`user`；流体 `inflow/dirichlet` 同属指定状态接口，见[用户边界](guides/UserBoundaries.zh-CN.md) |
 | `x1r_boundary_type` | string | `outflow` | 同上 |
 | `x2l_boundary_type` | string | `outflow` | 同上 |
 | `x2r_boundary_type` | string | `outflow` | 同上 |
@@ -363,7 +364,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `gravity_type` | string | `none` | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU/CUDA 一维球/柱及受测完整方位角二维极坐标、三维柱/球坐标 isolated 已验收，包含原点、轴线和极点 |
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | CGS 引力常数 |
-| `gravity_boundary` | string | `periodic` | `periodic` 去除体积平均密度；`isolated` 为三维有限质量 Newton 势、一维径向对称势或二维极坐标单位长度质量的对数势；均不减背景密度 |
+| `gravity_boundary` | string | `periodic` | `periodic` 去除体积平均密度；`isolated` 为现有有限质量／径向／二维对数核；`dirichlet` 零势；`neumann` 零外法向梯度且检查 Gauss 相容性；`user` 从 `gravity_boundary.cpp` 返回逐面条件 |
 | `gravity_rtol` | float | `1e-10` | 大于零且小于一的体积 RMS 相对残差 |
 | `gravity_atol` | float | `0` | 非负绝对残差，单位 `s^-2`；零代表相对精度主导 |
 | `gravity_max_cycles` | int | `200` | 正整数，MG/FGMRES 外迭代上限；不收敛停止推进 |
@@ -927,6 +928,8 @@ Data/<requested field>       [block, z?, y?, x] 内部单元数组
 ARCH 检查点保存继续模拟所需的完整状态，两个后端共用读取器和写入器。
 读取器检查文件内部的格式标识及下述必需字段；不完整或不支持的输入会在恢复模拟
 之前被拒绝。
+
+当前 checkpoint 格式为 7；必需的 `boundary_identity` 保存面类型、算例／边界源码摘要及科学自定义参数。身份缺失或改变拒绝续算，绝对源码路径和后端选择不影响比较。边界收支从各次进程启动重新累计，详见[用户边界诊断](guides/UserBoundaries.zh-CN.md#后端诊断与重启)。
 
 属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species`、`cells_per_block`、`dt_old`、`dt_burn`、`resume_after_regrid`、`eos_type`、`ideal_gamma`、`burn_enabled`、`active_network`、`nse_enabled`、`eos_table_path` 和 `eos_table_sha256`。checkpoint 中的 `eos_type` 记录已解析的规范策略（`ideal`、`helmholtz`、`tabular3d` 或 `tabular4d`），因此自动识别出的表 rank 属于 restart 身份，而不是沿用配置中的原始 `tabular` 拼写。燃烧关闭时 `active_network` 必须为 `none`。时间步字段分别恢复增长控制、下一宏步携带的燃烧限制及循环阶段，避免重复执行已完成的 regrid 或按步输出。表路径仅用于审计；兼容性按 SHA-256 内容身份判断，因此同一份表可以在不同安装位置之间移动。表加载器会在加载前后计算摘要，并将缓存 owner 绑定到该摘要；传给每次 checkpoint 的不可变身份描述的是 EOS owner 实际驻留的字节，而不是稍后重新读取路径的结果。
 

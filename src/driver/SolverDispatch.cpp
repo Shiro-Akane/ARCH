@@ -26,6 +26,7 @@
 #include "data/FluidState.h"
 #include "grid/Grid.h"
 #include "interface/ProblemGenerator.h"
+#include "physics/boundary/UserBoundary.h"
 #include "io/IO.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "physics/eos/eosdispatch.h"
@@ -191,6 +192,14 @@ void DispatchSolver(const std::string &solver_name,
     // Own the effective configuration for the complete driver lifetime. Auto
     // selection must reach CPU and device views, initialisation and restart IO.
     SimConfig config = requested_config;
+    auto resolved_boundaries = arch::boundary::ResolveCaseBoundaries(
+        problem.RegisteredName(), problem.SourceFile(), config);
+    // Setup can feed callback-visible values. Include its compiled identity as
+    // well as sibling callback digests; output paths remain portable metadata.
+    if (resolved_boundaries.physical || resolved_boundaries.gravity)
+        resolved_boundaries.identity += ";case-sha=" + problem.SourceSha256();
+    arch::boundary::ScopedUserBoundarySelection boundary_selection(
+        std::move(resolved_boundaries), config, specs);
     std::cout << "[Dispatch] Initializing System..." << std::endl;
 
     using namespace arch::dispatch;

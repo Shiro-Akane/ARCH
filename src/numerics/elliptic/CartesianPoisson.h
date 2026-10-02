@@ -18,14 +18,14 @@
 #include "numerics/elliptic/EllipticMesh.h"
 
 namespace arch::elliptic {
-enum class BoundaryKind { Periodic, Dirichlet, RadialIsolated, CurvilinearIsolated };
+enum class BoundaryKind { Periodic, Dirichlet, RadialIsolated, CurvilinearIsolated, User };
 
 struct BoundaryData {
     BoundaryKind kind = BoundaryKind::Periodic;
     std::array<std::vector<double>, 6> values; // 2*axis + side; empty for periodic.
 };
 
-void validate_mesh(const CartesianMesh& mesh);
+void validate_mesh(const CartesianMesh& mesh, bool full_angular_domain = false);
 void validate_boundary(const CartesianMesh& mesh, const BoundaryData& boundary);
 void validate_values(std::span<const double> values, std::size_t size);
 double rms(std::span<const double> values);

@@ -12,7 +12,7 @@ CUDA 后端会在 GPU 上执行流体动力学与自适应网格的数值计算�
 |---|---|
 | 流体 | Van Leer、Steger-Warming、Roe、HLL、HLLC；PCM/MUSCL/PPM；MinMod/MC/SuperBee/Van Leer 限制器；Euler/SSPRK2/SSPRK3 |
 | 网格与几何 | 一、二、三维块网格；笛卡尔、柱坐标与球坐标，采用两端共用的坐标约定 |
-| 边界 | 周期、流出、反射 |
+| 边界 | 周期、流出、反射及用户物理／势边界；Host 回调只交换所需边界片，共用 EOS 与面通量规则；成本见[用户边界](guides/UserBoundaries.zh-CN.md) |
 | 动态 AMR | 细化指标、守恒插值与限制、跨层交换、流体／扩散通量修正和事务式状态迁移 |
 | EOS | 理想气体、Helmholtz、规范化 Tabular3D/Tabular4D 数据布局 |
 | 扩散 | 组分、热和黏性算子采用 RKL1/RKL2；材料模型决定实际通道。目前 Helmholtz 恒星模型只提供热传导。 |

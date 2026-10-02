@@ -15,6 +15,8 @@
 #include "amr/topology/AmrDefines.h"
 #include "core/ArchPortability.h"
 #include "data/StateDiagnostics.h"
+#include "physics/boundary/BoundaryDiagnostics.h"
+#include "physics/boundary/BoundaryFlux.h"
 
 /**
  * @brief Represents the conserved variables at a single point.
@@ -63,6 +65,11 @@ ARCH_INLINE FluidVector operator*(double s, const FluidVector &v)
  */
 struct FluidState
 {
+    // Face-only callback data, regenerated for every stage and after regrid.
+    std::shared_ptr<const arch::boundary::DiffusionBoundaryStorage> diffusion_boundary;
+    // Optional physical-surface observer; one block record is shared by the
+    // three stage slots and never evolves conserved state.
+    std::shared_ptr<arch::boundary::BoundaryFluxCaptureStorage> boundary_flux_capture;
     arch::state::RepairBudget stage_repairs; // Ephemeral; consumed before slot publication.
     // Host arrays use the active-dimension block extent.
     std::vector<double> rho;

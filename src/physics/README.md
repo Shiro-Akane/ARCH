@@ -8,6 +8,8 @@ by the [numerical methods](../numerics/README.md).
   equilibrium over a supported network's species.
 - [Species](species/README.md): composition metadata and shared mixture queries.
 - [Gravity](gravity/README.md): the configured gravitational source.
+- [Boundary services](boundary/README.md): separate compiled physical/potential
+  callbacks, shared EOS ghost rules and physical-surface transport controls.
 - [Diffusion coefficients](diffusionCoe/README.md): stellar conductivity.
 - [Diagnostics](diagnostics/README.md): metric-aware velocity diagnostics.
 - [Constants and units](constant/README.md): project-owned constant definitions.

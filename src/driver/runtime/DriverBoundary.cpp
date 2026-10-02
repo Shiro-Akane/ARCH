@@ -49,6 +49,11 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
     const auto& plans = amr_ctrl.ghost_exchange.GetPlans(
         amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles);
     (void)compute_backend->execute_physical_boundary_batch(accesses, version, token);
+    if (bc_handler.has_user()) {
+        const auto& active = amr_ctrl.tree->GetActiveBlocks();
+        for (std::size_t b = 0; b < accesses.size(); ++b)
+            bc_handler.apply_device(*compute_backend, accesses[b], amr_ctrl.pool->GetBlock(active[b]).grid);
+    }
     for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
         const auto& plan = plans.same_level[group];
         auto& level_accesses = boundary_level_accesses;
@@ -97,7 +102,11 @@ void DriverRuntime::complete_device_boundary(StateSlot slot)
     // identical Device ghosts would invalidate a synchronized Host copy
     // while leaving the interior synchronized, breaking the whole-state
     // materialization contract required by Host consumers.
-    if (!needs_device_ghosts) return;
+    auto& stamp = user_boundary_stamps_[static_cast<std::size_t>(slot)];
+    const bool same_context = !bc_handler.has_user()
+        || (stamp.epoch == stage_handles.front().epoch
+            && stamp.revision == bc_handler.stage_revision());
+    if (!needs_device_ghosts && same_context) return;
     const auto before = compute_backend->counters();
     StageExecutionContext context{
         ExecutionSide::Device, *residency_ledger, scheduler_clock};
@@ -109,25 +118,35 @@ void DriverRuntime::complete_device_boundary(StateSlot slot)
         });
     trace_backend_operation(
         arch::backend::BackendOperation::PhysicalBoundary, slot, before);
+    // Publish the context stamp only after every boundary/exchange and the
+    // residency transaction completed. Failed work cannot become a cache hit.
+    if (bc_handler.has_user())
+        stamp = {stage_handles.front().epoch, bc_handler.stage_revision()};
 }
 
 /** Fill missing host or device ghosts before a stage reads the state. */
 void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
 {
     if (compute_backend) { complete_device_boundary(slot); return; }
-    if (slot != StateSlot::Current)
-        throw std::logic_error("Host stage-slot boundaries belong to the integrator");
+    arch::state::HostFailure failure;
+    const auto member = slot == StateSlot::Current ? &amr::Block::fluid_state
+        : slot == StateSlot::Next ? &amr::Block::state_next : &amr::Block::state_scratch;
 #pragma omp parallel for schedule(dynamic, 1)
     for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
-        amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
-        bc_handler.apply(block.fluid_state, block.grid);
+        try {
+            amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
+            bc_handler.apply(block.*member, block.grid);
+        } catch (...) { failure.capture_current(); }
     }
+    failure.rethrow();
     amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                            config.grid.dim,
-                                            &amr::Block::fluid_state,
-                                            stage_handles);
-    if (residency_ledger && !stage_handles.empty())
-        publish_current_ghost();
+                                            config.grid.dim, member, stage_handles);
+    if (residency_ledger && !stage_handles.empty()) {
+        StageExecutionContext context{ExecutionSide::Host, *residency_ledger, scheduler_clock};
+        const auto version = residency_ledger->inspect({stage_handles.front(), slot}).interior.version;
+        (void)arch::scheduler::complete_boundary(context, stage_handles, slot, version,
+            [](StateSlot, arch::state::StateVersion, arch::state::CompletionToken token) { return token; });
+    }
 }
 
 /** Download accepted resident state only when host output needs it. */

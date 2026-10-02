@@ -87,11 +87,8 @@ struct SolverRK2
                 },
                 [&](StateSlot output, arch::state::StateVersion,
                     arch::state::CompletionToken token) {
-#pragma omp parallel for schedule(dynamic)
-                    for (size_t i = 0; i < active_blocks.size(); ++i) {
-                        amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-                        boundary_condition.apply(state_for(b, output), b.grid);
-                    }
+                    TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition,
+                        output == StateSlot::Scratch ? &amr::Block::state_scratch : &amr::Block::state_next);
                     if (output != StateSlot::Scratch)
                         throw std::logic_error("RK2 ghost exchange requires Scratch output");
                     amr_ctrl.ghost_exchange.ExecuteExchange(

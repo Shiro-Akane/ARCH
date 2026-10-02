@@ -14,24 +14,21 @@
 #pragma once
 
 #include <array>
+#include <cmath>
+#include <limits>
 #include <optional>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "amr/exchange/BoundaryPlan.h"
 #include "data/UserTypes.h"
 #include "grid/Grid.h"
+#include "grid/GridMetrics.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include "physics/species/Species.h"
 
 namespace arch::boundary {
-enum class BoundaryPurpose { Hydro, Diffusion, Gravity };
-enum class ScalarBoundaryKind { None, Value, NormalGradient, OutwardFlux };
-
-/** Scalar data: value, outward normal derivative, or outward transport flux. */
-struct ScalarBoundaryCondition {
-    ScalarBoundaryKind kind = ScalarBoundaryKind::None;
-    double value = 0.;
-};
-
 /** A physical face/ghost request, independent of backend storage and AMR ids. */
 struct BoundaryCoordinates {
     BoundaryAxis axis = BoundaryAxis::X1;
@@ -46,6 +43,65 @@ struct BoundaryCoordinates {
     PointCoords point{};
     PointCoords ghost_point{};
 };
+
+/** Outward Cartesian unit normal from the existing native orthonormal basis.
+ * Cartesian e_i; cylindrical e_R/e_z/e_phi; spherical e_r/e_theta/e_phi.
+ * Grid remains the coordinate authority, including the current 2D conventions.
+ */
+inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const PointCoords& face,
+                                                    BoundaryAxis axis, BoundarySide side)
+{
+    const GridMetrics::Geometry geometry = GridMetrics::geometry_kind(grid);
+    if (geometry == GridMetrics::Geometry::Unsupported)
+        throw std::invalid_argument("Unsupported boundary coordinate geometry");
+    const int direction = static_cast<int>(axis);
+    if (direction < 0 || direction >= grid.dim)
+        throw std::invalid_argument("physical boundary axis must be an active grid direction");
+    if (side != BoundarySide::Lower && side != BoundarySide::Upper)
+        throw std::invalid_argument("physical boundary side must be Lower or Upper");
+    const double sign = (side == BoundarySide::Lower) ? -1.0 : 1.0;
+    std::array<double, 3> normal{0.0, 0.0, 0.0};
+    switch (geometry) {
+    case GridMetrics::Geometry::Cartesian:
+        normal[direction] = 1.0;
+        break;
+    case GridMetrics::Geometry::Cylindrical: {
+        const double phi = face.phi_cy;
+        const double cosine = std::cos(phi);
+        const double sine = std::sin(phi);
+        if (direction == 0) normal = {cosine, sine, 0.0};
+        else if (grid.dim == 2) normal = {-sine, cosine, 0.0};
+        else if (direction == 1) normal = {0.0, 0.0, 1.0};
+        else normal = {-sine, cosine, 0.0};
+        break;
+    }
+    case GridMetrics::Geometry::Spherical: {
+        const double theta = face.theta;
+        const double phi = face.phi;
+        const double sin_theta = std::sin(theta);
+        const double cos_theta = std::cos(theta);
+        const double cosine = std::cos(phi);
+        const double sine = std::sin(phi);
+        if (direction == 0)
+            normal = {sin_theta * cosine, sin_theta * sine, cos_theta};
+        else if (grid.dim == 2)
+            normal = {-sine, cosine, 0.0};
+        else if (direction == 1)
+            normal = {cos_theta * cosine, cos_theta * sine, -sin_theta};
+        else
+            normal = {-sine, cosine, 0.0};
+        break;
+    }
+    case GridMetrics::Geometry::Unsupported:
+        break;
+    }
+    for (double& component : normal) component *= sign;
+    const double magnitude = std::sqrt(normal[0] * normal[0] + normal[1] * normal[1]
+                                     + normal[2] * normal[2]);
+    if (!std::isfinite(magnitude) || std::abs(magnitude - 1.0) > 64.0 * std::numeric_limits<double>::epsilon())
+        throw std::invalid_argument("physical boundary normal is not a finite unit direction");
+    return normal;
+}
 
 /** Snapshot passed only to the physical boundary callback. */
 struct PhysicalBoundaryContext : BoundaryCoordinates {

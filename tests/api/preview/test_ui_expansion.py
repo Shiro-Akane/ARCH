@@ -63,7 +63,7 @@ class Expansion(unittest.TestCase):
         for key in ['max_blocks','regrid_interval']:
             self.assertNotIn('toggle', params[key]['presentation'])
         reflect=params['x1l_boundary_type']['options']['choices']
-        self.assertEqual(len(reflect), 3)
+        self.assertEqual({c['value'] for c in reflect}, {'outflow','periodic','reflect','user','neumann'})
         self.assertEqual(reflect[-1]['acceptedNames'], ['reflect','reflecting'])
         bd=next(c for c in params['ode_solver']['options']['choices'] if c['value']=='bd')
         self.assertIn('Deuflhard', bd['displayName'])

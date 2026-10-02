@@ -1,0 +1,228 @@
+{
+  "binary": "arch_cuda_burn_policy_parity",
+  "notes": [
+    "Every grouped CTest entry runs all of its listed subcases through the same",
+    "single-route dispatch used by the retained CLI, so grouping changes only the",
+    "number of CTest names, not the checks, fixtures, budgets or context policy."
+  ],
+  "grouped_entries": [
+    {
+      "new_test": "burn_policy_parity_matrix_aprox13",
+      "cli": "matrix.aprox13",
+      "old_entries": [
+        {
+          "old_test": "burn_policy_parity_aprox13_be_nr",
+          "subcase": "aprox13.be_nr",
+          "solver": "Solver_BE_NR",
+          "authority_index": 0,
+          "variant": 0
+        },
+        {
+          "old_test": "burn_policy_parity_aprox13_bd",
+          "subcase": "aprox13.bd",
+          "solver": "Solver_BD",
+          "authority_index": 1,
+          "variant": 0
+        },
+        {
+          "old_test": "burn_policy_parity_aprox13_ros4",
+          "subcase": "aprox13.ros4",
+          "solver": "Solver_ROS4",
+          "authority_index": 2,
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "new_test": "burn_policy_parity_matrix_aprox19",
+      "cli": "matrix.aprox19",
+      "old_entries": [
+        {
+          "old_test": "burn_policy_parity_aprox19_be_nr",
+          "subcase": "aprox19.be_nr",
+          "solver": "Solver_BE_NR",
+          "authority_index": 3,
+          "variant": 1
+        },
+        {
+          "old_test": "burn_policy_parity_aprox19_bd",
+          "subcase": "aprox19.bd",
+          "solver": "Solver_BD",
+          "authority_index": 4,
+          "variant": 1
+        },
+        {
+          "old_test": "burn_policy_parity_aprox19_ros4",
+          "subcase": "aprox19.ros4",
+          "solver": "Solver_ROS4",
+          "authority_index": 5,
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "new_test": "burn_policy_parity_matrix_aprox21",
+      "cli": "matrix.aprox21",
+      "old_entries": [
+        {
+          "old_test": "burn_policy_parity_aprox21_be_nr",
+          "subcase": "aprox21.be_nr",
+          "solver": "Solver_BE_NR",
+          "authority_index": 6,
+          "variant": 2
+        },
+        {
+          "old_test": "burn_policy_parity_aprox21_bd",
+          "subcase": "aprox21.bd",
+          "solver": "Solver_BD",
+          "authority_index": 7,
+          "variant": 2
+        },
+        {
+          "old_test": "burn_policy_parity_aprox21_ros4",
+          "subcase": "aprox21.ros4",
+          "solver": "Solver_ROS4",
+          "authority_index": 8,
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "new_test": "burn_policy_parity_matrix_iso7",
+      "cli": "matrix.iso7",
+      "old_entries": [
+        {
+          "old_test": "burn_policy_parity_iso7_be_nr",
+          "subcase": "iso7.be_nr",
+          "solver": "Solver_BE_NR",
+          "authority_index": 9,
+          "variant": 3
+        },
+        {
+          "old_test": "burn_policy_parity_iso7_bd",
+          "subcase": "iso7.bd",
+          "solver": "Solver_BD",
+          "authority_index": 10,
+          "variant": 3
+        },
+        {
+          "old_test": "burn_policy_parity_iso7_ros4",
+          "subcase": "iso7.ros4",
+          "solver": "Solver_ROS4",
+          "authority_index": 11,
+          "variant": 3
+        }
+      ]
+    },
+    {
+      "new_test": "burn_policy_parity_status_matrix",
+      "cli": "matrix.status",
+      "old_entries": [
+        {
+          "old_test": "burn_policy_parity_status_be_nr",
+          "subcase": "status.be_nr",
+          "solver": "Solver_BE_NR",
+          "max_substeps": 1
+        },
+        {
+          "old_test": "burn_policy_parity_status_bd",
+          "subcase": "status.bd",
+          "solver": "Solver_BD",
+          "max_substeps": 4
+        },
+        {
+          "old_test": "burn_policy_parity_status_ros4",
+          "subcase": "status.ros4",
+          "solver": "Solver_ROS4",
+          "max_substeps": 4
+        }
+      ]
+    }
+  ],
+  "unchanged_helper_entries": [
+    {
+      "test": "burn_policy_parity_helpers",
+      "cli": "helpers",
+      "checks": [
+        "check_workspace_contract",
+        "check_driver_leaves",
+        "check_handoff_thresholds",
+        "check_helper_thresholds"
+      ],
+      "note": "Unchanged CTest entry and command line."
+    }
+  ],
+  "unchanged_backend_entries": [
+    {
+      "test": "cuda_backend_burn_aprox13_be_nr",
+      "command": "arch_cuda_hydro_block aprox13.be_nr",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_aprox13_bd",
+      "command": "arch_cuda_hydro_block aprox13.bd",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_aprox13_ros4",
+      "command": "arch_cuda_hydro_block aprox13.ros4",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_aprox19_be_nr",
+      "command": "arch_cuda_hydro_block aprox19.be_nr",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_aprox19_bd",
+      "command": "arch_cuda_hydro_block aprox19.bd",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_aprox19_ros4",
+      "command": "arch_cuda_hydro_block aprox19.ros4",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_aprox21_be_nr",
+      "command": "arch_cuda_hydro_block aprox21.be_nr",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_aprox21_bd",
+      "command": "arch_cuda_hydro_block aprox21.bd",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_aprox21_ros4",
+      "command": "arch_cuda_hydro_block aprox21.ros4",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_iso7_be_nr",
+      "command": "arch_cuda_hydro_block iso7.be_nr",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_iso7_bd",
+      "command": "arch_cuda_hydro_block iso7.bd",
+      "note": "Unchanged backend route witness."
+    },
+    {
+      "test": "cuda_backend_burn_iso7_ros4",
+      "command": "arch_cuda_hydro_block iso7.ros4",
+      "note": "Unchanged backend route witness."
+    }
+  ],
+  "preserved_cli_only_routes": [
+    {
+      "cli": "workspace_alias",
+      "note": "Preserved CLI-only alias workspace case; it had no CTest registration before or after this change."
+    }
+  ],
+  "scope": "CUDA burn policy CTest entry convergence, original mathematical gates retained",
+  "source_sha256": {
+    "tests/cuda/microphysics/burn/test_burn_policy_parity.cu": "2bf1a2f686c848995fd15682bcaf95164a9094dfd14e6177eed26964d3cbb604",
+    "cmake/tests/CudaTests.cmake": "1a5ee5550a56fa9b314166059b6ed92d53776f1200d61d444e1a0f3894d01c1e"
+  }
+}

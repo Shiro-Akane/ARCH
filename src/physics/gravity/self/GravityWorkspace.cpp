@@ -15,10 +15,23 @@
 #include "grid/GridMetrics.h"
 
 namespace Physical::Gravity {
+namespace {
+/** Build the multigrid hierarchy either from a legacy kind or an explicit
+ *  per-side policy; excluded copy elision keeps the solver in place. */
+arch::multigrid::CompositeMultigrid make_gravity_solver(const amr::EllipticMeshBinding& binding,
+    arch::elliptic::BoundaryKind kind,const arch::elliptic::CompositeBoundary* boundary,
+    const std::shared_ptr<GravityExecution>& execution) {
+    if(boundary)
+        return arch::multigrid::CompositeMultigrid(binding.base,binding.cells,*boundary,execution->numeric());
+    return arch::multigrid::CompositeMultigrid(binding.base,binding.cells,kind,execution->numeric());
+}
+}
 /** Allocate resident density, face and force fields for one topology epoch. */
 SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic::BoundaryKind kind,
+    arch::elliptic::CompositeBoundary boundary,
     std::shared_ptr<GravityExecution> runner):binding(std::move(value)),execution(std::move(runner)),
-    solver(binding.base,binding.cells,kind,execution->numeric()) {
+    user_boundary(std::move(boundary)),explicit_boundary(kind==arch::elliptic::BoundaryKind::User),
+    solver(make_gravity_solver(binding,kind,explicit_boundary?&user_boundary:nullptr,execution)) {
     auto& e=solver.execution();const auto& op=solver.op();const int n=op.size();
     density=e.array<double>(n);rhs=e.array<double>(n);boundary_values=e.array<double>(op.faces().size());
     face_gradient=e.array<double>(op.faces().size());sides=e.array<double>(6*n);g=e.array<double>(3*n);
@@ -107,6 +120,22 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
     if(kind==arch::elliptic::BoundaryKind::Dirichlet ||
        kind==arch::elliptic::BoundaryKind::CurvilinearIsolated){GravityBoundary tree(op);nodes=e.upload(tree.nodes());moments=e.array<BoundaryMoments>(nodes.size);
         for(const auto& layer:tree.layers())layers.push_back(e.upload(layer));points=e.upload(boundary_points);}
+    if(explicit_boundary) {
+        // One owner per physical face; the datum c is scattered onto this
+        // O(surface) plan, so no full boundary vector crosses the backend.
+        for(std::size_t i=0;i<op.faces().size();++i) {
+            const auto& face=op.faces()[i];
+            if(face.boundary_side<0) continue;
+            boundary_faces.push_back(static_cast<int>(i));
+            boundary_native.push_back(face.center);
+        }
+        boundary_host_values.assign(boundary_faces.size(),0.);
+        boundary_face_index=e.array<int>(static_cast<int>(boundary_faces.size()));
+        boundary_face_values=e.array<double>(static_cast<int>(boundary_faces.size()));
+        if(!boundary_faces.empty())
+            e.copy(boundary_face_index.data,boundary_faces.data(),sizeof(int)*boundary_faces.size(),
+                arch::multigrid::Transfer::Upload);
+    }
     e.fill(boundary_values);e.fence();
 }
 }

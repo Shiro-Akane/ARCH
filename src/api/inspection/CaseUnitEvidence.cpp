@@ -118,6 +118,12 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"hotspot_radius", "cm"},
         {"hotspot_separation", "cm"},
     }}},
+    {"UserBoundary", {"simulation/UserBoundary/case.cpp", "443a4967b2324cfdcdaf993b3a1e9b37b3362136a8c94dbe1d9e59eaed069557", {
+        {"user_boundary_heat_flux", "erg/(cm^2 s)"},
+    }}},
+    {"UserGravity", {"simulation/UserGravity/case.cpp", "4280829d0a70fa50903a5bfac1338fe1ab15c8eb19e2eea5bf00d64d18dae42f", {
+        {"user_boundary_heat_flux", "erg/(cm^2 s)"},
+    }}},
     {"SNIaCoupled", {"simulation/SNIaCoupled/SNIaCoupled.cpp", "291721c4a22fece17f6df95020386e912fc02f333e5d17110f5d10cf28182e15", {
         {"rho0", "g/cm^3"},
         {"temperature0", "K"},

@@ -182,6 +182,8 @@ arch_configure_cuda_backend_object(arch_cuda_backend_diffusion
     src/cuda/runtime/diffusion/CudaBackendDiffusion.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_exchange
     src/cuda/runtime/amr/CudaBackendExchange.cu)
+target_sources(arch_cuda_backend_exchange PRIVATE
+    src/cuda/runtime/boundary/CudaBackendBoundary.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_amr_flux
     src/cuda/runtime/amr/CudaBackendAmrFlux.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_amr_indicators

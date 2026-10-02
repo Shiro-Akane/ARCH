@@ -30,6 +30,7 @@ inline arch::grid::ScalarFieldLayout native_scalar_layout(const Grid& grid) {
 struct EllipticCellBinding { std::size_t block; int offset; };
 struct EllipticMeshBinding {
     arch::elliptic::CartesianMesh base;
+    std::array<bool,3> periodic{}; // Physical AMR topology, separate from Poisson gauge.
     std::vector<arch::elliptic::CompositeCell> cells;
     std::vector<EllipticCellBinding> storage;
     std::vector<const Grid*> grids;

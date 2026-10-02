@@ -427,3 +427,24 @@ uses a private workspace and forward declarations to avoid propagating MG templa
 into the hydro dispatch matrix. The same control and math execute through Host or CUDA loop providers.
 The target name records compilation by the Host compiler, not a Host field fallback:
 CUDA runs keep iteration vectors resident and use the existing stream/allocation owners.
+
+## User boundary ownership
+
+| Responsibility | Authority | Consumers |
+| --- | --- | --- |
+| Typed callback data / portable registration | `physics/boundary/BoundaryTypes.h`, `UserBoundary.h` | Public two-header case interface, Driver, restart |
+| Origin/pole identity | `grid/CoordinateBoundary.h` | Physical ghosts, AMR coordinate seam, composite Poisson |
+| EOS ghost and transport-flux rules | `physics/boundary/PhysicalBoundary.h`, `BoundaryFlux.h` | Host loop and CUDA surface adapter share these leaves |
+| Actual surface observation and quadrature | `BoundaryDiagnostics.h`, `DriverBoundaryDiagnostics.cpp` | Host/CUDA actual face kernels, Driver IO |
+| Potential side policy / field exchange | `gravity/self/GravityUserBoundary.*`, `GravityBoundaryDiagnostics.h` | Existing composite operator / gravity execution |
+| CUDA storage and gather/scatter | `cuda/runtime/boundary/CudaBackendBoundary.cu` | Surface-only callback snapshots and observer planes |
+| Region transfer layout / completion | `CudaBackendResources.cpp::copy_host_device_region`, `ComputeBackend.h::transfer_state_regions` | Disjoint Interior/Ghost cuboids, per-plane species stride and the existing residency/fence transaction |
+| Completed user ghost reuse | `PhysicalBoundaryHandler::configure_stage`, `DriverRuntime::complete_device_boundary` | Exact time/purpose snapshot plus existing field version and AMR epoch; failure never publishes a reusable stamp |
+| Host surface evaluation | `PhysicalBoundaryHandler::apply_device`, existing `state::HostFailure` | Independent sample outputs and face-control rows may use OpenMP; immutable inputs, fixed scatter order, and joined failure rejection before publication. CUDA calls remain outside the worker loop. |
+
+Regularity is identified geometrically, not by dropping small physical areas.
+Source registration, callback names and scientific inputs participate in format-7
+restart identity. The O7 configuration/API owner retains required-input semantics;
+O8 extends existing options/applicability without creating a parallel config model.
+Legacy and mixed-flux gradient descriptors call the same `composite_face_gradient`;
+the once-per-level selector removes unused branches without changing its arithmetic.

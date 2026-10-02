@@ -213,3 +213,6 @@ CTest 负责运行测试，不会自动编译缺失的测试程序。不指定 `
 构建的是默认目标集合；启用测试后这个集合会更大。更多定向检查见
 [Tests](../../tests/README.md)，科学算例及验收使用
 [Validation](../../validation/README.zh-CN.md) 中各模块的流程。
+
+算例边界随应用编译：把 `physical_boundary.cpp`、`gravity_boundary.cpp` 放在注册算例源码
+同目录，新增文件后重新配置并构建，无需边界路径参数。见[用户边界](UserBoundaries.zh-CN.md)。

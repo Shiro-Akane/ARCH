@@ -6,6 +6,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -16,6 +17,7 @@ import time
 import h5py
 import numpy as np
 from gravity_box import BoxCampaign
+from user_boundaries import UserBoundaryCampaign
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -25,55 +27,99 @@ def require(ok, message):
         raise RuntimeError(message)
 
 
-def benchmark(executable, output, steps=2, only=None):
-    """Same Release binary, warmup + three samples; no speedup pass threshold."""
+def benchmark(executable, output, terminal_time=.1, only=None, repeats=5,
+              cpu_executable=None, baseline_cpu=None, cuda_host_threads=1):
+    """Alternating complete physical-time runs; same binary for CPU/GPU ratios.
+
+    An optional frozen CPU binary adds a separate same-compiler regression
+    pair. That pair never replaces the same-binary backend speedup denominator.
+    """
     records, summaries, device_memory = [], [], []
     stop = threading.Event()
     def monitor():
         while not stop.is_set():
-            result = subprocess.run(['nvidia-smi','--query-gpu=memory.used','--format=csv,noheader,nounits'],
+            result = subprocess.run(['nvidia-smi','--query-gpu=memory.used,temperature.gpu,utilization.gpu,power.draw',
+                                     '--format=csv,noheader,nounits'],
                                     capture_output=True,text=True,timeout=10)
             if result.returncode == 0:
-                device_memory.append(dict(time=time.time(),used_mib=float(result.stdout.splitlines()[0])))
-            stop.wait(.2)
+                values=result.stdout.splitlines()[0].split(',')
+                device_memory.append(dict(time=time.time(),used_mib=float(values[0]),
+                    temperature_c=float(values[1]),utilization_percent=float(values[2]),power_w=float(values[3])))
+            stop.wait(.5)
     thread = threading.Thread(target=monitor,daemon=True)
     thread.start()
     cases = [
-        ('small-periodic',dict(nblockx1=4,max_steps=2)),
-        ('medium-periodic',dict(nblockx1=2,nblockx2=2,nblockx3=2,x2_max=1e8,x3_max=1e8,max_steps=2)),
-        ('large-periodic',dict(nblockx1=4,nblockx2=4,nblockx3=4,x2_max=1e8,x3_max=1e8,max_steps=2,max_blocks=128)),
+        ('small-periodic',dict(nblockx1=4)),
+        ('medium-periodic',dict(nblockx1=2,nblockx2=2,nblockx3=2,x2_max=1e8,x3_max=1e8)),
+        ('large-periodic',dict(nblockx1=4,nblockx2=4,nblockx3=4,x2_max=1e8,x3_max=1e8,max_blocks=128)),
         ('large-isolated-amr',BoxCampaign.cloud_config(roots=2,width=.06,center_x=.22,center_y=.22,center_z=.22,
-            lrefinemax=1,refine_threshold=.1,derefine_threshold=.01,tmax=10.,max_steps=2))]
+            lrefinemax=1,refine_threshold=.1,derefine_threshold=.01))]
+    if only == 'large-user-boundary':
+        cases = [('large-user-boundary', dict(nblockx1=4,nblockx2=4,nblockx3=4,
+                                              max_blocks=128,dimension=3))]
+    images={'cpu':executable,'cuda':executable}
+    if baseline_cpu:
+        images.update({'baseline-cpu':baseline_cpu,'candidate-cpu':cpu_executable})
     try:
         for name,config in cases:
             if only and name!=only:continue
-            if steps!=2:
-                config.update(max_steps=steps,tmax=1. if 'periodic' in name else 1e6)
+            if name == 'large-user-boundary':
+                require(not baseline_cpu, 'the previous release has no UserBoundary model; benchmark its built-in BC separately')
+            config.update(max_steps=-1,tmax=terminal_time)
+            reference=None
+            def run(label,count,sample):
+                nonlocal reference
+                backend='cuda' if label=='cuda' else 'cpu'
+                if name == 'large-user-boundary':
+                    campaign=UserBoundaryCampaign(images[label],output/name,backend,count,measure_resources=True)
+                    _,_,end,_,record=campaign.run(sample,**config)
+                    final=end['state'] | dict(time=end['time'])
+                else:
+                    campaign=BoxCampaign(images[label],output/name,backend,count,True)
+                    data,folder,record=campaign.run(sample,**config)
+                    final=data[-1]
+                require(abs(final['time']-terminal_time)<=8*np.finfo(float).eps*terminal_time,
+                        sample+': benchmark did not reach the shared physical endpoint')
+                record.update(lane=label,final_time=final['time'],physical_time=terminal_time)
+                if reference is None:reference=final
+                for key in reference:
+                    require(np.allclose(final[key],reference[key],rtol=2e-11,atol=2e-13),
+                            sample+': final-state parity failed for '+key)
+                records.append(record)
+                return record
             sweep=[]
             for count in [1,4,8]:
-                c=BoxCampaign(executable,output/name,'cpu',count,True)
-                _,_,record=c.run('warmup-cpu-'+str(count),**config)
-                records.append(record);sweep.append(record)
+                sweep.append(run('cpu',count,'warmup-cpu-'+str(count)))
             best=min(sweep,key=lambda r:r['elapsed_seconds'])['threads']
-            gpu=BoxCampaign(executable,output/name,'cuda',1,True)
-            _,_,warm=gpu.run('warmup-cuda',**config);records.append(warm)
+            warm=run('cuda',cuda_host_threads,'warmup-cuda')
+            if baseline_cpu:
+                run('baseline-cpu',best,'warmup-baseline-cpu')
+                run('candidate-cpu',best,'warmup-candidate-cpu')
+            samples={label:[] for label in images}
+            for repeat in range(repeats):
+                order=list(images) if repeat%2==0 else list(reversed(images))
+                for label in order:
+                    samples[label].append(run(label,cuda_host_threads if label=='cuda' else best,label+'-'+str(repeat)))
             groups={}
-            for backend,count in [('cpu',best),('cuda',1)]:
-                samples=[]
-                c=BoxCampaign(executable,output/name,backend,count,True)
-                for repeat in range(3):
-                    _,_,r=c.run(f'{backend}-{repeat}',**config);samples.append(r);records.append(r)
+            for label,values in samples.items():
                 keys=['elapsed_seconds','driver_seconds','output_seconds','setup_seconds','solve_seconds',
                       'source_boundary_seconds','poisson_seconds','force_seconds','stage_poisson_seconds','peak_rss_kib']
-                groups[backend]={key:dict(median=statistics.median(r[key] for r in samples),
-                    minimum=min(r[key] for r in samples),maximum=max(r[key] for r in samples)) for key in keys}
+                groups[label]={key:dict(median=statistics.median(r[key] for r in values),
+                    minimum=min(r[key] for r in values),maximum=max(r[key] for r in values)) for key in keys}
             speedup={key:groups['cpu'][key]['median']/groups['cuda'][key]['median']
                      for key in ['elapsed_seconds','solve_seconds','poisson_seconds','stage_poisson_seconds']}
-            summaries.append(dict(name=name,cells=warm['cells'],cpu_threads=best,groups=groups,speedup=speedup))
+            summary=dict(name=name,cells=warm['cells'],cpu_threads=best,cuda_host_threads=cuda_host_threads,physical_time=terminal_time,
+                         repeats=repeats,groups=groups,speedup=speedup)
+            if baseline_cpu:
+                summary['candidate_over_baseline_cpu']=groups['candidate-cpu']['elapsed_seconds']['median']/groups['baseline-cpu']['elapsed_seconds']['median']
+            summaries.append(summary)
             print(name,speedup,flush=True)
     finally:
         stop.set();thread.join(timeout=15)
         report=dict(executable=str(executable),sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
+                    status='passed' if len(summaries)==sum(1 for name,_ in cases if not only or name==only) else 'incomplete',
+                    protocol='warmup, CPU thread selection, alternating complete physical endpoints',
+                    images={label:dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest()) for label,path in images.items()},
                     device_memory_scope='whole-device usage including baseline, not per-process allocation',
                     device_memory=device_memory,results=records,summaries=summaries)
         (output/'performance.json').write_text(json.dumps(report,indent=2)+'\n')
@@ -85,14 +131,26 @@ def main():
     parser.add_argument('--cuda-arch', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--benchmark-only', action='store_true', help='run local performance matrix instead of qualification')
-    parser.add_argument('--benchmark-steps', type=int, default=2, help='positive macro-step limit for performance runs')
-    parser.add_argument('--benchmark-case', choices=['small-periodic','medium-periodic','large-periodic','large-isolated-amr'])
+    parser.add_argument('--benchmark-time', type=float, default=.1, help='common physical endpoint in seconds; no accepted-step cap')
+    parser.add_argument('--benchmark-repeats', type=int, default=5, help='at least three alternating measured runs per lane')
+    parser.add_argument('--benchmark-cuda-host-threads', type=int, default=1,
+                        help='OpenMP threads for Host callbacks/initialization in the CUDA lane; default retains serial Host measurements')
+    parser.add_argument('--baseline-cpu-arch', type=Path, help='optional frozen same-compiler CPU image for the separate regression pair')
+    parser.add_argument('--benchmark-case', choices=['small-periodic','medium-periodic','large-periodic','large-user-boundary','large-isolated-amr'])
     args = parser.parse_args()
     args.output = args.output.resolve()
+    require(not args.output.exists() or not any(args.output.iterdir()),
+            'choose a new or empty local output directory')
     args.output.mkdir(parents=True, exist_ok=True)
     if args.benchmark_only:
-        require(args.benchmark_steps>0,'benchmark steps must be positive')
-        benchmark(args.cuda_arch.resolve(),args.output,args.benchmark_steps,args.benchmark_case)
+        require(math.isfinite(args.benchmark_time) and args.benchmark_time>0,
+                'benchmark physical endpoint must be finite and positive')
+        require(args.benchmark_repeats>=3,'benchmark needs at least three alternating repetitions')
+        require(args.benchmark_cuda_host_threads>=1,'CUDA Host execution requires a positive thread count')
+        benchmark(args.cuda_arch.resolve(),args.output,args.benchmark_time,args.benchmark_case,
+                  args.benchmark_repeats,args.cpu_arch.resolve(),
+                  args.baseline_cpu_arch.resolve() if args.baseline_cpu_arch else None,
+                  args.benchmark_cuda_host_threads)
         return
     base = {}
     for line in (ROOT/'simulation/JeansWave/JeansWave.par').read_text().splitlines():
@@ -117,7 +175,8 @@ def main():
     def inspect(folder, cuda=False):
         path = sorted(folder.glob('*chk*.h5'))[-1]
         with h5py.File(path) as f:
-            require(int(f.attrs['checkpoint_version'])==6, 'checkpoint version')
+            require(int(f.attrs['checkpoint_version'])==7, 'checkpoint version')
+            require(bool(f.attrs.get('boundary_identity', '')), 'checkpoint boundary identity')
             require(f.attrs['gravity_type']=='external', 'gravity identity')
             require(np.array_equal(f['gravity_controls'][:],[.7,0.,0.]), 'external controls')
             time = float(f.attrs['time'])
@@ -206,7 +265,7 @@ def main():
                 backend+': nonconverged self gravity was not rejected')
         require(not list(folder.glob('*plt*.h5')),backend+': failed self field published')
         records.append(dict(name='reject-self-convergence-'+backend,rejected=True))
-    # Native v6 checkpoint remains backend independent; phi is recomputed from
+    # Native checkpoint remains backend independent; phi is recomputed from
     # the resumed density, and no old device allocation is serialized.
     x,_,_=cpu_box.run('continuous',tmax=.03)
     _,folder,_=cpu_box.run('checkpoint',tmax=.03,max_steps=2)
@@ -218,7 +277,7 @@ def main():
                   cpu_sha256=hashlib.sha256(args.cpu_arch.read_bytes()).hexdigest(),
                   cuda_sha256=hashlib.sha256(args.cuda_arch.read_bytes()).hexdigest(),results=records)
     (args.output/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    print('CUDA gravity qualification passed: external/self, independent physics, AMR, coupling and v6 restart')
+    print('CUDA gravity qualification passed: external/self, independent physics, AMR, coupling and portable restart')
 
 
 if __name__=='__main__':

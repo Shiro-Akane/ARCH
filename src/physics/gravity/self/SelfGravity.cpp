@@ -27,15 +27,30 @@
 #include "physics/constant/PhysicalConstants.h"
 #include "physics/gravity/GravityBoundary.h"
 #include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/self/GravityUserBoundary.h"
 #include "physics/gravity/self/GravityWorkspace.h"
+
+#include "physics/boundary/UserBoundary.h"
 
 namespace Physical::Gravity {
 /** Validate gravity boundary kind, G and convergence controls once. */
 SelfGravity::SelfGravity(GravityConfig config):config_(std::move(config)) {
-    if ((config_.boundary!="periodic" && config_.boundary!="isolated") || !std::isfinite(config_.G_const) || config_.G_const<=0.
+    const bool known=config_.boundary=="periodic" || config_.boundary=="isolated"
+        || config_.boundary=="dirichlet" || config_.boundary=="neumann" || config_.boundary=="user";
+    if (!known || !std::isfinite(config_.G_const) || config_.G_const<=0.
         || !std::isfinite(config_.relative_tolerance) || config_.relative_tolerance<=0. || config_.relative_tolerance>=1.
         || !std::isfinite(config_.absolute_tolerance) || config_.absolute_tolerance<0. || config_.max_cycles<1)
         throw std::invalid_argument("Invalid self-gravity physical or convergence controls");
+    if (config_.boundary=="user") {
+        // Capture the immutable selection once; the copied callback and the
+        // borrowed config/species stay live for every later run.
+        const auto* selection=arch::boundary::CurrentUserBoundaries();
+        if (!selection || !selection->callbacks.gravity || !selection->config || !selection->species)
+            throw std::invalid_argument("User self-gravity boundary requires an active resolved gravity callback");
+        user_callback_=selection->callbacks.gravity;
+        user_config_=selection->config;
+        user_species_=selection->species;
+    }
 }
 /** Destroy the topology-bound resident workspace after its execution lease. */
 SelfGravity::~SelfGravity()=default;
@@ -44,8 +59,10 @@ SelfGravity::Workspace& SelfGravity::workspace() const {
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
     return *work_;
 }
-/** Bind one AMR topology epoch and establish native active-cell order. */
-void SelfGravity::bind(amr::EllipticMeshBinding binding) const {
+/** Bind one AMR topology epoch and establish native active-cell order. The
+ *  supplied stage/restart @p time samples the initial side structure, so a
+ *  restart never evaluates a user callback at an artificial t=0. */
+void SelfGravity::bind(amr::EllipticMeshBinding binding, double time) const {
     invalidate();
     if (binding.grids.empty() || binding.grids.size()!=binding.handles.size()
         || binding.cells.size()!=binding.storage.size()) throw std::invalid_argument("Invalid gravity mesh binding");
@@ -61,19 +78,61 @@ void SelfGravity::bind(amr::EllipticMeshBinding binding) const {
                 throw std::invalid_argument("Gravity cells do not match native active storage order");
     }
     if (cell!=binding.cells.size()) throw std::invalid_argument("Extra cells in gravity mesh binding");
+    const bool user_boundary=config_.boundary=="user";
+    const bool explicit_policy=config_.boundary=="dirichlet" || config_.boundary=="neumann" || user_boundary;
     if(binding.base.geometry!=arch::elliptic::Geometry::Cartesian &&
-        config_.boundary!="isolated")
-        throw std::invalid_argument("Curvilinear self-gravity requires an isolated field boundary");
-    const auto kind=binding.base.geometry!=arch::elliptic::Geometry::Cartesian
+        config_.boundary!="isolated" && !explicit_policy)
+        throw std::invalid_argument("Curvilinear self-gravity requires an isolated or explicit field boundary");
+    auto kind=binding.base.geometry!=arch::elliptic::Geometry::Cartesian
         ? (binding.base.dimension==1 ? arch::elliptic::BoundaryKind::RadialIsolated
                                      : arch::elliptic::BoundaryKind::CurvilinearIsolated)
         : (config_.boundary=="periodic" ? arch::elliptic::BoundaryKind::Periodic
                                         : arch::elliptic::BoundaryKind::Dirichlet);
-    work_=std::make_unique<Workspace>(std::move(binding),kind,
+    arch::elliptic::CompositeBoundary boundary;
+    if(explicit_policy) {
+        kind=arch::elliptic::BoundaryKind::User;
+        boundary=user_boundary
+            ? gravity_user_boundary(user_callback_,*user_config_,*user_species_,binding.base,binding.periodic,time)
+            : gravity_homogeneous_boundary(binding.base,binding.periodic,
+                config_.boundary=="neumann" ? arch::elliptic::FaceBoundaryKind::Neumann
+                                            : arch::elliptic::FaceBoundaryKind::Dirichlet);
+    }
+    // Periodic pairs owned by an explicit policy are a physical topology
+    // property; reject any that disagrees with the AMR binding. Legacy
+    // periodic/isolated gravity kinds keep their established behavior.
+    if(explicit_policy) for(int axis=0;axis<binding.base.dimension;++axis)
+        if((boundary.sides[2*axis]==arch::elliptic::FaceBoundaryKind::Periodic)!=binding.periodic[axis])
+            throw std::invalid_argument("Self-gravity periodicity disagrees with the AMR topology");
+    work_=std::make_unique<Workspace>(std::move(binding),kind,std::move(boundary),
         execution_?execution_:(execution_=make_host_gravity_execution()));
+    work_->boundary_time=time;
 }
 /** Retire a prior gravity publication whenever its density lease changes. */
 void SelfGravity::invalidate() const noexcept { if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate(); } }
+/** Resolve the explicit per-side policy for the requested stage time. */
+arch::elliptic::CompositeBoundary SelfGravity::current_boundary(const Workspace& w,double time) const {
+    if(config_.boundary=="user")
+        return gravity_user_boundary(user_callback_,*user_config_,*user_species_,w.binding.base,
+            w.binding.periodic,time);
+    return gravity_homogeneous_boundary(w.binding.base,w.binding.periodic,
+        config_.boundary=="neumann" ? arch::elliptic::FaceBoundaryKind::Neumann
+                                    : arch::elliptic::FaceBoundaryKind::Dirichlet);
+}
+/** Rebuild the topology-bound operator after a side structure/a/b change. */
+void SelfGravity::rebuild_boundary(arch::elliptic::CompositeBoundary boundary) const {
+    auto& bound=*work_;
+    auto binding=std::move(bound.binding);
+    auto runner=bound.execution;
+    // The publication counter and boundary time belong to the topology epoch,
+    // not to one operator instance; a rebuild must not restart either.
+    const std::uint64_t generation=bound.generation;
+    const double time=bound.boundary_time;
+    bound.solver.execution().fence();
+    work_=std::make_unique<Workspace>(std::move(binding),arch::elliptic::BoundaryKind::User,
+        std::move(boundary),std::move(runner));
+    work_->generation=generation;
+    work_->boundary_time=time;
+}
 /** Restart and uninterrupted runs must start each macro-step solve identically. */
 void SelfGravity::clear_solver_initial_guess() const noexcept {
     if(work_) work_->solver.clear_initial_guess();
@@ -82,20 +141,31 @@ void SelfGravity::clear_solver_initial_guess() const noexcept {
 arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& request) const {
     invalidate();
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
-    auto& w=*work_; const auto& op=w.solver.op(); const auto& identity=request.identity;
-    if (request.blocks.size()!=w.patches.size() || identity.inputs.size()!=w.patches.size()
-        || identity.topology!=w.binding.handles.front().epoch || identity.gravitational_constant!=config_.G_const
-        || identity.operator_revision!=1 || identity.boundary_revision!=1 || identity.accuracy_revision!=1)
-        throw std::logic_error("Self-gravity solve identity differs from bound mesh/configuration");
-    for (std::size_t b=0;b<w.patches.size();++b) {
-        const auto& view=request.blocks[b];
-        if (view.identity!=identity.inputs[b] || view.identity.block!=w.binding.handles[b]
-            || view.density.memory!=(w.solver.execution().device()?arch::grid::FieldMemory::Device:arch::grid::FieldMemory::Host) || !view.density.data
-            || view.density.layout!=amr::native_scalar_layout(*w.binding.grids[b])
-            || view.density.storage_generation!=view.identity.storage_generation
-            || view.density.size!=static_cast<std::size_t>(w.binding.grids[b]->GetTotalSize()))
-            throw std::logic_error("Self-gravity density view does not match its dependency");
+    const auto& identity=request.identity;
+    {
+        auto& bound=*work_; const auto& op=bound.solver.op();
+        if (request.blocks.size()!=bound.patches.size() || identity.inputs.size()!=bound.patches.size()
+            || identity.topology!=bound.binding.handles.front().epoch || identity.gravitational_constant!=config_.G_const
+            || identity.operator_revision!=1 || identity.boundary_revision!=1 || identity.accuracy_revision!=1)
+            throw std::logic_error("Self-gravity solve identity differs from bound mesh/configuration");
+        for (std::size_t b=0;b<bound.patches.size();++b) {
+            const auto& view=request.blocks[b];
+            if (view.identity!=identity.inputs[b] || view.identity.block!=bound.binding.handles[b]
+                || view.density.memory!=(bound.solver.execution().device()?arch::grid::FieldMemory::Device:arch::grid::FieldMemory::Host) || !view.density.data
+                || view.density.layout!=amr::native_scalar_layout(*bound.binding.grids[b])
+                || view.density.storage_generation!=view.identity.storage_generation
+                || view.density.size!=static_cast<std::size_t>(bound.binding.grids[b]->GetTotalSize()))
+                throw std::logic_error("Self-gravity density view does not match its dependency");
+        }
     }
+    // A datum-only change keeps the multigrid levels; a changed side structure
+    // rebuilds the operator on the same AMR binding and execution.
+    if(work_->explicit_boundary) {
+        auto next=current_boundary(*work_,identity.input_time);
+        if(!gravity_same_structure(work_->user_boundary,next)) rebuild_boundary(std::move(next));
+        work_->boundary_time=identity.input_time;
+    }
+    auto& w=*work_; const auto& op=w.solver.op();
     using Clock=std::chrono::steady_clock;
     const auto started=Clock::now();
     auto& e=w.solver.execution();std::vector<const double*> pointers;
@@ -105,12 +175,44 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     w.max_density=e.maximum(w.density);
     if(!std::isfinite(w.max_density))throw std::invalid_argument("Self gravity requires finite positive active density");
     w.mean=w.solver.mean(w.density);
-    // A=-Laplacian: A*Phi=-4*pi*G*(rho-<rho>) for periodic gravity;
-    // isolated gravity keeps rho and supplies a finite-mass Dirichlet face.
+    // A=-Laplacian: A*Phi=-4*pi*G*(rho-<rho>) only for a wholly periodic
+    // gravity; every flux boundary keeps rho and relies on the shared
+    // compatibility check instead of manufacturing a zero-mean source.
     const double factor=-4.*arch::constants::math::pi*config_.G_const;
     e.linear(w.rhs,factor,w.density,0.,{},
-        op.has_constant_nullspace()?-factor*w.mean:0.);
-    if(w.nodes.size){
+        op.periodic_boundary()?-factor*w.mean:0.);
+    if(w.explicit_boundary){
+        // Evaluate the position/time datum c at the actual physical face
+        // centers and scatter only O(surface) values onto the shared plan.
+        // Homogeneous dirichlet/neumann sides keep the zero datum.
+        for(std::size_t i=0;config_.boundary=="user" && i<w.boundary_faces.size();++i) {
+            const auto& face=op.faces()[w.boundary_faces[i]];
+            const int index=face.boundary_side;
+            const auto& condition=w.user_boundary.conditions[index];
+            if(condition.kind==arch::elliptic::FaceBoundaryKind::Periodic) {w.boundary_host_values[i]=0.;continue;}
+            const auto data=gravity_user_sample(user_callback_,*user_config_,*user_species_,w.binding.base,
+                index,w.boundary_native[i],identity.input_time);
+            const auto kind=condition.kind==arch::elliptic::FaceBoundaryKind::Dirichlet
+                ?arch::boundary::GravityBoundaryCondition::Dirichlet
+                :(condition.kind==arch::elliptic::FaceBoundaryKind::Neumann
+                    ?arch::boundary::GravityBoundaryCondition::Neumann
+                    :arch::boundary::GravityBoundaryCondition::Robin);
+            if(data.kind!=kind || data.a!=condition.a || data.b!=condition.b)
+                throw std::invalid_argument("User gravity side structure changes within a stage");
+            // A nonfinite datum must fail here, before it can be uploaded into
+            // the boundary values that feed the solve and the force rows.
+            if(!std::isfinite(data.c))
+                throw std::invalid_argument("User gravity boundary datum is not finite");
+            w.boundary_host_values[i]=data.c;
+        }
+        if(!w.boundary_faces.empty()) {
+            e.copy(w.boundary_face_values.data,w.boundary_host_values.data(),
+                sizeof(double)*w.boundary_host_values.size(),arch::multigrid::Transfer::Upload);
+            w.execution->run(ScatterBoundary{static_cast<int>(w.boundary_faces.size()),
+                w.boundary_face_index.data,w.boundary_face_values.data,w.boundary_values.data});
+        }
+        w.solver.boundary_rhs(w.rhs,w.boundary_values);
+    } else if(w.nodes.size){
         for(auto it=w.layers.rbegin();it!=w.layers.rend();++it)
             w.execution->run(UpdateMoments{it->size,it->data,w.nodes.data,w.moments.data,w.density.data,w.volumes.data});
         w.execution->run(EvaluateBoundary{w.points.size,w.points.data,w.nodes.data,w.moments.data,w.nodes.size,op.base().dimension,
@@ -135,7 +237,10 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
         }
         w.solver.boundary_rhs(w.rhs,w.boundary_values);
     }
-    w.solver.project(w.rhs);
+    // The periodic constant mode is projected only for a wholly periodic
+    // operator; a pure/mixed flux boundary keeps its raw source so the shared
+    // Gauss-law compatibility check can reject an unbalanced mass.
+    if(op.periodic_boundary()) w.solver.project(w.rhs);
     e.fence();
     const auto source_ready=Clock::now();
     w.report=w.solver.solve(w.rhs,{config_.relative_tolerance,config_.absolute_tolerance,config_.max_cycles});
@@ -171,7 +276,13 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
 void SelfGravity::set_execution(std::shared_ptr<GravityExecution> execution) const {
     if(!execution||execution_==execution)return;
     invalidate();if(work_)work_->solver.execution().fence();execution_=std::move(execution);
-    if(work_){auto binding=std::move(work_->binding);work_.reset();bind(std::move(binding));}
+    if(work_){
+        auto binding=std::move(work_->binding);
+        const double time=work_->boundary_time;
+        const std::uint64_t generation=work_->generation;
+        work_.reset();bind(std::move(binding),time);
+        work_->generation=generation;
+    }
 }
 /** Return one published patch face field for hydro source application. */
 GravityPatchView SelfGravity::patch_view(std::size_t block) const {workspace().require();return work_->patches.at(block);}
@@ -212,4 +323,49 @@ void SelfGravity::add_flux_work_on_patch(std::vector<FluidVector>& delta,const s
         delta[c].eng+=gravity_flux_work(patch.work_faces[axis][c],patch.work_faces[axis][c+stride],flux[c].rho,flux[c+stride].rho,dt);
     }
 }
+/** Reduce resident field energy and download only actual boundary face pairs. */
+GravityBoundarySnapshot SelfGravity::boundary_snapshot() const {
+    auto& w=workspace(); w.require();
+    auto& execution=w.solver.execution(); const auto& op=w.solver.op();
+    if(!w.boundary_samples_bound) {
+        arch::multigrid::SparseStorage rows;
+        std::vector<int> faces,signs; std::vector<double> datum_coefficients;
+        for(int f=0;f<static_cast<int>(op.faces().size());++f) {
+            const auto& face=op.faces()[f]; if(face.boundary_side<0) continue;
+            const int cell=face.left>=0 ? face.left : face.right;
+            const auto& leaf=op.cells()[cell]; const int axis=face.axis;
+            rows.row(face.value_samples,face.value_coefficients);
+            faces.push_back(f); signs.push_back((face.boundary_side&1)?1:-1);
+            datum_coefficients.push_back(face.value_boundary_coefficient);
+            w.boundary_sample_identity.push_back({
+                {face.boundary_side,leaf.level,axis==2?leaf.index[0]:leaf.index[(axis+1)%3],
+                 leaf.index[(axis+2)%3]},face.area,0.,0.});
+        }
+        w.boundary_sample_rows={execution,rows};
+        w.boundary_sample_faces=execution.upload(faces); w.boundary_sample_signs=execution.upload(signs);
+        w.boundary_sample_coefficients=execution.upload(datum_coefficients);
+        w.boundary_sample_values=execution.array<double>(2*faces.size());
+        w.boundary_samples_bound=true;
+    }
+    GravityBoundarySnapshot result;
+    result.mesh=op.base(); result.G=config_.G_const; result.time=w.source.input_time;
+    result.potential_energy=.5*execution.reduce({w.density.data,w.solver.resident_potential().data,
+        w.volumes.data,op.size(),arch::multigrid::ReductionKind::Product});
+    if(!std::isfinite(result.potential_energy)) throw std::runtime_error("Nonfinite gravity field energy");
+    if(w.boundary_sample_faces.size) {
+        w.execution->run(GravityBoundarySample{w.boundary_sample_faces.size,w.boundary_sample_rows.view(),
+            w.boundary_sample_faces.data,w.boundary_sample_signs.data,w.boundary_sample_coefficients.data,
+            w.solver.resident_potential().data,w.boundary_values.data,w.face_gradient.data,
+            w.boundary_sample_values.data});
+        const auto pairs=execution.download(w.boundary_sample_values);
+        result.faces=w.boundary_sample_identity;
+        for(std::size_t i=0;i<result.faces.size();++i) {
+            result.faces[i].potential=pairs[2*i]; result.faces[i].normal_gradient=pairs[2*i+1];
+            if(!std::isfinite(pairs[2*i]) || !std::isfinite(pairs[2*i+1]))
+                throw std::runtime_error("Nonfinite gravity boundary field");
+        }
+    }
+    return result;
+}
+
 }

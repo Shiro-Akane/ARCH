@@ -11,6 +11,7 @@
 #include "cuda/hydro/boundary/BoundaryPlan.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/schedule/StageScheduler.h"
+#include "grid/GridMetrics.h"
 #include "numerics/diffusion/DiffFunction.h"
 #include "numerics/burnsolver/Networks.h"
 #include "physics/eos/HelmEos.h"
@@ -19,6 +20,7 @@
 #include "physics/eos/tabular/Tabular4DEOS.h"
 #include "physics/species/Species.h"
 
+#include <algorithm>
 #include <cmath>
 #include <array>
 #include <bit>
@@ -228,6 +230,26 @@ std::uint64_t run_hydro_route(
         arch::state::ExecutionSide::Device, ledger, clock};
     const std::array handles{handle};
     const double dt = 0.125 * backend->compute_hydro_dt(current, 0.8);
+    // Observe both actual Cartesian boundary faces through the production
+    // service. The cell-volume budget below detects a missing upper plane or
+    // observing a neighboring interior face, independently of route hashes.
+    arch::backend::BoundaryFluxPlanes capture;capture.block=handle;
+    capture.stage[0].resize(6);capture.stage[1].resize(6);
+    capture.initial[0].resize(6);capture.initial[1].resize(6);
+    const std::array layout{capture};
+    std::array<long double,5> boundary_budget{};
+    context.hydro_flux_capture_begin=[&](const arch::scheduler::StageDescriptor& stage) {
+        backend->configure_boundary_flux_capture(layout,stage.flux_register_weight,0.,false);
+    };
+    context.hydro_flux_capture_accept=[&](const arch::scheduler::StageDescriptor&) {
+        const auto planes=backend->download_boundary_flux_capture();
+        require(planes.size()==1,"hydro observer lost its physical block");
+        for(int side=0;side<2;++side) {
+            require(planes[0].stage[side].size()==6,"hydro observer lost an owned physical face");
+            for(int field=0;field<5;++field)
+                boundary_budget[field]+=static_cast<long double>(dt)*(side?1.:-1.)*planes[0].stage[side][field];
+        }
+    };
     const auto executor = [&] (
         const arch::scheduler::StageDescriptor& descriptor,
         arch::state::CompletionToken token) {
@@ -279,6 +301,25 @@ std::uint64_t run_hydro_route(
     (void)arch::backend::transfer_state_regions(
         *backend, ledger, clock, current, transfer_view(downloaded),
         arch::state::PendingTransferPhase::PendingD2H);
+
+    const auto totals=[&](const FluidState& state) {
+        std::array<long double,5> value{};
+        for(int i=block.grid.Is();i<block.grid.Ie();++i) {
+            const auto u=state.get(block.grid.GetIndex(i));
+            const double fields[]{u.rho,u.mom_u,u.mom_v,u.mom_w,u.eng};
+            const long double volume=GridMetrics::CellVolume(block.grid,i,block.grid.Js(),block.grid.Ks());
+            for(int field=0;field<5;++field)value[field]+=volume*fields[field];
+        }
+        return value;
+    };
+    const auto initial_totals=totals(block.fluid_state),final_totals=totals(downloaded);
+    for(int field=0;field<5;++field) {
+        const long double error=final_totals[field]-initial_totals[field]+boundary_budget[field];
+        const long double scale=std::max({std::abs(initial_totals[field]),std::abs(final_totals[field]),
+            std::abs(boundary_budget[field])});
+        require(std::abs(error)<=128.*std::numeric_limits<double>::epsilon()*scale,
+            "actual hydro surface flux does not close the conserved cell-volume budget");
+    }
 
     std::uint64_t hash = 1469598103934665603ULL;
     for (int i = block.grid.Is(); i < block.grid.Ie(); ++i) {

@@ -138,12 +138,14 @@ bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
     const auto& gravity=provenance.gravity_controls;
     if (!std::all_of(gravity.begin(),gravity.end(),[](double x){return std::isfinite(x);})) return false;
     if (provenance.gravity_type=="self") {
-        if ((provenance.gravity_boundary!="periodic" && provenance.gravity_boundary!="isolated") || gravity.size()!=4 || gravity[0]<=0.
+        if ((provenance.gravity_boundary!="periodic" && provenance.gravity_boundary!="isolated"
+             && provenance.gravity_boundary!="dirichlet" && provenance.gravity_boundary!="neumann"
+             && provenance.gravity_boundary!="user") || gravity.size()!=4 || gravity[0]<=0.
             || gravity[1]<=0. || gravity[1]>=1. || gravity[2]<0. || gravity[3]<1. || std::floor(gravity[3])!=gravity[3]) return false;
     } else if (provenance.gravity_type=="external") {
         if (gravity.size()!=3 || provenance.gravity_boundary!="none") return false;
     } else if (provenance.gravity_type!="none" || !gravity.empty() || provenance.gravity_boundary!="none") return false;
-    if (!provenance.available || provenance.eos_type.empty()
+    if (!provenance.available || provenance.boundary_identity.empty() || provenance.eos_type.empty()
         || provenance.active_network.empty()
         || !is_canonical_identity(provenance.eos_type)
         || !is_canonical_identity(provenance.active_network)
@@ -266,6 +268,7 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
         file.createAttribute("eos_type", checkpoint.provenance.eos_type);
+        file.createAttribute("boundary_identity", checkpoint.provenance.boundary_identity);
         file.createAttribute("gravity_type", checkpoint.provenance.gravity_type);
         file.createAttribute("gravity_boundary", checkpoint.provenance.gravity_boundary);
         file.createDataSet("gravity_controls", checkpoint.provenance.gravity_controls);
@@ -364,6 +367,7 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         int nse_enabled = 0;
         checkpoint.provenance.available = true;
         file.getAttribute("eos_type").read(checkpoint.provenance.eos_type);
+        file.getAttribute("boundary_identity").read(checkpoint.provenance.boundary_identity);
         file.getAttribute("gravity_type").read(checkpoint.provenance.gravity_type);
         file.getAttribute("gravity_boundary").read(checkpoint.provenance.gravity_boundary);
         file.getDataSet("gravity_controls").read(checkpoint.provenance.gravity_controls);

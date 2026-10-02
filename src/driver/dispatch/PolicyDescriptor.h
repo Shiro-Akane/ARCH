@@ -647,9 +647,11 @@ inline ParseResult<GravityId> parse_gravity(std::string_view value) noexcept
 inline ParseResult<BoundaryFeature> parse_boundary(std::string_view value) noexcept
 {
     if (ascii_iequals(value, "periodic")) return {BoundaryFeature::Periodic, true, false, {}};
-    if (ascii_iequals(value, "outflow")) return {BoundaryFeature::Outflow, true, false, {}};
+    if (ascii_iequals(value, "outflow") || ascii_iequals(value, "neumann")) return {BoundaryFeature::Outflow, true, false, {}};
     if (ascii_iequals(value, "reflect") || ascii_iequals(value, "reflecting"))
         return {BoundaryFeature::Reflecting, true, false, {}};
+    if (ascii_iequals(value, "user") || ascii_iequals(value, "inflow") || ascii_iequals(value, "dirichlet"))
+        return {BoundaryFeature::User, true, false, {}};
     return {BoundaryFeature::Unknown, false, false, "unknown boundary"};
 }
 

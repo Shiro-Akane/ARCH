@@ -127,6 +127,18 @@ __device__ inline void hydro_face_kernel_work(
         flux.store(face, face_flux);
         for (int species = 0; species < state.n_species; ++species)
             flux.set_species(species, face, face_species_flux[species]);
+        // Observe the exact flux divergence and reflux consume, after
+        // admissibility limiting and physical-boundary ghost filling.
+        // Hydro reconstructs from the left cell, while divergence addresses
+        // the face by its right-cell index. Shift only the normal coordinate
+        // so both domain faces refer to the flux just stored at cell+stride.
+        // Hydro heat flux is zero; only owned physical face planes are touched.
+        if (state.capture.stage[2 * direction] || state.capture.stage[2 * direction + 1])
+            arch::boundary::CaptureBoundaryFlux(state.capture, direction,
+                i+(direction==0),j+(direction==1),k+(direction==2),
+                grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, face_flux,
+                state.n_species ? flux.mass_fractions + face : nullptr,
+                state.n_species, flux.total_size, 0.0);
     }
 }
 

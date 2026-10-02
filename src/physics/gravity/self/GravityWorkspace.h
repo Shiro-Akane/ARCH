@@ -24,6 +24,10 @@ struct SelfGravity::Workspace {
     template<class T> using Array=arch::multigrid::Array<T>;
     amr::EllipticMeshBinding binding;
     std::shared_ptr<GravityExecution> execution;
+    // Explicit per-side policy (dirichlet/neumann/user) resolved for this
+    // topology epoch; legacy periodic/isolated kinds carry no such boundary.
+    arch::elliptic::CompositeBoundary user_boundary;
+    bool explicit_boundary=false;
     arch::multigrid::CompositeMultigrid solver;
     Vector density,rhs,boundary_values,face_gradient,sides,work_sides,g,patch_faces,patch_work_faces,inverse_dt_squared;
     Array<GravityCell> cells;
@@ -36,8 +40,24 @@ struct SelfGravity::Workspace {
     std::vector<Array<int>> layers;
     std::vector<int> patch_offsets;
     std::vector<GravityPatchView> patches;
+    // O(surface) physical-face scatter plan for the position/time datum c.
+    std::vector<int> boundary_faces;
+    std::vector<std::array<double,3>> boundary_native;
+    Array<int> boundary_face_index;
+    Array<double> boundary_face_values;
+    std::vector<double> boundary_host_values;
+    // Lazily allocated surface observer; ordinary runs never request it.
+    arch::multigrid::SparseArray boundary_sample_rows;
+    Array<int> boundary_sample_faces,boundary_sample_signs;
+    Vector boundary_sample_coefficients,boundary_sample_values;
+    std::vector<GravityBoundaryFaceState> boundary_sample_identity;
+    bool boundary_samples_bound=false;
     std::unordered_map<const Grid*,std::size_t> lookup;
     int native_size=0;
+    // Stage/restart time at which the current side structure was sampled. An
+    // execution swap rebinds on the same topology and must keep this time
+    // instead of silently falling back to t=0.
+    double boundary_time=0.;
     GravityFieldValidity validity;
     GravitySolveIdentity source;
     std::uint64_t generation=0;
@@ -48,7 +68,8 @@ struct SelfGravity::Workspace {
     arch::multigrid::SolveReport report;
     Timings timings;
     double mean=0.,max_density=0.,max_acceleration_ratio=0.;
-    Workspace(amr::EllipticMeshBinding,arch::elliptic::BoundaryKind,std::shared_ptr<GravityExecution>);
+    Workspace(amr::EllipticMeshBinding,arch::elliptic::BoundaryKind,
+        arch::elliptic::CompositeBoundary,std::shared_ptr<GravityExecution>);
     /** Reject access unless the workspace holds a matching completed gravity field. */
     void require() const {
         if(!ready||!validity.matches(source,generation))throw std::logic_error("Self-gravity field is not published for this input");

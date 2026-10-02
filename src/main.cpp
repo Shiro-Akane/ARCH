@@ -25,6 +25,7 @@
 #include "core/problem/ProblemRegistry.h"
 #include "core/config/RuntimeParams.h"
 #include "interface/ProblemGenerator.h"
+#include "physics/boundary/UserBoundary.h"
 
 // Runtime data required for startup reporting and dispatch.
 #include "amr/topology/AmrDefines.h"
@@ -62,6 +63,9 @@ int main(int argc, char **argv)
     try
     {
         config = RuntimeParams::Load(par_file);
+        const auto* registered = ProblemRegistry::Get().Registration(problem_type);
+        if (registered)
+            (void)arch::boundary::ResolveCaseBoundaries(problem_type, registered->source_file, config);
 
         // Plot output and checkpoints depend on out_dir.  Logs may be placed
         // in a separate directory so HDF5-only trees remain easy to archive

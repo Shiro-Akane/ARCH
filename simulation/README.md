@@ -12,6 +12,8 @@ runtime name; the catalogue below gives the actual names.
 
 | Directory | Runtime name | Purpose |
 |---|---|---|
+| [UserBoundary](UserBoundary/README.md) | `UserBoundary` | Class-form physical/potential callbacks and thermal channels |
+| [UserGravity](UserGravity/README.md) | `UserGravity` | Function-form callbacks on radial and multidimensional domains |
 | [Sod](Sod/README.md) | `Sod` | One-dimensional shock tube and introductory input |
 | [Sedov](Sedov/README.md) | `Sedov` | Finite-radius Cartesian blast and AMR evolution |
 | [SmoothAdvection](SmoothAdvection/README.md) | `SmoothAdvection` | Periodic entropy-wave transport |

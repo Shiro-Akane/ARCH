@@ -786,10 +786,10 @@ int main(int argc, char** argv)
                   == alignof(DenseMatrixData<BurnLimits::MAX_ODE_NEQ>));
     static_assert(offsetof(arch::cuda::BurnOdeMatrixWorkspace, system)
                   == sizeof(DenseMatrixData<BurnLimits::MAX_ODE_NEQ>));
-    try {
-        if (argc != 2)
-            throw std::runtime_error("usage: arch_cuda_burn_policy_parity ROUTE");
-        const std::string route = argv[1];
+    // One named route in its own fresh CUDA context. Both the single-route
+    // CLI and the grouped matrices use this dispatch, so grouping never
+    // changes which checks run or how their results are compared.
+    auto run_named_route = [](const std::string& route) {
         if (route == "helpers") {
             run_in_fresh_context([](cudaStream_t stream) {
                 check_workspace_contract();
@@ -841,6 +841,66 @@ int main(int argc, char** argv)
             throw std::runtime_error("unknown burn policy parity route: " + route);
         }
 #undef RUN_ROUTE
+    };
+
+    // A matrix runs every listed route, each in its own fresh CUDA context so
+    // no EOS, controller or workspace state is reused between routes. A
+    // failing subcase is named and the remaining routes still run; the matrix
+    // then fails as a whole so no route is silently omitted.
+    auto run_matrix = [&run_named_route](const char* const* subcases,
+                                         std::size_t count,
+                                         const std::string& matrix) {
+        std::size_t failures = 0;
+        for (std::size_t index = 0; index < count; ++index) {
+            const std::string subcase = subcases[index];
+            const int mismatches_before = numerical_mismatches;
+            try {
+                run_named_route(subcase);
+            } catch (const std::exception& error) {
+                std::cerr << "burn policy parity " << matrix << " subcase "
+                          << subcase << " failed: " << error.what() << '\n';
+                ++failures;
+                continue;
+            }
+            if (numerical_mismatches != mismatches_before) {
+                std::cerr << "burn policy parity " << matrix << " subcase "
+                          << subcase << " produced numerical mismatches\n";
+                ++failures;
+            }
+        }
+        if (failures != 0)
+            throw std::runtime_error(
+                matrix + " burn policy matrix failed "
+                + std::to_string(failures) + " of " + std::to_string(count)
+                + " subcases");
+    };
+
+    try {
+        if (argc != 2)
+            throw std::runtime_error("usage: arch_cuda_burn_policy_parity ROUTE");
+        const std::string route = argv[1];
+        static constexpr const char* kAprox13Matrix[] = {
+            "aprox13.be_nr", "aprox13.bd", "aprox13.ros4"};
+        static constexpr const char* kAprox19Matrix[] = {
+            "aprox19.be_nr", "aprox19.bd", "aprox19.ros4"};
+        static constexpr const char* kAprox21Matrix[] = {
+            "aprox21.be_nr", "aprox21.bd", "aprox21.ros4"};
+        static constexpr const char* kIso7Matrix[] = {
+            "iso7.be_nr", "iso7.bd", "iso7.ros4"};
+        static constexpr const char* kStatusMatrix[] = {
+            "status.be_nr", "status.bd", "status.ros4"};
+        if (route == "matrix.aprox13")
+            run_matrix(kAprox13Matrix, 3, "aprox13");
+        else if (route == "matrix.aprox19")
+            run_matrix(kAprox19Matrix, 3, "aprox19");
+        else if (route == "matrix.aprox21")
+            run_matrix(kAprox21Matrix, 3, "aprox21");
+        else if (route == "matrix.iso7")
+            run_matrix(kIso7Matrix, 3, "iso7");
+        else if (route == "matrix.status")
+            run_matrix(kStatusMatrix, 3, "status");
+        else
+            run_named_route(route);
         if (numerical_mismatches != 0)
             throw std::runtime_error("burn policy numerical mismatches: "
                                      + std::to_string(numerical_mismatches));

@@ -27,6 +27,21 @@ An individual test checks its stated contract. Full application coverage,
 sanitizer results and combined acceptance are recorded in
 [Validation](../../validation/README.md).
 
+### Burn policy parity
+
+[Policy parity](microphysics/burn/test_burn_policy_parity.cu) owns the burn
+network/ODE routes and the controller status routes, with the workspace,
+driver-leaf and handoff helper witnesses. `burn_policy_parity_matrix_aprox13`,
+`..._aprox19`, `..._aprox21` and `..._iso7` each group the BE_NR/BD/ROS4 routes
+of one network, and `burn_policy_parity_status_matrix` groups the three
+controller status routes; `burn_policy_parity_helpers` keeps the helper
+witnesses. Every grouped subcase still runs in its own fresh CUDA context with
+the frozen fixtures and the unchanged ULP/error budgets, and a failing subcase
+names the original route while the remaining routes still run. For focused
+diagnosis the binary keeps the single-route CLI, e.g.
+`arch_cuda_burn_policy_parity aprox19.ros4`, `... status.bd`, `... helpers` or
+`... workspace_alias`. The backend `cuda_backend_burn_*` entries are unchanged.
+
 The generated sparse trajectory harness accepts optional `--storage-cells FIRST SECOND`
 and `--pool-cells COUNT`; defaults remain 2/3 cells and a requested pool of 2.
 Non-default transcripts identify those controls and retain the same three ODE

@@ -40,6 +40,30 @@ Host 的 Save As／Reopen 通过不能替代实际打开选择窗口的验证。
 - [现行 API](../../src/api/README.md)：已实现的协议；新版本落地时再同步正文和样例。
   历史交接中的 90 参数／11 模型、可编辑 `gravity_G` 和虚拟默认值不覆盖本计划。
 
+### 用户边界的并行集成
+
+O8 在独立 `codex/o8-boundaries` 分支实施，基于 `compute/optim` 的 `8fc0dd25`。
+O7.0 的配置构造、必填清单、`null/missing` 响应和 G 退役仍由联合负责人拥有。
+O8 没有改标准参数数量、默认值系统或配置响应外壳；它在已有
+`options/applicability` 中补充边界选项、固定文件和 Host/CUDA 成本说明。
+读取配置成功依然不代表回调存在或模拟就绪。
+该分支新增两个边界示例后注册模型为 16 个；完整初始场及初始 AMR 仍按既有
+Sod／CellularDet 能力开放，示例注册本身不扩展 Preview 的科学覆盖。
+
+合并时关注 `ConfigValidation.h`、`Configuration.cpp`、`ProblemRegistry.h`、
+`SolverDispatch.cpp` 和 checkpoint compatibility 的双方修改。保留 O7 配置完整性语义，
+同时保留 O8 的类型区分、注册检查、面拓扑和重启身份，不能整文件覆盖。
+O8 checkpoint 格式为 7；若 O7 的几何身份变化需要后续格式升级，应在同一读写器中
+一起演进。RZ 更新须调整原生轴序／法向／度量的共同权威，不复制用户边界公式。
+G 退役时还需迁移新增两个示例势回调中的 CGS 一致性检查：当前它们拒绝与共享
+常数不一致的 `G_const`；字段删除后保留共享常数和对应势公式即可，不能保留已失效成员引用。
+
+用户写法见[用户边界指南](../guides/UserBoundaries.zh-CN.md)。GUI 可以按 Core 的两类
+选项提供源码入口和明确诊断，不新增任意边界路径控件，不把物理域 `user` 当作势边界。
+文件与回调必须先编译进所选执行程序，Run 仍走实际 preflight。
+第二平台只运行冻结输入并提交处理后的摘要；科学收支和模型适用性由维护者判定，
+H5／plt／checkpoint 原始数据继续留在本机。
+
 ### 1.1 首次接手的阅读顺序
 
 | 顺序／时机 | 必读资料 | 读完应能回答 |

@@ -16,6 +16,8 @@
 #pragma once
 
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 #include "amr/AMRControl.h"
 #include "data/GlobalDefs.h"
@@ -34,6 +36,27 @@ class ProblemGenerator
 {
 public:
     virtual ~ProblemGenerator() = default;
+
+    /**
+     * @brief Record the registry name and source identity after creation.
+     * Called once by ProblemRegistry::Create; no Setup/Init signature changes.
+     */
+    void BindRegistration(std::string registered_name, std::string source_file,
+                          std::string source_sha256)
+    {
+        registered_name_ = std::move(registered_name);
+        source_file_ = std::move(source_file);
+        source_sha256_ = std::move(source_sha256);
+    }
+
+    /** @brief Registry key this instance was created from, empty if unattached. */
+    const std::string &RegisteredName() const { return registered_name_; }
+
+    /** @brief Case source path recorded at registration, as compiled. */
+    const std::string &SourceFile() const { return source_file_; }
+
+    /** @brief Compiled case source digest recorded at registration. */
+    const std::string &SourceSha256() const { return source_sha256_; }
 
     // Explicit inspection boundary. Production InitializeData has no observer
     // or extra per-cell branch. Restore the caller's observer even on failure.
@@ -87,4 +110,8 @@ public:
                                 const SpeciesManager &specs,
                                 ProblemInitializationContext context) = 0;
 
+private:
+    std::string registered_name_;
+    std::string source_file_;
+    std::string source_sha256_;
 };

@@ -12,7 +12,11 @@
 #include <array>
 #include <memory>
 
+#include "numerics/elliptic/CompositePoisson.h"
+#include "physics/boundary/BoundaryTypes.h"
+#include "physics/boundary/UserBoundary.h"
 #include "physics/gravity/IGravityPolicy.h"
+#include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 
 namespace amr { struct EllipticMeshBinding; }
 namespace arch::state { struct CompletionToken; }
@@ -25,7 +29,9 @@ class SelfGravity final : public IGravityPolicy {
 public:
     explicit SelfGravity(GravityConfig config);
     ~SelfGravity();
-    void bind(amr::EllipticMeshBinding binding) const;
+    /** Bind one topology epoch; @p time is the stage/restart time used to
+     *  sample the initial side structure (0 keeps the legacy call shape). */
+    void bind(amr::EllipticMeshBinding binding, double time = 0.) const;
     arch::state::CompletionToken prepare(const GravitySolveRequest&) const;
     void invalidate() const noexcept;
     void clear_solver_initial_guess() const noexcept;
@@ -40,6 +46,8 @@ public:
     // Wall time bounded by completion fences; no asynchronous launch timing.
     struct Timings { double source_boundary=0., poisson=0., force=0.; };
     const Timings& timings() const;
+    /** Sample field energy and physical-face pairs for independent accounting. */
+    GravityBoundarySnapshot boundary_snapshot() const;
     void add_sources_on_patch(std::vector<FluidVector>&, const FluidState&,
         const Grid&, double, void* = nullptr) const override;
     void add_flux_work_on_patch(std::vector<FluidVector>&, const std::vector<FluidVector>&,
@@ -47,8 +55,17 @@ public:
 private:
     struct Workspace;
     Workspace& workspace() const;
+    /** Resolve the explicit per-side policy for the requested stage time. */
+    arch::elliptic::CompositeBoundary current_boundary(const Workspace&,double) const;
+    /** Rebuild the topology-bound operator after a side structure change. */
+    void rebuild_boundary(arch::elliptic::CompositeBoundary) const;
     GravityConfig config_;
     mutable std::unique_ptr<Workspace> work_;
     mutable std::shared_ptr<GravityExecution> execution_;
+    // Immutable callback selection captured at construction and kept live for
+    // every run; the referenced config/species outlive the simulation scope.
+    arch::boundary::GravityBoundaryFunction user_callback_;
+    const SimConfig* user_config_=nullptr;
+    const SpeciesManager* user_species_=nullptr;
 };
 }

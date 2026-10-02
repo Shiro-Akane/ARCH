@@ -84,10 +84,12 @@ Json options(const std::string& key) {
     if (key == "eos_type") return simple_options({"ideal", "helmholtz", "tabular"});
     if (key == "compute_backend") return simple_options({"cpu", "cuda", "auto"});
     if (key == "gravity_type") return simple_options({"none", "external", "self"});
-    if (key == "gravity_boundary") return simple_options({"periodic", "isolated"});
+    if (key == "gravity_boundary") return simple_options({"periodic", "isolated", "dirichlet", "neumann", "user"});
     if (key == "use_nse") return simple_options({"true", "false", "auto"});
     if (key.ends_with("_boundary_type")) return Json::object({{"caseSensitive", false}, {"unknownBehavior", "error"},
         {"choices", Json::array({
+            Json::object({{"value", "user"}, {"displayName", "User primitive"}, {"acceptedNames", Json::array({"user", "inflow", "dirichlet"})}}),
+            Json::object({{"value", "neumann"}, {"displayName", "Zero normal gradient"}, {"acceptedNames", Json::array({"neumann"})}}),
             Json::object({{"value", "outflow"}, {"displayName", "Outflow"}, {"acceptedNames", Json::array({"outflow"})}}),
             Json::object({{"value", "periodic"}, {"displayName", "Periodic"}, {"acceptedNames", Json::array({"periodic"})}}),
             Json::object({{"value", "reflect"}, {"displayName", "Reflecting"}, {"acceptedNames", Json::array({"reflect", "reflecting"})}})})}});
@@ -172,10 +174,14 @@ std::string condition(const ParameterDefinition& d) {
     if (key == "EntropyFixCoefficient") return "EntropyFix=true";
     if (key == "cuda_device") return "compute_backend=cuda or auto; no device probing in configuration inspection";
     if (key == "restart_file") return "restart=true";
+    if (key.ends_with("_boundary_type"))
+        return "active grid axis; user/inflow/dirichlet requires compiled sibling physical_boundary.cpp; neumann means zero normal gradient; callbacks run on Host with boundary-slice CUDA transfers; dispatch checks registration";
+    if (key == "gravity_boundary")
+        return "gravity_type=self; user requires compiled sibling gravity_boundary.cpp and may return Dirichlet/Neumann/Robin/Periodic per face; callbacks run on Host with boundary-only CUDA transfers; inspection is not runtime readiness";
     if (key == "eos_table_path") return "eos_type=helmholtz or tabular";
     if (key == "eos_helm_table_path") return "eos_type=tabular; need depends on table policy";
     if (key.starts_with("gravity_g_")) return "gravity_type=external";
-    if (d.group == "Gravity" && key != "gravity_type") return "gravity_type=self; Cartesian periodic or 3D isolated gravity";
+    if (d.group == "Gravity" && key != "gravity_type") return "gravity_type=self; selected geometry and gravity boundary must be compatible";
     if (d.group == "Diffusion" && key != "use_diffusion") {
         if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec") return "use_diffusion=true; explicit coefficient forbidden with Helmholtz";
         return "use_diffusion=true";

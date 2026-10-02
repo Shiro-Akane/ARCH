@@ -185,3 +185,13 @@ executable and requires numpy/h5py in CMake's selected `Python3_EXECUTABLE`
 environment (CI installs both). Configure that interpreter with the matching
 packages rather than skipping the test. Device, coupling and performance evidence
 is in [gravity validation](../validation/gravity/README.md).
+
+User-boundary registration, EOS states, coordinate normals, stage times and
+conservative surface fluxes extend the existing `boundary_plan` test. The
+existing `compute_backend` entry checks parallel Host surface evaluation,
+corner/snapshot parity and rejection before scatter. Mixed
+potential conditions, Gauss compatibility and cache invalidation extend the
+Poisson/gravity tests above. `self_gravity_physics` also runs short three-geometry
+boundary, AMR and restart checks through the same test entry point. Full device
+comparisons and timing remain manual gravity-validation campaigns; raw HDF5
+stays local.

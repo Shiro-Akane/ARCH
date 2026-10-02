@@ -56,9 +56,22 @@ foreach(case_source IN LISTS ARCH_APPLICATION_SOURCES)
         set_property(SOURCE "${case_source}" APPEND PROPERTY COMPILE_DEFINITIONS
             ARCH_CASE_SOURCE_SHA256="${case_source_sha256}")
     endif()
+    # Same-directory boundary helpers carry their own digest, kept separate
+    # from the case digest so neither literal identity is combined.
+    get_filename_component(case_source_name "${case_source}" NAME)
+    if(case_source_name STREQUAL "physical_boundary.cpp" OR
+       case_source_name STREQUAL "gravity_boundary.cpp")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${case_source}")
+        file(SHA256 "${case_source}" boundary_source_sha256)
+        set_property(SOURCE "${case_source}" APPEND PROPERTY COMPILE_DEFINITIONS
+            ARCH_BOUNDARY_SOURCE_SHA256="${boundary_source_sha256}")
+    endif()
 endforeach()
 
 include("${CMAKE_CURRENT_LIST_DIR}/../CustomNetworks.cmake")
+
+list(FILTER ARCH_APPLICATION_SOURCES EXCLUDE REGEX
+    "/src/physics/boundary/PhysicalBoundaryHandler\\.cpp$")
 
 # Dispatch sources (isolated in its own object target to manage template instantiation)
 set(DISPATCH_SRC_DIRS
@@ -72,6 +85,8 @@ set(ARCH_DISPATCH_SOURCES
     src/driver/SolverDispatch.cpp
     src/driver/runtime/DriverRuntime.cpp
     src/driver/runtime/DriverBoundary.cpp
+    src/driver/runtime/DriverBoundaryDiagnostics.cpp
+    src/physics/boundary/PhysicalBoundaryHandler.cpp
     src/driver/runtime/DriverRegrid.cpp
     src/driver/io/DriverIO.cpp
     src/driver/stages/GravityStage.cpp
@@ -130,7 +145,8 @@ set(ARCH_GRAVITY_CPU_SOURCES
     src/numerics/multigrid/CompositeExecution.cpp
     src/physics/gravity/GravityBoundary.cpp
     src/physics/gravity/GravityExecution.cpp
-    src/physics/gravity/self/GravityWorkspace.cpp src/physics/gravity/self/SelfGravity.cpp)
+    src/physics/gravity/self/GravityWorkspace.cpp src/physics/gravity/self/SelfGravity.cpp
+    src/physics/gravity/self/GravityUserBoundary.cpp)
 foreach(source IN LISTS ARCH_GRAVITY_CPU_SOURCES)
     list(REMOVE_ITEM ARCH_APPLICATION_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
 endforeach()

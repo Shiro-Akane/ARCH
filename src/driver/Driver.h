@@ -63,6 +63,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     using arch::scheduler::ScopedStageBinding;
     SimulationController ctrl(config, start_state);
     BCHandler bc_handler{config};
+    bc_handler.bind(eos, specs);
+    bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
     if (!config.io.restart)
         for (int id : amr_ctrl.tree->GetActiveBlocks()) ctrl.repairs.combine(amr_ctrl.pool->GetBlock(id).fluid_state.stage_repairs);
     DriverRuntime runtime(amr_ctrl, bc_handler, config, specs, ctrl);
@@ -170,10 +172,18 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             std::min({candidates.hydro, candidates.diffusion_sts, gravity_stage.timestep()}), dt_burn_global);
         dt_burn_global = 1e99;
         const double dt = ctrl.sync_dt(dt_computed);
+        bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
         auto stage_context = runtime.stage_context();
         stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
         stage_context.step_start_time = ctrl.t_current;
         stage_context.step_dt = dt;
+        if (bc_handler.has_user())
+            stage_context.physical_boundary_preparation = [&](arch::state::StateSlot slot, double time,
+                arch::boundary::BoundaryPurpose purpose) {
+                bc_handler.configure_stage(time, purpose);
+                runtime.ensure_fluid_ghosts(slot);
+            };
+        runtime.bind_boundary_accounting(stage_context);
         ScopedStageBinding stage_binding(stage_context, runtime.handles());
 
         // Symmetric split: Burn(dt/2), Diffusion(dt/2), Hydro(dt), Diffusion(dt/2), Burn(dt/2).
@@ -187,6 +197,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         {
             CpuStageTimer timed(cpu_stages, CpuStage::Diffusion, time_cpu_stages);
+            stage_context.boundary_start_time = ctrl.t_current;
+            stage_context.boundary_step_dt = 0.5 * dt;
+            bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Diffusion);
             advance_diffusion(runtime, workspace, stage_context, eos, resolved_plan,
                               ctrl.step_count, 0.5 * dt, candidates.diffusion_forward_euler);
         }
@@ -197,6 +210,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         {
             CpuStageTimer timed(cpu_stages, CpuStage::Diffusion, time_cpu_stages);
+            stage_context.boundary_start_time = ctrl.t_current + 0.5 * dt;
+            stage_context.boundary_step_dt = 0.5 * dt;
+            bc_handler.configure_stage(ctrl.t_current + 0.5 * dt, arch::boundary::BoundaryPurpose::Diffusion);
             advance_diffusion(runtime, workspace, stage_context, eos, resolved_plan,
                               ctrl.step_count, 0.5 * dt, candidates.diffusion_forward_euler);
         }
@@ -210,6 +226,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         gravity_stage.invalidate();
         ctrl.advance(dt);
+        bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
         advanced_any_step = true;
         ctrl.print_step(dt, candidates.hydro, has_burn ? dt / 2.0 : 0.0,
                         candidates.diffusion_forward_euler, has_burn, has_diff);

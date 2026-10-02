@@ -188,6 +188,14 @@ foreach(contract IN ITEMS boundary_plan same_level_exchange_plan
     add_test(NAME ${contract} COMMAND arch_${contract})
 endforeach()
 
+# Extend the existing boundary contract lane rather than multiplying test jobs.
+target_sources(arch_boundary_plan PRIVATE
+    src/physics/boundary/PhysicalBoundaryHandler.cpp
+    tests/host/amr/test_user_boundary_registry.cpp
+    tests/host/amr/test_user_physical_boundary.cpp
+    tests/host/amr/test_user_boundary_diagnostics.cpp)
+target_link_libraries(arch_boundary_plan PRIVATE arch_diffusion_math)
+
 # Runtime policy resolution and backend resource contracts.
 add_executable(arch_resolved_execution_plan
     tests/host/driver/test_resolved_execution_plan.cpp)
@@ -216,7 +224,9 @@ target_link_libraries(arch_reduction_contract PRIVATE
 add_test(NAME reduction_contract COMMAND arch_reduction_contract)
 
 add_executable(arch_compute_backend tests/host/driver/test_compute_backend.cpp)
+target_sources(arch_compute_backend PRIVATE src/physics/boundary/PhysicalBoundaryHandler.cpp)
 arch_configure_host_test(arch_compute_backend)
+target_link_libraries(arch_compute_backend PRIVATE arch_diffusion_math)
 add_test(NAME compute_backend COMMAND arch_compute_backend)
 
 add_executable(arch_device_block_store_lifecycle

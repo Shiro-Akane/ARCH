@@ -145,9 +145,10 @@ thermal-diffusion combinations have been checked. CPU manufactured solutions,
 independent boundary and Gauss checks, AMR coupling and restart are recorded in
 the [curved-coordinate CPU record](results/p11-p12-20260923/README.md); CUDA analytic radial
 checks, same-input curved four-module parity, bidirectional restart and local
-performance are in the [curved-coordinate CUDA record](results/p13-20260924/README.md). Partial
-azimuth domains, external mass and a Jeans-specific refinement indicator remain
-unsupported for self-gravity. Start with [GravityBox](../../simulation/GravityBox/README.md)
+performance are in the [curved-coordinate CUDA record](results/p13-20260924/README.md). Explicit Dirichlet/Neumann/linear Robin and user potential conditions support
+all three geometries and valid azimuth sectors. Isolated mass models still require
+full azimuth; external mass and a Jeans-specific refinement indicator are outside
+this scope. Start with [GravityBox](../../simulation/GravityBox/README.md)
 for reusable inputs. The [Cartesian gravity acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
 records numerical, coupling, restart and device checks. The [radial field and AMR record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The
 [earlier periodic solver record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
@@ -155,11 +156,30 @@ periodic scope.
 
 `run_self_gravity.py --arch <ARCH> --output <new directory>` checks Jeans waves,
 energy, time order, dynamic AMR, restart, isolated boundaries, radial 1D
-field/domain checks and selected coupling (numpy/h5py). `--quick` is the existing CTest analytic/rejection subset.
+field/domain checks, user boundaries and selected coupling (numpy/h5py). `--quick` is the existing CTest analytic/rejection subset.
 `arch_composite_poisson 3` checks three-dimensional uniform and composite
 manufactured solutions; `contract` checks failure and hierarchy invariants.
 `check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`
-qualifies actual device gravity; `--benchmark-only` measures representative local workloads.
+qualifies actual device gravity; `--benchmark-only --benchmark-time 0.1` measures
+representative local workloads through the same physical endpoint. Runs alternate after
+warmup; `--benchmark-repeats` defaults to five. Report complete elapsed time, ranges and
+final-field parity. `--baseline-cpu-arch` adds a separate frozen/current pure-CPU regression
+pair; backend speedups still use one CUDA-enabled executable. Keep compilation,
+sanitizer runs and other GPU workloads separate from formal timing.
+`--benchmark-case large-user-boundary --benchmark-time 0.0003` measures the
+64³ physical/potential callback example separately from built-in boundaries.
+The previous release has no such model and is used only for the built-in CPU
+regression pair. `--benchmark-cuda-host-threads` records the CUDA lane's Host
+thread resources explicitly (default 1). Ordinary C++ callbacks execute on the
+Host; this option permits comparison with the CPU lane's thread resources.
+An improvement from additional Host threads is not a GPU kernel speedup.
+`user_boundaries.py` also accepts the shared
+`--cuda-sanitizer` / `--sanitizer-tool` controls; instrumentation preserves its
+state, surface-budget and restart validators. Original sanitizer logs stay local.
+The [user-boundary acceptance record](results/user-boundaries-20261003/README.md)
+combines independent mathematical checks, native/AMR runtime evidence, device
+safety, coverage mapping and complete-task costs, including the short callback
+workload's negative whole-task result.
 
 The [2D/3D four-module example](../../simulation/SNIaCoupled/README.md)
 checks Hydro/self-gravity/burn/thermal-diffusion execution with AMR. Its original

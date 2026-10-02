@@ -115,6 +115,11 @@ struct DeviceStateView
     int total_size;
     int n_species;
 
+    arch::boundary::DiffusionBoundaryView diffusion_boundary{};
+    // Block-owned physical-surface observer planes. Ordinary runs leave this
+    // view empty, so kernels neither allocate, transfer nor synchronize.
+    arch::boundary::BoundaryFluxCaptureView capture{};
+
     ARCH_INLINE FluidVector load(int cell) const
     {
         return {rho[cell], mom_u[cell], mom_v[cell], mom_w[cell], eng[cell]};

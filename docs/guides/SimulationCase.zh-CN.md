@@ -84,7 +84,7 @@ nblockx3 = 0
 
 每个 block 在每个活动维度含 16 个内部单元。设置 `nblockx2 = nblockx3 = 0` 会创建真正的一维存储；只设置 `nblockx3 = 0` 会创建二维存储。`nblockx2 = 0` 而 `nblockx3` 为正是无效组合。
 
-六个边界键接受 `outflow`、`reflect` 或 `periodic`。非活动轴的取值不生效。
+六个边界键接受 `outflow`、`reflect`、`periodic`、`neumann` 或 `user`。非活动轴的取值不生效。自定义入流、热通量和引力势使用独立的同目录边界文件，见[用户边界指南](UserBoundaries.zh-CN.md)。
 
 ### 数值方法
 

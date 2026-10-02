@@ -37,6 +37,18 @@ namespace arch::boundary { class BoundaryPlan; }
 
 namespace arch::backend {
 
+struct BoundaryFluxPlanes {
+    amr::BlockHandle block{};
+    std::array<std::vector<double>, 6> stage, initial;
+};
+
+/** Packed boundary snapshots; size is proportional to the requested surface. */
+struct BoundaryCells {
+    std::size_t species_count = 0;
+    std::vector<FluidVector> conserved;
+    std::vector<double> enuc, composition; // Cell-major boundary staging only.
+};
+
 struct StorageGeneration {
     std::uint64_t value = 0;
     friend constexpr auto operator<=>(const StorageGeneration&,
@@ -407,6 +419,24 @@ public:
     virtual void enqueue_upload_slot(
         BackendStateAccess access, state::StateRegion region,
         HostStateTransferView host) = 0;
+    /** Read only specified boundary donors through a validated slot lease. */
+    virtual BoundaryCells read_boundary_cells(BackendStateAccess, std::span<const int>,
+        state::StateRegion = state::StateRegion::Interior) {
+        throw std::logic_error("backend user boundary slice read is unavailable");
+    }
+    /** Publish only validated ghost cells and transient diffusion-face data. */
+    virtual void write_boundary_cells(BackendStateAccess, std::span<const int>,
+        const BoundaryCells&, const boundary::DiffusionBoundaryStorage&) {
+        throw std::logic_error("backend user boundary slice write is unavailable");
+    }
+    /** Configure the observer weights applied to the next observed stage. */
+    virtual void configure_boundary_flux_capture(std::span<const BoundaryFluxPlanes>, double, double, bool) {
+        throw std::logic_error("backend boundary flux capture is unavailable");
+    }
+    /** Transfer only block-owned physical-surface planes back to Host storage. */
+    virtual std::vector<BoundaryFluxPlanes> download_boundary_flux_capture() {
+        throw std::logic_error("backend boundary flux capture is unavailable");
+    }
     virtual bool supports_dynamic_topology_store() const noexcept
     {
         return false;
@@ -510,6 +540,11 @@ protected:
     }
 };
 
+/** Synchronize valid interior/ghost regions through one checked transaction.
+ *  A boundary-only publication can leave the interior synchronized while
+ *  ghosts are valid only on the source side. Preserve the synchronized region
+ *  and transfer only the region that changed; stale/pending sources still fail
+ *  before any write, and a failed enqueue/fence never publishes completion. */
 inline state::CompletionToken transfer_state_regions(
     ComputeBackend& backend, state::StateResidencyLedger& ledger,
     scheduler::MonotonicSchedulerClock& clock, BackendStateAccess access,
@@ -534,7 +569,8 @@ inline state::CompletionToken transfer_state_regions(
             direction == state::PendingTransferPhase::PendingH2D
             ? state::StateResidency::HostValid
             : state::StateResidency::DeviceValid;
-        if (region.residency != expected
+        if ((region.residency != expected
+             && region.residency != state::StateResidency::Synchronized)
             || region.pending_transfer
                 != state::PendingTransferPhase::None
             || !state::is_complete(region.completion)
@@ -544,6 +580,14 @@ inline state::CompletionToken transfer_state_regions(
     };
     require_source(before.interior);
     require_source(before.ghost);
+    const auto needs_transfer = [&](state::StateRegion region) {
+        const auto& coherence = region == state::StateRegion::Interior
+            ? before.interior : before.ghost;
+        return coherence.residency != state::StateResidency::Synchronized;
+    };
+    if (!needs_transfer(state::StateRegion::Interior)
+        && !needs_transfer(state::StateRegion::Ghost))
+        throw std::logic_error("backend transfer source is already synchronized");
     if (before.ghost.version != before.interior.version
         || before.ghost_source_version != before.interior.version) {
         throw std::logic_error("backend transfer ghost is stale");
@@ -564,9 +608,11 @@ inline state::CompletionToken transfer_state_regions(
     constexpr std::array<state::StateRegion, 2> regions{
         state::StateRegion::Interior, state::StateRegion::Ghost};
     for (const auto region : regions)
-        ledger.begin_transfer(key, region, direction, pending);
+        if (needs_transfer(region))
+            ledger.begin_transfer(key, region, direction, pending);
 
     for (const auto region : regions) {
+        if (!needs_transfer(region)) continue;
         if (direction == state::PendingTransferPhase::PendingH2D)
             backend.enqueue_upload_slot(access, region, host);
         else
@@ -574,7 +620,8 @@ inline state::CompletionToken transfer_state_regions(
     }
     backend.quiesce();
     for (const auto region : regions)
-        ledger.complete_transfer(key, region, completed);
+        if (needs_transfer(region))
+            ledger.complete_transfer(key, region, completed);
     const BackendCounters counters_after = backend.counters();
     backend.append_trace({
         macro_step,

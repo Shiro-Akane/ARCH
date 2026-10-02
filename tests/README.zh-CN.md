@@ -29,7 +29,7 @@ ARCH 测试使用仓库内的解析／独立参考和常规依赖；配置、运
 全部 Python 工具测试，以及包含 KLU 和所有已配置 Host 测试的 CPU Release 构建。
 这些任务复用下文的测试入口，不维护另一套 CI 数学实现。CPU 任务会下载所需的
 Helmholtz LFS 表，拒绝缺项或跳过的 CTest 报告；工具任务同样不接受跳过的检查。
-`physics/selfgravity` 的 push/目标 PR 也触发同一完整流程。下载限定为当前测试真正使用的
+触发范围由工作流定义。下载限定为当前测试真正使用的
 Helmholtz 表，不下载无关历史 HDF5 与大表；测试选择、数值容差和失败判据保持不变。
 
 `CI required` 汇总这两个任务的结果，不代表实际执行了 CUDA 或重新完成了整套科学
@@ -137,6 +137,12 @@ CPU 锚点为 `composite_poisson_contract`、`composite_poisson_analytic`、
 `self_gravity_lifecycle` 和 `self_gravity_physics`。最后一项运行正式程序，需要
 CMake 所选 `Python3_EXECUTABLE` 环境中的 numpy/h5py；应配置对应解释器及依赖，
 而不是跳过。设备、耦合与性能证据见[引力验证](../validation/gravity/README.zh-CN.md)。
+
+用户边界的注册、EOS 状态、坐标法向、阶段时间及守恒面通量检查并入现有
+`boundary_plan`；Host 表面并行的快照／角点一致性和失败后零发布并入现有
+`compute_backend`。混合势边界、Gauss 相容性和缓存失效并入上述泊松／引力检查。
+`self_gravity_physics` 同时运行三类几何的短边界、AMR 与重启检查，保持单一测试入口。
+完整设备对照和计时通过引力验证脚本手动执行，原始 HDF5 留在本机。
 
 ## 查找与扩展测试
 

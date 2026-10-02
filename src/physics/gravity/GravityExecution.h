@@ -59,7 +59,35 @@ struct CellAcceleration {
         inverse_dt_squared[i]=maximum;
     }
 };
-using GravityWork=std::variant<GatherDensity,UpdateMoments,EvaluateBoundary,CellAcceleration>;
+/** Write one host-evaluated physical datum onto its composite face.
+ *  Only O(surface) values/indices cross the backend boundary each stage; the
+ *  interior of the boundary vector is never downloaded or rebuilt. */
+struct ScatterBoundary {
+    int size;const int* faces;const double* values;double* out;
+    /** out[faces[i]] = values[i]; one owner per physical face. */
+    ARCH_INLINE void operator()(int i) const {out[faces[i]]=values[i];}
+};
+/** Sample actual eliminated boundary fields; only these surface pairs download. */
+struct GravityBoundarySample {
+    int size;
+    arch::multigrid::SparseView potential_rows;
+    const int* faces;
+    const int* signs;
+    const double* datum_coefficients;
+    const double* potential;
+    const double* datum;
+    const double* gradient;
+    double* out;
+    /** Phi_B = sum(coeff*Phi_cell)+coeff_B*c; derivative points outward. */
+    ARCH_INLINE void operator()(int i) const {
+        arch::math::CompensatedSum sum;
+        for(int k=potential_rows.offsets[i];k<potential_rows.offsets[i+1];++k)
+            sum.add(potential_rows.values[k]*potential[potential_rows.columns[k]]);
+        sum.add(datum_coefficients[i]*datum[faces[i]]);
+        out[2*i]=sum.value(); out[2*i+1]=signs[i]*gradient[faces[i]];
+    }
+};
+using GravityWork=std::variant<GatherDensity,UpdateMoments,EvaluateBoundary,CellAcceleration,ScatterBoundary,GravityBoundarySample>;
 class GravityExecution {
 public:
     virtual ~GravityExecution()=default;

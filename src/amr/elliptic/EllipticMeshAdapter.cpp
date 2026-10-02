@@ -37,6 +37,13 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
             throw std::invalid_argument("Elliptic root extent exceeds indexing capacity");
         base.cells[axis]=static_cast<int>(extent);
     }
+    const std::string lower_faces[]{config.x1l_boundary_type,config.x2l_boundary_type,config.x3l_boundary_type};
+    const std::string upper_faces[]{config.x1r_boundary_type,config.x2r_boundary_type,config.x3r_boundary_type};
+    for (int axis=0; axis<base.dimension; ++axis) {
+        if ((lower_faces[axis]=="periodic") != (upper_faces[axis]=="periodic"))
+            throw std::invalid_argument("Elliptic AMR topology requires paired periodic physical faces");
+        result.periodic[axis]=lower_faces[axis]=="periodic";
+    }
     base.origin={config.x1_min,config.x2_min,config.x3_min};
     const double ends[]{config.x1_max,config.x2_max,config.x3_max};
     for (int a=0;a<base.dimension;++a) base.spacing[a]=(ends[a]-base.origin[a])/base.cells[a];

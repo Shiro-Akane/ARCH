@@ -86,8 +86,9 @@ endforeach()
 # Backend resource ownership, AMR transactions and geometric leaves.
 add_executable(arch_cuda_regrid_transaction tests/cuda/amr/test_cuda_regrid_transaction.cpp)
 target_include_directories(arch_cuda_regrid_transaction PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+# BCHandler now has one compiled owner shared with the production driver.
 target_link_libraries(arch_cuda_regrid_transaction PRIVATE
-    arch_cuda_backend CUDA::cudart)
+    arch_cuda_backend arch_solver_dispatch CUDA::cudart)
 add_test(NAME cuda_regrid_transaction COMMAND arch_cuda_regrid_transaction)
 set_tests_properties(cuda_regrid_transaction PROPERTIES SKIP_RETURN_CODE 77)
 # Exercise the same setup kernel owned by the production backend without
@@ -483,18 +484,17 @@ foreach(route IN ITEMS
     add_test(NAME "cuda_backend_burn_${backend_route_test}"
         COMMAND arch_cuda_hydro_block "${route}")
 endforeach()
-foreach(solver IN ITEMS be_nr bd ros4)
-    add_test(NAME "burn_policy_parity_status_${solver}"
-        COMMAND arch_cuda_burn_policy_parity "status.${solver}")
-endforeach()
-foreach(route IN ITEMS
-        aprox13.be_nr aprox13.bd aprox13.ros4
-        aprox19.be_nr aprox19.bd aprox19.ros4
-        aprox21.be_nr aprox21.bd aprox21.ros4
-        iso7.be_nr iso7.bd iso7.ros4)
-    string(REPLACE "." "_" route_test "${route}")
-    add_test(NAME "burn_policy_parity_${route_test}"
-        COMMAND arch_cuda_burn_policy_parity "${route}")
-    set_tests_properties("burn_policy_parity_${route_test}" PROPERTIES
+# Grouped burn policy witnesses: one entry per network matrix and one for the
+# controller status matrix.  Each matrix runs every original route through the
+# same single-route dispatch, each in its own fresh CUDA context; a failing
+# subcase names its original route while the remaining routes still run.  The
+# helpers entry and the single-route CLI
+# (`arch_cuda_burn_policy_parity <route>`) stay available unchanged.
+foreach(network IN ITEMS aprox13 aprox19 aprox21 iso7)
+    add_test(NAME "burn_policy_parity_matrix_${network}"
+        COMMAND arch_cuda_burn_policy_parity "matrix.${network}")
+    set_tests_properties("burn_policy_parity_matrix_${network}" PROPERTIES
         DEPENDS burn_mainline_reference)
 endforeach()
+add_test(NAME burn_policy_parity_status_matrix
+    COMMAND arch_cuda_burn_policy_parity "matrix.status")

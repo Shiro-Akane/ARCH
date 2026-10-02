@@ -18,7 +18,7 @@ technical results and combined acceptance status.
 |---|---|
 | Hydrodynamics | Van Leer, Steger-Warming, Roe, HLL, HLLC; PCM/MUSCL/PPM; MinMod/MC/SuperBee/Van Leer limiters; Euler/SSPRK2/SSPRK3 |
 | Mesh and geometry | One-, two- and three-dimensional block meshes; Cartesian, cylindrical and spherical geometry with the common CPU conventions |
-| Boundaries | Periodic, outflow and reflecting boundaries |
+| Boundaries | Periodic, outflow, reflecting and user physical/potential conditions; Host callbacks exchange surface slices using shared EOS/face mathematics; see [user boundaries](guides/UserBoundaries.md) |
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
 | Diffusion | Species, thermal and viscous operators with RKL1/RKL2; the material closure determines active channels. The current Helmholtz stellar closure supplies thermal conduction only. |

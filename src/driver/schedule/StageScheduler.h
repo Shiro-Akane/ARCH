@@ -15,6 +15,7 @@
 #include <functional>
 
 #include "driver/runtime/StateResidency.h"
+#include "physics/boundary/BoundaryFlux.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -207,6 +208,15 @@ struct StageExecutionContext {
     std::function<void(const StageDescriptor&)> hydro_acceptance;
     double step_start_time = 0.0;
     double step_dt = 0.0;
+    std::function<void(state::StateSlot, double, arch::boundary::BoundaryPurpose)> physical_boundary_preparation;
+    double boundary_start_time = 0.0, boundary_step_dt = 0.0;
+    // Optional physical-surface observation of the already-computed face flux.
+    // Empty by default; only callback runs configure them. Accounting never
+    // changes the stage descriptors or the coefficient recurrence.
+    std::function<void(const StageDescriptor&)> hydro_flux_capture_begin;
+    std::function<void(const StageDescriptor&)> hydro_flux_capture_accept;
+    std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_begin;
+    std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_accept;
 };
 
 static_assert(std::is_same_v<decltype(StageExecutionContext::side),
@@ -505,6 +515,11 @@ HydroExecutionResult execute_hydro_plan(
     HydroExecutionResult result;
     result.stages.reserve(plan.stages.size());
     for (const StageDescriptor& descriptor : plan.stages) {
+        if (context.physical_boundary_preparation)
+            context.physical_boundary_preparation(descriptor.input_slot,
+                context.step_start_time + descriptor.input_time_fraction * context.step_dt,
+                arch::boundary::BoundaryPurpose::Hydro);
+        if (context.hydro_flux_capture_begin) context.hydro_flux_capture_begin(descriptor);
         result.stages.push_back(execute_stage(
             context, handles, descriptor, executor,
             [&](const StageDescriptor& stage, state::CompletionToken token) {
@@ -521,6 +536,7 @@ HydroExecutionResult execute_hydro_plan(
                 if (!state::is_complete(completed))
                     throw std::logic_error("Hydro preparation did not complete");
             }));
+        if (context.hydro_flux_capture_accept) context.hydro_flux_capture_accept(descriptor);
     }
     rotate_slots(context, handles, plan.final_rotation,
                  std::forward<PhysicalRotation>(physical_rotation));
@@ -554,8 +570,21 @@ RklExecutionResult execute_rkl_plan(
     RklExecutionResult result;
     result.stages.reserve(plan.stages.size());
     for (const RklStageDescriptor& descriptor : plan.stages) {
+        if (context.physical_boundary_preparation) {
+            const int j = descriptor.stage - 1, stages = static_cast<int>(plan.stages.size());
+            // RKL1 c_j=j(j+1)/s(s+1); RKL2 c_1=4/[3(s²+s-2)],
+            // c_j=(j²+j-2)/(s²+s-2) for j>=2. Both have c_0=0.
+            const double denominator = double(stages) * (stages + 1) - (plan.second_order ? 2. : 0.);
+            const double fraction = j == 0 ? 0. : !plan.second_order ? double(j) * (j + 1) / denominator
+                : j == 1 ? 4. / (3. * denominator) : (double(j) * (j + 1) - 2.) / denominator;
+            context.physical_boundary_preparation(descriptor.stage == 1 ? descriptor.state_n_slot : descriptor.previous_slot,
+                context.boundary_start_time + fraction * context.boundary_step_dt,
+                arch::boundary::BoundaryPurpose::Diffusion);
+        }
+        if (context.rkl_flux_capture_begin) context.rkl_flux_capture_begin(descriptor, plan);
         result.stages.push_back(execute_rkl_stage(
             context, handles, descriptor, executor, reflux, boundary));
+        if (context.rkl_flux_capture_accept) context.rkl_flux_capture_accept(descriptor, plan);
     }
     rotate_slots(context, handles, plan.final_rotation,
                  std::forward<PhysicalRotation>(physical_rotation));

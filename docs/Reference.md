@@ -135,8 +135,9 @@ External gravity supplies an acceleration. Self gravity solves a composite AMR P
 | Cylindrical/spherical radial 1D | `isolated` | Nonnegative radius and reflecting inner radial fluid face |
 | Cylindrical/spherical polar 2D `(r,phi)` | `isolated` | Full azimuth with periodic fluid faces; reflecting inner radial face |
 | Cylindrical `(r,z,phi)` / spherical `(r,theta,phi)` 3D | `isolated` | Full azimuth; inner radial and tested axis/pole singular faces reflect |
+| All three geometries, 1D–3D | `dirichlet`, `neumann`, `user` | Per-side potential/outward gradient/linear Robin; paired periodic directions and regular coordinate joins |
 
-Every self-gravity root axis needs a power-of-two cell extent. Native root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology; curvilinear gravity uses isolated boundaries. A periodic potential responds to density relative to its volume mean, while isolated gravity uses the full density. The isolated two-dimensional polar potential uses a logarithmic kernel with mass per unit axial length. See [gravity parameters](#eos-and-gravity) for solver controls and [gravity validation](../validation/gravity/README.md) for tested trajectories.
+Every self-gravity root axis needs a power-of-two cell extent. Native root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. Explicit `dirichlet`, `neumann` and `user` work in 1D–3D for all three geometries. User conditions combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions, including valid annuli, sectors and wedges. Coordinate singularities retain their regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). A periodic potential responds to density relative to its volume mean, while isolated gravity uses the full density. The isolated two-dimensional polar potential uses a logarithmic kernel with mass per unit axial length. See [gravity parameters](#eos-and-gravity) for solver controls and [gravity validation](../validation/gravity/README.md) for tested trajectories.
 
 ### Combining methods and physics
 
@@ -409,7 +410,7 @@ precedence over default member initializers in `GlobalDefs.h`.
 | `x1_min/max` | expression | `0/1` | active axis must have max > min |
 | `x2_min/max` | expression | `0/1` | angular restrictions depend on geometry/dimension |
 | `x3_min/max` | expression | `0/1` | angular restrictions depend on geometry/dimension |
-| `x1l_boundary_type` | string | `outflow` | `outflow`, `reflect`, `periodic` |
+| `x1l_boundary_type` | string | `outflow` | `outflow`, `reflect`, `periodic`, `neumann`, `user`; fluid `inflow/dirichlet` alias prescribed state; see [user boundaries](guides/UserBoundaries.md) |
 | `x1r_boundary_type` | string | `outflow` | same |
 | `x2l_boundary_type` | string | `outflow` | same |
 | `x2r_boundary_type` | string | `outflow` | same |
@@ -481,7 +482,7 @@ tabular component discovery or electron completion.
 | `gravity_type` | string | `none` | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity, including coordinate joins, on CPU/CUDA are supported |
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | CGS gravitational constant used by self gravity |
-| `gravity_boundary` | string | `periodic` | `periodic`: subtract volume-mean density; `isolated`: finite-domain 3D Newton boundary, 1D radial symmetry, or 2D polar logarithmic boundary; no background subtraction |
+| `gravity_boundary` | string | `periodic` | `periodic`: remove volume-mean density; `isolated`: existing finite-mass/radial/logarithmic closure; `dirichlet`: zero potential; `neumann`: zero outward gradient with Gauss compatibility; `user`: per-side data from `gravity_boundary.cpp` |
 | `gravity_rtol` | float | `1e-10` | Positive relative volume RMS residual target, smaller than one |
 | `gravity_atol` | float | `0` | Nonnegative absolute residual in `s^-2`; zero keeps relative accuracy |
 | `gravity_max_cycles` | int | `200` | Positive outer MG/FGMRES iteration limit; failure stops evolution |
@@ -1235,6 +1236,8 @@ An ARCH checkpoint contains the complete state needed to resume a simulation.
 Both backends use the same reader and writer. The reader checks the file's
 internal schema identifier and the required fields below; incomplete or
 unsupported input is rejected before restoring the simulation.
+
+Current checkpoint format is 7. Required `boundary_identity` records face types, case/callback source digests and scientific custom inputs; missing or changed identity rejects restart. Absolute source paths and backend choice do not affect compatibility. Boundary accounting restarts at process launch; see [boundary diagnostics](guides/UserBoundaries.md#backends-accounting-and-restart).
 
 Attributes include `checkpoint_version`, `time`, `step`, `chk_index`,
 `plt_index`, `dim`, `geometry`, `num_species`, `cells_per_block`, `dt_old`,

@@ -103,8 +103,9 @@ Every block contains 16 interior cells per active dimension. Setting
 `nblockx2 = nblockx3 = 0` creates a true 1D allocation; setting only
 `nblockx3 = 0` creates 2D. `nblockx2 = 0` with positive `nblockx3` is invalid.
 
-The six boundary keys accept `outflow`, `reflect`, or `periodic`. Inactive-axis
-values are inert.
+The six boundary keys accept `outflow`, `reflect`, `periodic`, `neumann`, or
+`user`. Inactive-axis values are inert. See the [user boundary guide](UserBoundaries.md)
+for sibling sources defining inflow, heat flux and potential conditions.
 
 ### Numerics
 

@@ -18,8 +18,8 @@
 #include "core/CompensatedSum.h"
 
 namespace arch::elliptic {
-/** Reject non-Cartesian mesh extents and spacing before building an operator. */
-void validate_mesh(const CartesianMesh& m)
+/** Validate geometric extents; complete angular coverage is a model requirement. */
+void validate_mesh(const CartesianMesh& m, bool full_angular_domain)
 {
     if (m.dimension < 1 || m.dimension > 3) throw std::invalid_argument("Poisson dimension must be 1..3");
     std::size_t count = 1;
@@ -50,20 +50,18 @@ void validate_mesh(const CartesianMesh& m)
     if (m.geometry != Geometry::Cartesian) {
         if (m.origin[0] < 0.)
             throw std::invalid_argument("Curvilinear gravity requires nonnegative radius");
-        if (m.dimension == 2) {
-            const double turn = 2. * std::acos(-1.);
-            if (std::abs(m.cells[1]*m.spacing[1]-turn) > 64.*std::numeric_limits<double>::epsilon()*turn)
-                throw std::invalid_argument("Polar gravity requires a full azimuthal turn");
+        if (m.dimension >= 2) {
+            const int azimuth=m.dimension-1;
+            const double turn=2.*std::acos(-1.), span=m.cells[azimuth]*m.spacing[azimuth];
+            const double roundoff=64.*std::numeric_limits<double>::epsilon()*turn;
+            if(span>turn+roundoff || (full_angular_domain && std::abs(span-turn)>roundoff))
+                throw std::invalid_argument(full_angular_domain
+                    ? "Curvilinear isolated gravity requires a full azimuthal turn"
+                    : "Curvilinear azimuthal span must not exceed a full turn");
         }
-        if (m.dimension == 3) {
-            const int azimuth = 2;
-            const double turn = 2. * std::acos(-1.);
-            if (std::abs(m.cells[azimuth]*m.spacing[azimuth]-turn) > 64.*std::numeric_limits<double>::epsilon()*turn)
-                throw std::invalid_argument("Curvilinear gravity requires a full azimuthal turn");
-            if (m.geometry == Geometry::Spherical &&
-                (m.origin[1] < 0. || m.origin[1]+m.cells[1]*m.spacing[1] > std::acos(-1.)))
-                throw std::invalid_argument("Spherical polar angle must stay in [0, pi]");
-        }
+        if(m.dimension==3 && m.geometry==Geometry::Spherical &&
+            (m.origin[1]<0. || m.origin[1]+m.cells[1]*m.spacing[1]>std::acos(-1.)))
+            throw std::invalid_argument("Spherical polar angle must stay in [0, pi]");
     }
 }
 

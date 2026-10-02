@@ -2,6 +2,7 @@
 #include "physics/gravity/GravityBoundary.h"
 #include "physics/constant/PhysicalConstants.h"
 #include <cmath>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
@@ -264,6 +265,410 @@ void isolated_boundary() {
     }
 }
 
+
+/** Independent continuum data for one physical side policy.
+ *  Dirichlet samples Phi, Neumann and Robin sample a*Phi+b*dPhi/dn of the
+ *  analytic solution with the outward normal (s=-1 lower, s=+1 upper side). */
+std::vector<double> continuum_boundary_values(const elliptic::CompositePoisson& op,
+    const elliptic::CompositeBoundary& boundary,
+    const std::function<double(const std::array<double,3>&)>& exact,
+    const std::function<std::array<double,3>(const std::array<double,3>&)>& gradient) {
+    std::vector<double> values(op.faces().size(),0.);
+    for(std::size_t index=0;index<op.faces().size();++index) {
+        const auto& face=op.faces()[index];
+        if(face.boundary_side<0) continue;
+        const int side=face.boundary_side&1,axis=face.boundary_side/2;
+        const double s=side?1.:-1.;
+        const double derivative=gradient(face.center)[axis];
+        const auto& condition=boundary.conditions[face.boundary_side];
+        switch(condition.kind) {
+        case elliptic::FaceBoundaryKind::Dirichlet: values[index]=exact(face.center); break;
+        case elliptic::FaceBoundaryKind::Neumann: values[index]=s*derivative; break;
+        case elliptic::FaceBoundaryKind::Robin:
+            values[index]=condition.a*exact(face.center)+condition.b*s*derivative; break;
+        default: values[index]=0.; break;
+        }
+    }
+    return values;
+}
+
+/** Area-weighted continuum flux mismatch and discrete solution error. */
+void continuum_face_error(const elliptic::CompositePoisson& op,std::span<const double> potential,
+    std::span<const double> values,
+    const std::function<std::array<double,3>(const std::array<double,3>&)>& gradient,
+    double& flux) {
+    double mismatch=0.,area=0.;
+    for(std::size_t i=0;i<op.faces().size();++i) {
+        const auto& face=op.faces()[i];
+        const double value=op.face_gradient(potential,face,values[i]);
+        const double expected=gradient(face.center)[face.axis];
+        mismatch+=face.area*(value-expected)*(value-expected);
+        area+=face.area;
+    }
+    flux=std::sqrt(mismatch/area);
+}
+
+/** Mixed Dirichlet/Neumann/Robin sides on a Cartesian box with AMR. */
+void mixed_cartesian_boundary() {
+    using K=elliptic::FaceBoundaryKind;
+    std::cout<<"mixed Cartesian refined,n,cells,cycles,phi,flux,phi_order,flux_order\n";
+    const auto exact=[](const std::array<double,3>& x) {
+        return std::exp(.3*x[0]+.2*x[1]+.1*x[2]);
+    };
+    const auto gradient=[](const std::array<double,3>& x) {
+        const double value=std::exp(.3*x[0]+.2*x[1]+.1*x[2]);
+        return std::array<double,3>{.3*value,.2*value,.1*value};
+    };
+    elliptic::CompositeBoundary boundary;
+    boundary.sides={K::Dirichlet,K::Neumann,K::Robin,K::Dirichlet,K::Neumann,K::Robin};
+    boundary.conditions[0]={K::Dirichlet,1.,0.};
+    boundary.conditions[1]={K::Neumann,0.,1.};
+    boundary.conditions[2]={K::Robin,1.5,1.};
+    boundary.conditions[3]={K::Dirichlet,1.,0.};
+    boundary.conditions[4]={K::Neumann,0.,1.};
+    boundary.conditions[5]={K::Robin,.5,1.};
+    for(bool refined:{false,true}) {
+        double previous_phi=0.,previous_flux=0.;
+        for(int n:{8,16}) {
+            const auto base=base_mesh(3,n);
+            multigrid::CompositeMultigrid solver(base,make_cells(base,refined),boundary);
+            const auto& op=solver.op();
+            require(!op.has_constant_nullspace(),"mixed boundary kept a constant nullspace");
+            // Every nonzero-area flux side publishes its own physical record.
+            int dirichlet_faces=0,neumann_faces=0,robin_faces=0;
+            for(const auto& face:op.faces()) {
+                if(face.boundary_side<0) continue;
+                require(face.area>0.,"mixed boundary published a zero-area record");
+                switch(boundary.conditions[face.boundary_side].kind) {
+                case K::Dirichlet: ++dirichlet_faces; break;
+                case K::Neumann: ++neumann_faces; break;
+                case K::Robin: ++robin_faces; break;
+                default: break;
+                }
+            }
+            require(dirichlet_faces>0 && neumann_faces>0 && robin_faces>0,
+                "mixed boundary did not publish every side kind");
+            std::vector<double> rhs(op.size()),error(op.size());
+            // Independent continuum source: -Laplacian(Phi) = -.14*Phi.
+            for(int i=0;i<op.size();++i) rhs[i]=-.14*exact(op.center(i));
+            const auto values=continuum_boundary_values(op,boundary,exact,gradient);
+            const auto result=solver.solve(op.effective_rhs(rhs,values),{1e-10,0.,300});
+            require(result.report.status==multigrid::SolveStatus::Converged
+                    && result.report.residual<=result.report.target,
+                "mixed Cartesian solve failed");
+            for(int i=0;i<op.size();++i) error[i]=result.potential[i]-exact(op.center(i));
+            const double phi=op.norm(error);
+            double flux=0.;
+            continuum_face_error(op,result.potential,values,gradient,flux);
+            std::cout<<"mixed Cartesian refined="<<refined<<" n="<<n<<" cells="<<op.size()
+                <<" cycles="<<result.report.cycles<<" phi="<<phi<<" flux="<<flux;
+            if(previous_phi) {
+                const double phi_order=std::log2(previous_phi/phi);
+                const double flux_order=std::log2(previous_flux/flux);
+                std::cout<<" orders="<<phi_order<<','<<flux_order;
+                require(phi_order>=1.8 && flux_order>=1.8,
+                    "mixed Cartesian second order budget");
+            }
+            std::cout<<'\n';
+            previous_phi=phi;previous_flux=flux;
+        }
+    }
+}
+
+/** Solve one mixed radial problem and report its independent error measures. */
+void curved_mixed_case(elliptic::Geometry geometry,bool refined,int n,
+    const std::function<double(const std::array<double,3>&)>& exact,
+    const std::function<std::array<double,3>(const std::array<double,3>&)>& gradient,
+    const std::function<double(const std::array<double,3>&)>& source,
+    double& phi,double& flux,int& cycles,bool wedge=false) {
+    using K=elliptic::FaceBoundaryKind;
+    const bool spherical=geometry==elliptic::Geometry::Spherical;
+    auto base=base_mesh(3,n);
+    base.geometry=geometry;
+    base.origin[0]=.5;base.spacing[0]=1./n;
+    base.origin[1]=spherical?.3:-.5;base.spacing[1]=(spherical?pi-.6:1.)/n;
+    base.origin[2]=0.;base.spacing[2]=2*pi/n;
+    elliptic::CompositeBoundary boundary;
+    boundary.sides={K::Robin,K::Dirichlet,K::Neumann,K::Robin,K::Periodic,K::Periodic};
+    boundary.conditions[0]={K::Robin,1.,1.};
+    boundary.conditions[1]={K::Dirichlet,1.,0.};
+    boundary.conditions[2]={K::Neumann,0.,1.};
+    boundary.conditions[3]={K::Robin,.5,1.};
+    boundary.conditions[4]={K::Periodic,0.,1.};
+    boundary.conditions[5]={K::Periodic,0.,1.};
+    if(wedge) {
+        base.origin[2]=.4; base.spacing[2]=1./n;
+        boundary.sides[4]=K::Dirichlet; boundary.conditions[4]={K::Dirichlet,1.,0.};
+        boundary.sides[5]=K::Neumann; boundary.conditions[5]={K::Neumann,0.,1.};
+    }
+    multigrid::CompositeMultigrid solver(base,make_cells(base,refined),boundary);
+    const auto& op=solver.op();
+    std::vector<double> rhs(op.size()),error(op.size());
+    for(int i=0;i<op.size();++i) rhs[i]=source(op.center(i));
+    const auto values=continuum_boundary_values(op,boundary,exact,gradient);
+    const auto result=solver.solve(op.effective_rhs(rhs,values),{1e-10,0.,300});
+    require(result.report.status==multigrid::SolveStatus::Converged
+            && result.report.residual<=result.report.target,
+        "mixed curved solve failed");
+    for(int i=0;i<op.size();++i) error[i]=result.potential[i]-exact(op.center(i));
+    phi=op.norm(error);cycles=result.report.cycles;
+    continuum_face_error(op,result.potential,values,gradient,flux);
+}
+
+/** Mixed Dirichlet/Neumann/Robin radial sides on curved native geometry.
+ *  A radial quadratic is reproduced exactly by the shared fit, while a cubic
+ *  perturbation leaves an O(h^2) error with an exactly zero tangential flux. */
+void curved_mixed_boundary() {
+    const auto quadratic_exact=[](const std::array<double,3>& x) {return 1.+.5*x[0]*x[0];};
+    const auto quadratic_gradient=[](const std::array<double,3>& x) {
+        return std::array<double,3>{x[0],0.,0.};
+    };
+    const auto cubic_exact=[](const std::array<double,3>& x) {
+        return 1.+.5*x[0]*x[0]+x[0]*x[0]*x[0]/6.;
+    };
+    const auto cubic_gradient=[](const std::array<double,3>& x) {
+        return std::array<double,3>{x[0]+.5*x[0]*x[0],0.,0.};
+    };
+    std::cout<<"mixed curved geometry,refined,n,cells,cycles,phi,flux,phi_order,flux_order\n";
+    for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical}) {
+        const bool spherical=geometry==elliptic::Geometry::Spherical;
+        // -Laplacian(1+r^2/2) is constant; the cubic term adds a linear radial
+        // source (2r spherical, 1.5r cylindrical).
+        const auto quadratic_source=[&](const std::array<double,3>&) {
+            return spherical?-3.:-2.;
+        };
+        const auto cubic_source=[&](const std::array<double,3>& x) {
+            return spherical?-(3.+2.*x[0]):-(2.+1.5*x[0]);
+        };
+        for(bool refined:{false,true}) for(int n:{8,16}) {
+            double phi=0.,flux=0.;int cycles=0;
+            curved_mixed_case(geometry,refined,n,quadratic_exact,quadratic_gradient,
+                quadratic_source,phi,flux,cycles);
+            std::cout<<"mixed curved quadratic geometry="<<static_cast<int>(geometry)
+                <<" refined="<<refined<<" n="<<n<<" cycles="<<cycles
+                <<" phi="<<phi<<" flux="<<flux<<'\n';
+            // The shared quadratic fit reproduces this solution to roundoff.
+            require(phi<1e-8 && flux<1e-7,"curved mixed quadratic exactness budget");
+        }
+        for(bool refined:{false,true}) {
+            double phi=0.,flux=0.; int cycles=0;
+            curved_mixed_case(geometry,refined,8,quadratic_exact,quadratic_gradient,
+                quadratic_source,phi,flux,cycles,true);
+            require(phi<1e-8 && flux<1e-7,"curved wedge mixed quadratic exactness budget");
+        }
+        for(bool refined:{false,true}) {
+            double previous_phi=0.,previous_flux=0.;
+            for(int n:{8,16}) {
+                double phi=0.,flux=0.;int cycles=0;
+                curved_mixed_case(geometry,refined,n,cubic_exact,cubic_gradient,
+                    cubic_source,phi,flux,cycles);
+                std::cout<<"mixed curved cubic geometry="<<static_cast<int>(geometry)
+                    <<" refined="<<refined<<" n="<<n<<" cycles="<<cycles
+                    <<" phi="<<phi<<" flux="<<flux;
+                if(previous_phi) {
+                    const double phi_order=std::log2(previous_phi/phi);
+                    const double flux_order=std::log2(previous_flux/flux);
+                    std::cout<<" orders="<<phi_order<<','<<flux_order;
+                    require(phi_order>=1.8 && flux_order>=1.8,
+                        "mixed curved second order budget");
+                }
+                std::cout<<'\n';
+                previous_phi=phi;previous_flux=flux;
+            }
+        }
+    }
+}
+
+/** Pure Neumann nullspace, volume-weighted gauge and source compatibility. */
+void pure_neumann_compatibility() {
+    using K=elliptic::FaceBoundaryKind;
+    const auto base=base_mesh(2,16);
+    const auto cells=make_cells(base,true);
+    elliptic::CompositeBoundary boundary;
+    boundary.sides.fill(K::Neumann);
+    elliptic::CompositePoisson op(base,cells,boundary);
+    require(op.has_constant_nullspace() && !op.periodic_boundary(),
+        "pure Neumann operator lost its constant nullspace");
+    std::vector<double> constant(op.size(),2.5),applied(op.size());
+    op.apply(constant,applied);
+    for(double value:applied) require(std::abs(value)<1e-12,"pure Neumann constant mode is not null");
+    // The volume-weighted zero gauge differs from the arithmetic mean on AMR.
+    std::vector<double> refined_fraction(op.size(),0.);
+    int refined_cells=0;
+    for(int i=0;i<op.size();++i) if(op.cells()[i].level==1) {refined_fraction[i]=1.;++refined_cells;}
+    const double volume_fraction=op.mean(refined_fraction);
+    require(std::abs(volume_fraction-double(refined_cells)/op.size())>1e-3,
+        "volume weighting is not distinct from the arithmetic mean");
+    op.project(refined_fraction);
+    require(std::abs(op.mean(refined_fraction))<=1e-14*op.norm(refined_fraction),
+        "volume-weighted zero gauge was not applied");
+    // A compatible source (zero volume-weighted mass) converges to a true solution.
+    multigrid::CompositeMultigrid solver(base,cells,boundary);
+    std::vector<double> rhs(op.size()),exact(op.size()),error(op.size());
+    for(int i=0;i<op.size();++i) {
+        const auto x=op.center(i);
+        exact[i]=std::cos(2*pi*x[0])*std::cos(2*pi*x[1]);
+        rhs[i]=8*pi*pi*exact[i];
+    }
+    op.project(rhs);
+    op.validate_compatibility(rhs);
+    const auto result=solver.solve(rhs,{1e-10,0.,300});
+    require(result.report.status==multigrid::SolveStatus::Converged,
+        "pure Neumann compatible solve failed");
+    op.apply(result.potential,applied);
+    for(int i=0;i<op.size();++i) applied[i]-=rhs[i];
+    require(op.norm(applied)<=result.report.target,"pure Neumann independent residual");
+    for(int i=0;i<op.size();++i) error[i]=result.potential[i]-exact[i];
+    std::cout<<"pure Neumann phi="<<op.norm(error)<<" cycles="<<result.report.cycles
+        <<" residual="<<result.report.residual<<'\n';
+    // A constant shift is still a solution and never changes the flux.
+    std::vector<double> shifted=result.potential;
+    for(double& value:shifted) value+=7.;
+    op.apply(shifted,applied);
+    for(int i=0;i<op.size();++i) applied[i]-=rhs[i];
+    require(op.norm(applied)<=result.report.target,"pure Neumann shift invariance");
+    // Inhomogeneous Neumann data must still telescope to zero net oriented flux.
+    std::vector<double> values(op.faces().size(),0.),flux_rhs(rhs.size(),0.);
+    for(std::size_t i=0;i<op.faces().size();++i)
+        if(op.faces()[i].boundary_side>=0) values[i]=1.;
+    flux_rhs=op.effective_rhs(flux_rhs,values);
+    require(std::abs(op.mean(flux_rhs))>1e-6,"balanced flux data is not represented");
+    // Nonzero mass with homogeneous Neumann data is rejected, not projected.
+    auto rejects=[&](auto function,const char* message) {
+        bool failed=false;
+        try {function();} catch(const std::exception&) {failed=true;}
+        require(failed,message);
+    };
+    std::vector<double> mass(op.size(),1.);
+    rejects([&]{solver.solve(mass,{1e-10,0.,100});},"nonzero Neumann mass accepted");
+    rejects([&]{op.validate_compatibility(mass);},"validate_compatibility accepted nonzero mass");
+    rejects([&]{std::vector<double> bad(op.size(),std::numeric_limits<double>::quiet_NaN());
+        op.validate_compatibility(bad);},"validate_compatibility accepted a nonfinite source");
+    // A pure periodic boundary keeps its legacy projection path.
+    elliptic::CompositePoisson periodic(base,cells,elliptic::BoundaryKind::Periodic);
+    require(periodic.periodic_boundary() && periodic.has_constant_nullspace(),
+        "legacy periodic boundary lost its projection");
+    periodic.validate_compatibility(mass);
+    std::vector<double> periodic_rhs(op.size(),1.);
+    periodic.project(periodic_rhs);
+    require(std::abs(periodic.mean(periodic_rhs))<1e-15,"legacy periodic projection");
+    // A one-cell root is rejected, so a coarse level always keeps a real
+    // bounded LU instead of the degenerate single-cell all-Neumann case.
+    elliptic::CartesianMesh single;
+    single.dimension=1;single.cells={1,1,1};single.spacing={1.,1.,1.};
+    rejects([&]{elliptic::CompositePoisson invalid(single,{{0,{0,0,0}}},boundary);},
+        "single-cell all-Neumann root accepted");
+}
+
+/** Prescribed flux remains independent of a large, volume-zero-mean potential.
+ *  The flat boundary patches give the independent values dPhi/dn=c/b for
+ *  Neumann and dPhi/dn=(c-a*Phi_A)/b in the near-Neumann roundoff limit. */
+void extreme_flux_boundary() {
+    using K=elliptic::FaceBoundaryKind;
+    const auto base=base_mesh(1,16);
+    const auto cells=make_cells(base,false);
+    for(const double a:{0.,std::ldexp(1.,-60)}) {
+        const auto kind=a==0.?K::Neumann:K::Robin;
+        elliptic::CompositeBoundary boundary;
+        boundary.sides.fill(kind);
+        boundary.conditions.fill({kind,a,1.});
+        // One Dirichlet side fixes the near-Neumann global gauge. This check
+        // targets the local flux row, not an almost singular coarse solve.
+        if(a!=0.) {
+            boundary.sides[1]=K::Dirichlet;
+            boundary.conditions[1]={K::Dirichlet,1.,0.};
+        }
+        multigrid::CompositeMultigrid solver(base,cells,boundary);
+        const auto& op=solver.op();
+        std::vector<double> potential(op.size()),values(op.faces().size(),1.);
+        for(int i=0;i<op.size();++i)
+            potential[i]=std::ldexp(op.center(i)[0]<.5?1.:-1.,54);
+        require(op.mean(potential)==0.,"extreme flux fixture has a nonzero gauge");
+        auto& execution=solver.execution();
+        const auto resident=execution.upload(potential),data=execution.upload(values);
+        auto gradients=execution.array<double>(op.faces().size());
+        solver.gradient(resident,gradients,data);
+        const auto packed=execution.download(gradients);
+        for(std::size_t i=0;i<op.faces().size();++i) {
+            const auto& face=op.faces()[i];
+            if(!op.has_flux_boundary(face))continue;
+            const int anchor=face.left>=0?face.left:face.right;
+            const double s=(face.boundary_side&1)?1.:-1.;
+            const double expected=s*(1.-a*potential[anchor]);
+            const double actual=op.face_gradient(potential,face,1.);
+            require(std::abs(actual-expected)<=16.*std::numeric_limits<double>::epsilon(),
+                "prescribed flux was cancelled against a large potential");
+            require(actual==packed[i],"packed gradient differs from the shared flux row");
+        }
+    }
+    // A pure Neumann row must not form an overflowing difference even when
+    // both input potentials are finite and have opposite maximum magnitude.
+    const double extreme[]={std::numeric_limits<double>::max(),-std::numeric_limits<double>::max()};
+    const int sample=1;const double zero=0.;
+    require(elliptic::composite_face_gradient(extreme,0,&sample,&zero,1,1.,1.,0.,true)==1.,
+        "pure Neumann flux read an irrelevant overflowing field difference");
+    std::cout<<"Extreme Neumann/near-Neumann scalar and packed gradients passed\n";
+}
+
+/** Reject unpaired periodic sides, inconsistent policies and bad coefficients. */
+void boundary_policy_rejection() {
+    using K=elliptic::FaceBoundaryKind;
+    const auto base=base_mesh(3,8);
+    const auto cells=make_cells(base,false);
+    auto rejects=[&](auto function,const char* message) {
+        bool failed=false;
+        try {function();} catch(const std::exception&) {failed=true;}
+        require(failed,message);
+    };
+    elliptic::CompositeBoundary unpaired;
+    unpaired.sides={K::Periodic,K::Dirichlet,K::Dirichlet,K::Dirichlet,K::Dirichlet,K::Dirichlet};
+    for(int index=0;index<6;++index)
+        unpaired.conditions[index]=index==0?elliptic::FaceBoundaryCondition{K::Periodic,0.,1.}
+                                           :elliptic::FaceBoundaryCondition{K::Dirichlet,1.,0.};
+    rejects([&]{elliptic::CompositePoisson invalid(base,cells,unpaired);},
+        "unpaired periodic side accepted");
+    elliptic::CompositeBoundary mismatch;
+    mismatch.sides.fill(K::Dirichlet); // conditions keep their Neumann default.
+    rejects([&]{elliptic::CompositePoisson invalid(base,cells,mismatch);},
+        "conditions disagreeing with sides accepted");
+    const auto invalid=[&](K kind,double a,double b,const char* message) {
+        elliptic::CompositeBoundary boundary;
+        boundary.sides.fill(K::Dirichlet);
+        for(int index=0;index<6;++index)
+            boundary.conditions[index]={K::Dirichlet,1.,0.};
+        boundary.sides[0]=kind;boundary.conditions[0]={kind,a,b};
+        rejects([&]{elliptic::CompositePoisson invalid(base,cells,boundary);},message);
+    };
+    invalid(K::Dirichlet,1.,1.,"Dirichlet b!=0 accepted");
+    invalid(K::Neumann,0.,2.,"Neumann b!=1 accepted");
+    invalid(K::Neumann,1.,1.,"Neumann a!=0 accepted");
+    invalid(K::Robin,1.,0.,"Robin b=0 accepted");
+    invalid(K::Robin,-1.,1.,"Robin negative a accepted");
+    invalid(K::Robin,1.,std::numeric_limits<double>::infinity(),"Robin nonfinite b accepted");
+    {
+        elliptic::CompositeBoundary boundary;
+        boundary.sides.fill(K::Dirichlet);
+        for(int index=0;index<6;++index)
+            boundary.conditions[index]={K::Dirichlet,1.,0.};
+        boundary.constant_nullspace=true;
+        rejects([&]{elliptic::CompositePoisson invalid(base,cells,boundary);},
+            "positive boundary weight kept the constant nullspace");
+    }
+    // A zero-weight Robin flux side is accepted and keeps a positive result.
+    {
+        elliptic::CompositeBoundary boundary;
+        boundary.sides.fill(K::Dirichlet);
+        for(int index=0;index<6;++index)
+            boundary.conditions[index]={K::Dirichlet,1.,0.};
+        boundary.sides[0]=K::Robin;boundary.conditions[0]={K::Robin,0.,.5};
+        elliptic::CompositePoisson accepted(base,cells,boundary);
+        require(!accepted.has_constant_nullspace(),"Robin/Dirichlet lost its nonsingular operator");
+    }
+    rejects([&]{elliptic::CompositePoisson invalid(base,cells,elliptic::BoundaryKind::RadialIsolated);},
+        "Cartesian radial boundary accepted");
+    rejects([&]{elliptic::CompositePoisson invalid(base,cells,elliptic::BoundaryKind::User);},
+        "bare user boundary kind accepted");
+}
 
 /** Check radial geometry, regular origin, mixed AMR and independent Gauss law. */
 void radial_convergence() {
@@ -662,6 +1067,17 @@ void curved_manufactured(bool singular=false, bool seam_refined=false) {
         }
 }
 
+/** A tiny annular physical surface must not disappear under an area threshold. */
+void tiny_physical_boundary() {
+    auto base=base_mesh(1,16);
+    base.geometry=elliptic::Geometry::Cylindrical;
+    base.origin[0]=1e-18;
+    elliptic::CompositePoisson op(base,make_cells(base,false),elliptic::BoundaryKind::RadialIsolated);
+    const auto face=std::find_if(op.faces().begin(),op.faces().end(),[](const auto& f){return f.boundary_side==0;});
+    require(face!=op.faces().end() && face->area==base.origin[0],
+        "tiny positive annular face was mistaken for the origin join");
+}
+
 }
 int main(int argc,char** argv) {
     try {
@@ -673,10 +1089,18 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="gauss") {curved_gauss_law();return 0;}
         if(argc>1 && std::string(argv[1])=="domain") {curved_domain_extension();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary") {boundary_convergence();isolated_boundary();return 0;}
+        if(argc>1 && std::string(argv[1])=="policy") {
+            tiny_physical_boundary();
+            mixed_cartesian_boundary();curved_mixed_boundary();
+            pure_neumann_compatibility();extreme_flux_boundary();boundary_policy_rejection();return 0;
+        }
         if(argc>1 && std::string(argv[1])=="ci") {
+            tiny_physical_boundary();
             boundary_convergence(16);isolated_boundary();averaged_source_exactness();
             convergence(2);radial_convergence();curved_manufactured();
-            curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);curved_manufactured(true,true);return 0;
+            curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);curved_manufactured(true,true);
+            mixed_cartesian_boundary();curved_mixed_boundary();
+            pure_neumann_compatibility();extreme_flux_boundary();boundary_policy_rejection();return 0;
         }
         averaged_source_exactness();
         convergence(argc>1 ? std::stoi(argv[1]) : 3);

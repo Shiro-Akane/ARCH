@@ -62,12 +62,27 @@ public:
      */
     std::unique_ptr<ProblemGenerator> Create(const std::string &name)
     {
-        // Use C++20 contains() if available, otherwise use find()
-        if (creators_.find(name) != creators_.end())
+        const auto creator = creators_.find(name);
+        if (creator == creators_.end())
+            return nullptr; // Caller must check for validity!
+
+        std::unique_ptr<ProblemGenerator> generator = creator->second();
+        if (generator)
         {
-            return creators_[name]();
+            // The created case carries its own registration identity; the
+            // caller never has to re-read registry-owned state.
+            const auto registration = registrations_.find(name);
+            if (registration != registrations_.end())
+            {
+                generator->BindRegistration(name, registration->second.source_file,
+                                            registration->second.source_sha256);
+            }
+            else
+            {
+                generator->BindRegistration(name, {}, {});
+            }
         }
-        return nullptr; // Caller must check for validity!
+        return generator;
     }
 
     // Registration names only: enumeration never constructs a case or calls Setup.

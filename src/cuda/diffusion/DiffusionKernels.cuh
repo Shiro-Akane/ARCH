@@ -207,9 +207,11 @@ __global__ void diffusion_face_kernel(
         const double spacing = DiffFlux::diffusion_face_spacing(
             geometry.geometry, grid.dim, direction, grid.dx1, grid.dx2, grid.dx3,
             geometry.GetCellCenterX(i), geometry.GetCellCenterY(j));
+        const FluidVector left = state.load(left_cell);
+        const FluidVector right = state.load(right_cell);
         const DiffFlux::DiffusionFaceStatus face_status =
             DiffFlux::evaluate_diffusion_face(
-                state.load(left_cell), state.load(right_cell),
+                left, right,
                 state.n_species > 0
                     ? state.mass_fractions + left_cell : nullptr,
                 state.n_species > 0
@@ -226,7 +228,30 @@ __global__ void diffusion_face_kernel(
             atomicExch(status, 1);
             continue;
         }
-        if (face_status.active) flux.store(right_cell, face_flux);
+        if (face_status.active) {
+            const int k = grid.ks + linear / (ni * nj);
+            const auto* controls = state.diffusion_boundary.at(direction, i, j, k,
+                grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, state.n_species);
+            const int coordinate[3]{i,j,k}, lower[3]{grid.is,grid.js,grid.ks};
+            boundary::ApplyDiffusionBoundaryFlux(controls, coordinate[direction] == lower[direction] ? -1. : 1.,
+                left, right, face_flux,
+                state.n_species ? flux.mass_fractions + right_cell : nullptr, state.n_species, flux.total_size);
+            flux.store(right_cell, face_flux);
+            // Observe the actual post-override flux: heat follows the shared
+            // DiffFlux convention F_E - sum_i F_mom_i * average face velocity.
+            if (state.capture.stage[2 * direction] || state.capture.stage[2 * direction + 1]) {
+                const double velocity[3]{
+                    0.5 * (left.mom_u / left.rho + right.mom_u / right.rho),
+                    0.5 * (left.mom_v / left.rho + right.mom_v / right.rho),
+                    0.5 * (left.mom_w / left.rho + right.mom_w / right.rho)};
+                const double heat = face_flux.eng - face_flux.mom_u * velocity[0]
+                    - face_flux.mom_v * velocity[1] - face_flux.mom_w * velocity[2];
+                boundary::CaptureBoundaryFlux(state.capture, direction, i, j, k,
+                    grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, face_flux,
+                    state.n_species ? flux.mass_fractions + right_cell : nullptr,
+                    state.n_species, flux.total_size, heat);
+            }
+        }
     }
 }
 

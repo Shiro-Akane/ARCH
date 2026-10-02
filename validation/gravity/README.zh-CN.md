@@ -122,18 +122,30 @@ RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预�
 CPU 制造解、独立边界/Gauss、AMR 与重启证据见
 [曲线坐标 CPU 记录](results/p11-p12-20260923/README.md)；CUDA 一维解析场、同输入四模块
 对照、双向跨后端续算与本机性能见 [曲线坐标 CUDA 记录](results/p13-20260924/README.md)。
-部分方位角扇区、域外质量源和 Jeans 专用细化指标仍不支持自引力。
+指定 Dirichlet／Neumann／线性 Robin 及用户势边界支持三类几何和有效扇区；孤立质量模型仍要求完整方位角。域外质量源和 Jeans 专用细化指标未纳入此范围。
 可从 [GravityBox](../../simulation/GravityBox/README.md)
 的示例输入开始。[笛卡尔自引力验收](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
 记录数值、耦合、重启与设备检查；早期 [周期场记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)
 保留其 CPU 周期范围；[径向场与 AMR 记录](results/p8-p10-20260923/README.md)保存椭圆与 AMR 指标。
 
 `run_self_gravity.py --arch <ARCH> --output <新目录>` 检查 Jeans 波、能量、时间阶、
-动态 AMR、重启、孤立边界、一维径向场及选定耦合（需要 numpy/h5py）；`--quick` 是既有 CTest
+动态 AMR、重启、孤立边界、一维径向场、用户边界及选定耦合（需要 numpy/h5py）；`--quick` 是既有 CTest
 解析与拒绝子集。`arch_composite_poisson 3` 检查三维均匀/混合层级制造解，
 `contract` 检查失败路径、层级不变量与径向椭圆门槛。
 `check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <新目录>`
-检查实际设备引力；`--benchmark-only` 测量本机代表性工作负载。
+检查实际设备引力；`--benchmark-only --benchmark-time 0.1` 测量达到同一物理终点的
+本机代表性工作负载。预热后交替运行，`--benchmark-repeats` 默认五次；记录总耗时、
+范围与后端场一致性。`--baseline-cpu-arch` 另列旧版／当前纯 CPU 防退化，CPU/GPU
+加速比仍使用同一 CUDA-enabled 程序。正式计时与编译、sanitizer 和其他 GPU 负载分开。
+`--benchmark-case large-user-boundary --benchmark-time 0.0003` 单列 64³ 用户物理／势
+回调场景；旧发布版没有该模型，只参与内置边界的 CPU 防退化比较。
+`--benchmark-cuda-host-threads` 明确记录 CUDA 路线的 Host 线程资源，默认 1；
+普通 C++ 边界回调在 Host 求值，可用此选项测量与 CPU 相同线程资源下的整程成本。
+线程数随结果保存，不能把增加 Host 线程取得的收益归为 GPU kernel 提速。
+`user_boundaries.py` 复用 `--cuda-sanitizer`／`--sanitizer-tool` 插桩入口，保留其场、
+实际面收支与重启判据；原始工具日志留在本机。
+[用户边界验收记录](results/user-boundaries-20261003/README.md)集中列出独立数学、
+原生几何／AMR、设备安全、覆盖映射和整程成本，保留短回调轨迹的整程负收益。
 
 [二维/三维四模块算例](../../simulation/SNIaCoupled/README.md)检查带 AMR 的流体、
 自引力、燃烧与热扩散联动；原 [Cartesian CPU/CUDA 冒烟记录](results/snia2d-20260923/README.md)、

@@ -31,6 +31,7 @@
 #include "amr/exchange/CoordinateSeamMath.h"
 #include "amr/storage/Block.h"
 #include "amr/storage/MemoryPool.h"
+#include "grid/CoordinateBoundary.h"
 
 namespace amr {
 
@@ -176,14 +177,14 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
     const bool origin = lower[0] == 0.;
     const bool north = spherical && dimension == 3 && lower[1] == 0.;
     const bool south = spherical && dimension == 3
-        && std::abs(upper[1] - pi) <= 1e-12;
+        && GridMetrics::IsCoordinateJoin(GridMetrics::Geometry::Spherical,dimension,1,upper[1]);
     if (!origin && !north && !south) return plan;
     const int azimuth = dimension - 1;
     const double phi_width = upper[azimuth] - lower[azimuth];
     // A partial wedge is still a valid pre-existing Hydro boundary problem.
-    // Only full turns have a physical phi+pi donor; self-gravity rejects a
-    // partial turn separately in its configuration contract.
-    if (std::abs(phi_width - 2. * pi) > 1e-12) return plan;
+    // Only full turns have a physical phi+pi donor. Explicit potential
+    // boundaries may use sectors, whose regularity does not imply this join.
+    if (std::abs(phi_width - 2. * pi) > 64.*std::numeric_limits<double>::epsilon()*2.*pi) return plan;
 
     // Leaf lookup is needed only for a full-turn singular domain. Ordinary
     // curved domains retain their previous exchange-plan construction cost.
@@ -221,13 +222,13 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
                     for (int depth = 1; depth <= grid.ng; ++depth)
                         append(id, grid.Is() - depth, j, k);
         }
-        if (north && std::abs(grid.x2_min) <= 1e-12) {
+        if (north && grid.x2_min == lower[1]) {
             for (int k = grid.Ks(); k < grid.Ke(); ++k)
                 for (int i = grid.Is(); i < grid.Ie(); ++i)
                     for (int depth = 1; depth <= grid.ng; ++depth)
                         append(id, i, grid.Js() - depth, k);
         }
-        if (south && std::abs(grid.x2_max - pi) <= 1e-12) {
+        if (south && grid.x2_max == upper[1]) {
             for (int k = grid.Ks(); k < grid.Ke(); ++k)
                 for (int i = grid.Is(); i < grid.Ie(); ++i)
                     for (int depth = 1; depth <= grid.ng; ++depth)

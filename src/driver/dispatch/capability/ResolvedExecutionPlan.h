@@ -90,6 +90,7 @@ enum class BoundaryFeature : std::uint32_t
     Periodic = 1u << 0,
     Outflow = 1u << 1,
     Reflecting = 1u << 2,
+    User = 1u << 3,
     Unknown = 1u << 31,
 };
 

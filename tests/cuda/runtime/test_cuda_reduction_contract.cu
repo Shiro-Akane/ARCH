@@ -626,6 +626,37 @@ void verify_composite_reductions()
     }
 }
 
+/** Execute the shared affine face rows on the real device with independent
+ *  Neumann and near-Neumann references; include irrelevant overflowing field
+ *  differences to verify that zero stencil weights do not consume them. */
+void verify_composite_flux_extremes()
+{
+    using namespace arch::multigrid;
+    auto owner=arch::cuda::make_cuda_gravity_execution(nullptr,0,{});
+    auto execution=owner->numeric();
+    const double a=std::ldexp(1.,-60),qB=2.,denominator=a+qB;
+    const std::vector<double> potential={std::ldexp(1.,54),-std::ldexp(1.,54),
+        std::numeric_limits<double>::max(),-std::numeric_limits<double>::max()};
+    SparseStorage rows;
+    const std::vector<int> first={0,1},second={2,3};
+    const std::vector<double> zero={0.,0.},robin={-a*qB/denominator,0.};
+    rows.row(first,zero);rows.row(first,robin);rows.row(second,zero);
+    SparseArray stencil(*execution,rows);
+    auto anchors=execution->upload(std::vector<int>{0,0,2});
+    auto weights=execution->upload(std::vector<double>{0.,-a*qB/denominator,0.});
+    auto factors=execution->upload(std::vector<double>{1.,qB/denominator,1.});
+    auto kinds=execution->upload(std::vector<unsigned char>{1,1,1});
+    auto values=execution->upload(std::vector<double>{1.,1.,1.});
+    auto field=execution->upload(potential);
+    auto gradients=execution->array<double>(3);
+    execution->run(GradientWork{3,{stencil.view(),anchors.data,factors.data,weights.data,kinds.data},
+        field.data,values.data,gradients.data});
+    const auto actual=execution->download(gradients);
+    const double expected[]={1.,1.-std::ldexp(1.,-6),1.};
+    for(int i=0;i<3;++i)
+        if(actual[i]!=expected[i])fail("composite prescribed flux lost an extreme-value datum");
+}
+
 int main()
 {
     int device_count = 0;
@@ -640,6 +671,7 @@ int main()
     verify_real_hydro_owner();
     verify_real_diffusion_owner();
     verify_composite_reductions();
+    verify_composite_flux_extremes();
     if (edge_cases != 36) fail("device edge case count");
     if (failures == 0)
         std::cout << "D2_CUDA_REDUCTION_CONTRACT_PASS edge_cases="

@@ -19,3 +19,7 @@ Generated-network preparation lives with the
 
 Keep this directory for task-oriented instructions. Scientific acceptance and
 its reproducible inputs belong to [Validation](../../validation/README.md).
+
+[UserBoundaries.md](UserBoundaries.md) ([Chinese](UserBoundaries.zh-CN.md))
+defines separate physical/potential sibling files, CGS conditions, stage time,
+coordinate joins, CUDA callback costs and restart identity.

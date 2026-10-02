@@ -19,6 +19,9 @@ ARCH 用于模拟可压缩流体运动、传热与核反应。它以有限体积
 
 ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应及外部／自引力计算，并可在 CPU 或 CUDA 后端运行。[独立功能清单](docs/Features.zh-CN.md)列出各模块、几何与边界的适用范围。[验证索引](validation/README.zh-CN.md)说明经过检查的模型组合；[版本说明](docs/releases/README.md)记录各源码版本的变化。
 
+物理域和自引力支持独立的用户边界回调，使用同目录源码及现有两个公共头文件；
+入流、热通量与势边界的写法见[用户边界指南](docs/guides/UserBoundaries.zh-CN.md)。
+
 在参数文件中用 `compute_backend = cpu`、`cuda` 或 `auto` 选择后端。自动选择只发生在启动阶段；细节见[CUDA 指南](docs/CudaBackendStatus.zh-CN.md)。
 
 ## 构建

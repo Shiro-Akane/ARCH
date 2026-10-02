@@ -93,18 +93,24 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     require(g.relative_tolerance < 1.0, "gravity_rtol", "Relative tolerance must be smaller than one.");
     nonnegative(g.absolute_tolerance, "gravity_atol");
     require(g.max_cycles > 0, "gravity_max_cycles", "Iteration count must be positive.");
-    require(g.boundary == "periodic" || g.boundary == "isolated", "gravity_boundary", "Expected periodic or isolated gravity boundary.");
+    require(g.boundary == "periodic" || g.boundary == "isolated" || g.boundary == "user"
+            || g.boundary == "dirichlet" || g.boundary == "neumann", "gravity_boundary",
+            "Expected periodic, isolated, dirichlet, neumann or user gravity boundary.");
     if (g.type == "self") {
+        const auto reflecting = [](const std::string& name) {
+            const auto parsed = arch::dispatch::parse_boundary(name);
+            return parsed.ok && parsed.value == arch::dispatch::BoundaryFeature::Reflecting;
+        };
         const bool curved=c.grid.geometry=="spherical" || c.grid.geometry=="cylindrical";
         require(c.grid.geometry=="cartesian" || curved, "geometry",
             "Self-gravity supports Cartesian, cylindrical and spherical geometry.");
         if(curved) {
-            require(g.boundary=="isolated","gravity_boundary",
-                "Curvilinear self-gravity requires isolated gravity boundary.");
+            require(g.boundary!="periodic","gravity_boundary",
+                "Curvilinear self-gravity requires isolated or explicit Dirichlet/Neumann/user boundaries.");
             require(c.grid.x1_min>=0.,"x1_min","Curvilinear self-gravity requires nonnegative radius.");
-            require(c.grid.x1l_boundary_type=="reflecting","x1l_boundary_type",
+            require(c.grid.x1_min > 0. || reflecting(c.grid.x1l_boundary_type),"x1l_boundary_type",
                 "The radial inner boundary requires reflecting fluid flow.");
-            if(c.grid.dim>1) {
+            if(c.grid.dim>1 && g.boundary=="isolated") {
                 // Full-azimuth singular faces use the shared AMR chart mapping;
                 // the radial inner face remains reflecting at the zero-area join.
                 const int azimuth=c.grid.dim-1;
@@ -118,10 +124,10 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
                     require(c.grid.x2_min>=0. && c.grid.x2_max<=pi,"x2_min",
                         "Spherical polar bounds must remain within [0,pi].");
                     if(c.grid.x2_min==0.)
-                        require(c.grid.x2l_boundary_type=="reflecting","x2l_boundary_type",
+                        require(reflecting(c.grid.x2l_boundary_type),"x2l_boundary_type",
                             "The north pole requires reflecting fluid flow with coordinate-seam mapping.");
                     if(std::abs(c.grid.x2_max-pi)<=1e-12)
-                        require(c.grid.x2r_boundary_type=="reflecting","x2r_boundary_type",
+                        require(reflecting(c.grid.x2r_boundary_type),"x2r_boundary_type",
                             "The south pole requires reflecting fluid flow with coordinate-seam mapping.");
                 }
             }
@@ -129,10 +135,11 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
             require(c.grid.dim==3,"gravity_boundary","Cartesian isolated gravity requires a 3D Newtonian domain.");
         const std::string faces[]{c.grid.x1l_boundary_type,c.grid.x1r_boundary_type,
             c.grid.x2l_boundary_type,c.grid.x2r_boundary_type,c.grid.x3l_boundary_type,c.grid.x3r_boundary_type};
-        const int azimuth=curved && c.grid.dim>1?c.grid.dim-1:-1;
+        const int azimuth=curved && c.grid.dim>1 && g.boundary=="isolated"?c.grid.dim-1:-1;
         for (int a=0; a<2*c.grid.dim; ++a) {
+            if(g.boundary=="user") continue; // Callback topology is checked when the mesh is bound.
             const bool periodic=g.boundary=="periodic" || a/2==azimuth;
-            require(periodic ? faces[a]=="periodic" : faces[a]=="outflow" || faces[a]=="reflecting",
+            require(periodic ? faces[a]=="periodic" : arch::dispatch::parse_boundary(faces[a]).ok && faces[a]!="periodic",
                 "gravity_boundary", "Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).");
         }
     }

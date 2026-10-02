@@ -245,3 +245,7 @@ CTest runs tests; it does not compile missing test executables. A build without
 `--target ARCH` builds the default target set, which is larger when tests are
 enabled. Choose further checks from [Tests](../../tests/README.md), and use the
 module recipes in [Validation](../../validation/README.md) for scientific runs.
+
+Case boundary callbacks compile with the application. Keep `physical_boundary.cpp`
+and `gravity_boundary.cpp` beside the registered case source, then reconfigure
+and rebuild; no boundary path setting is needed. See [user boundaries](UserBoundaries.md).

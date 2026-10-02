@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <vector>
 
 struct IdealGas;
 class HelmEos;
@@ -115,6 +116,13 @@ public:
     state::CompletionToken execute_physical_boundary_batch(
         std::span<const backend::BackendStateAccess> accesses,
         state::StateVersion version, state::CompletionToken expected) override;
+    backend::BoundaryCells read_boundary_cells(backend::BackendStateAccess,
+        std::span<const int>, state::StateRegion = state::StateRegion::Interior) override;
+    void write_boundary_cells(backend::BackendStateAccess, std::span<const int>,
+        const backend::BoundaryCells&, const boundary::DiffusionBoundaryStorage&) override;
+    void configure_boundary_flux_capture(std::span<const backend::BoundaryFluxPlanes>,
+        double weight, double initial_weight, bool save_initial) override;
+    std::vector<backend::BoundaryFluxPlanes> download_boundary_flux_capture() override;
     state::CompletionToken execute_same_level_exchange(
         std::span<const backend::BackendStateAccess> accesses,
         const amr::SameLevelExchangePlan& plan, state::StateSlot slot,

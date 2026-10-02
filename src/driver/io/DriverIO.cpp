@@ -90,6 +90,28 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                                   const CpuStageTimings& cpu_stages)
 {
     const auto& config = runtime.configuration();
+    const auto& hydro_budget=runtime.hydro_boundary_budget();
+    const auto& diffusion_budget=runtime.diffusion_boundary_budget();
+    if (!hydro_budget.empty()) {
+        std::ofstream fluxes(config.io.out_dir+"/boundary_fluxes.tsv");
+        if (!fluxes) throw std::runtime_error("Cannot write boundary flux diagnostics");
+        fluxes << "# scope=since-process-start; positive=outgoing; momentum=native; "
+                  "energy=fluid-total; gravity-work=separate; units=CGS\n";
+        const auto& observer=runtime.boundary_observer_operations();
+        fluxes << "# observer_bytes_h2d=" << observer.bytes_h2d << "; observer_bytes_d2h=" << observer.bytes_d2h
+            << "; observer_kernels=" << observer.kernel_count << "; observer_synchronizations=" << observer.stream_sync_count << '\n';
+        fluxes << "time\toperator\tmass\tmomentum_x1\tmomentum_x2\tmomentum_x3\tenergy";
+        for (const auto& species:runtime.species().species_list)
+            fluxes << "\tspecies_" << species.name;
+        fluxes << "\theat\n" << std::setprecision(17);
+        for (int kind=0;kind<3;++kind) {
+            fluxes << ctrl.t_current << '\t' << (kind==0 ? "hydro" : kind==1 ? "diffusion" : "total");
+            for (std::size_t k=0;k<hydro_budget.size();++k)
+                fluxes << '\t' << (kind==0 ? hydro_budget[k] : kind==1 ? diffusion_budget[k]
+                    : hydro_budget[k]+diffusion_budget[k]);
+            fluxes << '\n';
+        }
+    }
     const auto* compute_backend = runtime.backend();
     const auto& regrid_measurements = runtime.regrid_records();
     const bool has_diff = config.physics.diffusion.use_diffusion;

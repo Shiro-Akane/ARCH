@@ -5,14 +5,6 @@
  * The test selects a device through the backend interface and verifies
  * complete state upload, storage reuse and resource-lifetime constraints.
  */
-#include "amr/storage/Block.h"
-#include "amr/exchange/BoundaryPlan.h"
-#include "cuda/runtime/CudaBackend.h"
-#include "physics/eos/IdealGas.h"
-#include "physics/species/Species.h"
-
-#include <cuda_runtime_api.h>
-
 #include <array>
 #include <bit>
 #include <cstdint>
@@ -21,6 +13,15 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
+
+#include <cuda_runtime_api.h>
+
+#include "amr/exchange/BoundaryPlan.h"
+#include "amr/storage/Block.h"
+#include "cuda/runtime/CudaBackend.h"
+#include "physics/eos/IdealGas.h"
+#include "physics/species/Species.h"
 
 namespace {
 
@@ -187,6 +188,153 @@ void upload_complete_current(
         transfer_view(state));
     require_backend_device_selected(
         "staged ghost upload did not restore the backend device");
+}
+
+// Host planes deliberately have end sentinels; species planes also have a
+// stride larger than the device plane. Region checks use individual cell
+// membership, independent of the implementation's rectangles or cuboids.
+struct RegionBuffer {
+    static constexpr double sentinel = -9876.5;
+    std::array<std::vector<double>, 6> fields;
+    std::vector<double> composition;
+    std::size_t cells, species_stride;
+
+    explicit RegionBuffer(std::size_t count)
+        : composition(2 * (count + 7), sentinel),
+          cells(count), species_stride(count + 7)
+    {
+        for (auto& field : fields) field.assign(count + 7, sentinel);
+    }
+
+    void fill(double seed, const Grid& grid)
+    {
+        // PAD_NX includes allocation-only row tails. Their sentinels must stay
+        // untouched: only actual grid cells participate in either region.
+        for (int k = 0; k < grid.GetTotalZ(); ++k)
+            for (int j = 0; j < grid.GetTotalY(); ++j)
+                for (int i = 0; i < grid.GetTotalX(); ++i) {
+            const std::size_t cell = grid.GetIndex(i, j, k);
+            for (std::size_t field = 0; field < fields.size(); ++field)
+                fields[field][cell] = seed + 8.0 * field + 0.000125 * cell;
+            fields.back()[cell] = ((cell + static_cast<int>(seed)) & 1)
+                ? -0.0 : 0.0;
+            composition[cell] = 0.25 + 0.01 * seed + 0.000001 * cell;
+            composition[species_stride + cell] = 1.0 - composition[cell];
+        }
+    }
+
+    arch::backend::HostStateTransferView view()
+    {
+        return {fields[0].data(), fields[1].data(), fields[2].data(),
+                fields[3].data(), fields[4].data(), fields[5].data(),
+                composition.data(), cells, 2, species_stride};
+    }
+};
+
+// Check all transferred values, every untouched cell, signed zeros, and host
+// padding. An erroneous field base/origin or species stride cannot hide behind
+// a numeric tolerance or a matching implementation-side decomposition.
+void require_region_buffer(
+    const RegionBuffer& actual, const RegionBuffer& inside,
+    const RegionBuffer& outside, const std::vector<unsigned char>& selected)
+{
+    const auto bits_equal = [](double a, double b) {
+        return std::bit_cast<std::uint64_t>(a)
+            == std::bit_cast<std::uint64_t>(b);
+    };
+    for (std::size_t cell = 0; cell < actual.cells; ++cell) {
+        const auto& source = selected[cell] ? inside : outside;
+        for (std::size_t field = 0; field < actual.fields.size(); ++field)
+            require(bits_equal(actual.fields[field][cell], source.fields[field][cell]),
+                    "region transfer crossed ownership or changed field bits at cell "
+                        + std::to_string(cell) + ", field " + std::to_string(field));
+        for (std::size_t species = 0; species < 2; ++species)
+            require(bits_equal(actual.composition[species * actual.species_stride + cell],
+                               source.composition[species * source.species_stride + cell]),
+                    "region transfer changed species-plane ownership or bits");
+    }
+    for (std::size_t cell = actual.cells; cell < actual.species_stride; ++cell) {
+        for (const auto& field : actual.fields)
+            require(bits_equal(field[cell], RegionBuffer::sentinel),
+                    "region transfer wrote beyond a host field plane");
+        for (std::size_t species = 0; species < 2; ++species)
+            require(bits_equal(actual.composition[species * actual.species_stride + cell],
+                               RegionBuffer::sentinel),
+                    "region transfer wrote host species stride padding");
+    }
+}
+
+void run_region_transfers(int device_count)
+{
+    using arch::state::StateRegion;
+    for (int dimension = 1; dimension <= 3; ++dimension) {
+        amr::Block block{};
+        block.id = 0;
+        block.active = true;
+        block.grid = Grid(amr::MAX_NG, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+                          1, dimension >= 2 ? 1 : 0, dimension == 3 ? 1 : 0);
+        block.grid.dim = dimension;
+        block.grid.InitializeTopology();
+        const std::size_t cells = block.grid.GetTotalSize();
+        for (FluidState* state :
+             {&block.fluid_state, &block.state_next, &block.state_scratch}) {
+            state->Preallocate(cells);
+            state->InitSpecies(2);
+        }
+        SpeciesManager species;
+        species.add_species("H1", 1.0, 1.0, 1.4, 1.0);
+        species.add_species("He4", 4.0, 2.0, 1.4, 1.0);
+        IdealGas eos(1.4, species);
+        const auto boundary = make_boundary_plan(dimension);
+        const amr::BlockHandle handle{{3001}, {1}};
+        const arch::backend::StorageGeneration storage{3001};
+        auto backend = arch::cuda::make_cuda_backend(
+            block, handle, storage, kBackendDevice,
+            make_launch_config(), species, boundary, eos);
+        const auto access = current(handle, storage);
+        RegionBuffer baseline(cells), replacement(cells), untouched(cells);
+        baseline.fill(1.0, block.grid);
+        replacement.fill(2.0, block.grid);
+        for (StateRegion region : {StateRegion::Interior, StateRegion::Ghost}) {
+            backend->enqueue_upload_slot(access, StateRegion::Interior, baseline.view());
+            backend->enqueue_upload_slot(access, StateRegion::Ghost, baseline.view());
+            backend->quiesce();
+            std::vector<unsigned char> selected(cells, 0);
+            std::size_t selected_cells = 0;
+            for (int k = 0; k < block.grid.GetTotalZ(); ++k)
+                for (int j = 0; j < block.grid.GetTotalY(); ++j)
+                    for (int i = 0; i < block.grid.GetTotalX(); ++i) {
+                        const bool interior = i >= block.grid.Is() && i < block.grid.Ie()
+                            && j >= block.grid.Js() && j < block.grid.Je()
+                            && k >= block.grid.Ks() && k < block.grid.Ke();
+                        const bool owned = (region == StateRegion::Interior) == interior;
+                        selected[block.grid.GetIndex(i, j, k)] = owned;
+                        selected_cells += owned;
+                    }
+            const std::uint64_t expected_bytes = selected_cells * 8 * sizeof(double);
+            const auto before_upload = backend->counters();
+            select_device_probe(device_count);
+            backend->enqueue_upload_slot(access, region, replacement.view());
+            backend->quiesce();
+            require_backend_device_selected("region upload lost the backend device");
+            require(backend->counters().bytes_h2d - before_upload.bytes_h2d == expected_bytes,
+                    "region upload byte accounting includes another region or omits species");
+            RegionBuffer whole(cells);
+            backend->enqueue_materialize_host_current(access, StateRegion::Interior, whole.view());
+            backend->enqueue_materialize_host_current(access, StateRegion::Ghost, whole.view());
+            backend->quiesce();
+            require_region_buffer(whole, replacement, baseline, selected);
+            RegionBuffer partial(cells);
+            const auto before_download = backend->counters();
+            select_device_probe(device_count);
+            backend->enqueue_materialize_host_current(access, region, partial.view());
+            backend->quiesce();
+            require_backend_device_selected("region download lost the backend device");
+            require(backend->counters().bytes_d2h - before_download.bytes_d2h == expected_bytes,
+                    "region download byte accounting includes another region or omits species");
+            require_region_buffer(partial, replacement, untouched, selected);
+        }
+    }
 }
 
 void run_store_lifecycle(int device_count)
@@ -446,6 +594,7 @@ int main()
     }
 
     try {
+        run_region_transfers(device_count);
         run_store_lifecycle(device_count);
         std::cout << "CUDA store lifecycle passed\n";
         return 0;

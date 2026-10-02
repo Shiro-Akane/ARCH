@@ -30,6 +30,23 @@
 
 namespace TimeIntegration
 {
+    /** Fill block ghosts and propagate callback failures after workers join. */
+    template<class BCPolicy>
+    inline void apply_domain_boundary(amr::AMRControl& control, BCPolicy& boundary,
+                                     FluidState amr::Block::* member)
+    {
+        const auto& active = control.tree->GetActiveBlocks();
+        arch::state::HostFailure failure;
+#pragma omp parallel for schedule(dynamic, 1)
+        for (std::size_t i = 0; i < active.size(); ++i) {
+            try {
+                auto& block = control.pool->GetBlock(active[i]);
+                boundary.apply(block.*member, block.grid);
+            } catch (...) { failure.capture_current(); }
+        }
+        failure.rethrow();
+    }
+
     inline void validate_stage_state(const FluidState& state, const Grid& grid,
                                      const NumericsConfig& config)
     {
@@ -315,6 +332,48 @@ namespace TimeIntegration
     }
 
     // Helper 3: Evaluate fluxes in every active dimension.
+    /**
+     * Observe the final oriented hydro flux on every physical outer face.
+     * Only faces that own a stage plane are touched; internal AMR joins and
+     * periodic pairs keep null planes, so this writes no simulation state.
+     */
+    inline void capture_hydro_surface_flux(
+        const FluidState& state, const Grid& grid, int dir,
+        const std::vector<FluidVector>& flux_buffer,
+        const std::vector<double>& spec_flux_buffer)
+    {
+        const auto storage = state.boundary_flux_capture;
+        if (!storage) return;
+        const arch::boundary::BoundaryFluxCaptureView view = storage->view();
+        const int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
+        const int species = state.GetNumSpecies();
+        const int total_size = grid.GetTotalSize();
+        const int lower[3]{grid.Is(), grid.Js(), grid.Ks()};
+        const int upper[3]{grid.Ie(), grid.Je(), grid.Ke()};
+        const int tangent_a = (dir + 1) % 3, tangent_b = (dir + 2) % 3;
+        for (int side = 0; side < 2; ++side) {
+            if (!view.stage[2 * dir + side]) continue;
+            int face[3]{lower[0], lower[1], lower[2]};
+            int cell[3]{lower[0], lower[1], lower[2]};
+            face[dir] = side == 0 ? lower[dir] : upper[dir];
+            cell[dir] = side == 0 ? lower[dir] : upper[dir] - 1;
+            for (int ib = lower[tangent_b]; ib < upper[tangent_b]; ++ib) {
+                cell[tangent_b] = face[tangent_b] = ib;
+                for (int ia = lower[tangent_a]; ia < upper[tangent_a]; ++ia) {
+                    cell[tangent_a] = face[tangent_a] = ia;
+                    const int index = grid.GetIndex(cell[0], cell[1], cell[2])
+                        + (side == 1 ? stride : 0);
+                    arch::boundary::CaptureBoundaryFlux(view, dir,
+                        face[0], face[1], face[2],
+                        lower[0], upper[0], lower[1], upper[1], lower[2], upper[2],
+                        flux_buffer[index],
+                        species > 0 ? spec_flux_buffer.data() + index : nullptr,
+                        species, total_size, 0.0);
+                }
+            }
+        }
+    }
+
     // FluxSchemePolicy supplies compute_fluxes for the selected reconstruction.
     template <typename FluxSchemePolicy, typename EosType>
     inline void evaluate_all_dimensions(
@@ -343,6 +402,8 @@ namespace TimeIntegration
             FluxSchemePolicy::compute_fluxes(
                 state, eos, grid, flux_buffer, spec_flux_buffer,
                 dir, entropy_fix_coeff, &mean_cache);
+
+            capture_hydro_surface_flux(state, grid, dir, flux_buffer, spec_flux_buffer);
 
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
 
