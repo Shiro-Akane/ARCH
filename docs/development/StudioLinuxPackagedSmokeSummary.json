@@ -1,0 +1,32 @@
+{
+  "scope": "packaged Linux production startup and HTTP smoke, not visual/manual UAT",
+  "sourceCommit": "f488fcaa6f92edcc109a5db3429a455f5a3dc40d",
+  "packagePath": "/home/arch/projects/ARCH-compute-optim/studio/.local/desktop-release/arch-studio-bin-linux-x64",
+  "origin": "http://127.0.0.1:43041",
+  "launcherPid": 298,
+  "hostPid": 433,
+  "schemaCount": 94,
+  "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+  "cases": [
+    "BurnGradient",
+    "BurnOneZone",
+    "CellularDet",
+    "CooperativeHotspots",
+    "DiffusionMode",
+    "ExternalGravity",
+    "Gaussian",
+    "GravityBox",
+    "JeansWave",
+    "RT",
+    "SNIaCoupled",
+    "Sedov",
+    "SmoothAdvection",
+    "Sod"
+  ],
+  "historyRecords": 3,
+  "assetIndexSha256": "4068b455573dfef0192749b3bd7cdee31f9cc1735962e71c3dd9128d327c4c0c",
+  "startupCwd": "/home/arch/projects/ARCH-compute-optim/validation/restart",
+  "usesVite": false,
+  "launcherGone": true,
+  "hostGone": true
+}

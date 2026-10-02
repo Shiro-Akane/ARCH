@@ -1385,3 +1385,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - Host desktop 接入固定 build-studio-cpu profile，并使用真实静态 registry；无需 Preview current 才能打开配置。未自动 configure/build，missing binary 仍明确报错。
 - 实际 launch 从当前项目打开 SmoothAdvection，desktop.log readiness 记录 Host PID425/port37059；Electron PID378、窗口标题 ARCH Studio—ARCH-compute-optim，renderer bootstrap 指向独立本地 production origin。定向 TERM 结束 launcher 后会话 exit0，Host425消失。该进程证据不等同窗口 close/manual UAT。
 - Computer Use 两次返回 [WARN:COPY MODE] WSLg 窗口，截图显示其他窗口，无法可靠交互；停止 UI 点击，未标 UAT PASS。218/218 tests、lint/typecheck PASS；packaged 分发、原生选择器及完整桌面操作仍待验收。
+
+### 2026-10-02 — Packaged Linux production smoke
+
+- clean f488fcaa6f92edcc109a5db3429a455f5a3dc40d：实际 Electron Linux package 成功；从 validation/restart 嵌套目录启动，包内 Host readiness 成功，无 Vite。
+- 通过包内 production origin 获取 index（与包内文件字节相同）、94参数schema、14模型registry和3条持久run历史。处理证据见 StudioLinuxPackagedSmokeSummary.json；未运行科学任务。
+- 本轮 launcher PID298 定向 TERM 后 session exit0，Host433与launcher均消失。仍不替代原生文件对话框、窗口点击/close和完整视觉 UAT；WSLg COPY MODE 限制未解除。
