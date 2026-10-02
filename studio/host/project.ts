@@ -1,3 +1,4 @@
+import {LOCAL_CPU_PROFILE_ID,localCpuProfile} from './localBuildProfile.ts';
 import {ConfigureRunner} from './configureRunner.ts';
 import type {ConfigureProfile} from './configureRunner.ts';
 import {WorkflowRunner} from './workflow.ts';
@@ -18,7 +19,9 @@ import type {ProjectSnapshot,ProjectFileRef} from '../src/host/contracts.ts';
 export interface ProjectOptions { project:string; case?:string; config?:string; binary?:string; buildProfile?:string; configureProfile?:ConfigureProfile }
 export async function openProject(options:ProjectOptions) {
  const root=await projectRoot(options.project);
- const selectedProfile=BUILD_PROFILES.find(p=>p.id===options.buildProfile);
+ const local=options.buildProfile===LOCAL_CPU_PROFILE_ID?localCpuProfile(root):undefined;
+ if(local){if(options.configureProfile)throw new Error('Local CPU profile owns its Configure settings.');options.configureProfile=local.configure;}
+ const selectedProfile=local?.build??BUILD_PROFILES.find(p=>p.id===options.buildProfile);
  if(options.configureProfile){
   if(options.configureProfile.sourceRoot!==root)throw new Error('Configure source root differs from managed project.');
   if(selectedProfile&&(selectedProfile.managedSourceRoot!==root||selectedProfile.buildDirRelative!==options.configureProfile.buildDirRelative))

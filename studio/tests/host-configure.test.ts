@@ -1,3 +1,4 @@
+import {localCpuProfile,LOCAL_CPU_PROFILE_ID} from '../host/localBuildProfile.ts';
 import {BUILD_PROFILES} from '../host/buildProfile.ts';
 import {openProject} from '../host/project.ts';
 import {createHostServer,listenLocal} from '../host/server.ts';
@@ -90,6 +91,20 @@ test('project assembly retains Configure ownership and rejects mismatched source
   assert.equal((await reader.configure.run(reader.snapshot().session.projectId,'project')).state,'succeeded');
   await assert.rejects(openProject({project:root,configureProfile:{...profile,sourceRoot:'/other'}}),/source root/);
   await assert.rejects(openProject({project:root,configureProfile:profile,buildProfile:BUILD_PROFILES[0].id}),/same managed source/);
+  await reader.configure.shutdown();
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('local CPU workflow owns a separate build tree and exposes Configure before the first build',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch local profile-'));
+ try{
+  const reader=await openProject({project:root,buildProfile:LOCAL_CPU_PROFILE_ID});
+  assert.ok(reader.configure);assert.ok(reader.build);
+  assert.equal(reader.build.profile.buildDirRelative,'build-studio-cpu');
+  assert.equal(reader.build.snapshot().configured,false);
+  assert.equal(reader.configure.profile.definitions.ARCH_ENABLE_CUDA,'OFF');
+  assert.equal(reader.configure.profile.definitions.ARCH_RUNTIME_OUTPUT_DIRECTORY,root+'/build-studio-cpu/bin');
+  assert.equal(localCpuProfile(root).build.dependenciesComplete,false);
   await reader.configure.shutdown();
  }finally{await rm(root,{recursive:true,force:true});}
 });
