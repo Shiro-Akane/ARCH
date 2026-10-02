@@ -131,7 +131,12 @@ class Campaign:
                 require(np.array_equal(left[name][:], right[name][:]), 'restart differs in ' + name)
             require(left.attrs['time'] == right.attrs['time'], 'restart time mismatch')
         self.results.append(dict(name='restart-identity', datasets=len(names), bitwise_equal=True))
-        for key, value in [('gravity_G', G*1.01), ('gravity_rtol', 2e-10), ('gravity_atol', 1e-14), ('gravity_max_cycles', 201)]:
+        # A retired input must fail during configuration, before restart IO.
+        # Saved-G identity rejection is covered by checkpoint_compatibility;
+        # changing the input key no longer tests that later boundary.
+        self.reject('retired-gravity-G', 'RETIRED_PARAMETER',
+                    **(common | {'gravity_G': G*1.01}))
+        for key, value in [('gravity_rtol', 2e-10), ('gravity_atol', 1e-14), ('gravity_max_cycles', 201)]:
             self.reject('restart-reject-' + key, 'gravity policy/boundary/controls', restart='true', restart_file=checkpoint,
                         **(common | {key: value}))
 

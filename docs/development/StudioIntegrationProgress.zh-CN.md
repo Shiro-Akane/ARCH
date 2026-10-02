@@ -1001,3 +1001,13 @@ arch_checkpoint_compatibility 完整现有单元套件 PASS，diff-check PASS。
 套件包含故意删除 dataset/attribute 的拒绝测试，产生 HDF5 诊断但最终退出0。
 这些 fixture 的 step=7 是测试构造数据，不是新运行的演化证据。
 未执行科学演化、CUDA、Windows适配或push。历史特殊G输入换算仍待维护者确认。
+
+### O7.0 active gravity validation entry audit
+
+run_self_gravity 的旧 gravity_G restart-controls 检查已改为独立
+RETIRED_PARAMETER 配置拒绝；保留其他三项 checkpoint controls 拒绝。
+原因：退役键在读取 checkpoint 前失败，不能继续声称验证了 saved-G 兼容性。
+实际 saved-G 拒绝已由上一提交 checkpoint 单元测试验证。
+Python compile 语法检查 PASS；未运行演化 campaign，不宣称该 campaign 通过。
+GravityConstantInputMigrationPending.zh-CN.md 列出径向非物理 G 与 FLASH ARCH
+输入待确认项；未改输入、独立物理参考或阈值。
