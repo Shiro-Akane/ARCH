@@ -1361,3 +1361,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 新增只读 GET /api/runs，按项目本地 job/state 恢复原 case、config SHA/path 和时间，不依赖旧 project session ID。活跃状态沿 supervisor 身份核验；损坏或未知状态保留记录及诊断，不伪造结束状态。
 - 读取 job 有16 KiB预算，历史超过1000条明确拒绝而非静默截断；继承现有 HTTP Origin/protocol 和无 body 约束。新 controller 读取完成记录及损坏状态测试通过，Run suite 11/11、lint/typecheck PASS。
 - UI 历史展示/重开后 Stop 尚待接入；此提交只完成 Host 恢复入口，不宣称端到端恢复验收。
+
+### 2026-10-02 — Saved Run history UI
+
+- 工作流新增 Saved run history，从当前 Host/project 读取持久记录，显示独立输入 SHA/path、case、状态、exit 与诊断；旧项目迟到响应不覆盖新项目。活跃记录提供按 run ID 的 Stop，不自动恢复执行或重试未知状态。
+- 新增 history 响应校验，拒绝旧项目、重复 ID 和无诊断的 unknown。完整 npm test 218/218 PASS（含 Host）、lint、typecheck+production build PASS；保留既有 bundle warning。
+- 真实桌面重开/Stop UAT 尚待执行；当前是 UI 接线与自动回归证据，不能替代人工操作验收。下一步继续 CPU binary 配置关联与 Linux production 工作流。

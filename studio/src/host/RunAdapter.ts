@@ -43,3 +43,20 @@ export function validateRunAcceptance(v:unknown,projectId:string):RunAcceptance{
  validateRunState(v.state,String(v.runId));return v as unknown as RunAcceptance;
 }
 export function validateRunStatus(v:unknown,projectId:string,runId:string){scope(v,projectId);return validateRunState(v,runId);}
+
+export interface RunHistoryRecord {runId:string;caseId?:string;configPath?:string;configSha?:string;createdAt?:string;state:RunState|null;diagnostic:string|null}
+export function validateRunHistory(v:unknown,projectId:string):RunHistoryRecord[]{
+ scope(v,projectId);
+ if(!record(v)||!Array.isArray(v.records)||v.records.length>1000)throw new Error('Invalid Run history.');
+ const seen=new Set<string>();
+ return v.records.map((entry:unknown)=>{
+  if(!record(entry)||!uuid(entry.runId)||seen.has(String(entry.runId))||
+   !(entry.diagnostic===null||text(entry.diagnostic)))throw new Error('Invalid Run history record.');
+  seen.add(String(entry.runId));
+  if(entry.state!==null)validateRunState(entry.state,String(entry.runId));
+  else if(!text(entry.diagnostic))throw new Error('Unknown Run status requires a diagnostic.');
+  for(const key of ['caseId','configPath','createdAt'])if(entry[key]!==undefined&&!text(entry[key]))throw new Error('Invalid Run history identity.');
+  if(entry.configSha!==undefined&&(typeof entry.configSha!=='string'||!/^[a-f0-9]{64}$/.test(entry.configSha)))throw new Error('Invalid saved input hash.');
+  return entry as unknown as RunHistoryRecord;
+ });
+}

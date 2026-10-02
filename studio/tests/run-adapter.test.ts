@@ -36,3 +36,13 @@ test('client handoff/status keeps exact run ownership and verified completion se
   {...accepted,state:{...state,exitCode:1}},{...accepted,state:{...state,finishedAt:undefined}}])
   assert.throws(()=>validateRunAcceptance(bad,'p'));
 });
+
+import {validateRunHistory} from '../src/host/RunAdapter.ts';
+test('history preserves unknown status and rejects stale projects or invented successful records',()=>{
+ const item={runId:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',state:null,diagnostic:'Supervisor unavailable'};
+ const response={protocolVersion:PROTOCOL_VERSION,projectId:'p',records:[item]};
+ assert.equal(validateRunHistory(response,'p')[0].state,null);
+ assert.throws(()=>validateRunHistory(response,'old'));
+ assert.throws(()=>validateRunHistory({...response,records:[{...item,diagnostic:null}]},'p'));
+ assert.throws(()=>validateRunHistory({...response,records:[item,item]},'p'));
+});

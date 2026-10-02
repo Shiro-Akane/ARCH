@@ -1,3 +1,4 @@
+import {RunHistory} from './RunHistory';
 import {useEffect,useRef,useState} from 'react';
 import {useHost} from '../host/hostContext';
 import {useCoreParameters} from '../state/coreParameters';
@@ -91,6 +92,7 @@ export function RunControls({copy,busy}:{copy:WorkingCopy|null;busy:boolean}){
   </div>
   {message&&message.projectId===projectId&&<p role="status">{message?.text}</p>}
   {active&&<details><summary>Latest independent run · {active.runId}</summary><p>Model: {active.caseId} · Saved config: {active.configPath} · SHA-256: <code>{active.configSha}</code></p><p>Terminal PID: {active.terminalPid} · Core PID: {active.state.processId??'not started'} · Exit: {active.state.exitCode??active.state.signal??'pending'}</p>{active.state.error&&<p role="alert">{active.state.error}</p>}<p>Closing Studio or changing configuration does not stop this run. Full output remains in its terminal and local run log.</p></details>}
+  <RunHistory projectId={projectId} refreshKey={activeRunId}/>
   {plan&&<section ref={dialog} tabIndex={-1} role="dialog" aria-label="Confirm local computation" className="run-confirmation" onKeyDown={e=>{if(e.key==='Escape'&&!waiting){setCandidate(undefined);setConfirmed(false);}}}>
    <h3>{plan.mode==='run'?'Run saved configuration':'Restart from saved checkpoint selection'}</h3>
    <p>Model: <strong>{plan.caseId}</strong> · Config: <code>{plan.config.relativePath}</code></p>
