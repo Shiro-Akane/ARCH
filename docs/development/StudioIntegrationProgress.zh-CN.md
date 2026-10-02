@@ -1299,3 +1299,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - clean bb036640d10e5294a0e92b0cd7ca046e7161c940：真实 Host Build succeeded，buildId=a48d762c-e99c-4368-87e2-eb49ca76e313；Manifest 保存 75 个链接文件、98 个明确缺失项。guard 2.014s、peak owned RSS 145008 KiB、swap 0。
 - StudioLinkManifestBuildSummary.json 记录 source/binary/depfile 身份及本地证据索引。freshness 保持 unknown，未执行模拟，不等同 UI 或演化验收。
 - 回查联合计划 4.2：允许单独确认“按已编译版本运行”，但不能声称覆盖当前源码。因此后续继续 3C 的显式 binary/input 确认与独立终端 Run/Restart 生命周期；完整 current 证明仍作为构建出口保留，不将工具链审计扩张为其他工作绝对前置。
+
+### 2026-10-02 — Independent Linux run supervisor
+
+- 3C 新增未暴露 HTTP 的终端 worker：精确 binary/saved config 身份复核、逐 run 的 input copy、直接文件日志、持久状态/exit code、进程 PID/start ticks、独占 worker claim。stdio 不依赖 Studio/Host 管道。
+- 真实 Linux fixture 验证启动器退出后继续运行、错误 run ID 不触发 Stop、无关进程保留，以及组首进程退出后 TERM-ignoring 后代仍受 owned Stop 清理。带空格/中文路径通过；短命进程退出早于 /proc 观察时明确标识，不伪造 start ticks。
+- 5/5 lifecycle tests PASS；不是 ARCH 演化/Restart 科学验收。当前尚未接入 Core 预检、用户确认、HTTP/UI 或 Linux 可见终端 launcher，不能宣称 Run/Restart 可用。
+- 本机 xterm/gnome-terminal/xfce4-terminal/konsole 均缺失，DISPLAY=:0 可见。后续入口需要明确缺依赖 UX 与实际终端安装/窗口验证，不静默改为无窗口后台计算；Windows 仍范围外。
