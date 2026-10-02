@@ -1135,3 +1135,11 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 .workflow-terminal p { font-size:12px; margin:4px 0 8px; }
 .workflow-terminal .build-log { max-height:25vh; }
 .real-workflow > [role=alert] { font-size:12px; color:#ffb8ad; }
+
+.run-controls { margin-top:7px; font-size:12px; }
+.run-controls p { margin:6px 0; }
+.run-confirmation { position:absolute; bottom:calc(100% + 8px); left:16px; right:16px; max-height:min(55vh,420px); overflow:auto; padding:14px; border:1px solid #718292; border-radius:6px; background:#18212b; box-shadow:0 6px 24px #0008; }
+.run-confirmation code { overflow-wrap:anywhere; }
+.run-confirmation h3 { margin:0 0 8px; }
+.run-confirmation label { display:block; margin:10px 0; }
+.run-confirmation [role=alert] { color:#ffb8ad; }

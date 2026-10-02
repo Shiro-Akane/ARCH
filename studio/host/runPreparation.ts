@@ -7,18 +7,9 @@ import {pathPreflight} from './pathPreflight.ts';
 import {validateRegistry} from '../src/host/workflowValidation.ts';
 import {validateConfigurationSchema,validateConfigurationInspection} from '../src/host/configurationValidation.ts';
 import type {ConfigReadResponse,FileFingerprint} from '../src/host/contracts.ts';
-import type {ConfigurationInspection,ConfigurationSchema,PathCheck} from '../src/host/configurationContracts.ts';
-export interface PrepareRunRequest {projectId:string;caseId:string;configRevision:string;mode:'run'|'restart'}
-export interface ConfirmRunRequest {projectId:string;planId:string;confirmation:'run-saved-input-with-compiled-binary'}
-export interface RunPreparation {
- planId:string;projectId:string;caseId:string;mode:'run'|'restart';createdAt:string;
- binary:{relativePath:string;fingerprint:FileFingerprint;sourceClaim:'compiled-version-only'};
- config:{relativePath:string;fingerprint:FileFingerprint};
- inspection:ConfigurationInspection;pathChecks:PathCheck[];issues:string[];
- canConfirm:boolean;simulationReadiness:'core-startup-pending';
- checkpointPath:string|null;
- pendingChecks:string[];
-}
+import type {ConfigurationSchema} from '../src/host/configurationContracts.ts';
+import type {PrepareRunRequest,ConfirmRunRequest,RunPreparation} from '../src/host/runContracts.ts';
+export type {PrepareRunRequest,ConfirmRunRequest,RunPreparation} from '../src/host/runContracts.ts';
 /** Static run preflight on the selected binary, independent of Preview capability/freshness. */
 export class RunPreparationRunner {
  private active=false;

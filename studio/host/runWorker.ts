@@ -14,11 +14,8 @@ export interface RunJob {
  inputRelativePath:string;confirmedBinary:'compiled-version';
  createdAt:string;
 }
-export interface RunState {
- runId:string;state:'starting'|'running'|'succeeded'|'failed'|'stopped';
- workerPid:number;processId?:number;processStartTicks?:string;processIdentity?:'captured'|'exited-before-observation';
- startedAt:string;finishedAt?:string;exitCode?:number|null;signal?:string|null;error?:string;
-}
+import type {RunState} from '../src/host/runContracts.ts';
+export type {RunState} from '../src/host/runContracts.ts';
 async function processTicks(pid:number){
  try{const text=await readFile('/proc/'+pid+'/stat','utf8');return text.slice(text.lastIndexOf(')')+2).split(' ')[19];}catch{return undefined;}
 }

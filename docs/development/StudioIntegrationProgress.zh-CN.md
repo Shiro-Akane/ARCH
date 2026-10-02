@@ -1331,3 +1331,11 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - runId=926efbfc-5fd5-4dfd-b9cd-51453c1da819；exit 0，Total Steps=0、Final Time=0，初始 12 AMR leaves。现有 h5wasm/node 只读确认 PLT time=0、checkpoint step=0/time=0；原始文件留本机，处理摘要见 StudioTerminalT0Summary.json。
 - xterm 使用 Monospace 后 terminal.log 为空；已核对本次 terminal/Core/worker PID 均结束。不是视觉/manual UAT、非零演化或 Restart 继续演化验收。
 - guard 1.008s、swap 0，仅两次采样；RSS 读数不能代表此短任务内存峰值，不作性能测量。后续仍需 UI 确认/状态/Stop、真实 Restart 与完整 Linux 工作流验收。
+
+### 2026-10-02 — Run/Restart confirmation and status UI
+
+- 工作流接入独立 Run/Restart 预检、保存输入与 compiled binary 显式确认、真实终态轮询和 owned Stop。配置编辑使旧确认失效；Undo 恢复相同文字也需要重新准备。已交付运行保留原始输入身份，不随编辑重命名。
+- 共享 Host/client Run 类型，响应核对项目、case、配置 SHA、binary 路径和任务身份。失败不盲目重试；明确 Core startup pending，不将静态 inspection 或 freshness unknown 称为模拟就绪/current。
+- npm test 216/216 PASS（包含 Host，不能重复累计），lint PASS，production build/typecheck PASS；git diff --check PASS。日志与哈希见 StudioRunUiRegressionSummary.json；原始日志保留本机。
+- 尚缺 Linux 交互 UAT、重开后的运行恢复及真实 Restart 继续演化验收；当前工程检查不替代这些出口。先前 t=0 只覆盖初始化/输出/终端交接，不覆盖后续演化或性能。
+- 当前授权以 compute/optim 联合计划为准：O7.0 G 接线及明确 t=0 AMR 对照已获准且已实施；历史非物理 G 等效换算仍待维护者确认，冻结物理定义/阈值不变。后续只推进 Linux/WSL，不开展 Windows 适配。

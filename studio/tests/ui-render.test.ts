@@ -64,10 +64,11 @@ test('runtime schema sections cover all standard controls and keep separate EOS 
  for(const text of ['Network ODE / Advanced','Adaptive Mesh Refinement (AMR)','Checkpoint / Restart','eos_helm_table_path','eos_table_path'])assert.ok(html.includes(text),text);
  assert.doesNotMatch(html,/Unit not provided · not-applicable/);
 });
-test('workflow bar exposes availability without Run/Restart execution and retains terminal',async()=>{
+test('disconnected workflow disables all execution and retains the terminal drawer',async()=>{
  const Provider=await component('host/BuildProvider.tsx','BuildProvider');
  const Bar=await component('components/WorkflowBar.tsx','WorkflowBar');
- const html=renderToStaticMarkup(createElement(Provider,null,createElement(Bar)));
+ const Core=await component('state/coreParameters.tsx','CoreParameterProvider');
+ const html=renderToStaticMarkup(createElement(Provider,null,createElement(Core,null,createElement(Bar))));
  for(const name of ['Configure','Build','Update Preview','Run','Restart from checkpoint'])assert.match(html,new RegExp('<button disabled=""[^>]*>'+name+'</button>'));
  assert.match(html,/closing this drawer does not cancel tasks/);
  assert.match(html,/No build output/);
