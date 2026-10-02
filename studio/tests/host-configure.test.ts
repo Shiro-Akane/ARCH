@@ -27,3 +27,20 @@ test('controlled Configure uses literal spaced paths, records evidence and refus
   assert.equal(bad.isActive(),false);
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+test('Configure cancellation waits for the owned process group and rejects concurrent starts',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch configure cancel-'));
+ try{
+  await writeFile(root+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(Cancel NONE)\nexecute_process(COMMAND /usr/bin/cmake -E sleep 30)\n');
+  const runner=new ConfigureRunner({id:'cancel',sourceRoot:root,buildDirRelative:'build',generator:'Ninja',definitions:{}});
+  const running=runner.run('p','cancel');
+  await assert.rejects(runner.run('p','cancel'),/already active/);
+  for(let i=0;i<100&&!runner.processId;i++)await new Promise(r=>setTimeout(r,10));
+  const pid=runner.processId;assert.ok(pid);
+  runner.cancel();
+  const result=await running;
+  assert.equal(result.state,'cancelled');assert.equal(result.evidence,undefined);
+  assert.equal(runner.isActive(),false);assert.equal(runner.processId,undefined);
+  assert.throws(()=>process.kill(pid,0),(e:unknown)=>(e as NodeJS.ErrnoException).code==='ESRCH');
+ }finally{await rm(root,{recursive:true,force:true});}
+});
