@@ -44,10 +44,10 @@ export function ConfigPanel({ onEdit, onInspect, active, onWorkingCopy }: { acti
   const fileInput=useRef<HTMLInputElement>(null);
   useEffect(()=>{if(!message)return;const timer=setTimeout(()=>setMessage(''),6000);return ()=>clearTimeout(timer);},[message]);
   const schema=useMemo(()=>{
-    if(core.schema?.projectId!==host.snapshot?.session.projectId||host.connected&&!sameBuildScope(core.schema,core.buildScope))return;
+    if(core.schema?.projectId!==host.snapshot?.session.projectId||host.connected&&!sameBuildScope(core.schema,core.configurationScope))return;
     const s=core.schema?.core;if(!s)return;
     return [...s.parameters,...s.auxiliaryParameters,...(s.caseDeclarations.find(c=>c.caseId===core.model)?.parameters??[])];
-  },[core.schema,host.snapshot?.session.projectId,host.connected,core.buildScope,core.model]);
+  },[core.schema,host.snapshot?.session.projectId,host.connected,core.configurationScope,core.model]);
   let workingText=state?.document.raw??'';try{if(state)workingText=serializePar(state.document,state.changes,state.removedKeys);}catch{/* Invalid edits remain visible; actions are blocked. */}
   const inspection=host.connected?currentInspection(core,workingText):undefined;
   const errors=state?parErrors(state,schema):{};

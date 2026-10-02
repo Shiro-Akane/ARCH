@@ -10,14 +10,20 @@ import {sameBuildScope} from '../host/configurationContracts';
 import {pairingSuspicion} from '../data/configurationIdentity';
 export function ConfigurationBridge({copy}:{copy:WorkingCopy|null}){
  const {connected,snapshot}=useHost();
- const {model,buildScope,setSchema,setInspection,setInspectionMessage,setDiscovery}=useCoreParameters();
+ const {model,buildScope,configurationScope,setConfigurationScope,setSchema,setInspection,setInspectionMessage,setDiscovery}=useCoreParameters();
  const requests=useRef(new InspectionRequests());
  const projectId=connected?snapshot?.session.projectId:undefined;
- const project=buildScope?.projectId===projectId?buildScope:null;
+ const binarySha=snapshot?.session.executable?.sha256;
+ useEffect(()=>{setConfigurationScope(projectId&&binarySha?{projectId,buildId:'selected-binary:'+binarySha,binarySha256:binarySha}:null);},[projectId,binarySha,setConfigurationScope]);
+ const project=configurationScope?.projectId===projectId?configurationScope:null;
+ useEffect(()=>{
+  if(!buildScope||buildScope.projectId!==projectId)return;let disposed=false;
+  void previewRequest('/api/cases').then(v=>{if(!disposed)setDiscovery(validateDiscovery(v,buildScope));}).catch(()=>{if(!disposed)setDiscovery(null);});
+  return()=>{disposed=true;};
+ },[buildScope,projectId,setDiscovery]);
  const text=copy?.text;
  useEffect(()=>{
   if(!project)return;let disposed=false;
-  void previewRequest('/api/cases').then(v=>{if(!disposed)setDiscovery(validateDiscovery(v,project));}).catch(e=>{if(!disposed){setDiscovery(null);setInspectionMessage(e instanceof Error?e.message:'Case discovery unavailable');}});
   void previewRequest('/api/configuration/schema').then(v=>{const s=validateSchemaResponse(v,project);if(!disposed)setSchema(s);}).catch(e=>{if(!disposed)setInspectionMessage(e instanceof Error?e.message:'Schema unavailable');});
   return()=>{disposed=true;};
  },[project,setSchema,setInspectionMessage,setDiscovery]);
@@ -49,5 +55,5 @@ export function ConfigurationIdentity({copy}:{copy:WorkingCopy|null}){
 // eslint-disable-next-line react-refresh/only-export-components
 export function currentInspection(core:ReturnType<typeof useCoreParameters>,text:string){
  const inspection=core.inspection;
- return inspection&&inspection.text===text&&inspection.response.identity.caseId===core.model&&sameBuildScope(inspection.response.identity,core.buildScope)?inspection.response.core:undefined;
+ return inspection&&inspection.text===text&&inspection.response.identity.caseId===core.model&&sameBuildScope(inspection.response.identity,core.configurationScope)?inspection.response.core:undefined;
 }

@@ -1413,3 +1413,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 直接启用本地CPU Preview会使project.ts选择Preview依赖的ConfigurationAdapter，破坏无manifest时独立静态编辑；临时接线已完整撤回，无实现/构建变化。
 - 形成StudioCpuPreviewIntegrationAudit.md：下一步先分离静态binary scope与Preview manifest scope，再绑定既有模型profile。保持当前静态编辑可用及freshness unknown，不以简单开关伪造完成。
+
+### 2026-10-02 — Separate configuration and Preview identity scopes
+
+- CoreParameter context新增configurationScope；ConfigurationBridge从项目选定binary SHA生成静态scope，schema/inspection与参数catalog只匹配此scope。Preview metadata/marker/AMR仍匹配原buildScope，不将静态检查充作Preview provenance。
+- 项目装配的ConfigurationAdapter始终选择当前binary，Preview readiness变化不撤销静态配置能力；discovery读取与schema请求分开。完整219/219 tests、lint、typecheck/production build PASS。
+- 本地CPU Preview profile尚未启用；下一步验证manifest缺失/Build后的双scope状态切换和真实Preview。桌面UAT仍未完成。
