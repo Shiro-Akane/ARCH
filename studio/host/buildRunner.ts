@@ -28,6 +28,7 @@ export class BuildRunner {
    else if(m.buildProfileFingerprint!==profileFingerprint(this.profile)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Build configuration changed since last successful Build.';}
    else{
     for(const old of m.trackedInputFingerprints){try{if(!same(old.fingerprint,await inspect(this.root,old.relativePath)))this.current.changedInputs.push(old.relativePath);}catch{this.current.changedInputs.push(old.relativePath);}}
+    let compilerUnknown=false;
     if(this.profile.compilerDependencyMode==='ninja'&&m.compilerInputs){
      try{
       const now=await fingerprintNinjaDependencies(this.root+'/'+this.profile.buildDirRelative);
@@ -38,7 +39,7 @@ export class BuildRunner {
        if(!this.current.changedInputs.length)this.current.changedInputs.push('compiler dependency graph');
       }
      }catch{
-      this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler dependency evidence unavailable or stale.';return this.snapshot();
+      compilerUnknown=true;
      }
     }
     let linkUnknown=false;
@@ -51,6 +52,7 @@ export class BuildRunner {
      }catch{linkUnknown=true;}
     }
     if(this.current.changedInputs.length||!m.inputsStableDuringBuild){this.current.binaryState='needs-build';this.current.freshnessReason=this.current.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs changed during Build; build again for a stable snapshot.';}
+    else if(compilerUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler dependency evidence unavailable or stale.';}
     else if(linkUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Linker input evidence is incomplete or unavailable.';}
     else if(m.compilerInputsStableDuringBuild===false){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler input stability was not established across Build.';}
     else if(!same(binary,m.outputBinary.fingerprint)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable differs from last successful Build manifest.';}

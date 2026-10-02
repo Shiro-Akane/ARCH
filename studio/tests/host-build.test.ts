@@ -44,6 +44,12 @@ test('actual compiler header outside fixed tracked list invalidates freshness',a
   await writeFile(root+'/value.h','constexpr int value=1;\n');
   const status=await runner.refreshFreshness();
   assert.equal(status.binaryState,'needs-build');assert.ok(status.changedInputs.includes(root+'/value.h'));
+  // Losing optional evidence must not erase a positively known tracked change.
+  await rm(root+'/build/.ninja_deps');
+  await writeFile(root+'/CMakeLists.txt',(await readFile(root+'/CMakeLists.txt','utf8'))+'# changed input\n');
+  const incomplete=await runner.refreshFreshness();
+  assert.equal(incomplete.binaryState,'needs-build');
+  assert.ok(incomplete.changedInputs.includes('CMakeLists.txt'));
  }finally{await rm(root,{recursive:true,force:true});}
 });
 

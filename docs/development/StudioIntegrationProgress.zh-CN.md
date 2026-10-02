@@ -1462,3 +1462,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 补强既有独立进程测试：启动者退出后，创建新 project session 的 RunController；从持久记录恢复原 run ID/config SHA/running 状态，通过公开 stop() 停止，再读取 stopped 历史。无需原 Host 内存对象。
 - Run worker/supervisor 7/7 PASS，lint PASS。本轮为真实 OS 子进程 fixture，不执行 ARCH 科学轨迹，不冒充桌面重开/按钮 UAT。生产实现未修改。
+
+### 2026-10-02 — Known build changes survive incomplete dependency evidence
+
+- 修正 refreshFreshness 的提前返回：Ninja 依赖读取失败记为 unknown evidence，继续收集 link 输入；已有 tracked/link 变化优先给 needs-build。只有没有已知变更时才给依赖 unavailable 的 freshness-unknown。
+- 真实临时 CMake/Ninja fixture 验证 header 变化，并在删除 fixture .ninja_deps 后修改 tracked CMakeLists，仍准确报告 needs-build。Build suite 10/10、lint/typecheck PASS。
+- 不改变 dependenciesComplete=false、不放宽 Preview readiness、不重新编译 ARCH，不将工具链/临时LTO输入覆盖缺口宣称已解决。
