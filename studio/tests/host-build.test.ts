@@ -90,3 +90,27 @@ test('link-only input mutation invalidates build and missing linker inputs canno
   assert.equal(await loadManifest(profile),undefined);
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+test('compiler driver changes invalidate freshness independently of source changes',async()=>{
+ const {root,p}=await fixture();
+ try{
+  await mkdir(root+'/studio');
+  const reply=root+'/build/.cmake/api/v1/reply';
+  await mkdir(reply,{recursive:true});
+  await writeFile(root+'/compiler','driver-one');
+  await writeFile(reply+'/toolchains.json',JSON.stringify({kind:'toolchains',version:{major:1},toolchains:[
+   {language:'CXX',compiler:{path:root+'/compiler',id:'fixture',version:'1'}}
+  ]}));
+  await writeFile(reply+'/index-fixture.json',JSON.stringify({objects:[{kind:'toolchains',jsonFile:'toolchains.json'}]}));
+  const profile={...p,compilerDependencyMode:'ninja' as const};
+  const runner=new BuildRunner(root,'p',profile,{spawn:fakeSpawn(root)});
+  await runner.start('p',profile.id);await finished(runner);
+  assert.equal(runner.snapshot().lastSuccessfulBuild?.compilerDrivers?.length,1);
+  await writeFile(root+'/compiler','driver-two');
+  const changed=await runner.refreshFreshness();
+  assert.equal(changed.binaryState,'needs-build');assert.ok(changed.changedInputs.includes(root+'/compiler'));
+  await rm(root+'/compiler');
+  const unknown=await runner.refreshFreshness();
+  assert.equal(unknown.binaryState,'freshness-unknown');assert.match(unknown.freshnessReason,/Compiler driver identity/);
+ }finally{await rm(root,{recursive:true,force:true});}
+});

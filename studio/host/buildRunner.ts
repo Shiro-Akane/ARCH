@@ -1,3 +1,4 @@
+import {readBuildToolchainEvidence} from './cmakeEvidence.ts';
 import {fingerprintLinkDependencies,changedLinkInputs} from './linkDependencies.ts';
 import {fingerprintNinjaDependencies,sameCompilerInputs} from './ninjaDependencies.ts';
 import {inputs,inspect,gitIdentity,makeManifest,saveManifest,loadManifest,same} from './buildManifest.ts';
@@ -42,6 +43,22 @@ export class BuildRunner {
       compilerUnknown=true;
      }
     }
+    let toolchainUnknown=false;
+    if(this.profile.compilerDependencyMode==='ninja'){
+     if(!m.compilerDrivers?.length||m.compilerDriverError)toolchainUnknown=true;
+     else try{
+      const now=(await readBuildToolchainEvidence(this.root+'/'+this.profile.buildDirRelative)).compilers;
+      const previous=new Map(m.compilerDrivers.map(c=>[c.language,c]));
+      for(const driver of now){
+       const old=previous.get(driver.language);
+       if(!old||old.path!==driver.path||old.resolvedPath!==driver.resolvedPath||old.sha256!==driver.sha256||
+          old.size!==driver.size||old.id!==driver.id||old.version!==driver.version)
+        this.current.changedInputs.push(driver.path);
+       previous.delete(driver.language);
+      }
+      for(const old of previous.values())this.current.changedInputs.push(old.path);
+     }catch{toolchainUnknown=true;}
+    }
     let linkUnknown=false;
     if(this.profile.linkDependencyFile){
      if(!m.linkInputs||m.linkInputError)linkUnknown=true;
@@ -53,6 +70,7 @@ export class BuildRunner {
     }
     if(this.current.changedInputs.length||!m.inputsStableDuringBuild){this.current.binaryState='needs-build';this.current.freshnessReason=this.current.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs changed during Build; build again for a stable snapshot.';}
     else if(compilerUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler dependency evidence unavailable or stale.';}
+    else if(toolchainUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler driver identity is incomplete or unavailable.';}
     else if(linkUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Linker input evidence is incomplete or unavailable.';}
     else if(m.compilerInputsStableDuringBuild===false){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler input stability was not established across Build.';}
     else if(!same(binary,m.outputBinary.fingerprint)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable differs from last successful Build manifest.';}

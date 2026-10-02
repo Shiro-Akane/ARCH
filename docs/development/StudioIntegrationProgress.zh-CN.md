@@ -1468,3 +1468,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 修正 refreshFreshness 的提前返回：Ninja 依赖读取失败记为 unknown evidence，继续收集 link 输入；已有 tracked/link 变化优先给 needs-build。只有没有已知变更时才给依赖 unavailable 的 freshness-unknown。
 - 真实临时 CMake/Ninja fixture 验证 header 变化，并在删除 fixture .ninja_deps 后修改 tracked CMakeLists，仍准确报告 needs-build。Build suite 10/10、lint/typecheck PASS。
 - 不改变 dependenciesComplete=false、不放宽 Preview readiness、不重新编译 ARCH，不将工具链/临时LTO输入覆盖缺口宣称已解决。
+
+### 2026-10-02 — Compiler driver freshness comparison
+
+- 既有 Manifest 已记录 compilerDrivers，但 refreshFreshness 未消费。现在比较 CMake 选定驱动 language/path/resolvedPath/SHA/size/id/version；已知变化给 needs-build，缺失/不可读取给 freshness-unknown，保持已知源码变更优先。
+- Build/CMake evidence 14/14 PASS，lint/typecheck PASS；fixture 覆盖同路径驱动内容变更与驱动缺失。未替换本机编译器、未重新编译 ARCH。
+- 这仅补齐 driver 变化检测；compiler subprogram/linker/implicit libraries 完整身份仍未证明，dependenciesComplete=false 保留。不据此宣布干净构建或完整 freshness 通过。
