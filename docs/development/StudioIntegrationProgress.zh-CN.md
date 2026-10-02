@@ -1158,3 +1158,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 修复首次配置失败/取消留下 query 而无 cache 后无法重试的问题：Host 记录 source/build/profile 身份，仅匹配的已认领目录可重试；不清理目录，不接受其他非空目录。失败或取消响应不保留成功 evidence。
 - 真实 CMake 失败→去除测试 cache→修正输入→重试成功；取消和其他绑定检查保留。2/2 PASS，typecheck/lint PASS。初次测试因测试文本换行转义错误失败，修正后通过；未修改验收条件。
 - Configure 仍待 Host/UI 接线和完整依赖证据，未执行正式 ARCH 配置/演化。
+
+
+### 2026-10-02 — Configure HTTP boundary
+
+- 可选 ProjectReader Configure 接入 POST /api/configure 与 GET /api/configure/status；继承精确 origin/host/protocol，POST 仅允许 projectId/profileId，拒绝过期项目/未知 profile/命令参数。配置期间拒绝冲突项目操作，状态保存真实终态。
+- 真实 HTTP→CMake 成功与注入拒绝、旧 Build 安全回归合计 5/5 PASS；typecheck/lint PASS。未默认启用生产 profile，项目装配/UI/退出接线仍待完成；不宣称 3C 已完成。

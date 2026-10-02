@@ -1,3 +1,6 @@
+import {openProject} from '../host/project.ts';
+import {createHostServer,listenLocal} from '../host/server.ts';
+import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
@@ -47,4 +50,26 @@ test('Configure cancellation waits for the owned process group and rejects concu
   assert.equal(runner.isActive(),false);assert.equal(runner.processId,undefined);
   assert.throws(()=>process.kill(pid,0),(e:unknown)=>(e as NodeJS.ErrnoException).code==='ESRCH');
  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('HTTP Configure rejects browser authority and publishes actual completion',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch configure http-'));
+ await writeFile(root+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(Http NONE)\n');
+ const reader=await openProject({project:root}),projectId=reader.snapshot().session.projectId;
+ const configure=new ConfigureRunner({id:'http',sourceRoot:root,buildDirRelative:'build',generator:'Ninja',definitions:{}});
+ const server=createHostServer({...reader,configure},'http://127.0.0.1:5173');
+ await listenLocal(server,0);const address=server.address();assert.ok(address&&typeof address!=='string');
+ const url='http://127.0.0.1:'+address.port;
+ const headers={Origin:'http://127.0.0.1:5173','X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,'Content-Type':'application/json'};
+ const post=(body:unknown)=>fetch(url+'/api/configure',{method:'POST',headers,body:JSON.stringify(body)});
+ try{
+  for(const field of ['args','program','env','cwd','shell'])assert.equal((await post({projectId,profileId:'http',[field]:'bad'})).status,400);
+  assert.equal((await post({projectId:'stale',profileId:'http'})).status,409);
+  assert.equal((await post({projectId,profileId:'unknown'})).status,400);
+  assert.equal((await post({projectId,profileId:'http'})).status,202);
+  for(let i=0;i<200&&configure.isActive();i++)await new Promise(r=>setTimeout(r,10));
+  assert.equal(configure.isActive(),false);
+  const response=await fetch(url+'/api/configure/status',{headers});
+  assert.equal(response.status,200);assert.equal((await response.json()).latest.state,'succeeded');
+ }finally{configure.cancel();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true});}
 });

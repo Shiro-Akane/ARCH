@@ -26,8 +26,9 @@ async function directory(root:string,relative:string){
 }
 /** Serial fixed-argv operation. Configure success never creates a Build Manifest. */
 export class ConfigureRunner {
- readonly profile:ConfigureProfile;private active=false;private log?:BuildLog;private child?:ChildProcess;private cancelled=false;private killTimer?:ReturnType<typeof setTimeout>;
+ readonly profile:ConfigureProfile;private active=false;private log?:BuildLog;private child?:ChildProcess;private cancelled=false;private killTimer?:ReturnType<typeof setTimeout>;private latest?:ConfigureResult;
  constructor(profile:ConfigureProfile){this.profile=structuredClone(profile);}
+ snapshot(){return {profileId:this.profile.id,active:this.active,processId:this.processId,latest:this.latest?structuredClone(this.latest):undefined};}
  isActive(){return this.active;}
  get processId(){return this.child?.pid;}
  cancel(){
@@ -104,7 +105,7 @@ export class ConfigureRunner {
    if(this.cancelled)throw new Error('Configure cancelled.');
    result.state='succeeded';
   }catch(e){delete result.evidence;if(this.cancelled)result.state='cancelled';result.error=e instanceof Error?e.message:'Configure failed';this.log.append('stderr',result.error);}
-  finally{if(this.killTimer)clearTimeout(this.killTimer);this.killTimer=undefined;this.child=undefined;this.log.append('state',undefined,result.state);this.active=false;}
+  finally{this.latest=structuredClone(result);if(this.killTimer)clearTimeout(this.killTimer);this.killTimer=undefined;this.child=undefined;this.log.append('state',undefined,result.state);this.active=false;}
   return result;
  }
 }
