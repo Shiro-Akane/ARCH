@@ -990,3 +990,14 @@ Raw input/preview/log/checkpoint kept in studio/.local/integration/amr-productio
 Processed identity/count/equality summary: O7ConfigurationT0AmrSummary.json.
 t=0 checks only initial topology and zero checkpoint time; NOT evolution acceptance.
 No CUDA or Windows work, push or release tag. Remaining joint goal unchanged.
+
+### O7.0 shared G checkpoint compatibility regression
+
+补充 checkpoint identity 专项断言：self identity 精确记录共享 CGS G，
+相同身份可接受；保存值 1e-20、6.67408e-8、0 和 NaN 明确拒绝，
+expected identity 不会被保存值覆盖。不改变兼容字段布局或科学阈值。
+arch_checkpoint_compatibility 完整现有单元套件 PASS，diff-check PASS。
+原始合成 HDF5 fixture 保存在 studio/.local/integration/gravity-checkpoint-compatibility。
+套件包含故意删除 dataset/attribute 的拒绝测试，产生 HDF5 诊断但最终退出0。
+这些 fixture 的 step=7 是测试构造数据，不是新运行的演化证据。
+未执行科学演化、CUDA、Windows适配或push。历史特殊G输入换算仍待维护者确认。

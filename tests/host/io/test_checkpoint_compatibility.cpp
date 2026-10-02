@@ -141,6 +141,30 @@ io::CheckpointData make_checkpoint(
     return checkpoint;
 }
 
+void test_shared_gravity_identity()
+{
+    SimConfig config;
+    config.physics.gravity.type = "self";
+    const auto species = make_species();
+    const auto current = io::inspect_checkpoint_provenance(
+        config, species, EosId::Ideal, false, "none", false);
+    constexpr double G = arch::constants::gravity::cgs::gravitational_constant;
+    expect(current.gravity_controls.size() == 4 && current.gravity_controls.front() == G,
+           "checkpoint identity does not record the shared CGS constant");
+    expect(io::require_checkpoint_provenance_compatible(current, current),
+           "matching shared gravity identity was rejected");
+    for (double historical : {1e-20, 6.67408e-8, 0.,
+                              std::numeric_limits<double>::quiet_NaN()}) {
+        auto saved = current;
+        saved.gravity_controls.front() = historical;
+        expect_rejected([&] {
+            io::require_checkpoint_provenance_compatible(saved, current);
+        }, "different saved G was accepted", "gravity policy/boundary/controls");
+        expect(current.gravity_controls.front() == G,
+               "saved identity overwrote current physical constant");
+    }
+}
+
 void test_identity_and_digest(const std::filesystem::path& directory)
 {
     const auto table = directory / "table-a.bin";
@@ -692,6 +716,7 @@ int main(int argc, char** argv)
         const std::filesystem::path directory = argv[1];
         std::filesystem::create_directories(directory);
         test_sha256_padding_boundaries(directory);
+        test_shared_gravity_identity();
         test_identity_and_digest(directory);
         test_hdf5_round_trip(directory);
         test_native_composition(directory);
