@@ -1,3 +1,5 @@
+import {checkpointFilesystemIdentity} from './runCheckpoint.ts';
+import type {RunCheckpoint} from './runCheckpoint.ts';
 import {spawn} from 'node:child_process';
 import type {ChildProcess} from 'node:child_process';
 import {open,readFile,readdir,rename,writeFile} from 'node:fs/promises';
@@ -12,7 +14,7 @@ export interface RunJob {
  binaryRelativePath:string;binaryFingerprint:FileFingerprint;
  configRelativePath:string;configFingerprint:FileFingerprint;
  inputRelativePath:string;confirmedBinary:'compiled-version';
- createdAt:string;
+ createdAt:string;checkpoint?:RunCheckpoint;
 }
 import type {RunState} from '../src/host/runContracts.ts';
 export type {RunState} from '../src/host/runContracts.ts';
@@ -55,6 +57,11 @@ function validateJob(job:RunJob){
  if(job.version!=='1'||!/^[-a-f0-9]{36}$/.test(job.runId)||!['run','restart'].includes(job.mode)||
   job.confirmedBinary!=='compiled-version'||!path.isAbsolute(job.projectRoot)||!/^[A-Za-z][A-Za-z0-9_]*$/.test(job.caseId))
   throw new Error('Invalid confirmed run identity.');
+ if(job.mode==='restart'&&(!job.checkpoint||!path.isAbsolute(job.checkpoint.path)||
+    job.checkpoint.path.includes('\0')||typeof job.checkpoint.filesystemIdentity!=='string'||
+    !job.checkpoint.filesystemIdentity||job.checkpoint.filesystemIdentity.length>16384))
+  throw new Error('Restart checkpoint handoff identity is required.');
+ if(job.mode==='run'&&job.checkpoint)throw new Error('Unexpected checkpoint identity in Run.');
  validateFingerprint(job.binaryFingerprint);validateFingerprint(job.configFingerprint);
 }
 /** Runs in the independent terminal, never in the Studio/Preview process group. */
@@ -83,6 +90,11 @@ export async function executeRun(job:RunJob,directory:string):Promise<RunState>{
   if(!binary.exists||binary.error||!binary.sha256||binary.size===undefined||!binary.modifiedTime||
    !sameFingerprint({sha256:binary.sha256,size:binary.size,modifiedTime:binary.modifiedTime},job.binaryFingerprint))
    throw new Error('Selected binary changed after confirmation.');
+  if(job.checkpoint){
+   let identity:string|undefined;
+   try{identity=await checkpointFilesystemIdentity(job.checkpoint.path);}catch{/* reject unreadable checkpoint */}
+   if(identity!==job.checkpoint.filesystemIdentity)throw new Error('Restart checkpoint changed after confirmation; prepare again.');
+  }
   const executable=await checkedPath(job.projectRoot,job.binaryRelativePath);
   const inputPath=await checkedPath(job.projectRoot,job.inputRelativePath);
   output=await open(path.join(directory,'console.log'),'wx',0o600);

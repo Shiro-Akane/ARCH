@@ -1505,3 +1505,11 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 用户确认Weston重启后仍只有图标。系统shared_memory virtiofs存在，但Weston首次分配报Input/output error/use_gfxredir=0；与Microsoft openvmm4274/WSLg1456报告吻合。详见StudioWslgVisibilityBlocker.md。
 - 临时诊断代码已撤回，当前launcher/Host421正常关闭；三条已交付Run均succeeded。完整WSL shutdown会终止所有发行版进程，超出单独compositor重启授权，须用户确认后才执行。
 - 不改tmpfs/global settings，不用侧边栏页面冒充原生验收。3C桌面UAT仍未通过，完整联合目标未完成。
+
+### 2026-10-02 — Restart checkpoint identity reaches independent worker
+
+- 将prepare/confirm共用文件系统身份抽到host/runCheckpoint.ts；确认后的path/filesystemIdentity写入本地job.json。独立worker启动Core前再次复核，缺失身份或确认后替换明确拒绝。普通Run禁止附带checkpoint身份，不新增浏览器命令权限。
+- controller→真实独立worker fixture覆盖延迟terminal交付期间同长度文件替换：job保留原身份，worker failed且无Core processId。worker fixture另覆盖身份缺失拒绝和未改变身份正常启动；这些fixture不是HDF5科学兼容性检查。
+- 完整npm test 223/223 PASS（含Host）、lint、typecheck/production build PASS；日志restart-handoff-regression.log留本地，既有bundle warning保留。
+- 仍非内容SHA/immutable handle：最终worker复核与Core实际open之间的竞态未消除。Core继续负责HDF5布局/身份/物理兼容；未宣称续算资源完全冻结。旧待执行Restart job缺新身份时失败，必须重新prepare/confirm；旧已完成历史可读。
+- WSLg完整VM重启等待用户确认；本轮继续允许的本地实现，没有执行待审批shutdown，没有把桌面UAT标为通过。

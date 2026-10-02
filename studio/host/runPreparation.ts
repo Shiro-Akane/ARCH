@@ -1,4 +1,4 @@
-import {stat,realpath} from 'node:fs/promises';
+import {checkpointFilesystemIdentity} from './runCheckpoint.ts';
 import {execFile} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {checkedPath,fingerprint} from './files.ts';
@@ -36,12 +36,6 @@ export class RunPreparationRunner {
     });
    child.stdin?.on('error',()=>undefined);child.stdin?.end(text);
   });
- }
- private async checkpointIdentity(filename:string){
-  const resolved=await realpath(filename),info=await stat(resolved,{bigint:true});
-  if(!info.isFile())throw new BuildError('Restart checkpoint is not a regular file.',409);
-  // Filesystem identity detects replacement/in-place writes; not HDF5 compatibility.
-  return JSON.stringify([resolved,...[info.dev,info.ino,info.size,info.mtimeNs,info.ctimeNs].map(String)]);
  }
  async prepare(request:PrepareRunRequest):Promise<RunPreparation>{
   const keys=['projectId','caseId','configRevision','mode'];
@@ -87,7 +81,7 @@ export class RunPreparationRunner {
     canConfirm:issues.length===0,simulationReadiness:'core-startup-pending',checkpointPath,
     pendingChecks:['Authoritative Core Setup and runtime configuration','EOS and network resource loading','Execution backend availability',
      ...(request.mode==='restart'?['Core checkpoint identity/layout and continuation compatibility']:[])]};
-   const checkpointIdentity=checkpointPath&&plan.canConfirm?await this.checkpointIdentity(checkpointPath):undefined;
+   const checkpointIdentity=checkpointPath&&plan.canConfirm?await checkpointFilesystemIdentity(checkpointPath):undefined;
    this.prepared={plan:structuredClone(plan),schema,checkpointIdentity};
    return plan;
   }finally{this.active=false;}
@@ -116,11 +110,12 @@ export class RunPreparationRunner {
    }
    if(plan.checkpointPath){
     let identity:string|undefined;
-    try{identity=await this.checkpointIdentity(plan.checkpointPath);}catch{/* reject disappeared/unreadable checkpoint */}
+    try{identity=await checkpointFilesystemIdentity(plan.checkpointPath);}catch{/* reject disappeared/unreadable checkpoint */}
     if(!prepared.checkpointIdentity||identity!==prepared.checkpointIdentity)
      throw new BuildError('Restart checkpoint changed after preparation; prepare again.',409);
    }
-   return {plan:structuredClone(plan),configText:saved.text};
+   return {plan:structuredClone(plan),configText:saved.text,
+    checkpoint:plan.checkpointPath?{path:plan.checkpointPath,filesystemIdentity:prepared.checkpointIdentity!}:undefined};
   }finally{this.active=false;}
  }
 }

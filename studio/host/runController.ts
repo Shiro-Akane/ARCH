@@ -54,7 +54,7 @@ export class RunController {
    const job:RunJob={version:'1',runId,projectRoot:root,caseId:plan.caseId,mode:plan.mode,
     binaryRelativePath:plan.binary.relativePath,binaryFingerprint:plan.binary.fingerprint,
     configRelativePath:plan.config.relativePath,configFingerprint:plan.config.fingerprint,
-    inputRelativePath:'studio/.local/runs/'+runId+'/input.par',confirmedBinary:'compiled-version',createdAt:new Date().toISOString()};
+    inputRelativePath:'studio/.local/runs/'+runId+'/input.par',confirmedBinary:'compiled-version',createdAt:new Date().toISOString(),checkpoint:confirmed.checkpoint};
    await writeFile(directory+'/input.par',confirmed.configText,{flag:'wx',mode:0o400});
    await writeFile(directory+'/job.json',JSON.stringify(job,null,2),{flag:'wx',mode:0o600});
    await writeFile(directory+'/confirmation.json',JSON.stringify({request,confirmedAt:job.createdAt,plan},null,2),{flag:'wx',mode:0o600});

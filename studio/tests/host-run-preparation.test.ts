@@ -231,3 +231,24 @@ test('Restart confirmation rejects a checkpoint replaced after preparation',asyn
   assert.ok(await f.runner.consume({projectId:'project',planId:renewed.planId,confirmation:'run-saved-input-with-compiled-binary'}));
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
+
+test('Restart handoff persists confirmed checkpoint identity and worker refuses a delayed replacement',async()=>{
+ const f=await fixture();
+ try{
+  await writeFile(f.root+'/saved.par','restart-fixture');await writeFile(f.root+'/restart.h5','checkpoint-one');
+  const plan=await f.runner.prepare({projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'restart'});
+  const run=new RunController(f.runner,{terminal:async directory=>{
+   // The terminal can be delayed after confirmation; the original plan must survive.
+   await rm(f.root+'/restart.h5');await writeFile(f.root+'/restart.h5','checkpoint-two');
+   const child=spawn(process.execPath,[worker,directory],{detached:true,stdio:'ignore'});
+   await new Promise<void>((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});child.unref();
+   return {pid:child.pid!,exited:()=>child.exitCode!==null||child.signalCode!==null};
+  }});
+  const launched=await run.start({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'});
+  const job=JSON.parse(await readFile(f.root+'/studio/.local/runs/'+launched.runId+'/job.json','utf8'));
+  assert.equal(job.checkpoint.path,f.root+'/restart.h5');assert.equal(typeof job.checkpoint.filesystemIdentity,'string');
+  let state=await run.status(launched.runId);
+  for(let n=0;n<50&&!state.finishedAt;n++){await new Promise(r=>setTimeout(r,20));state=await run.status(launched.runId);}
+  assert.equal(state.state,'failed');assert.match(state.error!,/checkpoint changed/);assert.equal(state.processId,undefined);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});

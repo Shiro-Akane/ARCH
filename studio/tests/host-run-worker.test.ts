@@ -1,3 +1,4 @@
+import {checkpointFilesystemIdentity} from '../host/runCheckpoint.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
@@ -129,4 +130,19 @@ test('a Stop request recorded before terminal handoff prevents any Core start',a
   const state=await executeRun(job,directory);
   assert.equal(state.state,'stopped');assert.equal(state.processId,undefined);assert.ok(state.finishedAt);
  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('Restart worker rejects missing or changed checkpoint handoff before Core starts',async()=>{
+ for(const mutation of ['missing-identity','changed','unchanged']){
+  const {root,directory,job}=await setup('#!/bin/sh\nexit 0\n');
+  try{
+   job.mode='restart';await writeFile(root+'/checkpoint.h5','checkpoint-one');
+   if(mutation!=='missing-identity')job.checkpoint={path:root+'/checkpoint.h5',filesystemIdentity:await checkpointFilesystemIdentity(root+'/checkpoint.h5')};
+   if(mutation==='missing-identity'){await assert.rejects(executeRun(job,directory),/handoff identity/);continue;}
+   if(mutation==='changed'){await rm(root+'/checkpoint.h5');await writeFile(root+'/checkpoint.h5','checkpoint-two');}
+   const state=await executeRun(job,directory);
+   if(mutation==='changed'){assert.equal(state.state,'failed');assert.match(state.error!,/checkpoint changed/);assert.equal(state.processId,undefined);}
+   else{assert.equal(state.state,'succeeded');assert.ok(state.processId);}
+  }finally{await rm(root,{recursive:true,force:true});}
+ }
 });
