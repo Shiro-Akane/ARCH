@@ -1,0 +1,177 @@
+{
+  "scope": "real CPU Sod warm Preview, not UI UAT",
+  "readinessReason": "Preview uses the last successful tracked build. Full dependency freshness is not independently verified.",
+  "buildId": "0e348e93-5fbe-4d0a-92b0-5d053f8764bf",
+  "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+  "binaryState": "freshness-unknown",
+  "runs": [
+    {
+      "identity": {
+        "requestId": "c3adbe71-3865-468f-8086-7a76b1495cc4",
+        "projectId": "9b6c8288-614a-42f6-9b59-d7d2f82dbce9",
+        "profileId": "sod-initial-cpu",
+        "caseId": "Sod",
+        "configRevision": "023d44d8030d1113125a35cf95deb14515df2ea53b0be59e51d685600c290b96",
+        "buildId": "0e348e93-5fbe-4d0a-92b0-5d053f8764bf",
+        "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403"
+      },
+      "state": "succeeded",
+      "fields": [
+        "DENS",
+        "PRES",
+        "TEMP",
+        "VELX",
+        "ENER",
+        "EINT"
+      ],
+      "dimension": 1,
+      "session": {
+        "generation": 1,
+        "processToken": "71050fc9-9310-453d-874b-9e1c115d993a",
+        "stage": "complete",
+        "elapsedMilliseconds": 0.763519,
+        "sequence": 1,
+        "transportParseMilliseconds": 0.2428820000000087,
+        "resources": {
+          "clearedAfterError": false,
+          "fileContentMatches": 0,
+          "fileHashes": 0,
+          "resultReused": false,
+          "retainedFileBytes": 0,
+          "retainedTables": 0,
+          "sampleEvaluation": {
+            "eosConversions": 2,
+            "exactStateReuses": 30,
+            "initCalls": 32,
+            "maxRetainedStates": 1024,
+            "scope": "this-request-fixed-eos"
+          },
+          "tableHits": 0,
+          "tableLoads": 0
+        },
+        "stages": [
+          {
+            "stage": "request",
+            "milliseconds": 0.038263
+          },
+          {
+            "stage": "configuration",
+            "milliseconds": 0.365925
+          },
+          {
+            "stage": "support",
+            "milliseconds": 0.024342
+          },
+          {
+            "stage": "configuration",
+            "milliseconds": 0.00749
+          },
+          {
+            "stage": "setup",
+            "milliseconds": 0.068407
+          },
+          {
+            "stage": "eos",
+            "milliseconds": 0.011247
+          },
+          {
+            "stage": "sampling",
+            "milliseconds": 0.017024
+          },
+          {
+            "stage": "source-validation",
+            "milliseconds": 0.076358
+          },
+          {
+            "stage": "complete",
+            "milliseconds": 0.115265
+          }
+        ]
+      }
+    },
+    {
+      "identity": {
+        "requestId": "5f24578f-9ef2-4844-a4ee-c75de95e1e0a",
+        "projectId": "9b6c8288-614a-42f6-9b59-d7d2f82dbce9",
+        "profileId": "sod-initial-cpu",
+        "caseId": "Sod",
+        "configRevision": "2725a346ed5ff75153b7873d1f004492700fa7c728b220408a02e53e93ea4410",
+        "buildId": "0e348e93-5fbe-4d0a-92b0-5d053f8764bf",
+        "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403"
+      },
+      "state": "succeeded",
+      "fields": [
+        "DENS",
+        "PRES",
+        "TEMP",
+        "VELX",
+        "ENER",
+        "EINT"
+      ],
+      "dimension": 1,
+      "session": {
+        "generation": 1,
+        "processToken": "71050fc9-9310-453d-874b-9e1c115d993a",
+        "stage": "complete",
+        "elapsedMilliseconds": 0.592954,
+        "sequence": 2,
+        "transportParseMilliseconds": 0.10576600000104008,
+        "resources": {
+          "clearedAfterError": false,
+          "fileContentMatches": 0,
+          "fileHashes": 0,
+          "resultReused": false,
+          "retainedFileBytes": 0,
+          "retainedTables": 0,
+          "sampleEvaluation": {
+            "eosConversions": 2,
+            "exactStateReuses": 30,
+            "initCalls": 32,
+            "maxRetainedStates": 1024,
+            "scope": "this-request-fixed-eos"
+          },
+          "tableHits": 0,
+          "tableLoads": 0
+        },
+        "stages": [
+          {
+            "stage": "request",
+            "milliseconds": 0.024895
+          },
+          {
+            "stage": "configuration",
+            "milliseconds": 0.266778
+          },
+          {
+            "stage": "support",
+            "milliseconds": 0.023943
+          },
+          {
+            "stage": "configuration",
+            "milliseconds": 0.007359
+          },
+          {
+            "stage": "setup",
+            "milliseconds": 0.061625
+          },
+          {
+            "stage": "eos",
+            "milliseconds": 0.015707
+          },
+          {
+            "stage": "sampling",
+            "milliseconds": 0.013398
+          },
+          {
+            "stage": "source-validation",
+            "milliseconds": 0.043711
+          },
+          {
+            "stage": "complete",
+            "milliseconds": 0.106624
+          }
+        ]
+      }
+    }
+  ]
+}

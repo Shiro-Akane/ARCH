@@ -1424,3 +1424,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 本地CPU profile绑定现有Sod/CellularDet Preview，保持原manifest/input/binary核验及full freshness unknown；配置适配器独立。缺manifest时registry回退静态binary scope，不因此隐藏所有注册模型。
 - Configure/Preview/Run相关28/28 PASS，lint/typecheck PASS；真实Build与warm Preview仍待刷新profile身份后验证。本次不扩展模型支持，不修改科学Core。
+
+### 2026-10-02 — Real local CPU Build and warm Sod Preview
+
+- clean9b1bf8bf：标准Host Build成功，buildId=0e348e93-5fbe-4d0a-92b0-5d053f8764bf；binary SHA不变，full freshness仍unknown。guard2.013s、peak owned RSS146820KiB、swap0，非性能benchmark。
+- 当前本地CPU profile真实Sod init-only32样本请求两次成功，未保存注释产生不同configRevision；同processToken/generation1，sequence1→2，六个真实字段DENS/PRES/TEMP/VELX/ENER/EINT。session最终shutdown。摘要见StudioLocalCpuPreviewSummary.json。
+- 本次不是simulation/桌面UAT，Cellular2D/AMR实际接线及取消/失败恢复仍待验证，未宣称整个3C或联合目标完成。
