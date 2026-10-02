@@ -1,0 +1,17 @@
+{
+  "scope": "Linux desktop Host startup rejection; not native dialog or visual UAT",
+  "results": [
+    {
+      "scenario": "missing-binary",
+      "exitCode": 1,
+      "error": "Selected binary is missing. Select an existing ARCH executable; no automatic Build was started.",
+      "readinessPublished": false
+    },
+    {
+      "scenario": "unknown-model",
+      "exitCode": 1,
+      "error": "Selected case is not registered by this binary.",
+      "readinessPublished": false
+    }
+  ]
+}

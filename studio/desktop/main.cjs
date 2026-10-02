@@ -39,7 +39,7 @@ async function launch(options){
  const home=await wsl(['/usr/bin/printenv','HOME']);
  const candidates=[home+'/.local/opt/node-studio/bin/node','/usr/bin/node'];let runtime;
  for(const candidate of candidates){try{const version=await wsl([candidate,'--version']);if(Number(version.match(/^v(\d+)/)?.[1])>=24){runtime=candidate;break;}}catch{/* next explicit prerequisite candidate */}}
- if(!runtime)throw new Error('Linux Node 24+ missing in selected WSL distro. Install a supported Node runtime, then reopen ARCH Studio.');
+ if(!runtime)throw new Error('Linux Node 24+ missing in the selected environment. Install a supported Node runtime, then reopen ARCH Studio.');
  const entry=await mapPath(path.join(contentRoot,'host','desktop.ts'));
  const token=randomBytes(32).toString('hex');
  const payload=Buffer.from(JSON.stringify({...values,caseId:options.case,origin,token})).toString('base64url');
@@ -47,8 +47,8 @@ async function launch(options){
  let errors='';child.stderr.on('data',b=>{errors=(errors+b.toString()).slice(-16000);});child.stdin.on('error',()=>{});
  try{
   ready=await new Promise((resolve,reject)=>{
-   let text='';const timer=setTimeout(()=>reject(new Error('WSL Host startup timed out. '+errors)),25000);
-   const fail=()=>{clearTimeout(timer);reject(new Error('WSL Host failed: '+errors));};
+   let text='';const timer=setTimeout(()=>reject(new Error('Local Host startup timed out. '+errors)),25000);
+   const fail=()=>{clearTimeout(timer);reject(new Error('Local Host failed: '+errors));};
    child.once('error',fail);child.once('close',fail);
    child.stdout.on('data',b=>{text+=b.toString();if(text.length>65536){clearTimeout(timer);reject(new Error('Host readiness output exceeded limit.'));return;}const end=text.indexOf('\n');if(end<0)return;try{const value=JSON.parse(text.slice(0,end));if(value.kind!=='desktop-ready'||value.token!==token||!Number.isInteger(value.port)||value.port<1||value.port>65535)throw new Error('Invalid Host readiness identity.');clearTimeout(timer);resolve(value);}catch(e){clearTimeout(timer);reject(e);}});
   });
@@ -59,14 +59,14 @@ async function launch(options){
     connected=true;break;
    }catch(e){lastError=e.message+' '+(e.cause?.code??'');await new Promise(r=>setTimeout(r,300));}
   }
-  if(!connected)throw new Error('Owned WSL Host localhost bridge unavailable: '+lastError+'. No unrelated service was adopted.');
+  if(!connected)throw new Error('Owned Local Host connection unavailable: '+lastError+'. No unrelated service was adopted.');
   await log('ready '+JSON.stringify({bridgePid:child.pid,hostPid:ready.pid,port:ready.port,project:ready.project,caseId:ready.caseId,distro:distro??'default',linuxUser}));
   await createWindow({endpoint:origin,caseId:ready.caseId,project:ready.project},'/index.html');
  }catch(e){await stopHost();throw e;}
 }
 async function createWindow(bootstrap,page){
  const old=win;
- win=new BrowserWindow({width:1440,height:940,minWidth:1000,minHeight:640,title:'ARCH Studio',show:false,webPreferences:{preload:path.join(root,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,additionalArguments:['--arch-bootstrap='+JSON.stringify(bootstrap)]}});
+ win=new BrowserWindow({width:1440,height:940,minWidth:1000,minHeight:640,title:'ARCH Studio',show:false,webPreferences:{preload:path.join(root,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,additionalArguments:['--arch-bootstrap='+JSON.stringify({...bootstrap,platform:process.platform})]}});
  win.on('page-title-updated',event=>event.preventDefault());
  win.setTitle(bootstrap.project?'ARCH Studio — '+path.posix.basename(bootstrap.project):'ARCH Studio — Open project');
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));

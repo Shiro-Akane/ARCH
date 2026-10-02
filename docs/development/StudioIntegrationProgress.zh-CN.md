@@ -1391,3 +1391,8 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - clean f488fcaa6f92edcc109a5db3429a455f5a3dc40d：实际 Electron Linux package 成功；从 validation/restart 嵌套目录启动，包内 Host readiness 成功，无 Vite。
 - 通过包内 production origin 获取 index（与包内文件字节相同）、94参数schema、14模型registry和3条持久run历史。处理证据见 StudioLinuxPackagedSmokeSummary.json；未运行科学任务。
 - 本轮 launcher PID298 定向 TERM 后 session exit0，Host433与launcher均消失。仍不替代原生文件对话框、窗口点击/close和完整视觉 UAT；WSLg COPY MODE 限制未解除。
+
+### 2026-10-02 — Linux launch recovery controls
+
+- Linux 项目页隐藏跨 WSL 发行版输入，增加显式 binary/case/source 字段；提交期间禁用重复 Open，空可选项不发出，错误提示改为 Local Host。沿用同一 Host 参数边界，不增加任意命令能力。
+- 实际 desktop Host 负向检查：missing binary 与未注册模型均 exit1，给出明确错误，未发布 readiness；摘要见 StudioLinuxLauncherFailureSummary.json。lint PASS。原生 UI/对话框操作验收仍待 WSLg 图形问题解决，未宣称完成。
