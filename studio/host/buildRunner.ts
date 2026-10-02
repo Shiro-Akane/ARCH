@@ -1,3 +1,4 @@
+import {fingerprintLinkDependencies,changedLinkInputs} from './linkDependencies.ts';
 import {fingerprintNinjaDependencies,sameCompilerInputs} from './ninjaDependencies.ts';
 import {inputs,inspect,gitIdentity,makeManifest,saveManifest,loadManifest,same} from './buildManifest.ts';
 import {BuildLog} from './buildLog.ts';
@@ -40,7 +41,17 @@ export class BuildRunner {
       this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler dependency evidence unavailable or stale.';return this.snapshot();
      }
     }
+    let linkUnknown=false;
+    if(this.profile.linkDependencyFile){
+     if(!m.linkInputs||m.linkInputError)linkUnknown=true;
+     else try{
+      const now=await fingerprintLinkDependencies(this.root+'/'+this.profile.buildDirRelative,this.profile.linkDependencyFile,this.root+'/'+this.profile.outputBinaryRelative);
+      this.current.changedInputs.push(...changedLinkInputs(m.linkInputs,now));
+      linkUnknown=now.unavailable.length>0;
+     }catch{linkUnknown=true;}
+    }
     if(this.current.changedInputs.length||!m.inputsStableDuringBuild){this.current.binaryState='needs-build';this.current.freshnessReason=this.current.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs changed during Build; build again for a stable snapshot.';}
+    else if(linkUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Linker input evidence is incomplete or unavailable.';}
     else if(m.compilerInputsStableDuringBuild===false){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler input stability was not established across Build.';}
     else if(!same(binary,m.outputBinary.fingerprint)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable differs from last successful Build manifest.';}
     else{this.current.binaryState=this.profile.dependenciesComplete?'built-from-current-tracked-inputs':'freshness-unknown';this.current.freshnessReason=this.profile.dependenciesComplete?'Explicit tracked inputs match the successful Build.':'Tracked inputs match; full dependency coverage is unknown.';}

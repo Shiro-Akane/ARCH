@@ -63,3 +63,24 @@ test('persisted compiler evidence rejects corrupt hashes, paths and duplicate in
   }
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+test('link-only input mutation invalidates build and missing linker inputs cannot claim current',async()=>{
+ const {root,p}=await fixture();
+ try{
+  await mkdir(root+'/studio');
+  await writeFile(root+'/library.so','library');
+  await writeFile(root+'/build/ARCH.link.d','bin/ARCH: '+root+'/library.so '+root+'/missing.ltrans.o\n');
+  const profile={...p,linkDependencyFile:'ARCH.link.d',dependenciesComplete:true};
+  const runner=new BuildRunner(root,'p',profile,{spawn:fakeSpawn(root)});
+  await runner.start('p',p.id);await finished(runner);
+  assert.equal(runner.snapshot().state,'succeeded');
+  assert.equal(runner.snapshot().binaryState,'freshness-unknown');
+  assert.match(runner.snapshot().freshnessReason,/Linker input/);
+  const manifest=await loadManifest(profile);assert.equal(manifest?.linkInputs?.unavailable.length,1);
+  await writeFile(root+'/library.so','library changed');
+  assert.equal((await runner.refreshFreshness()).binaryState,'needs-build');
+  assert.ok(runner.snapshot().changedInputs.includes(root+'/library.so'));
+  await saveManifest(profile,{...manifest!,linkInputs:{...manifest!.linkInputs!,depfileSha256:'bad'}});
+  assert.equal(await loadManifest(profile),undefined);
+ }finally{await rm(root,{recursive:true,force:true});}
+});

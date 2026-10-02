@@ -13,6 +13,7 @@ export async function validateProfile(root:string,p:BuildProfile,cmake=CMAKE){
  if(root!==p.managedSourceRoot)throw new Error('Profile source root does not match the managed project.');
  if(!/^[a-zA-Z0-9_-]+$/.test(p.id)||!p.displayName||!/^[-a-zA-Z0-9_.+]+$/.test(p.target)||p.target.startsWith('-'))throw new Error('Invalid fixed profile identity or target.');
  if(!Number.isInteger(p.parallelism)||p.parallelism<1||p.parallelism>28)throw new Error('Invalid fixed parallelism.');
+ if(p.linkDependencyFile)selectedPath(p.linkDependencyFile);
  for(const rel of [p.buildDirRelative,p.outputBinaryRelative,...p.trackedInputs,...(p.sourceRelativePath?[p.sourceRelativePath]:[])])selectedPath(rel);
  if(p.trackedInputs.length>128||p.trackedInputs.some(x=>x.endsWith('.par')))throw new Error('Invalid tracked build inputs; runtime config is not compiled.');
  for(const rel of new Set([...p.trackedInputs,...(p.sourceRelativePath?[p.sourceRelativePath]:[])])){

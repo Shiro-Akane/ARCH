@@ -31,13 +31,19 @@ export type BuildState = 'not-configured'|'ready'|'queued'|'building'|'succeeded
 export type BinaryBuildState = 'missing'|'available'|'built-from-current-tracked-inputs'|'needs-build'|'freshness-unknown';
 export interface BuildProfile {
  id:string; displayName:string; managedSourceRoot:string; buildDirRelative:string; target:string; outputBinaryRelative:string;
- compilerDependencyMode?:'ninja'; registeredCases?:string[]; caseId?:string; sourceRelativePath?:string; parallelism:number; trackedInputs:string[]; dependenciesComplete:boolean;
+ compilerDependencyMode?:'ninja'; linkDependencyFile?:string; registeredCases?:string[]; caseId?:string; sourceRelativePath?:string; parallelism:number; trackedInputs:string[]; dependenciesComplete:boolean;
 }
 export interface BuildRequest { projectId:string; profileId:string }
 export interface BuildEvent { projectId:string; buildId:string; sequence:number; timestamp:string; kind:'state'|'stdout'|'stderr'; state?:BuildState; text?:string }
 export interface BuildResult { buildId:string; projectId:string; state:'succeeded'|'failed'|'cancelled'; exitCode?:number|null; signal?:string|null; startedAt:string; finishedAt:string; error?:string }
 export interface InputFingerprint { relativePath:string; fingerprint:FileFingerprint }
+export interface LinkInputSnapshot {
+ kind:'linker-inputs'; depfileSha256:string;
+ files:{path:string;resolvedPath:string;sha256:string;size:number}[];
+ unavailable:{path:string;reason:'missing'}[];
+}
 export interface BuildManifest {
+ linkInputs?:LinkInputSnapshot; linkInputError?:string;
  compilerDrivers?:{language:string;path:string;resolvedPath:string;id:string;version:string;sha256:string;size:number}[]; compilerDriverError?:string;
  compilerInputs?:{kind:'ninja-compiler-inputs';objectCount:number;files:{path:string;sha256:string;size:number}[]}; compilerInputError?:string; compilerInputsStableDuringBuild?:boolean;
  manifestVersion:'1'; buildId:string; projectId:string; profileId:string; caseId?:string; managedSourceRoot:string;

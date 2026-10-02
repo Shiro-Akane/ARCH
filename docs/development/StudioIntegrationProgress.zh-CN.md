@@ -1286,3 +1286,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 本机 mold 2.30.0 支持 --dependency-file。新增默认 OFF 的 ARCH_EMIT_LINK_DEPENDENCIES，仅 Studio CPU profile ON；ARCH.link.d 由真实链接器输出，不改数值 flags/科学逻辑，其他 linker 不支持时明确失败。
 - 实际 Host Configure/Build PASS；guard 7.101s、peak owned RSS 2039732 KiB、swap 0。输出包含解析后的 libm.so.6、libstdc++、crt 启动对象，以及 LTO 临时产物；后者链接后已消失，需明确分类，不能静默忽略当完整。
 - 未更新旧 CPU/CUDA 验证树，未运行模拟；依赖解析/manifest 接入仍待完成，完整覆盖保持 false。
+
+### 2026-10-02 — Linker input manifest and freshness
+
+- 3C 构建身份：Host-owned linkDependencyFile 读取真实 linker depfile，校验 expected executable、有限 Make 转义及预算；不执行变量或 shell 语法。Manifest 保存持久文件 SHA/size/realpath，缺失项逐项保留，不凭 LTO 文件名猜测完整覆盖。
+- freshness 比较链接输入内容、symlink 目标和依赖集合；库变化判 needs-build，证据缺失保持 unknown。未提升 dependenciesComplete。
+- 实际 build-studio-cpu 只读采集 75 个现存文件、119779535 bytes，包含 libm.so.6；另 98 个缺失项。原始身份留 .local/integration/link-inputs-20261002T041128Z.json。
+- 受影响 Build/link suites 12/12 PASS，typecheck/lint PASS。尚待真实 Host Build 持久化验证；完整工具链、Linux UI UAT、Run/Restart 与后续科学阶段未完成。
