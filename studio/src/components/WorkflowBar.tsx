@@ -4,11 +4,11 @@ import {useHost} from '../host/hostContext';
 import {useBuild,BuildOutput} from '../host/BuildProvider';
 import {useWorkflow} from '../state/workflowContext';
 export function WorkflowBar(){
- const {snapshot,connected}=useHost();const {status,error,pending,start}=useBuild();const {preview}=useWorkflow();
+ const {connected}=useHost();const {status,error,pending,start}=useBuild();const {preview}=useWorkflow();
  const configure=useConfigure();
  const [open,setOpen]=useState(false);
  const building=pending||!!status?.activeBuildId;
- const canBuild=connected&&!!snapshot?.host.capabilities.build&&!!status?.configured&&!building&&!configure.status?.active&&!configure.pending;
+ const canBuild=connected&&!!status?.configured&&!building&&!configure.status?.active&&!configure.pending;
  const canConfigure=connected&&!!configure.status?.profileId&&!building&&!configure.pending&&!configure.status.active;
  const configureReason=configure.status?.profileId?'Configure the Host-owned CPU build profile. Configuration does not build or update the executable.':'Configure unavailable: select a Host-owned Configure profile.';
  return <footer className="real-workflow" aria-label="Real Config workflow">

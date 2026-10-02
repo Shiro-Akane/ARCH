@@ -98,6 +98,8 @@ test('project assembly retains Configure ownership and rejects mismatched source
 test('local CPU workflow owns a separate build tree and exposes Configure before the first build',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch local profile-'));
  try{
+  await writeFile(root+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(Local NONE)\nfile(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/bin")\n');
+  await writeFile(root+'/CMakePresets.json','{"version":1}');
   const reader=await openProject({project:root,buildProfile:LOCAL_CPU_PROFILE_ID});
   assert.ok(reader.configure);assert.ok(reader.build);
   assert.equal(reader.build.profile.buildDirRelative,'build-studio-cpu');
@@ -105,6 +107,12 @@ test('local CPU workflow owns a separate build tree and exposes Configure before
   assert.equal(reader.configure.profile.definitions.ARCH_ENABLE_CUDA,'OFF');
   assert.equal(reader.configure.profile.definitions.ARCH_RUNTIME_OUTPUT_DIRECTORY,root+'/build-studio-cpu/bin');
   assert.equal(localCpuProfile(root).build.dependenciesComplete,false);
+  const configured=await reader.configure.run(reader.snapshot().session.projectId,LOCAL_CPU_PROFILE_ID);
+  assert.equal(configured.state,'succeeded',configured.error);
+  await reader.build.validate();
+  assert.equal(reader.build.snapshot().configured,true);
+  assert.equal((await reader.build.refreshFreshness()).binaryState,'missing');
+
   await reader.configure.shutdown();
  }finally{await rm(root,{recursive:true,force:true});}
 });

@@ -1202,3 +1202,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 工作流 Configure 按 Host profile 可用性启用，显示实际任务状态，支持取消；终端抽屉显示有界日志，关闭抽屉不取消。轮询校验项目/operation 身份，旧项目响应不覆盖当前状态。
 - Build 状态读取在无活动任务时重新验证配置和 freshness，使首次 Configure 后可识别实际 tree；仍不将配置成功等同 binary current。
 - typecheck/lint PASS，Configure adapter+UI render 7/7 PASS。尚待 production build/真实 Linux UI UAT；Run/Restart 仍禁用，未声称 3C 完成。
+
+
+### 2026-10-02 — First Configure enables Build
+
+- 修复工作流 Build 按钮同时依赖连接时旧 capabilities.build 的问题；改用当前已校验 Build status.configured 和任务 busy 状态。
+- 真实微型 CMake 验证无 tree→Configure→Build configured，binary 仍 missing；未编译时不作成功声明。Configure+UI 回归 11/11 PASS，typecheck PASS。
