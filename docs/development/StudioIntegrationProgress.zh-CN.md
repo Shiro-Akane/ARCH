@@ -1378,3 +1378,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 前端在没有 ready Preview build 时使用当前项目 executable SHA 的 selected-binary scope，读取静态 schema/inspection；真实 Preview 仍要求原 readiness。Host /api/cases 在无 WorkflowRunner 时读取真实注册表，fieldModels 为空且 AMR execution capability=null，不以注册冒充已接入执行。
 - 完整218/218 tests、lint、typecheck/production build PASS。真实 build-studio-cpu binary 返回94标准参数/14注册模型，未保存 SmoothAdvection 文本 inspection status=ok/no diagnostics；摘要见 StudioSelectedBinaryConfigurationSummary.json。未运行 Setup/Preview/simulation，未改变 build freshness。
 - Linux production UI UAT 和 selected CPU Preview/AMR profile 接入仍待完成；不能将静态接线通过当作整个工作流验收。
+
+### 2026-10-02 — Native Linux production desktop entry
+
+- 审计确认旧 desktop/arch-studio 仍转发 Windows exe，本机 Linux UAT 仅临时脚本。现替换为 Linux Electron 原生入口，生产 dist 与直接 Node Host，复用受控端口/token/原生路径及 Save As；Linux packaging 默认输出原生 runtime。不执行 Windows 适配。
+- Host desktop 接入固定 build-studio-cpu profile，并使用真实静态 registry；无需 Preview current 才能打开配置。未自动 configure/build，missing binary 仍明确报错。
+- 实际 launch 从当前项目打开 SmoothAdvection，desktop.log readiness 记录 Host PID425/port37059；Electron PID378、窗口标题 ARCH Studio—ARCH-compute-optim，renderer bootstrap 指向独立本地 production origin。定向 TERM 结束 launcher 后会话 exit0，Host425消失。该进程证据不等同窗口 close/manual UAT。
+- Computer Use 两次返回 [WARN:COPY MODE] WSLg 窗口，截图显示其他窗口，无法可靠交互；停止 UI 点击，未标 UAT PASS。218/218 tests、lint/typecheck PASS；packaged 分发、原生选择器及完整桌面操作仍待验收。

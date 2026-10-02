@@ -1,3 +1,4 @@
+import {localCpuProfile} from './localBuildProfile.ts';
 /** Packaged desktop entrypoint. Only Electron main supplies this launch envelope. */
 import {registeredSourceCase} from './desktopSource.ts';
 import {openProject} from './project.ts';
@@ -15,7 +16,9 @@ async function discover(start:string){
 const root=await discover(launch.project??launch.source??launch.cwd);
 function relative(input:string){const absolute=path.resolve(launch.cwd,input);const rel=path.relative(root,absolute);if(rel.startsWith('../')||path.isAbsolute(rel))throw new Error('Selected file is outside the managed project.');return rel;}
 const binary=launch.binary?relative(launch.binary):undefined;
-const profile=BUILD_PROFILES.find(p=>p.managedSourceRoot===root&&(!binary||p.outputBinaryRelative===binary));
+const registered=BUILD_PROFILES.find(p=>p.managedSourceRoot===root&&(!binary||p.outputBinaryRelative===binary));
+const local=localCpuProfile(root).build;
+const profile=registered??(!binary||binary===local.outputBinaryRelative?local:undefined);
 if(binary&&!await stat(path.join(root,binary)).then(s=>s.isFile(),()=>false))throw new Error('Selected binary is missing. Select an existing ARCH executable; no automatic Build was started.');
 if(!profile)throw new Error('No approved Host-owned Build Profile matches this project/binary. Register a trusted profile; build trees are never rebound automatically.');
 const config=launch.config?relative(launch.config):'simulation/Sod/Sod.par';
@@ -23,7 +26,7 @@ const reader=await openProject({project:root,config,buildProfile:profile.id});
 const build=reader.build?.snapshot();
 if(!build?.configured)throw new Error(build?.reason??'Configured build directory unavailable.');
 if(!reader.snapshot().session.executable?.exists)throw new Error('ARCH executable is missing. Restore/build the approved binary outside this launch, then retry.');
-const registry=await reader.workflow?.discovery();
+const registry=await (reader.workflow?.discovery()??reader.configuration?.discovery());
 let caseId=launch.caseId??'Sod';
 if(launch.source)caseId=registeredSourceCase(registry?.cases??[],root,relative(launch.source),launch.caseId);
 if(!registry?.cases.some(c=>c.caseId===caseId))throw new Error('Selected case is not registered by this binary.');

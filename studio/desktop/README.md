@@ -1,3 +1,31 @@
+# ARCH Studio Linux / WSL desktop
+
+Current development entry (preserves the invoking Linux working directory):
+
+    bash /path/to/ARCH/studio/desktop/arch-studio --project /path/to/ARCH --binary build-studio-cpu/bin/ARCH --case SmoothAdvection --config validation/restart/inputs/uninterrupted.par
+
+Requires installed Linux Electron dependencies, Linux Node 24+ in
+~/.local/opt/node-studio/bin/node or /usr/bin/node, and a production studio/dist.
+The entry uses production assets and starts its own authenticated loopback Host;
+it does not require Vite or a manually chosen port. Linux file dialogs use native
+project paths. Opening never configures or builds ARCH automatically.
+
+The Host accepts the fixed local CPU Release profile (build-studio-cpu), or an
+existing registered profile. A missing binary/build reports a prerequisite error.
+Static configuration and registry inspection can work without Preview readiness;
+this does not assert that the binary includes current source.
+
+Run/Restart additionally require xterm. Delivered computations survive Studio
+closure; their records remain under studio/.local/runs. Close only shuts down the
+owned Host and its Preview/Configure work, waiting for active Build completion.
+
+Linux packaging: npm run desktop:package. Keep the complete resulting directory
+together; start its arch-studio script. Packaging output is local and not committed.
+Desktop visual acceptance is pending: the current WSLg environment exposes a
+[WARN:COPY MODE] window whose capture does not show Studio reliably.
+
+## Historical Windows workflow (outside the current delivery scope)
+
 # ARCH Studio desktop (Windows x64 + WSL2)
 
 Run arch-studio.exe. No npm, Vite, browser or port setup is needed.

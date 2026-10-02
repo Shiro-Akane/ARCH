@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
-# WSL entrypoint: preserve Linux cwd; packaged executable stays on Windows.
+# Linux/WSL entrypoint; preserve native paths and the calling working directory.
 set -eu
 here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-exec "$here/arch-studio.exe" --cwd "$PWD" --distro "$WSL_DISTRO_NAME" "$@"
+if [ -x "$here/arch-studio-bin" ]; then
+  exec "$here/arch-studio-bin" "$@"
+fi
+runtime="$here/../node_modules/electron/dist/electron"
+if [ ! -x "$runtime" ]; then
+  printf '%s\n' 'Linux Electron runtime missing. Install Studio dependencies first.' >&2
+  exit 1
+fi
+if [ ! -f "$here/../dist/index.html" ]; then
+  printf '%s\n' 'Production assets missing. Run the Studio production build first.' >&2
+  exit 1
+fi
+exec "$runtime" "$here/main.cjs" "$@"
