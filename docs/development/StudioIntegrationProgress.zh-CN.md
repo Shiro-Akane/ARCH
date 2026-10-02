@@ -1222,3 +1222,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 加入固定 Ninja -t deps 读取器，保留项目外/带空格路径，拒绝 stale、缺失、截断记录；不从文件名扩展猜依赖。
 - 实际 build-studio-cpu 读取 66 个 object、735 个独立 input；只读，无编译或演化。解析负向测试 PASS、typecheck PASS。
 - codemodel 同时确认 ARCH 关联三个内部库，并含系统动态库与 -lm；完整 target/link/toolchain 哈希和 manifest 接入仍待完成，dependenciesComplete 保持 false。
+
+
+### 2026-10-02 — Compiler input fingerprints in Build Manifest
+
+- 本地 CPU profile 在成功 Build 时采集实际 Ninja compiler 输入 SHA/size，记录到 manifest；失败以 compilerInputError 明示。文件数/逐文件/总字节限制和读取稳定性检查保持有界。
+- 实际只读采集 66 objects、735 files、10089196 bytes 成功。Build/解析回归 8/8、typecheck/lint PASS。
+- 此次未重新 Build 更新旧 manifest；尚缺 pre-build 完整输入稳定性、link/toolchain/新增依赖比较，因此 dependenciesComplete=false 保持不变。

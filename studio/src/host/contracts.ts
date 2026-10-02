@@ -31,13 +31,14 @@ export type BuildState = 'not-configured'|'ready'|'queued'|'building'|'succeeded
 export type BinaryBuildState = 'missing'|'available'|'built-from-current-tracked-inputs'|'needs-build'|'freshness-unknown';
 export interface BuildProfile {
  id:string; displayName:string; managedSourceRoot:string; buildDirRelative:string; target:string; outputBinaryRelative:string;
- registeredCases?:string[]; caseId?:string; sourceRelativePath?:string; parallelism:number; trackedInputs:string[]; dependenciesComplete:boolean;
+ compilerDependencyMode?:'ninja'; registeredCases?:string[]; caseId?:string; sourceRelativePath?:string; parallelism:number; trackedInputs:string[]; dependenciesComplete:boolean;
 }
 export interface BuildRequest { projectId:string; profileId:string }
 export interface BuildEvent { projectId:string; buildId:string; sequence:number; timestamp:string; kind:'state'|'stdout'|'stderr'; state?:BuildState; text?:string }
 export interface BuildResult { buildId:string; projectId:string; state:'succeeded'|'failed'|'cancelled'; exitCode?:number|null; signal?:string|null; startedAt:string; finishedAt:string; error?:string }
 export interface InputFingerprint { relativePath:string; fingerprint:FileFingerprint }
 export interface BuildManifest {
+ compilerInputs?:{kind:'ninja-compiler-inputs';objectCount:number;files:{path:string;sha256:string;size:number}[]}; compilerInputError?:string;
  manifestVersion:'1'; buildId:string; projectId:string; profileId:string; caseId?:string; managedSourceRoot:string;
  sourceGitHead?:string; repositoryDirty?:boolean; buildProfileFingerprint:string; sourceFingerprint?:FileFingerprint;
  trackedInputFingerprints:InputFingerprint[]; preBuildInputFingerprints:InputFingerprint[]; inputsStableDuringBuild:boolean;
