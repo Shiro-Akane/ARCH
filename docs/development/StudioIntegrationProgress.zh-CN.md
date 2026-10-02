@@ -1046,3 +1046,22 @@ topology comparison: PASS; raw evidence in fresh persistent .local directories,
 processed summary O7RuntimeConfigurationT0Summary.json. No evolution/CUDA claim.
 Public preparation SimConfig and further provenance/metadata migration still remain;
 this boundary closure alone does not establish complete O7.0 or joint delivery.
+
+### O7.0 extended CPU component regression after frozen Driver migration
+
+At f2b1f012, additional Preview/parameter/cache checks 7/7 PASS (16.36s):
+preview_initial_conversion, preview_parameter_reads, preview_parameter_metadata,
+preview_sampling_limits, preview_verified_resources, preview_exact_sample_cache,
+preview_cellular_2d.
+
+Additional CPU component checks 21/21 PASS (36.57s): refinement_indicator_math,
+curvilinear_metrics, compensated_sum, sparse_ode_continuation, sparse_residual,
+checkpoint_conservation_metrics, burn_mainline_reference, generated_nse,
+tabular_strict_math, baryon_source_format, helm_components, mainline_authority,
+block_handle, reduction_contract, device_block_store_lifecycle, low_density_math,
+composite_poisson_contract, tabular_eos_ideal_gas, native_tabular_eos,
+tabular_component_completion, sparse_klu_161_equations.
+
+These are existing component/reference tests with unchanged budgets, not full
+scientific evolution campaigns or CUDA qualification. No claim of all 67 CTests
+passing; no change to historical pending G inputs. No code changes in this batch.
