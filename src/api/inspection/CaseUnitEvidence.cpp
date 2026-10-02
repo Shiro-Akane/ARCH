@@ -69,29 +69,29 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"p_int", "erg/cm^3"},
         {"amplitude", "cm/s"},
     }}},
-    {"SmoothAdvection", {"simulation/SmoothAdvection/SmoothAdvection.cpp", "addbe6ea60478e85ec3268740f17307f36c009c36a16b5bd40a9f2cf0c6e2210", {
+    {"SmoothAdvection", {"simulation/SmoothAdvection/SmoothAdvection.cpp", "1c6e80c5b542c33253d41f2afd8e28ca8544443573d5db73235cda65160e144a", {
         {"rho_mean", "g/cm^3"},
         {"rho_amplitude", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
-    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "b6466696b0de2ef2efbdfb683934037f412cc73e1abff46fdd5929f006b3953c", {
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "27e5a8bf1d22a7303fd6e45adddd3780eb990e133cb74f1927526d237a7df12d", {
         {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
     }}},
-    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "76f126a0799bbc56b9648c6d042f6d02b62f880fdcae934ad440c6cb13008114", {
+    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "1dc38ddda8cda82399760a8cb1393d601e93a4036f85d5f7186ef06fad23d6ab", {
         {"rho0", "g/cm^3"}, {"pressure0", "erg/cm^3"},
         {"amplitude", "1"}, {"phase", "rad"}, {"mode", "1"},
         {"standing_wave", "1"},
     }}},
-    {"ExternalGravity", {"simulation/ExternalGravity/ExternalGravity.cpp", "198e1be5635176864163fa27ea14dcaa383f10f4173f44fa23b2559e7eae4d71", {
+    {"ExternalGravity", {"simulation/ExternalGravity/ExternalGravity.cpp", "512ded6e1a5f447c7b580cf14cb21205942a3f550ff3d43a3bd6b839234d4dc2", {
         {"rho0", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"velocity_x0", "cm/s"},
     }}},
-    {"DiffusionMode", {"simulation/DiffusionMode/DiffusionMode.cpp", "6f8cff66d7f5c995e6617260182b5997b3d82d5cb4daddb96b2b9811aa791c4b", {
+    {"DiffusionMode", {"simulation/DiffusionMode/DiffusionMode.cpp", "99adddc7019cb1d2cf4de86b2a08c93f4bebacdef4faff71e8a6353b375bc842", {
         {"rho0", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"tracer_mean", "1"},

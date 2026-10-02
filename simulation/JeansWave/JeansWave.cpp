@@ -33,10 +33,10 @@ public:
         result.consumers.needs_temperature_floor = false;
         result.consumers.needs_composition_floor = false;
         result.parameters = {
-            {"rho0", "float", "g/cm^3"}, {"pressure0", "float", "erg/cm^3"},
-            {"amplitude", "float", "1"}, {"phase", "float", "rad"},
-            {"mode", "int", "1"},
-            {"standing_wave", "string", "1", "simulation", {true, {}}, {"true", "false"}}};
+            {"rho0", "float", "g/cm^3", "verification"}, {"pressure0", "float", "erg/cm^3", "verification"},
+            {"amplitude", "float", "1", "verification"}, {"phase", "float", "rad", "verification"},
+            {"mode", "int", "1", "verification"},
+            {"standing_wave", "string", "1", "verification", {true, {}}, {"true", "false"}}};
         return result;
     }
 

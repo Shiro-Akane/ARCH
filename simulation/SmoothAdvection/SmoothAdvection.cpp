@@ -36,11 +36,11 @@ public:
         result.consumers.needs_temperature_floor = false;
         result.consumers.needs_composition_floor = false;
         result.parameters = {
-            {"rho_mean", "float", "g/cm^3"},
-            {"rho_amplitude", "float", "g/cm^3"},
-            {"pressure0", "float", "erg/cm^3"},
-            {"velocity0", "float", "cm/s"},
-            {"mode", "int", "1"}};
+            {"rho_mean", "float", "g/cm^3", "verification"},
+            {"rho_amplitude", "float", "g/cm^3", "verification"},
+            {"pressure0", "float", "erg/cm^3", "verification"},
+            {"velocity0", "float", "cm/s", "verification"},
+            {"mode", "int", "1", "verification"}};
         return result;
     }
 

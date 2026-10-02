@@ -28,6 +28,16 @@ test('contextual Inspectors show only relevant data and parameter details',async
  const real=renderToStaticMarkup(createElement(Param,{parameter:{key:'solver',label:'solver',value:'HLLC',raw:'HLLC',line:4,type:'text',options:['hllc']}}));
  assert.match(real,/Source line/);assert.match(real,/HLLC/);assert.match(real,/Allowed values/);assert.doesNotMatch(real,/Density/);
 });
+test('parameter usage comes from Core inspection and is not inferred from the key',async()=>{
+ const Param=await component('components/Inspector/ParameterInspector.tsx','ParameterInspector');
+ const parameter={key:'rho0',label:'rho0',value:'1',raw:'1',line:1,type:'float'};
+ for(const usage of ['simulation','verification']){
+  const html=renderToStaticMarkup(createElement(Param,{parameter:{...parameter,parsed:{usage}}}));
+  assert.match(html,new RegExp('Core parameter usage</dt><dd>'+usage+'</dd>'));
+ }
+ const html=renderToStaticMarkup(createElement(Param,{parameter}));
+ assert.match(html,/Core parameter usage<\/dt><dd>Unavailable<\/dd>/);
+});
 test('controls preserve raw fallback, bool tri-state and exact numeric values',async()=>{
  const Control=await component('components/ParameterPanel/ConfigControl.tsx','ConfigControl');
  const render=(props:object)=>renderToStaticMarkup(createElement(Control,{name:'custom',value:'',onChange:()=>{},...props}));

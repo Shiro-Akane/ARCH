@@ -34,7 +34,7 @@ public:
             {"center_y", "float", "cm"},
             {"center_z", "float", "cm"},
             {"gas_cv", "float", "erg/(g*K)"},
-            {"hydrostatic_radial", "string", "1", "simulation", {true, {}}, {"true", "false"}}};
+            {"hydrostatic_radial", "string", "1", "verification", {true, {}}, {"true", "false"}}};
         for (auto& parameter : result.parameters) {
             if (parameter.key == "gas_cv")
                 parameter.requirement = result.composition->complete

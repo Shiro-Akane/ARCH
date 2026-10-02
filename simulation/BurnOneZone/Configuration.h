@@ -17,8 +17,8 @@ inline config::CaseConfiguration BurnOneZoneConfiguration(
     if (result.composition->complete)
         result.consumers.needs_composition_floor = !result.composition->keys.empty();
     result.parameters = {
-        {"rho0", "float", "g/cm^3"},
-        {"temperature0", "float", "K"}};
+        {"rho0", "float", "g/cm^3", "verification"},
+        {"temperature0", "float", "K", "verification"}};
     return result;
 }
 } // namespace arch::cases

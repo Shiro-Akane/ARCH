@@ -1105,3 +1105,12 @@ no unknown hydro-method fallback, and nine expression fields excluding retired G
 Legal aliases/explicit auto distinguished from unknown-method fallback.
 Documentation-only change; relied on existing parser/contract tests and source audit,
 diff-check PASS; no redundant simulation. Full reference migration not yet claimed.
+
+
+### 2026-10-02 — O7.0 case-scoped usage metadata
+
+- 按 ComputeOptimizationPlan 1.3 在原 case 声明中标注 JeansWave、SmoothAdvection、DiffusionMode、ExternalGravity、BurnOneZone 的 verification 用途；GravityBox 仅 hydrostatic_radial 为 verification。标准数值控制及其余初态参数仍为 simulation。
+- Inspector 展示当前 inspection 返回的用途；缺少响应时显示 Unavailable，不按键名推断。用途不改变必填、值解析或可用性。
+- 五个修改的 case.cpp 自 Setup 至文件末尾与前一提交逐字相同；单位证据 SHA 仅在确认物理表达式未变后更新。BurnOneZone 只改声明头。
+- CPU ARCH 增量构建 PASS（15.144s，无 swap）；configuration_v3_contract、case_inspection_contract 2/2 PASS（6.21s）；Studio ui-render 6/6、typecheck、lint PASS；git diff --check PASS。
+- 新断言覆盖 case-scoped 同名 rho0、标准控制不误标、缺失 verification 输入保持 missing/null。此次无 simulation、无新增 t=0 输出；后续演化与完整交付仍未完成。

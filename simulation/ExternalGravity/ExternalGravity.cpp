@@ -30,8 +30,8 @@ public:
         result.consumers.needs_temperature_floor = false;
         result.consumers.needs_composition_floor = false;
         result.parameters = {
-            {"rho0", "float", "g/cm^3"}, {"pressure0", "float", "erg/cm^3"},
-            {"velocity_x0", "float", "cm/s"}};
+            {"rho0", "float", "g/cm^3", "verification"}, {"pressure0", "float", "erg/cm^3", "verification"},
+            {"velocity_x0", "float", "cm/s", "verification"}};
         return result;
     }
 

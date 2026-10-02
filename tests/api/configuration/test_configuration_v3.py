@@ -117,6 +117,21 @@ class ConfigurationV3(unittest.TestCase):
             self.assertNotIn("defaultValue", v)
             self.assertNotIn("defaultSource", v)
 
+    def test_usage_is_case_scoped_and_does_not_exempt_requirements(self):
+        schema = self.call(["--config-schema"])
+        self.assertTrue(all(p["usage"] == "simulation" for p in schema["parameters"]))
+        cases = {c["caseId"]: records(c) for c in schema["caseDeclarations"]}
+        for case in ["JeansWave", "SmoothAdvection", "DiffusionMode", "ExternalGravity", "BurnOneZone"]:
+            self.assertTrue(all(p["usage"] == "verification" for p in cases[case].values()), case)
+            inspected = records(self.inspect("", case=case, expected=3))
+            for key in cases[case]:
+                self.assertEqual(inspected[key]["usage"], "verification")
+                self.assertEqual(inspected[key]["inputState"], "missing")
+                self.assertIsNone(inspected[key]["resolvedValue"])
+        self.assertEqual(cases["GravityBox"]["hydrostatic_radial"]["usage"], "verification")
+        self.assertEqual(cases["GravityBox"]["rho0"]["usage"], "simulation")
+        self.assertTrue(all(p["usage"] == "simulation" for p in cases["Sod"].values()))
+
     def test_valid_provenance(self):
         data = self.inspect()
         self.assertEqual(data["completeness"]["state"], "complete")
