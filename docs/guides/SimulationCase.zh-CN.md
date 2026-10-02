@@ -182,6 +182,8 @@ simulation/
 创建 `simulation/MyCase/MyCase.cpp`。`REGISTER_PROBLEM_CLASS` 将一个可默认构造的普通算例类包装起来，该类需提供：
 
 ```cpp
+static arch::config::CaseConfiguration DescribeConfiguration(
+    const arch::config::StandardInputResolution&);
 void Setup(SimConfig &config, SpeciesManager &specs);
 void Init(const PointCoords &point, PrimitiveData &out) const;
 ```
@@ -199,7 +201,7 @@ CMake 自动提供 `include/` 与 `src/` 搜索路径，因此算例不需要知
 
 `Setup` 在网格分配前运行，你应该在其中读取、验证算例参数并注册所需的核素。`Init` 函数会在 OpenMP 并行环境下被调用，用于精确地将初始数据填充到已分配的根网格单元中（且仅调用一次）。初始以及后续生成的任何细网格 block 都是通过守恒的 AMR 传递操作构造的，而不会再次调用 `Init`。正因如此，`Init` 必须是严格确定的、线程安全的，并且没有任何依赖于执行顺序的副作用。
 
-最小完整示例：
+以下示例为 IdealGas 材料；声明完整仅表示已列出本算例的输入需求，不表示文件、EOS 或设备已经检查：
 
 ```cpp
 #include <UserInterface.h>
@@ -217,6 +219,20 @@ class GaussianDensity
     int gas_id_ = -1;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"}, {"pressure0", "float", "erg/cm^3"},
+            {"amplitude", "float", "g/cm^3"}, {"width", "float", "cm"}};
+        return result;
+    }
+
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         rho0_ = config.Get<double>("rho0", 1.0);
@@ -247,6 +263,8 @@ public:
 REGISTER_PROBLEM_CLASS("GaussianDensity", GaussianDensity);
 ```
 
+为示例准备参数文件时，复制已迁移的 Sod_beginner.par，移除 Sod 的 x_pos、rho_left/right、p_left/right、u_left/right 七个专属键，再显式加入 rho0=1、pressure0=1、amplitude=0.1、width=0.1。保留标准配置；这里的数值是教学输入，不是运行回填默认。Setup 只读取配置并登记材料，不得改写标准控制。
+
 新增 `.cpp` 后重新运行 CMake 配置，以刷新源码 glob：
 
 ```bash
@@ -262,9 +280,9 @@ cmake --build build-cpu --target ARCH --parallel 1
 
 ### `SimConfig`
 
-用 `config.Get<double/int/string>(key, default)` 读取算例自定义参数。自定义数值在 `.par` 中填写完整的十进制数或科学记数法，例如 `1e8`；不完整的数值在被算例作为数字读取时会报错。标准网格边界和引力表达式参数可直接使用小写 `pi`、`2*pi` 和 `exp(1)`、`exp(-2)` 等形式。`exp(number)` 是自然指数函数；`1e8` 或 `1E8` 中的 `e/E` 是科学记数法的十进制指数标记，独立的 `e` 或 `E` 不是参数常数。
+用 `config.Get<double/int/string>(key, default)` 读取算例自定义参数。 必须先由静态 `DescribeConfiguration` 声明类型、单位和实际需求；声明在 Setup 前解析，不能执行不完整 Setup 来探测缺项。Get 的第二个实参只保留读取观察信息，不会补齐缺失输入，也不构成批准的物理默认。自定义数值在 `.par` 中填写完整的十进制数或科学记数法，例如 `1e8`；不完整的数值在 Setup 前的声明输入解析阶段报错。标准网格边界和引力表达式参数可直接使用小写 `pi`、`2*pi` 和 `exp(1)`、`exp(-2)` 等形式。`exp(number)` 是自然指数函数；`1e8` 或 `1E8` 中的 `e/E` 是科学记数法的十进制指数标记，独立的 `e` 或 `E` 不是参数常数。
 
-算例 `.cpp` 中的数学计算使用 C++ 标准库：按需加入 `<cmath>` 并调用 `std::exp`、`std::sin`、`std::cos`、`std::log`；自然常数可从 `<numbers>` 读取 `std::numbers::e`，圆周率也可用公开头文件提供的 `arch::constants::math::pi`。这些计算发生在 `Setup` 或 `Init` 中，不由 `config.Get` 求值。未知键会作为自定义参数保留，但不会进行拼写验证。
+算例 `.cpp` 中的数学计算使用 C++ 标准库：按需加入 `<cmath>` 并调用 `std::exp`、`std::sin`、`std::cos`、`std::log`；自然常数可从 `<numbers>` 读取 `std::numbers::e`，圆周率也可用公开头文件提供的 `arch::constants::math::pi`。这些计算发生在 `Setup` 或 `Init` 中，不由 `config.Get` 求值。未知键会报错；只有算例声明或组分声明拥有的键才允许读取。退役键不能作为 custom 绕过。
 
 当你需要访问核心设置时，应该直接读取它们严格按类型定义的成员。例如：
 

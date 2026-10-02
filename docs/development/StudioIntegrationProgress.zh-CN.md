@@ -1084,3 +1084,15 @@ in a copied Sod input, rather than appending a duplicate. Added existing stdin
 --inspect-config usage and declared-only/no-Setup/no-EOS/no-path/readiness limits.
 Command/fixture verified in preceding input migration; no redundant execution.
 Case authoring guide still needs declaration migration; public docs not complete.
+
+### O7.0 public case guide declaration migration
+
+Both SimulationCase guides now include static DescribeConfiguration in the public
+contract and identical GaussianDensity example, with owned float/unit declarations
+and actual material consumer flags. Replaced legacy unknown-as-custom and implicit
+Get fallback wording. Explained complete declaration versus resource readiness,
+explicit teaching input creation from migrated Sod, and no standard-control mutation.
+Extracted identical C++ example to local documented-case fixture; real public-header
+C++20 syntax compilation PASS, diff-check PASS. This is compile verification only;
+example was not added to production registry or executed as a scientific case.
+Further reference/API example refresh remains open; no all-docs completion claim.
