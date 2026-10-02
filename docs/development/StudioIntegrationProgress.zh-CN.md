@@ -1408,3 +1408,8 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 上轮实测Host退出后Electron仍存活；关闭流程等待assets.close，而renderer长连接尚存。现先停止接入，再closeAllConnections，仅在Host/Build排空后关闭资产/proxy连接，不终止已交付Run。
 - 真实HTTP未结束响应回归及launcher suite 3/3 PASS，lint/typecheck PASS。旧卡住进程按已记录PID/start-ticks精确清理，旧会话exit1，未冒充正常退出。
 - 修复后真实Linux Wayland启动→Host readiness→TERM，launcher exit0且desktop clean shutdown，Host消失；见StudioDesktopShutdownSummary.json。这是退出工程验证，不替代原生窗口点击/Save As UAT。
+
+### 2026-10-02 — Local CPU Preview identity integration audit
+
+- 直接启用本地CPU Preview会使project.ts选择Preview依赖的ConfigurationAdapter，破坏无manifest时独立静态编辑；临时接线已完整撤回，无实现/构建变化。
+- 形成StudioCpuPreviewIntegrationAudit.md：下一步先分离静态binary scope与Preview manifest scope，再绑定既有模型profile。保持当前静态编辑可用及freshness unknown，不以简单开关伪造完成。
