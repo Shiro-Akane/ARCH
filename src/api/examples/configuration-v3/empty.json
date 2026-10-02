@@ -1,8 +1,10 @@
 {
+  "amrIndicators": null,
   "completeness": {
     "scope": "declared-configuration-before-setup",
     "state": "incomplete"
   },
+  "coordinates": null,
   "coverage": {
     "auxiliaryParametersComplete": true,
     "caseParametersComplete": true,
@@ -1404,6 +1406,7 @@
       "severity": "error"
     }
   ],
+  "diffusion": null,
   "execution": {
     "caseDeclarations": "checked",
     "caseRegistration": "checked",

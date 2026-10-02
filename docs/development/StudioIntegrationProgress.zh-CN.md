@@ -1114,3 +1114,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 五个修改的 case.cpp 自 Setup 至文件末尾与前一提交逐字相同；单位证据 SHA 仅在确认物理表达式未变后更新。BurnOneZone 只改声明头。
 - CPU ARCH 增量构建 PASS（15.144s，无 swap）；configuration_v3_contract、case_inspection_contract 2/2 PASS（6.21s）；Studio ui-render 6/6、typecheck、lint PASS；git diff --check PASS。
 - 新断言覆盖 case-scoped 同名 rho0、标准控制不误标、缺失 verification 输入保持 missing/null。此次无 simulation、无新增 t=0 输出；后续演化与完整交付仍未完成。
+
+
+### 2026-10-02 — Refresh actual v3 API evidence
+
+- 从 clean e4c87d98 的已编译 CPU ARCH 重新采集 schema、有效 Sod、empty、invalid 四份静态响应；记录 binary SHA、精确输入、退出码及实现身份。94 个可写标准参数，gravity_G 仍为 retired，case 用途标签与实现同步。
+- 每次在独立空目录调用，确认无文件副作用；不执行 Setup、Preview 或 simulation。输入未改变，没有科学数组或原始 H5。
+- 直接依赖这些响应的 configuration/Host/path/catalog/workspace/Inspector 回归 26/26 PASS；git diff --check PASS。历史 candidate 保留候选身份，不冒充当前 binary。

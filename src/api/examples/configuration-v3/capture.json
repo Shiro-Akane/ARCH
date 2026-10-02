@@ -1,7 +1,7 @@
 {
-  "baseCommit": "0aa078cf0df033cc58e9bae2c9876adc468f6c0c",
-  "sourceWasDirty": true,
-  "executableSha256": "870594c98e894823a07711e0a141123aec4a9d3a96a578cde02b7520a5c28ee3",
+  "baseCommit": "e4c87d98b648ea33028f6f53bae438ed388ff3d5",
+  "sourceWasDirty": false,
+  "executableSha256": "12322fbd2506555ee409c8bd862f73d2f44977a05673296c91d7e851397fe04e",
   "configurationVersion": "3",
   "fixtures": [
     {
@@ -51,8 +51,8 @@
   ],
   "implementationSha256": {
     "src/api/ApplicationContract.h": "ae4118e039d55af07ccca7ed2dda9d6804900d6f16ad5f4c52d6fbcf4a742c79",
-    "src/api/configuration/Configuration.cpp": "615e5dea94c7a096f2dcba581b26b26056c9d653549aa92a45602103ede8c512",
+    "src/api/configuration/Configuration.cpp": "03df1f382c16ddda0d38293a68c2ffd75122df2d88d552bae91f4709dcff47dc",
     "src/api/protocol/Response.h": "7ce4193b34e2c9be538f2a7ea16e4bb4eb9101ba4e6ed7d7f49efa0d041ebcd9",
-    "src/core/config/InputResolution.h": "6d14bd1151df3055f49de66a5c042763d27c5dc967dc1262ecb91423c5e64cd2"
+    "src/core/config/InputResolution.h": "14bcec2628176dc4680b9c9823bfc0b54040ff016696b77a6b7704d6cc893bee"
   }
 }

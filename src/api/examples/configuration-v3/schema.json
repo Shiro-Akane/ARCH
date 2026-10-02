@@ -243,7 +243,7 @@
             "status": "known",
             "unit": "g/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -274,11 +274,11 @@
             "status": "known",
             "unit": "K"
           },
-          "usage": "simulation"
+          "usage": "verification"
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/BurnOneZone/BurnOneZone.cpp",
-      "sourceSha256": "3982c61be73ae02fe32fb01c040f078c19b4f71780ba97a288f086adf552ee36"
+      "sourceSha256": "52cb9928a8afcd8437d6c3b99149112bd310bbb9cbe47ea7d034bd6e41b503c3"
     },
     {
       "caseId": "CellularDet",
@@ -870,7 +870,7 @@
             "status": "known",
             "unit": "g/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -901,7 +901,7 @@
             "status": "known",
             "unit": "erg/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -932,7 +932,7 @@
             "status": "dimensionless",
             "unit": "1"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -963,7 +963,7 @@
             "status": "dimensionless",
             "unit": "1"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -994,11 +994,11 @@
             "status": "dimensionless",
             "unit": "1"
           },
-          "usage": "simulation"
+          "usage": "verification"
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/DiffusionMode/DiffusionMode.cpp",
-      "sourceSha256": "b8e876946ba5d42e9110d4c80d672318a82c37b7120ea2a327e20c47cb19db77"
+      "sourceSha256": "99adddc7019cb1d2cf4de86b2a08c93f4bebacdef4faff71e8a6353b375bc842"
     },
     {
       "caseId": "ExternalGravity",
@@ -1037,7 +1037,7 @@
             "status": "known",
             "unit": "g/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -1068,7 +1068,7 @@
             "status": "known",
             "unit": "erg/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -1099,11 +1099,11 @@
             "status": "known",
             "unit": "cm/s"
           },
-          "usage": "simulation"
+          "usage": "verification"
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/ExternalGravity/ExternalGravity.cpp",
-      "sourceSha256": "198e1be5635176864163fa27ea14dcaa383f10f4173f44fa23b2559e7eae4d71"
+      "sourceSha256": "512ded6e1a5f447c7b580cf14cb21205942a3f550ff3d43a3bd6b839234d4dc2"
     },
     {
       "caseId": "Gaussian",
@@ -1491,7 +1491,7 @@
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/GaussianPulse/Gaussian.cpp",
-      "sourceSha256": "e15ea53dc5827bea7303dfb525a0c84a54cbb97d0790d5e04f2a1dd1d3431bea"
+      "sourceSha256": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9"
     },
     {
       "caseId": "GravityBox",
@@ -1871,11 +1871,11 @@
             "status": "dimensionless",
             "unit": "1"
           },
-          "usage": "simulation"
+          "usage": "verification"
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/GravityBox/GravityBox.cpp",
-      "sourceSha256": "136961ab3ac27bb95b7bdae8e8b89347ee645c3bed2cb6a3ccb92a7b479f78e5"
+      "sourceSha256": "27e5a8bf1d22a7303fd6e45adddd3780eb990e133cb74f1927526d237a7df12d"
     },
     {
       "caseId": "JeansWave",
@@ -1914,7 +1914,7 @@
             "status": "known",
             "unit": "g/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -1945,7 +1945,7 @@
             "status": "known",
             "unit": "erg/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -1976,7 +1976,7 @@
             "status": "dimensionless",
             "unit": "1"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -2007,7 +2007,7 @@
             "status": "known",
             "unit": "rad"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -2038,7 +2038,7 @@
             "status": "dimensionless",
             "unit": "1"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -2088,11 +2088,11 @@
             "status": "dimensionless",
             "unit": "1"
           },
-          "usage": "simulation"
+          "usage": "verification"
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/JeansWave/JeansWave.cpp",
-      "sourceSha256": "5f29312fa5cf0d729ee8be9bf99c89e10c71eabc8c8ef0255cbd730ddc44aa9b"
+      "sourceSha256": "1dc38ddda8cda82399760a8cb1393d601e93a4036f85d5f7186ef06fad23d6ab"
     },
     {
       "caseId": "RT",
@@ -2259,7 +2259,7 @@
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/RTinstability/RT_instab.cpp",
-      "sourceSha256": "1bf4351f7508ad08780f4eed73f2722a7ae42ed4f32888be5205ecd3f69f2bba"
+      "sourceSha256": "d0fcfcc78136d34dea31fff799892ac2c4ddaefcf1f60d5e4be33307b63b515a"
     },
     {
       "caseId": "SNIaCoupled",
@@ -2748,7 +2748,7 @@
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/Sedov/Sedov.cpp",
-      "sourceSha256": "f9574da9e9ab762b55d7b128e28dfc7aadfed881c4bae838a2a6eaf07cc63be2"
+      "sourceSha256": "4f91941fabb5183233b7b211f1ff61eccaefa1496c4d1e161fe214b2ce3bbae6"
     },
     {
       "caseId": "SmoothAdvection",
@@ -2787,7 +2787,7 @@
             "status": "known",
             "unit": "g/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -2818,7 +2818,7 @@
             "status": "known",
             "unit": "g/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -2849,7 +2849,7 @@
             "status": "known",
             "unit": "erg/cm^3"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -2880,7 +2880,7 @@
             "status": "known",
             "unit": "cm/s"
           },
-          "usage": "simulation"
+          "usage": "verification"
         },
         {
           "allowedDefault": null,
@@ -2911,11 +2911,11 @@
             "status": "dimensionless",
             "unit": "1"
           },
-          "usage": "simulation"
+          "usage": "verification"
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/SmoothAdvection/SmoothAdvection.cpp",
-      "sourceSha256": "addbe6ea60478e85ec3268740f17307f36c009c36a16b5bd40a9f2cf0c6e2210"
+      "sourceSha256": "1c6e80c5b542c33253d41f2afd8e28ca8544443573d5db73235cda65160e144a"
     },
     {
       "caseId": "Sod",
@@ -3144,7 +3144,7 @@
         }
       ],
       "source": "/home/arch/projects/ARCH-compute-optim/simulation/Sod/Sod.cpp",
-      "sourceSha256": "f079c8272918dd02b39c3f3ad890abdb453523012a98edf94938fdf131337238"
+      "sourceSha256": "7867565cdbe801769c0860de8d4a41254aaaa7be354951bcab69dd042a242738"
     }
   ],
   "caseDeclarationsComplete": true,

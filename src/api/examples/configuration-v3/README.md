@@ -15,3 +15,5 @@ The configuration_v3_contract actual-binary test independently asserts missing,
 invalid, repeated, default, case-defined and derived semantics, identity, budget
 and absence of filesystem side effects. These fixtures are evidence for this
 static boundary, not full simulation readiness or finished Host/Studio acceptance.
+
+Current capture: committed source e4c87d98, 94 writable standard parameters, retired gravity_G, and case-scoped simulation/verification usage. The source was clean when captured; static inspection includes the current shared AMR selection metadata. Configuration completeness still does not prove EOS resources or simulation readiness.
