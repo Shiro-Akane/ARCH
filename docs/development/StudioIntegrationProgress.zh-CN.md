@@ -1430,3 +1430,23 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - clean9b1bf8bf：标准Host Build成功，buildId=0e348e93-5fbe-4d0a-92b0-5d053f8764bf；binary SHA不变，full freshness仍unknown。guard2.013s、peak owned RSS146820KiB、swap0，非性能benchmark。
 - 当前本地CPU profile真实Sod init-only32样本请求两次成功，未保存注释产生不同configRevision；同processToken/generation1，sequence1→2，六个真实字段DENS/PRES/TEMP/VELX/ENER/EINT。session最终shutdown。摘要见StudioLocalCpuPreviewSummary.json。
 - 本次不是simulation/桌面UAT，Cellular2D/AMR实际接线及取消/失败恢复仍待验证，未宣称整个3C或联合目标完成。
+
+### 2026-10-02 — 用户授权范围确认与恢复
+
+- 当前以 compute/optim 联合交付计划为依据；本次用户确认取代旧 Phase 3B 对 O7.0 科学 Core G 接线及明确 t=0 AMR checkpoint 对照的限制。允许共享 CGS 常数接线、退役可写 gravity_G、调用方/配置/checkpoint 身份/相关测试同步。
+- 冻结物理定义和验收阈值不变；历史非物理 G 输入的等效换算仍须整理依据交维护者确认，不自动迁移。
+- 明确 t=0 的既有对照可生成本地验证输出；原始 H5/checkpoint 留本机持久目录，仅提交处理指标、摘要、输入/构建身份和必要诊断。t=0 只覆盖初态/checkpoint 对照，不替代演化验收。
+- 恢复前 HEAD 为64148c7a1c6e7c718f14309c6115d51d8b74bad4，工作树干净。沿用已完成证据，不重复 baseline。继续 Linux/WSL，不开展 Windows 适配。具体命令仍按正常执行审批逐项评估。
+
+### 2026-10-02 — Local CPU CellularDet and initial AMR
+
+- 现有有效 CellularDet 输入：二维采样 shape=[12,20]、x1-fastest，共240点；七个真实字段成功返回。初始 AMR status=ok、complete=true，20叶块（level1=4、level2=16），两轮初始化细化。
+- 使用同一 project/configRevision/build/binary；本轮不宣称完成 renderer overlay 的 EOS identity/视觉验收。AMR 不含 cell field array，普通采样值不等于 AMR cell average。
+- Core execution 明确 timeStepping=not_executed、scientificOutput=not_created、simulationReadiness=not_checked。这不是新的生产 t=0 checkpoint 对照或演化验证。
+- 精简证据见 StudioLocalCellularAmrSummary.json；原始响应留 studio/.local/integration/local-cellular-amr-response.json，不提交数组。桌面 UAT、取消/失败恢复及联合计划其他出口仍未完成。
+
+### 2026-10-02 — Real CPU Preview cancellation and error recovery
+
+- 真实本地 CPU Sod：成功 → start acknowledgement 后立即取消 → cancelled 且保留上一成功结果 → 恢复成功 → 重复 solver 配置被 Core DUPLICATE_PARAMETER 拒绝且保留成功结果 → 再恢复成功。所有断言通过，finally 等待 session shutdown。
+- 取消后新 session generation=3；错误后恢复沿用同一 processToken，sequence=3。精简结果见 StudioLocalPreviewRecoverySummary.json。
+- 本轮只证明 Host 请求状态/保留/恢复，不证明耗时 Core 计算中途取消，也不是桌面 UAT。没有 simulation、科学阈值变更或原始数组提交。
