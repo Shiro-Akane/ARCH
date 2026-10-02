@@ -1151,3 +1151,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - Configure 使用独立 Linux 进程组；取消只向其 PID 对应进程组发送 TERM，仍存活时限时 KILL；等待 child close 才结束 active 状态。准备/证据阶段的取消也不能产生成功结果。
 - 真实 CMake 延迟工程验证取消与并发拒绝，取消后 PID 不存在、无成功 evidence；连同 Configure 正/负路径 2/2 PASS，typecheck/lint PASS。
 - 尚待接入 Host shutdown、跨 Build/Preview 互斥和 UI；测试不声称覆盖任意自行脱离进程组的外部工具。未运行 ARCH 或改动科学输入。
+
+
+### 2026-10-02 — Configure first-failure recovery
+
+- 修复首次配置失败/取消留下 query 而无 cache 后无法重试的问题：Host 记录 source/build/profile 身份，仅匹配的已认领目录可重试；不清理目录，不接受其他非空目录。失败或取消响应不保留成功 evidence。
+- 真实 CMake 失败→去除测试 cache→修正输入→重试成功；取消和其他绑定检查保留。2/2 PASS，typecheck/lint PASS。初次测试因测试文本换行转义错误失败，修正后通过；未修改验收条件。
+- Configure 仍待 Host/UI 接线和完整依赖证据，未执行正式 ARCH 配置/演化。

@@ -3,7 +3,7 @@ import {mkdir,readFile,readdir,stat,writeFile} from 'node:fs/promises';
 import type {ChildProcess} from 'node:child_process';
 import {spawn} from 'node:child_process';
 import {StringDecoder} from 'node:string_decoder';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 import {checkedPath,selectedPath} from './files.ts';
 import {BuildLog} from './buildLog.ts';
 import {CMAKE} from './buildProfile.ts';
@@ -56,6 +56,9 @@ export class ConfigureRunner {
    if(definitions.some(([key,value])=>!/^[_A-Za-z][_A-Za-z0-9]*$/.test(key)||typeof value!=='string'||value.includes('\0')))
     throw new Error('Invalid Host Configure definition.');
    const build=await directory(p.sourceRoot,p.buildDirRelative);
+   const ownershipFile=p.buildDirRelative+'/.arch-studio-configure-owner.json';
+   const ownership=JSON.stringify({sourceRoot:p.sourceRoot,buildDirectory:build,profileId:p.id,
+    profileSha256:createHash('sha256').update(JSON.stringify(p)).digest('hex')});
    let cache:string|undefined;
    try{cache=await readFile(await checkedPath(p.sourceRoot,p.buildDirRelative+'/CMakeCache.txt'),'utf8');}
    catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;}
@@ -63,7 +66,15 @@ export class ConfigureRunner {
     const lines=cache.split(/\r?\n/);
     if(!lines.includes('CMAKE_HOME_DIRECTORY:INTERNAL='+p.sourceRoot)||!lines.includes('CMAKE_CACHEFILE_DIR:INTERNAL='+build)||
        !lines.includes('CMAKE_GENERATOR:INTERNAL='+p.generator))throw new Error('Existing CMake tree binding or generator differs; refusing to migrate it.');
-   }else if((await readdir(build)).length)throw new Error('Unconfigured build directory is not empty.');
+   }else if((await readdir(build)).length){
+    let saved:string|undefined;
+    try{saved=await readFile(await checkedPath(p.sourceRoot,ownershipFile),'utf8');}
+    catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;}
+    if(saved!==ownership)throw new Error('Unconfigured build directory is not empty or owned by this Configure profile.');
+   }
+   // Preserve ownership across an interrupted first configure; never clean its files.
+   try{await writeFile(path.join(p.sourceRoot,ownershipFile),ownership,{flag:'wx'});}
+   catch(e){if((e as NodeJS.ErrnoException).code!=='EEXIST')throw e;await checkedPath(p.sourceRoot,ownershipFile);}
    const query=await directory(p.sourceRoot,p.buildDirRelative+'/.cmake/api/v1/query');
    for(const name of ['cmakeFiles-v1','codemodel-v2','cache-v2','toolchains-v1']){
     // Existing query is preserved; a symlink is never followed or overwritten.
@@ -92,7 +103,7 @@ export class ConfigureRunner {
    result.evidence=await readCMakeConfigurationEvidence(p.sourceRoot,build,path.join(reply,entry.jsonFile));
    if(this.cancelled)throw new Error('Configure cancelled.');
    result.state='succeeded';
-  }catch(e){if(this.cancelled)result.state='cancelled';result.error=e instanceof Error?e.message:'Configure failed';this.log.append('stderr',result.error);}
+  }catch(e){delete result.evidence;if(this.cancelled)result.state='cancelled';result.error=e instanceof Error?e.message:'Configure failed';this.log.append('stderr',result.error);}
   finally{if(this.killTimer)clearTimeout(this.killTimer);this.killTimer=undefined;this.child=undefined;this.log.append('state',undefined,result.state);this.active=false;}
   return result;
  }

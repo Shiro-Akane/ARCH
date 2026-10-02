@@ -25,6 +25,10 @@ test('controlled Configure uses literal spaced paths, records evidence and refus
   const bad=new ConfigureRunner({...profile,buildDirRelative:'bad-build'});
   assert.equal((await bad.run('p','test')).state,'failed');
   assert.equal(bad.isActive(),false);
+  // A failed first configure may leave no cache. Its owned files must survive a retry.
+  await rm(root+'/bad-build/CMakeCache.txt',{force:true});
+  await writeFile(root+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(Recovered NONE)\n');
+  assert.equal((await bad.run('p','test')).state,'succeeded');
  }finally{await rm(root,{recursive:true,force:true});}
 });
 
