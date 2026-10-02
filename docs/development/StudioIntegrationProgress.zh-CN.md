@@ -1324,3 +1324,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 新增 Linux xterm 交接、逐 run 的只读输入副本/确认记录、GET 状态及无 body 的 owned Stop。命令/argv/cwd/env 由 Host 固定；项目 Build/Configure/Preview 与交接阶段互斥。Host 生命周期不接管已交付终端的计算。
 - 终端未确认交接时保留 run ID、记录 Stop 且不盲重试；迟到 worker 在启动 Core 前检查已有 Stop。无可见终端环境时明确失败，不回退后台运行。
 - 当前工程回归 25/25 PASS，包含计划重放/篡改、文件及 checkpoint 路径变化、HTTP 权限、独立进程与后代清理；尚未进行真实 ARCH terminal run，UI 确认面板与 Restart 继续演化仍待实现/验收。
+
+### 2026-10-02 — Real xterm/ARCH t=0 handoff
+
+- clean 301517c2b43d8f56f5c1a5c3972901397e29ca2b：复用既有获准 Sod tmax=0 输入，仅 out_dir 改为唯一持久本地目录；经真实 RunPreparationRunner/RunController/xterm/worker 启动当前 CPU ARCH。
+- runId=926efbfc-5fd5-4dfd-b9cd-51453c1da819；exit 0，Total Steps=0、Final Time=0，初始 12 AMR leaves。现有 h5wasm/node 只读确认 PLT time=0、checkpoint step=0/time=0；原始文件留本机，处理摘要见 StudioTerminalT0Summary.json。
+- xterm 使用 Monospace 后 terminal.log 为空；已核对本次 terminal/Core/worker PID 均结束。不是视觉/manual UAT、非零演化或 Restart 继续演化验收。
+- guard 1.008s、swap 0，仅两次采样；RSS 读数不能代表此短任务内存峰值，不作性能测量。后续仍需 UI 确认/状态/Stop、真实 Restart 与完整 Linux 工作流验收。
