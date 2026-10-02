@@ -1480,3 +1480,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - Host-held plan 记录 checkpoint realpath/dev/inode/size/mtimeNs/ctimeNs，确认时重读并拒绝替换/修改；不读取或解释 HDF5、不写 checkpoint。Core 仍执行权威身份/布局兼容检查。
 - Run preparation 12/12 PASS（包含同长度 checkpoint 替换后拒绝、重新准备成功），lint/typecheck PASS。
 - 这是 prepare→confirm 的文件系统身份边界，不是内容 SHA，也不消除 confirm→Core open 的竞态；不宣称完整 immutable checkpoint handoff。输出目录并发隔离仍待设计与验证，未在本轮修改。
+
+### 2026-10-02 — Current Linux desktop capture revalidation
+
+- clean f4816808 当前 Linux launcher 启动 Sod，Host readiness 成功；当前生产资产服务正常。Computer Use 选中真实 msrdc ARCH 窗口，但截图仍返回无关应用像素，仅外层pane可访问；停止点击，未操作其他应用。
+- 同 production 资产的浏览器诊断显示 React 可渲染；因没有 Electron preload/bootstrap 默认显示 demo，不能将此作为 managed项目或原生desktop UAT。临时浏览器页已关闭。
+- 当前原生窗口保留供用户核对实际显示，已请求“正常显示/空白/未看到窗口”反馈。本地 desktop-current-diagnostic.json 记录本次 PID/start ticks/端口；不能把活跃进程状态当长期静态验收。
+- O7执行细则再次确认数值实现依赖3C主链路及现有模型预览；待图形观测判定期间只读核对，未提前实施 JENS/RZ 或开展 Windows 适配。
