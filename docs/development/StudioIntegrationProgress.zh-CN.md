@@ -1065,3 +1065,14 @@ tabular_component_completion, sparse_klu_161_equations.
 These are existing component/reference tests with unchanged budgets, not full
 scientific evolution campaigns or CUDA qualification. No claim of all 67 CTests
 passing; no change to historical pending G inputs. No code changes in this batch.
+
+### O7.0 active Sod beginner and comparison inputs
+
+Migrated Sod_beginner.par and SodFlash1D.par to explicit former controls:
+sml_rho=1e-12/min_eint=1e-10/max_eint=1e21/hll_wave_speed=roe,
+CPU when previously omitted, network_name=none as the checked nonburn Sod input.
+Numerical defaults verified against 8fc0dd25 GlobalDefs; physical initial states,
+domain, grid, terminal time and output schedule unchanged.
+Real ARCH --inspect-config returned status ok, declared completeness complete,
+no diagnostics for both. Setup/EOS/filesystem/CUDA not executed; simulation readiness
+not checked. This is input migration evidence, not a rerun of FLASH or evolution.
