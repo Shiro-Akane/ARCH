@@ -1096,3 +1096,12 @@ Extracted identical C++ example to local documented-case fixture; real public-he
 C++20 syntax compilation PASS, diff-check PASS. This is compile verification only;
 example was not added to production registry or executed as a scientific case.
 Further reference/API example refresh remains open; no all-docs completion claim.
+
+### O7.0 parsing reference corrections
+
+Both references now match tested v3 behavior: duplicate/no-equals/empty-key rejection,
+declared ownership instead of removed mutable custom maps, no Get missing fallback,
+no unknown hydro-method fallback, and nine expression fields excluding retired G.
+Legal aliases/explicit auto distinguished from unknown-method fallback.
+Documentation-only change; relied on existing parser/contract tests and source audit,
+diff-check PASS; no redundant simulation. Full reference migration not yet claimed.

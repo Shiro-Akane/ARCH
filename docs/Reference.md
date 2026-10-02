@@ -348,8 +348,9 @@ Ordinary simulations use these two positional arguments. `ARCH --config-schema` 
 ## Parameter parsing
 
 `ConfigParser` reads the first `=` on each non-empty line, removes text after
-`#`, trims whitespace, and stores the last value for a duplicate key. Keys are
-case-sensitive.
+`#`, trims whitespace, and records raw tokens and locations. Duplicate keys are rejected with their
+locations; no occurrence is selected. Keys are case-sensitive. Non-comment lines
+without an equals sign and empty keys are rejected.
 
 Important behavior:
 
@@ -358,13 +359,11 @@ Important behavior:
   `0`/`1` and `on`/`off` are rejected;
 - geometry, boundary, gravity, and compute-backend tokens are normalized to
   ASCII lowercase once during parameter loading;
-- unknown keys are retained in `SimConfig::custom_params` or
-  `custom_string_params`; spelling validation is unavailable;
-- `SimConfig::Get<T>` returns its caller-supplied default when a custom key is
-  absent; a present custom value that is not a complete number fails when read
-  as numeric;
-- grid bounds `x1/x2/x3_min/max` and gravity fields `gravity_g_x/y/z` and
-  `gravity_G` use a restricted expression parser: lowercase `pi`, `-pi`,
+- unknown keys are rejected after standard, case and composition ownership is resolved;
+- case parameters must be declared before Setup. `SimConfig::Get<T>` reads resolved
+  declared values; its second argument does not fill missing input. Invalid values
+  preserve their raw token but do not acquire a valid resolved value or source;
+- grid bounds `x1/x2/x3_min/max` and external gravity fields `gravity_g_x/y/z` use a restricted expression parser: lowercase `pi`, `-pi`,
   `2*pi`, `pi*2`, `pi/2`, and `exp(number)` such as `exp(1)`. Results must be
   finite. Standalone `e/E`, `sin`, `cos`, and `log` are outside `.par` syntax;
   `e/E` in `1e8` or `1E8` is only a scientific-notation exponent marker;
@@ -376,15 +375,15 @@ Invalid selections are handled as follows:
 
 | Invalid choice | Current behavior |
 | --- | --- |
-| flux | warning, HLLC |
-| reconstruction | warning, PCM |
-| MUSCL limiter | warning, MinMod |
-| hydro integrator | warning, SSPRK2 |
+| flux | error during configuration resolution; no fallback |
+| reconstruction | error during configuration resolution; no fallback |
+| MUSCL limiter | error during configuration resolution; no fallback |
+| hydro integrator | error during configuration resolution; no fallback |
 | gravity | exception during configuration resolution |
 | EOS, network, ODE, linear solver | exception |
 | diffusion integrator | exception during configuration resolution |
 
-Inspect the startup “Strategy” line and resolve fallback warnings in research workflows.
+Inspect configuration diagnostics before startup. Legal aliases and explicit auto policies retain their documented semantics; unknown methods do not silently select another method. `gravity_G` is retired; production gravity uses the shared CGS constant, with a read-only checkpoint identity.
 
 ### Migrating input files
 

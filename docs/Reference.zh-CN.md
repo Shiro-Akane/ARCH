@@ -247,16 +247,16 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 ## 参数解析
 
-`ConfigParser` 对每个非空行读取第一个 `=`，删除 `#` 后文本，去除空白，并在键重复时保留最后一个值。键区分大小写。
+`ConfigParser` 对每个非空行读取第一个 `=`，删除 `#` 后文本，去除空白，并保存原 token 和位置。重复键携带位置报错，不选择任何一次赋值。键区分大小写；无等号的非注释行和空键均报错。
 
 重要行为：
 
 - 标准整数和浮点数值要求完整的数值记号；浮点数可用十进制或科学记数法；
 - Boolean 只接受不区分大小写的 `true` 或 `false`；数字 `0`/`1` 与 `on`/`off` 会被拒绝；
 - geometry、boundary、gravity 与 compute-backend token 在参数加载时统一规范为 ASCII 小写；
-- 未知键保留在 `SimConfig::custom_params` 或 `custom_string_params`，不提供拼写验证；
-- 自定义键缺失时，`SimConfig::Get<T>` 返回调用者提供的默认值；自定义数值须是完整数值记号，存在但不可作为数值解析的键在数值读取时会报错；
-- 网格边界 `x1/x2/x3_min/max` 及引力参数 `gravity_g_x/y/z`、`gravity_G` 使用轻量表达式解析器，支持小写 `pi`、`-pi`、`2*pi`、`pi*2`、`pi/2` 和 `exp(number)`，例如 `exp(1)`；结果必须有限。独立的 `e/E` 常数及 `sin`、`cos`、`log` 不属于 `.par` 表达式语法；`1e8`/`1E8` 中的 `e/E` 仅是科学记数法的指数标记；
+- 标准、算例和组分声明完成所有权判断后，未知键明确报错；
+- 算例参数必须在 Setup 前声明；`SimConfig::Get<T>` 读取已解析的声明值，第二个实参不补齐缺项。非法值保留原 token，但没有有效 resolved 值或来源；
+- 网格边界 `x1/x2/x3_min/max` 及引力参数 `gravity_g_x/y/z` 使用轻量表达式解析器，支持小写 `pi`、`-pi`、`2*pi`、`pi*2`、`pi/2` 和 `exp(number)`，例如 `exp(1)`；结果必须有限。独立的 `e/E` 常数及 `sin`、`cos`、`log` 不属于 `.par` 表达式语法；`1e8`/`1E8` 中的 `e/E` 仅是科学记数法的指数标记；
 - 路径相对于进程工作目录解释；
 - EOS dispatch 会移除 `eos_table_path` 的引号，普通字符串则保留解析器文本。
 
@@ -264,15 +264,15 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 | 无效选择 | 当前行为 |
 | --- | --- |
-| flux | 警告，选择 HLLC |
-| reconstruction | 警告，选择 PCM |
-| MUSCL limiter | 警告，选择 MinMod |
-| hydro integrator | 警告，选择 SSPRK2 |
+| flux | 配置解析报错；不自动回退 |
+| reconstruction | 配置解析报错；不自动回退 |
+| MUSCL limiter | 配置解析报错；不自动回退 |
+| hydro integrator | 配置解析报错；不自动回退 |
 | gravity | 在统一解析配置时抛出异常 |
 | EOS、network、ODE、linear solver | 抛出异常 |
 | diffusion integrator | 在统一解析配置时抛出异常 |
 
-科研工作流应检查启动时的 Strategy 行，并核对 fallback 警告。
+运行前应检查配置诊断。合法别名和显式 auto 策略保持各自语义；未知方法不静默替换。`gravity_G` 已退役，正式引力直接使用共享 CGS 常数，checkpoint 仅记录只读身份。
 
 ### 输入迁移
 
