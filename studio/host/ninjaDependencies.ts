@@ -51,3 +51,10 @@ export async function fingerprintNinjaDependencies(buildDirectory:string){
  }
  return {kind:'ninja-compiler-inputs' as const,objectCount:objects.length,files};
 }
+
+export type CompilerInputSnapshot=Awaited<ReturnType<typeof fingerprintNinjaDependencies>>;
+export function sameCompilerInputs(before:CompilerInputSnapshot|undefined,after:CompilerInputSnapshot|undefined):boolean{
+ if(!before||!after||before.objectCount!==after.objectCount||before.files.length!==after.files.length)return false;
+ const prior=new Map(before.files.map(f=>[f.path,f]));
+ return after.files.every(f=>{const old=prior.get(f.path);return old?.sha256===f.sha256&&old.size===f.size;});
+}

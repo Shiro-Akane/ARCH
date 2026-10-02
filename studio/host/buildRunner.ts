@@ -1,3 +1,4 @@
+import {fingerprintNinjaDependencies} from './ninjaDependencies.ts';
 import {inputs,inspect,gitIdentity,makeManifest,saveManifest,loadManifest,same} from './buildManifest.ts';
 import {BuildLog} from './buildLog.ts';
 import {StringDecoder} from 'node:string_decoder';
@@ -27,6 +28,7 @@ export class BuildRunner {
    else{
     for(const old of m.trackedInputFingerprints){try{if(!same(old.fingerprint,await inspect(this.root,old.relativePath)))this.current.changedInputs.push(old.relativePath);}catch{this.current.changedInputs.push(old.relativePath);}}
     if(this.current.changedInputs.length||!m.inputsStableDuringBuild){this.current.binaryState='needs-build';this.current.freshnessReason=this.current.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs changed during Build; build again for a stable snapshot.';}
+    else if(m.compilerInputsStableDuringBuild===false){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler input stability was not established across Build.';}
     else if(!same(binary,m.outputBinary.fingerprint)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable differs from last successful Build manifest.';}
     else{this.current.binaryState=this.profile.dependenciesComplete?'built-from-current-tracked-inputs':'freshness-unknown';this.current.freshnessReason=this.profile.dependenciesComplete?'Explicit tracked inputs match the successful Build.':'Tracked inputs match; full dependency coverage is unknown.';}
    }
@@ -52,11 +54,12 @@ export class BuildRunner {
   const result:BuildResult={projectId:this.projectId,buildId:id,startedAt,finishedAt:'',state:'failed'};
   try{
    const before:InputFingerprint[]=await inputs(this.profile);const preBinary:FileFingerprint|undefined=await inspect(this.root,this.profile.outputBinaryRelative,true).catch(()=>undefined);const git=await gitIdentity(this.root);
+   const compilerBefore=this.profile.compilerDependencyMode==='ninja'?await fingerprintNinjaDependencies(this.root+'/'+this.profile.buildDirRelative).catch(()=>undefined):undefined;
    await new Promise<void>((resolve,reject)=>{
     const child=(this.hooks.spawn??spawn)(this.hooks.cmake??CMAKE,['--build',this.root+'/'+this.profile.buildDirRelative,'--target',this.profile.target,'--parallel',String(this.profile.parallelism)],{cwd:this.root,shell:false,env:{PATH:'/usr/local/cuda-12.8/bin:/usr/local/bin:/usr/bin:/bin',HOME:process.env.HOME??'/home/arch',LANG:'C.UTF-8'},stdio:['ignore','pipe','pipe']});this.child=child;
     for(const [stream,kind] of [[child.stdout,'stdout'],[child.stderr,'stderr']] as const){const decoder=new StringDecoder('utf8');stream?.on('data',(chunk:Buffer)=>this.log?.append(kind,decoder.write(chunk)));stream?.on('end',()=>{const tail=decoder.end();if(tail)this.log?.append(kind,tail);});}
     child.once('error',()=>reject(new Error('Build process could not start.')));child.once('close',(code,signal)=>{result.exitCode=code;result.signal=signal;if(code===0)resolve();else reject(new Error('Build exited unsuccessfully.'));});
-   });const manifest=await makeManifest(this.profile,this.projectId,id,startedAt,before,preBinary,git);await saveManifest(this.profile,manifest);this.current.lastSuccessfulBuild=manifest;result.state='succeeded';
+   });const manifest=await makeManifest(this.profile,this.projectId,id,startedAt,before,preBinary,git,compilerBefore);await saveManifest(this.profile,manifest);this.current.lastSuccessfulBuild=manifest;result.state='succeeded';
   }catch(e){result.error=e instanceof Error?e.message:'Build failed';}
   finally{result.finishedAt=new Date().toISOString();if(result.error)this.log?.append('stderr',result.error);this.log?.append('state',undefined,result.state);this.current.latestResult=result;this.current.state=result.state;this.child=undefined;await this.refreshFreshness(true);delete this.current.activeBuildId;}
  }

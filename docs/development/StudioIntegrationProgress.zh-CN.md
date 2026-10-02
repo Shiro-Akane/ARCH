@@ -1229,3 +1229,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 本地 CPU profile 在成功 Build 时采集实际 Ninja compiler 输入 SHA/size，记录到 manifest；失败以 compilerInputError 明示。文件数/逐文件/总字节限制和读取稳定性检查保持有界。
 - 实际只读采集 66 objects、735 files、10089196 bytes 成功。Build/解析回归 8/8、typecheck/lint PASS。
 - 此次未重新 Build 更新旧 manifest；尚缺 pre-build 完整输入稳定性、link/toolchain/新增依赖比较，因此 dependenciesComplete=false 保持不变。
+
+
+### 2026-10-02 — Compiler input stability across Build
+
+- CPU Host Build 记录构建前/后的 compiler input snapshot，比较 object 数、路径集合、内容 SHA 与 size。首次无 deps 或采集失败不伪造稳定；manifest 标记 compilerInputsStableDuringBuild=false，freshness unknown（不谎报必然源码变化）。
+- Build/依赖稳定性回归 9/9 PASS、typecheck PASS。完整 link/toolchain 和后续 freshness 动态比对仍待接入；未升级 dependenciesComplete。
