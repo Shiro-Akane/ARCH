@@ -1215,3 +1215,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 在 clean 8987eb69 经 openProject/ConfigureRunner 实际配置 build-studio-cpu，随后经 BuildRunner 编译 ARCH 成功。旧 build-cpu/build-cuda 保留。
 - 内存 guard 41.162s、peak owned RSS 3723316 KiB、swap 0；未停止。manifest 输入稳定，binary 身份见 StudioLocalCpuBuildSummary.json；完整日志留 studio/.local/integration。
 - binaryState 诚实保持 freshness-unknown（完整编译依赖仍未覆盖），不冒充 current。此次未执行 simulation/Preview，也不代替 Linux UI UAT 或 Run/Restart 验收。
+
+
+### 2026-10-02 — Compiler-recorded include dependency capture
+
+- 加入固定 Ninja -t deps 读取器，保留项目外/带空格路径，拒绝 stale、缺失、截断记录；不从文件名扩展猜依赖。
+- 实际 build-studio-cpu 读取 66 个 object、735 个独立 input；只读，无编译或演化。解析负向测试 PASS、typecheck PASS。
+- codemodel 同时确认 ARCH 关联三个内部库，并含系统动态库与 -lm；完整 target/link/toolchain 哈希和 manifest 接入仍待完成，dependenciesComplete 保持 false。
