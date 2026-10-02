@@ -1137,3 +1137,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 新增 Host-only CMake cmakeFiles-v1 读取器：绑定真实 source/build/reply 路径，检查版本/大小/读取稳定性，哈希实际配置输入（含外部模块），明确 dependenciesComplete=false，缺编译 include、link 输入及工具链身份。
 - 负向边界及本机 CMake 微型无语言工程 2/2 PASS（带空格 source/build 路径、外部 CMake 模块）；typecheck/lint PASS。未 configure ARCH，未 Build/Run 科学任务。
 - 此模块尚待接入受控 Configure 和 Build Manifest，不宣称 Configure 可用或构建身份完整；下一步需生成受控 File API query 并补齐实际编译/link/toolchain 证据。
+
+
+### 2026-10-02 — Controlled Configure execution foundation
+
+- 新增 Host-owned ConfigureProfile/ConfigureRunner：固定 CMake 路径与 argv、受控 env、有界 BuildLog；绑定 source/build/generator，拒绝不同缓存绑定和非空未配置目录，不迁移既有树。生成 File API query，成功后读取实际配置证据，不创建 Build Manifest。
+- 本机 CMake 无语言微型工程验证：带空格路径、重复配置、未知 profile、错误绑定、非空目录和非法 CMake 输入；连同 evidence suite 3/3 PASS，typecheck PASS；修复 close 回调 lint 后 lint PASS。
+- 未配置正式 ARCH tree。仍待 Host/HTTP/UI 接线、跨 Build/Preview 互斥、取消/退出生命周期及完整依赖采集；此提交不代表 3C Configure 功能验收。Run/Restart 与科学后续目标保持未完成。
