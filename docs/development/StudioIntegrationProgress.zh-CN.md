@@ -21,9 +21,9 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | --- | --- | --- | --- |
 | 1 3B 源码接收与复验 | 封箱源码已引入；Linux 打开/另存/重开复验通过 | npm ci、177 tests、lint/typecheck/build PASS；Linux 原生打开、Host Save As、重开 PASS（范围见报告） | 不适用 |
 | 2 O7.0 + 配置 v3/Host/Studio | 候选契约、14模型声明、部分输入共同检查及CLI/初态前置门已实现；v3序列化/受控构造/客户端在迁移 | 相关Core单元和真实入口检查通过；完整v3/Host/Studio未验证 | 科学条件按唯一计划；疑点交维护者 |
-| 3 Linux/WSL 3C 启动/Configure/Build | 待实施 | 待执行 | 不适用 |
-| 4 3C Run/Restart/进程隔离 | 待实施，依赖新配置契约 | 待执行 | 小型有效输入 |
-| 5 全模型初态/AMR | 待实施 | 待逐模型验收 | 真实域/预算需明确 |
+| 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 进程/HTTP/Build 验证通过；当前原生视觉 UAT 未通过，dependenciesComplete=false | 不适用 |
+| 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验及 Stop | Sod t=0 与 SmoothAdvection Run/Restart 对照通过；桌面全流程 UAT 未完成 | 不推广为其他模型/后端演化验收 |
+| 5 全模型初态/AMR | 当前仅 Sod/CellularDet，通用扩展未实施 | 本地 CPU 两模型初态及 Cellular AMR 有证据；其余模型未验收 | 真实域/预算需明确 |
 | 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
 | 7 O7.2–O7.5 RZ | 待实施 | 分层 CPU | O7.4 科学方案须 review |
 | 8 CUDA/第二平台短测 | 待 CPU 完成 | 未编译/未计时 | 冻结同物理终点；保留负收益 |
@@ -1450,3 +1450,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 真实本地 CPU Sod：成功 → start acknowledgement 后立即取消 → cancelled 且保留上一成功结果 → 恢复成功 → 重复 solver 配置被 Core DUPLICATE_PARAMETER 拒绝且保留成功结果 → 再恢复成功。所有断言通过，finally 等待 session shutdown。
 - 取消后新 session generation=3；错误后恢复沿用同一 processToken，sequence=3。精简结果见 StudioLocalPreviewRecoverySummary.json。
 - 本轮只证明 Host 请求状态/保留/恢复，不证明耗时 Core 计算中途取消，也不是桌面 UAT。没有 simulation、科学阈值变更或原始数组提交。
+
+
+### 2026-10-02 — CPU profile full regression and next-stage audit
+
+- ce447252 clean source：npm test 219/219 PASS（包括 Host，不重复计数）；lint PASS；npm run build 中 tsc --noEmit 和 Vite production build PASS。既有大 bundle warning 保留；日志留本地 cpu-profile-full-regression.log。
+- 全模型入口实际缺口：src/api/preview/Preview.cpp 支持判断及 capabilities 仅 Sod 1D/CellularDet 2D；Sampling.h 按 case 选择采样维度；Host previewProfile.ts 也仅两 profile。不能仅扩大前端/Host 白名单冒充 Core 支持。
+- 依联合计划4.3，配置/Run出口完成后才扩展科学数据展示；当前 Linux原生视觉/文件对话框UAT未完成，未启动全模型实现。进程/HTTP验证不能替代该验收。顺序清单已纠正过时“未实施”项，但不将部分验证标成整体完成。
