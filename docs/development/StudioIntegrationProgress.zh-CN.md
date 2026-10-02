@@ -1121,3 +1121,11 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 从 clean e4c87d98 的已编译 CPU ARCH 重新采集 schema、有效 Sod、empty、invalid 四份静态响应；记录 binary SHA、精确输入、退出码及实现身份。94 个可写标准参数，gravity_G 仍为 retired，case 用途标签与实现同步。
 - 每次在独立空目录调用，确认无文件副作用；不执行 Setup、Preview 或 simulation。输入未改变，没有科学数组或原始 H5。
 - 直接依赖这些响应的 configuration/Host/path/catalog/workspace/Inspector 回归 26/26 PASS；git diff --check PASS。历史 candidate 保留候选身份，不冒充当前 binary。
+
+
+### 2026-10-02 — Current v3 Studio regression and 3C boundary
+
+- 在 edd73d32 执行 npm test：181/181 PASS（包含 Host 测试，不重复相加）；npm run build PASS（TypeScript + Vite，674 modules）。保留 bundle >500kB 提示，未做无关重构。dist 为本地忽略产物。
+- 3B 参数布局已按 Core 契约展示 external 三分量，包括非活动轴显式零；本轮只读核对，无重复实现。此前 typecheck/lint 在 e4c87d98 通过，随后只有响应样例与文档变化。
+- 3C 尚未完成：WorkflowBar Configure disabled，Run/Restart disabled；BuildRunner 仅支持现有 tree；旧 Profile 为部分硬编码依赖且 dependenciesComplete=false。必须实现受控 Configure、完整依赖身份及独立终端 Run/Restart，不得用现有按钮或 no-work 构建冒充完成。
+- 本次为自动化基线，不替代 Linux/WSL production UAT、文件选择器、终端/Host 生命周期验收。未运行演化、未进入 CUDA，完整联合目标仍在进行。
