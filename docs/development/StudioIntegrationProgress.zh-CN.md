@@ -1457,3 +1457,8 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - ce447252 clean source：npm test 219/219 PASS（包括 Host，不重复计数）；lint PASS；npm run build 中 tsc --noEmit 和 Vite production build PASS。既有大 bundle warning 保留；日志留本地 cpu-profile-full-regression.log。
 - 全模型入口实际缺口：src/api/preview/Preview.cpp 支持判断及 capabilities 仅 Sod 1D/CellularDet 2D；Sampling.h 按 case 选择采样维度；Host previewProfile.ts 也仅两 profile。不能仅扩大前端/Host 白名单冒充 Core 支持。
 - 依联合计划4.3，配置/Run出口完成后才扩展科学数据展示；当前 Linux原生视觉/文件对话框UAT未完成，未启动全模型实现。进程/HTTP验证不能替代该验收。顺序清单已纠正过时“未实施”项，但不将部分验证标成整体完成。
+
+### 2026-10-02 — Reconnected Host Run control regression
+
+- 补强既有独立进程测试：启动者退出后，创建新 project session 的 RunController；从持久记录恢复原 run ID/config SHA/running 状态，通过公开 stop() 停止，再读取 stopped 历史。无需原 Host 内存对象。
+- Run worker/supervisor 7/7 PASS，lint PASS。本轮为真实 OS 子进程 fixture，不执行 ARCH 科学轨迹，不冒充桌面重开/按钮 UAT。生产实现未修改。

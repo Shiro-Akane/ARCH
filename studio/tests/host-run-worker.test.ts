@@ -10,6 +10,8 @@ import {fileURLToPath} from 'node:url';
 import {fingerprint} from '../host/files.ts';
 import {readConfig} from '../host/config.ts';
 import {executeRun} from '../host/runWorker.ts';
+import {RunController} from '../host/runController.ts';
+import {RunPreparationRunner} from '../host/runPreparation.ts';
 import type {RunJob,RunState} from '../host/runWorker.ts';
 const worker=fileURLToPath(new URL('../host/runWorker.ts',import.meta.url));
 async function setup(script:string){
@@ -67,9 +69,20 @@ test('run survives launcher exit and only matching run ID requests Stop',async()
   assert.ok(pid);assert.equal(running.processIdentity,'captured');assert.ok(running.processStartTicks);process.kill(pid!,0);
   await writeFile(directory+'/stop-request','wrong-run-id');
   await new Promise(r=>setTimeout(r,250));process.kill(pid!,0);
-  await writeFile(directory+'/stop-request',job.runId);
+  // A newly connected Host has no in-memory knowledge of the delivered job.
+  const projectId=randomUUID();
+  const recovered=new RunController(new RunPreparationRunner(root,projectId,'ARCH',()=>readConfig(root,'saved.par',projectId)));
+  const history=await recovered.history();
+  assert.equal(history.length,1);assert.equal(history[0].runId,job.runId);
+  assert.equal(history[0].configSha,job.configFingerprint.sha256);
+  assert.equal(history[0].state?.state,'running');assert.equal(history[0].diagnostic,null);
+  // Remove only this test's deliberately invalid request before the public Stop.
+  await rm(directory+'/stop-request');
+  assert.deepEqual(await recovered.stop(job.runId),{runId:job.runId,stopRequested:true});
   const ended=await waitState(directory,s=>!!s.finishedAt);
   assert.equal(ended.state,'stopped');assert.equal(ended.signal,'SIGTERM');
+  assert.equal((await recovered.status(job.runId)).state,'stopped');
+  assert.equal((await recovered.history())[0].state?.state,'stopped');
   assert.throws(()=>process.kill(pid!,0));
  }finally{
   if(pid)try{process.kill(-pid,'SIGKILL');}catch{/* already reaped */}
