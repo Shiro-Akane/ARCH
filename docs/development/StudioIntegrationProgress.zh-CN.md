@@ -1279,3 +1279,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - Ninja 1.11.1 -t inputs ARCH 包含 explicit/implicit/order-only，但明确排除 validation inputs；且含 phony，不可直接作为全文件清单。
 - 处理后审计 StudioLinkInputAudit.json 记录实际外部链接文件 SHA/realpath/格式，覆盖 HDF5/KLU/OpenMP 等。libm 等可能为 linker script，不能只哈希脚本就假定实际 ELF 已覆盖。
 - 下一步需按 rule 区分 phony、追踪 linker script/隐式库与 compiler 子程序；当前不提升完整覆盖。只读审计，无编译或演化。
+
+
+### 2026-10-02 — Linker-native dependency evidence
+
+- 本机 mold 2.30.0 支持 --dependency-file。新增默认 OFF 的 ARCH_EMIT_LINK_DEPENDENCIES，仅 Studio CPU profile ON；ARCH.link.d 由真实链接器输出，不改数值 flags/科学逻辑，其他 linker 不支持时明确失败。
+- 实际 Host Configure/Build PASS；guard 7.101s、peak owned RSS 2039732 KiB、swap 0。输出包含解析后的 libm.so.6、libstdc++、crt 启动对象，以及 LTO 临时产物；后者链接后已消失，需明确分类，不能静默忽略当完整。
+- 未更新旧 CPU/CUDA 验证树，未运行模拟；依赖解析/manifest 接入仍待完成，完整覆盖保持 false。

@@ -65,3 +65,5 @@ parallelism. The [test-module guide](tests/README.md) explains where to register
 new checks. Measured compilation costs remain in the
 [core-build reference](../validation/backend/results/cold-core-first-law-20260907/release-909/README.md);
 shortening CMake source alone does not reduce template-instantiation cost.
+
+Local provenance tooling may opt into ARCH_EMIT_LINK_DEPENDENCIES=ON. ARCH then asks the selected linker to write Makefile-style ARCH.link.d in the build directory. This is disabled by default and adds no numerical flags. A linker without --dependency-file support fails explicitly; absence of the file must not be treated as complete dependency coverage.

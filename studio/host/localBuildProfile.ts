@@ -10,6 +10,6 @@ export function localCpuProfile(sourceRoot:string):{build:BuildProfile;configure
    parallelism:4,compilerDependencyMode:'ninja',dependenciesComplete:false,trackedInputs:['CMakeLists.txt','CMakePresets.json',buildDirRelative+'/CMakeCache.txt']},
   configure:{id:LOCAL_CPU_PROFILE_ID,sourceRoot,buildDirRelative,generator:'Ninja',
    definitions:{CMAKE_BUILD_TYPE:'Release',ARCH_ENABLE_CUDA:'OFF',ARCH_ENABLE_OPENMP:'ON',
-    BUILD_TESTING:'OFF',ARCH_RUNTIME_OUTPUT_DIRECTORY:sourceRoot+'/'+buildDirRelative+'/bin'}}
+    BUILD_TESTING:'OFF',ARCH_EMIT_LINK_DEPENDENCIES:'ON',ARCH_RUNTIME_OUTPUT_DIRECTORY:sourceRoot+'/'+buildDirRelative+'/bin'}}
  };
 }

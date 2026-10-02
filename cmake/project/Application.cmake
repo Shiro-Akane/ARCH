@@ -142,6 +142,14 @@ target_link_libraries(arch_solver_dispatch
     PRIVATE arch_diffusion_math arch_gravity_cpu)
 
 add_executable(ARCH ${ARCH_APPLICATION_SOURCES})
+
+# Opt-in provenance for local tooling. This changes link diagnostics only, not
+# numerical flags; unsupported linkers fail explicitly instead of claiming coverage.
+option(ARCH_EMIT_LINK_DEPENDENCIES "Emit ARCH linker-read dependency file" OFF)
+if(ARCH_EMIT_LINK_DEPENDENCIES)
+    target_link_options(ARCH PRIVATE "LINKER:--dependency-file=ARCH.link.d")
+endif()
+
 target_link_libraries(ARCH PRIVATE arch_solver_dispatch)
 if(CMAKE_DL_LIBS)
     target_link_libraries(arch_solver_dispatch PRIVATE ${CMAKE_DL_LIBS})
