@@ -1129,3 +1129,11 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 3B 参数布局已按 Core 契约展示 external 三分量，包括非活动轴显式零；本轮只读核对，无重复实现。此前 typecheck/lint 在 e4c87d98 通过，随后只有响应样例与文档变化。
 - 3C 尚未完成：WorkflowBar Configure disabled，Run/Restart disabled；BuildRunner 仅支持现有 tree；旧 Profile 为部分硬编码依赖且 dependenciesComplete=false。必须实现受控 Configure、完整依赖身份及独立终端 Run/Restart，不得用现有按钮或 no-work 构建冒充完成。
 - 本次为自动化基线，不替代 Linux/WSL production UAT、文件选择器、终端/Host 生命周期验收。未运行演化、未进入 CUDA，完整联合目标仍在进行。
+
+
+### 2026-10-02 — CMake configuration evidence foundation
+
+- 当前 ARCH build tree 无 File API reply；只读 Ninja deps 确认包含仓库外 HighFive 与系统头。固定少量路径不可升级为完整依赖证明。
+- 新增 Host-only CMake cmakeFiles-v1 读取器：绑定真实 source/build/reply 路径，检查版本/大小/读取稳定性，哈希实际配置输入（含外部模块），明确 dependenciesComplete=false，缺编译 include、link 输入及工具链身份。
+- 负向边界及本机 CMake 微型无语言工程 2/2 PASS（带空格 source/build 路径、外部 CMake 模块）；typecheck/lint PASS。未 configure ARCH，未 Build/Run 科学任务。
+- 此模块尚待接入受控 Configure 和 Build Manifest，不宣称 Configure 可用或构建身份完整；下一步需生成受控 File API query 并补齐实际编译/link/toolchain 证据。
