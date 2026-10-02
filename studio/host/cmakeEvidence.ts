@@ -49,3 +49,22 @@ export async function readCMakeConfigurationEvidence(sourceRoot:string,buildDire
   replySha256:createHash('sha256').update(bytes).digest('hex'),inputs,dependenciesComplete:false,
   missingCoverage:['compiler-includes','link-inputs','toolchain-identity']};
 }
+
+/** Driver identities only; implicit libraries and compiler subprocesses remain separate evidence. */
+export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile:string){
+ const build=await realpath(buildDirectory),reply=await realpath(replyFile);
+ if(path.dirname(reply)!==path.join(build,'.cmake/api/v1/reply'))throw new Error('Toolchain reply outside selected build.');
+ const bytes=await boundedFile(reply,8*1024*1024),data:unknown=JSON.parse(bytes.toString('utf8'));
+ if(!object(data)||data.kind!=='toolchains'||!object(data.version)||data.version.major!==1||!Array.isArray(data.toolchains)||!data.toolchains.length||data.toolchains.length>16)
+  throw new Error('Incompatible CMake toolchain reply.');
+ const compilers=[];
+ for(const entry of data.toolchains){
+  if(!object(entry)||typeof entry.language!=='string'||!object(entry.compiler)||!absolute(entry.compiler.path)||
+     typeof entry.compiler.id!=='string'||typeof entry.compiler.version!=='string')throw new Error('Malformed compiler identity.');
+  const resolvedPath=await realpath(entry.compiler.path),content=await boundedFile(resolvedPath,128*1024*1024);
+  compilers.push({language:entry.language,path:entry.compiler.path,resolvedPath,id:entry.compiler.id,version:entry.compiler.version,
+   sha256:createHash('sha256').update(content).digest('hex'),size:content.length});
+ }
+ return {kind:'cmake-compiler-driver-identities' as const,replySha256:createHash('sha256').update(bytes).digest('hex'),compilers,
+  dependenciesComplete:false as const,missingCoverage:['compiler-subprograms','linker','implicit-libraries']};
+}
