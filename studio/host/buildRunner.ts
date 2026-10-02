@@ -1,4 +1,4 @@
-import {fingerprintNinjaDependencies} from './ninjaDependencies.ts';
+import {fingerprintNinjaDependencies,sameCompilerInputs} from './ninjaDependencies.ts';
 import {inputs,inspect,gitIdentity,makeManifest,saveManifest,loadManifest,same} from './buildManifest.ts';
 import {BuildLog} from './buildLog.ts';
 import {StringDecoder} from 'node:string_decoder';
@@ -27,6 +27,19 @@ export class BuildRunner {
    else if(m.buildProfileFingerprint!==profileFingerprint(this.profile)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Build configuration changed since last successful Build.';}
    else{
     for(const old of m.trackedInputFingerprints){try{if(!same(old.fingerprint,await inspect(this.root,old.relativePath)))this.current.changedInputs.push(old.relativePath);}catch{this.current.changedInputs.push(old.relativePath);}}
+    if(this.profile.compilerDependencyMode==='ninja'&&m.compilerInputs){
+     try{
+      const now=await fingerprintNinjaDependencies(this.root+'/'+this.profile.buildDirRelative);
+      if(!sameCompilerInputs(m.compilerInputs,now)){
+       const previous=new Map(m.compilerInputs.files.map(f=>[f.path,f]));
+       for(const file of now.files){const old=previous.get(file.path);if(!old||old.sha256!==file.sha256||old.size!==file.size)this.current.changedInputs.push(file.path);previous.delete(file.path);}
+       this.current.changedInputs.push(...previous.keys());
+       if(!this.current.changedInputs.length)this.current.changedInputs.push('compiler dependency graph');
+      }
+     }catch{
+      this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler dependency evidence unavailable or stale.';return this.snapshot();
+     }
+    }
     if(this.current.changedInputs.length||!m.inputsStableDuringBuild){this.current.binaryState='needs-build';this.current.freshnessReason=this.current.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs changed during Build; build again for a stable snapshot.';}
     else if(m.compilerInputsStableDuringBuild===false){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler input stability was not established across Build.';}
     else if(!same(binary,m.outputBinary.fingerprint)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable differs from last successful Build manifest.';}

@@ -1,3 +1,4 @@
+import {execFile} from 'node:child_process';import {promisify} from 'node:util';
 import {fixture,fakeSpawn,finished} from './build-fixture.ts';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';import assert from 'node:assert/strict';import {mkdir,writeFile,rm} from 'node:fs/promises';
@@ -23,5 +24,24 @@ test('missing migrated tracked input invalidates the profile before any process 
   await assert.rejects(runner.start('project',profile.id),/profile migration required/);
   assert.equal(spawned,false);
   assert.equal(runner.snapshot().configured,false);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('actual compiler header outside fixed tracked list invalidates freshness',async()=>{
+ const {root,p}=await fixture();
+ try{
+  await mkdir(root+'/studio');await rm(root+'/build',{recursive:true,force:true});
+  await writeFile(root+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(Deps CXX)\nadd_executable(ARCH main.cpp)\nset_target_properties(ARCH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")\n');
+  await writeFile(root+'/main.cpp','#include "value.h"\nint main(){return value;}\n');
+  await writeFile(root+'/value.h','constexpr int value=0;\n');
+  await promisify(execFile)('/usr/bin/cmake',['-S',root,'-B',root+'/build','-G','Ninja'],{timeout:15000});
+  const profile={...p,sourceRelativePath:undefined,trackedInputs:['CMakeLists.txt'],compilerDependencyMode:'ninja' as const};
+  const runner=new BuildRunner(root,'p',profile);
+  await runner.start('p',profile.id);await finished(runner);
+  assert.equal(runner.snapshot().state,'succeeded');
+  assert.ok(runner.snapshot().lastSuccessfulBuild?.compilerInputs?.files.some(f=>f.path===root+'/value.h'));
+  await writeFile(root+'/value.h','constexpr int value=1;\n');
+  const status=await runner.refreshFreshness();
+  assert.equal(status.binaryState,'needs-build');assert.ok(status.changedInputs.includes(root+'/value.h'));
  }finally{await rm(root,{recursive:true,force:true});}
 });

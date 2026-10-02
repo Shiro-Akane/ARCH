@@ -1242,3 +1242,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 在 clean 64a04d2e 经真实 Host Build 路径刷新 manifest：66 objects / 735 compiler inputs，前后内容/集合稳定，binary SHA 与首次构建相同；freshness-unknown 正确保留。guard 1.015s、swap 0，无增量编译、无 simulation。
 - 精简证据见 StudioCompilerInputsBuildSummary.json；当前完整记录按 build ID 留本地。发现本地 smoke 脚本旧固定结果文件被本次覆盖，首次摘要身份仍在 Git，但该路径不能再作为首次完整日志；已改为每 build ID 独立文件，避免后续覆盖。旧 guard 日志保留。
 - 链接/工具链及持续 freshness 检查仍未完成，不据此宣布完整构建证明。
+
+
+### 2026-10-02 — Freshness checks compiler inputs
+
+- 本地 CPU freshness 读取实际 compiler dependency graph，与成功 manifest 内容哈希/路径集合比较；固定 tracked list 之外的 header 变化可标 needs-build。缺失/stale/读取失败保持 freshness-unknown。
+- 不提升 dependenciesComplete，link/toolchain 完整性仍待接入。此路径读取实际图，不信任持久 manifest 中任意新增路径去扫描文件。
