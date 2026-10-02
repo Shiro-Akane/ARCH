@@ -1306,3 +1306,14 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 真实 Linux fixture 验证启动器退出后继续运行、错误 run ID 不触发 Stop、无关进程保留，以及组首进程退出后 TERM-ignoring 后代仍受 owned Stop 清理。带空格/中文路径通过；短命进程退出早于 /proc 观察时明确标识，不伪造 start ticks。
 - 5/5 lifecycle tests PASS；不是 ARCH 演化/Restart 科学验收。当前尚未接入 Core 预检、用户确认、HTTP/UI 或 Linux 可见终端 launcher，不能宣称 Run/Restart 可用。
 - 本机 xterm/gnome-terminal/xfce4-terminal/konsole 均缺失，DISPLAY=:0 可见。后续入口需要明确缺依赖 UX 与实际终端安装/窗口验证，不静默改为无窗口后台计算；Windows 仍范围外。
+
+### 2026-10-02 — Selected binary Run/Restart preparation
+
+- 3C 新增 RunPreparationRunner 与 POST /api/run/prepare：只接受 projectId/caseId/configRevision/mode；从当前关联保存文件读取精确字节，使用已选 binary 的 list-cases/config-schema/inspect-config，复用 v3 类型/身份和 Host 路径预检，前后再次验证 config/binary 未变化。
+- 不依赖仅 Sod/Cellular Preview Profile，不把注册列表硬编码；明确 compiled-version-only 与 core-startup-pending。声明完整性、资源存在性和 Core Setup/EOS/backend/checkpoint 检查分开。Restart 必须匹配显式保存的 restart/restart_file，不写配置、不创建科学输出。
+- 运行预检/HTTP/project 新增 6 项测试通过；与 Configure/configuration 的相关回归共 14/14 PASS（不是独立累计计数）。最终初始化调整后相关 11/11 复验、lint PASS，typecheck 通过。
+- 真实 CPU binary 的保存 Sod v3 输入静态检查 canConfirm=true，无 issue；这只允许下一步用户确认，不是科学运行就绪。完整响应留 .local/integration/run-preflight-ffa7f582-2ccd-4034-9db0-d0cd526677da.json。
+- 该静态检查 binary SHA-256：ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403；config SHA-256：9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843。
+
+- WSL root 管理入口安装 xterm 390 及 8 个必要依赖（无系统升级、无密码/sudo 配置改变）；连接 WSLg 的 1 秒 sleep smoke exit 0。默认 fixed 字体加载有警告，需后续明确字体及视觉验证，不能冒充 Linux manual UAT。
+- 尚未实现确认计划持有/消费、终端启动 endpoint/UI、真实 ARCH Run/Restart；后续继续这些出口，不开展 Windows 适配。

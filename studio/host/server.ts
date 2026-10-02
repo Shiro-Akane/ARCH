@@ -1,3 +1,4 @@
+import type {RunPreparationRunner,PrepareRunRequest} from './runPreparation.ts';
 import type {ConfigureRunner} from './configureRunner.ts';
 import type {WorkflowRunner} from './workflow.ts';
 import type {WorkflowRequest} from '../src/host/workflowContracts.ts';
@@ -13,7 +14,7 @@ import {ConfigError} from './config.ts';
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
 import type { ProjectSnapshot } from '../src/host/contracts.ts';
-export interface ProjectReader { configure?:ConfigureRunner; workflow?:WorkflowRunner; configuration?:ConfigurationAdapter; preview?:PreviewRunner; readSource?():Promise<unknown>; build?:BuildRunner; saveConfig?(request:SaveConfigRequest):Promise<ConfigWriteResponse>; saveConfigAs?(request:SaveConfigAsRequest):Promise<ConfigWriteResponse>; readConfig?(): Promise<ConfigReadResponse>; snapshot(): ProjectSnapshot; refresh(): Promise<ProjectSnapshot> }
+export interface ProjectReader { runPreparation?:RunPreparationRunner; configure?:ConfigureRunner; workflow?:WorkflowRunner; configuration?:ConfigurationAdapter; preview?:PreviewRunner; readSource?():Promise<unknown>; build?:BuildRunner; saveConfig?(request:SaveConfigRequest):Promise<ConfigWriteResponse>; saveConfigAs?(request:SaveConfigAsRequest):Promise<ConfigWriteResponse>; readConfig?(): Promise<ConfigReadResponse>; snapshot(): ProjectSnapshot; refresh(): Promise<ProjectSnapshot> }
 export function createHostServer(reader: ProjectReader, origin: string, desktop?:{token:string}): Server {
   const configureSnapshot=()=>({protocolVersion:PROTOCOL_VERSION,projectId:reader.snapshot().session.projectId,...(reader.configure?.snapshot()??{active:false,available:false})});
   const allowed = new URL(origin);
@@ -29,10 +30,11 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
     const previewStart=req.url==='/api/preview';
     const workflowStart=req.url==='/api/workflow';
     const workflowCancel=/^\/api\/workflow\/([a-f0-9-]{36})\/cancel$/.exec(req.url??'');
+    const prepareRun=req.url==='/api/run/prepare';
     const inspectConfig=req.url==='/api/configuration/inspect';
     const configureOperation=/^\/api\/configure\/([a-f0-9-]{36})\/(events|cancel)$/.exec(req.url??'');
     const eventMatch=/^\/api\/build\/([a-f0-9-]{36})\/events$/.exec(req.url??'');
-    const routes = ['/api/configure','/api/configure/status','/api/cases','/api/workflow','/api/workflow/status','/api/configuration/schema','/api/configuration/inspect','/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
+    const routes = ['/api/run/prepare','/api/configure','/api/configure/status','/api/cases','/api/workflow','/api/workflow/status','/api/configuration/schema','/api/configuration/inspect','/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
     if (!routes.includes(req.url ?? '')&&!eventMatch&&!configureOperation&&!previewCancel&&!workflowCancel) {send(404,{error:'Unknown endpoint'});return;}
     if (req.method === 'OPTIONS') {res.setHeader('Access-Control-Allow-Methods','GET, POST');res.setHeader('Access-Control-Allow-Headers','X-ARCH-Studio, X-ARCH-Protocol, Content-Type');send(200,{});return;}
     if (req.headers['x-arch-studio'] !== '1') {send(403,{error:'Studio request header required'});return;}
@@ -41,9 +43,9 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
     const buildRequest=req.url==='/api/build';
     const configureRequest=req.url==='/api/configure';
     const write=req.url==='/api/config/save'||req.url==='/api/config/save-as';
-    if (req.method !== (refresh||write||buildRequest||configureRequest||configureOperation?.[2]==='cancel'||previewStart||inspectConfig||previewCancel||workflowStart||workflowCancel ? 'POST' : 'GET')) {send(405,{error:'Method not allowed'});return;}
+    if (req.method !== (prepareRun||refresh||write||buildRequest||configureRequest||configureOperation?.[2]==='cancel'||previewStart||inspectConfig||previewCancel||workflowStart||workflowCancel ? 'POST' : 'GET')) {send(405,{error:'Method not allowed'});return;}
     // All endpoints are argument-free. Reject command/path fields rather than ignoring them.
-    if (!write && !buildRequest && !configureRequest && !previewStart && !inspectConfig && !workflowStart && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) {req.resume();send(400,{error:'Request bodies are forbidden'});return;}
+    if (!prepareRun && !write && !buildRequest && !configureRequest && !previewStart && !inspectConfig && !workflowStart && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) {req.resume();send(400,{error:'Request bodies are forbidden'});return;}
     try {
       if(configureOperation){
        if(!reader.configure)throw new BuildError('Configure unavailable',404);
@@ -60,14 +62,20 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
       if(eventMatch){if(!reader.build)throw new BuildError('Build unavailable',404);send(200,reader.build.events(eventMatch[1]));return;}
       if(req.url==='/api/build/profile'||req.url==='/api/build/status'){if(reader.build&&!reader.build.isActive()&&!reader.configure?.isActive()){await reader.build.validate();await reader.build.refreshFreshness();}send(200,reader.build?.snapshot()??{protocolVersion:PROTOCOL_VERSION,projectId:reader.snapshot().session.projectId,configured:false,state:'not-configured',reason:'No Host-owned Build Profile selected.',mappingState:'unknown',binaryState:'freshness-unknown',freshnessReason:'No build provenance.',changedInputs:[]});return;}
       if(req.url==='/api/configure/status'){send(200,configureSnapshot());return;}
-      if(write||buildRequest||configureRequest||previewStart||inspectConfig||workflowStart){
+      if(prepareRun||write||buildRequest||configureRequest||previewStart||inspectConfig||workflowStart){
        if(write&&(!reader.snapshot().host.capabilities.writeConfig||!reader.saveConfig||!reader.saveConfigAs)){send(403,{error:{code:'write-failed',message:'This host does not support configuration writes.'}});return;}
        if(req.headers['content-type']!=='application/json'){send(400,{error:{code:'protocol-error',message:'Expected application/json.'}});return;}
        const body=await new Promise<string>((resolve,reject)=>{let size=0;const chunks:Buffer[]=[];let failed=false;const timer=setTimeout(()=>{failed=true;reject(new ConfigError('protocol-error','Request body timed out.'));req.resume();},10000);req.on('data',(b:Buffer)=>{if(failed)return;size+=b.length;if(size>1024*1024){failed=true;clearTimeout(timer);reject(new ConfigError('payload-too-large','Request exceeds 1 MiB.'));return;}chunks.push(b);});req.on('end',()=>{clearTimeout(timer);if(!failed){try{resolve(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{reject(new ConfigError('protocol-error','Request must be valid UTF-8.'));}}});req.on('error',()=>{clearTimeout(timer);reject(new ConfigError('protocol-error','Request body could not be read.'));});});
        let data:unknown;try{data=JSON.parse(body);}catch{throw new ConfigError('protocol-error','Invalid JSON body.');}
        if(!data||typeof data!=='object'||Array.isArray(data))throw new ConfigError('protocol-error','Expected a configuration request.');
        const r=data as Record<string,unknown>;
+       if(reader.runPreparation?.isActive())throw new BuildError('Run preparation is active; wait before other project operations.',409);
        if(reader.configure?.isActive())throw new BuildError('Configure is active; wait before other project operations.',409);
+       if(prepareRun){
+        if(!reader.runPreparation)throw new BuildError('No selected binary for run preparation.',404);
+        if(reader.build?.isActive()||reader.preview?.isActive()||reader.workflow?.isActive())throw new BuildError('Project operation active; cancel or wait.',409);
+        send(200,{protocolVersion:PROTOCOL_VERSION,...await reader.runPreparation.prepare(r as unknown as PrepareRunRequest)});return;
+       }
        if(workflowStart){if(!reader.workflow)throw new BuildError('Workflow unavailable',404);send(202,await reader.workflow.start(r as unknown as WorkflowRequest));return;}
        if(inspectConfig){if(!reader.configuration)throw new BuildError('Configuration inspection unavailable',404);send(200,await reader.configuration.inspect(r as unknown as ConfigurationRequest));return;}
        if(previewStart){if(!reader.preview)throw new BuildError('Preview unavailable',404);send(202,await reader.preview.start(r as unknown as RealPreviewRequest));return;}
