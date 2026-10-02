@@ -39,3 +39,6 @@ radial_1d 的 1e-20 与 FLASH ARCH 输入的 6.67408e-8 不能直接替换后复
 InitialState 不得进入演化；auto 保留请求/解析结果且不修改输入快照；CPU/CUDA
 共享同一语义。生产验证需解除权限问题后执行，原始结果只留本机。
 本审计不代表 O7.0 或完整目标完成，不缩小 3C 与后续科学验收范围。
+
+
+后续更新：实际 Driver/dispatch bindings 已改用私有构造 RuntimeConfiguration，auto 解析后冻结；CPU 构建、配置入口和 t=0 对照通过。上文为改造前审计，完整 O7.0 仍待其他条目关闭。

@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sstream>
 #include "core/config/RuntimeParams.h"
+#include "core/config/RuntimeConfiguration.h"
+#include <type_traits>
 #include "fixtures/config/burn_controller_input.h"
 #include "physics/network/aprox13/NetAprox13.h"
 #include "physics/network/aprox19/NetAprox19.h"
@@ -17,6 +19,12 @@ template<class T> concept HasMutableCaseMaps = requires(T value) { value.custom_
 static_assert(!HasMutableCaseMaps<SimConfig>);
 template<class T> concept HasMutableGravityConstant = requires(T value) { value.G_const; };
 static_assert(!HasMutableGravityConstant<GravityConfig>);
+static_assert(!std::is_default_constructible_v<arch::config::RuntimeConfiguration>);
+static_assert(!std::is_constructible_v<arch::config::RuntimeConfiguration,
+    const SimConfig&, const arch::config::PreparedConfiguration&>);
+static_assert(std::is_same_v<decltype(std::declval<const arch::config::RuntimeConfiguration&>().config()),
+    const SimConfig&>);
+
 void require(bool value, const char* message) {
     if (!value) throw std::runtime_error(message);
 }

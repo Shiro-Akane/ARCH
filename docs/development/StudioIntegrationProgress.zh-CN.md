@@ -1028,3 +1028,21 @@ topology_transaction, resolved_execution_plan, runtime_probe_and_capabilities,
 compute_backend. Previously passed production t=0 checks were not repeated.
 No evolution campaign/CUDA/Windows work; historical physics migration and controlled
 final runtime configuration remain open. Full joint delivery not complete.
+
+### O7.0 frozen configuration through actual Driver boundary
+
+Added RuntimeConfiguration with private constructor, owned const config/species;
+only checked DispatchSolver is a friend. Existing use_nse=auto resolves first,
+then config freezes before resource construction. Euler/RK2/RK3 bindings and
+launch helpers through run_simulation now accept this snapshot, not caller-supplied
+SimConfig/species pairs. Existing plan/backend resolution and numerical code unchanged.
+Compile-time checks prohibit default/external construction and require const access.
+
+First build failed on unqualified PreparedConfiguration in global friend declaration;
+qualified the type, preserving private access. Retry build PASS (19.141s, zero swap).
+configuration_entry_contract/configuration_input/resolved_execution_plan 3/3 PASS.
+Because real Driver interfaces changed, reran existing authorized t=0 Sod/Cellular
+topology comparison: PASS; raw evidence in fresh persistent .local directories,
+processed summary O7RuntimeConfigurationT0Summary.json. No evolution/CUDA claim.
+Public preparation SimConfig and further provenance/metadata migration still remain;
+this boundary closure alone does not establish complete O7.0 or joint delivery.

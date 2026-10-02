@@ -1,0 +1,24 @@
+{
+  "scope": "t=0 initial topology regression after runtime boundary change; no evolution or CUDA acceptance",
+  "baseCommit": "eff8b9f4dc092fb4ac67cc2927b94e9b5caea806",
+  "cases": [
+    {
+      "case": "Sod",
+      "time": 0,
+      "inputSha256": "595001d1c87d56fe9f0c3c4203bc36fc2c09fb425acd2f4dd29c42082bcec12b",
+      "binarySha256": "8dc4488b6c7a195d56fc2e6c18abde2c1961002d4c17cda3ab8ff591891ed544",
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/Sod-tyoclkp3",
+      "leaves": 12,
+      "logicalKeysEqual": true
+    },
+    {
+      "case": "CellularDet",
+      "time": 0,
+      "inputSha256": "c3e8b28d04de5f9be5667799c6a4501d7dc6b0c61c32d7065552768817ee1ab6",
+      "binarySha256": "8dc4488b6c7a195d56fc2e6c18abde2c1961002d4c17cda3ab8ff591891ed544",
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/CellularDet-61gz2kpp",
+      "leaves": 20,
+      "logicalKeysEqual": true
+    }
+  ]
+}

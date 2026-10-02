@@ -23,6 +23,7 @@
 
 #include "amr/AMRControl.h"
 #include "core/config/RuntimeParams.h"
+#include "core/config/RuntimeConfiguration.h"
 #include "data/FluidState.h"
 #include "grid/Grid.h"
 #include "interface/ProblemGenerator.h"
@@ -37,19 +38,19 @@
 #endif
 
 // Integrator-specific translation units expose these narrow dispatch entries.
-void Dispatch_Euler(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+void Dispatch_Euler(amr::AMRControl&, const arch::config::RuntimeConfiguration&,
                     const RunState&,
                     const arch::dispatch::ResolvedExecutionPlan&,
                     const arch::dispatch::ExecutionRequirements&,
                     const arch::dispatch::BackendResolution&,
                     arch::dispatch::StartupOrder&);
-void Dispatch_RK2(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+void Dispatch_RK2(amr::AMRControl&, const arch::config::RuntimeConfiguration&,
                   const RunState&,
                   const arch::dispatch::ResolvedExecutionPlan&,
                   const arch::dispatch::ExecutionRequirements&,
                   const arch::dispatch::BackendResolution&,
                   arch::dispatch::StartupOrder&);
-void Dispatch_RK3(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+void Dispatch_RK3(amr::AMRControl&, const arch::config::RuntimeConfiguration&,
                   const RunState&,
                   const arch::dispatch::ResolvedExecutionPlan&,
                   const arch::dispatch::ExecutionRequirements&,
@@ -194,48 +195,50 @@ void DispatchSolver(ProblemGenerator &problem,
     const auto& specs = prepared.species();
     // Own the effective configuration for the complete driver lifetime. Auto
     // selection must reach CPU and device views, initialisation and restart IO.
-    SimConfig config = requested_config;
+    SimConfig effective = requested_config;
     std::cout << "[Dispatch] Initializing System..." << std::endl;
 
     using namespace arch::dispatch;
     StartupOrder startup_order;
     const auto requested_backend = parse_compute_backend(
-        config.execution.compute_backend);
+        effective.execution.compute_backend);
     if (!requested_backend.ok)
         throw std::runtime_error(std::string(requested_backend.error));
 
     const auto parsed_plan = resolve_execution_plan(
-        config, [&] {
+        effective, [&] {
             return inspect_eos_table_rank(
-                EOSDispatcher::table_path(config, "Tabular"));
+                EOSDispatcher::table_path(effective, "Tabular"));
         }, specs.count());
     if (!parsed_plan.ok)
         throw std::runtime_error(std::string(parsed_plan.error));
     if (parsed_plan.value.eos == EosId::Tabular3D
         || parsed_plan.value.eos == EosId::Tabular4D) {
         const auto source = inspect_tabular_source(
-            EOSDispatcher::table_path(config, "Tabular"));
+            EOSDispatcher::table_path(effective, "Tabular"));
         EOSDispatcher::validate_coupling(
-            config, source, parsed_plan.value.flux == FluxId::Sw);
+            effective, source, parsed_plan.value.flux == FluxId::Sw);
     }
     if (parsed_plan.value.eos == EosId::Helmholtz && parsed_plan.value.flux == FluxId::Sw)
         throw std::invalid_argument("Steger-Warming requires a composition-only gamma; select HLL, HLLC, Roe or VL for Helmholtz EOS.");
-    resolve_nse_request(config.physics.burn, parsed_plan.value.network);
-    if (config.physics.burn.nse_auto && config.physics.burn.use_burn) {
+    resolve_nse_request(effective.physics.burn, parsed_plan.value.network);
+    if (effective.physics.burn.nse_auto && effective.physics.burn.use_burn) {
         std::cout << "[Dispatch] use_nse=auto resolved to "
-                  << (config.physics.burn.use_nse ? "enabled" : "disabled")
+                  << (effective.physics.burn.use_nse ? "enabled" : "disabled")
                   << " (" << network_nse_reason(parsed_plan.value.network) << ")"
-                  << "; thresholds T>" << config.physics.burn.nseTempThreshold
-                  << " K, rho>" << config.physics.burn.nseDensThreshold
+                  << "; thresholds T>" << effective.physics.burn.nseTempThreshold
+                  << " K, rho>" << effective.physics.burn.nseDensThreshold
                   << " g/cm^3." << std::endl;
     }
-    if (config.physics.burn.use_burn && config.physics.burn.use_nse
+    if (effective.physics.burn.use_burn && effective.physics.burn.use_nse
         && !network_supports_nse(parsed_plan.value.network)) {
         throw std::invalid_argument(
             "use_nse=true requires an NSE-capable network: "
             + std::string(network_nse_reason(parsed_plan.value.network))
             + ". Select use_nse=auto or false to retain ordinary ODE burning.");
     }
+    const arch::config::RuntimeConfiguration runtime(effective, prepared);
+    const auto& config = runtime.config();
     const auto cpu_candidate = materialize_execution_plan(
         parsed_plan.value, ComputeBackend::Cpu, specs.count());
     const auto cuda_candidate = materialize_execution_plan(
@@ -337,17 +340,17 @@ void DispatchSolver(ProblemGenerator &problem,
 
     if (plan.time_integrator == arch::dispatch::TimeIntegratorId::Rk2)
     {
-        Dispatch_RK2(amr_ctrl, config, specs, run_state, plan, requirements,
+        Dispatch_RK2(amr_ctrl, runtime, run_state, plan, requirements,
                      backend, startup_order);
     }
     else if (plan.time_integrator == arch::dispatch::TimeIntegratorId::Rk3)
     {
-        Dispatch_RK3(amr_ctrl, config, specs, run_state, plan, requirements,
+        Dispatch_RK3(amr_ctrl, runtime, run_state, plan, requirements,
                      backend, startup_order);
     }
     else if (plan.time_integrator == arch::dispatch::TimeIntegratorId::Euler)
     {
-        Dispatch_Euler(amr_ctrl, config, specs, run_state, plan, requirements,
+        Dispatch_Euler(amr_ctrl, runtime, run_state, plan, requirements,
                        backend, startup_order);
     }
     else

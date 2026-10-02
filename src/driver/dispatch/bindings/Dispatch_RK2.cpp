@@ -26,13 +26,15 @@
 #include "physics/gravity/GravityDispatch.h"
 
 void Dispatch_RK2(
-    amr::AMRControl &amr_ctrl, const SimConfig &config,
-    const SpeciesManager &specs, const RunState &run_state,
+    amr::AMRControl &amr_ctrl, const arch::config::RuntimeConfiguration &runtime,
+    const RunState &run_state,
     const arch::dispatch::ResolvedExecutionPlan& plan,
     const arch::dispatch::ExecutionRequirements& requirements,
     const arch::dispatch::BackendResolution& backend,
     arch::dispatch::StartupOrder& startup_order)
 {
+    const auto& config = runtime.config();
+    const auto& specs = runtime.species();
     EOSDispatcher::dispatch_eos(
         plan.eos, config, specs,
         [&](auto &&eos, std::string_view loaded_table_sha256)
@@ -56,7 +58,7 @@ void Dispatch_RK2(
                   << " (" << config.numerics.limiter << ")" << std::endl;
 
         DispatchImpl::launch_resolved_run<SolverRK2>(
-            amr_ctrl, eos, grav_handle.get(), burn_handle, config, specs,
+            amr_ctrl, eos, grav_handle.get(), burn_handle, runtime,
             run_state, checkpoint_provenance, plan, requirements, backend,
             startup_order);
     });
