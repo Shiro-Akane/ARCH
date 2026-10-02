@@ -1493,3 +1493,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 用户确认默认启动没有看到窗口，故该路径桌面可见性验收失败，不能只解释为截图限制。Linux/WSLg仍建立了RDP窗口及Host readiness，但这些证据不足。
 - 按本轮记录的PID/start ticks终止默认launcher，旧Host414正常退出/clean shutdown。仅局部参数 --disable-gpu --ozone-platform=x11 对照启动，Host1310 readiness成功；没有修改源码或WSLg全局配置。
 - Computer Use仍返回无关像素，停止输入。已请求用户确认软件X11窗口是否出现；对照保持运行供核对。本地desktop-software-x11-summary.json登记精确进程身份与结果，不标桌面UAT通过。
+
+### 2026-10-02 — WSLg visibility diagnosis and compositor recovery
+
+- 用户确认软件X11对照也仅有任务栏图标；Codex侧边栏页面不能视为独立Linux窗口。临时Electron诊断显示visible=true/minimized=false/bounds=(560,250,1440,940)，处于2560×1440屏幕内；该诊断源码改动已逐项撤回。
+- 沿用用户此前明确Weston重启授权：关闭本轮自有launcher/Host1852并确认clean shutdown；以系统root核对/usr/bin/weston后TERM旧PID16，WSLGd恢复为2236，未终止工程发行版。
+- 默认launcher重开Host421 readiness成功；Computer Use仍返回无关画面，停止UI输入。新窗口保留供用户确认，afterRestartUserObservation仍pending。本地精简记录desktop-after-weston-summary.json，未标桌面验收通过。
