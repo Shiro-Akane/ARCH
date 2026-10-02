@@ -1235,3 +1235,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - CPU Host Build 记录构建前/后的 compiler input snapshot，比较 object 数、路径集合、内容 SHA 与 size。首次无 deps 或采集失败不伪造稳定；manifest 标记 compilerInputsStableDuringBuild=false，freshness unknown（不谎报必然源码变化）。
 - Build/依赖稳定性回归 9/9 PASS、typecheck PASS。完整 link/toolchain 和后续 freshness 动态比对仍待接入；未升级 dependenciesComplete。
+
+
+### 2026-10-02 — Actual compiler-aware manifest validation
+
+- 在 clean 64a04d2e 经真实 Host Build 路径刷新 manifest：66 objects / 735 compiler inputs，前后内容/集合稳定，binary SHA 与首次构建相同；freshness-unknown 正确保留。guard 1.015s、swap 0，无增量编译、无 simulation。
+- 精简证据见 StudioCompilerInputsBuildSummary.json；当前完整记录按 build ID 留本地。发现本地 smoke 脚本旧固定结果文件被本次覆盖，首次摘要身份仍在 Git，但该路径不能再作为首次完整日志；已改为每 build ID 独立文件，避免后续覆盖。旧 guard 日志保留。
+- 链接/工具链及持续 freshness 检查仍未完成，不据此宣布完整构建证明。
