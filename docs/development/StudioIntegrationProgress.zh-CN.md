@@ -1317,3 +1317,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - WSL root 管理入口安装 xterm 390 及 8 个必要依赖（无系统升级、无密码/sudo 配置改变）；连接 WSLg 的 1 秒 sleep smoke exit 0。默认 fixed 字体加载有警告，需后续明确字体及视觉验证，不能冒充 Linux manual UAT。
 - 尚未实现确认计划持有/消费、终端启动 endpoint/UI、真实 ARCH Run/Restart；后续继续这些出口，不开展 Windows 适配。
+
+### 2026-10-02 — Confirmed terminal handoff and Run routes
+
+- 3C Host 保存最近一次预检计划（5 分钟有效），显式 compiled-binary/saved-input 确认只能消费一次；消费前复核配置、binary 和资源可达性。前端修改响应不改变 Host-held plan。
+- 新增 Linux xterm 交接、逐 run 的只读输入副本/确认记录、GET 状态及无 body 的 owned Stop。命令/argv/cwd/env 由 Host 固定；项目 Build/Configure/Preview 与交接阶段互斥。Host 生命周期不接管已交付终端的计算。
+- 终端未确认交接时保留 run ID、记录 Stop 且不盲重试；迟到 worker 在启动 Core 前检查已有 Stop。无可见终端环境时明确失败，不回退后台运行。
+- 当前工程回归 25/25 PASS，包含计划重放/篡改、文件及 checkpoint 路径变化、HTTP 权限、独立进程与后代清理；尚未进行真实 ARCH terminal run，UI 确认面板与 Restart 继续演化仍待实现/验收。

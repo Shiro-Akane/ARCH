@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,writeFile,rm,readdir} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,rm,readdir,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {RunPreparationRunner} from '../host/runPreparation.ts';
@@ -25,8 +25,9 @@ if(input.includes('restart-fixture')){
 if(input.includes('invalid-fixture')){result.status='error';result.completeness.state='invalid';process.exitCode=3;}
 setTimeout(()=>console.log(JSON.stringify(result)),input.includes('slow-fixture')?100:0);
 });
-}else process.exit(99);
+}else if(process.argv[2]==='Sod')setTimeout(()=>process.exit(0),20);else process.exit(99);
 `;
+ await mkdir(root+'/studio');
  await writeFile(root+'/ARCH',script,{mode:0o755});
  await writeFile(root+'/saved.par','saved fixture\n');
  const config=()=>readConfig(root,'saved.par','project');
@@ -111,5 +112,87 @@ test('project run preparation reads the current associated saved file without a 
   const saved=await project.readConfig();
   const plan=await project.runPreparation.prepare({projectId:saved.projectId,caseId:'Sod',configRevision:saved.fingerprint.sha256,mode:'run'});
   assert.equal(plan.canConfirm,true);assert.equal(plan.config.relativePath,'saved.par');
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+
+import {RunController} from '../host/runController.ts';
+import {spawn} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const worker=fileURLToPath(new URL('../host/runWorker.ts',import.meta.url));
+test('confirmation consumes a Host-held plan once and ignores mutations to the returned object',async()=>{
+ const f=await fixture();
+ try{
+  const request={projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'run' as const};
+  const plan=await f.runner.prepare(request),sha=plan.binary.fingerprint.sha256;
+  plan.binary.fingerprint.sha256='0'.repeat(64);
+  const confirmation={projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary' as const};
+  await assert.rejects(f.runner.consume({...confirmation,program:'/bin/sh'} as never),/confirmation required/);
+  const consumed=await f.runner.consume(confirmation);
+  assert.equal(consumed.plan.binary.fingerprint.sha256,sha);
+  await assert.rejects(f.runner.consume(confirmation),/unavailable/);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+test('changed confirmed input prevents terminal launch; plan cannot be replayed',async()=>{
+ const f=await fixture();let launched=false;
+ try{
+  const plan=await f.runner.prepare({projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'run'});
+  const run=new RunController(f.runner,{terminal:async()=>{launched=true;throw new Error('must not launch');}});
+  await writeFile(f.root+'/saved.par','changed after prepare');
+  const confirmation={projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary' as const};
+  await assert.rejects(run.start(confirmation),/changed after preparation/);
+  assert.equal(launched,false);await assert.rejects(run.start(confirmation),/unavailable/);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+test('confirmed handoff stores exact bytes, retains status and completes independently',async()=>{
+ const f=await fixture();
+ try{
+  const plan=await f.runner.prepare({projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'run'});
+  const run=new RunController(f.runner,{terminal:async directory=>{
+   const child=spawn(process.execPath,[worker,directory],{detached:true,stdio:'ignore'});
+   await new Promise<void>((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});child.unref();
+   return {pid:child.pid!,exited:()=>child.exitCode!==null||child.signalCode!==null};
+  }});
+  const launched=await run.start({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'});
+  assert.equal(await readFile(f.root+'/studio/.local/runs/'+launched.runId+'/input.par','utf8'),await readFile(f.root+'/saved.par','utf8'));
+  let state=await run.status(launched.runId);
+  for(let n=0;n<50&&!state.finishedAt;n++){await new Promise(r=>setTimeout(r,20));state=await run.status(launched.runId);}
+  assert.equal(state.state,'succeeded');assert.equal(state.exitCode,0);
+  await assert.rejects(run.stop(launched.runId),/already finished/);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+
+test('run start/status/Stop HTTP rejects command authority and uses only the confirmed plan',async()=>{
+ const f=await fixture();
+ const runs=new RunController(f.runner,{terminal:async directory=>{
+  const child=spawn(process.execPath,[worker,directory],{detached:true,stdio:'ignore'});
+  await new Promise<void>((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});child.unref();
+  return {pid:child.pid!,exited:()=>child.exitCode!==null||child.signalCode!==null};
+ }});
+ const server=createHostServer({runPreparation:f.runner,runs,snapshot:()=>({session:{projectId:'project'},host:{}}) as never,refresh:async()=>({}) as never},'http://127.0.0.1:4179');
+ try{
+  await listenLocal(server,0);
+  const base='http://127.0.0.1:'+(server.address() as {port:number}).port;
+  const headers={Origin:'http://127.0.0.1:4179','X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,'Content-Type':'application/json'};
+  const plan=await f.runner.prepare({projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'run'});
+  const confirmation={projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'};
+  assert.equal((await fetch(base+'/api/run',{method:'POST',headers,body:JSON.stringify({...confirmation,program:'/bin/sh'})})).status,400);
+  const started=await fetch(base+'/api/run',{method:'POST',headers,body:JSON.stringify(confirmation)});
+  assert.equal(started.status,202);
+  const result=await started.json() as {runId:string};
+  assert.equal((await fetch(base+'/api/run/'+result.runId+'/stop',{method:'POST',headers,body:'{"pid":1}'})).status,400);
+  const status=await fetch(base+'/api/run/'+result.runId,{headers});assert.equal(status.status,200);
+  assert.equal((await fetch(base+'/api/run',{method:'POST',headers,body:JSON.stringify(confirmation)})).status,409);
+  assert.equal((await fetch(base+'/api/run/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',{headers})).status,404);
+  for(let n=0;n<50&&!(await runs.status(result.runId)).finishedAt;n++)await new Promise(r=>setTimeout(r,20));
+  assert.equal((await runs.status(result.runId)).state,'succeeded');
+ }finally{await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(f.root,{recursive:true,force:true});}
+});
+test('checkpoint disappearance after preparation is rejected before confirmation is consumed into a job',async()=>{
+ const f=await fixture();
+ try{
+  await writeFile(f.root+'/saved.par','restart-fixture');await writeFile(f.root+'/restart.h5','metadata-only fixture');
+  const plan=await f.runner.prepare({projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'restart'});
+  await rm(f.root+'/restart.h5');
+  await assert.rejects(f.runner.consume({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'}),/Resource preflight changed/);
  }finally{await rm(f.root,{recursive:true,force:true});}
 });

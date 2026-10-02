@@ -108,3 +108,12 @@ test('Stop also terminates a TERM-ignoring child after its group leader exits',a
   assert.ok(!stat||stat.slice(stat.lastIndexOf(')')+2).startsWith('Z '),'owned descendant must be exited');
  }finally{if(descendant)try{process.kill(descendant,'SIGKILL');}catch{/* gone */}await rm(root,{recursive:true,force:true});}
 });
+
+test('a Stop request recorded before terminal handoff prevents any Core start',async()=>{
+ const {root,directory,job}=await setup('#!/bin/sh\nexit 0\n');
+ try{
+  await writeFile(directory+'/stop-request',job.runId);
+  const state=await executeRun(job,directory);
+  assert.equal(state.state,'stopped');assert.equal(state.processId,undefined);assert.ok(state.finishedAt);
+ }finally{await rm(root,{recursive:true,force:true});}
+});

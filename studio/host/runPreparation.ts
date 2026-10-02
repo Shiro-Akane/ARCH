@@ -7,8 +7,9 @@ import {pathPreflight} from './pathPreflight.ts';
 import {validateRegistry} from '../src/host/workflowValidation.ts';
 import {validateConfigurationSchema,validateConfigurationInspection} from '../src/host/configurationValidation.ts';
 import type {ConfigReadResponse,FileFingerprint} from '../src/host/contracts.ts';
-import type {ConfigurationInspection,PathCheck} from '../src/host/configurationContracts.ts';
+import type {ConfigurationInspection,ConfigurationSchema,PathCheck} from '../src/host/configurationContracts.ts';
 export interface PrepareRunRequest {projectId:string;caseId:string;configRevision:string;mode:'run'|'restart'}
+export interface ConfirmRunRequest {projectId:string;planId:string;confirmation:'run-saved-input-with-compiled-binary'}
 export interface RunPreparation {
  planId:string;projectId:string;caseId:string;mode:'run'|'restart';createdAt:string;
  binary:{relativePath:string;fingerprint:FileFingerprint;sourceClaim:'compiled-version-only'};
@@ -21,6 +22,7 @@ export interface RunPreparation {
 /** Static run preflight on the selected binary, independent of Preview capability/freshness. */
 export class RunPreparationRunner {
  private active=false;
+ private prepared?:{plan:RunPreparation;schema:ConfigurationSchema};
  readonly root:string;readonly projectId:string;readonly binaryRelativePath:string;
  private config:()=>Promise<ConfigReadResponse>;
  constructor(root:string,projectId:string,binaryRelativePath:string,config:()=>Promise<ConfigReadResponse>){
@@ -50,7 +52,7 @@ export class RunPreparationRunner {
    !['run','restart'].includes(request.mode)||typeof request.configRevision!=='string'||!/^[a-f0-9]{64}$/.test(request.configRevision))
    throw new BuildError('Invalid run preparation request.');
   if(this.active)throw new BuildError('Run preparation already active.',409);
-  this.active=true;
+  this.active=true;this.prepared=undefined;
   try{
    const saved=await this.config();
    if(saved.projectId!==this.projectId||saved.fingerprint.sha256!==request.configRevision)
@@ -81,12 +83,39 @@ export class RunPreparationRunner {
    const latest=await this.config();
    if(latest.relativePath!==saved.relativePath||!sameFingerprint(latest.fingerprint,saved.fingerprint)||!sameFingerprint(await this.binary(),binary))
     throw new BuildError('Configuration or executable changed during run preparation.',409);
-   return {planId:randomUUID(),projectId:this.projectId,caseId:request.caseId,mode:request.mode,createdAt:new Date().toISOString(),
+   const plan:RunPreparation={planId:randomUUID(),projectId:this.projectId,caseId:request.caseId,mode:request.mode,createdAt:new Date().toISOString(),
     binary:{relativePath:this.binaryRelativePath,fingerprint:binary,sourceClaim:'compiled-version-only'},
     config:{relativePath:saved.relativePath,fingerprint:saved.fingerprint},inspection,pathChecks,issues,
     canConfirm:issues.length===0,simulationReadiness:'core-startup-pending',checkpointPath,
     pendingChecks:['Authoritative Core Setup and runtime configuration','EOS and network resource loading','Execution backend availability',
      ...(request.mode==='restart'?['Core checkpoint identity/layout and continuation compatibility']:[])]};
+   this.prepared={plan:structuredClone(plan),schema};
+   return plan;
+  }finally{this.active=false;}
+ }
+ async consume(request:ConfirmRunRequest){
+  const keys=['projectId','planId','confirmation'];
+  if(!request||Object.keys(request).length!==keys.length||Object.keys(request).some(k=>!keys.includes(k))||
+   request.projectId!==this.projectId||typeof request.planId!=='string'||request.confirmation!=='run-saved-input-with-compiled-binary')
+   throw new BuildError('Explicit saved-input/compiled-binary confirmation required.');
+  if(this.active)throw new BuildError('Run preparation already active.',409);
+  const prepared=this.prepared;
+  if(!prepared||prepared.plan.planId!==request.planId||!prepared.plan.canConfirm||
+   Date.now()-Date.parse(prepared.plan.createdAt)>5*60*1000)throw new BuildError('Run plan unavailable, invalid or expired; prepare again.',409);
+  this.prepared=undefined;this.active=true;
+  try{
+   const plan=prepared.plan,saved=await this.config();
+   if(saved.projectId!==this.projectId||saved.relativePath!==plan.config.relativePath||
+    !sameFingerprint(saved.fingerprint,plan.config.fingerprint)||!sameFingerprint(await this.binary(),plan.binary.fingerprint))
+    throw new BuildError('Saved input or binary changed after preparation; prepare again.',409);
+   const checks=await pathPreflight(prepared.schema,plan.inspection,this.root);
+   for(const check of checks){
+    const p=plan.inspection.parameters.find(p=>p.key===check.key);
+    if(p?.applicability.state==='not-applicable')continue;
+    if(check.status==='error'||check.status==='unable-to-check'||(check.status==='not-set'&&p?.requirement.required===true))
+     throw new BuildError('Resource preflight changed: '+check.key+': '+check.message,409);
+   }
+   return {plan:structuredClone(plan),configText:saved.text};
   }finally{this.active=false;}
  }
 }

@@ -74,6 +74,9 @@ export async function executeRun(job:RunJob,directory:string):Promise<RunState>{
  let owned:ChildProcess|undefined;
  let output:Awaited<ReturnType<typeof open>>|undefined,tail:Awaited<ReturnType<typeof open>>|undefined;
  try{
+  if((await readFile(directory+'/stop-request','utf8').catch(()=>'' )).trim()===job.runId){
+   state.state='stopped';return state;
+  }
   const original=await readConfig(job.projectRoot,job.configRelativePath,job.runId);
   if(!sameFingerprint(original.fingerprint,job.configFingerprint))throw new Error('Saved configuration changed after confirmation.');
   const input=await readConfig(job.projectRoot,job.inputRelativePath,job.runId);
