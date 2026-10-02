@@ -1272,3 +1272,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 读取 manifest 时验证 compiler 输入/driver 的结构、SHA、size、绝对路径、重复项与稳定性布尔；损坏记录不恢复为有效 provenance。
 - 实际保存/重新读取/篡改字段拒绝及 Build suite 9/9 PASS，typecheck PASS。完整链接与工具链依赖仍未完成。
+
+
+### 2026-10-02 — Actual target link-input audit
+
+- Ninja 1.11.1 -t inputs ARCH 包含 explicit/implicit/order-only，但明确排除 validation inputs；且含 phony，不可直接作为全文件清单。
+- 处理后审计 StudioLinkInputAudit.json 记录实际外部链接文件 SHA/realpath/格式，覆盖 HDF5/KLU/OpenMP 等。libm 等可能为 linker script，不能只哈希脚本就假定实际 ELF 已覆盖。
+- 下一步需按 rule 区分 phony、追踪 linker script/隐式库与 compiler 子程序；当前不提升完整覆盖。只读审计，无编译或演化。

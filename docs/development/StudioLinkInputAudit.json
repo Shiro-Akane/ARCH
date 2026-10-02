@@ -1,0 +1,120 @@
+{
+  "sourceCommit": "35a75a69cc1b270065686efef45a02b4fd39d447",
+  "target": "ARCH",
+  "ninjaVersion": "1.11.1",
+  "targetInputCount": 153,
+  "externalLinkInputs": [
+    {
+      "path": "/usr/lib/gcc/x86_64-linux-gnu/13/libgomp.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0",
+      "size": 352304,
+      "sha256": "135f3c8f006d2fe5e68e51281c7974cb991a03de3bfb3593d68d174dfcf854d1",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libhdf5_serial.so.103.4.0",
+      "size": 3613632,
+      "sha256": "aa9c9c402261b73469d0b79fe0d585537bdea8d4b5dab872fab613640277db0e",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libhdf5_serial_cpp.so.103.4.2",
+      "size": 496640,
+      "sha256": "d9d41f75955659f372a7e3b422fb3b62bb8749748600db4aebe3282418ce82dd",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libhdf5_serial_hl.so.100.1.7",
+      "size": 142800,
+      "sha256": "f7612eea5f3df4d0fb7b7d8d0840b79ee25958e00da8d4934fe869ae36431a2b",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl_cpp.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libhdf5_serial_hl_cpp.so.100.1.8",
+      "size": 23000,
+      "sha256": "75b0c33f70d13236d3366688dab121e8d15fc358dd426347be2b069219f707fd",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libcrypto.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libcrypto.so.3",
+      "size": 5309400,
+      "sha256": "6866ed711dab8927e1bf82bf1cd30e828bdfc34f3cc1e83b1c9eb01ce6c37d9a",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libcurl.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+      "size": 786336,
+      "sha256": "cf6398ebba028cc7dcc5425208bb2da2d0706b885a7c9c4cbac3d453e512c1f6",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libdl.a",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libdl.a",
+      "size": 8,
+      "sha256": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+      "elf": false,
+      "archive": true
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libklu.so.2.3.2",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libklu.so.2.3.2",
+      "size": 170168,
+      "sha256": "40affe6ff14811a9605a5b8eb4accd02667fe1567e0e95f7f5292a0854c07bdb",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libm.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libm.so",
+      "size": 140,
+      "sha256": "55de4a3e12e17c3e2b18eb95ee21b3f46a8893ea6cab68c0a1c3a5caaf32e6cf",
+      "elf": false,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libpthread.a",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libpthread.a",
+      "size": 8,
+      "sha256": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+      "elf": false,
+      "archive": true
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libsz.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libsz.so.2.0.1",
+      "size": 14256,
+      "sha256": "e73fa40252e84d38d64f9b3268ae6679530a777a55d6478d6b24de176d845c4b",
+      "elf": true,
+      "archive": false
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/libz.so",
+      "resolvedPath": "/usr/lib/x86_64-linux-gnu/libz.so.1.3",
+      "size": 113000,
+      "sha256": "86200da370f20476a2507e9097a789b5ef97269b4ca8d5e164ad82dab9d99892",
+      "elf": true,
+      "archive": false
+    }
+  ],
+  "dependenciesComplete": false,
+  "gaps": [
+    "phony nodes require rule classification",
+    "validation inputs excluded by Ninja inputs tool",
+    "linker scripts and implicit library resolution",
+    "compiler subprocess and linker identity"
+  ],
+  "coverage": "read-only target graph audit; no build or simulation"
+}
