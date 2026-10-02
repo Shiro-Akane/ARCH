@@ -1,3 +1,4 @@
+import {BUILD_PROFILES} from '../host/buildProfile.ts';
 import {openProject} from '../host/project.ts';
 import {createHostServer,listenLocal} from '../host/server.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
@@ -77,4 +78,18 @@ test('HTTP Configure rejects browser authority and publishes actual completion',
   assert.equal((await fetch(url+'/api/configure/'+status.operationId+'/cancel',{headers})).status,405);
   assert.equal((await fetch(url+'/api/configure/'+status.operationId+'/cancel',{method:'POST',headers,body:'{}'})).status,400);
  }finally{configure.cancel();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true});}
+});
+
+test('project assembly retains Configure ownership and rejects mismatched source/build association',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch configure project-'));
+ try{
+  await writeFile(root+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(Project NONE)\n');
+  const profile={id:'project',sourceRoot:root,buildDirRelative:'build',generator:'Ninja' as const,definitions:{}};
+  const reader=await openProject({project:root,configureProfile:profile});
+  assert.ok(reader.configure);
+  assert.equal((await reader.configure.run(reader.snapshot().session.projectId,'project')).state,'succeeded');
+  await assert.rejects(openProject({project:root,configureProfile:{...profile,sourceRoot:'/other'}}),/source root/);
+  await assert.rejects(openProject({project:root,configureProfile:profile,buildProfile:BUILD_PROFILES[0].id}),/same managed source/);
+  await reader.configure.shutdown();
+ }finally{await rm(root,{recursive:true,force:true});}
 });

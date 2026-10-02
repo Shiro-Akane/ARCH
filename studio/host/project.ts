@@ -19,6 +19,11 @@ export interface ProjectOptions { project:string; case?:string; config?:string; 
 export async function openProject(options:ProjectOptions) {
  const root=await projectRoot(options.project);
  const selectedProfile=BUILD_PROFILES.find(p=>p.id===options.buildProfile);
+ if(options.configureProfile){
+  if(options.configureProfile.sourceRoot!==root)throw new Error('Configure source root differs from managed project.');
+  if(selectedProfile&&(selectedProfile.managedSourceRoot!==root||selectedProfile.buildDirRelative!==options.configureProfile.buildDirRelative))
+   throw new Error('Configure and Build profiles must use the same managed source and build directory.');
+ }
  if(selectedProfile){if(options.case&&options.case!==selectedProfile.sourceRelativePath)throw new Error('Selected source differs from fixed Build Profile.');if(options.binary&&options.binary!==selectedProfile.outputBinaryRelative)throw new Error('Selected binary differs from fixed Build Profile.');options.case=selectedProfile.sourceRelativePath;options.binary=selectedProfile.outputBinaryRelative;}
  for(const value of [options.case,options.config,options.binary])if(value!==undefined)selectedPath(value);
  const read=async(value:string|undefined,kind:ProjectFileRef['kind'])=>value===undefined?undefined:await fingerprint(root,value,kind);
@@ -27,7 +32,6 @@ export async function openProject(options:ProjectOptions) {
  let result:ProjectSnapshot={host:{protocolVersion:PROTOCOL_VERSION,hostKind:'local',platform:process.platform,projectRoot:root,capabilities:{readProject:true,writeConfig:process.platform==='linux',build:false,preview:false,watchFiles:false}},session:{projectId:randomUUID(),displayName:path.basename(root),projectRoot:root,caseSource,parameterFile,executable,sourceState:state(caseSource),configFileState:state(parameterFile),binaryState:state(executable),mapping:'unknown',metadata:'unavailable',openedAt:new Date().toISOString(),refreshedAt:new Date().toISOString()}};
  let build:BuildRunner|undefined;
  if(options.buildProfile){if(!selectedProfile)throw new Error('Unknown Host build profile');build=new BuildRunner(root,result.session.projectId,selectedProfile!);result.host.capabilities.build=(await build.initialize()).configured;}
- if(options.configureProfile&&options.configureProfile.sourceRoot!==root)throw new Error('Configure source root differs from managed project.');
  const configure=options.configureProfile?new ConfigureRunner(options.configureProfile):undefined;
  const preview=build?.profile.id===SOD_PREVIEW_PROFILE.buildProfileId?new PreviewRunner(build,SOD_PREVIEW_PROFILE,{},PREVIEW_PROFILES):undefined;
  const workflow=preview?new WorkflowRunner(preview):undefined;

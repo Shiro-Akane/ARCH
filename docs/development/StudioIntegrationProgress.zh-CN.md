@@ -1176,3 +1176,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - openProject 可接收 Host-only ConfigureProfile，校验 source root 与项目一致；Build/Preview busy 条件计入 Configure。CLI/Desktop Linux Host 退出等待 Configure shutdown；shutdown 拒绝新配置并等待实际 close。
 - 真实 CMake shutdown/PID 消失/关闭后拒绝重启及已有 Configure/HTTP 检查 3/3 PASS，typecheck/lint PASS。尚未选择生产 ConfigureProfile 或接通 UI，不代表真实 ARCH Configure/Build/Run 已完成。
+
+
+### 2026-10-02 — Configure/Build association
+
+- 项目装配提前拒绝 Configure 与 Build 的 source/build directory 不一致；单独 Configure 仍严格绑定 managed source。
+- 新增 openProject→Configure 真实 CMake 测试及错误关联拒绝；Configure suite 4/4 PASS、typecheck PASS。生产 profile/UI 尚待启用，完整交付未完成。
