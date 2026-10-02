@@ -1260,3 +1260,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 新增 CMake toolchains-v1 读取器，校验 reply 位于选定 build tree，记录 compiler path/realpath/id/version/SHA/size；明确缺 compiler 子程序、linker、隐式库，不宣称完整。
 - 实际读取 GNU C/C++ 13.3.0 两个 driver，完整身份留 .local/integration/compiler-driver-evidence.json；typecheck PASS。尚待 manifest 接入与其他工具链组件采集，未运行编译或演化。
+
+
+### 2026-10-02 — Compiler driver manifest integration
+
+- 新增工具链边界测试：内容变化、错误版本、跨 tree reply 与缺文件均验证；CMake evidence suite 3/3 PASS。
+- 本地 CPU manifest 现在沿当前 File API index 采集 compiler driver 身份，失败独立记录 compilerDriverError；不将缺 compiler 子程序/linker/隐式库的部分证据标为完整。

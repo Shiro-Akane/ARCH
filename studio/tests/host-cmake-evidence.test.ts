@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm,readdir} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {readCMakeConfigurationEvidence} from '../host/cmakeEvidence.ts';
+import {readCMakeConfigurationEvidence,readCMakeToolchainEvidence} from '../host/cmakeEvidence.ts';
 test('CMake configuration evidence binds source/build and hashes external inputs without claiming compiler coverage',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch cmake evidence-'));
  try{
@@ -47,5 +47,26 @@ test('reads actual installed CMake File API with a spaced source/build path',asy
   assert.ok(evidence.inputs.some(i=>i.path===source+'/CMakeLists.txt'));
   assert.ok(evidence.inputs.some(i=>i.cmake&&i.external));
   assert.equal(evidence.dependenciesComplete,false);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('toolchain evidence hashes the selected driver and rejects invalid versions, bindings and missing files',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch toolchain-'));
+ try{
+  const build=root+'/build',reply=build+'/.cmake/api/v1/reply';
+  await mkdir(reply,{recursive:true});await writeFile(root+'/compiler','driver-v1');
+  const file=reply+'/toolchains.json';
+  const data={kind:'toolchains',version:{major:1,minor:0},toolchains:[{language:'CXX',compiler:{path:root+'/compiler',id:'test',version:'1'}}]};
+  await writeFile(file,JSON.stringify(data));
+  const first=await readCMakeToolchainEvidence(build,file);
+  assert.equal(first.compilers[0].size,9);assert.equal(first.dependenciesComplete,false);
+  await writeFile(root+'/compiler','driver-v2');
+  assert.notEqual((await readCMakeToolchainEvidence(build,file)).compilers[0].sha256,first.compilers[0].sha256);
+  await writeFile(file,JSON.stringify({...data,version:{major:2}}));
+  await assert.rejects(readCMakeToolchainEvidence(build,file),/Incompatible/);
+  await writeFile(file,JSON.stringify(data));await rm(root+'/compiler');
+  await assert.rejects(readCMakeToolchainEvidence(build,file));
+  await writeFile(root+'/outside.json',JSON.stringify(data));
+  await assert.rejects(readCMakeToolchainEvidence(build,root+'/outside.json'),/outside/);
  }finally{await rm(root,{recursive:true,force:true});}
 });

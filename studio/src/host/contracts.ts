@@ -38,6 +38,7 @@ export interface BuildEvent { projectId:string; buildId:string; sequence:number;
 export interface BuildResult { buildId:string; projectId:string; state:'succeeded'|'failed'|'cancelled'; exitCode?:number|null; signal?:string|null; startedAt:string; finishedAt:string; error?:string }
 export interface InputFingerprint { relativePath:string; fingerprint:FileFingerprint }
 export interface BuildManifest {
+ compilerDrivers?:{language:string;path:string;resolvedPath:string;id:string;version:string;sha256:string;size:number}[]; compilerDriverError?:string;
  compilerInputs?:{kind:'ninja-compiler-inputs';objectCount:number;files:{path:string;sha256:string;size:number}[]}; compilerInputError?:string; compilerInputsStableDuringBuild?:boolean;
  manifestVersion:'1'; buildId:string; projectId:string; profileId:string; caseId?:string; managedSourceRoot:string;
  sourceGitHead?:string; repositoryDirty?:boolean; buildProfileFingerprint:string; sourceFingerprint?:FileFingerprint;

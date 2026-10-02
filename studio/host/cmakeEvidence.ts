@@ -1,5 +1,5 @@
 import path from 'node:path';
-import {readFile,stat,realpath} from 'node:fs/promises';
+import {readFile,stat,realpath,readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 /** CMake-owned configuration inputs; not a transitive compiler dependency claim. */
 export interface CMakeInputEvidence {path:string;sha256:string;size:number;generated:boolean;external:boolean;cmake:boolean}
@@ -67,4 +67,16 @@ export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile
  }
  return {kind:'cmake-compiler-driver-identities' as const,replySha256:createHash('sha256').update(bytes).digest('hex'),compilers,
   dependenciesComplete:false as const,missingCoverage:['compiler-subprograms','linker','implicit-libraries']};
+}
+
+export async function readBuildToolchainEvidence(buildDirectory:string){
+ const build=await realpath(buildDirectory),reply=path.join(build,'.cmake/api/v1/reply');
+ const names=(await readdir(reply)).filter(n=>/^index-.*\.json$/.test(n)).sort();
+ if(!names.length)throw new Error('No CMake File API index.');
+ const index:unknown=JSON.parse((await boundedFile(path.join(reply,names.at(-1)!),8*1024*1024)).toString('utf8'));
+ if(!object(index)||!Array.isArray(index.objects))throw new Error('Malformed CMake File API index.');
+ const entry=index.objects.find(o=>object(o)&&o.kind==='toolchains');
+ if(!object(entry)||typeof entry.jsonFile!=='string'||path.basename(entry.jsonFile)!==entry.jsonFile)
+  throw new Error('Missing toolchains reply reference.');
+ return readCMakeToolchainEvidence(build,path.join(reply,entry.jsonFile));
 }
