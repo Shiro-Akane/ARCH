@@ -78,7 +78,7 @@ async function shutdown(){
  if(closing)return;
  if(dirty){const choice=await dialog.showMessageBox(win,{type:'warning',buttons:['Keep editing','Discard unsaved copy and close'],defaultId:0,cancelId:0,message:'The Working Copy has unsaved changes.'});if(choice.response===0)return;}
  closing=true;win?.setTitle('ARCH Studio — shutting down Host (waiting for active Build if needed)');
- try{await stopHost();await new Promise(resolve=>assets.close(resolve));await log('desktop clean shutdown');win?.destroy();app.quit();}catch(e){closing=false;await dialog.showMessageBox(win,{type:'error',message:'Shutdown failed; window kept open.',detail:e.message});}
+ try{await stopHost();const {closeAssets}=await import('./close-assets.mjs');await closeAssets(assets);await log('desktop clean shutdown');win?.destroy();app.quit();}catch(e){closing=false;await dialog.showMessageBox(win,{type:'error',message:'Shutdown failed; window kept open.',detail:e.message});}
 }
 function senderAllowed(event){if(event.sender!==win?.webContents||new URL(event.senderFrame.url).origin!==origin)throw new Error('Unexpected desktop sender.');}
 app.whenReady().then(async()=>{

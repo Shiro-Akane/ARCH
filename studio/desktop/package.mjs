@@ -3,7 +3,7 @@ import {mkdir,cp,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 const base=process.cwd(),staging=path.join(base,'.local','desktop-app');
 await mkdir(staging,{recursive:true});
-for(const file of ['main.cjs','preload.cjs','arguments.mjs','launcher.html','launcher.js','launcher.css'])await cp(path.join(base,'desktop',file),path.join(staging,file));
+for(const file of ['main.cjs','close-assets.mjs','preload.cjs','arguments.mjs','launcher.html','launcher.js','launcher.css'])await cp(path.join(base,'desktop',file),path.join(staging,file));
 for(const dir of ['dist','host','src'])await cp(path.join(base,dir),path.join(staging,dir),{recursive:true});
 await writeFile(path.join(staging,'package.json'),JSON.stringify({name:'arch-studio',version:'0.0.0',type:'module',main:'main.cjs',description:'ARCH Studio Linux desktop with local Host',author:'ARCH Studio',license:'UNLICENSED'}));
 await cp(path.join(base,'DEPENDENCY-LICENSES.json'),path.join(staging,'DEPENDENCY-LICENSES.json'));

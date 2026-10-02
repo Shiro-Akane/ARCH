@@ -1402,3 +1402,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 只读 WSLg1.0.73.2日志确认 enable_copy_warning_title=1；不能仅凭标题认定截图根因。DISPLAY/Wayland socket存在；单次 Wayland 对照报告 drmGetDevices2 无设备，Computer Use显示空画面，未记作UI通过，未修改系统配置。
 - 对照发现开发入口固定 argv.slice(2) 误读 Electron runtime flag。改为定位实际 main.cjs 后提取项目参数；lint PASS，真实 --ozone-platform=wayland 重试成功发布 SmoothAdvection Host readiness（PID424）。定向关闭 launcher后Host消失。
 - WSLg视觉/原生对话框UAT仍未完成。没有把错误页或后台readiness当视觉验收，也未放宽渲染/科学标准。
+
+### 2026-10-02 — Desktop asset-connection shutdown fix
+
+- 上轮实测Host退出后Electron仍存活；关闭流程等待assets.close，而renderer长连接尚存。现先停止接入，再closeAllConnections，仅在Host/Build排空后关闭资产/proxy连接，不终止已交付Run。
+- 真实HTTP未结束响应回归及launcher suite 3/3 PASS，lint/typecheck PASS。旧卡住进程按已记录PID/start-ticks精确清理，旧会话exit1，未冒充正常退出。
+- 修复后真实Linux Wayland启动→Host readiness→TERM，launcher exit0且desktop clean shutdown，Host消失；见StudioDesktopShutdownSummary.json。这是退出工程验证，不替代原生窗口点击/Save As UAT。
