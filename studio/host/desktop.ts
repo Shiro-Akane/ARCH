@@ -35,7 +35,7 @@ let closing=false;
 async function close(){
  if(closing)return;closing=true;
  server.close();server.closeAllConnections();
- await reader.preview?.shutdown();
+ await Promise.all([reader.configure?.shutdown(),reader.preview?.shutdown()]);
  // Keep this owned supervisor alive until compiler completion; never abandon a Build.
  while(reader.build?.isActive())await new Promise(r=>setTimeout(r,100));
  // Let bounded configuration/discovery children and single-shot reaping drain.

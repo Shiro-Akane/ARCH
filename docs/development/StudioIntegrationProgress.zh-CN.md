@@ -1170,3 +1170,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - Configure 状态公开 operationId；events/cancel 仅作用于匹配任务，旧 ID 返回 404，取消仅 POST 且无请求体。日志复用 BuildLog 有界缓冲。
 - Configure 实际 CMake/取消/HTTP 回归 3/3 PASS，typecheck/lint PASS；新增日志可读、过期取消 ID、错误 HTTP 方法和请求体拒绝断言。尚待生产 profile/项目装配/UI，不宣称端到端完成。
+
+
+### 2026-10-02 — Configure project lifecycle
+
+- openProject 可接收 Host-only ConfigureProfile，校验 source root 与项目一致；Build/Preview busy 条件计入 Configure。CLI/Desktop Linux Host 退出等待 Configure shutdown；shutdown 拒绝新配置并等待实际 close。
+- 真实 CMake shutdown/PID 消失/关闭后拒绝重启及已有 Configure/HTTP 检查 3/3 PASS，typecheck/lint PASS。尚未选择生产 ConfigureProfile 或接通 UI，不代表真实 ARCH Configure/Build/Run 已完成。

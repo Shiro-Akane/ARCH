@@ -26,9 +26,10 @@ async function directory(root:string,relative:string){
 }
 /** Serial fixed-argv operation. Configure success never creates a Build Manifest. */
 export class ConfigureRunner {
- readonly profile:ConfigureProfile;private active=false;private log?:BuildLog;private child?:ChildProcess;private cancelled=false;private killTimer?:ReturnType<typeof setTimeout>;private latest?:ConfigureResult;
+ readonly profile:ConfigureProfile;private active=false;private log?:BuildLog;private child?:ChildProcess;private cancelled=false;private killTimer?:ReturnType<typeof setTimeout>;private latest?:ConfigureResult;private completed:Promise<void>=Promise.resolve();private resolveCompleted?:()=>void;private closing=false;
  constructor(profile:ConfigureProfile){this.profile=structuredClone(profile);}
  snapshot(){return {operationId:this.log?.buildId,profileId:this.profile.id,active:this.active,processId:this.processId,latest:this.latest?structuredClone(this.latest):undefined};}
+ async shutdown(){this.closing=true;this.cancel();await this.completed;}
  isActive(){return this.active;}
  get processId(){return this.child?.pid;}
  cancel(){
@@ -45,9 +46,10 @@ export class ConfigureRunner {
  events(operationId?:string){if(operationId!==undefined&&operationId!==this.log?.buildId)throw new Error('Unknown Configure operation.');return this.log?.snapshot();}
  cancelOperation(operationId:string){if(operationId!==this.log?.buildId)throw new Error('Unknown Configure operation.');this.cancel();return this.snapshot();}
  async run(projectId:string,profileId:string):Promise<ConfigureResult>{
+  if(this.closing)throw new Error('Configure Host is shutting down.');
   if(this.active)throw new Error('Configure already active.');
   if(profileId!==this.profile.id)throw new Error('Unknown Host Configure profile.');
-  this.active=true;this.cancelled=false;
+  this.active=true;this.cancelled=false;this.completed=new Promise(resolve=>{this.resolveCompleted=resolve;});
   const id=randomUUID(),result:ConfigureResult={id,profileId,state:'failed',exitCode:null};
   this.log=new BuildLog(projectId,id);
   try{
@@ -106,7 +108,7 @@ export class ConfigureRunner {
    if(this.cancelled)throw new Error('Configure cancelled.');
    result.state='succeeded';
   }catch(e){delete result.evidence;if(this.cancelled)result.state='cancelled';result.error=e instanceof Error?e.message:'Configure failed';this.log.append('stderr',result.error);}
-  finally{this.latest=structuredClone(result);if(this.killTimer)clearTimeout(this.killTimer);this.killTimer=undefined;this.child=undefined;this.log.append('state',undefined,result.state);this.active=false;}
+  finally{this.latest=structuredClone(result);if(this.killTimer)clearTimeout(this.killTimer);this.killTimer=undefined;this.child=undefined;this.log.append('state',undefined,result.state);this.active=false;this.resolveCompleted?.();this.resolveCompleted=undefined;}
   return result;
  }
 }

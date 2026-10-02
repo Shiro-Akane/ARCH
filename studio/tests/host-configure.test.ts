@@ -44,8 +44,9 @@ test('Configure cancellation waits for the owned process group and rejects concu
   await assert.rejects(runner.run('p','cancel'),/already active/);
   for(let i=0;i<100&&!runner.processId;i++)await new Promise(r=>setTimeout(r,10));
   const pid=runner.processId;assert.ok(pid);
-  runner.cancel();
-  const result=await running;
+  const shutdown=runner.shutdown();
+  const result=await running;await shutdown;
+  await assert.rejects(runner.run('p','cancel'),/shutting down/);
   assert.equal(result.state,'cancelled');assert.equal(result.evidence,undefined);
   assert.equal(runner.isActive(),false);assert.equal(runner.processId,undefined);
   assert.throws(()=>process.kill(pid,0),(e:unknown)=>(e as NodeJS.ErrnoException).code==='ESRCH');
