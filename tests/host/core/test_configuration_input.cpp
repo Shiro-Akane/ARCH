@@ -15,6 +15,8 @@
 namespace {
 template<class T> concept HasMutableCaseMaps = requires(T value) { value.custom_params; value.custom_string_params; };
 static_assert(!HasMutableCaseMaps<SimConfig>);
+template<class T> concept HasMutableGravityConstant = requires(T value) { value.G_const; };
+static_assert(!HasMutableGravityConstant<GravityConfig>);
 void require(bool value, const char* message) {
     if (!value) throw std::runtime_error(message);
 }

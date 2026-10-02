@@ -76,7 +76,6 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     scalar(d.alpha_therm, "alpha_therm");
     scalar(d.D_spec, "D_spec");
     const auto& g = c.physics.gravity;
-    scalar(g.G_const, "gravity_G");
     scalar(g.relative_tolerance, "gravity_rtol");
     scalar(g.absolute_tolerance, "gravity_atol");
     scalar(g.max_cycles, "gravity_max_cycles");

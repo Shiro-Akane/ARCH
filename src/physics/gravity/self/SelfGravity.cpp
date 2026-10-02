@@ -30,9 +30,9 @@
 #include "physics/gravity/self/GravityWorkspace.h"
 
 namespace Physical::Gravity {
-/** Validate gravity boundary kind, G and convergence controls once. */
+/** Validate gravity boundary kind and convergence controls once. */
 SelfGravity::SelfGravity(GravityConfig config):config_(std::move(config)) {
-    if ((config_.boundary!="periodic" && config_.boundary!="isolated") || !std::isfinite(config_.G_const) || config_.G_const<=0.
+    if ((config_.boundary!="periodic" && config_.boundary!="isolated")
         || !std::isfinite(config_.relative_tolerance) || config_.relative_tolerance<=0. || config_.relative_tolerance>=1.
         || !std::isfinite(config_.absolute_tolerance) || config_.absolute_tolerance<0. || config_.max_cycles<1)
         throw std::invalid_argument("Invalid self-gravity physical or convergence controls");
@@ -84,7 +84,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
     auto& w=*work_; const auto& op=w.solver.op(); const auto& identity=request.identity;
     if (request.blocks.size()!=w.patches.size() || identity.inputs.size()!=w.patches.size()
-        || identity.topology!=w.binding.handles.front().epoch || identity.gravitational_constant!=config_.G_const
+        || identity.topology!=w.binding.handles.front().epoch || identity.gravitational_constant!=arch::constants::gravity::cgs::gravitational_constant
         || identity.operator_revision!=1 || identity.boundary_revision!=1 || identity.accuracy_revision!=1)
         throw std::logic_error("Self-gravity solve identity differs from bound mesh/configuration");
     for (std::size_t b=0;b<w.patches.size();++b) {
@@ -107,7 +107,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     w.mean=w.solver.mean(w.density);
     // A=-Laplacian: A*Phi=-4*pi*G*(rho-<rho>) for periodic gravity;
     // isolated gravity keeps rho and supplies a finite-mass Dirichlet face.
-    const double factor=-4.*arch::constants::math::pi*config_.G_const;
+    const double factor=-4.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant;
     e.linear(w.rhs,factor,w.density,0.,{},
         op.has_constant_nullspace()?-factor*w.mean:0.);
     if(w.nodes.size){
@@ -117,7 +117,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
             op.base().geometry==arch::elliptic::Geometry::Cartesian ? GridMetrics::Geometry::Cartesian
                 : (op.base().geometry==arch::elliptic::Geometry::Cylindrical
                     ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical),
-            config_.G_const,op.base().origin[0]+op.base().cells[0]*op.base().spacing[0],w.boundary_values.data});
+            arch::constants::gravity::cgs::gravitational_constant,op.base().origin[0]+op.base().cells[0]*op.base().spacing[0],w.boundary_values.data});
         w.solver.boundary_rhs(w.rhs,w.boundary_values);
     } else if(op.boundary_kind()==arch::elliptic::BoundaryKind::RadialIsolated) {
         // Spherical free-space outer value: Phi(R)=-G*M/R,
@@ -128,7 +128,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
             const double unit_mass=e.reduce({w.density.data,nullptr,w.volumes.data,
                 op.size(),arch::multigrid::ReductionKind::Product});
             const double outer=op.base().origin[0]+op.base().cells[0]*op.base().spacing[0];
-            const double value=-4.*arch::constants::math::pi*config_.G_const*unit_mass/outer;
+            const double value=-4.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant*unit_mass/outer;
             for(std::size_t f=0;f<op.faces().size();++f)
                 if(op.faces()[f].boundary_side==1)
                     e.copy(w.boundary_values.data+f,&value,sizeof(value),arch::multigrid::Transfer::Upload);
@@ -182,7 +182,7 @@ double SelfGravity::timestep(double cfl) const {
     workspace().require();const auto& w=*work_;
     if(!std::isfinite(cfl)||cfl<=0.||cfl>1.)throw std::invalid_argument("Invalid gravity CFL");
     // dt_g = CFL / sqrt(max(4*pi*G*rho_max, max_a |g_a|/dx_a)).
-    return cfl/std::sqrt(std::max(4.*arch::constants::math::pi*config_.G_const*w.max_density,w.max_acceleration_ratio));
+    return cfl/std::sqrt(std::max(4.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant*w.max_density,w.max_acceleration_ratio));
 }
 /** Download the accepted potential only when requested by output. */
 const std::vector<double>& SelfGravity::potential() const {workspace().download();return work_->host_phi;}

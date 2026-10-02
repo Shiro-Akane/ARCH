@@ -27,7 +27,7 @@ struct Fixture {
     }
     void reset(std::uint64_t epoch) {
         handles.clear();views.clear();identity={};
-        identity.topology={epoch};identity.gravitational_constant=config.physics.gravity.G_const;
+        identity.topology={epoch};identity.gravitational_constant=arch::constants::gravity::cgs::gravitational_constant;
         identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
         for(int id:control.tree->GetActiveBlocks()) {
             auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
@@ -61,8 +61,8 @@ void lifecycle() {
     gravity.add_sources_on_patch(delta,block.fluid_state,block.grid,1.);
     for(int i=block.grid.Is();i<block.grid.Ie();++i) {
         const auto c=block.grid.GetIndex(i,0,0);
-        const double exact=-2.*f.config.physics.gravity.G_const*0.1*std::sin(2.*constants::math::pi*block.grid.GetPhysicalCoords(i,0,0).x);
-        require(std::abs(delta[c].mom_u/block.fluid_state.rho[c]-exact)<0.001*2.*f.config.physics.gravity.G_const*0.1,"force sign/amplitude");
+        const double exact=-2.*arch::constants::gravity::cgs::gravitational_constant*0.1*std::sin(2.*constants::math::pi*block.grid.GetPhysicalCoords(i,0,0).x);
+        require(std::abs(delta[c].mom_u/block.fluid_state.rho[c]-exact)<0.001*2.*arch::constants::gravity::cgs::gravitational_constant*0.1,"force sign/amplitude");
         require(delta[c].eng==0.,"momentum callback double counts energy");
     }
     std::vector<FluidVector> flux(block.grid.GetTotalSize());
@@ -133,7 +133,7 @@ void lifecycle() {
     gravity.prepare({f.identity,f.views});
     require(gravity.report().rhs_rms>0. && gravity.report().residual<=gravity.report().target,"tiny nonuniform physical source lost");
     double maximum=0.;for(double phi:gravity.potential()) maximum=std::max(maximum,std::abs(phi/1e-100));
-    require(maximum>0.02*f.config.physics.gravity.G_const,"tiny physical gravity was clamped away");
+    require(maximum>0.02*arch::constants::gravity::cgs::gravitational_constant,"tiny physical gravity was clamped away");
 
 }
 void native_components() {
@@ -142,7 +142,7 @@ void native_components() {
         config.grid.nblockx1=config.grid.nblockx2=2;
         config.grid.nblockx3=dimension==3?2:0;
         amr::AMRControl control(12,dimension);control.tree->InitRootGrid(config,0);
-        GravitySolveIdentity identity;identity.topology={1};identity.gravitational_constant=config.physics.gravity.G_const;
+        GravitySolveIdentity identity;identity.topology={1};identity.gravitational_constant=arch::constants::gravity::cgs::gravitational_constant;
         identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
         std::vector<amr::BlockHandle> handles;std::vector<GravityDensityView> views;
         for(int id:control.tree->GetActiveBlocks()) {
@@ -166,7 +166,7 @@ void native_components() {
                 const auto point=grid.GetPhysicalCoords(i,j,k);const double position[]{point.x,point.y,point.z};
                 const int cell=grid.GetIndex(i,j,k);const double momentum[]{delta[cell].mom_u,delta[cell].mom_v,delta[cell].mom_w};
                 for(int axis=0;axis<dimension;++axis) {
-                    double exact=-.2*config.physics.gravity.G_const/dimension;
+                    double exact=-.2*arch::constants::gravity::cgs::gravitational_constant/dimension;
                     for(int a=0;a<dimension;++a) exact*=a==axis?std::sin(2.*constants::math::pi*position[a]+.17*(a+1)):std::cos(2.*constants::math::pi*position[a]+.17*(a+1));
                     const double force=momentum[axis]/block.fluid_state.rho[cell];
                     error[axis]+=(force-exact)*(force-exact);scale[axis]+=exact*exact;

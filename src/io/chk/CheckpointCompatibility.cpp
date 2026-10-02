@@ -99,7 +99,7 @@ CheckpointProvenance make_checkpoint_provenance(
     result.gravity_type=gravity.type;
     if (gravity.type=="self") {
         result.gravity_boundary=gravity.boundary;
-        result.gravity_controls={gravity.G_const,gravity.relative_tolerance,gravity.absolute_tolerance,
+        result.gravity_controls={arch::constants::gravity::cgs::gravitational_constant,gravity.relative_tolerance,gravity.absolute_tolerance,
                                  static_cast<double>(gravity.max_cycles)};
     } else if (gravity.type=="external") result.gravity_controls={gravity.g_x,gravity.g_y,gravity.g_z};
     result.burn_enabled = burn_enabled;

@@ -75,7 +75,7 @@ public:
         const double frequency_squared =
             config.physics.gamma * pressure_ / rho_ * wave_number_ * wave_number_
             - 4.0 * arch::constants::math::pi
-                * config.physics.gravity.G_const * rho_;
+                * arch::constants::gravity::cgs::gravitational_constant * rho_;
         if (!(frequency_squared > 0.0))
             throw std::invalid_argument(
                 "JeansWave selects the stable oscillatory branch");

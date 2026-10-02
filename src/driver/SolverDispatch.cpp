@@ -325,7 +325,7 @@ void DispatchSolver(ProblemGenerator &problem,
     }
     else if (grav_type == "self" || grav_type == "Self" || grav_type == "SELF")
     {
-        std::cout << " | G_const = " << config.physics.gravity.G_const;
+        std::cout << " | G_const = " << arch::constants::gravity::cgs::gravitational_constant;
     }
     std::cout << std::endl;
 

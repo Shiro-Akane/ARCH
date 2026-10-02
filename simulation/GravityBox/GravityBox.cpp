@@ -92,7 +92,7 @@ public:
                 const double dimension=config.grid.geometry=="spherical"?3.:2.;
                 // dP/dr=-rho*4*pi*G*rho*r/d and
                 // P=(gamma-1)*rho*cv*T for the single ideal-gas species.
-                hydrostatic_drop_=2.*arch::constants::math::pi*config.physics.gravity.G_const*rho_/
+                hydrostatic_drop_=2.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant*rho_/
                     (dimension*(config.physics.gamma-1.)*cv);
                 const double outer_ghost=length_[0]*
                     (1.+4./(config.grid.nblockx1*amr::BLOCK_NX));

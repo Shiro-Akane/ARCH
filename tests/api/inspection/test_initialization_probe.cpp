@@ -168,7 +168,7 @@ int main(int argc, char** argv) {
                 if (kind == 1) input.io.out_dir = "other";
                 if (kind == 2) input.numerics.dt_max = 10;
                 if (kind == 3) input.amr.refine_on_p = true;
-                if (kind == 4) input.physics.gravity.G_const = 1;
+                if (kind == 4) input.physics.gravity.max_cycles = 201;
                 if (kind == 5) input = load_probe();
             }
             void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&,

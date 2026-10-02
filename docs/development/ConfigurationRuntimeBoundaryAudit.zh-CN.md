@@ -1,5 +1,7 @@
 # O7.0 运行配置边界复核
 
+更新（2026-10-02）：用户已明确恢复 G 接线与指定 t=0 对照授权；下文为 b6536533 的历史审计快照。G 可写成员/UniformGravity 入口现已迁移，共享常数 CPU 检查及 t=0 拓扑对照已执行，见 StudioIntegrationProgress 与 O7ConfigurationT0AmrSummary.json。运行配置构造边界及历史科学输入迁移仍未完成。
+
 基线 b6536533，分支 studio/compute-optim-integration。本次仅只读审计，未执行 Driver 或科学输出。
 
 ## 已存在的防护

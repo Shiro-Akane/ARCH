@@ -124,7 +124,6 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
     if (key == "nuclearDensMin" || key == "nseDensThreshold")
         return Json::object({{"unit", "g/cm^3"}, {"status", "known"}});
     if (key == "gravity_atol") return Json::object({{"unit", "1/s^2"}, {"status", "known"}});
-    if (key == "gravity_G") return Json::object({{"unit", "cm^3/(g*s^2)"}, {"status", "known"}});
     if (key.starts_with("gravity_g_"))
         return Json::object({{"unit", system == "cgs" ? Json("cm/s^2") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec")

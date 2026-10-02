@@ -76,12 +76,12 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
-    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "c594aed5e0a2bb24f09e351a0874e8fe4eac0a39747d0bd05e85c51800971b14", {
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "b6466696b0de2ef2efbdfb683934037f412cc73e1abff46fdd5929f006b3953c", {
         {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
     }}},
-    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "5f29312fa5cf0d729ee8be9bf99c89e10c71eabc8c8ef0255cbd730ddc44aa9b", {
+    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "76f126a0799bbc56b9648c6d042f6d02b62f880fdcae934ad440c6cb13008114", {
         {"rho0", "g/cm^3"}, {"pressure0", "erg/cm^3"},
         {"amplitude", "1"}, {"phase", "rad"}, {"mode", "1"},
         {"standing_wave", "1"},

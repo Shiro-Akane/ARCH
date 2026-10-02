@@ -49,7 +49,7 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     // pool addresses are reused. No publication can survive an expired lease.
     if (++generation_==0) throw std::overflow_error("Gravity density lease exhausted");
     Physical::Gravity::GravitySolveIdentity identity;
-    identity.topology=epoch_; identity.input_time=time; identity.gravitational_constant=config.physics.gravity.G_const;
+    identity.topology=epoch_; identity.input_time=time; identity.gravitational_constant=arch::constants::gravity::cgs::gravitational_constant;
     identity.operator_revision=1;identity.boundary_revision=1;identity.accuracy_revision=1;
     std::vector<Physical::Gravity::GravityDensityView> views;
     const auto& active=runtime_.control().tree->GetActiveBlocks();

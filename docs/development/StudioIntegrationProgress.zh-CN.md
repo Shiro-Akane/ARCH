@@ -954,3 +954,39 @@ inspection 回归覆盖 JENS、旧别名 RHO、1D VELY、burn-off ENUC 和空选
 受控 CPU 增量构建 25.262 秒，无 swap；configuration_v3_contract 和
 configuration_input 2/2 PASS（2.33 秒），diff-check PASS。
 未执行生产 AMR、simulation、CUDA 或上传原始结果；完整目标未完成。
+
+### 2026-10-02 授权恢复联合交付
+
+用户明确以 compute/optim 当前联合计划取代旧 Phase 3B 对以下操作的限制：
+允许 O7.0 科学 Core G 接线、可写 gravity_G 退役、调用方/配置/checkpoint
+身份/测试迁移；允许现有明确 t=0 AMR checkpoint 对照，原始 H5/checkpoint
+保存在本机持久目录，仅提交处理后指标、摘要、输入/构建身份和必要诊断。
+冻结物理定义/阈值不变；历史非物理 G 等效换算提交维护者确认。
+t=0 覆盖独立标注，不代替后续演化验收。继续 Linux/WSL，不做 Windows 适配。
+
+恢复前 HEAD 06e67f30，工作树 clean；fetch 后 origin/compute/optim
+仍为 8fc0dd25eefd2243e8c36f85440bac46994e2e73，无自动 merge/reset。
+此前审批拒绝记录属于历史状态，现按这次直接授权重新审批推进。
+
+### O7.0 restored authorization: G wiring and persistent t=0 evidence
+
+UniformGravity no longer accepts caller-supplied G; GravityConfig.G_const removed.
+SelfGravity RHS/boundary/timestep, GravityStage/checkpoint identity, GravityBox and
+JeansWave now use shared CGS constant directly. Existing identity fields retained;
+no old checkpoint value is used to overwrite the constant. Removed inactive API
+presentation/scalar validation of retired G; registry rejection preserved.
+Model source hashes updated. Setup mutation test now targets max_cycles because
+G is no longer writable; compile-time tests prohibit the removed public controls.
+Historical 1e-20 and FLASH 6.67408e-8 inputs untouched, pending maintainer-approved
+scientific migration; full G retirement of all active validation inputs remains open.
+
+Poisson contract/analytic 2/2 PASS. CPU rebuild 29.402s, zero swap.
+Configuration v3/input, initialization probe, registered-case inspection and
+self-gravity lifecycle 5/5 PASS. UI expansion migrated to explicit nonduplicate
+inputs and v3 schema. First run 8/9 methods passed, including Sod/Cellular t=0
+production checkpoint comparisons. One applicability enum expectation was wrong;
+fixed to satisfied and reran that method only: PASS. Original mesh thresholds intact.
+Raw input/preview/log/checkpoint kept in studio/.local/integration/amr-production-oracle.
+Processed identity/count/equality summary: O7ConfigurationT0AmrSummary.json.
+t=0 checks only initial topology and zero checkpoint time; NOT evolution acceptance.
+No CUDA or Windows work, push or release tag. Remaining joint goal unchanged.

@@ -79,7 +79,6 @@ inline detail::Json ParameterPresentation(const config::ParameterDefinition& def
         {"gravity_rtol", {"Gravity relative tolerance", "Relative volume RMS residual target."}},
         {"gravity_atol", {"Gravity absolute tolerance", "Absolute Poisson RHS residual in s^-2; zero uses relative accuracy."}},
         {"gravity_max_cycles", {"Gravity iteration limit", "Maximum outer composite MG/Krylov iterations; failure stops evolution."}},
-        {"gravity_G", {"Gravitational constant", "Gravitational constant for the self-gravity Poisson equation in CGS."}},
         {"lrefinemin", {"Minimum refinement level", "Prevents coarsening below this level; it does not force uniform initial refinement."}},
         {"lrefinemax", {"Maximum refinement level", "Highest allowed refinement level; each active direction is halved per level."}},
         {"regrid_interval", {"Regrid interval", "Number of simulation steps between regrids. Must be positive; it is not an initial preview iteration count."}},

@@ -17,7 +17,7 @@ inline const char* ScalarControlError(std::string_view key, double value) {
         return false;
     };
     if (in({"sml_rho", "min_eint", "max_eint", "dt_init", "dt_min",
-            "smallt", "enucDtFactor", "nseTempThreshold", "ode_atol", "gravity_G"}))
+            "smallt", "enucDtFactor", "nseTempThreshold", "ode_atol"}))
         return std::isfinite(value) && value > 0.0 ? nullptr : "Requires a finite positive value.";
     if (in({"EntropyFixCoefficient", "nuclearTempMin", "nuclearDensMin",
             "nseDensThreshold", "nu_visc", "alpha_therm", "D_spec", "gravity_atol", "tmax"}))
