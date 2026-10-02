@@ -1,3 +1,4 @@
+import {saveManifest,loadManifest} from '../host/buildManifest.ts';
 import {execFile} from 'node:child_process';import {promisify} from 'node:util';
 import {fixture,fakeSpawn,finished} from './build-fixture.ts';
 import {readFile} from 'node:fs/promises';
@@ -43,5 +44,22 @@ test('actual compiler header outside fixed tracked list invalidates freshness',a
   await writeFile(root+'/value.h','constexpr int value=1;\n');
   const status=await runner.refreshFreshness();
   assert.equal(status.binaryState,'needs-build');assert.ok(status.changedInputs.includes(root+'/value.h'));
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('persisted compiler evidence rejects corrupt hashes, paths and duplicate inputs',async()=>{
+ const {root,p}=await fixture();
+ try{
+  await mkdir(root+'/studio');
+  const runner=new BuildRunner(root,'p',p,{spawn:fakeSpawn(root)});
+  await runner.start('p',p.id);await finished(runner);
+  const m=runner.snapshot().lastSuccessfulBuild!;
+  const file={path:root+'/case.cpp',sha256:'a'.repeat(64),size:10};
+  const valid={...m,compilerInputs:{kind:'ninja-compiler-inputs' as const,objectCount:1,files:[file]},compilerInputsStableDuringBuild:true};
+  await saveManifest(p,valid);assert.ok(await loadManifest(p));
+  for(const files of [[{...file,sha256:'bad'}],[{...file,path:'relative'}],[file,file]]){
+   await saveManifest(p,{...valid,compilerInputs:{...valid.compilerInputs,files}});
+   assert.equal(await loadManifest(p),undefined);
+  }
  }finally{await rm(root,{recursive:true,force:true});}
 });

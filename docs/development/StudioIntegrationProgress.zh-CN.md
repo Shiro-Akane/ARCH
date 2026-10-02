@@ -1266,3 +1266,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 新增工具链边界测试：内容变化、错误版本、跨 tree reply 与缺文件均验证；CMake evidence suite 3/3 PASS。
 - 本地 CPU manifest 现在沿当前 File API index 采集 compiler driver 身份，失败独立记录 compilerDriverError；不将缺 compiler 子程序/linker/隐式库的部分证据标为完整。
+
+
+### 2026-10-02 — Persisted compiler evidence validation
+
+- 读取 manifest 时验证 compiler 输入/driver 的结构、SHA、size、绝对路径、重复项与稳定性布尔；损坏记录不恢复为有效 provenance。
+- 实际保存/重新读取/篡改字段拒绝及 Build suite 9/9 PASS，typecheck PASS。完整链接与工具链依赖仍未完成。
