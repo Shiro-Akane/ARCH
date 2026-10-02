@@ -1350,3 +1350,8 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - clean f840c4999a8ea55ccd2c64c6e1a2ab1ef0822194：沿既有 SmoothAdvection 输入与 tmax=0.1，源运行及 Restart 均通过真实 RunPreparation/RunController/xterm/worker，exit 0。只重定位本地输出及真实 checkpoint 路径，不改变物理控制。
 - checkpoint 第25步/time=0.025227987917244142 恢复至第100步/time=0.1。最终根属性、4块拓扑、密度/动量/能量/ENUC 及控制数组逐值相同；处理摘要见 StudioTerminalRestartSummary.json。原始 H5、输入与完整日志留本机持久目录。
 - 本次 terminal/worker/Core owned process 均无残留；不是视觉 UAT、CUDA、燃烧或动态 AMR 验收。短任务 guard 采样不足，不作性能声明。重开运行恢复、完整 Linux UI 工作流与后续科学计划仍未完成。
+
+### 2026-10-02 — Live Run supervisor identity
+
+- Run worker 记录 Linux boot ID 与自身 /proc start ticks；Host 对 starting/running 读取核验仍是原 supervisor，拒绝旧记录、重启、PID 复用或已退出 supervisor。拒绝时明确 computation outcome unknown，不虚构 failed/succeeded，不按进程名终止或自动重试。完成记录仍可读取。
+- Run preparation/HTTP/worker/supervisor 18/18 PASS，typecheck/lint PASS。旧活跃记录缺身份时需人工核对日志；持久运行列表及 UI 重开恢复仍待接入。当前 selected local CPU 配置目录仍受旧 Preview profile 绑定，是后续需解开的独立缺口。

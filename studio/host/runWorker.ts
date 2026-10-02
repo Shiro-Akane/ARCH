@@ -65,7 +65,7 @@ export async function executeRun(job:RunJob,directory:string):Promise<RunState>{
  const expected='studio/.local/runs/'+job.runId;
  if(await checkedPath(job.projectRoot,expected)!==directory||job.inputRelativePath!==expected+'/input.par')
   throw new Error('Run directory does not match the owned run identity.');
- const state:RunState={runId:job.runId,state:'starting',workerPid:process.pid,startedAt:new Date().toISOString()};
+ const state:RunState={runId:job.runId,state:'starting',workerPid:process.pid,workerStartTicks:await processTicks(process.pid),bootId:(await readFile('/proc/sys/kernel/random/boot_id','utf8')).trim(),startedAt:new Date().toISOString()};
  const claim=await open(path.join(directory,'worker.lock'),'wx',0o600);await claim.close();
  await store(directory,state);
  let owned:ChildProcess|undefined;

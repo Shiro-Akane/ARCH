@@ -1,3 +1,4 @@
+import {verifyRunSupervisor} from './runSupervisor.ts';
 import {spawn} from 'node:child_process';
 import {access,mkdir,open,readFile,writeFile} from 'node:fs/promises';
 import {constants} from 'node:fs';
@@ -83,6 +84,7 @@ export class RunController {
     throw new BuildError('Run state identity mismatch.',502);
    const job=JSON.parse(await readFile(directory+'/job.json','utf8')) as RunJob;
    if(job.runId!==runId||job.projectRoot!==this.preparing.root)throw new BuildError('Run owner mismatch.',409);
+   await verifyRunSupervisor(state);
    return state;
   }finally{await file.close();}
  }
