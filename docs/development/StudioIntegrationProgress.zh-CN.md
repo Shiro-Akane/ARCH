@@ -1248,3 +1248,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - 本地 CPU freshness 读取实际 compiler dependency graph，与成功 manifest 内容哈希/路径集合比较；固定 tracked list 之外的 header 变化可标 needs-build。缺失/stale/读取失败保持 freshness-unknown。
 - 不提升 dependenciesComplete，link/toolchain 完整性仍待接入。此路径读取实际图，不信任持久 manifest 中任意新增路径去扫描文件。
+
+
+### 2026-10-02 — Configure integration full regression
+
+- clean 01185a62：npm test 192/192 PASS（含 Host，不重复累加），lint PASS，npm run build（typecheck+Vite）PASS，676 modules。现有 bundle size 提示保留，未顺手重构。
+- 结果/本地日志哈希见 StudioConfigureRegressionSummary.json。覆盖当前参数、Preview、保存和 Configure 自动回归，不等同 Linux desktop UAT 或 Run/Restart/科学验收。
