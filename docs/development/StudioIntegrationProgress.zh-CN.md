@@ -1396,3 +1396,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - Linux 项目页隐藏跨 WSL 发行版输入，增加显式 binary/case/source 字段；提交期间禁用重复 Open，空可选项不发出，错误提示改为 Local Host。沿用同一 Host 参数边界，不增加任意命令能力。
 - 实际 desktop Host 负向检查：missing binary 与未注册模型均 exit1，给出明确错误，未发布 readiness；摘要见 StudioLinuxLauncherFailureSummary.json。lint PASS。原生 UI/对话框操作验收仍待 WSLg 图形问题解决，未宣称完成。
+
+### 2026-10-02 — WSLg Wayland diagnostic and launch argument fix
+
+- 只读 WSLg1.0.73.2日志确认 enable_copy_warning_title=1；不能仅凭标题认定截图根因。DISPLAY/Wayland socket存在；单次 Wayland 对照报告 drmGetDevices2 无设备，Computer Use显示空画面，未记作UI通过，未修改系统配置。
+- 对照发现开发入口固定 argv.slice(2) 误读 Electron runtime flag。改为定位实际 main.cjs 后提取项目参数；lint PASS，真实 --ozone-platform=wayland 重试成功发布 SmoothAdvection Host readiness（PID424）。定向关闭 launcher后Host消失。
+- WSLg视觉/原生对话框UAT仍未完成。没有把错误页或后台readiness当视觉验收，也未放宽渲染/科学标准。

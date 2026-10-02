@@ -106,7 +106,8 @@ app.whenReady().then(async()=>{
  ipcMain.handle('desktop:save-path',async(event,name)=>{senderAllowed(event);if(!ready||typeof name!=='string')throw new Error('No managed project.');const distribution=linux?'':distro||await exec('wsl.exe',['--exec','/usr/bin/printenv','WSL_DISTRO_NAME']);const rootWin=linux?ready.project:'\\\\wsl.localhost\\'+distribution+ready.project.replaceAll('/','\\');const d=await dialog.showSaveDialog(win,{title:'Save new project configuration',defaultPath:path.join(rootWin,path.basename(name)),filters:[{name:'ARCH configuration',extensions:['par']}]});if(d.canceled||!d.filePath)return null;const mapped=await mapPath(d.filePath);const relative=path.posix.relative(ready.project,mapped);if(relative.startsWith('../')||path.posix.isAbsolute(relative)||!relative.endsWith('.par'))throw new Error('Save As must select a new .par inside the managed project.');return relative;});
  ipcMain.on('desktop:dirty',(event,value)=>{senderAllowed(event);dirty=value===true;});
  const {parseLaunchArgs}=await import('./arguments.mjs');
- try{const args=app.isPackaged?process.argv.slice(1):process.argv.slice(2);await launch(parseLaunchArgs(args,process.cwd()));}
+ try{const entryIndex=process.argv.findIndex((value,index)=>index>0&&path.resolve(value)===__filename);
+  const args=app.isPackaged?process.argv.slice(1):process.argv.slice(entryIndex>=1?entryIndex+1:2);await launch(parseLaunchArgs(args,process.cwd()));}
  catch(e){await log('launch failed: '+e.message);await createWindow({error:e.message},'/launcher.html');}
 }).catch(async e=>{await log(e.message);app.quit();});
 app.on('window-all-closed',()=>{if(!closing)void shutdown();});
