@@ -1367,3 +1367,8 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 工作流新增 Saved run history，从当前 Host/project 读取持久记录，显示独立输入 SHA/path、case、状态、exit 与诊断；旧项目迟到响应不覆盖新项目。活跃记录提供按 run ID 的 Stop，不自动恢复执行或重试未知状态。
 - 新增 history 响应校验，拒绝旧项目、重复 ID 和无诊断的 unknown。完整 npm test 218/218 PASS（含 Host）、lint、typecheck+production build PASS；保留既有 bundle warning。
 - 真实桌面重开/Stop UAT 尚待执行；当前是 UI 接线与自动回归证据，不能替代人工操作验收。下一步继续 CPU binary 配置关联与 Linux production 工作流。
+
+### 2026-10-02 — Selected binary static configuration adapter
+
+- 无 Preview profile 的项目现在装配静态 ConfigurationAdapter，执行固定 config-schema/list-cases/inspect-config，基于选定 executable SHA 前后核验。selected-binary:SHA 是内容 scope，不是成功 Build/current 证明；现有 Preview readiness 路径不放宽。
+- 无 Preview 项目的真实子进程 fixture 验证 schema/inspection 与未知模型拒绝；与旧配置和 Run 回归14/14 PASS，lint/typecheck PASS。前端 ConfigurationBridge/buildScope 与 discovery 仍待迁移，因此尚不宣称 local CPU 参数面板端到端可用。

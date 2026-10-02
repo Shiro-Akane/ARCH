@@ -109,6 +109,15 @@ test('project run preparation reads the current associated saved file without a 
  try{
   const project=await openProject({project:f.root,binary:'ARCH',config:'saved.par'});
   assert.equal(project.preview,undefined);assert.ok(project.runPreparation);
+  assert.ok(project.configuration);
+  const schema=await project.configuration.schema();
+  assert.match(schema.buildId,/^selected-binary:[a-f0-9]{64}$/);
+  const bytes=await project.readConfig();
+  const inspected=await project.configuration.inspect({projectId:bytes.projectId,caseId:'Sod',configText:bytes.text,configRevision:bytes.fingerprint.sha256});
+  assert.equal(inspected.identity.binarySha256,schema.binarySha256);
+  assert.equal(inspected.core.status,'ok');
+  await assert.rejects(project.configuration.inspect({projectId:bytes.projectId,caseId:'NotRegistered',configText:bytes.text,configRevision:bytes.fingerprint.sha256}),/not registered/);
+
   const saved=await project.readConfig();
   const plan=await project.runPreparation.prepare({projectId:saved.projectId,caseId:'Sod',configRevision:saved.fingerprint.sha256,mode:'run'});
   assert.equal(plan.canConfirm,true);assert.equal(plan.config.relativePath,'saved.par');
