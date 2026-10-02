@@ -1,8 +1,8 @@
 import {hostEndpoint} from './desktop.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';
 import type {BuildSnapshot,BuildEvents,SourceResponse} from './contracts.ts';
-export async function buildRequest(route:string,body?:unknown):Promise<unknown>{
- const response=await fetch(hostEndpoint+route,{method:body?'POST':'GET',headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,credentials:'omit',redirect:'error',signal:AbortSignal.timeout(15000)});
+export async function buildRequest(route:string,body?:unknown,method?:'POST'):Promise<unknown>{
+ const response=await fetch(hostEndpoint+route,{method:method??(body?'POST':'GET'),headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,credentials:'omit',redirect:'error',signal:AbortSignal.timeout(15000)});
  const reader=response.body?.getReader();if(!reader)throw new Error('Empty Build response');const chunks:Uint8Array[]=[];let size=0;
  try{while(true){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>2*1024*1024){await reader.cancel();throw new Error('Build response exceeds limit');}chunks.push(value);}}finally{reader.releaseLock();}
  const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length;}const data=JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(bytes));

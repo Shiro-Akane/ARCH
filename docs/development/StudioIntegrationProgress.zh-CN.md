@@ -1195,3 +1195,10 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 
 - Configure status/start/cancel 响应补齐协议与当前项目身份；前端运行时校验拒绝旧项目、旧协议、无任务 ID 的 active、错误 operation/result 配对和非零 exit 的虚假成功。
 - 新客户端负向测试及真实 Host Configure 回归 6/6 PASS，typecheck PASS。UI polling/button 仍待接入，不以 adapter 通过代替用户操作验收。
+
+
+### 2026-10-02 — Configure workflow UI
+
+- 工作流 Configure 按 Host profile 可用性启用，显示实际任务状态，支持取消；终端抽屉显示有界日志，关闭抽屉不取消。轮询校验项目/operation 身份，旧项目响应不覆盖当前状态。
+- Build 状态读取在无活动任务时重新验证配置和 freshness，使首次 Configure 后可识别实际 tree；仍不将配置成功等同 binary current。
+- typecheck/lint PASS，Configure adapter+UI render 7/7 PASS。尚待 production build/真实 Linux UI UAT；Run/Restart 仍禁用，未声称 3C 完成。
