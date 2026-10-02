@@ -1011,3 +1011,20 @@ RETIRED_PARAMETER 配置拒绝；保留其他三项 checkpoint controls 拒绝�
 Python compile 语法检查 PASS；未运行演化 campaign，不宣称该 campaign 通过。
 GravityConstantInputMigrationPending.zh-CN.md 列出径向非物理 G 与 FLASH ARCH
 输入待确认项；未改输入、独立物理参考或阈值。
+
+### O7.0 complete configured CPU target compilation
+
+After f491bb99, built all configured CPU targets: 125 Ninja steps PASS.
+Memory guard: 25.521 seconds, minimum available 17612008 KiB, peak owned RSS
+6573600 KiB, zero swap growth, no guard stop. Local build log:
+studio/.local/integration/o7-cpu-all-targets-build.log.
+CTest inventory has 67 tests; this is an inventory, NOT 67 passing tests.
+
+Additional scoped configuration/constants/stage/backend checks 15/15 PASS
+(0.22s): config_input_records, input_resolution, case_configuration,
+physical_constants, state_residency, shared_stage_scheduler, gravity_stage_contract,
+boundary_plan, same_level_exchange_plan, amr_operation_plans, amr_flux_surface_plan,
+topology_transaction, resolved_execution_plan, runtime_probe_and_capabilities,
+compute_backend. Previously passed production t=0 checks were not repeated.
+No evolution campaign/CUDA/Windows work; historical physics migration and controlled
+final runtime configuration remain open. Full joint delivery not complete.
