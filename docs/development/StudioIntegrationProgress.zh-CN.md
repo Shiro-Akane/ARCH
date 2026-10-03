@@ -3129,3 +3129,14 @@ pending HTTP Cancel→保留旧LOD→Host恢复不覆盖→新LOD成功。
 首次非目标worker注入已恢复并排除证据；不宣称native active-reader回收或全部race完成。
 正常close exit0/8owned退出/H5/config不变/managed clean。见PlotfileStickyCancel报告/Summary。
 未Build Core/simulation/push/tag，联合目标继续推进。
+
+## 2026-10-04 Plotfile 原生 reader 取消与视口竞态
+
+584508ea production native：真实20×16² CellularDet →32×24 LOD；
+首次暂停触发15秒超时且旧图保留，单独记录不作race PASS。
+第二次窗口Cancel→旧图保留→reader最终消失→下一次finer读取恢复；
+未测reap latency或Host最终分类，不夸大kill原因。
+第三次8秒暂停/自动恢复，Zoom in改变viewport，迟到响应明确discard，
+旧显示保留，Fit恢复全域。正常close exit0，8owned+3reader精确身份均退出。
+H5/config字节不变、managed clean，无Core Build/simulation/源码修改；
+不重复331项检查。见PlotfileNativeRace报告/Summary。未push/tag，联合目标仍在推进。

@@ -1,0 +1,117 @@
+{
+  "scope": "Real Linux production Viewer: timeout retention, native cancel/recovery, viewport stale-response discard and Fit; not full scientific acceptance",
+  "implementationCommit": "584508ea1d9fc23009da69973de7b13abf2fc00e",
+  "contractCommit": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+  "branch": "studio/compute-optim-integration",
+  "remoteAvailable": false,
+  "nativeWindow": 4393350,
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "managedBinarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "producerBinarySha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+  "display": {
+    "cellsScanned": 5120,
+    "shape": [
+      24,
+      32
+    ],
+    "storedBlocks": 20,
+    "nativeCellShape": [
+      16,
+      16
+    ],
+    "fullDomain": [
+      [
+        0,
+        25.6
+      ],
+      [
+        0,
+        12.8
+      ]
+    ],
+    "field": "DENS"
+  },
+  "timeout": {
+    "worker": {
+      "pid": 1661351,
+      "ppid": 1648628,
+      "startTicks": "6697427",
+      "state": "T",
+      "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node"
+    },
+    "message": "Metadata read exceeded its wall-clock budget.",
+    "previousDisplayRetained": true,
+    "racePass": false
+  },
+  "cancel": {
+    "worker": {
+      "pid": 1664574,
+      "ppid": 1648628,
+      "startTicks": "6704640",
+      "state": "T",
+      "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node"
+    },
+    "message": "Read cancelled; previous successful data retained.",
+    "workerLaterAbsent": true,
+    "nextViewportReadSuccess": true,
+    "reapLatencyMeasured": false,
+    "exclusiveKillCauseObserved": false
+  },
+  "viewportRace": {
+    "worker": {
+      "pid": 1667257,
+      "ppid": 1648628,
+      "startTicks": "6710551",
+      "state": "T",
+      "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node"
+    },
+    "injectedPauseSeconds": 8,
+    "resumedWithinProductionBudget": true,
+    "priorView": [
+      [
+        2.56,
+        23.04
+      ],
+      [
+        1.28,
+        11.52
+      ]
+    ],
+    "newView": [
+      [
+        4.608,
+        20.992
+      ],
+      [
+        2.304,
+        10.496
+      ]
+    ],
+    "message": "Viewport changed during read; result discarded, previous display retained.",
+    "previousSuccessfulDisplayRetained": true,
+    "fitRestoresFullDomain": true
+  },
+  "startupInit": "Observed preparing/current before switching workspace; no Generate input. Not zero Preview activity.",
+  "cleanup": {
+    "processesChecked": 11,
+    "survivingOwnedIdentities": [],
+    "h5Sha": "8cc5e9e1da007bdc2854a091517a487b08f40976ec9a5580c44f76a1f7d5550b",
+    "configSha": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843",
+    "cleanBuildWorktreeStatus": ""
+  },
+  "matchesOriginalLocalInputs": {
+    "CellularDet.h5": true,
+    "Sod.par": true
+  },
+  "launcherExitCode": 0,
+  "sourceModified": false,
+  "coreBuildOrSimulation": false,
+  "checks": "Existing 331/331, lint/typecheck/build remain unchanged; docs diff check only",
+  "limits": [
+    "Injected SIGSTOP, not measured organic disk slowdown",
+    "No native wheel/pan routing acceptance",
+    "No independent science or publication-completeness approval",
+    "No timing claim for cancellation reap; existing automated HTTP-disconnect evidence remains separate",
+    "No push/tag; precise local SHA is not remotely accessible"
+  ]
+}
