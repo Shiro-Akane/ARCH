@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "numerics/integrator/IHydroSolver.h"
+#include "numerics/integrator/HydroGeometryBinding.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 
 #include "amr/AMRControl.h"
@@ -33,6 +34,8 @@ struct SolverRK2
                       const Numerics::IHydroSolver* hydro,
                       const NumericsConfig &num_cfg)
     {
+        const auto geometry=TimeIntegration::bind_hydro_geometry(
+            amr_ctrl,boundary_condition,hydro,gravity);
         amr_ctrl.flux_register.Clear();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
         if (!active_blocks.empty()) {
@@ -96,7 +99,7 @@ struct SolverRK2
                         throw std::logic_error("RK2 ghost exchange requires Scratch output");
                     amr_ctrl.ghost_exchange.ExecuteExchange(
                         amr_ctrl.pool, amr_ctrl.tree, dim,
-                        &amr::Block::state_scratch, binding.handles);
+                        &amr::Block::state_scratch, binding.handles,geometry.exchange_chart);
                     return token;
                 },
             [&](arch::state::SlotRotation rotation) {
@@ -113,7 +116,7 @@ struct SolverRK2
             },
             [&](const HydroPlan&, StateSlot,
                 arch::state::CompletionToken token) {
-                amr_ctrl.ApplyReflux(dt);
+                amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics);
                 TimeIntegration::validate_reflux_state(amr_ctrl,num_cfg);
                 return token;
             });

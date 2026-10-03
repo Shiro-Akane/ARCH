@@ -2700,3 +2700,8 @@ CPU3/3与随后仅变化mixed Hydro BC→exchange→stage→BC→exchange→refl
 ## 2026-10-04 RZ Host Hydro policy
 
 真实 HydroSolverImpl 已传递固定内部 chart 并通过 IHydroSolver 暴露身份。四个 mixed-AMR fixture 改经真实虚接口，CPU scoped 3/3 PASS；详见 RZHydroPolicy-20261004.zh-CN.md。Euler/RK scheduler chart propagation 仍待完成，不宣称生产 RZ/演化验收。
+
+
+## 2026-10-04 RZ actual Host scheduler
+
+Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-AMR实际ledger测试通过。错误BC profile保留clock/ledger与既有flux。受影响scoped4/4及最终flux guard1/1 PASS；详见RZScheduledHydro-20261004.zh-CN.md。公共runtime/CUDA/科学验收仍未完成。

@@ -366,6 +366,11 @@ struct BCHandler
         }
     }
 
+    GridMetrics::GeometrySemantics geometry_semantics() const noexcept
+    {
+        return semantics_;
+    }
+
     void apply(FluidState &state, const Grid &grid) const
     {
         const auto& selected=logical_plan(grid);

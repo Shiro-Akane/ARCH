@@ -8,6 +8,9 @@
 #include "driver/DriverUtils.h"
 #include "numerics/integrator/GeometricSources.h"
 #include "numerics/integrator/HydroSolverImpl.h"
+#include "numerics/integrator/TimeIntegratorEuler.h"
+#include "numerics/integrator/TimeIntegratorRK2.h"
+#include "numerics/integrator/TimeIntegratorRK3.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "math/geometry/CurvilinearMetricCases.h"
 #include "math/geometry/RzMetricCases.h"
@@ -283,8 +286,126 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
         <<" max_state_error="<<max_state_error<<'\n';
 }
 
+template<typename Solver>
+void test_rz_scheduled_hydro(int direction,double inner) {
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    SpeciesManager species;
+    species.add_species("gas0",1.,1.,1.4,3.);
+    species.add_species("gas1",2.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> policy(eos,rz);
+    const Numerics::IHydroSolver& hydro=policy;
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> legacy(eos);
+    if(hydro.geometry_semantics()!=rz
+        || legacy.geometry_semantics()!=GridMetrics::GeometrySemantics::Existing)
+        throw std::runtime_error("Host Hydro type-erased chart identity");
+    bool invalid_rejected=false;
+    try {
+        Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> invalid(
+            eos,static_cast<GridMetrics::GeometrySemantics>(255));
+    } catch(const std::invalid_argument&) { invalid_rejected=true; }
+    if(!invalid_rejected)throw std::runtime_error("Unknown Hydro chart accepted");
+    NumericsConfig numerics{};
+    numerics.entropy_fix_coeff=0.;numerics.hll_roe_wave_speed=true;
+    numerics.sml_rho=1.e-14;numerics.min_eint=1.e-14;numerics.max_eint=1.e10;
+    SimConfig config{};
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=direction==0?2:1;
+    config.grid.nblockx2=direction==0?1:2;config.grid.nblockx3=0;
+    config.grid.x1_min=inner;config.grid.x1_max=inner+2.;
+    config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    config.grid.amr_max_blocks=32;config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+    amr::AMRControl control(32,2);
+    control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
+        {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
+        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
+    const auto& active=control.tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles;
+    const FluidVector reference{2.,0.,6.,0.,21.5}; // p5, vz3, zero swirl.
+    for(std::size_t n=0;n<active.size();++n) {
+        handles.push_back({{4000+n},{97}});
+        auto& block=control.pool->GetBlock(active[n]);
+        block.fluid_state.InitSpecies(2);block.state_next.InitSpecies(2);block.state_scratch.InitSpecies(2);
+        for(int cell=0;cell<block.grid.GetTotalSize();++cell) {
+            block.fluid_state.set(cell,reference);
+            block.fluid_state.X(0,cell)=.6;block.fluid_state.X(1,cell)=.4;
+        }
+    }
+    control.BindActiveHandles(handles);control.flux_register.EnsureSpecies(2);
+    control.flux_register.Clear();
+    BCHandler boundary(config,rz);
+    for(int id:active) {
+        auto& block=control.pool->GetBlock(id);
+        boundary.apply(block.fluid_state,block.grid);
+    }
+    control.ghost_exchange.ExecuteExchange(control.pool,control.tree,2,
+        &amr::Block::fluid_state,handles,amr::CoordinateSeamGeometry::RzAxisymmetric);
+
+    using namespace arch::state;
+    using namespace arch::scheduler;
+    StateResidencyLedger ledger({97});
+    for(auto handle:handles) {
+        ledger.register_block(handle,{1},{1,CompletionState::Complete});
+        ledger.publish_ghost({handle,StateSlot::Current},ExecutionSide::Host,
+            {1},{2,CompletionState::Complete});
+    }
+    MonotonicSchedulerClock clock(2,1);
+    StageExecutionContext context{ExecutionSide::Host,ledger,clock};
+    ScopedStageBinding scope(context,handles);
+    // Mismatch must fail before advancing the clock/ledger. Use the actual
+    // scheduled entry, not only its helper.
+    BCHandler wrong_boundary(config);
+    control.flux_register.AddFineFlux(active.front(),0,0,{123.,0.,0.,0.,0.},1.);
+    bool mismatch=false;
+    try { Solver::solve(control,.001,wrong_boundary,nullptr,&hydro,numerics); }
+    catch(const std::invalid_argument&) { mismatch=true; }
+    if(!mismatch || clock.last_version()!=1 || clock.last_token()!=2)
+        throw std::runtime_error("RZ scheduler mismatch mutated publication");
+    for(auto h:handles)
+        if(ledger.inspect({h,StateSlot::Current}).interior.version!=StateVersion{1})
+            throw std::runtime_error("RZ mismatch changed state ledger");
+    if(!control.flux_register.HasData(active.front(),0)
+        ||control.flux_register.GetSummedFlux(active.front(),0,0).rho!=123.)
+        throw std::runtime_error("RZ mismatch cleared accumulated flux");
+    Solver::solve(control,.001,boundary,nullptr,&hydro,numerics);
+    const std::uint64_t stages=std::is_same_v<Solver,SolverEuler>?1:
+        (std::is_same_v<Solver,SolverRK2>?2:3);
+    if(clock.last_version()!=1+stages+1)
+        throw std::runtime_error("RZ scheduler publication count");
+    double error=0.;
+    for(std::size_t n=0;n<active.size();++n) {
+        const auto& block=control.pool->GetBlock(active[n]);
+        const auto& g=block.grid;
+        const auto state=ledger.inspect({handles[n],StateSlot::Current});
+        if(state.interior.version.value!=clock.last_version()
+            ||state.interior.residency!=StateResidency::HostValid
+            ||state.ghost.residency!=StateResidency::Invalid)
+            throw std::runtime_error("RZ final reflux ledger identity");
+        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+            const int cell=g.GetIndex(i,j,0);
+            const auto u=block.fluid_state.get(cell);
+            for(double v:{u.rho-reference.rho,u.mom_u-reference.mom_u,
+                u.mom_v-reference.mom_v,u.mom_w-reference.mom_w,u.eng-reference.eng,
+                block.fluid_state.X(0,cell)-.6,block.fluid_state.X(1,cell)-.4}) {
+                close(v,0.,"RZ scheduled mixed-AMR constant-state drift");
+                error=std::max(error,std::abs(v));
+            }
+        }
+    }
+    if(control.RequireFluxTopologyPlan(2,rz).semantics!=rz)
+        throw std::runtime_error("Scheduled Hydro reflux chart mismatch");
+    std::cout<<"RZ_SCHEDULED_HYDRO method="<<Solver::name()
+        <<" direction="<<direction<<" inner="<<inner<<" max_state_error="<<error
+        <<" version="<<clock.last_version()<<'\n';
+}
+
 int main()
 {
+    for(int direction:{0,1})for(double inner:{0.,1.}) {
+        test_rz_scheduled_hydro<SolverEuler>(direction,inner);
+        test_rz_scheduled_hydro<SolverRK2>(direction,inner);
+        test_rz_scheduled_hydro<SolverRK3>(direction,inner);
+    }
     for(int direction:{0,1})for(double inner:{0.,1.})
         test_rz_mixed_hydro_stage(direction,inner);
     test_rz_host_cfl();
