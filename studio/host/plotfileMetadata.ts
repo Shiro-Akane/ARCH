@@ -83,6 +83,33 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
   if(!Array.isArray(values))throw Error('Invalid candidate species representation.');
   speciesNames=values;
  }
+ let speciesProperties:unknown;
+ const propertyNames=['A','Z','gamma','Cv'];
+ if(e.attrs.species_properties_version){
+  const version=read('species_properties_version'),state=read('species_properties_state');
+  if(version!=='checkpoint-species-1')throw Error('Unsupported candidate species properties version.');
+  if(state==='recorded'){
+   if(count===0)throw Error('Empty recorded candidate species properties.');
+   const values:Record<string,number[]>={};
+   for(const key of propertyNames){
+    const d=dataset(e,'species_'+key),shape=d.shape;
+    if(d.metadata.type!==1||d.metadata.size!==8||!shape||shape.length!==1||shape[0]!==count)
+     throw Error('Invalid candidate species properties shape/type.');
+    const data=d.slice([[0,count]]);
+    if(!(data instanceof Float64Array)||!data.every(Number.isFinite))
+     throw Error('Invalid candidate species properties values.');
+    values[key]=Array.from(data);
+   }
+   speciesProperties={version,state,source:read('species_properties_source'),values};
+  }else if(state==='unknown'){
+   if(read('species_properties_source')!=='unknown'||propertyNames.some(key=>e.get('species_'+key)!==null))
+    throw Error('Contradictory unknown candidate species properties.');
+   speciesProperties={version,state,source:null,values:null,reason:scalar(e,'species_properties_reason',256)};
+  }else throw Error('Invalid candidate species properties state.');
+ }else if(propertyNames.some(key=>e.get('species_'+key)!==null)||
+   ['species_properties_state','species_properties_source','species_properties_reason'].some(key=>e.attrs[key])){
+  throw Error('Candidate species properties lack their version.');
+ }
  const gammaAvailable=read('ideal_gamma_available');
  if(gammaAvailable!==0&&gammaAvailable!==1)throw Error('Invalid candidate gamma availability.');
  const evidence={
@@ -94,6 +121,7 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
   eosTableState:read('eos_table_state'),eosTableSha256:known('eos_table_sha256'),
   idealGamma:gammaAvailable===1?read('ideal_gamma'):null,
   speciesState:read('species_identity_state'),speciesNames,
+  ...(speciesProperties===undefined?{}:{speciesProperties}),
   runId:null,effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:known('eos_unit_system'),
  };
  if(!sourceEvidenceValid(evidence))throw Error('Invalid candidate source evidence.');

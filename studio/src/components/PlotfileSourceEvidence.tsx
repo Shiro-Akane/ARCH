@@ -16,6 +16,18 @@ export function PlotfileSourceEvidence({evidence}:{evidence?:Evidence|null}){
    <dt>Run / effective config / build / source Git</dt><dd>unknown</dd>
    <dt>Recorded unit system</dt><dd>{evidence.eosUnitSystem??'unknown'}</dd>
   </dl>
+  {evidence.speciesProperties?.state==='recorded'?<details>
+   <summary>Recorded EOS constituents · {evidence.speciesNames.length} species</summary>
+   <p>Raw runtime provenance values, in recorded species order. No unit conversion or complete EOS identity is inferred.</p>
+   <table><thead><tr><th>Species</th><th>A</th><th>Z</th><th>gamma</th><th>Cv · raw</th></tr></thead>
+    <tbody>{evidence.speciesNames.map((name,index)=><tr key={index}>
+     <th>{name}</th>{(['A','Z','gamma','Cv'] as const).map(key=><td key={key}>
+      {evidence.speciesProperties?.state==='recorded'?String(evidence.speciesProperties.values[key][index]):''}
+     </td>)}
+    </tr>)}</tbody></table>
+   <p>Source: {evidence.speciesProperties.source}</p>
+  </details>:<p>EOS constituent properties: {evidence.speciesProperties?.state==='unknown'?
+   evidence.speciesProperties.reason:'not recorded in this file'}</p>}
   <p>Recorded candidate evidence does not certify full scientific provenance or freshness. Raw config differs from effective config; the binary digest covers the main executable only.</p>
  </section>;
 }

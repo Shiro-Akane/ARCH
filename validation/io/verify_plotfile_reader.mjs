@@ -21,6 +21,12 @@ for(const directory of JSON.parse(await fs.readFile(process.argv[2],'utf8'))) {
  assert.ok(['Sod','CellularDet'].includes(m.candidateSourceIdentity?.caseId));assert.equal(m.time,0);
  assert.equal(m.fields.find(f=>f.name==='DENS').unit,'g/cm^3');
  assert.equal(m.coordinates.units,'cm');assert.equal(m.timeUnit,'s');assert.equal(m.candidateSourceIdentity.eosUnitSystem,'cgs');
+ const properties=m.candidateSourceIdentity.speciesProperties;
+ if(properties?.state==='recorded'){
+  assert.equal(properties.source,'resolved-runtime-checkpoint-provenance');
+  for(const key of ['A','Z','gamma','Cv'])assert.equal(properties.values[key].length,m.candidateSourceIdentity.speciesNames.length);
+ }
+
  assert.equal(m.candidateNativeGrid.measureUnit,m.dimension===1?'cm':'cm^2');
  const selection={field:'DENS',block:0,start:m.cellShape.map(()=>0),count:m.cellShape.map(()=>1)};
  const result=await readPlotfileFieldSlice(path,selection);
@@ -46,6 +52,7 @@ for(const directory of JSON.parse(await fs.readFile(process.argv[2],'utf8'))) {
    sliceOverviewPointClientValidation:'PASS'});
  }
  rows.push({case:m.candidateSourceIdentity.caseId,fileSha256:m.file.sha256,binarySha256:m.candidateSourceIdentity.binarySha256,
+  speciesProperties:m.candidateSourceIdentity.speciesProperties??null,
   dimension:m.dimension,fieldDeclaration:m.fields.find(f=>f.name==='DENS').declaration,
   coordinateUnit:m.coordinates.units,timeUnit:m.timeUnit,measureUnit:m.candidateNativeGrid.measureUnit,
   measureNormalization:m.candidateNativeGrid.measureNormalization,rawPointValue:point.payload.values[0],

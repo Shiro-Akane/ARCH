@@ -26,7 +26,7 @@ test('source evidence separates partial recorded values from unsupported full/bu
  assert.ok(sourceEvidenceValid({...valid,eosType:'tabular3d',idealGamma:null,eosTableState:'recorded',eosTableSha256:'c'.repeat(64)}));
 });
 await h5.ready;
-async function fixture(run:(path:string)=>Promise<void>,changes:Record<string,string|number>={}){
+async function fixture(run:(path:string)=>Promise<void>,changes:Record<string,string|number>={},properties?:(group:InstanceType<typeof h5.Group>)=>void){
  const dir=await mkdtemp(join(tmpdir(),'arch-source-evidence-')),path=join(dir,'fixture.h5');
  try{
   await copyFile(new URL('./fixtures/sod-1d.h5',import.meta.url),path);
@@ -43,6 +43,7 @@ async function fixture(run:(path:string)=>Promise<void>,changes:Record<string,st
     build_id:'unknown',source_git_head:'unknown',eos_unit_system:'unknown',...changes};
    for(const [k,v] of Object.entries(attrs))g.create_attribute(k,v);
    g.create_dataset({name:'species_names',data:['first','second']});
+   properties?.(g);
   }finally{f.close();}
   await run(path);
  }finally{await rm(dir,{recursive:true,force:true});}
@@ -63,4 +64,57 @@ test('unknown candidate version, bad digest, EOS contradiction and species budge
   await fixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/candidate|budget/i);},changes);
  const legacy=await inspectPlotfileMetadata(new URL('./fixtures/sod-1d.h5',import.meta.url).pathname);
  assert.equal(legacy.candidateSourceIdentity,null);
+});
+
+const properties={version:'checkpoint-species-1',state:'recorded',
+ source:'resolved-runtime-checkpoint-provenance',values:{A:[12,16],Z:[6,8],gamma:[1.4,5/3],Cv:[3,4]}};
+const propertyAttrs={species_properties_version:'checkpoint-species-1',
+ species_properties_state:'recorded',species_properties_source:'resolved-runtime-checkpoint-provenance'};
+function writeProperties(group:InstanceType<typeof h5.Group>,replace?:{key:string;data:Float64Array|Float32Array}){
+ for(const [key,values] of Object.entries(properties.values))
+  group.create_dataset({name:'species_'+key,data:replace?.key===key?replace.data:new Float64Array(values)});
+}
+test('bounded EOS constituents preserve runtime order and raw FP64 through reader/client',async()=>{
+ await fixture(async path=>{
+  const metadata=await inspectPlotfileMetadata(path);
+  assert.deepEqual(metadata.candidateSourceIdentity?.speciesProperties,properties);
+  const response={protocolVersion:PROTOCOL_VERSION,projectId:'session',relativePath:'candidate.h5',metadata};
+  const result=validatePlotfileAudit(response,'session','candidate.h5').audit;
+  assert.deepEqual(result.candidateSourceIdentity?.speciesProperties,properties);
+  assert.equal(result.completion.state,'unknown');
+  assert.equal(result.renderEligible,false);
+ },propertyAttrs,group=>writeProperties(group));
+});
+test('optional EOS constituents reject forged source, unbounded/partial/nonfinite vectors',()=>{
+ assert.ok(sourceEvidenceValid({...valid,speciesProperties:properties}));
+ const bad=[{version:'future'},{source:'schema defaults'},{state:'complete'},
+  {values:{...properties.values,A:[12]}},{values:{...properties.values,Cv:[3,NaN]}},
+  {values:{...properties.values,Z:new Array(129).fill(1)}},
+  {values:{...properties.values,extra:[]}}];
+ for(const change of bad)assert.equal(sourceEvidenceValid({...valid,speciesProperties:{...properties,...change}}),false);
+ assert.equal(sourceEvidenceValid({...valid,speciesState:'unknown',speciesNames:[],speciesProperties:properties}),false);
+});
+test('reader rejects EOS property float32/shape/NaN/version/unknown contradictions',async()=>{
+ for(const replace of [{key:'Cv',data:new Float32Array([3,4])},
+  {key:'A',data:new Float64Array([12])},{key:'Z',data:new Float64Array([6,NaN])}])
+  await fixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/species properties/i);},
+   propertyAttrs,group=>writeProperties(group,replace));
+ await fixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/species properties/i);},
+  {...propertyAttrs,species_properties_version:'future'},group=>writeProperties(group));
+ await fixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/species properties/i);},
+  {},group=>writeProperties(group));
+ await fixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/species properties/i);},
+  {...propertyAttrs,species_properties_state:'unknown',species_properties_source:'unknown',
+   species_properties_reason:'not supplied'},group=>writeProperties(group));
+});
+test('explicit unknown EOS properties preserve reason without synthetic values',async()=>{
+ const unknown={version:'checkpoint-species-1',state:'unknown',source:null,values:null,
+  reason:'resolved species properties not supplied by caller'};
+ assert.ok(sourceEvidenceValid({...valid,speciesProperties:unknown}));
+ assert.equal(sourceEvidenceValid({...valid,speciesProperties:{...unknown,reason:''}}),false);
+ await fixture(async path=>{
+  const metadata=await inspectPlotfileMetadata(path);
+  assert.deepEqual(metadata.candidateSourceIdentity?.speciesProperties,unknown);
+ },{species_properties_version:'checkpoint-species-1',species_properties_state:'unknown',
+  species_properties_source:'unknown',species_properties_reason:unknown.reason});
 });

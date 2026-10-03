@@ -2496,3 +2496,11 @@ Cellular 32x24 响应28512bytes仍扫描5120单元；每请求新worker，没有
 直接来自 runtime checkpoint provenance；state/version/source 与缺失 reason 明确。
 Sod1/Cellular19 组分四组属性与 checkpoint 位级一致；Host 旧路径兼容，整体仍 partial。
 见 PlotfileEosConstituents-20261003.zh-CN.md / Summary.json。当前 Viewer 未消费新属性，不声称完整 EOS verified。
+
+
+## 2026-10-03 recorded EOS properties Host/Viewer
+
+之前“Viewer未消费新属性”为历史状态：本轮已接入 optional speciesProperties，严格FP64[Ns]及来源验证。
+Sod1/Cellular19真实属性经Host/独立HDF逐位一致；315项全回归及production检查通过。
+Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做单位推断或EOS verified。
+见 PlotfileEosSourceUi-20261003.zh-CN.md / Summary.json。完整联合目标和其余科学/资源验收仍待。
