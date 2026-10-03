@@ -1562,3 +1562,14 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 Jeans 仅计算新旧 G 的线性频率敏感性，FLASH 编译 G 尚未确认。
 没有修改 .par、运行 ARCH/FLASH 或调整阈值；待维护者批准后才迁移输入。
 完整目标及先后顺序不变，不能将该分析记为科学验收 PASS。
+
+## WSLg recovery / partial native 3C UAT
+
+Current boot differs from the prior failing session; gfxredir=1 and the actual
+independent Linux ARCH Studio window is capturable. Native Open Config and Save As
+to a new ignored local file were exercised; saved bytes exactly match original.
+See StudioWslgVisibilityBlocker.md for identities and remaining checks.
+The earlier visibility blocker is historical; full native 3C acceptance remains
+incomplete. No new simulation, configure, build or scientific input modification
+was performed in these recovery checks. A combined-catalog standard-count label
+discrepancy was recorded for follow-up; actual Core schema remains 94 parameters.
