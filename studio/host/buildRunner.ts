@@ -44,10 +44,12 @@ export class BuildRunner {
     for(const old of m.trackedInputFingerprints){try{if(!same(old.fingerprint,await inspect(this.root,old.relativePath)))evidence.changedInputs.push(old.relativePath);}catch{evidence.changedInputs.push(old.relativePath);}}
     let configurationUnknown=false;
     if(this.profile.compilerDependencyMode==='ninja'){
-     if(!m.configurationInputs||m.configurationInputError||m.configurationInputsStableDuringBuild!==true)configurationUnknown=true;
+     if(!m.configurationInputs||!m.configurationInputs.generatorTools||m.configurationInputError||m.configurationInputsStableDuringBuild!==true)configurationUnknown=true;
      else try{
       const now=await readBuildConfigurationInputs(this.root,this.root+'/'+this.profile.buildDirRelative);
       if(!sameConfigurationInputs(m.configurationInputs,now)){
+       const tools=new Map(m.configurationInputs.generatorTools.map(t=>[t.role,t]));
+       for(const t of now.generatorTools??[]){const old=tools.get(t.role);if(!old||old.path!==t.path||old.resolvedPath!==t.resolvedPath||old.sha256!==t.sha256||old.size!==t.size)evidence.changedInputs.push(t.path);}
        const prior=new Map(m.configurationInputs.inputs.map(f=>[f.path,f]));
        for(const f of now.inputs){const old=prior.get(f.path);if(!old||old.sha256!==f.sha256||old.size!==f.size)evidence.changedInputs.push(f.path);prior.delete(f.path);}
        evidence.changedInputs.push(...prior.keys());

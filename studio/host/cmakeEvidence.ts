@@ -1,13 +1,15 @@
 import path from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {readFile,stat,realpath,readdir} from 'node:fs/promises';
+import {readFile,stat,realpath,readdir,access} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {constants} from 'node:fs';
 /** CMake-owned configuration inputs; not a transitive compiler dependency claim. */
 export interface CMakeInputEvidence {path:string;sha256:string;size:number;generated:boolean;external:boolean;cmake:boolean}
+export interface GeneratorToolEvidence {role:'cmake'|'ninja';path:string;resolvedPath:string;sha256:string;size:number}
 export interface CMakeConfigurationEvidence {
  kind:'cmake-configuration-inputs';version:1;sourceRoot:string;buildDirectory:string;
- replySha256:string;inputs:CMakeInputEvidence[];dependenciesComplete:false;
+ replySha256:string;inputs:CMakeInputEvidence[];generatorTools?:GeneratorToolEvidence[];dependenciesComplete:false;
  missingCoverage:readonly ['compiler-includes','link-inputs','toolchain-identity'];
 }
 function object(x:unknown):x is Record<string,unknown>{return !!x&&typeof x==='object'&&!Array.isArray(x);}
@@ -135,12 +137,43 @@ export async function readBuildToolchainEvidence(buildDirectory:string){
  }
  return data;
 }
+/** Fingerprint fixed Host tools; cache program paths are never executed. */
+export async function readBuildGeneratorEvidence(sourceRoot:string,buildDirectory:string,hostCmake='/usr/bin/cmake'):Promise<GeneratorToolEvidence[]>{
+ const source=await realpath(sourceRoot),build=await realpath(buildDirectory);
+ const cache=path.join(build,'CMakeCache.txt'),bytes=await boundedFile(cache,2*1024*1024);
+ const values=new Map<string,string>();
+ for(const line of bytes.toString('utf8').split(/\r?\n/)){
+  if(!line||line.startsWith('#')||line.startsWith('//')||!line.includes('='))continue;
+  const at=line.indexOf('='),key=line.slice(0,at).split(':')[0];
+  if(values.has(key))throw new Error('Duplicate CMake cache key: '+key);
+  values.set(key,line.slice(at+1));
+ }
+ if(values.get('CMAKE_HOME_DIRECTORY')!==source||values.get('CMAKE_CACHEFILE_DIR')!==build)
+  throw new Error('Generator source/build binding differs.');
+ if(values.get('CMAKE_GENERATOR')!=='Ninja')throw new Error('Unsupported Host generator.');
+ if(values.get('CMAKE_COMMAND')!==hostCmake)throw new Error('Cache CMake differs from fixed Host CMake.');
+ const tools:GeneratorToolEvidence[]=[];
+ for(const role of ['cmake','ninja'] as const){
+  const filename=role==='cmake'?hostCmake:values.get('CMAKE_MAKE_PROGRAM');
+  if(!absolute(filename))throw new Error('Absolute generator tool path required.');
+  const resolvedPath=await realpath(filename);await access(resolvedPath,constants.X_OK);
+  const content=await boundedFile(resolvedPath,128*1024*1024);
+  if(await realpath(filename)!==resolvedPath)throw new Error('Generator tool target changed while reading.');
+  tools.push({role,path:filename,resolvedPath,sha256:createHash('sha256').update(content).digest('hex'),size:content.length});
+ }
+ if(!(await boundedFile(cache,2*1024*1024)).equals(bytes))throw new Error('Generator cache changed while reading.');
+ return tools;
+}
 export async function readBuildConfigurationInputs(sourceRoot:string,buildDirectory:string){
  const {build,replyFile}=await buildReply(buildDirectory,'cmakeFiles');
- return readCMakeConfigurationEvidence(sourceRoot,build,replyFile);
+ const evidence=await readCMakeConfigurationEvidence(sourceRoot,build,replyFile);
+ evidence.generatorTools=await readBuildGeneratorEvidence(sourceRoot,build);
+ return evidence;
 }
 export function sameConfigurationInputs(a:CMakeConfigurationEvidence|undefined,b:CMakeConfigurationEvidence|undefined){
- if(!a||!b||a.sourceRoot!==b.sourceRoot||a.buildDirectory!==b.buildDirectory||a.inputs.length!==b.inputs.length)return false;
+ if(!a||!b||!a.generatorTools||!b.generatorTools||a.generatorTools.length!==2||b.generatorTools.length!==2||a.sourceRoot!==b.sourceRoot||a.buildDirectory!==b.buildDirectory||a.inputs.length!==b.inputs.length)return false;
+ const tools=new Map(a.generatorTools.map(t=>[t.role,t]));
+ if(!b.generatorTools.every(t=>{const old=tools.get(t.role);return old?.path===t.path&&old.resolvedPath===t.resolvedPath&&old.sha256===t.sha256&&old.size===t.size;}))return false;
  const prior=new Map(a.inputs.map(f=>[f.path,f]));
  return b.inputs.every(f=>{
   const old=prior.get(f.path);

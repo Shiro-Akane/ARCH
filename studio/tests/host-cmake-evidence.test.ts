@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm,readdir} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {readCMakeConfigurationEvidence,readCMakeToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs,readBuildLinkerSelection} from '../host/cmakeEvidence.ts';
+import {readCMakeConfigurationEvidence,readCMakeToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs,readBuildLinkerSelection,readBuildGeneratorEvidence} from '../host/cmakeEvidence.ts';
 test('CMake configuration evidence binds source/build and hashes external inputs without claiming compiler coverage',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch cmake evidence-'));
  try{
@@ -39,7 +39,7 @@ test('reads actual installed CMake File API with a spaced source/build path',asy
   await mkdir(source);await mkdir(build+'/.cmake/api/v1/query',{recursive:true});
   await writeFile(source+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(Evidence NONE)\n');
   await writeFile(build+'/.cmake/api/v1/query/cmakeFiles-v1','');
-  await promisify(execFile)('/usr/bin/cmake',['-S',source,'-B',build],{timeout:15000,maxBuffer:1024*1024});
+  await promisify(execFile)('/usr/bin/cmake',['-S',source,'-B',build,'-G','Ninja'],{timeout:15000,maxBuffer:1024*1024});
   const reply=build+'/.cmake/api/v1/reply';
   const name=(await readdir(reply)).find(n=>n.startsWith('cmakeFiles-v1-'));
   assert.ok(name);
@@ -47,7 +47,7 @@ test('reads actual installed CMake File API with a spaced source/build path',asy
   assert.ok(evidence.inputs.some(i=>i.path===source+'/CMakeLists.txt'));
   assert.ok(evidence.inputs.some(i=>i.cmake&&i.external));
   assert.equal(evidence.dependenciesComplete,false);
-  assert.equal(sameConfigurationInputs(evidence,await readBuildConfigurationInputs(source,build)),true);
+  assert.equal(sameConfigurationInputs(await readBuildConfigurationInputs(source,build),await readBuildConfigurationInputs(source,build)),true);
   assert.equal(sameConfigurationInputs(undefined,evidence),false);
  }finally{await rm(root,{recursive:true,force:true});}
 });
@@ -127,5 +127,30 @@ test('ARCH linker selection reads fixed target flags and rejects overrides, ambi
   await assert.rejects(readBuildLinkerSelection(build),/configuration/);
   await writeFile(reply+'/codemodel.json',JSON.stringify({...model,configurations:[{targets:[{name:'ARCH',jsonFile:'../outside.json'}]}]}));
   await assert.rejects(readBuildLinkerSelection(build),/target/);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('generator tools are read-only identities; content changes and missing legacy evidence cannot be current',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch generator-'));
+ try{
+  const source=root+'/source',build=root+'/build',cmake=root+'/cmake',ninja=root+'/ninja';
+  await mkdir(source);await mkdir(build);
+  const payload='#!/bin/sh\ntouch '+root+'/executed\n';
+  await writeFile(cmake,payload,{mode:0o700});await writeFile(ninja,payload,{mode:0o700});
+  const entries={CMAKE_HOME_DIRECTORY:source,CMAKE_CACHEFILE_DIR:build,CMAKE_GENERATOR:'Ninja',CMAKE_COMMAND:cmake,CMAKE_MAKE_PROGRAM:ninja};
+  const put=async(extra='')=>writeFile(build+'/CMakeCache.txt',Object.entries(entries).map(([k,v])=>k+':INTERNAL='+v).join('\n')+'\n'+extra);
+  await put();
+  const first=await readBuildGeneratorEvidence(source,build,cmake);
+  await writeFile(ninja,'#!/bin/sh\nexit 1\n');
+  const after=await readBuildGeneratorEvidence(source,build,cmake);
+  assert.notEqual(first[1].sha256,after[1].sha256);
+  assert.equal((await readdir(root)).includes('executed'),false);
+  const base={kind:'cmake-configuration-inputs' as const,version:1 as const,sourceRoot:source,buildDirectory:build,replySha256:'a'.repeat(64),inputs:[],dependenciesComplete:false as const,missingCoverage:['compiler-includes','link-inputs','toolchain-identity'] as const};
+  assert.equal(sameConfigurationInputs(base,base),false);
+  assert.equal(sameConfigurationInputs({...base,generatorTools:first},{...base,generatorTools:first}),true);
+  assert.equal(sameConfigurationInputs({...base,generatorTools:first},{...base,generatorTools:after}),false);
+  await put('CMAKE_GENERATOR:INTERNAL=Ninja\n');await assert.rejects(readBuildGeneratorEvidence(source,build,cmake),/Duplicate/);
+  await put();await assert.rejects(readBuildGeneratorEvidence(source,build,'/usr/bin/cmake'),/differs/);
+  entries.CMAKE_MAKE_PROGRAM='relative';await put();await assert.rejects(readBuildGeneratorEvidence(source,build,cmake),/Absolute/);
  }finally{await rm(root,{recursive:true,force:true});}
 });

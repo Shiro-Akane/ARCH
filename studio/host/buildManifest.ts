@@ -24,6 +24,14 @@ function validCompilerEvidence(m:BuildManifest){
  if(m.configurationInputs){
   const c=m.configurationInputs,seen=new Set<string>();
   if(c.kind!=='cmake-configuration-inputs'||c.version!==1||c.sourceRoot!==m.managedSourceRoot||c.buildDirectory!==m.buildDirectory||!sha(c.replySha256)||!Array.isArray(c.inputs)||!c.inputs.length||c.inputs.length>20000)return false;
+  if(c.generatorTools!==undefined){
+   if(!Array.isArray(c.generatorTools)||c.generatorTools.length!==2)return false;
+   const roles=new Set<string>();
+   for(const t of c.generatorTools){
+    if(!t||!['cmake','ninja'].includes(t.role)||roles.has(t.role)||!path.isAbsolute(t.path)||!path.isAbsolute(t.resolvedPath)||t.path.includes('\0')||t.resolvedPath.includes('\0')||!sha(t.sha256)||!size(t.size))return false;
+    roles.add(t.role);
+   }
+  }
   for(const f of c.inputs){
    if(!f||typeof f.path!=='string'||!path.isAbsolute(f.path)||f.path.includes('\0')||seen.has(f.path)||!sha(f.sha256)||!size(f.size)||![f.generated,f.external,f.cmake].every(v=>typeof v==='boolean'))return false;
    seen.add(f.path);

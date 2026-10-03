@@ -234,17 +234,36 @@ test('Build persists CMake-only inputs; external configuration mutation invalida
   const extra=root+'/untracked dependency.cmake';await writeFile(extra,'# first');
   await writeFile(reply+'/cmakeFiles.json',JSON.stringify({kind:'cmakeFiles',version:{major:1},paths:{source:root,build:root+'/build'},inputs:[{path:extra,isExternal:true}]}));
   await writeFile(reply+'/index-test.json',JSON.stringify({objects:[{kind:'cmakeFiles',jsonFile:'cmakeFiles.json'}]}));
+  const ninja=root+'/fake-ninja';const payload='#!/bin/sh\nexit 0\n';
+  await writeFile(ninja,payload,{mode:0o700});
+  const cache=root+'/build/CMakeCache.txt';
+  await writeFile(cache,(await readFile(cache,'utf8'))+
+   'CMAKE_GENERATOR:INTERNAL=Ninja\nCMAKE_COMMAND:INTERNAL=/usr/bin/cmake\nCMAKE_MAKE_PROGRAM:FILEPATH='+ninja+'\n');
   const profile={...p,compilerDependencyMode:'ninja' as const};
   const runner=new BuildRunner(root,'p',profile,{spawn:fakeSpawn(root)});
   await runner.start('p',p.id);await finished(runner);
   const manifest=await loadManifest(profile);
   assert.equal(manifest?.configurationInputsStableDuringBuild,true);
   assert.equal(manifest?.configurationInputs?.inputs[0].path,extra);
+  assert.equal(manifest?.configurationInputs?.generatorTools?.length,2);
+  await writeFile(ninja,'#!/bin/sh\nexit 1\n');
+  const toolState=await runner.refreshFreshness();
+  assert.equal(toolState.binaryState,'needs-build');assert.ok(toolState.changedInputs.includes(ninja));
+  await writeFile(ninja,payload);
+  const legacy=structuredClone(manifest!);delete legacy.configurationInputs!.generatorTools;
+  await saveManifest(profile,legacy);
+  const legacyRunner=new BuildRunner(root,'p',profile,{spawn:fakeSpawn(root)});
+  assert.equal((await legacyRunner.initialize()).binaryState,'freshness-unknown');
+  await saveManifest(profile,manifest!);
   await writeFile(extra,'# changed');
   const state=await runner.refreshFreshness();
   assert.equal(state.binaryState,'needs-build');assert.ok(state.changedInputs.includes(extra));
   const corrupt=structuredClone(manifest!);corrupt.configurationInputs!.inputs[0].sha256='not-a-hash';
   await saveManifest(profile,corrupt);assert.equal(await loadManifest(profile),undefined);
+  const corruptTool=structuredClone(manifest!);corruptTool.configurationInputs!.generatorTools![0].sha256='not-a-hash';
+  await saveManifest(profile,corruptTool);assert.equal(await loadManifest(profile),undefined);
+  corruptTool.configurationInputs!.generatorTools=Array(2).fill(manifest!.configurationInputs!.generatorTools![0]);
+  await saveManifest(profile,corruptTool);assert.equal(await loadManifest(profile),undefined);
  }finally{await rm(root,{recursive:true,force:true});}
 });
 

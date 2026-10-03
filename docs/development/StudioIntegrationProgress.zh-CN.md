@@ -2948,3 +2948,12 @@ RadialFullCpuAdditions报告逐原入口列gravity覆盖：除3D mixed coarse FA
 Manifest尚缺generator before/after/runtime closure，dependenciesComplete仍false；
 下一步接Host证据，旧manifest不冒充complete。见BuildGeneratorIdentity报告/Summary。
 CPU科学gate及CUDA/O9仍未关闭，未push/tag。
+
+## 2026-10-04 3C generator Manifest/freshness接线
+
+固定Host CMake/Ninja只读identity进入CMake evidence及已有before/after Manifest通道；
+drift→needs-build，legacy缺项/不完整→unknown，持久坏hash/重复角色拒绝。
+定向22/22、完整Studio/Host322/322、lint/typecheck/production PASS；初次旧fixture缺项日志保留。
+真实build-studio-cpu82配置inputs+2tool读取通过，但未执行realBuild，不能称across-Build稳定；
+下一步clean-source真实Build验证，full runtime closure与dependenciesComplete=false继续保留。
+见BuildGeneratorManifest报告/Summary；不改science/旧Manifest，未push/tag。
