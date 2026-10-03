@@ -2998,3 +2998,14 @@ cleana0fe6200固定CPU Build c7d70a21成功，static runtime before/after稳定�
 明确Ninja no work：没有active compiler/linker调用，不冒充clean-from-scratch或实际loaded closure。
 见BuildRuntimeRealBuild-20261004报告/Summary；下一步独立clean源+新Host CPU tree的真实configure/build。
 科学baseline/原ELF未动，无simulation/Windows/push/tag，科学CPU/CUDA/O9出口仍未完成。
+
+
+## 2026-10-04 独立clean Host CPU configure/build
+
+clean64b0ce2f detached新worktree，空build-studio-cpu经真实ConfigureRunner/BuildRunner完成70步；
+未复用cache/object/node_modules，原source与两份原ELF保持。实际compiler期间static runtime前后稳定，
+158CMake/742compiler/175link inputs，missing0，新Node disk reload ID/runtime图一致。
+首次无priorcompiler graph，compilerInputsStableDuringBuild=false/freshness-unknown按实保留；
+loader闭包与dependenciesComplete=false不变。3静态API smoke exit0，非Init/科学/完整CTest验收。
+见HostCleanCpuBuild-20261004报告/Summary；raw/audit worktree持久本机。
+无simulation/Windows/push/tag；后续科学CPU/Jeans/RZ/CUDA/O9出口仍未完成。
