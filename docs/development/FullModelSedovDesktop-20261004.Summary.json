@@ -1,0 +1,225 @@
+{
+  "scope": "new Sedov Cartesian 2D Linux native production UAT; no simulation",
+  "launchIdentity": {
+    "sourceReference": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/full-model-production-20261003/Sedov.par",
+    "inputSha256": "35646e15bfb001d53c6a9987abf596ef0e0bb683bb6bfd4070ef2fe90b899137",
+    "studioSourceHead": "ff680898d320bc1f8ed7eaacf5d1f5cf0fff0f2e",
+    "managedSourceHead": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+    "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75"
+  },
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "windowId": 29559176,
+  "launcherSession": 54438,
+  "field": {
+    "shape": [
+      128,
+      128
+    ],
+    "order": "x1-fastest",
+    "x3": 0,
+    "selected": "PRES",
+    "domain": {
+      "x": [
+        0,
+        1
+      ],
+      "y": [
+        0,
+        1
+      ]
+    },
+    "displayRange": [
+      1e-05,
+      141.471
+    ],
+    "sampleInspector": [
+      {
+        "index": 8127,
+        "indices": [
+          63,
+          63
+        ],
+        "coordinates": [
+          0.49609375,
+          0.49609375
+        ],
+        "density": 1.0,
+        "pressureDisplayed": 141.47107,
+        "temperatureDisplayed": 353.67768,
+        "velocity": [
+          0,
+          0
+        ],
+        "scope": "rounded UI display"
+      },
+      {
+        "index": 3302,
+        "indices": [
+          102,
+          25
+        ],
+        "coordinates": [
+          0.80078125,
+          0.19921875
+        ],
+        "density": 1.0,
+        "pressureDisplayed": 1e-05,
+        "temperatureDisplayed": 2.5e-05,
+        "velocity": [
+          0,
+          0
+        ],
+        "scope": "rounded UI display"
+      }
+    ]
+  },
+  "initialAmr": {
+    "complete": true,
+    "completedPasses": 3,
+    "leafBlocks": 52,
+    "levelCounts": [
+      {
+        "level": 0,
+        "leafBlocks": 12
+      },
+      {
+        "level": 1,
+        "leafBlocks": 12
+      },
+      {
+        "level": 2,
+        "leafBlocks": 12
+      },
+      {
+        "level": 3,
+        "leafBlocks": 16
+      }
+    ],
+    "previewBudget": {
+      "maxBlocks": 512,
+      "memoryMiB": 128
+    },
+    "workingCapacityDisplayed": 230,
+    "configuredMaxBlocks": 2048,
+    "overlayMatchingIdentityDisplayed": true,
+    "selectedLogicalKey": "3:15:14:0",
+    "level": 3,
+    "logicalIndex": [
+      15,
+      14,
+      0
+    ],
+    "lower": [
+      0.46875,
+      0.4375
+    ],
+    "upper": [
+      0.5,
+      0.46875
+    ],
+    "cellShape": [
+      16,
+      16
+    ],
+    "cellSpacing": [
+      0.001953125,
+      0.001953125
+    ],
+    "cellFieldArrays": "not provided by API; Init sample remains separate"
+  },
+  "resourceEstimate": {
+    "levels": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "fullDomainLeaves": [
+      16,
+      64,
+      256,
+      1024
+    ],
+    "activeCells": [
+      4096,
+      16384,
+      65536,
+      262144
+    ],
+    "scope": "full-domain scale estimate, not OOM prediction"
+  },
+  "cleanup": {
+    "exitCode": 0,
+    "ownedProcessesBeforeClose": [
+      {
+        "pid": 1552875,
+        "parentPid": 1552872,
+        "startTicks": "6300620",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "mode": null
+      },
+      {
+        "pid": 1552877,
+        "parentPid": 1552875,
+        "startTicks": "6300622",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "mode": null
+      },
+      {
+        "pid": 1552878,
+        "parentPid": 1552875,
+        "startTicks": "6300623",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "mode": null
+      },
+      {
+        "pid": 1552900,
+        "parentPid": 1552877,
+        "startTicks": "6300629",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "mode": null
+      },
+      {
+        "pid": 1552902,
+        "parentPid": 1552875,
+        "startTicks": "6300630",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "mode": null
+      },
+      {
+        "pid": 1552914,
+        "parentPid": 1552875,
+        "startTicks": "6300632",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "mode": null
+      },
+      {
+        "pid": 1553279,
+        "parentPid": 1552878,
+        "startTicks": "6301098",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "mode": null
+      },
+      {
+        "pid": 1554253,
+        "parentPid": 1552914,
+        "startTicks": "6302790",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "mode": "preview-session"
+      }
+    ],
+    "remainingOwnedProcesses": [],
+    "allOwnedProcessesGone": true
+  },
+  "configUnchanged": true,
+  "configuredScientificOutputAbsent": true,
+  "checks": "native UAT only; no source edits, no unchanged automated baselines repeated",
+  "limitations": [
+    "not independent Sedov physics/oracle acceptance",
+    "no evolution/restart/CUDA/scientific output in this test",
+    "wheel zoom/pan still unverified; this turn did not repeat failed input attempts",
+    "full model native desktop matrix incomplete",
+    "field Preview state hierarchy-not-constructed remains its own earlier snapshot, separate from completed AMR",
+    "no authenticated Host state extraction; UI matching labels do not prove all unseen response bytes unchanged"
+  ]
+}

@@ -3035,3 +3035,12 @@ Viewer 贯通；旧文件兼容，非法/不完整 reason 拒绝。真实 C++ IO
 自建窗口exit0，8个owned PID/startTicks全部消失；输入和两个worktree保持clean。
 精确新clean CPU binary/build身份及限制见 FullModelRTNativeFit-20261004.zh-CN.md。
 本轮无科学输出/配置/源码改动，不重跑已过自动baseline。
+
+## 2026-10-04 Sedov 原生二维多层 AMR 矩阵
+
+首次补齐真实Linux production Sedov2D：128×128压力场、沉积/环境原生样本、
+Complete52leaf/L0-L3=12/12/12/16，图选L3块3:15:14:0及独立dyadic几何一致。
+初态sample与AMR几何分开，resource estimate不作OOM预测。
+配置SHA未变、无配置指定output，正常关闭exit0且8个owned进程全部清理。
+见FullModelSedovDesktop-20261004；无源码修改，不重复自动baseline。
+全模型矩阵/wheel/科学待决及CUDA/O9尚未完成。
