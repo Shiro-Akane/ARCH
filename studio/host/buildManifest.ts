@@ -41,7 +41,18 @@ function validCompilerEvidence(m:BuildManifest){
  }
  if(m.compilerDrivers!==undefined){
   if(!Array.isArray(m.compilerDrivers)||m.compilerDrivers.length>16)return false;
-  for(const c of m.compilerDrivers)if(!c||typeof c.path!=='string'||!path.isAbsolute(c.path)||typeof c.resolvedPath!=='string'||!path.isAbsolute(c.resolvedPath)||!sha(c.sha256)||!size(c.size)||![c.language,c.id,c.version].every(v=>typeof v==='string'&&v.length>0))return false;
+  for(const c of m.compilerDrivers){
+   if(!c||typeof c.path!=='string'||!path.isAbsolute(c.path)||typeof c.resolvedPath!=='string'||!path.isAbsolute(c.resolvedPath)||!sha(c.sha256)||!size(c.size)||![c.language,c.id,c.version].every(v=>typeof v==='string'&&v.length>0))return false;
+   if(c.specsSha256!==undefined&&!sha(c.specsSha256))return false;
+   if(c.components!==undefined){
+    if(!Array.isArray(c.components)||!c.components.length||c.components.length>16)return false;
+    const roles=new Set<string>();
+    for(const f of c.components){
+     if(!f||typeof f.role!=='string'||!f.role||roles.has(f.role)||typeof f.path!=='string'||!path.isAbsolute(f.path)||f.path.includes('\0')||typeof f.resolvedPath!=='string'||!path.isAbsolute(f.resolvedPath)||f.resolvedPath.includes('\0')||!sha(f.sha256)||!size(f.size))return false;
+     roles.add(f.role);
+    }
+   }
+  }
  }
  return true;
 }

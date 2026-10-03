@@ -111,6 +111,42 @@ test('compiler driver changes invalidate freshness independently of source chang
   assert.equal(changed.binaryState,'needs-build');assert.ok(changed.changedInputs.includes(root+'/compiler'));
   await rm(root+'/compiler');
   const unknown=await runner.refreshFreshness();
-  assert.equal(unknown.binaryState,'freshness-unknown');assert.match(unknown.freshnessReason,/Compiler driver identity/);
+  assert.equal(unknown.binaryState,'freshness-unknown');assert.match(unknown.freshnessReason,/Compiler toolchain identity/);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('GNU subprocess/specs drift invalidates persisted Build identity and legacy evidence stays unknown',async()=>{
+ const {root,p}=await fixture();
+ try{
+  await mkdir(root+'/studio');
+  const reply=root+'/build/.cmake/api/v1/reply';await mkdir(reply,{recursive:true});
+  await writeFile(reply+'/toolchains.json',JSON.stringify({kind:'toolchains',version:{major:1},toolchains:[
+   {language:'CXX',compiler:{path:'/usr/bin/c++',id:'GNU',version:'13.3.0'}}
+  ]}));
+  await writeFile(reply+'/index-fixture.json',JSON.stringify({objects:[{kind:'toolchains',jsonFile:'toolchains.json'}]}));
+  const profile={...p,compilerDependencyMode:'ninja' as const};
+  const runner=new BuildRunner(root,'p',profile,{spawn:fakeSpawn(root)});
+  await runner.start('p',profile.id);await finished(runner);
+  const manifest=runner.snapshot().lastSuccessfulBuild!;
+  assert.equal(manifest.compilerDrivers?.[0].components?.length,6);
+  for(const role of ['cc1plus','ld','liblto_plugin.so']){
+   const mutated=structuredClone(manifest);
+   mutated.compilerDrivers![0].components!.find(c=>c.role===role)!.sha256='a'.repeat(64);
+   await saveManifest(profile,mutated);
+   const reopened=new BuildRunner(root,'p',profile);
+   const state=await reopened.initialize();
+   assert.equal(state.binaryState,'needs-build');
+   assert.ok(state.changedInputs.some(input=>input.includes(role==='ld'?'ld':role)));
+  }
+  const specs=structuredClone(manifest);specs.compilerDrivers![0].specsSha256='a'.repeat(64);
+  await saveManifest(profile,specs);
+  assert.equal((await new BuildRunner(root,'p',profile).initialize()).binaryState,'needs-build');
+  const legacy=structuredClone(manifest);
+  delete legacy.compilerDrivers![0].components;delete legacy.compilerDrivers![0].specsSha256;
+  await saveManifest(profile,legacy);
+  assert.equal((await new BuildRunner(root,'p',profile).initialize()).binaryState,'freshness-unknown');
+  const invalid=structuredClone(manifest);
+  invalid.compilerDrivers![0].components![0].path='relative';
+  await saveManifest(profile,invalid);assert.equal(await loadManifest(profile),undefined);
  }finally{await rm(root,{recursive:true,force:true});}
 });

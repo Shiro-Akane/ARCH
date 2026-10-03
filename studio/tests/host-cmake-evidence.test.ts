@@ -70,3 +70,37 @@ test('toolchain evidence hashes the selected driver and rejects invalid versions
   await assert.rejects(readCMakeToolchainEvidence(build,root+'/outside.json'),/outside/);
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+test('GNU component fingerprints detect subprocess and specs changes without claiming complete dependencies',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch GNU evidence-'));
+ try{
+  const build=root+'/build',reply=build+'/.cmake/api/v1/reply';
+  await mkdir(reply,{recursive:true});
+  const roles=['cc1plus','collect2','as','ld','lto1','liblto_plugin.so'];
+  for(const role of roles)await writeFile(root+'/'+role,role+'-v1');
+  await writeFile(root+'/compiler','driver');
+  const file=reply+'/toolchains.json';
+  await writeFile(file,JSON.stringify({kind:'toolchains',version:{major:1},toolchains:[{language:'CXX',compiler:{path:root+'/compiler',id:'GNU',version:'13.3'}}]}));
+  let specs='builtin specs v1';
+  const probe=async(_compiler:string,arg:string)=>{
+   if(arg==='-dumpspecs')return specs;
+   const role=arg.split('=')[1];
+   return role==='specs'?'specs':root+'/'+role;
+  };
+  const read=()=>readCMakeToolchainEvidence(build,file,probe);
+  const before=await read();
+  assert.equal(before.compilers[0].components?.length,6);
+  assert.equal(before.dependenciesComplete,false);
+  await writeFile(root+'/cc1plus','modified cc1plus');
+  const after=await read();
+  assert.notEqual(before.compilers[0].components?.[0].sha256,after.compilers[0].components?.[0].sha256);
+  assert.equal(before.compilers[0].sha256,after.compilers[0].sha256);
+  specs='builtin specs v2';
+  assert.notEqual(before.compilers[0].specsSha256,(await read()).compilers[0].specsSha256);
+  await rm(root+'/ld');
+  await assert.rejects(read(),/ENOENT/);
+  await writeFile(root+'/ld','linker');
+  await assert.rejects(readCMakeToolchainEvidence(build,file,async()=>'/bad\nreply'),/Invalid GNU/);
+  await assert.rejects(readCMakeToolchainEvidence(build,file,async()=> 'relative/path'),/cannot be resolved/);
+ }finally{await rm(root,{recursive:true,force:true});}
+});

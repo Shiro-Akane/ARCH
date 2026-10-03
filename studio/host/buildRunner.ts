@@ -54,6 +54,19 @@ export class BuildRunner {
        if(!old||old.path!==driver.path||old.resolvedPath!==driver.resolvedPath||old.sha256!==driver.sha256||
           old.size!==driver.size||old.id!==driver.id||old.version!==driver.version)
         this.current.changedInputs.push(driver.path);
+       if(driver.id==='GNU'){
+        if(!old?.components?.length||!old.specsSha256||!driver.components?.length)toolchainUnknown=true;
+        else{
+         if(old.specsSha256!==driver.specsSha256)this.current.changedInputs.push(driver.path+' specs');
+         const prior=new Map(old.components.map(c=>[c.role,c]));
+         for(const component of driver.components){
+          const saved=prior.get(component.role);
+          if(!saved||saved.path!==component.path||saved.resolvedPath!==component.resolvedPath||saved.sha256!==component.sha256||saved.size!==component.size)this.current.changedInputs.push(component.path);
+          prior.delete(component.role);
+         }
+         for(const removed of prior.values())this.current.changedInputs.push(removed.path);
+        }
+       }
        previous.delete(driver.language);
       }
       for(const old of previous.values())this.current.changedInputs.push(old.path);
@@ -70,7 +83,7 @@ export class BuildRunner {
     }
     if(this.current.changedInputs.length||!m.inputsStableDuringBuild){this.current.binaryState='needs-build';this.current.freshnessReason=this.current.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs changed during Build; build again for a stable snapshot.';}
     else if(compilerUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler dependency evidence unavailable or stale.';}
-    else if(toolchainUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler driver identity is incomplete or unavailable.';}
+    else if(toolchainUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler toolchain identity is incomplete or unavailable.';}
     else if(linkUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Linker input evidence is incomplete or unavailable.';}
     else if(m.compilerInputsStableDuringBuild===false){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler input stability was not established across Build.';}
     else if(!same(binary,m.outputBinary.fingerprint)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable differs from last successful Build manifest.';}
