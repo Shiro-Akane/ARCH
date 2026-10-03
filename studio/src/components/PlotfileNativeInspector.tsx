@@ -12,6 +12,8 @@ export function PlotfileNativeInspector({samples,row}:{samples:AuditResponse;row
    <dt>Observed file</dt><dd>{samples.relativePath}</dd>
    <dt>File SHA-256</dt><dd className="audit-digest">{a.file.sha256}</dd>
    <dt>Field / raw value</dt><dd>{p.field} · {String(p.values[row])} · unit unknown</dd>
+   {a.pointEvidence&&<><dt>Queried physical point</dt><dd>{a.pointEvidence.point.join(' / ')} · {a.pointEvidence.rule}</dd>
+    <dt>Point search coverage</dt><dd>{a.pointEvidence.scannedCells} stored cells scanned · one exact match · no interpolation</dd></>}
    <dt>Time</dt><dd>{a.time}</dd>
    <dt>Stored block / global index</dt><dd>{p.block} / {p.linearIndices[row]}</dd>
    <dt>Local i / j / k · no ghost</dt><dd>{storedCellIndices(a,p.block,p.linearIndices[row]).join(' / ')}</dd>

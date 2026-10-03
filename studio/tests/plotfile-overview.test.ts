@@ -42,7 +42,7 @@ import {join} from 'node:path';
 import {readPlotfileOverviewIsolated,inspectPlotfileMetadataIsolated,PlotfileReadError} from '../host/isolatedPlotfileMetadata.ts';
 import {readProjectPlotfileOverview} from '../host/projectPlotfileMetadata.ts';
 import {validatePlotfileOverview} from '../src/host/plotfileAudit.ts';
-async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2,blocks=2){
+async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2,blocks=2,overlap=false){
  await h5.ready;const root=await mkdtemp(join(tmpdir(),'arch-overview-')),path=join(root,'plot.h5');
  try{
   const cells=blocks*nx*ny,blockCells=nx*ny;
@@ -58,6 +58,7 @@ async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2
     logical_identity:'file-local level/logical_x1/logical_x2/logical_x3'}))native.create_attribute(k,v);
    for(let axis=1;axis<=3;axis++){
     const lower=Float64Array.from({length:cells},(_,i)=>axis===1?Math.floor(i/blockCells)*nx+i%nx:axis===2?Math.floor(i%blockCells/nx):0);
+    if(overlap&&axis===1)lower[blockCells]=nx-.5;
     native.create_dataset({name:'x'+axis+'_lower',data:lower});
     native.create_dataset({name:'x'+axis+'_upper',data:Float64Array.from(lower,v=>axis===3?0:v+1)});
     native.create_dataset({name:'logical_x'+axis,data:Uint32Array.from({length:blocks},(_,i)=>axis===1?i:0)});
@@ -146,4 +147,51 @@ test('limited native outlines do not truncate global field scanning or pretend t
   assert.equal(validOverview({...o,nativeBlocks:{...leaf,complete:true}},
    {field:'DENS',width:32,height:1},129,2,[1,1],129),false);
  },1,1,129);
+});
+
+import {copyPointRequest,nativeAxisContains} from '../src/host/plotfilePoint.ts';
+import {readPlotfilePoint} from '../host/plotfileMetadata.ts';
+import {readPlotfilePointIsolated} from '../host/isolatedPlotfileMetadata.ts';
+import {readProjectPlotfilePoint} from '../host/projectPlotfileMetadata.ts';
+import {validatePlotfilePoint} from '../src/host/plotfileAudit.ts';
+test('native point boundary rules are explicit and requests cannot carry arbitrary execution',()=>{
+ assert.equal(nativeAxisContains(1,0,1,2),false);
+ assert.equal(nativeAxisContains(1,1,2,2),true);
+ assert.equal(nativeAxisContains(2,1,2,2),true);
+ for(const r of [null,{field:'DENS',point:[NaN]},{field:'DENS',point:[]},
+  {field:'DENS',point:[1,2,3]},{field:'DENS',point:[0],env:{}}])assert.throws(()=>copyPointRequest(r));
+ const r={field:'DENS',point:[1,2]},copy=copyPointRequest(r);r.point[0]=99;assert.deepEqual(copy.point,[1,2]);
+});
+test('exact native point resolves interior, shared block edges, global maximum and raw values',async()=>{
+ await withNative(async path=>{
+  for(const [point,index] of [[[0,0],0],[[2.5,.5],2],[[3,1],9],[[6,2],11]] as [number[],number][]){
+   const result=await readPlotfilePoint(path,{field:'DENS',point});
+   assert.deepEqual(result.payload?.linearIndices,[index]);assert.deepEqual(result.payload?.values,[index]);
+   assert.equal(result.pointEvidence?.scannedCells,12);
+  }
+  await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[-1,0]}),/NO_NATIVE_CELL/);
+  await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[0]}),/dimension/);
+ });
+});
+test('point isolated/caller identity rejects wrong coordinates, stale digest and cancels before releasing ownership',async()=>{
+ await withNative(async(path,root)=>{
+  const point={field:'DENS',point:[3.5,1.5]},controller=new AbortController();
+  const pending=readPlotfilePointIsolated(path,point,{signal:controller.signal});controller.abort();
+  await assert.rejects(pending,e=>e instanceof PlotfileReadError&&e.code==='CANCELLED');
+  const result=await readPlotfilePointIsolated(path,point);
+  const body={projectId:'point',relativePath:'plot.h5',pointQuery:point,expectedFileSha256:result.file.sha256};
+  const response=await readProjectPlotfilePoint(root,'point',body);
+  assert.deepEqual(validatePlotfilePoint(response,'point','plot.h5',point,result.file.sha256).audit.payload?.values,[9]);
+  assert.throws(()=>validatePlotfilePoint(response,'point','plot.h5',{field:'DENS',point:[4.5,1.5]},result.file.sha256),/point/);
+  await assert.rejects(readProjectPlotfilePoint(root,'point',{...body,expectedFileSha256:'0'.repeat(64)}),/SHA-256/);
+  await assert.rejects(readProjectPlotfilePoint(root,'point',{...body,command:'sh'}));
+  assert.throws(()=>validatePlotfilePoint({...response,result:{...response.result,pointEvidence:{...response.result.pointEvidence,matchCount:2}}},
+   'point','plot.h5',point,result.file.sha256),/point/);
+ });
+});
+
+test('overlapping stored cells fail the exact point query instead of guessing a level or nearest value',async()=>{
+ await withNative(async path=>{
+  await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[2.75,.5]}),/AMBIGUOUS_NATIVE_CELL/);
+ },3,2,2,true);
 });

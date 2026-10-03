@@ -9,10 +9,11 @@ import {performance} from 'node:perf_hooks';
 
 const [projectRoot,inputPath,requestJson]=process.argv.slice(2);
 if(!projectRoot||!inputPath||process.argv.length>5)
- throw Error('Usage: node measure_plotfile_query.mjs PROJECT_ROOT PLOTFILE [SLICE_OR_OVERVIEW_JSON]');
+ throw Error('Usage: node measure_plotfile_query.mjs PROJECT_ROOT PLOTFILE [SLICE_OR_OVERVIEW_OR_POINT_JSON]');
 if(process.platform!=='linux')throw Error('Measurement requires Linux /proc/self/io.');
 const reader=await import(pathToFileURL(resolve(projectRoot,'studio/host/plotfileMetadata.ts')).href);
 const request=requestJson?JSON.parse(requestJson):null;
+const point=request&&typeof request==='object'&&'point' in request;
 const overview=request&&typeof request==='object'&&'width' in request;
 function ioCounters(){
  const result={};
@@ -22,7 +23,7 @@ function ioCounters(){
  return result;
 }
 const before=ioCounters(),cpu=process.cpuUsage(),start=performance.now();
-const response=overview?await reader.readPlotfileOverview(resolve(inputPath),request):request
+const response=point?await reader.readPlotfilePoint(resolve(inputPath),request):overview?await reader.readPlotfileOverview(resolve(inputPath),request):request
  ?await reader.readPlotfileFieldSlice(resolve(inputPath),request)
  :await reader.inspectPlotfileMetadata(resolve(inputPath));
 const elapsedMs=performance.now()-start,cpuDelta=process.cpuUsage(cpu),after=ioCounters();
@@ -31,7 +32,7 @@ const usage=process.resourceUsage();
 const difference=key=>(after[key]-before[key]).toString();
 console.log(JSON.stringify({
  measurementVersion:'plotfile-query-cost-1',
- mode:overview?'overview':request?'slice':'metadata',request,
+ mode:point?'point':overview?'overview':request?'slice':'metadata',request,
  runtime:{node:process.version,platform:process.platform,arch:process.arch},
  file:{sha256:response.file.sha256,bytes:response.file.bytes},
  structure:{blocks:response.blocks,cells:response.cells,cellShape:response.cellShape},

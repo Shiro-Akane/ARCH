@@ -11,11 +11,11 @@ function fraction(e:{clientX:number;clientY:number},svg:SVGSVGElement){
  return {x:((e.clientX-b.left)/b.width*900-frame.left)/frame.width,
   y:1-((e.clientY-b.top)/b.height*370-frame.top)/frame.height};
 }
-export function PlotfileOverviewView(props:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void}){
+export function PlotfileOverviewView(props:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void;onPoint:(point:number[])=>void}){
  const o=props.samples.audit.overview;if(!o)return null;
  return <Overview key={[props.samples.audit.file.sha256,o.field,o.width,o.height].join(':')} {...props}/>;
 }
-function Overview({samples,disabled,onInspect}:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void}){
+function Overview({samples,disabled,onInspect,onPoint}:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void;onPoint:(point:number[])=>void}){
  const o=samples.audit.overview!,range=finitePlotRange(o.values.map(v=>v===null?'NaN':v));
  const domain:PlotView={x:o.domain.x,y:o.dimension===2?o.domain.y:range??[0,1]};
  const [view,setView]=useState(domain),[chosen,setChosen]=useState<number|null>(null);
@@ -59,13 +59,15 @@ function Overview({samples,disabled,onInspect}:{samples:AuditResponse;disabled:b
   if(f.x<0||f.x>1||f.y<0||f.y>1)return;
   const x=plotValue(f.x,d.view.x),y=plotValue(f.y,d.view.y);
   const i=Math.floor((x-o.domain.x[0])/dx),j=o.dimension===2?Math.floor((y-o.domain.y[0])/dy):0;
-  if(i>=0&&i<o.width&&j>=0&&j<o.height)select(j*o.width+i);
+  if(disabled)return;
+  if(i>=0&&i<o.width&&j>=0&&j<o.height)setChosen(j*o.width+i);
+  onPoint(o.dimension===1?[x]:[x,y]);
  }
  return <section aria-label="Candidate global Plotfile display LOD">
   <h3>Global display LOD · candidate</h3>
   <p>{samples.relativePath} · {o.field} · time {samples.audit.time} · file {samples.audit.file.sha256}</p>
   <p>{o.scannedCells} stored leaf cells scanned → {o.width}×{o.height} display pixels. Coordinate-overlap-weighted display means; not native values or scientific integrals. Units remain unknown.</p>
-  <p>Click a pixel to read its largest-overlap representative native cell. Inspector shows that stored cell, not the LOD mean. Zoom/pan redraw this existing LOD; zoom does not fetch finer data.</p>
+  <p>Click to locate the exact native cell at stored x1[/x2] coordinates. Keyboard pixel selection reads its largest-overlap representative. Inspector shows the raw stored cell, not the LOD mean. Zoom/pan redraw this existing LOD; zoom does not fetch finer data.</p>
   {leaves&&<fieldset><legend>Native leaf block outlines · same file digest</legend>
    <label><input type="checkbox" checked={showBlocks} onChange={e=>setShowBlocks(e.target.checked)}/>Show native leaf outlines</label>
    {levels.map(level=><label key={level}><input type="checkbox" checked={!hiddenLevels.includes(level)}

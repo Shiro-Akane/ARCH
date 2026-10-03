@@ -1,3 +1,5 @@
+import {copyPointRequest,validPointEvidence,pointMatchesNativeCell} from './plotfilePoint.ts';
+import type {PlotfilePointRequest,PlotfilePointEvidence} from './plotfilePoint.ts';
 import {copyOverviewRequest,validOverview} from './plotfileOverview.ts';
 import type {PlotfileOverview,PlotfileOverviewRequest} from './plotfileOverview.ts';
 import {sourceEvidenceValid} from './plotfileSourceIdentity.ts';
@@ -16,6 +18,7 @@ export interface NativePlotCells extends CandidateNativeGrid {
  lower:Record<'x1'|'x2'|'x3',number[]>;upper:Record<'x1'|'x2'|'x3',number[]>;cellMeasure:number[];
 }
 export interface PlotfileAudit {
+ pointEvidence?:PlotfilePointEvidence;
  overview?:PlotfileOverview;
  candidateSourceIdentity?:PlotfileSourceEvidence|null;
  schemaVersion:string;file:{bytes:number;sha256:string};time:number;dimension:number;geometry:string;
@@ -104,11 +107,11 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
  }else if(a.payload!==undefined)throw Error('Metadata response unexpectedly contains raw samples.');
  return {projectId,relativePath,audit:a as unknown as PlotfileAudit};
 }
-async function fetchPlotfileAudit(projectId:string,relativePath:string,signal:AbortSignal,selection?:SliceSelection,expectedSha?:string,overview?:PlotfileOverviewRequest):Promise<unknown>{
- const response=await fetch(hostEndpoint+'/api/plotfile/audit-'+(overview?'overview':selection?'slice':'metadata'),{
+async function fetchPlotfileAudit(projectId:string,relativePath:string,signal:AbortSignal,selection?:SliceSelection,expectedSha?:string,overview?:PlotfileOverviewRequest,point?:PlotfilePointRequest):Promise<unknown>{
+ const response=await fetch(hostEndpoint+'/api/plotfile/audit-'+(point?'point':overview?'overview':selection?'slice':'metadata'),{
   method:'POST',headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,'Content-Type':'application/json'},
   credentials:'omit',redirect:'error',signal:AbortSignal.any([signal,AbortSignal.timeout(16000)]),
-  body:JSON.stringify({projectId,relativePath,...(overview?{overview:copyOverviewRequest(overview),expectedFileSha256:expectedSha}:selection?{slice:selection,expectedFileSha256:expectedSha}:{})}),
+  body:JSON.stringify({projectId,relativePath,...(point?{pointQuery:copyPointRequest(point),expectedFileSha256:expectedSha}:overview?{overview:copyOverviewRequest(overview),expectedFileSha256:expectedSha}:selection?{slice:selection,expectedFileSha256:expectedSha}:{})}),
  });
  if(!response.headers.get('content-type')?.includes('application/json'))throw Error('Invalid Plotfile response type.');
  const reader=response.body?.getReader();if(!reader)throw Error('Empty Plotfile response.');
@@ -137,4 +140,24 @@ export function validatePlotfileOverview(value:unknown,projectId:string,relative
 }
 export async function requestPlotfileOverview(projectId:string,relativePath:string,signal:AbortSignal,request:PlotfileOverviewRequest,sha:string){
  return validatePlotfileOverview(await fetchPlotfileAudit(projectId,relativePath,signal,undefined,sha,request),projectId,relativePath,request,sha);
+}
+
+export function validatePlotfilePoint(value:unknown,projectId:string,relativePath:string,request:PlotfilePointRequest,sha:string):AuditResponse{
+ if(!record(value)||!record(value.result)||value.result.schemaVersion!=='audit-point-1'||
+  !record(value.result.payload))throw Error('Invalid native point response.');
+ const result=value.result,p=result.payload;
+ if(!record(p))throw Error('Missing native point payload.');
+ if(p.field!==request.field||typeof p.block!=='number'||!Array.isArray(p.start)||!Array.isArray(p.shape)||
+  p.start.some(n=>typeof n!=='number')||p.shape.some(n=>n!==1))throw Error('Invalid native point slice.');
+ const selection={field:request.field,block:p.block,start:p.start as number[],count:p.shape as number[]};
+ const response=validatePlotfileAudit({...value,result:{...result,schemaVersion:'audit-slice-1'}},projectId,relativePath,selection,sha);
+ const evidence=result.pointEvidence;
+ if(!validPointEvidence(evidence,copyPointRequest(request),response.audit.cells,response.audit.dimension)||
+  !pointMatchesNativeCell(response.audit.payload?.nativeCells,request,evidence))
+  throw Error('Native point does not match its stored cell bounds.');
+ return {...response,audit:{...response.audit,schemaVersion:'audit-point-1',pointEvidence:evidence}};
+}
+export async function requestPlotfilePoint(projectId:string,relativePath:string,signal:AbortSignal,request:PlotfilePointRequest,sha:string){
+ const point=copyPointRequest(request);
+ return validatePlotfilePoint(await fetchPlotfileAudit(projectId,relativePath,signal,undefined,sha,undefined,point),projectId,relativePath,point,sha);
 }

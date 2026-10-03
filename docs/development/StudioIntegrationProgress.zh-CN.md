@@ -2422,3 +2422,8 @@ f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负
 ### 2026-10-03：全域原生 leaf outlines 与 Block Inspector
 
 同digest输出最多128个leaf native bounds/level/key/shape，显式complete/limited；全域SVG共享物理映射和clip，level开关只改轮廓。296 tests+lint/typecheck/build PASS；真实Sod12/Cellular20与checkpoint/Preview keys和H5 native包络一致。129块fixture证明limited outlines不截断全域field。真实窗口交互UAT和viewport/index仍待完成。见 PlotfileLeafOutlinesProgress-20261003.zh-CN.md。
+
+
+### 2026-10-03：全域坐标点击→精确原生cell
+
+新增受控audit-point，存盘bounds半开/全域最大边界包含，one exact match回查raw slice；gap/overlap明确失败。client/Inspector校验同digest和point，保留失败前结果。300 tests+lint/typecheck/build PASS；真实Sod index96/Cellular index3074 raw值和文件SHA保持。当前仍full scan，非indexed查询；窗口UAT、viewport/index及owner review待完成。见 PlotfileNativePointProgress-20261003.zh-CN.md。

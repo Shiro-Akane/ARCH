@@ -1,3 +1,5 @@
+import {copyPointRequest,validPointEvidence,pointMatchesNativeCell} from '../src/host/plotfilePoint.ts';
+import type {PlotfilePointRequest} from '../src/host/plotfilePoint.ts';
 import {copyOverviewRequest,validOverview} from '../src/host/plotfileOverview.ts';
 import type {PlotfileOverviewRequest} from '../src/host/plotfileOverview.ts';
 /** Linux reader isolation only; no endpoint, renderer or completion claim. */
@@ -17,7 +19,7 @@ let active=false;
 const OUTPUT_LIMIT=64*1024;
 
 /** Options are Host-owned. The browser must not supply execution settings. */
-function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={},slice?:PlotfileSliceRequest,overview?:PlotfileOverviewRequest):Promise<Metadata>{
+function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={},slice?:PlotfileSliceRequest,overview?:PlotfileOverviewRequest,point?:PlotfilePointRequest):Promise<Metadata>{
  const timeoutMs=options.timeoutMs??15_000;
  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>15_000)
   return Promise.reject(new RangeError('Metadata timeout must be 1..15000 ms.'));
@@ -27,7 +29,7 @@ function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number
  return new Promise((resolve,reject)=>{
   let failure:Error|undefined;let bytes=0;const chunks:Buffer[]=[];
   // The heap cap is not a hard RSS/WASM cap. Process termination bounds lifetime.
-  const child=spawn(process.execPath,['--max-old-space-size=256',fileURLToPath(new URL('./plotfileMetadataWorker.ts',import.meta.url)),path,...(overview?[JSON.stringify({overview})]:slice?[JSON.stringify(slice)]:[])],
+  const child=spawn(process.execPath,['--max-old-space-size=256',fileURLToPath(new URL('./plotfileMetadataWorker.ts',import.meta.url)),path,...(point?[JSON.stringify({pointQuery:point})]:overview?[JSON.stringify({overview})]:slice?[JSON.stringify(slice)]:[])],
    {stdio:['ignore','pipe','ignore'],shell:false});
   const terminate=(error:Error)=>{failure??=error;child.kill('SIGKILL');};
   const cancel=()=>terminate(new PlotfileReadError('CANCELLED','Metadata read cancelled.'));
@@ -51,10 +53,20 @@ function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number
     if(code!==0||signal||response.ok!==true){
      reject(new PlotfileReadError('WORKER_FAILED',typeof response.message==='string'?response.message:'Metadata worker failed.'));return;
     }
-    if(response.result?.schemaVersion!==(overview?'audit-overview-1':slice?'audit-slice-1':'audit-1')||response.result?.renderEligible!==false||
+    if(response.result?.schemaVersion!==(point?'audit-point-1':overview?'audit-overview-1':slice?'audit-slice-1':'audit-1')||response.result?.renderEligible!==false||
        response.result?.completion?.state!=='unknown')throw Error('Invalid metadata worker response.');
     if(overview&&!validOverview(response.result.overview,overview,response.result.cells,response.result.dimension,response.result.cellShape,response.result.blocks))throw Error('Invalid overview worker response.');
-    if(slice){
+    let selection=slice;
+    if(point){
+     const p=response.result.payload;
+     if(!validPointEvidence(response.result.pointEvidence,point,response.result.cells,response.result.dimension)||
+      !pointMatchesNativeCell(p?.nativeCells,point,response.result.pointEvidence)||p.field!==point.field)
+      throw Error('Invalid native point worker response.');
+     selection=copyPlotfileSliceRequest({field:p.field,block:p.block,start:p.start,count:p.shape});
+     if(selection.count.some(n=>n!==1))throw Error('Point response is not a single native cell.');
+    }
+    if(selection){
+     const slice=selection;
      const p=response.result.payload,n=slice.count.reduce((a,b)=>a*b,1);
      const raw=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)||v==='NaN'||v==='Infinity'||v==='-Infinity';
      if(!p||p.field!==slice.field||p.block!==slice.block||p.order!=='x1-fastest'||
@@ -82,5 +94,10 @@ export function readPlotfileFieldSliceIsolated(path:string,request:PlotfileSlice
 
 export function readPlotfileOverviewIsolated(path:string,request:PlotfileOverviewRequest,options:{signal?:AbortSignal;timeoutMs?:number}={}){
  try{return readIsolated(path,options,undefined,copyOverviewRequest(request));}
+ catch(error){return Promise.reject(error);}
+}
+
+export function readPlotfilePointIsolated(path:string,request:PlotfilePointRequest,options:{signal?:AbortSignal;timeoutMs?:number}={}){
+ try{return readIsolated(path,options,undefined,undefined,copyPointRequest(request));}
  catch(error){return Promise.reject(error);}
 }

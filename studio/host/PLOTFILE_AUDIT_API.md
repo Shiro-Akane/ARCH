@@ -93,3 +93,21 @@ returned. complete=false means limited outlines, while the field scan still cove
 Clients must validate shape/count/index/key/extent consistency and associate records only
 with the enclosing observed file digest. Level visibility is display-only and filters
 outlines, not field contributions or scientific data.
+
+
+### Exact stored native point
+
+POST /api/plotfile/audit-point uses the same protected origin/protocol and file identity:
+
+    {"projectId":"session","relativePath":"results/plt_0000.h5",
+     "expectedFileSha256":"<64 lowercase hex>",
+     "pointQuery":{"field":"DENS","point":[0.5,6.5]}}
+
+Only candidate Cartesian native 1D/2D; point length equals dimension.
+Cell bounds are half-open, with the full-domain maximum included.
+One exact match returns audit-point-1, a single raw slice plus pointEvidence.
+No interpolation, nearest-cell or guessed-level fallback. NO_NATIVE_CELL and
+AMBIGUOUS_NATIVE_CELL fail; current worker-error mapping is HTTP422.
+Inspector validates the echoed request/coverage/boundary rule and the returned
+cell bounds. Each point read currently scans bounds and hashes the full file;
+fixed response size does not imply indexed or cheap reads.

@@ -1,3 +1,5 @@
+import {copyPointRequest,nativeAxisContains,POINT_BOUNDARY_RULE} from '../src/host/plotfilePoint.ts';
+import type {PlotfilePointRequest,PlotfilePointEvidence} from '../src/host/plotfilePoint.ts';
 import {copyOverviewRequest,createOverview,MAX_OVERVIEW_BLOCKS,validNativeBlocks} from '../src/host/plotfileOverview.ts';
 import type {PlotfileOverviewRequest,PlotfileOverview,NativePlotBlock,NativePlotBlocks} from '../src/host/plotfileOverview.ts';
 /**
@@ -275,7 +277,42 @@ function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:P
  return {...acc.finish(),nativeBlocks:blockSummary};
 }
 
-async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewRequest?:PlotfileOverviewRequest) {
+function readPoint(file:InstanceType<typeof h5.File>,shape:number[],request:PlotfilePointRequest,native:NativeHeader){
+ const dimension=shape.length-1;
+ if(request.point.length!==dimension)throw Error('Point coordinates must match stored dimension.');
+ const ng=group(file,'NativeGrid'),total=shape.reduce((a,b)=>a*b,1);
+ const bounds=(start:number,count:number)=>['x1_lower','x1_upper',...(dimension===2?['x2_lower','x2_upper']:[])].map(name=>{
+  const values=rawNumbers(dataset(ng,name).slice([[start,start+count]]),count);
+  if(values.some(v=>typeof v!=='number'))throw Error('Nonfinite native point geometry.');
+  return values as number[];
+ });
+ const domain={x:[Infinity,-Infinity] as [number,number],y:dimension===2?[Infinity,-Infinity] as [number,number]:[0,1] as [number,number]};
+ for(let start=0;start<total;start+=512){
+  const b=bounds(start,Math.min(512,total-start));
+  for(let i=0;i<b[0].length;i++){
+   domain.x[0]=Math.min(domain.x[0],b[0][i]);domain.x[1]=Math.max(domain.x[1],b[1][i]);
+   if(dimension===2){domain.y[0]=Math.min(domain.y[0],b[2][i]);domain.y[1]=Math.max(domain.y[1],b[3][i]);}
+  }
+ }
+ let index=-1,matches=0;
+ for(let start=0;start<total;start+=512){
+  const b=bounds(start,Math.min(512,total-start));
+  for(let i=0;i<b[0].length;i++){
+   if(b[1][i]<=b[0][i]||dimension===2&&b[3][i]<=b[2][i])throw Error('Invalid native point cell bounds.');
+   if(nativeAxisContains(request.point[0],b[0][i],b[1][i],domain.x[1])&&
+    (dimension===1||nativeAxisContains(request.point[1],b[2][i],b[3][i],domain.y[1]))){index=start+i;matches++;}
+  }
+ }
+ if(matches!==1)throw Error(matches?'AMBIGUOUS_NATIVE_CELL: overlapping stored bounds.':'NO_NATIVE_CELL: point outside stored cells or in a gap.');
+ const cellShape=shape.slice(1),per=cellShape.reduce((a,b)=>a*b,1),block=Math.floor(index/per);
+ let local=index-block*per;const start=Array(cellShape.length).fill(0);
+ for(let axis=cellShape.length-1;axis>=0;axis--){start[axis]=local%cellShape[axis];local=Math.floor(local/cellShape[axis]);}
+ const payload=readSlice(file,shape,{field:request.field,block,start,count:cellShape.map(()=>1)},native);
+ const pointEvidence:PlotfilePointEvidence={version:'candidate-native-point-1',...request,rule:POINT_BOUNDARY_RULE,domain,scannedCells:total,matchCount:1};
+ return {payload,pointEvidence};
+}
+
+async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewRequest?:PlotfileOverviewRequest,pointRequest?:PlotfilePointRequest) {
  if(/\.partial-[A-Za-z0-9]{6}$/.test(path))throw Error('Writer temporary is not a published Plotfile.');
  const source=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
  try {
@@ -291,6 +328,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
   const file=new h5.File('/proc/self/fd/'+source.fd,'r');
   let structure;
   let overview:PlotfileOverview|undefined;
+  let pointEvidence:PlotfilePointEvidence|undefined;
   let payload:ReturnType<typeof readSlice>|undefined;
   try {
    if(file.file_id<0n)throw new Error('Could not open HDF5 plotfile.');
@@ -318,6 +356,10 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    const candidateSourceIdentity=sourceEvidence(file);
    const candidateNativeGrid=nativeHeader(file,shape,geometry);
    if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request,candidateNativeGrid);}
+   if(pointRequest){
+    if(!candidateNativeGrid||!names.includes(pointRequest.field))throw Error('Point read requires candidate native Cartesian 1D/2D bounds and a stored field.');
+    ({payload,pointEvidence}=readPoint(file,shape,pointRequest,candidateNativeGrid));
+   }
    if(overviewRequest){
     if(!candidateNativeGrid||!names.includes(overviewRequest.field))throw Error('Overview requires candidate native Cartesian 1D/2D metadata and a stored field.');
     overview=readOverview(file,shape,overviewRequest);
@@ -336,7 +378,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
   const after=await source.stat({bigint:true});
   if(before.size!==after.size||before.mtimeNs!==after.mtimeNs||before.ctimeNs!==after.ctimeNs||position!==Number(before.size))
    throw new Error('Plotfile changed during metadata audit; retry only after authoritative completion.');
-  return {schemaVersion:overviewRequest?'audit-overview-1':request?'audit-slice-1':'audit-1',payload,overview,file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString(),ctimeNs:before.ctimeNs.toString()},...structure};
+  return {schemaVersion:pointRequest?'audit-point-1':overviewRequest?'audit-overview-1':request?'audit-slice-1':'audit-1',payload,overview,pointEvidence,file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString(),ctimeNs:before.ctimeNs.toString()},...structure};
  } finally {await source.close();}
 }
 
@@ -352,5 +394,10 @@ export function readPlotfileFieldSlice(path:string,request:PlotfileSliceRequest)
 
 export function readPlotfileOverview(path:string,request:PlotfileOverviewRequest){
  try{return auditPlotfile(path,undefined,copyOverviewRequest(request));}
+ catch(error){return Promise.reject(error);}
+}
+
+export function readPlotfilePoint(path:string,request:PlotfilePointRequest){
+ try{return auditPlotfile(path,undefined,undefined,copyPointRequest(request));}
  catch(error){return Promise.reject(error);}
 }

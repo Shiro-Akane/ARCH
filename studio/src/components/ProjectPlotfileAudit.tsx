@@ -1,3 +1,4 @@
+import type {PlotfilePointRequest} from '../host/plotfilePoint';
 import {PlotfileOverviewView} from './PlotfileOverviewView';
 import type {PlotfileOverviewRequest} from '../host/plotfileOverview';
 import {PlotfileNativeView} from './PlotfileNativeView';
@@ -5,7 +6,7 @@ import {PlotfileSourceEvidence} from './PlotfileSourceEvidence';
 import {useEffect,useRef,useState} from 'react';
 import {PlotfileNativeInspector} from './PlotfileNativeInspector';
 import {useHost} from '../host/hostContext';
-import {requestPlotfileAudit,requestPlotfileOverview,storedCellIndices} from '../host/plotfileAudit';
+import {requestPlotfileAudit,requestPlotfileOverview,requestPlotfilePoint,storedCellIndices} from '../host/plotfileAudit';
 import type {AuditResponse,SliceSelection} from '../host/plotfileAudit';
 
 export function ProjectPlotfileAudit(){
@@ -23,16 +24,16 @@ function ConnectedAudit({projectId}:{projectId:string}){
  const sequence=useRef(0),active=useRef<AbortController|null>(null);
  useEffect(()=>()=>{sequence.current++;active.current?.abort();},[]);
  function cancel(){sequence.current++;active.current?.abort();active.current=null;setBusy(false);setMessage('Read cancelled; previous successful data retained.');}
- async function read(selection?:SliceSelection,overviewRequest?:PlotfileOverviewRequest){
-  const relativePath=selection||overviewRequest?info?.relativePath:path;
+ async function read(selection?:SliceSelection,overviewRequest?:PlotfileOverviewRequest,pointRequest?:PlotfilePointRequest){
+  const relativePath=selection||overviewRequest||pointRequest?info?.relativePath:path;
   if(!relativePath)return;
   active.current?.abort();const controller=new AbortController();active.current=controller;
-  const request=++sequence.current;setBusy(true);setMessage(overviewRequest?'Scanning leaf cells for candidate display LOD…':selection?'Reading bounded raw samples…':'Reading file metadata…');
+  const request=++sequence.current;setBusy(true);setMessage(pointRequest?'Locating exact native cell from stored bounds…':overviewRequest?'Scanning leaf cells for candidate display LOD…':selection?'Reading bounded raw samples…':'Reading file metadata…');
   try{
-   const result=overviewRequest?await requestPlotfileOverview(projectId,relativePath,controller.signal,overviewRequest,info!.audit.file.sha256):await requestPlotfileAudit(projectId,relativePath,controller.signal,selection,selection?info?.audit.file.sha256:undefined);
+   const result=pointRequest?await requestPlotfilePoint(projectId,relativePath,controller.signal,pointRequest,info!.audit.file.sha256):overviewRequest?await requestPlotfileOverview(projectId,relativePath,controller.signal,overviewRequest,info!.audit.file.sha256):await requestPlotfileAudit(projectId,relativePath,controller.signal,selection,selection?info?.audit.file.sha256:undefined);
    if(request!==sequence.current)return;
    if(overviewRequest){setOverview(result);setMessage('Candidate global display LOD loaded; Inspector reads native cells separately.');}
-   else if(selection){setSamples(result);setSelectedRow(0);setMessage('Raw samples loaded · completion and scientific identity remain unverified.');}
+   else if(selection||pointRequest){setSamples(result);setSelectedRow(0);setMessage('Raw samples loaded · completion and scientific identity remain unverified.');}
    else{setOverview(null);setInfo(result);setSamples(null);setSelectedRow(null);setField(result.audit.fields[0].name);setBlock('0');setStart(result.audit.cellShape.map(()=> '0'));setCount(result.audit.cellShape.map((n,i)=>String(i===result.audit.cellShape.length-1?Math.min(8,n):1)));setMessage('Metadata loaded · select a bounded sample region.');}
   }catch(error){if(request===sequence.current)setMessage(error instanceof Error?error.message:'Read failed. Previous successful data retained.');}
   finally{if(request===sequence.current){setBusy(false);active.current=null;}}
@@ -60,7 +61,7 @@ function ConnectedAudit({projectId}:{projectId:string}){
    <button disabled={busy||!field} onClick={readSamples}>Read raw samples</button>
    <button disabled={busy||!field||!info.audit.candidateNativeGrid} onClick={()=>void read(undefined,{field,width:32,height:info.audit.dimension===1?1:24})}>Read global display LOD · scans leaves</button>
   </>}
-  {overview&&<PlotfileOverviewView samples={overview} disabled={busy} onInspect={index=>{
+  {overview&&<PlotfileOverviewView samples={overview} disabled={busy} onPoint={point=>void read(undefined,undefined,{field:overview.audit.overview!.field,point})} onInspect={index=>{
    const a=overview.audit,p=a.overview!;const perBlock=a.cellShape.reduce((x,y)=>x*y,1),block=Math.floor(index/perBlock);
    const ijk=storedCellIndices(a,block,index);
    void read({field:p.field,block,start:ijk.slice(0,a.dimension).reverse(),count:a.cellShape.map(()=>1)});
