@@ -2570,3 +2570,11 @@ DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容�
 ## 2026-10-04 RZ finite-ring axis reference candidate
 
 独立Decimal轴线解析参考8例80/120位收敛，完整环体势/力/质量与有界tensor积分对照；源内/边缘发现较慢收敛，保留具体误差，不冻结生产阶数或科学预算。5项工具检查PASS。见 RZFiniteRingAxisReference-20261004.zh-CN.md / Summary；生产Core/capability未改、未ARCH运行/Build/CUDA。
+
+
+## 2026-10-04：Linux 3D mixed AMR desktop 补证
+
+清洁35654249经native UI受管CPU Build（binary2c53420c），RT32³与limited10-leaf混合初始AMR实窗显示、
+三固定轴切面、图上块命中/Inspector及level过滤补证。发现hidden L1旧Inspector遗漏，最小显示过滤修复后
+321项/lint/typecheck/build/diff通过，新production native hide/show复验通过。未simulation/科学Core改动/重复Build。
+详见FullModel3DMixedAmrDesktop-20261004.zh-CN.md/Summary；native wheel、完整freshness及整体科学/平台目标仍待。
