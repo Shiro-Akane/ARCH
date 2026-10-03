@@ -272,6 +272,10 @@ void write_plt(amr::AMRControl &amr_ctrl,
         source_identity.eos_table_sha256 = runtime_provenance->eos_table_sha256;
         source_identity.ideal_gamma = runtime_provenance->ideal_gamma;
         source_identity.species_names = runtime_provenance->species_names;
+        source_identity.species_A = runtime_provenance->species_A;
+        source_identity.species_Z = runtime_provenance->species_Z;
+        source_identity.species_gamma = runtime_provenance->species_gamma;
+        source_identity.species_Cv = runtime_provenance->species_Cv;
     }
     io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity, &field_metadata);
 }

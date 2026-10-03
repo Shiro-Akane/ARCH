@@ -98,6 +98,8 @@ int main(int argc, char** argv) {
         identity.raw_config_sha256="ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
         identity.case_id="Sod"; identity.eos_type="ideal"; identity.ideal_gamma=1.4;
         identity.species_names={"test-species"}; identity.unit_system="cgs";
+        identity.species_A={12.};identity.species_Z={6.};
+        identity.species_gamma={1.4};identity.species_Cv={3.};
         const std::map<std::string,io::PlotFieldMetadata> declarations{
             {"DENS",io::plot_field_metadata("DENS",true)},
             {"ENTR",io::plot_field_metadata("ENTR",true)},
@@ -122,6 +124,16 @@ int main(int argc, char** argv) {
             std::vector<std::string> species;
             f.getDataSet("SourceIdentity/species_names").read(species);
             require(species==identity.species_names,"species ordering changed");
+            for(const auto& [name,expected]:std::map<std::string,std::vector<double>>{
+                {"species_A",identity.species_A},{"species_Z",identity.species_Z},
+                {"species_gamma",identity.species_gamma},{"species_Cv",identity.species_Cv}}) {
+                std::vector<double> actual;f.getDataSet("SourceIdentity/"+name).read(actual);
+                require(actual==expected,"resolved species properties changed");
+            }
+            f.getGroup("SourceIdentity").getAttribute("species_properties_state").read(id);
+            require(id=="recorded","species properties state missing");
+            f.getGroup("SourceIdentity").getAttribute("species_properties_source").read(id);
+            require(id=="resolved-runtime-checkpoint-provenance","species properties source guessed");
             const auto attribute=[&](const std::string& dataset,const char* name) {
                 std::string value;f.getDataSet(dataset).getAttribute(name).read(value);return value;
             };
@@ -158,6 +170,21 @@ int main(int argc, char** argv) {
             require(logical==std::vector<uint32_t>{0,1},"logical mapping changed");
         }
         const auto original_digest=arch::core::file_sha256(path.string());
+        auto unavailable_properties=identity;
+        unavailable_properties.species_A.clear();unavailable_properties.species_Z.clear();
+        unavailable_properties.species_gamma.clear();unavailable_properties.species_Cv.clear();
+        const auto legacy_path=root/("unknown-properties-"+std::to_string(dimension)+".h5");
+        io::write_hdf5_plt_impl(legacy_path.string(),0,dimension,"cartesian",native_dims,
+            cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&native,&unavailable_properties);
+        {
+            HighFive::File file(legacy_path.string(),HighFive::File::ReadOnly);
+            auto source=file.getGroup("SourceIdentity");std::string value;
+            source.getAttribute("species_properties_state").read(value);
+            require(value=="unknown","missing caller properties were guessed");
+            source.getAttribute("species_properties_reason").read(value);
+            require(!value.empty(),"unknown properties reason missing");
+            require(!source.exist("species_A"),"missing properties synthesized");
+        }
         auto bad_metadata=declarations;bad_metadata["ENTR"].unit_reason.clear();
         bool metadata_rejected=false;
         try {
@@ -174,6 +201,18 @@ int main(int argc, char** argv) {
         }catch(const std::invalid_argument&){normalization_rejected=true;}
         require(normalization_rejected,"3D normalization accepted for low-dimensional measure");
         require(arch::core::file_sha256(path.string())==original_digest,"bad normalization replaced file");
+        for(int corruption=0;corruption<2;++corruption) {
+            auto bad_properties=identity;
+            if(corruption==0)bad_properties.species_Cv.clear();
+            else bad_properties.species_A[0]=std::numeric_limits<double>::quiet_NaN();
+            bool rejected=false;
+            try {
+                io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
+                    cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&native,&bad_properties);
+            }catch(const std::invalid_argument&){rejected=true;}
+            require(rejected,"partial/nonfinite resolved species evidence accepted");
+            require(arch::core::file_sha256(path.string())==original_digest,"bad species evidence replaced file");
+        }
         auto bad_identity=identity;bad_identity.eos_table_sha256="not-a-digest";
         bool bad_source_rejected=false;
         try {

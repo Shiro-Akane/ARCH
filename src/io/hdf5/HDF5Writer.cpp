@@ -283,6 +283,15 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             throw std::invalid_argument("Invalid plot ideal EOS identity.");
         if (id.eos_type.empty() && (!id.eos_table_sha256.empty() || !id.species_names.empty()))
             throw std::invalid_argument("Plot EOS evidence requires its resolved policy.");
+        const bool has_properties=!id.species_A.empty() || !id.species_Z.empty()
+            || !id.species_gamma.empty() || !id.species_Cv.empty();
+        if (has_properties) {
+            for(const auto* values:{&id.species_A,&id.species_Z,&id.species_gamma,&id.species_Cv})
+                if (id.eos_type.empty() || id.species_names.empty()
+                    || values->size()!=id.species_names.size()
+                    || !std::all_of(values->begin(),values->end(),[](double v){return std::isfinite(v);}))
+                    throw std::invalid_argument("Invalid plot resolved species properties.");
+        }
     }
     // Same-directory atomic replacement retains legacy overwrite semantics.
     // Atomic visibility does not promise power-loss durability (no fsync).
@@ -344,6 +353,20 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             if(id.eos_type=="ideal")identity.createAttribute("ideal_gamma",id.ideal_gamma);
             identity.createAttribute("species_count",static_cast<int>(id.species_names.size()));
             if(!id.species_names.empty())identity.createDataSet("species_names",id.species_names);
+            const bool has_properties=!id.species_A.empty();
+            identity.createAttribute("species_properties_version",std::string("checkpoint-species-1"));
+            identity.createAttribute("species_properties_state",std::string(has_properties?"recorded":"unknown"));
+            identity.createAttribute("species_properties_source",std::string(has_properties?
+                "resolved-runtime-checkpoint-provenance":"unknown"));
+            if(has_properties) {
+                identity.createDataSet("species_A",id.species_A);
+                identity.createDataSet("species_Z",id.species_Z);
+                identity.createDataSet("species_gamma",id.species_gamma);
+                identity.createDataSet("species_Cv",id.species_Cv);
+            } else {
+                identity.createAttribute("species_properties_reason",
+                    std::string("resolved species properties not supplied by caller"));
+            }
             for(const char* name:{"run_id","effective_config_sha256",
                  "build_id","source_git_head"})
                 identity.createAttribute(name,std::string("unknown"));

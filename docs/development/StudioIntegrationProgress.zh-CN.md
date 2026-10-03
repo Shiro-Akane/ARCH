@@ -2488,3 +2488,11 @@ checkpoint 原子发布以及大文件/缓存/资源证据保持待办；全联�
 真实 Sod9/Cellular28 多字段文件经 production 隔离 worker 查询、BUSY、启动期取消和恢复通过。
 Cellular 32x24 响应28512bytes仍扫描5120单元；每请求新worker，没有跨查询cache。
 见 PlotfileIsolatedWorkerCost-20261003.zh-CN.md / Summary.json；不外推大文件/HDF深度取消/同机演化影响。
+
+
+## 2026-10-03 resolved EOS constituents
+
+新增 /SourceIdentity/species_A,Z,gamma,Cv，FP64[Ns]，严格按 species_names 顺序，
+直接来自 runtime checkpoint provenance；state/version/source 与缺失 reason 明确。
+Sod1/Cellular19 组分四组属性与 checkpoint 位级一致；Host 旧路径兼容，整体仍 partial。
+见 PlotfileEosConstituents-20261003.zh-CN.md / Summary.json。当前 Viewer 未消费新属性，不声称完整 EOS verified。

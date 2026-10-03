@@ -56,12 +56,29 @@ for d in json.loads(Path(args.evidence_directories).read_text()):
   assert text(identity.attrs['eos_table_sha256'])==(text(c.attrs['eos_table_sha256']) or 'unknown')
   assert [text(v) for v in identity['species_names'][:]]==[text(v) for v in c['Species/name'][:]]
   assert text(identity.attrs['build_id'])=='unknown'
+  property_state=text(identity.attrs.get('species_properties_state','unknown'))
+  compared_properties=[]
+  if property_state=='recorded':
+   assert text(identity.attrs['species_properties_version'])=='checkpoint-species-1'
+   assert text(identity.attrs['species_properties_source'])=='resolved-runtime-checkpoint-provenance'
+   for name in ['A','Z','gamma','Cv']:
+    stored=identity['species_'+name];expected=c['Species/'+name]
+    assert stored.dtype.kind=='f' and stored.dtype.itemsize==8
+    assert stored.shape==expected.shape==(len(identity['species_names']),)
+    values=stored[:];reference_values=expected[:]
+    assert np.isfinite(values).all()
+    assert np.array_equal(values.view(np.uint64),reference_values.view(np.uint64))
+    compared_properties.append(name)
+  else:
+   assert property_state=='unknown'
+
   rows.append({'case':case,'dimension':dim,'time':0,'step':0,'leafBlocks':count,'storedShape':list(shape),
    'densitySamplesCompared':count*per,'densityBitExactMismatchCount':mismatch,
    'logicalKeysMatchPreviewAndCheckpoint':True,'maxNativeBoundsAbsDifference':max_bound_error,
    'maxCartesianCenterAbsDifference':max_center_error,'maxCellMeasureAbsDifference':max_measure_error,
    'numericalMetadataReview':'reported without adding scientific tolerance',
-   'caseRawConfigBinaryEosSpeciesMatch':True,'rawConfigSha256':sha(par),'binarySha256':sha(binary),
+   'caseRawConfigBinaryEosSpeciesMatch':True,'eosIdentityScope':'policy/table/names; not complete EOS certification',
+   'speciesPropertiesState':property_state,'checkpointSpeciesPropertiesBitMatched':compared_properties,'rawConfigSha256':sha(par),'binarySha256':sha(binary),
    'plotfileSha256':before,'plotfileBytes':plot.stat().st_size,
    'localEvidenceDirectory':str(d),'scope':'t=0 DENS/native metadata only; no evolution or all-field acceptance'})
  assert sha(plot)==before

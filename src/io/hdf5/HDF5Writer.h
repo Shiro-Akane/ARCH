@@ -76,6 +76,8 @@ struct PlotSourceIdentity {
     double ideal_gamma = 0.;
     std::string unit_system;
     std::vector<std::string> species_names;
+    // Exact resolved constituents; absent vectors remain unknown for legacy callers.
+    std::vector<double> species_A, species_Z, species_gamma, species_Cv;
 };
 
 // Candidate native metadata for Cartesian 1D/2D leaf interiors only.

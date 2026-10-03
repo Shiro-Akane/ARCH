@@ -1,0 +1,156 @@
+{
+  "build": {
+    "sourceHead": "6c10cb2a0f0897e157db8e19221414c8b40088a9",
+    "sourceStatus": " M src/io/hdf5/HDF5Writer.cpp\n M src/io/hdf5/HDF5Writer.h\n M src/io/plot/PlotIO.cpp\n M tests/host/io/test_plotfile_publication.cpp\n",
+    "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+    "trackedBuildInputs": {
+      "src/io/hdf5/HDF5Writer.h": "f9ffacfba8ecc11d57f8efbead363ca48006fe9d87d2e81d7ca9411a00c11c9a",
+      "src/io/hdf5/HDF5Writer.cpp": "948c72295074fdf002c7c40173b012a92873e9eca7e8fe16a0e86559a38e83a6",
+      "src/io/plot/PlotIO.cpp": "72ad59930422a79453e160a64fd7b0568369efbd5cfa2feadfc445583b398ae3",
+      "src/driver/io/DriverIO.cpp": "a536f14b1db2a4b32f10ebfc924294a9e582bd7924bd7fa045721ee031b7538f"
+    },
+    "scope": "existing CPU Release build; additive EOS constituent metadata; t=0 only"
+  },
+  "t0": {
+    "exitCode": 0,
+    "seconds": 3.7016090440010885,
+    "directories": [
+      "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/CellularDet-961ptsw8",
+      "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/Sod-ps9xam5i"
+    ]
+  },
+  "native": [
+    {
+      "case": "CellularDet",
+      "dimension": 2,
+      "time": 0,
+      "step": 0,
+      "leafBlocks": 20,
+      "storedShape": [
+        20,
+        16,
+        16
+      ],
+      "densitySamplesCompared": 5120,
+      "densityBitExactMismatchCount": 0,
+      "logicalKeysMatchPreviewAndCheckpoint": true,
+      "maxNativeBoundsAbsDifference": 1.7763568394002505e-15,
+      "maxCartesianCenterAbsDifference": 0.0,
+      "maxCellMeasureAbsDifference": 0.0,
+      "numericalMetadataReview": "reported without adding scientific tolerance",
+      "caseRawConfigBinaryEosSpeciesMatch": true,
+      "eosIdentityScope": "policy/table/names; not complete EOS certification",
+      "speciesPropertiesState": "recorded",
+      "checkpointSpeciesPropertiesBitMatched": [
+        "A",
+        "Z",
+        "gamma",
+        "Cv"
+      ],
+      "rawConfigSha256": "e280f011586d02906d2bed1f65faeb980748be54deb29733eb55faf971f8a0c0",
+      "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+      "plotfileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+      "plotfileBytes": 474616,
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/CellularDet-961ptsw8",
+      "scope": "t=0 DENS/native metadata only; no evolution or all-field acceptance"
+    },
+    {
+      "case": "Sod",
+      "dimension": 1,
+      "time": 0,
+      "step": 0,
+      "leafBlocks": 12,
+      "storedShape": [
+        12,
+        16
+      ],
+      "densitySamplesCompared": 192,
+      "densityBitExactMismatchCount": 0,
+      "logicalKeysMatchPreviewAndCheckpoint": true,
+      "maxNativeBoundsAbsDifference": 0.0,
+      "maxCartesianCenterAbsDifference": 0.0,
+      "maxCellMeasureAbsDifference": 0.0,
+      "numericalMetadataReview": "reported without adding scientific tolerance",
+      "caseRawConfigBinaryEosSpeciesMatch": true,
+      "eosIdentityScope": "policy/table/names; not complete EOS certification",
+      "speciesPropertiesState": "recorded",
+      "checkpointSpeciesPropertiesBitMatched": [
+        "A",
+        "Z",
+        "gamma",
+        "Cv"
+      ],
+      "rawConfigSha256": "8a2d92fed96382017dbca79dedbcebbf870d8e9c3e15c6efe4c3f829f0353e69",
+      "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+      "plotfileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+      "plotfileBytes": 38360,
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/Sod-ps9xam5i",
+      "scope": "t=0 DENS/native metadata only; no evolution or all-field acceptance"
+    }
+  ],
+  "reader": [
+    {
+      "case": "CellularDet",
+      "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+      "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+      "dimension": 2,
+      "fieldDeclaration": {
+        "version": "candidate-field-1",
+        "unit": "g/cm^3",
+        "centering": "cell",
+        "basis": "scalar",
+        "meaning": "mass_density",
+        "unitReason": null
+      },
+      "coordinateUnit": "cm",
+      "timeUnit": "s",
+      "measureUnit": "cm^2",
+      "measureNormalization": "per_unit_transverse_length",
+      "rawPointValue": 43375362.843074,
+      "pointIndex": 3074,
+      "overviewScannedCells": 5120,
+      "readerClientValidation": "PASS",
+      "completion": "unknown",
+      "renderEligible": false,
+      "scope": "real t=0 DENS metadata/slice/overview/point; not native UI or science acceptance"
+    },
+    {
+      "case": "Sod",
+      "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+      "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+      "dimension": 1,
+      "fieldDeclaration": {
+        "version": "candidate-field-1",
+        "unit": "g/cm^3",
+        "centering": "cell",
+        "basis": "scalar",
+        "meaning": "mass_density",
+        "unitReason": null
+      },
+      "coordinateUnit": "cm",
+      "timeUnit": "s",
+      "measureUnit": "cm",
+      "measureNormalization": "per_unit_transverse_area",
+      "rawPointValue": 0.125,
+      "pointIndex": 186,
+      "overviewScannedCells": 192,
+      "readerClientValidation": "PASS",
+      "completion": "unknown",
+      "renderEligible": false,
+      "scope": "real t=0 DENS metadata/slice/overview/point; not native UI or science acceptance"
+    }
+  ],
+  "driverFailure": {
+    "scope": "real CPU DriverIO IO-only fixture; no timestep or EOS science acceptance",
+    "exitCode": 0,
+    "stdout": "[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-eos-properties-20261003/driver-failure/evidence/fixture_HLLC_plt_0017.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-eos-properties-20261003/driver-failure/evidence/fixture_HLLC_plt_0018.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-eos-properties-20261003/driver-failure/evidence/fixture_HLLC_plt_0019.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-eos-properties-20261003/driver-failure/evidence/fixture_HLLC_plt_0020.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-eos-properties-20261003/driver-failure/evidence/fixture_HLLC_plt_0021.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-eos-properties-20261003/driver-failure/evidence/fixture_HLLC_plt_0022.h5 at t=0\nPASS real Driver write/flush/close/rename/create propagation; unchanged failure index; same-index retries; time=0 step=0\n",
+    "stderr": "",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "driverSourceSha256": "a536f14b1db2a4b32f10ebfc924294a9e582bd7924bd7fa045721ee031b7538f",
+    "dispatchLibrarySha256": "7233bdc532d3c9a8e8792e8203c8e9e31395ea993331aaba235d57d836d55f48",
+    "testExecutableSha256": "c136ec14df186a632a574d39b205e88652e8353d9ba3bdb44976a7a592453241",
+    "fixtureSource": "/home/arch/projects/ARCH-compute-optim/tests/host/io/test_driver_plot_publication.cpp"
+  },
+  "ioRegression": "plotfile_publication/checkpoint_compatibility 2/2 PASS, 0.19s",
+  "scope": "additive exact resolved EOS constituents; not complete EOS/build/source identity or evolution acceptance"
+}
