@@ -2774,3 +2774,12 @@ clean869ae3d3源码完整ARCH CPU Release重编53steps成功；ELF f82bb7ff…�
 实际case/raw config/binary来源身份匹配，原checkpoint与冻结输入不变。
 新增验证脚本和处理后报告，原始输出local ignored。
 不升级为二维AMR演化、独立科学oracle、CUDA/RZ/O9验收。
+
+## 2026-10-04 evolved Plotfile production readback
+
+32c7d7e6既有Sod连续/续算8份文件，经production isolated worker与client validators，
+metadata/overview及128次field point通过独立h5py参考；raw FP64值/坐标/bounds/测度逐位一致，
+level/logical/index/来源身份匹配，原file SHA不变。
+固定32像素overview仍全扫128叶单元，不承诺大文件成本。
+没有production改动/新simulation/native UAT；completion unknown及未确认science身份保持。
+见 PlotfileEvolvedReader-20261004.zh-CN.md / Summary.json；联合目标仍未完成。

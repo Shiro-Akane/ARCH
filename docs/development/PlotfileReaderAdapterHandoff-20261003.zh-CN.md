@@ -159,3 +159,12 @@ Sod9/Cellular28个t=0字段与已有参考FP64逐位一致，production isolated
 这补齐了该Sod用例的evolved/restart身份工程证据；
 不代表二维演化AMR、独立科学oracle或长期演化已验收。
 生产字段/数组映射与发布行为没有变化；本地交付仍未push。
+
+## 2026-10-04 evolved Plotfile production readback
+
+32c7d7e6既有Sod连续/续算8份文件，经production isolated worker与client validators，
+metadata/overview及128次field point通过独立h5py参考；raw FP64值/坐标/bounds/测度逐位一致，
+level/logical/index/来源身份匹配，原file SHA不变。
+固定32像素overview仍全扫128叶单元，不承诺大文件成本。
+没有production改动/新simulation/native UAT；completion unknown及未确认science身份保持。
+见 PlotfileEvolvedReader-20261004.zh-CN.md / Summary.json；联合目标仍未完成。
