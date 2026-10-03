@@ -111,3 +111,17 @@ AMBIGUOUS_NATIVE_CELL fail; current worker-error mapping is HTTP422.
 Inspector validates the echoed request/coverage/boundary rule and the returned
 cell bounds. Each point read currently scans bounds and hashes the full file;
 fixed response size does not imply indexed or cheap reads.
+
+
+### Explicit display viewport
+
+overview may add viewport={"x":[min,max],"y":[min,max]}. Ranges must be finite,
+increasing and contain only x/y. 1D spatial y is inactive and must be [0,1].
+Response domain is the display viewport; globalDomain is the full stored bounds.
+Native block records retain their full-file extents and identities.
+
+All leaf bounds/selected fields are still scanned. Empty/outside pixels are null.
+The UI retains one full and one refined bounded response. Fit restores retained
+full data without reading; zoom/pan do not auto-query. Refine is a user action,
+and results from superseded display revisions are discarded. No spatial-index
+performance claim is made by this extension.

@@ -253,7 +253,9 @@ function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:P
   kind:'stored-active-leaf',totalBlocks:shape[0],limit:MAX_OVERVIEW_BLOCKS,
   complete:shape[0]<=MAX_OVERVIEW_BLOCKS,blocks:nativeBlocks};
  if(!validNativeBlocks(blockSummary,total,dimension,domain))throw Error('Invalid candidate leaf block records.');
- const acc=createOverview(request,dimension,domain);
+ if(request.viewport&&dimension===1&&JSON.stringify(request.viewport.y)!=='[0,1]')
+  throw Error('1D viewport y is an inactive coordinate; use [0,1].');
+ const acc=createOverview(request,dimension,request.viewport??domain);
  // Pass 2 batches adjacent complete rows, or x1 segments when a row exceeds
  // 512 cells. Each rectangular field slice aligns with one contiguous native slice.
  const nx=shape[shape.length-1],ny=dimension===2?shape[1]:1;
@@ -274,7 +276,7 @@ function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:P
    for(let row=0;row<ny;row++)for(let x=0;x<nx;x+=512)consume(block,row,x,Math.min(512,nx-x),1);
   }
  }
- return {...acc.finish(),nativeBlocks:blockSummary};
+ return {...acc.finish(),globalDomain:domain,nativeBlocks:blockSummary};
 }
 
 function readPoint(file:InstanceType<typeof h5.File>,shape:number[],request:PlotfilePointRequest,native:NativeHeader){

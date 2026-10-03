@@ -2,6 +2,7 @@ import {useEffect,useId,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import type {AuditResponse} from '../host/plotfileAudit';
 import {finitePlotRange,panPlotView,plotFraction,plotValue,zoomPlotView} from '../data/nativePlotView';
+import type {PlotfileDomain} from '../host/plotfileOverview';
 import type {PlotView} from '../data/nativePlotView';
 import {plotColor} from '../data/plotColors';
 
@@ -11,13 +12,16 @@ function fraction(e:{clientX:number;clientY:number},svg:SVGSVGElement){
  return {x:((e.clientX-b.left)/b.width*900-frame.left)/frame.width,
   y:1-((e.clientY-b.top)/b.height*370-frame.top)/frame.height};
 }
-export function PlotfileOverviewView(props:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void;onPoint:(point:number[])=>void}){
+export function PlotfileOverviewView(props:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void;onPoint:(point:number[])=>void;fullSamples?:AuditResponse;onRefine?:(viewport:PlotfileDomain)=>void;onFitFull?:()=>void;onViewChange?:()=>void}){
  const o=props.samples.audit.overview;if(!o)return null;
  return <Overview key={[props.samples.audit.file.sha256,o.field,o.width,o.height].join(':')} {...props}/>;
 }
-function Overview({samples,disabled,onInspect,onPoint}:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void;onPoint:(point:number[])=>void}){
+function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFitFull,onViewChange}:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void;onPoint:(point:number[])=>void;fullSamples?:AuditResponse;onRefine?:(viewport:PlotfileDomain)=>void;onFitFull?:()=>void;onViewChange?:()=>void}){
  const o=samples.audit.overview!,range=finitePlotRange(o.values.map(v=>v===null?'NaN':v));
  const domain:PlotView={x:o.domain.x,y:o.dimension===2?o.domain.y:range??[0,1]};
+ const full=fullSamples?.audit.file.sha256===samples.audit.file.sha256&&fullSamples.audit.overview?.field===o.field?fullSamples.audit.overview:o;
+ const fullRange=finitePlotRange(full.values.map(v=>v===null?'NaN':v));
+ const fullView:PlotView={x:full.domain.x,y:o.dimension===2?full.domain.y:fullRange??[0,1]};
  const [view,setView]=useState(domain),[chosen,setChosen]=useState<number|null>(null);
  const [showBlocks,setShowBlocks]=useState(true),[hiddenLevels,setHiddenLevels]=useState<number[]>([]);
  const [selectedBlock,setSelectedBlock]=useState<number|null>(null);
@@ -29,11 +33,11 @@ function Overview({samples,disabled,onInspect,onPoint}:{samples:AuditResponse;di
   const svg=svgRef.current;if(!svg)return;
   function wheel(e:WheelEvent){
    const f=fraction(e,svg!);if(f.x<0||f.x>1||f.y<0||f.y>1)return;
-   e.preventDefault();setView(v=>zoomPlotView(v,e.deltaY>0?1.15:1/1.15,f.x,f.y));
+   e.preventDefault();onViewChange?.();setView(v=>zoomPlotView(v,e.deltaY>0?1.15:1/1.15,f.x,f.y));
   }
   svg.addEventListener('wheel',wheel,{passive:false});
   return ()=>svg.removeEventListener('wheel',wheel);
- },[]);
+ },[onViewChange]);
  const X=(x:number)=>frame.left+plotFraction(x,view.x)*frame.width;
  const Y=(y:number)=>frame.top+(1-plotFraction(y,view.y))*frame.height;
  const dx=(o.domain.x[1]-o.domain.x[0])/o.width,dy=(o.domain.y[1]-o.domain.y[0])/o.height;
@@ -44,12 +48,12 @@ function Overview({samples,disabled,onInspect,onPoint}:{samples:AuditResponse;di
  function down(e:ReactPointerEvent<SVGSVGElement>){
   if(e.button!==0)return;const f=fraction(e,e.currentTarget);
   if(f.x<0||f.x>1||f.y<0||f.y>1)return;
-  e.currentTarget.setPointerCapture(e.pointerId);
+  onViewChange?.();e.currentTarget.setPointerCapture(e.pointerId);
   drag.current={...f,clientX:e.clientX,clientY:e.clientY,view};
  }
  function move(e:ReactPointerEvent<SVGSVGElement>){
   const d=drag.current;if(!d)return;const f=fraction(e,e.currentTarget);
-  setView(panPlotView(d.view,f.x-d.x,f.y-d.y));
+  onViewChange?.();setView(panPlotView(d.view,f.x-d.x,f.y-d.y));
  }
  function up(e:ReactPointerEvent<SVGSVGElement>){
   const d=drag.current;drag.current=null;if(!d)return;
@@ -64,8 +68,9 @@ function Overview({samples,disabled,onInspect,onPoint}:{samples:AuditResponse;di
   onPoint(o.dimension===1?[x]:[x,y]);
  }
  return <section aria-label="Candidate global Plotfile display LOD">
-  <h3>Global display LOD · candidate</h3>
+  <h3>Plotfile display LOD · candidate</h3>
   <p>{samples.relativePath} · {o.field} · time {samples.audit.time} · file {samples.audit.file.sha256}</p>
+  <p>{o.globalDomain&&JSON.stringify(o.domain)!==JSON.stringify(o.globalDomain)?'Viewport LOD':'Full-domain LOD'} · displayed x1 [{o.domain.x.join(', ')}]{o.dimension===2?' · x2 ['+o.domain.y.join(', ')+']':''}</p>
   <p>{o.scannedCells} stored leaf cells scanned → {o.width}×{o.height} display pixels. Coordinate-overlap-weighted display means; not native values or scientific integrals. Units remain unknown.</p>
   <p>Click to locate the exact native cell at stored x1[/x2] coordinates. Keyboard pixel selection reads its largest-overlap representative. Inspector shows the raw stored cell, not the LOD mean. Zoom/pan redraw this existing LOD; zoom does not fetch finer data.</p>
   {leaves&&<fieldset><legend>Native leaf block outlines · same file digest</legend>
@@ -75,14 +80,15 @@ function Overview({samples,disabled,onInspect,onPoint}:{samples:AuditResponse;di
    <p>{leaves.complete?'Complete stored leaf set':'Limited outline set'}: {leaves.blocks.length} / {leaves.totalBlocks} blocks · cap {leaves.limit}.
     Level filters change outlines only; the field LOD still contains all scanned leaves. No parent/coarse blocks are synthesized.</p>
   </fieldset>}
-  <button onClick={()=>setView(v=>zoomPlotView(v,.8))}>Zoom in · LOD</button>
-  <button onClick={()=>setView(v=>zoomPlotView(v,1.25))}>Zoom out · LOD</button>
-  <button onClick={()=>setView(domain)}>Fit full domain · LOD</button>
+  <button onClick={()=>{onViewChange?.();setView(v=>zoomPlotView(v,.8));}}>Zoom in · LOD</button>
+  <button onClick={()=>{onViewChange?.();setView(v=>zoomPlotView(v,1.25));}}>Zoom out · LOD</button>
+  <button onClick={()=>{onViewChange?.();setView(fullView);onFitFull?.();}}>Fit full domain · LOD</button>
+  {onRefine&&<button disabled={disabled} onClick={()=>onRefine({x:[...view.x],y:o.dimension===2?[...view.y]:[0,1]})}>Read finer current viewport · scans leaves</button>}
   {o.values.some(v=>v===null)&&<p role="alert">Magenta pixels / 1D gaps mean empty, nonfinite or overflowed display reduction; raw Inspector remains available.</p>}
   <svg ref={svgRef} viewBox="0 0 900 370" preserveAspectRatio="none" aria-label="Global Plotfile LOD plot"
    style={{width:'100%',height:370,touchAction:'none',background:'#14232c'}}
    onPointerDown={down} onPointerMove={move} onPointerUp={up}
-   onPointerCancel={()=>{const d=drag.current;drag.current=null;if(d)setView(d.view);}}>
+   onPointerCancel={()=>{const d=drag.current;drag.current=null;if(d){onViewChange?.();setView(d.view);}}}>
    <defs><clipPath id={clipId}><rect x={frame.left} y={frame.top} width={frame.width} height={frame.height}/></clipPath></defs>
    <rect x={frame.left} y={frame.top} width={frame.width} height={frame.height} fill="none" stroke="#84949f"/>
    <g clipPath={'url(#'+clipId+')'}>

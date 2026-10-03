@@ -18,13 +18,15 @@ export function ProjectPlotfileAudit(){
 function ConnectedAudit({projectId}:{projectId:string}){
  const [path,setPath]=useState(''),[info,setInfo]=useState<AuditResponse|null>(null),[samples,setSamples]=useState<AuditResponse|null>(null);
  const [field,setField]=useState(''),[block,setBlock]=useState('0'),[start,setStart]=useState<string[]>([]),[count,setCount]=useState<string[]>([]);
- const [overview,setOverview]=useState<AuditResponse|null>(null);
+ const [overview,setOverview]=useState<AuditResponse|null>(null),[refined,setRefined]=useState<AuditResponse|null>(null);
+ const viewportRevision=useRef(0);
  const [selectedRow,setSelectedRow]=useState<number|null>(null);
  const [busy,setBusy]=useState(false),[message,setMessage]=useState('Enter a project-relative .h5 path and read metadata.');
  const sequence=useRef(0),active=useRef<AbortController|null>(null);
  useEffect(()=>()=>{sequence.current++;active.current?.abort();},[]);
  function cancel(){sequence.current++;active.current?.abort();active.current=null;setBusy(false);setMessage('Read cancelled; previous successful data retained.');}
  async function read(selection?:SliceSelection,overviewRequest?:PlotfileOverviewRequest,pointRequest?:PlotfilePointRequest){
+  const requestedViewportRevision=viewportRevision.current;
   const relativePath=selection||overviewRequest||pointRequest?info?.relativePath:path;
   if(!relativePath)return;
   active.current?.abort();const controller=new AbortController();active.current=controller;
@@ -32,9 +34,13 @@ function ConnectedAudit({projectId}:{projectId:string}){
   try{
    const result=pointRequest?await requestPlotfilePoint(projectId,relativePath,controller.signal,pointRequest,info!.audit.file.sha256):overviewRequest?await requestPlotfileOverview(projectId,relativePath,controller.signal,overviewRequest,info!.audit.file.sha256):await requestPlotfileAudit(projectId,relativePath,controller.signal,selection,selection?info?.audit.file.sha256:undefined);
    if(request!==sequence.current)return;
-   if(overviewRequest){setOverview(result);setMessage('Candidate global display LOD loaded; Inspector reads native cells separately.');}
+   if(overviewRequest?.viewport&&requestedViewportRevision!==viewportRevision.current){setMessage('Viewport changed during read; result discarded, previous display retained.');return;}
+   if(overviewRequest){
+    if(overviewRequest.viewport)setRefined(result);else{setRefined(null);setOverview(result);}
+    setMessage(overviewRequest.viewport?'Candidate viewport LOD loaded; full-domain display retained for Fit.':'Candidate global display LOD loaded; Inspector reads native cells separately.');
+   }
    else if(selection||pointRequest){setSamples(result);setSelectedRow(0);setMessage('Raw samples loaded · completion and scientific identity remain unverified.');}
-   else{setOverview(null);setInfo(result);setSamples(null);setSelectedRow(null);setField(result.audit.fields[0].name);setBlock('0');setStart(result.audit.cellShape.map(()=> '0'));setCount(result.audit.cellShape.map((n,i)=>String(i===result.audit.cellShape.length-1?Math.min(8,n):1)));setMessage('Metadata loaded · select a bounded sample region.');}
+   else{setRefined(null);setOverview(null);setInfo(result);setSamples(null);setSelectedRow(null);setField(result.audit.fields[0].name);setBlock('0');setStart(result.audit.cellShape.map(()=> '0'));setCount(result.audit.cellShape.map((n,i)=>String(i===result.audit.cellShape.length-1?Math.min(8,n):1)));setMessage('Metadata loaded · select a bounded sample region.');}
   }catch(error){if(request===sequence.current)setMessage(error instanceof Error?error.message:'Read failed. Previous successful data retained.');}
   finally{if(request===sequence.current){setBusy(false);active.current=null;}}
  }
@@ -61,7 +67,9 @@ function ConnectedAudit({projectId}:{projectId:string}){
    <button disabled={busy||!field} onClick={readSamples}>Read raw samples</button>
    <button disabled={busy||!field||!info.audit.candidateNativeGrid} onClick={()=>void read(undefined,{field,width:32,height:info.audit.dimension===1?1:24})}>Read global display LOD · scans leaves</button>
   </>}
-  {overview&&<PlotfileOverviewView samples={overview} disabled={busy} onPoint={point=>void read(undefined,undefined,{field:overview.audit.overview!.field,point})} onInspect={index=>{
+  {overview&&<PlotfileOverviewView samples={refined??overview} fullSamples={overview} disabled={busy}
+   onViewChange={()=>{viewportRevision.current++;}} onFitFull={()=>setRefined(null)}
+   onRefine={viewport=>void read(undefined,{field:overview.audit.overview!.field,width:32,height:overview.audit.dimension===1?1:24,viewport})} onPoint={point=>void read(undefined,undefined,{field:overview.audit.overview!.field,point})} onInspect={index=>{
    const a=overview.audit,p=a.overview!;const perBlock=a.cellShape.reduce((x,y)=>x*y,1),block=Math.floor(index/perBlock);
    const ijk=storedCellIndices(a,block,index);
    void read({field:p.field,block,start:ijk.slice(0,a.dimension).reverse(),count:a.cellShape.map(()=>1)});

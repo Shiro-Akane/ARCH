@@ -139,7 +139,8 @@ export function validatePlotfileOverview(value:unknown,projectId:string,relative
  return {...response,audit:{...response.audit,schemaVersion:'audit-overview-1',overview}};
 }
 export async function requestPlotfileOverview(projectId:string,relativePath:string,signal:AbortSignal,request:PlotfileOverviewRequest,sha:string){
- return validatePlotfileOverview(await fetchPlotfileAudit(projectId,relativePath,signal,undefined,sha,request),projectId,relativePath,request,sha);
+ const copied=copyOverviewRequest(request);
+ return validatePlotfileOverview(await fetchPlotfileAudit(projectId,relativePath,signal,undefined,sha,copied),projectId,relativePath,copied,sha);
 }
 
 export function validatePlotfilePoint(value:unknown,projectId:string,relativePath:string,request:PlotfilePointRequest,sha:string):AuditResponse{

@@ -2427,3 +2427,8 @@ f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负
 ### 2026-10-03：全域坐标点击→精确原生cell
 
 新增受控audit-point，存盘bounds半开/全域最大边界包含，one exact match回查raw slice；gap/overlap明确失败。client/Inspector校验同digest和point，保留失败前结果。300 tests+lint/typecheck/build PASS；真实Sod index96/Cellular index3074 raw值和文件SHA保持。当前仍full scan，非indexed查询；窗口UAT、viewport/index及owner review待完成。见 PlotfileNativePointProgress-20261003.zh-CN.md。
+
+
+### 2026-10-03：显式viewport LOD与full Fit保留
+
+严格viewport请求、显示domain/globalDomain分离，完整nativeBlocks身份不裁切；手动finer按钮，缓存一份full+一份refined，Fit不读文件。revision guard防止过期视口覆盖。302 tests+lint/typecheck/build PASS；真实Sod/Cellular局部HTTP/client/SSR PASS，仍full scan。现有WSLg窗口恢复可见，但保留旧RT会话，不声称新Viewer native UAT。见 PlotfileViewportProgress-20261003.zh-CN.md。

@@ -1,5 +1,6 @@
 /** Candidate display contract; no Core initialization or scientific integration. */
-export interface PlotfileOverviewRequest {field:string;width:number;height:number}
+export type PlotfileDomain={x:[number,number];y:[number,number]};
+export interface PlotfileOverviewRequest {field:string;width:number;height:number;viewport?:PlotfileDomain}
 export const MAX_OVERVIEW_BLOCKS=128;
 export interface NativePlotBlock {
  index:number;firstCellIndex:number;level:number;logicalKey:string;logicalCoordinates:number[];
@@ -11,6 +12,7 @@ export interface NativePlotBlocks {
 }
 export interface PlotfileOverview {
  nativeBlocks?:NativePlotBlocks;
+ globalDomain?:PlotfileDomain;
  version:'candidate-overview-1';field:string;width:number;height:number;dimension:1|2;
  domain:{x:[number,number];y:[number,number]};
  values:(number|null)[];representativeIndices:(number|null)[];
@@ -21,11 +23,22 @@ export interface PlotfileOverview {
 export function copyOverviewRequest(value:unknown):PlotfileOverviewRequest {
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Invalid overview request.');
  const r=value as Record<string,unknown>;
- if(Object.keys(r).sort().join(',')!=='field,height,width'||typeof r.field!=='string'||!r.field.length||r.field.length>128||
+ if(!['field,height,width','field,height,viewport,width'].includes(Object.keys(r).sort().join(','))||typeof r.field!=='string'||!r.field.length||r.field.length>128||
   !Number.isSafeInteger(r.width)||Number(r.width)<1||Number(r.width)>32||
   !Number.isSafeInteger(r.height)||Number(r.height)<1||Number(r.height)>32)
   throw Error('Overview requires a field and 1..32 pixels per axis.');
- return {field:r.field,width:Number(r.width),height:Number(r.height)};
+ const viewport=r.viewport===undefined?undefined:copyPlotfileDomain(r.viewport);
+ if('viewport' in r&&!viewport)throw Error('Explicit viewport must contain physical ranges.');
+ return {field:r.field,width:Number(r.width),height:Number(r.height),...(viewport?{viewport}:{})};
+}
+export function copyPlotfileDomain(value:unknown):PlotfileDomain{
+ if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Invalid physical viewport.');
+ const r=value as Record<string,unknown>;
+ if(Object.keys(r).sort().join(',')!=='x,y')throw Error('Viewport accepts only x/y ranges.');
+ for(const range of [r.x,r.y])if(!Array.isArray(range)||range.length!==2||
+  range.some(v=>typeof v!=='number'||!Number.isFinite(v))||range[1]<=range[0]||!Number.isFinite(range[1]-range[0]))
+  throw Error('Viewport ranges must be finite and increasing.');
+ return {x:[...(r.x as [number,number])],y:[...(r.y as [number,number])]};
 }
 /** Streaming accumulator. Weights are display coordinate overlaps, NOT cell_measure. */
 export function createOverview(request:PlotfileOverviewRequest,dimension:1|2,domain:PlotfileOverview['domain']){
@@ -72,6 +85,10 @@ export function validOverview(value:unknown,request:PlotfileOverviewRequest,tota
  const v=value as PlotfileOverview,n=request.width*request.height;
  return v.version==='candidate-overview-1'&&v.field===request.field&&v.width===request.width&&v.height===request.height&&
   v.dimension===dimension&&(dimension===1?request.height===1:dimension===2)&&
+  (request.viewport===undefined?(!v.globalDomain||JSON.stringify(v.domain)===JSON.stringify(v.globalDomain)):
+   !!v.globalDomain&&JSON.stringify(v.domain)===JSON.stringify(request.viewport))&&
+  (v.globalDomain===undefined||[v.globalDomain.x,v.globalDomain.y].every(a=>Array.isArray(a)&&a.length===2&&
+   a.every(Number.isFinite)&&a[1]>a[0]&&Number.isFinite(a[1]-a[0])))&&
   v.reduction==='coordinate-overlap-weighted-display-mean'&&v.scannedCells===total&&
   Number.isSafeInteger(v.nonfiniteCells)&&v.nonfiniteCells>=0&&v.nonfiniteCells<=total&&
   !!v.domain&&[v.domain.x,v.domain.y].every(a=>Array.isArray(a)&&a.length===2&&a.every(Number.isFinite)&&a[1]>a[0]&&Number.isFinite(a[1]-a[0]))&&
@@ -80,7 +97,7 @@ export function validOverview(value:unknown,request:PlotfileOverviewRequest,tota
   v.representativeIndices.every(x=>x===null||Number.isSafeInteger(x)&&x>=0&&x<total)&&
   Array.isArray(v.diagnostics)&&v.diagnostics.every(x=>typeof x==='string'&&x.length<=128)&&
   v.diagnostics.includes('DISPLAY_LOD_NOT_NATIVE_VALUES')&&v.diagnostics.includes('FULL_LEAF_SCAN')&&
-  (v.nativeBlocks===undefined||validNativeBlocks(v.nativeBlocks,total,dimension,v.domain)&&
+  (v.nativeBlocks===undefined||validNativeBlocks(v.nativeBlocks,total,dimension,v.globalDomain??v.domain)&&
    (blocks===undefined||v.nativeBlocks.totalBlocks===blocks)&&
    (cellShape===undefined||v.nativeBlocks.blocks.every(b=>
     JSON.stringify(b.cellShape)===JSON.stringify([...cellShape].reverse().concat(Array(3-dimension).fill(1))))));

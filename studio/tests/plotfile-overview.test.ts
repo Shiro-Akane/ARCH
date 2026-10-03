@@ -195,3 +195,26 @@ test('overlapping stored cells fail the exact point query instead of guessing a 
   await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[2.75,.5]}),/AMBIGUOUS_NATIVE_CELL/);
  },3,2,2,true);
 });
+
+test('viewport request deeply copies physical ranges and rejects invalid or arbitrary properties',()=>{
+ const r={field:'DENS',width:2,height:2,viewport:{x:[1,2],y:[3,4]}},copy=copyOverviewRequest(r);
+ r.viewport.x[0]=99;assert.deepEqual(copy.viewport,{x:[1,2],y:[3,4]});
+ for(const viewport of [undefined,null,{x:[1,1],y:[0,1]},{x:[0,Infinity],y:[0,1]},
+  {x:[0,1],y:[0,1],command:'sh'},{x:[0,1],y:[0,1,2]}])
+  assert.throws(()=>copyOverviewRequest({field:'DENS',width:2,height:2,viewport}));
+});
+test('viewport LOD clips raw native contributions but preserves complete stored domain and block identity',async()=>{
+ await withNative(async path=>{
+  const request={field:'DENS',width:2,height:2,viewport:{x:[2,4] as [number,number],y:[.25,1.75] as [number,number]}};
+  const r=await readPlotfileOverview(path,request),o=r.overview!;
+  assert.deepEqual(o.domain,request.viewport);assert.deepEqual(o.globalDomain,{x:[0,6],y:[0,2]});
+  assert.deepEqual(o.values,[2,6,5,9]);assert.deepEqual(o.representativeIndices,[2,6,5,9]);
+  assert.equal(o.scannedCells,12);assert.equal(o.nativeBlocks?.blocks.length,2);
+  assert.deepEqual(o.nativeBlocks?.blocks[0].lower,[0,0,0]);
+  assert.equal(validOverview(o,request,12,2,[2,3],2),true);
+  assert.equal(validOverview({...o,domain:{x:[0,6],y:[0,2]}},request,12,2,[2,3],2),false);
+  const outside=await readPlotfileOverview(path,{...request,viewport:{x:[20,21],y:[0,2]}});
+  assert.deepEqual(outside.overview?.values,[null,null,null,null]);
+  assert.equal(outside.overview?.scannedCells,12);
+ });
+});
