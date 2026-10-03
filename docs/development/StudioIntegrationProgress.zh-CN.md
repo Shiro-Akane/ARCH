@@ -2435,3 +2435,5 @@ f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负
 
 
 2026-10-03：Plotfile Linux native UAT 发现并修复 stale binary 阻断只读启动；Sod extrema/outline 遮挡已修 display 范围，native 复验待办。304 tests及静态/production检查PASS。见 PlotfileNativeDesktopFindings-20261003.zh-CN.md。未 Core Build/simulation/push/tag。
+
+2026-10-03：Linux native Sod extrema留白复验通过；Cartesian2D热图/level轮廓/zoom-pan-fit/原生point已实测，h5py独立核对两单元FP64指标一致。修复1D导航保留场纵轴及只读控件对比度，305 tests+lint/typecheck/build PASS，新assets native复验待办。无科学输出或发布。

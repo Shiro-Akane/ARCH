@@ -2,7 +2,7 @@ import {useEffect,useId,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import type {AuditResponse} from '../host/plotfileAudit';
 import {plotColor} from '../data/plotColors';
-import {finitePlotRange,nativePlotDomain,panPlotView,pickNativePlotCell,plotFraction,plotValue,zoomPlotView} from '../data/nativePlotView';
+import {finitePlotRange,nativePlotDomain,panNativeSpatialView,pickNativePlotCell,plotFraction,plotValue,zoomNativeSpatialView} from '../data/nativePlotView';
 import type {PlotView} from '../data/nativePlotView';
 
 const frame={left:72,top:20,width:790,height:290};
@@ -29,11 +29,11 @@ function NativeView({samples,domain,selectedRow,onSelect}:{samples:AuditResponse
   const svg=svgRef.current;if(!svg)return;
   function wheel(e:WheelEvent){
    const f=fractions(e,svg!);if(f.x<0||f.x>1||f.y<0||f.y>1)return;
-   e.preventDefault();setView(v=>zoomPlotView(v,e.deltaY>0?1.15:1/1.15,f.x,f.y));
+   e.preventDefault();setView(v=>zoomNativeSpatialView(v,a.dimension,e.deltaY>0?1.15:1/1.15,f.x,f.y));
   }
   svg.addEventListener('wheel',wheel,{passive:false});
   return ()=>svg.removeEventListener('wheel',wheel);
- },[]);
+ },[a.dimension]);
  const drag=useRef<{x:number;y:number;view:PlotView;clientX:number;clientY:number}|null>(null);
  const clipId=useId().replaceAll(':','');
  const fieldRange=finitePlotRange(p.values);
@@ -47,7 +47,7 @@ function NativeView({samples,domain,selectedRow,onSelect}:{samples:AuditResponse
  }
  function move(e:ReactPointerEvent<SVGSVGElement>){
   const d=drag.current;if(!d)return;
-  const f=fractions(e,e.currentTarget);setView(panPlotView(d.view,f.x-d.x,f.y-d.y));
+  const f=fractions(e,e.currentTarget);setView(panNativeSpatialView(d.view,a.dimension,f.x-d.x,f.y-d.y));
  }
  function up(e:ReactPointerEvent<SVGSVGElement>){
   const d=drag.current;drag.current=null;if(!d)return;
@@ -64,8 +64,8 @@ function NativeView({samples,domain,selectedRow,onSelect}:{samples:AuditResponse
   <h3>Native stored cells · candidate slice display</h3>
   <p>One requested block region, not a global overview or LOD. Units and scientific certification remain pending. Field: {p.field} · level {n.level} · key {n.logicalKey}.</p>
   <div>
-   <button onClick={()=>setView(v=>zoomPlotView(v,.8))}>Zoom in · stored cells</button>
-   <button onClick={()=>setView(v=>zoomPlotView(v,1.25))}>Zoom out · stored cells</button>
+   <button onClick={()=>setView(v=>zoomNativeSpatialView(v,a.dimension,.8))}>Zoom in · stored cells</button>
+   <button onClick={()=>setView(v=>zoomNativeSpatialView(v,a.dimension,1.25))}>Zoom out · stored cells</button>
    <button onClick={()=>setView(domain)}>Fit slice</button>
   </div>
   <p>Drag to pan; scroll to zoom; click a cell or use its keyboard focus to inspect. Display operations perform no read, Save or Preview.</p>

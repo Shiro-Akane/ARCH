@@ -1,7 +1,7 @@
 import {useEffect,useId,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import type {AuditResponse} from '../host/plotfileAudit';
-import {finitePlotRange,linePlotRange,panPlotView,plotFraction,plotValue,zoomPlotView} from '../data/nativePlotView';
+import {finitePlotRange,linePlotRange,panNativeSpatialView,plotFraction,plotValue,zoomNativeSpatialView} from '../data/nativePlotView';
 import type {PlotfileDomain} from '../host/plotfileOverview';
 import type {PlotView} from '../data/nativePlotView';
 import {plotColor} from '../data/plotColors';
@@ -33,11 +33,11 @@ function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFit
   const svg=svgRef.current;if(!svg)return;
   function wheel(e:WheelEvent){
    const f=fraction(e,svg!);if(f.x<0||f.x>1||f.y<0||f.y>1)return;
-   e.preventDefault();onViewChange?.();setView(v=>zoomPlotView(v,e.deltaY>0?1.15:1/1.15,f.x,f.y));
+   e.preventDefault();onViewChange?.();setView(v=>zoomNativeSpatialView(v,o.dimension,e.deltaY>0?1.15:1/1.15,f.x,f.y));
   }
   svg.addEventListener('wheel',wheel,{passive:false});
   return ()=>svg.removeEventListener('wheel',wheel);
- },[onViewChange]);
+ },[onViewChange,o.dimension]);
  const X=(x:number)=>frame.left+plotFraction(x,view.x)*frame.width;
  const Y=(y:number)=>frame.top+(1-plotFraction(y,view.y))*frame.height;
  const dx=(o.domain.x[1]-o.domain.x[0])/o.width,dy=(o.domain.y[1]-o.domain.y[0])/o.height;
@@ -53,7 +53,7 @@ function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFit
  }
  function move(e:ReactPointerEvent<SVGSVGElement>){
   const d=drag.current;if(!d)return;const f=fraction(e,e.currentTarget);
-  onViewChange?.();setView(panPlotView(d.view,f.x-d.x,f.y-d.y));
+  onViewChange?.();setView(panNativeSpatialView(d.view,o.dimension,f.x-d.x,f.y-d.y));
  }
  function up(e:ReactPointerEvent<SVGSVGElement>){
   const d=drag.current;drag.current=null;if(!d)return;
@@ -80,8 +80,8 @@ function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFit
    <p>{leaves.complete?'Complete stored leaf set':'Limited outline set'}: {leaves.blocks.length} / {leaves.totalBlocks} blocks · cap {leaves.limit}.
     Level filters change outlines only; the field LOD still contains all scanned leaves. No parent/coarse blocks are synthesized.</p>
   </fieldset>}
-  <button onClick={()=>{onViewChange?.();setView(v=>zoomPlotView(v,.8));}}>Zoom in · LOD</button>
-  <button onClick={()=>{onViewChange?.();setView(v=>zoomPlotView(v,1.25));}}>Zoom out · LOD</button>
+  <button onClick={()=>{onViewChange?.();setView(v=>zoomNativeSpatialView(v,o.dimension,.8));}}>Zoom in · LOD</button>
+  <button onClick={()=>{onViewChange?.();setView(v=>zoomNativeSpatialView(v,o.dimension,1.25));}}>Zoom out · LOD</button>
   <button onClick={()=>{onViewChange?.();setView(fullView);onFitFull?.();}}>Fit full domain · LOD</button>
   {onRefine&&<button disabled={disabled} onClick={()=>onRefine({x:[...view.x],y:o.dimension===2?[...view.y]:[0,1]})}>Read finer current viewport · scans leaves</button>}
   {o.values.some(v=>v===null)&&<p role="alert">Magenta pixels / 1D gaps mean empty, nonfinite or overflowed display reduction; raw Inspector remains available.</p>}

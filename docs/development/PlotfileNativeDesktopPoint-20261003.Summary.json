@@ -1,0 +1,64 @@
+[
+  {
+    "case": "Sod",
+    "globalIndex": 191,
+    "storedIndex": [
+      11,
+      15
+    ],
+    "queriedPoint": [
+      0.4997936886036577
+    ],
+    "DENS": 0.125,
+    "dtype": "float64",
+    "center": [
+      0.4990234375,
+      0.0,
+      0.0
+    ],
+    "lower": [
+      0.498046875,
+      0.0,
+      0.0
+    ],
+    "upper": [
+      0.5,
+      0.0,
+      0.0
+    ],
+    "measure": 0.001953125,
+    "pointInside": true
+  },
+  {
+    "case": "CellularDet",
+    "globalIndex": 3074,
+    "storedIndex": [
+      12,
+      0,
+      2
+    ],
+    "queriedPoint": [
+      0.5243270271866453,
+      6.509655172413793
+    ],
+    "DENS": 43375362.843074,
+    "dtype": "float64",
+    "center": [
+      0.5,
+      6.5,
+      0.0
+    ],
+    "lower": [
+      0.4,
+      6.4,
+      0.0
+    ],
+    "upper": [
+      0.6000000000000001,
+      6.6000000000000005,
+      0.0
+    ],
+    "measure": 0.040000000000000015,
+    "pointInside": true
+  }
+]

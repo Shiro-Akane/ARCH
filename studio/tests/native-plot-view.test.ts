@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {finitePlotRange,linePlotRange,nativePlotDomain,panPlotView,pickNativePlotCell,plotFraction,plotValue,zoomPlotView} from '../src/data/nativePlotView.ts';
+import {finitePlotRange,linePlotRange,nativePlotDomain,panPlotView,pickNativePlotCell,plotFraction,plotValue,zoomPlotView,zoomNativeSpatialView,panNativeSpatialView} from '../src/data/nativePlotView.ts';
 import type {NativePlotCells} from '../src/host/plotfileAudit.ts';
 function native():NativePlotCells{
  const x=[0,1,2,0,1,2],y=[10,10,10,11,11,11];
@@ -51,4 +51,13 @@ test('1D display padding keeps extrema inside clip without changing raw/color ra
  assert.ok(plotFraction(raw[0],line)>0);assert.ok(plotFraction(raw[1],line)<1);
  assert.deepEqual(finitePlotRange(raw),[.125,1]);assert.equal(JSON.stringify(raw),before);
  assert.equal(linePlotRange(['NaN']),null);
+});
+
+test('Plotfile 1D navigation leaves the field ordinate visible while 2D navigates both spatial axes',()=>{
+ const values=[.125,1],view={x:[0,1] as [number,number],y:linePlotRange(values)!};
+ const zoom=zoomNativeSpatialView(view,1,.8),pan=panNativeSpatialView(zoom,1,.2,.7);
+ assert.deepEqual(zoom.x,[.09999999999999998,.9]);assert.equal(zoom.y,view.y);assert.equal(pan.y,view.y);
+ for(const value of values)assert.ok(plotFraction(value,pan.y)>0&&plotFraction(value,pan.y)<1);
+ assert.deepEqual(zoomNativeSpatialView(view,2,.8),zoomPlotView(view,.8));
+ assert.deepEqual(panNativeSpatialView(view,2,.2,.7),panPlotView(view,.2,.7));
 });

@@ -1,3 +1,4 @@
+import './ProjectPlotfileAudit.css';
 import type {PlotfilePointRequest} from '../host/plotfilePoint';
 import {PlotfileOverviewView} from './PlotfileOverviewView';
 import type {PlotfileOverviewRequest} from '../host/plotfileOverview';
@@ -11,7 +12,7 @@ import type {AuditResponse,SliceSelection} from '../host/plotfileAudit';
 
 export function ProjectPlotfileAudit(){
  const host=useHost();
- return <section aria-label="Project Plotfile audit"><h2>Project file · read-only audit</h2>
+ return <section className="project-plotfile-audit" aria-label="Project Plotfile audit"><h2>Project file · read-only audit</h2>
   {host.connected&&host.snapshot?<ConnectedAudit key={host.snapshot.session.projectId} projectId={host.snapshot.session.projectId}/>:<p>Connect a Local Host to read a plotfile inside its managed project.</p>}
  </section>;
 }

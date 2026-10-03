@@ -49,3 +49,13 @@ export function pickNativePlotCell(native:NativePlotCells,dimension:number,x:num
   (dimension===1||y>=native.lower.x2[i]&&y<=native.upper.x2[i]));
  return index<0?null:index;
 }
+
+/** Plotfile navigation changes spatial axes only; the 1D ordinate is a field value. */
+export function zoomNativeSpatialView(view:PlotView,dimension:number,factor:number,x=.5,y=.5):PlotView {
+ const next=zoomPlotView(view,factor,x,y);
+ return dimension===1?{x:next.x,y:view.y}:next;
+}
+export function panNativeSpatialView(view:PlotView,dimension:number,dx:number,dy:number):PlotView {
+ const next=panPlotView(view,dx,dimension===1?0:dy);
+ return dimension===1?{x:next.x,y:view.y}:next;
+}

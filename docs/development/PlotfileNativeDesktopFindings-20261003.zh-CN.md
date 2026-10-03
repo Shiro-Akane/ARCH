@@ -47,3 +47,49 @@ Vite 保留已有大 chunk 非阻断提示，没有借机打包重构。
 - Real Config 上“Build selected … tracked inputs validated”文案与 stale readiness 并列，可能造成误读；需要单独核对状态表达。
 - 按 23ff77c4f contract 继续补 reviewed单位/基底/测度normalization、完整来源身份与读取适配验证。
 - 全域扫描成本、缓存/索引与大文件仍待；固定像素不代表首次扫描量小。
+
+## 第二轮实际窗口复验与增量修复
+
+从 1abb4d91 clean tree 开始；同一已验证 live desktop PID673163/start3322608，
+通过应用 View→Reload 加载 index-6fySSCxx.js，无替代 observer/DOM 事件注入。
+Sod 全部叶块轮廓开启时 .125/1 两段场线均在轴框内可见：F2 native 复验通过。
+Zoom 后物理点查询返回 index191/block11/i15，DENS=.125、中心 .4990234375，
+bounds [.498046875,.5]、measure .001953125；查询点 .4997936886036577 在其内。
+原生值保持，未拿 display mean 替代。
+
+CellularDet 同窗口切换文件并显式 metadata/LOD：
+time0、20×[16,16]、5120原生cells、32×24显示pixels；
+文件 SHA78104fab2ea63a58fd15cb82a4c227e0fee3c5c8c1726091e65855ddcd4dd187。
+热图与叶块轮廓正确呈现 x1[0,25.6]/x2[0,12.8]，Level2取消只隐藏轮廓，
+Zoom→x1[2.56,23.04]/x2[1.28,11.52]，真实 drag pan 时共同移动，
+Fit恢复完整domain。未将这次32×24显示网格等同于non-square原生block测试。
+
+点击左部高密度区域，原生Inspector返回index3074/block12/j0/i2，
+query [.5243270271866453,6.509655172413793]、
+center [.5,6.5,0]、DENS43375362.843074、
+x1bounds[.4,.6000000000000001]、x2bounds[6.4,6.6000000000000005]、
+measure .040000000000000015、level2/key2/0/2/0。
+独立 h5py 单元读回确认这些值与 FP64 dtype、point inclusion；
+处理后的两个单元摘要见 PlotfileNativeDesktopPoint-20261003.Summary.json，
+不是全场或演化一致性证明。
+
+### F3：一维默认 Zoom 将高低场线裁出 ordinate（修复待 native）
+
+上一版默认zoom同时缩小field Y范围，在Sod两段常数场上导致field看似消失。
+Plotfile spatial navigation 现在1D只改变x1，2D仍改变x1/x2；
+同一helper同时用于LOD与原生slice的button/wheel/pan。
+Inspector/hit testing仍用同物理x1及原生bounds；没有改数组、Core、配置或科学预算。
+补足wheel hooks维数依赖；没有关闭lint规则。
+
+### F4：新增只读工作区控件深色对比度（修复待 native）
+
+此前未继承专用样式的button呈黑字深底，实际可点击却像disabled。
+加入ProjectPlotfileAudit局部CSS作用域：按钮、输入、fieldset、键盘focus；
+不改变全局产品、配置面板或其它工作区。
+
+最终 npm test305/305、lint/typecheck/build/diff PASS；新production assets
+index-DjuR4Vqq.js/index-BAqTuhxL.css。
+当前已打开窗口仍是此前assets，不将F3/F4算作native复验PASS。
+viewport refinement/race/cancel/recovery、field切换、wheel原生操作和publication/科学语义剩余项继续待办。
+Linux production实际Sod/2D读取、显示、point链路已取得证据，但全项目与完整Viewer交付未完成。
+本轮没有Core构建、simulation、Preview、push、tag、main merge或Windows适配。
