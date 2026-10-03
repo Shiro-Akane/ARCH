@@ -112,14 +112,31 @@ export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile
   dependenciesComplete:false as const,missingCoverage:['compiler-subprograms','linker','implicit-libraries']};
 }
 
-export async function readBuildToolchainEvidence(buildDirectory:string){
+async function buildReply(buildDirectory:string,kind:string){
  const build=await realpath(buildDirectory),reply=path.join(build,'.cmake/api/v1/reply');
  const names=(await readdir(reply)).filter(n=>/^index-.*\.json$/.test(n)).sort();
  if(!names.length)throw new Error('No CMake File API index.');
  const index:unknown=JSON.parse((await boundedFile(path.join(reply,names.at(-1)!),8*1024*1024)).toString('utf8'));
  if(!object(index)||!Array.isArray(index.objects))throw new Error('Malformed CMake File API index.');
- const entry=index.objects.find(o=>object(o)&&o.kind==='toolchains');
+ const entry=index.objects.find(o=>object(o)&&o.kind===kind);
  if(!object(entry)||typeof entry.jsonFile!=='string'||path.basename(entry.jsonFile)!==entry.jsonFile)
-  throw new Error('Missing toolchains reply reference.');
- return readCMakeToolchainEvidence(build,path.join(reply,entry.jsonFile));
+  throw new Error('Missing '+kind+' reply reference.');
+ return {build,replyFile:path.join(reply,entry.jsonFile)};
+}
+
+export async function readBuildToolchainEvidence(buildDirectory:string){
+ const {build,replyFile}=await buildReply(buildDirectory,'toolchains');
+ return readCMakeToolchainEvidence(build,replyFile);
+}
+export async function readBuildConfigurationInputs(sourceRoot:string,buildDirectory:string){
+ const {build,replyFile}=await buildReply(buildDirectory,'cmakeFiles');
+ return readCMakeConfigurationEvidence(sourceRoot,build,replyFile);
+}
+export function sameConfigurationInputs(a:CMakeConfigurationEvidence|undefined,b:CMakeConfigurationEvidence|undefined){
+ if(!a||!b||a.sourceRoot!==b.sourceRoot||a.buildDirectory!==b.buildDirectory||a.inputs.length!==b.inputs.length)return false;
+ const prior=new Map(a.inputs.map(f=>[f.path,f]));
+ return b.inputs.every(f=>{
+  const old=prior.get(f.path);
+  return old?.sha256===f.sha256&&old.size===f.size&&old.generated===f.generated&&old.external===f.external&&old.cmake===f.cmake;
+ });
 }

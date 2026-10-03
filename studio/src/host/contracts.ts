@@ -1,3 +1,4 @@
+import type {CMakeConfigurationEvidence} from '../../host/cmakeEvidence.ts';
 export const PROTOCOL_VERSION = '1.3';
 export interface HostCapabilities { readProject: boolean; writeConfig: boolean; build: boolean; preview: boolean; watchFiles: boolean }
 export interface HostInfo { protocolVersion: string; hostKind: 'local'; platform: string; projectRoot: string; capabilities: HostCapabilities }
@@ -47,6 +48,7 @@ export interface BuildManifest {
  linkInputs?:LinkInputSnapshot; linkInputError?:string;
  compilerDrivers?:{language:string;path:string;resolvedPath:string;id:string;version:string;sha256:string;size:number;components?:{role:string;path:string;resolvedPath:string;sha256:string;size:number}[];specsSha256?:string}[]; compilerDriverError?:string;
  preBuildCompilerDrivers?:BuildManifest['compilerDrivers']; compilerDriversStableDuringBuild?:boolean;
+ configurationInputs?:CMakeConfigurationEvidence; configurationInputError?:string; configurationInputsStableDuringBuild?:boolean;
  compilerInputs?:{kind:'ninja-compiler-inputs';objectCount:number;files:{path:string;sha256:string;size:number}[]}; compilerInputError?:string; compilerInputsStableDuringBuild?:boolean;
  manifestVersion:'1'; buildId:string; projectId:string; profileId:string; caseId?:string; managedSourceRoot:string;
  sourceGitHead?:string; repositoryDirty?:boolean; buildProfileFingerprint:string; sourceFingerprint?:FileFingerprint;

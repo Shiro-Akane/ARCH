@@ -217,3 +217,24 @@ test('retained LTO inputs use a Host-owned per-build directory and refuse symlin
   assert.equal(calls,1);
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+test('Build persists CMake-only inputs; external configuration mutation invalidates freshness and corrupt evidence rejects',async()=>{
+ const {root,p}=await fixture();await mkdir(root+'/studio');
+ try{
+  const reply=root+'/build/.cmake/api/v1/reply';await mkdir(reply,{recursive:true});
+  const extra=root+'/untracked dependency.cmake';await writeFile(extra,'# first');
+  await writeFile(reply+'/cmakeFiles.json',JSON.stringify({kind:'cmakeFiles',version:{major:1},paths:{source:root,build:root+'/build'},inputs:[{path:extra,isExternal:true}]}));
+  await writeFile(reply+'/index-test.json',JSON.stringify({objects:[{kind:'cmakeFiles',jsonFile:'cmakeFiles.json'}]}));
+  const profile={...p,compilerDependencyMode:'ninja' as const};
+  const runner=new BuildRunner(root,'p',profile,{spawn:fakeSpawn(root)});
+  await runner.start('p',p.id);await finished(runner);
+  const manifest=await loadManifest(profile);
+  assert.equal(manifest?.configurationInputsStableDuringBuild,true);
+  assert.equal(manifest?.configurationInputs?.inputs[0].path,extra);
+  await writeFile(extra,'# changed');
+  const state=await runner.refreshFreshness();
+  assert.equal(state.binaryState,'needs-build');assert.ok(state.changedInputs.includes(extra));
+  const corrupt=structuredClone(manifest!);corrupt.configurationInputs!.inputs[0].sha256='not-a-hash';
+  await saveManifest(profile,corrupt);assert.equal(await loadManifest(profile),undefined);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
