@@ -12,6 +12,8 @@ def main():
     parser.add_argument("--binary",required=True)
     parser.add_argument("--references",required=True)
     parser.add_argument("--output-root",required=True)
+    parser.add_argument("--attempts",type=int,choices=(1,2),default=2,
+        help="Use one run per case for cross-build regression; two for repeat UUID evidence")
     args=parser.parse_args()
     binary=Path(args.binary).resolve(); digest=sha(binary)
     root=Path(args.output_root).resolve();root.mkdir(parents=True,exist_ok=False)
@@ -31,7 +33,7 @@ def main():
         assert values["tmax"]=="0" and values["max_steps"]=="-1" and values["compute_backend"]=="cpu"
         old_plot=next((ref/"output").glob("*_plt_*.h5"))
         old_chk=next((ref/"output").glob("*_chk_*.h5"))
-        for attempt in range(2):
+        for attempt in range(args.attempts):
             evidence=root/(case+"-"+str(attempt));evidence.mkdir()
             output=evidence/"output"
             updated=re.sub(r"^out_dir\s*=.*$","out_dir="+str(output),text,flags=re.MULTILINE)
@@ -57,6 +59,10 @@ def main():
                 field_count=len(f["Data"])
             datasets=[]
             with h5py.File(chk) as f,h5py.File(old_chk) as old:
+                assert float(f.attrs["time"])==0.0 and int(f.attrs["step"])==0
+                if "geometry_semantics_revision" in f.attrs:
+                    assert int(f.attrs["geometry_semantics_revision"])==1
+                    assert f.attrs["geometry_chart"]=="existing"
                 def compare(name,obj):
                     if isinstance(obj,h5py.Dataset) and obj.dtype.kind in "fiu":
                         assert name in old and obj.shape==old[name].shape and obj.dtype==old[name].dtype

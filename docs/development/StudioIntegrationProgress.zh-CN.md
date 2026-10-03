@@ -2761,3 +2761,7 @@ source-verified实际注册Gaussian严格Setup/Init/sharedEOS链PASS，256原生
 
 ## 2026-10-04 current full CPU ARCH rebuild
 clean869ae3d3源码完整ARCH CPU Release重编53steps成功；ELF f82bb7ff…，9项真实executable配置/Preview/session契约regression PASS(59.51s)。不能升级为RZ科学/CUDA/benchmark通过；未改其他StudioSession binary。见 CpuRzSourceRebuild-20261004.zh-CN.md / Summary。未push/tag。
+
+
+## 2026-10-04 current CPU t=0 IO regression
+新完整CPU f82bb7ff…用既有批准tmax0输入一例/case；Sod9/Cellular28完整字段及各checkpoint20numeric datasets bit一致。新chart existing及run/config/binary身份通过production isolated reader/client。不是科学/evolution/RZ/CUDA验收。见 CurrentCpuPlotfileT0-20261004.zh-CN.md / Summary；raw留本机，未push/tag。

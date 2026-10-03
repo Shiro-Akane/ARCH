@@ -1,0 +1,52 @@
+{
+  "sourceHead": "869ae3d3d30e8a9b16e377112af73e737b6c736a",
+  "measurementHead": "b168728c6b9b2efb1115d09e558c326d2e15ff47",
+  "binarySha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+  "scope": "Approved CPU t=0 reference inputs, one run per case; only out_dir changes",
+  "runs": [
+    {
+      "case": "Sod",
+      "runId": "767ae5d8-6ee6-44b7-882a-416fb700c61d",
+      "plotfile": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-cpu-plotfile-t0-20261004/raw/Sod-0/output/reference_HLLC_plt_0000.h5",
+      "plotfileSha256": "355d345f270d7e5570420af602ee98ae6ab75b0c7d0473cf61925ead41eb471a",
+      "inputSha256": "7a1d196460b69aefcc5e3d02f81dcbbcf46c964dac902643ccef4e431e56f280",
+      "binarySha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+      "fieldCount": 9,
+      "checkpointNumericDatasets": 20,
+      "fieldAndCheckpointBitsUnchanged": true,
+      "checkpointSha256": "1311fb80771b14adf0a2efde9ba277bf328510a39b58942b4eccc84b53aca3f3",
+      "checkpointGeometryIdentity": {
+        "revision": 1,
+        "chart": "existing"
+      },
+      "productionIsolatedReaderAndClient": true
+    },
+    {
+      "case": "CellularDet",
+      "runId": "a8137c3f-4a76-46fd-b15e-25c2dcc2e787",
+      "plotfile": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-cpu-plotfile-t0-20261004/raw/CellularDet-0/output/reference_HLLC_plt_0000.h5",
+      "plotfileSha256": "8cc5e9e1da007bdc2854a091517a487b08f40976ec9a5580c44f76a1f7d5550b",
+      "inputSha256": "6ca2b63719942d1a900cab8458a4417b0dc88c3a41750e37df5fff55647391e3",
+      "binarySha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+      "fieldCount": 28,
+      "checkpointNumericDatasets": 20,
+      "fieldAndCheckpointBitsUnchanged": true,
+      "checkpointSha256": "1cda4ea9e2e37dd5aca5632f76d5d4360191efd352d11bf005d07bf06b8d1421",
+      "checkpointGeometryIdentity": {
+        "revision": 1,
+        "chart": "existing"
+      },
+      "productionIsolatedReaderAndClient": true
+    }
+  ],
+  "fieldCount": 37,
+  "checkpointNumericDatasetsPerCase": 20,
+  "rawDataRetainedLocally": true,
+  "readerEnvironment": "Node 24.21 native TS support; no tsx dependency installed",
+  "limitations": [
+    "No independent PRES/TEMP/diagnostics science oracle",
+    "No trajectory, evolved restart, RZ capability, CUDA or scientific acceptance",
+    "No new desktop UAT"
+  ],
+  "checkerSha256": "68b5f7f1bfdd6726d1f8d3754755b17dd83acdfe1c21d2928b0b8dd694812d29"
+}
