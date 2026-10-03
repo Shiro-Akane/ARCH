@@ -2733,3 +2733,7 @@ Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-A
 
 ## 2026-10-04 native RZ checkpoint writer binding
 DriverIO 传递 Runtime profile，write_chk 写前校验并记录几何身份。实际二维 native FP64/controller roundtrip scoped PASS；DriverIO CPU TU 编译成功。公共 dispatch/restart/evolution 未因此完成。见 RZCheckpointWriter-20261004.zh-CN.md 与 Summary.json。未 push/tag。
+
+
+## 2026-10-04 actual Driver checkpoint profile evidence
+当前 Driver/Runtime/IO 源码重编后，Cartesian 与内部 RZ 两例实际写出/恢复 PASS；time=0 step=0，原生字段与 controller 未变。补齐此前仅 TU 编译的缺口。首次 fixture ledger 初始化缺失及修正保留证据。见 RZDriverCheckpoint-20261004.zh-CN.md / Summary。公共 RZ 演化/CUDA 未验收，未 push/tag。
