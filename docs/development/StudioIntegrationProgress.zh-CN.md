@@ -2565,3 +2565,8 @@ b26fb8a2 最小 writer 面索引求值修复，C++反例先失败后publication/
 ## 2026-10-04 Plotfile run identity
 
 DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容，其他未确认身份仍unknown。321项Studio回归及CPU构建/发布检查PASS；四次真实CPU t=0的原始字段/20项checkpoint数据bit一致，隔离点查身份匹配。见 PlotfileRunIdentity-20261004.zh-CN.md / Summary。未演化、未CUDA、未push。
+
+
+## 2026-10-04 RZ finite-ring axis reference candidate
+
+独立Decimal轴线解析参考8例80/120位收敛，完整环体势/力/质量与有界tensor积分对照；源内/边缘发现较慢收敛，保留具体误差，不冻结生产阶数或科学预算。5项工具检查PASS。见 RZFiniteRingAxisReference-20261004.zh-CN.md / Summary；生产Core/capability未改、未ARCH运行/Build/CUDA。
