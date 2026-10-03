@@ -251,8 +251,10 @@ function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:P
  const dimension=(shape.length-1) as 1|2,ng=group(file,'NativeGrid'),data=dataset(group(file,'Data'),request.field);
  if(data.metadata.type!==1||![4,8].includes(data.metadata.size))throw Error('Overview requires stored float fields.');
  const total=shape.reduce((a,b)=>a*b,1),blockCells=shape.slice(1).reduce((a,b)=>a*b,1);
- const bounds=(start:number,count:number)=>['x1_lower','x1_upper',...(dimension===2?['x2_lower','x2_upper']:[])].map(name=>{
-  const raw=rawNumbers(dataset(ng,name).slice([[start,start+count]]),count);
+ // Reuse dataset objects only within this open file/query; no cross-query cache.
+ const boundDatasets=['x1_lower','x1_upper',...(dimension===2?['x2_lower','x2_upper']:[])].map(name=>dataset(ng,name));
+ const bounds=(start:number,count:number)=>boundDatasets.map(d=>{
+  const raw=rawNumbers(d.slice([[start,start+count]]),count);
   if(raw.some(v=>typeof v!=='number'))throw Error('Nonfinite overview geometry.');
   return raw as number[];
  });
@@ -325,8 +327,10 @@ function readPoint(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
  const dimension=shape.length-1;
  if(request.point.length!==dimension)throw Error('Point coordinates must match stored dimension.');
  const ng=group(file,'NativeGrid'),total=shape.reduce((a,b)=>a*b,1);
- const bounds=(start:number,count:number)=>['x1_lower','x1_upper',...(dimension===2?['x2_lower','x2_upper']:[])].map(name=>{
-  const values=rawNumbers(dataset(ng,name).slice([[start,start+count]]),count);
+ // Reuse dataset objects only within this open file/query; no cross-query cache.
+ const boundDatasets=['x1_lower','x1_upper',...(dimension===2?['x2_lower','x2_upper']:[])].map(name=>dataset(ng,name));
+ const bounds=(start:number,count:number)=>boundDatasets.map(d=>{
+  const values=rawNumbers(d.slice([[start,start+count]]),count);
   if(values.some(v=>typeof v!=='number'))throw Error('Nonfinite native point geometry.');
   return values as number[];
  });

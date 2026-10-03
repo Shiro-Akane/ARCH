@@ -95,3 +95,11 @@ read_bytes=0 不代表无逻辑扫描。启动期取消证据不代替 HDF 深�
 verify_plotfile_fields.py、verify_plotfile_reader.mjs、run_driver_plot_publication.py、
 measure_plotfile_query.mjs、measure_plotfile_isolation.mjs。
 具体失败及处理后的摘要与脚本提交；原始科学输出不提交。
+
+
+## 2026-10-04 大查询工程增量
+
+两份合成 8192/524288 单元夹具补测读取成本，单次 query 内复用 bounds dataset 对象。
+三组配对大总览/point 中位下降约26%，完整响应与真实 Sod/Cellular 文件对基线一致。
+逻辑读调用仍高；没有 spatial index/cross-query cache。读取期取消/reap/recovery 已测，精确限定见
+PlotfileLargeQuery-20261004.zh-CN.md / Summary.json。此证据不替代真实 AMR、科学 review 或同机演化。

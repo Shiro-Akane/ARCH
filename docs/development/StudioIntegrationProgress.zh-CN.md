@@ -2512,3 +2512,12 @@ Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做
 真实 HDF5 负零在 worker/HTTP JSON 中丢失已先复现，最小传输及显示补丁后 1D/非正方形 2D 位级反例通过。
 316 项全回归、lint/typecheck/build/diff check 通过；见 PlotfileFp64Wire-20261003.zh-CN.md/Summary.json。
 本轮不重建科学 Core、不运行 simulation、不变更 checkpoint；完整科学与资源验收仍待，未封箱联合目标。
+
+
+## Plotfile 大叶块工程成本与读取期取消（2026-10-04）
+
+基线33a49399，52万单元合成 fixture 首次/重复总览仍全扫；仅复用单查询 bounds dataset 对象。
+三组交替测量大夹具总览/point中位下降约26%，rchar未显著减少，保留负收益与资源限制。
+4文件×4查询完整响应与冻结基线一致，真实Sod/Cellular文件保持只读。
+读取期取消后约4ms完成reap，BUSY/recovery通过；316项全回归及生产检查通过。
+见PlotfileLargeQuery-20261004.zh-CN.md/Summary.json；不宣称真实AMR全验收、同机演化影响或科学目标完成。

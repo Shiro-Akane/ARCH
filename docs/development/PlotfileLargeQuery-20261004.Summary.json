@@ -1,0 +1,1510 @@
+{
+  "version": "synthetic-plotfile-query-scale-1",
+  "baselineCommit": "33a49399cb5f1f671a9de3d575fc4137c989b271",
+  "candidateSource": {
+    "baseHead": "33a49399cb5f1f671a9de3d575fc4137c989b271",
+    "stateAtMeasurement": "dirty Host query patch only",
+    "plotfileMetadataSha256": "22f1c528671a3c7fd7fd112e0887a542d1eb859b93a74163ccbf65211f53edcc"
+  },
+  "fixtures": [
+    {
+      "case": "synthetic-4-blocks",
+      "shape": [
+        4,
+        32,
+        64
+      ],
+      "cells": 8192,
+      "fileBytes": 739328,
+      "scientificReference": false,
+      "storage": "contiguous FP64, no compression",
+      "sourceIdentity": "not recorded; synthetic fixture only",
+      "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a"
+    },
+    {
+      "case": "synthetic-256-blocks",
+      "shape": [
+        256,
+        32,
+        64
+      ],
+      "cells": 524288,
+      "fileBytes": 46159872,
+      "scientificReference": false,
+      "storage": "contiguous FP64, no compression",
+      "sourceIdentity": "not recorded; synthetic fixture only",
+      "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67"
+    }
+  ],
+  "initialBaseline": [
+    {
+      "case": "synthetic-4-blocks",
+      "bytes": 739328,
+      "fields": 1,
+      "cells": 8192,
+      "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+      "rawPoint": {
+        "value": 384,
+        "index": 384
+      },
+      "cancelBusyRecovery": "PASS",
+      "rawFileUnchanged": true,
+      "queries": [
+        {
+          "label": "metadata",
+          "elapsedMs": 153.21593,
+          "responseBytes": 1424,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 114912,
+          "observedMaxRchar": 5090816,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "overview-0",
+          "elapsedMs": 180.18765000000002,
+          "responseBytes": 16739,
+          "scannedCells": 8192,
+          "observedMaxHwmKiB": 121264,
+          "observedMaxRchar": 10104433,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "overview-1",
+          "elapsedMs": 177.30011599999995,
+          "responseBytes": 16739,
+          "scannedCells": 8192,
+          "observedMaxHwmKiB": 119684,
+          "observedMaxRchar": 10104433,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "point",
+          "elapsedMs": 166.102751,
+          "responseBytes": 2313,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 119416,
+          "observedMaxRchar": 10234481,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "cancel-after-worker-observed",
+          "elapsedMs": 2.129519000000073,
+          "responseBytes": 0,
+          "scannedCells": null,
+          "error": {
+            "code": "CANCELLED",
+            "message": "Metadata read cancelled."
+          },
+          "observedMaxHwmKiB": 0,
+          "observedMaxRchar": 0,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "metadata-after-cancel",
+          "elapsedMs": 147.23170800000003,
+          "responseBytes": 1424,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 114576,
+          "observedMaxRchar": 5090865,
+          "observedMaxReadBytes": 0
+        }
+      ]
+    },
+    {
+      "case": "synthetic-256-blocks",
+      "bytes": 46159872,
+      "fields": 1,
+      "cells": 524288,
+      "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+      "rawPoint": {
+        "value": 384,
+        "index": 384
+      },
+      "cancelBusyRecovery": "PASS",
+      "rawFileUnchanged": true,
+      "queries": [
+        {
+          "label": "metadata",
+          "elapsedMs": 202.307815,
+          "responseBytes": 1432,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 115368,
+          "observedMaxRchar": 50516953,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "overview-0",
+          "elapsedMs": 838.6458749999999,
+          "responseBytes": 42029,
+          "scannedCells": 524288,
+          "observedMaxHwmKiB": 129040,
+          "observedMaxRchar": 650086561,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "overview-1",
+          "elapsedMs": 824.7103139999999,
+          "responseBytes": 42029,
+          "scannedCells": 524288,
+          "observedMaxHwmKiB": 126700,
+          "observedMaxRchar": 650086577,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "point",
+          "elapsedMs": 713.844615,
+          "responseBytes": 2325,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 127624,
+          "observedMaxRchar": 584193201,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "cancel-after-worker-observed",
+          "elapsedMs": 2.7882259999996677,
+          "responseBytes": 0,
+          "scannedCells": null,
+          "error": {
+            "code": "CANCELLED",
+            "message": "Metadata read cancelled."
+          },
+          "observedMaxHwmKiB": 0,
+          "observedMaxRchar": 0,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "metadata-after-cancel",
+          "elapsedMs": 197.329569,
+          "responseBytes": 1432,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 114812,
+          "observedMaxRchar": 50516953,
+          "observedMaxReadBytes": 0
+        }
+      ]
+    }
+  ],
+  "initialCandidate": [
+    {
+      "case": "synthetic-4-blocks",
+      "bytes": 739328,
+      "fields": 1,
+      "cells": 8192,
+      "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+      "rawPoint": {
+        "value": 384,
+        "index": 384
+      },
+      "cancelBusyRecovery": "PASS",
+      "rawFileUnchanged": true,
+      "queries": [
+        {
+          "label": "metadata",
+          "elapsedMs": 151.528733,
+          "responseBytes": 1424,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 113716,
+          "observedMaxRchar": 5091170,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "overview-0",
+          "elapsedMs": 165.502168,
+          "responseBytes": 16739,
+          "scannedCells": 8192,
+          "observedMaxHwmKiB": 122928,
+          "observedMaxRchar": 10104689,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "overview-1",
+          "elapsedMs": 171.73162000000002,
+          "responseBytes": 16739,
+          "scannedCells": 8192,
+          "observedMaxHwmKiB": 124936,
+          "observedMaxRchar": 10104689,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "point",
+          "elapsedMs": 173.667824,
+          "responseBytes": 2313,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 119492,
+          "observedMaxRchar": 10150729,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "cancel-after-worker-observed",
+          "elapsedMs": 2.2605949999999666,
+          "responseBytes": 0,
+          "scannedCells": null,
+          "error": {
+            "code": "CANCELLED",
+            "message": "Metadata read cancelled."
+          },
+          "observedMaxHwmKiB": 0,
+          "observedMaxRchar": 0,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "metadata-after-cancel",
+          "elapsedMs": 153.631576,
+          "responseBytes": 1424,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 114996,
+          "observedMaxRchar": 5091121,
+          "observedMaxReadBytes": 0
+        }
+      ]
+    },
+    {
+      "case": "synthetic-256-blocks",
+      "bytes": 46159872,
+      "fields": 1,
+      "cells": 524288,
+      "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+      "rawPoint": {
+        "value": 384,
+        "index": 384
+      },
+      "cancelBusyRecovery": "PASS",
+      "rawFileUnchanged": true,
+      "queries": [
+        {
+          "label": "metadata",
+          "elapsedMs": 202.7347349999999,
+          "responseBytes": 1432,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 114684,
+          "observedMaxRchar": 50517209,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "overview-0",
+          "elapsedMs": 603.4175399999999,
+          "responseBytes": 42029,
+          "scannedCells": 524288,
+          "observedMaxHwmKiB": 132048,
+          "observedMaxRchar": 650077401,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "overview-1",
+          "elapsedMs": 616.6137219999998,
+          "responseBytes": 42029,
+          "scannedCells": 524288,
+          "observedMaxHwmKiB": 131468,
+          "observedMaxRchar": 650077401,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "point",
+          "elapsedMs": 546.9466860000002,
+          "responseBytes": 2325,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 127768,
+          "observedMaxRchar": 584180953,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "cancel-after-worker-observed",
+          "elapsedMs": 2.772378000000117,
+          "responseBytes": 0,
+          "scannedCells": null,
+          "error": {
+            "code": "CANCELLED",
+            "message": "Metadata read cancelled."
+          },
+          "observedMaxHwmKiB": 0,
+          "observedMaxRchar": 0,
+          "observedMaxReadBytes": 0
+        },
+        {
+          "label": "metadata-after-cancel",
+          "elapsedMs": 206.73552000000018,
+          "responseBytes": 1432,
+          "scannedCells": null,
+          "observedMaxHwmKiB": 115180,
+          "observedMaxRchar": 50517209,
+          "observedMaxReadBytes": 0
+        }
+      ]
+    }
+  ],
+  "pairedMeasurements": [
+    {
+      "baseline": [
+        {
+          "case": "synthetic-4-blocks",
+          "bytes": 739328,
+          "fields": 1,
+          "cells": 8192,
+          "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 156.94735,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 112792,
+              "observedMaxRchar": 5092371,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 182.305825,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 120724,
+              "observedMaxRchar": 10105947,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 176.430205,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 122524,
+              "observedMaxRchar": 10105964,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 169.19580399999995,
+              "responseBytes": 2313,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 119812,
+              "observedMaxRchar": 10235987,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.2660960000000614,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 156.28812500000004,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 116108,
+              "observedMaxRchar": 5092371,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "bytes": 46159872,
+          "fields": 1,
+          "cells": 524288,
+          "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 203.39631900000006,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114672,
+              "observedMaxRchar": 50518459,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 827.820457,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 128796,
+              "observedMaxRchar": 650088075,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 831.1043799999998,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 129696,
+              "observedMaxRchar": 650088075,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 708.6562289999997,
+              "responseBytes": 2325,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 126204,
+              "observedMaxRchar": 584194699,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.618206999999984,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 198.471094,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114284,
+              "observedMaxRchar": 50233723,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "case": "synthetic-4-blocks",
+          "bytes": 739328,
+          "fields": 1,
+          "cells": 8192,
+          "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 149.285212,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 112976,
+              "observedMaxRchar": 5091129,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 169.64589600000002,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 121928,
+              "observedMaxRchar": 10104705,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 166.34634899999998,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 122364,
+              "observedMaxRchar": 10104746,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 165.004997,
+              "responseBytes": 2313,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 121048,
+              "observedMaxRchar": 10234745,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 3.2855069999999387,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 158.92271500000004,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 113908,
+              "observedMaxRchar": 4941561,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "bytes": 46159872,
+          "fields": 1,
+          "cells": 524288,
+          "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 215.1326499999999,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114820,
+              "observedMaxRchar": 50517217,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 602.9478749999998,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 130072,
+              "observedMaxRchar": 650077401,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 608.0772159999999,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 131692,
+              "observedMaxRchar": 650077401,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 532.8815770000001,
+              "responseBytes": 2325,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 127508,
+              "observedMaxRchar": 584180920,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.604229999999916,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 196.23936699999967,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 116496,
+              "observedMaxRchar": 50517258,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "baseline": [
+        {
+          "case": "synthetic-4-blocks",
+          "bytes": 739328,
+          "fields": 1,
+          "cells": 8192,
+          "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 147.138409,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 112884,
+              "observedMaxRchar": 5092371,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 182.12938900000003,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 120304,
+              "observedMaxRchar": 10105939,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 181.557191,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 119724,
+              "observedMaxRchar": 10105947,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 162.94023400000003,
+              "responseBytes": 2313,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 120404,
+              "observedMaxRchar": 10086435,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 3.4898359999999684,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 146.06044899999995,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 112156,
+              "observedMaxRchar": 5092371,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "bytes": 46159872,
+          "fields": 1,
+          "cells": 524288,
+          "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 200.01332200000013,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 115964,
+              "observedMaxRchar": 50518500,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 821.802682,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 127572,
+              "observedMaxRchar": 650088124,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 811.9148819999998,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 126312,
+              "observedMaxRchar": 650088075,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 726.7154760000003,
+              "responseBytes": 2325,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 127080,
+              "observedMaxRchar": 584194699,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.5958310000000893,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 196.59826300000032,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 116288,
+              "observedMaxRchar": 50518459,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "case": "synthetic-4-blocks",
+          "bytes": 739328,
+          "fields": 1,
+          "cells": 8192,
+          "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 149.99446,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114124,
+              "observedMaxRchar": 5091121,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 167.432904,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 119108,
+              "observedMaxRchar": 10104738,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 171.016957,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 121440,
+              "observedMaxRchar": 10104697,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 160.41189500000007,
+              "responseBytes": 2313,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 119152,
+              "observedMaxRchar": 10234737,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 3.4039340000000493,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 148.01546699999994,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 112476,
+              "observedMaxRchar": 5091121,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "bytes": 46159872,
+          "fields": 1,
+          "cells": 524288,
+          "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 204.62306399999989,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 116216,
+              "observedMaxRchar": 50517258,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 628.8812300000002,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 132104,
+              "observedMaxRchar": 650077458,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 602.5773720000002,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 133972,
+              "observedMaxRchar": 650077401,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 524.7763110000001,
+              "responseBytes": 2325,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 128800,
+              "observedMaxRchar": 584180961,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.698859000000084,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 204.64935300000025,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114916,
+              "observedMaxRchar": 50517209,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "baseline": [
+        {
+          "case": "synthetic-4-blocks",
+          "bytes": 739328,
+          "fields": 1,
+          "cells": 8192,
+          "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 146.028363,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 113376,
+              "observedMaxRchar": 5092371,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 172.79806299999998,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 118516,
+              "observedMaxRchar": 10105939,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 174.674893,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 121172,
+              "observedMaxRchar": 10105947,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 175.20563200000004,
+              "responseBytes": 2313,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 120332,
+              "observedMaxRchar": 10236011,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.2205470000000105,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 159.16695199999992,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114432,
+              "observedMaxRchar": 5092371,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "bytes": 46159872,
+          "fields": 1,
+          "cells": 524288,
+          "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 204.97699699999998,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114728,
+              "observedMaxRchar": 50518459,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 840.6302800000001,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 126428,
+              "observedMaxRchar": 650088083,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 828.517204,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 130064,
+              "observedMaxRchar": 650088083,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 723.804314,
+              "responseBytes": 2325,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 126360,
+              "observedMaxRchar": 584194707,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.9171080000000984,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 202.20395499999995,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114012,
+              "observedMaxRchar": 50430347,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "case": "synthetic-4-blocks",
+          "bytes": 739328,
+          "fields": 1,
+          "cells": 8192,
+          "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 153.169426,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 111888,
+              "observedMaxRchar": 5091121,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 168.730392,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 121268,
+              "observedMaxRchar": 10104697,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 174.68073399999997,
+              "responseBytes": 16739,
+              "scannedCells": 8192,
+              "observedMaxHwmKiB": 122504,
+              "observedMaxRchar": 9627409,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 165.66071399999998,
+              "responseBytes": 2313,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 118356,
+              "observedMaxRchar": 10234729,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.4583169999999654,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 146.23935899999992,
+              "responseBytes": 1424,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 113628,
+              "observedMaxRchar": 5091121,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "bytes": 46159872,
+          "fields": 1,
+          "cells": 524288,
+          "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+          "rawPoint": {
+            "value": 384,
+            "index": 384
+          },
+          "cancelBusyRecovery": "PASS",
+          "rawFileUnchanged": true,
+          "queries": [
+            {
+              "label": "metadata",
+              "elapsedMs": 200.6334149999999,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 114440,
+              "observedMaxRchar": 50517217,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-0",
+              "elapsedMs": 609.2181660000001,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 132000,
+              "observedMaxRchar": 650077401,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "overview-1",
+              "elapsedMs": 627.8912999999998,
+              "responseBytes": 42029,
+              "scannedCells": 524288,
+              "observedMaxHwmKiB": 131140,
+              "observedMaxRchar": 650077450,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "point",
+              "elapsedMs": 530.3738020000001,
+              "responseBytes": 2325,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 125972,
+              "observedMaxRchar": 584181002,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "cancel-after-worker-observed",
+              "elapsedMs": 2.7715429999998378,
+              "responseBytes": 0,
+              "scannedCells": null,
+              "error": {
+                "code": "CANCELLED",
+                "message": "Metadata read cancelled."
+              },
+              "observedMaxHwmKiB": 0,
+              "observedMaxRchar": 0,
+              "observedMaxReadBytes": 0
+            },
+            {
+              "label": "metadata-after-cancel",
+              "elapsedMs": 198.3074270000002,
+              "responseBytes": 1432,
+              "scannedCells": null,
+              "observedMaxHwmKiB": 115116,
+              "observedMaxRchar": 50517209,
+              "observedMaxReadBytes": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pairedMedians": [
+    {
+      "case": "synthetic-4-blocks",
+      "query": "overview-0",
+      "baselineMs": [
+        182.305825,
+        182.12938900000003,
+        172.79806299999998
+      ],
+      "candidateMs": [
+        169.64589600000002,
+        167.432904,
+        168.730392
+      ],
+      "baselineMedianMs": 182.12938900000003,
+      "candidateMedianMs": 168.730392,
+      "candidateOverBaseline": 0.926431439354359
+    },
+    {
+      "case": "synthetic-4-blocks",
+      "query": "overview-1",
+      "baselineMs": [
+        176.430205,
+        181.557191,
+        174.674893
+      ],
+      "candidateMs": [
+        166.34634899999998,
+        171.016957,
+        174.68073399999997
+      ],
+      "baselineMedianMs": 176.430205,
+      "candidateMedianMs": 171.016957,
+      "candidateOverBaseline": 0.9693179067609199
+    },
+    {
+      "case": "synthetic-4-blocks",
+      "query": "point",
+      "baselineMs": [
+        169.19580399999995,
+        162.94023400000003,
+        175.20563200000004
+      ],
+      "candidateMs": [
+        165.004997,
+        160.41189500000007,
+        165.66071399999998
+      ],
+      "baselineMedianMs": 169.19580399999995,
+      "candidateMedianMs": 165.004997,
+      "candidateOverBaseline": 0.9752310228686288
+    },
+    {
+      "case": "synthetic-256-blocks",
+      "query": "overview-0",
+      "baselineMs": [
+        827.820457,
+        821.802682,
+        840.6302800000001
+      ],
+      "candidateMs": [
+        602.9478749999998,
+        628.8812300000002,
+        609.2181660000001
+      ],
+      "baselineMedianMs": 827.820457,
+      "candidateMedianMs": 609.2181660000001,
+      "candidateOverBaseline": 0.7359303105504194
+    },
+    {
+      "case": "synthetic-256-blocks",
+      "query": "overview-1",
+      "baselineMs": [
+        831.1043799999998,
+        811.9148819999998,
+        828.517204
+      ],
+      "candidateMs": [
+        608.0772159999999,
+        602.5773720000002,
+        627.8912999999998
+      ],
+      "baselineMedianMs": 828.517204,
+      "candidateMedianMs": 608.0772159999999,
+      "candidateOverBaseline": 0.7339343263655391
+    },
+    {
+      "case": "synthetic-256-blocks",
+      "query": "point",
+      "baselineMs": [
+        708.6562289999997,
+        726.7154760000003,
+        723.804314
+      ],
+      "candidateMs": [
+        532.8815770000001,
+        524.7763110000001,
+        530.3738020000001
+      ],
+      "baselineMedianMs": 723.804314,
+      "candidateMedianMs": 530.3738020000001,
+      "candidateOverBaseline": 0.7327585533014661
+    }
+  ],
+  "cancel": {
+    "version": "plotfile-read-phase-cancel-1",
+    "event": {
+      "pid": 943448,
+      "elapsedMs": 236.727882,
+      "rchar": 95119033,
+      "threshold": 92319744,
+      "openInputDescriptors": 2
+    },
+    "cancelSettledMs": 240.737155,
+    "recoveryMs": 542.294496,
+    "rawFileUnchanged": true,
+    "cancelledProcessReaped": true,
+    "busy": "PASS",
+    "recovery": "PASS",
+    "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+    "limitations": [
+      "Read-phase defined by observed open input descriptors and rchar > two file sizes.",
+      "rchar includes imports and HDF/WASM calls; this is not an instrumented exact HDF call boundary.",
+      "No HTTP/native UI, kernel-uninterruptible I/O, real ENOSPC or concurrent simulation claim."
+    ]
+  },
+  "completeResponseComparison": {
+    "version": "plotfile-query-response-digests-1",
+    "rows": [
+      {
+        "case": "synthetic-4-blocks",
+        "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+        "responses": {
+          "metadata": {
+            "sha256": "af8d87bbda6729666af511331da9680a3645bb5728eb9ce732448ba609fa1ffb",
+            "bytes": 1424
+          },
+          "overview": {
+            "sha256": "8db6cf8a8a84d293f3ddcaf184189788d822e88b109019981c5ee9d0139f4cf0",
+            "bytes": 16739
+          },
+          "point": {
+            "sha256": "8b4ae9289583f802abfe36aad73e070639adb69873e5c62e1512e939c0f92e52",
+            "bytes": 2313
+          },
+          "slice": {
+            "sha256": "aae1339cac280edfb6cc2d6897520bdc4c52cc91bbfd1b59f6bfc7389ffcafc2",
+            "bytes": 2307
+          }
+        },
+        "rawFileUnchanged": true
+      },
+      {
+        "case": "synthetic-256-blocks",
+        "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+        "responses": {
+          "metadata": {
+            "sha256": "7d56998f59a0e4896e1c2ebf235ed6a35beb14b91004f8c28b736fc6e81704f3",
+            "bytes": 1432
+          },
+          "overview": {
+            "sha256": "170462065dc6aa6041e89db75d639e0c9db1c9ffac1dfe5f180c9a6d03e35f52",
+            "bytes": 42029
+          },
+          "point": {
+            "sha256": "69ddd0a953ebc5ff760bb52088fae0ca5fb250f3c9c0e72158117a7ce5a01bd9",
+            "bytes": 2325
+          },
+          "slice": {
+            "sha256": "22263a67d4c242da50bf720cf9485e0ee171c53fa7fbb8eb37b2ac47a9d2fad8",
+            "bytes": 2315
+          }
+        },
+        "rawFileUnchanged": true
+      },
+      {
+        "case": "CellularDet",
+        "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+        "responses": {
+          "metadata": {
+            "sha256": "05ffb41849820947d213360b299379d4d9253d7bcf0cf4b42e68babee3485890",
+            "bytes": 2721
+          },
+          "overview": {
+            "sha256": "716b7b52934e9b8f93c039b114576769e4ae84fc32f0575c31221afc193fe9f5",
+            "bytes": 23713
+          },
+          "point": {
+            "sha256": "577a60a357ba0dafc75ab3a2ed422a35a0e50dba6f7bb398bf0db4eb8efa05ed",
+            "bytes": 3688
+          },
+          "slice": {
+            "sha256": "723b47bfb17fb7b2aeb9244fa91b7b3d053bc723d89cfd98fede0062e97b7eb7",
+            "bytes": 4142
+          }
+        },
+        "rawFileUnchanged": true
+      },
+      {
+        "case": "Sod",
+        "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+        "responses": {
+          "metadata": {
+            "sha256": "dd18c600c4a4a676e7a51dfdd10e70f9b8b060dd8a57a8f6f2275692c3a7710b",
+            "bytes": 2262
+          },
+          "overview": {
+            "sha256": "1398a8bda5576bbc1c82611a32858aefa909176502042ddacb709f6d2bb64236",
+            "bytes": 4928
+          },
+          "point": {
+            "sha256": "4eec919b7575c1aad45377ffcca5387fb58c27d2a2a8a6de71bc87da0554a363",
+            "bytes": 3182
+          },
+          "slice": {
+            "sha256": "812faedbc5a066ceb4f02e07dee85b839fe007fa8868d8b7ae8909969167848d",
+            "bytes": 3358
+          }
+        },
+        "rawFileUnchanged": true
+      }
+    ],
+    "scope": "Complete numeric JSON response digests; raw HDF and arrays stay local; no science certification"
+  },
+  "allCompleteResponseDigestsMatchBaseline": true,
+  "existingOutputRootRefused": true,
+  "checks": [
+    {
+      "name": "test",
+      "exitCode": 0,
+      "seconds": 6.314
+    },
+    {
+      "name": "lint",
+      "exitCode": 0,
+      "seconds": 5.707
+    },
+    {
+      "name": "typecheck",
+      "exitCode": 0,
+      "seconds": 2.855
+    },
+    {
+      "name": "build",
+      "exitCode": 0,
+      "seconds": 3.526
+    },
+    {
+      "name": "fixture-syntax",
+      "exitCode": 0
+    },
+    {
+      "name": "response-script-syntax",
+      "exitCode": 0
+    },
+    {
+      "name": "cancel-script-syntax",
+      "exitCode": 0
+    },
+    {
+      "name": "diff",
+      "exitCode": 0
+    }
+  ],
+  "runtime": {
+    "node": "v24.21.0",
+    "platform": "Linux/WSL",
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "cpu": "Intel(R) Core(TM) i7-14700K"
+  },
+  "scope": "Engineering resource workload only; not physical endpoint benchmark or complete production AMR certification",
+  "limits": [
+    "Full digest and two bounds scans remain; no spatial index or cross-query cache.",
+    "Observed rchar includes process/import/WASM calls, not pure HDF or physical disk bytes.",
+    "Warm OS cache; 5ms observed HWM/counters may miss final peak.",
+    "Synthetic uniform tiled blocks do not validate production AMR topology/coverage.",
+    "No native desktop UAT, CPU/CUDA simulation interference, hard WASM RSS ceiling or kernel I/O cancellation claim.",
+    "Original HDF/plt/checkpoint stay local; no scientific thresholds changed."
+  ]
+}
