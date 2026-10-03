@@ -32,6 +32,10 @@ MeshResult BuildInitialMesh(ProblemGenerator& problem, const SimConfig& config,
         if (std::chrono::steady_clock::now() - start > std::chrono::seconds(contract::mesh_seconds))
             throw MeshBudgetStop("mesh-time-budget");
     };
+    const auto roots = RootBlockCount(config.grid.dim,
+        {config.grid.nblockx1, config.grid.nblockx2, config.grid.nblockx3});
+    if (!roots)
+        throw std::invalid_argument("Root grid count is invalid or exceeds the int64 range");
     const auto cells = PaddedCells(config.grid.dim);
     // Three states plus deliberately conservative headroom for transfer plans,
     // backup states, species, geometry, exchange and response. This working-set
@@ -40,7 +44,6 @@ MeshResult BuildInitialMesh(ProblemGenerator& problem, const SimConfig& config,
     const int configured_capacity = config.grid.amr_max_blocks > 0 ? config.grid.amr_max_blocks : 10000;
     const auto memory_capacity = std::int64_t(request.mesh_memory_mib) * 1024 * 1024 / bytes_per_slot;
     const int capacity = static_cast<int>(std::min<std::int64_t>({configured_capacity, request.mesh_max_blocks, memory_capacity}));
-    std::int64_t roots = std::int64_t(config.grid.nblockx1) * std::max(1, config.grid.nblockx2);
     auto result = Json::object({{"kind", "amr-leaf-mesh"}, {"version", "1"},
         {"dimension", config.grid.dim}, {"geometry", config.grid.geometry}, {"unit", "cm"},
         {"refinementRatio", 2}, {"balance", "face-neighbor-2:1"},
@@ -51,7 +54,7 @@ MeshResult BuildInitialMesh(ProblemGenerator& problem, const SimConfig& config,
         {"leafCount", 0}, {"levelCounts", Json::array()},
         {"resources", AmrResourceMetadata(config, species.count())},
         {"fieldOverlay", "separate uniform Init samples; not AMR cell averages"}});
-    if (roots > capacity) {
+    if (*roots > capacity) {
         result["limitedReason"] = "root-grid-exceeds-working-capacity";
         result["snapshot"] = "none";
         return {std::move(result), false, false};
@@ -105,9 +108,13 @@ MeshResult BuildInitialMesh(ProblemGenerator& problem, const SimConfig& config,
             + ":" + std::to_string(block.logical_x2) + ":" + std::to_string(block.logical_x3);
         auto lower = Json::array({g.x1_min}); auto upper = Json::array({g.x1_max});
         auto shape = Json::array({amr::BLOCK_NX}); auto spacing = Json::array({(g.x1_max-g.x1_min)/amr::BLOCK_NX});
-        if (config.grid.dim == 2) {
+        if (config.grid.dim >= 2) {
             lower.push(g.x2_min); upper.push(g.x2_max); shape.push(amr::BLOCK_NY);
             spacing.push((g.x2_max-g.x2_min)/amr::BLOCK_NY);
+        }
+        if (config.grid.dim == 3) {
+            lower.push(g.x3_min); upper.push(g.x3_max); shape.push(amr::BLOCK_NZ);
+            spacing.push((g.x3_max-g.x3_min)/amr::BLOCK_NZ);
         }
         leaves.push(Json::object({{"logicalKey", key}, {"level", block.level},
             {"logicalIndex", Json::array({std::int64_t(block.logical_x1), std::int64_t(block.logical_x2), std::int64_t(block.logical_x3)})},

@@ -2148,3 +2148,15 @@ Run740d4d6c，CPU Sod既有4096cell/t0.2，仅out_dir改为独立目录；
 旧未更新target的观察不计，新测试指针类型编译错误修复后最终通过。
 详见FullModelDimensionalSamplingProgress.zh-CN.md；ARCH binary未重编，不冒称source current。
 下一步三轴grid/root capacity及实际GeneratePreview接线；全模型/AMR/plt整体仍未完成。
+
+### 全模型初态实施：三轴网格/根容量
+
+基线583ac18e；ResourceEstimates统一RootBlockCount/ValidateInitialPreviewGrid，
+Preview两元素校验补三轴，真实BuildInitialMesh根预算含x3，leaf几何补第三轴。
+根计数非法/溢出明确错误，合法超工作容量limited/none。
+原sampling和新真实root geometry fixture两个CPU scoped CTest PASS；
+实际生产Preview/Resource对象编译PASS，不声称ARCH重新链接或新capability。
+几何fixture1x1x2/lref0覆盖第三轴容量、真实叶块/bounds/spacing及metadata一致性，
+不是科学模型或三维细化验收。详见FullModelThreeAxisGridProgress.zh-CN.md。
+下一步真实GeneratePreview按dimension接线/CLI-session/逐模型回应，再Host/UI；
+当前public完整场仍两模型，ARCH binary未重编，源码freshness不能声称current。

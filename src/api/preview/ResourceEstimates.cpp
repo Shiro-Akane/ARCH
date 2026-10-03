@@ -40,9 +40,7 @@ Json number(Count value) { return value ? Json(*value) : Json(); }
 /** Count only the supplied mesh plan; no runtime configuration is constructed. */
 static Json ResourceCounts(int dim, const std::array<int, 3>& blocks, int maximum_level,
                     int configured_capacity, int species_count) {
-    Count roots = blocks[0];
-    if (dim >= 2) roots = multiply(roots, blocks[1]);
-    if (dim == 3) roots = multiply(roots, blocks[2]);
+    Count roots = RootBlockCount(dim, blocks);
     const auto padded = PaddedCells(dim);
     const auto base_bytes = padded * 6 * 3 * 8;
     const auto cells = amr::BLOCK_NX * (dim >= 2 ? amr::BLOCK_NY : 1) * (dim == 3 ? amr::BLOCK_NZ : 1);

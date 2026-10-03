@@ -60,34 +60,6 @@ Json envelope(const PreviewRequest &request) {
         {"data", Json()}, {"diagnostics", Json::array()}});
 }
 
-/** Reject invalid root blocks, domain bounds and AMR coordinate ranges. */
-void validate_grid(const SimConfig &config) {
-    config.RequireLoadedValues();
-    const auto &g = config.grid;
-    if (config.amr.lrefinemin < 0 || config.amr.lrefinemax < config.amr.lrefinemin
-        || config.amr.lrefinemax > amr::kMaxRefinementLevel)
-        throw std::invalid_argument("AMR levels must satisfy 0 <= lrefinemin <= lrefinemax <= 15");
-    const int blocks[] = {g.nblockx1, g.nblockx2};
-    const double lo[] = {g.x1_min, g.x2_min}, hi[] = {g.x1_max, g.x2_max};
-    const std::string lower[] = {g.x1l_boundary_type, g.x2l_boundary_type};
-    const std::string upper[] = {g.x1r_boundary_type, g.x2r_boundary_type};
-    std::uint64_t roots = 1;
-    for (int axis = 0; axis < g.dim; ++axis) {
-        if (blocks[axis] <= 0 || !std::isfinite(lo[axis]) || !std::isfinite(hi[axis])
-            || !(hi[axis] > lo[axis]) || !std::isfinite(hi[axis] - lo[axis]))
-            throw std::invalid_argument("Active axis bounds must be finite and ordered, with positive root blocks");
-        const std::uint64_t extent = std::uint64_t(blocks[axis]) << config.amr.lrefinemax;
-        if (extent - 1 > amr::kMortonCoordinateMask)
-            throw std::invalid_argument("AMR root extent exceeds the supported coordinate range");
-        roots *= std::uint64_t(blocks[axis]);
-        if (!dispatch::parse_boundary(lower[axis]).ok || !dispatch::parse_boundary(upper[axis]).ok)
-            throw std::invalid_argument("Unsupported active-axis boundary type");
-    }
-    const int max_blocks = g.amr_max_blocks > 0 ? g.amr_max_blocks : 10000;
-    if (std::uint64_t(max_blocks) < roots)
-        throw std::invalid_argument("max_blocks cannot hold the configured root blocks");
-}
-
 /** Place distinct finite sampling coordinates at interior cell centers. */
 std::vector<double> sample_axis(double lo, double hi, int count) {
     std::vector<double> coordinates;
@@ -152,7 +124,8 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             throw std::invalid_argument("Initial-state preview does not load restart checkpoints");
         ReportStage(request, result, "configuration");
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
-        validate_grid(config);
+        config.RequireLoadedValues();
+        ValidateInitialPreviewGrid(config.grid, config.amr);
         if (sampling.two_dimensional) {
             ReportStage(request, result, "support");
             exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";

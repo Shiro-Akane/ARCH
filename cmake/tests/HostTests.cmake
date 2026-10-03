@@ -59,6 +59,13 @@ set_tests_properties(preview_parameter_metadata PROPERTIES TIMEOUT 180)
 add_executable(arch_preview_sampling_limits tests/api/preview/test_sampling_limits.cpp)
 arch_configure_host_test(arch_preview_sampling_limits)
 add_test(NAME preview_sampling_limits COMMAND arch_preview_sampling_limits)
+add_executable(arch_preview_mesh_geometry
+    tests/api/preview/test_initial_mesh_geometry.cpp
+    src/api/preview/ResourceEstimates.cpp src/core/files/FileFingerprint.cpp)
+arch_configure_host_test(arch_preview_mesh_geometry)
+target_link_libraries(arch_preview_mesh_geometry PRIVATE arch_build_contract)
+add_test(NAME preview_mesh_geometry COMMAND arch_preview_mesh_geometry)
+
 add_test(NAME portable_network_generator
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/network/test_portable_network_generator.py)

@@ -1,5 +1,6 @@
 #include "api/protocol/Response.h"
 #include "api/preview/Sampling.h"
+#include "api/preview/ResourceEstimates.h"
 #include "grid/Grid.h"
 
 #include <iostream>
@@ -72,6 +73,46 @@ int main() {
     generic.samples_x1 = 2; generic.samples_x2 = 2; generic.samples_x3 = 2;
     generic.sample_count_provided = true;
     rejects([&] { ResolveSampling(generic, 3); });
+
+    require(RootBlockCount(1, {2, 0, 0}) == 2, "1D inactive axes not counted");
+    require(RootBlockCount(2, {2, 3, 0}) == 6, "2D roots");
+    require(RootBlockCount(3, {2, 3, 5}) == 30, "3D root capacity includes x3");
+    require(!RootBlockCount(3, {2, 3, 0}), "active third axis cannot be zero");
+    require(!RootBlockCount(3, {std::numeric_limits<int>::max(),
+        std::numeric_limits<int>::max(), std::numeric_limits<int>::max()}),
+        "root product overflow before allocation");
+    require(!RootBlockCount(0, {1, 1, 1}), "invalid root dimension");
+
+    GridConfig topology;
+    topology.dim = 3;
+    topology.nblockx1 = 2; topology.nblockx2 = 3; topology.nblockx3 = 5;
+    topology.x1_min = 0; topology.x1_max = 2;
+    topology.x2_min = -1; topology.x2_max = 3;
+    topology.x3_min = 7; topology.x3_max = 11;
+    topology.x1l_boundary_type = topology.x1r_boundary_type = "outflow";
+    topology.x2l_boundary_type = topology.x2r_boundary_type = "outflow";
+    topology.x3l_boundary_type = topology.x3r_boundary_type = "outflow";
+    topology.amr_max_blocks = 30;
+    AmrConfig levels; levels.lrefinemin = 0; levels.lrefinemax = 0;
+    ValidateInitialPreviewGrid(topology, levels);
+    topology.amr_max_blocks = 29;
+    rejects([&] { ValidateInitialPreviewGrid(topology, levels); });
+    topology.amr_max_blocks = 30;
+    topology.x3_max = topology.x3_min;
+    rejects([&] { ValidateInitialPreviewGrid(topology, levels); });
+    topology.x3_max = 11;
+    topology.x3_min = std::numeric_limits<double>::infinity();
+    rejects([&] { ValidateInitialPreviewGrid(topology, levels); });
+    topology.x3_min = 7;
+    topology.x3r_boundary_type = "unknown";
+    rejects([&] { ValidateInitialPreviewGrid(topology, levels); });
+    topology.x3r_boundary_type = "outflow";
+    topology.nblockx3 = int(amr::kMortonCoordinateMask);
+    levels.lrefinemax = 1;
+    rejects([&] { ValidateInitialPreviewGrid(topology, levels); });
+    topology.nblockx3 = 5; levels.lrefinemax = 0;
+    topology.dim = 4;
+    rejects([&] { ValidateInitialPreviewGrid(topology, levels); });
 
     Grid grid(0, -2, 6, 10, 16, 50, 60);
     grid.dim = 2;
