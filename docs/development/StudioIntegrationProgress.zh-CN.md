@@ -2540,3 +2540,8 @@ Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做
 ## 2026-10-04：Build 后项目身份自动衔接
 
 修复 ffcd32fd 上实测需要手动刷新的问题，成功受管 Build 后只刷新同项目同输出路径的 executable 身份；晚到/失败响应保护及去重回归通过，320/320 + lint/typecheck/build/diff PASS。新 production assets 在现有 Linux 窗口无需手动 Refresh Project State 即恢复 Sod Current。完整 freshness unknown 与科学/平台未完成项不变。见 StudioBuildProjectIdentity-20261004.zh-CN.md/Summary。
+
+
+## 2026-10-04：Plotfile 全域 stored bounds finding
+
+补全真实 Sod/Cellular 全叶单元精确覆盖诊断：逻辑分区均无遗漏/重叠，但 Cellular native FP64 bounds 出现极窄 gap/overlap，production point 在 [0.1,1.2]/[0.1,2.6] 实际拒绝零/双命中。5项反例测试通过，原H5不变；不添加容差或宣布几何验收。详见 PlotfileFullCoverage-20261004.zh-CN.md/Summary；下一步按 shared face 定义修复并 review。
