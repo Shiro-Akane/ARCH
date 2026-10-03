@@ -8,6 +8,7 @@ import {open,realpath} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import h5 from 'h5wasm/node';
+import {sourceEvidenceValid} from '../src/host/plotfileSourceIdentity.ts';
 import {copyPlotfileSliceRequest,MAX_SLICE_CELLS} from './plotfileSliceRequest.ts';
 import type {PlotfileSliceRequest} from './plotfileSliceRequest.ts';
 export type {PlotfileSliceRequest} from './plotfileSliceRequest.ts';
@@ -47,6 +48,43 @@ function dataset(group: InstanceType<typeof h5.Group>, name: string) {
  return value;
 }
 
+function sourceEvidence(file:InstanceType<typeof h5.File>){
+ const e=file.get('SourceIdentity');
+ if(e===null)return null;
+ if(!(e instanceof h5.Group))throw Error('Invalid local SourceIdentity group.');
+ const read=(key:string)=>scalar(e,key);
+ const known=(key:string)=>{const value=read(key);return value==='unknown'?null:value;};
+ for(const key of ['run_id','effective_config_sha256','build_id','source_git_head','eos_unit_system'])
+  if(read(key)!=='unknown')throw Error('Unsupported candidate source identity claim: '+key);
+ if(scalar(file,'plot_identity_state')!=='unknown')throw Error('Candidate source identity cannot certify full provenance.');
+ const count=read('species_count');
+ if(typeof count!=='number'||!Number.isSafeInteger(count)||count<0||count>128)
+  throw Error('Candidate species count exceeds budget.');
+ let speciesNames:unknown[]=[];
+ if(count){
+  const d=dataset(e,'species_names'),shape=d.shape;
+  if(d.metadata.type!==3||!shape||shape.length!==1||shape[0]!==count)
+   throw Error('Invalid candidate species dataset.');
+  const values=d.slice([[0,count]]);
+  if(!Array.isArray(values))throw Error('Invalid candidate species representation.');
+  speciesNames=values;
+ }
+ const gammaAvailable=read('ideal_gamma_available');
+ if(gammaAvailable!==0&&gammaAvailable!==1)throw Error('Invalid candidate gamma availability.');
+ const evidence={
+  version:read('version'),scope:read('scope'),
+  caseId:known('case_id'),caseSource:known('case_source'),
+  rawConfigSha256:known('raw_config_sha256'),rawConfigSource:known('raw_config_source'),
+  binarySha256:known('binary_sha256'),binarySource:known('binary_source'),binaryScope:read('binary_scope'),
+  eosType:known('eos_type'),eosSource:known('eos_source'),
+  eosTableState:read('eos_table_state'),eosTableSha256:known('eos_table_sha256'),
+  idealGamma:gammaAvailable===1?read('ideal_gamma'):null,
+  speciesState:read('species_identity_state'),speciesNames,
+  runId:null,effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:null,
+ };
+ if(!sourceEvidenceValid(evidence))throw Error('Invalid candidate source evidence.');
+ return evidence;
+}
 type NativeHeader={version:string;measureSource:string;measureConvention:string;measureUnit:null};
 function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:string):NativeHeader|null {
  const entity=file.get('NativeGrid');
@@ -201,9 +239,10 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
     const s=shapeOf(dataset(grid,name),'Grid/'+name);
     if(s.length!==1||s[0]!==blocks)throw new Error('Block metadata shape mismatch: '+name);
    }
+   const candidateSourceIdentity=sourceEvidence(file);
    const candidateNativeGrid=nativeHeader(file,shape,geometry);
    if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request,candidateNativeGrid);}
-   structure={candidateNativeGrid,time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
+   structure={candidateSourceIdentity,candidateNativeGrid,time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
     coordinates:{storedBasis:'cartesian',centering:'cell-center',units:null},
     completion:{state:'unknown',reason:candidateNativeGrid?'Candidate writer publication recognized; scientific contract review remains pending.':'Legacy writer has no recognized completion/publish contract.'},
     scientificIdentity:{case:null,config:null,build:null,binary:null,eos:null},

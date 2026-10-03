@@ -2387,3 +2387,8 @@ ae3af9b7 上实际 DriverIO 的 resolved checkpoint EOS evidence + immutable Con
 ### Plotfile 实际运行 binary
 
 5a8bd920 上 shared process digest 经/proc/self/exe按进程缓存并传PlotIO→writer，主executable范围明确；build/source/dependency freshness仍unknown。配置/IO3/3 PASS与PlotIO object编译；独立owned ELF启动后launch路径替换，fresh proc/cached SHA保持原inode，与独立Python hash一致，exit0子进程消失。详见 PlotfileRunningBinaryProgress-20261003.zh-CN.md/Summary。reader/client新身份、effective/units/真实模型/Viewer/review未完成，无 production替换/simulation/CUDA/push/tag。
+
+
+### Plotfile 部分来源证据 UI
+
+82ab50fa 上SourceIdentity候选有界读取+Host/client共享语义校验，逐文件metadata与原生Inspector显示case/raw SHA/running binary/EOS/species，partial/unknown不升级科学认证。真实C++H5→reader→client→React SSR及legacy通过，npm282/282+lint/typecheck/build/diff PASS；详见 PlotfileSourceEvidenceUiProgress-20261003.zh-CN.md/Summary。SSR非native UAT，units/effective/build/真实模型/Viewer/LOD/I/O/review未完。无simulation/production ARCH/CUDA/push/tag。

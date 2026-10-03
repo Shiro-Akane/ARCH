@@ -1,3 +1,5 @@
+import {sourceEvidenceValid} from './plotfileSourceIdentity.ts';
+import type {PlotfileSourceEvidence} from './plotfileSourceIdentity.ts';
 import {hostEndpoint} from './desktop.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';
 import {record} from './previewValidation.ts';
@@ -12,6 +14,7 @@ export interface NativePlotCells extends CandidateNativeGrid {
  lower:Record<'x1'|'x2'|'x3',number[]>;upper:Record<'x1'|'x2'|'x3',number[]>;cellMeasure:number[];
 }
 export interface PlotfileAudit {
+ candidateSourceIdentity?:PlotfileSourceEvidence|null;
  schemaVersion:string;file:{bytes:number;sha256:string};time:number;dimension:number;geometry:string;
  blocks:number;cellShape:number[];cells:number;fields:{name:string;shape:number[];unit:null}[];
  completion:{state:'unknown';reason:string};renderEligible:false;candidateNativeGrid?:CandidateNativeGrid|null;
@@ -68,6 +71,8 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
     !unknownScience(a.scientificIdentity)||
     !record(a.coordinates)||a.coordinates.storedBasis!=='cartesian'||a.coordinates.centering!=='cell-center'||a.coordinates.units!==null)
   throw Error('Unsupported or malformed Plotfile audit response.');
+ if(a.candidateSourceIdentity!==undefined&&a.candidateSourceIdentity!==null&&!sourceEvidenceValid(a.candidateSourceIdentity))
+  throw Error('Invalid candidate source evidence.');
  const hasNative=a.candidateNativeGrid!==undefined&&a.candidateNativeGrid!==null;
  if(hasNative&&(!nativeHeaderValid(a.candidateNativeGrid)||a.geometry!=='cartesian'||![1,2].includes(Number(a.dimension))))
   throw Error('Invalid candidate native header.');

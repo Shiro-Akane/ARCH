@@ -1,3 +1,4 @@
+import {PlotfileSourceEvidence} from './PlotfileSourceEvidence';
 import {storedCellIndices} from '../host/plotfileAudit';
 import type {AuditResponse} from '../host/plotfileAudit';
 
@@ -25,6 +26,7 @@ export function PlotfileNativeInspector({samples,row}:{samples:AuditResponse;row
     <dt>Measure source / convention</dt><dd>{n.measureSource} · {n.measureConvention}</dd>
    </>}
   </dl>
+  <PlotfileSourceEvidence evidence={a.candidateSourceIdentity}/>
   <p>{n?'Candidate native metadata; scientific review and units remain pending. Logical identity is scoped to this file digest.':'Native bounds and cell measure were not recorded in this file.'} Values are read from storage, without interpolation or LOD aggregation.</p>
  </section>;
 }

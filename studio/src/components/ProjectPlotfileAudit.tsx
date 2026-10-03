@@ -1,3 +1,4 @@
+import {PlotfileSourceEvidence} from './PlotfileSourceEvidence';
 import {useEffect,useRef,useState} from 'react';
 import {PlotfileNativeInspector} from './PlotfileNativeInspector';
 import {useHost} from '../host/hostContext';
@@ -47,6 +48,7 @@ function ConnectedAudit({projectId}:{projectId:string}){
   <p role="status">{message}</p>
   <p>File completion: unverified · Units: unavailable · Scientific provenance: unavailable. Raw inspection does not certify a simulation result.</p>
   {info&&<><dl><dt>Observed file</dt><dd>{info.relativePath}</dd><dt>SHA-256</dt><dd className="audit-digest">{info.audit.file.sha256}</dd><dt>Time</dt><dd>{info.audit.time}</dd><dt>Geometry / dimension</dt><dd>{info.audit.geometry} / {info.audit.dimension}D</dd><dt>Stored shape</dt><dd>{info.audit.blocks} blocks × [{info.audit.cellShape.join(', ')}] · x1-fastest</dd></dl>
+   <PlotfileSourceEvidence evidence={info.audit.candidateSourceIdentity}/>
    <label>Stored field <select aria-label="Audit field" value={field} onChange={e=>setField(e.target.value)}>{info.audit.fields.map(f=><option key={f.name} value={f.name}>{f.name}</option>)}</select></label>
    <label>Block index <input aria-label="Audit block" value={block} onChange={e=>setBlock(e.target.value)} inputMode="numeric"/></label>
    {info.audit.cellShape.map((n,i)=><fieldset key={i}><legend>Stored axis x{info.audit.dimension-i} · {n} cells</legend><label>Start <input aria-label={'Audit start '+i} value={start[i]} inputMode="numeric" onChange={e=>setStart(v=>v.map((s,j)=>j===i?e.target.value:s))}/></label><label>Count <input aria-label={'Audit count '+i} value={count[i]} inputMode="numeric" onChange={e=>setCount(v=>v.map((s,j)=>j===i?e.target.value:s))}/></label></fieldset>)}
