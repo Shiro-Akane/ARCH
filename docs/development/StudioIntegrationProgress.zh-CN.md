@@ -2392,3 +2392,8 @@ ae3af9b7 上实际 DriverIO 的 resolved checkpoint EOS evidence + immutable Con
 ### Plotfile 部分来源证据 UI
 
 82ab50fa 上SourceIdentity候选有界读取+Host/client共享语义校验，逐文件metadata与原生Inspector显示case/raw SHA/running binary/EOS/species，partial/unknown不升级科学认证。真实C++H5→reader→client→React SSR及legacy通过，npm282/282+lint/typecheck/build/diff PASS；详见 PlotfileSourceEvidenceUiProgress-20261003.zh-CN.md/Summary。SSR非native UAT，units/effective/build/真实模型/Viewer/LOD/I/O/review未完。无simulation/production ARCH/CUDA/push/tag。
+
+
+### Plotfile 发布失败/中断证据
+
+f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负返回，异常/无成功log/旧digest不变/临时清理检查通过。owned writer child flush前暂停后SIGKILL，旧final不变、partial留ignored、child消失；reader打开前拒绝partial保留命名。CPU scoped1/1、npm283/283+lint/typecheck/diff PASS；详见 PlotfilePublicationFaultsProgress-20261003.zh-CN.md/Summary。非hardware/断电/全窗口覆盖，真实模型与Viewer/科学review未完，无simulation/production binary/CUDA/push/tag。

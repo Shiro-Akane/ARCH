@@ -202,6 +202,7 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
   nativeCells,unit:null,nonFiniteEncoding:'IEEE special values as explicit strings',diagnostics:nonFinite?['NONFINITE_RAW_VALUES']:[]};
 }
 async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
+ if(/\.partial-[A-Za-z0-9]{6}$/.test(path))throw Error('Writer temporary is not a published Plotfile.');
  const source=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
  try {
   // Reject parent-directory symlink swaps before HDF5 reads any bytes.

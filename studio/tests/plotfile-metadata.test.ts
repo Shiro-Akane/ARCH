@@ -79,3 +79,12 @@ test('coordinate lengths, field count and input byte budgets are enforced',async
   await assert.rejects(inspectPlotfileMetadata(oversized),/at most 64 MiB/);
  });
 });
+
+
+test('writer partial naming is rejected before HDF5 access, even with readable legacy contents',async()=>{
+ await fixture(async path=>{
+  const temporary=path+'.partial-ABC123';
+  await writeFile(temporary,await readFile(path));
+  await assert.rejects(inspectPlotfileMetadata(temporary),/not a published Plotfile/);
+ });
+});

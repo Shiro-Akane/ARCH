@@ -8,9 +8,44 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <sstream>
+#ifdef ARCH_PLOT_FAILURE_TEST
+// Linker wrapping belongs solely to this Linux test executable.
+enum class Fault { None, Write, Flush, Close, PauseFlush };
+static Fault fault=Fault::None;
+static int injected=0;
+extern "C" herr_t __real_H5Dwrite(hid_t,hid_t,hid_t,hid_t,hid_t,const void*);
+extern "C" herr_t __real_H5Fflush(hid_t,H5F_scope_t);
+extern "C" herr_t __real_H5Fclose(hid_t);
+extern "C" herr_t __wrap_H5Dwrite(hid_t a,hid_t b,hid_t c,hid_t d,hid_t e,const void* data) {
+    if(fault==Fault::Write){fault=Fault::None;++injected;return -1;}
+    return __real_H5Dwrite(a,b,c,d,e,data);
+}
+extern "C" herr_t __wrap_H5Fflush(hid_t a,H5F_scope_t b) {
+    if(fault==Fault::PauseFlush) {
+        fault=Fault::None;
+        std::cout<<"PAUSED before-flush"<<std::endl;
+        std::string resume;std::getline(std::cin,resume);
+    }
+    if(fault==Fault::Flush){fault=Fault::None;++injected;return -1;}
+    return __real_H5Fflush(a,b);
+}
+extern "C" herr_t __wrap_H5Fclose(hid_t a) {
+    if(fault==Fault::Close){fault=Fault::None;++injected;return -1;}
+    return __real_H5Fclose(a);
+}
+#endif
 void require(bool b, const char* m) { if (!b) throw std::runtime_error(m); }
 int main(int argc, char** argv) {
  try {
+#ifdef ARCH_PLOT_FAILURE_TEST
+    if(argc==3 && std::string(argv[1])=="--publication-pause") {
+        fault=Fault::PauseFlush;
+        io::write_hdf5_plt_impl(argv[2],0,1,"cartesian",{1,2},
+            {.25,.75},{0,0},{0,0},{0},{0},{{"DENS",{9.,10.}}});
+        return 0;
+    }
+#endif
     if(argc==2 && std::string(argv[1])=="--fingerprint-pause") {
         const auto expected=arch::core::running_executable_sha256();
         std::cout<<"READY "<<expected<<std::endl;
@@ -139,6 +174,23 @@ int main(int argc, char** argv) {
         require(version=="candidate-1","version absent");
     };
     write(target.string(),v); check();
+#ifdef ARCH_PLOT_FAILURE_TEST
+    for(Fault stage : {Fault::Write,Fault::Flush,Fault::Close}) {
+        const auto original_digest=arch::core::file_sha256(target.string());
+        fault=stage;injected=0;bool propagated=false;
+        std::ostringstream captured;
+        auto* original_output=std::cout.rdbuf(captured.rdbuf());
+        try { write(target.string(),v); }catch(const std::exception&) { propagated=true; }
+        std::cout.rdbuf(original_output);
+        require(propagated&&injected==1&&fault==Fault::None,"HDF5 failure injection missed/swallowed");
+        require(captured.str().find("Saved PLT")==std::string::npos,"false success after HDF5 failure");
+        require(arch::core::file_sha256(target.string())==original_digest,"HDF5 failure replaced prior published bytes");
+        check();
+        for(auto& e:std::filesystem::directory_iterator(root))
+            require(e.path().filename().string().find(".partial-")==std::string::npos,"failure temporary leaked");
+    }
+    std::cout<<"PASS injected HDF5 write/flush/close failures; no false success; previous file unchanged"<<std::endl;
+#endif
     bool failed=false;
     try { write(target.string(),std::vector<double>{1}); }
     catch(const std::invalid_argument&) { failed=true; }

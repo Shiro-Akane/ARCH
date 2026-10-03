@@ -315,6 +315,11 @@ function(arch_register_io_regression_tests)
         "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
     target_link_libraries(arch_plotfile_publication PRIVATE
         ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        target_compile_definitions(arch_plotfile_publication PRIVATE ARCH_PLOT_FAILURE_TEST=1)
+        target_link_options(arch_plotfile_publication PRIVATE
+            "-Wl,--wrap=H5Dwrite" "-Wl,--wrap=H5Fflush" "-Wl,--wrap=H5Fclose")
+    endif()
     add_test(NAME plotfile_publication COMMAND arch_plotfile_publication
         "${CMAKE_CURRENT_BINARY_DIR}/plotfile-publication-data")
 
