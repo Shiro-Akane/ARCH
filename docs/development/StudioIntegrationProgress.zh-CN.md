@@ -2313,3 +2313,11 @@ ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，
 ### Project Plotfile原始审计UI接入
 
 5cd70044上接Host metadata/slice、Project请求保护及bounded原始值表，未知completion/单位/science/native几何诚实显示；旧1D文案纠正但保留local H5需求。真实reader→客户端拒绝错位/伪认证测试通过，最终275/275+静态/build/diff PASS。最终production renderer/Host显示Sod4×16与PRES global32原值，正常退出/owned Electron Host消失，config/binary不变。详见PlotfileProjectAuditUiProgress-20261003.zh-CN.md/Summary。native Manual UAT/正式科学Viewer/LOD/native-cell仍pending，已请求Core IO准确契约；无simulation/ARCH build/CUDA/push/tag/main merge。
+
+
+### 正式 Plotfile Core IO 最小契约草案
+
+6eef34f5 clean 基线上只读核对 writer/PlotIO，形成 PlotfileCoreIoContractProposal.zh-CN.md。
+明确 direct truncate、close 前 Saved 日志、异常仅记录及字段/layout/Cartesian centers 的现行含义。
+提出版本化 completion/identity/units/native-cell 与 scoped acceptance；发布、体积、LOD 待 Core 定案，不称实现或验收通过。
+仅文档，无 Core/Host/UI 修改、build/simulation/Preview/CUDA/push/tag/main merge；正式科学 Viewer 出口 pending。
