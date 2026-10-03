@@ -2258,3 +2258,11 @@ warm更新六字段/数据/配置/Build身份不变；两轮正常关闭exit0，
 O7.4有限环体近远场/缓存/独立oracle决定清单见O7_RZ_IMPLEMENTATION_MAP及Summary。
 checkpoint仅geometry string不能区分旧polar与未来RZ，明确保留semantic revision gate。
 未改Core/开放能力/执行不变测试；先O7.1 CPU，科学确认与历史迁移仍pending。
+
+### 构建身份收尾：CMake 输入、LTO 保留及选定链接器
+
+568bf0c3/5ba4a957 通过 GNU LTO plugin debug 和 Host-owned TMPDIR 保留实际链接依赖；先前真实 link 已验证 172 项无缺失，浮点/IPO 定义未调整。
+1f80abd8 接入 CMake File API 的构建前后输入；164de218 接入 ARCH target 选定 GNU linker 指纹与 legacy unknown。最终 Studio/Host 260/260，lint/typecheck/production build/diff PASS。
+clean 164de218 标准 Host-owned 增量 Build 39eb4f9e 成功；Ninja no work to do，binary ee3de6cf 不变。82 CMake/735 compiler/172 link 输入，三个稳定标志 true；独立 Node 重载同 build ID、changedInputs=[]，完整覆盖仍 false/freshness-unknown。
+详见 BuildSelectedLinkerIntegration-20261003.zh-CN.md/Summary.json。本项不是干净重建或实际 linker 执行观察；未运行 simulation/push/tag/main merge。
+下一阶段仍按联合计划推进；全模型桌面矩阵、正式 plt、O7.1–O7.5、CPU/CUDA 科学与性能验证尚未封箱。
