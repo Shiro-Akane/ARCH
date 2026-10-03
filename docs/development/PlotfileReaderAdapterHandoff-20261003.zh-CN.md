@@ -103,3 +103,8 @@ measure_plotfile_query.mjs、measure_plotfile_isolation.mjs。
 三组配对大总览/point 中位下降约26%，完整响应与真实 Sod/Cellular 文件对基线一致。
 逻辑读调用仍高；没有 spatial index/cross-query cache。读取期取消/reap/recovery 已测，精确限定见
 PlotfileLargeQuery-20261004.zh-CN.md / Summary.json。此证据不替代真实 AMR、科学 review 或同机演化。
+
+
+## 2026-10-04 native y-face 修复
+
+当前 writer 增量 b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1：仅将Cartesian y upper按共享整数面索引求值。真实Sod/Cellular新t=0文件全叶bounds精确覆盖通过，旧文件gap/overlap保留反例；原场值/中心/测度及checkpoint数值未变。schema/字段数组映射不变。新binary1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8；详细身份和限制见 PlotfileSharedFaceRepair-20261004.Summary.json。本地提交尚未push。

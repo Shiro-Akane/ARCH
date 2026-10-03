@@ -2545,3 +2545,8 @@ Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做
 ## 2026-10-04：Plotfile 全域 stored bounds finding
 
 补全真实 Sod/Cellular 全叶单元精确覆盖诊断：逻辑分区均无遗漏/重叠，但 Cellular native FP64 bounds 出现极窄 gap/overlap，production point 在 [0.1,1.2]/[0.1,2.6] 实际拒绝零/双命中。5项反例测试通过，原H5不变；不添加容差或宣布几何验收。详见 PlotfileFullCoverage-20261004.zh-CN.md/Summary；下一步按 shared face 定义修复并 review。
+
+
+## 2026-10-04：Plotfile shared y-face 修复
+
+b26fb8a2 最小 writer 面索引求值修复，C++反例先失败后publication/checkpoint2/2通过。cleanCPU binary1bdd71ed仅增量PlotIO/link；新Sod/Cellular明确t=0对照stored全域gap/overlap均0，除Cellular1280个y upper外Plotdatasets与20项checkpoint数值字节一致。原Inspector失败两点唯一命中，旧文件保留；见 PlotfileSharedFaceRepair-20261004.zh-CN.md/Summary。科学/其他几何/演化/平台任务仍待。
