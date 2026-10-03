@@ -2342,3 +2342,8 @@ a2e4b9c5 上仅临时 capture/passive observer：Computer Use plot负wheel/普�
 ### 测量工具：物理终点模式工程补齐
 
 5a44cbec 上既有 curved runner 增 endpoint-pair，max_steps=-1/tmax显式、逐backend即时终点校验、实际步数可不同，原科学/parity/AMR检查保留。8项synthetic H5/stub测试与CLI/diff PASS；依赖与编辑错误日志本机保留。详见PhysicalEndpointRunnerProgress-20261003.zh-CN.md/Summary。不是正式benchmark：预热/交替/线程/manifest/冻结输入预算仍pending；无真实ARCH/CPU-CUDA轨迹、scientific Core/production build/push/tag/main merge。
+
+
+### 测量调度：预热、交替、显式 CUDA Host 线程
+
+2cc0b9ab上补 paired_trials，endpoint显式CPU/CUDA Host threads与>=3pairs，warmup单列、交替顺序、逐attempt失败保留、所有计时/min/max/median/负收益完整。13项synthetic/stub suite与diff PASS，qualified_benchmark=false，正式冻结/线程/manifest/资源出口未完。详见PhysicalEndpointScheduleProgress-20261003.zh-CN.md。无真实simulation/CPU-CUDA计时/push/tag。

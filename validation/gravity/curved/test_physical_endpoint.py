@@ -11,7 +11,7 @@ import h5py
 import numpy as np
 
 from compare_backends import compare_pair
-from run_cuda_matrix import changed_input, one_run
+from run_cuda_matrix import changed_input, one_run, paired_trials, timing_summary
 from verify_coupled import physical_times_agree, verify
 
 
@@ -118,6 +118,75 @@ class PhysicalEndpointTests(unittest.TestCase):
             self.assertEqual(process.call_count, 1)
         self.assertIn("max_steps=-1\n", (destination/"input.par").read_text())
         self.assertTrue((destination/"run.log").exists())
+
+    def test_warmup_and_alternating_pairs_keep_explicit_threads(self):
+        calls = []
+        state = {}
+        def run_stub(executable, source, destination, backend, steps, threads, **kwargs):
+            calls.append((destination.parent.name, backend, threads, kwargs["end_time"]))
+            phase_value = 1000.0 if destination.parent.name == "warmup" else 10.0
+            return {"elapsed_seconds": phase_value if backend == "cpu" else phase_value/2,
+                    "driver_seconds": phase_value/2, "threads": threads}
+        snapshots = []
+        import copy
+        with patch("run_cuda_matrix.one_run", side_effect=run_stub), patch(
+                "run_cuda_matrix.compare_pair", return_value={"verified": True}):
+            paired_trials(self.root/"binary", self.root/"input", self.root/"pair",
+                          None, 6, 4, 3, end_time=1.0,
+                          state=state, notify=lambda: snapshots.append(copy.deepcopy(state)))
+        self.assertEqual([backend for _, backend, _, _ in calls],
+                         ["cpu", "cuda", "cpu", "cuda", "cuda", "cpu", "cpu", "cuda"])
+        self.assertEqual([threads for _, backend, threads, _ in calls if backend == "cuda"],
+                         [4, 4, 4, 4])
+        self.assertTrue(all(endpoint == 1.0 for _, _, _, endpoint in calls))
+        self.assertEqual(state["status"], "passed")
+        self.assertEqual(len(state["trials"]), 3)
+        metrics = timing_summary(state["trials"])
+        self.assertEqual(metrics["cpu"]["elapsed_seconds"]["samples"], [10.0]*3)
+        self.assertEqual(metrics["end_to_end_speedup"], 2.0)
+        self.assertTrue(any(s["attempts"][0]["status"] == "running" for s in snapshots))
+
+    def test_failed_warmup_stops_before_next_backend_and_retains_failure(self):
+        state = {}
+        with patch("run_cuda_matrix.one_run", side_effect=RuntimeError("early endpoint")) as run:
+            with self.assertRaisesRegex(RuntimeError, "early endpoint"):
+                paired_trials(self.root/"binary", self.root/"input", self.root/"pair",
+                              None, 6, 4, 3, end_time=1.0, state=state)
+            self.assertEqual(run.call_count, 1)
+        self.assertEqual(state["status"], "failed")
+        self.assertEqual(state["trials"], [])
+        self.assertEqual(state["attempts"][0]["active_backend"], "cpu")
+        self.assertEqual(state["attempts"][0]["error"], "early endpoint")
+
+    def test_scheduler_refuses_insufficient_endpoint_pairs(self):
+        with patch("run_cuda_matrix.one_run") as run:
+            for repeats in (1, 2):
+                with self.assertRaises(ValueError):
+                    paired_trials(self.root/"binary", self.root/"input", self.root/"pair",
+                                  None, 6, 4, repeats, end_time=1.0)
+            run.assert_not_called()
+
+    def test_legacy_short_check_has_no_warmup(self):
+        with patch("run_cuda_matrix.one_run", return_value={"elapsed_seconds": 1.0}) as run, patch(
+                "run_cuda_matrix.compare_pair", return_value={}):
+            state = paired_trials(self.root/"binary", self.root/"input", self.root/"pair",
+                                  2, 8, 1, 1)
+        self.assertIsNone(state["warmup"])
+        self.assertEqual(run.call_count, 2)
+
+    def test_timing_summary_preserves_negative_speedup_and_invalid_values(self):
+        trials = [{"cpu": {"elapsed_seconds": value, "driver_seconds": value},
+                   "cuda": {"elapsed_seconds": value*2, "driver_seconds": value*2}}
+                  for value in (2.0, 1.0, 3.0)]
+        metrics = timing_summary(trials)
+        self.assertEqual(metrics["end_to_end_speedup"], 0.5)
+        self.assertEqual(metrics["cpu"]["elapsed_seconds"]["samples"], [2.0, 1.0, 3.0])
+        self.assertEqual(metrics["cpu"]["elapsed_seconds"]["minimum"], 1.0)
+        self.assertEqual(metrics["cpu"]["elapsed_seconds"]["maximum"], 3.0)
+        for value in (0.0, -1.0, math.inf, math.nan):
+            trials[0]["cpu"]["elapsed_seconds"] = value
+            with self.assertRaises(ValueError):
+                timing_summary(trials)
 
     def test_existing_parity_budget_not_relaxed(self):
         cpu, cuda = self.root/"cpu", self.root/"cuda"

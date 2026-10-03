@@ -9,8 +9,9 @@ Usage: run_cuda_matrix.py --arch build-ci/cuda-focused/bin/ARCH \
 Endpoint mode: replace --pair with --endpoint-pair label:input.par:T_END[:amr|regular].
 T_END must come from the owner's frozen plan; max_steps is disabled.
 Endpoint completion is verified for each run before launching the other backend.
-This mode alone is not a qualified benchmark protocol (warmup, alternating order,
-thread screening, manifests and frozen scientific inputs are still required).
+Endpoint mode requires --cpu-threads, --cuda-host-threads and --repeats >=3.
+It warms each backend once and alternates measured pair order. Thread screening,
+CPU-only baselines, manifests and frozen scientific inputs are still required.
 
 Each run has its own input and output directory. The existing coupled verifier
 and compare_backends.py enforce the physical and parity budgets. The optional
@@ -141,6 +142,77 @@ def one_run(executable, source, destination, backend, steps, threads, *, end_tim
     }
 
 
+def paired_trials(executable, source, destination, steps, cpu_threads, cuda_threads,
+                  repeats, *, end_time=None, expect_mixed=True, notify=lambda: None,
+                  state=None):
+    """Warm each backend once, then alternate measured pairs without dropping runs."""
+    if repeats < 1 or cpu_threads < 1 or cuda_threads < 1:
+        raise ValueError("positive repeats and explicit backend thread budgets required")
+    if end_time is not None and repeats < 3:
+        raise ValueError("physical endpoint measurements require at least three pairs")
+    state = state if state is not None else {}
+    state.update(warmup=None, trials=[], attempts=[], status="running")
+
+    def pair(phase, repeat, order):
+        record = {"phase": phase, "repeat": repeat, "order": list(order),
+                  "runs": {}, "status": "running"}
+        state["attempts"].append(record)
+        notify()
+        folder = destination / ("warmup" if phase == "warmup" else f"repeat-{repeat}")
+        try:
+            for backend in order:
+                record["active_backend"] = backend
+                notify()
+                record["runs"][backend] = one_run(
+                    executable, source, folder/backend, backend, steps,
+                    cpu_threads if backend == "cpu" else cuda_threads,
+                    end_time=end_time, expect_mixed=expect_mixed)
+                notify()
+            record["parity"] = compare_pair(
+                destination.name, folder/"cpu", folder/"cuda", steps,
+                expect_mixed=expect_mixed, expected_time=end_time)
+            record.pop("active_backend", None)
+            record["status"] = "passed"
+            notify()
+            return {"cpu": record["runs"]["cpu"], "cuda": record["runs"]["cuda"],
+                    "parity": record["parity"], "order": record["order"]}
+        except Exception as error:
+            record["status"] = state["status"] = "failed"
+            record["error"] = str(error)
+            notify()
+            raise
+
+    if end_time is not None:
+        state["warmup"] = pair("warmup", None, ("cpu", "cuda"))
+        notify()
+    for repeat in range(repeats):
+        order = ("cpu", "cuda") if repeat % 2 == 0 else ("cuda", "cpu")
+        state["trials"].append(pair("measurement", repeat, order))
+        notify()
+    state["status"] = "passed"
+    notify()
+    return state
+
+
+def timing_summary(trials):
+    """Keep all measured samples; warmup is stored separately."""
+    result = {}
+    for backend in ("cpu", "cuda"):
+        result[backend] = {}
+        for metric in ("elapsed_seconds", "driver_seconds"):
+            values = [trial[backend][metric] for trial in trials]
+            if not values or any(not math.isfinite(value) or value <= 0 for value in values):
+                raise ValueError("nonpositive or invalid timing sample")
+            result[backend][metric] = {"samples": values, "count": len(values),
+                                      "median": statistics.median(values),
+                                      "minimum": min(values), "maximum": max(values)}
+    result["end_to_end_speedup"] = (result["cpu"]["elapsed_seconds"]["median"] /
+                                    result["cuda"]["elapsed_seconds"]["median"])
+    result["driver_speedup"] = (result["cpu"]["driver_seconds"]["median"] /
+                               result["cuda"]["driver_seconds"]["median"])
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--arch", type=Path, required=True)
@@ -150,10 +222,15 @@ def main():
     modes.add_argument("--endpoint-pair", action="append",
                        help="label:input.par:owner-frozen-t-end[:amr|regular]; max_steps=-1")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--cpu-threads", type=int, default=8)
+    parser.add_argument("--cpu-threads", type=int, help="explicit screened CPU thread budget; legacy default 8")
+    parser.add_argument("--cuda-host-threads", type=int, help="explicit CUDA Host thread budget; legacy default 1")
     parser.add_argument("--repeats", type=int, default=1)
     args = parser.parse_args()
-    if args.cpu_threads < 1 or args.repeats < 1:
+    if args.endpoint_pair and (args.cpu_threads is None or args.cuda_host_threads is None or args.repeats < 3):
+        parser.error("endpoint mode requires explicit CPU/CUDA Host threads and at least three repeats")
+    args.cpu_threads = 8 if args.cpu_threads is None else args.cpu_threads
+    args.cuda_host_threads = 1 if args.cuda_host_threads is None else args.cuda_host_threads
+    if min(args.cpu_threads, args.cuda_host_threads, args.repeats) < 1:
         parser.error("threads and repeats must be positive")
     executable = args.arch.resolve()
     output = args.output.resolve()
@@ -162,7 +239,12 @@ def main():
         "executable": str(executable),
         "sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
         "pairs": {},
+        "schedules": {},
         "speedups": {},
+        "qualified_benchmark": False,
+        "pending": ["owner-frozen inputs/budgets", "thread/affinity screening",
+                    "CPU-only baseline", "hardware/build/effective-input manifest",
+                    "resource sampling"],
     }
     for specification in args.pair or args.endpoint_pair:
         parts = specification.split(":")
@@ -181,33 +263,17 @@ def main():
         if not source.is_file() or (steps is not None and steps < 1) or (
                 end_time is not None and (not math.isfinite(end_time) or end_time <= 0)):
             raise ValueError(f"{label}: invalid input or stopping condition")
-        trials = []
-        for repeat in range(args.repeats):
-            cpu_dir = output / label / f"repeat-{repeat}" / "cpu"
-            gpu_dir = output / label / f"repeat-{repeat}" / "cuda"
-            cpu = one_run(executable, source, cpu_dir, "cpu", steps,
-                          args.cpu_threads, end_time=end_time, expect_mixed=(mode == "amr"))
-            cuda = one_run(executable, source, gpu_dir, "cuda", steps, 1, end_time=end_time, expect_mixed=(mode == "amr"))
-            parity = compare_pair(label, cpu_dir, gpu_dir, steps,
-                                  expect_mixed=(mode == "amr"), expected_time=end_time)
-            trials.append({"cpu": cpu, "cuda": cuda, "parity": parity})
-            report["pairs"][label] = trials
+        schedule = {}
+        report["schedules"][label] = schedule
+        def publish():
             (output / "summary.json").write_text(
                 json.dumps(report, indent=2, sort_keys=True) + "\n")
-            print(label, repeat, "driver speedup",
-                  cpu["driver_seconds"] / cuda["driver_seconds"], flush=True)
-        report["speedups"][label] = {
-            "mode": mode,
-            "cpu_threads": args.cpu_threads,
-            "driver": (statistics.median(run["cpu"]["driver_seconds"]
-                                         for run in trials)
-                       / statistics.median(run["cuda"]["driver_seconds"]
-                                           for run in trials)),
-            "end_to_end": (statistics.median(run["cpu"]["elapsed_seconds"]
-                                             for run in trials)
-                           / statistics.median(run["cuda"]["elapsed_seconds"]
-                                               for run in trials)),
-        }
+        paired_trials(executable, source, output/label, steps, args.cpu_threads,
+                      args.cuda_host_threads, args.repeats, end_time=end_time,
+                      expect_mixed=(mode == "amr"), notify=publish, state=schedule)
+        report["pairs"][label] = schedule["trials"]
+        report["speedups"][label] = timing_summary(schedule["trials"])
+        publish()
     (output / "summary.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n")
 
