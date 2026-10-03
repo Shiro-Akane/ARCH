@@ -32,8 +32,13 @@ struct ProblemInitializationContext
     arch::dispatch::EosId eos = arch::dispatch::EosId::Ideal;
 };
 
+class ProblemRegistry;
+
 class ProblemGenerator
 {
+    friend class ProblemRegistry;
+    // Assigned only by the registry factory, never by config input or a caller.
+    std::string registered_case_id_;
 public:
     virtual ~ProblemGenerator() = default;
 
@@ -42,6 +47,10 @@ public:
     arch::config::PreparedConfiguration SetupChecked(SimConfig& config, SpeciesManager& species) {
         arch::config::ValidateControls(config, species.count());
         config.RequireLoadedValues();
+        if (!registered_case_id_.empty()
+            && config.LoadedCaseId() != registered_case_id_)
+            throw ConfigValueError("case", "CASE_IDENTITY_MISMATCH",
+                "Loaded configuration belongs to another registered model.");
         const auto before = config;
         Setup(config, species);
         arch::config::ValidateControls(config, species.count());

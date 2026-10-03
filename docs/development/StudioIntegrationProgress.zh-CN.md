@@ -20,9 +20,9 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
 | 1 3B 源码接收与复验 | 封箱源码已引入；Linux 打开/另存/重开复验通过 | npm ci、177 tests、lint/typecheck/build PASS；Linux 原生打开、Host Save As、重开 PASS（范围见报告） | 不适用 |
-| 2 O7.0 + 配置 v3/Host/Studio | 候选契约、14模型声明、部分输入共同检查及CLI/初态前置门已实现；v3序列化/受控构造/客户端在迁移 | 相关Core单元和真实入口检查通过；完整v3/Host/Studio未验证 | 科学条件按唯一计划；疑点交维护者 |
+| 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 进程/HTTP/Build 验证通过；当前原生视觉 UAT 未通过，dependenciesComplete=false | 不适用 |
-| 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验及 Stop | Sod t=0 与 SmoothAdvection Run/Restart 对照通过；桌面全流程 UAT 未完成 | 不推广为其他模型/后端演化验收 |
+| 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | Sod t=0、SmoothAdvection Run/Restart和输出锁回归通过；227项Studio/Host回归通过；桌面全流程 UAT 未完成 | 不推广为其他模型/后端演化验收 |
 | 5 全模型初态/AMR | 当前仅 Sod/CellularDet，通用扩展未实施 | 本地 CPU 两模型初态及 Cellular AMR 有证据；其余模型未验收 | 真实域/预算需明确 |
 | 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
 | 7 O7.2–O7.5 RZ | 待实施 | 分层 CPU | O7.4 科学方案须 review |
@@ -1535,3 +1535,11 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - clean913c3d5f：同一既有CPU binary和step25 checkpoint，仅修改out_dir到新的持久本地目录，实际prepare/confirm→独立terminal/worker→ARCH Restart succeeded/exit0。out_dir/log_dir两个Host确认条目去重为一个canonical目录锁，未改变输入物理值。
 - 最终step100/time0.1；16对象路径/属性、14数据集布局/全部值与retained source checkpoint完全一致，maxAbs=0，原restart checkpoint SHA不变。terminal/worker/Core均退出，完成后重新获取同一目录锁成功，未执行第二次Core run。
 - StudioRunOutputReservationSummary.json保存精简身份/指标；raw H5、完整日志及对照留.local，不上传。并发/worker crash证据来自前述真实OS fixture；本轮真实ARCH单任务结果不冒充科学并发、CUDA或原生桌面验收。
+
+### 2026-10-03 — O7.0 registered model/load case identity
+
+- 审计发现SetupChecked只核对加载完整性/配置改写，没有核对Registry创建的模型实例与加载case。现由Registry私有接线实例case ID，RuntimeParams保留loader-owned私有case身份；错误配对在Setup前返回CASE_IDENTITY_MISMATCH，同case正常准备。未改Setup/Init公式、参数默认或科学阈值。
+- direct C++ fixture证明错误配对不进入模型；有效同case通过。CPU initialization_probe、input_resolution、case_configuration、configuration_input 4项PASS；重链ARCH后preview_api_contract、configuration_entry_contract、configuration_v3_contract、case_inspection_contract、preview_session_contract 5项PASS。未将CTest项与内部方法重复相加。
+- 28并发增量CPU构建24.455s，最低可用15094724KiB、peak owned RSS9017400KiB、swap0，保护器未停止。首次probe编译因不完整ConfigurationInput类型失败，改为loader私有身份字段后重编通过；没有循环include或绕过失败。精简证据O7RegisteredCaseIdentitySummary.json。
+- 这是Registry-created实例的配对检查，不给未注册直接构造子类推断身份；不宣告所有任意C++访问可追踪。build-cpu binary已更新，Studio的build-studio-cpu/Manifest未替换；不冒充Studio已消费新binary。无simulation/CUDA/raw上传/push。
+- 顺序清单顶部修正过时v3迁移描述，保留整体科学/原生UAT未签收、特殊G输入换算待批准。联合计划允许O7.0与3C并行，本轮未越过3C去实现全模型/JENS/RZ。

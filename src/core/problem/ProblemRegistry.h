@@ -68,7 +68,9 @@ public:
         // Use C++20 contains() if available, otherwise use find()
         if (creators_.find(name) != creators_.end())
         {
-            return creators_[name]();
+            auto problem = creators_[name]();
+            if (problem) problem->registered_case_id_ = name;
+            return problem;
         }
         return nullptr; // Caller must check for validity!
     }

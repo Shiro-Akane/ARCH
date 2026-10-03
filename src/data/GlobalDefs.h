@@ -397,6 +397,7 @@ struct SimConfig
 private:
     friend class RuntimeParams;
     std::shared_ptr<const arch::config::ConfigurationInput> loaded_input_;
+    std::string loaded_case_id_;
     std::shared_ptr<const SimConfig> loaded_values_;
     struct ResolvedCaseValue {
         std::optional<arch::preview::ParameterValue> value;
@@ -424,6 +425,7 @@ public:
     void RequireSamePreparation(const SimConfig& expected) const {
         const char* changed = nullptr;
         if (loaded_input_ != expected.loaded_input_) changed = "configuration";
+        else if (loaded_case_id_ != expected.loaded_case_id_) changed = "case";
         else if (grid != expected.grid) changed = "grid";
         else if (numerics != expected.numerics) changed = "numerics";
         else if (execution != expected.execution) changed = "execution";
@@ -440,6 +442,11 @@ public:
             throw ConfigValueError("configuration", "INCOMPLETE_CONFIGURATION",
                 "Preparation requires case-aware declared input loading.");
         RequireSamePreparation(*loaded_values_);
+    }
+
+    const std::string& LoadedCaseId() const {
+        RequireLoadedValues();
+        return loaded_case_id_;
     }
 
     GridConfig grid;

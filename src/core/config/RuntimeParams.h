@@ -110,6 +110,7 @@ public:
 private:
     static void CaptureResolvedCaseValues(SimConfig& config,
                                           const arch::config::ConfigurationInput& input) {
+        config.loaded_case_id_ = input.case_id;
         config.material_model_owner_ = input.case_id + ":" + input.case_source_file;
         config.material_model_identity_ = input.case_source_sha256;
         const auto material_inputs = [&](const auto& records) {

@@ -70,6 +70,30 @@ int main(int argc, char** argv) {
             declaration.parameters.push_back({key, "float", ""});
         return declaration;
     }});
+    {
+        struct RegisteredProbe final : ProblemGenerator {
+            bool entered = false;
+            void Setup(SimConfig&, SpeciesManager&) override { entered = true; }
+            void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                                ProblemInitializationContext) override {}
+        };
+        ProblemRegistry::Get().Register("registered-probe",
+            [] { return std::make_unique<RegisteredProbe>(); },
+            *ProblemRegistry::Get().Registration("probe"));
+        auto model = ProblemRegistry::Get().Create("registered-probe");
+        auto input = load_probe();
+        SpeciesManager species;
+        bool rejected = false;
+        try { model->SetupChecked(input, species); }
+        catch (const ConfigValueError& e) { rejected = e.code == "CASE_IDENTITY_MISMATCH"; }
+        require(rejected && !static_cast<RegisteredProbe&>(*model).entered,
+                "mismatched registered case entered Setup");
+        auto matching = RuntimeParams::LoadText(declared_input, "registered-probe",
+            config::ConfigurationPurpose::InitialState);
+        model->SetupChecked(matching, species);
+        require(static_cast<RegisteredProbe&>(*model).entered,
+                "matching registered case did not reach checked Setup");
+    }
     static_assert(!std::is_default_constructible_v<config::PreparedConfiguration>);
     static_assert(!std::is_constructible_v<config::PreparedConfiguration,
         const SimConfig&, const SpeciesManager&, const ProblemGenerator&>);
