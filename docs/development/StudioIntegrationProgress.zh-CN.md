@@ -2745,3 +2745,7 @@ DriverIO 传递 Runtime profile，write_chk 写前校验并记录几何身份。
 
 ## 2026-10-04 native RZ coordinates
 Grid 显式profile轴名/物理坐标/domain 已接入；PointCoords.r 保持球半径，x2=z长度不受角度限幅。旧路径不变，3/3相关CPU scoped checks PASS。PopulateState authoritative context 接线尚待执行，不能声称模型IC贯通。见 RZNativeCoordinates-20261004.zh-CN.md / Summary。未 push/tag。
+
+
+## 2026-10-04 authoritative RZ initial population
+ProblemInitializationContext explicit profile 已接真实 PopulateState，坐标和 repair volume同一 chart；RZ z-dependent场/完整环体repair与legacy polar四例PASS，3项初始化API scoped regressions PASS。真实注册模型/public RZ演化未验收。见 RZInitialPopulation-20261004.zh-CN.md / Summary。未 push/tag。

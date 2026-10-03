@@ -179,6 +179,21 @@ namespace ProblemHelper
         arch::config::ValidateControls(config, specs.count());
         int n_species = specs.count();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+        // Validate the whole chart before invoking model callbacks or mutating
+        // any block. Public callers retain Existing until full RZ migration.
+        const auto semantics = context.geometry_semantics;
+        if (semantics != GridMetrics::GeometrySemantics::Existing &&
+            semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::invalid_argument("Unknown initialization geometry profile");
+        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz &&
+            (config.grid.dim != 2 || config.grid.geometry != "cylindrical"))
+            throw std::invalid_argument("RZ initialization requires cylindrical dimension 2");
+        for (int id : active_blocks) {
+            const auto& grid = amr_ctrl.pool->GetBlock(id).grid;
+            if (grid.dim != config.grid.dim || grid.geometry != config.grid.geometry)
+                throw std::invalid_argument("Initialization native grid/config geometry mismatch");
+            (void)GridMetrics::make_geometry_view(grid, semantics);
+        }
 
         EOSDispatcher::dispatch_eos(context.eos, config, specs, [&](auto &&eos) {
             std::exception_ptr initialization_failure;
@@ -203,7 +218,7 @@ namespace ProblemHelper
                                 int idx = b.grid.GetIndex(i, j, k);
 
                                 // Compute logical physical coordinate (assuming center of cell)
-                                PointCoords p = b.grid.GetPhysicalCoords(i, j, k);
+                                PointCoords p = b.grid.GetPhysicalCoords(i, j, k, semantics);
 
                                 data.rho = 0.0;
                                 data.u = 0.0;
@@ -222,7 +237,7 @@ namespace ProblemHelper
                                     && i >= b.grid.Is() && i < b.grid.Ie()
                                     && j >= b.grid.Js() && j < b.grid.Je()
                                     && k >= b.grid.Ks() && k < b.grid.Ke()) {
-                                    const double volume=GridMetrics::CellVolume(b.grid,i,j,k);
+                                    const double volume=GridMetrics::CellVolume(GridMetrics::make_geometry_view(b.grid,semantics),i,j,k);
                                     if (b.fluid_state.stage_repairs.values[0] == 0.0) {
                                         b.fluid_state.stage_repairs.position[0]=p.x;
                                         b.fluid_state.stage_repairs.position[1]=p.y;
