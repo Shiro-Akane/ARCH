@@ -3,10 +3,10 @@
 ## 精确引用
 
 - Owner验证contract：23ff77c4f08419de2b3c5eadee214da2af25784e；已完整阅读，未merge。
-- 当前writer/query/Viewer源码：e7181420d06f3eb95eff85061d347ed0f26eaec6。
+- 当前 writer/query/Viewer 与验证工具源码：a2b0658bfe6d0bc36eb87983c5b8131327e817b3。
 - 分支：studio/compute-optim-integration；本地提交，尚未push，不能称为远端可获取。
-- 新t=0 writer clean构建来源：ab23bad7e8bea93c3569618d1a6335312372cc30。
-- CPU binary SHA：c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec。
+- 最新 canonical t=0 clean 构建来源：a2b0658bfe6d0bc36eb87983c5b8131327e817b3；旧证据引用保留。
+- 最新 CPU binary SHA：b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a。
 - 本文是小切片对接，不是完整联合目标或科学验收封箱。
 
 ## 实际字段与数组映射
@@ -114,3 +114,13 @@ verify_plotfile_reader.mjs、measure_plotfile_query.mjs。
 后续源码仅统一为pressure_density_proxy，原公式及unknown unit_reason保持。
 compiled scoped ENTR声明接受，新canonical生产H5仍待验证；不由reading adapter改写旧文件。
 所有新raw文件留本机；Owner科学/数组适配与EOS独立参考保持待办。
+
+
+## Canonical 生产文件复验
+
+最新证据见 PlotfileCanonicalT0-20261003.zh-CN.md / Summary.json。
+真实 Sod 9 字段与 CellularDet 28 字段已重新由上述 a2b0658b / b360c662 构建写出；
+37 字段 Host/client 查询和原始 FP64 点读通过，ENTR 声明对齐 owner canonical。
+Owner header 子验证通过，case/config/binary 外部可信身份核对；完整数组适配及科学 review 仍待。
+新旧 checkpoint t=0 状态位级差异 0；旧 c294 文件及原 ENTR finding 保留，不改写历史原始文件。
+以上是当前状态；前文旧文件/待验证描述均为历史证据，不替代本次精确身份。
