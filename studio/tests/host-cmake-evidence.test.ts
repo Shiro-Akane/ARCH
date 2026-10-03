@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm,readdir} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {readCMakeConfigurationEvidence,readCMakeToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs} from '../host/cmakeEvidence.ts';
+import {readCMakeConfigurationEvidence,readCMakeToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs,readBuildLinkerSelection} from '../host/cmakeEvidence.ts';
 test('CMake configuration evidence binds source/build and hashes external inputs without claiming compiler coverage',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch cmake evidence-'));
  try{
@@ -104,5 +104,28 @@ test('GNU component fingerprints detect subprocess and specs changes without cla
   await writeFile(root+'/ld','linker');
   await assert.rejects(readCMakeToolchainEvidence(build,file,async()=>'/bad\nreply'),/Invalid GNU/);
   await assert.rejects(readCMakeToolchainEvidence(build,file,async()=> 'relative/path'),/cannot be resolved/);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('ARCH linker selection reads fixed target flags and rejects overrides, ambiguity and escaped replies',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch linker selection-'));
+ try{
+  const build=root+'/build',reply=build+'/.cmake/api/v1/reply';
+  await mkdir(reply,{recursive:true});
+  await writeFile(reply+'/index-test.json',JSON.stringify({objects:[{kind:'codemodel',jsonFile:'codemodel.json'}]}));
+  const model={kind:'codemodel',version:{major:2},paths:{build},configurations:[{targets:[{name:'ARCH',jsonFile:'target.json'}]}]};
+  await writeFile(reply+'/codemodel.json',JSON.stringify(model));
+  const put=async(flags:string)=>writeFile(reply+'/target.json',JSON.stringify({name:'ARCH',type:'EXECUTABLE',link:{language:'CXX',commandFragments:[{role:'flags',fragment:flags}]}}));
+  await put('-O3 -fuse-ld=mold');
+  const selected=await readBuildLinkerSelection(build);
+  assert.equal(selected.programName,'ld.mold');assert.equal(selected.observedExecution,false);
+  await put('-O3');assert.equal((await readBuildLinkerSelection(build)).programName,'ld');
+  for(const flags of ['-fuse-ld=mold -fuse-ld=lld','-fuse-ld=/tmp/custom','-B/tmp/tools','--sysroot=/tmp/sys','-specs=custom','@options']){
+   await put(flags);await assert.rejects(readBuildLinkerSelection(build),/Unsupported|Ambiguous/);
+  }
+  await writeFile(reply+'/codemodel.json',JSON.stringify({...model,configurations:[...model.configurations,...model.configurations]}));
+  await assert.rejects(readBuildLinkerSelection(build),/configuration/);
+  await writeFile(reply+'/codemodel.json',JSON.stringify({...model,configurations:[{targets:[{name:'ARCH',jsonFile:'../outside.json'}]}]}));
+  await assert.rejects(readBuildLinkerSelection(build),/target/);
  }finally{await rm(root,{recursive:true,force:true});}
 });

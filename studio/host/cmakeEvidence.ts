@@ -140,3 +140,43 @@ export function sameConfigurationInputs(a:CMakeConfigurationEvidence|undefined,b
   return old?.sha256===f.sha256&&old.size===f.size&&old.generated===f.generated&&old.external===f.external&&old.cmake===f.cmake;
  });
 }
+
+/** Read selection only; never execute CMake command fragments or claim observed linker execution. */
+export async function readBuildLinkerSelection(buildDirectory:string){
+ const {build,replyFile}=await buildReply(buildDirectory,'codemodel');
+ const bytes=await boundedFile(replyFile,8*1024*1024),data:unknown=JSON.parse(bytes.toString('utf8'));
+ if(!object(data)||data.kind!=='codemodel'||!object(data.version)||data.version.major!==2||
+    !object(data.paths)||data.paths.build!==build||!Array.isArray(data.configurations)||data.configurations.length!==1)
+  throw new Error('Unsupported ARCH codemodel binding or configuration count.');
+ const configuration=data.configurations[0];
+ if(!object(configuration)||!Array.isArray(configuration.targets))throw new Error('Malformed codemodel targets.');
+ const targets=configuration.targets.filter(t=>object(t)&&t.name==='ARCH');
+ if(targets.length!==1||!object(targets[0])||typeof targets[0].jsonFile!=='string'||
+    path.basename(targets[0].jsonFile)!==targets[0].jsonFile)throw new Error('Missing or ambiguous ARCH target.');
+ const targetFile=path.join(path.dirname(replyFile),targets[0].jsonFile);
+ if(path.dirname(await realpath(targetFile))!==path.dirname(replyFile))throw new Error('Target reply escapes build tree.');
+ const targetBytes=await boundedFile(targetFile,8*1024*1024),target:unknown=JSON.parse(targetBytes.toString('utf8'));
+ if(!object(target)||target.name!=='ARCH'||target.type!=='EXECUTABLE'||!object(target.link)||
+    target.link.language!=='CXX'||!Array.isArray(target.link.commandFragments))
+  throw new Error('Unsupported ARCH link description.');
+ const flags:string[]=[];
+ for(const entry of target.link.commandFragments){
+  if(!object(entry)||typeof entry.fragment!=='string'||typeof entry.role!=='string'||entry.fragment.includes('\0'))
+   throw new Error('Malformed link command fragment.');
+  if(entry.role==='flags')flags.push(entry.fragment);
+ }
+ const tokens=flags.join(' ').trim().split(/\s+/).filter(Boolean);
+ // Overrides require their own driver-resolution contract; guessing through them is unsafe.
+ if(tokens.some(t=>t.startsWith('-B')||t.startsWith('--sysroot')||t.startsWith('-specs')||
+    t.startsWith('@')||/["'\\]/.test(t)))throw new Error('Unsupported linker resolution override.');
+ const selections=tokens.filter(t=>t.startsWith('-fuse-ld'));
+ if(selections.length>1)throw new Error('Ambiguous linker selection.');
+ const option=selections[0]??null;
+ if(option!==null&&!['-fuse-ld=mold','-fuse-ld=lld','-fuse-ld=bfd','-fuse-ld=gold'].includes(option))
+  throw new Error('Unsupported linker selection.');
+ return {kind:'cmake-linker-selection' as const,target:'ARCH' as const,language:'CXX' as const,
+  option,programName:option===null?'ld':'ld.'+option.slice('-fuse-ld='.length),
+  codemodelSha256:createHash('sha256').update(bytes).digest('hex'),
+  targetReplySha256:createHash('sha256').update(targetBytes).digest('hex'),
+  observedExecution:false as const};
+}
