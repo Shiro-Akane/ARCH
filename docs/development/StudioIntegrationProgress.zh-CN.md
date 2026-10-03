@@ -2293,3 +2293,7 @@ fetch后compute/optim仍8fc0dd25，无新科学批准引用。一般EOS/AMR/演�
 ### Production renderer 缩放/平移/选点/Fit 实际事件诊断
 
 8557b900：正式入口/dist/RT128²，Electron wheel 与 DOM wheel 均到SVG并改变轴域，反向wheel/Fit恢复；缩放后pointer pan改变轴域，选点marker随Fit重投影。全部fetch为GET状态轮询，无Preview/Save/Build/Run mutation，config/binary SHA不变。正常close/Host退出，四轮desktop/Host PID均消失；临时harness两项失败如实保留。详见FullModelRendererWheelDiagnostic-20261003.zh-CN.md/Summary。renderer范围PASS不替代native WSLg UAT；完整桌面出口pending。无正式源码改动，不重复260项不变回归。
+
+### Plotfile有界字段切片原语
+
+ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，原始values/Cartesian中心/global索引对齐，NaN显式编码。二维非方形/三维/边界/恢复5项PASS，完整265/265及lint/typecheck/build/diff PASS。真实Sod H5的DENS8样本只读通过，raw本地保留。详见PlotfileBoundedSliceProgress-20261003.zh-CN.md/Summary。slice尚未接隔离worker/endpoint/UI，completion unknown/renderEligible false，正式plt出口未完成；无simulation/Core build/CUDA/push/tag/main merge。

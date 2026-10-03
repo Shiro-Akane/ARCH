@@ -44,8 +44,52 @@ function dataset(group: InstanceType<typeof h5.Group>, name: string) {
  return value;
 }
 
-/** Read only headers and a streaming file digest; never return field payloads. */
-export async function inspectPlotfileMetadata(path: string) {
+export interface PlotfileSliceRequest {field:string;block:number;start:number[];count:number[]}
+const MAX_SLICE_CELLS=512;
+type RawNumber=number|'NaN'|'Infinity'|'-Infinity';
+function rawNumbers(value:unknown,expected:number):RawNumber[] {
+ if(!ArrayBuffer.isView(value)||value instanceof DataView||value instanceof BigInt64Array||value instanceof BigUint64Array)
+  throw Error('Unsupported slice numeric representation.');
+ const numbers=Array.from(value as unknown as ArrayLike<number>);
+ if(numbers.length!==expected)throw Error('Slice payload length mismatch.');
+ return numbers.map(n=>Number.isNaN(n)?'NaN':n===Infinity?'Infinity':n===-Infinity?'-Infinity':n);
+}
+function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:PlotfileSliceRequest) {
+ const {field,block,start,count}=request,cellShape=shape.slice(1);
+ if(!Number.isSafeInteger(block)||block<0||block>=shape[0]||start.length!==cellShape.length||count.length!==cellShape.length)
+  throw Error('Invalid block or slice dimension.');
+ let cells=1;
+ for(let axis=0;axis<cellShape.length;axis++){
+  if(!Number.isSafeInteger(start[axis])||!Number.isSafeInteger(count[axis])||start[axis]<0||count[axis]<1||start[axis]+count[axis]>cellShape[axis])
+   throw Error('Slice bounds outside stored cell shape.');
+  cells*=count[axis];if(cells>MAX_SLICE_CELLS)throw Error('Slice exceeds 512-sample budget.');
+ }
+ const data=dataset(group(file,'Data'),field);
+ if(data.metadata.type!==1||![4,8].includes(data.metadata.size))throw Error('Slice requires float32/float64 fields.');
+ const values=rawNumbers(data.slice([[block,block+1],...start.map((n,i)=>[n,n+count[i]] as [number,number])]),cells);
+ const blockCells=cellShape.reduce((a,b)=>a*b,1),indices:number[]=[];
+ for(let n=0;n<cells;n++){
+  let local=n,index=0,stride=1;
+  for(let axis=cellShape.length-1;axis>=0;axis--){index+=(start[axis]+local%count[axis])*stride;local=Math.floor(local/count[axis]);stride*=cellShape[axis];}
+  indices.push(block*blockCells+index);
+ }
+ const grid=group(file,'Grid'),coordinates:Record<string,RawNumber[]>={};
+ for(const axis of ['x','y','z']){
+  const coordinate=dataset(grid,axis);
+  if(coordinate.metadata.type!==1||![4,8].includes(coordinate.metadata.size))throw Error('Slice requires float32/float64 coordinates.');
+  const result:RawNumber[]=[];
+  // Each row is contiguous in x1; never read the complete coordinate array.
+  for(let n=0;n<cells;n+=count[count.length-1]){
+   const length=count[count.length-1],index=indices[n];
+   result.push(...rawNumbers(coordinate.slice([[index,index+length]]),length));
+  }
+  coordinates[axis]=result;
+ }
+ const nonFinite=values.some(v=>typeof v!=='number')||Object.values(coordinates).some(a=>a.some(v=>typeof v!=='number'));
+ return {field,block,start:[...start],shape:[...count],order:'x1-fastest',linearIndices:indices,values,coordinates,
+  unit:null,nonFiniteEncoding:'IEEE special values as explicit strings',diagnostics:nonFinite?['NONFINITE_RAW_VALUES']:[]};
+}
+async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
  const source=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
  try {
   // Reject parent-directory symlink swaps before HDF5 reads any bytes.
@@ -59,6 +103,7 @@ export async function inspectPlotfileMetadata(path: string) {
   // the HDF5 object between stat/hash/header reads.
   const file=new h5.File('/proc/self/fd/'+source.fd,'r');
   let structure;
+  let payload:ReturnType<typeof readSlice>|undefined;
   try {
    if(file.file_id<0n)throw new Error('Could not open HDF5 plotfile.');
    const time=scalar(file,'time'), dimension=scalar(file,'dim'), geometry=scalar(file,'geometry');
@@ -82,13 +127,14 @@ export async function inspectPlotfileMetadata(path: string) {
     const s=shapeOf(dataset(grid,name),'Grid/'+name);
     if(s.length!==1||s[0]!==blocks)throw new Error('Block metadata shape mismatch: '+name);
    }
+   if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request);}
    structure={time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
     coordinates:{storedBasis:'cartesian',centering:'cell-center',units:null},
     completion:{state:'unknown',reason:'Current writer has no authoritative completion marker or atomic publish contract.'},
     scientificIdentity:{case:null,config:null,build:null,binary:null,eos:null},
     nativeCellGeometry:{bounds:'unavailable',volume:'unavailable'},
     renderEligible:false,
-    diagnostics:['METADATA_ONLY','OUTPUT_COMPLETION_UNVERIFIED','UNITS_UNAVAILABLE','SCIENTIFIC_IDENTITY_UNAVAILABLE','NATIVE_CELL_GEOMETRY_UNAVAILABLE']};
+    diagnostics:[request?'FIELD_SLICE_AUDIT':'METADATA_ONLY','OUTPUT_COMPLETION_UNVERIFIED','UNITS_UNAVAILABLE','SCIENTIFIC_IDENTITY_UNAVAILABLE','NATIVE_CELL_GEOMETRY_UNAVAILABLE']};
   } finally {if(file.file_id>=0n)file.close();}
   const hash=createHash('sha256'),buffer=Buffer.alloc(64*1024);
   let position=0;
@@ -96,6 +142,20 @@ export async function inspectPlotfileMetadata(path: string) {
   const after=await source.stat({bigint:true});
   if(before.size!==after.size||before.mtimeNs!==after.mtimeNs||before.ctimeNs!==after.ctimeNs||position!==Number(before.size))
    throw new Error('Plotfile changed during metadata audit; retry only after authoritative completion.');
-  return {schemaVersion:'audit-1',file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString(),ctimeNs:before.ctimeNs.toString()},...structure};
+  return {schemaVersion:request?'audit-slice-1':'audit-1',payload,file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString(),ctimeNs:before.ctimeNs.toString()},...structure};
  } finally {await source.close();}
+}
+
+
+/** Read only headers and a streaming file digest; never load field payloads. */
+export function inspectPlotfileMetadata(path:string){return auditPlotfile(path);}
+
+/** Local audit primitive only. Production use requires isolated worker ownership. */
+export function readPlotfileFieldSlice(path:string,request:PlotfileSliceRequest){
+ if(!request||Object.keys(request).sort().join(',')!=='block,count,field,start'||
+    typeof request.field!=='string'||request.field.length<1||request.field.length>128||
+    !Array.isArray(request.start)||!Array.isArray(request.count)||
+    request.start.length<1||request.start.length>3||request.count.length!==request.start.length)
+  return Promise.reject(Error('Invalid slice request.'));
+ return auditPlotfile(path,{field:request.field,block:request.block,start:[...request.start],count:[...request.count]});
 }
