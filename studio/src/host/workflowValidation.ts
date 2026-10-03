@@ -1,6 +1,6 @@
 import {validateCoordinates} from './configurationValidation.ts';
 import {record} from './previewValidation.ts';
-import type {RegisteredCase,ResourceEstimate,AmrMesh,WorkflowCore,WorkflowOperation,CaseProbe} from './workflowContracts.ts';
+import type {RegisteredCase,ResourceEstimate,AmrMesh,WorkflowCore,WorkflowOperation,CaseProbe,InspectionSpecies} from './workflowContracts.ts';
 function invalid(message:string):never{throw new Error(message);}
 const finite=(v:unknown):v is number=>typeof v==='number'&&Number.isFinite(v);
 const integer=(v:unknown,min=0,max=Number.MAX_SAFE_INTEGER):v is number=>finite(v)&&Number.isInteger(v)&&v>=min&&v<=max;
@@ -54,10 +54,21 @@ export function validateMesh(value:unknown,status:string):AmrMesh{
  if(resources.dimension!==dimension)invalid('AMR resource dimension mismatch.');
  return value as unknown as AmrMesh;
 }
-function validateProbe(value:unknown):CaseProbe{
+export function inspectionSpecies(state:unknown):InspectionSpecies[]{
+ if(!record(state)||!Array.isArray(state.species))invalid('Missing Init probe species identity.');
+ const names=new Set<string>();
+ for(let index=0;index<state.species.length;index++){
+  const species=state.species[index];
+  if(!record(species)||species.index!==index||typeof species.name!=='string'||!species.name||names.has(species.name))invalid('Invalid Init probe species identity.');
+  names.add(species.name);
+ }
+ return state.species as InspectionSpecies[];
+}
+function validateProbe(value:unknown,state:unknown):CaseProbe{
+ const species=inspectionSpecies(state);
  if(!record(value)||value.kind!=='initial-primitive-probe'||value.completeFieldCoverage!==false||!integer(value.sampleCount,1,27)||!Array.isArray(value.samples)||value.samples.length!==value.sampleCount||typeof value.valueLocation!=='string'||typeof value.sampling!=='string'||typeof value.velocityBasis!=='string')invalid('Invalid Init probe.');
  for(const s of value.samples){
-  if(!record(s)||!numbers(s.cartesianPosition,3)||typeof s.positionUnit!=='string'||typeof s.thermodynamicInput!=='string'||!Array.isArray(s.fields)||s.fields.length>32||!Array.isArray(s.massFractions)||!s.massFractions.every(finite)||typeof s.massFractionUnit!=='string')invalid('Invalid Init sample.');
+  if(!record(s)||!numbers(s.cartesianPosition,3)||typeof s.positionUnit!=='string'||typeof s.thermodynamicInput!=='string'||!Array.isArray(s.fields)||s.fields.length>32||!Array.isArray(s.massFractions)||s.massFractions.length!==species.length||!s.massFractions.every(finite)||s.massFractionUnit!=='1')invalid('Invalid Init sample.');
   for(const f of s.fields)if(!record(f)||typeof f.key!=='string'||(f.unit!==null&&typeof f.unit!=='string')||!finite(f.value)||typeof f.consumedByConversion!=='boolean')invalid('Invalid Init sample field.');
  }
  return value as unknown as CaseProbe;
@@ -80,7 +91,7 @@ export function validateWorkflowCore(value:unknown,operation:WorkflowOperation,e
    }
   }else{
    if(value.version!=='1'||ex.driverScientificOutput!=='not_created'||ex.eosConversion!=='not_executed'||value.status==='limited')invalid('Invalid inspection execution contract.');
-   if(value.data!==null)validateProbe(value.data);
+   if(value.data!==null)validateProbe(value.data,value.state);
    const m=value.parameterMetadata;
    if(m!==undefined){
     if(!record(m)||m.version!=='1'||m.complete!==false||m.automaticExpressionInference!==false||typeof m.coverage!=='string'||!Array.isArray(m.parameters)||m.parameters.length>4096||!texts(m.unobservedInputKeys)||typeof m.unobservedMeaning!=='string')invalid('Invalid observed metadata.');

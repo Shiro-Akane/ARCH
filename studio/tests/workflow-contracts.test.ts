@@ -89,3 +89,27 @@ test('authoritative Cartesian reference has balanced 2:1 transitions',()=>{
  }
  assert.ok(transitions>0);
 });
+
+test('Init probe composition rejects mismatched species identity or unit without changing raw values',()=>{
+ const original=example('case-inspection-cellular.json'),before=JSON.stringify(original);
+ validateWorkflowCore(original,'inspect-case',original.identity);
+ assert.equal(JSON.stringify(original),before);
+ for(const mutate of [
+  (v:ReturnType<typeof example>)=>v.data.samples[0].massFractions.pop(),
+  (v:ReturnType<typeof example>)=>v.data.samples[0].massFractions.push(0),
+  (v:ReturnType<typeof example>)=>v.state.species.reverse(),
+  (v:ReturnType<typeof example>)=>v.state.species[1].index=0,
+  (v:ReturnType<typeof example>)=>v.state.species[1].name=v.state.species[0].name,
+  (v:ReturnType<typeof example>)=>delete v.state.species,
+  (v:ReturnType<typeof example>)=>v.data.samples[0].massFractionUnit='g/cm^3',
+ ]){
+  const v=structuredClone(original);mutate(v);
+  assert.throws(()=>validateWorkflowCore(v,'inspect-case',v.identity),/species|Init sample/);
+ }
+ const empty=example('case-inspection-sod.json');empty.state.species=[];
+ for(const s of empty.data.samples)s.massFractions=[];
+ assert.equal(validateWorkflowCore(empty,'inspect-case',empty.identity).status,'ok');
+ const signed=example('case-inspection-sod.json');signed.data.samples[0].massFractions[0]=-0;
+ validateWorkflowCore(signed,'inspect-case',signed.identity);
+ assert.ok(Object.is(signed.data.samples[0].massFractions[0],-0));
+});

@@ -3086,3 +3086,11 @@ production native新增DiffusionMode：512sample、rho/P均匀、Species index0 
 首次Preview在观察期间自行进入preparing/current，未记为手动请求验证。
 正常close exit0、8owned PID/startTicks均退出、config不变/无科学output/managed clean。
 见FullModelDiffusionDesktop-20261004。无源码或baseline重复；联合目标仍未闭合。
+
+## 2026-10-04 Init probe 组分身份关联修复
+
+实际finding：连续Preview无mass-fraction arrays；独立inspect-case已有raw probes，
+但旧UI无名称列表且未校验registry/count/unit。新增严格identity校验与named raw表，
+不归一化、不添加default、不冒充完整场/AMR cell。相关22/22、全331/331、lint/types/build通过，
+真实DiffusionMode3probes通过新validator；SSR保留signedzero。原生新增表尚未UAT。
+见InitProbeCompositionIdentity-20261004。未改科学Core/Build/simulation，联合目标仍在推进。

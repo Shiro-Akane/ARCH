@@ -1,0 +1,69 @@
+{
+  "scope": "inspect-case sparse raw Init composition; not continuous field or AMR values",
+  "sourceBaseline": "f6a95475deb8afe1c30eb67a1cc18e004630347a",
+  "managedCoreSource": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "caseId": "DiffusionMode",
+  "configRevision": "205e63f4b3f03ce188f19b0654720c5e85f9ebaf54f6f5429703ff8cf7adcad3",
+  "species": [
+    {
+      "index": 0,
+      "name": "background"
+    },
+    {
+      "index": 1,
+      "name": "tracer"
+    }
+  ],
+  "sampleCount": 3,
+  "rawMassFractions": [
+    [
+      0.5,
+      0.5
+    ],
+    [
+      0.7499749010540354,
+      0.2500250989459646
+    ],
+    [
+      0.5,
+      0.49999999999999994
+    ]
+  ],
+  "focusedTests": {
+    "pass": 22,
+    "fail": 0
+  },
+  "fullTests": {
+    "pass": 331,
+    "fail": 0,
+    "skip": 0
+  },
+  "checks": [
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "seconds": 6.3376171588897705
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "seconds": 5.935929775238037
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "seconds": 2.907724380493164
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "seconds": 3.608130693435669
+    }
+  ],
+  "nativeUat": "not yet run for changed composition UI",
+  "fullCompositionField": "not supplied by current field Preview contract",
+  "noScientificCoreChange": true,
+  "noSimulation": true,
+  "remoteAvailable": false
+}

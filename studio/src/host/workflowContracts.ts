@@ -32,6 +32,7 @@ export interface ObservedParameter {
  valueSource:string;sourceReason:string|null;unit:string|null;description:string|null;readCount:number;
  unitEvidence:Record<string,unknown>;diagnostics:unknown[];
 }
+export interface InspectionSpecies {index:number;name:string}
 export interface CaseProbe {
  kind:'initial-primitive-probe';completeFieldCoverage:false;sampleCount:number;valueLocation:string;sampling:string;velocityBasis:string;
  samples:{cartesianPosition:number[];positionUnit:string;thermodynamicInput:string;fields:{key:string;unit:string|null;value:number;consumedByConversion:boolean}[];massFractions:number[];massFractionUnit:string}[];

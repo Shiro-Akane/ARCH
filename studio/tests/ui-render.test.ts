@@ -74,3 +74,18 @@ test('disconnected workflow disables all execution and retains the terminal draw
  assert.match(html,/No build output/);
  assert.match(html,/id="workflow-terminal"[^>]*hidden/);
 });
+
+test('raw Init composition labels Core species indices without normalization or field claims',async()=>{
+ const Probe=await component('components/Workflow/InitProbe.tsx','InitProbe');
+ const data={kind:'initial-primitive-probe',sampleCount:1,valueLocation:'actual Init output',sampling:'sparse points',velocityBasis:'native orthonormal',completeFieldCoverage:false,
+  samples:[{cartesianPosition:[.25,0,0],positionUnit:'cm',thermodynamicInput:'pressure',fields:[],massFractions:[-0,.375],massFractionUnit:'1'}]};
+ const state={species:[{index:0,name:'background'},{index:1,name:'tracer'}]};
+ const before=JSON.stringify({data,state});
+ const html=renderToStaticMarkup(createElement(Probe,{data,state}));
+ assert.match(html,/<td>0<\/td><td>background<\/td><td>-0<\/td><td>1<\/td>/);
+ assert.match(html,/<td>1<\/td><td>tracer<\/td><td>0.375<\/td><td>1<\/td>/);
+ assert.match(html,/not a full composition field/);
+ assert.equal(JSON.stringify({data,state}),before);
+ const empty=structuredClone(data);empty.samples[0].massFractions=[];
+ assert.match(renderToStaticMarkup(createElement(Probe,{data:empty,state:{species:[]}})),/No species registered by Core/);
+});
