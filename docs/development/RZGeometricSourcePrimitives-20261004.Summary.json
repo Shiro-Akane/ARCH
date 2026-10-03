@@ -1,0 +1,26 @@
+{
+  "baseHead": "d9ff57de87789a791ccad407f8eecb9c1e9d203d",
+  "dirtyInputs": {
+    "src/grid/GridMetrics.h": "ccac7c7355b39f59e160176a2e1cd174778398055cc97181feea1a70141527c8",
+    "src/numerics/integrator/GeometricSources.h": "3bbb2923198e2274627ede3dba61440f78da26b951fe2a9e169c20bd682a0184",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "c0a1bfc7e8b3a345e07364fef9df9ee466f770f32123ff4d22f189cbf684544f"
+  },
+  "scope": "CPU local RZ source adapter; production geometry dispatch unchanged",
+  "test": "curvilinear_metrics 1/1 PASS",
+  "binarySha256": "b712138709747cd99de2eb409bbc64cfaa32e30955d15b65fd9944fce4d5bbc9",
+  "checks": [
+    "axis pressure balance r_left=0,1,4",
+    "distinct r/z/phi component mapping",
+    "no z/mass/energy source",
+    "legacy cylindrical dim=1,2,3 exact formula comparison",
+    "existing metric/CFL/viscous regressions"
+  ],
+  "initialFailure": "Test referred to nonexistent FluidVector.energy; corrected to authoritative eng. Initial build.log retained locally.",
+  "notVerified": [
+    "evolved angular momentum conservation",
+    "production RZ geometry migration",
+    "AMR/RZ elliptic and gravity boundary integration",
+    "CUDA execution",
+    "EOS scientific acceptance"
+  ]
+}

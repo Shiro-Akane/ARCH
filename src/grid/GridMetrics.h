@@ -54,6 +54,13 @@ ARCH_HOST_DEVICE inline double cylindrical_annulus_volume(double r_left, double 
     return 0.5 * (r_right - r_left) * (r_right + r_left);
 }
 
+/** Integral (1/r) r dr divided by integral r dr; finite at an axis cell. */
+ARCH_HOST_DEVICE inline double cylindrical_inverse_radius_average(
+    double r_left, double r_right)
+{
+    return (r_right-r_left)/cylindrical_annulus_volume(r_left,r_right);
+}
+
 /**
  * Explicit axisymmetric (r,z) measures of a full rotating cell.
  *
@@ -85,6 +92,13 @@ ARCH_HOST_DEVICE inline double AxialFaceArea(double r_left, double r_right)
 {
     return arch::constants::math::two_pi
         * cylindrical_annulus_volume(r_left, r_right);
+}
+
+/** Full-volume average of 1/r; common 2*pi and dz cancel exactly. */
+ARCH_HOST_DEVICE inline double InverseRadiusVolumeAverage(
+    double r_left, double r_right)
+{
+    return cylindrical_inverse_radius_average(r_left,r_right);
 }
 
 /** Orthonormal r/z lengths for active direction 0 or 1; no angle factor. */
@@ -202,7 +216,7 @@ ARCH_HOST_DEVICE inline double InverseRadiusVolumeAverage(
     const double right = grid.GetFacePosR(i);
     if (grid.geometry == Geometry::Spherical && grid.dim != 2)
         return cylindrical_annulus_volume(left, right) / radial_shell_volume(left, right);
-    return (right - left) / cylindrical_annulus_volume(left, right);
+    return cylindrical_inverse_radius_average(left, right);
 }
 
 inline double CellVolume(const Grid& grid, int i, int j, int k) {

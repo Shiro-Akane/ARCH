@@ -2595,3 +2595,10 @@ DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容�
 RZ最大relative error1.64562e-16，旧metric3.03178e-16。未切GeometryView dispatch或开放RZ；
 未编ARCH/演化/CUDA/push。见RZMetricPrimitives-20261004.zh-CN.md/Summary。
 O7.1科学规则、RZ整条接线/近场预算和最终平台出口仍待。
+
+
+## 2026-10-04 RZ 几何源项共享入口
+
+显式 r/z/phi 适配与旧圆柱源项共用数学入口；生产二维 dispatch 不变。
+限定 CPU curvilinear_metrics 1/1 PASS，包含旧 1/2/3D 非零旋流公式精确回归。
+详见 RZGeometricSourcePrimitives-20261004.zh-CN.md / Summary.json；完整 RZ、CUDA 与科学 gates 尚未关闭。

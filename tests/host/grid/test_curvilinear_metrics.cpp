@@ -63,6 +63,66 @@ int main()
         close((Rz::AxialFaceArea(left,middle)+Rz::AxialFaceArea(middle,right))/axial,
               1.,"RZ coarse/fine axial area sum");
     }
+    for (double left : {0.,1.,4.}) {
+        const double right=left+.25, dz=.5, dt=.125;
+        const double inv=2./(left+right);
+        close(Rz::InverseRadiusVolumeAverage(left,right),inv,"RZ axis-cell inverse radius");
+        const FluidVector rest{2.,0.,0.,0.,20.};
+        FluidVector rest_delta{};
+        TimeIntegration::add_rz_geometric_source_cell(rest,nullptr,ConstantEos{},
+            left,right,dt,rest_delta);
+        const double pressure_flux=dt*5.*(Rz::RadialFaceArea(right,dz)
+            -Rz::RadialFaceArea(left,dz))/Rz::CellVolume(left,right,dz);
+        close(rest_delta.mom_u-pressure_flux,0.,"RZ constant-pressure axis balance");
+        if (rest_delta.rho!=0. || rest_delta.eng!=0.
+            || rest_delta.mom_v!=0. || rest_delta.mom_w!=0.)
+            throw std::runtime_error("RZ rest source changed unrelated component");
+        // Distinct z and phi velocities catch accidental polar/axis mapping.
+        const FluidVector moving{2.,6.,14.,10.,20.};
+        FluidVector delta{17.,19.,23.,29.,31.};
+        TimeIntegration::add_rz_geometric_source_cell(moving,nullptr,ConstantEos{},
+            left,right,dt,delta);
+        close(delta.mom_u-19.,dt*(2.*25.+5.)*inv,"RZ centrifugal source");
+        close(delta.mom_w-29.,-dt*2.*3.*5.*inv,"RZ phi curvature source");
+        if (delta.mom_v!=23. || delta.rho!=17. || delta.eng!=31.)
+            throw std::runtime_error("RZ source changed z/mass/energy");
+        auto translated=moving;
+        translated.mom_v=-1000.;
+        FluidVector other{17.,19.,23.,29.,31.};
+        TimeIntegration::add_rz_geometric_source_cell(translated,nullptr,ConstantEos{},
+            left,right,dt,other);
+        if (delta.mom_u!=other.mom_u || delta.mom_w!=other.mom_w)
+            throw std::runtime_error("RZ geometric source depends on axial velocity");
+        GeometryView full{};
+        full.geometry=Geometry::Cylindrical;full.dim=3;full.x1_min=left;
+        full.dx1=right-left;full.dx2=dz;full.dx3=.3;
+        FluidVector existing{17.,19.,23.,29.,31.};
+        TimeIntegration::add_geometric_source_cell(moving,nullptr,ConstantEos{},
+            full,0,0,dt,existing);
+        if (existing.mom_u!=delta.mom_u || existing.mom_w!=delta.mom_w
+            || existing.mom_v!=delta.mom_v)
+            throw std::runtime_error("RZ and full cylindrical source diverged");
+    }
+    // Preserve the pre-extraction polar/full cylindrical formulas exactly.
+    for (int dim : {1,2,3}) {
+        GeometryView grid{};
+        grid.geometry=Geometry::Cylindrical;grid.dim=dim;
+        grid.x1_min=1.;grid.dx1=.25;grid.dx2=.5;grid.dx3=.3;
+        const FluidVector u{2.,6.,14.,10.,20.};
+        FluidVector actual{17.,19.,23.,29.,31.}, expected=actual;
+        const double rho=u.rho,vr=u.mom_u/rho;
+        const double vp=dim==2?u.mom_v/rho:(dim==3?u.mom_w/rho:0.);
+        const double inv=(1.25-1.)/(.5*(1.25-1.)*(1.25+1.));
+        expected.mom_u += .125*(rho*vp*vp+5.)*inv;
+        if (dim==2) expected.mom_v += .125*(-rho*vr*(u.mom_v/rho))*inv;
+        if (dim==3) expected.mom_w += .125*(-rho*vr*(u.mom_w/rho))*inv;
+        TimeIntegration::add_geometric_source_cell(u,nullptr,ConstantEos{},
+            grid,0,0,.125,actual);
+        if (actual.rho!=expected.rho || actual.eng!=expected.eng
+            || actual.mom_u!=expected.mom_u || actual.mom_v!=expected.mom_v
+            || actual.mom_w!=expected.mom_w)
+            throw std::runtime_error("Legacy cylindrical source formula changed");
+    }
     const double pi = arch::constants::math::pi;
     for (Geometry geometry : {Geometry::Cartesian, Geometry::Cylindrical, Geometry::Spherical})
     for (int dimension : {1, 2, 3})

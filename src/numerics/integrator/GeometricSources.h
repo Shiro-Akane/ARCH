@@ -18,6 +18,42 @@
 
 namespace TimeIntegration {
 
+/**
+ * Shared cylindrical curvature terms for a piecewise-constant accepted cell.
+ * The loader chooses its actual angular component; the same formula serves
+ * polar (r,phi) and axisymmetric/full (r,z,phi) orthonormal bases.
+ * Positive density, resolved pressure and GridMetrics average 1/r are inputs.
+ * Angular momentum density gets -rho*v_r*v_phi/r; z, mass and energy do not.
+ */
+ARCH_HOST_DEVICE inline void add_cylindrical_momentum_sources(
+    double rho, double radial_velocity, double angular_velocity,
+    double pressure, double inverse_radius, double dt,
+    double& radial_delta, double* angular_delta)
+{
+    radial_delta += dt * (rho * angular_velocity * angular_velocity + pressure) * inverse_radius;
+    if (angular_delta)
+        *angular_delta += dt * (-rho * radial_velocity * angular_velocity) * inverse_radius;
+}
+
+/**
+ * Explicit finite-volume (r,z,phi) source adapter for an axisymmetric r-z cell.
+ * Evaluate authoritative EOS pressure once, then consume the shared cylindrical
+ * source and full-volume inverse-radius metric. Native mom_v is z and mom_w is
+ * phi even though there is no active phi derivative. No density/pressure floor,
+ * mass/energy source or separate backend mathematics is introduced.
+ * Generic GeometryView dispatch remains unchanged until its consumers migrate.
+ */
+template <typename EosType>
+ARCH_HOST_DEVICE inline void add_rz_geometric_source_cell(
+    const FluidVector& U, const double* composition, const EosType& eos,
+    double r_left, double r_right, double dt, FluidVector& delta)
+{
+    const double pressure=eos.get_pressure(U,composition);
+    const double inverse_radius=GridMetrics::Rz::InverseRadiusVolumeAverage(r_left,r_right);
+    add_cylindrical_momentum_sources(U.rho,U.mom_u/U.rho,U.mom_w/U.rho,
+        pressure,inverse_radius,dt,delta.mom_u,&delta.mom_w);
+}
+
 template <typename EosType>
 ARCH_HOST_DEVICE inline void add_geometric_source_cell(
     const FluidVector& U, const double* composition, const EosType& eos,
@@ -38,11 +74,9 @@ ARCH_HOST_DEVICE inline void add_geometric_source_cell(
     if (grid.geometry == Geometry::Cylindrical) {
         // 2D axes are (r,phi); 3D axes are (r,z,phi), as on the CPU.
         const double v_phi = grid.dim == 2 ? v_y : (grid.dim == 3 ? v_z : 0.0);
-        delta.mom_u += dt * (rho * v_phi * v_phi + p) * inverse_radius;
-        if (grid.dim == 2)
-            delta.mom_v += dt * (-rho * v_x * v_y) * inverse_radius;
-        else if (grid.dim == 3)
-            delta.mom_w += dt * (-rho * v_x * v_z) * inverse_radius;
+        double* angular_delta=grid.dim==2?&delta.mom_v:(grid.dim==3?&delta.mom_w:nullptr);
+        add_cylindrical_momentum_sources(rho,v_x,v_phi,p,inverse_radius,dt,
+            delta.mom_u,angular_delta);
     } else if (grid.geometry == Geometry::Spherical) {
         if (grid.dim == 1) {
             delta.mom_u += dt * 2.0 * p * inverse_radius;
