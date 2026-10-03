@@ -1680,3 +1680,23 @@ Rules/tests/CMake unchanged; migration approval pending. Managed Studio ARCH bin
 not refreshed, and prior Run/Preview evidence remains tied to its prior binary.
 Do not claim full Core CPU/CUDA/3C or scientific acceptance from these8 tests.
 No push/tag, raw upload or historical G input migration.
+
+## Managed CPU Build after pi authority consolidation
+
+Cleanf5e2c001: existing authenticated desktop Host, fixed studio-cpu-release
+profile, normal /api/build(projectId,profileId) succeeded exit0.
+Builda7c719a8-5851-4331-a020-f131a38843b8 records sourceHEADf5e2c001,
+repositoryDirty=false, tracked and compiler inputs stable. All four changed
+consumers' SHA values match the735-file compiler input record.
+Old warm worker5586 exited through Host beforeStart; no active compiler remains.
+
+Output binary SHA remains e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7,
+size7177152, mtime updated. Constant expressions compiled to identical binary.
+Prior API/Preview/Run evidence remains for that SHA; no identical binary checks
+were repeated. New Build ID/mtime identities must still govern next request.
+Full dependency freshness remains unknown, not Current.
+StudioPiAuthorityManagedBuildSummary.json contains processed identities only.
+
+No independent configure, simulation, CUDA, raw upload/push/tag or native
+Build-click/visible-window acceptance claimed. Architecture rule migration
+approval and user-visible native 3C acceptance remain open.
