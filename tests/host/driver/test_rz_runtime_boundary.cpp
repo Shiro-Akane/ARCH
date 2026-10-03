@@ -2,6 +2,9 @@
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/DriverUtils.h"
 #include "driver/schedule/DriverControl.h"
+#include "driver/stages/DriverStages.h"
+#include "physics/eos/IdealGas.h"
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 static void require(bool value,const char* message) {
@@ -66,6 +69,56 @@ int main() {
     require(runtime.stage_context().ledger.inspect(
         {runtime.handles()[0],arch::state::StateSlot::Current}).interior.version==v,
         "Runtime halo refresh changed interior version");
+    // Actual Driver candidate aggregation over all native leaf cells.
+    IdealGas eos(1.4,species);
+    config.numerics.cfl=.4;
+    arch::driver::DriverStageWorkspace workspace;
+    const double sound=std::sqrt(1.4*(100.-14.)*.4/2.);
+    double expected=1.e99;
+    for(int id:active) {
+        const auto& g=control.pool->GetBlock(id).grid;
+        expected=std::min(expected,.5*config.numerics.cfl/
+            ((1.+sound)/g.dx1+(3.+sound)/g.dx2));
+    }
+    const auto candidates=arch::driver::calculate_timestep_candidates(
+        runtime,workspace,eos,nullptr);
+    require(std::isfinite(candidates.hydro)
+        &&std::abs(candidates.hydro-expected)<=2.e-12*std::max(1.,expected),
+        "Driver RZ CFL physical dr/dz aggregation");
+    config.physics.diffusion.use_diffusion=true;
+    config.physics.diffusion.use_viscous_diffusion=true;
+    config.physics.diffusion.nu_visc=.01;
+    double diffusion_expected=1.e99;
+    for(int id:active) {
+        const auto& b=control.pool->GetBlock(id);
+        diffusion_expected=std::min(diffusion_expected,DiffFlux::adaptive_dt_diff(
+            b.fluid_state,eos,b.grid,config,1.,
+            GridMetrics::GeometrySemantics::AxisymmetricRz));
+    }
+    for(auto integrator:{arch::dispatch::DiffusionIntegratorId::Rkl1,
+                        arch::dispatch::DiffusionIntegratorId::Rkl2}) {
+        arch::dispatch::ResolvedExecutionPlan plan{};
+        plan.diffusion_integrator=integrator;
+        const auto diff=arch::driver::calculate_timestep_candidates(runtime,workspace,eos,&plan);
+        require(diff.diffusion_forward_euler==diffusion_expected,
+            "Driver RZ diffusion dropped chart");
+        require(diff.hydro==candidates.hydro,"Diffusion changed Hydro candidate");
+        std::cout<<std::setprecision(17)<<"RZ_RUNTIME_DT direction="<<direction
+            <<" inner="<<inner<<" rkl="<<(integrator==arch::dispatch::DiffusionIntegratorId::Rkl1?1:2)
+            <<" hydro="<<diff.hydro<<" independent_hydro="<<expected
+            <<" diffusion_fe="<<diff.diffusion_forward_euler
+            <<" diffusion_sts="<<diff.diffusion_sts<<'\n';
+    }
+    config.physics.diffusion.use_diffusion=false;
+    auto& bad=control.pool->GetBlock(active.front());
+    const int bad_cell=bad.grid.GetIndex(bad.grid.Is(),bad.grid.Js(),0);
+    const double saved=bad.fluid_state.rho[bad_cell];
+    bad.fluid_state.rho[bad_cell]=std::numeric_limits<double>::quiet_NaN();
+    bool invalid_density=false;
+    try{(void)arch::driver::calculate_timestep_candidates(runtime,workspace,eos,nullptr);}
+    catch(const std::runtime_error&){invalid_density=true;}
+    require(invalid_density,"Driver ignored invalid active CFL density");
+    bad.fluid_state.rho[bad_cell]=saved;
     bool device=false,regrid=false;
     try{(void)runtime.prepare_backend_bindings();}catch(const std::logic_error&){device=true;}
     try{(void)runtime.perform_regrid(0,0.);}catch(const std::logic_error&){regrid=true;}

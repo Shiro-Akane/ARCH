@@ -90,7 +90,8 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
         const auto candidate_for = [&](std::size_t index, bool parallel_rows) {
             const amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[index]);
             const auto scan = [&] {
-                return adaptive_dt(b.fluid_state, eos, b.grid, cfl, parallel_rows);
+                return adaptive_dt(b.fluid_state, eos, b.grid, cfl, parallel_rows,
+                    runtime.geometry_semantics());
             };
             const double dt_b = [&] {
                 if constexpr (requires { typename EosPolicy::HostHydroScope; }) {
@@ -160,7 +161,8 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
             const double block_dt = compute_backend
                 ? device_diffusion_dt[index]
                 : DiffFlux::adaptive_dt_diff(
-                    block.fluid_state, eos, block.grid, config, 1.0);
+                    block.fluid_state, eos, block.grid, config, 1.0,
+                    runtime.geometry_semantics());
             workspace.diffusion_dt_candidates.push_back({
                 block_dt,
                 DriverReduction::make_block_reduction_key(

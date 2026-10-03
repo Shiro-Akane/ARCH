@@ -2710,3 +2710,8 @@ Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-A
 ## 2026-10-04 RZ DriverRuntime Host halo
 
 初始/刷新halo已使用固定RZ chart。四个真实mixed-AMR Runtime案例PASS；受影响scoped3/3 PASS。device/regrid尚未迁移，明确拒绝而非静默旧chart。重编译的fixture与Runtime源码身份见RZRuntimeHalo-20261004.Summary.json；不代表production binary/演化验收。
+
+
+## 2026-10-04 RZ Driver timestep candidates
+
+真实calculate_timestep_candidates的Hydro/diffusion调用已传Runtime chart。mixed-AMR四组独立Hydro参考maxabs1.0842e-19，8组RKL候选路由接线一致；active NaN明确失败。scoped3/3 PASS。实际RKL evolution尚待迁移；详见RZRuntimeTimestep-20261004.zh-CN.md。
