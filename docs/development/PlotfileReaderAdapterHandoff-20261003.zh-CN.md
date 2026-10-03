@@ -1,6 +1,61 @@
 # Plotfile 读取适配对接：当前候选实现
 
-## 精确引用与交付边界
+## 当前读取适配引用（2026-10-04 最新核对）
+
+本节优先于下面按时间保留的历史构建记录。
+
+- 已完整读取 owner contract：23ff77c4f08419de2b3c5eadee214da2af25784e。
+- 累积实现源码 SHA：691f563d54bb0b038151f2f2eb0641bf7e464a94；
+  分支 studio/compute-optim-integration；核对时 working tree clean，尚未 push。
+  这是准确的本地源码引用，不能称为 owner 已能 fetch 的远程引用。
+- 当前主 CPU executable 构建源码：b82205e2c6414f2d8783063d6ff086c06f66404c；
+  SHA-256：7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4；
+  size：7409736 bytes。本次读取实际 ELF 再次核对；后续改动为测试/验证/文档。
+  构建与真实 CLI 失败/恢复证据见 DriverDiagnosticMainCpu-20261004.Summary.json。
+- 对接入口：src/io/hdf5/HDF5Writer.cpp、src/io/plot/PlotIO.cpp、
+  src/io/plot/PlotFieldMetadata.h、src/io/plot/PlotGridMetadata.h；
+  production query 为 studio/host/plotfileMetadata.ts 与 isolatedPlotfileMetadata.ts；
+  UI 为 studio/src/components/PlotfileWorkspace.tsx、PlotfileNativeView.tsx、
+  PlotfileNativeInspector.tsx。字段数组映射见本文件下表，未更改。
+- 首版范围仍是 Sod 1D + Cartesian CellularDet 2D AMR；内部 RZ 不能用于此次 Viewer 验收。
+- 本次只更新交付引用和真实属性说明；未重新 Build、生成科学输出或重跑已通过的基线。
+
+### Owner adapter 的发布与身份属性
+
+生产文件采用分散属性，没有 plotfile_candidate JSON。根属性为：
+plot_publication_version=candidate-1、plot_publication_state=complete、
+plot_publication_method=checked-close-atomic-replace、plot_storage_order=x1-fastest。
+NativeGrid/version=candidate-cartesian-1，block_kind=active-leaf、ghost_cells=0。
+complete 属性本身不能证明文件已发布；它在临时文件中也存在，必须结合正式路径、
+checked flush/close/rename 的生产证据，不能把 .partial 当作完成输出。
+
+根 plot_identity_state=unknown 是保留的整体不完整声明；不能据此丢弃
+SourceIdentity 中实际已记录的部分身份，也不能据部分身份把整体标成 verified。
+SourceIdentity/version=candidate-identity-1、scope=partial；
+case_id、raw_config_sha256、binary_sha256、run_id 及各 *_source 分别描述实际来源。
+binary_scope=main-executable-only；EOS 来自 resolved-runtime-checkpoint-provenance。
+
+effective_config_sha256、build_id、source_git_head 的生产属性仍为 unknown，
+且没有对应逐键 reason 属性。原因是 writer 尚未接入 authoritative effective-config、
+完整 Build 身份与 source provenance；这是明确的身份缺口，不得由 adapter 根据当前
+Git HEAD、文件名或外部猜测补成 known。外部可信 binary/config 期望仍应单独比对。
+SourceIdentity 属性与完整 build freshness 是不同验收项。
+
+### 当前验证边界
+
+已有真实 t=0 Sod 9 / Cellular 28 字段、原生 bounds/measure、点选、
+FP64/checkpoint 位级一致、真实发布故障及重试、固定终点 Sod restart 的处理后证据；
+原始 H5/plt/checkpoint 和完整数组留在 ignored studio/.local。
+同机 Reader 测量见 PlotfileRunInterference-20261004.Summary.json：
+三组小用例 paired median 比值 1.001356，仅覆盖 query lifecycle 重叠，
+不证明大 AMR 深度扫描与演化重叠，更不能作为性能验收。
+
+剩余 owner review：读取适配、单位/基底/低维积分、独立科学 oracle、
+完整来源身份及全域科学一致性。现有 full CPU regression 曾为 69/71，
+随后 ui_expansion scoped recheck 通过；self_gravity 输入迁移仍未闭合。
+这些状态不能由 Plotfile 局部通过升级为全项目 PASS。
+
+## 历史精确引用与交付边界
 
 - Owner contract：23ff77c4f08419de2b3c5eadee214da2af25784e，已完整阅读，未 merge。
 - 本地分支：studio/compute-optim-integration；尚未 push，不能称为远端可获取。
