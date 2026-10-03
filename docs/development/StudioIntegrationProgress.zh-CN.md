@@ -2327,3 +2327,8 @@ ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，
 
 7473158e 基线上扩充既有 native fixture，真实守恒态 EOS→Jeans 数值叶与独立 caloric 参考比较，240 项最大相对误差1.0004323370200706e-14；既有2e-12容差未变，scoped编译/CTest1/1 PASS。
 详见 JeansNativeTabularReference-20261003.zh-CN.md/Summary。未传真实表参数，不能称全 EOS/科学通过；JENS production仍 unavailable，一般EOS/AMR/预算 pending。仅测试与精简报告，raw H5/日志留本地，无production ARCH build/simulation/CUDA/push/tag/main merge。
+
+
+### 原生 RT 点击／滚轮再次区分
+
+61cf9142 production main/preload/dist，最大化原生窗口后点击sample9664/坐标/密度2与Inspector身份一致，点击链路有效；双向wheel与稳定观察domain不变，native zoom仍NOT VERIFIED。首次CLI flag顺序错误保留，改测试命令后重开。Alt+F4 exit0，8个owned进程全消失、config/binary不变。详见FullModelNativeWheelRecheck-20261003.zh-CN.md；下一步需被动wheel delivery证据，非重复发送或renderer模拟冒充。无源码/build/simulation/CUDA/push/tag/main merge。
