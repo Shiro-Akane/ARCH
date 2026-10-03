@@ -17,6 +17,7 @@ export function PlotfileOverviewView(props:{samples:AuditResponse;disabled:boole
  return <Overview key={[props.samples.audit.file.sha256,o.field,o.width,o.height].join(':')} {...props}/>;
 }
 function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFitFull,onViewChange}:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void;onPoint:(point:number[])=>void;fullSamples?:AuditResponse;onRefine?:(viewport:PlotfileDomain)=>void;onFitFull?:()=>void;onViewChange?:()=>void}){
+ const unit=samples.audit.fields.find(f=>f.name===samples.audit.overview?.field)?.unit??'unit unknown',coordinateUnit=samples.audit.coordinates.units??'unit unknown';
  const o=samples.audit.overview!,range=finitePlotRange(o.values.map(v=>v===null?'NaN':v));
  const domain:PlotView={x:o.domain.x,y:o.dimension===2?o.domain.y:linePlotRange(o.values.map(v=>v===null?'NaN':v))??[0,1]};
  const full=fullSamples?.audit.file.sha256===samples.audit.file.sha256&&fullSamples.audit.overview?.field===o.field?fullSamples.audit.overview:o;
@@ -71,7 +72,7 @@ function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFit
   <h3>Plotfile display LOD · candidate</h3>
   <p>{samples.relativePath} · {o.field} · time {samples.audit.time} · file {samples.audit.file.sha256}</p>
   <p>{o.globalDomain&&JSON.stringify(o.domain)!==JSON.stringify(o.globalDomain)?'Viewport LOD':'Full-domain LOD'} · displayed x1 [{o.domain.x.join(', ')}]{o.dimension===2?' · x2 ['+o.domain.y.join(', ')+']':''}</p>
-  <p>{o.scannedCells} stored leaf cells scanned → {o.width}×{o.height} display pixels. Coordinate-overlap-weighted display means; not native values or scientific integrals. Units remain unknown.</p>
+  <p>{o.scannedCells} stored leaf cells scanned → {o.width}×{o.height} display pixels. Coordinate-overlap-weighted display means; not native values or scientific integrals. Recorded field unit: {unit}; review pending.</p>
   <p>Click to locate the exact native cell at stored x1[/x2] coordinates. Keyboard pixel selection reads its largest-overlap representative. Inspector shows the raw stored cell, not the LOD mean. Zoom/pan redraw this existing LOD; zoom does not fetch finer data.</p>
   {leaves&&<fieldset><legend>Native leaf block outlines · same file digest</legend>
    <label><input type="checkbox" checked={showBlocks} onChange={e=>setShowBlocks(e.target.checked)}/>Show native leaf outlines</label>
@@ -118,10 +119,10 @@ function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFit
     <text x={frame.left+f*frame.width} y={335} textAnchor="middle">{plotValue(f,view.x).toPrecision(4)}</text>
     <text x={65} y={frame.top+(1-f)*frame.height+4} textAnchor="end">{plotValue(f,view.y).toPrecision(4)}</text>
    </g>)}
-   <text x={460} y={363} textAnchor="middle" fill="#d5e2eb">x1 · unit unknown</text>
-   <text x={16} y={165} transform="rotate(-90 16 165)" textAnchor="middle" fill="#d5e2eb">{o.dimension===2?'x2 · unit unknown':o.field+' · display mean'}</text>
+   <text x={460} y={363} textAnchor="middle" fill="#d5e2eb">x1 · {coordinateUnit}</text>
+   <text x={16} y={165} transform="rotate(-90 16 165)" textAnchor="middle" fill="#d5e2eb">{o.dimension===2?'x2 · '+coordinateUnit:o.field+' · display mean · '+unit}</text>
   </svg>
-  {o.dimension===2&&range&&<p>Viridis display means: {range[0]} → {range[1]} · unit unknown.</p>}
+  {o.dimension===2&&range&&<p>Viridis display means: {range[0]} → {range[1]} · {unit}.</p>}
   {leaves&&<details><summary>Native leaf block Inspector</summary>
    <p>File-local identity · {samples.audit.file.sha256}. Bounds span the stored native cells; these are leaf records, not a full parent hierarchy.</p>
    <div className="audit-table-scroll"><table><thead><tr><th>Inspect block</th><th>Stored index</th><th>Level</th><th>Logical key</th></tr></thead><tbody>
@@ -129,7 +130,7 @@ function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFit
      onClick={()=>setSelectedBlock(b.index)}>Inspect native block {b.index}</button></td><td>{b.index}</td><td>{b.level}</td><td>{b.logicalKey}</td></tr>)}
    </tbody></table></div>
    {selectedLeaf&&<dl><dt>Native block / logical key / level</dt><dd>{selectedLeaf.index} / {selectedLeaf.logicalKey} / {selectedLeaf.level}</dd>
-    <dt>Native bounds x1 / x2 / x3 · units unknown</dt><dd>{selectedLeaf.lower.map((lo,i)=>'['+lo+', '+selectedLeaf.upper[i]+']').join(' / ')}</dd>
+    <dt>Native bounds x1 / x2 / x3 · {coordinateUnit}</dt><dd>{selectedLeaf.lower.map((lo,i)=>'['+lo+', '+selectedLeaf.upper[i]+']').join(' / ')}</dd>
     <dt>No-ghost cell shape · x1 / x2 / x3</dt><dd>{selectedLeaf.cellShape.join(' / ')}</dd>
     <dt>First stored native cell index</dt><dd>{selectedLeaf.firstCellIndex}</dd>
     <dt>Identity scope</dt><dd>Only this file digest; no cross-run block identity claim.</dd>

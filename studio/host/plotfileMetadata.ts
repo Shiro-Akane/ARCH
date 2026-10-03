@@ -1,3 +1,5 @@
+import {validFieldDeclaration,validMeasureLabels} from '../src/host/plotfileDeclarations.ts';
+import type {PlotfileFieldDeclaration} from '../src/host/plotfileDeclarations.ts';
 import {copyPointRequest,nativeAxisContains,POINT_BOUNDARY_RULE} from '../src/host/plotfilePoint.ts';
 import type {PlotfilePointRequest,PlotfilePointEvidence} from '../src/host/plotfilePoint.ts';
 import {copyOverviewRequest,createOverview,MAX_OVERVIEW_BLOCKS,validNativeBlocks} from '../src/host/plotfileOverview.ts';
@@ -31,12 +33,12 @@ function shapeOf(dataset: unknown, label: string): number[] {
  for(const n of shape){cells*=n;if(!Number.isSafeInteger(cells)||cells>MAX_CELLS)throw new Error('Dataset exceeds metadata audit budget: '+label);}
  return shape;
 }
-function scalar(file: InstanceType<typeof h5.File>|InstanceType<typeof h5.Group>, name: string): unknown {
+function scalar(file: InstanceType<typeof h5.File>|InstanceType<typeof h5.Group>|InstanceType<typeof h5.Dataset>, name: string, limit=128): unknown {
  const attribute=file.attrs[name];
  if(!attribute || (attribute.shape && attribute.shape.reduce((a,b)=>a*b,1)!==1))
   throw new Error('Missing or non-scalar plot metadata: '+name);
  // The only string consumed is the writer's bounded geometry identifier.
- if(attribute.metadata.size>128)throw new Error('Oversized plot metadata: '+name);
+ if(attribute.metadata.size>limit)throw new Error('Oversized plot metadata: '+name);
  const value=attribute.json_value;
  return Array.isArray(value)&&value.length===1?value[0]:value;
 }
@@ -52,13 +54,21 @@ function dataset(group: InstanceType<typeof h5.Group>, name: string) {
  return value;
 }
 
+function fieldDeclaration(d:InstanceType<typeof h5.Dataset>):PlotfileFieldDeclaration|null {
+ if(!d.attrs.metadata_version)return null;
+ const known=(key:string)=>{const value=scalar(d,key,256);return value==='unknown'?null:value;};
+ const value={version:scalar(d,'metadata_version'),unit:known('unit'),centering:scalar(d,'centering'),
+  basis:known('basis'),meaning:known('meaning'),unitReason:d.attrs.unit_reason?scalar(d,'unit_reason',256):null};
+ if(!validFieldDeclaration(value))throw Error('Invalid recorded field declaration.');
+ return value;
+}
 function sourceEvidence(file:InstanceType<typeof h5.File>){
  const e=file.get('SourceIdentity');
  if(e===null)return null;
  if(!(e instanceof h5.Group))throw Error('Invalid local SourceIdentity group.');
  const read=(key:string)=>scalar(e,key);
  const known=(key:string)=>{const value=read(key);return value==='unknown'?null:value;};
- for(const key of ['run_id','effective_config_sha256','build_id','source_git_head','eos_unit_system'])
+ for(const key of ['run_id','effective_config_sha256','build_id','source_git_head'])
   if(read(key)!=='unknown')throw Error('Unsupported candidate source identity claim: '+key);
  if(scalar(file,'plot_identity_state')!=='unknown')throw Error('Candidate source identity cannot certify full provenance.');
  const count=read('species_count');
@@ -84,12 +94,12 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
   eosTableState:read('eos_table_state'),eosTableSha256:known('eos_table_sha256'),
   idealGamma:gammaAvailable===1?read('ideal_gamma'):null,
   speciesState:read('species_identity_state'),speciesNames,
-  runId:null,effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:null,
+  runId:null,effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:known('eos_unit_system'),
  };
  if(!sourceEvidenceValid(evidence))throw Error('Invalid candidate source evidence.');
  return evidence;
 }
-type NativeHeader={version:string;measureSource:string;measureConvention:string;measureUnit:null};
+type NativeHeader={version:string;measureSource:string;measureConvention:string;measureUnit:'cm'|'cm^2'|null;measureNormalization?:string|null};
 function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:string):NativeHeader|null {
  const entity=file.get('NativeGrid');
  if(entity===null)return null;
@@ -97,12 +107,16 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
  const expected:Record<string,string|number>={
   version:'candidate-cartesian-1',centering:'cell',ghost_cells:0,block_kind:'active-leaf',
   center_basis:'cartesian',measure_source:'GridMetrics::CellVolume',
-  measure_convention:'active-coordinate-product; inactive-measures-omitted',measure_unit:'unknown',
+  measure_convention:'active-coordinate-product; inactive-measures-omitted',
   logical_identity:'file-local level/logical_x1/logical_x2/logical_x3',
  };
  if(geometry!=='cartesian'||![2,3].includes(shape.length))throw Error('Unsupported candidate native geometry.');
  for(const [name,value] of Object.entries(expected))
   if(scalar(entity,name)!==value)throw Error('Unsupported candidate native metadata: '+name);
+ const rawUnit=scalar(entity,'measure_unit'),measureUnit=rawUnit==='unknown'?null:rawUnit;
+ const rawNormalization=entity.attrs.measure_normalization?scalar(entity,'measure_normalization'):null;
+ const measureNormalization=rawNormalization==='unknown'?null:rawNormalization;
+ if(!validMeasureLabels(measureUnit,measureNormalization,shape.length-1))throw Error('Invalid native measure labels.');
  const publication:Record<string,string>={
   plot_publication_version:'candidate-1',plot_publication_state:'complete',
   plot_publication_method:'checked-close-atomic-replace',plot_storage_order:'x1-fastest',
@@ -121,7 +135,7 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
    throw Error('Candidate logical dataset shape/type mismatch: '+name);
  }
  return {version:'candidate-cartesian-1',measureSource:'GridMetrics::CellVolume',
-  measureConvention:'active-coordinate-product; inactive-measures-omitted',measureUnit:null};
+  measureConvention:'active-coordinate-product; inactive-measures-omitted',measureUnit:measureUnit as 'cm'|'cm^2'|null,measureNormalization:measureNormalization as string|null};
 }
 type RawNumber=number|'NaN'|'Infinity'|'-Infinity';
 function rawNumbers(value:unknown,expected:number):RawNumber[] {
@@ -165,7 +179,7 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
  let nativeCells:null|{
   version:string;identityScope:string;logicalKey:string;level:number;logicalCoordinates:number[];
   lower:Record<string,number[]>;upper:Record<string,number[]>;cellMeasure:number[];
-  measureSource:string;measureConvention:string;measureUnit:null;
+  measureSource:string;measureConvention:string;measureUnit:'cm'|'cm^2'|null;measureNormalization?:string|null;
  }=null;
  if(native){
   const ng=group(file,'NativeGrid');
@@ -203,7 +217,7 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
  }
  const nonFinite=values.some(v=>typeof v!=='number')||Object.values(coordinates).some(a=>a.some(v=>typeof v!=='number'));
  return {field,block,start:[...start],shape:[...count],order:'x1-fastest',linearIndices:indices,values,coordinates,
-  nativeCells,unit:null,nonFiniteEncoding:'IEEE special values as explicit strings',diagnostics:nonFinite?['NONFINITE_RAW_VALUES']:[]};
+  nativeCells,unit:fieldDeclaration(data)?.unit??null,nonFiniteEncoding:'IEEE special values as explicit strings',diagnostics:nonFinite?['NONFINITE_RAW_VALUES']:[]};
 }
 function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:PlotfileOverviewRequest):PlotfileOverview {
  const dimension=(shape.length-1) as 1|2,ng=group(file,'NativeGrid'),data=dataset(group(file,'Data'),request.field);
@@ -342,7 +356,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    const grid=group(file,'Grid'),data=group(file,'Data');
    const names=data.keys();
    if(!names.length||names.length>MAX_FIELDS)throw new Error('Invalid field count or field audit budget exceeded.');
-   const fields=names.map(name=>({name,shape:shapeOf(dataset(data,name),name),unit:null}));
+   const fields=names.map(name=>{const d=dataset(data,name),declaration=fieldDeclaration(d);return {name,shape:shapeOf(d,name),unit:declaration?.unit??null,declaration};});
    const shape=fields[0].shape;
    if(shape.length!==dimension+1||fields.some(f=>JSON.stringify(f.shape)!==JSON.stringify(shape)))
     throw new Error('Field shapes must match [blocks, ...cellShape] for the selected dimension.');
@@ -366,13 +380,17 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
     if(!candidateNativeGrid||!names.includes(overviewRequest.field))throw Error('Overview requires candidate native Cartesian 1D/2D metadata and a stored field.');
     overview=readOverview(file,shape,overviewRequest);
    }
-   structure={candidateSourceIdentity,candidateNativeGrid,time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
-    coordinates:{storedBasis:'cartesian',centering:'cell-center',units:null},
+   const coordinateUnit=grid.attrs.coordinate_unit?scalar(grid,'coordinate_unit'):null;
+   if(coordinateUnit!==null&&!['unknown','cm'].includes(String(coordinateUnit)))throw Error('Unsupported recorded coordinate unit.');
+   const timeUnit=file.attrs.time_unit?scalar(file,'time_unit'):null;
+   if(timeUnit!==null&&!['unknown','s'].includes(String(timeUnit)))throw Error('Unsupported recorded time unit.');
+   structure={timeUnit:timeUnit==='s'?'s':null,candidateSourceIdentity,candidateNativeGrid,time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
+    coordinates:{storedBasis:'cartesian',centering:'cell-center',units:coordinateUnit==='cm'?'cm':null},
     completion:{state:'unknown',reason:candidateNativeGrid?'Candidate writer publication recognized; scientific contract review remains pending.':'Legacy writer has no recognized completion/publish contract.'},
     scientificIdentity:{case:null,config:null,build:null,binary:null,eos:null},
     nativeCellGeometry:{bounds:'unavailable',volume:'unavailable'},
     renderEligible:false,
-    diagnostics:[request?'FIELD_SLICE_AUDIT':'METADATA_ONLY','OUTPUT_COMPLETION_UNVERIFIED','UNITS_UNAVAILABLE','SCIENTIFIC_IDENTITY_UNAVAILABLE',...(candidateNativeGrid?['CANDIDATE_NATIVE_GRID_REVIEW_PENDING']:['NATIVE_CELL_GEOMETRY_UNAVAILABLE'])]};
+    diagnostics:[request?'FIELD_SLICE_AUDIT':'METADATA_ONLY','OUTPUT_COMPLETION_UNVERIFIED',fields.every(f=>f.unit===null)?'UNITS_UNAVAILABLE':'RECORDED_UNITS_REVIEW_PENDING','SCIENTIFIC_IDENTITY_UNAVAILABLE',...(candidateNativeGrid?['CANDIDATE_NATIVE_GRID_REVIEW_PENDING']:['NATIVE_CELL_GEOMETRY_UNAVAILABLE'])]};
   } finally {if(file.file_id>=0n)file.close();}
   const hash=createHash('sha256'),buffer=Buffer.alloc(64*1024);
   let position=0;

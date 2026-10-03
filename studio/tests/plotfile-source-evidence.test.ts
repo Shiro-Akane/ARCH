@@ -16,6 +16,7 @@ const valid={version:'candidate-identity-1',scope:'partial',caseId:'Sod',caseSou
  runId:null,effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:null};
 test('source evidence separates partial recorded values from unsupported full/build/unit claims',()=>{
  assert.ok(sourceEvidenceValid(valid));
+ assert.ok(sourceEvidenceValid({...valid,eosUnitSystem:'cgs'}));
  for(const change of [{scope:'complete'},{version:'future'},{buildId:'guessed'},{eosUnitSystem:'CGS'},
   {rawConfigSource:'current path'},{binarySource:'argv0'},{binaryScope:'all dependencies'},
   {caseId:null},{rawConfigSha256:'wrong'},{binarySha256:'B'.repeat(64)},

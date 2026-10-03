@@ -1,3 +1,5 @@
+import {declaredText,validFieldDeclaration,validMeasureLabels} from './plotfileDeclarations.ts';
+import type {PlotfileFieldDeclaration} from './plotfileDeclarations.ts';
 import {copyPointRequest,validPointEvidence,pointMatchesNativeCell} from './plotfilePoint.ts';
 import type {PlotfilePointRequest,PlotfilePointEvidence} from './plotfilePoint.ts';
 import {copyOverviewRequest,validOverview} from './plotfileOverview.ts';
@@ -11,7 +13,7 @@ export interface SliceSelection {field:string;block:number;start:number[];count:
 export type RawPlotNumber=number|'NaN'|'Infinity'|'-Infinity';
 export interface CandidateNativeGrid {
  version:'candidate-cartesian-1';measureSource:'GridMetrics::CellVolume';
- measureConvention:'active-coordinate-product; inactive-measures-omitted';measureUnit:null;
+ measureConvention:'active-coordinate-product; inactive-measures-omitted';measureUnit:'cm'|'cm^2'|null;measureNormalization?:string|null;
 }
 export interface NativePlotCells extends CandidateNativeGrid {
  identityScope:'file-local';logicalKey:string;level:number;logicalCoordinates:number[];
@@ -22,10 +24,10 @@ export interface PlotfileAudit {
  overview?:PlotfileOverview;
  candidateSourceIdentity?:PlotfileSourceEvidence|null;
  schemaVersion:string;file:{bytes:number;sha256:string};time:number;dimension:number;geometry:string;
- blocks:number;cellShape:number[];cells:number;fields:{name:string;shape:number[];unit:null}[];
+ blocks:number;cellShape:number[];cells:number;fields:{name:string;shape:number[];unit:string|null;declaration?:PlotfileFieldDeclaration|null}[];timeUnit?:'s'|null;
  completion:{state:'unknown';reason:string};renderEligible:false;candidateNativeGrid?:CandidateNativeGrid|null;
- scientificIdentity:Record<string,null>;coordinates:{storedBasis:'cartesian';centering:'cell-center';units:null};
- payload?:{nativeCells?:NativePlotCells|null;field:string;block:number;start:number[];shape:number[];linearIndices:number[];values:RawPlotNumber[];coordinates:Record<'x'|'y'|'z',RawPlotNumber[]>;unit:null;diagnostics:string[]};
+ scientificIdentity:Record<string,null>;coordinates:{storedBasis:'cartesian';centering:'cell-center';units:'cm'|null};
+ payload?:{nativeCells?:NativePlotCells|null;field:string;block:number;start:number[];shape:number[];linearIndices:number[];values:RawPlotNumber[];coordinates:Record<'x'|'y'|'z',RawPlotNumber[]>;unit:string|null;diagnostics:string[]};
 }
 export interface AuditResponse {projectId:string;relativePath:string;audit:PlotfileAudit}
 const raw=(v:unknown):v is RawPlotNumber=>typeof v==='number'&&Number.isFinite(v)||v==='NaN'||v==='Infinity'||v==='-Infinity';
@@ -33,10 +35,10 @@ function unknownScience(v:unknown){return record(v)&&['case','config','build','b
 function rawCoordinates(v:unknown,n:number){if(!record(v))return false;return ['x','y','z'].every(k=>{const a=v[k];return Array.isArray(a)&&a.length===n&&a.every(raw);});}
 function nativeHeaderValid(v:unknown):v is CandidateNativeGrid {
  return record(v)&&v.version==='candidate-cartesian-1'&&v.measureSource==='GridMetrics::CellVolume'&&
-  v.measureConvention==='active-coordinate-product; inactive-measures-omitted'&&v.measureUnit===null;
+  v.measureConvention==='active-coordinate-product; inactive-measures-omitted'&&validMeasureLabels(v.measureUnit,v.measureNormalization);
 }
 function nativeCellsValid(v:unknown,header:unknown,n:number,dimension:number):v is NativePlotCells {
- if(!nativeHeaderValid(v)||!nativeHeaderValid(header)||!record(v)||v.identityScope!=='file-local'||
+ if(!nativeHeaderValid(v)||!nativeHeaderValid(header)||v.measureUnit!==header.measureUnit||v.measureNormalization!==header.measureNormalization||!record(v)||v.identityScope!=='file-local'||
     !Number.isSafeInteger(v.level)||Number(v.level)<0||!Array.isArray(v.logicalCoordinates)||
     v.logicalCoordinates.length!==3||v.logicalCoordinates.some(x=>!Number.isSafeInteger(x)||x<0||x>0xffffffff)||
     v.logicalKey!==[v.level,...v.logicalCoordinates].join('/')||
@@ -72,15 +74,18 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
     !Number.isSafeInteger(a.cells)||Number(a.cells)<1||Number(a.cells)>10_000_000||
     a.cells!==Number(a.blocks)*a.cellShape.reduce((x:number,y:number)=>x*y,1)||
     !Array.isArray(a.fields)||a.fields.length<1||a.fields.length>128||
-    a.fields.some(f=>!record(f)||typeof f.name!=='string'||!f.name.length||f.unit!==null||JSON.stringify(f.shape)!==JSON.stringify([a.blocks,...a.cellShape as number[]]))||
+    a.fields.some(f=>!record(f)||typeof f.name!=='string'||!f.name.length||(f.unit!==null&&!declaredText(f.unit))||(f.declaration!==undefined&&f.declaration!==null? !validFieldDeclaration(f.declaration)||f.unit!==f.declaration.unit:f.unit!==null)||JSON.stringify(f.shape)!==JSON.stringify([a.blocks,...a.cellShape as number[]]))||
     !record(a.completion)||a.completion.state!=='unknown'||typeof a.completion.reason!=='string'||a.renderEligible!==false||
     !unknownScience(a.scientificIdentity)||
-    !record(a.coordinates)||a.coordinates.storedBasis!=='cartesian'||a.coordinates.centering!=='cell-center'||a.coordinates.units!==null)
+    !record(a.coordinates)||a.coordinates.storedBasis!=='cartesian'||a.coordinates.centering!=='cell-center'||![null,'cm'].includes(a.coordinates.units as null|'cm'))
   throw Error('Unsupported or malformed Plotfile audit response.');
+ if(a.coordinates.units==='cm'&&(!record(a.candidateSourceIdentity)||a.candidateSourceIdentity.eosUnitSystem!=='cgs'))throw Error('Coordinate units lack matching recorded unit system.');
+ if(a.timeUnit==='s'&&(!record(a.candidateSourceIdentity)||a.candidateSourceIdentity.eosUnitSystem!=='cgs'))throw Error('Time units lack matching recorded unit system.');
+ if(a.timeUnit!==undefined&&a.timeUnit!==null&&a.timeUnit!=='s')throw Error('Invalid recorded time unit.');
  if(a.candidateSourceIdentity!==undefined&&a.candidateSourceIdentity!==null&&!sourceEvidenceValid(a.candidateSourceIdentity))
   throw Error('Invalid candidate source evidence.');
  const hasNative=a.candidateNativeGrid!==undefined&&a.candidateNativeGrid!==null;
- if(hasNative&&(!nativeHeaderValid(a.candidateNativeGrid)||a.geometry!=='cartesian'||![1,2].includes(Number(a.dimension))))
+ if(hasNative&&(!nativeHeaderValid(a.candidateNativeGrid)||!validMeasureLabels(a.candidateNativeGrid.measureUnit,a.candidateNativeGrid.measureNormalization,Number(a.dimension))||a.geometry!=='cartesian'||![1,2].includes(Number(a.dimension))))
   throw Error('Invalid candidate native header.');
  if(selection){
   const cellShape=a.cellShape as number[];
@@ -94,7 +99,7 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
    for(let axis=cellShape.length-1;axis>=0;axis--){index+=(selection.start[axis]+local%selection.count[axis])*stride;local=Math.floor(local/selection.count[axis]);stride*=cellShape[axis];}
    return index;
   });
-  if(a.file.sha256!==expectedSha||!record(p)||p.field!==selection.field||p.block!==selection.block||p.order!=='x1-fastest'||p.unit!==null||
+  if(a.file.sha256!==expectedSha||!record(p)||p.field!==selection.field||p.block!==selection.block||p.order!=='x1-fastest'||p.unit!==(a.fields as {name:string;unit:string|null}[]).find(f=>f.name===selection.field)?.unit||
      JSON.stringify(p.start)!==JSON.stringify(selection.start)||JSON.stringify(p.shape)!==JSON.stringify(selection.count)||
      n<1||n>512||!Array.isArray(p.values)||p.values.length!==n||!p.values.every(raw)||
      !Array.isArray(p.linearIndices)||p.linearIndices.length!==n||p.linearIndices.some((v,i)=>v!==expectedIndices[i])||

@@ -124,3 +124,14 @@ CGS SourceIdentity.eos_unit_system、time_unit 和 Grid.coordinate_unit。
 这不 retroactively 改写上述 t=0 文件；旧文件仍保持 missing finding。
 新声明已完成 synthetic writer 与 checkpoint scoped regression，尚未重链生产 ARCH
 或生成新的 t=0 对照，不能代替生产科学验收。
+
+
+## 真实新声明读取接入
+
+writer clean基线ab23bad7e8bea93c3569618d1a6335312372cc30；
+新CPU binary c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec。
+Sod/CellularDet新t=0 file SHA、输入身份和scoped结果见PlotfileFieldRealT0-20261003.Summary.json。
+Host/client已接metadata/slice/overview/point声明；字段标签和native measure仍是recorded candidate，
+不提升为完整身份/科学认证。Viewer单位消费已实现，新单位native UAT仍待。
+最新准确Host/UI源码引用是包含本节的提交；前述4e9a3640是之前导航修复的引用，
+不能再将其当作最新声明接入代码。独立原始数据仍留本机。

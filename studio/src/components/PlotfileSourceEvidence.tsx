@@ -13,7 +13,8 @@ export function PlotfileSourceEvidence({evidence}:{evidence?:Evidence|null}){
    <dt>EOS table</dt><dd>{evidence.eosTableState} · {evidence.eosTableSha256??'no recorded digest'}</dd>
    <dt>IdealGas gamma</dt><dd>{evidence.idealGamma??'not recorded'}</dd>
    <dt>Ordered species</dt><dd>{evidence.speciesState} · {evidence.speciesNames.join(', ')||'none recorded'}</dd>
-   <dt>Run / effective config / build / source Git / unit system</dt><dd>unknown</dd>
+   <dt>Run / effective config / build / source Git</dt><dd>unknown</dd>
+   <dt>Recorded unit system</dt><dd>{evidence.eosUnitSystem??'unknown'}</dd>
   </dl>
   <p>Recorded candidate evidence does not certify full scientific provenance or freshness. Raw config differs from effective config; the binary digest covers the main executable only.</p>
  </section>;

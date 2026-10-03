@@ -2445,3 +2445,10 @@ publication/checkpoint scoped tests 与独立 synthetic h5py FP64 位级读回�
 未重链 production ARCH、未生成新 t=0、未做完整身份或科学 review。
 见 PlotfileFieldDeclarations-20261003.zh-CN.md。旧 native UAT/305项 Studio检查不重复；
 完整联合目标、O7物理 review/平台验证及新声明的 Host/Viewer 消费继续未完成。
+
+
+2026-10-03：从clean ab23bad7构建CPU ARCH c294f0d1…，既有Sod/CellularDet t=0方法通过。
+新DENS/native/单位声明经checkpoint独立读回与Host/client四种只读查询通过；
+Host与UI已迁移recorded declaration，旧文件unknown保留。
+309项回归/lint/typecheck/build通过，新单位native UAT及完整科学/来源review未完成。
+见PlotfileFieldRealT0-20261003.zh-CN.md；完整联合目标不收缩到本切片。

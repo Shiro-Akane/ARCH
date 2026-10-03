@@ -59,8 +59,8 @@ function ConnectedAudit({projectId}:{projectId:string}){
   <button disabled={busy||!path.trim()} onClick={()=>void read()}>Read metadata</button>
   <button disabled={!busy} onClick={cancel}>Cancel read</button>
   <p role="status">{message}</p>
-  <p>File completion: unverified · Units: unavailable · Scientific provenance: unavailable. Raw inspection does not certify a simulation result.</p>
-  {info&&<><dl><dt>Observed file</dt><dd>{info.relativePath}</dd><dt>SHA-256</dt><dd className="audit-digest">{info.audit.file.sha256}</dd><dt>Time</dt><dd>{info.audit.time}</dd><dt>Geometry / dimension</dt><dd>{info.audit.geometry} / {info.audit.dimension}D</dd><dt>Stored shape</dt><dd>{info.audit.blocks} blocks × [{info.audit.cellShape.join(', ')}] · x1-fastest</dd></dl>
+  <p>File completion: unverified · Units: recorded declarations when available, review pending · Scientific provenance: unavailable. Raw inspection does not certify a simulation result.</p>
+  {info&&<><dl><dt>Observed file</dt><dd>{info.relativePath}</dd><dt>SHA-256</dt><dd className="audit-digest">{info.audit.file.sha256}</dd><dt>Time</dt><dd>{info.audit.time} · {info.audit.timeUnit??'unit unknown'}</dd><dt>Geometry / dimension</dt><dd>{info.audit.geometry} / {info.audit.dimension}D</dd><dt>Stored shape</dt><dd>{info.audit.blocks} blocks × [{info.audit.cellShape.join(', ')}] · x1-fastest</dd></dl>
    <PlotfileSourceEvidence evidence={info.audit.candidateSourceIdentity}/>
    <label>Stored field <select aria-label="Audit field" value={field} onChange={e=>setField(e.target.value)}>{info.audit.fields.map(f=><option key={f.name} value={f.name}>{f.name}</option>)}</select></label>
    <label>Block index <input aria-label="Audit block" value={block} onChange={e=>setBlock(e.target.value)} inputMode="numeric"/></label>
@@ -78,7 +78,7 @@ function ConnectedAudit({projectId}:{projectId:string}){
   {payload&&<><h3>Displayed raw samples · {payload.field}</h3><p>{samples?.relativePath} · block {payload.block} · start [{payload.start.join(', ')}] · shape [{payload.shape.join(', ')}]. These are stored Cartesian centers. {payload.nativeCells?'Candidate native bounds and measure are available in the Inspector.':'Native cell bounds and measure were not recorded.'}</p>
    {payload.diagnostics.length>0&&<p role="alert">{payload.diagnostics.join(' · ')}</p>}
    {samples&&<PlotfileNativeView samples={samples} selectedRow={selectedRow} onSelect={setSelectedRow}/>}
-   <div className="audit-table-scroll"><table><thead><tr><th>Inspect</th><th>Global index</th><th>Raw value · unit unknown</th><th>Stored x</th><th>Stored y</th><th>Stored z</th></tr></thead><tbody>{payload.values.map((v,i)=><tr key={payload.linearIndices[i]}><td><button aria-label={"Inspect stored cell "+payload.linearIndices[i]} aria-pressed={selectedRow===i} onClick={()=>setSelectedRow(i)}>Inspect</button></td><td>{payload.linearIndices[i]}</td><td>{String(v)}</td><td>{String(payload.coordinates.x[i])}</td><td>{String(payload.coordinates.y[i])}</td><td>{String(payload.coordinates.z[i])}</td></tr>)}</tbody></table></div>
+   <div className="audit-table-scroll"><table><thead><tr><th>Inspect</th><th>Global index</th><th>Raw value · {payload.unit??'unit unknown'}</th><th>Stored x</th><th>Stored y</th><th>Stored z</th></tr></thead><tbody>{payload.values.map((v,i)=><tr key={payload.linearIndices[i]}><td><button aria-label={"Inspect stored cell "+payload.linearIndices[i]} aria-pressed={selectedRow===i} onClick={()=>setSelectedRow(i)}>Inspect</button></td><td>{payload.linearIndices[i]}</td><td>{String(v)}</td><td>{String(payload.coordinates.x[i])}</td><td>{String(payload.coordinates.y[i])}</td><td>{String(payload.coordinates.z[i])}</td></tr>)}</tbody></table></div>
    {samples&&selectedRow!==null&&<PlotfileNativeInspector samples={samples} row={selectedRow}/>}
   </>}
  </div>;

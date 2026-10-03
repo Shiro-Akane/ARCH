@@ -97,11 +97,11 @@ function NativeView({samples,domain,selectedRow,onSelect}:{samples:AuditResponse
     <text x={frame.left+f*frame.width} y={335} textAnchor="middle">{plotValue(f,view.x).toPrecision(4)}</text>
     <text x={65} y={frame.top+(1-f)*frame.height+4} textAnchor="end">{plotValue(f,view.y).toPrecision(4)}</text>
    </g>)}
-   <text x={460} y={363} textAnchor="middle" fill="#d5e2eb">x1 · unit unknown</text>
-   <text x={16} y={165} transform="rotate(-90 16 165)" textAnchor="middle" fill="#d5e2eb">{a.dimension===2?'x2 · unit unknown':p.field+' · unit unknown'}</text>
+   <text x={460} y={363} textAnchor="middle" fill="#d5e2eb">x1 · {a.coordinates.units??'unit unknown'}</text>
+   <text x={16} y={165} transform="rotate(-90 16 165)" textAnchor="middle" fill="#d5e2eb">{a.dimension===2?'x2 · '+(a.coordinates.units??'unit unknown'):p.field+' · '+(p.unit??'unit unknown')}</text>
   </svg>
   {a.dimension===2&&fieldRange&&<div aria-label="Stored field color range" style={{background:'linear-gradient(to right,'+[0,.25,.5,.75,1].map(t=>plotColor('Viridis',t)).join(',')+')',padding:6,color:'#fff'}}>
-   Viridis · {fieldRange[0]} → {fieldRange[1]} · {p.field} · unit unknown
+   Viridis · {fieldRange[0]} → {fieldRange[1]} · {p.field} · {p.unit??'unit unknown'}
   </div>}
  </section>;
 }
