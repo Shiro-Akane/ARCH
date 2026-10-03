@@ -1543,3 +1543,12 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 28并发增量CPU构建24.455s，最低可用15094724KiB、peak owned RSS9017400KiB、swap0，保护器未停止。首次probe编译因不完整ConfigurationInput类型失败，改为loader私有身份字段后重编通过；没有循环include或绕过失败。精简证据O7RegisteredCaseIdentitySummary.json。
 - 这是Registry-created实例的配对检查，不给未注册直接构造子类推断身份；不宣告所有任意C++访问可追踪。build-cpu binary已更新，Studio的build-studio-cpu/Manifest未替换；不冒充Studio已消费新binary。无simulation/CUDA/raw上传/push。
 - 顺序清单顶部修正过时v3迁移描述，保留整体科学/原生UAT未签收、特殊G输入换算待批准。联合计划允许O7.0与3C并行，本轮未越过3C去实现全模型/JENS/RZ。
+
+### 2026-10-03 — Host Build consumes registered-case identity change
+
+- clean4cf374a8通过原studio-cpu-release Host Build流程成功更新受管binary/Manifest，buildId02ad2cf2-6c7f-4bb5-9f0a-090b18722620。未复制build-cpu产物、未独立configure。四个改变的Core输入指纹均与新Manifest compilerInputs记录一致；sourceGitHead正确、repositoryDirty=false。
+- 新binary SHA e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7；原ae619257已替换。guard42.172s、minimum available19708608KiB、peak ownedRSS3744516KiB、swap0，无guard stop；不是benchmark。完整依赖证据仍不齐，freshness-unknown保留。
+- 新binary的Host v3 schema/registry/inspection身份匹配；有效Sod输入ok、空输入error。Sod两次未保存32样本请求同token/generation1，sequence1→2；六字段成功。Cellular shape[12,20]/x1-fastest共240点、七字段；AMR complete=true、20叶块，level1=4/level2=16。
+- Field/AMR project/case/configRevision/build/binary及EOS sourceFingerprint一致；execution明确not_executed/not_created。原输入字节不变，finally关闭Preview，/proc确认无该受管binary Preview worker。精简证据StudioRegisteredCaseManagedSyncSummary.json；新目录原始响应/日志只留本机。
+- 这是受影响新Core的Host集成复验，不是UI/原生file-dialog/renderer UAT或独立科学演化验收；未重跑未改动Studio完整227项基线。WSLg完整重启仍待授权，未提前全模型/JENS/RZ或CUDA。
+- 新受管binary随后实际执行已批准SmoothAdvection retained checkpoint续算：succeeded/exit0，step100/time0.1；16对象/14数据集路径、属性、布局和所有值与旧source最终checkpoint相同，maxAbs0，checkpoint SHA不变。进程退出，raw输出留新的本地目录。Run发生时仅本轮两份报告未提交，因此记录repositoryDirty=true；无未提交Core改动，Build发生时为clean4cf374a8。Preview/AMR仍无timestep；这条显式Restart包含真实演化，不能笼统写成整个复验无simulation。

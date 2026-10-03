@@ -1,0 +1,280 @@
+{
+  "scope": "Host integration after registered-case identity change: static configuration, init-only Preview/AMR, and retained fixed-grid CPU Restart",
+  "status": "PASS",
+  "sodInputSha": "595001d1c87d56fe9f0c3c4203bc36fc2c09fb425acd2f4dd29c42082bcec12b",
+  "cellularInputSha": "c3e8b28d04de5f9be5667799c6a4501d7dc6b0c61c32d7065552768817ee1ab6",
+  "buildId": "02ad2cf2-6c7f-4bb5-9f0a-090b18722620",
+  "binarySHA256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+  "binaryState": "freshness-unknown",
+  "sourceCommit": "4cf374a84bf10b3532cf95c0d1878c4c8c5eabef",
+  "configuration": {
+    "schemaVersion": "3",
+    "standardKeyCount": 94,
+    "registeredCaseCount": 14,
+    "staticBuildId": "selected-binary:e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+    "validStatus": "ok",
+    "emptyStatus": "error"
+  },
+  "sodWarm": [
+    {
+      "identity": {
+        "requestId": "aabab947-d3e5-4560-afb1-6238fa98a819",
+        "projectId": "ccac3fb8-7bf3-4a14-b443-8003a3e45840",
+        "profileId": "sod-initial-cpu",
+        "caseId": "Sod",
+        "configRevision": "8473eb1d606d89a9aff110b0c0b90605920752b28501677e1c806a0b0a5fb3ac",
+        "buildId": "02ad2cf2-6c7f-4bb5-9f0a-090b18722620",
+        "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+      },
+      "session": {
+        "generation": 1,
+        "processToken": "bb58c796-18ff-4858-83ac-9cb55019ef68",
+        "sequence": 1
+      },
+      "fields": [
+        {
+          "key": "DENS",
+          "unit": "g/cm^3",
+          "count": 32
+        },
+        {
+          "key": "PRES",
+          "unit": "erg/cm^3",
+          "count": 32
+        },
+        {
+          "key": "TEMP",
+          "unit": "K",
+          "count": 32
+        },
+        {
+          "key": "VELX",
+          "unit": "cm/s",
+          "count": 32
+        },
+        {
+          "key": "ENER",
+          "unit": "erg/cm^3",
+          "count": 32
+        },
+        {
+          "key": "EINT",
+          "unit": "erg/g",
+          "count": 32
+        }
+      ]
+    },
+    {
+      "identity": {
+        "requestId": "2bdda5d3-e667-498a-bcbc-1bc7c12a4dee",
+        "projectId": "ccac3fb8-7bf3-4a14-b443-8003a3e45840",
+        "profileId": "sod-initial-cpu",
+        "caseId": "Sod",
+        "configRevision": "e0eb9c7b2a4b9218d67fdb261df5fcbacca57953e53e2f5120d9ce71c4a37db0",
+        "buildId": "02ad2cf2-6c7f-4bb5-9f0a-090b18722620",
+        "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+      },
+      "session": {
+        "generation": 1,
+        "processToken": "bb58c796-18ff-4858-83ac-9cb55019ef68",
+        "sequence": 2
+      },
+      "fields": [
+        {
+          "key": "DENS",
+          "unit": "g/cm^3",
+          "count": 32
+        },
+        {
+          "key": "PRES",
+          "unit": "erg/cm^3",
+          "count": 32
+        },
+        {
+          "key": "TEMP",
+          "unit": "K",
+          "count": 32
+        },
+        {
+          "key": "VELX",
+          "unit": "cm/s",
+          "count": 32
+        },
+        {
+          "key": "ENER",
+          "unit": "erg/cm^3",
+          "count": 32
+        },
+        {
+          "key": "EINT",
+          "unit": "erg/g",
+          "count": 32
+        }
+      ]
+    }
+  ],
+  "cellular": {
+    "identity": {
+      "requestId": "d64a47cc-5023-4126-ab44-e96b617c7251",
+      "projectId": "ccac3fb8-7bf3-4a14-b443-8003a3e45840",
+      "profileId": "cellular-initial-cpu",
+      "caseId": "CellularDet",
+      "configRevision": "c3e8b28d04de5f9be5667799c6a4501d7dc6b0c61c32d7065552768817ee1ab6",
+      "buildId": "02ad2cf2-6c7f-4bb5-9f0a-090b18722620",
+      "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+    },
+    "sampling": {
+      "count": 240,
+      "fixedCoordinates": [
+        {
+          "name": "x3",
+          "unit": "cm",
+          "value": 0
+        }
+      ],
+      "kind": "uniform",
+      "order": "x1-fastest",
+      "position": "bin-center",
+      "shape": [
+        12,
+        20
+      ],
+      "valueLocation": "init-sample"
+    },
+    "fields": [
+      {
+        "key": "DENS",
+        "unit": "g/cm^3",
+        "count": 240
+      },
+      {
+        "key": "PRES",
+        "unit": "erg/cm^3",
+        "count": 240
+      },
+      {
+        "key": "TEMP",
+        "unit": "K",
+        "count": 240
+      },
+      {
+        "key": "VELX",
+        "unit": "cm/s",
+        "count": 240
+      },
+      {
+        "key": "ENER",
+        "unit": "erg/cm^3",
+        "count": 240
+      },
+      {
+        "key": "EINT",
+        "unit": "erg/g",
+        "count": 240
+      },
+      {
+        "key": "VELY",
+        "unit": "cm/s",
+        "count": 240
+      }
+    ],
+    "eosSourceFingerprint": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+  },
+  "amr": {
+    "identity": {
+      "projectId": "ccac3fb8-7bf3-4a14-b443-8003a3e45840",
+      "buildId": "02ad2cf2-6c7f-4bb5-9f0a-090b18722620",
+      "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+      "caseId": "CellularDet",
+      "configRevision": "c3e8b28d04de5f9be5667799c6a4501d7dc6b0c61c32d7065552768817ee1ab6",
+      "requestId": "f0df7494-2850-484b-aa6e-29ce89130558"
+    },
+    "complete": true,
+    "leafCount": 20,
+    "levelCounts": [
+      {
+        "leafBlocks": 0,
+        "level": 0
+      },
+      {
+        "leafBlocks": 4,
+        "level": 1
+      },
+      {
+        "leafBlocks": 16,
+        "level": 2
+      }
+    ],
+    "execution": {
+      "previewBackend": "cpu",
+      "scientificOutput": "not_created",
+      "simulationReadiness": "not_checked",
+      "timeStepping": "not_executed"
+    },
+    "eosSourceFingerprint": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+  },
+  "inputFilesUnchanged": true,
+  "previewShutdown": true,
+  "beforeBinarySHA256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+  "sourceWorkingTreeCleanAtBuild": true,
+  "buildManifestProfileFingerprint": "bb6d0e898f36c8aa0794189d51cfaff396f89bd47869143c6088860681206feb",
+  "inputsStableDuringBuild": true,
+  "changedCoreInputsMatchManifest": {
+    "src/data/GlobalDefs.h": true,
+    "src/core/config/RuntimeParams.h": true,
+    "src/core/problem/ProblemRegistry.h": true,
+    "src/interface/ProblemGenerator.h": true
+  },
+  "compilerInputFileCount": 735,
+  "compilerObjectCount": 66,
+  "noManagedPreviewWorkersAfterShutdown": true,
+  "guard": {
+    "elapsedSeconds": 42.172,
+    "minAvailableKiB": 19708608,
+    "peakOwnedRSSKiB": 3744516,
+    "baselineSwapKiB": 0,
+    "peakSwapKiB": 0,
+    "stopped": false
+  },
+  "guardIsBenchmark": false,
+  "localDataId": "registered-case-managed-sync-4c41e0d9-b4b0-4ac0-b671-da077691fa50",
+  "localVerificationScript": "registered-case-managed-sync-4c41e0d9-b4b0-4ac0-b671-da077691fa50.mjs",
+  "localVerificationScriptSHA256": "0f67e32dfe33ed385b0bf1e7c9dc74258edf7c83a1c38865f4c68e6f3515f731",
+  "rawResponsesRetainedLocally": true,
+  "limitations": [
+    "Incomplete dependency evidence remains freshness-unknown",
+    "No native desktop/file-dialog/renderer UAT",
+    "Registered cases do not all have full field Preview",
+    "AMR contains no cell field arrays; uniform samples are not cell averages",
+    "Not independent scientific accuracy or evolution acceptance",
+    "Preview/AMR were init-only; explicit retained SmoothAdvection Restart reached step100/time0.1",
+    "No CUDA or new physics campaign"
+  ],
+  "realRestart": {
+    "status": "PASS",
+    "runId": "9eed92af-092b-4d97-bb81-274df1419c6c",
+    "state": "succeeded",
+    "exitCode": 0,
+    "sourceCommit": "4cf374a84bf10b3532cf95c0d1878c4c8c5eabef",
+    "sourceWorkingTreeClean": false,
+    "binarySHA256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+    "savedInputSHA256": "14b1fb8c3275ef5174b7959ed30d3d5203d664741bb341e684e0bf9ff9567781",
+    "checkpointSHA256": "933016ac9e0708cba709e7bab373f61bdf5c8cad7cf9afb722616c3a4373c61b",
+    "checkpointUnchanged": true,
+    "finalStep": 100,
+    "finalTime": 0.1,
+    "comparedObjects": 16,
+    "comparedDatasets": 14,
+    "allPathsAttributesLayoutsValuesEqual": true,
+    "maxAbs": 0,
+    "ownedProcessesExited": true,
+    "localRawDataId": "registered-case-real-restart-90f3ebd4-15e9-4161-8174-314ce3def12b",
+    "retainedBaselineRawDataId": "restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9",
+    "scope": "fixed-grid CPU continuation engineering, not independent scientific accuracy"
+  },
+  "uncommittedAtRestart": [
+    "docs/development/StudioIntegrationProgress.zh-CN.md",
+    "docs/development/StudioRegisteredCaseManagedSyncSummary.json"
+  ],
+  "noUncommittedCoreChangeAtRestart": true
+}
