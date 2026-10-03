@@ -127,7 +127,8 @@ struct Block {
      * @param root_dx1/2/3  Root-level cell spacing (computed by AmrTree)
      */
     void InitGeometry(const Grid& root_grid,
-                      double root_dx1, double root_dx2, double root_dx3)
+                      double root_dx1, double root_dx2, double root_dx3,
+                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
         // Calculate cell sizes at this level
         double factor = 1.0 / (1 << level);
@@ -153,7 +154,7 @@ struct Block {
                     root_grid.nblockx1, root_grid.nblockx2, root_grid.nblockx3);
         grid.geometry = root_grid.geometry;
         grid.dim = root_grid.dim;
-        grid.InitializeTopology();
+        grid.InitializeTopology(semantics);
     }
 };
 

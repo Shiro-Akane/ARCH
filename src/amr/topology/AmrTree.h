@@ -148,7 +148,19 @@ public:
     /**
      * @brief Initialize the Level 0 root blocks.
      */
-    void InitRootGrid(const SimConfig& config, int n_species) {
+    void InitRootGrid(const SimConfig& config, int n_species,
+                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) {
+        // Preflight explicit RZ domain before changing root/active storage.
+        // Default polar creation retains its historical per-block validation.
+        if (semantics != GridMetrics::GeometrySemantics::Existing) {
+            Grid candidate(MAX_NG, config.grid.x1_min, config.grid.x1_max,
+                config.grid.x2_min, config.grid.x2_max,
+                config.grid.x3_min, config.grid.x3_max,
+                config.grid.nblockx1, config.grid.nblockx2, config.grid.nblockx3);
+            candidate.dim=config.grid.dim;
+            candidate.geometry=config.grid.geometry;
+            candidate.InitializeTopology(semantics);
+        }
         if (config.amr.lrefinemin < 0 ||
             config.amr.lrefinemax < config.amr.lrefinemin ||
             config.amr.lrefinemax > kMaxRefinementLevel) {
@@ -203,7 +215,7 @@ public:
                     b.logical_x2 = j;
                     b.logical_x3 = k;
                     b.morton_code = encodeMorton(0, i, j, k);
-                    b.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3);
+                    b.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3, semantics);
                     b.fluid_state.InitSpecies(n_species);
                     b.state_next.InitSpecies(n_species);
                     b.state_scratch.InitSpecies(n_species);
@@ -232,7 +244,8 @@ public:
                       const std::vector<int>& levels,
                       const std::vector<uint32_t>& logical_x1,
                       const std::vector<uint32_t>& logical_x2,
-                      const std::vector<uint32_t>& logical_x3)
+                      const std::vector<uint32_t>& logical_x3,
+                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
         const size_t count = levels.size();
         if (count == 0 || logical_x1.size() != count || logical_x2.size() != count ||
@@ -240,7 +253,7 @@ public:
             throw std::invalid_argument("Checkpoint AMR leaf metadata is inconsistent.");
         }
 
-        InitRootGrid(config, n_species);
+        InitRootGrid(config, n_species, semantics);
         for (const int root_id : active_blocks) pool->FreeBlock(root_id);
         active_blocks.clear();
 
@@ -257,7 +270,7 @@ public:
             block.logical_x3 = logical_x3[index];
             block.morton_code = encodeMorton(block.level, block.logical_x1,
                                              block.logical_x2, block.logical_x3);
-            block.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3);
+            block.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3, semantics);
             block.fluid_state.InitSpecies(n_species);
             block.state_next.InitSpecies(n_species);
             block.state_scratch.InitSpecies(n_species);

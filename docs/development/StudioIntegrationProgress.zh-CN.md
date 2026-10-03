@@ -2749,3 +2749,7 @@ Grid 显式profile轴名/物理坐标/domain 已接入；PointCoords.r 保持球
 
 ## 2026-10-04 authoritative RZ initial population
 ProblemInitializationContext explicit profile 已接真实 PopulateState，坐标和 repair volume同一 chart；RZ z-dependent场/完整环体repair与legacy polar四例PASS，3项初始化API scoped regressions PASS。真实注册模型/public RZ演化未验收。见 RZInitialPopulation-20261004.zh-CN.md / Summary。未 push/tag。
+
+
+## 2026-10-04 RZ native AMR length domain
+shared Block/root/leaf creation已传explicit profile；真实5leaf mixed checkpoint z[-10,10]重建PASS，shared初始化z[-4,4]及full-ring repair PASS。3项相关CPU scoped regressions PASS；不是refine/coarsen角动量或演化验收。见 RZNativeAmrDomain-20261004.zh-CN.md / Summary。未 push/tag。

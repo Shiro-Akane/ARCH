@@ -15,12 +15,12 @@ int main() {
         SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
         config.grid.nblockx1=1;config.grid.nblockx2=1;config.grid.nblockx3=0;
         config.grid.x1_min=0.;config.grid.x1_max=2.;
-        config.grid.x2_min=-.5;config.grid.x2_max=.5;
+        config.grid.x2_min=rz?-4.:-.5;config.grid.x2_max=rz?4.:.5;
         config.physics.eos_type="ideal";config.physics.gamma=1.4;
         if(repair)config.numerics.sml_rho=4.;
         SpeciesManager species;species.add_species("gas",1.,1.,1.4,2.);
-        amr::AMRControl control(4,2);control.tree->InitRootGrid(config,1);
         const auto sem=rz?GeometrySemantics::AxisymmetricRz:GeometrySemantics::Existing;
+        amr::AMRControl control(4,2);control.tree->InitRootGrid(config,1,sem);
         auto callback=[](const PointCoords& p,PrimitiveData& d) {
             d.rho=2.+.25*p.z_cy;d.u=0.;d.v=3.;d.w=0.;
             d.p=5.+.5*p.z_cy;d.mass_fractions[0]=1.;
@@ -66,6 +66,14 @@ int main() {
         auto& mutable_state=control.pool->GetBlock(control.tree->GetActiveBlocks().front()).fluid_state;
         const auto rho_before=mutable_state.rho,eng_before=mutable_state.eng;
         const auto ledger_before=mutable_state.stage_repairs.values;
+        const auto leaves_before=control.tree->GetActiveBlocks();
+        const auto pool_before=control.pool->GetNumActiveBlocks();
+        bool root_rejected=false;
+        try { control.tree->InitRootGrid(config,1,static_cast<GeometrySemantics>(99)); }
+        catch(const std::invalid_argument&) {root_rejected=true;}
+        require(root_rejected&&control.tree->GetActiveBlocks()==leaves_before&&
+                control.pool->GetNumActiveBlocks()==pool_before&&mutable_state.rho==rho_before,
+                "invalid RZ root preflight changed live topology/storage");
         std::atomic<int> called{0};
         bool rejected=false;
         try {ProblemHelper::detail::PopulateState(control,config,species,

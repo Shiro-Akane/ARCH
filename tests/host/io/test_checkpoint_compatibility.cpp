@@ -774,18 +774,24 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
     SimConfig config;
     config.grid.dim = 2;
     config.grid.geometry = "cylindrical";
-    config.grid.nblockx1 = 1;
+    config.grid.nblockx1 = 2;
     config.grid.nblockx2 = 1;
     config.grid.nblockx3 = 0;
-    config.grid.amr_max_blocks = 4;
+    config.grid.x2_min = -10.;
+    config.grid.x2_max = 10.;
+    config.grid.amr_max_blocks = 16;
+    config.amr.lrefinemax = 1;
     config.io.out_dir = (directory / "native-rz").string();
     config.io.base_name = "rz";
     const auto species = make_species();
     const auto provenance = io::inspect_checkpoint_provenance(
         config, species, EosId::Ideal, false, "none", false);
     amr::AMRControl source(config.grid.amr_max_blocks, 2);
-    source.tree->InitRootGrid(config, species.count());
-    auto& block = source.pool->GetBlock(source.tree->GetActiveBlocks().front());
+    source.tree->LoadLeafGrid(config, species.count(), {1,1,1,1,0},
+        {0,1,0,1,1}, {0,0,1,1,0}, {0,0,0,0,0},
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
+    for (int id : source.tree->GetActiveBlocks()) {
+    auto& block = source.pool->GetBlock(id);
     auto& fluid = block.fluid_state;
     const auto& grid = block.grid;
     for (int j=grid.Js(); j<grid.Je(); ++j)
@@ -800,6 +806,7 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
             fluid.X(0,c)=.25;
             fluid.X(1,c)=.75;
         }
+    }
     arch::state::RepairBudget repairs;
     repairs.reset(species.count());
     write_chk(source, 3, 4, 7, .25, .01, .02, true,
@@ -813,7 +820,13 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
     RunState state;
     read_chk(file.string(), restored, state, config, species, provenance,
              {1,"axisymmetric-rz"});
-    const auto& rb=restored.pool->GetBlock(restored.tree->GetActiveBlocks().front());
+    expect(restored.tree->GetActiveBlocks().size()==5,
+           "mixed RZ checkpoint changed leaf count");
+    for (int id : restored.tree->GetActiveBlocks()) {
+    const auto& rb=restored.pool->GetBlock(id);
+    const double lower=-10.+rb.logical_x2*20./(1<<rb.level);
+    expect(rb.grid.x2_min == lower && rb.grid.x2_max == lower+20./(1<<rb.level),
+           "mixed RZ native leaf restore lost physical z domain");
     for (int j=rb.grid.Js(); j<rb.grid.Je(); ++j)
         for (int i=rb.grid.Is(); i<rb.grid.Ie(); ++i) {
             const int c=rb.grid.GetIndex(i,j,rb.grid.Ks());
@@ -823,6 +836,7 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
                    rb.fluid_state.X(0,c)==.25 && rb.fluid_state.X(1,c)==.75,
                    "native RZ checkpoint restore changed original FP64 state");
         }
+    }
     expect(state.time==.25 && state.step==7 && state.chk_idx==3 &&
            state.plt_idx==4 && state.dt_old==.01 && state.dt_burn==.02 &&
            state.resume_after_regrid, "native RZ controller changed");

@@ -170,7 +170,10 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     }
 
     amr_ctrl.tree->LoadLeafGrid(config, expected_species, checkpoint.levels,
-                                checkpoint.logical_x1, checkpoint.logical_x2, checkpoint.logical_x3);
+                                checkpoint.logical_x1, checkpoint.logical_x2, checkpoint.logical_x3,
+                                expected_geometry.chart == "axisymmetric-rz"
+                                    ? GridMetrics::GeometrySemantics::AxisymmetricRz
+                                    : GridMetrics::GeometrySemantics::Existing);
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (active_blocks.size() != checkpoint.levels.size())
         throw std::runtime_error("Checkpoint AMR leaf reconstruction changed the block count.");
