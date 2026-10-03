@@ -1,0 +1,66 @@
+{
+  "testedSourceCommit": "8a0b6cc1a8ed6065be87404363e7a3b4d66d4f8b",
+  "scope": "Gaussian Cartesian 3D native desktop partial UAT",
+  "identity": {
+    "requestId": "1301d213-cb20-47b5-8cda-4ffba7ce91f0",
+    "projectId": "84b85922-8a9f-43c4-b282-476330ff65be",
+    "profileId": "initial-cpu-Gaussian-3d",
+    "caseId": "Gaussian",
+    "configRevision": "c4eba722b78c245b5d7ebe8a24ed72b51d08dbdaab3b1d7794bb7670a8fcfe7a",
+    "buildId": "b122233f-61aa-4fd5-932a-a27ded45e302",
+    "binarySha256": "ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a"
+  },
+  "shape": [
+    32,
+    32,
+    32
+  ],
+  "count": 32768,
+  "dataSha256": "15c6c7876abcdf1bd175f1b51580e41d08fcf53c8fd04a49dd6721b6a95e9e8e",
+  "diskConfigSha256": "c4eba722b78c245b5d7ebe8a24ed72b51d08dbdaab3b1d7794bb7670a8fcfe7a",
+  "displayOperationsPreserveIdentityAndArrays": true,
+  "amrRequestId": "97619faf-fde6-4cf2-94ce-1b84d1ea5d95",
+  "amrLeaf": {
+    "cellShape": [
+      16,
+      16,
+      16
+    ],
+    "cellSpacing": [
+      0.05,
+      0.1375,
+      0.11875
+    ],
+    "level": 0,
+    "logicalIndex": [
+      0,
+      0,
+      0
+    ],
+    "logicalKey": "0:0:0:0",
+    "lower": [
+      0.2,
+      0.3,
+      -0.4
+    ],
+    "upper": [
+      1,
+      2.5,
+      1.5
+    ]
+  },
+  "amrComplete": true,
+  "desktopExitCode": 0,
+  "electronAndHostGone": true,
+  "remainingProductionPreviewOrAmrWorkers": [],
+  "inspectorSelectionClearedOnSliceChange": "observed; explicit UI handlers clear selection; continuation semantics need review",
+  "coverageNotClaimed": [
+    "all-model desktop UAT",
+    "curved native UI",
+    "non-cubic desktop sampling",
+    "mixed-level 3D refinement",
+    "cancellation/race UI",
+    "scientific evolution",
+    "CUDA"
+  ]
+}

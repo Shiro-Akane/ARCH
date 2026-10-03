@@ -307,6 +307,6 @@
     "passed": 244,
     "failed": 0
   },
-  "desktopUat": "pending",
+  "desktopUat": "partial Gaussian Cartesian 3D PASS; full matrix pending",
   "rawLocalDirectory": "studio/.local/integration/full-model-production-20261003"
 }

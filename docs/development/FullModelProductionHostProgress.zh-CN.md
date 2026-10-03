@@ -39,7 +39,7 @@ UI维度选择只允许其精确SHA与当前成功Build binary一致；Preview�
 
 ## 未完成
 
-真实Linux desktop全模型/三维/AMR交互UAT待进行；本项HTTP证据不替代桌面验收。
+Gaussian Cartesian三维Linux desktop代表已验收field/slice/raw Inspector/根AMR叠加及关闭清理；详见FullModelNativeDesktopProgress.zh-CN.md。完整矩阵仍待完成，HTTP证据不替代桌面验收。
 完整三维混合细化组合、独立plt、JENS/RZ/CUDA、冻结科学预算及性能/长时验证未完成。
 本次没有simulation/Save/科学输出。原始响应数组仅留ignored本地；摘要按模型提交。
 不push/tag/main merge，不标记联合目标完成。
