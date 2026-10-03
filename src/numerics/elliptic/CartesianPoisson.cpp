@@ -12,6 +12,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 #include "numerics/elliptic/CartesianPoisson.h"
 
@@ -48,9 +49,11 @@ void validate_mesh(const CartesianMesh& m)
             largest = std::max(largest, m.spacing[a]);
         }
     }
-    if (!std::isfinite(diagonal_bound) ||
-        (m.geometry == Geometry::Cartesian && largest / smallest > 2.))
-        throw std::invalid_argument("Poisson prototype requires valid spacing and finite diagonal");
+    if (!std::isfinite(diagonal_bound))
+        throw std::invalid_argument("Poisson prototype requires a finite diagonal bound");
+    if (m.geometry == Geometry::Cartesian && largest / smallest > 2.)
+        throw std::invalid_argument("Poisson prototype spacing ratio=" +
+            std::to_string(largest / smallest) + " exceeds limit=2");
     if (m.geometry != Geometry::Cartesian) {
         if (m.origin[0] < 0.)
             throw std::invalid_argument("Curvilinear gravity requires nonnegative radius");

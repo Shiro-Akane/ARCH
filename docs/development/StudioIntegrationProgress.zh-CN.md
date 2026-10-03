@@ -2916,3 +2916,11 @@ native-mixed-3d首gravity solve FAIL，原日志保留。源码推导selective�
 与既有Cartesian guard<=2冲突，未放宽guard/变更数值方法；待Core确认。
 原未到达Restart独立7条PASS，本例实际14datasets均numeric且raw bytes一致，不清除full FAIL。
 见JeansFullCpuFinding报告/Summary；historical radial G另待，CPU/CUDA/O9出口保持未完成。
+
+## 2026-10-04 coarse mesh直接构造证据
+
+原64/16/16 root、等spacing经production CompositeMultigrid实际构造，失败coarse4/4/4
+spacing(.25,.0625,.0625) ratio4>2得到直接证据。仅拆分guard消息并附coarse上下文，
+不改operator/算法/上限/预算；定向fixture+原contract PASS，fullJeans依旧FAIL待Core。
+主ARCH未重编，fixture诊断不冒充主binary。见PoissonCoarseDiagnostic报告/Summary，
+raw本机ignored，无simulation/CUDA/push/tag。

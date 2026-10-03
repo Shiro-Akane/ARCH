@@ -48,6 +48,29 @@ std::vector<elliptic::CompositeCell> make_origin_seam_cells(
     return cells;
 }
 
+/** Reproduce the exact root dimensions of the failed Jeans 3D campaign.
+ * This validates diagnostic provenance, not support for the rejected hierarchy.
+ */
+void coarse_mesh_diagnostic() {
+    auto base=base_mesh(3,16);
+    base.cells={64,16,16};base.spacing={1./64,1./64,1./64};
+    elliptic::validate_mesh(base);
+    try {
+        multigrid::CompositeMultigrid solver(base,make_cells(base,false));
+    } catch (const std::invalid_argument& error) {
+        const std::string message=error.what();
+        std::cout<<message<<'\n';
+        require(message.find("Composite coarse mesh cells=(4,4,4)")!=std::string::npos,
+                "coarse diagnostic lacks actual failing mesh");
+        require(message.find("spacing=(0.250000,0.062500,0.062500)")!=std::string::npos,
+                "coarse diagnostic lacks actual spacing");
+        require(message.ends_with("spacing ratio=4.000000 exceeds limit=2"),
+                "coarse diagnostic conflates spacing with finite diagonal");
+        return;
+    }
+    throw std::runtime_error("Known unsupported coarse hierarchy unexpectedly accepted; review contract");
+}
+
 double potential(const std::array<double,3>& x,int dim) {
     double result=1.;
     for (int a=0;a<dim;++a) result*=std::cos(2*pi*x[a]+0.17*(a+1));
@@ -760,6 +783,7 @@ void curved_manufactured(bool singular=false, bool seam_refined=false) {
 int main(int argc,char** argv) {
     try {
         std::cout<<std::setprecision(17);
+        if(argc>1 && std::string(argv[1])=="coarse-diagnostic") {coarse_mesh_diagnostic();return 0;}
         if (argc>1 && std::string(argv[1])=="rz") { rz_manufactured(); rz_boundary_guard(); return 0; }
         if (argc>1 && std::string(argv[1])=="contract") { contract(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
