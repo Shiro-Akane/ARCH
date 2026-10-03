@@ -2367,3 +2367,8 @@ eb12c90c 上 NativeGrid candidate-cartesian-1：真实 PlotIO 原 loop 同步写
 ### Plotfile 候选原生只读查询
 
 198aa969 上候选 header/512 bounded nativeCells 接入现有 pinned reader/worker，严格版本、布局、发布标记、bounds/measure校验；logical file-local，unknown身份/单位/正式能力不提升。C++writer真实H5→Node查询1D/2D原值/测度/identity/字节不变通过，Studio277/277+Host127/127+lint/typecheck/build/diff PASS。详见 PlotfileNativeQueryProgress-20261003.zh-CN.md/Summary。输入64MiB与full-file hash保留，actual HDF read bytes/RSS未测，client/Inspector/Viewer/真实模型review未完；无 simulation/production ARCH/CUDA/push/tag。
+
+
+### Plotfile 原生 Inspector 候选
+
+9e284bcc 上客户端严格校验候选nativeCells/header与file-local identity，逐样本 Inspector显示raw/fileSHA/time/index/no-ghost i/j/k/center/bounds/shared measure及unknown警示；legacy不补算。真实C++writer→reader→client→React SSR1D/2D/legacy通过，npm279/279+lint/typecheck/build/diff PASS。详见 PlotfileNativeInspectorProgress-20261003.zh-CN.md/Summary；不是native desktop UAT或全域Viewer，科学身份/单位/真实模型对照/review pending。无simulation/CUDA/production ARCH/push/tag。

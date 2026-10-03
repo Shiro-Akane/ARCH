@@ -3,17 +3,54 @@ import {PROTOCOL_VERSION} from './contracts.ts';
 import {record} from './previewValidation.ts';
 export interface SliceSelection {field:string;block:number;start:number[];count:number[]}
 export type RawPlotNumber=number|'NaN'|'Infinity'|'-Infinity';
+export interface CandidateNativeGrid {
+ version:'candidate-cartesian-1';measureSource:'GridMetrics::CellVolume';
+ measureConvention:'active-coordinate-product; inactive-measures-omitted';measureUnit:null;
+}
+export interface NativePlotCells extends CandidateNativeGrid {
+ identityScope:'file-local';logicalKey:string;level:number;logicalCoordinates:number[];
+ lower:Record<'x1'|'x2'|'x3',number[]>;upper:Record<'x1'|'x2'|'x3',number[]>;cellMeasure:number[];
+}
 export interface PlotfileAudit {
  schemaVersion:string;file:{bytes:number;sha256:string};time:number;dimension:number;geometry:string;
  blocks:number;cellShape:number[];cells:number;fields:{name:string;shape:number[];unit:null}[];
- completion:{state:'unknown';reason:string};renderEligible:false;
+ completion:{state:'unknown';reason:string};renderEligible:false;candidateNativeGrid?:CandidateNativeGrid|null;
  scientificIdentity:Record<string,null>;coordinates:{storedBasis:'cartesian';centering:'cell-center';units:null};
- payload?:{field:string;block:number;start:number[];shape:number[];linearIndices:number[];values:RawPlotNumber[];coordinates:Record<'x'|'y'|'z',RawPlotNumber[]>;unit:null;diagnostics:string[]};
+ payload?:{nativeCells?:NativePlotCells|null;field:string;block:number;start:number[];shape:number[];linearIndices:number[];values:RawPlotNumber[];coordinates:Record<'x'|'y'|'z',RawPlotNumber[]>;unit:null;diagnostics:string[]};
 }
 export interface AuditResponse {projectId:string;relativePath:string;audit:PlotfileAudit}
 const raw=(v:unknown):v is RawPlotNumber=>typeof v==='number'&&Number.isFinite(v)||v==='NaN'||v==='Infinity'||v==='-Infinity';
 function unknownScience(v:unknown){return record(v)&&['case','config','build','binary','eos'].every(k=>v[k]===null);}
 function rawCoordinates(v:unknown,n:number){if(!record(v))return false;return ['x','y','z'].every(k=>{const a=v[k];return Array.isArray(a)&&a.length===n&&a.every(raw);});}
+function nativeHeaderValid(v:unknown):v is CandidateNativeGrid {
+ return record(v)&&v.version==='candidate-cartesian-1'&&v.measureSource==='GridMetrics::CellVolume'&&
+  v.measureConvention==='active-coordinate-product; inactive-measures-omitted'&&v.measureUnit===null;
+}
+function nativeCellsValid(v:unknown,header:unknown,n:number,dimension:number):v is NativePlotCells {
+ if(!nativeHeaderValid(v)||!nativeHeaderValid(header)||!record(v)||v.identityScope!=='file-local'||
+    !Number.isSafeInteger(v.level)||Number(v.level)<0||!Array.isArray(v.logicalCoordinates)||
+    v.logicalCoordinates.length!==3||v.logicalCoordinates.some(x=>!Number.isSafeInteger(x)||x<0||x>0xffffffff)||
+    v.logicalKey!==[v.level,...v.logicalCoordinates].join('/')||
+    !record(v.lower)||!record(v.upper)||!Array.isArray(v.cellMeasure)||v.cellMeasure.length!==n||
+    v.cellMeasure.some(x=>typeof x!=='number'||!Number.isFinite(x)||x<=0))return false;
+ const lower=v.lower,upper=v.upper;
+ return ['x1','x2','x3'].every((key,axis)=>{
+  const lo=lower[key],hi=upper[key];
+  return Array.isArray(lo)&&Array.isArray(hi)&&lo.length===n&&hi.length===n&&
+   lo.every((x,i)=>typeof x==='number'&&Number.isFinite(x)&&typeof hi[i]==='number'&&Number.isFinite(hi[i])&&
+    (axis<dimension?hi[i]>x:x===0&&hi[i]===0));
+ });
+}
+/** Reverse the stored x1-fastest index into no-ghost block-local i/j/k. */
+export function storedCellIndices(a:Pick<PlotfileAudit,'cellShape'>,block:number,index:number):number[] {
+ const blockCells=a.cellShape.reduce((x,y)=>x*y,1);let local=index-block*blockCells;
+ if(!Number.isSafeInteger(local)||local<0||local>=blockCells)throw Error('Stored sample outside block.');
+ const ijk=[0,0,0];
+ for(let axis=a.cellShape.length-1;axis>=0;axis--){
+  ijk[a.cellShape.length-1-axis]=local%a.cellShape[axis];local=Math.floor(local/a.cellShape[axis]);
+ }
+ return ijk;
+}
 export function validatePlotfileAudit(value:unknown,projectId:string,relativePath:string,selection?:SliceSelection,expectedSha?:string):AuditResponse{
  if(!record(value)||value.protocolVersion!==PROTOCOL_VERSION||value.projectId!==projectId||value.relativePath!==relativePath)
   throw Error('Plotfile response project/file identity mismatch.');
@@ -31,6 +68,9 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
     !unknownScience(a.scientificIdentity)||
     !record(a.coordinates)||a.coordinates.storedBasis!=='cartesian'||a.coordinates.centering!=='cell-center'||a.coordinates.units!==null)
   throw Error('Unsupported or malformed Plotfile audit response.');
+ const hasNative=a.candidateNativeGrid!==undefined&&a.candidateNativeGrid!==null;
+ if(hasNative&&(!nativeHeaderValid(a.candidateNativeGrid)||a.geometry!=='cartesian'||![1,2].includes(Number(a.dimension))))
+  throw Error('Invalid candidate native header.');
  if(selection){
   const cellShape=a.cellShape as number[];
   if(selection.start.length!==cellShape.length||selection.count.length!==cellShape.length||
@@ -50,6 +90,9 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
      !rawCoordinates(p.coordinates,n)||
      !Array.isArray(p.diagnostics)||!p.diagnostics.every(d=>typeof d==='string'))
    throw Error('Plotfile slice identity or raw payload mismatch.');
+  if(hasNative?!nativeCellsValid(p.nativeCells,a.candidateNativeGrid,n,Number(a.dimension)):
+     p.nativeCells!==undefined&&p.nativeCells!==null)
+   throw Error('Plotfile native cell payload/header mismatch.');
  }else if(a.payload!==undefined)throw Error('Metadata response unexpectedly contains raw samples.');
  return {projectId,relativePath,audit:a as unknown as PlotfileAudit};
 }

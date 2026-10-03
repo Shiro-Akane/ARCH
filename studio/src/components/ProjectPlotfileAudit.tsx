@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {PlotfileNativeInspector} from './PlotfileNativeInspector';
 import {useHost} from '../host/hostContext';
 import {requestPlotfileAudit} from '../host/plotfileAudit';
 import type {AuditResponse,SliceSelection} from '../host/plotfileAudit';
@@ -12,6 +13,7 @@ export function ProjectPlotfileAudit(){
 function ConnectedAudit({projectId}:{projectId:string}){
  const [path,setPath]=useState(''),[info,setInfo]=useState<AuditResponse|null>(null),[samples,setSamples]=useState<AuditResponse|null>(null);
  const [field,setField]=useState(''),[block,setBlock]=useState('0'),[start,setStart]=useState<string[]>([]),[count,setCount]=useState<string[]>([]);
+ const [selectedRow,setSelectedRow]=useState<number|null>(null);
  const [busy,setBusy]=useState(false),[message,setMessage]=useState('Enter a project-relative .h5 path and read metadata.');
  const sequence=useRef(0),active=useRef<AbortController|null>(null);
  useEffect(()=>()=>{sequence.current++;active.current?.abort();},[]);
@@ -24,8 +26,8 @@ function ConnectedAudit({projectId}:{projectId:string}){
   try{
    const result=await requestPlotfileAudit(projectId,relativePath,controller.signal,selection,selection?info?.audit.file.sha256:undefined);
    if(request!==sequence.current)return;
-   if(selection){setSamples(result);setMessage('Raw samples loaded · completion and scientific identity remain unverified.');}
-   else{setInfo(result);setSamples(null);setField(result.audit.fields[0].name);setBlock('0');setStart(result.audit.cellShape.map(()=> '0'));setCount(result.audit.cellShape.map((n,i)=>String(i===result.audit.cellShape.length-1?Math.min(8,n):1)));setMessage('Metadata loaded · select a bounded sample region.');}
+   if(selection){setSamples(result);setSelectedRow(0);setMessage('Raw samples loaded · completion and scientific identity remain unverified.');}
+   else{setInfo(result);setSamples(null);setSelectedRow(null);setField(result.audit.fields[0].name);setBlock('0');setStart(result.audit.cellShape.map(()=> '0'));setCount(result.audit.cellShape.map((n,i)=>String(i===result.audit.cellShape.length-1?Math.min(8,n):1)));setMessage('Metadata loaded · select a bounded sample region.');}
   }catch(error){if(request===sequence.current)setMessage(error instanceof Error?error.message:'Read failed. Previous successful data retained.');}
   finally{if(request===sequence.current){setBusy(false);active.current=null;}}
  }
@@ -50,9 +52,10 @@ function ConnectedAudit({projectId}:{projectId:string}){
    {info.audit.cellShape.map((n,i)=><fieldset key={i}><legend>Stored axis x{info.audit.dimension-i} · {n} cells</legend><label>Start <input aria-label={'Audit start '+i} value={start[i]} inputMode="numeric" onChange={e=>setStart(v=>v.map((s,j)=>j===i?e.target.value:s))}/></label><label>Count <input aria-label={'Audit count '+i} value={count[i]} inputMode="numeric" onChange={e=>setCount(v=>v.map((s,j)=>j===i?e.target.value:s))}/></label></fieldset>)}
    <button disabled={busy||!field} onClick={readSamples}>Read raw samples</button>
   </>}
-  {payload&&<><h3>Displayed raw samples · {payload.field}</h3><p>{samples?.relativePath} · block {payload.block} · start [{payload.start.join(', ')}] · shape [{payload.shape.join(', ')}]. These are stored Cartesian centers; native cell bounds/volumes are unavailable.</p>
+  {payload&&<><h3>Displayed raw samples · {payload.field}</h3><p>{samples?.relativePath} · block {payload.block} · start [{payload.start.join(', ')}] · shape [{payload.shape.join(', ')}]. These are stored Cartesian centers. {payload.nativeCells?'Candidate native bounds and measure are available in the Inspector.':'Native cell bounds and measure were not recorded.'}</p>
    {payload.diagnostics.length>0&&<p role="alert">{payload.diagnostics.join(' · ')}</p>}
-   <div className="audit-table-scroll"><table><thead><tr><th>Global index</th><th>Raw value · unit unknown</th><th>Stored x</th><th>Stored y</th><th>Stored z</th></tr></thead><tbody>{payload.values.map((v,i)=><tr key={payload.linearIndices[i]}><td>{payload.linearIndices[i]}</td><td>{String(v)}</td><td>{String(payload.coordinates.x[i])}</td><td>{String(payload.coordinates.y[i])}</td><td>{String(payload.coordinates.z[i])}</td></tr>)}</tbody></table></div>
+   <div className="audit-table-scroll"><table><thead><tr><th>Inspect</th><th>Global index</th><th>Raw value · unit unknown</th><th>Stored x</th><th>Stored y</th><th>Stored z</th></tr></thead><tbody>{payload.values.map((v,i)=><tr key={payload.linearIndices[i]}><td><button aria-label={"Inspect stored cell "+payload.linearIndices[i]} aria-pressed={selectedRow===i} onClick={()=>setSelectedRow(i)}>Inspect</button></td><td>{payload.linearIndices[i]}</td><td>{String(v)}</td><td>{String(payload.coordinates.x[i])}</td><td>{String(payload.coordinates.y[i])}</td><td>{String(payload.coordinates.z[i])}</td></tr>)}</tbody></table></div>
+   {samples&&selectedRow!==null&&<PlotfileNativeInspector samples={samples} row={selectedRow}/>}
   </>}
  </div>;
 }
