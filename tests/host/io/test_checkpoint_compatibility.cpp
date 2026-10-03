@@ -603,6 +603,80 @@ void test_host_restart(const std::filesystem::path& directory)
                                       config, species, expected); }, reason, diagnostic);
         expect(snapshot() == before, "rejected restart modified live state: " + reason);
     };
+    // Actual HDF/read_chk path: missing/partial/future/RZ chart must reject
+    // before replacing this populated live hierarchy or controller.
+    for (int corruption = 0; corruption < 5; ++corruption) {
+        io::write_hdf5_chk_impl(path.string(), checkpoint);
+        {
+            HighFive::File file(path.string(), HighFive::File::ReadWrite);
+            if (corruption == 0) file.deleteAttribute("geometry_chart");
+            if (corruption == 1) file.getAttribute("geometry_semantics_revision").write(2);
+            if (corruption == 2) file.getAttribute("geometry_chart").write(std::string("axisymmetric-rz"));
+            if (corruption >= 3) {
+                file.deleteAttribute("geometry_chart");
+                file.deleteAttribute("geometry_semantics_revision");
+            }
+        }
+        if (corruption == 3) {
+            // Legacy Cartesian v6 remains readable by the existing chart.
+            const auto legacy = io::read_hdf5_chk_impl(path.string());
+            io::require_checkpoint_geometry_compatible(legacy.dim, legacy.geometry, legacy.geometry_identity);
+        } else if (corruption == 4) {
+            expect_rejected([&] { read_chk(path.string(), protected_tree, protected_state,
+                config, species, identity, {1, "axisymmetric-rz"}); },
+                "legacy checkpoint accepted as RZ");
+        } else {
+            reject_unchanged(identity, "invalid geometry identity");
+        }
+        expect(snapshot() == before, "geometry rejection modified live state");
+    }
+    // HDF roundtrip of explicit internal RZ identity; not public RZ restart.
+    auto rz_payload = checkpoint;
+    rz_payload.dim = 2;
+    rz_payload.geometry = "cylindrical";
+    rz_payload.geometry_identity = {1, "axisymmetric-rz"};
+    const auto rz_path = directory / "internal-rz-identity.h5";
+    io::write_hdf5_chk_impl(rz_path.string(), rz_payload);
+    const auto rz = io::read_hdf5_chk_impl(rz_path.string());
+    io::require_checkpoint_geometry_compatible(2, "cylindrical", rz.geometry_identity,
+                                               {1, "axisymmetric-rz"});
+    expect_rejected([&] { io::require_checkpoint_geometry_compatible(
+        2, "cylindrical", rz.geometry_identity); }, "RZ accepted as legacy polar");
+    expect_rejected([&] { io::require_checkpoint_geometry_compatible(
+        2, "cylindrical", {}, {1, "axisymmetric-rz"}); }, "legacy polar accepted as RZ");
+    // Real old 2D cylindrical HDF + populated live tree: never interpreted as RZ.
+    {
+        HighFive::File file(rz_path.string(), HighFive::File::ReadWrite);
+        file.deleteAttribute("geometry_semantics_revision");
+        file.deleteAttribute("geometry_chart");
+    }
+    auto polar_config = config;
+    polar_config.grid.dim = 2;
+    polar_config.grid.geometry = "cylindrical";
+    polar_config.grid.nblockx2 = 1;
+    amr::AMRControl polar_live(polar_config.grid.amr_max_blocks, 2);
+    polar_live.tree->InitRootGrid(polar_config, species.count());
+    const auto polar_ids = polar_live.tree->GetActiveBlocks();
+    auto& polar_fluid = polar_live.pool->GetBlock(polar_ids.front()).fluid_state;
+    std::fill(polar_fluid.rho.begin(), polar_fluid.rho.end(), 19.0);
+    const auto polar_rho = polar_fluid.rho;
+    RunState polar_state = state;
+    expect_rejected([&] { read_chk(rz_path.string(), polar_live, polar_state,
+        polar_config, species, identity, {1, "axisymmetric-rz"}); },
+        "actual legacy polar file accepted as RZ", "no authoritative RZ");
+    expect(polar_live.tree->GetActiveBlocks() == polar_ids && polar_fluid.rho == polar_rho
+        && polar_state.time == state.time && polar_state.step == state.step
+        && polar_state.chk_idx == state.chk_idx && polar_state.plt_idx == state.plt_idx,
+        "legacy polar rejection changed live state");
+    auto invalid_geometry = checkpoint;
+    invalid_geometry.geometry_identity = {2, "existing"};
+    io::write_hdf5_chk_impl(path.string(), checkpoint);
+    const auto geometry_digest = arch::core::file_sha256(path.string());
+    expect_rejected([&] { io::write_hdf5_chk_impl(path.string(), invalid_geometry); },
+                    "future geometry revision accepted");
+    expect(arch::core::file_sha256(path.string()) == geometry_digest,
+           "invalid geometry writer truncated previous checkpoint");
+
     // Format v6 predates controls revision 2. Exercise an actual v6/15-value
     // payload instead of merely changing the currently active configuration.
     auto legacy_controls = checkpoint.state_controls;

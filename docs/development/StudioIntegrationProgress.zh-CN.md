@@ -2725,3 +2725,7 @@ Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-A
 ## 2026-10-04 RZ nonzero actual RKL
 
 非零quadratic热方程实际Driver RKL独立参考8组通过，maxabs5.68434e-14；nonzero mixed-AMR闭域full-ring能量收支8组maxrelative2.38262e-17。原16组零算子同fixture通过。仅工程证据，不替代科学场值/长期验收；见RZNonzeroRkl-20261004.zh-CN.md。
+
+
+## 2026-10-04 RZ checkpoint geometry identity
+独立 revision/chart 保护已接入 HDF 与 Host read_chk；旧二维 cylindrical 文件不能按 RZ 恢复。checkpoint_compatibility scoped PASS，公共 RZ write/restart 尚未完成。见 RZCheckpointIdentity-20261004.zh-CN.md。未 push/tag。

@@ -9,6 +9,7 @@
 
 #pragma once
 #include <cstdint>
+#include "io/chk/CheckpointGeometryIdentity.h"
 #include <array>
 #include "data/StateDiagnostics.h"
 #include <map>
@@ -52,6 +53,7 @@ struct CheckpointData {
     int dim = 1;
     int num_species = 0;
     std::string geometry;
+    CheckpointGeometryIdentity geometry_identity;
     std::size_t cells_per_block = 0;
     bool has_timestep_state = false;
     bool resume_after_regrid = false;

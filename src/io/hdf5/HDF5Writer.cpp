@@ -24,6 +24,7 @@
 #include <string>
 
 #include "io/hdf5/HDF5Writer.h"
+#include "io/chk/CheckpointCompatibility.h"
 #include "core/config/ConfigValidation.h"
 
 #include <highfive/H5DataSet.hpp>
@@ -431,6 +432,10 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint)
 {
+    const auto geometry_identity = (checkpoint.geometry_identity.revision == 0 && checkpoint.geometry_identity.chart.empty())
+        ? CheckpointGeometryIdentity{1, "existing"} : checkpoint.geometry_identity;
+    require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                                          geometry_identity, geometry_identity);
     const size_t blocks = checkpoint.levels.size();
     if (!has_consistent_checkpoint_payload(checkpoint)) {
         throw std::invalid_argument("Checkpoint payload dimensions are inconsistent.");
@@ -473,6 +478,8 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("plt_index", checkpoint.plt_file_index);
         file.createAttribute("dim", checkpoint.dim);
         file.createAttribute("geometry", checkpoint.geometry);
+        file.createAttribute("geometry_semantics_revision", geometry_identity.revision);
+        file.createAttribute("geometry_chart", geometry_identity.chart);
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
         file.createAttribute("eos_type", checkpoint.provenance.eos_type);
@@ -568,6 +575,16 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         file.getAttribute("plt_index").read(checkpoint.plt_file_index);
         file.getAttribute("dim").read(checkpoint.dim);
         file.getAttribute("geometry").read(checkpoint.geometry);
+        const bool has_revision = file.hasAttribute("geometry_semantics_revision");
+        const bool has_chart = file.hasAttribute("geometry_chart");
+        if (has_revision != has_chart)
+            throw std::runtime_error("Incomplete checkpoint geometry identity");
+        if (has_revision) {
+            file.getAttribute("geometry_semantics_revision").read(checkpoint.geometry_identity.revision);
+            file.getAttribute("geometry_chart").read(checkpoint.geometry_identity.chart);
+            require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                checkpoint.geometry_identity, checkpoint.geometry_identity);
+        }
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);
         int burn_enabled = 0;

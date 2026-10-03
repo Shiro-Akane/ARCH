@@ -133,9 +133,12 @@ void write_chk(amr::AMRControl &amr_ctrl,
 void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
               RunState &run_state, const SimConfig &config,
               const SpeciesManager &specs,
-              const io::CheckpointProvenance &expected_provenance)
+              const io::CheckpointProvenance &expected_provenance,
+              const io::CheckpointGeometryIdentity &expected_geometry)
 {
     io::CheckpointData checkpoint = io::read_hdf5_chk_impl(filepath);
+    io::require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                                               checkpoint.geometry_identity, expected_geometry);
     if (checkpoint.state_controls != arch::config::StateControlIdentity(config))
         throw std::runtime_error("Checkpoint state controls differ from the active configuration");
     const int expected_species = specs.count();
