@@ -1529,3 +1529,9 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - scoped24/24和完整227/227 npm tests PASS（Host包含其中），lint、tsc/production build PASS。初次lint要求保留cause，修正后输出锁3/3再次通过；完整日志run-output-reservation-regression.log留本地。既有bundle warning未改变。
 - 范围是同Linux用户、Studio管理的相同canonical目录；不声称阻止外部Core/nested-directory/remount/最后检查后的symlink竞态，也不代表允许覆盖历史输出。旧pending job缺output身份必须重新准备；历史状态读取保持。原生WSLg窗口/文件选择器UAT仍未通过，完整WSL重启等待授权。
 - README顶部更新为当前Linux/WSL实际状态，旧Phase3A/Windows说明明确下移为历史。新增锁通过真实OS fixture验证；当前ARCH binary受影响真实续算尚待新提交上的定向复验，不将fixture当科学输出验收。
+
+### 2026-10-03 — Real ARCH output-reservation regression
+
+- clean913c3d5f：同一既有CPU binary和step25 checkpoint，仅修改out_dir到新的持久本地目录，实际prepare/confirm→独立terminal/worker→ARCH Restart succeeded/exit0。out_dir/log_dir两个Host确认条目去重为一个canonical目录锁，未改变输入物理值。
+- 最终step100/time0.1；16对象路径/属性、14数据集布局/全部值与retained source checkpoint完全一致，maxAbs=0，原restart checkpoint SHA不变。terminal/worker/Core均退出，完成后重新获取同一目录锁成功，未执行第二次Core run。
+- StudioRunOutputReservationSummary.json保存精简身份/指标；raw H5、完整日志及对照留.local，不上传。并发/worker crash证据来自前述真实OS fixture；本轮真实ARCH单任务结果不冒充科学并发、CUDA或原生桌面验收。
