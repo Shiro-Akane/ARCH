@@ -1,7 +1,7 @@
 {
   "date": "2026-10-03",
   "auditBase": "e240bbd92e651c31005a9d9b2bba08fc52e62ba2",
-  "status": "MAIN_CHAIN_VERIFIED_FULL_EXIT_PENDING_ISOLATION_SCENARIO",
+  "status": "ENGINEERING_WORKFLOW_VERIFIED_WITH_RECORDED_LIMITS",
   "requirements": [
     {
       "requirement": "Linux独立production窗口",
@@ -71,9 +71,9 @@
     },
     {
       "requirement": "活跃Run与Preview cancel/不同项目重开",
-      "status": "PARTIAL_DIRECT_EVIDENCE",
-      "evidence": "studio/host/desktop.ts",
-      "boundary": "Run独立所有权代码及close survival已证明；同时取消Preview/实际重开不同项目的同场景直接证据仍缺。"
+      "status": "VERIFIED_WITH_LIMITS",
+      "evidence": "StudioRunPreviewProjectIsolation.zh-CN.md",
+      "boundary": "同一活跃Run的Preview取消/不同项目Host重开有直接PID/start/log证据；owned idle Preview worker stall，不冒充native project-picker点击。"
     }
   ],
   "checks": [
@@ -115,12 +115,14 @@
     "retainedFinalOutputsExist": true
   },
   "localEvidence": "studio/.local/integration/3c-exit-audit-20261003",
-  "nextAction": "Direct bounded delivered-Run isolation scenario: Preview cancellation and close/relaunch to another project.",
+  "nextAction": "Audit full-model Init/AMR and independent plt contracts; preserve separate pending scientific/architecture approvals.",
   "notClaimed": [
     "Full objective complete",
     "Full Core/architecture/CUDA suite passed",
     "Historical nonphysical G migration approved",
     "Complete build freshness",
     "Full-model/JENS/RZ/plt implemented"
-  ]
+  ],
+  "updatedBase": "9a5c8958bbc4cda738c0abebf182bc698222f0d3",
+  "isolationRunId": "740d4d6c-6cba-41ce-b7df-d6a8a7585eaf"
 }

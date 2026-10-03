@@ -22,7 +22,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前235 Studio/Host及lint/typecheck/production PASS；原生文件选择、Dirty保护、空格/中文SaveAs/Reopen、外部冲突拒绝及显式overwrite已有直接证据；用户截图确认独立窗口可见；历史177项不替代本轮 | 不适用 |
 | 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 原生Configure/Build通过；真实CMake微型工程编译失败/恢复通过；完整依赖freshness仍unknown，dependenciesComplete=false；边界见Studio3CExitAudit | 不适用 |
-| 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | 原生Sod Run/Restart/Stop、关闭后计算继续及历史恢复通过；235项Studio/Host通过；仍待活跃Run与Preview cancel/不同项目重开同场景直接隔离证据 | 不推广为其他模型/后端演化验收 |
+| 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | 原生Sod Run/Restart/Stop、关闭后计算继续及历史恢复通过；235项Studio/Host通过；同场景Preview cancel/不同项目Host重开隔离已PASS，Run同PID/start持续推进并自然完成；保留Host/native覆盖区分 | 不推广为其他模型/后端演化验收 |
 | 5 全模型初态/AMR | 当前仅 Sod/CellularDet，通用扩展未实施 | 本地 CPU 两模型初态及 Cellular AMR 有证据；其余模型未验收 | 真实域/预算需明确 |
 | 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
 | 7 O7.2–O7.5 RZ | 待实施 | 分层 CPU | O7.4 科学方案须 review |
@@ -2119,3 +2119,13 @@ freshness changed/unknown准确。没有构建ARCH或simulation。
 报告Studio3CExitAudit.zh-CN.md/Summary.json；日志raw本机ignored。
 顶部顺序清单更新当前证据，旧记录按当时范围保留。
 历史G/architecture迁移批准独立待处理，无push/tag/main merge/full-model/JENS/RZ/CUDA advance。
+
+### 3C工程出口：活跃Run并发隔离补证
+
+基线9a5c8958；StudioRunPreviewProjectIsolation.zh-CN.md/精简Summary记录真实生产Host验证。
+Run740d4d6c，CPU Sod既有4096cell/t0.2，仅out_dir改为独立目录；
+取消pending Preview、关闭原Host、打开另一项目后同PID/start且日志增长，自然到step8994/exit0。
+两项目源码/输入/binary不变，原生窗口未操作，两个测试Host/Preview/Run进程清理完成。
+3C工程工作流出口已验证；未知Build完整依赖和fault覆盖边界保留。
+未重复235项不变回归。历史G与architecture批准独立待处理，下一步按计划审计全模型/plt。
+无CUDA/push/tag/main merge，新raw全部保留本机ignored目录。
