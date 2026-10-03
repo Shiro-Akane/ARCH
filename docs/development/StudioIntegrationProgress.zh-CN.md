@@ -2297,3 +2297,7 @@ fetch后compute/optim仍8fc0dd25，无新科学批准引用。一般EOS/AMR/演�
 ### Plotfile有界字段切片原语
 
 ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，原始values/Cartesian中心/global索引对齐，NaN显式编码。二维非方形/三维/边界/恢复5项PASS，完整265/265及lint/typecheck/build/diff PASS。真实Sod H5的DENS8样本只读通过，raw本地保留。详见PlotfileBoundedSliceProgress-20261003.zh-CN.md/Summary。slice尚未接隔离worker/endpoint/UI，completion unknown/renderEligible false，正式plt出口未完成；无simulation/Core build/CUDA/push/tag/main merge。
+
+### Plotfile隔离/Project切片接线
+
+54747a7e上slice复用固定worker/15s/64KiB/Node heap与单任务容量，cancel/timeout/超限exit后恢复；pure请求校验不加载WASM。Project请求必须携带expected SHA，post-read还核对路径dev/ino/size/mtime/ctime；异步修改请求不能重标记返回值。完整269/269与typecheck/lint/build/diff PASS，超响应真实H5退出测试通过。详见PlotfileIsolatedSliceProgress-20261003.zh-CN.md/Summary；无endpoint/正式Viewer，completion unknown/renderEligible false，正式plt出口仍pending。无scientific Core/simulation/ARCH build/CUDA/push/tag/main merge。

@@ -1,6 +1,8 @@
-/** Linux metadata isolation only; no endpoint, renderer or completion claim. */
+/** Linux reader isolation only; no endpoint, renderer or completion claim. */
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {copyPlotfileSliceRequest} from './plotfileSliceRequest.ts';
+import type {PlotfileSliceRequest} from './plotfileSliceRequest.ts';
 import type {inspectPlotfileMetadata} from './plotfileMetadata.ts';
 
 type Metadata=Awaited<ReturnType<typeof inspectPlotfileMetadata>>;
@@ -13,7 +15,7 @@ let active=false;
 const OUTPUT_LIMIT=64*1024;
 
 /** Options are Host-owned. The browser must not supply execution settings. */
-export function inspectPlotfileMetadataIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={}):Promise<Metadata>{
+function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={},slice?:PlotfileSliceRequest):Promise<Metadata>{
  const timeoutMs=options.timeoutMs??15_000;
  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>15_000)
   return Promise.reject(new RangeError('Metadata timeout must be 1..15000 ms.'));
@@ -23,7 +25,7 @@ export function inspectPlotfileMetadataIsolated(path:string,options:{signal?:Abo
  return new Promise((resolve,reject)=>{
   let failure:Error|undefined;let bytes=0;const chunks:Buffer[]=[];
   // The heap cap is not a hard RSS/WASM cap. Process termination bounds lifetime.
-  const child=spawn(process.execPath,['--max-old-space-size=256',fileURLToPath(new URL('./plotfileMetadataWorker.ts',import.meta.url)),path],
+  const child=spawn(process.execPath,['--max-old-space-size=256',fileURLToPath(new URL('./plotfileMetadataWorker.ts',import.meta.url)),path,...(slice?[JSON.stringify(slice)]:[])],
    {stdio:['ignore','pipe','ignore'],shell:false});
   const terminate=(error:Error)=>{failure??=error;child.kill('SIGKILL');};
   const cancel=()=>terminate(new PlotfileReadError('CANCELLED','Metadata read cancelled.'));
@@ -47,10 +49,30 @@ export function inspectPlotfileMetadataIsolated(path:string,options:{signal?:Abo
     if(code!==0||signal||response.ok!==true){
      reject(new PlotfileReadError('WORKER_FAILED',typeof response.message==='string'?response.message:'Metadata worker failed.'));return;
     }
-    if(response.result?.schemaVersion!=='audit-1'||response.result?.renderEligible!==false||
+    if(response.result?.schemaVersion!==(slice?'audit-slice-1':'audit-1')||response.result?.renderEligible!==false||
        response.result?.completion?.state!=='unknown')throw Error('Invalid metadata worker response.');
+    if(slice){
+     const p=response.result.payload,n=slice.count.reduce((a,b)=>a*b,1);
+     const raw=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)||v==='NaN'||v==='Infinity'||v==='-Infinity';
+     if(!p||p.field!==slice.field||p.block!==slice.block||p.order!=='x1-fastest'||
+        JSON.stringify(p.start)!==JSON.stringify(slice.start)||JSON.stringify(p.shape)!==JSON.stringify(slice.count)||
+        !Array.isArray(p.values)||p.values.length!==n||!p.values.every(raw)||
+        !Array.isArray(p.linearIndices)||p.linearIndices.length!==n||!p.linearIndices.every((i:unknown)=>typeof i==='number'&&Number.isSafeInteger(i)&&i>=0)||
+        ['x','y','z'].some(axis=>!Array.isArray(p.coordinates?.[axis])||p.coordinates[axis].length!==n||!p.coordinates[axis].every(raw)))
+      throw Error('Invalid slice worker response.');
+    }else if(response.result.payload!==undefined)throw Error('Metadata worker returned an unexpected payload.');
     resolve(response.result as Metadata);
    }catch{reject(new PlotfileReadError('INVALID_RESPONSE','Metadata worker returned an invalid response.'));}
   });
  });
+}
+
+
+export function inspectPlotfileMetadataIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={}){
+ return readIsolated(path,options);
+}
+/** Same fixed worker/capacity/timeout as metadata; no browser execution settings. */
+export function readPlotfileFieldSliceIsolated(path:string,request:PlotfileSliceRequest,options:{signal?:AbortSignal;timeoutMs?:number}={}){
+ try{return readIsolated(path,options,copyPlotfileSliceRequest(request));}
+ catch(error){return Promise.reject(error);}
 }

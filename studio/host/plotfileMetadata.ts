@@ -8,6 +8,9 @@ import {open,realpath} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import h5 from 'h5wasm/node';
+import {copyPlotfileSliceRequest,MAX_SLICE_CELLS} from './plotfileSliceRequest.ts';
+import type {PlotfileSliceRequest} from './plotfileSliceRequest.ts';
+export type {PlotfileSliceRequest} from './plotfileSliceRequest.ts';
 
 const MAX_FILE_BYTES=64*1024*1024;
 const MAX_FIELDS=128;
@@ -44,8 +47,6 @@ function dataset(group: InstanceType<typeof h5.Group>, name: string) {
  return value;
 }
 
-export interface PlotfileSliceRequest {field:string;block:number;start:number[];count:number[]}
-const MAX_SLICE_CELLS=512;
 type RawNumber=number|'NaN'|'Infinity'|'-Infinity';
 function rawNumbers(value:unknown,expected:number):RawNumber[] {
  if(!ArrayBuffer.isView(value)||value instanceof DataView||value instanceof BigInt64Array||value instanceof BigUint64Array)
@@ -152,10 +153,6 @@ export function inspectPlotfileMetadata(path:string){return auditPlotfile(path);
 
 /** Local audit primitive only. Production use requires isolated worker ownership. */
 export function readPlotfileFieldSlice(path:string,request:PlotfileSliceRequest){
- if(!request||Object.keys(request).sort().join(',')!=='block,count,field,start'||
-    typeof request.field!=='string'||request.field.length<1||request.field.length>128||
-    !Array.isArray(request.start)||!Array.isArray(request.count)||
-    request.start.length<1||request.start.length>3||request.count.length!==request.start.length)
-  return Promise.reject(Error('Invalid slice request.'));
- return auditPlotfile(path,{field:request.field,block:request.block,start:[...request.start],count:[...request.count]});
+ try{return auditPlotfile(path,copyPlotfileSliceRequest(request));}
+ catch(error){return Promise.reject(error);}
 }
