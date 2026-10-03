@@ -85,3 +85,24 @@ typecheck、lint、production build、diff-check PASS；测试后worker进程扫
 completion仍unknown、renderEligible=false，单位/科学身份/native bounds-volume
 仍缺authoritative contract；本增量不等于正式plt查看器交付。
 没有push/tag/main merge，没有CUDA或Windows适配。
+
+## 受管项目文件边界增量（2026-10-03）
+
+基线4e529ce7ece421c362ac03f004104a0d73ccf12b。
+新增 Host 内部 readProjectPlotfileMetadata(root,projectId,request,signal)；
+request严格只包含projectId/relativePath。root和session由Host持有，
+拒绝旧session、absolute/traversal路径、命令/环境字段、所有选中路径符号链接。
+沿用现有checkedPath/projectRoot，不复制一套项目路径规则。
+尚无HTTP路由、浏览器选择器或科学数据provider。
+
+低层读取在打开描述符后、HDF5读取前检查/proc/self/fd实际路径与选中绝对路径，
+防止父目录符号链接交换后读取越界对象。worker完成后再次核对选中name、
+device/inode/size/mtimeNs/ctimeNs，文件替换/修改不作为当前结果返回。
+metadata audit-1增加ctimeNs供同一Host内部核对；未发布新的科学协议。
+响应projectId只是读取会话身份，不能填入未知的case/config/build/binary/EOS身份。
+
+相关12项测试PASS（原始5、隔离5、项目边界2），typecheck/lint/diff-check PASS。
+本次只跑受影响组，不重复上一提交已通过的完整255项或未受影响生产build。
+没有新simulation/raw output，没有ARCH Core构建，未push/tag/main merge。
+正式plt科学显示仍等待字段/单位/native geometry/完成状态契约确认；
+这个边界入口不解除该科学Stop Gate。

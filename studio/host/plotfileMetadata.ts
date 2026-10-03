@@ -4,7 +4,8 @@
  * stable file identity do not prove writer completion or scientific provenance.
  */
 import {constants} from 'node:fs';
-import {open} from 'node:fs/promises';
+import {open,realpath} from 'node:fs/promises';
+import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import h5 from 'h5wasm/node';
 
@@ -47,6 +48,9 @@ function dataset(group: InstanceType<typeof h5.Group>, name: string) {
 export async function inspectPlotfileMetadata(path: string) {
  const source=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
  try {
+  // Reject parent-directory symlink swaps before HDF5 reads any bytes.
+  if(await realpath('/proc/self/fd/'+source.fd)!==resolve(path))
+   throw new Error('Plotfile path identity changed during open.');
   const before=await source.stat({bigint:true});
   if(!before.isFile()||before.size<1n||before.size>BigInt(MAX_FILE_BYTES))
    throw new Error('Choose a regular non-empty plotfile of at most 64 MiB for metadata audit.');
@@ -92,6 +96,6 @@ export async function inspectPlotfileMetadata(path: string) {
   const after=await source.stat({bigint:true});
   if(before.size!==after.size||before.mtimeNs!==after.mtimeNs||before.ctimeNs!==after.ctimeNs||position!==Number(before.size))
    throw new Error('Plotfile changed during metadata audit; retry only after authoritative completion.');
-  return {schemaVersion:'audit-1',file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString()},...structure};
+  return {schemaVersion:'audit-1',file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString(),ctimeNs:before.ctimeNs.toString()},...structure};
  } finally {await source.close();}
 }
