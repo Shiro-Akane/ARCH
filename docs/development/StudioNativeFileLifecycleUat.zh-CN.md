@@ -126,3 +126,32 @@ Host项目与保存文件关联、输入SHA/mtime/size及binary身份保持不�
 完整原始记录只在本机ignored目录；提交处理后摘要。
 不改源码/科学定义/阈值，不重复未变套件，不push/tag/main merge；
 整体3C未完成，不进入全模型/JENS/RZ/CUDA阶段。
+
+## 2026-10-03 补充：用户可见性确认与 Sod 平台曲线显示修正
+
+用户提供独立 Linux Studio 窗口截图并明确报告“已显示linux界面”。
+此前 taskbar-only 为历史状态，不再作为当前阻断。窗口标题及 Host 项目关联
+ARCH-compute-optim；可见性确认不等于完整流程验收。任务栏中的已结束 ARCH
+终端是保留日志窗口，不根据缩略图判断 Core 仍运行。
+
+对照真实 init-only response：Sod DENS 共512点，前256点为1、后256点为0.125，
+x_pos=0.5。原图自动纵轴恰好等于字段min/max，使两段平台压在边框上；
+本次只为1D自动纵轴添加5%显示留白，Linear/Log均在各自变换空间处理。
+手动范围、clipping、2D颜色范围、原始数组及科学初始化均未改变。
+非正值Log仍明确拒绝；极端不可表示范围不引入无穷或伪造数据。
+
+Production build刷新当前原生窗口13437218后，最大化捕获两段平台均在图框内部，
+纵轴约0.08125到1.04375；分界和x_pos标记保持0.5。最大化输入后的refresh
+曾返回window is not a usable app window；重新枚举同一窗口并捕获确认已最大化，
+未重复输入或重启。工作副本Saved、Disk in-sync、Preview Current。
+刷新沿既有策略产生新的init-only request877e5181-a8b1-4fce-921a-ca70316783e6，
+未启动Run/Restart或simulation。配置SHA仍3a772a8866d5e4cd77d81d2f8bb7cabb51521f3f70223d2522aec9fc8101865c，
+Build仍a7c719a8-5851-4331-a020-f131a38843b8，binary仍e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7。
+512点真实密度值未变；build完整依赖freshness仍unknown，未改称current source。
+
+检查：plot presentation scoped8/8、Studio/Host总231/231、lint、typecheck、
+production build与diff check PASS。已有bundle-size warning保留。
+原始日志在studio/.local/integration/line-viewport-headroom-regression.log，
+不提交dist或完整response arrays；无Core重新编译，无push/tag/main merge。
+仍待原生Stop、active Preview/AMR关闭、active Run原生关闭及显式overwrite等矩阵，
+不宣称3C或整个联合计划完成，不提前进入全模型/JENS/RZ/CUDA。

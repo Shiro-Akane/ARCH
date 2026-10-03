@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {projection,zoomView,panView,axisDefault,fieldDefault,displayRange,fieldRange,logDataError,previewCoordinateDomain} from '../src/data/plotPresentation.ts';
+import {projection,zoomView,panView,axisDefault,fieldDefault,displayRange,fieldRange,lineFieldRange,logDataError,previewCoordinateDomain} from '../src/data/plotPresentation.ts';
 import {realInitGrid,gridPoint,sampleEdges} from '../src/data/RealInitPreviewProvider.ts';
 const near=(a:number,b:number)=>assert.ok(Math.abs(a-b)<Math.max(1,Math.abs(b))*1e-10,`${a} != ${b}`);
 test('all four 1D scale combinations preserve data/marker/hit inverse under zoom and pan',()=>{
@@ -19,3 +19,25 @@ test('physical manual ranges and independent clipping reject invalid drafts with
 test('zoom bounds remain finite and Fit is exact full-domain projection',()=>{let v:[number,number]=[0,1];for(let i=0;i<200;i++)v=zoomView(v,.99,.8);assert.ok(v[1]>v[0]);v=panView(v,1e6);assert.ok(v[0]>=0&&v[1]<=1);const full=projection([0,25.6],'linear');assert.equal(full.inverse(0),0);assert.equal(full.inverse(1),25.6);});
 
 test('authoritative Core region restores exact full domain; unrepresentable display ranges reject',()=>{assert.deepEqual(previewCoordinateDomain({grid:{axes:[{name:'x1',min:0,max:25.6}]}},'x1'),[0,25.6]);assert.equal(previewCoordinateDomain({grid:{axes:[{name:'x1',min:0,max:Infinity}]}},'x1'),undefined);assert.throws(()=>projection([-1e308,1e308],'linear'),/represented/);});
+
+test('Sod plateaus lie inside the automatic 1D viewport on Linear and Log without changing raw values',()=>{
+ const raw=[1,1,.125,.125],before=[...raw];
+ for(const scale of ['linear','log'] as const){
+  const settings={...fieldDefault(),scale},range=lineFieldRange(settings,[.125,1]);
+  const yp=projection(range,scale);
+  for(const value of raw){assert.ok(yp.forward(value)>0&&yp.forward(value)<1);near(yp.inverse(yp.forward(value)),value);}
+  assert.deepEqual(fieldRange(settings,[.125,1]),[.125,1]);
+ }
+ assert.deepEqual(raw,before);
+});
+test('1D headroom preserves explicit manual/clipping limits and rejects nonpositive Log',()=>{
+ for(const scale of ['linear','log'] as const){
+  for(const settings of [
+   {...fieldDefault(),scale,manual:true,min:'.2',max:'.8'},
+   {...fieldDefault(),scale,lower:true,low:'.2'},
+   {...fieldDefault(),scale,upper:true,high:'.8'},
+  ])assert.deepEqual(lineFieldRange(settings,[.125,1]),fieldRange(settings,[.125,1]));
+ }
+ assert.throws(()=>lineFieldRange({...fieldDefault(),scale:'log'},[0,1]),/positive/);
+ assert.equal(logDataError([0,-1],'log','Field')?.includes('Return to Linear'),true);
+});

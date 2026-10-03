@@ -21,11 +21,12 @@ owned Host and its Preview/Configure work, waiting for active Build completion.
 
 Linux packaging: npm run desktop:package. Keep the complete resulting directory
 together; start its arch-studio script. Packaging output is local and not committed.
-Desktop visual acceptance remains pending. Earlier WSLg copy-mode capture
-failures are historical; the current independent Linux window can be captured
-with its parameter interface. The user's latest report is still a taskbar icon
-without a visible page. Tool capture, activation and maximization do not establish
-user-visible acceptance; WSLg display recovery has not been confirmed.
+The user has confirmed the independent Linux window is visible and supplied
+screenshots of its parameter interface. Earlier WSLg copy-mode capture failures
+and taskbar-only reports are historical. Production-window inspection confirms
+Sod density plateaus and its x_pos marker match the authoritative initialization
+response. This establishes visibility and this display check; full native workflow
+acceptance, including remaining active-task shutdown checks, is still incomplete.
 See [native file lifecycle evidence](../../docs/development/StudioNativeFileLifecycleUat.zh-CN.md)
 and [active-close coverage](../../docs/development/StudioNativeActiveCloseAttempt.zh-CN.md)
 for the verified scope and remaining lifecycle checks.

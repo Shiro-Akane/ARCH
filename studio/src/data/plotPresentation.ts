@@ -19,6 +19,17 @@ export function fieldRange(s:FieldSetting,automatic:Range):Range {
  if(!r.every(Number.isFinite)||r[0]>=r[1]||(s.scale==='log'&&r[0]<=0))throw Error('Clipping requires finite lower < upper and positive bounds for Log.');
  return r;
 }
+/** Only the 1D automatic viewport gets headroom; explicit limits and color ranges stay exact. */
+export function lineFieldRange(s:FieldSetting,automatic:Range):Range {
+ const r=fieldRange(s,automatic);
+ if(s.manual||s.lower||s.upper)return r;
+ const lo=s.scale==='log'?Math.log10(r[0]):r[0],hi=s.scale==='log'?Math.log10(r[1]):r[1];
+ const pad=(hi-lo)*.05;
+ const candidate:Range=s.scale==='log'?[10**(lo-pad),10**(hi+pad)]:[lo-pad,hi+pad];
+ // Extreme finite inputs must not acquire an unrepresentable display domain.
+ return candidate.every(Number.isFinite)&&candidate[0]<candidate[1]&&
+  (s.scale!=='log'||candidate[0]>0)?candidate:r;
+}
 export function projection(domain:Range,scale:Scale,view:Range=[0,1]){
  const transform=(v:number)=>scale==='log'?Math.log10(v):v;
  const inverse=(v:number)=>scale==='log'?10**v:v;

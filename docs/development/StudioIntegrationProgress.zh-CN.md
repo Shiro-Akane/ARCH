@@ -19,9 +19,9 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
-| 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前 229 Studio/Host tests 与静态/production 检查 PASS；原生Open取消、未保存替换取消及空格/中文路径SaveAs/Reopen已有捕获与字节证据；用户可见窗口确认和其他原生矩阵未通过；历史177项不替代本轮 | 不适用 |
+| 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前 229 Studio/Host tests 与静态/production 检查 PASS；原生Open取消、未保存替换取消及空格/中文路径SaveAs/Reopen已有捕获与字节证据；用户已用截图确认独立窗口可见；其他原生矩阵未完整；历史177项不替代本轮 | 不适用 |
 | 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
-| 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 进程/HTTP/Build 验证通过；当前原生视觉 UAT 未通过，dependenciesComplete=false | 不适用 |
+| 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 进程/HTTP/Build 验证通过；独立窗口可见及Sod显示核对通过；完整原生UAT未完成，dependenciesComplete=false | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | Sod t=0、SmoothAdvection Run/Restart和输出锁回归通过；227项Studio/Host回归通过；桌面全流程 UAT 未完成 | 不推广为其他模型/后端演化验收 |
 | 5 全模型初态/AMR | 当前仅 Sod/CellularDet，通用扩展未实施 | 本地 CPU 两模型初态及 Cellular AMR 有证据；其余模型未验收 | 真实域/预算需明确 |
 | 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
@@ -1836,3 +1836,32 @@ to0.4 withoutSave; Saved/DiskinSync and automatic init-only PreviewCurrent obser
 StudioNativeFileLifecycleUat/Summary updated. No new Run/Build/source change.
 Discard/activeClose/nativeStop/overwrite/humanVisibility remain open; no whole3C,
 full-model/JENS/RZ advance, unchanged-suite rerun/raw upload/push/tag/main merge.
+
+## 2026-10-03 补充：用户可见性确认与 Sod 平台曲线显示修正
+
+用户提供独立 Linux Studio 窗口截图并明确报告“已显示linux界面”。
+此前 taskbar-only 为历史状态，不再作为当前阻断。窗口标题及 Host 项目关联
+ARCH-compute-optim；可见性确认不等于完整流程验收。任务栏中的已结束 ARCH
+终端是保留日志窗口，不根据缩略图判断 Core 仍运行。
+
+对照真实 init-only response：Sod DENS 共512点，前256点为1、后256点为0.125，
+x_pos=0.5。原图自动纵轴恰好等于字段min/max，使两段平台压在边框上；
+本次只为1D自动纵轴添加5%显示留白，Linear/Log均在各自变换空间处理。
+手动范围、clipping、2D颜色范围、原始数组及科学初始化均未改变。
+非正值Log仍明确拒绝；极端不可表示范围不引入无穷或伪造数据。
+
+Production build刷新当前原生窗口13437218后，最大化捕获两段平台均在图框内部，
+纵轴约0.08125到1.04375；分界和x_pos标记保持0.5。最大化输入后的refresh
+曾返回window is not a usable app window；重新枚举同一窗口并捕获确认已最大化，
+未重复输入或重启。工作副本Saved、Disk in-sync、Preview Current。
+刷新沿既有策略产生新的init-only request877e5181-a8b1-4fce-921a-ca70316783e6，
+未启动Run/Restart或simulation。配置SHA仍3a772a8866d5e4cd77d81d2f8bb7cabb51521f3f70223d2522aec9fc8101865c，
+Build仍a7c719a8-5851-4331-a020-f131a38843b8，binary仍e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7。
+512点真实密度值未变；build完整依赖freshness仍unknown，未改称current source。
+
+检查：plot presentation scoped8/8、Studio/Host总231/231、lint、typecheck、
+production build与diff check PASS。已有bundle-size warning保留。
+原始日志在studio/.local/integration/line-viewport-headroom-regression.log，
+不提交dist或完整response arrays；无Core重新编译，无push/tag/main merge。
+仍待原生Stop、active Preview/AMR关闭、active Run原生关闭及显式overwrite等矩阵，
+不宣称3C或整个联合计划完成，不提前进入全模型/JENS/RZ/CUDA。

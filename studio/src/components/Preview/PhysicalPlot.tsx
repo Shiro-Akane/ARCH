@@ -6,7 +6,7 @@ import type {PointerEvent as ReactPointerEvent} from 'react';
 import {plotColor} from '../../data/plotColors';
 import type {CoreBinding} from '../../host/previewContracts';
 import {sampleEdges} from '../../data/RealInitPreviewProvider';
-import {axisDefault,fieldDefault,displayRange,fieldRange,projection,zoomView,panView,paddedRange,logDataError} from '../../data/plotPresentation';
+import {axisDefault,fieldDefault,displayRange,fieldRange,lineFieldRange,projection,zoomView,panView,paddedRange,logDataError} from '../../data/plotPresentation';
 import type {Range} from '../../data/plotPresentation';
 import {PlotControls} from './PlotControls';
 export interface PositionMarkerProps {binding:CoreBinding;value:number;pending:boolean;onCandidate:(value:number|null)=>void;onCommit:(value:number)=>void}
@@ -27,7 +27,7 @@ export function PhysicalPlot({xDomain,yDomain,x,y,values,field,selected,onPoint,
   try{
    for(const error of [logDataError(x,xs.scale,'X coordinates'),y&&logDataError(y,ys.scale,'Y coordinates'),!meshOnly&&logDataError(values,fs.scale,'Field values')])if(error)throw Error(error);
    const xr=displayRange(xs,xDomain??[edgesX[0],edgesX[edgesX.length-1]]),fr=fieldRange(fs,extent);
-   const yr=y&&edgesY?displayRange(ys,yDomain??[edgesY[0],edgesY[edgesY.length-1]]):fr;
+   const yr=y&&edgesY?displayRange(ys,yDomain??[edgesY[0],edgesY[edgesY.length-1]]):lineFieldRange(fs,extent);
    return {xr,yr,fr,xp:projection(xr,xs.scale,view.x),yp:projection(yr,y?ys.scale:fs.scale,view.y),fp:projection(fr,fs.scale)};
   }catch(e){return {error:e instanceof Error?e.message:'Invalid display settings'};}
  },[xDomain,yDomain,x,y,values,xs,ys,fs,edgesX,edgesY,extent,view,meshOnly]);
