@@ -71,7 +71,7 @@ class Campaign:
         for line in (ROOT / 'simulation/JeansWave/JeansWave.par').read_text().splitlines():
             if '=' in line and not line.startswith('#'):
                 key, value = line.split('=', 1)
-                self.base[key] = value
+                self.base[key.strip()] = value.strip()
         self.results = []
 
     def run(self, name, *, energy_budget=.01, **changes):
@@ -113,7 +113,11 @@ class Campaign:
                                 env=os.environ | {'OMP_NUM_THREADS': '1'}, capture_output=True, text=True, timeout=60)
         (folder / 'run.log').write_text(result.stdout + result.stderr)
         require(result.returncode != 0 and expected.lower() in (result.stdout + result.stderr).lower(), name + ': expected rejection missing')
-        require(not list(folder.glob('*plt*.h5')), name + ': published output on rejected run')
+        require('DUPLICATE_PARAMETER' not in result.stdout + result.stderr and
+                'MISSING_PARAMETER' not in result.stdout + result.stderr,
+                name + ': unrelated input construction error masked the target rejection')
+        require(not list(folder.glob('*.h5')) and not list(folder.glob('*.partial')),
+                name + ': published or temporary scientific output on rejected run')
         self.results.append(dict(name=name, rejected=True, reason=expected))
 
     def restart(self):
@@ -216,7 +220,8 @@ def main():
                 ('reject-periodic-fluid-face', {'x1l_boundary_type':'outflow'},
                  'Fluid faces must match the gravity topology'),
                 ('reject-3d-isolated-fluid-faces',
-                 {'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1},
+                 {'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1,
+                  'x2_min':0, 'x2_max':1, 'x3_min':0, 'x3_max':1},
                  'Fluid faces must match the gravity topology')]:
             campaign.reject(name, message, **changes)
         status = 'passed'

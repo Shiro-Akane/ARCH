@@ -2900,3 +2900,11 @@ linear error .000261426 <.02；burn能量/质量预算通过，paired transport 
 8输入inspect exit0；两种restart最终20numeric dataset raw bytes及整个checkpoint SHA一致。
 不改Core/物理/参考/阈值，无重build；历史G regrid_cycle原样待Core，full gate仍未完成，
 原69/71失败JUnit保持。见RadialInputMigration报告/Summary；raw本机ignored，未push/tag。
+
+## 2026-10-04 gravity negative contract真因复验
+
+原14negative初次11/14，发现空格key override形成重复键假通过及多维必填缺项。
+生成器strip keys/values，补明确原轴/center默认；reject新增禁止重复/缺项掩盖与无H5/partial。
+14/14复验全部实际INVALID_RANGE+目标诊断，无scientific output，不改Core/物理预算。
+见GravityNegativeContracts报告/Summary；原fail日志/全CTestJUnit保持，historicalG full gate仍未关闭。
+无重build/CUDA/push/tag。

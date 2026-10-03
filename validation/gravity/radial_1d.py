@@ -257,7 +257,11 @@ class RadialCampaign:
         require(result.returncode != 0 and reason.lower() in
                 (result.stdout + result.stderr).lower(),
                 name + ': expected invalid configuration was accepted')
-        require(not list(folder.glob('*plt*.h5')), name + ': rejected run published data')
+        require('DUPLICATE_PARAMETER' not in result.stdout + result.stderr and
+                'MISSING_PARAMETER' not in result.stdout + result.stderr,
+                name + ': unrelated input construction error masked the target rejection')
+        require(not list(folder.glob('*.h5')) and not list(folder.glob('*.partial')),
+                name + ': rejected run published scientific data or temporary file')
         self.results.append(dict(name=name, rejected=True))
 
     def run_checks(self, quick=False):
@@ -273,8 +277,9 @@ class RadialCampaign:
             self.reject(geometry, 'nonnegative radius', x1_min=-1)
         # P12 permits the origin when the complete azimuth and fluid seam
         # topology are present; retain distinct invalid-topology checks.
-        self.reject('spherical', 'full azimuthal turn', nblockx2=1)
+        self.reject('spherical', 'full azimuthal turn', nblockx2=1,
+                    x2_min=0, x2_max=1, center_y=0)
         self.reject('spherical', 'Fluid faces must match', nblockx2=1,
                     x1_min=0.5, x1_max=RADIUS,
-                    x2_max=6.283185307179586,
+                    x2_min=0, x2_max=6.283185307179586, center_y=0,
                     x2l_boundary_type='outflow')
