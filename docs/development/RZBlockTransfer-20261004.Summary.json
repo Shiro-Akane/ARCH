@@ -1,0 +1,76 @@
+{
+  "baseHead": "025a5210b9aef163358c2f5121e92a79d1f4f8e4",
+  "dirtyInputs": {
+    "src/amr/storage/Block.h": "555ac6fcb795697c4095d0ec446a2208042a4100486ea37f0636b2843a6ad5ef",
+    "src/amr/exchange/GhostExchange.h": "7e22eeb26f2a108764d00baebd76d15305294778e4c3c0e9aaec9f8d43507750",
+    "tests/host/amr/test_amr_operation_plans.cpp": "0128c9f73b2cd8479de0c910fe5580a755a9767829b7e33c6d3b2f6a1c3a70b9"
+  },
+  "testBinarySha256": "e43c54108964c266b66f3938fd961ee8250d99f6f982edc1cf966e03ef1aac35",
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "amr_operation_plans": "PASS",
+    "diffCheck": "PASS"
+  },
+  "scientificStatus": "OPEN_FINDING: RZ refinement angular momentum changes",
+  "fixture": {
+    "dimension": 2,
+    "parentShape": [
+      16,
+      16
+    ],
+    "childCount": 4,
+    "childShape": [
+      16,
+      16
+    ],
+    "radialDomains": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ]
+    ],
+    "axialDomain": [
+      -0.5,
+      0.5
+    ],
+    "species": 2,
+    "state": "rho=2+0.1*r+0.2*z; mom_r=0.1*rho; mom_z=0.2*rho; mom_phi=2*rho*r; eng=100*rho; enuc_rate=0.3*rho; X0=0.6+0.01*r; X1=1-X0"
+  },
+  "oracle": {
+    "volume": "pi*(r_hi^2-r_lo^2)*dz",
+    "angularMomentum": "sum(momentum_phi*(2/3)*pi*(r_hi^3-r_lo^3)*dz)",
+    "implementation": "independent long-double integral of piecewise-constant cell momentum_phi; same shared pi constant",
+    "engineeringNormalization": "max(1,abs(parent integral)), not always a relative error",
+    "engineeringGate": "1e-12; arithmetic/conservative-transfer check only, not owner scientific budget"
+  },
+  "results": [
+    {
+      "inner": 0.0,
+      "conserved_error": 3.5563253182938023e-17,
+      "angular_before": 6.52565014546476,
+      "angular_refined": 6.528903220450582,
+      "angular_restored": 6.525650145464761,
+      "angular_relative_change": 0.0004985058826793116
+    },
+    {
+      "inner": 1.0,
+      "conserved_error": 2.4968065488241603e-17,
+      "angular_before": 102.00961373742267,
+      "angular_refined": 102.02021879603544,
+      "angular_restored": 102.00961373742267,
+      "angular_relative_change": 0.00010396136426979989
+    }
+  ],
+  "localEvidence": "studio/.local/integration/rz-block-transfer-20261004/ctest-include-final.log",
+  "limits": [
+    "explicit internal RZ adapter; runtime Grid remains legacy",
+    "angular error measured, not accepted or threshold-adjusted",
+    "parent ghosts analytic; no time evolution, reflux or complete RZ production acceptance",
+    "no CUDA; no full ARCH build; no simulation",
+    "earlier midpoint angular approximations superseded by exact r*dV measure; original logs retained"
+  ]
+}

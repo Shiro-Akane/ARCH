@@ -336,7 +336,8 @@ public:
         const std::shared_ptr<MemoryPool>& pool,
         const std::shared_ptr<AmrTree>& tree, int dim,
         FluidState Block::* state_ptr,
-        std::span<const BlockHandle> handles)
+        std::span<const BlockHandle> handles,
+        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart)
     {
         const auto& active_blocks = tree->GetActiveBlocks();
         if (state_ptr == nullptr || plan.dimension != dim
@@ -441,7 +442,10 @@ public:
                     const LogicalAmrCell& logical =
                         transfer.source_cells[cell];
                     measure = GridMetrics::CellVolume(
-                        source_block.grid,
+                        GridMetrics::make_geometry_view(source_block.grid,
+                            chart==CoordinateSeamGeometry::RzAxisymmetric
+                                ? GridMetrics::GeometrySemantics::AxisymmetricRz
+                                : GridMetrics::GeometrySemantics::Existing),
                         source_block.grid.Is() + logical[0],
                         source_block.grid.Js() + logical[1],
                         source_block.grid.Ks() + logical[2]);
@@ -643,7 +647,7 @@ public:
                 *compiled, level_views, host_workspace_);
         }
         ExecuteCoarseFinePlan(
-            plans.coarse_fine, pool, tree, dim, state_ptr, handles);
+            plans.coarse_fine, pool, tree, dim, state_ptr, handles, chart);
         execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 

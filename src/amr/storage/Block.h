@@ -15,6 +15,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -106,7 +107,8 @@ struct Block {
      */
     void InterpolateFromCoarse(const Block& coarse, int child_idx, int dim,
                                double density_floor,
-                               double min_specific_internal_energy);
+                               double min_specific_internal_energy,
+                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
 
     /**
      * @brief Volume average data from child blocks to this coarse block.
@@ -115,7 +117,8 @@ struct Block {
      */
     void AverageToCoarse(const Block* children[], int dim,
                          double density_floor,
-                         double min_specific_internal_energy);
+                         double min_specific_internal_energy,
+                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
 
 
     /**
@@ -171,8 +174,10 @@ inline regrid_math::ConstStateView regrid_state_view(const FluidState& state)
 
 inline void Block::InterpolateFromCoarse(
     const Block& coarse, int child_idx, int dim, double density_floor,
-    double min_specific_internal_energy)
+    double min_specific_internal_energy, GridMetrics::GeometrySemantics semantics)
 {
+    const auto fine_view=GridMetrics::make_geometry_view(grid,semantics);
+    const auto coarse_view=GridMetrics::make_geometry_view(coarse.grid,semantics);
     const int nx = BLOCK_NX / 2;
     const int ny = dim >= 2 ? BLOCK_NY / 2 : 1;
     const int nz = dim == 3 ? BLOCK_NZ / 2 : 1;
@@ -203,14 +208,14 @@ inline void Block::InterpolateFromCoarse(
                 geometry.neighbours[3] = dim >= 2 ? coarse.grid.GetIndex(ci, cj + 1, ck) : geometry.center;
                 geometry.neighbours[4] = dim == 3 ? coarse.grid.GetIndex(ci, cj, ck - 1) : geometry.center;
                 geometry.neighbours[5] = dim == 3 ? coarse.grid.GetIndex(ci, cj, ck + 1) : geometry.center;
-                geometry.coarse_volume = GridMetrics::CellVolume(coarse.grid, ci, cj, ck);
+                geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
                 int destination[8]{};
                 for (int child = 0; child < (1 << dim); ++child) {
                     const int fi = grid.Is() + 2 * i + (child & 1);
                     const int fj = grid.Js() + 2 * j + (dim >= 2 ? (child >> 1) & 1 : 0);
                     const int fk = grid.Ks() + 2 * k + (dim == 3 ? (child >> 2) & 1 : 0);
                     destination[child] = grid.GetIndex(fi, fj, fk);
-                    geometry.fine_volumes[child] = GridMetrics::CellVolume(grid, fi, fj, fk);
+                    geometry.fine_volumes[child] = GridMetrics::CellVolume(fine_view, fi, fj, fk);
                 }
                 regrid_math::ProlongationResult result{};
                 const auto status = regrid_math::prolong_family(
@@ -232,8 +237,10 @@ inline void Block::InterpolateFromCoarse(
 
 inline void Block::AverageToCoarse(
     const Block* children[], int dim, double density_floor,
-    double min_specific_internal_energy)
+    double min_specific_internal_energy, GridMetrics::GeometrySemantics semantics)
 {
+    const auto coarse_view=GridMetrics::make_geometry_view(grid,semantics);
+    std::array<GridMetrics::GeometryView,8> fine_views{};
     const int nx = BLOCK_NX;
     const int ny = dim >= 2 ? BLOCK_NY : 1;
     const int nz = dim == 3 ? BLOCK_NZ : 1;
@@ -244,6 +251,8 @@ inline void Block::AverageToCoarse(
         if (children[child] == nullptr
             || children[child]->fluid_state.GetNumSpecies() != species)
             throw std::invalid_argument("invalid Host AMR restriction binding");
+    for (int child=0;child<(1<<dim);++child)
+        fine_views[child]=GridMetrics::make_geometry_view(children[child]->grid,semantics);
     std::vector<double> workspace(static_cast<std::size_t>(species));
     for (int k = 0; k < nz; ++k) {
         for (int j = 0; j < ny; ++j) {
@@ -260,13 +269,13 @@ inline void Block::AverageToCoarse(
                 const int ck = grid.Ks() + k;
                 regrid_math::RestrictionGeometry geometry{};
                 geometry.count = 1 << dim;
-                geometry.coarse_volume = GridMetrics::CellVolume(grid, ci, cj, ck);
+                geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
                 for (int cell = 0; cell < geometry.count; ++cell) {
                     const int fi = child.grid.Is() + ibase + (cell & 1);
                     const int fj = child.grid.Js() + jbase + (dim >= 2 ? (cell >> 1) & 1 : 0);
                     const int fk = child.grid.Ks() + kbase + (dim == 3 ? (cell >> 2) & 1 : 0);
                     geometry.source_cells[cell] = child.grid.GetIndex(fi, fj, fk);
-                    geometry.volumes[cell] = GridMetrics::CellVolume(child.grid, fi, fj, fk);
+                    geometry.volumes[cell] = GridMetrics::CellVolume(fine_views[child_index], fi, fj, fk);
                 }
                 regrid_math::RestrictionResult result{};
                 const auto status = regrid_math::restrict_family(

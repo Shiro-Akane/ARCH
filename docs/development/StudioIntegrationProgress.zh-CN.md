@@ -2658,3 +2658,10 @@ RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 RZ
 显式 chart 贯穿 face/divergence/source/operator/dt，真实 padded 512 active-cell 线性场及独立 dt 一致。
 变密度/动态黏度 work 的原生 volume-average 参考三分辨率二阶，CPU 受影响检查通过。
 详见 RZHostDiffusion-20261004.zh-CN.md / Summary；实际边界/AMR/RKL演化、其它材料/CUDA/科学出口未关闭。
+
+## 2026-10-04 RZ Block / coarse-fine 环体测度
+显式 chart 贯穿 Block prolong/restrict 与 Host coarse-fine source weights，复用既有 shared transfer。
+真实 parent/four-child/restored-parent 体积积分工程检查与 CPU regression 2/2 PASS。
+精确 r*dV 角动量 finding：细化相对改变 4.9850588267931159e-4 / 1.0396136426979989e-4，
+粗化恢复不代表 AMR 演化守恒；未改阈值或科学状态，需 Core discrete transfer contract。
+详见 RZBlockTransfer-20261004.zh-CN.md / Summary；完整 RZ/capability/CUDA/科学出口未关闭。

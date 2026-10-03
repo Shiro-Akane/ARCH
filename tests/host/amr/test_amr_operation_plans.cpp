@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <iomanip>
 #include <limits>
 #include <map>
 #include <set>
@@ -1334,6 +1335,80 @@ void test_coordinate_seam_case(int dimension, bool spherical, bool mixed)
     }
 }
 
+void test_rz_regrid_roundtrip() {
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    for(double inner:{0.,1.}) {
+        amr::Block parent{},restored{};
+        std::array<amr::Block,4> fine;
+        const auto initialize=[&](amr::Block& block,double left,double right,double low,double high) {
+            block.grid=Grid(amr::MAX_NG,left,right,low,high,0.,1.);
+            block.grid.geometry="cylindrical";block.grid.dim=2;block.grid.InitializeTopology();
+            block.fluid_state.Preallocate(block.grid.GetTotalSize());
+            block.fluid_state.InitSpecies(2);
+        };
+        initialize(parent,inner,inner+1.,-.5,.5);
+        initialize(restored,inner,inner+1.,-.5,.5);
+        for(int c=0;c<4;++c) {
+            const double x=inner+.5*(c&1),z=-.5+.5*((c>>1)&1);
+            initialize(fine[c],x,x+.5,z,z+.5);
+        }
+        auto& g=parent.grid;
+        for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
+            const int cell=g.GetIndex(i,j,0);
+            const double radius=g.GetCellCenterX(i),z=g.GetCellCenterY(j);
+            const double rho=2.+.1*radius+.2*z;
+            parent.fluid_state.set(cell,{rho,.1*rho,.2*rho,2.*rho*radius,100.*rho});
+            parent.fluid_state.enuc_rate[cell]=.3*rho;
+            parent.fluid_state.X(0,cell)=.6+.01*radius;
+            parent.fluid_state.X(1,cell)=1.-parent.fluid_state.X(0,cell);
+        }
+        const amr::Block* children[4];
+        for(int c=0;c<4;++c) {
+            fine[c].InterpolateFromCoarse(parent,c,2,1.e-14,1.e-14,rz);
+            children[c]=&fine[c];
+        }
+        restored.AverageToCoarse(children,2,1.e-14,1.e-14,rz);
+        const auto integrals=[](const amr::Block& block) {
+            std::array<long double,9> sum{};
+            const auto& g=block.grid;const auto& u=block.fluid_state;
+            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                const int cell=g.GetIndex(i,j,0);
+                const long double lo=g.GetFacePosL(i),hi=g.GetFacePosR(i);
+                const long double volume=arch::constants::math::pi*(hi*hi-lo*lo)*g.dx2;
+                const double data[]{u.rho[cell],u.mom_u[cell],u.mom_v[cell],
+                    u.mom_w[cell],u.eng[cell],u.enuc_rate[cell],
+                    u.rho[cell]*u.X(0,cell),u.rho[cell]*u.X(1,cell)};
+                for(int a=0;a<8;++a)sum[a]+=volume*data[a];
+                // Integral r*dV for piecewise-constant momentum_phi, not r_mid*V.
+                const long double radial_moment=(2.L/3.L)*arch::constants::math::pi
+                    *(hi*hi*hi-lo*lo*lo)*g.dx2;
+                sum[8]+=radial_moment*u.mom_w[cell];
+            }
+            return sum;
+        };
+        const auto before=integrals(parent),after=integrals(restored);
+        std::array<long double,9> refined{};
+        for(const auto& block:fine) {
+            const auto sum=integrals(block);
+            for(int a=0;a<9;++a)refined[a]+=sum[a];
+        }
+        double max_error=0.;
+        for(int a=0;a<8;++a) {
+            const double scale=std::max(1.,std::abs(static_cast<double>(before[a])));
+            max_error=std::max(max_error,static_cast<double>(
+                std::max(std::abs(after[a]-before[a]),std::abs(refined[a]-before[a])))/scale);
+        }
+        expect(max_error<1.e-12,"RZ Block migration lost conserved volume integrals");
+        std::cout<<std::setprecision(17)<<"RZ_REGRID inner="<<inner<<" conserved_error="<<max_error
+            <<" angular_before="<<static_cast<double>(before[8])
+            <<" angular_refined="<<static_cast<double>(refined[8])
+            <<" angular_restored="<<static_cast<double>(after[8])
+            <<" angular_relative_change="<<static_cast<double>((refined[8]-before[8])/before[8])<<'\n';
+        // Angular momentum is a separate r-weighted quantity. Report its
+        // difference; do not infer its acceptance from conserved mom_phi.
+    }
+}
+
 void test_rz_axis_seam(bool mixed, double inner_radius)
 {
     SimConfig config{};
@@ -1477,6 +1552,7 @@ int main()
         test_host_exchange_cache_rebinding();
         test_mixed_level_and_coarse_fine_execution();
         test_coordinate_seam_mapping();
+        test_rz_regrid_roundtrip();
         test_rz_axis_seam(false,0.);
         test_rz_axis_seam(true,0.);
         test_rz_axis_seam(false,.25);
