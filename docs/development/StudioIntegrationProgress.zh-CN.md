@@ -3102,3 +3102,11 @@ species index/name/raw值表均可读，保留tracer .49999999999999994，不改
 正常close exit0、8owned进程退出、config不变/no output/managed clean。
 InitProbeCompositionIdentity报告/Summary已补证；只追加记录，不重跑331项。
 连续composition field和科学CPU/CUDA/O9仍未完成，未push/tag。
+
+## 2026-10-04 SNIaCoupled 原生13组分/二维初态矩阵
+
+production native新增SNIaCoupled：128²真实热点、helmholtz ready、首个raw Init probe的13个index/name/fraction表；
+不把Core floor与输入default混淆，不作连续composition field或科学演化验收。
+单次AMR Complete1leaf L0，0:0:0:0 bounds/cellShape/spacing几何一致；无AMR cell field arrays。
+正常close exit0、8owned PID/startTicks退出、config未变/无科学output/managed clean。
+见FullModelSNIaDesktop-20261004报告/Summary；无源码修改，不重复331项基线，不push/tag。
