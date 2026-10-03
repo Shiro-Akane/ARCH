@@ -56,3 +56,8 @@ tests/cuda/amr/test_refinement_indicators.cpp 及现有AMR/重启/配置入口�
 
 科学批准引用尚未在本次审计中取得，保持pending。这不阻塞Linux桌面/plt接口审计等已授权工作。
 本文件不修改Core、不编译、不Preview、不演化、不push/tag。
+
+## 隔离数值基础进度（2026-10-03）
+
+JeansDiagnostics.h 已实现冻结公式的数值叶函数，独立 Decimal 参考和 CPU scoped CTest 1/1 通过，见 JeansNumericLeaf-20261003.zh-CN.md。
+这不解除上述科学确认与前序桌面出口门槛；尚无 EOS/网格/AMR/plot 消费者，JENS capability 仍 unavailable。数值输入域/工程舍入界限不是科学有效状态或轨迹预算批准。

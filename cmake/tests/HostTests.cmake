@@ -135,7 +135,7 @@ add_test(NAME configuration_input COMMAND arch_configuration_input
     "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
 
 # Numerical leaves and independent reference authorities.
-foreach(contract IN ITEMS core/physical_constants amr/refinement_indicator_math grid/curvilinear_metrics)
+foreach(contract IN ITEMS core/physical_constants core/jeans_diagnostics amr/refinement_indicator_math grid/curvilinear_metrics)
     get_filename_component(contract_directory "${contract}" DIRECTORY)
     get_filename_component(contract "${contract}" NAME)
     add_executable(arch_${contract} tests/host/${contract_directory}/test_${contract}.cpp)

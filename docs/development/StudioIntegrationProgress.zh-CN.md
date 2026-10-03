@@ -2266,3 +2266,10 @@ checkpoint仅geometry string不能区分旧polar与未来RZ，明确保留semant
 clean 164de218 标准 Host-owned 增量 Build 39eb4f9e 成功；Ninja no work to do，binary ee3de6cf 不变。82 CMake/735 compiler/172 link 输入，三个稳定标志 true；独立 Node 重载同 build ID、changedInputs=[]，完整覆盖仍 false/freshness-unknown。
 详见 BuildSelectedLinkerIntegration-20261003.zh-CN.md/Summary.json。本项不是干净重建或实际 linker 执行观察；未运行 simulation/push/tag/main merge。
 下一阶段仍按联合计划推进；全模型桌面矩阵、正式 plt、O7.1–O7.5、CPU/CUDA 科学与性能验证尚未封箱。
+
+### O7.1 数值基础：隔离共享 Jeans 叶函数
+
+a06b8d51 基线上增加 JeansDiagnostics::evaluate，消费总密度/声速平方/max(h_active) 与共享 CGS G；二进制指数缩放保留可表示极端结果。无生产消费者、能力仍 unavailable，不选 EOS/AMR 阈值或新增 floor。
+独立 Decimal 80/120 位参考、8 个数值 case、12 个非法输入位置和2个最终不可表示结果；现有 build-cpu scoped target 编译与 CTest 1/1 PASS。首次选 production BUILD_TESTING=OFF 的 unknown-target 失败保留。
+详见 JeansNumericLeaf-20261003.zh-CN.md/Summary；一般 EOS/候选父态/条件规则与独立科学预算 pending，完整桌面矩阵和 O7.1 出口未完成。
+未重编生产 ARCH、未运行 simulation/Preview/CUDA、不 push/tag/main merge。
