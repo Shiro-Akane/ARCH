@@ -2240,3 +2240,12 @@ completion unknown、renderEligible false。真实维护Sod及已有t=0 12叶块
 只读读取，field arrays禁止读取测试通过。5/5 scoped tests、lint/typecheck PASS；
 无新模拟/IO改动。详见PlotfileMetadataPrototype.zh-CN.md及精简Summary。
 正式Reader/LOD/Inspector待契约freeze与隔离实现；不把原型计为plt出口完成。
+
+### 全模型原生桌面：BurnOneZone 非空间状态 Inspector
+
+基线7426b516；真实production Linux窗口验证均匀初态表，发现Inspector误显示
+协议采样坐标后按Core uniform-state语义修正，仅显示原值和来源身份。
+249/249 Studio/Host、lint/typecheck/build/diff PASS；新production原生复验通过，
+warm更新六字段/数据/配置/Build身份不变；两轮正常关闭exit0，实际worker已回收。
+详见FullModelUniformStateDesktopProgress.zh-CN.md及精简Summary。
+非燃烧演化/AMR/性能验收，完整桌面矩阵仍未完；状态过宽文案单独记录。

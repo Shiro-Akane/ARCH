@@ -1,0 +1,80 @@
+{
+  "baseline": "7426b51687123565a059129bf68bb00d50cfed46",
+  "case": "BurnOneZone",
+  "scope": "Linux native production Initial Condition UAT; no burn evolution",
+  "buildId": "b122233f-61aa-4fd5-932a-a27ded45e302",
+  "binarySha256": "ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a",
+  "configRevision": "1381a51cac62c93c02f1000d1b568e581aeb7a2a766cf392753bbe52ea35d408",
+  "dataSha256": "80c102e57871167b07b0c99797f74ab14c763fc38d228950cd86490beebd2374",
+  "diskConfigSha256": "1381a51cac62c93c02f1000d1b568e581aeb7a2a766cf392753bbe52ea35d408",
+  "representation": "uniform-state",
+  "requests": {
+    "beforeFix": "e32de216-e49c-4167-a60b-f99f0ee85e9c",
+    "afterFix": "80f28c23-923c-4675-b384-cd0b42330ab1",
+    "warm": "0bd510d4-d21a-4caf-ade4-db93ff1c390c"
+  },
+  "initialState": {
+    "DENS": {
+      "value": 10000000,
+      "unit": "g/cm^3"
+    },
+    "PRES": {
+      "value": 1.8697622183188768e+24,
+      "unit": "erg/cm^3"
+    },
+    "TEMP": {
+      "value": 3000000000.0000005,
+      "unit": "K"
+    },
+    "VELX": {
+      "value": 0,
+      "unit": "cm/s"
+    },
+    "ENER": {
+      "value": 4.092492793328973e+24,
+      "unit": "erg/cm^3"
+    },
+    "EINT": {
+      "value": 409249279332897300,
+      "unit": "erg/g"
+    }
+  },
+  "nativeChecks": {
+    "uniformStateTable": "PASS",
+    "nonSpatialInspector": "PASS after UI fix",
+    "identityAndRawValuesUnchanged": "PASS",
+    "warmPreview": "PASS",
+    "closeExitCode": 0,
+    "knownOwnedPidsGone": [
+      269056,
+      269102,
+      273609,
+      273656,
+      274084
+    ],
+    "remainingSelectedBinaryPreviewWorkers": []
+  },
+  "warmObservations": {
+    "sequence": 2,
+    "tableLoads": 0,
+    "tableHits": 2,
+    "eosConversions": 1,
+    "exactStateReuses": 511,
+    "timingClaim": "not a benchmark"
+  },
+  "regression": {
+    "StudioHost": "249/249 PASS",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limits": [
+    "no evolution/ignition acceptance",
+    "no native AMR UAT for this case",
+    "complete dependency freshness unknown",
+    "manual update transient label Parameters changed is overly broad; config unchanged",
+    "full-model desktop matrix still incomplete"
+  ],
+  "rawDataUploaded": false
+}
