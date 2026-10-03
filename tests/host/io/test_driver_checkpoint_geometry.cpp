@@ -108,6 +108,51 @@ int main(int argc,char** argv) {
         }
         require(state.time==0.&&state.step==0&&state.chk_idx==7&&state.plt_idx==11&&
                 state.dt_burn==.02&&state.resume_after_regrid,"checkpoint controller changed");
+        // Distinct ledger slots prove output labels, not a zero-only smoke test.
+        counters.repairs.values[4]=1.25;
+        counters.repairs.values[5]=-2.5;
+        counters.repairs.values[6]=3.75;
+        output.write_measurements({}, {});
+        const auto report_path=std::filesystem::path(config.io.out_dir)/"state_repairs.txt";
+        const auto read_report=[&] {
+            std::ifstream in(report_path);
+            return std::string(std::istreambuf_iterator<char>(in),{});
+        };
+        const auto report=read_report();
+        if (rz) {
+            require(report.find("geometry_chart=axisymmetric-rz\n")!=std::string::npos,
+                    "RZ repair report omitted explicit chart");
+            require(report.find("measure_normalization=full_rotation\n")!=std::string::npos,
+                    "RZ repair report omitted full-ring measure");
+            require(report.find("momentum_r=1.25\n")!=std::string::npos &&
+                    report.find("momentum_z=-2.5\n")!=std::string::npos &&
+                    report.find("momentum_phi=3.75\n")!=std::string::npos,
+                    "RZ repair report mislabeled component slots");
+            require(report.find("momentum_x=")==std::string::npos &&
+                    report.find("momentum_y=")==std::string::npos,
+                    "RZ repair report retained Cartesian component aliases");
+        } else {
+            require(report.starts_with("revision=P1.5-v1 units=CGS\n"),
+                    "legacy repair report header changed");
+            require(report.find("momentum_x=1.25\n")!=std::string::npos &&
+                    report.find("momentum_y=-2.5\n")!=std::string::npos &&
+                    report.find("momentum_z=3.75\n")!=std::string::npos,
+                    "legacy repair component labels changed");
+            require(report.find("geometry_chart=")==std::string::npos,
+                    "legacy repair report unexpectedly migrated");
+        }
+        // Linux /dev/full makes the real buffered report flush fail.
+        std::filesystem::remove(report_path);
+        std::filesystem::create_symlink("/dev/full",report_path);
+        propagated=false;
+        try { output.write_measurements({}, {}); }
+        catch (const std::exception&) { propagated=true; }
+        require(propagated,"repair report write failure swallowed");
+        std::filesystem::remove(report_path);
+        output.write_measurements({}, {});
+        require(read_report()==report,"repair report failure recovery changed ledger serialization");
+        require(arch::core::file_sha256(path.string())==original_digest,
+                "measurement failure altered checkpoint");
         std::cout<<"PASS actual DriverIO "<<(rz?"RZ":"Cartesian")<<" profile/native/controller/rejection/create/retry time=0 step=0\n";
     }
     return 0;

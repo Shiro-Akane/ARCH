@@ -2783,3 +2783,11 @@ level/logical/index/来源身份匹配，原file SHA不变。
 固定32像素overview仍全扫128叶单元，不承诺大文件成本。
 没有production改动/新simulation/native UAT；completion unknown及未确认science身份保持。
 见 PlotfileEvolvedReader-20261004.zh-CN.md / Summary.json；联合目标仍未完成。
+
+## 2026-10-04 actual Driver RZ repair diagnostics
+
+实际Driver报告RZ动量r/z/phi及full-rotation cm³/g/erg身份已记录；
+发现并修复真实/dev/full buffered failure吞没，flush/close异常先于成功摘要传播。
+重编actual CPU fixture Cartesian/RZ通过，legacy报告bytes一致，
+同ledger恢复与旧checkpoint SHA不变；只time0/step0，非演化/science/CUDA验收。
+主ARCH尚未重新构建；见RZDriverRepairDiagnostics-20261004报告和Summary。

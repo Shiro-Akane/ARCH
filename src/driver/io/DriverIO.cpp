@@ -130,8 +130,21 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         std::ofstream report(config.io.out_dir + "/state_repairs.txt");
         if (!report) throw std::runtime_error("cannot write state repair diagnostics");
         report << std::setprecision(17) << "revision=P1.5-v1 units=CGS\n";
+        // Ledger slots follow the local orthonormal state basis. RZ uses
+        // complete rotating cells, so its integrals are full 3D quantities.
+        // The phi momentum integral is not the r-weighted angular momentum.
+        const bool rz = runtime.geometry_semantics()
+            == GridMetrics::GeometrySemantics::AxisymmetricRz;
+        if (rz)
+            report << "geometry_semantics_revision=1\ngeometry_chart=axisymmetric-rz\n"
+                   << "momentum_basis=local-orthonormal-r-z-phi\n"
+                   << "measure_unit=cm^3\nmeasure_normalization=full_rotation\n"
+                   << "mass_unit=g\nmomentum_unit=g*cm/s\nenergy_unit=erg\n";
         const char* names[]{"events","affected_volume","mass_signed","mass_absolute",
-            "momentum_x","momentum_y","momentum_z","energy_signed","energy_absolute","local_cell"};
+            rz ? "momentum_r" : "momentum_x",
+            rz ? "momentum_z" : "momentum_y",
+            rz ? "momentum_phi" : "momentum_z",
+            "energy_signed","energy_absolute","local_cell"};
         for (int i=0;i<state::RepairView::fixed_size;++i) report << names[i] << "=" << ctrl.repairs.values[i] << "\n";
         for (int i=0;i<ctrl.repairs.species();++i) {
             report << "species_" << i << "_signed=" << ctrl.repairs.values[10+2*i] << "\n";
@@ -140,6 +153,11 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         report << "block_uid=" << ctrl.repairs.block_uid << "\nstage=" << ctrl.repairs.stage
                << "\ntime=" << ctrl.repairs.time << "\nposition=" << ctrl.repairs.position[0] << ","
                << ctrl.repairs.position[1] << "," << ctrl.repairs.position[2] << "\n";
+        // Buffered text failures must propagate before announcing diagnostics.
+        report.flush();
+        if (!report) throw std::runtime_error("cannot flush state repair diagnostics");
+        report.close();
+        if (!report) throw std::runtime_error("cannot close state repair diagnostics");
         std::cout << "[State] floor repairs=" << ctrl.repairs.values[0]
                   << " delta_mass=" << ctrl.repairs.values[2]
                   << " delta_energy=" << ctrl.repairs.values[7] << std::endl;
