@@ -2535,3 +2535,8 @@ Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做
 ## 2026-10-04：受管生产 CPU Build 与 Sod 初始化恢复
 
 从清洁 a28c6576 的 Linux 桌面执行既有 CPU Build，Manifest c99c8486、binary 1bf5a00d；通过 Refresh Project State 后 Sod field/根级 Initial AMR 均 Current。完整依赖 freshness 仍 unknown，compiler-input 前后稳定标记 false；未改科学实现或运行 simulation。详情见 StudioDesktopBuildRefresh-20261004.zh-CN.md 与对应 Summary。总体目标仍未完成。
+
+
+## 2026-10-04：Build 后项目身份自动衔接
+
+修复 ffcd32fd 上实测需要手动刷新的问题，成功受管 Build 后只刷新同项目同输出路径的 executable 身份；晚到/失败响应保护及去重回归通过，320/320 + lint/typecheck/build/diff PASS。新 production assets 在现有 Linux 窗口无需手动 Refresh Project State 即恢复 Sod Current。完整 freshness unknown 与科学/平台未完成项不变。见 StudioBuildProjectIdentity-20261004.zh-CN.md/Summary。
