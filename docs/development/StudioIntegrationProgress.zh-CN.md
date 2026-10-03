@@ -2851,3 +2851,10 @@ median66.843/66.934ms(+0.136%)，六次21checkpoint datasets/4plotfields原bits�
 短Run只证明query/worker lifecycle重叠，未证明deep HDF phase完整重叠，不作正式性能/O9验收。
 audit文件名假设失败已修，只读复用已有输出，未重复Run；详见PlotfileRunInterference报告/Summary。
 大文件/长期同机影响及科学gate仍待。未push/tag。
+
+
+## 2026-10-04 Driver diagnostics buffered failure
+
+真实time=0 Driver复现timing两个流/dev/full被吞没，统一六种diagnostics显式flush/close。
+Cartesian/RZ四种实际failure/recovery及旧checkpoint/repair序列化保持PASS；source/fixture身份见DriverDiagnosticClose报告/Summary。
+未改科学公式/数据，主ARCH尚未重编，regrid/CUDA真实fault注入和科学/平台出口保持待验收。

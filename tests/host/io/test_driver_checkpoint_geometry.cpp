@@ -153,6 +153,31 @@ int main(int argc,char** argv) {
         require(read_report()==report,"repair report failure recovery changed ledger serialization");
         require(arch::core::file_sha256(path.string())==original_digest,
                 "measurement failure altered checkpoint");
+        bool all_timing_failures_propagated=true;
+        for (const char* name : {"run_timings.tsv","cpu_stage_timings.tsv"}) {
+            const auto timing_path=std::filesystem::path(config.io.out_dir)/name;
+            std::filesystem::remove(timing_path);
+            std::filesystem::create_symlink("/dev/full",timing_path);
+            bool rejected=false;
+            try { output.write_measurements({}, {}); }
+            catch (const std::exception& error) {
+                rejected=std::string(error.what()).find(
+                    std::string(name)=="run_timings.tsv" ? "run timings" : "CPU stage timings")
+                    !=std::string::npos;
+            }
+            std::cout<<"TIMING_FAILURE chart="<<(rz?"RZ":"Cartesian")
+                     <<" file="<<name<<" propagated="<<rejected<<"\n";
+            all_timing_failures_propagated &= rejected;
+            std::filesystem::remove(timing_path);
+            output.write_measurements({}, {});
+            require(std::filesystem::file_size(timing_path)>0,
+                    "timing report recovery produced no data");
+            require(read_report()==report,
+                    "timing failure recovery changed repair ledger serialization");
+            require(arch::core::file_sha256(path.string())==original_digest,
+                    "timing report failure changed previous checkpoint");
+        }
+        require(all_timing_failures_propagated,"timing buffered write failure swallowed");
         // Analytical nonzero velocity field probes the writer's chart,
         // component basis and shared diagnostics (not an evolved model).
         config.io.vars.rho=true;config.io.vars.u=true;

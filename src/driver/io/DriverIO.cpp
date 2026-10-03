@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <string>
 #include <vector>
 
 #include "driver/io/DriverIO.h"
@@ -24,6 +25,16 @@
 
 namespace arch::driver {
 namespace {
+/** Finish diagnostic streams explicitly; destructors cannot propagate buffered failures. */
+void close_diagnostic(std::ofstream& output, const char* description)
+{
+    output.flush();
+    if (!output)
+        throw std::runtime_error(std::string("cannot flush ") + description);
+    output.close();
+    if (!output)
+        throw std::runtime_error(std::string("cannot close ") + description);
+}
 /** Reject invalid conserved, composition or EOS state before serializing any plot. */
 void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
                           TemperatureFunc temperature, Gamma1Func gamma1, const void* eos)
@@ -111,6 +122,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                << std::chrono::duration<double>(Clock::now()-started_).count() << '\t'
                << output_seconds_ << '\t' << output_calls_ << '\n';
         if (!timing) throw std::runtime_error("cannot write run timings");
+        close_diagnostic(timing, "run timings");
     }
     // Stage clocks are wall intervals around synchronous CPU calls. They do
     // not include setup, output or miscellaneous Driver work; the existing
@@ -125,6 +137,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
             timing << names[i] << '\t' << cpu_stages.seconds[i]
                    << '\t' << cpu_stages.calls[i] << '\n';
         if (!timing) throw std::runtime_error("cannot write CPU stage timings");
+        close_diagnostic(timing, "CPU stage timings");
     }
     {
         std::ofstream report(config.io.out_dir + "/state_repairs.txt");
@@ -154,10 +167,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                << "\ntime=" << ctrl.repairs.time << "\nposition=" << ctrl.repairs.position[0] << ","
                << ctrl.repairs.position[1] << "," << ctrl.repairs.position[2] << "\n";
         // Buffered text failures must propagate before announcing diagnostics.
-        report.flush();
-        if (!report) throw std::runtime_error("cannot flush state repair diagnostics");
-        report.close();
-        if (!report) throw std::runtime_error("cannot close state repair diagnostics");
+        close_diagnostic(report, "state repair diagnostics");
         std::cout << "[State] floor repairs=" << ctrl.repairs.values[0]
                   << " delta_mass=" << ctrl.repairs.values[2]
                   << " delta_energy=" << ctrl.repairs.values[7] << std::endl;
@@ -178,6 +188,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                    << record.operations.kernel_count << '\t' << record.operations.stream_sync_count << '\n';
         }
         if (!output) throw std::runtime_error("failed writing regrid measurements");
+        close_diagnostic(output, "regrid measurements");
     }
 
     if (compute_backend) {
@@ -223,6 +234,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         }
         if (!trace_output)
             throw std::runtime_error("failed writing CUDA backend trace");
+        close_diagnostic(trace_output, "CUDA backend trace");
 
         if (has_diff) {
             const std::filesystem::path schedule_path = directory
@@ -250,6 +262,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
             if (!schedule_output || cuda_diffusion_schedule.empty())
                 throw std::runtime_error(
                     "failed writing CUDA diffusion schedule");
+            close_diagnostic(schedule_output, "CUDA diffusion schedule");
         }
     }
 
