@@ -64,7 +64,7 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
     runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
     write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index++,
-              ctrl.t_current, config, specs, extra_fields);
+              ctrl.t_current, config, specs, extra_fields, &checkpoint_provenance);
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }

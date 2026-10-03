@@ -203,7 +203,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
                          const std::map<std::string, std::vector<double>>& data_map,
-                         const PlotNativeGrid* native_grid)
+                         const PlotNativeGrid* native_grid,
+                         const PlotSourceIdentity* source_identity)
 {
     if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
         || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
@@ -239,6 +240,23 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             if (!std::isfinite(measure) || measure <= 0.)
                 throw std::invalid_argument("Invalid native cell measure.");
     }
+    if (source_identity) {
+        const auto& id=*source_identity;
+        const auto text_ok=[](const std::string& text) {
+            return text.size()<=128 && text.find(char(0))==std::string::npos;
+        };
+        if (!text_ok(id.case_id) || !text_ok(id.eos_type) || id.species_names.size()>128
+            || !std::all_of(id.species_names.begin(),id.species_names.end(),[&](const auto& n){return !n.empty()&&text_ok(n);}))
+            throw std::invalid_argument("Invalid plot source identity text.");
+        if (!id.eos_table_sha256.empty() &&
+            (id.eos_table_sha256.size()!=64 || !std::all_of(id.eos_table_sha256.begin(),id.eos_table_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid plot EOS table digest.");
+        if (id.eos_type=="ideal" && (!std::isfinite(id.ideal_gamma) || id.ideal_gamma<=1. || !id.eos_table_sha256.empty()))
+            throw std::invalid_argument("Invalid plot ideal EOS identity.");
+        if (id.eos_type.empty() && (!id.eos_table_sha256.empty() || !id.species_names.empty()))
+            throw std::invalid_argument("Plot EOS evidence requires its resolved policy.");
+    }
     // Same-directory atomic replacement retains legacy overwrite semantics.
     // Atomic visibility does not promise power-loss durability (no fsync).
     std::string pattern = filepath + ".partial-XXXXXX";
@@ -272,6 +290,28 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         grid_group.createDataSet("z", coord_z);
         grid_group.createDataSet("level", block_levels);
         grid_group.createDataSet("morton", block_mortons);
+
+        if (source_identity) {
+            const auto& id=*source_identity;
+            Group identity=file.createGroup("SourceIdentity");
+            identity.createAttribute("version",std::string("candidate-identity-1"));
+            identity.createAttribute("scope",std::string("partial"));
+            identity.createAttribute("case_id",id.case_id.empty()?std::string("unknown"):id.case_id);
+            identity.createAttribute("case_source",id.case_id.empty()?std::string("unknown"):std::string("ConfigurationInput.case_id"));
+            identity.createAttribute("eos_type",id.eos_type.empty()?std::string("unknown"):id.eos_type);
+            identity.createAttribute("eos_source",id.eos_type.empty()?std::string("unknown"):std::string("resolved-runtime-checkpoint-provenance"));
+            identity.createAttribute("eos_table_sha256",id.eos_table_sha256.empty()?std::string("unknown"):id.eos_table_sha256);
+            identity.createAttribute("eos_table_state",id.eos_type=="ideal"?std::string("not-applicable"):
+                id.eos_table_sha256.empty()?std::string("unknown"):std::string("recorded"));
+            identity.createAttribute("species_identity_state",id.eos_type.empty()?std::string("unknown"):std::string("recorded"));
+            identity.createAttribute("ideal_gamma_available",id.eos_type=="ideal"?1:0);
+            if(id.eos_type=="ideal")identity.createAttribute("ideal_gamma",id.ideal_gamma);
+            identity.createAttribute("species_count",static_cast<int>(id.species_names.size()));
+            if(!id.species_names.empty())identity.createDataSet("species_names",id.species_names);
+            for(const char* name:{"run_id","raw_config_sha256","effective_config_sha256",
+                 "build_id","binary_sha256","source_git_head","eos_unit_system"})
+                identity.createAttribute(name,std::string("unknown"));
+        }
 
         if (native_grid) {
             Group native = file.createGroup("NativeGrid");

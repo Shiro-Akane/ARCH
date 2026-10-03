@@ -47,10 +47,26 @@ int main(int argc, char** argv) {
         if(dimension==2) native_dims.push_back(ny);
         native_dims.push_back(nx);
         auto path=root/("native-"+std::to_string(dimension)+".h5");
+        io::PlotSourceIdentity identity;
+        identity.case_id="Sod"; identity.eos_type="ideal"; identity.ideal_gamma=1.4;
+        identity.species_names={"test-species"};
         io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
-            cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&native);
+            cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&native,&identity);
         {
             HighFive::File f(path.string(),HighFive::File::ReadOnly);
+            std::string id;
+            f.getAttribute("plot_identity_state").read(id);
+            require(id=="unknown","partial evidence falsely certified");
+            f.getGroup("SourceIdentity").getAttribute("case_id").read(id);
+            require(id=="Sod","case source evidence missing");
+            f.getGroup("SourceIdentity").getAttribute("binary_sha256").read(id);
+            require(id=="unknown","binary identity fabricated");
+            double gamma=0.;
+            f.getGroup("SourceIdentity").getAttribute("ideal_gamma").read(gamma);
+            require(gamma==1.4,"resolved gamma changed");
+            std::vector<std::string> species;
+            f.getDataSet("SourceIdentity/species_names").read(species);
+            require(species==identity.species_names,"species ordering changed");
             std::vector<double> measure;
             f.getDataSet("NativeGrid/cell_measure").read(measure);
             require(measure==native.cell_measure,"stored measure differs");
@@ -64,6 +80,13 @@ int main(int argc, char** argv) {
             f.getDataSet("NativeGrid/logical_x1").read(logical);
             require(logical==std::vector<uint32_t>{0,1},"logical mapping changed");
         }
+        auto bad_identity=identity;bad_identity.eos_table_sha256="not-a-digest";
+        bool bad_source_rejected=false;
+        try {
+            io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
+                cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&native,&bad_identity);
+        }catch(const std::invalid_argument&){bad_source_rejected=true;}
+        require(bad_source_rejected,"invalid EOS source digest accepted");
         auto invalid=native;
         invalid.upper[0][0]=invalid.lower[0][0];
         bool rejected=false;

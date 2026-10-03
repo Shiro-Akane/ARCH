@@ -29,6 +29,7 @@ namespace amr {
 
 namespace io {
     struct CheckpointProvenance;
+    struct PlotSourceIdentity;
     struct PlotScalarField { std::string_view name; std::span<const double> values; };
 }
 
@@ -56,7 +57,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
                PressureFunc p_func, TemperatureFunc t_func, Gamma1Func gamma1_func, const void* p_context,
                int file_index, double current_time,
                const SimConfig &config, const SpeciesManager &specs,
-               std::span<const io::PlotScalarField> extra_fields = {});
+               std::span<const io::PlotScalarField> extra_fields = {},
+               const io::CheckpointProvenance* runtime_provenance = nullptr);
 
 // Checkpoint output for restart.
 void write_chk(amr::AMRControl &amr_ctrl,

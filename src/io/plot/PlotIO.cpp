@@ -47,7 +47,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
                PressureFunc p_func, TemperatureFunc t_func, Gamma1Func gamma1_func, const void* p_context,
                int file_index, double current_time,
                const SimConfig &config, const SpeciesManager &specs,
-               std::span<const io::PlotScalarField> extra_fields)
+               std::span<const io::PlotScalarField> extra_fields,
+               const io::CheckpointProvenance* runtime_provenance)
 {
     if (!fs::exists(config.io.out_dir))
         fs::create_directories(config.io.out_dir);
@@ -252,5 +253,14 @@ void write_plt(amr::AMRControl &amr_ctrl,
             throw std::invalid_argument("Nonfinite additional plot field");
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
     }
-    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr);
+    io::PlotSourceIdentity source_identity;
+    if (const auto input = config.LoadedInput())
+        source_identity.case_id = input->case_id;
+    if (runtime_provenance && runtime_provenance->available) {
+        source_identity.eos_type = runtime_provenance->eos_type;
+        source_identity.eos_table_sha256 = runtime_provenance->eos_table_sha256;
+        source_identity.ideal_gamma = runtime_provenance->ideal_gamma;
+        source_identity.species_names = runtime_provenance->species_names;
+    }
+    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity);
 }

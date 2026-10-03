@@ -2372,3 +2372,8 @@ eb12c90c 上 NativeGrid candidate-cartesian-1：真实 PlotIO 原 loop 同步写
 ### Plotfile 原生 Inspector 候选
 
 9e284bcc 上客户端严格校验候选nativeCells/header与file-local identity，逐样本 Inspector显示raw/fileSHA/time/index/no-ghost i/j/k/center/bounds/shared measure及unknown警示；legacy不补算。真实C++writer→reader→client→React SSR1D/2D/legacy通过，npm279/279+lint/typecheck/build/diff PASS。详见 PlotfileNativeInspectorProgress-20261003.zh-CN.md/Summary；不是native desktop UAT或全域Viewer，科学身份/单位/真实模型对照/review pending。无simulation/CUDA/production ARCH/push/tag。
+
+
+### Plotfile case / EOS 部分来源身份
+
+ae3af9b7 上实际 DriverIO 的 resolved checkpoint EOS evidence + immutable ConfigurationInput.case_id传到共享writer SourceIdentity候选；gamma/ordered species/tableSHA复用、不重载EOS。unknown config/build/binary/unit/system保留，partial不冒认证。DriverIO/PlotIO object与IO scoped2/2 PASS、独立h5py回读通过、diff PASS；详见 PlotfileSourceIdentityProgress-20261003.zh-CN.md/Summary。reader/UI未消费新身份、完整原始config/binary与真实模型review待续；无simulation/production ARCH替换/CUDA/push/tag。

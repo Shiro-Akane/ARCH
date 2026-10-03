@@ -66,6 +66,15 @@ struct CheckpointData {
     std::vector<double> mass_fractions;
 };
 
+// Partial evidence supplied from the immutable load boundary and resolved EOS.
+// Missing run/config/build/binary identities remain explicitly unknown.
+struct PlotSourceIdentity {
+    std::string case_id;
+    std::string eos_type, eos_table_sha256;
+    double ideal_gamma = 0.;
+    std::vector<std::string> species_names;
+};
+
 // Candidate native metadata for Cartesian 1D/2D leaf interiors only.
 // Cell arrays use exactly the Data field flattening; inactive bounds are zero.
 struct PlotNativeGrid {
@@ -81,7 +90,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
                          const std::map<std::string, std::vector<double>>& data_map,
-                         const PlotNativeGrid* native_grid = nullptr);
+                         const PlotNativeGrid* native_grid = nullptr,
+                         const PlotSourceIdentity* source_identity = nullptr);
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint);
 CheckpointData read_hdf5_chk_impl(const std::string& filepath);
