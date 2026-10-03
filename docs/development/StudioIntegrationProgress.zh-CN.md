@@ -2352,3 +2352,8 @@ a2e4b9c5 上仅临时 capture/passive observer：Computer Use plot负wheel/普�
 ### Plotfile 分工与候选实现授权更新
 
 47d99ab1 clean 基线上核对联合计划 35c5b7b114069621901386bfc4bc2a656e65af06（origin/codex/o8-boundaries）。本地契约草案移除等待完整 HDF5 布局的旧实现门槛，改为 writer/查询/Viewer 三个小交付；Core review 单位、坐标、测度、身份、发布与原值一致性。首版仅 Sod 1D + Cartesian 2D AMR，原始 H5 本机，明确首次全域叶块扫描成本。本次仅更新范围文档，不宣称 writer/科学 Viewer 已完成；无源码修改、Build、simulation、push/tag/main merge。
+
+
+### Plotfile 候选发布基础增量
+
+835edb77 上共享 writer 增 checked flush/close + 同目录临时文件 atomic replace，失败向调用方传播，Saved 移到成功发布后；raw double/Grid/Data/shape 与 checkpoint 格式保留。Sod-shaped 1D/非方形2D多块/NaN/Inf、旧文件保护及 create/rename 失败、cleanup 测试与既有 checkpoint suite 2/2 PASS。详见 PlotfilePublicationProgress-20261003.zh-CN.md。尚无科学身份/单位/native bounds/测度，关闭故障注入与真正原生查询/Viewer pending；不自动认证旧文件。无 production ARCH build/simulation/CUDA/push/tag。

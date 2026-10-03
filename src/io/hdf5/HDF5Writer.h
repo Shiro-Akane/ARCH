@@ -65,6 +65,8 @@ struct CheckpointData {
     std::vector<double> mass_fractions;
 };
 
+// Linux/WSL candidate: checked close, then atomic replacement. Throws on failure.
+// Publication alone supplies no scientific provenance, units or native bounds.
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,
                          const std::vector<size_t>& dims,
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,

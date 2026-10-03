@@ -14,6 +14,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <system_error>
+#include <unistd.h>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -183,20 +186,64 @@ bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
 
 } // namespace
 
+// Explicit close is required: HighFive destructor errors are only logged.
+class CheckedPlotFile final : public File {
+public:
+    using File::File;
+    void close_checked() {
+        if (H5Fget_obj_count(getId(), H5F_OBJ_ALL | H5F_OBJ_LOCAL) != 1)
+            throw std::runtime_error("Plotfile still has open child handles.");
+        if (H5Fclose(getId()) < 0) throw std::runtime_error("Plotfile close failed.");
+        _hid = H5I_INVALID_HID;
+    }
+};
+
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,
                          const std::vector<size_t>& dims,
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
                          const std::map<std::string, std::vector<double>>& data_map)
 {
-    try
-    {
-        File file(filepath, File::ReadWrite | File::Create | File::Truncate);
-
+    if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
+        || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
+        throw std::invalid_argument("Invalid plotfile dimensions/time/fields.");
+    size_t cells = 1;
+    for (size_t extent : dims) {
+        if (extent == 0 || cells > std::numeric_limits<size_t>::max() / extent)
+            throw std::invalid_argument("Invalid plotfile shape.");
+        cells *= extent;
+    }
+    if (coord_x.size() != cells || coord_y.size() != cells || coord_z.size() != cells
+        || block_levels.size() != dims.front() || block_mortons.size() != dims.front())
+        throw std::invalid_argument("Inconsistent plotfile coordinate/block payload.");
+    for (const auto& [name, buffer] : data_map)
+        if (name.empty() || name.find('/') != std::string::npos || buffer.size() != cells)
+            throw std::invalid_argument("Invalid plotfile field name/length.");
+    // Same-directory atomic replacement retains legacy overwrite semantics.
+    // Atomic visibility does not promise power-loss durability (no fsync).
+    std::string pattern = filepath + ".partial-XXXXXX";
+    std::vector<char> temporary(pattern.begin(), pattern.end());
+    temporary.push_back(0);
+    int fd = ::mkstemp(temporary.data());
+    if (fd < 0) throw std::system_error(errno, std::generic_category(), "Create plot temporary");
+    const std::filesystem::path temporary_path(temporary.data());
+    if (::close(fd) != 0) {
+        int error = errno;
+        std::error_code ignored; std::filesystem::remove(temporary_path, ignored);
+        throw std::system_error(error, std::generic_category(), "Close temporary descriptor");
+    }
+    try {
+        CheckedPlotFile file(temporary_path.string(), File::ReadWrite | File::Truncate);
         file.createAttribute("time", current_time);
         file.createAttribute("dim", dim);
         file.createAttribute("geometry", geom);
 
+        {
+        file.createAttribute("plot_publication_version", std::string("candidate-1"));
+        file.createAttribute("plot_publication_state", std::string("complete"));
+        file.createAttribute("plot_publication_method", std::string("checked-close-atomic-replace"));
+        file.createAttribute("plot_storage_order", std::string("x1-fastest"));
+        file.createAttribute("plot_identity_state", std::string("unknown"));
         Group grid_group = file.createGroup("Grid");
         Group data_group = file.createGroup("Data");
 
@@ -211,12 +258,16 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             ds.write_raw(buffer.data());
         }
 
-        std::cout << "[IO] Saved PLT: " << filepath << " at t=" << current_time << std::endl;
+        }
+        file.flush();
+        file.close_checked();
+        std::filesystem::rename(temporary_path, filepath);
+    } catch (...) {
+        std::error_code ignored;
+        std::filesystem::remove(temporary_path, ignored);
+        throw;
     }
-    catch (Exception &err)
-    {
-        std::cerr << "[IO Error] PLT write failed: " << err.what() << std::endl;
-    }
+    std::cout << "[IO] Saved PLT: " << filepath << " at t=" << current_time << std::endl;
 }
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint)

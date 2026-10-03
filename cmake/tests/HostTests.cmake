@@ -308,6 +308,15 @@ function(arch_register_io_regression_tests)
             $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_FILE:arch_preview_cellular_reference>)
     set_tests_properties(preview_cellular_2d PROPERTIES TIMEOUT 600)
 
+    add_executable(arch_plotfile_publication
+        tests/host/io/test_plotfile_publication.cpp src/io/hdf5/HDF5Writer.cpp)
+    arch_configure_host_test(arch_plotfile_publication
+        "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_plotfile_publication PRIVATE
+        ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    add_test(NAME plotfile_publication COMMAND arch_plotfile_publication
+        "${CMAKE_CURRENT_BINARY_DIR}/plotfile-publication-data")
+
     add_executable(arch_checkpoint_compatibility
         tests/host/io/test_checkpoint_compatibility.cpp
         src/core/files/FileFingerprint.cpp
