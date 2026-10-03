@@ -2757,3 +2757,7 @@ shared Block/root/leaf creation已传explicit profile；真实5leaf mixed checkp
 
 ## 2026-10-04 registered Gaussian RZ init + GravityBox finding
 source-verified实际注册Gaussian严格Setup/Init/sharedEOS链PASS，256原生cells组分mapping误差0。GravityBox isolated二维遍历x/y漏RZ z，待Core明确center参数/profile，不自行改物理。见 RZRegisteredInitialization-20261004.zh-CN.md / Summary。非科学演化验收，未push/tag。
+
+
+## 2026-10-04 current full CPU ARCH rebuild
+clean869ae3d3源码完整ARCH CPU Release重编53steps成功；ELF f82bb7ff…，9项真实executable配置/Preview/session契约regression PASS(59.51s)。不能升级为RZ科学/CUDA/benchmark通过；未改其他StudioSession binary。见 CpuRzSourceRebuild-20261004.zh-CN.md / Summary。未push/tag。
