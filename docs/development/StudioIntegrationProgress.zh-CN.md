@@ -3150,3 +3150,13 @@ AMR Complete1leaf L0，0:0:0:0 bounds/16cells/.0625cm算术一致。
 正常close exit0，8owned退出、config不变、无科学output/managed clean。
 见FullModelBurnGradientDesktop-20261004报告/Summary。
 无源码修改、不重复331项、不push/tag；联合科学CPU/CUDA/O9及全模型矩阵仍未闭合。
+
+## 2026-10-04 ExternalGravity 原生初态与 AMR
+
+新增 production Linux ExternalGravity 行：512 均匀 Init samples、原始 Inspector、
+external/X acceleration=0 的 Core 单位控件；8leaf L0 Complete / 128 cells。
+列表选 0:0:0:0 bounds=[0,.125] /16 cells/.0078125cm，身份与几何一致。
+零外力不作演化验收；raw probes 未展开，Y/Z 控件未完整检查，不夸大覆盖。
+正常 close exit0，8owned 退出、config 不变、无科学 output/managed clean。
+见 FullModelExternalGravityDesktop-20261004 报告/Summary。
+无源码修改、不重复331项、不push/tag；联合目标尚未闭合。
