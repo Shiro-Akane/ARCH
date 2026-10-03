@@ -2968,3 +2968,14 @@ clean8e520462 上真实固定 Host CPU Build 成功；CMake/Ninja 身份前后�
 处理后证据见 BuildGeneratorRealBuild-20261004.zh-CN.md / Summary.json。
 没有simulation、科学flags变更、主build-cpu替换、Windows或push/tag。
 下一步仍需完整依赖closure与独立科学review，不以这一工程出口替代CPU/Jeans/RZ/CUDA/O9验收。
+
+
+## 2026-10-04 Build tools static ELF runtime evidence
+
+从成功Manifest实际12个tool/component roots只读得到65个ELF、209条candidate依赖边，
+unresolved=[]但status=partial；不执行审计对象，保留loader cache/工具/库path-SHA。
+8/8相关测试通过，初次directory异常/猜错GCC路径的失败记录保留；改按Manifest路径。
+RPATH/missing/ambiguous明确unresolved，FIFO拒绝，cycle/node预算覆盖。
+尚未证明真实loader选择/dlopen/nonELF/config closure/跨Build稳定与Host接线；
+dependenciesComplete=false、主Manifest不变。见BuildToolRuntimeEvidence-20261004。
+无Build/simulation/scientific flags/Windows/push/tag，科学与CUDA/O9出口保持待验收。
