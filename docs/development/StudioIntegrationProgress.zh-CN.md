@@ -2630,3 +2630,10 @@ CPU curvilinear_metrics + amr_operation_plans 2/2 PASS。
 修复显式 RZ view 误走 2D polar curl；复用既有 3D cylindrical 公式。
 轴正则旋流/轴向结构 27-cell 解析 div/curl 和受影响 CPU regression 2/2 PASS。
 详见 RZVelocityDiagnostics-20261004.zh-CN.md / Summary；黏性未解析方位连接及全路径仍待接线。
+
+
+## 2026-10-04 RZ 黏性连接
+
+显式 RZ 未解析 phi 连接复用 3D cylindrical 数学，源项及 row bound 同步。
+Cartesian 线性场对应的 RZ 局部 shared face/source momentum/work flux 检查通过，CPU 2/2 PASS。
+详见 RZViscousConnection-20261004.zh-CN.md / Summary；完整运输/变系数演化/CUDA 与科学出口未关闭。

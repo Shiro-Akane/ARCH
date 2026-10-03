@@ -248,6 +248,57 @@ int main()
         result.raw_dt = DiffFlux::adaptive_dt_diff(state, eos, grid, config, 1.);
         return result;
     };
+    // Independent Cartesian vector-Laplacian witness for axisymmetric flow:
+    // vr=r, vz=3z, vphi=2r => Cartesian v=(x-2y,2x+y,3z).
+    // Momentum Laplacian is zero and work divergence is mu*(1+4+4+1+9)=19mu.
+    for (double left : {0.,1.,4.}) {
+        auto grid=make_rz_geometry_view(make_geometry_view(
+            Geometry::Cylindrical,2,{left,-1.,0.},{.25,.5,0.}));
+        grid.ng=1;grid.stride_y=3;grid.stride_z=9;grid.total_size=9;
+        std::vector<FluidVector> states(9);
+        for (int j=0;j<3;++j) for (int i=0;i<3;++i) {
+            const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+            states[grid.GetIndex(i,j)]={2.,2.*r,6.*z,4.*r,1000.};
+        }
+        const auto cfg=DiffFlux::make_diffusion_config_view(config);
+        DiffFlux::DiffusionCoefficients coefficients{};
+        coefficients.nu_visc=ViscousGeometryCases::viscosity;
+        const double composition[]{1.};
+        const int cell=grid.GetIndex(1,1);
+        FluidVector delta{};
+        int neighbour_reads=0;
+        const auto status=DiffFlux::evaluate_geometric_diffusion_cell(
+            states[cell],composition,eos,species.get_host_view(),cfg,grid,1,1,0,1.,
+            nullptr,nullptr,delta,[&](int index) {++neighbour_reads;return states.at(index);});
+        if (!status.valid || !status.active || neighbour_reads!=0)
+            throw std::runtime_error("RZ viscous source accessed inactive phi neighbour");
+        const double r=grid.GetCellCenterX(1),inv=2./(left+left+.25);
+        close(delta.mom_u,-2.*coefficients.nu_visc*inv,"RZ radial viscous connection");
+        close(delta.mom_w,-4.*coefficients.nu_visc*inv,"RZ swirl viscous connection");
+        if (delta.mom_v!=0. || delta.rho!=0. || delta.eng!=0.)
+            throw std::runtime_error("RZ viscous source changed z/mass/energy");
+        close(DiffFlux::viscous_source_stability_rate(coefficients.nu_visc,grid,1,1),
+            coefficients.nu_visc*inv/r,"RZ unresolved phi row bound");
+        for (int direction=0;direction<2;++direction) {
+            const int stride=direction==0?1:grid.stride_y;
+            FluidVector flux[2];
+            for (int side=0;side<2;++side) {
+                const auto& a=states[cell+(side?0:-stride)];
+                const auto& b=states[cell+(side?stride:0)];
+                DiffFlux::assemble_diffusion_face_flux(a,b,1.,1.,2.,
+                    composition,composition,1,PhysicalSpacing(grid,direction,1,1),
+                    1.,coefficients,cfg,flux[side],nullptr,0,
+                    DiffFlux::viscous_basis_rotation(grid,direction,1,1));
+            }
+            delta=delta-(flux[1]*FaceArea(grid,direction,1,1,0,true)
+                -flux[0]*FaceArea(grid,direction,1,1,0,false))/CellVolume(grid,1,1,0);
+        }
+        close(delta.mom_u,0.,"RZ radial linear-vector Laplacian");
+        close(delta.mom_v,0.,"RZ axial linear-vector Laplacian");
+        close(delta.mom_w,0.,"RZ swirl linear-vector Laplacian");
+        close(delta.eng,19.*2.*coefficients.nu_visc,"RZ conservative viscous work flux");
+        if (delta.rho!=0.) throw std::runtime_error("RZ viscosity changed mass");
+    }
     ViscousGeometryCases::convergence("cpu", evaluate);
     ViscousGeometryCases::radial_origin("cpu", evaluate);
     ViscousGeometryCases::density_stability("cpu", evaluate);

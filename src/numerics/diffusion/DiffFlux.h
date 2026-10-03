@@ -164,6 +164,9 @@ namespace DiffFlux
         if (grid.geometry == DiffusionGeometry::Cartesian || direction == 0)
             return {};
         const double inverse_radius = 1.0 / grid.GetCellCenterX(i);
+        if (GridMetrics::is_axisymmetric_rz(grid))
+            return direction == 2 ? ViscousBasisRotation{0.0, -inverse_radius, 0.0}
+                                  : ViscousBasisRotation{};
         if (grid.dim == 2) return {0.0, 0.0, inverse_radius}; // both polar (r,phi)
         if (grid.geometry == DiffusionGeometry::Cylindrical)
             return direction == 2 ? ViscousBasisRotation{0.0, -inverse_radius, 0.0}
@@ -327,6 +330,8 @@ namespace DiffFlux
         if (!(viscosity > 0.) || grid.geometry == DiffusionGeometry::Cartesian) return 0.;
         const double radius = grid.GetCellCenterX(i);
         const double inverse_radius = GridMetrics::InverseRadiusVolumeAverage(grid, i);
+        if (GridMetrics::is_axisymmetric_rz(grid))
+            return viscosity * inverse_radius / radius; // unresolved phi connection only
         if (grid.dim == 1) {
             const double angular_dimensions = grid.geometry == DiffusionGeometry::Spherical ? 2.0 : 1.0;
             return viscosity * angular_dimensions * inverse_radius / radius;
@@ -589,9 +594,16 @@ namespace DiffFlux
         }
         const FluidVector velocity = viscous_velocity(U);
         FluidVector source{};
-        for (int direction = 1; direction < grid.dim; ++direction) {
+        const bool rz = GridMetrics::is_axisymmetric_rz(grid);
+        for (int direction = 1; direction < (rz ? 3 : grid.dim); ++direction) {
             const auto rotation = viscous_basis_rotation(grid, direction, i, j);
             if (rotation.x == 0.0 && rotation.y == 0.0 && rotation.z == 0.0) continue;
+            if (rz && direction == 2) {
+                // Axisymmetry removes d_phi(v), not C_phi(v). Reuse the same
+                // cylindrical connection twice; no inactive-axis neighbour.
+                source = source + rotation.apply(rotation.apply(velocity));
+                continue;
+            }
             const int stride = direction == 1 ? grid.stride_y : grid.stride_z;
             const int cell = grid.GetIndex(i, j, k);
             const auto left = read_state(cell - stride), right = read_state(cell + stride);
