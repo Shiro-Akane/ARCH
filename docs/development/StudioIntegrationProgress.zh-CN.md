@@ -2720,3 +2720,8 @@ Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-A
 ## 2026-10-04 RZ actual Driver RKL
 
 真实single/composite RKL1/2贯通统一RZ operator/source/register/reflux/halo；16组常态零算子实际scheduler检查通过（RKL1两stages/RKL2五stages），maxerror1.42109e-14，scoped4/4 PASS。不是非零演化/科学验收；详见RZRuntimeRkl-20261004.zh-CN.md。
+
+
+## 2026-10-04 RZ nonzero actual RKL
+
+非零quadratic热方程实际Driver RKL独立参考8组通过，maxabs5.68434e-14；nonzero mixed-AMR闭域full-ring能量收支8组maxrelative2.38262e-17。原16组零算子同fixture通过。仅工程证据，不替代科学场值/长期验收；见RZNonzeroRkl-20261004.zh-CN.md。
