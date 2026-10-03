@@ -130,7 +130,8 @@ export function validatePlotfileOverview(value:unknown,projectId:string,relative
  const result=value.result,{overview,...metadata}=result;
  const response=validatePlotfileAudit({...value,metadata:{...metadata,schemaVersion:'audit-1'}},projectId,relativePath);
  if(!response.audit.candidateNativeGrid||!response.audit.fields.some(f=>f.name===request.field)||
-  !validOverview(overview,copyOverviewRequest(request),response.audit.cells,response.audit.dimension))
+  !validOverview(overview,copyOverviewRequest(request),response.audit.cells,response.audit.dimension,response.audit.cellShape,response.audit.blocks)||
+  overview.nativeBlocks!==undefined&&overview.nativeBlocks.totalBlocks!==response.audit.blocks)
   throw Error('Invalid candidate Plotfile overview.');
  return {...response,audit:{...response.audit,schemaVersion:'audit-overview-1',overview}};
 }

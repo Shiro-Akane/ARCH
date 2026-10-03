@@ -42,10 +42,10 @@ import {join} from 'node:path';
 import {readPlotfileOverviewIsolated,inspectPlotfileMetadataIsolated,PlotfileReadError} from '../host/isolatedPlotfileMetadata.ts';
 import {readProjectPlotfileOverview} from '../host/projectPlotfileMetadata.ts';
 import {validatePlotfileOverview} from '../src/host/plotfileAudit.ts';
-async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2){
+async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2,blocks=2){
  await h5.ready;const root=await mkdtemp(join(tmpdir(),'arch-overview-')),path=join(root,'plot.h5');
  try{
-  const cells=2*nx*ny,blockCells=nx*ny;
+  const cells=blocks*nx*ny,blockCells=nx*ny;
   const f=new h5.File(path,'w');
   try{
    for(const [k,v] of Object.entries({time:0,dim:2,geometry:'cartesian',
@@ -60,12 +60,12 @@ async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2
     const lower=Float64Array.from({length:cells},(_,i)=>axis===1?Math.floor(i/blockCells)*nx+i%nx:axis===2?Math.floor(i%blockCells/nx):0);
     native.create_dataset({name:'x'+axis+'_lower',data:lower});
     native.create_dataset({name:'x'+axis+'_upper',data:Float64Array.from(lower,v=>axis===3?0:v+1)});
-    native.create_dataset({name:'logical_x'+axis,data:new Uint32Array(axis===1?[0,1]:[0,0])});
+    native.create_dataset({name:'logical_x'+axis,data:Uint32Array.from({length:blocks},(_,i)=>axis===1?i:0)});
     grid.create_dataset({name:['x','y','z'][axis-1],data:Float64Array.from(lower,v=>axis===3?0:v+.5)});
    }
    native.create_dataset({name:'cell_measure',data:new Float64Array(cells).fill(1)});
-   for(const name of ['level','morton'])grid.create_dataset({name,data:new Int32Array([0,0])});
-   f.create_group('Data').create_dataset({name:'DENS',data:Float64Array.from({length:cells},(_,i)=>i),shape:[2,ny,nx]});
+   for(const name of ['level','morton'])grid.create_dataset({name,data:Int32Array.from({length:blocks},(_,i)=>name==='level'?0:i)});
+   f.create_group('Data').create_dataset({name:'DENS',data:Float64Array.from({length:cells},(_,i)=>i),shape:[blocks,ny,nx]});
   }finally{f.close();}
   await run(path,root);
  }finally{await rm(root,{recursive:true,force:true});}
@@ -113,4 +113,37 @@ test('overview batching covers wide rows and partial final row slabs without cha
   assert.equal(r.overview?.scannedCells,1280);
   assert.deepEqual(r.overview?.values,Array.from({length:20},(_,j)=>[j*32+15.5,640+j*32+15.5]).flat());
  },32,20);
+});
+
+test('native block outlines bind to raw level/logical identity and only emitted leaf bounds',async()=>{
+ await withNative(async path=>{
+  const r=await readPlotfileOverview(path,{field:'DENS',width:6,height:2}),leaf=r.overview!.nativeBlocks!;
+  assert.equal(leaf.complete,true);assert.equal(leaf.totalBlocks,2);
+  assert.deepEqual(leaf.blocks.map(b=>b.logicalKey),['0/0/0/0','0/1/0/0']);
+  assert.deepEqual(leaf.blocks.map(b=>b.lower),[[0,0,0],[3,0,0]]);
+  assert.deepEqual(leaf.blocks.map(b=>b.upper),[[3,2,0],[6,2,0]]);
+  assert.deepEqual(leaf.blocks.map(b=>b.firstCellIndex),[0,6]);
+  assert.deepEqual(leaf.blocks[0].cellShape,[3,2,1]);
+  const request={field:'DENS',width:6,height:2},overview=r.overview!;
+  for(const change of [
+   {...leaf,complete:false}, {...leaf,totalBlocks:3}, {...leaf,identityScope:'global'},
+   {...leaf,blocks:leaf.blocks.map((b,i)=>i===1?{...b,logicalKey:leaf.blocks[0].logicalKey}:b)},
+   {...leaf,blocks:leaf.blocks.map((b,i)=>i===0?{...b,level:-1}:b)},
+   {...leaf,blocks:leaf.blocks.map((b,i)=>i===0?{...b,upper:[7,2,0]}:b)},
+   {...leaf,blocks:leaf.blocks.map((b,i)=>i===0?{...b,firstCellIndex:1}:b)},
+  ])assert.equal(validOverview({...overview,nativeBlocks:change},request,12,2,[2,3],2),false);
+  assert.equal(validOverview({...overview,nativeBlocks:{...leaf,blocks:leaf.blocks.map(b=>({...b,cellShape:[6,1,1]}))}},
+   request,12,2,[2,3],2),false);
+ });
+});
+test('limited native outlines do not truncate global field scanning or pretend to be complete',async()=>{
+ await withNative(async path=>{
+  const r=await readPlotfileOverview(path,{field:'DENS',width:32,height:1}),o=r.overview!,leaf=o.nativeBlocks!;
+  assert.equal(o.scannedCells,129);assert.deepEqual(o.domain,{x:[0,129],y:[0,1]});
+  assert.equal(leaf.totalBlocks,129);assert.equal(leaf.complete,false);assert.equal(leaf.blocks.length,128);
+  assert.equal(leaf.blocks.at(-1)?.index,127);
+  assert.equal(validOverview(o,{field:'DENS',width:32,height:1},129,2,[1,1],129),true);
+  assert.equal(validOverview({...o,nativeBlocks:{...leaf,complete:true}},
+   {field:'DENS',width:32,height:1},129,2,[1,1],129),false);
+ },1,1,129);
 });

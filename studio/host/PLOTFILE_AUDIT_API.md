@@ -81,3 +81,15 @@ as a native value at the mouse position.
 All leaf geometry and selected fields are scanned; the complete file is hashed.
 Fixed pixels bound response, not first-overview scan cost. Zoom/pan redraw existing LOD.
 Viewport refinement and native hierarchy outline contracts are not implemented yet.
+
+
+### Native leaf outlines in overview
+
+Optional overview.nativeBlocks (candidate-leaf-outlines-1) contains only stored-active-leaf,
+file-local records. Records include index, firstCellIndex, level, logicalKey/coordinates,
+native cell envelope lower/upper and x1-first no-ghost cellShape. No parent/coarse records
+or fields are synthesized. totalBlocks is the full stored count; at most128 records are
+returned. complete=false means limited outlines, while the field scan still covers all cells.
+Clients must validate shape/count/index/key/extent consistency and associate records only
+with the enclosing observed file digest. Level visibility is display-only and filters
+outlines, not field contributions or scientific data.

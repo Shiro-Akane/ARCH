@@ -2417,3 +2417,8 @@ f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负
 ### 2026-10-03：跨块候选总览与原生回查
 
 新增受控 audit-overview、固定输出 streaming display LOD、全域 zoom/pan/Fit、representative native cell→同 digest Inspector。真实 Sod 192 / CellularDet 5120 单元完整扫描，HTTP/client/SSR/raw回查 PASS，原 H5 不变。合并512以内连续行后 Cellular rchar 34271170→3551170 bytes，完整response优化前后exact一致。294 tests + lint/typecheck/build PASS。未声称桌面UAT/完整AMR outlines/大型文件支持完成。见 PlotfileGlobalOverviewProgress-20261003.zh-CN.md。
+
+
+### 2026-10-03：全域原生 leaf outlines 与 Block Inspector
+
+同digest输出最多128个leaf native bounds/level/key/shape，显式complete/limited；全域SVG共享物理映射和clip，level开关只改轮廓。296 tests+lint/typecheck/build PASS；真实Sod12/Cellular20与checkpoint/Preview keys和H5 native包络一致。129块fixture证明limited outlines不截断全域field。真实窗口交互UAT和viewport/index仍待完成。见 PlotfileLeafOutlinesProgress-20261003.zh-CN.md。

@@ -53,7 +53,7 @@ function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number
     }
     if(response.result?.schemaVersion!==(overview?'audit-overview-1':slice?'audit-slice-1':'audit-1')||response.result?.renderEligible!==false||
        response.result?.completion?.state!=='unknown')throw Error('Invalid metadata worker response.');
-    if(overview&&!validOverview(response.result.overview,overview,response.result.cells,response.result.dimension))throw Error('Invalid overview worker response.');
+    if(overview&&!validOverview(response.result.overview,overview,response.result.cells,response.result.dimension,response.result.cellShape,response.result.blocks))throw Error('Invalid overview worker response.');
     if(slice){
      const p=response.result.payload,n=slice.count.reduce((a,b)=>a*b,1);
      const raw=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)||v==='NaN'||v==='Infinity'||v==='-Infinity';

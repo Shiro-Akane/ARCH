@@ -19,6 +19,10 @@ function Overview({samples,disabled,onInspect}:{samples:AuditResponse;disabled:b
  const o=samples.audit.overview!,range=finitePlotRange(o.values.map(v=>v===null?'NaN':v));
  const domain:PlotView={x:o.domain.x,y:o.dimension===2?o.domain.y:range??[0,1]};
  const [view,setView]=useState(domain),[chosen,setChosen]=useState<number|null>(null);
+ const [showBlocks,setShowBlocks]=useState(true),[hiddenLevels,setHiddenLevels]=useState<number[]>([]);
+ const [selectedBlock,setSelectedBlock]=useState<number|null>(null);
+ const leaves=o.nativeBlocks,levels=[...new Set(leaves?.blocks.map(b=>b.level)??[])].sort((a,b)=>a-b);
+ const selectedLeaf=leaves?.blocks.find(b=>b.index===selectedBlock);
  const svgRef=useRef<SVGSVGElement|null>(null),drag=useRef<{x:number;y:number;clientX:number;clientY:number;view:PlotView}|null>(null);
  const clipId=useId().replaceAll(':','');
  useEffect(()=>{
@@ -62,6 +66,13 @@ function Overview({samples,disabled,onInspect}:{samples:AuditResponse;disabled:b
   <p>{samples.relativePath} · {o.field} · time {samples.audit.time} · file {samples.audit.file.sha256}</p>
   <p>{o.scannedCells} stored leaf cells scanned → {o.width}×{o.height} display pixels. Coordinate-overlap-weighted display means; not native values or scientific integrals. Units remain unknown.</p>
   <p>Click a pixel to read its largest-overlap representative native cell. Inspector shows that stored cell, not the LOD mean. Zoom/pan redraw this existing LOD; zoom does not fetch finer data.</p>
+  {leaves&&<fieldset><legend>Native leaf block outlines · same file digest</legend>
+   <label><input type="checkbox" checked={showBlocks} onChange={e=>setShowBlocks(e.target.checked)}/>Show native leaf outlines</label>
+   {levels.map(level=><label key={level}><input type="checkbox" checked={!hiddenLevels.includes(level)}
+    onChange={e=>setHiddenLevels(v=>e.target.checked?v.filter(n=>n!==level):[...v,level])}/>Level {level}</label>)}
+   <p>{leaves.complete?'Complete stored leaf set':'Limited outline set'}: {leaves.blocks.length} / {leaves.totalBlocks} blocks · cap {leaves.limit}.
+    Level filters change outlines only; the field LOD still contains all scanned leaves. No parent/coarse blocks are synthesized.</p>
+  </fieldset>}
   <button onClick={()=>setView(v=>zoomPlotView(v,.8))}>Zoom in · LOD</button>
   <button onClick={()=>setView(v=>zoomPlotView(v,1.25))}>Zoom out · LOD</button>
   <button onClick={()=>setView(domain)}>Fit full domain · LOD</button>
@@ -86,6 +97,15 @@ function Overview({samples,disabled,onInspect}:{samples:AuditResponse;disabled:b
       stroke={chosenPixel?'#ffde59':'none'} strokeWidth={2}/>;
     })}
    </g>
+   {leaves&&showBlocks&&<g clipPath={'url(#'+clipId+')'} pointerEvents="none" aria-label="Native AMR leaf outlines">
+    {leaves.blocks.filter(b=>!hiddenLevels.includes(b.level)).map(b=><rect key={b.index}
+     data-native-block={b.index} data-native-level={b.level} x={X(b.lower[0])}
+     y={o.dimension===2?Y(b.upper[1]):frame.top}
+     width={(b.upper[0]-b.lower[0])/(view.x[1]-view.x[0])*frame.width}
+     height={o.dimension===2?(b.upper[1]-b.lower[1])/(view.y[1]-view.y[0])*frame.height:frame.height}
+     fill="none" stroke={selectedBlock===b.index?'#fff':'hsl('+((b.level*67)%360)+',90%,70%)'} strokeWidth={selectedBlock===b.index?3:1.2}/>
+    )}
+   </g>}
    {[0,.25,.5,.75,1].map(f=><g key={f} fill="#d5e2eb" fontSize="11">
     <text x={frame.left+f*frame.width} y={335} textAnchor="middle">{plotValue(f,view.x).toPrecision(4)}</text>
     <text x={65} y={frame.top+(1-f)*frame.height+4} textAnchor="end">{plotValue(f,view.y).toPrecision(4)}</text>
@@ -94,6 +114,19 @@ function Overview({samples,disabled,onInspect}:{samples:AuditResponse;disabled:b
    <text x={16} y={165} transform="rotate(-90 16 165)" textAnchor="middle" fill="#d5e2eb">{o.dimension===2?'x2 · unit unknown':o.field+' · display mean'}</text>
   </svg>
   {o.dimension===2&&range&&<p>Viridis display means: {range[0]} → {range[1]} · unit unknown.</p>}
-  <p>Native AMR block outlines are not yet included in this LOD view. {o.diagnostics.join(' · ')}</p>
+  {leaves&&<details><summary>Native leaf block Inspector</summary>
+   <p>File-local identity · {samples.audit.file.sha256}. Bounds span the stored native cells; these are leaf records, not a full parent hierarchy.</p>
+   <div className="audit-table-scroll"><table><thead><tr><th>Inspect block</th><th>Stored index</th><th>Level</th><th>Logical key</th></tr></thead><tbody>
+    {leaves.blocks.map(b=><tr key={b.index}><td><button aria-pressed={selectedBlock===b.index}
+     onClick={()=>setSelectedBlock(b.index)}>Inspect native block {b.index}</button></td><td>{b.index}</td><td>{b.level}</td><td>{b.logicalKey}</td></tr>)}
+   </tbody></table></div>
+   {selectedLeaf&&<dl><dt>Native block / logical key / level</dt><dd>{selectedLeaf.index} / {selectedLeaf.logicalKey} / {selectedLeaf.level}</dd>
+    <dt>Native bounds x1 / x2 / x3 · units unknown</dt><dd>{selectedLeaf.lower.map((lo,i)=>'['+lo+', '+selectedLeaf.upper[i]+']').join(' / ')}</dd>
+    <dt>No-ghost cell shape · x1 / x2 / x3</dt><dd>{selectedLeaf.cellShape.join(' / ')}</dd>
+    <dt>First stored native cell index</dt><dd>{selectedLeaf.firstCellIndex}</dd>
+    <dt>Identity scope</dt><dd>Only this file digest; no cross-run block identity claim.</dd>
+   </dl>}
+  </details>}
+  <p>{leaves?'Stored leaf outlines available; scientific/units review remains pending.':'Native leaf records unavailable in this response.'} {o.diagnostics.join(' · ')}</p>
  </section>;
 }

@@ -1,5 +1,5 @@
-import {copyOverviewRequest,createOverview} from '../src/host/plotfileOverview.ts';
-import type {PlotfileOverviewRequest,PlotfileOverview} from '../src/host/plotfileOverview.ts';
+import {copyOverviewRequest,createOverview,MAX_OVERVIEW_BLOCKS,validNativeBlocks} from '../src/host/plotfileOverview.ts';
+import type {PlotfileOverviewRequest,PlotfileOverview,NativePlotBlock,NativePlotBlocks} from '../src/host/plotfileOverview.ts';
 /**
  * Inspect the current ARCH writer's structure without loading field arrays.
  * This is a local audit primitive, not a result provider: readable HDF5 and
@@ -212,15 +212,45 @@ function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:P
   if(raw.some(v=>typeof v!=='number'))throw Error('Nonfinite overview geometry.');
   return raw as number[];
  });
+ const emitted=Math.min(shape[0],MAX_OVERVIEW_BLOCKS);
+ const nativeBlocks:NativePlotBlock[]=Array.from({length:emitted},(_,index)=>({
+  index,firstCellIndex:index*blockCells,level:0,logicalKey:'',logicalCoordinates:[],
+  lower:[Infinity,dimension===2?Infinity:0,0],upper:[-Infinity,dimension===2?-Infinity:0,0],
+  cellShape:[shape[shape.length-1],dimension===2?shape[1]:1,1],
+ }));
  const domain={x:[Infinity,-Infinity] as [number,number],y:dimension===2?[Infinity,-Infinity] as [number,number]:[0,1] as [number,number]};
  // Pass 1 obtains authoritative bounds. No complete geometry array is materialized.
  for(let start=0;start<total;start+=512){
   const b=bounds(start,Math.min(512,total-start));
   for(let i=0;i<b[0].length;i++){
+   const block=Math.floor((start+i)/blockCells);
+   if(block<emitted){
+    const leaf=nativeBlocks[block];
+    leaf.lower[0]=Math.min(leaf.lower[0],b[0][i]);leaf.upper[0]=Math.max(leaf.upper[0],b[1][i]);
+    if(dimension===2){leaf.lower[1]=Math.min(leaf.lower[1],b[2][i]);leaf.upper[1]=Math.max(leaf.upper[1],b[3][i]);}
+   }
    domain.x[0]=Math.min(domain.x[0],b[0][i]);domain.x[1]=Math.max(domain.x[1],b[1][i]);
    if(dimension===2){domain.y[0]=Math.min(domain.y[0],b[2][i]);domain.y[1]=Math.max(domain.y[1],b[3][i]);}
   }
  }
+ const identity=(g:InstanceType<typeof h5.Group>,name:string)=>{
+  const d=dataset(g,name);
+  if(d.metadata.type!==0||d.metadata.size!==4)throw Error('Invalid leaf identity type.');
+  const raw=rawNumbers(d.slice([[0,emitted]]),emitted);
+  if(raw.some(v=>typeof v!=='number'||!Number.isSafeInteger(v)||v<0||v>0xffffffff))
+   throw Error('Invalid leaf identity.');
+  return raw as number[];
+ };
+ const levels=identity(group(file,'Grid'),'level');
+ const logical=['logical_x1','logical_x2','logical_x3'].map(name=>identity(ng,name));
+ for(const leaf of nativeBlocks){
+  leaf.level=levels[leaf.index];leaf.logicalCoordinates=logical.map(axis=>axis[leaf.index]);
+  leaf.logicalKey=[leaf.level,...leaf.logicalCoordinates].join('/');
+ }
+ const blockSummary:NativePlotBlocks={version:'candidate-leaf-outlines-1',identityScope:'file-local',
+  kind:'stored-active-leaf',totalBlocks:shape[0],limit:MAX_OVERVIEW_BLOCKS,
+  complete:shape[0]<=MAX_OVERVIEW_BLOCKS,blocks:nativeBlocks};
+ if(!validNativeBlocks(blockSummary,total,dimension,domain))throw Error('Invalid candidate leaf block records.');
  const acc=createOverview(request,dimension,domain);
  // Pass 2 batches adjacent complete rows, or x1 segments when a row exceeds
  // 512 cells. Each rectangular field slice aligns with one contiguous native slice.
@@ -242,7 +272,7 @@ function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:P
    for(let row=0;row<ny;row++)for(let x=0;x<nx;x+=512)consume(block,row,x,Math.min(512,nx-x),1);
   }
  }
- return acc.finish();
+ return {...acc.finish(),nativeBlocks:blockSummary};
 }
 
 async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewRequest?:PlotfileOverviewRequest) {

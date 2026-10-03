@@ -1,6 +1,16 @@
 /** Candidate display contract; no Core initialization or scientific integration. */
 export interface PlotfileOverviewRequest {field:string;width:number;height:number}
+export const MAX_OVERVIEW_BLOCKS=128;
+export interface NativePlotBlock {
+ index:number;firstCellIndex:number;level:number;logicalKey:string;logicalCoordinates:number[];
+ lower:[number,number,number];upper:[number,number,number];cellShape:[number,number,number];
+}
+export interface NativePlotBlocks {
+ version:'candidate-leaf-outlines-1';identityScope:'file-local';kind:'stored-active-leaf';
+ totalBlocks:number;limit:128;complete:boolean;blocks:NativePlotBlock[];
+}
 export interface PlotfileOverview {
+ nativeBlocks?:NativePlotBlocks;
  version:'candidate-overview-1';field:string;width:number;height:number;dimension:1|2;
  domain:{x:[number,number];y:[number,number]};
  values:(number|null)[];representativeIndices:(number|null)[];
@@ -57,7 +67,7 @@ export function createOverview(request:PlotfileOverviewRequest,dimension:1|2,dom
  return {add,finish};
 }
 
-export function validOverview(value:unknown,request:PlotfileOverviewRequest,total:number,dimension:number):value is PlotfileOverview{
+export function validOverview(value:unknown,request:PlotfileOverviewRequest,total:number,dimension:number,cellShape?:number[],blocks?:number):value is PlotfileOverview{
  if(!value||typeof value!=='object')return false;
  const v=value as PlotfileOverview,n=request.width*request.height;
  return v.version==='candidate-overview-1'&&v.field===request.field&&v.width===request.width&&v.height===request.height&&
@@ -69,5 +79,37 @@ export function validOverview(value:unknown,request:PlotfileOverviewRequest,tota
   Array.isArray(v.representativeIndices)&&v.representativeIndices.length===n&&
   v.representativeIndices.every(x=>x===null||Number.isSafeInteger(x)&&x>=0&&x<total)&&
   Array.isArray(v.diagnostics)&&v.diagnostics.every(x=>typeof x==='string'&&x.length<=128)&&
-  v.diagnostics.includes('DISPLAY_LOD_NOT_NATIVE_VALUES')&&v.diagnostics.includes('FULL_LEAF_SCAN');
+  v.diagnostics.includes('DISPLAY_LOD_NOT_NATIVE_VALUES')&&v.diagnostics.includes('FULL_LEAF_SCAN')&&
+  (v.nativeBlocks===undefined||validNativeBlocks(v.nativeBlocks,total,dimension,v.domain)&&
+   (blocks===undefined||v.nativeBlocks.totalBlocks===blocks)&&
+   (cellShape===undefined||v.nativeBlocks.blocks.every(b=>
+    JSON.stringify(b.cellShape)===JSON.stringify([...cellShape].reverse().concat(Array(3-dimension).fill(1))))));
+}
+
+/** Validate only emitted file-local leaf records; never claim parent/coarse hierarchy. */
+export function validNativeBlocks(value:unknown,total:number,dimension:number,domain:PlotfileOverview['domain']):value is NativePlotBlocks{
+ if(!value||typeof value!=='object')return false;
+ const v=value as NativePlotBlocks;
+ if(v.version!=='candidate-leaf-outlines-1'||v.identityScope!=='file-local'||v.kind!=='stored-active-leaf'||
+  v.limit!==MAX_OVERVIEW_BLOCKS||!Number.isSafeInteger(v.totalBlocks)||v.totalBlocks<1||v.totalBlocks>total||
+  v.complete!==(v.totalBlocks<=MAX_OVERVIEW_BLOCKS)||!Array.isArray(v.blocks)||
+  v.blocks.length!==Math.min(v.totalBlocks,MAX_OVERVIEW_BLOCKS))return false;
+ const keys=new Set<string>();
+ return v.blocks.every((b,i)=>{
+  if(!b||b.index!==i||!Number.isSafeInteger(b.level)||b.level<0||b.level>0xffffffff||
+   !Array.isArray(b.logicalCoordinates)||b.logicalCoordinates.length!==3||
+   b.logicalCoordinates.some(n=>!Number.isSafeInteger(n)||n<0||n>0xffffffff)||
+   b.logicalKey!==[b.level,...b.logicalCoordinates].join('/')||keys.has(b.logicalKey)||
+   !Array.isArray(b.cellShape)||b.cellShape.length!==3||
+   b.cellShape.some((n,axis)=>!Number.isSafeInteger(n)||(axis<dimension?n<1:n!==1))||
+   b.cellShape.reduce((a,n)=>a*n,1)!==total/v.totalBlocks||
+   b.firstCellIndex!==i*(total/v.totalBlocks)||
+   !Array.isArray(b.lower)||!Array.isArray(b.upper)||b.lower.length!==3||b.upper.length!==3)return false;
+  keys.add(b.logicalKey);
+  return b.lower.every((lo,axis)=>{
+   const hi=b.upper[axis],range=axis===0?domain.x:domain.y;
+   return Number.isFinite(lo)&&Number.isFinite(hi)&&
+    (axis<dimension?hi>lo&&lo>=range[0]&&hi<=range[1]:lo===0&&hi===0);
+  });
+ });
 }
