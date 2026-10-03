@@ -1,0 +1,28 @@
+{
+  "baseline": "3c28623a0b7d2ae2a38a17c49781a9fe44887ffe",
+  "scope": "Explicit internal Grid coordinate/profile/domain path; default public cylindrical remains polar",
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "boundary_plan": "PASS",
+    "checkpoint_compatibility": "PASS"
+  },
+  "coordinateCases": [
+    "axis z=-4/+4",
+    "r=3 z=-4/+4",
+    "r=1e150 z=-1e150 overflow-resistant hypot",
+    "256 native interior centers",
+    "z extent 20 > 2pi accepted only with explicit RZ",
+    "legacy cylindrical 2D exact witness",
+    "3D cylindrical exact witness",
+    "invalid dimension/geometry profiles rejected"
+  ],
+  "sources": {
+    "src/grid/Grid.h": "1e3697f7e0f18743b79fc9581785c51e6bec1144fddbedd2680222c9001d998b",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "8a99adb1cefe3f30de42e9595a9fe532726ff018d75f8c52f71bfaa014597f64"
+  },
+  "limitations": [
+    "ProblemHelper PopulateState not yet bound to explicit profile",
+    "No public RZ migration or scientific acceptance",
+    "No CUDA verification"
+  ]
+}

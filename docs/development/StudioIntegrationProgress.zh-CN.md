@@ -2741,3 +2741,7 @@ DriverIO 传递 Runtime profile，write_chk 写前校验并记录几何身份。
 
 ## 2026-10-04 checkpoint failure index
 实测 Driver checkpoint serializer 拒绝消耗序号，已将递增移到 writer 成功返回后。当前源码实际 Cartesian/RZ serializer/create 失败及同编号恢复 PASS，原值/controller不变；未改 checkpoint 发布机制。见 CheckpointFailureIndex-20261004.zh-CN.md / Summary。未 push/tag。
+
+
+## 2026-10-04 native RZ coordinates
+Grid 显式profile轴名/物理坐标/domain 已接入；PointCoords.r 保持球半径，x2=z长度不受角度限幅。旧路径不变，3/3相关CPU scoped checks PASS。PopulateState authoritative context 接线尚待执行，不能声称模型IC贯通。见 RZNativeCoordinates-20261004.zh-CN.md / Summary。未 push/tag。

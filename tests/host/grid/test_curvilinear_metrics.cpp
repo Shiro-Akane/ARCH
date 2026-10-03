@@ -399,8 +399,53 @@ void test_rz_scheduled_hydro(int direction,double inner) {
         <<" version="<<clock.last_version()<<'\n';
 }
 
+
+void test_rz_native_coordinates()
+{
+    using GridMetrics::GeometrySemantics;
+    constexpr auto rz=GeometrySemantics::AxisymmetricRz;
+    for (const auto [radius,z] : std::array<std::pair<double,double>,5>{
+        {{0.,-4.},{0.,4.},{3.,-4.},{3.,4.},{1.e150,-1.e150}}}) {
+        const auto p=Grid::PhysicalCoordsFromNative(2,"cylindrical",radius,z,0.,rz);
+        if(p.x!=radius || p.y!=0. || p.z!=z || p.r_cy!=radius || p.z_cy!=z ||
+           p.phi_cy!=0. || p.phi!=0. || p.r!=std::hypot(radius,z) ||
+           p.theta!=std::atan2(radius,z))
+            throw std::runtime_error("RZ native coordinate expansion mismatch");
+    }
+    Grid grid(amr::MAX_NG,0.,2.,-10.,10.,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";
+    grid.InitializeTopology(rz); // z length >2pi is valid; not an angle.
+    if(grid.GetAxisNames(rz)!=std::vector<std::string>{"r_cy","z_cy"})
+        throw std::runtime_error("RZ native axes mismatch");
+    for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
+        const auto p=grid.GetPhysicalCoords(i,j,grid.Ks(),rz);
+        if(p.r_cy!=grid.GetCellCenterX(i) || p.z_cy!=grid.GetCellCenterY(j) ||
+           p.z!=p.z_cy || p.r!=std::hypot(p.r_cy,p.z_cy))
+            throw std::runtime_error("RZ native cell center mismatch");
+    }
+    bool rejected=false;
+    try {grid.InitializeTopology();} catch(const std::invalid_argument&) {rejected=true;}
+    if(!rejected) throw std::runtime_error("legacy polar angle guard was removed");
+    // Exact legacy coordinate witnesses and 3D cylindrical mapping.
+    const auto old=Grid::PhysicalCoordsFromNative(2,"cylindrical",3.,.5);
+    if(old.z_cy!=0. || old.phi_cy!=.5 || old.x!=3.*std::cos(.5) ||
+       old.y!=3.*std::sin(.5))
+        throw std::runtime_error("legacy cylindrical polar mapping changed");
+    const auto three=Grid::PhysicalCoordsFromNative(3,"cylindrical",3.,-4.,.5);
+    if(three.r_cy!=3. || three.z_cy!=-4. || three.phi_cy!=.5 || three.r!=5.)
+        throw std::runtime_error("3D cylindrical mapping changed");
+    for(const auto [dim,geometry] : std::array<std::pair<int,const char*>,4>{
+        {{1,"cylindrical"},{3,"cylindrical"},{2,"cartesian"},{2,"spherical"}}}) {
+        rejected=false;
+        try {(void)Grid::PhysicalCoordsFromNative(dim,geometry,1.,2.,0.,rz);}
+        catch(const std::invalid_argument&) {rejected=true;}
+        if(!rejected) throw std::runtime_error("invalid RZ coordinate profile accepted");
+    }
+    std::cout<<"RZ_NATIVE_COORDINATES physical/native/axes/domain/legacy PASS\n";
+}
 int main()
 {
+    test_rz_native_coordinates();
     for(int direction:{0,1})for(double inner:{0.,1.}) {
         test_rz_scheduled_hydro<SolverEuler>(direction,inner);
         test_rz_scheduled_hydro<SolverRK2>(direction,inner);
