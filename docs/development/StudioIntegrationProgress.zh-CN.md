@@ -2578,3 +2578,11 @@ DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容�
 三固定轴切面、图上块命中/Inspector及level过滤补证。发现hidden L1旧Inspector遗漏，最小显示过滤修复后
 321项/lint/typecheck/build/diff通过，新production native hide/show复验通过。未simulation/科学Core改动/重复Build。
 详见FullModel3DMixedAmrDesktop-20261004.zh-CN.md/Summary；native wheel、完整freshness及整体科学/平台目标仍待。
+
+
+## 2026-10-04 RZ finite-volume off-axis reference candidate
+
+新增独立Decimal K/E有限环体离轴点值参考与direct 3D Newton积分对照；
+六例60/100位算术一致，固定源分区揭示近外缘整体64阶仍有约1.98e-15 cm/s²径向力变化。
+完整旋转质量/四极矩给远场候选误差，未冻结生产阶数/开角/预算。8项工具检查与diff PASS。
+见RZFiniteRingOffAxisReference-20261004.zh-CN.md/Summary。未改生产Core/capability/Build/ARCH运行/CUDA/push。
