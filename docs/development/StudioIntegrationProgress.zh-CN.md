@@ -2683,3 +2683,9 @@ legacy反例与36项归约边界/CPU2/2通过；不修改共享归约数学。
 累计通量不能跨chart/geometry消费，显式Clear重注册恢复，uniform empty计划no-op。
 四组真实L0/L1 radial/axial实际Host修正和CPU3/3通过，最大积分算术差3.53183e-17。
 详见 RZReflux-20261004.zh-CN.md / Summary；实际scheduler调用/演化/CUDA和角动量科学finding仍未关闭。
+
+## 2026-10-04 RZ mixed Hydro stage
+共享 Hydro registration 已传同一chart，解除内部AMR guard，保留未迁移gravity拒绝。
+四组真实5-leaf/5120-cell exchange→HLLC/PCM→stage→reflux联动及CPU3/3通过，
+final最大常态误差3.55618e-17。详见 RZMixedHydro-20261004.zh-CN.md / Summary。
+生产scheduler、物理边界/非均匀演化、扩散/RKL、gravity/IO/checkpoint/CUDA与angular finding仍待。

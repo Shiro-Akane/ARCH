@@ -335,8 +335,8 @@ namespace TimeIntegration
         // output/cache mutation. Runtime Grid still uses its existing chart.
         (void)GridMetrics::make_geometry_view(grid, semantics);
         if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
-            && (gravity != nullptr || amr_ctrl != nullptr))
-            throw std::invalid_argument("RZ Hydro gravity/AMR flux consumers not migrated");
+            && gravity != nullptr)
+            throw std::invalid_argument("RZ Hydro gravity consumer not migrated");
         int n_spec = state.GetNumSpecies();
         std::fill(dU.begin(), dU.end(), FluidVector());
         std::fill(d_spec.begin(), d_spec.end(), 0.0);
@@ -363,7 +363,7 @@ namespace TimeIntegration
             // Flux registration has one shared face-index convention for all AMR operators.
             if (amr_ctrl && block_id >= 0) {
                 amr::RegisterCoarseFineFluxes(*amr_ctrl, block_id, grid, dir,
-                                               flux_buffer, spec_flux_buffer, n_spec, flux_weight);
+                                               flux_buffer, spec_flux_buffer, n_spec, flux_weight, semantics);
             }
         }
 

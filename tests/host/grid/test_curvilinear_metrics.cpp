@@ -77,19 +77,23 @@ void test_rz_host_hydro() {
         }
         if (updated.stage_repairs.values[0]!=0.)
             throw std::runtime_error("RZ constant-state Hydro unexpectedly repaired");
-        // Reject legacy gravity/AMR mixing before resetting output.
-        amr::AMRControl unmigrated(4,2);
+        // Reject legacy gravity before resetting output or calling its owner.
+        struct UnmigratedGravity : Physical::Gravity::IGravityPolicy {
+            mutable int calls=0;
+            void add_sources_on_patch(std::vector<FluidVector>&,const FluidState&,
+                const Grid&,double,void*) const override { ++calls; }
+        } unmigrated;
         delta[0].rho=123.;
         bool rejected=false;
         try {
             TimeIntegration::evaluate_all_dimensions<FluxHLLC<PCMReconstruction>>(
-                &unmigrated,-1,state,eos,grid,dt,delta,species_delta,
-                flux,species_flux,nullptr,0.,1.,true,rz);
+                nullptr,-1,state,eos,grid,dt,delta,species_delta,
+                flux,species_flux,&unmigrated,0.,1.,true,rz);
         } catch (const std::invalid_argument& error) {
             rejected=std::string(error.what()).find("not migrated")!=std::string::npos;
         }
-        if (!rejected || delta[0].rho!=123.)
-            throw std::runtime_error("RZ unmigrated AMR changed Hydro output");
+        if (!rejected || delta[0].rho!=123. || unmigrated.calls!=0)
+            throw std::runtime_error("RZ unmigrated gravity changed Hydro output");
         // An intentional existing density-floor repair checks the *budget*
         // metric, not a physical scenario or a new choice of science floors.
         FluidState low, repaired;
@@ -163,8 +167,100 @@ void test_rz_host_cfl() {
     }
 }
 
+
+void test_rz_mixed_hydro_stage(int direction,double inner) {
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    SpeciesManager species;
+    species.add_species("gas0",1.,1.,1.4,3.);
+    species.add_species("gas1",2.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    SimConfig config{};
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=direction==0?2:1;
+    config.grid.nblockx2=direction==0?1:2;config.grid.nblockx3=0;
+    config.grid.x1_min=inner;config.grid.x1_max=inner+2.;
+    config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    config.grid.amr_max_blocks=32;config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+    amr::AMRControl control(32,2);
+    control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
+        {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
+        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
+    const auto& active=control.tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles;
+    const FluidVector reference{2.,0.,6.,0.,21.5}; // p5, vz3, zero swirl.
+    for(std::size_t n=0;n<active.size();++n) {
+        handles.push_back({{4000+n},{97}});
+        auto& block=control.pool->GetBlock(active[n]);
+        block.fluid_state.InitSpecies(2);block.state_next.InitSpecies(2);
+        for(int cell=0;cell<block.grid.GetTotalSize();++cell) {
+            block.fluid_state.set(cell,reference);
+            block.fluid_state.X(0,cell)=.6;block.fluid_state.X(1,cell)=.4;
+        }
+    }
+    control.BindActiveHandles(handles);control.flux_register.EnsureSpecies(2);
+    control.flux_register.Clear();
+    control.ghost_exchange.ExecuteExchange(control.pool,control.tree,2,
+        &amr::Block::fluid_state,handles,amr::CoordinateSeamGeometry::RzAxisymmetric);
+    constexpr double dt=.001;
+    double max_delta=0.;
+    for(int id:active) {
+        auto& block=control.pool->GetBlock(id);
+        const auto& g=block.grid;const int size=g.GetTotalSize();
+        std::vector<FluidVector> delta(size),flux(size);
+        std::vector<double> ds(2*size),fs(2*size);
+        TimeIntegration::evaluate_all_dimensions<FluxHLLC<PCMReconstruction>>(
+            &control,id,block.fluid_state,eos,g,dt,delta,ds,flux,fs,
+            nullptr,0.,1.,true,rz);
+        TimeIntegration::perform_stage_update(block.fluid_state,block.fluid_state,
+            block.state_next,delta,ds,g,0.,1.,1.e-14,1.e-14,1.e10,rz);
+        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+            const auto d=delta[g.GetIndex(i,j,0)];
+            for(double v:{d.rho,d.mom_u,d.mom_v,d.mom_w,d.eng}) {
+                close(v,0.,"RZ mixed Hydro uniform-state derivative");
+                max_delta=std::max(max_delta,std::abs(v));
+            }
+        }
+        if(block.state_next.stage_repairs.values[0]!=0.)
+            throw std::runtime_error("RZ mixed Hydro manufactured repair");
+    }
+    const auto& topology=control.RequireFluxTopologyPlan(2,rz);
+    if(topology.semantics!=rz)throw std::runtime_error("Hydro registered legacy AMR chart");
+    double max_register=0.;
+    for(int id:active)for(int face=0;face<4;++face) {
+        if(!control.flux_register.HasData(id,face))continue;
+        const int count=face/2==0?amr::BLOCK_NY:amr::BLOCK_NX;
+        for(int cell=0;cell<count;++cell) {
+            const auto f=control.flux_register.GetSummedFlux(id,face,cell);
+            for(double v:{f.rho,f.mom_u,f.mom_v,f.mom_w,f.eng}) {
+                close(v,0.,"RZ mixed Hydro constant face-register balance");
+                max_register=std::max(max_register,std::abs(v));
+            }
+        }
+    }
+    control.ApplyReflux(dt,&amr::Block::state_next,rz);
+    double max_state_error=0.;
+    for(int id:active) {
+        const auto& block=control.pool->GetBlock(id);const auto& g=block.grid;
+        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+            const int cell=g.GetIndex(i,j,0);const auto u=block.state_next.get(cell);
+            const double errors[]{u.rho-reference.rho,u.mom_u-reference.mom_u,
+                u.mom_v-reference.mom_v,u.mom_w-reference.mom_w,u.eng-reference.eng,
+                block.state_next.X(0,cell)-.6,block.state_next.X(1,cell)-.4};
+            for(double v:errors) {
+                close(v,0.,"RZ mixed Hydro stage/reflux state drift");
+                max_state_error=std::max(max_state_error,std::abs(v));
+            }
+        }
+    }
+    std::cout<<"RZ_MIXED_HYDRO direction="<<direction<<" inner="<<inner
+        <<" max_delta="<<max_delta<<" max_register="<<max_register
+        <<" max_state_error="<<max_state_error<<'\n';
+}
+
 int main()
 {
+    for(int direction:{0,1})for(double inner:{0.,1.})
+        test_rz_mixed_hydro_stage(direction,inner);
     test_rz_host_cfl();
     test_rz_host_hydro();
     using namespace GridMetrics;

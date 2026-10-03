@@ -1,0 +1,97 @@
+{
+  "baseHead": "c268d0d7751759d2738b8c2cc46aa5217a527425",
+  "dirtyInputs": {
+    "src/numerics/integrator/TimeIntegratorHelper.h": "4e6877509898584621b108299f36579b88d984fc6eb2d7075dfb3dc1171e3ae5",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "1db31798e45dc7ffbd13e6c1e3ea1a8808289ae387b5b9980585816c6e69c9cd"
+  },
+  "testBinarySha256": "8e247f07436254ea7965c0b2817fd9f25c471c73c25804c44314fd8ef0e0d353",
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "amr_operation_plans": "PASS",
+    "amr_flux_surface_plan": "PASS",
+    "diffCheck": "PASS"
+  },
+  "chain": [
+    "real LoadLeafGrid mixed L0/L1",
+    "BindActiveHandles",
+    "Clear register",
+    "ExecuteExchange RzAxisymmetric",
+    "evaluate_all_dimensions HLLC PCM + RZ registration",
+    "perform_stage_update RZ",
+    "ApplyReflux state_next RZ"
+  ],
+  "fixture": {
+    "cases": 4,
+    "leavesPerCase": 5,
+    "activeCellsPerLeaf": 256,
+    "dimensions": 2,
+    "interfaces": [
+      "radial",
+      "axial"
+    ],
+    "innerRadii": [
+      0,
+      1
+    ],
+    "species": 2,
+    "fractions": [
+      0.6,
+      0.4
+    ],
+    "state": [
+      2,
+      0,
+      6,
+      0,
+      21.5
+    ],
+    "pressure": 5,
+    "axialVelocity": 3,
+    "swirl": 0,
+    "stageDt": 0.001,
+    "stageWeights": [
+      0,
+      1
+    ],
+    "physicalBoundaryGhosts": "analytic constant fixture; not a boundary policy trajectory"
+  },
+  "resultsRoundedByExistingStreamPrecision": [
+    {
+      "direction": 0.0,
+      "inner": 0.0,
+      "max_delta": 2.77556e-17,
+      "max_register": 0.0,
+      "max_state_error": 2.77556e-17
+    },
+    {
+      "direction": 0.0,
+      "inner": 1.0,
+      "max_delta": 4.95494e-17,
+      "max_register": 3.14523e-15,
+      "max_state_error": 3.55618e-17
+    },
+    {
+      "direction": 1.0,
+      "inner": 0.0,
+      "max_delta": 5.34464e-16,
+      "max_register": 2.13163e-14,
+      "max_state_error": 1.38778e-17
+    },
+    {
+      "direction": 1.0,
+      "inner": 1.0,
+      "max_delta": 5.29374e-16,
+      "max_register": 2.84217e-14,
+      "max_state_error": 1.38778e-17
+    }
+  ],
+  "engineeringGate": "existing close 2e-12*max(1,abs(reference)); not a new scientific budget",
+  "gravityGuard": "explicit RZ rejects gravity before output mutation and source callback",
+  "limits": [
+    "public runtime Grid/IHydroSolver/scheduler remain legacy",
+    "single constant-state stage only; not nonuniform trajectory, physical boundary or long-time acceptance",
+    "AMR refinement angular momentum finding remains open; zero-swirl witness is not angular acceptance",
+    "no CUDA/ARCH full build/simulation; no push/tag/main merge"
+  ],
+  "localEvidence": "studio/.local/integration/rz-mixed-hydro-20261004"
+}
