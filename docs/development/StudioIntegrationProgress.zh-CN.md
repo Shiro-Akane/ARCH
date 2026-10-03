@@ -2397,3 +2397,8 @@ ae3af9b7 上实际 DriverIO 的 resolved checkpoint EOS evidence + immutable Con
 ### Plotfile 发布失败/中断证据
 
 f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负返回，异常/无成功log/旧digest不变/临时清理检查通过。owned writer child flush前暂停后SIGKILL，旧final不变、partial留ignored、child消失；reader打开前拒绝partial保留命名。CPU scoped1/1、npm283/283+lint/typecheck/diff PASS；详见 PlotfilePublicationFaultsProgress-20261003.zh-CN.md/Summary。非hardware/断电/全窗口覆盖，真实模型与Viewer/科学review未完，无simulation/production binary/CUDA/push/tag。
+
+
+### Plotfile真实t=0 writer对照
+
+24f448ce clean CPU -j8增量ARCH23.4s/采样groupRSS4.8GiB，desktop production未替换。精确既有授权t=0方法Sod12叶/Cellular20叶与Preview/Checkpoint keys相同、step0/time0；DENS192/5120 bit mismatch0，center/measure差0，Cellular bounds差1.776e-15如实提交owner review不增容差。case/raw/binary/EOS/species和真实reader→client通过。详见 PlotfileRealT0Progress-20261003.zh-CN.md/Summary及repeatable validation/io脚本；raw/ARCH副本本机ignored。非evolution/全field/Viewer/单位科学验收，无CUDA/push/tag。
