@@ -1,0 +1,75 @@
+{
+  "sourceBase": "f86f9706756277550d43c5ab0b035140abfa358f",
+  "ownerContract": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+  "finding": "JSON.stringify changes stored negative zero to positive zero at worker/HTTP boundaries",
+  "before": {
+    "directHdfSignedZero": "PASS",
+    "workerHttpSignedZero": "FAIL",
+    "testsPassed": 3,
+    "testsFailed": 1
+  },
+  "after": {
+    "testCount": 316,
+    "passed": 316,
+    "failed": 0,
+    "dimensions": [
+      1,
+      2
+    ],
+    "shapes": [
+      [
+        1,
+        8
+      ],
+      [
+        1,
+        2,
+        4
+      ]
+    ],
+    "values": [
+      "-0",
+      "+0",
+      "minimum positive/negative subnormal",
+      "maximum positive/negative finite",
+      "adjacent doubles around 1"
+    ],
+    "comparison": "BigUint64Array bit identity across actual HDF5/isolated worker/HTTP JSON",
+    "rawFileUnchanged": true,
+    "numericJsonTypeUnchanged": true,
+    "rawDisplaySignedZero": "PASS"
+  },
+  "checks": [
+    {
+      "name": "test",
+      "exitCode": 0,
+      "seconds": 6.227
+    },
+    {
+      "name": "lint",
+      "exitCode": 0,
+      "seconds": 5.824
+    },
+    {
+      "name": "typecheck",
+      "exitCode": 0,
+      "seconds": 2.83
+    },
+    {
+      "name": "build",
+      "exitCode": 0,
+      "seconds": 3.585
+    },
+    {
+      "name": "diff",
+      "exitCode": 0,
+      "seconds": 0.009
+    }
+  ],
+  "productionAsset": "index-CZj54lZc.js",
+  "scope": "synthetic wire counterexamples, no scientific Core rebuild, simulation, checkpoint change or new native desktop UAT",
+  "limitations": [
+    "NaN payload bits are not certified; existing explicit NaN/Infinity strings unchanged",
+    "does not prove full scientific provenance, EOS accuracy, complete AMR coverage or large-file resource safety"
+  ]
+}

@@ -1,3 +1,4 @@
+import {stringifyPlotfile} from './plotfileJson.ts';
 import {copyPointRequest} from '../src/host/plotfilePoint.ts';
 /** Fixed Host-owned reader worker. No scientific Core execution. */
 import {inspectPlotfileMetadata,readPlotfileFieldSlice,readPlotfileOverview,readPlotfilePoint} from './plotfileMetadata.ts';
@@ -13,7 +14,7 @@ try {
   :isPoint?await readPlotfilePoint(process.argv[2],copyPointRequest(request.pointQuery))
   :isOverview?await readPlotfileOverview(process.argv[2],copyOverviewRequest(request.overview))
   :await readPlotfileFieldSlice(process.argv[2],copyPlotfileSliceRequest(request));
- process.stdout.write(JSON.stringify({ok:true,result}));
+ process.stdout.write(stringifyPlotfile({ok:true,result}));
 } catch(error) {
  const message=error instanceof Error?error.message:'Plotfile read failed.';
  process.stdout.write(JSON.stringify({ok:false,message:message.slice(0,1024)}));

@@ -2504,3 +2504,11 @@ Sod1/Cellular19 组分四组属性与 checkpoint 位级一致；Host 旧路径�
 Sod1/Cellular19真实属性经Host/独立HDF逐位一致；315项全回归及production检查通过。
 Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做单位推断或EOS verified。
 见 PlotfileEosSourceUi-20261003.zh-CN.md / Summary.json。完整联合目标和其余科学/资源验收仍待。
+
+
+## Plotfile FP64 wire 与读取对接增量（2026-10-03）
+
+已完整核对 owner 23ff77c4f contract，刷新 PlotfileReaderAdapterHandoff 的实际字段/数组/身份/发布映射。
+真实 HDF5 负零在 worker/HTTP JSON 中丢失已先复现，最小传输及显示补丁后 1D/非正方形 2D 位级反例通过。
+316 项全回归、lint/typecheck/build/diff check 通过；见 PlotfileFp64Wire-20261003.zh-CN.md/Summary.json。
+本轮不重建科学 Core、不运行 simulation、不变更 checkpoint；完整科学与资源验收仍待，未封箱联合目标。

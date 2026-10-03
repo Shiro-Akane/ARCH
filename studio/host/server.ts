@@ -1,3 +1,4 @@
+import {stringifyPlotfile} from './plotfileJson.ts';
 import {readProjectPlotfileMetadata,readProjectPlotfileFieldSlice,readProjectPlotfileOverview,readProjectPlotfilePoint} from './projectPlotfileMetadata.ts';
 import {PlotfileReadError} from './isolatedPlotfileMetadata.ts';
 import type {RunController} from './runController.ts';
@@ -24,7 +25,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
   const allowed = new URL(origin);
   if (allowed.protocol !== 'http:' || allowed.hostname !== '127.0.0.1' || allowed.origin !== origin) throw new Error('UI origin must be an exact http://127.0.0.1:PORT origin');
   return createServer(async (req, res) => {
-    const send = (status: number, value: unknown) => {res.writeHead(status, {'Content-Type':'application/json', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
+    const send = (status: number, value: unknown, plotfile=false) => {res.writeHead(status, {'Content-Type':'application/json', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff'});res.end(plotfile?stringifyPlotfile(value):JSON.stringify(value));};
     if(desktop&&req.headers['x-arch-desktop-token']!==desktop.token){send(403,{error:'Desktop ownership rejected'});return;}
     const address = req.socket.localPort;
     if (req.headers.host !== `127.0.0.1:${address}` || req.headers.origin !== origin) {send(403,{error:'Host or Origin rejected'});return;}
@@ -98,7 +99,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
           :req.url==='/api/plotfile/audit-point'?readProjectPlotfilePoint(root,projectId,data,controller.signal):req.url==='/api/plotfile/audit-overview'?readProjectPlotfileOverview(root,projectId,data,controller.signal):readProjectPlotfileFieldSlice(root,projectId,data,controller.signal));
          const current=reader.snapshot();
          if(current.session.projectId!==projectId||current.host.projectRoot!==root)throw new ConfigError('changed-externally','Project session changed during Plotfile audit.');
-         if(!res.destroyed)send(200,result);
+         if(!res.destroyed)send(200,result,true);
         }catch(error){
          if(res.destroyed)return;
          if(error instanceof PlotfileReadError)throw error;
