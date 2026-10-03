@@ -1,0 +1,36 @@
+{
+  "scope": "Actual registered Gaussian Setup/Init/shared EOS RZ profile; no timestep evolution",
+  "exitCode": 0,
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "executableSha256": "0826b60c380773a4d6d25eaf19af2271056483a4f9d8a4c13dc2af2e14795399",
+  "recompiledSources": {
+    "tests/host/grid/test_registered_rz_initialization.cpp": "25810bbd4f6643db46708b2888299a27143e01f4ff6dd4e8d6987975fc00e0c1",
+    "src/core/problem/ProblemHelper.cpp": "da6ae9cae1f4d8cc73c7f67dab335e15c92d356792a5651519c7d9b6062755e3",
+    "src/physics/eos/eosdispatch.cpp": "7758ee7e4680999816ae86c79ffa9e3792856231960508a93e408221b6ea03c6",
+    "simulation/GaussianPulse/Gaussian.cpp": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9"
+  },
+  "initializationHeaders": {
+    "src/interface/ProblemGenerator.h": "11e92f91ec2e56cb25bdbf27cf13c3f243b9437dc6d14c71e1bb43b3741d7f5f",
+    "src/grid/Grid.h": "1e3697f7e0f18743b79fc9581785c51e6bec1144fddbedd2680222c9001d998b",
+    "simulation/GaussianPulse/Gaussian.cpp": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9",
+    "validation/amr/inputs/gaussian_rz_init_probe.par": "58a152b658b8918f28484b608670b840fa85e5722fb83d966e91fef4faf2d28b",
+    "src/core/problem/InitialStateConversion.h": "46b03265b9a7e50b5e959e7eee49937a3e384f24bbd10bb03f9c8d9976e39ba8"
+  },
+  "limitations": [
+    "Public RZ dispatch still gated",
+    "No registered model science acceptance",
+    "CUDA not qualified"
+  ],
+  "baseline": "2e48646561f15cdb6398f62d74a4e02ed21357a8",
+  "cells": 256,
+  "maxFractionMappingError": 0.0,
+  "registeredCaseSourceSha256": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9",
+  "initialFailure": "Probe included model TU without ARCH_CASE_SOURCE_SHA256; strict model material source check correctly rejected. Replaced with actual case compile command/current-source object.",
+  "finding": {
+    "case": "GravityBox",
+    "sourceSha256": "27e5a8bf1d22a7303fd6e45adddd3780eb990e133cb74f1927526d237a7df12d",
+    "path": "isolated Init dimension_=2 loops coords={p.x,p.y,p.z} for a<dimension_; RZ p.y=0, p.z carries axis2",
+    "impact": "RZ isolated 2D density mode omits z variation and may apply center_y to inactive Cartesian y",
+    "status": "Core interpretation requested; no scientific model change"
+  }
+}

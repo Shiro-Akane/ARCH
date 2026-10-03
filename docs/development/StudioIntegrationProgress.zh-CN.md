@@ -2753,3 +2753,7 @@ ProblemInitializationContext explicit profile 已接真实 PopulateState，坐�
 
 ## 2026-10-04 RZ native AMR length domain
 shared Block/root/leaf creation已传explicit profile；真实5leaf mixed checkpoint z[-10,10]重建PASS，shared初始化z[-4,4]及full-ring repair PASS。3项相关CPU scoped regressions PASS；不是refine/coarsen角动量或演化验收。见 RZNativeAmrDomain-20261004.zh-CN.md / Summary。未 push/tag。
+
+
+## 2026-10-04 registered Gaussian RZ init + GravityBox finding
+source-verified实际注册Gaussian严格Setup/Init/sharedEOS链PASS，256原生cells组分mapping误差0。GravityBox isolated二维遍历x/y漏RZ z，待Core明确center参数/profile，不自行改物理。见 RZRegisteredInitialization-20261004.zh-CN.md / Summary。非科学演化验收，未push/tag。
