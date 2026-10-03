@@ -2199,3 +2199,12 @@ uniform-state独立表达，固定非活动坐标/单位由Core提供。slice不
 无simulation/scientific output；最终243/243及lint/typecheck/build/diff PASS。
 详见FullModelAmrDisplayProgress.zh-CN.md/Summary。生产binary/实际Host/desktop UAT仍待完成，
 不以root mesh推广三维混合细化或科学验收；独立plt/JENS/RZ/CUDA未完成。无push/tag/main merge。
+
+### 生产更新前实际 freshness 门槛修复
+
+基线1c97f9b0。旧生产binary仍为e506619f；实际Build检测到10个compiler inputs变化/needs-build，
+但旧Preview readiness仅检查固定inputs而错误ready=true。本次明确拒绝needs-build，
+实际复核变为ready=false/Build required，保留full-dependency unknown的原有边界。
+新增回归与最终244/244、lint/typecheck/production/diff PASS；日志ignored本地。
+旧Linux窗口已通过原生close正常退出，owned Electron/Host均消失，未覆盖未保存输入。
+随后须正式Host-owned CPU Build和真实多模型Host/desktop UAT；本项不是完整阶段封箱。

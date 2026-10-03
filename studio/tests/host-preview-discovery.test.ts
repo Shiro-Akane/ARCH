@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {previewFixture} from './preview-fixture.ts';
@@ -48,5 +48,20 @@ test('Host shutdown reaps an outstanding capability query and forbids restart',a
   assert.throws(()=>process.kill(pid,0),(e:unknown)=>(e as NodeJS.ErrnoException).code==='ESRCH');
   assert.equal((await readiness).ready,false);
   await assert.rejects(f.preview.start(f.request),/Host is closed/);
+ }finally{await f.preview.shutdown();await f.cleanup();}
+});
+
+
+test('known changed compiler/build inputs disable Preview even when fixed inputs and old binary still match',async()=>{
+ const f=await previewFixture();
+ try{
+  const snapshot=f.build.snapshot.bind(f.build);
+  const replacement=mock.method(f.build,'snapshot',()=>({...snapshot(),binaryState:'needs-build' as const,changedInputs:['actual/compiler/header.h']}));
+  assert.equal((await f.preview.readiness()).ready,false);
+  assert.match(f.preview.snapshot().reason!,/compiler inputs changed/);
+  await assert.rejects(f.preview.start(f.request),/Build required/);
+  assert.equal(f.preview.isActive(),false);
+  replacement.mock.restore();
+  assert.equal((await f.preview.readiness()).ready,true);
  }finally{await f.preview.shutdown();await f.cleanup();}
 });
