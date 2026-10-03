@@ -19,10 +19,10 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
-| 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前 229 Studio/Host tests 与静态/production 检查 PASS；原生Open取消、未保存替换取消及空格/中文路径SaveAs/Reopen已有捕获与字节证据；用户已用截图确认独立窗口可见；其他原生矩阵未完整；历史177项不替代本轮 | 不适用 |
+| 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前235 Studio/Host及lint/typecheck/production PASS；原生文件选择、Dirty保护、空格/中文SaveAs/Reopen、外部冲突拒绝及显式overwrite已有直接证据；用户截图确认独立窗口可见；历史177项不替代本轮 | 不适用 |
 | 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
-| 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 进程/HTTP/Build 验证通过；独立窗口可见及Sod显示核对通过；完整原生UAT未完成，dependenciesComplete=false | 不适用 |
-| 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | Sod t=0、SmoothAdvection Run/Restart和输出锁回归通过；227项Studio/Host回归通过；桌面全流程 UAT 未完成 | 不推广为其他模型/后端演化验收 |
+| 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 原生Configure/Build通过；真实CMake微型工程编译失败/恢复通过；完整依赖freshness仍unknown，dependenciesComplete=false；边界见Studio3CExitAudit | 不适用 |
+| 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | 原生Sod Run/Restart/Stop、关闭后计算继续及历史恢复通过；235项Studio/Host通过；仍待活跃Run与Preview cancel/不同项目重开同场景直接隔离证据 | 不推广为其他模型/后端演化验收 |
 | 5 全模型初态/AMR | 当前仅 Sod/CellularDet，通用扩展未实施 | 本地 CPU 两模型初态及 Cellular AMR 有证据；其余模型未验收 | 真实域/预算需明确 |
 | 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
 | 7 O7.2–O7.5 RZ | 待实施 | 分层 CPU | O7.4 科学方案须 review |
@@ -2101,3 +2101,21 @@ UAT 发现确认 grid min-content 与32px固定按钮高度造成长路径越界
 完整 Studio/Host234/234、lint/typecheck/build/diff PASS，bundle warning保留。
 报告 StudioNativeOverwriteUat.zh-CN.md/Summary.json；完整输入与日志仅 ignored 本地目录。
 没有 ARCH compile/CUDA、push/tag/main merge。继续做3C逐项出口审计，不提前全模型/JENS/RZ。
+
+
+## 3C 出口审计及真实编译失败恢复
+
+2026-10-03，e240bbd9 clean。逐项核对联合4.1/4.2/5/6要求与当前实现/证据。
+原生文件/Configure/Build/Run/Restart/Stop及关闭主链路通过；
+Preview取消与不同项目重开时delivered Run的同场景直接证据仍缺，完整出口pending。
+不扩大为自然短Init瞬间关闭的额外门槛。
+
+新增host-build-real.test.ts在空格/中文临时目录真实CMake/Ninja编译微型C++，
+成功→明确#error失败→修正成功；失败保留旧成功Manifest/binary/错误输入，
+freshness changed/unknown准确。没有构建ARCH或simulation。
+定向1/1、最终235/235、lint/typecheck/build/diff PASS。
+既有Sod Restart持久job/state/input/binary身份及本机H5存在只读复核一致，不重跑轨迹。
+
+报告Studio3CExitAudit.zh-CN.md/Summary.json；日志raw本机ignored。
+顶部顺序清单更新当前证据，旧记录按当时范围保留。
+历史G/architecture迁移批准独立待处理，无push/tag/main merge/full-model/JENS/RZ/CUDA advance。
