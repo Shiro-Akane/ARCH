@@ -1793,3 +1793,21 @@ StudioNativeFileLifecycleUat/Summary extended with exact scope.
 Dirty-copy Cancel and other remaining native matrix are still uncovered;
 human-visible window still NOT VERIFIED. No source/preview/run/build/test rerun,
 raw upload/push/tag or whole3B/3C completion claim.
+
+## Native external-change Save refusal and Dirty Save As recovery verified
+
+Clean8f2a30af: independent ignored copy, real GTK Open -> CFL working edit0.41
+(Saved0.4); external append-only comment to that copy. Native Save refuses,
+Disk changed-externally and explicit retained-copy conflict. Original external
+SHA bb76a913... unchanged after refusal and Dirty GTK SaveAs Cancel.
+DirtyCancel retains0.41 and conflict. Native SaveAs new RecoveredSod.par saves
+1260bytes/SHAf452da1c... exactly original text with onlycfl0.4→0.41.
+Original/source input unchanged, diff_cfl missing remains unwritten.
+Host/header associates new file, Saved/DiskinSync; existing init-only refresh.
+StudioNativeFileLifecycleUat/Summary carry processed identities and scope.
+
+This closes native external-conflict refusal/retention, DirtySaveAsCancel and
+SaveAs recovery, not explicit overwrite or active window-close matrix.
+Human-visible independent window still NOT VERIFIED, no whole3C/O7 PASS.
+No simulation/build/source change/unchanged-suite rerun/raw upload/push/tag/
+main merge/full-model/JENS/RZ advance.

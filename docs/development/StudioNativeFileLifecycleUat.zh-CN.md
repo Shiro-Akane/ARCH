@@ -69,3 +69,37 @@ mtime/size未变化；默认新目标不存在；选定binarySHA仍e506619f...�
 原生覆盖/外部冲突/活跃close等矩阵仍未完整，整体3B/3C未宣称PASS。
 仅补充处理后摘要与文档，git diff --check；不重复 unchanged suite，
 不上传原始数据、不push/tag/main merge。
+
+## 2026-10-03 补充：原生外部冲突、Dirty Cancel 与另存恢复
+
+执行前8f2a30af0ae0be2eb16b5f1b18ba6b3104337ea5，工作树干净。
+新建本机ignored目录 native-save-conflict-2a662c9f-ff83-44de-b2a6-896ea0644358，
+从此前有效UatSod.par复制Sod.par；历史输入/原始工程Sod不改。
+原生Open13044318精确关联新副本。Core目录搜索cfl后，
+实际文本控件0.4→0.41；Inspector Working Copy0.41与Saved0.4分离。
+
+独立外部写入只向测试副本追加一行注释，保留cfl0.4。
+原生Save实际被拒绝；主界面Disk changed-externally，并明确显示
+“This configuration file changed on disk. Your unsaved Working Copy has been kept.”
+工作副本0.41仍在，磁盘保持外部改动SHA
+bb76a91310d870ed661f196c0e1de82cc5226b2b2cdd278a1ae64bd0790263ca。
+
+从该冲突提示打开GTK Save As37358706并Cancel；
+模态关闭后Inspector仍WorkingCopy0.41/Saved0.4，冲突提示保持，
+默认Sod_copy.par不存在。此项补齐Dirty SaveAs Cancel，未丢编辑。
+
+随后再次打开GTK SaveAs125438558，明确选择此前不存在的
+同目录RecoveredSod.par并Save。新文件真实落盘1260bytes，
+SHA f452da1cb53bff2a7fe9c6c5d62407e979e5c88893f2a1a231f2c26b7c1083fb。
+逐字节等于原始UatSod内容只将cfl = 0.4改为0.41；
+缺失diff_cfl未插入。外部注释仍在冲突源文件，不被新副本吸收或覆盖。
+Host/header关联RecoveredSod.par；界面Saved、Disk in-sync；
+原UatSod与binarySHA均未变。
+
+已有自动init-only Preview随工作副本编辑/新关联刷新；没有Run/Restart、
+科学timestep、Build或科学源码变更。仍不以工具原生捕获代替用户
+独立窗口可见性；最后用户只有任务栏图标的反馈未被新回答取代。
+本轮关闭外部冲突拒写/保留、DirtyCancel、另存恢复项，
+并未覆盖明确Overwrite选择或活跃窗口关闭矩阵，不宣称整个3C完成。
+只提交处理后摘要/报告/进度；原配置与完整本地证据留ignored目录，
+diff check通过，不重复既有unchanged229-suite，无push/tag/main merge。
