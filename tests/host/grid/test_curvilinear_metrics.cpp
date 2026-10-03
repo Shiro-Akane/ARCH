@@ -299,6 +299,79 @@ int main()
         close(delta.eng,19.*2.*coefficients.nu_visc,"RZ conservative viscous work flux");
         if (delta.rho!=0.) throw std::runtime_error("RZ viscosity changed mass");
     }
+    // Complete Host operator with native padded storage and explicit RZ chart.
+    for (double left : {0.,1.}) {
+        Grid grid(amr::MAX_NG,left,left+1.,-.5,.5,0.,1.);
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+        FluidState state,delta;
+        state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
+        delta.Preallocate(grid.GetTotalSize());delta.InitSpecies(1);
+        for(int j=0;j<grid.GetTotalY();++j) for(int i=0;i<grid.GetTotalX();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+            state.set(cell,{2.,2.*r,6.*z,4.*r,1000.});state.X(0,cell)=1.;
+        }
+        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config,
+            GeometrySemantics::AxisymmetricRz);
+        for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            close(delta.mom_u[cell],0.,"RZ Host radial linear operator");
+            close(delta.mom_v[cell],0.,"RZ Host axial linear operator");
+            close(delta.mom_w[cell],0.,"RZ Host swirl linear operator");
+            close(delta.eng[cell],19.*2.*ViscousGeometryCases::viscosity,
+                "RZ Host conservative work divergence");
+            if(delta.rho[cell]!=0. || delta.X(0,cell)!=0.)
+                throw std::runtime_error("RZ Host viscosity changed mass/species");
+        }
+        const double dt=DiffFlux::adaptive_dt_diff(state,eos,grid,config,1.,
+            GeometrySemantics::AxisymmetricRz);
+        // Constant nu: radial/axial face sum is 2nu/dr²+2nu/dz²,
+        // and the strongest unresolved phi source is at the first radial cell.
+        const double center=grid.GetCellCenterX(grid.Is());
+        const double inv=2./(2.*left+grid.dx1);
+        const double rate=2.*ViscousGeometryCases::viscosity
+            *(1./(grid.dx1*grid.dx1)+1./(grid.dx2*grid.dx2))
+            +ViscousGeometryCases::viscosity*inv/center;
+        close(dt,1./rate,"RZ Host explicit diffusion limit");
+    }
+    // Variable mu=nu*rho, rho=2+alpha*r. Independent cell-volume
+    // average of Cartesian div(mu*v.grad(v)) is nu*(38+24alpha*<r>).
+    double previous_rz_work_error=0.;
+    for(double h : {.05,.025,.0125}) {
+        const double lower=.5-(amr::BLOCK_NX/2+.5)*h;
+        Grid grid(amr::MAX_NG,lower,lower+amr::BLOCK_NX*h,
+            -.5,-.5+amr::BLOCK_NY*h,0.,1.);
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+        FluidState state,delta;
+        state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
+        delta.Preallocate(grid.GetTotalSize());delta.InitSpecies(1);
+        constexpr double alpha=.1;
+        for(int j=0;j<grid.GetTotalY();++j) for(int i=0;i<grid.GetTotalX();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j),rho=2.+alpha*r;
+            state.set(cell,{rho,rho*r,rho*3.*z,rho*2.*r,rho*1000.});
+            state.X(0,cell)=1.;
+        }
+        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config,
+            GeometrySemantics::AxisymmetricRz);
+        const int i=grid.Is()+amr::BLOCK_NX/2,j=grid.Js()+amr::BLOCK_NY/2;
+        const int cell=grid.GetIndex(i,j,0);
+        const double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+        const double average_r=(2./3.)*(hi*hi+hi*lo+lo*lo)/(hi+lo);
+        const double nu=ViscousGeometryCases::viscosity;
+        close(delta.mom_u[cell],nu*alpha,"RZ variable-mu radial derivative");
+        close(delta.mom_v[cell],0.,"RZ variable-mu axial derivative");
+        close(delta.mom_w[cell],2.*nu*alpha,"RZ variable-mu swirl derivative");
+        const double reference=nu*(38.+24.*alpha*average_r);
+        const double error=std::abs(delta.eng[cell]-reference);
+        std::cout<<"RZ_HOST_VARIABLE_MU h="<<h<<" work_error="<<error<<'\n';
+        if(!std::isfinite(error) || (previous_rz_work_error>1.e-10
+            && previous_rz_work_error<3.5*error))
+            throw std::runtime_error("RZ variable-mu work lost second-order consistency");
+        previous_rz_work_error=error;
+    }
+    if(previous_rz_work_error>1.e-4)
+        throw std::runtime_error("RZ variable-mu existing analytic engineering budget exceeded");
     ViscousGeometryCases::convergence("cpu", evaluate);
     ViscousGeometryCases::radial_origin("cpu", evaluate);
     ViscousGeometryCases::density_stability("cpu", evaluate);

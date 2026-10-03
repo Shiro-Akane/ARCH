@@ -61,6 +61,13 @@ inline GeometryView make_rz_geometry_view(GeometryView grid)
     return grid;
 }
 
+/** Bind one native storage layout to an explicit validated internal chart. */
+inline GeometryView make_geometry_view(const Grid& grid, GeometrySemantics semantics)
+{
+    const auto view=make_geometry_view(grid);
+    return semantics==GeometrySemantics::AxisymmetricRz ? make_rz_geometry_view(view) : view;
+}
+
 ARCH_HOST_DEVICE inline double radial_shell_volume(double r_left, double r_right) {
     // Integral r^2 dr, factored before evaluation to retain thin-shell digits.
     return (r_right - r_left)

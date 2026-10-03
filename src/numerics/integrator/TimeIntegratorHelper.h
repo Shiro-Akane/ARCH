@@ -80,8 +80,10 @@ namespace TimeIntegration
     inline void accumulate_divergence(
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         const std::vector<FluidVector> &fluxes, const std::vector<double> &spec_fluxes,
-        const Grid &grid, double dt, int dir, int n_spec)
+        const Grid &grid, double dt, int dir, int n_spec,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
         int total_size = grid.GetTotalSize();
 
@@ -96,9 +98,9 @@ namespace TimeIntegration
             {
                 int idx = grid.GetIndex(i, j, k);
 
-                const double volume = GridMetrics::CellVolume(grid, i, j, k);
-                const double area_l = GridMetrics::FaceArea(grid, dir, i, j, k, false);
-                const double area_r = GridMetrics::FaceArea(grid, dir, i, j, k, true);
+                const double volume = GridMetrics::CellVolume(geometry, i, j, k);
+                const double area_l = GridMetrics::FaceArea(geometry, dir, i, j, k, false);
+                const double area_r = GridMetrics::FaceArea(geometry, dir, i, j, k, true);
 
                 const double* lower_species_flux = n_spec > 0
                     ? spec_fluxes.data() + idx : nullptr;

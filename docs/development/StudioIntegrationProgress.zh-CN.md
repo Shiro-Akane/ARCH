@@ -2651,3 +2651,10 @@ Cartesian 线性场对应的 RZ 局部 shared face/source momentum/work flux 检
 发现新内部 RZ mesh 可误入旧 2D log 核；构造与 cached values 双入口已明确拒绝。
 RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 RZBoundaryGuard-20261004.zh-CN.md / Summary。
 有限环体生产方案和预算尚待 Core review，未 fallback/开放能力。
+
+
+## 2026-10-04 RZ 完整 Host diffusion
+
+显式 chart 贯穿 face/divergence/source/operator/dt，真实 padded 512 active-cell 线性场及独立 dt 一致。
+变密度/动态黏度 work 的原生 volume-average 参考三分辨率二阶，CPU 受影响检查通过。
+详见 RZHostDiffusion-20261004.zh-CN.md / Summary；实际边界/AMR/RKL演化、其它材料/CUDA/科学出口未关闭。

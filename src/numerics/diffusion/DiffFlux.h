@@ -479,7 +479,8 @@ namespace DiffFlux
     static void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& grid, const SimConfig& config,
                                std::vector<FluidVector>& flux_out,
                                std::vector<double>& spec_flux_out,
-                               int dir)
+                               int dir,
+                               GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
         arch::state::HostFailure failure;
         int n_species = state.GetNumSpecies();
@@ -501,6 +502,7 @@ namespace DiffFlux
             ? species_manager->get_host_view() : SpeciesHostView{};
         const DiffusionConfigView diffusion_config =
             make_diffusion_config_view(config);
+        const auto geometry_view=GridMetrics::make_geometry_view(grid,semantics);
         const DiffusionGeometry geometry =
             diffusion_geometry_from_name(grid.geometry);
         if (geometry == DiffusionGeometry::Unsupported) {
@@ -525,9 +527,7 @@ namespace DiffFlux
                             FluidVector U_L = state.get(idx_L);
                             FluidVector U_R = state.get(idx_R);
                             FluidVector F_diff;
-                            const double spacing = diffusion_face_spacing(
-                                geometry, grid.dim, dir, grid.dx1, grid.dx2, grid.dx3,
-                                grid.GetCellCenterX(i), grid.GetCellCenterY(j));
+                            const double spacing = GridMetrics::PhysicalSpacing(geometry_view,dir,i,j);
                             const DiffusionFaceStatus status = evaluate_diffusion_face(
                                 U_L, U_R,
                                 n_species > 0 ? state.mass_fractions.data() + idx_L : nullptr,
@@ -538,7 +538,7 @@ namespace DiffFlux
                                 charge.data(), inverse_mass.data(), F_diff,
                                 n_species > 0 ? spec_flux_out.data() + idx_R : nullptr,
                                 grid.GetTotalSize(), do_viscous ? viscous_basis_rotation(
-                                    GridMetrics::make_geometry_view(grid), dir, i, j)
+                                    geometry_view, dir, i, j)
                                     : ViscousBasisRotation{});
                             if (!status.valid) {
                                 throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
@@ -629,14 +629,15 @@ namespace DiffFlux
      */
     template <typename EosType>
     inline void add_geometric_sources(std::vector<FluidVector>& dU, const FluidState& state,
-                                      const EosType& eos, const Grid& grid, const SimConfig& config, double dt)
+                                      const EosType& eos, const Grid& grid, const SimConfig& config, double dt,
+                                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
         arch::state::HostFailure failure;
         if (!config.physics.diffusion.use_viscous_diffusion) return;
         if (grid.geometry == "cartesian") return;
 
         int n_species = state.GetNumSpecies();
-        const auto geometry = GridMetrics::make_geometry_view(grid);
+        const auto geometry = GridMetrics::make_geometry_view(grid,semantics);
         const auto diffusion_config = make_diffusion_config_view(config);
         const SpeciesManager* species_manager = eos.get_species_manager();
         const SpeciesHostView species = species_manager
@@ -677,8 +678,10 @@ namespace DiffFlux
      */
     template <typename EosType>
     void compute_diffusion_operator(const FluidState& state, FluidState& L_U,
-                                    const EosType& eos, const Grid& grid, const SimConfig& config)
+                                    const EosType& eos, const Grid& grid, const SimConfig& config,
+                                    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        (void)GridMetrics::make_geometry_view(grid,semantics); // fail before destination writes
         int n_spec = state.GetNumSpecies();
 
         #pragma omp parallel for schedule(static)
@@ -709,11 +712,11 @@ namespace DiffFlux
             std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector());
             std::fill(spec_flux_buffer.begin(), spec_flux_buffer.end(), 0.0);
 
-            compute_fluxes(state, eos, grid, config, flux_buffer, spec_flux_buffer, dir);
-            TimeIntegration::accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, 1.0, dir, n_spec);
+            compute_fluxes(state, eos, grid, config, flux_buffer, spec_flux_buffer, dir, semantics);
+            TimeIntegration::accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, 1.0, dir, n_spec, semantics);
         }
 
-        add_geometric_sources(dU, state, eos, grid, config, 1.0);
+        add_geometric_sources(dU, state, eos, grid, config, 1.0, semantics);
 
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < grid.GetTotalSize(); ++i) {
@@ -741,7 +744,8 @@ namespace DiffFlux
      * Physical and inter-block ghosts must be complete before this call.
      */
     template <typename EosType>
-    inline double adaptive_dt_diff(const FluidState &state, const EosType &eos, const Grid &grid, const SimConfig &config, double cfl_number)
+    inline double adaptive_dt_diff(const FluidState &state, const EosType &eos, const Grid &grid, const SimConfig &config, double cfl_number,
+                                   GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
         arch::state::HostFailure failure;
         if (!config.physics.diffusion.use_diffusion)
@@ -772,7 +776,7 @@ namespace DiffFlux
             make_diffusion_config_view(config);
         const DiffusionGeometry geometry =
             diffusion_geometry_from_name(grid.geometry);
-        const auto geometry_view = GridMetrics::make_geometry_view(grid);
+        const auto geometry_view = GridMetrics::make_geometry_view(grid,semantics);
         if (geometry == DiffusionGeometry::Unsupported) {
             std::cerr << "[FATAL ERROR] Unsupported diffusion geometry: "
                       << grid.geometry << std::endl;
