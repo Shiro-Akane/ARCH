@@ -5,7 +5,8 @@
  * These Host/device leaves are the metric authority for flux divergence,
  * transfer, sources, and stability estimates. Inactive-coordinate measures
  * are omitted consistently: spherical 1D uses volume per solid angle, while
- * both curved 2D geometries describe a polar plane, not an (r,theta) slice.
+ * default curved 2D geometries describe a polar plane, not an (r,theta) slice.
+ * An explicit internal AxisymmetricRz view uses full-ring r/z measures.
  * Face fluxes and vector components use the local orthonormal basis.
  */
 
@@ -13,6 +14,7 @@
 
 #include <array>
 #include <cmath>
+#include <stdexcept>
 
 #include "grid/Grid.h"
 #include "grid/GridGeometryView.h"
@@ -43,6 +45,19 @@ inline GeometryView make_geometry_view(Geometry geometry, int dimension,
             lower[0], lower[1], lower[2]};
 }
 
+/**
+ * Opt-in chart identity for callers migrating the whole RZ math path.
+ * Does not change geometry_from_name, runtime capabilities or native Grid.
+ * Width/coordinate validity remains the caller's existing grid contract.
+ */
+inline GeometryView make_rz_geometry_view(GeometryView grid)
+{
+    if (grid.geometry != Geometry::Cylindrical || grid.dim != 2)
+        throw std::invalid_argument("RZ geometry view requires cylindrical dimension 2");
+    grid.semantics = GeometrySemantics::AxisymmetricRz;
+    return grid;
+}
+
 ARCH_HOST_DEVICE inline double radial_shell_volume(double r_left, double r_right) {
     // Integral r^2 dr, factored before evaluation to retain thin-shell digits.
     return (r_right - r_left)
@@ -66,8 +81,9 @@ ARCH_HOST_DEVICE inline double cylindrical_inverse_radius_average(
  *
  * Workflow: callers validate 0 <= r_left < r_right and dz > 0, then use
  * these same volume/face measures for divergence, transfer and diagnostics.
- * This does not change GeometryView dispatch: its existing 2-D cylindrical
- * specialization still represents the polar plane until all consumers migrate.
+ * Explicit AxisymmetricRz GeometryView dispatch consumes these same leaves.
+ * Default 2-D cylindrical still represents the polar plane until all consumers
+ * and runtime geometry identity migrate together.
  * Units are cm^3, cm^2 and cm for CGS inputs. No unit-azimuth normalization
  * or inactive-direction measure is mixed into the full 2*pi volume.
  */
@@ -123,6 +139,8 @@ ARCH_HOST_DEVICE inline double polar_angle_measure(double theta_left, double the
 ARCH_HOST_DEVICE inline double CellVolume(const GeometryView& grid, int i, int j, int /*k*/) {
     const double r_left = grid.GetFacePosL(i);
     const double r_right = grid.GetFacePosR(i);
+    if (grid.semantics == GeometrySemantics::AxisymmetricRz)
+        return Rz::CellVolume(r_left,r_right,grid.dx2);
     if (grid.geometry == Geometry::Cartesian) {
         double volume = grid.dx1;
         if (grid.dim >= 2) volume *= grid.dx2;
@@ -150,6 +168,9 @@ ARCH_HOST_DEVICE inline double FaceArea(const GeometryView& grid, int dir, int i
     const double r_left = grid.GetFacePosL(i);
     const double r_right = grid.GetFacePosR(i);
     const double r_face = high_face ? r_right : r_left;
+    if (grid.semantics == GeometrySemantics::AxisymmetricRz)
+        return dir == 0 ? Rz::RadialFaceArea(r_face,grid.dx2)
+                        : Rz::AxialFaceArea(r_left,r_right);
     if (grid.geometry == Geometry::Cartesian) {
         if (dir == 0) return (grid.dim >= 2 ? grid.dx2 : 1.0) * (grid.dim == 3 ? grid.dx3 : 1.0);
         if (dir == 1) return grid.dx1 * (grid.dim == 3 ? grid.dx3 : 1.0);
@@ -201,6 +222,8 @@ ARCH_HOST_DEVICE inline double PhysicalSpacing(
 ARCH_HOST_DEVICE inline double PhysicalSpacing(
     const GeometryView& grid, int direction, int i, int j)
 {
+    if (grid.semantics == GeometrySemantics::AxisymmetricRz)
+        return Rz::PhysicalSpacing(direction,grid.dx1,grid.dx2);
     return PhysicalSpacing(grid.geometry, grid.dim, direction,
         grid.dx1, grid.dx2, grid.dx3, grid.GetCellCenterX(i), grid.SourceTheta(j));
 }

@@ -2616,3 +2616,10 @@ O7.1科学规则、RZ整条接线/近场预算和最终平台出口仍待。
 显式 chart 已贯穿 GetPlans/ExecuteExchange，native geometry 进入 exact cache key。
 真实均匀/混合 topology 的切换、命中、bounds 失效和完整 Host 轴 ghost 执行 CPU 1/1 PASS。
 详见 RZExchangeIdentity-20261004.zh-CN.md / Summary；不代表 RZ 保守 AMR/CUDA/演化出口通过。
+
+
+## 2026-10-04 RZ 共享 GeometryView
+
+内部显式 chart 已贯穿 metric/source/代表位置转换，旧 Grid/default chart 保持。
+CPU curvilinear_metrics + amr_operation_plans 2/2 PASS。
+详见 RZGeometryView-20261004.zh-CN.md / Summary；运输/AMR/elliptic/IO/CUDA 与科学出口未关闭。

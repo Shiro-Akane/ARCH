@@ -20,6 +20,9 @@ enum class Geometry : int {
     Unsupported = 3,
 };
 
+/** Internal explicit chart; default preserves legacy cylindrical polar 2D. */
+enum class GeometrySemantics : int { Existing = 0, AxisymmetricRz = 1 };
+
 struct GeometryView {
     Geometry geometry = Geometry::Cartesian;
     int dim = 1;
@@ -33,6 +36,7 @@ struct GeometryView {
     double x1_min = 0.0;
     double x2_min = 0.0;
     double x3_min = 0.0;
+    GeometrySemantics semantics = GeometrySemantics::Existing;
 
     ARCH_HOST_DEVICE int GetIndex(int i, int j = 0, int k = 0) const
     {
@@ -94,6 +98,15 @@ ARCH_HOST_DEVICE inline std::array<double,3> PhysicalPosition(
     return native;
 }
 
+
+/** Representative Cartesian meridian position, not a point-source gravity model. */
+ARCH_HOST_DEVICE inline std::array<double,3> PhysicalPosition(
+    const GeometryView& grid, const std::array<double,3>& native)
+{
+    if (grid.semantics == GeometrySemantics::AxisymmetricRz)
+        return {native[0], 0., native[1]};
+    return PhysicalPosition(grid.geometry, grid.dim, native);
+}
 
 static_assert(std::is_standard_layout_v<GeometryView>);
 static_assert(std::is_trivially_copyable_v<GeometryView>);

@@ -73,8 +73,10 @@ ARCH_HOST_DEVICE inline void add_geometric_source_cell(
 
     if (grid.geometry == Geometry::Cylindrical) {
         // 2D axes are (r,phi); 3D axes are (r,z,phi), as on the CPU.
-        const double v_phi = grid.dim == 2 ? v_y : (grid.dim == 3 ? v_z : 0.0);
-        double* angular_delta=grid.dim==2?&delta.mom_v:(grid.dim==3?&delta.mom_w:nullptr);
+        const bool rz = grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+        const double v_phi = rz ? v_z : (grid.dim == 2 ? v_y : (grid.dim == 3 ? v_z : 0.0));
+        double* angular_delta = rz ? &delta.mom_w :
+            (grid.dim==2?&delta.mom_v:(grid.dim==3?&delta.mom_w:nullptr));
         add_cylindrical_momentum_sources(rho,v_x,v_phi,p,inverse_radius,dt,
             delta.mom_u,angular_delta);
     } else if (grid.geometry == Geometry::Spherical) {

@@ -123,6 +123,45 @@ int main()
             || actual.mom_w!=expected.mom_w)
             throw std::runtime_error("Legacy cylindrical source formula changed");
     }
+    for (double left : {0.,1.,4.}) {
+        const auto legacy=make_geometry_view(Geometry::Cylindrical,2,
+            {left,-2.,0.},{.25,.5,0.});
+        const auto rz=make_rz_geometry_view(legacy);
+        if (legacy.semantics!=GeometrySemantics::Existing)
+            throw std::runtime_error("RZ conversion changed input view");
+        if (CellVolume(rz,0,0,0)!=Rz::CellVolume(left,left+.25,.5)
+            || FaceArea(rz,0,0,0,0,false)!=Rz::RadialFaceArea(left,.5)
+            || FaceArea(rz,0,0,0,0,true)!=Rz::RadialFaceArea(left+.25,.5)
+            || FaceArea(rz,1,0,0,0,false)!=Rz::AxialFaceArea(left,left+.25)
+            || FaceArea(rz,1,0,0,0,true)!=Rz::AxialFaceArea(left,left+.25)
+            || PhysicalSpacing(rz,0,0,0)!=.25 || PhysicalSpacing(rz,1,0,0)!=.5)
+            throw std::runtime_error("RZ view did not consume shared full-ring measures");
+        if (PhysicalPosition(rz,{left+.125,-1.75,0.})
+                !=std::array<double,3>{left+.125,0.,-1.75})
+            throw std::runtime_error("RZ representative position lost axial coordinate");
+        FluidVector direct{},through_view{};
+        const FluidVector u{2.,6.,14.,10.,100.};
+        TimeIntegration::add_rz_geometric_source_cell(u,nullptr,ConstantEos{},
+            left,left+.25,.125,direct);
+        TimeIntegration::add_geometric_source_cell(u,nullptr,ConstantEos{},
+            rz,0,0,.125,through_view);
+        if (direct.mom_u!=through_view.mom_u || direct.mom_w!=through_view.mom_w
+            || through_view.mom_v!=0. || through_view.rho!=0. || through_view.eng!=0.)
+            throw std::runtime_error("RZ shared view source mapping drifted");
+    }
+    for (Geometry kind : {Geometry::Cartesian,Geometry::Spherical}) {
+        bool rejected=false;
+        try { (void)make_rz_geometry_view(make_geometry_view(kind,2,{0.,0.,0.},{1.,1.,0.})); }
+        catch (const std::invalid_argument&) {rejected=true;}
+        if (!rejected) throw std::runtime_error("RZ view accepted unrelated geometry");
+    }
+    for (int dimension : {1,3}) {
+        bool rejected=false;
+        try { (void)make_rz_geometry_view(make_geometry_view(
+            Geometry::Cylindrical,dimension,{0.,0.,0.},{1.,1.,1.})); }
+        catch (const std::invalid_argument&) {rejected=true;}
+        if (!rejected) throw std::runtime_error("RZ view accepted unsupported dimension");
+    }
     const double pi = arch::constants::math::pi;
     for (Geometry geometry : {Geometry::Cartesian, Geometry::Cylindrical, Geometry::Spherical})
     for (int dimension : {1, 2, 3})
