@@ -1,0 +1,139 @@
+{
+  "scope": "Linux production Viewer native metadata failure retention; not cancellation/race acceptance",
+  "launchSourceCommit": "79e2c9c8e6dfc8415f15d7c81a405ebd73b9987e",
+  "productionAssetCodeCommit": "65aed733f21702258bca17527f6c30922db04a73",
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "managedBinarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "inputs": [
+    {
+      "case": "Sod",
+      "original": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-cpu-plotfile-t0-20261004/raw/Sod-0/output/reference_HLLC_plt_0000.h5",
+      "localCopy": "/home/arch/projects/ARCH-host-clean-build-20261004/studio/.local/integration/native-plotfile-retention-20261004/Sod.h5",
+      "sha256": "355d345f270d7e5570420af602ee98ae6ab75b0c7d0473cf61925ead41eb471a"
+    },
+    {
+      "case": "CellularDet",
+      "original": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-cpu-plotfile-t0-20261004/raw/CellularDet-0/output/reference_HLLC_plt_0000.h5",
+      "localCopy": "/home/arch/projects/ARCH-host-clean-build-20261004/studio/.local/integration/native-plotfile-retention-20261004/CellularDet.h5",
+      "sha256": "8cc5e9e1da007bdc2854a091517a487b08f40976ec9a5580c44f76a1f7d5550b"
+    }
+  ],
+  "windowId": 34147344,
+  "initialLaunchFailure": {
+    "windowId": 29100426,
+    "reason": "No approved Host-owned Build Profile matches this project/binary",
+    "selectedBinary": "build-cpu/bin/ARCH",
+    "normalCloseExitCode": 0,
+    "bypassed": false
+  },
+  "cellular": {
+    "time": 0,
+    "dimension": 2,
+    "geometry": "cartesian",
+    "blocks": 20,
+    "cellShape": [
+      16,
+      16
+    ],
+    "scannedCells": 5120,
+    "displayShape": [
+      24,
+      32
+    ],
+    "domain": {
+      "x": [
+        0,
+        25.6
+      ],
+      "y": [
+        0,
+        12.8
+      ]
+    },
+    "fileBinaryIdentity": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+    "unknownIdentities": [
+      "effective config",
+      "build manifest",
+      "source Git"
+    ],
+    "nativeOutlinesComplete": "20/20; levels 1 and 2",
+    "missingPathFailure": "ENOENT",
+    "oldMetadataAndLodRetained": true
+  },
+  "cancellation": {
+    "nativeResult": "not verified",
+    "finding": "Only Cancel read control is above source evidence; not visible while query controls/plot are in viewport. Small existing query completed before cancel could be exercised.",
+    "race": "not verified"
+  },
+  "startupInitPreview": "Observed preparing/current before switching workspace; no Generate input. Do not claim zero Preview activity.",
+  "cleanup": {
+    "execSession": 26921,
+    "exitCode": 0,
+    "ownedProcesses": [
+      {
+        "pid": 1627649,
+        "parentPid": 1627648,
+        "startTicks": "6597275",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1627651,
+        "parentPid": 1627649,
+        "startTicks": "6597277",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1627652,
+        "parentPid": 1627649,
+        "startTicks": "6597277",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1627675,
+        "parentPid": 1627651,
+        "startTicks": "6597284",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1627677,
+        "parentPid": 1627649,
+        "startTicks": "6597284",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1627690,
+        "parentPid": 1627649,
+        "startTicks": "6597286",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1628055,
+        "parentPid": 1627652,
+        "startTicks": "6597756",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1629029,
+        "parentPid": 1627690,
+        "startTicks": "6599449",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allExactPidStartTicksGone": true
+  },
+  "rawFilesUnchanged": true,
+  "configUnchanged": true,
+  "expectedScientificOutputAbsent": "output/sod_standard",
+  "managedWorktreeClean": true,
+  "coreBuildOrSimulation": false,
+  "sourceChanges": false,
+  "noBaselineRepeat": true
+}

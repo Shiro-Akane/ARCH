@@ -3110,3 +3110,13 @@ production native新增SNIaCoupled：128²真实热点、helmholtz ready、首�
 单次AMR Complete1leaf L0，0:0:0:0 bounds/cellShape/spacing几何一致；无AMR cell field arrays。
 正常close exit0、8owned PID/startTicks退出、config未变/无科学output/managed clean。
 见FullModelSNIaDesktop-20261004报告/Summary；无源码修改，不重复331项基线，不push/tag。
+
+## 2026-10-04 Plotfile 原生失败保留与Cancel可达性
+
+新增实际窗口证据：CellularDet metadata/5120cells→32×24LOD后，缺失文件ENOENT，
+旧metadata/SHA/domain/LOD/native20leaf轮廓保持，不把失败冒充新文件成功。
+唯一Cancel在页面顶部，当前query/plot视口不可见；native cancel/race仍未验证，下一步收束这一finding。
+首次无profile启动拒绝日志保留，正常关闭后使用既有受控CPU project，没有绕过gate。
+启动曾观察Init Preview preparing/current；如实记录，不声称zero Preview。
+close exit0/8owned退出/H5与config不变/managed clean。见PlotfileNativeFailureRetention报告/Summary。
+无Core Build/simulation/代码或baseline重复，不push/tag，联合目标仍在推进。
