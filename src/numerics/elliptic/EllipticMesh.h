@@ -12,6 +12,7 @@
 #include <array>
 
 #include "core/ArchPortability.h"
+#include "grid/GridGeometryView.h"
 
 namespace arch::elliptic {
 enum class Geometry { Cartesian, Cylindrical, Spherical };
@@ -22,6 +23,7 @@ struct EllipticMesh {
     std::array<double, 3> spacing{1., 1., 1.};
     std::array<double, 3> origin{};
     Geometry geometry = Geometry::Cartesian;
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing;
     /** Return the number of root logical cells. */
     ARCH_HOST_DEVICE int size() const { return cells[0] * cells[1] * cells[2]; }
     /** Flatten x-fast logical cell coordinates. */

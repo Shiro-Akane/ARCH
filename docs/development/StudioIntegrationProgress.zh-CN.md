@@ -2637,3 +2637,10 @@ CPU curvilinear_metrics + amr_operation_plans 2/2 PASS。
 显式 RZ 未解析 phi 连接复用 3D cylindrical 数学，源项及 row bound 同步。
 Cartesian 线性场对应的 RZ 局部 shared face/source momentum/work flux 检查通过，CPU 2/2 PASS。
 详见 RZViscousConnection-20261004.zh-CN.md / Summary；完整运输/变系数演化/CUDA 与科学出口未关闭。
+
+
+## 2026-10-04 RZ composite Poisson/MG
+
+显式 mesh 身份贯穿完整环体 volume/face、dr/dz、轴线与物理 z 边界，沿用现有 coarse hierarchy。
+四组规则/混合制造解与旧 contract/curved/singular 回归通过，求解后 force/phi 指标单独报告。
+详见 RZCompositePoisson-20261004.zh-CN.md / Summary；生产环体边界与科学预算仍未获验收。

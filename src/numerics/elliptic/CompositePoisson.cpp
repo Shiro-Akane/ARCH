@@ -55,6 +55,12 @@ CompositeBoundary resolve_boundary(const EllipticMesh& mesh,BoundaryKind kind) {
             result.sides[3]=spherical && std::abs(polar_high-arch::constants::math::pi)<1e-14
                 ? FaceBoundaryKind::Neumann : FaceBoundaryKind::Dirichlet;
         }
+        if (mesh.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            // RZ has physical z boundaries, not an azimuthal periodic turn.
+            result.sides[2]=FaceBoundaryKind::Dirichlet;
+            result.sides[3]=FaceBoundaryKind::Dirichlet;
+            return result;
+        }
         const int azimuth=mesh.dimension-1;
         result.sides[2*azimuth]=FaceBoundaryKind::Periodic;
         result.sides[2*azimuth+1]=FaceBoundaryKind::Periodic;
@@ -118,8 +124,9 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
             }
             const auto geometry=base_.geometry==Geometry::Cylindrical
                 ? GridMetrics::Geometry::Cylindrical : GridMetrics::Geometry::Spherical;
-            volume=GridMetrics::CellVolume(GridMetrics::make_geometry_view(
-                geometry,base_.dimension,lower,widths),0,0,0);
+            auto view=GridMetrics::make_geometry_view(geometry,base_.dimension,lower,widths);
+            view.semantics=base_.semantics;
+            volume=GridMetrics::CellVolume(view,0,0,0);
         }
         if (!std::isfinite(volume) || volume<=0.) throw std::invalid_argument("Composite leaf volume out of range");
         volumes_.push_back(volume);
@@ -171,13 +178,15 @@ double CompositePoisson::face_area(const CompositeFace& face) const {
     }
     const auto geometry=base_.geometry==Geometry::Cylindrical
         ? GridMetrics::Geometry::Cylindrical : GridMetrics::Geometry::Spherical;
-    return GridMetrics::FaceArea(GridMetrics::make_geometry_view(
-        geometry,base_.dimension,lower,widths),face.axis,0,0,0,true);
+    auto view=GridMetrics::make_geometry_view(geometry,base_.dimension,lower,widths);
+    view.semantics=base_.semantics;
+    return GridMetrics::FaceArea(view,face.axis,0,0,0,true);
 }
 
 /** Return physical length per native coordinate at a face center. */
 double CompositePoisson::face_metric(const CompositeFace& face,int axis) const {
-    if(base_.geometry==Geometry::Cartesian || axis==0) return 1.;
+    if(base_.geometry==Geometry::Cartesian || axis==0
+        || base_.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) return 1.;
     const auto geometry=base_.geometry==Geometry::Cylindrical
         ? GridMetrics::Geometry::Cylindrical : GridMetrics::Geometry::Spherical;
     return GridMetrics::PhysicalSpacing(geometry,base_.dimension,axis,1.,1.,1.,

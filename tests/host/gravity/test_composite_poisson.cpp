@@ -565,6 +565,70 @@ void curved_domain_extension() {
 }
 
 /** Exercise nonaxisymmetric manufactured potentials on native curved meshes. */
+/** Frozen RZ polynomial, point-valued potential and analytic face derivatives. */
+void rz_manufactured() {
+    constexpr double a=.75,b=1.25;
+    for(double inner:{0.,.5}) for(bool mixed:{false,true}) {
+        auto base=base_mesh(2,8);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        base.origin={inner,-.5,0.};
+        const auto exact=[](const std::array<double,3>& x) {return a*x[0]*x[0]+b*x[1]*x[1];};
+        multigrid::CompositeMultigrid solver(base,make_cells(base,mixed),
+            elliptic::BoundaryKind::CurvilinearIsolated);
+        const auto& op=solver.op();
+        std::vector<double> phi(op.size()),rhs(op.size(),-(4.*a+2.*b)),
+            bc(op.faces().size()),applied(op.size());
+        for(int i=0;i<op.size();++i)phi[i]=exact(op.center(i));
+        for(std::size_t f=0;f<bc.size();++f)
+            if(op.faces()[f].boundary_side>=0)bc[f]=exact(op.faces()[f].center);
+        const auto lifted=op.effective_rhs(rhs,bc);
+        op.apply(phi,applied);
+        double operator_error=0.,force_error=0.,total_volume=0.;
+        int coarse_fine=0,axial_boundaries=0;
+        for(int i=0;i<op.size();++i) {
+            operator_error=std::max(operator_error,std::abs(applied[i]-lifted[i]));
+            total_volume+=op.volumes()[i];
+        }
+        for(std::size_t i=0;i<op.faces().size();++i) {
+            const auto& face=op.faces()[i];
+            const double target=2.*(face.axis==0?a:b)*face.center[face.axis];
+            force_error=std::max(force_error,std::abs(op.face_gradient(phi,face,
+                face.boundary_side>=0?bc[i]:0.)-target));
+            if(face.boundary_side==2 || face.boundary_side==3)++axial_boundaries;
+            if(face.left>=0 && face.right>=0
+                && op.cells()[face.left].level!=op.cells()[face.right].level)++coarse_fine;
+            require(!(inner==0. && face.axis==0 && face.center[0]==0.),
+                "RZ axis emitted nonzero-area face");
+        }
+        const double volume=pi*((inner+1.)*(inner+1.)-inner*inner);
+        // Arithmetic polynomial-reproduction gate only; not a science acceptance budget.
+        require(std::abs(total_volume-volume)<1e-12*volume,"RZ full volume mismatch");
+        require(axial_boundaries>0,"RZ z boundaries became periodic");
+        require(!mixed || coarse_fine>0,"RZ witness lacks coarse/fine faces");
+        require(operator_error<1e-10 && force_error<1e-10,"RZ polynomial reproduction failed");
+        const auto result=solver.solve(lifted,{1e-11,0.,300});
+        require(result.report.status==multigrid::SolveStatus::Converged
+            && result.report.residual<=result.report.target,"RZ MG failed checked residual");
+        double phi_error=0.,solved_face_error=0.;
+        for(std::size_t i=0;i<op.faces().size();++i) {
+            const auto& face=op.faces()[i];
+            const double target=2.*(face.axis==0?a:b)*face.center[face.axis];
+            solved_face_error=std::max(solved_face_error,std::abs(op.face_gradient(
+                result.potential,face,face.boundary_side>=0?bc[i]:0.)-target));
+        }
+        for(int i=0;i<op.size();++i)
+            phi_error=std::max(phi_error,std::abs(result.potential[i]-phi[i]));
+        std::cout<<"RZ_MANUFACTURED inner="<<inner<<" mixed="<<mixed
+            <<" cells="<<op.size()<<" coarse_fine="<<coarse_fine
+            <<" volume="<<total_volume<<" operator_error="<<operator_error
+            <<" face_error="<<force_error<<" phi_error="<<phi_error
+            <<" solved_face_error="<<solved_face_error
+            <<" cycles="<<result.report.cycles<<" residual="<<result.report.residual
+            <<" target="<<result.report.target<<'\n';
+        // Report solution error separately; residual alone is not science acceptance.
+    }
+}
+
 void curved_manufactured(bool singular=false, bool seam_refined=false) {
     for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
         for(int dim:{2,3}) for(bool refined:{false,true}) {
@@ -666,6 +730,7 @@ void curved_manufactured(bool singular=false, bool seam_refined=false) {
 int main(int argc,char** argv) {
     try {
         std::cout<<std::setprecision(17);
+        if (argc>1 && std::string(argv[1])=="rz") { rz_manufactured(); return 0; }
         if (argc>1 && std::string(argv[1])=="contract") { contract(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
         if(argc>1 && std::string(argv[1])=="curved") {curved_manufactured();curved_boundary_integral();return 0;}

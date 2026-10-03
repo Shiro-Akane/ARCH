@@ -22,6 +22,9 @@ namespace arch::elliptic {
 /** Reject non-Cartesian mesh extents and spacing before building an operator. */
 void validate_mesh(const CartesianMesh& m)
 {
+    const bool rz=m.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (rz && (m.dimension!=2 || m.geometry!=Geometry::Cylindrical))
+        throw std::invalid_argument("RZ elliptic mesh requires cylindrical dimension 2");
     if (m.dimension < 1 || m.dimension > 3) throw std::invalid_argument("Poisson dimension must be 1..3");
     std::size_t count = 1;
     double smallest = std::numeric_limits<double>::max(), largest = 0.;
@@ -51,7 +54,7 @@ void validate_mesh(const CartesianMesh& m)
     if (m.geometry != Geometry::Cartesian) {
         if (m.origin[0] < 0.)
             throw std::invalid_argument("Curvilinear gravity requires nonnegative radius");
-        if (m.dimension == 2) {
+        if (m.dimension == 2 && !rz) {
             const double turn = arch::constants::math::two_pi;
             if (std::abs(m.cells[1]*m.spacing[1]-turn) > 64.*std::numeric_limits<double>::epsilon()*turn)
                 throw std::invalid_argument("Polar gravity requires a full azimuthal turn");
