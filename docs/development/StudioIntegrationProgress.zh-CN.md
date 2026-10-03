@@ -2285,3 +2285,7 @@ abdbf87d 基线上 evaluate_cell 复用 GridMetrics::PhysicalSpacing，逐活动
 30820aeb 基线上仅扩充现有 scoped test：真实 IdealGas pressure/sound speed→evaluate_cell，与独立 caloric 解析参考比较。
 24个密度/内能/静止/运动/单闭合/双组分组合，最大相对误差1.9657272738823614e-16，CTest1/1 PASS；双组分独立gamma27/14不等于构造fallback1.4。详见 JeansIdealGasReference-20261003.zh-CN.md/Summary。
 fetch后compute/optim仍8fc0dd25，无新科学批准引用。一般EOS/AMR/演化/restart科学预算仍pending，JENS production unavailable；无simulation/CUDA/production ARCH build/push/tag/main merge。
+
+### 原生滚轮复核：输入目标不一致证据
+
+8d8e6617 production RT128²双向滚轮及普通参数滚动对照均无可见变化；一次点击返回explorer/目标msrdc不匹配，重新activate后截图布局改变。没有证据将其定性为绘图数学bug，也不计native zoom PASS。Alt+F4正常关闭exit0，9个owned进程按PID/start均消失，config/binary SHA不变。详见FullModelNativeWheelDiagnostic-20261003.zh-CN.md/Summary.json；全模型桌面出口仍pending。本轮无源码/Save/Build/simulation/CUDA改动，不重复未变更回归。
