@@ -2432,3 +2432,6 @@ f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负
 ### 2026-10-03：显式viewport LOD与full Fit保留
 
 严格viewport请求、显示domain/globalDomain分离，完整nativeBlocks身份不裁切；手动finer按钮，缓存一份full+一份refined，Fit不读文件。revision guard防止过期视口覆盖。302 tests+lint/typecheck/build PASS；真实Sod/Cellular局部HTTP/client/SSR PASS，仍full scan。现有WSLg窗口恢复可见，但保留旧RT会话，不声称新Viewer native UAT。见 PlotfileViewportProgress-20261003.zh-CN.md。
+
+
+2026-10-03：Plotfile Linux native UAT 发现并修复 stale binary 阻断只读启动；Sod extrema/outline 遮挡已修 display 范围，native 复验待办。304 tests及静态/production检查PASS。见 PlotfileNativeDesktopFindings-20261003.zh-CN.md。未 Core Build/simulation/push/tag。

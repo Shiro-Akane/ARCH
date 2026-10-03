@@ -1,6 +1,6 @@
 import {localCpuProfile} from './localBuildProfile.ts';
 /** Packaged desktop entrypoint. Only Electron main supplies this launch envelope. */
-import {registeredSourceCase} from './desktopSource.ts';
+import {registeredSourceCase,desktopRegistry} from './desktopSource.ts';
 import {openProject} from './project.ts';
 import {BUILD_PROFILES} from './buildProfile.ts';
 import {createHostServer,listenLocal} from './server.ts';
@@ -26,7 +26,7 @@ const reader=await openProject({project:root,config,buildProfile:profile.id});
 const build=reader.build?.snapshot();
 if(!build?.configured)throw new Error(build?.reason??'Configured build directory unavailable.');
 if(!reader.snapshot().session.executable?.exists)throw new Error('ARCH executable is missing. Restore/build the approved binary outside this launch, then retry.');
-const registry=await (reader.workflow?.discovery()??reader.configuration?.discovery());
+const registry=await desktopRegistry(reader);
 let caseId=launch.caseId??'Sod';
 if(launch.source)caseId=registeredSourceCase(registry?.cases??[],root,relative(launch.source),launch.caseId);
 if(!registry?.cases.some(c=>c.caseId===caseId))throw new Error('Selected case is not registered by this binary.');

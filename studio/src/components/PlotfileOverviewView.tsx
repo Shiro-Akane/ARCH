@@ -1,7 +1,7 @@
 import {useEffect,useId,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import type {AuditResponse} from '../host/plotfileAudit';
-import {finitePlotRange,panPlotView,plotFraction,plotValue,zoomPlotView} from '../data/nativePlotView';
+import {finitePlotRange,linePlotRange,panPlotView,plotFraction,plotValue,zoomPlotView} from '../data/nativePlotView';
 import type {PlotfileDomain} from '../host/plotfileOverview';
 import type {PlotView} from '../data/nativePlotView';
 import {plotColor} from '../data/plotColors';
@@ -18,9 +18,9 @@ export function PlotfileOverviewView(props:{samples:AuditResponse;disabled:boole
 }
 function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFitFull,onViewChange}:{samples:AuditResponse;disabled:boolean;onInspect:(index:number)=>void;onPoint:(point:number[])=>void;fullSamples?:AuditResponse;onRefine?:(viewport:PlotfileDomain)=>void;onFitFull?:()=>void;onViewChange?:()=>void}){
  const o=samples.audit.overview!,range=finitePlotRange(o.values.map(v=>v===null?'NaN':v));
- const domain:PlotView={x:o.domain.x,y:o.dimension===2?o.domain.y:range??[0,1]};
+ const domain:PlotView={x:o.domain.x,y:o.dimension===2?o.domain.y:linePlotRange(o.values.map(v=>v===null?'NaN':v))??[0,1]};
  const full=fullSamples?.audit.file.sha256===samples.audit.file.sha256&&fullSamples.audit.overview?.field===o.field?fullSamples.audit.overview:o;
- const fullRange=finitePlotRange(full.values.map(v=>v===null?'NaN':v));
+ const fullRange=linePlotRange(full.values.map(v=>v===null?'NaN':v));
  const fullView:PlotView={x:full.domain.x,y:o.dimension===2?full.domain.y:fullRange??[0,1]};
  const [view,setView]=useState(domain),[chosen,setChosen]=useState<number|null>(null);
  const [showBlocks,setShowBlocks]=useState(true),[hiddenLevels,setHiddenLevels]=useState<number[]>([]);

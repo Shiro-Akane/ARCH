@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {finitePlotRange,nativePlotDomain,panPlotView,pickNativePlotCell,plotFraction,plotValue,zoomPlotView} from '../src/data/nativePlotView.ts';
+import {finitePlotRange,linePlotRange,nativePlotDomain,panPlotView,pickNativePlotCell,plotFraction,plotValue,zoomPlotView} from '../src/data/nativePlotView.ts';
 import type {NativePlotCells} from '../src/host/plotfileAudit.ts';
 function native():NativePlotCells{
  const x=[0,1,2,0,1,2],y=[10,10,10,11,11,11];
@@ -36,10 +36,19 @@ test('zoom anchors remain fixed; pan and inverse restore the view; invalid colla
 });
 test('1D uses stored x bounds and raw field range; nonfinite values remain unmodified',()=>{
  const n=native(),values=[1,'NaN',.125,'Infinity',1,1] as const;
- assert.deepEqual(nativePlotDomain(n,1,[...values]),{x:[0,3],y:[.125,1]});
+ const domain=nativePlotDomain(n,1,[...values])!;
+ assert.deepEqual(domain.x,[0,3]);
+ assert.ok(Math.abs(domain.y[0]-.08125)<=Number.EPSILON);assert.equal(domain.y[1],1.04375);
  assert.deepEqual(finitePlotRange(['NaN','Infinity','-Infinity']),null);
  assert.deepEqual(finitePlotRange([0,0]),[-.5,.5]);
  assert.deepEqual(values,[1,'NaN',.125,'Infinity',1,1]);
  assert.equal(pickNativePlotCell(n,1,2.5,1e20),2);
  assert.equal(nativePlotDomain(n,3,[1]),null);
+});
+
+test('1D display padding keeps extrema inside clip without changing raw/color range',()=>{
+ const raw=[.125,1],before=JSON.stringify(raw),line=linePlotRange(raw)!;
+ assert.ok(plotFraction(raw[0],line)>0);assert.ok(plotFraction(raw[1],line)<1);
+ assert.deepEqual(finitePlotRange(raw),[.125,1]);assert.equal(JSON.stringify(raw),before);
+ assert.equal(linePlotRange(['NaN']),null);
 });

@@ -9,10 +9,16 @@ export function finitePlotRange(values:RawPlotNumber[]):[number,number]|null {
  const pad=Math.abs(lo)*.05||.5;
  return Number.isFinite(lo-pad)&&Number.isFinite(hi+pad)?[lo-pad,hi+pad]:null;
 }
+export function linePlotRange(values:RawPlotNumber[]):[number,number]|null {
+ const range=finitePlotRange(values);if(!range)return null;
+ const pad=(range[1]-range[0])*.05;
+ const padded:[number,number]=[range[0]-pad,range[1]+pad];
+ return validRange(padded)?padded:range;
+}
 export function nativePlotDomain(native:NativePlotCells,dimension:number,values:RawPlotNumber[]):PlotView|null {
  if(dimension!==1&&dimension!==2)return null;
  const x:[number,number]=[Math.min(...native.lower.x1),Math.max(...native.upper.x1)];
- const y=dimension===2?[Math.min(...native.lower.x2),Math.max(...native.upper.x2)] as [number,number]:finitePlotRange(values);
+ const y=dimension===2?[Math.min(...native.lower.x2),Math.max(...native.upper.x2)] as [number,number]:linePlotRange(values);
  return y&&validRange(x)&&validRange(y)?{x,y}:null;
 }
 function validRange(r:[number,number]){
