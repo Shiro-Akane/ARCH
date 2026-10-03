@@ -38,6 +38,8 @@ struct PreviewRequest {
     int sample_count = default_sample_count;
     bool sample_count_provided = false;
     std::optional<int> samples_x1, samples_x2;
+    // Internal dimensional sampling; not an advertised 3D CLI capability yet.
+    std::optional<int> samples_x3;
     // Optional session progress; single-shot callers retain one JSON response.
     std::function<void(std::string_view)> progress;
     std::function<void(std::size_t, std::size_t, std::size_t)> sample_evaluation;

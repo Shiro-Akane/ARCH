@@ -35,6 +35,44 @@ int main() {
     request.samples_x2.reset();
     rejects([&] { ResolveSampling(request); });
 
+    PreviewRequest generic;
+    generic.case_id = "Gaussian";
+    require(ResolveSampling(generic, 1).count == 512, "case-independent 1D plan");
+    require(ResolveSampling(generic, 2).count == 16384, "case-independent 2D plan");
+    auto volume = ResolveSampling(generic, 3);
+    require(volume.nx == 32 && volume.ny == 32 && volume.nz == 32
+            && volume.count == 32768 && !volume.two_dimensional, "bounded 3D defaults");
+    generic.samples_x1 = 7; generic.samples_x2 = 5; generic.samples_x3 = 3;
+    volume = ResolveSampling(generic, 3);
+    require(volume.nx == 7 && volume.ny == 5 && volume.nz == 3
+            && volume.count == 105, "non-cubic extents and product");
+    for (int n : {0, -1, 1, 65, std::numeric_limits<int>::max()}) {
+        generic.samples_x3 = n;
+        rejects([&] { ResolveSampling(generic, 3); });
+    }
+    for (int axis = 0; axis < 3; ++axis) {
+        generic.samples_x1 = 2; generic.samples_x2 = 2; generic.samples_x3 = 2;
+        std::optional<int>* extents[] = {&generic.samples_x1, &generic.samples_x2, &generic.samples_x3};
+        for (int n : {1, 65, std::numeric_limits<int>::max()}) {
+            *extents[axis] = n;
+            rejects([&] { ResolveSampling(generic, 3); });
+        }
+    }
+    generic.samples_x1 = 64; generic.samples_x2 = 64; generic.samples_x3 = 64;
+    rejects([&] { ResolveSampling(generic, 3); }); // Legal axes, product over budget.
+    generic.samples_x1 = 64; generic.samples_x2 = 32; generic.samples_x3 = 16;
+    require(ResolveSampling(generic, 3).count == 32768, "non-cubic total budget boundary");
+    generic.samples_x3.reset();
+    rejects([&] { ResolveSampling(generic, 3); });
+    generic.samples_x3 = 2;
+    rejects([&] { ResolveSampling(generic, 2); });
+    rejects([&] { ResolveSampling(generic, 1); });
+    rejects([&] { ResolveSampling(generic, 0); });
+    rejects([&] { ResolveSampling(generic, 4); });
+    generic.samples_x1 = 2; generic.samples_x2 = 2; generic.samples_x3 = 2;
+    generic.sample_count_provided = true;
+    rejects([&] { ResolveSampling(generic, 3); });
+
     Grid grid(0, -2, 6, 10, 16, 50, 60);
     grid.dim = 2;
     grid.InitializeTopology();

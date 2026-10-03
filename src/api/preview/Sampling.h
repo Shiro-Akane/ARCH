@@ -20,34 +20,56 @@ class SamplingLimitError : public std::invalid_argument {
 public:
     using std::invalid_argument::invalid_argument;
 };
+// Internal 3D budgets; publish only after generation and transport verification.
+inline constexpr int default_samples_3d = 32;
+inline constexpr int max_samples_per_axis_3d = 64;
+inline constexpr std::size_t max_total_samples_3d = 32768;
 struct SamplingPlan {
     int nx, ny;
     std::size_t count;
     bool two_dimensional;
+    int nz = 1;
 };
 
-// All products and sample budgets are checked before allocating field arrays.
-/** Resolve 1D/2D sample counts under the protocol budget before allocation. */
-inline SamplingPlan ResolveSampling(const PreviewRequest &request) {
-    const bool two_d = request.case_id == "CellularDet";
-    if (!two_d) {
-        if (request.samples_x1 || request.samples_x2)
-            throw std::invalid_argument("Axis sampling options are only supported for CellularDet 2D");
+// The caller supplies the parsed configuration dimension, not a case-name guess.
+// Validate all products before allocating field arrays.
+/** Resolve bounded extents for a one-, two- or three-axis request. */
+inline SamplingPlan ResolveSampling(const PreviewRequest &request, int dimension) {
+    if (dimension < 1 || dimension > 3)
+        throw std::invalid_argument("Sampling dimension must be 1, 2 or 3");
+    if (dimension == 1) {
+        if (request.samples_x1 || request.samples_x2 || request.samples_x3)
+            throw std::invalid_argument("Axis sampling options require a multidimensional preview");
         if (request.sample_count < 2 || request.sample_count > max_sample_count)
-            throw SamplingLimitError("Sod requires 2..4096 samples");
-        return {request.sample_count, 1, std::size_t(request.sample_count), false};
+            throw SamplingLimitError("One-dimensional preview requires 2..4096 samples");
+        return {request.sample_count, 1, std::size_t(request.sample_count), false, 1};
     }
     if (request.sample_count_provided || request.sample_count != default_sample_count)
-        throw std::invalid_argument("CellularDet 2D uses --samples-x1 and --samples-x2, not --samples");
-    if (request.samples_x1.has_value() != request.samples_x2.has_value())
-        throw std::invalid_argument("Provide both --samples-x1 and --samples-x2, or neither");
-    const int nx = request.samples_x1.value_or(default_samples_2d);
-    const int ny = request.samples_x2.value_or(default_samples_2d);
-    if (nx < 2 || nx > max_samples_per_axis_2d || ny < 2 || ny > max_samples_per_axis_2d)
-        throw SamplingLimitError("CellularDet requires 2..256 samples per axis");
-    const auto count = std::uint64_t(nx) * std::uint64_t(ny);
-    if (count > max_total_samples_2d)
-        throw SamplingLimitError("CellularDet exceeds the total sample budget");
-    return {nx, ny, std::size_t(count), true};
+        throw std::invalid_argument("Multidimensional preview uses axis samples, not --samples");
+    if (dimension == 2 && request.samples_x3)
+        throw std::invalid_argument("Two-dimensional preview does not accept third-axis samples");
+    const bool any = request.samples_x1 || request.samples_x2 || request.samples_x3;
+    const bool all = request.samples_x1 && request.samples_x2
+        && (dimension == 2 || request.samples_x3);
+    if (any && !all)
+        throw std::invalid_argument("Provide all active-axis sample counts, or none");
+    const int default_axis = dimension == 2 ? default_samples_2d : default_samples_3d;
+    const int max_axis = dimension == 2 ? max_samples_per_axis_2d : max_samples_per_axis_3d;
+    const std::size_t max_total = dimension == 2 ? max_total_samples_2d : max_total_samples_3d;
+    const int nx = request.samples_x1.value_or(default_axis);
+    const int ny = request.samples_x2.value_or(default_axis);
+    const int nz = dimension == 3 ? request.samples_x3.value_or(default_axis) : 1;
+    const int extents[] = {nx, ny, nz};
+    for (int axis = 0; axis < dimension; ++axis)
+        if (extents[axis] < 2 || extents[axis] > max_axis)
+            throw SamplingLimitError("Axis samples exceed the dimensional working budget");
+    const auto count = std::uint64_t(nx) * std::uint64_t(ny) * std::uint64_t(nz);
+    if (count > max_total)
+        throw SamplingLimitError("Preview exceeds the total sample budget");
+    return {nx, ny, std::size_t(count), dimension == 2, nz};
+}
+/** Preserve existing callers until parsed-dimension generation integration. */
+inline SamplingPlan ResolveSampling(const PreviewRequest &request) {
+    return ResolveSampling(request, request.case_id == "CellularDet" ? 2 : 1);
 }
 } // namespace arch::api

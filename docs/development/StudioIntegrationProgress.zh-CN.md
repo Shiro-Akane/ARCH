@@ -2139,3 +2139,12 @@ Run740d4d6c，CPU Sod既有4096cell/t0.2，仅out_dir改为独立目录；
 既有本机H5的shape和缺失case/config/build身份已只读确认，不上传raw。
 下一步在原所有者扩展按dimension的有界采样/三轴验证，逐模型复用Setup/Init/EOS；
 全模型与plt仍in progress，不宣称实现/科学通过。本轮无新Preview/AMR/simulation/build或不变测试重复。
+
+### 全模型初态实施：采样预算基础
+
+基线fa9d63db。Sampling.h新增按解析dimension的1/2/3轴有界计划，内部samples_x3，
+旧Sod/Cellular调用保留，尚未发布新模型/三维能力。内部3D预算32^3默认/每轴64/总32768，
+待真实响应与资源验证后才可发布。既有CPU sampling目标实际重编exit0、CTest1/1及diff check PASS；
+旧未更新target的观察不计，新测试指针类型编译错误修复后最终通过。
+详见FullModelDimensionalSamplingProgress.zh-CN.md；ARCH binary未重编，不冒称source current。
+下一步三轴grid/root capacity及实际GeneratePreview接线；全模型/AMR/plt整体仍未完成。
