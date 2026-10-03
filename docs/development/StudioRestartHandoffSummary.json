@@ -1,0 +1,43 @@
+{
+  "scope": "SmoothAdvection fixed-grid CPU Restart after checkpoint worker-handoff identity update; engineering regression only",
+  "sourceCommit": "ed3fa4fd587c040aeb1093a2a2e93eb0c8f5d21a",
+  "sourceWorkingTreeClean": true,
+  "status": "PASS",
+  "binarySHA256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+  "savedInputSHA256": "142201c41da2606a74b43e7a61c3f97bf2c9f8a49bafcc9dd9c4d5e7acbddfca",
+  "checkpointSHA256": "933016ac9e0708cba709e7bab373f61bdf5c8cad7cf9afb722616c3a4373c61b",
+  "checkpointUnchanged": true,
+  "runId": "0bfb87b5-2543-462f-9e3b-cc6f2c1e93d0",
+  "runState": "succeeded",
+  "exitCode": 0,
+  "startedAt": "2026-10-03T02:51:29.470Z",
+  "finishedAt": "2026-10-03T02:51:29.592Z",
+  "jobCheckpointFilesystemIdentityPersisted": true,
+  "finalStep": 100,
+  "finalTime": 0.1,
+  "comparedObjectCount": 16,
+  "comparedDatasetCount": 14,
+  "allObjectAttributesEqual": true,
+  "allDatasetLayoutsEqual": true,
+  "allDatasetValuesEqual": true,
+  "maxAbsoluteDifference": 0,
+  "ownedTerminalWorkerCoreExited": true,
+  "localRawDataId": "restart-handoff-real-d278e141-dc61-4c8c-93cd-e7e89d4ed960",
+  "baselineRawDataId": "restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9",
+  "files": {
+    "input": "resumed.par",
+    "checkpoint": "source-output/RestartSmoothAdvection_chk_0001.h5 (baseline)",
+    "final": "resumed-output/RestartSmoothAdvection_chk_0004.h5",
+    "state": "result.json",
+    "comparison": "reproducible-comparison.json"
+  },
+  "rawOutputRetainedLocally": true,
+  "processingScript": "studio/scripts/compareRestartCheckpoints.mjs",
+  "limitations": [
+    "Not independent scientific accuracy acceptance",
+    "Not native desktop or file-dialog UAT",
+    "Filesystem metadata identity is not an immutable Core-open handle",
+    "No adaptive AMR, burn, gravity or CUDA coverage",
+    "Original source trajectory was retained, not rerun"
+  ]
+}

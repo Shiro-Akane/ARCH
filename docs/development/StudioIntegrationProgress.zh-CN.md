@@ -1513,3 +1513,11 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 完整npm test 223/223 PASS（含Host）、lint、typecheck/production build PASS；日志restart-handoff-regression.log留本地，既有bundle warning保留。
 - 仍非内容SHA/immutable handle：最终worker复核与Core实际open之间的竞态未消除。Core继续负责HDF5布局/身份/物理兼容；未宣称续算资源完全冻结。旧待执行Restart job缺新身份时失败，必须重新prepare/confirm；旧已完成历史可读。
 - WSLg完整VM重启等待用户确认；本轮继续允许的本地实现，没有执行待审批shutdown，没有把桌面UAT标为通过。
+
+### 2026-10-03 — Real Restart worker-handoff regression
+
+- clean ed3fa4fd：复用已验证 SmoothAdvection 输入和 step25 checkpoint，仅将 out_dir 改到新的本地持久目录；未重跑原 source 轨迹、未改变科学参数或误差阈值。新 prepare→confirm→独立 worker→真实 Core 续算 succeeded/exit0。
+- job.json 保留 checkpoint 文件系统身份；原 checkpoint SHA 在复验后不变。最终 step100/time0.1，与 retained source 最终 checkpoint 的16对象路径/属性、14数据集布局及全部值逐一相同，maxAbs=0。worker/Core/本轮terminal均退出。
+- 精简证据 StudioRestartHandoffSummary.json；后处理脚本 studio/scripts/compareRestartCheckpoints.mjs 可复现比较，不含原始数组。H5/checkpoint/运行日志仍留 .local，未上传。本轮仅固定网格CPU续算工程回归，不是独立科学精度、adaptive AMR、CUDA或原生桌面验收。
+- WSLg完整重启仍等用户授权；桌面可见性和原生文件对话框UAT未通过，未进入依赖3C出口的全模型/JENS/RZ实现。
+- 后处理脚本实际读取 retained/new 最终 checkpoint 得到相同结论；新增脚本 lint PASS，git diff --check PASS。未重复运行不受影响的223项完整回归。
