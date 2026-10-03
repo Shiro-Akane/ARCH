@@ -2015,3 +2015,19 @@ Run 76f06645-6aa0-4d9d-b9df-f3b4f637fd83 在 2026-10-03T06:16:29.118Z 开始。d
 同一Linux正式入口重开，新窗口93457630正确关联项目/测试副本/Sod1D。原生Saved run history显示本次Sod succeeded以及此前native Stop的stopped记录；新Host读取同一持久记录，state逐字段相同。恢复只读取历史，不重复运行或停止已完成任务。
 
 本轮只有验收和报告，无源码改动、不重跑234项检查、不Compile ARCH、不CUDA。完整输入/output/H5/checkpoint/logs留本机studio/.local/integration和studio/.local/runs；提交精简状态/身份摘要与清单。没有push/tag/main merge。native active Run close可标通过，active Preview/AMR关闭和明确overwrite等其他矩阵仍待完成；不宣告整个3C或联合科学计划完成。
+
+## 原生 Cellular Preview 关闭：owned 清理通过，活动 Core 未确认
+
+2026-10-03，基线 e73d226a clean。原生打开 tracked 二维 Preview 样本后发现
+tmax 缺项使工作台禁用 Preview；未猜值/改文件/绕过检查。改为原生打开已有
+AMR t=0 对照输入（use_burn=false/tmax=0），保持全部参数。
+UI 显示 generating 后原生关闭。06:25:40.948Z desktop clean shutdown，
+Electron53611/Host53657/直接 ARCH54079 均退出，无信号替代操作。
+
+只读监测0.5秒 timeout 太短，248样本无成功 status 读取；未捕获 request ID
+或关闭瞬间 Core stage。UI generating 不是 Core active 的充分证据，
+active Preview close 仍 NOT VERIFIED；owned 清理只按本轮实际范围通过。
+报告 StudioNativePreviewCloseAttempt.zh-CN.md/Summary.json 保存边界。
+不自动重放，不以过往其他关闭记录代替。当前独立窗口已关闭。
+无源码修改/Save/Run/Build/CUDA，不重复234项检查；只有报告/diff check。
+未 push/tag/main merge，未进入全模型/JENS/RZ。
