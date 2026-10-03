@@ -2765,3 +2765,12 @@ clean869ae3d3源码完整ARCH CPU Release重编53steps成功；ELF f82bb7ff…�
 
 ## 2026-10-04 current CPU t=0 IO regression
 新完整CPU f82bb7ff…用既有批准tmax0输入一例/case；Sod9/Cellular28完整字段及各checkpoint20numeric datasets bit一致。新chart existing及run/config/binary身份通过production isolated reader/client。不是科学/evolution/RZ/CUDA验收。见 CurrentCpuPlotfileT0-20261004.zh-CN.md / Summary；raw留本机，未push/tag。
+
+### 2026-10-04 Plotfile evolved Restart identity
+
+既有Sod .05→.2/step280 CPU Run/Restart复验PASS：
+21个最终checkpoint dataset一致，20个数值逐位一致；
+四个最终Plotfile场逐位一致；不同output-session UUIDv4且session内稳定；
+实际case/raw config/binary来源身份匹配，原checkpoint与冻结输入不变。
+新增验证脚本和处理后报告，原始输出local ignored。
+不升级为二维AMR演化、独立科学oracle、CUDA/RZ/O9验收。

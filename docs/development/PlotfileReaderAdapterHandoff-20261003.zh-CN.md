@@ -143,3 +143,19 @@ PlotfileAllFieldsFaceRepair-20261004.Summary.json。37 字段 bit 一致和 chec
 数值 dataset bit 一致是 t=0 工程证据；PRES/TEMP/diagnostics 独立科学 oracle、
 演化和真实 restart output-session identity 仍未因此获验收。
 原始文件、ELF 和日志留在 ignored studio/.local；本地提交尚未提供远端可获取引用。
+
+## 2026-10-04 当前 CPU 与 evolved Restart 补证
+
+当前完整CPU binary由869ae3d3构建，SHA
+f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44。
+Sod9/Cellular28个t=0字段与已有参考FP64逐位一致，production isolated reader/client点查询通过；
+见 CurrentCpuPlotfileT0-20261004。
+
+新增已有固定网格Sod .05/step67 → .2/step280续算验证：
+连续/续算最终21个checkpoint dataset一致，其中20个数值dataset逐位一致；
+四个最终Plotfile字段逐位一致。连续与续算分别使用不同output-session UUIDv4，
+各自session内部保持一致；输入checkpoint未改写。
+见 PlotfileEvolvedRestartIdentity-20261004.Summary.json 与同名报告。
+这补齐了该Sod用例的evolved/restart身份工程证据；
+不代表二维演化AMR、独立科学oracle或长期演化已验收。
+生产字段/数组映射与发布行为没有变化；本地交付仍未push。
