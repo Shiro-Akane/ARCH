@@ -3169,3 +3169,12 @@ external/X acceleration=0 的 Core 单位控件；8leaf L0 Complete / 128 cells�
 12相关/334全回归PASS；首次lint缺left依赖已修复，最终lint/typecheck/build/diff PASS。
 三个本轮窗口exit0、每轮8owned退出、config不变/无scientific output/managed clean。
 见FullModelJeansDesktop报告/Summary；不push/tag，科学CPU/CUDA/O9仍未闭合。
+
+## 2026-10-04 CellularDet 动态绘图区二维原生复验
+
+现行t0输入真实128² density/pressure，坐标和三个colorbar标签完整可读；
+右边距变化后重新点同一物理位置仍8078，七个raw Inspector值/configRevision保持。
+Field切换实际reset selection，重新命中与selection retention分开。
+旧full-model输入缺tmax被正确拒绝，未绕过；采用现有已批准t0输入按字节复制。
+正常close两个窗口exit0/7与8owned清理、输入不变、既有8个科学output文件SHA不变/managed clean。
+见CellularPlotMarginNative报告/Summary，无代码修改或334项重复；科学CPU/CUDA/O9仍未闭合。
