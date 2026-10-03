@@ -37,6 +37,10 @@ inline void RegisterCoarseFineFluxes(
         || !amr_plan_detail::is_finite_binary64(stage_weight))
         throw std::invalid_argument("invalid coarse-fine flux inputs");
 
+    if (!topology.native_grids.empty() && !matches_amr_flux_geometry(
+            topology,*amr_ctrl.pool,amr_ctrl.tree->GetActiveBlocks(),
+            topology.semantics,block_id))
+        throw std::invalid_argument("AMR face-flux native geometry drifted");
     const Block& block = amr_ctrl.pool->GetBlock(block_id);
     if (!flux_plan_detail::same_grid_contract(block.grid, grid)
         || block.fluid_state.GetNumSpecies() != species_count)
@@ -80,7 +84,7 @@ inline void RegisterCoarseFineFluxes(
         }
     }
     amr_ctrl.flux_register.ApplyRegistrationPlan(
-        route->plan, values, topology.pool_lowering, stage_weight);
+        route->plan, values, topology.pool_lowering, stage_weight,topology.fingerprint);
 }
 
 /**
@@ -92,10 +96,11 @@ inline void RegisterCoarseFineFluxes(
     AMRControl& amr_ctrl, int block_id, const Grid& grid, int direction,
     const std::vector<FluidVector>& flux_buffer,
     const std::vector<double>& species_flux_buffer,
-    int species_count, double stage_weight)
+    int species_count, double stage_weight,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
     const auto& topology =
-        amr_ctrl.RequireFluxTopologyPlan(species_count);
+        amr_ctrl.RequireFluxTopologyPlan(species_count,semantics,block_id);
     RegisterCoarseFineFluxes(
         amr_ctrl, topology, block_id, grid, direction, flux_buffer,
         species_flux_buffer, species_count, stage_weight);

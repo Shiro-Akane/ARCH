@@ -52,7 +52,7 @@ struct AMRControl {
     {
         active_handles_ = handles;
         std::atomic_store_explicit(
-            &reflux_topology_plan_, std::shared_ptr<const RefluxPlan>{},
+            &reflux_topology_plan_, std::shared_ptr<const CachedRefluxPlan>{},
             std::memory_order_release);
         std::atomic_store_explicit(
             &flux_topology_plan_,
@@ -67,7 +67,9 @@ struct AMRControl {
         return active_handles_;
     }
 
-    const AmrFluxTopologyPlan& RequireFluxTopologyPlan(int species_count)
+    const AmrFluxTopologyPlan& RequireFluxTopologyPlan(int species_count,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+        int source_block = -1)
     {
         const auto handles = ActiveHandles();
         const int dimension = tree->GetRootGridDim();
@@ -75,7 +77,8 @@ struct AMRControl {
             &flux_topology_plan_, std::memory_order_acquire);
         if (cached && cached->species_count == species_count
             && cached->dimension == dimension
-            && cached->epoch == handles.front().epoch)
+            && cached->epoch == handles.front().epoch
+            && matches_amr_flux_geometry(*cached,*pool,tree->GetActiveBlocks(),semantics,source_block))
             return *cached;
 
         std::lock_guard lock(flux_plan_mutex_);
@@ -83,14 +86,15 @@ struct AMRControl {
             &flux_topology_plan_, std::memory_order_acquire);
         if (!cached || cached->species_count != species_count
             || cached->dimension != dimension
-            || cached->epoch != handles.front().epoch) {
+            || cached->epoch != handles.front().epoch
+            || !matches_amr_flux_geometry(*cached,*pool,tree->GetActiveBlocks(),semantics,source_block)) {
             cached = std::make_shared<const AmrFluxTopologyPlan>(
                 build_amr_flux_topology_plan(
                     *pool, tree->GetActiveBlocks(), handles,
-                    dimension, species_count));
+                    dimension, species_count,semantics));
             std::atomic_store_explicit(
                 &reflux_topology_plan_,
-                std::shared_ptr<const RefluxPlan>{},
+                std::shared_ptr<const CachedRefluxPlan>{},
                 std::memory_order_release);
             std::atomic_store_explicit(
                 &flux_topology_plan_, cached, std::memory_order_release);
@@ -98,30 +102,38 @@ struct AMRControl {
         return *cached;
     }
 
-    const RefluxPlan& RequireRefluxTopologyPlan(int species_count)
+    const RefluxPlan& RequireRefluxTopologyPlan(int species_count,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
-        const auto& topology = RequireFluxTopologyPlan(species_count);
+        const auto& topology = RequireFluxTopologyPlan(species_count,semantics);
         auto cached = std::atomic_load_explicit(
             &reflux_topology_plan_, std::memory_order_acquire);
-        if (cached && cached->scope.from_epoch == topology.epoch)
-            return *cached;
+        if (cached && cached->topology_fingerprint == topology.fingerprint)
+            return cached->plan;
         std::lock_guard lock(flux_plan_mutex_);
         cached = std::atomic_load_explicit(
             &reflux_topology_plan_, std::memory_order_acquire);
-        if (!cached || cached->scope.from_epoch != topology.epoch) {
-            cached = std::make_shared<const RefluxPlan>(
-                build_amr_reflux_topology_plan(*pool, topology));
+        if (!cached || cached->topology_fingerprint != topology.fingerprint) {
+            cached = std::make_shared<const CachedRefluxPlan>(
+                CachedRefluxPlan{topology.fingerprint,
+                    build_amr_reflux_topology_plan(*pool, topology)});
             std::atomic_store_explicit(
                 &reflux_topology_plan_, cached, std::memory_order_release);
         }
-        return *cached;
+        return cached->plan;
     }
 
 
-    void ApplyReflux(double dt, FluidState Block::* state_ptr = &Block::fluid_state) {
+    void ApplyReflux(double dt, FluidState Block::* state_ptr = &Block::fluid_state,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) {
         const auto& active_blocks = tree->GetActiveBlocks();
         const auto& plan = RequireRefluxTopologyPlan(
-            flux_register.GetNumSpecies());
+            flux_register.GetNumSpecies(),semantics);
+        const auto& topology=RequireFluxTopologyPlan(
+            flux_register.GetNumSpecies(),semantics);
+        flux_register.ValidateTopologyIdentity(topology.fingerprint,
+            !plan.operations.empty()
+                && semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
         flux_register.ExecuteRefluxPlan(
             plan, pool, active_blocks, ActiveHandles(), state_ptr, dt);
     }
@@ -135,7 +147,11 @@ struct AMRControl {
 private:
     std::span<const BlockHandle> active_handles_{};
     std::shared_ptr<const AmrFluxTopologyPlan> flux_topology_plan_;
-    std::shared_ptr<const RefluxPlan> reflux_topology_plan_;
+    struct CachedRefluxPlan {
+        std::uint64_t topology_fingerprint;
+        RefluxPlan plan;
+    };
+    std::shared_ptr<const CachedRefluxPlan> reflux_topology_plan_;
     std::mutex flux_plan_mutex_;
 };
 

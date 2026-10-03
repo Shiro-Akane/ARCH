@@ -19,6 +19,8 @@
 #include <bit>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <tuple>
@@ -48,6 +50,9 @@ private:
     std::vector<FluidVector> fluxes_; // [block][active face][face cell]
     std::vector<double> species_fluxes_; // [block][active face][face cell][species]
     std::vector<int> active_;         // [block][face], atomic write target
+    mutable std::mutex identity_mutex_;
+    std::optional<std::uint64_t> topology_identity_;
+
 
     void ConfigureLayout(int dim) {
         if (dim < 1 || dim > 3) {
@@ -108,6 +113,8 @@ public:
         fluxes_.assign(static_cast<size_t>(capacity_) * block_stride_, FluidVector{});
         active_.assign(static_cast<size_t>(capacity_) * 6, 0);
         species_fluxes_.assign(static_cast<size_t>(capacity_) * block_stride_ * num_species_, 0.0);
+        std::lock_guard lock(identity_mutex_);
+        topology_identity_.reset();
     }
 
     void EnsureSpecies(int num_species) {
@@ -121,7 +128,17 @@ public:
 
     int GetNumSpecies() const { return num_species_; }
 
+    void ValidateTopologyIdentity(std::uint64_t fingerprint, bool required = false) const {
+        std::lock_guard lock(identity_mutex_);
+        if ((!topology_identity_ && required)
+            || (topology_identity_ && *topology_identity_ != fingerprint))
+            throw std::invalid_argument("AMR accumulated flux topology identity mismatch; Clear required");
+    }
+
     void Clear() {
+        // Clear/resize are scheduler barriers, never concurrent registration.
+        std::lock_guard lock(identity_mutex_);
+        topology_identity_.reset();
         for (int block_id = 0; block_id < capacity_; ++block_id) {
             for (int face_dir = 0; face_dir < 6; ++face_dir) {
                 const size_t face_slot = FaceSlot(block_id, face_dir);
@@ -232,7 +249,8 @@ public:
         const FluxRegistrationPlan& plan,
         std::span<const double> values,
         const std::map<AmrEndpoint, int>& pool_lowering,
-        double stage_weight = 1.0)
+        double stage_weight = 1.0,
+        std::optional<std::uint64_t> topology_fingerprint = std::nullopt)
     {
         validate_amr_plan(plan);
         if (values.size() != plan.operations.size())
@@ -297,6 +315,12 @@ public:
         // Zero-weight stages are a mathematical no-op and must not create a
         // false HasData witness in the Host register.
         if (stage_weight == 0.0) return;
+        if (topology_fingerprint) {
+            std::lock_guard lock(identity_mutex_);
+            if (topology_identity_ && *topology_identity_ != *topology_fingerprint)
+                throw std::invalid_argument("AMR accumulated flux topology identity mismatch; Clear required");
+            topology_identity_ = *topology_fingerprint;
+        }
         for (const auto& contribution : compiled) {
             if (contribution.field == AmrField::Species) {
                 AddRegisteredSpeciesFlux(
@@ -326,7 +350,8 @@ public:
     RefluxPlan BuildRefluxPlan(
         const std::shared_ptr<MemoryPool>& pool,
         std::span<const int> active_blocks,
-        std::span<const BlockHandle> handles, int dim, double dt) const
+        std::span<const BlockHandle> handles, int dim, double dt,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) const
     {
         if (dim != dim_ || handles.size() != active_blocks.size()
             || handles.empty()
@@ -358,10 +383,11 @@ public:
                     const int j = block.grid.Js() + logical[1];
                     const int k = block.grid.Ks() + logical[2];
                     const double area = GridMetrics::FaceArea(
-                        block.grid, axis_value(axis), i, j, k,
+                        GridMetrics::make_geometry_view(block.grid,semantics),
+                        axis_value(axis), i, j, k,
                         side == AmrSide::Upper);
                     const double volume = GridMetrics::CellVolume(
-                        block.grid, i, j, k);
+                        GridMetrics::make_geometry_view(block.grid,semantics), i, j, k);
                     if (!amr_plan_detail::is_finite_binary64(area)
                         || !amr_plan_detail::is_finite_binary64(volume)
                         || area <= 0.0 || volume <= 0.0)

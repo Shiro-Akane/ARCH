@@ -2677,3 +2677,9 @@ RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 RZ
 最大独立参考差4.33681e-19。发现并修复单 invalid active cell 被Ignore-NaN掩盖，
 legacy反例与36项归约边界/CPU2/2通过；不修改共享归约数学。
 详见 RZHostCfl-20261004.zh-CN.md / Summary；强旋流source稳定性/全路径/CUDA/科学出口未完成。
+
+## 2026-10-04 RZ AMR flux/reflux
+共享 topology/native view 接通完整环体注册面与 reflux A/V，chart/bounds纳入缓存身份；
+累计通量不能跨chart/geometry消费，显式Clear重注册恢复，uniform empty计划no-op。
+四组真实L0/L1 radial/axial实际Host修正和CPU3/3通过，最大积分算术差3.53183e-17。
+详见 RZReflux-20261004.zh-CN.md / Summary；实际scheduler调用/演化/CUDA和角动量科学finding仍未关闭。
