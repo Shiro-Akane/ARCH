@@ -1700,3 +1700,24 @@ StudioPiAuthorityManagedBuildSummary.json contains processed identities only.
 No independent configure, simulation, CUDA, raw upload/push/tag or native
 Build-click/visible-window acceptance claimed. Architecture rule migration
 approval and user-visible native 3C acceptance remain open.
+
+## Native Sod Restart captured / exact final checkpoint equality
+
+Clean cf572e0f: from the saved UatSodRestart.par, native Restart preparation,
+explicit saved-input/binary/output confirmation and independent-terminal Start
+ran once:30db4e5c-7c43-4cac-8b30-9af8fad393db, succeeded/exit0.
+Actual checkpoint time0.05/step67 continued to time0.2/step280.
+Existing full-data comparator verified24 object paths/attributes and21 dataset
+layouts/all values equal to uninterrupted source final checkpoint, maxAbs0.
+Selected checkpoint SHA, saved/frozen input SHA and binary SHA unchanged.
+Core13707/worker13695 exited; completed independent terminal13694 held by design.
+
+Processed record validation/backend/results/studio-native-sod-restart-20261003/.
+Raw H5/plt/checkpoints/logs stay ignored locally, no field arrays uploaded.
+This is fixed-grid CPU continuation engineering evidence, not independent
+scientific accuracy/AMR/CUDA or full3C PASS. The maximized independent window,
+confirmation and terminal were captured; user-visible acceptance remains pending.
+No silent assumption of approval: existing joint goal authorized Run/Restart;
+this captured engineering check does not replace the pending human visibility
+answer. Native cancellation/unsaved/close/Stop matrix remains unfinished.
+Architecture-audit migration approval and historicalG scientific approval pending.
