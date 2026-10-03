@@ -2940,3 +2940,11 @@ Gaussian势/力minimum order2.012819/1.999534，耦合minimum2.017102，
 RadialFullCpuAdditions报告逐原入口列gravity覆盖：除3D mixed coarse FAIL与
 两种historicalG regrid_cycle待Core外，已执行分项证据齐；不拼接full绿色结果。
 原full失败JUnit保持，JENS/RZ/CUDA/O9总体出口继续未完成；raw本机持久索引，未push/tag。
+
+## 2026-10-04 3C generator identity只读审计
+
+真实build-cpu/build-studio-cpu核对固定Host CMake与Ninja路径/SHA/source绑定；
+4项负向与no-execution测试PASS。新增可复现audit，不configure/build或执行cacheprogram。
+Manifest尚缺generator before/after/runtime closure，dependenciesComplete仍false；
+下一步接Host证据，旧manifest不冒充complete。见BuildGeneratorIdentity报告/Summary。
+CPU科学gate及CUDA/O9仍未关闭，未push/tag。
