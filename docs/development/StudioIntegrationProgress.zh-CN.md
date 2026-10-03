@@ -2530,3 +2530,8 @@ Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做
 保留初次CLI语法错误、Sedov只有root、RT四root limited和外部域假设修正的完整处理摘要。
 同步INITIAL_AMR_API.md的动态全模型/native轴单位；没有生产源码改动，不重复先前316项检查。
 见FullModel3DMixedAmr-20261004.zh-CN.md/Summary.json；native UI与完整科学/平台出口仍待。
+
+
+## 2026-10-04：受管生产 CPU Build 与 Sod 初始化恢复
+
+从清洁 a28c6576 的 Linux 桌面执行既有 CPU Build，Manifest c99c8486、binary 1bf5a00d；通过 Refresh Project State 后 Sod field/根级 Initial AMR 均 Current。完整依赖 freshness 仍 unknown，compiler-input 前后稳定标记 false；未改科学实现或运行 simulation。详情见 StudioDesktopBuildRefresh-20261004.zh-CN.md 与对应 Summary。总体目标仍未完成。
