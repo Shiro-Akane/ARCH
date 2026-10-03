@@ -138,14 +138,15 @@ namespace TimeIntegration
         const FluidState &state,
         const EosType &eos,
         const Grid &grid,
-        double dt)
+        double dt,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        const auto geometry = GridMetrics::make_geometry_view(grid, semantics);
         arch::state::HostFailure failure;
         if (grid.geometry == "cartesian")
             return;
 
         int n_spec = state.GetNumSpecies();
-        const auto geometry = GridMetrics::make_geometry_view(grid);
         const int ks = grid.Ks(), ke = grid.Ke();
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
@@ -251,8 +252,10 @@ namespace TimeIntegration
         const FluidState &u_n, const FluidState &u_current, FluidState &u_dest,
         const std::vector<FluidVector> &dU, const std::vector<double> &d_spec,
         const Grid &grid, double weight_n, double weight_flux,
-        double sml_rho, double min_eint, double max_eint)
+        double sml_rho, double min_eint, double max_eint,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        const auto geometry = GridMetrics::make_geometry_view(grid, semantics);
         int n_spec = u_n.GetNumSpecies();
         int total_size = grid.GetTotalSize();
 
@@ -288,7 +291,7 @@ namespace TimeIntegration
                     U_old, U_curr, dU[idx], Xi_old, Xi_curr, species_delta,
                     n_spec, total_size, weight_n, weight_flux,
                     sml_rho, min_eint, max_eint, U_new, Xi_new, local.view(),
-                    GridMetrics::CellVolume(grid, i, j, k), idx);
+                    GridMetrics::CellVolume(geometry, i, j, k), idx);
                 if (!arch::state::accepted(status)) ++local_invalid;
                 u_dest.set(idx, U_new);
             }
@@ -325,8 +328,15 @@ namespace TimeIntegration
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         std::vector<FluidVector> &flux_buffer, std::vector<double> &spec_flux_buffer,
         const Physical::Gravity::IGravityPolicy* gravity,
-        double entropy_fix_coeff, double flux_weight = 1.0, bool roe_wave_speed = true)
+        double entropy_fix_coeff, double flux_weight = 1.0, bool roe_wave_speed = true,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        // Validate the chart and reject consumers not yet migrated before any
+        // output/cache mutation. Runtime Grid still uses its existing chart.
+        (void)GridMetrics::make_geometry_view(grid, semantics);
+        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
+            && (gravity != nullptr || amr_ctrl != nullptr))
+            throw std::invalid_argument("RZ Hydro gravity/AMR flux consumers not migrated");
         int n_spec = state.GetNumSpecies();
         std::fill(dU.begin(), dU.end(), FluidVector());
         std::fill(d_spec.begin(), d_spec.end(), 0.0);
@@ -346,7 +356,7 @@ namespace TimeIntegration
                 state, eos, grid, flux_buffer, spec_flux_buffer,
                 dir, entropy_fix_coeff, &mean_cache);
 
-            accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
+            accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec, semantics);
 
             if (gravity) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
 
@@ -357,7 +367,7 @@ namespace TimeIntegration
             }
         }
 
-        add_geometric_sources(dU, state, eos, grid, dt);
+        add_geometric_sources(dU, state, eos, grid, dt, semantics);
         add_gravity_sources(dU, state, grid, dt, gravity);
     }
 } // namespace TimeIntegration

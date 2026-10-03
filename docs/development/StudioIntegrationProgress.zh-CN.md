@@ -2665,3 +2665,9 @@ RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 RZ
 精确 r*dV 角动量 finding：细化相对改变 4.9850588267931159e-4 / 1.0396136426979989e-4，
 粗化恢复不代表 AMR 演化守恒；未改阈值或科学状态，需 Core discrete transfer contract。
 详见 RZBlockTransfer-20261004.zh-CN.md / Summary；完整 RZ/capability/CUDA/科学出口未关闭。
+
+## 2026-10-04 RZ Host Hydro 组合层
+同一显式 chart 接通真实 face traversal/divergence/source 与 stage repair 的完整环体计量。
+真实 HLLC/PCM/IdealGas 768-cell 压力/轴向/旋流组合及预算反例、CPU 2/2 PASS。
+显式 RZ gravity/AMR reflux 未迁移时先拒绝；生产 IHydroSolver/runtime 未切换。
+详见 RZHostHydro-20261004.zh-CN.md / Summary；角动量 AMR finding、实际演化/CUDA/科学出口仍待。

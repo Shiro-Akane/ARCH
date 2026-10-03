@@ -7,6 +7,7 @@
  */
 #include "driver/DriverUtils.h"
 #include "numerics/integrator/GeometricSources.h"
+#include "numerics/flux/FluxHLLC.h"
 #include "math/geometry/CurvilinearMetricCases.h"
 #include "math/geometry/RzMetricCases.h"
 #include "math/geometry/ViscousGeometryCases.h"
@@ -28,8 +29,92 @@ struct ConstantEos {
 };
 }
 
+
+void test_rz_host_hydro() {
+    using namespace GridMetrics;
+    SpeciesManager species;
+    species.add_species("gas", 1., 1., 1.4, 3.);
+    IdealGas eos(1.4, species);
+    const auto rz = GeometrySemantics::AxisymmetricRz;
+    for (double inner : {0., 1.}) for (double swirl : {0., 2.}) {
+        // Nonzero constant swirl has no regular axis extension; its source
+        // witness is restricted to the non-axis domain.
+        if (inner == 0. && swirl != 0.) continue;
+        Grid grid(amr::MAX_NG, inner, inner+1., -.5, .5, 0., 1.);
+        grid.dim=2; grid.geometry="cylindrical"; grid.InitializeTopology();
+        FluidState state, updated;
+        const int size=grid.GetTotalSize();
+        state.Preallocate(size); state.InitSpecies(1);
+        updated.Preallocate(size); updated.InitSpecies(1);
+        constexpr double rho=2., axial=3., pressure=5., dt=.001;
+        const double energy=pressure/.4+.5*rho*(axial*axial+swirl*swirl);
+        for (int cell=0;cell<size;++cell) {
+            state.set(cell,{rho,0.,rho*axial,rho*swirl,energy});
+            state.X(0,cell)=1.;
+        }
+        std::vector<FluidVector> delta(size),flux(size);
+        std::vector<double> species_delta(size),species_flux(size);
+        TimeIntegration::evaluate_all_dimensions<FluxHLLC<PCMReconstruction>>(
+            nullptr,-1,state,eos,grid,dt,delta,species_delta,
+            flux,species_flux,nullptr,0.,1.,true,rz);
+        TimeIntegration::perform_stage_update(state,state,updated,
+            delta,species_delta,grid,0.,1.,1.e-14,1.e-14,1.e10,rz);
+        double max_error=0.;
+        for (int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            const double inverse_radius=2./(grid.GetFacePosL(i)+grid.GetFacePosR(i));
+            const double expected=dt*rho*swirl*swirl*inverse_radius;
+            close(delta[cell].mom_u,expected,"RZ Host Hydro centrifugal source");
+            close(delta[cell].mom_v,0.,"RZ Host Hydro axial momentum");
+            close(delta[cell].mom_w,0.,"RZ Host Hydro swirl momentum");
+            close(delta[cell].rho,0.,"RZ Host Hydro density");
+            close(delta[cell].eng,0.,"RZ Host Hydro energy");
+            close(species_delta[cell],0.,"RZ Host Hydro species");
+            close(updated.mom_u[cell],expected,"RZ Host Hydro RK update");
+            close(updated.mom_v[cell],rho*axial,"RZ Host Hydro updated axial momentum");
+            close(updated.X(0,cell),1.,"RZ Host Hydro updated composition");
+            max_error=std::max(max_error,std::abs(delta[cell].mom_u-expected));
+        }
+        if (updated.stage_repairs.values[0]!=0.)
+            throw std::runtime_error("RZ constant-state Hydro unexpectedly repaired");
+        // Reject legacy gravity/AMR mixing before resetting output.
+        amr::AMRControl unmigrated(4,2);
+        delta[0].rho=123.;
+        bool rejected=false;
+        try {
+            TimeIntegration::evaluate_all_dimensions<FluxHLLC<PCMReconstruction>>(
+                &unmigrated,-1,state,eos,grid,dt,delta,species_delta,
+                flux,species_flux,nullptr,0.,1.,true,rz);
+        } catch (const std::invalid_argument& error) {
+            rejected=std::string(error.what()).find("not migrated")!=std::string::npos;
+        }
+        if (!rejected || delta[0].rho!=123.)
+            throw std::runtime_error("RZ unmigrated AMR changed Hydro output");
+        // An intentional existing density-floor repair checks the *budget*
+        // metric, not a physical scenario or a new choice of science floors.
+        FluidState low, repaired;
+        low.Preallocate(size); low.InitSpecies(0);
+        repaired.Preallocate(size); repaired.InitSpecies(0);
+        for(int cell=0;cell<size;++cell) low.set(cell,{.5,0.,0.,0.,100.});
+        std::fill(delta.begin(),delta.end(),FluidVector{});
+        std::vector<double> no_species;
+        TimeIntegration::perform_stage_update(low,low,repaired,delta,no_species,
+            grid,0.,1.,1.,1.e-14,1.e10,rz);
+        const double volume=arch::constants::math::pi
+            *((inner+1.)*(inner+1.)-inner*inner);
+        close(repaired.stage_repairs.values[0],amr::BLOCK_NX*amr::BLOCK_NY,
+            "RZ Hydro repair count");
+        close(repaired.stage_repairs.values[1],volume,"RZ Hydro repaired full-ring volume");
+        close(repaired.stage_repairs.values[2],.5*volume,"RZ Hydro repair mass measure");
+        std::cout<<"RZ_HOST_HYDRO inner="<<inner<<" swirl="<<swirl
+            <<" max_radial_error="<<max_error<<" repair_volume="
+            <<repaired.stage_repairs.values[1]<<'\n';
+    }
+}
+
 int main()
 {
+    test_rz_host_hydro();
     using namespace GridMetrics;
     const double conditioning = CurvilinearMetricCases::conditioning_error();
     if (!std::isfinite(conditioning) || conditioning > 2.e-12)
