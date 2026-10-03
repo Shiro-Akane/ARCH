@@ -103,3 +103,26 @@ Host/header关联RecoveredSod.par；界面Saved、Disk in-sync；
 并未覆盖明确Overwrite选择或活跃窗口关闭矩阵，不宣称整个3C完成。
 只提交处理后摘要/报告/进度；原配置与完整本地证据留ignored目录，
 diff check通过，不重复既有unchanged229-suite，无push/tag/main merge。
+
+## 2026-10-03 补充：Dirty 原生关闭保护与 Keep editing
+
+执行前源码7d2b9513a40235de706c5064ee22f0425e19e2e0，工作树干净。
+本地 ignored native-close-run 测试副本的文本控件cfl0.4→0.41，
+Inspector分别显示WorkingCopy0.41/Saved0.4。点击实际窗口关闭按钮，
+原生对话框18549204显示“The Working Copy has unsaved changes.”，
+提供Keep editing与Discard unsaved copy and close。只选择Keep editing。
+后续list_windows不再返回对话框；原窗口仍在，Dirty和0.41编辑保留。
+
+取消关闭前后Electron14246/startTicks279169、Host14292/startTicks279179、
+暖Preview14445/startTicks279622的PID/启动身份/父进程/组均不变。
+Host项目与保存文件关联、输入SHA/mtime/size及binary身份保持不变。
+测试后用文本控件将本次自己的编辑恢复0.4，没有Save或磁盘写入；
+界面Saved/Disk in-sync，既有自动init-only刷新恢复Current。
+未启动新的Run/Restart、Build或正式simulation。
+
+这只关闭Dirty close→Keep editing保护项。没有选择Discard，
+没有证明活跃Run/Preview/AMR关闭或原生Stop；用户窗口可见性仍待确认。
+现有历史部分记录按其执行时刻解读，本补充不将此前未覆盖项追溯为PASS。
+完整原始记录只在本机ignored目录；提交处理后摘要。
+不改源码/科学定义/阈值，不重复未变套件，不push/tag/main merge；
+整体3C未完成，不进入全模型/JENS/RZ/CUDA阶段。

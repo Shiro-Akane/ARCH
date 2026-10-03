@@ -8,7 +8,7 @@
       "sha256": "381ceb60eb6cdbf7c99b43577ff0d94731144d655514c7a8194d09ce8d88644e",
       "size": 1259
     },
-    "studio/.local/Native UAT \u4e2d\u6587 Sod 20261003.par": {
+    "studio/.local/Native UAT 中文 Sod 20261003.par": {
       "sha256": "f452da1cb53bff2a7fe9c6c5d62407e979e5c88893f2a1a231f2c26b7c1083fb",
       "size": 1260
     },
@@ -194,5 +194,73 @@
     "previewScope": "Existing automatic authoritative init-only refresh; no simulation Run, scientific timestep or Build",
     "humanVisibleWindow": "NOT VERIFIED",
     "remaining": "Explicit overwrite choice; active native window close/Run/Preview/AMR matrix; whole 3C acceptance"
+  },
+  "nativeDirtyCloseKeepEditing": {
+    "sourceHead": "7d2b9513a40235de706c5064ee22f0425e19e2e0",
+    "scope": "Native Dirty close confirmation and Keep editing; no actual shutdown",
+    "windowId": 13437218,
+    "dialogId": 18549204,
+    "config": {
+      "relativePath": "studio/.local/integration/native-close-run-89a8e2af-72ec-4c3e-8864-ba4da8c541a1/Sod.par",
+      "kind": "parameter",
+      "exists": true,
+      "size": 1252,
+      "modifiedTime": "2026-10-03T04:55:58.756Z",
+      "sha256": "3a772a8866d5e4cd77d81d2f8bb7cabb51521f3f70223d2522aec9fc8101865c",
+      "changed": false
+    },
+    "workingCflBeforeClose": 0.41,
+    "savedCfl": 0.4,
+    "workingCflAfterKeepEditing": 0.41,
+    "dialogMessage": "The Working Copy has unsaved changes.",
+    "choice": "Keep editing",
+    "dialogAbsentAfter": true,
+    "processIdentitiesBefore": {
+      "14246": {
+        "pid": 14246,
+        "startTicks": "279169",
+        "ppid": 14241,
+        "pgrp": 14246
+      },
+      "14292": {
+        "pid": 14292,
+        "startTicks": "279179",
+        "ppid": 14246,
+        "pgrp": 14246
+      },
+      "14445": {
+        "pid": 14445,
+        "startTicks": "279622",
+        "ppid": 14292,
+        "pgrp": 14445
+      }
+    },
+    "processIdentitiesAfter": {
+      "14246": {
+        "pid": 14246,
+        "startTicks": "279169",
+        "ppid": 14241,
+        "pgrp": 14246
+      },
+      "14292": {
+        "pid": 14292,
+        "startTicks": "279179",
+        "ppid": 14246,
+        "pgrp": 14246
+      },
+      "14445": {
+        "pid": 14445,
+        "startTicks": "279622",
+        "ppid": 14292,
+        "pgrp": 14445
+      }
+    },
+    "diskShaMtimeSizeUnchanged": true,
+    "projectAssociationUnchanged": true,
+    "cleanup": "Restored owned test edit to0.4 in textbox without Save; Saved/Disk in-sync observed",
+    "previewScope": "Existing automatic init-only refresh on edit and restoration; no simulation timestep",
+    "rawLocalRoot": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-close-run-89a8e2af-72ec-4c3e-8864-ba4da8c541a1",
+    "humanVisibleWindow": "NOT VERIFIED",
+    "notCovered": "Discard and close; active Run/Preview/AMR close; native Stop; explicit overwrite"
   }
 }

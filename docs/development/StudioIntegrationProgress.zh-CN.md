@@ -1825,3 +1825,14 @@ does not prove human visibility. Current desktop/Host/warm Preview not closed.
 3C native active-close/Stop/overwrite/display acceptance remain incomplete.
 No source/build/unchanged-suite repeat/raw upload/push/tag/main merge or
 full-model/JENS/RZ/CUDA advance.
+
+## Native Dirty close -> Keep editing protection verified
+
+Clean7d2b9513: test-copy CFL0.4→0.41; actual close button opens native
+unsaved-copy dialog18549204. Keep editing removes modal and retainsDirty/0.41,
+Saved0.4. Electron14246/Host14292/warm14445 PID/startTicks/parent/group unchanged;
+project/file association and diskSHA/mtime/size unchanged. Own test edit restored
+to0.4 withoutSave; Saved/DiskinSync and automatic init-only PreviewCurrent observed.
+StudioNativeFileLifecycleUat/Summary updated. No new Run/Build/source change.
+Discard/activeClose/nativeStop/overwrite/humanVisibility remain open; no whole3C,
+full-model/JENS/RZ advance, unchanged-suite rerun/raw upload/push/tag/main merge.
