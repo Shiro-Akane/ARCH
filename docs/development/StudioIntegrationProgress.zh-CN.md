@@ -2834,3 +2834,11 @@ repair ledger0、controller恢复和来源checkpoint SHA保持。无生产修改
 同一新ELF零事件四组回归通过，4×21 checkpoint dataset与旧参考一致。
 仅diagnostic fixture故意触发floor，未改科学budget或参考。
 主ARCH未为header重编；公开RZ/science/CUDA仍待。见RZHydroRepairPosition报告/Summary。
+
+
+## 2026-10-04 Hydro repair 坐标主 CPU 接入
+
+clean9fb34629主ARCH五步增量构建成功，ELFe75300fc…；592tracked inputs相对b38f44a8唯一变化为DriverStages.h。
+scheduler/checkpoint2/2 PASS，当前archive实际Driver四组非零repair+checkpoint续接PASS，原生坐标精确、41040状态/身份word一致。
+未新增科学场景/阈值，公开RZ/CUDA/O9与整体科学出口保持未完成。
+见RepairPositionCpuIntegration-20261004报告/Summary；raw本机ignored，未push/tag。

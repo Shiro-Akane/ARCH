@@ -205,3 +205,13 @@ ENTR 保持 pressure_density_proxy、unknown unit/reason；原生场值和 FP64 
 原始 H5/plt/checkpoint/ELF/full arrays 留在本机 ignored studio/.local。
 下一步先由 Core 按此映射对接读取适配层，具体 finding 再做最小修改；
 不因已有单点检查通过而冻结全部布局或扩大几何范围。
+
+
+## 后续 CPU 构建身份更新
+
+主ARCH已从clean9fb34629981f434b8fc5d531adf44b3330c083c8增量构建，
+ELF SHA-256 e75300fc607f4f6078240e2a524c5b0d6085fd0d48b811369c6eaff0729ee8fc。
+相对此前592tracked inputs唯一变化为DriverStages.h，现纳入Hydro repair代表位置修复。
+上节“主ELF尚未包含该修复”是当时记录，已由此次构建补齐；不改变Cartesian Plotfile数组映射。
+定向scheduler/checkpoint与当前archive实际非零repair续接PASS；详见RepairPositionCpuIntegration-20261004。
+尚未push；完整source/binary科学身份、二维演化和独立oracle仍按此前边界待review。

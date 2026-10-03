@@ -1,0 +1,50 @@
+{
+  "status": "PASS",
+  "build": {
+    "sourceHead": "9fb34629981f434b8fc5d531adf44b3330c083c8",
+    "sourceDirty": false,
+    "beforeBinarySha256": "ca6437d283c23c8f94aa562b5678273b2c06e1c5df3cc79df38ebe40c7e2e069",
+    "buildExit": 0,
+    "elapsedSeconds": 19.968013839999912,
+    "parallelism": 8,
+    "trackedInputsCount": 592,
+    "trackedInputDigest": "73ecdb9986a00ba4b39f95cf16b651529fdecc9f9c93406ab6bd8d441720728a",
+    "afterBinarySha256": "e75300fc607f4f6078240e2a524c5b0d6085fd0d48b811369c6eaff0729ee8fc",
+    "binarySize": 7408664,
+    "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/repair-position-main-cpu-20261004"
+  },
+  "changedTrackedInputs": [
+    "src/driver/stages/DriverStages.h"
+  ],
+  "checks": [
+    {
+      "label": "scoped-build",
+      "exitCode": 0,
+      "elapsedSeconds": 4.029534647997934,
+      "output": "[0/2] Re-checking globbed directories...\n[1/5] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/io/hdf5/HDF5Writer.cpp.o\n[2/5] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/io/chk/CheckpointCompatibility.cpp.o\n[3/5] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/io/chk/ChkIO.cpp.o\n[4/5] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/tests/host/io/test_checkpoint_compatibility.cpp.o\n[5/5] Linking CXX executable arch_checkpoint_compatibility\n"
+    },
+    {
+      "label": "scoped-ctest",
+      "exitCode": 0,
+      "elapsedSeconds": 0.4302664049973828,
+      "output": "Internal ctest changing into directory: /home/arch/projects/ARCH-compute-optim/build-cpu\nTest project /home/arch/projects/ARCH-compute-optim/build-cpu\n    Start 40: shared_stage_scheduler\n1/2 Test #40: shared_stage_scheduler ...........   Passed    0.00 sec\n    Start 67: checkpoint_compatibility\n2/2 Test #67: checkpoint_compatibility .........   Passed    0.42 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.42 sec\n"
+    }
+  ],
+  "actualDriverFixture": {
+    "exitCode": 0,
+    "executableSha256": "6ffe45980d822bfc1582bffdf9917d16fafd61f19532144df58970347a022ae9",
+    "stageHeaderSha256": "8cca89eb273cec8353ec7aa8c3f7d50a6ce198e22acf87d61bb9237a765bd283",
+    "cases": 4,
+    "eventsPerCase": 2560,
+    "comparisonWordsPerCase": 10260,
+    "coordinatesExact": true,
+    "checkpointContinuationBitsEqual": true,
+    "sourceCheckpointUnchanged": true
+  },
+  "limitations": [
+    "Internal engineering two-step RK2 only, not approved scientific endpoint",
+    "Public RZ capabilities remain gated",
+    "No CUDA, new physical budget or O9 acceptance",
+    "Tracked input inventory is not exact compiler/transitive shared-library dependency closure"
+  ]
+}
