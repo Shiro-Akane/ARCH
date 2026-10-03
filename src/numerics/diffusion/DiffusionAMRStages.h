@@ -31,6 +31,22 @@ namespace Numerics::Diffusion {
 
 namespace detail {
 
+template<typename BCPolicy>
+inline void validate_geometry(const Grid& grid,const BCPolicy& boundary,
+    GridMetrics::GeometrySemantics semantics)
+{
+    (void)GridMetrics::make_geometry_view(grid,semantics);
+    if constexpr(requires { boundary.geometry_semantics(); }) {
+        if(boundary.geometry_semantics()!=semantics)
+            throw std::invalid_argument("Diffusion/boundary chart mismatch");
+    } else if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::invalid_argument("RZ diffusion boundary identity missing");
+    if constexpr(requires { boundary.logical_plan(grid); })
+        (void)boundary.logical_plan(grid);
+    else if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::invalid_argument("RZ diffusion boundary preflight missing");
+}
+
 // These expression leaves intentionally remain macro-expanded at Host
 // call sites. GCC's -ffast-math changes FMA grouping when the recurrences
 // cross a function boundary, even after inlining. Keeping one expansion source
@@ -283,7 +299,8 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
                                          const Grid& grid, const SimConfig& config,
                                          double dt, double flux_weight,
                                          std::vector<FluidVector>& dU,
-                                         std::vector<double>& d_species)
+                                         std::vector<double>& d_species,
+                                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
     const int n_species = state.GetNumSpecies();
     const int total_size = grid.GetTotalSize();
@@ -295,14 +312,14 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
     for (int dir = 0; dir < grid.dim; ++dir) {
         std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector{});
         std::fill(species_flux_buffer.begin(), species_flux_buffer.end(), 0.0);
-        DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir);
+        DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir, semantics);
         TimeIntegration::accumulate_divergence(dU, d_species, flux_buffer, species_flux_buffer,
-                                               grid, dt, dir, n_species);
+                                               grid, dt, dir, n_species, semantics);
         amr::RegisterCoarseFineFluxes(amr_ctrl, block_id, grid, dir, flux_buffer,
-                                      species_flux_buffer, n_species, flux_weight);
+                                      species_flux_buffer, n_species, flux_weight, semantics);
     }
 
-    DiffFlux::add_geometric_sources(dU, state, eos, grid, config, dt);
+    DiffFlux::add_geometric_sources(dU, state, eos, grid, config, dt, semantics);
 }
 
 inline void apply_first_rkl_stage(const FluidState& state_n, FluidState& destination,
@@ -385,7 +402,8 @@ inline void apply_recursive_rkl_stage(const FluidState& state_n,
 
 template <typename BCPolicy>
 inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
-                        FluidState amr::Block::* state_ptr)
+                        FluidState amr::Block::* state_ptr,
+                        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
     const auto& binding = arch::scheduler::current_stage_binding();
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
@@ -398,7 +416,10 @@ inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
     }
     amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
                                             amr_ctrl.tree->GetRootGridDim(),
-                                            state_ptr, binding.handles);
+                                            state_ptr, binding.handles,
+        semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+            ? amr::CoordinateSeamGeometry::RzAxisymmetric
+            : amr::CoordinateSeamGeometry::ExistingChart);
 }
 
 inline FluidState& state_for(amr::Block& block,
@@ -457,8 +478,10 @@ template <typename EosType, typename BCPolicy>
 inline void advance_single_rkl(
     amr::Block& block, const EosType& eos, const Grid& grid,
     const SimConfig& config, double dt, double dt_diff_fe,
-    BCPolicy& boundary_condition, arch::scheduler::RklMethod method)
+    BCPolicy& boundary_condition, arch::scheduler::RklMethod method,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
+    validate_geometry(grid,boundary_condition,semantics);
     using namespace arch::scheduler;
     using arch::state::StateSlot;
     const DiffFunction::RKLOrder order = order_for(method);
@@ -514,7 +537,7 @@ inline void advance_single_rkl(
 
                 if (descriptor.stage == 1) {
                     DiffFlux::compute_diffusion_operator(
-                        state_n, increment_initial, eos, grid, config);
+                        state_n, increment_initial, eos, grid, config, semantics);
 #pragma omp parallel for schedule(static)
                     for (int index = 0; index < grid.GetTotalSize(); ++index) {
                         output.rho[index] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
@@ -548,7 +571,7 @@ inline void advance_single_rkl(
                 }
 
                 DiffFlux::compute_diffusion_operator(
-                    previous, increment_previous, eos, grid, config);
+                    previous, increment_previous, eos, grid, config, semantics);
                 const double initial_weight = selected_plan.second_order
                     ? 1.0 - coefficients.mu - coefficients.nu : 0.0;
 #pragma omp parallel for schedule(static)
@@ -676,8 +699,12 @@ template <typename EosType, typename BCPolicy>
 inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff_fe,
                             BCPolicy& boundary_condition, const EosType& eos,
                             const SimConfig& config,
-                            arch::scheduler::RklMethod method)
+                            arch::scheduler::RklMethod method,
+                            GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
+    for(int id:amr_ctrl.tree->GetActiveBlocks())
+        detail::validate_geometry(amr_ctrl.pool->GetBlock(id).grid,
+            boundary_condition,semantics);
     using namespace arch::scheduler;
     using arch::state::StateSlot;
     const DiffFunction::RKLOrder order = detail::order_for(method);
@@ -694,7 +721,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
         throw std::logic_error("AMR RKL scheduler handle count mismatch");
     amr_ctrl.flux_register.EnsureSpecies(
         amr_ctrl.pool->GetBlock(active_blocks.front()).fluid_state.GetNumSpecies());
-    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state);
+    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state, semantics);
     const arch::state::StateVersion current_version =
         binding.context.ledger.inspect(
             {binding.handles.front(), StateSlot::Current}).interior.version;
@@ -748,7 +775,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                     detail::evaluate_diffusion_increment(
                         amr_ctrl, block_id, previous, eos, block.grid,
                         config, dt, coefficients.tilde_mu, d_previous,
-                        d_species_previous);
+                        d_species_previous, semantics);
 
                     if (descriptor.stage == 1) {
                         detail::apply_first_rkl_stage(
@@ -764,7 +791,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         detail::evaluate_diffusion_increment(
                             amr_ctrl, block_id, state_n, eos, block.grid,
                             config, dt, coefficients.gamma, d_initial,
-                            d_species_initial);
+                            d_species_initial, semantics);
                     } else {
                         d_initial.assign(block.grid.GetTotalSize(),
                                          FluidVector{});
@@ -785,7 +812,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
             [&](const RklPlan&, const RklStageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
                 amr_ctrl.ApplyReflux(
-                    dt, detail::member_for(descriptor.output_slot));
+                    dt, detail::member_for(descriptor.output_slot), semantics);
                 TimeIntegration::validate_reflux_state(amr_ctrl,config.numerics,
                     detail::member_for(descriptor.output_slot));
                 return token;
@@ -794,7 +821,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
             [&](StateSlot output, arch::state::StateVersion,
                 arch::state::CompletionToken token) {
                 detail::synchronize(amr_ctrl, boundary_condition,
-                                    detail::member_for(output));
+                                    detail::member_for(output), semantics);
                 return token;
             };
     const auto rotate = [&](arch::state::SlotRotation rotation) {
@@ -814,7 +841,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
             binding.context, binding.handles, stages, executor, reflux,
             boundary, rotate);
     }
-    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state);
+    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state, semantics);
     const arch::state::StateVersion final_version =
         binding.context.ledger.inspect(
             {binding.handles.front(), StateSlot::Current}).interior.version;

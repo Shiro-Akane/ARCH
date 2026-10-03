@@ -2715,3 +2715,8 @@ Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-A
 ## 2026-10-04 RZ Driver timestep candidates
 
 真实calculate_timestep_candidates的Hydro/diffusion调用已传Runtime chart。mixed-AMR四组独立Hydro参考maxabs1.0842e-19，8组RKL候选路由接线一致；active NaN明确失败。scoped3/3 PASS。实际RKL evolution尚待迁移；详见RZRuntimeTimestep-20261004.zh-CN.md。
+
+
+## 2026-10-04 RZ actual Driver RKL
+
+真实single/composite RKL1/2贯通统一RZ operator/source/register/reflux/halo；16组常态零算子实际scheduler检查通过（RKL1两stages/RKL2五stages），maxerror1.42109e-14，scoped4/4 PASS。不是非零演化/科学验收；详见RZRuntimeRkl-20261004.zh-CN.md。

@@ -315,16 +315,18 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
         }
         if (rkl1) {
             Numerics::Diffusion::advance_amr_rkl1(
-                amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config);
+                amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config,
+                runtime.geometry_semantics());
         } else {
             Numerics::Diffusion::advance_amr_rkl2(
-                amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config);
+                amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config,
+                runtime.geometry_semantics());
         }
     } else {
         const auto execute_single = [&](auto& integrator) {
             amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks.front());
             integrator.integrate(block, eos, block.grid, config,
-                                 diffusion_dt, dt_diff_fe, bc_handler);
+                                 diffusion_dt, dt_diff_fe, bc_handler, runtime.geometry_semantics());
         };
         Numerics::Diffusion::dispatch_diffusion(
             config, resolved_plan->diffusion_integrator,

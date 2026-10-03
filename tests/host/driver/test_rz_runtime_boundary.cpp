@@ -12,18 +12,19 @@ static void require(bool value,const char* message) {
 }
 int main() {
  try {
-  for(int direction:{0,1})for(double inner:{0.,1.}) {
+  for(bool mixed:{false,true})for(int direction:{0,1})for(double inner:{0.,1.}) {
     SimConfig config{};
     config.grid.dim=2;config.grid.geometry="cylindrical";
-    config.grid.nblockx1=direction==0?2:1;
-    config.grid.nblockx2=direction==0?1:2;config.grid.nblockx3=0;
+    config.grid.nblockx1=mixed&&direction==0?2:1;
+    config.grid.nblockx2=mixed&&direction==1?2:1;config.grid.nblockx3=0;
     config.grid.x1_min=inner;config.grid.x1_max=inner+2.;
     config.grid.x2_min=-1.;config.grid.x2_max=1.;
     config.grid.amr_max_blocks=32;config.amr.lrefinemin=0;config.amr.lrefinemax=1;
     amr::AMRControl control(32,2);
-    control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
+    if(mixed)control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
         {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
         {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
+    else control.tree->LoadLeafGrid(config,0,{0},{0},{0},{0});
     SpeciesManager species;species.add_species("a",1.,1.,1.4,3.);
     species.add_species("b",2.,1.,1.4,3.);
     const auto& active=control.tree->GetActiveBlocks();
@@ -109,6 +110,60 @@ int main() {
             <<" diffusion_fe="<<diff.diffusion_forward_euler
             <<" diffusion_sts="<<diff.diffusion_sts<<'\n';
     }
+    // Real Driver -> single/composite RKL -> scheduler, with a zero
+    // viscous operator witness (constant axial translation, no swirl).
+    for(auto integrator:{arch::dispatch::DiffusionIntegratorId::Rkl1,
+                        arch::dispatch::DiffusionIntegratorId::Rkl2}) {
+        for(int id:active) {
+            auto& b=control.pool->GetBlock(id);
+            for(int cell=0;cell<b.grid.GetTotalSize();++cell) {
+                b.fluid_state.set(cell,{2.,0.,6.,0.,21.5});
+                b.fluid_state.X(0,cell)=.6;b.fluid_state.X(1,cell)=.4;
+            }
+        }
+        auto context=runtime.stage_context();
+        (void)arch::scheduler::publish_completed_interior(
+            context,runtime.handles(),arch::state::StateSlot::Current);
+        runtime.ensure_fluid_ghosts();
+        arch::dispatch::ResolvedExecutionPlan plan{};plan.diffusion_integrator=integrator;
+        const auto diff=arch::driver::calculate_timestep_candidates(runtime,workspace,eos,&plan);
+        const double dt=3.*diff.diffusion_forward_euler*config.physics.diffusion.diff_cfl;
+        const auto order=integrator==arch::dispatch::DiffusionIntegratorId::Rkl1
+            ?DiffFunction::RKLOrder::First:DiffFunction::RKLOrder::Second;
+        const int stages=DiffFunction::compute_stages(order,dt,diff.diffusion_forward_euler,
+            config.physics.diffusion.diff_cfl,config.physics.diffusion.max_stages);
+        require(stages>=2,"RKL fixture did not exercise recurrence");
+        const auto before=context.ledger.inspect(
+            {runtime.handles()[0],arch::state::StateSlot::Current}).interior.version;
+        {
+            arch::scheduler::ScopedStageBinding scope(context,runtime.handles());
+            arch::driver::advance_diffusion(runtime,workspace,context,eos,&plan,0,dt,
+                diff.diffusion_forward_euler);
+        }
+        double error=0.;
+        for(std::size_t n=0;n<active.size();++n) {
+            const auto& b=control.pool->GetBlock(active[n]);const auto& g=b.grid;
+            const auto coherence=context.ledger.inspect(
+                {runtime.handles()[n],arch::state::StateSlot::Current});
+            require(coherence.interior.version.value==before.value+stages,
+                "RKL real stage publication count");
+            context.ledger.require_readable({runtime.handles()[n],arch::state::StateSlot::Current},
+                {arch::state::ExecutionSide::Host,coherence.interior.version,true,true});
+            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                const int cell=g.GetIndex(i,j,0);const auto u=b.fluid_state.get(cell);
+                for(double e:{u.rho-2.,u.mom_u,u.mom_v-6.,u.mom_w,u.eng-21.5,
+                    b.fluid_state.X(0,cell)-.6,b.fluid_state.X(1,cell)-.4})
+                    error=std::max(error,std::abs(e));
+            }
+        }
+        require(std::isfinite(error)&&error<=2.e-12,"RZ actual RKL constant state drift");
+        if(mixed)require(control.RequireFluxTopologyPlan(2,
+            GridMetrics::GeometrySemantics::AxisymmetricRz).semantics
+            ==GridMetrics::GeometrySemantics::AxisymmetricRz,"RKL AMR chart identity");
+        std::cout<<"RZ_RUNTIME_RKL mixed="<<mixed<<" direction="<<direction
+            <<" inner="<<inner<<" rkl="<<(integrator==arch::dispatch::DiffusionIntegratorId::Rkl1?1:2)
+            <<" stages="<<stages<<" max_error="<<error<<'\n';
+    }
     config.physics.diffusion.use_diffusion=false;
     auto& bad=control.pool->GetBlock(active.front());
     const int bad_cell=bad.grid.GetIndex(bad.grid.Is(),bad.grid.Js(),0);
@@ -119,12 +174,14 @@ int main() {
     catch(const std::runtime_error&){invalid_density=true;}
     require(invalid_density,"Driver ignored invalid active CFL density");
     bad.fluid_state.rho[bad_cell]=saved;
+    const auto current_version=runtime.stage_context().ledger.inspect(
+        {runtime.handles()[0],arch::state::StateSlot::Current}).interior.version;
     bool device=false,regrid=false;
     try{(void)runtime.prepare_backend_bindings();}catch(const std::logic_error&){device=true;}
     try{(void)runtime.perform_regrid(0,0.);}catch(const std::logic_error&){regrid=true;}
     require(device&&regrid,"Unmigrated RZ consumer accepted");
     require(runtime.stage_context().ledger.inspect(
-        {runtime.handles()[0],arch::state::StateSlot::Current}).interior.version==v,
+        {runtime.handles()[0],arch::state::StateSlot::Current}).interior.version==current_version,
         "Rejected Runtime consumer changed version");
     require(counters.step_count==0&&counters.t_current==0.,"Runtime fixture advanced time");
     std::cout<<"RZ_RUNTIME_HALO direction="<<direction<<" inner="<<inner

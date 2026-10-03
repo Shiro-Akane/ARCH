@@ -41,11 +41,14 @@ execute("link",tokens)
 result=subprocess.run([str(exe)],env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
     text=True,capture_output=True,timeout=30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
-summary={"scope":"Actual CPU Runtime initialization/halo refresh and Driver timestep candidates; no time advancement or scientific output",
+summary={"scope":"Actual CPU Runtime halo, timestep candidates and RKL stage kernels; no simulation driver time advancement or scientific output",
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
  "buildDirectory":str(build),"executableSha256":hashlib.sha256(exe.read_bytes()).hexdigest(),
  "recompiledSources":{s:hashlib.sha256((root/s).read_bytes()).hexdigest() for s in sources},
  "timestepHeaderSha256":hashlib.sha256((root/"src/driver/stages/DriverStages.h").read_bytes()).hexdigest(),
+ "rklHeaderSha256":{str(h.relative_to(root)):hashlib.sha256(h.read_bytes()).hexdigest()
+    for h in [root/"src/numerics/diffusion"/name for name in
+      ["DiffDispatch.h","DiffusionAMRStages.h","RKL1TimeIntegrator.h","RKL2TimeIntegrator.h"]]},
  "limitations":["RZ production regrid remains gated","CUDA not qualified","No scientific evolution acceptance"]}
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)
