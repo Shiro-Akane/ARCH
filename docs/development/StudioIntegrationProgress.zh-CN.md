@@ -2066,3 +2066,20 @@ freshness-unknown/dependenciesComplete=false保留，不冒充clean编译或curr
 当前窗口与Host仍运行。无产品/Core修改、Run/Save/CUDA，不重复234项检查；
 仅JSON/diff-check，无push/tag/main merge。仍收尾3C文件及生命周期出口，
 不将额外自然初始化时序测试自动升级为新的科学前置。
+
+## 原生活动 AMR 请求关闭：受阻共享 worker 覆盖通过
+
+2026-10-03，2deb2810 clean。复用当前Linux窗口19270674与保存Sod输入，
+workflow起始none/Preview succeeded。严格核对owned --preview-session
+worker77360/start1038828/parent76933，SIGSTOP带90秒同身份T状态恢复保护。
+原生Generate initial AMR一次，请求9ba1e717持续preview-amr/running，
+06:44:22.053Z直接复核worker仍T；原生close06:44:35.035Z，
+Host38.701Z退出/desktop38.704Z clean。Electron76887/Host76933/worker77360
+均消失，保护未介入，config/binary SHA未变。
+
+未完成AMR请求原生关闭/owned清理PASS（fault injection scope），不声称
+自然AMR数学运行时序或本次已返回hierarchy/response identity/数值通过。
+报告StudioNativeStalledAmrClose.zh-CN.md/Summary.json；原始证据ignored。
+无产品/Core修改、Run/Save/Build/CUDA，不重复234项检查；JSON/diff check。
+当前窗口已关闭，3C文件覆盖/阶段报告继续收束；不push/tag/main merge，
+不提前进入全模型/JENS/RZ。
