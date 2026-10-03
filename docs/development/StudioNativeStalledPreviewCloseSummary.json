@@ -1,0 +1,87 @@
+{
+  "sourceCommit": "cbc66c49dc9314859d887ecc70af70a829ef2c15",
+  "platform": "Linux/WSL native Electron",
+  "status": "PASS — active request close under explicit worker-stall fault injection",
+  "baselineIdentity": {
+    "requestId": "702eb7ed-2d93-48fd-b48f-dc26c8d8eb1e",
+    "projectId": "54c4fa62-53d5-45b4-8fcd-2cde5671f2d4",
+    "profileId": "cellular-initial-cpu",
+    "caseId": "CellularDet",
+    "configRevision": "45b21a327cc54f974be506dda3b4db808b29d9b10110e06cc21b91d5f2184086",
+    "buildId": "f6449e3d-ccc0-4d51-ac96-eaf767de62a8",
+    "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+  },
+  "activeRequestId": "1272c28f-8d6f-4d9d-91ea-15fca3f46c45",
+  "faultInjection": {
+    "signal": "SIGSTOP",
+    "worker": {
+      "pid": 72375,
+      "state": "T",
+      "startTicks": "1005444",
+      "ppid": 71947,
+      "pgrp": 72375
+    },
+    "ownershipVerified": "unique direct child of this Host, exact executable, --preview-session flag, PID/startTicks",
+    "automaticRestoreGuardSeconds": 90,
+    "guardRestored": false
+  },
+  "activeBeforeClose": {
+    "at": "2026-10-03T06:32:46.038602+00:00",
+    "state": "generating",
+    "requestId": "1272c28f-8d6f-4d9d-91ea-15fca3f46c45",
+    "session": {
+      "stage": "request",
+      "generation": 1
+    },
+    "workerState": "T",
+    "guardRestored": false
+  },
+  "lastSuccessfulStateObservation": {
+    "startedAt": "2026-10-03T06:33:12.745461+00:00",
+    "state": "generating",
+    "requestId": "1272c28f-8d6f-4d9d-91ea-15fca3f46c45",
+    "timing": {
+      "hostQueueMilliseconds": 0.0023330000112764537
+    },
+    "session": {
+      "stage": "request",
+      "generation": 1
+    },
+    "completedAt": "2026-10-03T06:33:13.512324+00:00"
+  },
+  "shutdown": {
+    "requestedAt": "2026-10-03T06:33:14.327Z",
+    "hostExitedAt": "2026-10-03T06:33:15.348Z",
+    "desktopCleanAt": "2026-10-03T06:33:15.349Z",
+    "hostElapsedMilliseconds": 1021,
+    "ownedAbsent": {
+      "71947": true,
+      "71901": true,
+      "72375": true
+    },
+    "observedWorkerExitCode": "not collected; duration is consistent with existing 1s SIGKILL grace, not an exit-code assertion"
+  },
+  "unchangedFiles": {
+    "studio/.local/integration/amr-production-oracle/CellularDet-gbya9tww/CellularDet.par": "45b21a327cc54f974be506dda3b4db808b29d9b10110e06cc21b91d5f2184086",
+    "build-studio-cpu/bin/ARCH": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+  },
+  "normalWarmAttempt": {
+    "requestId": "e5cee974-b5ec-4144-8616-532c8bfba7ac",
+    "succeededObservedAt": "2026-10-03T06:30:08.673425+00:00",
+    "shutdownRequestedAt": "2026-10-03T06:30:10.265Z",
+    "result": "NOT EXERCISED — request completed before close"
+  },
+  "limits": [
+    "does not prove natural Setup/Init execution was active at close",
+    "AMR close not exercised",
+    "whole3C remains incomplete"
+  ],
+  "operations": {
+    "productionStartupInitPreview": true,
+    "nativeUpdatePreviewOnceInEachAttempt": true,
+    "simulation": false,
+    "Build": false,
+    "Save": false,
+    "CoreModification": false
+  }
+}

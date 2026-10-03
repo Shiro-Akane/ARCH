@@ -2031,3 +2031,22 @@ active Preview close 仍 NOT VERIFIED；owned 清理只按本轮实际范围通�
 不自动重放，不以过往其他关闭记录代替。当前独立窗口已关闭。
 无源码修改/Save/Run/Build/CUDA，不重复234项检查；只有报告/diff check。
 未 push/tag/main merge，未进入全模型/JENS/RZ。
+
+## 活动 Preview 请求原生关闭：显式 worker stall 覆盖通过
+
+2026-10-03，cbc66c49 clean。实测status读取0.77秒，5秒监测成功捕获普通warm
+generating，但请求e5cee974在06:30:08.673Z已succeeded，关闭06:30:10.265Z；
+该自然active-close仍NOT EXERCISED，不用UI更新中状态补判。
+
+另以既有CellularDet t=0/use_burn=false输入启动正式Linux窗口，startup成功后，
+严格核对唯一owned --preview-session worker72375/start1005444/parent71947，
+SIGSTOP故障注入带90秒同PID/start保护。原生Update Preview后请求1272c28f
+持续generating/stage=request；native close06:33:14.327Z，Host于15.348Z退出。
+Electron71901/Host71947/worker72375均消失，保护未介入，config/binary SHA未变。
+
+活动受阻Preview请求原生关闭/owned清理PASS（明确fault injection scope）。
+不宣称自然Setup/Init执行在关闭瞬间被覆盖。报告
+StudioNativeStalledPreviewClose.zh-CN.md/Summary.json记录准确边界；
+active AMR close/保存矩阵和完整3C仍待完成。当前窗口已关闭，无Run/Build/Save/
+Core改动/CUDA，不重复234项通过检查，只执行report JSON/diff check；
+raw证据留ignored目录，无push/tag/main merge/full-model/JENS/RZ advance。
