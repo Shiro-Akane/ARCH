@@ -2555,3 +2555,8 @@ b26fb8a2 最小 writer 面索引求值修复，C++反例先失败后publication/
 ## 2026-10-04：修复后的37字段补证
 
 复用b26fb8a2 CPU binary执行既有t=0 ALL，Sod9/Cellular28字段完整数组与早期canonical原bits全一致；新ALL文件stored全域覆盖、37次production worker raw点查与Host/client链路通过。三项反例测试通过，原H5/全数组本机保留。见 PlotfileAllFieldsFaceRepair-20261004.zh-CN.md/Summary；独立EOS/diagnostic科学oracle、native UAT及总目标保持未完成。
+
+
+## 2026-10-04 Jeans 指数边界补证
+
+301项独立Decimal参考与共享数值叶函数CPU比对通过，197正有限（2次正规）/31下溢/73溢出，最大相对误差1.5432483614913696e-16。沿用既有工程界限，无floor或生产能力开放。见 JeansExponentGrid-20261004.zh-CN.md / Summary；一般EOS/父态/RZ近场科学决策仍待确认。

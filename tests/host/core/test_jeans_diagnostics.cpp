@@ -7,6 +7,7 @@
  */
 #include "physics/diagnostics/JeansDiagnostics.h"
 #include "physics/eos/IdealGas.h"
+#include "../../math/physics/JeansNumericCases.h"
 #include <array>
 #include <limits>
 #include <iostream>
@@ -48,6 +49,31 @@ int main()
     if (overflow.status != JeansDiagnostics::Status::unrepresentable ||
         underflow.status != JeansDiagnostics::Status::unrepresentable)
         throw std::runtime_error("Jeans nonrepresentable result hidden");
+    double exponent_max_relative_error = 0.0;
+    int exponent_valid = 0, exponent_unrepresentable = 0;
+    for (const auto& c : JeansNumericReference::cases) {
+        const auto result = JeansDiagnostics::evaluate(c.rho, c.cs2, c.h);
+        if (!std::isfinite(c.expected) || c.expected == 0.0) {
+            if (result.status != JeansDiagnostics::Status::unrepresentable ||
+                result.cells != c.expected)
+                throw std::runtime_error("Jeans exponent-grid range failure hidden");
+            ++exponent_unrepresentable;
+            continue;
+        }
+        // Long-double difference avoids underflow in the engineering error
+        // calculation itself. Retain the existing 16-double-epsilon criterion.
+        const double relative_error = static_cast<double>(
+            std::abs(static_cast<long double>(result.cells)-c.expected)/c.expected);
+        exponent_max_relative_error = std::max(exponent_max_relative_error, relative_error);
+        if (result.status != JeansDiagnostics::Status::valid ||
+            relative_error > 16 * std::numeric_limits<double>::epsilon())
+            throw std::runtime_error("Jeans exponent-grid reference mismatch");
+        ++exponent_valid;
+    }
+    std::cout << std::setprecision(17)
+              << "JEANS_EXPONENT_VALID=" << exponent_valid
+              << " UNREPRESENTABLE=" << exponent_unrepresentable
+              << " MAX_RELATIVE_ERROR=" << exponent_max_relative_error << '\n';
     // Independent spacing expectations for the maintained native coordinates.
     // Do not use production PhysicalSpacing to construct the expected result.
     GridMetrics::GeometryView grid{};
