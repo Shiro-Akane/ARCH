@@ -55,7 +55,8 @@ class Expansion(unittest.TestCase):
         self.assertIn('Sedov', cases)
         self.assertIn('CellularDet', cases)
         self.assertNotIn('Cellular', cases)
-        self.assertFalse(cases['Sedov']['initialFieldPreview'])
+        self.assertTrue(cases['Sedov']['initialFieldPreview'])
+        self.assertTrue(cases['Sedov']['initialAmrPreview'])
         self.assertTrue(cases['CellularDet']['initialAmrPreview'])
         self.assertEqual(out['setup'], 'not_executed')
         self.assertTrue(all(not c['automaticCustomUnitInference'] for c in cases.values()))
@@ -155,7 +156,14 @@ class Expansion(unittest.TestCase):
         for args in [('--mesh-max-blocks','2.5'),('--mesh-memory-mib','999'),('--samples','32')]:
             out=self.api('--preview-amr',SOD,*args,code=2)
             self.assertEqual(out['kind'],'initial-amr-preview')
-        self.api('--preview-amr',(ROOT/'simulation/Sedov/Sedov.par').read_text(),case='Sedov',code=4)
+        unknown=self.api('--preview-amr',SOD,case='not-registered',code=3)
+        self.assertTrue(any(d.get('detailCode')=='UNKNOWN_CASE' for d in unknown['diagnostics']))
+        self.assertEqual(unknown['state']['setup'],'not_executed')
+        sedov=edit((ROOT/'simulation/Sedov/Sedov.par').read_text(),lrefinemax=0)
+        mesh=self.api('--preview-amr',sedov,case='Sedov')
+        self.assertEqual(mesh['execution']['timeStepping'],'not_executed')
+        self.assertTrue(mesh['data']['complete'])
+        self.verify_mesh(mesh,[1,1])
         self.api('--preview-amr',edit(SOD,restart='true',restart_file='/absent'),code=4)
 
     def test_cellular_mesh_and_resource_species(self):

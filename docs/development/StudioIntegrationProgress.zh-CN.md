@@ -2875,3 +2875,12 @@ Build完整freshness仍unknown：mold原生--repro两次非科学LTO link捕获�
 长/短目录均复现，只读archive审计INVALID，不靠推测顺序/关闭LTO/升级工具链置complete。
 见BuildLinkReproIdentity-20261004报告/Summary；无ARCH build/run或科学/Core改动。
 科学方案待Core并不等于已通过CPU阶段；统一CUDA/O9仍不得提前认证。
+
+
+## 2026-10-04 全配置CPU regression finding
+
+87-step全Host构建暴露陈旧raw launch断言，迁移至受控RuntimeConfiguration并保留负向入口覆盖；续建38steps完成。
+CMake Python关联已有numpy/h5py venv，科学flags未变。完整71 CTest实际69PASS/2FAIL/0skip，strict inventory拒绝nonzero failures。
+Sedov能力旧断言修正后定向PASS；GravityBox cloud旧default迁移缺项/中心污染按原Setup+独立oracle明确，原t=0势/力预算PASS。
+整个self_gravity campaign尚未复验/通过，历史radial G=1e-20需Core科学换算确认；不宣称71/71或CPU出口/CUDA/O9完成。
+见CurrentFullCpuRegression报告/Summary；原始失败日志/JUnit/H5本机保留。

@@ -128,7 +128,12 @@ class BoxCampaign:
     @staticmethod
     def cloud_config(roots=1, extent=1., **changes):
         return dict(gravity_boundary='isolated', nblockx1=roots, nblockx2=roots, nblockx3=roots,
+                    # Preserve the pre-v3 cloud's actual Setup defaults and
+                    # the independent oracle's center, rather than inheriting
+                    # explicit values from the periodic 1D base configuration.
+                    x1_min=0., x2_min=0., x3_min=0.,
                     x1_max=extent, x2_max=extent, x3_max=extent,
+                    center_x=extent/2, center_y=extent/2, center_z=extent/2,
                     x1l_boundary_type='reflecting', x1r_boundary_type='reflecting',
                     x2l_boundary_type='reflecting', x2r_boundary_type='reflecting',
                     x3l_boundary_type='reflecting', x3r_boundary_type='reflecting',

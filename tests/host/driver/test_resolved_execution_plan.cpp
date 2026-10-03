@@ -45,8 +45,20 @@ struct HostHandleProbeEos
 // Check the launch signature without instantiating a numerical driver body.
 struct HydroLaunchTypeProbe {};
 
-template <class... Context>
+template <class Config, class... Context>
 concept HasHydroLaunchContext = requires(
+    amr::AMRControl& amr, const HostHandleProbeEos& eos,
+    const Physical::Gravity::IGravityPolicy* gravity,
+    const BurnerHandle<HostHandleProbeEos>& burn, const Config& config,
+    const RunState& state, Context&&... context) {
+    DispatchImpl::launch_run<HydroLaunchTypeProbe, HydroLaunchTypeProbe>(
+        amr, eos, gravity, burn, config, state,
+        std::forward<Context>(context)...);
+};
+
+// The previous raw-config/separate-species signature must remain unavailable.
+template <class... Context>
+concept HasLegacyHydroLaunchContext = requires(
     amr::AMRControl& amr, const HostHandleProbeEos& eos,
     const Physical::Gravity::IGravityPolicy* gravity,
     const BurnerHandle<HostHandleProbeEos>& burn, const SimConfig& config,
@@ -117,16 +129,25 @@ const char* diffusion_route()
 
 void test_plain_cpp_contracts()
 {
-    static_assert(HasHydroLaunchContext<
+    static_assert(HasHydroLaunchContext<arch::config::RuntimeConfiguration,
         const ResolvedExecutionPlan&, const ExecutionRequirements&,
         const BackendResolution&, StartupOrder&, const io::CheckpointProvenance&>);
-    static_assert(!HasHydroLaunchContext<>);
-    static_assert(!HasHydroLaunchContext<
+    static_assert(!HasHydroLaunchContext<arch::config::RuntimeConfiguration>);
+    static_assert(!HasHydroLaunchContext<arch::config::RuntimeConfiguration,
         const ResolvedExecutionPlan&, const ExecutionRequirements&,
         const BackendResolution&, StartupOrder&>);
-    static_assert(!HasHydroLaunchContext<
+    static_assert(!HasHydroLaunchContext<arch::config::RuntimeConfiguration,
         const ResolvedExecutionPlan*, const ExecutionRequirements*,
         const BackendResolution*, StartupOrder*, const io::CheckpointProvenance*>);
+    static_assert(!HasHydroLaunchContext<SimConfig,
+        const ResolvedExecutionPlan&, const ExecutionRequirements&,
+        const BackendResolution&, StartupOrder&, const io::CheckpointProvenance&>);
+    static_assert(!HasLegacyHydroLaunchContext<
+        const ResolvedExecutionPlan&, const ExecutionRequirements&,
+        const BackendResolution&, StartupOrder&, const io::CheckpointProvenance&>);
+    static_assert(!std::is_default_constructible_v<arch::config::RuntimeConfiguration>);
+    static_assert(!std::is_constructible_v<arch::config::RuntimeConfiguration,
+        const SimConfig&, const arch::config::PreparedConfiguration&>);
     static_assert(!HasConfigOnlyBurnHandle<SimConfig>);
     static_assert(!HasConfigOnlyBurnDispatch<SimConfig>);
     static_assert(!HasConfigOnlyDiffusionDispatch<SimConfig>);
