@@ -2550,3 +2550,8 @@ Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做
 ## 2026-10-04：Plotfile shared y-face 修复
 
 b26fb8a2 最小 writer 面索引求值修复，C++反例先失败后publication/checkpoint2/2通过。cleanCPU binary1bdd71ed仅增量PlotIO/link；新Sod/Cellular明确t=0对照stored全域gap/overlap均0，除Cellular1280个y upper外Plotdatasets与20项checkpoint数值字节一致。原Inspector失败两点唯一命中，旧文件保留；见 PlotfileSharedFaceRepair-20261004.zh-CN.md/Summary。科学/其他几何/演化/平台任务仍待。
+
+
+## 2026-10-04：修复后的37字段补证
+
+复用b26fb8a2 CPU binary执行既有t=0 ALL，Sod9/Cellular28字段完整数组与早期canonical原bits全一致；新ALL文件stored全域覆盖、37次production worker raw点查与Host/client链路通过。三项反例测试通过，原H5/全数组本机保留。见 PlotfileAllFieldsFaceRepair-20261004.zh-CN.md/Summary；独立EOS/diagnostic科学oracle、native UAT及总目标保持未完成。

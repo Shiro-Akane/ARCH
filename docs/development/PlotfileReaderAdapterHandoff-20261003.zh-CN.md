@@ -108,3 +108,8 @@ PlotfileLargeQuery-20261004.zh-CN.md / Summary.json。此证据不替代真实 A
 ## 2026-10-04 native y-face 修复
 
 当前 writer 增量 b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1：仅将Cartesian y upper按共享整数面索引求值。真实Sod/Cellular新t=0文件全叶bounds精确覆盖通过，旧文件gap/overlap保留反例；原场值/中心/测度及checkpoint数值未变。schema/字段数组映射不变。新binary1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8；详细身份和限制见 PlotfileSharedFaceRepair-20261004.Summary.json。本地提交尚未push。
+
+
+## 2026-10-04 ALL 字段补证
+
+b26fb8a2 writer修复后新Sod9/Cellular28全部字段与早期canonical完整FP64数组bit一致；新ALL native bounds全域gap/overlap为0；37个字段production isolated point与client校验通过。schema/数组映射不变，精确input/file/binary身份与限制见 PlotfileAllFieldsFaceRepair-20261004.Summary.json。仍不把数值一致性升级为独立科学oracle验收。
