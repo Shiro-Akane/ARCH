@@ -1811,3 +1811,17 @@ SaveAs recovery, not explicit overwrite or active window-close matrix.
 Human-visible independent window still NOT VERIFIED, no whole3C/O7 PASS.
 No simulation/build/source change/unchanged-suite rerun/raw upload/push/tag/
 main merge/full-model/JENS/RZ advance.
+
+## Native active-close attempt finished before close; scope remains open
+
+Clean10ad80b1: actual Linux Run prepare/explicit confirmation/native Start once.
+Runafb95966-335d-47d4-8620-39d4ca6f8035 naturally succeeded/exit0,
+04:57:55.833Z–04:58:12.341Z, step8994/time0.2. Worker19122/Core19134 absent;
+heldterminal19121 expected. Saved/frozen bytes match and original inputs/binary
+SHA unchanged. Active Electron-close was NOT EXERCISED; no automatic replay.
+StudioNativeActiveCloseAttempt.zh-CN.md/Summary.json retain exact reduced evidence.
+Latest user still reports taskbar-only; subsequent tool activation/maximization
+does not prove human visibility. Current desktop/Host/warm Preview not closed.
+3C native active-close/Stop/overwrite/display acceptance remain incomplete.
+No source/build/unchanged-suite repeat/raw upload/push/tag/main merge or
+full-model/JENS/RZ/CUDA advance.
