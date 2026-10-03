@@ -20,6 +20,7 @@ export interface ConfigAssociation { projectId:string; relativePath:string; load
 export type DiskState = 'in-sync'|'changed-externally'|'missing'|'read-error'|'unknown';
 export interface ConfigLifecycleState { association?:ConfigAssociation; loadedFingerprint?:FileFingerprint; savedFingerprint?:FileFingerprint; diskState:DiskState }
 export interface ConfigReadResponse { projectId:string; relativePath:string; text:string; fingerprint:FileFingerprint }
+export interface OpenConfigRequest { projectId:string; relativePath:string }
 export interface SaveConfigRequest { projectId:string; relativePath:string; expectedFingerprint:FileFingerprint; text:string }
 export interface SaveConfigAsRequest { projectId:string; destinationRelativePath:string; text:string }
 export type ConfigFileErrorCode = 'not-found'|'permission-denied'|'outside-project-root'|'changed-externally'|'destination-exists'|'invalid-path'|'payload-too-large'|'write-failed'|'rename-failed'|'protocol-error'|'read-error';

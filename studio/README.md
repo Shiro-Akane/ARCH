@@ -15,8 +15,9 @@ evidence remains freshness **unknown**, including after a no-work Build.
 Linux desktop/arch-studio uses production React assets and a managed local Host.
 Node 24.21.0 / npm 11.19.0 were used for engineering verification. The Linux
 environment needs xterm for the independent Run terminal and /usr/bin/flock
-(from util-linux) for output reservation. Native window/file-dialog UAT remains
-**not passed**: see [WSLg visibility blocker](../docs/development/StudioWslgVisibilityBlocker.md).
+(from util-linux) for output reservation. Linux Open Config uses a native project picker and safe Host reads, so the selected
+file becomes the associated saved input for Run/Restart. Browser imports remain
+unassociated. Full native desktop workflow UAT remains **not passed**: see [WSLg visibility blocker](../docs/development/StudioWslgVisibilityBlocker.md).
 Backend/HTTP evidence and the browser debug view do not replace native UAT.
 
 Configure and Build use Host-owned argv and profiles. Run/Restart use an explicitly

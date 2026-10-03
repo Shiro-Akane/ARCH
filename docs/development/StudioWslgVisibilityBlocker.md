@@ -84,3 +84,18 @@ only out_dir (new absent destination) and chk_dt (0.05) differ from the original
 Sod.par, with all physical parameters and tmax=0.2 retained. Input identity is
 recorded locally. It remains prepared-not-run. Do not start it until the UI's
 selected saved config and Host association match the fixture.
+
+### Native config association repair verified in production
+
+Linux desktop now has an explicit native Open project configuration IPC and
+Host /api/config/open selection route. Browser file import previously had no
+trusted Host association by design. Safe reads, project containment and saved
+fingerprints remain Host-owned; errors retain prior selection/Working Copy.
+Full 229 Studio/Host tests and static/production checks passed.
+
+After normal close, prior launcher/Host/warm worker all exited. The new production
+window selected studio/.local/UatSod.par via the native dialog and explicit Open
+button; header and Host association changed, Saved/Disk in-sync and completed
+inspection were visible. This establishes distinct-file selection. Return on the
+long path did not establish selection; its earlier failure cannot alone prove a
+Host read bug. Full native Run/Restart and cancellation matrix remain incomplete.

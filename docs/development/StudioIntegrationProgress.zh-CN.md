@@ -1582,3 +1582,31 @@ file closed the chooser without changing the displayed config identity. The
 earlier same-file dialog observation did not prove loading and is corrected.
 Save As byte identity remains proved. New Sod output/checkpoint fixture remains
 prepared-not-run; no simulation starts until saved input association is verified.
+
+## Linux native Open Config association fix
+
+Desktop Open Config now uses an explicit Linux native path picker and
+POST /api/config/open with only projectId/relativePath. Host reuses safe readConfig
+and the serialized selection lifecycle; successful reads establish saved
+fingerprint/project association without writing the selected file. Browser import
+continues as an unassociated Working Copy; Windows adaptation is not extended.
+Existing unsaved replacement protection remains in front of native selection.
+
+Regression: 6 scoped configuration checks, then full Studio/Host 229/229 tests,
+lint/typecheck/production build/diff check PASS. New tests cover exact BOM/CRLF
+bytes, selection identity, missing/outside/symlink/invalid paths, stale session,
+injected fields, active operation rejection and Save restricted to selected input.
+Only Studio code changed; scientific Core and binary were not rebuilt.
+
+Native UAT: old window closed normally; launcher PID380, Host427 and warm worker586
+all exited. Production assets reopened in Linux. Distinct short-path config
+studio/.local/UatSod.par was selected via native Open project configuration and
+explicit Open button. UI header, Host association, Saved and Disk in-sync changed
+to that file; Core inspection completed. Long-path Return confirmation did not
+establish selection and is not marked passed. Native cancellation/unsaved-choice
+matrix, Run/Restart and remaining desktop lifecycle still need completion.
+
+Local log: studio/.local/integration/native-config-open-regression.log.
+The local UatSod.par is byte-identical to the previously prepared workflow fixture;
+only original out_dir and chk_dt differ, physics/tmax unchanged. Still not run.
+No raw data/input files from .local are committed; no push or tag.

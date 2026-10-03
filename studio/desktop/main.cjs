@@ -101,6 +101,15 @@ app.whenReady().then(async()=>{
   }catch{res.writeHead(404).end();}
  });
  await new Promise((resolve,reject)=>{assets.once('error',reject);assets.listen(0,'127.0.0.1',resolve);});origin='http://127.0.0.1:'+assets.address().port;
+ if(linux)ipcMain.handle('desktop:open-path',async event=>{
+  senderAllowed(event);if(!ready)throw new Error('No managed project.');
+  const d=await dialog.showOpenDialog(win,{title:'Open project configuration',defaultPath:ready.project,properties:['openFile'],filters:[{name:'ARCH configuration',extensions:['par']}]});
+  if(d.canceled)return null;
+  const selected=d.filePaths[0];if(typeof selected!=='string')throw new Error('No configuration selected.');
+  const relative=path.relative(ready.project,path.resolve(selected));
+  if(!relative||path.isAbsolute(relative)||relative.split(path.sep).includes('..')||!relative.endsWith('.par'))throw new Error('Choose a .par inside the managed project.');
+  return relative;
+ });
  ipcMain.handle('desktop:pick-project',async event=>{senderAllowed(event);const d=await dialog.showOpenDialog(win,{title:'Choose managed ARCH project',properties:['openDirectory']});return d.canceled?null:d.filePaths[0];});
  ipcMain.handle('desktop:launch',async(event,options)=>{senderAllowed(event);try{await launch(options);return {};}catch(e){return {error:e.message};}});
  ipcMain.handle('desktop:save-path',async(event,name)=>{senderAllowed(event);if(!ready||typeof name!=='string')throw new Error('No managed project.');const distribution=linux?'':distro||await exec('wsl.exe',['--exec','/usr/bin/printenv','WSL_DISTRO_NAME']);const rootWin=linux?ready.project:'\\\\wsl.localhost\\'+distribution+ready.project.replaceAll('/','\\');const d=await dialog.showSaveDialog(win,{title:'Save new project configuration',defaultPath:path.join(rootWin,path.basename(name)),filters:[{name:'ARCH configuration',extensions:['par']}]});if(d.canceled||!d.filePath)return null;const mapped=await mapPath(d.filePath);const relative=path.posix.relative(ready.project,mapped);if(relative.startsWith('../')||path.posix.isAbsolute(relative)||!relative.endsWith('.par'))throw new Error('Save As must select a new .par inside the managed project.');return relative;});

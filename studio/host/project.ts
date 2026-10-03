@@ -12,7 +12,7 @@ import {BuildRunner} from './buildRunner.ts';
 import {BUILD_PROFILES} from './buildProfile.ts';
 import {atomicSave,publishConfig} from './atomicConfig.ts';
 import {ConfigError} from './config.ts';
-import type {SaveConfigRequest,SaveConfigAsRequest,ConfigReadResponse,ConfigWriteResponse} from '../src/host/contracts.ts';
+import type {OpenConfigRequest,SaveConfigRequest,SaveConfigAsRequest,ConfigReadResponse,ConfigWriteResponse} from '../src/host/contracts.ts';
 import {readConfig} from './config.ts';
 import path from 'node:path';import {randomUUID} from 'node:crypto';
 import {fingerprint,projectRoot,selectedPath} from './files.ts';
@@ -68,6 +68,7 @@ export async function openProject(options:ProjectOptions) {
  async function saved(read:ConfigReadResponse):Promise<ConfigWriteResponse>{options.config=read.relativePath;const current=await fingerprint(root,read.relativePath,'parameter');result.session.parameterFile=current;baseline.parameterFile=structuredClone(current);result.session.configFileState=current.error?'unknown':current.exists?'available':'missing';result.session.refreshedAt=new Date().toISOString();return {...read,project:structuredClone(result)};}
  function projectId(id:string){if(id!==result.session.projectId)throw new ConfigError('protocol-error','Project session changed. Reconnect before saving.');}
  return {runs,runPreparation,configure,build,preview,workflow,configuration:options.binary?new ConfigurationAdapter({root,projectId:result.session.projectId,binaryRelativePath:options.binary}):undefined,readSource:()=>readSource(root,options.case,result.session.projectId),snapshot:()=>{result.host.capabilities.preview=preview?.snapshot().ready??false;return structuredClone(result);},refresh:()=>serial(refresh),readConfig:()=>serial(()=>readConfig(root,options.config,result.session.projectId)),
+  openConfig:(request:OpenConfigRequest)=>serial(async()=>{projectId(request.projectId);return saved(await readConfig(root,request.relativePath,result.session.projectId));}),
   saveConfig:(request:SaveConfigRequest)=>serial(async()=>{projectId(request.projectId);if(request.relativePath!==options.config)throw new ConfigError('invalid-path','Save may only update the current associated configuration.');return saved(await atomicSave(root,request.relativePath,result.session.projectId,request.text,request.expectedFingerprint));}),
   saveConfigAs:(request:SaveConfigAsRequest)=>serial(async()=>{projectId(request.projectId);return saved(await publishConfig(root,request.destinationRelativePath,result.session.projectId,request.text,undefined,true));})};
 }
