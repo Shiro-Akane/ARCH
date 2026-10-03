@@ -59,3 +59,29 @@ invalid HDF5 测试的库诊断是预期拒绝，不是测试失败。
 精简证据：PlotfileMetadataPrototype.Summary.json。
 完整检查log与metadata JSON留 studio/.local/integration/plotfile-metadata-audit。
 无新simulation、无科学IO改动、无Windows适配、无push/tag/main merge。
+
+## 隔离读取增量（2026-10-03）
+
+基线 cf743de8d37ef7862f9721ab2c15025a02b8fb69。
+Host 新增 inspectPlotfileMetadataIsolated，固定使用当前 Node 和仓库内
+plotfileMetadataWorker.ts；无 shell、不接受 program/args/env。
+路径仅作为本地读取参数，本步没有新增 browser endpoint 或项目文件授权入口。
+
+HDF5/WASM 解析和哈希在单独进程内执行，Host 不导入 HDF5 runtime。
+每个 Host 进程最多一个读取；默认15秒、允许Host缩短但不可延长。
+stdout上限64KiB，超限/取消/超时SIGKILL，并等待close后才清除active、settle请求。
+预取消不启动worker；失败后下一次读取可以成功，不能释放槽位却遗留旧worker。
+Node heap上限256MiB并非WASM/整个进程的硬RSS限制，不宣称内存绝对隔离；
+正式大文件入口仍需真实平台资源预算与更完整文件授权。
+
+新增五项隔离测试：真实既有Sod只读、预取消/坏路径恢复、
+超时/在途取消/并发拒绝、非法Host timeout、真实长字段名HDF5触发输出超限后恢复。
+这些测试覆盖进程生命周期；在途取消测试不宣称已中断特定解析阶段。
+结合现有五项metadata检查与上一轮视口边界新增项，完整Studio/Host255/255 PASS，
+typecheck、lint、production build、diff-check PASS；测试后worker进程扫描为空。
+完整日志在ignored .local/integration/full-model-production-20261003/plt-isolation-*。
+
+未接入UI/Host endpoint，未读取field payload，未修改Core writer或生成simulation输出。
+completion仍unknown、renderEligible=false，单位/科学身份/native bounds-volume
+仍缺authoritative contract；本增量不等于正式plt查看器交付。
+没有push/tag/main merge，没有CUDA或Windows适配。
