@@ -1,0 +1,111 @@
+{
+  "status": "PASS",
+  "sourceBase": "8f018f12c5c49be25dbb0707376939d2228115d4",
+  "actualFixture": {
+    "scope": "Actual CPU DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
+    "exitCode": 0,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "executableSha256": "2e1dc61ef0c26a5d4818e02d3c987ae240f2173e48675c625301229f0b53c3e3",
+    "recompiledSources": {
+      "tests/host/io/test_driver_checkpoint_geometry.cpp": "c87993c90d5579289fe18d4b59d4ba287fde7cad422e2037597e992a4ffb5317",
+      "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+      "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+      "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69",
+      "src/driver/io/DriverIO.cpp": "f4124a59694eb4bd9fd98dbfc6b8b3d872d0e1f88b22fe21e3400800f0906f59",
+      "src/io/chk/ChkIO.cpp": "9667d1c416c7161136df2158a6a47a6835c6ac2ebd2b083cbbe1056270a5f8aa",
+      "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+      "src/io/hdf5/HDF5Writer.cpp": "bccdbf487c6d6e8f0b351028a23069e09c05130e734490667c3a1f6b42377a38",
+      "src/io/plot/PlotIO.cpp": "ea003bbd4bfb50bfedf2fdafa9512681212a171ef9b079fb45728e8a1f4e1edb"
+    },
+    "limitations": [
+      "Public RZ dispatch still gated",
+      "No evolved restart acceptance",
+      "CUDA not qualified"
+    ]
+  },
+  "explicitSharedHeaderSha256": {
+    "src/io/IO.h": "f02e4365970fc3b01129a708322ee8e9f919f95287ba8fd94c12e71346e9e69e",
+    "src/io/hdf5/HDF5Writer.h": "5600b3cd7f6b9aa176933af8e386946bb1a3da022ac30d6b39f7cf2d68a154f6",
+    "src/io/plot/PlotGridMetadata.h": "7292dc5a1244c8b49a3a96d01c45695b64f55fa6d6fe0dbf5276ff7d325ee318",
+    "src/io/plot/PlotFieldMetadata.h": "fed79b043f147e8b1f4e1539a43554368b63891ed0e2f96e2e7318444d692563",
+    "src/grid/GridGeometryView.h": "c7ac1652c266dfe8fa454249521e7022ac252b81f1cc8f4eb5233c31a726e4e5",
+    "src/physics/diagnostics/VelocityDiagnostics.h": "f3321fb9f77a544b3a6bf658cd938b97896d8929ad3fef86e7c421c15625069c"
+  },
+  "readback": {
+    "status": "PASS",
+    "scope": "Actual Driver IO-only fixture; analytical velocity and independent Decimal ring measure, no timestep advancement",
+    "arithmeticGate": 2e-12,
+    "gateOrigin": "Existing internal CPU geometry engineering gate; not owner scientific acceptance",
+    "rows": [
+      {
+        "mode": "cartesian",
+        "shape": [
+          1,
+          16
+        ],
+        "fileSha256": "14d86c73e7b0a4682907f9ade33a04bc4e0d1f1c2cf6ce9a247a28ee57021f65",
+        "legacyMetadataPreserved": true
+      },
+      {
+        "mode": "rz",
+        "shape": [
+          1,
+          16,
+          16
+        ],
+        "cells": 256,
+        "fileSha256": "d064c1653df74357cb3ceb11c9a319549d84a35061986a8f5f693a7089b6a6a3",
+        "chart": "axisymmetric-rz",
+        "coordinateMapping": "(r,z) -> Cartesian (r,0,z)",
+        "measureUnit": "cm^3",
+        "normalization": "full_rotation",
+        "fullDomainVolume": 25.132741228718345,
+        "metricMaxRelativeError": 2.0561161577137884e-16,
+        "fieldMaxAbsoluteErrors": {
+          "VELX": 0.0,
+          "VELY": 0.0,
+          "VELZ": 0.0,
+          "DIVV": {
+            "allCellsBoundaryDiscreteMaxError": 7.216449660063518e-16,
+            "interiorAnalyticMaxError": 7.216449660063518e-16
+          },
+          "VORT": {
+            "allCellsBoundaryDiscreteMaxError": 1.1102230246251565e-16,
+            "interiorAnalyticMaxError": 1.1102230246251565e-16
+          }
+        },
+        "publication": "checked-close-atomic-replace"
+      }
+    ],
+    "limitations": [
+      "No public RZ capability",
+      "No RZ Viewer support",
+      "No gravity or angular-momentum transfer acceptance",
+      "No CUDA"
+    ]
+  },
+  "readerGate": {
+    "status": "PASS",
+    "cartesianMetadata": "accepted",
+    "internalRzMetadata": "explicitly rejected",
+    "errorCode": "WORKER_FAILED",
+    "diagnostic": "Unsupported candidate native geometry.",
+    "fileHashesUnchanged": true,
+    "scope": "Current production isolated reader capability gate; not RZ Viewer or science acceptance"
+  },
+  "publicationRegression": {
+    "test": "plotfile_publication",
+    "status": "PASS",
+    "total": 1
+  },
+  "firstReadbackFailure": "Applied continuum derivative at outflow boundary; retained failure, corrected independent boundary stencil, arithmetic gate unchanged",
+  "rawEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-driver-plot-20261004",
+  "notComplete": [
+    "Main ARCH rebuilt for current IO change",
+    "Public RZ",
+    "RZ Viewer",
+    "Evolved RZ/AMR/gravity",
+    "CUDA",
+    "Owner scientific acceptance"
+  ]
+}

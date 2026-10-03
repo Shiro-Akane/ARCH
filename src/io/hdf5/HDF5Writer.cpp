@@ -207,8 +207,13 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::map<std::string, std::vector<double>>& data_map,
                          const PlotNativeGrid* native_grid,
                          const PlotSourceIdentity* source_identity,
-                         const std::map<std::string, PlotFieldMetadata>* field_metadata)
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata,
+                         GridMetrics::GeometrySemantics semantics)
 {
+    const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if ((semantics != GridMetrics::GeometrySemantics::Existing && !rz)
+        || (rz && (dim != 2 || geom != "cylindrical")))
+        throw std::invalid_argument("Unsupported Plotfile geometry profile.");
     if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
         || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
         throw std::invalid_argument("Invalid plotfile dimensions/time/fields.");
@@ -225,7 +230,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         if (name.empty() || name.find('/') != std::string::npos || buffer.size() != cells)
             throw std::invalid_argument("Invalid plotfile field name/length.");
     if (native_grid) {
-        if (geom != "cartesian" || dim > 2 || native_grid->cell_measure.size() != cells)
+        if ((!rz && (geom != "cartesian" || dim > 2)) || native_grid->cell_measure.size() != cells)
             throw std::invalid_argument("Invalid candidate native grid geometry/length.");
         for (size_t axis = 0; axis < 3; ++axis) {
             if (native_grid->lower[axis].size() != cells
@@ -235,13 +240,14 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             for (size_t cell = 0; cell < cells; ++cell) {
                 double lo = native_grid->lower[axis][cell], hi = native_grid->upper[axis][cell];
                 if (!std::isfinite(lo) || !std::isfinite(hi)
+                    || (rz && axis == 0 && lo < 0.)
                     || (axis < static_cast<size_t>(dim) ? hi <= lo : lo != 0. || hi != 0.))
                     throw std::invalid_argument("Invalid native cell bounds.");
             }
         }
-        if ((native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
-            && (native_grid->measure_unit!=(dim==1 ? "cm" : "cm^2")
-                || native_grid->normalization!=(dim==1 ? "per_unit_transverse_area" : "per_unit_transverse_length")))
+        if ((rz || native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
+            && (native_grid->measure_unit!=(rz ? "cm^3" : dim==1 ? "cm" : "cm^2")
+                || native_grid->normalization!=(rz ? "full_rotation" : dim==1 ? "per_unit_transverse_area" : "per_unit_transverse_length")))
             throw std::invalid_argument("Invalid native measure declaration.");
         for (double measure : native_grid->cell_measure)
             if (!std::isfinite(measure) || measure <= 0.)
@@ -315,6 +321,10 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         file.createAttribute("time", current_time);
         file.createAttribute("dim", dim);
         file.createAttribute("geometry", geom);
+        if (rz) {
+            file.createAttribute("geometry_semantics_revision",1);
+            file.createAttribute("geometry_chart",std::string("axisymmetric-rz"));
+        }
         file.createAttribute("time_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "s" : "unknown"));
 
         {
@@ -382,14 +392,20 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
 
         if (native_grid) {
             Group native = file.createGroup("NativeGrid");
-            native.createAttribute("version", std::string("candidate-cartesian-1"));
+            native.createAttribute("version", std::string(rz ? "candidate-axisymmetric-rz-1" : "candidate-cartesian-1"));
+            if (rz) {
+                native.createAttribute("x1_axis",std::string("r_cy"));
+                native.createAttribute("x2_axis",std::string("z_cy"));
+                native.createAttribute("x3_axis",std::string("inactive"));
+                native.createAttribute("native_coordinate_unit",std::string("cm"));
+            }
             native.createAttribute("centering", std::string("cell"));
             native.createAttribute("ghost_cells", 0);
             native.createAttribute("block_kind", std::string("active-leaf"));
             native.createAttribute("center_basis", std::string("cartesian"));
             native.createAttribute("measure_source", std::string("GridMetrics::CellVolume"));
             native.createAttribute("measure_convention",
-                std::string("active-coordinate-product; inactive-measures-omitted"));
+                std::string(rz ? "full-rotation-axisymmetric-ring" : "active-coordinate-product; inactive-measures-omitted"));
             native.createAttribute("measure_unit", native_grid->measure_unit);
             native.createAttribute("measure_normalization", native_grid->normalization);
             native.createAttribute("logical_identity",

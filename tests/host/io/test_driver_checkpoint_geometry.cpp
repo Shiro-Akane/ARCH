@@ -21,13 +21,15 @@ int main(int argc,char** argv) {
         config.grid.dim=rz?2:1;config.grid.geometry=rz?"cylindrical":"cartesian";
         config.grid.nblockx1=1;config.grid.nblockx2=rz?1:0;config.grid.nblockx3=0;
         config.grid.x1_min=0.;config.grid.x1_max=1.;
-        config.grid.x2_min=0.;config.grid.x2_max=1.;
+        config.grid.x2_min=rz?-4.:0.;config.grid.x2_max=rz?4.:1.;
         config.grid.x1l_boundary_type="outflow";config.grid.x1r_boundary_type="outflow";
         config.grid.x2l_boundary_type="outflow";config.grid.x2r_boundary_type="outflow";
         config.amr.lrefinemin=0;config.amr.lrefinemax=0;
         config.io.out_dir=(root/(rz?"rz":"cartesian")).string();config.io.base_name="fixture";
         SpeciesManager species;species.add_species("fixture-gas",1.,1.,1.4,1.);
-        amr::AMRControl control(4,config.grid.dim);control.tree->InitRootGrid(config,1);
+        const auto semantics=rz?GridMetrics::GeometrySemantics::AxisymmetricRz:
+                                 GridMetrics::GeometrySemantics::Existing;
+        amr::AMRControl control(4,config.grid.dim);control.tree->InitRootGrid(config,1,semantics);
         const double fractions[]={1.};
         for(int id:control.tree->GetActiveBlocks()){
             auto& f=control.pool->GetBlock(id).fluid_state;
@@ -39,8 +41,6 @@ int main(int argc,char** argv) {
         RunState start;start.chk_idx=7;start.plt_idx=11;
         SimulationController counters(config,start);
         counters.repairs.reset(species.count());
-        const auto semantics=rz?GridMetrics::GeometrySemantics::AxisymmetricRz:
-                                 GridMetrics::GeometrySemantics::Existing;
         BCHandler boundaries(config,semantics);
         arch::driver::DriverRuntime runtime(control,boundaries,config,species,counters);
         runtime.initialize_topology();
@@ -153,6 +153,39 @@ int main(int argc,char** argv) {
         require(read_report()==report,"repair report failure recovery changed ledger serialization");
         require(arch::core::file_sha256(path.string())==original_digest,
                 "measurement failure altered checkpoint");
+        // Analytical nonzero velocity field probes the writer's chart,
+        // component basis and shared diagnostics (not an evolved model).
+        config.io.vars.rho=true;config.io.vars.u=true;
+        config.io.vars.v=true;config.io.vars.w=true;
+        config.io.vars.vort=true;config.io.vars.divv=true;
+        config.io.vars.eng=true;
+        for (int id : control.tree->GetActiveBlocks()) {
+            auto& b=control.pool->GetBlock(id);
+            const int nx=b.grid.stride_y, ny=b.grid.stride_z/nx;
+            const int nz=b.grid.total_size/b.grid.stride_z;
+            for (int k=0;k<nz;++k)
+                for (int j=0;j<ny;++j)
+                    for (int i=0;i<nx;++i) {
+                        const auto pos=b.grid.GetPhysicalCoords(i,j,k,semantics);
+                        const double u=rz?.1*pos.r_cy:0.;
+                        const double v=rz?.2*pos.z_cy:0.;
+                        const double w=rz?.3*pos.r_cy:0.;
+                        b.fluid_state.set(b.grid.GetIndex(i,j,k),FluidVector{2.,2.*u,2.*v,2.*w,100.});
+                    }
+        }
+        output.write_plot();
+        require(counters.plt_file_index==12,"plot success did not advance exactly once");
+        const auto plots_before=std::distance(std::filesystem::directory_iterator(config.io.out_dir),
+                                             std::filesystem::directory_iterator{});
+        bool profile_rejected=false;
+        try {
+            write_plt(control,pressure,temperature,gamma,nullptr,11,0.,config,species,
+                      {},&provenance,{},static_cast<GridMetrics::GeometrySemantics>(99));
+        } catch (const std::invalid_argument&) { profile_rejected=true; }
+        require(profile_rejected,"unknown writer chart accepted");
+        require(plots_before==std::distance(std::filesystem::directory_iterator(config.io.out_dir),
+                                            std::filesystem::directory_iterator{}),
+                "rejected chart created a new file");
         std::cout<<"PASS actual DriverIO "<<(rz?"RZ":"Cartesian")<<" profile/native/controller/rejection/create/retry time=0 step=0\n";
     }
     return 0;

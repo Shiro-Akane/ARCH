@@ -9,6 +9,7 @@
 
 #pragma once
 #include <cstdint>
+#include "grid/GridGeometryView.h"
 #include "io/chk/CheckpointGeometryIdentity.h"
 #include <array>
 #include "data/StateDiagnostics.h"
@@ -83,7 +84,7 @@ struct PlotSourceIdentity {
     std::vector<double> species_A, species_Z, species_gamma, species_Cv;
 };
 
-// Candidate native metadata for Cartesian 1D/2D leaf interiors only.
+// Candidate native metadata for Cartesian 1D/2D or explicit RZ leaf interiors.
 // Cell arrays use exactly the Data field flattening; inactive bounds are zero.
 struct PlotNativeGrid {
     std::array<std::vector<double>,3> lower, upper;
@@ -107,7 +108,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::map<std::string, std::vector<double>>& data_map,
                          const PlotNativeGrid* native_grid = nullptr,
                          const PlotSourceIdentity* source_identity = nullptr,
-                         const std::map<std::string, PlotFieldMetadata>* field_metadata = nullptr);
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata = nullptr,
+                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint);
 CheckpointData read_hdf5_chk_impl(const std::string& filepath);

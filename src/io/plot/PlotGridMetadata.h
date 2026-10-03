@@ -8,15 +8,22 @@
 #include <stdexcept>
 
 namespace io {
-inline bool supports_plot_native_grid(const Grid& grid) {
+inline bool supports_plot_native_grid(const Grid& grid,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) {
+    if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
+        return grid.geometry == "cylindrical" && grid.dim == 2;
+    if (semantics != GridMetrics::GeometrySemantics::Existing)
+        throw std::invalid_argument("Unknown Plotfile geometry profile.");
     return grid.geometry == "cartesian" && (grid.dim == 1 || grid.dim == 2);
 }
 inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
-                                   int i, int j, int k) {
-    if (!supports_plot_native_grid(grid))
+                                   int i, int j, int k,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) {
+    if (!supports_plot_native_grid(grid,semantics))
         throw std::invalid_argument("Candidate native Plotfile geometry unsupported.");
-    output.measure_unit = grid.dim == 1 ? "cm" : "cm^2";
-    output.normalization = grid.dim == 1 ? "per_unit_transverse_area" : "per_unit_transverse_length";
+    const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    output.measure_unit = rz ? "cm^3" : grid.dim == 1 ? "cm" : "cm^2";
+    output.normalization = rz ? "full_rotation" : grid.dim == 1 ? "per_unit_transverse_area" : "per_unit_transverse_length";
     output.lower[0].push_back(grid.GetFacePosL(i));
     output.upper[0].push_back(grid.GetFacePosR(i));
     const double y_lower = grid.dim >= 2 ? grid.x2_min + (j-grid.ng)*grid.dx2 : 0.;
@@ -28,6 +35,6 @@ inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
     output.lower[2].push_back(0.);
     output.upper[2].push_back(0.);
     output.cell_measure.push_back(GridMetrics::CellVolume(
-        GridMetrics::make_geometry_view(grid),i,j,k));
+        GridMetrics::make_geometry_view(grid,semantics),i,j,k));
 }
 } // namespace io

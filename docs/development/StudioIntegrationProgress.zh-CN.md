@@ -2800,3 +2800,12 @@ Cartesian repair报告bytes一致。真实主CLI /dev/full报告flush失败exit1
 即使科学终点已到达也不报成功；不提供科学输出回滚或真实磁盘耗尽承诺。
 主binary已包含修复，公共RZ/CUDA/science/O9 gates保持未完成。
 见CpuDriverDiagnosticsIntegration-20261004报告/Summary。
+
+## 2026-10-04 actual RZ Driver Plotfile
+
+Runtime profile贯通writer/中心/共享diagnostics，二维phi速度保留；
+内部RZ native schema/full-ring cm³及local r/z/phi基底明确。256cells actualDriver写出、
+独立Decimal/native数组读回及旧publication回归PASS；首个boundary oracle错误已保留并修正，
+未改阈值。当前生产Reader明确拒绝尚未支持RZ，不冒充Viewer完成。
+主ARCH未重编、公共RZ/AMR角动量/gravity/evolution/CUDA仍待。
+见RZDriverPlot-20261004报告/Summary，raw本机ignored。

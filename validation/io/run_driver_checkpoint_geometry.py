@@ -17,7 +17,7 @@ sources=["tests/host/io/test_driver_checkpoint_geometry.cpp",
  "src/driver/runtime/DriverRuntime.cpp","src/driver/runtime/DriverBoundary.cpp",
  "src/driver/runtime/DriverRegrid.cpp","src/driver/io/DriverIO.cpp",
  "src/io/chk/ChkIO.cpp","src/io/chk/CheckpointCompatibility.cpp",
- "src/io/hdf5/HDF5Writer.cpp"]
+ "src/io/hdf5/HDF5Writer.cpp","src/io/plot/PlotIO.cpp"]
 objects=[]
 def execute(label,args):
     with (out/(label+".log")).open("w") as log:
