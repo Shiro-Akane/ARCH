@@ -2382,3 +2382,8 @@ ae3af9b7 上实际 DriverIO 的 resolved checkpoint EOS evidence + immutable Con
 ### Plotfile 加载时原文身份
 
 9a34e0db 上复用parser InputText，由成功RuntimeParams Load/LoadText捕获 immutable raw_text，再由PlotIO shared SHA传writer；不重读路径、不归一化raw。注释/CRLF/no-final-LF、独立hashlib参考、parsed同raw不同、磁盘load后替换不改变identity及partial不认证测试通过；配置+IO scoped3/3 PASS、真实PlotIO/DriverIO object与diff PASS。详见 PlotfileRawConfigProgress-20261003.zh-CN.md。binary/build/effective/units/reader显示/真实模型review未完；无simulation/production替换/CUDA/push/tag。
+
+
+### Plotfile 实际运行 binary
+
+5a8bd920 上 shared process digest 经/proc/self/exe按进程缓存并传PlotIO→writer，主executable范围明确；build/source/dependency freshness仍unknown。配置/IO3/3 PASS与PlotIO object编译；独立owned ELF启动后launch路径替换，fresh proc/cached SHA保持原inode，与独立Python hash一致，exit0子进程消失。详见 PlotfileRunningBinaryProgress-20261003.zh-CN.md/Summary。reader/client新身份、effective/units/真实模型/Viewer/review未完成，无 production替换/simulation/CUDA/push/tag。

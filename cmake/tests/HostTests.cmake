@@ -309,7 +309,8 @@ function(arch_register_io_regression_tests)
     set_tests_properties(preview_cellular_2d PROPERTIES TIMEOUT 600)
 
     add_executable(arch_plotfile_publication
-        tests/host/io/test_plotfile_publication.cpp src/io/hdf5/HDF5Writer.cpp)
+        tests/host/io/test_plotfile_publication.cpp src/io/hdf5/HDF5Writer.cpp
+        src/core/files/FileFingerprint.cpp)
     arch_configure_host_test(arch_plotfile_publication
         "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
     target_link_libraries(arch_plotfile_publication PRIVATE

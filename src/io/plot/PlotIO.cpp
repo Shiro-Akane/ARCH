@@ -255,6 +255,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
     }
     io::PlotSourceIdentity source_identity;
+    source_identity.binary_sha256 = arch::core::running_executable_sha256();
     if (const auto input = config.LoadedInput()) {
         source_identity.case_id = input->case_id;
         if (input->raw_text_available)

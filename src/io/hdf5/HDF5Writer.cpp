@@ -256,6 +256,10 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             (id.raw_config_sha256.size()!=64 || !std::all_of(id.raw_config_sha256.begin(),id.raw_config_sha256.end(),
              [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
             throw std::invalid_argument("Invalid raw config digest.");
+        if (!id.binary_sha256.empty() &&
+            (id.binary_sha256.size()!=64 || !std::all_of(id.binary_sha256.begin(),id.binary_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid plot binary digest.");
         if (id.eos_type=="ideal" && (!std::isfinite(id.ideal_gamma) || id.ideal_gamma<=1. || !id.eos_table_sha256.empty()))
             throw std::invalid_argument("Invalid plot ideal EOS identity.");
         if (id.eos_type.empty() && (!id.eos_table_sha256.empty() || !id.species_names.empty()))
@@ -302,6 +306,9 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             identity.createAttribute("scope",std::string("partial"));
             identity.createAttribute("case_id",id.case_id.empty()?std::string("unknown"):id.case_id);
             identity.createAttribute("case_source",id.case_id.empty()?std::string("unknown"):std::string("ConfigurationInput.case_id"));
+            identity.createAttribute("binary_sha256",id.binary_sha256.empty()?std::string("unknown"):id.binary_sha256);
+            identity.createAttribute("binary_source",id.binary_sha256.empty()?std::string("unknown"):std::string("Linux /proc/self/exe"));
+            identity.createAttribute("binary_scope",std::string("main-executable-only"));
             identity.createAttribute("raw_config_sha256",id.raw_config_sha256.empty()?std::string("unknown"):id.raw_config_sha256);
             identity.createAttribute("raw_config_source",id.raw_config_sha256.empty()?std::string("unknown"):
                 std::string("ConfigurationInput.raw_text; exact parser bytes"));
@@ -316,7 +323,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             identity.createAttribute("species_count",static_cast<int>(id.species_names.size()));
             if(!id.species_names.empty())identity.createDataSet("species_names",id.species_names);
             for(const char* name:{"run_id","effective_config_sha256",
-                 "build_id","binary_sha256","source_git_head","eos_unit_system"})
+                 "build_id","source_git_head","eos_unit_system"})
                 identity.createAttribute(name,std::string("unknown"));
         }
 

@@ -1,3 +1,4 @@
+#include "core/files/FileFingerprint.h"
 #include "io/hdf5/HDF5Writer.h"
 #include "io/plot/PlotGridMetadata.h"
 #include <highfive/H5File.hpp>
@@ -10,6 +11,15 @@
 void require(bool b, const char* m) { if (!b) throw std::runtime_error(m); }
 int main(int argc, char** argv) {
  try {
+    if(argc==2 && std::string(argv[1])=="--fingerprint-pause") {
+        const auto expected=arch::core::running_executable_sha256();
+        std::cout<<"READY "<<expected<<std::endl;
+        std::string resume;std::getline(std::cin,resume);
+        require(arch::core::file_sha256("/proc/self/exe")==expected,"running inode changed with launch path");
+        require(arch::core::running_executable_sha256()==expected,"cached running digest changed");
+        std::cout<<"PASS "<<expected<<std::endl;
+        return 0;
+    }
     require(argc == 2, "fixture directory required");
     std::filesystem::path root(argv[1]);
     std::filesystem::create_directories(root);
@@ -48,6 +58,7 @@ int main(int argc, char** argv) {
         native_dims.push_back(nx);
         auto path=root/("native-"+std::to_string(dimension)+".h5");
         io::PlotSourceIdentity identity;
+        identity.binary_sha256=arch::core::running_executable_sha256();
         identity.raw_config_sha256="ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
         identity.case_id="Sod"; identity.eos_type="ideal"; identity.ideal_gamma=1.4;
         identity.species_names={"test-species"};
@@ -61,7 +72,7 @@ int main(int argc, char** argv) {
             f.getGroup("SourceIdentity").getAttribute("case_id").read(id);
             require(id=="Sod","case source evidence missing");
             f.getGroup("SourceIdentity").getAttribute("binary_sha256").read(id);
-            require(id=="unknown","binary identity fabricated");
+            require(id==identity.binary_sha256,"running binary identity differs");
             f.getGroup("SourceIdentity").getAttribute("raw_config_sha256").read(id);
             require(id==identity.raw_config_sha256,"captured raw digest changed");
             double gamma=0.;
