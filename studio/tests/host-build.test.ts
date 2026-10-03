@@ -125,22 +125,31 @@ test('GNU subprocess/specs drift invalidates persisted Build identity and legacy
   await writeFile(reply+'/toolchains.json',JSON.stringify({kind:'toolchains',version:{major:1},toolchains:[
    {language:'CXX',compiler:{path:'/usr/bin/c++',id:'GNU',version:'13.3.0'}}
   ]}));
-  await writeFile(reply+'/index-fixture.json',JSON.stringify({objects:[{kind:'toolchains',jsonFile:'toolchains.json'}]}));
+  await writeFile(reply+'/index-fixture.json',JSON.stringify({objects:[{kind:'toolchains',jsonFile:'toolchains.json'},{kind:'codemodel',jsonFile:'codemodel.json'}]}));
+  await writeFile(reply+'/codemodel.json',JSON.stringify({kind:'codemodel',version:{major:2},paths:{build:root+'/build'},configurations:[{targets:[{name:'ARCH',jsonFile:'target.json'}]}]}));
+  await writeFile(reply+'/target.json',JSON.stringify({name:'ARCH',type:'EXECUTABLE',link:{language:'CXX',commandFragments:[{role:'flags',fragment:'-fuse-ld=mold'}]}}));
   const profile={...p,compilerDependencyMode:'ninja' as const};
   const runner=new BuildRunner(root,'p',profile,{spawn:fakeSpawn(root)});
   await runner.start('p',profile.id);await finished(runner);
   const manifest=runner.snapshot().lastSuccessfulBuild!;
-  assert.equal(manifest.compilerDrivers?.[0].components?.length,6);
-  assert.equal(manifest.preBuildCompilerDrivers?.[0].components?.length,6);
+  assert.equal(manifest.compilerDrivers?.[0].components?.length,7);
+  assert.equal(manifest.preBuildCompilerDrivers?.[0].components?.length,7);
   assert.equal(manifest.compilerDriversStableDuringBuild,true);
-  for(const role of ['cc1plus','ld','liblto_plugin.so']){
+  const legacyLinker=structuredClone(manifest);
+  legacyLinker.compilerDrivers![0].components=legacyLinker.compilerDrivers![0].components!.filter(c=>!c.role.startsWith('selected-'));
+  await saveManifest(profile,legacyLinker);
+  const legacyState=await new BuildRunner(root,'p',profile).initialize();
+  assert.equal(legacyState.binaryState,'freshness-unknown');
+  assert.match(legacyState.freshnessReason,/Compiler toolchain identity/);
+  assert.equal(legacyState.changedInputs.length,0);
+  for(const role of ['cc1plus','ld','liblto_plugin.so','selected-ld.mold']){
    const mutated=structuredClone(manifest);
    mutated.compilerDrivers![0].components!.find(c=>c.role===role)!.sha256='a'.repeat(64);
    await saveManifest(profile,mutated);
    const reopened=new BuildRunner(root,'p',profile);
    const state=await reopened.initialize();
    assert.equal(state.binaryState,'needs-build');
-   assert.ok(state.changedInputs.some(input=>input.includes(role==='ld'?'ld':role)));
+   assert.ok(state.changedInputs.includes(manifest.compilerDrivers![0].components!.find(c=>c.role===role)!.path));
   }
   const specs=structuredClone(manifest);specs.compilerDrivers![0].specsSha256='a'.repeat(64);
   await saveManifest(profile,specs);

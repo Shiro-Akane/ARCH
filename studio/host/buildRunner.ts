@@ -1,6 +1,6 @@
 import {mkdir,stat} from 'node:fs/promises';
 import {checkedPath} from './files.ts';
-import {readBuildToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs} from './cmakeEvidence.ts';
+import {readBuildToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs,HOST_BUILD_PATH} from './cmakeEvidence.ts';
 import {fingerprintLinkDependencies,changedLinkInputs} from './linkDependencies.ts';
 import {fingerprintNinjaDependencies,sameCompilerInputs} from './ninjaDependencies.ts';
 import {inputs,inspect,gitIdentity,makeManifest,saveManifest,loadManifest,same} from './buildManifest.ts';
@@ -77,6 +77,7 @@ export class BuildRunner {
          const prior=new Map(old.components.map(c=>[c.role,c]));
          for(const component of driver.components){
           const saved=prior.get(component.role);
+          if(component.role.startsWith('selected-')&&!saved){toolchainUnknown=true;continue;}
           if(!saved||saved.path!==component.path||saved.resolvedPath!==component.resolvedPath||saved.sha256!==component.sha256||saved.size!==component.size)this.current.changedInputs.push(component.path);
           prior.delete(component.role);
          }
@@ -141,7 +142,7 @@ export class BuildRunner {
    const compilerBefore=this.profile.compilerDependencyMode==='ninja'?await fingerprintNinjaDependencies(this.root+'/'+this.profile.buildDirRelative).catch(()=>undefined):undefined;
    const toolchainBefore=this.profile.compilerDependencyMode==='ninja'?(await readBuildToolchainEvidence(this.root+'/'+this.profile.buildDirRelative).catch(()=>undefined))?.compilers:undefined;
    await new Promise<void>((resolve,reject)=>{
-    const child=(this.hooks.spawn??spawn)(this.hooks.cmake??CMAKE,['--build',this.root+'/'+this.profile.buildDirRelative,'--target',this.profile.target,'--parallel',String(this.profile.parallelism)],{cwd:this.root,shell:false,env:{PATH:'/usr/local/cuda-12.8/bin:/usr/local/bin:/usr/bin:/bin',HOME:process.env.HOME??'/home/arch',LANG:'C.UTF-8',...(retainedTmp?{TMPDIR:retainedTmp}:{})},stdio:['ignore','pipe','pipe']});this.child=child;
+    const child=(this.hooks.spawn??spawn)(this.hooks.cmake??CMAKE,['--build',this.root+'/'+this.profile.buildDirRelative,'--target',this.profile.target,'--parallel',String(this.profile.parallelism)],{cwd:this.root,shell:false,env:{PATH:HOST_BUILD_PATH,HOME:process.env.HOME??'/home/arch',LANG:'C.UTF-8',...(retainedTmp?{TMPDIR:retainedTmp}:{})},stdio:['ignore','pipe','pipe']});this.child=child;
     for(const [stream,kind] of [[child.stdout,'stdout'],[child.stderr,'stderr']] as const){const decoder=new StringDecoder('utf8');stream?.on('data',(chunk:Buffer)=>this.log?.append(kind,decoder.write(chunk)));stream?.on('end',()=>{const tail=decoder.end();if(tail)this.log?.append(kind,tail);});}
     child.once('error',()=>reject(new Error('Build process could not start.')));child.once('close',(code,signal)=>{result.exitCode=code;result.signal=signal;if(code===0)resolve();else reject(new Error('Build exited unsuccessfully.'));});
    });const manifest=await makeManifest(this.profile,this.projectId,id,startedAt,before,preBinary,git,compilerBefore,toolchainBefore,configurationBefore);await saveManifest(this.profile,manifest);this.current.lastSuccessfulBuild=manifest;result.state='succeeded';

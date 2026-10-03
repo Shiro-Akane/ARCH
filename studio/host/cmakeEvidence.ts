@@ -52,32 +52,34 @@ export async function readCMakeConfigurationEvidence(sourceRoot:string,buildDire
   missingCoverage:['compiler-includes','link-inputs','toolchain-identity']};
 }
 
+export const HOST_BUILD_PATH='/usr/local/cuda-12.8/bin:/usr/local/bin:/usr/bin:/bin';
 type CompilerProbe=(compiler:string,argument:string)=>Promise<string>;
 const compilerProbe:CompilerProbe=async(compiler,argument)=>{
  const result=await promisify(execFile)(compiler,[argument],{
-  env:{PATH:'/usr/bin:/bin',LC_ALL:'C'},timeout:5000,maxBuffer:1024*1024,
+  env:{PATH:HOST_BUILD_PATH,LC_ALL:'C'},timeout:5000,maxBuffer:1024*1024,
  });
  return result.stdout;
 };
-async function gnuComponents(compiler:string,language:string,probe:CompilerProbe){
+async function gnuComponents(compiler:string,language:string,probe:CompilerProbe,selectedProgram?:string){
  const components:{role:string;path:string;resolvedPath:string;sha256:string;size:number}[]=[];
  const query=async(argument:string)=>{
   const value=(await probe(compiler,argument)).trim();
   if(!value||value.includes('\0')||value.includes('\n'))throw new Error('Invalid GNU component reply.');
   return value;
  };
- for(const role of [language==='CXX'?'cc1plus':'cc1','collect2','as','ld','lto1','liblto_plugin.so']){
-  const value=await query((role==='liblto_plugin.so'?'-print-file-name=':'-print-prog-name=')+role);
+ for(const role of [language==='CXX'?'cc1plus':'cc1','collect2','as','ld','lto1','liblto_plugin.so',...(selectedProgram?['selected-'+selectedProgram]:[])]){
+  const program=role.startsWith('selected-')?role.slice('selected-'.length):role;
+  const value=await query((role==='liblto_plugin.so'?'-print-file-name=':'-print-prog-name=')+program);
   // Bare tool names are resolved only through the same fixed Host PATH used for the probe.
   let filename=value;
   if(!path.isAbsolute(value)){
-   if(path.basename(value)!==value||role==='liblto_plugin.so')throw new Error('GNU component cannot be resolved: '+role);
+   if(path.basename(value)!==value||role==='liblto_plugin.so')throw new Error('GNU component cannot be resolved: '+program);
    filename='';
-   for(const dir of ['/usr/bin','/bin']){
+   for(const dir of HOST_BUILD_PATH.split(':')){
     const candidate=path.join(dir,value);
     try{await stat(candidate);filename=candidate;break;}catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;}
    }
-   if(!filename)throw new Error('GNU component unavailable: '+role);
+   if(!filename)throw new Error('GNU component unavailable: '+program);
   }
   const resolvedPath=await realpath(filename),content=await boundedFile(resolvedPath,128*1024*1024);
   if(await realpath(filename)!==resolvedPath)throw new Error('GNU component target changed while reading.');
@@ -93,7 +95,7 @@ async function gnuComponents(compiler:string,language:string,probe:CompilerProbe
  return {components,specsSha256:createHash('sha256').update(specs).digest('hex')};
 }
 /** Host-owned GNU subprocess identities; implicit libraries and per-invocation overrides remain separate evidence. */
-export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile:string,probe:CompilerProbe=compilerProbe){
+export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile:string,probe:CompilerProbe=compilerProbe,selectedProgram?:string){
  const build=await realpath(buildDirectory),reply=await realpath(replyFile);
  if(path.dirname(reply)!==path.join(build,'.cmake/api/v1/reply'))throw new Error('Toolchain reply outside selected build.');
  const bytes=await boundedFile(reply,8*1024*1024),data:unknown=JSON.parse(bytes.toString('utf8'));
@@ -106,7 +108,7 @@ export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile
   const resolvedPath=await realpath(entry.compiler.path),content=await boundedFile(resolvedPath,128*1024*1024);
   compilers.push({language:entry.language,path:entry.compiler.path,resolvedPath,id:entry.compiler.id,version:entry.compiler.version,
    sha256:createHash('sha256').update(content).digest('hex'),size:content.length,
-   ...(entry.compiler.id==='GNU'&&['C','CXX'].includes(entry.language)?await gnuComponents(entry.compiler.path,entry.language,probe):{})});
+   ...(entry.compiler.id==='GNU'&&['C','CXX'].includes(entry.language)?await gnuComponents(entry.compiler.path,entry.language,probe,entry.language==='CXX'?selectedProgram:undefined):{})});
  }
  return {kind:'cmake-compiler-driver-identities' as const,replySha256:createHash('sha256').update(bytes).digest('hex'),compilers,
   dependenciesComplete:false as const,missingCoverage:['compiler-subprograms','linker','implicit-libraries']};
@@ -126,7 +128,12 @@ async function buildReply(buildDirectory:string,kind:string){
 
 export async function readBuildToolchainEvidence(buildDirectory:string){
  const {build,replyFile}=await buildReply(buildDirectory,'toolchains');
- return readCMakeToolchainEvidence(build,replyFile);
+ const data=await readCMakeToolchainEvidence(build,replyFile);
+ if(data.compilers.some(c=>c.id==='GNU'&&c.language==='CXX')){
+  const selection=await readBuildLinkerSelection(build);
+  return readCMakeToolchainEvidence(build,replyFile,compilerProbe,selection.programName);
+ }
+ return data;
 }
 export async function readBuildConfigurationInputs(sourceRoot:string,buildDirectory:string){
  const {build,replyFile}=await buildReply(buildDirectory,'cmakeFiles');
