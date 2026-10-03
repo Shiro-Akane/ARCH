@@ -3018,3 +3018,11 @@ Viewer 贯通；旧文件兼容，非法/不完整 reason 拒绝。真实 C++ IO
 主 ARCH ELF 未重编译；没有新 simulation 或原始数据提交。
 完整来源身份、独立科学 review、大文件成本及联合目标仍未完成。
 具体范围、失败记录与处理后摘要见 PlotfileIdentityReasons-20261004.zh-CN.md。
+
+## 2026-10-04 Plotfile candidate FP64 Reader finding
+
+反例证明候选原生文件曾接受 FP32 场。现在全部 field 和中心坐标强制 FP64，
+覆盖 metadata/slice/overview/point/isolated worker；legacy FP32 结构识别保留。
+定向24/24、完整329/329、lint/typecheck/build PASS；既有真实 Sod/Cellular
+37字段文件读回兼容且SHA不变。无Core Build/新simulation。
+限制与未完成项见 PlotfileReaderFp64Contract-20261004.zh-CN.md。

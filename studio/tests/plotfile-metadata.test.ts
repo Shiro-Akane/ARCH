@@ -88,3 +88,14 @@ test('writer partial naming is rejected before HDF5 access, even with readable l
   await assert.rejects(inspectPlotfileMetadata(temporary),/not a published Plotfile/);
  });
 });
+
+test('legacy FP32 structure remains readable without acquiring the candidate FP64 contract',async()=>{
+ await fixture(async path=>{
+  const result=await inspectPlotfileMetadata(path);
+  assert.ok(result.fields.some(field=>field.name==='PRES'));
+  assert.equal(result.candidateNativeGrid,null);
+  assert.equal(result.completion.state,'unknown');
+  assert.equal(result.renderEligible,false);
+ },f=>(f.get('Data') as InstanceType<typeof h5.Group>).create_dataset({
+  name:'PRES',data:new Float32Array(30),shape:[2,3,5]}));
+});

@@ -410,6 +410,17 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    }
    const candidateSourceIdentity=sourceEvidence(file);
    const candidateNativeGrid=nativeHeader(file,shape,geometry);
+   if(candidateNativeGrid){
+    // Candidate writer contract preserves raw binary64 fields and centers.
+    // Legacy structure inspection has no such precision claim.
+    for(const [g,name,label] of [
+     ...names.map(name=>[data,name,'field '+name] as const),
+     ...['x','y','z'].map(name=>[grid,name,'coordinate '+name] as const)]){
+     const d=dataset(g,name);
+     if(d.metadata.type!==1||d.metadata.size!==8)
+      throw Error('Candidate native '+label+' requires FP64.');
+    }
+   }
    if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request,candidateNativeGrid);}
    if(pointRequest){
     if(!candidateNativeGrid||!names.includes(pointRequest.field))throw Error('Point read requires candidate native Cartesian 1D/2D bounds and a stored field.');

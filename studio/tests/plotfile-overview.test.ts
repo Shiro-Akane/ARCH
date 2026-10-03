@@ -42,7 +42,8 @@ import {join} from 'node:path';
 import {readPlotfileOverviewIsolated,inspectPlotfileMetadataIsolated,PlotfileReadError} from '../host/isolatedPlotfileMetadata.ts';
 import {readProjectPlotfileOverview} from '../host/projectPlotfileMetadata.ts';
 import {validatePlotfileOverview} from '../src/host/plotfileAudit.ts';
-async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2,blocks=2,overlap=false){
+async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2,blocks=2,overlap=false,
+ storage:'fp64'|'fp32-field'|'integer-field'|'fp32-coordinate'='fp64'){
  await h5.ready;const root=await mkdtemp(join(tmpdir(),'arch-overview-')),path=join(root,'plot.h5');
  try{
   const cells=blocks*nx*ny,blockCells=nx*ny;
@@ -62,11 +63,14 @@ async function withNative(run:(path:string,root:string)=>Promise<void>,nx=3,ny=2
     native.create_dataset({name:'x'+axis+'_lower',data:lower});
     native.create_dataset({name:'x'+axis+'_upper',data:Float64Array.from(lower,v=>axis===3?0:v+1)});
     native.create_dataset({name:'logical_x'+axis,data:Uint32Array.from({length:blocks},(_,i)=>axis===1?i:0)});
-    grid.create_dataset({name:['x','y','z'][axis-1],data:Float64Array.from(lower,v=>axis===3?0:v+.5)});
+    grid.create_dataset({name:['x','y','z'][axis-1],data:storage==='fp32-coordinate'&&axis===1?
+     Float32Array.from(lower,v=>v+.5):Float64Array.from(lower,v=>axis===3?0:v+.5)});
    }
    native.create_dataset({name:'cell_measure',data:new Float64Array(cells).fill(1)});
    for(const name of ['level','morton'])grid.create_dataset({name,data:Int32Array.from({length:blocks},(_,i)=>name==='level'?0:i)});
-   f.create_group('Data').create_dataset({name:'DENS',data:Float64Array.from({length:cells},(_,i)=>i),shape:[blocks,ny,nx]});
+   const values=storage==='fp32-field'?Float32Array.from({length:cells},(_,i)=>i):
+    storage==='integer-field'?Int32Array.from({length:cells},(_,i)=>i):Float64Array.from({length:cells},(_,i)=>i);
+   f.create_group('Data').create_dataset({name:'DENS',data:values,shape:[blocks,ny,nx]});
   }finally{f.close();}
   await run(path,root);
  }finally{await rm(root,{recursive:true,force:true});}
@@ -217,4 +221,21 @@ test('viewport LOD clips raw native contributions but preserves complete stored 
   assert.deepEqual(outside.overview?.values,[null,null,null,null]);
   assert.equal(outside.overview?.scannedCells,12);
  });
+});
+
+test('candidate native fields and center coordinates must be FP64 on every read path',async()=>{
+ for(const storage of ['fp32-field','integer-field','fp32-coordinate'] as const)
+  await withNative(async path=>{
+   const before=await readFile(path);
+   const {inspectPlotfileMetadata,readPlotfileFieldSlice}=await import('../host/plotfileMetadata.ts');
+   await assert.rejects(inspectPlotfileMetadata(path),/Candidate native .* requires FP64/);
+   await assert.rejects(readPlotfileFieldSlice(path,{field:'DENS',block:0,start:[0,0],count:[1,1]}),
+    /Candidate native .* requires FP64/);
+   await assert.rejects(readPlotfileOverview(path,{field:'DENS',width:6,height:2}),
+    /Candidate native .* requires FP64/);
+   await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[.5,.5]}),
+    /Candidate native .* requires FP64/);
+   await assert.rejects(inspectPlotfileMetadataIsolated(path),/Candidate native .* requires FP64/);
+   assert.deepEqual(await readFile(path),before);
+  },3,2,2,false,storage);
 });
