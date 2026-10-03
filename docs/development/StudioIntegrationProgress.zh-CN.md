@@ -2227,3 +2227,7 @@ production独立窗口已完成32³真实场、z/x切片、原始sample1807、�
 ### 球坐标非立方体桌面代表
 
 865f49bf production Linux独立窗口实测Nx5/Ny3/Nz2→shape[2,3,5]、30样本；phi/r切面分别5×3和3×2，Core原生cm/rad单位、sample12原值、根AMR叠加及关闭exit0通过。轮滚未发生可见缩放，不计PASS；完整矩阵/缩放/取消/非空间模型桌面仍待完成。证据见FullModelSphericalDesktopProgress.zh-CN.md。
+
+### O7.1 实施前调用映射
+
+已按执行细则核对共享数学/EOS/PhysicalSpacing、AMR flag与候选父态、Driver接受步、plot/API/Studio和CUDA消费者，形成O7_1_JENS_IMPLEMENTATION_MAP.zh-CN.md。当前JENS仍unavailable，未实施或运行演化；一般EOS/父态/独立预算批准ref待提供。前序桌面出口仍待完成。
