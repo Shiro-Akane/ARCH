@@ -1,3 +1,5 @@
+import {reserveRunOutputs} from './runOutput.ts';
+import type {RunOutputDirectory} from './runOutput.ts';
 import {checkpointFilesystemIdentity} from './runCheckpoint.ts';
 import type {RunCheckpoint} from './runCheckpoint.ts';
 import {spawn} from 'node:child_process';
@@ -14,7 +16,7 @@ export interface RunJob {
  binaryRelativePath:string;binaryFingerprint:FileFingerprint;
  configRelativePath:string;configFingerprint:FileFingerprint;
  inputRelativePath:string;confirmedBinary:'compiled-version';
- createdAt:string;checkpoint?:RunCheckpoint;
+ createdAt:string;checkpoint?:RunCheckpoint;outputDirectories:RunOutputDirectory[];
 }
 import type {RunState} from '../src/host/runContracts.ts';
 export type {RunState} from '../src/host/runContracts.ts';
@@ -62,6 +64,9 @@ function validateJob(job:RunJob){
     !job.checkpoint.filesystemIdentity||job.checkpoint.filesystemIdentity.length>16384))
   throw new Error('Restart checkpoint handoff identity is required.');
  if(job.mode==='run'&&job.checkpoint)throw new Error('Unexpected checkpoint identity in Run.');
+ if(!Array.isArray(job.outputDirectories)||job.outputDirectories.length>16||job.outputDirectories.some(d=>!d||
+  typeof d.path!=='string'||typeof d.canonicalPath!=='string'||!path.isAbsolute(d.path)||!path.isAbsolute(d.canonicalPath)||
+  d.path.includes('\0')||d.canonicalPath.includes('\0')))throw new Error('Confirmed output directory identity is required; prepare again.');
  validateFingerprint(job.binaryFingerprint);validateFingerprint(job.configFingerprint);
 }
 /** Runs in the independent terminal, never in the Studio/Preview process group. */
@@ -76,6 +81,7 @@ export async function executeRun(job:RunJob,directory:string):Promise<RunState>{
  const claim=await open(path.join(directory,'worker.lock'),'wx',0o600);await claim.close();
  await store(directory,state);
  let owned:ChildProcess|undefined;
+ let outputReservations:Awaited<ReturnType<typeof reserveRunOutputs>>=[];
  let output:Awaited<ReturnType<typeof open>>|undefined,tail:Awaited<ReturnType<typeof open>>|undefined;
  try{
   if((await readFile(directory+'/stop-request','utf8').catch(()=>'' )).trim()===job.runId){
@@ -95,6 +101,7 @@ export async function executeRun(job:RunJob,directory:string):Promise<RunState>{
    try{identity=await checkpointFilesystemIdentity(job.checkpoint.path);}catch{/* reject unreadable checkpoint */}
    if(identity!==job.checkpoint.filesystemIdentity)throw new Error('Restart checkpoint changed after confirmation; prepare again.');
   }
+  outputReservations=await reserveRunOutputs(job.outputDirectories);
   const executable=await checkedPath(job.projectRoot,job.binaryRelativePath);
   const inputPath=await checkedPath(job.projectRoot,job.inputRelativePath);
   output=await open(path.join(directory,'console.log'),'wx',0o600);
@@ -102,7 +109,7 @@ export async function executeRun(job:RunJob,directory:string):Promise<RunState>{
   // Direct file descriptors avoid a broken GUI/terminal stdout pipe killing Core.
   const child=spawn(executable,[job.caseId,inputPath],{cwd:job.projectRoot,detached:true,shell:false,
    env:{PATH:'/usr/bin:/bin',HOME:process.env.HOME??'',LANG:'C.UTF-8'},
-   stdio:['ignore',output.fd,output.fd]});
+   stdio:['ignore',output.fd,output.fd,...outputReservations.map(file=>file.fd)]});
   owned=child;
   let ended=false,spawnError:Error|undefined,code:number|null=null,signal:NodeJS.Signals|null=null;
   child.once('error',e=>{spawnError=e;ended=true;});
@@ -153,6 +160,7 @@ export async function executeRun(job:RunJob,directory:string):Promise<RunState>{
  }
  finally{
   await tail?.close();await output?.close();
+  await Promise.all(outputReservations.map(file=>file.close()));
   state.finishedAt=new Date().toISOString();await store(directory,state);
  }
  return state;

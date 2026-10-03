@@ -26,7 +26,7 @@ async function setup(script:string){
  const job:RunJob={version:'1',runId,projectRoot:root,caseId:'Sod',mode:'run',binaryRelativePath:'ARCH',
   binaryFingerprint:{sha256:binary.sha256!,size:binary.size!,modifiedTime:binary.modifiedTime!},
   configRelativePath:'saved.par',configFingerprint:input.fingerprint,inputRelativePath:relative+'/input.par',
-  confirmedBinary:'compiled-version',createdAt:new Date().toISOString()};
+  confirmedBinary:'compiled-version',createdAt:new Date().toISOString(),outputDirectories:[]};
  await writeFile(directory+'/job.json',JSON.stringify(job));
  return {root,directory,job};
 }
@@ -144,5 +144,44 @@ test('Restart worker rejects missing or changed checkpoint handoff before Core s
    if(mutation==='changed'){assert.equal(state.state,'failed');assert.match(state.error!,/checkpoint changed/);assert.equal(state.processId,undefined);}
    else{assert.equal(state.state,'succeeded');assert.ok(state.processId);}
   }finally{await rm(root,{recursive:true,force:true});}
+ }
+});
+
+
+test('output reservation survives worker exit through the inherited Core descriptor',async()=>{
+ const first=await setup('#!/bin/sh\nwhile [ ! -f "$0.release" ]; do /usr/bin/sleep 0.05; done\n');
+ const shared=first.root+'/output',created=[first];
+ let core:number|undefined;
+ let child:ReturnType<typeof spawn>|undefined;
+ try{
+  first.job.outputDirectories=[{path:shared,canonicalPath:shared}];
+  await writeFile(first.directory+'/job.json',JSON.stringify(first.job));
+  child=spawn(process.execPath,[worker,first.directory],{stdio:'ignore'});
+  const closed=new Promise<void>(resolve=>child!.once('close',()=>resolve()));
+  core=(await waitState(first.directory,s=>s.state==='running')).processId;assert.ok(core);
+  // The launcher/Host is already absent; now even the worker is killed.
+  child.kill('SIGKILL');await closed;
+  process.kill(core!,0);
+  const contender=await setup('#!/bin/sh\nexit 0\n');created.push(contender);
+  contender.job.outputDirectories=[{path:shared,canonicalPath:shared}];
+  const blocked=await executeRun(contender.job,contender.directory);
+  assert.equal(blocked.state,'failed');assert.match(blocked.error!,/reserved by another/);assert.equal(blocked.processId,undefined);
+  const independent=await setup('#!/bin/sh\nexit 0\n');created.push(independent);
+  independent.job.outputDirectories=[{path:independent.root+'/output',canonicalPath:independent.root+'/output'}];
+  assert.equal((await executeRun(independent.job,independent.directory)).state,'succeeded');
+  await writeFile(first.root+'/ARCH.release','release');
+  const deadline=Date.now()+3000;
+  while(Date.now()<deadline){
+   const stat=await readFile('/proc/'+core+'/stat','utf8').catch(()=>undefined);
+   if(!stat||stat.slice(stat.lastIndexOf(')')+2).startsWith('Z '))break;
+   await new Promise(r=>setTimeout(r,30));
+  }
+  const retry=await setup('#!/bin/sh\nexit 0\n');created.push(retry);
+  retry.job.outputDirectories=[{path:shared,canonicalPath:shared}];
+  assert.equal((await executeRun(retry.job,retry.directory)).state,'succeeded');
+ }finally{
+  child?.kill('SIGKILL');
+  if(core)try{process.kill(-core,'SIGKILL');}catch{/* already exited */}
+  for(const f of created)await rm(f.root,{recursive:true,force:true});
  }
 });

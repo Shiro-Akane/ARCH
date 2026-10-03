@@ -1,3 +1,4 @@
+import {canonicalOutputDirectory} from './runOutput.ts';
 import {checkpointFilesystemIdentity} from './runCheckpoint.ts';
 import {execFile} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
@@ -114,7 +115,10 @@ export class RunPreparationRunner {
     if(!prepared.checkpointIdentity||identity!==prepared.checkpointIdentity)
      throw new BuildError('Restart checkpoint changed after preparation; prepare again.',409);
    }
-   return {plan:structuredClone(plan),configText:saved.text,
+   const outputDirectories=await Promise.all(checks.filter(check=>check.role==='output-directory'&&check.resolvedPath&&check.status==='ok'&&
+    plan.inspection.parameters.find(p=>p.key===check.key)?.applicability.state!=='not-applicable').map(async check=>
+     ({path:check.resolvedPath!,canonicalPath:await canonicalOutputDirectory(check.resolvedPath!)})));
+   return {plan:structuredClone(plan),configText:saved.text,outputDirectories,
     checkpoint:plan.checkpointPath?{path:plan.checkpointPath,filesystemIdentity:prepared.checkpointIdentity!}:undefined};
   }finally{this.active=false;}
  }

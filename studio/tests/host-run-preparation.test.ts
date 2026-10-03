@@ -167,6 +167,8 @@ test('confirmed handoff stores exact bytes, retains status and completes indepen
   }});
   const launched=await run.start({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'});
   assert.equal(await readFile(f.root+'/studio/.local/runs/'+launched.runId+'/input.par','utf8'),await readFile(f.root+'/saved.par','utf8'));
+  const job=JSON.parse(await readFile(f.root+'/studio/.local/runs/'+launched.runId+'/job.json','utf8'));
+  assert.ok(job.outputDirectories.length>0);assert.ok(job.outputDirectories.every((p:{path:string;canonicalPath:string})=>path.isAbsolute(p.path)&&p.canonicalPath===p.path));
   let state=await run.status(launched.runId);
   for(let n=0;n<50&&!state.finishedAt;n++){await new Promise(r=>setTimeout(r,20));state=await run.status(launched.runId);}
   assert.equal(state.state,'succeeded');assert.equal(state.exitCode,0);

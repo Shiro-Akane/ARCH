@@ -1,3 +1,62 @@
+# ARCH Studio — current Linux/WSL integration
+
+Current scope follows
+[StudioConfigurationHandoff.zh-CN.md](../docs/development/StudioConfigurationHandoff.zh-CN.md).
+Windows adaptation and distribution packages are outside this delivery.
+Earlier checkpoint instructions below are historical, including their model/key
+counts, machine paths and Windows startup commands.
+
+The configuration extension is version 3; schema and registry are read from the
+selected binary. Static editing/inspection is independent of Preview freshness.
+The local CPU Release profile is studio-cpu-release, target ARCH, executable
+build-studio-cpu/bin/ARCH, relative to the selected project. Incomplete dependency
+evidence remains freshness **unknown**, including after a no-work Build.
+
+Linux desktop/arch-studio uses production React assets and a managed local Host.
+Node 24.21.0 / npm 11.19.0 were used for engineering verification. The Linux
+environment needs xterm for the independent Run terminal and /usr/bin/flock
+(from util-linux) for output reservation. Native window/file-dialog UAT remains
+**not passed**: see [WSLg visibility blocker](../docs/development/StudioWslgVisibilityBlocker.md).
+Backend/HTTP evidence and the browser debug view do not replace native UAT.
+
+Configure and Build use Host-owned argv and profiles. Run/Restart use an explicitly
+saved exact input and selected compiled binary, with a separate confirmation;
+they do not claim that an old binary contains current source. Delivered runs have
+persistent job/state/log records and survive Host exit. Stop targets only the
+owned process identity/group. Restart preserves the checkpoint filesystem identity
+through preparation, confirmation and worker handoff; Core checks scientific
+compatibility. This is not an immutable checkpoint handle.
+
+## Run output reservation
+
+The Host records applicable Core-schema output-directory paths from the confirmed
+inspection. The independent worker resolves existing ancestors, refuses changed
+symlink associations and takes nonblocking Linux advisory locks before Core starts.
+Aliases of the same canonical directory share one reservation. Core inherits the
+lock descriptors, so the reservation outlives Host exit and even worker exit while
+Core is still running. Locks release when their last descriptor closes; lock files
+are never unlinked to avoid splitting the inode used by concurrent workers.
+A collision fails before Core starts; choose a distinct output directory and
+prepare/confirm again. Saved .par bytes are never rewritten to choose a directory.
+
+This coordinates Studio-managed runs by the same Linux user using the same canonical
+directory. It does not police external Core launches, nested-directory relationships,
+filesystem remounts or symlink changes after the final check. It does not approve
+overwriting old scientific output. Pending jobs created before output identities
+were recorded must be prepared again; completed history remains readable.
+Full Run engineering checks do not constitute independent scientific acceptance.
+
+Real CPU field/initial AMR remain Sod 1D and CellularDet Cartesian 2D. Registered
+models are not all field-preview supported. Expanded model Preview, plt delivery,
+Jeans/RZ and later CPU/CUDA scientific acceptance remain pending.
+
+See [integration progress](../docs/development/StudioIntegrationProgress.zh-CN.md)
+for exact commits and the separate engineering/scientific/UAT evidence.
+
+---
+
+## Historical checkpoint instructions
+
 # Phase 3A current integration
 
 The current compatibility checkpoint is main-based: Core main

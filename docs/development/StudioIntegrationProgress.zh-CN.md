@@ -1521,3 +1521,11 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - 精简证据 StudioRestartHandoffSummary.json；后处理脚本 studio/scripts/compareRestartCheckpoints.mjs 可复现比较，不含原始数组。H5/checkpoint/运行日志仍留 .local，未上传。本轮仅固定网格CPU续算工程回归，不是独立科学精度、adaptive AMR、CUDA或原生桌面验收。
 - WSLg完整重启仍等用户授权；桌面可见性和原生文件对话框UAT未通过，未进入依赖3C出口的全模型/JENS/RZ实现。
 - 后处理脚本实际读取 retained/new 最终 checkpoint 得到相同结论；新增脚本 lint PASS，git diff --check PASS。未重复运行不受影响的223项完整回归。
+
+### 2026-10-03 — Independent Run output-directory reservation
+
+- 只消费Host确认的Core schema output-directory路径；applicable resolved路径/规范化目录写入job，worker在Core启动前复核并用固定/usr/bin/flock取得nonblocking锁。别名规范化相同目录共用锁，不改.par，不新增浏览器命令/路径控制权。
+- 锁描述符由worker及Core继承：跨Host/project session独立；fixture中worker SIGKILL后存活Core仍持锁，另一个同目录Run失败且无Core PID；不同目录成功，原Core退出后同目录可重新运行。部分多目录锁失败释放已取得锁；dangling/重定向symlink拒绝；preflight不创建scientific output。
+- scoped24/24和完整227/227 npm tests PASS（Host包含其中），lint、tsc/production build PASS。初次lint要求保留cause，修正后输出锁3/3再次通过；完整日志run-output-reservation-regression.log留本地。既有bundle warning未改变。
+- 范围是同Linux用户、Studio管理的相同canonical目录；不声称阻止外部Core/nested-directory/remount/最后检查后的symlink竞态，也不代表允许覆盖历史输出。旧pending job缺output身份必须重新准备；历史状态读取保持。原生WSLg窗口/文件选择器UAT仍未通过，完整WSL重启等待授权。
+- README顶部更新为当前Linux/WSL实际状态，旧Phase3A/Windows说明明确下移为历史。新增锁通过真实OS fixture验证；当前ARCH binary受影响真实续算尚待新提交上的定向复验，不将fixture当科学输出验收。
