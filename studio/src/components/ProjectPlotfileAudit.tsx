@@ -56,10 +56,12 @@ function ConnectedAudit({projectId}:{projectId:string}){
  }
  const payload=samples?.audit.payload;
  return <div className="plotfile-audit">
-  <label>Project-relative file <input aria-label="Project plotfile path" value={path} onChange={e=>setPath(e.target.value)} placeholder="results/plt_0000.h5"/></label>
-  <button disabled={busy||!path.trim()} onClick={()=>void read()}>Read metadata</button>
-  <button disabled={!busy} onClick={cancel}>Cancel read</button>
-  <p role="status">{message}</p>
+  <div className="plotfile-read-controls" aria-label="Plotfile read status and controls">
+   <label>Project-relative file <input aria-label="Project plotfile path" value={path} onChange={e=>setPath(e.target.value)} placeholder="results/plt_0000.h5"/></label>
+   <button disabled={busy||!path.trim()} onClick={()=>void read()}>Read metadata</button>
+   <button disabled={!busy} onClick={cancel}>Cancel read</button>
+   <p role="status">{message}</p>
+  </div>
   <p>File completion: unverified · Units: recorded declarations when available, review pending · Scientific provenance: unavailable. Raw inspection does not certify a simulation result.</p>
   {info&&<><dl><dt>Observed file</dt><dd>{info.relativePath}</dd><dt>SHA-256</dt><dd className="audit-digest">{info.audit.file.sha256}</dd><dt>Time</dt><dd>{info.audit.time} · {info.audit.timeUnit??'unit unknown'}</dd><dt>Geometry / dimension</dt><dd>{info.audit.geometry} / {info.audit.dimension}D</dd><dt>Stored shape</dt><dd>{info.audit.blocks} blocks × [{info.audit.cellShape.join(', ')}] · x1-fastest</dd></dl>
    <PlotfileSourceEvidence evidence={info.audit.candidateSourceIdentity}/>

@@ -19,3 +19,14 @@
 }
 .project-plotfile-audit label { margin: 4px 8px 4px 0; }
 .project-plotfile-audit fieldset { border: 1px solid #526572; }
+
+/* Keep cancellation and the request outcome reachable while inspecting long files. */
+.project-plotfile-audit .plotfile-read-controls {
+ position: sticky;
+ top: 0;
+ z-index: 2;
+ padding: 8px 0;
+ background: #0f1921;
+ border-bottom: 1px solid #526572;
+}
+.project-plotfile-audit .plotfile-read-controls p { margin: 6px 0; }

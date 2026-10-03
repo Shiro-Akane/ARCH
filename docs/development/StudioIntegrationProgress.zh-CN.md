@@ -3120,3 +3120,12 @@ production native新增SNIaCoupled：128²真实热点、helmholtz ready、首�
 启动曾观察Init Preview preparing/current；如实记录，不声称zero Preview。
 close exit0/8owned退出/H5与config不变/managed clean。见PlotfileNativeFailureRetention报告/Summary。
 无Core Build/simulation/代码或baseline重复，不push/tag，联合目标仍在推进。
+
+## 2026-10-04 Plotfile sticky Cancel实际修复
+
+既有path/status/Cancel进入同一sticky栏；不改request guards或科学数组。
+331/331、lint/typecheck/build/diff PASS；native查询视口可达、受控Host暂停后的
+pending HTTP Cancel→保留旧LOD→Host恢复不覆盖→新LOD成功。
+首次非目标worker注入已恢复并排除证据；不宣称native active-reader回收或全部race完成。
+正常close exit0/8owned退出/H5/config不变/managed clean。见PlotfileStickyCancel报告/Summary。
+未Build Core/simulation/push/tag，联合目标继续推进。
