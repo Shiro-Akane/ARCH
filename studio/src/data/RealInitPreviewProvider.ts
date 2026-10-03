@@ -15,10 +15,11 @@ export async function previewRequest(route:string,body?:unknown,post=false):Prom
 }
 export class RealInitPreviewProvider {
  async status(projectId:string){return validatePreviewStatus(await previewRequest('/api/preview/status'),projectId);}
- async start(projectId:string,text:string,profileId='sod-initial-cpu',requestedShape?:number[]){
+ async start(projectId:string,text:string,profileId='sod-initial-cpu',requestedShape?:number[],expectedCase=profileId==='cellular-initial-cpu'?'CellularDet':profileId==='sod-initial-cpu'?'Sod':undefined){
+  if(!expectedCase)throw new Error('Selected runtime case identity is required.');
   const revision=await configRevision(text);
   const v=await previewRequest('/api/preview',{projectId,profileId,configText:text,configRevision:revision,...(requestedShape?{requestedShape}:{})});
-  if(!record(v)||v.protocolVersion!==PROTOCOL_VERSION||v.projectId!==projectId||!record(v.identity)||typeof v.requestId!=='string'||!/^[a-f0-9-]{36}$/.test(v.requestId)||v.identity.requestId!==v.requestId||v.identity.projectId!==projectId||v.identity.profileId!==profileId||v.identity.caseId!==(profileId==='cellular-initial-cpu'?'CellularDet':'Sod')||v.identity.configRevision!==revision||typeof v.identity.buildId!=='string'||typeof v.identity.binarySha256!=='string'||! /^[a-f0-9]{64}$/.test(v.identity.binarySha256))throw new Error('Invalid Preview acceptance identity');
+  if(!record(v)||v.protocolVersion!==PROTOCOL_VERSION||v.projectId!==projectId||!record(v.identity)||typeof v.requestId!=='string'||!/^[a-f0-9-]{36}$/.test(v.requestId)||v.identity.requestId!==v.requestId||v.identity.projectId!==projectId||v.identity.profileId!==profileId||v.identity.caseId!==expectedCase||v.identity.configRevision!==revision||typeof v.identity.buildId!=='string'||typeof v.identity.binarySha256!=='string'||! /^[a-f0-9]{64}$/.test(v.identity.binarySha256))throw new Error('Invalid Preview acceptance identity');
   return v.identity as unknown as PreviewIdentity;
  }
  cancel(id:string){return previewRequest('/api/preview/'+id+'/cancel',undefined,true);}
@@ -30,10 +31,10 @@ export function realInitLine(result:RealPreviewResult,key:string):LinePreviewDat
 }
 export function canAcceptRevision(start:{text:string;projectId:string},current:{text:string;projectId:string;valid:boolean}){return current.valid&&start.text===current.text&&start.projectId===current.projectId;}
 
-export interface RealGrid {width:number;height:number;x:Float64Array;y:Float64Array;values:Float64Array;field:string;unit:string|null;min:number;max:number}
+export interface RealGrid {width:number;height:number;x:Float64Array;y:Float64Array;values:Float64Array;field:string;unit:string|null;min:number;max:number;xName?:string;yName?:string;xUnit?:string|null;yUnit?:string|null;globalIndices?:Uint32Array;slice?:{axis:number;index:number;coordinate:number}}
 export function realInitGrid(result:RealPreviewResult,key:string):RealGrid{
  const d=result.core.data,f=d?.fields.find(f=>f.key===key);if(!d||d.dimension!==2||!f)throw new Error('Authoritative 2D field unavailable');
- return {width:d.sampling.shape[1],height:d.sampling.shape[0],x:Float64Array.from(d.axes[0].values),y:Float64Array.from(d.axes[1].values),values:Float64Array.from(f.values),field:f.displayName,unit:f.unit,min:f.min,max:f.max};
+ return {width:d.sampling.shape[1],height:d.sampling.shape[0],x:Float64Array.from(d.axes[0].values),y:Float64Array.from(d.axes[1].values),values:Float64Array.from(f.values),field:f.displayName,unit:f.unit,min:f.min,max:f.max,xName:axisLabel(result,0),yName:axisLabel(result,1),xUnit:d.axes[0].unit,yUnit:d.axes[1].unit};
 }
 export function gridPoint(data:RealGrid,x:number,y:number){
  const xe=sampleEdges(data.x),ye=sampleEdges(data.y);
@@ -44,3 +45,38 @@ export function gridPoint(data:RealGrid,x:number,y:number){
 
 // Core supplies uniform bin centers; HeatmapVis expects N+1 pixel edges.
 export function sampleEdges(centers:Float64Array){const step=centers[1]-centers[0];return Float64Array.from({length:centers.length+1},(_,i)=>centers[0]+(i-.5)*step);}
+
+
+/** Core native axis semantics; never guess Cartesian labels for curved grids. */
+export function axisLabel(result:RealPreviewResult,axis:number){
+ const d=result.core.data;
+ return d?.coordinates?.metadata.axes[axis]?.displayName??d?.axes[axis]?.name??'Unknown axis';
+}
+/** A display-only slice; global indices still address the untouched response. */
+export function realInitSlice(result:RealPreviewResult,key:string,fixedAxis:number,index:number):RealGrid{
+ const d=result.core.data,f=d?.fields.find(f=>f.key===key);
+ if(!d||d.dimension!==3||!f||!Number.isInteger(fixedAxis)||fixedAxis<0||fixedAxis>2
+  ||!Number.isInteger(index)||index<0||index>=d.axes[fixedAxis].values.length)
+  throw new Error('Authoritative volume slice unavailable');
+ const shown=[0,1,2].filter(axis=>axis!==fixedAxis),[horizontal,vertical]=shown;
+ const x=d.axes[horizontal].values,y=d.axes[vertical].values;
+ const [,ny,nx]=d.sampling.shape;
+ const globalIndices=new Uint32Array(x.length*y.length),values=new Float64Array(globalIndices.length);
+ let min=Infinity,max=-Infinity;
+ for(let j=0;j<y.length;j++)for(let i=0;i<x.length;i++){
+  const indices=[0,0,0];indices[fixedAxis]=index;indices[horizontal]=i;indices[vertical]=j;
+  const global=(indices[2]*ny+indices[1])*nx+indices[0],local=j*x.length+i;
+  globalIndices[local]=global;values[local]=f.values[global];
+  min=Math.min(min,values[local]);max=Math.max(max,values[local]);
+ }
+ return {width:x.length,height:y.length,x:Float64Array.from(x),y:Float64Array.from(y),values,
+  field:f.displayName,unit:f.unit,min,max,globalIndices,xName:axisLabel(result,horizontal),
+  yName:axisLabel(result,vertical),xUnit:d.axes[horizontal].unit,yUnit:d.axes[vertical].unit,
+  slice:{axis:fixedAxis,index,coordinate:d.axes[fixedAxis].values[index]}};
+}
+export function realSampleCoordinates(result:RealPreviewResult,index:number){
+ const d=result.core.data;
+ if(!d||!Number.isInteger(index)||index<0||index>=d.sampling.count)throw new Error('Invalid raw sample index');
+ const sizes=[...d.sampling.shape].reverse();let rest=index;
+ return d.axes.map((axis,a)=>{const i=rest%sizes[a];rest=Math.floor(rest/sizes[a]);return {axis:a,index:i,name:axisLabel(result,a),unit:axis.unit,value:axis.values[i]};});
+}
