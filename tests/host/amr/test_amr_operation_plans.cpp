@@ -1372,7 +1372,34 @@ void test_rz_axis_seam(bool mixed, double inner_radius)
         return;
     }
     expect(!plan.transfers.empty(),"RZ axis lacks ghost transfers");
-    amr::execute_coordinate_seam_plan(plan,control.pool,&amr::Block::fluid_state);
+    std::vector<amr::BlockHandle> handles;
+    for (std::size_t index=0;index<active.size();++index)
+        handles.push_back({{5000+index},{97}});
+    auto& exchange=control.ghost_exchange;
+    const auto rz=amr::CoordinateSeamGeometry::RzAxisymmetric;
+    expect(exchange.GetPlans(control.pool,control.tree,2,handles)
+        .coordinate_seam.transfers.empty(),"Default chart silently enabled RZ");
+    expect(!exchange.GetPlans(control.pool,control.tree,2,handles,rz)
+        .coordinate_seam.transfers.empty(),"Chart identity reused cached polar plan");
+    const auto builds=exchange.PlanCacheBuilds();
+    (void)exchange.GetPlans(control.pool,control.tree,2,handles,rz);
+    expect(exchange.PlanCacheBuilds()==builds,"Unchanged RZ chart missed cache");
+    for (int id:active) {
+        auto& grid=control.pool->GetBlock(id).grid;
+        grid.x1_min+=.25;grid.x1_max+=.25;
+    }
+    expect(exchange.GetPlans(control.pool,control.tree,2,handles,rz)
+        .coordinate_seam.transfers.empty(),"Changed geometry reused axis plan");
+    expect(exchange.PlanCacheBuilds()==builds+1,"Native bounds did not invalidate cache");
+    for (int id:active) {
+        auto& grid=control.pool->GetBlock(id).grid;
+        grid.x1_min-=.25;grid.x1_max-=.25;
+    }
+    exchange.ExecuteExchange(control.pool,control.tree,2,
+        &amr::Block::fluid_state,handles,rz);
+    expect(exchange.PlanCacheBuilds()==builds+2,"Restored axis retained shifted plan");
+    expect(exchange.GetPlans(control.pool,control.tree,2,handles)
+        .coordinate_seam.transfers.empty(),"Returning to polar retained RZ plan");
     std::set<int> levels;
     for (const auto& transfer:plan.transfers) {
         const auto& donor=control.pool->GetBlock(transfer.source_id);

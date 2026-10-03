@@ -2609,3 +2609,10 @@ O7.1科学规则、RZ整条接线/近场预算和最终平台出口仍待。
 显式 RZ seam chart 已复用现有 donor/transfer executor，默认 polar chart 不变。
 真实均匀与混合 L0/L1 轴 parity、非零内边界及旧 seam 回归 CPU 1/1 PASS。
 详见 RZAxisSeam-20261004.zh-CN.md / Summary.json；生产调度、CUDA、完整 RZ 演化仍待接入。
+
+
+## 2026-10-04 RZ Host exchange/cache 身份
+
+显式 chart 已贯穿 GetPlans/ExecuteExchange，native geometry 进入 exact cache key。
+真实均匀/混合 topology 的切换、命中、bounds 失效和完整 Host 轴 ghost 执行 CPU 1/1 PASS。
+详见 RZExchangeIdentity-20261004.zh-CN.md / Summary；不代表 RZ 保守 AMR/CUDA/演化出口通过。

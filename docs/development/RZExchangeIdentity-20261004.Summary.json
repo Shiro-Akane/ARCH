@@ -1,0 +1,29 @@
+{
+  "baseHead": "69fc5e6aed09f7e6a2af7a721c44c6056092ed40",
+  "dirtyInputs": {
+    "src/amr/exchange/GhostExchange.h": "bb49bb1c55813f9eb1aaa8d91b5b777ab83c03570c1ed57642d4b59aba2b0e12",
+    "tests/host/amr/test_amr_operation_plans.cpp": "532c7044ebe7d423c35e30ca85df9c2e5da30c62931e4df3d7d667bf24b497ca"
+  },
+  "test": "amr_operation_plans 1/1 PASS",
+  "binarySha256": "af22aa0bdd8bca5614a9cf41d383d6e8bd76d4ffe498593414bbd4f27a57b1ae",
+  "afterBuildChange": "GhostExchange cache documentation comment only",
+  "scope": [
+    "chart identity changes rebuild cache",
+    "identical chart/geometry hits cache",
+    "changed native radial bounds invalidate axis plan",
+    "restore physical axis rebuilds",
+    "explicit RZ through complete Host ExecuteExchange",
+    "return to ExistingChart does not retain RZ seam",
+    "old slot/storage/species/epoch validation regression"
+  ],
+  "limits": [
+    "coarse-fine measures still existing production geometry; not RZ conservative transfer acceptance",
+    "no default production chart switch",
+    "no CUDA execution",
+    "no simulation"
+  ],
+  "finalInputHashes": {
+    "src/amr/exchange/GhostExchange.h": "1ec6ac2c96dc532aedc5bdbf97e2a6f1bce36c328aabbd4b1dab142fbc9716d0",
+    "tests/host/amr/test_amr_operation_plans.cpp": "532c7044ebe7d423c35e30ca85df9c2e5da30c62931e4df3d7d667bf24b497ca"
+  }
+}

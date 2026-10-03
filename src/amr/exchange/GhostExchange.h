@@ -15,6 +15,7 @@
 #pragma once
 
 #include <array>
+#include <bit>
 #include <cmath>
 #include <memory>
 #include <map>
@@ -47,11 +48,14 @@ public:
     // One entry per exchange owner, not one entry per historical topology.
     // Logical plans contain no storage/view pointers. Slots, generations,
     // layouts and physical measures are deliberately rebound by each executor.
+    // Native geometry/chart also keys this cache because seam stencils store
+    // physical donor weights; field/slot contents remain outside the key.
     // The returned reference is valid until the next cache miss on this owner.
     const CachedPlans& GetPlans(
         const std::shared_ptr<MemoryPool>& pool,
         const std::shared_ptr<AmrTree>& tree, int dim,
-        std::span<const BlockHandle> handles) const
+        std::span<const BlockHandle> handles,
+        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart) const
     {
         if (!pool || !tree || dim < 1 || dim > 3)
             throw std::invalid_argument("invalid exchange plan cache context");
@@ -60,9 +64,10 @@ public:
             throw std::invalid_argument("exchange cache requires committed handles");
         auto& key = cache_probe_;
         key.clear();
-        key.reserve(2 + active.size() * 44);
+        key.reserve(3 + active.size() * 72);
         key.push_back(static_cast<std::uint64_t>(dim));
         key.push_back(active.size());
+        key.push_back(static_cast<std::uint64_t>(chart));
         for (std::size_t i = 0; i < active.size(); ++i) {
             if (!is_valid(handles[i]))
                 throw std::invalid_argument("exchange cache has invalid handle");
@@ -73,6 +78,20 @@ public:
                 static_cast<std::uint64_t>(block.level),
                 block.logical_x1, block.logical_x2, block.logical_x3,
                 static_cast<std::uint64_t>(block.fluid_state.GetNumSpecies())});
+            // Seam donor positions/weights depend on chart and native
+            // geometry, even if logical topology and handles are unchanged.
+            // Preserve binary64 identity instead of a lossy numeric hash.
+            const auto& grid = block.grid;
+            key.push_back(grid.geometry.size());
+            for (unsigned char byte : grid.geometry) key.push_back(byte);
+            for (double value : {grid.x1_min,grid.x1_max,grid.x2_min,grid.x2_max,
+                    grid.x3_min,grid.x3_max,grid.dx1,grid.dx2,grid.dx3})
+                key.push_back(std::bit_cast<std::uint64_t>(value));
+            key.insert(key.end(), {static_cast<std::uint64_t>(grid.dim),
+                static_cast<std::uint64_t>(grid.nblockx1),
+                static_cast<std::uint64_t>(grid.nblockx2),
+                static_cast<std::uint64_t>(grid.nblockx3),
+                static_cast<std::uint64_t>(grid.ng)});
             for (int face = 0; face < 2 * dim; ++face) {
                 const auto& neighbor = block.face_neighbors[face];
                 if (neighbor.count < 0 || neighbor.count > 4)
@@ -92,7 +111,7 @@ public:
         candidate->same_level = BuildSameLevelPlans(pool, tree, dim, handles);
         candidate->coarse_fine = BuildCoarseFinePlan(pool, tree, dim, handles);
         candidate->coordinate_seam = make_coordinate_seam_plan(
-            pool, active, dim);
+            pool, active, dim, chart);
         std::map<BlockHandle, std::size_t> indices;
         for (std::size_t i = 0; i < handles.size(); ++i)
             if (!indices.emplace(handles[i], i).second)
@@ -549,7 +568,8 @@ public:
     void ExecuteExchange(
         std::shared_ptr<MemoryPool> pool, std::shared_ptr<AmrTree> tree,
         int dim, FluidState Block::* state_ptr,
-        std::span<const BlockHandle> handles = {})
+        std::span<const BlockHandle> handles = {},
+        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart)
     {
         const auto& active_blocks = tree->GetActiveBlocks();
         if (handles.empty() || handles.size() != active_blocks.size())
@@ -587,7 +607,7 @@ public:
             view.species_stride = block.grid.GetTotalSize();
             views.push_back(view);
         }
-        const auto& plans = GetPlans(pool, tree, dim, handles);
+        const auto& plans = GetPlans(pool, tree, dim, handles, chart);
         host_compiled_.resize(plans.same_level.size());
         std::vector<HostExchangeBlockView> level_views;
         for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
