@@ -156,3 +156,8 @@ CPU 制造解、独立边界/Gauss、AMR 与重启证据见
 固定温度燃烧、可选面 EOS 工作、计算量差异和未关闭项。代表性四模块路径为
 HLLC/MUSCL/MC＋RK2＋RKL2 热扩散＋BD/DenseLU＋MG＋AMR，采用
 Helmholtz/aprox13 并关闭 NSE，不能据此宣称全部策略组合已验收。
+
+[执行成本复核](flash/results/cpu-followup-20261003/README.md)记录用户边界基线之后的
+同状态 EOS 复用、原始表读取和多重网格 Host 调度。相同物理终点的 CPU/FLASH
+整程成本、原预算下的字段对照及 2D/3D 四模块五步检查分别说明范围，并保留未达到
+的性能目标。FLASH 对比属于可选的维护者工作，ARCH 的构建、测试和 CI 独立运行。

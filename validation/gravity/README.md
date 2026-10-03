@@ -194,3 +194,10 @@ fixed-temperature burn, optional face-EOS work, workload differences and
 remaining qualification gaps. The representative four-module route is
 HLLC/MUSCL/MC + RK2 + RKL2 thermal + BD/DenseLU + MG + AMR with
 Helmholtz/aprox13 and NSE disabled; this is not an all-policy coupling matrix.
+
+The [execution-cost follow-up](flash/results/cpu-followup-20261003/README.md)
+records exact-state EOS reuse, canonical table loading and Host multigrid
+scheduling after the user-boundary baseline. Matched-endpoint CPU/FLASH costs,
+unchanged-budget field comparisons and five-step 2D/3D coupled checks have
+separate scopes. Its unresolved cost targets remain visible; FLASH comparisons
+are optional developer work, independent of ARCH build, tests and CI.

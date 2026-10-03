@@ -6,18 +6,25 @@
  * runtime table is helm_table.dat from the project's downloaded
  * helmholtz.tar.xz archive; ARCH supplies the EOS policy and table checks.
  * Workflow:
- * 1. Prepare composition and density interpolation factors for one query.
+ * 0. Stream the canonical decimal table into the original field layout,
+ *    retaining exact conversion and rejecting incomplete or invalid input.
+ * 1. Prepare the ordered composition sums first; build the density-axis and
+ *    ion interpolation factors only when a query actually evaluates the EOS,
+ *    so a repeated inverse-memo lookup can return before that work.
  * 2. Evaluate the shared electron/positron, ion, photon and Coulomb terms.
  * 3. Recover thermodynamic derivatives or a bounded temperature inverse;
  *    reuse work only while its complete state identity remains unchanged.
+ * 4. Retain the pressure and the acoustic jet of one inverse state inside the
+ *    same memo entry, so the pressure-only, sound-speed and derivative-pair
+ *    queries of one (rho,e,X) endpoint never repeat the EOS evaluation.
  */
 #pragma once
 
 #include <algorithm>
 #include <array>
 #include <bit>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -26,13 +33,13 @@
 #include <string>
 #include <vector>
 
+#include "core/CompensatedSum.h"
+#include "data/FluidState.h"
+#include "physics/constant/PhysicalConstants.h"
 #include "physics/eos/eos.h"
 #include "physics/eos/eos_Utils.h"
-
-#include "data/FluidState.h"
-#include "core/CompensatedSum.h"
+#include "physics/eos/sources/HelmTableReader.h"
 #include "physics/species/Species.h"
-#include "physics/constant/PhysicalConstants.h"
 
 
 // Timmes Helmholtz EOS leaf parameterized by host or device species metadata.
@@ -115,20 +122,27 @@ struct BasicHelmEosView {
         return {index, spacing, std::max((value - nodes[index]) / spacing, 0.0)};
     }
 
+    // Ordered composition sums y=sum(X/A), z=sum(X*Z/A) plus the charge flag
+    // read BEFORE the Ye clamp. An inverse-memo key needs only this prefix;
+    // the ion factors and density axis are a separate, later step so a cache
+    // hit never builds them.
+    struct CompositionState {
+        double ytot = 0.0, ye = 0.0;
+        bool charge_active = true;
+    };
+
     // One inverse keeps rho and X fixed while only T changes. This local
     // workspace belongs to that call; it never survives an RK/ODE stage,
     // regrid, table replacement or checkpoint boundary.
-    struct FixedDensityState {
-        double ytot, ye, n_ion, mean_ion_spacing;
-        bool charge_active;
+    struct FixedDensityState : CompositionState {
+        double n_ion, mean_ion_spacing;
         int index;
         double weights[6], first[6], second[6];
     };
 
-    /** Prepare composition and density-axis factors for an unchanged rho,X. */
-    ARCH_INLINE FixedDensityState prepare_fixed_density(double rho, const double* X) const
+    /** Ordered composition sums shared by the memo key and every EOS path. */
+    ARCH_INLINE void prepare_composition(const double* X, CompositionState& state) const
     {
-        FixedDensityState state{};
         for (int k = 0; k < specs.count; ++k) {
             const double inverse_a = 1.0 / specs.get_A(k);
             state.ytot += X[k] * inverse_a;
@@ -136,10 +150,24 @@ struct BasicHelmEosView {
         }
         state.charge_active = state.ye > 1.0e-16;
         state.ye = std::max(1.0e-16, state.ye);
+    }
+
+    /** Ion factors and quintic density basis for a prepared composition.
+     *  Kept separate from prepare_composition so a memo hit skips the axis. */
+    ARCH_INLINE void prepare_fixed_density_tail(double rho, FixedDensityState& state) const
+    {
         state.n_ion = rho * state.ytot * avo;
         state.mean_ion_spacing = 1.0 / std::cbrt(
             (4.0 / 3.0) * arch::constants::math::pi * state.n_ion);
         prepare_density_axis(rho * state.ye, state);
+    }
+
+    /** Prepare composition and density-axis factors for an unchanged rho,X. */
+    ARCH_INLINE FixedDensityState prepare_fixed_density(double rho, const double* X) const
+    {
+        FixedDensityState state{};
+        prepare_composition(X, state);
+        prepare_fixed_density_tail(rho, state);
         return state;
     }
 
@@ -604,6 +632,17 @@ struct BasicHelmEosView {
             std::array<std::uint64_t, 5> key{};
             double temperature = 0.0;
             bool ready = false;
+            // Same entry, extended: the pressure and the acoustic jet at the
+            // cached temperature. pressure_ready is set by a pressure-only
+            // evaluation; acoustic_ready additionally promises cv and the two
+            // fixed-composition pressure derivatives. A key change or slot
+            // reuse clears the whole entry, so no field outlives its state.
+            double pressure = 0.0;
+            double cv = 0.0;
+            double pressure_density = 0.0;
+            double pressure_temperature = 0.0;
+            bool pressure_ready = false;
+            bool acoustic_ready = false;
         };
         const BasicHelmEosView* owner;
         std::array<Entry, 256> entries{};
@@ -636,6 +675,78 @@ struct BasicHelmEosView {
         HostHydroScope& operator=(const HostHydroScope&) = delete;
     };
 
+    /** The ONE inverse memo: locate or fill the exact-key entry, and hand back
+     *  its pointer so the temperature, pressure and acoustic fields of one
+     *  (rho,target,X) identity share a single slot. Returns nullptr when the
+     *  original strict inverse does not yield a reusable finite temperature. */
+    ARCH_HEAVY_INLINE HostInverseWorkspace::Entry* inverse_memo(
+        double rho, double target, const double* Xi, bool pressure,
+        const CompositionState& composition) const {
+#if !defined(__CUDA_ARCH__)
+        // Helm's complete fixed-composition inverse depends on X only through
+        // the original ordered sums y=sum(X/A), z=sum(X*Z/A). These are exact
+        // floating-point keys, not rounded composition bins.
+        const std::array<std::uint64_t, 5> key{
+            std::bit_cast<std::uint64_t>(rho), std::bit_cast<std::uint64_t>(target),
+            std::bit_cast<std::uint64_t>(composition.ytot),
+            std::bit_cast<std::uint64_t>(composition.ye),
+            static_cast<std::uint64_t>(pressure)};
+        auto& slot = host_inverse_workspace->entry(key);
+        if (slot.ready && slot.key == key) return &slot;
+        const double result =
+            invert_temperature_uncached(rho, target, Xi, pressure, &composition);
+        // A failed query never overwrites success with a reusable sentinel.
+        if (!(std::isfinite(result) && result > 0.0)) return nullptr;
+        // A new key reuses the storage: clear the temperature and EVERY field
+        // derived from it so a stale pressure/acoustic value can never leak.
+        slot = {};
+        slot.key = key;
+        slot.temperature = result;
+        slot.ready = true;
+        return &slot;
+#else
+        (void)rho; (void)target; (void)Xi; (void)pressure; (void)composition;
+        return nullptr;
+#endif
+    }
+
+    /** Entry for one energy endpoint (rho,e,Xi), keyed exactly like the
+     *  temperature memo so its cached pressure and acoustic fields always
+     *  belong to the cached temperature. Returns nullptr when no workspace
+     *  applies or the strict inverse did not succeed; the caller then runs the
+     *  unchanged uncached path. */
+    ARCH_HEAVY_INLINE HostInverseWorkspace::Entry* energy_state_entry(
+        double rho, double e, const double* Xi) const {
+#if !defined(__CUDA_ARCH__)
+        if (host_inverse_workspace && host_inverse_workspace->owner == this
+            && rho > 0.0 && e > 0.0 && std::isfinite(e)
+            && Xi && specs.count > 0 && temperature_nodes) {
+            CompositionState composition{};
+            prepare_composition(Xi, composition);
+            return inverse_memo(rho, e, Xi, false, composition);
+        }
+#endif
+        return nullptr;
+    }
+
+    /** Retain the acoustic fields only while they are finite physical
+     *  closures: a non-finite or nonpositive evaluation keeps its original
+     *  return value but is never memoized as a successful state. */
+    ARCH_INLINE void store_acoustic(HostInverseWorkspace::Entry& slot,
+                                    double pressure, double cv,
+                                    const ThermodynamicDerivatives& d) const {
+        if (std::isfinite(pressure) && pressure > 0.0
+            && std::isfinite(cv) && cv > 0.0
+            && std::isfinite(d.pressure_density)
+            && std::isfinite(d.pressure_temperature)) {
+            slot.pressure = pressure;
+            slot.cv = cv;
+            slot.pressure_density = d.pressure_density;
+            slot.pressure_temperature = d.pressure_temperature;
+            slot.pressure_ready = slot.acoustic_ready = true;
+        }
+    }
+
     /** Recover T from the original root solve, reusing only identical inputs. */
     ARCH_HEAVY_INLINE double invert_temperature(double rho, double target,
                                                 const double* Xi, bool pressure) const {
@@ -643,20 +754,15 @@ struct BasicHelmEosView {
         if (host_inverse_workspace && host_inverse_workspace->owner == this
             && rho > 0.0 && target > 0.0 && std::isfinite(target)
             && Xi && specs.count > 0 && temperature_nodes) {
-            const auto fixed = prepare_fixed_density(rho, Xi);
-            // Helm's complete fixed-composition inverse depends on X only
-            // through the original ordered sums y=sum(X/A), z=sum(X*Z/A).
-            // These are exact floating-point keys, not rounded composition bins.
-            const std::array<std::uint64_t, 5> key{
-                std::bit_cast<std::uint64_t>(rho), std::bit_cast<std::uint64_t>(target),
-                std::bit_cast<std::uint64_t>(fixed.ytot), std::bit_cast<std::uint64_t>(fixed.ye),
-                static_cast<std::uint64_t>(pressure)};
-            auto& slot = host_inverse_workspace->entry(key);
-            if (slot.ready && slot.key == key) return slot.temperature;
-            const double result = invert_temperature_uncached(rho, target, Xi, pressure, &fixed);
-            // A failed query never overwrites success with a reusable sentinel.
-            if (std::isfinite(result) && result > 0.0) slot = {key, result, true};
-            return result;
+            // Only the ordered sums are needed to key the lookup; the density
+            // axis and ion factors stay unbuilt until the query actually
+            // evaluates the EOS below, so a hit pays neither locate_axis nor
+            // the quintic basis evaluation.
+            CompositionState composition{};
+            prepare_composition(Xi, composition);
+            if (const auto* slot =
+                    inverse_memo(rho, target, Xi, pressure, composition))
+                return slot->temperature;
         }
 #endif
         return invert_temperature_uncached(rho, target, Xi, pressure);
@@ -665,13 +771,19 @@ struct BasicHelmEosView {
     // Monotone bracket inversion on the actual source temperature domain.
     // This is the ARCH adapter, not a modification of the Timmes formulas.
     ARCH_HEAVY_INLINE double invert_temperature_uncached(double rho, double target,
-        const double* Xi, bool pressure, const FixedDensityState* prepared = nullptr) const {
+        const double* Xi, bool pressure, const CompositionState* prepared = nullptr) const {
         if (!(rho > 0.0) || !(target > 0.0) || !std::isfinite(target)
             || !temperature_nodes || specs.count == 0 || Xi == nullptr)
             return arch::state::invalid();
         double lower = temperature_nodes[0];
         double upper = temperature_nodes[jmax - 1];
-        const auto fixed = prepared ? *prepared : prepare_fixed_density(rho, Xi);
+        // Lazy fixed-density construction: the caller may already hold the
+        // exact composition prefix; the ion factors and density axis are built
+        // here, once, only because this branch evaluates the EOS.
+        FixedDensityState fixed{};
+        if (prepared == nullptr) prepare_composition(Xi, fixed);
+        else static_cast<CompositionState&>(fixed) = *prepared;
+        prepare_fixed_density_tail(rho, fixed);
         const auto value = [&](double T, double& derivative) {
             double P, E, cv;
             ThermodynamicDerivatives d;
@@ -755,14 +867,24 @@ struct BasicHelmEosView {
         double rho, double e, const double* Xi,
         double& pressure, double& speed) const
     {
-        const double T = get_temperature(rho, e, Xi);
+        auto* slot = energy_state_entry(rho, e, Xi);
+        const double T =
+            slot != nullptr ? slot->temperature : get_temperature(rho, e, Xi);
         if (!std::isfinite(T)) {
             pressure = speed = arch::state::invalid();
             return;
         }
         double energy, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, Xi, pressure, energy, &cv, &d, nullptr, JetRequest::Acoustic);
+        if (slot != nullptr && slot->acoustic_ready) {
+            pressure = slot->pressure;
+            cv = slot->cv;
+            d.pressure_density = slot->pressure_density;
+            d.pressure_temperature = slot->pressure_temperature;
+        } else {
+            calc_thermo_with_cv(rho, T, Xi, pressure, energy, &cv, &d, nullptr, JetRequest::Acoustic);
+            if (slot != nullptr) store_acoustic(*slot, pressure, cv, d);
+        }
         if (!(cv > 0.0) || !std::isfinite(pressure)) {
             speed = arch::state::invalid();
             return;
@@ -936,6 +1058,19 @@ struct BasicHelmEosView {
     }
 
     ARCH_INLINE double get_pressure_from_rho_e(double rho, double e, const double* Xi) const {
+        // Exact reuse of an earlier identical (rho,e,Xi) query. A pressure-only
+        // miss evaluates the unchanged pressure path and never builds the
+        // acoustic jet.
+        if (auto* slot = energy_state_entry(rho, e, Xi)) {
+            if (slot->pressure_ready) return slot->pressure;
+            double P, E;
+            calc_thermo(rho, slot->temperature, Xi, P, E);
+            if (std::isfinite(P) && P > 0.0) {
+                slot->pressure = P;
+                slot->pressure_ready = true;
+            }
+            return P;
+        }
         double T = get_temperature(rho, e, Xi);
         double P, E;
         calc_thermo(rho, T, Xi, P, E);
@@ -961,19 +1096,39 @@ struct BasicHelmEosView {
     }
 
     ARCH_INLINE double get_dp_drho_e(double rho, double e, const double* Xi) const {
-        const double T = get_temperature(rho, e, Xi);
-        double P, E, cv;
+        auto* slot = energy_state_entry(rho, e, Xi);
+        const double T =
+            slot != nullptr ? slot->temperature : get_temperature(rho, e, Xi);
+        double P, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
+        if (slot != nullptr && slot->acoustic_ready) {
+            P = slot->pressure;
+            cv = slot->cv;
+            d.pressure_density = slot->pressure_density;
+            d.pressure_temperature = slot->pressure_temperature;
+        } else {
+            double E;
+            calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
+            if (slot != nullptr) store_acoustic(*slot, P, cv, d);
+        }
         const double energy_density = (P - T * d.pressure_temperature) / (rho * rho);
         return d.pressure_density - d.pressure_temperature * energy_density / cv;
     }
 
     ARCH_INLINE double get_dp_de_rho(double rho, double e, const double* Xi) const {
-        const double T = get_temperature(rho, e, Xi);
-        double P, E, cv;
+        auto* slot = energy_state_entry(rho, e, Xi);
+        const double T =
+            slot != nullptr ? slot->temperature : get_temperature(rho, e, Xi);
+        double cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
+        if (slot != nullptr && slot->acoustic_ready) {
+            cv = slot->cv;
+            d.pressure_temperature = slot->pressure_temperature;
+        } else {
+            double P, E;
+            calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
+            if (slot != nullptr) store_acoustic(*slot, P, cv, d);
+        }
         return d.pressure_temperature / cv;
     }
 
@@ -984,10 +1139,21 @@ struct BasicHelmEosView {
         double rho, double e, const double* Xi,
         double& chi, double& kappa) const
     {
-        const double T = get_temperature(rho, e, Xi);
-        double P, E, cv;
+        auto* slot = energy_state_entry(rho, e, Xi);
+        const double T =
+            slot != nullptr ? slot->temperature : get_temperature(rho, e, Xi);
+        double P, cv;
         ThermodynamicDerivatives d;
-        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
+        if (slot != nullptr && slot->acoustic_ready) {
+            P = slot->pressure;
+            cv = slot->cv;
+            d.pressure_density = slot->pressure_density;
+            d.pressure_temperature = slot->pressure_temperature;
+        } else {
+            double E;
+            calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d, nullptr, JetRequest::Acoustic);
+            if (slot != nullptr) store_acoustic(*slot, P, cv, d);
+        }
         const double energy_density =
             (P - T * d.pressure_temperature) / (rho * rho);
         chi = d.pressure_density
@@ -1063,8 +1229,11 @@ public:
         for (int k = 0; k < 9; ++k) host_f[k].resize(imax * jmax);
         for (int k = 0; k < 4; ++k) host_ef_table[k].resize(imax * jmax);
 
+        // Only byte traversal changes: the four original loops below still
+        // consume all 21 fields in the documented Timmes table order.
+        helm_eos::loader::HelmTableReader table_reader(file);
         const auto read_value = [&](double &value) {
-            if (!(file >> value))
+            if (!table_reader.read(value))
                 throw std::runtime_error(
                     "Incomplete or nonnumeric 541x201 Timmes helm_table.dat: "
                     + table_path);

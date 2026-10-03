@@ -106,6 +106,12 @@ namespace TimeIntegration
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
 
+        // Immutable geometry descriptor hoisted per patch invocation: the Grid
+        // is const and its topology is fixed until this call returns, so every
+        // row/cell reuses the same shared leaf descriptor instead of rebuilding
+        // it inside the traversal.
+        const GridMetrics::GeometryView geometry = GridMetrics::make_geometry_view(grid);
+
         const auto accumulate_row = [&](int kj) {
             int k = ks + kj / nj;
             int j = js + kj % nj;
@@ -113,9 +119,9 @@ namespace TimeIntegration
             {
                 int idx = grid.GetIndex(i, j, k);
 
-                const double volume = GridMetrics::CellVolume(grid, i, j, k);
-                const double area_l = GridMetrics::FaceArea(grid, dir, i, j, k, false);
-                const double area_r = GridMetrics::FaceArea(grid, dir, i, j, k, true);
+                const double volume = GridMetrics::CellVolume(geometry, i, j, k);
+                const double area_l = GridMetrics::FaceArea(geometry, dir, i, j, k, false);
+                const double area_r = GridMetrics::FaceArea(geometry, dir, i, j, k, true);
 
                 const double* lower_species_flux = n_spec > 0
                     ? spec_fluxes.data() + idx : nullptr;
@@ -278,6 +284,10 @@ namespace TimeIntegration
         const int nk = ke - ks;
         const int nj = je - js;
 
+        // Immutable geometry descriptor hoisted per patch invocation; shared
+        // leaf math is unchanged and no per-cell value is cached.
+        const GridMetrics::GeometryView geometry = GridMetrics::make_geometry_view(grid);
+
         u_dest.stage_repairs.reset(n_spec);
         int invalid_count = 0;
         const auto update_row = [&](int kj, arch::state::RepairBudget& local,
@@ -303,7 +313,7 @@ namespace TimeIntegration
                     U_old, U_curr, dU[idx], Xi_old, Xi_curr, species_delta,
                     n_spec, total_size, weight_n, weight_flux,
                     sml_rho, min_eint, max_eint, U_new, Xi_new, local.view(),
-                    GridMetrics::CellVolume(grid, i, j, k), idx);
+                    GridMetrics::CellVolume(geometry, i, j, k), idx);
                 if (!arch::state::accepted(status)) ++local_invalid;
                 u_dest.set(idx, U_new);
             }
