@@ -1,4 +1,4 @@
-import type {ConfigurationBuildScope,ConfigurationIdentity} from './configurationContracts';
+import type {ConfigurationBuildScope,ConfigurationIdentity,CoordinateSystem} from './configurationContracts';
 export type WorkflowOperation='inspect-case'|'amr-resources'|'preview-amr';
 export interface RegisteredCase {
  caseId:string;initialFieldPreview:boolean;initialAmrPreview:boolean;previewDimensions:number[];
@@ -13,7 +13,8 @@ export interface ResourceLevel {level:number;fullDomainLeafBlocks:number|null;ac
 export interface ResourceEstimate {version:'1';dimension:number;levels:ResourceLevel[];poolPreallocatedBaseBytes:number|null;configuredPoolCapacity:number;advisoryOnly:true;assumption:string;scope:string;excludes:string[];oomPrediction:'not-provided';speciesCount:number|null}
 export interface AmrLeaf {logicalKey:string;level:number;logicalIndex:number[];lower:number[];upper:number[];cellShape:number[];cellSpacing:number[]}
 export interface AmrMesh {
- version:'1';kind:'amr-leaf-mesh';dimension:1|2;geometry:'cartesian';unit:string;
+ version:'1';kind:'amr-leaf-mesh';dimension:1|2|3;geometry:'cartesian'|'spherical'|'cylindrical';unit:string|null;
+ coordinates?:{version:'1';basis:'native-grid';metadata:CoordinateSystem};
  leaves:AmrLeaf[];leafCount:number;levelCounts:{level:number;leafBlocks:number}[];
  complete:boolean;completedPasses:number;snapshot:'none'|'last-completed-balanced-hierarchy';limitedReason:string|null;
  configuredMaxBlocks:number;workingCapacity:number;resources:ResourceEstimate;

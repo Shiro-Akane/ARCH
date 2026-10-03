@@ -1,3 +1,4 @@
+import {validateCoordinates} from './configurationValidation.ts';
 import {record} from './previewValidation.ts';
 import type {RegisteredCase,ResourceEstimate,AmrMesh,WorkflowCore,WorkflowOperation,CaseProbe} from './workflowContracts.ts';
 function invalid(message:string):never{throw new Error(message);}
@@ -30,8 +31,16 @@ export function validateResources(value:unknown):ResourceEstimate{
  return value as unknown as ResourceEstimate;
 }
 export function validateMesh(value:unknown,status:string):AmrMesh{
- if(!record(value)||value.version!=='1'||value.kind!=='amr-leaf-mesh'||![1,2].includes(Number(value.dimension))||value.geometry!=='cartesian'||typeof value.unit!=='string'||typeof value.complete!=='boolean'||!integer(value.completedPasses)||!integer(value.leafCount,0,1024)||!Array.isArray(value.leaves)||value.leaves.length!==value.leafCount||!Array.isArray(value.levelCounts)||!integer(value.configuredMaxBlocks,1)||!integer(value.workingCapacity,0,1024)||!['none','last-completed-balanced-hierarchy'].includes(String(value.snapshot))||(value.limitedReason!==null&&typeof value.limitedReason!=='string'))invalid('Invalid initial AMR mesh.');
+ if(!record(value)||value.version!=='1'||value.kind!=='amr-leaf-mesh'||![1,2,3].includes(Number(value.dimension))||!['cartesian','spherical','cylindrical'].includes(String(value.geometry))||(value.unit!==null&&typeof value.unit!=='string')||typeof value.complete!=='boolean'||!integer(value.completedPasses)||!integer(value.leafCount,0,1024)||!Array.isArray(value.leaves)||value.leaves.length!==value.leafCount||!Array.isArray(value.levelCounts)||!integer(value.configuredMaxBlocks,1)||!integer(value.workingCapacity,0,1024)||!['none','last-completed-balanced-hierarchy'].includes(String(value.snapshot))||(value.limitedReason!==null&&typeof value.limitedReason!=='string'))invalid('Invalid initial AMR mesh.');
  if((status==='ok')!==value.complete||(value.complete&&(value.snapshot==='none'||value.limitedReason!==null))||(!value.complete&&typeof value.limitedReason!=='string')||(value.snapshot==='none'&&value.leafCount!==0))invalid('Contradictory AMR completion state.');
+ if(value.coordinates!==undefined){
+  const c=value.coordinates;
+  if(!record(c)||c.version!=='1'||c.basis!=='native-grid')invalid('Invalid AMR coordinate contract.');
+  validateCoordinates(c.metadata);
+  if(!record(c.metadata)||c.metadata.dimension!==value.dimension||c.metadata.geometry!==value.geometry
+   ||!Array.isArray(c.metadata.axes)||c.metadata.axes.some((a,i)=>!record(a)||a.active!==(i<Number(value.dimension))))invalid('AMR native coordinates disagree with mesh.');
+ }else if(value.geometry!=='cartesian'||value.dimension===3)invalid('AMR native coordinate metadata required.');
+ if(value.geometry!=='cartesian'&&value.unit!==null)invalid('Mixed AMR axis units cannot use one length unit.');
  const ids=new Set<string>(),counts=new Map<number,number>(),dimension=Number(value.dimension);
  for(const l of value.leaves){
   if(!record(l)||!integer(l.level,0,127)||!numbers(l.logicalIndex,3)||!l.logicalIndex.every(n=>integer(n))||l.logicalKey!==[l.level,...l.logicalIndex].join(':')||ids.has(String(l.logicalKey))||!numbers(l.lower,dimension)||!numbers(l.upper,dimension)||!numbers(l.cellShape,dimension)||!l.cellShape.every(n=>integer(n,1,65536))||!numbers(l.cellSpacing,dimension))invalid('Invalid AMR leaf identity or geometry.');
@@ -41,7 +50,8 @@ export function validateMesh(value:unknown,status:string):AmrMesh{
  const levels=new Set<number>();
  for(const l of value.levelCounts){if(!record(l)||!integer(l.level)||levels.has(l.level)||!integer(l.leafBlocks,0,1024)||(counts.get(l.level)??0)!==l.leafBlocks)invalid('AMR level counts disagree with leaves.');levels.add(l.level);}
  if([...counts.keys()].some(level=>!levels.has(level)))invalid('Incomplete AMR level counts.');
- validateResources(value.resources);
+ const resources=validateResources(value.resources);
+ if(resources.dimension!==dimension)invalid('AMR resource dimension mismatch.');
  return value as unknown as AmrMesh;
 }
 function validateProbe(value:unknown):CaseProbe{
@@ -64,7 +74,10 @@ export function validateWorkflowCore(value:unknown,operation:WorkflowOperation,e
   if(ex.previewBackend!=='cpu'||ex.timeStepping!=='not_executed'||ex.simulationReadiness!=='not_checked')invalid('Unsafe workflow execution contract.');
   if(operation==='preview-amr'){
    if(ex.scientificOutput!=='not_created')invalid('AMR scientific output contract mismatch.');
-   if(value.status!=='error')validateMesh(value.data,String(value.status));
+   if(value.status!=='error'){
+    const mesh=validateMesh(value.data,String(value.status)),grid=record(value.state)?value.state.grid:undefined;
+    if(record(grid)&&(grid.dimension!==mesh.dimension||grid.geometry!==mesh.geometry))invalid('AMR state grid disagrees with mesh.');
+   }
   }else{
    if(value.version!=='1'||ex.driverScientificOutput!=='not_created'||ex.eosConversion!=='not_executed'||value.status==='limited')invalid('Invalid inspection execution contract.');
    if(value.data!==null)validateProbe(value.data);

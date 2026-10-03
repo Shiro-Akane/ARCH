@@ -60,7 +60,7 @@ export function PhysicalPlot({xLabel='x1',yLabel='x2',xDomain,yDomain,x,y,values
   if(d.marker&&marker){d.value=geometry.xp.inverse((px-left)/width);marker.onCandidate(d.value);}else if(d.moved)setView({x:panView(d.view.x,(px-d.px)/width),y:panView(d.view.y,-(py-d.py)/height)});
  }
  function up(e:ReactPointerEvent<SVGSVGElement>){const d=drag.current;if(!d)return;drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
-  if(d.marker&&marker){marker.onCandidate(null);if(d.moved&&d.value!==d.startValue&&d.value>marker.binding.min&&d.value<marker.binding.max)marker.onCommit(d.value);}else if(!d.moved&&!('error' in geometry)){const {px,py}=coordinates(e);if(inside(px,py)){const f=fractions(px,py);const x=geometry.xp.inverse(f.x),y=geometry.yp.inverse(f.y);if(amr?.selecting){const leaf=amrAt(amr.mesh,x,y,amr.levels);if(leaf)amr.onSelect(leaf.logicalKey);}else onPoint(x,y);}}
+  if(d.marker&&marker){marker.onCandidate(null);if(d.moved&&d.value!==d.startValue&&d.value>marker.binding.min&&d.value<marker.binding.max)marker.onCommit(d.value);}else if(!d.moved&&!('error' in geometry)){const {px,py}=coordinates(e);if(inside(px,py)){const f=fractions(px,py);const x=geometry.xp.inverse(f.x),y=geometry.yp.inverse(f.y);if(amr?.selecting){const leaf=amrAt(amr.mesh,x,y,amr.levels,amr.slice);if(leaf)amr.onSelect(leaf.logicalKey);}else onPoint(x,y);}}
  }
  function fit(){setView({x:FULL,y:FULL});setX(axisDefault());setY(axisDefault());setField(f=>({...f,manual:false}));}
  const sx=selected===null?NaN:x[selected%x.length],sy=selected===null?NaN:y?y[Math.floor(selected/x.length)]:values[selected];

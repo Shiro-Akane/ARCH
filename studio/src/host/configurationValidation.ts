@@ -105,7 +105,7 @@ export function validateInspectionResponse(v:unknown,request:ConfigurationReques
  return {protocolVersion:PROTOCOL_VERSION,identity:v.identity as unknown as InspectionResponse['identity'],core,...(v.pathChecks===undefined?{}:{pathChecks:validatePathChecks(v.pathChecks)})};
 }
 
-function validateCoordinates(v:unknown){
+export function validateCoordinates(v:unknown){
  if(!record(v)||!strings(v,['geometry','unitSystem'])||![1,2,3].includes(Number(v.dimension))||!Array.isArray(v.axes)||v.axes.length!==3)throw new Error('Invalid Core coordinates.');
  for(const [i,a] of v.axes.entries())if(!record(a)||!strings(a,['key','displayName','nativeName','kind','blocksKey','minKey','maxKey','lowerBoundaryKey','upperBoundaryKey'])||a.key!==`x${i+1}`||typeof a.active!=='boolean'||typeof a.blocks!=='number'||(a.unit!==null&&typeof a.unit!=='string'))throw new Error('Invalid Core axis.');
 }
