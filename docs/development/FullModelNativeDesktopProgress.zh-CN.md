@@ -30,3 +30,18 @@ binary SHA256 ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a�
 完整依赖freshness仍unknown，未提升为clean build。
 原始field/AMR响应及配置仅留studio/.local/integration/full-model-production-20261003。
 提交只含本报告和精简摘要；没有simulation、科学输出、push、tag或main merge。
+
+## 切片原始样本保留修正与真实复验
+
+复核发现FullModelWorkspaceProgress定义了切面外选择保留，UI已有对应提示；
+但slice axis/index两个onChange仍清空selected。仅移除这两处setSelected(null)，
+不改请求、配置、Core、数组或AMR逻辑。
+
+重新生成production assets，通过正式Linux独立窗口选择sample783（i15/j24/k0）。
+z切片0→1及固定轴z→x之后，Inspector继续显示原坐标与8个原始字段；
+切面外警告出现，当前切面marker消失，没有把旧坐标投影成新样本。
+只读Host前后对照：requestId、完整identity、shape、data SHA、磁盘配置SHA全部相同。
+请求e077293a-2e7d-4c3c-9a41-23d911194e50。
+正常窗口关闭exit=0；本轮Electron258997与Host259043已退出。
+Studio/Host244/244、lint、typecheck、production build、diff-check通过。
+此修正替代上文“清空行为待核查”，保留历史失败观察；完整桌面矩阵尚未完成。

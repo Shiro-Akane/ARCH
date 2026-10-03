@@ -62,5 +62,32 @@
     "cancellation/race UI",
     "scientific evolution",
     "CUDA"
-  ]
+  ],
+  "sliceRetentionFollowup": {
+    "fixed": true,
+    "scope": "two display-only handlers",
+    "selectedRawIndex": 783,
+    "indices": [
+      15,
+      24,
+      0
+    ],
+    "operations": [
+      "z slice 0 to 1",
+      "fixed axis z to x"
+    ],
+    "rawInspectorRetained": true,
+    "offPlaneWarningAndNoMarker": true,
+    "identityAndArraysUnchanged": true,
+    "requestId": "e077293a-2e7d-4c3c-9a41-23d911194e50",
+    "desktopExitCode": 0,
+    "electronAndHostGone": true,
+    "studioChecks": {
+      "testPassed": 244,
+      "testFailed": 0,
+      "lint": "PASS",
+      "typecheck": "PASS",
+      "build": "PASS"
+    }
+  }
 }

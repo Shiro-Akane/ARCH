@@ -2221,3 +2221,5 @@ UI修正精确selected-binary SHA与successful Build分层匹配，最终244/244
 ### Gaussian 三维真实 Linux 桌面代表
 
 production独立窗口已完成32³真实场、z/x切片、原始sample1807、根AMR叠加/几何及正常关闭清理；field/config身份和数组未变。完整模型/曲线/非立方体/取消矩阵仍待完成；slice清空选择已如实记录。详见FullModelNativeDesktopProgress.zh-CN.md。本次仅补充证据，不重跑未变更的244项检查。
+
+切片选择保留后续：两个UI handler移除selected清空，production Linux窗口实测sample783在z索引/固定轴变化后保留原始8字段，切面外提示及无marker正确。请求/数组/配置身份未变，244项及lint/typecheck/build通过，关闭exit0。未重新编译Core，完整桌面矩阵仍待完成。
