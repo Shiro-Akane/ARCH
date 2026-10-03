@@ -2231,3 +2231,12 @@ production独立窗口已完成32³真实场、z/x切片、原始sample1807、�
 ### O7.1 实施前调用映射
 
 已按执行细则核对共享数学/EOS/PhysicalSpacing、AMR flag与候选父态、Driver接受步、plot/API/Studio和CUDA消费者，形成O7_1_JENS_IMPLEMENTATION_MAP.zh-CN.md。当前JENS仍unavailable，未实施或运行演化；一般EOS/父态/独立预算批准ref待提供。前序桌面出口仍待完成。
+
+### 独立 plt：元数据有界原型
+
+基线41aa5354；仅本地metadata primitive，未接 production Host/UI。
+现有writer无完成发布契约/单位/native cell geometry/科学身份，原型始终
+completion unknown、renderEligible false。真实维护Sod及已有t=0 12叶块/192cells
+只读读取，field arrays禁止读取测试通过。5/5 scoped tests、lint/typecheck PASS；
+无新模拟/IO改动。详见PlotfileMetadataPrototype.zh-CN.md及精简Summary。
+正式Reader/LOD/Inspector待契约freeze与隔离实现；不把原型计为plt出口完成。
