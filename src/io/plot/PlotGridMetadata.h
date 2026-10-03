@@ -21,7 +21,10 @@ inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
     output.upper[0].push_back(grid.GetFacePosR(i));
     const double y_lower = grid.dim >= 2 ? grid.x2_min + (j-grid.ng)*grid.dx2 : 0.;
     output.lower[1].push_back(y_lower);
-    output.upper[1].push_back(grid.dim >= 2 ? y_lower + grid.dx2 : 0.);
+    // Evaluate the shared face at its integer index, just like the next row's
+    // lower face; adding dx2 to a rounded lower face can leave a gap/overlap.
+    output.upper[1].push_back(grid.dim >= 2
+        ? grid.x2_min + (j-grid.ng+1)*grid.dx2 : 0.);
     output.lower[2].push_back(0.);
     output.upper[2].push_back(0.);
     output.cell_measure.push_back(GridMetrics::CellVolume(

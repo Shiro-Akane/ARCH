@@ -59,6 +59,22 @@ int main(int argc, char** argv) {
     require(argc == 2, "fixture directory required");
     std::filesystem::path root(argv[1]);
     std::filesystem::create_directories(root);
+    // Non-dyadic spacing must give the same stored face to adjacent rows.
+    // Compare independently emitted cells, not a rounded width tolerance.
+    {
+        Grid grid;
+        grid.dim=2; grid.ng=2;
+        grid.x1_min=0.; grid.x1_max=3.2;
+        grid.x2_min=0.; grid.x2_max=3.2;
+        grid.InitializeTopology();
+        for (int j=grid.Js();j+1<grid.Je();++j) {
+            io::PlotNativeGrid left,right;
+            io::append_plot_native_cell(left,grid,grid.Is(),j,0);
+            io::append_plot_native_cell(right,grid,grid.Is(),j+1,0);
+            require(left.upper[1].back()==right.lower[1].back(),
+                    "adjacent native y faces disagree");
+        }
+    }
     for (int dimension : {1,2}) {
         io::PlotNativeGrid native;
         std::vector<double> cx,cy,cz,field;
