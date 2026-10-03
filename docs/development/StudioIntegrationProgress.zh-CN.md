@@ -2289,3 +2289,7 @@ fetch后compute/optim仍8fc0dd25，无新科学批准引用。一般EOS/AMR/演�
 ### 原生滚轮复核：输入目标不一致证据
 
 8d8e6617 production RT128²双向滚轮及普通参数滚动对照均无可见变化；一次点击返回explorer/目标msrdc不匹配，重新activate后截图布局改变。没有证据将其定性为绘图数学bug，也不计native zoom PASS。Alt+F4正常关闭exit0，9个owned进程按PID/start均消失，config/binary SHA不变。详见FullModelNativeWheelDiagnostic-20261003.zh-CN.md/Summary.json；全模型桌面出口仍pending。本轮无源码/Save/Build/simulation/CUDA改动，不重复未变更回归。
+
+### Production renderer 缩放/平移/选点/Fit 实际事件诊断
+
+8557b900：正式入口/dist/RT128²，Electron wheel 与 DOM wheel 均到SVG并改变轴域，反向wheel/Fit恢复；缩放后pointer pan改变轴域，选点marker随Fit重投影。全部fetch为GET状态轮询，无Preview/Save/Build/Run mutation，config/binary SHA不变。正常close/Host退出，四轮desktop/Host PID均消失；临时harness两项失败如实保留。详见FullModelRendererWheelDiagnostic-20261003.zh-CN.md/Summary。renderer范围PASS不替代native WSLg UAT；完整桌面出口pending。无正式源码改动，不重复260项不变回归。
