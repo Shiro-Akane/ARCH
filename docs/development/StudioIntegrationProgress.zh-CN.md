@@ -1763,3 +1763,22 @@ report remains authoritative; tool activation/maximization does not supersede it
 Run survival across active Studio/Host close and native matrix remain open.
 No whole3C/O7 completion/full-model/JENS/RZ advance, unchanged-suite rerun,
 source edit, build, raw upload, push, tag or main merge.
+
+## Live Run survives production Host close and can be stopped after Host reopen
+
+Clean d3ccc711: isolated real production desktop.ts Host, same valid CPU4096
+Sod with unique local output. Run e475ea66-60cf-4b9d-88d0-98415cb9579c.
+Host17389 exits0 via formal stdin close and is absent; worker17413/Core17425/
+terminal17412 retain startTicks, Core running. Console grows1658→13970 bytes.
+Reopened Host17453 finds original running job in history and stops it:
+stopped/SIGTERM, worker/Core absent. Recovery Host exits0 and is absent;
+held terminal is expected. Current Electron14246/Host14292/warm14445 untouched.
+Frozen/saved inputs match; original Sod and binary SHA unchanged.
+
+StudioHostCloseSurvivalUat.zh-CN.md/Summary.json are reduced evidence.
+Production Host lifecycle PASS does not replace native Electron close-button
+or human-visible terminal UAT. WSLg readonly session/monitor/log audit does
+not prove display repaired. Latest human taskbar-only report remains.
+Remaining native close/cancel/file conflict matrix and audit/G approvals open.
+No whole3C/O7 PASS, full-model/JENS/RZ advance, source/build/unchanged-suite rerun,
+raw upload, push, release tag or main merge.
