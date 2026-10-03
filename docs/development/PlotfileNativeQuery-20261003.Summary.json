@@ -1,0 +1,48 @@
+{
+  "baseline": "198aa96907f9291ba671ad9559015e3f2554cfa5",
+  "kind": "manufactured writer/query interoperability",
+  "cases": [
+    {
+      "dimension": 1,
+      "blocks": 2,
+      "cellShape": [
+        16
+      ],
+      "samples": 3,
+      "logicalKey": "0/1/0/0",
+      "source": "GridMetrics::CellVolume",
+      "identity": "unknown",
+      "completion": "unknown",
+      "renderEligible": false,
+      "sha256": "30f4cef17f6424afe748f7d8a9572f04c0617ce3f19c67ac9b4adb8ce869846f",
+      "readOnly": true,
+      "responseBytes": 1866
+    },
+    {
+      "dimension": 2,
+      "blocks": 2,
+      "cellShape": [
+        16,
+        16
+      ],
+      "samples": 6,
+      "logicalKey": "0/1/0/0",
+      "source": "GridMetrics::CellVolume",
+      "identity": "unknown",
+      "completion": "unknown",
+      "renderEligible": false,
+      "sha256": "8c966c916827d3551e61d5112bba4c0f9e4292583141ccd85857596a9f7017a7",
+      "readOnly": true,
+      "responseBytes": 2113
+    }
+  ],
+  "checks": {
+    "studioTests": "277/277 PASS",
+    "hostTests": "127/127 PASS",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "scientificReview": "pending",
+  "simulationRun": false
+}

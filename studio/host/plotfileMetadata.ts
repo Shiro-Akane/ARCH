@@ -26,7 +26,7 @@ function shapeOf(dataset: unknown, label: string): number[] {
  for(const n of shape){cells*=n;if(!Number.isSafeInteger(cells)||cells>MAX_CELLS)throw new Error('Dataset exceeds metadata audit budget: '+label);}
  return shape;
 }
-function scalar(file: InstanceType<typeof h5.File>, name: string): unknown {
+function scalar(file: InstanceType<typeof h5.File>|InstanceType<typeof h5.Group>, name: string): unknown {
  const attribute=file.attrs[name];
  if(!attribute || (attribute.shape && attribute.shape.reduce((a,b)=>a*b,1)!==1))
   throw new Error('Missing or non-scalar plot metadata: '+name);
@@ -47,6 +47,40 @@ function dataset(group: InstanceType<typeof h5.Group>, name: string) {
  return value;
 }
 
+type NativeHeader={version:string;measureSource:string;measureConvention:string;measureUnit:null};
+function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:string):NativeHeader|null {
+ const entity=file.get('NativeGrid');
+ if(entity===null)return null;
+ if(!(entity instanceof h5.Group))throw Error('Invalid local NativeGrid group.');
+ const expected:Record<string,string|number>={
+  version:'candidate-cartesian-1',centering:'cell',ghost_cells:0,block_kind:'active-leaf',
+  center_basis:'cartesian',measure_source:'GridMetrics::CellVolume',
+  measure_convention:'active-coordinate-product; inactive-measures-omitted',measure_unit:'unknown',
+  logical_identity:'file-local level/logical_x1/logical_x2/logical_x3',
+ };
+ if(geometry!=='cartesian'||![2,3].includes(shape.length))throw Error('Unsupported candidate native geometry.');
+ for(const [name,value] of Object.entries(expected))
+  if(scalar(entity,name)!==value)throw Error('Unsupported candidate native metadata: '+name);
+ const publication:Record<string,string>={
+  plot_publication_version:'candidate-1',plot_publication_state:'complete',
+  plot_publication_method:'checked-close-atomic-replace',plot_storage_order:'x1-fastest',
+ };
+ for(const [name,value] of Object.entries(publication))
+  if(scalar(file,name)!==value)throw Error('Invalid candidate native publication: '+name);
+ const cells=shape.reduce((a,b)=>a*b,1);
+ for(const name of ['x1_lower','x1_upper','x2_lower','x2_upper','x3_lower','x3_upper','cell_measure']){
+  const d=dataset(entity,name),ds=shapeOf(d,'NativeGrid/'+name);
+  if(d.metadata.type!==1||d.metadata.size!==8||ds.length!==1||ds[0]!==cells)
+   throw Error('Candidate native dataset shape/type mismatch: '+name);
+ }
+ for(const name of ['logical_x1','logical_x2','logical_x3']){
+  const d=dataset(entity,name),ds=shapeOf(d,'NativeGrid/'+name);
+  if(d.metadata.type!==0||d.metadata.size!==4||ds.length!==1||ds[0]!==shape[0])
+   throw Error('Candidate logical dataset shape/type mismatch: '+name);
+ }
+ return {version:'candidate-cartesian-1',measureSource:'GridMetrics::CellVolume',
+  measureConvention:'active-coordinate-product; inactive-measures-omitted',measureUnit:null};
+}
 type RawNumber=number|'NaN'|'Infinity'|'-Infinity';
 function rawNumbers(value:unknown,expected:number):RawNumber[] {
  if(!ArrayBuffer.isView(value)||value instanceof DataView||value instanceof BigInt64Array||value instanceof BigUint64Array)
@@ -55,7 +89,7 @@ function rawNumbers(value:unknown,expected:number):RawNumber[] {
  if(numbers.length!==expected)throw Error('Slice payload length mismatch.');
  return numbers.map(n=>Number.isNaN(n)?'NaN':n===Infinity?'Infinity':n===-Infinity?'-Infinity':n);
 }
-function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:PlotfileSliceRequest) {
+function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:PlotfileSliceRequest,native:NativeHeader|null) {
  const {field,block,start,count}=request,cellShape=shape.slice(1);
  if(!Number.isSafeInteger(block)||block<0||block>=shape[0]||start.length!==cellShape.length||count.length!==cellShape.length)
   throw Error('Invalid block or slice dimension.');
@@ -86,9 +120,48 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
   }
   coordinates[axis]=result;
  }
+ let nativeCells:null|{
+  version:string;identityScope:string;logicalKey:string;level:number;logicalCoordinates:number[];
+  lower:Record<string,number[]>;upper:Record<string,number[]>;cellMeasure:number[];
+  measureSource:string;measureConvention:string;measureUnit:null;
+ }=null;
+ if(native){
+  const ng=group(file,'NativeGrid');
+  const readRows=(name:string)=>{
+   const d=dataset(ng,name),result:number[]=[];
+   for(let n=0;n<cells;n+=count[count.length-1]){
+    const length=count[count.length-1],index=indices[n];
+    const numbers=rawNumbers(d.slice([[index,index+length]]),length);
+    if(numbers.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw Error('Nonfinite native cell geometry: '+name);
+    result.push(...numbers as number[]);
+   }
+   return result;
+  };
+  const lower:Record<string,number[]>={},upper:Record<string,number[]>={};
+  for(let axis=0;axis<3;axis++){
+   const name='x'+(axis+1);
+   lower[name]=readRows(name+'_lower');upper[name]=readRows(name+'_upper');
+   for(let n=0;n<cells;n++)
+    if(axis<cellShape.length?upper[name][n]<=lower[name][n]:lower[name][n]!==0||upper[name][n]!==0)
+     throw Error('Invalid candidate native bounds: '+name);
+  }
+  const cellMeasure=readRows('cell_measure');
+  if(cellMeasure.some(v=>v<=0))throw Error('Invalid native cell measure.');
+  const readBlock=(g:InstanceType<typeof h5.Group>,name:string)=>{
+   const d=dataset(g,name);
+   if(d.metadata.type!==0||d.metadata.size!==4)throw Error('Invalid native logical identity type.');
+   const raw=rawNumbers(d.slice([[block,block+1]]),1)[0];
+   if(typeof raw!=='number'||!Number.isSafeInteger(raw)||raw<0)throw Error('Invalid native logical identity value.');
+   return raw;
+  };
+  const level=readBlock(grid,'level');
+  const logicalCoordinates=['logical_x1','logical_x2','logical_x3'].map(name=>readBlock(ng,name));
+  nativeCells={...native,identityScope:'file-local',logicalKey:[level,...logicalCoordinates].join('/'),
+   level,logicalCoordinates,lower,upper,cellMeasure};
+ }
  const nonFinite=values.some(v=>typeof v!=='number')||Object.values(coordinates).some(a=>a.some(v=>typeof v!=='number'));
  return {field,block,start:[...start],shape:[...count],order:'x1-fastest',linearIndices:indices,values,coordinates,
-  unit:null,nonFiniteEncoding:'IEEE special values as explicit strings',diagnostics:nonFinite?['NONFINITE_RAW_VALUES']:[]};
+  nativeCells,unit:null,nonFiniteEncoding:'IEEE special values as explicit strings',diagnostics:nonFinite?['NONFINITE_RAW_VALUES']:[]};
 }
 async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
  const source=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
@@ -128,14 +201,15 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
     const s=shapeOf(dataset(grid,name),'Grid/'+name);
     if(s.length!==1||s[0]!==blocks)throw new Error('Block metadata shape mismatch: '+name);
    }
-   if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request);}
-   structure={time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
+   const candidateNativeGrid=nativeHeader(file,shape,geometry);
+   if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request,candidateNativeGrid);}
+   structure={candidateNativeGrid,time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
     coordinates:{storedBasis:'cartesian',centering:'cell-center',units:null},
-    completion:{state:'unknown',reason:'Current writer has no authoritative completion marker or atomic publish contract.'},
+    completion:{state:'unknown',reason:candidateNativeGrid?'Candidate writer publication recognized; scientific contract review remains pending.':'Legacy writer has no recognized completion/publish contract.'},
     scientificIdentity:{case:null,config:null,build:null,binary:null,eos:null},
     nativeCellGeometry:{bounds:'unavailable',volume:'unavailable'},
     renderEligible:false,
-    diagnostics:[request?'FIELD_SLICE_AUDIT':'METADATA_ONLY','OUTPUT_COMPLETION_UNVERIFIED','UNITS_UNAVAILABLE','SCIENTIFIC_IDENTITY_UNAVAILABLE','NATIVE_CELL_GEOMETRY_UNAVAILABLE']};
+    diagnostics:[request?'FIELD_SLICE_AUDIT':'METADATA_ONLY','OUTPUT_COMPLETION_UNVERIFIED','UNITS_UNAVAILABLE','SCIENTIFIC_IDENTITY_UNAVAILABLE',...(candidateNativeGrid?['CANDIDATE_NATIVE_GRID_REVIEW_PENDING']:['NATIVE_CELL_GEOMETRY_UNAVAILABLE'])]};
   } finally {if(file.file_id>=0n)file.close();}
   const hash=createHash('sha256'),buffer=Buffer.alloc(64*1024);
   let position=0;
