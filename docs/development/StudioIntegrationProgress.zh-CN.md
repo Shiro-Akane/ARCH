@@ -23,12 +23,12 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 原生Configure/Build通过；真实CMake微型工程编译失败/恢复通过；完整依赖freshness仍unknown，dependenciesComplete=false；边界见Studio3CExitAudit | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | 原生Sod Run/Restart/Stop、关闭后计算继续及历史恢复通过；235项Studio/Host通过；同场景Preview cancel/不同项目Host重开隔离已PASS，Run同PID/start持续推进并自然完成；保留Host/native覆盖区分 | 不推广为其他模型/后端演化验收 |
-| 5 全模型初态/AMR | 当前仅 Sod/CellularDet，通用扩展未实施 | 本地 CPU 两模型初态及 Cellular AMR 有证据；其余模型未验收 | 真实域/预算需明确 |
+| 5 全模型初态/AMR | 当前仅 Sod/CellularDet；已完成Core/Host/UI限制与逐模型域审计，通用扩展未实施 | 本地 CPU 两模型初态及 Cellular AMR 有证据；其余模型未验收 | 真实域/预算需明确 |
 | 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
 | 7 O7.2–O7.5 RZ | 待实施 | 分层 CPU | O7.4 科学方案须 review |
 | 8 CUDA/第二平台短测 | 待 CPU 完成 | 未编译/未计时 | 冻结同物理终点；保留负收益 |
 | 9 批准的 O9 长时子集 | 待冻结输入/预算 | 未执行 | 未批准项不能称完成 |
-| 独立 plt 只读出口 | 待 3C 后/文件语义确认 | 未执行 | 原生单元与数据身份 |
+| 独立 plt 只读出口 | 已只读核对writer及既有H5 shape/身份缺失；读取接口未实现 | 元数据审计完成，未读完整场/未执行结果UAT | 原生单元与数据身份 |
 
 ## 不变量与交付
 
@@ -2129,3 +2129,13 @@ Run740d4d6c，CPU Sod既有4096cell/t0.2，仅out_dir改为独立目录；
 3C工程工作流出口已验证；未知Build完整依赖和fault覆盖边界保留。
 未重复235项不变回归。历史G与architecture批准独立待处理，下一步按计划审计全模型/plt。
 无CUDA/push/tag/main merge，新raw全部保留本机ignored目录。
+
+### 全模型初态/AMR与plt进入实现前审计
+
+基线d81620ad；FullModelInitialAndPlotContractAudit.zh-CN.md/精简Summary记录当前binary真实能力、
+14-model Setup/Init域、Core采样/3D容量/Host validation限制及具体迁移顺序。
+所有注册模型有point initializer不等于当前完整场支持；仅Sod/Cellular支持。
+当前二维cylindrical仍(r,phi)，不得改名RZ。plt实际writer用Cartesian中心，
+既有本机H5的shape和缺失case/config/build身份已只读确认，不上传raw。
+下一步在原所有者扩展按dimension的有界采样/三轴验证，逐模型复用Setup/Init/EOS；
+全模型与plt仍in progress，不宣称实现/科学通过。本轮无新Preview/AMR/simulation/build或不变测试重复。
