@@ -185,9 +185,9 @@ class Campaign:
         require(force_errors[1] < force_errors[0] or max(force_errors) < 1e-11, 'AMR force does not improve')
         for dimension in [2, 3]:
             self.run(f'native-{dimension}d', nblockx1=2, nblockx2=1, nblockx3=int(dimension==3),
-                     x2_max=.5, x3_max=.5, max_blocks=16, max_steps=2, tmax=.02)
+                     x2_min=0, x3_min=0, x2_max=.5, x3_max=.5, max_blocks=16, max_steps=2, tmax=.02)
             self.run(f'native-mixed-{dimension}d', nblockx1=4, nblockx2=1, nblockx3=int(dimension==3),
-                     x2_max=.25, x3_max=.25, max_blocks=32, max_steps=2, tmax=.02,
+                     x2_min=0, x3_min=0, x2_max=.25, x3_max=.25, max_blocks=32, max_steps=2, tmax=.02,
                      phase=math.pi/4, lrefinemax=1, refine_threshold=2e-5, derefine_threshold=5e-6)
         self.restart()
 

@@ -2908,3 +2908,11 @@ linear error .000261426 <.02；burn能量/质量预算通过，paired transport 
 14/14复验全部实际INVALID_RANGE+目标诊断，无scientific output，不改Core/物理预算。
 见GravityNegativeContracts报告/Summary；原fail日志/全CTestJUnit保持，historicalG full gate仍未关闭。
 无重build/CUDA/push/tag。
+
+## 2026-10-04 原完整Jeans CPU campaign新finding
+
+四份原多维配置补历史轴min0，inspect均exit0；full前24条空间/时间阶/AMR及部分多维通过，
+native-mixed-3d首gravity solve FAIL，原日志保留。源码推导selective粗化末层spacing ratio4
+与既有Cartesian guard<=2冲突，未放宽guard/变更数值方法；待Core确认。
+原未到达Restart独立7条PASS，本例实际14datasets均numeric且raw bytes一致，不清除full FAIL。
+见JeansFullCpuFinding报告/Summary；historical radial G另待，CPU/CUDA/O9出口保持未完成。
