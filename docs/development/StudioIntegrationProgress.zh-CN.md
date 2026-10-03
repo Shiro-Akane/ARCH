@@ -2309,3 +2309,7 @@ ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，
 ### Plotfile live HTTP断开清理补证
 
 86800bb7：实际loopback metadata/slice请求，/proc复核直接owned worker argv/parent/start后SIGSTOP，同身份T与pending100ms确认，再断开HTTP；worker回收约14.897/9.678ms，后续读取200/SHA一致，字节未变。故障注入scope，不冒称自然HDF解析/native close。首轮proc ESRCH竞态失败保留后修正validator。完整273/273、lint/typecheck/diff PASS，生产源码未变不重复build。详见PlotfileHttpDisconnectVerification-20261003.zh-CN.md/Summary；正式plt UI/科学语义出口仍pending。
+
+### Project Plotfile原始审计UI接入
+
+5cd70044上接Host metadata/slice、Project请求保护及bounded原始值表，未知completion/单位/science/native几何诚实显示；旧1D文案纠正但保留local H5需求。真实reader→客户端拒绝错位/伪认证测试通过，最终275/275+静态/build/diff PASS。最终production renderer/Host显示Sod4×16与PRES global32原值，正常退出/owned Electron Host消失，config/binary不变。详见PlotfileProjectAuditUiProgress-20261003.zh-CN.md/Summary。native Manual UAT/正式科学Viewer/LOD/native-cell仍pending，已请求Core IO准确契约；无simulation/ARCH build/CUDA/push/tag/main merge。

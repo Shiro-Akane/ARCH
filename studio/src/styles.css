@@ -1144,3 +1144,11 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 .run-confirmation h3 { margin:0 0 8px; }
 .run-confirmation label { display:block; margin:10px 0; }
 .run-confirmation [role=alert] { color:#ffb8ad; }
+
+.plotfile-audit label {display:inline-flex;gap:8px;align-items:center;margin:6px 12px 6px 0;}
+.plotfile-audit fieldset {display:inline-flex;gap:12px;max-width:100%;margin:8px;}
+.plotfile-audit input {max-width:100%;}
+.audit-digest {overflow-wrap:anywhere;}
+.audit-table-scroll {max-height:420px;overflow:auto;}
+.audit-table-scroll table {border-collapse:collapse;width:100%;}
+.audit-table-scroll th,.audit-table-scroll td {text-align:left;padding:6px;border-bottom:1px solid #465260;white-space:nowrap;}
