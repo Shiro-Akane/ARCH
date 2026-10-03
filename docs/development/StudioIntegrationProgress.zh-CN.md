@@ -3077,3 +3077,12 @@ helmholtz ready/实际表路径/13species，12leaf L0 Complete。
 Init sample与AMR几何分离；没有执行Poisson/evolution验收。
 正常close exit0，8owned PID/startTicks均退出，input未变/无科学output/managed clean。
 见FullModelGravityBoxDesktop-20261004。无源码修改或baseline重复；联合科学/CPU/CUDA/O9仍未闭合。
+
+## 2026-10-04 DiffusionMode 原生组分身份/初态矩阵
+
+production native新增DiffusionMode：512sample、rho/P均匀、Species index0 background/index1 tracer，
+8leaf L0 Complete/128cells、块0:5:0:0几何算术一致。
+当前菜单/Inspector无组分mass-fraction场，明确不作该项PASS；D_spec0不作扩散演化验收。
+首次Preview在观察期间自行进入preparing/current，未记为手动请求验证。
+正常close exit0、8owned PID/startTicks均退出、config不变/无科学output/managed clean。
+见FullModelDiffusionDesktop-20261004。无源码或baseline重复；联合目标仍未闭合。
