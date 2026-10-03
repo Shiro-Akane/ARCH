@@ -1,0 +1,58 @@
+{
+  "implementationCommit": "e7181420d06f3eb95eff85061d347ed0f26eaec6",
+  "writerBuildSourceCommit": "ab23bad7e8bea93c3569618d1a6335312372cc30",
+  "ownerContractCommit": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+  "platform": "Linux/WSL native Electron",
+  "productionAsset": "index-BJQ3bLmF.js",
+  "sodCoordinateUnit": "cm",
+  "cellularCoordinateUnit": "cm",
+  "densityUnit": "g/cm^3",
+  "sodMeasureNormalization": "per_unit_transverse_area",
+  "cellularMeasureNormalization": "per_unit_transverse_length",
+  "points": [
+    {
+      "case": "Sod",
+      "index": 51,
+      "rawValue": 0.125,
+      "cellMeasure": 0.0078125,
+      "center": [
+        0.65234375,
+        0.0,
+        0.0
+      ],
+      "fileSha256": "b78b025ab3854aa505054b4f3eb69d6e408a8a9367cf5925bd0d72737e7c12b4",
+      "status": "PASS"
+    },
+    {
+      "case": "CellularDet",
+      "index": 3074,
+      "rawValue": 43375362.843074,
+      "cellMeasure": 0.040000000000000015,
+      "center": [
+        0.5,
+        6.5,
+        0.0
+      ],
+      "fileSha256": "abd3382e89a55ce9f44bc04979795043aa004e62034178bb199d5189a2e3b7bb",
+      "status": "PASS"
+    }
+  ],
+  "independentH5pyReadback": "PASS",
+  "sourceIdentity": "partial; run/effective/build/source Git unknown",
+  "completion": "unverified",
+  "scientificReview": "pending",
+  "scope": "t=0 DENS / unit labels / native Inspector; not full Viewer or evolution acceptance",
+  "pendingFindings": [
+    "Cellular per-cell bounds max difference 1.7763568394002505e-15; no new tolerance",
+    "stale selected binary startup Build status copy may imply tracked inputs validated",
+    "registry may become unavailable after startup poll"
+  ],
+  "notPerformed": [
+    "new Core build",
+    "new Preview",
+    "simulation",
+    "Windows adaptation",
+    "push",
+    "tag"
+  ]
+}

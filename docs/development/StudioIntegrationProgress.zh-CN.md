@@ -2452,3 +2452,10 @@ publication/checkpoint scoped tests 与独立 synthetic h5py FP64 位级读回�
 Host与UI已迁移recorded declaration，旧文件unknown保留。
 309项回归/lint/typecheck/build通过，新单位native UAT及完整科学/来源review未完成。
 见PlotfileFieldRealT0-20261003.zh-CN.md；完整联合目标不收缩到本切片。
+
+
+2026-10-03：e7181420 production Linux Electron实际完成新单位Sod/Cellular metadata→LOD→point Inspector。
+轴cm、DENS g/cm^3、time s与低维cm/cm^2 normalization实际显示；index51/3074经独立h5py一致。
+更新准确writer构建SHA/HostUI SHA/数组映射对接文档；旧pending记录由新报告补充，不追溯改写旧证据。
+见PlotfileNativeUnitUat-20261003；来源仍partial、发布未认证、Cellular bounds finding待owner review。
+无新Build/Preview/simulation/重复测试/push/tag；完整联合目标未完成。
