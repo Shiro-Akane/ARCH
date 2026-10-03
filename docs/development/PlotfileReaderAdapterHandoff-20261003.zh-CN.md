@@ -4,10 +4,12 @@
 
 - Owner contract：23ff77c4f08419de2b3c5eadee214da2af25784e，已完整阅读，未 merge。
 - 本地分支：studio/compute-optim-integration；尚未 push，不能称为远端可获取。
-- writer / Driver 发布修复 / EOS 属性源码：568026113e09ebeb03eb0b92a55fa35096660d4e。
+- 当前 Plotfile writer / Driver / 查询 / Viewer 累积交付引用：e34c54f7405a6d9e2d8c481e32d4c57e782625c1（本地提交，尚未 push）。
+- writer / Driver 发布修复 / EOS 属性早期源码：568026113e09ebeb03eb0b92a55fa35096660d4e。
 - Host / Viewer EOS 属性消费：f86f9706756277550d43c5ab0b035140abfa358f。
-- 本文件所属提交另含 FP64 signed-zero 传输与显示补丁，见 PlotfileFp64Wire-20261003.zh-CN.md。
-  获取这一提交的完整 SHA 应使用 git log -1；对外交付时附准确 SHA。
+- FP64 signed-zero 传输与显示提交：33a49399cb5f1f671a9de3d575fc4137c989b271；见 PlotfileFp64Wire-20261003.zh-CN.md。
+- y-face 原生 bounds 修复：b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1；ALL 字段补证：01cbe4376b317e217333b1f75ba119a25eb43627。
+- output-session UUID 增量：e34c54f7405a6d9e2d8c481e32d4c57e782625c1。
 - 当前真实 EOS 属性文件的 CPU binary SHA：
   325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b。
   构建为 6c10cb2a 基线加记录在 PlotfileEosConstituents-20261003.Summary.json 中的 dirty writer inputs；
@@ -52,7 +54,8 @@ ENUC specific_burning_energy_rate，erg/g/s；VORT/DIVV 1/s；组分质量分数
 case_id 来自 ConfigurationInput.case_id；raw_config_sha256 对实际 parser 字节；
 binary_sha256 来自 Linux /proc/self/exe，scope=main-executable-only。
 EOS/table/gamma/species 及四组属性取 resolved runtime checkpoint provenance。
-run_id、effective_config_sha256、build_id、source_git_head 仍 unknown；不由文件名/当前 HEAD 填充。
+run_id 为 DriverIO 持有的 OS-generated UUIDv4；run_id_source 明确标识 output session。
+effective_config_sha256、build_id、source_git_head 仍 unknown，并保留原因；不由文件名/当前 HEAD 填充。
 EOS 属性精确记录不等于独立 EOS 科学认证。可信期望应来自文件外受控输入/构建记录。
 
 同目录 .partial → write → flush → checked H5Fclose → atomic rename。
@@ -118,3 +121,25 @@ b26fb8a2 writer修复后新Sod9/Cellular28全部字段与早期canonical完整FP
 ## 2026-10-04 Run output-session identity
 
 SourceIdentity/run_id不再固定unknown：DriverIO持有OS-generated UUIDv4；新增run_id_source="DriverIO output session; OS-generated UUIDv4"。旧文件unknown兼容。effective_config_sha256/build_id/source_git_head仍unknown。四次真实Sod/Cellular t=0与production isolated reader/client验证通过，37字段以及每次20个checkpoint数值dataset bit不变。映射/FP64/checkpoint语义不变，细节与真实build-input身份见 PlotfileRunIdentity-20261004.zh-CN.md / Summary。尚未push。
+
+
+## 2026-10-04 交给 owner 的读取适配入口
+
+已再次完整核对 owner 的 PlotfileValidationContract.zh-CN.md（23ff77c4f08419de2b3c5eadee214da2af25784e）。
+优先对照本文件“实际字段与数组映射”，将生产分散属性归一到 owner 的候选语义；
+无需生产 writer 另写一份 plotfile_candidate JSON。
+
+读取适配必须保留：
+1. publication 标记与 checked close / atomic rename 的共同证据，失败不得推进成功序号。
+2. 外部受控 input/binary 身份；unknown build/effective config/source HEAD 不冒充已验证。
+3. FP64 原始数组、文件 block 顺序、i-fastest、原生 bounds 与 Core cell measure。
+4. 单位、Cartesian 分量基底及低维积分归一化；ENTR 不冒称热力学熵。
+5. Inspector 回查原生叶单元；Native AMR 与 Displayed LOD 独立表达。
+6. 固定像素返回量不等于固定扫描成本；首次全域总览仍可能扫描全部叶单元。
+
+本次只核对和更新对接说明，未重新运行无变化的 baseline，也未生成新 H5/checkpoint。
+当前原始证据见 PlotfileRunIdentity-20261004.Summary.json 和
+PlotfileAllFieldsFaceRepair-20261004.Summary.json。37 字段 bit 一致和 checkpoint 20 个
+数值 dataset bit 一致是 t=0 工程证据；PRES/TEMP/diagnostics 独立科学 oracle、
+演化和真实 restart output-session identity 仍未因此获验收。
+原始文件、ELF 和日志留在 ignored studio/.local；本地提交尚未提供远端可获取引用。
