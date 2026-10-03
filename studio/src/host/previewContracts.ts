@@ -1,11 +1,11 @@
 import type {BuildManifest} from './contracts.ts';
 export const PREVIEW_SCHEMA='1.0';
 export const MAX_PREVIEW_BYTES=8*1024*1024;
-export interface PreviewProfile { id:string; displayName:string; buildProfileId:string; caseId:'Sod'|'CellularDet'; dimension:1|2; defaultSampleCount:number; maxSampleCount:number; defaultShape?:number[]; maxPerAxis?:number; runnerKind:'existing-arch-cli'; configured:boolean }
+export interface PreviewProfile { id:string; displayName:string; buildProfileId:string; caseId:string; dimension:1|2|3; defaultSampleCount:number; maxSampleCount:number; defaultShape?:number[]; maxPerAxis?:number; runnerKind:'existing-arch-cli'; configured:boolean }
 export interface RealPreviewRequest { projectId:string; profileId:string; configText:string; configRevision:string; requestedSampleCount?:number; requestedShape?:number[] }
-export interface PreviewIdentity { requestId:string; projectId:string; caseId:'Sod'|'CellularDet'; configRevision:string; buildId:string; binarySha256:string; profileId:string }
+export interface PreviewIdentity { requestId:string; projectId:string; caseId:string; configRevision:string; buildId:string; binarySha256:string; profileId:string }
 export interface PreviewDiagnostic { severity:'info'|'warning'|'error'; code:string; message:string }
-export interface RealPreviewData { dimension:1|2; kind:'line'|'grid'; sampling:{kind:'uniform';valueLocation:'init-sample';position:'bin-center';count:number;shape:number[];order:'x1-fastest';fixedCoordinates?:{name:string;value:number;unit:string|null}[]}; axes:{name:string;unit:string|null;values:number[]}[]; fields:{key:string;displayName:string;unit:string|null;values:number[];min:number;max:number}[] }
+export interface RealPreviewData { dimension:1|2|3; kind:'line'|'grid'|'volume'; sampling:{kind:'uniform';valueLocation:'init-sample';position:'bin-center';count:number;shape:number[];order:'x1-fastest';fixedCoordinates?:{name:string;value:number;unit:string|null}[]}; coordinates?:{version:'1';basis:'native-grid';velocityBasis:'native-orthonormal';geometry:string;representation:'uniform-state'|'spatial-samples';metadata:import('./configurationContracts.ts').CoordinateSystem}; axes:{name:string;unit:string|null;values:number[]}[]; fields:{key:string;displayName:string;unit:string|null;values:number[];min:number;max:number}[] }
 export interface CorePreview { schemaVersion:'1.0'; kind:'initial-state-preview'; status:'ok'|'error'; stage:string; identity:{requestId:string;caseId:string;configRevision:string}|null; execution?:{previewBackend:'cpu';simulationReadiness:'not_checked';timeStepping:'not_executed';scientificOutput:'not_created'}; state?:Record<string,unknown>|null; parameterMetadata?:ParameterMetadata; graphicalBindings?:GraphicalBindings; data:RealPreviewData|null; diagnostics:PreviewDiagnostic[] }
 export interface RealPreviewResult { protocolVersion:string; identity:PreviewIdentity; generatedAt:string; core:CorePreview }
 export type PreviewRunState='none'|'generating'|'succeeded'|'failed'|'cancelled';
@@ -22,4 +22,9 @@ export interface CoreBinding extends ParameterConstraints {id:string;parameterKe
 export interface ParameterMetadata {version:'1';coverage:'observed-case-setup-reads';complete:false;parameters:CoreParameter[]}
 export interface GraphicalBindings {version:'1';items:CoreBinding[]}
 
-export interface ModelCapability {caseId:string;dimensions:number[];geometries:string[];previewBackend:'cpu';fields:string[];maxFields:number;maxResponseBytes:number;sampling:{defaultShape:number[];minPerAxis:number;maxPerAxis:number;maxTotalSamples:number};supportedShockDirections?:number[]}
+export interface ModelSampling {defaultShape:number[];minPerAxis:number;maxPerAxis:number;maxTotalSamples:number}
+export interface ModelCapability {caseId:string;dimensions:number[];geometries:string[];previewBackend:'cpu';fields:string[];maxFields:number;maxResponseBytes:number;sampling?:ModelSampling;samplingByDimension?:(ModelSampling&{dimension:1|2|3})[];supportedShockDirections?:number[]}
+export function samplingForDimension(model:ModelCapability,dimension:number):ModelSampling|undefined {
+ return model.samplingByDimension?.find(s=>s.dimension===dimension)
+  ??(model.dimensions.length===1&&model.dimensions[0]===dimension?model.sampling:undefined);
+}

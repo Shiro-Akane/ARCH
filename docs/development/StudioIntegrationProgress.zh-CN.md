@@ -23,7 +23,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 原生Configure/Build通过；真实CMake微型工程编译失败/恢复通过；完整依赖freshness仍unknown，dependenciesComplete=false；边界见Studio3CExitAudit | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | 原生Sod Run/Restart/Stop、关闭后计算继续及历史恢复通过；235项Studio/Host通过；同场景Preview cancel/不同项目Host重开隔离已PASS，Run同PID/start持续推进并自然完成；保留Host/native覆盖区分 | 不推广为其他模型/后端演化验收 |
-| 5 全模型初态/AMR | Core维度驱动真实生成/CLI/session已接通；当前UI仍仅Sod/Cellular，Host/UI通用接入待实施 | CPU14维护模型字段+根AMR、三维代表/曲线参考、非立方体与warm session通过；不是混合细化/科学认证 | Setup域/预算与科学验收分开 |
+| 5 全模型初态/AMR | Core维度驱动真实生成/CLI/session已接通；Host动态Profiles/三轴协议已实现并工程回归；UI仍仅Sod/Cellular，通用显示待实施 | CPU14维护模型字段+根AMR、三维代表/曲线参考、非立方体与warm session通过；不是混合细化/科学认证 | Setup域/预算与科学验收分开 |
 | 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
 | 7 O7.2–O7.5 RZ | 待实施 | 分层 CPU | O7.4 科学方案须 review |
 | 8 CUDA/第二平台短测 | 待 CPU 完成 | 未编译/未计时 | 冻结同物理终点；保留负收益 |
@@ -2175,3 +2175,10 @@ CLI/session三轴请求、VELZ精确缓存、runtime发现共用已审阅域；�
 下一步Host validators/provider、模型工作区及3D/单区视图，再实际AMR混合层级和独立plt。
 科学/CUDA/JENS/RZ未验收；历史G/architecture审批独立pending。
 没有simulation/scientific output/Windows适配/push/tag/main merge。
+
+### 全模型 Host 增量：动态能力与查询清理
+
+基线9164222c；真实CPU capabilities经相同TS校验生成22个case/dimension Profiles。
+Host增量最终237/237、lint/typecheck/production build/diff PASS；首轮失败及受阻查询人工释放边界保留。
+详见FullModelHostIntegrationProgress.zh-CN.md。未运行simulation或替换生产UIbinary。
+实际Host多模型请求、provider/3D/state/曲线/AMR UI/UAT仍待实施，不宣告阶段完成。

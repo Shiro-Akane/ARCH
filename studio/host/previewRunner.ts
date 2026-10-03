@@ -9,6 +9,8 @@ import {profileFingerprint} from './buildProfile.ts';
 import {BuildError,BuildRunner} from './buildRunner.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 import {MAX_PREVIEW_BYTES} from '../src/host/previewContracts.ts';
+import {samplingForDimension} from '../src/host/previewContracts.ts';
+import {profilesFromModels} from './previewProfile.ts';
 import type {PreviewStatus,PreviewProfile,RealPreviewRequest,PreviewIdentity} from '../src/host/previewContracts.ts';
 import {validateCorePreview,validateModelCapabilities} from '../src/host/previewValidation.ts';
 export interface PreviewHooks {spawn?:typeof spawn;timeoutMs?:number;graceMs?:number}
@@ -16,6 +18,8 @@ interface PendingPreview {text:string;count:number|number[];identity:PreviewIden
 export class PreviewRunner {
  externalBusy?:()=>boolean;
  readonly build:BuildRunner; profile:PreviewProfile; private profiles:PreviewProfile[];
+ private capabilityKey?:string; private capabilityPromise?:Promise<unknown>;
+ private closed=false; private capabilityQueries=new Map<AbortController,Promise<void>>();
  private current:PreviewStatus; private child?:ChildProcessWithoutNullStreams; private cancelled=false;
  private session?:PreviewSession; private sessionKey?:string; private sessionGeneration=0;
  private reaping:Promise<void>=Promise.resolve();
@@ -29,30 +33,67 @@ export class PreviewRunner {
  }
  isActive(){return this.current.state==='generating'||!!this.auxiliaryRequestId;}
  snapshot(){return structuredClone(this.current);}
+ /** Cache cheap discovery per successful build/binary identity, not per edit. */
+ private async capabilities(buildId:string,binarySha256:string):Promise<unknown>{
+  if(this.closed)throw new Error('Preview Host is closed.');
+  const binary=await checkedPath(this.build.root,this.build.profile.outputBinaryRelative);
+  if(this.closed)throw new Error('Preview Host is closed.');
+  const key=JSON.stringify([this.build.root,binary,buildId,binarySha256]);
+  if(key!==this.capabilityKey||!this.capabilityPromise){
+   this.capabilityKey=key;
+   const controller=new AbortController();
+   let finish!:()=>void;
+   this.capabilityQueries.set(controller,new Promise<void>(resolve=>{finish=resolve;}));
+   this.capabilityPromise=new Promise<unknown>((resolve,reject)=>{
+    const query=execFile(binary,['--preview-capabilities'],{cwd:this.build.root,timeout:3000,killSignal:'SIGKILL',signal:controller.signal,maxBuffer:65536,encoding:'utf8',env:{PATH:'/usr/bin:/bin',LANG:'C.UTF-8',OMP_NUM_THREADS:'1',CUDA_VISIBLE_DEVICES:''}},(error,stdout)=>{
+     if(error){reject(new Error('Preview capability process could not start or query failed.'));return;}
+     try{const result=JSON.parse(stdout);capabilityExtensions(result);resolve(result);}
+     catch(e){reject(e);}
+    }).once('close',()=>{this.capabilityQueries.delete(controller);finish();});
+    controller.signal.addEventListener('abort',()=>{query.kill('SIGKILL');},{once:true});
+   });
+   void this.capabilityPromise.catch(()=>{if(this.capabilityKey===key){this.capabilityKey=undefined;this.capabilityPromise=undefined;}});
+  }
+  return this.capabilityPromise;
+ }
  async readiness(){
   const b=await this.build.validate();await this.build.refreshFreshness();const m=this.build.snapshot().lastSuccessfulBuild;
   this.current.ready=false;this.current.build=m;
   try {
+   if(this.closed)throw new Error('Preview Host is closed.');
    if(!b.configured||this.build.isActive())throw new Error('Build unavailable or active.');
-   if(this.build.profile.id!==this.profile.buildProfileId||!(this.build.profile.registeredCases??[this.build.profile.caseId]).includes(this.profile.caseId))throw new Error('Preview profile does not match the configured Build.');
+   if(this.build.profile.id!==this.profile.buildProfileId)throw new Error('Preview profile does not match the configured Build.');
    if(!m||!m.inputsStableDuringBuild||m.buildProfileFingerprint!==profileFingerprint(this.build.profile))throw new Error('Build required before real preview: no matching successful manifest.');
    const now=await inputs(this.build.profile);
    if(now.length!==m.trackedInputFingerprints.length||now.some((v,i)=>v.relativePath!==m.trackedInputFingerprints[i].relativePath||!same(v.fingerprint,m.trackedInputFingerprints[i].fingerprint)))throw new Error('Tracked source changed. Build required before real preview.');
    if(!same(await inspect(this.build.root,this.build.profile.outputBinaryRelative,true),m.outputBinary.fingerprint))throw new Error('Binary differs from successful Build. Build required before real preview.');
+   const capabilities=await this.capabilities(m.buildId,m.outputBinary.fingerprint.sha256);
+   const root=capabilities as {modelCapabilities?:unknown};
+   if(root.modelCapabilities!==undefined){
+    const models=validateModelCapabilities(root.modelCapabilities);
+    this.profiles=profilesFromModels(models,this.build.profile.id);
+    this.current.modelCapabilities=models;this.current.profiles=this.profiles;
+    const selected=this.profiles.find(p=>p.id===this.profile.id);
+    if(selected){this.profile=selected;this.current.profile=selected;}
+   }
+   if(this.closed)throw new Error('Preview Host is closed.');
    this.current.ready=true;this.current.reason='Preview uses the last successful tracked build. Full dependency freshness is not independently verified.';
   } catch(e){this.current.reason=e instanceof Error?e.message:'Preview readiness unknown';}
   if(!this.current.ready&&this.session)await this.endSession('Preview Build readiness changed.');
   return this.snapshot();
  }
  async start(r:RealPreviewRequest){
+  if(this.closed)throw new BuildError('Preview Host is closed.',409);
   if(this.auxiliaryRequestId||this.externalBusy?.())throw new BuildError('Initialization workflow is active; wait or cancel it.',409);
   const allowed=['projectId','profileId','configText','configRevision','requestedSampleCount','requestedShape'];
-  const profile=this.profiles.find(p=>p.id===r.profileId);
-  if(Object.keys(r).some(k=>!allowed.includes(k))||r.projectId!==this.build.projectId||!profile||typeof r.configText!=='string'||!r.configText||Buffer.byteLength(r.configText)>1024*1024||r.configText.includes('\0')||Buffer.from(r.configText,'utf8').toString('utf8')!==r.configText||r.configRevision!==createHash('sha256').update(r.configText).digest('hex'))throw new BuildError('Invalid Preview request or config revision.');
-  const chosen=profile!;let count:number|number[];
-  if(chosen.dimension===2){
+  if(Object.keys(r).some(k=>!allowed.includes(k))||r.projectId!==this.build.projectId||typeof r.profileId!=='string'||typeof r.configText!=='string'||!r.configText||Buffer.byteLength(r.configText)>1024*1024||r.configText.includes('\0')||Buffer.from(r.configText,'utf8').toString('utf8')!==r.configText||r.configRevision!==createHash('sha256').update(r.configText).digest('hex'))throw new BuildError('Invalid Preview request or config revision.');
+  let profile=this.profiles.find(p=>p.id===r.profileId);
+  if(!profile&&!this.isActive()){await this.readiness();profile=this.profiles.find(p=>p.id===r.profileId);}
+  if(!profile)throw new BuildError('Unknown Host-owned Preview profile.');
+  const chosen=profile;let count:number|number[];
+  if(chosen.dimension>1){
    count=r.requestedShape??chosen.defaultShape!;
-   if(r.requestedSampleCount!==undefined||!Array.isArray(count)||count.length!==2||count.some(n=>!Number.isInteger(n)||n<2||n>(chosen.maxPerAxis??256))||count[0]*count[1]>chosen.maxSampleCount)throw new BuildError('CellularDet requires [Ny,Nx], each 2..256, at most 65536 samples.');
+   if(r.requestedSampleCount!==undefined||!Array.isArray(count)||count.length!==chosen.dimension||count.some(n=>!Number.isInteger(n)||n<2||n>(chosen.maxPerAxis??256))||count.reduce((a,b)=>a*b,1)>chosen.maxSampleCount)throw new BuildError('Invalid bounded multidimensional Preview sampling shape.');
   }else{count=r.requestedSampleCount??chosen.defaultSampleCount;if(r.requestedShape!==undefined||!Number.isInteger(count)||count<2||count>chosen.maxSampleCount)throw new BuildError('Preview samples must be 2..4096.');}
   if(this.isActive()){
    if(!this.session||this.cancelled)throw new BuildError('Preview is already generating; cancel or wait.',409);
@@ -119,7 +160,7 @@ export class PreviewRunner {
   if(session){this.sessionGeneration++;this.reaping=session.terminate(reason);}
   await this.reaping;
  }
- async shutdown(){this.auxiliaryRequestId=undefined;this.pending=undefined;this.current.queue=undefined;this.cancelled=true;this.terminate();await this.endSession('Preview Host shutdown.');}
+ async shutdown(){this.closed=true;this.current.ready=false;this.current.reason='Preview Host is closed.';const queries=[...this.capabilityQueries.entries()];for(const [controller] of queries)controller.abort();await Promise.allSettled(queries.map(([,closed])=>closed));this.capabilityKey=undefined;this.capabilityPromise=undefined;this.auxiliaryRequestId=undefined;this.pending=undefined;this.current.queue=undefined;this.cancelled=true;this.terminate();await this.endSession('Preview Host shutdown.');}
  private async run(text:string,count:number|number[],identity:PreviewIdentity,queuedAt:number){
   const startedAt=performance.now();
   this.current.timing={hostQueueMilliseconds:startedAt-queuedAt};
@@ -130,10 +171,7 @@ export class PreviewRunner {
    if(!this.current.ready||this.current.build?.buildId!==identity.buildId||this.current.build.outputBinary.fingerprint.sha256!==identity.binarySha256)throw new Error('Build changed before queued Preview.');
    const binary=await checkedPath(this.build.root,this.build.profile.outputBinaryRelative);
    if(this.cancelled)throw new Error('Preview cancelled.');
-   const capabilities=await new Promise<unknown>((resolve,reject)=>{
-    const child=execFile(binary,['--preview-capabilities'],{cwd:this.build.root,timeout:3000,maxBuffer:65536,encoding:'utf8',env:{PATH:'/usr/bin:/bin',LANG:'C.UTF-8',OMP_NUM_THREADS:'1',CUDA_VISIBLE_DEVICES:''}},(error,stdout)=>{if(error)reject(new Error('Preview capability process could not start or query failed.'));else try{resolve(JSON.parse(stdout));}catch{reject(new Error('Invalid capability JSON'));}});
-    this.child=child as ChildProcessWithoutNullStreams;
-   });
+   const capabilities=await this.capabilities(identity.buildId,identity.binarySha256);
    if(this.cancelled)throw new Error('Preview cancelled.');
    const extensions=capabilityExtensions(capabilities);
    const caps=capabilities as {modelCapabilities?:unknown};
@@ -141,8 +179,9 @@ export class PreviewRunner {
    this.current.modelCapabilities=models;
    const model=models?.find(m=>m.caseId===identity.caseId);
    if(identity.caseId==='CellularDet'&&!model)throw new Error('CellularDet 2D model capability unavailable.');
-   if(model){const shape=Array.isArray(count)?count:[count];if(!model.dimensions.includes(shape.length)||shape.some(n=>n<model.sampling.minPerAxis||n>model.sampling.maxPerAxis)||shape.reduce((a,b)=>a*b,1)>model.sampling.maxTotalSamples)throw new Error('Requested sampling exceeds model capabilities.');}
-   const samplingArgs=Array.isArray(count)?['--samples-x1',String(count[1]),'--samples-x2',String(count[0])]:['--samples',String(count)];
+   if(model){const shape=Array.isArray(count)?count:[count],budget=samplingForDimension(model,shape.length);if(!budget||!model.dimensions.includes(shape.length)||shape.some(n=>n<budget.minPerAxis||n>budget.maxPerAxis)||shape.reduce((a,b)=>a*b,1)>budget.maxTotalSamples)throw new Error('Requested sampling exceeds model capabilities.');}
+   else if(identity.caseId!=='Sod')throw new Error('Selected model capability unavailable.');
+   const samplingArgs=Array.isArray(count)?[...count].reverse().flatMap((n,axis)=>['--samples-x'+(axis+1),String(n)]):['--samples',String(count)];
    let output:{bytes:Buffer;code:number|null};
    let sessionResult:SessionResult|undefined;
    const capability=sessionCapability(capabilities);
@@ -161,7 +200,7 @@ export class PreviewRunner {
     this.child=undefined;
     this.current.session={generation,processToken:session.processToken,stage:'request'};
     sessionResult=await session.request({command:'--preview',caseId:identity.caseId,requestId:identity.requestId,configText:text,
-     ...(Array.isArray(count)?{samplesX1:count[1],samplesX2:count[0]}:{samples:count})},event=>{
+     ...(Array.isArray(count)?Object.fromEntries([...count].reverse().map((n,axis)=>['samplesX'+(axis+1),n])):{samples:count})},event=>{
       if(this.session===session&&this.sessionGeneration===generation&&!this.cancelled)
        this.current.session={generation,processToken:session.processToken,...event};
      });
@@ -188,6 +227,10 @@ export class PreviewRunner {
    if(this.cancelled)throw new Error('Preview cancelled.');
    if(output.bytes.length>MAX_PREVIEW_BYTES)throw new Error('Preview response exceeds 8 MiB.');
    const core=validateCorePreview(JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(output.bytes)),identity,count);
+   if(model&&core.data){
+    const geometry=core.data.coordinates?.geometry??(core.state?.grid as {geometry?:string}|undefined)?.geometry??'cartesian';
+    if(!model.dimensions.includes(core.data.dimension)||!model.geometries.includes(geometry))throw new Error('Response is outside negotiated model domain.');
+   }
    if(model&&core.data&&(core.data.fields.length>model.maxFields||core.data.fields.some(f=>!model.fields.includes(f.key))||output.bytes.length>model.maxResponseBytes))throw new Error('Response exceeds model field/byte capabilities.');
    if(core.status==='error')this.current.failure=core;
    if(identity.caseId!=='Sod'||!extensions.metadata)delete core.parameterMetadata;

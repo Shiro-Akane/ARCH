@@ -36,7 +36,7 @@ export function sessionCapability(capabilities: unknown): SessionCapability | un
 export type SessionRequest = {
  command:'--preview'|'--inspect-config'|'--inspect-case'|'--amr-resources'|'--preview-amr';
  caseId:string; requestId:string; configText:string;
- samples?:number; samplesX1?:number; samplesX2?:number; meshMaxBlocks?:number; meshMemoryMiB?:number;
+ samples?:number; samplesX1?:number; samplesX2?:number; samplesX3?:number; meshMaxBlocks?:number; meshMemoryMiB?:number;
 };
 export interface SessionProgress {stage:string; elapsedMilliseconds:number}
 export interface SessionResult {
@@ -48,7 +48,7 @@ export interface SessionOptions {
  binary:string; cwd:string; capability:SessionCapability;
  spawn?:typeof spawn; readyTimeoutMs?:number; timeoutMs?:number; graceMs?:number;
 }
-const stages = new Set(['request','configuration','support','setup','eos','sampling','initialization','initial-refinement','source-validation','complete']);
+const stages = new Set(['request','input','configuration','support','setup','eos','sampling','initialization','initial-refinement','source-validation','complete']);
 function duration(value:unknown):number {
  if(typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error('Invalid session duration.');
  return value;
