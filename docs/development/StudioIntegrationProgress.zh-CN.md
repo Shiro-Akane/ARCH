@@ -1573,3 +1573,12 @@ The earlier visibility blocker is historical; full native 3C acceptance remains
 incomplete. No new simulation, configure, build or scientific input modification
 was performed in these recovery checks. A combined-catalog standard-count label
 discrepancy was recorded for follow-up; actual Core schema remains 94 parameters.
+
+### Native workflow continuation / unresolved Open Config replacement
+
+Desktop Configure and no-work Build succeeded; explicit Preview refresh restored
+Current. Native Open Config replacement is not passed: selecting a distinct new
+file closed the chooser without changing the displayed config identity. The
+earlier same-file dialog observation did not prove loading and is corrected.
+Save As byte identity remains proved. New Sod output/checkpoint fixture remains
+prepared-not-run; no simulation starts until saved input association is verified.

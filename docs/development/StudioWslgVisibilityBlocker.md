@@ -62,3 +62,25 @@ An observed UI wording issue remains: it labels 102 combined entries as standard
 keys, while the actual binary --config-schema returns 94 standard parameters.
 No binary drift was found; investigate catalog augmentation before changing the
 label. This observation is not a new schema count or scientific contract.
+
+### Follow-up: Configure/Build verified; Open Config result not yet proved
+
+Native Configure completed with succeeded status and actual CMake stdout in the
+terminal drawer. Native Build succeeded, reporting ninja: no work to do.
+Build ID a1fa8f1c-8fb3-48cd-9b16-d99f50f3173d records source a9f17b97,
+stable tracked inputs and the unchanged e506619f... binary. This is not a clean
+rebuild proof. Existing Preview became previous/stale; explicit Update Preview
+returned it to Current.
+
+Correction of the earlier Open Config observation: closing a dialog while opening
+the same file was insufficient to prove replacement. A later selection of the
+distinct native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/Sod.par
+closed the dialog but did not update the displayed file identity. Treat native
+Open Config replacement/reopen as NOT PASSED pending investigation. Save As
+on-disk verification and visible window evidence remain valid. No Run was started.
+
+A local engineering-UAT fixture exists in that ignored workflow directory;
+only out_dir (new absent destination) and chk_dt (0.05) differ from the original
+Sod.par, with all physical parameters and tmax=0.2 retained. Input identity is
+recorded locally. It remains prepared-not-run. Do not start it until the UI's
+selected saved config and Host association match the fixture.
