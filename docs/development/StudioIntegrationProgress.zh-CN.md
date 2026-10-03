@@ -24,11 +24,11 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 原生Configure/Build通过；真实CMake微型工程编译失败/恢复通过；完整依赖freshness仍unknown，dependenciesComplete=false；边界见Studio3CExitAudit | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | 原生Sod Run/Restart/Stop、关闭后计算继续及历史恢复通过；235项Studio/Host通过；同场景Preview cancel/不同项目Host重开隔离已PASS，Run同PID/start持续推进并自然完成；保留Host/native覆盖区分 | 不推广为其他模型/后端演化验收 |
 | 5 全模型初态/AMR | Core维度驱动真实生成/CLI/session已接通；Host动态Profiles/三轴协议、UI配置维度选择/三维切片/单区状态已实现；AMR native/三维切面显示已实现；14模型真实HTTP已验证；Gaussian Cartesian三维桌面代表已通过切片/Inspector/根AMR/关闭清理；完整桌面矩阵待完成 | CPU14维护模型字段+根AMR、三维代表/曲线参考、非立方体与warm session通过；不是混合细化/科学认证 | Setup域/预算与科学验收分开 |
-| 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
-| 7 O7.2–O7.5 RZ | 待实施 | 分层 CPU | O7.4 科学方案须 review |
+| 6 O7.1 JENS | shared CPU/device 数值叶函数及真实物理 spacing 已实现；生产 output/AMR/lifecycle 尚未接通 | IdealGas/NativeTabular/301 exponent 工程参考已有证据，未称科学验收 | 一般 EOS 声速、条件需求、候选父态与科学预算待 Core 确认；见 Jeans* 报告 |
+| 7 O7.2–O7.5 RZ | 内部显式 chart 已贯通 metric/source/Host Hydro/RKL/halo/CFL/reflux/Init/IO/checkpoint；公开迁移、regrid/gravity/device 未完成 | 实际 mixed Runtime/续接和独立数值参考已记录；主 CPU 已重编；不冒充科学出口 | angular-momentum transfer finding、finite-ring 路线/预算及 GravityBox Init 语义待 Core；见 RZ* 报告 |
 | 8 CUDA/第二平台短测 | 待 CPU 完成 | 未编译/未计时 | 冻结同物理终点；保留负收益 |
 | 9 批准的 O9 长时子集 | 待冻结输入/预算 | 未执行 | 未批准项不能称完成 |
-| 独立 plt 只读出口 | 已只读核对writer及既有H5 shape/身份缺失；读取接口未实现 | 元数据审计完成，未读完整场/未执行结果UAT | 原生单元与数据身份 |
+| 独立 plt 只读出口 | Sod 1D/Cartesian CellularDet 2D writer、隔离查询/LOD/native Inspector/Viewer 已实现 | 37 字段与checkpoint位级对照、发布失败、native UAT、evolved Sod点查及小样本成本已有证据 | Owner读取适配/单位/独立科学oracle、完整身份、大AMR同机扫描成本仍待；见 PlotfileReaderAdapterHandoff |
 
 ## 不变量与交付
 
@@ -2866,3 +2866,12 @@ cleanb82205e2主ARCH3步重编，ELF7d0360de…；两种真实timing/dev/full CL
 既有Sod明确t=0的9fields/21checkpoint datasets保持原bits，未改science/input/budget。
 控制脚本输入名保护性停止已核实恢复，未重复build；未持久build计时以null说明，不编造。
 详见DriverDiagnosticMainCpu报告/Summary；regrid/CUDA真实故障、O7科学/平台出口仍待。
+
+
+## 2026-10-04 阶段出口清单校正与linker capture finding
+
+总表的JENS/RZ/plt历史“待实施”已按后续真实源码及证据更新，保留所有尚未完成出口。
+Build完整freshness仍unknown：mold原生--repro两次非科学LTO link捕获产生19份不同内容同一路径，
+长/短目录均复现，只读archive审计INVALID，不靠推测顺序/关闭LTO/升级工具链置complete。
+见BuildLinkReproIdentity-20261004报告/Summary；无ARCH build/run或科学/Core改动。
+科学方案待Core并不等于已通过CPU阶段；统一CUDA/O9仍不得提前认证。
