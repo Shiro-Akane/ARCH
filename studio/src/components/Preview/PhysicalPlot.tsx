@@ -66,7 +66,7 @@ export function PhysicalPlot({xLabel='x1',yLabel='x2',xDomain,yDomain,x,y,values
  const sx=selected===null?NaN:x[selected%x.length],sy=selected===null?NaN:y?y[Math.floor(selected/x.length)]:values[selected];
  const gradient=Array.from({length:17},(_,i)=>({offset:`${i/16*100}%`,color:plotColor(fs.map,i/16)}));
  return <>{!meshOnly&&<PlotControls twoD={!!y} x={xs} y={ys} field={fs} onX={s=>{setX(s);setView(v=>({...v,x:FULL}));}} onY={s=>{setY(s);setView(v=>({...v,y:FULL}));}} onField={s=>{setField(s);if(!y)setView(v=>({...v,y:FULL}));}}/>}
- <button onClick={fit}>Fit {y?'2D':'1D'} view</button><p className="section-note">Scroll to zoom · drag to pan · click to inspect. Fit restores full coordinate domain. Raw samples are unchanged.</p>
+ <button onClick={fit}>Fit {y?'2D':'1D'} view</button><p className="section-note">Scroll to zoom · drag a zoomed view to pan · click to inspect. Fit restores full coordinate domain. Raw samples are unchanged.</p>
  {(fs.lower||fs.upper)&&<p role="status">Clipped · {fs.lower?`lower ${fs.low}`:''} {fs.upper?`upper ${fs.high}`:''} · {y?'colorbar endpoint saturation':'out-of-range portions marked at plot edges'}</p>}
  {marker&&(!Number.isFinite(marker.value)||marker.value<=marker.binding.min||marker.value>=marker.binding.max)&&<p role="status">x_pos candidate outside Core bounds ({marker.binding.min}, {marker.binding.max}); release will not commit. Correct the value or cancel the drag.</p>}
  {'error' in geometry&&<p role="alert" className="plot-error">{geometry.error} Plot withheld; Inspector retains raw values.</p>}

@@ -41,3 +41,17 @@ test('1D headroom preserves explicit manual/clipping limits and rejects nonposit
  assert.throws(()=>lineFieldRange({...fieldDefault(),scale:'log'},[0,1]),/positive/);
  assert.equal(logDataError([0,-1],'log','Field')?.includes('Return to Linear'),true);
 });
+
+test('full-domain pan remains fixed; zoomed pan clamps to bounds without changing raw hit coordinates',()=>{
+ const rawX=new Float64Array([.0625,.1875]),rawValues=new Float64Array([1,2]);
+ const beforeX=Array.from(rawX),beforeValues=Array.from(rawValues);
+ for(const shift of [-1e6,-.1,.1,1e6])assert.deepEqual(panView([0,1],shift),[0,1]);
+ const zoomed=zoomView([0,1],.5,.5);
+ assert.deepEqual(panView(zoomed,1e6),[0,.5]);
+ assert.deepEqual(panView(zoomed,-1e6),[.5,1]);
+ for(const view of [zoomed,panView(zoomed,.1),panView(zoomed,-.1)]){
+  const xp=projection([0,.25],'linear',view);
+  for(const coordinate of rawX)near(xp.inverse(xp.forward(coordinate)),coordinate);
+ }
+ assert.deepEqual(Array.from(rawX),beforeX);assert.deepEqual(Array.from(rawValues),beforeValues);
+});

@@ -33,9 +33,17 @@ API 未提供 AMR cell field arrays；普通 Init sample 的七字段不称为 A
 身份、完整数据 digest、mesh digest 和 disk config digest 逐项不变。
 没有重新执行 Core Preview/AMR，没有编辑/Save配置。
 
-一次 Computer Use drag 仅改变样本选择、轴范围未观察到变化。代码路径要求
-连续 pointer-move；当前证据不能区别事件投递与应用问题，不据此改映射公式，
-也不记 native zoom/pan PASS。该交互仍需实际复现，Fit 后映射也尚未专项验收。
+一次 Computer Use drag 仅改变样本选择、轴范围未观察到变化。后续审查确认
+panView 把范围限制在完整 domain 内；完整 domain 尚未 zoom 时拖动不能改变轴，
+因此这次观察不构成平移故障证据。代码路径另要求连续 pointer-move。
+
+再次启动 production RT，先点选聚焦绘图区，再尝试 scrollY=-240，
+未观察到缩放轴变化。这是原生操作未能完成的记录；尚未区分输入投递与应用问题，
+不据此修改数学或静默换成其他输入验收，也不记 native zoom/pan PASS。
+本轮窗口正常关闭exit0。新增边界回归确认全domain平移固定、zoom后边界钳位、
+原值与投影逆映射保持；它不能替代原生鼠标交互。
+界面提示澄清“drag a zoomed view to pan”，未改变交互或科学行为。
+Fit 后映射也尚未专项原生验收。
 
 ## 生命周期与覆盖边界
 
