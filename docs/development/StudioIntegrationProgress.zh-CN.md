@@ -1610,3 +1610,22 @@ Local log: studio/.local/integration/native-config-open-regression.log.
 The local UatSod.par is byte-identical to the previously prepared workflow fixture;
 only original out_dir and chk_dt differ, physics/tmax unchanged. Still not run.
 No raw data/input files from .local are committed; no push or tag.
+
+## Native Sod Run evidence / user-visible desktop confirmation pending
+
+On clean 7d9b95f9, native saved config selection and Run confirmation launched
+Sod once in an independent terminal: run795e6be7-105e-4b3d-a48a-eae68a6f4303,
+succeeded/exit0, final step280/time0.2. Frozen input matches saved bytes; original
+Sod input and e506619f binary remain unchanged. Only out_dir/chk_dt differ from
+the original. Core/worker exited; completed terminal is held by design.
+Processed evidence: validation/backend/results/studio-native-sod-run-20261003/.
+Raw H5/checkpoints/logs remain ignored locally. This is engineering workflow
+evidence, not independent scientific accuracy, AMR/CUDA or full 3C PASS.
+
+Restart was prepared from actual time0.05/step67 checkpoint, then its pending
+confirmation was cancelled without starting Core. Restart remains not passed.
+Latest user reply still reports only a taskbar icon. The independent window was
+captured and activated, but that does not prove visibility to the user. A fresh
+visibility confirmation is pending; no further native computation was started.
+Historical agent-captured recovery evidence remains, user acceptance is not closed.
+No unchanged automatic suite was rerun and no physics/threshold/input migrated.
