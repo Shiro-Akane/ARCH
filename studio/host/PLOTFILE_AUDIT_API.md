@@ -47,8 +47,9 @@ Project mismatch, traversal, absolute paths, symlinks and stale expected file SH
 reject. Selection is copied before await; the selected path must still match the
 pinned file at read completion. A changed Project session rejects a late response.
 Client disconnect aborts its reader signal; worker timeout/cancel/output limit
-release capacity only after child close. HTTP disconnect timing coverage is still
-pending; fixed-worker cancellation/exit behavior is directly tested.
+release capacity only after child close. Live HTTP disconnect is verified while an exactly-owned reader worker is
+explicitly SIGSTOP-stalled; metadata and slice both reap and recover. This does
+not claim natural HDF5 instruction timing or native desktop-close coverage.
 
 One metadata or slice worker at a time;15s maximum lifetime,64KiB stdout budget,
 256MiB Node heap cap. Heap cap is not a hard RSS/WASM cap.

@@ -2305,3 +2305,7 @@ ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，
 ### Plotfile真实HTTP审计接线
 
 508595c2上metadata/slice固定只读POST audit路由接入，精确Origin/protocol/token及Project/file身份保护；真实Sod global32值通过，late Project变化409。初次global/local索引错误由worker正确拒绝后修正测试请求。完整272/272及静态/build/diff PASS。详见PlotfileHostAuditApiProgress-20261003.zh-CN.md/Summary及host/PLOTFILE_AUDIT_API。断开abort signal已接，live HTTP时序证据pending；无正式审计UI，completion unknown/科学身份缺失/renderEligible false，正式plt出口未完成。无simulation/Core build/CUDA/push/tag/main merge。
+
+### Plotfile live HTTP断开清理补证
+
+86800bb7：实际loopback metadata/slice请求，/proc复核直接owned worker argv/parent/start后SIGSTOP，同身份T与pending100ms确认，再断开HTTP；worker回收约14.897/9.678ms，后续读取200/SHA一致，字节未变。故障注入scope，不冒称自然HDF解析/native close。首轮proc ESRCH竞态失败保留后修正validator。完整273/273、lint/typecheck/diff PASS，生产源码未变不重复build。详见PlotfileHttpDisconnectVerification-20261003.zh-CN.md/Summary；正式plt UI/科学语义出口仍pending。
