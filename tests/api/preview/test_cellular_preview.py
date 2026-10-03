@@ -82,7 +82,9 @@ class CellularPreviewContract(unittest.TestCase):
         caps = json.loads(run.stdout)
         self.assertEqual(caps['cases'], ['Sod'])
         models = {m['caseId']: m for m in caps['modelCapabilities']}
-        self.assertEqual(set(models), {'Sod', 'CellularDet'})
+        registry = json.loads(subprocess.check_output([str(ARCH), '--list-cases'], timeout=15))
+        self.assertEqual(set(models), {row['caseId'] for row in registry['cases']
+                                       if row['initialFieldPreview']})
         model = models['CellularDet']
         self.assertEqual(model['dimensions'], [2])
         self.assertEqual(model['geometries'], ['cartesian'])

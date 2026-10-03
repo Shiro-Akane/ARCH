@@ -27,6 +27,20 @@ int main() {
     require(failed); before=calls; run(); require(calls==before+1);
     for (int i=0;i<2000;++i) { p.p=1000+i; run(); }
     p.p=4000; run(); before=calls; run(); require(calls==before+1); // Full cache falls back to full conversion.
+    // The eighth output is VELZ; exact reuse must retain it, including for
+    // zero-species pure fluids, and changes in w must invalidate that row.
+    InitialSampleCache volume;
+    PrimitiveData q{}; q.rho=1; q.p=1; q.w=.4;
+    int volume_calls=0;
+    const auto volume_run=[&] {
+        return volume.evaluate(q,[&] {
+            ++volume_calls;
+            return InitialSampleCache::Row{1,1,1,0,1,1,0,q.w};
+        });
+    };
+    require(volume_run()[7]==q.w && volume_run()[7]==q.w && volume_calls==1);
+    q.w=std::nextafter(q.w,1.);
+    require(volume_run()[7]==q.w && volume_calls==2);
     InitialSampleCache fresh;
     before=calls; fresh.evaluate(p,[&] { ++calls; return InitialSampleCache::Row{}; });
     require(calls==before+1); // No result crosses requests.

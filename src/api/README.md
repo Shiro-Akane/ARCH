@@ -12,7 +12,7 @@
 
 ## 当前提供什么
 
-- 支持已注册的 **一维 Cartesian Sod** 与 **二维 Cartesian CellularDet**；直接调用各模型的 `Setup/Init`。
+- runtime modelCapabilities 发布内置模型的已审阅初始化域，直接复用各模型 Setup/Init。旧 Sod 1D / CellularDet 2D Cartesian 字段、采样及顶层能力视图保持兼容。新模型和三维路径需要重新编译当前 Core；Studio 通用接入尚在进行。
 - 使用 CPU 生成显示采样。配置中的 `compute_backend=cuda` 不会触发设备检测或 CUDA 初始化。
 - 接收尚未保存的 `.par` 文本，返回坐标、密度、压力、温度、速度和能量。
 - 同时返回 EOS、基础网格、AMR 配置、已注册组分及各阶段状态。
@@ -73,6 +73,44 @@ Host 应直接启动进程，以 stdin 写入编辑器当前的 `.par` 文本，
 - 上述单次命令每个进程处理一次请求。会话模式另见 PREVIEW_SESSION_API.md。Host 负责超时、取消和终止进程；未正常退出或未收到完整响应时，不接纳结果。
 
 接口不需要 WebSocket、HTTP 或 SSH。本地 Host 可以使用已有的进程管理方式调用。
+
+### 按配置维度生成通用初态
+
+新增可选 extensions.initialSampling.version="1"；外层 schema 保持1.0。
+采样维度来自解析后的配置，不能从模型文件名或默认维度猜测。
+已注册不等于自动支持；未知自定义模型仍可检查，不会自动获得完整场能力。
+每个模型的维度/几何域见 modelCapabilities，具体组合仍由真实 SetupChecked 检查。
+
+除旧 Sod/Cellular 行保留 sampling 外，新模型提供 samplingByDimension：
+1D 使用 --samples，默认512、2–4096；
+2D 使用全部两轴计数，默认128×128、每轴2–256、总点数≤65536；
+3D 使用全部三轴计数，默认32³、每轴2–64、总点数≤32768。
+计数全部给出或全部省略，不能混用一维参数；响应仍受8 MiB限制，超限返回结构化错误。
+
+三维调用示例（配置须实际启用三轴；不能只给采样参数改变维度）：
+
+~~~sh
+build-cpu/bin/ARCH --preview SNIaCoupled --config-stdin \
+  --samples-x1 5 --samples-x2 3 --samples-x3 2 \
+  < simulation/SNIaCoupled/SNIaCoupled_3d_cartesian_amr.par
+~~~
+
+data.kind 为 line/grid/volume；shape分别为[Nx]/[Ny,Nx]/[Nz,Ny,Nx]，
+order为x1-fastest，三维索引 (k*Ny+j)*Nx+i。
+按维度提供6/7/8个字段，三维新增VELZ，前六字段及VELY顺序不变。
+会话等价成员为samples/samplesX1/samplesX2/samplesX3，使用相同生成边界。
+
+data.coordinates.version="1"明确native-grid轴、native-orthonormal速度和原生轴单位；
+角坐标为rad、长度为cm。初始化点通过共享Grid展开为真实Cartesian PointCoords。
+二维cylindrical当前是(r,phi)、z=0，不是未来RZ；二维spherical是赤道(r,phi)，theta=pi/2。
+非活动坐标由Grid的规则记录，不将所有x3一概解释为物理z。
+BurnOneZone标为uniform-state，不能把重复采样解释为反应轨迹。
+纯流体零物种继续使用共享IdealGas原有闭合，不注入虚构species或客户端物理默认。
+
+真实AMR使用相同模型域并复用已有初始化/细化路径。
+新曲线几何AMR的data.unit=null，通过版本化coordinates.metadata逐轴给单位；
+不能将angular bounds/cellSpacing称为cm。AMR层级没有cell field arrays，
+完整场Init样本也不是细化单元平均值。成功初态不认证引力场、演化、GPU或科学收敛。
 
 ### CellularDet 二维调用
 

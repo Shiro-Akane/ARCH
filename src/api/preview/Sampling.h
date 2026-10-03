@@ -20,7 +20,7 @@ class SamplingLimitError : public std::invalid_argument {
 public:
     using std::invalid_argument::invalid_argument;
 };
-// Internal 3D budgets; publish only after generation and transport verification.
+// Bounded 3D budgets, negotiated through the initialSampling extension.
 inline constexpr int default_samples_3d = 32;
 inline constexpr int max_samples_per_axis_3d = 64;
 inline constexpr std::size_t max_total_samples_3d = 32768;

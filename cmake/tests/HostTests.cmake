@@ -30,6 +30,12 @@ add_test(NAME preview_api_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_preview.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(preview_api_contract PROPERTIES TIMEOUT 180)
+add_test(NAME preview_full_model_contract
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_full_model_preview.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(preview_full_model_contract PROPERTIES TIMEOUT 180)
+
 add_test(NAME configuration_api_contract
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_configuration.py

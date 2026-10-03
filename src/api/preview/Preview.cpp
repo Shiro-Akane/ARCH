@@ -38,6 +38,20 @@
 #include "physics/eos/eosdispatch.h"
 
 namespace arch::api {
+// Domains follow each built-in initializer and its documented dimensional scope.
+// Unknown registrations remain inspectable without inventing preview support.
+InitialPreviewDomain PreviewDomain(std::string_view name) {
+    if (name == "Gaussian" || name == "GravityBox") return {14, true, false};
+    if (name == "SNIaCoupled") return {12, true, false};
+    if (name == "Sedov") return {14, false, false};
+    if (name == "RT") return {12, false, false};
+    if (name == "CellularDet" || name == "CooperativeHotspots") return {4, false, false};
+    if (name == "BurnOneZone") return {2, false, true};
+    if (name == "Sod" || name == "JeansWave" || name == "BurnGradient"
+        || name == "SmoothAdvection" || name == "ExternalGravity"
+        || name == "DiffusionMode") return {2, false, false};
+    return {};
+}
 namespace {
 using detail::Json;
 
@@ -74,10 +88,10 @@ std::vector<double> sample_axis(double lo, double hi, int count) {
     return coordinates;
 }
 /** Serialize one coordinate axis and its CGS unit. */
-Json axis_json(const char *name, const std::vector<double> &coordinates, const std::string& system) {
+Json axis_json(const char *name, const std::string& native_name, const std::vector<double> &coordinates, const std::string& system) {
     auto values = Json::array();
     for (double x : coordinates) values.push(x);
-    return Json::object({{"name", name}, {"unit", AxisUnit("x", system)}, {"values", values}});
+    return Json::object({{"name", name}, {"unit", AxisUnit(native_name, system)}, {"values", values}});
 }
 
 /** Serialize one sampled field with its finite range and unit. */
@@ -103,8 +117,6 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             || request.request_id.size() > 128 || request.case_id.size() > 128)
             throw std::invalid_argument("Expected nonempty config <= 1 MiB and identifiers <= 128 bytes");
         SamplingPlan sampling;
-        try { sampling = ResolveSampling(request); }
-        catch (const SamplingLimitError &) { error_code = "SAMPLING_LIMIT_EXCEEDED"; throw; }
         ReportStage(request, result, "configuration");
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
         std::shared_ptr<preview::ParameterReadTrace> reads;
@@ -116,17 +128,24 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         PublishStateSnapshot(state, config);
         ReportStage(request, result, "support");
         exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
-        if (config.grid.geometry != "cartesian"
-            || !((request.case_id == "Sod" && config.grid.dim == 1)
-                 || (request.case_id == "CellularDet" && config.grid.dim == 2)))
-            throw std::invalid_argument("Preview supports Cartesian Sod 1D and CellularDet 2D");
+        const auto domain = PreviewDomain(request.case_id);
+        if (!domain.accepts(config.grid.dim, config.grid.geometry))
+            throw std::invalid_argument("Case dimension/geometry is outside its documented initial preview domain");
         if (config.io.restart)
             throw std::invalid_argument("Initial-state preview does not load restart checkpoints");
         ReportStage(request, result, "configuration");
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
         config.RequireLoadedValues();
         ValidateInitialPreviewGrid(config.grid, config.amr);
-        if (sampling.two_dimensional) {
+        if (!request.initial_mesh) {
+            ReportStage(request, result, "input");
+            exit_code = 2; error_code = "INVALID_REQUEST";
+            try { sampling = ResolveSampling(request, config.grid.dim); }
+            catch (const SamplingLimitError &) { error_code = "SAMPLING_LIMIT_EXCEEDED"; throw; }
+        } else {
+            sampling = {0, 0, 0, config.grid.dim == 2, 0};
+        }
+        if (request.case_id == "CellularDet") {
             ReportStage(request, result, "support");
             exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
             const int direction = config.Get<int>("shock_dir", 0);
@@ -159,7 +178,6 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         PublishStateSnapshot(state, config); // Setup can change the effective configuration.
         state["setup"] = "ready";
         state["species"] = SpeciesSnapshot(specs);
-        if (specs.count() == 0) throw std::runtime_error("Initialization registered no species");
         ReportStage(request, result, "eos");
         error_code = "EOS_FAILED";
         state["eos"]["status"] = "error";
@@ -173,10 +191,14 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             if (!parsed.ok) throw std::invalid_argument("Unknown EOS type: " + config.physics.eos_type);
             eos_id = parsed.value;
         }
+        // Pure-fluid models legitimately register no species. IdealGas owns
+        // that closure (configured gamma and documented Cv); do not add a fake gas.
+        if (specs.count() == 0 && eos_id != dispatch::EosId::Ideal)
+            throw std::runtime_error("The selected non-ideal EOS requires species");
         state["eos"]["resolved"] = std::string(dispatch::canonical_policy_name<dispatch::EosPolicies>(eos_id));
         std::optional<MeshResult> mesh;
-        std::vector<double> x_coordinates, y_coordinates;
-        const std::size_t field_count = sampling.two_dimensional ? max_preview_fields : 6;
+        std::vector<double> x_coordinates, y_coordinates, z_coordinates;
+        const std::size_t field_count = config.grid.dim == 3 ? 8 : config.grid.dim == 2 ? 7 : 6;
         std::vector<std::vector<double>> values(field_count);
         for (auto &field_values : values) field_values.reserve(sampling.count);
         EOSDispatcher::dispatch_eos(eos_id, config, specs, [&](auto &&eos, std::string_view fingerprint) {
@@ -195,34 +217,39 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             PrimitiveData data{};
             InitialSampleCache conversions;
             x_coordinates = sample_axis(config.grid.x1_min, config.grid.x1_max, sampling.nx);
-            if (sampling.two_dimensional)
+            if (config.grid.dim >= 2)
                 y_coordinates = sample_axis(config.grid.x2_min, config.grid.x2_max, sampling.ny);
-            for (int j = 0; j < sampling.ny; ++j) {
-                for (int i = 0; i < sampling.nx; ++i) {
-                    data = PrimitiveData{};
-                    data.mass_fractions.resize(specs.count(), 0.0);
-                    const PointCoords point = Grid::PhysicalCoordsFromNative(config.grid.dim, config.grid.geometry,
-                        x_coordinates[i], sampling.two_dimensional ? y_coordinates[j] : 0.0);
-                    problem->SampleInitialPrimitive(point, data);
-                    if (data.mass_fractions.size() != std::size_t(specs.count())
-                        || !std::isfinite(data.rho) || data.rho <= 0)
-                        throw std::runtime_error("Invalid density or composition extent from initializer");
-                    for (double fraction : data.mass_fractions)
-                        if (!std::isfinite(fraction)) throw std::runtime_error("Non-finite initial composition");
-                    const auto row = conversions.evaluate(data, [&] {
-                        const FluidVector conserved = ProblemHelper::detail::InitialConservedState(data, eos, config.numerics);
-                        const double pressure = eos.get_pressure(conserved, data.mass_fractions.data());
-                        const double eint = eos_utils::extract_specific_internal_energy(conserved);
-                        const double temperature = eos.get_temperature(conserved.rho, eint, data.mass_fractions.data());
-                        const InitialSampleCache::Row converted{conserved.rho, pressure, temperature, data.u, conserved.eng, eint, data.v};
-                        if (pressure <= 0 || temperature <= 0)
-                            throw std::runtime_error("EOS returned non-positive initial pressure or temperature");
-                        for (double value : converted)
-                            if (!std::isfinite(value)) throw std::runtime_error("Non-finite initial field value");
-                        return converted;
-                    });
-                    for (std::size_t f = 0; f < values.size(); ++f) {
-                        values[f].push_back(row[f]);
+            if (config.grid.dim == 3)
+                z_coordinates = sample_axis(config.grid.x3_min, config.grid.x3_max, sampling.nz);
+            for (int k = 0; k < sampling.nz; ++k) {
+                for (int j = 0; j < sampling.ny; ++j) {
+                    for (int i = 0; i < sampling.nx; ++i) {
+                        data = PrimitiveData{};
+                        data.mass_fractions.resize(specs.count(), 0.0);
+                        const PointCoords point = Grid::PhysicalCoordsFromNative(config.grid.dim, config.grid.geometry,
+                            x_coordinates[i], config.grid.dim >= 2 ? y_coordinates[j] : 0.0,
+                            config.grid.dim == 3 ? z_coordinates[k] : 0.0);
+                        problem->SampleInitialPrimitive(point, data);
+                        if (data.mass_fractions.size() != std::size_t(specs.count())
+                            || !std::isfinite(data.rho) || data.rho <= 0)
+                            throw std::runtime_error("Invalid density or composition extent from initializer");
+                        for (double fraction : data.mass_fractions)
+                            if (!std::isfinite(fraction)) throw std::runtime_error("Non-finite initial composition");
+                        const auto row = conversions.evaluate(data, [&] {
+                            const FluidVector conserved = ProblemHelper::detail::InitialConservedState(data, eos, config.numerics);
+                            const double pressure = eos.get_pressure(conserved, data.mass_fractions.data());
+                            const double eint = eos_utils::extract_specific_internal_energy(conserved);
+                            const double temperature = eos.get_temperature(conserved.rho, eint, data.mass_fractions.data());
+                            const InitialSampleCache::Row converted{conserved.rho, pressure, temperature, data.u, conserved.eng, eint, data.v, data.w};
+                            if (pressure <= 0 || temperature <= 0)
+                                throw std::runtime_error("EOS returned non-positive initial pressure or temperature");
+                            for (double value : converted)
+                                if (!std::isfinite(value)) throw std::runtime_error("Non-finite initial field value");
+                            return converted;
+                        });
+                        for (std::size_t f = 0; f < values.size(); ++f) {
+                            values[f].push_back(row[f]);
+                        }
                     }
                 }
             }
@@ -235,6 +262,11 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         if (mesh) {
             if (reads && mesh->constructed) PublishParameterMetadata(result, *reads, positions, true);
             result["data"] = std::move(mesh->data);
+            if (config.grid.geometry != "cartesian") result["data"]["unit"] = Json();
+            result["data"]["coordinates"] = Json::object({
+                {"version", "1"}, {"basis", "native-grid"},
+                {"metadata", CoordinateMetadata(config.grid, UnitSystem(config))},
+                {"boundsAndSpacingUnits", "per active axis; never a single length unit for angular axes"}});
             result["status"] = mesh->complete ? "ok" : "limited";
             ReportStage(request, result, "complete");
             state["grid"]["hierarchy"] = mesh->constructed ? "constructed" : "not_constructed";
@@ -248,24 +280,61 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             }
             return SerializePreviewResponse(result, 0);
         }
-        auto axes = Json::array({axis_json("x1", x_coordinates, UnitSystem(config))});
+        Grid coordinate_grid;
+        coordinate_grid.dim = config.grid.dim;
+        coordinate_grid.geometry = config.grid.geometry;
+        const auto axis_names = coordinate_grid.GetAxisNames();
+        auto axes = Json::array({axis_json("x1", axis_names[0], x_coordinates, UnitSystem(config))});
         auto shape = Json::array({sampling.nx});
-        if (sampling.two_dimensional) {
-            axes.push(axis_json("x2", y_coordinates, UnitSystem(config)));
+        if (config.grid.dim >= 2) {
+            axes.push(axis_json("x2", axis_names[1], y_coordinates, UnitSystem(config)));
             shape = Json::array({sampling.ny, sampling.nx});
         }
+        if (config.grid.dim == 3) {
+            axes.push(axis_json("x3", axis_names[2], z_coordinates, UnitSystem(config)));
+            shape = Json::array({sampling.nz, sampling.ny, sampling.nx});
+        }
         auto fields = Json::array();
-        const char *keys[] = {"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT", "VELY"};
-        const char *names[] = {"Density", "Pressure", "Temperature", "X velocity", "Total energy density", "Specific internal energy", "Y velocity"};
-        for (std::size_t j = 0; j < values.size(); ++j) fields.push(field(keys[j], names[j], values[j], UnitSystem(config)));
+        const char *keys[] = {"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT", "VELY", "VELZ"};
+        const char *names[] = {"Density", "Pressure", "Temperature", "X velocity", "Total energy density", "Specific internal energy", "Y velocity", "Z velocity"};
+        for (std::size_t j = 0; j < values.size(); ++j) {
+            std::string display_name = names[j];
+            if (config.grid.geometry != "cartesian" && (j == 3 || j == 6 || j == 7)) {
+                const int axis = j == 3 ? 0 : j == 6 ? 1 : 2;
+                display_name = "Native " + axis_names[axis] + " velocity";
+            }
+            fields.push(field(keys[j], display_name.c_str(), values[j], UnitSystem(config)));
+        }
         auto sampling_json = Json::object({{"kind", "uniform"}, {"valueLocation", "init-sample"},
             {"position", "bin-center"}, {"count", std::int64_t(sampling.count)},
             {"shape", shape}, {"order", "x1-fastest"}});
         if (sampling.two_dimensional)
             sampling_json["fixedCoordinates"] = Json::array({Json::object({{"name", "x3"}, {"value", 0}, {"unit", AxisUnit("x", UnitSystem(config))}})});
-        result["data"] = Json::object({{"dimension", config.grid.dim}, {"kind", sampling.two_dimensional ? "grid" : "line"},
+        result["data"] = Json::object({{"dimension", config.grid.dim}, {"kind", config.grid.dim == 3 ? "volume" : config.grid.dim == 2 ? "grid" : "line"},
             {"sampling", sampling_json}, {"axes", axes},
             {"fields", fields}});
+        result["data"]["coordinates"] = Json::object({
+            {"version", "1"}, {"basis", "native-grid"},
+            {"velocityBasis", "native-orthonormal"}, {"geometry", config.grid.geometry},
+            {"metadata", CoordinateMetadata(config.grid, UnitSystem(config))},
+            {"pointExpansion", "Grid::PhysicalCoordsFromNative"},
+            {"representation", domain.uniform_state ? "uniform-state" : "spatial-samples"}});
+        // Inactive physical coordinates are expanded by Grid, not inferred from
+        // the logical x3 label (which is azimuth in spherical 3D).
+        if (config.grid.dim < 3 && config.grid.geometry != "cartesian") {
+            auto fixed = Json::array();
+            if (config.grid.geometry == "spherical") {
+                if (config.grid.dim <= 2)
+                    fixed.push(Json::object({{"name", "theta"}, {"value", arch::constants::math::pi / 2.0}, {"unit", "rad"}}));
+                if (config.grid.dim == 1)
+                    fixed.push(Json::object({{"name", "phi"}, {"value", 0}, {"unit", "rad"}}));
+            } else {
+                fixed.push(Json::object({{"name", "z_cy"}, {"value", 0}, {"unit", "cm"}}));
+                if (config.grid.dim == 1)
+                    fixed.push(Json::object({{"name", "phi_cy"}, {"value", 0}, {"unit", "rad"}}));
+            }
+            result["data"]["sampling"]["fixedCoordinates"] = fixed;
+        }
         if (reads) PublishParameterMetadata(result, *reads, positions, true);
         result["status"] = "ok"; ReportStage(request, result, "complete");
         exit_code = 0;
@@ -300,15 +369,57 @@ std::string PreviewCapabilities() {
             {"fields", Json::array({"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT", "VELY"})},
             {"maxFields", std::int64_t(max_preview_fields)}, {"maxResponseBytes", std::int64_t(max_response_bytes)}})
     });
+    // Add audited domains from the runtime registry; registry membership alone
+    // never enables a new user-defined model. Existing two model rows retain
+    // their legacy fields and sampling view.
+    auto amr_cases = Json::array();
+    for (const auto& name : ProblemRegistry::Get().Names()) {
+        const auto domain = PreviewDomain(name);
+        if (!domain.dimensions) continue;
+        amr_cases.push(name);
+        if (name == "Sod" || name == "CellularDet") continue;
+        auto dimensions = Json::array();
+        auto budgets = Json::array();
+        int largest_dimension = 1;
+        for (int dim = 1; dim <= 3; ++dim) {
+            if (!(domain.dimensions & (1u << dim))) continue;
+            dimensions.push(dim); largest_dimension = dim;
+            auto shape = Json::array();
+            const int count = dim == 1 ? default_sample_count : dim == 2 ? default_samples_2d : default_samples_3d;
+            for (int axis = 0; axis < dim; ++axis) shape.push(count);
+            budgets.push(Json::object({{"dimension", dim}, {"defaultShape", shape},
+                {"minPerAxis", 2}, {"maxPerAxis", dim == 1 ? max_sample_count : dim == 2 ? max_samples_per_axis_2d : max_samples_per_axis_3d},
+                {"maxTotalSamples", std::int64_t(dim == 1 ? max_sample_count : dim == 2 ? max_total_samples_2d : max_total_samples_3d)}}));
+        }
+        auto fields = Json::array({"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT"});
+        if (largest_dimension >= 2) fields.push("VELY");
+        if (largest_dimension == 3) fields.push("VELZ");
+        models.push(Json::object({{"caseId", name}, {"dimensions", dimensions},
+            {"geometries", domain.curved ? Json::array({"cartesian", "cylindrical", "spherical"}) : Json::array({"cartesian"})},
+            {"previewBackend", "cpu"}, {"samplingByDimension", budgets},
+            {"fields", fields}, {"maxFields", largest_dimension + 5},
+            {"maxResponseBytes", std::int64_t(max_response_bytes)},
+            {"representation", domain.uniform_state ? "uniform-state" : "spatial-samples"},
+            {"supportScope", "initializer only; SetupChecked validates configuration; no gravity solve or evolution certification"}}));
+    }
     // Preserve the flat Sod capability view for existing 1D clients. New
     // clients use modelCapabilities to negotiate each case independently.
     auto extensions = ParameterExtensionCapabilities();
+    extensions["initialSampling"] = Json::object({{"version", "1"},
+        {"dimensionSource", "parsed configuration"}, {"shapeOrder", "last-active-axis-first"},
+        {"flattening", "x1-fastest"}, {"coordinates", "native-grid"},
+        {"velocityBasis", "native-orthonormal"}, {"threeDimensionalKind", "volume"},
+        {"cliAxisOptions", Json::array({"--samples-x1", "--samples-x2", "--samples-x3"})},
+        {"sessionAxisMembers", Json::array({"samplesX1", "samplesX2", "samplesX3"})},
+        {"fieldCountByDimension", Json::array({6, 7, 8})},
+        {"scope", "initialization only; no simulation timestep or scientific output"}});
     extensions["session"] = PreviewSessionCapability();
     extensions["configuration"] = ConfigurationExtensions();
     extensions["discovery"] = Json::object({{"version", "1"}, {"command", "--list-cases"}});
     extensions["amr"] = Json::object({{"version", "1"}, {"resourcesCommand", "--amr-resources"},
         {"meshCommand", "--preview-amr"}, {"workerPlatform", "linux"},
-        {"cases", Json::array({"Sod", "CellularDet"})}, {"geometries", Json::array({"cartesian"})},
+        {"cases", amr_cases}, {"geometries", Json::array({"cartesian", "cylindrical", "spherical"})},
+        {"domainNegotiation", "modelCapabilities; SetupChecked restrictions still apply"},
         {"defaultMaxBlocks", contract::mesh_default_blocks}, {"defaultMemoryMiB", contract::mesh_default_memory_mib}, {"processAddressSpaceMiB", contract::worker_address_space_mib},
         {"processCpuSeconds", contract::worker_cpu_seconds}, {"hostWallTimeoutRequired", true}});
     extensions["caseInspection"] = Json::object({{"version", contract::initialization_version},

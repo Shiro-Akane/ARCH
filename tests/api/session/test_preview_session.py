@@ -87,6 +87,25 @@ class PreviewSession(unittest.TestCase):
         self.session = Session(self.cwd)
         self.addCleanup(self.session.close)
 
+    def test_multidimensional_request_recovery_and_equivalence(self):
+        text = replace_inputs((ROOT/'simulation/Sedov/Sedov.par').read_text(),
+                              nblockx1=1, nblockx2=1, nblockx3=1, max_blocks=8)
+        for nx, ny, nz in [(5, 3, 2), (3, 2, 4)]:
+            result, progress = self.session.call("Sedov", text,
+                                                samplesX1=nx, samplesX2=ny, samplesX3=nz)
+            self.check(result, text, progress)
+            single = self.single("Sedov", text, "--preview",
+                                 "--samples-x1", str(nx), "--samples-x2", str(ny),
+                                 "--samples-x3", str(nz))
+            self.assertEqual(result["response"]["data"], single["data"])
+            self.assertEqual(single["data"]["sampling"]["shape"], [nz, ny, nx])
+        error, _ = self.session.call("Sedov", text, samplesX1=3, samplesX2=3)
+        self.assertEqual(error["exitCode"], 2)
+        result, progress = self.session.call("Sod", BASE, samples=8)
+        self.check(result, BASE, progress)
+        self.assertEqual(result["response"]["data"]["dimension"], 1)
+        self.assertEqual(list(self.cwd.iterdir()), [])
+
     def single(self, case, text, command, *args):
         proc = subprocess.run([str(ARCH), command, case, '--config-stdin', '--request-id', 'edit-初期🌌', *args],
             input=text, text=True, capture_output=True, cwd=self.cwd, env=ENV, timeout=360)
