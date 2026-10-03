@@ -2957,3 +2957,14 @@ drift→needs-build，legacy缺项/不完整→unknown，持久坏hash/重复角
 真实build-studio-cpu82配置inputs+2tool读取通过，但未执行realBuild，不能称across-Build稳定；
 下一步clean-source真实Build验证，full runtime closure与dependenciesComplete=false继续保留。
 见BuildGeneratorManifest报告/Summary；不改science/旧Manifest，未push/tag。
+
+
+## 2026-10-04 3C generator real Build 持久化出口
+
+clean8e520462 上真实固定 Host CPU Build 成功；CMake/Ninja 身份前后稳定并随成功 Manifest
+保存，新 Node 进程从磁盘恢复。首次 compiler-input stability=false 原样保留；
+其后一次无改动 no-op Build 的配置/编译/工具/explicit inputs 全稳定，175 linker inputs missing=0，
+新进程 changedInputs=[]。dependenciesComplete=false/freshness-unknown 保持，不标完整current。
+处理后证据见 BuildGeneratorRealBuild-20261004.zh-CN.md / Summary.json。
+没有simulation、科学flags变更、主build-cpu替换、Windows或push/tag。
+下一步仍需完整依赖closure与独立科学review，不以这一工程出口替代CPU/Jeans/RZ/CUDA/O9验收。
