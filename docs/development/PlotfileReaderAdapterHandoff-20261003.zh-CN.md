@@ -168,3 +168,40 @@ level/logical/index/来源身份匹配，原file SHA不变。
 固定32像素overview仍全扫128叶单元，不承诺大文件成本。
 没有production改动/新simulation/native UAT；completion unknown及未确认science身份保持。
 见 PlotfileEvolvedReader-20261004.zh-CN.md / Summary.json；联合目标仍未完成。
+
+## 当前对接引用（2026-10-04，供 Core adapter review）
+
+- 累积实现源码：50fd1968598636795e9f50b132aedaf030ac9cbe；
+  分支 studio/compute-optim-integration，本地 clean commit，尚未 push。
+  此 SHA 是源码引用，不是当前主 executable 的构建源码身份。
+- 当前主 CPU executable 编译源码：b38f44a8d51a97e19a0d133a5ab547390d01f53d；
+  ELF SHA-256：ca6437d283c23c8f94aa562b5678273b2c06e1c5df3cc79df38ebe40c7e2e069。
+  构建身份、tracked inputs 和真实发布故障摘要见 RZPlotCpuIntegration-20261004.Summary.json。
+  后续 50fd1968 的 Hydro repair position header 修复只经独立实际 Driver fixture 验证，
+  当前主 ELF 尚未包含该修复；不能把源码 HEAD 冒充 ELF 的构建身份。
+- 首版可接入范围仍是 Sod 1D + Cartesian CellularDet 2D AMR。
+  内部 RZ writer 增量属于后续几何工程；当前正式 Reader 明确拒绝该 schema，
+  不把它混入本轮 Cartesian Viewer 验收。
+
+数组映射沿用上文：/Data/<field> FP64，一维 [B,Nx]、二维 [B,Ny,Nx]；
+i-fastest、活动叶块、无 ghost，严格保留文件 block 顺序。
+/Grid/x,y,z 与场 C-order 展平一致；/NativeGrid 的各轴 lower/upper 和 cell_measure
+按相同顺序展平，level + logical_x1/x2/x3 为 file-local 原生块身份。
+Owner adapter 可组装 bounds [B,Ny,Nx,2,2] 和 measure [B,Ny,Nx]；
+不得按 Morton 排序后直接索引原数组。
+
+最新主 CPU 回归的 Sod 9 / Cellular 28 个 t=0 完整字段与旧参考 FP64 bits 一致，
+各自 checkpoint 的 20 个数值 dataset 亦逐位一致。
+真实 Driver write/flush/close/rename/create 故障、成功序号与同编号重试通过。
+既有固定网格 Sod 连续/续算文件另有独立 production-reader 点选证据，
+详见 PlotfileEvolvedReader-20261004.Summary.json。
+这些是记录范围内的工程证据，不能替代二维演化 AMR、独立 EOS 科学 oracle、
+完整身份或全域科学验收。
+
+发布仍为同目录临时文件 → checked flush/close → atomic rename；
+不声称 fsync、真实 ENOSPC 或断电持久性已验证，不改变 checkpoint 的既有语义。
+ENTR 保持 pressure_density_proxy、unknown unit/reason；原生场值和 FP64 不转换。
+首次全域总览仍可能扫描全部叶单元；固定响应像素数不等于固定读取或内存成本。
+原始 H5/plt/checkpoint/ELF/full arrays 留在本机 ignored studio/.local。
+下一步先由 Core 按此映射对接读取适配层，具体 finding 再做最小修改；
+不因已有单点检查通过而冻结全部布局或扩大几何范围。
