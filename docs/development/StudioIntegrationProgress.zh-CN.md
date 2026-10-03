@@ -2989,3 +2989,12 @@ static runtime before/after进入BuildRunner/makeManifest，旧记录unknown，�
 定向26/26、完整326/326、Python8/8、lint/typecheck/production PASS；两次24/25原失败保留。
 未Build/重写旧Manifest，下一步clean-source真实Build+disk reload；dependenciesComplete=false。
 见BuildToolRuntimeHost-20261004报告/Summary；科学CPU/CUDA/O9出口不变，未push/tag。
+
+
+## 2026-10-04 real Host no-op Build runtime持久化
+
+cleana0fe6200固定CPU Build c7d70a21成功，static runtime before/after稳定，
+新Node disk reload runtime图SHA/ID一致，known inputs不变但freshness-unknown保持。
+明确Ninja no work：没有active compiler/linker调用，不冒充clean-from-scratch或实际loaded closure。
+见BuildRuntimeRealBuild-20261004报告/Summary；下一步独立clean源+新Host CPU tree的真实configure/build。
+科学baseline/原ELF未动，无simulation/Windows/push/tag，科学CPU/CUDA/O9出口仍未完成。
