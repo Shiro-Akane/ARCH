@@ -3026,3 +3026,12 @@ Viewer 贯通；旧文件兼容，非法/不完整 reason 拒绝。真实 C++ IO
 定向24/24、完整329/329、lint/typecheck/build PASS；既有真实 Sod/Cellular
 37字段文件读回兼容且SHA不变。无Core Build/新simulation。
 限制与未完成项见 PlotfileReaderFp64Contract-20261004.zh-CN.md。
+
+## 2026-10-04 RT 原生 Fit 与滚轮对照
+
+确认复用UAT窗口/launcher实际存活；原生scrollbar drag、RT Inspector index8511、
+含零domain Log停绘/raw保留、Fit恢复Linear通过。
+普通参数区wheel也无可见滚动，故native wheel zoom/pan仍未验证，不能标PASS。
+自建窗口exit0，8个owned PID/startTicks全部消失；输入和两个worktree保持clean。
+精确新clean CPU binary/build身份及限制见 FullModelRTNativeFit-20261004.zh-CN.md。
+本轮无科学输出/配置/源码改动，不重跑已过自动baseline。
