@@ -20,7 +20,6 @@ export function PhysicalPlot({xLabel='x1',yLabel='x2',xDomain,yDomain,x,y,values
  const drag=useRef<{id:number;px:number;py:number;view:typeof view;marker:boolean;value:number;startValue:number;moved:boolean}|null>(null);
  const markerRef=useRef(marker);useLayoutEffect(()=>{markerRef.current=marker;},[marker]);
  useEffect(()=>{const cancel=()=>{if(drag.current?.marker)markerRef.current?.onCandidate(null);drag.current=null;};const key=(e:KeyboardEvent)=>{if(e.key==='Escape')cancel();};window.addEventListener('keydown',key);window.addEventListener('blur',cancel);return()=>{cancel();window.removeEventListener('keydown',key);window.removeEventListener('blur',cancel);};},[]);
- useLayoutEffect(()=>{const el=container.current;if(!el)return;const observer=new ResizeObserver(entries=>{const r=entries[0].contentRect;setSize({width:Math.max(240,r.width),height:Math.max(200,r.height)});});observer.observe(el);const prevent=(e:WheelEvent)=>{const r=el.getBoundingClientRect();if(e.clientX>=r.left+80&&e.clientX<=r.right-90&&e.clientY>=r.top+24&&e.clientY<=r.bottom-58)e.preventDefault();};el.addEventListener('wheel',prevent,{passive:false});return()=>{observer.disconnect();el.removeEventListener('wheel',prevent);};},[]);
  const edgesX=useMemo(()=>sampleEdges(x),[x]);const edgesY=useMemo(()=>y?sampleEdges(y):null,[y]);
  const extent=useMemo(()=>{if(meshOnly)return [0,1] as Range;let min=Infinity,max=-Infinity;for(const v of values){min=Math.min(min,v);max=Math.max(max,v);}return paddedRange(min,max);},[values,meshOnly]);
  const geometry=useMemo(()=>{
@@ -31,7 +30,10 @@ export function PhysicalPlot({xLabel='x1',yLabel='x2',xDomain,yDomain,x,y,values
    return {xr,yr,fr,xp:projection(xr,xs.scale,view.x),yp:projection(yr,y?ys.scale:fs.scale,view.y),fp:projection(fr,fs.scale)};
   }catch(e){return {error:e instanceof Error?e.message:'Invalid display settings'};}
  },[xDomain,yDomain,x,y,values,xs,ys,fs,edgesX,edgesY,extent,view,meshOnly]);
- const left=80,top=24,width=Math.max(80,size.width-left-90),height=Math.max(80,size.height-top-58);
+ const ticks='error' in geometry?null:{x:formatPlotTicks(Array.from({length:6},(_,i)=>geometry.xp.inverse(i/5))),y:formatPlotTicks(Array.from({length:6},(_,i)=>geometry.yp.inverse(i/5))),field:formatPlotTicks([0,.5,1].map(f=>geometry.fp.inverse(f)))};
+ const left=Math.max(80,40+7*Math.max(0,...(ticks?.y??[]).map(label=>label.length))),right=y&&!meshOnly?Math.max(90,40+7*Math.max(0,...(ticks?.field??[]).map(label=>label.length))):90,top=24,width=Math.max(80,size.width-left-right),height=Math.max(80,size.height-top-58);
+ useLayoutEffect(()=>{const el=container.current;if(!el)return;const observer=new ResizeObserver(entries=>{const r=entries[0].contentRect;setSize({width:Math.max(240,r.width),height:Math.max(200,r.height)});});observer.observe(el);const prevent=(e:WheelEvent)=>{const r=el.getBoundingClientRect();if(e.clientX>=r.left+left&&e.clientX<=r.right-right&&e.clientY>=r.top+24&&e.clientY<=r.bottom-58)e.preventDefault();};el.addEventListener('wheel',prevent,{passive:false});return()=>{observer.disconnect();el.removeEventListener('wheel',prevent);};},[left,right]);
+
  useLayoutEffect(()=>{
   const el=canvas.current,ctx=el?.getContext('2d');if(!el||!ctx)return;const ratio=window.devicePixelRatio||1;
   el.width=Math.round(size.width*ratio);el.height=Math.round(size.height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,size.width,size.height);
@@ -50,7 +52,7 @@ export function PhysicalPlot({xLabel='x1',yLabel='x2',xDomain,yDomain,x,y,values
    ctx.fillStyle='#ffbf66';for(let i=0;i<x.length;i++)if(values[i]<yr[0]||values[i]>yr[1]){const px=left+xp.forward(x[i])*width;ctx.fillRect(px-1,values[i]<yr[0]?top+height-4:top,2,4);}
   }
   ctx.restore();
- },[geometry,size,width,height,x,y,values,edgesX,edgesY,fs.map,meshOnly]);
+ },[geometry,size,left,width,height,x,y,values,edgesX,edgesY,fs.map,meshOnly]);
  const clipId=useId();
  function coordinates(e:{clientX:number;clientY:number;currentTarget:SVGSVGElement}){const r=e.currentTarget.getBoundingClientRect();return {px:(e.clientX-r.left)*size.width/r.width,py:(e.clientY-r.top)*size.height/r.height};}
  function fractions(px:number,py:number){return {x:(px-left)/width,y:1-(py-top)/height};}
@@ -64,7 +66,6 @@ export function PhysicalPlot({xLabel='x1',yLabel='x2',xDomain,yDomain,x,y,values
  }
  function fit(){setView({x:FULL,y:FULL});setX(axisDefault());setY(axisDefault());setField(f=>({...f,manual:false}));}
  const sx=selected===null?NaN:x[selected%x.length],sy=selected===null?NaN:y?y[Math.floor(selected/x.length)]:values[selected];
- const ticks='error' in geometry?null:{x:formatPlotTicks(Array.from({length:6},(_,i)=>geometry.xp.inverse(i/5))),y:formatPlotTicks(Array.from({length:6},(_,i)=>geometry.yp.inverse(i/5))),field:formatPlotTicks([0,.5,1].map(f=>geometry.fp.inverse(f)))};
  const gradient=Array.from({length:17},(_,i)=>({offset:`${i/16*100}%`,color:plotColor(fs.map,i/16)}));
  return <>{!meshOnly&&<PlotControls twoD={!!y} x={xs} y={ys} field={fs} onX={s=>{setX(s);setView(v=>({...v,x:FULL}));}} onY={s=>{setY(s);setView(v=>({...v,y:FULL}));}} onField={s=>{setField(s);if(!y)setView(v=>({...v,y:FULL}));}}/>}
  <button onClick={fit}>Fit {y?'2D':'1D'} view</button><p className="section-note">Scroll to zoom · drag a zoomed view to pan · click to inspect. Fit restores full coordinate domain. Raw samples are unchanged.</p>
