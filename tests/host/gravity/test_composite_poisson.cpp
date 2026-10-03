@@ -565,6 +565,36 @@ void curved_domain_extension() {
 }
 
 /** Exercise nonaxisymmetric manufactured potentials on native curved meshes. */
+/** Prevent explicit RZ identity from silently reaching the legacy 2D log kernel. */
+void rz_boundary_guard() {
+    auto rz=base_mesh(2,4);
+    rz.geometry=elliptic::Geometry::Cylindrical;
+    rz.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    rz.origin={0.,-.5,0.};
+    const elliptic::CompositePoisson rz_op(rz,make_cells(rz,false),
+        elliptic::BoundaryKind::CurvilinearIsolated);
+    auto rejected=[](auto call) {
+        bool refused=false;
+        try {call();}
+        catch(const std::invalid_argument& error) {
+            refused=std::string(error.what()).find("finite-ring contract pending")!=std::string::npos;
+        }
+        require(refused,"RZ reached legacy isolated boundary without explicit contract error");
+    };
+    rejected([&] {Physical::Gravity::GravityBoundary boundary(rz_op);});
+    auto polar=rz;polar.semantics=GridMetrics::GeometrySemantics::Existing;
+    polar.origin[1]=0.;polar.spacing[1]=2.*pi/polar.cells[1];
+    const elliptic::CompositePoisson polar_op(polar,make_cells(polar,false),
+        elliptic::BoundaryKind::CurvilinearIsolated);
+    Physical::Gravity::GravityBoundary legacy(polar_op);
+    legacy.update(std::vector<double>(polar_op.size(),1.));
+    const auto values=legacy.values(polar_op,constants::gravity::cgs::gravitational_constant);
+    require(values.size()==polar_op.faces().size(),"Legacy boundary lost output shape");
+    for(double value:values)require(std::isfinite(value),"Legacy boundary no longer finite");
+    rejected([&] {(void)legacy.values(rz_op,constants::gravity::cgs::gravitational_constant);});
+    std::cout<<"RZ_BOUNDARY_GUARD_PASS constructor=refused cached_legacy=refused legacy=preserved\n";
+}
+
 /** Frozen RZ polynomial, point-valued potential and analytic face derivatives. */
 void rz_manufactured() {
     constexpr double a=.75,b=1.25;
@@ -730,7 +760,7 @@ void curved_manufactured(bool singular=false, bool seam_refined=false) {
 int main(int argc,char** argv) {
     try {
         std::cout<<std::setprecision(17);
-        if (argc>1 && std::string(argv[1])=="rz") { rz_manufactured(); return 0; }
+        if (argc>1 && std::string(argv[1])=="rz") { rz_manufactured(); rz_boundary_guard(); return 0; }
         if (argc>1 && std::string(argv[1])=="contract") { contract(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
         if(argc>1 && std::string(argv[1])=="curved") {curved_manufactured();curved_boundary_integral();return 0;}

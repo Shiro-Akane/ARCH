@@ -2644,3 +2644,10 @@ Cartesian 线性场对应的 RZ 局部 shared face/source momentum/work flux 检
 显式 mesh 身份贯穿完整环体 volume/face、dr/dz、轴线与物理 z 边界，沿用现有 coarse hierarchy。
 四组规则/混合制造解与旧 contract/curved/singular 回归通过，求解后 force/phi 指标单独报告。
 详见 RZCompositePoisson-20261004.zh-CN.md / Summary；生产环体边界与科学预算仍未获验收。
+
+
+## 2026-10-04 RZ isolated boundary guard
+
+发现新内部 RZ mesh 可误入旧 2D log 核；构造与 cached values 双入口已明确拒绝。
+RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 RZBoundaryGuard-20261004.zh-CN.md / Summary。
+有限环体生产方案和预算尚待 Core review，未 fallback/开放能力。

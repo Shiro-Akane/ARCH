@@ -69,6 +69,8 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
      reference_radius_(op.base().origin[0]+op.base().cells[0]*op.base().spacing[0]),
      volumes_(op.volumes()) {
     using namespace arch::elliptic;
+    if(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::invalid_argument("RZ isolated boundary unavailable: finite-ring contract pending");
     if((dimension_!=2 && dimension_!=3) ||
        (dimension_==2 && op.base().geometry==Geometry::Cartesian))
         throw std::invalid_argument("Isolated multipole gravity requires 2D polar or 3D space");
@@ -151,6 +153,10 @@ void GravityBoundary::update(std::span<const double> density) {
 /** Evaluate isolated boundary potential at each exterior composite face. */
 std::vector<double> GravityBoundary::values(const arch::elliptic::CompositePoisson& op,
                                            double G,double theta,int order) const {
+    // A legacy cached tree must not consume an RZ operator as a log-kernel
+    // boundary. Analytic RZ operator tests do not certify this source model.
+    if(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::invalid_argument("RZ isolated boundary unavailable: finite-ring contract pending");
     if(!std::isfinite(G) || G<=0. || !std::isfinite(theta) || theta<0. || theta>=1.
         || order<0 || order>2) throw std::invalid_argument("Invalid isolated boundary evaluation");
     std::vector<double> result(op.faces().size());
