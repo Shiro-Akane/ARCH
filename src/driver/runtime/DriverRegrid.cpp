@@ -31,6 +31,8 @@ using topology::TopologyObservation;
 /** Stage a topology transaction, migrate state, validate and publish only on success. */
 bool DriverRuntime::execute_regrid()
 {
+    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("RZ regrid migration and angular-momentum contract are incomplete");
     const auto make_regrid_ledger = [] (
         amr::TopologyEpoch epoch,
         std::span<const amr::BlockHandle> handles,

@@ -30,7 +30,7 @@ using topology::TopologyObservation;
 /** Borrow core run owners and initialize state/version bookkeeping. */
 DriverRuntime::DriverRuntime(amr::AMRControl& control, BCHandler& boundaries,
     const SimConfig& settings, const SpeciesManager& species, SimulationController& controller)
-    : amr_ctrl(control), bc_handler(boundaries), config(settings), specs(species), ctrl(controller),
+    : geometry_semantics_(boundaries.geometry_semantics()), amr_ctrl(control), bc_handler(boundaries), config(settings), specs(species), ctrl(controller),
       topology_registry(topology::TopologyDomainBounds{
           config.grid.dim,
           {static_cast<std::uint32_t>(std::max(1, config.grid.nblockx1)),
@@ -123,6 +123,8 @@ void DriverRuntime::trace_backend_operation(backend::BackendOperation operation,
 /** Register initial block identities and their state residency. */
 void DriverRuntime::initialize_topology()
 {
+    for (int id:amr_ctrl.tree->GetActiveBlocks())
+        (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
     auto initial_candidate =
         topology_registry.stage_adoption(observe_topology());
     std::unique_ptr<StateResidencyLedger> staged_initial_ledger;
@@ -151,7 +153,10 @@ void DriverRuntime::initialize_topology()
             amr_ctrl.ghost_exchange.ExecuteExchange(
                 amr_ctrl.pool, amr_ctrl.tree, config.grid.dim,
                 &amr::Block::fluid_state,
-                proposed.handles_in_observation_order);
+                proposed.handles_in_observation_order,
+                geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
+                    ? amr::CoordinateSeamGeometry::RzAxisymmetric
+                    : amr::CoordinateSeamGeometry::ExistingChart);
             StageExecutionContext staged_context{
                 ExecutionSide::Host, *replacement, scheduler_clock};
             (void)arch::scheduler::complete_boundary(
@@ -173,6 +178,8 @@ void DriverRuntime::initialize_topology()
 /** Build topology bindings for backend storage allocation. */
 std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bindings()
 {
+    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("RZ device runtime is not yet migrated");
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     if (active.empty() || stage_handles.size() != active.size()) {
         throw std::logic_error(
@@ -208,6 +215,8 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
 /** Install a validated compute backend and its resident block views. */
 void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> backend)
 {
+    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("RZ device runtime is not yet migrated");
     if (compute_backend || !backend) throw std::logic_error("invalid backend installation");
     compute_backend = std::move(backend);
 }

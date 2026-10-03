@@ -2705,3 +2705,8 @@ CPU3/3与随后仅变化mixed Hydro BC→exchange→stage→BC→exchange→refl
 ## 2026-10-04 RZ actual Host scheduler
 
 Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-AMR实际ledger测试通过。错误BC profile保留clock/ledger与既有flux。受影响scoped4/4及最终flux guard1/1 PASS；详见RZScheduledHydro-20261004.zh-CN.md。公共runtime/CUDA/科学验收仍未完成。
+
+
+## 2026-10-04 RZ DriverRuntime Host halo
+
+初始/刷新halo已使用固定RZ chart。四个真实mixed-AMR Runtime案例PASS；受影响scoped3/3 PASS。device/regrid尚未迁移，明确拒绝而非静默旧chart。重编译的fixture与Runtime源码身份见RZRuntimeHalo-20261004.Summary.json；不代表production binary/演化验收。

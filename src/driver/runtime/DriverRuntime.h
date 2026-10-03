@@ -17,6 +17,8 @@
 #include "driver/runtime/ComputeBackend.h"
 #include "driver/runtime/TopologyIdentityRegistry.h"
 #include "driver/schedule/StageScheduler.h"
+#include "grid/GridMetrics.h"
+#include "amr/exchange/CoordinateSeamPlan.h"
 
 class BCHandler;
 struct SimulationController;
@@ -65,6 +67,7 @@ public:
     BCHandler& boundaries() const { return bc_handler; }
     const SimConfig& configuration() const { return config; }
     const SpeciesManager& species() const { return specs; }
+    GridMetrics::GeometrySemantics geometry_semantics() const noexcept { return geometry_semantics_; }
     state::RepairBudget& repair_budget();
     const std::vector<RegridMeasurement>& regrid_records() const { return regrid_measurements; }
 private:
@@ -76,6 +79,7 @@ private:
     bool execute_regrid();
     static backend::HostStateTransferView host_transfer_view(FluidState&);
 
+    const GridMetrics::GeometrySemantics geometry_semantics_;
     amr::AMRControl& amr_ctrl;
     BCHandler& bc_handler;
     const SimConfig& config;

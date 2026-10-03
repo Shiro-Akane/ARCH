@@ -117,6 +117,8 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
     if (compute_backend) { complete_device_boundary(slot); return; }
     if (slot != StateSlot::Current)
         throw std::logic_error("Host stage-slot boundaries belong to the integrator");
+    for (int id:amr_ctrl.tree->GetActiveBlocks())
+        (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
 #pragma omp parallel for schedule(dynamic, 1)
     for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
         amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
@@ -125,7 +127,10 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
     amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
                                             config.grid.dim,
                                             &amr::Block::fluid_state,
-                                            stage_handles);
+                                            stage_handles,
+                                            geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
+                                                ? amr::CoordinateSeamGeometry::RzAxisymmetric
+                                                : amr::CoordinateSeamGeometry::ExistingChart);
     if (residency_ledger && !stage_handles.empty())
         publish_current_ghost();
 }
