@@ -2884,3 +2884,11 @@ CMake Python关联已有numpy/h5py venv，科学flags未变。完整71 CTest实�
 Sedov能力旧断言修正后定向PASS；GravityBox cloud旧default迁移缺项/中心污染按原Setup+独立oracle明确，原t=0势/力预算PASS。
 整个self_gravity campaign尚未复验/通过，历史radial G=1e-20需Core科学换算确认；不宣称71/71或CPU出口/CUDA/O9完成。
 见CurrentFullCpuRegression报告/Summary；原始失败日志/JUnit/H5本机保留。
+
+## 2026-10-04 CPU Cartesian gravity quick 输入迁移
+
+按原8fc0dd25 RuntimeParams/StandardParameters/GlobalDefs有效默认显式补 thermal/burn 输入，
+三个inspect exit0；既有thermal .05和两份compact burn 1e-10真实CPU轨迹/原预算PASS。
+linear error .000261426 <.02；burn能量/质量预算通过，paired transport effect8.215896e-7 >1e-8。
+未改Core/物理参考/阈值；无需重build。完整self_gravity仍未关闭，径向历史G换算待Core，
+原full CTest失败JUnit不改。见GravityQuickInputMigration报告/Summary；raw本机ignored。

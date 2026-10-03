@@ -162,7 +162,8 @@ class BoxCampaign:
         amplitude,thermal=1e-5,2e-5
         data,folder,record=self.run(f'thermal-linear-{roots}', nblockx1=roots, rho0=1e7, temperature0=3e7,
             amplitude=amplitude, temperature_amplitude=thermal, use_diffusion='true',use_thermal_diff='true',
-            alpha_therm=1e15,tmax=.05,cfl=.2,diff_integrator='RKL2')
+            alpha_therm=1e15,tmax=.05,cfl=.2,diff_integrator='RKL2',diff_cfl=.8,
+            use_viscous_diff='false',use_species_diff='false')
         d=data[-1];k=2*math.pi/1e8;speed=math.sqrt((2/3)*CV*3e7);omega_g=4*math.pi*G*1e7
         matrix=np.array([[0,-k*speed,0],[k*speed-omega_g/(k*speed),0,k*speed],
                          [0,-(2/3)*k*speed,-1e15*k*k]])
@@ -183,13 +184,17 @@ class BoxCampaign:
         return dict(nblockx1=2, rho0=1e7, temperature0=1e9, amplitude=.01,temperature_amplitude=.01,
                     eos_type='helmholtz',eos_table_path=str(ROOT/'EOS_toolkit/tables/helmholtz/helm_table.dat'),
                     use_burn='true',network_name='aprox13',xhe4=1.,xc12=0.,xo16=0.,
+                    # Preserve the original pre-v3 RuntimeParams effective defaults.
+                    nuclearTempMin=1e9,nuclearDensMin=1e-10,smallt=1e5,smallx=1e-20,
+                    enucDtFactor=1e30,eos_coulomb_mult=1.,
                     ode_solver='bd',linear_solver='DenseLU',ode_rtol=1e-9,ode_atol=1e-12,
                     tmax=1e-4,dt_init=2.5e-5,tstep_change_factor=1.,use_nse='false') | changes
 
     def coupled(self, name, diffusion=False, **changes):
         config=self.burning_config()
         if diffusion:
-            config.update(use_diffusion='true',use_thermal_diff='true',use_species_diff='true',diff_integrator='RKL2')
+            config.update(use_diffusion='true',use_thermal_diff='true',use_species_diff='true',
+                          use_viscous_diff='false',diff_integrator='RKL2',diff_cfl=.8)
         data,folder,record=self.run(name, **(config|changes))
         require(abs(record['nuclear_heat_over_initial_gas'])>1e-8,name+': no nuclear heat')
         def mean_fraction(d,key):
