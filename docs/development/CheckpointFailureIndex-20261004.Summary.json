@@ -1,0 +1,37 @@
+{
+  "scope": "Actual CPU DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
+  "exitCode": 0,
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "executableSha256": "52008396c74aafeaef8ee803e4262073313dee0027570f742fb9179ccc9e92fc",
+  "recompiledSources": {
+    "tests/host/io/test_driver_checkpoint_geometry.cpp": "e5cbe6f7466edc33581500c42817f016bbe48c5fa7aba31ef21304a9d481461a",
+    "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+    "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+    "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69",
+    "src/driver/io/DriverIO.cpp": "1ccb5fa574992fd1fc8e0b8a38e4e3fd1fcf75434d955ebee86baa6ee8aabea1",
+    "src/io/chk/ChkIO.cpp": "544132f085348d795d047684fed53b9021cfebfeccca650bae0a87e180b6d808",
+    "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+    "src/io/hdf5/HDF5Writer.cpp": "1ef3fa88d6f38c5497797dc17348989a9dffe41f94e06c946cda2b95a925ef18"
+  },
+  "limitations": [
+    "Public RZ dispatch still gated",
+    "No evolved restart acceptance",
+    "CUDA not qualified"
+  ],
+  "baseline": "73be293adbe68483d2cd866ea09cee8f351c36de",
+  "beforeExitCode": 1,
+  "beforeDiagnostic": "failed checkpoint consumed Driver index",
+  "beforeExecutableSha256": "55b4a992f4a6d8690e0f448d31aef6443ecbcc6e8c6f15e9d1fb85ff8ae4c35c",
+  "expectedAfterDiagnostic": "HDF5 errno=20 Not a directory, propagated and caught by negative test",
+  "checks": [
+    "Cartesian/RZ repair-ledger rejection retains index 7; no output file",
+    "Cartesian/RZ success retry publishes index 7 and increments once",
+    "Cartesian/RZ blocked parent create failure retains index 8 and previous checkpoint SHA",
+    "Cartesian/RZ recovery publishes index 8 and increments once",
+    "Raw state/controller restore remains exact; time=0 step=0"
+  ],
+  "limits": [
+    "No checkpoint atomic publication/close/ENOSPC/power-loss guarantee added",
+    "No public RZ/evolution/CUDA acceptance"
+  ]
+}

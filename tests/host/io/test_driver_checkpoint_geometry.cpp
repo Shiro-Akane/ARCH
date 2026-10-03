@@ -5,6 +5,8 @@
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
 #include "io/chk/CheckpointCompatibility.h"
+#include "core/files/FileFingerprint.h"
+#include <fstream>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -48,11 +50,42 @@ int main(int argc,char** argv) {
         auto temperature=+[](const FluidVector&,const double*,const void*){return 2.5;};
         auto gamma=+[](const FluidVector&,const double*,const void*){return 1.4;};
         arch::driver::DriverIO output(runtime,counters,provenance,pressure,temperature,gamma,nullptr);
+        // A real serializer rejection must propagate without consuming an index.
+        // Keep the scientific state valid; corrupt only the repair-ledger shape.
+        const auto ledger=counters.repairs.values;
+        counters.repairs.values.pop_back();
+        bool propagated=false;
+        try { output.write_checkpoint(.02,true); }
+        catch(const std::exception&) { propagated=true; }
+        counters.repairs.values=ledger;
+        require(propagated,"checkpoint serializer failure swallowed");
+        require(counters.chk_file_index==7,"failed checkpoint consumed Driver index");
+        require(!std::filesystem::exists(std::filesystem::path(config.io.out_dir)/"fixture_chk_0007.h5"),
+                "rejected checkpoint produced a scientific output file");
         output.write_checkpoint(.02,true);
         require(counters.chk_file_index==8,"checkpoint success did not advance once");
         require(counters.plt_file_index==11&&counters.step_count==0&&counters.t_current==0.,
                 "checkpoint changed simulation/controller");
         const auto path=std::filesystem::path(config.io.out_dir)/"fixture_chk_0007.h5";
+        const auto original_digest=arch::core::file_sha256(path.string());
+        const auto original_directory=config.io.out_dir;
+        const auto blocker=std::filesystem::path(config.io.out_dir)/"blocked-parent";
+        std::ofstream(blocker)<<"keep";
+        config.io.out_dir=blocker.string();
+        propagated=false;
+        try { output.write_checkpoint(.02,true); }
+        catch(const std::exception&) { propagated=true; }
+        require(propagated&&counters.chk_file_index==8,
+                "create failure swallowed or consumed checkpoint index");
+        require(std::filesystem::is_regular_file(blocker),
+                "create failure modified blocking file");
+        require(arch::core::file_sha256(path.string())==original_digest,
+                "create failure changed previous checkpoint");
+        config.io.out_dir=original_directory;
+        output.write_checkpoint(.02,true);
+        require(counters.chk_file_index==9 &&
+                std::filesystem::is_regular_file(std::filesystem::path(config.io.out_dir)/"fixture_chk_0008.h5"),
+                "create failure retry did not use the same index");
         const auto payload=io::read_hdf5_chk_impl(path.string());
         require(payload.geometry_identity.revision==1 &&
                 payload.geometry_identity.chart==(rz?"axisymmetric-rz":"existing"),
@@ -75,7 +108,7 @@ int main(int argc,char** argv) {
         }
         require(state.time==0.&&state.step==0&&state.chk_idx==7&&state.plt_idx==11&&
                 state.dt_burn==.02&&state.resume_after_regrid,"checkpoint controller changed");
-        std::cout<<"PASS actual DriverIO "<<(rz?"RZ":"Cartesian")<<" profile/native/controller time=0 step=0\n";
+        std::cout<<"PASS actual DriverIO "<<(rz?"RZ":"Cartesian")<<" profile/native/controller/rejection/create/retry time=0 step=0\n";
     }
     return 0;
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

@@ -88,10 +88,12 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
         geometry_identity.chart = "axisymmetric-rz";
     else if (semantics != GridMetrics::GeometrySemantics::Existing)
         throw std::runtime_error("Unsupported runtime checkpoint geometry profile");
-    write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index,
+    write_chk(amr_ctrl, ctrl.chk_file_index, ctrl.plt_file_index,
               ctrl.step_count, ctrl.t_current, ctrl.dt_old,
               dt_burn_global, resume_after_regrid, config, specs,
               checkpoint_provenance, ctrl.repairs, geometry_identity);
+    // Reserve the identity until the serializer reports success.
+    ++ctrl.chk_file_index;
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }

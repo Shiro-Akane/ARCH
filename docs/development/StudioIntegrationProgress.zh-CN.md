@@ -2737,3 +2737,7 @@ DriverIO 传递 Runtime profile，write_chk 写前校验并记录几何身份。
 
 ## 2026-10-04 actual Driver checkpoint profile evidence
 当前 Driver/Runtime/IO 源码重编后，Cartesian 与内部 RZ 两例实际写出/恢复 PASS；time=0 step=0，原生字段与 controller 未变。补齐此前仅 TU 编译的缺口。首次 fixture ledger 初始化缺失及修正保留证据。见 RZDriverCheckpoint-20261004.zh-CN.md / Summary。公共 RZ 演化/CUDA 未验收，未 push/tag。
+
+
+## 2026-10-04 checkpoint failure index
+实测 Driver checkpoint serializer 拒绝消耗序号，已将递增移到 writer 成功返回后。当前源码实际 Cartesian/RZ serializer/create 失败及同编号恢复 PASS，原值/controller不变；未改 checkpoint 发布机制。见 CheckpointFailureIndex-20261004.zh-CN.md / Summary。未 push/tag。
