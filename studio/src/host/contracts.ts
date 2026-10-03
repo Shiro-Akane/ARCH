@@ -1,3 +1,4 @@
+import type {ToolRuntimeEvidence} from '../../host/toolRuntimeEvidence.ts';
 import type {CMakeConfigurationEvidence} from '../../host/cmakeEvidence.ts';
 export const PROTOCOL_VERSION = '1.3';
 export interface HostCapabilities { readProject: boolean; writeConfig: boolean; build: boolean; preview: boolean; watchFiles: boolean }
@@ -45,6 +46,7 @@ export interface LinkInputSnapshot {
  unavailable:{path:string;reason:'missing'}[];
 }
 export interface BuildManifest {
+ toolRuntime?:ToolRuntimeEvidence; toolRuntimeError?:string; toolRuntimeStableDuringBuild?:boolean;
  linkInputs?:LinkInputSnapshot; linkInputError?:string;
  compilerDrivers?:{language:string;path:string;resolvedPath:string;id:string;version:string;sha256:string;size:number;components?:{role:string;path:string;resolvedPath:string;sha256:string;size:number}[];specsSha256?:string}[]; compilerDriverError?:string;
  preBuildCompilerDrivers?:BuildManifest['compilerDrivers']; compilerDriversStableDuringBuild?:boolean;

@@ -2979,3 +2979,13 @@ RPATH/missing/ambiguous明确unresolved，FIFO拒绝，cycle/node预算覆盖。
 尚未证明真实loader选择/dlopen/nonELF/config closure/跨Build稳定与Host接线；
 dependenciesComplete=false、主Manifest不变。见BuildToolRuntimeEvidence-20261004。
 无Build/simulation/scientific flags/Windows/push/tag，科学与CUDA/O9出口保持待验收。
+
+
+## 2026-10-04 static runtime Host Manifest/freshness接线
+
+static runtime before/after进入BuildRunner/makeManifest，旧记录unknown，损坏/重复记录拒绝，
+已知库SHA/target漂移即使新图失败仍needs-build；不claimactual loader/完整closure。
+真实12roots/65ELF/209edges与Python图SHA+边一致，只读双snapshot稳定，不冒充真实Build前后。
+定向26/26、完整326/326、Python8/8、lint/typecheck/production PASS；两次24/25原失败保留。
+未Build/重写旧Manifest，下一步clean-source真实Build+disk reload；dependenciesComplete=false。
+见BuildToolRuntimeHost-20261004报告/Summary；科学CPU/CUDA/O9出口不变，未push/tag。

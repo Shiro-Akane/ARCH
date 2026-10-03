@@ -29,6 +29,8 @@ class ToolRuntimeTests(unittest.TestCase):
         c = parse_cache("libx.so (libc6,x86-64) => /a/x.so\n"
             "libx.so (libc6,x86-64) => /b/x.so\nlibx.so (libc6) => /i386/x.so\n")
         self.assertEqual(c, {"libx.so": ["/a/x.so", "/b/x.so"]})
+        self.assertEqual(parse_cache("libx.so (libc6,x86-64) => /path with spaces/x.so\n"),
+                         {"libx.so": ["/path with spaces/x.so"]})
 
     def test_untrusted_inspector_never_runs(self):
         with self.assertRaisesRegex(ValueError, "fixed"):

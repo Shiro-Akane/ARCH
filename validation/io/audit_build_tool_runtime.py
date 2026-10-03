@@ -71,7 +71,7 @@ def parse_elf(text):
 def parse_cache(text):
     result = {}
     for line in text.splitlines():
-        match = re.fullmatch(r"\s*(\S+) \(([^)]*)\) => (/\S+)\s*", line)
+        match = re.fullmatch(r"\s*(\S+) \(([^)]*)\) => (/.+?)\s*", line)
         if match and "x86-64" in match[2].split(","):
             result.setdefault(match[1], set()).add(match[3])
     return {k: sorted(v) for k, v in result.items()}

@@ -1,3 +1,4 @@
+import {readToolRuntimeEvidence,toolRuntimeRoots,changedRuntimeInputs,runtimeFingerprint} from './toolRuntimeEvidence.ts';
 import {mkdir,stat} from 'node:fs/promises';
 import {checkedPath} from './files.ts';
 import {readBuildToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs,HOST_BUILD_PATH} from './cmakeEvidence.ts';
@@ -102,6 +103,18 @@ export class BuildRunner {
       for(const old of previous.values())evidence.changedInputs.push(old.path);
      }catch{toolchainUnknown=true;}
     }
+    let runtimeUnknown=false;
+    if(this.profile.compilerDependencyMode==='ninja'){
+     if(!m.toolRuntime||m.toolRuntimeError||m.toolRuntimeStableDuringBuild!==true)runtimeUnknown=true;
+     else try{
+      for(const old of [...m.toolRuntime.nodes,...m.toolRuntime.inspectors,m.toolRuntime.loaderCache]){try{const f=await runtimeFingerprint(old.path);if(f.resolvedPath!==old.resolvedPath||f.sha256!==old.sha256||f.size!==old.size)evidence.changedInputs.push(old.path);}catch{evidence.changedInputs.push(old.path);}}
+      const configuration=await readBuildConfigurationInputs(this.root,this.root+'/'+this.profile.buildDirRelative);
+      const drivers=(await readBuildToolchainEvidence(this.root+'/'+this.profile.buildDirRelative)).compilers;
+      const now=await readToolRuntimeEvidence(toolRuntimeRoots(configuration,drivers));
+      evidence.changedInputs.push(...changedRuntimeInputs(m.toolRuntime,now));
+      runtimeUnknown=now.unresolved.length>0||this.profile.dependenciesComplete;
+     }catch{runtimeUnknown=true;}
+    }
     let linkUnknown=false,missingLinkInputs=0;
     if(this.profile.linkDependencyFile){
      if(!m.linkInputs||m.linkInputError)linkUnknown=true;
@@ -115,6 +128,7 @@ export class BuildRunner {
     else if(compilerUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Compiler dependency evidence unavailable or stale.';}
     else if(toolchainUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Compiler toolchain identity is incomplete or unavailable.';}
     else if(configurationUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason='CMake configuration input evidence unavailable or unstable.';}
+    else if(runtimeUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Static tool runtime identity is missing, unstable, or actual loader selection remains unverified.';}
     else if(linkUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason=missingLinkInputs?('Linker input evidence is incomplete: '+missingLinkInputs+' recorded inputs are missing. Full dependency freshness is unknown.'):'Linker input evidence is incomplete or unavailable.';}
     else if(m.compilerInputsStableDuringBuild===false){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Compiler input stability was not established across Build.';}
     else if(!same(binary,m.outputBinary.fingerprint)){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Executable differs from last successful Build manifest.';}
@@ -157,11 +171,12 @@ export class BuildRunner {
    const configurationBefore=this.profile.compilerDependencyMode==='ninja'?await readBuildConfigurationInputs(this.root,this.root+'/'+this.profile.buildDirRelative).catch(()=>undefined):undefined;
    const compilerBefore=this.profile.compilerDependencyMode==='ninja'?await fingerprintNinjaDependencies(this.root+'/'+this.profile.buildDirRelative).catch(()=>undefined):undefined;
    const toolchainBefore=this.profile.compilerDependencyMode==='ninja'?(await readBuildToolchainEvidence(this.root+'/'+this.profile.buildDirRelative).catch(()=>undefined))?.compilers:undefined;
+   const runtimeBefore=this.profile.compilerDependencyMode==='ninja'?await Promise.resolve().then(()=>readToolRuntimeEvidence(toolRuntimeRoots(configurationBefore,toolchainBefore))).catch(()=>undefined):undefined;
    await new Promise<void>((resolve,reject)=>{
     const child=(this.hooks.spawn??spawn)(this.hooks.cmake??CMAKE,['--build',this.root+'/'+this.profile.buildDirRelative,'--target',this.profile.target,'--parallel',String(this.profile.parallelism)],{cwd:this.root,shell:false,env:{PATH:HOST_BUILD_PATH,HOME:process.env.HOME??'/home/arch',LANG:'C.UTF-8',...(retainedTmp?{TMPDIR:retainedTmp}:{})},stdio:['ignore','pipe','pipe']});this.child=child;
     for(const [stream,kind] of [[child.stdout,'stdout'],[child.stderr,'stderr']] as const){const decoder=new StringDecoder('utf8');stream?.on('data',(chunk:Buffer)=>this.log?.append(kind,decoder.write(chunk)));stream?.on('end',()=>{const tail=decoder.end();if(tail)this.log?.append(kind,tail);});}
     child.once('error',()=>reject(new Error('Build process could not start.')));child.once('close',(code,signal)=>{result.exitCode=code;result.signal=signal;if(code===0)resolve();else reject(new Error('Build exited unsuccessfully.'));});
-   });const manifest=await makeManifest(this.profile,this.projectId,id,startedAt,before,preBinary,git,compilerBefore,toolchainBefore,configurationBefore);await saveManifest(this.profile,manifest);this.current.lastSuccessfulBuild=manifest;result.state='succeeded';
+   });const manifest=await makeManifest(this.profile,this.projectId,id,startedAt,before,preBinary,git,compilerBefore,toolchainBefore,configurationBefore,runtimeBefore);await saveManifest(this.profile,manifest);this.current.lastSuccessfulBuild=manifest;result.state='succeeded';
   }catch(e){result.error=e instanceof Error?e.message:'Build failed';}
   finally{result.finishedAt=new Date().toISOString();if(result.error)this.log?.append('stderr',result.error);this.log?.append('state',undefined,result.state);this.current.latestResult=result;this.current.state=result.state;this.child=undefined;await this.refreshFreshness(true);delete this.current.activeBuildId;}
  }
