@@ -2932,3 +2932,11 @@ Gaussian势/力minimum order2.012819/1.999534，耦合minimum2.017102，
 原预算/完整数组参考及zero floor保持。24秒无swap growth/guard stop，raw index与SHA本机持久。
 上游fetch refs未变；3D Jeans coarse冲突/历史radial G及科学待审仍在，full CPU gate不清除。
 见BoxFullCpuAdditions报告/Summary；未重build/CUDA/Windows/push/tag。
+
+## 2026-10-04 径向full未运行分辨率与gravity覆盖收束
+
+球/柱static16/32、hydrostatic16共6原样本PASS；复用相同ELF的quick64/32/64证据，
+静水16→32→64严格下降且原<.01，static原<1e-7通过，无重复baseline或阈值变更。
+RadialFullCpuAdditions报告逐原入口列gravity覆盖：除3D mixed coarse FAIL与
+两种historicalG regrid_cycle待Core外，已执行分项证据齐；不拼接full绿色结果。
+原full失败JUnit保持，JENS/RZ/CUDA/O9总体出口继续未完成；raw本机持久索引，未push/tag。

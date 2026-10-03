@@ -1,0 +1,208 @@
+{
+  "sourceHead": "d80780ec03ff0b9167453565d13c0e7597bd9be6",
+  "binarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "scope": "Original non-quick radial positive additions only; historical-G full gate remains incomplete",
+  "priorSummarySha256": "9e3392479198adf3d012b8489f448e5b31f2289898ead75ec378089894eb041f",
+  "results": [
+    {
+      "name": "spherical-static-16",
+      "geometry": "spherical",
+      "plots": 1,
+      "max_gauss_relative_error": 1.3589735921669282e-14,
+      "solves": 1,
+      "potential_relative_error": 2.67161470711785e-15,
+      "force_relative_error": 1.3589735921669279e-14
+    },
+    {
+      "name": "spherical-static-32",
+      "geometry": "spherical",
+      "plots": 1,
+      "max_gauss_relative_error": 2.658561409468905e-14,
+      "solves": 1,
+      "potential_relative_error": 6.295839953108262e-15,
+      "force_relative_error": 2.658561409468905e-14
+    },
+    {
+      "name": "spherical-hydrostatic-16",
+      "geometry": "spherical",
+      "plots": 2,
+      "max_gauss_relative_error": 1.3589735921669282e-14,
+      "solves": 38,
+      "parasitic_velocity_rms": 1108090.242054464,
+      "relative_to_center_sound_speed": 0.0042096758986180935,
+      "reused32Rms": 556222.6362544537,
+      "reused64Rms": 223203.63678577595
+    },
+    {
+      "name": "cylindrical-static-16",
+      "geometry": "cylindrical",
+      "plots": 1,
+      "max_gauss_relative_error": 6.308865259182501e-15,
+      "solves": 1,
+      "potential_relative_error": 4.391941572588909e-15,
+      "force_relative_error": 6.3088652591825e-15
+    },
+    {
+      "name": "cylindrical-static-32",
+      "geometry": "cylindrical",
+      "plots": 1,
+      "max_gauss_relative_error": 1.0540392825049832e-14,
+      "solves": 1,
+      "potential_relative_error": 1.0113146684682193e-14,
+      "force_relative_error": 1.0540392825049832e-14
+    },
+    {
+      "name": "cylindrical-hydrostatic-16",
+      "geometry": "cylindrical",
+      "plots": 2,
+      "max_gauss_relative_error": 6.308865259182501e-15,
+      "solves": 38,
+      "parasitic_velocity_rms": 1441964.2277664838,
+      "relative_to_center_sound_speed": 0.005478075544680827,
+      "reused32Rms": 746296.6907218151,
+      "reused64Rms": 314925.3061054262
+    }
+  ],
+  "status": "PASS",
+  "elapsedSeconds": 0.27174913099588593,
+  "inputFingerprints": [
+    {
+      "name": "cylindrical-hydrostatic-16",
+      "sha256": "2f89c6eec32d651bbbb9410a360d7d27c586329e5f0d834a4c29b34da7a44748"
+    },
+    {
+      "name": "cylindrical-static-16",
+      "sha256": "ed06e7e40d69c1090db41f674eeb9d31fb8b8a24e36cad63b9b3a291bad03cfa"
+    },
+    {
+      "name": "cylindrical-static-32",
+      "sha256": "468c0980280a5a58fa2d4367099d265304dc015da55cda150efd071910fd9aad"
+    },
+    {
+      "name": "spherical-hydrostatic-16",
+      "sha256": "278d04d0fadf62d8960692b5e6a94873aafc7a08460dec697a8967d5165cbd37"
+    },
+    {
+      "name": "spherical-static-16",
+      "sha256": "3ace95a9bc44445112d2190e37fa0b4ed8a7d365079f2a739adf46ad132d72c4"
+    },
+    {
+      "name": "spherical-static-32",
+      "sha256": "3b475dc083af66f8253ea524b9bc70982b650488f4043dcb259bfcdc3670fe0d"
+    }
+  ],
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/radial-full-additions-20261004",
+  "fullSelfGravityGate": "NOT_COMPLETE",
+  "localScientificDataIndex": [
+    {
+      "relativeFile": "runs/cylindrical-hydrostatic-16/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 19168,
+      "sha256": "653b9361708faad33a0b15ca4d7dab7909312148e81f0855940f3353fbb8ba98",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/cylindrical-hydrostatic-16/GravityBox_HLLC_plt_0001.h5",
+      "sizeBytes": 19168,
+      "sha256": "ce705e1746f862e7229d2570868cf45db8829875f335cb14428aaabaf0ce3651",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/cylindrical-hydrostatic-16/GravityBox_chk_0000.h5",
+      "sizeBytes": 18352,
+      "sha256": "6a341c9ddb8e973c6d4929248a2db29b39f11ce8722283a11707c705f74700b6",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/cylindrical-hydrostatic-16/GravityBox_chk_0001.h5",
+      "sizeBytes": 18352,
+      "sha256": "3f9b29a60ec2d51a24b0e26ae3c238b582324e690ea91a930a48eb0e284320d5",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/cylindrical-static-16/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 19168,
+      "sha256": "97463ac20955d0f1d9567dd867e774daed4d31c92dd808bf5905030c5f2b103a",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/cylindrical-static-16/GravityBox_chk_0000.h5",
+      "sizeBytes": 18352,
+      "sha256": "a78e7ec23a60419e59fbbb466d9aeea440d28f0ec7e6c0c4c293901057110d86",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/cylindrical-static-32/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 21240,
+      "sha256": "14b0b19e1ddf82186323de04bdf7ed0a0dbaa4ffca77a5024d451994c2ae79d5",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/cylindrical-static-32/GravityBox_chk_0000.h5",
+      "sizeBytes": 20400,
+      "sha256": "fca6331655a8e6e617dacd2bac255e2ae51c31a4de1d8527523e0f9767022da7",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/spherical-hydrostatic-16/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 19168,
+      "sha256": "d5c98164f0e2bd55a7400553b32b02ac658fbd66a4bbc71fe743d4f386c3f0b1",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/spherical-hydrostatic-16/GravityBox_HLLC_plt_0001.h5",
+      "sizeBytes": 19168,
+      "sha256": "c1129aa9e6fc0734210a96d30b43dec6cf4c94d2a231ef3a62ccd2f8cd1763bc",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/spherical-hydrostatic-16/GravityBox_chk_0000.h5",
+      "sizeBytes": 18352,
+      "sha256": "a02ed4592cb84e6664c609210ce07badf8519d8e8f1b5ce2fcedb653c3618605",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/spherical-hydrostatic-16/GravityBox_chk_0001.h5",
+      "sizeBytes": 18352,
+      "sha256": "eb54e8786bd7594a2b584479ba5378a57eb779ba170b8ad250680d133ae56555",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/spherical-static-16/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 19168,
+      "sha256": "d0b3d4c0352d76d0e9591125146adc88ecb394633a4beb336fb7b9158b598867",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/spherical-static-16/GravityBox_chk_0000.h5",
+      "sizeBytes": 18352,
+      "sha256": "859c9909a62c790e2fed4471e9737ed613320f176160bb628b54c7b0ce58c44e",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/spherical-static-32/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 21240,
+      "sha256": "b55985c574df1cd122a1c5687b454c2cd514b4c8d7eb638caae802cb4ac32465",
+      "retention": "Persistent local ignored directory, not uploaded"
+    },
+    {
+      "relativeFile": "runs/spherical-static-32/GravityBox_chk_0000.h5",
+      "sizeBytes": 20400,
+      "sha256": "fd4f0678253cbaa30fc45bb2f94418133322ad7b3dbaa2cfded0b23ba2b1bdc4",
+      "retention": "Persistent local ignored directory, not uploaded"
+    }
+  ],
+  "generatorSha256": "bed57fc0972c686ab734267405aa1418eed91106393505e0e5733fa7ecbe36aa",
+  "unchangedBudgets": {
+    "staticPotentialMax": 1e-07,
+    "staticForceMax": 1e-07,
+    "gaussMax": 1e-07,
+    "hydrostaticVelocitySoundRatioMax": 0.01,
+    "hydrostaticRefinementTrend": "Strict decrease"
+  },
+  "limitations": [
+    "Six original non-quick positive additions only, no new science endpoints.",
+    "Prior static64/hydrostatic32,64 reused with matching executable SHA.",
+    "Historical-G regrid_cycle unchanged and not executed; no full PASS.",
+    "One-dimensional spherical/cylindrical evidence is not two-dimensional RZ acceptance."
+  ]
+}
