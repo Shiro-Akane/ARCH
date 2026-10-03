@@ -202,7 +202,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::vector<size_t>& dims,
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
-                         const std::map<std::string, std::vector<double>>& data_map)
+                         const std::map<std::string, std::vector<double>>& data_map,
+                         const PlotNativeGrid* native_grid)
 {
     if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
         || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
@@ -219,6 +220,25 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
     for (const auto& [name, buffer] : data_map)
         if (name.empty() || name.find('/') != std::string::npos || buffer.size() != cells)
             throw std::invalid_argument("Invalid plotfile field name/length.");
+    if (native_grid) {
+        if (geom != "cartesian" || dim > 2 || native_grid->cell_measure.size() != cells)
+            throw std::invalid_argument("Invalid candidate native grid geometry/length.");
+        for (size_t axis = 0; axis < 3; ++axis) {
+            if (native_grid->lower[axis].size() != cells
+                || native_grid->upper[axis].size() != cells
+                || native_grid->logical[axis].size() != dims.front())
+                throw std::invalid_argument("Invalid native grid bounds/logical shape.");
+            for (size_t cell = 0; cell < cells; ++cell) {
+                double lo = native_grid->lower[axis][cell], hi = native_grid->upper[axis][cell];
+                if (!std::isfinite(lo) || !std::isfinite(hi)
+                    || (axis < static_cast<size_t>(dim) ? hi <= lo : lo != 0. || hi != 0.))
+                    throw std::invalid_argument("Invalid native cell bounds.");
+            }
+        }
+        for (double measure : native_grid->cell_measure)
+            if (!std::isfinite(measure) || measure <= 0.)
+                throw std::invalid_argument("Invalid native cell measure.");
+    }
     // Same-directory atomic replacement retains legacy overwrite semantics.
     // Atomic visibility does not promise power-loss durability (no fsync).
     std::string pattern = filepath + ".partial-XXXXXX";
@@ -252,6 +272,28 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         grid_group.createDataSet("z", coord_z);
         grid_group.createDataSet("level", block_levels);
         grid_group.createDataSet("morton", block_mortons);
+
+        if (native_grid) {
+            Group native = file.createGroup("NativeGrid");
+            native.createAttribute("version", std::string("candidate-cartesian-1"));
+            native.createAttribute("centering", std::string("cell"));
+            native.createAttribute("ghost_cells", 0);
+            native.createAttribute("block_kind", std::string("active-leaf"));
+            native.createAttribute("center_basis", std::string("cartesian"));
+            native.createAttribute("measure_source", std::string("GridMetrics::CellVolume"));
+            native.createAttribute("measure_convention",
+                std::string("active-coordinate-product; inactive-measures-omitted"));
+            native.createAttribute("measure_unit", std::string("unknown"));
+            native.createAttribute("logical_identity",
+                std::string("file-local level/logical_x1/logical_x2/logical_x3"));
+            for (size_t axis = 0; axis < 3; ++axis) {
+                const std::string name = "x" + std::to_string(axis+1);
+                native.createDataSet(name + "_lower", native_grid->lower[axis]);
+                native.createDataSet(name + "_upper", native_grid->upper[axis]);
+                native.createDataSet("logical_" + name, native_grid->logical[axis]);
+            }
+            native.createDataSet("cell_measure", native_grid->cell_measure);
+        }
 
         for (const auto& [name, buffer] : data_map) {
             DataSet ds = data_group.createDataSet<double>(name, DataSpace(dims));

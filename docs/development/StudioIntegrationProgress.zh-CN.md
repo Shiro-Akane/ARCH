@@ -2357,3 +2357,8 @@ a2e4b9c5 上仅临时 capture/passive observer：Computer Use plot负wheel/普�
 ### Plotfile 候选发布基础增量
 
 835edb77 上共享 writer 增 checked flush/close + 同目录临时文件 atomic replace，失败向调用方传播，Saved 移到成功发布后；raw double/Grid/Data/shape 与 checkpoint 格式保留。Sod-shaped 1D/非方形2D多块/NaN/Inf、旧文件保护及 create/rename 失败、cleanup 测试与既有 checkpoint suite 2/2 PASS。详见 PlotfilePublicationProgress-20261003.zh-CN.md。尚无科学身份/单位/native bounds/测度，关闭故障注入与真正原生查询/Viewer pending；不自动认证旧文件。无 production ARCH build/simulation/CUDA/push/tag。
+
+
+### Plotfile Cartesian 原生网格候选
+
+eb12c90c 上 NativeGrid candidate-cartesian-1：真实 PlotIO 原 loop 同步写 bounds/shared CellVolume/logical coordinates，raw Data/Grid 不变；仅1D/2D Cartesian，单位与科学身份 unknown。ng=2 manufactured双块1D/2D raw/measure/bounds/logical回读、invalid拒绝与 checkpoint 2/2 PASS，PlotIO object 编译通过。详见 PlotfileNativeGridProgress-20261003.zh-CN.md。native query/真实AMR输出/review未完；无 production binary替换/simulation/CUDA/push/tag。

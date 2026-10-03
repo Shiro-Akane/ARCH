@@ -1,4 +1,5 @@
 #include "io/hdf5/HDF5Writer.h"
+#include "io/plot/PlotGridMetadata.h"
 #include <highfive/H5File.hpp>
 #include <filesystem>
 #include <fstream>
@@ -12,6 +13,66 @@ int main(int argc, char** argv) {
     require(argc == 2, "fixture directory required");
     std::filesystem::path root(argv[1]);
     std::filesystem::create_directories(root);
+    for (int dimension : {1,2}) {
+        io::PlotNativeGrid native;
+        std::vector<double> cx,cy,cz,field;
+        const size_t nx=amr::BLOCK_NX, ny=dimension==2 ? amr::BLOCK_NY : 1;
+        for (int block=0;block<2;++block) {
+            Grid grid;
+            grid.dim=dimension; grid.ng=2;
+            grid.x1_min=double(block); grid.x1_max=double(block+1);
+            grid.x2_min=2.; grid.x2_max=4.; grid.x3_min=0.; grid.x3_max=0.;
+            grid.InitializeTopology();
+            native.logical[0].push_back(block);
+            native.logical[1].push_back(0); native.logical[2].push_back(0);
+            for(int k=grid.Ks();k<grid.Ke();++k)
+            for(int j=grid.Js();j<grid.Je();++j)
+            for(int i=grid.Is();i<grid.Ie();++i) {
+                io::append_plot_native_cell(native,grid,i,j,k);
+                const auto pos=grid.GetPhysicalCoords(i,j,k);
+                cx.push_back(pos.x); cy.push_back(pos.y); cz.push_back(pos.z);
+                const size_t index=field.size(); field.push_back(double(index)+.25);
+                const double expected_lower=block+double(i-grid.ng)/nx;
+                require(native.lower[0].back()==expected_lower,"ghost offset/bounds mismatch");
+                require(native.upper[0].back()==expected_lower+1./nx,"upper bound mismatch");
+                const double expected_measure=dimension==1 ? 1./nx : 2./(nx*ny);
+                require(native.cell_measure.back()==expected_measure,"independent Cartesian measure mismatch");
+                require(pos.x==(native.lower[0].back()+native.upper[0].back())*.5,
+                        "Cartesian center/bounds mismatch");
+            }
+            grid.geometry="cylindrical";
+            require(!io::supports_plot_native_grid(grid),"curved support falsely claimed");
+        }
+        std::vector<size_t> native_dims{2};
+        if(dimension==2) native_dims.push_back(ny);
+        native_dims.push_back(nx);
+        auto path=root/("native-"+std::to_string(dimension)+".h5");
+        io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
+            cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&native);
+        {
+            HighFive::File f(path.string(),HighFive::File::ReadOnly);
+            std::vector<double> measure;
+            f.getDataSet("NativeGrid/cell_measure").read(measure);
+            require(measure==native.cell_measure,"stored measure differs");
+            std::vector<double> lower;
+            f.getDataSet("NativeGrid/x1_lower").read(lower);
+            require(lower==native.lower[0],"stored lower bounds differ");
+            std::vector<double> raw(field.size());
+            f.getDataSet("Data/DENS").read(raw.data());
+            require(raw==field,"metadata changed field order");
+            std::vector<uint32_t> logical;
+            f.getDataSet("NativeGrid/logical_x1").read(logical);
+            require(logical==std::vector<uint32_t>{0,1},"logical mapping changed");
+        }
+        auto invalid=native;
+        invalid.upper[0][0]=invalid.lower[0][0];
+        bool rejected=false;
+        try {
+            io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
+                cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&invalid);
+        } catch(const std::invalid_argument&) { rejected=true; }
+        require(rejected,"invalid native bounds accepted");
+    }
     auto target = root / "candidate.h5";
     std::vector<size_t> dims{2,3,5};
     std::vector<double> x(30), y(30), z(30,0), v(30);

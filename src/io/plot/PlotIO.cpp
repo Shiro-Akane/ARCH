@@ -25,6 +25,7 @@
 #include "physics/species/Species.h"
 
 #include "io/IO.h"
+#include "io/plot/PlotGridMetadata.h"
 #include "io/hdf5/HDF5Writer.h"
 
 namespace fs = std::filesystem;
@@ -82,11 +83,28 @@ void write_plt(amr::AMRControl &amr_ctrl,
     std::vector<int> block_levels(num_blocks);
     std::vector<int> block_mortons(num_blocks);
 
+    io::PlotNativeGrid native_grid;
+    const bool has_native_grid = io::supports_plot_native_grid(first_b.grid);
+    if (has_native_grid) {
+        for (size_t axis=0;axis<3;++axis) {
+            native_grid.lower[axis].reserve(total_cells);
+            native_grid.upper[axis].reserve(total_cells);
+            native_grid.logical[axis].reserve(num_blocks);
+        }
+        native_grid.cell_measure.reserve(total_cells);
+    }
     size_t cell_idx = 0;
     for (size_t b_idx = 0; b_idx < num_blocks; ++b_idx) {
         const amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[b_idx]);
         block_levels[b_idx] = b.level;
         block_mortons[b_idx] = b.morton_code;
+        if (b.grid.dim != dim || b.grid.geometry != geom)
+            throw std::invalid_argument("Mixed plotfile block geometry.");
+        if (has_native_grid) {
+            native_grid.logical[0].push_back(b.logical_x1);
+            native_grid.logical[1].push_back(b.logical_x2);
+            native_grid.logical[2].push_back(b.logical_x3);
+        }
 
         for (int k = b.grid.Ks(); k < b.grid.Ke(); ++k) {
             for (int j = b.grid.Js(); j < b.grid.Je(); ++j) {
@@ -95,6 +113,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
                     coord_x[cell_idx] = p.x;
                     coord_y[cell_idx] = p.y;
                     coord_z[cell_idx] = p.z;
+                    if (has_native_grid)
+                        io::append_plot_native_cell(native_grid,b.grid,i,j,k);
                     cell_idx++;
                 }
             }
@@ -232,5 +252,5 @@ void write_plt(amr::AMRControl &amr_ctrl,
             throw std::invalid_argument("Nonfinite additional plot field");
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
     }
-    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map);
+    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr);
 }

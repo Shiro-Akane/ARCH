@@ -9,6 +9,7 @@
 
 #pragma once
 #include <cstdint>
+#include <array>
 #include "data/StateDiagnostics.h"
 #include <map>
 #include <string>
@@ -65,13 +66,22 @@ struct CheckpointData {
     std::vector<double> mass_fractions;
 };
 
+// Candidate native metadata for Cartesian 1D/2D leaf interiors only.
+// Cell arrays use exactly the Data field flattening; inactive bounds are zero.
+struct PlotNativeGrid {
+    std::array<std::vector<double>,3> lower, upper;
+    std::vector<double> cell_measure;
+    std::array<std::vector<uint32_t>,3> logical;
+};
+
 // Linux/WSL candidate: checked close, then atomic replacement. Throws on failure.
 // Publication alone supplies no scientific provenance, units or native bounds.
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,
                          const std::vector<size_t>& dims,
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
-                         const std::map<std::string, std::vector<double>>& data_map);
+                         const std::map<std::string, std::vector<double>>& data_map,
+                         const PlotNativeGrid* native_grid = nullptr);
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint);
 CheckpointData read_hdf5_chk_impl(const std::string& filepath);
