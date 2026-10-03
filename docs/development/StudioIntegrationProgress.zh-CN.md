@@ -3060,3 +3060,12 @@ production原生窗口新增SmoothAdvection行：512sample/真实8leaf L0 Comple
 标准wheel-120无应用范围变化且背景截图变化，input routing怀疑但未确定，zoom/pan不标PASS。
 正常close exit0，8owned PID/startTicks均消失；input不变/no scientific output/managed clean。
 见FullModelAdvectionDesktop-20261004。无源码修改，不重复已过自动baseline，不push/tag。
+
+## 2026-10-04 CooperativeHotspots 原生共享EOS二维矩阵
+
+新增production native矩阵行：128×128密度/温度、热点/环境sample、
+helmholtz ready/实际表路径/13species，12leaf L0 Complete。
+逻辑块0:3:2:0 bounds/spacing独立算术一致，Init sample不冒充AMR cell value。
+正常close exit0，8owned PID/startTicks均退出，input不变/no simulation输出/managed clean。
+详见FullModelHotspotsDesktop-20261004。远端联合计划无更新，科学待决不变。
+不重复自动baseline；native矩阵/wheel/科学CPU/CUDA/O9仍未闭合。
