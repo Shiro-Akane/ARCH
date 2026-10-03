@@ -2301,3 +2301,7 @@ ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，
 ### Plotfile隔离/Project切片接线
 
 54747a7e上slice复用固定worker/15s/64KiB/Node heap与单任务容量，cancel/timeout/超限exit后恢复；pure请求校验不加载WASM。Project请求必须携带expected SHA，post-read还核对路径dev/ino/size/mtime/ctime；异步修改请求不能重标记返回值。完整269/269与typecheck/lint/build/diff PASS，超响应真实H5退出测试通过。详见PlotfileIsolatedSliceProgress-20261003.zh-CN.md/Summary；无endpoint/正式Viewer，completion unknown/renderEligible false，正式plt出口仍pending。无scientific Core/simulation/ARCH build/CUDA/push/tag/main merge。
+
+### Plotfile真实HTTP审计接线
+
+508595c2上metadata/slice固定只读POST audit路由接入，精确Origin/protocol/token及Project/file身份保护；真实Sod global32值通过，late Project变化409。初次global/local索引错误由worker正确拒绝后修正测试请求。完整272/272及静态/build/diff PASS。详见PlotfileHostAuditApiProgress-20261003.zh-CN.md/Summary及host/PLOTFILE_AUDIT_API。断开abort signal已接，live HTTP时序证据pending；无正式审计UI，completion unknown/科学身份缺失/renderEligible false，正式plt出口未完成。无simulation/Core build/CUDA/push/tag/main merge。
