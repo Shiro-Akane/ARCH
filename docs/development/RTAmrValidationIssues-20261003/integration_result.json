@@ -1,0 +1,723 @@
+{
+  "status": "reflux_only_candidate_incomplete_do_not_merge",
+  "source_commit": "11ed53a01ddc06952c1cac5e2e1c117e05c0a6be",
+  "archive": "rt-reflux-integration-20261003.tar.gz",
+  "bytes": 45240140,
+  "sha256": "8ab599a5326580ad253467a5a423f8d1a845c16a80a98248d7400bd6e52f7d34",
+  "members": 413,
+  "source_bundle_prerequisite": "25adec4224497981a0c124a3485f786194975be4",
+  "scope": "Raw checkpoints, input decks, logs, review, source bundle and patches; no main merge",
+  "review": {
+    "status": "reflux_only_candidate_incomplete_do_not_merge",
+    "source_commit": "11ed53a01ddc06952c1cac5e2e1c117e05c0a6be",
+    "stage_accounting_impulses": 1013,
+    "kernel_cases_exact": 8,
+    "checkpoint_metadata_contract": "passed; not full restart trajectory acceptance",
+    "source_audit": {
+      "baseline": "25adec4224497981a0c124a3485f786194975be4",
+      "candidate": "11ed53a01ddc06952c1cac5e2e1c117e05c0a6be",
+      "changed_files": [
+        "src/amr/flux/FluxRegister.h",
+        "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+        "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
+        "src/cuda/runtime/control/CudaBackendInternal.h",
+        "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+        "src/data/StateDiagnostics.h",
+        "src/driver/runtime/ComputeBackend.h",
+        "src/driver/stages/DriverStages.h",
+        "src/numerics/diffusion/DiffFunction.cpp",
+        "src/numerics/diffusion/DiffFunction.h",
+        "src/numerics/diffusion/DiffusionAMRStages.h",
+        "src/numerics/state/StateAdmissibility.h",
+        "validation/rt-reflux-candidate-v1/test_rkl_accounting.cpp",
+        "validation/rt-reflux-candidate-v1/test_roundoff.cpp"
+      ],
+      "unchanged_numeric_owners_sha256": {
+        "src/data/StateDiagnostics.h:combine": "9f24ff0fb3b6b608915a98687ca4733894300a033190f0d3f42650b7436000a3",
+        "src/numerics/state/StateAdmissibility.h:recover": "0cfd7856f6229aafb273a02bcaf200327780a2352870d5f2e1d0bf560432d44b",
+        "src/numerics/state/StateAdmissibility.h:apply_bounds": "1148bc08f9ce50c991f04783b720555ab080c062c9767a6d2d14e38cbfaa9d02",
+        "src/numerics/state/StateAdmissibility.h:validate": "329bf1d69868614a608acc010299b064cb966de105cf41115643e123c94a8fd0",
+        "src/numerics/state/StateAdmissibility.h:normalize_composition": "fdf375ff7da9d33963a5b53d4faafc5c1e052578eaf87f3edae84ee73b3a1c75",
+        "src/numerics/diffusion/DiffFunction.cpp:get_rkl1_coeffs": "ca3cafa3a5fdefd200ee2275c1715e040d31d70003cb1c15839c6adce880abc8",
+        "src/numerics/diffusion/DiffFunction.cpp:get_rkl2_coeffs": "01f214ed961260ac1ec231b13f4f0f17d503ff0a75973a2678eb89ecc0cc7497",
+        "src/numerics/diffusion/DiffFunction.cpp:get_rkl_coeffs": "031acbacf6a0088df1ad551256fdb72a37c7438941d0577d698e989ab09fcc4f",
+        "src/amr/flux/AmrFluxMath.h": "d819b2bfd2d59292c80b81fc505ba855732e98e1041d69779251661e4e25225b",
+        "src/numerics/diffusion/DiffusionAMRStages.h:existing_RKL_expression_prefix": "9e02be1c1bc473aba4af84b621d07f5e2abeb090d0d65460d1b7592b4f4e9c22"
+      },
+      "build_dependency_and_physics_configuration_changes": false,
+      "scope": "Selected source invariance only; not a proof of complete solver equivalence"
+    },
+    "cases": [
+      {
+        "name": "native_rt_prefix_10",
+        "cpu": {
+          "last_reported_step": 10,
+          "fatal_lines": [],
+          "guard_stopped": false
+        },
+        "cpu_checkpoints": 2,
+        "repeat_and_observer_comparisons": [
+          {
+            "run": "cpu-24-v2",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "cpu-24\r",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer-cpu-24",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer2-cpu-24",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          }
+        ],
+        "cuda": {
+          "last_reported_step": 10,
+          "fatal_lines": [],
+          "guard_stopped": false
+        },
+        "cuda_checkpoints": 2,
+        "cpu_cuda_initial": {
+          "left_sha256": "d665034cfae913543c9c0ea80ddffda0a2e861af67487457ee6665e37c295741",
+          "right_sha256": "25628ad0e5b6243751dd6cc3a3c047e2a2878af81e1e79fa81c6bcb8e106e8c7",
+          "numeric_fields_exact": 37,
+          "string_provenance_excluded": true
+        },
+        "cpu_cuda_final_exact_error": "Checkpoint drift: ['Data/X', 'Data/eng', 'Data/mom_u', 'Data/mom_v', 'Data/rho', 'Data/rhoX']",
+        "cpu_cuda_fields": {
+          "Data/X": {
+            "max_abs": 2.9545531576914354e-126,
+            "linf_relative": 2.9545531576914335e-126
+          },
+          "Data/eng": {
+            "max_abs": 3.552713678800501e-15,
+            "linf_relative": 5.573301404392131e-16
+          },
+          "Data/enuc_rate": {
+            "max_abs": 0.0,
+            "linf_relative": 0.0
+          },
+          "Data/mom_u": {
+            "max_abs": 3.417667827887959e-16,
+            "linf_relative": 2.6982065906068556e-11
+          },
+          "Data/mom_v": {
+            "max_abs": 2.1250362580715887e-16,
+            "linf_relative": 4.368025180947487e-15
+          },
+          "Data/mom_w": {
+            "max_abs": 0.0,
+            "linf_relative": 0.0
+          },
+          "Data/rho": {
+            "max_abs": 8.881784197001252e-16,
+            "linf_relative": 4.438560840013586e-16
+          },
+          "Data/rhoX": {
+            "max_abs": 8.881784197001252e-16,
+            "linf_relative": 4.438560840013586e-16
+          }
+        }
+      },
+      {
+        "name": "native_rt_failure",
+        "cpu": {
+          "last_reported_step": 24,
+          "fatal_lines": [],
+          "guard_stopped": false
+        },
+        "cpu_checkpoints": 2,
+        "repeat_and_observer_comparisons": [
+          {
+            "run": "cpu-24-v2",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "cpu-24\r",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer-cpu-24",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer2-cpu-24",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          }
+        ],
+        "cuda": {
+          "last_reported_step": 24,
+          "fatal_lines": [],
+          "guard_stopped": false
+        },
+        "cuda_checkpoints": 2,
+        "cpu_cuda_initial": {
+          "left_sha256": "3e16bb36442e809b5047f94e69999d3680496a2d16cf77d93cb638f73d503141",
+          "right_sha256": "e0e6a5833dead1536a2e793c7965b4db4736fced3a6d7a11ae76544f6f0573e2",
+          "numeric_fields_exact": 37,
+          "string_provenance_excluded": true
+        },
+        "cpu_cuda_final_exact_error": "Checkpoint drift: ['Data/X', 'Data/eng', 'Data/mom_u', 'Data/mom_v', 'Data/rho', 'Data/rhoX', 'state_repairs']",
+        "cpu_cuda_fields": {
+          "Data/X": {
+            "max_abs": 1.305060893599705e-54,
+            "linf_relative": 1.305060893599704e-54
+          },
+          "Data/eng": {
+            "max_abs": 8.554361023094259e-06,
+            "linf_relative": 1.3419560366080053e-06
+          },
+          "Data/enuc_rate": {
+            "max_abs": 0.0,
+            "linf_relative": 0.0
+          },
+          "Data/mom_u": {
+            "max_abs": 5.8665392418997337e-08,
+            "linf_relative": 0.0012008818622903136
+          },
+          "Data/mom_v": {
+            "max_abs": 3.013313027528221e-06,
+            "linf_relative": 6.189151218145856e-05
+          },
+          "Data/mom_w": {
+            "max_abs": 0.0,
+            "linf_relative": 0.0
+          },
+          "Data/rho": {
+            "max_abs": 5.342691000720379e-08,
+            "linf_relative": 2.66802858998082e-08
+          },
+          "Data/rhoX": {
+            "max_abs": 5.342691000720379e-08,
+            "linf_relative": 2.66802858998082e-08
+          }
+        }
+      },
+      {
+        "name": "native_rt_species",
+        "cpu": {
+          "last_reported_step": 6,
+          "fatal_lines": [
+            "[Fatal Error] AMR block=64: Invalid accepted state: cell=586 status=6"
+          ],
+          "guard_stopped": false
+        },
+        "cpu_checkpoints": 1,
+        "repeat_and_observer_comparisons": [
+          {
+            "run": "cpu-24-v2",
+            "compared_checkpoints": 1,
+            "numeric_fields_exact_per_checkpoint": [
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "cpu-24\r",
+            "compared_checkpoints": 1,
+            "numeric_fields_exact_per_checkpoint": [
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer-cpu-24",
+            "compared_checkpoints": 1,
+            "numeric_fields_exact_per_checkpoint": [
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer2-cpu-24",
+            "compared_checkpoints": 1,
+            "numeric_fields_exact_per_checkpoint": [
+              37
+            ],
+            "scope": "available checkpoints only"
+          }
+        ],
+        "cuda": {
+          "last_reported_step": 6,
+          "fatal_lines": [
+            "[Fatal Error] diffusion stage failed: block=65"
+          ],
+          "guard_stopped": false
+        },
+        "cuda_checkpoints": 1,
+        "cpu_cuda_initial": {
+          "left_sha256": "715c06a971bc2e91e2910653f51bb1ad3c1f02f54e82a639e43e78dffa1f5399",
+          "right_sha256": "6ea7d44842523b6786b948e1b4a26c309b892ac5d1c5c61b73497a147beb6ff6",
+          "numeric_fields_exact": 37,
+          "string_provenance_excluded": true
+        }
+      },
+      {
+        "name": "native_rt_thermal",
+        "cpu": {
+          "last_reported_step": 24,
+          "fatal_lines": [],
+          "guard_stopped": false
+        },
+        "cpu_checkpoints": 2,
+        "repeat_and_observer_comparisons": [
+          {
+            "run": "cpu-24-v2",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "cpu-24\r",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer-cpu-24",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer2-cpu-24",
+            "compared_checkpoints": 2,
+            "numeric_fields_exact_per_checkpoint": [
+              37,
+              37
+            ],
+            "scope": "available checkpoints only"
+          }
+        ],
+        "cuda": {
+          "last_reported_step": 24,
+          "fatal_lines": [],
+          "guard_stopped": false
+        },
+        "cuda_checkpoints": 2,
+        "cpu_cuda_initial": {
+          "left_sha256": "e10acca292ceec134d42f30caec58076941fa01009db12bc88f0e6e04dbd533a",
+          "right_sha256": "1e4f52e7def8c612e5d9a8e8cc100a1d0f5e608d480c7f3f7509f94c6ead6fbb",
+          "numeric_fields_exact": 37,
+          "string_provenance_excluded": true
+        },
+        "cpu_cuda_final_exact_error": "Checkpoint drift: ['/@dt_old', '/@time', 'Data/X', 'Data/eng', 'Data/mom_u', 'Data/mom_v', 'Data/rho', 'Data/rhoX', 'state_repairs']",
+        "cpu_cuda_fields": {
+          "Data/X": {
+            "max_abs": 7.34185320538927e-07,
+            "linf_relative": 7.341853205389265e-07
+          },
+          "Data/eng": {
+            "max_abs": 1.3370780529875503e-05,
+            "linf_relative": 2.025980593673347e-06
+          },
+          "Data/enuc_rate": {
+            "max_abs": 0.0,
+            "linf_relative": 0.0
+          },
+          "Data/mom_u": {
+            "max_abs": 1.2830276578475438e-06,
+            "linf_relative": 0.01871357252297085
+          },
+          "Data/mom_v": {
+            "max_abs": 3.75200821991703e-06,
+            "linf_relative": 2.1714304265279237e-05
+          },
+          "Data/mom_w": {
+            "max_abs": 0.0,
+            "linf_relative": 0.0
+          },
+          "Data/rho": {
+            "max_abs": 3.7546157392043256e-06,
+            "linf_relative": 1.8383929131412117e-06
+          },
+          "Data/rhoX": {
+            "max_abs": 3.7546157392043256e-06,
+            "linf_relative": 1.8383929131412117e-06
+          }
+        }
+      },
+      {
+        "name": "native_rt_thermal_species",
+        "cpu": {
+          "last_reported_step": 6,
+          "fatal_lines": [
+            "[Fatal Error] AMR block=77: Invalid accepted state: cell=589 status=6"
+          ],
+          "guard_stopped": false
+        },
+        "cpu_checkpoints": 1,
+        "repeat_and_observer_comparisons": [
+          {
+            "run": "cpu-24-v2",
+            "compared_checkpoints": 1,
+            "numeric_fields_exact_per_checkpoint": [
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "cpu-24\r",
+            "compared_checkpoints": 1,
+            "numeric_fields_exact_per_checkpoint": [
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer-cpu-24",
+            "compared_checkpoints": 1,
+            "numeric_fields_exact_per_checkpoint": [
+              37
+            ],
+            "scope": "available checkpoints only"
+          },
+          {
+            "run": "observer2-cpu-24",
+            "compared_checkpoints": 1,
+            "numeric_fields_exact_per_checkpoint": [
+              37
+            ],
+            "scope": "available checkpoints only"
+          }
+        ],
+        "cuda": {
+          "last_reported_step": 6,
+          "fatal_lines": [
+            "[Fatal Error] diffusion stage failed: block=84"
+          ],
+          "guard_stopped": false
+        },
+        "cuda_checkpoints": 1,
+        "cpu_cuda_initial": {
+          "left_sha256": "b0e9af85527280292e3d3cb0ee5fd9f202090c0b6f7185a6f2fdb6f149a4f581",
+          "right_sha256": "034e4cd4a7d9107b43b335477ab7c264305f0692ab23884fe470e2ed4828973b",
+          "numeric_fields_exact": 37,
+          "string_provenance_excluded": true
+        }
+      }
+    ],
+    "limitations": [
+      "Failure checkpoints contain only the initial state; no failed final-state parity claim.",
+      "24 steps is not the full RT trajectory or dataset protocol.",
+      "The cumulative repair row includes existing Hydro repairs, not only candidate reflux changes.",
+      "Stage 0 is non-Hydro/initial; exact RKL stage is not encoded by the old checkpoint field.",
+      "No performance, sanitizer, full restart or all-physics acceptance.",
+      "No new GNN training or data collection acceptance."
+    ],
+    "interior_pre_reflux_witnesses": {
+      "native_rt_species": [
+        {
+          "block": "64",
+          "cell": "586",
+          "species": "1",
+          "fraction": "-1.6098091658057792e-218"
+        },
+        {
+          "block": "64",
+          "cell": "592",
+          "species": "1",
+          "fraction": "-3.2195896916382767e-218"
+        },
+        {
+          "block": "87",
+          "cell": "174",
+          "species": "0",
+          "fraction": "-3.9301813881327194e-222"
+        },
+        {
+          "block": "90",
+          "cell": "169",
+          "species": "0",
+          "fraction": "-3.1747752422657534e-249"
+        }
+      ],
+      "native_rt_thermal_species": [
+        {
+          "block": "77",
+          "cell": "589",
+          "species": "1",
+          "fraction": "-4.4313271694678882e-248"
+        },
+        {
+          "block": "77",
+          "cell": "594",
+          "species": "1",
+          "fraction": "-2.3790584777810426e-239"
+        },
+        {
+          "block": "87",
+          "cell": "168",
+          "species": "0",
+          "fraction": "-6.1496264022291947e-265"
+        }
+      ]
+    },
+    "cpu_report_status": "failed",
+    "cuda_report_status": "failed",
+    "original_vs_candidate_cuda_prefix": {
+      "left_sha256": "c52241228efe71946e9c6428dffb0885e18cfb94079731b304d84c2dae7fe438",
+      "right_sha256": "edd164889c47d69552f7a14ed87bddd840a97001d826c58ffd91c90e83ef8097",
+      "numeric_fields_exact": 37,
+      "string_provenance_excluded": true
+    },
+    "three_lane_prefix_probes": {
+      "11": {
+        "scope": "Three-lane prefix probe: CPU build/CPU, CUDA build/CPU, CUDA build/CUDA.",
+        "steps": 11,
+        "cases": [
+          {
+            "lane": "cpu",
+            "backend": "cpu",
+            "binary_sha256": "066f371dcbebc1c7f1e74748ec33a3f6fcd9a19b710ba0429dd1fa06747dfebd",
+            "parameter_sha256": "00e84caf7247f75dbdd6c2b0cd476b8968c32b1c7a9ad6fb5823de1ae2e66173",
+            "command": [
+              "/usr/bin/python3",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "16384",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-11/cpu/stdout.log",
+              "--",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/build-cpu/bin/ARCH",
+              "RT",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-11/cpu/run.par"
+            ],
+            "returncode": 0
+          },
+          {
+            "lane": "cuda_build_cpu",
+            "backend": "cpu",
+            "binary_sha256": "73cec99d973b3ad55083fe6534d75710be401c36a71a5ed51854f206e1b75ee4",
+            "parameter_sha256": "e46016ca37bdc40a336905d7a4b9dd36abebfc5fffe214fe19d473332458e8cb",
+            "command": [
+              "/usr/bin/python3",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "16384",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-11/cuda_build_cpu/stdout.log",
+              "--",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/build-cuda/bin/ARCH",
+              "RT",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-11/cuda_build_cpu/run.par"
+            ],
+            "returncode": 0,
+            "differences": {}
+          },
+          {
+            "lane": "cuda",
+            "backend": "cuda",
+            "binary_sha256": "73cec99d973b3ad55083fe6534d75710be401c36a71a5ed51854f206e1b75ee4",
+            "parameter_sha256": "af27b17757a4ce4a780d1b17b6074e38d1ec00a9d04c3245027aba09571389f6",
+            "command": [
+              "/usr/bin/python3",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "16384",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-11/cuda/stdout.log",
+              "--",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/build-cuda/bin/ARCH",
+              "RT",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-11/cuda/run.par"
+            ],
+            "returncode": 0,
+            "differences": {
+              "Data/X": {
+                "max_abs": 2.0303534698525194e-115,
+                "linf_relative": 2.0303534698525176e-115
+              },
+              "Data/eng": {
+                "max_abs": 4.440892098500626e-15,
+                "linf_relative": 6.966625200150858e-16
+              },
+              "Data/mom_u": {
+                "max_abs": 3.299582964711237e-16,
+                "linf_relative": 2.20798766748385e-11
+              },
+              "Data/mom_v": {
+                "max_abs": 2.480654570646834e-16,
+                "linf_relative": 5.09846098697374e-15
+              },
+              "Data/rho": {
+                "max_abs": 8.881784197001252e-16,
+                "linf_relative": 4.438324325564635e-16
+              },
+              "Data/rhoX": {
+                "max_abs": 8.881784197001252e-16,
+                "linf_relative": 4.438324325564635e-16
+              }
+            }
+          }
+        ],
+        "status": "diagnostic_only"
+      },
+      "12": {
+        "scope": "Three-lane prefix probe: CPU build/CPU, CUDA build/CPU, CUDA build/CUDA.",
+        "steps": 12,
+        "cases": [
+          {
+            "lane": "cpu",
+            "backend": "cpu",
+            "binary_sha256": "066f371dcbebc1c7f1e74748ec33a3f6fcd9a19b710ba0429dd1fa06747dfebd",
+            "parameter_sha256": "20838cf466bd4860eb36242cc990f249b32077b1e5f7da367602f1a0c26dacca",
+            "command": [
+              "/usr/bin/python3",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "16384",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-12/cpu/stdout.log",
+              "--",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/build-cpu/bin/ARCH",
+              "RT",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-12/cpu/run.par"
+            ],
+            "returncode": 0
+          },
+          {
+            "lane": "cuda_build_cpu",
+            "backend": "cpu",
+            "binary_sha256": "73cec99d973b3ad55083fe6534d75710be401c36a71a5ed51854f206e1b75ee4",
+            "parameter_sha256": "444dc571928ea350133fba3793f8667179b2e5c62b2c157b4ca2be02b7c0cd70",
+            "command": [
+              "/usr/bin/python3",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "16384",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-12/cuda_build_cpu/stdout.log",
+              "--",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/build-cuda/bin/ARCH",
+              "RT",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-12/cuda_build_cpu/run.par"
+            ],
+            "returncode": 0,
+            "differences": {}
+          },
+          {
+            "lane": "cuda",
+            "backend": "cuda",
+            "binary_sha256": "73cec99d973b3ad55083fe6534d75710be401c36a71a5ed51854f206e1b75ee4",
+            "parameter_sha256": "527ee5baded3176623601054a6e19c9cc805a79752324d3a29066b30fc84fa53",
+            "command": [
+              "/usr/bin/python3",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "16384",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-12/cuda/stdout.log",
+              "--",
+              "/home/ubuntu/projects/ARCH-rt-reflux-candidate-v1/build-cuda/bin/ARCH",
+              "RT",
+              "/home/ubuntu/projects/ARCH-gnn-rerun-20261003/candidate-integration-v1/parity-prefix-12/cuda/run.par"
+            ],
+            "returncode": 0,
+            "differences": {
+              "Data/X": {
+                "max_abs": 1.3080452628505039e-105,
+                "linf_relative": 1.3080452628505031e-105
+              },
+              "Data/eng": {
+                "max_abs": 1.928235349168972e-12,
+                "linf_relative": 3.0249079627398686e-13
+              },
+              "Data/mom_u": {
+                "max_abs": 1.5613597349436233e-13,
+                "linf_relative": 9.014541261691591e-09
+              },
+              "Data/mom_v": {
+                "max_abs": 9.962005612790259e-12,
+                "linf_relative": 2.0472853206688257e-10
+              },
+              "Data/rho": {
+                "max_abs": 4.418687638008123e-13,
+                "linf_relative": 2.2079488030706626e-13
+              },
+              "Data/rhoX": {
+                "max_abs": 4.418687638008123e-13,
+                "linf_relative": 2.2079488030706626e-13
+              },
+              "state_repairs": {
+                "max_abs": 3.655751546224103e-06,
+                "linf_relative": 1.494583624784997e-09
+              }
+            }
+          }
+        ],
+        "status": "diagnostic_only"
+      }
+    }
+  }
+}
