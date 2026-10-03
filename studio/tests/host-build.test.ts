@@ -247,3 +247,20 @@ test('Build persists CMake-only inputs; external configuration mutation invalida
   await saveManifest(profile,corrupt);assert.equal(await loadManifest(profile),undefined);
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+test('overlapping freshness scans never expose cleared changed-input evidence',async()=>{
+ const {root,p}=await fixture();
+ try{
+  await mkdir(root+'/studio');
+  const runner=new BuildRunner(root,'p',p,{spawn:fakeSpawn(root)});
+  await runner.start('p',p.id);await finished(runner);
+  await writeFile(root+'/case.cpp','// stale source');
+  await runner.refreshFreshness();
+  assert.deepEqual(runner.snapshot().changedInputs,['case.cpp']);
+  const first=runner.refreshFreshness(),second=runner.refreshFreshness();
+  const during=runner.snapshot();
+  const results=await Promise.all([first,second]);
+  assert.deepEqual(during.changedInputs,['case.cpp']);
+  for(const result of results){assert.equal(result.binaryState,'needs-build');assert.deepEqual(result.changedInputs,['case.cpp']);}
+ }finally{await rm(root,{recursive:true,force:true});}
+});

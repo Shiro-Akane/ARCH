@@ -2459,3 +2459,10 @@ Host与UI已迁移recorded declaration，旧文件unknown保留。
 更新准确writer构建SHA/HostUI SHA/数组映射对接文档；旧pending记录由新报告补充，不追溯改写旧证据。
 见PlotfileNativeUnitUat-20261003；来源仍partial、发布未认证、Cellular bounds finding待owner review。
 无新Build/Preview/simulation/重复测试/push/tag；完整联合目标未完成。
+
+
+2026-10-03：关闭Linux启动registry/schema busy和freshness共享中间态两个实际finding。
+两个反例先复现失败，再修复；311/311全回归+lint/typecheck/build通过。
+最终native多轮轮询registry/source保持、dirty binary needs-build及初始化禁用稳定。
+中间旧Host一次false-ready自动Sod Init Preview已如实保留失败记录，非simulation验收。
+见StudioStartupFreshnessConcurrency-20261003；Core和完整科学/平台目标未完成。

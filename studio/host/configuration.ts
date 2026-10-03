@@ -12,6 +12,7 @@ export interface SelectedConfigurationBinary {root:string;projectId:string;binar
 /** Only the Host chooses executable, arguments, cwd and environment. */
 export class ConfigurationAdapter {
  private active=false;
+ private registryQuery:Promise<Record<string,unknown>>|null=null;
  private schemaCache?:{buildId:string;sha:string;core:ConfigurationSchema};
  private preview?:PreviewRunner;
  private selected?:SelectedConfigurationBinary;
@@ -30,8 +31,19 @@ export class ConfigurationAdapter {
   return s.build;
  }
  private async run(args:string[],text?:string):Promise<Record<string,unknown>> {
-  if(this.active)throw new BuildError('Configuration inspection already active.',409);
-  this.active=true;
+  // Static registration can overlap schema/inspection at startup. Coalesce it
+  // separately: at most one registry child plus one configuration child.
+  if(args.length===1&&args[0]==='--list-cases'){
+   if(this.registryQuery)return this.registryQuery;
+   const query=this.runCommand(args,text,true);
+   this.registryQuery=query;
+   try{return await query;}finally{if(this.registryQuery===query)this.registryQuery=null;}
+  }
+  return this.runCommand(args,text);
+ }
+ private async runCommand(args:string[],text?:string,registry=false):Promise<Record<string,unknown>> {
+  if(!registry&&this.active)throw new BuildError('Configuration inspection already active.',409);
+  if(!registry)this.active=true;
   try {
    const build=this.target;
    const binary=await checkedPath(build.root,build.binaryRelativePath);
@@ -43,7 +55,7 @@ export class ConfigurationAdapter {
     });
     child.stdin?.on('error',()=>undefined);child.stdin?.end(text??'');
    });
-  }finally{this.active=false;}
+  }finally{if(!registry)this.active=false;}
  }
  async discovery(){
   const before=await this.ready();

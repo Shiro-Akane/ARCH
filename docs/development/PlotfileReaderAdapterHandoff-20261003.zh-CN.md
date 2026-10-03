@@ -95,3 +95,11 @@ verify_plotfile_reader.mjs、measure_plotfile_query.mjs。
 原始H5/plt/checkpoint/ELF/full arrays/logs仅本机studio/.local。
 适配方可先按上述精确源码SHA、字段及bounds/measure mapping对接，
 按具体missing/invalid findings逐项收敛，再冻结科学语义。
+
+
+## Linux启动finding关闭记录
+
+上文stale startup文案/registry轮询finding已在后续Studio/Host补丁处理。
+见StudioStartupFreshnessConcurrency-20261003.zh-CN.md；先复现两种并发失败，
+311项完整回归和最终Linux native gate复验通过。Plotfile科学数组/布局仍保持e7181420引用。
+此补丁没有重建ARCH或提升Plotfile身份/科学认证，不消除其余review finding。

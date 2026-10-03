@@ -17,6 +17,7 @@ export class BuildError extends Error { status:number; constructor(message:strin
 export interface RunnerHooks { cmake?:string; spawn?:typeof spawn }
 export class BuildRunner {
  readonly profile:BuildProfile; readonly root:string; readonly projectId:string;
+ private freshnessQuery:Promise<BuildSnapshot>|null=null;
  private hooks:RunnerHooks; private current:BuildSnapshot; private child?:ChildProcess; private log?:BuildLog;
  constructor(root:string,projectId:string,profile:BuildProfile,hooks:RunnerHooks={}){
   this.root=root;this.projectId=projectId;this.profile=structuredClone(profile);this.hooks=hooks;
@@ -24,13 +25,23 @@ export class BuildRunner {
  }
  async initialize(){await this.validate();this.current.lastSuccessfulBuild=await loadManifest(this.profile);return this.refreshFreshness();}
  async refreshFreshness(finalizing=false){
+  if(this.freshnessQuery){
+   if(!finalizing)return this.freshnessQuery;
+   await this.freshnessQuery;
+  }
+  const query=this.measureFreshness(finalizing);
+  this.freshnessQuery=query;
+  try{return await query;}finally{if(this.freshnessQuery===query)this.freshnessQuery=null;}
+ }
+ private async measureFreshness(finalizing=false){
   if(this.isActive()&&!finalizing)return this.snapshot();
-  const m=this.current.lastSuccessfulBuild;this.current.changedInputs=[];
+  const m=this.current.lastSuccessfulBuild;
+  const evidence={changedInputs:[] as string[],binaryState:this.current.binaryState,freshnessReason:this.current.freshnessReason};
   try{const binary=await inspect(this.root,this.profile.outputBinaryRelative,true);
-   if(!m){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable available, but no successful Studio build provenance.';}
-   else if(m.buildProfileFingerprint!==profileFingerprint(this.profile)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Build configuration changed since last successful Build.';}
+   if(!m){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Executable available, but no successful Studio build provenance.';}
+   else if(m.buildProfileFingerprint!==profileFingerprint(this.profile)){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Build configuration changed since last successful Build.';}
    else{
-    for(const old of m.trackedInputFingerprints){try{if(!same(old.fingerprint,await inspect(this.root,old.relativePath)))this.current.changedInputs.push(old.relativePath);}catch{this.current.changedInputs.push(old.relativePath);}}
+    for(const old of m.trackedInputFingerprints){try{if(!same(old.fingerprint,await inspect(this.root,old.relativePath)))evidence.changedInputs.push(old.relativePath);}catch{evidence.changedInputs.push(old.relativePath);}}
     let configurationUnknown=false;
     if(this.profile.compilerDependencyMode==='ninja'){
      if(!m.configurationInputs||m.configurationInputError||m.configurationInputsStableDuringBuild!==true)configurationUnknown=true;
@@ -38,9 +49,9 @@ export class BuildRunner {
       const now=await readBuildConfigurationInputs(this.root,this.root+'/'+this.profile.buildDirRelative);
       if(!sameConfigurationInputs(m.configurationInputs,now)){
        const prior=new Map(m.configurationInputs.inputs.map(f=>[f.path,f]));
-       for(const f of now.inputs){const old=prior.get(f.path);if(!old||old.sha256!==f.sha256||old.size!==f.size)this.current.changedInputs.push(f.path);prior.delete(f.path);}
-       this.current.changedInputs.push(...prior.keys());
-       if(!this.current.changedInputs.length)this.current.changedInputs.push('CMake configuration input graph');
+       for(const f of now.inputs){const old=prior.get(f.path);if(!old||old.sha256!==f.sha256||old.size!==f.size)evidence.changedInputs.push(f.path);prior.delete(f.path);}
+       evidence.changedInputs.push(...prior.keys());
+       if(!evidence.changedInputs.length)evidence.changedInputs.push('CMake configuration input graph');
       }
      }catch{configurationUnknown=true;}
     }
@@ -50,9 +61,9 @@ export class BuildRunner {
       const now=await fingerprintNinjaDependencies(this.root+'/'+this.profile.buildDirRelative);
       if(!sameCompilerInputs(m.compilerInputs,now)){
        const previous=new Map(m.compilerInputs.files.map(f=>[f.path,f]));
-       for(const file of now.files){const old=previous.get(file.path);if(!old||old.sha256!==file.sha256||old.size!==file.size)this.current.changedInputs.push(file.path);previous.delete(file.path);}
-       this.current.changedInputs.push(...previous.keys());
-       if(!this.current.changedInputs.length)this.current.changedInputs.push('compiler dependency graph');
+       for(const file of now.files){const old=previous.get(file.path);if(!old||old.sha256!==file.sha256||old.size!==file.size)evidence.changedInputs.push(file.path);previous.delete(file.path);}
+       evidence.changedInputs.push(...previous.keys());
+       if(!evidence.changedInputs.length)evidence.changedInputs.push('compiler dependency graph');
       }
      }catch{
       compilerUnknown=true;
@@ -69,24 +80,24 @@ export class BuildRunner {
        const old=previous.get(driver.language);
        if(!old||old.path!==driver.path||old.resolvedPath!==driver.resolvedPath||old.sha256!==driver.sha256||
           old.size!==driver.size||old.id!==driver.id||old.version!==driver.version)
-        this.current.changedInputs.push(driver.path);
+        evidence.changedInputs.push(driver.path);
        if(driver.id==='GNU'){
         if(!old?.components?.length||!old.specsSha256||!driver.components?.length)toolchainUnknown=true;
         else{
-         if(old.specsSha256!==driver.specsSha256)this.current.changedInputs.push(driver.path+' specs');
+         if(old.specsSha256!==driver.specsSha256)evidence.changedInputs.push(driver.path+' specs');
          const prior=new Map(old.components.map(c=>[c.role,c]));
          for(const component of driver.components){
           const saved=prior.get(component.role);
           if(component.role.startsWith('selected-')&&!saved){toolchainUnknown=true;continue;}
-          if(!saved||saved.path!==component.path||saved.resolvedPath!==component.resolvedPath||saved.sha256!==component.sha256||saved.size!==component.size)this.current.changedInputs.push(component.path);
+          if(!saved||saved.path!==component.path||saved.resolvedPath!==component.resolvedPath||saved.sha256!==component.sha256||saved.size!==component.size)evidence.changedInputs.push(component.path);
           prior.delete(component.role);
          }
-         for(const removed of prior.values())this.current.changedInputs.push(removed.path);
+         for(const removed of prior.values())evidence.changedInputs.push(removed.path);
         }
        }
        previous.delete(driver.language);
       }
-      for(const old of previous.values())this.current.changedInputs.push(old.path);
+      for(const old of previous.values())evidence.changedInputs.push(old.path);
      }catch{toolchainUnknown=true;}
     }
     let linkUnknown=false,missingLinkInputs=0;
@@ -94,20 +105,23 @@ export class BuildRunner {
      if(!m.linkInputs||m.linkInputError)linkUnknown=true;
      else try{
       const now=await fingerprintLinkDependencies(this.root+'/'+this.profile.buildDirRelative,this.profile.linkDependencyFile,this.root+'/'+this.profile.outputBinaryRelative);
-      this.current.changedInputs.push(...changedLinkInputs(m.linkInputs,now));
+      evidence.changedInputs.push(...changedLinkInputs(m.linkInputs,now));
       missingLinkInputs=now.unavailable.length;linkUnknown=missingLinkInputs>0;
      }catch{linkUnknown=true;}
     }
-    if(this.current.changedInputs.length||!m.inputsStableDuringBuild||m.compilerDriversStableDuringBuild===false){this.current.binaryState='needs-build';this.current.freshnessReason=this.current.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs or compiler toolchain changed during Build; build again for a stable snapshot.';}
-    else if(compilerUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler dependency evidence unavailable or stale.';}
-    else if(toolchainUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler toolchain identity is incomplete or unavailable.';}
-    else if(configurationUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='CMake configuration input evidence unavailable or unstable.';}
-    else if(linkUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason=missingLinkInputs?('Linker input evidence is incomplete: '+missingLinkInputs+' recorded inputs are missing. Full dependency freshness is unknown.'):'Linker input evidence is incomplete or unavailable.';}
-    else if(m.compilerInputsStableDuringBuild===false){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler input stability was not established across Build.';}
-    else if(!same(binary,m.outputBinary.fingerprint)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable differs from last successful Build manifest.';}
-    else{this.current.binaryState=this.profile.dependenciesComplete?'built-from-current-tracked-inputs':'freshness-unknown';this.current.freshnessReason=this.profile.dependenciesComplete?'Explicit tracked inputs match the successful Build.':'Tracked inputs match; full dependency coverage is unknown.';}
+    if(evidence.changedInputs.length||!m.inputsStableDuringBuild||m.compilerDriversStableDuringBuild===false){evidence.binaryState='needs-build';evidence.freshnessReason=evidence.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs or compiler toolchain changed during Build; build again for a stable snapshot.';}
+    else if(compilerUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Compiler dependency evidence unavailable or stale.';}
+    else if(toolchainUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Compiler toolchain identity is incomplete or unavailable.';}
+    else if(configurationUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason='CMake configuration input evidence unavailable or unstable.';}
+    else if(linkUnknown){evidence.binaryState='freshness-unknown';evidence.freshnessReason=missingLinkInputs?('Linker input evidence is incomplete: '+missingLinkInputs+' recorded inputs are missing. Full dependency freshness is unknown.'):'Linker input evidence is incomplete or unavailable.';}
+    else if(m.compilerInputsStableDuringBuild===false){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Compiler input stability was not established across Build.';}
+    else if(!same(binary,m.outputBinary.fingerprint)){evidence.binaryState='freshness-unknown';evidence.freshnessReason='Executable differs from last successful Build manifest.';}
+    else{evidence.binaryState=this.profile.dependenciesComplete?'built-from-current-tracked-inputs':'freshness-unknown';evidence.freshnessReason=this.profile.dependenciesComplete?'Explicit tracked inputs match the successful Build.':'Tracked inputs match; full dependency coverage is unknown.';}
    }
-  }catch{this.current.binaryState='missing';this.current.freshnessReason='Expected executable missing or unreadable; no readiness claim.';}
+  }catch{evidence.binaryState='missing';evidence.freshnessReason='Expected executable missing or unreadable; no readiness claim.';}
+  // Publish only a completed scan of the still-current manifest. Polling must
+  // never observe a cleared or partially rebuilt changed-input list.
+  if(this.current.lastSuccessfulBuild===m&&(!this.isActive()||finalizing))Object.assign(this.current,evidence);
   return this.snapshot();
  }
  snapshot(){return structuredClone(this.current);}

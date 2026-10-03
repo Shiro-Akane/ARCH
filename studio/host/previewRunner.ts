@@ -57,12 +57,12 @@ export class PreviewRunner {
   return this.capabilityPromise;
  }
  async readiness(){
-  const b=await this.build.validate();await this.build.refreshFreshness();const m=this.build.snapshot().lastSuccessfulBuild;
+  const b=await this.build.validate();const refreshed=await this.build.refreshFreshness();const m=refreshed.lastSuccessfulBuild;
   this.current.ready=false;this.current.build=m;
   try {
    if(this.closed)throw new Error('Preview Host is closed.');
    if(!b.configured||this.build.isActive())throw new Error('Build unavailable or active.');
-   if(this.build.snapshot().binaryState==='needs-build')throw new Error('Tracked source or compiler inputs changed. Build required before real preview.');
+   if(refreshed.binaryState==='needs-build')throw new Error('Tracked source or compiler inputs changed. Build required before real preview.');
    if(this.build.profile.id!==this.profile.buildProfileId)throw new Error('Preview profile does not match the configured Build.');
    if(!m||!m.inputsStableDuringBuild||m.buildProfileFingerprint!==profileFingerprint(this.build.profile))throw new Error('Build required before real preview: no matching successful manifest.');
    const now=await inputs(this.build.profile);

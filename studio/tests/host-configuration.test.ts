@@ -42,3 +42,21 @@ if(process.argv[2]==='--config-schema'){process.stdout.write(JSON.stringify(${JS
   const pending=adapter.inspect(request('slow'));await new Promise(resolve=>setTimeout(resolve,40));await writeFile(f.root+'/case.cpp','changed');await assert.rejects(pending,/current successful Preview build|Build changed/);
  }finally{await f.cleanup();}
 });
+
+test('static registry survives overlapping schema requests without enabling Preview',async()=>{
+ const f=await previewFixture();
+ try{
+  const registry=JSON.parse(await readFile(new URL('../../src/api/examples/local-workflow/registered-cases.json',import.meta.url),'utf8'));
+  const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8'));
+  const script='#!'+process.execPath+'\nconst fs=require("node:fs");fs.appendFileSync("static-commands.log",process.argv[2]+"\\n");const result=process.argv[2]==="--list-cases"?'+JSON.stringify(registry)+':'+JSON.stringify(schema)+';setTimeout(()=>console.log(JSON.stringify(result)),100);\n';
+  await writeFile(f.root+'/build/bin/ARCH',script,{mode:0o755});
+  const adapter=new ConfigurationAdapter({root:f.root,projectId:'p',binaryRelativePath:'build/bin/ARCH'});
+  const [catalog,cases,alsoCases]=await Promise.all([adapter.schema(),adapter.discovery(),adapter.discovery()]);
+  assert.equal(cases.binarySha256,catalog.binarySha256);
+  assert.deepEqual(cases,alsoCases);
+  assert.ok(cases.buildId.startsWith('selected-binary:'));
+  assert.deepEqual(cases.fieldModels,[]);assert.equal(cases.amr,null);
+  assert.equal((await readFile(f.root+'/static-commands.log','utf8')).split('\n').filter(x=>x==='--list-cases').length,1);
+  assert.equal((await f.preview.readiness()).ready,false);
+ }finally{await f.cleanup();}
+});

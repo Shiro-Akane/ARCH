@@ -7,8 +7,9 @@ import type {WorkingCopy} from '../../data/RealInitPreviewProvider';
 import type {WorkflowOperation,WorkflowResult,AmrMesh,CaseProbe,ResourceEstimate} from '../../host/workflowContracts';
 import {ResourceTable} from './ResourceTable';
 import {effectiveEntries,parsePar} from '../../data/ParDocument';
-export function InitializationWorkflow({copy,fieldBusy,onBusy,onMesh}:{copy:WorkingCopy|null;fieldBusy:boolean;onBusy:(busy:boolean)=>void;onMesh:(result:WorkflowResult)=>void}){
+export function InitializationWorkflow({copy,fieldBusy,buildReady,onBusy,onMesh}:{buildReady:boolean;copy:WorkingCopy|null;fieldBusy:boolean;onBusy:(busy:boolean)=>void;onMesh:(result:WorkflowResult)=>void}){
  const core=useCoreParameters(),scope=core.buildScope;
+ const currentBuild=buildReady&&!!scope&&!scope.buildId.startsWith('selected-binary:');
  const discovery=sameBuildScope(core.discovery,scope)?core.discovery:null;
  const model=discovery?.cases.find(c=>c.caseId===core.model);
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
@@ -20,7 +21,7 @@ export function InitializationWorkflow({copy,fieldBusy,onBusy,onMesh}:{copy:Work
  useEffect(()=>{alive.current=true;const gate=generation;return()=>{alive.current=false;gate.current++;if(owned.current)void previewRequest('/api/workflow/'+owned.current+'/cancel',undefined,true).catch(()=>{});};},[]);
  const isCurrent=(r:{result:WorkflowResult;text:string})=>r.text===copy?.text&&r.result.identity.caseId===core.model&&sameBuildScope(r.result.identity,scope);
  async function run(operation:WorkflowOperation){
-  if(!scope||!copy?.valid||!discovery||busy||fieldBusy)return;
+  if(!currentBuild||!scope||!copy?.valid||!discovery||busy||fieldBusy)return;
   const ticket=++generation.current,start={text:copy.text,caseId:core.model,scope};
   setBusy(true);onBusy(true);setError('');setMessage(operation==='inspect-case'?'Inspecting initialization…':operation==='preview-amr'?'Constructing initial AMR…':'Estimating full-domain resources…');
   try{
@@ -46,13 +47,13 @@ export function InitializationWorkflow({copy,fieldBusy,onBusy,onMesh}:{copy:Work
   finally{if(ticket===generation.current){owned.current=null;if(alive.current){setBusy(false);onBusy(false);}}}
  }
  async function cancel(){generation.current++;setMessage('Cancelling initialization workflow…');try{if(owned.current)await previewRequest('/api/workflow/'+owned.current+'/cancel',undefined,true);setMessage('Cancelled; previous result retained.');}catch(e){setError(e instanceof Error?e.message:'Cancellation failed.');}finally{owned.current=null;setBusy(false);onBusy(false);}}
- const disabled=!scope||!copy?.valid||!model||busy||fieldBusy;
+ const disabled=!currentBuild||!scope||!copy?.valid||!model||busy||fieldBusy;
  const inspection=results['inspect-case'],resources=results['amr-resources'],mesh=results['preview-amr'];
  const values=new Map(effectiveEntries(parsePar(copy?.text??'')).map(e=>[e.key,e.value]));
  const budgetValid=Number.isInteger(Number(maxBlocks||discovery?.amr?.defaultMaxBlocks))&&Number(maxBlocks||discovery?.amr?.defaultMaxBlocks)>=1&&Number(maxBlocks||discovery?.amr?.defaultMaxBlocks)<=1024&&Number.isInteger(Number(memory||discovery?.amr?.defaultMemoryMiB))&&Number(memory||discovery?.amr?.defaultMemoryMiB)>=16&&Number(memory||discovery?.amr?.defaultMemoryMiB)<=256;
  return <section className="initialization-workflow" aria-label="Case inspection and initial AMR"><h3>Initialization &amp; initial AMR</h3>
  {model?<p>Registered: {model.caseId} · Field Preview {model.initialFieldPreview?'supported':'unavailable'} · Initial AMR {model.initialAmrPreview?'supported':'unavailable'} · Dimensions {model.previewDimensions.join(', ')||'inspection only'} · Geometry {discovery?.fieldModels.find(m=>m.caseId===model.caseId)?.geometries.join(', ')||'reported by inspection'}</p>:<p>Selected binary registry unavailable. Connect a current Build.</p>}
- <p>Build {scope?.buildId.slice(0,8)??'unavailable'} · binary {scope?.binarySha256.slice(0,12)??'unavailable'} · tracked inputs validated; complete dependency freshness unknown.</p>
+ <p>Build {scope?.buildId.slice(0,8)??'unavailable'} · binary {scope?.binarySha256.slice(0,12)??'unavailable'} · {currentBuild?'tracked inputs match successful Build; complete dependency freshness unknown.':'selected binary only; current tracked-input Build validation unavailable. Initialization requires a current successful Build.'}</p>
  <div className="real-preview-actions"><button disabled={disabled||!model?.inspection.setupReads} onClick={()=>void run('inspect-case')}>Inspect initialization</button><button disabled={disabled||!discovery?.amr} onClick={()=>void run('amr-resources')}>Estimate AMR resources</button><button disabled={!busy} onClick={()=>void cancel()}>Cancel initialization</button></div>
  {model?.initialAmrPreview&&<><p>AMR preview budget · separate from .par max_blocks. Core v1: 1–1024 blocks, 16–256 MiB.</p><div className="real-preview-actions"><label>Preview max blocks <input aria-label="AMR preview max blocks" type="number" min={1} max={1024} value={maxBlocks||discovery?.amr?.defaultMaxBlocks||''} onChange={e=>setMaxBlocks(e.target.value)}/></label><label>Preview memory MiB <input aria-label="AMR preview memory MiB" type="number" min={16} max={256} value={memory||discovery?.amr?.defaultMemoryMiB||''} onChange={e=>setMemory(e.target.value)}/></label><button disabled={disabled||!budgetValid} onClick={()=>void run('preview-amr')}>Generate initial AMR</button></div></>}
  <p role="status">{message.startsWith('Current ·')&&!Object.values(results).some(isCurrent)?'Previous results / stale · Working Copy, model or build changed.':message}</p>{error&&<p role="alert">{error}</p>}
