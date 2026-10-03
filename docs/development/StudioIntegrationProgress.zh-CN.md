@@ -1741,3 +1741,25 @@ Agent capture of separate maximized window does not prove user visibility:
 latest human report only taskbar icon, fresh confirmation pending.
 Other cancellation/overwrite/active-close/Run-lifetime/Stop matrix still incomplete.
 No whole3B/3C/O7 PASS, no full-model/JENS/RZ advance, raw input/upload/push/tag.
+
+## Host/Core explicit Stop verified; native visibility still open
+
+Clean6b2caa34: saved4096-cell CPU Sod, existing authenticated desktop Host,
+controlled prepare/confirm/start and real independent xterm.
+Run6c0d8ba8-ec35-44ca-83c1-a1e626264a20 observed Core16728 running with
+matching /proc startTicks, then owned Stop -> stopped/SIGTERM.
+Worker16716/Core16728 absent after; Electron14246/Host14292/warm14445
+PID/startTicks/parent/group unchanged. Held terminal16715 is expected.
+Frozen input equals saved; original Sod and selected binary SHA unchanged.
+
+Earlier native1024-cell9192f783 finished naturally1.743s/exit0; no Stop PASS.
+Second run produced initial output and one timestep before interruption;
+no scientific accuracy/benchmark/final-time claim.
+StudioHostStopLifecycleUat.zh-CN.md and Summary.json record reduced evidence.
+All raw inputs/H5/checkpoints/logs remain ignored locally.
+
+Native Stop button and user-visible window NOT VERIFIED. User taskbar-only
+report remains authoritative; tool activation/maximization does not supersede it.
+Run survival across active Studio/Host close and native matrix remain open.
+No whole3C/O7 completion/full-model/JENS/RZ advance, unchanged-suite rerun,
+source edit, build, raw upload, push, tag or main merge.
