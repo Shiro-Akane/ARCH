@@ -3140,3 +3140,13 @@ pending HTTP Cancel→保留旧LOD→Host恢复不覆盖→新LOD成功。
 旧显示保留，Fit恢复全域。正常close exit0，8owned+3reader精确身份均退出。
 H5/config字节不变、managed clean，无Core Build/simulation/源码修改；
 不重复331项检查。见PlotfileNativeRace报告/Summary。未push/tag，联合目标仍在推进。
+
+## 2026-10-04 BurnGradient 原生初态/组分/AMR
+
+新增production Linux矩阵行：512samples温度脉冲、中心sample255/raw Inspector，
+首个raw Init probe的13具名组分；输入/default/Core floor语义分开。
+AMR Complete1leaf L0，0:0:0:0 bounds/16cells/.0625cm算术一致。
+无continuous species/ENUC菜单，不作燃烧演化或AMR cell field验收。
+正常close exit0，8owned退出、config不变、无科学output/managed clean。
+见FullModelBurnGradientDesktop-20261004报告/Summary。
+无源码修改、不重复331项、不push/tag；联合科学CPU/CUDA/O9及全模型矩阵仍未闭合。
