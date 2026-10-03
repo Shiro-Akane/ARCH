@@ -7,6 +7,7 @@
  */
 #include "driver/DriverUtils.h"
 #include "numerics/integrator/GeometricSources.h"
+#include "numerics/integrator/HydroSolverImpl.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "math/geometry/CurvilinearMetricCases.h"
 #include "math/geometry/RzMetricCases.h"
@@ -174,6 +175,21 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
     species.add_species("gas0",1.,1.,1.4,3.);
     species.add_species("gas1",2.,1.,1.4,3.);
     IdealGas eos(1.4,species);
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> policy(eos,rz);
+    const Numerics::IHydroSolver& hydro=policy;
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> legacy(eos);
+    if(hydro.geometry_semantics()!=rz
+        || legacy.geometry_semantics()!=GridMetrics::GeometrySemantics::Existing)
+        throw std::runtime_error("Host Hydro type-erased chart identity");
+    bool invalid_rejected=false;
+    try {
+        Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> invalid(
+            eos,static_cast<GridMetrics::GeometrySemantics>(255));
+    } catch(const std::invalid_argument&) { invalid_rejected=true; }
+    if(!invalid_rejected)throw std::runtime_error("Unknown Hydro chart accepted");
+    NumericsConfig numerics{};
+    numerics.entropy_fix_coeff=0.;numerics.hll_roe_wave_speed=true;
+    numerics.sml_rho=1.e-14;numerics.min_eint=1.e-14;numerics.max_eint=1.e10;
     SimConfig config{};
     config.grid.dim=2;config.grid.geometry="cylindrical";
     config.grid.nblockx1=direction==0?2:1;
@@ -211,13 +227,12 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
     for(int id:active) {
         auto& block=control.pool->GetBlock(id);
         const auto& g=block.grid;const int size=g.GetTotalSize();
-        std::vector<FluidVector> delta(size),flux(size);
-        std::vector<double> ds(2*size),fs(2*size);
-        TimeIntegration::evaluate_all_dimensions<FluxHLLC<PCMReconstruction>>(
-            &control,id,block.fluid_state,eos,g,dt,delta,ds,flux,fs,
-            nullptr,0.,1.,true,rz);
-        TimeIntegration::perform_stage_update(block.fluid_state,block.fluid_state,
-            block.state_next,delta,ds,g,0.,1.,1.e-14,1.e-14,1.e10,rz);
+        std::vector<FluidVector> delta(size);
+        std::vector<double> ds(2*size);
+        hydro.evaluate_patch(&control,id,block.fluid_state,g,dt,delta,ds,
+            nullptr,numerics,1.);
+        hydro.update_patch(block.fluid_state,block.fluid_state,
+            block.state_next,delta,ds,g,0.,1.,numerics);
         for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
             const auto d=delta[g.GetIndex(i,j,0)];
             for(double v:{d.rho,d.mom_u,d.mom_v,d.mom_w,d.eng}) {

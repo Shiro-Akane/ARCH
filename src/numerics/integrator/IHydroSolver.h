@@ -29,6 +29,13 @@ class IHydroSolver {
 public:
     virtual ~IHydroSolver() = default;
 
+    // Internal chart identity. Existing bindings retain their historical chart;
+    // Host RZ bindings must report the same profile used by patch mathematics.
+    virtual GridMetrics::GeometrySemantics geometry_semantics() const noexcept
+    {
+        return GridMetrics::GeometrySemantics::Existing;
+    }
+
     /**
      * @brief Evaluates flux divergences and geometric/gravity sources on a single patch.
      * @param state The current fluid state.

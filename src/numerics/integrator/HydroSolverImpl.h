@@ -21,7 +21,19 @@ namespace Numerics {
 template <typename EosType, typename FluxSchemePolicy>
 class HydroSolverImpl : public IHydroSolver {
 public:
-    HydroSolverImpl(const EosType& eos) : eos_(eos) {}
+    explicit HydroSolverImpl(const EosType& eos,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+        : eos_(eos), semantics_(semantics)
+    {
+        if (semantics != GridMetrics::GeometrySemantics::Existing
+            && semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::invalid_argument("Unknown Host Hydro geometry semantics");
+    }
+
+    GridMetrics::GeometrySemantics geometry_semantics() const noexcept override
+    {
+        return semantics_;
+    }
 
     virtual void evaluate_patch(amr::AMRControl* amr_ctrl, int block_id,
                                 const FluidState& state, const Grid& grid, double dt,
@@ -39,7 +51,7 @@ public:
         const auto evaluate = [&] {
             TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy, EosType>(
                 amr_ctrl, block_id, state, eos_, grid, dt, dU, d_spec,
-                flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed);
+                flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed, semantics_);
         };
         if constexpr (requires { typename EosType::HostHydroScope; }) {
             // The EOS owns the complete key. Storage is local to this worker
@@ -58,11 +70,12 @@ public:
         TimeIntegration::perform_stage_update(
             state_old, state_curr, state_new, dU, d_spec, grid,
             w_old, w_flux, num_cfg.sml_rho, num_cfg.min_eint,
-            num_cfg.max_eint);
+            num_cfg.max_eint, semantics_);
     }
 
 private:
     const EosType& eos_;
+    const GridMetrics::GeometrySemantics semantics_;
 };
 
 } // namespace Numerics

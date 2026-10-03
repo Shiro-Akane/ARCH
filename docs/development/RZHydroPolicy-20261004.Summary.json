@@ -1,0 +1,22 @@
+{
+  "baseline": "a35f70acaa7aca9cac69e9eb775222b942000551",
+  "scope": "Host type-erased Hydro binding; not scheduled timestep qualification",
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "boundary_plan": "PASS",
+    "amr_operation_plans": "PASS"
+  },
+  "mixed_amr_cases": [
+    "RZ_MIXED_HYDRO direction=0 inner=0 max_delta=2.77556e-17 max_register=0 max_state_error=2.77556e-17",
+    "RZ_MIXED_HYDRO direction=0 inner=1 max_delta=4.95494e-17 max_register=3.14523e-15 max_state_error=3.55618e-17",
+    "RZ_MIXED_HYDRO direction=1 inner=0 max_delta=5.34464e-16 max_register=2.13163e-14 max_state_error=1.38778e-17",
+    "RZ_MIXED_HYDRO direction=1 inner=1 max_delta=5.29374e-16 max_register=2.84217e-14 max_state_error=1.38778e-17"
+  ],
+  "raw_log_directory": "studio/.local/integration/rz-hydro-policy-20261004",
+  "limitations": [
+    "Euler/RK scheduler callbacks still require chart propagation",
+    "Public runtime RZ and checkpoint semantic migration incomplete",
+    "AMR angular-momentum transfer finding unresolved",
+    "No CUDA or physical trajectory acceptance claimed"
+  ]
+}

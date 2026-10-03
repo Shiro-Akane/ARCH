@@ -2695,3 +2695,8 @@ final最大常态误差3.55618e-17。详见 RZMixedHydro-20261004.zh-CN.md / Sum
 272个ghost/corner/signed-zero逐位参考、nonzero inner普通BC及旧冻结指纹保持通过。
 CPU3/3与随后仅变化mixed Hydro BC→exchange→stage→BC→exchange→reflux检查通过。
 详见 RZPhysicalBoundary-20261004.zh-CN.md / Summary；production scheduler/科学出口/CUDA与angular finding未关闭。
+
+
+## 2026-10-04 RZ Host Hydro policy
+
+真实 HydroSolverImpl 已传递固定内部 chart 并通过 IHydroSolver 暴露身份。四个 mixed-AMR fixture 改经真实虚接口，CPU scoped 3/3 PASS；详见 RZHydroPolicy-20261004.zh-CN.md。Euler/RK scheduler chart propagation 仍待完成，不宣称生产 RZ/演化验收。
