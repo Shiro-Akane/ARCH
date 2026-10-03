@@ -1,0 +1,387 @@
+{
+  "baseline": "af18b44ae16023fa266bca2cf1a7fa0a2d5a1671",
+  "scope": "O7.2-O7.5 pre-implementation mapping, not implementation/physics acceptance",
+  "scan": {
+    "patterns": [
+      "Cylindrical",
+      "cylindrical",
+      "GridMetrics::",
+      "GeometryView",
+      "PhysicalPosition",
+      "CoordinateSeam"
+    ],
+    "scope": "tracked src .h/.cpp/.cu/.cuh",
+    "files": 50,
+    "sites": 229,
+    "limits": "lexical scan only; indirect consumers also require explicit dependency review"
+  },
+  "consumerIdentities": [
+    {
+      "path": "src/amr/elliptic/EllipticMeshAdapter.cpp",
+      "sha256": "08abce675926063539a53c9ac846006199f2021641c7ec4fe8d8041c34f2e1a8",
+      "matchedSites": 7
+    },
+    {
+      "path": "src/amr/exchange/CoordinateSeamMath.h",
+      "sha256": "977f972bc84b7d27b87996f4138ab870b0dbfd47461bd2b09accb1063ef1420e",
+      "matchedSites": 6
+    },
+    {
+      "path": "src/amr/exchange/CoordinateSeamPlan.h",
+      "sha256": "bebd46f22abc0a483f1eddb26b270fcd05205cf07e98530e335cf6b3c5abbb19",
+      "matchedSites": 13
+    },
+    {
+      "path": "src/amr/exchange/GhostExchange.h",
+      "sha256": "daf7469452cf49f5da8f2bd9e5d474f91a86698798f1ba53425fe8026306fd6f",
+      "matchedSites": 3
+    },
+    {
+      "path": "src/amr/flux/AmrFluxPlan.h",
+      "sha256": "a7d4a5c6db2ac50e5f9508150b93cb6f8b9e9be37fe4a49420ff4a5512255a17",
+      "matchedSites": 4
+    },
+    {
+      "path": "src/amr/flux/FluxRegister.h",
+      "sha256": "f47d15cab9aa22b86e9d8a3ecdb03088235918a2890659ee4f4dec7384dae3cb",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/amr/storage/Block.h",
+      "sha256": "ba336a0551726b5fcc29914a2b5992a1d22e3105fa47ead6c4077e880226e7f9",
+      "matchedSites": 4
+    },
+    {
+      "path": "src/amr/topology/AmrTree.h",
+      "sha256": "6dc3c2580b81e4440864d69e9ed3db1004cadeb067a09647f7a9fa2148525989",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/api/Preview.h",
+      "sha256": "ee4175257eeaefe25f55c9305fcbf5e7962a56ae562be608276bbb3aa17dfa6e",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/api/configuration/Configuration.cpp",
+      "sha256": "03df1f382c16ddda0d38293a68c2ffd75122df2d88d552bae91f4709dcff47dc",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/api/preview/Preview.cpp",
+      "sha256": "7d6b21de99d931dcb67d02f99944b426bbf8c313f4ea9cd5473fe4c67d5d9357",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/core/config/ControlRelations.h",
+      "sha256": "ef7565ff47d733951b11554ad59dd2d42c651153d9c1f70f2a5b60ae9097f809",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/core/problem/ProblemHelper.cpp",
+      "sha256": "3c18dc4c387cb0debb82a5100428c502c7f5a3d3f62d401ac13ddd279e6d0c30",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/cuda/common/CudaCommon.cuh",
+      "sha256": "66d5e4427171a4a0252f3f5f7bbaa8e0b68d130a7e7881644421800792190168",
+      "matchedSites": 3
+    },
+    {
+      "path": "src/cuda/common/GridMetricsCache.cu",
+      "sha256": "a723350ff1e3a9551a9fc26247aa46bd1637a5feb61482945ad6bce9726cb81c",
+      "matchedSites": 4
+    },
+    {
+      "path": "src/cuda/diffusion/DiffusionKernels.cuh",
+      "sha256": "1a0550bd057a67f225b6f136bae78f4c0fd0d1d7527aa8d97509b9bad4039df1",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/cuda/hydro/GridGeometryAdapter.cuh",
+      "sha256": "e274dc56d2e4d58e7b4e8251327463481de7ed1be92238ca08ade93c441c3087",
+      "matchedSites": 5
+    },
+    {
+      "path": "src/cuda/hydro/kernels/HydroBatchKernels.cuh",
+      "sha256": "357315fe274074e438d7a9ce376a518bc9bce0a6163e40af1ec8c62d6c891db1",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/cuda/hydro/kernels/HydroSourceKernels.cuh",
+      "sha256": "3951a25a91c2565734595443cb9b27104bb05aeb9972d915992485989542db82",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/cuda/hydro/kernels/HydroStageKernels.cuh",
+      "sha256": "18c7557c70b1ddd79b4d504a4725e98bc36a84b4c469caadd222a1c962404ef3",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/cuda/runtime/CudaBackend.h",
+      "sha256": "0ff148d170478c81e77db6730c9cfe231b508ae15e32f83dcfb2c0f4067caf6b",
+      "matchedSites": 3
+    },
+    {
+      "path": "src/cuda/runtime/amr/CudaBackendCoordinateSeam.cpp",
+      "sha256": "3cbdd3d52b14cdd413b421672c0ee1704e996ea73ca60c6761e7ce90454691e7",
+      "matchedSites": 7
+    },
+    {
+      "path": "src/cuda/runtime/amr/CudaBackendExchange.cu",
+      "sha256": "33fc04386db4669205050ecdf1a188f7d60adb7225c047b53ce44c33622f23e7",
+      "matchedSites": 4
+    },
+    {
+      "path": "src/cuda/runtime/amr/CudaBackendExchange.h",
+      "sha256": "1720e90d24126224778c2b59c9433e3038461f4374743beb1cef7eb597d2a64d",
+      "matchedSites": 5
+    },
+    {
+      "path": "src/cuda/runtime/amr/CudaBackendMigration.cpp",
+      "sha256": "5c55b8b9d1c10c3f5009f1070b76babd27d26a511be142131eba8afd62e0dc00",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/cuda/runtime/control/CudaBackendInternal.h",
+      "sha256": "612e9fbc50a3c0cf41e4c86d18b4d8a62ce3aa00a8def3eae6f52b22aed1735a",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/cuda/runtime/control/CudaBackendResources.cpp",
+      "sha256": "18adcb91a5ca4573f6ea173e24faa8222b3f01db96ac6f31bdf0cf425a620a60",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/cuda/runtime/control/CudaBackendStore.cpp",
+      "sha256": "837f01ed4b6646d3902d135af77473461728c5aa36e8d5eb9bb198c7d9c89712",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+      "sha256": "5058783a4cb77825386f9eaadafa5adb6861dd4d59ef2e288bc0cfba343ce0d7",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/data/GlobalDefs.h",
+      "sha256": "2a8fc0ca6815cc2acb54309449e8e82e860ed9cb21489c111cf7e111a841bc9f",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/driver/DriverUtils.h",
+      "sha256": "659f79e07afd8d70ff4f4fe23e0ffb004346d070d0ab173b50afcbba851cafec",
+      "matchedSites": 5
+    },
+    {
+      "path": "src/driver/SolverDispatch.cpp",
+      "sha256": "05893826d32dc613bbfdad66f0c17901c1962cabf7d53bc5b5a5e45e2dd939c5",
+      "matchedSites": 3
+    },
+    {
+      "path": "src/driver/dispatch/PolicyDescriptor.h",
+      "sha256": "ffe56d4e50af9aea3a260c05f067ccfe2c41d28d7797f8054158d39422a68b1d",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/driver/dispatch/capability/BackendCapabilities.h",
+      "sha256": "ffb1e78cb5eb3c50dafe56093a94cb087aad79f5c711f5948c9a3a49004c25e4",
+      "matchedSites": 2
+    },
+    {
+      "path": "src/driver/dispatch/capability/ResolvedExecutionPlan.h",
+      "sha256": "234f885899e433f8617badaafe5a890e8f01d32a9a1df197835620b6688902ed",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/driver/runtime/ComputeBackend.h",
+      "sha256": "15ca36b0b0fd5d9cb8f7a873d756ec6786c85810ca2cad05f7c18e70ed88c573",
+      "matchedSites": 3
+    },
+    {
+      "path": "src/grid/Grid.h",
+      "sha256": "2d64b4df11282fc1d48e377580c1f4cb6ca69925e1be3f5c0275922c15d24c57",
+      "matchedSites": 14
+    },
+    {
+      "path": "src/grid/GridGeometryView.h",
+      "sha256": "e9acfce1e9b47965f576784b1bc5281307d8ecce64704d5bce7b3a5ec9e05a51",
+      "matchedSites": 8
+    },
+    {
+      "path": "src/grid/GridMetrics.h",
+      "sha256": "f794d1553e0e28782e079c9fd21e9e3eab586b08803a5ab3e914f024d99dfc77",
+      "matchedSites": 19
+    },
+    {
+      "path": "src/numerics/diffusion/DiffFlux.h",
+      "sha256": "0df737022a115f1673e028d4d9aa83b24807d8fde72c022f37a77e7248c059f2",
+      "matchedSites": 18
+    },
+    {
+      "path": "src/numerics/elliptic/CompositePoisson.cpp",
+      "sha256": "8ff50a51c29d848ea958e40a0a70e89c859864c65c0e55c603c73b0bbc6084b9",
+      "matchedSites": 9
+    },
+    {
+      "path": "src/numerics/elliptic/EllipticMesh.h",
+      "sha256": "4c6280c834691de263a15a6c53dce9b43c27830e1a32313238cad92eabc46ccd",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/numerics/integrator/GeometricSources.h",
+      "sha256": "584265cebf9953f8e35769644c52e6a646f5633369dbaf437d8070dd6b177b6b",
+      "matchedSites": 4
+    },
+    {
+      "path": "src/numerics/integrator/TimeIntegratorHelper.h",
+      "sha256": "dca54778c5145074188b568e7bd540cbaa1603ba3dff428f362d671f5cc8b56a",
+      "matchedSites": 7
+    },
+    {
+      "path": "src/physics/diagnostics/VelocityDiagnostics.h",
+      "sha256": "2f3a0a1ec84c964ee2eae2358bffcab9b74c2fb7b8cdbcbee5fd3c75c475369b",
+      "matchedSites": 9
+    },
+    {
+      "path": "src/physics/gravity/GravityBoundary.cpp",
+      "sha256": "724c94e85c3b29c7d2e8e5a44ab5bc4141bd101aed125099943a93713861d801",
+      "matchedSites": 11
+    },
+    {
+      "path": "src/physics/gravity/GravityBoundary.h",
+      "sha256": "6e21163e1b01e69a429c6e3c78924bd7f79809fb283ba84f13b24cf09e61fc63",
+      "matchedSites": 7
+    },
+    {
+      "path": "src/physics/gravity/GravityExecution.h",
+      "sha256": "f1bd208fc491829dc1506cde27330fbd26c262ebf2c86a2221103d66d4341541",
+      "matchedSites": 1
+    },
+    {
+      "path": "src/physics/gravity/self/GravityWorkspace.cpp",
+      "sha256": "f0352629010318ed15ff97f9f8d209687514ea1443c1aed02644a2e9267c0fbe",
+      "matchedSites": 8
+    },
+    {
+      "path": "src/physics/gravity/self/SelfGravity.cpp",
+      "sha256": "6fe64c95e3fa30272a655582b459dad1139e837bce048fcf91f717e5c09a41d5",
+      "matchedSites": 5
+    }
+  ],
+  "directEvidence": [
+    {
+      "path": "src/grid/Grid.h",
+      "lines": [
+        202
+      ],
+      "needle": "return {\"r_cy\", \"phi_cy\"}",
+      "sha256": "2d64b4df11282fc1d48e377580c1f4cb6ca69925e1be3f5c0275922c15d24c57"
+    },
+    {
+      "path": "src/grid/Grid.h",
+      "lines": [
+        289
+      ],
+      "needle": "coords.z_cy = 0.0",
+      "sha256": "2d64b4df11282fc1d48e377580c1f4cb6ca69925e1be3f5c0275922c15d24c57"
+    },
+    {
+      "path": "src/grid/GridGeometryView.h",
+      "lines": [
+        88
+      ],
+      "needle": "if (dimension == 2) return",
+      "sha256": "e9acfce1e9b47965f576784b1bc5281307d8ecce64704d5bce7b3a5ec9e05a51"
+    },
+    {
+      "path": "src/grid/GridMetrics.h",
+      "lines": [
+        135
+      ],
+      "needle": "dim == 2 ? radius * dx2",
+      "sha256": "f794d1553e0e28782e079c9fd21e9e3eab586b08803a5ab3e914f024d99dfc77"
+    },
+    {
+      "path": "src/numerics/integrator/GeometricSources.h",
+      "lines": [
+        40
+      ],
+      "needle": "grid.dim == 2 ? v_y",
+      "sha256": "584265cebf9953f8e35769644c52e6a646f5633369dbaf437d8070dd6b177b6b"
+    },
+    {
+      "path": "src/amr/exchange/CoordinateSeamPlan.h",
+      "lines": [
+        187
+      ],
+      "needle": "phi_width - 2. * pi",
+      "sha256": "bebd46f22abc0a483f1eddb26b270fcd05205cf07e98530e335cf6b3c5abbb19"
+    },
+    {
+      "path": "src/physics/diagnostics/VelocityDiagnostics.h",
+      "lines": [
+        95
+      ],
+      "needle": "Both 2-D cylindrical",
+      "sha256": "2f3a0a1ec84c964ee2eae2358bffcab9b74c2fb7b8cdbcbee5fd3c75c475369b"
+    },
+    {
+      "path": "src/physics/gravity/GravityBoundary.cpp",
+      "lines": [
+        163
+      ],
+      "needle": "result[i]=dimension_==2",
+      "sha256": "724c94e85c3b29c7d2e8e5a44ab5bc4141bd101aed125099943a93713861d801"
+    },
+    {
+      "path": "src/physics/gravity/GravityBoundary.h",
+      "lines": [
+        78
+      ],
+      "needle": "dimension==2",
+      "sha256": "6e21163e1b01e69a429c6e3c78924bd7f79809fb283ba84f13b24cf09e61fc63"
+    },
+    {
+      "path": "src/io/chk/ChkIO.cpp",
+      "lines": [
+        143
+      ],
+      "needle": "checkpoint.geometry != config.grid.geometry",
+      "sha256": "07321e2a4de52ca184323f5dcdad238549fbdd18768af209c3ea75b8adabac0d"
+    }
+  ],
+  "existingTestEntrypoints": [
+    "tests/host/grid/test_curvilinear_metrics.cpp",
+    "tests/math/geometry/CurvilinearMetricCases.h",
+    "tests/math/geometry/ViscousGeometryCases.h",
+    "tests/host/amr/test_boundary_plan.cpp",
+    "tests/host/gravity/test_poisson_multigrid.cpp",
+    "tests/host/gravity/test_composite_poisson.cpp",
+    "tests/host/gravity/test_self_gravity.cpp",
+    "tests/host/gravity/test_gravity_stage_contract.cpp",
+    "tests/host/io/test_checkpoint_compatibility.cpp",
+    "tests/api/preview/test_initial_mesh_geometry.cpp",
+    "tests/cuda/grid/test_curvilinear_geometry_smoke.cu",
+    "tests/cuda/grid/test_grid_metrics_cache.cu",
+    "tests/cuda/grid/test_boundary_plan_parity.cu",
+    "tests/cuda/amr/test_cuda_regrid_migration.cu",
+    "tests/cuda/numerics/test_diffusion_rkl_parity.cu"
+  ],
+  "currentMeaning": {
+    "cylindrical2D": "polar r-phi",
+    "spherical2D": "equatorial polar r-phi",
+    "cylindrical3D": "r-z-phi"
+  },
+  "reviewPending": [
+    "O7.1 Core confirmation prior to numerical progression",
+    "O7.4 near/far finite-ring method and component error budgets",
+    "historical polar input equivalence",
+    "geometry/checkpoint semantic revision approval"
+  ],
+  "actions": {
+    "CoreChanged": false,
+    "capabilityOpened": false,
+    "testsRun": false,
+    "simulationRun": false,
+    "cudaBuilt": false
+  }
+}

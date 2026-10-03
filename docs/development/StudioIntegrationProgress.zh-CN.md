@@ -2249,3 +2249,12 @@ completion unknown、renderEligible false。真实维护Sod及已有t=0 12叶块
 warm更新六字段/数据/配置/Build身份不变；两轮正常关闭exit0，实际worker已回收。
 详见FullModelUniformStateDesktopProgress.zh-CN.md及精简Summary。
 非燃烧演化/AMR/性能验收，完整桌面矩阵仍未完；状态过宽文案单独记录。
+
+### O7.2–O7.5 实施前：独立 RZ 消费者映射
+
+基线af18b44a；按handoff §2完成RZ独立当前调用方→修改点→参考→测试映射。
+真实源码仍为2D polar：physical position/spacing/source/seam/log gravity均未改。
+50个tracked源码文件229词法命中及间接transfer/IO路径、source hashes/test入口、
+O7.4有限环体近远场/缓存/独立oracle决定清单见O7_RZ_IMPLEMENTATION_MAP及Summary。
+checkpoint仅geometry string不能区分旧polar与未来RZ，明确保留semantic revision gate。
+未改Core/开放能力/执行不变测试；先O7.1 CPU，科学确认与历史迁移仍pending。
