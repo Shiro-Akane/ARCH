@@ -2791,3 +2791,12 @@ level/logical/index/来源身份匹配，原file SHA不变。
 重编actual CPU fixture Cartesian/RZ通过，legacy报告bytes一致，
 同ledger恢复与旧checkpoint SHA不变；只time0/step0，非演化/science/CUDA验收。
 主ARCH尚未重新构建；见RZDriverRepairDiagnostics-20261004报告和Summary。
+
+## 2026-10-04 repair diagnostics main CPU integration
+
+clean07d4bf24主CPU重编DriverIO/link成功，binary60892079…。
+既有Sod .05/67→.2/280连续/续算PASS，新旧8份/32场原bits一致，
+Cartesian repair报告bytes一致。真实主CLI /dev/full报告flush失败exit1，
+即使科学终点已到达也不报成功；不提供科学输出回滚或真实磁盘耗尽承诺。
+主binary已包含修复，公共RZ/CUDA/science/O9 gates保持未完成。
+见CpuDriverDiagnosticsIntegration-20261004报告/Summary。
