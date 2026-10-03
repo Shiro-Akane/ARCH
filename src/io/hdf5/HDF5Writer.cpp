@@ -384,9 +384,13 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             identity.createAttribute("run_id",id.run_id.empty()?std::string("unknown"):id.run_id);
             identity.createAttribute("run_id_source",id.run_id.empty()?std::string("unknown"):
                 std::string("DriverIO output session; OS-generated UUIDv4"));
-            for(const char* name:{"effective_config_sha256",
-                 "build_id","source_git_head"})
+            for(const auto& [name,reason]:std::map<std::string,std::string>{
+                {"effective_config_sha256","authoritative effective-config identity not supplied to writer"},
+                {"build_id","authoritative Build Manifest identity not supplied to writer"},
+                {"source_git_head","authoritative source Git identity not supplied to writer"}}) {
                 identity.createAttribute(name,std::string("unknown"));
+                identity.createAttribute(name+"_reason",reason);
+            }
             identity.createAttribute("eos_unit_system",id.unit_system.empty()?std::string("unknown"):id.unit_system);
         }
 

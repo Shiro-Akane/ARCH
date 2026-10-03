@@ -137,6 +137,15 @@ int main(int argc, char** argv) {
             require(id=="unknown","partial evidence falsely certified");
             f.getGroup("SourceIdentity").getAttribute("case_id").read(id);
             require(id=="Sod","case source evidence missing");
+            for(const auto& [name,expected]:std::map<std::string,std::string>{
+                {"effective_config_sha256","authoritative effective-config identity not supplied to writer"},
+                {"build_id","authoritative Build Manifest identity not supplied to writer"},
+                {"source_git_head","authoritative source Git identity not supplied to writer"}}) {
+                f.getGroup("SourceIdentity").getAttribute(name).read(id);
+                require(id=="unknown","unsupported identity falsely certified");
+                f.getGroup("SourceIdentity").getAttribute(name+"_reason").read(id);
+                require(id==expected,"unknown identity reason missing or changed");
+            }
             f.getGroup("SourceIdentity").getAttribute("run_id").read(id);
             require(id==identity.run_id,"run output identity lost");
             f.getGroup("SourceIdentity").getAttribute("run_id_source").read(id);

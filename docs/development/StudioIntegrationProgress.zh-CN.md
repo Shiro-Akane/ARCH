@@ -3009,3 +3009,12 @@ clean64b0ce2f detached新worktree，空build-studio-cpu经真实ConfigureRunner/
 loader闭包与dependenciesComplete=false不变。3静态API smoke exit0，非Init/科学/完整CTest验收。
 见HostCleanCpuBuild-20261004报告/Summary；raw/audit worktree持久本机。
 无simulation/Windows/push/tag；后续科学CPU/Jeans/RZ/CUDA/O9出口仍未完成。
+
+## 2026-10-04 Plotfile 来源原因小增量
+
+按 owner 23ff77c4f contract，补齐三个 unknown identity reason 的 writer → Reader/client →
+Viewer 贯通；旧文件兼容，非法/不完整 reason 拒绝。真实 C++ IO 1D/2D 读回，
+来源反例 9/9、完整 Studio/Host 327/327、lint/typecheck/build/diff check PASS。
+主 ARCH ELF 未重编译；没有新 simulation 或原始数据提交。
+完整来源身份、独立科学 review、大文件成本及联合目标仍未完成。
+具体范围、失败记录与处理后摘要见 PlotfileIdentityReasons-20261004.zh-CN.md。

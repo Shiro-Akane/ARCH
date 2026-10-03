@@ -110,6 +110,12 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
    ['species_properties_state','species_properties_source','species_properties_reason'].some(key=>e.attrs[key])){
   throw Error('Candidate species properties lack their version.');
  }
+ const reasonKeys={effectiveConfigSha256:'effective_config_sha256_reason',
+  buildId:'build_id_reason',sourceGitHead:'source_git_head_reason'};
+ const reasonCount=Object.values(reasonKeys).filter(key=>e.attrs[key]).length;
+ if(reasonCount!==0&&reasonCount!==3)throw Error('Incomplete candidate source identity reasons.');
+ const unknownIdentityReasons=reasonCount?Object.fromEntries(Object.entries(reasonKeys)
+  .map(([key,attribute])=>[key,scalar(e,attribute,256)])):undefined;
  const gammaAvailable=read('ideal_gamma_available');
  if(gammaAvailable!==0&&gammaAvailable!==1)throw Error('Invalid candidate gamma availability.');
  const evidence={
@@ -122,6 +128,7 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
   idealGamma:gammaAvailable===1?read('ideal_gamma'):null,
   speciesState:read('species_identity_state'),speciesNames,
   ...(speciesProperties===undefined?{}:{speciesProperties}),
+  ...(unknownIdentityReasons===undefined?{}:{unknownIdentityReasons}),
   runId:known('run_id'),...(e.attrs.run_id_source?{runIdSource:known('run_id_source')}:{}),effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:known('eos_unit_system'),
  };
  if(!sourceEvidenceValid(evidence))throw Error('Invalid candidate source evidence.');

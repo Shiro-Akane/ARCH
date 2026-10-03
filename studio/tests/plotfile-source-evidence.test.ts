@@ -134,3 +134,29 @@ test('recorded run UUID passes writer-shaped HDF -> reader -> client evidence',a
  for(const change of [{run_id:run},{run_id:run,run_id_source:'filename'}])
   await fixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/source evidence/);},change);
 });
+
+test('recorded unknown identity reasons survive HDF reader/client without upgrading provenance',async()=>{
+ const reasons={effectiveConfigSha256:'authoritative effective-config identity not supplied to writer',
+  buildId:'authoritative Build Manifest identity not supplied to writer',
+  sourceGitHead:'authoritative source Git identity not supplied to writer'};
+ const attrs={effective_config_sha256_reason:reasons.effectiveConfigSha256,
+  build_id_reason:reasons.buildId,source_git_head_reason:reasons.sourceGitHead};
+ await fixture(async path=>{
+  const metadata=await inspectPlotfileMetadata(path);
+  assert.deepEqual(metadata.candidateSourceIdentity?.unknownIdentityReasons,reasons);
+  const audit=validatePlotfileAudit({protocolVersion:PROTOCOL_VERSION,projectId:'session',
+   relativePath:'candidate.h5',metadata},'session','candidate.h5').audit;
+  assert.deepEqual(audit.candidateSourceIdentity?.unknownIdentityReasons,reasons);
+  assert.equal(audit.renderEligible,false);
+  assert.equal(audit.candidateSourceIdentity?.buildId,null);
+ },attrs);
+ for(const unknownIdentityReasons of [{...reasons,buildId:''},{...reasons,buildId:' '},
+  {...reasons,buildId:'x'.repeat(257)},{...reasons,buildId:'bad\0reason'},
+  {buildId:'partial'},{...reasons,extra:'unexpected'}])
+  assert.equal(sourceEvidenceValid({...valid,unknownIdentityReasons}),false);
+ for(const changes of [{build_id_reason:'partial'}, {...attrs,source_git_head_reason:''},
+  {...attrs,build_id_reason:'x'.repeat(257)}])
+  await fixture(async path=>{
+   await assert.rejects(inspectPlotfileMetadata(path),/reason|metadata|source evidence/i);
+  },changes);
+});

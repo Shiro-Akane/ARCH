@@ -14,7 +14,9 @@ export function PlotfileSourceEvidence({evidence}:{evidence?:Evidence|null}){
    <dt>IdealGas gamma</dt><dd>{evidence.idealGamma??'not recorded'}</dd>
    <dt>Ordered species</dt><dd>{evidence.speciesState} · {evidence.speciesNames.join(', ')||'none recorded'}</dd>
    <dt>Run output session</dt><dd>{evidence.runId??'unknown'} · {evidence.runIdSource??'unknown'}</dd>
-   <dt>Effective config / build / source Git</dt><dd>unknown</dd>
+   {(['effectiveConfigSha256','buildId','sourceGitHead'] as const).map((key,index)=>
+    <div key={key}><dt>{['Effective config','Build Manifest','Source Git'][index]}</dt>
+     <dd>unknown · {evidence.unknownIdentityReasons?.[key]??'reason not recorded in this file'}</dd></div>)}
    <dt>Recorded unit system</dt><dd>{evidence.eosUnitSystem??'unknown'}</dd>
   </dl>
   {evidence.speciesProperties?.state==='recorded'?<details>
