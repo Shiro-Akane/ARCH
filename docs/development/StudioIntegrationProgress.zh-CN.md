@@ -2858,3 +2858,11 @@ audit文件名假设失败已修，只读复用已有输出，未重复Run；详
 真实time=0 Driver复现timing两个流/dev/full被吞没，统一六种diagnostics显式flush/close。
 Cartesian/RZ四种实际failure/recovery及旧checkpoint/repair序列化保持PASS；source/fixture身份见DriverDiagnosticClose报告/Summary。
 未改科学公式/数据，主ARCH尚未重编，regrid/CUDA真实fault注入和科学/平台出口保持待验收。
+
+
+## 2026-10-04 Driver diagnostic 主CPU接入
+
+cleanb82205e2主ARCH3步重编，ELF7d0360de…；两种真实timing/dev/full CLI均exit1，正常恢复exit0。
+既有Sod明确t=0的9fields/21checkpoint datasets保持原bits，未改science/input/budget。
+控制脚本输入名保护性停止已核实恢复，未重复build；未持久build计时以null说明，不编造。
+详见DriverDiagnosticMainCpu报告/Summary；regrid/CUDA真实故障、O7科学/平台出口仍待。

@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "sourceHead": "b82205e2c6414f2d8783063d6ff086c06f66404c",
+  "buildExitCode": 0,
+  "buildSteps": 3,
+  "beforeBinarySha256": "e75300fc607f4f6078240e2a524c5b0d6085fd0d48b811369c6eaff0729ee8fc",
+  "afterBinarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "binarySize": 7409736,
+  "parallelism": 8,
+  "buildSeconds": null,
+  "buildTimingReason": "Build passed before orchestration stopped on wrong input filename; duration not persisted, not reconstructed or rebuilt",
+  "cases": [
+    {
+      "file": "run_timings.tsv",
+      "exitCode": 1,
+      "expectedError": "cannot flush run timings",
+      "errorFound": true
+    },
+    {
+      "file": "cpu_stage_timings.tsv",
+      "exitCode": 1,
+      "expectedError": "cannot flush CPU stage timings",
+      "errorFound": true
+    }
+  ],
+  "frozenInputSha256": "f90a1050996fc3d62f4beb6ceacf41005025c440bd14d75cf1ca863033f87406",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-diagnostic-main-cpu-20261004",
+  "scope": "Existing explicitly approved CPU Sod t=0 inputs, real CLI diagnostic failures only",
+  "recovery": {
+    "exitCode": 0,
+    "comparisonDatasetCounts": {
+      "Data": 9,
+      "checkpoint": 21
+    },
+    "bitsUnchanged": true
+  }
+}
