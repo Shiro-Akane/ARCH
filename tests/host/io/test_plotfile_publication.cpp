@@ -1,6 +1,7 @@
 #include "core/files/FileFingerprint.h"
 #include "io/hdf5/HDF5Writer.h"
 #include "io/plot/PlotGridMetadata.h"
+#include "io/plot/PlotFieldMetadata.h"
 #include <highfive/H5File.hpp>
 #include <filesystem>
 #include <fstream>
@@ -96,9 +97,14 @@ int main(int argc, char** argv) {
         identity.binary_sha256=arch::core::running_executable_sha256();
         identity.raw_config_sha256="ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
         identity.case_id="Sod"; identity.eos_type="ideal"; identity.ideal_gamma=1.4;
-        identity.species_names={"test-species"};
+        identity.species_names={"test-species"}; identity.unit_system="cgs";
+        const std::map<std::string,io::PlotFieldMetadata> declarations{
+            {"DENS",io::plot_field_metadata("DENS",true)},
+            {"ENTR",io::plot_field_metadata("ENTR",true)},
+            {"species",io::plot_species_metadata()}};
+
         io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
-            cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&native,&identity);
+            cx,cy,cz,{0,0},{1,2},{{"DENS",field},{"ENTR",field},{"species",field},{"unregistered",field}},&native,&identity,&declarations);
         {
             HighFive::File f(path.string(),HighFive::File::ReadOnly);
             std::string id;
@@ -116,6 +122,28 @@ int main(int argc, char** argv) {
             std::vector<std::string> species;
             f.getDataSet("SourceIdentity/species_names").read(species);
             require(species==identity.species_names,"species ordering changed");
+            const auto attribute=[&](const std::string& dataset,const char* name) {
+                std::string value;f.getDataSet(dataset).getAttribute(name).read(value);return value;
+            };
+            require(attribute("Data/DENS","unit")=="g/cm^3","density unit missing");
+            require(attribute("Data/DENS","centering")=="cell","field centering missing");
+            require(attribute("Data/DENS","basis")=="scalar","density basis mismatch");
+            require(attribute("Data/ENTR","unit")=="unknown","ENTR falsely fixed entropy unit");
+            require(attribute("Data/ENTR","meaning")=="pressure_density_gamma1_proxy","ENTR mislabeled");
+            require(!attribute("Data/ENTR","unit_reason").empty(),"unknown unit reason absent");
+            require(attribute("Data/species","unit")=="1","dimensionless species mistaken for unknown");
+            require(attribute("Data/unregistered","unit")=="unknown","serializer inferred undeclared field");
+            f.getGroup("NativeGrid").getAttribute("measure_unit").read(id);
+            require(id==(dimension==1 ? "cm" : "cm^2"),"low-dimensional measure unit mismatch");
+            f.getGroup("NativeGrid").getAttribute("measure_normalization").read(id);
+            require(id==(dimension==1 ? "per_unit_transverse_area" : "per_unit_transverse_length"),
+                    "low-dimensional normalization mismatch");
+            f.getGroup("SourceIdentity").getAttribute("eos_unit_system").read(id);
+            require(id=="cgs","producer unit system not stored");
+            f.getGroup("Grid").getAttribute("coordinate_unit").read(id);
+            require(id=="cm","Cartesian physical coordinate unit absent");
+            f.getAttribute("time_unit").read(id);
+            require(id=="s","CGS time unit absent");
             std::vector<double> measure;
             f.getDataSet("NativeGrid/cell_measure").read(measure);
             require(measure==native.cell_measure,"stored measure differs");
@@ -129,6 +157,23 @@ int main(int argc, char** argv) {
             f.getDataSet("NativeGrid/logical_x1").read(logical);
             require(logical==std::vector<uint32_t>{0,1},"logical mapping changed");
         }
+        const auto original_digest=arch::core::file_sha256(path.string());
+        auto bad_metadata=declarations;bad_metadata["ENTR"].unit_reason.clear();
+        bool metadata_rejected=false;
+        try {
+            io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
+                cx,cy,cz,{0,0},{1,2},{{"DENS",field},{"ENTR",field},{"species",field}},&native,&identity,&bad_metadata);
+        }catch(const std::invalid_argument&){metadata_rejected=true;}
+        require(metadata_rejected,"unknown field unit without reason accepted");
+        require(arch::core::file_sha256(path.string())==original_digest,"bad metadata replaced published file");
+        auto bad_measure=native;bad_measure.normalization="total_3d_volume";
+        bool normalization_rejected=false;
+        try {
+            io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
+                cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&bad_measure);
+        }catch(const std::invalid_argument&){normalization_rejected=true;}
+        require(normalization_rejected,"3D normalization accepted for low-dimensional measure");
+        require(arch::core::file_sha256(path.string())==original_digest,"bad normalization replaced file");
         auto bad_identity=identity;bad_identity.eos_table_sha256="not-a-digest";
         bool bad_source_rejected=false;
         try {
@@ -145,6 +190,14 @@ int main(int argc, char** argv) {
         } catch(const std::invalid_argument&) { rejected=true; }
         require(rejected,"invalid native bounds accepted");
     }
+    require(io::plot_field_metadata("PRES",true).unit=="erg/cm^3","pressure unit changed");
+    require(io::plot_field_metadata("TEMP",true).unit=="K","temperature unit changed");
+    require(io::plot_field_metadata("ENER",true).meaning=="total_energy_density","energy meaning changed");
+    require(io::plot_field_metadata("ENUC",true).unit=="erg/g/s","specific burn rate unit changed");
+    require(io::plot_field_metadata("VELX",true).basis=="cartesian","Cartesian velocity basis absent");
+    require(io::plot_field_metadata("VELX",false).basis=="unknown","curved basis guessed");
+    require(arch::fields::cgs_unit("ENTR").empty(),"API assigned fixed ENTR unit");
+    require(arch::fields::cgs_unit("not-a-field").empty(),"unknown unit inferred");
     auto target = root / "candidate.h5";
     std::vector<size_t> dims{2,3,5};
     std::vector<double> x(30), y(30), z(30,0), v(30);
@@ -170,6 +223,8 @@ int main(int argc, char** argv) {
         std::vector<double> raw(30); f.getDataSet("Data/DENS").read(raw.data());
         for(size_t i=0;i<30;++i)
             require((std::isnan(v[i])&&std::isnan(raw[i]))||v[i]==raw[i],"raw value changed");
+        std::string unit;f.getDataSet("Data/DENS").getAttribute("unit").read(unit);
+        require(unit=="unknown","low-level writer inferred unit from field name");
         std::string version; f.getAttribute("plot_publication_version").read(version);
         require(version=="candidate-1","version absent");
     };

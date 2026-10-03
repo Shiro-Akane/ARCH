@@ -74,6 +74,7 @@ struct PlotSourceIdentity {
     std::string binary_sha256;
     std::string eos_type, eos_table_sha256;
     double ideal_gamma = 0.;
+    std::string unit_system;
     std::vector<std::string> species_names;
 };
 
@@ -83,6 +84,13 @@ struct PlotNativeGrid {
     std::array<std::vector<double>,3> lower, upper;
     std::vector<double> cell_measure;
     std::array<std::vector<uint32_t>,3> logical;
+    std::string measure_unit = "unknown", normalization = "unknown";
+};
+
+// Declarations come from the actual producer, not inferred by the HDF serializer.
+struct PlotFieldMetadata {
+    std::string unit = "unknown", basis = "unknown", meaning = "unknown";
+    std::string unit_reason = "producer declaration unavailable";
 };
 
 // Linux/WSL candidate: checked close, then atomic replacement. Throws on failure.
@@ -93,7 +101,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
                          const std::map<std::string, std::vector<double>>& data_map,
                          const PlotNativeGrid* native_grid = nullptr,
-                         const PlotSourceIdentity* source_identity = nullptr);
+                         const PlotSourceIdentity* source_identity = nullptr,
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata = nullptr);
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint);
 CheckpointData read_hdf5_chk_impl(const std::string& filepath);

@@ -15,6 +15,8 @@ inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
                                    int i, int j, int k) {
     if (!supports_plot_native_grid(grid))
         throw std::invalid_argument("Candidate native Plotfile geometry unsupported.");
+    output.measure_unit = grid.dim == 1 ? "cm" : "cm^2";
+    output.normalization = grid.dim == 1 ? "per_unit_transverse_area" : "per_unit_transverse_length";
     output.lower[0].push_back(grid.GetFacePosL(i));
     output.upper[0].push_back(grid.GetFacePosR(i));
     const double y_lower = grid.dim >= 2 ? grid.x2_min + (j-grid.ng)*grid.dx2 : 0.;

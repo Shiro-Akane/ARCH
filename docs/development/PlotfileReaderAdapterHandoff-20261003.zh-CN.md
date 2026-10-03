@@ -114,3 +114,13 @@ processed point 见 PlotfileNativeDesktopPoint-20261003.Summary.json。
 来源完整性和逐字段 unit/basis/meaning 仍按 missing finding 处理；ENTR 代理量、
 低维 measure normalization 以及 Cellular per-cell bounds 舍入 finding 继续由维护者 review。
 原始 H5/plt/checkpoint 留本机；本地分支尚未 push，不能将该 SHA 描述成远端可访问交付。
+
+## 字段声明增量（本地待 review）
+
+后续新增 producer-supplied dataset attrs，详见 PlotfileFieldDeclarations-20261003.zh-CN.md：
+/Data/<field> 的 unit/centering/basis/meaning/unit_reason；
+NativeGrid 的 measure_unit/measure_normalization；
+CGS SourceIdentity.eos_unit_system、time_unit 和 Grid.coordinate_unit。
+这不 retroactively 改写上述 t=0 文件；旧文件仍保持 missing finding。
+新声明已完成 synthetic writer 与 checkpoint scoped regression，尚未重链生产 ARCH
+或生成新的 t=0 对照，不能代替生产科学验收。

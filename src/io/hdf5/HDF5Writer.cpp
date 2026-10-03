@@ -204,7 +204,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
                          const std::map<std::string, std::vector<double>>& data_map,
                          const PlotNativeGrid* native_grid,
-                         const PlotSourceIdentity* source_identity)
+                         const PlotSourceIdentity* source_identity,
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata)
 {
     if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
         || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
@@ -236,12 +237,30 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                     throw std::invalid_argument("Invalid native cell bounds.");
             }
         }
+        if ((native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
+            && (native_grid->measure_unit!=(dim==1 ? "cm" : "cm^2")
+                || native_grid->normalization!=(dim==1 ? "per_unit_transverse_area" : "per_unit_transverse_length")))
+            throw std::invalid_argument("Invalid native measure declaration.");
         for (double measure : native_grid->cell_measure)
             if (!std::isfinite(measure) || measure <= 0.)
                 throw std::invalid_argument("Invalid native cell measure.");
     }
+    if (field_metadata) {
+        const auto text_ok=[](const std::string& v) {
+            return !v.empty() && v.size()<=256 && v.find(char(0))==std::string::npos;
+        };
+        for (const auto& [name,m] : *field_metadata) {
+            if (!data_map.contains(name) || !text_ok(m.unit) || !text_ok(m.basis)
+                || !text_ok(m.meaning) || m.unit_reason.size()>256
+                || m.unit_reason.find(char(0))!=std::string::npos
+                || (m.unit=="unknown" && m.unit_reason.empty()))
+                throw std::invalid_argument("Invalid plot field metadata.");
+        }
+    }
     if (source_identity) {
         const auto& id=*source_identity;
+        if (!id.unit_system.empty() && id.unit_system!="cgs")
+            throw std::invalid_argument("Unsupported plot unit system.");
         const auto text_ok=[](const std::string& text) {
             return text.size()<=128 && text.find(char(0))==std::string::npos;
         };
@@ -283,6 +302,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         file.createAttribute("time", current_time);
         file.createAttribute("dim", dim);
         file.createAttribute("geometry", geom);
+        file.createAttribute("time_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "s" : "unknown"));
 
         {
         file.createAttribute("plot_publication_version", std::string("candidate-1"));
@@ -292,6 +312,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         file.createAttribute("plot_identity_state", std::string("unknown"));
         Group grid_group = file.createGroup("Grid");
         Group data_group = file.createGroup("Data");
+        grid_group.createAttribute("coordinate_basis",std::string("cartesian"));
+        grid_group.createAttribute("coordinate_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "cm" : "unknown"));
 
         grid_group.createDataSet("x", coord_x);
         grid_group.createDataSet("y", coord_y);
@@ -323,8 +345,9 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             identity.createAttribute("species_count",static_cast<int>(id.species_names.size()));
             if(!id.species_names.empty())identity.createDataSet("species_names",id.species_names);
             for(const char* name:{"run_id","effective_config_sha256",
-                 "build_id","source_git_head","eos_unit_system"})
+                 "build_id","source_git_head"})
                 identity.createAttribute(name,std::string("unknown"));
+            identity.createAttribute("eos_unit_system",id.unit_system.empty()?std::string("unknown"):id.unit_system);
         }
 
         if (native_grid) {
@@ -337,7 +360,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             native.createAttribute("measure_source", std::string("GridMetrics::CellVolume"));
             native.createAttribute("measure_convention",
                 std::string("active-coordinate-product; inactive-measures-omitted"));
-            native.createAttribute("measure_unit", std::string("unknown"));
+            native.createAttribute("measure_unit", native_grid->measure_unit);
+            native.createAttribute("measure_normalization", native_grid->normalization);
             native.createAttribute("logical_identity",
                 std::string("file-local level/logical_x1/logical_x2/logical_x3"));
             for (size_t axis = 0; axis < 3; ++axis) {
@@ -352,6 +376,16 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         for (const auto& [name, buffer] : data_map) {
             DataSet ds = data_group.createDataSet<double>(name, DataSpace(dims));
             ds.write_raw(buffer.data());
+            PlotFieldMetadata metadata;
+            if (field_metadata) {
+                if (const auto it=field_metadata->find(name);it!=field_metadata->end()) metadata=it->second;
+            }
+            ds.createAttribute("metadata_version",std::string("candidate-field-1"));
+            ds.createAttribute("unit",metadata.unit);
+            ds.createAttribute("centering",std::string("cell"));
+            ds.createAttribute("basis",metadata.basis);
+            ds.createAttribute("meaning",metadata.meaning);
+            if (!metadata.unit_reason.empty()) ds.createAttribute("unit_reason",metadata.unit_reason);
         }
 
         }

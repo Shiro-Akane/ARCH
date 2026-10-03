@@ -11,6 +11,7 @@
 #include "api/Configuration.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "grid/Grid.h"
+#include "data/FieldUnits.h"
 
 namespace arch::api {
 using detail::Json;
@@ -22,15 +23,7 @@ std::string UnitSystem(const SimConfig& config) {
 std::string FieldUnit(const std::string& key, const std::string& system) {
     if (system == "unknown") return {};
     if (system != "cgs") return {};
-    if (key == "DENS") return "g/cm^3";
-    if (key == "TEMP") return "K";
-    if (key == "PRES") return "erg/cm^3";
-    if (key == "ENER") return "erg/cm^3";
-    if (key == "GPOT") return "cm^2/s^2";
-    if (key == "GACX" || key == "GACY" || key == "GACZ") return "cm/s^2";
-    if (key == "EINT") return "erg/g";
-    if (key == "VELX" || key == "VELY" || key == "VELZ") return "cm/s";
-    return {};
+    return std::string(arch::fields::cgs_unit(key));
 }
 std::string AxisUnit(const std::string& label, const std::string& system) {
     if (label == "phi" || label == "phi_cy" || label == "theta") return "rad";

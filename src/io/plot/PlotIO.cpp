@@ -27,6 +27,7 @@
 #include "io/IO.h"
 #include "core/files/FileFingerprint.h"
 #include "io/plot/PlotGridMetadata.h"
+#include "io/plot/PlotFieldMetadata.h"
 #include "io/hdf5/HDF5Writer.h"
 
 namespace fs = std::filesystem;
@@ -225,6 +226,9 @@ void write_plt(amr::AMRControl &amr_ctrl,
     if (vars.vort || vars.divv) {
         extract_velocity_diagnostics(vars.vort, vars.divv);
     }
+    std::map<std::string, io::PlotFieldMetadata> field_metadata;
+    for (const auto& [name, values] : data_map)
+        field_metadata.emplace(name, io::plot_field_metadata(name, geom == "cartesian"));
     std::vector<int> selected_species;
     if (vars.species) {
         for (int species = 0; species < specs.count(); ++species) selected_species.push_back(species);
@@ -242,6 +246,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
     }
     for (const int species : selected_species) {
         const std::string& var_name = specs.get_name(species);
+        field_metadata[var_name] = io::plot_species_metadata();
         extract_and_store(var_name, [species](const FluidState &s, int idx) {
             return s.X(species, idx);
         });
@@ -255,6 +260,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
     }
     io::PlotSourceIdentity source_identity;
+    source_identity.unit_system = "cgs";
     source_identity.binary_sha256 = arch::core::running_executable_sha256();
     if (const auto input = config.LoadedInput()) {
         source_identity.case_id = input->case_id;
@@ -267,5 +273,5 @@ void write_plt(amr::AMRControl &amr_ctrl,
         source_identity.ideal_gamma = runtime_provenance->ideal_gamma;
         source_identity.species_names = runtime_provenance->species_names;
     }
-    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity);
+    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity, &field_metadata);
 }
