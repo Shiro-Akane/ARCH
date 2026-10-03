@@ -2050,3 +2050,19 @@ StudioNativeStalledPreviewClose.zh-CN.md/Summary.json记录准确边界；
 active AMR close/保存矩阵和完整3C仍待完成。当前窗口已关闭，无Run/Build/Save/
 Core改动/CUDA，不重复234项通过检查，只执行report JSON/diff check；
 raw证据留ignored目录，无push/tag/main merge/full-model/JENS/RZ advance。
+
+## 原生 CPU Configure 验收通过
+
+2026-10-03，1fca3381 clean；对照联合计划第4.2、5节补齐原生Configure证据。
+Linux正式entry/production窗口19270674，Host-owned studio-cpu-release，
+原生Configure一次，operation c160d385-b4bc-4ea6-ad67-0a1671486fbd succeeded/exit0；
+捕获running及完成，原生Show terminal显示真实CMake输出。
+Release/Ninja/source root当前集成工程/CUDA OFF；缓存、CMakeLists/Presets、
+保存Sod输入及binary SHA/size/mtime均未变，故不重复Build。
+freshness-unknown/dependenciesComplete=false保留，不冒充clean编译或current。
+
+报告StudioNativeConfigureUat.zh-CN.md/Summary.json；full File API inputs/events
+留ignored目录。Hide drawer可能晚于任务完成，不扩大原生active-hide覆盖。
+当前窗口与Host仍运行。无产品/Core修改、Run/Save/CUDA，不重复234项检查；
+仅JSON/diff-check，无push/tag/main merge。仍收尾3C文件及生命周期出口，
+不将额外自然初始化时序测试自动升级为新的科学前置。

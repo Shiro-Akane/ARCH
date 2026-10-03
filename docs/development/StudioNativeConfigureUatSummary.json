@@ -1,0 +1,81 @@
+{
+  "sourceCommit": "1fca3381f039a83d2c3ae71ec79e6e4d950ef25c",
+  "scope": "native Linux/WSL production CPU Configure; not clean Build or CUDA",
+  "status": "PASS",
+  "operationId": "c160d385-b4bc-4ea6-ad67-0a1671486fbd",
+  "profileId": "studio-cpu-release",
+  "state": "succeeded",
+  "exitCode": 0,
+  "host": {
+    "pid": 76933,
+    "startTicks": "1038120",
+    "ppid": 76887,
+    "origin": "http://127.0.0.1:43419"
+  },
+  "configurationEvidence": {
+    "kind": "cmake-configuration-inputs",
+    "version": 1,
+    "sourceRoot": "/home/arch/projects/ARCH-compute-optim",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+    "replySha256": "14773cababf81a97b3a6989d495fce0dc6a33d2a206b13d02a56c23d9d7b3e96",
+    "inputCount": 82,
+    "dependenciesComplete": false,
+    "missingCoverage": [
+      "compiler-includes",
+      "link-inputs",
+      "toolchain-identity"
+    ]
+  },
+  "stateEvents": [
+    {
+      "sequence": 17,
+      "timestamp": "2026-10-03T06:37:56.452Z",
+      "kind": "state",
+      "state": "succeeded"
+    }
+  ],
+  "filesUnchanged": true,
+  "filesAfter": {
+    "build-studio-cpu/CMakeCache.txt": {
+      "sha256": "e158bad7aa7ccac786afab6cd26a29a9d46e8f5240de78efabd948d182477844",
+      "mtimeNs": 1790913717585306334,
+      "size": 21327
+    },
+    "build-studio-cpu/bin/ARCH": {
+      "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+      "mtimeNs": 1791000710885251414,
+      "size": 7177152
+    },
+    "CMakeLists.txt": {
+      "sha256": "52a5bf91cccb8265b5f060375b148f29cb20ad3f0893c021b2a349aee8d1a139",
+      "mtimeNs": 1790826929476846051,
+      "size": 1404
+    },
+    "CMakePresets.json": {
+      "sha256": "c848363aacbc2df10e0f1cd4f7f9d11e5f50136df282b638f5d0002fc1b57369",
+      "mtimeNs": 1790826929476846051,
+      "size": 1580
+    },
+    "studio/.local/integration/native-active-close-direct-0fffcf94-cea7-42b8-b360-c87397bc7d4d/Sod.par": {
+      "sha256": "9edb45ef29ce5bbf371f9145f5bc1dbb051ee31563472aaee865e159e59b3d16",
+      "mtimeNs": 1791008090419199113,
+      "size": 1262
+    }
+  },
+  "cache": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "ARCH_ENABLE_CUDA": false,
+    "CMAKE_GENERATOR": "Ninja",
+    "ARCH_EMIT_LINK_DEPENDENCIES": true
+  },
+  "binaryStateAfter": "freshness-unknown",
+  "nativeObservations": [
+    "Configure clicked once",
+    "Configuring/running and Cancel Configure shown",
+    "Configure succeeded",
+    "Show terminal displays real CMake output"
+  ],
+  "drawerHideScope": "task may have completed before Hide terminal; no claim to native hide-during-active coverage",
+  "noRunOrSave": true,
+  "noBuildRequired": "CMakeCache, input/binary fingerprints and metadata unchanged; no automatic rebuild performed"
+}
