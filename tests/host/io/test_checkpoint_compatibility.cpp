@@ -769,6 +769,79 @@ void test_host_restart(const std::filesystem::path& directory)
     reject_unchanged(identity, "incompatible spatial dimension");
 }
 
+void test_native_rz_checkpoint(const std::filesystem::path& directory)
+{
+    SimConfig config;
+    config.grid.dim = 2;
+    config.grid.geometry = "cylindrical";
+    config.grid.nblockx1 = 1;
+    config.grid.nblockx2 = 1;
+    config.grid.nblockx3 = 0;
+    config.grid.amr_max_blocks = 4;
+    config.io.out_dir = (directory / "native-rz").string();
+    config.io.base_name = "rz";
+    const auto species = make_species();
+    const auto provenance = io::inspect_checkpoint_provenance(
+        config, species, EosId::Ideal, false, "none", false);
+    amr::AMRControl source(config.grid.amr_max_blocks, 2);
+    source.tree->InitRootGrid(config, species.count());
+    auto& block = source.pool->GetBlock(source.tree->GetActiveBlocks().front());
+    auto& fluid = block.fluid_state;
+    const auto& grid = block.grid;
+    for (int j=grid.Js(); j<grid.Je(); ++j)
+        for (int i=grid.Is(); i<grid.Ie(); ++i) {
+            const int c=grid.GetIndex(i,j,grid.Ks());
+            fluid.rho[c]=2.;
+            fluid.mom_u[c]=.1;
+            fluid.mom_v[c]=.2;
+            fluid.mom_w[c]=.3;
+            fluid.eng[c]=100.;
+            fluid.enuc_rate[c]=-.5;
+            fluid.X(0,c)=.25;
+            fluid.X(1,c)=.75;
+        }
+    arch::state::RepairBudget repairs;
+    repairs.reset(species.count());
+    write_chk(source, 3, 4, 7, .25, .01, .02, true,
+              config, species, provenance, repairs, {1,"axisymmetric-rz"});
+    const auto file = directory / "native-rz/rz_chk_0003.h5";
+    const auto payload=io::read_hdf5_chk_impl(file.string());
+    expect(payload.geometry_identity.revision==1 &&
+           payload.geometry_identity.chart=="axisymmetric-rz",
+           "native writer lost explicit RZ identity");
+    amr::AMRControl restored(config.grid.amr_max_blocks,2);
+    RunState state;
+    read_chk(file.string(), restored, state, config, species, provenance,
+             {1,"axisymmetric-rz"});
+    const auto& rb=restored.pool->GetBlock(restored.tree->GetActiveBlocks().front());
+    for (int j=rb.grid.Js(); j<rb.grid.Je(); ++j)
+        for (int i=rb.grid.Is(); i<rb.grid.Ie(); ++i) {
+            const int c=rb.grid.GetIndex(i,j,rb.grid.Ks());
+            expect(rb.fluid_state.rho[c]==2. && rb.fluid_state.mom_u[c]==.1 &&
+                   rb.fluid_state.mom_v[c]==.2 && rb.fluid_state.mom_w[c]==.3 &&
+                   rb.fluid_state.eng[c]==100. && rb.fluid_state.enuc_rate[c]==-.5 &&
+                   rb.fluid_state.X(0,c)==.25 && rb.fluid_state.X(1,c)==.75,
+                   "native RZ checkpoint restore changed original FP64 state");
+        }
+    expect(state.time==.25 && state.step==7 && state.chk_idx==3 &&
+           state.plt_idx==4 && state.dt_old==.01 && state.dt_burn==.02 &&
+           state.resume_after_regrid, "native RZ controller changed");
+    const auto digest=arch::core::file_sha256(file.string());
+    expect_rejected([&] { write_chk(source,3,4,7,.25,.01,.02,true,
+        config,species,provenance,repairs,{2,"axisymmetric-rz"}); },
+        "native writer accepted future chart revision");
+    expect(arch::core::file_sha256(file.string())==digest,
+           "rejected native writer changed previous output");
+    auto invalid=config;
+    invalid.grid.geometry="cartesian";
+    invalid.io.out_dir=(directory/"invalid-rz").string();
+    expect_rejected([&] { write_chk(source,3,4,7,.25,.01,.02,true,
+        invalid,species,provenance,repairs,{1,"axisymmetric-rz"}); },
+        "native writer accepted Cartesian RZ chart");
+    expect(!std::filesystem::exists(invalid.io.out_dir),
+           "invalid geometry created output directory");
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -795,6 +868,7 @@ int main(int argc, char** argv)
         test_hdf5_round_trip(directory);
         test_native_composition(directory);
         test_host_restart(directory);
+        test_native_rz_checkpoint(directory);
         std::cout << "checkpoint compatibility tests passed\n";
         return 0;
     } catch (const std::exception& error) {

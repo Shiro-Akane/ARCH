@@ -70,7 +70,8 @@ void write_chk(amr::AMRControl &amr_ctrl,
                bool resume_after_regrid,
                const SimConfig &config, const SpeciesManager &specs,
                const io::CheckpointProvenance &provenance,
-               const arch::state::RepairBudget &repairs = arch::state::RepairBudget{});
+               const arch::state::RepairBudget &repairs = arch::state::RepairBudget{},
+               const io::CheckpointGeometryIdentity &geometry_identity = {1, "existing"});
 
 // Checkpoint input for restart.
 void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,

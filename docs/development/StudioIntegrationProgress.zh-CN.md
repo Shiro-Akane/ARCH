@@ -2729,3 +2729,7 @@ Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-A
 
 ## 2026-10-04 RZ checkpoint geometry identity
 独立 revision/chart 保护已接入 HDF 与 Host read_chk；旧二维 cylindrical 文件不能按 RZ 恢复。checkpoint_compatibility scoped PASS，公共 RZ write/restart 尚未完成。见 RZCheckpointIdentity-20261004.zh-CN.md。未 push/tag。
+
+
+## 2026-10-04 native RZ checkpoint writer binding
+DriverIO 传递 Runtime profile，write_chk 写前校验并记录几何身份。实际二维 native FP64/controller roundtrip scoped PASS；DriverIO CPU TU 编译成功。公共 dispatch/restart/evolution 未因此完成。见 RZCheckpointWriter-20261004.zh-CN.md 与 Summary.json。未 push/tag。

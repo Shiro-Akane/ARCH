@@ -46,8 +46,11 @@ void write_chk(amr::AMRControl &amr_ctrl,
                bool resume_after_regrid,
                const SimConfig &config, const SpeciesManager &specs,
                const io::CheckpointProvenance &provenance,
-               const arch::state::RepairBudget &repairs)
+               const arch::state::RepairBudget &repairs,
+               const io::CheckpointGeometryIdentity &geometry_identity)
 {
+    io::require_checkpoint_geometry_compatible(config.grid.dim, config.grid.geometry,
+                                               geometry_identity, geometry_identity);
     if (!fs::exists(config.io.out_dir)) fs::create_directories(config.io.out_dir);
 
     std::ostringstream filename;
@@ -71,6 +74,7 @@ void write_chk(amr::AMRControl &amr_ctrl,
     checkpoint.plt_file_index = plt_file_index;
     checkpoint.dim = dim;
     checkpoint.geometry = config.grid.geometry;
+    checkpoint.geometry_identity = geometry_identity;
     checkpoint.cells_per_block = cells_per_block;
     checkpoint.has_timestep_state = true;
     checkpoint.resume_after_regrid = resume_after_regrid;

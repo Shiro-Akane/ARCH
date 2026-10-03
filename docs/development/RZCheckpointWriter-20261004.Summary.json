@@ -1,0 +1,19 @@
+{
+  "baseline": "287b0c8c15876a15551496ef3d95228d5d11d697",
+  "scope": "Native 2D checkpoint writer/readback and actual DriverIO translation-unit compile; no evolution",
+  "driverCompileExitCode": 0,
+  "checkpointTest": "PASS 1/1; 0.15 s",
+  "sources": {
+    "src/driver/io/DriverIO.cpp": "078b2ffb251a9b380c62e81e3c99e0d680c04f61b56efeadefa5a1b57f843ef2",
+    "src/io/IO.h": "449a78cb9410c9b321870de5c66faa8f2f5b4480d6263048006e3d812bda2405",
+    "src/io/chk/ChkIO.cpp": "544132f085348d795d047684fed53b9021cfebfeccca650bae0a87e180b6d808",
+    "src/io/chk/CheckpointGeometryIdentity.h": "32cf1e3378bf5511f23d2cd4062ad89738d630ab9e2c6258dfc7447a9cd992b6",
+    "tests/host/io/test_checkpoint_compatibility.cpp": "1307934a3edb48ae60d22489c35afab032b6415d608e440a05f4ee517063d6b3"
+  },
+  "limitations": [
+    "No linked Driver checkpoint runtime exercise",
+    "No public RZ dispatch/restart enabled",
+    "No RZ evolution or scientific acceptance",
+    "No CUDA validation"
+  ]
+}

@@ -82,10 +82,16 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
     if (runtime.backend())
         runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
+    const auto semantics = runtime.geometry_semantics();
+    io::CheckpointGeometryIdentity geometry_identity{1, "existing"};
+    if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
+        geometry_identity.chart = "axisymmetric-rz";
+    else if (semantics != GridMetrics::GeometrySemantics::Existing)
+        throw std::runtime_error("Unsupported runtime checkpoint geometry profile");
     write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index,
               ctrl.step_count, ctrl.t_current, ctrl.dt_old,
               dt_burn_global, resume_after_regrid, config, specs,
-              checkpoint_provenance, ctrl.repairs);
+              checkpoint_provenance, ctrl.repairs, geometry_identity);
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
