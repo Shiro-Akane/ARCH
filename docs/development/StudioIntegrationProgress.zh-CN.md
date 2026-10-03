@@ -1657,3 +1657,26 @@ See O7ArchitectureAuditMigrationReview.zh-CN.md for exact evidence, bounded
 proposal and negative mutation requirements. Automatic approval rejected applying
 the audit/test update; no rule/test/source/CMake file was changed. Await explicit
 confirmation of that proposal. No new simulation/build/raw upload/push/tag.
+
+## O7.0 pi/two_pi shared authority
+
+Four consumers now include existing PhysicalConstants.h:
+ControlRelations, CoordinateSeamPlan, CartesianPoisson, CompositePoisson.
+Geometry/seam/Poisson formulas and all thresholds unchanged; independent test
+oracles retain their own constants. g++13.3 strict flags, FE_TONEAREST probe:
+old/runtime acos(-1) and shared pi exact bits400921fb54442d18;
+old2*pi and shared two_pi exact bits401921fb54442d18. Other rounding modes/CUDA
+are not certified by this probe.
+
+Six affected CPU targets incrementally built at28 concurrency with memory guard:
+6.032s, minimum available21427488KiB, peak ownedRSS1539016KiB, swap0, no stop.
+Eight existing configuration/constants/AMR/uniform+composite Poisson tests PASS,
+including analytic references; original budgets unchanged. O7PiAuthoritySummary.json
+records identities, scope and local logs. No new simulation/scientific output.
+
+Architecture audit repeated because new production includes affect its scope:
+still FAIL with exactly the two previously recorded failures, no additional issue.
+Rules/tests/CMake unchanged; migration approval pending. Managed Studio ARCH binary
+not refreshed, and prior Run/Preview evidence remains tied to its prior binary.
+Do not claim full Core CPU/CUDA/3C or scientific acceptance from these8 tests.
+No push/tag, raw upload or historical G input migration.

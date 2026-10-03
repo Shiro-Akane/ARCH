@@ -15,6 +15,7 @@
 #include <string_view>
 #include "amr/topology/Morton.h"
 #include "driver/dispatch/PolicyDescriptor.h"
+#include "physics/constant/PhysicalConstants.h"
 
 namespace arch::config::relations {
 inline bool AtLeast(double value, double lower) { return value >= lower; }
@@ -68,7 +69,7 @@ void CheckGravityTopology(const GravityTopology& g, Report report) {
                    std::vector<std::string>{"gravity_type", "geometry"});
         if (g.dimension && *g.dimension > 1) {
             const int azimuth = *g.dimension - 1;
-            const double turn = 2.0 * std::acos(-1.0);
+            const double turn = arch::constants::math::two_pi;
             if (g.lower[azimuth] && g.upper[azimuth]
                 && !(std::abs((*g.upper[azimuth] - *g.lower[azimuth]) - turn)
                      <= 64.0 * std::numeric_limits<double>::epsilon() * turn))
@@ -76,7 +77,7 @@ void CheckGravityTopology(const GravityTopology& g, Report report) {
                        "Curvilinear gravity requires a full azimuthal turn.",
                        std::vector<std::string>{"geometry", azimuth == 1 ? "x2_min" : "x3_min"});
             if (*g.geometry == "spherical" && *g.dimension == 3) {
-                const double pi = std::acos(-1.0);
+                const double pi = arch::constants::math::pi;
                 if (g.lower[1] && g.upper[1]
                     && !(*g.lower[1] >= 0.0 && *g.upper[1] <= pi))
                     report("x2_min", "Spherical polar bounds must remain within [0,pi].",

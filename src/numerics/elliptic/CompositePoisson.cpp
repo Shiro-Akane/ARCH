@@ -22,6 +22,7 @@
 #include "numerics/elliptic/CompositePoisson.h"
 
 #include "core/CompensatedSum.h"
+#include "physics/constant/PhysicalConstants.h"
 #include "grid/GridMetrics.h"
 #include "numerics/linalg/DenseWrap.h"
 
@@ -51,7 +52,7 @@ CompositeBoundary resolve_boundary(const EllipticMesh& mesh,BoundaryKind kind) {
             const bool spherical=mesh.geometry==Geometry::Spherical;
             const double polar_high=mesh.origin[1]+mesh.cells[1]*mesh.spacing[1];
             result.sides[2]=spherical && mesh.origin[1]==0. ? FaceBoundaryKind::Neumann : FaceBoundaryKind::Dirichlet;
-            result.sides[3]=spherical && std::abs(polar_high-std::acos(-1.))<1e-14
+            result.sides[3]=spherical && std::abs(polar_high-arch::constants::math::pi)<1e-14
                 ? FaceBoundaryKind::Neumann : FaceBoundaryKind::Dirichlet;
         }
         const int azimuth=mesh.dimension-1;

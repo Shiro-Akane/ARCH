@@ -31,6 +31,7 @@
 #include "amr/exchange/CoordinateSeamMath.h"
 #include "amr/storage/Block.h"
 #include "amr/storage/MemoryPool.h"
+#include "physics/constant/PhysicalConstants.h"
 
 namespace amr {
 
@@ -45,7 +46,7 @@ inline std::array<double, 3> regular_position(
     std::array<double, 3> point, int dimension, bool spherical,
     double phi_lower, double phi_width, std::array<std::int8_t, 3>& signs)
 {
-    const double pi = std::acos(-1.);
+    const double pi = arch::constants::math::pi;
     const int azimuth = dimension - 1;
     // Across r=0: (r,phi) -> (-r,phi+pi); for a sphere also
     // (theta,phi) -> (pi-theta,phi+pi). Basis signs follow those maps.
@@ -148,7 +149,7 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
     if (first.geometry != "cylindrical" && first.geometry != "spherical")
         return plan;
     const bool spherical = first.geometry == "spherical";
-    const double pi = std::acos(-1.);
+    const double pi = arch::constants::math::pi;
     std::array<double, 3> lower{
         std::numeric_limits<double>::infinity(),
         std::numeric_limits<double>::infinity(),

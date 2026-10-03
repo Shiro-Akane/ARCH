@@ -1,0 +1,75 @@
+{
+  "scope": "O7.0 pi/two_pi single authority, CPU only",
+  "preChangeSourceHEAD": "698ededdcd4762a6375bf970fde00eeddf31e272",
+  "workingTree": "four listed production consumers changed at test execution",
+  "probe": {
+    "sourceHEAD": "698ededdcd4762a6375bf970fde00eeddf31e272",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "flags": [
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off"
+    ],
+    "rounding": "FE_TONEAREST",
+    "piAndTwoPiBits": [
+      "400921fb54442d18",
+      "400921fb54442d18",
+      "401921fb54442d18",
+      "401921fb54442d18"
+    ],
+    "exactEquality": true,
+    "localProbe": "studio/.local/integration/pi-rounding-probe-579e1e13-6da2-42f3-a45c-29428e64ab30"
+  },
+  "changedInputs": {
+    "src/core/config/ControlRelations.h": "ef7565ff47d733951b11554ad59dd2d42c651153d9c1f70f2a5b60ae9097f809",
+    "src/amr/exchange/CoordinateSeamPlan.h": "bebd46f22abc0a483f1eddb26b270fcd05205cf07e98530e335cf6b3c5abbb19",
+    "src/numerics/elliptic/CartesianPoisson.cpp": "1bd46ae06c8453a48a1240ed6b6ee9ffe4d1eee192b1cf6fdf6e7e059fbc1da7",
+    "src/numerics/elliptic/CompositePoisson.cpp": "8ff50a51c29d848ea958e40a0a70e89c859864c65c0e55c603c73b0bbc6084b9"
+  },
+  "build": {
+    "targets": 6,
+    "parallel": 28,
+    "elapsedSeconds": 6.032,
+    "minimumAvailableKiB": 21427488,
+    "peakOwnedRSSKiB": 1539016,
+    "peakSwapKiB": 0,
+    "guardStopped": false
+  },
+  "tests": {
+    "selected": [
+      "input_resolution",
+      "configuration_input",
+      "physical_constants",
+      "amr_operation_plans",
+      "poisson_multigrid_contract",
+      "poisson_multigrid_analytic",
+      "composite_poisson_analytic",
+      "composite_poisson_contract"
+    ],
+    "passed": 8,
+    "failed": 0,
+    "seconds": 6.23
+  },
+  "architectureAudit": {
+    "state": "FAIL",
+    "exitCode": 1,
+    "failures": [
+      "audit: protected mainline authority changed: src/core/config/RuntimeParams.h",
+      "audit: OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+    ],
+    "rulesUnchanged": true,
+    "approvalPending": true
+  },
+  "notValidated": [
+    "CUDA",
+    "new scientific evolution",
+    "full 67 CTest inventory",
+    "managed ARCH binary refresh",
+    "user-visible desktop acceptance"
+  ],
+  "localLogs": [
+    "studio/.local/integration/o7-pi-consumers-build.log",
+    "studio/.local/integration/o7-pi-consumers-ctest.log"
+  ]
+}
