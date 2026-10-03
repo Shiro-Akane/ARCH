@@ -743,6 +743,91 @@ void test_e0_e1_boundary_completion_contract()
         [](StateSlot, StateVersion, CompletionToken token) { return token; },
         {2}, "pending transfer allowed ghost publication");
 }
+
+void test_rz_physical_boundary()
+{
+    static_assert(static_cast<int>(BoundaryType::RzAxis)==4);
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    SimConfig config{};
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.x1_min=0.;config.grid.x1_max=2.;
+    config.grid.x2_min=-.5;config.grid.x2_max=.5;
+    config.grid.x1l_boundary_type="reflecting";config.grid.x1r_boundary_type="outflow";
+    config.grid.x2l_boundary_type="reflecting";config.grid.x2r_boundary_type="outflow";
+    BCHandler boundary(config,rz);
+    Grid grid(amr::MAX_NG,0.,1.,-.5,.5,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+    FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(2);
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const int cell=grid.GetIndex(i,j,0);const double code=i+100.*j;
+        state.set(cell,{100.+code,3.+code,5.+2.*code,7.+3.*code,100000.+code});
+        state.enuc_rate[cell]=9.+4.*code;state.X(0,cell)=.25;state.X(1,cell)=.75;
+    }
+    const int signed_zero=grid.GetIndex(grid.Is(),grid.Js()+1,0);
+    state.mom_u[signed_zero]=0.;state.mom_w[signed_zero]=-0.;
+    const auto before=state;
+    const auto& axis_plan=boundary.logical_plan(grid);
+    require(axis_plan.input().faces[0]==BoundaryType::RzAxis,"r=0 patch lost axis rule");
+    require(axis_plan.fingerprint()!=boundary.logical_plan().fingerprint(),
+        "RZ axis has normal reflection fingerprint");
+    boundary.apply(state,grid);
+    const auto bits=[](double value){return std::bit_cast<std::uint64_t>(value);};
+    std::size_t checked=0;
+    const auto check=[&](int destination,int source,int radial,int axial,int phi) {
+        require(bits(state.rho[destination])==bits(before.rho[source]),"RZ BC scalar donor");
+        require(bits(state.eng[destination])==bits(before.eng[source]),"RZ BC energy donor");
+        require(bits(state.enuc_rate[destination])==bits(before.enuc_rate[source]),"RZ BC ENUC donor");
+        require(bits(state.mom_u[destination])==bits(radial*before.mom_u[source]),"RZ BC radial parity");
+        require(bits(state.mom_v[destination])==bits(axial*before.mom_v[source]),"RZ BC axial parity");
+        require(bits(state.mom_w[destination])==bits(phi*before.mom_w[source]),"RZ BC phi parity");
+        for(int species=0;species<2;++species)
+            require(bits(state.X(species,destination))==bits(before.X(species,source)),
+                "RZ BC composition donor");
+        ++checked;
+    };
+    for(int d=1;d<=grid.ng;++d)for(int j=grid.Js();j<grid.Je();++j) {
+        check(grid.GetIndex(grid.Is()-d,j,0),grid.GetIndex(grid.Is()+d-1,j,0),-1,1,-1);
+        check(grid.GetIndex(grid.Ie()-1+d,j,0),grid.GetIndex(grid.Ie()-1,j,0),1,1,1);
+    }
+    for(int d=1;d<=grid.ng;++d)for(int i=grid.Is();i<grid.Ie();++i) {
+        check(grid.GetIndex(i,grid.Js()-d,0),grid.GetIndex(i,grid.Js()+d-1,0),1,-1,1);
+        check(grid.GetIndex(i,grid.Je()-1+d,0),grid.GetIndex(i,grid.Je()-1,0),1,1,1);
+    }
+    for(int dr=1;dr<=grid.ng;++dr)for(int dz=1;dz<=grid.ng;++dz)
+        check(grid.GetIndex(grid.Is()-dr,grid.Js()-dz,0),
+            grid.GetIndex(grid.Is()+dr-1,grid.Js()+dz-1,0),-1,-1,-1);
+    // Only actual r=0 is regular axis: a non-axis patch must keep the user's BC.
+    Grid interior=grid;interior.x1_min=1.;interior.x1_max=2.;
+    auto actual=before,legacy=before;
+    boundary.apply(actual,interior);BCHandler(config).apply(legacy,interior);
+    require(state_hash(actual,false)==state_hash(legacy,false),"RZ applied axis to non-axis patch");
+    require(boundary.logical_plan(interior).input().faces[0]==BoundaryType::Reflecting,
+        "non-axis lower boundary became axis");
+    auto nonzero=config;nonzero.grid.x1_min=1.;
+    BCHandler nonzero_boundary(nonzero,rz);
+    auto nonzero_state=before;nonzero_boundary.apply(nonzero_state,interior);
+    require(state_hash(nonzero_state,false)==state_hash(legacy,false),
+        "nonzero domain lower BC changed");
+    const auto unchanged=state_hash(before,false);
+    auto invalid=grid;invalid.geometry="cartesian";
+    auto invalid_state=before;
+    require_rejected([&]{boundary.apply(invalid_state,invalid);},"RZ BC accepted wrong chart");
+    require(state_hash(invalid_state,false)==unchanged,"invalid RZ BC wrote state");
+    require_rejected([&]{nonzero_boundary.apply(invalid_state,grid);},
+        "non-axis profile accepted r=0 patch");
+    require(state_hash(invalid_state,false)==unchanged,"mismatched axis profile wrote state");
+    auto bad_config=config;bad_config.grid.x1l_boundary_type="periodic";
+    require_rejected([&]{(void)BCHandler(bad_config,rz);},"radial periodic became RZ axis");
+    for(int slot:{1,2,3}) {
+        auto input=two_dimensional_input();input.faces[slot]=BoundaryType::RzAxis;
+        require_rejected([&]{(void)make_boundary_plan(input);},"misplaced RZ axis accepted");
+    }
+    auto input=one_dimensional_input();input.faces[0]=BoundaryType::RzAxis;
+    require_rejected([&]{(void)make_boundary_plan(input);},"1D accepted RZ axis");
+    std::cout<<"RZ_PHYSICAL_BC checked_ghost_cells="<<checked
+        <<" legacy_fingerprints_preserved=1 signed_zero=1 nonzero_inner=1\n";
+}
+
 } // namespace
 
 int main()
@@ -754,6 +839,7 @@ int main()
         test_invalid_inputs();
         test_host_lowering_and_executor();
         test_production_bc_handler();
+        test_rz_physical_boundary();
         test_e0_e1_boundary_completion_contract();
         std::cout << "boundary plan contract passed\n";
         return 0;

@@ -199,6 +199,11 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
     }
     control.BindActiveHandles(handles);control.flux_register.EnsureSpecies(2);
     control.flux_register.Clear();
+    BCHandler boundary(config,rz);
+    for(int id:active) {
+        auto& block=control.pool->GetBlock(id);
+        boundary.apply(block.fluid_state,block.grid);
+    }
     control.ghost_exchange.ExecuteExchange(control.pool,control.tree,2,
         &amr::Block::fluid_state,handles,amr::CoordinateSeamGeometry::RzAxisymmetric);
     constexpr double dt=.001;
@@ -237,6 +242,12 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
             }
         }
     }
+    for(int id:active) {
+        auto& block=control.pool->GetBlock(id);
+        boundary.apply(block.state_next,block.grid);
+    }
+    control.ghost_exchange.ExecuteExchange(control.pool,control.tree,2,
+        &amr::Block::state_next,handles,amr::CoordinateSeamGeometry::RzAxisymmetric);
     control.ApplyReflux(dt,&amr::Block::state_next,rz);
     double max_state_error=0.;
     for(int id:active) {

@@ -2689,3 +2689,9 @@ legacy反例与36项归约边界/CPU2/2通过；不修改共享归约数学。
 四组真实5-leaf/5120-cell exchange→HLLC/PCM→stage→reflux联动及CPU3/3通过，
 final最大常态误差3.55618e-17。详见 RZMixedHydro-20261004.zh-CN.md / Summary。
 生产scheduler、物理边界/非均匀演化、扩散/RKL、gravity/IO/checkpoint/CUDA与angular finding仍待。
+
+## 2026-10-04 RZ 物理 BC
+内部logical axis规则/实际BCHandler按native r=0选择，scalar/z even、r/phi odd，无half turn；
+272个ghost/corner/signed-zero逐位参考、nonzero inner普通BC及旧冻结指纹保持通过。
+CPU3/3与随后仅变化mixed Hydro BC→exchange→stage→BC→exchange→reflux检查通过。
+详见 RZPhysicalBoundary-20261004.zh-CN.md / Summary；production scheduler/科学出口/CUDA与angular finding未关闭。

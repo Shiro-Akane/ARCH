@@ -29,6 +29,8 @@ enum class BoundaryType : std::uint8_t {
     Outflow = 1,
     Reflecting = 2,
     Inactive = 3,
+    // Internal RZ regular axis; never a user-configurable boundary string.
+    RzAxis = 4,
 };
 
 enum class BoundaryAxis : std::uint8_t { X1 = 0, X2 = 1, X3 = 2 };
@@ -115,6 +117,9 @@ inline std::int8_t reflection_sign(
     BoundaryAxis axis, BoundaryType type,
     BoundaryFieldClass field) noexcept
 {
+    if (type == BoundaryType::RzAxis)
+        return field == BoundaryFieldClass::MomentumX
+            || field == BoundaryFieldClass::MomentumZ ? -1 : 1;
     if (type != BoundaryType::Reflecting)
         return 1;
     const bool normal =
@@ -150,7 +155,7 @@ constexpr bool contains_active_region(
 inline bool valid_boundary_type(BoundaryType type) noexcept
 {
     return static_cast<std::uint8_t>(type)
-        <= static_cast<std::uint8_t>(BoundaryType::Inactive);
+        <= static_cast<std::uint8_t>(BoundaryType::RzAxis);
 }
 
 inline std::int32_t checked_destination_coordinate(
@@ -187,7 +192,7 @@ inline std::int32_t source_axis_coordinate(
             ? extent64 - depth64 : depth64 - 1;
     } else if (type == BoundaryType::Outflow) {
         coordinate = side == BoundarySide::Lower ? 0 : extent64 - 1;
-    } else if (type == BoundaryType::Reflecting) {
+    } else if (type == BoundaryType::Reflecting || type == BoundaryType::RzAxis) {
         coordinate = side == BoundarySide::Lower
             ? depth64 - 1 : extent64 - depth64;
     } else {
@@ -262,6 +267,9 @@ inline LogicalCellRef source_logical_cell(
     const auto type = face_type(input, axis, side);
     if (!detail::valid_boundary_type(type) || type == BoundaryType::Inactive)
         throw std::invalid_argument("Invalid active boundary type");
+    if (type == BoundaryType::RzAxis
+        && (input.dimension != 2 || axis != BoundaryAxis::X1 || side != BoundarySide::Lower))
+        throw std::invalid_argument("RZ axis requires 2D lower radial boundary");
     LogicalCellRef source = destination;
     const auto coordinate = detail::source_axis_coordinate(
         input.active_extent[axis_value], depth, side, type);
@@ -312,6 +320,9 @@ inline BoundaryPlan make_boundary_plan(const BoundaryPlanInput& input)
                 static_cast<BoundarySide>(side));
             if (!detail::valid_boundary_type(type))
                 throw std::invalid_argument("Unknown boundary type");
+            if (type == BoundaryType::RzAxis
+                && (input.dimension != 2 || axis != 0 || side != 0))
+                throw std::invalid_argument("RZ axis requires 2D lower radial boundary");
             if (active && type == BoundaryType::Inactive)
                 throw std::invalid_argument("Inactive type on active axis");
             if (!active && type != BoundaryType::Inactive)

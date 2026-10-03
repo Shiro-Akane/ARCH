@@ -23,6 +23,7 @@
 #include <bit>
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <string_view>
@@ -340,21 +341,55 @@ inline void execute(
  */
 struct BCHandler
 {
-    explicit BCHandler(const SimConfig& config)
-        : logical_plan_(make_logical_plan(config)),
+    explicit BCHandler(const SimConfig& config,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+        : semantics_(semantics), logical_plan_(make_logical_plan(config)),
           compiled_(arch::boundary::host::compile(
               logical_plan_,
               arch::boundary::host::make_canonical_layout(
                   logical_plan_.input().dimension)))
     {
+        if (semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            if (config.grid.dim != 2 || config.grid.geometry != "cylindrical"
+                || !std::isfinite(config.grid.x1_min) || config.grid.x1_min < 0.)
+                throw std::invalid_argument("RZ boundary requires cylindrical 2D nonnegative radius");
+            if (config.grid.x1_min == 0.) {
+                auto input=logical_plan_.input();
+                if (input.faces[0] == arch::boundary::BoundaryType::Periodic)
+                    throw std::invalid_argument("RZ axis cannot be radial periodic");
+                input.faces[0]=arch::boundary::BoundaryType::RzAxis;
+                axis_plan_=arch::boundary::make_boundary_plan(input);
+                axis_compiled_=arch::boundary::host::compile(*axis_plan_,compiled_.layout);
+            }
+        } else if (semantics_ != GridMetrics::GeometrySemantics::Existing) {
+            throw std::invalid_argument("Unknown boundary chart");
+        }
     }
 
     void apply(FluidState &state, const Grid &grid) const
     {
+        const auto& selected=logical_plan(grid);
+        arch::boundary::host::execute(
+            &selected == &logical_plan_ ? compiled_ : *axis_compiled_,state);
+    }
+
+    /** Select the already-prepared physical plan for this native patch. */
+    const arch::boundary::BoundaryPlan& logical_plan(const Grid& grid) const
+    {
         const auto actual = arch::boundary::host::make_layout(grid);
         if (!(actual == compiled_.layout))
             throw std::invalid_argument("Grid does not match prepared boundary layout");
-        arch::boundary::host::execute(compiled_, state);
+        if (semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            (void)GridMetrics::make_geometry_view(grid,semantics_);
+            if (!std::isfinite(grid.x1_min) || grid.x1_min < 0.)
+                throw std::invalid_argument("Invalid RZ physical boundary radius");
+            if (grid.x1_min == 0.) {
+                if (!axis_plan_)
+                    throw std::invalid_argument("RZ axis patch disagrees with prepared source domain");
+                return *axis_plan_;
+            }
+        }
+        return logical_plan_;
     }
 
     const arch::boundary::BoundaryPlan& logical_plan() const noexcept
@@ -363,6 +398,10 @@ struct BCHandler
     }
 
 private:
+    GridMetrics::GeometrySemantics semantics_;
+    std::optional<arch::boundary::BoundaryPlan> axis_plan_;
+    std::optional<arch::boundary::host::HostCompiledBoundaryPlan> axis_compiled_;
+
     static arch::boundary::BoundaryType parse_active_face(
         std::string_view value)
     {
