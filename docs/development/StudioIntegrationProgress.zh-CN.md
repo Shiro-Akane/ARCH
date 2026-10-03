@@ -2321,3 +2321,9 @@ ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，
 明确 direct truncate、close 前 Saved 日志、异常仅记录及字段/layout/Cartesian centers 的现行含义。
 提出版本化 completion/identity/units/native-cell 与 scoped acceptance；发布、体积、LOD 待 Core 定案，不称实现或验收通过。
 仅文档，无 Core/Host/UI 修改、build/simulation/Preview/CUDA/push/tag/main merge；正式科学 Viewer 出口 pending。
+
+
+### O7.1 静态接口链路：manufactured Native Tabular
+
+7473158e 基线上扩充既有 native fixture，真实守恒态 EOS→Jeans 数值叶与独立 caloric 参考比较，240 项最大相对误差1.0004323370200706e-14；既有2e-12容差未变，scoped编译/CTest1/1 PASS。
+详见 JeansNativeTabularReference-20261003.zh-CN.md/Summary。未传真实表参数，不能称全 EOS/科学通过；JENS production仍 unavailable，一般EOS/AMR/预算 pending。仅测试与精简报告，raw H5/日志留本地，无production ARCH build/simulation/CUDA/push/tag/main merge。
