@@ -2842,3 +2842,12 @@ clean9fb34629主ARCH五步增量构建成功，ELFe75300fc…；592tracked input
 scheduler/checkpoint2/2 PASS，当前archive实际Driver四组非零repair+checkpoint续接PASS，原生坐标精确、41040状态/身份word一致。
 未新增科学场景/阈值，公开RZ/CUDA/O9与整体科学出口保持未完成。
 见RepairPositionCpuIntegration-20261004报告/Summary；raw本机ignored，未push/tag。
+
+
+## 2026-10-04 Plotfile / CPU 同机小样本测量
+
+已批准Sod .2/280三组baseline/concurrent+既有5120cell Cellular production Reader；
+median66.843/66.934ms(+0.136%)，六次21checkpoint datasets/4plotfields原bits一致、身份与原文件SHA保持。
+短Run只证明query/worker lifecycle重叠，未证明deep HDF phase完整重叠，不作正式性能/O9验收。
+audit文件名假设失败已修，只读复用已有输出，未重复Run；详见PlotfileRunInterference报告/Summary。
+大文件/长期同机影响及科学gate仍待。未push/tag。

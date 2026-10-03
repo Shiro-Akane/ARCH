@@ -1,0 +1,197 @@
+{
+  "scope": "Small frozen CPU Sod endpoint + existing Cartesian Cellular Plotfile overview",
+  "node": "v24.21.0",
+  "binarySha256": "e75300fc607f4f6078240e2a524c5b0d6085fd0d48b811369c6eaff0729ee8fc",
+  "readerFileSha256": "6e94d795f07cca3d735e2e5dd6c1129b4efe6478af811fb95ffbcc2066fad755",
+  "rows": [
+    {
+      "concurrent": false,
+      "config": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-interference-20261004/run-0/Sod.par",
+      "elapsedMs": 85.07423700000001,
+      "archSample": {
+        "rssKiB": 21108,
+        "rchar": 7449123,
+        "readBytes": 0
+      },
+      "observedReaderWorkers": [],
+      "readerQueries": [],
+      "noOwnedChildAfterSettlement": true,
+      "checkpointDatasetCount": 21,
+      "fieldDatasetCount": 4,
+      "finalTime": 0.2,
+      "finalStep": 280,
+      "rawBitsEqual": true
+    },
+    {
+      "concurrent": true,
+      "config": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-interference-20261004/run-1/Sod.par",
+      "elapsedMs": 66.934088,
+      "archSample": {
+        "rssKiB": 21200,
+        "rchar": 7449123,
+        "readBytes": 0
+      },
+      "observedReaderWorkers": [
+        {
+          "pid": 1373265,
+          "rssKiB": 101180,
+          "rchar": 4329082,
+          "readBytes": 0
+        }
+      ],
+      "readerQueries": [
+        {
+          "startedMs": 149.396753,
+          "endedMs": 329.703907,
+          "elapsedMs": 180.30920300000002,
+          "responseBytes": 28918,
+          "scannedCells": 5120,
+          "overlapMs": 66.934088
+        }
+      ],
+      "noOwnedChildAfterSettlement": true,
+      "checkpointDatasetCount": 21,
+      "fieldDatasetCount": 4,
+      "finalTime": 0.2,
+      "finalStep": 280,
+      "rawBitsEqual": true
+    },
+    {
+      "concurrent": false,
+      "config": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-interference-20261004/run-2/Sod.par",
+      "elapsedMs": 64.998651,
+      "archSample": {
+        "rssKiB": 20964,
+        "rchar": 7449123,
+        "readBytes": 0
+      },
+      "observedReaderWorkers": [],
+      "readerQueries": [],
+      "noOwnedChildAfterSettlement": true,
+      "checkpointDatasetCount": 21,
+      "fieldDatasetCount": 4,
+      "finalTime": 0.2,
+      "finalStep": 280,
+      "rawBitsEqual": true
+    },
+    {
+      "concurrent": true,
+      "config": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-interference-20261004/run-3/Sod.par",
+      "elapsedMs": 66.73717099999999,
+      "archSample": {
+        "rssKiB": 21336,
+        "rchar": 7449123,
+        "readBytes": 0
+      },
+      "observedReaderWorkers": [
+        {
+          "pid": 1373279,
+          "rssKiB": 97452,
+          "rchar": 4323905,
+          "readBytes": 0
+        }
+      ],
+      "readerQueries": [
+        {
+          "startedMs": 409.130549,
+          "endedMs": 598.85491,
+          "elapsedMs": 189.72533199999998,
+          "responseBytes": 28918,
+          "scannedCells": 5120,
+          "overlapMs": 66.73717099999999
+        }
+      ],
+      "noOwnedChildAfterSettlement": true,
+      "checkpointDatasetCount": 21,
+      "fieldDatasetCount": 4,
+      "finalTime": 0.2,
+      "finalStep": 280,
+      "rawBitsEqual": true
+    },
+    {
+      "concurrent": false,
+      "config": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-interference-20261004/run-4/Sod.par",
+      "elapsedMs": 66.84347100000002,
+      "archSample": {
+        "rssKiB": 21228,
+        "rchar": 7449123,
+        "readBytes": 0
+      },
+      "observedReaderWorkers": [],
+      "readerQueries": [],
+      "noOwnedChildAfterSettlement": true,
+      "checkpointDatasetCount": 21,
+      "fieldDatasetCount": 4,
+      "finalTime": 0.2,
+      "finalStep": 280,
+      "rawBitsEqual": true
+    },
+    {
+      "concurrent": true,
+      "config": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-interference-20261004/run-5/Sod.par",
+      "elapsedMs": 67.34387800000002,
+      "archSample": {
+        "rssKiB": 21144,
+        "rchar": 7449123,
+        "readBytes": 0
+      },
+      "observedReaderWorkers": [
+        {
+          "pid": 1373313,
+          "rssKiB": 94332,
+          "rchar": 4323905,
+          "readBytes": 0
+        }
+      ],
+      "readerQueries": [
+        {
+          "startedMs": 680.599423,
+          "endedMs": 876.285387,
+          "elapsedMs": 195.68639499999995,
+          "responseBytes": 28918,
+          "scannedCells": 5120,
+          "overlapMs": 67.34387800000002
+        }
+      ],
+      "noOwnedChildAfterSettlement": true,
+      "checkpointDatasetCount": 21,
+      "fieldDatasetCount": 4,
+      "finalTime": 0.2,
+      "finalStep": 280,
+      "rawBitsEqual": true
+    }
+  ],
+  "limitations": [
+    "Warm-cache, three pairs, alternating baseline/concurrent; not a statistical performance acceptance.",
+    "5 ms sampling may miss final peaks and exit counters; rchar includes Node/HDF imports.",
+    "Existing 5120-cell Reader file only; not large AMR scalability or long O9.",
+    "Reader process overhead is part of this measured workflow; ARCH runs with one CPU thread.",
+    "Fixed returned pixels do not eliminate whole-file digest and native leaf scanning.",
+    "Short ARCH runtime overlaps reader lifecycle but does not prove HDF deep scan overlaps each simulation; no significant slowdown conclusion."
+  ],
+  "timing": {
+    "baselineMs": [
+      85.07423700000001,
+      64.998651,
+      66.84347100000002
+    ],
+    "concurrentMs": [
+      66.934088,
+      66.73717099999999,
+      67.34387800000002
+    ],
+    "baselineMedianMs": 66.84347100000002,
+    "concurrentMedianMs": 66.934088,
+    "medianRatio": 1.0013556597023512
+  },
+  "status": "PASS",
+  "auditOnly": true,
+  "sourceHead": "333fd4aebfafe24a7ee9d04f369c532551bb7059",
+  "frozenInputSha256": "381ceb60eb6cdbf7c99b43577ff0d94731144d655514c7a8194d09ce8d88644e",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-interference-20261004",
+  "measurementSourceHead": "333fd4aebfafe24a7ee9d04f369c532551bb7059",
+  "binaryBuildSourceHead": "9fb34629981f434b8fc5d531adf44b3330c083c8",
+  "auditScriptSha256": "666a98845c3d979892379e9e086e9c8d264257c8eb2d217b12b766feb00d120e",
+  "auditScriptState": "Post-measurement filename fix + audit-existing mode; all six completed runs reused, none rerun",
+  "readerQueryPhaseQualification": "Reader worker observed alive before ARCH; startup/scan phases not individually instrumented, no deep-HDF-overlap claim"
+}

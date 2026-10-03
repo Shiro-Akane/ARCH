@@ -215,3 +215,10 @@ ELF SHA-256 e75300fc607f4f6078240e2a524c5b0d6085fd0d48b811369c6eaff0729ee8fc。
 上节“主ELF尚未包含该修复”是当时记录，已由此次构建补齐；不改变Cartesian Plotfile数组映射。
 定向scheduler/checkpoint与当前archive实际非零repair续接PASS；详见RepairPositionCpuIntegration-20261004。
 尚未push；完整source/binary科学身份、二维演化和独立oracle仍按此前边界待review。
+
+
+## 同机运行成本初步证据
+
+三组已有Sod固定终点Run与既有5120cell Cellular overview配对，median wall66.843/66.934ms；
+checkpoint/原场值位级一致，Reader与ARCH均清理。仅query lifecycle重叠，无深度HDF阶段重叠证明，
+不能外推大AMR/长期同机运行。具体输入、binary、测量源码和失败说明见PlotfileRunInterference-20261004。
