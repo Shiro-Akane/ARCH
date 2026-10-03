@@ -1,3 +1,5 @@
+import {mkdir,stat} from 'node:fs/promises';
+import {checkedPath} from './files.ts';
 import {readBuildToolchainEvidence} from './cmakeEvidence.ts';
 import {fingerprintLinkDependencies,changedLinkInputs} from './linkDependencies.ts';
 import {fingerprintNinjaDependencies,sameCompilerInputs} from './ninjaDependencies.ts';
@@ -111,11 +113,20 @@ export class BuildRunner {
  private async run(id:string,startedAt:string){
   const result:BuildResult={projectId:this.projectId,buildId:id,startedAt,finishedAt:'',state:'failed'};
   try{
+   let retainedTmp:string|undefined;
+   if(this.profile.retainGnuLtoInputs){
+    const base=this.profile.buildDirRelative+'/.studio-link-inputs';
+    await mkdir(this.root+'/'+base,{mode:0o700}).catch((e:NodeJS.ErrnoException)=>{if(e.code!=='EEXIST')throw e;});
+    if(!(await stat(await checkedPath(this.root,base))).isDirectory())throw new Error('Link input retention destination is not a directory.');
+    const relative=base+'/'+id;
+    await mkdir(this.root+'/'+relative,{mode:0o700});
+    retainedTmp=await checkedPath(this.root,relative);
+   }
    const before:InputFingerprint[]=await inputs(this.profile);const preBinary:FileFingerprint|undefined=await inspect(this.root,this.profile.outputBinaryRelative,true).catch(()=>undefined);const git=await gitIdentity(this.root);
    const compilerBefore=this.profile.compilerDependencyMode==='ninja'?await fingerprintNinjaDependencies(this.root+'/'+this.profile.buildDirRelative).catch(()=>undefined):undefined;
    const toolchainBefore=this.profile.compilerDependencyMode==='ninja'?(await readBuildToolchainEvidence(this.root+'/'+this.profile.buildDirRelative).catch(()=>undefined))?.compilers:undefined;
    await new Promise<void>((resolve,reject)=>{
-    const child=(this.hooks.spawn??spawn)(this.hooks.cmake??CMAKE,['--build',this.root+'/'+this.profile.buildDirRelative,'--target',this.profile.target,'--parallel',String(this.profile.parallelism)],{cwd:this.root,shell:false,env:{PATH:'/usr/local/cuda-12.8/bin:/usr/local/bin:/usr/bin:/bin',HOME:process.env.HOME??'/home/arch',LANG:'C.UTF-8'},stdio:['ignore','pipe','pipe']});this.child=child;
+    const child=(this.hooks.spawn??spawn)(this.hooks.cmake??CMAKE,['--build',this.root+'/'+this.profile.buildDirRelative,'--target',this.profile.target,'--parallel',String(this.profile.parallelism)],{cwd:this.root,shell:false,env:{PATH:'/usr/local/cuda-12.8/bin:/usr/local/bin:/usr/bin:/bin',HOME:process.env.HOME??'/home/arch',LANG:'C.UTF-8',...(retainedTmp?{TMPDIR:retainedTmp}:{})},stdio:['ignore','pipe','pipe']});this.child=child;
     for(const [stream,kind] of [[child.stdout,'stdout'],[child.stderr,'stderr']] as const){const decoder=new StringDecoder('utf8');stream?.on('data',(chunk:Buffer)=>this.log?.append(kind,decoder.write(chunk)));stream?.on('end',()=>{const tail=decoder.end();if(tail)this.log?.append(kind,tail);});}
     child.once('error',()=>reject(new Error('Build process could not start.')));child.once('close',(code,signal)=>{result.exitCode=code;result.signal=signal;if(code===0)resolve();else reject(new Error('Build exited unsuccessfully.'));});
    });const manifest=await makeManifest(this.profile,this.projectId,id,startedAt,before,preBinary,git,compilerBefore,toolchainBefore);await saveManifest(this.profile,manifest);this.current.lastSuccessfulBuild=manifest;result.state='succeeded';

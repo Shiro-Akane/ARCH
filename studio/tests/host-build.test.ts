@@ -3,7 +3,7 @@ import {execFile} from 'node:child_process';import {promisify} from 'node:util';
 import {fixture,fakeSpawn,finished} from './build-fixture.ts';
 import {readFile} from 'node:fs/promises';
 import {writeFileSync} from 'node:fs';
-import test from 'node:test';import assert from 'node:assert/strict';import {mkdir,writeFile,rm} from 'node:fs/promises';
+import test from 'node:test';import assert from 'node:assert/strict';import {mkdir,writeFile,rm,symlink,stat} from 'node:fs/promises';
 import {validateProfile} from '../host/buildProfile.ts';import {BuildRunner} from '../host/buildRunner.ts';
 test('profile validates bindings and refuses traversal, wrong source, missing CMake',async()=>{const {root,p}=await fixture();try{await validateProfile(root,p);for(const invalid of [{...p,managedSourceRoot:'/other'},{...p,buildDirRelative:'../escape'},{...p,target:'--help'},{...p,trackedInputs:['case.par']}])await assert.rejects(validateProfile(root,invalid));await assert.rejects(validateProfile(root,p,'/no/cmake'));}finally{await rm(root,{recursive:true,force:true});}});
 test('unknown profile and missing configured directory never start a process',async()=>{const {root,p}=await fixture();try{const runner=new BuildRunner(root,'project',{...p,buildDirRelative:'missing'});await assert.rejects(runner.start('project','unknown'));await assert.rejects(runner.start('project',p.id));assert.equal(runner.snapshot().state,'not-configured');}finally{await rm(root,{recursive:true,force:true});}});
@@ -189,5 +189,31 @@ test('toolchain mutation during build requires a new stable Build even when post
   assert.equal((await new BuildRunner(root,'p',profile).initialize()).binaryState,'needs-build');
   const malformed={...legacy,compilerDriversStableDuringBuild:'yes'} as never;
   await saveManifest(profile,malformed);assert.equal(await loadManifest(profile),undefined);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('retained LTO inputs use a Host-owned per-build directory and refuse symlink redirection',async()=>{
+ const {root,p}=await fixture();await mkdir(root+'/studio');
+ try{
+  let calls=0;
+  const profile={...p,compilerDependencyMode:'ninja' as const,linkDependencyFile:'ARCH.link.d',retainGnuLtoInputs:true};
+  const runFake=fakeSpawn(root) as (...args:unknown[])=>unknown;
+  const runner=new BuildRunner(root,'p',profile,{spawn:((program:unknown,args:unknown,options:unknown)=>{
+   calls++;
+   const env=(options as {env:Record<string,string>}).env;
+   assert.match(env.TMPDIR,new RegExp('^'+root+'/build/\\.studio-link-inputs/[a-f0-9-]{36}$'));
+   return runFake(program,args,options);
+  }) as never});
+  const start=await runner.start('p',p.id);await finished(runner);
+  assert.equal(calls,1);
+  assert.equal((await stat(root+'/build/.studio-link-inputs/'+start.buildId)).mode&0o777,0o700);
+  // Replacing the retention root cannot redirect the next build.
+  await rm(root+'/build/.studio-link-inputs',{recursive:true});
+  await symlink('/tmp',root+'/build/.studio-link-inputs');
+  const denied=new BuildRunner(root,'p',profile,{spawn:(()=>{calls++;throw Error('must not spawn');}) as never});
+  await denied.start('p',p.id);
+  const result=await finished(denied);
+  assert.equal(result.state,'failed');assert.match(result.latestResult?.error??'',/Symlinks/);
+  assert.equal(calls,1);
  }finally{await rm(root,{recursive:true,force:true});}
 });
