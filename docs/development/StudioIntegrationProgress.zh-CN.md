@@ -1782,3 +1782,14 @@ not prove display repaired. Latest human taskbar-only report remains.
 Remaining native close/cancel/file conflict matrix and audit/G approvals open.
 No whole3C/O7 PASS, full-model/JENS/RZ advance, source/build/unchanged-suite rerun,
 raw upload, push, release tag or main merge.
+
+## Native Save As Cancel on clean Working Copy verified
+
+Cleanfbb0fe3b: same Linux Studio window, actual GTK Save dialog78253042
+opened from Save Working Copy As then nativeCancel; modal disappeared.
+Host project/config association and SHA/mtime/size unchanged,
+default project-root StopSod4096_copy.par absent, binary SHA unchanged.
+StudioNativeFileLifecycleUat/Summary extended with exact scope.
+Dirty-copy Cancel and other remaining native matrix are still uncovered;
+human-visible window still NOT VERIFIED. No source/preview/run/build/test rerun,
+raw upload/push/tag or whole3B/3C completion claim.

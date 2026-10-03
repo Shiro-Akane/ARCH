@@ -48,3 +48,24 @@ active Preview/AMR关闭、active Run独立存活与显式Stop、完整用户可
 
 原始输入、日志及科学数据仍保留本机忽略目录；只提交本报告和精简指纹。
 完整联合目标与阶段顺序不变；没有push/tag/main合并，也未进入全模型/JENS/RZ/CUDA阶段。
+
+## 2026-10-03 补充：干净 Working Copy 的原生 Save As Cancel
+
+执行前源码 fbb0fe3bbc0bff2e1e5ed63622d85d7977e7d3f5、working tree clean。
+同一个Linux独立窗口13437218；从实际参数面板底部
+Save Working Copy As 打开GTK保存窗口78253042。
+窗口标题 Save new project configuration，默认名称 StopSod4096_copy.par，
+目录为managed project root。实际点击原生Cancel；
+后续list_windows只剩Studio、不再返回该模态，主界面恢复。
+
+Host保持原projectId与StopSod4096.par关联，输入SHA
+1ab5c596b7f6d2225fceebdc06847c3d66a5b40610f1c30d87f8f57059404cef、
+mtime/size未变化；默认新目标不存在；选定binarySHA仍e506619f...。
+取消没有落盘或切换关联。主界面仍为已保存状态，既有Preview保持显示；
+本轮未编辑参数、启动Preview/Run、重新Build或改源码。
+
+此项只证明干净工作副本SaveAs Cancel；Dirty副本取消另列未覆盖。
+工具原生交互与窗口捕获不替代用户独立窗口可见性确认。
+原生覆盖/外部冲突/活跃close等矩阵仍未完整，整体3B/3C未宣称PASS。
+仅补充处理后摘要与文档，git diff --check；不重复 unchanged suite，
+不上传原始数据、不push/tag/main merge。
