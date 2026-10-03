@@ -2337,3 +2337,8 @@ ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，
 ### 原生 wheel 被动投递取证
 
 a2e4b9c5 上仅临时 capture/passive observer：Computer Use plot负wheel/普通参数正wheel均0 wheel事件；同位置click有2个trusted svg pointer事件、sample9664选中。排查收窄至跨WSLg投递，不能宣布native zoom PASS。详见FullModelNativeWheelDelivery-20261003.zh-CN.md/Summary。用户硬件鼠标对照pending，当前owned Electron355883/session29013 live暂保留；未声称cleanup已完成。config/binary未变，无正式源码/build/simulation/CUDA/push/tag/main merge。
+
+
+### 测量工具：物理终点模式工程补齐
+
+5a44cbec 上既有 curved runner 增 endpoint-pair，max_steps=-1/tmax显式、逐backend即时终点校验、实际步数可不同，原科学/parity/AMR检查保留。8项synthetic H5/stub测试与CLI/diff PASS；依赖与编辑错误日志本机保留。详见PhysicalEndpointRunnerProgress-20261003.zh-CN.md/Summary。不是正式benchmark：预热/交替/线程/manifest/冻结输入预算仍pending；无真实ARCH/CPU-CUDA轨迹、scientific Core/production build/push/tag/main merge。

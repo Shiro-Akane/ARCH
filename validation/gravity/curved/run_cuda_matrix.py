@@ -6,6 +6,12 @@ Usage: run_cuda_matrix.py --arch build-ci/cuda-focused/bin/ARCH \
     --pair regular:validation/gravity/curved/inputs/p13_polar_origin_4x4_regular.par:3:regular \
     --output /tmp/arch-p13-matrix --cpu-threads 16 --repeats 3
 
+Endpoint mode: replace --pair with --endpoint-pair label:input.par:T_END[:amr|regular].
+T_END must come from the owner's frozen plan; max_steps is disabled.
+Endpoint completion is verified for each run before launching the other backend.
+This mode alone is not a qualified benchmark protocol (warmup, alternating order,
+thread screening, manifests and frozen scientific inputs are still required).
+
 Each run has its own input and output directory. The existing coupled verifier
 and compare_backends.py enforce the physical and parity budgets. The optional
 regular mode requires a root-only grid; the default requires actual mixed AMR.
@@ -15,6 +21,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import statistics
@@ -22,16 +29,24 @@ import subprocess
 import time
 
 from compare_backends import compare_pair
+from verify_coupled import verify
 
 ROOT = Path(__file__).resolve().parents[3]
 
 
-def changed_input(source, backend, output, steps):
-    """Override only execution identity, step limit, and output ownership."""
+def changed_input(source, backend, output, steps, *, end_time=None):
+    """Override execution identity and the explicit stopping mode only."""
+    if end_time is not None:
+        if not math.isfinite(end_time) or end_time <= 0 or steps is not None:
+            raise ValueError("endpoint mode requires finite positive time and no step quota")
+    elif steps is None or steps < 1:
+        raise ValueError("positive step quota required")
     changes = {
         "compute_backend": backend, "out_dir": str(output),
-        "max_steps": str(steps),
+        "max_steps": "-1" if end_time is not None else str(steps),
     }
+    if end_time is not None:
+        changes["tmax"] = repr(end_time)
     result = []
     seen = set()
     for line in source.read_text().splitlines():
@@ -91,11 +106,11 @@ def regrid_metrics(directory):
     return result
 
 
-def one_run(executable, source, destination, backend, steps, threads):
+def one_run(executable, source, destination, backend, steps, threads, *, end_time=None, expect_mixed=True):
     """Run one immutable input and retain the full log on failure."""
     destination.mkdir(parents=True, exist_ok=False)
     input_path = destination / "input.par"
-    input_path.write_text(changed_input(source, backend, destination, steps))
+    input_path.write_text(changed_input(source, backend, destination, steps, end_time=end_time))
     env = os.environ.copy()
     env["OMP_NUM_THREADS"] = str(threads)
     started = time.monotonic()
@@ -111,7 +126,12 @@ def one_run(executable, source, destination, backend, steps, threads):
     plan = list(destination.glob("*_backend_plan.txt"))
     if len(plan) != 1 or f"resolved={backend}\n" not in plan[0].read_text():
         raise RuntimeError(f"{destination}: requested backend was not used")
+    endpoint = (verify(destination.name, destination, None, expect_mixed,
+                       expected_time=end_time) if end_time is not None else None)
     return {
+        "endpoint_verification": endpoint,
+        "requested_endpoint": end_time,
+        "input_sha256": hashlib.sha256(input_path.read_bytes()).hexdigest(),
         "elapsed_seconds": elapsed,
         "driver_seconds": driver_seconds(destination),
         "gravity": gravity_times(destination),
@@ -124,8 +144,11 @@ def one_run(executable, source, destination, backend, steps, threads):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--arch", type=Path, required=True)
-    parser.add_argument("--pair", action="append", required=True,
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--pair", action="append",
                         help="label:input.par:accepted-steps[:amr|regular]")
+    modes.add_argument("--endpoint-pair", action="append",
+                       help="label:input.par:owner-frozen-t-end[:amr|regular]; max_steps=-1")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--cpu-threads", type=int, default=8)
     parser.add_argument("--repeats", type=int, default=1)
@@ -141,27 +164,32 @@ def main():
         "pairs": {},
         "speedups": {},
     }
-    for specification in args.pair:
+    for specification in args.pair or args.endpoint_pair:
         parts = specification.split(":")
         if len(parts) not in (3, 4):
-            parser.error("pair must be label:input.par:steps[:amr|regular]")
+            parser.error("pair must be label:input.par:steps-or-t-end[:amr|regular]")
         label, input_name, count = parts[:3]
         mode = parts[3] if len(parts) == 4 else "amr"
         if mode not in ("amr", "regular"):
             parser.error("pair mode must be amr or regular")
         source = Path(input_name).resolve()
-        steps = int(count)
-        if not source.is_file() or steps < 1:
-            raise ValueError(f"{label}: invalid input or step limit")
+        try:
+            end_time = float(count) if args.endpoint_pair else None
+            steps = None if args.endpoint_pair else int(count)
+        except ValueError:
+            parser.error("invalid step quota or physical endpoint")
+        if not source.is_file() or (steps is not None and steps < 1) or (
+                end_time is not None and (not math.isfinite(end_time) or end_time <= 0)):
+            raise ValueError(f"{label}: invalid input or stopping condition")
         trials = []
         for repeat in range(args.repeats):
             cpu_dir = output / label / f"repeat-{repeat}" / "cpu"
             gpu_dir = output / label / f"repeat-{repeat}" / "cuda"
             cpu = one_run(executable, source, cpu_dir, "cpu", steps,
-                          args.cpu_threads)
-            cuda = one_run(executable, source, gpu_dir, "cuda", steps, 1)
+                          args.cpu_threads, end_time=end_time, expect_mixed=(mode == "amr"))
+            cuda = one_run(executable, source, gpu_dir, "cuda", steps, 1, end_time=end_time, expect_mixed=(mode == "amr"))
             parity = compare_pair(label, cpu_dir, gpu_dir, steps,
-                                  expect_mixed=(mode == "amr"))
+                                  expect_mixed=(mode == "amr"), expected_time=end_time)
             trials.append({"cpu": cpu, "cuda": cuda, "parity": parity})
             report["pairs"][label] = trials
             (output / "summary.json").write_text(

@@ -40,8 +40,21 @@ def leaf_levels(plot):
             "field_min_max": fields}
 
 
-def verify(label, directory, expected_steps, expect_mixed=True):
+def physical_times_agree(left, right):
+    """Retain the existing coupled endpoint budget, rejecting invalid times."""
+    if not all(math.isfinite(value) for value in (left, right)):
+        return False
+    scale = max(abs(left), abs(right), 1e-30)
+    return abs(left - right) <= max(1e-20, 2e-10 * scale)
+
+
+def verify(label, directory, expected_steps, expect_mixed=True, *, expected_time=None):
     """Require completed four-module stepping and the requested AMR topology."""
+    if expected_time is not None:
+        if not math.isfinite(expected_time) or expected_time <= 0 or expected_steps is not None:
+            raise ValueError(f"{label}: endpoint mode requires positive finite time and no step quota")
+    elif expected_steps is None or expected_steps < 1:
+        raise ValueError(f"{label}: positive expected steps required")
     plots = sorted(directory.glob("*_plt_*.h5"))
     if len(plots) != 2:
         raise ValueError(f"{label}: expected initial and final plots")
@@ -55,6 +68,8 @@ def verify(label, directory, expected_steps, expect_mixed=True):
     elif (set(initial["leaves_by_level"]) != {"0"}
           or set(final["leaves_by_level"]) != {"0"}):
         raise ValueError(f"{label}: expected a regular root grid")
+    if expected_time is not None and not physical_times_agree(final["time_seconds"], expected_time):
+        raise ValueError(f"{label}: requested physical endpoint was not reached")
     if not final["time_seconds"] > initial["time_seconds"]:
         raise ValueError(f"{label}: time did not advance")
     if final["field_min_max"]["ENUC"][1] <= 0:
@@ -69,11 +84,14 @@ def verify(label, directory, expected_steps, expect_mixed=True):
         raise ValueError(f"{label}: expected one Driver log")
     log = logs[0].read_text()
     completion = re.search(r"Simulation Done\. Total Steps: (\d+)", log)
-    if completion is None or int(completion.group(1)) != expected_steps:
+    if completion is None or (expected_steps is not None and int(completion.group(1)) != expected_steps):
         raise ValueError(f"{label}: wrong accepted step count")
+    accepted_steps = int(completion.group(1))
+    if accepted_steps < 1:
+        raise ValueError(f"{label}: no accepted evolution steps")
     step_lines = [line for line in log.splitlines()
                   if re.match(r"^\s*\d+\s+\S+", line)]
-    if len(step_lines) != expected_steps:
+    if len(step_lines) != accepted_steps:
         raise ValueError(f"{label}: step rows missing")
     diffusion_dt = [float(line.split()[5]) for line in step_lines]
     if not all(math.isfinite(value) and value > 0 for value in diffusion_dt):
@@ -97,7 +115,8 @@ def verify(label, directory, expected_steps, expect_mixed=True):
         raise ValueError(f"{label}: no actual AMR refinement")
     if not expect_mixed and any(row["topology_changed"] == "1" for row in regrids):
         raise ValueError(f"{label}: regular grid changed topology")
-    return {"directory": str(directory), "steps": expected_steps,
+    return {"directory": str(directory), "steps": accepted_steps,
+            "requested_endpoint": expected_time,
             "initial": initial, "final": final, "state_repairs": 0,
             "gravity_solves": len(solves),
             "maximum_residual_over_target": max(ratios),
