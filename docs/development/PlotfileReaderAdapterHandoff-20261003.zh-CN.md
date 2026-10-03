@@ -1,5 +1,14 @@
 # Plotfile 读取适配对接：当前候选实现
 
+## 2026-10-04 最新增量（优先于历史记录）
+
+累积源码 73ef212266f9103ed8146a151a86626ed148cde3。
+writer unknown reason 增量 6b291494d5de8168e50ed57718a0a3cee7c3bd4c，
+Reader FP64 增量 5656f7b87abd075e464fbd48e1b98a82756949ba。
+新 writer 已有三个逐项 unknown reason；下面“没有 reason”的描述仅指旧样本与当时版本，
+不可作为当前 writer 状态。主科学 ELF 和既有真实样本未因此重新生成。
+最新脚本和逐字段单元摘要见 PlotfileHandoffReadback-20261004.zh-CN.md。
+
 ## 当前读取适配引用（2026-10-04 最新核对）
 
 本节优先于下面按时间保留的历史构建记录。

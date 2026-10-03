@@ -3044,3 +3044,11 @@ Complete52leaf/L0-L3=12/12/12/16，图选L3块3:15:14:0及独立dyadic几何一�
 配置SHA未变、无配置指定output，正常关闭exit0且8个owned进程全部清理。
 见FullModelSedovDesktop-20261004；无源码修改，不重复自动baseline。
 全模型矩阵/wheel/科学待决及CUDA/O9尚未完成。
+
+## 2026-10-04 Plotfile 可复现对接读回
+
+补只读 export_plotfile_handoff.py：实际分散属性和全部字段单元/FP64位模式，
+非方形、signed zero、FP32、partial、外部链接/索引反例4/4。
+既有Sod9/Cellular28字段原生单元读回，H5前后SHA不变。
+修正旧handoff中 unknown reason 已过期的描述，保留旧producer与当前source区别。
+无Build/simulation/原始数组提交/push/tag；owner科学review、全模型及CUDA/O9尚未完成。

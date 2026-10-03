@@ -1,0 +1,854 @@
+{
+  "implementationBaseline": "73ef212266f9103ed8146a151a86626ed148cde3",
+  "contractCommit": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+  "relatedTests": "4/4 PASS",
+  "samples": [
+    {
+      "scope": "one stored cell, all exported fields; not scientific acceptance",
+      "fileSha256": "355d345f270d7e5570420af602ee98ae6ab75b0c7d0473cf61925ead41eb471a",
+      "rootAttributes": {
+        "dim": 1,
+        "geometry": "cartesian",
+        "plot_identity_state": "unknown",
+        "plot_publication_method": "checked-close-atomic-replace",
+        "plot_publication_state": "complete",
+        "plot_publication_version": "candidate-1",
+        "plot_storage_order": "x1-fastest",
+        "time": 0.0,
+        "time_unit": "s"
+      },
+      "sourceIdentityAttributes": {
+        "binary_scope": "main-executable-only",
+        "binary_sha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+        "binary_source": "Linux /proc/self/exe",
+        "build_id": "unknown",
+        "case_id": "Sod",
+        "case_source": "ConfigurationInput.case_id",
+        "effective_config_sha256": "unknown",
+        "eos_source": "resolved-runtime-checkpoint-provenance",
+        "eos_table_sha256": "unknown",
+        "eos_table_state": "not-applicable",
+        "eos_type": "ideal",
+        "eos_unit_system": "cgs",
+        "ideal_gamma": 1.4,
+        "ideal_gamma_available": 1,
+        "raw_config_sha256": "7a1d196460b69aefcc5e3d02f81dcbbcf46c964dac902643ccef4e431e56f280",
+        "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+        "run_id": "767ae5d8-6ee6-44b7-882a-416fb700c61d",
+        "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+        "scope": "partial",
+        "source_git_head": "unknown",
+        "species_count": 1,
+        "species_identity_state": "recorded",
+        "species_properties_source": "resolved-runtime-checkpoint-provenance",
+        "species_properties_state": "recorded",
+        "species_properties_version": "checkpoint-species-1",
+        "version": "candidate-identity-1"
+      },
+      "nativeGridAttributes": {
+        "block_kind": "active-leaf",
+        "center_basis": "cartesian",
+        "centering": "cell",
+        "ghost_cells": 0,
+        "logical_identity": "file-local level/logical_x1/logical_x2/logical_x3",
+        "measure_convention": "active-coordinate-product; inactive-measures-omitted",
+        "measure_normalization": "per_unit_transverse_area",
+        "measure_source": "GridMetrics::CellVolume",
+        "measure_unit": "cm",
+        "version": "candidate-cartesian-1"
+      },
+      "shape": [
+        12,
+        16
+      ],
+      "index": [
+        11,
+        15
+      ],
+      "flatIndex": 191,
+      "fields": {
+        "DENS": {
+          "path": "/Data/DENS",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "mass_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "g/cm^3"
+          },
+          "value": 0.125,
+          "fp64Bits": "3fc0000000000000"
+        },
+        "DIVV": {
+          "path": "/Data/DIVV",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "velocity_divergence",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "value": 0.0,
+          "fp64Bits": "0000000000000000"
+        },
+        "ENER": {
+          "path": "/Data/ENER",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "total_energy_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "value": 0.25000000000000006,
+          "fp64Bits": "3fd0000000000001"
+        },
+        "ENTR": {
+          "path": "/Data/ENTR",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure_density_proxy",
+            "metadata_version": "candidate-field-1",
+            "unit": "unknown",
+            "unit_reason": "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy"
+          },
+          "value": 1.837917367995254,
+          "fp64Bits": "3ffd681c0ac4a3e5"
+        },
+        "PRES": {
+          "path": "/Data/PRES",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "value": 0.1,
+          "fp64Bits": "3fb999999999999a"
+        },
+        "SodGas": {
+          "path": "/Data/SodGas",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 1.0,
+          "fp64Bits": "3ff0000000000000"
+        },
+        "TEMP": {
+          "path": "/Data/TEMP",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "temperature",
+            "metadata_version": "candidate-field-1",
+            "unit": "K"
+          },
+          "value": 2.0000000000000004,
+          "fp64Bits": "4000000000000001"
+        },
+        "VELX": {
+          "path": "/Data/VELX",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "value": 0.0,
+          "fp64Bits": "0000000000000000"
+        },
+        "VORT": {
+          "path": "/Data/VORT",
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "vorticity_magnitude",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "value": 0.0,
+          "fp64Bits": "0000000000000000"
+        }
+      },
+      "bounds": [
+        [
+          0.498046875,
+          0.5
+        ]
+      ],
+      "cellMeasure": 0.001953125,
+      "centers": [
+        0.4990234375,
+        0.0,
+        0.0
+      ],
+      "block": {
+        "level": 3,
+        "morton": 585
+      },
+      "arrayOrder": "stored block order, x1-fastest",
+      "limitations": [
+        "complete marker is not proof of successful close/rename",
+        "identity declarations do not establish independent producer freshness",
+        "one cell does not establish global AMR coverage or scientific accuracy",
+        "whole-file SHA scans the file; payload count is not physical HDF I/O"
+      ],
+      "fileUnchanged": true,
+      "case": "Sod"
+    },
+    {
+      "scope": "one stored cell, all exported fields; not scientific acceptance",
+      "fileSha256": "8cc5e9e1da007bdc2854a091517a487b08f40976ec9a5580c44f76a1f7d5550b",
+      "rootAttributes": {
+        "dim": 2,
+        "geometry": "cartesian",
+        "plot_identity_state": "unknown",
+        "plot_publication_method": "checked-close-atomic-replace",
+        "plot_publication_state": "complete",
+        "plot_publication_version": "candidate-1",
+        "plot_storage_order": "x1-fastest",
+        "time": 0.0,
+        "time_unit": "s"
+      },
+      "sourceIdentityAttributes": {
+        "binary_scope": "main-executable-only",
+        "binary_sha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+        "binary_source": "Linux /proc/self/exe",
+        "build_id": "unknown",
+        "case_id": "CellularDet",
+        "case_source": "ConfigurationInput.case_id",
+        "effective_config_sha256": "unknown",
+        "eos_source": "resolved-runtime-checkpoint-provenance",
+        "eos_table_sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+        "eos_table_state": "recorded",
+        "eos_type": "helmholtz",
+        "eos_unit_system": "cgs",
+        "ideal_gamma_available": 0,
+        "raw_config_sha256": "6ca2b63719942d1a900cab8458a4417b0dc88c3a41750e37df5fff55647391e3",
+        "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+        "run_id": "a8137c3f-4a76-46fd-b15e-25c2dcc2e787",
+        "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+        "scope": "partial",
+        "source_git_head": "unknown",
+        "species_count": 19,
+        "species_identity_state": "recorded",
+        "species_properties_source": "resolved-runtime-checkpoint-provenance",
+        "species_properties_state": "recorded",
+        "species_properties_version": "checkpoint-species-1",
+        "version": "candidate-identity-1"
+      },
+      "nativeGridAttributes": {
+        "block_kind": "active-leaf",
+        "center_basis": "cartesian",
+        "centering": "cell",
+        "ghost_cells": 0,
+        "logical_identity": "file-local level/logical_x1/logical_x2/logical_x3",
+        "measure_convention": "active-coordinate-product; inactive-measures-omitted",
+        "measure_normalization": "per_unit_transverse_length",
+        "measure_source": "GridMetrics::CellVolume",
+        "measure_unit": "cm^2",
+        "version": "candidate-cartesian-1"
+      },
+      "shape": [
+        20,
+        16,
+        16
+      ],
+      "index": [
+        19,
+        15,
+        15
+      ],
+      "flatIndex": 5119,
+      "fields": {
+        "DENS": {
+          "path": "/Data/DENS",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "mass_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "g/cm^3"
+          },
+          "value": 10000000.000000006,
+          "fp64Bits": "416312d000000003"
+        },
+        "DIVV": {
+          "path": "/Data/DIVV",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "velocity_divergence",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "value": 0.0,
+          "fp64Bits": "0000000000000000"
+        },
+        "ENER": {
+          "path": "/Data/ENER",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "total_energy_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "value": 1.6286614998780056e+24,
+          "fp64Bits": "44f58e1eab4c098c"
+        },
+        "ENTR": {
+          "path": "/Data/ENTR",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure_density_proxy",
+            "metadata_version": "candidate-field-1",
+            "unit": "unknown",
+            "unit_reason": "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy"
+          },
+          "value": 56551319426708.15,
+          "fp64Bits": "42c9b770a72b4a13"
+        },
+        "PRES": {
+          "path": "/Data/PRES",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "value": 8.673469414740815e+23,
+          "fp64Bits": "44e6f55f19e7b433"
+        },
+        "TEMP": {
+          "path": "/Data/TEMP",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "temperature",
+            "metadata_version": "candidate-field-1",
+            "unit": "K"
+          },
+          "value": 199999999.99999663,
+          "fp64Bits": "41a7d783ffffff8f"
+        },
+        "VELX": {
+          "path": "/Data/VELX",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "value": 0.0,
+          "fp64Bits": "0000000000000000"
+        },
+        "VELY": {
+          "path": "/Data/VELY",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "value": 0.0,
+          "fp64Bits": "0000000000000000"
+        },
+        "VORT": {
+          "path": "/Data/VORT",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "vorticity_magnitude",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "value": 0.0,
+          "fp64Bits": "0000000000000000"
+        },
+        "ar36": {
+          "path": "/Data/ar36",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "c12": {
+          "path": "/Data/c12",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 0.6000000000000001,
+          "fp64Bits": "3fe3333333333334"
+        },
+        "ca40": {
+          "path": "/Data/ca40",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "cr48": {
+          "path": "/Data/cr48",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "fe52": {
+          "path": "/Data/fe52",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "fe54": {
+          "path": "/Data/fe54",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "h1": {
+          "path": "/Data/h1",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "he3": {
+          "path": "/Data/he3",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "he4": {
+          "path": "/Data/he4",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 0.39999999999999997,
+          "fp64Bits": "3fd9999999999999"
+        },
+        "mg24": {
+          "path": "/Data/mg24",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "n14": {
+          "path": "/Data/n14",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "ne20": {
+          "path": "/Data/ne20",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "neut": {
+          "path": "/Data/neut",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "ni56": {
+          "path": "/Data/ni56",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "o16": {
+          "path": "/Data/o16",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "prot": {
+          "path": "/Data/prot",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "s32": {
+          "path": "/Data/s32",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "si28": {
+          "path": "/Data/si28",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        },
+        "ti44": {
+          "path": "/Data/ti44",
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "attributes": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "value": 9.999999999999998e-21,
+          "fp64Bits": "3bc79ca10c924222"
+        }
+      },
+      "bounds": [
+        [
+          12.600000000000001,
+          12.8
+        ],
+        [
+          12.600000000000001,
+          12.8
+        ]
+      ],
+      "cellMeasure": 0.03999999999999998,
+      "centers": [
+        12.700000000000001,
+        12.700000000000001,
+        0.0
+      ],
+      "block": {
+        "level": 2,
+        "morton": 27
+      },
+      "arrayOrder": "stored block order, x1-fastest",
+      "limitations": [
+        "complete marker is not proof of successful close/rename",
+        "identity declarations do not establish independent producer freshness",
+        "one cell does not establish global AMR coverage or scientific accuracy",
+        "whole-file SHA scans the file; payload count is not physical HDF I/O"
+      ],
+      "fileUnchanged": true,
+      "case": "CellularDet"
+    }
+  ],
+  "remoteAvailable": false
+}
