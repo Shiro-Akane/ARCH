@@ -3069,3 +3069,11 @@ helmholtz ready/实际表路径/13species，12leaf L0 Complete。
 正常close exit0，8owned PID/startTicks均退出，input不变/no simulation输出/managed clean。
 详见FullModelHotspotsDesktop-20261004。远端联合计划无更新，科学待决不变。
 不重复自动baseline；native矩阵/wheel/科学CPU/CUDA/O9仍未闭合。
+
+## 2026-10-04 GravityBox 原生 self-gravity 参数/初态矩阵
+
+新增真实 production GravityBox 1D：self 控件可达、512 Init samples、4leaf L0 Complete，
+逻辑块0:3:0:0 bounds/spacing算术一致。没有GPOT/GAC菜单，不把配置支持冒充gravity field支持。
+Init sample与AMR几何分离；没有执行Poisson/evolution验收。
+正常close exit0，8owned PID/startTicks均退出，input未变/无科学output/managed clean。
+见FullModelGravityBoxDesktop-20261004。无源码修改或baseline重复；联合科学/CPU/CUDA/O9仍未闭合。
