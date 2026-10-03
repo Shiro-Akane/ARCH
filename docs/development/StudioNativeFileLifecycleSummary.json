@@ -1,0 +1,124 @@
+{
+  "sourceCommit": "4df8367a94a197b0b3d54953eedaa9a07dc94110",
+  "recordedAt": "2026-10-03T04:27:46.176479+00:00",
+  "launcherPid": 14246,
+  "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+  "files": {
+    "studio/.local/UatSod.par": {
+      "sha256": "381ceb60eb6cdbf7c99b43577ff0d94731144d655514c7a8194d09ce8d88644e",
+      "size": 1259
+    },
+    "studio/.local/Native UAT 中文 Sod 20261003.par": {
+      "sha256": "f452da1cb53bff2a7fe9c6c5d62407e979e5c88893f2a1a231f2c26b7c1083fb",
+      "size": 1260
+    },
+    "simulation/Sod/Sod.par": {
+      "sha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843",
+      "size": 1143
+    },
+    "build-studio-cpu/bin/ARCH": {
+      "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+      "size": 7177152
+    }
+  },
+  "processes": [
+    {
+      "pid": 14251,
+      "ppid": 14246,
+      "comm": "electron",
+      "startTicks": "279171",
+      "role": "launcher child"
+    },
+    {
+      "pid": 14252,
+      "ppid": 14246,
+      "comm": "electron",
+      "startTicks": "279171",
+      "role": "launcher child"
+    },
+    {
+      "pid": 14279,
+      "ppid": 14246,
+      "comm": "electron",
+      "startTicks": "279177",
+      "role": "launcher child"
+    },
+    {
+      "pid": 14292,
+      "ppid": 14246,
+      "comm": "MainThread",
+      "startTicks": "279179",
+      "role": "launcher child"
+    },
+    {
+      "pid": 14445,
+      "ppid": 14292,
+      "comm": "ARCH",
+      "startTicks": "279622",
+      "role": "preview-session"
+    }
+  ],
+  "oldDesktopProcessesAbsent": {
+    "5388": true,
+    "5434": true,
+    "5586": true,
+    "13695": true,
+    "13707": true
+  },
+  "checks": {
+    "nativeOpenCancel": "observed original UatSod.par association preserved",
+    "unsavedCancelReplacement": "observed Dirty retained and cfl=0.41; saved value remained0.4",
+    "nativeSaveAs": "new path containing spaces and Unicode; exact edited bytes saved",
+    "reopenOriginal": "observed UatSod.par loaded after SaveAs",
+    "reopenEdited": "observed new saved association and cfl=0.41, Saved/Disk in-sync",
+    "missingParameterNotInserted": "diff_cfl absent in both original and saved copy",
+    "catalogWording": "observed102 catalog keys, no standard-key claim",
+    "nativeWindowCapture": "observed separate maximized WSLg window id13437218,2560x1392",
+    "userVisibleWindowAcceptance": "pending; latest human report only taskbar icon",
+    "unicodeGlyphRendering": "incomplete; Chinese filename characters rendered as missing-glyph boxes",
+    "previewPolicy": "existing automatic init-only refresh remains; no new Run/Restart"
+  },
+  "notCovered": [
+    "SaveAs chooser cancel",
+    "Discard and Open",
+    "explicit overwrite/external-conflict UX",
+    "active Preview/AMR close",
+    "active Run survival and explicit Stop",
+    "full native desktop acceptance",
+    "scientific accuracy or evolution/CUDA"
+  ],
+  "runJobs": [
+    {
+      "id": "0bfb87b5-2543-462f-9e3b-cc6f2c1e93d0",
+      "mtimeUtc": "2026-10-03T02:51:29.352376+00:00"
+    },
+    {
+      "id": "14ad3646-6a57-4487-bb91-e3ec7697313e",
+      "mtimeUtc": "2026-10-02T05:14:15.571053+00:00"
+    },
+    {
+      "id": "30db4e5c-7c43-4cac-8b30-9af8fad393db",
+      "mtimeUtc": "2026-10-03T04:15:33.052515+00:00"
+    },
+    {
+      "id": "7628658b-bc1c-45cc-9537-58fff0760872",
+      "mtimeUtc": "2026-10-03T03:02:48.050495+00:00"
+    },
+    {
+      "id": "795e6be7-105e-4b3d-a48a-eae68a6f4303",
+      "mtimeUtc": "2026-10-03T03:53:41.263079+00:00"
+    },
+    {
+      "id": "926efbfc-5fd5-4dfd-b9cd-51453c1da819",
+      "mtimeUtc": "2026-10-02T04:47:38.533999+00:00"
+    },
+    {
+      "id": "9eed92af-092b-4d97-bb81-274df1419c6c",
+      "mtimeUtc": "2026-10-03T03:20:39.421827+00:00"
+    },
+    {
+      "id": "b463c8c7-c69b-4c5d-97de-b55db9a4e2a7",
+      "mtimeUtc": "2026-10-02T05:15:13.228774+00:00"
+    }
+  ]
+}

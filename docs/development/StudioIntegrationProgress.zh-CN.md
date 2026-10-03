@@ -19,7 +19,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
-| 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前 229 Studio/Host tests 与静态/production 检查 PASS；用户可见窗口确认和完整原生取消/重开矩阵未通过；历史177项不替代本轮 | 不适用 |
+| 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前 229 Studio/Host tests 与静态/production 检查 PASS；原生Open取消、未保存替换取消及空格/中文路径SaveAs/Reopen已有捕获与字节证据；用户可见窗口确认和其他原生矩阵未通过；历史177项不替代本轮 | 不适用 |
 | 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 进程/HTTP/Build 验证通过；当前原生视觉 UAT 未通过，dependenciesComplete=false | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | Sod t=0、SmoothAdvection Run/Restart和输出锁回归通过；227项Studio/Host回归通过；桌面全流程 UAT 未完成 | 不推广为其他模型/后端演化验收 |
@@ -1721,3 +1721,23 @@ No silent assumption of approval: existing joint goal authorized Run/Restart;
 this captured engineering check does not replace the pending human visibility
 answer. Native cancellation/unsaved/close/Stop matrix remains unfinished.
 Architecture-audit migration approval and historicalG scientific approval pending.
+
+## Native file lifecycle partial UAT
+
+Clean4df8367a: old idle desktop closed normally; Electron5388/Host5434/warm5586
+and completed Restart worker/Core absent. Existing launcher reopened as14246,
+Host14292; current production assets show102 catalog keys truthfully.
+Native Open Cancel preserves association; Dirty edit cfl0.4→0.41 and Cancel
+replacement preserves unsaved value. Native SaveAs to a new ignored space/Unicode
+path saves exactly the one token edit; original/local source and binary SHA unchanged.
+Open original then Reopen edited copy establishes new header/Host association,
+Saved/Disk in-sync and cfl0.41. Missingdiff_cfl not inserted.
+
+StudioNativeFileLifecycleUat.zh-CN.md and Summary.json record processed evidence.
+Existing automatic init-only Preview refresh operated; no new Run/Restart,
+scientific timestep, build or unchanged229-test rerun. Unicode path operations
+work, but Chinese glyphs render as boxes; readability remains incomplete.
+Agent capture of separate maximized window does not prove user visibility:
+latest human report only taskbar icon, fresh confirmation pending.
+Other cancellation/overwrite/active-close/Run-lifetime/Stop matrix still incomplete.
+No whole3B/3C/O7 PASS, no full-model/JENS/RZ advance, raw input/upload/push/tag.
