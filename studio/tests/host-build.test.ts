@@ -83,6 +83,7 @@ test('link-only input mutation invalidates build and missing linker inputs canno
   assert.equal(runner.snapshot().state,'succeeded');
   assert.equal(runner.snapshot().binaryState,'freshness-unknown');
   assert.match(runner.snapshot().freshnessReason,/Linker input/);
+  assert.match(runner.snapshot().freshnessReason,/1 recorded inputs are missing/);
   const manifest=await loadManifest(profile);assert.equal(manifest?.linkInputs?.unavailable.length,1);
   await writeFile(root+'/library.so','library changed');
   assert.equal((await runner.refreshFreshness()).binaryState,'needs-build');

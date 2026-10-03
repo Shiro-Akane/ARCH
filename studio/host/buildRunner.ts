@@ -73,19 +73,19 @@ export class BuildRunner {
       for(const old of previous.values())this.current.changedInputs.push(old.path);
      }catch{toolchainUnknown=true;}
     }
-    let linkUnknown=false;
+    let linkUnknown=false,missingLinkInputs=0;
     if(this.profile.linkDependencyFile){
      if(!m.linkInputs||m.linkInputError)linkUnknown=true;
      else try{
       const now=await fingerprintLinkDependencies(this.root+'/'+this.profile.buildDirRelative,this.profile.linkDependencyFile,this.root+'/'+this.profile.outputBinaryRelative);
       this.current.changedInputs.push(...changedLinkInputs(m.linkInputs,now));
-      linkUnknown=now.unavailable.length>0;
+      missingLinkInputs=now.unavailable.length;linkUnknown=missingLinkInputs>0;
      }catch{linkUnknown=true;}
     }
     if(this.current.changedInputs.length||!m.inputsStableDuringBuild||m.compilerDriversStableDuringBuild===false){this.current.binaryState='needs-build';this.current.freshnessReason=this.current.changedInputs.length?'Tracked build inputs changed since successful Build.':'Tracked inputs or compiler toolchain changed during Build; build again for a stable snapshot.';}
     else if(compilerUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler dependency evidence unavailable or stale.';}
     else if(toolchainUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler toolchain identity is incomplete or unavailable.';}
-    else if(linkUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Linker input evidence is incomplete or unavailable.';}
+    else if(linkUnknown){this.current.binaryState='freshness-unknown';this.current.freshnessReason=missingLinkInputs?('Linker input evidence is incomplete: '+missingLinkInputs+' recorded inputs are missing. Full dependency freshness is unknown.'):'Linker input evidence is incomplete or unavailable.';}
     else if(m.compilerInputsStableDuringBuild===false){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Compiler input stability was not established across Build.';}
     else if(!same(binary,m.outputBinary.fingerprint)){this.current.binaryState='freshness-unknown';this.current.freshnessReason='Executable differs from last successful Build manifest.';}
     else{this.current.binaryState=this.profile.dependenciesComplete?'built-from-current-tracked-inputs':'freshness-unknown';this.current.freshnessReason=this.profile.dependenciesComplete?'Explicit tracked inputs match the successful Build.':'Tracked inputs match; full dependency coverage is unknown.';}
