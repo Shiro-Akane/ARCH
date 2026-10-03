@@ -113,3 +113,8 @@ PlotfileLargeQuery-20261004.zh-CN.md / Summary.json。此证据不替代真实 A
 ## 2026-10-04 ALL 字段补证
 
 b26fb8a2 writer修复后新Sod9/Cellular28全部字段与早期canonical完整FP64数组bit一致；新ALL native bounds全域gap/overlap为0；37个字段production isolated point与client校验通过。schema/数组映射不变，精确input/file/binary身份与限制见 PlotfileAllFieldsFaceRepair-20261004.Summary.json。仍不把数值一致性升级为独立科学oracle验收。
+
+
+## 2026-10-04 Run output-session identity
+
+SourceIdentity/run_id不再固定unknown：DriverIO持有OS-generated UUIDv4；新增run_id_source="DriverIO output session; OS-generated UUIDv4"。旧文件unknown兼容。effective_config_sha256/build_id/source_git_head仍unknown。四次真实Sod/Cellular t=0与production isolated reader/client验证通过，37字段以及每次20个checkpoint数值dataset bit不变。映射/FP64/checkpoint语义不变，细节与真实build-input身份见 PlotfileRunIdentity-20261004.zh-CN.md / Summary。尚未push。

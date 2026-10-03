@@ -68,7 +68,7 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
  if(!(e instanceof h5.Group))throw Error('Invalid local SourceIdentity group.');
  const read=(key:string)=>scalar(e,key);
  const known=(key:string)=>{const value=read(key);return value==='unknown'?null:value;};
- for(const key of ['run_id','effective_config_sha256','build_id','source_git_head'])
+ for(const key of ['effective_config_sha256','build_id','source_git_head'])
   if(read(key)!=='unknown')throw Error('Unsupported candidate source identity claim: '+key);
  if(scalar(file,'plot_identity_state')!=='unknown')throw Error('Candidate source identity cannot certify full provenance.');
  const count=read('species_count');
@@ -122,7 +122,7 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
   idealGamma:gammaAvailable===1?read('ideal_gamma'):null,
   speciesState:read('species_identity_state'),speciesNames,
   ...(speciesProperties===undefined?{}:{speciesProperties}),
-  runId:null,effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:known('eos_unit_system'),
+  runId:known('run_id'),...(e.attrs.run_id_source?{runIdSource:known('run_id_source')}:{}),effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:known('eos_unit_system'),
  };
  if(!sourceEvidenceValid(evidence))throw Error('Invalid candidate source evidence.');
  return evidence;

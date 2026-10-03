@@ -58,7 +58,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
                int file_index, double current_time,
                const SimConfig &config, const SpeciesManager &specs,
                std::span<const io::PlotScalarField> extra_fields = {},
-               const io::CheckpointProvenance* runtime_provenance = nullptr);
+               const io::CheckpointProvenance* runtime_provenance = nullptr,
+               std::string_view run_id = {});
 
 // Checkpoint output for restart.
 void write_chk(amr::AMRControl &amr_ctrl,

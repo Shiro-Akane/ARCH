@@ -1,0 +1,104 @@
+{
+  "scope": "CPU t=0 only, run output-session identity, not evolution/restart or full scientific provenance",
+  "build": {
+    "baseHead": "148c0d06ca884bba4f2251cd5d4226a28801b2b2",
+    "dirty": true,
+    "binarySha256": "13e8c786b4c5c47e50c7a77f8f78c9f757c117a4af845e01d0e55f90f789b97d",
+    "changedTrackedInputs": {
+      "src/driver/io/DriverIO.cpp": "e63b3cf29165949becb102a7be8bfbb198349bf02c8899a68be6052b414b9e76",
+      "src/driver/io/DriverIO.h": "118cca691ed560ce3a0463f19f4a02637b3f3de915c8997fd279ac0d16ceac49",
+      "src/io/IO.h": "92ce81eadc01c0a2f92f9279bbf34158f197415f65bc4eb2d36201732d78a062",
+      "src/io/hdf5/HDF5Writer.cpp": "c5b87f95cc9c078f794f685ac0c4ccea06d3b547e0ec25535880a4e25af914b3",
+      "src/io/hdf5/HDF5Writer.h": "58dfbd9821b1591ea5a53dcc5f475675d405fa84957dc056dc44d10c2daf9c5c",
+      "src/io/plot/PlotIO.cpp": "98d90d10ceef2fea00bc1b1738c57282e98dd9ae27c248e9f8695e7be3c2ae8f",
+      "src/core/files/RunIdentity.h": "b957e475db632eff94f40c28ecf8e0e97973638dabf8a46c2cf0c82703d93552"
+    }
+  },
+  "runs": [
+    {
+      "case": "Sod",
+      "runId": "cb06f394-43e8-4801-9253-ab5f80df8e49",
+      "plotfile": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-identity-20261004/raw/Sod-0/output/reference_HLLC_plt_0000.h5",
+      "plotfileSha256": "f6cce4ef37510b995667f55eef85f2373269740c7eba71f5ab8aa055295d03db",
+      "inputSha256": "797337a762679de57cff9dfd3bdc7fa90001de3b33c893affc2bb515682bbdbd",
+      "binarySha256": "13e8c786b4c5c47e50c7a77f8f78c9f757c117a4af845e01d0e55f90f789b97d",
+      "fieldCount": 9,
+      "checkpointNumericDatasets": 20,
+      "fieldAndCheckpointBitsUnchanged": true
+    },
+    {
+      "case": "Sod",
+      "runId": "244c9dfc-6b7c-49bf-96ad-696887c766f7",
+      "plotfile": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-identity-20261004/raw/Sod-1/output/reference_HLLC_plt_0000.h5",
+      "plotfileSha256": "51e0dbd6914bad2d99d912ff114a95f3036ae2c34f7011d11d43dfed3c7048b8",
+      "inputSha256": "7c41c74a5c0c7ad4c7d3ff7b4af94e3bab01a9cf72611ef0cfb155d01813ebe9",
+      "binarySha256": "13e8c786b4c5c47e50c7a77f8f78c9f757c117a4af845e01d0e55f90f789b97d",
+      "fieldCount": 9,
+      "checkpointNumericDatasets": 20,
+      "fieldAndCheckpointBitsUnchanged": true
+    },
+    {
+      "case": "CellularDet",
+      "runId": "bac95e46-457a-4833-896b-609fd130fd5f",
+      "plotfile": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-identity-20261004/raw/CellularDet-0/output/reference_HLLC_plt_0000.h5",
+      "plotfileSha256": "8f218efe2dc1d2bb8a9de7ca14df1f36e5a283d25acfcddf9086577a16064091",
+      "inputSha256": "3cb6dc1ff0963282d2548fc63d8af3e2a91043113f49e7865ba498a1614c0371",
+      "binarySha256": "13e8c786b4c5c47e50c7a77f8f78c9f757c117a4af845e01d0e55f90f789b97d",
+      "fieldCount": 28,
+      "checkpointNumericDatasets": 20,
+      "fieldAndCheckpointBitsUnchanged": true
+    },
+    {
+      "case": "CellularDet",
+      "runId": "e8c573d5-0690-4ab5-8460-4ef564d41e48",
+      "plotfile": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-run-identity-20261004/raw/CellularDet-1/output/reference_HLLC_plt_0000.h5",
+      "plotfileSha256": "056717dd4d61d8c108bf43d002377fb1f6848442b8fee925d2933cdbfa273195",
+      "inputSha256": "05ffb1c4b641e7d2d1fe678fe6b6dd6af77838671b96c2e3fd0956e50b1069ab",
+      "binarySha256": "13e8c786b4c5c47e50c7a77f8f78c9f757c117a4af845e01d0e55f90f789b97d",
+      "fieldCount": 28,
+      "checkpointNumericDatasets": 20,
+      "fieldAndCheckpointBitsUnchanged": true
+    }
+  ],
+  "isolated": [
+    {
+      "case": "Sod",
+      "runId": "cb06f394-43e8-4801-9253-ab5f80df8e49",
+      "productionIsolatedReaderAndClient": true,
+      "sourceUnchanged": true
+    },
+    {
+      "case": "Sod",
+      "runId": "244c9dfc-6b7c-49bf-96ad-696887c766f7",
+      "productionIsolatedReaderAndClient": true,
+      "sourceUnchanged": true
+    },
+    {
+      "case": "CellularDet",
+      "runId": "bac95e46-457a-4833-896b-609fd130fd5f",
+      "productionIsolatedReaderAndClient": true,
+      "sourceUnchanged": true
+    },
+    {
+      "case": "CellularDet",
+      "runId": "e8c573d5-0690-4ab5-8460-4ef564d41e48",
+      "productionIsolatedReaderAndClient": true,
+      "sourceUnchanged": true
+    }
+  ],
+  "checks": {
+    "studioTests": 321,
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "coreProductionBuild": "PASS",
+    "plotfilePublication": "1/1 PASS",
+    "checkpointNumericDatasetsPerRun": 20
+  },
+  "limits": [
+    "single plotfile per real t=0 invocation; stable multiple outputs and new restart UUID established by ownership/code path, not a new evolution/restart test",
+    "no native desktop UAT this turn",
+    "effective config/build/source Git still unknown",
+    "no CUDA/push/tag/main merge"
+  ]
+}

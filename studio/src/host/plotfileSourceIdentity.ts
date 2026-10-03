@@ -11,14 +11,17 @@ export interface PlotfileSourceEvidence {
  eosType:string|null;eosSource:'resolved-runtime-checkpoint-provenance'|null;
  eosTableState:'unknown'|'recorded'|'not-applicable';eosTableSha256:string|null;idealGamma:number|null;
  speciesState:'unknown'|'recorded';speciesNames:string[];speciesProperties?:PlotfileSpeciesProperties;
- runId:null;effectiveConfigSha256:null;buildId:null;sourceGitHead:null;eosUnitSystem:'cgs'|null;
+ runId:string|null;runIdSource?:string|null;effectiveConfigSha256:null;buildId:null;sourceGitHead:null;eosUnitSystem:'cgs'|null;
 }
 const object=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const text=(v:unknown)=>typeof v==='string'&&v.length>0&&v.length<=128&&!v.includes('\0');
 const digest=(v:unknown)=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 export function sourceEvidenceValid(v:unknown):v is PlotfileSourceEvidence {
  if(!object(v)||v.version!=='candidate-identity-1'||v.scope!=='partial'||v.binaryScope!=='main-executable-only'||
-  !['runId','effectiveConfigSha256','buildId','sourceGitHead'].every(k=>v[k]===null))return false;
+  !['effectiveConfigSha256','buildId','sourceGitHead'].every(k=>v[k]===null))return false;
+ if(v.runId===null ? v.runIdSource!==undefined&&v.runIdSource!==null :
+  typeof v.runId!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(v.runId)||
+  v.runIdSource!=='DriverIO output session; OS-generated UUIDv4')return false;
  if(v.eosUnitSystem!==null&&v.eosUnitSystem!=='cgs')return false;
  if(v.caseId===null?v.caseSource!==null:!text(v.caseId)||v.caseSource!=='ConfigurationInput.case_id')return false;
  if(v.rawConfigSha256===null?v.rawConfigSource!==null:!digest(v.rawConfigSha256)||v.rawConfigSource!=='ConfigurationInput.raw_text; exact parser bytes')return false;

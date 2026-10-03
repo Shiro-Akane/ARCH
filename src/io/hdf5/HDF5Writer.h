@@ -69,6 +69,7 @@ struct CheckpointData {
 // Partial evidence supplied from the immutable load boundary and resolved EOS.
 // Missing run/config/build/binary identities remain explicitly unknown.
 struct PlotSourceIdentity {
+    std::string run_id;
     std::string case_id;
     std::string raw_config_sha256;
     std::string binary_sha256;

@@ -1,4 +1,6 @@
 #include "core/files/FileFingerprint.h"
+#include "core/files/RunIdentity.h"
+#include <regex>
 #include "io/hdf5/HDF5Writer.h"
 #include "io/plot/PlotGridMetadata.h"
 #include "io/plot/PlotFieldMetadata.h"
@@ -110,6 +112,11 @@ int main(int argc, char** argv) {
         native_dims.push_back(nx);
         auto path=root/("native-"+std::to_string(dimension)+".h5");
         io::PlotSourceIdentity identity;
+        identity.run_id=arch::core::new_run_identity();
+        require(std::regex_match(identity.run_id,std::regex(
+            "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}")),
+            "invalid OS-generated run UUID");
+        require(identity.run_id!=arch::core::new_run_identity(),"run instances reused UUID");
         identity.binary_sha256=arch::core::running_executable_sha256();
         identity.raw_config_sha256="ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
         identity.case_id="Sod"; identity.eos_type="ideal"; identity.ideal_gamma=1.4;
@@ -130,6 +137,10 @@ int main(int argc, char** argv) {
             require(id=="unknown","partial evidence falsely certified");
             f.getGroup("SourceIdentity").getAttribute("case_id").read(id);
             require(id=="Sod","case source evidence missing");
+            f.getGroup("SourceIdentity").getAttribute("run_id").read(id);
+            require(id==identity.run_id,"run output identity lost");
+            f.getGroup("SourceIdentity").getAttribute("run_id_source").read(id);
+            require(id=="DriverIO output session; OS-generated UUIDv4","run source guessed");
             f.getGroup("SourceIdentity").getAttribute("binary_sha256").read(id);
             require(id==identity.binary_sha256,"running binary identity differs");
             f.getGroup("SourceIdentity").getAttribute("raw_config_sha256").read(id);
@@ -229,6 +240,14 @@ int main(int argc, char** argv) {
             require(rejected,"partial/nonfinite resolved species evidence accepted");
             require(arch::core::file_sha256(path.string())==original_digest,"bad species evidence replaced file");
         }
+        auto invalid_run=identity;invalid_run.run_id="filename-derived";
+        bool invalid_run_rejected=false;
+        try {
+            io::write_hdf5_plt_impl(path.string(),0.,dimension,"cartesian",native_dims,
+                cx,cy,cz,{0,0},{1,2},{{"DENS",field}},&native,&invalid_run);
+        } catch(const std::invalid_argument&) {invalid_run_rejected=true;}
+        require(invalid_run_rejected,"malformed run identity accepted");
+        require(arch::core::file_sha256(path.string())==original_digest,"invalid run replaced published file");
         auto bad_identity=identity;bad_identity.eos_table_sha256="not-a-digest";
         bool bad_source_rejected=false;
         try {

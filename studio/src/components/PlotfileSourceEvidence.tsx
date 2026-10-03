@@ -13,7 +13,8 @@ export function PlotfileSourceEvidence({evidence}:{evidence?:Evidence|null}){
    <dt>EOS table</dt><dd>{evidence.eosTableState} · {evidence.eosTableSha256??'no recorded digest'}</dd>
    <dt>IdealGas gamma</dt><dd>{evidence.idealGamma??'not recorded'}</dd>
    <dt>Ordered species</dt><dd>{evidence.speciesState} · {evidence.speciesNames.join(', ')||'none recorded'}</dd>
-   <dt>Run / effective config / build / source Git</dt><dd>unknown</dd>
+   <dt>Run output session</dt><dd>{evidence.runId??'unknown'} · {evidence.runIdSource??'unknown'}</dd>
+   <dt>Effective config / build / source Git</dt><dd>unknown</dd>
    <dt>Recorded unit system</dt><dd>{evidence.eosUnitSystem??'unknown'}</dd>
   </dl>
   {evidence.speciesProperties?.state==='recorded'?<details>

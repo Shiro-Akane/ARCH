@@ -118,3 +118,19 @@ test('explicit unknown EOS properties preserve reason without synthetic values',
  },{species_properties_version:'checkpoint-species-1',species_properties_state:'unknown',
   species_properties_source:'unknown',species_properties_reason:unknown.reason});
 });
+
+test('recorded run UUID passes writer-shaped HDF -> reader -> client evidence',async()=>{
+ const run='67cd09d8-a208-4ff8-92ad-cd66d58f207f';
+ const source='DriverIO output session; OS-generated UUIDv4';
+ await fixture(async path=>{
+  const metadata=await inspectPlotfileMetadata(path);
+  assert.equal(metadata.candidateSourceIdentity?.runId,run);
+  assert.equal(metadata.candidateSourceIdentity?.runIdSource,source);
+  assert.ok(sourceEvidenceValid(metadata.candidateSourceIdentity));
+  for(const change of [{runId:'filename'},{runIdSource:'filename'},{runId:null}]){
+   assert.equal(sourceEvidenceValid({...metadata.candidateSourceIdentity,...change}),false);
+  }
+ },{run_id:run,run_id_source:source});
+ for(const change of [{run_id:run},{run_id:run,run_id_source:'filename'}])
+  await fixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/source evidence/);},change);
+});

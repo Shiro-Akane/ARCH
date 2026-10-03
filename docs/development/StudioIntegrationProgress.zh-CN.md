@@ -2560,3 +2560,8 @@ b26fb8a2 最小 writer 面索引求值修复，C++反例先失败后publication/
 ## 2026-10-04 Jeans 指数边界补证
 
 301项独立Decimal参考与共享数值叶函数CPU比对通过，197正有限（2次正规）/31下溢/73溢出，最大相对误差1.5432483614913696e-16。沿用既有工程界限，无floor或生产能力开放。见 JeansExponentGrid-20261004.zh-CN.md / Summary；一般EOS/父态/RZ近场科学决策仍待确认。
+
+
+## 2026-10-04 Plotfile run identity
+
+DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容，其他未确认身份仍unknown。321项Studio回归及CPU构建/发布检查PASS；四次真实CPU t=0的原始字段/20项checkpoint数据bit一致，隔离点查身份匹配。见 PlotfileRunIdentity-20261004.zh-CN.md / Summary。未演化、未CUDA、未push。

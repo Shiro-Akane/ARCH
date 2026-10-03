@@ -50,7 +50,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
                int file_index, double current_time,
                const SimConfig &config, const SpeciesManager &specs,
                std::span<const io::PlotScalarField> extra_fields,
-               const io::CheckpointProvenance* runtime_provenance)
+               const io::CheckpointProvenance* runtime_provenance, std::string_view run_id)
 {
     if (!fs::exists(config.io.out_dir))
         fs::create_directories(config.io.out_dir);
@@ -260,6 +260,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
     }
     io::PlotSourceIdentity source_identity;
+    source_identity.run_id = run_id;
     source_identity.unit_system = "cgs";
     source_identity.binary_sha256 = arch::core::running_executable_sha256();
     if (const auto input = config.LoadedInput()) {

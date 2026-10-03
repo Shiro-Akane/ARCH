@@ -1,3 +1,4 @@
+#include "core/files/RunIdentity.h"
 /**
  * @file HDF5Writer.cpp
  * @brief Read and write the common HDF5 datasets and attributes.
@@ -259,6 +260,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
     }
     if (source_identity) {
         const auto& id=*source_identity;
+        if (!id.run_id.empty() && !arch::core::valid_run_identity(id.run_id))
+            throw std::invalid_argument("Invalid plot run identity.");
         if (!id.unit_system.empty() && id.unit_system!="cgs")
             throw std::invalid_argument("Unsupported plot unit system.");
         const auto text_ok=[](const std::string& text) {
@@ -367,7 +370,10 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                 identity.createAttribute("species_properties_reason",
                     std::string("resolved species properties not supplied by caller"));
             }
-            for(const char* name:{"run_id","effective_config_sha256",
+            identity.createAttribute("run_id",id.run_id.empty()?std::string("unknown"):id.run_id);
+            identity.createAttribute("run_id_source",id.run_id.empty()?std::string("unknown"):
+                std::string("DriverIO output session; OS-generated UUIDv4"));
+            for(const char* name:{"effective_config_sha256",
                  "build_id","source_git_head"})
                 identity.createAttribute(name,std::string("unknown"));
             identity.createAttribute("eos_unit_system",id.unit_system.empty()?std::string("unknown"):id.unit_system);
