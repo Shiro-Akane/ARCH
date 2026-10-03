@@ -28,6 +28,9 @@ inline Geometry geometry_from_name(const std::string& geometry) {
     return Geometry::Unsupported;
 }
 
+/** Native Grid retains its legacy semantics until the full production migration. */
+inline bool is_axisymmetric_rz(const Grid&) { return false; }
+
 inline Geometry geometry_kind(const Grid& grid) {
     return geometry_from_name(grid.geometry);
 }

@@ -1,0 +1,37 @@
+{
+  "baseHead": "9c5ced160bba7a1855d7230d4b382ff5902bce3e",
+  "dirtyInputs": {
+    "src/grid/GridGeometryView.h": "c7ac1652c266dfe8fa454249521e7022ac252b81f1cc8f4eb5233c31a726e4e5",
+    "src/grid/GridMetrics.h": "2b697c596da5cfa59a89539ad7440f32f20b1dca058d92988e156bfd7108f3f8",
+    "src/physics/diagnostics/VelocityDiagnostics.h": "f3321fb9f77a544b3a6bf658cd938b97896d8929ad3fef86e7c421c15625069c",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "65eb0fdf65c88f20c59f374d4a6c40329e39bf122e23bb0f00a47f74789d30a6"
+  },
+  "tests": "curvilinear_metrics + amr_operation_plans 2/2 PASS",
+  "witness": {
+    "vr": "(a+b*z)*r",
+    "vz": "c*r^2+d*z",
+    "vphi": "(w+q*z)*r",
+    "div": "2*(a+b*z)+d",
+    "curl_r": "-q*r",
+    "curl_phi": "(b-2*c)*r",
+    "curl_z": "2*(w+q*z)",
+    "sampleCells": 27,
+    "radialLower": [
+      0,
+      1,
+      4
+    ],
+    "budget": "existing 2e-12 arithmetic gate; not a new science budget"
+  },
+  "binarySha256": {
+    "arch_curvilinear_metrics": "3d7c04353b709256de62ef5416330fa744f9804f09d040a617daddfe8f5d70fa",
+    "arch_amr_operation_plans": "8579c5d16bccd531b5e5120657c9283ce6a239df86d6e5cd9d813f58877b2590"
+  },
+  "limits": [
+    "native Grid still legacy polar",
+    "no production capability",
+    "no CUDA",
+    "viscous unresolved phi connection not migrated",
+    "not evolved science acceptance"
+  ]
+}

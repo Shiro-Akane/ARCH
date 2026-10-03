@@ -31,6 +31,7 @@ struct Values {
  * Momentum storage follows the hydro source-term convention: VELX is radial for
  * curvilinear grids; VELY is azimuthal in 2-D polar/cylindrical grids and polar
  * in 3-D spherical grids; VELZ is azimuthal in 3-D cylindrical/spherical grids.
+ * Explicit RZ views use VELY=axial and VELZ=azimuthal with no phi derivative.
  * Logical-grid indices are materialized once because this routine is called in the
  * AMR and PLT inner loops; the component derivatives then reuse the same stencil.
  */
@@ -91,6 +92,17 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
     }
 
     const double radius = std::max(std::abs(grid.GetCellCenterX(i)), 0.5 * grid.dx1);
+    if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cylindrical
+        && (grid.dim == 3 || GridMetrics::is_axisymmetric_rz(grid))) {
+        // Logical axes are (r,z,phi), or explicit axisymmetric (r,z).
+        // RZ retains v_phi; ddz above is zero because there is no phi axis.
+        const double omega_r = ddz(vel_y) / radius - ddy(vel_z);
+        const double omega_phi = ddy(vel_x) - ddx(vel_y);
+        const double omega_z = vel_z_center / radius + ddx(vel_z) - ddz(vel_x) / radius;
+        result.vorticity = std::sqrt(omega_r * omega_r + omega_phi * omega_phi + omega_z * omega_z);
+        return result;
+    }
+
     if (grid.dim <= 2) {
         // Both 2-D cylindrical and the project's 2-D spherical specialization
         // are polar (r, phi) grids with physical components (v_r, v_phi).
@@ -99,14 +111,6 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
         return result;
     }
 
-    if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cylindrical) {
-        // Logical axes are (r, z, phi), with stored components (v_r, v_z, v_phi).
-        const double omega_r = ddz(vel_y) / radius - ddy(vel_z);
-        const double omega_phi = ddy(vel_x) - ddx(vel_y);
-        const double omega_z = vel_z_center / radius + ddx(vel_z) - ddz(vel_x) / radius;
-        result.vorticity = std::sqrt(omega_r * omega_r + omega_phi * omega_phi + omega_z * omega_z);
-        return result;
-    }
 
     // 3-D spherical logical axes are (r, theta, phi) with physical components
     // (v_r, v_theta, v_phi). The floor prevents numerical singularities in ghosts.

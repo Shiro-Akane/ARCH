@@ -12,6 +12,7 @@
 #include "math/geometry/ViscousGeometryCases.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "physics/eos/IdealGas.h"
+#include "physics/diagnostics/VelocityDiagnostics.h"
 #include <iostream>
 #include <stdexcept>
 
@@ -161,6 +162,28 @@ int main()
             Geometry::Cylindrical,dimension,{0.,0.,0.},{1.,1.,1.})); }
         catch (const std::invalid_argument&) {rejected=true;}
         if (!rejected) throw std::runtime_error("RZ view accepted unsupported dimension");
+    }
+    // Independent axisymmetric polynomial witness:
+    // vr=(a+b*z)*r, vz=c*r*r+d*z, vphi=(w+q*z)*r.
+    // div=2(a+b*z)+d; curl=(-q*r, (b-2c)*r, 2(w+q*z)).
+    for (double left : {0.,1.,4.}) {
+        auto grid=make_rz_geometry_view(make_geometry_view(
+            Geometry::Cylindrical,2,{left,-1.,0.},{.25,.5,0.}));
+        grid.ng=1;grid.stride_y=5;grid.stride_z=25;grid.total_size=25;
+        std::vector<double> vr(25),vz(25),vp(25);
+        const double a=.5,b=.25,c=-.75,d=1.5,w=2.,q=.5;
+        for (int j=0;j<5;++j) for (int i=0;i<5;++i) {
+            const int cell=grid.GetIndex(i,j);
+            const double radius=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+            vr[cell]=(a+b*z)*radius;vz[cell]=c*radius*radius+d*z;vp[cell]=(w+q*z)*radius;
+        }
+        for (int j : {1,2,3}) for (int i : {1,2,3}) {
+            const double radius=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+            const auto value=VelocityDiagnostics::evaluate(grid,vr,vz,vp,i,j,0);
+            close(value.divergence,2.*(a+b*z)+d,"RZ analytic finite-volume divergence");
+            close(value.vorticity,std::sqrt(q*q*radius*radius+(b-2.*c)*(b-2.*c)*radius*radius
+                +4.*(w+q*z)*(w+q*z)),"RZ analytic axisymmetric curl");
+        }
     }
     const double pi = arch::constants::math::pi;
     for (Geometry geometry : {Geometry::Cartesian, Geometry::Cylindrical, Geometry::Spherical})

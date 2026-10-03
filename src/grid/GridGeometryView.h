@@ -78,6 +78,12 @@ struct GeometryView {
     }
 };
 
+/** Explicit view identity used by mathematical consumers during migration. */
+ARCH_HOST_DEVICE inline bool is_axisymmetric_rz(const GeometryView& grid)
+{
+    return grid.semantics == GeometrySemantics::AxisymmetricRz;
+}
+
 ARCH_HOST_DEVICE inline Geometry geometry_kind(const GeometryView& grid)
 {
     return grid.geometry;

@@ -2623,3 +2623,10 @@ O7.1科学规则、RZ整条接线/近场预算和最终平台出口仍待。
 内部显式 chart 已贯穿 metric/source/代表位置转换，旧 Grid/default chart 保持。
 CPU curvilinear_metrics + amr_operation_plans 2/2 PASS。
 详见 RZGeometryView-20261004.zh-CN.md / Summary；运输/AMR/elliptic/IO/CUDA 与科学出口未关闭。
+
+
+## 2026-10-04 RZ velocity diagnostics
+
+修复显式 RZ view 误走 2D polar curl；复用既有 3D cylindrical 公式。
+轴正则旋流/轴向结构 27-cell 解析 div/curl 和受影响 CPU regression 2/2 PASS。
+详见 RZVelocityDiagnostics-20261004.zh-CN.md / Summary；黏性未解析方位连接及全路径仍待接线。
