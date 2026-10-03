@@ -63,3 +63,5 @@ JeansDiagnostics.h 已实现冻结公式的数值叶函数，独立 Decimal 参�
 这不解除上述科学确认与前序桌面出口门槛；尚无 EOS/网格/AMR/plot 消费者，JENS capability 仍 unavailable。数值输入域/工程舍入界限不是科学有效状态或轨迹预算批准。
 
 活动物理尺度接线已由 evaluate_cell 复用 GridMetrics::PhysicalSpacing，CPU Jeans/既有曲线度量 scoped CTest 2/2 通过，见 JeansPhysicalSpacing-20261003.zh-CN.md。仍无生产消费者；不得从尺度测试推出一般 EOS、AMR 生命周期或 RZ 已验收。
+
+真实 IdealGas 静态声速路径已用独立 caloric 参考验证24组合（最大相对误差1.9657272738823614e-16，CPU CTest1/1），见 JeansIdealGasReference-20261003.zh-CN.md。这只补足 IdealGas 数值证据，不替代一般 EOS oracle/接受态/AMR/科学预算批准。

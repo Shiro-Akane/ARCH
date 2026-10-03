@@ -6,9 +6,11 @@
  * AMR threshold, trajectory or scientific acceptance budget.
  */
 #include "physics/diagnostics/JeansDiagnostics.h"
+#include "physics/eos/IdealGas.h"
 #include <array>
 #include <limits>
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 #include <algorithm>
 
@@ -94,5 +96,51 @@ int main()
     if (JeansDiagnostics::evaluate_cell(1,1,grid,0,0).status !=
             JeansDiagnostics::Status::invalid_input)
         throw std::runtime_error("Unknown Jeans geometry accepted");
+    // Independent caloric IdealGas reference, including moving fluid and a
+    // two-species mixture whose gamma differs from the constructor fallback.
+    // No production EOS function contributes to the expected expression.
+    SpeciesManager empty_species;
+    IdealGas simple(1.5, empty_species);
+    SpeciesManager mixture_species;
+    mixture_species.add_species("first", 1.0, 1.0, 1.5, 2.0);
+    mixture_species.add_species("second", 2.0, 1.0, 2.0, 4.0);
+    IdealGas mixture(1.4, mixture_species);
+    const std::array<double,2> composition{.25,.75};
+    const long double reference_pi =
+        3.141592653589793238462643383279502884L;
+    const long double reference_G = 6.67430e-8L;
+    double max_relative_error = 0.0;
+    int eos_cases = 0;
+    for (bool use_mixture : {false,true})
+    for (double density : {.25,1.0,4.0})
+    for (double specific_internal_energy : {4.0,16.0})
+    for (bool moving : {false,true}) {
+        const auto& eos = use_mixture ? mixture : simple;
+        const double* Xi = use_mixture ? composition.data() : nullptr;
+        const double u = moving ? 2.0 : 0.0;
+        const double v = moving ? 3.0 : 0.0;
+        const double w = moving ? 4.0 : 0.0;
+        const FluidVector state{density,density*u,density*v,density*w,
+            density*(specific_internal_energy + .5*(u*u+v*v+w*w))};
+        const double pressure = eos.get_pressure(state,Xi);
+        const double sound_speed = eos.get_sound_speed(state,pressure,Xi);
+        GridMetrics::GeometryView physical_grid{};
+        physical_grid.dim = 2; physical_grid.dx1 = .25; physical_grid.dx2 = .5;
+        const auto actual = JeansDiagnostics::evaluate_cell(
+            state.rho,sound_speed*sound_speed,physical_grid,0,0);
+        // Cv-weighted gamma = 1 + (1/4*2*1/2 + 3/4*4*1)/(1/4*2 + 3/4*4).
+        const long double gamma = use_mixture ? 27.0L/14.0L : 1.5L;
+        const long double expected = std::sqrt(reference_pi *
+            gamma*(gamma-1)*specific_internal_energy/(reference_G*density))/.5L;
+        const double relative_error = static_cast<double>(
+            std::abs(static_cast<long double>(actual.cells)-expected)/expected);
+        max_relative_error = std::max(max_relative_error,relative_error);
+        if (actual.status != JeansDiagnostics::Status::valid ||
+            relative_error > 16*std::numeric_limits<double>::epsilon())
+            throw std::runtime_error("Jeans IdealGas independent reference mismatch");
+        ++eos_cases;
+    }
+    std::cout << std::setprecision(17) << "JEANS_IDEALGAS_CASES=" << eos_cases
+              << " MAX_RELATIVE_ERROR=" << max_relative_error << '\n';
     std::cout << "JEANS_DIAGNOSTICS_NUMERIC_PASS\n";
 }

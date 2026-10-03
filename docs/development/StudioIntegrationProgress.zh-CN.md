@@ -2279,3 +2279,9 @@ a06b8d51 基线上增加 JeansDiagnostics::evaluate，消费总密度/声速平�
 abdbf87d 基线上 evaluate_cell 复用 GridMetrics::PhysicalSpacing，逐活动轴校验后取最大值；忽略非活动轴，非法值不由max/abs/floor掩盖。
 各向异性 Cartesian/当前polar/3-D cylindrical/spherical赤道、极区、首径向单元及非法几何/维度/间距通过独立尺度参考；既有曲线度量回归共同 CTest 2/2 PASS。
 详见 JeansPhysicalSpacing-20261003.zh-CN.md。未接接受态EOS/AMR/plot，能力仍 unavailable，科学确认与前序桌面矩阵门槛保留；无 production ARCH build/simulation/CUDA/push/tag/main merge。
+
+### O7.1 静态数值证据：真实 IdealGas / 组成闭合
+
+30820aeb 基线上仅扩充现有 scoped test：真实 IdealGas pressure/sound speed→evaluate_cell，与独立 caloric 解析参考比较。
+24个密度/内能/静止/运动/单闭合/双组分组合，最大相对误差1.9657272738823614e-16，CTest1/1 PASS；双组分独立gamma27/14不等于构造fallback1.4。详见 JeansIdealGasReference-20261003.zh-CN.md/Summary。
+fetch后compute/optim仍8fc0dd25，无新科学批准引用。一般EOS/AMR/演化/restart科学预算仍pending，JENS production unavailable；无simulation/CUDA/production ARCH build/push/tag/main merge。
