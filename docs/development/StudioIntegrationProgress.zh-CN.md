@@ -2472,3 +2472,12 @@ Host与UI已迁移recorded declaration，旧文件unknown保留。
 37字段Host/client slice/LOD/point及h5py原生回查通过。发现ENTR canonical名称冲突并最小修正metadata；
 scoped2/2及孤立ENTR header通过，完整unknown-extra fixture/旧生产文件边界如实保留。
 见PlotfileMultiFieldT0-20261003；新canonical生产输出及科学/平台review未完成。
+
+
+## 2026-10-03 Plotfile Driver failure propagation
+
+Canonical t=0 来源 a2b0658b/b360c662 已完成；报告提交 94a094f4。
+本轮在真实 CPU Driver 复现发布失败推进 plot index；修复为成功返回后递增。
+五种故障及同编号重试通过，既有 IO 两项回归通过；原始文件留本机。
+见 PlotfileDriverFailurePropagation-20261003.zh-CN.md。科学 review、完整身份、
+checkpoint 原子发布以及大文件/缓存/资源证据保持待办；全联合目标未封箱。

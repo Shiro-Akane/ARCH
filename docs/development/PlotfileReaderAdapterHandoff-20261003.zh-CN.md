@@ -124,3 +124,11 @@ compiled scoped ENTR声明接受，新canonical生产H5仍待验证；不由read
 Owner header 子验证通过，case/config/binary 外部可信身份核对；完整数组适配及科学 review 仍待。
 新旧 checkpoint t=0 状态位级差异 0；旧 c294 文件及原 ENTR finding 保留，不改写历史原始文件。
 以上是当前状态；前文旧文件/待验证描述均为历史证据，不替代本次精确身份。
+
+
+## Driver 层发布失败补充
+
+已实际复现 writer 抛错后 Driver plot index 提前前进；最小补丁将递增移到成功返回后。
+真实 CPU Driver write/flush/close/rename/create 故障与同编号重试通过；
+见 PlotfileDriverFailurePropagation-20261003.zh-CN.md / Summary.json。
+此证据不扩展为 checkpoint 原子发布、ENOSPC 或硬件持久性声明。
