@@ -1,9 +1,9 @@
 # Plotfile Core IO 最小契约草案
 
-日期：2026-10-03。状态：**草案，待 Core 负责人确认；不是已实现 API 或科学验收**。
+日期：2026-10-03。状态：**候选实现依据；允许小范围试做，科学语义待 Core review；不是已实现 API 或科学验收**。
 审计基线：6eef34f5cd0f793df7d9b8c18c9a0b114d9aaaac。
 依据：StudioConfigurationHandoff.zh-CN.md 的正式 plt 只读结果接口、LOD、原生单元 Inspector 出口。
-本次仅整理契约，不修改 writer、科学 Core、checkpoint 格式，不运行 simulation。
+原始草案仅整理契约。更新依据为联合计划提交 35c5b7b114069621901386bfc4bc2a656e65af06 及用户最新分工确认：允许在共享 IO 层试做最小 writer 扩展、只读查询与 Viewer；保持科学场值、精度、数值推进及 checkpoint 语义。
 当前 audit 接口继续 completion unknown / renderEligible false，不自动升级认证。
 
 ## 1. 源码事实
@@ -24,9 +24,9 @@ checkpoint provenance 是独立契约，不自动赋予 plt 完整身份。
 ## 2. 兼容与职责
 
 保留当前 Grid/Data 原始数值、shape、存储顺序。建议增加独立版本的 PlotMetadata 扩展。
-以下字段名是逻辑候选；HDF5 映射由 Core 定案，不能作为已发布名字接入客户端。
+以下字段名与 HDF5 映射可由实现方提出并试用，必须标记候选版本；正式支持范围以 Core review 后的契约为准。
 
-- Core 提供实际 case/config/EOS/字段/网格语义及发布状态。
+- 实现方复用 Core 已有 case/config/EOS/网格来源，提出存储、发布、查询及显示候选实现；Core review 单位、坐标、积分测度、身份、发布完整性与原生数值一致性。
 - Host 提供实际持有的 job/build/binary 指纹并声明关联来源。
 - Studio 不根据文件名、当前模型或 binary 补齐旧文件身份。
 - 缺失信息为 unknown；legacy 文件继续 raw audit。
@@ -41,8 +41,7 @@ final collision 的 replace/reject 策略由 Core 明确，不无声覆盖成功
 正式读取至少校验已知 writer/发布版本、布局一致性、读取期间文件身份稳定。
 
 原子可见性与断电耐久性不同；是否 fsync 文件与目录需要明确，不默认保证。
-待定：临时文件失败保留／清理、rename 平台语义、冲突、错误返回／异常、
-调用方退出状态与关闭失败注入。草案不授权直接实施这些未确认的 IO 语义。
+候选实现需明确并验证：临时文件失败保留／清理、Linux rename 语义、冲突、错误返回／异常、调用方退出状态与关闭失败注入。允许提出小范围实现供 review；不能把未经验证的发布流程称为完整性保证。
 
 ## 4. 最小 metadata 结构
 
@@ -107,9 +106,11 @@ Host 不另复制曲线公式，也不由中心差分猜体积。
 ## 6. 只读与 LOD 边界
 
 沿用 project/path/digest 绑定、隔离 worker、bounded slice、取消及旧响应淘汰。
-正式 metadata 结构／版本验证后才进入科学 Viewer。
+首版可接入已知候选 metadata 版本的 Viewer，明确标记候选语义、已知支持范围和未知项；legacy raw audit 不自动升级科学身份。
 LOD 与 raw 是不同数据层；显示降采样不用于科学范数，不替代 Inspector 原值。
-聚合／曲线权重／AMR overlap／覆盖状态先由 owner 定案，不默认平均或插值。
+首版仅 Sod 1D 与笛卡尔 2D AMR；提出明确的 LOD 取样／聚合与覆盖规则并交 owner review，不静默改变原值。曲线坐标、3D、XDMF 后续单独扩展。
+单元积分测度复用 GridMetrics::CellVolume；低维每单位长度／立体角约定交 Core 核定。当前叶块输出不能冒充已存粗层场值。
+固定图像尺寸仅限制返回数据量；首次全域总览可能扫描大量叶块。实测读取字节、响应大小与峰值内存，缓存受明确预算约束。
 zoom/pan 重绘已有数据，不改 Config、不运行 Core、不写文件。
 
 ## 7. Core scoped acceptance（待实施，不是本轮 PASS）
@@ -127,7 +128,7 @@ zoom/pan 重绘已有数据，不改 Config、不运行 Core、不写文件。
 8. cancel/limit/corrupt/replacement 后 worker 清理／恢复；Node heap 不冒称 WASM/RSS 硬限。
 9. LOD/Inspector 标明 original/derived，选择回读 raw，非有限值不静默修复。
 
-## 8. Core 最小决定项
+## 8. Core review 项（不阻塞首版候选布局试做）
 
 1. 是否已有准确 IO contract/commit？有则以其为准替换草案。
 2. close 后同目录原子发布、final collision、失败传播是否接受？
@@ -136,5 +137,10 @@ zoom/pan 重绘已有数据，不改 Config、不运行 Core、不写文件。
 5. bounds/volume 显式存储还是 Core 只读接口？
 6. LOD 聚合／权重／重叠规则、独立参考与预算？
 
-收到明确决定或实现引用后才接线受影响 Core/Host/Studio 与 scoped tests。
-本草案不解除正式科学文件语义门槛；其他已批准工作可继续。
+无需等待完整布局规范，按三个小交付推进：
+
+1. writer 最小扩展、metadata 读取与原生单元查询；附准确 SHA、数组映射、发布失败处理和本地验证摘要。
+2. 全域显示、zoom/pan、AMR 轮廓、Inspector；区分 Native AMR 与 Displayed LOD，实测 I/O、响应与内存成本。
+3. Core review 后按 finding 修改并逐片冻结，再扩大范围。
+
+此授权替代本草案旧版“等待完整 IO 布局决定后才实现”的门槛；不替代科学 review，不扩大到曲线坐标、3D 或 XDMF。原始 H5 留本机；提交处理后的摘要。

@@ -2347,3 +2347,8 @@ a2e4b9c5 上仅临时 capture/passive observer：Computer Use plot负wheel/普�
 ### 测量调度：预热、交替、显式 CUDA Host 线程
 
 2cc0b9ab上补 paired_trials，endpoint显式CPU/CUDA Host threads与>=3pairs，warmup单列、交替顺序、逐attempt失败保留、所有计时/min/max/median/负收益完整。13项synthetic/stub suite与diff PASS，qualified_benchmark=false，正式冻结/线程/manifest/资源出口未完。详见PhysicalEndpointScheduleProgress-20261003.zh-CN.md。无真实simulation/CPU-CUDA计时/push/tag。
+
+
+### Plotfile 分工与候选实现授权更新
+
+47d99ab1 clean 基线上核对联合计划 35c5b7b114069621901386bfc4bc2a656e65af06（origin/codex/o8-boundaries）。本地契约草案移除等待完整 HDF5 布局的旧实现门槛，改为 writer/查询/Viewer 三个小交付；Core review 单位、坐标、测度、身份、发布与原值一致性。首版仅 Sod 1D + Cartesian 2D AMR，原始 H5 本机，明确首次全域叶块扫描成本。本次仅更新范围文档，不宣称 writer/科学 Viewer 已完成；无源码修改、Build、simulation、push/tag/main merge。
