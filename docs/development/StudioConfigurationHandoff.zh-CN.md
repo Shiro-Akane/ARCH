@@ -316,6 +316,12 @@ case／原始 config／build／binary／EOS 身份、字段单位与位置／分
 Reader 只消费已经发布的结果，不用“文件存在”判定写入完成；读取不加载模拟 EOS、
 启动 Driver 或初始化 CUDA。修改共享 writer 的负责人唯一，避免两边各写一套格式。
 
+维护者已准备[候选扩展验证入口](PlotfileValidationContract.zh-CN.md)，含小型反例、
+可调整的 HDF 路径映射和指定原生单元读回。它用于对接交付，生产 writer／正式 API
+仍由合作者实施；现有布局可以提交映射后适配，测试副本不规定最终存储方案。
+[本轮记录](../../validation/backend/results/plotfile-contract/README.md)仅证明所列读取检查，
+完成标记反例不代替实际关闭／原子发布／失败传播验收。
+
 首版按三个小交付推进：
 
 1. 先用现有 Sod 与笛卡尔二维 AMR 输出，完成最小 writer 扩展、元数据读取和原生

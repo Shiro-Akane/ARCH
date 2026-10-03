@@ -54,7 +54,7 @@ Helmholtz 表，不下载无关历史 HDF5 与大表；测试选择、数值容�
 
 ## 不需要 GPU 的工具检查
 
-使用 Python 3.10 或更新版本，以及构建环境中的 Git/CMake。微物理／检查点协议
+使用 Python 3.10 或更新版本，以及构建环境中的 Git/CMake。微物理／检查点／Plotfile 协议
 检查需要安装 NumPy 和 h5py。测试使用受控输入，不需要 pynucastro、SciPy 或 CUDA 设备。
 
 ```bash

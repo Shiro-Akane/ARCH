@@ -8,6 +8,11 @@ The [compute optimization plan](ComputeOptimizationPlan.zh-CN.md) defines the ne
 
 The [joint delivery entry point](StudioConfigurationHandoff.zh-CN.md) gives the collaborator a reading order, branch setup, configuration/API and Studio workflow, and evidence requirements. Finish the reported 3B checkpoint and the Linux/WSL 3C launch/build/run/restart path first; native Windows adaptation and packaging are outside this assignment. The [Jeans, RZ and second-platform execution guide](JeansRZPlatformHandoff.zh-CN.md) extends that responsibility through O7.1–O7.5 implementation and the approved O9 subset on an i7-14700K/RTX 5070 Ti system. Maintainers approve scientific rules, references and budgets. Process raw outputs locally and upload only reviewed summaries, metrics, figures and bounded diagnostic extracts; HDF5, plotfiles, checkpoints and full arrays stay on the producing machine. The [current contract audit](../../validation/backend/results/studio-config-contract-audit-20261001/README.md) preserves the inspected baseline; it does not certify the unpushed Studio checkpoint or future contract.
 
+The [Plotfile validation bridge](PlotfileValidationContract.zh-CN.md) supplies small
+counterexamples, adjustable HDF path mappings and native-cell readback for the joint
+Viewer work. It checks local reader consistency; the collaborator continues to own
+production writer/query/Viewer delivery and its publication/failure acceptance.
+
 The [historical archive](archive/README.md) preserves completed low-density/EOS migration, implementation decisions and earlier backend reviews. Current user-facing behavior is described by the [feature list](../Features.md) and [reference](../Reference.md).
 
 The *owner* of an implementation is the specific file or module where its core behavior is defined and maintained. A caller might supply data to this implementation or decide *how* it should execute, but it must never introduce a duplicate copy of the same formula. *Memory owners*, on the other hand, serve a different purpose: they allocate system resources and guarantee they remain alive until all consumers have finished using them.

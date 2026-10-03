@@ -27,6 +27,17 @@ outputs locally before submitting evidence: upload concise metrics, timing table
 figures and diagnostic extracts, not HDF5, plotfiles, checkpoints or full arrays.
 Keep the originals on the producing machine with an identifiable local index.
 
+The [Plotfile candidate probe](plotfile_contract.py) checks a mapped JSON header,
+FP64 field/block shapes and one native Cartesian 1D/2D cell by hyperslab. Its
+[joint validation guide](../../docs/development/PlotfileValidationContract.zh-CN.md)
+defines the adjustable test adapter, low-dimensional measure normalization,
+identity expectations and result codes. `candidate` means local consistency;
+it does not qualify production publication, provenance, complete AMR coverage
+or physical accuracy. Legacy files retain explicit missing semantics. See the
+[processed record](results/plotfile-contract/README.md) for tiny counterexamples
+and source-pinned real-output readback. The checks use existing NumPy/h5py and
+tooling discovery, without new CI lanes or a production writer change.
+
 ## Optimization and coupled checks
 
 The [HPC-CUDA evidence index](results/hpc-cuda-optimization/README.md) summarizes

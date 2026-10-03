@@ -122,6 +122,10 @@ G 迁移的科学输入及误差预算，并 review Core 改动；双方不并�
 按[Jeans／RZ 与第二平台执行细则](JeansRZPlatformHandoff.zh-CN.md)分阶段 review；
 O7.4 环体边界路线、独立参考及科学预算由维护者确认。O8／O10 不随本次分配实施。
 
+Plotfile 交付可复用[候选格式验证入口](PlotfileValidationContract.zh-CN.md)核对单位、
+身份声明、原生网格和单元读回；它与生产 writer 的发布验收分别判定。
+轻量反例纳入现有 tooling discovery，不增加独立 CI 流程或后端矩阵。
+
 14700K／RTX 5070 Ti 纳入新平台短检查、整程计时和批准的 O9 长时子集，CPU 先行、CUDA 后验收。
 沿现有 runner 补齐同物理终点模式，记录混合核心／WSL 可见拓扑、绝对耗时、误差及全部重复值；
 跨主机结果标为平台比较。合作者负责取证和本机后处理，科学结论由维护者评审。

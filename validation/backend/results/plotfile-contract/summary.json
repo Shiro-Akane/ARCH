@@ -1,0 +1,399 @@
+{
+  "scope": "Candidate reader/adapter tests; production writer, physics and Studio unchanged. No CUDA compilation or simulation rerun.",
+  "baseline_commit": "35c5b7b114069621901386bfc4bc2a656e65af06",
+  "file_identities": {
+    "validation/backend/plotfile_contract.py": "2651b0df1b12aac64be1ce5c5e3fe82271c9476588fd6e60fd0b606fb751b973",
+    "tests/tooling/validation/test_plotfile_contract.py": "0974085774c0c9dd90543c452a355d7657220dc38ddc899cdb3c435bf68ce323",
+    "src/io/plot/PlotIO.cpp": "d7d471b9b449a8f1c79c1112011f6b950b7699b21ca2a86b749180a39a6b8e64",
+    "src/io/hdf5/HDF5Writer.cpp": "f6873ed7f7488e197bfd56b0d33d60594a4640537ebe05861bc16f262715797c"
+  },
+  "tests": {
+    "new_reader_methods": 13,
+    "new_reader_failed": 0,
+    "new_reader_skipped": 0,
+    "tooling_work_python": {
+      "version": "3.12.14",
+      "total": 376,
+      "failed": 0,
+      "skipped": 13,
+      "seconds": 19.649,
+      "skip_reason": "Linux pidfd interfaces absent in this conda Python build",
+      "final_source_run": true
+    },
+    "linux_resource_system_python": {
+      "version": "3.12.3",
+      "total": 22,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 2.118,
+      "scope": "Unchanged existing resource tests; includes all 13 previously skipped methods plus 9 overlap methods"
+    },
+    "architecture_audit_exit": 0
+  },
+  "real_outputs": [
+    {
+      "name": "sod",
+      "original_local": "output/cpu-followup-20261003/candidate-screen/candidate-screen_sod_arch_1/Sod_HLLC_plt_0000.h5",
+      "checkpoint_local": "output/cpu-followup-20261003/candidate-screen/candidate-screen_sod_arch_1/Sod_chk_0000.h5",
+      "input_local": "output/cpu-followup-20261003/candidate-screen/candidate-screen_sod_arch_1/input.par",
+      "candidate_local": "output/plot-contract-20261003/fixtures/sod-candidate.h5",
+      "original_sha256": "a9753be59056a5db56217d714b5c6259f18e7c962c2a2f9d0ee13ac61fb3d5d3",
+      "checkpoint_sha256": "56803529eebe66205c963dc462c902c87d42e504612e0775d2f2d85d49c5a29a",
+      "input_sha256": "f932bbd736d33ada99af61baa09e34f0e9f3e57291727cb5846a380a17c174a9",
+      "shape": [
+        256,
+        16
+      ],
+      "cells": 4096,
+      "fields": 4,
+      "levels": [
+        0
+      ],
+      "density_and_energy_checkpoint_bitwise_equal": true,
+      "all_exported_fields_bitwise_preserved": true,
+      "all_cartesian_centers_bitwise_preserved": true,
+      "candidate_metadata_is_synthetic": true,
+      "publication_atomicity_tested": false
+    },
+    {
+      "name": "amr2d",
+      "original_local": "output/cpu-followup-20261003/candidate-screen/candidate-screen_noburn_arch_1/CellularMatched2D_HLLC_plt_0000.h5",
+      "checkpoint_local": "output/cpu-followup-20261003/candidate-screen/candidate-screen_noburn_arch_1/CellularMatched2D_chk_0000.h5",
+      "input_local": "output/cpu-followup-20261003/candidate-screen/candidate-screen_noburn_arch_1/input.par",
+      "candidate_local": "output/plot-contract-20261003/fixtures/amr2d-candidate.h5",
+      "original_sha256": "c7a29f5ab16709b4472ce24bb958a9f732f0fbd706d781feba27d8ef1e958312",
+      "checkpoint_sha256": "336656573b8f4c864b5cf2afa414022fd9a2ff0abbb0d836efdf285cb1906f7b",
+      "input_sha256": "c3794e43782414f1699c99fd19d4b3dae98651054ef679bb394ae161e11e90c9",
+      "shape": [
+        14,
+        16,
+        16
+      ],
+      "cells": 3584,
+      "fields": 28,
+      "levels": [
+        0,
+        1
+      ],
+      "density_and_energy_checkpoint_bitwise_equal": true,
+      "all_exported_fields_bitwise_preserved": true,
+      "all_cartesian_centers_bitwise_preserved": true,
+      "candidate_metadata_is_synthetic": true,
+      "publication_atomicity_tested": false
+    }
+  ],
+  "selected_native_queries": [
+    {
+      "model": "sod",
+      "cell": [
+        0,
+        0
+      ],
+      "query": {
+        "cell": [
+          0,
+          0
+        ],
+        "field": "DENS",
+        "value": 1.0,
+        "native_bounds": [
+          [
+            0.0,
+            0.000244140625
+          ]
+        ],
+        "measure": 0.000244140625,
+        "cartesian_center": [
+          0.0001220703125,
+          0.0,
+          0.0
+        ],
+        "level": 0,
+        "morton": 0
+      },
+      "logical_payload_bytes_read": 64,
+      "value_bitwise_matches_original": true
+    },
+    {
+      "model": "sod",
+      "cell": [
+        255,
+        15
+      ],
+      "query": {
+        "cell": [
+          255,
+          15
+        ],
+        "field": "DENS",
+        "value": 0.125,
+        "native_bounds": [
+          [
+            0.999755859375,
+            1.0
+          ]
+        ],
+        "measure": 0.000244140625,
+        "cartesian_center": [
+          0.9998779296875,
+          0.0,
+          0.0
+        ],
+        "level": 0,
+        "morton": 2396745
+      },
+      "logical_payload_bytes_read": 64,
+      "value_bitwise_matches_original": true
+    },
+    {
+      "model": "amr2d",
+      "cell": [
+        0,
+        0,
+        0
+      ],
+      "query": {
+        "cell": [
+          0,
+          0,
+          0
+        ],
+        "field": "DENS",
+        "value": 20000000.0,
+        "native_bounds": [
+          [
+            16.0,
+            17.0
+          ],
+          [
+            0.0,
+            1.0
+          ]
+        ],
+        "measure": 1.0,
+        "cartesian_center": [
+          16.5,
+          0.5,
+          0.0
+        ],
+        "level": 0,
+        "morton": 1
+      },
+      "logical_payload_bytes_read": 80,
+      "value_bitwise_matches_original": true
+    },
+    {
+      "model": "amr2d",
+      "cell": [
+        13,
+        15,
+        15
+      ],
+      "query": {
+        "cell": [
+          13,
+          15,
+          15
+        ],
+        "field": "DENS",
+        "value": 20000000.0,
+        "native_bounds": [
+          [
+            15.5,
+            16.0
+          ],
+          [
+            31.5,
+            32.0
+          ]
+        ],
+        "measure": 0.25,
+        "cartesian_center": [
+          15.75,
+          31.75,
+          0.0
+        ],
+        "level": 1,
+        "morton": 19
+      },
+      "logical_payload_bytes_read": 80,
+      "value_bitwise_matches_original": true
+    }
+  ],
+  "remaining_production_acceptance": [
+    "Actual writer complete-close and atomic publication under injected I/O/rename failure",
+    "Producer identity binding to actual Host/Core/EOS sources",
+    "Complete native AMR topology and spatial point ownership",
+    "Viewer LOD, actual I/O/decompression/peak-memory/cache budget and co-running impact",
+    "Other geometry/dimensions and optional third-party bridges"
+  ],
+  "delegation": {
+    "logical_tasks": 3,
+    "requests": 6,
+    "repair_allowance_per_task": 1,
+    "jobs": [
+      {
+        "job": "probe",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "seconds": 420.03,
+        "timed_out": true,
+        "delivery_accepted": false,
+        "reported_token_usage": null,
+        "estimated_cost_usd": null,
+        "manager_timing": [],
+        "outcome": "timeout with partial artifact",
+        "output_token_details": null
+      },
+      {
+        "job": "tests",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "seconds": 268.17,
+        "timed_out": false,
+        "delivery_accepted": false,
+        "reported_token_usage": {
+          "input_tokens": 975641,
+          "cached_input_tokens": 962560,
+          "output_tokens": 58963,
+          "noncached_input_tokens": 13081
+        },
+        "estimated_cost_usd": {
+          "currency": "USD",
+          "off_peak": 0.04022763,
+          "peak": 0.08045526,
+          "status": "estimate from reported token usage; API billing is authoritative",
+          "pricing_snapshot": "2026-10-02.1"
+        },
+        "manager_timing": [],
+        "outcome": "structured delivery with contract defects",
+        "output_token_details": null
+      },
+      {
+        "job": "audit",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "api",
+        "seconds": 11.82,
+        "timed_out": false,
+        "delivery_accepted": false,
+        "reported_token_usage": {
+          "input_tokens": 2687,
+          "cached_input_tokens": 512,
+          "output_tokens": 2048,
+          "noncached_input_tokens": 2175
+        },
+        "estimated_cost_usd": {
+          "currency": "USD",
+          "off_peak": 0.00155659,
+          "peak": 0.00311317,
+          "status": "estimate from reported token usage; API billing is authoritative",
+          "pricing_snapshot": "2026-10-02.1"
+        },
+        "manager_timing": [],
+        "outcome": "output cap exhausted before structured result",
+        "output_token_details": {
+          "total": 2048,
+          "reasoning": 2048,
+          "visible": 0,
+          "truncation_reason": "max_output_tokens",
+          "authority": "manager-owned historical default, not user or account hard cap"
+        }
+      },
+      {
+        "job": "probe-repair",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "seconds": 180.05,
+        "timed_out": true,
+        "delivery_accepted": false,
+        "reported_token_usage": null,
+        "estimated_cost_usd": null,
+        "manager_timing": [],
+        "outcome": "timeout with partial artifact",
+        "manager_timing_quality": "Notice was recorded after an earlier direct run.json inspection; first-detection latency unknown. No backfill.",
+        "output_token_details": null
+      },
+      {
+        "job": "tests-repair",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "seconds": 240.06,
+        "timed_out": true,
+        "delivery_accepted": false,
+        "reported_token_usage": null,
+        "estimated_cost_usd": null,
+        "manager_timing": [],
+        "outcome": "timeout with partial artifact",
+        "output_token_details": null
+      },
+      {
+        "job": "audit-repair",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "api",
+        "seconds": 11.34,
+        "timed_out": false,
+        "delivery_accepted": false,
+        "reported_token_usage": {
+          "input_tokens": 1119,
+          "cached_input_tokens": 512,
+          "output_tokens": 2048,
+          "noncached_input_tokens": 607
+        },
+        "estimated_cost_usd": {
+          "currency": "USD",
+          "off_peak": 0.00132139,
+          "peak": 0.00264277,
+          "status": "estimate from reported token usage; API billing is authoritative",
+          "pricing_snapshot": "2026-10-02.1"
+        },
+        "manager_timing": [],
+        "outcome": "output cap exhausted before structured result",
+        "output_token_details": {
+          "total": 2048,
+          "reasoning": 2048,
+          "visible": 0,
+          "truncation_reason": "max_output_tokens",
+          "authority": "manager-owned historical default, not user or account hard cap"
+        }
+      }
+    ],
+    "worker_wall_seconds_sum": 1131.47,
+    "known_token_usage_subtotal": {
+      "input_tokens": 979447,
+      "cached_input_tokens": 963584,
+      "noncached_input_tokens": 15863,
+      "output_tokens": 63059
+    },
+    "known_cost_usd_subtotal": [
+      0.04310561,
+      0.0862112
+    ],
+    "total_cost_usd": null,
+    "total_cost_reason": "Three timed-out CLI calls did not report token usage; manager cost unmeasured. Known subtotal is not total.",
+    "parallel_overlap": "Two isolated code/test workers; semantic task refilled after a slot returned. Manager checked historical outputs and prepared handoff during workers.",
+    "blocking_wait_seconds": 0,
+    "blocking_wait_scope": "No explicit sleep or wait solely for worker completion; total manager active/token cost unmeasured.",
+    "extra_rework": "All deliveries rejected; manager consolidated partial ideas, corrected local and cross-interface defects, and independently ran tests.",
+    "new_scientific_findings_from_worker": [],
+    "recommendation": "Keep bounded assistance, reduce implementation task size and pin index/output keys explicitly; avoid another 2048-token high-effort reasoning call. No speedup claim from this trial.",
+    "manager_first_detection_latency": "Incomplete instrumentation; late notice for probe repair must not be used as actual reaction latency.",
+    "followup_policy": "User v7: manager-owned regular high output budget 16384 including reasoning, short final summary separately. Exhausted repairs remain exhausted; no new request to resample this task."
+  },
+  "legacy_3d_structure": {
+    "status": "legacy",
+    "shape": [
+      64,
+      16,
+      16,
+      16
+    ],
+    "scientific_values_read": false,
+    "candidate_3d_supported": false
+  }
+}
