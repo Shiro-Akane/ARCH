@@ -3052,3 +3052,11 @@ Complete52leaf/L0-L3=12/12/12/16，图选L3块3:15:14:0及独立dyadic几何一�
 既有Sod9/Cellular28字段原生单元读回，H5前后SHA不变。
 修正旧handoff中 unknown reason 已过期的描述，保留旧producer与当前source区别。
 无Build/simulation/原始数组提交/push/tag；owner科学review、全模型及CUDA/O9尚未完成。
+
+## 2026-10-04 SmoothAdvection 原生1D初态与AMR
+
+production原生窗口新增SmoothAdvection行：512sample/真实8leaf L0 Complete，
+列表选择0:7:0:0 bounds/cellspacing独立算术符合；AMR无cell field arrays明确保留。
+标准wheel-120无应用范围变化且背景截图变化，input routing怀疑但未确定，zoom/pan不标PASS。
+正常close exit0，8owned PID/startTicks均消失；input不变/no scientific output/managed clean。
+见FullModelAdvectionDesktop-20261004。无源码修改，不重复已过自动baseline，不push/tag。
