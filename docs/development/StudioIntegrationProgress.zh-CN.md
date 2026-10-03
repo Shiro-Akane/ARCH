@@ -3094,3 +3094,11 @@ production native新增DiffusionMode：512sample、rho/P均匀、Species index0 
 不归一化、不添加default、不冒充完整场/AMR cell。相关22/22、全331/331、lint/types/build通过，
 真实DiffusionMode3probes通过新validator；SSR保留signedzero。原生新增表尚未UAT。
 见InitProbeCompositionIdentity-20261004。未改科学Core/Build/simulation，联合目标仍在推进。
+
+## 2026-10-04 Init probe 组分表原生 UAT
+
+65aed733的Linux production窗口中真实inspect-case→Current；三个probe的
+species index/name/raw值表均可读，保留tracer .49999999999999994，不改写/归一化。
+正常close exit0、8owned进程退出、config不变/no output/managed clean。
+InitProbeCompositionIdentity报告/Summary已补证；只追加记录，不重跑331项。
+连续composition field和科学CPU/CUDA/O9仍未完成，未push/tag。

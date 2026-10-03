@@ -32,7 +32,19 @@ SSR反例验证-0/name/index正确对应、原对象不变及空species提示。
 
 Core ELF沿用clean64b0ce2f源、SHA d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75。
 原Core代码/算法未修改或重新Build；没有simulation、科学输出或阈值变更。
-生产原生桌面新增组分表尚未UAT，不能用SSR替代该项。
+生产原生桌面验证已补齐，见下节；SSR与原生证据分别保留。
 本机ignored .local保留真实响应和完整检查日志；只提交处理后的摘要和代码。
 连续组分场需要真实Core Preview contract扩展，不由frontend插值probe或从文件名猜测。
 科学CPU/Jeans/RZ/CUDA/O9及全模型桌面矩阵仍未完成，未push/tag。
+
+## Linux native production UAT 补证
+
+从提交65aed733f21702258bca17527f6c30922db04a73和刚生成production assets启动独立窗口19074204。
+真实点击Inspect initialization→Current，展开Raw Init probes，三个probe均能滚动到组分表。
+名称index0 background/index1 tracer正确；Probe0两项.5，Probe1原值
+.7499749010540354/.2500250989459646，Probe2 tracer .49999999999999994原文可读。
+解释文字明确no normalization/EOS conversion、not full composition field。
+全程未编辑/Save配置，未启动Run；正常close launcher session33256 exit0，
+8owned PID+startTicks全部退出，inputSHA不变/output不存在/managed clean。
+本轮只追加UAT记录，无新代码；不重复刚通过的331项检查。
+连续composition field及全项目科学出口仍未因此完成。

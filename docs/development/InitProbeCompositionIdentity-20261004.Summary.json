@@ -61,7 +61,79 @@
       "seconds": 3.608130693435669
     }
   ],
-  "nativeUat": "not yet run for changed composition UI",
+  "nativeUat": {
+    "sourceCommit": "65aed733f21702258bca17527f6c30922db04a73",
+    "windowId": 19074204,
+    "operation": "Inspect initialization button -> Current -> expand Raw Init probes",
+    "allThreeTablesReadable": true,
+    "coreIndexNameMappingCorrect": true,
+    "unroundedLastTracerDisplayed": "0.49999999999999994",
+    "inputSha256": "205e63f4b3f03ce188f19b0654720c5e85f9ebaf54f6f5429703ff8cf7adcad3",
+    "inputUnchanged": true,
+    "scientificOutputAbsent": true,
+    "launcherSession": 33256,
+    "exitCode": 0,
+    "ownedProcesses": [
+      {
+        "pid": 1606129,
+        "parentPid": 1606128,
+        "startTicks": "6516265",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1606131,
+        "parentPid": 1606129,
+        "startTicks": "6516266",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1606132,
+        "parentPid": 1606129,
+        "startTicks": "6516266",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1606154,
+        "parentPid": 1606131,
+        "startTicks": "6516273",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1606156,
+        "parentPid": 1606129,
+        "startTicks": "6516273",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1606169,
+        "parentPid": 1606129,
+        "startTicks": "6516275",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1606534,
+        "parentPid": 1606132,
+        "startTicks": "6516733",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1607508,
+        "parentPid": 1606169,
+        "startTicks": "6518418",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allExactPidStartTicksGone": true,
+    "managedWorkingTreeClean": true
+  },
   "fullCompositionField": "not supplied by current field Preview contract",
   "noScientificCoreChange": true,
   "noSimulation": true,
