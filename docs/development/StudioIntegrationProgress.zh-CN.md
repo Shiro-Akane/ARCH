@@ -2809,3 +2809,12 @@ Runtime profile贯通writer/中心/共享diagnostics，二维phi速度保留；
 未改阈值。当前生产Reader明确拒绝尚未支持RZ，不冒充Viewer完成。
 主ARCH未重编、公共RZ/AMR角动量/gravity/evolution/CUDA仍待。
 见RZDriverPlot-20261004报告/Summary，raw本机ignored。
+
+## 2026-10-04 internal RZ IO main CPU build
+
+cleanb38f44a8主CPU12步重编成功，ELFca6437d2…；
+新CPU Sod9/Cellular28 t=0 fields和各20checkpoint numeric datasets原bits一致。
+实际Driver发布write/flush/close/rename/create failure/index/retry全部PASS。
+显式592项source fingerprint已本机保存；不宣称完整dependency freshness。
+refs fetch无新Core决策；公共RZ/角动量transfer/环体gravity/science/CUDA/O9仍待。
+见RZPlotCpuIntegration-20261004报告/Summary。
