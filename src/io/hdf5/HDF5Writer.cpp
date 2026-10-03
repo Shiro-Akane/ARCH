@@ -252,6 +252,10 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             (id.eos_table_sha256.size()!=64 || !std::all_of(id.eos_table_sha256.begin(),id.eos_table_sha256.end(),
              [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
             throw std::invalid_argument("Invalid plot EOS table digest.");
+        if (!id.raw_config_sha256.empty() &&
+            (id.raw_config_sha256.size()!=64 || !std::all_of(id.raw_config_sha256.begin(),id.raw_config_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid raw config digest.");
         if (id.eos_type=="ideal" && (!std::isfinite(id.ideal_gamma) || id.ideal_gamma<=1. || !id.eos_table_sha256.empty()))
             throw std::invalid_argument("Invalid plot ideal EOS identity.");
         if (id.eos_type.empty() && (!id.eos_table_sha256.empty() || !id.species_names.empty()))
@@ -298,6 +302,9 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             identity.createAttribute("scope",std::string("partial"));
             identity.createAttribute("case_id",id.case_id.empty()?std::string("unknown"):id.case_id);
             identity.createAttribute("case_source",id.case_id.empty()?std::string("unknown"):std::string("ConfigurationInput.case_id"));
+            identity.createAttribute("raw_config_sha256",id.raw_config_sha256.empty()?std::string("unknown"):id.raw_config_sha256);
+            identity.createAttribute("raw_config_source",id.raw_config_sha256.empty()?std::string("unknown"):
+                std::string("ConfigurationInput.raw_text; exact parser bytes"));
             identity.createAttribute("eos_type",id.eos_type.empty()?std::string("unknown"):id.eos_type);
             identity.createAttribute("eos_source",id.eos_type.empty()?std::string("unknown"):std::string("resolved-runtime-checkpoint-provenance"));
             identity.createAttribute("eos_table_sha256",id.eos_table_sha256.empty()?std::string("unknown"):id.eos_table_sha256);
@@ -308,7 +315,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             if(id.eos_type=="ideal")identity.createAttribute("ideal_gamma",id.ideal_gamma);
             identity.createAttribute("species_count",static_cast<int>(id.species_names.size()));
             if(!id.species_names.empty())identity.createDataSet("species_names",id.species_names);
-            for(const char* name:{"run_id","raw_config_sha256","effective_config_sha256",
+            for(const char* name:{"run_id","effective_config_sha256",
                  "build_id","binary_sha256","source_git_head","eos_unit_system"})
                 identity.createAttribute(name,std::string("unknown"));
         }

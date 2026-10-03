@@ -25,6 +25,7 @@
 #include "physics/species/Species.h"
 
 #include "io/IO.h"
+#include "core/files/FileFingerprint.h"
 #include "io/plot/PlotGridMetadata.h"
 #include "io/hdf5/HDF5Writer.h"
 
@@ -254,8 +255,11 @@ void write_plt(amr::AMRControl &amr_ctrl,
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
     }
     io::PlotSourceIdentity source_identity;
-    if (const auto input = config.LoadedInput())
+    if (const auto input = config.LoadedInput()) {
         source_identity.case_id = input->case_id;
+        if (input->raw_text_available)
+            source_identity.raw_config_sha256 = arch::core::string_sha256(input->raw_text);
+    }
     if (runtime_provenance && runtime_provenance->available) {
         source_identity.eos_type = runtime_provenance->eos_type;
         source_identity.eos_table_sha256 = runtime_provenance->eos_table_sha256;

@@ -2377,3 +2377,8 @@ eb12c90c 上 NativeGrid candidate-cartesian-1：真实 PlotIO 原 loop 同步写
 ### Plotfile case / EOS 部分来源身份
 
 ae3af9b7 上实际 DriverIO 的 resolved checkpoint EOS evidence + immutable ConfigurationInput.case_id传到共享writer SourceIdentity候选；gamma/ordered species/tableSHA复用、不重载EOS。unknown config/build/binary/unit/system保留，partial不冒认证。DriverIO/PlotIO object与IO scoped2/2 PASS、独立h5py回读通过、diff PASS；详见 PlotfileSourceIdentityProgress-20261003.zh-CN.md/Summary。reader/UI未消费新身份、完整原始config/binary与真实模型review待续；无simulation/production ARCH替换/CUDA/push/tag。
+
+
+### Plotfile 加载时原文身份
+
+9a34e0db 上复用parser InputText，由成功RuntimeParams Load/LoadText捕获 immutable raw_text，再由PlotIO shared SHA传writer；不重读路径、不归一化raw。注释/CRLF/no-final-LF、独立hashlib参考、parsed同raw不同、磁盘load后替换不改变identity及partial不认证测试通过；配置+IO scoped3/3 PASS、真实PlotIO/DriverIO object与diff PASS。详见 PlotfileRawConfigProgress-20261003.zh-CN.md。binary/build/effective/units/reader显示/真实模型review未完；无simulation/production替换/CUDA/push/tag。

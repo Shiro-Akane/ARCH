@@ -13,6 +13,10 @@
 namespace arch::config {
 struct ConfigurationInput {
     std::string case_id;
+    // Exact parser bytes, captured only after successful case-aware loading.
+    // Distinct from parsed tokens/resolved values; never reread from a path.
+    bool raw_text_available = false;
+    std::string raw_text;
     std::string case_source_file, case_source_sha256;
     ConfigurationPurpose purpose = ConfigurationPurpose::Evolution;
     // Filled only at successful loading; partial analysis must not demand a valid parser.

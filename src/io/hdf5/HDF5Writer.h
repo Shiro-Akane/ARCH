@@ -70,6 +70,7 @@ struct CheckpointData {
 // Missing run/config/build/binary identities remain explicitly unknown.
 struct PlotSourceIdentity {
     std::string case_id;
+    std::string raw_config_sha256;
     std::string eos_type, eos_table_sha256;
     double ideal_gamma = 0.;
     std::vector<std::string> species_names;

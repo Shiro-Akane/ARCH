@@ -125,7 +125,7 @@ target_link_libraries(arch_case_configuration PRIVATE arch_build_contract)
 add_test(NAME case_configuration COMMAND arch_case_configuration)
 
 add_executable(arch_configuration_input tests/host/core/test_configuration_input.cpp
-    src/core/config/CompositionInput.cpp)
+    src/core/config/CompositionInput.cpp src/core/files/FileFingerprint.cpp)
 target_include_directories(arch_configuration_input PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/simulation" "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_compile_definitions(arch_configuration_input PRIVATE

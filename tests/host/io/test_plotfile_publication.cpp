@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
         native_dims.push_back(nx);
         auto path=root/("native-"+std::to_string(dimension)+".h5");
         io::PlotSourceIdentity identity;
+        identity.raw_config_sha256="ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
         identity.case_id="Sod"; identity.eos_type="ideal"; identity.ideal_gamma=1.4;
         identity.species_names={"test-species"};
         io::write_hdf5_plt_impl(path.string(),0,dimension,"cartesian",native_dims,
@@ -61,6 +62,8 @@ int main(int argc, char** argv) {
             require(id=="Sod","case source evidence missing");
             f.getGroup("SourceIdentity").getAttribute("binary_sha256").read(id);
             require(id=="unknown","binary identity fabricated");
+            f.getGroup("SourceIdentity").getAttribute("raw_config_sha256").read(id);
+            require(id==identity.raw_config_sha256,"captured raw digest changed");
             double gamma=0.;
             f.getGroup("SourceIdentity").getAttribute("ideal_gamma").read(gamma);
             require(gamma==1.4,"resolved gamma changed");

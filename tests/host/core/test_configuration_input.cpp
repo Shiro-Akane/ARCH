@@ -1,3 +1,5 @@
+#include "core/files/FileFingerprint.h"
+#include <unistd.h>
 /**
  * @file test_configuration_input.cpp
  * @brief Exercise declared production loading before any model or output exists.
@@ -94,6 +96,34 @@ int main(int argc, char** argv) {
                 && !has(unknown_amr, "refine_var", "INVALID_REFINEMENT_SELECTION"),
                 "unknown dimension was guessed for AMR selection");
         auto input = inspect(fixture);
+        require(!input.raw_text_available, "partial analysis falsely claimed successful raw capture");
+        // Exact input identity must preserve comments, CRLF and missing final LF.
+        std::string exact="# raw provenance comment\r\n";
+        for(char c:fixture) exact += c=='\n' ? std::string("\r\n") : std::string(1,c);
+        if(exact.ends_with("\r\n")) exact.resize(exact.size()-2);
+        auto exact_config=RuntimeParams::LoadText(exact,"declared-test",ConfigurationPurpose::InitialState);
+        require(exact_config.LoadedInput()->raw_text_available &&
+                exact_config.LoadedInput()->raw_text==exact,"LoadText raw bytes normalized/lost");
+        require(arch::core::string_sha256(exact_config.LoadedInput()->raw_text)=="8c34bcbd520d7672aad2a2ff09c747771eb6898e7692c9a3e1cce8892d8cfa8f",
+                "raw SHA disagrees with independent Python hashlib");
+        std::string pattern=(std::filesystem::temp_directory_path()/"arch-raw-config-XXXXXX").string();
+        std::vector<char> temporary(pattern.begin(),pattern.end());temporary.push_back(0);
+        const int fd=::mkstemp(temporary.data());require(fd>=0,"raw fixture create failed");
+        require(::close(fd)==0,"raw fixture close failed");
+        const std::filesystem::path raw_path(temporary.data());
+        { std::ofstream output(raw_path,std::ios::binary);output<<exact;require(output.good(),"raw fixture write failed"); }
+        auto file_config=RuntimeParams::Load(raw_path.string(),"declared-test");
+        { std::ofstream output(raw_path,std::ios::binary);output<<"# replaced after load"; }
+        require(file_config.LoadedInput()->raw_text_available &&
+                file_config.LoadedInput()->raw_text==exact &&
+                arch::core::string_sha256(file_config.LoadedInput()->raw_text)=="8c34bcbd520d7672aad2a2ff09c747771eb6898e7692c9a3e1cce8892d8cfa8f",
+                "file replacement relabeled loaded raw identity");
+        std::filesystem::remove(raw_path);
+        auto comment_config=RuntimeParams::LoadText(exact+"\r\n# another comment",
+                "declared-test",ConfigurationPurpose::InitialState);
+        require(comment_config.LoadedInput()->raw_tokens==exact_config.LoadedInput()->raw_tokens &&
+                comment_config.LoadedInput()->raw_text!=exact_config.LoadedInput()->raw_text,
+                "raw and parsed input identities collapsed");
         input.RequireDeclaredInputs();
         require(input.requirements_known(), "complete input retained unknown requirements");
         const auto& log = input.auxiliary.at("log_dir");

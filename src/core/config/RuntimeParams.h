@@ -62,6 +62,8 @@ public:
         auto input = arch::config::AnalyzeConfigurationInput(parser, case_id);
         input.RequireDeclaredInputs();
         input.raw_tokens = parser.GetAllParams();
+        input.raw_text = parser.InputText();
+        input.raw_text_available = true;
         auto config = Resolve(input.standard);
         CaptureResolvedCaseValues(config, input);
         config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
@@ -79,6 +81,8 @@ public:
         auto input = arch::config::AnalyzeConfigurationInput(parser, case_id, purpose);
         input.RequireDeclaredInputs();
         input.raw_tokens = parser.GetAllParams();
+        input.raw_text = parser.InputText();
+        input.raw_text_available = true;
         auto config = Resolve(input.standard);
         CaptureResolvedCaseValues(config, input);
         config.loaded_input_ = std::make_shared<const arch::config::ConfigurationInput>(std::move(input));
