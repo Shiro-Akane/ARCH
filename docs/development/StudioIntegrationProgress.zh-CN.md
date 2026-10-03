@@ -2083,3 +2083,21 @@ Host38.701Z退出/desktop38.704Z clean。Electron76887/Host76933/worker77360
 无产品/Core修改、Run/Save/Build/CUDA，不重复234项检查；JSON/diff check。
 当前窗口已关闭，3C文件覆盖/阶段报告继续收束；不push/tag/main merge，
 不提前进入全模型/JENS/RZ。
+
+
+## 原生显式覆盖保存通过与长路径确认布局修复
+
+2026-10-03，a946d982 clean。独立 Sod 输入刻意使用 CellularDet.par 文件名，
+仅编辑 cfl 0.4→0.41；Preview pairing confirmation 全部取消，无真实 Preview/AMR/Run。
+原生 Save 的明确 overwrite 确认先 Cancel，磁盘逐字节未变、Dirty/0.41 保留；
+再次显式 Overwrite 后落盘内容逐字节等于唯一 cfl 修改预期，原 source/backup/binary 未变，
+缺失 diff_cfl 未插入。原生 Reload disk version 后 Working/Saved 均0.41，Disk in-sync。
+
+UAT 发现确认 grid min-content 与32px固定按钮高度造成长路径越界/按钮文字重叠。
+只修复 styles.css 的确认网格列宽、换行及 auto-height。重载 production 后观察路径与按钮
+正常分行，滚动可访问；相同内容 overwrite 验证按钮操作成功，不扩称第二次 Dirty-save。
+仍需要滚动查看位于 Save 上方的确认，未实现自动聚焦。
+
+完整 Studio/Host234/234、lint/typecheck/build/diff PASS，bundle warning保留。
+报告 StudioNativeOverwriteUat.zh-CN.md/Summary.json；完整输入与日志仅 ignored 本地目录。
+没有 ARCH compile/CUDA、push/tag/main merge。继续做3C逐项出口审计，不提前全模型/JENS/RZ。
