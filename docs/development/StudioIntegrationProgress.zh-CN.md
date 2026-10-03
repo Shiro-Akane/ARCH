@@ -2466,3 +2466,9 @@ Host与UI已迁移recorded declaration，旧文件unknown保留。
 最终native多轮轮询registry/source保持、dirty binary needs-build及初始化禁用稳定。
 中间旧Host一次false-ready自动Sod Init Preview已如实保留失败记录，非simulation验收。
 见StudioStartupFreshnessConcurrency-20261003；Core和完整科学/平台目标未完成。
+
+
+2026-10-03：真实t=0多字段切片Sod9/Cellular28，ALL仅改变输出字段/新目录；新旧checkpoint守恒量和组分位级差0。
+37字段Host/client slice/LOD/point及h5py原生回查通过。发现ENTR canonical名称冲突并最小修正metadata；
+scoped2/2及孤立ENTR header通过，完整unknown-extra fixture/旧生产文件边界如实保留。
+见PlotfileMultiFieldT0-20261003；新canonical生产输出及科学/平台review未完成。

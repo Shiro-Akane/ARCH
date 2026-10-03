@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
             require(attribute("Data/DENS","centering")=="cell","field centering missing");
             require(attribute("Data/DENS","basis")=="scalar","density basis mismatch");
             require(attribute("Data/ENTR","unit")=="unknown","ENTR falsely fixed entropy unit");
-            require(attribute("Data/ENTR","meaning")=="pressure_density_gamma1_proxy","ENTR mislabeled");
+            require(attribute("Data/ENTR","meaning")=="pressure_density_proxy","ENTR mislabeled");
             require(!attribute("Data/ENTR","unit_reason").empty(),"unknown unit reason absent");
             require(attribute("Data/species","unit")=="1","dimensionless species mistaken for unknown");
             require(attribute("Data/unregistered","unit")=="unknown","serializer inferred undeclared field");

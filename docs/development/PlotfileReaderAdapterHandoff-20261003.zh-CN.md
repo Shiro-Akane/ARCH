@@ -103,3 +103,14 @@ verify_plotfile_reader.mjs、measure_plotfile_query.mjs。
 见StudioStartupFreshnessConcurrency-20261003.zh-CN.md；先复现两种并发失败，
 311项完整回归和最终Linux native gate复验通过。Plotfile科学数组/布局仍保持e7181420引用。
 此补丁没有重建ARCH或提升Plotfile身份/科学认证，不消除其余review finding。
+
+
+## 多字段对接增量
+
+本轮新增真实Sod9字段/CellularDet28字段（19组分），完整名单/shape/声明及SHA
+见PlotfileMultiFieldT0-20261003.Summary.json；仍来自ab23bad7/c294f0d1 binary。
+37字段Host/client只读链路和每个点的原始FP64回查通过，守恒量/组分对checkpoint逐单元位级差0。
+旧生产ENTR meaning与23ff77c4f checker canonical不一致，返回entropy；
+后续源码仅统一为pressure_density_proxy，原公式及unknown unit_reason保持。
+compiled scoped ENTR声明接受，新canonical生产H5仍待验证；不由reading adapter改写旧文件。
+所有新raw文件留本机；Owner科学/数组适配与EOS独立参考保持待办。

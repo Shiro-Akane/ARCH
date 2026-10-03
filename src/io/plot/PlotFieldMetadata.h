@@ -18,7 +18,7 @@ inline PlotFieldMetadata plot_field_metadata(std::string_view name, bool cartesi
         m.basis = cartesian ? "cartesian" : "unknown";
     }
     else if (name == "ENTR") {
-        m.meaning = "pressure_density_gamma1_proxy";
+        m.meaning = "pressure_density_proxy";
         m.unit_reason = "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy";
     }
     else if (name == "ENUC") {
