@@ -54,6 +54,47 @@ ARCH_HOST_DEVICE inline double cylindrical_annulus_volume(double r_left, double 
     return 0.5 * (r_right - r_left) * (r_right + r_left);
 }
 
+/**
+ * Explicit axisymmetric (r,z) measures of a full rotating cell.
+ *
+ * Workflow: callers validate 0 <= r_left < r_right and dz > 0, then use
+ * these same volume/face measures for divergence, transfer and diagnostics.
+ * This does not change GeometryView dispatch: its existing 2-D cylindrical
+ * specialization still represents the polar plane until all consumers migrate.
+ * Units are cm^3, cm^2 and cm for CGS inputs. No unit-azimuth normalization
+ * or inactive-direction measure is mixed into the full 2*pi volume.
+ */
+namespace Rz {
+
+/** Integral of r dr dphi dz; reuse the factored radial integral for thin cells. */
+ARCH_HOST_DEVICE inline double CellVolume(
+    double r_left, double r_right, double dz)
+{
+    return arch::constants::math::two_pi
+        * cylindrical_annulus_volume(r_left, r_right) * dz;
+}
+
+/** Radial face integrates r_face dphi dz; the regular axis has zero area. */
+ARCH_HOST_DEVICE inline double RadialFaceArea(double r_face, double dz)
+{
+    return arch::constants::math::two_pi * r_face * dz;
+}
+
+/** Axial face integrates r dr dphi, identical on lower and upper z faces. */
+ARCH_HOST_DEVICE inline double AxialFaceArea(double r_left, double r_right)
+{
+    return arch::constants::math::two_pi
+        * cylindrical_annulus_volume(r_left, r_right);
+}
+
+/** Orthonormal r/z lengths for active direction 0 or 1; no angle factor. */
+ARCH_HOST_DEVICE inline double PhysicalSpacing(int direction, double dr, double dz)
+{
+    return direction == 0 ? dr : dz;
+}
+
+} // namespace Rz
+
 ARCH_HOST_DEVICE inline double polar_angle_measure(double theta_left, double theta_right) {
     // Integral sin(theta) dtheta = 2 sin(midpoint) sin(half width).
     // Angle addition avoids rounding the midpoint onto the south pole for

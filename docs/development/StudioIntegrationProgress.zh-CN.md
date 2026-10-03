@@ -2586,3 +2586,12 @@ DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容�
 六例60/100位算术一致，固定源分区揭示近外缘整体64阶仍有约1.98e-15 cm/s²径向力变化。
 完整旋转质量/四极矩给远场候选误差，未冻结生产阶数/开角/预算。8项工具检查与diff PASS。
 见RZFiniteRingOffAxisReference-20261004.zh-CN.md/Summary。未改生产Core/capability/Build/ARCH运行/CUDA/push。
+
+
+## 2026-10-04 RZ full-rotation metric primitives
+
+在现有GridMetrics所有者下实现显式CPU/device完整环体volume、radial/axial face area与r/z spacing。
+10组独立70/100位参考一致；现有CPU curvilinear_metrics定向构建/CTest通过，
+RZ最大relative error1.64562e-16，旧metric3.03178e-16。未切GeometryView dispatch或开放RZ；
+未编ARCH/演化/CUDA/push。见RZMetricPrimitives-20261004.zh-CN.md/Summary。
+O7.1科学规则、RZ整条接线/近场预算和最终平台出口仍待。

@@ -8,6 +8,7 @@
 #include "driver/DriverUtils.h"
 #include "numerics/integrator/GeometricSources.h"
 #include "math/geometry/CurvilinearMetricCases.h"
+#include "math/geometry/RzMetricCases.h"
 #include "math/geometry/ViscousGeometryCases.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "physics/eos/IdealGas.h"
@@ -33,6 +34,35 @@ int main()
     if (!std::isfinite(conditioning) || conditioning > 2.e-12)
         throw std::runtime_error("independent thin-shell/polar measures");
     std::cout << "INDEPENDENT_METRIC_MAX_RELATIVE_ERROR=" << conditioning << '\n';
+    // Same existing arithmetic metric gate; no new production science budget.
+    const double rz_conditioning = RzMetricCases::conditioning_error();
+    if (!std::isfinite(rz_conditioning) || rz_conditioning > 2.e-12)
+        throw std::runtime_error("independent full-rotation RZ measures");
+    std::cout << "RZ_METRIC_MAX_RELATIVE_ERROR=" << rz_conditioning << '\n';
+    for (const auto& sample : RzMetricCases::cases) {
+        const double dr = sample.upper-sample.lower;
+        if (Rz::PhysicalSpacing(0,dr,sample.dz)!=dr
+            || Rz::PhysicalSpacing(1,dr,sample.dz)!=sample.dz)
+            throw std::runtime_error("RZ physical spacing changed");
+    }
+    for (double left : {0.,1.,4.}) {
+        const double right=left+.25, dz=.5;
+        const double volume=Rz::CellVolume(left,right,dz);
+        const double radial_lower=Rz::RadialFaceArea(left,dz);
+        const double radial_upper=Rz::RadialFaceArea(right,dz);
+        const double axial=Rz::AxialFaceArea(left,right);
+        // Independent div(r e_r + z e_z)=3; full rotating face fluxes.
+        close((right*radial_upper-left*radial_lower+dz*axial)/volume,
+              3.,"RZ linear vector divergence");
+        close((radial_upper-radial_lower)/volume,
+              2./(left+right),"RZ volume-average inverse radius");
+        const double middle=.5*(left+right);
+        const double fine=Rz::CellVolume(left,middle,dz/2.)
+            +Rz::CellVolume(middle,right,dz/2.);
+        close(2.*fine/volume,1.,"RZ finite source partition");
+        close((Rz::AxialFaceArea(left,middle)+Rz::AxialFaceArea(middle,right))/axial,
+              1.,"RZ coarse/fine axial area sum");
+    }
     const double pi = arch::constants::math::pi;
     for (Geometry geometry : {Geometry::Cartesian, Geometry::Cylindrical, Geometry::Spherical})
     for (int dimension : {1, 2, 3})
