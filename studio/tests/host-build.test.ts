@@ -2,6 +2,7 @@ import {saveManifest,loadManifest} from '../host/buildManifest.ts';
 import {execFile} from 'node:child_process';import {promisify} from 'node:util';
 import {fixture,fakeSpawn,finished} from './build-fixture.ts';
 import {readFile} from 'node:fs/promises';
+import {writeFileSync} from 'node:fs';
 import test from 'node:test';import assert from 'node:assert/strict';import {mkdir,writeFile,rm} from 'node:fs/promises';
 import {validateProfile} from '../host/buildProfile.ts';import {BuildRunner} from '../host/buildRunner.ts';
 test('profile validates bindings and refuses traversal, wrong source, missing CMake',async()=>{const {root,p}=await fixture();try{await validateProfile(root,p);for(const invalid of [{...p,managedSourceRoot:'/other'},{...p,buildDirRelative:'../escape'},{...p,target:'--help'},{...p,trackedInputs:['case.par']}])await assert.rejects(validateProfile(root,invalid));await assert.rejects(validateProfile(root,p,'/no/cmake'));}finally{await rm(root,{recursive:true,force:true});}});
@@ -129,6 +130,8 @@ test('GNU subprocess/specs drift invalidates persisted Build identity and legacy
   await runner.start('p',profile.id);await finished(runner);
   const manifest=runner.snapshot().lastSuccessfulBuild!;
   assert.equal(manifest.compilerDrivers?.[0].components?.length,6);
+  assert.equal(manifest.preBuildCompilerDrivers?.[0].components?.length,6);
+  assert.equal(manifest.compilerDriversStableDuringBuild,true);
   for(const role of ['cc1plus','ld','liblto_plugin.so']){
    const mutated=structuredClone(manifest);
    mutated.compilerDrivers![0].components!.find(c=>c.role===role)!.sha256='a'.repeat(64);
@@ -148,5 +151,42 @@ test('GNU subprocess/specs drift invalidates persisted Build identity and legacy
   const invalid=structuredClone(manifest);
   invalid.compilerDrivers![0].components![0].path='relative';
   await saveManifest(profile,invalid);assert.equal(await loadManifest(profile),undefined);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('toolchain mutation during build requires a new stable Build even when post-build driver matches disk',async()=>{
+ const {root,p}=await fixture();
+ try{
+  await mkdir(root+'/studio');
+  const reply=root+'/build/.cmake/api/v1/reply';await mkdir(reply,{recursive:true});
+  await writeFile(root+'/compiler','before');
+  await writeFile(reply+'/toolchains.json',JSON.stringify({kind:'toolchains',version:{major:1},toolchains:[
+   {language:'CXX',compiler:{path:root+'/compiler',id:'fixture',version:'1'}}
+  ]}));
+  await writeFile(reply+'/index-fixture.json',JSON.stringify({objects:[{kind:'toolchains',jsonFile:'toolchains.json'}]}));
+  const profile={...p,compilerDependencyMode:'ninja' as const};
+  const runFake=fakeSpawn(root);
+  const runner=new BuildRunner(root,'p',profile,{spawn:runFake});
+  // Deterministic mutation at the Host-owned spawn boundary: pre-capture has already completed.
+  const changing=new BuildRunner(root,'p',profile,{spawn:((...args:Parameters<typeof runFake>)=>{
+   const child=runFake(...args);
+   writeFileSync(root+'/compiler','after');
+   return child;
+  }) as never});
+  await changing.start('p',profile.id);await finished(changing);
+  assert.equal(changing.snapshot().state,'succeeded');
+  assert.equal(changing.snapshot().lastSuccessfulBuild?.compilerDriversStableDuringBuild,false);
+  assert.equal(changing.snapshot().binaryState,'needs-build');
+  assert.equal((await new BuildRunner(root,'p',profile).initialize()).binaryState,'needs-build');
+  await runner.start('p',profile.id);await finished(runner);
+  assert.equal(runner.snapshot().lastSuccessfulBuild?.compilerDriversStableDuringBuild,true);
+  const legacy=structuredClone(runner.snapshot().lastSuccessfulBuild!);
+  delete legacy.compilerDriversStableDuringBuild;delete legacy.preBuildCompilerDrivers;
+  await saveManifest(profile,legacy);
+  assert.equal((await new BuildRunner(root,'p',profile).initialize()).binaryState,'freshness-unknown');
+  await writeFile(root+'/compiler','changed after legacy build');
+  assert.equal((await new BuildRunner(root,'p',profile).initialize()).binaryState,'needs-build');
+  const malformed={...legacy,compilerDriversStableDuringBuild:'yes'} as never;
+  await saveManifest(profile,malformed);assert.equal(await loadManifest(profile),undefined);
  }finally{await rm(root,{recursive:true,force:true});}
 });

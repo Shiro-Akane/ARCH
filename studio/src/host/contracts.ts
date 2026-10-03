@@ -46,6 +46,7 @@ export interface LinkInputSnapshot {
 export interface BuildManifest {
  linkInputs?:LinkInputSnapshot; linkInputError?:string;
  compilerDrivers?:{language:string;path:string;resolvedPath:string;id:string;version:string;sha256:string;size:number;components?:{role:string;path:string;resolvedPath:string;sha256:string;size:number}[];specsSha256?:string}[]; compilerDriverError?:string;
+ preBuildCompilerDrivers?:BuildManifest['compilerDrivers']; compilerDriversStableDuringBuild?:boolean;
  compilerInputs?:{kind:'ninja-compiler-inputs';objectCount:number;files:{path:string;sha256:string;size:number}[]}; compilerInputError?:string; compilerInputsStableDuringBuild?:boolean;
  manifestVersion:'1'; buildId:string; projectId:string; profileId:string; caseId?:string; managedSourceRoot:string;
  sourceGitHead?:string; repositoryDirty?:boolean; buildProfileFingerprint:string; sourceFingerprint?:FileFingerprint;
