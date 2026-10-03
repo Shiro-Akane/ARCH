@@ -42,6 +42,9 @@ test('configuration dimension/profile selection rejects stale input and every bu
  const select=(value=inspection,text='current',inspected='current',project='p',model='Gaussian',build='b',sha='sha')=>
   previewProfileForConfiguration(profiles,value,text,inspected,project,model,build,sha)?.id;
  assert.equal(select(),'3d');
+ const selected=structuredClone(inspection);selected.identity.buildId='selected-binary:sha';
+ assert.equal(select(selected),'3d');
+ selected.identity.buildId='selected-binary:other';assert.equal(select(selected),undefined);
  assert.equal(select(inspection,'edited'),undefined);
  assert.equal(select(inspection,'current','old'),undefined);
  assert.equal(select(inspection,'current','current','other'),undefined);

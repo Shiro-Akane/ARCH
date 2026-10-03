@@ -23,7 +23,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 原生Configure/Build通过；真实CMake微型工程编译失败/恢复通过；完整依赖freshness仍unknown，dependenciesComplete=false；边界见Studio3CExitAudit | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | 原生Sod Run/Restart/Stop、关闭后计算继续及历史恢复通过；235项Studio/Host通过；同场景Preview cancel/不同项目Host重开隔离已PASS，Run同PID/start持续推进并自然完成；保留Host/native覆盖区分 | 不推广为其他模型/后端演化验收 |
-| 5 全模型初态/AMR | Core维度驱动真实生成/CLI/session已接通；Host动态Profiles/三轴协议、UI配置维度选择/三维切片/单区状态已实现；AMR native/三维切面显示已实现；真实HTTP/桌面UAT待完成 | CPU14维护模型字段+根AMR、三维代表/曲线参考、非立方体与warm session通过；不是混合细化/科学认证 | Setup域/预算与科学验收分开 |
+| 5 全模型初态/AMR | Core维度驱动真实生成/CLI/session已接通；Host动态Profiles/三轴协议、UI配置维度选择/三维切片/单区状态已实现；AMR native/三维切面显示已实现；14模型真实HTTP已验证；Linux桌面UAT待完成 | CPU14维护模型字段+根AMR、三维代表/曲线参考、非立方体与warm session通过；不是混合细化/科学认证 | Setup域/预算与科学验收分开 |
 | 6 O7.1 JENS | 待实施 | 先 CPU | 独立参考/预算由维护者确认 |
 | 7 O7.2–O7.5 RZ | 待实施 | 分层 CPU | O7.4 科学方案须 review |
 | 8 CUDA/第二平台短测 | 待 CPU 完成 | 未编译/未计时 | 冻结同物理终点；保留负收益 |
@@ -2208,3 +2208,12 @@ uniform-state独立表达，固定非活动坐标/单位由Core提供。slice不
 新增回归与最终244/244、lint/typecheck/production/diff PASS；日志ignored本地。
 旧Linux窗口已通过原生close正常退出，owned Electron/Host均消失，未覆盖未保存输入。
 随后须正式Host-owned CPU Build和真实多模型Host/desktop UAT；本项不是完整阶段封箱。
+
+### 生产 CPU binary 与14模型真实 HTTP 验证
+
+正式Host-owned Build b122233f，在clean a299395c上12项增量编译/链接，binary ee3de6cf；
+actual Manifest保持dependenciesComplete=false/freshness-unknown，不冒充clean/current。
+14模型unsaved inspect/field/AMR及全身份/EOS/native匹配PASS；RT limited如实保留。
+UI修正精确selected-binary SHA与successful Build分层匹配，最终244/244及lint/typecheck/build/diff PASS。
+详见FullModelProductionHostProgress.zh-CN.md/Summary；原始响应/Manifest/events仅本地ignored。
+旧Linux窗口正常关闭，desktop实际新能力UAT待进行；没有simulation/Save/push/tag/main merge。
