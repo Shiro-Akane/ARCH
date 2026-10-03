@@ -6,6 +6,7 @@ import argparse,json,pathlib,shlex,subprocess,os,hashlib
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument("--build",type=pathlib.Path,required=True)
 p.add_argument("--output-root",type=pathlib.Path,required=True)
+p.add_argument("--repair-position",action="store_true",help="Induce floor events in diagnostic-only fixture")
 a=p.parse_args();build=a.build.resolve();out=a.output_root.resolve()
 if out.exists():p.error("output-root must be new")
 entries=json.loads((build/"compile_commands.json").read_text())
@@ -39,11 +40,13 @@ if any(t in {"&&",";","|",">","<"} for t in tokens):p.error("unsupported link sc
 idx=tokens.index(main["output"]);tokens[idx:idx+1]=objects
 exe=out/"rz-checkpoint-continuation";tokens[tokens.index("-o")+1]=str(exe)
 execute("link",tokens)
-result=subprocess.run([str(exe),str(out/"evidence")],env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
+result=subprocess.run([str(exe),str(out/"evidence")]+(["--repair-position"] if a.repair_position else []),env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
     text=True,capture_output=True,timeout=30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
 summary={"scope":"Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
+ "repairPositionProbe":a.repair_position,
+ "stageHeaderSha256":hashlib.sha256((root/"src/driver/stages/DriverStages.h").read_bytes()).hexdigest(),
  "buildDirectory":str(build),"executableSha256":hashlib.sha256(exe.read_bytes()).hexdigest(),
  "recompiledSources":{s:hashlib.sha256((root/s).read_bytes()).hexdigest() for s in sources},
  "limitations":["Public RZ dispatch still gated","No scientific evolution acceptance","CUDA not qualified"]}

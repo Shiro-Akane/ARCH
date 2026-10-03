@@ -2826,3 +2826,11 @@ refs fetch无新Core决策；公共RZ/角动量transfer/环体gravity/science/CU
 repair ledger0、controller恢复和来源checkpoint SHA保持。无生产修改/public能力开放/CUDA。
 发现Hydro repair代表位置仍默认polar，后续需非零事件实际测试+profile接线。
 见RZCheckpointContinuation-20261004报告/Summary；raw本机ignored。
+
+## 2026-10-04 actual Hydro repair RZ event position
+
+上一轮finding已真实非零事件复现并修复：acceptance callback传Runtime chart，
+独立(r,0,z)坐标四组精确匹配，checkpoint后代表身份/position/ledger/续接原bits一致。
+同一新ELF零事件四组回归通过，4×21 checkpoint dataset与旧参考一致。
+仅diagnostic fixture故意触发floor，未改科学budget或参考。
+主ARCH未为header重编；公开RZ/science/CUDA仍待。见RZHydroRepairPosition报告/Summary。

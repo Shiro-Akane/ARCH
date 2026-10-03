@@ -77,7 +77,9 @@ static std::vector<std::uint64_t> snapshot(const amr::AMRControl& control) {
 }
 int main(int argc,char** argv) {
  try {
-    require(argc==2,"new local output root required");
+    require(argc==2 || (argc==3 && std::string(argv[2])=="--repair-position"),
+            "new local output root and optional --repair-position required");
+    const bool repair_probe=argc==3;
     const std::filesystem::path root(argv[1]);require(!std::filesystem::exists(root),"output root exists");
     SpeciesManager species;species.add_species("gas0",1.,1.,1.4,3.);
     species.add_species("gas1",2.,1.,1.4,3.);IdealGas eos(1.4,species);
@@ -95,6 +97,9 @@ int main(int argc,char** argv) {
         config.physics.gravity.type="none";
         config.numerics.entropy_fix_coeff=0.;config.numerics.hll_roe_wave_speed=true;
         config.numerics.sml_rho=1e-14;config.numerics.min_eint=1e-14;config.numerics.max_eint=1e10;
+        // Deliberately trigger the existing floor machinery only in the
+        // diagnostic fixture. This is not tuning a scientific run to pass.
+        if (repair_probe) config.numerics.min_eint=100.;
         config.io.tmax=2*dt;
         config.io.out_dir=(root/(std::to_string(direction)+"-"+std::to_string(inner))).string();
         config.io.base_name="internal-rz";
@@ -105,6 +110,29 @@ int main(int argc,char** argv) {
         arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
         runtime.initialize_topology();
         advance(runtime,counters,hydro);
+        if (repair_probe) {
+            const auto& repairs=counters.repairs;
+            require(repairs.values[0]>0.,"repair-position fixture did not generate real repairs");
+            bool found=false;
+            for(std::size_t n=0;n<runtime.handles().size();++n) {
+                if(runtime.handles()[n].uid.value!=repairs.block_uid) continue;
+                const auto& g=control.pool->GetBlock(control.tree->GetActiveBlocks()[n]).grid;
+                const int cell=static_cast<int>(repairs.values[9]);
+                const int k=cell/g.stride_z,j=(cell-k*g.stride_z)/g.stride_y;
+                const int i=cell-k*g.stride_z-j*g.stride_y;
+                const double expected_r=g.x1_min+(i-g.ng+.5)*g.dx1;
+                const double expected_z=g.x2_min+(j-g.ng+.5)*g.dx2;
+                std::cout<<std::setprecision(17)<<"RZ_REPAIR_POSITION direction="<<direction
+                    <<" inner="<<inner<<" events="<<repairs.values[0]
+                    <<" actual="<<repairs.position[0]<<","<<repairs.position[1]<<","<<repairs.position[2]
+                    <<" expected="<<expected_r<<",0,"<<expected_z<<"\n";
+                require(repairs.position[0]==expected_r && repairs.position[1]==0.
+                    &&repairs.position[2]==expected_z,"Hydro repair position used old polar chart");
+                require(repairs.stage==1 && repairs.time==0.,"repair representative stage/time changed");
+                found=true;
+            }
+            require(found,"repair representative block identity missing");
+        }
         const auto split=snapshot(control);
         const auto provenance=io::inspect_checkpoint_provenance(config,species,
             arch::dispatch::EosId::Ideal,false,"none",false);
@@ -130,7 +158,15 @@ int main(int argc,char** argv) {
         require(counters.t_current==2*dt&&resumed_counters.t_current==counters.t_current
             &&counters.step_count==2&&resumed_counters.step_count==2,"continued controller differs");
         require(counters.repairs.values==resumed_counters.repairs.values
-            &&counters.repairs.values[0]==0.,"continuation repair ledger differs");
+            &&(repair_probe ? counters.repairs.values[0]>0. : counters.repairs.values[0]==0.),
+            "continuation repair ledger differs");
+        for(int axis=0;axis<3;++axis)
+            require(counters.repairs.position[axis]==resumed_counters.repairs.position[axis],
+                    "checkpoint repair position changed on continuation");
+        require(counters.repairs.block_uid==resumed_counters.repairs.block_uid &&
+                counters.repairs.stage==resumed_counters.repairs.stage &&
+                counters.repairs.time==resumed_counters.repairs.time,
+                "checkpoint repair representative identity changed");
         require(arch::core::file_sha256(checkpoint.string())==checkpoint_sha,
             "continuation modified source checkpoint");
         std::cout<<std::setprecision(17)<<"PASS RZ_CHECKPOINT_CONTINUATION direction="<<direction

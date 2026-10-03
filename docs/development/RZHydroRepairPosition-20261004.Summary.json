@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "sourceBase": "64bb83906709a7584d510f660b5e2b715b3907a4",
+  "before": {
+    "exitCode": 1,
+    "executableSha256": "187e023dce6cfbbf02956c747bccc2d4952933d0d9bf1e93683ebac8afc3df82",
+    "stageHeaderSha256": "6c25bb19521b7dafa08b27326d84d826bb5f8e8b1900968034df8eb8d0480ab0",
+    "diagnostic": "Hydro repair position used old polar chart",
+    "positionEvidence": "RZ_REPAIR_POSITION direction=0 inner=0 events=2560 actual=0.61029898368911739,-0.83127114289383963,0 expected=1.03125,0,-0.9375"
+  },
+  "after": {
+    "exitCode": 0,
+    "executableSha256": "6ffe45980d822bfc1582bffdf9917d16fafd61f19532144df58970347a022ae9",
+    "stageHeaderSha256": "8cca89eb273cec8353ec7aa8c3f7d50a6ce198e22acf87d61bb9237a765bd283",
+    "positionEvidence": [
+      "RZ_REPAIR_POSITION direction=0 inner=0 events=2560 actual=1.03125,0,-0.9375 expected=1.03125,0,-0.9375",
+      "RZ_REPAIR_POSITION direction=0 inner=1 events=2560 actual=2.03125,0,-0.9375 expected=2.03125,0,-0.9375",
+      "RZ_REPAIR_POSITION direction=1 inner=0 events=2560 actual=0.0625,0,0.03125 expected=0.0625,0,0.03125",
+      "RZ_REPAIR_POSITION direction=1 inner=1 events=2560 actual=1.0625,0,0.03125 expected=1.0625,0,0.03125"
+    ],
+    "recompiledSources": {
+      "tests/host/driver/test_rz_checkpoint_continuation.cpp": "f92fcba1f86e5ed36e24265a92ac6a2b173b86a043078f11ef58f492bb757f15",
+      "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+      "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+      "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69",
+      "src/driver/io/DriverIO.cpp": "f4124a59694eb4bd9fd98dbfc6b8b3d872d0e1f88b22fe21e3400800f0906f59",
+      "src/io/chk/ChkIO.cpp": "9667d1c416c7161136df2158a6a47a6835c6ac2ebd2b083cbbe1056270a5f8aa",
+      "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+      "src/io/hdf5/HDF5Writer.cpp": "bccdbf487c6d6e8f0b351028a23069e09c05130e734490667c3a1f6b42377a38",
+      "src/io/plot/PlotIO.cpp": "ea003bbd4bfb50bfedf2fdafa9512681212a171ef9b079fb45728e8a1f4e1edb"
+    }
+  },
+  "zeroRepairRegression": {
+    "status": "PASS",
+    "zeroRepairContinuationCases": 4,
+    "fixtureExitCode": 0,
+    "preFixCheckpointComparisons": [
+      {
+        "case": "0-0.000000",
+        "datasetCount": 21,
+        "bitsUnchangedFromPreFix": true
+      },
+      {
+        "case": "0-1.000000",
+        "datasetCount": 21,
+        "bitsUnchangedFromPreFix": true
+      },
+      {
+        "case": "1-0.000000",
+        "datasetCount": 21,
+        "bitsUnchangedFromPreFix": true
+      },
+      {
+        "case": "1-1.000000",
+        "datasetCount": 21,
+        "bitsUnchangedFromPreFix": true
+      }
+    ],
+    "scope": "Same freshly compiled ELF, default zero-event mode; no production header change since repair test"
+  },
+  "checks": [
+    "Actual Hydro events, not fabricated RepairBudget",
+    "Independent native (r,0,z) coordinates match exactly",
+    "Event stage/time/representative identity retained",
+    "Repair ledger and original accepted state bits match continuous/restarted",
+    "Input checkpoint SHA unchanged"
+  ],
+  "diagnosticOnlyFixture": "min_eint=100 deliberately induces floor events; only engineering test inputs, not a changed scientific reference or threshold",
+  "limitations": [
+    "Main ARCH not rebuilt for this one header fix",
+    "No public RZ scientific run",
+    "No AMR angular momentum or finite-ring gravity acceptance",
+    "No CUDA",
+    "Nonzero legacy-chart event not newly exercised"
+  ],
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-repair-position-20261004-after"
+}

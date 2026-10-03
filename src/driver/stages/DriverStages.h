@@ -462,7 +462,10 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
                 const auto& grid=amr_ctrl.pool->GetBlock(active_blocks[index]).grid;
                 const int cell=static_cast<int>(stage.values[9]);
                 const int k=cell/grid.stride_z, j=(cell-k*grid.stride_z)/grid.stride_y;
-                const auto point=grid.GetPhysicalCoords(cell-k*grid.stride_z-j*grid.stride_y,j,k);
+                // Event positions must use the same immutable chart as the
+                // accepted state, metrics and checkpoint geometry identity.
+                const auto point=grid.GetPhysicalCoords(
+                    cell-k*grid.stride_z-j*grid.stride_y,j,k,runtime.geometry_semantics());
                 stage.position[0]=point.x; stage.position[1]=point.y; stage.position[2]=point.z;
                 break;
             }
