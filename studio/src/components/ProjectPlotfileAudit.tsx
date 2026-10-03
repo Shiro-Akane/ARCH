@@ -1,3 +1,4 @@
+import {PlotfileNativeView} from './PlotfileNativeView';
 import {PlotfileSourceEvidence} from './PlotfileSourceEvidence';
 import {useEffect,useRef,useState} from 'react';
 import {PlotfileNativeInspector} from './PlotfileNativeInspector';
@@ -56,6 +57,7 @@ function ConnectedAudit({projectId}:{projectId:string}){
   </>}
   {payload&&<><h3>Displayed raw samples · {payload.field}</h3><p>{samples?.relativePath} · block {payload.block} · start [{payload.start.join(', ')}] · shape [{payload.shape.join(', ')}]. These are stored Cartesian centers. {payload.nativeCells?'Candidate native bounds and measure are available in the Inspector.':'Native cell bounds and measure were not recorded.'}</p>
    {payload.diagnostics.length>0&&<p role="alert">{payload.diagnostics.join(' · ')}</p>}
+   {samples&&<PlotfileNativeView samples={samples} selectedRow={selectedRow} onSelect={setSelectedRow}/>}
    <div className="audit-table-scroll"><table><thead><tr><th>Inspect</th><th>Global index</th><th>Raw value · unit unknown</th><th>Stored x</th><th>Stored y</th><th>Stored z</th></tr></thead><tbody>{payload.values.map((v,i)=><tr key={payload.linearIndices[i]}><td><button aria-label={"Inspect stored cell "+payload.linearIndices[i]} aria-pressed={selectedRow===i} onClick={()=>setSelectedRow(i)}>Inspect</button></td><td>{payload.linearIndices[i]}</td><td>{String(v)}</td><td>{String(payload.coordinates.x[i])}</td><td>{String(payload.coordinates.y[i])}</td><td>{String(payload.coordinates.z[i])}</td></tr>)}</tbody></table></div>
    {samples&&selectedRow!==null&&<PlotfileNativeInspector samples={samples} row={selectedRow}/>}
   </>}

@@ -1,0 +1,43 @@
+{
+  "kind": "real H5 -> reader -> client -> SVG SSR; not native desktop UAT",
+  "results": [
+    {
+      "caseId": "Sod",
+      "dimension": 1,
+      "shape": [
+        16
+      ],
+      "samples": 16,
+      "fileSha256": "3817608ba60fd43a905d39b9261a51c37b41a190e31891b98d6911855854ca8d",
+      "responseBytes": 3572,
+      "SSR": "PASS",
+      "rawFileUnchanged": true
+    },
+    {
+      "caseId": "CellularDet",
+      "dimension": 2,
+      "shape": [
+        16,
+        16
+      ],
+      "samples": 256,
+      "fileSha256": "78104fab2ea63a58fd15cb82a4c227e0fee3c5c8c1726091e65855ddcd4dd187",
+      "responseBytes": 33098,
+      "SSR": "PASS",
+      "rawFileUnchanged": true
+    }
+  ],
+  "sourceBaseline": "5ca95f6e9693dc767c064ea2a50dc3b4d4e193bc",
+  "checks": {
+    "npmTest": {
+      "pass": 286,
+      "fail": 0
+    },
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "nonSquareMapping": "PASS",
+    "zoomPanHitMapping": "PASS",
+    "nativeDesktopUat": "NOT_RUN"
+  }
+}

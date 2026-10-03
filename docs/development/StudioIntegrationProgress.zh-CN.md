@@ -2407,3 +2407,8 @@ f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负
 ### 2026-10-03：Plotfile 只读查询成本基线
 
 新增 validation/io/measure_plotfile_query.mjs；既有真实 Sod/CellularDet t=0 文件各做 metadata/slice 查询，源 SHA 不变。Cellular 返回 2058/3058 bytes，而每次 digest 扫描 472888 bytes；rchar 499642/522186 bytes、存储 read_bytes 0（缓存条件），单独说明计数语义和 RSS 范围。详见 PlotfileQueryCostProgress-20261003.zh-CN.md 和处理后的 Summary.json。无科学输出/前端修改；全域 Viewer/LOD 尚未完成。
+
+
+### 2026-10-03：原生 Plotfile 单块视图
+
+新增 1D bounds 线段/2D native rectangles、Viridis raw range、zoom/pan/Fit 和图表→Inspector 同一 row 的选择；显示不修改输入或发起读取。286 测试及 lint/typecheck/build PASS；真实 Sod 16 / CellularDet 256 单元 H5→reader→client→SVG SSR PASS，原始 H5 不变。原生窗口 UAT、全域/LOD 尚未完成，不声称正式 Viewer 完成。见 PlotfileNativeViewProgress-20261003.zh-CN.md。
