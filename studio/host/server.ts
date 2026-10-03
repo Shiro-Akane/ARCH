@@ -1,4 +1,4 @@
-import {readProjectPlotfileMetadata,readProjectPlotfileFieldSlice} from './projectPlotfileMetadata.ts';
+import {readProjectPlotfileMetadata,readProjectPlotfileFieldSlice,readProjectPlotfileOverview} from './projectPlotfileMetadata.ts';
 import {PlotfileReadError} from './isolatedPlotfileMetadata.ts';
 import type {RunController} from './runController.ts';
 import type {ConfirmRunRequest} from './runPreparation.ts';
@@ -31,7 +31,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
     res.setHeader('Access-Control-Allow-Origin',origin);
     res.setHeader('Vary','Origin');
     const previewCancel=/^\/api\/preview\/([a-f0-9-]{36})\/cancel$/.exec(req.url??'');
-    const plotfileAudit=req.url==='/api/plotfile/audit-metadata'||req.url==='/api/plotfile/audit-slice';
+    const plotfileAudit=req.url==='/api/plotfile/audit-metadata'||req.url==='/api/plotfile/audit-slice'||req.url==='/api/plotfile/audit-overview';
     const previewStart=req.url==='/api/preview';
     const workflowStart=req.url==='/api/workflow';
     const workflowCancel=/^\/api\/workflow\/([a-f0-9-]{36})\/cancel$/.exec(req.url??'');
@@ -41,7 +41,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
     const inspectConfig=req.url==='/api/configuration/inspect';
     const configureOperation=/^\/api\/configure\/([a-f0-9-]{36})\/(events|cancel)$/.exec(req.url??'');
     const eventMatch=/^\/api\/build\/([a-f0-9-]{36})\/events$/.exec(req.url??'');
-    const routes = ['/api/plotfile/audit-metadata','/api/plotfile/audit-slice','/api/runs','/api/run','/api/run/prepare','/api/configure','/api/configure/status','/api/cases','/api/workflow','/api/workflow/status','/api/configuration/schema','/api/configuration/inspect','/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/open','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
+    const routes = ['/api/plotfile/audit-overview','/api/plotfile/audit-metadata','/api/plotfile/audit-slice','/api/runs','/api/run','/api/run/prepare','/api/configure','/api/configure/status','/api/cases','/api/workflow','/api/workflow/status','/api/configuration/schema','/api/configuration/inspect','/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/open','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
     if (!routes.includes(req.url ?? '')&&!eventMatch&&!configureOperation&&!previewCancel&&!workflowCancel&&!runOperation) {send(404,{error:'Unknown endpoint'});return;}
     if (req.method === 'OPTIONS') {res.setHeader('Access-Control-Allow-Methods','GET, POST');res.setHeader('Access-Control-Allow-Headers','X-ARCH-Studio, X-ARCH-Protocol, Content-Type');send(200,{});return;}
     if (req.headers['x-arch-studio'] !== '1') {send(403,{error:'Studio request header required'});return;}
@@ -95,7 +95,7 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
         try{
          const result=await (req.url==='/api/plotfile/audit-metadata'
           ?readProjectPlotfileMetadata(root,projectId,data,controller.signal)
-          :readProjectPlotfileFieldSlice(root,projectId,data,controller.signal));
+          :req.url==='/api/plotfile/audit-overview'?readProjectPlotfileOverview(root,projectId,data,controller.signal):readProjectPlotfileFieldSlice(root,projectId,data,controller.signal));
          const current=reader.snapshot();
          if(current.session.projectId!==projectId||current.host.projectRoot!==root)throw new ConfigError('changed-externally','Project session changed during Plotfile audit.');
          if(!res.destroyed)send(200,result);

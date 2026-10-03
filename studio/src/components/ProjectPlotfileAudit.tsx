@@ -1,9 +1,11 @@
+import {PlotfileOverviewView} from './PlotfileOverviewView';
+import type {PlotfileOverviewRequest} from '../host/plotfileOverview';
 import {PlotfileNativeView} from './PlotfileNativeView';
 import {PlotfileSourceEvidence} from './PlotfileSourceEvidence';
 import {useEffect,useRef,useState} from 'react';
 import {PlotfileNativeInspector} from './PlotfileNativeInspector';
 import {useHost} from '../host/hostContext';
-import {requestPlotfileAudit} from '../host/plotfileAudit';
+import {requestPlotfileAudit,requestPlotfileOverview,storedCellIndices} from '../host/plotfileAudit';
 import type {AuditResponse,SliceSelection} from '../host/plotfileAudit';
 
 export function ProjectPlotfileAudit(){
@@ -15,21 +17,23 @@ export function ProjectPlotfileAudit(){
 function ConnectedAudit({projectId}:{projectId:string}){
  const [path,setPath]=useState(''),[info,setInfo]=useState<AuditResponse|null>(null),[samples,setSamples]=useState<AuditResponse|null>(null);
  const [field,setField]=useState(''),[block,setBlock]=useState('0'),[start,setStart]=useState<string[]>([]),[count,setCount]=useState<string[]>([]);
+ const [overview,setOverview]=useState<AuditResponse|null>(null);
  const [selectedRow,setSelectedRow]=useState<number|null>(null);
  const [busy,setBusy]=useState(false),[message,setMessage]=useState('Enter a project-relative .h5 path and read metadata.');
  const sequence=useRef(0),active=useRef<AbortController|null>(null);
  useEffect(()=>()=>{sequence.current++;active.current?.abort();},[]);
  function cancel(){sequence.current++;active.current?.abort();active.current=null;setBusy(false);setMessage('Read cancelled; previous successful data retained.');}
- async function read(selection?:SliceSelection){
-  const relativePath=selection?info?.relativePath:path;
+ async function read(selection?:SliceSelection,overviewRequest?:PlotfileOverviewRequest){
+  const relativePath=selection||overviewRequest?info?.relativePath:path;
   if(!relativePath)return;
   active.current?.abort();const controller=new AbortController();active.current=controller;
-  const request=++sequence.current;setBusy(true);setMessage(selection?'Reading bounded raw samples…':'Reading file metadata…');
+  const request=++sequence.current;setBusy(true);setMessage(overviewRequest?'Scanning leaf cells for candidate display LOD…':selection?'Reading bounded raw samples…':'Reading file metadata…');
   try{
-   const result=await requestPlotfileAudit(projectId,relativePath,controller.signal,selection,selection?info?.audit.file.sha256:undefined);
+   const result=overviewRequest?await requestPlotfileOverview(projectId,relativePath,controller.signal,overviewRequest,info!.audit.file.sha256):await requestPlotfileAudit(projectId,relativePath,controller.signal,selection,selection?info?.audit.file.sha256:undefined);
    if(request!==sequence.current)return;
-   if(selection){setSamples(result);setSelectedRow(0);setMessage('Raw samples loaded · completion and scientific identity remain unverified.');}
-   else{setInfo(result);setSamples(null);setSelectedRow(null);setField(result.audit.fields[0].name);setBlock('0');setStart(result.audit.cellShape.map(()=> '0'));setCount(result.audit.cellShape.map((n,i)=>String(i===result.audit.cellShape.length-1?Math.min(8,n):1)));setMessage('Metadata loaded · select a bounded sample region.');}
+   if(overviewRequest){setOverview(result);setMessage('Candidate global display LOD loaded; Inspector reads native cells separately.');}
+   else if(selection){setSamples(result);setSelectedRow(0);setMessage('Raw samples loaded · completion and scientific identity remain unverified.');}
+   else{setOverview(null);setInfo(result);setSamples(null);setSelectedRow(null);setField(result.audit.fields[0].name);setBlock('0');setStart(result.audit.cellShape.map(()=> '0'));setCount(result.audit.cellShape.map((n,i)=>String(i===result.audit.cellShape.length-1?Math.min(8,n):1)));setMessage('Metadata loaded · select a bounded sample region.');}
   }catch(error){if(request===sequence.current)setMessage(error instanceof Error?error.message:'Read failed. Previous successful data retained.');}
   finally{if(request===sequence.current){setBusy(false);active.current=null;}}
  }
@@ -54,7 +58,13 @@ function ConnectedAudit({projectId}:{projectId:string}){
    <label>Block index <input aria-label="Audit block" value={block} onChange={e=>setBlock(e.target.value)} inputMode="numeric"/></label>
    {info.audit.cellShape.map((n,i)=><fieldset key={i}><legend>Stored axis x{info.audit.dimension-i} · {n} cells</legend><label>Start <input aria-label={'Audit start '+i} value={start[i]} inputMode="numeric" onChange={e=>setStart(v=>v.map((s,j)=>j===i?e.target.value:s))}/></label><label>Count <input aria-label={'Audit count '+i} value={count[i]} inputMode="numeric" onChange={e=>setCount(v=>v.map((s,j)=>j===i?e.target.value:s))}/></label></fieldset>)}
    <button disabled={busy||!field} onClick={readSamples}>Read raw samples</button>
+   <button disabled={busy||!field||!info.audit.candidateNativeGrid} onClick={()=>void read(undefined,{field,width:32,height:info.audit.dimension===1?1:24})}>Read global display LOD · scans leaves</button>
   </>}
+  {overview&&<PlotfileOverviewView samples={overview} disabled={busy} onInspect={index=>{
+   const a=overview.audit,p=a.overview!;const perBlock=a.cellShape.reduce((x,y)=>x*y,1),block=Math.floor(index/perBlock);
+   const ijk=storedCellIndices(a,block,index);
+   void read({field:p.field,block,start:ijk.slice(0,a.dimension).reverse(),count:a.cellShape.map(()=>1)});
+  }}/>}
   {payload&&<><h3>Displayed raw samples · {payload.field}</h3><p>{samples?.relativePath} · block {payload.block} · start [{payload.start.join(', ')}] · shape [{payload.shape.join(', ')}]. These are stored Cartesian centers. {payload.nativeCells?'Candidate native bounds and measure are available in the Inspector.':'Native cell bounds and measure were not recorded.'}</p>
    {payload.diagnostics.length>0&&<p role="alert">{payload.diagnostics.join(' · ')}</p>}
    {samples&&<PlotfileNativeView samples={samples} selectedRow={selectedRow} onSelect={setSelectedRow}/>}

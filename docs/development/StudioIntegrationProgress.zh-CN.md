@@ -2412,3 +2412,8 @@ f309d8f0 上Linux test-only linker wrap注入真实H5Dwrite/H5Fflush/H5Fclose负
 ### 2026-10-03：原生 Plotfile 单块视图
 
 新增 1D bounds 线段/2D native rectangles、Viridis raw range、zoom/pan/Fit 和图表→Inspector 同一 row 的选择；显示不修改输入或发起读取。286 测试及 lint/typecheck/build PASS；真实 Sod 16 / CellularDet 256 单元 H5→reader→client→SVG SSR PASS，原始 H5 不变。原生窗口 UAT、全域/LOD 尚未完成，不声称正式 Viewer 完成。见 PlotfileNativeViewProgress-20261003.zh-CN.md。
+
+
+### 2026-10-03：跨块候选总览与原生回查
+
+新增受控 audit-overview、固定输出 streaming display LOD、全域 zoom/pan/Fit、representative native cell→同 digest Inspector。真实 Sod 192 / CellularDet 5120 单元完整扫描，HTTP/client/SSR/raw回查 PASS，原 H5 不变。合并512以内连续行后 Cellular rchar 34271170→3551170 bytes，完整response优化前后exact一致。294 tests + lint/typecheck/build PASS。未声称桌面UAT/完整AMR outlines/大型文件支持完成。见 PlotfileGlobalOverviewProgress-20261003.zh-CN.md。

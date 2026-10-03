@@ -59,3 +59,25 @@ A disconnected client receives no successful late result.
 No endpoint executes Core, writes a file, starts simulation, or changes Config.
 Formal completion/provenance/native geometry publication remains a Core IO
 contract prerequisite for the final scientific Viewer.
+
+
+## Candidate global display overview (Linux only)
+
+POST /api/plotfile/audit-overview uses the existing Origin/protocol headers and owned worker:
+
+    {"projectId":"session","relativePath":"results/plt_0000.h5",
+     "expectedFileSha256":"<64 lowercase hex>",
+     "overview":{"field":"DENS","width":32,"height":24}}
+
+Only published candidate NativeGrid Cartesian 1D/2D is accepted. Axes are 1..32 pixels;
+1D height=1. Existing 64 MiB file/64 KiB worker-output limits remain.
+Response audit-overview-1 retains observed identity/unknown scientific certification.
+Overview values are coordinate overlap weighted DISPLAY means in x1-fastest [height,width],
+not native values or cell-measure integrals. Nonfinite contribution/empty/overflow masks to null.
+representativeIndices select the largest-overlap raw native cell (first encounter ties).
+Inspector fetches that index through audit-slice with the same digest. Do not label the mean
+as a native value at the mouse position.
+
+All leaf geometry and selected fields are scanned; the complete file is hashed.
+Fixed pixels bound response, not first-overview scan cost. Zoom/pan redraw existing LOD.
+Viewport refinement and native hierarchy outline contracts are not implemented yet.

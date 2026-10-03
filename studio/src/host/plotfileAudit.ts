@@ -1,3 +1,5 @@
+import {copyOverviewRequest,validOverview} from './plotfileOverview.ts';
+import type {PlotfileOverview,PlotfileOverviewRequest} from './plotfileOverview.ts';
 import {sourceEvidenceValid} from './plotfileSourceIdentity.ts';
 import type {PlotfileSourceEvidence} from './plotfileSourceIdentity.ts';
 import {hostEndpoint} from './desktop.ts';
@@ -14,6 +16,7 @@ export interface NativePlotCells extends CandidateNativeGrid {
  lower:Record<'x1'|'x2'|'x3',number[]>;upper:Record<'x1'|'x2'|'x3',number[]>;cellMeasure:number[];
 }
 export interface PlotfileAudit {
+ overview?:PlotfileOverview;
  candidateSourceIdentity?:PlotfileSourceEvidence|null;
  schemaVersion:string;file:{bytes:number;sha256:string};time:number;dimension:number;geometry:string;
  blocks:number;cellShape:number[];cells:number;fields:{name:string;shape:number[];unit:null}[];
@@ -101,11 +104,11 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
  }else if(a.payload!==undefined)throw Error('Metadata response unexpectedly contains raw samples.');
  return {projectId,relativePath,audit:a as unknown as PlotfileAudit};
 }
-export async function requestPlotfileAudit(projectId:string,relativePath:string,signal:AbortSignal,selection?:SliceSelection,expectedSha?:string):Promise<AuditResponse>{
- const response=await fetch(hostEndpoint+'/api/plotfile/audit-'+(selection?'slice':'metadata'),{
+async function fetchPlotfileAudit(projectId:string,relativePath:string,signal:AbortSignal,selection?:SliceSelection,expectedSha?:string,overview?:PlotfileOverviewRequest):Promise<unknown>{
+ const response=await fetch(hostEndpoint+'/api/plotfile/audit-'+(overview?'overview':selection?'slice':'metadata'),{
   method:'POST',headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,'Content-Type':'application/json'},
   credentials:'omit',redirect:'error',signal:AbortSignal.any([signal,AbortSignal.timeout(16000)]),
-  body:JSON.stringify({projectId,relativePath,...(selection?{slice:selection,expectedFileSha256:expectedSha}:{})}),
+  body:JSON.stringify({projectId,relativePath,...(overview?{overview:copyOverviewRequest(overview),expectedFileSha256:expectedSha}:selection?{slice:selection,expectedFileSha256:expectedSha}:{})}),
  });
  if(!response.headers.get('content-type')?.includes('application/json'))throw Error('Invalid Plotfile response type.');
  const reader=response.body?.getReader();if(!reader)throw Error('Empty Plotfile response.');
@@ -114,5 +117,23 @@ export async function requestPlotfileAudit(projectId:string,relativePath:string,
  const data=new Uint8Array(bytes);let offset=0;for(const c of chunks){data.set(c,offset);offset+=c.length;}
  const value:unknown=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(data));
  if(!response.ok)throw Error(record(value)&&record(value.error)&&typeof value.error.message==='string'?value.error.message:'Plotfile read failed ('+response.status+').');
- return validatePlotfileAudit(value,projectId,relativePath,selection,expectedSha);
+ return value;
+}
+
+export async function requestPlotfileAudit(projectId:string,relativePath:string,signal:AbortSignal,selection?:SliceSelection,expectedSha?:string):Promise<AuditResponse>{
+ return validatePlotfileAudit(await fetchPlotfileAudit(projectId,relativePath,signal,selection,expectedSha),projectId,relativePath,selection,expectedSha);
+}
+export function validatePlotfileOverview(value:unknown,projectId:string,relativePath:string,request:PlotfileOverviewRequest,sha:string):AuditResponse{
+ if(!record(value)||!record(value.result)||value.result.schemaVersion!=='audit-overview-1'||
+  value.result.payload!==undefined||!record(value.result.file)||value.result.file.sha256!==sha)
+  throw Error('Plotfile overview identity mismatch.');
+ const result=value.result,{overview,...metadata}=result;
+ const response=validatePlotfileAudit({...value,metadata:{...metadata,schemaVersion:'audit-1'}},projectId,relativePath);
+ if(!response.audit.candidateNativeGrid||!response.audit.fields.some(f=>f.name===request.field)||
+  !validOverview(overview,copyOverviewRequest(request),response.audit.cells,response.audit.dimension))
+  throw Error('Invalid candidate Plotfile overview.');
+ return {...response,audit:{...response.audit,schemaVersion:'audit-overview-1',overview}};
+}
+export async function requestPlotfileOverview(projectId:string,relativePath:string,signal:AbortSignal,request:PlotfileOverviewRequest,sha:string){
+ return validatePlotfileOverview(await fetchPlotfileAudit(projectId,relativePath,signal,undefined,sha,request),projectId,relativePath,request,sha);
 }

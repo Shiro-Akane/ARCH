@@ -1,3 +1,5 @@
+import {copyOverviewRequest,createOverview} from '../src/host/plotfileOverview.ts';
+import type {PlotfileOverviewRequest,PlotfileOverview} from '../src/host/plotfileOverview.ts';
 /**
  * Inspect the current ARCH writer's structure without loading field arrays.
  * This is a local audit primitive, not a result provider: readable HDF5 and
@@ -201,7 +203,49 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
  return {field,block,start:[...start],shape:[...count],order:'x1-fastest',linearIndices:indices,values,coordinates,
   nativeCells,unit:null,nonFiniteEncoding:'IEEE special values as explicit strings',diagnostics:nonFinite?['NONFINITE_RAW_VALUES']:[]};
 }
-async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
+function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:PlotfileOverviewRequest):PlotfileOverview {
+ const dimension=(shape.length-1) as 1|2,ng=group(file,'NativeGrid'),data=dataset(group(file,'Data'),request.field);
+ if(data.metadata.type!==1||![4,8].includes(data.metadata.size))throw Error('Overview requires stored float fields.');
+ const total=shape.reduce((a,b)=>a*b,1),blockCells=shape.slice(1).reduce((a,b)=>a*b,1);
+ const bounds=(start:number,count:number)=>['x1_lower','x1_upper',...(dimension===2?['x2_lower','x2_upper']:[])].map(name=>{
+  const raw=rawNumbers(dataset(ng,name).slice([[start,start+count]]),count);
+  if(raw.some(v=>typeof v!=='number'))throw Error('Nonfinite overview geometry.');
+  return raw as number[];
+ });
+ const domain={x:[Infinity,-Infinity] as [number,number],y:dimension===2?[Infinity,-Infinity] as [number,number]:[0,1] as [number,number]};
+ // Pass 1 obtains authoritative bounds. No complete geometry array is materialized.
+ for(let start=0;start<total;start+=512){
+  const b=bounds(start,Math.min(512,total-start));
+  for(let i=0;i<b[0].length;i++){
+   domain.x[0]=Math.min(domain.x[0],b[0][i]);domain.x[1]=Math.max(domain.x[1],b[1][i]);
+   if(dimension===2){domain.y[0]=Math.min(domain.y[0],b[2][i]);domain.y[1]=Math.max(domain.y[1],b[3][i]);}
+  }
+ }
+ const acc=createOverview(request,dimension,domain);
+ // Pass 2 batches adjacent complete rows, or x1 segments when a row exceeds
+ // 512 cells. Each rectangular field slice aligns with one contiguous native slice.
+ const nx=shape[shape.length-1],ny=dimension===2?shape[1]:1;
+ const consume=(block:number,row:number,x:number,width:number,rows:number)=>{
+  const count=width*rows,start=block*blockCells+row*nx+x,b=bounds(start,count);
+  const selection=dimension===1?[[block,block+1],[x,x+width]]:[[block,block+1],[row,row+rows],[x,x+width]];
+  const values=rawNumbers(data.slice(selection as [number,number][]),count);
+  for(let i=0;i<count;i++){
+   const value=values[i];acc.add(start+i,[b[0][i],dimension===2?b[2][i]:0],
+    [b[1][i],dimension===2?b[3][i]:1],typeof value==='number'?value:NaN);
+  }
+ };
+ for(let block=0;block<shape[0];block++){
+  if(dimension===2&&nx<=512){
+   const batchRows=Math.floor(512/nx);
+   for(let row=0;row<ny;row+=batchRows)consume(block,row,0,nx,Math.min(batchRows,ny-row));
+  }else{
+   for(let row=0;row<ny;row++)for(let x=0;x<nx;x+=512)consume(block,row,x,Math.min(512,nx-x),1);
+  }
+ }
+ return acc.finish();
+}
+
+async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewRequest?:PlotfileOverviewRequest) {
  if(/\.partial-[A-Za-z0-9]{6}$/.test(path))throw Error('Writer temporary is not a published Plotfile.');
  const source=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
  try {
@@ -216,6 +260,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
   // the HDF5 object between stat/hash/header reads.
   const file=new h5.File('/proc/self/fd/'+source.fd,'r');
   let structure;
+  let overview:PlotfileOverview|undefined;
   let payload:ReturnType<typeof readSlice>|undefined;
   try {
    if(file.file_id<0n)throw new Error('Could not open HDF5 plotfile.');
@@ -243,6 +288,10 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
    const candidateSourceIdentity=sourceEvidence(file);
    const candidateNativeGrid=nativeHeader(file,shape,geometry);
    if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request,candidateNativeGrid);}
+   if(overviewRequest){
+    if(!candidateNativeGrid||!names.includes(overviewRequest.field))throw Error('Overview requires candidate native Cartesian 1D/2D metadata and a stored field.');
+    overview=readOverview(file,shape,overviewRequest);
+   }
    structure={candidateSourceIdentity,candidateNativeGrid,time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
     coordinates:{storedBasis:'cartesian',centering:'cell-center',units:null},
     completion:{state:'unknown',reason:candidateNativeGrid?'Candidate writer publication recognized; scientific contract review remains pending.':'Legacy writer has no recognized completion/publish contract.'},
@@ -257,7 +306,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest) {
   const after=await source.stat({bigint:true});
   if(before.size!==after.size||before.mtimeNs!==after.mtimeNs||before.ctimeNs!==after.ctimeNs||position!==Number(before.size))
    throw new Error('Plotfile changed during metadata audit; retry only after authoritative completion.');
-  return {schemaVersion:request?'audit-slice-1':'audit-1',payload,file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString(),ctimeNs:before.ctimeNs.toString()},...structure};
+  return {schemaVersion:overviewRequest?'audit-overview-1':request?'audit-slice-1':'audit-1',payload,overview,file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString(),ctimeNs:before.ctimeNs.toString()},...structure};
  } finally {await source.close();}
 }
 
@@ -268,5 +317,10 @@ export function inspectPlotfileMetadata(path:string){return auditPlotfile(path);
 /** Local audit primitive only. Production use requires isolated worker ownership. */
 export function readPlotfileFieldSlice(path:string,request:PlotfileSliceRequest){
  try{return auditPlotfile(path,copyPlotfileSliceRequest(request));}
+ catch(error){return Promise.reject(error);}
+}
+
+export function readPlotfileOverview(path:string,request:PlotfileOverviewRequest){
+ try{return auditPlotfile(path,undefined,copyOverviewRequest(request));}
  catch(error){return Promise.reject(error);}
 }
