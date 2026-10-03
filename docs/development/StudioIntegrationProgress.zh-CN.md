@@ -2924,3 +2924,11 @@ spacing(.25,.0625,.0625) ratio4>2得到直接证据。仅拆分guard消息并附
 不改operator/算法/上限/预算；定向fixture+原contract PASS，fullJeans依旧FAIL待Core。
 主ARCH未重编，fixture诊断不冒充主binary。见PoissonCoarseDiagnostic报告/Summary，
 raw本机ignored，无simulation/CUDA/push/tag。
+
+## 2026-10-04 原Box full CPU新增检查
+
+不重跑不变quick，执行10个非quick新增cloud/扩域/mixed及coupled时间阶样本PASS。
+Gaussian势/力minimum order2.012819/1.999534，耦合minimum2.017102，
+原预算/完整数组参考及zero floor保持。24秒无swap growth/guard stop，raw index与SHA本机持久。
+上游fetch refs未变；3D Jeans coarse冲突/历史radial G及科学待审仍在，full CPU gate不清除。
+见BoxFullCpuAdditions报告/Summary；未重build/CUDA/Windows/push/tag。
