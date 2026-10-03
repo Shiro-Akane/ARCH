@@ -2332,3 +2332,8 @@ ae71df6d上复用同一pinned读取事务，单block hyperslab最多512样本，
 ### 原生 RT 点击／滚轮再次区分
 
 61cf9142 production main/preload/dist，最大化原生窗口后点击sample9664/坐标/密度2与Inspector身份一致，点击链路有效；双向wheel与稳定观察domain不变，native zoom仍NOT VERIFIED。首次CLI flag顺序错误保留，改测试命令后重开。Alt+F4 exit0，8个owned进程全消失、config/binary不变。详见FullModelNativeWheelRecheck-20261003.zh-CN.md；下一步需被动wheel delivery证据，非重复发送或renderer模拟冒充。无源码/build/simulation/CUDA/push/tag/main merge。
+
+
+### 原生 wheel 被动投递取证
+
+a2e4b9c5 上仅临时 capture/passive observer：Computer Use plot负wheel/普通参数正wheel均0 wheel事件；同位置click有2个trusted svg pointer事件、sample9664选中。排查收窄至跨WSLg投递，不能宣布native zoom PASS。详见FullModelNativeWheelDelivery-20261003.zh-CN.md/Summary。用户硬件鼠标对照pending，当前owned Electron355883/session29013 live暂保留；未声称cleanup已完成。config/binary未变，无正式源码/build/simulation/CUDA/push/tag/main merge。
