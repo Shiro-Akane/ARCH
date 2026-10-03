@@ -132,3 +132,10 @@ Owner header 子验证通过，case/config/binary 外部可信身份核对；完
 真实 CPU Driver write/flush/close/rename/create 故障与同编号重试通过；
 见 PlotfileDriverFailurePropagation-20261003.zh-CN.md / Summary.json。
 此证据不扩展为 checkpoint 原子发布、ENOSPC 或硬件持久性声明。
+
+
+## 2026-10-03 production Plotfile worker cost
+
+真实 Sod9/Cellular28 多字段文件经 production 隔离 worker 查询、BUSY、启动期取消和恢复通过。
+Cellular 32x24 响应28512bytes仍扫描5120单元；每请求新worker，没有跨查询cache。
+见 PlotfileIsolatedWorkerCost-20261003.zh-CN.md / Summary.json；不外推大文件/HDF深度取消/同机演化影响。

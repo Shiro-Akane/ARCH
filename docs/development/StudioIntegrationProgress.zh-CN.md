@@ -2481,3 +2481,10 @@ Canonical t=0 来源 a2b0658b/b360c662 已完成；报告提交 94a094f4。
 五种故障及同编号重试通过，既有 IO 两项回归通过；原始文件留本机。
 见 PlotfileDriverFailurePropagation-20261003.zh-CN.md。科学 review、完整身份、
 checkpoint 原子发布以及大文件/缓存/资源证据保持待办；全联合目标未封箱。
+
+
+## 2026-10-03 production Plotfile worker cost
+
+真实 Sod9/Cellular28 多字段文件经 production 隔离 worker 查询、BUSY、启动期取消和恢复通过。
+Cellular 32x24 响应28512bytes仍扫描5120单元；每请求新worker，没有跨查询cache。
+见 PlotfileIsolatedWorkerCost-20261003.zh-CN.md / Summary.json；不外推大文件/HDF深度取消/同机演化影响。
