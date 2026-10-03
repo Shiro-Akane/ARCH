@@ -2602,3 +2602,10 @@ O7.1科学规则、RZ整条接线/近场预算和最终平台出口仍待。
 显式 r/z/phi 适配与旧圆柱源项共用数学入口；生产二维 dispatch 不变。
 限定 CPU curvilinear_metrics 1/1 PASS，包含旧 1/2/3D 非零旋流公式精确回归。
 详见 RZGeometricSourcePrimitives-20261004.zh-CN.md / Summary.json；完整 RZ、CUDA 与科学 gates 尚未关闭。
+
+
+## 2026-10-04 RZ 轴线 topology/ghost 增量
+
+显式 RZ seam chart 已复用现有 donor/transfer executor，默认 polar chart 不变。
+真实均匀与混合 L0/L1 轴 parity、非零内边界及旧 seam 回归 CPU 1/1 PASS。
+详见 RZAxisSeam-20261004.zh-CN.md / Summary.json；生产调度、CUDA、完整 RZ 演化仍待接入。

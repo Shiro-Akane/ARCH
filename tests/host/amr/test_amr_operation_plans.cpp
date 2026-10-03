@@ -1334,6 +1334,71 @@ void test_coordinate_seam_case(int dimension, bool spherical, bool mixed)
     }
 }
 
+void test_rz_axis_seam(bool mixed, double inner_radius)
+{
+    SimConfig config{};
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=1;config.grid.nblockx2=2;config.grid.nblockx3=0;
+    config.grid.x1_min=inner_radius;config.grid.x1_max=inner_radius+1.;
+    config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    config.grid.x1l_boundary_type="reflecting";
+    config.grid.x2l_boundary_type="outflow";config.grid.x2r_boundary_type="outflow";
+    config.grid.amr_max_blocks=24;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=mixed?1:0;
+    amr::AMRControl control(24,2);
+    if (mixed) {
+        control.tree->LoadLeafGrid(config,2,
+            {1,1,1,1,0},{0,1,0,1,0},{0,0,1,1,1},{0,0,0,0,0});
+    } else control.tree->InitRootGrid(config,2);
+    const auto& active=control.tree->GetActiveBlocks();
+    for (int id:active) {
+        auto& block=control.pool->GetBlock(id);
+        const auto& grid=block.grid;
+        for (int j=grid.Js();j<grid.Je();++j)
+            for (int i=grid.Is();i<grid.Ie();++i) {
+                const int cell=grid.GetIndex(i,j,grid.Ks());
+                const double radius=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+                auto& state=block.fluid_state;
+                state.rho[cell]=2.;state.mom_u[cell]=radius;
+                state.mom_v[cell]=2.+z;state.mom_w[cell]=3.*radius;
+                state.eng[cell]=100.;state.enuc_rate[cell]=.125;
+                state.X(0,cell)=.6;state.X(1,cell)=.4;
+            }
+    }
+    const auto plan=amr::make_coordinate_seam_plan(control.pool,active,2,
+        amr::CoordinateSeamGeometry::RzAxisymmetric);
+    if (inner_radius!=0.) {
+        expect(plan.transfers.empty(),"Nonzero RZ inner boundary treated as axis");
+        return;
+    }
+    expect(!plan.transfers.empty(),"RZ axis lacks ghost transfers");
+    amr::execute_coordinate_seam_plan(plan,control.pool,&amr::Block::fluid_state);
+    std::set<int> levels;
+    for (const auto& transfer:plan.transfers) {
+        const auto& donor=control.pool->GetBlock(transfer.source_id);
+        const auto& destination=control.pool->GetBlock(transfer.destination_id);
+        // Mirrored active cell is in the same physical boundary block, even
+        // on the mixed hierarchy. A half-turn lookup would cross z blocks.
+        expect(transfer.source_id==transfer.destination_id,"RZ axis used angular donor");
+        expect(transfer.momentum_sign==std::array<std::int8_t,3>{-1,1,-1},
+            "RZ basis parity changed");
+        levels.insert(destination.level);
+        const int cell=transfer.destination_cell,source=transfer.source_center;
+        const auto& a=destination.fluid_state;
+        const auto& b=donor.fluid_state;
+        expect(a.rho[cell]==b.rho[source] && a.eng[cell]==b.eng[source]
+            && a.enuc_rate[cell]==b.enuc_rate[source]
+            && a.X(0,cell)==b.X(0,source) && a.X(1,cell)==b.X(1,source),
+            "RZ axis changed scalar/species parity");
+        expect(a.mom_u[cell]==-b.mom_u[source]
+            && a.mom_v[cell]==b.mom_v[source]
+            && a.mom_w[cell]==-b.mom_w[source],"RZ axis momentum parity changed");
+    }
+    if (mixed) expect(levels==std::set<int>{0,1},"RZ mixed axis did not cover both levels");
+    expect_rejected([&] {amr::make_coordinate_seam_plan(control.pool,active,3,
+        amr::CoordinateSeamGeometry::RzAxisymmetric);},"RZ seam accepted 3D chart");
+}
+
 void test_coordinate_seam_mapping()
 {
     // Ordinary curved Hydro may use a partial wedge with physical side
@@ -1385,6 +1450,9 @@ int main()
         test_host_exchange_cache_rebinding();
         test_mixed_level_and_coarse_fine_execution();
         test_coordinate_seam_mapping();
+        test_rz_axis_seam(false,0.);
+        test_rz_axis_seam(true,0.);
+        test_rz_axis_seam(false,.25);
         const auto ordinary = ordinary_plan();
         const auto migration = migration_plan();
         std::cout << "AMR_PLAN_CONTRACT_PASS ordinary="
