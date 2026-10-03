@@ -93,3 +93,31 @@ index-DjuR4Vqq.js/index-BAqTuhxL.css。
 viewport refinement/race/cancel/recovery、field切换、wheel原生操作和publication/科学语义剩余项继续待办。
 Linux production实际Sod/2D读取、显示、point链路已取得证据，但全项目与完整Viewer交付未完成。
 本轮没有Core构建、simulation、Preview、push、tag、main merge或Windows适配。
+
+## 第三轮实际窗口复验：F3/F4 已验证，显式 refinement / Fit
+
+实现基线 4e9a364081e097271b2988bd5ce1ec86b864f3b8，操作前 working tree clean。
+同一 production Linux WSLg 窗口、PID673163，应用 View→Reload 后加载
+index-DjuR4Vqq.js / index-BAqTuhxL.css。继续使用既有 Sod t=0 文件；
+没有重新编译 Core、运行 simulation 或生成 Preview。
+
+真实窗口依次执行 Read metadata、Read global display LOD：
+12×16 原生 shape、192 stored leaf cells、32×1 显示像素、同一文件 SHA。
+初始 x1=[0,1]；显示 ordinate 约 [.08125,1.04375]，两段 DENS=.125/1 可见。
+Zoom in 后 x1=[.1,.9]，ordinate 和高低场线保留：F3 缩放复验通过。
+真实 drag (850,575)→(990,600) 后 x1 轴显示约 [.0007815,.8008]，
+ordinate 保持原范围，场和 block outlines 一同水平移动：F3 平移复验通过。
+这段轴读数为截图显示精度，不能当成原生 cell/科学数组精确值。
+
+在这个平移视口点击 Read finer current viewport 后，显示图更新：
+Sod discontinuity 附近出现按该视口重新分桶的过渡显示像素，原生叶块轮廓保持。
+这仍是 display mean，不是原生存储场变化。Fit full domain 后恢复 x1=[0,1]
+以及保留的全域 LOD；没有把 refined-domain 当成 full domain。
+按钮、输入和 fieldset 的深色样式已实际加载，启用按钮文字和禁用状态可区分：F4 复验通过。
+
+证据边界：此次只验证上述可见交互和 domain/ordinate；未用截图宣称 HTTP 请求次数、
+无配置写入、取消/race 保留行为或 wheel 注入已通过。drag 后部分轴文字出现浏览器选中高亮，
+不影响这次映射验证，后续可单独作为 UX finding。完整 Viewer / 联合科学交付仍未完成。
+原生 point FP64 独立读回沿用第二轮处理摘要，不重复未变验证。
+本轮只更新报告，不改源码；305 项回归及 lint/typecheck/build 的结果沿用 4e9a3640，
+没有为文档变更重复运行全套测试。

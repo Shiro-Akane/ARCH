@@ -93,3 +93,24 @@ Cellular 单元 bounds 对 Preview 最大差 1.7763568394002505e-15，记录为 
 先测试 block,j,i 索引、FP64、原生 bounds/measure 和可信外部身份匹配。
 没有逐字段声明时返回具体 missing finding，不以名称补齐“已知”声明。
 完成单位/基底及完整身份 review 后冻结小切片，再扩展几何和更大文件。
+
+## 对接引用更新：原生桌面增量验证
+
+最新实现引用：4e9a364081e097271b2988bd5ce1ec86b864f3b8。
+HDF writer/字段和数组映射保持上文布局；后续增量主要修正只读 Desktop 启动 gate、
+一维场值轴留白、空间导航和控件对比度，未改变 t=0 文件或 binary 身份。
+305 项 Studio/Host regression、lint/typecheck/build/diff check 已通过。
+
+实际 Linux production 桌面已完成 Sod 与 CellularDet 的读取→总览→缩放/平移/Fit→
+原生 point Inspector 小切片；两个 point 用独立 h5py 核对 FP64 值、bounds、measure。
+最新一维导航修复亦已复验，显式 viewport refinement 后 Fit 能恢复原始全域。
+具体步骤、finding 和证据边界见 PlotfileNativeDesktopFindings-20261003.zh-CN.md；
+processed point 见 PlotfileNativeDesktopPoint-20261003.Summary.json。
+尚未完成所有 field switch、wheel、cancel/race/failure native UAT 和大文件/索引/缓存测量，
+因此不是完整 Viewer 封箱结论。
+
+交给读取适配层时，应以最新实现 SHA 核对代码，同时独立核对 t=0 file SHA / binary SHA，
+不能把当前 source HEAD 当成旧参考文件的构建来源。
+来源完整性和逐字段 unit/basis/meaning 仍按 missing finding 处理；ENTR 代理量、
+低维 measure normalization 以及 Cellular per-cell bounds 舍入 finding 继续由维护者 review。
+原始 H5/plt/checkpoint 留本机；本地分支尚未 push，不能将该 SHA 描述成远端可访问交付。
