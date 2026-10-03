@@ -2818,3 +2818,11 @@ cleanb38f44a8主CPU12步重编成功，ELFca6437d2…；
 显式592项source fingerprint已本机保存；不宣称完整dependency freshness。
 refs fetch无新Core决策；公共RZ/角动量transfer/环体gravity/science/CUDA/O9仍待。
 见RZPlotCpuIntegration-20261004报告/Summary。
+
+## 2026-10-04 RZ actual scheduler checkpoint continuation
+
+四组5leaf mixed RZ，真实DriverStages/RK2推进→checkpoint→新Runtime/ledger/ghost恢复→再推进PASS；
+.001/1→.002/2仅既有工程unit步骤，非批准科学终点。41040原始数值/身份word一致，
+repair ledger0、controller恢复和来源checkpoint SHA保持。无生产修改/public能力开放/CUDA。
+发现Hydro repair代表位置仍默认polar，后续需非零事件实际测试+profile接线。
+见RZCheckpointContinuation-20261004报告/Summary；raw本机ignored。

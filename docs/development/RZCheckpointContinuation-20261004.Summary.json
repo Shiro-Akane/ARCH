@@ -1,0 +1,84 @@
+{
+  "status": "PASS",
+  "sourceBase": "456ab252b6409adb1d1fc640673ab7cf040e2c4d",
+  "scope": "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
+  "executableSha256": "640a39123598713c50d73872f0ee90439ab5c4a6077181a854ebc18552bbbfab",
+  "recompiledSources": {
+    "tests/host/driver/test_rz_checkpoint_continuation.cpp": "6385f96524fc8a6164014ee525e09bf24654cd01ff3926773e4a9e6a08e65e4c",
+    "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+    "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+    "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69",
+    "src/driver/io/DriverIO.cpp": "f4124a59694eb4bd9fd98dbfc6b8b3d872d0e1f88b22fe21e3400800f0906f59",
+    "src/io/chk/ChkIO.cpp": "9667d1c416c7161136df2158a6a47a6835c6ac2ebd2b083cbbe1056270a5f8aa",
+    "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+    "src/io/hdf5/HDF5Writer.cpp": "bccdbf487c6d6e8f0b351028a23069e09c05130e734490667c3a1f6b42377a38",
+    "src/io/plot/PlotIO.cpp": "ea003bbd4bfb50bfedf2fdafa9512681212a171ef9b079fb45728e8a1f4e1edb"
+  },
+  "sharedStageHeaderSha256": "6c25bb19521b7dafa08b27326d84d826bb5f8e8b1900968034df8eb8d0480ab0",
+  "cases": [
+    {
+      "direction": "0",
+      "inner": "0",
+      "leaves": "5",
+      "split_time": "0.001",
+      "final_time": "0.002",
+      "final_step": "2",
+      "bit_words": "10260",
+      "checkpoint_sha": "8cd57ce4c5eddce4108bb7a35da475ef3cbbca816ea55a023a73f6ded12636e3"
+    },
+    {
+      "direction": "0",
+      "inner": "1",
+      "leaves": "5",
+      "split_time": "0.001",
+      "final_time": "0.002",
+      "final_step": "2",
+      "bit_words": "10260",
+      "checkpoint_sha": "78c82db9388ad2726c82da9de89171da51346c8f2c0a3b32f3db0b8d78af0ad8"
+    },
+    {
+      "direction": "1",
+      "inner": "0",
+      "leaves": "5",
+      "split_time": "0.001",
+      "final_time": "0.002",
+      "final_step": "2",
+      "bit_words": "10260",
+      "checkpoint_sha": "7b0ebfaa2e6dc85c0461fe8a085401969f1feaf8f0b95c948723587f57a03bb8"
+    },
+    {
+      "direction": "1",
+      "inner": "1",
+      "leaves": "5",
+      "split_time": "0.001",
+      "final_time": "0.002",
+      "final_step": "2",
+      "bit_words": "10260",
+      "checkpoint_sha": "dce39018f81c16fc7b5d2a538b3a74a8cdf48449466bae9ba67175bd03c9a169"
+    }
+  ],
+  "totalComparedBitWords": 41040,
+  "checks": [
+    "Five native mixed leaves reconstructed",
+    "All accepted conserved/composition/ENUC words bit identical at split and final",
+    "Actual Host RK2 with readable current interior and ghosts",
+    "Controller time/step/dt_old restored",
+    "Repair ledger retained, zero repairs",
+    "Source checkpoint SHA unchanged"
+  ],
+  "fixtureCorrection": "First compile used nonexistent ledger reference type; corrected to existing aggregate API, no production change",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-continuation-20261004-corrected",
+  "newFinding": {
+    "file": "src/driver/stages/DriverStages.h",
+    "scope": "Hydro repair representative position",
+    "evidence": "stage.position uses grid.GetPhysicalCoords without runtime.geometry_semantics()",
+    "status": "Unfixed; needs actual nonzero repair test and profile propagation",
+    "impact": "Internal RZ event coordinates would follow old polar chart; zero-repair continuation does not exercise it"
+  },
+  "limitations": [
+    "Internal two-step constant translation, not public RZ simulation",
+    "No scientific endpoint or independent evolution accuracy acceptance",
+    "No actual RZ regrid/angular momentum/gravity",
+    "No CUDA or full desktop UAT"
+  ]
+}
