@@ -8,7 +8,19 @@
 ARCH --list-cases
 ```
 
-返回 `kind=registered-cases`，`cases` 来自本 binary 的注册表，不构造模型、不调用 Setup。每项提供注册名、场预览和 AMR 预览支持状态、支持维数；当前实际网格仅支持 Cartesian Sod 1D、CellularDet 2D（shock_dir=0/1）。注册成功不等于任意模型已支持预览。
+返回 `kind=registered-cases`，`cases` 来自本 binary 的注册表，不构造模型、不调用 Setup。每项提供注册名、场预览和 AMR 预览支持状态、支持维数。客户端必须消费所选 binary 的
+initialFieldPreview、initialAmrPreview 与 previewDimensions，不保留 Sod/Cellular 白名单。
+当前 Linux 集成分支已接入已登记模型的初始化路径及 1/2/3D 原生坐标网格；
+模型/维数、几何、EOS 和 Setup 输入的适用条件仍逐请求检查。
+注册成功不等于任意配置均可预览，也不等于演化、self-gravity field 或 JENS 已完成。
+
+已核对 CPU binary 325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b
+发布 14 个模型：BurnGradient、BurnOneZone、CellularDet、CooperativeHotspots、
+DiffusionMode、ExternalGravity、Gaussian、GravityBox、JeansWave、RT、SNIaCoupled、
+Sedov、SmoothAdvection、Sod。这是该 binary 的证据，不是永久模型数量常量。
+支持维数以运行时列表为准；参见
+[全模型生产 Host 验证](../../docs/development/FullModelProductionHostProgress.zh-CN.md)
+和[三维有界混合快照](../../docs/development/FullModel3DMixedAmr-20261004.zh-CN.md)。
 
 此查询给本地启动器使用。`arch-studio` 命令、桌面窗口、项目发现、源码/构建身份以及文件管理由 Studio/Host 实现。Core 不依据 `.cpp` 文件名猜测注册名，也不能通过该列表证明源码与 binary 一致。
 
@@ -56,14 +68,22 @@ ARCH --preview-amr CellularDet --config-stdin \
 |---|---|
 | leaves[].logicalKey | level:i:j:k；本次配置中的逻辑身份，不是可复用的池下标 |
 | leaves[].level / logicalIndex | 真实层级和三方向逻辑索引 |
-| leaves[].lower / upper | 活动方向的块物理边界，cm；不含 ghost |
-| leaves[].cellShape / cellSpacing | 块内各方向活动单元数和间距；GUI 据此生成单元线 |
+| leaves[].lower / upper | 活动原生轴的块边界；单位逐轴读取 coordinates.metadata.axes；不含 ghost |
+| leaves[].cellShape / cellSpacing | 块内各原生轴活动单元数和间距；spacing 使用逐轴单位；GUI 据此生成单元线 |
 | levelCounts / leafCount | 当前返回快照的各级叶块数及总数 |
 | complete / completedPasses | 是否完成 Core 所需的初始细化；已完整执行的判断/细化轮次 |
 | snapshot | last-completed-balanced-hierarchy，或根网格预算不足时的 none |
 | limitedReason | 预览限制原因；完成时为 null |
 | configuredMaxBlocks / workingCapacity | `.par` 的有效容量与本次较小的预览工作容量 |
 | resources | 包含实际已注册组分数量的资源规模表 |
+
+当前响应包含 data.coordinates={version:"1",basis:"native-grid",metadata:...}。
+metadata 的 dimension/geometry/active axes 应与 mesh 和 state.grid 一致。
+Cartesian 轴为长度，通常 cm；角度轴使用 Core 发布的 rad。曲线网格 data.unit=null，
+不能将所有 bounds/spacing 都标成 cm，也不能把原生轴绘图误称笛卡尔位置。
+当前二维 cylindrical 仍是极平面，不因本扩展成为 RZ；RZ 迁移需独立完成 Core 与科学验收。
+三维视图沿所选原生轴取切面，仅过滤已有叶块，不重新调用 Init/AMR；
+切面内边界半开、最外侧边界包含。保持原始 logicalKey、level、三轴 bounds/shape/spacing。
 
 相邻共面叶块维持 2:1 平衡。缩放只改变绘制，不改变叶块或重新细化。图形可叠加旧 `--preview` 的规则场采样，但要说明它是 Init 采样，不是 AMR 单元平均值。当前 API 不传 AMR 单元场数组。
 

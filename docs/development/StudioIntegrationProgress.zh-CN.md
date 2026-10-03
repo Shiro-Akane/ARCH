@@ -2521,3 +2521,12 @@ Linux原生窗口确认两模型表格可访问，保留partial/unknown，不做
 4文件×4查询完整响应与冻结基线一致，真实Sod/Cellular文件保持只读。
 读取期取消后约4ms完成reap，BUSY/recovery通过；316项全回归及生产检查通过。
 见PlotfileLargeQuery-20261004.zh-CN.md/Summary.json；不宣称真实AMR全验收、同机演化影响或科学目标完成。
+
+
+## 全模型三维混合初始 AMR 补证（2026-10-04）
+
+复用现有 CPU API，RT 1×3×1 返回 L0=2/L1=8 的真实 last-completed-balanced hierarchy；
+仍 limited，不提升为complete；三轴81次命中、精确Cartesian无重叠/域覆盖/2:1与四个反例拒绝通过。
+保留初次CLI语法错误、Sedov只有root、RT四root limited和外部域假设修正的完整处理摘要。
+同步INITIAL_AMR_API.md的动态全模型/native轴单位；没有生产源码改动，不重复先前316项检查。
+见FullModel3DMixedAmr-20261004.zh-CN.md/Summary.json；native UI与完整科学/平台出口仍待。
