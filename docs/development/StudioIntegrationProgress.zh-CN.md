@@ -1646,3 +1646,14 @@ Current running window has not been relaunched to load these assets; native UAT
 of the new wording and user-visible independent window acceptance remain pending.
 The top stage table now distinguishes historical177-test evidence, current229,
 agent-captured native interactions and incomplete user-visible acceptance.
+
+## O7.0 architecture audit failure / migration proposal awaiting approval
+
+At clean2589a8e8, existing architecture audit exits1: obsolete RuntimeParams
+parser.GetBool marker, and exact CUDA controller-test source tuple missing the
+CompositionInput.cpp added by strict-loader migration. Existing106 audit tests:
+105PASS/1FAIL (repository-tree test); no skips. Do not mark audit/O7.0 PASS.
+See O7ArchitectureAuditMigrationReview.zh-CN.md for exact evidence, bounded
+proposal and negative mutation requirements. Automatic approval rejected applying
+the audit/test update; no rule/test/source/CMake file was changed. Await explicit
+confirmation of that proposal. No new simulation/build/raw upload/push/tag.
