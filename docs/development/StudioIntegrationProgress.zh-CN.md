@@ -1552,3 +1552,13 @@ diff-check PASS; no redundant simulation. Full reference migration not yet claim
 - Field/AMR project/case/configRevision/build/binary及EOS sourceFingerprint一致；execution明确not_executed/not_created。原输入字节不变，finally关闭Preview，/proc确认无该受管binary Preview worker。精简证据StudioRegisteredCaseManagedSyncSummary.json；新目录原始响应/日志只留本机。
 - 这是受影响新Core的Host集成复验，不是UI/原生file-dialog/renderer UAT或独立科学演化验收；未重跑未改动Studio完整227项基线。WSLg完整重启仍待授权，未提前全模型/JENS/RZ或CUDA。
 - 新受管binary随后实际执行已批准SmoothAdvection retained checkpoint续算：succeeded/exit0，step100/time0.1；16对象/14数据集路径、属性、布局和所有值与旧source最终checkpoint相同，maxAbs0，checkpoint SHA不变。进程退出，raw输出留新的本地目录。Run发生时仅本轮两份报告未提交，因此记录repositoryDirty=true；无未提交Core改动，Build发生时为clean4cf374a8。Preview/AMR仍无timestep；这条显式Restart包含真实演化，不能笼统写成整个复验无simulation。
+
+## 历史 G 输入：只读换算依据（未批准）
+
+新增 analyze_g_input_migration.py 与 GravityConstantMigrationAnalysis.json，
+报告见 GravityConstantInputMigrationPending.zh-CN.md。连续 Euler–Poisson
+相似条件 q*b*a²=c² 得到密度缩放候选；离散等效、floor 激活、实际演化终点
+仍未证明。核实历史径向中心 0 与当前公共 center_x=5e7 的独立初态差异。
+Jeans 仅计算新旧 G 的线性频率敏感性，FLASH 编译 G 尚未确认。
+没有修改 .par、运行 ARCH/FLASH 或调整阈值；待维护者批准后才迁移输入。
+完整目标及先后顺序不变，不能将该分析记为科学验收 PASS。
