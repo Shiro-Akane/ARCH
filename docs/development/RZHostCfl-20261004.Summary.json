@@ -1,0 +1,107 @@
+{
+  "baseHead": "f108f1d32f5190337aa8eb7e40e8fdc963fcc919",
+  "dirtyInputs": {
+    "src/driver/DriverUtils.h": "04254c66d40d865199300d558e107541844455eee53323384d7753007cbd395a",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "23ca1ff78e1de14506194b5115e8d1807b9702ab89eaa8755fef646a2805c340",
+    "tests/host/driver/test_reduction_contract.cpp": "7194cad2f6009017d5f37c38b151c02d22f11f11ea1512850d1ee5ef8575a07b"
+  },
+  "testBinarySha256": {
+    "arch_curvilinear_metrics": "5161ee0253947498484aee216e5ea9793c663724b4029116df9f75dfb670b8a1",
+    "arch_reduction_contract": "f33b90927630fa3cee00c869e9ec754d7ac61cdad61977a2ebcf8609e943077b"
+  },
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "reduction_contract": "PASS",
+    "diffCheck": "PASS"
+  },
+  "witness": {
+    "dimension": 2,
+    "gridShape": [
+      16,
+      16
+    ],
+    "rDomains": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ]
+    ],
+    "zDomain": [
+      -1,
+      1
+    ],
+    "dr": 0.0625,
+    "dz": 0.125,
+    "rho": 2,
+    "pressure": 5,
+    "gamma": 1.4,
+    "CFL": 0.4,
+    "radialVelocity": ".1+.2*r",
+    "axialVelocity": "-.5+.3*z",
+    "swirl": [
+      0,
+      2
+    ],
+    "reference": ".5*CFL/minimum inverse transport time: min_cells(.5*CFL/((abs(vr)+sqrt(gamma*p/rho))/dr+(abs(vz)+sqrt(gamma*p/rho))/dz))",
+    "serialParallel": "exact binary64 equality",
+    "engineeringGate": "existing close 2e-12*max(1,abs(reference))"
+  },
+  "resultsRoundedByExistingStreamPrecision": [
+    {
+      "inner": 0.0,
+      "swirl": 0.0,
+      "dt": 0.00358103,
+      "reference": 0.00358103,
+      "absolute_error": 0.0
+    },
+    {
+      "inner": 0.0,
+      "swirl": 2.0,
+      "dt": 0.00358103,
+      "reference": 0.00358103,
+      "absolute_error": 0.0
+    },
+    {
+      "inner": 1.0,
+      "swirl": 0.0,
+      "dt": 0.00338697,
+      "reference": 0.00338697,
+      "absolute_error": 4.33681e-19
+    },
+    {
+      "inner": 1.0,
+      "swirl": 2.0,
+      "dt": 0.00338697,
+      "reference": 0.00338697,
+      "absolute_error": 4.33681e-19
+    }
+  ],
+  "fixedFinding": "Host active-cell invalid candidate was hidden by generic minimum Ignore-NaN",
+  "legacyRegression": {
+    "singleBadDensity": [
+      0,
+      -1,
+      "NaN",
+      "infinity"
+    ],
+    "singleBadMomentum": "infinity",
+    "schedules": [
+      "serial",
+      "parallel"
+    ],
+    "sharedReductionEdges": 36
+  },
+  "limits": [
+    "acoustic transport bound only; not a new source stability formula",
+    "runtime Grid/scheduler remain legacy; explicit RZ only",
+    "no gravity/AMR/reflux/time evolution acceptance",
+    "CUDA invalid-cell failure handling still must align later; not validated",
+    "no ARCH full build or simulation; no push/tag/main merge"
+  ],
+  "localEvidence": "studio/.local/integration/rz-host-cfl-20261004",
+  "failurePreserved": "ctest.log reproduced single NaN density acceptance before Host validation fix"
+}

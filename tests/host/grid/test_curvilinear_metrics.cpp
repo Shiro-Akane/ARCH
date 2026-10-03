@@ -112,8 +112,60 @@ void test_rz_host_hydro() {
     }
 }
 
+
+void test_rz_host_cfl() {
+    using namespace GridMetrics;
+    SpeciesManager species;
+    species.add_species("gas",1.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    constexpr double cfl=.4,rho=2.,pressure=5.;
+    const double sound=std::sqrt(1.4*pressure/rho);
+    for (double inner : {0.,1.}) {
+        Grid grid(amr::MAX_NG,inner,inner+1.,-1.,1.,0.,1.);
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+        FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
+        double zero_swirl_dt=0.;
+        for (double swirl : {0.,2.}) {
+            double reference=std::numeric_limits<double>::max();
+            for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+                const int cell=grid.GetIndex(i,j,0);
+                const double radius=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+                const double radial=.1+.2*radius,axial=-.5+.3*z;
+                state.set(cell,{rho,rho*radial,rho*axial,rho*swirl,
+                    pressure/.4+.5*rho*(radial*radial+axial*axial+swirl*swirl)});
+                state.X(0,cell)=1.;
+                if(i>=grid.Is() && i<grid.Ie() && j>=grid.Js() && j<grid.Je()) {
+                    // Independent two-face acoustic transport bound, dr != dz.
+                    const double rate=(std::abs(radial)+sound)*amr::BLOCK_NX
+                        +(std::abs(axial)+sound)*amr::BLOCK_NY/2.;
+                    reference=std::min(reference,.5*cfl/rate);
+                }
+            }
+            const double serial=adaptive_dt(state,eos,grid,cfl,false,
+                GeometrySemantics::AxisymmetricRz);
+            const double parallel=adaptive_dt(state,eos,grid,cfl,true,
+                GeometrySemantics::AxisymmetricRz);
+            close(serial,reference,"RZ Host CFL r/z physical transport bound");
+            close(parallel,reference,"RZ Host parallel CFL bound");
+            if(serial!=parallel)throw std::runtime_error("RZ CFL reduction schedule drift");
+            if(swirl==0.)zero_swirl_dt=serial;
+            else close(serial,zero_swirl_dt,"inactive phi entered RZ acoustic CFL");
+            std::cout<<"RZ_HOST_CFL inner="<<inner<<" swirl="<<swirl
+                <<" dt="<<serial<<" reference="<<reference
+                <<" absolute_error="<<std::abs(serial-reference)<<'\n';
+        }
+        state.rho[grid.GetIndex(grid.Is(),grid.Js(),0)]=
+            std::numeric_limits<double>::quiet_NaN();
+        bool rejected=false;
+        try { (void)adaptive_dt(state,eos,grid,cfl,false,GeometrySemantics::AxisymmetricRz); }
+        catch(const std::runtime_error&) { rejected=true; }
+        if(!rejected)throw std::runtime_error("RZ CFL accepted invalid active density");
+    }
+}
+
 int main()
 {
+    test_rz_host_cfl();
     test_rz_host_hydro();
     using namespace GridMetrics;
     const double conditioning = CurvilinearMetricCases::conditioning_error();

@@ -2671,3 +2671,9 @@ RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 RZ
 真实 HLLC/PCM/IdealGas 768-cell 压力/轴向/旋流组合及预算反例、CPU 2/2 PASS。
 显式 RZ gravity/AMR reflux 未迁移时先拒绝；生产 IHydroSolver/runtime 未切换。
 详见 RZHostHydro-20261004.zh-CN.md / Summary；角动量 AMR finding、实际演化/CUDA/科学出口仍待。
+
+## 2026-10-04 RZ Host acoustic CFL
+显式 RZ chart 贯穿 Hydro dt 的 dr/dz 与原 shared归约；非等距1024-cell夹具串/并行一致，
+最大独立参考差4.33681e-19。发现并修复单 invalid active cell 被Ignore-NaN掩盖，
+legacy反例与36项归约边界/CPU2/2通过；不修改共享归约数学。
+详见 RZHostCfl-20261004.zh-CN.md / Summary；强旋流source稳定性/全路径/CUDA/科学出口未完成。
