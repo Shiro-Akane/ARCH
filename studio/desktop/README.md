@@ -21,8 +21,14 @@ owned Host and its Preview/Configure work, waiting for active Build completion.
 
 Linux packaging: npm run desktop:package. Keep the complete resulting directory
 together; start its arch-studio script. Packaging output is local and not committed.
-Desktop visual acceptance is pending: the current WSLg environment exposes a
-[WARN:COPY MODE] window whose capture does not show Studio reliably.
+Desktop visual acceptance remains pending. Earlier WSLg copy-mode capture
+failures are historical; the current independent Linux window can be captured
+with its parameter interface. The user's latest report is still a taskbar icon
+without a visible page. Tool capture, activation and maximization do not establish
+user-visible acceptance; WSLg display recovery has not been confirmed.
+See [native file lifecycle evidence](../../docs/development/StudioNativeFileLifecycleUat.zh-CN.md)
+and [active-close coverage](../../docs/development/StudioNativeActiveCloseAttempt.zh-CN.md)
+for the verified scope and remaining lifecycle checks.
 
 ## Historical Windows workflow (outside the current delivery scope)
 
