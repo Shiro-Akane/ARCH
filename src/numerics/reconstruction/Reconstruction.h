@@ -245,7 +245,8 @@ struct MusclReconstruction
 
 /**
  * @struct PPMReconstruction
- * @brief Third-order piecewise-parabolic reconstruction with smooth-extremum preservation.
+ * @brief Third-order piecewise-parabolic reconstruction with continuous
+ * curvature-supported face bounds and a CW endpoint blend.
  */
 struct PPMReconstruction
 {
@@ -254,48 +255,48 @@ struct PPMReconstruction
     static constexpr int NG = 3;
 
 private:
+    // Curvature support follows the second-difference limiting principle of
+    // Sekora/Colella (2009, arXiv:0903.4200). The continuous projection/blend
+    // below is stated explicitly rather than using their conditional switches.
+    // This shared dimensionless coefficient bounds local curvature relative to
+    // neighboring second differences; it is a numerical method coefficient.
+    static constexpr double kCurvatureLimitCoefficient = 1.25;
+
     static ARCH_INLINE double interpolate_face_4th(double u_im1, double u_i, double u_ip1, double u_ip2)
     {
         return (7.0 / 12.0) * (u_i + u_ip1) - (1.0 / 12.0) * (u_im1 + u_ip2);
     }
 
-    static ARCH_INLINE bool is_smooth_extremum(
-        double u_im2, double u_im1, double u_i, double u_ip1, double u_ip2)
+    // Continuous extended-interval face projection between the cell averages
+    // u_i and u_ip1. The fourth-order face f is clamped into
+    // [min(u_i,u_ip1) - kp/6, max(u_i,u_ip1) + kn/6], where kp and kn are the
+    // positive and negative curvature supports bounded by the two adjacent
+    // second differences. Clamp and bounds are continuous in the data and scale
+    // equivariant; a zero supported curvature reduces the projection to the
+    // ordinary adjacent-average bound, so no inside/outside switch or midpoint
+    // replacement is needed. Cell averages are not point samples: the retained
+    // curvature keeps the true extremum face of an exact quadratic instead of
+    // flattening it to the average of the two cell means.
+    static ARCH_INLINE double project_face(
+        double f, double u_im1, double u_i, double u_ip1, double u_ip2)
     {
-        const double slope_left = u_i - u_im1;
-        const double slope_right = u_ip1 - u_i;
-        if ((slope_left > 0.0 && slope_right > 0.0) || (slope_left < 0.0 && slope_right < 0.0))
-            return false;
-
-        const double d2_left = u_im2 - 2.0 * u_im1 + u_i;
-        const double d2_center = u_im1 - 2.0 * u_i + u_ip1;
-        const double d2_right = u_i - 2.0 * u_ip1 + u_ip2;
-        const double curvature_scale = std::max({
-            std::abs(d2_left), std::abs(d2_center), std::abs(d2_right)});
-        const double value_scale = std::max({
-            std::abs(u_im2), std::abs(u_im1), std::abs(u_i),
-            std::abs(u_ip1), std::abs(u_ip2)});
-
-        if (curvature_scale <= 1e-12 * value_scale)
-            return false;
-        if (d2_center == 0.0 || d2_left == 0.0 || d2_right == 0.0
-            || (d2_left > 0.0) != (d2_center > 0.0) || (d2_center > 0.0) != (d2_right > 0.0))
-            return false;
-
-        const double min_curvature = std::min({
-            std::abs(d2_left), std::abs(d2_center), std::abs(d2_right)});
-        return min_curvature >= 0.25 * curvature_scale;
+        const double d_left = (u_ip1 - u_i) - (u_i - u_im1);
+        const double d_right = (u_ip2 - u_ip1) - (u_ip1 - u_i);
+        const double k_positive = std::max(0.0, std::min(
+            kCurvatureLimitCoefficient * d_left, kCurvatureLimitCoefficient * d_right));
+        const double k_negative = std::max(0.0, std::min(
+            -kCurvatureLimitCoefficient * d_left, -kCurvatureLimitCoefficient * d_right));
+        const double lower = std::min(u_i, u_ip1) - k_positive / 6.0;
+        const double upper = std::max(u_i, u_ip1) + k_negative / 6.0;
+        return std::max(lower, std::min(f, upper));
     }
 
-    static ARCH_INLINE void apply_cw_limiter(
-        double &u_left, double &u_right, double u_average,
-        bool preserve_smooth_extremum)
+    // Colella/Woodward two-to-one endpoint bound used by the profile blend.
+    static ARCH_INLINE void apply_cw_bound(
+        double &u_left, double &u_right, double u_average)
     {
         const double delta_left = u_left - u_average;
         const double delta_right = u_right - u_average;
-
-        if (preserve_smooth_extremum)
-            return;
 
         if ((delta_left > 0.0 && delta_right > 0.0)
             || (delta_left < 0.0 && delta_right < 0.0))
@@ -311,25 +312,70 @@ private:
             u_right = u_average - 2.0 * delta_left;
     }
 
+    // Continuous curvature-supported CW blend for one cell. The original
+    // Colella/Woodward two-to-one endpoint bound is computed unconditionally from
+    // the input faces fL/fR and the cell mean u_i, then blended back toward the
+    // original faces by theta = min(1, k/|P|). Here P = 6*(aL+aR) is the
+    // dimensionless parabolic second derivative, supported by the
+    // three adjacent second differences. theta=1 keeps the original profile
+    // (quadratics satisfy |P| <= C*min(|dL|,|dC|,|dR|)) and theta=0 keeps the CW
+    // bound for unsupported sharp profiles; both limits join continuously because
+    // the CW correction is itself bounded by |P|/6 per endpoint, so the weighted
+    // blend tends to the original face as P tends to zero even when theta has a
+    // directional limit. A zero P is an exact linear profile and returns the
+    // original faces instead of dividing 0/0.
+    static ARCH_INLINE void apply_cell_limiter(
+        double &fL, double &fR,
+        double u_im2, double u_im1, double u_i, double u_ip1, double u_ip2)
+    {
+        double cw_left = fL;
+        double cw_right = fR;
+        apply_cw_bound(cw_left, cw_right, u_i);
+
+        const double a_left = fL - u_i;
+        const double a_right = fR - u_i;
+        const double P = 6.0 * (a_left + a_right);
+        if (P == 0.0)
+            return; // linear profile: the original faces already lie on it
+
+        const double d_left = (u_i - u_im1) - (u_im1 - u_im2);
+        const double d_center = (u_ip1 - u_i) - (u_i - u_im1);
+        const double d_right = (u_ip2 - u_ip1) - (u_ip1 - u_i);
+        const double S = P > 0.0 ? 1.0 : -1.0;
+        const double k = std::max(0.0, std::min({
+            kCurvatureLimitCoefficient * S * d_left,
+            kCurvatureLimitCoefficient * S * d_center,
+            kCurvatureLimitCoefficient * S * d_right}));
+        const double theta = std::min(1.0, k / std::abs(P));
+        if (theta == 1.0)
+            return; // full original profile, exact by construction
+        if (theta == 0.0) {
+            fL = cw_left;
+            fR = cw_right;
+            return;
+        }
+        fL = cw_left + theta * (fL - cw_left);
+        fR = cw_right + theta * (fR - cw_right);
+    }
+
 public:
     static ARCH_INLINE void reconstruct_scalar_ppm(
         const double (&v)[6], double& left, double& right)
     {
-        double u_face_imhalf = interpolate_face_4th(v[0], v[1], v[2], v[3]);
-        double u_face_iphalf = interpolate_face_4th(v[1], v[2], v[3], v[4]);
-        double u_face_ip3half = interpolate_face_4th(v[2], v[3], v[4], v[5]);
+        const double u_face_imhalf = project_face(
+            interpolate_face_4th(v[0], v[1], v[2], v[3]), v[0], v[1], v[2], v[3]);
+        const double u_face_iphalf = project_face(
+            interpolate_face_4th(v[1], v[2], v[3], v[4]), v[1], v[2], v[3], v[4]);
+        const double u_face_ip3half = project_face(
+            interpolate_face_4th(v[2], v[3], v[4], v[5]), v[2], v[3], v[4], v[5]);
 
         double u_L_cell_i = u_face_imhalf;
         double u_R_cell_i = u_face_iphalf;
-        apply_cw_limiter(
-            u_L_cell_i, u_R_cell_i, v[2],
-            is_smooth_extremum(v[0], v[1], v[2], v[3], v[4]));
+        apply_cell_limiter(u_L_cell_i, u_R_cell_i, v[0], v[1], v[2], v[3], v[4]);
 
         double u_L_cell_ip1 = u_face_iphalf;
         double u_R_cell_ip1 = u_face_ip3half;
-        apply_cw_limiter(
-            u_L_cell_ip1, u_R_cell_ip1, v[3],
-            is_smooth_extremum(v[1], v[2], v[3], v[4], v[5]));
+        apply_cell_limiter(u_L_cell_ip1, u_R_cell_ip1, v[1], v[2], v[3], v[4], v[5]);
 
         left = u_R_cell_i;
         right = u_L_cell_ip1;

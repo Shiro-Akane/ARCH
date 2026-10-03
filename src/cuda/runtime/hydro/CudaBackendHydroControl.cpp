@@ -248,6 +248,7 @@ state::CompletionToken CudaBackend::clear_amr_flux_register(
 state::CompletionToken CudaBackend::execute_amr_reflux(
     state::StateSlot slot, double dt, state::CompletionToken expected)
 {
+    reflux_repairs.reset(impl_->species_view.count);
     if (!complete_token(expected) || !std::isfinite(dt) || dt < 0.0)
         throw std::invalid_argument("invalid CUDA AMR reflux contract");
     CudaAmrFluxPlanRuntime* const plan = impl_->active_amr_flux.get();
@@ -257,6 +258,11 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
         || plan->device_blocks.size() != plan->host_blocks.size())
         throw std::logic_error("CUDA AMR flux block bindings drifted");
 
+    auto& scratch = impl_->reflux_batch;
+    const int species_count = impl_->species_view.count;
+    const int repair_stride = state::RepairView::fixed_size + 2 * species_count;
+    scratch.ensure_repairs(plan->host_blocks.size(), species_count);
+
     // Slot rotation changes the DeviceStateView pointers.  Rebind immediately
     // before reflux so Hydro targets the rotated Current buffer and RKL targets
     // the descriptor's not-yet-published output slot.
@@ -265,6 +271,8 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
         if (block == nullptr)
             throw std::logic_error("CUDA AMR flux block was retired early");
         plan->host_blocks[index].state = block->slots[slot_index(slot)];
+        plan->host_blocks[index].repairs = {
+            scratch.repairs->get() + index * repair_stride, species_count};
     }
 
     const auto& reflux = plan->compiled_reflux;
@@ -273,6 +281,10 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
         throw std::logic_error("CUDA AMR reflux plan has no contributions");
     const std::size_t descriptor_bytes = plan->host_blocks.size()
         * sizeof(DeviceAmrFluxBlockView);
+    CudaQuiescenceGuard reflux_guard{*impl_};
+    check_cuda(cudaMemsetAsync(scratch.repairs->get(), 0,
+        scratch.host_repairs.size() * sizeof(double), impl_->stream.get()),
+        "reset reflux repair receipts");
     enqueue_cuda_metadata_upload(
                    plan->device_blocks.get(), plan->host_blocks.data(),
                    descriptor_bytes, impl_->stream.get(), impl_->runtime_counters,
@@ -280,7 +292,6 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
     if (!plan->reflux_status.get()) plan->reflux_status.allocate(1);
     check_cuda(cudaMemsetAsync(plan->reflux_status.get(),0,sizeof(int),impl_->stream.get()),"reset reflux status");
     int reflux_status=0;
-    CudaQuiescenceGuard reflux_guard{*impl_};
     check_cuda(launch_cuda_amr_reflux(
                    plan->device_blocks.get(),
                    static_cast<int>(plan->host_blocks.size()),
@@ -293,10 +304,21 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
                "launch CUDA AMR reflux");
     check_cuda(cudaMemcpyAsync(&reflux_status,plan->reflux_status.get(),sizeof(int),
         cudaMemcpyDeviceToHost,impl_->stream.get()),"download reflux status");
+    check_cuda(cudaMemcpyAsync(scratch.host_repairs.data(), scratch.repairs->get(),
+        scratch.host_repairs.size() * sizeof(double), cudaMemcpyDeviceToHost, impl_->stream.get()),
+        "download reflux repair receipts");
     quiesce();
     reflux_guard.completed=true;
     impl_->runtime_counters.bytes_d2h+=sizeof(int);
     if (reflux_status) throw std::runtime_error("Invalid state after CUDA AMR reflux: status="+std::to_string(reflux_status));
+    for (std::size_t index = 0; index < plan->host_blocks.size(); ++index) {
+        state::RepairBudget report(species_count);
+        std::copy_n(scratch.host_repairs.data() + index * repair_stride,
+            repair_stride, report.values.data());
+        report.block_uid = plan->runtime_blocks[index]->handle.uid.value;
+        reflux_repairs.combine(report);
+    }
+    impl_->runtime_counters.bytes_d2h += scratch.host_repairs.size() * sizeof(double);
     if (dt > 0.0) ++impl_->runtime_counters.kernel_count;
     return expected;
 }

@@ -64,6 +64,12 @@ See [test setup](../tests/README.md#add-cuda-and-its-sparse-provider).
 - [qualify_cuda_amr_evidence.py](qualify_cuda_amr_evidence.py): review recorded
   matrices against their manifests, source/build identities and final artifacts.
 
+For a fixed level-zero grid, ARCH skips empty regrid transactions. The backend
+runner identifies this from the actual run parameters and marks the regrid
+measurement as not applicable; it does not invent a timing or a zero counter.
+Dynamic AMR still requires valid transaction measurements. Field, conservation
+and scientific-reference checks apply in both cases.
+
 ARCH and the comparator must come from the same build. Choose an absent or empty
 output directory under a local build area or temporary directory; runners retain
 logs and do not erase an earlier run. Writing or “publishing” evidence here means

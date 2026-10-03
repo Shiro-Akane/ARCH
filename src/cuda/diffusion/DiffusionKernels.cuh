@@ -399,11 +399,15 @@ static __global__ void first_rkl_stage_kernel(
             ? destination.mass_fractions + cell : nullptr);
     if (blocks) {
         const auto& b = blocks[blockIdx.y];
-        const auto status = state::validate(updated,
+        const int k = cell / grid.stride_z;
+        const int j = (cell - k * grid.stride_z) / grid.stride_y;
+        const int i = cell - k * grid.stride_z - j * grid.stride_y;
+        const auto status = state::accept_conservative_state(updated,
             destination.n_species ? destination.mass_fractions + cell : nullptr,
             destination.n_species, destination.total_size,
-            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max);
-        if (status != state::Status::valid) {
+            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max,
+            GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k), b.repairs, cell);
+        if (!state::accepted(status)) {
             atomicExch(b.workspace.status, 100 + static_cast<int>(status));
             return;
         }
@@ -467,11 +471,15 @@ static __global__ void recursive_rkl_stage_kernel(
             ? destination.mass_fractions + cell : nullptr);
     if (blocks) {
         const auto& b = blocks[blockIdx.y];
-        const auto status = state::validate(updated,
+        const int k = cell / grid.stride_z;
+        const int j = (cell - k * grid.stride_z) / grid.stride_y;
+        const int i = cell - k * grid.stride_z - j * grid.stride_y;
+        const auto status = state::accept_conservative_state(updated,
             destination.n_species ? destination.mass_fractions + cell : nullptr,
             destination.n_species, destination.total_size,
-            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max);
-        if (status != state::Status::valid) {
+            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max,
+            GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k), b.repairs, cell);
+        if (!state::accepted(status)) {
             atomicExch(b.workspace.status, 100 + static_cast<int>(status));
             return;
         }

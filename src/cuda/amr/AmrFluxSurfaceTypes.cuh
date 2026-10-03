@@ -10,6 +10,7 @@
 #pragma once
 
 #include "cuda/common/CudaCommon.cuh"
+#include "data/StateDiagnostics.h"
 
 #include <array>
 #include <cstddef>
@@ -56,6 +57,7 @@ struct DeviceAmrFluxBlockView {
     DeviceGridView grid{};
     DeviceAmrFluxSurfaceView registers[6]{};
     DeviceAmrFluxSurfaceView initial_flux[6]{};
+    state::RepairView repairs{};
 };
 
 inline constexpr std::size_t amr_flux_surface_scalar_count(

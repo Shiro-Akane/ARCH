@@ -217,6 +217,7 @@ struct StageExecutionContext {
     std::function<void(const StageDescriptor&)> hydro_flux_capture_accept;
     std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_begin;
     std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_accept;
+    std::function<void(const RklStageDescriptor&)> rkl_acceptance;
 };
 
 static_assert(std::is_same_v<decltype(StageExecutionContext::side),
@@ -463,8 +464,11 @@ StageExecutionResult execute_rkl_stage(
             return std::forward<Executor>(executor)(descriptor, token);
         },
         [&](const StageDescriptor&, state::CompletionToken token) {
-            if (!descriptor.reflux_before_publish) return token;
-            return std::forward<Reflux>(reflux)(descriptor, token);
+            const auto completed = descriptor.reflux_before_publish
+                ? std::forward<Reflux>(reflux)(descriptor, token) : token;
+            if (state::is_complete(completed) && completed.value == token.value
+                && context.rkl_acceptance) context.rkl_acceptance(descriptor);
+            return completed;
         },
         std::forward<Boundary>(boundary));
 }

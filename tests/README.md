@@ -17,6 +17,28 @@ All commands below run from the repository root in Linux or WSL2. Tool tests,
 numerical regressions and application smoke have different purposes;
 [Validation](../validation/README.md) records scientific comparisons and budgets.
 
+For conservative-state acceptance changes, the focused Host targets are
+`arch_conservative_acceptance`, `arch_rkl_repair_weights` and
+`arch_shared_stage_scheduler`. They check bounded composition corrections and
+receipts, propagation through the existing RKL recurrence, and rejection before
+state publication. `arch_cuda_conservative_acceptance` runs the same acceptance
+leaf on an actual device. These contracts do not replace complete AMR evolution
+and restart; [RT replay inputs](../validation/amr/inputs/rt/README.md) provide the
+four reported cases and their current evidence owner.
+
+`arch_ppm_limiter` checks the common PPM face projection and curvature-supported
+profile blend against analytic constant, affine and quadratic cell averages and
+roundoff-perturbation witnesses. `arch_cuda_ppm_limiter` exercises the same
+production function on a real GPU, with bitwise Host/device comparisons and the
+same perturbation budget. These leaves complement the existing smooth-wave,
+Sod and Sedov scientific references; they are not full-evolution acceptance.
+
+`arch_flux_limiter` checks conservative face limiting at zero and trace
+composition, including strict fluid bounds, conservation, scaling and physical
+reflection. `arch_cuda_flux_limiter` compares the same production leaf on Host
+and device. Both use the existing composition roundoff band; neither introduces
+a physical species floor or replaces stage acceptance and correction receipts.
+
 Compiling the full test suite costs more time and host RAM than building only
 the application. `BUILD_TESTING=ON` registers the applicable tests; the default
 `all` build compiles their extra executables. CUDA tests add substantial NVCC

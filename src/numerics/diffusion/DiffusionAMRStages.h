@@ -505,6 +505,7 @@ inline void advance_single_rkl(
                 FluidState& previous = state_for(block, descriptor.previous_slot);
                 FluidState& older = state_for(block, descriptor.older_slot);
                 FluidState& output = state_for(block, descriptor.output_slot);
+                output.stage_repairs.reset(output.GetNumSpecies());
                 const DiffFunction::RKLCoeffs coefficients =
                     DiffFunction::get_rkl_coeffs(
                         order, descriptor.stage, stages);
@@ -638,7 +639,7 @@ inline void advance_single_rkl(
     const auto reflux =
             [&](const RklPlan&, const RklStageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
-                TimeIntegration::validate_stage_state(state_for(block, descriptor.output_slot),
+                TimeIntegration::accept_stage_state(state_for(block, descriptor.output_slot),
                     grid, config.numerics);
                 return token;
             };
@@ -740,6 +741,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         detail::state_for(block, descriptor.older_slot);
                     FluidState& output =
                         detail::state_for(block, descriptor.output_slot);
+                    output.stage_repairs.reset(output.GetNumSpecies());
                     std::vector<FluidVector> d_previous;
                     std::vector<double> d_species_previous;
                     detail::evaluate_diffusion_increment(
@@ -752,6 +754,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                             state_n, output, d_previous,
                             d_species_previous, block.grid,
                             coefficients.tilde_mu);
+                        TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
                         continue;
                     }
 
@@ -775,6 +778,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         d_species_previous, d_initial, d_species_initial,
                         block.grid, coefficients,
                         selected_plan.second_order);
+                    TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
                 }
                 return token;
             };
@@ -783,8 +787,8 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                 arch::state::CompletionToken token) {
                 amr_ctrl.ApplyReflux(
                     dt, detail::member_for(descriptor.output_slot));
-                TimeIntegration::validate_reflux_state(amr_ctrl,config.numerics,
-                    detail::member_for(descriptor.output_slot));
+                TimeIntegration::accept_reflux_state(amr_ctrl,config.numerics,
+                    detail::member_for(descriptor.output_slot), false);
                 return token;
             };
     const auto boundary =

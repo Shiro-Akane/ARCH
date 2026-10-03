@@ -21,6 +21,7 @@ import validation_sanitizer
 
 
 PARAMETER_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
+INTEGER_LEVEL_RE = re.compile(r"^[+-]?[0-9]+$")
 STEP_RE = re.compile(r"Simulation Done\. Total Steps:\s*([0-9]+)")
 
 
@@ -71,7 +72,10 @@ def read_parameter_map(path: Path) -> dict[str, str]:
         stripped = line.split("#", 1)[0]
         match = PARAMETER_RE.match(stripped)
         if match:
-            result[match.group(1)] = match.group(2)
+            key = match.group(1)
+            if key in result:
+                raise RuntimeError(f"duplicate parameter in actual run inputs: {key}")
+            result[key] = match.group(2)
     return result
 
 
@@ -723,9 +727,36 @@ def summarize_regrids(records: list[dict[str, Any]], backend: str, expected_step
             'overlaps_backend_trace': True}
 
 
-def read_regrid_metrics(path: Path, backend: str, expected_steps: int) -> dict[str, Any]:
+def fixed_grid_without_regrid(parameter_file: Path) -> bool:
+    """True only for an actual, unambiguous single-level run with no AMR.
+
+    Driver deliberately skips no-op fixed-grid regrids, so an absent whole-
+    regrid report is not-applicable rather than a missing measurement.  Both
+    refinement bounds must be present in the actual run parameters exactly once,
+    written as valid integer text and equal to zero; a missing, duplicate,
+    nonzero or non-integer bound keeps the measurement mandatory.
+    """
+    parameters = read_parameter_map(parameter_file)
+    for key in ('lrefinemin', 'lrefinemax'):
+        if key not in parameters:
+            return False
+        text = parameters[key]
+        if not INTEGER_LEVEL_RE.match(text):
+            return False
+        if int(text) != 0:
+            return False
+    return True
+
+
+def read_regrid_metrics(path: Path, backend: str, expected_steps: int,
+                        parameter_file: Path | None = None) -> dict[str, Any]:
     if not path.is_file():
-        raise RuntimeError('ARCH lane did not produce whole-regrid measurements')
+        if parameter_file is None or not fixed_grid_without_regrid(parameter_file):
+            raise RuntimeError('ARCH lane did not produce whole-regrid measurements')
+        return {'applicable': False,
+                'reason': 'fixed-level0 grid: no initial refinement and no dynamic '
+                          'topology transaction, so whole-regrid measurement is not applicable',
+                'file': None, 'records': [], 'summary': None}
     lines = path.read_text().splitlines()
     if len(lines) < 2:
         raise RuntimeError('regrid measurement file is empty')
@@ -743,7 +774,7 @@ def read_regrid_metrics(path: Path, backend: str, expected_steps: int) -> dict[s
                 for key, value in zip(header, values)})
         except ValueError as error:
             raise RuntimeError('malformed regrid measurement value') from error
-    return {'file': provenance.file_identity(path), 'records': records,
+    return {'applicable': True, 'file': provenance.file_identity(path), 'records': records,
             'summary': summarize_regrids(records, backend, expected_steps)}
 
 
@@ -953,7 +984,9 @@ def run_arch_lane(
         "resolved_plan": resolved_plan,
         "trace": trace if backend == "cuda" else None,
         "trace_summary": trace_summary,
-        "regrid": read_regrid_metrics(prefix.with_name(prefix.name + "_regrid.tsv"), backend, steps),
+        "regrid": read_regrid_metrics(
+            prefix.with_name(prefix.name + "_regrid.tsv"), backend, steps,
+            parameter_file=parameter),
         "diffusion_schedule": schedule if schedule_summary else None,
         "diffusion_schedule_summary": schedule_summary,
         "sanitizer": sanitizer.evidence(lane_root) if sanitizer and backend == "cuda" else None,
@@ -1009,7 +1042,9 @@ def run_arch_terminal_lane(
         "resolved_plan": resolved_plan,
         "trace": trace if backend == "cuda" else None,
         "trace_summary": trace_summary,
-        "regrid": read_regrid_metrics(prefix.with_name(prefix.name + "_regrid.tsv"), backend, accepted_steps),
+        "regrid": read_regrid_metrics(
+            prefix.with_name(prefix.name + "_regrid.tsv"), backend, accepted_steps,
+            parameter_file=parameter),
         "sanitizer": sanitizer.evidence(lane_root) if sanitizer and backend == "cuda" else None,
     }
 

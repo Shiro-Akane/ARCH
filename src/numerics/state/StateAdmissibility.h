@@ -19,6 +19,10 @@
 // State recovery is independent of a density scale. Physical floors belong to
 // NumericsConfig; EOS validity belongs to the selected thermodynamic model.
 namespace arch::state {
+// The same trace-sized band is used by Hydro and conservative-stage acceptance.
+inline constexpr double composition_roundoff_limit =
+    64.0 * std::numeric_limits<double>::epsilon();
+
 enum class Status : unsigned char {
     valid, repaired, nonfinite, nonpositive_density, unresolved_energy,
     energy_ceiling, invalid_composition, invalid_thermodynamics
@@ -129,6 +133,75 @@ ARCH_INLINE Status validate(const FluidVector& fluid, const double* fractions,
 ARCH_INLINE bool accepted(Status status)
 { return status == Status::valid || status == Status::repaired; }
 
+/**
+ * Accept only bounded negative traces with an explicit species-mass receipt.
+ *
+ * Delta M_s = -rho * X_s * V for X_s < 0. No positive fraction, density or
+ * energy is changed and no abundance floor is introduced. This is a measured
+ * correction policy, not a claim that every small negative is caused by the
+ * final floating-point subtraction. Larger negatives remain numerical errors.
+ * Preflight the entire cell and every receipt before the first state write.
+ */
+ARCH_INLINE Status repair_composition_roundoff(
+    const FluidVector& fluid, double* fractions, int count, int stride,
+    double volume, RepairView receipt, int cell)
+{
+    if (count < 0 || stride <= 0 || (count > 0 && !fractions))
+        return Status::invalid_composition;
+    bool needs_repair = false;
+    double nonnegative_sum = 0.0;
+    for (int s = 0; s < count; ++s) {
+        const double x = fractions[s * stride];
+        if (!std::isfinite(x) || x < -composition_roundoff_limit)
+            return Status::invalid_composition;
+        needs_repair = needs_repair || x < 0.0;
+        nonnegative_sum += std::max(x, 0.0);
+    }
+    if (!needs_repair) return Status::valid;
+    const auto kinematics = recover(fluid);
+    if (kinematics.status != Status::valid) return kinematics.status;
+    if (!receipt.values || receipt.species != count
+        || !(volume > 0.0) || !std::isfinite(volume)
+        || std::abs(nonnegative_sum - 1.0)
+            > 512.0 * count * std::numeric_limits<double>::epsilon())
+        return Status::invalid_composition;
+    for (int s = 0; s < count; ++s) {
+        const double x = fractions[s * stride];
+        if (x >= 0.0) continue;
+        // Multiply the tiny fraction first; rho*V may otherwise overflow even
+        // when the correction is representable. An underflowed receipt cannot
+        // account for a state change, so reject it rather than silently clip.
+        const double mass = (fluid.rho * -x) * volume;
+        if (!(mass > 0.0) || !std::isfinite(mass))
+            return Status::invalid_composition;
+    }
+    receipt.event(volume, cell);
+    for (int s = 0; s < count; ++s) {
+        const double x = fractions[s * stride];
+        if (x >= 0.0) continue;
+        receipt.species_mass(s, (fluid.rho * -x) * volume);
+        fractions[s * stride] = 0.0;
+    }
+    return Status::repaired;
+}
+
+/** Validate physical bounds before any trace repair, then validate composition. */
+ARCH_INLINE Status accept_conservative_state(
+    const FluidVector& fluid, double* fractions, int count, int stride,
+    double density_floor, double energy_floor, double energy_ceiling,
+    double volume, RepairView receipt, int cell)
+{
+    const auto physical = validate(fluid, nullptr, 0, 1,
+        density_floor, energy_floor, energy_ceiling);
+    if (physical != Status::valid) return physical;
+    const auto repair = repair_composition_roundoff(
+        fluid, fractions, count, stride, volume, receipt, cell);
+    if (!accepted(repair)) return repair;
+    const auto final = validate(fluid, fractions, count, stride,
+        density_floor, energy_floor, energy_ceiling);
+    return final == Status::valid ? repair : final;
+}
+
 // Xi are mass fractions, not molar abundances. Project only onto the requested
 // simplex; zero species are allowed when floor=0. Invalid input never invents
 // a uniform mixture. The residual species absorbs only final rounding error.
@@ -141,7 +214,7 @@ ARCH_INLINE bool normalize_composition(double* fractions, int count, int stride 
     int largest = 0;
     for (int i = 0; i < count; ++i) {
         const double x = fractions[i * stride];
-        if (!std::isfinite(x) || x < -64.0 * std::numeric_limits<double>::epsilon()) return false;
+        if (!std::isfinite(x) || x < -composition_roundoff_limit) return false;
         sum += std::max(x, 0.0);
         if (x > fractions[largest * stride]) largest = i;
     }

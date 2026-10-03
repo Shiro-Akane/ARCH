@@ -377,6 +377,28 @@ arch_configure_host_test(arch_low_density)
 target_link_libraries(arch_low_density PRIVATE arch_build_contract)
 add_test(NAME low_density_math COMMAND arch_low_density)
 
+# Shared PPM curvature limits: analytic profiles and roundoff sensitivity.
+add_executable(arch_ppm_limiter tests/host/numerics/test_ppm_limiter.cpp)
+arch_configure_host_test(arch_ppm_limiter)
+target_link_libraries(arch_ppm_limiter PRIVATE arch_build_contract)
+add_test(NAME ppm_limiter_math COMMAND arch_ppm_limiter)
+
+add_executable(arch_flux_limiter tests/host/numerics/test_flux_limiter.cpp)
+arch_configure_host_test(arch_flux_limiter)
+target_link_libraries(arch_flux_limiter PRIVATE arch_build_contract)
+add_test(NAME conservative_flux_limiter COMMAND arch_flux_limiter)
+
+# Conservative acceptance leaves and the stage-to-final repair-mass recurrence.
+add_executable(arch_conservative_acceptance
+    tests/host/numerics/test_conservative_acceptance.cpp)
+arch_configure_host_test(arch_conservative_acceptance)
+target_link_libraries(arch_conservative_acceptance PRIVATE arch_build_contract)
+add_test(NAME conservative_acceptance COMMAND arch_conservative_acceptance)
+add_executable(arch_rkl_repair_weights tests/host/numerics/test_rkl_repair_weights.cpp)
+arch_configure_host_test(arch_rkl_repair_weights)
+target_link_libraries(arch_rkl_repair_weights PRIVATE arch_build_contract arch_diffusion_math)
+add_test(NAME rkl_repair_weights COMMAND arch_rkl_repair_weights)
+
 # P2 is standalone CPU mathematics; no fluid dispatch, HDF5 or CUDA execution.
 add_executable(arch_poisson_multigrid tests/host/gravity/test_poisson_multigrid.cpp
     src/numerics/elliptic/CartesianPoisson.cpp

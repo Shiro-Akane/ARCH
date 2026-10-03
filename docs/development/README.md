@@ -55,6 +55,10 @@ them, and they supplement rather than replace GitHub push protection.
 
 ## Maintained contributor references
 
+- [RT/AMR data-correctness repair](RTAmrDataCorrectnessRepair.zh-CN.md): shared
+  acceptance rules, RKL correction accounting, portable replay inputs and the
+  current GNN collection-admission decision. This is a targeted development
+  record, not an additional release-wide validation claim.
 - [Current interface review](ImplementationOwnership.md#current-interface-and-compatibility-review): the complete ARCH checkpoint
   contract, removal of unused solver-selection members, retained API boundaries
   and the focused verification record.

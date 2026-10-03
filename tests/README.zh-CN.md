@@ -12,6 +12,22 @@ ARCH 测试使用仓库内的解析／独立参考和常规依赖；配置、运
 以下命令均从仓库根目录在 Linux 或 WSL2 中执行。工具测试、数值回归和完整程序短测
 各有用途；科学误差与验收预算统一见 [Validation](../validation/README.zh-CN.md)。
 
+修改守恒状态接受流程时，可先运行 `arch_conservative_acceptance`、
+`arch_rkl_repair_weights` 和 `arch_shared_stage_scheduler`，检查有界组分修正及
+收支、原有 RKL 递推中的修正传播，以及非法状态在发布前被拒绝。
+`arch_cuda_conservative_acceptance` 在实际设备上调用同一接受函数。这些局部契约
+不能代替完整 AMR 演化与重启；[RT 复现输入](../validation/amr/inputs/rt/README.md)
+提供四组相关算例及其当前验证记录。
+
+`arch_ppm_limiter` 用常量、线性和二次曲线的解析单元平均值，以及末位扰动反例，
+检查共用 PPM 的面值投影和曲率支持混合。`arch_cuda_ppm_limiter` 在真实 GPU 上
+执行同一生产函数，逐位比较 Host／设备结果，并使用相同的扰动预算。这些局部检查
+应与既有平滑波、Sod 和 Sedov 的独立科学参考一起使用，不能单独代表演化验收。
+
+`arch_flux_limiter` 检查零组分及微量组分下的守恒面通量限制，覆盖严格流体边界、
+守恒、缩放和物理反射。`arch_cuda_flux_limiter` 在 Host 与设备上比较同一生产函数。
+两者沿用现有组分舍入带，不添加物理组分下限，也不替代阶段接受和修正收支。
+
 完整测试套件的编译耗时与主机内存需求都高于只构建应用。
 `BUILD_TESTING=ON` 注册适用的测试目标，默认 `all` 构建会编译这些额外的可执行程序。
 启用 `ARCH_ENABLE_CUDA=ON` 后，CUDA 测试还会增加大量 NVCC 编译工作。

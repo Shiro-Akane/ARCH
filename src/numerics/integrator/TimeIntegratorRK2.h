@@ -111,7 +111,7 @@ struct SolverRK2
             [&](const HydroPlan&, StateSlot,
                 arch::state::CompletionToken token) {
                 amr_ctrl.ApplyReflux(dt);
-                TimeIntegration::validate_reflux_state(amr_ctrl,num_cfg);
+                TimeIntegration::accept_reflux_state(amr_ctrl,num_cfg);
                 return token;
             });
     }

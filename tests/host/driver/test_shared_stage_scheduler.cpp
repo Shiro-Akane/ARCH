@@ -1252,6 +1252,221 @@ void test_boundary_failure_blocks_next_stage_and_rotation()
     expect(!physical_rotation, "failed path does not rotate physical state");
 }
 
+void test_rkl_acceptance_ordering_and_failure()
+{
+    using namespace arch::scheduler;
+    const RklPlan plan = make_rkl_plan(RklMethod::RKL1, 1);
+    const RklStageDescriptor& descriptor = plan.stages[0];
+    expect(descriptor.stage == 1
+               && descriptor.output_slot == StateSlot::Scratch
+               && descriptor.reflux_before_publish,
+           "RKL acceptance fixture uses the shared single-stage descriptor");
+
+    // Executor -> reflux -> acceptance -> publication, acceptance exactly once.
+    {
+        ReadyLedger ready(ExecutionSide::Host);
+        StageExecutionContext context{ExecutionSide::Host, ready.ledger,
+                                      ready.clock};
+        const std::vector handles{ready.handle};
+        const StateVersion old_output_version =
+            ready.ledger.inspect({ready.handle, descriptor.output_slot})
+                .interior.version;
+        std::vector<std::string> order;
+        int acceptance_calls = 0;
+        int reflux_calls = 0;
+        context.rkl_acceptance = [&](const RklStageDescriptor& accepted) {
+            ++acceptance_calls;
+            const auto output = ready.ledger.inspect(
+                {ready.handle, accepted.output_slot});
+            expect(output.interior.version == old_output_version,
+                   "acceptance observes the old output version");
+            expect(accepted.stage == descriptor.stage
+                       && accepted.output_slot == descriptor.output_slot
+                       && accepted.reflux_before_publish,
+                   "acceptance receives the matching descriptor");
+            order.push_back("acceptance");
+        };
+        const auto executor = [&](const RklStageDescriptor& stage,
+                                  CompletionToken token) {
+            expect(ready.ledger.inspect({ready.handle, stage.output_slot})
+                       .interior.version == old_output_version,
+                   "executor runs before the stage publication");
+            order.push_back("executor");
+            return token;
+        };
+        const auto reflux = [&](const RklStageDescriptor& stage,
+                                CompletionToken token) {
+            ++reflux_calls;
+            expect(ready.ledger.inspect({ready.handle, stage.output_slot})
+                       .interior.version == old_output_version,
+                   "reflux runs before the stage publication");
+            order.push_back("reflux");
+            return token;
+        };
+        const auto boundary = [&](StateSlot output, StateVersion,
+                                  CompletionToken token) {
+            const auto published =
+                ready.ledger.inspect({ready.handle, output});
+            expect(published.interior.residency == StateResidency::HostValid
+                       && published.interior.version != old_output_version,
+                   "publication precedes the boundary ghost completion");
+            order.push_back("publication");
+            return token;
+        };
+        const StageExecutionResult result = execute_rkl_stage(
+            context, handles, descriptor, executor, reflux, boundary);
+        expect(order
+                   == std::vector<std::string>(
+                       {"executor", "reflux", "acceptance", "publication"}),
+               "RKL acceptance orders after reflux and before publication");
+        expect(acceptance_calls == 1 && reflux_calls == 1,
+               "accepted RKL stage accepts and refluxes exactly once");
+        const auto output =
+            ready.ledger.inspect({ready.handle, descriptor.output_slot});
+        expect(output.interior.version == result.version
+                   && result.version != old_output_version
+                   && output.ghost.residency == StateResidency::HostValid
+                   && output.ghost_source_version == result.version,
+               "acceptance advances the version then publishes matching ghost");
+    }
+
+    // Rejected executor/reflux tokens suppress acceptance and publication.
+    const auto expect_rejected = [&](auto executor, auto reflux,
+                                     int expected_reflux_calls,
+                                     const char* message) {
+        ReadyLedger ready(ExecutionSide::Host);
+        StageExecutionContext context{ExecutionSide::Host, ready.ledger,
+                                      ready.clock};
+        const std::vector handles{ready.handle};
+        const auto before =
+            ready.ledger.inspect({ready.handle, descriptor.output_slot});
+        int acceptance_calls = 0;
+        int reflux_calls = 0;
+        context.rkl_acceptance = [&](const RklStageDescriptor&) {
+            ++acceptance_calls;
+        };
+        const auto counted_reflux = [&](const RklStageDescriptor& stage,
+                                        CompletionToken token) {
+            ++reflux_calls;
+            return reflux(stage, token);
+        };
+        expect_throws<std::logic_error>(
+            [&] {
+                (void)execute_rkl_stage(
+                    context, handles, descriptor, executor, counted_reflux,
+                    [](StateSlot, StateVersion, CompletionToken token) {
+                        return token;
+                    });
+            },
+            message);
+        expect(acceptance_calls == 0, message);
+        expect(reflux_calls == expected_reflux_calls, message);
+        expect_slot_equal(
+            ready.ledger.inspect({ready.handle, descriptor.output_slot}),
+            before, message);
+    };
+
+    expect_rejected(
+        [](const RklStageDescriptor&, CompletionToken token) {
+            return CompletionToken{token.value + 1, CompletionState::Complete};
+        },
+        [](const RklStageDescriptor&, CompletionToken token) {
+            return token;
+        },
+        0, "wrong executor token rejects before reflux and acceptance");
+    expect_rejected(
+        [](const RklStageDescriptor&, CompletionToken token) {
+            return CompletionToken{token.value, CompletionState::Pending};
+        },
+        [](const RklStageDescriptor&, CompletionToken token) {
+            return token;
+        },
+        0, "incomplete executor token rejects before reflux and acceptance");
+    expect_rejected(
+        [](const RklStageDescriptor&, CompletionToken token) {
+            return token;
+        },
+        [](const RklStageDescriptor&, CompletionToken token) {
+            return CompletionToken{token.value + 1, CompletionState::Complete};
+        },
+        1, "wrong reflux token rejects without acceptance or publication");
+    expect_rejected(
+        [](const RklStageDescriptor&, CompletionToken token) {
+            return token;
+        },
+        [](const RklStageDescriptor&, CompletionToken token) {
+            return CompletionToken{token.value, CompletionState::Pending};
+        },
+        1, "incomplete reflux token rejects without acceptance or publication");
+
+    // A throwing acceptance blocks publication.
+    {
+        ReadyLedger ready(ExecutionSide::Host);
+        StageExecutionContext context{ExecutionSide::Host, ready.ledger,
+                                      ready.clock};
+        const std::vector handles{ready.handle};
+        const auto before =
+            ready.ledger.inspect({ready.handle, descriptor.output_slot});
+        context.rkl_acceptance = [](const RklStageDescriptor&) {
+            throw std::runtime_error("acceptance failure");
+        };
+        expect_throws<std::runtime_error>(
+            [&] {
+                (void)execute_rkl_stage(
+                    context, handles, descriptor,
+                    [](const RklStageDescriptor&, CompletionToken token) {
+                        return token;
+                    },
+                    [](const RklStageDescriptor&, CompletionToken token) {
+                        return token;
+                    },
+                    [](StateSlot, StateVersion, CompletionToken token) {
+                        return token;
+                    });
+            },
+            "throwing acceptance propagates");
+        expect_slot_equal(
+            ready.ledger.inspect({ready.handle, descriptor.output_slot}),
+            before, "throwing acceptance publishes nothing");
+    }
+
+    // A valid reflux-free descriptor accepts once without invoking reflux.
+    {
+        ReadyLedger ready(ExecutionSide::Host);
+        StageExecutionContext context{ExecutionSide::Host, ready.ledger,
+                                      ready.clock};
+        const std::vector handles{ready.handle};
+        RklStageDescriptor reflux_free = descriptor;
+        reflux_free.reflux_before_publish = false;
+        int acceptance_calls = 0;
+        int reflux_calls = 0;
+        context.rkl_acceptance = [&](const RklStageDescriptor& accepted) {
+            ++acceptance_calls;
+            expect(!accepted.reflux_before_publish,
+                   "acceptance sees the reflux-free descriptor");
+        };
+        const StageExecutionResult result = execute_rkl_stage(
+            context, handles, reflux_free,
+            [](const RklStageDescriptor&, CompletionToken token) {
+                return token;
+            },
+            [&](const RklStageDescriptor&, CompletionToken token) {
+                ++reflux_calls;
+                return token;
+            },
+            [](StateSlot, StateVersion, CompletionToken token) {
+                return token;
+            });
+        expect(acceptance_calls == 1 && reflux_calls == 0,
+               "reflux-free RKL descriptor accepts once without reflux");
+        const auto output =
+            ready.ledger.inspect({ready.handle, reflux_free.output_slot});
+        expect(output.interior.version == result.version
+                   && output.ghost.residency == StateResidency::HostValid,
+               "reflux-free accepted stage still publishes interior and ghost");
+    }
+}
+
 void test_real_registration_batches_across_topology_epoch()
 {
     using namespace arch::scheduler;
@@ -1664,6 +1879,7 @@ int main()
     test_fake_cuda_rkl_uses_shared_descriptors();
     test_scheduler_owned_reflux_and_runtime_lane_traces();
     test_boundary_failure_blocks_next_stage_and_rotation();
+    test_rkl_acceptance_ordering_and_failure();
     test_real_registration_batches_across_topology_epoch();
     test_persistent_clock_and_overflow();
     test_scoped_production_context_binding();

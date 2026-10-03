@@ -12,6 +12,9 @@ These parameter files are owned by [AMR validation](../README.md):
 - [gaussian_diffusion_amr.par](gaussian_diffusion_amr.par): localized species
   diffusion across an adaptive mesh.
 - [burn_enuc_amr.par](burn_enuc_amr.par): burn-energy-driven refinement and restart.
+- [rt/](rt/README.md): four Rayleigh–Taylor replay inputs covering hydrodynamics,
+  species diffusion, thermal diffusion and their combination, with restart
+  instructions and a link to the current data-correctness evidence.
 
 [gpu_cases.json](../gpu_cases.json) and
 [gpu_curvilinear_cases.json](../gpu_curvilinear_cases.json) define their execution

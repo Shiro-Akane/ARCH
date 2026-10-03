@@ -281,6 +281,7 @@ public:
     virtual double compute_hydro_dt(BackendStateAccess current,
                                     double cfl) = 0;
     state::RepairBudget stage_repairs; // Compact completed-stage diagnostics.
+    state::RepairBudget reflux_repairs; // Completed reflux, separate from stage receipts.
     virtual state::CompletionToken execute_hydro_stage(
         BackendStateAccess current,
         const scheduler::StageDescriptor& descriptor,

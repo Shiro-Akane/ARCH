@@ -85,6 +85,107 @@ class BackendValidationTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 module.read_regrid_metrics(path, 'cuda', 2)
 
+    def test_fixed_grid_missing_regrid_is_not_applicable_not_measured(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'regrid.tsv'
+            parameter = Path(directory) / 'actual.par'
+            parameter.write_text('compute_backend = cpu\nlrefinemin = 0\nlrefinemax = 0\n')
+            self.assertFalse(path.exists())
+            result = module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+            self.assertIs(result['applicable'], False)
+            self.assertIsNone(result['file'])
+            self.assertEqual(result['records'], [])
+            self.assertIsNone(result['summary'])
+            self.assertIn('fixed', result['reason'].lower())
+            self.assertNotIn('wall_seconds', result)
+            with self.assertRaisesRegex(RuntimeError, 'whole-regrid measurements'):
+                module.read_regrid_metrics(path, 'cpu', 3)
+            for text in ('lrefinemin = 0\nlrefinemax = 1\n',
+                         'lrefinemin = 1\nlrefinemax = 1\n',
+                         'lrefinemin = 0\n',
+                         'lrefinemax = 0\n',
+                         'lrefinemin = zero\nlrefinemax = 0\n',
+                         'lrefinemin = 0\nlrefinemax = -1\n',
+                         'lrefinemin = 0\nlrefinemax = 0.5\n'):
+                with self.subTest(text=text):
+                    parameter.write_text('# dynamic or malformed bounds\n' + text)
+                    with self.assertRaisesRegex(RuntimeError, 'whole-regrid measurements'):
+                        module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+
+    def test_duplicate_and_floatified_levels_never_waive_regrid_measure(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'regrid.tsv'
+            parameter = Path(directory) / 'actual.par'
+            # A repeated bound previously resolved last-wins onto the fixed grid.
+            parameter.write_text('lrefinemin = 0\nlrefinemax = 1\nlrefinemax = 0\n')
+            with self.assertRaises(RuntimeError) as caught:
+                module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+            self.assertIn('duplicate', str(caught.exception))
+            with self.assertRaisesRegex(RuntimeError, 'duplicate'):
+                module.read_parameter_map(parameter)
+            parameter.write_text('lrefinemin = 0\nlrefinemin = 1\nlrefinemax = 0\n')
+            with self.assertRaisesRegex(RuntimeError, 'duplicate'):
+                module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+            # Float text underflowing to zero is not an integer level bound.
+            for text in ('lrefinemin = 0\nlrefinemax = 1e-10000\n',
+                         'lrefinemin = 1e-10000\nlrefinemax = 0\n'):
+                with self.subTest(text=text):
+                    parameter.write_text(text)
+                    with self.assertRaisesRegex(RuntimeError, 'whole-regrid measurements'):
+                        module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+
+    def test_level_bounds_accept_only_integer_zero_text(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'regrid.tsv'
+            parameter = Path(directory) / 'actual.par'
+            for text in ('lrefinemin = 0\nlrefinemax = 00\n',
+                         'lrefinemin = +0\nlrefinemax = -0\n',
+                         'lrefinemin = 0\nlrefinemax = 0 # no dynamic regrid\n'):
+                with self.subTest(text=text):
+                    parameter.write_text(text)
+                    self.assertIs(
+                        module.read_regrid_metrics(
+                            path, 'cpu', 3, parameter_file=parameter)['applicable'],
+                        False)
+            for text in ('lrefinemin = 0.0\nlrefinemax = 0\n',
+                         'lrefinemin = 0\nlrefinemax = 0.5\n',
+                         'lrefinemin = 0\nlrefinemax = 1e0\n',
+                         'lrefinemin = 0\nlrefinemax = 0x0\n',
+                         'lrefinemin = zero\nlrefinemax = 0\n'):
+                with self.subTest(text=text):
+                    parameter.write_text(text)
+                    with self.assertRaisesRegex(RuntimeError, 'whole-regrid measurements'):
+                        module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+
+    def test_existing_regrid_report_is_validated_even_for_fixed_grid(self):
+        module = load_module()
+        header = ('backend', 'physical_time', 'wall_seconds', 'macro_step', 'old_blocks',
+                  'new_blocks', 'topology_changed', 'bytes_h2d', 'bytes_d2h',
+                  'kernel_count', 'stream_sync_count')
+        row = dict(backend='cpu', physical_time=0.1, wall_seconds=0.2, macro_step=0,
+                   old_blocks=1, new_blocks=2, topology_changed=1, bytes_h2d=0,
+                   bytes_d2h=0, kernel_count=0, stream_sync_count=0)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'regrid.tsv'
+            parameter = Path(directory) / 'actual.par'
+            parameter.write_text('lrefinemin = 0\nlrefinemax = 0\n')
+            path.write_text('\t'.join(header) + '\n'
+                            + '\t'.join(str(row[key]) for key in header) + '\n')
+            result = module.read_regrid_metrics(path, 'cpu', 2, parameter_file=parameter)
+            self.assertIs(result['applicable'], True)
+            self.assertEqual(result['records'], [row])
+            self.assertEqual(len(result['file']['sha256']), 64)
+            self.assertEqual(result['summary']['topology_changes'], 1)
+            path.write_text('\t'.join(header) + '\n' + '0.1\t0.2\n')
+            with self.assertRaises(RuntimeError):
+                module.read_regrid_metrics(path, 'cpu', 2, parameter_file=parameter)
+            path.write_text('\t'.join(header) + '\n')
+            with self.assertRaises(RuntimeError):
+                module.read_regrid_metrics(path, 'cpu', 2, parameter_file=parameter)
+
     def test_terminal_parity_without_oracle_still_checks_actual_metadata(self):
         module = load_module()
         case = {"id": "terminal", "accepted_steps": [], "scientific_time": 0.1,

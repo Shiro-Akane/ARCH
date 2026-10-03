@@ -31,6 +31,7 @@ struct DeviceDiffusionBatchBlock {
     CudaBackendDiffusionWorkspace workspace;
     std::array<CudaAmrFluxDirectionRouteView, 3> routes{};
     state::Bounds bounds{};
+    state::RepairView repairs{};
 };
 static_assert(std::is_trivially_copyable_v<DeviceDiffusionBatchBlock>);
 

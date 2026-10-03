@@ -84,6 +84,22 @@ foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
 endforeach()
 
 # Backend resource ownership, AMR transactions and geometric leaves.
+add_executable(arch_cuda_conservative_acceptance
+    tests/cuda/numerics/test_conservative_acceptance.cu)
+target_link_libraries(arch_cuda_conservative_acceptance PRIVATE arch_build_contract CUDA::cudart)
+arch_configure_cuda_leaf_test(arch_cuda_conservative_acceptance)
+add_test(NAME cuda_conservative_acceptance COMMAND arch_cuda_conservative_acceptance)
+
+add_executable(arch_cuda_ppm_limiter tests/cuda/numerics/test_ppm_limiter.cu)
+target_link_libraries(arch_cuda_ppm_limiter PRIVATE arch_build_contract CUDA::cudart)
+arch_configure_cuda_leaf_test(arch_cuda_ppm_limiter)
+add_test(NAME cuda_ppm_limiter_math COMMAND arch_cuda_ppm_limiter)
+
+add_executable(arch_cuda_flux_limiter tests/cuda/numerics/test_flux_limiter.cu)
+target_link_libraries(arch_cuda_flux_limiter PRIVATE arch_build_contract CUDA::cudart)
+arch_configure_cuda_leaf_test(arch_cuda_flux_limiter)
+add_test(NAME cuda_flux_limiter COMMAND arch_cuda_flux_limiter)
+
 add_executable(arch_cuda_regrid_transaction tests/cuda/amr/test_cuda_regrid_transaction.cpp)
 target_include_directories(arch_cuda_regrid_transaction PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 # BCHandler now has one compiled owner shared with the production driver.

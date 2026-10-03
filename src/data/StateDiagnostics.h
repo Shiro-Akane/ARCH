@@ -80,7 +80,7 @@ struct RepairView {
 struct RepairBudget {
     std::vector<double> values;
     std::uint64_t block_uid = 0; // 0 identifies initialization before topology publication.
-    int stage = 0; // 0 initial state, 1..3 Hydro Runge-Kutta stage.
+    int stage = 0; // 0 initialization/non-Hydro correction, 1..3 Hydro RK stage.
     double time = 0.0;
     double position[3]{}; // Physical coordinates of one triggering cell.
 
@@ -102,7 +102,14 @@ struct RepairBudget {
         }
         values[0] += other.values[0];
         for (std::size_t i = 1; i < other.values.size(); ++i)
-            if (i != 9) values[i] += weight * other.values[i];
+            if (i != 9) {
+                // A negative recurrence gain may reverse a signed correction,
+                // but cannot make its volume or absolute error budget negative.
+                const bool absolute = i == 1 || i == 3 || i == 8
+                    || (i >= RepairView::fixed_size
+                        && (i - RepairView::fixed_size) % 2 == 1);
+                values[i] += (absolute ? std::abs(weight) : weight) * other.values[i];
+            }
     }
 };
 } // namespace arch::state

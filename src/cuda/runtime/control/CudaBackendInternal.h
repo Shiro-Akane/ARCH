@@ -316,6 +316,7 @@ struct CudaBackend::Impl {
         }
     } hydro_batch;
     HydroBatchScratch diffusion_batch;
+    HydroBatchScratch reflux_batch;
     ReusableDeviceAllocation<DeviceDiffusionBatchBlock> diffusion_bindings;
     ReusableDeviceAllocation<DeviceStateCopyBlock> state_copy_bindings;
     ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;

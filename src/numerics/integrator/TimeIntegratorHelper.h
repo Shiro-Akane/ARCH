@@ -47,6 +47,45 @@ namespace TimeIntegration
         failure.rethrow();
     }
 
+    /** Repair trace-only composition errors, then validate the complete cell. */
+    inline void accept_stage_state(FluidState& state, const Grid& grid,
+                                   const NumericsConfig& config)
+    {
+        const auto geometry = GridMetrics::make_geometry_view(grid);
+        for (int k = grid.Ks(); k < grid.Ke(); ++k)
+            for (int j = grid.Js(); j < grid.Je(); ++j)
+                for (int i = grid.Is(); i < grid.Ie(); ++i) {
+                    const int cell = grid.GetIndex(i, j, k);
+                    double* fractions = state.GetNumSpecies()
+                        ? state.mass_fractions.data() + cell : nullptr;
+                    const auto status = arch::state::accept_conservative_state(
+                        state.get(cell), fractions, state.GetNumSpecies(),
+                        grid.GetTotalSize(), config.sml_rho, config.min_eint, config.max_eint,
+                        GridMetrics::CellVolume(geometry, i, j, k),
+                        state.stage_repairs.view(), cell);
+                    if (!arch::state::accepted(status))
+                        throw std::runtime_error("Invalid accepted state: cell=" + std::to_string(cell)
+                            + " status=" + std::to_string(static_cast<int>(status)));
+                }
+    }
+
+    /** Accept after all reflux faces; optionally retain the RKL-stage receipt. */
+    inline void accept_reflux_state(amr::AMRControl& control,
+                                    const NumericsConfig& config,
+                                    FluidState amr::Block::* slot = &amr::Block::fluid_state,
+                                    bool reset_receipt = true)
+    {
+        for (int id : control.tree->GetActiveBlocks()) {
+            auto& block = control.pool->GetBlock(id);
+            auto& state = block.*slot;
+            if (reset_receipt) state.stage_repairs.reset(state.GetNumSpecies());
+            try { accept_stage_state(state, block.grid, config); }
+            catch (const std::exception& error) {
+                throw std::runtime_error("AMR block=" + std::to_string(id) + ": " + error.what());
+            }
+        }
+    }
+
     inline void validate_stage_state(const FluidState& state, const Grid& grid,
                                      const NumericsConfig& config)
     {
@@ -234,7 +273,7 @@ namespace TimeIntegration
             const double density = weight_n * U_old.rho * Xi_old[off]
                 + weight_flux * (U_curr.rho * Xi_curr[off] + d_spec[off]);
             double fraction = density / raw_density;
-            if (!std::isfinite(fraction) || fraction < -64.0 * std::numeric_limits<double>::epsilon()) {
+            if (!std::isfinite(fraction) || fraction < -arch::state::composition_roundoff_limit) {
                 U_new.eng = arch::state::invalid();
                 return arch::state::Status::invalid_composition;
             }

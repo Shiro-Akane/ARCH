@@ -20,6 +20,9 @@
 // species, before flux registration. Under dt/V * sum(A*a) <= 1 the Cartesian
 // update is a convex combination of its mean and these admissible bar states.
 // This is a sufficient Euler invariant-domain condition, not a table-EOS theorem.
+// Density/internal energy use the strict domain. Composition uses the same
+// bounded trace cone as stage acceptance; accepted negative traces require a
+// recorded mass correction before any state is published.
 namespace FluxAdmissibility {
 // A high-order face is a trial state. The final conservative limiter always
 // queries the unchanged owning cell means through the required EOS contract.
@@ -195,10 +198,21 @@ ARCH_INLINE void limit_face_with_thermo(const FluidVector& left, const FluidVect
         const double f_l = fl.rho * x_left[s], f_r = fr.rho * x_right[s];
         const double low_species = 0.5 * f_l + 0.5 * f_r - 0.5 * a * (qr - ql);
         const double bar_species = 0.5 * ql + 0.5 * qr - (0.5 / a) * (f_r - f_l);
-        const double deviation = std::abs((low_species - species_flux[s]) / a);
-        if (!std::isfinite(deviation)) theta = 0.0;
-        else if (deviation > bar_species)
-            theta = std::min(theta, std::max(0.0, bar_species) / deviation);
+        // Use the same bounded trace cone as conservative-stage acceptance:
+        // q_s + tau*rho >= 0, tau = composition_roundoff_limit. For either
+        // bar state the shifted correction is dq_s + tau*drho, so this bound
+        // controls both signs without a zero-trace 0/0 switch that can turn
+        // an arbitrarily small species perturbation into a full fluid-flux
+        // fallback. Density/energy remain strictly admissible above; any
+        // accepted negative trace is still repaired with its stage receipt.
+        const double tau = arch::state::composition_roundoff_limit;
+        const double shifted_bar = bar_species + tau * bar.rho;
+        const double shifted_deviation = std::abs(
+            (low_species - species_flux[s]) / a + tau * correction.rho);
+        if (!std::isfinite(shifted_deviation) || !std::isfinite(shifted_bar))
+            theta = 0.0;
+        else if (shifted_deviation > shifted_bar)
+            theta = std::min(theta, std::max(0.0, shifted_bar) / shifted_deviation);
     }
     if (theta >= 1.0) return;
     high = theta == 0.0 ? low : low + theta * (high - low);

@@ -1,0 +1,107 @@
+# Reproduction input from codex/rt-amr-validation-notes-20261003 at 2ee826655.
+# Only runtime paths, step limit and checkpoint cadence are adjusted.
+# ==============================================================================
+# ARCH Simulation Configuration File
+# Case: Rayleigh-Taylor Instability (2D/3D Benchmark)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# [Grid Configuration]
+# Standard domain: 0.25 x 1.0 (for 2D)
+# ------------------------------------------------------------------------------
+nblockx1 = 4
+nblockx2 = 16
+nblockx3 = 0       # Set positive only for a true 3D case
+max_blocks = 768
+
+x1_min    = 0.0
+x1_max    = 0.25
+x2_min    = 0.0
+x2_max    = 1.0
+x3_min    = 0.0
+x3_max    = 0.25    # Only effectively used if n3 > 1
+
+geometry = cartesian
+
+# Standard RT boundary conditions:
+# Reflecting (solid walls) on top/bottom, Reflecting/Periodic on sides.
+x1r_boundary_type = reflect
+x1l_boundary_type = reflect
+x2r_boundary_type = reflect
+x2l_boundary_type = reflect
+x3r_boundary_type = reflect
+x3l_boundary_type = reflect
+
+# ------------------------------------------------------------------------------
+# [Numerics]
+# ------------------------------------------------------------------------------
+solver          = HLLC       # Options: SW, VL, Roe, HLL, HLLC
+reconstruct     = ppm        # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
+time_integrator = RK3        # Options: RK2, RK3, Euler/RK1
+limiter         = none       # Options: minmod, superbee, vanleer, mc, none
+cfl             = 0.4        # Keep lower (<0.5) for multi-D instability tracking
+
+EntropyFix = true
+EntropyFixCoefficient = 0.1
+
+# ------------------------------------------------------------------------------
+# [AMR]
+# Follow the density inversion and heavy-fluid tracer through the RT interface.
+# ------------------------------------------------------------------------------
+lrefinemin = 0
+lrefinemax = 2
+regrid_interval = 2
+refine_var = DENS, HeavyFluid
+refine_threshold = 0.25
+derefine_threshold = 0.05
+
+# ------------------------------------------------------------------------------
+# [Time & IO]
+# Typical RT timescale sees full mushroom development around t = 8.5
+# ------------------------------------------------------------------------------
+tmax = 1e+99
+max_steps = 256
+restart = false
+restart_file = output/rt-amr/thermal/rt_chk_0004.h5
+
+out_dir = output/rt-amr/thermal
+base_name = rt
+
+plt_dt = -1
+plt_dstep = -1
+plt_variables= ALL       # Ensures we output the "species" variable to see mixing
+
+chk_dt = -1
+chk_dstep = 32
+
+# ------------------------------------------------------------------------------
+# [Physics Core]
+# ------------------------------------------------------------------------------
+eos_type   = ideal # Options: ideal, tabular
+eos_table_path = ""
+gamma = 1.4
+
+gravity_type = external
+gravity_g_y = -0.1025
+
+
+
+# ------------------------------------------------------------------------------
+# [User Custom Parameters (Read by RT_instab.cpp)]
+# ------------------------------------------------------------------------------
+rho_heavy = 2.0
+rho_light = 1.0
+y_int = 0.5
+p_int = 2.5
+amplitude = 0.023
+use_burn = false
+use_diffusion = true
+diff_integrator = RKL2
+diff_cfl = 0.8
+diff_max_stages = 256
+use_thermal_diff = true
+use_viscous_diff = false
+use_species_diff = false
+alpha_therm = 0.0007
+compute_backend = cpu
+log_dir = output/rt-amr/thermal

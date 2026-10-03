@@ -16,6 +16,7 @@
 #include "amr/flux/AmrFluxMath.h"
 #include "amr/flux/AmrFluxExecutionPlan.h"
 #include "cuda/amr/AmrFluxSurfaceTypes.cuh"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "numerics/state/StateAdmissibility.h"
 
 namespace arch::cuda::amr_flux_kernel_detail {
@@ -188,10 +189,16 @@ __global__ void reflux_kernel(
                     rho_after));
     }
     if (status) {
-        const auto outcome=arch::state::validate(state.load(state_cell),
+        const auto grid = blocks[target.block].grid;
+        const int k = state_cell / grid.stride_z;
+        const int j = (state_cell - k * grid.stride_z) / grid.stride_y;
+        const int i = state_cell - k * grid.stride_z - j * grid.stride_y;
+        const auto outcome=arch::state::accept_conservative_state(state.load(state_cell),
             state.n_species?state.mass_fractions+state_cell:nullptr,
-            state.n_species,state.total_size,density_floor,energy_floor,energy_ceiling);
-        if (outcome!=arch::state::Status::valid) atomicExch(status,100+static_cast<int>(outcome));
+            state.n_species,state.total_size,density_floor,energy_floor,energy_ceiling,
+            GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k),
+            blocks[target.block].repairs, state_cell);
+        if (!arch::state::accepted(outcome)) atomicExch(status,100+static_cast<int>(outcome));
     }
 }
 
