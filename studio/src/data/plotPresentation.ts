@@ -48,3 +48,15 @@ export function previewCoordinateDomain(state:Record<string,unknown>|null|undefi
  const axis=grid.axes.find((a:unknown)=>a&&typeof a==='object'&&'name' in a&&a.name===name);
  if(axis&&typeof axis.min==='number'&&typeof axis.max==='number'&&Number.isFinite(axis.min)&&Number.isFinite(axis.max)&&axis.min<axis.max)return [axis.min,axis.max];
 }
+
+/** Increase label precision only when distinct displayed ticks would otherwise collide. */
+export function formatPlotTicks(values:readonly number[]):string[] {
+ const format=(value:number,precision:number)=>Object.is(value,-0)?'-0':
+  value!==0&&(Math.abs(value)>=1e5||Math.abs(value)<1e-3)?
+   value.toExponential(precision-1):Number(value.toPrecision(Math.max(5,precision))).toString();
+ for(let precision=4;precision<=17;precision++){
+  const labels=values.map(value=>format(value,precision));
+  if(labels.every((label,i)=>values.every((other,j)=>Object.is(values[i],other)||label!==labels[j])))return labels;
+ }
+ return values.map(value=>Object.is(value,-0)?'-0':String(value));
+}

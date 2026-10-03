@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {projection,zoomView,panView,axisDefault,fieldDefault,displayRange,fieldRange,lineFieldRange,logDataError,previewCoordinateDomain} from '../src/data/plotPresentation.ts';
+import {projection,zoomView,panView,axisDefault,fieldDefault,displayRange,fieldRange,lineFieldRange,logDataError,previewCoordinateDomain,formatPlotTicks} from '../src/data/plotPresentation.ts';
 import {realInitGrid,gridPoint,sampleEdges} from '../src/data/RealInitPreviewProvider.ts';
 const near=(a:number,b:number)=>assert.ok(Math.abs(a-b)<Math.max(1,Math.abs(b))*1e-10,`${a} != ${b}`);
 test('all four 1D scale combinations preserve data/marker/hit inverse under zoom and pan',()=>{
@@ -54,4 +54,23 @@ test('full-domain pan remains fixed; zoomed pan clamps to bounds without changin
   for(const coordinate of rawX)near(xp.inverse(xp.forward(coordinate)),coordinate);
  }
  assert.deepEqual(Array.from(rawX),beforeX);assert.deepEqual(Array.from(rawValues),beforeValues);
+});
+
+test('Jeans small perturbation ticks remain distinct around a large background',()=>{
+ const ticks=Array.from({length:6},(_,i)=>9998900+i*440),before=[...ticks];
+ const labels=formatPlotTicks(ticks);
+ assert.equal(new Set(labels).size,ticks.length);
+ for(let i=0;i<ticks.length;i++)assert.ok(Math.abs(Number(labels[i])-ticks[i])<220);
+ assert.deepEqual(ticks,before);
+});
+test('tick labels preserve signed zero and distinguish adjacent FP64 values',()=>{
+ const ticks=[-0,0,1,1+Number.EPSILON,1+2*Number.EPSILON];
+ assert.equal(new Set(formatPlotTicks(ticks)).size,ticks.length);
+ assert.deepEqual(formatPlotTicks([0,.2,.4,.6,.8,1]),['0','0.2','0.4','0.6','0.8','1']);
+});
+test('small signed and logarithmic ranges retain distinct display labels',()=>{
+ for(const ticks of [[-1e7-1100,-1e7-660,-1e7-220], [1e-9,1.00001e-9,1.00002e-9], [1e-8,1e-4,1]]){
+  const labels=formatPlotTicks(ticks);assert.equal(new Set(labels).size,ticks.length);
+  assert.ok(labels.every((label,i)=>Math.sign(Number(label))===Math.sign(ticks[i])));
+ }
 });
