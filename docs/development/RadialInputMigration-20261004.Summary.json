@@ -1,0 +1,282 @@
+{
+  "sourceHead": "be41ae74c156a57e4ffe21356586c13d81dab23d",
+  "binarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "scope": "Existing quick radial samples excluding untouched historical-G regrid_cycle; full gate remains incomplete",
+  "inspection": [
+    {
+      "name": "spherical-static-64",
+      "exitCode": 0,
+      "inputSha256": "43f5f93ffe69f4af6964c5372f0eae2f9ddefd67a5f1f08773b9deeedfa08254"
+    },
+    {
+      "name": "spherical-dynamic-amr",
+      "exitCode": 0,
+      "inputSha256": "537d0a3631405300fcab3166fea9e66a3856f704be9326b162824f4c9ee436a9"
+    },
+    {
+      "name": "spherical-hydrostatic-32",
+      "exitCode": 0,
+      "inputSha256": "138979a20932ab416e71d437108227a20d3f33bf6ad12c36b4a03cec5e039168"
+    },
+    {
+      "name": "spherical-near-vacuum",
+      "exitCode": 0,
+      "inputSha256": "5ad05c9477ae72771b0c27b4b811612a8be4a8dad24a2ffc1f55249bc0043292"
+    },
+    {
+      "name": "cylindrical-static-64",
+      "exitCode": 0,
+      "inputSha256": "6fda2f8bad291266fa3f6a7b4e07579424600d396671c2c28645a807951a0cb2"
+    },
+    {
+      "name": "cylindrical-dynamic-amr",
+      "exitCode": 0,
+      "inputSha256": "45a2d6f5c079c70f771709db1d46102654a66bc6c1df25e99fb2a3ed5f1e6353"
+    },
+    {
+      "name": "cylindrical-hydrostatic-32",
+      "exitCode": 0,
+      "inputSha256": "33cfa2b00fd64ef6150964ecdad11379e2961e6e49aad7394a37d1941c47f992"
+    },
+    {
+      "name": "cylindrical-near-vacuum",
+      "exitCode": 0,
+      "inputSha256": "c441e17958778e116e6879fdea5b37e8da92a4e9a5c7c25537948baad8aea63e"
+    }
+  ],
+  "results": [
+    {
+      "name": "spherical-static-64",
+      "geometry": "spherical",
+      "plots": 1,
+      "max_gauss_relative_error": 1.257036493044585e-13,
+      "solves": 1,
+      "potential_relative_error": 3.5101934687864876e-14,
+      "force_relative_error": 1.2581108832095802e-13
+    },
+    {
+      "name": "spherical-dynamic-amr",
+      "geometry": "spherical",
+      "plots": 7,
+      "max_gauss_relative_error": 1.2130693729141864e-08,
+      "solves": 50,
+      "mass_relative_drift": 6.587070298935682e-16,
+      "energy_relative_drift": 1.2079456407487342e-05,
+      "initial_leaves": 4,
+      "final_leaves": 8,
+      "restart_bitwise_equal": true
+    },
+    {
+      "name": "spherical-restart",
+      "geometry": "spherical",
+      "plots": 4,
+      "max_gauss_relative_error": 5.48348594420662e-09,
+      "solves": 34
+    },
+    {
+      "name": "spherical-hydrostatic-32",
+      "geometry": "spherical",
+      "plots": 2,
+      "max_gauss_relative_error": 2.658561409468905e-14,
+      "solves": 70,
+      "parasitic_velocity_rms": 556222.6362544537,
+      "relative_to_center_sound_speed": 0.0021131104103623206
+    },
+    {
+      "name": "spherical-hydrostatic-64",
+      "geometry": "spherical",
+      "plots": 2,
+      "max_gauss_relative_error": 1.257036493044585e-13,
+      "solves": 138,
+      "parasitic_velocity_rms": 223203.63678577595,
+      "relative_to_center_sound_speed": 0.000847958888726325
+    },
+    {
+      "name": "spherical-near-vacuum",
+      "geometry": "spherical",
+      "plots": 2,
+      "max_gauss_relative_error": 1.2850700546764376e-13,
+      "solves": 10,
+      "minimum_density": 1.00000091834698e-12
+    },
+    {
+      "name": "cylindrical-static-64",
+      "geometry": "cylindrical",
+      "plots": 1,
+      "max_gauss_relative_error": 4.011056615982721e-14,
+      "solves": 1,
+      "potential_relative_error": 4.235297066829622e-14,
+      "force_relative_error": 4.01821921708269e-14
+    },
+    {
+      "name": "cylindrical-dynamic-amr",
+      "geometry": "cylindrical",
+      "plots": 7,
+      "max_gauss_relative_error": 1.0827919614833886e-11,
+      "solves": 50,
+      "mass_relative_drift": 6.818005361675095e-16,
+      "energy_relative_drift": 2.5731197233871516e-05,
+      "initial_leaves": 4,
+      "final_leaves": 8,
+      "restart_bitwise_equal": true
+    },
+    {
+      "name": "cylindrical-restart",
+      "geometry": "cylindrical",
+      "plots": 4,
+      "max_gauss_relative_error": 1.0827919614833886e-11,
+      "solves": 34
+    },
+    {
+      "name": "cylindrical-hydrostatic-32",
+      "geometry": "cylindrical",
+      "plots": 2,
+      "max_gauss_relative_error": 1.0540392825049832e-14,
+      "solves": 70,
+      "parasitic_velocity_rms": 746296.6907218151,
+      "relative_to_center_sound_speed": 0.0028352087879821336
+    },
+    {
+      "name": "cylindrical-hydrostatic-64",
+      "geometry": "cylindrical",
+      "plots": 2,
+      "max_gauss_relative_error": 4.011056615982721e-14,
+      "solves": 138,
+      "parasitic_velocity_rms": 314925.3061054262,
+      "relative_to_center_sound_speed": 0.001196412909944005
+    },
+    {
+      "name": "cylindrical-near-vacuum",
+      "geometry": "cylindrical",
+      "plots": 2,
+      "max_gauss_relative_error": 3.9964900598702244e-14,
+      "solves": 10,
+      "minimum_density": 1.000000918448964e-12
+    }
+  ],
+  "status": "PASS",
+  "restartRawByteAudit": [
+    {
+      "geometry": "spherical",
+      "allDatasetCount": 21,
+      "numericDatasetCount": 20,
+      "numericDatasetNames": [
+        "Blocks/level",
+        "Blocks/logical_x1",
+        "Blocks/logical_x2",
+        "Blocks/logical_x3",
+        "Data/X",
+        "Data/eng",
+        "Data/enuc_rate",
+        "Data/mom_u",
+        "Data/mom_v",
+        "Data/mom_w",
+        "Data/rho",
+        "Data/rhoX",
+        "Species/A",
+        "Species/Cv",
+        "Species/Z",
+        "Species/gamma",
+        "gravity_controls",
+        "repair_position",
+        "state_controls",
+        "state_repairs"
+      ],
+      "numericRawBytesEqual": true,
+      "directCheckpointSha256": "397b5ddfd1eae4a6ebd284cc4493d61aa2542ec4e0e89df49481a679b70b7e6c",
+      "resumedCheckpointSha256": "397b5ddfd1eae4a6ebd284cc4493d61aa2542ec4e0e89df49481a679b70b7e6c"
+    },
+    {
+      "geometry": "cylindrical",
+      "allDatasetCount": 21,
+      "numericDatasetCount": 20,
+      "numericDatasetNames": [
+        "Blocks/level",
+        "Blocks/logical_x1",
+        "Blocks/logical_x2",
+        "Blocks/logical_x3",
+        "Data/X",
+        "Data/eng",
+        "Data/enuc_rate",
+        "Data/mom_u",
+        "Data/mom_v",
+        "Data/mom_w",
+        "Data/rho",
+        "Data/rhoX",
+        "Species/A",
+        "Species/Cv",
+        "Species/Z",
+        "Species/gamma",
+        "gravity_controls",
+        "repair_position",
+        "state_controls",
+        "state_repairs"
+      ],
+      "numericRawBytesEqual": true,
+      "directCheckpointSha256": "d0f9affe1a80e1f54abd3f579f3af53406e80eb95c28d8df575a71da7d565175",
+      "resumedCheckpointSha256": "d0f9affe1a80e1f54abd3f579f3af53406e80eb95c28d8df575a71da7d565175"
+    }
+  ],
+  "inputFingerprints": [
+    {
+      "name": "cylindrical-dynamic-amr",
+      "sha256": "955660a9ef2c75b165cb066d9c4b59fcb6aa6f70aa404281ac2556d73c4f4899"
+    },
+    {
+      "name": "cylindrical-hydrostatic-32",
+      "sha256": "fbdcf89a954b8752b40ae6927cb6531613b52cce2dad8b452978d775ba2884a9"
+    },
+    {
+      "name": "cylindrical-hydrostatic-64",
+      "sha256": "014539578bba3ceb385d9a2de03665d91eab478a2bb329f648f8f19e61ae5fb1"
+    },
+    {
+      "name": "cylindrical-near-vacuum",
+      "sha256": "f3dd33103c7af482ae3f005d3f0a3dd4fd35ccd613e2c890b4a6a2a65b90403f"
+    },
+    {
+      "name": "cylindrical-restart",
+      "sha256": "264bb2f9da80c29fc49094e801d13634ed133b6d65c0aabc943094514151a002"
+    },
+    {
+      "name": "cylindrical-static-64",
+      "sha256": "4ab0a1725cdfd40e9932c78f0d2d5b2b09d9ea65f2ffaef1de95377de126421d"
+    },
+    {
+      "name": "spherical-dynamic-amr",
+      "sha256": "fc5982f94990e53a4504201dd328d1109d2a0d04f28230128dcd02666cbb627b"
+    },
+    {
+      "name": "spherical-hydrostatic-32",
+      "sha256": "523b2609c1baa3636aed91ab53e51ec5889459ce6aaf2818e6bf6fb9bbd9db42"
+    },
+    {
+      "name": "spherical-hydrostatic-64",
+      "sha256": "e0f91109d49fa5ab9882154223c204c5fdfd4848d31128ba8c9304ae0f66712b"
+    },
+    {
+      "name": "spherical-near-vacuum",
+      "sha256": "3ba64e710c03363a965e89744ce4ac00b9c3c74cc4b2dd55132e1bb3c8ab9e43"
+    },
+    {
+      "name": "spherical-restart",
+      "sha256": "5b5eb5a60cbd36196747ccfa26a0662087451adaf75f577faeac4a33728e195a"
+    },
+    {
+      "name": "spherical-static-64",
+      "sha256": "c5757582987b87e8eed1b9ba8524e0fcb43a966948046b9da4a242b3ed8e1ccf"
+    }
+  ],
+  "defaultSourceCommit": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+  "defaultSource": "simulation/GravityBox/GravityBox.cpp Setup radial ? 0; original GravityBox.par contains no center_x",
+  "generatorSha256": "186dd4089bc21ffaa8b57951fd0ad0bd3964f794468fd42476c5674448a492c9",
+  "fullSelfGravityGate": "NOT_COMPLETE",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/radial-input-migration-20261004",
+  "limitations": [
+    "Existing one-dimensional spherical/cylindrical quick positive samples; not two-dimensional RZ acceptance.",
+    "Historical gravity_G=1e-20 regrid_cycle unchanged and not executed; owner equivalent conversion pending.",
+    "No negative-config scope or full CTest rerun this turn.",
+    "The original runner np.array_equal checks were additionally verified with raw numeric bytes, including signed-zero identity.",
+    "No Core, physical reference, budget or CUDA change."
+  ]
+}

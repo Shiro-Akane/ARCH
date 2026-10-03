@@ -2892,3 +2892,11 @@ Sedov能力旧断言修正后定向PASS；GravityBox cloud旧default迁移缺项
 linear error .000261426 <.02；burn能量/质量预算通过，paired transport effect8.215896e-7 >1e-8。
 未改Core/物理参考/阈值；无需重build。完整self_gravity仍未关闭，径向历史G换算待Core，
 原full CTest失败JUnit不改。见GravityQuickInputMigration报告/Summary；raw本机ignored。
+
+## 2026-10-04 径向CPU quick输入迁移
+
+发现radial继承v3周期base center_x=5e7，按原8fc0dd25 radial Setup明确默认恢复center_x=0；
+球/柱共12个既有static/dynamic-AMR/restart/hydrostatic/near-vacuum正向样本原预算PASS。
+8输入inspect exit0；两种restart最终20numeric dataset raw bytes及整个checkpoint SHA一致。
+不改Core/物理/参考/阈值，无重build；历史G regrid_cycle原样待Core，full gate仍未完成，
+原69/71失败JUnit保持。见RadialInputMigration报告/Summary；raw本机ignored，未push/tag。

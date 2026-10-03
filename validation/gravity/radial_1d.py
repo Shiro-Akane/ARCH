@@ -95,6 +95,9 @@ class RadialCampaign:
             x1l_boundary_type='reflecting', x1r_boundary_type='reflecting',
             x1_min=0, x1_max=RADIUS, nblockx2=0, nblockx3=0,
             rho0=RHO, temperature0=1e7, amplitude=0,
+            # Preserve the original radial Setup default instead of inheriting
+            # the explicit Cartesian periodic sample's domain midpoint.
+            center_x=0,
             out_dir=str(folder), plt_variables='DENS,ENER,VELX',
         ) | {key: str(value) for key, value in changes.items()}
         folder.mkdir(parents=True, exist_ok=True)
