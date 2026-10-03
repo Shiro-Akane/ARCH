@@ -2273,3 +2273,9 @@ a06b8d51 基线上增加 JeansDiagnostics::evaluate，消费总密度/声速平�
 独立 Decimal 80/120 位参考、8 个数值 case、12 个非法输入位置和2个最终不可表示结果；现有 build-cpu scoped target 编译与 CTest 1/1 PASS。首次选 production BUILD_TESTING=OFF 的 unknown-target 失败保留。
 详见 JeansNumericLeaf-20261003.zh-CN.md/Summary；一般 EOS/候选父态/条件规则与独立科学预算 pending，完整桌面矩阵和 O7.1 出口未完成。
 未重编生产 ARCH、未运行 simulation/Preview/CUDA、不 push/tag/main merge。
+
+### O7.1 数值基础：活动物理间距绑定
+
+abdbf87d 基线上 evaluate_cell 复用 GridMetrics::PhysicalSpacing，逐活动轴校验后取最大值；忽略非活动轴，非法值不由max/abs/floor掩盖。
+各向异性 Cartesian/当前polar/3-D cylindrical/spherical赤道、极区、首径向单元及非法几何/维度/间距通过独立尺度参考；既有曲线度量回归共同 CTest 2/2 PASS。
+详见 JeansPhysicalSpacing-20261003.zh-CN.md。未接接受态EOS/AMR/plot，能力仍 unavailable，科学确认与前序桌面矩阵门槛保留；无 production ARCH build/simulation/CUDA/push/tag/main merge。
