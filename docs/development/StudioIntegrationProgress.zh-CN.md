@@ -3160,3 +3160,12 @@ external/X acceleration=0 的 Core 单位控件；8leaf L0 Complete / 128 cells�
 正常 close exit0，8owned 退出、config 不变、无科学 output/managed clean。
 见 FullModelExternalGravityDesktop-20261004 报告/Summary。
 无源码修改、不重复331项、不push/tag；联合目标尚未闭合。
+
+## 2026-10-04 JeansWave 原生矩阵与刻度修复
+
+新增512sample JeansWave真实初态/Inspector、4leaf L0 Complete AMR身份证据；不作演化科学验收。
+原生finding：小扰动刻度重复→自适应精度66f4f6f1；再次finding前缀裁切→共享动态边距b0de7b56。
+最终native六标签可读/不重复，sample255与raw Inspector/configRevision保持。
+12相关/334全回归PASS；首次lint缺left依赖已修复，最终lint/typecheck/build/diff PASS。
+三个本轮窗口exit0、每轮8owned退出、config不变/无scientific output/managed clean。
+见FullModelJeansDesktop报告/Summary；不push/tag，科学CPU/CUDA/O9仍未闭合。
