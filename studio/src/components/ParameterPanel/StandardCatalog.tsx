@@ -84,11 +84,11 @@ export function StandardCatalog({schema,values,inspection,pathChecks,errors,onEd
    {!!placed('inactive').length&&<details><summary>Inactive settings · text retained ({placed('inactive').length})</summary><p>Inactive controls remain searchable. Hiding a field never resolves an error.</p>{placed('inactive').map(render)}</details>}
   </>;
  }
- return <section className="standard-catalog" aria-label="Standard parameter catalog">
-  <p>{schema.parameters.length} standard keys · {rows.length} controls · aliases share one control</p>
-  <input className="parameter-search" aria-label="Search all standard parameters" placeholder="Search name, raw key or description…" value={search} onChange={e=>setSearch(e.target.value)}/>
-  <nav className="block-navigator" aria-label="Standard parameter groups">{groups.map(g=><button key={g} aria-pressed={!!expanded[g]} onClick={()=>{setSearch('');setExpanded(v=>({...v,[g]:!v[g]}));}}>{g}</button>)}</nav>
-  {query?<><h3>Search results</h3>{rows.filter(matches).map(render)}{!rows.some(matches)&&<p>No matching standard parameters.</p>}</>:groups.map(g=>{
+ return <section className="standard-catalog" aria-label="Parameter catalog">
+  <p>{schema.parameters.length} catalog keys · {rows.length} controls · aliases share one control</p>
+  <input className="parameter-search" aria-label="Search all parameters" placeholder="Search name, raw key or description…" value={search} onChange={e=>setSearch(e.target.value)}/>
+  <nav className="block-navigator" aria-label="Parameter groups">{groups.map(g=><button key={g} aria-pressed={!!expanded[g]} onClick={()=>{setSearch('');setExpanded(v=>({...v,[g]:!v[g]}));}}>{g}</button>)}</nav>
+  {query?<><h3>Search results</h3>{rows.filter(matches).map(render)}{!rows.some(matches)&&<p>No matching parameters.</p>}</>:groups.map(g=>{
    const members=rows.filter(r=>r.parameter.group===g),issues=members.filter(r=>errors[r.sourceKey]||errors[r.parameter.key]||inspection?.diagnostics.some(d=>d.parameterKey===r.parameter.key&&d.severity==='error')).length;
    const first=members.find(r=>['gravity_type','use_diffusion','use_burn','eos_type','geometry','compute_backend'].includes(r.parameter.key));
    return <details className="standard-group" key={g} open={!!expanded[g]} onToggle={e=>{const open=e.currentTarget.open;setExpanded(v=>v[g]===open?v:{...v,[g]:open});}}><summary>{g}<small>{first?first.parameter.key+' = '+first.value:members.length+' parameters'} · {issues} issues</small></summary>{groupBody(g)}</details>;

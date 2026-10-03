@@ -19,7 +19,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
-| 1 3B 源码接收与复验 | 封箱源码已引入；Linux 打开/另存/重开复验通过 | npm ci、177 tests、lint/typecheck/build PASS；Linux 原生打开、Host Save As、重开 PASS（范围见报告） | 不适用 |
+| 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前 229 Studio/Host tests 与静态/production 检查 PASS；用户可见窗口确认和完整原生取消/重开矩阵未通过；历史177项不替代本轮 | 不适用 |
 | 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 进程/HTTP/Build 验证通过；当前原生视觉 UAT 未通过，dependenciesComplete=false | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | Sod t=0、SmoothAdvection Run/Restart和输出锁回归通过；227项Studio/Host回归通过；桌面全流程 UAT 未完成 | 不推广为其他模型/后端演化验收 |
@@ -1629,3 +1629,20 @@ captured and activated, but that does not prove visibility to the user. A fresh
 visibility confirmation is pending; no further native computation was started.
 Historical agent-captured recovery evidence remains, user acceptance is not closed.
 No unchanged automatic suite was rerun and no physics/threshold/input migrated.
+
+## 3B catalog-count truthfulness correction
+
+ConfigPanel passes the merged Core/case/auxiliary schema to StandardCatalog.
+Its count was incorrectly labelled standard keys. The count now says catalog keys;
+search/group/accessibility wording likewise refers to the parameter catalog.
+No frontend count constant, schema rewrite, parameter insertion or physics change.
+Current binary standard schema remains94; combined catalog102 is not94 standards.
+
+After this UI-only change: npm test229/229 (Host included), lint, typecheck,
+production build and git diff --check PASS. Local log:
+studio/.local/integration/catalog-wording-regression.log.
+Existing bundle-size warning remains. No scientific Core/build/simulation rerun.
+Current running window has not been relaunched to load these assets; native UAT
+of the new wording and user-visible independent window acceptance remain pending.
+The top stage table now distinguishes historical177-test evidence, current229,
+agent-captured native interactions and incomplete user-visible acceptance.
