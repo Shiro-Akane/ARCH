@@ -67,3 +67,15 @@ new checks. Measured compilation costs remain in the
 shortening CMake source alone does not reduce template-instantiation cost.
 
 Local provenance tooling may opt into ARCH_EMIT_LINK_DEPENDENCIES=ON. ARCH then asks the selected linker to write Makefile-style ARCH.link.d in the build directory. This is disabled by default and adds no numerical flags. A linker without --dependency-file support fails explicitly; absence of the file must not be treated as complete dependency coverage.
+
+GNU C++ provenance builds may additionally opt into
+ARCH_RETAIN_LTO_LINK_INPUTS=ON with ARCH_EMIT_LINK_DEPENDENCIES=ON.
+The GNU linker plugin's diagnostic retention option keeps its generated LTO
+inputs available for fingerprinting. It is OFF by default, does not disable IPO
+or change floating-point flags, and fails configuration for other compiler IDs
+or without link dependency emission. Retained objects consume local disk;
+use a Host-owned persistent TMPDIR before adopting it in a managed profile.
+The independent GCC 13/mold microprobe produced identical control/retention ELF
+bytes, but that is not an ARCH equivalence or complete build-coverage claim.
+Current Studio profiles do not enable this option. No existing build cache or
+Manifest is upgraded merely because this option exists.

@@ -1,0 +1,66 @@
+{
+  "scope": "Persistent-object non-scientific linker microprobe. No ARCH build/flags/Manifest changes, no executable run.",
+  "commands": {
+    "persistent-control": [
+      "/usr/bin/g++",
+      "-O3",
+      "-flto=auto",
+      "-fuse-ld=mold",
+      "-Wl,--dependency-file=persistent-control.link.d",
+      "main.o",
+      "helper.o",
+      "-o",
+      "persistent-control"
+    ],
+    "persistent-debug": [
+      "/usr/bin/g++",
+      "-O3",
+      "-flto=auto",
+      "-fuse-ld=mold",
+      "-Wl,-plugin-opt=-debug",
+      "-Wl,--dependency-file=persistent-debug.link.d",
+      "main.o",
+      "helper.o",
+      "-o",
+      "persistent-debug"
+    ]
+  },
+  "fileCount": 19,
+  "unavailable": [],
+  "ltoFiles": [
+    {
+      "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/full-model-production-20261003/lto-provenance-probe/plugin-temp/cc2itGlY.ltrans0.ltrans.o",
+      "resolvedPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/full-model-production-20261003/lto-provenance-probe/plugin-temp/cc2itGlY.ltrans0.ltrans.o",
+      "sha256": "9161203b359af53be9399f7458117123123b0504dbf023ac12dc26f5fe930f12",
+      "size": 1296
+    }
+  ],
+  "completeForProbe": true,
+  "textIdentical": true,
+  "binaryIdentical": true,
+  "baselineCommit": "9681891f600313f3a0233ae483a545198db4b90d",
+  "otherProbes": {
+    "outerLinkerWrapper": "Failed: LTO input already missing after linker return.",
+    "moldReproArchive": "Failed: archive has21 members but no generated ltrans input.",
+    "singleStepPluginDebug": "LTO retained, driver-generated source object files removed; incomplete."
+  },
+  "optionImplementedDefaultOff": "ARCH_RETAIN_LTO_LINK_INPUTS",
+  "studioProfileChanged": false,
+  "archConfiguredOrBuilt": false,
+  "cmakeOptionFixture": [
+    {
+      "name": "default",
+      "exitCode": 0,
+      "pluginRetentionInLinkCommand": false
+    },
+    {
+      "name": "enabled",
+      "exitCode": 0,
+      "pluginRetentionInLinkCommand": true
+    },
+    {
+      "name": "missing-emission",
+      "exitCode": 1
+    }
+  ]
+}

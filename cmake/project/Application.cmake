@@ -146,6 +146,15 @@ add_executable(ARCH ${ARCH_APPLICATION_SOURCES})
 # Opt-in provenance for local tooling. This changes link diagnostics only, not
 # numerical flags; unsupported linkers fail explicitly instead of claiming coverage.
 option(ARCH_EMIT_LINK_DEPENDENCIES "Emit ARCH linker-read dependency file" OFF)
+# GNU LTO's plugin normally removes generated linker inputs before tooling can
+# fingerprint them. Retention is opt-in; it is not complete dependency evidence.
+option(ARCH_RETAIN_LTO_LINK_INPUTS "Retain GNU LTO linker inputs for local provenance" OFF)
+if(ARCH_RETAIN_LTO_LINK_INPUTS)
+    if(NOT ARCH_EMIT_LINK_DEPENDENCIES OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        message(FATAL_ERROR "LTO input retention requires GNU C++ and ARCH_EMIT_LINK_DEPENDENCIES=ON")
+    endif()
+    target_link_options(ARCH PRIVATE "LINKER:-plugin-opt=-debug")
+endif()
 if(ARCH_EMIT_LINK_DEPENDENCIES)
     target_link_options(ARCH PRIVATE "LINKER:--dependency-file=ARCH.link.d")
 endif()
