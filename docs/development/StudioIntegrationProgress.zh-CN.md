@@ -3207,3 +3207,11 @@ clean64b0ce2f现有CPU binary只读inspect-config：16profile覆盖当前14case�
 不区分工具/WSL转发与app handler，不做无证据修复；wheel/drag映射不算PASS。
 正常close exit0/8owned身份退出/config不变/no output/managed clean。
 见NativeWheelRoutingDiagnostic报告/Summary；无Core build/simulation/源码改动/基线重复/push/tag。
+
+## 2026-10-04 Studio/Host既有CI覆盖接入
+
+ci.yml唯一workflow新增Linux净安装/一次完整Node套件/lint/build，required同时要求原Tooling/CPU及Studio。
+既有check_ci_results新增TAP非空/无skip/TODO/cancel和计数条目一致性，12相关失败控制PASS。
+净副本初次遗漏共享fixture56fail完整保留；补齐同一HEAD后334/334、lint/types/build/actionlint/diff PASS。
+不重复Host子集或build内typecheck；无新增artifact上传、无push/dispatch、无Core build/simulation。
+见StudioCiIntegration报告/Summary；hostedCI、architecture科学及完整联合目标未因此通过。

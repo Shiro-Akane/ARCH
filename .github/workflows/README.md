@@ -16,7 +16,8 @@ separately when useful.
 | --- | --- |
 | `Tooling` | Workflow syntax, shared-authority/header audit and every Python test under `tests/tooling`; empty or skipped suites fail |
 | `CPU Release` | The `cpu-release` preset with tests and KLU enabled; builds ARCH and all configured CPU tests, then runs the complete CTest inventory |
-| `CI required` | Succeeds only when both jobs succeed; failed, cancelled or skipped dependencies do not count as passing |
+| `Studio and Host` | Clean locked install with Node 24.21.0; full Node suite once (including Host), lint and production build with type checking; empty/skipped/TODO reports fail |
+| `CI required` | Succeeds only when Tooling, CPU Release and Studio/Host all succeed; failed, cancelled or skipped dependencies do not count as passing |
 
 Pull requests targeting `main`, `CUDA_complete_v1` or `physics/selfgravity`, and
 pushes to those branches, trigger the workflow. There are no path exclusions, so documentation
@@ -60,6 +61,33 @@ result for every selected test. Skips remain failures. This profile is not the
 complete CUDA inventory or a substitute for application-level numerical,
 restart and sanitizer validation; the hosted CPU job keeps its full inventory.
 
+## Studio and Host coverage
+
+The existing workflow now includes one Linux Studio/Host job. Its Node runtime
+matches the locally verified 24.21.0 environment. The setup-node action is pinned
+to 820762786026740c76f36085b0efc47a31fe5020; see its
+[official inputs](https://github.com/actions/setup-node) for runtime selection.
+npm ci uses the committed lockfile, without a restored node_modules directory or
+package-manager cache. Electron binary download is disabled because this lane
+does not launch a native window or produce a desktop package.
+
+The command uses the same tests/*.test.ts selection as npm test, with TAP
+reporting for completion checks. Host tests are already included and are not
+run again with test:host. The existing check_ci_results.py rejects empty,
+failed, cancelled, skipped, TODO or inconsistent Node reports. npm run build
+already executes tsc --noEmit before Vite, so CI does not duplicate typecheck.
+Per-step local timing is diagnostic; it is not a scientific benchmark.
+
+The job performs no Core Build/Preview/simulation and no desktop UAT. It consumes
+the repository API fixtures as well as Studio fixtures, so a standalone studio/
+archive is insufficient. A hosted passing result remains unproven until this
+revision is reviewed/pushed and the actual workflow runs.
+
+There is no new Studio artifact upload. The runner-local build-ci/studio/
+contains check reports, versions and timing only; dist, node_modules and
+scientific output are not added to artifacts. The pre-existing Tooling and CPU
+diagnostic upload rules below are unchanged.
+
 ## Resources and reports
 
 The CPU build starts with two compiler jobs and serial CTest execution, with
@@ -70,7 +98,7 @@ memory/I/O pressure. These are CI execution limits, not new runtime defaults or
 performance measurements. Compiler concurrency can be tuned after observing
 real runner measurements without changing production optimization.
 
-Tooling and CPU jobs have 20- and 180-minute limits; each CTest execution has a
+Tooling and Studio/Host each have a 20-minute limit; CPU has a 180-minute limit; each CTest execution has a
 600-second limit. Timeouts and guard stops fail the job. The compiler cache is
 limited to 1 GiB and separated by native compiler target flags and build
 configuration. PR jobs may restore existing caches; only successful pushes to

@@ -200,9 +200,56 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
+  studio:
+    name: Studio and Host
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # This suite checks Node/React/Host, not native Electron window behavior.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - name: Check out the tested revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prepare the declared Node runtime
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+
+      - name: Record identity and install locked dependencies
+        working-directory: studio
+        run: |
+          set -euo pipefail
+          mkdir -p ../build-ci/studio
+          git rev-parse HEAD > ../build-ci/studio/commit.txt
+          node --version > ../build-ci/studio/node.txt
+          npm --version > ../build-ci/studio/npm.txt
+          /usr/bin/time -p npm ci 2>&1 | tee ../build-ci/studio/install.log
+
+      - name: Run the full Studio suite including Host exactly once
+        working-directory: studio
+        run: |
+          set -euo pipefail
+          /usr/bin/time -p node --test --test-reporter=tap tests/*.test.ts \
+            2> ../build-ci/studio/test-time.log | tee ../build-ci/studio/tests.tap
+          python3 ../tools/check_ci_results.py --node-tap ../build-ci/studio/tests.tap
+
+      - name: Lint and build production assets with type checking
+        working-directory: studio
+        run: |
+          set -euo pipefail
+          /usr/bin/time -p npm run lint 2>&1 | tee ../build-ci/studio/lint.log
+          # npm run build already runs tsc --noEmit before Vite.
+          /usr/bin/time -p npm run build 2>&1 | tee ../build-ci/studio/build.log
+
+      # No new artifact upload: raw diagnostics remain in the disposable runner.
+
   required:
     name: CI required
-    needs: [tooling, cpu]
+    needs: [tooling, cpu, studio]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -210,9 +257,12 @@ jobs:
     env:
       TOOLING_RESULT: ${{ needs.tooling.result }}
       CPU_RESULT: ${{ needs.cpu.result }}
+      STUDIO_RESULT: ${{ needs.studio.result }}
     steps:
-      - name: Require both jobs to succeed
+      - name: Require all jobs to succeed
         run: |
           printf 'Tooling: %s\nCPU Release: %s\n' "$TOOLING_RESULT" "$CPU_RESULT"
           test "$TOOLING_RESULT" = success
           test "$CPU_RESULT" = success
+          printf 'Studio and Host: %s\n' "$STUDIO_RESULT"
+          test "$STUDIO_RESULT" = success

@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
 
 from check_ci_results import (CPU_COVERAGE_ANCHORS, DRIVER_CUDA_COVERAGE_ANCHORS,
-                              check_inventory, check_junit, main)
+                              check_inventory, check_junit, check_node_tap, main)
 
 
 class CiResultTests(unittest.TestCase):
@@ -28,6 +28,37 @@ class CiResultTests(unittest.TestCase):
             check_junit(report, names)
         with self.assertRaisesRegex(ValueError, "unknown coverage profile"):
             check_inventory(self.inventory(), "typo")
+
+    def node_report(self, tests=2, passed=2, failed=0, cancelled=0, skipped=0, todo=0):
+        return (f"TAP version 13\nok 1 - first\nok 2 - second\n1..2\n"
+                f"# tests {tests}\n# suites 0\n# pass {passed}\n# fail {failed}\n"
+                f"# cancelled {cancelled}\n# skipped {skipped}\n# todo {todo}\n")
+
+    def test_node_report_rejects_empty_skipped_cancelled_todo_and_incomplete(self):
+        self.assertEqual(check_node_tap(self.node_report()), 2)
+        for report in ("", self.node_report(tests=0, passed=0),
+                       self.node_report(passed=1), self.node_report(failed=1),
+                       self.node_report(cancelled=1), self.node_report(skipped=1),
+                       self.node_report(todo=1), self.node_report().replace("1..2", "1..0"),
+                       self.node_report().replace("1..2", "1..1"),
+                       self.node_report().replace("ok 1 - first\n", ""),
+                       self.node_report().replace("ok 2 - second", "ok 1 - second"),
+                       self.node_report() + "# tests 2\n",
+                       self.node_report().replace("ok 1 - first", "not ok 1 - first"),
+                       self.node_report() + "Bail out! interrupted\n"):
+            with self.subTest(report=report), self.assertRaises(ValueError):
+                check_node_tap(report)
+
+    def test_node_cli_failure_controls(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "tests.tap"
+            report.write_text(self.node_report(), encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["--node-tap", str(report)]), 0)
+            report.write_text(self.node_report(skipped=1), encoding="utf-8")
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(["--node-tap", str(report)]), 1)
+                self.assertEqual(main(["--node-tap", str(report), "--junit", "unused"]), 1)
 
     def inventory(self, names=None):
         return {"tests": [{"name": name} for name in sorted(

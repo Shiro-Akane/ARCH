@@ -1,0 +1,78 @@
+{
+  "baselineCommit": "6d8114384b4713c9a9e95778abce3610a2cf959d",
+  "candidateScope": [
+    ".github/workflows/ci.yml",
+    "tools/check_ci_results.py",
+    "tests/tooling/build_tools/test_ci_results.py",
+    ".github/workflows/README.md"
+  ],
+  "sourceState": "candidate patch over clean baseline; no scientific Core changes",
+  "setupNodeCommit": "820762786026740c76f36085b0efc47a31fe5020",
+  "nodeVersion": "v24.21.0",
+  "npmVersion": "11.19.0",
+  "freshNodeModules": true,
+  "electronBinaryDownload": "skipped; native window is not covered",
+  "install": {
+    "name": "install",
+    "exitCode": 0,
+    "wallSeconds": 3.8041724099894054
+  },
+  "firstHarnessFailure": {
+    "cause": "studio-only archive omitted shared repository fixtures",
+    "tests": 330,
+    "pass": 274,
+    "fail": 56,
+    "continuedPastFailure": false,
+    "rawErrorRetainedLocal": true
+  },
+  "finalCommands": [
+    {
+      "name": "test",
+      "exitCode": 0,
+      "wallSeconds": 5.381865871997434
+    },
+    {
+      "name": "report",
+      "exitCode": 0,
+      "wallSeconds": 0.0305953579954803
+    },
+    {
+      "name": "lint",
+      "exitCode": 0,
+      "wallSeconds": 6.592315411995514
+    },
+    {
+      "name": "build",
+      "exitCode": 0,
+      "wallSeconds": 3.7967965769930743
+    }
+  ],
+  "nodeSuite": {
+    "tests": 334,
+    "pass": 334,
+    "fail": 0,
+    "skipped": 0,
+    "todo": 0,
+    "cancelled": 0
+  },
+  "reportGateTests": {
+    "tests": 12,
+    "pass": 12,
+    "coverage": "Node incomplete/empty/skipped/cancelled/TODO/bailout/inconsistent entries and original CTest inventory/JUnit controls"
+  },
+  "actionlint": {
+    "version": "1.7.12",
+    "checksumVerified": true,
+    "exitCode": 0
+  },
+  "artifactUpload": "no new Studio artifact upload; earlier attempted raw diagnostic upload rejected by automatic review and removed before writing workflow",
+  "hostedCiStatus": "not run; no push/dispatch",
+  "coreBuildOrSimulation": false,
+  "knownWarning": "Vite chunk >500 kB; unchanged warning not suppressed",
+  "limitations": [
+    "local WSL costs are not hosted runner costs",
+    "full scientific CPU/architecture gates remain unpassed/pending",
+    "no native UAT or CUDA execution",
+    "fixtures/Core protocol tests are not actual full simulation acceptance"
+  ]
+}
