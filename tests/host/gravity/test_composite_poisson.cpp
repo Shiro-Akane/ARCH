@@ -1,5 +1,6 @@
 #include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/GravityBoundary.h"
+#include "physics/gravity/GravitySourceBounds.h"
 #include "physics/constant/PhysicalConstants.h"
 #include <cmath>
 #include <iomanip>
@@ -907,6 +908,50 @@ void finite_ring_tree_boundary_contract() {
     std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
 }
 
+void isolated_gravity_source_probe() {
+    using namespace Physical::Gravity;
+    auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+    base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    base.origin={0.,-.5,0.};
+    elliptic::CompositePoisson op(base,make_cells(base,true),elliptic::BoundaryKind::CurvilinearIsolated);
+    const double samples[]{0.,1.e-310,1.e-300,1.e-10,1.,1.e7,1.e100,1.e300,
+        std::numeric_limits<double>::max()};
+    std::vector<double> density(op.size()),source(op.size());
+    const double factor=-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant;
+    for(int i=0;i<op.size();++i){density[i]=samples[i%9];source[i]=factor*density[i];}
+    const auto bounds=bound_isolated_gravity_source(op,density,source);
+    require(bounds.status==GravitySourceBoundStatus::Bounded,
+        "isolated source construction bounds missing");
+    const auto dump=[](const auto& x) {
+        std::cout<<'[';bool first=true;
+        for(auto value:x){if(!first)std::cout<<',';first=false;std::cout<<value;}std::cout<<']';
+    };
+    std::cout<<std::setprecision(17)<<"{\"density\":";dump(density);
+    std::cout<<",\"source\":";dump(source);std::cout<<",\"lower\":";dump(bounds.lower);
+    std::cout<<",\"upper\":";dump(bounds.upper);std::cout<<",\"cellBounds\":";dump(bounds.cell_bounds);
+    std::cout<<",\"weights\":";dump(op.norm_weights());std::cout<<",\"normUpper\":"<<bounds.norm_upper;
+    auto zero=density;std::fill(zero.begin(),zero.end(),0.);
+    require(bound_isolated_gravity_source(op,zero,zero).norm_upper==0.,
+        "exact zero source acquired hidden floor");
+    auto tiny=density;std::fill(tiny.begin(),tiny.end(),std::numeric_limits<double>::denorm_min());
+    require(bound_isolated_gravity_source(op,tiny,zero).status==GravitySourceBoundStatus::CollapsedToZero,
+        "positive unrepresentable source accepted as zero");
+    tiny[0]=-1.;
+    require(bound_isolated_gravity_source(op,tiny,source).status==GravitySourceBoundStatus::InvalidInput,
+        "negative physical density accepted");
+    auto invalid=source;invalid[0]=std::numeric_limits<double>::quiet_NaN();
+    require(bound_isolated_gravity_source(op,density,invalid).status==GravitySourceBoundStatus::InvalidInput,
+        "NaN source acquired certificate");
+    invalid=source;invalid[8]=std::numeric_limits<double>::max();
+    require(bound_isolated_gravity_source(op,density,invalid).status==GravitySourceBoundStatus::Overflow,
+        "unrepresentable error distance acquired finite certificate");
+    auto cart=base_mesh(2,4);
+    elliptic::CompositePoisson periodic(cart,make_cells(cart,false),elliptic::BoundaryKind::Periodic);
+    require(bound_isolated_gravity_source(periodic,{},{}).status==GravitySourceBoundStatus::UnsupportedPeriodic,
+        "total density certified as periodic contrast source");
+    std::cout<<",\"negativePass\":true}\n";
+}
+
 void native_arithmetic_ledger_probe() {
     using namespace elliptic;
     std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
@@ -1640,6 +1685,7 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="gravity-source-bounds-probe") {isolated_gravity_source_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="arithmetic-ledger-probe") {native_arithmetic_ledger_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-contact-gauss3") {std::cout<<std::setprecision(17);finite_ring_contact_gauss3_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-contact-log") {std::cout<<std::setprecision(17);finite_ring_contact_log_contract();return 0;}

@@ -335,6 +335,11 @@ Duffy/Decimal诊断包含于区间。非接触四例由数千boxes降为44～104
 norm平方验证通过。source与geometry/coefficient construction仍独立待证明，不自动
 授予完整物理quality。见 NativePoissonArithmeticLedgerNode-20261005.zh-CN.md。
 
+isolated -4*pi*G*rho source构造companion界已由28 native cells的独立100/140位pi/source
+参考验证；明确拒绝periodic、负/非有限输入及positive-source-collapse，exact zero无floor。
+source norm仍conditional stored weights；生产源路径未修改，完整组合与geometry/AMR身份待贯通。
+见 IsolatedGravitySourceBoundNode-20261005.zh-CN.md，production RZ gate保持。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
