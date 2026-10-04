@@ -143,4 +143,22 @@ export const PREVIEW_BUILD_PROFILE:BuildProfile={
   'include/GlobalDefs.h',
  ],
 };
-export const BUILD_PROFILES=[ARCH_PROFILE,PREVIEW_BUILD_PROFILE];
+// Reviewed, existing unique O7 CPU tree. Opening validates its original bindings;
+// it never configures/rebinds the tree or invents a successful Build manifest.
+// This explicit input set is incomplete: freshness remains unknown without evidence.
+export const COMPUTE_OPTIM_CPU_PROFILE:BuildProfile={
+ ...PREVIEW_BUILD_PROFILE,
+ id:'arch-compute-optim-existing-cpu',
+ displayName:'ARCH compute/optim existing CPU Release',
+ managedSourceRoot:'/home/arch/projects/ARCH-compute-optim',
+ buildDirRelative:'build-cpu',
+ outputBinaryRelative:'build-cpu/bin/ARCH',
+ caseId:'GravityBox',
+ sourceRelativePath:'simulation/GravityBox/GravityBox.cpp',
+ registeredCases:undefined,
+ parallelism:28,
+ trackedInputs:PREVIEW_BUILD_PROFILE.trackedInputs
+  .filter(input=>input!=='build-phase3a-cpu/CMakeCache.txt')
+  .concat(['build-cpu/CMakeCache.txt','simulation/GravityBox/GravityBox.cpp','src/physics/diagnostics/JeansDiagnostics.h']),
+};
+export const BUILD_PROFILES=[ARCH_PROFILE,PREVIEW_BUILD_PROFILE,COMPUTE_OPTIM_CPU_PROFILE];
