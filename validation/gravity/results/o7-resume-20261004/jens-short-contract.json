@@ -1,0 +1,192 @@
+{
+  "contract_version": "uniform-lifecycle-1",
+  "status": "FROZEN_IMPLEMENTATION_CONTRACT_NOT_RUNTIME_EVIDENCE",
+  "baseline": "08ae94684d433ddbb7398a9de88c4fb9d09070b4",
+  "case_id": "GravityBox",
+  "configuration_note": "Complete active .par must be rendered from current strict case/schema after JENS implementation. This JSON supplies overrides, not an alternate parser or complete executable input.",
+  "common": {
+    "geometry": "cartesian",
+    "eos_type": "ideal",
+    "gamma": 1.6666666666666667,
+    "network_name": "none",
+    "gas_cv": 1.0,
+    "rho0": 10000000.0,
+    "temperature0": 1.0,
+    "amplitude": 0.0,
+    "temperature_amplitude": 0.0,
+    "velocity0": 0.0,
+    "width": 0.1,
+    "center_x": 0.5,
+    "use_burn": false,
+    "use_diffusion": false,
+    "hydrostatic_radial": false,
+    "gravity_type": "self",
+    "gravity_boundary": "periodic",
+    "gravity_rtol": 1e-10,
+    "gravity_atol": 0.0,
+    "solver": "HLLC",
+    "reconstruct": "muscl",
+    "limiter": "mc",
+    "time_integrator": "RK3",
+    "cfl": 0.2,
+    "lrefinemin": 0,
+    "lrefinemax": 1,
+    "max_blocks": 64,
+    "regrid_interval": 2,
+    "refine_threshold": 0.8,
+    "derefine_threshold": 0.2,
+    "sml_rho": 1e-12,
+    "min_eint": 1e-10,
+    "max_eint": 1e+21,
+    "tmax": 0.02,
+    "max_steps": -1,
+    "plt_dt": 0.01,
+    "chk_dt": 0.01,
+    "plt_dstep": -1,
+    "chk_dstep": -1,
+    "restart": false
+  },
+  "boundaries": "periodic on every active fluid face",
+  "gravitational_constant_cgs": 6.6743e-08,
+  "dimensions": [
+    {
+      "dim": 1,
+      "root_blocks": [
+        4,
+        0,
+        0
+      ],
+      "lower_cm": [
+        0
+      ],
+      "upper_cm": [
+        1
+      ],
+      "center_cm": [
+        0.5
+      ],
+      "block_cells_active": [
+        16
+      ],
+      "expected_initial_active_leaf_blocks": 8,
+      "expected_initial_active_leaf_cells": 128,
+      "minimum_staged_peak_slots": 12
+    },
+    {
+      "dim": 2,
+      "root_blocks": [
+        4,
+        1,
+        0
+      ],
+      "lower_cm": [
+        0,
+        0
+      ],
+      "upper_cm": [
+        1,
+        0.25
+      ],
+      "center_cm": [
+        0.5,
+        0.125
+      ],
+      "block_cells_active": [
+        16,
+        16
+      ],
+      "expected_initial_active_leaf_blocks": 16,
+      "expected_initial_active_leaf_cells": 4096,
+      "minimum_staged_peak_slots": 20
+    },
+    {
+      "dim": 3,
+      "root_blocks": [
+        4,
+        1,
+        1
+      ],
+      "lower_cm": [
+        0,
+        0,
+        0
+      ],
+      "upper_cm": [
+        1,
+        0.25,
+        0.25
+      ],
+      "center_cm": [
+        0.5,
+        0.125,
+        0.125
+      ],
+      "block_cells_active": [
+        16,
+        16,
+        16
+      ],
+      "expected_initial_active_leaf_blocks": 32,
+      "expected_initial_active_leaf_cells": 131072,
+      "minimum_staged_peak_slots": 36
+    }
+  ],
+  "lanes": {
+    "disabled": {
+      "refine_var": "DENS",
+      "jens_plot": false,
+      "expected_level": 0
+    },
+    "output_only": {
+      "refine_var": "DENS",
+      "jens_plot": true,
+      "jeans_cells_required": false,
+      "expected_level": 0
+    },
+    "active": {
+      "refine_var": "JENS",
+      "jens_plot": true,
+      "jeans_cells": 160.0,
+      "expected_level": 1
+    }
+  },
+  "reference": {
+    "input_double_aware": true,
+    "eos": "single caloric gas, cs2=gamma*(gamma-1)*gas_cv*temperature0",
+    "density": "total accepted positive density",
+    "h0_cm": 0.015625,
+    "h1_cm": 0.0078125,
+    "lambda_cm_ideal_rational_gamma": 2.286919195481633,
+    "NJ0_ideal_rational_gamma": 146.36282851082453,
+    "NJ1_ideal_rational_gamma": 292.72565702164906,
+    "periodic_source": 0.0,
+    "gauge_fixed_potential": 0.0,
+    "acceleration_cm_s2": 0.0
+  },
+  "checks": [
+    "refine before first advance",
+    "every accepted macrostep leaf resolution",
+    "coarsen veto uses restricted parent state",
+    "separate pre-refined transaction fixture with jeans_cells=64 permits coarsen",
+    "capacity and level insufficiency reject before advance",
+    "strict FP64 comparison including equality",
+    "same physical endpoint all lanes",
+    "accepted checkpoint at0.01s to0.02s per lane",
+    "off and output-only same topology/state/work path",
+    "no hidden off-path EOS/synchronization"
+  ],
+  "budgets": {
+    "static_diagnostic_relative_max": "16*double_epsilon for this well-conditioned input, using actual input doubles",
+    "mass_relative_drift_max": 1e-12,
+    "total_energy_relative_drift_max": 1e-12,
+    "repair_events": 0,
+    "poisson": "original physical residual <= original requested target; no added floor",
+    "restart": "existing same-lane strict checkpoint/state comparison; backend reduction policy stays separate"
+  },
+  "limits": [
+    "Does not validate nonzero gravity, nonlinear fragmentation, arbitrary EOS or performance.",
+    "max_blocks is pool slot capacity, not live leaf count. Staging retains old4 roots while allocating 8/16/32 new leaves, requiring12/20/36 slots. Explicit success capacity64; capacity32 is a valid3D staged-allocation failure fixture.",
+    "No new CI job or mandatory external code.",
+    "Raw outputs remain local; submit processed scalars and input/build identities."
+  ]
+}

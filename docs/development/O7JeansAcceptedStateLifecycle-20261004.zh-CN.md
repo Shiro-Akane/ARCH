@@ -42,3 +42,10 @@ jeans_cells checkpoint 身份、独立低密度与演化参考、restart、CUDA 
 
 RZ Lz finding 保持开放，离散设计与环体参考预算仍待独立 review。没有新增 Windows
 适配，没有上传原始场数组或 checkpoint，没有宣布完整 O7 科学验收通过。
+
+## 同批收到的 Core 短验收契约
+
+推送前收到 4d9f38ac89a54c7bf57828af1d423401a4bb6167 的 uniform-lifecycle-1；
+已完整读取并保留在共同分支。该提交仅更新文档和机读契约，没有修改本轮已测实现。
+下一步沿现有 GravityBox campaign 接入关闭/仅输出/实际约束三通道、1D/2D/3D、
+0.01→0.02 s 真实续算及冻结预算；本报告中的事务夹具不冒充该科学包通过。
