@@ -3360,3 +3360,12 @@ RZ完整科学、统一CUDA、正式benchmark/批准长跑仍未完成。
 未认证求积/空间/力或新科学预算，结果只供review，不关闭RZ gate。
 见RZNativeCellPotentialDiagnostic报告/summary；原始数组仍留本机。
 未改Core/ELF/科学阈值，未Build/Simulation/CUDA/长跑。
+
+### 当前CPU Box／径向完整原子组（2026-10-05）
+
+Box14+Radial28原检查PASS；34科学执行/8拒绝，全部repair=0/原residual目标通过。
+独立三维云势/力阶>=1.8、coupled阶约2、球柱径向动态/restart/静水平衡通过。
+不修改源/输入/科学预算；原dynamic径向12步未到tmax，记录真实终点。
+见BoxRadialExistingCpuGates报告/summary；原始H5/checkpoint/日志本机保管。
+这是当前7d3bd3d的原CPU物理子组证据，不是完整O7/RZ/CUDA/benchmark/长跑签收。
+完整dependency freshness仍unknown，Linux/WSL范围不变。
