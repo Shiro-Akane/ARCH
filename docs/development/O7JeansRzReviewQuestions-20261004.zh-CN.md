@@ -362,6 +362,13 @@ stored weight/geometry/full RHS identity 仍独立待证明，production RZ/CUDA
 canonical geometry/volume/coefficient、完整 RHS/residual、实际AMR source publication 与
 Phi/force 科学签收仍待贯通，production RZ gate保持。
 
+实际 ring/current source identity 与 canonical B/RHS/residual 现在由组合接口贯通：
+source、boundary、assembly 逐cell合并，evaluation单列，再执行原T_safe。
+8组176 cells独立Fraction/100、140位source检查通过，6项CTest与新binary冻结JENS9+9通过。
+scope显式 StoredNativeOperator，physical_status=UncertifiedInput；未知geometry/coefficient/
+weights构造不填零。见 RZRingRhsCompositionNode-20261005.zh-CN.md。
+production RZ、完整物理RHS与Phi/force及CUDA/long-run gate仍保持。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

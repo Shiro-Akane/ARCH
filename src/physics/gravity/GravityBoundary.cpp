@@ -311,6 +311,54 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
         error.quality=arch::elliptic::BoundaryErrorQuality::CertifiedAbsolute;
     return result;
 }
+/** Join source, boundary and actual provider arithmetic with one owner identity.
+ * Workflow: require current ring -> bound actual arrays -> sum cell errors ->
+ * evaluate original user rtol/atol conditionally. Construction gaps stay explicit.
+ */
+RingRhsAssessment GravityBoundary::assess_ring_rhs(
+    const arch::elliptic::CompositePoisson& op,const RingBoundaryEvaluation& ring,
+    std::span<const double> computed_source,std::span<const double> computed_rhs,
+    std::span<const double> potential,std::span<const double> computed_residual,
+    double rtol,double atol) const {
+    using namespace arch::elliptic;
+    require_current_ring(op,ring);
+    RingRhsAssessment result;
+    result.source=ring.source;result.source_generation=ring.source_generation;
+    if(ring.source.gravitational_constant!=arch::constants::gravity::cgs::gravitational_constant)
+        return result; // This physical source companion uses the authoritative shared G.
+    result.source_error=bound_isolated_gravity_source(op,ring_density_,computed_source);
+    result.boundary_error=op.propagate_boundary_error(ring.errors);
+    result.assembly_error=op.bound_rhs_assembly_roundoff(computed_source,ring.values,computed_rhs);
+    result.residual_error=op.bound_residual_evaluation_roundoff(potential,computed_rhs,computed_residual);
+    if(result.source_error.status==GravitySourceBoundStatus::Overflow
+        ||result.boundary_error.status==BoundaryErrorStatus::Overflow
+        ||result.assembly_error.status==BoundaryErrorStatus::Overflow
+        ||result.residual_error.status==BoundaryErrorStatus::Overflow) {
+        result.conditional.status=BoundaryResidualStatus::Overflow;return result;
+    }
+    if(result.source_error.status!=GravitySourceBoundStatus::Bounded
+        ||result.boundary_error.status!=BoundaryErrorStatus::Bounded
+        ||result.assembly_error.status!=BoundaryErrorStatus::Bounded
+        ||result.residual_error.status!=BoundaryErrorStatus::Bounded)return result;
+    auto& combined=result.combined_rhs_error;
+    combined.cell_bounds.resize(op.size());
+    for(int i=0;i<op.size();++i) {
+        combined.cell_bounds[i]=finite_ring_detail::sum_up(
+            finite_ring_detail::sum_up(result.source_error.cell_bounds[i],
+                result.boundary_error.cell_bounds[i]),result.assembly_error.cell_bounds[i]);
+        if(!std::isfinite(combined.cell_bounds[i])) {
+            combined.status=BoundaryErrorStatus::Overflow;
+            result.conditional.status=BoundaryResidualStatus::Overflow;return result;
+        }
+    }
+    const auto norm=op.norm_interval(combined.cell_bounds);
+    combined.status=norm.status;combined.norm_upper=norm.upper;
+    // RHS assembly is already included cellwise: do not count it twice.
+    result.conditional=op.assess_boundary_residual(computed_rhs,computed_residual,combined,
+        0.,result.residual_error.norm_upper,BoundaryErrorQuality::CertifiedAbsolute,rtol,atol);
+    return result;
+}
+
 void GravityBoundary::require_current_ring(const arch::elliptic::CompositePoisson& op,
     const RingBoundaryEvaluation& result) const {
     require_ring_operator(op);

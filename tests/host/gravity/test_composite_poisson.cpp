@@ -992,6 +992,83 @@ void finite_ring_parent_probe() {
     std::cout<<"]}\n";
 }
 
+/** Actual identity-bound composition; raw vectors remain local for Fraction checks. */
+void finite_ring_rhs_probe() {
+    using namespace Physical::Gravity;
+    const auto dump=[](const auto& v){std::cout<<'[';bool first=true;for(auto x:v){if(!first)std::cout<<',';first=false;std::cout<<x;}std::cout<<']';};
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
+    for(bool mixed:{false,true})for(double origin:{0.,.5})for(bool zero:{false,true}) {
+        auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.5,0.};
+        multigrid::CompositeMultigrid solver(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        const auto& op=solver.op();auto& execution=solver.execution();
+        GravityBoundary tree(op,{7});GravitySolveIdentity id;id.topology={7};
+        id.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+        id.operator_revision=id.boundary_revision=id.accuracy_revision=1;
+        id.inputs.push_back({{{1},{7}},state::StateSlot::Current,{1},1});
+        std::vector<double> density(op.size(),0.);
+        if(!zero)for(int i=0;i<op.size();++i)density[i]=1.+.3*op.center(i)[1];
+        tree.update(density,id);RingBoundaryControl control;control.face_absolute_target=1.e-5;
+        control.maximum_boxes_per_leaf=8;
+        const auto ring=tree.ring_boundary(op,id,control);
+        require(ring.status==RingBoundaryStatus::Bounded,"composition ring input not bounded");
+        const auto rho=execution.upload(density);auto src=execution.array<double>(op.size());
+        const double factor=-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant;
+        execution.linear(src,factor,rho,0.,{},0.);
+        const auto source=execution.download(src),rhs=op.effective_rhs(source,ring.values);
+        std::vector<double> phi(op.size(),0.),residual(op.size());
+        op.apply(phi,residual);for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
+        const auto result=tree.assess_ring_rhs(op,ring,source,rhs,phi,residual,1.e-10,0.);
+        require(result.scope==RingRhsAssessmentScope::StoredNativeOperator
+            &&result.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
+            "missing geometry construction became physical acceptance");
+        require(result.source_error.status==GravitySourceBoundStatus::Bounded
+            &&result.combined_rhs_error.status==elliptic::BoundaryErrorStatus::Bounded,
+            "actual source/face/assembly composition failed");
+        require(result.conditional.status==(zero?elliptic::BoundaryResidualStatus::Accepted
+            :elliptic::BoundaryResidualStatus::ResidualTooLarge),"original tolerance comparison changed");
+        if(zero)require(result.conditional.total_residual_upper==0.&&result.conditional.tolerance_safe==0.,
+            "zero source/RHS acquired floor");
+        auto wrong_residual=residual;
+        if(!zero) {
+            std::fill(wrong_residual.begin(),wrong_residual.end(),0.);
+            const auto wrong=tree.assess_ring_rhs(op,ring,source,rhs,phi,wrong_residual,1.e-10,0.);
+            require(wrong.conditional.status!=elliptic::BoundaryResidualStatus::Accepted
+                &&wrong.residual_error.norm_upper>0.,"fake zero residual hid actual evaluation error");
+        }
+        auto stale=ring;stale.source_generation--;
+        bool rejected=false;try{tree.assess_ring_rhs(op,stale,source,rhs,phi,residual,1.e-10,0.);}
+        catch(const std::exception&){rejected=true;}
+        require(rejected,"composition accepted stale ring source generation");
+        require(tree.assess_ring_rhs(op,ring,{},rhs,phi,residual,1.e-10,0.).conditional.status
+            ==elliptic::BoundaryResidualStatus::InvalidInput,"missing physical source accepted");
+        if(!first)std::cout<<',';first=false;
+        std::cout<<"{\"mixed\":"<<mixed<<",\"origin\":"<<origin<<",\"zero\":"<<zero<<",\"density\":";dump(density);
+        std::cout<<",\"source\":";dump(source);std::cout<<",\"rhs\":";dump(rhs);
+        std::cout<<",\"volumes\":";dump(op.volumes());std::cout<<",\"weights\":";dump(op.norm_weights());
+        std::cout<<",\"face_lower\":";dump(ring.lower);std::cout<<",\"face_upper\":";dump(ring.upper);
+        std::cout<<",\"source_lower\":";dump(result.source_error.lower);std::cout<<",\"source_upper\":";dump(result.source_error.upper);
+        std::cout<<",\"combined_cells\":";dump(result.combined_rhs_error.cell_bounds);
+        std::cout<<",\"combined_norm_upper\":"<<result.combined_rhs_error.norm_upper
+            <<",\"source_norm_upper\":"<<result.source_error.norm_upper
+            <<",\"boundary_norm_upper\":"<<result.boundary_error.norm_upper
+            <<",\"assembly_norm_upper\":"<<result.assembly_error.norm_upper
+            <<",\"residual_norm_upper\":"<<result.residual_error.norm_upper
+            <<",\"total_residual_upper\":"<<result.conditional.total_residual_upper
+            <<",\"tolerance_safe\":"<<result.conditional.tolerance_safe<<",\"faces\":[";
+        bool first_face=true;
+        for(std::size_t f=0;f<op.faces().size();++f) {
+            const auto& face=op.faces()[f];
+            if(face.boundary_side<0)continue;
+            if(!first_face)std::cout<<',';first_face=false;
+            std::cout<<"{\"index\":"<<f<<",\"left\":"<<face.left<<",\"right\":"<<face.right
+                <<",\"area\":"<<face.area<<",\"boundary_coefficient\":"<<face.boundary_coefficient<<'}';
+        }
+        std::cout<<"]}";
+    }
+    std::cout<<"]}\n";
+}
+
 void periodic_gravity_source_probe() {
     using namespace Physical::Gravity;
     const auto dump=[](const auto& x) {
@@ -1919,6 +1996,7 @@ int main(int argc,char** argv) {
         }
         if(argc>1 && std::string(argv[1])=="ring-separated-gauss") {std::cout<<std::setprecision(17);finite_ring_separated_gauss_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-far-leaf") {std::cout<<std::setprecision(17);finite_ring_far_leaf_contract();return 0;}
+        if(argc>1 && std::string(argv[1])=="ring-rhs-probe") {finite_ring_rhs_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-parent-probe") {finite_ring_parent_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-native-face") {std::cout<<std::setprecision(17);finite_ring_tree_boundary_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-axis-enclosure") {std::cout<<std::setprecision(17);finite_ring_axis_enclosure_contract();return 0;}

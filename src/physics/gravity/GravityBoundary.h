@@ -18,6 +18,7 @@
 #include "core/CompensatedSum.h"
 #include "physics/gravity/FiniteRingBoundaryMath.h"
 #include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/GravitySourceBounds.h"
 #include "grid/GridGeometryView.h"
 #include "grid/GridMetrics.h"
 #include "numerics/elliptic/CompositePoisson.h"
@@ -370,6 +371,22 @@ struct RingBoundaryEvaluation {
     std::vector<double> values,lower,upper,far_truncation_upper,far_evaluation_width_upper;
     std::vector<arch::elliptic::BoundaryPotentialError> errors;
 };
+/** Composed mathematical-source error, conditional on the stored operator.
+ * Native geometry/stencil/weights construction remains a mandatory separate
+ * physical certificate. No API can upgrade this result into production RZ.
+ */
+enum class RingRhsAssessmentScope { StoredNativeOperator };
+struct RingRhsAssessment {
+    GravitySolveIdentity source;
+    std::uint64_t source_generation=0;
+    RingRhsAssessmentScope scope=RingRhsAssessmentScope::StoredNativeOperator;
+    GravitySourceBounds source_error;
+    arch::elliptic::BoundaryRhsError boundary_error,combined_rhs_error;
+    arch::elliptic::PoissonArithmeticError assembly_error,residual_error;
+    arch::elliptic::BoundaryResidualAssessment conditional;
+    arch::elliptic::BoundaryResidualStatus physical_status=
+        arch::elliptic::BoundaryResidualStatus::UncertifiedInput;
+};
 class GravityBoundary {
 public:
     explicit GravityBoundary(const arch::elliptic::CompositePoisson&,
@@ -383,6 +400,10 @@ public:
         const GravitySolveIdentity&,const RingBoundaryControl&) const;
     void require_current_ring(const arch::elliptic::CompositePoisson&,
         const RingBoundaryEvaluation&) const;
+    RingRhsAssessment assess_ring_rhs(const arch::elliptic::CompositePoisson&,
+        const RingBoundaryEvaluation&,std::span<const double> computed_source,
+        std::span<const double> computed_rhs,std::span<const double> potential,
+        std::span<const double> computed_residual,double rtol,double atol) const;
     std::vector<double> values(const arch::elliptic::CompositePoisson&,double G,
                                double theta=0.25,int order=2) const;
     const auto& nodes() const {return nodes_;}
