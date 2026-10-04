@@ -652,3 +652,9 @@ architecture audit 通过，详见 O7JeansConditionalInputIdentity-20261004.zh-C
 RZ-A前置W/centroid/torque测度及单一状态无存储转换已经通过现有CPU数学测试，
 见 RZAngularMeasureNode-20261004.zh-CN.md；真实transfer和其余消费者仍未迁移，
 完整RZ门槛继续保留。
+
+2026-10-04 RZ-A CPU全单元传递节点：真实W restriction/prolongation、
+同一candidate parent positivity→EOS/JENS→migration、非法父态veto及joint theta
+通过CPU fixtures。最终ELF的冻结JENS九组演化/续算回归PASS。
+详见 RZAngularTransferNode-20261004.zh-CN.md。AMR ghost和B/C/D消费者
+仍待贯通，完整RZ能力门槛保留，尚未开展CUDA/RZ新长跑。

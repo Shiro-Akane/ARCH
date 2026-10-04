@@ -184,20 +184,32 @@ void parent_state_reference()
         source.fractions=fractions.data();source.species_stride=4;
         amr::regrid_math::RestrictionGeometry geometry{};
         geometry.count=4;geometry.coarse_volume=GridMetrics::CellVolume(coarse,0,0,0);
+        geometry.angular_momentum=rz;
+        if(rz)geometry.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(
+            radius,radius+2.,2.);
         std::array<long double,5> integral{};
         std::array<long double,2> species_integral{};
-        long double volume=0., internal_integral=0.;
+        long double volume=0., internal_integral=0., angular_measure=0., angular_integral=0.;
         for(int cell=0;cell<4;++cell) {
             const int i=cell%2,j=cell/2;
             const double density=i?2.:1., velocity=(j?-1.:1.)*(i?1.:2.);
             const double internal=i?8.:4.;
             fields[0][cell]=density;fields[1][cell]=density*velocity;
-            fields[4][cell]=density*(internal+.5*velocity*velocity);
+            const double swirl=rz?(i?-1.:2.):0.;
+            fields[3][cell]=density*swirl;
+            fields[4][cell]=density*(internal+.5*(velocity*velocity+swirl*swirl));
             fractions[cell]=i?.25:.75;fractions[4+cell]=1.-fractions[cell];
             geometry.source_cells[cell]=cell;
             geometry.volumes[cell]=GridMetrics::CellVolume(grid,i,j,0);
             const long double left=radius+i,right=left+1.;
             const long double measure=rz?pi*(right*right-left*left):1.L;
+            if(rz) {
+                geometry.angular_measures[cell]=GridMetrics::Rz::AngularMomentumMeasure(
+                    static_cast<double>(left),static_cast<double>(right),1.);
+                // Independent integral 2*pi*int r^2 dr, not the production helper.
+                const long double w=(2.L/3.L)*pi*(right*right*right-left*left*left);
+                angular_measure+=w;angular_integral+=w*fields[3][cell];
+            }
             volume+=measure;internal_integral+=measure*density*internal;
             for(int f=0;f<5;++f)integral[f]+=measure*fields[f][cell];
             for(int sp=0;sp<2;++sp)
@@ -209,8 +221,11 @@ void parent_state_reference()
                 0.,0.,workspace,parent)!=amr::regrid_math::Status::Ok)
             throw std::runtime_error("Jeans parent restriction rejected bounded fixture");
         const long double rho=integral[0]/volume;
-        const long double kinetic=(integral[1]*integral[1]+integral[2]*integral[2]+
-                                   integral[3]*integral[3])/(2*integral[0]*integral[0]);
+        const long double azimuth_m=rz?angular_integral/angular_measure:integral[3]/volume;
+        const long double kinetic=(integral[1]*integral[1]+integral[2]*integral[2])
+            /(2*integral[0]*integral[0])+.5L*(azimuth_m/rho)*(azimuth_m/rho);
+        if(rz && std::abs(parent.fluid.mom_w-azimuth_m)>bound*std::max(1.L,std::abs(azimuth_m)))
+            throw std::runtime_error("Jeans RZ parent bypassed W angular restriction");
         const long double internal=integral[4]/integral[0]-kinetic;
         if(!(internal>internal_integral/integral[0]))
             throw std::runtime_error("opposite-velocity parent lost unresolved kinetic energy");
@@ -230,8 +245,15 @@ void parent_state_reference()
         const long double expected=std::sqrt(pi*gamma*(gamma-1)*internal/(G*rho))/2;
         const double error=static_cast<double>(std::abs(actual.cells-expected)/expected);
         maximum=std::max(maximum,error);
-        if(actual.status!=JeansDiagnostics::Status::valid || error>bound)
+        if(actual.status!=JeansDiagnostics::Status::valid || error>bound) {
+            std::cerr<<std::setprecision(20)<<"JEANS_PARENT_FAILURE chart="<<chart
+                <<" mixed="<<mixed<<" error="<<error<<" bound="<<bound
+                <<" actual="<<actual.cells<<" expected="<<expected
+                <<" rho="<<parent.fluid.rho<<" mphi="<<parent.fluid.mom_w
+                <<" E="<<parent.fluid.eng<<" internal_ref="<<internal
+                <<" pressure="<<pressure<<" sound="<<sound<<'\n';
             throw std::runtime_error("Jeans independent restricted-parent reference mismatch");
+        }
         ++cases;
     }
     std::cout<<std::setprecision(17)<<"JEANS_PARENT_CASES="<<cases

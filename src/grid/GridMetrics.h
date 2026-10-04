@@ -153,6 +153,13 @@ ARCH_HOST_DEVICE inline double AngularReconstructionRadius(double left, double r
     return .75*right*((1.0+t)*(1.0+t*t)/(1.0+t+t*t));
 }
 
+/** Mirrored coordinate for an axis ghost cell; never a negative V/W measure. */
+ARCH_HOST_DEVICE inline double AngularReconstructionCoordinate(double left, double right)
+{
+    return right<=0.0 ? -AngularReconstructionRadius(-right,-left)
+                      : AngularReconstructionRadius(left,right);
+}
+
 /** Integral r dA on a radial face; exact zero at the regular axis. */
 ARCH_HOST_DEVICE inline double RadialTorqueMeasure(double radius, double dz)
 {

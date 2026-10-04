@@ -96,6 +96,7 @@ private:
 
     // Global Domain (root-level grid topology)
     Grid root_grid;
+    GridMetrics::GeometrySemantics root_semantics=GridMetrics::GeometrySemantics::Existing;
     double root_dx1, root_dx2, root_dx3;
     std::vector<int> refinement_species_indices;
     using ThermodynamicEvaluator = std::function<void(const FluidState&, std::vector<double>*, std::vector<double>*, std::vector<double>*)>;
@@ -109,6 +110,7 @@ public:
     AmrTree(std::shared_ptr<MemoryPool> memory_pool) : pool(memory_pool) {}
 
     int GetRootGridDim() const { return root_grid.dim; }
+    GridMetrics::GeometrySemantics GetGeometrySemantics() const { return root_semantics; }
     /**
      * @brief Installs the EOS-backed pressure/temperature batch evaluator.
      *
@@ -133,7 +135,7 @@ public:
             throw std::runtime_error("JENS requires the current EOS evaluator before regridding.");
         const auto& state = block.fluid_state;
         const auto& grid = block.grid;
-        const auto geometry = GridMetrics::make_geometry_view(grid);
+        const auto geometry = GridMetrics::make_geometry_view(grid,root_semantics);
         std::vector<double> fractions(state.GetNumSpecies());
         double minimum = std::numeric_limits<double>::infinity();
         for (int k=grid.Ks();k<grid.Ke();++k)
@@ -151,7 +153,7 @@ public:
     }
 
     /** Preflight the real restricted parent without allocating or publishing a pool block. */
-    bool JeansParentResolved(const SimConfig& config, std::span<const int> siblings) const
+    bool CandidateParentResolved(const SimConfig& config, std::span<const int> siblings) const
     {
         const auto& first=pool->GetBlock(siblings.front());
         Block candidate{};
@@ -159,16 +161,22 @@ public:
         candidate.logical_x1=first.logical_x1>>1;
         candidate.logical_x2=first.logical_x2>>1;
         candidate.logical_x3=first.logical_x3>>1;
-        candidate.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3);
+        candidate.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3,root_semantics);
         candidate.fluid_state.Preallocate(candidate.grid.GetTotalSize());
         candidate.fluid_state.InitSpecies(first.fluid_state.GetNumSpecies());
         const Block* children[8]{};
         for (std::size_t child=0;child<siblings.size();++child)
             children[child]=&pool->GetBlock(siblings[child]);
-        candidate.AverageToCoarse(children,root_grid.dim,
-            config.numerics.sml_rho,config.numerics.min_eint);
-        // Equality permits coarsening; there is no epsilon or target relaxation.
-        return MinimumJeansCells(candidate)>=config.amr.jeans_cells;
+        const auto status=candidate.TryAverageToCoarse(children,root_grid.dim,
+            config.numerics.sml_rho,config.numerics.min_eint,root_semantics);
+        // Inadmissible restricted parent vetoes this group without repairing
+        // E/J or allocating a destination. Other contract failures remain fatal.
+        if(status==regrid_math::Status::CoarseFluid) return false;
+        if(status!=regrid_math::Status::Ok)
+            throw std::runtime_error(regrid_math::status_message(status));
+        // The same W/V-restricted candidate feeds authoritative EOS/JENS.
+        return !config.amr.refine_on_jeans
+            || MinimumJeansCells(candidate)>=config.amr.jeans_cells;
     }
 
     /** @brief Defers initial thermodynamic regridding until the EOS is live. */
@@ -233,6 +241,7 @@ public:
             throw std::invalid_argument("AMR root-block extent exceeds the 20-bit Morton coordinate range at lrefinemax.");
         }
 
+        root_semantics=semantics;
         // Populate root grid from user config
         root_grid = Grid(amr::MAX_NG,
                          config.grid.x1_min, config.grid.x1_max,
@@ -605,7 +614,7 @@ public:
                     proposed_lowering.at(group.destination.handle))
                     .InterpolateFromCoarse(
                         parent, group.child_index, owner_->root_grid.dim,
-                        config_.numerics.sml_rho, config_.numerics.min_eint);
+                        config_.numerics.sml_rho, config_.numerics.min_eint,owner_->root_semantics);
             }
             for (const auto& group : groups.restrictions) {
                 const Block* children[8]{};
@@ -615,7 +624,7 @@ public:
                 owner_->pool->GetBlock(proposed_lowering.at(group.destination.handle))
                     .AverageToCoarse(
                         children, owner_->root_grid.dim,
-                        config_.numerics.sml_rho, config_.numerics.min_eint);
+                        config_.numerics.sml_rho, config_.numerics.min_eint,owner_->root_semantics);
             }
             migration_complete_ = true;
         }
@@ -915,7 +924,7 @@ public:
                         child.level, child.logical_x1,
                         child.logical_x2, child.logical_x3);
                     child.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
+                        root_grid, root_dx1, root_dx2, root_dx3,root_semantics);
                     const int species = block.fluid_state.GetNumSpecies();
                     child.fluid_state.InitSpecies(species);
                     child.state_next.InitSpecies(species);
@@ -950,8 +959,9 @@ public:
                         siblings.push_back(sibling);
                     }
                 }
-                if (can_merge && config.amr.refine_on_jeans)
-                    can_merge=JeansParentResolved(config,siblings);
+                if (can_merge && (config.amr.refine_on_jeans
+                    || root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz))
+                    can_merge=CandidateParentResolved(config,siblings);
                 if (can_merge) {
                     prepared.changed_ = true;
                     PoolBlockAllocationGuard allocation(
@@ -969,7 +979,7 @@ public:
                         parent.level, parent.logical_x1,
                         parent.logical_x2, parent.logical_x3);
                     parent.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
+                        root_grid, root_dx1, root_dx2, root_dx3,root_semantics);
                     const int species = block.fluid_state.GetNumSpecies();
                     parent.fluid_state.InitSpecies(species);
                     parent.state_next.InitSpecies(species);

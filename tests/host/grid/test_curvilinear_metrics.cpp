@@ -69,7 +69,7 @@ void test_rz_angular_measures() {
     const double parent_e=(9./16.+3.*2049./16.)/4.;
     close(parent_m,-111./8.,"RZ frozen angular parent");
     close(parent_e-.5*parent_m*parent_m,-9./128.,"RZ frozen parent veto reference");
-    std::cout<<"RZ_ANGULAR_MEASURES_PASS\\n";
+    std::cout<<"RZ_ANGULAR_MEASURES_PASS\n";
 }
 
 void test_rz_host_hydro() {
