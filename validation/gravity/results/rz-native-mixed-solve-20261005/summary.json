@@ -1,0 +1,118 @@
+{
+  "status": "STATIC_MIXED_NATIVE_SOLVES_AND_SOURCE_RETIREMENT_PASS",
+  "baseCommit": "aaaffa39e8a9ccf9d0b19c8860288abc5a0e7de1",
+  "actualSolvedReference": {
+    "status": "PASS",
+    "cases": 2,
+    "cells": 56,
+    "rows": [
+      {
+        "radialOrigin": 0,
+        "mixedAmr": true,
+        "cells": 28,
+        "faces": 64,
+        "maximumExactRhsBoxDistance": 7.733817374571562e-17,
+        "maximumExactEvaluationError": 4.017828524101793e-20,
+        "maximumExactOriginalResidualBoxDistance": 8.578631791928128e-17,
+        "totalResidualUpper": 8.592618076165241e-17,
+        "toleranceSafe": 1.1564498921357118e-15,
+        "rhsErrorUpper": 5.703959004541415e-17,
+        "work": 444,
+        "rangeEvaluations": 1001380
+      },
+      {
+        "radialOrigin": 0.5,
+        "mixedAmr": true,
+        "cells": 28,
+        "faces": 68,
+        "maximumExactRhsBoxDistance": 7.584342750713228e-17,
+        "maximumExactEvaluationError": 5.719914430008267e-20,
+        "maximumExactOriginalResidualBoxDistance": 7.663845987204768e-16,
+        "totalResidualUpper": 5.638391462135799e-16,
+        "toleranceSafe": 1.677867015381812e-15,
+        "rhsErrorUpper": 6.143169516830373e-17,
+        "work": 592,
+        "rangeEvaluations": 1562074
+      }
+    ],
+    "probeRecordSha256": "5e0fc39ea731f0c09dcfd0813257618b1ca6be9b91f080f966f43d862d3974ef",
+    "scope": "Actual solved nonzero-source native discrete original request rtol=1e-10 atol=0, given certified finite-ring boundary intervals",
+    "limitations": [
+      "Exact-coordinate subset; only the uniform/mixed meshes explicitly recorded in rows",
+      "Not independent continuous Phi/force or full RZ release",
+      "Boundary integral enclosure is checked by existing ring proofs; this script checks its native consumption",
+      "No timestep/simulation, CUDA or long-run claim; raw arrays remain local"
+    ]
+  },
+  "actualExecution": {
+    "exitCode": 0,
+    "seconds": 40.43011832237244,
+    "probeSha256": "a7bf1de11500077ee95fa83a6f120b0e2ed758eb353bdc0ab4baaed2dde951d9",
+    "stderr": ""
+  },
+  "sourceRetirement": {
+    "status": "PASS",
+    "cases": 2,
+    "evidence": "RING_ACTUAL_SOURCE_RETIREMENT_PASS cases=2 static_mixed_mesh=1 no_simulation=1",
+    "covers": [
+      "current checked root ring accepted",
+      "actual density/time/version/storage update rejects old certificate",
+      "new actual density request bound to increased generation",
+      "old source request rejected",
+      "different AMR epoch rejects update",
+      "failed source update retires current certificate"
+    ],
+    "limitations": [
+      "Static mixed numerical-domain fixture; no actual Runtime regrid or simulation stage",
+      "One abstract fixture dependency ID, not production all-block dependency collection proof"
+    ]
+  },
+  "unchangedControls": {
+    "rootShape": [
+      4,
+      4
+    ],
+    "mixedLeafCellsPerCase": 28,
+    "radialOrigins": [
+      0.0,
+      0.5
+    ],
+    "zOrigin": -0.5,
+    "density": 1.0,
+    "sharedCgsG": 6.6743e-08,
+    "faceAbsoluteTarget": 1e-18,
+    "maximumBoxesPerLeaf": 65536,
+    "maximumLeafEvaluations": 100000,
+    "solverMaxCycles": 200,
+    "originalRtol": 1e-10,
+    "originalAtol": 0.0
+  },
+  "sourceSha256": {
+    "tests/host/gravity/test_composite_poisson.cpp": "6901d6caf4ae764309f5e8a489dd4633c05368d5c384309f945235de3c545bee",
+    "validation/gravity/rz_native_ring_solved_reference.py": "3eebcff84e4e0c07f17493a05c49d290265cb84ab690c95240baec3d0b950814"
+  },
+  "productionBinarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "finalProbeSha256": "a7bf1de11500077ee95fa83a6f120b0e2ed758eb353bdc0ab4baaed2dde951d9",
+  "coreRegression": {
+    "action": "REUSED_UNCHANGED_CORE",
+    "receipt": "validation/gravity/results/rz-ring-balanced-workspace-20261005/summary.json",
+    "receiptSha256": "574ad7d55103ffc56dd3d6af90c6d55ad7898b75c134c0ef282ac3110684407f",
+    "coverage": "6 Core scoped tests +9 ring mathematical contracts; no Core changes in this node"
+  },
+  "frozenJens": {
+    "action": "REUSED_MATCHING_ELF",
+    "receipt": "validation/gravity/results/rz-stencil-construction-20261005/summary.json",
+    "receiptSha256": "fe1473f61205f1aae7831be7e6d95f3637c51654432567d7d16a826c792bf2a0",
+    "coverage": "9 frozen evolutions +9 actual restart comparisons"
+  },
+  "architectureAudit": "PASS",
+  "diffCheck": "PASS",
+  "rawLocalRoot": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-native-mixed-solve-20261005",
+  "remaining": [
+    "Continuous Phi/force reference and original spatial convergence",
+    "General rounded root geometry/source/observer certificate",
+    "Actual Runtime AMR/stage source publication and complete angular consumer science",
+    "2x2 interpolation and axis/viscosity findings",
+    "Unified CUDA/approved long runs after corresponding CPU gates"
+  ]
+}

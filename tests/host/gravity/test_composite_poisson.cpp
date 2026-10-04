@@ -1382,14 +1382,60 @@ void finite_ring_rhs_probe() {
 }
 
 /** Actual isolated nonzero finite-ring solve; no driver/timestep/output. */
-void native_ring_solved_probe() {
+/** Retire actual ring certificates after density/time/storage or topology change.
+ * Static operator fixture only: not a simulation stage or a production publish.
+ */
+void ring_source_retirement_contract() {
+    using namespace Physical::Gravity;
+    for(double origin:{0.,.5}) {
+        auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.5,0.};
+        elliptic::CompositePoisson op(base,make_cells(base,true),elliptic::BoundaryKind::CurvilinearIsolated);
+        GravityBoundary tree(op,{9});GravitySolveIdentity id;id.topology={9};
+        id.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+        id.operator_revision=id.boundary_revision=id.accuracy_revision=1;
+        id.inputs.push_back({{{1},{9}},state::StateSlot::Current,{1},1});
+        std::vector<double> density(op.size(),1.);
+        tree.update(density,id);RingBoundaryControl control;
+        control.face_absolute_target=1.e-5;control.maximum_boxes_per_leaf=8;
+        const auto ring=tree.ring_boundary(op,id,control);
+        require(ring.status==RingBoundaryStatus::Bounded,"retirement fixture ring failed");
+        tree.require_current_ring(op,ring);
+        const auto before=tree.root_scoped_ring_errors(op,ring);
+        require(op.native_rz_propagate_potential_error(before).status==elliptic::BoundaryErrorStatus::Bounded,
+            "retirement fixture missing current root certificate");
+        auto changed=id;changed.input_time=.125;
+        changed.inputs[0].version={2};changed.inputs[0].storage_generation=2;
+        density[0]=1.25;tree.update(density,changed);
+        bool rejected=false;
+        try{tree.root_scoped_ring_errors(op,ring);}catch(const std::logic_error&){rejected=true;}
+        require(rejected,"actual density update retained old root certificate");
+        rejected=false;
+        try{tree.ring_boundary(op,id,control);}catch(const std::logic_error&){rejected=true;}
+        require(rejected,"actual density update accepted old request identity");
+        const auto current=tree.ring_boundary(op,changed,control);
+        require(current.status==RingBoundaryStatus::Bounded&&current.source==changed
+            &&current.source_generation>ring.source_generation,"updated density not bound to new generation");
+        tree.require_current_ring(op,current);
+        auto wrong_epoch=changed;wrong_epoch.topology={10};wrong_epoch.inputs[0].block.epoch={10};
+        rejected=false;
+        try{tree.update(density,wrong_epoch);}catch(const std::logic_error&){rejected=true;}
+        require(rejected,"bound tree accepted changed AMR epoch");
+        rejected=false;
+        try{tree.require_current_ring(op,current);}catch(const std::logic_error&){rejected=true;}
+        require(rejected,"rejected source update left certificate consumable");
+    }
+    std::cout<<"RING_ACTUAL_SOURCE_RETIREMENT_PASS cases=2 static_mixed_mesh=1 no_simulation=1\n";
+}
+
+void native_ring_solved_probe(bool mixed=false) {
     using namespace Physical::Gravity;
     const auto dump=[](const auto& x){std::cout<<'[';bool first=true;for(auto v:x){if(!first)std::cout<<',';first=false;std::cout<<v;}std::cout<<']';};
     std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
     for(double origin:{0.,.5}) {
         auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
         base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.5,0.};
-        multigrid::CompositeMultigrid solver(base,make_cells(base,false),elliptic::BoundaryKind::CurvilinearIsolated);
+        multigrid::CompositeMultigrid solver(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
         const auto& op=solver.op();GravityBoundary tree(op,{9});GravitySolveIdentity id;id.topology={9};
         id.gravitational_constant=constants::gravity::cgs::gravitational_constant;
         id.operator_revision=id.boundary_revision=id.accuracy_revision=1;
@@ -1420,12 +1466,21 @@ void native_ring_solved_probe() {
         std::vector<double> residual(op.size());op.apply(solved.potential,residual);
         for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
         const auto result=tree.assess_native_ring_rhs(op,ring,source,rhs,solved.potential,residual,1.e-10,0.);
+        if(result.conditional.status!=elliptic::BoundaryResidualStatus::Accepted) {
+            std::cerr<<std::setprecision(17)<<"NATIVE_RESIDUAL_DIAGNOSTIC {\"origin\":"<<origin
+                <<",\"mixed\":"<<mixed<<",\"cells\":"<<op.size()
+                <<",\"status\":"<<int(result.conditional.status)
+                <<",\"totalResidualUpper\":"<<result.conditional.total_residual_upper
+                <<",\"toleranceSafe\":"<<result.conditional.tolerance_safe
+                <<",\"rhsErrorUpper\":"<<result.conditional.rhs_error_upper
+                <<",\"evaluationErrorUpper\":"<<result.native_residual_error.native_norm_upper<<"}\n";
+        }
         require(result.conditional.status==elliptic::BoundaryResidualStatus::Accepted,
             "actual solved native residual exceeds original request");
         require(result.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
             "native solved residual became full physics release");
         if(!first)std::cout<<',';first=false;
-        std::cout<<"{\"radial_origin\":"<<origin<<",\"origin\":";dump(base.origin);
+        std::cout<<"{\"mixed\":"<<mixed<<",\"radial_origin\":"<<origin<<",\"origin\":";dump(base.origin);
         std::cout<<",\"spacing\":";dump(base.spacing);
         std::cout<<",\"cells\":[";bool cf=true;
         for(const auto& cell:op.cells()) {
@@ -2450,6 +2505,8 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="rz-stencil-probe") {native_rz_stencil_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="rz-measure-probe") {native_rz_measure_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-balanced-reduction-probe") {ring_balanced_reduction_probe();return 0;}
+        if(argc>1 && std::string(argv[1])=="ring-source-retirement") {ring_source_retirement_contract();return 0;}
+        if(argc>1 && std::string(argv[1])=="native-ring-mixed-probe") {native_ring_solved_probe(true);return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-solved-probe") {native_ring_solved_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-rhs-probe") {finite_ring_rhs_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-parent-probe") {finite_ring_parent_probe();return 0;}

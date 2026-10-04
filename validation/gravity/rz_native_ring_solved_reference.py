@@ -57,7 +57,7 @@ def main():
         # Direct independent original-request guarantee for every RHS in box.
         assert norm2(full)<=F(1e-10)**2*norm2(minimum_rhs)
         assert F(c['rhs_norm_lower'])**2<=norm2(list(map(F,c['rhs'])))
-        rows.append({'radialOrigin':c['radial_origin'],'cells':len(cells),'faces':len(c['faces']),
+        rows.append({'radialOrigin':c['radial_origin'],'mixedAmr':bool(c.get('mixed',False)),'cells':len(cells),'faces':len(c['faces']),
             'maximumExactRhsBoxDistance':float(max(rhs_error)),
             'maximumExactEvaluationError':float(max(eval_error)),
             'maximumExactOriginalResidualBoxDistance':float(max(full)),
@@ -66,7 +66,7 @@ def main():
     result={'status':'PASS','cases':len(rows),'cells':sum(r['cells'] for r in rows),'rows':rows,
         'probeRecordSha256':hashlib.sha256(a.probe_record.read_bytes()).hexdigest(),
         'scope':'Actual solved nonzero-source native discrete original request rtol=1e-10 atol=0, given certified finite-ring boundary intervals',
-        'limitations':['Exact-coordinate subset, two uniform 4x4 roots only','Not independent continuous Phi/force or full RZ release',
+        'limitations':['Exact-coordinate subset; only the uniform/mixed meshes explicitly recorded in rows','Not independent continuous Phi/force or full RZ release',
             'Boundary integral enclosure is checked by existing ring proofs; this script checks its native consumption',
             'No timestep/simulation, CUDA or long-run claim; raw arrays remain local']}
     a.output.parent.mkdir(parents=True,exist_ok=True)

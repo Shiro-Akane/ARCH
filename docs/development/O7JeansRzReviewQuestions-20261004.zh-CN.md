@@ -438,6 +438,13 @@ composition PASS冒充actual solved Phi/force或完整科学签收，不改阈�
 exact-coordinate预算finding，不关闭continuous Phi/force、一般geometry、mixed
 实际AMR solve、2x2 interpolation或全RZ科学gate；production/CUDA/long-run gate保持。
 
+静态mixed AMR真实source/Poisson已扩至axis/off-axis两例，每例28 cells，
+56 cells132 faces的独立Fraction native original request验证PASS，rtol1e-10、
+atol0及原ring预算保持。实际density/time/version/storage update后旧source
+证书/request失效、新generation绑定；wrong AMR epoch及失败update拒绝通过。
+见RZNativeMixedSolveNode-20261005.zh-CN.md。这不等于Runtime真实regrid/
+全block依赖收集、continuous Phi/force或完整科学发布；production gate保持。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
