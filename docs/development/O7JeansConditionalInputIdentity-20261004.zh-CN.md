@@ -54,3 +54,10 @@ validation/gravity/results/o7-jeans-input-identity-20261004/summary.json。
 执行 uniform-lifecycle-1 的三个通道、1D/2D/3D、真实分割时刻续算、零源势力、
 守恒与 repairs gate；之后统一处理受影响 CUDA。
 本轮不宣布该科学包通过，不关闭 RZ Lz finding，不新增 Windows 适配。
+
+## 推送前收到的 Core 增量
+
+已完整读取并保留 a9ada04fbf1d1e833f2dcf5bc63324a0b6287f6d 的 finite-ring
+数学/residual 契约。仅主计划双方追加段冲突，保留两段；没有 Core/API/scientific
+实现冲突。本轮已测试代码不变。环体共享矩、kernel、支持球与余项界现在可独立
+实施，近场 certified error/完整势力验收和 Lz 离散设计仍分别保留 gate。

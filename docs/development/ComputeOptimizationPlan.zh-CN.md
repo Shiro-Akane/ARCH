@@ -641,3 +641,5 @@ restart state_controls revision3/20值记录 active JENS 与已消费目标，
 旧 revision 明确拒绝，不迁移原始 checkpoint。CPU 构建、6个 scoped 回归与实际
 architecture audit 通过，详见 O7JeansConditionalInputIdentity-20261004.zh-CN.md。
 冻结三通道演化/真实续算及 CUDA 科学验收仍未完成。
+
+2026-10-04 环体节点：数学路线和误差接口见 [Core 决定第7节](O7JeansRzReviewQuestions-20261004.zh-CN.md#7-rz-有限环体边界已定数学部件与误差接口)。共享 finite-ring 部件可以并行实施，完整生产边界及 RZ 科学状态维持待验；不将泊松 residual 误写为边界势／面力的总误差。
