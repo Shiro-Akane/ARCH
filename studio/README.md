@@ -17,8 +17,12 @@ Node 24.21.0 / npm 11.19.0 were used for engineering verification. The Linux
 environment needs xterm for the independent Run terminal and /usr/bin/flock
 (from util-linux) for output reservation. Linux Open Config uses a native project picker and safe Host reads, so the selected
 file becomes the associated saved input for Run/Restart. Browser imports remain
-unassociated. Full native desktop workflow UAT remains **not passed**: see [WSLg visibility blocker](../docs/development/StudioWslgVisibilityBlocker.md).
-Backend/HTTP evidence and the browser debug view do not replace native UAT.
+unassociated. The user confirmed that the independent Linux window is visible;
+the taskbar-only WSLg failure is historical, as recorded in the
+[visibility diagnosis and recovery](../docs/development/StudioWslgVisibilityBlocker.md).
+Native file dialogs, conflict retention, overwrite, Stop and Run survival have
+separate scoped evidence. Full native/physics acceptance is still **not passed**;
+browser or HTTP checks do not replace missing native interaction coverage.
 
 Configure and Build use Host-owned argv and profiles. Run/Restart use an explicitly
 saved exact input and selected compiled binary, with a separate confirmation;
@@ -47,9 +51,105 @@ overwriting old scientific output. Pending jobs created before output identities
 were recorded must be prepared again; completed history remains readable.
 Full Run engineering checks do not constitute independent scientific acceptance.
 
-Real CPU field/initial AMR remain Sod 1D and CellularDet Cartesian 2D. Registered
-models are not all field-preview supported. Expanded model Preview, plt delivery,
-Jeans/RZ and later CPU/CUDA scientific acceptance remain pending.
+## Linux development startup
+
+Use Linux paths in WSL. From a checkout with the declared Node environment and
+Linux Electron prerequisites available:
+
+    cd /path/to/ARCH/studio
+    npm ci
+    npm run build
+    bash desktop/arch-studio --project /path/to/managed-ARCH --binary build-studio-cpu/bin/ARCH --case Sod --config simulation/Sod/Sod.par
+
+The managed project can be separate from the Studio development checkout.
+Relative binary/config paths resolve against that project; the binary must exist
+and have an approved Host profile/Build record for operations that require it.
+A missing prerequisite is an error, not permission to use another project's
+binary or run an automatic configure/build. Select Configure/Build explicitly.
+The launcher serves production assets in its independent window, selects internal
+loopback ports and owns its Host. No Vite server or copied localhost URL is needed.
+See the [Linux desktop entry](desktop/README.md) for discovery and lifecycle details.
+This is the source development entry; packaging/distribution is not this delivery.
+
+## Initial views and runtime discovery
+
+The selected binary's registry, capabilities, inspected configuration and
+initialSampling profiles determine available case/dimension/geometry choices.
+The delivered Core supports additional reviewed registered models and 1D/2D/3D
+initial sampling profiles; it is no longer limited globally to Sod/CellularDet.
+Registration does not grant arbitrary field or AMR support. Do not hard-code a
+model count, silently reuse a different model/profile or treat an invalid config
+as initialized. See [Core generation evidence](../docs/development/FullModelInitialGenerationProgress.zh-CN.md)
+and [production Host evidence](../docs/development/FullModelProductionHostProgress.zh-CN.md).
+
+A real initial view reuses authoritative Setup/Init and shared EOS conversion,
+without simulation timesteps or scientific Plotfile/checkpoint output. Current
+working-copy changes use the delivered 300 ms automatic init-only scheduling
+strategy; startup may also generate a Preview. This never implies automatic Save,
+Run or AMR. Explicit Update Preview and cancellation remain available.
+Preview Session wall budgets come from the current binary's capability
+(heavy and mesh requests are separate), not a universal 30-second timeout.
+
+3D views are physical native-coordinate slices. A selected sample outside a
+changed slice remains inspectable as the original sample and is marked off-slice.
+Native velocity components/axis units come from Core; old 2D cylindrical means
+r/phi, not the internal, unreleased RZ profile. Initial AMR is a separate request,
+and a limited hierarchy remains limited. Its geometry Inspector is not an AMR
+cell-field Inspector: this API has no AMR cell field arrays. Field and hierarchy
+must match project/case/config/build/binary/EOS/native coordinate identities.
+
+Schema defaults, parsed inspection values and model-read/effective Preview
+values remain separate. Catalog counts include case parameters and are not
+standard-schema counts. Missing standard keys remain editable but are not
+written until an explicit working-copy edit. Invalid/retired text stays visible,
+with explicit Undo-able removal rather than silent defaults or custom-key bypass.
+Current input audit is
+[15 complete / 1 incomplete old profile](../docs/development/FullModelCurrentInputAudit-20261004.zh-CN.md);
+the old CellularDet profile lacks tmax. The approved burn-off t=0 input does not
+certify an equivalent burn-on evolution migration.
+
+## Read-only Plotfile candidate
+
+A separate project Plotfile workspace supports the first reviewed format scope:
+Sod 1D and Cartesian CellularDet 2D active-leaf data. It provides display LOD,
+Native AMR outlines and native stored-cell Inspector. The Inspector reads original
+FP64 values, not interpolated or LOD color values. Initial samples and Plotfile
+cells are distinct sources; opening a file does not make it a Current initial view.
+
+Units, basis, native bounds and Core measures are consumed from recorded evidence.
+ENTR is a pressure/density proxy with unknown unit, not certified thermodynamic
+entropy. Build/effective-config/source identity gaps remain unknown; a complete
+marker alone cannot prove checked close/atomic publication.
+See the [current adapter mapping and evidence](../docs/development/PlotfileAdapterDelivery-20261004.zh-CN.md).
+
+Fixed pixel responses bound returned data, not first overview scanning cost.
+Queries can scan all leaves and hash the file; no cross-query spatial index/cache
+is claimed. Cancellation, late-response rejection and last-successful-view
+retention have scoped evidence. Native wheel/pan input is still
+[unverified](../docs/development/NativeWheelRoutingDiagnostic-20261004.zh-CN.md).
+Raw H5/plt/checkpoints and full arrays remain local. Curvilinear/3D Plotfile and
+XDMF, independent scientific review, CPU/CUDA and frozen O9 acceptance remain pending.
+
+## Verified scope and outstanding work
+
+Linux visibility/file/Run/Restart engineering evidence is indexed separately:
+[native files](../docs/development/StudioNativeFileLifecycleUat.zh-CN.md),
+[explicit overwrite](../docs/development/StudioNativeOverwriteUat.zh-CN.md),
+[native Stop](../docs/development/StudioNativeStopUat.zh-CN.md),
+[active Run close/history](../docs/development/StudioNativeActiveRunCloseUat.zh-CN.md)
+and [idle close/relaunch](../docs/development/StudioNativeCurrentHostRelaunch.zh-CN.md).
+Active Preview/AMR close evidence uses deliberately stalled workers:
+[Preview](../docs/development/StudioNativeStalledPreviewClose.zh-CN.md) and
+[AMR](../docs/development/StudioNativeStalledAmrClose.zh-CN.md).
+It does not prove naturally active Setup/Init timing. Reports retain their
+original source/input/binary identities; no-work Build is not clean-build proof.
+
+The [CI lane](../.github/workflows/README.md) runs the full Studio/Host Node suite
+once, lint and build/type checking. Local 334-test evidence does not prove hosted
+CI, native desktop UAT, simulation readiness or scientific accuracy.
+Jeans/RZ scientific decisions, remaining native interactions, complete CPU/CUDA
+acceptance and the frozen O9 subset remain open. Internal RZ engineering checks
+do not enable public RZ runtime/Preview capability.
 
 See [integration progress](../docs/development/StudioIntegrationProgress.zh-CN.md)
 for exact commits and the separate engineering/scientific/UAT evidence.

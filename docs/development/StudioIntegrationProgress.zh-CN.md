@@ -3215,3 +3215,10 @@ ci.yml唯一workflow新增Linux净安装/一次完整Node套件/lint/build，req
 净副本初次遗漏共享fixture56fail完整保留；补齐同一HEAD后334/334、lint/types/build/actionlint/diff PASS。
 不重复Host子集或build内typecheck；无新增artifact上传、无push/dispatch、无Core build/simulation。
 见StudioCiIntegration报告/Summary；hostedCI、architecture科学及完整联合目标未因此通过。
+
+## 2026-10-04 Studio当前README能力/启动文档收束
+
+首页移除过期“仅Sod/Cellular”和WSLg仍不可见结论；按runtime profiles显示支持域，保留科学/输入/AMR有限边界。
+新增Linux开发入口、受管项目分离、300ms自动init-only策略、原生文件/Stop/Run存活和fault-injection关闭证据链接。
+Plotfile原值/FP64/未知身份/首扫描成本与wheel未验证分开表达，CI不冒充hosted/科学PASS。
+相对链接全部核对存在，diff check；纯文档无baseline重复/Build/Preview/simulation/push/tag。
