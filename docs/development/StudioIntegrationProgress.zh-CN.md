@@ -3187,3 +3187,10 @@ clean64b0ce2f现有CPU binary只读inspect-config：16profile覆盖当前14case�
 旧HTTP全成功报告保持其旧binary/input范围；新失败不回填默认、不隐藏、不改阈值。
 见FullModelCurrentInputAudit报告/Summary；无代码或334基线重复，managed clean/不push/tag。
 联合科学CPU/CUDA/O9及剩余交互仍未闭合。
+
+## 2026-10-04 配置API当前状态文档收束
+
+核对RuntimeConfiguration私有构造/const持有、Driver/dispatch实际消费及本轮真实v3摘要，
+更新CONFIGURATION_API首页和动态摘要/检查说明，去掉“尚未接线”的过期描述。
+保留旧输入15/16、材料来源展示、科学/CUDA及联合阶段未发布限制；t0不冒充演化。
+仅文档修改，diff check和相对链接实际目标核对，不重复334项或科学baseline。

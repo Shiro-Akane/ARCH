@@ -1,9 +1,11 @@
 # Studio 配置接口 v3
 
 当前集成分支的 Core 已实现配置扩展版本 3，外层仍为 schemaVersion="1.0"。
-这是 O7.0 进行中的迁移，Host/Studio 传输与nullable表单已迁移；尚未完成动态摘要接线、受控只读运行配置和
-全部旧输入迁移，不能作为阶段发布声明。v2 的 defaultValue/defaultSource、
-缺项回填和 custom 未检查列表不再是本接口。
+Host/Studio 已消费 v3 的 nullable 表单、来源与诊断；静态 inspection 的坐标、扩散和 AMR
+选择摘要已从共同解析结果接线。生产 Driver/dispatch 使用私有构造的只读
+RuntimeConfiguration，见下文的运行边界。它们是已实现的接口能力，不代表 O7.0
+或联合阶段已经发布：旧输入迁移、完整材料来源展示、受影响科学与平台验收仍分别核对。
+v2 的 defaultValue/defaultSource、缺项回填和 custom 未检查列表不再是本接口。
 
 完整字段定义见 [v3 协议](CONFIGURATION_V3_CANDIDATE.md)；
 必填／默认规则唯一来源仍是
@@ -86,11 +88,11 @@ fieldUnits 来自 Core 物理单位。标准输入为 CGS，包括 IdealGas，�
 units.status 区分 known、dimensionless、not-applicable、coordinate-dependent、
 mixed-state、not-specified；未知单位为 null。
 
-v3 inspection 不再通过带默认值的 SimConfig 构造 coordinates、diffusion、
-amrIndicators 或旧 resolved 摘要。依赖未解析时必须保持未知。
-Host/Studio已校验v3传输和显示nullable记录；相关动态展示仍需从共同解析结果接线，端到端迁移尚未完成；
-不能从 v2 快照恢复虚假默认摘要。现有 Preview 的实际状态响应不因此成为
-当前未完成配置的替代值。
+v3 inspection 不通过带默认值的 SimConfig 构造 coordinates、diffusion 或 amrIndicators。
+当前三个摘要分别消费已解析的拓扑、EOS/扩散开关和 AMR 选择依赖；依赖未解析时返回
+null，Host 将其作为缺少可用摘要处理。具体覆盖见本文末尾的三个 partial summary 条目。
+这些摘要不是网格构造、EOS 求值或初始 AMR；不能从 v2 快照恢复虚假默认摘要，
+也不能用现有 Preview 的状态替代当前未完成配置。
 
 ## 客户端与验证
 
@@ -98,12 +100,31 @@ Host/Studio已校验v3传输和显示nullable记录；相关动态展示仍需�
 草稿保存与运行资格独立；保存、inspection 都不能自动插入缺项或删除退役键。
 未知／错误输入保持可定位，显式删除可 Undo。
 
-当前真实二进制回归为 configuration_v3_contract；共同解析与实际入口
-分别有 configuration_input、input_resolution、case_configuration、
-config_input_records、configuration_entry_contract。不能把这些局部通过
-称为全部 Core/Host/Studio 回归通过。旧 v2 fixtures 和调用方待迁移。
-实际 v3 配置响应存于 examples/configuration-v3；原 examples/configuration
-为历史 v2 证据，不应再作为新客户端协议期望。
+配置 v3 的检查入口包括 configuration_v3_contract；共同解析与实际入口还由
+configuration_input、input_resolution、case_configuration、config_input_records、
+configuration_entry_contract 覆盖。它们的通过范围必须关联实际 source/binary/输入，
+不能称为全部 Core/Host/Studio 或科学回归通过。
+实际 v3 配置响应存于 examples/configuration-v3；原 examples/configuration 是历史
+v2 证据，不作为当前客户端协议期望，也不因当前检查通过而改写历史文件。
+
+当前旧模型输入的复验见
+[全模型输入审计](../../docs/development/FullModelCurrentInputAudit-20261004.zh-CN.md)：
+16 profiles 覆盖该 binary 的 14 个注册 case，15 份声明完整；旧 CellularDet 输入缺
+tmax，仍为失败。已批准的 t=0 替代输入与旧 burn-on 输入分开记录。
+该静态结果不执行 Setup/Init，也不证明 simulation readiness。
+
+## 受控运行边界
+
+配置准备后的合法策略解析（例如 use_nse=auto）由生产启动所有者完成，再构造
+[RuntimeConfiguration](../core/config/RuntimeConfiguration.h)。其构造函数私有，
+仅 DispatchSolver 可构造；对象以 const 持有有效配置及已准备的 species。
+Driver 与 dispatch bindings 接收该类型，不能用原始 SimConfig 或另一份
+SpeciesManager 替代。输入、checked preparation 与策略解析后的运行值仍为不同层。
+
+既有 CPU t=0 拓扑对照记录于
+[运行边界摘要](../../docs/development/O7RuntimeConfigurationT0Summary.json)。
+该证据仅覆盖所记身份的初始拓扑，不表示 CUDA、演化、所有下层直接入口或整个
+材料来源呈现已经完成；后续验收继续按联合计划分别记录。
 
 ### Registered model values during configuration preparation
 
