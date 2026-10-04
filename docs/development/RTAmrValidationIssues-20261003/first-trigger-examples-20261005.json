@@ -1,0 +1,470 @@
+[
+  {
+    "case": "species",
+    "baseline_first_trigger_backend": "cpu",
+    "key": [
+      6,
+      0,
+      0,
+      2,
+      0,
+      17,
+      111,
+      1
+    ],
+    "cpu": {
+      "macro": 6,
+      "half": 0,
+      "stage": 0,
+      "mode": "hydro",
+      "time": 0.00031097653243928865,
+      "half_dt": 2.5915412815918346e-05,
+      "kind": 2,
+      "cell": 613,
+      "x": 0.068359375,
+      "y": 0.435546875,
+      "z": 0.0,
+      "dx": 0.00390625,
+      "dy": 0.00390625,
+      "status": 1,
+      "s": 1,
+      "before": -3.6417600305693125e-158,
+      "after": 0.0,
+      "rho": 1.0000021705403355,
+      "volume": 1.52587890625e-05,
+      "mass": 5.556896873712694e-163,
+      "level": 0,
+      "logical_block": [
+        1,
+        6,
+        0
+      ],
+      "interior_cell": [
+        1,
+        15,
+        0
+      ],
+      "global_level_cell": [
+        17,
+        111,
+        0
+      ],
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        17,
+        111,
+        1
+      ],
+      "before_hex": "-0x1.ffffb72b3daf7p-524",
+      "mass_hex": "0x1.0000000000000p-539"
+    },
+    "cuda": {
+      "macro": 6,
+      "half": 0,
+      "stage": 0,
+      "mode": "hydro",
+      "time": 0.00031097653243928865,
+      "half_dt": 2.5915412815918346e-05,
+      "kind": 2,
+      "cell": 613,
+      "x": 0.068359375,
+      "y": 0.435546875,
+      "z": 0.0,
+      "dx": 0.00390625,
+      "dy": 0.00390625,
+      "status": 0,
+      "s": 1,
+      "before": 0.0,
+      "after": 0.0,
+      "rho": 1.0000021705403355,
+      "volume": 1.52587890625e-05,
+      "mass": 0.0,
+      "level": 0,
+      "logical_block": [
+        1,
+        6,
+        0
+      ],
+      "interior_cell": [
+        1,
+        15,
+        0
+      ],
+      "global_level_cell": [
+        17,
+        111,
+        0
+      ],
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        17,
+        111,
+        1
+      ],
+      "before_hex": "0x0.0p+0",
+      "mass_hex": "0x0.0p+0"
+    },
+    "both_repair": false,
+    "sign_decision_differs": true,
+    "physical_time_delta": 0.0
+  },
+  {
+    "case": "species",
+    "baseline_first_trigger_backend": "cuda",
+    "key": [
+      6,
+      0,
+      0,
+      2,
+      0,
+      21,
+      111,
+      1
+    ],
+    "cpu": {
+      "macro": 6,
+      "half": 0,
+      "stage": 0,
+      "mode": "hydro",
+      "time": 0.00031097653243928865,
+      "half_dt": 2.5915412815918346e-05,
+      "kind": 2,
+      "cell": 617,
+      "x": 0.083984375,
+      "y": 0.435546875,
+      "z": 0.0,
+      "dx": 0.00390625,
+      "dy": 0.00390625,
+      "status": 0,
+      "s": 1,
+      "before": 0.0,
+      "after": 0.0,
+      "rho": 1.000017897404661,
+      "volume": 1.52587890625e-05,
+      "mass": 0.0,
+      "level": 0,
+      "logical_block": [
+        1,
+        6,
+        0
+      ],
+      "interior_cell": [
+        5,
+        15,
+        0
+      ],
+      "global_level_cell": [
+        21,
+        111,
+        0
+      ],
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        21,
+        111,
+        1
+      ],
+      "before_hex": "0x0.0p+0",
+      "mass_hex": "0x0.0p+0"
+    },
+    "cuda": {
+      "macro": 6,
+      "half": 0,
+      "stage": 0,
+      "mode": "hydro",
+      "time": 0.00031097653243928865,
+      "half_dt": 2.5915412815918346e-05,
+      "kind": 2,
+      "cell": 617,
+      "x": 0.083984375,
+      "y": 0.435546875,
+      "z": 0.0,
+      "dx": 0.00390625,
+      "dy": 0.00390625,
+      "status": 1,
+      "s": 1,
+      "before": -6.256397699165848e-148,
+      "after": 0.0,
+      "rho": 1.000017897404661,
+      "volume": 1.52587890625e-05,
+      "mass": 9.546676135936265e-153,
+      "level": 0,
+      "logical_block": [
+        1,
+        6,
+        0
+      ],
+      "interior_cell": [
+        5,
+        15,
+        0
+      ],
+      "global_level_cell": [
+        21,
+        111,
+        0
+      ],
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        21,
+        111,
+        1
+      ],
+      "before_hex": "-0x1.fffda779374f0p-490",
+      "mass_hex": "0x1.0000000000000p-505"
+    },
+    "both_repair": false,
+    "sign_decision_differs": true,
+    "physical_time_delta": 0.0
+  },
+  {
+    "case": "coupled",
+    "baseline_first_trigger_backend": "cpu",
+    "key": [
+      6,
+      0,
+      0,
+      2,
+      0,
+      22,
+      111,
+      1
+    ],
+    "cpu": {
+      "macro": 6,
+      "half": 0,
+      "stage": 0,
+      "mode": "hydro",
+      "time": 0.0003109076095861663,
+      "half_dt": 2.5890013315386836e-05,
+      "kind": 2,
+      "cell": 618,
+      "x": 0.087890625,
+      "y": 0.435546875,
+      "z": 0.0,
+      "dx": 0.00390625,
+      "dy": 0.00390625,
+      "status": 1,
+      "s": 1,
+      "before": -3.128187742736508e-148,
+      "after": 0.0,
+      "rho": 1.000021448037204,
+      "volume": 1.52587890625e-05,
+      "mass": 4.7733380679681323e-153,
+      "level": 0,
+      "logical_block": [
+        1,
+        6,
+        0
+      ],
+      "interior_cell": [
+        6,
+        15,
+        0
+      ],
+      "global_level_cell": [
+        22,
+        111,
+        0
+      ],
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        22,
+        111,
+        1
+      ],
+      "before_hex": "-0x1.fffd3056b6f8cp-491",
+      "mass_hex": "0x1.0000000000000p-506"
+    },
+    "cuda": {
+      "macro": 6,
+      "half": 0,
+      "stage": 0,
+      "mode": "hydro",
+      "time": 0.00031090760958616634,
+      "half_dt": 2.589001331538685e-05,
+      "kind": 2,
+      "cell": 618,
+      "x": 0.087890625,
+      "y": 0.435546875,
+      "z": 0.0,
+      "dx": 0.00390625,
+      "dy": 0.00390625,
+      "status": 0,
+      "s": 1,
+      "before": 0.0,
+      "after": 0.0,
+      "rho": 1.000021448037204,
+      "volume": 1.52587890625e-05,
+      "mass": 0.0,
+      "level": 0,
+      "logical_block": [
+        1,
+        6,
+        0
+      ],
+      "interior_cell": [
+        6,
+        15,
+        0
+      ],
+      "global_level_cell": [
+        22,
+        111,
+        0
+      ],
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        22,
+        111,
+        1
+      ],
+      "before_hex": "0x0.0p+0",
+      "mass_hex": "0x0.0p+0"
+    },
+    "both_repair": false,
+    "sign_decision_differs": true,
+    "physical_time_delta": 5.421010862427522e-20
+  },
+  {
+    "case": "coupled",
+    "baseline_first_trigger_backend": "cuda",
+    "key": [
+      6,
+      0,
+      0,
+      2,
+      0,
+      20,
+      111,
+      1
+    ],
+    "cpu": {
+      "macro": 6,
+      "half": 0,
+      "stage": 0,
+      "mode": "hydro",
+      "time": 0.0003109076095861663,
+      "half_dt": 2.5890013315386836e-05,
+      "kind": 2,
+      "cell": 616,
+      "x": 0.080078125,
+      "y": 0.435546875,
+      "z": 0.0,
+      "dx": 0.00390625,
+      "dy": 0.00390625,
+      "status": 0,
+      "s": 1,
+      "before": 0.0,
+      "after": 0.0,
+      "rho": 1.0000142542318469,
+      "volume": 1.52587890625e-05,
+      "mass": 0.0,
+      "level": 0,
+      "logical_block": [
+        1,
+        6,
+        0
+      ],
+      "interior_cell": [
+        4,
+        15,
+        0
+      ],
+      "global_level_cell": [
+        20,
+        111,
+        0
+      ],
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        20,
+        111,
+        1
+      ],
+      "before_hex": "0x0.0p+0",
+      "mass_hex": "0x0.0p+0"
+    },
+    "cuda": {
+      "macro": 6,
+      "half": 0,
+      "stage": 0,
+      "mode": "hydro",
+      "time": 0.00031090760958616634,
+      "half_dt": 2.589001331538685e-05,
+      "kind": 2,
+      "cell": 616,
+      "x": 0.080078125,
+      "y": 0.435546875,
+      "z": 0.0,
+      "dx": 0.00390625,
+      "dy": 0.00390625,
+      "status": 1,
+      "s": 1,
+      "before": -6.1097856366982093e-151,
+      "after": 0.0,
+      "rho": 1.0000142542318469,
+      "volume": 1.52587890625e-05,
+      "mass": 9.322925914000258e-156,
+      "level": 0,
+      "logical_block": [
+        1,
+        6,
+        0
+      ],
+      "interior_cell": [
+        4,
+        15,
+        0
+      ],
+      "global_level_cell": [
+        20,
+        111,
+        0
+      ],
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        20,
+        111,
+        1
+      ],
+      "before_hex": "-0x1.fffe21b6d37a1p-500",
+      "mass_hex": "0x1.0000000000000p-515"
+    },
+    "both_repair": false,
+    "sign_decision_differs": true,
+    "physical_time_delta": 5.421010862427522e-20
+  }
+]

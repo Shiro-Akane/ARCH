@@ -1,0 +1,688 @@
+{
+  "schema": 1,
+  "completed_at": "2026-10-05 Asia/Shanghai",
+  "frozen_main": "25adec4224497981a0c124a3485f786194975be4",
+  "tested_repair": "ee091b35c45e959910a6a4520aa240856c0d560d",
+  "zero_output_candidate": "dcd3a70aa0a1bd8c40daa3e9e3d95a58c3fba05d",
+  "candidate_patch_sha256": "9d8537919ee2d4d01b49aa57e2f123b735fa7047ed63ee5c66f3704e04db73e3",
+  "candidate_scope": "5 files: output lifecycle check, write/flush failure checking, and regression tests; no numerical leaf changes",
+  "candidate_tests": {
+    "zero_restore_exact": 6,
+    "normal_runs": 8,
+    "normal_checkpoints_strict": 200,
+    "native_real_write_failure_rejected": true,
+    "missing_schedule_rejected_by_unit": true,
+    "unit_cpu_cuda_pass": true,
+    "conservative_acceptance_and_rkl_weights_pass": true
+  },
+  "observer_verified_checkpoints": 32,
+  "observer_verifications": [
+    {
+      "lane": "observer_species_cpu",
+      "verification_sha256": "a57dcb495f42d246d586f03339cc6620762087a564ad35f8e07480cbc3dd8070",
+      "observer_receipt_sha256": "f88c5141c1c868af2facc60de9745faaa3899fb276d1df2bcc9bcdffe8d250e3",
+      "reference_receipt_sha256": "08fe9666972c37fb226b7f9497f4efba1c0d8d785a8728ec7a8389eae34cbbe4",
+      "reference_binary_sha256": "7f90533c2aa480c3ab5adb3d89ac9595d458573038e618e01acdeb52181e0ace",
+      "observer_patch_sha256": "cd4898df4d9e37b5cda292e5a0fba330569afd50feb9de78c3e5dcdaa8719fb1",
+      "comparisons_sha256": "cc48228cb5cf16be23a851317c9c0169ac2d79508dd177da44f131371cc4e5d5",
+      "historical_mismatched_stop_comparison_sha256": "fee6ac6a0e5b348128a0ab623855a5cbc406b12227758835f3e9ef7acccf1707",
+      "strict_all_fields_equal": true,
+      "physical_time_topology_exact": true,
+      "integer_ledger_exact": true,
+      "training_data_admitted": false
+    },
+    {
+      "lane": "observer_corrected_v3_species_cuda",
+      "verification_sha256": "81e20a451e06a18adda78ad02a017336d4fedfca919f9aebc397e4d468b6d6ae",
+      "observer_receipt_sha256": "61424ee6ecd17528e97531164da0bfa420cb2275b403c45c59bc67676187a5c3",
+      "reference_receipt_sha256": "ffbf06952fce1eca1f82fd774c3634df75c6a1213a8bdf00096c7dd6840c3afc",
+      "reference_binary_sha256": "2e7902b7618c2df5446a675a82f88c216f885d0eda9ecb8fa1e8f91f8011c42a",
+      "observer_patch_sha256": "7405654e2a1d30848c5a9c5762e68d35dbb608c8f275b38f2f1988d3d79bc5b0",
+      "comparisons_sha256": "105aafb10d50ed5f15ba7a2404d373f67980c6eff57c1cf006fad1dfc1eca4bf",
+      "historical_mismatched_stop_comparison_sha256": "70a9b5adbf91fd5e24913e298cb7ca9d36a5cb45dd70ce068d5aca81133a9f14",
+      "strict_all_fields_equal": true,
+      "physical_time_topology_exact": true,
+      "integer_ledger_exact": true,
+      "training_data_admitted": false
+    },
+    {
+      "lane": "observer_coupled_cpu",
+      "verification_sha256": "c328883ba6a89871c6506022d77eef6fe9bcec1b9201c1736a79ec8ceeaab1e9",
+      "observer_receipt_sha256": "8b7bd4d3f7b86742a8ab4b0be8fcd5a69e274403d3c8b6c23771fd40ee541b42",
+      "reference_receipt_sha256": "1529404dfd1cc8fba914ce1f8a4dd5fd9bc7dcb29697e6f77e1adf2a6e63623f",
+      "reference_binary_sha256": "7f90533c2aa480c3ab5adb3d89ac9595d458573038e618e01acdeb52181e0ace",
+      "observer_patch_sha256": "cd4898df4d9e37b5cda292e5a0fba330569afd50feb9de78c3e5dcdaa8719fb1",
+      "comparisons_sha256": "585da57515eb289ffb491627548eb745a60d704cabc1ae8eb6afe8010005d90c",
+      "historical_mismatched_stop_comparison_sha256": "794c011407382ea76f70aecfd19db508ee5412b40c0c77a25123ff443b3e6db8",
+      "strict_all_fields_equal": true,
+      "physical_time_topology_exact": true,
+      "integer_ledger_exact": true,
+      "training_data_admitted": false
+    },
+    {
+      "lane": "observer_corrected_v3_coupled_cuda",
+      "verification_sha256": "248f0345189d6fb6ada517ce9d3f6cdd16315b17bb8c705dca8ef0d0b6758b77",
+      "observer_receipt_sha256": "61be4194728b10f24e39422f3c9e618cd06c056c5d7b30a7be88a9dfea8a6055",
+      "reference_receipt_sha256": "0d931926878409b768f53411529909c45223d84a698dc5aa0cf774d377cb982b",
+      "reference_binary_sha256": "2e7902b7618c2df5446a675a82f88c216f885d0eda9ecb8fa1e8f91f8011c42a",
+      "observer_patch_sha256": "7405654e2a1d30848c5a9c5762e68d35dbb608c8f275b38f2f1988d3d79bc5b0",
+      "comparisons_sha256": "c1e756b8eb60042f1d3f67f3bfcdedcc2e8c7cb46cabf835b071eb2f26dd953a",
+      "historical_mismatched_stop_comparison_sha256": "6204127b1ba5548765857cc9e4900e3f0b129794bee73b35269486f0702c399f",
+      "strict_all_fields_equal": true,
+      "physical_time_topology_exact": true,
+      "integer_ledger_exact": true,
+      "training_data_admitted": false
+    }
+  ],
+  "first_count_divergence": {
+    "completed_step": 7,
+    "macro_step": 6,
+    "phase": "Hydro RK3 complete -> AMR reflux acceptance -> second diffusion half-step",
+    "stage_metadata": 0,
+    "note": "stage=0 is non-RK receipt category, not proof that the event occurred inside diffusion"
+  },
+  "observed_count_rows": [
+    {
+      "case": "species",
+      "backend": "cpu",
+      "events": 11,
+      "audited_stage_receipts": 35,
+      "audited_pending_global_merges": 56,
+      "counted_once": true,
+      "reset_merge_exact": true
+    },
+    {
+      "case": "species",
+      "backend": "cuda",
+      "events": 12,
+      "audited_stage_receipts": 35,
+      "audited_pending_global_merges": 56,
+      "counted_once": true,
+      "reset_merge_exact": true
+    },
+    {
+      "case": "coupled",
+      "backend": "cpu",
+      "events": 7,
+      "audited_stage_receipts": 35,
+      "audited_pending_global_merges": 56,
+      "counted_once": true,
+      "reset_merge_exact": true
+    },
+    {
+      "case": "coupled",
+      "backend": "cuda",
+      "events": 11,
+      "audited_stage_receipts": 35,
+      "audited_pending_global_merges": 56,
+      "counted_once": true,
+      "reset_merge_exact": true
+    }
+  ],
+  "first_trigger_examples": [
+    {
+      "case": "species",
+      "baseline_first_trigger_backend": "cpu",
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        17,
+        111,
+        1
+      ],
+      "cpu": {
+        "macro": 6,
+        "half": 0,
+        "stage": 0,
+        "mode": "hydro",
+        "time": 0.00031097653243928865,
+        "half_dt": 2.5915412815918346e-05,
+        "kind": 2,
+        "cell": 613,
+        "x": 0.068359375,
+        "y": 0.435546875,
+        "z": 0.0,
+        "dx": 0.00390625,
+        "dy": 0.00390625,
+        "status": 1,
+        "s": 1,
+        "before": -3.6417600305693125e-158,
+        "after": 0.0,
+        "rho": 1.0000021705403355,
+        "volume": 1.52587890625e-05,
+        "mass": 5.556896873712694e-163,
+        "level": 0,
+        "logical_block": [
+          1,
+          6,
+          0
+        ],
+        "interior_cell": [
+          1,
+          15,
+          0
+        ],
+        "global_level_cell": [
+          17,
+          111,
+          0
+        ],
+        "key": [
+          6,
+          0,
+          0,
+          2,
+          0,
+          17,
+          111,
+          1
+        ],
+        "before_hex": "-0x1.ffffb72b3daf7p-524",
+        "mass_hex": "0x1.0000000000000p-539"
+      },
+      "cuda": {
+        "macro": 6,
+        "half": 0,
+        "stage": 0,
+        "mode": "hydro",
+        "time": 0.00031097653243928865,
+        "half_dt": 2.5915412815918346e-05,
+        "kind": 2,
+        "cell": 613,
+        "x": 0.068359375,
+        "y": 0.435546875,
+        "z": 0.0,
+        "dx": 0.00390625,
+        "dy": 0.00390625,
+        "status": 0,
+        "s": 1,
+        "before": 0.0,
+        "after": 0.0,
+        "rho": 1.0000021705403355,
+        "volume": 1.52587890625e-05,
+        "mass": 0.0,
+        "level": 0,
+        "logical_block": [
+          1,
+          6,
+          0
+        ],
+        "interior_cell": [
+          1,
+          15,
+          0
+        ],
+        "global_level_cell": [
+          17,
+          111,
+          0
+        ],
+        "key": [
+          6,
+          0,
+          0,
+          2,
+          0,
+          17,
+          111,
+          1
+        ],
+        "before_hex": "0x0.0p+0",
+        "mass_hex": "0x0.0p+0"
+      },
+      "both_repair": false,
+      "sign_decision_differs": true,
+      "physical_time_delta": 0.0
+    },
+    {
+      "case": "species",
+      "baseline_first_trigger_backend": "cuda",
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        21,
+        111,
+        1
+      ],
+      "cpu": {
+        "macro": 6,
+        "half": 0,
+        "stage": 0,
+        "mode": "hydro",
+        "time": 0.00031097653243928865,
+        "half_dt": 2.5915412815918346e-05,
+        "kind": 2,
+        "cell": 617,
+        "x": 0.083984375,
+        "y": 0.435546875,
+        "z": 0.0,
+        "dx": 0.00390625,
+        "dy": 0.00390625,
+        "status": 0,
+        "s": 1,
+        "before": 0.0,
+        "after": 0.0,
+        "rho": 1.000017897404661,
+        "volume": 1.52587890625e-05,
+        "mass": 0.0,
+        "level": 0,
+        "logical_block": [
+          1,
+          6,
+          0
+        ],
+        "interior_cell": [
+          5,
+          15,
+          0
+        ],
+        "global_level_cell": [
+          21,
+          111,
+          0
+        ],
+        "key": [
+          6,
+          0,
+          0,
+          2,
+          0,
+          21,
+          111,
+          1
+        ],
+        "before_hex": "0x0.0p+0",
+        "mass_hex": "0x0.0p+0"
+      },
+      "cuda": {
+        "macro": 6,
+        "half": 0,
+        "stage": 0,
+        "mode": "hydro",
+        "time": 0.00031097653243928865,
+        "half_dt": 2.5915412815918346e-05,
+        "kind": 2,
+        "cell": 617,
+        "x": 0.083984375,
+        "y": 0.435546875,
+        "z": 0.0,
+        "dx": 0.00390625,
+        "dy": 0.00390625,
+        "status": 1,
+        "s": 1,
+        "before": -6.256397699165848e-148,
+        "after": 0.0,
+        "rho": 1.000017897404661,
+        "volume": 1.52587890625e-05,
+        "mass": 9.546676135936265e-153,
+        "level": 0,
+        "logical_block": [
+          1,
+          6,
+          0
+        ],
+        "interior_cell": [
+          5,
+          15,
+          0
+        ],
+        "global_level_cell": [
+          21,
+          111,
+          0
+        ],
+        "key": [
+          6,
+          0,
+          0,
+          2,
+          0,
+          21,
+          111,
+          1
+        ],
+        "before_hex": "-0x1.fffda779374f0p-490",
+        "mass_hex": "0x1.0000000000000p-505"
+      },
+      "both_repair": false,
+      "sign_decision_differs": true,
+      "physical_time_delta": 0.0
+    },
+    {
+      "case": "coupled",
+      "baseline_first_trigger_backend": "cpu",
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        22,
+        111,
+        1
+      ],
+      "cpu": {
+        "macro": 6,
+        "half": 0,
+        "stage": 0,
+        "mode": "hydro",
+        "time": 0.0003109076095861663,
+        "half_dt": 2.5890013315386836e-05,
+        "kind": 2,
+        "cell": 618,
+        "x": 0.087890625,
+        "y": 0.435546875,
+        "z": 0.0,
+        "dx": 0.00390625,
+        "dy": 0.00390625,
+        "status": 1,
+        "s": 1,
+        "before": -3.128187742736508e-148,
+        "after": 0.0,
+        "rho": 1.000021448037204,
+        "volume": 1.52587890625e-05,
+        "mass": 4.7733380679681323e-153,
+        "level": 0,
+        "logical_block": [
+          1,
+          6,
+          0
+        ],
+        "interior_cell": [
+          6,
+          15,
+          0
+        ],
+        "global_level_cell": [
+          22,
+          111,
+          0
+        ],
+        "key": [
+          6,
+          0,
+          0,
+          2,
+          0,
+          22,
+          111,
+          1
+        ],
+        "before_hex": "-0x1.fffd3056b6f8cp-491",
+        "mass_hex": "0x1.0000000000000p-506"
+      },
+      "cuda": {
+        "macro": 6,
+        "half": 0,
+        "stage": 0,
+        "mode": "hydro",
+        "time": 0.00031090760958616634,
+        "half_dt": 2.589001331538685e-05,
+        "kind": 2,
+        "cell": 618,
+        "x": 0.087890625,
+        "y": 0.435546875,
+        "z": 0.0,
+        "dx": 0.00390625,
+        "dy": 0.00390625,
+        "status": 0,
+        "s": 1,
+        "before": 0.0,
+        "after": 0.0,
+        "rho": 1.000021448037204,
+        "volume": 1.52587890625e-05,
+        "mass": 0.0,
+        "level": 0,
+        "logical_block": [
+          1,
+          6,
+          0
+        ],
+        "interior_cell": [
+          6,
+          15,
+          0
+        ],
+        "global_level_cell": [
+          22,
+          111,
+          0
+        ],
+        "key": [
+          6,
+          0,
+          0,
+          2,
+          0,
+          22,
+          111,
+          1
+        ],
+        "before_hex": "0x0.0p+0",
+        "mass_hex": "0x0.0p+0"
+      },
+      "both_repair": false,
+      "sign_decision_differs": true,
+      "physical_time_delta": 5.421010862427522e-20
+    },
+    {
+      "case": "coupled",
+      "baseline_first_trigger_backend": "cuda",
+      "key": [
+        6,
+        0,
+        0,
+        2,
+        0,
+        20,
+        111,
+        1
+      ],
+      "cpu": {
+        "macro": 6,
+        "half": 0,
+        "stage": 0,
+        "mode": "hydro",
+        "time": 0.0003109076095861663,
+        "half_dt": 2.5890013315386836e-05,
+        "kind": 2,
+        "cell": 616,
+        "x": 0.080078125,
+        "y": 0.435546875,
+        "z": 0.0,
+        "dx": 0.00390625,
+        "dy": 0.00390625,
+        "status": 0,
+        "s": 1,
+        "before": 0.0,
+        "after": 0.0,
+        "rho": 1.0000142542318469,
+        "volume": 1.52587890625e-05,
+        "mass": 0.0,
+        "level": 0,
+        "logical_block": [
+          1,
+          6,
+          0
+        ],
+        "interior_cell": [
+          4,
+          15,
+          0
+        ],
+        "global_level_cell": [
+          20,
+          111,
+          0
+        ],
+        "key": [
+          6,
+          0,
+          0,
+          2,
+          0,
+          20,
+          111,
+          1
+        ],
+        "before_hex": "0x0.0p+0",
+        "mass_hex": "0x0.0p+0"
+      },
+      "cuda": {
+        "macro": 6,
+        "half": 0,
+        "stage": 0,
+        "mode": "hydro",
+        "time": 0.00031090760958616634,
+        "half_dt": 2.589001331538685e-05,
+        "kind": 2,
+        "cell": 616,
+        "x": 0.080078125,
+        "y": 0.435546875,
+        "z": 0.0,
+        "dx": 0.00390625,
+        "dy": 0.00390625,
+        "status": 1,
+        "s": 1,
+        "before": -6.1097856366982093e-151,
+        "after": 0.0,
+        "rho": 1.0000142542318469,
+        "volume": 1.52587890625e-05,
+        "mass": 9.322925914000258e-156,
+        "level": 0,
+        "logical_block": [
+          1,
+          6,
+          0
+        ],
+        "interior_cell": [
+          4,
+          15,
+          0
+        ],
+        "global_level_cell": [
+          20,
+          111,
+          0
+        ],
+        "key": [
+          6,
+          0,
+          0,
+          2,
+          0,
+          20,
+          111,
+          1
+        ],
+        "before_hex": "-0x1.fffe21b6d37a1p-500",
+        "mass_hex": "0x1.0000000000000p-515"
+      },
+      "both_repair": false,
+      "sign_decision_differs": true,
+      "physical_time_delta": 5.421010862427522e-20
+    }
+  ],
+  "rounding_scope": "Per-event contribution bounds apply within each observed backend trace; prior fixed-contribution ledger bound remains conditional and is not applied across different CPU/CUDA event sets.",
+  "rejected_observer_root_cause": {
+    "classification": "assistant_introduced_diagnostic_overlay_control_flow_bug",
+    "baseline_ee091b_affected": false,
+    "zero_step_candidate_dcd3a70a_affected": false,
+    "bad_overlay_variants": [
+      "observer-v1 CUDA",
+      "observer-buffered-v2 CUDA",
+      "isolated-v3 built but never run"
+    ],
+    "cause": "Insertion of printf into an unbraced if(stage==1) made clear_amr_flux_register unconditional in the CUDA Hydro stage executor.",
+    "effect": "RK2/RK3 contributions were cleared before the next stage rather than accumulated; original numerical leaf mathematics was unchanged but orchestration was not.",
+    "fix_scope": "Restore original stage==1 guard with braces in diagnostic overlay only. No frozen solver or numerical candidate change.",
+    "before": "            if (descriptor.stage == 1)\n                printf(\"AUDIT_EXEC stage=%d\\n\",descriptor.stage);fflush(stdout);\n            (void)compute_backend->clear_amr_flux_register(token);",
+    "after": "            printf(\"AUDIT_EXEC stage=%d\\n\",descriptor.stage);fflush(stdout);\n            if (descriptor.stage == 1) {\n                (void)compute_backend->clear_amr_flux_register(token);\n            }",
+    "training_data_admitted": false
+  },
+  "rejected_observer_comparisons_preserved": true,
+  "audit_guard_tests": 8,
+  "usable_trajectory_scope": {
+    "baseline": "ee091b35c45e959910a6a4520aa240856c0d560d",
+    "cases": [
+      "plain",
+      "species",
+      "thermal",
+      "coupled"
+    ],
+    "existing_physical_end_time": 0.06,
+    "existing_steps": {
+      "plain": 1156,
+      "species": 1157,
+      "thermal": 1158,
+      "coupled": 1159
+    },
+    "use": "bounded physical verification and candidate read-only feature/label extraction after joint review",
+    "not": "full t=8.5 acceptance or already available GNN training set"
+  },
+  "gnn_recorder_in_ee091b": false,
+  "training_data_admitted": false,
+  "core_solver_bug_confirmed": false,
+  "friend_main_modified": false,
+  "remaining": [
+    "joint review and batch admission decision",
+    "new-baseline recorder/domain/time/lifecycle contract",
+    "full t=8.5 and all-configuration frozen acceptance",
+    "late-time event histories are not all traced by this seven-step audit"
+  ],
+  "archive": {
+    "file": "audit-evidence.tar.gz",
+    "bytes": 22918814,
+    "sha256": "d003cc62e6ee4fc6f2d2a4187d82296c5e8895dacbad84d76d5bcf6555a31eaf",
+    "members": 329,
+    "roundtrip_member_hashes_verified": true
+  },
+  "scripts": [
+    {
+      "file": "analyze_observer.py",
+      "sha256": "46e75c0c010aff80593c3ec073359344dbfe12304c51c32167f299ee32738d0c"
+    },
+    {
+      "file": "audit_gnn_contract.py",
+      "sha256": "19e426590cad289b2504cdf24e6dd6e798523014a21ced6ae01eb6f840b6fec2"
+    },
+    {
+      "file": "candidate_tests.py",
+      "sha256": "a27d1a76efb45c678e038e89eb124ee9b610e883b10ec3c71476babcb37f2773"
+    },
+    {
+      "file": "create_buffer_observer.py",
+      "sha256": "1fd8647d2b1bbb73dcd72e9b33e0198d10c221dac5a6d75827688993607b89c2"
+    },
+    {
+      "file": "create_observer.py",
+      "sha256": "50b8053bd6a551efdacef773ef65654d83364b36e6613a961b8a397bd23c3c91"
+    },
+    {
+      "file": "finalize_followup.py",
+      "sha256": "0cfd8f2a912ff5cccfdee1882b05a1efd2819199493285b7c90135852cd7a1fb"
+    },
+    {
+      "file": "run_observer.py",
+      "sha256": "60be269413bc5c6019e41071dbc0f37bff97293ad4ee442c7e4dd5df1e067246"
+    },
+    {
+      "file": "test_observer_audit.py",
+      "sha256": "b4b53c6fca05449b3beaafd260104ec24128f69e5d54e181b4aaaa39ccf7b8b0"
+    }
+  ],
+  "production_candidate_numerical_math_modified": false,
+  "rejected_diagnostic_overlay_control_flow_modified": true,
+  "observed_remote_heads_20261005": {
+    "main": "25adec4224497981a0c124a3485f786194975be4",
+    "o8_boundaries": "11a321d5604f9ee62b9f9587c81f14de4f128bc4",
+    "friend_report_branch_before": "4cdcf48989ab9cfd0eefd79b744fd931456f4c1a",
+    "note": "new o8 branch head is not covered; no baseline switching"
+  }
+}
