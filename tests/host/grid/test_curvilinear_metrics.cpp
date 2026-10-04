@@ -19,6 +19,7 @@
 #include "physics/eos/IdealGas.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
 #include <iostream>
+#include <mutex>
 #include <stdexcept>
 
 namespace {
@@ -431,15 +432,96 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
         <<" max_state_error="<<max_state_error<<'\n';
 }
 
+// Test observer delegates every update to the actual hydro owner. It only
+// recomputes physical boundary face fluxes from the exact stage input, using
+// the same EOS/HLLC policy and independent full-ring surface integration.
+class RzBoundaryBudgetObserver final : public Numerics::IHydroSolver {
+public:
+    RzBoundaryBudgetObserver(const Numerics::IHydroSolver& owner,const IdealGas& eos)
+        :owner_(owner),eos_(eos){}
+    GridMetrics::GeometrySemantics geometry_semantics() const noexcept override {
+        return owner_.geometry_semantics();
+    }
+    void evaluate_patch(amr::AMRControl* control,int block_id,
+        const FluidState& state,const Grid& grid,double dt,
+        std::vector<FluidVector>& dU,std::vector<double>& ds,
+        const Physical::Gravity::IGravityPolicy* gravity,
+        const NumericsConfig& cfg,double stage_weight=1.,
+        void* stream=nullptr) const override
+    {
+        std::array<long double,5> local{};
+        long double unweighted_torque=0.;
+        FluxAdmissibility::MeanThermoCache means;
+        means.reset(grid.GetTotalSize());means.roe_wave_speed=cfg.hll_roe_wave_speed;
+        std::vector<FluidVector> flux(grid.GetTotalSize());
+        std::vector<double> species_flux(state.GetNumSpecies()*grid.GetTotalSize());
+        const auto& block=control->pool->GetBlock(block_id);
+        const long double pi=std::acos(-1.L);
+        for(int dir=0;dir<2;++dir) {
+            std::fill(flux.begin(),flux.end(),FluidVector{});
+            std::fill(species_flux.begin(),species_flux.end(),0.);
+            FluxHLLC<PCMReconstruction>::compute_fluxes(state,eos_,grid,flux,
+                species_flux,dir,cfg.entropy_fix_coeff,&means);
+            for(int side=0;side<2;++side) {
+                if(block.face_neighbors[2*dir+side].count!=0)continue;
+                const int count=dir==0?grid.Je()-grid.Js():grid.Ie()-grid.Is();
+                for(int n=0;n<count;++n) {
+                    const int i=dir==0?(side?grid.Ie():grid.Is()):grid.Is()+n;
+                    const int j=dir==0?grid.Js()+n:(side?grid.Je():grid.Js());
+                    const int c=grid.GetIndex(i,j,0);
+                    const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+                    const long double A=dir==0?2.L*pi*l*grid.dx2:pi*(h*h-l*l);
+                    const long double T=dir==0?2.L*pi*l*l*grid.dx2
+                        :2.L*pi*(h*h*h-l*l*l)/3.L;
+                    const long double factor=(side?1.L:-1.L)*dt*stage_weight;
+                    local[0]+=factor*A*flux[c].rho;
+                    local[1]+=factor*A*flux[c].eng;
+                    local[2]+=factor*T*flux[c].mom_w;
+                    unweighted_torque+=(side?1.L:-1.L)*dt*T*flux[c].mom_w;
+                    for(int k=0;k<2;++k)
+                        local[3+k]+=factor*A*species_flux[k*grid.GetTotalSize()+c];
+                }
+            }
+        }
+        owner_.evaluate_patch(control,block_id,state,grid,dt,dU,ds,
+            gravity,cfg,stage_weight,stream);
+        std::lock_guard lock(mutex_);
+        for(int k=0;k<5;++k)outward_[k]+=local[k];
+        unweighted_torque_+=unweighted_torque;
+        ++stage_calls_;
+    }
+    void update_patch(const FluidState& old,const FluidState& current,FluidState& next,
+        const std::vector<FluidVector>& dU,const std::vector<double>& ds,
+        const Grid& grid,double old_weight,double flux_weight,
+        const NumericsConfig& cfg,void* stream=nullptr) const override {
+        owner_.update_patch(old,current,next,dU,ds,grid,old_weight,flux_weight,cfg,stream);
+    }
+    std::array<long double,5> outward() const {
+        std::lock_guard lock(mutex_);return outward_;
+    }
+    long double unweighted_torque() const {
+        std::lock_guard lock(mutex_);return unweighted_torque_;
+    }
+    int stage_calls() const {std::lock_guard lock(mutex_);return stage_calls_;}
+private:
+    const Numerics::IHydroSolver& owner_;
+    const IdealGas& eos_;
+    mutable std::mutex mutex_;
+    mutable std::array<long double,5> outward_{};
+    mutable int stage_calls_=0;
+    mutable long double unweighted_torque_=0.;
+};
+
 template<typename Solver>
-void test_rz_rotating_closed_budget(int direction,double inner) {
+void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false) {
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
     SpeciesManager species;
     species.add_species("gas0",1.,1.,1.4,3.);
     species.add_species("gas1",2.,1.,1.4,3.);
     IdealGas eos(1.4,species);
     Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> policy(eos,rz);
-    const Numerics::IHydroSolver& hydro=policy;
+    RzBoundaryBudgetObserver observer(policy,eos);
+    const Numerics::IHydroSolver& hydro=observer;
     Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> legacy(eos);
     if(hydro.geometry_semantics()!=rz
         || legacy.geometry_semantics()!=GridMetrics::GeometrySemantics::Existing)
@@ -462,6 +544,11 @@ void test_rz_rotating_closed_budget(int direction,double inner) {
     config.grid.amr_max_blocks=32;config.amr.lrefinemin=0;config.amr.lrefinemax=1;
     config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
     config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="reflecting";
+    if(open) {
+        config.grid.x1r_boundary_type="outflow";
+        config.grid.x1l_boundary_type=inner==0.?"reflecting":"outflow";
+        config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="outflow";
+    }
     amr::AMRControl control(32,2);
     control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
         {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
@@ -553,13 +640,16 @@ void test_rz_rotating_closed_budget(int direction,double inner) {
             });
         Solver::solve(control,1.e-4,boundary,nullptr,&hydro,numerics);
         const auto now=totals();
-        // Reflecting physical boundaries have exactly zero advective
-        // outward torque/mass/energy; axis torque is zero by regularity.
-        const long double jerror=std::abs(now[2]-before[2])/before[3];
-        const long double merror=std::abs(now[0]-before[0])/before[0];
-        const long double eerror=std::abs(now[1]-before[1])/before[1];
-        const long double xerror=std::max(std::abs(now[4]-before[4])/before[4],
-            std::abs(now[5]-before[5])/before[5]);
+        const auto out=observer.outward();
+        const long double jerror=std::abs(now[2]-before[2]+out[2])
+            /(before[3]+std::abs(out[2]));
+        const long double merror=std::abs(now[0]-before[0]+out[0])
+            /(before[0]+std::abs(out[0]));
+        const long double eerror=std::abs(now[1]-before[1]+out[1])
+            /(before[1]+std::abs(out[1]));
+        const long double xerror=std::max(std::abs(now[4]-before[4]+out[3])
+            /(before[4]+std::abs(out[3])),std::abs(now[5]-before[5]+out[4])
+            /(before[5]+std::abs(out[4])));
         if(jerror>1.e-12L||merror>1.e-12L||eerror>1.e-12L||xerror>1.e-12L)
             throw std::runtime_error("RZ rotating mixed-AMR closed science budget");
         maxJ=std::max(maxJ,jerror);maxM=std::max(maxM,merror);
@@ -578,11 +668,23 @@ void test_rz_rotating_closed_budget(int direction,double inner) {
     if(maxTorqueRegister==0.)throw std::runtime_error("rotating fixture never exercised torque reflux");
     const auto& topology=control.RequireFluxTopologyPlan(2,rz,-1,true);
     if(!topology.angular_transport)throw std::runtime_error("rotating hydro lost torque identity");
-    std::cout<<"RZ_ROTATING_CLOSED method="<<Solver::name()<<" direction="<<direction
+    const auto final_out=observer.outward();
+    if(open && final_out[2]==0.)throw std::runtime_error("open fixture has zero external torque");
+    const int stages=std::is_same_v<Solver,SolverEuler>?1:(std::is_same_v<Solver,SolverRK2>?2:3);
+    if(observer.stage_calls()!=steps*stages*static_cast<int>(active.size()))
+        throw std::runtime_error("boundary budget missed a real RK patch-stage");
+    const auto final_state=totals();
+    const long double naive_error=std::abs(final_state[2]-before[2]+observer.unweighted_torque())
+        /(before[3]+std::abs(observer.unweighted_torque()));
+    if(open && stages>1 && naive_error<=1.e-12L)
+        throw std::runtime_error("wrong RK boundary stage accounting escaped negative control");
+    std::cout<<"RZ_ROTATING_BUDGET open="<<open<<" method="<<Solver::name()<<" direction="<<direction
         <<" inner="<<inner<<" steps="<<steps<<" J_error="<<static_cast<double>(maxJ)
         <<" mass_error="<<static_cast<double>(maxM)<<" E_error="<<static_cast<double>(maxE)
         <<" species_error="<<static_cast<double>(maxSpecies)
-        <<" max_torque_register="<<maxTorqueRegister<<'\n';
+        <<" outward_torque="<<static_cast<double>(final_out[2])
+        <<" naive_stage_error="<<static_cast<double>(naive_error)
+        <<" stage_calls="<<observer.stage_calls()<<" max_torque_register="<<maxTorqueRegister<<'\n';
 }
 
 template<typename Solver>
@@ -755,9 +857,14 @@ int main()
     for(int direction:{0,1})for(double inner:{0.,1.})
         test_rz_mixed_hydro_stage(direction,inner);
     for(int direction:{0,1})for(double inner:{0.,1.}) {
-        test_rz_rotating_closed_budget<SolverEuler>(direction,inner);
-        test_rz_rotating_closed_budget<SolverRK2>(direction,inner);
-        test_rz_rotating_closed_budget<SolverRK3>(direction,inner);
+        test_rz_rotating_boundary_budget<SolverEuler>(direction,inner);
+        test_rz_rotating_boundary_budget<SolverRK2>(direction,inner);
+        test_rz_rotating_boundary_budget<SolverRK3>(direction,inner);
+    }
+    for(int direction:{0,1})for(double inner:{0.,1.}) {
+        test_rz_rotating_boundary_budget<SolverEuler>(direction,inner,true);
+        test_rz_rotating_boundary_budget<SolverRK2>(direction,inner,true);
+        test_rz_rotating_boundary_budget<SolverRK3>(direction,inner,true);
     }
     test_rz_host_cfl();
     test_rz_host_hydro();
