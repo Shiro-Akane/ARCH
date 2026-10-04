@@ -17,6 +17,8 @@
 #include "core/CompensatedSum.h"
 #include "numerics/elliptic/CartesianPoisson.h"
 
+namespace arch::multigrid { class CompositeMultigrid; }
+
 namespace arch::elliptic {
 // Shared cancellation-safe face derivative, used by scalar tests and both
 // production execution providers. Coefficients are built once on the Host.
@@ -82,6 +84,11 @@ public:
     double dot(std::span<const double> x, std::span<const double> y) const;
     void project(std::span<double> x) const;
 private:
+    friend class arch::multigrid::CompositeMultigrid;
+    // Only the hierarchy owner can construct a derived operator from a real
+    // fine operator. No public flag or AMR leaf level grants this provenance.
+    CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
+                     BoundaryKind kind, const CompositePoisson* fine);
     CartesianMesh base_;
     BoundaryKind kind_;
     CompositeBoundary boundary_;

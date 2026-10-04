@@ -25,6 +25,8 @@ struct BoundaryData {
     std::array<std::vector<double>, 6> values; // 2*axis + side; empty for periodic.
 };
 
+// Geometry/arithmetic checks shared with controlled internal MG derivation.
+namespace detail { void validate_mesh_geometry(const CartesianMesh& mesh); }
 void validate_mesh(const CartesianMesh& mesh);
 void validate_boundary(const CartesianMesh& mesh, const BoundaryData& boundary);
 void validate_values(std::span<const double> values, std::size_t size);

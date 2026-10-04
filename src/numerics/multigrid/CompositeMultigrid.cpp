@@ -111,7 +111,7 @@ CompositeMultigrid::CompositeMultigrid(elliptic::CartesianMesh base,std::vector<
         }
         levels_.back().parent=std::move(parents);
         try {
-            levels_.emplace_back(CompositePoisson(coarse_base,std::move(coarse),kind));
+            levels_.emplace_back(CompositePoisson(coarse_base,std::move(coarse),kind,&fine));
         } catch (const std::invalid_argument& error) {
             throw std::invalid_argument("Composite coarse mesh cells=(" +
                 std::to_string(coarse_base.cells[0]) + "," +

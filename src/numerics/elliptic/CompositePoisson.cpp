@@ -87,9 +87,38 @@ std::array<double,3> CompositePoisson::center(int cell) const {
 }
 /** Validate a nonoverlapping covering of the domain before constructing faces. */
 CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells, BoundaryKind kind)
+    : CompositePoisson(base,std::move(cells),kind,nullptr) {}
+
+/** Validate a controlled dyadic derivation while retaining shared assembly. */
+CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
+    BoundaryKind kind, const CompositePoisson* fine)
     : base_(base), kind_(kind), boundary_(resolve_boundary(base,kind)),
       cells_(std::move(cells)) {
-    validate_mesh(base_);
+    if (!fine) validate_mesh(base_);
+    else {
+        detail::validate_mesh_geometry(base_);
+        const auto& parent=fine->base();
+        if (base_.dimension!=parent.dimension || base_.geometry!=parent.geometry ||
+            base_.semantics!=parent.semantics || kind!=fine->boundary_kind())
+            throw std::invalid_argument("Composite coarse derivation changes geometry/boundary");
+        bool changed=false;
+        for (int a=0;a<3;++a) {
+            if (base_.origin[a]!=parent.origin[a])
+                throw std::invalid_argument("Composite coarse derivation changes origin");
+            const bool unchanged=base_.cells[a]==parent.cells[a] &&
+                                 base_.spacing[a]==parent.spacing[a];
+            const bool halved=a<base_.dimension && !fine->max_level() &&
+                parent.cells[a]>4 && base_.cells[a]==parent.cells[a]/2 &&
+                base_.spacing[a]==2.*parent.spacing[a];
+            if (!unchanged && !halved)
+                throw std::invalid_argument("Composite coarse derivation is not controlled dyadic coarsening");
+            changed|=halved;
+            if (base_.cells[a]*base_.spacing[a]!=parent.cells[a]*parent.spacing[a])
+                throw std::invalid_argument("Composite coarse derivation changes domain");
+        }
+        if (!fine->max_level() && !changed)
+            throw std::invalid_argument("Composite coarse derivation makes no progress");
+    }
     if (kind != BoundaryKind::Periodic && kind != BoundaryKind::Dirichlet &&
         kind != BoundaryKind::RadialIsolated && kind != BoundaryKind::CurvilinearIsolated)
         throw std::invalid_argument("Invalid composite boundary kind");

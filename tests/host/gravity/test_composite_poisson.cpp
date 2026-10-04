@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <limits>
+#include <type_traits>
 using namespace arch;
 namespace {
 constexpr double pi=constants::math::pi;
@@ -48,27 +49,62 @@ std::vector<elliptic::CompositeCell> make_origin_seam_cells(
     return cells;
 }
 
-/** Reproduce the exact root dimensions of the failed Jeans 3D campaign.
- * This validates diagnostic provenance, not support for the rejected hierarchy.
+/** Internal anisotropy is hierarchy-owned; physical inputs retain ratio <=2.
+ * The solve here is an algebraic residual check, not an independent science gate.
  */
 void coarse_mesh_diagnostic() {
-    auto base=base_mesh(3,16);
-    base.cells={64,16,16};base.spacing={1./64,1./64,1./64};
-    elliptic::validate_mesh(base);
-    try {
-        multigrid::CompositeMultigrid solver(base,make_cells(base,false));
-    } catch (const std::invalid_argument& error) {
-        const std::string message=error.what();
-        std::cout<<message<<'\n';
-        require(message.find("Composite coarse mesh cells=(4,4,4)")!=std::string::npos,
-                "coarse diagnostic lacks actual failing mesh");
-        require(message.find("spacing=(0.250000,0.062500,0.062500)")!=std::string::npos,
-                "coarse diagnostic lacks actual spacing");
-        require(message.ends_with("spacing ratio=4.000000 exceeds limit=2"),
-                "coarse diagnostic conflates spacing with finite diagonal");
-        return;
-    }
-    throw std::runtime_error("Known unsupported coarse hierarchy unexpectedly accepted; review contract");
+    static_assert(!std::is_constructible_v<elliptic::CompositePoisson,
+        elliptic::CartesianMesh,std::vector<elliptic::CompositeCell>,
+        elliptic::BoundaryKind,const elliptic::CompositePoisson*>);
+    auto rejects=[](auto function,const char* message) {
+        bool failed=false;
+        try {function();} catch(const std::invalid_argument&) {failed=true;}
+        require(failed,message);
+    };
+    auto invalid=base_mesh(3,4);invalid.spacing={4.,1.,1.};
+    rejects([&]{elliptic::CompositePoisson op(invalid,make_cells(invalid,false));},
+            "unsupported physical spacing ratio accepted");
+    rejects([&]{elliptic::CompositePoisson op(invalid,make_cells(invalid,true));},
+            "AMR leaf level bypassed physical spacing ratio");
+    invalid.spacing[0]=std::numeric_limits<double>::infinity();
+    rejects([&]{multigrid::CompositeMultigrid op(invalid,make_cells(invalid,false));},
+            "nonfinite physical geometry accepted");
+    for (const auto shape:{std::array<int,3>{32,8,4},std::array<int,3>{64,16,16}})
+        for (const auto kind:{elliptic::BoundaryKind::Periodic,elliptic::BoundaryKind::Dirichlet})
+            for (bool refined:{false,true}) {
+                auto base=base_mesh(3,shape[0]);base.cells=shape;
+                multigrid::CompositeMultigrid solver(base,make_cells(base,refined),kind);
+                const auto& op=solver.op();
+                require(solver.level_count()==static_cast<std::size_t>(
+                    (shape[0]==32?4:5)+(refined?1:0)),
+                    "coarse hierarchy stopped before bounded actual bottom");
+                std::vector<double> exact(op.size()),rhs(op.size()),residual(op.size());
+                for(int i=0;i<op.size();++i) {
+                    const auto x=op.center(i);double value=1.;
+                    for(int a=0;a<3;++a)
+                        value*=std::cos(2*pi*(x[a]-base.origin[a])/
+                            (base.cells[a]*base.spacing[a])+0.17*(a+1));
+                    exact[i]=value;
+                }
+                op.project(exact);op.apply(exact,rhs);op.project(rhs);
+                const auto solution=solver.solve(rhs,{1e-10,0.,200});
+                require(solution.report.status==multigrid::SolveStatus::Converged,
+                        "derived coarse hierarchy solve failed");
+                op.apply(solution.potential,residual);
+                for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
+                require(op.norm(residual)<=solution.report.target,
+                        "derived hierarchy independent physical residual");
+                solver.clear_initial_guess();
+                const auto repeated=solver.solve(rhs,{1e-10,0.,200});
+                require(repeated.report.status==multigrid::SolveStatus::Converged &&
+                        repeated.report.residual<=repeated.report.target,
+                        "derived hierarchy repeated solve failed");
+                std::cout<<"derived-coarse shape="<<shape[0]<<','<<shape[1]<<','<<shape[2]
+                         <<" refined="<<refined<<" boundary="<<static_cast<int>(kind)
+                         <<" levels="<<solver.level_count()
+                         <<" residual="<<op.norm(residual)
+                         <<" target="<<solution.report.target<<'\n';
+            }
 }
 
 double potential(const std::array<double,3>& x,int dim) {
@@ -785,7 +821,7 @@ int main(int argc,char** argv) {
         std::cout<<std::setprecision(17);
         if(argc>1 && std::string(argv[1])=="coarse-diagnostic") {coarse_mesh_diagnostic();return 0;}
         if (argc>1 && std::string(argv[1])=="rz") { rz_manufactured(); rz_boundary_guard(); return 0; }
-        if (argc>1 && std::string(argv[1])=="contract") { contract(); radial_convergence(); return 0; }
+        if (argc>1 && std::string(argv[1])=="contract") { contract(); coarse_mesh_diagnostic(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
         if(argc>1 && std::string(argv[1])=="curved") {curved_manufactured();curved_boundary_integral();return 0;}
         if(argc>1 && std::string(argv[1])=="singular") {curved_manufactured(true);curved_manufactured(true,true);return 0;}

@@ -195,9 +195,21 @@ class RadialCampaign:
     def regrid_cycle(self, geometry):
         """Exercise actual refine, coarsen and unchanged topology publications."""
         name = geometry + '-refine-coarsen'
+        # Core-approved similarity migration is limited to this historical
+        # low-G, single-species IdealGas sample. Never alter production G.
+        require(self.base.get('eos_type') == 'ideal'
+                and self.base.get('network_name') == 'none'
+                and self.base.get('use_burn') == 'false'
+                and self.base.get('use_diffusion') == 'false',
+                name + ': low-G similarity requires nonreactive single-species IdealGas')
+        old_g = 1e-20
+        scale = old_g / G
+        density = RHO * scale
+        require(.8 * density > float(self.base['sml_rho']),
+                name + ': migrated density overlaps the unchanged density floor')
         plots, folder, record = self.run(
-            name, geometry, nblockx1=4, rho0=RHO, amplitude=.2, width=2e7,
-            gravity_G=1e-20, temperature0=1e9, lrefinemax=1,
+            name, geometry, nblockx1=4, rho0=density, amplitude=.2, width=2e7,
+            temperature0=1e9, lrefinemax=1,
             refine_threshold=.01, derefine_threshold=.005,
             regrid_interval=2, max_steps=40, tmax=.1, plt_dstep=20)
         with (folder / 'GravityBox_regrid.tsv').open() as stream:
@@ -214,7 +226,15 @@ class RadialCampaign:
                 name + ': closed-domain conservation across regrid cycle')
         record.update(mass_relative_drift=mass_error,
                       energy_relative_drift=energy_error,
-                      refined_and_coarsened=True)
+                      refined_and_coarsened=True,
+                      similarity_migration=dict(
+                          authority='11a321d5604f9ee62b9f9587c81f14de4f128bc4:2.1',
+                          old_G=old_g, shared_G=G, scale=scale,
+                          old_rho0=RHO, migrated_rho0=density,
+                          unchanged_temperature=1e9,
+                          fluid_mass_energy_scale=scale,
+                          independent_Gauss_budget=1e-7,
+                          relative_conservation_budget=1e-12))
 
     def hydrostatic(self, geometry, quick):
         """Measure parasitic radial velocity against an independent ideal-gas balance."""
