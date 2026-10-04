@@ -3287,3 +3287,7 @@ publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0
 ## 2026-10-04：独立 CPU-only 对照工具
 
 已补齐 --cpu-only-arch 三路预热/交替测量、同线程/affinity/冻结输入、两种 CPU 基线比值与失败保留。28/28 工具测试及 help/diff check PASS。详见 PhysicalEndpointCpuBaseline-20261004.zh-CN.md 与同名 Summary.json。仅合成验证；真实 CPU-only Release 身份、计时、资源采样和科学 gate 仍未完成，qualified_benchmark=false。没有 Build/ARCH/CUDA 执行，不改变阈值，不 push/tag。
+
+## 2026-10-04：第二平台 GPU 身份差异
+
+实际preflight两次 i7-14700K/RTX4070Ti（12282MiB），不等于计划5070Ti；exit2/UUID一致，3解析测试PASS，初次fixture错误已保留。频率策略unavailable，不推断P/E或峰值。已询问平台安排，CPU继续，5070Ti/CUDA出口未完成。详见PlatformPreflight报告/Summary。上游10caebe7仅RT维护文档；不merge/Build/simulation/push/tag。
