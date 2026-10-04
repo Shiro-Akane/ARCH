@@ -146,6 +146,15 @@ def run_command(executable, input_path, affinity=None):
     return ["/usr/bin/taskset", "--cpu-list", ",".join(map(str, selected)), *command]
 
 
+def log_tail(path):
+    """Bound failure diagnostics by bytes and lines; retain the full local log."""
+    with path.open("rb") as stream:
+        stream.seek(0, os.SEEK_END)
+        stream.seek(max(0, stream.tell() - 65536))
+        tail = stream.read(65536)
+    return "\n".join(tail.decode("utf-8", errors="replace").splitlines()[-35:])
+
+
 def one_run(executable, source, destination, backend, steps, threads, *, end_time=None, expect_mixed=True, affinity=None):
     """Run one immutable input and retain the full log on failure."""
     input_path = destination / "input.par"
@@ -168,17 +177,26 @@ def one_run(executable, source, destination, backend, steps, threads, *, end_tim
         key: env.get(key) for key in ("OMP_NUM_THREADS", "OMP_DYNAMIC", "OMP_PLACES", "OMP_PROC_BIND")}
     (destination / "execution.json").write_text(json.dumps(execution, indent=2) + "\n")
     started = time.monotonic()
-    completed = subprocess.run(
-        command,
-        cwd=ROOT, env=env, capture_output=True, text=True)
+    log_path = destination / "run.log"
+    try:
+        # Stream both channels to disk throughout execution. Long-run logs must
+        # not consume an unbounded Python buffer or wait until exit to appear.
+        with log_path.open("xb") as log:
+            completed = subprocess.run(
+                command, cwd=ROOT, env=env,
+                stdout=log, stderr=subprocess.STDOUT)
+    except OSError as error:
+        execution.update(launch_error=str(error),
+                         elapsed_seconds=time.monotonic() - started)
+        (destination / "execution.json").write_text(json.dumps(execution, indent=2) + "\n")
+        raise
     elapsed = time.monotonic() - started
-    (destination / "run.log").write_text(completed.stdout + completed.stderr)
     execution.update(launch_exit_code=completed.returncode, elapsed_seconds=elapsed)
     (destination / "execution.json").write_text(json.dumps(execution, indent=2) + "\n")
     if completed.returncode != 0:
         raise RuntimeError(
             f"{destination}: ARCH/taskset launch returned {completed.returncode}\n"
-            + "\n".join((completed.stdout + completed.stderr).splitlines()[-35:]))
+            + log_tail(log_path))
     plan = list(destination.glob("*_backend_plan.txt"))
     if len(plan) != 1 or f"resolved={backend}\n" not in plan[0].read_text():
         raise RuntimeError(f"{destination}: requested backend was not used")

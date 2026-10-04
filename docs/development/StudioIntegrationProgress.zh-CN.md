@@ -3320,3 +3320,13 @@ publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0
 见OpenmpPlatformPreflightNode-20261005.zh-CN.md。
 这是平台前检，不替runner填入生产actual team，不选最优线程、不计性能通过；
 Core冻结科学场景、完整CPU出口后再执行统一CUDA/正式benchmark/批准长跑。
+
+### 物理终点 runner 流式本地日志（2026-10-05）
+
+one_run 将完整 stdout/stderr 直接写二进制本地日志，避免长跑全量内存捕获；
+非零退出只读有界末尾，启动失败留 launch_error、不重试。
+31/31（含真实 >1 MiB/非 UTF-8 子进程日志）、architecture/diff PASS；
+首轮旧 taskset 夹具失败保留，更新夹具后通过。
+见 PhysicalEndpointStreamLog-20261005.zh-CN.md 与处理后 summary。
+不运行 ARCH/Build/CUDA、不重复未变 production JENS 短包；
+资源采样/科学预算/统一 CUDA/正式 benchmark/长跑出口仍未完成。

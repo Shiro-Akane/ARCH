@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synthetic IO tests of stopping semantics; no ARCH process is launched."""
+"""Stopping/IO semantics with synthetic data and real tool children, never ARCH."""
 import math
 import os
 import json
@@ -123,6 +123,52 @@ class PhysicalEndpointTests(unittest.TestCase):
             self.assertEqual(process.call_count, 1)
         self.assertIn("max_steps=-1\n", (destination/"input.par").read_text())
         self.assertTrue((destination/"run.log").exists())
+
+    def test_real_failed_child_streams_full_binary_log_and_bounds_diagnostics(self):
+        destination = self.root / "large-log-failure"
+        child = (r"import os; os.write(1,b'FIRST-ONLY\n'); "
+                 r"os.write(1,b'x'*1048576); os.write(2,b'\xff\nLAST-ERROR\n'); "
+                 "raise SystemExit(7)")
+        with patch("run_cuda_matrix.run_command", return_value=[sys.executable, "-c", child]):
+            with self.assertRaisesRegex(RuntimeError, "launch returned 7") as caught:
+                one_run(Path(sys.executable), self.root/"input", destination, "cpu", 2, 1)
+        raw = (destination/"run.log").read_bytes()
+        self.assertEqual(len(raw), 1048576 + len(b"FIRST-ONLY\n") + len(b"\xff\nLAST-ERROR\n"))
+        self.assertTrue(raw.startswith(b"FIRST-ONLY\n"))
+        self.assertTrue(raw.endswith(b"\xff\nLAST-ERROR\n"))
+        self.assertIn("LAST-ERROR", str(caught.exception))
+        self.assertNotIn("FIRST-ONLY", str(caught.exception))
+        self.assertLess(len(str(caught.exception)), 66000)
+        identity = json.loads((destination/"execution.json").read_text())
+        self.assertEqual(identity["launch_exit_code"], 7)
+
+    def test_success_uses_file_descriptor_without_capture_buffer(self):
+        destination = self.root / "streamed-success"
+        def child(*args, **kwargs):
+            self.assertNotIn("capture_output", kwargs)
+            self.assertNotIn("text", kwargs)
+            self.assertEqual(kwargs["stderr"], subprocess.STDOUT)
+            kwargs["stdout"].write(b"live child log\n")
+            kwargs["stdout"].flush()
+            self.assertEqual((destination/"run.log").read_bytes(), b"live child log\n")
+            (destination/"case_backend_plan.txt").write_text("resolved=cpu\n")
+            return CompletedProcess(args[0], 0)
+        with patch("run_cuda_matrix.subprocess.run", side_effect=child), patch(
+                "run_cuda_matrix.driver_seconds", return_value=1), patch(
+                "run_cuda_matrix.gravity_times", return_value={}), patch(
+                "run_cuda_matrix.regrid_metrics", return_value={}):
+            result = one_run(self.root/"unused", self.root/"input", destination, "cpu", 2, 1)
+        self.assertEqual(result["execution"]["launch_exit_code"], 0)
+        self.assertEqual((destination/"run.log").read_bytes(), b"live child log\n")
+
+    def test_missing_executable_preserves_launch_error_without_retry(self):
+        destination = self.root / "missing-executable"
+        with self.assertRaises(FileNotFoundError):
+            one_run(self.root/"no-such-executable", self.root/"input", destination, "cpu", 2, 1)
+        record = json.loads((destination/"execution.json").read_text())
+        self.assertIn("launch_error", record)
+        self.assertNotIn("launch_exit_code", record)
+        self.assertEqual((destination/"run.log").read_bytes(), b"")
 
     def test_warmup_and_alternating_pairs_keep_explicit_threads(self):
         calls = []
@@ -249,8 +295,10 @@ class PhysicalEndpointTests(unittest.TestCase):
         source.write_text("tmax=1\n")
         destination = self.root/"binding-failure"
         selected = min(os.sched_getaffinity(0))
-        with patch("run_cuda_matrix.subprocess.run",
-                   return_value=CompletedProcess([], 1, "", "taskset: failed")) as run:
+        def failed_taskset(*args, **kwargs):
+            kwargs["stdout"].write(b"taskset: failed\n")
+            return CompletedProcess(args[0], 1)
+        with patch("run_cuda_matrix.subprocess.run", side_effect=failed_taskset) as run:
             with self.assertRaisesRegex(RuntimeError, "launch returned 1"):
                 one_run(self.root/"ARCH", source, destination, "cpu", 2, 1, affinity=(selected,))
         self.assertEqual(run.call_count, 1)
