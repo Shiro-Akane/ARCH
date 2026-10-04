@@ -3238,3 +3238,11 @@ Plotfile原值/FP64/未知身份/首扫描成本与wheel未验证分开表达，
 首轮完整日志保留，未删本地证据或放宽规则。新版required CI不能因Studio单job通过声称全绿。
 限定迁移授权问题已提出，未改规则；见O7ArchitectureCurrentAudit报告/Summary。
 无Build/simulation/push/tag；联合目标继续，科学待决保持。
+
+## 2026-10-04 Linux 显式 Zoom 桌面入口
+
+PhysicalPlot新增Zoom in/out，复用wheel同一zoomView状态更新，不写Config/Save/Preview。
+334/334、lint/tsc/production/diff PASS；native Sod范围缩放/点查/Zoom out及raw身份保持。
+真实drag只产生终点sample选择而未pan，保留NOT VERIFIED，不修输入路由猜测。
+两个窗口均exit0/每轮8owned退出，input/binary不变/no output/managed clean。
+见StudioNativeZoomControls报告/Summary；wheel/pan/2D native及科学/CUDA/O9仍未闭合。
