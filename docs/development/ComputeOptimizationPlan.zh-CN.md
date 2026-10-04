@@ -631,3 +631,5 @@ DriverIO checkpoint native/失败传播回归通过；CPU ARCH 与 shared schedu
 配置/API 的公开 JENS gate 暂未解除，uniform-lifecycle-1 的实际三通道演化/
 0.01→0.02 s 重启验收仍待完整配置与 checkpoint 身份接线。见
 O7JeansNativePlotConsumer-20261004.zh-CN.md；不据此关闭 RZ finding。
+
+2026-10-04 环体节点：数学路线和误差接口见 [Core 决定第7节](O7JeansRzReviewQuestions-20261004.zh-CN.md#7-rz-有限环体边界已定数学部件与误差接口)。共享 finite-ring 部件可以并行实施，完整生产边界及 RZ 科学状态维持待验；不将泊松 residual 误写为边界势／面力的总误差。
