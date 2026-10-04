@@ -3200,3 +3200,10 @@ clean64b0ce2f现有CPU binary只读inspect-config：16profile覆盖当前14case�
 完整读取23ff77c4f contract，核对当前clean be8a108b源码与writer/FP64 reader/只读导出脚本精确SHA。
 适配交付索引新增当前入口，保留旧JSON/ELF/样本身份，明确新writer unknown reason与旧样本差异。
 不Build/simulation/重跑无变化基线；不push/tag。原生wheel/drag映射、二维演化、独立oracle及完整身份仍待验证。
+
+## 2026-10-04 原生滚轮路由对照
+
+060373ea production Sod native sample202/Inspector/Current身份正常；普通/最大化窗口及普通内容区wheel均无可见响应。
+不区分工具/WSL转发与app handler，不做无证据修复；wheel/drag映射不算PASS。
+正常close exit0/8owned身份退出/config不变/no output/managed clean。
+见NativeWheelRoutingDiagnostic报告/Summary；无Core build/simulation/源码改动/基线重复/push/tag。
