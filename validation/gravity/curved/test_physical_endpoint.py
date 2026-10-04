@@ -15,7 +15,7 @@ import h5py
 import numpy as np
 
 from compare_backends import compare_pair
-from run_cuda_matrix import changed_input, one_run, paired_trials, timing_summary, parse_affinity, run_command
+from run_cuda_matrix import changed_input, one_run, paired_trials, timing_summary, parse_affinity, run_command, main
 from verify_coupled import physical_times_agree, verify
 
 
@@ -44,6 +44,7 @@ class PhysicalEndpointTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
+        (self.root/"input").write_bytes(b"# owner input\ncfl=0.4\ntmax=8\n")
 
     def tearDown(self):
         self.temp.cleanup()
@@ -260,6 +261,80 @@ class PhysicalEndpointTests(unittest.TestCase):
         self.assertIsNone(evidence["actual_openmp_team_size"])
         self.assertEqual(evidence["openmp_environment"]["OMP_PROC_BIND"], "spread")
         self.assertIn("taskset: failed", (destination/"run.log").read_text())
+
+    def test_original_input_edit_does_not_change_frozen_campaign(self):
+        source = self.root/"input"
+        original = source.read_bytes()
+        calls = []
+        def run_stub(executable, frozen, *args, **kwargs):
+            calls.append(frozen.read_bytes())
+            source.write_text("cfl=0.9\n")
+            return {"elapsed_seconds": 1.0, "driver_seconds": 0.5}
+        with patch("run_cuda_matrix.one_run", side_effect=run_stub), patch(
+                "run_cuda_matrix.compare_pair", return_value={}):
+            state = paired_trials(self.root/"binary", source, self.root/"pair", None, 1, 1, 3, end_time=1.0)
+        self.assertEqual(calls, [original]*8)
+        self.assertEqual(state["source"]["sha256"], __import__("hashlib").sha256(original).hexdigest())
+
+    def test_frozen_input_tampering_stops_before_next_backend(self):
+        def run_stub(executable, frozen, *args, **kwargs):
+            frozen.chmod(0o644)
+            frozen.write_text("cfl=0.9\n")
+            return {"elapsed_seconds": 1.0}
+        state = {}
+        with patch("run_cuda_matrix.one_run", side_effect=run_stub) as run:
+            with self.assertRaisesRegex(ValueError, "frozen source input changed"):
+                paired_trials(self.root/"binary", self.root/"input", self.root/"pair",
+                              None, 1, 1, 3, end_time=1.0, state=state)
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(state["status"], "failed")
+        self.assertEqual(state["trials"], [])
+
+    def test_cli_collision_and_bad_labels_preserve_existing_evidence(self):
+        binary = self.root/"binary"
+        binary.write_bytes(b"not executed")
+        existing = self.root/"existing"
+        existing.mkdir()
+        sentinel = b"old independent evidence"
+        (existing/"summary.json").write_bytes(sentinel)
+        base = ["runner", "--arch", str(binary), "--output", str(existing), "--pair"]
+        with patch("sys.argv", base+[f"good:{self.root/'input'}:2"]), patch(
+                "run_cuda_matrix.paired_trials") as run:
+            with self.assertRaises(FileExistsError):
+                main()
+        run.assert_not_called()
+        self.assertEqual((existing/"summary.json").read_bytes(), sentinel)
+        output = self.root/"not-created"
+        for labels in (["../escape"], ["/absolute"], ["same", "same"], ["has space"], ["summary.json"]):
+            args = ["runner", "--arch", str(binary), "--output", str(output)]
+            for label in labels:
+                args += ["--pair", f"{label}:{self.root/'input'}:2"]
+            with patch("sys.argv", args), patch("run_cuda_matrix.paired_trials") as run:
+                with self.assertRaises(SystemExit) as error:
+                    main()
+                self.assertEqual(error.exception.code, 2)
+            run.assert_not_called()
+            self.assertFalse(output.exists())
+
+    def test_missing_binary_does_not_create_campaign_output(self):
+        output = self.root/"no-binary-output"
+        args = ["runner", "--arch", str(self.root/"missing"), "--output", str(output),
+                "--pair", f"case:{self.root/'input'}:2"]
+        with patch("sys.argv", args), patch("run_cuda_matrix.paired_trials") as run:
+            with self.assertRaises(FileNotFoundError):
+                main()
+        run.assert_not_called()
+        self.assertFalse(output.exists())
+
+    def test_existing_pair_directory_refuses_before_overwriting_snapshot(self):
+        folder = self.root/"pair"
+        folder.mkdir()
+        (folder/"frozen-source.par").write_bytes(b"preserved")
+        with patch("run_cuda_matrix.one_run") as run:
+            with self.assertRaises(FileExistsError):
+                paired_trials(self.root/"binary", self.root/"input", folder, 2, 1, 1, 1)
+        run.assert_not_called()
+        self.assertEqual((folder/"frozen-source.par").read_bytes(), b"preserved")
 
     def test_existing_parity_budget_not_relaxed(self):
         cpu, cuda = self.root/"cpu", self.root/"cuda"

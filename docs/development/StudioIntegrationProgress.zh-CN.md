@@ -3276,3 +3276,10 @@ publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0
 19/19含真实kernel child绑定probe PASS，execution记录requested与actual team unknown分开。
 不猜WSL P/E映射；CPU-only/观测/冻结包待补，qualified benchmark=false，无ARCH/CUDA实际轨迹。
 见PhysicalEndpointAffinity报告/Summary；未Build或重复Studio/Core基线，无push/tag/raw上传。
+
+## 2026-10-04 终点 runner 输入冻结与证据保护
+
+新output原子创建/全部spec preflight，旧summary保留；label越界/重复/保留名拒绝。
+每pair frozen-source原字节/SHA/readonly，全部backend复用；篡改失败停止，不受原文件后续编辑影响。
+24/24 targeted PASS；仅合成/工具，无ARCH/CUDA/benchmark、无科学定义或budget变化。
+见PhysicalEndpointInputFreeze报告/Summary；外部数据/完整binary身份与实际科学gate仍未完成，无push/tag。

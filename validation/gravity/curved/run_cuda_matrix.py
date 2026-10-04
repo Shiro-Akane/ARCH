@@ -13,7 +13,8 @@ Endpoint mode requires --cpu-threads, --cuda-host-threads and --repeats >=3.
 It warms each backend once and alternates measured pair order. Thread screening,
 CPU-only baselines, manifests and frozen scientific inputs are still required.
 Use --cpu-affinity / --cuda-host-affinity for explicit Linux taskset lists.
-CPU IDs are observed logical CPUs, never inferred P/E topology. Omitted lists
+CPU IDs are observed logical CPUs, never inferred P/E topology.
+Output must be a new directory; every pair retains an exact frozen source copy. Omitted lists
 retain legacy inherited affinity and cannot qualify an affinity-frozen benchmark.
 
 Each run has its own input and output directory. The existing coupled verifier
@@ -203,8 +204,22 @@ def paired_trials(executable, source, destination, steps, cpu_threads, cuda_thre
         raise ValueError("positive repeats and explicit backend thread budgets required")
     if end_time is not None and repeats < 3:
         raise ValueError("physical endpoint measurements require at least three pairs")
+    # Read the owner-provided input once; all backends use this exact snapshot.
+    raw = source.read_bytes()
+    raw.decode("utf-8")  # reject incompatible input before creating any output
+    source_sha = hashlib.sha256(raw).hexdigest()
+    destination.mkdir(parents=True, exist_ok=False)
+    frozen = destination / "frozen-source.par"
+    frozen.write_bytes(raw)
+    frozen.chmod(0o444)
     state = state if state is not None else {}
-    state.update(warmup=None, trials=[], attempts=[], status="running")
+    state.update(warmup=None, trials=[], attempts=[], status="running",
+                 source={"path": str(source), "sha256": source_sha,
+                         "frozen_path": str(frozen)})
+    def require_frozen_source():
+        if hashlib.sha256(frozen.read_bytes()).hexdigest() != source_sha:
+            raise ValueError("frozen source input changed; campaign stopped")
+
 
     def pair(phase, repeat, order):
         record = {"phase": phase, "repeat": repeat, "order": list(order),
@@ -216,11 +231,13 @@ def paired_trials(executable, source, destination, steps, cpu_threads, cuda_thre
             for backend in order:
                 record["active_backend"] = backend
                 notify()
+                require_frozen_source()
                 record["runs"][backend] = one_run(
-                    executable, source, folder/backend, backend, steps,
+                    executable, frozen, folder/backend, backend, steps,
                     cpu_threads if backend == "cpu" else cuda_threads,
                     end_time=end_time, expect_mixed=expect_mixed,
                     affinity=cpu_affinity if backend == "cpu" else cuda_affinity)
+                require_frozen_source()
                 notify()
             record["parity"] = compare_pair(
                 destination.name, folder/"cpu", folder/"cuda", steps,
@@ -300,23 +317,16 @@ def main():
         parser.error(str(error))
     executable = args.arch.resolve()
     output = args.output.resolve()
-    output.mkdir(parents=True, exist_ok=True)
-    report = {
-        "executable": str(executable),
-        "sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
-        "pairs": {},
-        "schedules": {},
-        "speedups": {},
-        "qualified_benchmark": False,
-        "pending": ["owner-frozen inputs/budgets", "thread/affinity screening",
-                    "CPU-only baseline", "hardware/build/effective-input manifest",
-                    "resource sampling"],
-    }
+    specifications = []
+    labels = set()
     for specification in args.pair or args.endpoint_pair:
         parts = specification.split(":")
         if len(parts) not in (3, 4):
             parser.error("pair must be label:input.par:steps-or-t-end[:amr|regular]")
         label, input_name, count = parts[:3]
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", label) or label in labels or label == "summary.json":
+            parser.error("pair label must be unique and a single safe directory name")
+        labels.add(label)
         mode = parts[3] if len(parts) == 4 else "amr"
         if mode not in ("amr", "regular"):
             parser.error("pair mode must be amr or regular")
@@ -328,7 +338,24 @@ def main():
             parser.error("invalid step quota or physical endpoint")
         if not source.is_file() or (steps is not None and steps < 1) or (
                 end_time is not None and (not math.isfinite(end_time) or end_time <= 0)):
-            raise ValueError(f"{label}: invalid input or stopping condition")
+            parser.error(f"{label}: invalid input or stopping condition")
+        source.read_bytes().decode("utf-8")
+        specifications.append((label, source, steps, end_time, mode))
+    # Refuse a preexisting directory atomically before touching summary or inputs.
+    executable_sha = hashlib.sha256(executable.read_bytes()).hexdigest()
+    output.mkdir(parents=True, exist_ok=False)
+    report = {
+        "executable": str(executable),
+        "sha256": executable_sha,
+        "pairs": {},
+        "schedules": {},
+        "speedups": {},
+        "qualified_benchmark": False,
+        "pending": ["owner-frozen inputs/budgets", "thread/affinity screening",
+                    "CPU-only baseline", "hardware/build/effective-input manifest",
+                    "resource sampling"],
+    }
+    for label, source, steps, end_time, mode in specifications:
         schedule = {}
         report["schedules"][label] = schedule
         def publish():
