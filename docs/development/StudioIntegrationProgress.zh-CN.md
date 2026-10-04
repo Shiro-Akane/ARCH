@@ -3178,3 +3178,12 @@ Field切换实际reset selection，重新命中与selection retention分开。
 旧full-model输入缺tmax被正确拒绝，未绕过；采用现有已批准t0输入按字节复制。
 正常close两个窗口exit0/7与8owned清理、输入不变、既有8个科学output文件SHA不变/managed clean。
 见CellularPlotMarginNative报告/Summary，无代码修改或334项重复；科学CPU/CUDA/O9仍未闭合。
+
+## 2026-10-04 全模型旧输入当前契约复验
+
+clean64b0ce2f现有CPU binary只读inspect-config：16profile覆盖当前14case集合，
+15complete/1incomplete（CellularDet缺tmax），没有Setup/EOS/CUDA/simulationReady。
+另有已批准t0 Cellular输入static complete，但use_burn=false，不冒充旧burn-on迁移通过。
+旧HTTP全成功报告保持其旧binary/input范围；新失败不回填默认、不隐藏、不改阈值。
+见FullModelCurrentInputAudit报告/Summary；无代码或334基线重复，managed clean/不push/tag。
+联合科学CPU/CUDA/O9及剩余交互仍未闭合。

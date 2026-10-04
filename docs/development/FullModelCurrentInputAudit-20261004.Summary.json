@@ -1,0 +1,1042 @@
+{
+  "sourceCommit": "4e98668f21d6ed144489582ebd37be3b2776b3a6",
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "scope": "Static declared configuration before Setup only; no Init/EOS/resources/simulation readiness",
+  "rows": [
+    {
+      "input": "BurnGradient.par",
+      "case": "BurnGradient",
+      "inputSha256": "8002e05c24c1326544de9c50c6dc2c732cf0aca4642b50ca52b349bc91395601",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 113,
+      "diagnostics": [],
+      "elapsedSeconds": 0.00693099299678579
+    },
+    {
+      "input": "BurnOneZone.par",
+      "case": "BurnOneZone",
+      "inputSha256": "1381a51cac62c93c02f1000d1b568e581aeb7a2a766cf392753bbe52ea35d408",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 110,
+      "diagnostics": [],
+      "elapsedSeconds": 0.006888197996886447
+    },
+    {
+      "input": "CellularDet.par",
+      "case": "CellularDet",
+      "inputSha256": "e82fc95db2bda34045ed940065a48b110e6529748d82bb6f811870b8df905ed7",
+      "exitCode": 3,
+      "status": "error",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "incomplete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 122,
+      "diagnostics": [
+        {
+          "code": "MISSING_PARAMETER",
+          "conditionId": "formal-evolution",
+          "expected": {
+            "type": "float",
+            "units": {
+              "status": "known",
+              "unit": "s"
+            }
+          },
+          "locations": [],
+          "message": "Required input has no declared value.",
+          "module": "Runtime",
+          "parameterKey": "tmax",
+          "relatedKeys": [],
+          "severity": "error"
+        }
+      ],
+      "elapsedSeconds": 0.006342557986499742
+    },
+    {
+      "input": "CooperativeHotspots.par",
+      "case": "CooperativeHotspots",
+      "inputSha256": "e4319416ca597a495ebb8fa3e91592a3dd4353348628554a706cbd172854fadb",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 116,
+      "diagnostics": [],
+      "elapsedSeconds": 0.005892387998756021
+    },
+    {
+      "input": "DiffusionMode.par",
+      "case": "DiffusionMode",
+      "inputSha256": "205e63f4b3f03ce188f19b0654720c5e85f9ebaf54f6f5429703ff8cf7adcad3",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 100,
+      "diagnostics": [],
+      "elapsedSeconds": 0.005435866012703627
+    },
+    {
+      "input": "ExternalGravity.par",
+      "case": "ExternalGravity",
+      "inputSha256": "73f9a423fc378a1ac063d4190e022122c8db460298d524539ad958d19ee30a7d",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 98,
+      "diagnostics": [],
+      "elapsedSeconds": 0.005495510995388031
+    },
+    {
+      "input": "Gaussian.par",
+      "case": "Gaussian",
+      "inputSha256": "0d58c79863cb77aea3b58c5f7e308f2632b2e214622b2ce47c2b8fa8e0cd8c45",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 126,
+      "diagnostics": [],
+      "elapsedSeconds": 0.006132352995336987
+    },
+    {
+      "input": "Gaussian3D-spherical.par",
+      "case": "Gaussian",
+      "inputSha256": "e1bb508885959ba48a7d41023a50635fcf35c57e2524ee10682a79ba937ce346",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 107,
+      "diagnostics": [],
+      "elapsedSeconds": 0.005733904996304773
+    },
+    {
+      "input": "Gaussian3D.par",
+      "case": "Gaussian",
+      "inputSha256": "c4eba722b78c245b5d7ebe8a24ed72b51d08dbdaab3b1d7794bb7670a8fcfe7a",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 107,
+      "diagnostics": [],
+      "elapsedSeconds": 0.006566002004547045
+    },
+    {
+      "input": "GravityBox.par",
+      "case": "GravityBox",
+      "inputSha256": "524bd50ae34e1408cf79b05159424264c6b92b351e64fa52971b6b95dc642fc5",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 106,
+      "diagnostics": [],
+      "elapsedSeconds": 0.006017462001182139
+    },
+    {
+      "input": "JeansWave.par",
+      "case": "JeansWave",
+      "inputSha256": "636c7a948009b7ab4a46eca26246f3bed475a6612bf8441ca5213bb2182caeaa",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 101,
+      "diagnostics": [],
+      "elapsedSeconds": 0.006170138993184082
+    },
+    {
+      "input": "RT.par",
+      "case": "RT",
+      "inputSha256": "aa72d96c240e3cd349fdae1f75bbd79a23a7b144fc926713fb00a0586f890602",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 100,
+      "diagnostics": [],
+      "elapsedSeconds": 0.005940962000750005
+    },
+    {
+      "input": "SNIaCoupled.par",
+      "case": "SNIaCoupled",
+      "inputSha256": "0bf177a94c518f007a6c0bc11868150e8d9eb3f46c7492916ae36df4e066c07b",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 116,
+      "diagnostics": [],
+      "elapsedSeconds": 0.006526195997139439
+    },
+    {
+      "input": "Sedov.par",
+      "case": "Sedov",
+      "inputSha256": "35646e15bfb001d53c6a9987abf596ef0e0bb683bb6bfd4070ef2fe90b899137",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 102,
+      "diagnostics": [],
+      "elapsedSeconds": 0.005762843997217715
+    },
+    {
+      "input": "SmoothAdvection.par",
+      "case": "SmoothAdvection",
+      "inputSha256": "374077d75ca66534f3b10ca6bf7cd6ebed8ce758e619b081271336116fb71212",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 100,
+      "diagnostics": [],
+      "elapsedSeconds": 0.00561240800016094
+    },
+    {
+      "input": "Sod.par",
+      "case": "Sod",
+      "inputSha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843",
+      "exitCode": 0,
+      "status": "ok",
+      "version": "3",
+      "completeness": {
+        "scope": "declared-configuration-before-setup",
+        "state": "complete"
+      },
+      "coverage": {
+        "auxiliaryParametersComplete": true,
+        "caseParametersComplete": true,
+        "conditionsComplete": true,
+        "diagnosticsComplete": true,
+        "standardParametersComplete": true
+      },
+      "execution": {
+        "caseDeclarations": "checked",
+        "caseRegistration": "checked",
+        "cuda": "not_initialized",
+        "eos": "not_loaded",
+        "filesystem": "not_accessed",
+        "setup": "not_executed",
+        "simulationReadiness": "not_checked",
+        "validationStage": "conditional-resolution"
+      },
+      "parameterCount": 102,
+      "diagnostics": [],
+      "elapsedSeconds": 0.005999158005579375
+    }
+  ],
+  "approvedCellularT0": {
+    "inputSha256": "6ca2b63719942d1a900cab8458a4417b0dc88c3a41750e37df5fff55647391e3",
+    "exitCode": 0,
+    "status": "ok",
+    "completeness": {
+      "scope": "declared-configuration-before-setup",
+      "state": "complete"
+    },
+    "coverage": {
+      "auxiliaryParametersComplete": true,
+      "caseParametersComplete": true,
+      "conditionsComplete": true,
+      "diagnosticsComplete": true,
+      "standardParametersComplete": true
+    },
+    "diagnostics": [],
+    "useBurn": false,
+    "tmax": 0,
+    "notSameConfigAsOldBurnOn": true
+  },
+  "registry": {
+    "cases": [
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "BurnGradient",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "4171da69285643702258f2ae4758fc0519dba7cadda40804f3aefff09b5055c8",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "background_temperature",
+            "center_x",
+            "peak_temperature",
+            "rho0",
+            "width"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/BurnGradient/BurnGradient.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "BurnOneZone",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "52cb9928a8afcd8437d6c3b99149112bd310bbb9cbe47ea7d034bd6e41b503c3",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "rho0",
+            "temperature0"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/BurnOneZone/BurnOneZone.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "CellularDet",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "afc2ae1c484def0d23e2f18c00da952cd886e1edf1883081bdc944874c4b9a01",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "noiseAmplitude",
+            "radiusPerturb",
+            "rhoAmbient",
+            "rhoPerturb",
+            "shock_dir",
+            "tempAmbient",
+            "tempPerturb",
+            "velxPerturb"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/Cellular/Cellular.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          2
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "CooperativeHotspots",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "dd6b0a29ee35da013ce712892a1c8de73e5c5e5124ff0f2efcbf950a3650698d",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "ambient_density",
+            "ambient_temperature",
+            "hotspot_center_x",
+            "hotspot_center_y",
+            "hotspot_radius",
+            "hotspot_separation",
+            "hotspot_temperature"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          2
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "DiffusionMode",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "99adddc7019cb1d2cf4de86b2a08c93f4bebacdef4faff71e8a6353b375bc842",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "mode",
+            "pressure0",
+            "rho0",
+            "tracer_amplitude",
+            "tracer_mean"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/DiffusionMode/DiffusionMode.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "ExternalGravity",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "512ded6e1a5f447c7b580cf14cb21205942a3f550ff3d43a3bd6b839234d4dc2",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "pressure0",
+            "rho0",
+            "velocity_x0"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/ExternalGravity/ExternalGravity.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "Gaussian",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "amp",
+            "gas_cv",
+            "p0",
+            "pressure_amplitude",
+            "rho0",
+            "u_amplitude",
+            "v_amplitude",
+            "w_amplitude",
+            "width",
+            "xc",
+            "yc",
+            "zc"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/GaussianPulse/Gaussian.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1,
+          2,
+          3
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "GravityBox",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "27e5a8bf1d22a7303fd6e45adddd3780eb990e133cb74f1927526d237a7df12d",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "amplitude",
+            "center_x",
+            "center_y",
+            "center_z",
+            "gas_cv",
+            "rho0",
+            "temperature0",
+            "temperature_amplitude",
+            "velocity0",
+            "width"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/GravityBox/GravityBox.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1,
+          2,
+          3
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "JeansWave",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "1dc38ddda8cda82399760a8cb1393d601e93a4036f85d5f7186ef06fad23d6ab",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "amplitude",
+            "mode",
+            "phase",
+            "pressure0",
+            "rho0",
+            "standing_wave"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/JeansWave/JeansWave.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "RT",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "d0fcfcc78136d34dea31fff799892ac2c4ddaefcf1f60d5e4be33307b63b515a",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "amplitude",
+            "p_int",
+            "rho_heavy",
+            "rho_light",
+            "y_int"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/RTinstability/RT_instab.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          2,
+          3
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "SNIaCoupled",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "2fe391554874d95e3802f4f7b5d66565f3afd5cf488da4b2a8c14b4d80e58a6a",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "center_x",
+            "center_y",
+            "center_z",
+            "density_amplitude",
+            "hotspot_width",
+            "rho0",
+            "temperature0",
+            "temperature_peak"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/SNIaCoupled/SNIaCoupled.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          2,
+          3
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "Sedov",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "4f91941fabb5183233b7b211f1ff61eccaefa1496c4d1e161fe214b2ce3bbae6",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "ambient_density",
+            "ambient_pressure",
+            "center_x",
+            "center_y",
+            "center_z",
+            "deposit_radius",
+            "explosion_energy"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/Sedov/Sedov.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1,
+          2,
+          3
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "SmoothAdvection",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "1c6e80c5b542c33253d41f2afd8e28ca8544443573d5db73235cda65160e144a",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "mode",
+            "pressure0",
+            "rho_amplitude",
+            "rho_mean",
+            "velocity0"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/SmoothAdvection/SmoothAdvection.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      },
+      {
+        "automaticCustomUnitInference": false,
+        "caseId": "Sod",
+        "initialAmrPreview": true,
+        "initialFieldPreview": true,
+        "inspection": {
+          "automaticExpressionInference": false,
+          "command": "--inspect-case",
+          "compiledSourceSha256": "7867565cdbe801769c0860de8d4a41254aaaa7be354951bcab69dd042a242738",
+          "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+          "hostWallTimeoutSeconds": 360,
+          "primitiveSinkProbe": true,
+          "processCpuSeconds": 300,
+          "registered": true,
+          "reviewedUnitEvidence": "current",
+          "reviewedUnitKeys": [
+            "p_left",
+            "p_right",
+            "rho_left",
+            "rho_right",
+            "u_left",
+            "u_right",
+            "x_pos"
+          ],
+          "setupReads": true,
+          "sourceFile": "/home/arch/projects/ARCH-host-clean-build-20261004/simulation/Sod/Sod.cpp",
+          "workerPlatform": "linux"
+        },
+        "previewDimensions": [
+          1
+        ],
+        "previewScope": "documented initializer domain; configuration-dependent Setup validation required"
+      }
+    ],
+    "cuda": "not_initialized",
+    "kind": "registered-cases",
+    "schemaVersion": "1.0",
+    "setup": "not_executed",
+    "sourceFreshness": "host-build-manifest-required",
+    "status": "ok",
+    "version": "1"
+  },
+  "coverageSummary": {
+    "registeredCases": 14,
+    "inputProfiles": 16,
+    "complete": 15,
+    "incomplete": 1,
+    "registrySetExactlyCovered": true,
+    "simulationReadiness": "not_checked",
+    "setup": "not_executed",
+    "cuda": "not_initialized",
+    "eos": "not_loaded"
+  }
+}
