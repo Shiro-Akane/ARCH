@@ -26,7 +26,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 5 全模型初态/AMR | Core维度驱动真实生成/CLI/session已接通；Host动态Profiles/三轴协议、UI配置维度选择/三维切片/单区状态已实现；AMR native/三维切面显示已实现；14模型真实HTTP已验证；Gaussian Cartesian三维桌面代表已通过切片/Inspector/根AMR/关闭清理；完整桌面矩阵待完成 | CPU14维护模型字段+根AMR、三维代表/曲线参考、非立方体与warm session通过；不是混合细化/科学认证 | Setup域/预算与科学验收分开 |
 | 6 O7.1 JENS | shared numeric/spacing、条件输入、accepted-state enforcement、parent/regrid transaction、native output/checkpoint与Studio catalog已接通；公开仅self+explicit CPU | 冻结uniform-lifecycle-1的9短轨迹+9真实续算、相应Core/Host及Linux消费者已记录；当前未变ELF沿用匹配receipt，不重复；见O7JeansUniformLifecycle/O7JeansNativeReview及后续ELF receipt | 这是Cartesian单IdealGas常量源CPU短子gate；非均匀/其他EOS、完整JENS、CUDA和性能不自动签收 |
 | 7 O7.2–O7.5 RZ | 内部chart、W/torque、实际Init/halo/repair/IO/checkpoint消费者已有候选；finite-ring可靠势与native A/B/RHS/residual实现已接通静态numerical路径；公开RZ regrid/self-gravity/device未开放 | 实际mixed静态原请求、源失效、逐叶真实边界势诊断及共享Cartesian实际Runtime身份链已有节点；初态/表示/续接证据范围分开；最新摘要以各节点精确SHA为准 | 连续Phi/force与空间、axis/viscosity、实际RZ Runtime全消费者科学gate仍开放；Duffy估计不能替代可靠参考，CUDA/新RZ长跑保持门槛 |
-| 8 CUDA/第二平台短测 | 待 CPU 完成 | 未编译/未计时 | 冻结同物理终点；保留负收益 |
+| 8 CUDA/第二平台短测 | 已通过的 CPU 子组按依赖接入统一 CUDA；公开未 qualified 能力继续拒绝 | sm_89 Release 构建已建立；5 个既有共享目标和 JENS accepted-cell 原 AMR CTest 实机 PASS；当前 backend consumer 与 Host contract、两个相关 CUDA CTest 实机 PASS；完整生产应用/生命周期待接 | 尚无完整 CUDA JENS 生命周期/RZ 科学签收或正式计时；冻结同物理终点，保留负收益 |
 | 9 批准的 O9 长时子集 | 待冻结输入/预算 | 未执行 | 未批准项不能称完成 |
 | 独立 plt 只读出口 | Sod 1D/Cartesian CellularDet 2D writer、隔离查询/LOD/native Inspector/Viewer 已实现 | 37 字段与checkpoint位级对照、发布失败、native UAT、evolved Sod点查及小样本成本已有证据 | Owner读取适配/单位/独立科学oracle、完整身份、大AMR同机扫描成本仍待；见 PlotfileReaderAdapterHandoff |
 
@@ -3388,3 +3388,8 @@ GNU-only外部GOMP观测library保持原body/线程请求/flags，不改Core/ELF
 ## 2026-10-05：JENS backend-local accepted-cell CUDA 节点
 
 原device AMR owner新增真实EOS→共享Jeans/GridMetrics→block minimum；301独立指数参考+12非法输入、24caloric组合和6 frozen patch维数/层级组合实机PASS，错误传播/恢复及species preflight通过。复用原AMR CTest，最终架构/diff检查通过；公共CUDA JENS门槛保持，backend消费者/父态/完整生命周期仍待接入。详见CudaJeansAcceptedCellNode-20261005.zh-CN.md及processed summary，CPU ELF/冻结收据未变，RZ/long-run/性能不宣称完成。
+
+
+## 2026-10-05：JENS backend consumer scoped 节点
+
+新增 Current 批量 minima consumer 的相关 Host contract 1/1 PASS；无能力 backend 明确拒绝空/非空请求。CUDA 完整后端依赖编译 exit0，最终增量无工作；原两个 CUDA CTest 2/2 PASS，三种积分器 Current 检查6次、失败恢复3组。仅 consumer scoped PASS，不称完整生命周期通过。当前源码与旧 CPU Build Manifest 不同，CPU ELF 本身未变，旧冻结 9+9 收据只证明对应 binary 的历史短包。Driver publication/候选父 device EOS 和完整三通道仍待接入，能力 gate 不移除。详见 CudaJeansBackendConsumerNode-20261005.zh-CN.md。

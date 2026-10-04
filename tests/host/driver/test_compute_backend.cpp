@@ -16,6 +16,7 @@
 #include <limits>
 #include <span>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -712,6 +713,22 @@ void test_multiblock_exchange_contract()
         "multi-block exchange accepted stale storage");
 }
 
+void test_jeans_consumer_is_fail_closed_by_default()
+{
+    FakeBackend backend;
+    const std::array<arch::backend::BackendStateAccess,1> accesses{{
+        {{{41},{7}},{101},arch::state::StateSlot::Current}}};
+    for(const auto batch : {std::span<const arch::backend::BackendStateAccess>{},
+                           std::span<const arch::backend::BackendStateAccess>{accesses}}) {
+        bool rejected=false;
+        try {(void)backend.evaluate_jeans_resolution(batch);}
+        catch(const std::logic_error& error) {
+            rejected=std::string(error.what())=="backend JENS accepted-state consumer is unavailable";
+        }
+        require(rejected,"unsupported backend silently accepted or fell back for JENS");
+    }
+}
+
 void test_dynamic_topology_store_is_fail_closed_by_default()
 {
     class DummyTopologyTransaction final
@@ -777,6 +794,7 @@ int main()
     test_microphysics_batch_contract();
     test_transfer_transaction();
     test_multiblock_exchange_contract();
+    test_jeans_consumer_is_fail_closed_by_default();
     test_dynamic_topology_store_is_fail_closed_by_default();
     return 0;
 }

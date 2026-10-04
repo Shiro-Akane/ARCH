@@ -417,6 +417,14 @@ public:
     {
         throw std::logic_error("backend AMR indicators are unavailable");
     }
+    // Accepted Current cells only; callers still own publication/version leases.
+    // A backend without this consumer must reject, never materialize Host state
+    // as an implicit fallback. Result order follows the supplied access order.
+    virtual std::vector<double> evaluate_jeans_resolution(
+        std::span<const BackendStateAccess>)
+    {
+        throw std::logic_error("backend JENS accepted-state consumer is unavailable");
+    }
     virtual std::unique_ptr<BackendTopologyStoreTransaction>
     begin_topology_store_transaction(
         const amr::AmrPlanScope&,

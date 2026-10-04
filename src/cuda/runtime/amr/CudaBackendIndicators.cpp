@@ -27,6 +27,72 @@ T* reserve_indicator_scratch(std::unique_ptr<DeviceAllocation<T>>& owner, std::s
 }
 } // namespace
 
+/** Read current device state into compact, ordered JENS minima without Host EOS.
+ * Validate the entire access/layout batch before enqueueing; the Driver owns
+ * StateVersion/publication readiness. Sequential kernels reuse one arena only
+ * on the same stream, and one final copy/fence precedes scratch reuse or return.
+ */
+std::vector<double> CudaBackend::evaluate_jeans_resolution(
+    std::span<const backend::BackendStateAccess> accesses)
+{
+    if (accesses.empty()) return {};
+    validate_hydro_batch_accesses(accesses);
+    std::vector<CudaBlockRuntime*> blocks;
+    std::vector<DeviceStateView> views;
+    std::size_t largest_cells = 0;
+    for (const auto& access : accesses) {
+        auto& block = impl_->require_block(access);
+        const auto view = block.require_access(access);
+        if (!valid_hydro_view(view) || !valid_hydro_grid(block.grid)
+            || view.total_size != block.grid.total_size
+            || block.grid.active_cell_count() <= 0
+            || block.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+            || view.n_species != impl_->species_count)
+            throw std::invalid_argument("invalid CUDA JENS accepted-state layout");
+        largest_cells = std::max(largest_cells, static_cast<std::size_t>(block.grid.total_size));
+        blocks.push_back(&block);
+        views.push_back(view);
+    }
+    visit_eos(impl_->eos, [&](const auto& eos) {
+        if constexpr (requires { eos.species.size(); }) {
+            if (eos.species.size() > 0 && eos.species.size() != impl_->species_count)
+                throw std::invalid_argument("CUDA JENS EOS/species extent mismatch");
+        }
+    });
+    const auto fields = 1 + static_cast<std::size_t>(impl_->species_count);
+    if (largest_cells > std::numeric_limits<std::size_t>::max() / fields / sizeof(double))
+        throw std::overflow_error("CUDA JENS scratch extent overflow");
+    impl_->select_device();
+    auto& scratch = impl_->refinement_scratch;
+    double* arena = reserve_indicator_scratch(scratch.arena, largest_cells * fields);
+    double* summaries = reserve_indicator_scratch(scratch.summary, accesses.size());
+    std::vector<double> result(accesses.size());
+    try {
+        for (std::size_t index = 0; index < blocks.size(); ++index) {
+            auto& block = *blocks[index];
+            DeviceJeansWorkspace workspace{arena, summaries + index,
+                impl_->species_count ? arena + largest_cells : nullptr, block.cfl_status.get()};
+            visit_eos(impl_->eos, [&](const auto& eos) {
+                check_cuda(launch_cuda_jeans_resolution(views[index], block.grid, eos,
+                    workspace, impl_->stream.get()), "evaluate CUDA JENS accepted-state minimum");
+                impl_->runtime_counters.kernel_count += 2;
+            });
+        }
+        const auto bytes = result.size() * sizeof(double);
+        check_cuda(cudaMemcpyAsync(result.data(), summaries, bytes, cudaMemcpyDeviceToHost,
+            impl_->stream.get()), "download CUDA JENS block minima");
+        impl_->runtime_counters.bytes_d2h += bytes;
+        quiesce();
+    } catch (...) {
+        impl_->quiesce_or_terminate();
+        throw;
+    }
+    for (double value : result)
+        if (!std::isfinite(value) || value <= 0.0)
+            throw std::runtime_error("CUDA JENS rejected an invalid accepted cell or EOS result");
+    return result;
+}
+
 std::vector<double> CudaBackend::evaluate_refinement_indicators(
     std::span<const backend::BackendStateAccess> accesses,
     const AmrConfig& config, double density_floor, std::span<const int> species)

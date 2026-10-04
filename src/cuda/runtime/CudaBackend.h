@@ -206,6 +206,9 @@ public:
         std::span<const backend::BackendStateAccess>, const AmrConfig&, double,
         std::span<const int>) override;
 
+    std::vector<double> evaluate_jeans_resolution(
+        std::span<const backend::BackendStateAccess>) override;
+
     StoreTransaction begin_store_transaction(
         amr::AmrPlanScope scope,
         std::span<const CudaBlockBinding> bindings);
