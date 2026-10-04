@@ -108,8 +108,10 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     // A=-Laplacian: A*Phi=-4*pi*G*(rho-<rho>) for periodic gravity;
     // isolated gravity keeps rho and supplies a finite-mass Dirichlet face.
     const double factor=-4.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant;
-    e.linear(w.rhs,factor,w.density,0.,{},
-        op.has_constant_nullspace()?-factor*w.mean:0.);
+    // Preserve tiny periodic density contrasts before multiplying by 4*pi*G.
+    // Shared work arithmetic is identical for host/device; physics is unchanged.
+    if(op.has_constant_nullspace())e.difference_scale(w.rhs,w.density,w.mean,factor);
+    else e.linear(w.rhs,factor,w.density);
     if(w.nodes.size){
         for(auto it=w.layers.rbegin();it!=w.layers.rend();++it)
             w.execution->run(UpdateMoments{it->size,it->data,w.nodes.data,w.moments.data,w.density.data,w.volumes.data});

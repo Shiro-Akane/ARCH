@@ -346,6 +346,13 @@ zero/constant/tiny-contrast/large-cancellation/subnormal）。范围为 stored w
 不宣称 physical source preprocessing 或 geometry 构造已证明；保守界可能超过微小
 contrast，原科学阈值未改变。见 ConstantModeProjectionLedgerNode-20261005.zh-CN.md。
 
+periodic physical source companion 与实际 CPU provider 36 lanes 已验证；发现并修复
+GRAV-PERIODIC-CONTRAST-01：factor*rho-factor*mean 的 tiny-contrast 抵消误差。
+生产改为共享 DifferenceScaleWork 先相减再相乘，物理 G/定义/阈值未改变。
+新 CPU ELF a6ce69f5... 的冻结 JENS 9短演化+9实际restart全通过；
+stored weight/geometry/full RHS identity 仍独立待证明，production RZ/CUDA gate保持。
+见 PeriodicGravitySourceNode-20261005.zh-CN.md 与处理后summary。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

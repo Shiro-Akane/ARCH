@@ -908,6 +908,81 @@ void finite_ring_tree_boundary_contract() {
     std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
 }
 
+void periodic_gravity_source_probe() {
+    using namespace Physical::Gravity;
+    const auto dump=[](const auto& x) {
+        std::cout<<'[';bool first=true;
+        for(auto value:x){if(!first)std::cout<<',';first=false;std::cout<<value;}std::cout<<']';
+    };
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
+    for(bool mixed:{false,true})for(int lane=0;lane<6;++lane) {
+        auto base=base_mesh(2,4);
+        multigrid::CompositeMultigrid solver(base,make_cells(base,mixed),elliptic::BoundaryKind::Periodic);
+        const auto& op=solver.op();auto& execution=solver.execution();
+        std::vector<double> density(op.size());
+        for(int i=0;i<op.size();++i) {
+            if(lane==0)density[i]=1.e7;
+            if(lane==1)density[i]=1.e7+(i%3-1)*.5;
+            if(lane==2)density[i]=1.e12+(i%3-1)*.000244140625;
+            if(lane==3)density[i]=(1.+(i%3)*.1)*1.e100;
+            if(lane==4)density[i]=(2.+i%3)*1.e-310;
+            if(lane==5)density[i]=(1.+i%3)*std::numeric_limits<double>::denorm_min();
+        }
+        const auto rho=execution.upload(density);
+        auto rhs=execution.array<double>(op.size());
+        const double factor=-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant;
+        const double mean=solver.mean(rho);
+        execution.difference_scale(rhs,rho,mean,factor);
+        solver.project(rhs);auto host_source=execution.download(rhs);
+        // Retain the pre-fix provider formula as a named diagnostic, not a
+        // second production path or an accepted physical source.
+        execution.linear(rhs,factor,rho,0.,{},-factor*mean);
+        solver.project(rhs);auto legacy=execution.download(rhs);
+        auto legacy_bounds=bound_periodic_gravity_source(op,density,legacy);
+        require(legacy_bounds.status==GravitySourceBoundStatus::Bounded,"legacy diagnostic bound missing");
+        auto bounds=bound_periodic_gravity_source(op,density,host_source);
+        require(bounds.status==GravitySourceBoundStatus::Bounded,"periodic provider source bound missing");
+        // Existing UniformGravity ordering is a separately named diagnostic.
+        auto subtract_first=density;const double scalar_mean=op.mean(density);
+        for(double& x:subtract_first)x=factor*(x-scalar_mean);
+        op.project(subtract_first);
+        auto alternate=bound_periodic_gravity_source(op,density,subtract_first);
+        require(alternate.status==GravitySourceBoundStatus::Bounded,"subtract-first source bound missing");
+        require(host_source==subtract_first,"corrected host source differs from subtract-first reference ordering");
+        for(int path=0;path<3;++path) {
+            const auto& actual=path==0?host_source:(path==1?subtract_first:legacy);
+            const auto& bound=path==0?bounds:(path==1?alternate:legacy_bounds);
+            if(!first)std::cout<<',';first=false;
+            std::cout<<"{\"mixed\":"<<mixed<<",\"lane\":"<<lane<<",\"path\":"
+                <<path<<",\"density\":";dump(density);std::cout<<",\"source\":";dump(actual);
+            std::cout<<",\"weights\":";dump(op.norm_weights());
+            std::cout<<",\"lower\":";dump(bound.lower);std::cout<<",\"upper\":";dump(bound.upper);
+            std::cout<<",\"cellBounds\":";dump(bound.cell_bounds);
+            std::cout<<",\"normUpper\":"<<bound.norm_upper<<'}';
+        }
+        if(lane==0)require(bounds.norm_upper==0.&&alternate.norm_upper==0.,
+            "constant positive density generated artificial source error floor");
+        if(lane==5) {
+            require(bounds.norm_upper>0.&&alternate.norm_upper>0.,
+                "unrepresentable periodic contrast got exact-zero certificate");
+            for(double x:host_source)require(x==0.,"tiny source fixture no longer rounds to zero");
+        }
+        auto bad_output=host_source;bad_output[0]=std::numeric_limits<double>::quiet_NaN();
+        require(bound_periodic_gravity_source(op,density,bad_output).status==GravitySourceBoundStatus::InvalidInput,
+            "NaN periodic output accepted");
+        auto invalid=density;invalid[0]=-1.;
+        require(bound_periodic_gravity_source(op,invalid,host_source).status==GravitySourceBoundStatus::InvalidInput,
+            "negative periodic density accepted");
+        require(bound_periodic_gravity_source(op,{},host_source).status==GravitySourceBoundStatus::InvalidInput,
+            "missing periodic density accepted");
+    }
+    auto base=base_mesh(2,4);
+    elliptic::CompositePoisson isolated(base,make_cells(base,false),elliptic::BoundaryKind::Dirichlet);
+    require(bound_periodic_gravity_source(isolated,{},{}).status==GravitySourceBoundStatus::UnsupportedNonperiodic,
+        "nonperiodic source treated as contrast");
+    std::cout<<"],\"negativePass\":true}\n";
+}
+
 void constant_mode_projection_probe() {
     using namespace elliptic;
     const auto dump=[](const auto& x) {
@@ -1727,6 +1802,7 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="periodic-source-bounds-probe") {periodic_gravity_source_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="projection-ledger-probe") {constant_mode_projection_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="gravity-source-bounds-probe") {isolated_gravity_source_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="arithmetic-ledger-probe") {native_arithmetic_ledger_probe();return 0;}
