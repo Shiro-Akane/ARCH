@@ -69,8 +69,10 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
 }
 }
 /** Build a physical-space mass tree over every active leaf. */
-GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
-    :dimension_(op.base().dimension),
+GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op,
+    amr::TopologyEpoch bound_topology)
+    :bound_mesh_(op.base()),bound_boundary_(op.boundary_kind()),bound_cells_(op.cells()),
+     bound_topology_(bound_topology),dimension_(op.base().dimension),
      finite_ring_(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz),
      reference_radius_(op.base().origin[0]+op.base().cells[0]*op.base().spacing[0]),
      volumes_(op.volumes()) {
@@ -145,18 +147,127 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
 }
 /** Recompute monopole, dipole and quadrupole moments from current density. */
 void GravityBoundary::update(std::span<const double> density) {
+    // Even a rejected attempted update retires the checked source association.
+    source_identity_.reset();ring_density_.clear();
     arch::elliptic::validate_values(density,volumes_.size());
-    for(auto layer=layers_.rbegin();layer!=layers_.rend();++layer) for(int index:*layer) {
+    for(double rho:density)if(rho<0.)throw std::invalid_argument("Negative isolated source density");
+    std::vector<BoundaryMoments> next(nodes_.size());
+    for(auto layer=layers_.rbegin();layer!=layers_.rend();++layer)for(int index:*layer) {
         const int cell=nodes_[index].cell;
         if(cell>=0) {
-            if(density[cell]<0.) throw std::invalid_argument("Negative isolated source density");
-            moments_[index]={};
             for(int q=0;q<10;++q)
-                moments_[index].value[q]=density[cell]*nodes_[index].unit_moments.value[q];
-        } else moments_[index]=combine_boundary_moments(nodes_.data(),moments_.data(),index);
-        for(double value:moments_[index].value)
-            if(!std::isfinite(value)) throw std::overflow_error("Nonfinite isolated mass moment");
+                next[index].value[q]=density[cell]*nodes_[index].unit_moments.value[q];
+        } else next[index]=combine_boundary_moments(nodes_.data(),next.data(),index);
+        for(double value:next[index].value)
+            if(!std::isfinite(value))throw std::overflow_error("Nonfinite isolated mass moment");
     }
+    // Prevalidated no-throw commit; keep the allocation stable for existing
+    // geometry/device upload views and reference consumers.
+    std::copy(next.begin(),next.end(),moments_.begin());
+}
+/** Cache actual source samples under the existing gravity dependency contract. */
+void GravityBoundary::update(std::span<const double> density,const GravitySolveIdentity& source) {
+    source_identity_.reset();ring_density_.clear();
+    validate_gravity_solve_identity(source);
+    if(!finite_ring_||!bound_topology_.value||source.topology!=bound_topology_)
+        throw std::logic_error("Ring source topology differs from bound tree");
+    if(source.gravitational_constant!=arch::constants::gravity::cgs::gravitational_constant)
+        throw std::logic_error("Ring source uses a different shared gravitational constant");
+    if(source_generation_==std::numeric_limits<std::uint64_t>::max())
+        throw std::overflow_error("Ring source generation exhausted");
+    std::vector<double> next_density(density.begin(),density.end());
+    auto next_identity=std::make_optional(source);
+    update(density);
+    ring_density_.swap(next_density);source_identity_=std::move(next_identity);
+    ++source_generation_;
+}
+/** Mesh equivalence is exact and ordered, not inferred from density array size. */
+void GravityBoundary::require_ring_operator(const arch::elliptic::CompositePoisson& op) const {
+    const auto& mesh=op.base();
+    if(!finite_ring_||mesh.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||mesh.dimension!=bound_mesh_.dimension||mesh.geometry!=bound_mesh_.geometry
+        ||mesh.cells!=bound_mesh_.cells||mesh.spacing!=bound_mesh_.spacing
+        ||mesh.origin!=bound_mesh_.origin||mesh.semantics!=bound_mesh_.semantics
+        ||op.boundary_kind()!=bound_boundary_||op.cells()!=bound_cells_)
+        throw std::logic_error("Ring boundary operator differs from bound mesh");
+}
+/** Consume all finite sources at native exterior face centers.
+ * A failed budget can retain diagnostic arrays, but errors remain uncertified
+ * and the result is not publishable. Existing production values() stays gated.
+ */
+RingBoundaryEvaluation GravityBoundary::ring_boundary(
+    const arch::elliptic::CompositePoisson& op,const GravitySolveIdentity& source,
+    const RingBoundaryControl& control) const {
+    using namespace finite_ring_detail;
+    require_ring_operator(op);
+    if(!source_identity_||source!=*source_identity_||ring_density_.size()!=volumes_.size())
+        throw std::logic_error("Ring source identity is stale or unavailable");
+    if(!std::isfinite(control.face_absolute_target)||control.face_absolute_target<0.
+        ||control.maximum_boxes_per_leaf==0||control.maximum_boxes_per_leaf>65536
+        ||control.maximum_leaf_evaluations==0)
+        throw std::invalid_argument("Invalid internal ring boundary budget");
+    RingBoundaryEvaluation result;result.source=source;result.source_generation=source_generation_;
+    const auto count=op.faces().size();
+    result.values.assign(count,0.);result.lower.assign(count,0.);result.upper.assign(count,0.);
+    result.errors.resize(count);
+    RingEnclosureControl leaf_control{};
+    leaf_control.absolute_target=positive_down(control.face_absolute_target/op.size());
+    leaf_control.maximum_boxes=control.maximum_boxes_per_leaf;
+    bool converged=true;result.status=RingBoundaryStatus::Bounded;
+    for(std::size_t face=0;face<count;++face)if(op.faces()[face].boundary_side>=0) {
+        SignedInterval total{};
+        for(const auto& node:nodes_)if(node.cell>=0) {
+            if(result.leaf_evaluations>=control.maximum_leaf_evaluations) {
+                result.status=RingBoundaryStatus::WorkLimit;return result;
+            }
+            ++result.leaf_evaluations;
+            // Same operator-owned edge arithmetic used by unit_cell_moments;
+            // lower+width could re-round an upper edge differently.
+            const auto center=op.center(node.cell);
+            const double wr=op.width(node.cell,0),wz=op.width(node.cell,1);
+            const double rl=center[0]-.5*wr,rh=center[0]+.5*wr;
+            const double zl=center[1]-.5*wz,zh=center[1]+.5*wz;
+            const auto leaf=finite_ring_potential_enclosure(rl,rh,zl,zh,
+                ring_density_[node.cell],op.faces()[face].center[0],
+                op.faces()[face].center[1],source.gravitational_constant,leaf_control);
+            result.range_evaluations+=leaf.range_evaluations;
+            if(!leaf.bound_valid) {
+                result.status=RingBoundaryStatus::PrecisionLimit;return result;
+            }
+            if(leaf.status!=RingIntervalStatus::Bounded) {
+                converged=false;
+                result.status=leaf.status==RingIntervalStatus::WorkLimit?
+                    RingBoundaryStatus::WorkLimit:RingBoundaryStatus::PrecisionLimit;
+            }
+            total=interval_sum(total,{leaf.lower,leaf.upper});
+        }
+        if(!interval_finite(total)) {
+            result.status=RingBoundaryStatus::PrecisionLimit;return result;
+        }
+        result.lower[face]=total.lower;result.upper[face]=total.upper;
+        result.values[face]=total.lower+.5*(total.upper-total.lower);
+        const double error=positive_up(std::max(result.values[face]-total.lower,
+                                                total.upper-result.values[face]));
+        result.errors[face].absolute_error=error;
+        if(!std::isfinite(result.values[face])||!std::isfinite(error)) {
+            result.status=RingBoundaryStatus::PrecisionLimit;return result;
+        }
+        if(error>control.face_absolute_target) {
+            converged=false;if(result.status==RingBoundaryStatus::Bounded)
+                result.status=RingBoundaryStatus::PrecisionLimit;
+        }
+    }
+    // Certification is all-or-nothing, including FP64 source reduction/budget.
+    if(converged)for(auto& error:result.errors)
+        error.quality=arch::elliptic::BoundaryErrorQuality::CertifiedAbsolute;
+    return result;
+}
+void GravityBoundary::require_current_ring(const arch::elliptic::CompositePoisson& op,
+    const RingBoundaryEvaluation& result) const {
+    require_ring_operator(op);
+    if(result.status!=RingBoundaryStatus::Bounded||!source_identity_
+        ||result.source!=*source_identity_||result.source_generation!=source_generation_)
+        throw std::logic_error("Ring boundary is failed, stale or from another density generation");
 }
 /** Evaluate isolated boundary potential at each exterior composite face. */
 std::vector<double> GravityBoundary::values(const arch::elliptic::CompositePoisson& op,

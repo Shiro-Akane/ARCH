@@ -53,6 +53,23 @@ struct GravityFieldStamp {
     arch::state::CompletionToken completion{};
 };
 
+/** Validate density/domain dependencies before either source-cache or field use.
+ * Completion remains a separate requirement: a valid source is not a solved field.
+ */
+inline void validate_gravity_solve_identity(const GravitySolveIdentity& source) {
+    if(!source.topology.value || source.inputs.empty() || !std::isfinite(source.input_time)
+        || !std::isfinite(source.gravitational_constant) || source.gravitational_constant<=0.
+        || !source.operator_revision || !source.boundary_revision || !source.accuracy_revision)
+        throw std::invalid_argument("Incomplete gravity solve identity");
+    for(const auto& input:source.inputs) {
+        if(!input.block.uid.value || input.block.epoch!=source.topology
+            || !arch::state::is_valid(input.version) || !input.storage_generation
+            || (input.slot!=arch::state::StateSlot::Current
+                && input.slot!=arch::state::StateSlot::Next
+                && input.slot!=arch::state::StateSlot::Scratch))
+            throw std::invalid_argument("Invalid gravity density dependency");
+    }
+}
 // Own only publication metadata. Field/workspace owners remain separate.
 // A failed solve cannot replace a previously published stamp; callers must
 // still require an exact source match before consuming any retained field.
@@ -60,22 +77,9 @@ class GravityFieldValidity {
 public:
     /** Publish a completed gravity stamp only after validating every density dependency. */
     void publish(GravityFieldStamp stamp) {
-        if (!arch::state::is_complete(stamp.completion) || !stamp.storage_generation
-            || !stamp.source.topology.value || stamp.source.inputs.empty()
-            || !std::isfinite(stamp.source.input_time)
-            || !std::isfinite(stamp.source.gravitational_constant)
-            || stamp.source.gravitational_constant <= 0.0
-            || !stamp.source.operator_revision || !stamp.source.boundary_revision
-            || !stamp.source.accuracy_revision)
+        if (!arch::state::is_complete(stamp.completion) || !stamp.storage_generation)
             throw std::invalid_argument("Incomplete gravity field publication");
-        for (const auto& input : stamp.source.inputs) {
-            if (!input.block.uid.value || input.block.epoch != stamp.source.topology
-                || !arch::state::is_valid(input.version) || !input.storage_generation
-                || (input.slot != arch::state::StateSlot::Current
-                    && input.slot != arch::state::StateSlot::Next
-                    && input.slot != arch::state::StateSlot::Scratch))
-                throw std::invalid_argument("Invalid gravity density dependency");
-        }
+        validate_gravity_solve_identity(stamp.source);
         published_ = std::move(stamp);
     }
     /** Require exact topology, time, operator settings and storage generation. */

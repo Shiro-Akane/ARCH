@@ -17,6 +17,7 @@
 
 #include "core/CompensatedSum.h"
 #include "physics/gravity/FiniteRingBoundaryMath.h"
+#include "physics/gravity/GravitySolveTypes.h"
 #include "grid/GridGeometryView.h"
 #include "grid/GridMetrics.h"
 #include "numerics/elliptic/CompositePoisson.h"
@@ -212,10 +213,33 @@ ARCH_INLINE double isolated_log_potential(const BoundaryTreeNode* nodes,
     }
     return potential.value();
 }
+/** Internal source integration budget; never config/API/browser controls.
+ * A geometric opening is not a certificate. Until moment arithmetic is bounded,
+ * this consumer visits every finite leaf using the shared source enclosure.
+ */
+struct RingBoundaryControl {
+    double face_absolute_target=0.;
+    std::uint64_t maximum_boxes_per_leaf=1024,maximum_leaf_evaluations=100000;
+};
+enum class RingBoundaryStatus : unsigned char { Bounded, WorkLimit, PrecisionLimit };
+struct RingBoundaryEvaluation {
+    RingBoundaryStatus status=RingBoundaryStatus::PrecisionLimit;
+    GravitySolveIdentity source;
+    std::uint64_t source_generation=0,leaf_evaluations=0,range_evaluations=0;
+    std::vector<double> values,lower,upper;
+    std::vector<arch::elliptic::BoundaryPotentialError> errors;
+};
 class GravityBoundary {
 public:
-    explicit GravityBoundary(const arch::elliptic::CompositePoisson&);
+    explicit GravityBoundary(const arch::elliptic::CompositePoisson&,
+        amr::TopologyEpoch bound_topology={});
     void update(std::span<const double> density);
+    // Internal checked source-cache path, not production RZ capability.
+    void update(std::span<const double> density,const GravitySolveIdentity&);
+    RingBoundaryEvaluation ring_boundary(const arch::elliptic::CompositePoisson&,
+        const GravitySolveIdentity&,const RingBoundaryControl&) const;
+    void require_current_ring(const arch::elliptic::CompositePoisson&,
+        const RingBoundaryEvaluation&) const;
     std::vector<double> values(const arch::elliptic::CompositePoisson&,double G,
                                double theta=0.25,int order=2) const;
     const auto& nodes() const {return nodes_;}
@@ -223,6 +247,14 @@ public:
     const auto& volumes() const {return volumes_;}
     const auto& moments() const {return moments_;}
 private:
+    void require_ring_operator(const arch::elliptic::CompositePoisson&) const;
+    arch::elliptic::CartesianMesh bound_mesh_;
+    arch::elliptic::BoundaryKind bound_boundary_;
+    std::vector<arch::elliptic::CompositeCell> bound_cells_;
+    amr::TopologyEpoch bound_topology_{};
+    std::optional<GravitySolveIdentity> source_identity_;
+    std::vector<double> ring_density_;
+    std::uint64_t source_generation_=0;
     int dimension_=3;
     bool finite_ring_=false;
     double reference_radius_=1.;

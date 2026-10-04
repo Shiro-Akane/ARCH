@@ -790,6 +790,123 @@ void finite_ring_moment_contract() {
 }
 
 
+/** Actual tree->native face->RHS error consumer, kept behind production gate. */
+void finite_ring_tree_boundary_contract() {
+    using namespace Physical::Gravity;
+    auto rejects=[](auto function,const char* message) {
+        bool rejected=false;try{function();}catch(const std::exception&){rejected=true;}
+        require(rejected,message);
+    };
+    for(bool mixed:{false,true})for(double radial_origin:{0.,.5}) {
+        auto base=base_mesh(2,4);
+        base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        base.origin={radial_origin,-.5,0.};
+        elliptic::CompositePoisson op(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        GravityBoundary tree(op,{7});
+        GravitySolveIdentity source;source.topology={7};
+        source.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+        source.operator_revision=source.boundary_revision=source.accuracy_revision=1;
+        source.inputs.push_back({{{1},{7}},state::StateSlot::Current,{1},1});
+        std::vector<double> density(op.size());
+        for(int cell=0;cell<op.size();++cell)density[cell]=1.+.3*op.center(cell)[1];
+        RingBoundaryControl control{};control.face_absolute_target=1.e-5;control.maximum_boxes_per_leaf=8;
+        rejects([&]{tree.ring_boundary(op,source,control);},"unprepared ring source consumed");
+        tree.update(density,source);
+        const auto result=tree.ring_boundary(op,source,control);
+        require(result.status==RingBoundaryStatus::Bounded,"bounded native-face fixture failed");
+        tree.require_current_ring(op,result);
+        const auto ledger=op.propagate_boundary_error(result.errors);
+        require(ledger.status==elliptic::BoundaryErrorStatus::Bounded&&ledger.norm_upper>0.,
+            "native-face interval did not enter canonical RHS ledger");
+        std::size_t exterior=0,newton_references=0;
+        long double reference8=0.,reference12=0.;
+        for(std::size_t face=0;face<op.faces().size();++face) {
+            const auto& f=op.faces()[face];
+            if(f.boundary_side<0) {
+                require(result.values[face]==0.&&result.errors[face].absolute_error==0.,
+                    "interior face acquired a scientific boundary value");continue;
+            }
+            ++exterior;
+            require(result.errors[face].quality==elliptic::BoundaryErrorQuality::CertifiedAbsolute
+                &&result.errors[face].absolute_error<=control.face_absolute_target,
+                "native face failed complete source budget");
+            if(newton_references)continue;
+            // Independent full-azimuth 3D Newton integral, two orders.
+            // This contact diagnostic is not a certified quadrature error.
+            const std::array<double,3> point{f.center[0],0.,f.center[1]};
+            for(int cell=0;cell<op.size();++cell) {
+                const auto x=op.center(cell);
+                const double rl=x[0]-.5*op.width(cell,0),rh=x[0]+.5*op.width(cell,0);
+                const double lo=x[1]-.5*op.width(cell,1),hi=x[1]+.5*op.width(cell,1);
+                const long double factor=static_cast<long double>(source.gravitational_constant)*density[cell];
+                reference8+=factor*independent_ring_potential(rl,rh,lo,hi,point,8);
+                reference12+=factor*independent_ring_potential(rl,rh,lo,hi,point,12);
+            }
+            require(result.lower[face]<=reference8&&reference8<=result.upper[face]
+                &&result.lower[face]<=reference12&&reference12<=result.upper[face],
+                "actual native face source diagnostics escaped interval");
+            ++newton_references;
+        }
+        require(result.leaf_evaluations==exterior*op.size(),
+            "tree traversal omitted a finite source or accepted an uncertified parent");
+        auto changed=source;changed.input_time=.25;
+        rejects([&]{tree.ring_boundary(op,changed,control);},"changed source time silently reused");
+        changed=source;changed.inputs[0].version={2};
+        rejects([&]{tree.ring_boundary(op,changed,control);},"changed density version silently reused");
+        changed=source;changed.inputs[0].storage_generation=2;
+        rejects([&]{tree.ring_boundary(op,changed,control);},"changed density allocation silently reused");
+        auto moved=base;moved.origin[1]+=.25;
+        elliptic::CompositePoisson other(moved,make_cells(moved,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        rejects([&]{tree.ring_boundary(other,source,control);},"same-count shifted mesh accepted");
+        auto reordered=op.cells();std::reverse(reordered.begin(),reordered.end());
+        elliptic::CompositePoisson order_changed(base,reordered,elliptic::BoundaryKind::CurvilinearIsolated);
+        rejects([&]{tree.ring_boundary(order_changed,source,control);},"changed cell order accepted");
+        rejects([&]{tree.values(op,source.gravitational_constant);},"production RZ gate removed");
+        auto limited=control;limited.maximum_leaf_evaluations=1;
+        const auto early=tree.ring_boundary(op,source,limited);
+        require(early.status==RingBoundaryStatus::WorkLimit&&early.leaf_evaluations==1,
+            "global source work budget ignored");
+        rejects([&]{tree.require_current_ring(op,early);},"partial work result published");
+        limited=control;limited.face_absolute_target=0.;limited.maximum_boxes_per_leaf=1;
+        const auto failed=tree.ring_boundary(op,source,limited);
+        require(failed.status!=RingBoundaryStatus::Bounded,
+            "nonzero source met hidden zero-target floor");
+        rejects([&]{tree.require_current_ring(op,failed);},"failed ring source result published");
+        require(op.propagate_boundary_error(failed.errors).status
+            ==elliptic::BoundaryErrorStatus::UncertifiedInput,
+            "failed partial source field entered certified RHS ledger");
+        auto doubled=density;for(auto& x:doubled)x*=2.;
+        const auto moment_storage=tree.moments().data();
+        tree.update(doubled,source);
+        require(tree.moments().data()==moment_storage,"moment update invalidated stable upload views");
+        rejects([&]{tree.require_current_ring(op,result);},"old source generation consumed");
+        const auto next=tree.ring_boundary(op,source,control);
+        require(next.source_generation==result.source_generation+1
+            &&next.status==RingBoundaryStatus::Bounded,"density update did not retire old generation");
+        auto bad=doubled;bad.back()=-1.;
+        const auto mass=tree.moments().front().value[0];
+        rejects([&]{tree.update(bad,source);},"negative source update accepted");
+        require(tree.moments().front().value[0]==mass,"rejected source partly published moments");
+        rejects([&]{tree.require_current_ring(op,next);},"failed update retained current source stamp");
+        changed=source;changed.topology={8};changed.inputs[0].block.epoch={8};
+        rejects([&]{tree.update(density,changed);},"new AMR epoch reused old tree");
+        tree.update(std::vector<double>(op.size(),0.),source);
+        const auto zero=tree.ring_boundary(op,source,limited);
+        require(zero.status==RingBoundaryStatus::Bounded,
+            "exact zero source acquired arithmetic or quadrature uncertainty");
+        for(double value:zero.values)require(value==0.,"zero source became nonzero field");
+        std::cout<<"RZ_RING_NATIVE_FACE mixed="<<mixed<<" radial_origin="<<radial_origin
+            <<" leaves="<<op.size()<<" exterior_faces="<<exterior
+            <<" source_evaluations="<<result.leaf_evaluations
+            <<" newton_references="<<newton_references
+            <<" newton8="<<static_cast<double>(reference8)<<" newton12="<<static_cast<double>(reference12)
+            <<" quadrature_difference="<<static_cast<double>(std::abs(reference8-reference12))
+            <<" rhs_error="<<ledger.norm_upper<<'\n';
+    }
+    std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
+}
+
 void finite_ring_axis_enclosure_contract() {
     using namespace Physical::Gravity;
     RingEnclosureControl control{};control.relative_target=1.e-10;
@@ -1316,6 +1433,7 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="ring-native-face") {std::cout<<std::setprecision(17);finite_ring_tree_boundary_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-axis-enclosure") {std::cout<<std::setprecision(17);finite_ring_axis_enclosure_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-enclosure") {std::cout<<std::setprecision(17);finite_ring_enclosure_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-k-interval") {std::cout<<std::setprecision(17);finite_ring_agm_interval_contract();return 0;}
