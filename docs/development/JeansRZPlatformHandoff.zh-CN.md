@@ -55,6 +55,13 @@ JENS 新增细化工作量、旧二维极平面与新 RZ 不属于同工作量�
 
 ### 2.1 恢复实施与科学签收边界（2026-10-04）
 
+最新可取得的协作者源码为 `4b5e496a9943099c203c6b001b1d95a56d9edf72`；
+[恢复短 gate 的 Core review](O7ResumeShortGates-20261004.zh-CN.md#core-review2026-10-04)、
+[架构迁移决定](O7ArchitectureRulesReview-20261004.zh-CN.md#2-core-决定与集成出口2026-10-04)
+及[科学子 gate 决定](O7JeansRzReviewQuestions-20261004.zh-CN.md#4-core-决定已批准子-gate-与剩余材料2026-10-04)
+补充本节授权；既有审批记录保留，完整科学验收仍未通过。
+
+
 合作者最新报告的 checkpoint 为 `4a7b43075a8b41726c20af6c3ffd6fadc41dcd96`，
 本轮增量尚未推送；维护者当前无法取得该对象，以下是基于现有共享源码及报告的
 实施决定，尚未独立复验该 checkpoint。平台更正为 14700K＋RTX 4070 Ti，

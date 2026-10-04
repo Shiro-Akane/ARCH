@@ -45,3 +45,33 @@ mixed-3d 保留原 max_steps=2，实际终点0.0005208006218809392；未到tmax=
 架构规则ID、职责迁移及候选见 O7ArchitectureRulesReview-20261004.zh-CN.md / O7ArchitectureRulesCandidate-20261004.patch，仍供Core review。JENS/RZ参考、采样含义和预算来源逐项见 O7JeansRzReviewQuestions-20261004.zh-CN.md；不自行猜定。
 
 恢复原计划其他Core/API/Studio工作；CUDA与独立三维科学覆盖继续按原计划。已通过对应短gate且输入/物理终点预算冻结的模型可长跑；本次mixed-3d的两步结果本身不提供新的长跑预算。尚未确认的RZ有限环参考、near/far误差分配和Lz finding单独等待，不再暂停所有工作。没有Windows适配、main merge或完整科学验收标签。
+
+## Core review（2026-10-04）
+
+评审对象为 `4b5e496a9943099c203c6b001b1d95a56d9edf72`，已从远端取得；
+维护者只使用 `/home/shiroakane/ARCH` 这一份 checkout，在同一分支审阅，
+未新建 ARCH 副本、worktree 或构建目录，也未启动 ARCH/CUDA 模拟。
+
+- **coarse-mesh 限定修复：源码范围认可。** 公共物理入口继续限制 Cartesian
+  spacing ratio≤2；内部构造为 private/friend，从实际 fine operator 检查维度、
+  几何语义、origin、边界、dyadic 同域和粗化进展，没有公开 bool 或 AMR level 豁免。
+  原 FGMRES、组装及 child-volume 路径保留。新增八组仅提供粗层代数残差证据；
+  不替代独立势／力／收敛和 CUDA 验收。该分支尚未包含另一工作线的 O8 user-BC
+  构造扩展，未来合并必须对受控派生入口保留完整 per-side boundary 身份，
+  不能用本分支仅支持的 BoundaryKind 互证所有新边界组合。
+- **low-G 限定迁移：方案及活动输入范围认可。** 已核对非反应、无扩散、单组分
+  IdealGas 限制和密度 floor 拒绝；共享 G、温度及其余动力学控制没有反向覆盖。
+  本机运行 `tests/host/gravity/test_radial_similarity.py -v`，3/3 通过。
+- **证据身份：** 提交 summary 的十项 inputFingerprints 与评审源码逐项一致。
+  该摘要包含三条恢复样本；6/6 CTest、33 条 quick 记录及两项径向运行结果继续
+  标为合作者平台报告，本机未重复模拟。二进制及原始 H5 未取得，
+  不将本次源码身份核对写成独立复跑或完整 Build Manifest 验收。
+- **架构候选：** 两条对应迁移已获限定实施授权，详见架构 review 第 2 节。
+  当前生产 auditor 未应用候选，两条 finding 仍保留；不能提前写成架构 PASS。
+- **JENS/RZ：** 认可静态参考的限定用途，具体批准范围、父态规则和仍待定案的
+  环体／角动量问题见科学 review 清单第 4 节；完整科学验收仍未通过。
+
+本轮独立检查和范围见同目录结果中的 `core-review.json`。后续先完成架构候选与
+既有 fixture／mutation 验收，再交付 JENS 生命周期／父态及 RZ 角动量设计。
+已有已冻结且通过对应短科学 gate 的模型可继续长轨迹；未确认的新 RZ 子集保持待审。
+正式 CUDA 验收及计时继续以 14700K＋RTX 4070 Ti 的新鲜构建与冻结输入执行。
