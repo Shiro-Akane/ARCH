@@ -10,3 +10,20 @@ restart fields. New-run initialization remains in `RunState`, separate from
 checkpoint restoration. See the [format reference](../../../docs/Reference.md#arch-checkpoint).
 
 Actual serialization is delegated entirely to the adjacent [HDF5 writer](../hdf5/README.md). Note that native composition, conserved species, controller states, and output phases are strict restart contracts, not opportunities for backend-specific state reconstruction. Refer to [restart validation](../../../validation/restart/README.md) for the exact recovery and forward-continuation checks, bearing in mind that these possess distinct acceptance criteria.
+
+
+## Internal RZ state identity
+
+The gated RZ path uses geometry_semantics_revision=2,
+geometry_chart=axisymmetric-rz and mandatory
+state_semantics=rz-m-phi-j-over-w-v1. Data/mom_w is the unique
+m_phi=J_cell/W_cell, with W=integral(r dV), in g/(cm^2 s).
+Its representative azimuthal velocity is m_phi/rho; J/V is derived
+from m_phi*W/V. The remaining conserved slots use native volume averages.
+No additional independently evolved angular array is serialized.
+
+Revision 1 cannot identify this representation and is rejected rather than
+converted. A missing/different tag is rejected before live hierarchy replacement.
+Layout version 6 and the existing chart revision 1 compatibility are unchanged.
+This discriminator does not prove a complete RZ restart contract: native
+measure/domain identity and other gated consumers require their own validation.

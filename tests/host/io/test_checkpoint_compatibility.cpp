@@ -644,7 +644,7 @@ void test_host_restart(const std::filesystem::path& directory)
             io::require_checkpoint_geometry_compatible(legacy.dim, legacy.geometry, legacy.geometry_identity);
         } else if (corruption == 4) {
             expect_rejected([&] { read_chk(path.string(), protected_tree, protected_state,
-                config, species, identity, {1, "axisymmetric-rz"}); },
+                config, species, identity, io::current_rz_checkpoint_geometry()); },
                 "legacy checkpoint accepted as RZ");
         } else {
             reject_unchanged(identity, "invalid geometry identity");
@@ -655,16 +655,16 @@ void test_host_restart(const std::filesystem::path& directory)
     auto rz_payload = checkpoint;
     rz_payload.dim = 2;
     rz_payload.geometry = "cylindrical";
-    rz_payload.geometry_identity = {1, "axisymmetric-rz"};
+    rz_payload.geometry_identity = io::current_rz_checkpoint_geometry();
     const auto rz_path = directory / "internal-rz-identity.h5";
     io::write_hdf5_chk_impl(rz_path.string(), rz_payload);
     const auto rz = io::read_hdf5_chk_impl(rz_path.string());
     io::require_checkpoint_geometry_compatible(2, "cylindrical", rz.geometry_identity,
-                                               {1, "axisymmetric-rz"});
+                                               io::current_rz_checkpoint_geometry());
     expect_rejected([&] { io::require_checkpoint_geometry_compatible(
         2, "cylindrical", rz.geometry_identity); }, "RZ accepted as legacy polar");
     expect_rejected([&] { io::require_checkpoint_geometry_compatible(
-        2, "cylindrical", {}, {1, "axisymmetric-rz"}); }, "legacy polar accepted as RZ");
+        2, "cylindrical", {}, io::current_rz_checkpoint_geometry()); }, "legacy polar accepted as RZ");
     // Real old 2D cylindrical HDF + populated live tree: never interpreted as RZ.
     {
         HighFive::File file(rz_path.string(), HighFive::File::ReadWrite);
@@ -683,7 +683,7 @@ void test_host_restart(const std::filesystem::path& directory)
     const auto polar_rho = polar_fluid.rho;
     RunState polar_state = state;
     expect_rejected([&] { read_chk(rz_path.string(), polar_live, polar_state,
-        polar_config, species, identity, {1, "axisymmetric-rz"}); },
+        polar_config, species, identity, io::current_rz_checkpoint_geometry()); },
         "actual legacy polar file accepted as RZ", "no authoritative RZ");
     expect(polar_live.tree->GetActiveBlocks() == polar_ids && polar_fluid.rho == polar_rho
         && polar_state.time == state.time && polar_state.step == state.step
@@ -834,16 +834,16 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
     arch::state::RepairBudget repairs;
     repairs.reset(species.count());
     write_chk(source, 3, 4, 7, .25, .01, .02, true,
-              config, species, provenance, repairs, {1,"axisymmetric-rz"});
+              config, species, provenance, repairs, io::current_rz_checkpoint_geometry());
     const auto file = directory / "native-rz/rz_chk_0003.h5";
     const auto payload=io::read_hdf5_chk_impl(file.string());
-    expect(payload.geometry_identity.revision==1 &&
+    expect(payload.geometry_identity.revision==io::rz_checkpoint_revision &&
            payload.geometry_identity.chart=="axisymmetric-rz",
            "native writer lost explicit RZ identity");
     amr::AMRControl restored(config.grid.amr_max_blocks,2);
     RunState state;
     read_chk(file.string(), restored, state, config, species, provenance,
-             {1,"axisymmetric-rz"});
+             io::current_rz_checkpoint_geometry());
     expect(restored.tree->GetActiveBlocks().size()==5,
            "mixed RZ checkpoint changed leaf count");
     for (int id : restored.tree->GetActiveBlocks()) {
@@ -865,8 +865,33 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
            state.plt_idx==4 && state.dt_old==.01 && state.dt_burn==.02 &&
            state.resume_after_regrid, "native RZ controller changed");
     const auto digest=arch::core::file_sha256(file.string());
+    const auto snapshot_restored=[&] {
+        std::vector<double> words;
+        for(int id:restored.tree->GetActiveBlocks()) {
+            const auto& f=restored.pool->GetBlock(id).fluid_state;
+            for(const auto* v:{&f.rho,&f.mom_u,&f.mom_v,&f.mom_w,&f.eng,&f.enuc_rate,&f.mass_fractions})
+                words.insert(words.end(),v->begin(),v->end());
+        }
+        return words;
+    };
+    const auto before=snapshot_restored();
+    for(int corruption=0;corruption<3;++corruption) {
+        const auto bad=directory/("rz-state-corruption-"+std::to_string(corruption)+".h5");
+        std::filesystem::copy_file(file,bad);
+        {
+            HighFive::File hdf(bad.string(),HighFive::File::ReadWrite);
+            if(corruption==0)hdf.getAttribute("geometry_semantics_revision").write(1);
+            if(corruption==1)hdf.deleteAttribute("state_semantics");
+            if(corruption==2)hdf.getAttribute("state_semantics").write(std::string("volume-average-momentum-phi-v1"));
+        }
+        expect_rejected([&]{read_chk(bad.string(),restored,state,config,species,provenance,
+            io::current_rz_checkpoint_geometry());},"RZ state identity corruption accepted");
+        expect(snapshot_restored()==before && state.time==.25 && state.step==7 &&
+            state.chk_idx==3 && state.plt_idx==4,"RZ state rejection mutated live state");
+        expect(arch::core::file_sha256(file.string())==digest,"RZ rejection modified original checkpoint");
+    }
     expect_rejected([&] { write_chk(source,3,4,7,.25,.01,.02,true,
-        config,species,provenance,repairs,{2,"axisymmetric-rz"}); },
+        config,species,provenance,repairs,{3,"axisymmetric-rz"}); },
         "native writer accepted future chart revision");
     expect(arch::core::file_sha256(file.string())==digest,
            "rejected native writer changed previous output");
@@ -874,7 +899,7 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
     invalid.grid.geometry="cartesian";
     invalid.io.out_dir=(directory/"invalid-rz").string();
     expect_rejected([&] { write_chk(source,3,4,7,.25,.01,.02,true,
-        invalid,species,provenance,repairs,{1,"axisymmetric-rz"}); },
+        invalid,species,provenance,repairs,io::current_rz_checkpoint_geometry()); },
         "native writer accepted Cartesian RZ chart");
     expect(!std::filesystem::exists(invalid.io.out_dir),
            "invalid geometry created output directory");

@@ -503,6 +503,8 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("geometry", checkpoint.geometry);
         file.createAttribute("geometry_semantics_revision", geometry_identity.revision);
         file.createAttribute("geometry_chart", geometry_identity.chart);
+        if(geometry_identity.chart=="axisymmetric-rz")
+            file.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
         file.createAttribute("eos_type", checkpoint.provenance.eos_type);
@@ -607,6 +609,14 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
             file.getAttribute("geometry_chart").read(checkpoint.geometry_identity.chart);
             require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
                 checkpoint.geometry_identity, checkpoint.geometry_identity);
+            if(checkpoint.geometry_identity.chart=="axisymmetric-rz") {
+                if(!file.hasAttribute("state_semantics"))
+                    throw std::runtime_error("RZ checkpoint missing mandatory m_phi=J/W state semantics");
+                std::string state_semantics;
+                file.getAttribute("state_semantics").read(state_semantics);
+                if(state_semantics!=rz_checkpoint_state_semantics)
+                    throw std::runtime_error("RZ checkpoint state semantics mismatch: expected m_phi=J/W");
+            }
         }
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);

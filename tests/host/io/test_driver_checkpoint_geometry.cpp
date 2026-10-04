@@ -139,12 +139,12 @@ int main(int argc,char** argv) {
                 std::filesystem::is_regular_file(std::filesystem::path(config.io.out_dir)/"fixture_chk_0008.h5"),
                 "create failure retry did not use the same index");
         const auto payload=io::read_hdf5_chk_impl(path.string());
-        require(payload.geometry_identity.revision==1 &&
+        require(payload.geometry_identity.revision==(rz?io::rz_checkpoint_revision:1) &&
                 payload.geometry_identity.chart==(rz?"axisymmetric-rz":"existing"),
                 "Driver checkpoint did not use immutable Runtime profile");
         amr::AMRControl restored(4,config.grid.dim);RunState state;
         read_chk(path.string(),restored,state,config,species,provenance,
-                 {1,rz?"axisymmetric-rz":"existing"});
+                 (rz?io::current_rz_checkpoint_geometry():io::CheckpointGeometryIdentity{1,"existing"}));
         require(payload.rho.size()==(rz?amr::BLOCK_NX*amr::BLOCK_NY:amr::BLOCK_NX),
                 "unexpected native storage shape");
         for(int id:restored.tree->GetActiveBlocks()){

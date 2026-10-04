@@ -144,7 +144,7 @@ int main(int argc,char** argv) {
         const auto checkpoint=std::filesystem::path(config.io.out_dir)/"internal-rz_chk_0000.h5";
         const auto checkpoint_sha=arch::core::file_sha256(checkpoint.string());
         amr::AMRControl restored(32,2);RunState restart;
-        read_chk(checkpoint.string(),restored,restart,config,species,provenance,{1,"axisymmetric-rz"});
+        read_chk(checkpoint.string(),restored,restart,config,species,provenance,io::current_rz_checkpoint_geometry());
         require(snapshot(restored)==split,"checkpoint did not preserve accepted interior bits");
         require(restart.time==dt&&restart.step==1&&restart.dt_old==dt,
             "split checkpoint controller not preserved");

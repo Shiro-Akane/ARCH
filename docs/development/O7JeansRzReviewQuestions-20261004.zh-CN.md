@@ -470,3 +470,15 @@ API/plot 中单位相同不代表平均语义相同，writer/reader/Inspector �
 完整消费链通过前保持生产 RZ gate；新 RZ 长轨迹与性能计时在相应短科学签收之后。
 
 本轮 Core 复核、DPS 调用边界与已知费用见 [精简复核记录](../../validation/gravity/results/o7-resume-20261004/core-nodes-review.json)。源码／编译／实际科学结果与规划参数分开标记，当前没有新的完整轨迹通过声明。
+
+
+### 8.5 C checkpoint 表示身份实施证据（2026-10-05）
+
+internal RZ checkpoint 切到 revision 2 + mandatory
+state_semantics=rz-m-phi-j-over-w-v1，mom_w 原 bits 表示 m_phi=J/W。
+旧 RZ revision 1、missing/wrong/future tag 明确拒绝，live state/原文件不变；
+existing revision 1兼容不变。实际非零 raw round-trip、DriverIO、
+4例 internal zero-rotation continuation（41040 words）、新CPU ELF的冻结JENS9+9通过。
+见 RZAngularCheckpointIdentityNode-20261005.zh-CN.md。
+RZ-CHK-MEASURE-01（domain/root counts与W身份）及其余 C/D仍待贯通；
+不解除production RZ gate，不授予旋转科学/CUDA/long-run PASS。
