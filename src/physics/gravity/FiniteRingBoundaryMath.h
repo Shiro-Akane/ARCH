@@ -54,6 +54,65 @@ ARCH_HEAVY_INLINE EllipticKResult ring_elliptic_k_complementary_root(double root
     }
     result.status=RingPotentialStatus::WorkLimit;return result;
 }
+/** Certified enclosure of K for an exact stored complementary root.
+ * Workflow: same ring kernel owner, prior to certified source quadrature.
+ * Preconditions: IEEE binary64 basic/sqrt operations, gradual underflow,
+ * no fast-math/contraction (the project's host/device build contract).
+ * This does NOT bound rounded distance/root construction or a source integral.
+ */
+enum class RingIntervalStatus : unsigned char {
+    Bounded, InvalidInput, SingularSample, PrecisionLimit, WorkLimit
+};
+struct EllipticKInterval {
+    double lower=0.,upper=std::numeric_limits<double>::infinity();
+    RingIntervalStatus status=RingIntervalStatus::InvalidInput;
+    int iterations=0;
+};
+namespace finite_ring_detail {
+ARCH_INLINE double positive_down(double x) {
+    return x<=0. ? 0. : std::nextafter(x,0.);
+}
+ARCH_INLINE double positive_up(double x) {
+    return x==0. ? 0. : std::nextafter(x,std::numeric_limits<double>::infinity());
+}
+ARCH_INLINE double product_up(double a,double b) {
+    if(a==0. || b==0.)return 0.;
+    return std::nextafter(a*b,std::numeric_limits<double>::infinity());
+}
+} // namespace finite_ring_detail
+ARCH_HEAVY_INLINE EllipticKInterval ring_elliptic_k_interval(double root) {
+    using namespace finite_ring_detail;
+    EllipticKInterval result{};
+    if(!std::isfinite(root) || root<0. || root>1.)return result;
+    if(root==0.) {result.status=RingIntervalStatus::SingularSample;return result;}
+    static_assert(std::numeric_limits<double>::is_iec559
+        && std::numeric_limits<double>::digits==53);
+    double al=1.,au=1.,bl=root,bu=root;
+    const double pil=positive_down(arch::constants::math::pi);
+    const double piu=positive_up(arch::constants::math::pi);
+    // AGM b_n <= M <= a_n; separately enclose both exact iterate sequences.
+    for(int step=0;step<32;++step) {
+        result.lower=positive_down(pil/product_up(2.,au));
+        if(bl>0.)result.upper=positive_up(piu/positive_down(2.*bl));
+        if(std::isfinite(result.upper) && result.upper-result.lower
+            <=64*std::numeric_limits<double>::epsilon()*result.lower) {
+            result.status=RingIntervalStatus::Bounded;return result;
+        }
+        const double next_al=positive_down(.5*positive_down(al+bl));
+        const double next_au=positive_up(.5*positive_up(au+bu));
+        // sqrt(a)*sqrt(b) avoids an underflowing a*b before sqrt.
+        const double next_bl=positive_down(positive_down(std::sqrt(al))
+            *positive_down(std::sqrt(bl)));
+        const double next_bu=product_up(positive_up(std::sqrt(au)),
+            positive_up(std::sqrt(bu)));
+        ++result.iterations;
+        if(next_al==al && next_au==au && next_bl==bl && next_bu==bu) {
+            result.status=RingIntervalStatus::PrecisionLimit;return result;
+        }
+        al=next_al;au=next_au;bl=next_bl;bu=next_bu;
+    }
+    result.status=RingIntervalStatus::WorkLimit;return result;
+}
 namespace finite_ring_detail {
 /** Integral kernel r K(m)/s. Known offsets avoid subtracting a near-contact point twice. */
 ARCH_HEAVY_INLINE EllipticKResult kernel(double observer_r,double source_r,

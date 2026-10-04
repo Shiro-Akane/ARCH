@@ -8,6 +8,7 @@
 #include <string>
 #include <limits>
 #include <type_traits>
+#include <cstdlib>
 using namespace arch;
 namespace {
 constexpr double pi=constants::math::pi;
@@ -789,6 +790,30 @@ void finite_ring_moment_contract() {
 }
 
 
+void finite_ring_agm_interval_contract() {
+    using namespace Physical::Gravity;
+    for(double root:{1.,.5,.01,1.e-12,1.e-100,1.e-300,
+                     std::numeric_limits<double>::denorm_min()}) {
+        const auto interval=ring_elliptic_k_interval(root);
+        require(interval.status==RingIntervalStatus::Bounded
+            && interval.lower>0. && std::isfinite(interval.upper)
+            && interval.lower<=interval.upper,"AGM enclosure failed");
+        const auto estimate=ring_elliptic_k_complementary_root(root);
+        if(estimate.status==RingPotentialStatus::EstimatedConverged)
+            require(interval.lower<=estimate.value && estimate.value<=interval.upper,
+                "existing AGM estimate escaped enclosure");
+        std::cout<<"RZ_RING_K_INTERVAL root="<<root<<" lower="<<interval.lower
+            <<" upper="<<interval.upper<<" iterations="<<interval.iterations<<'\n';
+    }
+    require(ring_elliptic_k_interval(0.).status==RingIntervalStatus::SingularSample,
+        "zero complementary root softened");
+    for(double bad:{-1.,2.,std::numeric_limits<double>::infinity(),
+                    std::numeric_limits<double>::quiet_NaN()})
+        require(ring_elliptic_k_interval(bad).status==RingIntervalStatus::InvalidInput,
+            "invalid complementary root accepted");
+    std::cout<<"RZ_RING_K_INTERVAL_PASS integral_certified=false production_values=gated\n";
+}
+
 void finite_ring_kernel_contract() {
     using namespace Physical::Gravity;
     const auto potential=[](double r,double z,RingQuadratureControl control={}) {
@@ -1187,9 +1212,16 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="ring-k-interval") {std::cout<<std::setprecision(17);finite_ring_agm_interval_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary-acceptance") {boundary_original_rhs_acceptance_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary-ledger") {boundary_error_ledger_contract();return 0;}
         std::cout<<std::setprecision(17);
+        if(argc==3 && std::string(argv[1])=="ring-k-probe") {
+            const auto value=Physical::Gravity::ring_elliptic_k_interval(std::strtod(argv[2],nullptr));
+            std::cout<<"{\"status\":"<<static_cast<int>(value.status)
+                <<",\"lower\":"<<value.lower<<",\"upper\":"<<value.upper
+                <<",\"iterations\":"<<value.iterations<<"}\n";return 0;
+        }
         if(argc>=9 && std::string(argv[1])=="ring-probe") {
             Physical::Gravity::RingQuadratureControl control{};
             if(argc>9)control.relative_estimate_target=std::stod(argv[9]);
