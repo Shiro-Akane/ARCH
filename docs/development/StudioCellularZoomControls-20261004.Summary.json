@@ -1,0 +1,62 @@
+{
+  "sourceCommit": "b0af53a8543d327fdc499e9d71aec00d0cc0a89d",
+  "scope": "Linux production CellularDet init-preview shared PhysicalPlot zoom controls; not Plotfile native-cell or scientific evolution acceptance",
+  "configSha256": "6ca2b63719942d1a900cab8458a4417b0dc88c3a41750e37df5fff55647391e3",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "shape": [
+    128,
+    128
+  ],
+  "domain": [
+    [
+      0,
+      25.6
+    ],
+    [
+      0,
+      12.8
+    ]
+  ],
+  "zoomedDomain": [
+    [
+      2.56,
+      23.04
+    ],
+    [
+      1.28,
+      11.52
+    ]
+  ],
+  "sample": {
+    "index": 7960,
+    "i": 24,
+    "j": 62,
+    "coordinate": [
+      4.9,
+      6.25,
+      0
+    ],
+    "renderedDensity": 43093166
+  },
+  "colorbarUnchanged": true,
+  "zoomOutAndFitRestoreFullDomain": true,
+  "selectionRetained": true,
+  "checks": {
+    "ownedProcessesGone": true,
+    "ownedProcessCount": 8,
+    "configUnchanged": true,
+    "binaryUnchanged": true,
+    "scientificOutputUnchanged": true,
+    "scientificOutputFileCount": 8,
+    "managedWorktreeClean": true,
+    "developmentWorktreeInitiallyClean": true,
+    "launcherExitCode": 0
+  },
+  "limitations": [
+    "Native pan and wheel remain NOT VERIFIED",
+    "Nx=Ny; this is non-square physical domain, not non-square sampling",
+    "Inspector rendered decimal agreement does not establish binary64 bit equality",
+    "Full dependency freshness unknown",
+    "No new simulation, Save, Build or manual Update Preview"
+  ]
+}

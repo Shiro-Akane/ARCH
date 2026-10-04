@@ -3246,3 +3246,11 @@ PhysicalPlot新增Zoom in/out，复用wheel同一zoomView状态更新，不写Co
 真实drag只产生终点sample选择而未pan，保留NOT VERIFIED，不修输入路由猜测。
 两个窗口均exit0/每轮8owned退出，input/binary不变/no output/managed clean。
 见StudioNativeZoomControls报告/Summary；wheel/pan/2D native及科学/CUDA/O9仍未闭合。
+
+## 2026-10-04 CellularDet 显式 Zoom 原生复验
+
+现行 production 128²、非正方形 domain 缩放到80%，坐标/heatmap一致；colorbar独立保持。
+命中7960=62*128+24 / (4.9,6.25) cm，Zoom out/Fit后Inspector显示与身份保持。
+正常close exit0/8owned退出/config与binary不变/既有8output SHA不变/managed clean。
+仅处理后报告，无代码/重复334基线/Build/simulation/push/tag；wheel/pan仍NOT VERIFIED。
+见StudioCellularZoomControls报告/Summary，联合目标和科学门槛保持未闭合。
