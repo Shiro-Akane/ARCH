@@ -1,0 +1,124 @@
+{
+  "status": "ACTUAL_RUNTIME_REFINE_COARSEN_NOCHANGE_CONTRACT_PASS",
+  "baseline": "2cca2b42b43e003aac98f9765357f2d75e600515",
+  "thresholdFixtureCorrection": {
+    "previousRefine": 0.001,
+    "previousDerefine": 0.2,
+    "previousPairValid": false,
+    "finalRefine": 0.001,
+    "finalDerefine": 0.0005,
+    "coreRelation": "0 <= derefine < refine <= 1",
+    "scope": "Engineering fixture control pair only; no scientific tolerance changed"
+  },
+  "activeBlocks": [
+    4,
+    8,
+    4,
+    4
+  ],
+  "epochs": [
+    1,
+    2,
+    3,
+    3
+  ],
+  "gathers": 7,
+  "finalCells": 64,
+  "retiredRefinedHandleRejected": true,
+  "noChangePreservesHandles": true,
+  "controllerTime": 0,
+  "controllerSteps": 0,
+  "executableSha256": "f81c7a5a5ba604de040b4fe11bc05d729cb1614716f7a54323bcc9308238ec2d",
+  "productionExecutableSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "recompiledSources": {
+    "tests/host/gravity/test_gravity_runtime_contract.cpp": "f67a4ab45291e886d3ca509b5ba9941dc81898fd7e5b4ec5d5851c46a6435bf5",
+    "src/driver/stages/GravityStage.cpp": "8820d7ba03478f00671b91ad8d43a2fe46b2450676a3ef4862f6950e2f029ea6",
+    "src/driver/runtime/DriverRuntime.cpp": "37e23c731840d694552526846f1e13e402b8cda7ec316035e482aa6e0c23a327",
+    "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+    "src/driver/runtime/DriverRegrid.cpp": "1af39912876480e6b264552ab495b544bc908310bd4d355f8d1b4ba667adcda8"
+  },
+  "controlRelationsSha256": "ef7565ff47d733951b11554ad59dd2d42c651153d9c1f70f2a5b60ae9097f809",
+  "diagnosticRows": [
+    {
+      "time": "0",
+      "stage": "0",
+      "epoch": "1",
+      "generation": "1",
+      "cells": "64",
+      "residual": "1.8826744423105356e-21",
+      "target": "5.9306267188300783e-18",
+      "rho_mean": "1"
+    },
+    {
+      "time": "0.125",
+      "stage": "0",
+      "epoch": "1",
+      "generation": "2",
+      "cells": "64",
+      "residual": "2.2303476996031627e-21",
+      "target": "6.1430963067450467e-18",
+      "rho_mean": "1.0026592188769303"
+    },
+    {
+      "time": "0.25",
+      "stage": "2",
+      "epoch": "1",
+      "generation": "5",
+      "cells": "64",
+      "residual": "9.5278603025041605e-22",
+      "target": "5.9306267188300768e-18",
+      "rho_mean": "1.2"
+    },
+    {
+      "time": "0.125",
+      "stage": "3",
+      "epoch": "1",
+      "generation": "6",
+      "cells": "64",
+      "residual": "2.0407505301186656e-21",
+      "target": "5.9306267188300768e-18",
+      "rho_mean": "1.3999999999999999"
+    },
+    {
+      "time": "0.5",
+      "stage": "0",
+      "epoch": "2",
+      "generation": "7",
+      "cells": "128",
+      "residual": "9.6252609350603976e-19",
+      "target": "6.1447201493267845e-18",
+      "rho_mean": "1.0026592188769305"
+    },
+    {
+      "time": "0.625",
+      "stage": "0",
+      "epoch": "3",
+      "generation": "8",
+      "cells": "64",
+      "residual": "0",
+      "target": "0",
+      "rho_mean": "1"
+    },
+    {
+      "time": "0.75",
+      "stage": "0",
+      "epoch": "3",
+      "generation": "9",
+      "cells": "64",
+      "residual": "0",
+      "target": "0",
+      "rho_mean": "1"
+    }
+  ],
+  "architectureAudit": "PASS",
+  "diffCheck": "PASS",
+  "memoryGuardStopped": false,
+  "peakSwapKiB": 0,
+  "existingLifecycleReceipt": "Unchanged existing checks from gravity-runtime-publication-20261005; not rerun",
+  "limitations": [
+    "Typed engineering fixture, not a complete v3 public config/registered model run",
+    "Cartesian shared identity path only; RZ capability/scientific/CUDA gates unchanged",
+    "Manually published constant density for coarsen; no actual Hydro evolution, restart or device migration proof",
+    "Raw TSV/executable/build logs local; no H5/plt/checkpoint generated"
+  ]
+}

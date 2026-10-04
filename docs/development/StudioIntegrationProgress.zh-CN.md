@@ -20,12 +20,12 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 | 阶段 | 实现 | 本轮工程验证 | 科学 review / 性能 |
 | --- | --- | --- | --- |
 | 1 3B 源码接收与复验 | 封箱源码已引入；native Open/Save As 与 Host 关联已有证据 | 当前235 Studio/Host及lint/typecheck/production PASS；原生文件选择、Dirty保护、空格/中文SaveAs/Reopen、外部冲突拒绝及显式overwrite已有直接证据；用户截图确认独立窗口可见；历史177项不替代本轮 | 不适用 |
-| 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 历史特殊G输入换算待维护者批准，不沿旧物理预算宣称通过 |
+| 2 O7.0 + 配置 v3/Host/Studio | v3实际API/Host/表单、注册模型声明、shared CGS G、只读Driver边界已实现；准备/来源边界持续核查 | CPU定向配置/组件、当前v3样例/Host/表单已有验证；整体科学/原生UAT未签收 | 限定IdealGas低G等效迁移已获授权；其余历史特殊G输入不自动推广，不沿旧物理预算宣称通过 |
 | 3 Linux/WSL 3C 启动/Configure/Build | 已有本地 CPU profile、独立 Host 与 Linux 启动实现 | 原生Configure/Build通过；真实CMake微型工程编译失败/恢复通过；完整依赖freshness仍unknown，dependenciesComplete=false；边界见Studio3CExitAudit | 不适用 |
 | 4 3C Run/Restart/进程隔离 | 已有独立终端、持久历史、身份核验/Stop及canonical输出目录锁 | 原生Sod Run/Restart/Stop、关闭后计算继续及历史恢复通过；235项Studio/Host通过；同场景Preview cancel/不同项目Host重开隔离已PASS，Run同PID/start持续推进并自然完成；保留Host/native覆盖区分 | 不推广为其他模型/后端演化验收 |
 | 5 全模型初态/AMR | Core维度驱动真实生成/CLI/session已接通；Host动态Profiles/三轴协议、UI配置维度选择/三维切片/单区状态已实现；AMR native/三维切面显示已实现；14模型真实HTTP已验证；Gaussian Cartesian三维桌面代表已通过切片/Inspector/根AMR/关闭清理；完整桌面矩阵待完成 | CPU14维护模型字段+根AMR、三维代表/曲线参考、非立方体与warm session通过；不是混合细化/科学认证 | Setup域/预算与科学验收分开 |
-| 6 O7.1 JENS | shared CPU/device 数值叶函数及真实物理 spacing 已实现；生产 output/AMR/lifecycle 尚未接通 | IdealGas/NativeTabular/301 exponent 工程参考已有证据，未称科学验收 | 一般 EOS 声速、条件需求、候选父态与科学预算待 Core 确认；见 Jeans* 报告 |
-| 7 O7.2–O7.5 RZ | 内部显式 chart 已贯通 metric/source/Host Hydro/RKL/halo/CFL/reflux/Init/IO/checkpoint；公开迁移、regrid/gravity/device 未完成 | 实际 mixed Runtime/续接和独立数值参考已记录；主 CPU 已重编；不冒充科学出口 | angular-momentum transfer finding、finite-ring 路线/预算及 GravityBox Init 语义待 Core；见 RZ* 报告 |
+| 6 O7.1 JENS | shared numeric/spacing、条件输入、accepted-state enforcement、parent/regrid transaction、native output/checkpoint与Studio catalog已接通；公开仅self+explicit CPU | 冻结uniform-lifecycle-1的9短轨迹+9真实续算、相应Core/Host及Linux消费者已记录；当前未变ELF沿用匹配receipt，不重复；见O7JeansUniformLifecycle/O7JeansNativeReview及后续ELF receipt | 这是Cartesian单IdealGas常量源CPU短子gate；非均匀/其他EOS、完整JENS、CUDA和性能不自动签收 |
+| 7 O7.2–O7.5 RZ | 内部chart、W/torque、实际Init/halo/repair/IO/checkpoint消费者已有候选；finite-ring可靠势与native A/B/RHS/residual实现已接通静态numerical路径；公开RZ regrid/self-gravity/device未开放 | 实际mixed静态原请求、源失效、逐叶真实边界势诊断及共享Cartesian实际Runtime身份链已有节点；初态/表示/续接证据范围分开；最新摘要以各节点精确SHA为准 | 连续Phi/force与空间、axis/viscosity、实际RZ Runtime全消费者科学gate仍开放；Duffy估计不能替代可靠参考，CUDA/新RZ长跑保持门槛 |
 | 8 CUDA/第二平台短测 | 待 CPU 完成 | 未编译/未计时 | 冻结同物理终点；保留负收益 |
 | 9 批准的 O9 长时子集 | 待冻结输入/预算 | 未执行 | 未批准项不能称完成 |
 | 独立 plt 只读出口 | Sod 1D/Cartesian CellularDet 2D writer、隔离查询/LOD/native Inspector/Viewer 已实现 | 37 字段与checkpoint位级对照、发布失败、native UAT、evolved Sod点查及小样本成本已有证据 | Owner读取适配/单位/独立科学oracle、完整身份、大AMR同机扫描成本仍待；见 PlotfileReaderAdapterHandoff |
@@ -3295,3 +3295,20 @@ publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0
 ## 2026-10-04：用户确认平台为4070Ti
 
 按用户明确更正，计划平台改为14700K/4070Ti；preflight以新期望exit0，实际CC8.9/driver617.14/原UUID一致。撤销误报导致的SM120/architecture120/CUDA12.8最低版本假设，旧exit2证据保留。详见PlatformIdentityCorrection报告/Summary。没有configure/build/CUDA计算或科学gate通过，不push/tag；其余科学与架构待决项不变。
+
+
+### 2026-10-05 清单同步边界
+
+本次校正上表过期的“JENS生产消费者尚未接通”和“finite-ring路线尚未确定”描述，
+不把历史早期证据替换成新测，也不改阶段退出标准。
+当前production CPU SHA仍7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510；
+其冻结JENS9+9匹配receipt见rz-stencil-construction-20261005摘要。
+新增参考工具/probe/实际Runtime fixture是各自独立身份，不冒充新production binary。
+
+真实Runtime refine证据已提交2cca2b42；随后审计发现工程fixture阈值对
+未满足Core关系。本次修正并在合法AMR阈值对下重新验证所有先前路径及coarsen/no-change，
+以GravityRuntimeCoarsenNode-20261005.zh-CN.md最终证据为准。
+这不修改Core阈值或科学方案，不通过工程回归关闭RZ科学finding。
+
+完整目标仍包含Linux/WSL工作流、模型/plt出口、完整O7 CPU、统一CUDA、
+冻结终点benchmark和批准长时子集。整体尚未完成。

@@ -659,3 +659,12 @@ Scratch/Next density、未发布非首块拒绝、失败旧场失效、真实reg
 见GravityRuntimePublicationNode-20261005.zh-CN.md和scalar summary。
 Controller time0/steps0，请求stage time不作为演化终点。
 生产ELF不变，沿用匹配JENS9+9；RZ self-gravity/regrid门槛与科学finding不关闭。
+
+### 共享 Runtime coarsen/no-change 及 fixture 修正（2026-10-05）
+
+发现前一typed fixture的AMR阈值对非法；保留原receipt并明确限制。
+本次使用现有Core关系检查，.001/.0005合法工程对重新验证之前路径，
+再完成实际coarsen/no-change及retired fine handle拒绝：
+4->8->4->4 blocks、epoch1->2->3->3、7次实际gather。
+见GravityRuntimeCoarsenNode-20261005.zh-CN.md。
+没有改科学阈值或Core，不以Cartesian/typed fixture替代RZ或公共配置科学签收。

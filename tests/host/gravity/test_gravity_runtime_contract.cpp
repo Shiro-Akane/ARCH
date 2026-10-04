@@ -1,6 +1,7 @@
 // Real DriverRuntime -> GravityStage -> SelfGravity, host publication contract.
 // Cartesian supported identity path only; no RZ capability or evolution claim.
 #include "amr/AMRControl.h"
+#include "core/config/ControlRelations.h"
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
@@ -43,6 +44,9 @@ int main(int argc,char** argv){
     config.grid.x1_min=0.;config.grid.x1_max=1.;
     config.amr.lrefinemin=0;config.amr.lrefinemax=1;config.grid.amr_max_blocks=16;
     config.amr.refine_on_rho=true;config.amr.refine_threshold=.001;
+    config.amr.derefine_threshold=.0005;
+    require(arch::config::relations::CurvatureThresholds(config.amr.refine_threshold,
+        config.amr.derefine_threshold),"fixture violates Core AMR threshold contract");
     config.amr.regrid_interval=1;
     config.io.out_dir=out.string();
     SpeciesManager species;species.add_species("fixture",1.,1.,1.4,1.);
@@ -129,9 +133,36 @@ int main(int argc,char** argv){
     require(runtime.handles().size()>old_blocks,"actual refine did not increase active leaves");
     stage.prepare_current(.5,true);verify(arch::state::StateSlot::Current);
     require(capture->gathers==5,"regrid did not rebind/gather current domain");
+    const auto refined_blocks=runtime.handles().size();
+    const auto refined_handles=runtime.handles();
+    // Legal DENS configuration retained. A constant accepted density gives zero
+    // curvature, making actual Runtime coarsening possible without disabling indicators.
+    stage.invalidate();
+    for(int id:control.tree->GetActiveBlocks()){
+        auto& b=control.pool->GetBlock(id);
+        for(double& rho:b.fluid_state.rho)rho=1.;
+    }
+    auto refined_context=runtime.stage_context();
+    arch::scheduler::publish_completed_interior(refined_context,runtime.handles(),arch::state::StateSlot::Current);
+    runtime.ensure_fluid_ghosts();
+    require(runtime.perform_regrid(0,0.),"actual Runtime coarsen witness missing");
+    require(runtime.handles().size()==old_blocks,"coarsen did not restore root block count");
+    require(runtime.handles().front().epoch!=refined_handles.front().epoch,
+        "coarsen did not turn topology identity");
+    auto coarse_context=runtime.stage_context();
+    rejects([&]{coarse_context.ledger.inspect({refined_handles.back(),arch::state::StateSlot::Current});},
+        "coarsened Runtime accepted retired refined handle");
+    stage.prepare_current(.625,true);verify(arch::state::StateSlot::Current);
+    require(capture->gathers==6,"coarsen did not rebind/gather current domain");
+    const auto coarse_handles=runtime.handles();
+    require(!runtime.perform_regrid(0,0.),"constant root grid unexpectedly changed topology");
+    require(runtime.handles()==coarse_handles,"no-change transaction turned topology identity");
+    stage.prepare_current(.75,false);verify(arch::state::StateSlot::Current);
+    require(capture->gathers==7,"no-change domain not prepared with a new lease");
     require(counters.t_current==0.&&counters.step_count==0,"fixture advanced simulation controller");
     std::cout<<"ACTUAL_GRAVITY_RUNTIME_CONTRACT_PASS initial_blocks="<<old_blocks
-        <<" refined_blocks="<<runtime.handles().size()<<" gathers="<<capture->gathers
+        <<" refined_blocks="<<refined_blocks<<" coarsened_blocks="<<runtime.handles().size()
+        <<" gathers="<<capture->gathers
         <<" cells="<<capture->cells.size()<<" time=0 steps=0\n";
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

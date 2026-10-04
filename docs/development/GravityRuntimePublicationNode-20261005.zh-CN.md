@@ -76,3 +76,12 @@ RZ批准路径开放后仍需真实逐块density/stage/regrid环体producer消�
 coarsen/restart/migration到device、实际Hydro stage演化、continuous Phi/force、
 axis/viscosity及完整角动量消费科学预算均不由此节点签收。
 CPU完整科学gate、统一CUDA、冻结benchmark和批准长跑仍依原计划。
+
+
+## 后续有效性修正（2026-10-05）
+
+直接构造fixture时refine_threshold=.001而默认derefine_threshold=.2，
+未满足Core成对关系；先前记录保留，但不作为合法生产配置的充分验收。
+GravityRuntimeCoarsenNode-20261005.zh-CN.md修正为合法工程fixture阈值对，
+复用Core关系检查后重新验证先前所有身份路径，并增加实际coarsen/no-change。
+没有修改生产科学参数或降低任何冻结科学阈值；请以后续receipt为准。
