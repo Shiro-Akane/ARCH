@@ -664,3 +664,9 @@ RZ-A前置W/centroid/torque测度及单一状态无存储转换已经通过现�
 无部分coarse/fine scatter通过；新ELF的JENS冻结九组演化与续算回归PASS。
 见 RZAngularGhostNode-20261004.zh-CN.md。B/C/D与CUDA仍待贯通，
 不把本节点作为完整RZ科学签收或长跑许可。
+
+2026-10-04 RZ-B CPU hydro torque增量：共享J/W divergence、去除重复phi curvature、
+严格无floor候选验证及独立closed/open/HLLC六组收支通过，最大相对误差8.6803e-18。
+新ELF冻结JENS九组演化/续算回归PASS。见 RZHydroTorqueNode-20261004.zh-CN.md。
+AMR signed torque/W reflux与C/D仍待贯通；变量mu应力finding RZ-VISC-01交Core确认，
+其余批准节点继续，完整RZ能力gate保留，不启动新RZ长跑。

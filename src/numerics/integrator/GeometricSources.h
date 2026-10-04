@@ -38,7 +38,7 @@ ARCH_HOST_DEVICE inline void add_cylindrical_momentum_sources(
 /**
  * Explicit finite-volume (r,z,phi) source adapter for an axisymmetric r-z cell.
  * Evaluate authoritative EOS pressure once, then consume the shared cylindrical
- * source and full-volume inverse-radius metric. Native mom_v is z and mom_w is
+ * radial source and full-volume inverse-radius metric. Native mom_v is z and mom_w is
  * phi even though there is no active phi derivative. No density/pressure floor,
  * mass/energy source or separate backend mathematics is introduced.
  * Generic GeometryView dispatch remains unchanged until its consumers migrate.
@@ -51,7 +51,7 @@ ARCH_HOST_DEVICE inline void add_rz_geometric_source_cell(
     const double pressure=eos.get_pressure(U,composition);
     const double inverse_radius=GridMetrics::Rz::InverseRadiusVolumeAverage(r_left,r_right);
     add_cylindrical_momentum_sources(U.rho,U.mom_u/U.rho,U.mom_w/U.rho,
-        pressure,inverse_radius,dt,delta.mom_u,&delta.mom_w);
+        pressure,inverse_radius,dt,delta.mom_u,nullptr);
 }
 
 template <typename EosType>
@@ -75,7 +75,9 @@ ARCH_HOST_DEVICE inline void add_geometric_source_cell(
         // 2D axes are (r,phi); 3D axes are (r,z,phi), as on the CPU.
         const bool rz = grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
         const double v_phi = rz ? v_z : (grid.dim == 2 ? v_y : (grid.dim == 3 ? v_z : 0.0));
-        double* angular_delta = rz ? &delta.mom_w :
+        // RZ torque divergence already contains the azimuthal curvature.
+        // Retain the radial pressure/centrifugal source exactly.
+        double* angular_delta = rz ? nullptr :
             (grid.dim==2?&delta.mom_v:(grid.dim==3?&delta.mom_w:nullptr));
         add_cylindrical_momentum_sources(rho,v_x,v_phi,p,inverse_radius,dt,
             delta.mom_u,angular_delta);

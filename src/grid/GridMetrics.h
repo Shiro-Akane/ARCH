@@ -172,6 +172,15 @@ ARCH_HOST_DEVICE inline double AxialTorqueMeasure(double left, double right)
     return AxialFaceArea(left,right)*VolumeCentroidRadius(left,right);
 }
 
+/** Physical integral r dA, borrowed by hydro, viscosity and reflux owners. */
+ARCH_HOST_DEVICE inline double FaceTorqueMeasure(
+    const GeometryView& grid,int direction,int i,bool upper)
+{
+    const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+    return direction==0 ? RadialTorqueMeasure(upper?right:left,grid.dx2)
+                        : AxialTorqueMeasure(left,right);
+}
+
 /** Orthonormal r/z lengths for active direction 0 or 1; no angle factor. */
 ARCH_HOST_DEVICE inline double PhysicalSpacing(int direction, double dr, double dz)
 {

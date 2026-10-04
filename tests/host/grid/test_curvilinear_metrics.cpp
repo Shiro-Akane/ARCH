@@ -72,6 +72,114 @@ void test_rz_angular_measures() {
     std::cout<<"RZ_ANGULAR_MEASURES_PASS\n";
 }
 
+
+void test_rz_torque_divergence_budget() {
+    constexpr long double pi=3.141592653589793238462643383279502884L;
+    constexpr double dt=.001;
+    SpeciesManager species;
+    species.add_species("gas0",1.,1.,1.4,3.);
+    species.add_species("gas1",2.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    for(double inner:{0.,1.})for(int lane:{0,1,2}) {
+        Grid grid(amr::MAX_NG,inner,inner+1.,-.5,1.,0.,1.);
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+        const int size=grid.GetTotalSize();
+        FluidState state,updated;
+        state.Preallocate(size);state.InitSpecies(2);
+        updated.Preallocate(size);updated.InitSpecies(2);
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+            const double angular=GridMetrics::Rz::AngularReconstructionCoordinate(left,right);
+            const double radial=.1*grid.GetCellCenterX(i);
+            const double axial=.05*grid.GetCellCenterY(j);
+            state.set(cell,{1.,radial,axial,angular,100.});
+            state.X(0,cell)=.6;state.X(1,cell)=.4;
+        }
+        std::vector<FluidVector> delta(size),flux(size);
+        std::vector<double> ds(2*size),sf(2*size);
+        if(lane==2)
+            TimeIntegration::evaluate_all_dimensions<FluxHLLC<PCMReconstruction>>(
+                nullptr,-1,state,eos,grid,dt,delta,ds,flux,sf,nullptr,0.,1.,true,
+                GridMetrics::GeometrySemantics::AxisymmetricRz);
+        long double outward_j=0.,outward_mass=0.,outward_energy=0.,outward_species[2]{};
+        for(int dir:{0,1}) {
+            std::fill(flux.begin(),flux.end(),FluidVector{});
+            std::fill(sf.begin(),sf.end(),0.);
+            if(lane==2) {
+                FluxHLLC<PCMReconstruction>::compute_fluxes(state,eos,grid,flux,sf,dir);
+            } else {
+                for(int j=grid.Js();j<=grid.Je();++j)for(int i=grid.Is();i<=grid.Ie();++i) {
+                    const int cell=grid.GetIndex(i,j,0);
+                    double value=1.+.3*i+.7*j;
+                    if(lane==0 && (dir==0?(i==grid.Is() || i==grid.Ie())
+                                              :(j==grid.Js() || j==grid.Je())))value=0.;
+                    flux[cell]={.2*value,.3*value,-.1*value,value,2.*value};
+                    sf[cell]=.6*flux[cell].rho;sf[size+cell]=.4*flux[cell].rho;
+                }
+                TimeIntegration::accumulate_divergence(delta,ds,flux,sf,grid,dt,dir,2,
+                    GridMetrics::GeometrySemantics::AxisymmetricRz,true);
+            }
+            // Independent full-ring face integrals, not the production metrics.
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                const long double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+                for(int side:{0,1}) {
+                    if(dir==0 && i!=(side?grid.Ie()-1:grid.Is()))continue;
+                    if(dir==1 && j!=(side?grid.Je()-1:grid.Js()))continue;
+                    const int face=grid.GetIndex(i+(dir==0?side:0),j+(dir==1?side:0),0);
+                    const long double radius=side?hi:lo;
+                    const long double area=dir==0?2*pi*radius*grid.dx2:pi*(hi*hi-lo*lo);
+                    const long double torque=dir==0?2*pi*radius*radius*grid.dx2
+                        :2*pi*(hi*hi*hi-lo*lo*lo)/3;
+                    const long double sign=side?1.L:-1.L;
+                    outward_j+=sign*dt*torque*flux[face].mom_w;
+                    outward_mass+=sign*dt*area*flux[face].rho;
+                    outward_energy+=sign*dt*area*flux[face].eng;
+                    for(int s=0;s<2;++s)outward_species[s]+=sign*dt*area*sf[s*size+face];
+                }
+            }
+        }
+        long double change_j=0.,change_mass=0.,change_energy=0.,change_species[2]{},initial_abs_j=0.;
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            const long double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+            const long double volume=pi*(hi*hi-lo*lo)*grid.dx2;
+            const long double w=2*pi*(hi*hi*hi-lo*lo*lo)*grid.dx2/3;
+            change_j+=w*delta[cell].mom_w;
+            initial_abs_j+=w*std::abs(state.mom_w[cell]);
+            change_mass+=volume*delta[cell].rho;change_energy+=volume*delta[cell].eng;
+            for(int s=0;s<2;++s)change_species[s]+=volume*ds[s*size+cell];
+        }
+        const long double denom=initial_abs_j+std::abs(outward_j);
+        const long double error=std::abs(change_j+outward_j)/denom;
+        if(!(error<=1.e-12L))throw std::runtime_error("RZ torque divergence violates frozen J budget");
+        const auto balance=[](long double change,long double outward,const char* name) {
+            if(std::abs(change+outward)>1.e-12L*std::max(1.L,std::abs(outward)))
+                throw std::runtime_error(name);
+        };
+        balance(change_mass,outward_mass,"RZ V mass divergence changed");
+        balance(change_energy,outward_energy,"RZ V energy divergence changed");
+        for(int s=0;s<2;++s)balance(change_species[s],outward_species[s],"RZ V species divergence changed");
+        if(lane==2) {
+            TimeIntegration::perform_stage_update(state,state,updated,delta,ds,grid,0.,1.,
+                1.e-14,1.e-14,1.e6,GridMetrics::GeometrySemantics::AxisymmetricRz);
+            if(updated.stage_repairs.values[0]!=0.)throw std::runtime_error("RZ torque stage repaired");
+            long double final_change=0.;
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                const int cell=grid.GetIndex(i,j,0);
+                const long double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+                final_change+=2*pi*(hi*hi*hi-lo*lo*lo)*grid.dx2/3
+                    *(updated.mom_w[cell]-state.mom_w[cell]);
+            }
+            if(std::abs(final_change+outward_j)/denom>1.e-12L)
+                throw std::runtime_error("RZ actual HLLC stage J budget failed");
+        }
+        std::cout<<"RZ_TORQUE_BUDGET inner="<<inner<<" lane="<<lane
+            <<" relative_error="<<static_cast<double>(error)
+            <<" boundary_torque_impulse="<<static_cast<double>(outward_j)<<'\n';
+    }
+}
+
 void test_rz_host_hydro() {
     using namespace GridMetrics;
     SpeciesManager species;
@@ -136,22 +244,21 @@ void test_rz_host_hydro() {
         }
         if (!rejected || delta[0].rho!=123. || unmigrated.calls!=0)
             throw std::runtime_error("RZ unmigrated gravity changed Hydro output");
-        // An intentional existing density-floor repair checks the *budget*
-        // metric, not a physical scenario or a new choice of science floors.
+        // Core's new single-J contract rejects a conservative RZ candidate
+        // below configured bounds; the former repair fixture is not acceptance.
         FluidState low, repaired;
         low.Preallocate(size); low.InitSpecies(0);
         repaired.Preallocate(size); repaired.InitSpecies(0);
         for(int cell=0;cell<size;++cell) low.set(cell,{.5,0.,0.,0.,100.});
         std::fill(delta.begin(),delta.end(),FluidVector{});
         std::vector<double> no_species;
-        TimeIntegration::perform_stage_update(low,low,repaired,delta,no_species,
-            grid,0.,1.,1.,1.e-14,1.e10,rz);
-        const double volume=arch::constants::math::pi
-            *((inner+1.)*(inner+1.)-inner*inner);
-        close(repaired.stage_repairs.values[0],amr::BLOCK_NX*amr::BLOCK_NY,
-            "RZ Hydro repair count");
-        close(repaired.stage_repairs.values[1],volume,"RZ Hydro repaired full-ring volume");
-        close(repaired.stage_repairs.values[2],.5*volume,"RZ Hydro repair mass measure");
+        bool low_rejected=false;
+        try {
+            TimeIntegration::perform_stage_update(low,low,repaired,delta,no_species,
+                grid,0.,1.,1.,1.e-14,1.e10,rz);
+        } catch(const std::runtime_error&) {low_rejected=true;}
+        if(!low_rejected || repaired.stage_repairs.values[0]!=0.)
+            throw std::runtime_error("RZ Hydro repaired a forbidden conservative candidate");
         std::cout<<"RZ_HOST_HYDRO inner="<<inner<<" swirl="<<swirl
             <<" max_radial_error="<<max_error<<" repair_volume="
             <<repaired.stage_repairs.values[1]<<'\n';
@@ -484,6 +591,7 @@ void test_rz_native_coordinates()
 int main()
 {
     test_rz_angular_measures();
+    test_rz_torque_divergence_budget();
     test_rz_native_coordinates();
     for(int direction:{0,1})for(double inner:{0.,1.}) {
         test_rz_scheduled_hydro<SolverEuler>(direction,inner);
@@ -548,7 +656,7 @@ int main()
         TimeIntegration::add_rz_geometric_source_cell(moving,nullptr,ConstantEos{},
             left,right,dt,delta);
         close(delta.mom_u-19.,dt*(2.*25.+5.)*inv,"RZ centrifugal source");
-        close(delta.mom_w-29.,-dt*2.*3.*5.*inv,"RZ phi curvature source");
+        close(delta.mom_w,29.,"RZ duplicated phi curvature source");
         if (delta.mom_v!=23. || delta.rho!=17. || delta.eng!=31.)
             throw std::runtime_error("RZ source changed z/mass/energy");
         auto translated=moving;
@@ -564,9 +672,10 @@ int main()
         FluidVector existing{17.,19.,23.,29.,31.};
         TimeIntegration::add_geometric_source_cell(moving,nullptr,ConstantEos{},
             full,0,0,dt,existing);
-        if (existing.mom_u!=delta.mom_u || existing.mom_w!=delta.mom_w
-            || existing.mom_v!=delta.mom_v)
-            throw std::runtime_error("RZ and full cylindrical source diverged");
+        close(existing.mom_w-29.,-dt*2.*3.*5.*inv,"Legacy full cylindrical phi source");
+        if (existing.mom_u!=delta.mom_u || existing.mom_v!=delta.mom_v
+            || delta.mom_w!=29.)
+            throw std::runtime_error("RZ torque source changed unrelated cylindrical contributions");
     }
     // Preserve the pre-extraction polar/full cylindrical formulas exactly.
     for (int dim : {1,2,3}) {
