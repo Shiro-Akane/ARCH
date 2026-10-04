@@ -137,6 +137,21 @@ struct NativeRzBoundaryPotentialError {
     std::vector<double> cell_bounds;
     double native_norm_upper=std::numeric_limits<double>::infinity();
 };
+/** Ideal final native A vs exact stored-coefficient A, for supplied phi.
+ * Does not certify the continuous PDE or a RHS source/potential producer.
+ */
+struct NativeRzOperatorConstructionError {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    std::vector<double> cell_bounds;
+    double native_norm_upper=std::numeric_limits<double>::infinity();
+};
+struct NativeRzResidualEvaluationError {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    NativeRzOperatorConstructionError construction;
+    PoissonArithmeticError arithmetic;
+    std::vector<double> cell_bounds;
+    double native_norm_upper=std::numeric_limits<double>::infinity();
+};
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
@@ -185,6 +200,11 @@ public:
         std::span<const double> boundary_values) const;
     NativeRzBoundaryPotentialError native_rz_propagate_potential_error(
         std::span<const NativeRzFacePotentialError> face_errors) const;
+    NativeRzOperatorConstructionError native_rz_operator_construction_error(
+        std::span<const double> potential) const;
+    NativeRzResidualEvaluationError native_rz_residual_evaluation_error(
+        std::span<const double> potential,std::span<const double> computed_rhs,
+        std::span<const double> computed_residual) const;
     WeightedNormInterval native_rz_norm_interval(std::span<const double> x) const;
     PoissonArithmeticError bound_rhs_assembly_roundoff(
         std::span<const double> source,std::span<const double> boundary_values,

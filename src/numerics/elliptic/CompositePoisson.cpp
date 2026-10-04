@@ -1022,6 +1022,70 @@ NativeRzBoundaryPotentialError CompositePoisson::native_rz_propagate_potential_e
     const auto norm=native_rz_norm_interval(result.cell_bounds);
     result.status=norm.status;result.native_norm_upper=norm.upper;return result;
 }
+/** Bound (A_ideal-A_stored)*phi with the canonical anchored gradient.
+ * apply() uses boundary_value=0: the -c_B*phi_anchor term belongs to A.
+ * Prescribed face values belong to the separate B/RHS ledger.
+ */
+NativeRzOperatorConstructionError CompositePoisson::native_rz_operator_construction_error(
+    std::span<const double> phi) const {
+    NativeRzOperatorConstructionError result;
+    if(base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2
+        ||phi.size()!=cells_.size()||!finite_field(phi))return result;
+    result.cell_bounds.assign(cells_.size(),0.);
+    for(std::size_t index=0;index<faces_.size();++index) {
+        const auto& face=faces_[index];const int anchor=face.left>=0?face.left:face.right;
+        const auto stencil=native_rz_stencil_enclosure(index);
+        const auto geometry=native_rz_face_enclosure(index);
+        if(stencil.status!=BoundaryErrorStatus::Bounded) {result.status=stencil.status;return result;}
+        if(geometry.status!=BoundaryErrorStatus::Bounded) {result.status=geometry.status;return result;}
+        for(int side=0;side<2;++side) {
+            const int cell=side?face.right:face.left;if(cell<0)continue;
+            const ArithmeticRange quotient{geometry.area_over_volume_lower[side],geometry.area_over_volume_upper[side]};
+            double contribution=0.;
+            for(std::size_t k=0;k<face.samples.size();++k) {
+                const auto ideal=range_product(quotient,
+                    {stencil.coefficient_lower[k],stencil.coefficient_upper[k]});
+                const auto stored=range_divide_volume(range_product({face.area,face.area},
+                    {face.coefficients[k],face.coefficients[k]}),volumes_[cell]);
+                const double factor=range_abs_upper(range_add(ideal,range_negate(stored)));
+                const auto difference=range_add({phi[face.samples[k]],phi[face.samples[k]]},
+                    {-phi[anchor],-phi[anchor]});
+                const double term=bound_product(factor,range_abs_upper(difference));
+                contribution=bound_up(contribution+term);
+            }
+            // Geometry already encloses the signed B factor; absolute defect
+            // bounds the homogeneous boundary term in A regardless of side.
+            const double boundary_term=bound_product(geometry.boundary_map_error_upper[side],std::abs(phi[anchor]));
+            contribution=bound_up(contribution+boundary_term);
+            result.cell_bounds[cell]=bound_up(result.cell_bounds[cell]+contribution);
+            if(!std::isfinite(result.cell_bounds[cell])) {result.status=BoundaryErrorStatus::Overflow;return result;}
+        }
+    }
+    const auto norm=native_rz_norm_interval(result.cell_bounds);
+    result.status=norm.status;result.native_norm_upper=norm.upper;return result;
+}
+/** Actual computed residual vs ideal A*phi minus the supplied computed RHS.
+ * Stored apply/subtraction roundoff and native A construction are separate.
+ * Ideal-vs-computed RHS and source/observer errors remain separate inputs.
+ */
+NativeRzResidualEvaluationError CompositePoisson::native_rz_residual_evaluation_error(
+    std::span<const double> phi,std::span<const double> rhs,std::span<const double> residual) const {
+    NativeRzResidualEvaluationError result;
+    if(phi.size()!=cells_.size()||rhs.size()!=cells_.size()||residual.size()!=cells_.size()
+        ||!finite_field(phi)||!finite_field(rhs)||!finite_field(residual))return result;
+    result.construction=native_rz_operator_construction_error(phi);
+    if(result.construction.status!=BoundaryErrorStatus::Bounded) {result.status=result.construction.status;return result;}
+    result.arithmetic=bound_residual_evaluation_roundoff(phi,rhs,residual);
+    if(result.arithmetic.status!=BoundaryErrorStatus::Bounded) {result.status=result.arithmetic.status;return result;}
+    result.cell_bounds.resize(cells_.size());
+    for(std::size_t i=0;i<cells_.size();++i) {
+        result.cell_bounds[i]=bound_up(result.construction.cell_bounds[i]+result.arithmetic.cell_bounds[i]);
+        if(!std::isfinite(result.cell_bounds[i])) {result.status=BoundaryErrorStatus::Overflow;return result;}
+    }
+    const auto norm=native_rz_norm_interval(result.cell_bounds);
+    result.status=norm.status;result.native_norm_upper=norm.upper;return result;
+}
 /** Construct full-ring volume/normalization bounds from root dyadic identity.
  * V=pi*dr*(2*r_lo+dr)*dz. Using dr explicitly avoids subtraction of
  * nearly equal radial edges. Stored GridMetrics outputs are compared, never

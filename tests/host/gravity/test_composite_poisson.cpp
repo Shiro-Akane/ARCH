@@ -1077,6 +1077,35 @@ void native_rz_stencil_probe() {
         }
         const auto total_norm=op.native_rz_norm_interval(total_boundary);
         require(total_norm.status==elliptic::BoundaryErrorStatus::Bounded,"total native boundary norm failed");
+        std::vector<double> potential(op.size()),applied(op.size()),residual(op.size());
+        for(int i=0;i<op.size();++i) {
+            const auto center=op.center(i);potential[i]=.25+center[0]*center[0]+.5*center[1];
+        }
+        op.apply(potential,applied);
+        for(int i=0;i<op.size();++i)residual[i]=applied[i]-rhs[i];
+        const auto evaluation=op.native_rz_residual_evaluation_error(potential,rhs,residual);
+        require(evaluation.status==elliptic::BoundaryErrorStatus::Bounded,"native A/residual evaluation failed");
+        require(op.native_rz_operator_construction_error({}).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "missing phi construction accepted");
+        auto bad_phi=potential;bad_phi[0]=std::numeric_limits<double>::quiet_NaN();
+        require(op.native_rz_operator_construction_error(bad_phi).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "NaN phi construction accepted");
+        require(op.native_rz_residual_evaluation_error(potential,rhs,{}).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "missing residual accepted");
+        std::vector<double> fake(op.size(),0.);
+        const auto fake_evaluation=op.native_rz_residual_evaluation_error(potential,rhs,fake);
+        require(fake_evaluation.status==elliptic::BoundaryErrorStatus::Bounded&&fake_evaluation.native_norm_upper>0.,
+            "fake zero residual assumed exact");
+        const auto zero_evaluation=op.native_rz_residual_evaluation_error(fake,fake,fake);
+        require(zero_evaluation.status==elliptic::BoundaryErrorStatus::Bounded&&zero_evaluation.native_norm_upper==0.,
+            "zero A/residual evaluation acquired floor");
+        std::vector<double> full_residual_error(op.size());
+        for(int i=0;i<op.size();++i) {
+            const double sum=total_boundary[i]+evaluation.cell_bounds[i];
+            full_residual_error[i]=sum==0.?0.:std::nextafter(sum,std::numeric_limits<double>::infinity());
+        }
+        const auto full_error_norm=op.native_rz_norm_interval(full_residual_error);
+        require(full_error_norm.status==elliptic::BoundaryErrorStatus::Bounded,"full manufactured residual error norm failed");
         const auto combined_norm=op.native_rz_norm_interval(combined);
         require(combined_norm.status==elliptic::BoundaryErrorStatus::Bounded,"combined native construction norm failed");
         std::cout<<",\"face_values\":";dump(face_values);std::cout<<",\"rhs\":";dump(rhs);
@@ -1089,6 +1118,15 @@ void native_rz_stencil_probe() {
         std::cout<<",\"propagated_native_norm_upper\":"<<propagated.native_norm_upper
             <<",\"total_boundary_cells\":";dump(total_boundary);
         std::cout<<",\"total_boundary_native_norm_upper\":"<<total_norm.upper;
+        std::cout<<",\"potential\":";dump(potential);std::cout<<",\"computed_applied\":";dump(applied);
+        std::cout<<",\"computed_residual\":";dump(residual);
+        std::cout<<",\"operator_construction_cells\":";dump(evaluation.construction.cell_bounds);
+        std::cout<<",\"operator_construction_native_norm_upper\":"<<evaluation.construction.native_norm_upper
+            <<",\"residual_evaluation_cells\":";dump(evaluation.cell_bounds);
+        std::cout<<",\"residual_arithmetic_cells\":";dump(evaluation.arithmetic.cell_bounds);
+        std::cout<<",\"residual_evaluation_native_norm_upper\":"<<evaluation.native_norm_upper
+            <<",\"full_residual_error_cells\":";dump(full_residual_error);
+        std::cout<<",\"full_residual_error_native_norm_upper\":"<<full_error_norm.upper;
         std::cout<<",\"faces\":[";fc=true;std::size_t face_index=0;
         for(const auto& face:op.faces()) {
             if(!fc)std::cout<<',';fc=false;

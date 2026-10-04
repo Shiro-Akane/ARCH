@@ -406,6 +406,14 @@ Fraction验证，真实ring ideal-error producer仍未完成，不自动提升�
 系数/阈值。见 RZIdealPotentialPropagationNode-20261005.zh-CN.md。
 interior A、完整physical residual/Phi/force及production gate仍待完成。
 
+native A construction与actual residual evaluation已单列并组合：
+同owner的anchored gradient、homogeneous boundary项、native A-V及ideal
+stencil区间贯通；38组3288 cells7464面独立Fraction检查construction、
+stored arithmetic、ideal evaluation和完整manufactured residual box通过。
+见 RZNativeResidualEvaluationNode-20261005.zh-CN.md。未将制造array当
+物理解；真实source/observer producer、原请求physical RHS/Phi/force及
+RZ全消费者/natural recovery/axis/viscosity gate仍待完成。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
