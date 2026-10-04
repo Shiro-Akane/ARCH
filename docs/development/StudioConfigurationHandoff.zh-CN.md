@@ -2,7 +2,7 @@
 
 2026-10-01。本文是合作者的统一入口，覆盖 O7.0 配置整改、Studio／Host、
 O7.1–O7.5 Jeans／RZ 实现，以及部分 O9 的第二平台验证。
-发布基线是 `v1.2.1`，工作计划位于 `compute/optim`。本轮只交付 Linux／WSL，原生 Windows 适配明确排除。
+发布基线是 `v1.2.1`，初始规划保存在 `compute/optim`；当前执行和交付分支为 `studio/compute-optim-integration`。本轮只交付 Linux／WSL，原生 Windows 适配明确排除。
 本文为实施与验收约定。14700K／RTX 4070 Ti 已完成合作者报告的平台预检，
 完整科学与正式 CUDA／性能验收仍未完成。2026-10-04 可取得源码与 Core 决定
 见[恢复短 gate 评审](O7ResumeShortGates-20261004.zh-CN.md#core-review2026-10-04)；
@@ -64,20 +64,22 @@ Host 的 Save As／Reopen 通过不能替代实际打开选择窗口的验证。
 
 ### 1.2 从当前分支建立自己的工作区
 
-交接文档和主计划一起位于 `compute/optim`，合作者拉取该分支的完整仓库。
-新目录示例（目录已存在时自行选择新位置，不覆盖现有工作）：
+当前执行分支是 `studio/compute-optim-integration`；复用本机已有的一份 ARCH checkout，
+在 clean 工作树上接收增量并记录 SHA，不创建第二份源码、worktree 或交叉引用的构建缓存。
+有未提交工作时先保留，再按实际差异合入；不 reset／覆盖用户改动。
 
 ```bash
-git clone --branch compute/optim git@github.com:Shiro-Akane/ARCH.git ARCH-compute-optim
-cd ARCH-compute-optim
+git fetch origin
+git switch studio/compute-optim-integration
+git merge --ff-only origin/studio/compute-optim-integration
 git rev-parse HEAD
 git status --short
 ```
 
-已有仓库可先 fetch，再建立独立 worktree 或本地分支；不要在未保存的 Studio 工作区上
-直接重置或覆盖。记录取得的精确 SHA，并确认本文及执行细则均存在。
-`compute/optim` 当前主要增量为计划，不等于包含尚未推送的 Studio checkpoint；
-先取得对方工作台源码，再按文件和提交核对引入，不能直接用旧 Core 覆盖此基线。
+本地历史有独立提交而不能 fast-forward 时，先审阅差异再做有界集成。
+Core 科学决定追加于现有 [逐项 review 清单](O7JeansRzReviewQuestions-20261004.zh-CN.md)：
+第6节是 JENS 短包，第7节是环体数学／误差接口，第8节是 RZ 单一角动量表示。
+每个获准节点可以独立推进并提交 review；未获准或未验收子集不阻塞无依赖工程工作。
 
 本地开发可以分阶段提交，统一回到约定的交付分支 review；多人写入时先登记责任。
 远端前进时先 fetch 并检查差异，不能 force-push 覆盖他人的工作。

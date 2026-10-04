@@ -16,7 +16,7 @@ RZ完整环体measure、r/z坐标、共享operator/source/transfer与制造解�
 | 真实IdealGas/双组分/运动态 | JeansIdealGasReference：24组合，max relative1.9657272738823614e-16；独立caloric closure | 既有叶函数16epsilon；样本为cell守恒态点值闭合 | 接受该独立闭合参考及覆盖域 |
 | Native Tabular域内rho/T/Ye | JeansNativeTabularReference：240组合，max relative1.0004323370200706e-14 | NativeTabularFixture既有2e-12，只是log-linear解析fixture | 此fixture能否签收静态子gate；真实table/Helm/free-energy子例和预算仍需指定 |
 | threshold与候选父态 | 以真实restriction父守恒态重新走同一EOS，不平均子声速；父spacing由真实GridMetrics | jeans_cells>=4已定；阈值附近科学/舍入验收未给具体预算 | 指定父态多材料/阈值临界独立状态和允许误差，不能由观察后拟合 |
-| JeansWave/GravityBox集成/接受宏步/regrid/restart | 复用正式初始化、当前真实AMR和checkpoint，不复制物理 | Jeans原mass/energy/force/residual预算沿run_self_gravity；不能当作JENS新非线性误差预算 | 指定冻结jeans_cells、amr历程、终点和独立诊断参考；未给列保持pending |
+| JeansWave/GravityBox集成/接受宏步/regrid/restart | 复用正式初始化、当前真实AMR和checkpoint，不复制物理 | Jeans原mass/energy/force/residual预算沿run_self_gravity；不能当作JENS新非线性误差预算 | 第6节已冻结 uniform-lifecycle-1；实际生命周期和非均匀扩展逐项待验 |
 
 ## RZ子例/参考/预算（待逐项review）
 
@@ -26,9 +26,9 @@ RZ完整环体measure、r/z坐标、共享operator/source/transfer与制造解�
 | 球对称映射至RZ | 沿第4.3节独立两向力/axis参考，不以同生产kernel互证 | 指定有限源、域/边界、点值或体积平均、误差weight与阈值 |
 | 有限环体轴线/离轴 | RZFiniteRingAxis/OffAxisReference：独立高精度积分，observer点值；并非cell/face平均 | 是否采用piecewise-constant有限源，inside/contact路线及平均语义 |
 | 近场积分 | 近外缘整体64→分区64 g_r差1.9753441487098356e-15 cm/s²；直接Newton与同阶核一致仍有共享源积分误差 | 分区/阶数/接触处理与源积分误差预算；不能由当前数值倒推“够准确” |
-| 远场矩/树聚合 | 完整环体monopole+traceless quadrupole候选；示例Phi误差7.558246644870839e-16 cm²/s² | 最终阶数/opening/聚合语义及截断预算，示例不是冻结值 |
+| 远场矩/树聚合 | 完整环体monopole+traceless quadrupole候选；示例Phi误差7.558246644870839e-16 cm²/s² | 第7节已定full-ring矩、余项界和误差接口；实际实现/覆盖域待验 |
 | 边界/离散/AMR/MG/backend | 复用现有GravityBoundary tree/workspace与shared FGMRES | 第4.3节分项误差预算：边界截断、源积分、离散、AMR、MG、后端舍入，逐项给出处/阈值 |
-| angular momentum transfer | RZBlockTransfer：保守mom_phi体积分不等于真实r-weighted Lz；axis变化4.9850588267931159e-4，offaxis1.039613642698e-4 | 原生角动量状态/传递语义、能量/组分约束和预算；恢复parent不消除演化影响 |
+| angular momentum transfer | RZBlockTransfer：保守mom_phi体积分不等于真实r-weighted Lz；axis变化4.9850588267931159e-4，offaxis1.039613642698e-4 | 第8节已定单一表示、贯通消费方和收支；原 finding 等实际科学子组签收 |
 | RZ长轨迹/公开能力 | O7.5完整数学、旧checkpoint拒绝及所有消费者同步后开放 | 指定冻结case/input/domain/EOS/boundary/endpoint/reference/预算与restart分割点；未确认不启动新RZ长跑 |
 
 本清单的已测误差是处理后历史证据，producer身份按各报告保留；不能冒充本次HEAD新测结果。没有新增/放宽阈值，没有从CPU/GPU一致宣布科学通过。接近源/全域参考及原始数组留本机，提交精简scalar摘要。模型满足对应短科学gate且冻结包完整后可独立推进CPU/CUDA长跑；本清单不是冻结输入包。
@@ -47,14 +47,14 @@ RZ完整环体measure、r/z坐标、共享operator/source/transfer与制造解�
 | IdealGas 24 组合 | 认可单组分和冻结组分双组分 caloric 闭合参考 | 独立核对 gamma_eff=1+sum(X Cv (gamma-1))/sum(X Cv)=27/14；原 16 epsilon 是该良态 fixture 预算，不扩展为任意高 Mach 或演化预算 |
 | NativeTabular 240 组合 | 认可当前 log-linear 合成 fixture 的静态子 gate，保留原 2e-12 | 不签收真实表或 Helm；复用各 EOS 已有独立值／导数／反演参考及误差预算补齐选定适用状态 |
 | 声速含义 | 当前 EOS 在冻结组成下的绝热声速，即 (dP/drho)_(s,X) | 不是等温、燃烧松弛、NSE 再平衡或辐射闭合的有效声速；这些不随 JENS 自动支持 |
-| 候选父态 | 先以真实物理体积 restriction 守恒量，再由父态 EOS 求声速 | 禁止平均子声速、子 N_J 或子温度来替代父态；子组分按 rho X 迁移 |
+| 候选父态 | rho、径向/轴向动量、E、rho X 按 V；新 RZ 角向按第8节 W，再由同一父态 EOS 求声速 | 禁止平均子声速、子 N_J 或子温度来替代父态；子组分按 rho X 迁移 |
 | threshold | N_J<jeans_cells 请求细化；父态 N_J>=jeans_cells 且其他指标及事务全部允许才可粗化 | 用实际 FP64 比较，明确等号行为；不插入降低目标的 epsilon、不加新参数；临界舍入样本与明确欠／已解析样本分开 |
 
 父态独立样本使用单／双组分、不同密度和相反速度的手工守恒子态，
 独立 long-double／Decimal 汇总 rho、动量、E、rho X 的体积分，
 再按该独立 caloric law 求父态内能和声速。相反速度的平均动量可为零，
 粗化后保留总能量意味着未解析动能进入父态内能，不能人为减掉该能量。
-不同径向位置使用真实环体体积；几何／AMR owner 继续只有一套。
+不同径向位置使用真实环体体积；新 RZ 角向依第8节使用 W。几何／AMR owner 继续只有一套。
 高 Mach 内能抵消、不可解析状态使用既有 EOS 拒绝和预算，不夹紧以通过测试。
 
 可先完成上述静态父态、比较边界和容量失败子例，再补接受宏步、regrid、restart
@@ -87,13 +87,10 @@ RZ 的物理守恒判据以角动量及其边界／源项力矩收支为准；
 不能把两个冲突约束一起列为必过门槛。
 
 因此不批准“只修 prolongation 并保留原 restriction 就能同时守恒”的结论。
-请提交一份共用的 RZ 角动量离散设计，明确权威状态与存储／单元平均语义，
-列出 hydro 几何源、面通量、prolong/restrict、reflux、EOS 动能、轴线奇偶性、
-IO/checkpoint、CPU/device 的贯通关系。可讨论角动量密度作为权威量或相容表示，
-但不能直接把状态改成 r*m_phi 而略去这些消费方，也不额外保存可漂移的双权威状态。
-维持质量、总能量、rho X 与正值处理的既定约束；独立恒定旋流／变旋流反例、
-混合网格多次事务及有／无边界力矩的收支验收由设计一起提交。
-该物理离散选择和预算确认后才进入对应源码修复，RZ 发布出口仍受此 finding 阻塞。
+第8节已定单一 RZ 代表量、面力矩、传递、reflux、EOS 与轴线消费链和短收支门槛；
+合作者按 A→B→C→D 提交实现和独立科学材料，不额外保存双权威状态。
+质量、总能量、rho X 与正值约束保持；finding 由实际旋流／变旋流、
+多次混合事务及有／无边界力矩的收支验收关闭，RZ 发布出口在签收前保留。
 
 ### 4.3 推进顺序与签收
 
@@ -305,3 +302,121 @@ $$
 
 上述数学部件可以独立实现、推送 review，角动量实现不阻塞它们。
 完整 RZ release 和新长跑仍须取得近场与势／力参考、角动量及全消费者短科学签收。
+
+## 8. RZ 角动量：单一表示与贯通实施节点
+
+Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
+沿用现有角向槽位和物理量纲；不另存一个可独立演化的 ell／J 数组。
+`J_cell=m_phi*W`、`ell_cell=J_cell/V=r_bar*m_phi` 是派生量，
+`r_bar=W/V`。质量、径向／轴向动量、总能量和 rho X 仍为原生体积平均。
+这项选择是数值表示的决定；不代表现有 RZ finding 已关闭或完整科学验收通过。
+生产能力继续受完整消费链、独立收敛／收支及可解析状态检查约束。
+
+### 8.1 平均、重构与 EOS
+
+m_phi 的量纲仍是 g/(cm² s)，但在 RZ 中不再标成 rho*u_phi 的普通体积平均。
+物理代表速度仍由 `u_phi=m_phi/rho` 得到；现有 EOS／内能恢复消费一份代表状态，
+不增加第二个热力学模型或双权威动量。
+这个动能闭合是有限体积表示的离散近似，不能宣称恒等于任意子单元速度分布的平均动能。
+光滑、可解析状态须证明二阶一致性，轴邻格和强旋流须单独检查；
+无法解析的真实输入或候选父态拒绝／保留细化，不补热、不改总能量、不给旋流额外 floor。
+初始化、用户物理边界与公共 primitive 接口仍给物理分量，由同一几何适配负责状态语义。
+
+m_phi 的径向权是 `r*dV`。线性物理动量重构的对应平均位置为
+
+$$
+\widetilde r=\frac{\int r^2dV}{\int r dV}
+=\frac34\frac{r_{hi}^4-r_{lo}^4}{r_{hi}^3-r_{lo}^3}.
+$$
+
+不要把它与体积平均位置 `r_bar=(2/3)*(r_hi³-r_lo³)/(r_hi²-r_lo²)`
+或几何中点混为一谈；这些度量继续由 `GridMetrics` 单一所有者提供。
+重构到真实面的位置后，现有 HLL／HLLC 等 Riemann 数学仍消费物理 primitive，
+禁止把 J 或 ell 原样送入 Riemann solver、EOS、燃烧或扩散。
+原有二阶重构／求积如不足以表达不同权矩，扩展其几何适配并证明一致性；
+不能通过为某个 solver 单独加近似参数掩盖该问题。
+
+例如 rho=1、`u_phi=Omega*r`、r=[1/2,1]、同 dz：
+`r_bar=7/9`、`m_phi/Omega=45/56`；真实平均旋转动能为 `5*Omega²/16`，
+代表闭合为 `2025*Omega²/6272`，差为 `65*Omega²/6272`。
+该差来自亚单元分布，随细化应收敛；不能拿它当成热源或放宽 EOS 拒绝预算。
+独立刚体旋转角动量参考是 `J=Omega*rho*pi*dz*(r_hi⁴-r_lo⁴)/2`。
+
+### 8.2 一次力矩更新，沿用既有数学所有者
+
+每个单元的权威方程为
+
+$$
+\frac{d(m_\phi W)}{dt}
+=-\sum_f\int_f rF_{m_\phi}\,dA
++\int_{cell}rS_{m_\phi}\,dV.
+$$
+
+径向面力矩通量是 `2*pi*r_face²*dz*F_mphi`；轴向面是
+`2*pi*integral(r²*F_mphi dr)`，不是 `2*pi*integral(r*F_mphi dr)`。
+面通量可用已重构物理状态作矩一致求积；常值面通量可乘该面的径向一阶面积矩。
+求积、方位应力和边界方向与原生面积共用，不能把 W 直接当面面积。
+
+- Hydro 只移除 RZ 方位分量中已经被力矩散度吸收的 advective curvature source；
+  径向压力／离心源、质量、径向／轴向动量、能量与组分通量保留其物理方程。
+  `GeometricSources`／flux owner 使用一个 RZ 适配，不复制全部 solver 或三套源项。
+- 外部角向作用和粘性方位应力分别纳入力矩收支。扩散使用原有应力数学，
+  同一角动量通量表示后去除对应重复曲率项，不能只修 Hydro 而遗漏 viscosity。
+  轴对称自引力无方位力，但径向／轴向力和原有能量功耦合仍须检查。
+- Reflux 累计并修正同一有符号面力矩积分，最后除本单元 W。
+  CPU/device、各时间积分阶段都消费同一权矩与转换叶函数；执行器只承担资源／kernel 差异。
+- 轴面 r=0 的力矩通量严格为零。正则场 `u_phi=O(r)`，物理角向量为奇、
+  派生 ell 为偶且为 O(r²)；反射 ghost 按原生几何映射取符号，
+  不能把负半径 ghost 的公式直接当正体积，不能在轴上执行除以 r。
+
+### 8.3 AMR、同一候选父态与不可解析的粗化
+
+角向 restriction 为 `m_parent=sum(m_child*W_child)/W_parent`；
+其余守恒分量继续按 V。prolongation 的角向偏差使加权 W 和为零，
+其他偏差使加权 V 和为零；复用已有共同 theta 正值限制，
+从可解析的 parent 基态混合，不能独立夹紧角向量而损失 J／总能量／rho X。
+轴邻格的 regular profile 与代表闭合仍受第8.1节的重构及误差检查约束。
+
+以下反例双方都可解析，证明候选父的正值验收不能省：
+两个径向子格 [0,1/2]、[1/2,1]，rho=1，径向／轴向动量为零，
+`m1=1,m2=-16`；各子比内能均为 1/16，因此 `E1=9/16,E2=2049/16`。
+`V1:V2=1:3`、`W1:W2=1:7`，父态为
+`m=-111/8,E=1539/16`，其比内能为 `-9/128`。
+必须拒绝这次粗化并保留原细网格，不能改 E、J 或 floors 来构造父态。
+
+同一候选父构造供正值检查、JENS、其他粗化指标与实际 migration 使用。
+先检查可解析性，再 EOS/JENS；候选不可解析属于粗化 veto，
+旧已接受状态损坏则明确失败，两者不能混成一个“可忽略错误”。
+不在 JENS 中另造按 V 平均角向分量的父态副本。
+已提交的旧内部 RZ 静态参考按新语义迁移、重新计算独立参考，不能复用旧 PASS 关闭该 finding；
+Cartesian 及未变语义的其他几何保持其现有参考和路径。
+
+### 8.4 消费链、短验收与发布出口
+
+| 次序 | 合作者可立即实施／提交 | 独立检查与出口 |
+| --- | --- | --- |
+| A | 几何权矩、单一状态转换、restriction／prolongation 内部 CPU fixture | 分区后 W 总和、手工 J、刚体／变旋流、上述不可解析父 veto；同时保持 rho/E/rho X 收支 |
+| B | Hydro 面力矩、几何源、reflux、轴线与已有 viscosity 适配 | 闭域无力矩、受边界／外源力矩两类收支；混合层级多次事务，不能只比较最终 parent |
+| C | Init／BC、EOS/声速/JENS、plot／API／checkpoint 语义接线 | 代表量、速度、J/V 与 native measure 可辨；状态语义版本升级、旧 RZ checkpoint 明确拒绝 |
+| D | 受影响 CPU 科学子组、再统一 CUDA | 独立径向平衡／旋转光滑解保持既有至少1.8的空间收敛目标；可解析域、能量和角动量各自验收 |
+
+闭域与有力矩的离散守恒检查，使用
+`abs(delta_J + outward_torque_impulse - applied_torque_impulse)`，
+以初始 `sum(abs(m_phi)*W)` 和外部／边界绝对力矩冲量之和归一化，短组门槛为 1e-12。
+该门槛来自既有守恒级别和短事务浮点收支，不按先前 5e-4／1e-4 实测漂移拟合。
+归一化量为零的零旋转/零力矩 fixture 要保持零角动量；不添加 tiny 分母。
+质量、总能量、rho X 的原有守恒预算及未触发修复条件分别保留。
+空间收敛覆盖热压支撑的刚体旋转平衡 `P=P0+rho*Omega²*r²/2`，
+独立亚单元积分与 native 面力；单靠总 J 守恒不能签收局部力或 EOS 闭合。
+高 Mach／轴邻格若达舍入或表示下限，回交误差／域分析，不能擅改门槛。
+
+所有权仍为原 `GridMetrics`、`FluidState` 的转换消费、`GeometricSources`、
+AMR transfer／flux surface、EOS bridge 和 IO；完整职责才决定是否需要新小文件。
+新增注释说明 Workflow、权矩公式、状态语义和子函数用途；公共用户仍只需两个 include 头文件。
+API/plot 中单位相同不代表平均语义相同，writer/reader/Inspector 同批标明并验证；
+旧极平面和新 RZ identity 不兼容，不建静默兼容层。
+
+可以先推送 A 或 B 供科学 review，独立推进第7节环体和第6节 JENS。
+完整消费链通过前保持生产 RZ gate；新 RZ 长轨迹与性能计时在相应短科学签收之后。
+
+本轮 Core 复核、DPS 调用边界与已知费用见 [精简复核记录](../../validation/gravity/results/o7-resume-20261004/core-nodes-review.json)。源码／编译／实际科学结果与规划参数分开标记，当前没有新的完整轨迹通过声明。
