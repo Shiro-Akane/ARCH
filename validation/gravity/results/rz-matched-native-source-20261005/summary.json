@@ -1,0 +1,66 @@
+{
+  "status": "ACTUAL_STATIC_SOURCE_BOUNDARY_PHI_DIAGNOSTIC_NOT_SCIENTIFIC_ACCEPTANCE",
+  "baseline": "d4f9cfcf040ad7f400dd8ca87cc6849bb2b69c2e",
+  "probeRecordSha256": "ca3135a23f6b9130f7373c8dd29b161e309398238d7e6421f6386de949a7cb8f",
+  "probeExecutableSha256": "11c6fe01a366f66d15391a57922485fcc7ccc283cab6ce7dfddd21cf71400eb9",
+  "productionExecutableSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "fileSha256": {
+    "tests/host/gravity/test_composite_poisson.cpp": "efa0f905556654cf221a05ebcea35f5bbe404734a0defdda43f6224219a94b41",
+    "validation/gravity/rz_matched_native_reference.py": "2075561728e4f16a5258f75c8042069f81bdfca2521cdfb00237647d8a4fd3f9",
+    "validation/gravity/rz_matched_source_reference.py": "53cc68bfab5fef8382eb9c0aab84917726a09a561151257559c71378d65f9d10",
+    "tests/tooling/validation/test_rz_matched_native_reference.py": "1388e73cb0fcae5a7372315e757338da9a6e648abe951b30f7a10e3bbc3c72c0",
+    "tests/tooling/validation/test_rz_matched_source_reference.py": "37143afbc0af4d2485dcb361db7705a2a02f2eb227df449f8093ab5c3c7abdb7"
+  },
+  "toolTests": 25,
+  "discreteOriginalRequest": "PASS 2 cases 56 leaves",
+  "rows": [
+    {
+      "radialOrigin": 0,
+      "cells": 28,
+      "boundaryObservers": 12,
+      "sourceId": "20c402eebc310f8e65cdeb56600ed69129d30141a6b4e1bf159947e9a2921484",
+      "maximumOrder16ProductionDelta": "5.680064180897274680711958020683756935374515105380053854427239723872201995E-14",
+      "maximumOrder32ProductionDelta": "3.76047003373031209433770967642548843714399748201588991723451460976022897E-15",
+      "maximumOrder16To32Estimate": "5.304017177525119491916692305348694582445179283832293314282357414185768812E-14",
+      "totalContactLeafObserverPairs": 12
+    },
+    {
+      "radialOrigin": 0.5,
+      "cells": 28,
+      "boundaryObservers": 16,
+      "sourceId": "92a2b0a04b8f8f0640aba0e99e6f31708e0966bd79666ba902a05d68e1d69ea6",
+      "maximumOrder16ProductionDelta": "5.679199136806502767087762436324093303310190145775526104481406895665249851E-14",
+      "maximumOrder32ProductionDelta": "3.76031908096814884939803179137346279029161222362117018680067728044611073E-15",
+      "maximumOrder16To32Estimate": "5.303167228709687882147959257186747024281028923413409085801339167620638778E-14",
+      "totalContactLeafObserverPairs": 16
+    }
+  ],
+  "selectedContactObserver": {
+    "case": 0,
+    "faceIndex": 1,
+    "sequence": [
+      {
+        "precision": 80,
+        "tPanels": 1,
+        "potential": "-2.7049866082465115519419516390208193228599579580693056502553077548425979379292404E-7"
+      },
+      {
+        "precision": 80,
+        "tPanels": 2,
+        "potential": "-2.7049865800463581658181496211723239077314844526140268893413058229235358837999571E-7"
+      },
+      {
+        "precision": 100,
+        "tPanels": 2,
+        "potential": "-2.704986580046358165818149621172323907731484452614026889341305822923535883799956961589113717014974363E-7"
+      }
+    ],
+    "tPartition1To2Estimate": "2.82001533861238020178484954151284735054552787609140019319190620541292833E-15",
+    "precision80To100Estimate": "1.38410886282985025637E-86"
+  },
+  "limitations": [
+    "Actual static numerical-domain density and stamp, not Runtime all-block dependency collection",
+    "No continuous force/cell Phi or certified quadrature error/spatial science threshold acceptance",
+    "All original production/CUDA/new RZ long-run gates unchanged"
+  ]
+}

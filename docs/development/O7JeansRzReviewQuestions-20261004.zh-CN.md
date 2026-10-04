@@ -637,3 +637,15 @@ Existing legacy 保持兼容，严格 RZ 未解析候选仍拒绝、不授权 he
 当前为独立fixture，尚未验证真实Runtime density publication；
 不得由Poisson RHS反推density冒充接线。inside/contact离轴力继续拒绝，
 连续科学预算和production/CUDA/long-run gate保持。
+
+### 真实静态叶源到连续边界势诊断（2026-10-05）
+
+mixed实际probe直接导出tree.update密度、当前ring source stamp、实际edges与梯度；
+独立适配通过Fraction核对root/leaf一致性，不从RHS推断density。
+2例56叶的原离散请求继续PASS，25相关工具测试PASS。
+真实28边界点包含接触源；16/32阶势估计与实际值分别记录，
+32阶最大差约3.76047e-15；选中contact点改变分区仍变化2.82002e-15，
+不能称独立可靠参考已达到1e-18或关闭连续科学gate。
+见RZMatchedNativeSourceNode-20261005.zh-CN.md与scalar summary。
+无零面积轴面，初始0点axis结果明确排除；static abstract dependency不替代
+Runtime all-block stage/regrid身份。force/连续空间/CPU完整RZ门槛保持。

@@ -1483,11 +1483,30 @@ void native_ring_solved_probe(bool mixed=false) {
         std::cout<<"{\"mixed\":"<<mixed<<",\"radial_origin\":"<<origin<<",\"origin\":";dump(base.origin);
         std::cout<<",\"spacing\":";dump(base.spacing);
         std::cout<<",\"cells\":[";bool cf=true;
-        for(const auto& cell:op.cells()) {
+        for(int i=0;i<op.size();++i) {
+            const auto& cell=op.cells()[i];
             if(!cf)std::cout<<',';cf=false;
-            std::cout<<"{\"level\":"<<cell.level<<",\"index\":";dump(cell.index);std::cout<<'}';
+            const auto center=op.center(i);
+            std::cout<<"{\"level\":"<<cell.level<<",\"index\":";dump(cell.index);
+            std::cout<<",\"density\":"<<density[i]<<",\"edges\":["
+                <<center[0]-.5*op.width(i,0)<<','<<center[0]+.5*op.width(i,0)<<','
+                <<center[1]-.5*op.width(i,1)<<','<<center[1]+.5*op.width(i,1)<<"]}";
         }
-        std::cout<<']';
+        tree.require_current_ring(op,ring);
+        std::cout<<"],\"source_identity\":{\"topology\":"<<ring.source.topology.value
+            <<",\"time\":"<<ring.source.input_time<<",\"G\":"<<ring.source.gravitational_constant
+            <<",\"operator_revision\":"<<ring.source.operator_revision
+            <<",\"boundary_revision\":"<<ring.source.boundary_revision
+            <<",\"accuracy_revision\":"<<ring.source.accuracy_revision
+            <<",\"generation\":"<<ring.source_generation<<",\"inputs\":[";
+        bool dependency_first=true;
+        for(const auto& input:ring.source.inputs) {
+            if(!dependency_first)std::cout<<',';dependency_first=false;
+            std::cout<<"{\"uid\":"<<input.block.uid.value<<",\"epoch\":"<<input.block.epoch.value
+                <<",\"slot\":"<<int(input.slot)<<",\"version\":"<<input.version.value
+                <<",\"storage_generation\":"<<input.storage_generation<<'}';
+        }
+        std::cout<<"]},\"source_scope\":\"static numerical domain; abstract dependency, not Runtime block publication\"";
         std::cout<<",\"source\":";dump(source);std::cout<<",\"rhs\":";dump(rhs);
         std::cout<<",\"source_lower\":";dump(result.source_error.lower);
         std::cout<<",\"source_upper\":";dump(result.source_error.upper);
@@ -1511,7 +1530,9 @@ void native_ring_solved_probe(bool mixed=false) {
                 <<",\"center\":";dump(face.center);std::cout<<",\"samples\":";dump(face.samples);
             std::cout<<",\"coefficients\":";dump(face.coefficients);
             std::cout<<",\"boundary_coefficient\":"<<face.boundary_coefficient
-                <<",\"area\":"<<face.area<<'}';
+                <<",\"area\":"<<face.area<<",\"gradient\":"
+                <<op.face_gradient(solved.potential,face,
+                    face.boundary_side>=0?ring.values[f]:0.)<<'}';
         }
         std::cout<<"]}";
     }

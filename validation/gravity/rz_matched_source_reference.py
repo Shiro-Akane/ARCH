@@ -8,7 +8,7 @@ import json
 from decimal import Decimal, localcontext
 from pathlib import Path
 from rz_ring_axis_reference import G, axis_reference, decimal_value
-from rz_ring_offaxis_reference import finite_volume_reference, decimal_gauss
+from rz_ring_offaxis_reference import finite_volume_reference, contact_potential_reference, decimal_gauss
 
 KEYS = ("r_lower", "r_upper", "z_lower", "z_upper", "density")
 
@@ -62,6 +62,36 @@ def reference(source, observer, *, order=32, precision=80):
                 values = finite_volume_reference(case, order, precision)
             total = {k:total[k]+values[k] for k in total}
         return total
+
+def potential_reference(source, observer, *, order=32, precision=80, t_panels=1):
+    """Separate approved contact Phi diagnostic; never supplies contact force."""
+    decimal_gauss(order, precision)
+    if type(t_panels) is not int or not 1 <= t_panels <= 4:
+        raise ValueError("Contact diagnostic t_panels must be 1..4")
+    leaves=validate_source(source)
+    R,Z=(decimal_value(observer[k]) for k in ("r_observer","z_observer"))
+    if not (R.is_finite() and Z.is_finite() and R>=0):
+        raise ValueError("Invalid observer")
+    with localcontext() as ctx:
+        ctx.prec=precision
+        total=Decimal(0);contact=exterior=axis=0
+        for leaf in leaves:
+            if leaf["density"]==0:continue
+            case=dict(leaf,r_observer=R,z_observer=Z)
+            if R==0:
+                value=axis_reference(*(leaf[k] for k in KEYS),Z,precision,
+                                     decimal_output=True)["potential"]
+                axis+=1
+            elif (leaf["r_lower"]<=R<=leaf["r_upper"]
+                  and leaf["z_lower"]<=Z<=leaf["z_upper"]):
+                value=contact_potential_reference(case,order,precision,t_panels)["potential"]
+                contact+=1
+            else:
+                value=finite_volume_reference(case,order,precision)["potential"]
+                exterior+=1
+            total+=value
+        return dict(potential=total,contactLeaves=contact,exteriorLeaves=exterior,
+                    axisLeaves=axis,certified=False)
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)

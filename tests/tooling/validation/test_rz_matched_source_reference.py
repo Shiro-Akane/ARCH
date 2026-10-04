@@ -68,6 +68,18 @@ class MatchedSourceTests(unittest.TestCase):
                                 (dict(r_observer=0,z_observer=0),{"order":1}),
                                 (dict(r_observer=0,z_observer=0),{"precision":20})]:
             with self.assertRaises(ValueError):rz.reference(s,observer,**kwargs)
+    def test_separate_contact_potential_keeps_force_rejected(self):
+        s=self.source();observer=dict(r_observer=.5,z_observer=0)
+        result=rz.potential_reference(s,observer,order=8)
+        self.assertEqual(result["contactLeaves"],2)
+        self.assertFalse(result["certified"])
+        self.assertLess(result["potential"],0)
+        self.assertNotIn("radial_acceleration",result)
+        with self.assertRaisesRegex(ValueError,"Interior/contact"):
+            rz.reference(s,observer,order=8)
+        with self.assertRaises(ValueError):
+            rz.potential_reference(s,observer,order=8,t_panels=0)
+
     def test_cli_retains_failure_and_refuses_overwrite(self):
         with tempfile.TemporaryDirectory() as folder:
             base=Path(folder);inp=base/"source.json";out=base/"summary.json"
