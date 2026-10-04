@@ -716,6 +716,49 @@ ARCH_HEAVY_INLINE SignedInterval separated_gauss2_integral_enclosure(
     if(interval_finite(result))result.lower=std::max(0.,result.lower);
     return result;
 }
+/** Three-point tensor Gauss, exact nodes 0,+/-sqrt(3/5), weights
+ * 8/9,5/9,5/9. The one-axis remainder is L^7/2016000*max|f^(6)|.
+ * The same Newton/Legendre derivative proof gives the reliable tensor
+ * remainder area*pi/5600*((dr/d)^6*(1+rh/d)+(dz/d)^6*rh/d).
+ * All irrational nodes, rational weights and evaluation are enclosed.
+ */
+ARCH_HEAVY_INLINE SignedInterval separated_gauss3_integral_enclosure(
+    double rl,double rh,double zl,double zh,double ro,double zo,double d_lower,
+    std::uint64_t* kernel_count=nullptr,std::uint64_t* agm_count=nullptr) {
+    if(!(d_lower>0.))return interval_invalid();
+    const auto dr=offset_interval(rh,rl),dz=offset_interval(zh,zl);
+    const auto hr=interval_product(dr,{.5,.5}),hz=interval_product(dz,{.5,.5});
+    const auto mr=interval_sum({rl,rl},hr),mz=interval_sum({zl,zl},hz);
+    const SignedInterval root{positive_down(std::sqrt(positive_down(3./5.))),
+                             positive_up(std::sqrt(quotient_up(3.,5.)))};
+    const SignedInterval nodes[]{interval_negate(root),{},root};
+    const SignedInterval weights[]{
+        {positive_down(5./9.),quotient_up(5.,9.)},
+        {positive_down(8./9.),quotient_up(8.,9.)},
+        {positive_down(5./9.),quotient_up(5.,9.)}};
+    SignedInterval sum{};
+    for(int i=0;i<3;++i)for(int j=0;j<3;++j) {
+        const auto radius=interval_sum(mr,interval_product(hr,nodes[i]));
+        const auto axial=interval_sum(mz,interval_product(hz,nodes[j]));
+        const auto kernel=separated_kernel_enclosure(radius,axial,ro,zo,kernel_count,agm_count);
+        if(!interval_finite(kernel))return interval_invalid();
+        sum=interval_sum(sum,interval_product(interval_product(weights[i],weights[j]),kernel));
+    }
+    const auto area=interval_product(dr,dz);
+    const auto quadrature=interval_product(interval_product(area,{.25,.25}),sum);
+    const double qr=quotient_up(dr.upper,d_lower),qz=quotient_up(dz.upper,d_lower);
+    const double qr2=product_up(qr,qr),qz2=product_up(qz,qz);
+    const double qr6=product_up(product_up(qr2,qr2),qr2);
+    const double qz6=product_up(product_up(qz2,qz2),qz2);
+    const double radial=quotient_up(rh,d_lower);
+    const double remainder=product_up(quotient_up(
+        product_up(area.upper,positive_up(arch::constants::math::pi)),5600.),
+        sum_up(product_up(qr6,sum_up(radial,1.)),product_up(qz6,radial)));
+    if(!interval_finite(quadrature)||!std::isfinite(remainder))return interval_invalid();
+    auto result=interval_sum(quadrature,{-remainder,remainder});
+    if(interval_finite(result))result.lower=std::max(0.,result.lower);
+    return result;
+}
 ARCH_HEAVY_INLINE SignedInterval positive_log_point_enclosure(double x) {
     if(!(x>0.)||!std::isfinite(x))return interval_invalid();
     if(x>=1.)return {logarithm_lower(x),logarithm_upper(x)};
@@ -896,6 +939,14 @@ ARCH_HEAVY_INLINE RingBox enclose_box(double rl,double rh,double zl,double zh,
             result.integral.lower=std::max(result.integral.lower,gauss.lower);
             result.integral.upper=std::min(result.integral.upper,gauss.upper);
         } // Disjoint bounds below fail; never overwrite with a looser fallback.
+        const auto gauss3=separated_gauss3_integral_enclosure(
+            rl,rh,zl,zh,ro,zo,dmin.lower,
+            &result.kernel_enclosures,&result.agm_iterations);
+        if(interval_finite(gauss3)) {
+            result.integral.lower=std::max(result.integral.lower,gauss3.lower);
+            result.integral.upper=std::min(result.integral.upper,gauss3.upper);
+        }
+
 
     }
     if(!std::isfinite(result.integral.upper) || result.integral.lower>result.integral.upper) {

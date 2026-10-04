@@ -25,10 +25,12 @@ def quadrant(a,b,precision):
         c.prec=precision;a,b=map(D.from_float,(a,b))
         return a*b*((a*a+b*b).sqrt().ln()-D("1.5"))+(a*a*atan(b/a)+b*b*atan(a/b))/2
 
-def duffy(values,order,precision):
+def duffy(values,order,precision,subtract_leading=False):
     with localcontext() as c:
         c.prec=precision
         rl,rh,zl,zh,ro,zo=map(D.from_float,values)
+        if subtract_leading and not ro>0:
+            raise ValueError("Leading contact subtraction requires a positive observer radius")
         rule=[((x+1)/2,w/2) for x,w in gauss(order)]
         integral=D(0)
         for a in (rl-ro,rh-ro):
@@ -48,7 +50,10 @@ def duffy(values,order,precision):
                                 if abs(aa-bb)<D(10)**(-precision+8):break
                             else:raise RuntimeError("reference AGM incomplete")
                             k=PI/(2*aa)
-                            integral+=abs(a*b)*t*wt*wu*rr*k/s
+                            integrand=t*rr*k/s
+                            if subtract_leading:integrand+=t*t.ln()/2
+                            integral+=abs(a*b)*wt*wu*integrand
+                    if subtract_leading:integral+=abs(a*b)/8
         return integral
 
 def call(binary,mode,values):
@@ -57,7 +62,32 @@ def call(binary,mode,values):
 
 def main():
     a=argparse.ArgumentParser();a.add_argument('--probe',type=Path,required=True)
-    a.add_argument('--output',type=Path,required=True);args=a.parse_args();rows=[]
+    a.add_argument('--output',type=Path,required=True)
+    a.add_argument('--strict-contact',action='store_true');args=a.parse_args();rows=[]
+    if args.strict_contact:
+        contact=[]
+        for ro,zo in ((1.,0.),(1.,.375),(.75,0.)):
+            values=(.5,1.,-.375,.375,ro,zo)
+            q=call(args.probe,'ring-enclosure-probe',
+                   (.5,1.,-.375,.375,1.,ro,zo,16384,1e-10))
+            assert q['status']==0
+            # Exact singular coefficient at t=0 is r/s=1/2.
+            # Integrate -(t/2)*log(t) analytically: 1/8 per triangle.
+            refs=[]
+            for n,p in ((64,80),(96,100)):
+                integral=duffy(values,n,p,subtract_leading=True)
+                with localcontext() as c:
+                    c.prec=p;refs.append(-4*D.from_float(6.67430e-8)*integral)
+            for v in refs:
+                assert D.from_float(q['lower'])<=v<=D.from_float(q['upper']),(values,q,str(v))
+            contact.append({'sourceObserverExactHex':[x.hex() for x in values],
+                'enclosure':q,'duffy64Precision80':str(refs[0]),'duffy96Precision100':str(refs[1])})
+            print('strict contact diagnostic contained',ro,zo,flush=True)
+        args.output.parent.mkdir(parents=True,exist_ok=True)
+        args.output.write_text(json.dumps({'status':'PASS','contactCases':3,'rows':contact,
+            'singularSubtraction':'exact integral -(t/2)*log(t)=1/8 per triangle',
+            'scope':'independent singularity-subtracted Duffy/Decimal AGM containment; differences not certified reference error or full RZ scientific acceptance'},indent=2)+'\n')
+        return
     for x in (0.,1.e-300,1.e-20,.25,.5,1.,2.,1.e20,1.e300):
         bound=call(args.probe,'ring-atan-probe',(x,))
         for precision in (100,140):

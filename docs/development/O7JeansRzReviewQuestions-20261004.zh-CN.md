@@ -324,6 +324,12 @@ production RZ gate 继续保留；实际未变化的 ARCH ELF 沿用匹配的 JE
 仍WorkLimit，仅上界缩紧约4%～7%；严格contact/inside未签收。
 见 RZContactLogMainPartNode-20261005.zh-CN.md，production gate保持。
 
+后续三点Gauss六阶可靠余项已贯通原owner：同一16384-work、1e-10 target的
+三个matched全源contact/inside样本由WorkLimit转为Bounded，独立singularity-subtracted
+Duffy/Decimal诊断包含于区间。非接触四例由数千boxes降为44～104。
+见 RZGauss3ContactBudgetNode-20261005.zh-CN.md；这是这些数学输入的预算验证，
+不是general parent、full RHS/residual、实际AMR消费者或完整RZ科学签收。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

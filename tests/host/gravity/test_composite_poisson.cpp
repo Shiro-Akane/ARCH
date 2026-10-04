@@ -907,6 +907,27 @@ void finite_ring_tree_boundary_contract() {
     std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
 }
 
+void finite_ring_contact_gauss3_contract() {
+    using namespace Physical::Gravity;
+    RingEnclosureControl control{};control.relative_target=1.e-10;
+    control.maximum_boxes=16384;
+    for(auto point:{std::array<double,2>{1.,0.},std::array<double,2>{1.,.375},
+                    std::array<double,2>{.75,0.}}) {
+        const auto bound=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,
+            point[0],point[1],arch::constants::gravity::cgs::gravitational_constant,control);
+        require(bound.bound_valid&&bound.status==RingIntervalStatus::Bounded
+            &&bound.absolute_error<=control.relative_target*std::abs(bound.value),
+            "matched contact Gauss3 failed original internal target");
+        std::cout<<"RZ_CONTACT_GAUSS3 r="<<point[0]<<" z="<<point[1]
+            <<" lower="<<bound.lower<<" upper="<<bound.upper
+            <<" error="<<bound.absolute_error<<" boxes="<<bound.leaf_boxes
+            <<" range_evaluations="<<bound.range_evaluations
+            <<" kernel_enclosures="<<bound.kernel_enclosures
+            <<" agm_iterations="<<bound.agm_iterations<<'\n';
+    }
+    std::cout<<"RZ_CONTACT_GAUSS3_PASS full_RZ_science=not_complete production_values=gated\n";
+}
+
 void finite_ring_contact_log_contract() {
     using namespace Physical::Gravity;
     using namespace finite_ring_detail;
@@ -949,7 +970,7 @@ void finite_ring_separated_gauss_contract() {
             point[0],point[1],1.,control);
         require(bound.bound_valid&&bound.status==RingIntervalStatus::Bounded
             &&bound.absolute_error<=control.relative_target*std::abs(bound.value)
-            &&bound.kernel_enclosures==10*bound.range_evaluations&&bound.agm_iterations>0,
+            &&bound.kernel_enclosures==28*bound.range_evaluations&&bound.agm_iterations>0,
             "separated Gauss derivative bound failed unchanged internal target");
         const auto reference24=independent_ring_potential(.5,1.,-.23,.71,
             {point[0],0.,point[1]},24);
@@ -965,11 +986,11 @@ void finite_ring_separated_gauss_contract() {
             <<" kernel_enclosures="<<bound.kernel_enclosures
             <<" agm_iterations="<<bound.agm_iterations<<'\n';
     }
-    auto capped=control;capped.maximum_boxes=4096;
+    auto capped=control;capped.maximum_boxes=8;
     const auto limited=finite_ring_potential_enclosure(.5,1.,-.23,.71,1.,2.,0.,1.,capped);
     require(limited.bound_valid&&limited.status==RingIntervalStatus::WorkLimit
         &&limited.leaf_boxes==capped.maximum_boxes,
-        "strict budget failure at known internal resource cap silently accepted");
+        "strict target at deliberately low internal resource cap silently accepted");
     auto zero=control;zero.relative_target=0.;zero.maximum_boxes=8;
     const auto failed=finite_ring_potential_enclosure(.5,1.,-.23,.71,1.,2.,0.,1.,zero);
     require(failed.bound_valid&&failed.status==RingIntervalStatus::WorkLimit
@@ -1541,6 +1562,7 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="ring-contact-gauss3") {std::cout<<std::setprecision(17);finite_ring_contact_gauss3_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-contact-log") {std::cout<<std::setprecision(17);finite_ring_contact_log_contract();return 0;}
         if(argc==3 && (std::string(argv[1])=="ring-atan-probe"||
                       std::string(argv[1])=="ring-positive-log-probe")) {
