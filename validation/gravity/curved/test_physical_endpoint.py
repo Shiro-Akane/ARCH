@@ -14,7 +14,7 @@ from subprocess import CompletedProcess
 import h5py
 import numpy as np
 
-from compare_backends import compare_pair
+from compare_backends import compare_pair, compare_cpu_baselines
 from run_cuda_matrix import changed_input, one_run, paired_trials, timing_summary, parse_affinity, run_command, main
 from verify_coupled import physical_times_agree, verify
 
@@ -335,6 +335,79 @@ class PhysicalEndpointTests(unittest.TestCase):
                 paired_trials(self.root/"binary", self.root/"input", folder, 2, 1, 1, 1)
         run.assert_not_called()
         self.assertEqual((folder/"frozen-source.par").read_bytes(), b"preserved")
+
+    def test_separate_cpu_baseline_schedule_and_both_speedups(self):
+        calls = []
+        def run_stub(executable, source, destination, backend, steps, threads, **kwargs):
+            role = destination.name
+            calls.append((role, executable.name, backend, threads, kwargs["affinity"]))
+            seconds = {"cpu_only": 3.0, "cpu": 4.0, "cuda": 2.0}[role]
+            return {"elapsed_seconds": seconds, "driver_seconds": seconds/2}
+        with patch("run_cuda_matrix.one_run", side_effect=run_stub), patch(
+                "run_cuda_matrix.compare_pair", return_value={}), patch(
+                "run_cuda_matrix.compare_cpu_baselines", return_value={}) as parity:
+            state = paired_trials(self.root/"cuda-release", self.root/"input", self.root/"pair",
+                                  None, 6, 2, 3, end_time=1.0,
+                                  cpu_only_executable=self.root/"cpu-release",
+                                  cpu_affinity=tuple(range(6)), cuda_affinity=(6, 7))
+        self.assertEqual([row[0] for row in calls],
+                         ["cpu_only", "cpu", "cuda", "cpu_only", "cpu", "cuda",
+                          "cuda", "cpu", "cpu_only", "cpu_only", "cpu", "cuda"])
+        self.assertTrue(all(row[1:] == ("cpu-release", "cpu", 6, tuple(range(6)))
+                            for row in calls if row[0] == "cpu_only"))
+        self.assertEqual(parity.call_count, 4)
+        summary = timing_summary(state["trials"])
+        self.assertEqual(summary["end_to_end_speedup"], 2.0)
+        self.assertEqual(summary["cpu_only_end_to_end_speedup"], 1.5)
+        self.assertEqual(summary["cpu_only"]["elapsed_seconds"]["samples"], [3.0]*3)
+        del state["trials"][0]["cpu_only"]
+        with self.assertRaisesRegex(ValueError, "baseline missing"):
+            timing_summary(state["trials"])
+
+    def test_cpu_only_failure_stops_campaign_and_keeps_attempt(self):
+        state = {}
+        with patch("run_cuda_matrix.one_run", side_effect=RuntimeError("CPU-only failed")) as run:
+            with self.assertRaisesRegex(RuntimeError, "CPU-only failed"):
+                paired_trials(self.root/"cuda", self.root/"input", self.root/"pair",
+                              None, 1, 1, 3, end_time=1.0,
+                              cpu_only_executable=self.root/"cpu", state=state)
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(state["status"], "failed")
+        self.assertEqual(state["attempts"][0]["active_backend"], "cpu_only")
+        self.assertEqual(state["trials"], [])
+
+    def test_cpu_baseline_comparison_requires_cpu_and_same_science_budget(self):
+        left, right = self.root/"cpu-only", self.root/"cpu-in-cuda"
+        fixture(left, 2)
+        fixture(right, 3)
+        result = compare_cpu_baselines("baseline", left, right, None, expected_time=1.0)
+        self.assertEqual(result["cpu_only"]["steps"], 2)
+        self.assertEqual(result["cpu_in_cuda"]["steps"], 3)
+        with self.assertRaisesRegex(ValueError, "resolve CPU"):
+            (right/"case_backend_plan.txt").write_text("resolved=cuda\n")
+            compare_cpu_baselines("wrong-backend", left, right, None, expected_time=1.0)
+        (right/"case_backend_plan.txt").write_text("resolved=cpu\n")
+        with h5py.File(right/"case_plt_0001.h5", "r+") as file:
+            file["Data/DENS"][...] = 1.001
+        with self.assertRaisesRegex(ValueError, "exceeds"):
+            compare_cpu_baselines("wrong-science", left, right, None, expected_time=1.0)
+        with self.assertRaisesRegex(ValueError, "CUDA run did not resolve"):
+            compare_pair("still-requires-cuda", left, right, None, expected_time=1.0)
+
+    def test_cli_rejects_same_binary_cpu_baseline_before_output(self):
+        binary = self.root/"binary"
+        duplicate = self.root/"same-bytes"
+        binary.write_bytes(b"identical")
+        duplicate.write_bytes(binary.read_bytes())
+        output = self.root/"not-created"
+        args = ["runner", "--arch", str(binary), "--cpu-only-arch", str(duplicate),
+                "--output", str(output), "--pair", f"case:{self.root/'input'}:2"]
+        with patch("sys.argv", args), patch("run_cuda_matrix.paired_trials") as run:
+            with self.assertRaises(SystemExit) as error:
+                main()
+        self.assertEqual(error.exception.code, 2)
+        self.assertFalse(output.exists())
+        run.assert_not_called()
 
     def test_existing_parity_budget_not_relaxed(self):
         cpu, cuda = self.root/"cpu", self.root/"cuda"

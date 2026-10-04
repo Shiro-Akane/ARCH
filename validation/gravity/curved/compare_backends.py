@@ -124,6 +124,23 @@ def compare_pair(label, cpu_dir, cuda_dir, steps, expect_mixed=True, *, expected
     }
 
 
+def compare_cpu_baselines(label, cpu_only_dir, cpu_in_cuda_dir, steps,
+                          expect_mixed=True, *, expected_time=None):
+    """Reuse identical field budgets; both baseline runs must resolve CPU."""
+    results = {}
+    for name, folder in (("cpu_only", cpu_only_dir), ("cpu_in_cuda", cpu_in_cuda_dir)):
+        results[name] = verify(label + "-" + name, folder, steps, expect_mixed,
+                               expected_time=expected_time)
+        plans = list(folder.glob("*_backend_plan.txt"))
+        if len(plans) != 1 or "resolved=cpu\n" not in plans[0].read_text():
+            raise ValueError(f"{label}: {name} did not resolve CPU")
+    left = sorted(cpu_only_dir.glob("*_plt_*.h5"))
+    right = sorted(cpu_in_cuda_dir.glob("*_plt_*.h5"))
+    results["initial"] = compare_plot(left[0], right[0], label + "-cpu-baseline-initial")
+    results["final"] = compare_plot(left[1], right[1], label + "-cpu-baseline-final")
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pair", action="append", required=True,

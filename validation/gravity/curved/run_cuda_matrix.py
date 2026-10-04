@@ -11,7 +11,9 @@ T_END must come from the owner's frozen plan; max_steps is disabled.
 Endpoint completion is verified for each run before launching the other backend.
 Endpoint mode requires --cpu-threads, --cuda-host-threads and --repeats >=3.
 It warms each backend once and alternates measured pair order. Thread screening,
-CPU-only baselines, manifests and frozen scientific inputs are still required.
+CPU-only build verification, manifests and frozen scientific inputs are still required.
+Use --cpu-only-arch to retain a separate CPU-only baseline with the same CPU budget;
+its runtime CPU plan does not certify CUDA OFF or Release build flags.
 Use --cpu-affinity / --cuda-host-affinity for explicit Linux taskset lists.
 CPU IDs are observed logical CPUs, never inferred P/E topology.
 Output must be a new directory; every pair retains an exact frozen source copy. Omitted lists
@@ -34,7 +36,7 @@ import statistics
 import subprocess
 import time
 
-from compare_backends import compare_pair
+from compare_backends import compare_pair, compare_cpu_baselines
 from verify_coupled import verify
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -198,7 +200,7 @@ def one_run(executable, source, destination, backend, steps, threads, *, end_tim
 
 def paired_trials(executable, source, destination, steps, cpu_threads, cuda_threads,
                   repeats, *, end_time=None, expect_mixed=True, notify=lambda: None,
-                  state=None, cpu_affinity=None, cuda_affinity=None):
+                  state=None, cpu_affinity=None, cuda_affinity=None, cpu_only_executable=None):
     """Warm each backend once, then alternate measured pairs without dropping runs."""
     if repeats < 1 or cpu_threads < 1 or cuda_threads < 1:
         raise ValueError("positive repeats and explicit backend thread budgets required")
@@ -233,20 +235,29 @@ def paired_trials(executable, source, destination, steps, cpu_threads, cuda_thre
                 notify()
                 require_frozen_source()
                 record["runs"][backend] = one_run(
-                    executable, frozen, folder/backend, backend, steps,
-                    cpu_threads if backend == "cpu" else cuda_threads,
+                    cpu_only_executable if backend == "cpu_only" else executable,
+                    frozen, folder/backend, "cpu" if backend == "cpu_only" else backend, steps,
+                    cpu_threads if backend != "cuda" else cuda_threads,
                     end_time=end_time, expect_mixed=expect_mixed,
-                    affinity=cpu_affinity if backend == "cpu" else cuda_affinity)
+                    affinity=cpu_affinity if backend != "cuda" else cuda_affinity)
                 require_frozen_source()
                 notify()
             record["parity"] = compare_pair(
                 destination.name, folder/"cpu", folder/"cuda", steps,
                 expect_mixed=expect_mixed, expected_time=end_time)
+            if cpu_only_executable is not None:
+                record["cpu_baseline_parity"] = compare_cpu_baselines(
+                    destination.name, folder/"cpu_only", folder/"cpu", steps,
+                    expect_mixed=expect_mixed, expected_time=end_time)
             record.pop("active_backend", None)
             record["status"] = "passed"
             notify()
-            return {"cpu": record["runs"]["cpu"], "cuda": record["runs"]["cuda"],
-                    "parity": record["parity"], "order": record["order"]}
+            result = {"cpu": record["runs"]["cpu"], "cuda": record["runs"]["cuda"],
+                      "parity": record["parity"], "order": record["order"]}
+            if cpu_only_executable is not None:
+                result.update(cpu_only=record["runs"]["cpu_only"],
+                              cpu_baseline_parity=record["cpu_baseline_parity"])
+            return result
         except Exception as error:
             record["status"] = state["status"] = "failed"
             record["error"] = str(error)
@@ -254,10 +265,13 @@ def paired_trials(executable, source, destination, steps, cpu_threads, cuda_thre
             raise
 
     if end_time is not None:
-        state["warmup"] = pair("warmup", None, ("cpu", "cuda"))
+        state["warmup"] = pair("warmup", None, ("cpu_only", "cpu", "cuda")
+                               if cpu_only_executable is not None else ("cpu", "cuda"))
         notify()
     for repeat in range(repeats):
         order = ("cpu", "cuda") if repeat % 2 == 0 else ("cuda", "cpu")
+        if cpu_only_executable is not None:
+            order = ("cpu_only", *order) if repeat % 2 == 0 else (*order, "cpu_only")
         state["trials"].append(pair("measurement", repeat, order))
         notify()
     state["status"] = "passed"
@@ -268,7 +282,10 @@ def paired_trials(executable, source, destination, steps, cpu_threads, cuda_thre
 def timing_summary(trials):
     """Keep all measured samples; warmup is stored separately."""
     result = {}
-    for backend in ("cpu", "cuda"):
+    has_cpu_only = any("cpu_only" in trial for trial in trials)
+    if has_cpu_only and not all("cpu_only" in trial for trial in trials):
+        raise ValueError("CPU-only baseline missing from measured trial")
+    for backend in (("cpu", "cuda", "cpu_only") if has_cpu_only else ("cpu", "cuda")):
         result[backend] = {}
         for metric in ("elapsed_seconds", "driver_seconds"):
             values = [trial[backend][metric] for trial in trials]
@@ -281,12 +298,19 @@ def timing_summary(trials):
                                     result["cuda"]["elapsed_seconds"]["median"])
     result["driver_speedup"] = (result["cpu"]["driver_seconds"]["median"] /
                                result["cuda"]["driver_seconds"]["median"])
+    if has_cpu_only:
+        result["cpu_only_end_to_end_speedup"] = (result["cpu_only"]["elapsed_seconds"]["median"] /
+                                                result["cuda"]["elapsed_seconds"]["median"])
+        result["cpu_only_driver_speedup"] = (result["cpu_only"]["driver_seconds"]["median"] /
+                                            result["cuda"]["driver_seconds"]["median"])
     return result
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--arch", type=Path, required=True)
+    parser.add_argument("--cpu-only-arch", type=Path,
+                        help="separate claimed CPU-only Release binary; build identity still needs review")
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--pair", action="append",
                         help="label:input.par:accepted-steps[:amr|regular]")
@@ -343,16 +367,23 @@ def main():
         specifications.append((label, source, steps, end_time, mode))
     # Refuse a preexisting directory atomically before touching summary or inputs.
     executable_sha = hashlib.sha256(executable.read_bytes()).hexdigest()
+    cpu_only = args.cpu_only_arch.resolve() if args.cpu_only_arch is not None else None
+    cpu_only_sha = hashlib.sha256(cpu_only.read_bytes()).hexdigest() if cpu_only is not None else None
+    if cpu_only_sha == executable_sha:
+        parser.error("CPU-only baseline requires a distinct binary identity")
     output.mkdir(parents=True, exist_ok=False)
     report = {
         "executable": str(executable),
         "sha256": executable_sha,
         "pairs": {},
         "schedules": {},
+        "cpu_only_binary": ({"path": str(cpu_only), "sha256": cpu_only_sha,
+                             "build_kind_verification": "pending"}
+                            if cpu_only is not None else None),
         "speedups": {},
         "qualified_benchmark": False,
         "pending": ["owner-frozen inputs/budgets", "thread/affinity screening",
-                    "CPU-only baseline", "hardware/build/effective-input manifest",
+                    "CPU-only build identity and measured baseline", "hardware/build/effective-input manifest",
                     "resource sampling"],
     }
     for label, source, steps, end_time, mode in specifications:
@@ -364,7 +395,8 @@ def main():
         paired_trials(executable, source, output/label, steps, args.cpu_threads,
                       args.cuda_host_threads, args.repeats, end_time=end_time,
                       expect_mixed=(mode == "amr"), notify=publish, state=schedule,
-                      cpu_affinity=cpu_affinity, cuda_affinity=cuda_affinity)
+                      cpu_affinity=cpu_affinity, cuda_affinity=cuda_affinity,
+                      cpu_only_executable=cpu_only)
         report["pairs"][label] = schedule["trials"]
         report["speedups"][label] = timing_summary(schedule["trials"])
         publish()

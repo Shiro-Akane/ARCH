@@ -3283,3 +3283,7 @@ publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0
 每pair frozen-source原字节/SHA/readonly，全部backend复用；篡改失败停止，不受原文件后续编辑影响。
 24/24 targeted PASS；仅合成/工具，无ARCH/CUDA/benchmark、无科学定义或budget变化。
 见PhysicalEndpointInputFreeze报告/Summary；外部数据/完整binary身份与实际科学gate仍未完成，无push/tag。
+
+## 2026-10-04：独立 CPU-only 对照工具
+
+已补齐 --cpu-only-arch 三路预热/交替测量、同线程/affinity/冻结输入、两种 CPU 基线比值与失败保留。28/28 工具测试及 help/diff check PASS。详见 PhysicalEndpointCpuBaseline-20261004.zh-CN.md 与同名 Summary.json。仅合成验证；真实 CPU-only Release 身份、计时、资源采样和科学 gate 仍未完成，qualified_benchmark=false。没有 Build/ARCH/CUDA 执行，不改变阈值，不 push/tag。
