@@ -403,7 +403,8 @@ inline void apply_recursive_rkl_stage(const FluidState& state_n,
 template <typename BCPolicy>
 inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
                         FluidState amr::Block::* state_ptr,
-                        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+                        arch::state::Bounds bounds = {})
 {
     const auto& binding = arch::scheduler::current_stage_binding();
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
@@ -419,7 +420,7 @@ inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
                                             state_ptr, binding.handles,
         semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
             ? amr::CoordinateSeamGeometry::RzAxisymmetric
-            : amr::CoordinateSeamGeometry::ExistingChart);
+            : amr::CoordinateSeamGeometry::ExistingChart,bounds);
 }
 
 inline FluidState& state_for(amr::Block& block,
@@ -721,7 +722,8 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
         throw std::logic_error("AMR RKL scheduler handle count mismatch");
     amr_ctrl.flux_register.EnsureSpecies(
         amr_ctrl.pool->GetBlock(active_blocks.front()).fluid_state.GetNumSpecies());
-    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state, semantics);
+    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state, semantics,
+        {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
     const arch::state::StateVersion current_version =
         binding.context.ledger.inspect(
             {binding.handles.front(), StateSlot::Current}).interior.version;
@@ -821,7 +823,8 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
             [&](StateSlot output, arch::state::StateVersion,
                 arch::state::CompletionToken token) {
                 detail::synchronize(amr_ctrl, boundary_condition,
-                                    detail::member_for(output), semantics);
+                                    detail::member_for(output), semantics,
+                    {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
                 return token;
             };
     const auto rotate = [&](arch::state::SlotRotation rotation) {
@@ -841,7 +844,8 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
             binding.context, binding.handles, stages, executor, reflux,
             boundary, rotate);
     }
-    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state, semantics);
+    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state, semantics,
+        {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
     const arch::state::StateVersion final_version =
         binding.context.ledger.inspect(
             {binding.handles.front(), StateSlot::Current}).interior.version;

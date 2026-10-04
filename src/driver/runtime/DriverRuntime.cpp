@@ -156,7 +156,8 @@ void DriverRuntime::initialize_topology()
                 proposed.handles_in_observation_order,
                 geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
                     ? amr::CoordinateSeamGeometry::RzAxisymmetric
-                    : amr::CoordinateSeamGeometry::ExistingChart);
+                    : amr::CoordinateSeamGeometry::ExistingChart,
+                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
             StageExecutionContext staged_context{
                 ExecutionSide::Host, *replacement, scheduler_clock};
             (void)arch::scheduler::complete_boundary(

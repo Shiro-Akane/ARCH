@@ -658,3 +658,9 @@ RZ-A前置W/centroid/torque测度及单一状态无存储转换已经通过现�
 通过CPU fixtures。最终ELF的冻结JENS九组演化/续算回归PASS。
 详见 RZAngularTransferNode-20261004.zh-CN.md。AMR ghost和B/C/D消费者
 仍待贯通，完整RZ能力门槛保留，尚未开展CUDA/RZ新长跑。
+
+2026-10-04 RZ-A CPU coarse/fine ghost节点：复用同一W/V family数学，
+径向/轴向1536 injection及768 average、三状态槽、非法父态/borrowed bounds失败
+无部分coarse/fine scatter通过；新ELF的JENS冻结九组演化与续算回归PASS。
+见 RZAngularGhostNode-20261004.zh-CN.md。B/C/D与CUDA仍待贯通，
+不把本节点作为完整RZ科学签收或长跑许可。

@@ -1336,6 +1336,139 @@ void test_coordinate_seam_case(int dimension, bool spherical, bool mixed)
     }
 }
 
+void test_rz_coarse_fine_ghost_angular() {
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const auto chart=amr::CoordinateSeamGeometry::RzAxisymmetric;
+    const arch::state::Bounds bounds{1.e-14,1.e-14,1.e6};
+    std::size_t injections=0,averages=0;
+    for(int direction:{0,1})for(double inner:{0.,1.}) {
+        SimConfig config{};
+        config.grid.dim=2;config.grid.geometry="cylindrical";
+        config.grid.nblockx1=direction==0?2:1;
+        config.grid.nblockx2=direction==1?2:1;config.grid.nblockx3=0;
+        config.grid.x1_min=inner;config.grid.x1_max=inner+config.grid.nblockx1;
+        config.grid.x2_min=0.;config.grid.x2_max=config.grid.nblockx2;
+        config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+        amr::AMRControl control(16,2);
+        control.tree->LoadLeafGrid(config,2,{1,1,1,1,0},
+            {0,1,0,1,direction==0?1u:0u},{0,0,1,1,direction==1?1u:0u},
+            {0,0,0,0,0},rz);
+        const auto& active=control.tree->GetActiveBlocks();
+        std::vector<amr::BlockHandle> handles;
+        for(std::size_t b=0;b<active.size();++b)handles.push_back({{70000+b},{111}});
+        const auto& plans=control.ghost_exchange.GetPlans(
+            control.pool,control.tree,2,handles,chart);
+        const auto cells=amr::compile_coarse_fine_cell_plan(plans.coarse_fine,2);
+        expect(!cells.transfers.empty(),"RZ mixed ghost fixture has no coarse/fine transfer");
+        const auto block_for=[&](amr::BlockHandle h)->amr::Block& {
+            for(std::size_t b=0;b<handles.size();++b)
+                if(handles[b]==h)return control.pool->GetBlock(active[b]);
+            throw std::runtime_error("RZ ghost handle missing");
+        };
+        const auto cell_index=[](const Grid& g,const amr::LogicalAmrCell& c) {
+            return g.GetIndex(g.Is()+c[0],g.Js()+c[1],g.Ks()+c[2]);
+        };
+        int slot_number=0;
+        for(auto member:{&amr::Block::fluid_state,&amr::Block::state_next,&amr::Block::state_scratch}) {
+            const double omega=++slot_number;
+            for(int id:active) {
+                auto& block=control.pool->GetBlock(id);const auto& g=block.grid;
+                auto& state=block.*member;
+                for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
+                    const int cell=g.GetIndex(i,j,0);
+                    const double lo=g.GetFacePosL(i),hi=g.GetFacePosR(i);
+                    const double radius=hi<=0.
+                        ? -.75*(std::pow(-lo,4)-std::pow(-hi,4))/(std::pow(-lo,3)-std::pow(-hi,3))
+                        : .75*(std::pow(hi,4)-std::pow(lo,4))/(std::pow(hi,3)-std::pow(lo,3));
+                    state.set(cell,{1.,0.,0.,omega*radius,100.});
+                    state.enuc_rate[cell]=.25*omega;
+                    state.X(0,cell)=.6;state.X(1,cell)=.4;
+                }
+            }
+            std::vector<FluidState> before;
+            for(int id:active)before.push_back(control.pool->GetBlock(id).*member);
+            control.ghost_exchange.ExecuteCoarseFinePlan(plans.coarse_fine,
+                control.pool,control.tree,2,member,handles,chart,bounds);
+            for(const auto& transfer:cells.transfers) {
+                auto& block=block_for(transfer.destination.handle);
+                const auto& g=block.grid;const auto& state=block.*member;
+                const int i=g.Is()+transfer.destination_cell[0];
+                const int destination=cell_index(g,transfer.destination_cell);
+                const long double lo=g.GetFacePosL(i),hi=g.GetFacePosR(i);
+                const long double expected=omega*.75L*(hi*hi*hi*hi-lo*lo*lo*lo)
+                    /(hi*hi*hi-lo*lo*lo);
+                expect(std::abs(state.mom_w[destination]-expected)<1.e-12*std::max(1.L,std::abs(expected)),
+                    "RZ ghost did not preserve analytic rigid rotation W average");
+                expect(std::abs(state.rho[destination]-1.)<1.e-12
+                    && std::abs(state.eng[destination]-100.)<1.e-12
+                    && std::abs(state.X(0,destination)-.6)<1.e-12
+                    && std::abs(state.X(1,destination)-.4)<1.e-12,
+                    "RZ ghost changed independent V fields or composition");
+                if(transfer.rule==amr::RefinementRule::CoarseGhostInjection)++injections;
+                else ++averages;
+            }
+            for(std::size_t b=0;b<active.size();++b) {
+                const auto& block=control.pool->GetBlock(active[b]);
+                const auto& g=block.grid;const auto& state=block.*member;
+                for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                    const int cell=g.GetIndex(i,j,0);
+                    expect(state.rho[cell]==before[b].rho[cell]
+                        && state.mom_w[cell]==before[b].mom_w[cell]
+                        && state.eng[cell]==before[b].eng[cell]
+                        && state.X(0,cell)==before[b].X(0,cell),
+                        "RZ ghost exchange changed active scientific state");
+                }
+            }
+        }
+        // Bounds are borrowed on every call, independent of the cached topology.
+        std::vector<FluidState> snapshot;
+        for(int id:active)snapshot.push_back(control.pool->GetBlock(id).fluid_state);
+        bool rejected=false;
+        try {
+            control.ghost_exchange.ExecuteCoarseFinePlan(plans.coarse_fine,control.pool,
+                control.tree,2,&amr::Block::fluid_state,handles,chart,{1.e-14,1.e-14,.1});
+        } catch(const std::runtime_error&) {rejected=true;}
+        expect(rejected,"RZ ghost ignored configured internal energy ceiling");
+        const auto unchanged=[&] {
+            for(std::size_t b=0;b<active.size();++b) {
+                const auto& state=control.pool->GetBlock(active[b]).fluid_state;
+                expect(state.rho==snapshot[b].rho && state.mom_u==snapshot[b].mom_u
+                    && state.mom_v==snapshot[b].mom_v && state.mom_w==snapshot[b].mom_w
+                    && state.eng==snapshot[b].eng && state.enuc_rate==snapshot[b].enuc_rate
+                    && state.mass_fractions==snapshot[b].mass_fractions,
+                    "RZ failed coarse/fine plan partially scattered");
+            }
+        };
+        unchanged();
+        if(direction==1 && inner==0.) {
+            const auto selected=std::find_if(cells.transfers.begin(),cells.transfers.end(),
+                [](const auto& t) {return t.rule==amr::RefinementRule::FineGhostAverage
+                    && t.destination_cell[0]==0;});
+            expect(selected!=cells.transfers.end(),"RZ axis W counterexample route missing");
+            auto& block=block_for(selected->source.handle);
+            for(int c=0;c<selected->source_count;++c) {
+                const int cell=cell_index(block.grid,selected->source_cells[c]);
+                const bool high=c&1;
+                block.fluid_state.set(cell,{1.,0.,0.,high?-16.:1.,
+                    high?2049./16.:9./16.});
+            }
+            snapshot.clear();
+            for(int id:active)snapshot.push_back(control.pool->GetBlock(id).fluid_state);
+            rejected=false;
+            try {
+                control.ghost_exchange.ExecuteCoarseFinePlan(plans.coarse_fine,
+                    control.pool,control.tree,2,&amr::Block::fluid_state,handles,chart,bounds);
+            } catch(const std::runtime_error& e) {
+                rejected=std::string(e.what()).find("inadmissible coarse-cell")!=std::string::npos;
+            }
+            expect(rejected,"RZ ghost did not reject frozen W parent counterexample");
+            unchanged();
+        }
+    }
+    expect(injections>0 && averages>0,"RZ ghost did not cover both directions");
+    std::cout<<"RZ_GHOST_W_PASS injections="<<injections<<" averages="<<averages<<'\n';
+}
+
 void test_rz_rigid_rotation_transfer() {
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
     constexpr long double pi=3.141592653589793238462643383279502884L;
@@ -1760,7 +1893,8 @@ int main()
         test_host_exchange_cache_rebinding();
         test_mixed_level_and_coarse_fine_execution();
         test_coordinate_seam_mapping();
-        test_rz_rigid_rotation_transfer();
+        test_rz_coarse_fine_ghost_angular();
+    test_rz_rigid_rotation_transfer();
     test_rz_joint_prolongation_theta();
     test_rz_candidate_parent_veto();
     test_rz_angular_restriction_counterexample();

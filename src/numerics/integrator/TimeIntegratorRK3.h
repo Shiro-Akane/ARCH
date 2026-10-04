@@ -108,7 +108,8 @@ struct SolverRK3
                         throw std::logic_error("RK3 ghost exchange selected Current output");
                     amr_ctrl.ghost_exchange.ExecuteExchange(
                         amr_ctrl.pool, amr_ctrl.tree, dim, output_member,
-                        binding.handles,geometry.exchange_chart);
+                        binding.handles,geometry.exchange_chart,
+                    {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint});
                     return token;
                 },
             [&](arch::state::SlotRotation rotation) {

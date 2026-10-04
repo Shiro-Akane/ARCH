@@ -322,7 +322,11 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
                                     amr_ctrl.pool, amr_ctrl.tree,
                                     config.grid.dim,
                                     &amr::Block::fluid_state,
-                                    payload.handles);
+                                    payload.handles,
+                                    geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
+                                        ? amr::CoordinateSeamGeometry::RzAxisymmetric
+                                        : amr::CoordinateSeamGeometry::ExistingChart,
+                                    {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
                                 StageExecutionContext staged_context{
                                     ExecutionSide::Host, *payload.ledger,
                                     scheduler_clock};

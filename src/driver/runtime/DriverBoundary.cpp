@@ -130,7 +130,8 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
                                             stage_handles,
                                             geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
                                                 ? amr::CoordinateSeamGeometry::RzAxisymmetric
-                                                : amr::CoordinateSeamGeometry::ExistingChart);
+                                                : amr::CoordinateSeamGeometry::ExistingChart,
+                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
     if (residency_ledger && !stage_handles.empty())
         publish_current_ghost();
 }
