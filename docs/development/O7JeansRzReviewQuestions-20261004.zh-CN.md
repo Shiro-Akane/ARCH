@@ -353,6 +353,15 @@ GRAV-PERIODIC-CONTRAST-01：factor*rho-factor*mean 的 tiny-contrast 抵消误�
 stored weight/geometry/full RHS identity 仍独立待证明，production RZ/CUDA gate保持。
 见 PeriodicGravitySourceNode-20261005.zh-CN.md 与处理后summary。
 
+一般父节点新增沿原 source tree 的瞬时 moment/translation interval companion，
+始终使用 general q^3/(1-q) tail，不沿用单叶反演对称性。实际 native-face parent acceptance
+按完整 interval/source-count budget 判定，失败下树，generation/topology 和 WorkLimit 保留。
+116 nodes/2320 独立矩比较、24 高精度尾界、16 Decimal Newton diagnostics、四个
+真实 tree 查询与8 scoped CTest通过；同 production ELF 沿用匹配冻结 JENS9+9。
+见 RZRingParentEnclosureNode-20261005.zh-CN.md。范围为 exact stored edges/density；
+canonical geometry/volume/coefficient、完整 RHS/residual、实际AMR source publication 与
+Phi/force 科学签收仍待贯通，production RZ gate保持。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

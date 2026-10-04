@@ -191,6 +191,27 @@ void GravityBoundary::require_ring_operator(const arch::elliptic::CompositePoiss
         ||op.boundary_kind()!=bound_boundary_||op.cells()!=bound_cells_)
         throw std::logic_error("Ring boundary operator differs from bound mesh");
 }
+/** Enclose the current source using existing leaf geometry and parent ordering.
+ * These intervals are scratch evidence, not independently updated physical data.
+ */
+std::vector<RingMomentEnclosure> GravityBoundary::ring_moment_enclosures(
+    const arch::elliptic::CompositePoisson& op,const GravitySolveIdentity& source) const {
+    require_ring_operator(op);
+    if(!source_identity_||source!=*source_identity_||ring_density_.size()!=volumes_.size())
+        throw std::logic_error("Ring source identity is stale or unavailable");
+    std::vector<RingMomentEnclosure> enclosed(nodes_.size());
+    for(int index=static_cast<int>(nodes_.size())-1;index>=0;--index) {
+        const auto& node=nodes_[index];
+        if(node.cell>=0) {
+            const auto center=op.center(node.cell);
+            const double wr=op.width(node.cell,0),wz=op.width(node.cell,1);
+            enclosed[index]=finite_ring_moment_enclosure(center[0]-.5*wr,center[0]+.5*wr,
+                center[1]-.5*wz,center[1]+.5*wz,ring_density_[node.cell],node.center);
+        } else enclosed[index]=combine_ring_moment_enclosures(nodes_.data(),enclosed.data(),index);
+    }
+    return enclosed;
+}
+
 /** Consume all finite sources at native exterior face centers.
  * A failed budget can retain diagnostic arrays, but errors remain uncertified
  * and the result is not publishable. Existing production values() stays gated.
@@ -207,20 +228,46 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
         ||control.maximum_leaf_evaluations==0)
         throw std::invalid_argument("Invalid internal ring boundary budget");
     RingBoundaryEvaluation result;result.source=source;result.source_generation=source_generation_;
+    const auto moment_bounds=ring_moment_enclosures(op,source);
     const auto count=op.faces().size();
     result.values.assign(count,0.);result.lower.assign(count,0.);result.upper.assign(count,0.);
     result.errors.resize(count);
+    result.far_truncation_upper.assign(count,0.);
+    result.far_evaluation_width_upper.assign(count,0.);
     RingEnclosureControl leaf_control{};
     leaf_control.absolute_target=positive_down(control.face_absolute_target/op.size());
     leaf_control.maximum_boxes=control.maximum_boxes_per_leaf;
     bool converged=true;result.status=RingBoundaryStatus::Bounded;
     for(std::size_t face=0;face<count;++face)if(op.faces()[face].boundary_side>=0) {
         SignedInterval total{};
-        for(const auto& node:nodes_)if(node.cell>=0) {
-            if(result.leaf_evaluations>=control.maximum_leaf_evaluations) {
+        for(int index=0;index<static_cast<int>(nodes_.size());) {
+            const auto& node=nodes_[index];
+            if(result.leaf_evaluations+result.parent_evaluations>=control.maximum_leaf_evaluations) {
                 result.status=RingBoundaryStatus::WorkLimit;return result;
             }
+            if(node.cell<0) {
+                ++result.parent_evaluations;
+                double tail=0.;SignedInterval evaluation{};
+                const auto far=ring_node_far_enclosure(node,moment_bounds[index],
+                    op.faces()[face].center[0],op.faces()[face].center[1],source.gravitational_constant,
+                    &tail,&evaluation);
+                const double allowance=positive_down(leaf_control.absolute_target*moment_bounds[index].leaves);
+                const double halfwidth=interval_finite(far)
+                    ? positive_up(.5*(far.upper-far.lower)) : std::numeric_limits<double>::infinity();
+                if(interval_finite(far)&&halfwidth<=allowance) {
+                    total=interval_sum(total,far);
+                    ++result.parent_acceptances;
+                    result.far_truncation_upper[face]=sum_up(result.far_truncation_upper[face],tail);
+                    result.far_evaluation_width_upper[face]=sum_up(result.far_evaluation_width_upper[face],
+                        positive_up(evaluation.upper-evaluation.lower));
+                    result.represented_leaf_evaluations+=moment_bounds[index].leaves;
+                    index=node.end;continue;
+                }
+                ++index;continue; // Budget/separation failure descends; no geometric-only opening.
+            }
             ++result.leaf_evaluations;
+            ++result.represented_leaf_evaluations;
+            ++index;
             // Same operator-owned edge arithmetic used by unit_cell_moments;
             // lower+width could re-round an upper edge differently.
             const auto center=op.center(node.cell);

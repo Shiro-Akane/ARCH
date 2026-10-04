@@ -849,8 +849,13 @@ void finite_ring_tree_boundary_contract() {
                 "actual native face source diagnostics escaped interval");
             ++newton_references;
         }
-        require(result.leaf_evaluations==exterior*op.size(),
-            "tree traversal omitted a finite source or accepted an uncertified parent");
+        require(result.represented_leaf_evaluations==exterior*op.size(),
+            "tree traversal omitted or double counted a finite source");
+        const double far_tail=*std::max_element(result.far_truncation_upper.begin(),result.far_truncation_upper.end());
+        const double far_arithmetic=*std::max_element(result.far_evaluation_width_upper.begin(),result.far_evaluation_width_upper.end());
+        require(result.parent_acceptances>0&&std::isfinite(far_tail)&&far_tail>0.
+            &&std::isfinite(far_arithmetic)&&far_arithmetic>0.,
+            "actual parent acceptance or separate tail/evaluation diagnostics missing");
         auto changed=source;changed.input_time=.25;
         rejects([&]{tree.ring_boundary(op,changed,control);},"changed source time silently reused");
         changed=source;changed.inputs[0].version={2};
@@ -866,7 +871,7 @@ void finite_ring_tree_boundary_contract() {
         rejects([&]{tree.values(op,source.gravitational_constant);},"production RZ gate removed");
         auto limited=control;limited.maximum_leaf_evaluations=1;
         const auto early=tree.ring_boundary(op,source,limited);
-        require(early.status==RingBoundaryStatus::WorkLimit&&early.leaf_evaluations==1,
+        require(early.status==RingBoundaryStatus::WorkLimit&&early.leaf_evaluations+early.parent_evaluations==1,
             "global source work budget ignored");
         rejects([&]{tree.require_current_ring(op,early);},"partial work result published");
         limited=control;limited.face_absolute_target=0.;limited.maximum_boxes_per_leaf=1;
@@ -900,12 +905,91 @@ void finite_ring_tree_boundary_contract() {
         std::cout<<"RZ_RING_NATIVE_FACE mixed="<<mixed<<" radial_origin="<<radial_origin
             <<" leaves="<<op.size()<<" exterior_faces="<<exterior
             <<" source_evaluations="<<result.leaf_evaluations
+            <<" parent_evaluations="<<result.parent_evaluations
+            <<" parent_acceptances="<<result.parent_acceptances
+            <<" represented_leaves="<<result.represented_leaf_evaluations
+            <<" far_tail_max="<<far_tail<<" far_evaluation_width_max="<<far_arithmetic
             <<" newton_references="<<newton_references
             <<" newton8="<<static_cast<double>(reference8)<<" newton12="<<static_cast<double>(reference12)
             <<" quadrature_difference="<<static_cast<double>(std::abs(reference8-reference12))
             <<" rhs_error="<<ledger.norm_upper<<'\n';
     }
-    std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
+    std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=interval_budget_checked\n";
+}
+
+/** Actual source tree companion, independently audited by Decimal integrals. */
+void finite_ring_parent_probe() {
+    using namespace Physical::Gravity;
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first_case=true;
+    for(bool mixed:{false,true})for(double origin:{0.,.5}) {
+        auto base=base_mesh(2,4);
+        base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        base.origin={origin,-.23,0.};
+        elliptic::CompositePoisson op(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        GravityBoundary tree(op,{7});
+        GravitySolveIdentity source;source.topology={7};source.operator_revision=source.boundary_revision=source.accuracy_revision=1;
+        source.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+        source.inputs.push_back({{{1},{7}},state::StateSlot::Current,{1},1});
+        std::vector<double> density(op.size());
+        for(int cell=0;cell<op.size();++cell)density[cell]=1.+.3*op.center(cell)[1]+.7*op.center(cell)[0];
+        tree.update(density,source);
+        const auto bounds=tree.ring_moment_enclosures(op,source);
+        const auto& nodes=tree.nodes();
+        if(!first_case)std::cout<<',';first_case=false;
+        std::cout<<"{\"mixed\":"<<mixed<<",\"origin\":"<<origin<<",\"nodes\":[";
+        for(std::size_t i=0;i<nodes.size();++i) {
+            require(bounds[i].valid,"actual source moment companion invalid");
+            if(i)std::cout<<',';
+            std::cout<<"{\"center\":["<<nodes[i].center[0]<<','<<nodes[i].center[1]<<','<<nodes[i].center[2]
+                <<"],\"end\":"<<nodes[i].end<<",\"cell\":"<<nodes[i].cell
+                <<",\"support_upper\":"<<bounds[i].support_upper<<",\"leaves\":"<<bounds[i].leaves<<",\"moments\":[";
+            for(int q=0;q<10;++q){if(q)std::cout<<',';std::cout<<'['<<bounds[i].value[q].lower<<','<<bounds[i].value[q].upper<<']';}
+            std::cout<<']';
+            if(nodes[i].cell>=0) {
+                const auto center=op.center(nodes[i].cell);
+                const double wr=op.width(nodes[i].cell,0),wz=op.width(nodes[i].cell,1);
+                std::cout<<",\"ring\":["<<center[0]-.5*wr<<','<<center[0]+.5*wr<<','
+                    <<center[1]-.5*wz<<','<<center[1]+.5*wz<<','<<density[nodes[i].cell]<<']';
+            }
+            std::cout<<'}';
+        }
+        require(bounds.front().value[3].lower>0.,"asymmetric density lost actual parent dipole");
+        std::cout<<"],\"far\":[";
+        int point=0;
+        for(double distance:{100.,1000.})for(auto direction:{std::array<double,2>{1.,0.},
+            std::array<double,2>{.6,.8},std::array<double,2>{.6,-.8}}) {
+            if(point++)std::cout<<',';
+            const double ro=distance*direction[0],zo=distance*direction[1];
+            double tail;finite_ring_detail::SignedInterval evaluation;
+            const auto potential=ring_node_far_enclosure(nodes.front(),bounds.front(),ro,zo,
+                source.gravitational_constant,&tail,&evaluation);
+            require(finite_ring_detail::interval_finite(potential)&&tail>0.,"general far interval unavailable");
+            long double ref8=0.,ref12=0.;
+            for(const auto& node:nodes)if(node.cell>=0) {
+                const auto c=op.center(node.cell);const double wr=op.width(node.cell,0),wz=op.width(node.cell,1);
+                const long double scale=static_cast<long double>(source.gravitational_constant)*density[node.cell];
+                ref8+=scale*independent_ring_potential(c[0]-.5*wr,c[0]+.5*wr,c[1]-.5*wz,c[1]+.5*wz,{ro,0.,zo},8);
+                ref12+=scale*independent_ring_potential(c[0]-.5*wr,c[0]+.5*wr,c[1]-.5*wz,c[1]+.5*wz,{ro,0.,zo},12);
+            }
+            require(potential.lower<=ref8&&ref8<=potential.upper&&potential.lower<=ref12&&ref12<=potential.upper,
+                "independent compound Newton reference escaped general q^3 interval");
+            std::cout<<"{\"point\":["<<ro<<','<<zo<<"],\"lower\":"<<potential.lower<<",\"upper\":"<<potential.upper
+                <<",\"tail_upper\":"<<tail<<",\"evaluation_lower\":"<<evaluation.lower
+                <<",\"evaluation_upper\":"<<evaluation.upper<<",\"newton8\":"<<static_cast<double>(ref8)
+                <<",\"newton12\":"<<static_cast<double>(ref12)<<'}';
+        }
+        require(!finite_ring_detail::interval_finite(ring_node_far_enclosure(nodes.front(),bounds.front(),
+            .1,nodes.front().center[2],source.gravitational_constant)),"inside full support accepted far expansion");
+        auto wrong_center=nodes.front();wrong_center.center[0]=1.;
+        require(!finite_ring_detail::interval_finite(ring_node_far_enclosure(wrong_center,bounds.front(),
+            100.,0.,source.gravitational_constant)),"non-axis expansion center accepted RZ companion");
+        auto invalid=bounds.front();invalid.valid=false;
+        require(!finite_ring_detail::interval_finite(ring_node_far_enclosure(nodes.front(),invalid,100.,0.,
+            source.gravitational_constant)),"invalid moments accepted far expansion");
+        std::cout<<"]}";
+    }
+    std::cout<<"]}\n";
 }
 
 void periodic_gravity_source_probe() {
@@ -1835,6 +1919,7 @@ int main(int argc,char** argv) {
         }
         if(argc>1 && std::string(argv[1])=="ring-separated-gauss") {std::cout<<std::setprecision(17);finite_ring_separated_gauss_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-far-leaf") {std::cout<<std::setprecision(17);finite_ring_far_leaf_contract();return 0;}
+        if(argc>1 && std::string(argv[1])=="ring-parent-probe") {finite_ring_parent_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-native-face") {std::cout<<std::setprecision(17);finite_ring_tree_boundary_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-axis-enclosure") {std::cout<<std::setprecision(17);finite_ring_axis_enclosure_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-enclosure") {std::cout<<std::setprecision(17);finite_ring_enclosure_contract();return 0;}
