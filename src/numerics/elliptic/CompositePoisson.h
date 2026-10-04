@@ -68,6 +68,21 @@ struct BoundaryRhsError {
     std::vector<double> cell_bounds; // RHS units, e.g. s^-2.
     double norm_upper=std::numeric_limits<double>::infinity();
 };
+struct WeightedNormInterval {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    double lower=0.,upper=std::numeric_limits<double>::infinity();
+};
+enum class BoundaryResidualStatus {
+    Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
+};
+struct BoundaryResidualAssessment {
+    BoundaryResidualStatus status=BoundaryResidualStatus::InvalidInput;
+    double tolerance_safe=0.;
+    double rhs_norm_lower=0.,rhs_norm_upper=std::numeric_limits<double>::infinity();
+    double residual_norm_upper=std::numeric_limits<double>::infinity();
+    double rhs_error_upper=std::numeric_limits<double>::infinity();
+    double total_residual_upper=std::numeric_limits<double>::infinity();
+};
 class CompositePoisson {
 public:
     CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
@@ -96,6 +111,14 @@ public:
     // geometry construction or source/RHS assembly rounding.
     BoundaryRhsError propagate_boundary_error(
         std::span<const BoundaryPotentialError> face_errors) const;
+    WeightedNormInterval norm_interval(std::span<const double> x) const;
+    // Mandatory external arithmetic ledgers: no default zero/fake certificate.
+    BoundaryResidualAssessment assess_boundary_residual(
+        std::span<const double> approximate_rhs,
+        std::span<const double> computed_residual,
+        const BoundaryRhsError& face_error,
+        double rhs_assembly_error_upper,double residual_evaluation_error_upper,
+        BoundaryErrorQuality evaluation_quality,double rtol,double atol) const;
     double mean(std::span<const double> x) const;
     double norm(std::span<const double> x) const;
     double dot(std::span<const double> x, std::span<const double> y) const;

@@ -1131,8 +1131,63 @@ void boundary_error_ledger_contract() {
     std::cout<<"BOUNDARY_RHS_LEDGER_PASS\n";
 }
 
+void boundary_original_rhs_acceptance_contract() {
+    using namespace elliptic;
+    auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+    base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    CompositePoisson op(base,make_cells(base,true),BoundaryKind::CurvilinearIsolated);
+    std::vector<double> rhs(op.size(),1.),residual(op.size(),1.e-5),zero(op.size(),0.);
+    std::vector<BoundaryPotentialError> errors(op.faces().size(),
+        {1.e-9,BoundaryErrorQuality::CertifiedAbsolute});
+    const auto budget=op.propagate_boundary_error(errors);
+    const auto quality=BoundaryErrorQuality::CertifiedAbsolute;
+    const auto accepted=op.assess_boundary_residual(rhs,residual,budget,0.,0.,quality,1.e-3,0.);
+    require(accepted.status==BoundaryResidualStatus::Accepted,"sufficient original RHS criterion rejected");
+    require(accepted.tolerance_safe<=1.e-3,"safe target relaxed the original request");
+    for(int pattern=0;pattern<16;++pattern) {
+        std::vector<double> face(errors.size());
+        for(std::size_t i=0;i<face.size();++i)face[i]=((i+pattern)%3==0?-1.:1.)*errors[i].absolute_error;
+        const auto perturbation=op.effective_rhs(zero,face);
+        std::vector<double> exact_rhs(rhs),exact_residual(residual);
+        for(int i=0;i<op.size();++i) {exact_rhs[i]+=perturbation[i];exact_residual[i]+=perturbation[i];}
+        require(op.norm(exact_residual)<=1.e-3*op.norm(exact_rhs),
+            "accepted bound failed original perturbed RHS request");
+        const auto interval=op.norm_interval(exact_rhs);
+        require(interval.status==BoundaryErrorStatus::Bounded
+            &&interval.lower<=op.norm(exact_rhs)&&op.norm(exact_rhs)<=interval.upper,
+            "canonical weighted norm escaped its interval");
+    }
+    auto zero_errors=errors;for(auto& e:zero_errors)e.absolute_error=0.;
+    const auto no_error=op.propagate_boundary_error(zero_errors);
+    const auto exact_zero=op.assess_boundary_residual(zero,zero,no_error,0.,0.,quality,1.e-3,0.);
+    require(exact_zero.status==BoundaryResidualStatus::Accepted
+        &&exact_zero.tolerance_safe==0.&&exact_zero.total_residual_upper==0.,
+        "zero request gained a hidden tolerance floor");
+    const auto cancellation=op.assess_boundary_residual(zero,zero,budget,0.,0.,quality,1.e-3,0.);
+    require(cancellation.status==BoundaryResidualStatus::ResidualTooLarge
+        &&cancellation.tolerance_safe==0.,"cancelled approximate RHS hid finite boundary error");
+    require(op.assess_boundary_residual(rhs,residual,budget,0.,0.,
+        BoundaryErrorQuality::Estimate,1.e-3,0.).status==BoundaryResidualStatus::UncertifiedInput,
+        "uncertified assembly/residual arithmetic was accepted");
+    require(op.assess_boundary_residual(rhs,residual,budget,0.,1.,
+        quality,1.e-3,0.).status==BoundaryResidualStatus::ResidualTooLarge,
+        "large residual-evaluation uncertainty ignored");
+    require(op.assess_boundary_residual(rhs,residual,budget,0.,0.,
+        quality,-1.,0.).status==BoundaryResidualStatus::InvalidInput,
+        "negative requested tolerance accepted");
+    std::vector<double> tiny(op.size(),std::numeric_limits<double>::denorm_min());
+    const auto subnormal=op.norm_interval(tiny);
+    require(subnormal.status==BoundaryErrorStatus::Bounded&&subnormal.upper>0.,
+        "positive subnormal norm silently became certified zero");
+    std::cout<<"BOUNDARY_ORIGINAL_RHS_ACCEPTANCE_PASS cells="<<op.size()
+        <<" safe_target="<<accepted.tolerance_safe<<" residual_upper="
+        <<accepted.total_residual_upper<<" cancellation_target="<<cancellation.tolerance_safe
+        <<" cancellation_status=ResidualTooLarge\n";
+}
+
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="boundary-acceptance") {boundary_original_rhs_acceptance_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary-ledger") {boundary_error_ledger_contract();return 0;}
         std::cout<<std::setprecision(17);
         if(argc>=9 && std::string(argv[1])=="ring-probe") {

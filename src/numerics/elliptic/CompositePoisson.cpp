@@ -600,4 +600,85 @@ BoundaryRhsError CompositePoisson::propagate_boundary_error(
         :BoundaryErrorStatus::Overflow;
     return result;
 }
+namespace {
+double bound_down(double value) {
+    return value<=0. ? 0. : std::nextafter(value,0.);
+}
+}
+/** Interval of the exact mathematical norm of stored x and stored native weights. */
+WeightedNormInterval CompositePoisson::norm_interval(std::span<const double> x) const
+{
+    WeightedNormInterval result{};
+    if(x.size()!=cells_.size())return result;
+    double scale=0.;
+    for(double value:x) {
+        if(!std::isfinite(value))return result;
+        scale=std::max(scale,std::abs(value));
+    }
+    if(scale==0.) {
+        result.status=BoundaryErrorStatus::Bounded;result.lower=result.upper=0.;return result;
+    }
+    double lo=0.,hi=0.;
+    for(std::size_t i=0;i<x.size();++i) {
+        const double magnitude=std::abs(x[i]);
+        if(magnitude==0.)continue;
+        const double qlo=bound_down(magnitude/scale),qhi=bound_quotient(magnitude,scale);
+        const double lower=bound_down(weights_[i]*bound_down(qlo*qlo));
+        const double upper=bound_product(weights_[i],bound_product(qhi,qhi));
+        if(lower!=0.)lo=bound_down(lo+lower);
+        if(upper!=0.)hi=bound_up(hi+upper);
+    }
+    result.lower=bound_down(scale*bound_down(std::sqrt(lo)));
+    result.upper=bound_product(scale,bound_up(std::sqrt(hi)));
+    result.status=std::isfinite(result.upper)?BoundaryErrorStatus::Bounded
+        :BoundaryErrorStatus::Overflow;
+    return result;
+}
+/**
+ * Conditional original-RHS acceptance, without modifying solver tolerance.
+ * E_b includes certified face propagation plus certified RHS assembly error.
+ * ||b_exact|| >= max(0, ||b_hat||_lower-E_b).
+ * Residual upper + E_b <= max(atol,rtol*that lower bound) is sufficient.
+ */
+BoundaryResidualAssessment CompositePoisson::assess_boundary_residual(
+    std::span<const double> rhs,std::span<const double> residual,
+    const BoundaryRhsError& face_error,double assembly_error,double evaluation_error,
+    BoundaryErrorQuality quality,double rtol,double atol) const
+{
+    BoundaryResidualAssessment result{};
+    const auto valid=[](double value){return std::isfinite(value)&&value>=0.;};
+    if(!valid(rtol)||!valid(atol)||!valid(assembly_error)||!valid(evaluation_error)
+        ||face_error.cell_bounds.size()!=cells_.size()
+        ||rhs.size()!=cells_.size()||residual.size()!=cells_.size())return result;
+    if(quality!=BoundaryErrorQuality::CertifiedAbsolute
+        ||face_error.status==BoundaryErrorStatus::UncertifiedInput) {
+        result.status=BoundaryResidualStatus::UncertifiedInput;return result;
+    }
+    if(face_error.status==BoundaryErrorStatus::Overflow) {
+        result.status=BoundaryResidualStatus::Overflow;return result;
+    }
+    if(face_error.status!=BoundaryErrorStatus::Bounded||!valid(face_error.norm_upper))return result;
+    for(double value:face_error.cell_bounds)if(!valid(value))return result;
+    const auto rhs_norm=norm_interval(rhs),residual_norm=norm_interval(residual);
+    if(rhs_norm.status==BoundaryErrorStatus::Overflow||residual_norm.status==BoundaryErrorStatus::Overflow) {
+        result.status=BoundaryResidualStatus::Overflow;return result;
+    }
+    if(rhs_norm.status!=BoundaryErrorStatus::Bounded||residual_norm.status!=BoundaryErrorStatus::Bounded)return result;
+    result.rhs_norm_lower=rhs_norm.lower;result.rhs_norm_upper=rhs_norm.upper;
+    result.rhs_error_upper=assembly_error==0.?face_error.norm_upper:
+        bound_up(face_error.norm_upper+assembly_error);
+    result.residual_norm_upper=evaluation_error==0.?residual_norm.upper:
+        bound_up(residual_norm.upper+evaluation_error);
+    const double exact_rhs_lower=bound_down(rhs_norm.lower-result.rhs_error_upper);
+    result.tolerance_safe=std::max(atol,bound_down(rtol*exact_rhs_lower));
+    result.total_residual_upper=result.rhs_error_upper==0.?result.residual_norm_upper:
+        bound_up(result.residual_norm_upper+result.rhs_error_upper);
+    if(!std::isfinite(result.rhs_error_upper)||!std::isfinite(result.residual_norm_upper)
+        ||!std::isfinite(result.total_residual_upper)||!std::isfinite(result.tolerance_safe)) {
+        result.status=BoundaryResidualStatus::Overflow;return result;
+    }
+    result.status=result.total_residual_upper<=result.tolerance_safe?
+        BoundaryResidualStatus::Accepted:BoundaryResidualStatus::ResidualTooLarge;
+    return result;
+}
 } // namespace arch::elliptic
