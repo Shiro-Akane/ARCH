@@ -812,6 +812,16 @@ void finite_ring_axis_enclosure_contract() {
             <<" upper="<<value.upper<<" error="<<value.absolute_error
             <<" status="<<static_cast<int>(value.status)<<'\n';
     }
+    for(double z:{0.,.375,2.,-2.,1.e6,-1.e6,1.e20,-1.e20}) {
+        const auto thin=finite_ring_potential_enclosure(1.,std::nextafter(1.,2.),
+            -.375,.375,1.,0.,z,1.,control);
+        require(thin.bound_valid && thin.status==RingIntervalStatus::Bounded
+            && thin.upper<0. && thin.absolute_error>0.,
+            "adjacent-double radial source lost its reliable interval");
+    }
+    require(!finite_ring_detail::interval_finite(
+        finite_ring_detail::log1p_enclosure({-1.,0.})),
+        "negative log1p interval accepted");
     auto tight=control;tight.relative_target=0.;
     const auto failed=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,0.,0.,1.,tight);
     require(failed.bound_valid && failed.status==RingIntervalStatus::PrecisionLimit
@@ -1312,6 +1322,13 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="boundary-acceptance") {boundary_original_rhs_acceptance_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary-ledger") {boundary_error_ledger_contract();return 0;}
         std::cout<<std::setprecision(17);
+        if(argc==3 && std::string(argv[1])=="ring-log1p-probe") {
+            const double x=std::strtod(argv[2],nullptr);
+            const auto bound=Physical::Gravity::finite_ring_detail::log1p_enclosure({x,x});
+            require(Physical::Gravity::finite_ring_detail::interval_finite(bound),
+                "log1p probe outside finite domain");
+            std::cout<<"{\"lower\":"<<bound.lower<<",\"upper\":"<<bound.upper<<"}\n";return 0;
+        }
         if(argc==3 && std::string(argv[1])=="ring-log-probe") {
             const double x=std::stod(argv[2]);
             const auto upper=Physical::Gravity::finite_ring_detail::logarithm_upper(x);

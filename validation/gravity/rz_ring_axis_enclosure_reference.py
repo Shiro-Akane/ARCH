@@ -58,31 +58,39 @@ def main():
     cases = [(rl, 1., -.375, .375, 1., zo)
              for rl in (0., .5) for zo in (0., .375, 2., 100., -100., 1.e6, -1.e6, 1.e12, -1.e12, 1.e20, -1.e20)]
     cases += [(rl, 1., -.23, .71, 1., zo) for rl in (0., .5) for zo in (1.e6, -1.e6, 1.e12, -1.e12)]
-    # Exact adjacent binary64 thin source: cancellation must stay visible.
-    cases.append((1., math.nextafter(1., math.inf), -.375, .375, 1., 2.))
+    # Adjacent stored endpoints and nonrepresentable exact midpoint radius.
+    cases += [(1., math.nextafter(1., math.inf), -.375, .375, 1., zo)
+              for zo in (0., .375, 2., -2., 1.e6, -1.e6, 1.e12, -1.e12, 1.e20, -1.e20)]
+    log1ps = []
+    for x in (0., math.ulp(0.), 1.e-300, 1.e-20, 1.e-8, .5, 1.,
+              math.nextafter(1., math.inf), 2., 1.e100):
+        bound = call(args.probe, "ring-log1p-probe", [repr(x)])
+        for precision in (400, 480):
+            with localcontext() as ctx:
+                ctx.prec = precision
+                exact = (1 + D.from_float(x)).ln()
+                assert D.from_float(bound["lower"]) <= exact <= D.from_float(bound["upper"])
+        log1ps.append({"input_hex": x.hex(), **bound})
     rows = []
     for values in cases:
         rl, rh, zl, zh, density, zo = values
         measured = call(args.probe, "ring-enclosure-probe",
                         [rl, rh, zl, zh, density, 0., zo, 128, "1e-10"])
-        refs = [reference(*values, p) for p in (80, 120)]
+        refs = [reference(*values, p) for p in (160, 200)]
         low, high = D.from_float(measured["lower"]), D.from_float(measured["upper"])
         for v in refs:
             assert low <= v <= high, (values, measured, str(v))
         assert measured["boxes"] == 0 and measured["range_evaluations"] == 0
-        if rl == 1.:
-            assert measured["status"] == 3, ("precision limitation hidden", values, measured)
-        else:
-            assert measured["status"] == 0, ("well-conditioned target rejected", values, measured)
+        assert measured["status"] == 0, ("unchanged internal target rejected", values, measured)
         rows.append({"source_exact_hex": [v.hex() for v in values],
-                     "reference_decimal_80": str(refs[0]),
-                     "reference_decimal_120": str(refs[1]), "enclosure": measured})
+                     "reference_decimal_160": str(refs[0]),
+                     "reference_decimal_200": str(refs[1]), "enclosure": measured})
         print("axis", rl, zo, "contained; status", measured["status"], flush=True)
     result = {"status": "PASS", "axis_cases": len(rows), "log_cases": len(logs),
-              "precision": [80, 120], "G_exact_binary64_hex": (6.67430e-8).hex(),
+              "precision": [160, 200], "log1p_cases": len(log1ps), "log1p_precision": [400, 480], "G_exact_binary64_hex": (6.67430e-8).hex(),
               "reference": "independent integrated 3D Newton axis primitive",
               "scope": "stored source axis point potential and arithmetic enclosure; not production RZ/force/residual science",
-              "logs": logs, "rows": rows}
+              "logs": logs, "log1ps": log1ps, "rows": rows}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n")
     print("RZ_AXIS_ENCLOSURE_DECIMAL_REFERENCE_PASS")

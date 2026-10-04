@@ -433,6 +433,47 @@ ARCH_HEAVY_INLINE SignedInterval asinh_interval_enclosure(double radius,SignedIn
     const auto lo=asinh_point_interval(q.lower),hi=asinh_point_interval(q.upper);
     return {lo.lower,hi.upper};
 }
+/** log(1+x), x>=0, without rounding tiny x out of 1+x.
+ * The existing positive atanh series uses z=x/(2+x) for x<=1;
+ * larger arguments reuse binary exponent reduction. No libm log assumption.
+ */
+ARCH_HEAVY_INLINE SignedInterval log1p_enclosure(SignedInterval x) {
+    if(!interval_finite(x)||x.lower<0.)return interval_invalid();
+    if(x.upper<=1.) {
+        const double zl=positive_down(x.lower/positive_up(2.+x.lower));
+        const double zu=quotient_up(x.upper,positive_down(2.+x.upper));
+        return {log_series_lower(zl),log_series_upper(zu)};
+    }
+    const double lo=std::max(1.,positive_down(1.+x.lower));
+    const double hi=sum_up(1.,x.upper);
+    return {logarithm_lower(lo),logarithm_upper(hi)};
+}
+/** Enclose integral dz/hypot(radius,z-zo). Same-side endpoints use the
+ * exact source width, not the subtraction of independently rounded asinh.
+ * Negative intervals mirror by odd asinh; crossing zero adds positive terms.
+ */
+ARCH_HEAVY_INLINE SignedInterval axis_asinh_difference_enclosure(
+    double radius,double zl,double zh,double zo) {
+    if(!(radius>0.))return interval_invalid();
+    auto lower=offset_interval(zl,zo),upper=offset_interval(zh,zo);
+    if(!interval_finite(lower)||!interval_finite(upper))return interval_invalid();
+    if(upper.upper<=0.) {
+        const auto original_lower=lower;
+        lower=interval_negate(upper);upper=interval_negate(original_lower);
+    }
+    if(lower.lower<0.)
+        return interval_sum(asinh_interval_enclosure(radius,upper),
+            interval_negate(asinh_interval_enclosure(radius,lower)));
+    const auto hi=axis_hypot_interval(radius,upper),lo=axis_hypot_interval(radius,lower);
+    const auto correction=interval_quotient_positive(interval_sum(upper,lower),
+        interval_sum(hi,lo));
+    const auto numerator=interval_product(offset_interval(zh,zl),
+        interval_sum({1.,1.},correction));
+    auto ratio=interval_quotient_positive(numerator,interval_sum(lower,lo));
+    if(!interval_finite(ratio))return interval_invalid();
+    ratio.lower=std::max(0.,ratio.lower); // Exact ratio is nonnegative.
+    return log1p_enclosure(ratio);
+}
 /** Same factored axis section as the existing analytic estimate. */
 ARCH_HEAVY_INLINE SignedInterval axis_section_enclosure(double rl,double rh,SignedInterval u) {
     const auto delta=offset_interval(rh,rl);
@@ -446,6 +487,14 @@ ARCH_HEAVY_INLINE SignedInterval axis_radial_term_enclosure(
     const auto difference=interval_sum(asinh_interval_enclosure(radius,upper),
         interval_negate(asinh_interval_enclosure(radius,lower)));
     return interval_product(interval_product({radius,radius},{radius,radius}),difference);
+}
+ARCH_HEAVY_INLINE SignedInterval axis_integral_potential_enclosure(
+    SignedInterval integral,double density,double G) {
+    const SignedInterval pi_range{positive_down(arch::constants::math::pi),
+                                  positive_up(arch::constants::math::pi)};
+    const auto factor=interval_product(interval_product(
+        interval_product({2.,2.},pi_range),{G,G}),{density,density});
+    return interval_negate(interval_product(factor,integral));
 }
 /** Independent axis enclosure after exact radial integration.
  * f(u)=sqrt(rh²+u²)-sqrt(rl²+u²)=integral_rl^rh r/hypot(r,u) dr.
@@ -473,11 +522,35 @@ ARCH_HEAVY_INLINE SignedInterval axis_midpoint_potential_enclosure(
     auto integral=interval_sum(midpoint_integral,{-error,error});
     if(!interval_finite(integral))return interval_invalid();
     integral.lower=std::max(0.,integral.lower); // Exact nonnegative Newton integrand.
-    const SignedInterval pi_range{positive_down(arch::constants::math::pi),
-                                  positive_up(arch::constants::math::pi)};
-    const auto factor=interval_product(interval_product(
-        interval_product({2.,2.},pi_range),{G,G}),{density,density});
-    return interval_negate(interval_product(factor,integral));
+    return axis_integral_potential_enclosure(integral,density,G);
+}
+/** Independent complementary bound after exact axial integration.
+ * g(r)=integral r/hypot(r,u) du, |g''|<=3*rh*dz/dmin³.
+ * Radial midpoint remainder <= dr³*rh*dz/(8*dmin³).
+ * The asinh gap decreases monotonically with r, enclosing an exact
+ * midpoint radius even when it lies between adjacent stored doubles.
+ */
+ARCH_HEAVY_INLINE SignedInterval axis_radial_midpoint_potential_enclosure(
+    double rl,double rh,double zl,double zh,double density,double zo,double G) {
+    const auto dr=offset_interval(rh,rl),dz=offset_interval(zh,zl);
+    const auto midpoint=interval_sum({rl,rl},interval_product(dr,{.5,.5}));
+    if(!interval_finite(midpoint)||!(midpoint.lower>0.))return interval_invalid();
+    const auto offsets=absolute_offset_range(zl,zh,zo);
+    const double distance_lower=distance_interval(rl,offsets.lower).lower;
+    if(!(distance_lower>0.)||!std::isfinite(distance_lower))return interval_invalid();
+    const auto low_gap=axis_asinh_difference_enclosure(midpoint.upper,zl,zh,zo);
+    const auto high_gap=axis_asinh_difference_enclosure(midpoint.lower,zl,zh,zo);
+    if(!interval_finite(low_gap)||!interval_finite(high_gap))return interval_invalid();
+    const SignedInterval gap{std::max(0.,low_gap.lower),high_gap.upper};
+    const auto center=interval_product(dr,interval_product(midpoint,gap));
+    const double ratio=quotient_up(dr.upper,distance_lower);
+    const double scale=quotient_up(product_up(dr.upper,product_up(rh,dz.upper)),distance_lower);
+    const double error=quotient_up(product_up(scale,product_up(ratio,ratio)),8.);
+    if(!interval_finite(center)||!std::isfinite(error))return interval_invalid();
+    auto integral=interval_sum(center,{-error,error});
+    if(!interval_finite(integral))return interval_invalid();
+    integral.lower=std::max(0.,integral.lower);
+    return axis_integral_potential_enclosure(integral,density,G);
 }
 /** Analytic axis potential, same four terms as axis(), with arithmetic ledger.
  * This is the R_o=0 branch, not a small-radius numerical switch.
@@ -496,13 +569,17 @@ ARCH_HEAVY_INLINE RingPotentialEnclosure axis_potential_enclosure(
                                   positive_up(arch::constants::math::pi)};
     const auto factor=interval_product(interval_product(pi_range,{G,G}),{density,density});
     auto potential=interval_negate(interval_product(factor,total));
-    const auto independent=axis_midpoint_potential_enclosure(rl,rh,zl,zh,density,zo,G);
-    if(interval_finite(independent)) {
+    const SignedInterval independent[]{
+        axis_midpoint_potential_enclosure(rl,rh,zl,zh,density,zo,G),
+        axis_radial_midpoint_potential_enclosure(rl,rh,zl,zh,density,zo,G)};
+    for(const auto candidate:independent)if(interval_finite(candidate)) {
         if(interval_finite(potential)) {
-            potential.lower=std::max(potential.lower,independent.lower);
-            potential.upper=std::min(potential.upper,independent.upper);
-            // Disjoint certified intervals are an error, not a successful repair.
-        } else potential=independent;
+            potential.lower=std::max(potential.lower,candidate.lower);
+            potential.upper=std::min(potential.upper,candidate.upper);
+            if(potential.lower>potential.upper) {
+                result.status=RingIntervalStatus::PrecisionLimit;return result;
+            } // Disjoint certified intervals cannot be overwritten by a later bound.
+        } else potential=candidate;
     }
     // Nonnegative source has nonpositive potential. This exact sign tightens
     // arithmetic overestimation, never clips physical field values.
