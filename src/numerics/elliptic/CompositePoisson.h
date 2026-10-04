@@ -72,6 +72,16 @@ struct WeightedNormInterval {
     BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
     double lower=0.,upper=std::numeric_limits<double>::infinity();
 };
+// Companion evaluation ledger for the exact mathematical operator defined by
+// stored native coefficients/volumes/weights. Geometry and source construction
+// remain separate mandatory certificates before full physical acceptance.
+enum class PoissonArithmeticScope { StoredNativeCoefficients };
+struct PoissonArithmeticError {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    PoissonArithmeticScope scope=PoissonArithmeticScope::StoredNativeCoefficients;
+    std::vector<double> cell_bounds;
+    double norm_upper=std::numeric_limits<double>::infinity();
+};
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
@@ -93,6 +103,7 @@ public:
     const CartesianMesh& base() const { return base_; }
     const auto& cells() const { return cells_; }
     const auto& volumes() const { return volumes_; }
+    const auto& norm_weights() const { return weights_; }
     const auto& diagonal() const { return diagonal_; }
     const auto& faces() const { return faces_; }
     int size() const { return static_cast<int>(cells_.size()); }
@@ -112,6 +123,13 @@ public:
     BoundaryRhsError propagate_boundary_error(
         std::span<const BoundaryPotentialError> face_errors) const;
     WeightedNormInterval norm_interval(std::span<const double> x) const;
+    PoissonArithmeticError bound_rhs_assembly_roundoff(
+        std::span<const double> source,std::span<const double> boundary_values,
+        std::span<const double> computed_rhs) const;
+    PoissonArithmeticError bound_residual_evaluation_roundoff(
+        std::span<const double> potential,std::span<const double> approximate_rhs,
+        std::span<const double> computed_residual) const;
+
     // Mandatory external arithmetic ledgers: no default zero/fake certificate.
     BoundaryResidualAssessment assess_boundary_residual(
         std::span<const double> approximate_rhs,

@@ -634,6 +634,112 @@ WeightedNormInterval CompositePoisson::norm_interval(std::span<const double> x) 
         :BoundaryErrorStatus::Overflow;
     return result;
 }
+namespace {
+/** Outward basic arithmetic for canonical stored-coefficient companion ledgers.
+ * No physics/kernel dependency. Encloses the mathematical expression rather
+ * than assuming CompensatedSum or a computed residual is exact.
+ */
+struct ArithmeticRange {double lo=0.,hi=0.;};
+bool finite_range(ArithmeticRange a) {
+    return std::isfinite(a.lo)&&std::isfinite(a.hi)&&a.lo<=a.hi;
+}
+ArithmeticRange range_negate(ArithmeticRange a) {return {-a.hi,-a.lo};}
+ArithmeticRange range_add(ArithmeticRange a,ArithmeticRange b) {
+    if(a.lo==0.&&a.hi==0.)return b;
+    if(b.lo==0.&&b.hi==0.)return a;
+    if(a.lo==a.hi&&b.lo==b.hi&&a.lo==-b.lo)return {};
+    return {std::nextafter(a.lo+b.lo,-std::numeric_limits<double>::infinity()),
+            std::nextafter(a.hi+b.hi,std::numeric_limits<double>::infinity())};
+}
+ArithmeticRange range_product(ArithmeticRange a,ArithmeticRange b) {
+    if((a.lo==0.&&a.hi==0.)||(b.lo==0.&&b.hi==0.))return {};
+    const double v[]{a.lo*b.lo,a.lo*b.hi,a.hi*b.lo,a.hi*b.hi};
+    double lo=v[0],hi=v[0];
+    for(double x:v){lo=std::min(lo,x);hi=std::max(hi,x);}
+    return {std::nextafter(lo,-std::numeric_limits<double>::infinity()),
+            std::nextafter(hi,std::numeric_limits<double>::infinity())};
+}
+ArithmeticRange range_divide_volume(ArithmeticRange a,double volume) {
+    if(a.lo==0.&&a.hi==0.)return {};
+    return {std::nextafter(a.lo/volume,-std::numeric_limits<double>::infinity()),
+            std::nextafter(a.hi/volume,std::numeric_limits<double>::infinity())};
+}
+bool finite_field(std::span<const double> x) {
+    for(double v:x)if(!std::isfinite(v))return false;
+    return true;
+}
+PoissonArithmeticError finish_arithmetic_ledger(const CompositePoisson& op,
+    std::span<const ArithmeticRange> exact,std::span<const double> computed) {
+    PoissonArithmeticError result{};result.cell_bounds.resize(exact.size());
+    for(std::size_t i=0;i<exact.size();++i) {
+        if(!finite_range(exact[i])) {result.status=BoundaryErrorStatus::Overflow;return result;}
+        const double distance=std::max(std::abs(computed[i]-exact[i].lo),
+                                       std::abs(computed[i]-exact[i].hi));
+        result.cell_bounds[i]=bound_up(distance);
+        if(!std::isfinite(result.cell_bounds[i])) {
+            result.status=BoundaryErrorStatus::Overflow;return result;
+        }
+    }
+    const auto norm=op.norm_interval(result.cell_bounds);
+    result.status=norm.status;result.norm_upper=norm.upper;return result;
+}
+}
+/** Bound actual RHS array against exact stored source+B*boundary expression.
+ * It does not certify the physical source or construction of native B.
+ */
+PoissonArithmeticError CompositePoisson::bound_rhs_assembly_roundoff(
+    std::span<const double> source,std::span<const double> boundary_values,
+    std::span<const double> computed_rhs) const {
+    if(source.size()!=cells_.size()||computed_rhs.size()!=cells_.size()
+        ||!finite_field(source)||!finite_field(computed_rhs))return {};
+    const bool no_boundary=boundary_values.empty()&&boundary_.constant_nullspace;
+    if(!no_boundary&&(boundary_values.size()!=faces_.size()||!finite_field(boundary_values)))
+        return {};
+    std::vector<ArithmeticRange> exact;exact.reserve(source.size());
+    for(double value:source)exact.push_back({value,value});
+    if(!no_boundary)for(std::size_t i=0;i<faces_.size();++i) {
+        const auto& f=faces_[i];
+        if(f.area==0.||f.boundary_coefficient==0.)continue;
+        const auto flux=range_product(range_product({f.area,f.area},
+            {f.boundary_coefficient,f.boundary_coefficient}),
+            {boundary_values[i],boundary_values[i]});
+        if(f.left>=0)exact[f.left]=range_add(exact[f.left],range_divide_volume(flux,volumes_[f.left]));
+        if(f.right>=0)exact[f.right]=range_add(exact[f.right],
+            range_negate(range_divide_volume(flux,volumes_[f.right])));
+    }
+    return finish_arithmetic_ledger(*this,exact,computed_rhs);
+}
+/** Bound computed residual against canonical mathematical A*potential-rhs.
+ * The scalar/provider residual and compensated gradient may have rounded;
+ * neither their arithmetic nor their equality is assumed by this ledger.
+ */
+PoissonArithmeticError CompositePoisson::bound_residual_evaluation_roundoff(
+    std::span<const double> potential,std::span<const double> rhs,
+    std::span<const double> computed_residual) const {
+    if(potential.size()!=cells_.size()||rhs.size()!=cells_.size()
+        ||computed_residual.size()!=cells_.size()||!finite_field(potential)
+        ||!finite_field(rhs)||!finite_field(computed_residual))return {};
+    std::vector<ArithmeticRange> exact(cells_.size());
+    for(const auto& f:faces_) {
+        if(f.area==0.)continue;
+        const int anchor=f.left>=0?f.left:f.right;
+        ArithmeticRange gradient{};
+        for(std::size_t k=0;k<f.samples.size();++k) {
+            const double value=potential[f.samples[k]],base=potential[anchor];
+            const auto difference=range_add({value,value},range_negate({base,base}));
+            gradient=range_add(gradient,
+                range_product({f.coefficients[k],f.coefficients[k]},difference));
+        }
+        gradient=range_add(gradient,range_product({f.boundary_coefficient,f.boundary_coefficient},
+            {-potential[anchor],-potential[anchor]}));
+        const auto flux=range_product({f.area,f.area},gradient);
+        if(f.left>=0)exact[f.left]=range_add(exact[f.left],
+            range_negate(range_divide_volume(flux,volumes_[f.left])));
+        if(f.right>=0)exact[f.right]=range_add(exact[f.right],range_divide_volume(flux,volumes_[f.right]));
+    }
+    for(std::size_t i=0;i<exact.size();++i)exact[i]=range_add(exact[i],{-rhs[i],-rhs[i]});
+    return finish_arithmetic_ledger(*this,exact,computed_residual);
+}
 /**
  * Conditional original-RHS acceptance, without modifying solver tolerance.
  * E_b includes certified face propagation plus certified RHS assembly error.

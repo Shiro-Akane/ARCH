@@ -907,6 +907,84 @@ void finite_ring_tree_boundary_contract() {
     std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
 }
 
+void native_arithmetic_ledger_probe() {
+    using namespace elliptic;
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
+    const auto dump=[](const auto& values) {
+        std::cout<<'[';bool first_value=true;
+        for(auto value:values){if(!first_value)std::cout<<',';first_value=false;std::cout<<value;}
+        std::cout<<']';
+    };
+    for(bool rz:{false,true})for(bool mixed:{false,true})for(double origin:{0.,.5}) {
+        if(!rz&&origin!=0.)continue;
+        auto base=base_mesh(2,4);
+        if(rz){base.geometry=Geometry::Cylindrical;base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;}
+        base.origin={origin,-.5,0.};
+        CompositePoisson op(base,make_cells(base,mixed),
+            rz?BoundaryKind::CurvilinearIsolated:BoundaryKind::Dirichlet);
+        for(int lane=0;lane<3;++lane) {
+            std::vector<double> phi(op.size()),source(op.size()),boundary(op.faces().size()),residual(op.size());
+            for(int i=0;i<op.size();++i) {
+                if(lane==1){phi[i]=std::sin(.4*i)+.125;source[i]=.1+.2*i;}
+                if(lane==2){phi[i]=1.e12+i*.0001220703125;source[i]=(i%2?-.03:.03);}
+            }
+            for(std::size_t i=0;i<boundary.size();++i) {
+                if(lane==1)boundary[i]=.3+.1*i;
+                if(lane==2)boundary[i]=1.e12-i*.0001220703125;
+            }
+            const auto rhs=op.effective_rhs(source,boundary);
+            op.apply(phi,residual);for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
+            const auto assembly=op.bound_rhs_assembly_roundoff(source,boundary,rhs);
+            const auto evaluation=op.bound_residual_evaluation_roundoff(phi,rhs,residual);
+            require(assembly.status==BoundaryErrorStatus::Bounded
+                &&evaluation.status==BoundaryErrorStatus::Bounded
+                &&assembly.scope==PoissonArithmeticScope::StoredNativeCoefficients,
+                "native canonical arithmetic ledger unavailable");
+            if(lane==0)require(assembly.norm_upper==0.&&evaluation.norm_upper==0.,
+                "exact zero operator arithmetic acquired hidden floor");
+            if(!first)std::cout<<',';first=false;
+            std::cout<<"{\"rz\":"<<rz<<",\"mixed\":"<<mixed<<",\"origin\":"<<origin<<",\"lane\":"<<lane;
+            std::cout<<",\"phi\":";dump(phi);std::cout<<",\"source\":";dump(source);
+            std::cout<<",\"boundary\":";dump(boundary);std::cout<<",\"rhs\":";dump(rhs);
+            std::cout<<",\"residual\":";dump(residual);std::cout<<",\"volumes\":";dump(op.volumes());
+            std::cout<<",\"weights\":";dump(op.norm_weights());
+            std::cout<<",\"rhsBounds\":";dump(assembly.cell_bounds);
+            std::cout<<",\"residualBounds\":";dump(evaluation.cell_bounds);
+            std::cout<<",\"rhsNormUpper\":"<<assembly.norm_upper
+                <<",\"residualNormUpper\":"<<evaluation.norm_upper<<",\"faces\":[";
+            bool first_face=true;
+            for(const auto& f:op.faces()) {
+                if(!first_face)std::cout<<',';first_face=false;
+                std::cout<<"{\"left\":"<<f.left<<",\"right\":"<<f.right<<",\"area\":"<<f.area
+                    <<",\"bc\":"<<f.boundary_coefficient<<",\"samples\":";dump(f.samples);
+                std::cout<<",\"coefficients\":";dump(f.coefficients);std::cout<<'}';
+            }
+            std::cout<<"]}";
+            auto wrong=residual;wrong[0]+=1.;
+            require(op.bound_residual_evaluation_roundoff(phi,rhs,wrong).cell_bounds[0]>=.99,
+                "mismatched computed residual acquired zero arithmetic certificate");
+            wrong[0]=std::numeric_limits<double>::quiet_NaN();
+            require(op.bound_residual_evaluation_roundoff(phi,rhs,wrong).status==BoundaryErrorStatus::InvalidInput,
+                "nonfinite residual acquired certificate");
+            require(op.bound_rhs_assembly_roundoff({},boundary,rhs).status==BoundaryErrorStatus::InvalidInput,
+                "missing source acquired certificate");
+            if(lane==0) {
+                auto huge=phi;
+                for(std::size_t i=0;i<huge.size();++i)
+                    huge[i]=i%2?-std::numeric_limits<double>::max():std::numeric_limits<double>::max();
+                require(op.bound_residual_evaluation_roundoff(huge,rhs,residual).status==BoundaryErrorStatus::Overflow,
+                    "overflowed canonical residual acquired finite certificate");
+                auto huge_boundary=boundary;
+                std::fill(huge_boundary.begin(),huge_boundary.end(),std::numeric_limits<double>::max());
+                require(op.bound_rhs_assembly_roundoff(source,huge_boundary,rhs).status==BoundaryErrorStatus::Overflow,
+                    "overflowed boundary assembly acquired finite certificate");
+            }
+
+        }
+    }
+    std::cout<<"],\"negativePass\":true}\n";
+}
+
 void finite_ring_contact_gauss3_contract() {
     using namespace Physical::Gravity;
     RingEnclosureControl control{};control.relative_target=1.e-10;
@@ -1562,6 +1640,7 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="arithmetic-ledger-probe") {native_arithmetic_ledger_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-contact-gauss3") {std::cout<<std::setprecision(17);finite_ring_contact_gauss3_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-contact-log") {std::cout<<std::setprecision(17);finite_ring_contact_log_contract();return 0;}
         if(argc==3 && (std::string(argv[1])=="ring-atan-probe"||

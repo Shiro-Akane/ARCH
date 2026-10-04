@@ -330,6 +330,11 @@ Duffy/Decimal诊断包含于区间。非接触四例由数千boxes降为44～104
 见 RZGauss3ContactBudgetNode-20261005.zh-CN.md；这是这些数学输入的预算验证，
 不是general parent、full RHS/residual、实际AMR消费者或完整RZ科学签收。
 
+实际CompositePoisson owner新增stored-coefficient RHS assembly/residual evaluation companion
+账本；18个Cartesian/RZ uniform/mixed lanes经独立精确Fraction逐cell与stored-weight
+norm平方验证通过。source与geometry/coefficient construction仍独立待证明，不自动
+授予完整物理quality。见 NativePoissonArithmeticLedgerNode-20261005.zh-CN.md。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
