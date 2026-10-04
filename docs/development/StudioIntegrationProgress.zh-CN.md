@@ -3369,3 +3369,12 @@ Box14+Radial28原检查PASS；34科学执行/8拒绝，全部repair=0/原residua
 见BoxRadialExistingCpuGates报告/summary；原始H5/checkpoint/日志本机保管。
 这是当前7d3bd3d的原CPU物理子组证据，不是完整O7/RZ/CUDA/benchmark/长跑签收。
 完整dependency freshness仍unknown，Linux/WSL范围不变。
+
+### actual production OpenMP team诊断（2026-10-05）
+
+GNU-only外部GOMP观测library保持原body/线程请求/flags，不改Core/ELF。
+原Gaussian cloud-1 t=0、requested8：1058region中1053为team1、5为team8；
+前128成员affinity有效，全程histogram完整，baseline/观测22dataset一致。
+3真实工具测试/audit/diff PASS；string pointer比较器问题保留并改为按值分析。
+见GompProductionTeamObservation报告/summary。只有本样本覆盖，不填未来runner team、
+不称最佳线程或正式性能；原始H5/trace本机，CUDA/科学/长跑出口未闭合。
