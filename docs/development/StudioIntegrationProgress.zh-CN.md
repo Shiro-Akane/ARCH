@@ -3312,3 +3312,11 @@ publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0
 
 完整目标仍包含Linux/WSL工作流、模型/plt出口、完整O7 CPU、统一CUDA、
 冻结终点benchmark和批准长时子集。整体尚未完成。
+
+### 第二平台实际 standalone team 前检（2026-10-05）
+
+现有platform_preflight扩展实际OpenMP helper观测，1/8/28 threads均形成对应team，
+每thread CPU/place/mask通过验证；GPU4070Ti匹配，cpufreq policy unavailable。
+见OpenmpPlatformPreflightNode-20261005.zh-CN.md。
+这是平台前检，不替runner填入生产actual team，不选最优线程、不计性能通过；
+Core冻结科学场景、完整CPU出口后再执行统一CUDA/正式benchmark/批准长跑。
