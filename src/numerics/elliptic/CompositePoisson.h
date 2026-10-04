@@ -11,6 +11,7 @@
 
 #include <array>
 #include <span>
+#include <limits>
 #include <unordered_map>
 #include <vector>
 
@@ -56,6 +57,17 @@ struct CompositeFace {
     std::vector<double> value_coefficients;
     double value_boundary_coefficient = 0.;
 };
+enum class BoundaryErrorQuality { CertifiedAbsolute, Estimate, Unknown };
+struct BoundaryPotentialError {
+    double absolute_error=0.; // Potential units, e.g. cm^2/s^2.
+    BoundaryErrorQuality quality=BoundaryErrorQuality::Unknown;
+};
+enum class BoundaryErrorStatus { Bounded, InvalidInput, UncertifiedInput, Overflow };
+struct BoundaryRhsError {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    std::vector<double> cell_bounds; // RHS units, e.g. s^-2.
+    double norm_upper=std::numeric_limits<double>::infinity();
+};
 class CompositePoisson {
 public:
     CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
@@ -79,6 +91,11 @@ public:
                          double boundary_value = 0.) const;
     std::vector<double> effective_rhs(std::span<const double> source,
                                      std::span<const double> boundary_values) const;
+    // Bound |B e_face| with the same stored native face coefficients.
+    // Requires certified potential inputs; does not certify their origin,
+    // geometry construction or source/RHS assembly rounding.
+    BoundaryRhsError propagate_boundary_error(
+        std::span<const BoundaryPotentialError> face_errors) const;
     double mean(std::span<const double> x) const;
     double norm(std::span<const double> x) const;
     double dot(std::span<const double> x, std::span<const double> y) const;

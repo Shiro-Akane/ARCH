@@ -532,4 +532,72 @@ std::vector<double> CompositePoisson::effective_rhs(std::span<const double> sour
     }
     return rhs;
 }
+/** Positive FP64 upper operations; exact zeros remain zero (no budget floor). */
+namespace {
+double bound_up(double value) {
+    return value==0. ? 0. : std::nextafter(value,std::numeric_limits<double>::infinity());
+}
+double bound_product(double left,double right) {
+    if(left==0. || right==0.)return 0.;
+    // A positive product rounded to zero is bounded by the next subnormal.
+    return std::nextafter(left*right,std::numeric_limits<double>::infinity());
+}
+double bound_quotient(double numerator,double denominator) {
+    if(numerator==0.)return 0.;
+    return std::nextafter(numerator/denominator,std::numeric_limits<double>::infinity());
+}
+}
+/**
+ * Map certified absolute face-potential errors into the canonical stored B.
+ * The positive sum deliberately ignores cancellation. Estimates cannot enter.
+ * Source/RHS construction and the potential evaluator need separate ledgers.
+ */
+BoundaryRhsError CompositePoisson::propagate_boundary_error(
+    std::span<const BoundaryPotentialError> errors) const
+{
+    BoundaryRhsError result{};
+    result.cell_bounds.assign(cells_.size(),0.);
+    if(errors.empty() && boundary_.constant_nullspace) {
+        result.status=BoundaryErrorStatus::Bounded;result.norm_upper=0.;return result;
+    }
+    if(errors.size()!=faces_.size())return result;
+    for(std::size_t i=0;i<faces_.size();++i) {
+        const auto& f=faces_[i];
+        if(f.area==0. || f.boundary_coefficient==0.)continue;
+        const auto& e=errors[i];
+        if(!std::isfinite(e.absolute_error) || e.absolute_error<0.)return result;
+        if(e.quality!=BoundaryErrorQuality::CertifiedAbsolute) {
+            result.status=BoundaryErrorStatus::UncertifiedInput;return result;
+        }
+        const double face=bound_product(f.area,std::abs(f.boundary_coefficient));
+        const auto add=[&](int cell) {
+            if(cell<0)return;
+            const double coefficient=bound_quotient(face,volumes_[cell]);
+            const double contribution=bound_product(coefficient,e.absolute_error);
+            if(contribution!=0.)
+                result.cell_bounds[cell]=bound_up(result.cell_bounds[cell]+contribution);
+        };
+        add(f.left);add(f.right);
+    }
+    double scale=0.;
+    for(double value:result.cell_bounds) {
+        if(!std::isfinite(value)) {
+            result.status=BoundaryErrorStatus::Overflow;return result;
+        }
+        scale=std::max(scale,value);
+    }
+    if(scale==0.) {
+        result.status=BoundaryErrorStatus::Bounded;result.norm_upper=0.;return result;
+    }
+    double square_sum=0.;
+    for(std::size_t i=0;i<result.cell_bounds.size();++i) {
+        const double q=bound_quotient(result.cell_bounds[i],scale);
+        const double term=bound_product(weights_[i],bound_product(q,q));
+        if(term!=0.)square_sum=bound_up(square_sum+term);
+    }
+    result.norm_upper=bound_product(scale,bound_up(std::sqrt(square_sum)));
+    result.status=std::isfinite(result.norm_upper)?BoundaryErrorStatus::Bounded
+        :BoundaryErrorStatus::Overflow;
+    return result;
+}
 } // namespace arch::elliptic

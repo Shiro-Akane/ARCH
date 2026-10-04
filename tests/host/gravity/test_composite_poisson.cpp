@@ -1071,8 +1071,69 @@ void curved_manufactured(bool singular=false, bool seam_refined=false) {
 }
 
 }
+void boundary_error_ledger_contract() {
+    using namespace elliptic;
+    for(bool rz:{false,true})for(bool refined:{false,true}) {
+        auto base=base_mesh(2,4);
+        if(rz) {
+            base.geometry=elliptic::Geometry::Cylindrical;
+            base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        }
+        CompositePoisson op(base,make_cells(base,refined),
+            rz?BoundaryKind::CurvilinearIsolated:BoundaryKind::Dirichlet);
+        std::vector<BoundaryPotentialError> errors(op.faces().size(),
+            {0.,BoundaryErrorQuality::CertifiedAbsolute});
+        for(std::size_t f=0;f<errors.size();++f)
+            errors[f].absolute_error=std::ldexp(1.,-22-static_cast<int>(f%5));
+        const auto bound=op.propagate_boundary_error(errors);
+        require(bound.status==BoundaryErrorStatus::Bounded,"certified face propagation rejected");
+        double maximum_ratio=0.;
+        std::vector<double> source(op.size(),0.),values(errors.size());
+        for(int pattern=0;pattern<16;++pattern) {
+            for(std::size_t f=0;f<values.size();++f)
+                values[f]=((f+pattern)%3==0?-1.:1.)*errors[f].absolute_error;
+            const auto perturbation=op.effective_rhs(source,values);
+            for(int cell=0;cell<op.size();++cell) {
+                require(std::abs(perturbation[cell])<=bound.cell_bounds[cell],
+                    "face error mapped outside the positive native B bound");
+                if(bound.cell_bounds[cell]>0.)
+                    maximum_ratio=std::max(maximum_ratio,std::abs(perturbation[cell])/bound.cell_bounds[cell]);
+            }
+            require(op.norm(perturbation)<=bound.norm_upper,"weighted RHS norm exceeded upper bound");
+        }
+        auto invalid=errors;
+        int used=-1;
+        for(std::size_t f=0;f<op.faces().size();++f)
+            if(op.faces()[f].area>0. && op.faces()[f].boundary_coefficient!=0.) {used=f;break;}
+        require(used>=0,"ledger test has no physical boundary");
+        const auto ring_estimate=Physical::Gravity::finite_ring_potential_estimate(
+            .5,1.,-.375,.375,1.,2.,0.,constants::gravity::cgs::gravitational_constant);
+        require(!ring_estimate.error_is_certified,"ring estimate silently became certified");
+        invalid[used].absolute_error=ring_estimate.estimated_error;
+        invalid[used].quality=ring_estimate.error_is_certified
+            ?BoundaryErrorQuality::CertifiedAbsolute:BoundaryErrorQuality::Estimate;
+        require(op.propagate_boundary_error(invalid).status==BoundaryErrorStatus::UncertifiedInput,
+            "quadrature estimate accepted as a certified boundary bound");
+        invalid[used].quality=BoundaryErrorQuality::CertifiedAbsolute;
+        invalid[used].absolute_error=-1.;
+        require(op.propagate_boundary_error(invalid).status==BoundaryErrorStatus::InvalidInput,
+            "negative potential bound accepted");
+        invalid[used].absolute_error=std::numeric_limits<double>::max();
+        require(op.propagate_boundary_error(invalid).status==BoundaryErrorStatus::Overflow,
+            "overflow boundary budget accepted");
+        for(auto& e:errors)e.absolute_error=0.;
+        const auto zero=op.propagate_boundary_error(errors);
+        require(zero.status==BoundaryErrorStatus::Bounded && zero.norm_upper==0.,
+            "zero boundary budget gained an implicit floor");
+        std::cout<<"BOUNDARY_RHS_LEDGER rz="<<rz<<" refined="<<refined
+            <<" cells="<<op.size()<<" max_bound_ratio="<<maximum_ratio<<'\n';
+    }
+    std::cout<<"BOUNDARY_RHS_LEDGER_PASS\n";
+}
+
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="boundary-ledger") {boundary_error_ledger_contract();return 0;}
         std::cout<<std::setprecision(17);
         if(argc>=9 && std::string(argv[1])=="ring-probe") {
             Physical::Gravity::RingQuadratureControl control{};

@@ -1,0 +1,43 @@
+{
+  "baseCommit": "7cc33630c7e74e85d7ad98ea2748b2dabc09fcfc",
+  "authority": "86bec324018349c6d81df84a3cced3ed9f9a2792 \u00a77",
+  "sourceDirtyAtBuild": true,
+  "sourceSha256": {
+    "src/numerics/elliptic/CompositePoisson.cpp": "841de3dcef8f4a9d75b7ae354a3e1b41cc1ffe48f41a19c7a9c947941c67aca5",
+    "src/numerics/elliptic/CompositePoisson.h": "d0bb05cf3ff9c966647c78b92a217792277fd71dae1c946f338621db5710ff74",
+    "tests/host/gravity/test_composite_poisson.cpp": "543f047223a030739bf97a0b2dd35bdcd5b3a7cac301177235f05d8153b52345"
+  },
+  "archSha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "productionElfUnchanged": true,
+  "testExecutableSha256": "22a98956ea0c86d7dfe2909507b17010e3a51a55f42cb9f2da5147f86efad83f",
+  "contract": "certified absolute face potential perturbation through exact mathematical stored B coefficients and stored native weighted norm; not full evaluator/RHS assembly certification",
+  "fixtures": 4,
+  "signedPerturbationPatternsPerFixture": 16,
+  "qualities": [
+    "CertifiedAbsolute",
+    "Estimate",
+    "Unknown"
+  ],
+  "statuses": [
+    "Bounded",
+    "InvalidInput",
+    "UncertifiedInput",
+    "Overflow"
+  ],
+  "actualRingEstimateRejected": true,
+  "zeroBoundExact": true,
+  "checks": {
+    "boundary-ledger": "PASS",
+    "composite_poisson_analytic": "PASS",
+    "composite_poisson_contract": "PASS",
+    "self_gravity_lifecycle": "PASS",
+    "ring": "PASS",
+    "architecture": "PASS",
+    "diff": "PASS"
+  },
+  "sourceGeometryRoundingCertified": false,
+  "nearQuadratureCertified": false,
+  "rhsAssemblyRoundingCertified": false,
+  "fullRzQualified": false,
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-boundary-rhs-ledger-20261004"
+}
