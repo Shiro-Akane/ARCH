@@ -3378,3 +3378,8 @@ GNU-only外部GOMP观测library保持原body/线程请求/flags，不改Core/ELF
 3真实工具测试/audit/diff PASS；string pointer比较器问题保留并改为按值分析。
 见GompProductionTeamObservation报告/summary。只有本样本覆盖，不填未来runner team、
 不称最佳线程或正式性能；原始H5/trace本机，CUDA/科学/长跑出口未闭合。
+
+
+## 2026-10-05：获准 CPU 子组的 CUDA scoped 节点
+
+已重读科学清单6–8；冻结JENS CPU9+9沿用匹配未变ELF收据。唯一工作区建立sm_89 Release CUDA验证，5个现有共享几何/AMR/归约/指标目标实机通过。发现并修复native-only+unused LTO archive的mold链接阻断，保留LTO；8项tooling、架构audit/diff check通过。详见ApprovedCpuCudaLeaves-20261005.zh-CN.md及对应processed summary。未完成完整JENS CUDA生命周期/生产ARCH CUDA应用或RZ科学签收，未启动长跑和计时；所有原能力门槛保持。

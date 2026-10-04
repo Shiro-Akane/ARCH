@@ -50,7 +50,7 @@ class BuildPresetTests(unittest.TestCase):
                      "Linux host C/C++ compilers, CMake and Ninja are required")
 class IpoLinkerTests(unittest.TestCase):
     def configure(self, directory, *, available=(), reject=(), reject_lto=False,
-                  build_type="Release", link_flag=""):
+                  build_type="Release", link_flag="", reject_native=False):
         root = Path(directory)
         # These wrappers only simulate an incompatible optional linker or flag;
         # successful controls still compile/link real C and C++ LTO objects.
@@ -63,6 +63,10 @@ arguments = sys.argv[1:]
 if any(flag in arguments for flag in {tuple(reject)!r}):
     sys.stderr.write("fixture: rejected linker option\\n")
     sys.exit(83)
+if {reject_native!r} and "-fuse-ld=mold" in arguments and any(
+        item.endswith("probe_unused") for item in arguments):
+    sys.stderr.write("fixture: rejected native-only unused LTO link\\n")
+    sys.exit(85)
 if {reject_lto!r} and "-c" not in arguments and any(
         flag.startswith("-flto") for flag in arguments):
     sys.stderr.write("fixture: rejected LTO link\\n")
@@ -119,8 +123,22 @@ endif()
         with tempfile.TemporaryDirectory() as root:
             run = self.configure(root, available=("mold",))
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
-            self.assertEqual((Path(root) / "build/selected.txt").read_text(), "-fuse-ld=mold")
-            self.assertIn("-fuse-ld=mold", self.assert_builds(root))
+            selected = (Path(root) / "build/selected.txt").read_text()
+            self.assertIn(selected, ("-fuse-ld=mold", ""))
+            if not selected:
+                error = (Path(root) / "build/CMakeFiles/CMakeError.log").read_text()
+                self.assertIn("Native object / unused LTO archive check", error)
+                self.assertIn("mold linker rejected", run.stdout)
+            self.assert_builds(root)
+
+    def test_native_only_unused_archive_failure_rejects_optional_linker(self):
+        with tempfile.TemporaryDirectory() as root:
+            run = self.configure(root, available=("mold",), reject_native=True)
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            self.assertEqual((Path(root) / "build/selected.txt").read_text(), "")
+            error = (Path(root) / "build/CMakeFiles/CMakeError.log").read_text()
+            self.assertIn("fixture: rejected native-only unused LTO link", error)
+            self.assert_builds(root)
 
     def test_incompatible_optional_linkers_fall_back_without_disabling_lto(self):
         with tempfile.TemporaryDirectory() as root:
