@@ -59,7 +59,7 @@ Json CoordinateMetadata(const GridConfig& g, const std::string& system) {
         {"thirdAxisRequiresSecond", true}, {"unitSystem", system}});
 }
 /** Summarize AMR controls for the resolved configuration. */
-Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled) {
+Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled, bool self_gravity, bool cpu_backend) {
     struct Item { const char* name; bool selected; const char* unavailable; };
     const Item items[] = {{"DENS", a.refine_on_rho, ""}, {"PRES", a.refine_on_p, ""},
         {"TEMP", a.refine_on_temp, ""}, {"VELX", a.refine_on_velx, ""},
@@ -68,7 +68,7 @@ Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled) {
         {"ENER", a.refine_on_eng, ""}, {"VORT", a.refine_on_vorticity, ""},
         {"DIVV", a.refine_on_div_v, ""}, {"ENTR", a.refine_on_entropy, ""},
         {"ENUC", a.refine_on_enuc, !burn_enabled ? "requires reactions" : ""},
-        {"JENS", a.refine_on_jeans, "JENS lifecycle qualification is incomplete"},
+        {"JENS", a.refine_on_jeans, self_gravity && cpu_backend ? "" : "requires self gravity and explicit CPU backend; CUDA not qualified"},
         {"SPECIES", a.refine_all_species, ""}};
     auto choices = Json::array();
     for (const auto& item : items)
@@ -80,7 +80,8 @@ Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled) {
         {"speciesResolution", "requires case Setup"}, {"separator", ","}, {"alternativeSeparator", "+"}});
 }
 Json RefinementMetadata(const SimConfig& c) {
-    return RefinementMetadata(c.amr, c.grid.dim, c.physics.burn.use_burn);
+    return RefinementMetadata(c.amr, c.grid.dim, c.physics.burn.use_burn,
+        c.physics.gravity.type=="self",c.execution.compute_backend=="cpu");
 }
 /** Expose the applicable diffusion controls and their state. */
 Json DiffusionMetadata(const std::string& eos_type, bool enabled) {

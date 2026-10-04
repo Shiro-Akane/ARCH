@@ -102,7 +102,9 @@ class ConfigurationV3(unittest.TestCase):
     def test_schema(self):
         data = self.call(["--config-schema"])
         p = records(data)
-        self.assertEqual(len(p), 94)
+        self.assertEqual(len(p), 95)
+        self.assertIsNone(p["jeans_cells"]["allowedDefault"])
+        self.assertEqual(p["jeans_cells"]["requirement"]["condition"]["dependencies"], ["refine_var"])
         self.assertEqual(sum(v["allowedDefault"] is not None for v in p.values()), 25)
         self.assertIsNone(p["cfl"]["allowedDefault"])
         self.assertEqual(p["restart_file"]["requirement"]["condition"]["dependencies"], ["restart"])
@@ -386,7 +388,7 @@ class ConfigurationV3(unittest.TestCase):
         self.assertEqual(off["diffusion"]["forbiddenExplicitKeys"], [])
 
     def test_amr_summary_shares_runtime_filtering_without_default_selection(self):
-        text = edit(BASE, "refine_var", "DENS+VELY+JENS+ENUC+He4")
+        text = edit(BASE, "refine_var", "DENS+VELY+ENUC+He4")
         data = self.inspect(text)
         choices = {x["value"]: x for x in data["amrIndicators"]["choices"]}
         self.assertTrue(choices["DENS"]["selected"])

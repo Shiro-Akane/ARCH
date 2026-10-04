@@ -5,6 +5,7 @@
 #pragma once
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -12,7 +13,8 @@
 
 namespace arch::config {
 inline void ResolveRefinementSelection(AmrConfig& a, int dimension,
-                                       bool burn_enabled, bool emit_warnings = true) {
+                                       bool burn_enabled, bool emit_warnings = true,
+                                       bool self_gravity = false, bool cpu_backend = false) {
         std::replace(a.refine_var.begin(), a.refine_var.end(), '+', ',');
         a.refine_on_rho = false;
         a.refine_on_p = false;
@@ -70,8 +72,12 @@ inline void ResolveRefinementSelection(AmrConfig& a, int dimension,
         }
         if (a.refine_on_vely && dimension < 2) { warn_amr_disabled("VELY", "the simulation is one-dimensional"); a.refine_on_vely = false; }
         if (a.refine_on_velz && dimension < 3) { warn_amr_disabled("VELZ", "the simulation has fewer than three dimensions"); a.refine_on_velz = false; }
-        if (a.refine_on_jeans)
-            throw std::invalid_argument("Explicit JENS refinement is not enabled until the complete lifecycle qualification passes.");
+        if (a.refine_on_jeans) {
+            if (!self_gravity || !cpu_backend)
+                throw std::invalid_argument("JENS refinement requires self gravity and explicit CPU backend; CUDA is not qualified.");
+            if (!std::isfinite(a.jeans_cells) || a.jeans_cells<4.)
+                throw std::invalid_argument("JENS refinement requires explicit finite jeans_cells >= 4.");
+        }
         const auto has_amr_indicator = [&] {
             return a.refine_on_rho || a.refine_on_p || a.refine_on_temp || a.refine_on_velx ||
                 a.refine_on_vely || a.refine_on_velz || a.refine_on_eng || a.refine_on_vorticity ||

@@ -32,18 +32,45 @@ def qualify(path, previous=None):
         if not np.isfinite(gamma) or gamma<=1:
             raise ValueError("invalid authoritative species gamma")
         dim=int(h.attrs["dim"])
-        chart=h["NativeGrid"].attrs.get("center_basis")
-        if chart not in ("cartesian","local-orthonormal-r-z-phi","axisymmetric-rz","cylindrical-r-z"):
-            # Explicit internal RZ bounds are physical dr,dz only. No angular
-            # spacing or arbitrary curvilinear interpretation is guessed.
-            if h["NativeGrid"].attrs.get("version")!="candidate-rz-1":
-                raise ValueError(f"unsupported reference chart: {chart}")
-        native=h["NativeGrid"]
         spacing=[]
-        for axis in range(1,dim+1):
-            lo=np.asarray(native[f"x{axis}_lower"]).reshape(-1)
-            hi=np.asarray(native[f"x{axis}_upper"]).reshape(-1)
-            spacing.append(hi-lo)
+        grid_evidence="explicit-native-bounds"
+        if "NativeGrid" in h:
+            chart=h["NativeGrid"].attrs.get("center_basis")
+            if chart not in ("cartesian","local-orthonormal-r-z-phi","axisymmetric-rz","cylindrical-r-z"):
+                if h["NativeGrid"].attrs.get("version")!="candidate-rz-1":
+                    raise ValueError(f"unsupported reference chart: {chart}")
+            native=h["NativeGrid"]
+            for axis in range(1,dim+1):
+                lo=np.asarray(native[f"x{axis}_lower"]).reshape(-1)
+                hi=np.asarray(native[f"x{axis}_upper"]).reshape(-1)
+                spacing.append(hi-lo)
+        elif dim==3 and h.attrs.get("geometry")=="cartesian":
+            # Existing 3D writer stores actual native Cartesian cell centers.
+            # Accept only an exactly uniform, fully matched tensor lattice;
+            # never infer spacing from config defaults or irregular samples.
+            grid_evidence="legacy-3d-exact-native-center-lattice"
+            shape=data.shape
+            if len(shape)!=4:raise ValueError("unexpected legacy 3D block shape")
+            count=int(np.prod(shape[1:]))
+            centers=[np.asarray(h["Grid"][axis]).reshape(shape[0],count)
+                     for axis in ("x","y","z")]
+            widths=[[] for _ in range(3)]
+            for block in range(shape[0]):
+                axes=[np.unique(c[block]) for c in centers]
+                if [len(x) for x in axes]!=list(reversed(shape[1:])):
+                    raise ValueError("native Cartesian center counts mismatch")
+                for axis,values in enumerate(axes):
+                    delta=np.diff(values)
+                    if len(delta)==0 or delta[0]<=0 or not np.all(delta==delta[0]):
+                        raise ValueError("legacy center lattice is not exactly uniform")
+                    widths[axis].extend([delta[0]]*count)
+                z,y,x=np.meshgrid(axes[2],axes[1],axes[0],indexing="ij")
+                if not all(np.array_equal(c[block],v.reshape(-1))
+                           for c,v in zip(centers,[x,y,z])):
+                    raise ValueError("legacy native tensor mapping mismatch")
+            spacing=[np.asarray(x) for x in widths]
+        else:
+            raise ValueError("missing supported authoritative native grid evidence")
         rho=np.asarray(h["Data/DENS"]).reshape(-1)
         energy=np.asarray(h["Data/ENER"]).reshape(-1)
         velocity=[np.asarray(h["Data"][key]).reshape(-1) if key in h["Data"]
@@ -80,7 +107,7 @@ def qualify(path, previous=None):
                             raise ValueError(f"output-only altered {name}")
                         unchanged.append(name)
         return {"file":str(path),"cells":len(actual),"shape":list(data.shape),
-                "dtype":str(data.dtype),"maxRelativeError":maximum,"bound":float(bound),
+                "dtype":str(data.dtype),"gridEvidence":grid_evidence,"maxRelativeError":maximum,"bound":float(bound),
                 "unchangedFields":unchanged,"publication":"complete",
                 "sourceIdentityScope":str(source.attrs.get("scope","unknown")),
                 "scope":"bounded static single-caloric-species native writer; not evolved JENS acceptance"}

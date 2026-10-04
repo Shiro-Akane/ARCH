@@ -111,6 +111,47 @@ void tree_transaction_contract()
     std::cout<<"JEANS_TREE_TRANSACTION_PASS\n";
 }
 
+void frozen_uniform_tree_gate()
+{
+    SimConfig config;config.grid.dim=1;config.grid.nblockx1=4;
+    config.grid.nblockx2=0;config.grid.nblockx3=0;config.grid.x1_max=1.;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+    config.amr.refine_on_rho=false;config.amr.refine_on_jeans=true;
+    config.amr.jeans_cells=160.;
+    SpeciesManager species;species.add_species("gas",1.,1.,1.6666666666666667,1.);
+    IdealGas eos(1.6666666666666667,species);
+    auto initialize=[&](amr::AmrTree& tree,amr::MemoryPool& pool) {
+        tree.InitRootGrid(config,1);
+        for(int id:tree.GetActiveBlocks()) {
+            auto& block=pool.GetBlock(id);
+            for(int cell=0;cell<block.grid.GetTotalSize();++cell) {
+                block.fluid_state.set(cell,{1e7,0.,0.,0.,1e7});
+                block.fluid_state.X(0,cell)=1.;
+            }
+        }
+        amr::BindRefinementThermodynamics(tree,eos);
+    };
+    auto require=[](bool value,const char* message) {
+        if(!value)throw std::runtime_error(message);
+    };
+    auto pool=std::make_shared<amr::MemoryPool>(12,1);
+    amr::AmrTree tree(pool);initialize(tree,*pool);
+    require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==8,
+            "frozen uniform160 did not refine 4 roots into 8 leaves");
+    require(!tree.Regrid(config),"frozen160 allowed unresolved parent");
+    config.amr.jeans_cells=64.;
+    require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==4,
+            "frozen64 refused resolved restricted parent");
+    config.amr.jeans_cells=160.;
+    auto short_pool=std::make_shared<amr::MemoryPool>(11,1);
+    amr::AmrTree short_tree(short_pool);initialize(short_tree,*short_pool);
+    const auto before=short_tree.GetActiveBlocks();bool rejected=false;
+    try {short_tree.Regrid(config);}catch(const std::runtime_error&){rejected=true;}
+    require(rejected&&short_tree.GetActiveBlocks()==before&&short_pool->GetNumActiveBlocks()==4,
+            "frozen staged capacity failure published/leaked blocks");
+    std::cout<<"JEANS_FROZEN_UNIFORM_TREE_PASS\n";
+}
+
 void parent_state_reference()
 {
     constexpr long double pi=3.141592653589793238462643383279502884L;
@@ -353,5 +394,6 @@ int main()
               << " MAX_RELATIVE_ERROR=" << max_relative_error << '\n';
     parent_state_reference();
     tree_transaction_contract();
+    frozen_uniform_tree_gate();
     std::cout << "JEANS_DIAGNOSTICS_NUMERIC_PASS\n";
 }

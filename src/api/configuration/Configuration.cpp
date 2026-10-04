@@ -477,7 +477,9 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
         const int x3 = *config::input_detail::get<int>(analysis.standard, "nblockx3");
         const bool burn = *config::input_detail::get<bool>(analysis.standard, "use_burn");
         result["amrIndicators"] = RefinementMetadata(
-            *analysis.refinement_selection, x3 > 0 ? 3 : x2 > 0 ? 2 : 1, burn);
+            *analysis.refinement_selection, x3 > 0 ? 3 : x2 > 0 ? 2 : 1, burn,
+            config::input_detail::choice(analysis.standard,"gravity_type",{"self"}).value.value_or(false),
+            config::input_detail::choice(analysis.standard,"compute_backend",{"cpu"}).value.value_or(false));
     }
     return SerializePreviewResponse(result, complete ? 0 : 3);
 }

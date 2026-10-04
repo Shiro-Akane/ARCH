@@ -125,6 +125,86 @@ class BoxCampaign:
         self.results.append(record)
         return plots, folder, record
 
+    def jeans_uniform_lifecycle(self, dimensions=(1,2,3)):
+        """Core-frozen bounded subgroup; reuse real GravityBox and native readers."""
+        import json
+        from check_jeans_plot import qualify
+        contract=json.loads((ROOT/'validation/gravity/results/o7-resume-20261004/jens-short-contract.json').read_text())
+        require(contract['contract_version']=='uniform-lifecycle-1','unknown Jeans contract')
+        require(self.backend=='cpu','Jeans CUDA qualification is separate')
+        common={k:('true' if v else 'false') if isinstance(v,bool) else v
+                for k,v in contract['common'].items()}
+        records=[]
+        for domain in contract['dimensions']:
+            dim=domain['dim']
+            if dim not in dimensions:continue
+            changes=dict(common)
+            for axis in range(1,4):
+                changes[f'nblockx{axis}']=domain['root_blocks'][axis-1]
+                changes[f'x{axis}l_boundary_type']='periodic'
+                changes[f'x{axis}r_boundary_type']='periodic'
+                if axis<=dim:
+                    changes[f'x{axis}_min']=domain['lower_cm'][axis-1]
+                    changes[f'x{axis}_max']=domain['upper_cm'][axis-1]
+                    changes[f'center_{("x","y","z")[axis-1]}']=domain['center_cm'][axis-1]
+            for lane,settings in contract['lanes'].items():
+                options=changes|dict(refine_var=settings['refine_var'],
+                    plt_variables='DENS,PRES,TEMP,VELX,VELY,VELZ,ENER,SPECIES')
+                if settings['jens_plot']:options['plt_variables']+=',JENS'
+                if 'jeans_cells' in settings:options['jeans_cells']=settings['jeans_cells']
+                name=f'jeans-uniform-{dim}d-{lane}'
+                plots,folder,record=self.run(name,energy_budget=1e-12,**options)
+                require(plots[-1]['time']==.02,name+': physical endpoint not reached')
+                require(all(np.all(p['level']==settings['expected_level']) for p in plots),
+                        name+': wrong AMR level or parent coarsen')
+                require(len(plots[0]['level'])==(domain['expected_initial_active_leaf_blocks']
+                        if lane=='active' else 4),name+': wrong initial leaf count')
+                for plot in plots:
+                    for key in ['GPOT',*['GACX','GACY','GACZ'][:dim]]:
+                        require(key in plot and np.all(plot[key]==0),name+': missing/nonzero uniform-source '+key)
+                    for key in ['VELX','VELY','VELZ']:
+                        if key in plot:require(np.all(plot[key]==0),name+': uniform state moved')
+                    require(np.all(plot['DENS']==1e7),name+': uniform density changed')
+                    require(np.all(plot['TEMP']==1),name+': uniform temperature changed')
+                    require(np.all(plot['ENER']==1e7),name+': uniform energy density changed')
+                    require(np.all(plot['PRES']==(1.6666666666666667-1)*1e7),
+                            name+': uniform EOS pressure changed')
+                    require(np.all(plot['gas']==1),name+': uniform composition changed')
+                checks=[]
+                if settings['jens_plot']:
+                    for path in sorted(folder.glob('*plt*.h5')):
+                        checks.append(qualify(path))
+                        with h5py.File(path) as h:
+                            if lane=='active':
+                                require(np.all(h['Data/JENS'][:]>=settings['jeans_cells']),
+                                        name+': unresolved accepted output')
+                checkpoints=[]
+                for path in folder.glob('*chk*.h5'):
+                    with h5py.File(path) as h:
+                        if float(h.attrs['time'])==.01:checkpoints.append(path)
+                require(len(checkpoints)==1,name+': no unique actual checkpoint at .01 s')
+                _,resumed,restart_record=self.run(name+'-restart',energy_budget=1e-12,
+                    **(options|dict(restart='true',restart_file=str(checkpoints[0]))))
+                direct=max(folder.glob('*chk*.h5'))
+                recovered=max(resumed.glob('*chk*.h5'))
+                with h5py.File(direct) as h, h5py.File(recovered) as g:
+                    require(float(h.attrs['time'])==.02 and float(g.attrs['time'])==.02,
+                            name+': restart endpoint not reached')
+                    for key in h.attrs:
+                        require(key in g.attrs and np.array_equal(h.attrs[key],g.attrs[key]),
+                                name+': strict restart attribute mismatch '+key)
+                    # Compare the actual native state/controller payload, not
+                    # file hashes or requested output names.
+                    for key in h:
+                        if isinstance(h[key],h5py.Dataset):
+                            require(key in g and np.array_equal(h[key][:],g[key][:]),
+                                    name+': strict restart mismatch '+key)
+                record.update(contract='uniform-lifecycle-1',dimension=dim,lane=lane,
+                    jens_checks=checks,restart_pass=True,
+                    restart_elapsed_seconds=restart_record['elapsed_seconds'])
+                records.append(record)
+        return records
+
     @staticmethod
     def cloud_config(roots=1, extent=1., **changes):
         return dict(gravity_boundary='isolated', nblockx1=roots, nblockx2=roots, nblockx3=roots,

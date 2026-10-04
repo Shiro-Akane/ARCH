@@ -85,6 +85,23 @@ class ConfigurationContract(unittest.TestCase):
         self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], len(keys))
         self.assertEqual(caps['cases'], ['Sod'])
 
+    def test_jeans_cpu_self_selection_is_authoritative(self):
+        text=('lrefinemax=1\nmax_blocks=64\nrefine_var=JENS\njeans_cells=160\n'
+              'gravity_type=self\ngravity_boundary=periodic\ngravity_rtol=1e-10\n'
+              'gravity_atol=0\ngravity_max_cycles=100\ncompute_backend=cpu\n'
+              'x1l_boundary_type=periodic\nx1r_boundary_type=periodic\n')
+        result=self.inspect(text)
+        choices={c['value']:c for c in result['amrIndicators']['choices']}
+        self.assertTrue(choices['JENS']['available'])
+        self.assertTrue(choices['JENS']['selected'])
+        target=next(p for p in result['parameters'] if p['key']=='jeans_cells')
+        self.assertEqual(target['parsedValue'],160)
+        self.assertEqual(target['valueSource'],'input')
+        bad=self.inspect(text.replace('compute_backend=cpu','compute_backend=cuda'),code=3)
+        self.assertIsNone(bad['amrIndicators'])
+        self.assertTrue(any(d.get('parameterKey')=='refine_var' and
+            d.get('code')=='INVALID_REFINEMENT_SELECTION' for d in bad['diagnostics']))
+
     def test_defaults_and_explicit_values_with_no_eos_or_device_access(self):
         result = self.inspect('eos_type=helmholtz\neos_table_path=/not present/absent.dat\ncompute_backend=cuda\ncuda_device=999\node_rtol=2e-5\neos_coulomb_mult=1\nx_pos=0.2\n')
         self.assertEqual(result['status'], 'ok')
