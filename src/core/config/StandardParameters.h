@@ -30,7 +30,7 @@ enum class InputCondition {
     Always, Evolution, Axis1, Axis2, Axis3, Limiter, Roe, Hll,
     Ideal, Tabular, Helm, Network, Burn, TemperatureFloor, CompositionFloor,
     Nse, Diffusion, Thermal, Viscous, Species, SelfGravity, ExternalGravity,
-    DynamicAmr, CurvatureAmr, Restart
+    DynamicAmr, CurvatureAmr, JeansAmr, Restart
 };
 struct ParameterDefinition {
     std::string_view key, type, group;
@@ -38,7 +38,7 @@ struct ParameterDefinition {
     RequirementKind requirement;
     InputCondition condition;
 };
-inline const std::array<ParameterDefinition, 95> standard_parameters{{
+inline const std::array<ParameterDefinition, 96> standard_parameters{{
 #define ARCH_STANDARD_PARAMETER(...) {__VA_ARGS__},
 #include "core/config/StandardParameterEntries.inc"
 #undef ARCH_STANDARD_PARAMETER

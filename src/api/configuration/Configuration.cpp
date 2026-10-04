@@ -96,6 +96,7 @@ Json constraints(const ParameterDefinition& d) {
     if (key == "nblockx2" || key == "nblockx3" || key == "lrefinemin" || key == "lrefinemax" || key == "nseDensThreshold") {
         out["min"] = 0; out["minInclusive"] = true;
     }
+    if (key == "jeans_cells") { out["min"] = 4; out["minInclusive"] = true; }
     if (key == "lrefinemin" || key == "lrefinemax") { out["max"] = amr::kMaxRefinementLevel; out["maxInclusive"] = true; }
     if (key == "eos_coulomb_mult" || key == "refine_threshold" || key == "derefine_threshold") {
         out["min"] = 0; out["max"] = 1; out["minInclusive"] = true; out["maxInclusive"] = true;
@@ -128,7 +129,7 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
         return Json::object({{"unit", system == "cgs" ? Json("cm/s^2") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec")
         return Json::object({{"unit", system == "cgs" ? Json("cm^2/s") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
-    if (key == "eos_coulomb_mult" || key == "tstep_change_factor" || key == "gamma" || key == "smallx" || key == "cfl" || key == "diff_cfl"
+    if (key == "jeans_cells" || key == "eos_coulomb_mult" || key == "tstep_change_factor" || key == "gamma" || key == "smallx" || key == "cfl" || key == "diff_cfl"
         || key == "gravity_rtol" || key == "ode_rtol" || key == "refine_threshold" || key == "derefine_threshold"
         || key == "enucDtFactor" || key == "EntropyFixCoefficient" || key.starts_with("ode_dt_") || key == "ode_initial_dt_frac")
         return Json::object({{"unit", "1"}, {"status", "dimensionless"}});
@@ -215,6 +216,7 @@ Json standard_condition(const ParameterDefinition& d, bool applicability) {
     case C::SelfGravity: case C::ExternalGravity: deps = {"gravity_type"}; break;
     case C::DynamicAmr: deps = {"lrefinemin", "lrefinemax"}; break;
     case C::CurvatureAmr: deps = {"lrefinemin", "lrefinemax", "refine_var"}; break;
+    case C::JeansAmr: deps = {"refine_var"}; break;
     case C::Restart: deps = {"restart"}; break;
     }
     if (d.requirement == config::RequirementKind::Optional && applicability) {

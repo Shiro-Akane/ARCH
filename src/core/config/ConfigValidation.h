@@ -109,6 +109,7 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     require(relations::RefinementLevels(c.amr.lrefinemin, c.amr.lrefinemax),
             "lrefinemax", "Require ordered refinement levels within the Morton range.");
     scalar(c.amr.regrid_interval, "regrid_interval");
+    if (c.amr.refine_on_jeans) scalar(c.amr.jeans_cells,"jeans_cells");
     require(relations::CurvatureThresholds(c.amr.refine_threshold, c.amr.derefine_threshold),
             "refine_threshold", "Require 0 <= derefine_threshold < refine_threshold <= 1.");
     scalar(c.io.tmax, "tmax");
@@ -119,14 +120,15 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
 }
 // Restart identity for state recovery and the physical/temporal limits that
 // determine accepted trajectories. The format revision fixes algorithm policy.
-inline constexpr std::size_t StateControlCount = 18;
-inline constexpr double StateControlRevision = 2.0;
+inline constexpr std::size_t StateControlCount = 20;
+inline constexpr double StateControlRevision = 3.0;
 inline std::vector<double> StateControlIdentity(const SimConfig& c)
 {
     const auto& n=c.numerics; const auto& b=c.physics.burn;
     return {StateControlRevision,n.sml_rho,n.min_eint,n.max_eint,n.cfl,n.dt_init,n.dt_min,n.tstep_change_factor,
         b.smallt,b.smallx,b.nuclearTempMin,b.nuclearDensMin,b.enucDtFactor,
         b.odeconfig.rtol,b.odeconfig.atol,n.dt_max,c.physics.eos_coulomb_mult,
-        double(n.hll_roe_wave_speed)};
+        double(n.hll_roe_wave_speed),double(c.amr.refine_on_jeans),
+        c.amr.refine_on_jeans ? c.amr.jeans_cells : 0.0};
 }
 } // namespace arch::config

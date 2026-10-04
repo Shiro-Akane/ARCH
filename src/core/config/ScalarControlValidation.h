@@ -31,6 +31,8 @@ inline const char* ScalarControlError(std::string_view key, double value) {
     if (in({"tstep_change_factor", "ode_dt_fac_max"}))
         return std::isfinite(value) && value >= 1.0
             ? nullptr : "Requires a finite value of at least one.";
+    if (key == "jeans_cells")
+        return std::isfinite(value) && value >= 4.0 ? nullptr : "Requires a finite value of at least four.";
     if (key == "gamma")
         return std::isfinite(value) && value > 1.0 ? nullptr : "Ideal-gas gamma must exceed one.";
     if (key == "eos_coulomb_mult")

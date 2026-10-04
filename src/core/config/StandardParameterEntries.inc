@@ -82,6 +82,7 @@ ARCH_STANDARD_PARAMETER("lrefinemin", "int", "Grid", std::nullopt, RequirementKi
 ARCH_STANDARD_PARAMETER("lrefinemax", "int", "Grid", std::nullopt, RequirementKind::Required, InputCondition::Always)
 ARCH_STANDARD_PARAMETER("regrid_interval", "int", "Grid", std::nullopt, RequirementKind::Conditional, InputCondition::DynamicAmr)
 ARCH_STANDARD_PARAMETER("refine_var", "string", "Grid", std::nullopt, RequirementKind::Conditional, InputCondition::DynamicAmr)
+ARCH_STANDARD_PARAMETER("jeans_cells", "float", "Grid", std::nullopt, RequirementKind::Conditional, InputCondition::JeansAmr)
 ARCH_STANDARD_PARAMETER("refine_threshold", "float", "Grid", std::nullopt, RequirementKind::Conditional, InputCondition::CurvatureAmr)
 ARCH_STANDARD_PARAMETER("derefine_threshold", "float", "Grid", std::nullopt, RequirementKind::Conditional, InputCondition::CurvatureAmr)
 ARCH_STANDARD_PARAMETER("tmax", "float", "Runtime", std::nullopt, RequirementKind::Required, InputCondition::Evolution)

@@ -58,8 +58,16 @@ class ConfigurationContract(unittest.TestCase):
         keys = set(re.findall(r'ARCH_STANDARD_PARAMETER\("([^"]+)"',
                               (ROOT/'src/core/config/StandardParameterEntries.inc').read_text())) - {'gravity_G'}
         self.assertEqual(set(specs), keys)
-        self.assertEqual(len(specs), 94)
+        self.assertEqual(len(specs), len(keys))
         self.assertEqual({p['group'] for p in specs.values()}, {'Grid','EOS','Network','Gravity','Diffusion','Runtime'})
+        jeans=specs['jeans_cells']
+        self.assertIsNone(jeans['allowedDefault'])
+        self.assertEqual(jeans['requirement']['kind'],'conditional')
+        self.assertEqual(jeans['requirement']['condition']['dependencies'],['refine_var'])
+        self.assertEqual(jeans['constraints']['min'],4)
+        self.assertTrue(jeans['constraints']['minInclusive'])
+        self.assertEqual(jeans['units']['unit'],'1')
+        self.assertEqual(jeans['presentation']['subgroup'],'AMR')
         self.assertIsNone(specs['ode_rtol']['allowedDefault'])
         self.assertIsNone(specs['ode_atol']['allowedDefault'])
         self.assertEqual(specs['ode_max_substeps']['allowedDefault']['value'], 10000)
@@ -74,7 +82,7 @@ class ConfigurationContract(unittest.TestCase):
         self.assertIsNone(specs['gravity_rtol']['allowedDefault'])
         self.assertIsNone(specs['gravity_atol']['allowedDefault'])
         caps = self.run_api(['--preview-capabilities'])
-        self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], 94)
+        self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], len(keys))
         self.assertEqual(caps['cases'], ['Sod'])
 
     def test_defaults_and_explicit_values_with_no_eos_or_device_access(self):

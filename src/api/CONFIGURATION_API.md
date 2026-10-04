@@ -233,3 +233,19 @@ otherwise the summary is null. It does not construct a hierarchy or resolve case
 species. With known dependencies, an alias or selection containing no usable
 indicator returns INVALID_REFINEMENT_SELECTION and preserves the input token.
 Current JENS unavailability is retained; no substitute indicator is selected.
+
+### O7 candidate: Jeans target and checkpoint identity
+
+The Core-owned catalog includes jeans_cells as a conditional dimensionless
+float with no runtime default and an inclusive minimum of four. It is required
+only when refine_var requests JENS; output-only selection does not require it.
+A supplied out-of-range value remains invalid even when unused.
+
+Public JENS selection remains unavailable pending lifecycle qualification.
+Explicit selection fails instead of warning and silently disabling it.
+This catalog change is not proof of field Preview or complete AMR support.
+
+Checkpoint state-controls revision 3 records active JENS refinement and its
+consumed target. Output-only and unused target values do not change that
+trajectory identity. Earlier controls revisions are rejected without migration;
+raw checkpoints remain unchanged and require their original executable.

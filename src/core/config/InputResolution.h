@@ -204,6 +204,25 @@ inline ConditionResult condition(InputCondition id, const StandardInputResolutio
         }
         return known(false);
     }
+    case C::JeansAmr: {
+        const auto* text=get<std::string>(values,"refine_var");
+        if (!text) {
+            // refine_var is conditional on dynamic AMR; an absent selector
+            // in a fixed-level configuration does not request JENS.
+            const auto dynamic=condition(C::DynamicAmr,values,context);
+            return dynamic.value && !*dynamic.value ? known(false) : unknown("refine_var");
+        }
+        std::string tokens=*text;
+        std::replace(tokens.begin(),tokens.end(),'+',',');
+        std::istringstream stream(tokens);std::string token;
+        while (std::getline(stream,token,',')) {
+            const auto first=token.find_first_not_of(" \t");
+            if (first==std::string::npos) continue;
+            token=token.substr(first,token.find_last_not_of(" \t")-first+1);
+            if (dispatch::ascii_iequals(token,"JENS")) return known(true);
+        }
+        return known(false);
+    }
     case C::Restart: return flag(values, "restart");
     }
     throw std::logic_error("Unregistered input condition");

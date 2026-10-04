@@ -91,6 +91,19 @@ int main(int argc, char** argv) {
         try { invalid_amr.RequireDeclaredInputs(); }
         catch (const ConfigInputError&) { amr_rejected = true; }
         require(amr_rejected, "invalid AMR selection passed the shared loading gate");
+        require(has(invalid_amr,"jeans_cells","MISSING_PARAMETER"),
+                "JENS AMR did not require explicit target");
+        auto output_only=inspect(without(fixture,"plt_variables")+"plt_variables=DENS,JENS\n");
+        require(!has(output_only,"jeans_cells","MISSING_PARAMETER"),
+                "output-only JENS incorrectly required target");
+        require(!has(inspect(fixture),"jeans_cells","MISSING_PARAMETER"),
+                "disabled JENS incorrectly required target");
+        const auto bad_target=inspect(fixture+"jeans_cells=3\n");
+        require(has(bad_target,"jeans_cells","INVALID_RANGE"),
+                "explicit illegal unused Jeans target was ignored");
+        const auto& definition=Definition("jeans_cells");
+        require(!definition.declared_default&&definition.condition==InputCondition::JeansAmr,
+                "Jeans target acquired implicit default or wrong condition");
         const auto unknown_amr = inspect(without(fixture, "nblockx2"));
         require(!unknown_amr.refinement_selection
                 && !has(unknown_amr, "refine_var", "INVALID_REFINEMENT_SELECTION"),

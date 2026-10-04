@@ -70,7 +70,8 @@ inline void ResolveRefinementSelection(AmrConfig& a, int dimension,
         }
         if (a.refine_on_vely && dimension < 2) { warn_amr_disabled("VELY", "the simulation is one-dimensional"); a.refine_on_vely = false; }
         if (a.refine_on_velz && dimension < 3) { warn_amr_disabled("VELZ", "the simulation has fewer than three dimensions"); a.refine_on_velz = false; }
-        if (a.refine_on_jeans) { warn_amr_disabled("JENS", "the Jeans refinement/plot diagnostic is not implemented"); a.refine_on_jeans = false; }
+        if (a.refine_on_jeans)
+            throw std::invalid_argument("Explicit JENS refinement is not enabled until the complete lifecycle qualification passes.");
         const auto has_amr_indicator = [&] {
             return a.refine_on_rho || a.refine_on_p || a.refine_on_temp || a.refine_on_velx ||
                 a.refine_on_vely || a.refine_on_velz || a.refine_on_eng || a.refine_on_vorticity ||

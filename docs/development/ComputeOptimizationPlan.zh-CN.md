@@ -631,3 +631,13 @@ DriverIO checkpoint native/失败传播回归通过；CPU ARCH 与 shared schedu
 配置/API 的公开 JENS gate 暂未解除，uniform-lifecycle-1 的实际三通道演化/
 0.01→0.02 s 重启验收仍待完整配置与 checkpoint 身份接线。见
 O7JeansNativePlotConsumer-20261004.zh-CN.md；不据此关闭 RZ finding。
+
+### JENS 条件输入与 checkpoint identity 增量
+
+jeans_cells 已加入唯一注册表与 API schema，只有 refine_var 请求 JENS 时必填；
+仅输出/关闭不要求目标，无隐式默认。显式未完成 qualification 的 JENS 请求明确拒绝，
+替代旧 warning-and-disable。公开能力仍未解除。
+restart state_controls revision3/20值记录 active JENS 与已消费目标，
+旧 revision 明确拒绝，不迁移原始 checkpoint。CPU 构建、6个 scoped 回归与实际
+architecture audit 通过，详见 O7JeansConditionalInputIdentity-20261004.zh-CN.md。
+冻结三通道演化/真实续算及 CUDA 科学验收仍未完成。

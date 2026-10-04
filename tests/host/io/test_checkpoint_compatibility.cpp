@@ -525,16 +525,37 @@ void test_host_restart(const std::filesystem::path& directory)
     io::write_hdf5_chk_impl(path.string(), checkpoint);
 
     // A control change must fail before replacing the live AMR state.
-    for(int control=0;control<3;++control) {
+    for(int control=0;control<4;++control) {
         auto changed=config;
         if(control==0) changed.numerics.dt_max=1.;
         if(control==1) changed.physics.eos_coulomb_mult=.5;
         if(control==2) changed.numerics.hll_roe_wave_speed=false;
+        if(control==3) {changed.amr.refine_on_jeans=true;changed.amr.jeans_cells=160.;}
         amr::AMRControl untouched(config.grid.amr_max_blocks,config.grid.dim);
         RunState unchanged;
         expect_rejected([&] { read_chk(path.string(),untouched,unchanged,changed,species,identity); },
                         "restart accepted a changed Coulomb/face/timestep control");
     }
+
+    // Unused target/output selection must not alter active trajectory identity.
+    auto output_only=config;output_only.io.vars.jens=true;output_only.amr.jeans_cells=160.;
+    expect(arch::config::StateControlIdentity(output_only)==checkpoint.state_controls,
+           "output-only or unused target changed restart identity");
+    auto active_config=config;active_config.amr.refine_on_jeans=true;
+    active_config.amr.jeans_cells=160.;
+    auto active_payload=checkpoint;
+    active_payload.state_controls=arch::config::StateControlIdentity(active_config);
+    const auto active_path=directory/"jeans-restart.h5";
+    io::write_hdf5_chk_impl(active_path.string(),active_payload);
+    amr::AMRControl active_tree(config.grid.amr_max_blocks,config.grid.dim);
+    RunState active_state;
+    read_chk(active_path.string(),active_tree,active_state,active_config,species,identity);
+    expect(active_tree.tree->GetActiveBlocks().size()==checkpoint.levels.size(),
+           "active JENS identity roundtrip failed");
+    active_config.amr.jeans_cells=161.;
+    expect_rejected([&] {read_chk(active_path.string(),active_tree,active_state,
+                                 active_config,species,identity);},
+                    "restart accepted a changed Jeans resolution target");
 
     amr::AMRControl restored(config.grid.amr_max_blocks, config.grid.dim);
     RunState state;
@@ -682,6 +703,8 @@ void test_host_restart(const std::filesystem::path& directory)
     auto legacy_controls = checkpoint.state_controls;
     legacy_controls.resize(15);
     legacy_controls[0] = 1.0;
+    auto prior_controls=checkpoint.state_controls;
+    prior_controls.resize(18);prior_controls[0]=2.0;
     auto future_controls = checkpoint.state_controls;
     future_controls[0] = arch::config::StateControlRevision + 1.0;
     auto short_controls = checkpoint.state_controls;
@@ -690,6 +713,7 @@ void test_host_restart(const std::filesystem::path& directory)
     nonfinite_controls[1] = std::numeric_limits<double>::quiet_NaN();
     for (const auto& [controls, diagnostic] : std::vector<std::pair<std::vector<double>, std::string>>{
              {legacy_controls, "Unsupported checkpoint state-control revision"},
+             {prior_controls, "Unsupported checkpoint state-control revision"},
              {future_controls, "Unsupported checkpoint state-control revision"},
              {short_controls, "Invalid checkpoint state-control length"},
              {nonfinite_controls, "missing or nonfinite values"},

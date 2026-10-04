@@ -308,6 +308,7 @@ private:
         assign(cfg.amr.regrid_interval, "regrid_interval");
         if (cfg.amr.regrid_interval < 1)
             throw std::invalid_argument("regrid_interval must be positive.");
+        assign(cfg.amr.jeans_cells, "jeans_cells");
         assign(cfg.amr.refine_var, "refine_var");
         arch::config::ResolveRefinementSelection(cfg.amr, cfg.grid.dim, cfg.physics.burn.use_burn);
         assign(cfg.amr.refine_threshold, "refine_threshold");
@@ -398,7 +399,8 @@ private:
         if (cfg.io.vars.enuc && !cfg.physics.burn.use_burn) { warn_plot_disabled("ENUC", "the nuclear reaction network is not enabled"); cfg.io.vars.enuc = false; }
         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
         if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.io.vars.w = false; }
-        if (cfg.io.vars.jens) { warn_plot_disabled("JENS", "the Jeans refinement/plot diagnostic is not implemented"); cfg.io.vars.jens = false; }
+        if (cfg.io.vars.jens)
+            throw std::invalid_argument("Explicit JENS output is not enabled until the complete lifecycle qualification passes.");
 
         arch::config::ValidateControls(cfg);
         return cfg;

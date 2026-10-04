@@ -68,7 +68,7 @@ Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled) {
         {"ENER", a.refine_on_eng, ""}, {"VORT", a.refine_on_vorticity, ""},
         {"DIVV", a.refine_on_div_v, ""}, {"ENTR", a.refine_on_entropy, ""},
         {"ENUC", a.refine_on_enuc, !burn_enabled ? "requires reactions" : ""},
-        {"JENS", a.refine_on_jeans, "Jeans diagnostic is not implemented"},
+        {"JENS", a.refine_on_jeans, "JENS lifecycle qualification is incomplete"},
         {"SPECIES", a.refine_all_species, ""}};
     auto choices = Json::array();
     for (const auto& item : items)

@@ -52,6 +52,9 @@ std::string state_control_error(const std::vector<double>& controls)
         return "Invalid checkpoint state-control length: expected "
             + std::to_string(arch::config::StateControlCount) + ", got "
             + std::to_string(controls.size()) + ".";
+    if ((controls[18] != 0.0 && controls[18] != 1.0)
+        || (controls[18] == 0.0 ? controls[19] != 0.0 : controls[19] < 4.0))
+        return "Invalid checkpoint Jeans resolution controls.";
     return {};
 }
 
