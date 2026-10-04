@@ -51,6 +51,30 @@ ARCH_HOST_DEVICE inline double reflux_conserved(
     return before + correction * registered_flux;
 }
 
+/**
+ * Angular register stores torque flux divided by the coarse ordinary face
+ * area. The native geometry owner supplies T_source/A_source; radial axis
+ * faces supply exactly zero without forming 0/0.
+ * This scalar transform deliberately does not select hydro/viscous semantics.
+ */
+ARCH_HOST_DEVICE inline double angular_registered_flux(
+    double physical_azimuthal_flux, double source_torque_per_area) noexcept
+{
+    return physical_azimuthal_flux * source_torque_per_area;
+}
+
+/**
+ * Convert the ordinary dt*A/V reflux coefficient to dt*A/W for m_phi=J/W.
+ * The geometry owner must validate positive finite native V and W first.
+ * No floor, repair or implicit choice of angular state is made here.
+ */
+ARCH_HOST_DEVICE inline double angular_reflux_coefficient(
+    double ordinary_correction, double native_volume,
+    double native_angular_measure) noexcept
+{
+    return ordinary_correction * (native_volume / native_angular_measure);
+}
+
 ARCH_HOST_DEVICE inline double reflux_species_density(
     double rho_before, double mass_fraction_before, double correction,
     double registered_species_flux) noexcept

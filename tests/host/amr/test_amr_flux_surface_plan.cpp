@@ -541,6 +541,66 @@ void test_rz_registration_reflux(int direction, double inner)
 }
 
 
+// Independent finite-ring integral reference. These tests qualify scalar
+// normalization only, not the still-unmigrated runtime register consumers.
+void test_rz_angular_normalization()
+{
+    const long double pi=std::acos(-1.L);
+    long double worst=0.L;
+    for(int direction:{0,1}) for(long double lo:{0.L,1.L})
+    for(double stage:{1.,-.375,0.}) {
+        const long double hi=lo+1.L, mid=(lo+hi)/2.L, dz=.75L;
+        const auto area=[&](long double a,long double b) {
+            return direction==0 ? 2.L*pi*hi*dz : pi*(b*b-a*a);
+        };
+        const auto torque=[&](long double a,long double b) {
+            return direction==0 ? 2.L*pi*hi*hi*dz
+                : 2.L*pi*(b*b*b-a*a*a)/3.L;
+        };
+        const long double coarse_area=area(lo,hi);
+        const long double volume=pi*(hi*hi-lo*lo)*dz;
+        const long double W=2.L*pi*(hi*hi*hi-lo*lo*lo)*dz/3.L;
+        // Radial refinement splits the tangential z interval; axial
+        // refinement splits r and requires different fine lever arms.
+        long double registered=0.L, reference_torque=0.L;
+        for(int child=0;child<2;++child) {
+            const long double a=child==0?lo:mid,b=child==0?mid:hi;
+            const long double fine_area=direction==0?coarse_area/2.L:area(a,b);
+            const long double fine_torque=direction==0?torque(lo,hi)/2.L:torque(a,b);
+            const double flux=child==0?2.25:-.75;
+            const double value=amr::flux_math::angular_registered_flux(
+                flux,static_cast<double>(fine_torque/fine_area));
+            registered+=amr::flux_math::registration_coefficient(
+                amr::RefinementRule::FineFluxContribution,
+                static_cast<double>(fine_area/coarse_area),stage)*value;
+            reference_torque+=stage*fine_torque*flux;
+        }
+        const double coarse_flux=.625;
+        registered+=amr::flux_math::registration_coefficient(
+            amr::RefinementRule::CoarseFluxContribution,1.,stage)
+            *amr::flux_math::angular_registered_flux(
+                coarse_flux,static_cast<double>(torque(lo,hi)/coarse_area));
+        reference_torque-=stage*torque(lo,hi)*coarse_flux;
+        const double dt=.03125;
+        const double correction=amr::flux_math::angular_reflux_coefficient(
+            static_cast<double>(dt*coarse_area/volume),
+            static_cast<double>(volume),static_cast<double>(W));
+        const long double measured=correction*registered*W;
+        const long double expected=dt*reference_torque;
+        const long double scale=dt*std::abs(static_cast<long double>(stage))
+            *(torque(lo,hi)*std::abs(coarse_flux)
+              +torque(lo,hi)*2.25L);
+        const long double error=scale==0.L?std::abs(measured-expected)
+            :std::abs(measured-expected)/scale;
+        expect(error<=1.e-12L,"signed AMR torque normalization lost angular budget");
+        worst=std::max(worst,error);
+    }
+    expect(amr::flux_math::angular_registered_flux(7.,0.)==0.,
+           "axis torque flux must vanish exactly");
+    std::cout<<"RZ_ANGULAR_NORMALIZATION cases=12 max_budget_error="
+             <<static_cast<double>(worst)<<'\n';
+}
+
 void test_rz_uniform_empty_reflux() {
     SimConfig config{};
     config.grid.dim=2;config.grid.geometry="cylindrical";
@@ -563,6 +623,7 @@ void test_rz_uniform_empty_reflux() {
 int main()
 {
     try {
+        test_rz_angular_normalization();
         test_rz_uniform_empty_reflux();
         test_shared_math();
         test_canonical_surface_lowering();
