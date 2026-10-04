@@ -4,7 +4,8 @@
 将 **O7.1–O7.5 的实现与受影响验证、部分 O9 的数据生产**交给同一位合作者。
 [主计划第 2、3、5 节](ComputeOptimizationPlan.zh-CN.md)继续定义数学和科学验收，
 本文细化工作顺序、复用位置、评审材料与第二台机器的执行方式。
-所有新增能力仍待实现；本文件不是新机实测结果或已冻结的科学输入包。
+实现与局部证据按逐项记录更新；完整科学验收尚未通过。
+已冻结的有界输入包见 [JENS 短验收包](O7JeansRzReviewQuestions-20261004.zh-CN.md#6-已冻结的-jens-短验收包uniform-lifecycle-1)，其余模型不得据此自动补齐预算。
 
 ## 1. 可以承担到哪一步
 
@@ -142,7 +143,8 @@ RZ 制造解和球对称映射可按第 4 节继续；环体源近远场方法�
 达到层级／容量限制仍欠分辨必须失败并报告单元／层级／最小 N_J 和原因。
 仅输出、触发 AMR、未启用三种路径分别检查；未启用时不增加遍历、EOS 或同步成本。
 
-维护者先确认：一般 EOS 声速含义、诊断/AMR 的条件需求、父态规则与参考预算。
+上述声速、参数条件和父态定义已在 [Core 科学决定](O7JeansRzReviewQuestions-20261004.zh-CN.md#4-core-决定已批准子-gate-与剩余材料2026-10-04) 定案；
+初始／接受宏步／regrid／restart 先执行 [uniform-lifecycle-1](O7JeansRzReviewQuestions-20261004.zh-CN.md#6-已冻结的-jens-短验收包uniform-lifecycle-1)，再逐项补其余待确认参考。
 尤其“约四格”不是所有闭合、非线性碎裂或降维模型的充分收敛保证。
 用 [JeansWave](../../simulation/JeansWave/README.md) 和
 [GravityBox](../../simulation/GravityBox/README.md) 做集成，不另外复制初始化公式。
