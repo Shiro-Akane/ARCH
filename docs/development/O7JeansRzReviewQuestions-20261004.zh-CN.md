@@ -340,6 +340,12 @@ isolated -4*pi*G*rho source构造companion界已由28 native cells的独立100/1
 source norm仍conditional stored weights；生产源路径未修改，完整组合与geometry/AMR身份待贯通。
 见 IsolatedGravitySourceBoundNode-20261005.zh-CN.md，production RZ gate保持。
 
+periodic constant-mode projection companion 已补到原 CompositePoisson owner；
+20 lanes 独立 exact Fraction 对照通过（uniform/mixed、periodic/Dirichlet、
+zero/constant/tiny-contrast/large-cancellation/subnormal）。范围为 stored weights，
+不宣称 physical source preprocessing 或 geometry 构造已证明；保守界可能超过微小
+contrast，原科学阈值未改变。见 ConstantModeProjectionLedgerNode-20261005.zh-CN.md。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

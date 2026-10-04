@@ -684,6 +684,25 @@ PoissonArithmeticError finish_arithmetic_ledger(const CompositePoisson& op,
     result.status=norm.status;result.norm_upper=norm.upper;return result;
 }
 }
+/** Companion certificate for the actual constant-mode projection.
+ * The supplied output may come from the scalar or execution provider path;
+ * no assumption is made about reduction/subtraction arithmetic being exact.
+ * Conditional stored-weight scope: P_w is not an ideal geometric projection.
+ */
+PoissonArithmeticError CompositePoisson::bound_constant_mode_projection_roundoff(
+    std::span<const double> input,std::span<const double> computed) const {
+    if(input.size()!=cells_.size()||computed.size()!=cells_.size()
+        ||!finite_field(input)||!finite_field(computed))return {};
+    ArithmeticRange average{};
+    if(boundary_.constant_nullspace)
+        for(std::size_t i=0;i<input.size();++i)
+            average=range_add(average,range_product({weights_[i],weights_[i]},
+                {input[i],input[i]}));
+    std::vector<ArithmeticRange> exact;exact.reserve(input.size());
+    for(double value:input)
+        exact.push_back(range_add({value,value},range_negate(average)));
+    return finish_arithmetic_ledger(*this,exact,computed);
+}
 /** Bound actual RHS array against exact stored source+B*boundary expression.
  * It does not certify the physical source or construction of native B.
  */

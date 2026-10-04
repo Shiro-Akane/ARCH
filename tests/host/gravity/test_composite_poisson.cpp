@@ -908,6 +908,48 @@ void finite_ring_tree_boundary_contract() {
     std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
 }
 
+void constant_mode_projection_probe() {
+    using namespace elliptic;
+    const auto dump=[](const auto& x) {
+        std::cout<<'[';bool first=true;
+        for(auto value:x){if(!first)std::cout<<',';first=false;std::cout<<value;}std::cout<<']';
+    };
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
+    for(bool mixed:{false,true})for(bool periodic:{false,true})for(int lane=0;lane<5;++lane) {
+        auto base=base_mesh(2,4);
+        CompositePoisson op(base,make_cells(base,mixed),
+            periodic?BoundaryKind::Periodic:BoundaryKind::Dirichlet);
+        std::vector<double> input(op.size());
+        for(int i=0;i<op.size();++i) {
+            if(lane==1)input[i]=1.e7;
+            if(lane==2)input[i]=1.e12+(i%3-1)*.000244140625;
+            if(lane==3)input[i]=(i%2?1.:-1.)*(1.e100+i*1.e85);
+            if(lane==4)input[i]=(i%3-1)*std::numeric_limits<double>::denorm_min();
+        }
+        auto actual=input;op.project(actual);
+        auto bound=op.bound_constant_mode_projection_roundoff(input,actual);
+        require(bound.status==BoundaryErrorStatus::Bounded,"projection ledger unavailable");
+        if(lane==0)require(bound.norm_upper==0.,"projection introduced zero budget floor");
+        if(!first)std::cout<<',';first=false;
+        std::cout<<"{\"mixed\":"<<mixed<<",\"periodic\":"<<periodic<<",\"lane\":"<<lane
+            <<",\"input\":";dump(input);std::cout<<",\"computed\":";dump(actual);
+        std::cout<<",\"weights\":";dump(op.norm_weights());
+        std::cout<<",\"cellBounds\":";dump(bound.cell_bounds);
+        std::cout<<",\"normUpper\":"<<bound.norm_upper<<'}';
+        if(lane==0) {
+            auto wrong=actual;wrong[0]=1.;
+            require(op.bound_constant_mode_projection_roundoff(input,wrong).cell_bounds[0]>=1.,
+                "wrong projected array obtained zero error");
+            auto invalid=input;invalid[0]=std::numeric_limits<double>::quiet_NaN();
+            require(op.bound_constant_mode_projection_roundoff(invalid,actual).status==BoundaryErrorStatus::InvalidInput,
+                "NaN projection input accepted");
+            require(op.bound_constant_mode_projection_roundoff({},actual).status==BoundaryErrorStatus::InvalidInput,
+                "missing projection input accepted");
+        }
+    }
+    std::cout<<"],\"negativePass\":true}\n";
+}
+
 void isolated_gravity_source_probe() {
     using namespace Physical::Gravity;
     auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
@@ -1685,6 +1727,7 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="projection-ledger-probe") {constant_mode_projection_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="gravity-source-bounds-probe") {isolated_gravity_source_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="arithmetic-ledger-probe") {native_arithmetic_ledger_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-contact-gauss3") {std::cout<<std::setprecision(17);finite_ring_contact_gauss3_contract();return 0;}

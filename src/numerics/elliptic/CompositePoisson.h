@@ -137,6 +137,10 @@ public:
         const BoundaryRhsError& face_error,
         double rhs_assembly_error_upper,double residual_evaluation_error_upper,
         BoundaryErrorQuality evaluation_quality,double rtol,double atol) const;
+    // Compare the actual projection with P_w*x=x-sum(stored_weight*x).
+    // Does not certify weight construction or physical source preprocessing.
+    PoissonArithmeticError bound_constant_mode_projection_roundoff(
+        std::span<const double> input,std::span<const double> computed) const;
     double mean(std::span<const double> x) const;
     double norm(std::span<const double> x) const;
     double dot(std::span<const double> x, std::span<const double> y) const;
