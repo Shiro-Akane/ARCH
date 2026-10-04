@@ -34,6 +34,44 @@ struct ConstantEos {
 }
 
 
+void test_rz_angular_measures() {
+    using namespace GridMetrics::Rz;
+    constexpr double pi=3.141592653589793238462643383279502884;
+    // Independently integrated solid rotation rho=Omega=1, r=[1/2,1], dz=1:
+    // J=2*pi*integral(r^3 dr)=15*pi/32; m_phi=J/W=45/56.
+    const double v=CellVolume(.5,1.,1.);
+    const double w=AngularMomentumMeasure(.5,1.,1.);
+    close(v,3.*pi/4.,"RZ angular volume");
+    close(w,7.*pi/12.,"RZ W measure");
+    close(VolumeCentroidRadius(.5,1.),7./9.,"RZ V centroid");
+    close(AngularReconstructionRadius(.5,1.),45./56.,"RZ W centroid");
+    close(arch::state::rz_angular_integral(45./56.,w),15.*pi/32.,"RZ rigid rotation J");
+    close(arch::state::rz_angular_density(45./56.,w,v),5./8.,"RZ derived ell");
+    close(arch::state::rz_representative_azimuthal_velocity(45./56.,1.),
+          45./56.,"RZ representative velocity");
+    if(RadialTorqueMeasure(0.,1.)!=0.)
+        throw std::runtime_error("RZ axis torque not exact zero");
+    close(RadialTorqueMeasure(.5,1.),pi/2.,"RZ radial torque measure");
+    close(AxialTorqueMeasure(.5,1.),7.*pi/12.,"RZ axial torque measure");
+    for(double left : {0.,.5,1.e10}) {
+        const double right=left+1.;
+        const double mid=left+.5;
+        const double parent=AngularMomentumMeasure(left,right,1.);
+        const double children=AngularMomentumMeasure(left,mid,.5)
+                             +AngularMomentumMeasure(mid,right,.5);
+        close(2.*children,parent,"RZ W radial/axial partition");
+        const double c=AngularReconstructionRadius(left,right);
+        if(!(c>left && c<right))throw std::runtime_error("RZ W centroid outside cell");
+    }
+    // Frozen inadmissible parent: W weights 1:7, V weights 1:3.
+    // This is the arithmetic reference, not an AMR transaction acceptance.
+    const double parent_m=(1.-7.*16.)/8.;
+    const double parent_e=(9./16.+3.*2049./16.)/4.;
+    close(parent_m,-111./8.,"RZ frozen angular parent");
+    close(parent_e-.5*parent_m*parent_m,-9./128.,"RZ frozen parent veto reference");
+    std::cout<<"RZ_ANGULAR_MEASURES_PASS\\n";
+}
+
 void test_rz_host_hydro() {
     using namespace GridMetrics;
     SpeciesManager species;
@@ -445,6 +483,7 @@ void test_rz_native_coordinates()
 }
 int main()
 {
+    test_rz_angular_measures();
     test_rz_native_coordinates();
     for(int direction:{0,1})for(double inner:{0.,1.}) {
         test_rz_scheduled_hydro<SolverEuler>(direction,inner);

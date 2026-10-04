@@ -127,6 +127,44 @@ ARCH_HOST_DEVICE inline double InverseRadiusVolumeAverage(
     return cylindrical_inverse_radius_average(r_left,r_right);
 }
 
+/**
+ * Volume centroid <r>_V, distinct from a midpoint and from the W centroid.
+ * Normalize by the upper radius so thin cells and large radii do not require
+ * subtracting adjacent powers or forming r^2 merely to obtain a length.
+ * Preconditions match CellVolume: 0 <= left < right, finite positive measure.
+ */
+ARCH_HOST_DEVICE inline double VolumeCentroidRadius(double left, double right)
+{
+    const double t=left/right;
+    return (2.0/3.0)*right*((1.0+t+t*t)/(1.0+t));
+}
+
+/** W = integral r dV; sole angular-momentum measure for m_phi = J/W. */
+ARCH_HOST_DEVICE inline double AngularMomentumMeasure(
+    double left, double right, double dz)
+{
+    return CellVolume(left,right,dz)*VolumeCentroidRadius(left,right);
+}
+
+/** <r>_W = integral r^3 dr / integral r^2 dr, for m_phi reconstruction. */
+ARCH_HOST_DEVICE inline double AngularReconstructionRadius(double left, double right)
+{
+    const double t=left/right;
+    return .75*right*((1.0+t)*(1.0+t*t)/(1.0+t+t*t));
+}
+
+/** Integral r dA on a radial face; exact zero at the regular axis. */
+ARCH_HOST_DEVICE inline double RadialTorqueMeasure(double radius, double dz)
+{
+    return RadialFaceArea(radius,dz)*radius;
+}
+
+/** Integral r dA on a z face, not its ordinary annulus area. */
+ARCH_HOST_DEVICE inline double AxialTorqueMeasure(double left, double right)
+{
+    return AxialFaceArea(left,right)*VolumeCentroidRadius(left,right);
+}
+
 /** Orthonormal r/z lengths for active direction 0 or 1; no angle factor. */
 ARCH_HOST_DEVICE inline double PhysicalSpacing(int direction, double dr, double dz)
 {

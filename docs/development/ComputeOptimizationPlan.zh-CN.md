@@ -645,3 +645,10 @@ architecture audit 通过，详见 O7JeansConditionalInputIdentity-20261004.zh-C
 2026-10-04 环体节点：数学路线和误差接口见 [Core 决定第7节](O7JeansRzReviewQuestions-20261004.zh-CN.md#7-rz-有限环体边界已定数学部件与误差接口)。共享 finite-ring 部件可以并行实施，完整生产边界及 RZ 科学状态维持待验；不将泊松 residual 误写为边界势／面力的总误差。
 
 2026-10-04 角动量节点：采用 [RZ 单一代表量 m_phi=J/W 的贯通方案](O7JeansRzReviewQuestions-20261004.zh-CN.md#8-rz-角动量单一表示与贯通实施节点)。按 A→B→C→D 小提交验收，父态不可解析 veto 与所有几何消费者同批迁移。该决定解锁实现，不关闭既有 Lz finding 或新 RZ 长跑出口。
+
+2026-10-04 实施节点：CPU self gravity 的公开 JENS 接线及 uniform-lifecycle-1
+九通道短演化/真实checkpoint续算 PASS，见 O7JeansUniformLifecycle-20261004.zh-CN.md。
+关闭的只是均匀态CPU短包；其他EOS/非均匀/CUDA/开销验收仍待完成。
+RZ-A前置W/centroid/torque测度及单一状态无存储转换已经通过现有CPU数学测试，
+见 RZAngularMeasureNode-20261004.zh-CN.md；真实transfer和其余消费者仍未迁移，
+完整RZ门槛继续保留。
