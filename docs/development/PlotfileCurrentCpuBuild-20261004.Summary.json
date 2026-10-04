@@ -1,0 +1,57 @@
+{
+  "source": {
+    "sourceHead": "b53fdc93ddec32cfd144d12bd860a2e994555f41",
+    "sourceDirty": false,
+    "binaryBeforeSha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+    "scope": "Release CPU affected PlotIO/DriverIO build + existing publication test; not full scientific acceptance",
+    "buildExitCode": 0,
+    "binaryAfterSha256": "3d9c64c30f2d3bb18efad143be2d123cde9da37ecfb58cb99bc5cff2c640ee0d"
+  },
+  "incrementalSteps": [
+    "[0/2] Re-checking globbed directories...",
+    "[1/8] Building CXX object CMakeFiles/arch_gravity_cpu.dir/src/numerics/elliptic/CartesianPoisson.cpp.o",
+    "[2/8] Building CXX object CMakeFiles/arch_gravity_cpu.dir/src/numerics/multigrid/CompositeMultigrid.cpp.o",
+    "[3/8] Linking CXX static library libarch_gravity_cpu.a",
+    "[4/8] Building CXX object CMakeFiles/ARCH.dir/src/io/hdf5/HDF5Writer.cpp.o",
+    "[5/8] Building CXX object CMakeFiles/ARCH.dir/src/io/plot/PlotIO.cpp.o",
+    "[6/8] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/io/DriverIO.cpp.o",
+    "[7/8] Linking CXX static library libarch_solver_dispatch.a",
+    "[8/8] Linking CXX executable bin/ARCH"
+  ],
+  "guard": [
+    "MEMORY_GUARD_RESULT min_available_kib=21917744 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=2654264 elapsed_seconds=11.195 stop_reason=none",
+    "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=4.084 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=12 complete=True"
+  ],
+  "publicationCTest": {
+    "test": "plotfile_publication",
+    "exitCode": 0
+  },
+  "currentCpuFixture": {
+    "scope": "real CPU DriverIO IO-only fixture; no timestep or EOS science acceptance",
+    "exitCode": 0,
+    "stderr": "empty-grid error: Cannot publish Plotfile without active leaf blocks.\n",
+    "plotSourceSha256": "1980798324c4d2678c8a342fc2ed75c730f2b9960d46b2449fc4e4630a23a2f5",
+    "fixtureSourceSha256": "40e07ce7f1c4c6b4c60ce3cbd46b1f6424ff1760aad50cb8b614fdd0a4ebb879",
+    "driverObjectSha256": "d0c9da149e98b459dd8b7e74275739f5d7af0635cb1cc1d8881b929ce41a549b",
+    "plotObjectSha256": "dbedefd9449ced03b8e4e41281ff730ce1810d4835f5443f8e2b2a1bd945c0a7",
+    "sourceGitHead": "b53fdc93ddec32cfd144d12bd860a2e994555f41",
+    "sourceGitDirty": false,
+    "driverSourceSha256": "5aaafe4f328b95306c169e195fa8ac3cc6821150b3e024da51fad55df4afbc3f",
+    "dispatchLibrarySha256": "84d0f733899cdcf3c7cf4780aa20355f095012f21e7d2d4c70d49126ec6daf29",
+    "testExecutableSha256": "5c8f3705b6e069c2ca8c5ad0a1f533acf36af1235700a28a7485445ce5e66744"
+  },
+  "managedStudioBinaryUnchangedSha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "checks": {
+    "validatedSourceHashesMatchCurrent": true,
+    "sourceWorktreeCleanAtBuild": true,
+    "currentCpuFixtureNoTimestep": true,
+    "publicationJUnitRecordedLocally": true
+  },
+  "limitations": [
+    "Only affected publication regression; full 69/71 historical scientific failures not rerun or cleared",
+    "Full dynamic dependency closure remains unknown",
+    "Two existing Poisson/multigrid objects also rebuilt; no new scientific acceptance inferred",
+    "Production Studio managed project remains separate and unchanged",
+    "No CUDA/benchmark/O9/simulation or raw-data upload"
+  ]
+}

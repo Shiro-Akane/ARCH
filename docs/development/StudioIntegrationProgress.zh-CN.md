@@ -3261,3 +3261,11 @@ PhysicalPlot新增Zoom in/out，复用wheel同一zoomView状态更新，不写Co
 PlotIO/DriverIO显式拒绝；当前两个IO object +真实fixture最终空叶/no-dir/序号及write/flush/close/rename/create全部PASS。
 五轮完整错误留本机，SHA/dirty/mixed-object边界记录；未Build完整ARCH/Simulation/重复334 baseline。
 见PlotfileEmptyGridPublication报告/Summary；真实ENOSPC/持久性、科学/CUDA/O9仍未闭合。
+
+## 2026-10-04 当前 CPU Plotfile 修复构建
+
+clean b53fdc93标准CPU build8步成功，含两个既有Poisson/multigrid待编译对象；新ELF3d9c64c3。
+publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0）；输入/源SHA核对。
+28并行memory/pressure guard无触发、观测swap0；原Studio受管binary d535不变，不篡改旧Manifest身份。
+完整loader闭包仍unknown，旧科学/architecture失败不清除；无simulation/CUDA/334或71baseline重复。
+见PlotfileCurrentCpuBuild报告/Summary；raw数据留本机，无push/tag。
