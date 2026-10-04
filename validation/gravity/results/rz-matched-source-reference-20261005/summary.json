@@ -1,0 +1,49 @@
+{
+  "status": "TOOL_TESTS_PASS_NOT_SCIENTIFIC_ACCEPTANCE",
+  "tests": 20,
+  "baseline": "9768426c4856ae36a35d83876e6a855de1961cc0",
+  "inputSha256": "5e2c0407a142f7fae4fa0faefb2a6fb2f476d8996ac667bc2836a2af7ad7b7ca",
+  "filesSha256": {
+    "validation/gravity/rz_matched_source_reference.py": "99288b67298c13b3022b36bb10372c2b4b8fe2e3fb6a6e7cfed8c7f4b2d7e0c2",
+    "validation/gravity/rz_ring_axis_reference.py": "6f77570a8c76d4424751f65fb4d4a0ec779764b9bb836a1703f4eefd51f6f35c",
+    "tests/tooling/validation/test_rz_matched_source_reference.py": "e3d642072003fdda815d2b23e853cfc4bc204b9ff8fa83030615f8d38935124a"
+  },
+  "rows": [
+    {
+      "observerId": "axis",
+      "order16To32AbsoluteEstimate": {
+        "potential": "0E-86",
+        "radial_acceleration": "0",
+        "axial_acceleration": "0E-86",
+        "mass": "0E-78"
+      },
+      "precision80To100AbsoluteEstimate": {
+        "potential": "8.229324472083866749486E-85",
+        "radial_acceleration": "0",
+        "axial_acceleration": "3.16402366614035690598E-86",
+        "mass": "1.234768657192094638E-80"
+      }
+    },
+    {
+      "observerId": "exterior",
+      "order16To32AbsoluteEstimate": {
+        "potential": "1.065163708682797650104028310E-47",
+        "radial_acceleration": "5.184928372776284593652721514E-47",
+        "axial_acceleration": "1.033449863935511133020546405E-46",
+        "mass": "0E-78"
+      },
+      "precision80To100AbsoluteEstimate": {
+        "potential": "7.4545168928826543729E-87",
+        "radial_acceleration": "9.51334253409184894224E-87",
+        "axial_acceleration": "2.43349361442055614456E-87",
+        "mass": "1.234768657192094638E-80"
+      }
+    }
+  ],
+  "contactStatus": "UNSUPPORTED_OR_FAILED",
+  "limitations": [
+    "Independent heterogeneous fixture, not actual Runtime matched density publication",
+    "Order/precision differences are estimates, not certified error bounds or frozen tolerance",
+    "No Core or ELF change; no simulation, CUDA or production gate change"
+  ]
+}

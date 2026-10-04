@@ -16,7 +16,7 @@ G = Decimal("6.67430e-8")
 def decimal_value(value):
     return Decimal.from_float(value) if isinstance(value,float) else Decimal(str(value))
 
-def axis_reference(r_lower,r_upper,z_lower,z_upper,density,z_observer,precision=80):
+def axis_reference(r_lower,r_upper,z_lower,z_upper,density,z_observer,precision=80, *, decimal_output=False):
     args=[decimal_value(v) for v in (r_lower,r_upper,z_lower,z_upper,density,z_observer)]
     if not all(v.is_finite() for v in args):
         raise ValueError("Finite source/observer inputs required")
@@ -39,12 +39,13 @@ def axis_reference(r_lower,r_upper,z_lower,z_upper,density,z_observer,precision=
         integral=(primitive(rr,high)-primitive(rr,low)
                   -primitive(rl,high)+primitive(rl,low))
         factor=2*PI*G*rho
-        return {
-            "potential":float(-factor*integral),
-            "axial_acceleration":float(-factor*(section(high)-section(low))),
-            "mass":float(PI*rho*(rr*rr-rl*rl)*(zr-zl)),
-            "radial_acceleration":0.0,
+        values = {
+            "potential":+(-factor*integral),
+            "axial_acceleration":+(-factor*(section(high)-section(low))),
+            "mass":+(PI*rho*(rr*rr-rl*rl)*(zr-zl)),
+            "radial_acceleration":Decimal(0),
         }
+        return values if decimal_output else {k:float(v) for k,v in values.items()}
 
 def tensor_quadrature(case,order):
     """Independent finite-volume Newton integration, bounded diagnostic only."""

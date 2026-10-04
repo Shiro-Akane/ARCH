@@ -628,3 +628,12 @@ Existing legacy 保持兼容，严格 RZ 未解析候选仍拒绝、不授权 he
 71 CTest 经初次完整 suite 与修改项定向复测全部取得 PASS；旧 catalog/reflux 软件夹具已迁移。
 见 RZRepairLedgerIdentityNode-20261005.zh-CN.md；完整旋转/viscosity/axis-force 科学门槛、
 完整环体 RHS 和 CUDA/长跑门槛仍保持，不以此节点代替科学签收。
+
+### 环体 matched-source 独立工具节点（2026-10-05）
+
+显式逐叶 bounds/rho/sourceId 的 Decimal 组合工具已实现；轴线解析、源外离轴、
+异密度叠加和失败保留共20相关工具测试通过，阶数与精度诊断分别记录。
+见 RZMatchedSourceReferenceNode-20261005.zh-CN.md。
+当前为独立fixture，尚未验证真实Runtime density publication；
+不得由Poisson RHS反推density冒充接线。inside/contact离轴力继续拒绝，
+连续科学预算和production/CUDA/long-run gate保持。
