@@ -27,3 +27,13 @@ converted. A missing/different tag is rejected before live hierarchy replacement
 Layout version 6 and the existing chart revision 1 compatibility are unchanged.
 This discriminator does not prove a complete RZ restart contract: native
 measure/domain identity and other gated consumers require their own validation.
+
+
+The current internal RZ path also requires NativeDomain version 1:
+FP64 bounds [r_min,r_max,z_min,z_max] in cm, root_blocks [Nr,Nz],
+cell_shape [BLOCK_NX,BLOCK_NY], and full_rotation normalization.
+The writer binds the actual tree root, rejects a differing active config,
+and the reader matches domain and per-axis shape before live reconstruction.
+Stored W has unit cm^4; this identity check is not a geometric accuracy proof.
+Older RZ files without this domain identity are rejected, not converted.
+The existing chart's checkpoint compatibility is unchanged.

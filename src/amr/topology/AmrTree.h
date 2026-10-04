@@ -110,6 +110,8 @@ public:
     AmrTree(std::shared_ptr<MemoryPool> memory_pool) : pool(memory_pool) {}
 
     int GetRootGridDim() const { return root_grid.dim; }
+    /** Immutable native domain identity for IO; no geometry reconstruction. */
+    const Grid& GetRootGrid() const { return root_grid; }
     GridMetrics::GeometrySemantics GetGeometrySemantics() const { return root_semantics; }
     /**
      * @brief Installs the EOS-backed pressure/temperature batch evaluator.

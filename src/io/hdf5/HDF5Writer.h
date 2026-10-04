@@ -55,6 +55,7 @@ struct CheckpointData {
     int num_species = 0;
     std::string geometry;
     CheckpointGeometryIdentity geometry_identity;
+    CheckpointNativeDomainIdentity native_domain; // mandatory for current RZ, empty for existing
     std::size_t cells_per_block = 0;
     bool has_timestep_state = false;
     bool resume_after_regrid = false;

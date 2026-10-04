@@ -9,6 +9,7 @@
 #include "core/config/ConfigValidation.h"
 #include "core/files/FileFingerprint.h"
 #include "io/IO.h"
+#include "grid/GridMetrics.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "io/hdf5/HDF5Writer.h"
 #include "physics/species/Species.h"
@@ -19,6 +20,7 @@
 #include <array>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -656,6 +658,7 @@ void test_host_restart(const std::filesystem::path& directory)
     rz_payload.dim = 2;
     rz_payload.geometry = "cylindrical";
     rz_payload.geometry_identity = io::current_rz_checkpoint_geometry();
+    rz_payload.native_domain={{0.,1.,0.,1.},{1,1},{static_cast<int>(rz_payload.cells_per_block),1}};
     const auto rz_path = directory / "internal-rz-identity.h5";
     io::write_hdf5_chk_impl(rz_path.string(), rz_payload);
     const auto rz = io::read_hdf5_chk_impl(rz_path.string());
@@ -864,6 +867,25 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
     expect(state.time==.25 && state.step==7 && state.chk_idx==3 &&
            state.plt_idx==4 && state.dt_old==.01 && state.dt_burn==.02 &&
            state.resume_after_regrid, "native RZ controller changed");
+    const auto native_angular_identity=[](const amr::AMRControl& control) {
+        std::vector<double> weights;long double angular=0.;
+        for(int id:control.tree->GetActiveBlocks()) {
+            const auto& b=control.pool->GetBlock(id);const auto& g=b.grid;
+            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                const double w=GridMetrics::Rz::AngularMomentumMeasure(g.GetFacePosL(i),g.GetFacePosR(i),g.dx2);
+                weights.push_back(w);
+                angular+=static_cast<long double>(b.fluid_state.mom_w[g.GetIndex(i,j,g.Ks())])*w;
+            }
+        }
+        return std::make_pair(weights,angular);
+    };
+    const auto [source_weights,source_angular]=native_angular_identity(source);
+    const auto [restored_weights,restored_angular]=native_angular_identity(restored);
+    expect(source_weights==restored_weights && source_angular==restored_angular,
+        "native RZ checkpoint reinterpreted W or J");
+    std::cout<<std::setprecision(21)<<"RZ_CHECKPOINT_NATIVE_W_J_PASS cells="<<source_weights.size()
+        <<" source_J="<<source_angular<<" restored_J="<<restored_angular<<"\n";
+
     const auto digest=arch::core::file_sha256(file.string());
     const auto snapshot_restored=[&] {
         std::vector<double> words;
@@ -875,9 +897,15 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
         return words;
     };
     const auto before=snapshot_restored();
+    // Preserve earlier local evidence when this scoped fixture is rerun.
+    const auto fresh_corruption_copy=[&](const std::string& prefix,int test) {
+        auto bad=directory/(prefix+"-"+std::to_string(test)+".h5");
+        for(int suffix=1;std::filesystem::exists(bad);++suffix)
+            bad=directory/(prefix+"-"+std::to_string(test)+"-"+std::to_string(suffix)+".h5");
+        std::filesystem::copy_file(file,bad);return bad;
+    };
     for(int corruption=0;corruption<3;++corruption) {
-        const auto bad=directory/("rz-state-corruption-"+std::to_string(corruption)+".h5");
-        std::filesystem::copy_file(file,bad);
+        const auto bad=fresh_corruption_copy("rz-state-corruption",corruption);
         {
             HighFive::File hdf(bad.string(),HighFive::File::ReadWrite);
             if(corruption==0)hdf.getAttribute("geometry_semantics_revision").write(1);
@@ -890,6 +918,51 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
             state.chk_idx==3 && state.plt_idx==4,"RZ state rejection mutated live state");
         expect(arch::core::file_sha256(file.string())==digest,"RZ rejection modified original checkpoint");
     }
+    // Active config must not reinterpret native W or the flattening geometry.
+    for(int change=0;change<6;++change) {
+        auto different=config;
+        if(change==0)different.grid.x1_min+=.125;
+        if(change==1)different.grid.x1_max+=.25;
+        if(change==2)different.grid.x2_min-=1.;
+        if(change==3)different.grid.x2_max+=1.;
+        if(change==4)different.grid.nblockx1+=1;
+        if(change==5)different.grid.nblockx2+=1;
+        expect_rejected([&]{read_chk(file.string(),restored,state,different,species,provenance,
+            io::current_rz_checkpoint_geometry());},"wrong native domain accepted","native domain/measure");
+        expect(snapshot_restored()==before && state.time==.25 && state.step==7,
+            "wrong-domain restore mutated live state");
+        expect_rejected([&]{write_chk(source,3,4,7,.25,.01,.02,true,
+            different,species,provenance,repairs,io::current_rz_checkpoint_geometry());},
+            "writer mislabeled actual tree with changed config","native domain/measure");
+        expect(arch::core::file_sha256(file.string())==digest,
+            "wrong-domain writer replaced previous checkpoint");
+    }
+    for(int corruption=0;corruption<7;++corruption) {
+        const auto bad=fresh_corruption_copy("rz-domain-corruption",corruption);
+        {
+            HighFive::File hdf(bad.string(),HighFive::File::ReadWrite);
+            if(corruption==0)hdf.unlink("NativeDomain");
+            else {
+                auto domain=hdf.getGroup("NativeDomain");
+                if(corruption==1) {domain.unlink("bounds");domain.createDataSet("bounds",std::vector<double>{0.,1.,-10.});}
+                if(corruption==2) {
+                    auto bounds=payload.native_domain.bounds;bounds[0]=std::numeric_limits<double>::quiet_NaN();
+                    domain.getDataSet("bounds").write(bounds);
+                }
+                if(corruption==3)domain.getAttribute("coordinate_unit").write(std::string("code_length"));
+                if(corruption==4)domain.getAttribute("measure_normalization").write(std::string("per_radian"));
+                if(corruption==5)domain.getAttribute("version").write(2);
+                if(corruption==6)domain.getDataSet("cell_shape").write(
+                    std::vector<int>{amr::BLOCK_NX*2,amr::BLOCK_NY/2});
+            }
+        }
+        expect_rejected([&]{read_chk(bad.string(),restored,state,config,species,provenance,
+            io::current_rz_checkpoint_geometry());},"corrupt native domain accepted");
+        expect(snapshot_restored()==before && state.time==.25 && state.step==7 &&
+            state.chk_idx==3 && state.plt_idx==4,"domain rejection mutated live state");
+        expect(arch::core::file_sha256(file.string())==digest,"domain rejection changed source checkpoint");
+    }
+    std::cout<<"RZ_NATIVE_DOMAIN_IDENTITY_PASS changed-config=6 corrupted-hdf=7\n";
     expect_rejected([&] { write_chk(source,3,4,7,.25,.01,.02,true,
         config,species,provenance,repairs,{3,"axisymmetric-rz"}); },
         "native writer accepted future chart revision");

@@ -459,6 +459,13 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         ? CheckpointGeometryIdentity{1, "existing"} : checkpoint.geometry_identity;
     require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
                                           geometry_identity, geometry_identity);
+    if(geometry_identity.chart=="axisymmetric-rz") {
+        require_valid_rz_checkpoint_domain(checkpoint.native_domain);
+        const auto& shape=checkpoint.native_domain.cell_shape;
+        if(checkpoint.cells_per_block/static_cast<std::size_t>(shape[0])!=static_cast<std::size_t>(shape[1])
+            ||checkpoint.cells_per_block%static_cast<std::size_t>(shape[0])!=0)
+            throw std::runtime_error("RZ checkpoint native cell shape differs from payload");
+    }
     const size_t blocks = checkpoint.levels.size();
     if (!has_consistent_checkpoint_payload(checkpoint)) {
         throw std::invalid_argument("Checkpoint payload dimensions are inconsistent.");
@@ -503,8 +510,17 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("geometry", checkpoint.geometry);
         file.createAttribute("geometry_semantics_revision", geometry_identity.revision);
         file.createAttribute("geometry_chart", geometry_identity.chart);
-        if(geometry_identity.chart=="axisymmetric-rz")
+        if(geometry_identity.chart=="axisymmetric-rz") {
             file.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
+            auto domain=file.createGroup("NativeDomain");
+            domain.createAttribute("version",1);
+            domain.createAttribute("bounds_order",std::string("r_min,r_max,z_min,z_max"));
+            domain.createAttribute("coordinate_unit",std::string("cm"));
+            domain.createAttribute("measure_normalization",std::string("full_rotation"));
+            domain.createDataSet("bounds",checkpoint.native_domain.bounds);
+            domain.createDataSet("root_blocks",checkpoint.native_domain.root_blocks);
+            domain.createDataSet("cell_shape",checkpoint.native_domain.cell_shape);
+        }
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
         file.createAttribute("eos_type", checkpoint.provenance.eos_type);
@@ -616,10 +632,30 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
                 file.getAttribute("state_semantics").read(state_semantics);
                 if(state_semantics!=rz_checkpoint_state_semantics)
                     throw std::runtime_error("RZ checkpoint state semantics mismatch: expected m_phi=J/W");
+                if(!file.exist("NativeDomain"))
+                    throw std::runtime_error("RZ checkpoint native domain identity missing");
+                auto domain=file.getGroup("NativeDomain");
+                int version=0;std::string order,unit,normalization;
+                domain.getAttribute("version").read(version);
+                domain.getAttribute("bounds_order").read(order);
+                domain.getAttribute("coordinate_unit").read(unit);
+                domain.getAttribute("measure_normalization").read(normalization);
+                if(version!=1||order!="r_min,r_max,z_min,z_max"||unit!="cm"||normalization!="full_rotation")
+                    throw std::runtime_error("RZ checkpoint native domain contract mismatch");
+                domain.getDataSet("bounds").read(checkpoint.native_domain.bounds);
+                domain.getDataSet("root_blocks").read(checkpoint.native_domain.root_blocks);
+                domain.getDataSet("cell_shape").read(checkpoint.native_domain.cell_shape);
+                require_valid_rz_checkpoint_domain(checkpoint.native_domain);
             }
         }
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);
+        if(checkpoint.geometry_identity.chart=="axisymmetric-rz") {
+            const auto& shape=checkpoint.native_domain.cell_shape;
+            if(checkpoint.cells_per_block/static_cast<std::size_t>(shape[0])!=static_cast<std::size_t>(shape[1])
+                ||checkpoint.cells_per_block%static_cast<std::size_t>(shape[0])!=0)
+                throw std::runtime_error("RZ checkpoint native cell shape differs from payload");
+        }
         int burn_enabled = 0;
         int nse_enabled = 0;
         checkpoint.provenance.available = true;

@@ -482,3 +482,14 @@ existing revision 1兼容不变。实际非零 raw round-trip、DriverIO、
 见 RZAngularCheckpointIdentityNode-20261005.zh-CN.md。
 RZ-CHK-MEASURE-01（domain/root counts与W身份）及其余 C/D仍待贯通；
 不解除production RZ gate，不授予旋转科学/CUDA/long-run PASS。
+
+
+### 8.6 C checkpoint W 测度身份实施证据（2026-10-05）
+
+RZ-CHK-MEASURE-01 的 domain/root-count/cell-shape 绑定已实现：writer从真实root tree
+发布，拒绝异域config；reader恢复前匹配，missing/invalid不猜测。
+6类config变化+7类HDF腐损反例通过，1280 native W与非零J恢复前后完全一致。
+实际DriverIO、4例internal zero-rotation continuation及新CPU binary的冻结JENS9+9通过。
+详见RZCheckpointMeasureIdentityNode-20261005.zh-CN.md。
+这是native measure身份范围的关闭，不授予独立几何精度、完整C/D、旋转科学、
+CUDA或long-run PASS；production gate保持，其余消费链继续推进。
