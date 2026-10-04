@@ -390,6 +390,14 @@ lambda error，再传播boundary/anchor/coefficients。38个真实operator、
 见 RZStencilEnclosureNode-20261005.zh-CN.md。未松动请求或physical root规则，
 完整face/source/observer/RHS/Phi/force及production gate仍待签收。
 
+face center/area/A-V及signed B构造区间已接到真实canonical effective_rhs：
+38个operator/3288 cells/7464面（1632boundary），独立Fraction和100/140位
+面积参考、native RMS的construction+actual assembly误差检查通过。
+见 RZFaceBoundaryMapEnclosureNode-20261005.zh-CN.md。manufactured面值
+不等于真实势签收；后续e_f必须用ideal B传播或显式保留交叉项，
+不能直接拼旧stored-B误差漏项。source/observer、interior A及完整physical
+residual/Phi/force和production gate仍待完成。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

@@ -875,6 +875,111 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
     result.status=std::isfinite(result.boundary_error_upper)?BoundaryErrorStatus::Bounded:BoundaryErrorStatus::Overflow;
     return result;
 }
+/** Enclose geometry and signed B from the same ideal root/leaf/face identity.
+ * The 2*pi in face measures and cell volumes cancels analytically in A_f/V_i.
+ * This includes actual stored area/coefficient/volume construction error;
+ * floating RHS assembly is still handled by its separate arithmetic ledger.
+ */
+NativeRzFaceEnclosure CompositePoisson::native_rz_face_enclosure(std::size_t index) const {
+    NativeRzFaceEnclosure result;result.face_index=index;
+    if(index>=faces_.size()||base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2)return result;
+    const auto& f=faces_[index];const bool boundary=f.boundary_side>=0;
+    const int anchor=f.left>=0?f.left:f.right;
+    const int fine=boundary?anchor:(cells_[f.left].level>=cells_[f.right].level?f.left:f.right);
+    const auto exact_width=[&](int cell,int axis) {
+        const double w=width(cell,axis);
+        return std::isfinite(w)&&w>0.&&std::ldexp(w,cells_[cell].level)==base_.spacing[axis]?w:0.;
+    };
+    std::array<ArithmeticRange,2> center{};
+    for(int a=0;a<2;++a) {
+        const int owner=a==f.axis?anchor:fine;const double w=exact_width(owner,a);
+        if(w<=0.)return result;
+        const double logical=a==f.axis?(boundary?cells_[anchor].index[a]+double(f.boundary_side%2)
+            :cells_[f.left].index[a]+1.):cells_[owner].index[a]+.5;
+        center[a]=range_add({base_.origin[a],base_.origin[a]},
+            range_product({logical,logical},{w,w}));
+        if(!finite_range(center[a])) {result.status=BoundaryErrorStatus::Overflow;return result;}
+        result.center_lower[a]=center[a].lo;result.center_upper[a]=center[a].hi;
+        result.center_error_upper[a]=bound_up(std::max(std::abs(f.center[a]-center[a].lo),
+            std::abs(f.center[a]-center[a].hi)));
+    }
+    const auto radial_measure=[&](int cell) {
+        const double dr=exact_width(cell,0);
+        if(dr<=0.)return ArithmeticRange{0.,0.};
+        const auto sum=range_add(range_product({2.,2.},{base_.origin[0],base_.origin[0]}),
+            range_product({2.*cells_[cell].index[0]+1.,2.*cells_[cell].index[0]+1.},{dr,dr}));
+        return range_product({dr,dr},sum); // (r_hi^2-r_lo^2), no pi.
+    };
+    const double dz=exact_width(fine,1);if(dz<=0.)return result;
+    const auto without_pi=f.axis==0?
+        range_product(range_product({2.,2.},center[0]),{dz,dz}):radial_measure(fine);
+    const double infinity=std::numeric_limits<double>::infinity();
+    const ArithmeticRange pi{std::nextafter(arch::constants::math::pi,-infinity),
+        std::nextafter(arch::constants::math::pi,infinity)};
+    const auto area=range_product(pi,without_pi);
+    if(!finite_range(area)||area.lo<0.) {result.status=BoundaryErrorStatus::Overflow;return result;}
+    result.area_lower=area.lo;result.area_upper=area.hi;
+    result.area_error_upper=bound_up(std::max(std::abs(f.area-area.lo),std::abs(f.area-area.hi)));
+    ArithmeticRange boundary_coefficient{};
+    if(boundary) {
+        const auto stencil=native_rz_stencil_enclosure(index);
+        if(stencil.status!=BoundaryErrorStatus::Bounded) {result.status=stencil.status;return result;}
+        boundary_coefficient={stencil.boundary_lower,stencil.boundary_upper};
+    }
+    for(int side=0;side<2;++side) {
+        const int cell=side?f.right:f.left;if(cell<0)continue;
+        const double height=exact_width(cell,1);if(height<=0.)return result;
+        const auto volume_without_pi=range_product(radial_measure(cell),{height,height});
+        const auto quotient=range_divide_positive(without_pi,volume_without_pi);
+        const auto stored_quotient=range_divide_volume({f.area,f.area},volumes_[cell]);
+        const auto quotient_defect=range_add(quotient,range_negate(stored_quotient));
+        if(!finite_range(quotient)||!finite_range(quotient_defect)) {
+            result.status=BoundaryErrorStatus::Overflow;return result;
+        }
+        result.area_over_volume_lower[side]=quotient.lo;result.area_over_volume_upper[side]=quotient.hi;
+        result.area_over_volume_error_upper[side]=range_abs_upper(quotient_defect);
+        if(!boundary)continue;
+        auto map=range_product(quotient,boundary_coefficient);
+        auto stored=range_divide_volume(range_product({f.area,f.area},
+            {f.boundary_coefficient,f.boundary_coefficient}),volumes_[cell]);
+        if(side) {map=range_negate(map);stored=range_negate(stored);}
+        const auto defect=range_add(map,range_negate(stored));
+        if(!finite_range(map)||!finite_range(defect)) {
+            result.status=BoundaryErrorStatus::Overflow;return result;
+        }
+        result.boundary_map_lower[side]=map.lo;result.boundary_map_upper[side]=map.hi;
+        result.boundary_map_error_upper[side]=range_abs_upper(defect);
+    }
+    result.status=std::isfinite(result.area_error_upper)&&finite_field(result.center_error_upper)
+        ?BoundaryErrorStatus::Bounded:BoundaryErrorStatus::Overflow;
+    return result;
+}
+/** |(B_ideal-B_stored) f_hat| with the actual final boundary map.
+ * Geometry/fit construction is counted here; RHS assembly roundoff, f_hat
+ * integral/source/observer error and interior A construction are not.
+ */
+NativeRzBoundaryConstructionError CompositePoisson::native_rz_boundary_construction_error(
+    std::span<const double> values) const {
+    NativeRzBoundaryConstructionError result;
+    if(base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2
+        ||values.size()!=faces_.size()||!finite_field(values))return result;
+    result.cell_bounds.assign(cells_.size(),0.);
+    for(std::size_t index=0;index<faces_.size();++index) {
+        const auto& face=faces_[index];if(face.boundary_side<0)continue;
+        const auto geometry=native_rz_face_enclosure(index);
+        if(geometry.status!=BoundaryErrorStatus::Bounded) {result.status=geometry.status;return result;}
+        for(int side=0;side<2;++side) {
+            const int cell=side?face.right:face.left;if(cell<0)continue;
+            const double term=bound_product(geometry.boundary_map_error_upper[side],std::abs(values[index]));
+            result.cell_bounds[cell]=bound_up(result.cell_bounds[cell]+term);
+            if(!std::isfinite(result.cell_bounds[cell])) {result.status=BoundaryErrorStatus::Overflow;return result;}
+        }
+    }
+    const auto norm=native_rz_norm_interval(result.cell_bounds);
+    result.status=norm.status;result.native_norm_upper=norm.upper;return result;
+}
 /** Construct full-ring volume/normalization bounds from root dyadic identity.
  * V=pi*dr*(2*r_lo+dr)*dz. Using dr explicitly avoids subtraction of
  * nearly equal radial edges. Stored GridMetrics outputs are compared, never

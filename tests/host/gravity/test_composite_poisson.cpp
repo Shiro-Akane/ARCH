@@ -998,6 +998,8 @@ void native_rz_stencil_probe() {
     auto cart=base_mesh(2,4);elliptic::CompositePoisson cart_op(cart,make_cells(cart,false));
     require(cart_op.native_rz_stencil_enclosure(0).status==elliptic::BoundaryErrorStatus::InvalidInput,
         "Cartesian stencil acquired RZ certificate");
+    require(cart_op.native_rz_face_enclosure(0).status==elliptic::BoundaryErrorStatus::InvalidInput,
+        "Cartesian face acquired RZ geometry certificate");
     std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
     const auto emit=[&](const elliptic::CompositePoisson& op,bool mixed,int hierarchy_level) {
         const auto& base=op.base();
@@ -1010,7 +1012,39 @@ void native_rz_stencil_probe() {
         }
         require(op.native_rz_stencil_enclosure(op.faces().size()).status==elliptic::BoundaryErrorStatus::InvalidInput,
             "out-of-range face acquired coefficient certificate");
-        std::cout<<"],\"faces\":[";fc=true;std::size_t face_index=0;
+        require(op.native_rz_face_enclosure(op.faces().size()).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "missing face acquired geometry certificate");
+        std::cout<<"],\"stored_volumes\":";dump(op.volumes());
+        std::vector<double> face_values(op.faces().size(),0.),source(op.size(),0.);
+        for(std::size_t i=0;i<face_values.size();++i)
+            if(op.faces()[i].boundary_side>=0)face_values[i]=.5*(int(i%9)-4);
+        const auto rhs=op.effective_rhs(source,face_values);
+        const auto construction=op.native_rz_boundary_construction_error(face_values);
+        const auto arithmetic=op.bound_rhs_assembly_roundoff(source,face_values,rhs);
+        require(construction.status==elliptic::BoundaryErrorStatus::Bounded
+            &&arithmetic.status==elliptic::BoundaryErrorStatus::Bounded,"actual B construction/assembly ledger failed");
+        require(op.native_rz_boundary_construction_error({}).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "missing boundary values acquired construction certificate");
+        auto bad_values=face_values;bad_values[0]=std::numeric_limits<double>::quiet_NaN();
+        require(op.native_rz_boundary_construction_error(bad_values).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "nonfinite boundary values acquired construction certificate");
+        auto zeros=face_values;std::fill(zeros.begin(),zeros.end(),0.);
+        const auto zero_error=op.native_rz_boundary_construction_error(zeros);
+        require(zero_error.status==elliptic::BoundaryErrorStatus::Bounded&&zero_error.native_norm_upper==0.,
+            "zero B construction acquired floor");
+        std::vector<double> combined(op.size());
+        for(int i=0;i<op.size();++i) {
+            const double sum=construction.cell_bounds[i]+arithmetic.cell_bounds[i];
+            combined[i]=sum==0.?0.:std::nextafter(sum,std::numeric_limits<double>::infinity());
+        }
+        const auto combined_norm=op.native_rz_norm_interval(combined);
+        require(combined_norm.status==elliptic::BoundaryErrorStatus::Bounded,"combined native construction norm failed");
+        std::cout<<",\"face_values\":";dump(face_values);std::cout<<",\"rhs\":";dump(rhs);
+        std::cout<<",\"construction_cells\":";dump(construction.cell_bounds);
+        std::cout<<",\"construction_native_norm_upper\":"<<construction.native_norm_upper
+            <<",\"combined_cells\":";dump(combined);
+        std::cout<<",\"combined_native_norm_upper\":"<<combined_norm.upper;
+        std::cout<<",\"faces\":[";fc=true;std::size_t face_index=0;
         for(const auto& face:op.faces()) {
             if(!fc)std::cout<<',';fc=false;
             const bool expected_fit=face.boundary_side>=0||
@@ -1032,7 +1066,20 @@ void native_rz_stencil_probe() {
                 <<",\"boundary_error_upper\":"<<proof.boundary_error_upper
                 <<",\"inverse_residual_upper\":"<<proof.inverse_residual_upper
                 <<",\"inverse_norm_upper\":"<<proof.inverse_norm_upper
-                <<",\"lambda_error_upper\":"<<proof.lambda_error_upper<<'}';
+                <<",\"lambda_error_upper\":"<<proof.lambda_error_upper;
+            const auto geometry=op.native_rz_face_enclosure(face_index-1);
+            require(geometry.status==elliptic::BoundaryErrorStatus::Bounded,"RZ face geometry certificate missing");
+            std::cout<<",\"center_lower\":";dump(geometry.center_lower);
+            std::cout<<",\"center_upper\":";dump(geometry.center_upper);
+            std::cout<<",\"center_error_upper\":";dump(geometry.center_error_upper);
+            std::cout<<",\"area_lower\":"<<geometry.area_lower<<",\"area_upper\":"<<geometry.area_upper
+                <<",\"area_error_upper\":"<<geometry.area_error_upper<<",\"area_over_volume_lower\":";
+            dump(geometry.area_over_volume_lower);std::cout<<",\"area_over_volume_upper\":";
+            dump(geometry.area_over_volume_upper);std::cout<<",\"area_over_volume_error_upper\":";
+            dump(geometry.area_over_volume_error_upper);std::cout<<",\"boundary_map_lower\":";
+            dump(geometry.boundary_map_lower);std::cout<<",\"boundary_map_upper\":";
+            dump(geometry.boundary_map_upper);std::cout<<",\"boundary_map_error_upper\":";
+            dump(geometry.boundary_map_error_upper);std::cout<<'}';
         }
         std::cout<<"]}";
     };

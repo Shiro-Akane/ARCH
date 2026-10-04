@@ -105,6 +105,26 @@ struct NativeRzStencilEnclosure {
     double boundary_lower=0.,boundary_upper=0.,boundary_error_upper=0.;
     double inverse_residual_upper=0.,inverse_norm_upper=0.,lambda_error_upper=0.;
 };
+/** Ideal root-dyadic face geometry and signed native boundary-map factors.
+ * Side arrays correspond to left/right cells; absent/interior boundary terms
+ * are exact zero. Source/observer potential differences remain separate.
+ */
+struct NativeRzFaceEnclosure {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    std::size_t face_index=0;
+    std::array<double,2> center_lower{},center_upper{},center_error_upper{};
+    double area_lower=0.,area_upper=0.,area_error_upper=0.;
+    std::array<double,2> area_over_volume_lower{},area_over_volume_upper{},area_over_volume_error_upper{};
+    std::array<double,2> boundary_map_lower{},boundary_map_upper{},boundary_map_error_upper{};
+};
+/** B construction error for supplied stored face values, in ideal native RMS.
+ * Does not certify those values at ideal source/observer coordinates.
+ */
+struct NativeRzBoundaryConstructionError {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    std::vector<double> cell_bounds;
+    double native_norm_upper=std::numeric_limits<double>::infinity();
+};
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
@@ -148,6 +168,9 @@ public:
     WeightedNormInterval norm_interval(std::span<const double> x) const;
     NativeRzMeasureEnclosure native_rz_measure_enclosure() const;
     NativeRzStencilEnclosure native_rz_stencil_enclosure(std::size_t face_index) const;
+    NativeRzFaceEnclosure native_rz_face_enclosure(std::size_t face_index) const;
+    NativeRzBoundaryConstructionError native_rz_boundary_construction_error(
+        std::span<const double> boundary_values) const;
     WeightedNormInterval native_rz_norm_interval(std::span<const double> x) const;
     PoissonArithmeticError bound_rhs_assembly_roundoff(
         std::span<const double> source,std::span<const double> boundary_values,
