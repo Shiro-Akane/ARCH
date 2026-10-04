@@ -1,5 +1,33 @@
 # Plotfile 当前适配交付索引（2026-10-04）
 
+## 当前对接引用（后续核对，优先于下方历史记录）
+
+- 已核对 owner contract：23ff77c4f08419de2b3c5eadee214da2af25784e，直接读取 Git 对象，未 merge。
+- 当前 clean 累积源码：be8a108b851b5ebb863daab40a1417d388b42766。
+- 分支：studio/compute-optim-integration；本地提交，尚未 push，不声称对方可从远端获取。
+- writer 最近改动：b38f44a8d51a97e19a0d133a5ab547390d01f53d，src/io/plot/PlotIO.cpp。
+  此提交含内部 RZ 增量，但本轮交付只接受 Cartesian；正式 reader 的拒绝边界仍保留。
+- FP64 reader：5656f7b87abd075e464fbd48e1b98a82756949ba，studio/host/plotfileMetadata.ts。
+- 可复现只读交付脚本：01371b1e4f0dc5e9b9fad57a73cd154fb7a3339f，validation/io/export_plotfile_handoff.py。
+- unknown reason 增量：6b291494d5de8168e50ed57718a0a3cee7c3bd4c。当前 writer 为 build_id、
+  effective_config_sha256、source_git_head 保留 unknown 和原因；下文无逐键 reason 仅描述旧样本。
+- 本次只核对源码/文档，不重编译、不运行 simulation，不更新任何样本 producer 身份。
+  下方 JSON 和 ELF SHA 为其记录时点的证据，不能理解为当前源码 HEAD 的构建身份。
+
+数组、字段、FP64、checkpoint 语义沿用下表。已有独立生产读回、全域覆盖反例/修复、
+发布故障传播、取消与过期响应保留证据分别见
+[Handoff readback](PlotfileHandoffReadback-20261004.zh-CN.md)、
+[全域覆盖](PlotfileFullCoverage-20261004.zh-CN.md)、
+[全部字段修复读回](PlotfileAllFieldsFaceRepair-20261004.zh-CN.md)、
+[Driver 故障传播](PlotfileDriverFailurePropagation-20261003.zh-CN.md)、
+[原生取消与视口竞态](PlotfileNativeRace-20261004.zh-CN.md)。
+
+这些证据的输入、producer 和范围各自独立。原生滚轮/拖动完整物理映射仍未闭合，
+不能由按钮 Zoom/Fit 或数学单测替代。全域覆盖工程检查也不等于二维演化、
+独立 EOS/诊断场 oracle 或完整来源身份验收。下一步继续小范围验证，收到 Core adapter
+具体 finding 后做最小修改，不扩大曲线坐标、3D 或 XDMF 范围。
+
+
 本索引按 owner 的 PlotfileValidationContract.zh-CN.md 核对，优先于旧 handoff 中按时间保留的历史引用。
 仅交付 Sod 1D 与 Cartesian CellularDet 2D AMR 小切片，不宣称全项目或独立科学验收通过。
 

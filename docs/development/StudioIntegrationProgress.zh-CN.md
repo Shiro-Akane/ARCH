@@ -3194,3 +3194,9 @@ clean64b0ce2f现有CPU binary只读inspect-config：16profile覆盖当前14case�
 更新CONFIGURATION_API首页和动态摘要/检查说明，去掉“尚未接线”的过期描述。
 保留旧输入15/16、材料来源展示、科学/CUDA及联合阶段未发布限制；t0不冒充演化。
 仅文档修改，diff check和相对链接实际目标核对，不重复334项或科学baseline。
+
+## 2026-10-04 owner Plotfile contract 对接引用核对
+
+完整读取23ff77c4f contract，核对当前clean be8a108b源码与writer/FP64 reader/只读导出脚本精确SHA。
+适配交付索引新增当前入口，保留旧JSON/ELF/样本身份，明确新writer unknown reason与旧样本差异。
+不Build/simulation/重跑无变化基线；不push/tag。原生wheel/drag映射、二维演化、独立oracle及完整身份仍待验证。
