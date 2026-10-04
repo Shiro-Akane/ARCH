@@ -649,3 +649,13 @@ mixed实际probe直接导出tree.update密度、当前ring source stamp、实际
 见RZMatchedNativeSourceNode-20261005.zh-CN.md与scalar summary。
 无零面积轴面，初始0点axis结果明确排除；static abstract dependency不替代
 Runtime all-block stage/regrid身份。force/连续空间/CPU完整RZ门槛保持。
+
+### 共享重力实际 Runtime publication 检查（2026-10-05）
+
+实际Cartesian DriverRuntime->GravityStage->SelfGravity的全块/非首块version、
+Scratch/Next density、未发布非首块拒绝、失败旧场失效、真实regrid新epoch
+重新绑定通过：4->8块，64->128cells，5次成功gather。
+不是scheduler Probe；Capture委托真实Host数学与执行器。
+见GravityRuntimePublicationNode-20261005.zh-CN.md和scalar summary。
+Controller time0/steps0，请求stage time不作为演化终点。
+生产ELF不变，沿用匹配JENS9+9；RZ self-gravity/regrid门槛与科学finding不关闭。
