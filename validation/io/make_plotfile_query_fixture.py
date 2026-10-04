@@ -12,7 +12,9 @@ import h5py
 import numpy as np
 
 
-def write_fixture(directory: Path, blocks: int) -> dict:
+def write_fixture(directory: Path, blocks: int, storage: str = 'contiguous') -> dict:
+    if storage not in ('contiguous', 'chunked', 'gzip'):
+        raise ValueError('Unsupported storage layout')
     nx, ny = 64, 32
     shape = (blocks, ny, nx)
     cells = blocks * ny * nx
@@ -35,12 +37,20 @@ def write_fixture(directory: Path, blocks: int) -> dict:
                        plot_publication_method='checked-close-atomic-replace',
                        plot_storage_order='x1-fastest', plot_identity_state='unknown',
                        synthetic_fixture='query-workload-1')
+        def dataset(group, key, value):
+            options = {}
+            if storage != 'contiguous':
+                options['chunks'] = (1, ny, nx) if value.ndim == 3 else (min(value.size, 4096),)
+            if storage == 'gzip':
+                options.update(compression='gzip', compression_opts=4)
+            return group.create_dataset(key, data=value, **options)
+
         grid = f.create_group('Grid')
         grid.attrs.update(coordinate_unit='cm', coordinate_basis='cartesian')
         for key, value in [('x', lower_x + .5), ('y', lower_y + .5), ('z', zero)]:
-            grid.create_dataset(key, data=value)
-        grid.create_dataset('level', data=np.zeros(blocks, dtype=np.int32))
-        grid.create_dataset('morton', data=np.arange(blocks, dtype=np.uint64))
+            dataset(grid, key, value)
+        dataset(grid, 'level', np.zeros(blocks, dtype=np.int32))
+        dataset(grid, 'morton', np.arange(blocks, dtype=np.uint64))
         native = f.create_group('NativeGrid')
         native.attrs.update(version='candidate-cartesian-1', centering='cell',
                             ghost_cells=0, block_kind='active-leaf',
@@ -51,29 +61,31 @@ def write_fixture(directory: Path, blocks: int) -> dict:
         # Candidate metadata is copied solely to exercise the reader. It does NOT
         # certify this synthetic h5py file as a production GridMetrics publication.
         for axis, low, high in [(1, lower_x, lower_x + 1), (2, lower_y, lower_y + 1), (3, zero, zero)]:
-            native.create_dataset(f'x{axis}_lower', data=low)
-            native.create_dataset(f'x{axis}_upper', data=high)
-            native.create_dataset(f'logical_x{axis}', data=np.arange(blocks, dtype=np.uint32) if axis == 1 else np.zeros(blocks, dtype=np.uint32))
-        native.create_dataset('cell_measure', data=np.ones(cells, dtype=np.float64))
-        field = f.create_group('Data').create_dataset('DENS', data=index.reshape(shape))
+            dataset(native, f'x{axis}_lower', low)
+            dataset(native, f'x{axis}_upper', high)
+            dataset(native, f'logical_x{axis}', np.arange(blocks, dtype=np.uint32) if axis == 1 else np.zeros(blocks, dtype=np.uint32))
+        dataset(native, 'cell_measure', np.ones(cells, dtype=np.float64))
+        field = dataset(f.create_group('Data'), 'DENS', index.reshape(shape))
         field.attrs.update(metadata_version='candidate-field-1', unit='unknown',
                            centering='cell', basis='scalar', meaning='synthetic_linear_index',
                            unit_reason='Synthetic storage workload, not physical density')
     assert path.stat().st_size < 64 * 1024 * 1024
     return {'case': f'synthetic-{blocks}-blocks', 'localEvidenceDirectory': str(directory),
             'shape': list(shape), 'cells': cells, 'fileBytes': path.stat().st_size,
-            'scientificReference': False, 'storage': 'contiguous FP64, no compression',
+            'scientificReference': False, 'storage': storage, 'compression': 'gzip level 4' if storage == 'gzip' else 'none',
             'sourceIdentity': 'not recorded; synthetic fixture only'}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-root', required=True, type=Path)
+    parser.add_argument('--storage', choices=('contiguous', 'chunked', 'gzip'), default='contiguous',
+                        help='Synthetic layout only; does not select production writer policy')
     args = parser.parse_args()
     root = args.output_root.resolve()
     # Existence is an error: retain all previous evidence, never overwrite.
     root.mkdir(parents=True, exist_ok=False)
-    runs = [write_fixture(root / f'blocks-{n}', n) for n in (4, 256)]
+    runs = [write_fixture(root / f'blocks-{n}', n, args.storage) for n in (4, 256)]
     (root / 'runs.json').write_text(json.dumps(runs, indent=2) + '\n')
     print(json.dumps({'version': 'synthetic-query-workload-1', 'runs': runs}, indent=2))
 

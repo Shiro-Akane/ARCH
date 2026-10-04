@@ -3222,3 +3222,11 @@ ci.yml唯一workflow新增Linux净安装/一次完整Node套件/lint/build，req
 新增Linux开发入口、受管项目分离、300ms自动init-only策略、原生文件/Stop/Run存活和fault-injection关闭证据链接。
 Plotfile原值/FP64/未知身份/首扫描成本与wheel未验证分开表达，CI不冒充hosted/科学PASS。
 相对链接全部核对存在，diff check；纯文档无baseline重复/Build/Preview/simulation/push/tag。
+
+## 2026-10-04 Plotfile chunk／压缩候选成本
+
+合成同数组 contiguous/chunked/gzip 六文件全部16 dataset位模式/属性一致，
+四类numeric响应除真实file身份外一致；九次隔离查询/cancel恢复/输入不变PASS。
+524288cells gzip文件约减少97.6%，首次overview约慢26.2%，仍全扫描；不改变生产writer策略。
+仅验证工具增加可选storage与处理后报告，不Build/simulation/334基线重复/push/tag。
+见PlotfileStorageLayoutCost报告/Summary；真实mixed-AMR大文件与科学/CUDA/O9仍待验证。
