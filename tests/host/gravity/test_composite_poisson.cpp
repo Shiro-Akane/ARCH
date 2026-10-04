@@ -790,6 +790,66 @@ void finite_ring_moment_contract() {
 }
 
 
+void finite_ring_enclosure_contract() {
+    using namespace Physical::Gravity;
+    RingEnclosureControl tight{};tight.maximum_boxes=128;
+    for(auto point:{std::array<double,2>{2.,0.},
+                    std::array<double,2>{.75,2.},
+                    std::array<double,2>{1.,0.},
+                    std::array<double,2>{1.,.375},
+                    std::array<double,2>{.75,0.}}) {
+        auto short_budget=tight;short_budget.maximum_boxes=16;
+        const auto broad=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,
+            point[0],point[1],1.,short_budget);
+        const auto fine=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,
+            point[0],point[1],1.,tight);
+        require(broad.bound_valid && fine.bound_valid
+            && broad.status==RingIntervalStatus::WorkLimit
+            && fine.status==RingIntervalStatus::WorkLimit,
+            "zero target produced fake certified convergence");
+        require(fine.lower<=fine.value && fine.value<=fine.upper
+            && fine.absolute_error<broad.absolute_error,
+            "range refinement failed to improve valid enclosure");
+        const auto estimate=finite_ring_potential_estimate(.5,1.,-.375,.375,1.,
+            point[0],point[1],1.);
+        require(fine.lower<=estimate.value && estimate.value<=fine.upper,
+            "diagnostic ring estimate outside reliable interval");
+        std::cout<<"RZ_RING_ENCLOSURE r="<<point[0]<<" z="<<point[1]
+            <<" lower="<<fine.lower<<" upper="<<fine.upper
+            <<" error="<<fine.absolute_error<<" broad_error="<<broad.absolute_error
+            <<" boxes="<<fine.leaf_boxes<<" range_evaluations="<<fine.range_evaluations
+            <<" target_status=WorkLimit\n";
+    }
+    const auto axis=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,0.,0.,1.,tight);
+    require(!axis.bound_valid && axis.status==RingIntervalStatus::PrecisionLimit,
+        "axis analytic ledger silently replaced by rectangle quadrature");
+    auto loose=tight;loose.absolute_target=10.;
+    const auto accepted=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,1.,0.,1.,loose);
+    require(accepted.bound_valid && accepted.status==RingIntervalStatus::Bounded
+        && accepted.absolute_error<=loose.absolute_target,"explicit loose algorithm target failed");
+    const auto zero=finite_ring_potential_enclosure(.5,1.,-.375,.375,0.,1.,0.,1.,tight);
+    require(zero.bound_valid && zero.status==RingIntervalStatus::Bounded
+        && zero.lower==0. && zero.upper==0. && zero.absolute_error==0.,
+        "zero density enclosure not exact");
+    auto invalid=tight;invalid.maximum_boxes=0;
+    require(!finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,1.,0.,1.,invalid).bound_valid,
+        "zero work budget accepted");
+    require(!finite_ring_potential_enclosure(.5,1.,-.375,.375,-1.,1.,0.,1.,tight).bound_valid,
+        "negative density accepted");
+    const auto overflow=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,
+        1.,0.,std::numeric_limits<double>::max(),tight);
+    require(!overflow.bound_valid && overflow.status==RingIntervalStatus::PrecisionLimit,
+        "overflowed potential bound silently accepted");
+    const auto unsplittable=finite_ring_potential_enclosure(1.,std::nextafter(1.,2.),
+        0.,std::numeric_limits<double>::epsilon(),1.,2.,2.,1.,tight);
+    require(unsplittable.status==RingIntervalStatus::PrecisionLimit,
+        "nonrepresentable midpoint bypassed subdivision failure");
+    for(double x:{1.,2.,4.,1.e100,std::numeric_limits<double>::max()})
+        require(finite_ring_detail::logarithm_upper(x)>=std::log(x),
+            "positive log series failed to enclose existing log");
+    std::cout<<"RZ_RING_ENCLOSURE_PASS production_values=gated tight_budget_not_converged\n";
+}
+
 void finite_ring_agm_interval_contract() {
     using namespace Physical::Gravity;
     for(double root:{1.,.5,.01,1.e-12,1.e-100,1.e-300,
@@ -1212,10 +1272,32 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="ring-enclosure") {std::cout<<std::setprecision(17);finite_ring_enclosure_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-k-interval") {std::cout<<std::setprecision(17);finite_ring_agm_interval_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary-acceptance") {boundary_original_rhs_acceptance_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary-ledger") {boundary_error_ledger_contract();return 0;}
         std::cout<<std::setprecision(17);
+        if(argc==3 && std::string(argv[1])=="ring-log-probe") {
+            const auto upper=Physical::Gravity::finite_ring_detail::logarithm_upper(std::stod(argv[2]));
+            require(std::isfinite(upper),"log probe outside finite domain");
+            std::cout<<"{\"upper\":"<<upper<<"}\n";return 0;
+        }
+        if(argc>=10 && std::string(argv[1])=="ring-enclosure-probe") {
+            Physical::Gravity::RingEnclosureControl control{};
+            control.maximum_boxes=std::stoull(argv[9]);
+            if(argc>10)control.relative_target=std::stod(argv[10]);
+            if(argc>11)control.absolute_target=std::stod(argv[11]);
+            const auto value=Physical::Gravity::finite_ring_potential_enclosure(
+                std::stod(argv[2]),std::stod(argv[3]),std::stod(argv[4]),std::stod(argv[5]),
+                std::stod(argv[6]),std::stod(argv[7]),std::stod(argv[8]),
+                constants::gravity::cgs::gravitational_constant,control);
+            require(value.bound_valid,"probe failed to produce a valid interval");
+            std::cout<<"{\"status\":"<<static_cast<int>(value.status)
+                <<",\"lower\":"<<value.lower<<",\"upper\":"<<value.upper
+                <<",\"value\":"<<value.value<<",\"absolute_error\":"<<value.absolute_error
+                <<",\"boxes\":"<<value.leaf_boxes
+                <<",\"range_evaluations\":"<<value.range_evaluations<<"}\n";return 0;
+        }
         if(argc==3 && std::string(argv[1])=="ring-k-probe") {
             const auto value=Physical::Gravity::ring_elliptic_k_interval(std::strtod(argv[2],nullptr));
             std::cout<<"{\"status\":"<<static_cast<int>(value.status)

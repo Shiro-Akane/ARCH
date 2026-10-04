@@ -9,6 +9,8 @@
 #include <cmath>
 #include <limits>
 #include <cstdint>
+#include <vector>
+#include <algorithm>
 #include "core/ArchPortability.h"
 #include "core/CompensatedSum.h"
 #include "physics/constant/PhysicalConstants.h"
@@ -277,5 +279,208 @@ ARCH_HEAVY_INLINE RingPotentialResult finite_ring_potential_estimate(
         previous=current;
     }
     result.status=RingPotentialStatus::WorkLimit;return result;
+}
+
+/** Reliable range integration; host owns subdivision resources, shared leaves
+ * own K/distance/log mathematics. No second gravity solver or user knob.
+ */
+struct RingEnclosureControl {
+    double relative_target=0.,absolute_target=0.;
+    std::uint64_t maximum_boxes=1024;
+};
+struct RingPotentialEnclosure {
+    double lower=std::numeric_limits<double>::quiet_NaN();
+    double upper=std::numeric_limits<double>::quiet_NaN();
+    double value=std::numeric_limits<double>::quiet_NaN();
+    double absolute_error=std::numeric_limits<double>::infinity();
+    RingIntervalStatus status=RingIntervalStatus::InvalidInput;
+    std::uint64_t leaf_boxes=0,range_evaluations=0;
+    bool bound_valid=false;
+};
+namespace finite_ring_detail {
+struct PositiveInterval {double lower=0.,upper=0.;};
+ARCH_INLINE double quotient_up(double a,double b) {
+    if(a==0.)return 0.;
+    return std::nextafter(a/b,std::numeric_limits<double>::infinity());
+}
+ARCH_INLINE double sum_up(double a,double b) {
+    return a==0. && b==0. ? 0. : positive_up(a+b);
+}
+/** Lower/upper hypot of nonnegative exact stored inputs, without squaring scales. */
+ARCH_HEAVY_INLINE PositiveInterval distance_interval(double x,double y) {
+    const double scale=x>y?x:y;
+    if(scale==0.)return {};
+    const double xl=positive_down(x/scale),yl=positive_down(y/scale);
+    const double xu=quotient_up(x,scale),yu=quotient_up(y,scale);
+    const double lo=positive_down(positive_down(xl*xl)+positive_down(yl*yl));
+    const double hi=sum_up(product_up(xu,xu),product_up(yu,yu));
+    return {positive_down(scale*positive_down(std::sqrt(lo))),
+            product_up(scale,positive_up(std::sqrt(hi)))};
+}
+ARCH_INLINE PositiveInterval absolute_offset_range(double lo,double hi,double observer) {
+    double nearest=0.;
+    if(observer<lo)nearest=positive_down(lo-observer);
+    else if(observer>hi)nearest=positive_down(observer-hi);
+    const double a=lo==observer?0.:positive_up(std::abs(lo-observer));
+    const double b=hi==observer?0.:positive_up(std::abs(hi-observer));
+    return {nearest,a>b?a:b};
+}
+/** Upper log via positive atanh series, including an explicit geometric tail.
+ * z in [0, 1/3+roundoff]. No std::log accuracy assumption in a certificate.
+ */
+ARCH_HEAVY_INLINE double log_series_upper(double z) {
+    if(z==0.)return 0.;
+    const double z2=product_up(z,z);
+    double power=z,sum=0.;
+    for(int k=0;k<48;++k) {
+        sum=sum_up(sum,quotient_up(power,2*k+1.));
+        power=product_up(power,z2);
+    }
+    const double denominator=positive_down(97.*positive_down(1.-z2));
+    return product_up(2.,sum_up(sum,quotient_up(power,denominator)));
+}
+ARCH_HEAVY_INLINE double logarithm_upper(double x) {
+    if(!(x>=1.) || !std::isfinite(x))return std::numeric_limits<double>::infinity();
+    if(x==1.)return 0.;
+    int exponent=0;
+    const double m=2*std::frexp(x,&exponent); // Exact binary scaling; 1<=m<2.
+    --exponent;
+    const double z=quotient_up(positive_up(m-1.),positive_down(m+1.));
+    const double ln2=log_series_upper(quotient_up(1.,3.));
+    return sum_up(product_up(static_cast<double>(exponent),ln2),log_series_upper(z));
+}
+struct RingBox {
+    double rl,rh,zl,zh;
+    PositiveInterval integral{};
+    RingIntervalStatus status=RingIntervalStatus::InvalidInput;
+};
+/** Integral enclosure of r*K(d/s)/s over one source rectangle.
+ * Contact bound: denominator in angular integral >= max(q,2 theta/pi),
+ * hence K <= pi/2*(1+log(1/q)). r/s<=1 and s<=S.
+ * Each observer-vertex quadrant contributes <=
+ * area*pi/2*(2+log(S/max(a,b))); integral log distance is finite.
+ */
+ARCH_HEAVY_INLINE RingBox enclose_box(double rl,double rh,double zl,double zh,
+    double ro,double zo) {
+    RingBox result{rl,rh,zl,zh};
+    const auto dr=absolute_offset_range(rl,rh,ro);
+    const auto dz=absolute_offset_range(zl,zh,zo);
+    const auto dmin=distance_interval(dr.lower,dz.lower);
+    const auto dmax=distance_interval(dr.upper,dz.upper);
+    const double srlo=positive_down(ro+rl),srhi=positive_up(ro+rh);
+    const auto smin=distance_interval(srlo,dz.lower);
+    const auto smax=distance_interval(srhi,dz.upper);
+    if(!std::isfinite(smax.upper) || !(smax.upper>0.)) {
+        result.status=RingIntervalStatus::PrecisionLimit;return result;
+    }
+    const bool contact=rl<=ro && ro<=rh && zl<=zo && zo<=zh;
+    if(contact) {
+        const double a[]{ro==rl?0.:positive_up(ro-rl),ro==rh?0.:positive_up(rh-ro)};
+        const double b[]{zo==zl?0.:positive_up(zo-zl),zo==zh?0.:positive_up(zh-zo)};
+        double upper=0.;
+        for(double x:a)for(double y:b)if(x>0. && y>0.) {
+            const double extent=x>y?x:y;
+            const double ratio=quotient_up(smax.upper,extent);
+            const double logarithm=logarithm_upper(ratio);
+            const double area=product_up(x,y);
+            const double factor=product_up(.5,positive_up(arch::constants::math::pi));
+            upper=sum_up(upper,product_up(product_up(area,factor),sum_up(2.,logarithm)));
+        }
+        result.integral={0.,upper};
+    } else {
+        if(!(dmin.lower>0.) || !(smin.lower>0.)) {
+            result.status=RingIntervalStatus::PrecisionLimit;return result;
+        }
+        const double qlo=positive_down(dmin.lower/smax.upper);
+        const double qhi=std::min(1.,quotient_up(dmax.upper,smin.lower));
+        if(!(qlo>0.)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
+        const auto khigh=ring_elliptic_k_interval(qlo);
+        const auto klow=ring_elliptic_k_interval(qhi);
+        if(khigh.status!=RingIntervalStatus::Bounded || klow.status!=RingIntervalStatus::Bounded) {
+            result.status=RingIntervalStatus::PrecisionLimit;return result;
+        }
+        const double area_lo=positive_down(positive_down(rh-rl)*positive_down(zh-zl));
+        const double area_hi=product_up(positive_up(rh-rl),positive_up(zh-zl));
+        const double kernel_lo=positive_down(positive_down(rl/smax.upper)*klow.lower);
+        const double kernel_hi=product_up(quotient_up(rh,smin.lower),khigh.upper);
+        result.integral={positive_down(area_lo*kernel_lo),product_up(area_hi,kernel_hi)};
+    }
+    if(!std::isfinite(result.integral.upper) || result.integral.lower>result.integral.upper) {
+        result.status=RingIntervalStatus::PrecisionLimit;return result;
+    }
+    result.status=RingIntervalStatus::Bounded;return result;
+}
+} // namespace finite_ring_detail
+
+/** Encloses the exact integral for stored geometry/density/G, including contact.
+ * Bounds remain diagnostic when a requested target fails; status WorkLimit is
+ * not successful convergence. Resource controller is CPU only at this node.
+ */
+inline RingPotentialEnclosure finite_ring_potential_enclosure(
+    double rl,double rh,double zl,double zh,double density,
+    double ro,double zo,double G,const RingEnclosureControl& control) {
+    using namespace finite_ring_detail;
+    RingPotentialEnclosure result{};
+    if(!std::isfinite(rl)||!std::isfinite(rh)||rl<0.||!(rl<rh)
+        ||!std::isfinite(zl)||!std::isfinite(zh)||!(zl<zh)
+        ||!std::isfinite(ro)||ro<0.||!std::isfinite(zo)
+        ||!std::isfinite(density)||density<0.||!std::isfinite(G)||!(G>0.)
+        ||!std::isfinite(control.relative_target)||control.relative_target<0.
+        ||!std::isfinite(control.absolute_target)||control.absolute_target<0.
+        ||control.maximum_boxes==0 || control.maximum_boxes>65536)return result;
+    if(density==0.) {
+        result.lower=result.upper=result.value=result.absolute_error=0.;
+        result.status=RingIntervalStatus::Bounded;result.bound_valid=true;return result;
+    }
+    // Axis belongs to the existing analytic branch. Its certified arithmetic
+    // ledger is pending; do not replace it by rectangle quadrature.
+    if(ro==0.) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
+    const double factor_lo=positive_down(positive_down(4.*G)*density);
+    const double factor_hi=product_up(product_up(4.,G),density);
+    if(!std::isfinite(factor_hi)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
+    std::vector<RingBox> boxes{enclose_box(rl,rh,zl,zh,ro,zo)};
+    result.range_evaluations=1;
+    for(;;) {
+        double sum_lo=0.,sum_hi=0.,largest=-1.;std::size_t worst=0;
+        for(std::size_t i=0;i<boxes.size();++i) {
+            const auto& box=boxes[i];
+            if(box.status!=RingIntervalStatus::Bounded) {
+                result.status=box.status;result.bound_valid=false;return result;
+            }
+            if(box.integral.lower!=0.)sum_lo=positive_down(sum_lo+box.integral.lower);
+            sum_hi=sum_up(sum_hi,box.integral.upper);
+            const double width=box.integral.upper-box.integral.lower;
+            if(width>largest) {largest=width;worst=i;}
+        }
+        result.lower=-product_up(factor_hi,sum_hi);
+        result.upper=-positive_down(factor_lo*sum_lo);
+        // Same-sign endpoints: this form preserves a representable endpoint
+        // when halving a subnormal endpoint would round it outside the interval.
+        result.value=result.lower+.5*(result.upper-result.lower);
+        result.absolute_error=positive_up(std::max(result.value-result.lower,result.upper-result.value));
+        result.leaf_boxes=boxes.size();
+        result.bound_valid=std::isfinite(result.lower)&&std::isfinite(result.upper)
+            &&std::isfinite(result.value)&&std::isfinite(result.absolute_error);
+        if(!result.bound_valid) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
+        const double safe_target=std::max(control.absolute_target,
+            positive_down(control.relative_target*std::abs(result.value)));
+        if(result.absolute_error<=safe_target) {result.status=RingIntervalStatus::Bounded;return result;}
+        if(boxes.size()>=control.maximum_boxes) {result.status=RingIntervalStatus::WorkLimit;return result;}
+        const auto parent=boxes[worst];
+        RingBox first=parent,second=parent;
+        if(parent.rh-parent.rl>=parent.zh-parent.zl) {
+            const double mid=.5*parent.rl+.5*parent.rh;
+            if(!(parent.rl<mid && mid<parent.rh)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
+            first.rh=second.rl=mid;
+        } else {
+            const double mid=.5*parent.zl+.5*parent.zh;
+            if(!(parent.zl<mid && mid<parent.zh)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
+            first.zh=second.zl=mid;
+        }
+        first=enclose_box(first.rl,first.rh,first.zl,first.zh,ro,zo);
+        second=enclose_box(second.rl,second.rh,second.zl,second.zh,ro,zo);
+        result.range_evaluations+=2;
+        boxes[worst]=first;boxes.push_back(second);
+    }
 }
 } // namespace Physical::Gravity
