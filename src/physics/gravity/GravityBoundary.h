@@ -225,7 +225,8 @@ enum class RingBoundaryStatus : unsigned char { Bounded, WorkLimit, PrecisionLim
 struct RingBoundaryEvaluation {
     RingBoundaryStatus status=RingBoundaryStatus::PrecisionLimit;
     GravitySolveIdentity source;
-    std::uint64_t source_generation=0,leaf_evaluations=0,range_evaluations=0;
+    std::uint64_t source_generation=0,leaf_evaluations=0,range_evaluations=0,
+        kernel_enclosures=0,agm_iterations=0;
     std::vector<double> values,lower,upper;
     std::vector<arch::elliptic::BoundaryPotentialError> errors;
 };

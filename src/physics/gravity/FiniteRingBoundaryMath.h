@@ -294,7 +294,7 @@ struct RingPotentialEnclosure {
     double value=std::numeric_limits<double>::quiet_NaN();
     double absolute_error=std::numeric_limits<double>::infinity();
     RingIntervalStatus status=RingIntervalStatus::InvalidInput;
-    std::uint64_t leaf_boxes=0,range_evaluations=0;
+    std::uint64_t leaf_boxes=0,range_evaluations=0,kernel_enclosures=0,agm_iterations=0;
     bool bound_valid=false;
 };
 namespace finite_ring_detail {
@@ -647,10 +647,80 @@ ARCH_HEAVY_INLINE SignedInterval single_leaf_far_potential_enclosure(
     if(interval_finite(potential))potential.upper=std::min(0.,potential.upper);
     return potential;
 }
+/** Range of r*K(d/s)/s for enclosed exact quadrature coordinates.
+ * Positive separation only; singular samples are never shifted or softened.
+ */
+ARCH_HEAVY_INLINE SignedInterval separated_kernel_enclosure(
+    SignedInterval radius,SignedInterval axial,double ro,double zo,
+    std::uint64_t* kernel_count=nullptr,std::uint64_t* agm_count=nullptr) {
+    if(!interval_finite(radius)||!interval_finite(axial)||radius.lower<0.)
+        return interval_invalid();
+    const auto radial=absolute_offset_range(radius.lower,radius.upper,ro);
+    const auto vertical=absolute_offset_range(axial.lower,axial.upper,zo);
+    const auto dmin=distance_interval(radial.lower,vertical.lower);
+    const auto dmax=distance_interval(radial.upper,vertical.upper);
+    const auto smin=distance_interval(positive_down(ro+radius.lower),vertical.lower);
+    const auto smax=distance_interval(sum_up(ro,radius.upper),vertical.upper);
+    if(!(dmin.lower>0.)||!(smin.lower>0.)||!std::isfinite(smax.upper))
+        return interval_invalid();
+    const double qlo=positive_down(dmin.lower/smax.upper);
+    const double qhi=std::min(1.,quotient_up(dmax.upper,smin.lower));
+    if(!(qlo>0.))return interval_invalid();
+    const auto high=ring_elliptic_k_interval(qlo),low=ring_elliptic_k_interval(qhi);
+    if(kernel_count)*kernel_count+=2;
+    if(agm_count)*agm_count+=high.iterations+low.iterations;
+    if(high.status!=RingIntervalStatus::Bounded||low.status!=RingIntervalStatus::Bounded)
+        return interval_invalid();
+    return {positive_down(positive_down(radius.lower/smax.upper)*low.lower),
+            product_up(quotient_up(radius.upper,smin.lower),high.upper)};
+}
+/** Two-point tensor Gauss with a proved fourth derivative remainder.
+ * From the Newton angular integral, |d^m(1/D)/dx^m| <= m!/d^(m+1).
+ * h=r*K/s=(1/4)integral r/D dtheta:
+ * |h_rrrr| <= (pi/2)*4!*(rh/d^5+1/d^4),
+ * |h_zzzz| <= (pi/2)*4!*rh/d^5.
+ * Tensor positive weights give area*pi/360 times the dimensionless sum
+ * below. Node 1/sqrt(3), geometry, kernel and reduction are all enclosed.
+ * This is not a difference between quadratures or an inferred tolerance.
+ */
+ARCH_HEAVY_INLINE SignedInterval separated_gauss2_integral_enclosure(
+    double rl,double rh,double zl,double zh,double ro,double zo,double d_lower,
+    std::uint64_t* kernel_count=nullptr,std::uint64_t* agm_count=nullptr) {
+    if(!(d_lower>0.))return interval_invalid();
+    const auto dr=offset_interval(rh,rl),dz=offset_interval(zh,zl);
+    const auto hr=interval_product(dr,{.5,.5}),hz=interval_product(dz,{.5,.5});
+    const auto mr=interval_sum({rl,rl},hr),mz=interval_sum({zl,zl},hz);
+    const SignedInterval root{positive_down(std::sqrt(3.)),positive_up(std::sqrt(3.))};
+    const auto node=interval_quotient_positive({1.,1.},root);
+    SignedInterval sum{};
+    for(double sign_r:{-1.,1.})for(double sign_z:{-1.,1.}) {
+        const auto radius=interval_sum(mr,interval_product(hr,
+            interval_product(node,{sign_r,sign_r})));
+        const auto axial=interval_sum(mz,interval_product(hz,
+            interval_product(node,{sign_z,sign_z})));
+        const auto kernel=separated_kernel_enclosure(radius,axial,ro,zo,kernel_count,agm_count);
+        if(!interval_finite(kernel))return interval_invalid();
+        sum=interval_sum(sum,kernel);
+    }
+    const auto area=interval_product(dr,dz);
+    const auto quadrature=interval_product(interval_product(area,{.25,.25}),sum);
+    const double qr=quotient_up(dr.upper,d_lower),qz=quotient_up(dz.upper,d_lower);
+    const double qr2=product_up(qr,qr),qz2=product_up(qz,qz);
+    const double radial=quotient_up(rh,d_lower);
+    const double remainder=product_up(quotient_up(
+        product_up(area.upper,positive_up(arch::constants::math::pi)),360.),
+        sum_up(product_up(product_up(qr2,qr2),sum_up(radial,1.)),
+               product_up(product_up(qz2,qz2),radial)));
+    if(!interval_finite(quadrature)||!std::isfinite(remainder))return interval_invalid();
+    auto result=interval_sum(quadrature,{-remainder,remainder});
+    if(interval_finite(result))result.lower=std::max(0.,result.lower);
+    return result;
+}
 struct RingBox {
     double rl,rh,zl,zh;
     PositiveInterval integral{};
     RingIntervalStatus status=RingIntervalStatus::InvalidInput;
+    std::uint64_t kernel_enclosures=0,agm_iterations=0;
 };
 /** Integral enclosure of r*K(d/s)/s over one source rectangle.
  * Contact bound: denominator in angular integral >= max(q,2 theta/pi),
@@ -694,6 +764,8 @@ ARCH_HEAVY_INLINE RingBox enclose_box(double rl,double rh,double zl,double zh,
         if(!(qlo>0.)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
         const auto khigh=ring_elliptic_k_interval(qlo);
         const auto klow=ring_elliptic_k_interval(qhi);
+        result.kernel_enclosures+=2;
+        result.agm_iterations+=khigh.iterations+klow.iterations;
         if(khigh.status!=RingIntervalStatus::Bounded || klow.status!=RingIntervalStatus::Bounded) {
             result.status=RingIntervalStatus::PrecisionLimit;return result;
         }
@@ -702,6 +774,14 @@ ARCH_HEAVY_INLINE RingBox enclose_box(double rl,double rh,double zl,double zh,
         const double kernel_lo=positive_down(positive_down(rl/smax.upper)*klow.lower);
         const double kernel_hi=product_up(quotient_up(rh,smin.lower),khigh.upper);
         result.integral={positive_down(area_lo*kernel_lo),product_up(area_hi,kernel_hi)};
+        const auto gauss=separated_gauss2_integral_enclosure(
+            rl,rh,zl,zh,ro,zo,dmin.lower,
+            &result.kernel_enclosures,&result.agm_iterations);
+        if(interval_finite(gauss)) {
+            result.integral.lower=std::max(result.integral.lower,gauss.lower);
+            result.integral.upper=std::min(result.integral.upper,gauss.upper);
+        } // Disjoint bounds below fail; never overwrite with a looser fallback.
+
     }
     if(!std::isfinite(result.integral.upper) || result.integral.lower>result.integral.upper) {
         result.status=RingIntervalStatus::PrecisionLimit;return result;
@@ -751,6 +831,8 @@ inline RingPotentialEnclosure finite_ring_potential_enclosure(
     if(!std::isfinite(factor_hi)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
     std::vector<RingBox> boxes{enclose_box(rl,rh,zl,zh,ro,zo)};
     result.range_evaluations=1;
+    result.kernel_enclosures=boxes[0].kernel_enclosures;
+    result.agm_iterations=boxes[0].agm_iterations;
     for(;;) {
         double sum_lo=0.,sum_hi=0.,largest=-1.;std::size_t worst=0;
         for(std::size_t i=0;i<boxes.size();++i) {
@@ -791,6 +873,8 @@ inline RingPotentialEnclosure finite_ring_potential_enclosure(
         first=enclose_box(first.rl,first.rh,first.zl,first.zh,ro,zo);
         second=enclose_box(second.rl,second.rh,second.zl,second.zh,ro,zo);
         result.range_evaluations+=2;
+        result.kernel_enclosures+=first.kernel_enclosures+second.kernel_enclosures;
+        result.agm_iterations+=first.agm_iterations+second.agm_iterations;
         boxes[worst]=first;boxes.push_back(second);
     }
 }

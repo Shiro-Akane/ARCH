@@ -33,12 +33,19 @@ def gauss(n):
         rows.append((x,2/((1-x*x)*derivative*derivative)))
     return rows
 
-def reference(values,n,precision):
+def reference(values,n,precision,angular_samples=None):
     with localcontext() as ctx:
         ctx.prec=precision
         rl,rh,zl,zh,rho,ro,zo=map(D.from_float,values)
         rule=gauss(n)
-        angles=[(cosine(PI*x),PI*w) for x,w in rule]
+        if angular_samples is None:
+            angles=[(cosine(PI*x),PI*w) for x,w in rule]
+        else:
+            angles=[]
+            for k in range(angular_samples):
+                angle=2*PI*(D(k)+D(".5"))/angular_samples
+                if angle>PI:angle-=2*PI
+                angles.append((cosine(angle),2*PI/angular_samples))
         radial=[((rh+rl)/2+(rh-rl)*x/2,(rh-rl)*w/2) for x,w in rule]
         axial=[((zh+zl)/2+(zh-zl)*x/2,(zh-zl)*w/2) for x,w in rule]
         total=D(0)
@@ -51,25 +58,39 @@ def reference(values,n,precision):
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--probe',type=Path,required=True)
-    ap.add_argument('--output',type=Path,required=True);a=ap.parse_args()
+    ap.add_argument('--output',type=Path,required=True)
+    ap.add_argument('--separated',action='store_true');a=ap.parse_args()
+    if a.separated:
+        cases=[(.5,1.,-.23,.71,1.,ro,zo)
+               for ro,zo in ((2.,0.),(.75,2.),(.01,2.),(2.,-.7))]
+        controls=('8192','1e-10')
+        specifications=((12,80,128),(16,100,256))
+    else:
+        cases=[]
+        for rl in (0.,.5):
+            for distance in (1.e3,1.e6,1.e12):
+                for dr,dz in ((1.,0.),(.6,.8),(.6,-.8)):
+                    cases.append((rl,1.,-.23,.71,1.,distance*dr,distance*dz))
+        controls=('1','1e-10')
+        specifications=((12,80,None),(16,100,None))
     rows=[]
-    for rl in (0.,.5):
-        for distance in (1.e3,1.e6,1.e12):
-            for dr,dz in ((1.,0.),(.6,.8),(.6,-.8)):
-                values=(rl,1.,-.23,.71,1.,distance*dr,distance*dz)
-                q=subprocess.run([str(a.probe.resolve()),'ring-enclosure-probe',
-                    *map(repr,values), '1','1e-10'],capture_output=True,text=True,check=True)
-                bound=json.loads(q.stdout)
-                assert bound['status']==0 and bound['range_evaluations']==0
-                refs=[reference(values,n,p) for n,p in ((12,80),(16,100))]
-                for v in refs:
-                    assert D.from_float(bound['lower'])<=v<=D.from_float(bound['upper']),(values,bound,str(v))
-                rows.append({'exactInputHex':[x.hex() for x in values],
-                    'newtonOrder12Precision80':str(refs[0]),
-                    'newtonOrder16Precision100':str(refs[1]),'enclosure':bound})
-                print('contained',rl,distance,dr,dz,flush=True)
+    for values in cases:
+        q=subprocess.run([str(a.probe.resolve()),'ring-enclosure-probe',
+            *map(repr,values),*controls],capture_output=True,text=True,check=True)
+        bound=json.loads(q.stdout)
+        assert bound['status']==0
+        if not a.separated:assert bound['range_evaluations']==0
+        refs=[reference(values,n,p,angular) for n,p,angular in specifications]
+        for v in refs:
+            assert D.from_float(bound['lower'])<=v<=D.from_float(bound['upper']),(values,bound,str(v))
+        rows.append({'exactInputHex':[x.hex() for x in values],
+            'newtonOrder12Precision80':str(refs[0]),
+            'newtonOrder16Precision100':str(refs[1]),'enclosure':bound})
+        print('contained',values,flush=True)
     result={'status':'PASS','cases':len(rows),'reference':'independent full-azimuth 3D Newton product quadrature',
         'orders':[12,16],'decimalPrecisions':[80,100],
+        'sampleDomain':'separated' if a.separated else 'far',
+        'angularSamples':[128,256] if a.separated else 'tensor Gauss 12/16',
         'scope':'diagnostic containment, not certified quadrature error or full RZ scientific acceptance','rows':rows}
     a.output.parent.mkdir(parents=True,exist_ok=True)
     a.output.write_text(json.dumps(result,indent=2)+'\n')

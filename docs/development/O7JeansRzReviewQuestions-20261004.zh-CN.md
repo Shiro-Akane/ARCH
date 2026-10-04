@@ -313,6 +313,12 @@ $$
 完整 assembly/residual certificate 和实际 AMR source publication 尚未完成。
 production RZ gate 继续保留；实际未变化的 ARCH ELF 沿用匹配的 JENS frozen receipt。
 
+非接触源积分新增 enclosed 两点 tensor Gauss 与独立推导的四阶余项界；
+四个源外样本在原内部1e-10预算下通过，4096-work-limit失败保留为反例。
+实际 K 调用/AGM iterations 已贯通源和原生 face consumer；
+详见 RZSeparatedGaussEnclosureNode-20261005.zh-CN.md。
+这不关闭 contact/inside 严格积分或完整 production residual finding。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

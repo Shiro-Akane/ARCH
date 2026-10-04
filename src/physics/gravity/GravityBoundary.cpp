@@ -231,6 +231,8 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
                 ring_density_[node.cell],op.faces()[face].center[0],
                 op.faces()[face].center[1],source.gravitational_constant,leaf_control);
             result.range_evaluations+=leaf.range_evaluations;
+            result.kernel_enclosures+=leaf.kernel_enclosures;
+            result.agm_iterations+=leaf.agm_iterations;
             if(!leaf.bound_valid) {
                 result.status=RingBoundaryStatus::PrecisionLimit;return result;
             }
