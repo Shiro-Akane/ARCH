@@ -114,7 +114,7 @@ _CUDA_FOCUSED_LINK_OBJECT_CONSUMERS = {
         ("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_species",
          "arch_cuda_backend_eos_utils")),
     "arch_cuda_burn_controller_parity": (
-        ("tests/cuda/microphysics/burn/test_burn_controller_parity.cu",),
+        ("tests/cuda/microphysics/burn/test_burn_controller_parity.cu", "src/core/config/compositioninput.cpp"),
         ("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_species",
          "arch_cuda_backend_eos_utils")),
 }
@@ -588,7 +588,7 @@ def audit_tree(root: pathlib.Path):
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
         "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
-        "src/core/config/RuntimeParams.h": "parser.GetBool",
+        "src/core/config/RuntimeParams.h": ("arch::config::AnalyzeConfigurationInput", "input.RequireDeclaredInputs();"),
         "src/driver/schedule/DriverControl.h": "1.0e-12",
         "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
         "src/physics/eos/eos_Utils.h": "get_isentropic_state_at_pressure_factor",
@@ -603,7 +603,8 @@ def audit_tree(root: pathlib.Path):
     }
     for relative, required in protected.items():
         path = root / relative
-        if not path.is_file() or required not in path.read_text(encoding="utf-8", errors="ignore"):
+        if not path.is_file() or any(token not in path.read_text(encoding="utf-8", errors="ignore")
+                                   for token in (required if isinstance(required, tuple) else (required,))):
             violations.append(f"protected mainline authority changed: {relative}")
 
     sources = [(path, path.read_text(encoding="utf-8", errors="ignore"))

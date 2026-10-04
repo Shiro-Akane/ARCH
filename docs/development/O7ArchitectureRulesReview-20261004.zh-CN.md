@@ -39,3 +39,10 @@ fixture 失效。迁移该 fixture 的实际 gate 内容，加入上述反例，
 复用现有 tooling discovery 和架构入口，不添加独立 CI workflow，也不降低断言。
 完成现有架构套件、实际源树审计和相应配置执行 gate 后，才关闭这两条 finding。
 测试目录中的微型 fixture 不构成新的 ARCH checkout；本机工作区继续唯一。
+
+## 3. 实施验收（2026-10-04）
+
+依据08ae94684的精确批准，生产规则、既有fixture与九类反例已同批迁移。
+实际architecture 108/108、tooling完整discovery 409/409、配置/API/checkpoint执行7/7、最终真实源树audit均PASS。
+上述两条本地finding关闭；历史候选/失败记录保留，不冒称GitHub CI或O7整体验收完成。
+详见O7ApprovedArchitectureAndJeansParent-20261004.zh-CN.md及对应处理后summary。

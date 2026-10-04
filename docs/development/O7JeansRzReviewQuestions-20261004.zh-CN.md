@@ -103,3 +103,11 @@ CPU 对应科学子 gate 通过后统一做受影响 CUDA 检查；已有完整�
 可独立执行长轨迹，未批准的新 RZ 不启动验收长跑。
 继续分别标记实现、工程验证、科学 review、性能，使用同一 ARCH 工作区，
 不新增外部软件依赖或独立 CI 矩阵；原始数据及全量日志留本机。
+
+## 5. 父态静态子 gate 实施记录（2026-10-04）
+
+按4.1节补充6个真实restriction→EOS→JENS父态样本：
+Cartesian、内部RZ轴线及离轴，单/双组分，相反速度保留总能量。
+独立体积分与caloric参考PASS；最大相对误差2.7056947525674304e-16。
+预算仅为声明的静态舍入传播，不扩展至演化/高Mach，详见O7ApprovedArchitectureAndJeansParent-20261004.zh-CN.md。
+阈值、容量和宏步/regrid/restart生命周期继续实施；RZ 4.2的finding和待审设计保持开放。

@@ -1,0 +1,92 @@
+{
+  "authority": "08ae94684d433ddbb7398a9de88c4fb9d09070b4",
+  "sourceHeadBeforeImplementation": "08ae94684d433ddbb7398a9de88c4fb9d09070b4",
+  "architecture": {
+    "actualSourceAuditExitCode": 0,
+    "existingSuiteTests": 108,
+    "toolingDiscoveryTests": 409,
+    "approvedMutationClasses": [
+      "missing-analysis",
+      "missing-declarations",
+      "old-GetBool-only",
+      "missing-helper",
+      "replaced-helper",
+      "extra-backend-core",
+      "missing-EOS-object",
+      "replaced-EOS-object",
+      "reordered-EOS-objects"
+    ],
+    "closedLocalFindings": [
+      "audit_tree.protected[src/core/config/RuntimeParams.h]",
+      "_CUDA_FOCUSED_LINK_OBJECT_CONSUMERS[arch_cuda_burn_controller_parity]"
+    ],
+    "newScopeExceptions": false,
+    "githubCiClaim": false
+  },
+  "configExecution": {
+    "pass": 7,
+    "fail": 0,
+    "cases": [
+      "configuration_api_contract",
+      "configuration_entry_contract",
+      "configuration_v3_contract",
+      "config_input_records",
+      "case_configuration",
+      "configuration_input",
+      "checkpoint_compatibility"
+    ]
+  },
+  "jeansParent": {
+    "cases": 6,
+    "charts": [
+      "Cartesian",
+      "internal-RZ-axis",
+      "internal-RZ-off-axis"
+    ],
+    "closures": [
+      "single",
+      "frozen-two-species-IdealGas"
+    ],
+    "actualPath": "GridMetrics::CellVolume -> amr::regrid_math::restrict_family -> parent EOS -> JeansDiagnostics::evaluate_cell",
+    "independentReference": "long-double full-ring/Cartesian volume integrals of rho/momentum/E/rhoX + caloric law, pi/G literals",
+    "maxRelativeError": 2.7056947525674304e-16,
+    "engineeringArithmeticBound": 4.88498130835069e-15,
+    "boundBasis": "gamma_12 arithmetic propagation plus existing 16-double-epsilon well-conditioned EOS/Jeans fixture bound, not trajectory tolerance",
+    "childSoundOrTemperatureAveraging": false,
+    "retainsUnresolvedKineticEnergy": true,
+    "lifecycleAcceptance": false,
+    "thresholdCapacityAcceptance": false,
+    "cudaAcceptance": false,
+    "testExecutableSha256": "096ab7e14768135c9e1c93f43e8da838e10be049d9379dd63481afab1e8ce4cc"
+  },
+  "localRawRoot": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/core-approved-architecture-20261004",
+  "historicalFixtureRelocation": [
+    {
+      "from": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-architecture-current-20261004/tracked-source",
+      "to": "/home/arch/validation-archives/o7-pre-review-fixtures-20261004/architecture-tracked-source",
+      "reason": "historical source fixture archive, not production source; no files deleted"
+    },
+    {
+      "from": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/studio-ci-candidate-20261004",
+      "to": "/home/arch/validation-archives/o7-pre-review-fixtures-20261004/studio-ci-candidate-20261004",
+      "reason": "historical source fixture archive, not production source; no files deleted"
+    }
+  ],
+  "initialFailuresPreserved": [
+    "WSL remote reflog permission failure; existing Git transport refreshed ref",
+    "complete architecture suite initially scanned historical source fixtures",
+    "system Python tooling discovery had six missing scientific dependency imports; existing venv ran all 409",
+    "first Jeans test invocation did not call new function; corrected before claiming parent coverage"
+  ],
+  "pending": [
+    "JENS threshold/capacity/accepted-macrostep/regrid/restart/disabled-path checks",
+    "RZ angular-momentum discrete design",
+    "finite-ring near/far and error budgets",
+    "full scientific and CUDA acceptance"
+  ],
+  "testedSourceFingerprints": {
+    "tools/audit_architecture.py": "1988951dca597322c38ac8a4d42b010049fef25fac8b37f40ec4ab7832716477",
+    "tests/tooling/architecture/test_audit_architecture.py": "f93155569ce95dddea1b8a0d714f2e241474c9d97d3245a9158345340c130bac",
+    "tests/host/core/test_jeans_diagnostics.cpp": "6804f39ed16a0ca7e1f3c91dde60615bc127cbc508bda448ccc36ef67127a66d"
+  }
+}

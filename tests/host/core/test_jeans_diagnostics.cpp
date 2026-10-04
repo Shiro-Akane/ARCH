@@ -7,6 +7,7 @@
  */
 #include "physics/diagnostics/JeansDiagnostics.h"
 #include "physics/eos/IdealGas.h"
+#include "amr/transfer/RegridTransferMath.h"
 #include "../../math/physics/JeansNumericCases.h"
 #include <array>
 #include <limits>
@@ -14,6 +15,97 @@
 #include <iomanip>
 #include <stdexcept>
 #include <algorithm>
+
+namespace {
+/** Compare real conservative restriction + EOS against independent caloric integrals.
+ * This is a bounded static parent-state gate, not lifecycle or RZ swirl acceptance.
+ */
+void parent_state_reference()
+{
+    constexpr long double pi=3.141592653589793238462643383279502884L;
+    constexpr long double G=6.67430e-8L;
+    const double u=std::numeric_limits<double>::epsilon()/2.;
+    // Four positive-volume products/sums, measure conversion and state
+    // recovery: gamma_12 propagates the bounded arithmetic stage. The existing
+    // well-conditioned IdealGas/Jeans closure retains its 16 epsilon bound.
+    const double bound=12*u/(1-12*u)+16*std::numeric_limits<double>::epsilon();
+    SpeciesManager empty;
+    IdealGas simple(1.5,empty);
+    SpeciesManager species;
+    species.add_species("first",1.,1.,1.5,2.);
+    species.add_species("second",2.,1.,2.,4.);
+    IdealGas mixture(1.4,species);
+    double maximum=0.;
+    int cases=0;
+    for(int chart=0;chart<3;++chart) for(bool mixed:{false,true}) {
+        const bool rz=chart!=0;
+        const double radius=chart==2?2.:0.;
+        auto grid=GridMetrics::make_geometry_view(
+            rz?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Cartesian,
+            2,{radius,0.,0.},{1.,1.,1.});
+        if(rz)grid=GridMetrics::make_rz_geometry_view(grid);
+        auto coarse=grid;coarse.dx1=2.;coarse.dx2=2.;
+        std::array<std::array<double,4>,6> fields{};
+        std::array<double,8> fractions{};
+        amr::regrid_math::ConstStateView source{};
+        for(int f=0;f<6;++f)source.fields[f]=fields[f].data();
+        source.fractions=fractions.data();source.species_stride=4;
+        amr::regrid_math::RestrictionGeometry geometry{};
+        geometry.count=4;geometry.coarse_volume=GridMetrics::CellVolume(coarse,0,0,0);
+        std::array<long double,5> integral{};
+        std::array<long double,2> species_integral{};
+        long double volume=0., internal_integral=0.;
+        for(int cell=0;cell<4;++cell) {
+            const int i=cell%2,j=cell/2;
+            const double density=i?2.:1., velocity=(j?-1.:1.)*(i?1.:2.);
+            const double internal=i?8.:4.;
+            fields[0][cell]=density;fields[1][cell]=density*velocity;
+            fields[4][cell]=density*(internal+.5*velocity*velocity);
+            fractions[cell]=i?.25:.75;fractions[4+cell]=1.-fractions[cell];
+            geometry.source_cells[cell]=cell;
+            geometry.volumes[cell]=GridMetrics::CellVolume(grid,i,j,0);
+            const long double left=radius+i,right=left+1.;
+            const long double measure=rz?pi*(right*right-left*left):1.L;
+            volume+=measure;internal_integral+=measure*density*internal;
+            for(int f=0;f<5;++f)integral[f]+=measure*fields[f][cell];
+            for(int sp=0;sp<2;++sp)
+                species_integral[sp]+=measure*density*fractions[4*sp+cell];
+        }
+        double workspace[2]{};
+        amr::regrid_math::RestrictionResult parent{};
+        if(amr::regrid_math::restrict_family(source,geometry,mixed?2:0,
+                0.,0.,workspace,parent)!=amr::regrid_math::Status::Ok)
+            throw std::runtime_error("Jeans parent restriction rejected bounded fixture");
+        const long double rho=integral[0]/volume;
+        const long double kinetic=(integral[1]*integral[1]+integral[2]*integral[2]+
+                                   integral[3]*integral[3])/(2*integral[0]*integral[0]);
+        const long double internal=integral[4]/integral[0]-kinetic;
+        if(!(internal>internal_integral/integral[0]))
+            throw std::runtime_error("opposite-velocity parent lost unresolved kinetic energy");
+        long double gamma=1.5L;
+        if(mixed) {
+            const long double x=species_integral[0]/integral[0];
+            gamma=1+(x*2*.5L+(1-x)*4)/(x*2+(1-x)*4);
+            for(int sp=0;sp<2;++sp)
+                if(std::abs(parent.fractions[sp]-species_integral[sp]/integral[0])>bound)
+                    throw std::runtime_error("Jeans parent composition is not rho-X weighted");
+        }
+        const auto& eos=mixed?mixture:simple;
+        const double* composition=mixed?parent.fractions:nullptr;
+        const double pressure=eos.get_pressure(parent.fluid,composition);
+        const double sound=eos.get_sound_speed(parent.fluid,pressure,composition);
+        const auto actual=JeansDiagnostics::evaluate_cell(parent.fluid.rho,sound*sound,coarse,0,0);
+        const long double expected=std::sqrt(pi*gamma*(gamma-1)*internal/(G*rho))/2;
+        const double error=static_cast<double>(std::abs(actual.cells-expected)/expected);
+        maximum=std::max(maximum,error);
+        if(actual.status!=JeansDiagnostics::Status::valid || error>bound)
+            throw std::runtime_error("Jeans independent restricted-parent reference mismatch");
+        ++cases;
+    }
+    std::cout<<std::setprecision(17)<<"JEANS_PARENT_CASES="<<cases
+             <<" MAX_RELATIVE_ERROR="<<maximum<<" PROPAGATED_ENGINEERING_BOUND="<<bound<<'\n';
+}
+}
 
 int main()
 {
@@ -168,5 +260,6 @@ int main()
     }
     std::cout << std::setprecision(17) << "JEANS_IDEALGAS_CASES=" << eos_cases
               << " MAX_RELATIVE_ERROR=" << max_relative_error << '\n';
+    parent_state_reference();
     std::cout << "JEANS_DIAGNOSTICS_NUMERIC_PASS\n";
 }
