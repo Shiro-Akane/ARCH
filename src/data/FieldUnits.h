@@ -7,6 +7,7 @@
 #include <string_view>
 namespace arch::fields {
 inline std::string_view cgs_unit(std::string_view key) {
+    if (key == "JENS") return "1";
     if (key == "DENS") return "g/cm^3";
     if (key == "TEMP") return "K";
     if (key == "PRES" || key == "ENER") return "erg/cm^3";

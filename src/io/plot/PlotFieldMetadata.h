@@ -9,7 +9,8 @@
 namespace io {
 inline PlotFieldMetadata plot_field_metadata(std::string_view name, bool cartesian) {
     PlotFieldMetadata m;
-    if (name == "DENS") m.meaning = "mass_density";
+    if (name == "JENS") m.meaning = "jeans_length_over_max_active_physical_spacing";
+    else if (name == "DENS") m.meaning = "mass_density";
     else if (name == "PRES") m.meaning = "pressure";
     else if (name == "TEMP") m.meaning = "temperature";
     else if (name == "ENER") m.meaning = "total_energy_density";

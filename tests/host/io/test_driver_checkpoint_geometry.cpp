@@ -263,6 +263,47 @@ int main(int argc,char** argv) {
         require(plots_before==std::distance(std::filesystem::directory_iterator(config.io.out_dir),
                                             std::filesystem::directory_iterator{}),
                 "rejected chart created a new file");
+        // Only-output consumer uses actual EOS closure and leaves tree/state
+        // unchanged. No runtime JENS capability is advertised by this fixture.
+        config.io.vars.jens=true;config.physics.gravity.type="self";
+        IdealGas plot_eos(1.4,species);
+        auto actual_pressure=+[](const FluidVector& u,const double* x,const void* eos) {
+            return static_cast<const IdealGas*>(eos)->get_pressure(u,x);
+        };
+        auto actual_temperature=+[](const FluidVector& u,const double* x,const void* eos) {
+            return static_cast<const IdealGas*>(eos)->get_temperature(u.rho,arch::state::recover(u).internal,x);
+        };
+        auto actual_gamma=+[](const FluidVector& u,const double* x,const void* eos) {
+            const auto& gas=*static_cast<const IdealGas*>(eos);
+            const double p=gas.get_pressure(u,x),cs=gas.get_sound_speed(u,p,x);
+            return u.rho*cs*cs/p;
+        };
+        const auto leaves=control.tree->GetActiveBlocks();
+        write_plt(control,actual_pressure,actual_temperature,actual_gamma,&plot_eos,
+                  12,0.,config,species,{},&provenance,{},semantics);
+        require(control.tree->GetActiveBlocks()==leaves,"JENS output changed AMR topology");
+        const auto good_plot=std::filesystem::path(config.io.out_dir)/"fixture_SW_plt_0012.h5";
+        const auto plot_digest=arch::core::file_sha256(good_plot.string());
+        auto bad_gamma=+[](const FluidVector&,const double*,const void*) {
+            return std::numeric_limits<double>::quiet_NaN();
+        };
+        bool diagnostic_rejected=false;
+        try {
+            write_plt(control,actual_pressure,actual_temperature,bad_gamma,&plot_eos,
+                      13,0.,config,species,{},&provenance,{},semantics);
+        } catch(const std::runtime_error&) {diagnostic_rejected=true;}
+        require(diagnostic_rejected&&!std::filesystem::exists(
+            std::filesystem::path(config.io.out_dir)/"fixture_SW_plt_0013.h5"),
+            "invalid JENS diagnostic published output");
+        config.physics.gravity.type="none";diagnostic_rejected=false;
+        try {
+            write_plt(control,actual_pressure,actual_temperature,actual_gamma,&plot_eos,
+                      13,0.,config,species,{},&provenance,{},semantics);
+        } catch(const std::invalid_argument&) {diagnostic_rejected=true;}
+        require(diagnostic_rejected&&arch::core::file_sha256(good_plot.string())==plot_digest,
+            "inapplicable JENS request damaged last successful output");
+        config.physics.gravity.type="self";
+        std::cout<<"JEANS_NATIVE_PLOT_PASS chart="<<(rz?"RZ":"Cartesian")<<"\n";
         std::cout<<"PASS actual DriverIO "<<(rz?"RZ":"Cartesian")<<" profile/native/controller/rejection/create/retry time=0 step=0\n";
     }
     return 0;

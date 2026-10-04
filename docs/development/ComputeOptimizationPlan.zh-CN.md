@@ -622,3 +622,12 @@ DriverIO checkpoint native/失败传播回归通过；CPU ARCH 与 shared schedu
 详见 O7JeansAcceptedStateLifecycle-20261004.zh-CN.md；RZ finding 与待审预算不变。
 
 2026-10-04 增量节点：已冻结 [JENS 短验收包](O7JeansRzReviewQuestions-20261004.zh-CN.md#6-已冻结的-jens-短验收包uniform-lifecycle-1)，合作者可先实施／提交 CPU 子组。环体及角动量设计独立推进，不挂起本节点；关闭、仅输出、AMR 约束的参数条件同步注册表与 API。
+
+### JENS 原生 Plotfile 消费者增量
+
+原生叶单元 writer 已接入共享 JeansDiagnostics 与当前 EOS pressure/Gamma1 回调；
+输出 FP64 无量纲 N_J，不替换 conserved fields。Cartesian/内部 RZ 静态输出、
+独立高精度参考、失败拒绝与最后成功文件保留检查通过。
+配置/API 的公开 JENS gate 暂未解除，uniform-lifecycle-1 的实际三通道演化/
+0.01→0.02 s 重启验收仍待完整配置与 checkpoint 身份接线。见
+O7JeansNativePlotConsumer-20261004.zh-CN.md；不据此关闭 RZ finding。

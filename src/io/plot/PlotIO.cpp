@@ -22,6 +22,7 @@
 #include "data/GlobalDefs.h"
 #include "grid/Grid.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
+#include "physics/diagnostics/JeansDiagnostics.h"
 #include "physics/species/Species.h"
 
 #include "io/IO.h"
@@ -57,6 +58,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
     if (semantics != GridMetrics::GeometrySemantics::Existing
         && semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::invalid_argument("Unknown Plotfile geometry profile.");
+    if (config.io.vars.jens && config.physics.gravity.type != "self")
+        throw std::invalid_argument("JENS output requires self gravity.");
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (active_blocks.empty())
         throw std::invalid_argument("Cannot publish Plotfile without active leaf blocks.");
@@ -227,6 +230,41 @@ void write_plt(amr::AMRControl &amr_ctrl,
             const double gamma1 = gamma1_func(U, Xi_temp.data(), p_context);
             return p_func(U, Xi_temp.data(), p_context) / std::pow(rho, gamma1);
         });
+    }
+
+    if (vars.jens) {
+        if (!p_func || !gamma1_func)
+            throw std::invalid_argument("JENS output requires authoritative EOS callbacks.");
+        std::vector<double> buffer(total_cells);
+        std::vector<double> fractions(specs.count());
+        std::size_t index=0;
+        for (int id:active_blocks) {
+            const auto& block=amr_ctrl.pool->GetBlock(id);
+            const auto& grid=block.grid;
+            const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
+            const auto& state=block.fluid_state;
+            for (int k=grid.Ks();k<grid.Ke();++k)
+                for (int j=grid.Js();j<grid.Je();++j)
+                    for (int i=grid.Is();i<grid.Ie();++i) {
+                        const int cell=grid.GetIndex(i,j,k);
+                        for (int species=0;species<state.GetNumSpecies();++species)
+                            fractions[species]=state.X(species,cell);
+                        const auto fluid=state.get(cell);
+                        const double pressure=p_func(fluid,fractions.data(),p_context);
+                        // Gamma1 callback is rho*adiabatic_cs^2/P from the
+                        // current EOS, not the configurable fallback gamma.
+                        const double gamma1=gamma1_func(fluid,fractions.data(),p_context);
+                        if (!std::isfinite(pressure) || pressure<=0.
+                            || !std::isfinite(gamma1) || gamma1<=0.)
+                            throw std::runtime_error("JENS output requires finite positive EOS pressure and Gamma1.");
+                        const auto diagnostic=JeansDiagnostics::evaluate_cell(
+                            fluid.rho,gamma1*pressure/fluid.rho,geometry,i,j);
+                        if (diagnostic.status!=JeansDiagnostics::Status::valid)
+                            throw std::runtime_error("JENS output rejected invalid or unrepresentable state.");
+                        buffer[index++]=diagnostic.cells;
+                    }
+        }
+        data_map.emplace("JENS",std::move(buffer));
     }
 
     if (vars.enuc)
