@@ -3383,3 +3383,8 @@ GNU-only外部GOMP观测library保持原body/线程请求/flags，不改Core/ELF
 ## 2026-10-05：获准 CPU 子组的 CUDA scoped 节点
 
 已重读科学清单6–8；冻结JENS CPU9+9沿用匹配未变ELF收据。唯一工作区建立sm_89 Release CUDA验证，5个现有共享几何/AMR/归约/指标目标实机通过。发现并修复native-only+unused LTO archive的mold链接阻断，保留LTO；8项tooling、架构audit/diff check通过。详见ApprovedCpuCudaLeaves-20261005.zh-CN.md及对应processed summary。未完成完整JENS CUDA生命周期/生产ARCH CUDA应用或RZ科学签收，未启动长跑和计时；所有原能力门槛保持。
+
+
+## 2026-10-05：JENS backend-local accepted-cell CUDA 节点
+
+原device AMR owner新增真实EOS→共享Jeans/GridMetrics→block minimum；301独立指数参考+12非法输入、24caloric组合和6 frozen patch维数/层级组合实机PASS，错误传播/恢复及species preflight通过。复用原AMR CTest，最终架构/diff检查通过；公共CUDA JENS门槛保持，backend消费者/父态/完整生命周期仍待接入。详见CudaJeansAcceptedCellNode-20261005.zh-CN.md及processed summary，CPU ELF/冻结收据未变，RZ/long-run/性能不宣称完成。
