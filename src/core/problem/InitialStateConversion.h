@@ -16,6 +16,7 @@
 #include "data/FluidState.h"
 #include "data/GlobalDefs.h"
 #include "data/UserTypes.h"
+#include "grid/GridMetrics.h"
 #include "numerics/state/StateAdmissibility.h"
 
 namespace ProblemHelper::detail {
@@ -72,6 +73,74 @@ FluidVector InitialConservedState(const PrimitiveData &data, const Eos &eos,
     }
     if (report) *report = recovery;
     return state;
+}
+
+/**
+ * Candidate native RZ cell conversion for the initialization/BC migration.
+ * Callback supplies physical primitive components at four real cell samples.
+ * rho/mom_r/mom_z/E/rhoX are V averages; m_phi is the r*dV average of rho*u_phi.
+ * The returned view owns no second evolved J/ell state. No live state is changed.
+ *
+ * This strict path refuses repaired samples and unresolved representative
+ * closures. PopulateState's legacy midpoint/repair/ghost publication is not yet
+ * switched: its whole repair ledger must migrate with this conversion.
+ */
+struct InitialCellState {
+    FluidVector conserved{};
+    std::vector<double> mass_fractions;
+};
+
+template <class Eos,class Callback>
+InitialCellState InitialRzCellState(double r_lower,double r_upper,
+    double z_lower,double z_upper,int species,const Eos& eos,
+    const NumericsConfig& limits,Callback&& init_callback)
+{
+    if (species<0 || !std::isfinite(r_lower) || !std::isfinite(r_upper)
+        || !std::isfinite(z_lower) || !std::isfinite(z_upper)
+        || r_lower<0. || !(r_upper>r_lower) || !(z_upper>z_lower))
+        throw std::invalid_argument("Invalid physical RZ initialization cell");
+    const double dz=z_upper-z_lower;
+    const double volume=GridMetrics::Rz::CellVolume(r_lower,r_upper,dz);
+    const double angular=GridMetrics::Rz::AngularMomentumMeasure(r_lower,r_upper,dz);
+    if (!std::isfinite(dz) || !std::isfinite(volume) || !(volume>0.)
+        || !std::isfinite(angular) || !(angular>0.))
+        throw std::invalid_argument("RZ initialization native V/W is not representable");
+    InitialCellState output;
+    output.mass_fractions.assign(species,0.);
+    PrimitiveData data;
+    for (const auto& q:GridMetrics::Rz::CellAverageSamples(r_lower,r_upper,z_lower,z_upper)) {
+        data=PrimitiveData{};
+        data.mass_fractions.assign(species,0.);
+        const auto p=Grid::PhysicalCoordsFromNative(2,"cylindrical",q.radius,q.axial,0.,
+            GridMetrics::GeometrySemantics::AxisymmetricRz);
+        init_callback(p,data);
+        if (data.mass_fractions.size()!=static_cast<size_t>(species))
+            throw std::runtime_error("RZ Init callback changed species layout");
+        arch::state::Repair repair;
+        const auto sample=InitialConservedState(data,eos,limits,&repair);
+        if (repair.status!=arch::state::Status::valid)
+            throw std::runtime_error("RZ cell sample requires repair; candidate not published");
+        output.conserved.rho+=q.volume_weight*sample.rho;
+        output.conserved.mom_u+=q.volume_weight*sample.mom_u;
+        output.conserved.mom_v+=q.volume_weight*sample.mom_v;
+        output.conserved.mom_w+=q.angular_weight*sample.mom_w;
+        output.conserved.eng+=q.volume_weight*sample.eng;
+        for(int sp=0;sp<species;++sp)
+            output.mass_fractions[sp]+=q.volume_weight*sample.rho*data.mass_fractions[sp];
+    }
+    for (double& x:output.mass_fractions) x/=output.conserved.rho;
+    if (arch::state::validate(output.conserved,output.mass_fractions.data(),species,1,
+        limits.sml_rho,limits.min_eint,limits.max_eint)!=arch::state::Status::valid)
+        throw std::runtime_error("RZ cell average has unresolved representative state");
+    const auto recovered=arch::state::recover(output.conserved);
+    const double temperature=eos.get_temperature(output.conserved.rho,recovered.internal,
+        output.mass_fractions.data());
+    const double pressure=eos.get_pressure(output.conserved,output.mass_fractions.data());
+    const double sound=eos.get_sound_speed(output.conserved,pressure,output.mass_fractions.data());
+    if (!(temperature>0.) || !std::isfinite(temperature) || !(pressure>0.)
+        || !std::isfinite(pressure) || !(sound>0.) || !std::isfinite(sound))
+        throw std::runtime_error("RZ cell representative state outside EOS domain");
+    return output;
 }
 
 } // namespace ProblemHelper::detail

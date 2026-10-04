@@ -153,6 +153,34 @@ ARCH_HOST_DEVICE inline double AngularReconstructionRadius(double left, double r
     return .75*right*((1.0+t)*(1.0+t*t)/(1.0+t+t*t));
 }
 
+/**
+ * Tensor Gauss-2 cell samples for V and W averages. This is a numerical
+ * integration rule, not an extra physical model or a user accuracy control.
+ * Preconditions: finite 0<=left<right and finite z_lower<z_upper.
+ * r dr and r^2 dr use separate normalized weights; do not exchange them.
+ */
+struct CellAverageSample {
+    double radius, axial, volume_weight, angular_weight;
+};
+ARCH_HOST_DEVICE inline std::array<CellAverageSample,4> CellAverageSamples(
+    double left,double right,double z_lower,double z_upper)
+{
+    constexpr double inverse_sqrt_three=.577350269189625764509148780501957456;
+    const double t=left/right;
+    std::array<CellAverageSample,4> result{};
+    int index=0;
+    for (int j=0;j<2;++j)
+        for (int i=0;i<2;++i) {
+            const double radial_fraction=.5+(i ? .5 : -.5)*inverse_sqrt_three;
+            const double axial_fraction=.5+(j ? .5 : -.5)*inverse_sqrt_three;
+            const double radius=left+radial_fraction*(right-left);
+            const double q=radius/right;
+            result[index++]={radius,z_lower+axial_fraction*(z_upper-z_lower),
+                .5*q/(1.+t),.75*q*q/(1.+t+t*t)};
+        }
+    return result;
+}
+
 /** Mirrored coordinate for an axis ghost cell; never a negative V/W measure. */
 ARCH_HOST_DEVICE inline double AngularReconstructionCoordinate(double left, double right)
 {

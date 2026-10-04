@@ -503,3 +503,13 @@ DENS/ENER与EOS诊断平均语义分开，FP64不改。256-cell独立读回、10
 当前Cartesian reader仍明确拒绝内部RZ；不伪装RZ Viewer/Inspector已支持。
 此节点不关闭Init/BC/其他API、轴/viscosity finding、完整C/D或CUDA/long-run，
 production gate保持。
+
+### 8.8 C 原生单元初始化转换候选证据（2026-10-05）
+
+共享GridMetrics tensor Gauss-2的V/W权重和InitialStateConversion候选已实现；
+6个独立单项式参考、45/56旋转参考、不可解析代表闭合拒绝通过。
+包含axis的初始化closure一致性order约1.99898/1.99975，满足原至少1.8要求，
+不等于演化/力收敛。实际ARCH重编ELF不变，沿用匹配JENS9+9。
+见RZCellInitialConversionNode-20261005.zh-CN.md。
+RZ-INIT-W-01真实PopulateState仍midpoint，RZ-INIT-REPAIR-01须同批迁移账本/ghost；
+新candidate尚未接入，不宣称C完成，production gate保持。
