@@ -12,6 +12,9 @@ Endpoint completion is verified for each run before launching the other backend.
 Endpoint mode requires --cpu-threads, --cuda-host-threads and --repeats >=3.
 It warms each backend once and alternates measured pair order. Thread screening,
 CPU-only baselines, manifests and frozen scientific inputs are still required.
+Use --cpu-affinity / --cuda-host-affinity for explicit Linux taskset lists.
+CPU IDs are observed logical CPUs, never inferred P/E topology. Omitted lists
+retain legacy inherited affinity and cannot qualify an affinity-frozen benchmark.
 
 Each run has its own input and output directory. The existing coupled verifier
 and compare_backends.py enforce the physical and parity budgets. The optional
@@ -24,6 +27,7 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import statistics
 import subprocess
@@ -107,22 +111,70 @@ def regrid_metrics(directory):
     return result
 
 
-def one_run(executable, source, destination, backend, steps, threads, *, end_time=None, expect_mixed=True):
+def parse_affinity(text, available):
+    """Validate an explicit Linux CPU list; never infer P/E core identities."""
+    if not text or len(text) > 16384:
+        raise ValueError("nonempty bounded affinity list required")
+    selected = []
+    for item in text.split(","):
+        if not re.fullmatch(r"[0-9]+(?:-[0-9]+)?", item):
+            raise ValueError("affinity must be comma-separated CPU IDs/ranges")
+        endpoints = [int(value) for value in item.split("-")]
+        lower, upper = endpoints[0], endpoints[-1]
+        if lower > upper or upper > 4095:
+            raise ValueError("invalid or oversized affinity range")
+        if len(selected) + upper - lower + 1 > 4096:
+            raise ValueError("affinity list exceeds logical CPU budget")
+        selected.extend(range(lower, upper + 1))
+    if len(set(selected)) != len(selected):
+        raise ValueError("duplicate affinity CPU")
+    if not set(selected).issubset(available):
+        raise ValueError("affinity includes unavailable CPU")
+    return tuple(sorted(selected))
+
+
+def run_command(executable, input_path, affinity=None):
+    """taskset binds the child before exec; failure is never a CPU fallback."""
+    command = [str(executable), "SNIaCoupled", str(input_path)]
+    if affinity is None:
+        return command
+    available = os.sched_getaffinity(0)
+    selected = parse_affinity(",".join(map(str, affinity)), available)
+    return ["/usr/bin/taskset", "--cpu-list", ",".join(map(str, selected)), *command]
+
+
+def one_run(executable, source, destination, backend, steps, threads, *, end_time=None, expect_mixed=True, affinity=None):
     """Run one immutable input and retain the full log on failure."""
-    destination.mkdir(parents=True, exist_ok=False)
     input_path = destination / "input.par"
+    command = run_command(executable, input_path, affinity)
+    if threads < 1 or (affinity is not None and threads > len(affinity)):
+        raise ValueError("positive thread budget within selected logical CPUs required")
+    destination.mkdir(parents=True, exist_ok=False)
     input_path.write_text(changed_input(source, backend, destination, steps, end_time=end_time))
     env = os.environ.copy()
     env["OMP_NUM_THREADS"] = str(threads)
+    execution = {"requested_threads": threads,
+                 "requested_affinity": list(affinity) if affinity is not None else None,
+                 "parent_allowed_cpus": sorted(os.sched_getaffinity(0)),
+                 "command": command, "affinity_enforcement": "taskset-before-exec" if affinity is not None else "inherited",
+                 "actual_openmp_team_size": None}
+    if affinity is not None:
+        env.update(OMP_DYNAMIC="FALSE", OMP_PLACES="threads", OMP_PROC_BIND="spread")
+        execution["taskset_sha256"] = hashlib.sha256(Path("/usr/bin/taskset").read_bytes()).hexdigest()
+    execution["openmp_environment"] = {
+        key: env.get(key) for key in ("OMP_NUM_THREADS", "OMP_DYNAMIC", "OMP_PLACES", "OMP_PROC_BIND")}
+    (destination / "execution.json").write_text(json.dumps(execution, indent=2) + "\n")
     started = time.monotonic()
     completed = subprocess.run(
-        [str(executable), "SNIaCoupled", str(input_path)],
+        command,
         cwd=ROOT, env=env, capture_output=True, text=True)
     elapsed = time.monotonic() - started
     (destination / "run.log").write_text(completed.stdout + completed.stderr)
+    execution.update(launch_exit_code=completed.returncode, elapsed_seconds=elapsed)
+    (destination / "execution.json").write_text(json.dumps(execution, indent=2) + "\n")
     if completed.returncode != 0:
         raise RuntimeError(
-            f"{destination}: ARCH returned {completed.returncode}\n"
+            f"{destination}: ARCH/taskset launch returned {completed.returncode}\n"
             + "\n".join((completed.stdout + completed.stderr).splitlines()[-35:]))
     plan = list(destination.glob("*_backend_plan.txt"))
     if len(plan) != 1 or f"resolved={backend}\n" not in plan[0].read_text():
@@ -138,13 +190,14 @@ def one_run(executable, source, destination, backend, steps, threads, *, end_tim
         "gravity": gravity_times(destination),
         "regrid": regrid_metrics(destination),
         "threads": threads,
+        "execution": execution,
         "directory": str(destination),
     }
 
 
 def paired_trials(executable, source, destination, steps, cpu_threads, cuda_threads,
                   repeats, *, end_time=None, expect_mixed=True, notify=lambda: None,
-                  state=None):
+                  state=None, cpu_affinity=None, cuda_affinity=None):
     """Warm each backend once, then alternate measured pairs without dropping runs."""
     if repeats < 1 or cpu_threads < 1 or cuda_threads < 1:
         raise ValueError("positive repeats and explicit backend thread budgets required")
@@ -166,7 +219,8 @@ def paired_trials(executable, source, destination, steps, cpu_threads, cuda_thre
                 record["runs"][backend] = one_run(
                     executable, source, folder/backend, backend, steps,
                     cpu_threads if backend == "cpu" else cuda_threads,
-                    end_time=end_time, expect_mixed=expect_mixed)
+                    end_time=end_time, expect_mixed=expect_mixed,
+                    affinity=cpu_affinity if backend == "cpu" else cuda_affinity)
                 notify()
             record["parity"] = compare_pair(
                 destination.name, folder/"cpu", folder/"cuda", steps,
@@ -225,6 +279,9 @@ def main():
     parser.add_argument("--cpu-threads", type=int, help="explicit screened CPU thread budget; legacy default 8")
     parser.add_argument("--cuda-host-threads", type=int, help="explicit CUDA Host thread budget; legacy default 1")
     parser.add_argument("--repeats", type=int, default=1)
+    parser.add_argument("--cpu-affinity", help="explicit available Linux CPU IDs/ranges, e.g. 0-7")
+    parser.add_argument("--cuda-host-affinity", help="explicit CUDA Host Linux CPU IDs/ranges")
+
     args = parser.parse_args()
     if args.endpoint_pair and (args.cpu_threads is None or args.cuda_host_threads is None or args.repeats < 3):
         parser.error("endpoint mode requires explicit CPU/CUDA Host threads and at least three repeats")
@@ -232,6 +289,15 @@ def main():
     args.cuda_host_threads = 1 if args.cuda_host_threads is None else args.cuda_host_threads
     if min(args.cpu_threads, args.cuda_host_threads, args.repeats) < 1:
         parser.error("threads and repeats must be positive")
+    try:
+        available = os.sched_getaffinity(0)
+        cpu_affinity = parse_affinity(args.cpu_affinity, available) if args.cpu_affinity is not None else None
+        cuda_affinity = parse_affinity(args.cuda_host_affinity, available) if args.cuda_host_affinity is not None else None
+        if any(cpus is not None and threads > len(cpus) for cpus, threads in
+               ((cpu_affinity, args.cpu_threads), (cuda_affinity, args.cuda_host_threads))):
+            raise ValueError("thread budget exceeds selected logical CPUs")
+    except ValueError as error:
+        parser.error(str(error))
     executable = args.arch.resolve()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -270,7 +336,8 @@ def main():
                 json.dumps(report, indent=2, sort_keys=True) + "\n")
         paired_trials(executable, source, output/label, steps, args.cpu_threads,
                       args.cuda_host_threads, args.repeats, end_time=end_time,
-                      expect_mixed=(mode == "amr"), notify=publish, state=schedule)
+                      expect_mixed=(mode == "amr"), notify=publish, state=schedule,
+                      cpu_affinity=cpu_affinity, cuda_affinity=cuda_affinity)
         report["pairs"][label] = schedule["trials"]
         report["speedups"][label] = timing_summary(schedule["trials"])
         publish()

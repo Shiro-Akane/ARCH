@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Synthetic IO tests of stopping semantics; no ARCH process is launched."""
 import math
+import os
+import json
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -11,7 +15,7 @@ import h5py
 import numpy as np
 
 from compare_backends import compare_pair
-from run_cuda_matrix import changed_input, one_run, paired_trials, timing_summary
+from run_cuda_matrix import changed_input, one_run, paired_trials, timing_summary, parse_affinity, run_command
 from verify_coupled import physical_times_agree, verify
 
 
@@ -187,6 +191,75 @@ class PhysicalEndpointTests(unittest.TestCase):
             trials[0]["cpu"]["elapsed_seconds"] = value
             with self.assertRaises(ValueError):
                 timing_summary(trials)
+
+    def test_affinity_list_validation(self):
+        self.assertEqual(parse_affinity("3,0-1", {0, 1, 3}), (0, 1, 3))
+        for text in ("", "0,0", "0-2,1", "2-1", "-1", "0;echo", "0,,1", "4096", "0-999999", "2"):
+            with self.assertRaises(ValueError, msg=text):
+                parse_affinity(text, {0, 1})
+
+    def test_actual_linux_taskset_child_binding(self):
+        selected = min(os.sched_getaffinity(0))
+        result = subprocess.run(
+            ["/usr/bin/taskset", "--cpu-list", str(selected), sys.executable,
+             "-c", "import os,json; print(json.dumps(sorted(os.sched_getaffinity(0))))"],
+            check=True, capture_output=True, text=True)
+        self.assertEqual(json.loads(result.stdout), [selected])
+
+    def test_affinity_command_is_argv_and_no_fallback(self):
+        with patch("run_cuda_matrix.os.sched_getaffinity", return_value={2, 4}):
+            command = run_command(Path("/safe path/ARCH"), Path("/config path/input.par"), (4, 2))
+            self.assertEqual(command, ["/usr/bin/taskset", "--cpu-list", "2,4",
+                                      "/safe path/ARCH", "SNIaCoupled", "/config path/input.par"])
+            with self.assertRaises(ValueError):
+                run_command(Path("/ARCH"), Path("/input"), (3,))
+        self.assertEqual(run_command(Path("/ARCH"), Path("/input")),
+                         ["/ARCH", "SNIaCoupled", "/input"])
+
+    def test_invalid_affinity_fails_before_output_or_process(self):
+        source = self.root/"input.par"
+        source.write_text("tmax=1\n")
+        destination = self.root/"no-output"
+        with patch("run_cuda_matrix.os.sched_getaffinity", return_value={0}), patch(
+                "run_cuda_matrix.subprocess.run") as run:
+            with self.assertRaises(ValueError):
+                one_run(self.root/"ARCH", source, destination, "cpu", 2, 1, affinity=(1,))
+            with self.assertRaises(ValueError):
+                one_run(self.root/"ARCH", source, destination, "cpu", 2, 2, affinity=(0,))
+        run.assert_not_called()
+        self.assertFalse(destination.exists())
+
+    def test_scheduler_keeps_backend_affinity_during_warmup_and_pairs(self):
+        calls = []
+        def run_stub(*args, **kwargs):
+            calls.append((args[3], kwargs["affinity"]))
+            return {"elapsed_seconds": 1.0, "driver_seconds": 0.5}
+        with patch("run_cuda_matrix.one_run", side_effect=run_stub), patch(
+                "run_cuda_matrix.compare_pair", return_value={}):
+            paired_trials(self.root/"binary", self.root/"input", self.root/"pair",
+                          None, 2, 1, 3, end_time=1.0,
+                          cpu_affinity=(0, 1), cuda_affinity=(2,))
+        self.assertEqual(len(calls), 8)
+        self.assertTrue(all(cpus == ((0, 1) if backend == "cpu" else (2,))
+                            for backend, cpus in calls))
+
+    def test_failed_taskset_preserves_execution_record_without_retry(self):
+        source = self.root/"input.par"
+        source.write_text("tmax=1\n")
+        destination = self.root/"binding-failure"
+        selected = min(os.sched_getaffinity(0))
+        with patch("run_cuda_matrix.subprocess.run",
+                   return_value=CompletedProcess([], 1, "", "taskset: failed")) as run:
+            with self.assertRaisesRegex(RuntimeError, "launch returned 1"):
+                one_run(self.root/"ARCH", source, destination, "cpu", 2, 1, affinity=(selected,))
+        self.assertEqual(run.call_count, 1)
+        evidence = json.loads((destination/"execution.json").read_text())
+        self.assertEqual(evidence["requested_affinity"], [selected])
+        self.assertEqual(evidence["affinity_enforcement"], "taskset-before-exec")
+        self.assertEqual(evidence["launch_exit_code"], 1)
+        self.assertIsNone(evidence["actual_openmp_team_size"])
+        self.assertEqual(evidence["openmp_environment"]["OMP_PROC_BIND"], "spread")
+        self.assertIn("taskset: failed", (destination/"run.log").read_text())
 
     def test_existing_parity_budget_not_relaxed(self):
         cpu, cuda = self.root/"cpu", self.root/"cuda"

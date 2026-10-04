@@ -3269,3 +3269,10 @@ publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0
 28并行memory/pressure guard无触发、观测swap0；原Studio受管binary d535不变，不篡改旧Manifest身份。
 完整loader闭包仍unknown，旧科学/architecture失败不清除；无simulation/CUDA/334或71baseline重复。
 见PlotfileCurrentCpuBuild报告/Summary；raw数据留本机，无push/tag。
+
+## 2026-10-04 物理终点 runner 显式 Linux affinity
+
+核对预热/交替已存在，不重复实现；原runner增cpu/cuda-host-affinity、taskset-before-exec、失败不fallback。
+19/19含真实kernel child绑定probe PASS，execution记录requested与actual team unknown分开。
+不猜WSL P/E映射；CPU-only/观测/冻结包待补，qualified benchmark=false，无ARCH/CUDA实际轨迹。
+见PhysicalEndpointAffinity报告/Summary；未Build或重复Studio/Core基线，无push/tag/raw上传。
