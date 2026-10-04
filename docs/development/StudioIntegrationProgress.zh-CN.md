@@ -3351,3 +3351,12 @@ JENS未变9+9 receipt复用，原始H5/日志继续留本机。
 native多维仍仅两步；未重复外围Box/径向或均匀JENS短包。
 binary/列明输入前后不变；见JeansExistingFullCpuGates-20261005报告及处理后summary。
 RZ完整科学、统一CUDA、正式benchmark/批准长跑仍未完成。
+
+### RZ实际cell点势独立诊断（2026-10-05）
+
+现有matched native adapter新增cells入口，实际potential/几何中心/全环体V-RMS；
+56真实mixed叶全部16/32阶参考，完整源不删贡献，6工具测试/audit/diff PASS。
+最大点势差4.086e-10/5.429e-10 cm²/s²，参考阶差约5.30e-14；
+未认证求积/空间/力或新科学预算，结果只供review，不关闭RZ gate。
+见RZNativeCellPotentialDiagnostic报告/summary；原始数组仍留本机。
+未改Core/ELF/科学阈值，未Build/Simulation/CUDA/长跑。
