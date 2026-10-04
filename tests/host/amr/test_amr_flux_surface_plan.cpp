@@ -361,7 +361,8 @@ void test_real_2d_topology_surface_partition()
 }
 
 
-void test_rz_registration_reflux(int direction, double inner)
+void test_rz_registration_reflux(int direction, double inner,
+    bool angular=false,double stage=1.)
 {
     constexpr int species=2;
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
@@ -391,11 +392,11 @@ void test_rz_registration_reflux(int direction, double inner)
     }
     control.BindActiveHandles(handles);control.flux_register.EnsureSpecies(species);
     expect(coarse>=0,"RZ reflux fixture has no coarse leaf");
-    const auto topology=control.RequireFluxTopologyPlan(species,rz);
-    const auto reflux=control.RequireRefluxTopologyPlan(species,rz);
+    const auto topology=control.RequireFluxTopologyPlan(species,rz,-1,angular);
+    const auto reflux=control.RequireRefluxTopologyPlan(species,rz,angular);
     expect(topology.semantics==rz,"RZ flux plan lost chart");
-    expect(&control.RequireFluxTopologyPlan(species,rz)
-        ==&control.RequireFluxTopologyPlan(species,rz),"RZ flux cache did not hit");
+    expect(&control.RequireFluxTopologyPlan(species,rz,-1,angular)
+        ==&control.RequireFluxTopologyPlan(species,rz,-1,angular),"RZ flux cache did not hit");
     const auto value=[](const Grid& g,int dir,int i,int j) {
         const double r=dir==0?g.GetFacePosL(i):g.GetCellCenterX(i);
         const double z=dir==1?g.x2_min+(j-g.Js())*g.dx2:g.GetCellCenterY(j);
@@ -408,7 +409,7 @@ void test_rz_registration_reflux(int direction, double inner)
         return arch::constants::math::pi*(hi*hi-lo*lo);
     };
     using Key=std::pair<int,int>;
-    std::map<Key,long double> expected_register;
+    std::map<Key,long double> expected_register,expected_angular;
     bool nonuniform_axial_weight=false;
     for(const auto& route:topology.routes) {
         const auto& block=control.pool->GetBlock(route.key.source_block);
@@ -444,10 +445,13 @@ void test_rz_registration_reflux(int direction, double inner)
                 if(dir==1 && std::abs(coefficient-.5L)>1.e-4L)
                     nonuniform_axial_weight=true;
             }
-            expected_register[{face,facecell}]+=coefficient*v;
+            expected_register[{face,facecell}]+=stage*coefficient*v;
+            const long double rl=g.GetFacePosL(si),rr=g.GetFacePosR(si);
+            const long double lever=dir==0?rl:(2.L/3.L)*(rr*rr*rr-rl*rl*rl)/(rr*rr-rl*rl);
+            expected_angular[{face,facecell}]+=stage*coefficient*4.L*v*(angular?lever:1.L);
         }
         amr::RegisterCoarseFineFluxes(control,block.id,g,dir,
-            flux,species_flux,species,1.,rz);
+            flux,species_flux,species,stage,rz,angular);
     }
     if(direction==1)expect(nonuniform_axial_weight,
         "RZ axial fine weights incorrectly remained uniform halves");
@@ -462,8 +466,8 @@ void test_rz_registration_reflux(int direction, double inner)
     const auto direct=control.flux_register.BuildRefluxPlan(
         control.pool,active,handles,2,dt,rz);
     expect(direct.operations.size()==reflux.operations.size(),"RZ direct/topology reflux count drifted");
-    std::map<int,long double> density_delta;
-    long double integrated_delta=0.,boundary_integral=0.;
+    std::map<int,long double> density_delta,phi_delta;
+    long double integrated_delta=0.,boundary_integral=0.,J_delta=0.,torque_delta=0.,initial_abs_J=0.;
     for(const auto& operation:reflux.operations) {
         if(operation.field!=amr::AmrField::Rho)continue;
         const int dir=amr::axis_value(operation.axis);
@@ -480,27 +484,69 @@ void test_rz_registration_reflux(int direction, double inner)
             "RZ reflux weight differs from independent full-ring A/V");
         const long double amount=(upper?-1.L:1.L)*dt*a*expected_register.at({face,facecell});
         density_delta[cell]+=amount/volume;boundary_integral+=amount;
+        const long double W=2.L*arch::constants::math::pi*(hi*hi*hi-lo*lo*lo)*cg.dx2/3.L;
+        const long double torque=(upper?-1.L:1.L)*dt*a*expected_angular.at({face,facecell});
+        phi_delta[cell]+=torque/(angular?W:volume);torque_delta+=torque;
     }
     for(std::size_t n=0;n<direct.operations.size();++n)
         expect(close(direct.operations[n].weight,dt*reflux.operations[n].weight),
             "RZ direct reflux lost chart/timestep weight");
-    control.ApplyReflux(dt,&amr::Block::fluid_state,rz);
+    control.ApplyReflux(dt,&amr::Block::fluid_state,rz,angular);
     const auto& state=control.pool->GetBlock(coarse).fluid_state;
     for(int j=cg.Js();j<cg.Je();++j)for(int i=cg.Is();i<cg.Ie();++i) {
         const int cell=cg.GetIndex(i,j,0);const double d=static_cast<double>(density_delta[cell]);
         expect(close(state.rho[cell],10.+d),"RZ actual density reflux mismatch");
         expect(close(state.mom_u[cell],20.+2.*d),"RZ actual radial reflux mismatch");
         expect(close(state.mom_v[cell],30.+3.*d),"RZ actual axial reflux mismatch");
-        expect(close(state.mom_w[cell],40.+4.*d),"RZ actual phi reflux mismatch");
+        expect(close(state.mom_w[cell],40.+static_cast<double>(phi_delta[cell])),"RZ actual phi reflux mismatch");
         expect(close(state.eng[cell],1000.+5.*d),"RZ actual energy reflux mismatch");
         expect(close(state.X(0,cell),.6)&&close(state.X(1,cell),.4),
             "RZ reflux composition drifted");
         const long double lo=cg.GetFacePosL(i),hi=cg.GetFacePosR(i);
+        const long double W=2.L*arch::constants::math::pi*(hi*hi*hi-lo*lo*lo)*cg.dx2/3.L;
+        J_delta+=(state.mom_w[cell]-40.)*(angular?W:arch::constants::math::pi*(hi*hi-lo*lo)*cg.dx2);
+        initial_abs_J+=40.L*W;
         integrated_delta+=(state.rho[cell]-10.)*arch::constants::math::pi
             *(hi*hi-lo*lo)*cg.dx2;
     }
     expect(std::abs(integrated_delta-boundary_integral)<1.e-13L,
         "RZ integrated correction differs from face imbalance");
+    const long double J_error=std::abs(J_delta-torque_delta)/(initial_abs_J+std::abs(torque_delta));
+    expect(J_error<=1.e-12L,"RZ torque reflux exceeded original angular budget");
+    if(angular) {
+        const auto ordinary=control.RequireFluxTopologyPlan(species,rz,-1,false).fingerprint;
+        expect(ordinary!=topology.fingerprint,"angular and ordinary register cache identity collided");
+        bool rejected=false;
+        try{control.ApplyReflux(dt,&amr::Block::fluid_state,rz,false);}
+        catch(const std::invalid_argument&){rejected=true;}
+        expect(rejected,"ordinary reflux consumed an accumulated torque register");
+        std::vector<amr::AmrFluxEndpointBinding> bindings;
+        for(std::size_t n=0;n<active.size();++n) {
+            const auto& block=control.pool->GetBlock(active[n]);
+            bindings.push_back({topology.active_endpoints[n],active[n],species,
+                amr::make_amr_flux_grid_layout(block.grid)});
+        }
+        const auto compiled=amr::compile_amr_flux_topology_plan(topology,bindings);
+        for(const auto& route:compiled.routes) for(const auto& term:route.terms) {
+            const auto& g=control.pool->GetBlock(route.source_block).grid;
+            const int i=term.source_cell%g.stride_y;
+            const long double l=g.GetFacePosL(i),h=g.GetFacePosR(i);
+            const long double lever=route.source_direction==0?l
+                :(2.L/3.L)*(h*h*h-l*l*l)/(h*h-l*l);
+            expect(close(term.angular_factor,static_cast<double>(lever)),
+                "compiled/device term lost authoritative face lever");
+        }
+        const auto compiled_reflux=amr::compile_amr_reflux_plan(reflux,bindings,species,&topology);
+        for(const auto& target:compiled_reflux.targets) {
+            const auto& g=control.pool->GetBlock(target.block).grid;
+            const int i=target.state_cell%g.stride_y;
+            const long double l=g.GetFacePosL(i),h=g.GetFacePosR(i);
+            const long double factor=1.5L*(h*h-l*l)/(h*h*h-l*l*l);
+            for(int offset=0;offset<target.contribution_count;++offset)
+                expect(close(compiled_reflux.contributions[target.first_contribution+offset].angular_factor,
+                    static_cast<double>(factor)),"compiled/device reflux factor lost W identity");
+        }
+    }
     // Chart and physical geometry are independent of topology epoch.
     const auto original_hash=topology.fingerprint;
     const auto legacy_hash=control.RequireFluxTopologyPlan(species).fingerprint;
@@ -510,19 +556,19 @@ void test_rz_registration_reflux(int direction, double inner)
     catch(const std::invalid_argument&) { wrong_chart_rejected=true; }
     expect(wrong_chart_rejected,"legacy chart consumed RZ accumulated flux");
 
-    expect(control.RequireFluxTopologyPlan(species,rz).fingerprint==original_hash,
+    expect(control.RequireFluxTopologyPlan(species,rz,-1,angular).fingerprint==original_hash,
         "RZ cache rebuild changed original identity");
-    const auto original_reflux_hash=control.RequireRefluxTopologyPlan(species,rz).fingerprint;
+    const auto original_reflux_hash=control.RequireRefluxTopologyPlan(species,rz,angular).fingerprint;
     for(int id:active) {
         auto& g=control.pool->GetBlock(id).grid;g.x1_min+=.125;g.x1_max+=.125;
     }
-    expect(control.RequireFluxTopologyPlan(species,rz).fingerprint!=original_hash,
+    expect(control.RequireFluxTopologyPlan(species,rz,-1,angular).fingerprint!=original_hash,
         "AMR flux cache retained stale native bounds");
-    expect(control.RequireRefluxTopologyPlan(species,rz).fingerprint!=original_reflux_hash
+    expect(control.RequireRefluxTopologyPlan(species,rz,angular).fingerprint!=original_reflux_hash
         || direction==1,"AMR reflux cache retained old radial coefficients");
 
     bool old_flux_rejected=false;
-    try { control.ApplyReflux(dt,&amr::Block::fluid_state,rz); }
+    try { control.ApplyReflux(dt,&amr::Block::fluid_state,rz,angular); }
     catch(const std::invalid_argument&) { old_flux_rejected=true; }
     expect(old_flux_rejected,"new native geometry consumed old accumulated flux");
     control.flux_register.Clear();
@@ -532,10 +578,11 @@ void test_rz_registration_reflux(int direction, double inner)
         std::vector<double> zero_species(species*block.grid.GetTotalSize());
         for(int dir=0;dir<2;++dir)
             amr::RegisterCoarseFineFluxes(control,id,block.grid,dir,
-                zero_flux,zero_species,species,1.,rz);
+                zero_flux,zero_species,species,1.,rz,angular);
     }
-    control.ApplyReflux(dt,&amr::Block::fluid_state,rz);
+    control.ApplyReflux(dt,&amr::Block::fluid_state,rz,angular);
     std::cout<<"RZ_REFLUX direction="<<direction<<" inner="<<inner
+        <<" angular="<<angular<<" stage="<<stage<<" J_budget_error="<<static_cast<double>(J_error)
         <<" register_error="<<max_register_error<<" conservation_error="
         <<static_cast<double>(std::abs(integrated_delta-boundary_integral))<<'\n';
 }
@@ -632,6 +679,8 @@ int main()
         test_real_2d_topology_surface_partition();
         for(int direction:{0,1})for(double inner:{0.,1.})
             test_rz_registration_reflux(direction,inner);
+        for(int direction:{0,1})for(double inner:{0.,1.})for(double stage:{1.,-.375})
+            test_rz_registration_reflux(direction,inner,true,stage);
         std::cout << "AMR_FLUX_SURFACE_PLAN_PASS\n";
         return 0;
     } catch (const std::exception& error) {

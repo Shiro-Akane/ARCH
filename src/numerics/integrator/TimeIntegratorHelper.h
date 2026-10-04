@@ -391,7 +391,8 @@ namespace TimeIntegration
             // Flux registration has one shared face-index convention for all AMR operators.
             if (amr_ctrl && block_id >= 0) {
                 amr::RegisterCoarseFineFluxes(*amr_ctrl, block_id, grid, dir,
-                                               flux_buffer, spec_flux_buffer, n_spec, flux_weight, semantics);
+                                               flux_buffer, spec_flux_buffer, n_spec, flux_weight, semantics,
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
             }
         }
 

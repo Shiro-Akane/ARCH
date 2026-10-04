@@ -69,7 +69,10 @@ inline void RegisterCoarseFineFluxes(
             values.push_back(flux_buffer[flux_index].mom_v);
             break;
         case AmrField::MomW:
-            values.push_back(flux_buffer[flux_index].mom_w);
+            values.push_back(flux_math::angular_registered_flux(
+                flux_buffer[flux_index].mom_w,
+                angular_registration_lever(topology,operation.source,
+                    operation.source_box,operation.axis)));
             break;
         case AmrField::Energy:
             values.push_back(flux_buffer[flux_index].eng);
@@ -97,10 +100,11 @@ inline void RegisterCoarseFineFluxes(
     const std::vector<FluidVector>& flux_buffer,
     const std::vector<double>& species_flux_buffer,
     int species_count, double stage_weight,
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+    bool angular_transport = false)
 {
     const auto& topology =
-        amr_ctrl.RequireFluxTopologyPlan(species_count,semantics,block_id);
+        amr_ctrl.RequireFluxTopologyPlan(species_count,semantics,block_id,angular_transport);
     RegisterCoarseFineFluxes(
         amr_ctrl, topology, block_id, grid, direction, flux_buffer,
         species_flux_buffer, species_count, stage_weight);

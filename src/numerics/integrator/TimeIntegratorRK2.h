@@ -117,7 +117,8 @@ struct SolverRK2
             },
             [&](const HydroPlan&, StateSlot,
                 arch::state::CompletionToken token) {
-                amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics);
+                amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics,
+                    geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
                 TimeIntegration::validate_reflux_state(amr_ctrl,num_cfg);
                 return token;
             });

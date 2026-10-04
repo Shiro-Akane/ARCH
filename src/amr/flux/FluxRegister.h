@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "amr/flux/AmrFluxMath.h"
+#include "amr/flux/AmrFluxPlan.h"
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/storage/Block.h"
 #include "amr/storage/MemoryPool.h"
@@ -424,7 +425,8 @@ public:
         std::span<const int> active_blocks,
         std::span<const BlockHandle> handles,
         FluidState Block::* state_ptr,
-        double timestep_scale = 1.0)
+        double timestep_scale = 1.0,
+        const AmrFluxTopologyPlan* topology = nullptr)
     {
         validate_amr_plan(plan);
         if (handles.size() != active_blocks.size())
@@ -447,6 +449,7 @@ public:
             int cell = -1;
             double weight = 0.0;
             double sign = 1.0;
+            double angular_factor = 1.0;
             std::array<bool, 5> fluid_fields{};
             std::vector<bool> species_fields;
         };
@@ -484,6 +487,8 @@ public:
                 group.cell = cell;
                 group.weight = operation.weight;
                 group.sign = operation.sign;
+                group.angular_factor=topology ? angular_reflux_factor(
+                    *topology,operation.destination,operation.destination_box) : 1.;
                 group.species_fields.assign(
                     static_cast<std::size_t>(species), false);
             } else if (group.block_id != active_blocks[found->second]
@@ -553,7 +558,7 @@ public:
             state.mom_v[index] = flux_math::reflux_conserved(
                 state.mom_v[index], correction, delta.mom_v);
             state.mom_w[index] = flux_math::reflux_conserved(
-                state.mom_w[index], correction, delta.mom_w);
+                state.mom_w[index], correction*group.angular_factor, delta.mom_w);
             state.eng[index] = flux_math::reflux_conserved(
                 state.eng[index], correction, delta.eng);
             for (int species = 0; species < state.GetNumSpecies(); ++species) {

@@ -57,6 +57,7 @@ struct AmrFluxRegistrationTerm {
     int source_cell = -1;          // Full direction scratch.
     int source_surface_cell = -1;  // Compact initial-flux surface.
     double geometric_weight = 0.0;
+    double angular_factor = 1.0;
 };
 
 struct AmrFluxRegistrationTarget {
@@ -104,6 +105,7 @@ struct AmrRefluxContribution {
     int register_cell = -1;
     double geometric_weight = 0.0;
     double sign = 1.0;
+    double angular_factor = 1.0;
 };
 
 struct AmrRefluxTarget {
@@ -364,7 +366,8 @@ inline std::vector<RawGroup> group_fields(
 
 inline AmrCompiledFluxRegistrationRoute compile_route(
     const AmrFluxRegistrationRoute& route,
-    const BindingIndex& bindings, int species_count)
+    const BindingIndex& bindings, int species_count,
+    const AmrFluxTopologyPlan& topology)
 {
     validate_amr_plan(route.plan);
     const auto& source_binding = require_binding(bindings, route.source);
@@ -408,7 +411,8 @@ inline AmrCompiledFluxRegistrationRoute compile_route(
                 group.key.axis, true),
             checked_surface_cell(
                 group.source->grid, group.key.source_box, group.key.axis),
-            group.key.weight});
+            group.key.weight, angular_registration_lever(topology,
+                group.key.source,group.key.source_box,group.key.axis)});
     }
 
     result.targets.reserve(targets.size());
@@ -444,7 +448,7 @@ inline AmrCompiledFluxTopologyPlan compile_amr_flux_topology_plan(
     result.routes.reserve(topology.routes.size());
     for (const auto& route : topology.routes)
         result.routes.push_back(flux_execution_detail::compile_route(
-            route, indexed, topology.species_count));
+            route, indexed, topology.species_count,topology));
     return result;
 }
 
@@ -491,9 +495,10 @@ build_amr_flux_surface_requirements(
 inline AmrCompiledRefluxPlan compile_amr_reflux_plan(
     const RefluxPlan& plan,
     std::span<const AmrFluxEndpointBinding> bindings,
-    int species_count)
+    int species_count, const AmrFluxTopologyPlan* topology = nullptr)
 {
     validate_amr_plan(plan);
+    if(topology) validate_amr_flux_topology_plan(*topology);
     const auto indexed = flux_execution_detail::index_bindings(
         bindings, plan.dimension, species_count);
     using TargetKey = std::tuple<int, int>;
@@ -521,7 +526,8 @@ inline AmrCompiledRefluxPlan compile_amr_reflux_plan(
             flux_execution_detail::checked_register_cell(
                 group.destination->grid, group.key.destination_box,
                 group.key.axis, group.key.side),
-            group.key.weight, group.key.sign});
+            group.key.weight, group.key.sign, topology ? angular_reflux_factor(
+                *topology,group.key.destination,group.key.destination_box) : 1.});
     }
 
     AmrCompiledRefluxPlan result{

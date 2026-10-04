@@ -111,13 +111,15 @@ __global__ void register_route_kernel(
             rho += coefficient * stage_source.rho[cell];
             mom_u += coefficient * stage_source.mom_u[cell];
             mom_v += coefficient * stage_source.mom_v[cell];
-            mom_w += coefficient * stage_source.mom_w[cell];
+            mom_w += coefficient * amr::flux_math::angular_registered_flux(
+                stage_source.mom_w[cell],term.angular_factor);
             eng += coefficient * stage_source.eng[cell];
         } else {
             rho += coefficient * surface_source.rho[cell];
             mom_u += coefficient * surface_source.mom_u[cell];
             mom_v += coefficient * surface_source.mom_v[cell];
-            mom_w += coefficient * surface_source.mom_w[cell];
+            mom_w += coefficient * amr::flux_math::angular_registered_flux(
+                surface_source.mom_w[cell],term.angular_factor);
             eng += coefficient * surface_source.eng[cell];
         }
     }
@@ -176,7 +178,8 @@ __global__ void reflux_kernel(
         state.mom_v[state_cell] = amr::flux_math::reflux_conserved(
             state.mom_v[state_cell], correction, flux.mom_v[flux_cell]);
         state.mom_w[state_cell] = amr::flux_math::reflux_conserved(
-            state.mom_w[state_cell], correction, flux.mom_w[flux_cell]);
+            state.mom_w[state_cell], correction*contribution.angular_factor,
+            flux.mom_w[flux_cell]);
         state.eng[state_cell] = amr::flux_math::reflux_conserved(
             state.eng[state_cell], correction, flux.eng[flux_cell]);
         for (int species = 0; species < target.species_count; ++species)

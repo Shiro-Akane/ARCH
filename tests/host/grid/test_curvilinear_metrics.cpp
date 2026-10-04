@@ -391,7 +391,7 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
         if(block.state_next.stage_repairs.values[0]!=0.)
             throw std::runtime_error("RZ mixed Hydro manufactured repair");
     }
-    const auto& topology=control.RequireFluxTopologyPlan(2,rz);
+    const auto& topology=control.RequireFluxTopologyPlan(2,rz,-1,true);
     if(topology.semantics!=rz)throw std::runtime_error("Hydro registered legacy AMR chart");
     double max_register=0.;
     for(int id:active)for(int face=0;face<4;++face) {
@@ -411,7 +411,7 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
     }
     control.ghost_exchange.ExecuteExchange(control.pool,control.tree,2,
         &amr::Block::state_next,handles,amr::CoordinateSeamGeometry::RzAxisymmetric);
-    control.ApplyReflux(dt,&amr::Block::state_next,rz);
+    control.ApplyReflux(dt,&amr::Block::state_next,rz,true);
     double max_state_error=0.;
     for(int id:active) {
         const auto& block=control.pool->GetBlock(id);const auto& g=block.grid;

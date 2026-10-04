@@ -657,7 +657,7 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
     }
 
     result->compiled_reflux = amr::compile_amr_reflux_plan(
-        reflux, bindings, topology.species_count);
+        reflux, bindings, topology.species_count,&topology);
     if (!result->compiled_reflux.targets.empty()) {
         if (result->compiled_reflux.contributions.empty())
             throw std::invalid_argument("CUDA AMR reflux has no contributions");

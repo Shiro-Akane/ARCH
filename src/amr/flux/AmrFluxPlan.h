@@ -55,6 +55,7 @@ struct AmrFluxTopologyPlan {
     std::map<AmrFluxRouteKey, std::size_t> route_index;
     std::uint64_t fingerprint = 0;
     GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing;
+    bool angular_transport = false; // MomW register is torque/coarse area.
     // Exact native geometry snapshots, not field values or storage pointers.
     std::vector<Grid> native_grids;
     std::map<int,std::size_t> native_grid_index;
@@ -208,7 +209,8 @@ inline std::uint64_t compute_fingerprint(const AmrFluxTopologyPlan& plan)
     noexcept
 {
     Fingerprint hash;
-    hash.u64(2); // Explicit chart/native-geometry flux-plan identity.
+    hash.u64(3); // Chart/native geometry and angular register identity.
+    hash.u64(plan.angular_transport);
     hash.u64(static_cast<std::uint64_t>(plan.semantics));
     hash.u64(plan.native_grids.size());
     for (const auto& grid : plan.native_grids) {
@@ -277,6 +279,9 @@ inline void validate_amr_flux_topology_plan(const AmrFluxTopologyPlan& plan)
     if (plan.semantics != GridMetrics::GeometrySemantics::Existing
         && plan.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::invalid_argument("invalid AMR flux chart");
+    if (plan.angular_transport && (plan.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
+        || plan.native_grids.empty()))
+        throw std::invalid_argument("angular AMR transport requires native RZ geometry");
     // Small synthetic logical-plan fixtures have no physical Grid snapshots.
     if (plan.native_grid_index.size() != plan.native_grids.size()
         || (!plan.native_grids.empty()
@@ -333,7 +338,8 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
     const MemoryPool& pool, std::span<const int> active_blocks,
     std::span<const BlockHandle> active_handles, int dimension,
     int species_count,
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+    bool angular_transport = false)
 {
     using namespace flux_plan_detail;
     if (dimension < 1 || dimension > 3 || species_count < 0
@@ -345,6 +351,7 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
     result.dimension = dimension;
     result.species_count = species_count;
     result.semantics = semantics;
+    result.angular_transport = angular_transport;
     result.epoch = active_handles.front().epoch;
     if (!is_valid(result.epoch))
         throw std::invalid_argument("invalid AMR flux topology epoch");
@@ -542,6 +549,56 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
     result.fingerprint = compute_fingerprint(result);
     validate_amr_flux_topology_plan(result);
     return result;
+}
+
+/** Native chart binding used by both Host and compiled/device plans. */
+inline const Grid& angular_native_grid(
+    const AmrFluxTopologyPlan& topology,const AmrEndpoint& endpoint)
+{
+    const auto lowered=topology.pool_lowering.find(endpoint);
+    if(lowered==topology.pool_lowering.end())
+        throw std::invalid_argument("angular AMR endpoint is not bound");
+    const auto found=topology.native_grid_index.find(lowered->second);
+    if(found==topology.native_grid_index.end())
+        throw std::invalid_argument("angular AMR native geometry is missing");
+    return topology.native_grids.at(found->second);
+}
+
+inline double angular_registration_lever(const AmrFluxTopologyPlan& topology,
+    const AmrEndpoint& source,const LogicalAmrBox& face,AmrAxis axis)
+{
+    if(!topology.angular_transport) return 1.;
+    if(axis!=AmrAxis::X && axis!=AmrAxis::Y)
+        throw std::invalid_argument("angular AMR face axis is not R/Z");
+    const auto& native=angular_native_grid(topology,source);
+    const auto geometry=GridMetrics::make_geometry_view(native,topology.semantics);
+    // Source boxes denote the physical face, including upper scratch face.
+    const int i=native.Is()+face.first[0];
+    const double lever=axis==AmrAxis::X ? geometry.GetFacePosL(i)
+        : GridMetrics::Rz::VolumeCentroidRadius(
+            geometry.GetFacePosL(i),geometry.GetFacePosR(i));
+    if(!amr_plan_detail::is_finite_binary64(lever)||lever<0.)
+        throw std::invalid_argument("invalid angular AMR face lever");
+    return lever;
+}
+
+inline double angular_reflux_factor(const AmrFluxTopologyPlan& topology,
+    const AmrEndpoint& destination,const LogicalAmrBox& cell)
+{
+    if(!topology.angular_transport) return 1.;
+    const auto& native=angular_native_grid(topology,destination);
+    const auto geometry=GridMetrics::make_geometry_view(native,topology.semantics);
+    const int i=native.Is()+cell.first[0];
+    const double left=geometry.GetFacePosL(i),right=geometry.GetFacePosR(i);
+    const double V=GridMetrics::Rz::CellVolume(left,right,geometry.dx2);
+    const double W=GridMetrics::Rz::AngularMomentumMeasure(left,right,geometry.dx2);
+    if(!amr_plan_detail::is_finite_binary64(V)||V<=0.
+        ||!amr_plan_detail::is_finite_binary64(W)||W<=0.)
+        throw std::invalid_argument("invalid angular AMR cell measure");
+    const double factor=flux_math::angular_reflux_coefficient(1.,V,W);
+    if(!amr_plan_detail::is_finite_binary64(factor)||factor<=0.)
+        throw std::invalid_argument("invalid angular AMR reflux factor");
+    return factor;
 }
 
 /**
