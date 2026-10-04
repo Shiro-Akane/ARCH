@@ -992,6 +992,56 @@ void finite_ring_parent_probe() {
     std::cout<<"]}\n";
 }
 
+/** Dump actual native metric construction for independent root-coordinate proofs. */
+void native_rz_measure_probe() {
+    const auto dump=[](const auto& v){std::cout<<'[';bool first=true;for(auto x:v){if(!first)std::cout<<',';first=false;std::cout<<x;}std::cout<<']';};
+    auto cart=base_mesh(2,4);
+    elliptic::CompositePoisson cart_op(cart,make_cells(cart,false));
+    require(cart_op.native_rz_measure_enclosure().status==elliptic::BoundaryErrorStatus::InvalidInput,
+        "Cartesian operator acquired RZ certificate");
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
+    for(bool mixed:{false,true})for(double origin:{0.,.5,.3})for(bool decimal:{false,true}) {
+        auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.3,0.};
+        if(decimal)base.spacing={.1,.15,1.};
+        elliptic::CompositePoisson op(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        const auto m=op.native_rz_measure_enclosure();
+        require(m.status==elliptic::BoundaryErrorStatus::Bounded,"native measure enclosure failed");
+        std::vector<double> values(op.size());
+        for(int i=0;i<op.size();++i)values[i]=(i%2?-1.:1.)*(1.+.1*i);
+        const auto norm=op.native_rz_norm_interval(values);
+        require(norm.status==elliptic::BoundaryErrorStatus::Bounded,"physical RMS failed");
+        require(op.native_rz_norm_interval({}).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "RMS accepted missing input");
+        auto invalid=values;invalid[0]=std::numeric_limits<double>::quiet_NaN();
+        require(op.native_rz_norm_interval(invalid).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "RMS accepted nonfinite input");
+        std::vector<double> zero(op.size(),0.);
+        const auto zn=op.native_rz_norm_interval(zero);
+        require(zn.status==elliptic::BoundaryErrorStatus::Bounded&&zn.lower==0.&&zn.upper==0.,
+            "physical RMS added zero floor");
+        if(!first)std::cout<<',';first=false;
+        std::cout<<"{\"mixed\":"<<mixed<<",\"origin\":"<<origin<<",\"spacing\":";
+        dump(base.spacing);std::cout<<",\"cells\":[";
+        bool fc=true;for(const auto& cell:op.cells()) {
+            if(!fc)std::cout<<',';fc=false;
+            std::cout<<"{\"level\":"<<cell.level<<",\"index\":";dump(cell.index);std::cout<<'}';
+        }
+        std::cout<<"],\"stored_volumes\":";dump(op.volumes());
+        std::cout<<",\"stored_weights\":";dump(op.norm_weights());
+        std::cout<<",\"volume_lower\":";dump(m.volume_lower);
+        std::cout<<",\"volume_upper\":";dump(m.volume_upper);
+        std::cout<<",\"volume_error\":";dump(m.volume_error_upper);
+        std::cout<<",\"weight_lower\":";dump(m.weight_lower);
+        std::cout<<",\"weight_upper\":";dump(m.weight_upper);
+        std::cout<<",\"weight_error\":";dump(m.weight_error_upper);
+        std::cout<<",\"total_lower\":"<<m.total_volume_lower<<",\"total_upper\":"<<m.total_volume_upper
+            <<",\"values\":";dump(values);
+        std::cout<<",\"norm_lower\":"<<norm.lower<<",\"norm_upper\":"<<norm.upper<<'}';
+    }
+    std::cout<<"]}\n";
+}
+
 /** Actual identity-bound composition; raw vectors remain local for Fraction checks. */
 void finite_ring_rhs_probe() {
     using namespace Physical::Gravity;
@@ -1996,6 +2046,7 @@ int main(int argc,char** argv) {
         }
         if(argc>1 && std::string(argv[1])=="ring-separated-gauss") {std::cout<<std::setprecision(17);finite_ring_separated_gauss_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-far-leaf") {std::cout<<std::setprecision(17);finite_ring_far_leaf_contract();return 0;}
+        if(argc>1 && std::string(argv[1])=="rz-measure-probe") {native_rz_measure_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-rhs-probe") {finite_ring_rhs_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-parent-probe") {finite_ring_parent_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-native-face") {std::cout<<std::setprecision(17);finite_ring_tree_boundary_contract();return 0;}

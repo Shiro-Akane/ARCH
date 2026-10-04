@@ -369,6 +369,12 @@ scope显式 StoredNativeOperator，physical_status=UncertifiedInput；未知geom
 weights构造不填零。见 RZRingRhsCompositionNode-20261005.zh-CN.md。
 production RZ、完整物理RHS与Phi/force及CUDA/long-run gate仍保持。
 
+native volume/weights 构造与理想 native RMS 现已在 CompositePoisson owner 提供独立
+外界：12组264 cells，Fraction normalized weights/RMS及100、140位volume检查通过。
+不把stored geometry当精确值；真实存储误差单列，零RMS精确零。见
+RZNativeMeasureConstructionNode-20261005.zh-CN.md。face fit/LU/fallback、
+source/observer坐标差异和完整physical RHS组合仍待证明，production gate保持。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

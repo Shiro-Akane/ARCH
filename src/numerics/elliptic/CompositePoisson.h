@@ -82,6 +82,15 @@ struct PoissonArithmeticError {
     std::vector<double> cell_bounds;
     double norm_upper=std::numeric_limits<double>::infinity();
 };
+/** Exact full-ring measures from the dyadic mesh identity, not stored weights.
+ * Transient proof data only; this does not certify face-fit/stencil construction.
+ */
+struct NativeRzMeasureEnclosure {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    std::vector<double> volume_lower,volume_upper,volume_error_upper;
+    std::vector<double> weight_lower,weight_upper,weight_error_upper;
+    double total_volume_lower=0.,total_volume_upper=0.;
+};
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
@@ -123,6 +132,8 @@ public:
     BoundaryRhsError propagate_boundary_error(
         std::span<const BoundaryPotentialError> face_errors) const;
     WeightedNormInterval norm_interval(std::span<const double> x) const;
+    NativeRzMeasureEnclosure native_rz_measure_enclosure() const;
+    WeightedNormInterval native_rz_norm_interval(std::span<const double> x) const;
     PoissonArithmeticError bound_rhs_assembly_roundoff(
         std::span<const double> source,std::span<const double> boundary_values,
         std::span<const double> computed_rhs) const;

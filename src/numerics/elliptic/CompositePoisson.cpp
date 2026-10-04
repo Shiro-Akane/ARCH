@@ -684,6 +684,80 @@ PoissonArithmeticError finish_arithmetic_ledger(const CompositePoisson& op,
     result.status=norm.status;result.norm_upper=norm.upper;return result;
 }
 }
+/** Construct full-ring volume/normalization bounds from root dyadic identity.
+ * V=pi*dr*(2*r_lo+dr)*dz. Using dr explicitly avoids subtraction of
+ * nearly equal radial edges. Stored GridMetrics outputs are compared, never
+ * assumed exact; fitted coefficients are deliberately outside this scope.
+ */
+NativeRzMeasureEnclosure CompositePoisson::native_rz_measure_enclosure() const {
+    NativeRzMeasureEnclosure result;
+    if(base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2)return result;
+    const double infinity=std::numeric_limits<double>::infinity();
+    const ArithmeticRange pi{std::nextafter(arch::constants::math::pi,-infinity),
+        std::nextafter(arch::constants::math::pi,infinity)};
+    std::vector<ArithmeticRange> volume;volume.reserve(cells_.size());
+    ArithmeticRange total{};
+    for(const auto& cell:cells_) {
+        const double dr=std::ldexp(base_.spacing[0],-cell.level);
+        const double dz=std::ldexp(base_.spacing[1],-cell.level);
+        if(!std::isfinite(dr)||!std::isfinite(dz)||dr<=0.||dz<=0.
+            ||std::ldexp(dr,cell.level)!=base_.spacing[0]
+            ||std::ldexp(dz,cell.level)!=base_.spacing[1])return result;
+        const auto radius_sum=range_add(
+            range_product({2.,2.},{base_.origin[0],base_.origin[0]}),
+            range_product({2.*cell.index[0]+1.,2.*cell.index[0]+1.},{dr,dr}));
+        const auto v=range_product(range_product(pi,{dr,dr}),
+            range_product(radius_sum,{dz,dz}));
+        if(!finite_range(v)||v.lo<=0.) {
+            result.status=BoundaryErrorStatus::Overflow;return result;
+        }
+        volume.push_back(v);total=range_add(total,v);
+    }
+    if(!finite_range(total)||total.lo<=0.) {
+        result.status=BoundaryErrorStatus::Overflow;return result;
+    }
+    result.total_volume_lower=total.lo;result.total_volume_upper=total.hi;
+    for(std::size_t i=0;i<volume.size();++i) {
+        const auto v=volume[i];
+        const double lo=std::nextafter(v.lo/total.hi,0.);
+        const double hi=std::nextafter(v.hi/total.lo,infinity);
+        const double ev=bound_up(std::max(std::abs(volumes_[i]-v.lo),std::abs(volumes_[i]-v.hi)));
+        const double ew=bound_up(std::max(std::abs(weights_[i]-lo),std::abs(weights_[i]-hi)));
+        if(!std::isfinite(hi)||!std::isfinite(ev)||!std::isfinite(ew)||lo<=0.) {
+            result.status=BoundaryErrorStatus::Overflow;return result;
+        }
+        result.volume_lower.push_back(v.lo);result.volume_upper.push_back(v.hi);
+        result.volume_error_upper.push_back(ev);
+        result.weight_lower.push_back(lo);result.weight_upper.push_back(hi);
+        result.weight_error_upper.push_back(ew);
+    }
+    result.status=BoundaryErrorStatus::Bounded;return result;
+}
+/** RMS enclosure with ideal native full-ring weights; zero remains exact.
+ * No change to production norm/provider arrays or numerical thresholds.
+ */
+WeightedNormInterval CompositePoisson::native_rz_norm_interval(std::span<const double> x) const {
+    WeightedNormInterval result;
+    if(x.size()!=cells_.size()||!finite_field(x))return result;
+    const auto measure=native_rz_measure_enclosure();
+    if(measure.status!=BoundaryErrorStatus::Bounded) {result.status=measure.status;return result;}
+    double scale=0.;for(double value:x)scale=std::max(scale,std::abs(value));
+    if(scale==0.) {result.status=BoundaryErrorStatus::Bounded;result.lower=result.upper=0.;return result;}
+    double lo=0.,hi=0.;
+    for(std::size_t i=0;i<x.size();++i) {
+        const double magnitude=std::abs(x[i]);if(magnitude==0.)continue;
+        const double qlo=bound_down(magnitude/scale),qhi=bound_quotient(magnitude,scale);
+        const double lower=bound_down(measure.weight_lower[i]*bound_down(qlo*qlo));
+        const double upper=bound_product(measure.weight_upper[i],bound_product(qhi,qhi));
+        if(lower!=0.)lo=bound_down(lo+lower);
+        if(upper!=0.)hi=bound_up(hi+upper);
+    }
+    result.lower=bound_down(scale*bound_down(std::sqrt(lo)));
+    result.upper=bound_product(scale,bound_up(std::sqrt(hi)));
+    result.status=std::isfinite(result.upper)?BoundaryErrorStatus::Bounded:BoundaryErrorStatus::Overflow;
+    return result;
+}
 /** Companion certificate for the actual constant-mode projection.
  * The supplied output may come from the scalar or execution provider path;
  * no assumption is made about reduction/subtraction arithmetic being exact.
