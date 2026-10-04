@@ -670,3 +670,9 @@ RZ-A前置W/centroid/torque测度及单一状态无存储转换已经通过现�
 新ELF冻结JENS九组演化/续算回归PASS。见 RZHydroTorqueNode-20261004.zh-CN.md。
 AMR signed torque/W reflux与C/D仍待贯通；变量mu应力finding RZ-VISC-01交Core确认，
 其余批准节点继续，完整RZ能力gate保留，不启动新RZ长跑。
+
+2026-10-04 finite-ring前置节点：同一GravityBoundary tree缓存axis-centered full-ring
+analytic十个矩和真实support；uniform/mixed parent翻译、signed absolute-mass与
+远场q=.01/.2/.7/.95余项包络验证PASS。见 RZFiniteRingMomentNode-20261004.zh-CN.md。
+constructor可建立内部缓存，production values双向chart gate继续拒绝RZ；
+near/contact kernel、rounding/global error ledger与完整科学签收尚未完成。

@@ -625,6 +625,169 @@ void curved_domain_extension() {
 
 /** Exercise nonaxisymmetric manufactured potentials on native curved meshes. */
 /** Prevent explicit RZ identity from silently reaching the legacy 2D log kernel. */
+
+/** Independent full-azimuth product quadrature; a reference, not a certified near bound. */
+long double independent_ring_potential(double lo,double hi,double zlo,double zhi,
+    const std::array<double,3>& point,int order) {
+    std::vector<long double> nodes(order),weights(order);
+    constexpr long double pi_l=3.141592653589793238462643383279502884L;
+    for(int i=0;i<order;++i) {
+        long double x=std::cos(pi_l*(i+.75L)/(order+.5L));
+        for(int it=0;it<30;++it) {
+            long double prev=1.,p=x;
+            for(int n=2;n<=order;++n) {const long double next=((2*n-1)*x*p-(n-1)*prev)/n;prev=p;p=next;}
+            const long double derivative=order*(x*p-prev)/(x*x-1.);
+            const long double next=x-p/derivative;
+            if(std::abs(next-x)<4*std::numeric_limits<long double>::epsilon()) {x=next;break;}
+            x=next;
+        }
+        long double prev=1.,p=x;
+        for(int n=2;n<=order;++n) {const long double next=((2*n-1)*x*p-(n-1)*prev)/n;prev=p;p=next;}
+        const long double derivative=order*(x*p-prev)/(x*x-1.);
+        nodes[i]=x;weights[i]=2/((1-x*x)*derivative*derivative);
+    }
+    constexpr int azimuths=256;
+    long double value=0.;
+    for(int i=0;i<order;++i)for(int j=0;j<order;++j) {
+        const long double radius=.5L*(lo+hi)+.5L*(hi-lo)*nodes[i];
+        const long double z=.5L*(zlo+zhi)+.5L*(zhi-zlo)*nodes[j];
+        long double angular=0.;
+        for(int k=0;k<azimuths;++k) {
+            const long double angle=2*pi_l*(k+.5L)/azimuths;
+            const long double x=point[0]-radius*std::cos(angle);
+            const long double y=point[1]-radius*std::sin(angle);
+            const long double dz=point[2]-z;
+            angular+=1/std::sqrt(x*x+y*y+dz*dz);
+        }
+        value-=radius*weights[i]*weights[j]*.25L*(hi-lo)*(zhi-zlo)
+            *2*pi_l/azimuths*angular;
+    }
+    return value;
+}
+
+void finite_ring_moment_contract() {
+    using namespace Physical::Gravity;
+    constexpr long double pi_l=3.141592653589793238462643383279502884L;
+    const auto close=[](double actual,long double reference,const char* message) {
+        require(std::isfinite(actual)
+            && std::abs(static_cast<long double>(actual)-reference)
+                <=2.e-12L*std::max(1.L,std::abs(reference)),message);
+    };
+    for(double lo:{0.,.5,3.})for(double dz:{.125,2.}) {
+        const double hi=lo+.75;
+        const long double mass=pi_l*(static_cast<long double>(hi)*hi-lo*lo)*dz;
+        const auto m=finite_ring_unit_moments(lo,hi,dz);
+        close(m.value[0],mass,"ring unit mass");
+        close(m.value[second_moment_index(0,0)],mass*(hi*hi+lo*lo)/4,"ring Ixx");
+        close(m.value[second_moment_index(1,1)],mass*(hi*hi+lo*lo)/4,"ring Iyy");
+        close(m.value[second_moment_index(2,2)],mass*dz*dz/12,"ring Izz");
+        for(int q:{1,2,3,5,6,8})require(m.value[q]==0.,"ring nonzero odd/cross moment");
+        close(finite_ring_support_squared(hi,.5*dz),hi*hi+.25L*dz*dz,"ring full physical support");
+        require(finite_ring_support_squared(hi,.5*dz)>.25*(hi-lo)*(hi-lo)+.25*dz*dz,
+            "ring support silently used meridional half diagonal");
+    }
+    auto base=base_mesh(2,4);
+    base.geometry=elliptic::Geometry::Cylindrical;
+    base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    base.origin={.5,-.5,0.};
+    for(bool mixed:{false,true}) {
+        elliptic::CompositePoisson op(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        GravityBoundary tree(op);
+        std::vector<double> density(op.size());
+        long double total=0.,dipole=0.,xx=0.,zz=0.;
+        const auto root_z=tree.nodes().front().center[2];
+        for(int c=0;c<op.size();++c) {
+            const auto native=op.center(c);
+            density[c]=1.+.3*native[1];
+            const long double lo=native[0]-.5*op.width(c,0),hi=native[0]+.5*op.width(c,0);
+            const long double dz=op.width(c,1),offset=native[1]-root_z;
+            const long double mass=density[c]*pi_l*(hi*hi-lo*lo)*dz;
+            total+=mass;dipole+=mass*offset;xx+=mass*(hi*hi+lo*lo)/4;
+            zz+=mass*(dz*dz/12+offset*offset);
+        }
+        tree.update(density);
+        const auto& root=tree.moments().front();
+        close(root.value[0],total,"ring parent mass translation");
+        close(root.value[3],dipole,"ring parent dipole translation");
+        close(root.value[second_moment_index(0,0)],xx,"ring parent radial second moment");
+        close(root.value[second_moment_index(2,2)],zz,"ring parent axial second moment");
+        require(root.value[3]!=0.,"ring asymmetric parent accidentally declared symmetric");
+        for(const auto& node:tree.nodes()) {
+            require(node.center[0]==0. && node.center[1]==0.,"ring center off symmetry axis");
+            if(node.cell<0)continue;
+            const auto x=op.center(node.cell);
+            const double expected_radius=x[0]+.5*op.width(node.cell,0);
+            close(node.radius_squared,expected_radius*expected_radius
+                +.25L*op.width(node.cell,1)*op.width(node.cell,1),"actual ring leaf support");
+            close(node.center[2],x[1],"actual ring axial midpoint");
+        }
+        auto changed=density;for(auto& value:changed)value*=2.;
+        tree.update(changed);close(tree.moments().front().value[0],2*total,"ring density generation reuse");
+        std::cout<<"RZ_RING_TREE mixed="<<mixed<<" leaves="<<op.size()
+            <<" mass="<<root.value[0]<<" dipole_z="<<root.value[3]<<'\n';
+    }
+    const auto moments=finite_ring_unit_moments(.5,1.,.75);
+    const double support=std::sqrt(finite_ring_support_squared(1.,.375));
+    for(double q:{.01,.2,.7,.95}) {
+        const double distance=support/q;
+        const std::array<double,3> point{.6*distance,0.,.8*distance};
+        const long double a=independent_ring_potential(.5,1.,-.375,.375,point,24);
+        const long double b=independent_ring_potential(.5,1.,-.375,.375,point,32);
+        const double r[3]{point[0],point[1],point[2]};
+        const double actual=newtonian_multipole_potential(moments,r,distance*distance,1.,2);
+        const auto symmetric=multipole_truncation_bound(1.,moments.value[0],support,distance,true);
+        const auto general=multipole_truncation_bound(1.,moments.value[0],support,distance,false);
+        require(symmetric.status==MultipoleBoundStatus::Bounded
+            && general.status==MultipoleBoundStatus::Bounded,"separated ring bound absent");
+        require(std::abs(a-b)<1.e-12L*std::abs(b),"independent far ring reference not converged");
+        require(std::abs(actual-b)<symmetric.value && symmetric.value<=general.value,
+            "ring quadrupole violates frozen leaf truncation envelope");
+        // Signed manufactured sources use absolute mass, even with net M=0.
+        const auto signed_source=multipole_truncation_bound(1.,2*moments.value[0],support,distance,false);
+        close(signed_source.value,2*general.value,"signed absolute-mass remainder");
+        std::cout<<"RZ_RING_FAR q="<<q<<" actual_error="<<static_cast<double>(std::abs(actual-b))
+            <<" symmetric_bound="<<symmetric.value<<" general_bound="<<general.value
+            <<" reference_difference="<<static_cast<double>(std::abs(a-b))<<'\n';
+    }
+    // Signed manufactured pair: net monopole vanishes, but the remainder does not.
+    // It must use integral |rho| dV, not abs(M_net).
+    BoundaryTreeNode signed_nodes[3]{};
+    signed_nodes[0].children[0]=1;signed_nodes[0].children[1]=2;
+    signed_nodes[1].center={0.,0.,.25};signed_nodes[2].center={0.,0.,-.25};
+    BoundaryMoments signed_moments[3]{};
+    signed_moments[1]=finite_ring_unit_moments(.5,1.,.25);
+    signed_moments[2]=signed_moments[1];
+    for(auto& value:signed_moments[2].value)value=-value;
+    signed_moments[0]=combine_boundary_moments(signed_nodes,signed_moments,0);
+    require(signed_moments[0].value[0]==0. && signed_moments[0].value[3]!=0.,
+        "signed parent translation lost source cancellation");
+    const double signed_point[3]{1.8,0.,2.4};
+    const double signed_actual=newtonian_multipole_potential(
+        signed_moments[0],signed_point,9.,1.,2);
+    const std::array<double,3> reference_point{1.8,0.,2.4};
+    const long double signed_reference=independent_ring_potential(.5,1.,.125,.375,reference_point,32)
+        -independent_ring_potential(.5,1.,-.375,-.125,reference_point,32);
+    const double absolute_mass=2*signed_moments[1].value[0];
+    const auto signed_bound=multipole_truncation_bound(1.,absolute_mass,support,3.,false);
+    const double signed_error=static_cast<double>(std::abs(signed_actual-signed_reference));
+    require(signed_bound.status==MultipoleBoundStatus::Bounded
+        && signed_error>1.e-12 && signed_error<signed_bound.value,
+        "signed zero-net-mass parent lost its absolute-mass error envelope");
+    std::cout<<"RZ_RING_SIGNED net_mass="<<signed_moments[0].value[0]
+        <<" absolute_mass="<<absolute_mass<<" actual_error="<<signed_error
+        <<" general_bound="<<signed_bound.value<<'\n';
+    require(multipole_truncation_bound(std::numeric_limits<double>::max(),
+        std::numeric_limits<double>::max(),.5,1.,false).status==MultipoleBoundStatus::Overflow,
+        "overflowed multipole bound became accepted");
+    require(multipole_truncation_bound(1.,1.,1.,1.,false).status==MultipoleBoundStatus::NotSeparated,
+        "ring contact accepted far bound");
+    require(multipole_truncation_bound(1.,-1.,1.,2.,false).status==MultipoleBoundStatus::InvalidInput,
+        "negative absolute mass accepted");
+    require(multipole_truncation_bound(1.,0.,1.,2.,false).value==0.,
+        "zero source remainder changed");
+    std::cout<<"RZ_RING_MOMENT_REMAINDER_PASS production_values=gated near_bound=pending\n";
+}
+
 void rz_boundary_guard() {
     auto rz=base_mesh(2,4);
     rz.geometry=elliptic::Geometry::Cylindrical;
@@ -640,18 +803,21 @@ void rz_boundary_guard() {
         }
         require(refused,"RZ reached legacy isolated boundary without explicit contract error");
     };
-    rejected([&] {Physical::Gravity::GravityBoundary boundary(rz_op);});
+    Physical::Gravity::GravityBoundary ring(rz_op);
+    ring.update(std::vector<double>(rz_op.size(),1.));
+    rejected([&] {(void)ring.values(rz_op,constants::gravity::cgs::gravitational_constant);});
     auto polar=rz;polar.semantics=GridMetrics::GeometrySemantics::Existing;
     polar.origin[1]=0.;polar.spacing[1]=2.*pi/polar.cells[1];
     const elliptic::CompositePoisson polar_op(polar,make_cells(polar,false),
         elliptic::BoundaryKind::CurvilinearIsolated);
     Physical::Gravity::GravityBoundary legacy(polar_op);
     legacy.update(std::vector<double>(polar_op.size(),1.));
+    rejected([&] {(void)ring.values(polar_op,constants::gravity::cgs::gravitational_constant);});
     const auto values=legacy.values(polar_op,constants::gravity::cgs::gravitational_constant);
     require(values.size()==polar_op.faces().size(),"Legacy boundary lost output shape");
     for(double value:values)require(std::isfinite(value),"Legacy boundary no longer finite");
     rejected([&] {(void)legacy.values(rz_op,constants::gravity::cgs::gravitational_constant);});
-    std::cout<<"RZ_BOUNDARY_GUARD_PASS constructor=refused cached_legacy=refused legacy=preserved\n";
+    std::cout<<"RZ_BOUNDARY_GUARD_PASS ring_cache=ready ring_values=refused cached_legacy=refused legacy=preserved\n";
 }
 
 /** Frozen RZ polynomial, point-valued potential and analytic face derivatives. */
@@ -820,7 +986,8 @@ int main(int argc,char** argv) {
     try {
         std::cout<<std::setprecision(17);
         if(argc>1 && std::string(argv[1])=="coarse-diagnostic") {coarse_mesh_diagnostic();return 0;}
-        if (argc>1 && std::string(argv[1])=="rz") { rz_manufactured(); rz_boundary_guard(); return 0; }
+        if (argc>1 && std::string(argv[1])=="rz") { finite_ring_moment_contract(); rz_manufactured(); rz_boundary_guard(); return 0; }
+        if (argc>1 && std::string(argv[1])=="ring") { finite_ring_moment_contract(); rz_boundary_guard(); return 0; }
         if (argc>1 && std::string(argv[1])=="contract") { contract(); coarse_mesh_diagnostic(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
         if(argc>1 && std::string(argv[1])=="curved") {curved_manufactured();curved_boundary_integral();return 0;}

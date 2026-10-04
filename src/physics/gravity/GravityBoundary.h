@@ -11,11 +11,13 @@
 
 #include <array>
 #include <cmath>
+#include <limits>
 #include <span>
 #include <vector>
 
 #include "core/CompensatedSum.h"
 #include "grid/GridGeometryView.h"
+#include "grid/GridMetrics.h"
 #include "numerics/elliptic/CompositePoisson.h"
 
 namespace Physical::Gravity {
@@ -32,6 +34,78 @@ struct BoundaryTreeNode {
 ARCH_INLINE int second_moment_index(int a,int b) {
     if(a>b) {const int tmp=a;a=b;b=tmp;}
     return a==0 ? 4+b : a==1 ? 6+b : 9;
+}
+/** Exact full-ring leaf moments about (0,0,z_mid), no quadrature or point mass. */
+ARCH_INLINE BoundaryMoments finite_ring_unit_moments(
+    double r_lower,double r_upper,double dz) {
+    BoundaryMoments m{};
+    m.value[0]=GridMetrics::Rz::CellVolume(r_lower,r_upper,dz);
+    m.value[second_moment_index(0,0)]
+        =m.value[second_moment_index(1,1)]
+        =m.value[0]*(r_lower*r_lower+r_upper*r_upper)/4.;
+    m.value[second_moment_index(2,2)]=m.value[0]*dz*dz/12.;
+    // Axial midpoint and a complete azimuth guarantee zero dipole/cross moments.
+    return m;
+}
+/** Full physical support about the ring-axis center, not a meridional half diagonal. */
+ARCH_INLINE double finite_ring_support_squared(double outer,double axial_half_width) {
+    return outer*outer+axial_half_width*axial_half_width;
+}
+enum class MultipoleBoundStatus : unsigned char { Bounded, InvalidInput, NotSeparated, Overflow };
+struct MultipoleTruncationBound {
+    double value=std::numeric_limits<double>::infinity();
+    MultipoleBoundStatus status=MultipoleBoundStatus::InvalidInput;
+};
+/**
+ * Legendre remainder after quadrupole. absolute_mass is integral |rho| dV,
+ * never abs(net mass) for signed manufactured data. Inversion symmetry is a
+ * proven source property (full-ring uniform leaf), not inferred for a parent.
+ * This covers truncation only; distance/support and accumulated arithmetic
+ * rounding still belong to the eventual boundary error ledger.
+ */
+ARCH_INLINE MultipoleTruncationBound multipole_truncation_bound(
+    double G,double absolute_mass,double support,double distance,
+    bool inversion_symmetric) {
+    MultipoleTruncationBound result{};
+    if(!std::isfinite(G) || G<=0. || !std::isfinite(absolute_mass)
+        || absolute_mass<0. || !std::isfinite(support) || support<0.
+        || !std::isfinite(distance) || distance<=0.)return result;
+    if(distance<=support) {result.status=MultipoleBoundStatus::NotSeparated;return result;}
+    if(absolute_mass==0. || support==0.) {
+        result.value=0.;result.status=MultipoleBoundStatus::Bounded;return result;
+    }
+    // Round the positive scalar series upward, without global rounding-mode
+    // mutation. Failure/overflow never becomes a zero-error witness.
+    const double infinity=std::numeric_limits<double>::infinity();
+    const auto up=[&](double v) {return std::nextafter(v,infinity);};
+    const double q=up(support/distance);
+    if(q>=1.) {result.status=MultipoleBoundStatus::NotSeparated;return result;}
+    const double q2=up(q*q);
+    const double power=inversion_symmetric?up(q2*q2):up(q2*q);
+    const double denominator=std::nextafter(
+        inversion_symmetric?1.-q2:1.-q,0.);
+    if(!(denominator>0.)) {result.status=MultipoleBoundStatus::NotSeparated;return result;}
+    const double amplitude=up(G*up(absolute_mass/distance));
+    result.value=up(up(amplitude*power)/denominator);
+    result.status=std::isfinite(result.value)
+        ? MultipoleBoundStatus::Bounded:MultipoleBoundStatus::Overflow;
+    return result;
+}
+/** Shared Newtonian moments; ring and legacy tree consumers use the same ten slots. */
+ARCH_INLINE double newtonian_multipole_potential(
+    const BoundaryMoments& m,const double* r,double r2,double G,int order) {
+    double term=m.value[0];
+    if(order>=1)for(int a=0;a<3;++a)term+=m.value[1+a]*r[a]/r2;
+    if(order>=2) {
+        double contraction=0.,trace=0.;
+        for(int a=0;a<3;++a) {
+            trace+=m.value[second_moment_index(a,a)];
+            for(int b=0;b<3;++b)contraction+=r[a]*r[b]*m.value[second_moment_index(a,b)];
+        }
+        term+=(3.*contraction/r2-trace)/(2.*r2);
+    }
+    const double inverse=1./std::sqrt(r2);
+    return -G*inverse*term;
 }
 /** Translate and sum child moments about the parent expansion center. */
 ARCH_INLINE BoundaryMoments combine_boundary_moments(const BoundaryTreeNode* nodes,
@@ -100,19 +174,7 @@ ARCH_INLINE double isolated_potential(const BoundaryTreeNode* nodes,
             potential.add(near_leaf_potential(node,m.value[0],point,G,1.,geometry,dimension));
             index=node.end;continue;
         }
-        const double inverse=1./std::sqrt(r2);
-        double term=m.value[0];
-        if(order>=1) for(int a=0;a<3;++a) term+=m.value[1+a]*r[a]/r2;
-        if(order>=2) {
-            double contraction=0.,trace=0.;
-            for(int a=0;a<3;++a) {
-                trace+=m.value[second_moment_index(a,a)];
-                for(int b=0;b<3;++b) contraction+=r[a]*r[b]*m.value[second_moment_index(a,b)];
-            }
-            term+=(3.*contraction/r2-trace)/(2.*r2);
-        }
-        // Phi = -G [M/r + D.r/r^3 + (3 r.Q.r/r^2 - tr Q)/(2 r^3)].
-        potential.add(-G*inverse*term);
+        potential.add(newtonian_multipole_potential(m,r,r2,G,order));
         index=node.end;
     }
     return potential.value();
@@ -161,6 +223,7 @@ public:
     const auto& moments() const {return moments_;}
 private:
     int dimension_=3;
+    bool finite_ring_=false;
     double reference_radius_=1.;
     std::vector<BoundaryTreeNode> nodes_;
     std::vector<std::vector<int>> layers_;

@@ -31,6 +31,11 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
     BoundaryMoments moments;
     const auto& base=op.base();
     moments.value[0]=op.volumes()[cell];
+    if(base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        const auto center=op.center(cell);
+        return finite_ring_unit_moments(center[0]-.5*op.width(cell,0),
+            center[0]+.5*op.width(cell,0),op.width(cell,1));
+    }
     if(base.geometry==Geometry::Cartesian)return moments;
     const auto center=op.center(cell);
     constexpr double nodes[]{-0.7745966692414834,0.,0.7745966692414834};
@@ -66,11 +71,10 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
 /** Build a physical-space mass tree over every active leaf. */
 GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
     :dimension_(op.base().dimension),
+     finite_ring_(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz),
      reference_radius_(op.base().origin[0]+op.base().cells[0]*op.base().spacing[0]),
      volumes_(op.volumes()) {
     using namespace arch::elliptic;
-    if(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::invalid_argument("RZ isolated boundary unavailable: finite-ring contract pending");
     if((dimension_!=2 && dimension_!=3) ||
        (dimension_==2 && op.base().geometry==Geometry::Cartesian))
         throw std::invalid_argument("Isolated multipole gravity requires 2D polar or 3D space");
@@ -89,7 +93,11 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
                 width[a]=std::ldexp(op.base().spacing[a],-key.level);
                 native[a]=op.base().origin[a]+(key.index[a]+0.5)*width[a];
             }
-            if(op.base().geometry==Geometry::Cartesian) {
+            if(finite_ring_) {
+                node.center={0.,0.,native[1]};
+                node.radius_squared=finite_ring_support_squared(
+                    native[0]+.5*width[0],.5*width[1]);
+            } else if(op.base().geometry==Geometry::Cartesian) {
                 node.center=native;
                 for(int a=0;a<3;++a)node.radius_squared+=0.25*width[a]*width[a];
             } else {
@@ -155,7 +163,7 @@ std::vector<double> GravityBoundary::values(const arch::elliptic::CompositePoiss
                                            double G,double theta,int order) const {
     // A legacy cached tree must not consume an RZ operator as a log-kernel
     // boundary. Analytic RZ operator tests do not certify this source model.
-    if(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+    if(finite_ring_ || op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::invalid_argument("RZ isolated boundary unavailable: finite-ring contract pending");
     if(!std::isfinite(G) || G<=0. || !std::isfinite(theta) || theta<0. || theta>=1.
         || order<0 || order>2) throw std::invalid_argument("Invalid isolated boundary evaluation");
