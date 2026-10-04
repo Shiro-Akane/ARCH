@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
@@ -793,16 +794,8 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
     ArithmeticRange boundary_coefficient=boundary_seed;
     if(face.construction==FaceStencilConstruction::PolynomialFit) {
         const int fine=boundary?anchor:(cells_[face.left].level>=cells_[face.right].level?face.left:face.right);
-        std::array<ArithmeticRange,2> offset{};
-        for(int a=0;a<2;++a) {
-            const int owner=a==axis?anchor:fine;
-            const double w=exact_width(owner,a);
-            if(w<=0.)return result;
-            double logical=cells_[owner].index[a]+.5;
-            if(a==axis)logical=boundary?cells_[anchor].index[a]+double(face.boundary_side%2)
-                :cells_[face.left].index[a]+1.;
-            offset[a]=range_product({logical,logical},{w,w});
-        }
+        const int scale_level=boundary?cells_[anchor].level:
+            std::min(cells_[face.left].level,cells_[face.right].level);
         std::vector<std::array<ArithmeticRange,6>> basis;
         std::vector<ArithmeticRange> weights,initial;
         std::array<std::array<ArithmeticRange,6>,6> gram{};
@@ -815,9 +808,25 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
             std::array<ArithmeticRange,2> delta{};
             for(int a=0;a<2;++a) {
                 const double w=exact_width(cell,a);if(w<=0.)return result;
-                const double logical=cells_[cell].index[a]+.5;
-                delta[a]=range_divide_volume(range_add(
-                    range_product({logical,logical},{w,w}),range_negate(offset[a])),scale);
+                const int owner=a==axis?anchor:fine;
+                const int common=std::max(cells_[cell].level,cells_[owner].level);
+                // level<=15 and index<=INT_MAX imply every doubled dyadic
+                // numerator and its difference fit <=48 bits. Build it in
+                // int64 before exact binary scaling: no world-center subtraction.
+                const std::int64_t sample=(2*std::int64_t(cells_[cell].index[a])+1)
+                    << (common-cells_[cell].level);
+                const std::int64_t face_numerator=a==axis?
+                    2*(std::int64_t(cells_[owner].index[a])+(boundary?face.boundary_side%2:1)):
+                    2*std::int64_t(cells_[owner].index[a])+1;
+                const std::int64_t face_position=face_numerator << (common-cells_[owner].level);
+                const double dyadic=std::ldexp(double(sample-face_position),scale_level-common-1);
+                int ea=0,en=0;
+                const double ma=std::frexp(base_.spacing[a],&ea),mn=std::frexp(base_.spacing[axis],&en);
+                const double exact=std::ldexp(dyadic,ea-en);
+                if(ma==mn&&std::isfinite(exact)&&std::ldexp(exact,en-ea)==dyadic)
+                    delta[a]={exact,exact}; // shared spacing/power-of-two ratio cancels exactly
+                else delta[a]=range_product({dyadic,dyadic},range_divide_positive(
+                    {base_.spacing[a],base_.spacing[a]},{base_.spacing[axis],base_.spacing[axis]}));
             }
             std::array<ArithmeticRange,6> p{{{1.,1.},delta[0],delta[1],range_square(delta[0]),
                 range_product(delta[0],delta[1]),range_square(delta[1])}};
@@ -973,6 +982,39 @@ NativeRzBoundaryConstructionError CompositePoisson::native_rz_boundary_construct
         for(int side=0;side<2;++side) {
             const int cell=side?face.right:face.left;if(cell<0)continue;
             const double term=bound_product(geometry.boundary_map_error_upper[side],std::abs(values[index]));
+            result.cell_bounds[cell]=bound_up(result.cell_bounds[cell]+term);
+            if(!std::isfinite(result.cell_bounds[cell])) {result.status=BoundaryErrorStatus::Overflow;return result;}
+        }
+    }
+    const auto norm=native_rz_norm_interval(result.cell_bounds);
+    result.status=norm.status;result.native_norm_upper=norm.upper;return result;
+}
+/** abs(B_ideal)*e_f: avoids the cross term lost by using stored B.
+ * Certified errors must refer to ideal root source AND observer geometry.
+ * Existing stored-coordinate ring errors cannot be implicitly promoted.
+ */
+NativeRzBoundaryPotentialError CompositePoisson::native_rz_propagate_potential_error(
+    std::span<const NativeRzFacePotentialError> errors) const {
+    NativeRzBoundaryPotentialError result;
+    if(base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2
+        ||errors.size()!=faces_.size())return result;
+    result.cell_bounds.assign(cells_.size(),0.);
+    for(std::size_t index=0;index<faces_.size();++index) {
+        const auto& face=faces_[index];if(face.boundary_side<0)continue;
+        const auto& input=errors[index];
+        if(!std::isfinite(input.error.absolute_error)||input.error.absolute_error<0.)return result;
+        if(input.error.quality!=BoundaryErrorQuality::CertifiedAbsolute
+            ||input.scope!=NativeRzPotentialScope::RootDyadicSourceAndObserver) {
+            result.status=BoundaryErrorStatus::UncertifiedInput;return result;
+        }
+        const auto map=native_rz_face_enclosure(index);
+        if(map.status!=BoundaryErrorStatus::Bounded) {result.status=map.status;return result;}
+        for(int side=0;side<2;++side) {
+            const int cell=side?face.right:face.left;if(cell<0)continue;
+            const double coefficient=std::max(std::abs(map.boundary_map_lower[side]),
+                std::abs(map.boundary_map_upper[side]));
+            const double term=bound_product(coefficient,input.error.absolute_error);
             result.cell_bounds[cell]=bound_up(result.cell_bounds[cell]+term);
             if(!std::isfinite(result.cell_bounds[cell])) {result.status=BoundaryErrorStatus::Overflow;return result;}
         }

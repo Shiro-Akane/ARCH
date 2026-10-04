@@ -125,6 +125,18 @@ struct NativeRzBoundaryConstructionError {
     std::vector<double> cell_bounds;
     double native_norm_upper=std::numeric_limits<double>::infinity();
 };
+// Distinct input prevents accidentally lifting stored-coordinate ring errors
+// into ideal-source/observer errors. Root scope must be supplied explicitly.
+enum class NativeRzPotentialScope { Unknown, RootDyadicSourceAndObserver };
+struct NativeRzFacePotentialError {
+    BoundaryPotentialError error;
+    NativeRzPotentialScope scope=NativeRzPotentialScope::Unknown;
+};
+struct NativeRzBoundaryPotentialError {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    std::vector<double> cell_bounds;
+    double native_norm_upper=std::numeric_limits<double>::infinity();
+};
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
@@ -171,6 +183,8 @@ public:
     NativeRzFaceEnclosure native_rz_face_enclosure(std::size_t face_index) const;
     NativeRzBoundaryConstructionError native_rz_boundary_construction_error(
         std::span<const double> boundary_values) const;
+    NativeRzBoundaryPotentialError native_rz_propagate_potential_error(
+        std::span<const NativeRzFacePotentialError> face_errors) const;
     WeightedNormInterval native_rz_norm_interval(std::span<const double> x) const;
     PoissonArithmeticError bound_rhs_assembly_roundoff(
         std::span<const double> source,std::span<const double> boundary_values,

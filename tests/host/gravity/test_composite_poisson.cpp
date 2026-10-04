@@ -1037,6 +1037,46 @@ void native_rz_stencil_probe() {
             const double sum=construction.cell_bounds[i]+arithmetic.cell_bounds[i];
             combined[i]=sum==0.?0.:std::nextafter(sum,std::numeric_limits<double>::infinity());
         }
+        std::vector<elliptic::NativeRzFacePotentialError> errors(op.faces().size());
+        std::vector<double> potential_errors(op.faces().size(),0.);
+        std::size_t first_boundary=op.faces().size();
+        for(std::size_t i=0;i<errors.size();++i)if(op.faces()[i].boundary_side>=0) {
+            if(first_boundary==op.faces().size())first_boundary=i;
+            potential_errors[i]=std::ldexp(1.,-20)*(1+i%3);
+            errors[i].error={potential_errors[i],elliptic::BoundaryErrorQuality::CertifiedAbsolute};
+            errors[i].scope=elliptic::NativeRzPotentialScope::RootDyadicSourceAndObserver;
+        }
+        require(first_boundary<op.faces().size(),"missing RZ physical boundary fixture");
+        const auto propagated=op.native_rz_propagate_potential_error(errors);
+        require(propagated.status==elliptic::BoundaryErrorStatus::Bounded,"ideal B potential error failed");
+        require(op.native_rz_propagate_potential_error({}).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "missing ideal error array accepted");
+        auto bad=errors;bad[first_boundary].scope=elliptic::NativeRzPotentialScope::Unknown;
+        require(op.native_rz_propagate_potential_error(bad).status==elliptic::BoundaryErrorStatus::UncertifiedInput,
+            "stored/unknown coordinate error silently lifted");
+        bad=errors;bad[first_boundary].error.quality=elliptic::BoundaryErrorQuality::Estimate;
+        require(op.native_rz_propagate_potential_error(bad).status==elliptic::BoundaryErrorStatus::UncertifiedInput,
+            "potential estimate certified");
+        bad=errors;bad[first_boundary].error.absolute_error=-1.;
+        require(op.native_rz_propagate_potential_error(bad).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "negative potential error accepted");
+        bad=errors;bad[first_boundary].error.absolute_error=std::numeric_limits<double>::quiet_NaN();
+        require(op.native_rz_propagate_potential_error(bad).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "NaN potential error accepted");
+        bad=errors;bad[first_boundary].error.absolute_error=std::numeric_limits<double>::max();
+        require(op.native_rz_propagate_potential_error(bad).status==elliptic::BoundaryErrorStatus::Overflow,
+            "overflow potential propagation accepted");
+        bad=errors;for(auto& e:bad)e.error.absolute_error=0.;
+        const auto zero_potential=op.native_rz_propagate_potential_error(bad);
+        require(zero_potential.status==elliptic::BoundaryErrorStatus::Bounded&&zero_potential.native_norm_upper==0.,
+            "zero ideal potential error acquired floor");
+        std::vector<double> total_boundary(op.size());
+        for(int i=0;i<op.size();++i) {
+            const double sum=combined[i]+propagated.cell_bounds[i];
+            total_boundary[i]=sum==0.?0.:std::nextafter(sum,std::numeric_limits<double>::infinity());
+        }
+        const auto total_norm=op.native_rz_norm_interval(total_boundary);
+        require(total_norm.status==elliptic::BoundaryErrorStatus::Bounded,"total native boundary norm failed");
         const auto combined_norm=op.native_rz_norm_interval(combined);
         require(combined_norm.status==elliptic::BoundaryErrorStatus::Bounded,"combined native construction norm failed");
         std::cout<<",\"face_values\":";dump(face_values);std::cout<<",\"rhs\":";dump(rhs);
@@ -1044,6 +1084,11 @@ void native_rz_stencil_probe() {
         std::cout<<",\"construction_native_norm_upper\":"<<construction.native_norm_upper
             <<",\"combined_cells\":";dump(combined);
         std::cout<<",\"combined_native_norm_upper\":"<<combined_norm.upper;
+        std::cout<<",\"potential_errors\":";dump(potential_errors);
+        std::cout<<",\"propagated_cells\":";dump(propagated.cell_bounds);
+        std::cout<<",\"propagated_native_norm_upper\":"<<propagated.native_norm_upper
+            <<",\"total_boundary_cells\":";dump(total_boundary);
+        std::cout<<",\"total_boundary_native_norm_upper\":"<<total_norm.upper;
         std::cout<<",\"faces\":[";fc=true;std::size_t face_index=0;
         for(const auto& face:op.faces()) {
             if(!fc)std::cout<<',';fc=false;

@@ -398,6 +398,14 @@ face center/area/A-V及signed B构造区间已接到真实canonical effective_rh
 不能直接拼旧stored-B误差漏项。source/observer、interior A及完整physical
 residual/Phi/force和production gate仍待完成。
 
+ideal B*e_f传播已实现，要求独立typed error及显式root-source/observer scope、
+CertifiedAbsolute；Unknown/Estimate/invalid/overflow均拒绝，zero精确零。
+construction+potential+assembly的38组完整manufactured boundary box已独立
+Fraction验证，真实ring ideal-error producer仍未完成，不自动提升旧stored
+坐标误差。精确integer-dyadic basis normalization只收紧proof，不改production
+系数/阈值。见 RZIdealPotentialPropagationNode-20261005.zh-CN.md。
+interior A、完整physical residual/Phi/force及production gate仍待完成。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
