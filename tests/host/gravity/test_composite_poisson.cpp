@@ -1243,7 +1243,7 @@ void finite_ring_rhs_probe() {
     using namespace Physical::Gravity;
     const auto dump=[](const auto& v){std::cout<<'[';bool first=true;for(auto x:v){if(!first)std::cout<<',';first=false;std::cout<<x;}std::cout<<']';};
     std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
-    for(bool mixed:{false,true})for(double origin:{0.,.5})for(bool zero:{false,true}) {
+    for(bool mixed:{false,true})for(double origin:{0.,.5,.3})for(bool zero:{false,true}) {
         auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
         base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.5,0.};
         multigrid::CompositeMultigrid solver(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
@@ -1258,6 +1258,29 @@ void finite_ring_rhs_probe() {
         control.maximum_boxes_per_leaf=8;
         const auto ring=tree.ring_boundary(op,id,control);
         require(ring.status==RingBoundaryStatus::Bounded,"composition ring input not bounded");
+        const auto root_errors=tree.root_scoped_ring_errors(op,ring);
+        const bool root_exact=origin!=.3;
+        const auto ideal_potential=op.native_rz_propagate_potential_error(root_errors);
+        require(ideal_potential.status==(root_exact?elliptic::BoundaryErrorStatus::Bounded
+            :elliptic::BoundaryErrorStatus::UncertifiedInput),"producer root scope proof incorrect");
+        auto scope_stale=ring;scope_stale.source_generation--;
+        bool scope_rejected=false;
+        try{tree.root_scoped_ring_errors(op,scope_stale);}catch(const std::exception&){scope_rejected=true;}
+        require(scope_rejected,"root producer accepted stale source generation");
+        auto missing_scope=ring;missing_scope.errors.clear();scope_rejected=false;
+        try{tree.root_scoped_ring_errors(op,missing_scope);}catch(const std::invalid_argument&){scope_rejected=true;}
+        require(scope_rejected,"root producer accepted missing face errors");
+        auto estimated_scope=ring;
+        for(auto& error:estimated_scope.errors)error.quality=elliptic::BoundaryErrorQuality::Estimate;
+        const auto estimates=tree.root_scoped_ring_errors(op,estimated_scope);
+        for(const auto& input:estimates)
+            require(input.scope==elliptic::NativeRzPotentialScope::Unknown,"estimated producer acquired root certificate");
+        auto other_base=base;other_base.origin[1]+=.125;
+        elliptic::CompositePoisson other(other_base,make_cells(other_base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        scope_rejected=false;
+        try{tree.root_scoped_ring_errors(other,ring);}catch(const std::logic_error&){scope_rejected=true;}
+        require(scope_rejected,"root producer accepted different operator geometry");
+
         const auto rho=execution.upload(density);auto src=execution.array<double>(op.size());
         const double factor=-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant;
         execution.linear(src,factor,rho,0.,{},0.);
@@ -1290,6 +1313,19 @@ void finite_ring_rhs_probe() {
             ==elliptic::BoundaryResidualStatus::InvalidInput,"missing physical source accepted");
         if(!first)std::cout<<',';first=false;
         std::cout<<"{\"mixed\":"<<mixed<<",\"origin\":"<<origin<<",\"zero\":"<<zero<<",\"density\":";dump(density);
+        std::cout<<",\"root_exact\":"<<root_exact<<",\"root_origin\":";dump(base.origin);
+        std::cout<<",\"root_spacing\":";dump(base.spacing);
+        std::cout<<",\"source_geometry\":[";bool geometry_first=true;
+        for(int i=0;i<op.size();++i) {
+            if(!geometry_first)std::cout<<',';geometry_first=false;
+            std::cout<<"{\"level\":"<<op.cells()[i].level<<",\"index\":";dump(op.cells()[i].index);
+            std::array<double,4> edges{};for(int a=0;a<2;++a) {
+                edges[2*a]=op.center(i)[a]-.5*op.width(i,a);
+                edges[2*a+1]=op.center(i)[a]+.5*op.width(i,a);
+            }
+            std::cout<<",\"edges\":";dump(edges);std::cout<<'}';
+        }
+        std::cout<<']';
         std::cout<<",\"source\":";dump(source);std::cout<<",\"rhs\":";dump(rhs);
         std::cout<<",\"volumes\":";dump(op.volumes());std::cout<<",\"weights\":";dump(op.norm_weights());
         std::cout<<",\"face_lower\":";dump(ring.lower);std::cout<<",\"face_upper\":";dump(ring.upper);
@@ -1308,6 +1344,9 @@ void finite_ring_rhs_probe() {
             if(face.boundary_side<0)continue;
             if(!first_face)std::cout<<',';first_face=false;
             std::cout<<"{\"index\":"<<f<<",\"left\":"<<face.left<<",\"right\":"<<face.right
+                <<",\"axis\":"<<face.axis<<",\"boundary_side\":"<<face.boundary_side
+                <<",\"root_scope\":"<<(root_errors[f].scope==elliptic::NativeRzPotentialScope::RootDyadicSourceAndObserver)
+                <<",\"center\":["<<face.center[0]<<','<<face.center[1]<<']'
                 <<",\"area\":"<<face.area<<",\"boundary_coefficient\":"<<face.boundary_coefficient<<'}';
         }
         std::cout<<"]}";

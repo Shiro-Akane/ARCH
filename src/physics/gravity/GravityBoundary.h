@@ -400,6 +400,10 @@ public:
         const GravitySolveIdentity&,const RingBoundaryControl&) const;
     void require_current_ring(const arch::elliptic::CompositePoisson&,
         const RingBoundaryEvaluation&) const;
+    // Lift a current producer only after exact root source/observer equality
+    // is proved; unsupported/rounded geometry retains Unknown scope.
+    std::vector<arch::elliptic::NativeRzFacePotentialError> root_scoped_ring_errors(
+        const arch::elliptic::CompositePoisson&,const RingBoundaryEvaluation&) const;
     RingRhsAssessment assess_ring_rhs(const arch::elliptic::CompositePoisson&,
         const RingBoundaryEvaluation&,std::span<const double> computed_source,
         std::span<const double> computed_rhs,std::span<const double> potential,

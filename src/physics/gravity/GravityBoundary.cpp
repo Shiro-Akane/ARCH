@@ -24,6 +24,30 @@
 
 namespace Physical::Gravity {
 namespace {
+/** Prove an exact binary root coordinate, with no near-equality tolerance.
+ * FMA product residual and TwoSum certify the two elementary operations.
+ * The restricted exponent domain keeps all possible residuals representable;
+ * unsupported exponents decline proof, never imply zero construction error.
+ */
+bool exact_root_coordinate(double origin,double root_spacing,double index,
+    int level,double stored) {
+    if(!std::isfinite(origin)||!std::isfinite(root_spacing)||root_spacing<=0.
+        ||!std::isfinite(index)||std::abs(index)>0x1p32||level<0||level>15
+        ||!std::isfinite(stored))return false;
+    const auto ordinary=[](double x) {
+        return x==0.||(std::ilogb(std::abs(x))>=-400&&std::ilogb(std::abs(x))<=400);
+    };
+    if(!ordinary(origin)||!ordinary(root_spacing)||2.*index!=std::trunc(2.*index))return false;
+    const double width=std::ldexp(root_spacing,-level);
+    if(std::ldexp(width,level)!=root_spacing)return false;
+    const double product=index*width;
+    if(!std::isfinite(product)||std::fma(index,width,-product)!=0.)return false;
+    const double sum=origin+product;
+    if(!std::isfinite(sum))return false;
+    const double virtual_product=sum-origin;
+    const double error=(origin-(sum-virtual_product))+(product-virtual_product);
+    return error==0.&&sum==stored;
+}
 /** Integrate a piecewise-constant curved cell into Cartesian mass moments. */
 BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int cell,
     const std::array<double,3>& origin) {
@@ -309,6 +333,42 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
     // Certification is all-or-nothing, including FP64 source reduction/budget.
     if(converged)for(auto& error:result.errors)
         error.quality=arch::elliptic::BoundaryErrorQuality::CertifiedAbsolute;
+    return result;
+}
+/** Certify the actual producer's source and observer coordinate identity.
+ * No re-integration, coordinate replacement or physics change is performed.
+ * All leaf edges and exterior face centers must equal ideal root coordinates
+ * exactly. The current density/AMR/generation checks precede scope promotion.
+ */
+std::vector<arch::elliptic::NativeRzFacePotentialError> GravityBoundary::root_scoped_ring_errors(
+    const arch::elliptic::CompositePoisson& op,const RingBoundaryEvaluation& ring) const {
+    using namespace arch::elliptic;
+    require_current_ring(op,ring);
+    if(ring.errors.size()!=op.faces().size())throw std::invalid_argument("Missing ring face errors");
+    std::vector<NativeRzFacePotentialError> result(ring.errors.size());
+    for(std::size_t i=0;i<result.size();++i)result[i].error=ring.errors[i];
+    const auto& base=op.base();
+    for(int i=0;i<op.size();++i)for(int axis=0;axis<2;++axis) {
+        const auto& cell=op.cells()[i];
+        const double center=op.center(i)[axis],half=.5*op.width(i,axis);
+        if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
+                double(cell.index[axis]),cell.level,center-half)
+            ||!exact_root_coordinate(base.origin[axis],base.spacing[axis],
+                double(cell.index[axis])+1.,cell.level,center+half))return result;
+    }
+    for(const auto& face:op.faces())if(face.boundary_side>=0) {
+        const int owner=face.left>=0?face.left:face.right;
+        const auto& cell=op.cells()[owner];
+        for(int axis=0;axis<2;++axis) {
+            const double index=double(cell.index[axis])+(axis==face.axis
+                ? double(face.boundary_side%2):.5);
+            if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
+                index,cell.level,face.center[axis]))return result;
+        }
+    }
+    for(std::size_t i=0;i<result.size();++i)if(op.faces()[i].boundary_side>=0
+        &&ring.errors[i].quality==BoundaryErrorQuality::CertifiedAbsolute)
+        result[i].scope=NativeRzPotentialScope::RootDyadicSourceAndObserver;
     return result;
 }
 /** Join source, boundary and actual provider arithmetic with one owner identity.

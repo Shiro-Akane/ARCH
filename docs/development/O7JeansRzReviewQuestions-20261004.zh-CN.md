@@ -414,6 +414,14 @@ stored arithmetic、ideal evaluation和完整manufactured residual box通过。
 物理解；真实source/observer producer、原请求physical RHS/Phi/force及
 RZ全消费者/natural recovery/axis/viscosity gate仍待完成。
 
+真实ring producer新增exact root source/observer身份证明：逐实际叶边界和
+exterior face坐标消费current operator/density/generation；FMA/TwoSum残差为零
+才提升显式root scope。12组264 cells176 exterior faces独立Fraction通过，
+8组精确坐标可传播ideal B，4组真实舍入坐标继续Unknown；Estimate、missing、
+stale、异operator拒绝。见RZRootProducerIdentityNode-20261005.zh-CN.md。
+这只贯通精确坐标子集，不关闭general geometry error、真实求解Phi/force或
+完整physical residual/RZ gate；相同生产ELF沿用冻结JENS9+9，不改阈值。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
