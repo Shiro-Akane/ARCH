@@ -429,6 +429,15 @@ stale、异operator拒绝。见RZRootProducerIdentityNode-20261005.zh-CN.md。
 见RZNativePhysicalRhsAssessmentNode-20261005.zh-CN.md。不以scoped
 composition PASS冒充actual solved Phi/force或完整科学签收，不改阈值，gate保持。
 
+前一真实axis4x4 WorkLimit已在相同1e-18 face target、65536 boxes/leaf、
+100000 work cap下由bounded balanced outward workspace消除；积分公式与原请求不变。
+720次独立Fraction workspace替换、9项原数学合同、6项Core scoped回归通过。
+实际axis/off-axis两例32 cells native source→ring→RHS→solve→apply/residual的
+独立Fraction original-request检查PASS，rtol1e-10、atol0未变。
+见RZRingBalancedWorkspaceNode-20261005.zh-CN.md。只关闭记录的uniform
+exact-coordinate预算finding，不关闭continuous Phi/force、一般geometry、mixed
+实际AMR solve、2x2 interpolation或全RZ科学gate；production/CUDA/long-run gate保持。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

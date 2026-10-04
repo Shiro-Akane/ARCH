@@ -1452,7 +1452,7 @@ void native_ring_solved_probe() {
             if(!ff)std::cout<<',';ff=false;const auto& face=op.faces()[f];
             std::cout<<"{\"index\":"<<f<<",\"axis\":"<<face.axis
                 <<",\"side\":"<<face.boundary_side%2<<",\"left\":"<<face.left
-                <<",\"right\":"<<face.right<<",\"boundary_side\":"<<face.boundary_side
+                <<",\"right\":"<<face.right<<",\"construction\":"<<int(face.construction)<<",\"boundary_side\":"<<face.boundary_side
                 <<",\"center\":";dump(face.center);std::cout<<",\"samples\":";dump(face.samples);
             std::cout<<",\"coefficients\":";dump(face.coefficients);
             std::cout<<",\"boundary_coefficient\":"<<face.boundary_coefficient
@@ -1700,6 +1700,63 @@ void native_arithmetic_ledger_probe() {
         }
     }
     std::cout<<"],\"negativePass\":true}\n";
+}
+
+/** Actual adaptive-workspace updates, independent interval-sum reference input. */
+void ring_balanced_reduction_probe() {
+    using namespace Physical::Gravity;
+    using namespace finite_ring_detail;
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
+    for(std::size_t capacity:{1u,3u,16u,257u,4096u,65536u}) {
+        RingBoxReduction reduction(capacity);
+        require(reduction.total().integral.lower==0.&&reduction.total().integral.upper==0.,
+            "empty balanced ring workspace acquired floor");
+        std::size_t depth=0,extent=1;while(extent<capacity){extent*=2;++depth;}
+        if(!first)std::cout<<',';first=false;
+        std::cout<<"{\"capacity\":"<<capacity<<",\"steps\":[";
+        for(std::size_t k=0;k<120;++k) {
+            const std::size_t index=(k*37)%std::min(capacity,std::size_t(97));
+            PositiveInterval input{};
+            switch(k%6) {
+                case 0:input={0.,0.};break;
+                case 1:input={1.,1.};break;
+                case 2:input={1.e-300,2.e-300};break;
+                case 3:input={1.e300,std::nextafter(1.e300,std::numeric_limits<double>::infinity())};break;
+                case 4:input={.1,.100001};break;
+                default:input={std::numeric_limits<double>::denorm_min(),2.*std::numeric_limits<double>::denorm_min()};
+            }
+            reduction.replace(index,input,RingIntervalStatus::Bounded);
+            const auto& total=reduction.total();
+            require(total.status==RingIntervalStatus::Bounded,"finite balanced sum rejected");
+            require(reduction.node_updates()==(k+1)*(depth+1),"balanced workspace exceeded logarithmic update bound");
+            if(k)std::cout<<',';
+            std::cout<<"{\"index\":"<<index<<",\"lower\":"<<input.lower<<",\"upper\":"<<input.upper
+                <<",\"total_lower\":"<<total.integral.lower<<",\"total_upper\":"<<total.integral.upper
+                <<",\"worst\":"<<total.worst_index<<",\"updates\":"<<reduction.node_updates()<<'}';
+        }
+        bool rejected=false;try{reduction.replace(capacity,{},RingIntervalStatus::Bounded);}
+        catch(const std::out_of_range&){rejected=true;}
+        require(rejected,"ring workspace bypassed capacity");
+        std::cout<<"]}";
+    }
+    RingBoxReduction tied(3);
+    tied.replace(2,{1.,2.},RingIntervalStatus::Bounded);
+    tied.replace(0,{1.,2.},RingIntervalStatus::Bounded);
+    tied.replace(1,{1.,2.},RingIntervalStatus::Bounded);
+    require(tied.total().worst_index==0,"ring workspace changed earliest-index tie break");
+    for(int i=0;i<3;++i)tied.replace(i,{},RingIntervalStatus::Bounded);
+    require(tied.total().integral.lower==0.&&tied.total().integral.upper==0.,"zero workspace acquired floor");
+    tied.replace(0,{1.,std::numeric_limits<double>::infinity()},RingIntervalStatus::Bounded);
+    require(tied.total().status==RingIntervalStatus::PrecisionLimit,"nonfinite ring interval certified");
+    tied.replace(0,{0.,std::numeric_limits<double>::quiet_NaN()},RingIntervalStatus::Bounded);
+    require(tied.total().status==RingIntervalStatus::PrecisionLimit,"NaN ring interval certified");
+    tied.replace(0,{-1.,1.},RingIntervalStatus::Bounded);
+    require(tied.total().status==RingIntervalStatus::PrecisionLimit,"negative ring lower bound certified");
+    RingBoxReduction overflow(2);
+    overflow.replace(0,{1.e308,1.e308},RingIntervalStatus::Bounded);
+    overflow.replace(1,{1.e308,1.e308},RingIntervalStatus::Bounded);
+    require(overflow.total().status==RingIntervalStatus::PrecisionLimit,"overflow ring sum certified");
+    std::cout<<"]}\n";
 }
 
 void finite_ring_contact_gauss3_contract() {
@@ -2392,6 +2449,7 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="ring-far-leaf") {std::cout<<std::setprecision(17);finite_ring_far_leaf_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="rz-stencil-probe") {native_rz_stencil_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="rz-measure-probe") {native_rz_measure_probe();return 0;}
+        if(argc>1 && std::string(argv[1])=="ring-balanced-reduction-probe") {ring_balanced_reduction_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-solved-probe") {native_ring_solved_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-rhs-probe") {finite_ring_rhs_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-parent-probe") {finite_ring_parent_probe();return 0;}

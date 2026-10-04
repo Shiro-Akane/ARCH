@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <vector>
 #include <algorithm>
+#include <stdexcept>
 #include "core/ArchPortability.h"
 #include "core/CompensatedSum.h"
 #include "physics/constant/PhysicalConstants.h"
@@ -954,6 +955,61 @@ ARCH_HEAVY_INLINE RingBox enclose_box(double rl,double rh,double zl,double zh,
     }
     result.status=RingIntervalStatus::Bounded;return result;
 }
+/** Bounded host workspace for balanced outward sums and largest-box choice.
+ * Each leaf stores an existing certified box interval. Replacement touches
+ * O(log maximum_boxes) ancestors; no subtraction from rounded totals, no new
+ * integration formula, and earliest-index tie breaking matches the old scan.
+ * Empty siblings are exact zero, so they cannot add a zero-input error floor.
+ */
+class RingBoxReduction {
+public:
+    struct Node {
+        PositiveInterval integral{};
+        RingIntervalStatus status=RingIntervalStatus::Bounded;
+        double largest_width=-1.;
+        std::size_t worst_index=0;
+    };
+    explicit RingBoxReduction(std::size_t maximum):maximum_(maximum) {
+        if(maximum==0||maximum>65536)throw std::invalid_argument("Invalid ring reduction capacity");
+        while(capacity_<maximum)capacity_*=2;
+        nodes_.resize(2*capacity_);
+    }
+    void replace(std::size_t index,PositiveInterval interval,RingIntervalStatus status) {
+        if(index>=maximum_)throw std::out_of_range("Ring reduction leaf exceeds budget");
+        if(status==RingIntervalStatus::Bounded
+            &&(!std::isfinite(interval.lower)||!std::isfinite(interval.upper)
+                ||interval.lower<0.||interval.lower>interval.upper))
+            status=RingIntervalStatus::PrecisionLimit;
+        std::size_t node=capacity_+index;
+        nodes_[node]={interval,status,interval.upper-interval.lower,index};
+        ++node_updates_;
+        while(node>1) {
+            node/=2;const auto& left=nodes_[2*node];const auto& right=nodes_[2*node+1];
+            Node parent;
+            parent.status=left.status!=RingIntervalStatus::Bounded?left.status:right.status;
+            // Only finite, validated child intervals can enter the sum.
+            if(parent.status==RingIntervalStatus::Bounded) {
+                parent.integral.lower=left.integral.lower==0.?right.integral.lower
+                    :(right.integral.lower==0.?left.integral.lower
+                        :positive_down(left.integral.lower+right.integral.lower));
+                parent.integral.upper=left.integral.upper==0.?right.integral.upper
+                    :(right.integral.upper==0.?left.integral.upper
+                        :sum_up(left.integral.upper,right.integral.upper));
+                if(!std::isfinite(parent.integral.upper))
+                    parent.status=RingIntervalStatus::PrecisionLimit;
+            }
+            const auto& chosen=left.largest_width>=right.largest_width?left:right;
+            parent.largest_width=chosen.largest_width;parent.worst_index=chosen.worst_index;
+            nodes_[node]=parent;++node_updates_;
+        }
+    }
+    const Node& total() const {return nodes_[1];}
+    std::uint64_t node_updates() const {return node_updates_;}
+private:
+    std::size_t maximum_=0,capacity_=1;
+    std::vector<Node> nodes_;
+    std::uint64_t node_updates_=0;
+};
 } // namespace finite_ring_detail
 
 /** Encloses the exact integral for stored geometry/density/G, including contact.
@@ -999,18 +1055,15 @@ inline RingPotentialEnclosure finite_ring_potential_enclosure(
     result.range_evaluations=1;
     result.kernel_enclosures=boxes[0].kernel_enclosures;
     result.agm_iterations=boxes[0].agm_iterations;
+    RingBoxReduction reduction(control.maximum_boxes);
+    reduction.replace(0,boxes[0].integral,boxes[0].status);
     for(;;) {
-        double sum_lo=0.,sum_hi=0.,largest=-1.;std::size_t worst=0;
-        for(std::size_t i=0;i<boxes.size();++i) {
-            const auto& box=boxes[i];
-            if(box.status!=RingIntervalStatus::Bounded) {
-                result.status=box.status;result.bound_valid=false;return result;
-            }
-            if(box.integral.lower!=0.)sum_lo=positive_down(sum_lo+box.integral.lower);
-            sum_hi=sum_up(sum_hi,box.integral.upper);
-            const double width=box.integral.upper-box.integral.lower;
-            if(width>largest) {largest=width;worst=i;}
+        const auto& total=reduction.total();
+        if(total.status!=RingIntervalStatus::Bounded) {
+            result.status=total.status;result.bound_valid=false;return result;
         }
+        const double sum_lo=total.integral.lower,sum_hi=total.integral.upper;
+        const std::size_t worst=total.worst_index;
         result.lower=-product_up(factor_hi,sum_hi);
         result.upper=-positive_down(factor_lo*sum_lo);
         // Same-sign endpoints: this form preserves a representable endpoint
@@ -1041,6 +1094,8 @@ inline RingPotentialEnclosure finite_ring_potential_enclosure(
         result.range_evaluations+=2;
         result.kernel_enclosures+=first.kernel_enclosures+second.kernel_enclosures;
         result.agm_iterations+=first.agm_iterations+second.agm_iterations;
+        reduction.replace(worst,first.integral,first.status);
+        reduction.replace(boxes.size(),second.integral,second.status);
         boxes[worst]=first;boxes.push_back(second);
     }
 }
