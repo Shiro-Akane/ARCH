@@ -3291,3 +3291,7 @@ publication CTest1/1与当前object-set direct/Driver fixture PASS（time0/step0
 ## 2026-10-04：第二平台 GPU 身份差异
 
 实际preflight两次 i7-14700K/RTX4070Ti（12282MiB），不等于计划5070Ti；exit2/UUID一致，3解析测试PASS，初次fixture错误已保留。频率策略unavailable，不推断P/E或峰值。已询问平台安排，CPU继续，5070Ti/CUDA出口未完成。详见PlatformPreflight报告/Summary。上游10caebe7仅RT维护文档；不merge/Build/simulation/push/tag。
+
+## 2026-10-04：用户确认平台为4070Ti
+
+按用户明确更正，计划平台改为14700K/4070Ti；preflight以新期望exit0，实际CC8.9/driver617.14/原UUID一致。撤销误报导致的SM120/architecture120/CUDA12.8最低版本假设，旧exit2证据保留。详见PlatformIdentityCorrection报告/Summary。没有configure/build/CUDA计算或科学gate通过，不push/tag；其余科学与架构待决项不变。
