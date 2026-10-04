@@ -34,6 +34,10 @@ inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
         ? grid.x2_min + (j-grid.ng+1)*grid.dx2 : 0.);
     output.lower[2].push_back(0.);
     output.upper[2].push_back(0.);
+    if (rz)
+        output.angular_measure.push_back(GridMetrics::Rz::AngularMomentumMeasure(
+            output.lower[0].back(), output.upper[0].back(),
+            output.upper[1].back()-output.lower[1].back()));
     output.cell_measure.push_back(GridMetrics::CellVolume(
         GridMetrics::make_geometry_view(grid,semantics),i,j,k));
 }

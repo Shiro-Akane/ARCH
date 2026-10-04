@@ -493,3 +493,13 @@ RZ-CHK-MEASURE-01 的 domain/root-count/cell-shape 绑定已实现：writer从�
 详见RZCheckpointMeasureIdentityNode-20261005.zh-CN.md。
 这是native measure身份范围的关闭，不授予独立几何精度、完整C/D、旋转科学、
 CUDA或long-run PASS；production gate保持，其余消费链继续推进。
+
+### 8.7 C Plotfile 角向表示消费实施证据（2026-10-05）
+
+内部RZ候选新增原生W、raw m_phi=J/W、派生J/V，VELZ明确为代表速度；
+DENS/ENER与EOS诊断平均语义分开，FP64不改。256-cell独立读回、10类发布前
+拒绝、86项Plotfile/Host回归及新CPU ELF匹配冻结JENS9+9通过。
+详见 RZAngularPlotfileConsumerNode-20261005.zh-CN.md 与处理后summary。
+当前Cartesian reader仍明确拒绝内部RZ；不伪装RZ Viewer/Inspector已支持。
+此节点不关闭Init/BC/其他API、轴/viscosity finding、完整C/D或CUDA/long-run，
+production gate保持。

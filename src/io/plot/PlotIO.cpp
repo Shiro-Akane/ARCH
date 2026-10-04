@@ -99,6 +99,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
     std::vector<int> block_mortons(num_blocks);
 
     io::PlotNativeGrid native_grid;
+    io::PlotRzAngularState angular_state;
     const bool has_native_grid = io::supports_plot_native_grid(first_b.grid,semantics);
     if (has_native_grid) {
         for (size_t axis=0;axis<3;++axis) {
@@ -107,6 +108,11 @@ void write_plt(amr::AMRControl &amr_ctrl,
             native_grid.logical[axis].reserve(num_blocks);
         }
         native_grid.cell_measure.reserve(total_cells);
+        if (rz) {
+            native_grid.angular_measure.reserve(total_cells);
+            angular_state.m_phi.reserve(total_cells);
+            angular_state.angular_momentum_density.reserve(total_cells);
+        }
     }
     size_t cell_idx = 0;
     for (size_t b_idx = 0; b_idx < num_blocks; ++b_idx) {
@@ -130,6 +136,13 @@ void write_plt(amr::AMRControl &amr_ctrl,
                     coord_z[cell_idx] = p.z;
                     if (has_native_grid)
                         io::append_plot_native_cell(native_grid,b.grid,i,j,k,semantics);
+                    if (rz) {
+                        const double m_phi = b.fluid_state.mom_w[b.grid.GetIndex(i,j,k)];
+                        angular_state.m_phi.push_back(m_phi);
+                        angular_state.angular_momentum_density.push_back(
+                            arch::state::rz_angular_density(m_phi,
+                                native_grid.angular_measure.back(), native_grid.cell_measure.back()));
+                    }
                     cell_idx++;
                 }
             }
@@ -279,7 +292,15 @@ void write_plt(amr::AMRControl &amr_ctrl,
         if (rz && (name == "VELX" || name == "VELY" || name == "VELZ")) {
             declaration.basis = "local-orthonormal-r-z-phi";
             declaration.meaning = name == "VELX" ? "radial_velocity"
-                : name == "VELY" ? "axial_velocity" : "azimuthal_velocity";
+                : name == "VELY" ? "axial_velocity" : "representative_azimuthal_velocity";
+        }
+        if (rz) {
+            if (name == "DENS" || name == "ENER") declaration.averaging = "native-volume-average";
+            else if (name == "VELZ") declaration.averaging = "representative-m_phi-over-rho";
+            else if (name == "VELX" || name == "VELY")
+                declaration.averaging = "recovered-from-native-volume-averaged-conserved-state";
+            else if (name == "PRES" || name == "TEMP" || name == "JENS")
+                declaration.averaging = "evaluated-from-representative-conserved-state";
         }
         field_metadata.emplace(name,std::move(declaration));
     }
@@ -332,5 +353,5 @@ void write_plt(amr::AMRControl &amr_ctrl,
         source_identity.species_gamma = runtime_provenance->species_gamma;
         source_identity.species_Cv = runtime_provenance->species_Cv;
     }
-    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity, &field_metadata,semantics);
+    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity, &field_metadata,semantics,rz ? &angular_state : nullptr);
 }

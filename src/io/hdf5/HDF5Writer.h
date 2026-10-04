@@ -90,14 +90,22 @@ struct PlotSourceIdentity {
 struct PlotNativeGrid {
     std::array<std::vector<double>,3> lower, upper;
     std::vector<double> cell_measure;
+    std::vector<double> angular_measure; // RZ only: W=int r*dV; same cell order
     std::array<std::vector<uint32_t>,3> logical;
     std::string measure_unit = "unknown", normalization = "unknown";
+};
+
+// RZ output view, not a second evolved state. The producer copies m_phi from
+// mom_w and derives J/V using the shared conversion and native W/V.
+struct PlotRzAngularState {
+    std::vector<double> m_phi, angular_momentum_density;
 };
 
 // Declarations come from the actual producer, not inferred by the HDF serializer.
 struct PlotFieldMetadata {
     std::string unit = "unknown", basis = "unknown", meaning = "unknown";
     std::string unit_reason = "producer declaration unavailable";
+    std::string averaging = "unknown";
 };
 
 // Linux/WSL candidate: checked close, then atomic replacement. Throws on failure.
@@ -110,7 +118,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const PlotNativeGrid* native_grid = nullptr,
                          const PlotSourceIdentity* source_identity = nullptr,
                          const std::map<std::string, PlotFieldMetadata>* field_metadata = nullptr,
-                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
+                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+                         const PlotRzAngularState* rz_angular_state = nullptr);
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint);
 CheckpointData read_hdf5_chk_impl(const std::string& filepath);

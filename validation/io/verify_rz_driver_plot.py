@@ -28,9 +28,9 @@ def main():
                 rows.append(dict(mode=mode,shape=list(shape),fileSha256=before,legacyMetadataPreserved=True))
                 continue
             assert shape==(1,16,16)
-            assert int(f.attrs["geometry_semantics_revision"])==1
+            assert int(f.attrs["geometry_semantics_revision"])==2
             assert f.attrs["geometry_chart"]=="axisymmetric-rz"
-            assert n.attrs["version"]=="candidate-axisymmetric-rz-1"
+            assert n.attrs["version"]=="candidate-axisymmetric-rz-2"
             assert n.attrs["measure_convention"]=="full-rotation-axisymmetric-ring"
             assert n.attrs["measure_unit"]=="cm^3" and n.attrs["measure_normalization"]=="full_rotation"
             assert n.attrs["x1_axis"]=="r_cy" and n.attrs["x2_axis"]=="z_cy"
@@ -46,7 +46,7 @@ def main():
             for field,expected,meaning in [
                 ("VELX",.1*rad,"radial_velocity"),
                 ("VELY",.2*z,"axial_velocity"),
-                ("VELZ",.3*rad,"azimuthal_velocity")]:
+                ("VELZ",.3*rad,"representative_azimuthal_velocity")]:
                 ds=f["Data/"+field]
                 assert ds.dtype==np.dtype("float64")
                 np.testing.assert_array_equal(ds[()].reshape(-1),expected)
@@ -85,7 +85,38 @@ def main():
                 assert analytic_error<2e-12
                 checks[field]=dict(allCellsBoundaryDiscreteMaxError=error,
                     interiorAnalyticMaxError=analytic_error)
+            assert f.attrs["state_semantics"]=="rz-m-phi-j-over-w-v1"
+            angular=f["NativeState"]
+            assert angular.attrs["version"]=="candidate-rz-angular-1"
+            w=n["angular_measure"][()]
+            assert w.dtype==np.dtype("float64")
+            assert n["angular_measure"].attrs["unit"]=="cm^4"
+            m=angular["m_phi"][()].reshape(-1)
+            ell=angular["angular_momentum_density"][()].reshape(-1)
+            assert angular["m_phi"].shape==shape and angular["m_phi"].dtype==np.dtype("float64")
+            assert angular["angular_momentum_density"].dtype==np.dtype("float64")
+            assert angular["m_phi"].attrs["unit"]=="g/(cm^2*s)"
+            assert angular["angular_momentum_density"].attrs["unit"]=="g/(cm*s)"
+            # Fixture prescribes raw m_phi=2*(.3*r_mid), not a new rotating Init reference.
+            np.testing.assert_array_equal(m,2*(.3*rad))
+            np.testing.assert_array_equal(f["Data/VELZ"][()].reshape(-1),m/2)
+            assert f["Data/VELZ"].attrs["averaging"]=="representative-m_phi-over-rho"
+            assert f["Data/DENS"].attrs["averaging"]=="native-volume-average"
+            assert f["Data/ENER"].attrs["averaging"]=="native-volume-average"
+            w_reference=[]
+            ell_reference=[]
+            with localcontext() as ctx:
+                ctx.prec=80
+                for a,b,c,d,mm in zip(lo,hi,zlo,zhi,m):
+                    a,b,c,d,mm=map(lambda v:Decimal.from_float(float(v)),(a,b,c,d,mm))
+                    ww=2*PI*(b**3-a**3)*(d-c)/3
+                    vv=PI*(b*b-a*a)*(d-c)
+                    w_reference.append(float(ww));ell_reference.append(float(mm*ww/vv))
+            w_error=float(np.max(np.abs(w-np.array(w_reference))/np.array(w_reference)))
+            ell_error=float(np.max(np.abs(ell-np.array(ell_reference))))
+            assert w_error<2e-12 and ell_error<2e-12
             actual=n["cell_measure"][()]
+            np.testing.assert_array_equal(ell,(m*w)/actual)
             metric_relative=float(np.max(np.abs(actual-reference)/reference))
             assert metric_relative<2e-12
             volume=float(np.sum(actual));assert abs(volume-float(8*PI))<2e-12
@@ -94,6 +125,8 @@ def main():
                 chart="axisymmetric-rz",coordinateMapping="(r,z) -> Cartesian (r,0,z)",
                 measureUnit="cm^3",normalization="full_rotation",
                 fullDomainVolume=volume,metricMaxRelativeError=metric_relative,
+                angularMeasureMaxRelativeError=w_error,angularDensityMaxAbsoluteError=ell_error,
+                rawMPhiPreserved=True,representativeVelocityDistinguished=True,
                 fieldMaxAbsoluteErrors=checks,publication="checked-close-atomic-replace"))
         assert sha(path)==before
     out=Path(args.summary);assert not out.exists()

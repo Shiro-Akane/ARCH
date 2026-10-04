@@ -77,6 +77,66 @@ int main(int argc, char** argv) {
                     "adjacent native y faces disagree");
         }
     }
+    // Internal RZ candidate must expose W and the single angular state. Invalid
+    // output views are rejected before replacing an already published file.
+    {
+        const auto profile=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        Grid grid;grid.dim=2;grid.ng=2;grid.geometry="cylindrical";
+        grid.x1_min=0.;grid.x1_max=1.;grid.x2_min=-1.;grid.x2_max=1.;
+        grid.InitializeTopology();
+        io::PlotNativeGrid native;io::PlotRzAngularState angular;
+        native.logical[0]={0};native.logical[1]={0};native.logical[2]={0};
+        std::vector<double> x,y,z,density;
+        for(int j=grid.Js();j<grid.Je();++j)
+        for(int i=grid.Is();i<grid.Ie();++i) {
+            io::append_plot_native_cell(native,grid,i,j,grid.Ks(),profile);
+            const auto pos=grid.GetPhysicalCoords(i,j,grid.Ks(),profile);
+            x.push_back(pos.x);y.push_back(pos.y);z.push_back(pos.z);density.push_back(2.);
+            angular.m_phi.push_back(1.);
+            angular.angular_momentum_density.push_back(
+                native.angular_measure.back()/native.cell_measure.back());
+        }
+        const std::vector<size_t> dims{1,amr::BLOCK_NY,amr::BLOCK_NX};
+        const auto path=(root/"native-rz-angular.h5").string();
+        const auto write=[&](const io::PlotNativeGrid* n,const io::PlotRzAngularState* s,
+                             GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            io::write_hdf5_plt_impl(path,0,2,
+                semantics==profile ? "cylindrical" : "cartesian",dims,x,y,z,{0},{0},
+                {{"DENS",density}},n,nullptr,nullptr,semantics,s);
+        };
+        write(&native,&angular);
+        {
+            HighFive::File f(path,HighFive::File::ReadOnly);std::string tag;
+            f.getAttribute("state_semantics").read(tag);
+            require(tag=="rz-m-phi-j-over-w-v1","RZ angular identity absent");
+            std::vector<double> raw(density.size());
+            f.getDataSet("NativeState/m_phi").read(raw.data());
+            require(raw==angular.m_phi,"m_phi output changed raw state");
+            f.getDataSet("NativeState/angular_momentum_density").read(raw.data());
+            require(raw==angular.angular_momentum_density,"J/V output changed");
+            f.getDataSet("NativeGrid/angular_measure").read(raw);
+            require(raw==native.angular_measure,"W output changed");
+        }
+        const auto digest=arch::core::file_sha256(path);
+        for (int mutation=0;mutation<10;++mutation) {
+            auto n=native;auto s=angular;
+            const io::PlotNativeGrid* np=&n;const io::PlotRzAngularState* sp=&s;
+            if(mutation==0) np=nullptr;
+            if(mutation==1) sp=nullptr;
+            if(mutation==2) n.angular_measure.pop_back();
+            if(mutation==3) n.angular_measure[0]=0.;
+            if(mutation==4) s.m_phi[0]=std::numeric_limits<double>::quiet_NaN();
+            if(mutation==5) s.angular_momentum_density[0]=std::numeric_limits<double>::infinity();
+            if(mutation==6) s.m_phi.pop_back();
+            if(mutation==7) s.angular_momentum_density[0]+=1.;
+            if(mutation==8) s.angular_momentum_density.pop_back();
+            bool rejected=false;
+            try { write(np,sp,mutation==9 ? GridMetrics::GeometrySemantics::Existing : profile); }
+            catch(const std::invalid_argument&){rejected=true;}
+            require(rejected,"invalid RZ angular payload accepted");
+            require(arch::core::file_sha256(path)==digest,"rejected RZ payload replaced file");
+        }
+    }
     for (int dimension : {1,2}) {
         io::PlotNativeGrid native;
         std::vector<double> cx,cy,cz,field;

@@ -25,6 +25,7 @@
 
 #include "io/hdf5/HDF5Writer.h"
 #include "io/chk/CheckpointCompatibility.h"
+#include "data/FluidState.h"
 #include "core/config/ConfigValidation.h"
 
 #include <highfive/H5DataSet.hpp>
@@ -211,7 +212,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const PlotNativeGrid* native_grid,
                          const PlotSourceIdentity* source_identity,
                          const std::map<std::string, PlotFieldMetadata>* field_metadata,
-                         GridMetrics::GeometrySemantics semantics)
+                         GridMetrics::GeometrySemantics semantics,
+                         const PlotRzAngularState* rz_angular_state)
 {
     const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
     if ((semantics != GridMetrics::GeometrySemantics::Existing && !rz)
@@ -232,6 +234,21 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
     for (const auto& [name, buffer] : data_map)
         if (name.empty() || name.find('/') != std::string::npos || buffer.size() != cells)
             throw std::invalid_argument("Invalid plotfile field name/length.");
+    if (rz && (!native_grid || !rz_angular_state))
+        throw std::invalid_argument("RZ Plotfile requires native W and m_phi state payload.");
+    if (!rz && (rz_angular_state || (native_grid && !native_grid->angular_measure.empty())))
+        throw std::invalid_argument("RZ angular payload on existing Plotfile geometry.");
+    if (rz) {
+        if (native_grid->angular_measure.size()!=cells
+            || rz_angular_state->m_phi.size()!=cells
+            || rz_angular_state->angular_momentum_density.size()!=cells)
+            throw std::invalid_argument("Invalid RZ angular payload length.");
+        for (size_t i=0;i<cells;++i)
+            if (!std::isfinite(native_grid->angular_measure[i]) || native_grid->angular_measure[i]<=0.
+                || !std::isfinite(rz_angular_state->m_phi[i])
+                || !std::isfinite(rz_angular_state->angular_momentum_density[i]))
+                throw std::invalid_argument("Invalid RZ angular measure/state.");
+    }
     if (native_grid) {
         if ((!rz && (geom != "cartesian" || dim > 2)) || native_grid->cell_measure.size() != cells)
             throw std::invalid_argument("Invalid candidate native grid geometry/length.");
@@ -255,6 +272,12 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         for (double measure : native_grid->cell_measure)
             if (!std::isfinite(measure) || measure <= 0.)
                 throw std::invalid_argument("Invalid native cell measure.");
+        if (rz)
+            for (size_t i=0;i<cells;++i)
+                if (rz_angular_state->angular_momentum_density[i]
+                    != arch::state::rz_angular_density(rz_angular_state->m_phi[i],
+                        native_grid->angular_measure[i],native_grid->cell_measure[i]))
+                    throw std::invalid_argument("RZ J/V differs from supplied m_phi, W and V.");
     }
     if (field_metadata) {
         const auto text_ok=[](const std::string& v) {
@@ -262,7 +285,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         };
         for (const auto& [name,m] : *field_metadata) {
             if (!data_map.contains(name) || !text_ok(m.unit) || !text_ok(m.basis)
-                || !text_ok(m.meaning) || m.unit_reason.size()>256
+                || !text_ok(m.meaning) || !text_ok(m.averaging) || m.unit_reason.size()>256
                 || m.unit_reason.find(char(0))!=std::string::npos
                 || (m.unit=="unknown" && m.unit_reason.empty()))
                 throw std::invalid_argument("Invalid plot field metadata.");
@@ -325,8 +348,9 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         file.createAttribute("dim", dim);
         file.createAttribute("geometry", geom);
         if (rz) {
-            file.createAttribute("geometry_semantics_revision",1);
+            file.createAttribute("geometry_semantics_revision",2);
             file.createAttribute("geometry_chart",std::string("axisymmetric-rz"));
+            file.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
         }
         file.createAttribute("time_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "s" : "unknown"));
 
@@ -399,7 +423,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
 
         if (native_grid) {
             Group native = file.createGroup("NativeGrid");
-            native.createAttribute("version", std::string(rz ? "candidate-axisymmetric-rz-1" : "candidate-cartesian-1"));
+            native.createAttribute("version", std::string(rz ? "candidate-axisymmetric-rz-2" : "candidate-cartesian-1"));
             if (rz) {
                 native.createAttribute("x1_axis",std::string("r_cy"));
                 native.createAttribute("x2_axis",std::string("z_cy"));
@@ -424,6 +448,34 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                 native.createDataSet("logical_" + name, native_grid->logical[axis]);
             }
             native.createDataSet("cell_measure", native_grid->cell_measure);
+            if (rz) {
+                auto w = native.createDataSet("angular_measure",native_grid->angular_measure);
+                w.createAttribute("unit",std::string("cm^4"));
+                w.createAttribute("meaning",std::string("integral-r-dV"));
+                w.createAttribute("source",std::string("GridMetrics::Rz::AngularMomentumMeasure"));
+                w.createAttribute("normalization",std::string("full_rotation"));
+            }
+        }
+
+        if (rz) {
+            auto state = file.createGroup("NativeState");
+            state.createAttribute("version",std::string("candidate-rz-angular-1"));
+            state.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
+            state.createAttribute("storage_order",std::string("same-as-Data; x1-fastest"));
+            state.createAttribute("evolved_state",std::string("m_phi only; J/V is derived output"));
+            for (const auto& [name, values] : std::map<std::string,const std::vector<double>*>{
+                {"m_phi",&rz_angular_state->m_phi},
+                {"angular_momentum_density",&rz_angular_state->angular_momentum_density}}) {
+                auto ds = state.createDataSet<double>(name,DataSpace(dims));
+                ds.write_raw(values->data());
+                const bool m = name=="m_phi";
+                ds.createAttribute("unit",std::string(m ? "g/(cm^2*s)" : "g/(cm*s)"));
+                ds.createAttribute("basis",std::string("local-orthonormal-r-z-phi"));
+                ds.createAttribute("centering",std::string("cell"));
+                ds.createAttribute("meaning",std::string(m ? "J-cell-over-W" : "J-cell-over-V"));
+                ds.createAttribute("averaging",std::string(m ? "r-dV-weighted-angular-momentum-component" : "native-volume-angular-momentum-density"));
+                ds.createAttribute("source",std::string(m ? "FluidState::mom_w" : "arch::state::rz_angular_density"));
+            }
         }
 
         for (const auto& [name, buffer] : data_map) {
@@ -438,6 +490,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             ds.createAttribute("centering",std::string("cell"));
             ds.createAttribute("basis",metadata.basis);
             ds.createAttribute("meaning",metadata.meaning);
+            ds.createAttribute("averaging",metadata.averaging);
             if (!metadata.unit_reason.empty()) ds.createAttribute("unit_reason",metadata.unit_reason);
         }
 
