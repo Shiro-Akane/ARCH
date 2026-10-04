@@ -995,23 +995,22 @@ void finite_ring_parent_probe() {
 /** Final fitted/recovered stencils and root identity for exact independent audit. */
 void native_rz_stencil_probe() {
     const auto dump=[](const auto& v){std::cout<<'[';bool first=true;for(auto x:v){if(!first)std::cout<<',';first=false;std::cout<<x;}std::cout<<']';};
+    auto cart=base_mesh(2,4);elliptic::CompositePoisson cart_op(cart,make_cells(cart,false));
+    require(cart_op.native_rz_stencil_enclosure(0).status==elliptic::BoundaryErrorStatus::InvalidInput,
+        "Cartesian stencil acquired RZ certificate");
     std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
-    for(bool mixed:{false,true})for(double origin:{0.,.5,.3})for(int profile:{0,1,2,3}) {
-        auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
-        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.3,0.};
-        if(profile==1)base.spacing={.1,.15,1.};
-        if(profile==2)base.spacing={.125,.25,1.};
-        if(profile==3)base.spacing={.25,.125,1.};
-        auto cells=mixed&&profile>=2?make_origin_seam_cells(base):make_cells(base,mixed);
-        elliptic::CompositePoisson op(base,std::move(cells),elliptic::BoundaryKind::CurvilinearIsolated);
+    const auto emit=[&](const elliptic::CompositePoisson& op,bool mixed,int hierarchy_level) {
+        const auto& base=op.base();
         if(!first)std::cout<<',';first=false;
-        std::cout<<"{\"mixed\":"<<mixed<<",\"origin\":";dump(base.origin);
+        std::cout<<"{\"mixed\":"<<mixed<<",\"hierarchy_level\":"<<hierarchy_level<<",\"origin\":";dump(base.origin);
         std::cout<<",\"spacing\":";dump(base.spacing);std::cout<<",\"cells\":[";
         bool fc=true;for(const auto& cell:op.cells()) {
             if(!fc)std::cout<<',';fc=false;
             std::cout<<"{\"level\":"<<cell.level<<",\"index\":";dump(cell.index);std::cout<<'}';
         }
-        std::cout<<"],\"faces\":[";fc=true;
+        require(op.native_rz_stencil_enclosure(op.faces().size()).status==elliptic::BoundaryErrorStatus::InvalidInput,
+            "out-of-range face acquired coefficient certificate");
+        std::cout<<"],\"faces\":[";fc=true;std::size_t face_index=0;
         for(const auto& face:op.faces()) {
             if(!fc)std::cout<<',';fc=false;
             const bool expected_fit=face.boundary_side>=0||
@@ -1023,9 +1022,38 @@ void native_rz_stencil_probe() {
                 <<",\"center\":";dump(face.center);std::cout<<",\"fragment_width\":";dump(face.fragment_width);
             std::cout<<",\"area\":"<<face.area<<",\"samples\":";dump(face.samples);
             std::cout<<",\"coefficients\":";dump(face.coefficients);
-            std::cout<<",\"boundary_coefficient\":"<<face.boundary_coefficient<<'}';
+            const auto proof=op.native_rz_stencil_enclosure(face_index++);
+            require(proof.status==elliptic::BoundaryErrorStatus::Bounded,"RZ ideal stencil certificate missing");
+            std::cout<<",\"boundary_coefficient\":"<<face.boundary_coefficient
+                <<",\"coefficient_lower\":";dump(proof.coefficient_lower);
+            std::cout<<",\"coefficient_upper\":";dump(proof.coefficient_upper);
+            std::cout<<",\"coefficient_error_upper\":";dump(proof.coefficient_error_upper);
+            std::cout<<",\"boundary_lower\":"<<proof.boundary_lower<<",\"boundary_upper\":"<<proof.boundary_upper
+                <<",\"boundary_error_upper\":"<<proof.boundary_error_upper
+                <<",\"inverse_residual_upper\":"<<proof.inverse_residual_upper
+                <<",\"inverse_norm_upper\":"<<proof.inverse_norm_upper
+                <<",\"lambda_error_upper\":"<<proof.lambda_error_upper<<'}';
         }
         std::cout<<"]}";
+    };
+    for(bool mixed:{false,true})for(double origin:{0.,.5,.3})for(int profile:{0,1,2,3}) {
+        auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.3,0.};
+        if(profile==1)base.spacing={.1,.15,1.};
+        if(profile==2)base.spacing={.125,.25,1.};
+        if(profile==3)base.spacing={.25,.125,1.};
+        auto cells=mixed&&profile>=2?make_origin_seam_cells(base):make_cells(base,mixed);
+        elliptic::CompositePoisson op(base,std::move(cells),elliptic::BoundaryKind::CurvilinearIsolated);
+        emit(op,mixed,-1);
+    }
+    for(bool mixed:{false,true})for(double origin:{0.,.5}) {
+        auto base=base_mesh(2,64);base.cells={64,4,1};
+        base.geometry=elliptic::Geometry::Cylindrical;base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        base.origin={origin,-.3,0.};
+        multigrid::CompositeMultigrid solver(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        bool rejected=false;try{solver.level_operator(solver.level_count());}catch(const std::out_of_range&){rejected=true;}
+        require(rejected,"hierarchy query accepted missing level");
+        for(std::size_t level=0;level<solver.level_count();++level)emit(solver.level_operator(level),mixed,int(level));
     }
     std::cout<<"]}\n";
 }

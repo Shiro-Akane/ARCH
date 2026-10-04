@@ -382,6 +382,14 @@ weighted Gram和exact solve，24组1416面8268 coefficient terms参考检查通�
 6项CTest通过。见 RZStencilConstructionReferenceNode-20261005.zh-CN.md。
 任意mesh的outward coefficient certificate及完整physical RHS仍未签收。
 
+理想root-dyadic最终stencil已有outward系数区间：复用DenseLU候选，
+以q=norm_inf(I-CG)<1证明inverse norm及完整interval equation residual的
+lambda error，再传播boundary/anchor/coefficients。38个真实operator、
+7464面38752 terms独立Fraction包含和exact inverse norm检查通过，
+覆盖10个真实派生coarse operator、最大spacing ratio4；recovery实际仍为0。
+见 RZStencilEnclosureNode-20261005.zh-CN.md。未松动请求或physical root规则，
+完整face/source/observer/RHS/Phi/force及production gate仍待签收。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

@@ -94,6 +94,17 @@ struct NativeRzMeasureEnclosure {
     std::vector<double> weight_lower,weight_upper,weight_error_upper;
     double total_volume_lower=0.,total_volume_upper=0.;
 };
+/** Proof of the ideal root-dyadic final RZ stencil; not a Phi/force certificate.
+ * The construction enum chooses the actual fitted or recovered policy.
+ */
+struct NativeRzStencilEnclosure {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    FaceStencilConstruction construction=FaceStencilConstruction::TwoPoint;
+    std::size_t face_index=0;
+    std::vector<double> coefficient_lower,coefficient_upper,coefficient_error_upper;
+    double boundary_lower=0.,boundary_upper=0.,boundary_error_upper=0.;
+    double inverse_residual_upper=0.,inverse_norm_upper=0.,lambda_error_upper=0.;
+};
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
@@ -136,6 +147,7 @@ public:
         std::span<const BoundaryPotentialError> face_errors) const;
     WeightedNormInterval norm_interval(std::span<const double> x) const;
     NativeRzMeasureEnclosure native_rz_measure_enclosure() const;
+    NativeRzStencilEnclosure native_rz_stencil_enclosure(std::size_t face_index) const;
     WeightedNormInterval native_rz_norm_interval(std::span<const double> x) const;
     PoissonArithmeticError bound_rhs_assembly_roundoff(
         std::span<const double> source,std::span<const double> boundary_values,

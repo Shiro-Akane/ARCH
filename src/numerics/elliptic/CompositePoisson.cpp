@@ -666,6 +666,79 @@ ArithmeticRange range_divide_volume(ArithmeticRange a,double volume) {
     return {std::nextafter(a.lo/volume,-std::numeric_limits<double>::infinity()),
             std::nextafter(a.hi/volume,std::numeric_limits<double>::infinity())};
 }
+ArithmeticRange range_square(ArithmeticRange a) {
+    if(a.lo==0.&&a.hi==0.)return {};
+    const double v[]{a.lo*a.lo,a.hi*a.hi};
+    const double lo=a.lo<=0.&&a.hi>=0.?0.:std::min(v[0],v[1]);
+    return {lo==0.?0.:std::nextafter(lo,0.),
+        std::nextafter(std::max(v[0],v[1]),std::numeric_limits<double>::infinity())};
+}
+ArithmeticRange range_divide_positive(ArithmeticRange a,ArithmeticRange b) {
+    if(!finite_range(a)||!finite_range(b)||b.lo<=0.)
+        return {std::numeric_limits<double>::quiet_NaN(),std::numeric_limits<double>::quiet_NaN()};
+    if(a.lo==0.&&a.hi==0.)return {};
+    return range_product(a,{std::nextafter(1./b.hi,0.),
+        std::nextafter(1./b.lo,std::numeric_limits<double>::infinity())});
+}
+double range_abs_upper(ArithmeticRange a) {
+    return finite_range(a)?std::max(std::abs(a.lo),std::abs(a.hi))
+        :std::numeric_limits<double>::infinity();
+}
+/** Neumann inverse proof for every matrix in the Gram enclosure.
+ * C and lambda_hat are only finite witnesses from the existing DenseLUSolver.
+ * q=||I-C*G||inf<1 proves ||G^-1||inf <= ||C||inf/(1-q).
+ * This also bounds lambda error from the full interval equation residual,
+ * including ideal coordinate/basis/Gram construction, not just LU rounding.
+ */
+bool enclose_gram_solution(const std::array<std::array<ArithmeticRange,6>,6>& g,
+    const std::array<ArithmeticRange,6>& rhs,std::array<ArithmeticRange,6>& lambda,
+    double& q,double& inverse_upper,double& error_upper) {
+    DenseMatrixData<10> midpoint;
+    for(int i=0;i<6;++i)for(int j=0;j<6;++j) {
+        if(!finite_range(g[i][j]))return false;
+        midpoint.data[i][j]=.5*g[i][j].lo+.5*g[i][j].hi;
+    }
+    std::array<std::array<double,6>,6> inverse{};
+    for(int col=0;col<6;++col) {
+        auto matrix=midpoint;double x[10]{};x[col]=1.;
+        if(!DenseLUSolver::solve<6,10>(matrix,x))return false;
+        for(int row=0;row<6;++row)inverse[row][col]=x[row];
+    }
+    auto matrix=midpoint;double approximate[10]{};
+    for(int i=0;i<6;++i) {
+        if(!finite_range(rhs[i]))return false;
+        approximate[i]=.5*rhs[i].lo+.5*rhs[i].hi;
+    }
+    if(!DenseLUSolver::solve<6,10>(matrix,approximate))return false;
+    q=0.;double inverse_norm=0.,residual_norm=0.;
+    for(int i=0;i<6;++i) {
+        double row=0.,inverse_row=0.;
+        for(int j=0;j<6;++j) {
+            ArithmeticRange product{};
+            for(int k=0;k<6;++k)product=range_add(product,
+                range_product({inverse[i][k],inverse[i][k]},g[k][j]));
+            const auto defect=range_add({i==j?1.:0.,i==j?1.:0.},range_negate(product));
+            row=bound_up(row+range_abs_upper(defect));
+            inverse_row=bound_up(inverse_row+std::abs(inverse[i][j]));
+        }
+        q=std::max(q,row);inverse_norm=std::max(inverse_norm,inverse_row);
+        auto residual=rhs[i];
+        for(int j=0;j<6;++j)residual=range_add(residual,
+            range_negate(range_product(g[i][j],{approximate[j],approximate[j]})));
+        residual_norm=std::max(residual_norm,range_abs_upper(residual));
+    }
+    if(!std::isfinite(q)||q>=1.)return false;
+    const double denominator=bound_down(1.-q);
+    if(denominator<=0.)return false;
+    inverse_upper=bound_quotient(inverse_norm,denominator);
+    error_upper=bound_product(inverse_upper,residual_norm);
+    if(!std::isfinite(error_upper)||!std::isfinite(inverse_upper))return false;
+    for(int i=0;i<6;++i) {
+        lambda[i]=range_add({approximate[i],approximate[i]},{-error_upper,error_upper});
+        if(!finite_range(lambda[i]))return false;
+    }
+    return true;
+}
 bool finite_field(std::span<const double> x) {
     for(double v:x)if(!std::isfinite(v))return false;
     return true;
@@ -685,6 +758,122 @@ PoissonArithmeticError finish_arithmetic_ledger(const CompositePoisson& op,
     const auto norm=op.norm_interval(result.cell_bounds);
     result.status=norm.status;result.norm_upper=norm.upper;return result;
 }
+}
+/** Enclose the final RZ derivative stencil relative to ideal root geometry.
+ * The existing final face owns the sample set and actual recovery decision.
+ * No thresholds/coefficients are altered; failure cannot become a certificate.
+ */
+NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size_t index) const {
+    NativeRzStencilEnclosure result;result.face_index=index;
+    if(index>=faces_.size()||base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2)return result;
+    const auto& face=faces_[index];result.construction=face.construction;
+    const int axis=face.axis,anchor=face.left>=0?face.left:face.right;
+    const bool boundary=face.boundary_side>=0;
+    const auto exact_width=[&](int cell,int a) {
+        const double w=width(cell,a);
+        return std::ldexp(w,cells_[cell].level)==base_.spacing[a]?w:0.;
+    };
+    const double h=exact_width(anchor,axis);
+    if(h<=0.||!std::isfinite(h))return result;
+    const double scale=boundary?h:std::max(exact_width(face.left,axis),exact_width(face.right,axis));
+    if(scale<=0.||!std::isfinite(scale))return result;
+    ArithmeticRange inverse,boundary_seed{};
+    if(boundary) {
+        inverse=range_divide_positive({2.,2.},{h,h});
+        if(face.boundary_side%2)inverse=range_negate(inverse);
+        boundary_seed=range_negate(inverse);
+    } else {
+        const double hl=exact_width(face.left,axis),hr=exact_width(face.right,axis);
+        if(hl<=0.||hr<=0.)return result;
+        inverse=range_divide_positive({1.,1.},
+            range_add(range_product({.5,.5},{hl,hl}),range_product({.5,.5},{hr,hr})));
+    }
+    std::vector<ArithmeticRange> coefficients;
+    ArithmeticRange boundary_coefficient=boundary_seed;
+    if(face.construction==FaceStencilConstruction::PolynomialFit) {
+        const int fine=boundary?anchor:(cells_[face.left].level>=cells_[face.right].level?face.left:face.right);
+        std::array<ArithmeticRange,2> offset{};
+        for(int a=0;a<2;++a) {
+            const int owner=a==axis?anchor:fine;
+            const double w=exact_width(owner,a);
+            if(w<=0.)return result;
+            double logical=cells_[owner].index[a]+.5;
+            if(a==axis)logical=boundary?cells_[anchor].index[a]+double(face.boundary_side%2)
+                :cells_[face.left].index[a]+1.;
+            offset[a]=range_product({logical,logical},{w,w});
+        }
+        std::vector<std::array<ArithmeticRange,6>> basis;
+        std::vector<ArithmeticRange> weights,initial;
+        std::array<std::array<ArithmeticRange,6>,6> gram{};
+        std::array<ArithmeticRange,6> rhs{};rhs[1+axis]={1.,1.};
+        if(boundary) {
+            gram[0][0]={1.,1.};
+            rhs[0]=range_negate(range_product(boundary_seed,{scale,scale}));
+        }
+        for(int cell:face.samples) {
+            std::array<ArithmeticRange,2> delta{};
+            for(int a=0;a<2;++a) {
+                const double w=exact_width(cell,a);if(w<=0.)return result;
+                const double logical=cells_[cell].index[a]+.5;
+                delta[a]=range_divide_volume(range_add(
+                    range_product({logical,logical},{w,w}),range_negate(offset[a])),scale);
+            }
+            std::array<ArithmeticRange,6> p{{{1.,1.},delta[0],delta[1],range_square(delta[0]),
+                range_product(delta[0],delta[1]),range_square(delta[1])}};
+            const auto denominator=range_add({1.,1.},range_add(range_square(delta[0]),range_square(delta[1])));
+            const auto weight=range_divide_positive({1.,1.},range_square(denominator));
+            ArithmeticRange seed{};
+            if(boundary&&cell==anchor)seed=inverse;
+            if(!boundary&&cell==face.left)seed=range_negate(inverse);
+            if(!boundary&&cell==face.right)seed=inverse;
+            seed=range_product(seed,{scale,scale});
+            for(int i=0;i<6;++i) {
+                rhs[i]=range_add(rhs[i],range_negate(range_product(seed,p[i])));
+                for(int j=0;j<6;++j)gram[i][j]=range_add(gram[i][j],
+                    range_product(weight,range_product(p[i],p[j])));
+            }
+            basis.push_back(p);weights.push_back(weight);initial.push_back(seed);
+        }
+        std::array<ArithmeticRange,6> lambda{};
+        if(!enclose_gram_solution(gram,rhs,lambda,result.inverse_residual_upper,
+            result.inverse_norm_upper,result.lambda_error_upper)) {
+            result.status=BoundaryErrorStatus::UncertifiedInput;return result;
+        }
+        if(boundary)boundary_coefficient=range_add(boundary_seed,range_divide_volume(lambda[0],scale));
+        for(std::size_t i=0;i<basis.size();++i) {
+            auto v=initial[i];
+            for(int j=0;j<6;++j)v=range_add(v,range_product(weights[i],range_product(basis[i][j],lambda[j])));
+            coefficients.push_back(range_divide_volume(v,scale));
+        }
+        auto sum=boundary_coefficient;std::size_t anchor_index=coefficients.size();
+        for(std::size_t i=0;i<coefficients.size();++i) {
+            if(face.samples[i]==anchor)anchor_index=i;else sum=range_add(sum,coefficients[i]);
+        }
+        if(anchor_index==coefficients.size())return result;
+        coefficients[anchor_index]=range_negate(sum);
+    } else if(face.construction==FaceStencilConstruction::TwoPoint
+        ||face.construction==FaceStencilConstruction::EllipticRecovery) {
+        for(int cell:face.samples)coefficients.push_back(boundary?inverse:
+            (cell==face.left?range_negate(inverse):inverse));
+    } else return result;
+    if(coefficients.size()!=face.coefficients.size()||!finite_range(boundary_coefficient)) {
+        result.status=BoundaryErrorStatus::Overflow;return result;
+    }
+    result.boundary_lower=boundary_coefficient.lo;result.boundary_upper=boundary_coefficient.hi;
+    result.boundary_error_upper=bound_up(std::max(std::abs(face.boundary_coefficient-boundary_coefficient.lo),
+        std::abs(face.boundary_coefficient-boundary_coefficient.hi)));
+    for(std::size_t i=0;i<coefficients.size();++i) {
+        const auto v=coefficients[i];
+        const double error=bound_up(std::max(std::abs(face.coefficients[i]-v.lo),std::abs(face.coefficients[i]-v.hi)));
+        if(!finite_range(v)||!std::isfinite(error)) {
+            result.status=BoundaryErrorStatus::Overflow;return result;
+        }
+        result.coefficient_lower.push_back(v.lo);result.coefficient_upper.push_back(v.hi);
+        result.coefficient_error_upper.push_back(error);
+    }
+    result.status=std::isfinite(result.boundary_error_upper)?BoundaryErrorStatus::Bounded:BoundaryErrorStatus::Overflow;
+    return result;
 }
 /** Construct full-ring volume/normalization bounds from root dyadic identity.
  * V=pi*dr*(2*r_lo+dr)*dz. Using dr explicitly avoids subtraction of
