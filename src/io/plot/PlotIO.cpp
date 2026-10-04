@@ -57,7 +57,10 @@ void write_plt(amr::AMRControl &amr_ctrl,
     if (semantics != GridMetrics::GeometrySemantics::Existing
         && semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::invalid_argument("Unknown Plotfile geometry profile.");
-    for (int id : amr_ctrl.tree->GetActiveBlocks())
+    const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+    if (active_blocks.empty())
+        throw std::invalid_argument("Cannot publish Plotfile without active leaf blocks.");
+    for (int id : active_blocks)
         (void)GridMetrics::make_geometry_view(amr_ctrl.pool->GetBlock(id).grid,semantics);
     const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
     if (!fs::exists(config.io.out_dir))
@@ -69,7 +72,6 @@ void write_plt(amr::AMRControl &amr_ctrl,
         << config.numerics.solver_name << "_plt_"
         << std::setw(4) << std::setfill('0') << file_index << ".h5";
 
-    const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     int dim = 3;
     std::string geom = "cartesian";
     if (!active_blocks.empty()) {
@@ -79,7 +81,6 @@ void write_plt(amr::AMRControl &amr_ctrl,
     }
 
     size_t num_blocks = active_blocks.size();
-    if (num_blocks == 0) return;
 
     const amr::Block& first_b = amr_ctrl.pool->GetBlock(active_blocks[0]);
     std::vector<size_t> block_dims = get_hdf5_dims(first_b.grid);

@@ -73,6 +73,8 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
     const auto& specs = runtime.species();
+    if (amr_ctrl.tree->GetActiveBlocks().empty())
+        throw std::invalid_argument("Cannot publish Plotfile without active leaf blocks.");
     runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
     if (plot_run_id_.empty()) plot_run_id_ = arch::core::new_run_identity();

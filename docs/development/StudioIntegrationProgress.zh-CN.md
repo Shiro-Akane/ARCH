@@ -3254,3 +3254,10 @@ PhysicalPlot新增Zoom in/out，复用wheel同一zoomView状态更新，不写Co
 正常close exit0/8owned退出/config与binary不变/既有8output SHA不变/managed clean。
 仅处理后报告，无代码/重复334基线/Build/simulation/push/tag；wheel/pan仍NOT VERIFIED。
 见StudioCellularZoomControls报告/Summary，联合目标和科学门槛保持未闭合。
+
+## 2026-10-04 Plotfile 空网格发布拒绝
+
+新增直接入口反例证实旧writer空叶返回并创建目录；初次Driver-only失败保留，不冒称已复现序号递增。
+PlotIO/DriverIO显式拒绝；当前两个IO object +真实fixture最终空叶/no-dir/序号及write/flush/close/rename/create全部PASS。
+五轮完整错误留本机，SHA/dirty/mixed-object边界记录；未Build完整ARCH/Simulation/重复334 baseline。
+见PlotfileEmptyGridPublication报告/Summary；真实ENOSPC/持久性、科学/CUDA/O9仍未闭合。

@@ -71,6 +71,29 @@ int main(int argc,char** argv) {
         std::ostringstream name;name<<"fixture_HLLC_plt_"<<std::setw(4)<<std::setfill('0')<<counters.plt_file_index<<".h5";
         return root/name.str();
     };
+    // No active leaves cannot count as a completed publication.
+    amr::AMRControl empty_control(4,1);
+    arch::driver::DriverRuntime empty_runtime(empty_control,boundaries,config,species,counters);
+    arch::driver::DriverIO empty_output(empty_runtime,counters,provenance,pressure,temperature,gamma,nullptr);
+    const auto empty_directory=root/"empty-grid-output";
+    config.io.out_dir=empty_directory.string();
+    bool direct_empty_failed=false;
+    try { write_plt(empty_control,pressure,temperature,gamma,nullptr,17,0.,config,species); }
+    catch(const std::exception& error) {
+        direct_empty_failed=std::string(error.what()).find("active leaf")!=std::string::npos;
+    }
+    require(direct_empty_failed,"direct writer accepted empty active grid");
+    require(!std::filesystem::exists(empty_directory),"direct empty writer created output directory");
+    bool empty_failed=false;
+    try { empty_output.write_plot(); }
+    catch(const std::exception& error) {
+        std::cerr<<"empty-grid error: "<<error.what()<<'\n';
+        empty_failed=std::string(error.what()).find("active leaf")!=std::string::npos;
+    }
+    require(empty_failed,"empty active grid publication did not fail explicitly");
+    require(counters.plt_file_index==17,"empty grid consumed output identity");
+    require(!std::filesystem::exists(empty_directory),"empty grid created output directory");
+    config.io.out_dir=root.string();
     output.write_plot();
     require(counters.plt_file_index==18,"successful publication did not advance exactly once");
     const auto first=root/"fixture_HLLC_plt_0017.h5";
@@ -114,7 +137,7 @@ int main(int argc,char** argv) {
     for(const auto& item:std::filesystem::directory_iterator(root))
         require(item.path().filename().string().find(".partial-")==std::string::npos,"failed temporary leaked");
     require(counters.step_count==0&&counters.t_current==0.,"IO fixture advanced simulation");
-    std::cout<<"PASS real Driver write/flush/close/rename/create propagation; unchanged failure index; same-index retries; time=0 step=0\n";
+    std::cout<<"PASS empty-grid direct/Driver rejection; real Driver write/flush/close/rename/create propagation; unchanged failure index; same-index retries; time=0 step=0\n";
     return 0;
  }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

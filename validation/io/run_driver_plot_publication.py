@@ -16,6 +16,16 @@ compile_args=shlex.split(main["command"])
 if "-DARCH_CUDA_BUILD_ENABLED=0" not in compile_args:p.error("CPU build required")
 out.mkdir(parents=True)
 obj=out/"fixture.o";exe=out/"driver-plot-publication"
+# Compile the current writer into a separate object, avoiding stale cached IO
+# without rebuilding ARCH or mutating the trusted build tree.
+plot=next(e for e in entries if pathlib.Path(e["file"]).name=="PlotIO.cpp")
+plot_args=shlex.split(plot["command"])
+plot_obj=out/"PlotIO.o"
+plot_args[plot_args.index("-o")+1]=str(plot_obj)
+driver=next(e for e in entries if pathlib.Path(e["file"]).name=="DriverIO.cpp")
+driver_args=shlex.split(driver["command"])
+driver_obj=out/"DriverIO.o"
+driver_args[driver_args.index("-o")+1]=str(driver_obj)
 compile_args[compile_args.index("-o")+1]=str(obj)
 compile_args[compile_args.index("-c")+1]=str(root/"tests/host/io/test_driver_plot_publication.cpp")
 commands=subprocess.check_output(["ninja","-t","commands","ARCH"],cwd=build,text=True)
@@ -28,8 +38,9 @@ if any(t in {"&&",";","|",">","<"} for t in tokens):p.error("unsupported link sc
 main_object=main["output"]
 tokens[tokens.index(main_object)]=str(obj)
 tokens[tokens.index("-o")+1]=str(exe)
+tokens[1:1]=[str(driver_obj),str(plot_obj)]
 tokens+=["-Wl,--wrap=H5Dwrite","-Wl,--wrap=H5Fflush","-Wl,--wrap=H5Fclose"]
-for name,args in [("compile",compile_args),("link",tokens)]:
+for name,args in [("compile",compile_args),("compile-plot",plot_args),("compile-driver",driver_args),("link",tokens)]:
     with (out/(name+".log")).open("w") as log:
         process=subprocess.run(args,cwd=build,stdout=log,stderr=subprocess.STDOUT,timeout=180)
     if process.returncode:
@@ -40,6 +51,12 @@ process=subprocess.run([str(exe),str(out/"evidence")],env=env,text=True,capture_
 result={"scope":"real CPU DriverIO IO-only fixture; no timestep or EOS science acceptance",
         "exitCode":process.returncode,"stdout":process.stdout,"stderr":process.stderr,
         "buildDirectory":str(build),
+        "plotSourceSha256":hashlib.sha256(pathlib.Path(plot["file"]).read_bytes()).hexdigest(),
+        "fixtureSourceSha256":hashlib.sha256((root/"tests/host/io/test_driver_plot_publication.cpp").read_bytes()).hexdigest(),
+        "driverObjectSha256":hashlib.sha256(driver_obj.read_bytes()).hexdigest(),
+        "plotObjectSha256":hashlib.sha256(plot_obj.read_bytes()).hexdigest(),
+        "sourceGitHead":subprocess.check_output(["git","rev-parse","HEAD"],cwd=root,text=True).strip(),
+        "sourceGitDirty":bool(subprocess.check_output(["git","status","--porcelain"],cwd=root,text=True).strip()),
         "driverSourceSha256":hashlib.sha256((root/"src/driver/io/DriverIO.cpp").read_bytes()).hexdigest(),
         "dispatchLibrarySha256":hashlib.sha256((build/"libarch_solver_dispatch.a").read_bytes()).hexdigest(),
         "testExecutableSha256":hashlib.sha256(exe.read_bytes()).hexdigest(),"fixtureSource":str(root/"tests/host/io/test_driver_plot_publication.cpp")}
