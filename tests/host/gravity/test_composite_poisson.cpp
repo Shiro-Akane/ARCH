@@ -788,6 +788,95 @@ void finite_ring_moment_contract() {
     std::cout<<"RZ_RING_MOMENT_REMAINDER_PASS production_values=gated near_bound=pending\n";
 }
 
+
+void finite_ring_kernel_contract() {
+    using namespace Physical::Gravity;
+    const auto potential=[](double r,double z,RingQuadratureControl control={}) {
+        return finite_ring_potential_estimate(.5,1.,-.375,.375,1.,r,z,1.,control);
+    };
+    for(double root:{1.,.5,1.e-12,1.e-100,1.e-300}) {
+        const auto value=ring_elliptic_k_complementary_root(root);
+        require(value.status==RingPotentialStatus::EstimatedConverged
+            && std::isfinite(value.value),"ring complementary-root AGM failed");
+        if(root==1.)require(value.value==pi/2.,"ring exact K(0) axis limit");
+        if(root<=1.e-12)
+            require(std::abs(value.value-std::log(4./root))<1.e-12*value.value,
+                "ring small complementary root asymptotic failed");
+        std::cout<<"RZ_RING_AGM root="<<root<<" value="<<value.value
+            <<" iterations="<<value.iterations<<'\n';
+    }
+    require(ring_elliptic_k_complementary_root(0.).status==RingPotentialStatus::SingularSample,
+        "ring exact contact kernel softened");
+    for(double z:{0.,.375,2.,100.}) {
+        const auto value=potential(0.,z);
+        require(value.status==RingPotentialStatus::AnalyticAxis && !value.error_is_certified,
+            "ring analytic axis not explicit or incorrectly certified");
+        // Independent long-double axis primitive, not the production stabilization.
+        const auto primitive=[](long double radius,long double u) {
+            return .5L*(u*std::sqrt(radius*radius+u*u)
+                +radius*radius*std::asinh(u/radius));
+        };
+        const long double lower=-.375L-z,upper=.375L-z;
+        const long double reference=-2*3.141592653589793238462643383279502884L*
+            (primitive(1.L,upper)-primitive(1.L,lower)
+            -primitive(.5L,upper)+primitive(.5L,lower));
+        require(std::abs(value.value-reference)<2.e-10L*std::abs(reference),
+            "ring analytic axis independent primitive mismatch");
+        std::cout<<"RZ_RING_AXIS z="<<z<<" value="<<value.value
+            <<" reference_error="<<static_cast<double>(std::abs(value.value-reference))
+            <<" roundoff_estimate="<<value.estimated_error<<'\n';
+    }
+    for(auto point:{std::array<double,3>{2.,0.,0.},
+                    std::array<double,3>{.75,0.,2.},
+                    std::array<double,3>{1.e-12,0.,2.}}) {
+        const auto value=potential(point[0],point[2]);
+        const auto reference=independent_ring_potential(.5,1.,-.375,.375,point,32);
+        require(value.status==RingPotentialStatus::EstimatedConverged && !value.error_is_certified,
+            "ring separated finite-volume estimate failed");
+        require(std::abs(value.value-reference)<1.e-9L*std::abs(reference),
+            "ring off-axis kernel independent 3D source mismatch");
+        std::cout<<"RZ_RING_KERNEL r="<<point[0]<<" z="<<point[2]<<" value="<<value.value
+            <<" reference_error="<<static_cast<double>(std::abs(value.value-reference))
+            <<" estimate="<<value.estimated_error<<" order="<<value.last_order
+            <<" evaluations="<<value.kernel_evaluations<<'\n';
+    }
+    for(auto point:{std::array<double,2>{1.,0.},
+                    std::array<double,2>{1.,.375},
+                    std::array<double,2>{.75,0.}}) {
+        RingQuadratureControl control{};control.relative_estimate_target=1.e-7;
+        const auto value=potential(point[0],point[1],control);
+        require((value.status==RingPotentialStatus::EstimatedConverged
+                 || value.status==RingPotentialStatus::WorkLimit)
+            && std::isfinite(value.value) && !value.error_is_certified
+            && value.kernel_evaluations<=control.maximum_kernel_evaluations,
+            "ring Duffy contact failed or was certified");
+        const auto mirrored=potential(point[0],-point[1],control);
+        require(std::abs(value.value-mirrored.value)<2.e-12*std::abs(value.value),
+            "ring contact reflection symmetry failed");
+        std::cout<<"RZ_RING_CONTACT r="<<point[0]<<" z="<<point[1]<<" value="<<value.value
+            <<" estimate="<<value.estimated_error<<" status="<<static_cast<int>(value.status)
+            <<" order="<<value.last_order<<" evaluations="<<value.kernel_evaluations<<'\n';
+    }
+    const auto default_contact=potential(.75,0.);
+    require(default_contact.status==RingPotentialStatus::WorkLimit
+        && std::isfinite(default_contact.value) && !default_contact.error_is_certified,
+        "ring default unresolved contact silently converged");
+    std::cout<<"RZ_RING_DEFAULT_CONTACT status=WorkLimit order="<<default_contact.last_order
+        <<" evaluations="<<default_contact.kernel_evaluations
+        <<" estimate="<<default_contact.estimated_error<<'\n';
+    auto limited=RingQuadratureControl{};limited.maximum_kernel_evaluations=1;
+    const auto short_work=potential(.75,0.,limited);
+    require(short_work.status==RingPotentialStatus::WorkLimit
+        && short_work.kernel_evaluations==1 && !short_work.error_is_certified,
+        "ring work limit silently converged");
+    auto exact=RingQuadratureControl{};exact.relative_estimate_target=exact.absolute_estimate_target=0.;
+    require(potential(0.,2.,exact).status==RingPotentialStatus::PrecisionLimit,
+        "axis zero tolerance gained hidden floor");
+    require(finite_ring_potential_estimate(.5,1.,-.375,.375,-1.,1.,0.,1.).status
+        ==RingPotentialStatus::InvalidInput,"ring negative source accepted");
+    std::cout<<"RZ_RING_KERNEL_CONTACT_PASS precision=estimate_only production=gated\n";
+}
+
 void rz_boundary_guard() {
     auto rz=base_mesh(2,4);
     rz.geometry=elliptic::Geometry::Cylindrical;
@@ -985,9 +1074,27 @@ void curved_manufactured(bool singular=false, bool seam_refined=false) {
 int main(int argc,char** argv) {
     try {
         std::cout<<std::setprecision(17);
+        if(argc>=9 && std::string(argv[1])=="ring-probe") {
+            Physical::Gravity::RingQuadratureControl control{};
+            if(argc>9)control.relative_estimate_target=std::stod(argv[9]);
+            if(argc>10)control.maximum_order=std::stoi(argv[10]);
+            if(argc>11)control.maximum_kernel_evaluations=std::stoull(argv[11]);
+            const auto value=Physical::Gravity::finite_ring_potential_estimate(
+                std::stod(argv[2]),std::stod(argv[3]),std::stod(argv[4]),std::stod(argv[5]),
+                std::stod(argv[6]),std::stod(argv[7]),std::stod(argv[8]),
+                constants::gravity::cgs::gravitational_constant,control);
+            std::cout<<"{\"status\":"<<static_cast<int>(value.status)<<",\"value\":";
+            if(std::isfinite(value.value))std::cout<<value.value;else std::cout<<"null";
+            std::cout<<",\"estimated_error\":";
+            if(std::isfinite(value.estimated_error))std::cout<<value.estimated_error;else std::cout<<"null";
+            std::cout<<",\"error_is_certified\":false,\"order\":"<<value.last_order
+                <<",\"kernel_evaluations\":"<<value.kernel_evaluations
+                <<",\"agm_iterations\":"<<value.agm_iterations<<"}\n";return 0;
+        }
+
         if(argc>1 && std::string(argv[1])=="coarse-diagnostic") {coarse_mesh_diagnostic();return 0;}
         if (argc>1 && std::string(argv[1])=="rz") { finite_ring_moment_contract(); rz_manufactured(); rz_boundary_guard(); return 0; }
-        if (argc>1 && std::string(argv[1])=="ring") { finite_ring_moment_contract(); rz_boundary_guard(); return 0; }
+        if (argc>1 && std::string(argv[1])=="ring") { finite_ring_moment_contract(); finite_ring_kernel_contract(); rz_boundary_guard(); return 0; }
         if (argc>1 && std::string(argv[1])=="contract") { contract(); coarse_mesh_diagnostic(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
         if(argc>1 && std::string(argv[1])=="curved") {curved_manufactured();curved_boundary_integral();return 0;}

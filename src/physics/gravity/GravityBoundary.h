@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "core/CompensatedSum.h"
+#include "physics/gravity/FiniteRingBoundaryMath.h"
 #include "grid/GridGeometryView.h"
 #include "grid/GridMetrics.h"
 #include "numerics/elliptic/CompositePoisson.h"

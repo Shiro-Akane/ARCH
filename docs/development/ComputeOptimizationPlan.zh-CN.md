@@ -676,3 +676,9 @@ analytic十个矩和真实support；uniform/mixed parent翻译、signed absolute
 远场q=.01/.2/.7/.95余项包络验证PASS。见 RZFiniteRingMomentNode-20261004.zh-CN.md。
 constructor可建立内部缓存，production values双向chart gate继续拒绝RZ；
 near/contact kernel、rounding/global error ledger与完整科学签收尚未完成。
+
+2026-10-04 finite-ring kernel/contact数学节点：唯一shared complementary-root AGM、
+精确axis limit、split+Duffy及显式工作/精度上限通过独立Decimal参考。
+8个axis样本、3个contact样本分别核对精度/分区；default contact仍明确WorkLimit，
+所有near结果estimate-only，不填certified residual。见 RZFiniteRingKernelNode-20261004.zh-CN.md。
+production values gate保留，可靠near bound/global ledger及RZ B/C/D仍待贯通。

@@ -8,7 +8,9 @@ Cross-check uses direct 3-D Newton tensor integration without elliptic functions
 
 K/E AGM identities: NIST DLMF 19.8.5--6; parameter m=k^2.
 No production gravity/GridMetrics/EOS code, softening, floors or tolerance gates.
-Interior/contact observers are rejected: near-singular quadrature is not certified.
+The default exterior potential/force reference rejects interior/contact.
+A separate --contact-review mode reports bounded potential estimates only; it
+does not supply a certified near bound or a contact force reference.
 """
 from decimal import Decimal, localcontext
 from functools import lru_cache
@@ -70,7 +72,7 @@ def decimal_gauss(order, precision):
         return tuple(sorted(roots))
 
 
-def source_arguments(case):
+def source_arguments(case, *, allow_contact=False):
     values = tuple(decimal_value(case[k]) for k in
         ("r_lower", "r_upper", "z_lower", "z_upper", "density",
          "r_observer", "z_observer"))
@@ -79,7 +81,7 @@ def source_arguments(case):
     rl, rr, zl, zr, rho, R, Z = values
     if not (0 <= rl < rr and zl < zr and rho > 0 and R >= 0):
         raise ValueError("Positive density and ordered annulus required")
-    if rl <= R <= rr and zl <= Z <= zr:
+    if not allow_contact and rl <= R <= rr and zl <= Z <= zr:
         raise ValueError("Interior/contact observer not covered by this reference")
     return values
 
@@ -208,10 +210,101 @@ CASES = [
 ]
 
 
+def contact_potential_reference(case, order=32, precision=80, t_panels=1):
+    """Independent Decimal Duffy potential, estimate-only bounded diagnostic.
+
+    Existing exterior force reference keeps rejecting contact. No production
+    kernel imports. Vary order, precision and t partition independently.
+    """
+    rl, rr, zl, zr, rho, R, Z = source_arguments(case, allow_contact=True)
+    if not (rl <= R <= rr and zl <= Z <= zr and R > 0):
+        raise ValueError("Dedicated contact reference requires positive-R inside/contact")
+    if not 1 <= t_panels <= 4:
+        raise ValueError("Diagnostic t partition limited to 1..4")
+    with localcontext() as ctx:
+        ctx.prec = precision
+        rs, zs = sorted(set((rl, R, rr))), sorted(set((zl, Z, zr)))
+        nodes = decimal_gauss(order, precision)
+        integral = Decimal(0)
+        work = 0
+        for ra, rb in zip(rs, rs[1:]):
+            for za, zb in zip(zs, zs[1:]):
+                a, b = (rb if ra == R else ra)-R, (zb if za == Z else za)-Z
+                if a == 0 or b == 0:
+                    continue
+                for triangle in (0,1):
+                    for panel in range(t_panels):
+                        tlo, thi = Decimal(panel)/t_panels, Decimal(panel+1)/t_panels
+                        for nt, wt in nodes:
+                            tv = tlo+(nt+1)*(thi-tlo)/2
+                            for nu, wu in nodes:
+                                uv = (nu+1)/2
+                                dr = tv*(a if triangle == 0 else (1-uv)*a)
+                                dz = tv*(uv*b if triangle == 0 else b)
+                                radius = R+dr
+                                s2 = (R+radius)**2+dz*dz
+                                # Decimal independent parameter m=k^2, not modulus.
+                                kv, _ = elliptic_ke(4*R*radius/s2)
+                                integral += wt*wu*(thi-tlo)/4 * tv*abs(a*b)*radius*kv/s2.sqrt()
+                                work += 1
+        return dict(potential=+(-4*G*rho*integral), kernel_evaluations=work,
+                    certified=False)
+
+
+CONTACT_CASES = [
+    dict(name="outer_face", r_lower=".5", r_upper=1, z_lower="-.375",
+         z_upper=".375", density=1, r_observer=1, z_observer=0),
+    dict(name="outer_corner", r_lower=".5", r_upper=1, z_lower="-.375",
+         z_upper=".375", density=1, r_observer=1, z_observer=".375"),
+    dict(name="interior", r_lower=".5", r_upper=1, z_lower="-.375",
+         z_upper=".375", density=1, r_observer=".75", z_observer=0),
+]
+
+
+def contact_review(output, probe=None):
+    import subprocess
+    rows = []
+    for case in CONTACT_CASES:
+        sequence = []
+        for order, panels, precision in [(32,1,80),(64,1,80),(64,2,80),(64,2,100)]:
+            value = contact_potential_reference(case,order,precision,panels)
+            sequence.append(dict(order=order,t_panels=panels,precision=precision,
+                potential=float(value["potential"]),decimal_potential=str(value["potential"]),
+                kernel_evaluations=value["kernel_evaluations"],certified=False))
+            print(case["name"],order,panels,precision,"processed",flush=True)
+        row = dict(source=case,reference_sequence=sequence,
+            precision_binary64_equal=sequence[-1]["potential"]==sequence[-2]["potential"],
+            order_32_to_64_delta=abs(sequence[0]["potential"]-sequence[1]["potential"]),
+            t_partition_1_to_2_delta=abs(sequence[1]["potential"]-sequence[2]["potential"]),
+            certified=False)
+        if probe:
+            command = [str(Path(probe).resolve()),"ring-probe",
+                *(str(case[k]) for k in ("r_lower","r_upper","z_lower","z_upper","density","r_observer","z_observer")),
+                "1e-7","128","200000"]
+            run = subprocess.run(command,text=True,capture_output=True,check=True,timeout=120)
+            value = json.loads(run.stdout)
+            row["production_math_probe"] = value
+            row["production_absolute_delta"] = abs(value["value"]-sequence[-1]["potential"])
+        rows.append(row)
+    report = dict(scope="Independent bounded contact point-potential review only; no certified near bound or production RZ acceptance",
+        G_cgs=str(G),potential_unit="cm^2/s^2",normalization="full rotating volume",
+        method="Independent Decimal AGM + split rectangle triangular Duffy; separate precision/order/t partition",
+        source_identity="matched piecewise-constant annulus",rows=rows,
+        limits=["Potential only; no contact force reference","Quadrature difference is estimate only",
+                "Existing exterior reference still rejects contact","No production kernel imported",
+                "No AMR/operator/CUDA/evolution or global residual certification"])
+    Path(output).write_text(json.dumps(report,indent=2)+"\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--contact-review", action="store_true")
+    parser.add_argument("--kernel-probe", help="Existing arch_composite_poisson test binary")
     args = parser.parse_args()
+    if args.contact_review:
+        contact_review(args.output,args.kernel_probe)
+        return
     rows = []
     for case in CASES:
         references = []

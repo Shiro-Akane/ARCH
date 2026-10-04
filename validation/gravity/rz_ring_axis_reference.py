@@ -82,6 +82,7 @@ CASES=[
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output",required=True)
+    parser.add_argument("--kernel-probe",help="Optional existing arch_composite_poisson test binary")
     args=parser.parse_args()
     rows=[]
     for case in CASES:
@@ -94,7 +95,19 @@ def main():
             actual=tensor_quadrature(case,order)
             errors={k:abs(actual[k]-high[k]) for k in high}
             quadrature.append(dict(order=order,values=actual,absolute_errors=errors))
-        rows.append(dict(source=case,reference=high,quadrature=quadrature))
+        row=dict(source=case,reference=high,quadrature=quadrature)
+        if args.kernel_probe:
+            import subprocess
+            from pathlib import Path
+            command=[str(Path(args.kernel_probe).resolve()),"ring-probe",
+                *(str(case[k]) for k in ("r_lower","r_upper","z_lower","z_upper","density")),
+                "0",str(case["z_observer"])]
+            run=subprocess.run(command,text=True,capture_output=True,check=True,timeout=120)
+            actual=json.loads(run.stdout)
+            row["production_math_probe"]=actual
+            row["production_absolute_delta"]=abs(actual["value"]-high["potential"])
+            row["production_relative_delta"]=row["production_absolute_delta"]/abs(high["potential"])
+        rows.append(row)
     report=dict(scope="Independent finite-volume axis reference only; no production RZ or scientific acceptance",
         G_cgs=str(G),potential_unit="cm^2/s^2",acceleration_unit="cm/s^2",mass_unit="g",
         normalization="full rotating volume, 2*pi",precision_digits=[80,120],rows=rows,
