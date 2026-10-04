@@ -387,6 +387,22 @@ public:
         return refinement_species_indices;
     }
 
+    /** Repair accepted-state JENS deficits without changing ordinary cadence. */
+    void EvaluateJeansRepair(const SimConfig& config)
+    {
+        (void)indicator::make_selection(config.amr,root_grid.dim,refinement_species_indices);
+        for (int id:active_blocks) {
+            auto& block=pool->GetBlock(id);
+            block.refine_flag=0;
+            if (!config.amr.refine_on_jeans) continue;
+            if (MinimumJeansCells(block)<config.amr.jeans_cells) {
+                if (block.level>=config.amr.lrefinemax)
+                    throw std::runtime_error("JENS remains underresolved at lrefinemax; increase allowed resolution.");
+                block.refine_flag=1;
+            }
+        }
+    }
+
     void EvaluateRefinement(const SimConfig& config) {
         const auto selection = indicator::make_selection(
             config.amr, root_grid.dim, refinement_species_indices);
@@ -861,10 +877,12 @@ public:
         const SimConfig& config,
         const PreApplyRegridObserver& observer = {},
         const StagedAllocationObserver& allocation_observer = {},
-        const std::function<void()>& evaluate_indicators = {})
+        const std::function<void()>& evaluate_indicators = {},
+        bool jeans_repair_only = false)
     {
         PreparedRegrid prepared(*this, config);
         if (evaluate_indicators) evaluate_indicators();
+        else if (jeans_repair_only) EvaluateJeansRepair(config);
         else EvaluateRefinement(config);
         RippleCheck();
         if (observer) observer(*this);

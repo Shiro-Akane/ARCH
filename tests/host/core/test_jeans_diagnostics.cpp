@@ -70,6 +70,20 @@ void tree_transaction_contract()
     require(!tree.Regrid(config),"one-ULP underresolved parent merged");
     config.amr.jeans_cells=root;
     require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==1,"parent equality did not permit merge");
+    // The accepted-macro repair mode must neither coarsen nor run normal
+    // curvature indicators between their configured regrid boundaries.
+    config.amr.jeans_cells=8.;
+    {
+        auto prepared=tree.PrepareRegrid(config,{}, {}, {},true);
+        require(prepared.topology_changed(),"repair mode missed unresolved root");
+        prepared.AbortNoexcept();
+    }
+    fill(tree,*pool,12.);
+    {
+        auto prepared=tree.PrepareRegrid(config,{}, {}, {},true);
+        require(!prepared.topology_changed(),"repair mode changed resolved topology");
+        prepared.PublishNoChangeNoexcept();
+    }
     int calls=0;
     tree.SetJeansEvaluator([&](const FluidVector&,const double*,
         const GridMetrics::GeometryView&,int,int)->JeansDiagnostics::Resolution {

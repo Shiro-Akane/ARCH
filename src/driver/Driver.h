@@ -122,6 +122,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     bool has_burn = config.physics.burn.use_burn;
     bool has_diff = config.physics.diffusion.use_diffusion;
 
+    if (config.amr.refine_on_jeans
+        && backend_resolution->resolved_backend != arch::dispatch::ComputeBackend::Cpu)
+        throw std::logic_error("device JENS lifecycle is not qualified");
+    runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
     start_compute_backend(runtime, eos, *resolved_plan, *backend_resolution, *startup_order);
     GravityStage gravity_stage(runtime, gravity);
     {
@@ -212,6 +216,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         gravity_stage.invalidate();
         ctrl.advance(dt);
+        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
         advanced_any_step = true;
         ctrl.print_step(dt, candidates.hydro, has_burn ? dt / 2.0 : 0.0,
                         candidates.diffusion_forward_euler, has_burn, has_diff);

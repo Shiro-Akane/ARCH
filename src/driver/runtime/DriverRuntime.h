@@ -44,7 +44,8 @@ public:
     DriverRuntime& operator=(const DriverRuntime&) = delete;
 
     void initialize_topology();
-    bool perform_regrid(int step, double time);
+    bool perform_regrid(int step, double time, bool jeans_repair_only = false);
+    void ensure_jeans_resolution(int step, double time);
     // Backend-local ghosts never request Host materialization.
     void ensure_fluid_ghosts(state::StateSlot slot = state::StateSlot::Current);
     void materialize_current_for_host();
@@ -76,7 +77,7 @@ private:
     state::StateVersion current_interior_version() const;
     void publish_current_ghost();
     void complete_device_boundary(state::StateSlot);
-    bool execute_regrid();
+    bool execute_regrid(bool jeans_repair_only);
     static backend::HostStateTransferView host_transfer_view(FluidState&);
 
     const GridMetrics::GeometrySemantics geometry_semantics_;

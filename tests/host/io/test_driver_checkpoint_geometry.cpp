@@ -6,13 +6,65 @@
 #include "driver/schedule/DriverControl.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "core/files/FileFingerprint.h"
+#include "amr/refinement/RefinementThermodynamics.h"
+#include "physics/eos/IdealGas.h"
 #include <fstream>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
 static void require(bool b,const char* m){if(!b)throw std::runtime_error(m);}
+// Real Runtime transaction gate, not an evolved trajectory acceptance.
+static void jeans_runtime_gate() {
+    SimConfig config;
+    config.grid.dim=1;config.grid.nblockx1=1;
+    config.grid.nblockx2=0;config.grid.nblockx3=0;config.grid.x1_max=8.;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=2;
+    config.amr.refine_on_rho=false;config.amr.refine_on_jeans=true;
+    config.amr.jeans_cells=8.;
+    SpeciesManager species;IdealGas eos(1.5,species);
+    amr::AMRControl control(16,1);control.tree->InitRootGrid(config,0);
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& block=control.pool->GetBlock(id);
+        for(int cell=0;cell<block.grid.GetTotalSize();++cell)
+            block.fluid_state.set(cell,{1e7,0.,0.,0.,1e7*4./3.});
+    }
+    amr::BindRefinementThermodynamics(*control.tree,eos);
+    RunState start;SimulationController counters(config,start);
+    BCHandler boundaries(config);
+    arch::driver::DriverRuntime runtime(control,boundaries,config,species,counters);
+    runtime.initialize_topology();
+    runtime.ensure_jeans_resolution(0,0.);
+    require(runtime.handles().size()==2,"Runtime JENS failed initial repair");
+    require(counters.step_count==0&&counters.t_current==0.,"JENS repair advanced simulation");
+    // Publish a new accepted state, rather than changing a cached diagnostic.
+    // This fixture does not claim to evolve a scientific trajectory.
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& block=control.pool->GetBlock(id);
+        for(int cell=0;cell<block.grid.GetTotalSize();++cell)
+            block.fluid_state.set(cell,{1e7,0.,0.,0.,1e7/3.});
+    }
+    auto context=runtime.stage_context();
+    (void)arch::scheduler::publish_completed_interior(
+        context,runtime.handles(),arch::state::StateSlot::Current);
+    runtime.ensure_jeans_resolution(1,.25);
+    require(runtime.handles().size()==4,"new accepted state used stale JENS resolution");
+    const auto handles=runtime.handles();
+    runtime.ensure_jeans_resolution(1,.25);
+    require(runtime.handles()==handles,"resolved accepted-state repair churned identity");
+    config.amr.jeans_cells=32.;
+    bool failed=false;
+    try {runtime.ensure_jeans_resolution(1,.25);}catch(const std::runtime_error&){failed=true;}
+    require(failed&&runtime.handles()==handles&&control.pool->GetNumActiveBlocks()==4,
+            "failed Runtime repair published partial identity");
+    config.amr.refine_on_jeans=false;
+    const auto records=runtime.regrid_records().size();
+    runtime.ensure_jeans_resolution(2,.5);
+    require(runtime.regrid_records().size()==records,"disabled JENS executed a transaction");
+    std::cout<<"JEANS_RUNTIME_TRANSACTION_PASS\n";
+}
 int main(int argc,char** argv) {
  try {
+    jeans_runtime_gate();
     require(argc==2,"new persistent output directory required");
     const std::filesystem::path root(argv[1]);
     require(!std::filesystem::exists(root),"output directory must be new");

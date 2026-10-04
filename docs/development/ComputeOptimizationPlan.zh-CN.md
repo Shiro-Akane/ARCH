@@ -609,3 +609,14 @@ ARCH 配置／默认测试／CI／发布门槛的依赖。外部程序缺失不�
 JENS新增6个独立父态静态样本通过；生命周期/后端与完整科学验收未完成。
 RZ角动量finding、离散设计与环体预算仍待审；不改变前述物理定义或阶段出口。
 证据见O7ApprovedArchitectureAndJeansParent-20261004.zh-CN.md。
+
+### JENS CPU accepted-state 生命周期接线增量
+
+内部 Tree 事务 checkpoint 523bec6a 已推送。现在 Driver 在初始化/恢复进入计算 backend 前、
+以及每个完成的宏步后执行只细化 JENS repair，复用既有拓扑/状态发布事务；
+普通指标的 regrid cadence 不变。最后一层必须再次检查，不以用完 pass 数隐藏分辨率不足。
+
+真实 CPU Runtime 多级 repair、身份稳定、容量/层级失败回滚、关闭路径无事务，以及原
+DriverIO checkpoint native/失败传播回归通过；CPU ARCH 与 shared scheduler 已重建。
+公开 JENS schema/能力仍关闭，演化、重启参数身份、输出和 CUDA 完整链未验收。
+详见 O7JeansAcceptedStateLifecycle-20261004.zh-CN.md；RZ finding 与待审预算不变。

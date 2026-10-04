@@ -42,7 +42,7 @@ execute("link",tokens)
 result=subprocess.run([str(exe),str(out/"evidence")],env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
     text=True,capture_output=True,timeout=30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
-summary={"scope":"Actual CPU DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
+summary={"scope":"Actual CPU JENS Runtime transactions and DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
  "buildDirectory":str(build),"executableSha256":hashlib.sha256(exe.read_bytes()).hexdigest(),
  "recompiledSources":{s:hashlib.sha256((root/s).read_bytes()).hexdigest() for s in sources},

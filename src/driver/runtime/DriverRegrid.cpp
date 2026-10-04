@@ -29,10 +29,14 @@ using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
 /** Stage a topology transaction, migrate state, validate and publish only on success. */
-bool DriverRuntime::execute_regrid()
+bool DriverRuntime::execute_regrid(bool jeans_repair_only)
 {
     if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("RZ regrid migration and angular-momentum contract are incomplete");
+    // No stale Host evaluation of device-owned fields. Public JENS remains
+    // gated until its backend-local consumer chain is qualified.
+    if (compute_backend && config.amr.refine_on_jeans)
+        throw std::logic_error("device JENS lifecycle is not qualified");
     const auto make_regrid_ledger = [] (
         amr::TopologyEpoch epoch,
         std::span<const amr::BlockHandle> handles,
@@ -87,7 +91,7 @@ bool DriverRuntime::execute_regrid()
     auto prepared = compute_backend
         ? amr_ctrl.tree->PrepareRegrid(
             config, {}, {}, evaluate_device_indicators)
-        : amr_ctrl.tree->PrepareRegrid(config);
+        : amr_ctrl.tree->PrepareRegrid(config, {}, {}, {}, jeans_repair_only);
     auto topology_candidate = topology_registry.stage_reconciliation(
         observe_blocks(prepared.proposed_active_blocks()));
     const auto& proposed = topology_candidate.reconciliation();
@@ -368,13 +372,13 @@ bool DriverRuntime::execute_regrid()
 }
 
 /** Apply the configured regrid cadence and record its outcome. */
-bool DriverRuntime::perform_regrid(int step, double time)
+bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only)
 {
     const auto started = std::chrono::steady_clock::now();
     const auto before = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};
     const auto old_blocks = stage_handles.size();
-    const bool changed = execute_regrid();
+    const bool changed = execute_regrid(jeans_repair_only);
     const auto after = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};
     regrid_measurements.push_back({step, time, old_blocks, stage_handles.size(), changed,
@@ -384,5 +388,15 @@ bool DriverRuntime::perform_regrid(int step, double time)
          after.stream_sync_count - before.stream_sync_count,
          after.getter_count - before.getter_count}});
     return changed;
+}
+/** Fully qualify accepted cells before another advance or durable output. */
+void DriverRuntime::ensure_jeans_resolution(int step, double time)
+{
+    if (!config.amr.refine_on_jeans) return;
+    // Include a final check after reaching lrefinemax. Refinement cannot hide
+    // an unresolved finest-level state by exhausting the loop count.
+    for (int pass=0;pass<=config.amr.lrefinemax;++pass)
+        if (!perform_regrid(step,time,true)) return;
+    throw std::logic_error("JENS repair did not converge within hierarchy depth");
 }
 } // namespace arch::driver
