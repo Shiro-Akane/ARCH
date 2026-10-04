@@ -1,0 +1,531 @@
+{
+  "status": "SCOPED_CPU_PASS_PRODUCTION_RZ_GATED",
+  "date": "2026-10-05",
+  "sourceBaseline": "2264b5f47bbb450648e277d05a9754183a63f3d3",
+  "dirtyAtBuild": true,
+  "sourceFingerprints": {
+    "src/physics/gravity/FiniteRingBoundaryMath.h": "c6ef8416a9683328717749a49942f265bd00e6d07fe986b82310904d71b11262",
+    "tests/host/gravity/test_composite_poisson.cpp": "4c0ff26a4747eef3504b58683216d1df99d0c98b09d71e3dc5f6d8029c0f77d0",
+    "validation/gravity/rz_ring_far_leaf_reference.py": "1dafd0cd3ed140b2108ae219c782320bcde782495bbf38a138363e47a938d329"
+  },
+  "cpuArchBinarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "cpuArchBinaryUnchanged": true,
+  "scopedTestElfSha256": "2d57f5d530cca1cd9ac0bfda1d91b1ea68a8d3860a94e5fa83deb2d6c33c7088",
+  "cpuArchIdentityScope": "Affected targets rebuilt; ARCH ELF unchanged. New internal far consumer is tested by scoped ELF; not enabled in production RZ.",
+  "checks": [
+    {
+      "mode": "ring-far-leaf",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-enclosure",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-native-face",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-axis-enclosure",
+      "exitCode": 0
+    },
+    {
+      "mode": "boundary-ledger",
+      "exitCode": 0
+    },
+    {
+      "mode": "ctest",
+      "exitCode": 0
+    },
+    {
+      "mode": "architecture",
+      "exitCode": 0
+    },
+    {
+      "mode": "diff",
+      "exitCode": 0
+    }
+  ],
+  "ctestPassed": 4,
+  "newtonDiagnostic": {
+    "status": "PASS",
+    "cases": 18,
+    "reference": "independent full-azimuth 3D Newton product quadrature",
+    "orders": [
+      12,
+      16
+    ],
+    "decimalPrecisions": [
+      80,
+      100
+    ],
+    "scope": "diagnostic containment, not certified quadrature error or full RZ scientific acceptance",
+    "rows": [
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.f400000000000p+9",
+          "0x0.0p+0"
+        ],
+        "newtonOrder12Precision80": "-1.9709857107419794906290662798979633255155127184915634706937066350737569843772154E-10",
+        "newtonOrder16Precision100": "-1.970985710741979501947214767178980993277916812187495301901699077196568625940161606332761582446679492E-10",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.9709857107449046e-10,
+          "upper": -1.9709857107390177e-10,
+          "value": -1.9709857107419612e-10,
+          "absolute_error": 2.943470510981665e-22,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.2c00000000000p+9",
+          "0x1.9000000000000p+9"
+        ],
+        "newtonOrder12Precision80": "-1.9713639152342731166788880567793855746439236845273904656867090717063638115832214E-10",
+        "newtonOrder16Precision100": "-1.971363915234273119024704764521023474897724928969951085381064346171765740463027571950073003168451657E-10",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.9713639152372307e-10,
+          "upper": -1.9713639152313383e-10,
+          "value": -1.9713639152342846e-10,
+          "absolute_error": 2.946313944337316e-22,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.2c00000000000p+9",
+          "-0x1.9000000000000p+9"
+        ],
+        "newtonOrder12Precision80": "-1.9706070568019788514235727372922673969870554182299922840688782450548012391452678E-10",
+        "newtonOrder16Precision100": "-1.970607056801978853763100373939347819007651467540427374331743802648963368267254836163199763854959813E-10",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.9706070568049308e-10,
+          "upper": -1.9706070567990493e-10,
+          "value": -1.9706070568019902e-10,
+          "absolute_error": 2.9408855715674367e-22,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.e848000000000p+19",
+          "0x0.0p+0"
+        ],
+        "newtonOrder12Precision80": "-1.9709855936984266711870342719973667159274994740868931176262106315344517904694671E-13",
+        "newtonOrder16Precision100": "-1.970985593698426671187035500118666287822671393502558520802207395575536819782769172203284773461985455E-13",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.9709855936984324e-13,
+          "upper": -1.9709855936984215e-13,
+          "value": -1.970985593698427e-13,
+          "absolute_error": 5.553580772755924e-28,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.24f8000000000p+19",
+          "0x1.86a0000000000p+19"
+        ],
+        "newtonOrder12Precision80": "-1.9709859721274359373511536094084153352491576888262673153650222635515053056533412E-13",
+        "newtonOrder16Precision100": "-1.970985972127435937351154086707759059209643004561042474356880881140773288370316712292724940095826150E-13",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.9709859721274416e-13,
+          "upper": -1.9709859721274302e-13,
+          "value": -1.9709859721274358e-13,
+          "absolute_error": 5.806016262426648e-28,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.24f8000000000p+19",
+          "-0x1.86a0000000000p+19"
+        ],
+        "newtonOrder12Precision80": "-1.9709852152689679572360143031047804716086925589546434046264132116801813521882524E-13",
+        "newtonOrder16Precision100": "-1.970985215268967957236014780403276136171977467128323008231487785867300664444133352714561547922292536E-13",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.9709852152689733e-13,
+          "upper": -1.9709852152689625e-13,
+          "value": -1.970985215268968e-13,
+          "absolute_error": 5.553580772755924e-28,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.d1a94a2000000p+39",
+          "0x0.0p+0"
+        ],
+        "newtonOrder12Precision80": "-1.9709855936983096274925298571587938270174326594720712363995754374967596444234331E-19",
+        "newtonOrder16Precision100": "-1.970985593698309627492529857158944828850057017244908198625585998002373172664368621036778586323592436E-19",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.9709855936983146e-19,
+          "upper": -1.9709855936983043e-19,
+          "value": -1.9709855936983096e-19,
+          "absolute_error": 5.2963073470648995e-34,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.176592e000000p+39",
+          "0x1.74876e8000000p+39"
+        ],
+        "newtonOrder12Precision80": "-1.9709855936986880567265197078475523117607977907143300348537258410651651457698039E-19",
+        "newtonOrder16Precision100": "-1.970985593698688056726519707847642912603638025357655339442749832598409395917034176635219832395704029E-19",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.970985593698693e-19,
+          "upper": -1.9709855936986827e-19,
+          "value": -1.970985593698688e-19,
+          "absolute_error": 5.2963073470648995e-34,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x0.0p+0",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.176592e000000p+39",
+          "-0x1.74876e8000000p+39"
+        ],
+        "newtonOrder12Precision80": "-1.9709855936979311982585395570223692420406493036683855301418676124527908940108959E-19",
+        "newtonOrder16Precision100": "-1.970985593697931198258539557022459842883489433939244124775626309800211079486110221528247014774723283E-19",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.9709855936979362e-19,
+          "upper": -1.970985593697926e-19,
+          "value": -1.9709855936979311e-19,
+          "absolute_error": 5.055566104016495e-34,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.f400000000000p+9",
+          "0x0.0p+0"
+        ],
+        "newtonOrder12Precision80": "-1.4782393292514538412325473855125643850482471639854090829935897604267032720269539E-10",
+        "newtonOrder16Precision100": "-1.478239329251453852209601293503243827026937589485648989186061226706370254595108266782491432165067345E-10",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.478239329253642e-10,
+          "upper": -1.4782393292492256e-10,
+          "value": -1.478239329251434e-10,
+          "absolute_error": 2.2083137415751615e-22,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.2c00000000000p+9",
+          "0x1.9000000000000p+9"
+        ],
+        "newtonOrder12Precision80": "-1.4785228939210098047205459430111073325092627533466365357152600677078048013849259E-10",
+        "newtonOrder16Precision100": "-1.478522893921009806986759490923701939675771523926377932775406888262060149310674496590259099434767261E-10",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.4785228939232322e-10,
+          "upper": -1.4785228939188122e-10,
+          "value": -1.478522893921022e-10,
+          "absolute_error": 2.2101231991651213e-22,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.2c00000000000p+9",
+          "-0x1.9000000000000p+9"
+        ],
+        "newtonOrder12Precision80": "-1.4779552501074324340103946556486191713177506619518748957178567287522696357057306E-10",
+        "newtonOrder16Precision100": "-1.477955250107432436270518666821322124214517230825536497076468963711550887066445695570515655410622427E-10",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.4779552501096507e-10,
+          "upper": -1.4779552501052387e-10,
+          "value": -1.4779552501074447e-10,
+          "absolute_error": 2.205987296102356e-22,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.e848000000000p+19",
+          "0x0.0p+0"
+        ],
+        "newtonOrder12Precision80": "-1.4782391952738661983651277814370728823725251765271627097879889474922181371036866E-13",
+        "newtonOrder16Precision100": "-1.478239195273866198365128923594340044739743302141130038243709456162529594079928291177897750299062592E-13",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.4782391952738712e-13,
+          "upper": -1.4782391952738616e-13,
+          "value": -1.4782391952738664e-13,
+          "absolute_error": 4.796274303743753e-28,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.24f8000000000p+19",
+          "0x1.86a0000000000p+19"
+        ],
+        "newtonOrder12Precision80": "-1.4782394790955344536311793457669388725472324139139828567704219128183111974905976E-13",
+        "newtonOrder16Precision100": "-1.478239479095534453631179787622447797588280807095130678125360017087987273114765829086376692176525739E-13",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.4782394790955392e-13,
+          "upper": -1.4782394790955296e-13,
+          "value": -1.4782394790955344e-13,
+          "absolute_error": 4.796274303743753e-28,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.24f8000000000p+19",
+          "-0x1.86a0000000000p+19"
+        ],
+        "newtonOrder12Precision80": "-1.4782389114516834685554681882453422418423761523307584739555648486067172330095392E-13",
+        "newtonOrder16Precision100": "-1.478238911451683468555468630100062500271707664066701879706721885799453600457089752980166172097017350E-13",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.4782389114516882e-13,
+          "upper": -1.4782389114516786e-13,
+          "value": -1.4782389114516834e-13,
+          "absolute_error": 4.796274303743753e-28,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.d1a94a2000000p+39",
+          "0x0.0p+0"
+        ],
+        "newtonOrder12Precision80": "-1.4782391952737322206193974390640513472712687192290985088187452492912703367035049E-19",
+        "newtonOrder16Precision100": "-1.478239195273732220619397439064183473941672957287941426676016499118730618483260230807646992565032293E-19",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.4782391952737368e-19,
+          "upper": -1.4782391952737274e-19,
+          "value": -1.478239195273732e-19,
+          "absolute_error": 4.8148248609680905e-34,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.176592e000000p+39",
+          "0x1.74876e8000000p+39"
+        ],
+        "newtonOrder12Precision80": "-1.4782391952740160425448897383862760445660504380752660532135349085353131656724639E-19",
+        "newtonOrder16Precision100": "-1.478239195274016042544889738386355320327604496291159199025676517478181309016449852284898672654493067E-19",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.4782391952740206e-19,
+          "upper": -1.4782391952740112e-19,
+          "value": -1.478239195274016e-19,
+          "absolute_error": 4.8148248609680905e-34,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.176592e000000p+39",
+          "-0x1.74876e8000000p+39"
+        ],
+        "newtonOrder12Precision80": "-1.4782391952734483986939046252673887422865824080433830977759162662241118743031408E-19",
+        "newtonOrder16Precision100": "-1.478239195273448398693904625267468018048136374933321660179512112914932128258189922372373587244256888E-19",
+        "enclosure": {
+          "status": 0,
+          "lower": -1.478239195273453e-19,
+          "upper": -1.4782391952734438e-19,
+          "value": -1.4782391952734484e-19,
+          "absolute_error": 4.574083617919686e-34,
+          "boxes": 0,
+          "range_evaluations": 0
+        }
+      }
+    ]
+  },
+  "nativeConsumerRows": [
+    {
+      "mixed": 0.0,
+      "radial_origin": 0.0,
+      "leaves": 16.0,
+      "exterior_faces": 12.0,
+      "source_evaluations": 192.0,
+      "newton_references": 1.0,
+      "newton8": -2.648686491151159e-07,
+      "newton12": -2.648870780292588e-07,
+      "quadrature_difference": 1.8428914142913818e-11,
+      "rhs_error": 1.869624044591919e-05
+    },
+    {
+      "mixed": 0.0,
+      "radial_origin": 0.5,
+      "leaves": 16.0,
+      "exterior_faces": 16.0,
+      "source_evaluations": 256.0,
+      "newton_references": 1.0,
+      "newton8": -3.8885752508890826e-07,
+      "newton12": -3.888760207508854e-07,
+      "quadrature_difference": 1.8495661977128693e-11,
+      "rhs_error": 3.0405648789134468e-05
+    },
+    {
+      "mixed": 1.0,
+      "radial_origin": 0.0,
+      "leaves": 28.0,
+      "exterior_faces": 12.0,
+      "source_evaluations": 336.0,
+      "newton_references": 1.0,
+      "newton8": -2.6478532124942166e-07,
+      "newton12": -2.6480375016356454e-07,
+      "quadrature_difference": 1.8428914142917153e-11,
+      "rhs_error": 1.9078778118975373e-05
+    },
+    {
+      "mixed": 1.0,
+      "radial_origin": 0.5,
+      "leaves": 28.0,
+      "exterior_faces": 16.0,
+      "source_evaluations": 448.0,
+      "newton_references": 1.0,
+      "newton8": -3.888026349463855e-07,
+      "newton12": -3.888211306083626e-07,
+      "quadrature_difference": 1.849566197708679e-11,
+      "rhs_error": 1.6324524770628832e-05
+    }
+  ],
+  "internalRelativeTarget": 1e-10,
+  "farProof": "Uniform full single leaf inversion symmetry; Legendre remainder GM/R*q^4/(1-q^2), with outward FP64 geometry/moments/evaluation",
+  "referenceQuality": "Independent product quadrature containment and precision/order diagnostics; not a certified quadrature remainder or complete RZ scientific gate",
+  "matchingJensReceipt": {
+    "status": "PASS",
+    "evolutions": 9,
+    "restarts": 9,
+    "binarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+    "summarySha256": "3669ec52f30008b292cd690e56f63c82fb066f5473e97d509a20081add8dea48",
+    "rerunThisNode": false,
+    "reason": "Actual production ARCH ELF unchanged after controlled affected rebuild; no new evidence requiring repeated frozen campaign"
+  },
+  "limitations": [
+    "No general-parent parity assumption/acceptance",
+    "Strict near/contact integration remains incomplete",
+    "Full assembly/coefficient/residual ledger and real AMR source publication pending",
+    "Production RZ gate retained; no CUDA or long-run acceptance"
+  ],
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-ring-far-leaf-20261005"
+}

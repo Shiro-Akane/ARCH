@@ -303,6 +303,16 @@ $$
 上述数学部件可以独立实现、推送 review，角动量实现不阻塞它们。
 完整 RZ release 和新长跑仍须取得近场与势／力参考、角动量及全消费者短科学签收。
 
+### 7.5 实施证据更新（2026-10-05）
+
+轴线 far/thin enclosure、原生 exterior face 消费已分别提交处理后证据。
+本次补完整常密度单叶的 monopole/quadrupole outward evaluation 与批准的
+偶次 Legendre tail，18个离轴 Newton 高精度诊断/原生消费反例及 scoped CPU
+回归通过，见 RZRingFarLeafEnclosureNode-20261005.zh-CN.md。
+这不是新的科学阈值或批准：一般父节点仍不假定反演对称，近场严格预算、
+完整 assembly/residual certificate 和实际 AMR source publication 尚未完成。
+production RZ gate 继续保留；实际未变化的 ARCH ELF 沿用匹配的 JENS frozen receipt。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

@@ -598,6 +598,55 @@ ARCH_HEAVY_INLINE RingPotentialEnclosure axis_potential_enclosure(
         RingIntervalStatus::PrecisionLimit;
     return result;
 }
+/** Complete finite leaf about its true center (0,0,(zl+zh)/2).
+ * Only this uniform leaf has inversion symmetry; no parent inference.
+ * Monopole + second moments, with exact Legendre tail <= GM/R*q^4/(1-q^2).
+ * All geometry/moment/evaluation arithmetic is enclosed, not just the tail.
+ * Return invalid inside the complete 3D support sphere; near/contact stays
+ * with the existing source-integral owner.
+ */
+ARCH_HEAVY_INLINE SignedInterval single_leaf_far_potential_enclosure(
+    double rl,double rh,double zl,double zh,double density,double ro,double zo,double G) {
+    const auto dr=offset_interval(rh,rl),dz=offset_interval(zh,zl);
+    const auto center=interval_sum({zl,zl},interval_product(dz,{.5,.5}));
+    const auto u=interval_sum({zo,zo},interval_negate(center));
+    const auto distance=axis_hypot_interval(ro,u);
+    const auto support=distance_interval(rh,product_up(.5,dz.upper));
+    if(!interval_finite(distance)||!(distance.lower>support.upper))
+        return interval_invalid();
+    const double q=quotient_up(support.upper,distance.lower);
+    const double q2=product_up(q,q);
+    const double denominator=positive_down(1.-q2);
+    if(!(denominator>0.))return interval_invalid();
+    const SignedInterval pi_range{positive_down(arch::constants::math::pi),
+                                  positive_up(arch::constants::math::pi)};
+    const auto mass=interval_product(interval_product(
+        interval_product(interval_product(pi_range,{density,density}),dr),
+        interval_sum({rh,rh},{rl,rl})),dz);
+    const auto radial_square=interval_sum(interval_product({rh,rh},{rh,rh}),
+                                         interval_product({rl,rl},{rl,rl}));
+    const auto ixx=interval_product(interval_product(mass,radial_square),{.25,.25});
+    const auto izz=interval_quotient_positive(
+        interval_product(mass,interval_product(dz,dz)),{12.,12.});
+    const auto inverse=interval_quotient_positive({1.,1.},distance);
+    const auto nr=interval_product({ro,ro},inverse),nz=interval_product(u,inverse);
+    const auto projected=interval_sum(interval_product(ixx,interval_product(nr,nr)),
+                                      interval_product(izz,interval_product(nz,nz)));
+    const auto trace=interval_sum(interval_product({2.,2.},ixx),izz);
+    const auto quadrupole=interval_product(interval_product(
+        interval_sum(interval_product({3.,3.},projected),interval_negate(trace)),
+        {.5,.5}),interval_product(inverse,interval_product(inverse,inverse)));
+    const auto truncated=interval_negate(interval_product({G,G},
+        interval_sum(interval_product(mass,inverse),quadrupole)));
+    if(!interval_finite(mass)||mass.lower<0.||!interval_finite(truncated))
+        return interval_invalid();
+    const double leading=product_up(G,quotient_up(mass.upper,distance.lower));
+    const double tail=product_up(leading,quotient_up(product_up(q2,q2),denominator));
+    if(!std::isfinite(tail))return interval_invalid();
+    auto potential=interval_sum(truncated,{-tail,tail});
+    if(interval_finite(potential))potential.upper=std::min(0.,potential.upper);
+    return potential;
+}
 struct RingBox {
     double rl,rh,zl,zh;
     PositiveInterval integral{};
@@ -682,6 +731,21 @@ inline RingPotentialEnclosure finite_ring_potential_enclosure(
         result.status=RingIntervalStatus::Bounded;result.bound_valid=true;return result;
     }
     if(ro==0.)return axis_potential_enclosure(rl,rh,zl,zh,density,zo,G,control);
+    // A certified single-leaf far expansion is useful only if the actual
+    // requested budget (including FP64 evaluation) passes. Otherwise retain
+    // the existing source subdivision/failure path, never a geometric shortcut.
+    const auto far=single_leaf_far_potential_enclosure(rl,rh,zl,zh,density,ro,zo,G);
+    if(interval_finite(far)) {
+        const double value=far.lower+.5*(far.upper-far.lower);
+        const double error=positive_up(std::max(value-far.lower,far.upper-value));
+        const double target=std::max(control.absolute_target,
+            positive_down(control.relative_target*std::abs(value)));
+        if(std::isfinite(value)&&std::isfinite(error)&&error<=target) {
+            result.lower=far.lower;result.upper=far.upper;result.value=value;
+            result.absolute_error=error;result.bound_valid=true;
+            result.status=RingIntervalStatus::Bounded;return result;
+        }
+    }
     const double factor_lo=positive_down(positive_down(4.*G)*density);
     const double factor_hi=product_up(product_up(4.,G),density);
     if(!std::isfinite(factor_hi)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}

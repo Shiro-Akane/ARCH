@@ -34,11 +34,11 @@ studio/.local/integration/rz-ring-native-face-20261005。
 
 实际命令（在现有 build-cpu）：
 
-    bin/arch_composite_poisson ring-native-face
-    bin/arch_composite_poisson ring
-    bin/arch_composite_poisson ring-axis-enclosure
-    bin/arch_composite_poisson ring-enclosure
-    bin/arch_composite_poisson boundary-ledger
+    ./arch_composite_poisson ring-native-face
+    ./arch_composite_poisson ring
+    ./arch_composite_poisson ring-axis-enclosure
+    ./arch_composite_poisson ring-enclosure
+    ./arch_composite_poisson boundary-ledger
 
 实际 CLI 及最终 exit code 以本机 checks-corrected.json 和各日志为准。CTest：gravity_stage_contract、composite_poisson_analytic、self_gravity_lifecycle、composite_poisson_contract，4/4 PASS。tools/audit_architecture.py PASS。git diff --check PASS。
 

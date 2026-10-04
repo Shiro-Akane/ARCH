@@ -907,6 +907,44 @@ void finite_ring_tree_boundary_contract() {
     std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
 }
 
+void finite_ring_far_leaf_contract() {
+    using namespace Physical::Gravity;
+    RingEnclosureControl control{};control.relative_target=1.e-10;
+    control.maximum_boxes=1;
+    for(double rl:{0.,.5})for(double distance:{1.e3,1.e6,1.e12})
+        for(auto direction:{std::array<double,2>{1.,0.},
+                            std::array<double,2>{.6,.8},
+                            std::array<double,2>{.6,-.8}}) {
+        const double ro=distance*direction[0],zo=distance*direction[1];
+        const auto bound=finite_ring_potential_enclosure(rl,1.,-.23,.71,1.,
+            ro,zo,1.,control);
+        require(bound.bound_valid&&bound.status==RingIntervalStatus::Bounded
+            &&bound.range_evaluations==0&&bound.upper<0.,
+            "far leaf did not pass certified unchanged internal target");
+        const auto reference8=independent_ring_potential(rl,1.,-.23,.71,{ro,0.,zo},8);
+        const auto reference12=independent_ring_potential(rl,1.,-.23,.71,{ro,0.,zo},12);
+        require(bound.lower<=reference8&&reference8<=bound.upper
+            &&bound.lower<=reference12&&reference12<=bound.upper,
+            "independent full-ring Newton diagnostic escaped far leaf enclosure");
+        std::cout<<"RZ_FAR_LEAF rl="<<rl<<" r="<<ro<<" z="<<zo
+            <<" lower="<<bound.lower<<" upper="<<bound.upper
+            <<" error="<<bound.absolute_error<<" newton8="<<static_cast<double>(reference8)
+            <<" newton12="<<static_cast<double>(reference12)<<'\n';
+    }
+    require(!finite_ring_detail::interval_finite(
+        finite_ring_detail::single_leaf_far_potential_enclosure(
+            .5,1.,-.375,.375,1.,.75,0.,1.)),
+        "observer inside complete support sphere accepted far expansion");
+    auto zero=control;zero.relative_target=0.;
+    const auto failed=finite_ring_potential_enclosure(.5,1.,-.23,.71,1.,1.e6,0.,1.,zero);
+    require(failed.bound_valid&&failed.status!=RingIntervalStatus::Bounded
+        &&failed.range_evaluations>0,"zero target silently accepted far roundoff");
+    const auto near=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,1.,0.,1.,control);
+    require(near.bound_valid&&near.status==RingIntervalStatus::WorkLimit
+        &&near.range_evaluations>0,"contact bypassed original source failure path");
+    std::cout<<"RZ_FAR_LEAF_PASS parent_symmetry=not_assumed production_values=gated\n";
+}
+
 void finite_ring_axis_enclosure_contract() {
     using namespace Physical::Gravity;
     RingEnclosureControl control{};control.relative_target=1.e-10;
@@ -1433,6 +1471,7 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="ring-far-leaf") {std::cout<<std::setprecision(17);finite_ring_far_leaf_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-native-face") {std::cout<<std::setprecision(17);finite_ring_tree_boundary_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-axis-enclosure") {std::cout<<std::setprecision(17);finite_ring_axis_enclosure_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-enclosure") {std::cout<<std::setprecision(17);finite_ring_enclosure_contract();return 0;}
