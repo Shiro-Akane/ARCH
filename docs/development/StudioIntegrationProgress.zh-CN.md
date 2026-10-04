@@ -3330,3 +3330,14 @@ one_run 将完整 stdout/stderr 直接写二进制本地日志，避免长跑全
 见 PhysicalEndpointStreamLog-20261005.zh-CN.md 与处理后 summary。
 不运行 ARCH/Build/CUDA、不重复未变 production JENS 短包；
 资源采样/科学预算/统一 CUDA/正式 benchmark/长跑出口仍未完成。
+
+### 当前 CPU 获准短 gate receipt（2026-10-05）
+
+原 e9d5cf22 receipt 不能自动代表现 production 7d3bd3d；
+只复验原 mixed-3D 2步与两个限定低G径向40步，3/3 PASS。
+原残差/Gauss/守恒预算保持，实际refine/coarsen/no-change和repair=0记录。
+标准CPU build实际 no work，cache/binary和591 tracked输入前后不变；
+dry-run regeneration不能称待重编译，dependenciesComplete仍false。
+实际终点均未达各自tmax，不能称正式终点/长跑或二维RZ验收。
+见CurrentCoreCpuShortGates-20261005.zh-CN.md及处理后summary；
+JENS未变9+9 receipt复用，原始H5/日志继续留本机。
