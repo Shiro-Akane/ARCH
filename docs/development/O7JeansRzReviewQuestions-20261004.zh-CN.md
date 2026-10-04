@@ -319,6 +319,11 @@ production RZ gate 继续保留；实际未变化的 ARCH ELF 沿用匹配的 JE
 详见 RZSeparatedGaussEnclosureNode-20261005.zh-CN.md。
 这不关闭 contact/inside 严格积分或完整 production residual finding。
 
+接触对数主项可用解析 quadrant log primitive 与 K complementary-root 收敛级数可靠上下界；
+20个高精度primitive检查和3个独立Duffy诊断通过。fixed16384-work的3个全源样本
+仍WorkLimit，仅上界缩紧约4%～7%；严格contact/inside未签收。
+见 RZContactLogMainPartNode-20261005.zh-CN.md，production gate保持。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，

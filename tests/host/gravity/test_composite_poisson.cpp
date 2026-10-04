@@ -907,6 +907,36 @@ void finite_ring_tree_boundary_contract() {
     std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=uncertified\n";
 }
 
+void finite_ring_contact_log_contract() {
+    using namespace Physical::Gravity;
+    using namespace finite_ring_detail;
+    for(auto point:{std::array<double,2>{1.,0.},std::array<double,2>{1.,.001},
+                    std::array<double,2>{.9995,0.}}) {
+        const auto bound=contact_log_integral_enclosure(.999,1.,-.001,.001,
+            point[0],point[1]);
+        require(interval_finite(bound)&&bound.lower>0.&&bound.upper>=bound.lower,
+            "contact log main-part reliable bound missing");
+        const auto box=enclose_box(.999,1.,-.001,.001,point[0],point[1]);
+        require(box.status==RingIntervalStatus::Bounded&&box.integral.lower>0.
+            &&box.integral.lower>=bound.lower&&box.integral.upper<=bound.upper,
+            "contact main-part not consumed by original rectangle owner");
+        std::cout<<"RZ_CONTACT_LOG r="<<point[0]<<" z="<<point[1]
+            <<" lower="<<bound.lower<<" upper="<<bound.upper<<'\n';
+    }
+    require(!interval_finite(contact_log_integral_enclosure(
+        .5,1.,-.375,.375,1.,2.)),"non-contact accepted as contact integral");
+    require(!interval_finite(positive_log_point_enclosure(0.)),
+        "log zero invented finite value");
+    require(!interval_finite(positive_atan_point_enclosure(-1.)),
+        "negative positive-atan accepted");
+    RingEnclosureControl control{};control.relative_target=1.e-10;
+    control.maximum_boxes=128;
+    const auto limited=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,1.,0.,1.,control);
+    require(limited.bound_valid&&limited.status==RingIntervalStatus::WorkLimit,
+        "contact logarithmic refinement falsely advertised strict convergence");
+    std::cout<<"RZ_CONTACT_LOG_PASS strict_target=not_complete production_values=gated\n";
+}
+
 void finite_ring_separated_gauss_contract() {
     using namespace Physical::Gravity;
     RingEnclosureControl control{};control.relative_target=1.e-10;
@@ -1511,6 +1541,32 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="ring-contact-log") {std::cout<<std::setprecision(17);finite_ring_contact_log_contract();return 0;}
+        if(argc==3 && (std::string(argv[1])=="ring-atan-probe"||
+                      std::string(argv[1])=="ring-positive-log-probe")) {
+            std::cout<<std::setprecision(17);
+            const double x=std::strtod(argv[2],nullptr);
+            const auto bound=std::string(argv[1])=="ring-atan-probe"?
+                Physical::Gravity::finite_ring_detail::positive_atan_point_enclosure(x):
+                Physical::Gravity::finite_ring_detail::positive_log_point_enclosure(x);
+            require(Physical::Gravity::finite_ring_detail::interval_finite(bound),"invalid primitive probe");
+            std::cout<<"{\"lower\":"<<bound.lower<<",\"upper\":"<<bound.upper<<"}\n";return 0;
+        }
+        if(argc==4 && std::string(argv[1])=="ring-quadrant-log-probe") {
+            std::cout<<std::setprecision(17);
+            const double a=std::stod(argv[2]),b=std::stod(argv[3]);
+            const auto bound=Physical::Gravity::finite_ring_detail::quadrant_log_distance_integral({a,a},{b,b});
+            require(Physical::Gravity::finite_ring_detail::interval_finite(bound),"invalid quadrant probe");
+            std::cout<<"{\"lower\":"<<bound.lower<<",\"upper\":"<<bound.upper<<"}\n";return 0;
+        }
+        if(argc==8 && std::string(argv[1])=="ring-contact-log-probe") {
+            std::cout<<std::setprecision(17);
+            const auto bound=Physical::Gravity::finite_ring_detail::contact_log_integral_enclosure(
+                std::stod(argv[2]),std::stod(argv[3]),std::stod(argv[4]),std::stod(argv[5]),
+                std::stod(argv[6]),std::stod(argv[7]));
+            require(Physical::Gravity::finite_ring_detail::interval_finite(bound),"invalid contact log probe");
+            std::cout<<"{\"lower\":"<<bound.lower<<",\"upper\":"<<bound.upper<<"}\n";return 0;
+        }
         if(argc>1 && std::string(argv[1])=="ring-separated-gauss") {std::cout<<std::setprecision(17);finite_ring_separated_gauss_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-far-leaf") {std::cout<<std::setprecision(17);finite_ring_far_leaf_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-native-face") {std::cout<<std::setprecision(17);finite_ring_tree_boundary_contract();return 0;}

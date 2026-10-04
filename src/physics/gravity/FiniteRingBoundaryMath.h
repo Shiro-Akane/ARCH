@@ -716,6 +716,115 @@ ARCH_HEAVY_INLINE SignedInterval separated_gauss2_integral_enclosure(
     if(interval_finite(result))result.lower=std::max(0.,result.lower);
     return result;
 }
+ARCH_HEAVY_INLINE SignedInterval positive_log_point_enclosure(double x) {
+    if(!(x>0.)||!std::isfinite(x))return interval_invalid();
+    if(x>=1.)return {logarithm_lower(x),logarithm_upper(x)};
+    const auto inverse=interval_quotient_positive({1.,1.},{x,x});
+    if(!interval_finite(inverse))return interval_invalid();
+    return {-logarithm_upper(inverse.upper),
+            -logarithm_lower(std::max(1.,inverse.lower))};
+}
+ARCH_HEAVY_INLINE SignedInterval positive_log_enclosure(SignedInterval x) {
+    if(!interval_finite(x)||!(x.lower>0.))return interval_invalid();
+    const auto lo=positive_log_point_enclosure(x.lower),hi=positive_log_point_enclosure(x.upper);
+    return {lo.lower,hi.upper};
+}
+/** atan on [0,1] by exact half angle, then 60-term alternating series.
+ * t=x/(1+sqrt(1+x^2))<=sqrt(2)-1; next term bounds the remainder.
+ */
+ARCH_HEAVY_INLINE SignedInterval atan_unit_point_enclosure(double x) {
+    if(!std::isfinite(x)||x<0.||x>1.)return interval_invalid();
+    if(x==0.)return {};
+    if(x==1.)return {positive_down(.25*arch::constants::math::pi),
+                    positive_up(.25*arch::constants::math::pi)};
+    const auto hyp=distance_interval(1.,x);
+    const auto t=interval_quotient_positive({x,x},
+        interval_sum({1.,1.},{hyp.lower,hyp.upper}));
+    if(!interval_finite(t)||t.lower<0.)return interval_invalid();
+    const auto t2=interval_product(t,t);auto power=t;SignedInterval sum{};
+    for(int k=0;k<60;++k) {
+        auto term=interval_quotient_positive(power,{2.*k+1.,2.*k+1.});
+        if(k%2)term=interval_negate(term);
+        sum=interval_sum(sum,term);power=interval_product(power,t2);
+    }
+    const double tail=quotient_up(power.upper,121.);
+    return interval_product({2.,2.},interval_sum(sum,{-tail,tail}));
+}
+ARCH_HEAVY_INLINE SignedInterval positive_atan_point_enclosure(double x) {
+    if(!std::isfinite(x)||x<0.)return interval_invalid();
+    if(x<=1.)return atan_unit_point_enclosure(x);
+    auto inverse=interval_quotient_positive({1.,1.},{x,x});
+    if(!interval_finite(inverse))return interval_invalid();
+    inverse.lower=std::max(0.,inverse.lower);inverse.upper=std::min(1.,inverse.upper);
+    const auto lo=atan_unit_point_enclosure(inverse.lower),hi=atan_unit_point_enclosure(inverse.upper);
+    return interval_sum({positive_down(.5*arch::constants::math::pi),
+                         positive_up(.5*arch::constants::math::pi)},
+                        interval_negate({lo.lower,hi.upper}));
+}
+ARCH_HEAVY_INLINE SignedInterval positive_atan_enclosure(SignedInterval x) {
+    if(!interval_finite(x)||x.lower<0.)return interval_invalid();
+    const auto lo=positive_atan_point_enclosure(x.lower),hi=positive_atan_point_enclosure(x.upper);
+    return {lo.lower,hi.upper};
+}
+/** Integral of log(sqrt(x^2+y^2)) over [0,a] x [0,b].
+ * Exact finite primitive; degenerate quadrants have zero measure.
+ */
+ARCH_HEAVY_INLINE SignedInterval quadrant_log_distance_integral(
+    SignedInterval a,SignedInterval b) {
+    if(!interval_finite(a)||!interval_finite(b)||a.lower<0.||b.lower<0.)
+        return interval_invalid();
+    if(a.upper==0.||b.upper==0.)return {};
+    if(!(a.lower>0.)||!(b.lower>0.))return interval_invalid();
+    const auto lo=distance_interval(a.lower,b.lower),hi=distance_interval(a.upper,b.upper);
+    const auto logarithm=positive_log_enclosure({lo.lower,hi.upper});
+    const auto ab=interval_product(a,b);
+    const auto angle_ba=positive_atan_enclosure(interval_quotient_positive(b,a));
+    const auto angle_ab=positive_atan_enclosure(interval_quotient_positive(a,b));
+    return interval_sum(interval_product(ab,interval_sum(logarithm,{-1.5,-1.5})),
+        interval_product({.5,.5},interval_sum(
+            interval_product(interval_product(a,a),angle_ba),
+            interval_product(interval_product(b,b),angle_ab))));
+}
+/** Tight contact bound by analytically integrating the logarithmic main part.
+ * NIST DLMF 19.12.1/.3: K(q)=sum c_n q^(2n)[log(1/q)+d_n],
+ * c_0=1, 0<c_n<=1, 0<d_n<=log(4). Hence
+ * L=log(4/q) <= K(q) <= L/(1-q^2) for 0<q<1.
+ * Contact itself has zero measure; the exact log-distance primitive integrates
+ * its singularity. No singular sample, epsilon, or quadrature difference.
+ */
+ARCH_HEAVY_INLINE SignedInterval contact_log_integral_enclosure(
+    double rl,double rh,double zl,double zh,double ro,double zo) {
+    if(!(rl<=ro&&ro<=rh&&zl<=zo&&zo<=zh))return interval_invalid();
+    const auto vertical=absolute_offset_range(zl,zh,zo);
+    const auto radial=absolute_offset_range(rl,rh,ro);
+    const auto dmax=distance_interval(radial.upper,vertical.upper);
+    const auto smin=distance_interval(positive_down(ro+rl),0.);
+    const auto smax=distance_interval(sum_up(ro,rh),vertical.upper);
+    if(!(smin.lower>0.)||!std::isfinite(smax.upper))return interval_invalid();
+    const double q=quotient_up(dmax.upper,smin.lower);
+    const double denominator=positive_down(1.-product_up(q,q));
+    if(!(denominator>0.))return interval_invalid();
+    const auto log_scale=positive_log_enclosure(
+        {positive_down(4.*smin.lower),product_up(4.,smax.upper)});
+    const SignedInterval xs[]{ro==rl?SignedInterval{}:offset_interval(ro,rl),
+                               ro==rh?SignedInterval{}:offset_interval(rh,ro)};
+    const SignedInterval ys[]{zo==zl?SignedInterval{}:offset_interval(zo,zl),
+                               zo==zh?SignedInterval{}:offset_interval(zh,zo)};
+    SignedInterval logarithm_integral{};
+    for(const auto a:xs)for(const auto b:ys)if(a.upper>0.&&b.upper>0.) {
+        const auto area=interval_product(a,b);
+        logarithm_integral=interval_sum(logarithm_integral,
+            interval_sum(interval_product(area,log_scale),
+                interval_negate(quadrant_log_distance_integral(a,b))));
+    }
+    if(!interval_finite(logarithm_integral))return interval_invalid();
+    logarithm_integral.lower=std::max(0.,logarithm_integral.lower);
+    const SignedInterval ratio{positive_down(rl/smax.upper),quotient_up(rh,smin.lower)};
+    const auto lower=interval_product(ratio,logarithm_integral);
+    const auto upper=interval_quotient_positive(lower,{denominator,denominator});
+    if(!interval_finite(lower)||!interval_finite(upper))return interval_invalid();
+    return {lower.lower,upper.upper};
+}
 struct RingBox {
     double rl,rh,zl,zh;
     PositiveInterval integral{};
@@ -755,6 +864,12 @@ ARCH_HEAVY_INLINE RingBox enclose_box(double rl,double rh,double zl,double zh,
             upper=sum_up(upper,product_up(product_up(area,factor),sum_up(2.,logarithm)));
         }
         result.integral={0.,upper};
+        const auto logarithm=contact_log_integral_enclosure(rl,rh,zl,zh,ro,zo);
+        if(interval_finite(logarithm)) {
+            result.integral.lower=std::max(result.integral.lower,logarithm.lower);
+            result.integral.upper=std::min(result.integral.upper,logarithm.upper);
+        }
+
     } else {
         if(!(dmin.lower>0.) || !(smin.lower>0.)) {
             result.status=RingIntervalStatus::PrecisionLimit;return result;
