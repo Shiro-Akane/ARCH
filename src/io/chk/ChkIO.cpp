@@ -56,6 +56,10 @@ void write_chk(amr::AMRControl &amr_ctrl,
 {
     io::require_checkpoint_geometry_compatible(config.grid.dim, config.grid.geometry,
                                                geometry_identity, geometry_identity);
+    const auto expected_repairs=geometry_identity.chart=="axisymmetric-rz"
+        ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
+    if(repairs.semantics!=expected_repairs)
+        throw std::runtime_error("Checkpoint repair measure identity differs from source chart");
     io::CheckpointNativeDomainIdentity native_domain;
     if(geometry_identity.chart=="axisymmetric-rz") {
         if(amr_ctrl.tree->GetGeometrySemantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz)

@@ -1534,7 +1534,7 @@ void test_production_lane_fingerprints_and_authority_absence()
         expect(source_occurrences(*lane, "execute_stage(") == 0
                    && source_occurrences(*lane, "rotate_slots(") == 0,
                "each Hydro adapter delegates scheduler ordering");
-        expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics)") == 1,
+        expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics,") == 1,
                "each Hydro physical adapter supplies one reflux callback");
         expect(source_occurrences(*lane, "bind_hydro_geometry(") == 1
                    && lane->find("geometry.exchange_chart") != std::string::npos,

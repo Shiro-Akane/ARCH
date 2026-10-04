@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <exception>
 #include <mutex>
+#include <stdexcept>
 #include <vector>
 
 #include "core/ArchPortability.h"
@@ -40,9 +41,20 @@ public:
 // 0/1: event count/affected volume; 2/3: signed/absolute mass; 4..6: momentum;
 // 7/8: signed/absolute energy; 9: one triggering local cell. Species follow as
 // signed/absolute pairs. The device borrows one row, never a host vector.
+enum class RepairSemantics : std::uint8_t { ExistingVolume, RzVolumeAngular };
+inline constexpr const char* existing_repair_semantics = "existing-volume-v1";
+inline constexpr const char* rz_repair_semantics = "rz-native-V-angular-J-v1";
+inline bool valid_repair_semantics(RepairSemantics s) {
+    return s==RepairSemantics::ExistingVolume || s==RepairSemantics::RzVolumeAngular;
+}
+inline const char* repair_semantics_name(RepairSemantics s) {
+    if(!valid_repair_semantics(s)) throw std::invalid_argument("Unknown repair measure identity");
+    return s==RepairSemantics::RzVolumeAngular ? rz_repair_semantics : existing_repair_semantics;
+}
 struct RepairView {
     double* values = nullptr;
     int species = 0;
+    RepairSemantics semantics = RepairSemantics::ExistingVolume;
     static constexpr int fixed_size = 10;
     /** Accumulate one repair statistic on host or device. */
     ARCH_INLINE void add(int index, double value) const {
@@ -70,6 +82,24 @@ struct RepairView {
         add(4, px); add(5, py); add(6, pz);
         add(7, energy); add(8, std::abs(energy));
     }
+    /** Convert density deltas using V, except RZ m_phi whose integral is J=W*m_phi.
+     * Measures come from the geometry owner. No physical repair is authorized here.
+     * Reject invalid measures/products before changing any ledger slot.
+     */
+    ARCH_INLINE bool conserved_density(double mass, double px, double py, double pz,
+        double energy, double volume, double angular_measure = 0.0) const {
+        const bool rz=semantics==RepairSemantics::RzVolumeAngular;
+        if((!rz && semantics!=RepairSemantics::ExistingVolume)
+            || !std::isfinite(volume) || volume<=0.0
+            || (rz && (!std::isfinite(angular_measure) || angular_measure<=0.0)))
+            return false;
+        const double dm=mass*volume, dx=px*volume, dy=py*volume;
+        const double dz=pz*(rz ? angular_measure : volume), de=energy*volume;
+        if(!std::isfinite(dm)||!std::isfinite(dx)||!std::isfinite(dy)
+            ||!std::isfinite(dz)||!std::isfinite(de)) return false;
+        conserved(dm,dx,dy,dz,de);
+        return true;
+    }
     /** Accumulate signed and absolute change for one species. */
     ARCH_INLINE void species_mass(int index, double delta) const {
         add(fixed_size + 2 * index, delta);
@@ -79,21 +109,36 @@ struct RepairView {
 
 struct RepairBudget {
     std::vector<double> values;
+    RepairSemantics semantics = RepairSemantics::ExistingVolume;
     std::uint64_t block_uid = 0; // 0 identifies initialization before topology publication.
     int stage = 0; // 0 initial state, 1..3 Hydro Runge-Kutta stage.
     double time = 0.0;
     double position[3]{}; // Physical coordinates of one triggering cell.
 
     RepairBudget() : RepairBudget(0) {}
-    explicit RepairBudget(int species) : values(RepairView::fixed_size + 2 * species, 0.0) {}
+    explicit RepairBudget(int species, RepairSemantics profile=RepairSemantics::ExistingVolume)
+        : values(RepairView::fixed_size + 2 * species, 0.0), semantics(profile) {
+        if(!valid_repair_semantics(profile)) throw std::invalid_argument("Unknown repair measure identity");
+    }
+    /** Bind an empty owner to its explicit chart; never reinterpret historical deltas. */
+    void bind_semantics(RepairSemantics profile) {
+        if(!valid_repair_semantics(profile)||!valid_repair_semantics(semantics))
+            throw std::invalid_argument("Unknown repair measure identity");
+        if(profile==semantics) return;
+        if(!std::all_of(values.begin(),values.end(),[](double x){return x==0.0;}))
+            throw std::invalid_argument("Cannot reinterpret nonempty repair measure identity");
+        semantics=profile;
+    }
     /** Infer species count from the compact statistic row. */
     int species() const { return static_cast<int>((values.size() - RepairView::fixed_size) / 2); }
     /** Clear the repair budget for a new species layout. */
-    void reset(int species) { *this = RepairBudget(species); }
+    void reset(int species, RepairSemantics profile=RepairSemantics::ExistingVolume) { *this = RepairBudget(species,profile); }
     /** Borrow the compact accounting row for a worker or kernel. */
-    RepairView view() { return {values.data(), species()}; }
+    RepairView view() { return {values.data(), species(), semantics}; }
     /** Merge a block budget while retaining the first triggering location. */
     void combine(const RepairBudget& other, double weight = 1.0) {
+        if(!valid_repair_semantics(semantics)||semantics!=other.semantics)
+            throw std::invalid_argument("Cannot merge different repair measure identities");
         if (values.size() < other.values.size()) values.resize(other.values.size(), 0.0);
         if (values[0] == 0.0 && other.values[0] > 0.0) {
             values[9] = other.values[9]; block_uid = other.block_uid;

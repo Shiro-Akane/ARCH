@@ -178,8 +178,12 @@ int main(int argc,char** argv) {
                     "RZ repair report omitted full-ring measure");
             require(report.find("momentum_r=1.25\n")!=std::string::npos &&
                     report.find("momentum_z=-2.5\n")!=std::string::npos &&
-                    report.find("momentum_phi=3.75\n")!=std::string::npos,
+                    report.find("angular_momentum_signed=3.75\n")!=std::string::npos,
                     "RZ repair report mislabeled component slots");
+            require(report.find("repair_semantics=rz-native-V-angular-J-v1\n")!=std::string::npos
+                &&report.find("angular_momentum_unit=g*cm^2/s\n")!=std::string::npos
+                &&report.find("momentum_phi=")==std::string::npos,
+                "RZ report lacks authoritative J identity/units");
             require(report.find("momentum_x=")==std::string::npos &&
                     report.find("momentum_y=")==std::string::npos,
                     "RZ repair report retained Cartesian component aliases");

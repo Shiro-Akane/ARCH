@@ -519,6 +519,10 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
             ||checkpoint.cells_per_block%static_cast<std::size_t>(shape[0])!=0)
             throw std::runtime_error("RZ checkpoint native cell shape differs from payload");
     }
+    const auto expected_repairs=geometry_identity.chart=="axisymmetric-rz"
+        ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
+    if(checkpoint.repairs.semantics!=expected_repairs)
+        throw std::invalid_argument("Checkpoint repair measure identity differs from source chart");
     const size_t blocks = checkpoint.levels.size();
     if (!has_consistent_checkpoint_payload(checkpoint)) {
         throw std::invalid_argument("Checkpoint payload dimensions are inconsistent.");
@@ -547,6 +551,7 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
         file.createAttribute("checkpoint_version", checkpoint_format_version);
         file.createDataSet("state_repairs", checkpoint.repairs.values);
+        file.createAttribute("repair_semantics",std::string(arch::state::repair_semantics_name(checkpoint.repairs.semantics)));
         file.createDataSet("state_controls", checkpoint.state_controls);
         file.createAttribute("repair_block_uid", checkpoint.repairs.block_uid);
         file.createAttribute("repair_stage", checkpoint.repairs.stage);
@@ -701,6 +706,19 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
                 require_valid_rz_checkpoint_domain(checkpoint.native_domain);
             }
         }
+        const bool rz_repairs=checkpoint.geometry_identity.chart=="axisymmetric-rz";
+        const auto repair_profile=rz_repairs ? arch::state::RepairSemantics::RzVolumeAngular
+            : arch::state::RepairSemantics::ExistingVolume;
+        if(!file.hasAttribute("repair_semantics")) {
+            if(rz_repairs) throw std::runtime_error("RZ checkpoint missing mandatory repair measure identity");
+        } else {
+            std::string saved_repairs;
+            file.getAttribute("repair_semantics").read(saved_repairs);
+            if(saved_repairs!=arch::state::repair_semantics_name(repair_profile))
+                throw std::runtime_error("Checkpoint repair measure identity mismatch");
+        }
+        // Identity has been validated; never infer a historical nonzero ledger from its values.
+        checkpoint.repairs.semantics=repair_profile;
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);
         if(checkpoint.geometry_identity.chart=="axisymmetric-rz") {

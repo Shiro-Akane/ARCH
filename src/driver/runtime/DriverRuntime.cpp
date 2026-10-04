@@ -36,7 +36,10 @@ DriverRuntime::DriverRuntime(amr::AMRControl& control, BCHandler& boundaries,
           {static_cast<std::uint32_t>(std::max(1, config.grid.nblockx1)),
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx2)),
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx3))},
-          config.amr.lrefinemax}) {}
+          config.amr.lrefinemax}) {
+    ctrl.repairs.bind_semantics(geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
+        ? state::RepairSemantics::RzVolumeAngular : state::RepairSemantics::ExistingVolume);
+}
 DriverRuntime::~DriverRuntime() = default;
 /** Snapshot logical identities for the requested active block order. */
 std::vector<TopologyObservation> DriverRuntime::observe_blocks(std::span<const int> active) const

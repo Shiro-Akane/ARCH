@@ -525,3 +525,14 @@ geometry并借用原BC，真实Runtime topology/exchange在发布前填好块间
 见RZPopulationAngularIntegrationNode-20261005.zh-CN.md。
 RZ-INIT-W-01关闭，RZ-INIT-REPAIR-01仅初始化范围关闭；
 运行期repair/checkpoint ledger、axis/viscosity与完整C/D尚未签收，production gate保持。
+
+### 8.10 Repair integral / checkpoint consumer update（2026-10-05）
+
+CPU RZ repair ledger 已带显式 V/J 身份，实际初始化、stage/Runtime/RK 聚合、checkpoint
+与文本报告贯通；slot 6 采用 delta m_phi*W。旧未知 RZ ledger（即使零）缺失身份拒绝，
+Existing legacy 保持兼容，严格 RZ 未解析候选仍拒绝、不授权 heating/floor。
+非零 HDF restore、写出不截断、错 tag/混合/overflow 反例、真实 DriverIO、4 internal
+零 phi continuation、初始求积及新 ELF 冻结 JENS 9+9 通过。
+71 CTest 经初次完整 suite 与修改项定向复测全部取得 PASS；旧 catalog/reflux 软件夹具已迁移。
+见 RZRepairLedgerIdentityNode-20261005.zh-CN.md；完整旋转/viscosity/axis-force 科学门槛、
+完整环体 RHS 和 CUDA/长跑门槛仍保持，不以此节点代替科学签收。

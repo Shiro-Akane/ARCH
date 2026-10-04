@@ -64,7 +64,13 @@ class Expansion(unittest.TestCase):
     def test_all_standard_parameters_have_presentation(self):
         out=self.api('--config-schema')
         params={p['key']:p for p in out['parameters']}
-        self.assertEqual(len(params), 94)
+        entries=(ROOT/'src/core/config/StandardParameterEntries.inc').read_text().splitlines()
+        expected={re.match(r'ARCH_STANDARD_PARAMETER\("([^"]+)"',line).group(1)
+            for line in entries if line.startswith('ARCH_STANDARD_PARAMETER(')
+            and 'RequirementKind::Retired' not in line}
+        self.assertEqual(set(params),expected)
+        self.assertEqual(len(out['parameters']),len(params))
+        self.assertNotIn('gravity_G',params)
         for p in params.values():
             self.assertTrue(p['presentation']['description'])
             self.assertTrue(p['presentation']['displayName'])

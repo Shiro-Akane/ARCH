@@ -219,7 +219,8 @@ namespace TimeIntegration
         double weight_n, double weight_flux,
         double sml_rho, double min_eint, double max_eint,
         FluidVector& U_new, double* Xi_new, arch::state::RepairView repairs = {},
-        double cell_volume = 1.0, int cell = 0, bool strict_conservative = false)
+        double cell_volume = 1.0, int cell = 0, bool strict_conservative = false,
+        double angular_measure = 0.0)
     {
         U_new = weight_n * U_old + weight_flux * (U_curr + delta);
 
@@ -260,9 +261,12 @@ namespace TimeIntegration
             return arch::state::Status::invalid_composition;
         }
         if (repair.status == arch::state::Status::repaired || composition_repaired) {
+            if(!repairs.conserved_density(repair.delta.rho,repair.delta.mom_u,
+                repair.delta.mom_v,repair.delta.mom_w,repair.delta.eng,cell_volume,angular_measure)) {
+                U_new.eng=arch::state::invalid();
+                return arch::state::Status::nonfinite;
+            }
             repairs.event(cell_volume, cell);
-            const auto delta = cell_volume * repair.delta;
-            repairs.conserved(delta.rho,delta.mom_u,delta.mom_v,delta.mom_w,delta.eng);
             for (int s = 0; s < n_spec; ++s) {
                 const int off = s * species_stride;
                 const double before = weight_n * U_old.rho * Xi_old[off]
@@ -293,7 +297,9 @@ namespace TimeIntegration
         const int nk = ke - ks;
         const int nj = je - js;
 
-        u_dest.stage_repairs.reset(n_spec);
+        const auto repair_profile=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+            ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
+        u_dest.stage_repairs.reset(n_spec,repair_profile);
         int invalid_count = 0;
         const auto update_row = [&](int kj, arch::state::RepairBudget& local,
                                     int& local_invalid) {
@@ -319,7 +325,9 @@ namespace TimeIntegration
                     n_spec, total_size, weight_n, weight_flux,
                     sml_rho, min_eint, max_eint, U_new, Xi_new, local.view(),
                     GridMetrics::CellVolume(geometry, i, j, k), idx,
-                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz,
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                        ? GridMetrics::Rz::AngularMomentumMeasure(grid.GetFacePosL(i),grid.GetFacePosR(i),grid.dx2) : 0.0);
                 if (!arch::state::accepted(status)) ++local_invalid;
                 u_dest.set(idx, U_new);
             }
@@ -331,7 +339,7 @@ namespace TimeIntegration
         if (parallel_rows) {
 #pragma omp parallel reduction(+:invalid_count)
             {
-                arch::state::RepairBudget local(n_spec);
+                arch::state::RepairBudget local(n_spec,repair_profile);
 #pragma omp for schedule(static)
                 for (int kj = 0; kj < nk * nj; ++kj)
                     update_row(kj, local, invalid_count);
@@ -339,7 +347,7 @@ namespace TimeIntegration
                 u_dest.stage_repairs.combine(local);
             }
         } else {
-            arch::state::RepairBudget local(n_spec);
+            arch::state::RepairBudget local(n_spec,repair_profile);
             for (int kj = 0; kj < nk * nj; ++kj)
                 update_row(kj, local, invalid_count);
             u_dest.stage_repairs.combine(local);

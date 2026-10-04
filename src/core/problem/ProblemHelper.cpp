@@ -216,7 +216,7 @@ namespace ProblemHelper
             for (int id:active_blocks) {
                 proposed.push_back(amr_ctrl.pool->GetBlock(id).fluid_state);
                 auto& state=proposed.back();
-                state.stage_repairs.reset(n_species);
+                state.stage_repairs.reset(n_species,arch::state::RepairSemantics::RzVolumeAngular);
                 std::fill(state.rho.begin(),state.rho.end(),arch::state::invalid());
                 std::fill(state.mom_u.begin(),state.mom_u.end(),arch::state::invalid());
                 std::fill(state.mom_v.begin(),state.mom_v.end(),arch::state::invalid());

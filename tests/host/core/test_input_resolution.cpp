@@ -45,7 +45,10 @@ int main(int argc, char** argv) {
         sod.needs_composition_floor = false;
         const auto complete = resolve(valid, sod);
         require(complete.requirements_satisfied(), "valid standard requirements rejected");
-        require(complete.parameters.size() == 94, "retired G must not be an active record");
+        const auto active_count=std::count_if(std::begin(standard_parameters),std::end(standard_parameters),
+            [](const auto& definition){return definition.requirement!=RequirementKind::Retired;});
+        require(complete.parameters.size()==static_cast<std::size_t>(active_count)
+            &&!complete.parameters.contains("gravity_G"),"active catalog incomplete or retired G exposed");
         require(!complete.parameters.at("dt_min").parsed, "default invented explicit parsed value");
         require(complete.parameters.at("dt_min").source == InputValueSource::DocumentedDefault,
                 "documented default lacks source");

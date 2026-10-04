@@ -442,10 +442,10 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     const auto& stage_handles = runtime.handles();
     auto* compute_backend = runtime.backend();
     const auto& num_cfg = config.numerics;
-    state::RepairBudget pending(runtime.species().count());
+    state::RepairBudget pending(runtime.species().count(),runtime.repair_budget().semantics);
     stage_context.hydro_acceptance = [&](const scheduler::StageDescriptor& descriptor) {
         if (stage_context.hydro_preparation) stage_context.hydro_preparation->invalidate();
-        state::RepairBudget stage(runtime.species().count());
+        state::RepairBudget stage(runtime.species().count(),runtime.repair_budget().semantics);
         if (compute_backend) stage = compute_backend->stage_repairs;
         else for (std::size_t index=0;index<active_blocks.size();++index) {
             auto& block = amr_ctrl.pool->GetBlock(active_blocks[index]);

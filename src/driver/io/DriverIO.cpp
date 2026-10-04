@@ -142,23 +142,27 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         close_diagnostic(timing, "CPU stage timings");
     }
     {
+        const bool rz = runtime.geometry_semantics()
+            == GridMetrics::GeometrySemantics::AxisymmetricRz;
+        const auto expected_repairs=rz ? state::RepairSemantics::RzVolumeAngular
+            : state::RepairSemantics::ExistingVolume;
+        if(ctrl.repairs.semantics!=expected_repairs)
+            throw std::runtime_error("Repair report measure identity differs from runtime chart");
         std::ofstream report(config.io.out_dir + "/state_repairs.txt");
         if (!report) throw std::runtime_error("cannot write state repair diagnostics");
         report << std::setprecision(17) << "revision=P1.5-v1 units=CGS\n";
-        // Ledger slots follow the local orthonormal state basis. RZ uses
-        // complete rotating cells, so its integrals are full 3D quantities.
-        // The phi momentum integral is not the r-weighted angular momentum.
-        const bool rz = runtime.geometry_semantics()
-            == GridMetrics::GeometrySemantics::AxisymmetricRz;
+        // RZ slot 6 is J=W*m_phi; other conserved deltas use V.
+        if(rz) report << "repair_semantics=" << state::repair_semantics_name(ctrl.repairs.semantics) << "\n";
         if (rz)
-            report << "geometry_semantics_revision=1\ngeometry_chart=axisymmetric-rz\n"
+            report << "geometry_semantics_revision=2\ngeometry_chart=axisymmetric-rz\n"
                    << "momentum_basis=local-orthonormal-r-z-phi\n"
                    << "measure_unit=cm^3\nmeasure_normalization=full_rotation\n"
-                   << "mass_unit=g\nmomentum_unit=g*cm/s\nenergy_unit=erg\n";
+                   << "mass_unit=g\nmomentum_unit=g*cm/s\nenergy_unit=erg\n"
+                   << "angular_momentum_unit=g*cm^2/s\nstate_semantics=rz-m-phi-j-over-w-v1\n";
         const char* names[]{"events","affected_volume","mass_signed","mass_absolute",
             rz ? "momentum_r" : "momentum_x",
             rz ? "momentum_z" : "momentum_y",
-            rz ? "momentum_phi" : "momentum_z",
+            rz ? "angular_momentum_signed" : "momentum_z",
             "energy_signed","energy_absolute","local_cell"};
         for (int i=0;i<state::RepairView::fixed_size;++i) report << names[i] << "=" << ctrl.repairs.values[i] << "\n";
         for (int i=0;i<ctrl.repairs.species();++i) {

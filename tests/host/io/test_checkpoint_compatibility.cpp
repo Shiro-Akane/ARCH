@@ -658,6 +658,7 @@ void test_host_restart(const std::filesystem::path& directory)
     rz_payload.dim = 2;
     rz_payload.geometry = "cylindrical";
     rz_payload.geometry_identity = io::current_rz_checkpoint_geometry();
+    rz_payload.repairs.bind_semantics(arch::state::RepairSemantics::RzVolumeAngular);
     rz_payload.native_domain={{0.,1.,0.,1.},{1,1},{static_cast<int>(rz_payload.cells_per_block),1}};
     const auto rz_path = directory / "internal-rz-identity.h5";
     io::write_hdf5_chk_impl(rz_path.string(), rz_payload);
@@ -673,6 +674,7 @@ void test_host_restart(const std::filesystem::path& directory)
         HighFive::File file(rz_path.string(), HighFive::File::ReadWrite);
         file.deleteAttribute("geometry_semantics_revision");
         file.deleteAttribute("geometry_chart");
+        file.deleteAttribute("repair_semantics");
     }
     auto polar_config = config;
     polar_config.grid.dim = 2;
@@ -835,7 +837,9 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
         }
     }
     arch::state::RepairBudget repairs;
-    repairs.reset(species.count());
+    repairs.reset(species.count(),arch::state::RepairSemantics::RzVolumeAngular);
+    expect(repairs.view().conserved_density(.5,1.,-2.,3.,4.,2.,5.),"RZ repair density recording failed");
+    repairs.view().event(2.,7);
     write_chk(source, 3, 4, 7, .25, .01, .02, true,
               config, species, provenance, repairs, io::current_rz_checkpoint_geometry());
     const auto file = directory / "native-rz/rz_chk_0003.h5";
@@ -847,6 +851,10 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
     RunState state;
     read_chk(file.string(), restored, state, config, species, provenance,
              io::current_rz_checkpoint_geometry());
+    expect(payload.repairs.semantics==arch::state::RepairSemantics::RzVolumeAngular
+        && state.repairs.semantics==payload.repairs.semantics
+        && state.repairs.values==repairs.values && state.repairs.values[6]==15.,
+        "RZ checkpoint did not preserve nonzero J repair ledger identity");
     expect(restored.tree->GetActiveBlocks().size()==5,
            "mixed RZ checkpoint changed leaf count");
     for (int id : restored.tree->GetActiveBlocks()) {
@@ -887,6 +895,12 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
         <<" source_J="<<source_angular<<" restored_J="<<restored_angular<<"\n";
 
     const auto digest=arch::core::file_sha256(file.string());
+    auto wrong_repair_profile=payload;
+    wrong_repair_profile.repairs.semantics=arch::state::RepairSemantics::ExistingVolume;
+    expect_rejected([&]{io::write_hdf5_chk_impl(file.string(),wrong_repair_profile);},
+        "RZ writer accepted ordinary volume repair identity");
+    expect(arch::core::file_sha256(file.string())==digest,
+        "wrong repair identity writer truncated previous checkpoint");
     const auto snapshot_restored=[&] {
         std::vector<double> words;
         for(int id:restored.tree->GetActiveBlocks()) {
@@ -904,13 +918,20 @@ void test_native_rz_checkpoint(const std::filesystem::path& directory)
             bad=directory/(prefix+"-"+std::to_string(test)+"-"+std::to_string(suffix)+".h5");
         std::filesystem::copy_file(file,bad);return bad;
     };
-    for(int corruption=0;corruption<3;++corruption) {
+    for(int corruption=0;corruption<7;++corruption) {
         const auto bad=fresh_corruption_copy("rz-state-corruption",corruption);
         {
             HighFive::File hdf(bad.string(),HighFive::File::ReadWrite);
             if(corruption==0)hdf.getAttribute("geometry_semantics_revision").write(1);
             if(corruption==1)hdf.deleteAttribute("state_semantics");
             if(corruption==2)hdf.getAttribute("state_semantics").write(std::string("volume-average-momentum-phi-v1"));
+            if(corruption==3)hdf.deleteAttribute("repair_semantics");
+            if(corruption==4)hdf.getAttribute("repair_semantics").write(std::string("existing-volume-v1"));
+            if(corruption==5)hdf.getAttribute("repair_semantics").write(std::string("rz-native-V-angular-J-v2"));
+            if(corruption==6) {
+                hdf.deleteAttribute("repair_semantics");
+                hdf.getDataSet("state_repairs").write(std::vector<double>(repairs.values.size(),0.));
+            }
         }
         expect_rejected([&]{read_chk(bad.string(),restored,state,config,species,provenance,
             io::current_rz_checkpoint_geometry());},"RZ state identity corruption accepted");
@@ -1004,6 +1025,27 @@ int main(int argc, char** argv)
         test_hdf5_round_trip(directory);
         test_native_composition(directory);
         test_host_restart(directory);
+        // Exact synthetic units distinguish V=2 from W=5 without invoking floors.
+        arch::state::RepairBudget volume(0),angular(0,arch::state::RepairSemantics::RzVolumeAngular);
+        expect(volume.view().conserved_density(.5,1.,-2.,3.,4.,2.),"volume ledger failed");
+        expect(angular.view().conserved_density(.5,1.,-2.,3.,4.,2.,5.),"angular ledger failed");
+        expect(volume.values[2]==1. && angular.values[2]==1.
+            &&volume.values[6]==6. &&angular.values[6]==15.
+            &&angular.values[4]==2. &&angular.values[5]==-4. &&angular.values[7]==8.,
+            "repair ledger confused V-integrated momentum and W-integrated J");
+        const auto before_angular=angular.values;
+        expect_rejected([&]{angular.combine(volume);},"mixed measure ledger merge accepted");
+        expect(angular.values==before_angular,"rejected merge changed ledger");
+        expect_rejected([&]{volume.bind_semantics(arch::state::RepairSemantics::RzVolumeAngular);},
+            "nonzero historical volume ledger reinterpreted as J");
+        expect(!angular.view().conserved_density(0.,0.,0.,3.,0.,2.,0.)
+            &&!angular.view().conserved_density(0.,0.,0.,3.,0.,2.,std::numeric_limits<double>::infinity())
+            &&!angular.view().conserved_density(0.,0.,0.,std::numeric_limits<double>::max(),0.,2.,5.)
+            &&angular.values==before_angular,"invalid W/product altered repair ledger");
+        arch::state::RepairBudget second=angular;
+        angular.combine(second,.5);
+        expect(angular.values[6]==22.5,"RK weighted J ledger changed units");
+        std::cout<<"REPAIR_V_W_IDENTITY_PASS\n";
         test_native_rz_checkpoint(directory);
         std::cout << "checkpoint compatibility tests passed\n";
         return 0;
