@@ -432,6 +432,160 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
 }
 
 template<typename Solver>
+void test_rz_rotating_closed_budget(int direction,double inner) {
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    SpeciesManager species;
+    species.add_species("gas0",1.,1.,1.4,3.);
+    species.add_species("gas1",2.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> policy(eos,rz);
+    const Numerics::IHydroSolver& hydro=policy;
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> legacy(eos);
+    if(hydro.geometry_semantics()!=rz
+        || legacy.geometry_semantics()!=GridMetrics::GeometrySemantics::Existing)
+        throw std::runtime_error("Host Hydro type-erased chart identity");
+    bool invalid_rejected=false;
+    try {
+        Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> invalid(
+            eos,static_cast<GridMetrics::GeometrySemantics>(255));
+    } catch(const std::invalid_argument&) { invalid_rejected=true; }
+    if(!invalid_rejected)throw std::runtime_error("Unknown Hydro chart accepted");
+    NumericsConfig numerics{};
+    numerics.entropy_fix_coeff=0.;numerics.hll_roe_wave_speed=true;
+    numerics.sml_rho=1.e-14;numerics.min_eint=1.e-14;numerics.max_eint=1.e10;
+    SimConfig config{};
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=direction==0?2:1;
+    config.grid.nblockx2=direction==0?1:2;config.grid.nblockx3=0;
+    config.grid.x1_min=inner;config.grid.x1_max=inner+2.;
+    config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    config.grid.amr_max_blocks=32;config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+    config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
+    config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="reflecting";
+    amr::AMRControl control(32,2);
+    control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
+        {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
+        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
+    const auto& active=control.tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles;
+    for(std::size_t n=0;n<active.size();++n) {
+        handles.push_back({{4000+n},{97}});
+        auto& block=control.pool->GetBlock(active[n]);
+        block.fluid_state.InitSpecies(2);block.state_next.InitSpecies(2);block.state_scratch.InitSpecies(2);
+        for(int cell=0;cell<block.grid.GetTotalSize();++cell) {
+            const auto& g=block.grid;
+            const int i=cell%g.stride_y,j=(cell/g.stride_y)%g.GetTotalY();
+            const double left=g.GetFacePosL(i),right=g.GetFacePosR(i);
+            const double radius=g.GetCellCenterX(i),z=g.GetCellCenterY(j);
+            const double pi=std::acos(-1.);
+            const double rho=2.+.1*std::cos(pi*(radius-inner))*.1*std::cos(pi*z);
+            const double vr=.03*std::sin(pi*(radius-inner)/2.);
+            const double vz=.02*std::sin(pi*(z+1.)/2.);
+            // Odd regular u_phi at the axis. Ghost values are filled by the
+            // actual boundary/AMR owners before the first stage.
+            const double wc=right<=0.?
+                -GridMetrics::Rz::AngularReconstructionRadius(-right,-left)
+                :GridMetrics::Rz::AngularReconstructionRadius(left,right);
+            const double vp=.15*wc*(1.+.2*std::cos(pi*z));
+            const double E=12.5+.5*rho*(vr*vr+vz*vz+vp*vp);
+            block.fluid_state.set(cell,{rho,rho*vr,rho*vz,rho*vp,E});
+            const double X=.6+.02*std::cos(pi*z);
+            block.fluid_state.X(0,cell)=X;block.fluid_state.X(1,cell)=1.-X;
+        }
+    }
+    control.BindActiveHandles(handles);control.flux_register.EnsureSpecies(2);
+    control.flux_register.Clear();
+    BCHandler boundary(config,rz);
+    for(int id:active) {
+        auto& block=control.pool->GetBlock(id);
+        boundary.apply(block.fluid_state,block.grid);
+    }
+    control.ghost_exchange.ExecuteExchange(control.pool,control.tree,2,
+        &amr::Block::fluid_state,handles,amr::CoordinateSeamGeometry::RzAxisymmetric);
+
+    using namespace arch::state;
+    using namespace arch::scheduler;
+    StateResidencyLedger ledger({97});
+    for(auto handle:handles) {
+        ledger.register_block(handle,{1},{1,CompletionState::Complete});
+        ledger.publish_ghost({handle,StateSlot::Current},ExecutionSide::Host,
+            {1},{2,CompletionState::Complete});
+    }
+    MonotonicSchedulerClock clock(2,1);
+    StageExecutionContext context{ExecutionSide::Host,ledger,clock};
+    ScopedStageBinding scope(context,handles);
+    // Independent full-ring integral budget, not production metric helpers.
+    const auto totals=[&]() {
+        std::array<long double,6> sum{};
+        const long double pi=std::acos(-1.L);
+        for(int id:active) {
+            const auto& block=control.pool->GetBlock(id);const auto& g=block.grid;
+            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                const int c=g.GetIndex(i,j,0);
+                const long double l=g.GetFacePosL(i),h=g.GetFacePosR(i);
+                const long double V=pi*(h*h-l*l)*g.dx2;
+                const long double W=2.L*pi*(h*h*h-l*l*l)*g.dx2/3.L;
+                const auto& u=block.fluid_state;
+                sum[0]+=u.rho[c]*V;sum[1]+=u.eng[c]*V;
+                sum[2]+=u.mom_w[c]*W;sum[3]+=std::abs(u.mom_w[c])*W;
+                sum[4]+=u.rho[c]*u.X(0,c)*V;sum[5]+=u.rho[c]*u.X(1,c)*V;
+            }
+        }
+        return sum;
+    };
+    const auto before=totals();
+    long double maxJ=0.,maxM=0.,maxE=0.,maxSpecies=0.;
+    double maxTorqueRegister=0.;
+    constexpr int steps=10;
+    for(int step=0;step<steps;++step) {
+        complete_boundary(context,handles,StateSlot::Current,
+            StateVersion{clock.last_version()},
+            [&](StateSlot,StateVersion,CompletionToken token) {
+                for(int id:active) {
+                    auto& block=control.pool->GetBlock(id);
+                    boundary.apply(block.fluid_state,block.grid);
+                }
+                control.ghost_exchange.ExecuteExchange(control.pool,control.tree,2,
+                    &amr::Block::fluid_state,handles,
+                    amr::CoordinateSeamGeometry::RzAxisymmetric,
+                    {numerics.sml_rho,numerics.min_eint,numerics.max_eint});
+                return token;
+            });
+        Solver::solve(control,1.e-4,boundary,nullptr,&hydro,numerics);
+        const auto now=totals();
+        // Reflecting physical boundaries have exactly zero advective
+        // outward torque/mass/energy; axis torque is zero by regularity.
+        const long double jerror=std::abs(now[2]-before[2])/before[3];
+        const long double merror=std::abs(now[0]-before[0])/before[0];
+        const long double eerror=std::abs(now[1]-before[1])/before[1];
+        const long double xerror=std::max(std::abs(now[4]-before[4])/before[4],
+            std::abs(now[5]-before[5])/before[5]);
+        if(jerror>1.e-12L||merror>1.e-12L||eerror>1.e-12L||xerror>1.e-12L)
+            throw std::runtime_error("RZ rotating mixed-AMR closed science budget");
+        maxJ=std::max(maxJ,jerror);maxM=std::max(maxM,merror);
+        maxE=std::max(maxE,eerror);maxSpecies=std::max(maxSpecies,xerror);
+        for(int id:active) {
+            const auto& block=control.pool->GetBlock(id);
+            for(double repair:block.fluid_state.stage_repairs.values)
+                if(repair!=0.)throw std::runtime_error("RZ rotating budget used repair");
+            for(int face=0;face<4;++face)if(control.flux_register.HasData(id,face)) {
+                const int count=face/2==0?amr::BLOCK_NY:amr::BLOCK_NX;
+                for(int c=0;c<count;++c)maxTorqueRegister=std::max(maxTorqueRegister,
+                    std::abs(control.flux_register.GetSummedFlux(id,face,c).mom_w));
+            }
+        }
+    }
+    if(maxTorqueRegister==0.)throw std::runtime_error("rotating fixture never exercised torque reflux");
+    const auto& topology=control.RequireFluxTopologyPlan(2,rz,-1,true);
+    if(!topology.angular_transport)throw std::runtime_error("rotating hydro lost torque identity");
+    std::cout<<"RZ_ROTATING_CLOSED method="<<Solver::name()<<" direction="<<direction
+        <<" inner="<<inner<<" steps="<<steps<<" J_error="<<static_cast<double>(maxJ)
+        <<" mass_error="<<static_cast<double>(maxM)<<" E_error="<<static_cast<double>(maxE)
+        <<" species_error="<<static_cast<double>(maxSpecies)
+        <<" max_torque_register="<<maxTorqueRegister<<'\n';
+}
+
+template<typename Solver>
 void test_rz_scheduled_hydro(int direction,double inner) {
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
     SpeciesManager species;
@@ -600,6 +754,11 @@ int main()
     }
     for(int direction:{0,1})for(double inner:{0.,1.})
         test_rz_mixed_hydro_stage(direction,inner);
+    for(int direction:{0,1})for(double inner:{0.,1.}) {
+        test_rz_rotating_closed_budget<SolverEuler>(direction,inner);
+        test_rz_rotating_closed_budget<SolverRK2>(direction,inner);
+        test_rz_rotating_closed_budget<SolverRK3>(direction,inner);
+    }
     test_rz_host_cfl();
     test_rz_host_hydro();
     using namespace GridMetrics;
