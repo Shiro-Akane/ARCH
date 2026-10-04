@@ -419,6 +419,66 @@ RingRhsAssessment GravityBoundary::assess_ring_rhs(
     return result;
 }
 
+
+/** Complete actual source/B/assembly/A/evaluation ledger in ideal native RMS.
+ * Potential scope comes from this producer's checked source/observer proof.
+ * Construction, integral and arithmetic errors are each counted once.
+ * Acceptance certifies only the native discrete residual, not Phi/force science.
+ */
+RingRhsAssessment GravityBoundary::assess_native_ring_rhs(
+    const arch::elliptic::CompositePoisson& op,const RingBoundaryEvaluation& ring,
+    std::span<const double> source,std::span<const double> rhs,
+    std::span<const double> potential,std::span<const double> residual,
+    double rtol,double atol) const {
+    using namespace arch::elliptic;
+    require_current_ring(op,ring);
+    RingRhsAssessment result;result.source=ring.source;
+    result.source_generation=ring.source_generation;
+    result.scope=RingRhsAssessmentScope::RootDyadicNativeOperator;
+    const auto face_errors=root_scoped_ring_errors(op,ring);
+    result.native_boundary_potential=op.native_rz_propagate_potential_error(face_errors);
+    if(result.native_boundary_potential.status!=BoundaryErrorStatus::Bounded) {
+        result.conditional.status=result.native_boundary_potential.status==BoundaryErrorStatus::UncertifiedInput
+            ?BoundaryResidualStatus::UncertifiedInput:(result.native_boundary_potential.status==BoundaryErrorStatus::Overflow
+                ?BoundaryResidualStatus::Overflow:BoundaryResidualStatus::InvalidInput);
+        return result;
+    }
+    result.source_error=bound_isolated_gravity_source(op,ring_density_,source);
+    result.native_boundary_construction=op.native_rz_boundary_construction_error(ring.values);
+    result.assembly_error=op.bound_rhs_assembly_roundoff(source,ring.values,rhs);
+    result.native_residual_error=op.native_rz_residual_evaluation_error(potential,rhs,residual);
+    if(result.source_error.status==GravitySourceBoundStatus::Overflow
+        ||result.native_boundary_construction.status==BoundaryErrorStatus::Overflow
+        ||result.assembly_error.status==BoundaryErrorStatus::Overflow
+        ||result.native_residual_error.status==BoundaryErrorStatus::Overflow) {
+        result.conditional.status=BoundaryResidualStatus::Overflow;return result;
+    }
+    if(result.source_error.status!=GravitySourceBoundStatus::Bounded
+        ||result.native_boundary_construction.status!=BoundaryErrorStatus::Bounded
+        ||result.assembly_error.status!=BoundaryErrorStatus::Bounded
+        ||result.native_residual_error.status!=BoundaryErrorStatus::Bounded)return result;
+    auto& combined=result.combined_rhs_error;combined.cell_bounds.resize(op.size());
+    for(int i=0;i<op.size();++i) {
+        combined.cell_bounds[i]=finite_ring_detail::sum_up(
+            finite_ring_detail::sum_up(result.source_error.cell_bounds[i],
+                result.native_boundary_construction.cell_bounds[i]),
+            finite_ring_detail::sum_up(result.native_boundary_potential.cell_bounds[i],
+                result.assembly_error.cell_bounds[i]));
+        if(!std::isfinite(combined.cell_bounds[i])) {
+            combined.status=BoundaryErrorStatus::Overflow;
+            result.conditional.status=BoundaryResidualStatus::Overflow;return result;
+        }
+    }
+    const auto norm=op.native_rz_norm_interval(combined.cell_bounds);
+    combined.status=norm.status;combined.norm_upper=norm.upper;
+    // Assembly already in combined RHS; A/evaluation already against computed
+    // RHS. No repeated assembly or homogeneous/prescribed boundary term.
+    result.conditional=op.assess_boundary_residual(rhs,residual,combined,0.,
+        result.native_residual_error.native_norm_upper,BoundaryErrorQuality::CertifiedAbsolute,
+        rtol,atol,BoundaryResidualNormScope::RootDyadicRzWeights);
+    return result;
+}
+
 void GravityBoundary::require_current_ring(const arch::elliptic::CompositePoisson& op,
     const RingBoundaryEvaluation& result) const {
     require_ring_operator(op);

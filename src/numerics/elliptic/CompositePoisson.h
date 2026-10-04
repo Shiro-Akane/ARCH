@@ -152,6 +152,7 @@ struct NativeRzResidualEvaluationError {
     std::vector<double> cell_bounds;
     double native_norm_upper=std::numeric_limits<double>::infinity();
 };
+enum class BoundaryResidualNormScope { StoredNativeWeights, RootDyadicRzWeights };
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
@@ -219,7 +220,8 @@ public:
         std::span<const double> computed_residual,
         const BoundaryRhsError& face_error,
         double rhs_assembly_error_upper,double residual_evaluation_error_upper,
-        BoundaryErrorQuality evaluation_quality,double rtol,double atol) const;
+        BoundaryErrorQuality evaluation_quality,double rtol,double atol,
+        BoundaryResidualNormScope norm_scope=BoundaryResidualNormScope::StoredNativeWeights) const;
     // Compare the actual projection with P_w*x=x-sum(stored_weight*x).
     // Does not certify weight construction or physical source preprocessing.
     PoissonArithmeticError bound_constant_mode_projection_roundoff(

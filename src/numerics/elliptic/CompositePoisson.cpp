@@ -1244,9 +1244,11 @@ PoissonArithmeticError CompositePoisson::bound_residual_evaluation_roundoff(
 BoundaryResidualAssessment CompositePoisson::assess_boundary_residual(
     std::span<const double> rhs,std::span<const double> residual,
     const BoundaryRhsError& face_error,double assembly_error,double evaluation_error,
-    BoundaryErrorQuality quality,double rtol,double atol) const
+    BoundaryErrorQuality quality,double rtol,double atol,BoundaryResidualNormScope scope) const
 {
     BoundaryResidualAssessment result{};
+    if(scope!=BoundaryResidualNormScope::StoredNativeWeights
+        &&scope!=BoundaryResidualNormScope::RootDyadicRzWeights)return result;
     const auto valid=[](double value){return std::isfinite(value)&&value>=0.;};
     if(!valid(rtol)||!valid(atol)||!valid(assembly_error)||!valid(evaluation_error)
         ||face_error.cell_bounds.size()!=cells_.size()
@@ -1260,14 +1262,24 @@ BoundaryResidualAssessment CompositePoisson::assess_boundary_residual(
     }
     if(face_error.status!=BoundaryErrorStatus::Bounded||!valid(face_error.norm_upper))return result;
     for(double value:face_error.cell_bounds)if(!valid(value))return result;
-    const auto rhs_norm=norm_interval(rhs),residual_norm=norm_interval(residual);
+    // The same acceptance mathematics serves both scopes; root scope must
+    // also re-norm the cell error ledger with ideal weights, never a stored norm.
+    const bool native=scope==BoundaryResidualNormScope::RootDyadicRzWeights;
+    const auto rhs_norm=native?native_rz_norm_interval(rhs):norm_interval(rhs);
+    const auto residual_norm=native?native_rz_norm_interval(residual):norm_interval(residual);
+    const auto error_norm=native?native_rz_norm_interval(face_error.cell_bounds)
+        :WeightedNormInterval{BoundaryErrorStatus::Bounded,0.,face_error.norm_upper};
+    if(error_norm.status!=BoundaryErrorStatus::Bounded) {
+        result.status=error_norm.status==BoundaryErrorStatus::Overflow
+            ?BoundaryResidualStatus::Overflow:BoundaryResidualStatus::InvalidInput;return result;
+    }
     if(rhs_norm.status==BoundaryErrorStatus::Overflow||residual_norm.status==BoundaryErrorStatus::Overflow) {
         result.status=BoundaryResidualStatus::Overflow;return result;
     }
     if(rhs_norm.status!=BoundaryErrorStatus::Bounded||residual_norm.status!=BoundaryErrorStatus::Bounded)return result;
     result.rhs_norm_lower=rhs_norm.lower;result.rhs_norm_upper=rhs_norm.upper;
-    result.rhs_error_upper=assembly_error==0.?face_error.norm_upper:
-        bound_up(face_error.norm_upper+assembly_error);
+    result.rhs_error_upper=assembly_error==0.?error_norm.upper:
+        bound_up(error_norm.upper+assembly_error);
     result.residual_norm_upper=evaluation_error==0.?residual_norm.upper:
         bound_up(residual_norm.upper+evaluation_error);
     const double exact_rhs_lower=bound_down(rhs_norm.lower-result.rhs_error_upper);

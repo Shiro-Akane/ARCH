@@ -1288,6 +1288,24 @@ void finite_ring_rhs_probe() {
         std::vector<double> phi(op.size(),0.),residual(op.size());
         op.apply(phi,residual);for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
         const auto result=tree.assess_ring_rhs(op,ring,source,rhs,phi,residual,1.e-10,0.);
+        const auto native=tree.assess_native_ring_rhs(op,ring,source,rhs,phi,residual,1.e-10,0.);
+        require(native.scope==RingRhsAssessmentScope::RootDyadicNativeOperator
+            &&native.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
+            "native discrete certificate promoted full RZ capability");
+        require(native.conditional.status==(root_exact?(zero?elliptic::BoundaryResidualStatus::Accepted
+            :elliptic::BoundaryResidualStatus::ResidualTooLarge):elliptic::BoundaryResidualStatus::UncertifiedInput),
+            "native actual original request changed");
+        if(root_exact) {
+            if(zero)require(native.conditional.total_residual_upper==0.&&native.conditional.tolerance_safe==0.,
+                "native zero acquired floor");
+            auto fake_residual=residual;std::fill(fake_residual.begin(),fake_residual.end(),0.);
+            const auto fake=tree.assess_native_ring_rhs(op,ring,source,rhs,phi,fake_residual,1.e-10,0.);
+            if(!zero)require(fake.conditional.status!=elliptic::BoundaryResidualStatus::Accepted,
+                "native fake zero residual hid actual unsolved source");
+            require(tree.assess_native_ring_rhs(op,ring,{},rhs,phi,residual,1.e-10,0.).conditional.status
+                ==elliptic::BoundaryResidualStatus::InvalidInput,"native missing source accepted");
+        }
+
         require(result.scope==RingRhsAssessmentScope::StoredNativeOperator
             &&result.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
             "missing geometry construction became physical acceptance");
@@ -1326,6 +1344,15 @@ void finite_ring_rhs_probe() {
             std::cout<<",\"edges\":";dump(edges);std::cout<<'}';
         }
         std::cout<<']';
+        if(root_exact) {
+            std::cout<<",\"native_rhs_error_cells\":";dump(native.combined_rhs_error.cell_bounds);
+            std::cout<<",\"native_eval_cells\":";dump(native.native_residual_error.cell_bounds);
+            std::cout<<",\"native_rhs_error_upper\":"<<native.conditional.rhs_error_upper
+                <<",\"native_residual_upper\":"<<native.conditional.residual_norm_upper
+                <<",\"native_total_upper\":"<<native.conditional.total_residual_upper
+                <<",\"native_tolerance_safe\":"<<native.conditional.tolerance_safe
+                <<",\"native_rhs_norm_lower\":"<<native.conditional.rhs_norm_lower;
+        }
         std::cout<<",\"source\":";dump(source);std::cout<<",\"rhs\":";dump(rhs);
         std::cout<<",\"volumes\":";dump(op.volumes());std::cout<<",\"weights\":";dump(op.norm_weights());
         std::cout<<",\"face_lower\":";dump(ring.lower);std::cout<<",\"face_upper\":";dump(ring.upper);
@@ -1348,6 +1375,88 @@ void finite_ring_rhs_probe() {
                 <<",\"root_scope\":"<<(root_errors[f].scope==elliptic::NativeRzPotentialScope::RootDyadicSourceAndObserver)
                 <<",\"center\":["<<face.center[0]<<','<<face.center[1]<<']'
                 <<",\"area\":"<<face.area<<",\"boundary_coefficient\":"<<face.boundary_coefficient<<'}';
+        }
+        std::cout<<"]}";
+    }
+    std::cout<<"]}\n";
+}
+
+/** Actual isolated nonzero finite-ring solve; no driver/timestep/output. */
+void native_ring_solved_probe() {
+    using namespace Physical::Gravity;
+    const auto dump=[](const auto& x){std::cout<<'[';bool first=true;for(auto v:x){if(!first)std::cout<<',';first=false;std::cout<<v;}std::cout<<']';};
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
+    for(double origin:{0.,.5}) {
+        auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.5,0.};
+        multigrid::CompositeMultigrid solver(base,make_cells(base,false),elliptic::BoundaryKind::CurvilinearIsolated);
+        const auto& op=solver.op();GravityBoundary tree(op,{9});GravitySolveIdentity id;id.topology={9};
+        id.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+        id.operator_revision=id.boundary_revision=id.accuracy_revision=1;
+        id.inputs.push_back({{{1},{9}},state::StateSlot::Current,{1},1});
+        std::vector<double> density(op.size(),1.);
+        tree.update(density,id);RingBoundaryControl control;control.face_absolute_target=1.e-18;
+        control.maximum_boxes_per_leaf=65536;
+        const auto ring=tree.ring_boundary(op,id,control);
+        if(ring.status!=RingBoundaryStatus::Bounded) {
+            std::cerr<<"RING_BUDGET_DIAGNOSTIC {\"origin\":"<<origin
+                <<",\"rootCells\":"<<op.size()<<",\"status\":"<<int(ring.status)
+                <<",\"faceAbsoluteTarget\":"<<control.face_absolute_target
+                <<",\"maximumBoxesPerLeaf\":"<<control.maximum_boxes_per_leaf
+                <<",\"maximumLeafEvaluations\":"<<control.maximum_leaf_evaluations
+                <<",\"leafEvaluations\":"<<ring.leaf_evaluations
+                <<",\"parentEvaluations\":"<<ring.parent_evaluations
+                <<",\"rangeEvaluations\":"<<ring.range_evaluations
+                <<",\"kernelEnclosures\":"<<ring.kernel_enclosures
+                <<",\"agmIterations\":"<<ring.agm_iterations<<"}\n";
+        }
+        require(ring.status==RingBoundaryStatus::Bounded,"actual native solve ring budget failed");
+        auto& execution=solver.execution();auto src=execution.array<double>(op.size());
+        execution.linear(src,-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant,
+            execution.upload(density),0.,{},0.);
+        const auto source=execution.download(src),rhs=op.effective_rhs(source,ring.values);
+        const auto solved=solver.solve(rhs,{1.e-10,0.,200});
+        require(solved.report.status==multigrid::SolveStatus::Converged,"actual native algebraic solve failed");
+        std::vector<double> residual(op.size());op.apply(solved.potential,residual);
+        for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
+        const auto result=tree.assess_native_ring_rhs(op,ring,source,rhs,solved.potential,residual,1.e-10,0.);
+        require(result.conditional.status==elliptic::BoundaryResidualStatus::Accepted,
+            "actual solved native residual exceeds original request");
+        require(result.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
+            "native solved residual became full physics release");
+        if(!first)std::cout<<',';first=false;
+        std::cout<<"{\"radial_origin\":"<<origin<<",\"origin\":";dump(base.origin);
+        std::cout<<",\"spacing\":";dump(base.spacing);
+        std::cout<<",\"cells\":[";bool cf=true;
+        for(const auto& cell:op.cells()) {
+            if(!cf)std::cout<<',';cf=false;
+            std::cout<<"{\"level\":"<<cell.level<<",\"index\":";dump(cell.index);std::cout<<'}';
+        }
+        std::cout<<']';
+        std::cout<<",\"source\":";dump(source);std::cout<<",\"rhs\":";dump(rhs);
+        std::cout<<",\"source_lower\":";dump(result.source_error.lower);
+        std::cout<<",\"source_upper\":";dump(result.source_error.upper);
+        std::cout<<",\"potential\":";dump(solved.potential);std::cout<<",\"residual\":";dump(residual);
+        std::cout<<",\"face_values\":";dump(ring.values);std::cout<<",\"face_lower\":";dump(ring.lower);
+        std::cout<<",\"face_upper\":";dump(ring.upper);
+        std::cout<<",\"rhs_error_cells\":";dump(result.combined_rhs_error.cell_bounds);
+        std::cout<<",\"evaluation_cells\":";dump(result.native_residual_error.cell_bounds);
+        std::cout<<",\"total_residual_upper\":"<<result.conditional.total_residual_upper
+            <<",\"tolerance_safe\":"<<result.conditional.tolerance_safe
+            <<",\"rhs_error_upper\":"<<result.conditional.rhs_error_upper
+            <<",\"residual_upper\":"<<result.conditional.residual_norm_upper
+            <<",\"rhs_norm_lower\":"<<result.conditional.rhs_norm_lower
+            <<",\"work\":"<<ring.leaf_evaluations+ring.parent_evaluations
+            <<",\"range_evaluations\":"<<ring.range_evaluations<<",\"faces\":[";
+        bool ff=true;for(std::size_t f=0;f<op.faces().size();++f) {
+            if(!ff)std::cout<<',';ff=false;const auto& face=op.faces()[f];
+            std::cout<<"{\"index\":"<<f<<",\"axis\":"<<face.axis
+                <<",\"side\":"<<face.boundary_side%2<<",\"left\":"<<face.left
+                <<",\"right\":"<<face.right<<",\"boundary_side\":"<<face.boundary_side
+                <<",\"center\":";dump(face.center);std::cout<<",\"samples\":";dump(face.samples);
+            std::cout<<",\"coefficients\":";dump(face.coefficients);
+            std::cout<<",\"boundary_coefficient\":"<<face.boundary_coefficient
+                <<",\"area\":"<<face.area<<'}';
         }
         std::cout<<"]}";
     }
@@ -2283,6 +2392,7 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="ring-far-leaf") {std::cout<<std::setprecision(17);finite_ring_far_leaf_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="rz-stencil-probe") {native_rz_stencil_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="rz-measure-probe") {native_rz_measure_probe();return 0;}
+        if(argc>1 && std::string(argv[1])=="native-ring-solved-probe") {native_ring_solved_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-rhs-probe") {finite_ring_rhs_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-parent-probe") {finite_ring_parent_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-native-face") {std::cout<<std::setprecision(17);finite_ring_tree_boundary_contract();return 0;}

@@ -375,7 +375,7 @@ struct RingBoundaryEvaluation {
  * Native geometry/stencil/weights construction remains a mandatory separate
  * physical certificate. No API can upgrade this result into production RZ.
  */
-enum class RingRhsAssessmentScope { StoredNativeOperator };
+enum class RingRhsAssessmentScope { StoredNativeOperator, RootDyadicNativeOperator };
 struct RingRhsAssessment {
     GravitySolveIdentity source;
     std::uint64_t source_generation=0;
@@ -383,6 +383,9 @@ struct RingRhsAssessment {
     GravitySourceBounds source_error;
     arch::elliptic::BoundaryRhsError boundary_error,combined_rhs_error;
     arch::elliptic::PoissonArithmeticError assembly_error,residual_error;
+    arch::elliptic::NativeRzBoundaryConstructionError native_boundary_construction;
+    arch::elliptic::NativeRzBoundaryPotentialError native_boundary_potential;
+    arch::elliptic::NativeRzResidualEvaluationError native_residual_error;
     arch::elliptic::BoundaryResidualAssessment conditional;
     arch::elliptic::BoundaryResidualStatus physical_status=
         arch::elliptic::BoundaryResidualStatus::UncertifiedInput;
@@ -405,6 +408,12 @@ public:
     std::vector<arch::elliptic::NativeRzFacePotentialError> root_scoped_ring_errors(
         const arch::elliptic::CompositePoisson&,const RingBoundaryEvaluation&) const;
     RingRhsAssessment assess_ring_rhs(const arch::elliptic::CompositePoisson&,
+        const RingBoundaryEvaluation&,std::span<const double> computed_source,
+        std::span<const double> computed_rhs,std::span<const double> potential,
+        std::span<const double> computed_residual,double rtol,double atol) const;
+    // Original request for the ideal native discrete problem, not continuous
+    // Phi/force/full RZ science. Real producer scope is checked internally.
+    RingRhsAssessment assess_native_ring_rhs(const arch::elliptic::CompositePoisson&,
         const RingBoundaryEvaluation&,std::span<const double> computed_source,
         std::span<const double> computed_rhs,std::span<const double> potential,
         std::span<const double> computed_residual,double rtol,double atol) const;

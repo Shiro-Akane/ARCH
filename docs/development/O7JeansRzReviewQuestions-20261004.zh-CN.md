@@ -422,6 +422,13 @@ stale、异operator拒绝。见RZRootProducerIdentityNode-20261005.zh-CN.md。
 这只贯通精确坐标子集，不关闭general geometry error、真实求解Phi/force或
 完整physical residual/RZ gate；相同生产ELF沿用冻结JENS9+9，不改阈值。
 
+真实current ring的native source/B construction/potential/assembly/A evaluation
+已接入ideal native RMS及原T_safe，8组176 cells独立归约检查通过，4舍入组
+继续拒绝。真实axis 4x4非零源检查在1e-18 face budget、65536 boxes/leaf下
+触发WorkLimit，尚未进入Poisson；2x2插值退化诊断同时保留。
+见RZNativePhysicalRhsAssessmentNode-20261005.zh-CN.md。不以scoped
+composition PASS冒充actual solved Phi/force或完整科学签收，不改阈值，gate保持。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
