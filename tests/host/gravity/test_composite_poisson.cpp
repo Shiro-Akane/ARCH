@@ -790,6 +790,36 @@ void finite_ring_moment_contract() {
 }
 
 
+void finite_ring_axis_enclosure_contract() {
+    using namespace Physical::Gravity;
+    RingEnclosureControl control{};control.relative_target=1.e-10;
+    for(double rl:{0.,.5})for(double z:{0.,.375,2.,100.,-100.,1.e6}) {
+        const auto value=finite_ring_potential_enclosure(rl,1.,-.375,.375,1.,0.,z,1.,control);
+        require(value.bound_valid && value.lower<=value.value && value.value<=value.upper
+            && value.upper<=0. && value.leaf_boxes==0 && value.range_evaluations==0,
+            "axis analytical enclosure missing or used rectangle quadrature");
+        const auto estimate=finite_ring_potential_estimate(rl,1.,-.375,.375,1.,0.,z,1.);
+        require(value.lower<=estimate.value && estimate.value<=value.upper,
+            "legacy stable axis estimate escaped analytic interval");
+        if(z==0.)require(value.status==RingIntervalStatus::Bounded,
+            "well-conditioned axis case failed explicit internal target");
+        if(z==1.e6)require(value.status==RingIntervalStatus::PrecisionLimit,
+            "far-axis arithmetic cancellation silently accepted");
+        std::cout<<"RZ_AXIS_ENCLOSURE rl="<<rl<<" z="<<z<<" lower="<<value.lower
+            <<" upper="<<value.upper<<" error="<<value.absolute_error
+            <<" status="<<static_cast<int>(value.status)<<'\n';
+    }
+    auto tight=control;tight.relative_target=0.;
+    const auto failed=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,0.,0.,1.,tight);
+    require(failed.bound_valid && failed.status==RingIntervalStatus::PrecisionLimit
+        && failed.absolute_error>0.,"axis zero target acquired hidden floor");
+    const auto huge=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,0.,
+        std::numeric_limits<double>::max(),1.,control);
+    require(!huge.bound_valid && huge.status==RingIntervalStatus::PrecisionLimit,
+        "unrepresentable axis arithmetic silently accepted");
+    std::cout<<"RZ_AXIS_ENCLOSURE_PASS production_values=gated\n";
+}
+
 void finite_ring_enclosure_contract() {
     using namespace Physical::Gravity;
     RingEnclosureControl tight{};tight.maximum_boxes=128;
@@ -821,8 +851,9 @@ void finite_ring_enclosure_contract() {
             <<" target_status=WorkLimit\n";
     }
     const auto axis=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,0.,0.,1.,tight);
-    require(!axis.bound_valid && axis.status==RingIntervalStatus::PrecisionLimit,
-        "axis analytic ledger silently replaced by rectangle quadrature");
+    require(axis.bound_valid && axis.status==RingIntervalStatus::PrecisionLimit
+        && axis.leaf_boxes==0 && axis.range_evaluations==0,
+        "axis analytic zero-target precision failure bypassed");
     auto loose=tight;loose.absolute_target=10.;
     const auto accepted=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,1.,0.,1.,loose);
     require(accepted.bound_valid && accepted.status==RingIntervalStatus::Bounded
@@ -1272,15 +1303,18 @@ void boundary_original_rhs_acceptance_contract() {
 
 int main(int argc,char** argv) {
     try {
+        if(argc>1 && std::string(argv[1])=="ring-axis-enclosure") {std::cout<<std::setprecision(17);finite_ring_axis_enclosure_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-enclosure") {std::cout<<std::setprecision(17);finite_ring_enclosure_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-k-interval") {std::cout<<std::setprecision(17);finite_ring_agm_interval_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary-acceptance") {boundary_original_rhs_acceptance_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="boundary-ledger") {boundary_error_ledger_contract();return 0;}
         std::cout<<std::setprecision(17);
         if(argc==3 && std::string(argv[1])=="ring-log-probe") {
-            const auto upper=Physical::Gravity::finite_ring_detail::logarithm_upper(std::stod(argv[2]));
-            require(std::isfinite(upper),"log probe outside finite domain");
-            std::cout<<"{\"upper\":"<<upper<<"}\n";return 0;
+            const double x=std::stod(argv[2]);
+            const auto upper=Physical::Gravity::finite_ring_detail::logarithm_upper(x);
+            const auto lower=Physical::Gravity::finite_ring_detail::logarithm_lower(x);
+            require(std::isfinite(lower)&&std::isfinite(upper),"log probe outside finite domain");
+            std::cout<<"{\"lower\":"<<lower<<",\"upper\":"<<upper<<"}\n";return 0;
         }
         if(argc>=10 && std::string(argv[1])=="ring-enclosure-probe") {
             Physical::Gravity::RingEnclosureControl control{};

@@ -349,6 +349,138 @@ ARCH_HEAVY_INLINE double logarithm_upper(double x) {
     const double ln2=log_series_upper(quotient_up(1.,3.));
     return sum_up(product_up(static_cast<double>(exponent),ln2),log_series_upper(z));
 }
+/** Lower positive atanh-series partial sum; omitted tail is positive. */
+ARCH_HEAVY_INLINE double log_series_lower(double z) {
+    if(z==0.)return 0.;
+    const double z2=positive_down(z*z);
+    double power=z,sum=0.;
+    for(int k=0;k<48;++k) {
+        sum=positive_down(sum+positive_down(power/(2*k+1.)));
+        power=positive_down(power*z2);
+    }
+    return positive_down(2.*sum);
+}
+ARCH_HEAVY_INLINE double logarithm_lower(double x) {
+    if(!(x>=1.) || !std::isfinite(x))return std::numeric_limits<double>::quiet_NaN();
+    if(x==1.)return 0.;
+    int exponent=0;
+    const double m=2*std::frexp(x,&exponent);--exponent;
+    const double z=positive_down(positive_down(m-1.)/positive_up(m+1.));
+    const double ln2=log_series_lower(positive_down(1./3.));
+    return positive_down(positive_down(static_cast<double>(exponent)*ln2)+log_series_lower(z));
+}
+struct SignedInterval {double lower=0.,upper=0.;};
+ARCH_INLINE SignedInterval interval_invalid() {
+    return {std::numeric_limits<double>::quiet_NaN(),std::numeric_limits<double>::quiet_NaN()};
+}
+ARCH_INLINE bool interval_finite(SignedInterval a) {
+    return std::isfinite(a.lower)&&std::isfinite(a.upper)&&a.lower<=a.upper;
+}
+ARCH_INLINE SignedInterval interval_sum(SignedInterval a,SignedInterval b) {
+    if(!interval_finite(a)||!interval_finite(b))return interval_invalid();
+    if(a.lower==0.&&a.upper==0.)return b;
+    if(b.lower==0.&&b.upper==0.)return a;
+    return {std::nextafter(a.lower+b.lower,-std::numeric_limits<double>::infinity()),
+            std::nextafter(a.upper+b.upper,std::numeric_limits<double>::infinity())};
+}
+ARCH_INLINE SignedInterval interval_negate(SignedInterval a) {return {-a.upper,-a.lower};}
+ARCH_INLINE SignedInterval interval_product(SignedInterval a,SignedInterval b) {
+    if(!interval_finite(a)||!interval_finite(b))return interval_invalid();
+    if((a.lower==0.&&a.upper==0.)||(b.lower==0.&&b.upper==0.))return {};
+    const double values[]{a.lower*b.lower,a.lower*b.upper,a.upper*b.lower,a.upper*b.upper};
+    double lo=values[0],hi=values[0];
+    for(double v:values) {
+        if(!std::isfinite(v))return interval_invalid();
+        lo=std::min(lo,v);hi=std::max(hi,v);
+    }
+    return {std::nextafter(lo,-std::numeric_limits<double>::infinity()),
+            std::nextafter(hi,std::numeric_limits<double>::infinity())};
+}
+ARCH_INLINE SignedInterval interval_quotient_positive(SignedInterval a,SignedInterval b) {
+    if(!interval_finite(a)||!interval_finite(b)||!(b.lower>0.))return interval_invalid();
+    const SignedInterval reciprocal{positive_down(1./b.upper),quotient_up(1.,b.lower)};
+    return interval_product(a,reciprocal);
+}
+ARCH_INLINE SignedInterval offset_interval(double a,double b) {
+    if(a==b)return {};
+    const double difference=a-b;
+    return {std::nextafter(difference,-std::numeric_limits<double>::infinity()),
+            std::nextafter(difference,std::numeric_limits<double>::infinity())};
+}
+ARCH_HEAVY_INLINE SignedInterval axis_hypot_interval(double radius,SignedInterval u) {
+    if(!interval_finite(u))return interval_invalid();
+    const double min_abs=u.lower<=0.&&u.upper>=0.?0.:
+        std::min(std::abs(u.lower),std::abs(u.upper));
+    const double max_abs=std::max(std::abs(u.lower),std::abs(u.upper));
+    return {distance_interval(radius,min_abs).lower,distance_interval(radius,max_abs).upper};
+}
+/** Continuous odd asinh via enclosed hypot and enclosed positive log. */
+ARCH_HEAVY_INLINE SignedInterval asinh_point_interval(double x) {
+    if(!std::isfinite(x))return interval_invalid();
+    if(x==0.)return {};
+    const double magnitude=std::abs(x);
+    const auto hyp=distance_interval(1.,magnitude);
+    const double lo=positive_down(magnitude+hyp.lower);
+    const double hi=sum_up(magnitude,hyp.upper);
+    // Exact asinh argument >=1; outward lower arithmetic may lie just below it.
+    SignedInterval result{logarithm_lower(std::max(1.,lo)),logarithm_upper(hi)};
+    return x<0.?interval_negate(result):result;
+}
+ARCH_HEAVY_INLINE SignedInterval asinh_interval_enclosure(double radius,SignedInterval u) {
+    if(!interval_finite(u)||!(radius>0.))return interval_invalid();
+    const auto q=interval_quotient_positive(u,{radius,radius});
+    if(!interval_finite(q))return interval_invalid();
+    const auto lo=asinh_point_interval(q.lower),hi=asinh_point_interval(q.upper);
+    return {lo.lower,hi.upper};
+}
+/** Same factored axis section as the existing analytic estimate. */
+ARCH_HEAVY_INLINE SignedInterval axis_section_enclosure(double rl,double rh,SignedInterval u) {
+    const auto delta=offset_interval(rh,rl);
+    const auto sum=interval_sum({rh,rh},{rl,rl});
+    const auto denominator=interval_sum(axis_hypot_interval(rh,u),axis_hypot_interval(rl,u));
+    return interval_quotient_positive(interval_product(delta,sum),denominator);
+}
+ARCH_HEAVY_INLINE SignedInterval axis_radial_term_enclosure(
+    double radius,SignedInterval lower,SignedInterval upper) {
+    if(radius==0.)return {}; // continuous r² asinh(u/r) limit.
+    const auto difference=interval_sum(asinh_interval_enclosure(radius,upper),
+        interval_negate(asinh_interval_enclosure(radius,lower)));
+    return interval_product(interval_product({radius,radius},{radius,radius}),difference);
+}
+/** Analytic axis potential, same four terms as axis(), with arithmetic ledger.
+ * This is the R_o=0 branch, not a small-radius numerical switch.
+ */
+ARCH_HEAVY_INLINE RingPotentialEnclosure axis_potential_enclosure(
+    double rl,double rh,double zl,double zh,double density,double zo,double G,
+    const RingEnclosureControl& control) {
+    RingPotentialEnclosure result{};
+    const auto lower=offset_interval(zl,zo),upper=offset_interval(zh,zo);
+    SignedInterval total=interval_sum(
+        interval_product(upper,axis_section_enclosure(rl,rh,upper)),
+        interval_negate(interval_product(lower,axis_section_enclosure(rl,rh,lower))));
+    total=interval_sum(total,axis_radial_term_enclosure(rh,lower,upper));
+    total=interval_sum(total,interval_negate(axis_radial_term_enclosure(rl,lower,upper)));
+    const SignedInterval pi_range{positive_down(arch::constants::math::pi),
+                                  positive_up(arch::constants::math::pi)};
+    const auto factor=interval_product(interval_product(pi_range,{G,G}),{density,density});
+    auto potential=interval_negate(interval_product(factor,total));
+    // Nonnegative source has nonpositive potential. This exact sign tightens
+    // arithmetic overestimation, never clips physical field values.
+    if(interval_finite(potential))potential.upper=std::min(0.,potential.upper);
+    if(!interval_finite(potential)) {
+        result.status=RingIntervalStatus::PrecisionLimit;return result;
+    }
+    result.lower=potential.lower;result.upper=potential.upper;
+    result.value=result.lower+.5*(result.upper-result.lower);
+    result.absolute_error=positive_up(std::max(result.value-result.lower,result.upper-result.value));
+    result.bound_valid=std::isfinite(result.value)&&std::isfinite(result.absolute_error);
+    if(!result.bound_valid) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
+    const double target=std::max(control.absolute_target,
+        positive_down(control.relative_target*std::abs(result.value)));
+    result.status=result.absolute_error<=target?RingIntervalStatus::Bounded:
+        RingIntervalStatus::PrecisionLimit;
+    return result;
+}
 struct RingBox {
     double rl,rh,zl,zh;
     PositiveInterval integral{};
@@ -432,9 +564,7 @@ inline RingPotentialEnclosure finite_ring_potential_enclosure(
         result.lower=result.upper=result.value=result.absolute_error=0.;
         result.status=RingIntervalStatus::Bounded;result.bound_valid=true;return result;
     }
-    // Axis belongs to the existing analytic branch. Its certified arithmetic
-    // ledger is pending; do not replace it by rectangle quadrature.
-    if(ro==0.) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
+    if(ro==0.)return axis_potential_enclosure(rl,rh,zl,zh,density,zo,G,control);
     const double factor_lo=positive_down(positive_down(4.*G)*density);
     const double factor_hi=product_up(product_up(4.,G),density);
     if(!std::isfinite(factor_hi)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
