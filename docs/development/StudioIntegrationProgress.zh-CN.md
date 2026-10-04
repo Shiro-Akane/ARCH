@@ -3341,3 +3341,13 @@ dry-run regeneration不能称待重编译，dependenciesComplete仍false。
 实际终点均未达各自tmax，不能称正式终点/长跑或二维RZ验收。
 见CurrentCoreCpuShortGates-20261005.zh-CN.md及处理后summary；
 JENS未变9+9 receipt复用，原始H5/日志继续留本机。
+
+### 当前 CPU 非均匀 JeansWave 原子组（2026-10-05）
+
+既有Campaign.full完整32条记录PASS；24演化/4拒绝/3阶数/1续算身份。
+时间Euler/RK2/RK3原门槛、64格误差/能量、动态AMR64/128两档与14dataset续算通过。
+保留32格粗步Euler约10.3%能量误差，原时间阶探针不称能量合格；
+密度末档阶1.7785是原有限幅波形诊断，不冒充P3势/面力阶数。
+native多维仍仅两步；未重复外围Box/径向或均匀JENS短包。
+binary/列明输入前后不变；见JeansExistingFullCpuGates-20261005报告及处理后summary。
+RZ完整科学、统一CUDA、正式benchmark/批准长跑仍未完成。
