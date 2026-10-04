@@ -793,18 +793,21 @@ void finite_ring_moment_contract() {
 void finite_ring_axis_enclosure_contract() {
     using namespace Physical::Gravity;
     RingEnclosureControl control{};control.relative_target=1.e-10;
-    for(double rl:{0.,.5})for(double z:{0.,.375,2.,100.,-100.,1.e6}) {
+    for(double rl:{0.,.5})for(double z:{0.,.375,2.,100.,-100.,1.e6,-1.e6,1.e12,-1.e12,1.e20,-1.e20}) {
         const auto value=finite_ring_potential_enclosure(rl,1.,-.375,.375,1.,0.,z,1.,control);
         require(value.bound_valid && value.lower<=value.value && value.value<=value.upper
             && value.upper<=0. && value.leaf_boxes==0 && value.range_evaluations==0,
             "axis analytical enclosure missing or used rectangle quadrature");
         const auto estimate=finite_ring_potential_estimate(rl,1.,-.375,.375,1.,0.,z,1.);
-        require(value.lower<=estimate.value && estimate.value<=value.upper,
-            "legacy stable axis estimate escaped analytic interval");
+        // The estimate is not an independent truth value: its rounding can
+        // exceed the tighter certified interval in far cancellation regimes.
+        require(value.lower<=estimate.value+estimate.estimated_error
+            && estimate.value-estimate.estimated_error<=value.upper,
+            "legacy estimate diagnostic band is disjoint from certified interval");
         if(z==0.)require(value.status==RingIntervalStatus::Bounded,
             "well-conditioned axis case failed explicit internal target");
-        if(z==1.e6)require(value.status==RingIntervalStatus::PrecisionLimit,
-            "far-axis arithmetic cancellation silently accepted");
+        if(std::abs(z)>=1.e6)require(value.status==RingIntervalStatus::Bounded,
+            "far-axis derivative enclosure failed explicit internal target");
         std::cout<<"RZ_AXIS_ENCLOSURE rl="<<rl<<" z="<<z<<" lower="<<value.lower
             <<" upper="<<value.upper<<" error="<<value.absolute_error
             <<" status="<<static_cast<int>(value.status)<<'\n';

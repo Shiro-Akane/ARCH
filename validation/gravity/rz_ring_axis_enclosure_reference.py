@@ -56,7 +56,8 @@ def main():
             assert D.from_float(measured["lower"]) <= exact <= D.from_float(measured["upper"])
         logs.append({"input_hex": x.hex(), **measured})
     cases = [(rl, 1., -.375, .375, 1., zo)
-             for rl in (0., .5) for zo in (0., .375, 2., 100., -100., 1.e6)]
+             for rl in (0., .5) for zo in (0., .375, 2., 100., -100., 1.e6, -1.e6, 1.e12, -1.e12, 1.e20, -1.e20)]
+    cases += [(rl, 1., -.23, .71, 1., zo) for rl in (0., .5) for zo in (1.e6, -1.e6, 1.e12, -1.e12)]
     # Exact adjacent binary64 thin source: cancellation must stay visible.
     cases.append((1., math.nextafter(1., math.inf), -.375, .375, 1., 2.))
     rows = []
@@ -69,7 +70,7 @@ def main():
         for v in refs:
             assert low <= v <= high, (values, measured, str(v))
         assert measured["boxes"] == 0 and measured["range_evaluations"] == 0
-        if zo == 1.e6 or rl == 1.:
+        if rl == 1.:
             assert measured["status"] == 3, ("precision limitation hidden", values, measured)
         else:
             assert measured["status"] == 0, ("well-conditioned target rejected", values, measured)

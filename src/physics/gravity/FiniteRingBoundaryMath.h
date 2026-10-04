@@ -447,6 +447,38 @@ ARCH_HEAVY_INLINE SignedInterval axis_radial_term_enclosure(
         interval_negate(asinh_interval_enclosure(radius,lower)));
     return interval_product(interval_product({radius,radius},{radius,radius}),difference);
 }
+/** Independent axis enclosure after exact radial integration.
+ * f(u)=sqrt(rh²+u²)-sqrt(rl²+u²)=integral_rl^rh r/hypot(r,u) dr.
+ * |f''(u)| <= 2 integral r/(r²+u²)^(3/2) dr <= (rh²-rl²)/dmin³.
+ * The midpoint integral error is therefore <= dz³*(rh²-rl²)/(24*dmin³).
+ * This is a proved derivative remainder, not a difference between quadratures.
+ * It tightens the same axis point potential; no near-axis switch or new force.
+ */
+ARCH_HEAVY_INLINE SignedInterval axis_midpoint_potential_enclosure(
+    double rl,double rh,double zl,double zh,double density,double zo,double G) {
+    const auto dz=offset_interval(zh,zl);
+    const auto radial_square=interval_product(offset_interval(rh,rl),
+        interval_sum({rh,rh},{rl,rl}));
+    const auto offsets=absolute_offset_range(zl,zh,zo);
+    const double distance_lower=distance_interval(rl,offsets.lower).lower;
+    if(!(distance_lower>0.)||!std::isfinite(distance_lower))return interval_invalid();
+    // Enclose the exact geometric midpoint, including offset and width rounding.
+    const auto midpoint=interval_sum(offset_interval(zl,zo),interval_product(dz,{.5,.5}));
+    const auto midpoint_integral=interval_product(dz,axis_section_enclosure(rl,rh,midpoint));
+    // Factored remainder avoids cubing large distances or tiny source widths.
+    const double ratio=quotient_up(dz.upper,distance_lower);
+    const double scale=quotient_up(product_up(dz.upper,radial_square.upper),distance_lower);
+    const double error=quotient_up(product_up(scale,product_up(ratio,ratio)),24.);
+    if(!interval_finite(midpoint_integral)||!std::isfinite(error))return interval_invalid();
+    auto integral=interval_sum(midpoint_integral,{-error,error});
+    if(!interval_finite(integral))return interval_invalid();
+    integral.lower=std::max(0.,integral.lower); // Exact nonnegative Newton integrand.
+    const SignedInterval pi_range{positive_down(arch::constants::math::pi),
+                                  positive_up(arch::constants::math::pi)};
+    const auto factor=interval_product(interval_product(
+        interval_product({2.,2.},pi_range),{G,G}),{density,density});
+    return interval_negate(interval_product(factor,integral));
+}
 /** Analytic axis potential, same four terms as axis(), with arithmetic ledger.
  * This is the R_o=0 branch, not a small-radius numerical switch.
  */
@@ -464,6 +496,14 @@ ARCH_HEAVY_INLINE RingPotentialEnclosure axis_potential_enclosure(
                                   positive_up(arch::constants::math::pi)};
     const auto factor=interval_product(interval_product(pi_range,{G,G}),{density,density});
     auto potential=interval_negate(interval_product(factor,total));
+    const auto independent=axis_midpoint_potential_enclosure(rl,rh,zl,zh,density,zo,G);
+    if(interval_finite(independent)) {
+        if(interval_finite(potential)) {
+            potential.lower=std::max(potential.lower,independent.lower);
+            potential.upper=std::min(potential.upper,independent.upper);
+            // Disjoint certified intervals are an error, not a successful repair.
+        } else potential=independent;
+    }
     // Nonnegative source has nonpositive potential. This exact sign tightens
     // arithmetic overestimation, never clips physical field values.
     if(interval_finite(potential))potential.upper=std::min(0.,potential.upper);
