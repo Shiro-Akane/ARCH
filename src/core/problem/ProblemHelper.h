@@ -92,7 +92,11 @@ IsentropicState GetIsentropicStateAtPressureFactor(
 
 namespace detail {
 
-/** @brief Internal bridge from a case Init callback to AMR state initialization. */
+/** Internal bridge from a physical Init callback to AMR state initialization.
+ * Existing charts retain point conversion and their original repair accounting.
+ * Explicit RZ publishes V/W-averaged interiors transactionally, with no repair;
+ * ghosts remain unavailable until Driver's physical BC/committed exchange.
+ */
 void PopulateState(amr::AMRControl& amr_ctrl, const SimConfig& config,
                    const SpeciesManager& specs,
                    ProblemInitializationContext context,

@@ -81,9 +81,9 @@ FluidVector InitialConservedState(const PrimitiveData &data, const Eos &eos,
  * rho/mom_r/mom_z/E/rhoX are V averages; m_phi is the r*dV average of rho*u_phi.
  * The returned view owns no second evolved J/ell state. No live state is changed.
  *
- * This strict path refuses repaired samples and unresolved representative
- * closures. PopulateState's legacy midpoint/repair/ghost publication is not yet
- * switched: its whole repair ledger must migrate with this conversion.
+ * The RZ PopulateState interior transaction uses this strict conversion:
+ * repaired samples/unresolved closures fail without adding heat or changing J.
+ * Ghost publication remains the Driver boundary/exchange owner's responsibility.
  */
 struct InitialCellState {
     FluidVector conserved{};

@@ -513,3 +513,15 @@ production gate保持。
 见RZCellInitialConversionNode-20261005.zh-CN.md。
 RZ-INIT-W-01真实PopulateState仍midpoint，RZ-INIT-REPAIR-01须同批迁移账本/ghost；
 新candidate尚未接入，不宣称C完成，production gate保持。
+
+### 8.9 C 真实 RZ 初始化与 Driver ghost 接线证据（2026-10-05）
+
+RZ PopulateState已经实际调用V/W单元转换并事务交付；RootState绑定explicit
+geometry并借用原BC，真实Runtime topology/exchange在发布前填好块间ghost。
+512-cell旋转J独立积分相对误差3.5132429098631294e-17，256 ghost donor/sign通过；
+不可解析/repair-required/错误species/数组候选不部分发布。
+注册Gaussian单元平均由独立erf积分验证，order3.9855/3.9961，原至少1.8不变。
+最终CPU ELF7c4d8d3c...的冻结JENS9+9和7项API回归通过。
+见RZPopulationAngularIntegrationNode-20261005.zh-CN.md。
+RZ-INIT-W-01关闭，RZ-INIT-REPAIR-01仅初始化范围关闭；
+运行期repair/checkpoint ledger、axis/viscosity与完整C/D尚未签收，production gate保持。
