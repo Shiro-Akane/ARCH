@@ -3230,3 +3230,11 @@ Plotfile原值/FP64/未知身份/首扫描成本与wheel未验证分开表达，
 524288cells gzip文件约减少97.6%，首次overview约慢26.2%，仍全扫描；不改变生产writer策略。
 仅验证工具增加可选storage与处理后报告，不Build/simulation/334基线重复/push/tag。
 见PlotfileStorageLayoutCost报告/Summary；真实mixed-AMR大文件与科学/CUDA/O9仍待验证。
+
+## 2026-10-04 当前 clean tracked 架构复核
+
+73ae158c 完整 git archive 下 audit 两项 FAIL、106单元105PASS/1FAIL，
+仍为RuntimeParams旧token与CUDA CompositionInput精确tuple。开发目录79命中含ignored净CI源码副本；
+首轮完整日志保留，未删本地证据或放宽规则。新版required CI不能因Studio单job通过声称全绿。
+限定迁移授权问题已提出，未改规则；见O7ArchitectureCurrentAudit报告/Summary。
+无Build/simulation/push/tag；联合目标继续，科学待决保持。
