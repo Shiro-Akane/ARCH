@@ -801,6 +801,94 @@ void test_rz_scheduled_hydro(int direction,double inner) {
 }
 
 
+// Isolated scientific diagnostic: the default compatibility suite cannot
+// silently turn a failed RZ spatial gate into a production capability.
+int audit_rz_rotating_equilibrium()
+{
+    SpeciesManager species;species.add_species("gas",1.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    bool passed=true;
+    for(double inner:{0.,1.}) {
+        long double previous_l1=0.,previous_rms=0.,previous_max=0.,previous_closure=0.;
+        for(int roots:{1,2,4,8}) {
+            long double weighted_abs=0.,weighted_square=0.,volume_sum=0.,max_error=0.;
+            long double closure_max=0.,J=0.,analytic_J=0.,source_max=0.;
+            double peak_radius=0.;
+            for(int block=0;block<roots;++block) {
+                const double lower=inner+static_cast<double>(block)/roots;
+                const double upper=inner+static_cast<double>(block+1)/roots;
+                Grid g(amr::MAX_NG,lower,upper,-.125,.125,0.,1.);
+                g.dim=2;g.geometry="cylindrical";g.InitializeTopology(rz);
+                FluidState state;state.Preallocate(g.GetTotalSize());state.InitSpecies(1);
+                for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
+                    double l=g.GetFacePosL(i),h=g.GetFacePosR(i),sign=1.;
+                    if(h<=0.) {const double t=l;l=-h;h=-t;sign=-1.;}
+                    const double r2mean=.5*(h*h+l*l);
+                    const double Pmean=5.+.5*r2mean; // rho=Omega=1.
+                    const double m=sign*GridMetrics::Rz::AngularReconstructionRadius(l,h);
+                    // E is the native volume average, not representative KE.
+                    const double E=Pmean/.4+.5*r2mean;
+                    const int c=g.GetIndex(i,j,0);
+                    state.set(c,{1.,0.,0.,m,E});state.X(0,c)=1.;
+                }
+                const int size=g.GetTotalSize();
+                std::vector<FluidVector> delta(size),flux(size);
+                std::vector<double> ds(size),sf(size);
+                TimeIntegration::evaluate_all_dimensions<
+                    FluxHLLC<MusclReconstruction<McLimiter>>>(
+                    nullptr,-1,state,eos,g,1.,delta,ds,flux,sf,nullptr,0.,1.,true,rz);
+                const long double pi=std::acos(-1.L);
+                for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                    const int c=g.GetIndex(i,j,0);
+                    const long double l=g.GetFacePosL(i),h=g.GetFacePosR(i);
+                    const long double V=pi*(h*h-l*l)*g.dx2;
+                    const long double W=2.L*pi*(h*h*h-l*l*l)*g.dx2/3.L;
+                    const long double Pmean=5.L+(h*h+l*l)/4.L;
+                    const long double err=std::abs(delta[c].mom_u); // exact equilibrium rhs=0.
+                    weighted_abs+=V*err;weighted_square+=V*err*err;volume_sum+=V;
+                    if(err>max_error) {max_error=err;peak_radius=g.GetCellCenterX(i);}
+                    const double X=1.;
+                    const double P=eos.get_pressure(state.get(c),&X);
+                    if(!std::isfinite(P))throw std::runtime_error("equilibrium diagnostic EOS input invalid");
+                    FluidVector source{};
+                    TimeIntegration::add_rz_geometric_source_cell(
+                        state.get(c),&X,eos,static_cast<double>(l),
+                        static_cast<double>(h),1.,source);
+                    const long double exact_pressure_div=2.L*
+                        (h*(5.L+h*h/2.L)-l*(5.L+l*l/2.L))/(h*h-l*l);
+                    source_max=std::max(source_max,
+                        std::abs(static_cast<long double>(source.mom_u)-exact_pressure_div));
+
+                    closure_max=std::max(closure_max,
+                        std::abs(static_cast<long double>(P)-Pmean));
+                    J+=state.mom_w[c]*W;
+                    analytic_J+=pi*g.dx2*(h*h*h*h-l*l*l*l)/2.L;
+                }
+            }
+            const long double L1=weighted_abs/volume_sum,rms=std::sqrt(weighted_square/volume_sum);
+            const double p1=roots==1?0.:static_cast<double>(std::log2(previous_l1/L1));
+            const double p2=roots==1?0.:static_cast<double>(std::log2(previous_rms/rms));
+            const double pinf=roots==1?0.:static_cast<double>(std::log2(previous_max/max_error));
+            const double pc=roots==1?0.:static_cast<double>(std::log2(previous_closure/closure_max));
+            const long double jerr=std::abs(J-analytic_J)/std::abs(analytic_J);
+            if(!std::isfinite(static_cast<double>(L1))||jerr>1.e-12L)
+                throw std::runtime_error("RZ equilibrium input or analytic J is invalid");
+            // Do not choose a favorable norm to close an ambiguous full gate.
+            if(roots==8 && (p1<1.8||p2<1.8||pinf<1.8||pc<1.8))passed=false;
+            std::cout<<"RZ_EQUILIBRIUM inner="<<inner<<" cells="<<roots*amr::BLOCK_NX
+                <<" L1="<<static_cast<double>(L1)<<" rms="<<static_cast<double>(rms)
+                <<" Linf="<<static_cast<double>(max_error)<<" closure="<<static_cast<double>(closure_max)
+                <<" source_exact_face_residual="<<static_cast<double>(source_max)
+                <<" peak_radius="<<peak_radius<<" p_L1="<<p1<<" p_rms="<<p2<<" p_Linf="<<pinf<<" p_closure="<<pc
+                <<" J_input_error="<<static_cast<double>(jerr)<<'\n';
+            previous_l1=L1;previous_rms=rms;previous_max=max_error;previous_closure=closure_max;
+        }
+    }
+    std::cout<<"RZ_EQUILIBRIUM_SPATIAL_GATE="<<(passed?"PASS":"NOT_CLEARED")<<'\n';
+    return passed?0:2;
+}
+
 void test_rz_native_coordinates()
 {
     using GridMetrics::GeometrySemantics;
@@ -844,8 +932,10 @@ void test_rz_native_coordinates()
     }
     std::cout<<"RZ_NATIVE_COORDINATES physical/native/axes/domain/legacy PASS\n";
 }
-int main()
+int main(int argc,char** argv)
 {
+    if(argc==2 && std::string(argv[1])=="rz-equilibrium-audit")
+        return audit_rz_rotating_equilibrium();
     test_rz_angular_measures();
     test_rz_torque_divergence_budget();
     test_rz_native_coordinates();
