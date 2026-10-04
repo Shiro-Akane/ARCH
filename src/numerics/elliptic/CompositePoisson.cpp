@@ -340,6 +340,7 @@ void CompositePoisson::build_faces() {
                 f.coefficients.push_back(inverse);
                 f.boundary_coefficient=0.;
             }
+            f.construction=FaceStencilConstruction::EllipticRecovery;
             recovered[face_index]=1; changed=true;
         }
         if(changed) continue;
@@ -426,6 +427,7 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
         if (f.samples[i]==anchor_cell) anchor=i; else sum+=f.coefficients[i];
     }
     f.coefficients[anchor]=-sum-f.boundary_coefficient;
+    f.construction=FaceStencilConstruction::PolynomialFit;
 }
 
 /** Fit a unique curved-face potential for both sides of the mass-flux work. */

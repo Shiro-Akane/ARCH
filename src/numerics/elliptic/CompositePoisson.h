@@ -44,8 +44,11 @@ struct CompositeCell {
 struct CompositeCellHash {
     std::size_t operator()(const CompositeCell& c) const noexcept;
 };
+// Records the actual final construction path; never inferred from coefficient values.
+enum class FaceStencilConstruction { TwoPoint, PolynomialFit, EllipticRecovery };
 struct CompositeFace {
     int left = 0, right = 0, axis = 0;
+    FaceStencilConstruction construction=FaceStencilConstruction::TwoPoint;
     double area = 0.;
     std::array<double,3> fragment_width{}; // Tangential subface widths in native coordinates.
     int boundary_side = -1; // Interior: -1; physical face: 2*axis+side.

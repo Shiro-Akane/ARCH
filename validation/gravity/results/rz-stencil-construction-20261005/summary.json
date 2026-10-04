@@ -1,0 +1,582 @@
+{
+  "status": "EXACT_REFERENCE_RECONSTRUCTION_PASS",
+  "cases": 24,
+  "faces": 1416,
+  "coefficientTerms": 8268,
+  "rows": [
+    {
+      "mixed": false,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "faces": 36,
+      "twoPoint": 24,
+      "polynomialFit": 12,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 6.531042676129014e-15,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 8.29682473966998e-15,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 8.049116928532385e-16
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "faces": 36,
+      "twoPoint": 24,
+      "polynomialFit": 12,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 1.3957635606539756e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 1.573011458373602e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 1.5936326332640267e-15
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "faces": 36,
+      "twoPoint": 24,
+      "polynomialFit": 12,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 1.3062085352258028e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 1.2887634985871783e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 1.1726730697603216e-15
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "faces": 36,
+      "twoPoint": 24,
+      "polynomialFit": 12,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 1.648531775222041e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 1.5746747647357186e-14,
+      "maxRootCoordinateDiscrepancy": 0.0,
+      "maxStoredConstantConstraintDefect": 1.339206523454095e-15
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "faces": 40,
+      "twoPoint": 24,
+      "polynomialFit": 16,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 7.67981203907299e-15,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 8.29682473966998e-15,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 8.187894806610529e-16
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "faces": 40,
+      "twoPoint": 24,
+      "polynomialFit": 16,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 2.2929794547163837e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 2.6533207477866423e-14,
+      "maxRootCoordinateDiscrepancy": 1.1102230246251565e-16,
+      "maxStoredConstantConstraintDefect": 1.6792123247455493e-15
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "faces": 40,
+      "twoPoint": 24,
+      "polynomialFit": 16,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 1.3062085352258028e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 1.2887634985871783e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 1.1726730697603216e-15
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "faces": 40,
+      "twoPoint": 24,
+      "polynomialFit": 16,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 1.648531775222041e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 1.5746747647357186e-14,
+      "maxRootCoordinateDiscrepancy": 0.0,
+      "maxStoredConstantConstraintDefect": 1.339206523454095e-15
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "faces": 40,
+      "twoPoint": 24,
+      "polynomialFit": 16,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 6.531042676129014e-15,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 8.29682473966998e-15,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 8.326672684688674e-16
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "faces": 40,
+      "twoPoint": 24,
+      "polynomialFit": 16,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 1.6575878855085104e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 1.587506644146492e-14,
+      "maxRootCoordinateDiscrepancy": 8.326672684688674e-17,
+      "maxStoredConstantConstraintDefect": 1.6688039838896884e-15
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "faces": 40,
+      "twoPoint": 24,
+      "polynomialFit": 16,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 1.3062085352258028e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 1.2887634985871783e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 1.7381929229287607e-15
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "faces": 40,
+      "twoPoint": 24,
+      "polynomialFit": 16,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 1.648531775222041e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 1.5746747647357186e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 1.4363510381087963e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "faces": 64,
+      "twoPoint": 36,
+      "polynomialFit": 28,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 2.3225923091597755e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 3.1836708243792855e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 1.5959455978986625e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "faces": 64,
+      "twoPoint": 36,
+      "polynomialFit": 28,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 5.0664379024708344e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 6.044106028526686e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 2.4702462297909733e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "faces": 88,
+      "twoPoint": 62,
+      "polynomialFit": 26,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 3.09782107139682e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 3.2455350923694645e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 2.1337098754514727e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "faces": 88,
+      "twoPoint": 62,
+      "polynomialFit": 26,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 2.016751270985903e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 2.3545776022273287e-14,
+      "maxRootCoordinateDiscrepancy": 0.0,
+      "maxStoredConstantConstraintDefect": 3.344546861683284e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "faces": 68,
+      "twoPoint": 36,
+      "polynomialFit": 32,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 2.6778636770398256e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 3.1836708243792855e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 1.5959455978986625e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "faces": 68,
+      "twoPoint": 36,
+      "polynomialFit": 32,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 5.458860474087345e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 6.044106028526686e-14,
+      "maxRootCoordinateDiscrepancy": 1.1102230246251565e-16,
+      "maxStoredConstantConstraintDefect": 1.7486012637846216e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "faces": 94,
+      "twoPoint": 62,
+      "polynomialFit": 32,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 3.09782107139682e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 3.2455350923694645e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 2.7998436902265667e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "faces": 94,
+      "twoPoint": 62,
+      "polynomialFit": 32,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 2.2465051435746982e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 2.3545776022273287e-14,
+      "maxRootCoordinateDiscrepancy": 0.0,
+      "maxStoredConstantConstraintDefect": 3.344546861683284e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "faces": 68,
+      "twoPoint": 36,
+      "polynomialFit": 32,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 2.3225923091597755e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 3.1836708243792855e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 1.519617764955683e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "faces": 68,
+      "twoPoint": 36,
+      "polynomialFit": 32,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 4.000623798830684e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 6.044106028526686e-14,
+      "maxRootCoordinateDiscrepancy": 8.326672684688674e-17,
+      "maxStoredConstantConstraintDefect": 1.9810542095655137e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "faces": 94,
+      "twoPoint": 62,
+      "polynomialFit": 32,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 3.09782107139682e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 3.2455350923694645e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 2.7998436902265667e-15
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "faces": 94,
+      "twoPoint": 62,
+      "polynomialFit": 32,
+      "ellipticRecovery": 0,
+      "maxAbsoluteCoefficientDiscrepancy": 2.016751270985903e-14,
+      "maxAbsoluteBoundaryCoefficientDiscrepancy": 2.3545776022273287e-14,
+      "maxRootCoordinateDiscrepancy": 5.551115123125783e-17,
+      "maxStoredConstantConstraintDefect": 3.344546861683284e-15
+    }
+  ],
+  "probeSha256": "c885549af02c0cb9a63234445f0dd560b5e48906ad211c61f10798cd0b330ca4",
+  "scope": "Actual final stencil path; exact root-coordinate Gram and rational solve; scalar discrepancies only",
+  "limitations": [
+    "Not a production outward coefficient certificate or error bound for arbitrary mesh",
+    "No observed error used to select a tolerance",
+    "Recovery checked as two-point, never claimed quadratic",
+    "No physical RHS/Phi/force acceptance, simulation, CUDA or long-run claim",
+    "Actual recovery count is zero in this 24-case fixture: branch is not independently exercised here"
+  ],
+  "baselineCommit": "ad6fe1f1b9af53f2a284c9d32f22cb79b90e4abe",
+  "sourceSha256": {
+    "src/numerics/elliptic/CompositePoisson.h": "670079980fa84eb1114ed53bda3825a3d9aa37a92edcc98d2e09870f34b5ca6c",
+    "src/numerics/elliptic/CompositePoisson.cpp": "25052803081d4f69698c485d7ffc4e9c25194eb2207a2148b73483eb17a8dff0",
+    "tests/host/gravity/test_composite_poisson.cpp": "cb1025799da6e95711494930dd55bf3bf961d09bd7e273c1e84ff081a30ca5f6",
+    "validation/gravity/rz_stencil_construction_reference.py": "289e2bdbdcbd4198bf8448da5daace23ad71e6bbbed549995e38abd5206a2241"
+  },
+  "cpuArchSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "checks": {
+    "affectedCoreCtest": "6/6 PASS final executable; 11.47 seconds",
+    "architectureAudit": "PASS",
+    "diffCheck": "PASS",
+    "build": "Original CPU Release tree incremental PASS; parallel 28; guard not stopped; swap growth 0; peak RSS 2566364 KiB",
+    "frozenJeans": "New binary 9 short + 9 actual restart PASS; guard not stopped; 52.138 seconds; peak RSS 817944 KiB; swap growth 0"
+  },
+  "pathCounts": {
+    "twoPoint": 876,
+    "polynomialFit": 540,
+    "ellipticRecovery": 0
+  },
+  "frozenJeans": {
+    "status": "PASS",
+    "contract": "uniform-lifecycle-1",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+    "contractSha256": "815c6369f5a33c3bd549dc86c43b876f542f6af00c78a2978155962d8a9eb1fe",
+    "inputSha256": {
+      "jeans-uniform-1d-active/input.par": "f843758b6d805a59151c39dc267eee48014fe048147017541809c892f022260c",
+      "jeans-uniform-1d-active-restart/input.par": "99e5ee8ef390eace61e4d0c8654207b64e10594dcc94e68b0907b8a768fa9cb2",
+      "jeans-uniform-1d-disabled/input.par": "92e0588ad150c526b324ff2e99a8f4b97c57ec3bd3d2b9d3a6d93e2d6d1e0129",
+      "jeans-uniform-1d-disabled-restart/input.par": "1d6b4c3558d7720510c4d3baee409b81b3bc17b318976d4981aae8eb574e3c30",
+      "jeans-uniform-1d-output_only/input.par": "64197fcfea7f318e379834888b10d0d9d4f3c3eb0873fbf9dcdea4ec3192efd1",
+      "jeans-uniform-1d-output_only-restart/input.par": "7c9322efa1f55cdcaff35420f331152b03b73e601beb9a39316bc406b2019806",
+      "jeans-uniform-2d-active/input.par": "9f119c3cfc68e5351a9ed1a4e65ddf5462f09134ddb59a8e047007aef495280b",
+      "jeans-uniform-2d-active-restart/input.par": "82d43a87ce6b0369ca50e183a6f3b2a05fb0cce0393edd8212f9ef11a7ceee79",
+      "jeans-uniform-2d-disabled/input.par": "eeda96d05ee45353396232b876e7e8ab4f292258214c47f8ac20ea36c5f2dfae",
+      "jeans-uniform-2d-disabled-restart/input.par": "8687e3c5def675e8057a1eb9368f8302cecfad70a7862110847dd9f254c6f8f6",
+      "jeans-uniform-2d-output_only/input.par": "31c55e08bf3f5968db18398310177f47bc0ea66298f0428a57cee2fad421173a",
+      "jeans-uniform-2d-output_only-restart/input.par": "fd64343b7894d674ad318a5aa4ac12eb7c34d6c4809a8b96fe9e91dfb27a21cd",
+      "jeans-uniform-3d-active/input.par": "c6a8c3765dc8cc7a0cc8f50395e38f2e87304efea6efccd12b5e4bcb4cc8fc6c",
+      "jeans-uniform-3d-active-restart/input.par": "b7915ea57dae6528d79c6ce8b49bcb282ecf693d79e9cb93c28528bcc140b5d8",
+      "jeans-uniform-3d-disabled/input.par": "5c8e8b8cb79e6c8019c9af9d2ad6b3341e1b92b03afdf32139c7be1d4483ea66",
+      "jeans-uniform-3d-disabled-restart/input.par": "f67933480b5c597b5830bd686e56e254a9256ccea1ee9199479dffffb0146bc1",
+      "jeans-uniform-3d-output_only/input.par": "6b3019ec7c2ac5559e8155f18be33e6336b0e629c25fc9e5df9cc1866d831cd5",
+      "jeans-uniform-3d-output_only-restart/input.par": "68736d5f9cc1cb1601856e6e44442773382416db7c354a08ddb2ef138dadcc49"
+    },
+    "cases": [
+      {
+        "name": "jeans-uniform-1d-active",
+        "dimension": 1,
+        "lane": "active",
+        "cells": 128,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 29,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-1d-disabled",
+        "dimension": 1,
+        "lane": "disabled",
+        "cells": 64,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null
+      },
+      {
+        "name": "jeans-uniform-1d-output_only",
+        "dimension": 1,
+        "lane": "output_only",
+        "cells": 64,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-2d-active",
+        "dimension": 2,
+        "lane": "active",
+        "cells": 4096,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 218,
+        "stage_solves": 162,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 55,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-2d-disabled",
+        "dimension": 2,
+        "lane": "disabled",
+        "cells": 1024,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null
+      },
+      {
+        "name": "jeans-uniform-2d-output_only",
+        "dimension": 2,
+        "lane": "output_only",
+        "cells": 1024,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-3d-active",
+        "dimension": 3,
+        "lane": "active",
+        "cells": 131072,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 330,
+        "stage_solves": 246,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 83,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-3d-disabled",
+        "dimension": 3,
+        "lane": "disabled",
+        "cells": 16384,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null
+      },
+      {
+        "name": "jeans-uniform-3d-output_only",
+        "dimension": 3,
+        "lane": "output_only",
+        "cells": 16384,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17
+      }
+    ]
+  },
+  "remainingDependencies": [
+    "Outward ideal coefficient/fit/LU construction certificate",
+    "Actual EllipticRecovery coverage on a naturally triggering hierarchy",
+    "Source/observer coordinate difference and physical operator/RHS composition",
+    "Independent Phi/force, axis/viscosity findings, RZ A-B-C-D full consumer science and then CUDA"
+  ]
+}

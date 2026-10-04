@@ -992,6 +992,44 @@ void finite_ring_parent_probe() {
     std::cout<<"]}\n";
 }
 
+/** Final fitted/recovered stencils and root identity for exact independent audit. */
+void native_rz_stencil_probe() {
+    const auto dump=[](const auto& v){std::cout<<'[';bool first=true;for(auto x:v){if(!first)std::cout<<',';first=false;std::cout<<x;}std::cout<<']';};
+    std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
+    for(bool mixed:{false,true})for(double origin:{0.,.5,.3})for(int profile:{0,1,2,3}) {
+        auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.3,0.};
+        if(profile==1)base.spacing={.1,.15,1.};
+        if(profile==2)base.spacing={.125,.25,1.};
+        if(profile==3)base.spacing={.25,.125,1.};
+        auto cells=mixed&&profile>=2?make_origin_seam_cells(base):make_cells(base,mixed);
+        elliptic::CompositePoisson op(base,std::move(cells),elliptic::BoundaryKind::CurvilinearIsolated);
+        if(!first)std::cout<<',';first=false;
+        std::cout<<"{\"mixed\":"<<mixed<<",\"origin\":";dump(base.origin);
+        std::cout<<",\"spacing\":";dump(base.spacing);std::cout<<",\"cells\":[";
+        bool fc=true;for(const auto& cell:op.cells()) {
+            if(!fc)std::cout<<',';fc=false;
+            std::cout<<"{\"level\":"<<cell.level<<",\"index\":";dump(cell.index);std::cout<<'}';
+        }
+        std::cout<<"],\"faces\":[";fc=true;
+        for(const auto& face:op.faces()) {
+            if(!fc)std::cout<<',';fc=false;
+            const bool expected_fit=face.boundary_side>=0||
+                (face.left>=0&&face.right>=0&&op.cells()[face.left].level!=op.cells()[face.right].level);
+            require(expected_fit?face.construction!=elliptic::FaceStencilConstruction::TwoPoint
+                :face.construction==elliptic::FaceStencilConstruction::TwoPoint,"stencil path not recorded");
+            std::cout<<"{\"left\":"<<face.left<<",\"right\":"<<face.right<<",\"axis\":"<<face.axis
+                <<",\"boundary_side\":"<<face.boundary_side<<",\"construction\":"<<int(face.construction)
+                <<",\"center\":";dump(face.center);std::cout<<",\"fragment_width\":";dump(face.fragment_width);
+            std::cout<<",\"area\":"<<face.area<<",\"samples\":";dump(face.samples);
+            std::cout<<",\"coefficients\":";dump(face.coefficients);
+            std::cout<<",\"boundary_coefficient\":"<<face.boundary_coefficient<<'}';
+        }
+        std::cout<<"]}";
+    }
+    std::cout<<"]}\n";
+}
+
 /** Dump actual native metric construction for independent root-coordinate proofs. */
 void native_rz_measure_probe() {
     const auto dump=[](const auto& v){std::cout<<'[';bool first=true;for(auto x:v){if(!first)std::cout<<',';first=false;std::cout<<x;}std::cout<<']';};
@@ -2046,6 +2084,7 @@ int main(int argc,char** argv) {
         }
         if(argc>1 && std::string(argv[1])=="ring-separated-gauss") {std::cout<<std::setprecision(17);finite_ring_separated_gauss_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-far-leaf") {std::cout<<std::setprecision(17);finite_ring_far_leaf_contract();return 0;}
+        if(argc>1 && std::string(argv[1])=="rz-stencil-probe") {native_rz_stencil_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="rz-measure-probe") {native_rz_measure_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-rhs-probe") {finite_ring_rhs_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-parent-probe") {finite_ring_parent_probe();return 0;}

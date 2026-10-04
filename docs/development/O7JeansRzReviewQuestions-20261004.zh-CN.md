@@ -375,6 +375,13 @@ native volume/weights 构造与理想 native RMS 现已在 CompositePoisson owne
 RZNativeMeasureConstructionNode-20261005.zh-CN.md。face fit/LU/fallback、
 source/observer坐标差异和完整physical RHS组合仍待证明，production gate保持。
 
+真实face新增最终stencil构造分支身份；独立Fraction重建root-coordinate
+weighted Gram和exact solve，24组1416面8268 coefficient terms参考检查通过。
+876 two-point、540 polynomial fit、0 recovery；本组不宣称覆盖recovery。
+实际系数/坐标/constant defect分列且不拟合阈值，新binary冻结JENS9+9与
+6项CTest通过。见 RZStencilConstructionReferenceNode-20261005.zh-CN.md。
+任意mesh的outward coefficient certificate及完整physical RHS仍未签收。
+
 ## 8. RZ 角动量：单一表示与贯通实施节点
 
 Core 选择 **RZ 专用的角向代表量 `m_phi=J_cell/W`** 作为唯一角向状态，
