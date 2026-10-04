@@ -33,6 +33,7 @@
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/transfer/RegridExecutionPlan.h"
 #include "amr/refinement/RefinementIndicatorMath.h"
+#include "physics/diagnostics/JeansDiagnostics.h"
 #include "amr/storage/MemoryPool.h"
 #include "amr/topology/Morton.h"
 
@@ -99,6 +100,9 @@ private:
     std::vector<int> refinement_species_indices;
     using ThermodynamicEvaluator = std::function<void(const FluidState&, std::vector<double>*, std::vector<double>*, std::vector<double>*)>;
     ThermodynamicEvaluator thermodynamic_evaluator;
+    using JeansEvaluator = std::function<JeansDiagnostics::Resolution(
+        const FluidVector&, const double*, const GridMetrics::GeometryView&, int, int)>;
+    JeansEvaluator jeans_evaluator;
     int deferred_initial_refinement_passes = 0;
 
 public:
@@ -114,6 +118,57 @@ public:
     void SetThermodynamicEvaluator(ThermodynamicEvaluator evaluator)
     {
         thermodynamic_evaluator = std::move(evaluator);
+    }
+
+    /** Bind the current immutable EOS; no result or stage state is cached. */
+    void SetJeansEvaluator(JeansEvaluator evaluator)
+    {
+        jeans_evaluator = std::move(evaluator);
+    }
+
+    /** Inspect active accepted cells only, through authoritative EOS and metrics. */
+    double MinimumJeansCells(const Block& block) const
+    {
+        if (!jeans_evaluator)
+            throw std::runtime_error("JENS requires the current EOS evaluator before regridding.");
+        const auto& state = block.fluid_state;
+        const auto& grid = block.grid;
+        const auto geometry = GridMetrics::make_geometry_view(grid);
+        std::vector<double> fractions(state.GetNumSpecies());
+        double minimum = std::numeric_limits<double>::infinity();
+        for (int k=grid.Ks();k<grid.Ke();++k)
+            for (int j=grid.Js();j<grid.Je();++j)
+                for (int i=grid.Is();i<grid.Ie();++i) {
+                    const int cell=grid.GetIndex(i,j,k);
+                    for (int species=0;species<state.GetNumSpecies();++species)
+                        fractions[species]=state.X(species,cell);
+                    const auto value=jeans_evaluator(state.get(cell),fractions.data(),geometry,i,j);
+                    if (value.status!=JeansDiagnostics::Status::valid)
+                        throw std::runtime_error("JENS rejected nonfinite, nonpositive or unrepresentable accepted state.");
+                    minimum=std::min(minimum,value.cells);
+                }
+        return minimum;
+    }
+
+    /** Preflight the real restricted parent without allocating or publishing a pool block. */
+    bool JeansParentResolved(const SimConfig& config, std::span<const int> siblings) const
+    {
+        const auto& first=pool->GetBlock(siblings.front());
+        Block candidate{};
+        candidate.level=first.level-1;
+        candidate.logical_x1=first.logical_x1>>1;
+        candidate.logical_x2=first.logical_x2>>1;
+        candidate.logical_x3=first.logical_x3>>1;
+        candidate.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3);
+        candidate.fluid_state.Preallocate(candidate.grid.GetTotalSize());
+        candidate.fluid_state.InitSpecies(first.fluid_state.GetNumSpecies());
+        const Block* children[8]{};
+        for (std::size_t child=0;child<siblings.size();++child)
+            children[child]=&pool->GetBlock(siblings[child]);
+        candidate.AverageToCoarse(children,root_grid.dim,
+            config.numerics.sml_rho,config.numerics.min_eint);
+        // Equality permits coarsening; there is no epsilon or target relaxation.
+        return MinimumJeansCells(candidate)>=config.amr.jeans_cells;
     }
 
     /** @brief Defers initial thermodynamic regridding until the EOS is live. */
@@ -384,6 +439,14 @@ public:
                 block.refine_flag = indicator::refinement_flag(maximum, block.level,
                     config.amr.lrefinemin, config.amr.lrefinemax,
                     config.amr.refine_threshold, config.amr.derefine_threshold);
+                if (config.amr.refine_on_jeans) {
+                    const double minimum=MinimumJeansCells(block);
+                    if (minimum<config.amr.jeans_cells) {
+                        if (block.level>=config.amr.lrefinemax)
+                            throw std::runtime_error("JENS remains underresolved at lrefinemax; increase allowed resolution.");
+                        block.refine_flag=1;
+                    }
+                }
             } catch (...) { failure.capture_current(); }
         }
         failure.rethrow();
@@ -869,6 +932,8 @@ public:
                         siblings.push_back(sibling);
                     }
                 }
+                if (can_merge && config.amr.refine_on_jeans)
+                    can_merge=JeansParentResolved(config,siblings);
                 if (can_merge) {
                     prepared.changed_ = true;
                     PoolBlockAllocationGuard allocation(

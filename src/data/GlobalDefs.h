@@ -325,7 +325,10 @@ struct AmrConfig
     bool refine_on_div_v = false;     ///< DIVV: velocity divergence
     bool refine_on_entropy = false;   ///< ENTR: EOS-local Gamma1 entropy proxy
     bool refine_on_enuc = false;      ///< ENUC: nuclear specific-energy source rate
-    bool refine_on_jeans = false;     ///< JENS: reserved for a self-gravity Jeans criterion
+    bool refine_on_jeans = false;     ///< JENS: direct self-gravity resolution criterion
+    // Zero represents an absent conditional control, never a model default.
+    // Runtime/API exposure remains gated until the complete consumer chain is qualified.
+    double jeans_cells = 0.0;
     bool refine_on_species = false;  ///< SPECIES or named network-tracer gradient
     bool refine_all_species = false; ///< SPECIES selects every registered species
     std::vector<std::string> refine_species_names; ///< Case-insensitive species tracer names

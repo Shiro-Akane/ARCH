@@ -8,6 +8,7 @@
 #include "physics/diagnostics/JeansDiagnostics.h"
 #include "physics/eos/IdealGas.h"
 #include "amr/transfer/RegridTransferMath.h"
+#include "amr/refinement/RefinementThermodynamics.h"
 #include "../../math/physics/JeansNumericCases.h"
 #include <array>
 #include <limits>
@@ -20,6 +21,82 @@ namespace {
 /** Compare real conservative restriction + EOS against independent caloric integrals.
  * This is a bounded static parent-state gate, not lifecycle or RZ swirl acceptance.
  */
+void tree_transaction_contract()
+{
+    SimConfig config;
+    config.grid.dim=1;config.grid.nblockx1=1;
+    config.grid.nblockx2=0;config.grid.nblockx3=0;
+    config.grid.x1_max=8.;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=2;
+    config.amr.refine_on_rho=false;
+    config.amr.refine_on_jeans=true;config.amr.jeans_cells=8.;
+    SpeciesManager species;IdealGas eos(1.5,species);
+    auto pool=std::make_shared<amr::MemoryPool>(16,1);
+    amr::AmrTree tree(pool);
+    tree.InitRootGrid(config,0);
+    amr::BindRefinementThermodynamics(tree,eos);
+    auto fill=[&](amr::AmrTree& target,amr::MemoryPool& memory,double energy) {
+        for(int id:target.GetActiveBlocks()) {
+            auto& block=memory.GetBlock(id);
+            for(int cell=0;cell<block.grid.GetTotalSize();++cell)
+                block.fluid_state.set(cell,FluidVector{1e7,0.,0.,0.,1e7*energy});
+        }
+    };
+    auto require=[](bool ok,const char* message) {
+        if(!ok)throw std::runtime_error(message);
+    };
+    fill(tree,*pool,4./3.);
+    const double root=tree.MinimumJeansCells(pool->GetBlock(tree.GetActiveBlocks().front()));
+    require(root>=4.&&root<8.,"fixture root resolution changed");
+    require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==2,"JENS failed real refinement");
+    require(!tree.Regrid(config)&&tree.GetActiveBlocks().size()==2,"underresolved parent was coarsened");
+    config.amr.jeans_cells=16.;
+    require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==4,"JENS second level failed");
+    const auto before=tree.GetActiveBlocks();
+    const int allocated=pool->GetNumActiveBlocks();
+    config.amr.jeans_cells=32.;
+    bool rejected=false;
+    try {tree.Regrid(config);}catch(const std::runtime_error&){rejected=true;}
+    require(rejected&&tree.GetActiveBlocks()==before&&pool->GetNumActiveBlocks()==allocated,
+            "lrefinemax failure published partial topology");
+    config.amr.jeans_cells=8.;fill(tree,*pool,12.);
+    require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==2,"resolved parent merge failed");
+    require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==1,"resolved root merge failed");
+    fill(tree,*pool,4./3.);
+    config.amr.jeans_cells=root;
+    require(!tree.Regrid(config),"threshold equality refined");
+    config.amr.jeans_cells=std::nextafter(root,std::numeric_limits<double>::infinity());
+    require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==2,"one-ULP underresolution did not refine");
+    require(!tree.Regrid(config),"one-ULP underresolved parent merged");
+    config.amr.jeans_cells=root;
+    require(tree.Regrid(config)&&tree.GetActiveBlocks().size()==1,"parent equality did not permit merge");
+    int calls=0;
+    tree.SetJeansEvaluator([&](const FluidVector&,const double*,
+        const GridMetrics::GeometryView&,int,int)->JeansDiagnostics::Resolution {
+        ++calls;throw std::runtime_error("disabled JENS invoked EOS");
+    });
+    config.amr.refine_on_jeans=false;
+    tree.EvaluateRefinement(config);
+    require(calls==0,"disabled JENS traversed EOS");
+    amr::BindRefinementThermodynamics(tree,eos);
+    config.amr.refine_on_jeans=true;
+    for(double bad:{0.,3.,std::numeric_limits<double>::quiet_NaN()}) {
+        config.amr.jeans_cells=bad;rejected=false;
+        try {tree.Regrid(config);}catch(const std::invalid_argument&){rejected=true;}
+        require(rejected&&tree.GetActiveBlocks().size()==1,"invalid target accepted");
+    }
+    auto small_pool=std::make_shared<amr::MemoryPool>(2,1);
+    amr::AmrTree small(small_pool);
+    small.InitRootGrid(config,0);fill(small,*small_pool,4./3.);
+    amr::BindRefinementThermodynamics(small,eos);
+    config.amr.jeans_cells=8.;const auto small_before=small.GetActiveBlocks();
+    rejected=false;
+    try {small.Regrid(config);}catch(const std::runtime_error&){rejected=true;}
+    require(rejected&&small.GetActiveBlocks()==small_before&&small_pool->GetNumActiveBlocks()==1,
+            "capacity failure leaked blocks or published partial topology");
+    std::cout<<"JEANS_TREE_TRANSACTION_PASS\n";
+}
+
 void parent_state_reference()
 {
     constexpr long double pi=3.141592653589793238462643383279502884L;
@@ -261,5 +338,6 @@ int main()
     std::cout << std::setprecision(17) << "JEANS_IDEALGAS_CASES=" << eos_cases
               << " MAX_RELATIVE_ERROR=" << max_relative_error << '\n';
     parent_state_reference();
+    tree_transaction_contract();
     std::cout << "JEANS_DIAGNOSTICS_NUMERIC_PASS\n";
 }
