@@ -154,16 +154,40 @@ public:
         return minimum;
     }
 
-    /** Preflight the real restricted parent without allocating or publishing a pool block. */
-    bool CandidateParentResolved(const SimConfig& config, std::span<const int> siblings) const
+    /** Construct authoritative geometry for one complete logical child family.
+     * No pool destination or accepted field is allocated/published by this hook.
+     */
+    Block CandidateParentGeometry(std::span<const int> siblings) const
     {
+        if(siblings.size()!=static_cast<std::size_t>(1<<root_grid.dim))
+            throw std::logic_error("candidate parent requires a complete child family");
         const auto& first=pool->GetBlock(siblings.front());
+        if(first.level<=0 || (first.logical_x1&1)
+            || (root_grid.dim>=2 && (first.logical_x2&1))
+            || (root_grid.dim==3 && (first.logical_x3&1)))
+            throw std::logic_error("candidate parent requires the lower logical child");
+        for(std::size_t child=0;child<siblings.size();++child) {
+            const auto& block=pool->GetBlock(siblings[child]);
+            if(block.level!=first.level
+                || block.logical_x1!=first.logical_x1+int(child&1)
+                || block.logical_x2!=first.logical_x2+(root_grid.dim>=2?int((child>>1)&1):0)
+                || block.logical_x3!=first.logical_x3+(root_grid.dim==3?int((child>>2)&1):0))
+                throw std::logic_error("candidate parent child order/identity mismatch");
+        }
         Block candidate{};
         candidate.level=first.level-1;
         candidate.logical_x1=first.logical_x1>>1;
         candidate.logical_x2=first.logical_x2>>1;
         candidate.logical_x3=first.logical_x3>>1;
         candidate.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3,root_semantics);
+        return candidate;
+    }
+
+    /** Preflight the real restricted parent without allocating or publishing a pool block. */
+    bool CandidateParentResolved(const SimConfig& config, std::span<const int> siblings) const
+    {
+        auto candidate=CandidateParentGeometry(siblings);
+        const auto& first=pool->GetBlock(siblings.front());
         candidate.fluid_state.Preallocate(candidate.grid.GetTotalSize());
         candidate.fluid_state.InitSpecies(first.fluid_state.GetNumSpecies());
         const Block* children[8]{};
@@ -889,7 +913,8 @@ public:
         const PreApplyRegridObserver& observer = {},
         const StagedAllocationObserver& allocation_observer = {},
         const std::function<void()>& evaluate_indicators = {},
-        bool jeans_repair_only = false)
+        bool jeans_repair_only = false,
+        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {})
     {
         PreparedRegrid prepared(*this, config);
         if (evaluate_indicators) evaluate_indicators();
@@ -962,8 +987,13 @@ public:
                     }
                 }
                 if (can_merge && (config.amr.refine_on_jeans
-                    || root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz))
-                    can_merge=CandidateParentResolved(config,siblings);
+                    || root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)) {
+                    if(candidate_parent) {
+                        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+                            throw std::logic_error("device RZ candidate parent is not qualified");
+                        can_merge=candidate_parent(CandidateParentGeometry(siblings),siblings);
+                    } else can_merge=CandidateParentResolved(config,siblings);
+                }
                 if (can_merge) {
                     prepared.changed_ = true;
                     PoolBlockAllocationGuard allocation(

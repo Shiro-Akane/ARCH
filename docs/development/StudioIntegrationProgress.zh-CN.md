@@ -3403,3 +3403,14 @@ GNU-only外部GOMP观测library保持原body/线程请求/flags，不改Core/ELF
 ## 2026-10-05：JENS private device 候选父态节点
 
 原restriction→完成status→同一父态authoritative EOS/JENS已实机验证（1D/4与41 species）；Host poison不影响，late storage拒绝，无store publication，仅compact12B。共享CoarseFluid veto/RestrictionEnuc fatal和source位级保持/恢复通过，保留fatal安全cleanup fence；原Host/CUDA transaction/migration各PASS。仍未接Driver/PrepareRegrid decision，不开放public JENS/RZ或称完整冻结CUDA包。详见JeansDeviceCandidateParentNode-20261005.zh-CN.md及processed summary，raw数据本机。
+
+
+## 2026-10-05：JENS actual Runtime device transaction 节点
+
+真实Runtime repair/ordinary regrid接通accepted device minima与same-tree candidate parent hook。
+1D/2D/3D目标160细化8/16/32、parent veto、exact equality和target64粗化、nextafter refine、
+finest拒绝、容量8/峰值12 rollback与stale Host/retired identity均原CUDA CTest实机PASS。
+CPU相关3项+实际Runtime gravity fixture PASS；没有推进time/step。
+见JeansRuntimeDeviceTransactionsNode-20261005.zh-CN.md及processed summary。
+公开CUDA JENS/RZ gate仍保持，完整冻结9+9 CUDA、科学RZ、long-run/benchmark未签收。
+未变CPU ARCH复用匹配receipt，旧Manifest不当作当前source fresh；raw数据/ELF/log本机。

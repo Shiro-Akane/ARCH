@@ -197,6 +197,14 @@ HLLC／MUSCL／MC／RK3、`cfl=0.2`、共享 CGS G、原 `gravity_rtol=1e-10`、
 CPU 子组通过后统一做受影响 CUDA；此短包不授权非线性碎裂或长轨迹结论，
 其最终输入／EOS／源码／build／binary 身份和简短指标需回交维护者 review。
 
+### 6.4 CUDA actual Runtime 事务实施证据（2026-10-05）
+
+原Runtime/PrepareRegrid已接通device accepted minima和同一逻辑family的private parent consumer。
+原CTest实机1D/2D/3D refine、veto、target64/FP64 equality coarsen、nextafter、finest拒绝及
+4 old+8 new峰值容量失败rollback通过，time/step0；相关CPU3项及实际gravity Runtime fixture通过。
+见JeansRuntimeDeviceTransactionsNode-20261005.zh-CN.md。公开CUDA JENS gate保持；
+这是t=0内部工程子组，不替代6.2/6.3完整三通道演化/续算包，原科学门槛未改。
+
 ## 7. RZ 有限环体边界：已定数学部件与误差接口
 
 本节点允许合作者实现以下共享数学与有界参考检查；生产能力声明、近场误差界

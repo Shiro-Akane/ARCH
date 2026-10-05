@@ -80,6 +80,7 @@ private:
     void publish_current_ghost();
     void complete_device_boundary(state::StateSlot);
     bool execute_regrid(bool jeans_repair_only);
+    bool device_jeans_parent_resolved(const amr::Block&,std::span<const int>);
     static backend::HostStateTransferView host_transfer_view(FluidState&);
 
     const GridMetrics::GeometrySemantics geometry_semantics_;

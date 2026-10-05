@@ -528,3 +528,14 @@ Nsight 原始 trace 或其他大型二进制 raw data。**
 受影响 CPU／CUDA 以及必需科学 review 均需完成。
 后续全模型预览与 plt 使用各自出口；暂未实现的能力在界面和文档中保持准确。
 最终摘要给维护者足够信息决定合并，无需由合作者自行宣布科学模型或新 GPU 已全面认证。
+
+
+## 2026-10-05：JENS actual Runtime device transaction 节点
+
+真实Runtime repair/ordinary regrid接通accepted device minima与same-tree candidate parent hook。
+1D/2D/3D目标160细化8/16/32、parent veto、exact equality和target64粗化、nextafter refine、
+finest拒绝、容量8/峰值12 rollback与stale Host/retired identity均原CUDA CTest实机PASS。
+CPU相关3项+实际Runtime gravity fixture PASS；没有推进time/step。
+见JeansRuntimeDeviceTransactionsNode-20261005.zh-CN.md及processed summary。
+公开CUDA JENS/RZ gate仍保持，完整冻结9+9 CUDA、科学RZ、long-run/benchmark未签收。
+未变CPU ARCH复用匹配receipt，旧Manifest不当作当前source fresh；raw数据/ELF/log本机。

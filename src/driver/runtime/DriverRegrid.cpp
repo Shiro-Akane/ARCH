@@ -10,6 +10,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <functional>
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
@@ -33,10 +35,8 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
 {
     if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("RZ regrid migration and angular-momentum contract are incomplete");
-    // No stale Host evaluation of device-owned fields. Public JENS remains
-    // gated until its backend-local consumer chain is qualified.
-    if (compute_backend && config.amr.refine_on_jeans)
-        throw std::logic_error("device JENS lifecycle is not qualified");
+    // Internal transaction qualification uses backend-local JENS consumers.
+    // Public configuration/startup gates remain until full lifecycle acceptance.
     const auto make_regrid_ledger = [] (
         amr::TopologyEpoch epoch,
         std::span<const amr::BlockHandle> handles,
@@ -71,26 +71,47 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
 #endif
 
     const auto evaluate_device_indicators = [&] {
-        complete_device_boundary(StateSlot::Current);
-        std::vector<arch::backend::BackendStateAccess> accesses;
-        accesses.reserve(stage_handles.size());
-        for (std::size_t index = 0; index < stage_handles.size(); ++index)
-            accesses.push_back(backend_access(index, StateSlot::Current));
-        const auto errors = compute_backend->evaluate_refinement_indicators(
-            accesses, config.amr, config.numerics.sml_rho,
-            amr_ctrl.tree->RefinementSpecies());
-        if (errors.size() != old_active.size())
-            throw std::logic_error("backend AMR indicator count mismatch");
-        for (std::size_t index = 0; index < errors.size(); ++index) {
-            auto& block = amr_ctrl.pool->GetBlock(old_active[index]);
-            block.refine_flag = amr::indicator::refinement_flag(errors[index],
-                block.level, config.amr.lrefinemin, config.amr.lrefinemax,
-                config.amr.refine_threshold, config.amr.derefine_threshold);
+        (void)amr::indicator::make_selection(
+            config.amr,config.grid.dim,amr_ctrl.tree->RefinementSpecies());
+        std::vector<double> errors;
+        if(!jeans_repair_only) {
+            complete_device_boundary(StateSlot::Current);
+            std::vector<arch::backend::BackendStateAccess> accesses;
+            accesses.reserve(stage_handles.size());
+            for(std::size_t index=0;index<stage_handles.size();++index)
+                accesses.push_back(backend_access(index,StateSlot::Current));
+            errors=compute_backend->evaluate_refinement_indicators(
+                accesses,config.amr,config.numerics.sml_rho,
+                amr_ctrl.tree->RefinementSpecies());
+            if(errors.size()!=old_active.size())
+                throw std::logic_error("backend AMR indicator count mismatch");
         }
+        const auto minima=config.amr.refine_on_jeans
+            ? evaluate_current_jeans_resolution() : std::vector<double>{};
+        // Validate every finest-level deficit before changing any decision flag.
+        if(config.amr.refine_on_jeans)
+            for(std::size_t index=0;index<old_active.size();++index)
+                if(minima[index]<config.amr.jeans_cells
+                    && amr_ctrl.pool->GetBlock(old_active[index]).level>=config.amr.lrefinemax)
+                    throw std::runtime_error("JENS remains underresolved at lrefinemax; increase allowed resolution.");
+        for(std::size_t index=0;index<old_active.size();++index) {
+            auto& block=amr_ctrl.pool->GetBlock(old_active[index]);
+            block.refine_flag=jeans_repair_only?0:amr::indicator::refinement_flag(
+                errors[index],block.level,config.amr.lrefinemin,config.amr.lrefinemax,
+                config.amr.refine_threshold,config.amr.derefine_threshold);
+            if(config.amr.refine_on_jeans && minima[index]<config.amr.jeans_cells)
+                block.refine_flag=1;
+        }
+    };
+    const auto evaluate_device_parent = [&](const amr::Block& parent,std::span<const int> siblings) {
+        return device_jeans_parent_resolved(parent,siblings);
     };
     auto prepared = compute_backend
         ? amr_ctrl.tree->PrepareRegrid(
-            config, {}, {}, evaluate_device_indicators)
+            config, {}, {}, evaluate_device_indicators, jeans_repair_only,
+            config.amr.refine_on_jeans
+                ? std::function<bool(const amr::Block&,std::span<const int>)>(evaluate_device_parent)
+                : std::function<bool(const amr::Block&,std::span<const int>)>{})
         : amr_ctrl.tree->PrepareRegrid(config, {}, {}, {}, jeans_repair_only);
     auto topology_candidate = topology_registry.stage_reconciliation(
         observe_blocks(prepared.proposed_active_blocks()));
@@ -373,6 +394,39 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
     amr_ctrl.BindActiveHandles(stage_handles);
     prepared.ReleaseRetiredNoexcept();
     return true;
+}
+
+/** Lease an authoritative logical child family before private parent EOS.
+ * Tree owns geometric sibling order/parent construction; Runtime owns accepted
+ * publication and selected storage identities. Neither reads Host field arrays.
+ */
+bool DriverRuntime::device_jeans_parent_resolved(
+    const amr::Block& parent,std::span<const int> siblings)
+{
+    if(!compute_backend || !config.amr.refine_on_jeans)
+        throw std::logic_error("device JENS parent requires an explicit active request");
+    topology_registry.validate_committed_snapshot(observe_topology());
+    const auto version=current_interior_version();
+    const auto& active=amr_ctrl.tree->GetActiveBlocks();
+    if(active.size()!=stage_handles.size() || active.size()!=backend_storage.size())
+        throw std::logic_error("device JENS parent source extent mismatch");
+    std::vector<backend::BackendStateAccess> accesses;
+    accesses.reserve(siblings.size());
+    for(int id:siblings) {
+        const auto found=std::find(active.begin(),active.end(),id);
+        if(found==active.end()) throw std::logic_error("device JENS parent child is not active");
+        const auto index=static_cast<std::size_t>(found-active.begin());
+        residency_ledger->require_readable(
+            {stage_handles[index],StateSlot::Current},{ExecutionSide::Device,version,true,false});
+        const auto access=backend_access(index,StateSlot::Current);
+        if(!compute_backend->contains(access))
+            throw std::logic_error("device JENS parent storage is unavailable");
+        accesses.push_back(access);
+    }
+    const auto minimum=compute_backend->evaluate_jeans_parent(accesses,parent);
+    if(minimum && (!std::isfinite(*minimum) || *minimum<=0.))
+        throw std::runtime_error("device JENS parent summary is invalid");
+    return minimum && *minimum>=config.amr.jeans_cells;
 }
 
 /** Apply the configured regrid cadence and record its outcome. */

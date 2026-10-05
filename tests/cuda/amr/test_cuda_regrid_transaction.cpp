@@ -16,6 +16,7 @@
 
 #include <cuda_runtime_api.h>
 #include <bit>
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -165,6 +166,141 @@ void run_jeans_runtime_lease()
     require(counters.t_current==0. && counters.step_count==0,"lease test ran simulation");
     std::cout<<"CUDA_JEANS_RUNTIME_LEASE_PASS blocks=2 stale_host=1 version_reject=1"
         <<" pending_reject=1 recovery=1 time=0 steps=0\n";
+}
+
+// Internal Runtime transaction qualification from the frozen uniform state's
+// geometry/material. No public configuration/startup capability is opened here;
+// no gravity solve, timestep or checkpoint is claimed.
+void run_jeans_runtime_transactions(int dimension,bool capacity_failure=false)
+{
+    auto config=configuration();
+    config.grid.dim=dimension;
+    config.grid.nblockx1=4;
+    config.grid.nblockx2=dimension>=2?1:0;
+    config.grid.nblockx3=dimension==3?1:0;
+    config.grid.x1_min=config.grid.x2_min=config.grid.x3_min=0.;
+    config.grid.x1_max=1.;config.grid.x2_max=config.grid.x3_max=.25;
+    config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="periodic";
+    config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="periodic";
+    config.grid.x3l_boundary_type=config.grid.x3r_boundary_type="periodic";
+    config.grid.amr_max_blocks=capacity_failure?8:64;
+    config.physics.gravity.type="self";
+    config.execution.compute_backend="cuda";
+    config.amr.refine_on_jeans=true;config.amr.jeans_cells=160.;
+    config.amr.refine_on_rho=true;
+    config.amr.refine_threshold=.1;config.amr.derefine_threshold=.05;
+    constexpr double gamma=1.6666666666666667;
+    SpeciesManager species;species.add_species("gas",1.,1.,gamma,1.);
+    IdealGas eos(gamma,species);
+    amr::AMRControl control(config.grid.amr_max_blocks,dimension);
+    control.tree->InitRootGrid(config,1);
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& b=control.pool->GetBlock(id);
+        for(auto* state:{&b.fluid_state,&b.state_next,&b.state_scratch}) {
+            state->InitSpecies(1);
+            for(int cell=0;cell<b.grid.GetTotalSize();++cell) {
+                state->set(cell,{1.e7,0.,0.,0.,1.e7});
+                state->enuc_rate[cell]=0.;state->X(0,cell)=1.;
+            }
+        }
+    }
+    // A Host EOS fallback would fail before being misreported as device work.
+    control.tree->SetJeansEvaluator([](const FluidVector&,const double*,
+        const GridMetrics::GeometryView&,int,int)->JeansDiagnostics::Resolution {
+        throw std::logic_error("stale Host Jeans evaluator was called");
+    });
+    BCHandler boundary(config);RunState start{};
+    SimulationController counters(config,start);
+    arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
+    runtime.initialize_topology();runtime.ensure_fluid_ghosts();
+    const auto topology=runtime.prepare_backend_bindings();
+    std::vector<arch::cuda::CudaBlockBinding> bindings;
+    for(const auto& b:topology)
+        bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary});
+    runtime.install_backend(arch::cuda::make_cuda_backend(bindings,0,
+        launch_config(config),species,eos));
+    runtime.upload_initial_state();
+    const auto root_minima=runtime.evaluate_current_jeans_resolution();
+    require(root_minima.size()==4 && root_minima.front()<160. && root_minima.front()>64.,
+        "frozen uniform geometry did not bracket the requested target");
+    const auto poison=[&] {
+        for(int id:control.tree->GetActiveBlocks()) {
+            auto& state=control.pool->GetBlock(id).fluid_state;
+            for(double& rho:state.rho)rho=std::numeric_limits<double>::quiet_NaN();
+            for(double& x:state.mass_fractions)x=std::numeric_limits<double>::quiet_NaN();
+        }
+    };
+    poison();
+    const auto original_handles=runtime.handles();
+    if(capacity_failure) {
+        bool rejected=false;
+        try {runtime.ensure_jeans_resolution(0,0.);}
+        catch(const std::runtime_error& error) {
+            rejected=std::string(error.what())=="AMR MemoryPool exhausted! Increase MaxBlocks.";
+        }
+        require(rejected && runtime.handles()==original_handles
+            && control.tree->GetActiveBlocks().size()==4,
+            "capacity failure partially published JENS topology");
+        require(runtime.evaluate_current_jeans_resolution()==root_minima,
+            "capacity failure changed accepted device source");
+        const auto* backend=dynamic_cast<const arch::cuda::CudaBackend*>(runtime.backend());
+        require(backend && backend->store_snapshot().staged_blocks==0,
+            "capacity failure leaked a staged device namespace");
+        require(counters.t_current==0. && counters.step_count==0,
+            "capacity failure advanced simulation");
+        std::cout<<"CUDA_JEANS_RUNTIME_CAPACITY_PASS roots=4 final_leaves=8 peak_needed=12 capacity=8 rollback=1 time=0 steps=0\n";
+        return;
+    }
+    runtime.ensure_jeans_resolution(0,0.);
+    const auto refined_count=std::size_t(4)<<dimension;
+    require(runtime.handles().size()==refined_count && runtime.handles()!=original_handles,
+        "real JENS repair did not publish complete refinement");
+    poison();
+    const auto refined_handles=runtime.handles();
+    std::vector<Access> refined_accesses;
+    for(std::size_t i=0;i<refined_handles.size();++i)
+        refined_accesses.push_back(runtime.backend_access(i,Slot::Current));
+    const auto refined_minima=runtime.evaluate_current_jeans_resolution();
+    for(double x:refined_minima)require(x>=160.,"published leaf remains underresolved");
+    require(!runtime.perform_regrid(0,0.) && runtime.handles()==refined_handles,
+        "underresolved candidate parent was not vetoed");
+    config.amr.jeans_cells=root_minima.front();
+    require(runtime.perform_regrid(0,0.) && runtime.handles().size()==4,
+        "candidate-parent equality was not allowed to coarsen");
+    poison();
+    require(runtime.evaluate_current_jeans_resolution()==root_minima,
+        "real JENS coarsen changed the uniform accepted state");
+    for(const auto access:refined_accesses)
+        require(!runtime.backend()->contains(access),
+            "retired refined identity remained consumable");
+    const auto coarse_handles=runtime.handles();
+    config.amr.jeans_cells=std::nextafter(root_minima.front(),std::numeric_limits<double>::infinity());
+    config.amr.lrefinemax=0;
+    bool rejected=false;
+    try {runtime.ensure_jeans_resolution(0,0.);}
+    catch(const std::runtime_error& error) {
+        rejected=std::string(error.what()).find("lrefinemax")!=std::string::npos;
+    }
+    require(rejected && runtime.handles()==coarse_handles
+        && runtime.evaluate_current_jeans_resolution()==root_minima,
+        "finest-level deficit did not reject before publication");
+    config.amr.lrefinemax=1;
+    runtime.ensure_jeans_resolution(0,0.);
+    require(runtime.handles().size()==refined_count,"nextafter deficit did not refine");
+    poison();
+    // The frozen package explicitly requests an allowed-parent target of 64;
+    // equality above is a separate exact FP64 boundary check.
+    config.amr.jeans_cells=64.;
+    require(runtime.perform_regrid(0,0.) && runtime.handles().size()==4,
+        "frozen target 64 did not permit real parent coarsening");
+    poison();
+    require(runtime.evaluate_current_jeans_resolution()==root_minima,
+        "target 64 coarsen changed the uniform accepted state");
+    require(counters.t_current==0. && counters.step_count==0,"transaction fixture advanced simulation");
+    std::cout<<"CUDA_JEANS_RUNTIME_TRANSACTIONS_PASS dimension="<<dimension
+        <<" root_blocks=4 refined_blocks="<<refined_count
+        <<" parent_veto=1 equality_coarsen=1 target64_coarsen=1 nextafter_refine=1 finest_reject=1 stale_host=1"
+        <<" time=0 steps=0\n";
 }
 
 void run(int species_count)
@@ -463,6 +599,8 @@ int main()
     try {
         require(probe == cudaSuccess, "CUDA device probe failed");
         run_jeans_runtime_lease();
+        for(int dimension=1;dimension<=3;++dimension)run_jeans_runtime_transactions(dimension);
+        run_jeans_runtime_transactions(1,true);
         run(4);
         run(41);
         return 0;
