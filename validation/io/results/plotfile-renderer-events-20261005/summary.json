@@ -1,0 +1,186 @@
+{
+  "status": "PASS",
+  "scope": "Linux Electron Chromium events; synthetic geometry; not scientific or human UAT",
+  "electron": "44.4.3",
+  "chromium": "152.0.7977.130",
+  "records": [
+    {
+      "windowSize": [
+        1280,
+        900
+      ],
+      "mode": "native",
+      "dimension": 1,
+      "shape": [
+        3
+      ],
+      "status": "PASS",
+      "selection": {
+        "row": 1
+      },
+      "rawUnchanged": true,
+      "networkCalls": 0,
+      "dragSelectCalls": 0,
+      "fitRestored": true
+    },
+    {
+      "windowSize": [
+        1280,
+        900
+      ],
+      "mode": "native",
+      "dimension": 2,
+      "shape": [
+        2,
+        3
+      ],
+      "status": "PASS",
+      "selection": {
+        "row": 4
+      },
+      "rawUnchanged": true,
+      "networkCalls": 0,
+      "dragSelectCalls": 0,
+      "fitRestored": true
+    },
+    {
+      "windowSize": [
+        1280,
+        900
+      ],
+      "mode": "overview",
+      "dimension": 1,
+      "shape": [
+        3
+      ],
+      "status": "PASS",
+      "selection": {
+        "point": [
+          1.4995253164556963
+        ]
+      },
+      "rawUnchanged": true,
+      "networkCalls": 0,
+      "dragSelectCalls": 0,
+      "fitRestored": true
+    },
+    {
+      "windowSize": [
+        1280,
+        900
+      ],
+      "mode": "overview",
+      "dimension": 2,
+      "shape": [
+        2,
+        3
+      ],
+      "status": "PASS",
+      "selection": {
+        "point": [
+          1.4995253164556963,
+          11.501508620689656
+        ]
+      },
+      "rawUnchanged": true,
+      "networkCalls": 0,
+      "dragSelectCalls": 0,
+      "fitRestored": true
+    },
+    {
+      "windowSize": [
+        1920,
+        1080
+      ],
+      "mode": "native",
+      "dimension": 1,
+      "shape": [
+        3
+      ],
+      "status": "PASS",
+      "selection": {
+        "row": 1
+      },
+      "rawUnchanged": true,
+      "networkCalls": 0,
+      "dragSelectCalls": 0,
+      "fitRestored": true
+    },
+    {
+      "windowSize": [
+        1920,
+        1080
+      ],
+      "mode": "native",
+      "dimension": 2,
+      "shape": [
+        2,
+        3
+      ],
+      "status": "PASS",
+      "selection": {
+        "row": 4
+      },
+      "rawUnchanged": true,
+      "networkCalls": 0,
+      "dragSelectCalls": 0,
+      "fitRestored": true
+    },
+    {
+      "windowSize": [
+        1920,
+        1080
+      ],
+      "mode": "overview",
+      "dimension": 1,
+      "shape": [
+        3
+      ],
+      "status": "PASS",
+      "selection": {
+        "point": [
+          1.499525316455696
+        ]
+      },
+      "rawUnchanged": true,
+      "networkCalls": 0,
+      "dragSelectCalls": 0,
+      "fitRestored": true
+    },
+    {
+      "windowSize": [
+        1920,
+        1080
+      ],
+      "mode": "overview",
+      "dimension": 2,
+      "shape": [
+        2,
+        3
+      ],
+      "status": "PASS",
+      "selection": {
+        "point": [
+          1.499525316455696,
+          11.501508620689656
+        ]
+      },
+      "rawUnchanged": true,
+      "networkCalls": 0,
+      "dragSelectCalls": 0,
+      "fitRestored": true
+    }
+  ],
+  "sourceHead": "df06683fe1845dc73a4e4b89636e6c27e224a44c",
+  "inputSha256": {
+    "studio/src/components/PlotfileNativeView.tsx": "ee95ec6b4d0953e2fcdf2379a1b74747013ba82aa61d1e296640da8c4f97c0b3",
+    "studio/src/components/PlotfileOverviewView.tsx": "f2da750ef6ddbd26d57fa559492b1fa153a62af603140176044fb03dda2aca0a",
+    "studio/src/data/nativePlotView.ts": "788e5830b9d5597ba04c15d4d99ff4e0e267d0f0aecdd999bf3ec13c10181283",
+    "validation/io/verify_plotfile_renderer_events.mjs": "746ea8c2eaf92a1790369a39f229f031a91f686951bc2e46a4488a22c56e413e"
+  },
+  "limits": [
+    "Synthetic geometry; not scientific or human UAT",
+    "Selection callbacks only; no complete Inspector/Host integration",
+    "Hidden-window preliminary PASS withdrawn because wheel was a no-op"
+  ]
+}
