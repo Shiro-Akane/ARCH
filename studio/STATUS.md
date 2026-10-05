@@ -13,6 +13,9 @@
 - 正式 ProjectPlotfileAudit + LocalHostProvider + HTTP Host + 实际 LOD 坐标查询：
   PlotfileProjectHttpRendererNode-20261005.zh-CN.md。独立 h5py FP64/grid identity 与错误保留通过；
   不是完整 App/launcher 人工 UAT 或全字段科学验收。
+- Plotfile 全字段/全叶单元正式 HTTP 读回：PlotfileHttpAllFieldsNode-20261005.zh-CN.md；
+  145,088 原始场值及网格 FP64 位一致，6项反例拒绝。仅既有 t=0 数据存储一致性，
+  不是物理/全字段 renderer 签收；670次请求，Host端口已关闭。
 - RZ-B外力矩消费者：RZAppliedTorqueGateFinding-20261005.zh-CN.md；
   NOT_CLEARED（ExternalGravity被finite-ring preflight统一拒绝）。stage 0、Current bits不变；
   不绕过gate，24组预算尚未取得结果。typed source/chart contract待Core review。
