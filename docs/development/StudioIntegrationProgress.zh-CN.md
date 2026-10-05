@@ -3468,3 +3468,11 @@ raw/ELF本机，无Windows适配；整体O7、批准长跑及冻结benchmark未�
 见CurrentCpuSourceIdentityNode-20261005.zh-CN.md与processed summary，raw/ELF本机。
 这是current源码匹配CPU receipt，不冒称公开CUDA JENS/RZ全科学/long-run/benchmark签收。
 CUDA9+9候选仍待明确本地验证授权；原科学gate保持，不开展Windows适配。
+
+
+## 2026-10-05：RZ Runtime边界分派定位
+
+RZ-BOUNDARY-DISPATCH-01 OPEN：EvaluateBoundary缺少chart身份，二维无条件走旧log kernel；
+当前bind gate已阻止生产进入，不能把finite-ring数学PASS冒充此Runtime已接通。
+见RZRuntimeBoundaryDispatchAudit-20261005.zh-CN.md；下一节点先原face-row制造势映射，
+再typed ring/RHS/force-work/publication，原科学出口保持，无新演化/阈值/Windows工作。
