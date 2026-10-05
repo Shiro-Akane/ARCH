@@ -255,6 +255,7 @@ void run(int species_count)
                 group.child_index, 1, config.numerics.sml_rho, config.numerics.min_eint);
             destination.state_next = oracle.fluid_state;
         }
+        std::map<amr::BlockHandle,double> parent_minima;
         for (const auto& group : groups.restrictions) {
             auto& destination = control.pool->GetBlock(proposed_by_handle.at(group.destination.handle));
             auto oracle = destination;
@@ -263,6 +264,20 @@ void run(int species_count)
                 children[child] = &control.pool->GetBlock(old_by_handle.at(group.children[child].handle));
             oracle.AverageToCoarse(children, 1, config.numerics.sml_rho, config.numerics.min_eint);
             destination.state_next = oracle.fluid_state;
+            double minimum=std::numeric_limits<double>::infinity();
+            std::vector<double> fractions(species_count);
+            const auto geometry=GridMetrics::make_geometry_view(oracle.grid);
+            for(int i=oracle.grid.Is();i<oracle.grid.Ie();++i) {
+                const auto cell=oracle.grid.GetIndex(i,0,0);
+                for(int sp=0;sp<species_count;++sp) fractions[sp]=oracle.fluid_state.X(sp,cell);
+                const auto u=oracle.fluid_state.get(cell);
+                const auto p=eos.get_pressure(u,fractions.data());
+                const auto c=eos.get_sound_speed(u,p,fractions.data());
+                const auto value=JeansDiagnostics::evaluate_cell(u.rho,c*c,geometry,i,0);
+                require(value.status==JeansDiagnostics::Status::valid,"invalid parent routing control");
+                minimum=std::min(minimum,value.cells);
+            }
+            parent_minima.emplace(group.destination.handle,minimum);
         }
         prepared.ActivateForDeviceMigration();
         for (const int id : proposed_ids) {
@@ -279,6 +294,83 @@ void run(int species_count)
             auto& state = control.pool->GetBlock(id).fluid_state;
             std::fill(state.rho.begin(), state.rho.end(), std::numeric_limits<double>::quiet_NaN());
             std::fill(state.mass_fractions.begin(), state.mass_fractions.end(), std::numeric_limits<double>::quiet_NaN());
+        }
+        for(const auto& group:groups.restrictions) {
+            std::array<Access,2> children;
+            for(int child=0;child<2;++child) {
+                const auto id=old_by_handle.at(group.children[child].handle);
+                const auto position=std::find(old_ids.begin(),old_ids.end(),id)-old_ids.begin();
+                children[child]=active[position];
+            }
+            const auto& parent=control.pool->GetBlock(proposed_by_handle.at(group.destination.handle));
+            const auto before_parent=backend->counters();
+            const auto before_store=backend->store_snapshot();
+            const auto minimum=backend->evaluate_jeans_parent(children,parent);
+            const auto after_parent=backend->counters();
+            const auto after_store=backend->store_snapshot();
+            const auto reference=parent_minima.at(group.destination.handle);
+            require(minimum && std::abs(*minimum-reference)
+                <=16*std::numeric_limits<double>::epsilon()*std::abs(reference),
+                "device JENS did not consume the same restricted parent EOS");
+            require(after_parent.kernel_count-before_parent.kernel_count==4
+                && after_parent.bytes_d2h-before_parent.bytes_d2h==sizeof(int)+sizeof(double)
+                && after_parent.bytes_h2d==before_parent.bytes_h2d
+                && after_parent.stream_sync_count-before_parent.stream_sync_count==2,
+                "JENS parent materialized fields or skipped transfer/EOS fences");
+            require(after_store.active_blocks==before_store.active_blocks
+                && after_store.staged_blocks==before_store.staged_blocks,
+                "JENS parent scratch was published into the active/staged namespace");
+            auto invalid_children=children;
+            ++invalid_children.back().storage.value;
+            bool rejected=false;
+            try {(void)backend->evaluate_jeans_parent(invalid_children,parent);}
+            catch(const std::invalid_argument&) {rejected=true;}
+            const auto after_invalid=backend->counters();
+            require(rejected && after_invalid.kernel_count==after_parent.kernel_count
+                && after_invalid.bytes_h2d==after_parent.bytes_h2d
+                && after_invalid.bytes_d2h==after_parent.bytes_d2h
+                && after_invalid.stream_sync_count==after_parent.stream_sync_count,
+                "late invalid parent child partially enqueued work");
+            // Explicit raw-source fault injection tests shared status routing.
+            // It is not a physically valid-leaf/nonconvex-parent science witness.
+            const auto last_id=old_by_handle.at(children.back().block);
+            for(int fault=0;fault<2;++fault) {
+                auto damaged=old_states.at(last_id);
+                if(fault==0)
+                    for(double& e:damaged.eng)e=-100.*std::abs(e);
+                else
+                    for(double& e:damaged.enuc_rate)e=std::numeric_limits<double>::quiet_NaN();
+                upload(children.back(),damaged);
+                const auto before_fault=backend->counters();
+                bool correctly_rejected=false;
+                try {
+                    const auto value=backend->evaluate_jeans_parent(children,parent);
+                    correctly_rejected=fault==0 && !value.has_value();
+                } catch(const std::runtime_error& error) {
+                    correctly_rejected=fault==1 && std::string(error.what())
+                        ==amr::regrid_math::status_message(amr::regrid_math::Status::RestrictionEnuc);
+                }
+                const auto after_fault=backend->counters();
+                require(correctly_rejected
+                    && after_fault.kernel_count-before_fault.kernel_count==2
+                    && after_fault.bytes_d2h-before_fault.bytes_d2h==sizeof(int)
+                    && after_fault.bytes_h2d==before_fault.bytes_h2d
+                    // Fatal propagation executes the existing fail-safe cleanup
+                    // fence after the checked restriction fence; veto returns directly.
+                    && after_fault.stream_sync_count-before_fault.stream_sync_count
+                        ==static_cast<std::uint64_t>(fault==0?1:2),
+                    "parent transfer failure reached EOS or lost veto/fatal semantics");
+                compare(damaged,download(children.back(),damaged),true);
+                upload(children.back(),old_states.at(last_id));
+                const auto recovered=backend->evaluate_jeans_parent(children,parent);
+                require(recovered && std::abs(*recovered-reference)
+                    <=16*std::numeric_limits<double>::epsilon()*std::abs(reference),
+                    "parent status/EOS latch or source did not recover");
+            }
+            std::cout<<"CUDA_JEANS_PARENT_STATUS_PASS species="<<species_count
+                <<" coarse_veto=1 restriction_enuc_fatal=1 eos_not_called=1 recovery=1\n";
+            std::cout<<"CUDA_JEANS_CANDIDATE_PARENT_PASS species="<<species_count
+                <<" children=2 private=1 stale_host=1 late_invalid_reject=1\n";
         }
         FluidState invalid = old_states.at(old_ids.front());
         if (inject_failure) {

@@ -40,6 +40,13 @@ cudaError_t launch_cuda_regrid_prolongation(
     double density_floor, double min_eint, double* workspace,
     std::size_t workspace_scalars, int* status, cudaStream_t stream);
 
+// No enqueue: share the complete restriction layout/workspace preflight with
+// callers that must validate before enqueueing metric/setup work.
+cudaError_t validate_cuda_regrid_restriction(
+    const DeviceRegridChildren& children, DeviceRegridBlock destination,
+    double density_floor, double min_eint, double* workspace,
+    std::size_t workspace_scalars, int* status);
+
 cudaError_t launch_cuda_regrid_restriction(
     const DeviceRegridChildren& children, DeviceRegridBlock destination,
     double density_floor, double min_eint, double* workspace,

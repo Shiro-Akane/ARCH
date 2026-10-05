@@ -9,6 +9,7 @@
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 #include "amr/exchange/ExchangePlan.h"
+#include "amr/storage/Block.h"
 #include "amr/flux/AmrFluxPlan.h"
 
 #include <array>
@@ -729,6 +730,18 @@ void test_jeans_consumer_is_fail_closed_by_default()
     }
 }
 
+void test_jeans_parent_is_fail_closed_by_default()
+{
+    FakeBackend backend;
+    const amr::Block candidate{};
+    bool rejected=false;
+    try {(void)backend.evaluate_jeans_parent({},candidate);}
+    catch(const std::logic_error& error) {
+        rejected=std::string(error.what())=="backend JENS candidate-parent consumer is unavailable";
+    }
+    require(rejected,"unsupported JENS parent used a Host fallback or silently accepted");
+}
+
 void test_dynamic_topology_store_is_fail_closed_by_default()
 {
     class DummyTopologyTransaction final
@@ -795,6 +808,7 @@ int main()
     test_transfer_transaction();
     test_multiblock_exchange_contract();
     test_jeans_consumer_is_fail_closed_by_default();
+    test_jeans_parent_is_fail_closed_by_default();
     test_dynamic_topology_store_is_fail_closed_by_default();
     return 0;
 }

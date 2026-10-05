@@ -208,6 +208,8 @@ public:
 
     std::vector<double> evaluate_jeans_resolution(
         std::span<const backend::BackendStateAccess>) override;
+    std::optional<double> evaluate_jeans_parent(
+        std::span<const backend::BackendStateAccess>, const amr::Block&) override;
 
     StoreTransaction begin_store_transaction(
         amr::AmrPlanScope scope,

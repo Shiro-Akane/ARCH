@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "1.0",
+  "node": "CUDA private restricted-parent EOS/Jeans consumer",
+  "status": "SCOPED_PASS_NOT_DRIVER_ENFORCEMENT",
+  "sourceHeadBeforeCommit": "ec984ed963b566c9f8f071495d073f00ac5f790f",
+  "inputFingerprints": {
+    "src/driver/runtime/ComputeBackend.h": "b11d9e7e95f9d5243e43942439c501df4926ad00cf117e156679b1cbb2443830",
+    "src/cuda/runtime/CudaBackend.h": "626a17838a06bcf9b8f54c2b2e7c10a345b3202361a5523d8204eea1159586cd",
+    "src/cuda/runtime/amr/CudaBackendIndicators.cpp": "b91da896fb25c7b002c4e966053ae210b515a5cdbe8ceeea08f30563e8eb0ab1",
+    "src/cuda/amr/RegridMigration.h": "1e9dc39a2821ad1423b7f5bca4082b0d3ce856e60772b8232fd3b3d69174461b",
+    "src/cuda/amr/RegridMigration.cu": "2a630f938bd0117d5c85d0f3af4f2f7da8455bab39f9ee264106ee4c137fc716",
+    "tests/cuda/amr/test_cuda_regrid_transaction.cpp": "ab19ce4a8550f3f12782585f77513859e23aeca478a398b88d884933bcd93459",
+    "tests/host/driver/test_compute_backend.cpp": "50847242b405cd97f26866bdcd0f50ca2f6e292bb4608b43c43e0a77f68a3864"
+  },
+  "cpuArchSha256Unchanged": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "hostContract": {
+    "ctest": "compute_backend",
+    "passed": 1,
+    "failed": 0,
+    "unsupportedParentRejected": true
+  },
+  "cudaContract": {
+    "ctest": "cuda_regrid_transaction",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "parentDimension": 1,
+    "speciesCounts": [
+      4,
+      41
+    ],
+    "geometricChildren": 2,
+    "staleHostPoisonIgnored": true,
+    "unpublishedParentNamespace": true,
+    "realCpuRestrictionThenEosRoutingControl": true,
+    "routingBudgetEpsilonMultiples": 16,
+    "lateInvalidStorageRejectedBeforeEnqueue": true,
+    "normalDelta": {
+      "kernels": 4,
+      "bytesH2D": 0,
+      "bytesD2H": 12,
+      "streamSyncs": 2
+    },
+    "coarseFluid": {
+      "behavior": "nullopt veto",
+      "kernels": 2,
+      "bytesD2H": 4,
+      "streamSyncs": 1
+    },
+    "restrictionEnuc": {
+      "behavior": "fatal shared status message",
+      "kernels": 2,
+      "bytesD2H": 4,
+      "streamSyncs": 2,
+      "includesOriginalFailSafeCleanupFence": true
+    },
+    "noParentEosAfterRestrictionFailure": true,
+    "rawSourceUnchangedBitwiseDuringVetoFatal": true,
+    "faultThenRestoredSourceParentRecovery": true,
+    "faultInputScope": "explicit invalid raw child energy/ENUC; not physically admissible-leaf/nonconvex-parent science proof"
+  },
+  "migrationRegression": {
+    "ctest": "cuda_regrid_migration",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "markers": 12,
+    "geometryScope": "existing Cartesian/cylindrical/spherical charts; not RZ angular representation scientific acceptance"
+  },
+  "executables": {
+    "build-cuda/arch_cuda_regrid_transaction": {
+      "sha256": "a7630f4446047fe2671f8b132cdec6c60570850a32c1106972bddc30a28e520a",
+      "size": 288164360
+    },
+    "build-cuda/arch_cuda_regrid_migration": {
+      "sha256": "b2dac38a05fd0fee8cc9be66e446f2d736968b40d0303995bcf2dac4c44ba465",
+      "size": 258624
+    }
+  },
+  "logs": {
+    "host-ctest.log": {
+      "sha256": "699bd745214c948e75e6c1400c17b57e8732e93b65891ff91ab73e8d5b8a9045",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-parent-cuda-20261005/host-ctest.log"
+    },
+    "ctest-final-2.log": {
+      "sha256": "2a704c037f8c2f46214583462002dbfceae32f8d127c0e8e6d63031e6f550f34",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-parent-cuda-20261005/ctest-final-2.log"
+    },
+    "migration-ctest.log": {
+      "sha256": "acd593feb15a34f6c9f51cd722071fc908b997e0b36fb0ecc4462d33f4caef26",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-parent-cuda-20261005/migration-ctest.log"
+    },
+    "build.log": {
+      "sha256": "caebb2a92c9c3f853c78bf9472de535e6629fedb562f9f8aa3a3bbe48271f858",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-parent-cuda-20261005/build.log"
+    },
+    "build-final-2.log": {
+      "sha256": "562ebe41f9e1cd3ff6fffabdac88a61e964b6485e13f7cc4c145c688bb00bb98",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-parent-cuda-20261005/build-final-2.log"
+    }
+  },
+  "failureHistory": {
+    "logSha256": "5bf376a54e433e5766af4b8836e5ad15cc41d54e781f5f61db5434315eeac0b4",
+    "cause": "new fatal-path counter assertion omitted existing quiesce_or_terminate cleanup fence",
+    "fix": "preserve original safety fence; assert exact veto=1/fatal=2 completion counters",
+    "scientificThresholdChanged": false
+  },
+  "limitations": [
+    "Private backend parent consumer; Driver/PrepareRegrid decision not yet connected",
+    "Public CUDA JENS gates retained",
+    "Normal parent numeric routing qualified only for IdealGas 1D test states",
+    "No complete frozen uniform CUDA lifecycle/restart/output package",
+    "No new RZ release or benchmark/long run",
+    "CPU existing binary receipts are not current source Build Manifest",
+    "Raw fields/logs/ELF remain local"
+  ],
+  "recordedUtc": "2026-10-05T00:21:56.565825+00:00"
+}

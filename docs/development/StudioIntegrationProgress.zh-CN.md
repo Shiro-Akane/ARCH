@@ -3398,3 +3398,8 @@ GNU-only外部GOMP观测library保持原body/线程请求/flags，不改Core/ELF
 ## 2026-10-05：JENS 实际 Runtime accepted lease 节点
 
 显式Runtime入口在整域topology/Current version/ledger side/pending/storage检查后才消费原tree/backend；真实CPU fixture与原CUDA事务CTest通过，poisoned Host不会被Device消费、非首version/pending在EOS/kernel前拒绝，实际显式D2H后恢复。原4/41 species refine/restrict/rollback保持PASS。此节点不是ordinary Driver enforcement接完，候选父device EOS与完整冻结CUDA生命周期仍待；gate不移除。详见JeansRuntimeAcceptedLeaseNode-20261005.zh-CN.md及processed summary，原数据本机。
+
+
+## 2026-10-05：JENS private device 候选父态节点
+
+原restriction→完成status→同一父态authoritative EOS/JENS已实机验证（1D/4与41 species）；Host poison不影响，late storage拒绝，无store publication，仅compact12B。共享CoarseFluid veto/RestrictionEnuc fatal和source位级保持/恢复通过，保留fatal安全cleanup fence；原Host/CUDA transaction/migration各PASS。仍未接Driver/PrepareRegrid decision，不开放public JENS/RZ或称完整冻结CUDA包。详见JeansDeviceCandidateParentNode-20261005.zh-CN.md及processed summary，raw数据本机。
