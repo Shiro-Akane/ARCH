@@ -31,9 +31,12 @@ using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
 /** Stage a topology transaction, migrate state, validate and publish only on success. */
-bool DriverRuntime::execute_regrid(bool jeans_repair_only)
+bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candidate)
 {
-    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
+    if(native_rz_candidate&&(geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||compute_backend||jeans_repair_only))
+        throw std::logic_error("Native RZ transaction verification requires CPU RZ ordinary AMR");
+    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz&&!native_rz_candidate)
         throw std::logic_error("RZ regrid migration and angular-momentum contract are incomplete");
     // Internal transaction qualification uses backend-local JENS consumers.
     // Public configuration/startup gates remain until full lifecycle acceptance.
@@ -432,11 +435,22 @@ bool DriverRuntime::device_jeans_parent_resolved(
 /** Apply the configured regrid cadence and record its outcome. */
 bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only)
 {
+    return perform_regrid_impl(step,time,jeans_repair_only,false);
+}
+/** Internal qualification consumes the same full migration/finalizer transaction.
+ * No alternative transfer math, namespace publication, or physical capability. */
+bool DriverRuntime::regrid_native_rz_candidate(int step,double time)
+{
+    return perform_regrid_impl(step,time,false,true);
+}
+bool DriverRuntime::perform_regrid_impl(int step,double time,bool jeans_repair_only,
+    bool native_rz_candidate)
+{
     const auto started = std::chrono::steady_clock::now();
     const auto before = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};
     const auto old_blocks = stage_handles.size();
-    const bool changed = execute_regrid(jeans_repair_only);
+    const bool changed = execute_regrid(jeans_repair_only,native_rz_candidate);
     const auto after = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};
     regrid_measurements.push_back({step, time, old_blocks, stage_handles.size(), changed,

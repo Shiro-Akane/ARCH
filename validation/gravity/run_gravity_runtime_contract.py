@@ -7,7 +7,9 @@ import argparse,json,pathlib,shlex,subprocess,os,hashlib
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument("--build",type=pathlib.Path,required=True)
 p.add_argument("--output-root",type=pathlib.Path,required=True)
-p.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
+modes=p.add_mutually_exclusive_group()
+modes.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
+modes.add_argument("--native-rz-regrid",action="store_true",help="Explicit internal CPU RZ Runtime AMR transaction, no physical grant")
 a=p.parse_args();build=a.build.resolve();out=a.output_root.resolve()
 if out.exists():p.error("output-root must be new")
 entries=json.loads((build/"compile_commands.json").read_text())
@@ -15,7 +17,8 @@ main=next(e for e in entries if pathlib.Path(e["file"]).name=="main.cpp")
 root=pathlib.Path(main["file"]).parent.parent
 if "-DARCH_CUDA_BUILD_ENABLED=0" not in shlex.split(main["command"]):p.error("CPU build required")
 out.mkdir(parents=True)
-sources=["tests/host/gravity/test_gravity_runtime_rz_contract.cpp" if a.native_rz else "tests/host/gravity/test_gravity_runtime_contract.cpp",
+sources=["tests/host/gravity/test_rz_runtime_regrid_contract.cpp" if a.native_rz_regrid else
+ "tests/host/gravity/test_gravity_runtime_rz_contract.cpp" if a.native_rz else "tests/host/gravity/test_gravity_runtime_contract.cpp",
  "src/driver/stages/GravityStage.cpp",
  "src/driver/runtime/DriverRuntime.cpp","src/driver/runtime/DriverBoundary.cpp",
  "src/driver/runtime/DriverRegrid.cpp","src/amr/elliptic/EllipticMeshAdapter.cpp"]
@@ -52,9 +55,13 @@ summary={"scope":"Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity al
     for h in [root/"src/numerics/diffusion"/name for name in
       ["DiffDispatch.h","DiffusionAMRStages.h","RKL1TimeIntegrator.h","RKL2TimeIntegrator.h"]]},
  "limitations":["Supported Cartesian identity path only; RZ production gravity/regrid remains gated","No actual Hydro integration or scientific evolution acceptance","No CUDA qualification; only local gravity diagnostic output"]}
-if a.native_rz:
+if a.native_rz or a.native_rz_regrid:
     summary["scope"]="Actual CPU RZ DriverRuntime lease -> GravityStage -> SelfGravity candidate; no timestep"
     summary["limitations"]=["Native candidate only; ordinary physical readers and RZ regrid/Device gates held",
         "No continuous Phi/force or evolution/conservation acceptance"]
+if a.native_rz_regrid:
+    summary["scope"]="Actual CPU RZ Runtime ordinary AMR transaction; no timestep or gravity field grant"
+    summary["limitations"]=["Internal migration only; production RZ/Device gates held",
+        "No continuous Phi/force, Hydro evolution or full angular science acceptance"]
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)

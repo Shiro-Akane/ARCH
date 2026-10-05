@@ -45,6 +45,9 @@ public:
 
     void initialize_topology();
     bool perform_regrid(int step, double time, bool jeans_repair_only = false);
+    // Explicit internal CPU transaction verification; not reachable from
+    // SimConfig/API/Driver evolution and never enables Device or production RZ.
+    bool regrid_native_rz_candidate(int step,double time);
     void ensure_jeans_resolution(int step, double time);
     // Explicit diagnostic/enforcement request; never invoked for disabled JENS.
     std::vector<double> evaluate_current_jeans_resolution();
@@ -79,7 +82,9 @@ private:
     state::StateVersion current_interior_version() const;
     void publish_current_ghost();
     void complete_device_boundary(state::StateSlot);
-    bool execute_regrid(bool jeans_repair_only);
+    bool execute_regrid(bool jeans_repair_only,bool native_rz_candidate=false);
+    bool perform_regrid_impl(int step,double time,bool jeans_repair_only,
+        bool native_rz_candidate);
     bool device_jeans_parent_resolved(const amr::Block&,std::span<const int>);
     static backend::HostStateTransferView host_transfer_view(FluidState&);
 

@@ -765,3 +765,14 @@ RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保�
 默认生产RZ bind/Device/regrid门槛保持。实际Cartesian4→8→4/7gather回归PASS。
 见 RZActualRuntimeCandidateNode-20261005.zh-CN.md。
 只覆盖真实root Runtime三槽，不代表混合拓扑迁移或连续势力/守恒/Device/长跑签收。
+
+### RZ 实际Runtime原AMR事务 / 父态veto（2026-10-05）
+
+显式内部CPU regrid候选复用原完整transaction；普通生产perform_regrid拒绝保持。
+零/非零旋转真实2→8→2及no-change、旧handle拒绝/新ledger readable通过。
+独立V/W收支七行max2.5020639583995762e-17，原1e-12短transfer预算不改；
+零J严格零。冻结W-parent -111/8、eint=-9/128实际group veto，
+8→5混合leaf，四原children bits保留、不补热/改J；合法新输入恢复5→2。
+见 RZActualRuntimeRegridNode-20261005.zh-CN.md。
+混合mesh field solve/fatal rollback/Hydro力矩/连续势力/axis/viscosity/Device/
+完整科学出口及长跑仍待验证，不以AMR transfer代替演化签收。
