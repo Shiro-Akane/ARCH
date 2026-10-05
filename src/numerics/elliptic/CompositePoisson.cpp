@@ -445,6 +445,43 @@ void CompositePoisson::fit_curved_face_value(CompositeFace& face) const {
         const double dl=0.5*width(left,axis),dr=0.5*width(right,axis);
         face.value_samples={left,right};
         face.value_coefficients={dr/(dl+dr),dl/(dl+dr)};
+        if(base_.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+            && cells_[left].level!=cells_[right].level) {
+            // A coarse/fine pair is tangentially displaced. Its normal-only
+            // interpolation is not Phi at this fragment's physical center.
+            // Correct the same unique face value to reproduce affine r/z,
+            // using the original derivative stencil's neighborhood and LU.
+            const auto samples=face.samples;
+            const double scale=std::max(width(left,axis),width(right,axis));
+            DenseMatrixData<10> gram;
+            double right_hand[10]{1.,0.,0.};
+            std::vector<std::array<double,3>> basis;
+            std::vector<double> weights,initial;
+            for(int cell:samples) {
+                const auto x=center(cell);
+                const std::array<double,3> p{1.,(x[0]-face.center[0])/scale,
+                    (x[1]-face.center[1])/scale};
+                const double distance=p[1]*p[1]+p[2]*p[2];
+                const double weight=1./((1.+distance)*(1.+distance));
+                const double value=cell==left?dr/(dl+dr):(cell==right?dl/(dl+dr):0.);
+                basis.push_back(p);weights.push_back(weight);initial.push_back(value);
+                for(int row=0;row<3;++row) {
+                    right_hand[row]-=value*p[row];
+                    for(int col=0;col<3;++col)gram.data[row][col]+=weight*p[row]*p[col];
+                }
+            }
+            if(!DenseLUSolver::solve<3,10>(gram,right_hand))
+                throw std::invalid_argument("Degenerate RZ face-potential interpolation");
+            face.value_samples=samples;face.value_coefficients.resize(samples.size());
+            double sum=0.;std::size_t anchor=0;
+            for(std::size_t k=0;k<samples.size();++k) {
+                double value=initial[k];
+                for(int row=0;row<3;++row)value+=weights[k]*basis[k][row]*right_hand[row];
+                face.value_coefficients[k]=value;
+                if(samples[k]==left)anchor=k;else sum+=value;
+            }
+            face.value_coefficients[anchor]=1.-sum;
+        }
         return;
     }
     auto candidates=face.samples;

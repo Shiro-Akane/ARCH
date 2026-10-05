@@ -3476,3 +3476,14 @@ RZ-BOUNDARY-DISPATCH-01 OPEN：EvaluateBoundary缺少chart身份，二维无条�
 当前bind gate已阻止生产进入，不能把finite-ring数学PASS冒充此Runtime已接通。
 见RZRuntimeBoundaryDispatchAudit-20261005.zh-CN.md；下一节点先原face-row制造势映射，
 再typed ring/RHS/force-work/publication，原科学出口保持，无新演化/阈值/Windows工作。
+
+
+## 2026-10-05：原生RZ face/work消费者与切向插值finding
+
+原Workspace face-row producer接回构造器；真实3584cells的Phi=z揭露coarse/fine
+normal-only Phi_face切向偏置（work=-.6772486772486772，native reference0）。
+原CompositePoisson用同一neighborhood/LU修正affine再现，原断言不变；
+face/work/actual Host cell force/dz timestep、CPU4CTest、actualCartesian Runtime7gather、
+CUDA-enabled Host1CTest通过。见RZNativeFaceWorkNode-20261005.zh-CN.md和summary。
+只关闭该affine scope，RZ typed ring boundary/publication/连续科学/axis/viscosity gate保持。
+生产ELF未变receipt复用，raw/ELF本机，无Windows或新长跑。

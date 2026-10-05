@@ -25,6 +25,16 @@ namespace Physical::Gravity {
 GravityCell gravity_cell_geometry(amr::EllipticCellBinding,
     const arch::elliptic::CompositePoisson&,int cell);
 BoundaryPoint gravity_boundary_point(const arch::elliptic::CompositePoisson&,int face);
+/** Original face-row plan, owned by the workspace geometry producer.
+ * Acceleration rows act on increasing-coordinate face gradients.
+ * Potential/boundary work rows keep signed 2*A/V*(Phi_face-Phi_cell).
+ * This plan does not qualify RZ source, solve or publication.
+ */
+struct GravityFaceRows {
+    arch::multigrid::SparseStorage acceleration,potential_work,boundary_work;
+    std::vector<BoundaryPoint> observers;
+};
+GravityFaceRows gravity_face_rows(const arch::elliptic::CompositePoisson&);
 struct SelfGravity::Workspace {
     using Vector=arch::multigrid::Vector;
     template<class T> using Array=arch::multigrid::Array<T>;

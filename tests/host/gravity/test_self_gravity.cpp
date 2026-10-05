@@ -193,6 +193,78 @@ void rz_binding_identity() {
                 && descriptor.width[2]==0.,"RZ workspace interpreted dz as r*dphi");
             ++checked;
         }
+        // Independent regular manufactured Phi=z: g_r=0, g_z=-1.
+        // No ring boundary solve or production bind is used here.
+        const auto rows=gravity_face_rows(op);
+        std::vector<double> phi(op.size()),boundary(op.faces().size()),gradient(op.faces().size());
+        for(int cell=0;cell<op.size();++cell)phi[cell]=op.center(cell)[1];
+        for(std::size_t face=0;face<op.faces().size();++face) {
+            boundary[face]=op.faces()[face].center[1];
+            gradient[face]=op.faces()[face].axis==1?1.:0.;
+        }
+        const auto apply=[](const arch::multigrid::SparseStorage& csr,int row,
+            const std::vector<double>& input) {
+            long double value=0.;
+            for(int k=csr.offsets[row];k<csr.offsets[row+1];++k)
+                value+=static_cast<long double>(csr.values[k])*input[csr.columns[k]];
+            return value;
+        };
+        std::vector<double> side_values(6*op.size()),cell_force(3*op.size()),inverse_dt(op.size());
+        std::vector<GravityCell> cell_geometry;
+        for(int cell=0;cell<op.size();++cell)
+            cell_geometry.push_back(gravity_cell_geometry(binding.storage[cell],op,cell));
+        for(int cell=0;cell<op.size();++cell)for(int axis=0;axis<2;++axis)for(int side=0;side<2;++side) {
+            const int row=6*cell+2*axis+side;
+            const long double acceleration=apply(rows.acceleration,row,gradient);
+            side_values[row]=static_cast<double>(acceleration);
+            const long double expected=axis==1?-1.:0.;
+            require(std::abs(acceleration-expected)<=64.*std::numeric_limits<double>::epsilon(),
+                "RZ native face acceleration uses wrong physical axis/fragment measure");
+            long double work=apply(rows.potential_work,row,phi)
+                +apply(rows.boundary_work,row,boundary),reference=0.,scale=0.;
+            // Native signed finite-volume work, independently summed by actual
+            // faces (not CSR columns): +/-2*A/V*(z_face-z_cell).
+            for(const auto& face:op.faces())if(face.axis==axis
+                && (side==0?face.right==cell:face.left==cell)) {
+                const long double term=(side==0?2.L:-2.L)*face.area/op.volumes()[cell]
+                    *(static_cast<long double>(face.center[1])-op.center(cell)[1]);
+                reference+=term;scale+=std::abs(term);
+            }
+            for(int k=rows.potential_work.offsets[row];k<rows.potential_work.offsets[row+1];++k)
+                scale+=std::abs(static_cast<long double>(rows.potential_work.values[k])
+                    *phi[rows.potential_work.columns[k]]);
+            for(int k=rows.boundary_work.offsets[row];k<rows.boundary_work.offsets[row+1];++k)
+                scale+=std::abs(static_cast<long double>(rows.boundary_work.values[k])
+                    *boundary[rows.boundary_work.columns[k]]);
+            if(std::abs(work-reference)>64.*std::numeric_limits<double>::epsilon()*scale) {
+                std::cerr.precision(20);
+                std::cerr<<"RZ_WORK_ROW cell="<<cell<<" axis="<<axis<<" side="<<side
+                    <<" inner="<<inner<<" level="<<binding.cells[cell].level
+                    <<" work="<<work<<" expected="<<reference<<" scale="<<scale<<'\n';
+                for(const auto& face:op.faces())if(face.axis==axis
+                    && (side==0?face.right==cell:face.left==cell)) {
+                    std::cerr<<"face center_z="<<face.center[1]<<" A="<<face.area
+                        <<" B="<<face.value_boundary_coefficient<<" samples=";
+                    for(std::size_t k=0;k<face.value_samples.size();++k)
+                        std::cerr<<face.value_samples[k]<<':'<<face.value_coefficients[k]<<' ';
+                    std::cerr<<'\n';
+                }
+                throw std::runtime_error("RZ native potential work sign/area/volume/interpolation mismatch");
+            }
+        }
+        // Execute the original shared CellAcceleration work through its Host
+        // executor; axial force must use dz and the inactive phi lane stays zero.
+        make_host_gravity_execution()->run(CellAcceleration{op.size(),2,
+            cell_geometry.data(),side_values.data(),cell_force.data(),inverse_dt.data()});
+        for(int cell=0;cell<op.size();++cell) {
+            require(cell_force[cell]==0. && cell_force[2*op.size()+cell]==0.,
+                "RZ force mapped to inactive angular component");
+            require(std::abs(cell_force[op.size()+cell]+1.)<=64.*std::numeric_limits<double>::epsilon(),
+                "RZ actual cell acceleration lost axial mapping");
+            const double expected=1./op.width(cell,1);
+            require(std::abs(inverse_dt[cell]-expected)<=64.*std::numeric_limits<double>::epsilon()*expected,
+                "RZ gravity timestep uses angular metric instead of dz");
+        }
         int observers=0;
         for(std::size_t face=0;face<op.faces().size();++face) {
             const auto& native=op.faces()[face];
@@ -246,7 +318,7 @@ void rz_binding_identity() {
         verify_binding(amr::bind_elliptic_mesh(control,config.grid,next));
     }
     std::cout<<"RZ_ELLIPTIC_BINDING_IDENTITY_PASS cells="<<checked
-        <<" axis=1 offaxis=1 mixed=1 workspace_lengths=1 meridian_observers=1 axial_dirichlet=1 runtime_gate=1 old_publication_retired=1 recovery=1\n";
+        <<" axis=1 offaxis=1 mixed=1 workspace_lengths=1 face_acceleration=1 potential_work=1 actual_cell_force=1 physical_timestep=1 meridian_observers=1 axial_dirichlet=1 runtime_gate=1 old_publication_retired=1 recovery=1\n";
 }
 void native_components() {
     for(int dimension:{2,3}) {

@@ -51,28 +51,13 @@ BoundaryPoint gravity_boundary_point(const arch::elliptic::CompositePoisson& op,
     const auto point=GridMetrics::PhysicalPosition(workspace_chart(op),op.faces()[face].center);
     return {{point[0],point[1],point[2]},face};
 }
-/** Allocate resident density, face and force fields for one topology epoch. */
-SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic::BoundaryKind kind,
-    std::shared_ptr<GravityExecution> runner):binding(std::move(value)),execution(std::move(runner)),
-    solver(binding.base,binding.cells,kind,execution->numeric()) {
-    auto& e=solver.execution();const auto& op=solver.op();const int n=op.size();
-    density=e.array<double>(n);rhs=e.array<double>(n);boundary_values=e.array<double>(op.faces().size());
-    face_gradient=e.array<double>(op.faces().size());sides=e.array<double>(6*n);g=e.array<double>(3*n);
+/** Build the original native face acceleration/work maps, without executing
+ * a boundary kernel or publishing a field. RZ consumes the operator's full-ring
+ * areas/volumes; Existing retains the same assembly order and coefficients.
+ */
+GravityFaceRows gravity_face_rows(const arch::elliptic::CompositePoisson& op) {
+    const int n=op.size();
     const bool curved=op.base().geometry!=arch::elliptic::Geometry::Cartesian;
-    if(curved)work_sides=e.array<double>(6*n);else work_sides=sides;
-    inverse_dt_squared=e.array<double>(n);density_pointers=e.array<const double*>(binding.grids.size());
-    std::vector<GravityCell> locations;
-    for(int i=0;i<n;++i)
-        locations.push_back(gravity_cell_geometry(binding.storage[i],op,i));
-    cells=e.upload(locations);volumes=e.upload(op.volumes());
-    for(std::size_t b=0;b<binding.grids.size();++b){lookup.emplace(binding.grids[b],b);patch_offsets.push_back(native_size);native_size+=binding.grids[b]->GetTotalSize();}
-    patch_faces=e.array<double>(3*native_size);
-    if(curved)patch_work_faces=e.array<double>(3*native_size);else patch_work_faces=patch_faces;
-    patches.resize(binding.grids.size());
-    for(std::size_t b=0;b<patches.size();++b)for(int a=0;a<3;++a){
-        patches[b].faces[a]=patch_faces.data+a*native_size+patch_offsets[b];
-        patches[b].work_faces[a]=patch_work_faces.data+a*native_size+patch_offsets[b];
-    }
     std::vector<std::vector<int>> columns(6*n),work_phi_columns(6*n),work_boundary_columns(6*n);
     std::vector<std::vector<double>> weights(6*n),work_phi_weights(6*n),work_boundary_weights(6*n);
     std::vector<BoundaryPoint> boundary_points;
@@ -109,18 +94,46 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
         double area=0.;for(double weight:side)area-=weight;
         if(area>0.)for(double& weight:side)weight/=area;
     }
-    arch::multigrid::SparseStorage side_rows,patch_rows;
-    for(int i=0;i<6*n;++i)side_rows.row(columns[i],weights[i]);
-    side_gather={e,side_rows};
-    if(curved) {
-        arch::multigrid::SparseStorage phi_rows,boundary_rows;
-        for(int i=0;i<6*n;++i) {
-            phi_rows.row(work_phi_columns[i],work_phi_weights[i]);
-            boundary_rows.row(work_boundary_columns[i],work_boundary_weights[i]);
+    GravityFaceRows result;
+    for(int i=0;i<6*n;++i) {
+        result.acceleration.row(columns[i],weights[i]);
+        if(curved) {
+            result.potential_work.row(work_phi_columns[i],work_phi_weights[i]);
+            result.boundary_work.row(work_boundary_columns[i],work_boundary_weights[i]);
         }
-        work_phi_gather={e,phi_rows};
-        work_boundary_gather={e,boundary_rows};
     }
+    result.observers=std::move(boundary_points);
+    return result;
+}
+/** Allocate resident density, face and force fields for one topology epoch. */
+SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic::BoundaryKind kind,
+    std::shared_ptr<GravityExecution> runner):binding(std::move(value)),execution(std::move(runner)),
+    solver(binding.base,binding.cells,kind,execution->numeric()) {
+    auto& e=solver.execution();const auto& op=solver.op();const int n=op.size();
+    density=e.array<double>(n);rhs=e.array<double>(n);boundary_values=e.array<double>(op.faces().size());
+    face_gradient=e.array<double>(op.faces().size());sides=e.array<double>(6*n);g=e.array<double>(3*n);
+    const bool curved=op.base().geometry!=arch::elliptic::Geometry::Cartesian;
+    if(curved)work_sides=e.array<double>(6*n);else work_sides=sides;
+    inverse_dt_squared=e.array<double>(n);density_pointers=e.array<const double*>(binding.grids.size());
+    std::vector<GravityCell> locations;
+    for(int i=0;i<n;++i)
+        locations.push_back(gravity_cell_geometry(binding.storage[i],op,i));
+    cells=e.upload(locations);volumes=e.upload(op.volumes());
+    for(std::size_t b=0;b<binding.grids.size();++b){lookup.emplace(binding.grids[b],b);patch_offsets.push_back(native_size);native_size+=binding.grids[b]->GetTotalSize();}
+    patch_faces=e.array<double>(3*native_size);
+    if(curved)patch_work_faces=e.array<double>(3*native_size);else patch_work_faces=patch_faces;
+    patches.resize(binding.grids.size());
+    for(std::size_t b=0;b<patches.size();++b)for(int a=0;a<3;++a){
+        patches[b].faces[a]=patch_faces.data+a*native_size+patch_offsets[b];
+        patches[b].work_faces[a]=patch_work_faces.data+a*native_size+patch_offsets[b];
+    }
+    const auto face_rows=gravity_face_rows(op);
+    side_gather={e,face_rows.acceleration};
+    if(curved) {
+        work_phi_gather={e,face_rows.potential_work};
+        work_boundary_gather={e,face_rows.boundary_work};
+    }
+    arch::multigrid::SparseStorage patch_rows;
     // One writer per native face, including block boundaries and coarse/fine
     // area averages. A gather avoids CUDA races between adjacent cells.
     std::vector<int> owner(3*native_size,-1);
@@ -129,7 +142,7 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
     const double one=1.;for(int i:owner){if(i<0)patch_rows.row({},{});else patch_rows.row({&i,1},{&one,1});}patch_gather={e,patch_rows};
     if(kind==arch::elliptic::BoundaryKind::Dirichlet ||
        kind==arch::elliptic::BoundaryKind::CurvilinearIsolated){GravityBoundary tree(op);nodes=e.upload(tree.nodes());moments=e.array<BoundaryMoments>(nodes.size);
-        for(const auto& layer:tree.layers())layers.push_back(e.upload(layer));points=e.upload(boundary_points);}
+        for(const auto& layer:tree.layers())layers.push_back(e.upload(layer));points=e.upload(face_rows.observers);}
     e.fill(boundary_values);e.fence();
 }
 }

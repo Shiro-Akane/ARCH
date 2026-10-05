@@ -593,3 +593,14 @@ raw/ELF本机，无Windows适配；整体O7、批准长跑及冻结benchmark未�
 见CurrentCpuSourceIdentityNode-20261005.zh-CN.md与processed summary，raw/ELF本机。
 这是current源码匹配CPU receipt，不冒称公开CUDA JENS/RZ全科学/long-run/benchmark签收。
 CUDA9+9候选仍待明确本地验证授权；原科学gate保持，不开展Windows适配。
+
+
+## 2026-10-05：原生RZ face/work消费者与切向插值finding
+
+原Workspace face-row producer接回构造器；真实3584cells的Phi=z揭露coarse/fine
+normal-only Phi_face切向偏置（work=-.6772486772486772，native reference0）。
+原CompositePoisson用同一neighborhood/LU修正affine再现，原断言不变；
+face/work/actual Host cell force/dz timestep、CPU4CTest、actualCartesian Runtime7gather、
+CUDA-enabled Host1CTest通过。见RZNativeFaceWorkNode-20261005.zh-CN.md和summary。
+只关闭该affine scope，RZ typed ring boundary/publication/连续科学/axis/viscosity gate保持。
+生产ELF未变receipt复用，raw/ELF本机，无Windows或新长跑。
