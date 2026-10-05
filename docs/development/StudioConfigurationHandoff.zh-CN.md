@@ -562,3 +562,14 @@ Existing原center/公式不变；3584真实root/mixed cell与所有边界face检
 不是Device RZ或完整RZ Runtime/science。原bind/regrid/JENS gate保持。
 见RZGravityWorkspaceChartNode-20261005.zh-CN.md及processed summary。
 CPU ELF未变receipt复用、raw/ELF本机；完整finite-ring runtime/force-work/科学/长跑仍未签收。
+
+
+## 2026-10-05：完整 CUDA ARCH 与原 CPU-qualified 短子组
+
+源2a984091的完整ARCH Release/sm89构建通过；19真实Device进程、
+27记录（8预期拒绝）原Wave/Box/Radial quick子组PASS。
+原参考/科学阈值/低G迁移未改，repair/residual/restart通过；
+真实端点与输入分别记录，不以quick/步骤截断冒充完整campaign/长跑。
+见CurrentCudaOriginalShortNode-20261005.zh-CN.md及processed summary。
+公开CUDA JENS gate未改，冻结9+9待明确本地验证授权；RZ科学/生产gate保持。
+raw/ELF本机；完整CUDA/long-run/benchmark未完成，不开展Windows适配。
