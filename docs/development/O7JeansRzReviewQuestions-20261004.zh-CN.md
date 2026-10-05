@@ -745,3 +745,13 @@ RZ-NATIVE-SERVICE-BUDGET-01 OPEN。零源按原正密度条件拒绝，未替代
 RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保留。
 见 RZPositiveIsolatedRhsBudgetNode-20261005.zh-CN.md。
 完整Runtime/连续势力/axis/viscosity/angular/CUDA/long-run科学门槛保持。
+
+### RZ 真实三状态buffer / 失败恢复节点（2026-10-05）
+
+原两块512cell，Current→Scratch→Next→Current实际独立allocation；
+非活动rho=NaN，选中rho1。非首slot/view失配原入口零委托工作拒绝，
+旧场退役后合法恢复；source generation=2/3/4，每次原conditional Accepted。
+465.035秒、swap0，physical读取消费始终拒绝candidate；CPU生命周期回归PASS。
+见 RZNativeSlotLifecycleNode-20261005.zh-CN.md。
+版本/storage身份由fixture给定，不代表DriverRuntime真实租约/regrid事务；
+连续势力/Hydro守恒/axis/viscosity/Device/long-run科学门槛保持。

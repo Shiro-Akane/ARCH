@@ -427,7 +427,7 @@ void rz_binding_identity() {
 /** Real native two-block gather and original SelfGravity pipeline.
  * Opt-in expensive verification; no Hydro/time/output and no physical publish.
  */
-void native_rz_service_candidate(bool zero_source=false) {
+void native_rz_service_candidate(bool zero_source=false,bool lifecycle=false) {
     SimConfig config;config.grid.geometry="cylindrical";config.grid.dim=2;
     config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
     config.grid.x1_min=0.;config.grid.x1_max=1.;
@@ -451,6 +451,8 @@ void native_rz_service_candidate(bool zero_source=false) {
             amr::native_scalar_layout(b.grid),grid::FieldMemory::Host,1}});
     }
     SelfGravity gravity(config.physics.gravity);
+    auto execution=std::make_shared<IdentityExecution>();
+    if(lifecycle)gravity.set_execution(execution);
     auto binding=amr::bind_elliptic_mesh(control,config.grid,handles);
     rejects([&]{gravity.bind(binding);},"public bind enabled RZ");
     gravity.bind_native_rz_candidate(binding,65536,100000);
@@ -496,6 +498,60 @@ void native_rz_service_candidate(bool zero_source=false) {
     auto stale=identity;stale.inputs.back().version={2};
     rejects([&]{gravity.prepare({stale,views});},"candidate accepted nonfirst stale dependency");
     rejects([&]{gravity.native_rz_potential();},"candidate failure retained old field");
+    if(lifecycle) {
+        // Borrow each real Block state allocation. Poison inactive buffers so
+        // Current-only gathering cannot masquerade as Scratch/Next support.
+        std::uint64_t previous_generation=assessment.source_generation;
+        const std::array slots{state::StateSlot::Scratch,state::StateSlot::Next,
+            state::StateSlot::Current};
+        for(std::size_t lane=0;lane<slots.size();++lane) {
+            views.clear();identity.inputs.clear();
+            std::size_t block_index=0;
+            for(int id:control.tree->GetActiveBlocks()) {
+                auto& block=control.pool->GetBlock(id);
+                for(auto* state:{&block.fluid_state,&block.state_scratch,&block.state_next})
+                    for(int c=0;c<block.grid.GetTotalSize();++c)
+                        state->rho[c]=std::numeric_limits<double>::quiet_NaN();
+                auto& selected=slots[lane]==state::StateSlot::Current?block.fluid_state:
+                    slots[lane]==state::StateSlot::Scratch?block.state_scratch:block.state_next;
+                for(int c=0;c<block.grid.GetTotalSize();++c)selected.set(c,{1.,0.,0.,0.,10.});
+                const auto generation=static_cast<std::uint64_t>(lane+2);
+                const GravityInputIdentity input{handles[block_index++],slots[lane],
+                    {generation},generation};
+                identity.inputs.push_back(input);
+                views.push_back({input,{selected.rho.data(),selected.rho.size(),
+                    amr::native_scalar_layout(block.grid),grid::FieldMemory::Host,generation}});
+            }
+            // A mismatched nonfirst slot must retire the publication before
+            // delegated gather/ring/solve work; the valid request then recovers.
+            auto bad=identity;bad.inputs.back().slot=
+                slots[lane]==state::StateSlot::Current?state::StateSlot::Next:state::StateSlot::Current;
+            const auto before=execution->work_count;
+            rejects([&]{gravity.prepare({bad,views});},"native lifecycle accepted wrong nonfirst slot");
+            require(execution->work_count==before,"native invalid slot executed work");
+            rejects([&]{gravity.native_rz_assessment();},"native invalid slot retained assessment");
+            gravity.prepare({identity,views});
+            const auto& next=gravity.native_rz_assessment();
+            require(next.source==identity&&next.source_generation>previous_generation,
+                "native lifecycle lost selected state identity/generation");
+            previous_generation=next.source_generation;
+            require(next.conditional.status==elliptic::BoundaryResidualStatus::Accepted
+                &&next.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
+                "native lifecycle lost original request or acquired physical grant");
+            require(gravity.native_rz_potential().size()==512,"native lifecycle changed active extent");
+            for(const auto& component:gravity.native_rz_acceleration())
+                for(double value:component)require(std::isfinite(value),"native lifecycle force nonfinite");
+            rejects([&]{gravity.potential();},"native lifecycle escaped candidate scope");
+            rejects([&]{gravity.patch_view(1);},"native nonfirst patch escaped candidate scope");
+            std::cout<<std::setprecision(17)<<"RZ_NATIVE_SLOT_PASS lane="<<lane
+                <<" slot="<<static_cast<int>(slots[lane])<<" source_generation="<<previous_generation
+                <<" total="<<next.conditional.total_residual_upper
+                <<" safe="<<next.conditional.tolerance_safe<<" cells=512 time=0 steps=0"<<std::endl;
+        }
+        std::cout<<"RZ_NATIVE_SERVICE_LIFECYCLE_PASS actual_buffers=3"
+            <<" inactive_nan=1 nonfirst_slot_zero_work=1 stale_retired=1 recovery=1"
+            <<" physical_readers_rejected=1 time=0 steps=0"<<std::endl;
+    }
     std::cout<<"RZ_NATIVE_SERVICE_CANDIDATE_PASS zero_numerical_source="<<zero_source<<" blocks=2 cells=512 source_identity=1"
         <<" original_request=1 finite_force=1 physical_readers_rejected=1 nonfirst_stale=1 time=0 steps=0\\n";
 }
@@ -559,4 +615,5 @@ void native_components() {
 int main(int argc,char** argv) { try {
     if(argc>1&&std::string_view(argv[1])=="native-rz-zero-scope"){native_rz_service_candidate(true);return 0;}
     if(argc>1&&std::string_view(argv[1])=="native-rz-service-candidate"){native_rz_service_candidate();return 0;}
+    if(argc>1&&std::string_view(argv[1])=="native-rz-service-lifecycle"){native_rz_service_candidate(false,true);return 0;}
     qualification_scope();request_identity_preflight();lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
