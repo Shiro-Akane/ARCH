@@ -849,3 +849,10 @@ CPU当前短包后，同Core tree CUDA Release ELF1cbbd695...27eb53，原Wave32/
 58实际run全部Device=1、kernels>0，共4311863 kernels，max residual/target0.7390315。
 见CurrentCudaReleaseScientificCheckpoint-20261005.zh-CN.md。并发环境用时不作benchmark；
 public CUDA JENS、新RZ/axis/viscosity/long-run gate保持，原数据本机。
+
+### 第二平台正式输入就绪只读审计（2026-10-05）
+
+8份SNIaCoupled候选，6份当前simulation声明complete；旧两份P13各缺16必填键。
+PLATFORM-P13-CONFIG-01 OPEN，未自动补参数。真实schema路径EOS文件存在且hash记录；
+API明确无Setup/EOS/CUDA/资源就绪验证。二维旧cylindrical API仍(r,phi)，不是新RZ包。
+见PlatformFrozenInputReadiness-20261005.zh-CN.md；正式endpoint/budget由Core冻结后计时/长跑。
