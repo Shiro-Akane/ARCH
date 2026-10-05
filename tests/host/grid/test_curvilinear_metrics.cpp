@@ -17,8 +17,11 @@
 #include "math/geometry/ViscousGeometryCases.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "physics/eos/IdealGas.h"
+#include "physics/gravity/ExternalGravity.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
 #include <iostream>
+#include <bit>
+#include <cstdint>
 #include <mutex>
 #include <stdexcept>
 
@@ -437,8 +440,9 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
 // the same EOS/HLLC policy and independent full-ring surface integration.
 class RzBoundaryBudgetObserver final : public Numerics::IHydroSolver {
 public:
-    RzBoundaryBudgetObserver(const Numerics::IHydroSolver& owner,const IdealGas& eos)
-        :owner_(owner),eos_(eos){}
+    RzBoundaryBudgetObserver(const Numerics::IHydroSolver& owner,const IdealGas& eos,
+        const Physical::Gravity::ExternalGravity* external=nullptr)
+        :external_(external),owner_(owner),eos_(eos){}
     GridMetrics::GeometrySemantics geometry_semantics() const noexcept override {
         return owner_.geometry_semantics();
     }
@@ -483,10 +487,32 @@ public:
                 }
             }
         }
+        // Read the actual stage state; the source update remains in the
+        // existing ExternalGravity/TimeIntegratorHelper owners. Independent
+        // endpoint integrals distinguish V energy work from W angular impulse.
+        std::array<long double,5> applied{};
+        long double unweighted_applied=0.;
+        if(external_) {
+            if(gravity!=external_ || grid.GetFacePosL(grid.Is())<=0.)
+                throw std::runtime_error("off-axis external torque identity");
+            const long double pi=std::acos(-1.L);
+            for(int j=grid.Js();j<grid.Je();++j)
+                for(int i=grid.Is();i<grid.Ie();++i) {
+                    const int c=grid.GetIndex(i,j,0);
+                    const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+                    const long double V=pi*(h*h-l*l)*grid.dx2;
+                    const long double W=2.L*pi*(h*h*h-l*l*l)*grid.dx2/3.L;
+                    const long double angular=dt*state.rho[c]*external_->g_z*W;
+                    applied[2]+=stage_weight*angular;
+                    unweighted_applied+=angular;
+                    applied[1]+=stage_weight*dt*state.mom_w[c]*external_->g_z*V;
+                }
+        }
         owner_.evaluate_patch(control,block_id,state,grid,dt,dU,ds,
             gravity,cfg,stage_weight,stream);
         std::lock_guard lock(mutex_);
-        for(int k=0;k<5;++k)outward_[k]+=local[k];
+        for(int k=0;k<5;++k) {outward_[k]+=local[k];applied_[k]+=applied[k];}
+        unweighted_applied_+=unweighted_applied;
         unweighted_torque_+=unweighted_torque;
         ++stage_calls_;
     }
@@ -502,8 +528,17 @@ public:
     long double unweighted_torque() const {
         std::lock_guard lock(mutex_);return unweighted_torque_;
     }
+    std::array<long double,5> applied() const {
+        std::lock_guard lock(mutex_);return applied_;
+    }
+    long double unweighted_applied() const {
+        std::lock_guard lock(mutex_);return unweighted_applied_;
+    }
     int stage_calls() const {std::lock_guard lock(mutex_);return stage_calls_;}
 private:
+    const Physical::Gravity::ExternalGravity* external_=nullptr;
+    mutable std::array<long double,5> applied_{};
+    mutable long double unweighted_applied_=0.;
     const Numerics::IHydroSolver& owner_;
     const IdealGas& eos_;
     mutable std::mutex mutex_;
@@ -513,14 +548,17 @@ private:
 };
 
 template<typename Solver>
-void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false) {
+void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false,double external_phi=0.) {
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
     SpeciesManager species;
     species.add_species("gas0",1.,1.,1.4,3.);
     species.add_species("gas1",2.,1.,1.4,3.);
     IdealGas eos(1.4,species);
     Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> policy(eos,rz);
-    RzBoundaryBudgetObserver observer(policy,eos);
+    if(external_phi!=0. && inner<=0.)throw std::invalid_argument("body torque audit is off-axis");
+    Physical::Gravity::ExternalGravity external(0.,0.,external_phi);
+    const auto* gravity=external_phi==0.?nullptr:&external;
+    RzBoundaryBudgetObserver observer(policy,eos,gravity);
     const Numerics::IHydroSolver& hydro=observer;
     Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> legacy(eos);
     if(hydro.geometry_semantics()!=rz
@@ -638,15 +676,40 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
                     {numerics.sml_rho,numerics.min_eint,numerics.max_eint});
                 return token;
             });
-        Solver::solve(control,1.e-4,boundary,nullptr,&hydro,numerics);
+        const auto snapshot=[&]() {
+            std::vector<std::uint64_t> words;
+            for(int id:active) {
+                const auto& b=control.pool->GetBlock(id);
+                for(int c=0;c<b.grid.GetTotalSize();++c) {
+                    const auto u=b.fluid_state.get(c);
+                    for(double value:{u.rho,u.mom_u,u.mom_v,u.mom_w,u.eng,
+                        b.fluid_state.X(0,c),b.fluid_state.X(1,c)})
+                        words.push_back(std::bit_cast<std::uint64_t>(value));
+                }
+            }
+            return words;
+        };
+        const auto preflight_state=gravity?snapshot():std::vector<std::uint64_t>{};
+        try {
+            Solver::solve(control,1.e-4,boundary,gravity,&hydro,numerics);
+        } catch(const std::invalid_argument& error) {
+            if(gravity && std::string(error.what())=="RZ gravity requires authoritative finite-ring contract") {
+                if(observer.stage_calls()!=0 || snapshot()!=preflight_state)
+                    throw std::runtime_error("external torque rejection partially updated current state");
+                std::cerr<<"RZ_APPLIED_TORQUE_PREFLIGHT stage_calls=0 state_words="
+                    <<preflight_state.size()<<" state_bits_unchanged=1 reason="<<error.what()<<'\n';
+            }
+            throw;
+        }
         const auto now=totals();
         const auto out=observer.outward();
-        const long double jerror=std::abs(now[2]-before[2]+out[2])
-            /(before[3]+std::abs(out[2]));
+        const auto applied=observer.applied();
+        const long double jerror=std::abs(now[2]-before[2]+out[2]-applied[2])
+            /(before[3]+std::abs(out[2])+std::abs(applied[2]));
         const long double merror=std::abs(now[0]-before[0]+out[0])
             /(before[0]+std::abs(out[0]));
-        const long double eerror=std::abs(now[1]-before[1]+out[1])
-            /(before[1]+std::abs(out[1]));
+        const long double eerror=std::abs(now[1]-before[1]+out[1]-applied[1])
+            /(before[1]+std::abs(out[1])+std::abs(applied[1]));
         const long double xerror=std::max(std::abs(now[4]-before[4]+out[3])
             /(before[4]+std::abs(out[3])),std::abs(now[5]-before[5]+out[4])
             /(before[5]+std::abs(out[4])));
@@ -669,19 +732,33 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
     const auto& topology=control.RequireFluxTopologyPlan(2,rz,-1,true);
     if(!topology.angular_transport)throw std::runtime_error("rotating hydro lost torque identity");
     const auto final_out=observer.outward();
+    const auto final_applied=observer.applied();
     if(open && final_out[2]==0.)throw std::runtime_error("open fixture has zero external torque");
     const int stages=std::is_same_v<Solver,SolverEuler>?1:(std::is_same_v<Solver,SolverRK2>?2:3);
     if(observer.stage_calls()!=steps*stages*static_cast<int>(active.size()))
         throw std::runtime_error("boundary budget missed a real RK patch-stage");
     const auto final_state=totals();
-    const long double naive_error=std::abs(final_state[2]-before[2]+observer.unweighted_torque())
+    const long double naive_error=std::abs(final_state[2]-before[2]+observer.unweighted_torque()-final_applied[2])
         /(before[3]+std::abs(observer.unweighted_torque()));
     if(open && stages>1 && naive_error<=1.e-12L)
         throw std::runtime_error("wrong RK boundary stage accounting escaped negative control");
-    std::cout<<"RZ_ROTATING_BUDGET open="<<open<<" method="<<Solver::name()<<" direction="<<direction
+    const long double missing_applied_error=std::abs(final_state[2]-before[2]+final_out[2])
+        /(before[3]+std::abs(final_out[2]));
+    const long double wrong_applied_stage_error=std::abs(final_state[2]-before[2]
+        +final_out[2]-observer.unweighted_applied())
+        /(before[3]+std::abs(final_out[2])+std::abs(observer.unweighted_applied()));
+    if(gravity && (final_applied[2]==0. || final_applied[1]==0. || missing_applied_error<=1.e-12L))
+        throw std::runtime_error("missing applied torque negative control escaped");
+    if(gravity && stages>1 && wrong_applied_stage_error<=1.e-12L)
+        throw std::runtime_error("wrong applied RK stage accounting escaped");
+    std::cout<<"RZ_ROTATING_BUDGET external_phi="<<external_phi<<" open="<<open<<" method="<<Solver::name()<<" direction="<<direction
         <<" inner="<<inner<<" steps="<<steps<<" J_error="<<static_cast<double>(maxJ)
         <<" mass_error="<<static_cast<double>(maxM)<<" E_error="<<static_cast<double>(maxE)
         <<" species_error="<<static_cast<double>(maxSpecies)
+        <<" applied_torque="<<static_cast<double>(final_applied[2])
+        <<" applied_energy="<<static_cast<double>(final_applied[1])
+        <<" missing_applied_error="<<static_cast<double>(missing_applied_error)
+        <<" wrong_applied_stage_error="<<static_cast<double>(wrong_applied_stage_error)
         <<" outward_torque="<<static_cast<double>(final_out[2])
         <<" naive_stage_error="<<static_cast<double>(naive_error)
         <<" stage_calls="<<observer.stage_calls()<<" max_torque_register="<<maxTorqueRegister<<'\n';
@@ -934,6 +1011,21 @@ void test_rz_native_coordinates()
 }
 int main(int argc,char** argv)
 {
+    if(argc==2 && std::string(argv[1])=="rz-applied-torque-audit") {
+        try {
+            for(int direction:{0,1})for(bool open:{false,true})for(double phi:{-.025,.025}) {
+                test_rz_rotating_boundary_budget<SolverEuler>(direction,1.,open,phi);
+                test_rz_rotating_boundary_budget<SolverRK2>(direction,1.,open,phi);
+                test_rz_rotating_boundary_budget<SolverRK3>(direction,1.,open,phi);
+            }
+            return 0;
+        } catch(const std::invalid_argument& error) {
+            if(std::string(error.what())!="RZ gravity requires authoritative finite-ring contract") throw;
+            std::cerr<<"RZ_APPLIED_TORQUE_SCIENCE_GATE=NOT_CLEARED "
+                "finding=RZ-EXT-TORQUE-GATE-01 planned_cases=24 completed_cases=0\n";
+            return 2;
+        }
+    }
     if(argc==2 && std::string(argv[1])=="rz-equilibrium-audit")
         return audit_rz_rotating_equilibrium();
     test_rz_angular_measures();
