@@ -676,3 +676,12 @@ Controller time0/steps0，请求stage time不作为演化终点。
 4->8->4->4 blocks、epoch1->2->3->3、7次实际gather。
 见GravityRuntimeCoarsenNode-20261005.zh-CN.md。
 没有改科学阈值或Core，不以Cartesian/typed fixture替代RZ或公共配置科学签收。
+
+### RZ实际tree→elliptic接口证据（2026-10-05）
+
+RZ-ELLIPTIC-SEMANTICS-01在adapter范围关闭：真实root/mixed tree chart、
+full-ring V、native offset和z Dirichlet共3584cells通过。
+SelfGravity尚未接完整finite-ring/native force/work/runtime消费者，显式gate保持。
+原CPU生命周期及实际Cartesian Runtime回归、CUDA-enabled Host构建兼容通过，
+均不冒称RZ科学/device签收。见RZEllipticChartBindingNode-20261005.zh-CN.md。
+原科学阈值未改；完整8.4 A→B→C→D与连续环体budget仍未完成。

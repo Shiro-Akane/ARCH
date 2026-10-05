@@ -539,3 +539,16 @@ CPU相关3项+实际Runtime gravity fixture PASS；没有推进time/step。
 见JeansRuntimeDeviceTransactionsNode-20261005.zh-CN.md及processed summary。
 公开CUDA JENS/RZ gate仍保持，完整冻结9+9 CUDA、科学RZ、long-run/benchmark未签收。
 未变CPU ARCH复用匹配receipt，旧Manifest不当作当前source fresh；raw数据/ELF/log本机。
+
+
+## 2026-10-05：RZ权威tree→elliptic chart桥接
+
+原adapter现在传递tree semantics并使用同一显式GridMetrics full-ring measure；
+axis/offaxis、2roots→5mixed真实tree事务，共3584cells逐cellvolume与z Dirichlet验证PASS。
+SelfGravity在未完成finite-ring/native force-work/runtime consumer前明确拒绝RZ，
+旧publication失效及Cartesian恢复通过，不宣布RZ科学完成。
+原CPU生命周期1/1、实际Cartesian Runtime7gather与CUDA-enabled Host1/1通过；
+旧工程非法AMR阈值对修正并以Core关系检查，原科学门槛不变。
+见RZEllipticChartBindingNode-20261005.zh-CN.md及processed summary。
+未变CPU ELF复用receipt；JENS门槛候选未应用，完整CUDA冻结包等待明确本地验证授权。
+raw数据本机；整体目标、RZ科学、long-run/benchmark仍未完成。

@@ -49,6 +49,11 @@ void SelfGravity::bind(amr::EllipticMeshBinding binding) const {
     invalidate();
     if (binding.grids.empty() || binding.grids.size()!=binding.handles.size()
         || binding.cells.size()!=binding.storage.size()) throw std::invalid_argument("Invalid gravity mesh binding");
+    // Source/measure binding is distinct from the full-ring boundary,
+    // native force/work and runtime publication consumer. Do not enter the
+    // legacy EvaluateBoundary workspace before that full RZ path is accepted.
+    if(binding.base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("RZ self-gravity finite-ring runtime consumer is not qualified");
     std::size_t cell=0;
     for (std::size_t b=0;b<binding.grids.size();++b) {
         if (!binding.grids[b] || !amr::is_valid(binding.handles[b])

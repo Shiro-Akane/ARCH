@@ -17,7 +17,7 @@ out.mkdir(parents=True)
 sources=["tests/host/gravity/test_gravity_runtime_contract.cpp",
  "src/driver/stages/GravityStage.cpp",
  "src/driver/runtime/DriverRuntime.cpp","src/driver/runtime/DriverBoundary.cpp",
- "src/driver/runtime/DriverRegrid.cpp"]
+ "src/driver/runtime/DriverRegrid.cpp","src/amr/elliptic/EllipticMeshAdapter.cpp"]
 objects=[]
 def execute(label,args):
     with (out/(label+".log")).open("w") as log:

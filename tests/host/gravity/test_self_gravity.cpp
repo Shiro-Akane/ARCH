@@ -5,6 +5,7 @@
 #include "physics/gravity/self/SelfGravity.h"
 #include "amr/AMRControl.h"
 #include "physics/constant/PhysicalConstants.h"
+#include "core/config/ControlRelations.h"
 #include <iostream>
 #include <limits>
 using namespace Physical::Gravity;
@@ -103,7 +104,10 @@ void lifecycle() {
     rejects([&]{limited.potential();},"nonconvergence publication");
     // Actual tree refinement, coarsening and identity turnover, not a synthetic
     // Cartesian replacement for the AMR adapter.
-    f.config.amr.refine_threshold=0.01;f.config.amr.refine_on_rho=true;
+    f.config.amr.refine_threshold=0.01;f.config.amr.derefine_threshold=.005;
+    f.config.amr.refine_on_rho=true;
+    require(arch::config::relations::CurvatureThresholds(f.config.amr.refine_threshold,
+        f.config.amr.derefine_threshold),"refine fixture violates Core thresholds");
     auto transaction=f.control.tree->PrepareRegrid(f.config,{}, {}, [&]{
         for(int id:f.control.tree->GetActiveBlocks()) f.control.pool->GetBlock(id).refine_flag=(id==0?1:0);
     });
@@ -117,7 +121,13 @@ void lifecycle() {
     rejects([&]{gravity.prepare({wrong,f.views});},"old topology accepted");
     gravity.prepare({f.identity,f.views});
     require(gravity.potential().size()==80,"refined leaf layout");
-    f.config.amr.refine_on_rho=false;f.config.amr.derefine_threshold=1.;f.config.amr.refine_threshold=1.;
+    // Keep DENS active and the original refine ceiling. The old equal pair
+    // (1,1) was forbidden by Core; this legal stricter coarsen pair exercises
+    // actual ordinary indicators rather than disabling every channel.
+    f.config.amr.refine_on_rho=true;f.config.amr.derefine_threshold=.5;
+    f.config.amr.refine_threshold=1.;
+    require(arch::config::relations::CurvatureThresholds(f.config.amr.refine_threshold,
+        f.config.amr.derefine_threshold),"coarsen fixture violates Core thresholds");
     require(f.control.tree->Regrid(f.config),"coarsen witness missing");
     gravity.invalidate();f.reset(3);gravity.bind(amr::bind_elliptic_mesh(f.control,f.config.grid,f.handles));
     gravity.prepare({f.identity,f.views});require(gravity.potential().size()==64,"coarsened leaf layout");
@@ -135,6 +145,87 @@ void lifecycle() {
     double maximum=0.;for(double phi:gravity.potential()) maximum=std::max(maximum,std::abs(phi/1e-100));
     require(maximum>0.02*arch::constants::gravity::cgs::gravitational_constant,"tiny physical gravity was clamped away");
 
+}
+void rz_binding_identity() {
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    std::size_t checked=0;
+    for(double inner:{0.,1.}) {
+        SimConfig config;
+        config.grid.geometry="cylindrical";config.grid.dim=2;
+        config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
+        config.grid.x1_min=inner;config.grid.x1_max=inner+1.;
+        config.grid.x2_min=-.5;config.grid.x2_max=.5;
+        config.amr.lrefinemax=1;config.amr.refine_on_rho=true;
+        config.amr.refine_threshold=.1;config.amr.derefine_threshold=.05;
+        amr::AMRControl control(8,2);control.tree->InitRootGrid(config,0,rz);
+        for(int id:control.tree->GetActiveBlocks()) {
+            auto& block=control.pool->GetBlock(id);
+            for(auto* fluid:{&block.fluid_state,&block.state_next,&block.state_scratch})
+                for(int cell=0;cell<block.grid.GetTotalSize();++cell)
+                    fluid->set(cell,{1.,0.,0.,0.,10.});
+        }
+        std::vector<amr::BlockHandle> handles;
+        for(int id:control.tree->GetActiveBlocks())
+            handles.push_back({{static_cast<std::uint64_t>(id+1)},{17}});
+        const auto verify_binding=[&](const amr::EllipticMeshBinding& binding) {
+        require(binding.base.semantics==rz,"RZ adapter lost authoritative tree chart");
+        arch::elliptic::CompositePoisson op(binding.base,binding.cells,
+            arch::elliptic::BoundaryKind::CurvilinearIsolated);
+        require(op.boundary().sides[2]==arch::elliptic::FaceBoundaryKind::Dirichlet
+            && op.boundary().sides[3]==arch::elliptic::FaceBoundaryKind::Dirichlet,
+            "RZ axial faces were reinterpreted as periodic azimuth");
+        for(std::size_t cell=0;cell<binding.storage.size();++cell) {
+            const auto storage=binding.storage[cell];
+            const auto& grid=*binding.grids[storage.block];
+            const auto position=binding.cells[cell].index;
+            const int i=grid.Is()+position[0]%amr::BLOCK_NX;
+            const int j=grid.Js()+position[1]%amr::BLOCK_NY;
+            require(storage.offset==grid.GetIndex(i,j,0),"RZ native offset changed");
+            const double native=GridMetrics::CellVolume(
+                GridMetrics::make_geometry_view(grid,rz),i,j,0);
+            require(op.volumes()[cell]==native,"RZ composite/native full-ring measure differ");
+            ++checked;
+        }
+        auto controls=config.physics.gravity;controls.boundary="isolated";
+        SelfGravity gravity(controls);
+        bool rejected=false;
+        try {gravity.bind(binding);}
+        catch(const std::logic_error& error) {
+            rejected=std::string_view(error.what())==
+                "RZ self-gravity finite-ring runtime consumer is not qualified";
+        }
+        require(rejected,"unqualified RZ reached legacy gravity runtime");
+        rejects([&]{gravity.potential();},"failed RZ bind published potential");
+        Fixture legacy;SelfGravity reused(legacy.config.physics.gravity);
+        reused.bind(amr::bind_elliptic_mesh(legacy.control,legacy.config.grid,legacy.handles));
+        reused.prepare({legacy.identity,legacy.views});
+        require(!reused.potential().empty(),"existing Cartesian field not ready");
+        rejects([&]{reused.bind(binding);},"live field accepted unqualified RZ chart");
+        rejects([&]{reused.potential();},"RZ bind failure retained old field publication");
+        reused.bind(amr::bind_elliptic_mesh(legacy.control,legacy.config.grid,legacy.handles));
+        reused.prepare({legacy.identity,legacy.views});
+        require(!reused.potential().empty(),"supported Cartesian rebind did not recover");
+        };
+        verify_binding(amr::bind_elliptic_mesh(control,config.grid,handles));
+        // Same original tree transfer owner; production Runtime RZ regridding
+        // remains gated. Refine one root, retaining a real mixed-level mesh.
+        const int selected=control.tree->GetActiveBlocks().front();
+        auto transaction=control.tree->PrepareRegrid(config,{}, {}, [&] {
+            for(int id:control.tree->GetActiveBlocks())
+                control.pool->GetBlock(id).refine_flag=id==selected?1:0;
+        });
+        require(transaction.topology_changed(),"RZ mixed binding witness did not refine");
+        std::vector<amr::BlockHandle> next;
+        for(int id:transaction.proposed_active_blocks())
+            next.push_back({{static_cast<std::uint64_t>(id+1)},{18}});
+        transaction.BuildMigrationPlans(handles,next,{1,{17},{18}});
+        transaction.ExecuteMigration();transaction.ActivateForFinalization();
+        transaction.PublishNoexcept();transaction.ReleaseRetired();
+        require(control.tree->GetActiveBlocks().size()==5,"RZ mixed binding leaf count");
+        verify_binding(amr::bind_elliptic_mesh(control,config.grid,next));
+    }
+    std::cout<<"RZ_ELLIPTIC_BINDING_IDENTITY_PASS cells="<<checked
+        <<" axis=1 offaxis=1 mixed=1 axial_dirichlet=1 runtime_gate=1 old_publication_retired=1 recovery=1\n";
 }
 void native_components() {
     for(int dimension:{2,3}) {
@@ -180,4 +271,4 @@ void native_components() {
 }
 
 }
-int main() { try {lifecycle();native_components();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+int main() { try {lifecycle();native_components();rz_binding_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
