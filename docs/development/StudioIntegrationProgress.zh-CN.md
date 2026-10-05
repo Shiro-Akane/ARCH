@@ -3448,3 +3448,13 @@ CPU ELF未变receipt复用、raw/ELF本机；完整finite-ring runtime/force-wor
 见CurrentCudaOriginalShortNode-20261005.zh-CN.md及processed summary。
 公开CUDA JENS gate未改，冻结9+9待明确本地验证授权；RZ科学/生产gate保持。
 raw/ELF本机；完整CUDA/long-run/benchmark未完成，不开展Windows适配。
+
+
+## 2026-10-05：原完整 gravity CUDA 子组
+
+同源/ELF/590-input聚合身份的原Wave32+Box14+Radial28，共74记录PASS；
+58真实Device进程、12预期拒绝及4汇总，repair/residual/空间与时间阶/restart原gate通过。
+见CurrentCudaOriginalFullNode-20261005.zh-CN.md及processed summary。
+明确保留PCM时间探针无energy-budget及两步/12步/40步短范围，不冒称统一终点benchmark。
+公开CUDA JENS gate未动，冻结9+9待明确本地验证授权；RZ全消费者/科学gate保持。
+raw/ELF本机，无Windows适配；整体O7、批准长跑及冻结benchmark未完成。
