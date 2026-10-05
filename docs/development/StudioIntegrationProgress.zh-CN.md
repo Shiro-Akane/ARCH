@@ -3458,3 +3458,13 @@ raw/ELF本机；完整CUDA/long-run/benchmark未完成，不开展Windows适配�
 明确保留PCM时间探针无energy-budget及两步/12步/40步短范围，不冒称统一终点benchmark。
 公开CUDA JENS gate未动，冻结9+9待明确本地验证授权；RZ全消费者/科学gate保持。
 raw/ELF本机，无Windows适配；整体O7、批准长跑及冻结benchmark未完成。
+
+
+## 2026-10-05：当前CPU binary身份与冻结短包
+
+标准增量ARCH构建实际产生新5d454c03 ELF，590-input聚合与当前CUDA receipt相同。
+因此复验原CPU冻结JENS9演化+9真实restart，以及Wave32/Box14/Radial28原完整子组，全PASS。
+原16epsilon、质量/能量/残差/收敛阈值未变；真实端点/短步数限制分别记录。
+见CurrentCpuSourceIdentityNode-20261005.zh-CN.md与processed summary，raw/ELF本机。
+这是current源码匹配CPU receipt，不冒称公开CUDA JENS/RZ全科学/long-run/benchmark签收。
+CUDA9+9候选仍待明确本地验证授权；原科学gate保持，不开展Windows适配。
