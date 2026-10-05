@@ -1,3 +1,25 @@
+# 当前联合交付索引（2026-10-05）
+
+以下历史 Phase 记录保留；当前目标按 docs/development/StudioConfigurationHandoff.zh-CN.md
+及 O7JeansRzReviewQuestions-20261004.zh-CN.md 第 6–8 节执行，不能以历史 Phase 0 段落判断当前能力。
+
+- Linux/WSL 配置契约、3B/3C 工程出口：见 Studio3CExitAudit.zh-CN.md（有范围限制）。
+- 当前 CPU/CUDA 短科学检查：见 CurrentCpuReleaseScientificCheckpoint-20261005.zh-CN.md、
+  CurrentCudaReleaseScientificCheckpoint-20261005.zh-CN.md；不是完整 JENS CUDA/RZ 或正式计时签收。
+- Plotfile renderer 8组工程事件与22项相关回归：PlotfileRendererEventsNode-20261005.zh-CN.md。
+- 真实 Sod / Cartesian CellularDet 细化块点击→生产隔离读取→实际 Inspector：
+  PlotfileRealRendererReadbackNode-20261005.zh-CN.md。两个既有 t=0 DENS 样本通过；
+  保留真实 producer 身份，原文件未变；不是正式 HTTP/Host 全应用人工 UAT。
+- 正式冻结输入/长包、完整 RZ 连续力参考、axis/viscosity finding 和完整科学签收仍开放；
+  JENS 公共 CUDA 接口候选仍需明确授权。未满足门槛不发布生产支持声明。
+- 原始 HDF5/checkpoint/日志/数组留本机，仅处理摘要与复现脚本提交 review。
+  唯一 Linux/WSL 工作区；不开展 Windows 适配。root STATUS.md 不修改。
+
+上述报告位于 docs/development/；处理证据位于 validation/ 对应 results/。
+项目仍进行中，不能由某个工程节点 PASS 宣称总目标完成。
+
+---
+
 # ARCH Studio progress
 
 ## Current Phase
