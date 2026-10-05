@@ -800,3 +800,14 @@ range/kernel/box计数与source-tree visits区分。
 见 RZUniformQuartetIntegrationNode-20261005.zh-CN.md。
 generic非均匀费用/continuous势力/fatal rollback/Hydro角动量/axis/viscosity/
 Device/long-run科学出口仍开放，生产门槛保持。
+
+### RZ 实际 fatal finalizer rollback / fresh field（2026-10-05）
+
+三次真实 CPU 内部 finalizer 故障恢复源 SoA bits、拓扑、Current版本和ghost可读性；
+池峰值10、失败回2，无泄漏/成功记录。源地址变化6次，不承诺旧borrow有效。
+重新gather核对当前指针/ledger，512cell原完整残差
+4.4674101534278339e-15 <= 1.4586002329335141e-14；invalidate退役旧场，合法2→8重试PASS。
+默认Cartesian4→8→4/7gather及架构审计PASS。
+见 RZActualRuntimeRollbackNode-20261005.zh-CN.md。
+仅t=0注入工程故障；RepairBudget元数据不在数组bits断言范围，
+continuous势力/Hydro角动量/axis/viscosity/Device/long-run科学出口仍开放。

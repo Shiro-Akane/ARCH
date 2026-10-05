@@ -11,7 +11,10 @@ modes=p.add_mutually_exclusive_group()
 modes.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
 modes.add_argument("--native-rz-regrid",action="store_true",help="Explicit internal CPU RZ Runtime AMR transaction, no physical grant")
 p.add_argument("--field-after-regrid",action="store_true",help="Native RZ regrid plus original candidate fields on mixed/coarse topology")
+p.add_argument("--regrid-rollback",action="store_true",help="Actual CPU RZ finalizer fault/rollback verification")
 a=p.parse_args()
+if a.regrid_rollback and not a.native_rz_regrid:p.error("--regrid-rollback requires --native-rz-regrid")
+if a.regrid_rollback and a.field_after_regrid:p.error("field-after-regrid and rollback are independent runs")
 if a.field_after_regrid and not a.native_rz_regrid:p.error("--field-after-regrid requires --native-rz-regrid")
 build=a.build.resolve();out=a.output_root.resolve()
 if out.exists():p.error("output-root must be new")
@@ -20,7 +23,8 @@ main=next(e for e in entries if pathlib.Path(e["file"]).name=="main.cpp")
 root=pathlib.Path(main["file"]).parent.parent
 if "-DARCH_CUDA_BUILD_ENABLED=0" not in shlex.split(main["command"]):p.error("CPU build required")
 out.mkdir(parents=True)
-sources=["tests/host/gravity/test_rz_runtime_regrid_contract.cpp" if a.native_rz_regrid else
+sources=["tests/host/gravity/test_rz_runtime_rollback_contract.cpp" if a.regrid_rollback else
+ "tests/host/gravity/test_rz_runtime_regrid_contract.cpp" if a.native_rz_regrid else
  "tests/host/gravity/test_gravity_runtime_rz_contract.cpp" if a.native_rz else "tests/host/gravity/test_gravity_runtime_contract.cpp",
  "src/driver/stages/GravityStage.cpp",
  "src/driver/runtime/DriverRuntime.cpp","src/driver/runtime/DriverBoundary.cpp",
@@ -49,7 +53,7 @@ execute("link",tokens)
 test_args=[str(exe),str(out/"runtime-output")]
 if a.field_after_regrid:test_args.append("--field-after-regrid")
 result=subprocess.run(test_args,env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
-    text=True,capture_output=True,timeout=1200 if a.native_rz or a.field_after_regrid else 30)
+    text=True,capture_output=True,timeout=1200 if a.native_rz or a.field_after_regrid or a.regrid_rollback else 30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
 summary={"scope":"Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity all-block/slot/regrid publication; no simulation time advancement",
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
@@ -72,5 +76,10 @@ if a.field_after_regrid:
     summary["scope"]="Actual CPU RZ Runtime mixed/coarse AMR -> native field rebind; no timestep"
     summary["limitations"]=["Explicit candidate only; production physical readers/Device gates held",
         "No continuous Phi/force or Hydro conservation/evolution science acceptance"]
+if a.regrid_rollback:
+    summary["scope"]="Actual CPU RZ Runtime finalizer fault, source/ledger/pool rollback and retry; no timestep"
+    summary["limitations"]=["Injected engineering failure only, not a physical stability/evolution gate",
+        "CPU source allocation addresses can change during deep-copy restore; no pointer-identity grant",
+        "Production RZ/Device gates held"]
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)

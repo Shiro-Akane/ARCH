@@ -31,8 +31,11 @@ using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
 /** Stage a topology transaction, migrate state, validate and publish only on success. */
-bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candidate)
+bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candidate,
+    const std::function<void()>& after_host_finalization)
 {
+    if(after_host_finalization&&!native_rz_candidate)
+        throw std::logic_error("Native finalization verification cannot affect production regrid");
     if(native_rz_candidate&&(geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||compute_backend||jeans_repair_only))
         throw std::logic_error("Native RZ transaction verification requires CPU RZ ordinary AMR");
@@ -351,6 +354,10 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                                         ? amr::CoordinateSeamGeometry::RzAxisymmetric
                                         : amr::CoordinateSeamGeometry::ExistingChart,
                                     {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
+                                // Borrowed internal verification callback only.
+                                // It runs inside the same fallible finalizer,
+                                // after real BC/ghost work and before publication.
+                                if(after_host_finalization)after_host_finalization();
                                 StageExecutionContext staged_context{
                                     ExecutionSide::Host, *payload.ledger,
                                     scheduler_clock};
@@ -439,18 +446,19 @@ bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only
 }
 /** Internal qualification consumes the same full migration/finalizer transaction.
  * No alternative transfer math, namespace publication, or physical capability. */
-bool DriverRuntime::regrid_native_rz_candidate(int step,double time)
+bool DriverRuntime::regrid_native_rz_candidate(int step,double time,
+    const std::function<void()>& after_host_finalization)
 {
-    return perform_regrid_impl(step,time,false,true);
+    return perform_regrid_impl(step,time,false,true,after_host_finalization);
 }
 bool DriverRuntime::perform_regrid_impl(int step,double time,bool jeans_repair_only,
-    bool native_rz_candidate)
+    bool native_rz_candidate,const std::function<void()>& after_host_finalization)
 {
     const auto started = std::chrono::steady_clock::now();
     const auto before = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};
     const auto old_blocks = stage_handles.size();
-    const bool changed = execute_regrid(jeans_repair_only,native_rz_candidate);
+    const bool changed = execute_regrid(jeans_repair_only,native_rz_candidate,after_host_finalization);
     const auto after = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};
     regrid_measurements.push_back({step, time, old_blocks, stage_handles.size(), changed,
