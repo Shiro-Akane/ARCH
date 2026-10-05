@@ -834,3 +834,11 @@ RZ-REFERENCE-COMPLEMENT-01：80位R=1/dr1e-60/dz2e-60时旧m舍入1，
 其中比旧74子组多六个既有配置拒绝。原physics/阈值不改，粗PCM能量不扩大签收。
 见CurrentCpuReleaseScientificCheckpoint-20261005.zh-CN.md。
 这些并发环境用时不作benchmark；CUDA/new RZ/long-run gate保持。
+
+### 全量连续面力诊断 finding（2026-10-05）
+
+四组88cell/208face全部完成；相同真实source/face身份，固定h/order/precision。
+原数组hash匹配quartet receipt，负梯度消费正确；RMS diagnostic delta约
+8.81e-10至1.17e-9 cm/s²，order drift约2.5e-9、precision drift约2e-82。
+RZ-CONTINUOUS-FORCE-REFERENCE-01 OPEN：求积/差分尚未解析，不判Core科学FAIL/PASS。
+见RZAllFaceForceReferenceFinding-20261005.zh-CN.md。原阈值/所有面保留，gate保持。
