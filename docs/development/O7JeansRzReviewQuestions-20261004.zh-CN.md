@@ -842,3 +842,10 @@ RZ-REFERENCE-COMPLEMENT-01：80位R=1/dr1e-60/dz2e-60时旧m舍入1，
 8.81e-10至1.17e-9 cm/s²，order drift约2.5e-9、precision drift约2e-82。
 RZ-CONTINUOUS-FORCE-REFERENCE-01 OPEN：求积/差分尚未解析，不判Core科学FAIL/PASS。
 见RZAllFaceForceReferenceFinding-20261005.zh-CN.md。原阈值/所有面保留，gate保持。
+
+### 当前同源码 CUDA 原子组复验（2026-10-05）
+
+CPU当前短包后，同Core tree CUDA Release ELF1cbbd695...27eb53，原Wave32/Box14/Radial28共74记录PASS。
+58实际run全部Device=1、kernels>0，共4311863 kernels，max residual/target0.7390315。
+见CurrentCudaReleaseScientificCheckpoint-20261005.zh-CN.md。并发环境用时不作benchmark；
+public CUDA JENS、新RZ/axis/viscosity/long-run gate保持，原数据本机。
