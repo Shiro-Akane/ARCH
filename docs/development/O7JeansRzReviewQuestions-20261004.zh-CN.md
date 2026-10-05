@@ -692,3 +692,11 @@ SelfGravity尚未接完整finite-ring/native force/work/runtime消费者，显�
 Existing旧数学保留，CPU/实际Cartesian Runtime/CUDA-enabled Host scoped回归通过。
 完整RZ Runtime仍在bind gate前停止，不冒称source/RHS/force-work或Device科学签收。
 见RZGravityWorkspaceChartNode-20261005.zh-CN.md；原8.4与连续环体科学出口不变。
+
+### 共享 SelfGravity 请求入口身份检查（2026-10-05）
+
+GRAVITY-IDENTITY-PREFLIGHT-01 已复现并修复：原非法 time 请求在最终发布拒绝前
+已经执行工作；共享校验现在位于 gather 前、旧场失效后。真实四块请求五类反例
+零工作、旧场退役和合法恢复通过，CPU/CUDA-enabled Host 生命周期及实际
+Cartesian Runtime 4→8→4/7 gather 回归通过。见 GravityRequestPreflightNode-20261005.zh-CN.md。
+这不是完整 RZ Runtime、Device JENS/RZ 或演化科学签收，原能力门槛保持。

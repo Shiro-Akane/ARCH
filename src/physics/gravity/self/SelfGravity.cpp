@@ -86,6 +86,9 @@ void SelfGravity::clear_solver_initial_guess() const noexcept {
 /** Gather current density, solve A phi = -4 pi G rho_source, and publish force. */
 arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& request) const {
     invalidate();
+    // Validate the same domain dependency contract used by source caches and
+    // publication before gather, moments, solve or device work can begin.
+    validate_gravity_solve_identity(request.identity);
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
     auto& w=*work_; const auto& op=w.solver.op(); const auto& identity=request.identity;
     if (request.blocks.size()!=w.patches.size() || identity.inputs.size()!=w.patches.size()

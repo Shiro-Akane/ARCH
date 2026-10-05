@@ -45,6 +45,39 @@ struct Fixture {
         }
     }
 };
+/** Count actual delegated work, so malformed identity cannot hide a gather. */
+class IdentityExecution final : public GravityExecution {
+    std::shared_ptr<GravityExecution> owner_=make_host_gravity_execution();
+public:
+    std::size_t work_count=0;
+    std::shared_ptr<multigrid::CompositeExecution> numeric() const override {return owner_->numeric();}
+    void run(const GravityWork& work) override {++work_count;owner_->run(work);}
+};
+/** Original service and native four-block density: reject before computation,
+ * retire the old field, then recover using the valid original request. */
+void request_identity_preflight() {
+    Fixture f;auto execution=std::make_shared<IdentityExecution>();
+    SelfGravity gravity(f.config.physics.gravity);gravity.set_execution(execution);
+    gravity.bind(amr::bind_elliptic_mesh(f.control,f.config.grid,f.handles));
+    for(int lane=0;lane<5;++lane) {
+        gravity.prepare({f.identity,f.views});
+        auto bad=f.identity;auto views=f.views;
+        if(lane==0)bad.input_time=std::numeric_limits<double>::quiet_NaN();
+        if(lane==1)bad.input_time=std::numeric_limits<double>::infinity();
+        if(lane==2)bad.inputs.back().version={0};
+        if(lane==3)bad.inputs.back().storage_generation=0;
+        if(lane==4)bad.inputs.back().slot=static_cast<state::StateSlot>(255);
+        views.back().identity=bad.inputs.back();
+        views.back().density.storage_generation=bad.inputs.back().storage_generation;
+        const auto before=execution->work_count;
+        rejects([&]{gravity.prepare({bad,views});},"malformed request identity accepted");
+        require(execution->work_count==before,"malformed identity executed gravity work before rejection");
+        rejects([&]{gravity.potential();},"identity rejection retained old publication");
+    }
+    gravity.prepare({f.identity,f.views});
+    require(gravity.potential().size()==64,"valid request did not recover after identity rejection");
+    std::cout<<"GRAVITY_REQUEST_PREFLIGHT_PASS lanes=5 native_blocks=4 work_before_rejection=0 recovery=1\n";
+}
 void lifecycle() {
     // Nonfinite face forces must fail before publishing a seemingly finite CFL.
     GravityCell cell{0,0,{1.,1.,1.}};
@@ -408,4 +441,4 @@ void native_components() {
 }
 
 }
-int main() { try {lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+int main() { try {request_identity_preflight();lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
