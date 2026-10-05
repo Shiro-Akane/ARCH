@@ -787,3 +787,16 @@ range/kernel/box计数与source-tree visits区分。
 见 RZMixedRuntimeFieldFinding-20261005.zh-CN.md。
 下一步审计原所有者严格等密度完整相邻分区的等价积分复用；
 方案尚未实施，不以架构PASS或之前root/transfer成功替代mixed科学证据。
+
+### 严格uniform quartet / 实际mixed field（2026-10-05）
+
+原完整四子分区同rho且native坐标精确时，复用同finite-ring并集积分；
+不平均源、不粗化native grid、不改变阈值/caps，每次额外fallback计入原work。
+同1280cell失败输入mixed epoch3、粗化512cell epoch4完整原请求PASS；
+普通plot/Hydro读取拒绝，physical资格0。RZ-MIXED-RUNTIME-WORK-01
+仅在该记录uniform输入范围关闭，旧失败保留。
+四例88cells原完整账本和四子分区独立Fraction PASS，
+非均匀/不精确坐标拒绝合并，CPU及CUDA-enabled Host回归PASS。
+见 RZUniformQuartetIntegrationNode-20261005.zh-CN.md。
+generic非均匀费用/continuous势力/fatal rollback/Hydro角动量/axis/viscosity/
+Device/long-run科学出口仍开放，生产门槛保持。

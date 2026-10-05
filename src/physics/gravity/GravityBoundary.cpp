@@ -15,6 +15,7 @@
 #include <array>
 #include <cmath>
 #include <functional>
+#include <optional>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -118,6 +119,41 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
     }
     return moments;
 }
+/** Exact same-density rectangle union, never a bbox/mass approximation.
+ * Direct four leaf siblings must tile [rl,rh]x[zl,zh] by equal shared edges.
+ * Caller additionally proves native/root edge arithmetic is exact.
+ * The single original finite-ring integral is then the sum over that union.
+ */
+struct UniformRingQuartet { double rl,rh,zl,zh,density; };
+std::optional<UniformRingQuartet> uniform_ring_quartet(
+    const arch::elliptic::CompositePoisson& op,
+    std::span<const BoundaryTreeNode> nodes,int index,std::span<const double> density) {
+    const auto& parent=nodes[index];
+    std::array<std::array<double,4>,4> edges{};
+    double rho=0.;
+    for(int c=0;c<4;++c) {
+        const int child=parent.children[c];
+        if(child<0||child>=static_cast<int>(nodes.size())||nodes[child].cell<0)return {};
+        const int cell=nodes[child].cell;
+        if(cell>=static_cast<int>(density.size()))return {};
+        if(c==0)rho=density[cell];
+        if(!std::isfinite(rho)||rho<0.||density[cell]!=rho)return {};
+        const auto center=op.center(cell);
+        edges[c]={center[0]-.5*op.width(cell,0),center[0]+.5*op.width(cell,0),
+            center[1]-.5*op.width(cell,1),center[1]+.5*op.width(cell,1)};
+    }
+    for(int c=4;c<8;++c)if(parent.children[c]>=0)return {};
+    const double rl=edges[0][0],rm=edges[0][1],rh=edges[3][1];
+    const double zl=edges[0][2],zm=edges[0][3],zh=edges[3][3];
+    if(!(rl<rm&&rm<rh&&zl<zm&&zm<zh))return {};
+    for(int c=0;c<4;++c) {
+        const std::array<double,4> expected{
+            c&1?rm:rl,c&1?rh:rm,c&2?zm:zl,c&2?zh:zm};
+        if(edges[c]!=expected)return {};
+    }
+    return UniformRingQuartet{rl,rh,zl,zh,rho};
+}
+
 }
 /** Build a physical-space mass tree over every active leaf. */
 GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op,
@@ -397,6 +433,11 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
     RingEnclosureControl leaf_control{};
     leaf_control.absolute_target=positive_down(control.face_absolute_target/op.size());
     leaf_control.maximum_boxes=control.maximum_boxes_per_leaf;
+    // Recompute from this full current source; no cache survives identity changes.
+    std::vector<std::optional<UniformRingQuartet>> quartets(nodes_.size());
+    if(exact_native_ring_geometry(op))
+        for(int i=0;i<static_cast<int>(nodes_.size());++i)if(nodes_[i].cell<0)
+            quartets[i]=uniform_ring_quartet(op,nodes_,i,ring_density_);
     bool converged=true;result.status=RingBoundaryStatus::Bounded;
     for(std::size_t face=0;face<count;++face)if(op.faces()[face].boundary_side>=0) {
         SignedInterval total{};
@@ -407,6 +448,33 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
             }
             if(node.cell<0) {
                 ++result.parent_evaluations;
+                if(quartets[index]) {
+                    // The parent visit pays for this exact integral first.
+                    // Avoid evaluating a multipole approximation unnecessarily.
+                    ++result.coalesced_parent_attempts;
+                    const auto& tile=*quartets[index];
+                    auto tile_control=leaf_control;
+                    tile_control.absolute_target=positive_down(4.*leaf_control.absolute_target);
+                    const auto enclosure=finite_ring_potential_enclosure(tile.rl,tile.rh,tile.zl,tile.zh,
+                        tile.density,op.faces()[face].center[0],op.faces()[face].center[1],
+                        source.gravitational_constant,tile_control);
+                    result.range_evaluations+=enclosure.range_evaluations;
+                    result.kernel_enclosures+=enclosure.kernel_enclosures;
+                    result.agm_iterations+=enclosure.agm_iterations;
+                    if(enclosure.bound_valid&&enclosure.status==RingIntervalStatus::Bounded) {
+                        total=interval_sum(total,{enclosure.lower,enclosure.upper});
+                        ++result.coalesced_parent_acceptances;
+                        result.coalesced_native_leaves+=4;
+                        result.represented_leaf_evaluations+=4;
+                        index=node.end;continue;
+                    }
+                    // Failed exact integral falls back to the old far/descent
+                    // path, with its extra evaluation charged to the same cap.
+                    if(result.leaf_evaluations+result.parent_evaluations>=control.maximum_leaf_evaluations) {
+                        result.status=RingBoundaryStatus::WorkLimit;return result;
+                    }
+                    ++result.parent_evaluations;
+                }
                 double tail=0.;SignedInterval evaluation{};
                 const auto far=ring_node_far_enclosure(node,moment_bounds[index],
                     op.faces()[face].center[0],op.faces()[face].center[1],source.gravitational_constant,

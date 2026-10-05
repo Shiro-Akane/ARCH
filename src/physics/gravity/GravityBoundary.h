@@ -384,7 +384,8 @@ struct RingBoundaryEvaluation {
     GravitySolveIdentity source;
     std::uint64_t source_generation=0,leaf_evaluations=0,range_evaluations=0,
         kernel_enclosures=0,agm_iterations=0,parent_evaluations=0,parent_acceptances=0,
-        represented_leaf_evaluations=0;
+        represented_leaf_evaluations=0,coalesced_parent_attempts=0,
+        coalesced_parent_acceptances=0,coalesced_native_leaves=0;
     std::vector<double> values,lower,upper,far_truncation_upper,far_evaluation_width_upper;
     std::vector<arch::elliptic::BoundaryPotentialError> errors;
 };

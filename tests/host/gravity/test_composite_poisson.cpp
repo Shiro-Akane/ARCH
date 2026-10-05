@@ -817,6 +817,7 @@ void finite_ring_tree_boundary_contract() {
         const auto result=tree.ring_boundary(op,source,control);
         require(result.status==RingBoundaryStatus::Bounded,"bounded native-face fixture failed");
         tree.require_current_ring(op,result);
+        require(result.coalesced_parent_attempts==0,"nonuniform native source was averaged for coalescence");
         const auto ledger=op.propagate_boundary_error(result.errors);
         require(ledger.status==elliptic::BoundaryErrorStatus::Bounded&&ledger.norm_upper>0.,
             "native-face interval did not enter canonical RHS ledger");
@@ -906,6 +907,9 @@ void finite_ring_tree_boundary_contract() {
             <<" leaves="<<op.size()<<" exterior_faces="<<exterior
             <<" source_evaluations="<<result.leaf_evaluations
             <<" parent_evaluations="<<result.parent_evaluations
+            <<" coalesced_attempts="<<result.coalesced_parent_attempts
+            <<" coalesced_acceptances="<<result.coalesced_parent_acceptances
+            <<" coalesced_native_leaves="<<result.coalesced_native_leaves
             <<" parent_acceptances="<<result.parent_acceptances
             <<" represented_leaves="<<result.represented_leaf_evaluations
             <<" far_tail_max="<<far_tail<<" far_evaluation_width_max="<<far_arithmetic
@@ -915,6 +919,41 @@ void finite_ring_tree_boundary_contract() {
             <<" rhs_error="<<ledger.norm_upper<<'\n';
     }
     std::cout<<"RZ_RING_NATIVE_FACE_PASS production_values=gated far_parent=interval_budget_checked\n";
+}
+
+/** Exact density and native/root geometry qualification; no average fallback. */
+void finite_ring_uniform_quartet_contract() {
+    using namespace Physical::Gravity;
+    for(double origin:{0.,.3})for(bool uniform:{false,true}) {
+        auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;base.origin={origin,-.5,0.};
+        elliptic::CompositePoisson op(base,make_cells(base,false),elliptic::BoundaryKind::CurvilinearIsolated);
+        GravityBoundary tree(op,{7});GravitySolveIdentity source;source.topology={7};
+        source.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+        source.operator_revision=source.boundary_revision=source.accuracy_revision=1;
+        source.inputs.push_back({{{1},{7}},state::StateSlot::Current,{1},1});
+        std::vector<double> density(op.size());
+        for(int i=0;i<op.size();++i)density[i]=uniform?1.:1.+.01*i;
+        tree.update(density,source);
+        RingBoundaryControl controls{};controls.face_absolute_target=1.e-9;
+        controls.maximum_boxes_per_leaf=65536;
+        const auto result=tree.ring_boundary(op,source,controls);
+        require(result.status==RingBoundaryStatus::Bounded,"uniform quartet qualification boundary failed");
+        if(origin==0.&&uniform)
+            require(result.coalesced_parent_acceptances>0,"qualified exact quartet was never integrated");
+        else require(result.coalesced_parent_attempts==0,"nonuniform or unproved geometry coalesced");
+        std::size_t exterior=0;
+        for(const auto& face:op.faces())exterior+=face.boundary_side>=0;
+        require(result.represented_leaf_evaluations==exterior*op.size(),"quartet omitted or doubled original source");
+        require(result.coalesced_native_leaves==4*result.coalesced_parent_acceptances,
+            "quartet represented count does not match original four leaves");
+        require(result.leaf_evaluations+result.parent_evaluations<=controls.maximum_leaf_evaluations,
+            "quartet bypassed original work cap");
+        tree.require_current_ring(op,result);
+        std::cout<<"RZ_UNIFORM_QUARTET_QUALIFICATION_PASS origin="<<origin<<" uniform="<<uniform
+            <<" attempts="<<result.coalesced_parent_attempts<<" accepted="<<result.coalesced_parent_acceptances
+            <<" represented="<<result.represented_leaf_evaluations<<'\n';
+    }
 }
 
 /** Actual source tree companion, independently audited by Decimal integrals. */
@@ -1553,6 +1592,9 @@ void native_ring_solved_probe(bool mixed=false,bool dynamic_budget=false,bool bu
                 <<",\"storage_generation\":"<<input.storage_generation<<'}';
         }
         std::cout<<"]},\"source_scope\":\"static numerical domain; abstract dependency, not Runtime block publication\"";
+        std::cout<<",\"coalesced_attempts\":"<<ring.coalesced_parent_attempts
+            <<",\"coalesced_acceptances\":"<<ring.coalesced_parent_acceptances
+            <<",\"coalesced_native_leaves\":"<<ring.coalesced_native_leaves;
         std::cout<<",\"dynamic_budget\":"<<dynamic_budget
             <<",\"face_target\":"<<control.face_absolute_target
             <<",\"proposal_source_norm_lower\":"<<proposal.source_norm_lower
@@ -2585,6 +2627,7 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="rz-stencil-probe") {native_rz_stencil_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="rz-measure-probe") {native_rz_measure_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-balanced-reduction-probe") {ring_balanced_reduction_probe();return 0;}
+        if(argc>1 && std::string(argv[1])=="ring-uniform-quartet") {finite_ring_uniform_quartet_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-source-retirement") {ring_source_retirement_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-mixed-probe") {native_ring_solved_probe(true);return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-positive-budget-probe") {native_ring_solved_probe(true,true,true);return 0;}
