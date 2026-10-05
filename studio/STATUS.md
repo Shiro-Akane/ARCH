@@ -16,6 +16,9 @@
 - RZ-B外力矩消费者：RZAppliedTorqueGateFinding-20261005.zh-CN.md；
   NOT_CLEARED（ExternalGravity被finite-ring preflight统一拒绝）。stage 0、Current bits不变；
   不绕过gate，24组预算尚未取得结果。typed source/chart contract待Core review。
+- CI配置/Preview/JENS注册遗漏保护：CiConfigurationCoverageNode-20261005.zh-CN.md；
+  13项checker测试与21项删除控制通过，既有71项inventory通过。无新增job/Core重跑；
+  hosted CI与同类runner冷/缓存耗时仍未取得。
 - 正式冻结输入/长包、完整 RZ 连续力参考、axis/viscosity finding 和完整科学签收仍开放；
   JENS 公共 CUDA 接口候选仍需明确授权。未满足门槛不发布生产支持声明。
 - 原始 HDF5/checkpoint/日志/数组留本机，仅处理摘要与复现脚本提交 review。

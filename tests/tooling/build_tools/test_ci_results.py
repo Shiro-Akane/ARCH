@@ -71,6 +71,22 @@ class CiResultTests(unittest.TestCase):
             ET.SubElement(root, "testcase", name=name, status="run")
         return root
 
+    def test_migrated_configuration_preview_and_jens_cannot_disappear(self):
+        # Explicit requirement names are independent of the checker group unions.
+        required = {
+            "config_input_records", "input_resolution", "case_configuration", "configuration_input",
+            "configuration_api_contract", "configuration_entry_contract", "configuration_v3_contract",
+            "preview_initial_conversion", "preview_api_contract", "preview_full_model_contract",
+            "preview_parameter_reads", "preview_parameter_metadata", "preview_sampling_limits",
+            "preview_mesh_geometry", "case_inspection_contract", "preview_session_contract",
+            "preview_verified_resources", "preview_exact_sample_cache", "preview_cellular_2d",
+            "jeans_diagnostics", "refinement_indicator_math",
+        }
+        self.assertTrue(required <= CPU_COVERAGE_ANCHORS)
+        for name in sorted(required):
+            with self.subTest(missing=name), self.assertRaisesRegex(ValueError, name):
+                check_inventory(self.inventory(CPU_COVERAGE_ANCHORS - {name}))
+
     def test_low_density_math_cannot_disappear_from_the_cpu_gate(self):
         with self.assertRaisesRegex(ValueError, "low_density_math"):
             check_inventory(self.inventory(CPU_COVERAGE_ANCHORS - {"low_density_math"}))

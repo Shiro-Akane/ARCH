@@ -15,6 +15,20 @@ import sys
 import xml.etree.ElementTree as ET
 
 
+# Existing parser / entry / API tests; removing their CMake registration must
+# not silently shrink a "complete" CPU report after the v3 contract migration.
+CONFIGURATION_COVERAGE_ANCHORS = frozenset({
+    "config_input_records", "input_resolution", "case_configuration", "configuration_input",
+    "configuration_api_contract", "configuration_entry_contract", "configuration_v3_contract",
+})
+PREVIEW_COVERAGE_ANCHORS = frozenset({
+    "preview_initial_conversion", "preview_api_contract", "preview_full_model_contract",
+    "preview_parameter_reads", "preview_parameter_metadata", "preview_sampling_limits",
+    "preview_mesh_geometry", "case_inspection_contract", "preview_session_contract",
+    "preview_verified_resources", "preview_exact_sample_cache", "preview_cellular_2d",
+})
+JENS_COVERAGE_ANCHORS = frozenset({"jeans_diagnostics", "refinement_indicator_math"})
+
 # Coverage anchors for the CPU+KLU profile, not a frozen total test count.
 # All other tests discovered by CTest must also appear in the completed report.
 CPU_COVERAGE_ANCHORS = frozenset({
@@ -25,7 +39,7 @@ CPU_COVERAGE_ANCHORS = frozenset({
     "shared_stage_scheduler", "gravity_stage_contract", "checkpoint_temporal_comparison",
     "poisson_multigrid_contract", "poisson_multigrid_analytic",
     "composite_poisson_contract", "composite_poisson_analytic", "self_gravity_lifecycle", "self_gravity_physics",
-})
+}) | CONFIGURATION_COVERAGE_ANCHORS | PREVIEW_COVERAGE_ANCHORS | JENS_COVERAGE_ANCHORS
 
 DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
     "cuda_compile_probe", "shared_stage_scheduler", "gravity_stage_contract",

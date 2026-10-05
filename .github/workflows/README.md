@@ -35,6 +35,13 @@ is selected for both C and C++; Release optimization, LTO and the shared
 floating-point contract are unchanged. CMake's test inventory is checked for
 CPU coverage anchors, including KLU, burning, EOS, AMR and checkpoint tests.
 Shared-stage and gravity preparation contracts are now explicit anchors too.
+Configuration v3 parser/resolution/direct-entry/API contracts and the existing
+Preview initialization/model/metadata/sampling/session/resource contracts are
+also required anchors, together with JENS diagnostics and indicator mathematics.
+Removing their CMake registrations therefore fails coverage even when every
+remaining JUnit entry passes. This does not run another suite or authorize a
+scientific gate: all configured tests still run once, and missing/skipped entries
+remain failures.
 After execution, [check_ci_results.py](../../tools/check_ci_results.py) requires
 one passing JUnit entry per configured test, without omissions or skips.
 The inventory, rather than a hard-coded total, determines how many tests run.
