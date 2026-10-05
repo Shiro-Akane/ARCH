@@ -87,7 +87,7 @@ endforeach()
 add_executable(arch_cuda_regrid_transaction tests/cuda/amr/test_cuda_regrid_transaction.cpp)
 target_include_directories(arch_cuda_regrid_transaction PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_link_libraries(arch_cuda_regrid_transaction PRIVATE
-    arch_cuda_backend CUDA::cudart)
+    arch_solver_dispatch arch_cuda_backend CUDA::cudart)
 add_test(NAME cuda_regrid_transaction COMMAND arch_cuda_regrid_transaction)
 set_tests_properties(cuda_regrid_transaction PROPERTIES SKIP_RETURN_CODE 77)
 # Exercise the same setup kernel owned by the production backend without

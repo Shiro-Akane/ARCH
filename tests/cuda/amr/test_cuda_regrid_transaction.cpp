@@ -9,6 +9,8 @@
 #include "amr/transfer/RegridExecutionPlan.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/DriverUtils.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/schedule/DriverControl.h"
 #include "physics/eos/IdealGas.h"
 #include "fixtures/amr/regrid_migration_fixture.h"
 
@@ -84,6 +86,85 @@ arch::cuda::CudaLaunchConfig launch_config(const SimConfig& config)
         ReconstructionId::Ppm, LimiterId::MinMod, TimeIntegratorId::Euler,
         EosId::Ideal, NetworkId::None, OdeSolverId::None, LinearSolverId::None,
         DiffusionIntegratorId::None}, config);
+}
+
+// Actual Runtime ledger -> real CudaBackend -> original device Jeans owner.
+// Host arrays are poisoned after upload: this is residency/routing evidence,
+// not a replacement for the independent EOS/numeric science tests.
+void run_jeans_runtime_lease()
+{
+    auto config=configuration();
+    SpeciesManager species;
+    species.add_species("gas",1.,1.,1.4,1.);
+    IdealGas eos(1.4,species);
+    amr::AMRControl control(32,1);
+    control.tree->InitRootGrid(config,1);
+    for(int id:control.tree->GetActiveBlocks())
+        amr::test::seed_regrid_parent(control.pool->GetBlock(id));
+    BCHandler boundary(config);
+    RunState start{};
+    SimulationController counters(config,start);
+    arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
+    runtime.initialize_topology();
+    runtime.ensure_fluid_ghosts();
+    const auto topology=runtime.prepare_backend_bindings();
+    std::vector<arch::cuda::CudaBlockBinding> bindings;
+    for(const auto& b:topology)
+        bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary});
+    runtime.install_backend(arch::cuda::make_cuda_backend(bindings,0,
+        launch_config(config),species,eos));
+    runtime.upload_initial_state();
+    const auto initial=runtime.evaluate_current_jeans_resolution();
+    require(initial.size()==2,"Runtime JENS initial extent mismatch");
+    auto context=runtime.stage_context();
+    arch::scheduler::publish_completed_interior(context,runtime.handles(),Slot::Current);
+    for(int id:control.tree->GetActiveBlocks())
+        for(double& rho:control.pool->GetBlock(id).fluid_state.rho)
+            rho=std::numeric_limits<double>::quiet_NaN();
+    const auto before=runtime.backend()->counters();
+    require(runtime.evaluate_current_jeans_resolution()==initial,
+        "Runtime JENS read stale Host arrays");
+    const auto after=runtime.backend()->counters();
+    require(after.bytes_h2d==before.bytes_h2d
+        && after.bytes_d2h-before.bytes_d2h==2*sizeof(double)
+        && after.kernel_count-before.kernel_count==4
+        && after.stream_sync_count-before.stream_sync_count==1,
+        "Runtime JENS materialized fields or used extra execution");
+    const auto unchanged=[&] {
+        const auto c=runtime.backend()->counters();
+        return c.kernel_count==after.kernel_count && c.bytes_h2d==after.bytes_h2d
+            && c.bytes_d2h==after.bytes_d2h && c.stream_sync_count==after.stream_sync_count;
+    };
+    const auto witness=context.clock.next_publication();
+    context.ledger.publish_interior({runtime.handles().back(),Slot::Current},
+        arch::state::ExecutionSide::Device,witness.version,witness.completion);
+    bool rejected=false;
+    try {(void)runtime.evaluate_current_jeans_resolution();}
+    catch(const std::logic_error&) {rejected=true;}
+    require(rejected && unchanged(),"nonfirst Current mismatch reached device JENS");
+    arch::scheduler::publish_completed_interior(context,runtime.handles(),Slot::Current);
+    const auto token=context.clock.next_completion();
+    const auto last=arch::state::StateKey{runtime.handles().back(),Slot::Current};
+    context.ledger.begin_transfer(last,Region::Interior,
+        arch::state::PendingTransferPhase::PendingD2H,
+        {token.value,arch::state::CompletionState::Pending});
+    rejected=false;
+    try {(void)runtime.evaluate_current_jeans_resolution();}
+    catch(const std::logic_error&) {rejected=true;}
+    require(rejected && unchanged(),"pending nonfirst Current reached device JENS");
+    // Complete a real explicit D2H before declaring the injected transfer
+    // complete. Do not mark poisoned Host storage synchronized by token alone.
+    auto& host=control.pool->GetBlock(control.tree->GetActiveBlocks().back()).fluid_state;
+    runtime.backend()->enqueue_materialize_host_current(
+        runtime.backend_access(runtime.handles().size()-1,Slot::Current),
+        Region::Interior,transfer(host));
+    runtime.backend()->quiesce();
+    context.ledger.complete_transfer(last,Region::Interior,token);
+    require(runtime.evaluate_current_jeans_resolution()==initial,
+        "Runtime JENS did not recover from a rejected lease");
+    require(counters.t_current==0. && counters.step_count==0,"lease test ran simulation");
+    std::cout<<"CUDA_JEANS_RUNTIME_LEASE_PASS blocks=2 stale_host=1 version_reject=1"
+        <<" pending_reject=1 recovery=1 time=0 steps=0\n";
 }
 
 void run(int species_count)
@@ -289,6 +370,7 @@ int main()
         || (probe == cudaSuccess && count == 0)) return 77;
     try {
         require(probe == cudaSuccess, "CUDA device probe failed");
+        run_jeans_runtime_lease();
         run(4);
         run(41);
         return 0;

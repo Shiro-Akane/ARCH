@@ -46,6 +46,8 @@ public:
     void initialize_topology();
     bool perform_regrid(int step, double time, bool jeans_repair_only = false);
     void ensure_jeans_resolution(int step, double time);
+    // Explicit diagnostic/enforcement request; never invoked for disabled JENS.
+    std::vector<double> evaluate_current_jeans_resolution();
     // Backend-local ghosts never request Host materialization.
     void ensure_fluid_ghosts(state::StateSlot slot = state::StateSlot::Current);
     void materialize_current_for_host();

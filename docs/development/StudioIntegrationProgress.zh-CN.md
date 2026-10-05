@@ -3393,3 +3393,8 @@ GNU-only外部GOMP观测library保持原body/线程请求/flags，不改Core/ELF
 ## 2026-10-05：JENS backend consumer scoped 节点
 
 新增 Current 批量 minima consumer 的相关 Host contract 1/1 PASS；无能力 backend 明确拒绝空/非空请求。CUDA 完整后端依赖编译 exit0，最终增量无工作；原两个 CUDA CTest 2/2 PASS，三种积分器 Current 检查6次、失败恢复3组。仅 consumer scoped PASS，不称完整生命周期通过。当前源码与旧 CPU Build Manifest 不同，CPU ELF 本身未变，旧冻结 9+9 收据只证明对应 binary 的历史短包。Driver publication/候选父 device EOS 和完整三通道仍待接入，能力 gate 不移除。详见 CudaJeansBackendConsumerNode-20261005.zh-CN.md。
+
+
+## 2026-10-05：JENS 实际 Runtime accepted lease 节点
+
+显式Runtime入口在整域topology/Current version/ledger side/pending/storage检查后才消费原tree/backend；真实CPU fixture与原CUDA事务CTest通过，poisoned Host不会被Device消费、非首version/pending在EOS/kernel前拒绝，实际显式D2H后恢复。原4/41 species refine/restrict/rollback保持PASS。此节点不是ordinary Driver enforcement接完，候选父device EOS与完整冻结CUDA生命周期仍待；gate不移除。详见JeansRuntimeAcceptedLeaseNode-20261005.zh-CN.md及processed summary，原数据本机。

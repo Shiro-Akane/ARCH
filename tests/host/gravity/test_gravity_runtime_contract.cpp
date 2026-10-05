@@ -1,6 +1,7 @@
 // Real DriverRuntime -> GravityStage -> SelfGravity, host publication contract.
 // Cartesian supported identity path only; no RZ capability or evolution claim.
 #include "amr/AMRControl.h"
+#include "physics/eos/IdealGas.h"
 #include "core/config/ControlRelations.h"
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
@@ -65,6 +66,22 @@ int main(int argc,char** argv){
     RunState start{};SimulationController counters(config,start);BCHandler boundary(config);
     arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
     runtime.initialize_topology();
+    IdealGas jeans_eos(1.4,species);
+    int jeans_calls=0;
+    control.tree->SetJeansEvaluator([&](const FluidVector& u,const double* fractions,
+        const GridMetrics::GeometryView& geometry,int i,int j) {
+        ++jeans_calls;
+        const double pressure=jeans_eos.get_pressure(u,fractions);
+        const double sound=jeans_eos.get_sound_speed(u,pressure,fractions);
+        return JeansDiagnostics::evaluate_cell(u.rho,sound*sound,geometry,i,j);
+    });
+    const auto initial_jeans=runtime.evaluate_current_jeans_resolution();
+    require(initial_jeans.size()==runtime.handles().size() && jeans_calls==64,
+        "actual Runtime JENS did not evaluate each active accepted cell");
+    for(std::size_t i=0;i<initial_jeans.size();++i)
+        require(initial_jeans[i]==control.tree->MinimumJeansCells(
+            control.pool->GetBlock(control.tree->GetActiveBlocks()[i])),
+            "actual Runtime JENS order differs from tree owner");
     Physical::Gravity::SelfGravity gravity(config.physics.gravity);
     auto capture=std::make_shared<Capture>();gravity.set_execution(capture);
     arch::driver::GravityStage stage(runtime,&gravity);
@@ -95,6 +112,11 @@ int main(int argc,char** argv){
         arch::state::ExecutionSide::Host,witness.version,witness.completion);
     require(context.ledger.inspect({runtime.handles().front(),arch::state::StateSlot::Current}).interior.version==first,
         "nonfirst publication changed first version");
+    const int calls_before_unpublished=jeans_calls;
+    rejects([&]{(void)runtime.evaluate_current_jeans_resolution();},
+        "JENS accepted inconsistent nonfirst Current version");
+    require(jeans_calls==calls_before_unpublished,
+        "JENS partially evaluated before nonfirst publication failure");
     stage.prepare_current(.125,true);verify(arch::state::StateSlot::Current);
     require(capture->gathers==2,"nonfirst update failed to issue new gather");
     const auto plan=arch::scheduler::make_hydro_plan(arch::scheduler::HydroMethod::RK3);
@@ -159,6 +181,20 @@ int main(int argc,char** argv){
     require(runtime.handles()==coarse_handles,"no-change transaction turned topology identity");
     stage.prepare_current(.75,false);verify(arch::state::StateSlot::Current);
     require(capture->gathers==7,"no-change domain not prepared with a new lease");
+    const auto coarse_jeans=runtime.evaluate_current_jeans_resolution();
+    require(coarse_jeans.size()==coarse_handles.size(),"JENS retained refined topology extent");
+    auto jeans_context=runtime.stage_context();
+    const auto device_only=jeans_context.clock.next_publication();
+    for(const auto handle:runtime.handles())
+        jeans_context.ledger.publish_interior({handle,arch::state::StateSlot::Current},
+            arch::state::ExecutionSide::Device,device_only.version,device_only.completion);
+    const int calls_before_device=jeans_calls;
+    rejects([&]{(void)runtime.evaluate_current_jeans_resolution();},
+        "Host JENS consumed device-only Current without a transfer lease");
+    require(jeans_calls==calls_before_device,"Host JENS used an implicit materialization fallback");
+    std::cout<<"ACTUAL_JEANS_RUNTIME_LEASE_PASS initial_blocks="<<initial_jeans.size()
+        <<" coarse_blocks="<<coarse_jeans.size()
+        <<" nonfirst_version_reject=1 device_only_reject=1 time=0 steps=0\n";
     require(counters.t_current==0.&&counters.step_count==0,"fixture advanced simulation controller");
     std::cout<<"ACTUAL_GRAVITY_RUNTIME_CONTRACT_PASS initial_blocks="<<old_blocks
         <<" refined_blocks="<<refined_blocks<<" coarsened_blocks="<<runtime.handles().size()

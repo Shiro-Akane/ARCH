@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <utility>
 
@@ -79,6 +80,47 @@ state::StateVersion DriverRuntime::current_interior_version() const
         }
     }
     return version;
+}
+
+/** Consume accepted interiors only after whole-domain publication preflight.
+ * Current slot/storage identity alone is not a publication lease. Keep the
+ * physical EOS/Jeans computation in the existing tree/backend owners.
+ */
+std::vector<double> DriverRuntime::evaluate_current_jeans_resolution()
+{
+    topology_registry.validate_committed_snapshot(observe_topology());
+    const auto version = current_interior_version();
+    const auto& active = amr_ctrl.tree->GetActiveBlocks();
+    if (active.size() != stage_handles.size()
+        || (compute_backend && backend_storage.size() != active.size()))
+        throw std::logic_error("JENS Current topology/storage extent mismatch");
+    const auto side = compute_backend ? ExecutionSide::Device : ExecutionSide::Host;
+    std::vector<backend::BackendStateAccess> accesses;
+    if (compute_backend) accesses.reserve(active.size());
+    // Do not evaluate earlier blocks before a later publication fails.
+    for (std::size_t index = 0; index < active.size(); ++index) {
+        residency_ledger->require_readable(
+            {stage_handles[index], StateSlot::Current}, {side, version, true, false});
+        if (compute_backend) {
+            const auto access = backend_access(index, StateSlot::Current);
+            if (!compute_backend->contains(access))
+                throw std::logic_error("JENS Current backend storage is unavailable");
+            accesses.push_back(access);
+        }
+    }
+    std::vector<double> result;
+    if (compute_backend) result = compute_backend->evaluate_jeans_resolution(accesses);
+    else {
+        result.reserve(active.size());
+        for (int id : active)
+            result.push_back(amr_ctrl.tree->MinimumJeansCells(amr_ctrl.pool->GetBlock(id)));
+    }
+    if (result.size() != active.size())
+        throw std::logic_error("JENS Current summary extent mismatch");
+    for (double value : result)
+        if (!std::isfinite(value) || value <= 0.)
+            throw std::runtime_error("JENS Current summary is invalid");
+    return result;
 }
 
 /** Lower one host fluid state to the backend transfer view. */
