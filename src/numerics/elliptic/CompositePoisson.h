@@ -132,6 +132,14 @@ struct NativeRzFacePotentialError {
     BoundaryPotentialError error;
     NativeRzPotentialScope scope=NativeRzPotentialScope::Unknown;
 };
+/** Uniform potential-error sensitivity of the ideal native boundary map.
+ * Units are inverse length squared; this is geometry, not a source certificate.
+ */
+struct NativeRzBoundarySensitivity {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    std::vector<double> cell_coefficients;
+    double native_norm_upper=std::numeric_limits<double>::infinity();
+};
 struct NativeRzBoundaryPotentialError {
     BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
     std::vector<double> cell_bounds;
@@ -199,6 +207,7 @@ public:
     NativeRzFaceEnclosure native_rz_face_enclosure(std::size_t face_index) const;
     NativeRzBoundaryConstructionError native_rz_boundary_construction_error(
         std::span<const double> boundary_values) const;
+    NativeRzBoundarySensitivity native_rz_boundary_sensitivity() const;
     NativeRzBoundaryPotentialError native_rz_propagate_potential_error(
         std::span<const NativeRzFacePotentialError> face_errors) const;
     NativeRzOperatorConstructionError native_rz_operator_construction_error(

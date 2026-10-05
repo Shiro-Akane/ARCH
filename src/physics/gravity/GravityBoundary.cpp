@@ -240,6 +240,50 @@ std::vector<RingMomentEnclosure> GravityBoundary::ring_moment_enclosures(
  * A failed budget can retain diagnostic arrays, but errors remain uncertified
  * and the result is not publishable. Existing production values() stays gated.
  */
+/** Derive an initial potential work target from current source and ideal B.
+ * Source norm is a scale for a proposal, NOT a lower bound for final RHS.
+ * The actual ring/source/construction/assembly/A ledger must still accept
+ * the original rtol/atol before any corresponding field qualification.
+ */
+RingBoundaryBudgetProposal GravityBoundary::propose_ring_budget(
+    const arch::elliptic::CompositePoisson& op,const GravitySolveIdentity& source,
+    std::span<const double> computed_source,double rtol,double atol) const {
+    require_ring_operator(op);
+    if(!source_identity_||source!=*source_identity_||ring_density_.size()!=volumes_.size())
+        throw std::logic_error("Ring budget source identity is stale or unavailable");
+    RingBoundaryBudgetProposal result;result.source=source;
+    result.source_generation=source_generation_;
+    if(!std::isfinite(rtol)||rtol<=0.||rtol>=1.
+        ||!std::isfinite(atol)||atol<0.)return result;
+    const auto source_error=bound_isolated_gravity_source(op,ring_density_,computed_source);
+    if(source_error.status!=GravitySourceBoundStatus::Bounded) {
+        result.status=source_error.status==GravitySourceBoundStatus::Overflow
+            ?RingBudgetStatus::Overflow:RingBudgetStatus::InvalidInput;return result;
+    }
+    const auto norm=op.native_rz_norm_interval(computed_source);
+    const auto error_norm=op.native_rz_norm_interval(source_error.cell_bounds);
+    const auto sensitivity=op.native_rz_boundary_sensitivity();
+    for(auto status:{norm.status,error_norm.status,sensitivity.status})
+        if(status!=arch::elliptic::BoundaryErrorStatus::Bounded) {
+            result.status=status==arch::elliptic::BoundaryErrorStatus::Overflow
+                ?RingBudgetStatus::Overflow:RingBudgetStatus::UncertifiedInput;return result;
+        }
+    const auto down=[](double v){return v>0.?std::nextafter(v,0.):0.;};
+    result.source_norm_lower=down(std::max(0.,norm.lower-error_norm.upper));
+    result.boundary_sensitivity_upper=sensitivity.native_norm_upper;
+    result.initial_tolerance=std::max(atol,down(rtol*result.source_norm_lower));
+    if(!std::isfinite(result.initial_tolerance)
+        ||!std::isfinite(result.boundary_sensitivity_upper)){
+        result.status=RingBudgetStatus::Overflow;return result;}
+    if(result.initial_tolerance==0.||result.boundary_sensitivity_upper<=0.) {
+        result.status=RingBudgetStatus::ZeroBudget;return result;
+    }
+    result.control.face_absolute_target=down(down(.5*result.initial_tolerance)
+        /result.boundary_sensitivity_upper);
+    result.status=result.control.face_absolute_target>0.
+        ?RingBudgetStatus::Proposed:RingBudgetStatus::ZeroBudget;
+    return result;
+}
 RingBoundaryEvaluation GravityBoundary::ring_boundary(
     const arch::elliptic::CompositePoisson& op,const GravitySolveIdentity& source,
     const RingBoundaryControl& control) const {

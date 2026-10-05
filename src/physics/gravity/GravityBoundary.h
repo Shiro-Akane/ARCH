@@ -361,6 +361,17 @@ struct RingBoundaryControl {
     // The existing global work cap includes leaf integration and parent attempts.
     std::uint64_t maximum_boxes_per_leaf=1024,maximum_leaf_evaluations=100000;
 };
+/** An initial work allocation only. Final RHS/residual assessment is mandatory;
+ * no Proposed result qualifies a solved field, continuous physics or publication.
+ */
+enum class RingBudgetStatus { Proposed, ZeroBudget, InvalidInput, UncertifiedInput, Overflow };
+struct RingBoundaryBudgetProposal {
+    RingBudgetStatus status=RingBudgetStatus::InvalidInput;
+    GravitySolveIdentity source;
+    std::uint64_t source_generation=0;
+    RingBoundaryControl control;
+    double source_norm_lower=0.,boundary_sensitivity_upper=0.,initial_tolerance=0.;
+};
 enum class RingBoundaryStatus : unsigned char { Bounded, WorkLimit, PrecisionLimit };
 struct RingBoundaryEvaluation {
     RingBoundaryStatus status=RingBoundaryStatus::PrecisionLimit;
@@ -399,6 +410,9 @@ public:
     void update(std::span<const double> density,const GravitySolveIdentity&);
     std::vector<RingMomentEnclosure> ring_moment_enclosures(
         const arch::elliptic::CompositePoisson&,const GravitySolveIdentity&) const;
+    RingBoundaryBudgetProposal propose_ring_budget(
+        const arch::elliptic::CompositePoisson&,const GravitySolveIdentity&,
+        std::span<const double> computed_source,double rtol,double atol) const;
     RingBoundaryEvaluation ring_boundary(const arch::elliptic::CompositePoisson&,
         const GravitySolveIdentity&,const RingBoundaryControl&) const;
     void require_current_ring(const arch::elliptic::CompositePoisson&,

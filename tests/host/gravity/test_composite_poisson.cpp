@@ -1428,7 +1428,7 @@ void ring_source_retirement_contract() {
     std::cout<<"RING_ACTUAL_SOURCE_RETIREMENT_PASS cases=2 static_mixed_mesh=1 no_simulation=1\n";
 }
 
-void native_ring_solved_probe(bool mixed=false) {
+void native_ring_solved_probe(bool mixed=false,bool dynamic_budget=false) {
     using namespace Physical::Gravity;
     const auto dump=[](const auto& x){std::cout<<'[';bool first=true;for(auto v:x){if(!first)std::cout<<',';first=false;std::cout<<v;}std::cout<<']';};
     std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
@@ -1441,7 +1441,17 @@ void native_ring_solved_probe(bool mixed=false) {
         id.operator_revision=id.boundary_revision=id.accuracy_revision=1;
         id.inputs.push_back({{{1},{9}},state::StateSlot::Current,{1},1});
         std::vector<double> density(op.size(),1.);
-        tree.update(density,id);RingBoundaryControl control;control.face_absolute_target=1.e-18;
+        tree.update(density,id);
+        auto& execution=solver.execution();auto src=execution.array<double>(op.size());
+        execution.linear(src,-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant,
+            execution.upload(density),0.,{},0.);
+        const auto source=execution.download(src);
+        RingBoundaryControl control;control.face_absolute_target=1.e-18;
+        const auto proposal=tree.propose_ring_budget(op,id,source,1.e-10,0.);
+        if(dynamic_budget) {
+            require(proposal.status==RingBudgetStatus::Proposed,"dynamic budget proposal failed");
+            control=proposal.control;
+        }
         control.maximum_boxes_per_leaf=65536;
         const auto ring=tree.ring_boundary(op,id,control);
         if(ring.status!=RingBoundaryStatus::Bounded) {
@@ -1457,10 +1467,7 @@ void native_ring_solved_probe(bool mixed=false) {
                 <<",\"agmIterations\":"<<ring.agm_iterations<<"}\n";
         }
         require(ring.status==RingBoundaryStatus::Bounded,"actual native solve ring budget failed");
-        auto& execution=solver.execution();auto src=execution.array<double>(op.size());
-        execution.linear(src,-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant,
-            execution.upload(density),0.,{},0.);
-        const auto source=execution.download(src),rhs=op.effective_rhs(source,ring.values);
+        const auto rhs=op.effective_rhs(source,ring.values);
         const auto solved=solver.solve(rhs,{1.e-10,0.,200});
         require(solved.report.status==multigrid::SolveStatus::Converged,"actual native algebraic solve failed");
         std::vector<double> residual(op.size());op.apply(solved.potential,residual);
@@ -1507,6 +1514,12 @@ void native_ring_solved_probe(bool mixed=false) {
                 <<",\"storage_generation\":"<<input.storage_generation<<'}';
         }
         std::cout<<"]},\"source_scope\":\"static numerical domain; abstract dependency, not Runtime block publication\"";
+        std::cout<<",\"dynamic_budget\":"<<dynamic_budget
+            <<",\"face_target\":"<<control.face_absolute_target
+            <<",\"proposal_source_norm_lower\":"<<proposal.source_norm_lower
+            <<",\"proposal_tolerance\":"<<proposal.initial_tolerance
+            <<",\"boundary_sensitivity_upper\":"<<proposal.boundary_sensitivity_upper
+            <<",\"sensitivity_cells\":";dump(op.native_rz_boundary_sensitivity().cell_coefficients);
         std::cout<<",\"source\":";dump(source);std::cout<<",\"rhs\":";dump(rhs);
         std::cout<<",\"source_lower\":";dump(result.source_error.lower);
         std::cout<<",\"source_upper\":";dump(result.source_error.upper);
@@ -2528,6 +2541,8 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="ring-balanced-reduction-probe") {ring_balanced_reduction_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-source-retirement") {ring_source_retirement_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-mixed-probe") {native_ring_solved_probe(true);return 0;}
+        if(argc>1 && std::string(argv[1])=="native-ring-dynamic-solved-probe") {native_ring_solved_probe(false,true);return 0;}
+        if(argc>1 && std::string(argv[1])=="native-ring-dynamic-mixed-probe") {native_ring_solved_probe(true,true);return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-solved-probe") {native_ring_solved_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-rhs-probe") {finite_ring_rhs_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-parent-probe") {finite_ring_parent_probe();return 0;}

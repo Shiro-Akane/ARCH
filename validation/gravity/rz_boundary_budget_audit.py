@@ -33,6 +33,17 @@ def audit(path):
                 if cell>=0:absolute_rows[cell]+=abs(area/volume[cell]*boundary_coefficient)
         norm2=sum((v*x*x for v,x in zip(volume,absolute_rows)),F(0))/sum(volume)
         assert norm2>0
+        if c.get("dynamic_budget"):
+            assert len(c["sensitivity_cells"])==len(cells)
+            for exact,upper in zip(absolute_rows,c["sensitivity_cells"]):
+                assert exact<=F(upper)
+            assert norm2<=F(c["boundary_sensitivity_upper"])**2
+            closest=[F(0) if F(lo)<=0<=F(hi) else min(abs(F(lo)),abs(F(hi)))
+                for lo,hi in zip(c["source_lower"],c["source_upper"])]
+            source_lower2=sum((v*x*x for v,x in zip(volume,closest)),F(0))/sum(volume)
+            assert F(c["proposal_source_norm_lower"])**2<=source_lower2
+            assert F(c["proposal_tolerance"])<=F(1e-10)*F(c["proposal_source_norm_lower"])
+            assert F(c["face_target"])*F(c["boundary_sensitivity_upper"])<=F(c["proposal_tolerance"])/2
         with localcontext() as ctx:
             ctx.prec=100
             coefficient=(Decimal(norm2.numerator)/Decimal(norm2.denominator)).sqrt()
@@ -54,6 +65,7 @@ def audit(path):
             "recordedToleranceSafePerSecondSquared":c["tolerance_safe"],
             "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic":str(proposal),
             "fixedTargetScaleDiagnostics":scales,
+            "dynamicProposalExactChecks":bool(c.get("dynamic_budget",False)),
             "recordedSolvePassed":c["total_residual_upper"]<=c["tolerance_safe"]})
     return {"recordSha256":hashlib.sha256(path.read_bytes()).hexdigest(),"rows":rows}
 

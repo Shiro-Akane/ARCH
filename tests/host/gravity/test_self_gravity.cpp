@@ -221,6 +221,30 @@ void ring_execution_identity() {
         "incomplete descriptor retained partial output");
     EvaluateBoundary legacy{};legacy.semantics=base.semantics;
     rejects([&]{execution->run(legacy);},"RZ chart reached legacy log work");
+    double previous_target=0.;
+    for(double rho:{0.,1.e-6,1.,1.e6}) {
+        std::fill(density.begin(),density.end(),rho);tree.update(density,identity);
+        std::vector<double> source(op.size(),-4.*constants::math::pi*
+            constants::gravity::cgs::gravitational_constant*rho);
+        const auto proposal=tree.propose_ring_budget(op,identity,source,1.e-10,0.);
+        require(proposal.source==identity&&proposal.source_generation>generation,
+            "budget proposal lost current source identity");
+        if(rho==0.)require(proposal.status==RingBudgetStatus::ZeroBudget
+            &&proposal.control.face_absolute_target==0.,"zero budget acquired a floor");
+        else {
+            require(proposal.status==RingBudgetStatus::Proposed
+                &&proposal.control.face_absolute_target>previous_target,
+                "budget did not follow source scale");
+            require(proposal.control.face_absolute_target*proposal.boundary_sensitivity_upper
+                <=.5*proposal.initial_tolerance,"budget exceeded initial half allocation");
+            previous_target=proposal.control.face_absolute_target;
+        }
+        require(tree.propose_ring_budget(op,identity,source,0.,0.).status
+            ==RingBudgetStatus::InvalidInput,"invalid request produced budget");
+        rejects([&]{tree.propose_ring_budget(op,stale,source,1.e-10,0.);},
+            "stale source produced a budget");
+    }
+    std::cout<<"RING_BUDGET_PROPOSAL_PASS scales=4 zero_floor=0 source_identity=1 stale_rejected=1\\n";
     std::cout<<"TYPED_RING_HOST_EXECUTION_PASS cells="<<op.size()
         <<" source_identity=1 stale_result_retired=1 work_limit=1 missing_owner=1 legacy_log_rejected=1\n";
 }

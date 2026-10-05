@@ -1030,6 +1030,31 @@ NativeRzBoundaryConstructionError CompositePoisson::native_rz_boundary_construct
  * Certified errors must refer to ideal root source AND observer geometry.
  * Existing stored-coordinate ring errors cannot be implicitly promoted.
  */
+/** Original ideal B enclosure summed for a unit uniform potential error.
+ * No fictitious source/observer certificate or stored-weight norm is used.
+ */
+NativeRzBoundarySensitivity CompositePoisson::native_rz_boundary_sensitivity() const {
+    NativeRzBoundarySensitivity result;
+    if(base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2
+        ||boundary_kind()!=BoundaryKind::CurvilinearIsolated)return result;
+    result.cell_coefficients.assign(cells_.size(),0.);
+    for(std::size_t index=0;index<faces_.size();++index) {
+        const auto& face=faces_[index];if(face.boundary_side<0)continue;
+        const auto map=native_rz_face_enclosure(index);
+        if(map.status!=BoundaryErrorStatus::Bounded){result.status=map.status;return result;}
+        for(int side=0;side<2;++side) {
+            const int cell=side?face.right:face.left;if(cell<0)continue;
+            const double coefficient=std::max(std::abs(map.boundary_map_lower[side]),
+                std::abs(map.boundary_map_upper[side]));
+            result.cell_coefficients[cell]=bound_up(result.cell_coefficients[cell]+coefficient);
+            if(!std::isfinite(result.cell_coefficients[cell])){
+                result.status=BoundaryErrorStatus::Overflow;return result;}
+        }
+    }
+    const auto norm=native_rz_norm_interval(result.cell_coefficients);
+    result.status=norm.status;result.native_norm_upper=norm.upper;return result;
+}
 NativeRzBoundaryPotentialError CompositePoisson::native_rz_propagate_potential_error(
     std::span<const NativeRzFacePotentialError> errors) const {
     NativeRzBoundaryPotentialError result;

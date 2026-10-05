@@ -711,3 +711,14 @@ solved record 重建 K=norm_native(abs(B)*1)，K约47.43–49.12 cm^-2，
 ledger和force/work/publication资格；不能以再加抽象fixture替代真实Runtime。
 见 RZRuntimeBudgetIntegrationAudit-20261005.zh-CN.md；公开RZ/连续势力/axis/
 viscosity/angular/CUDA/long-run科学门槛保持，原阈值不变。
+
+### RZ 原所有者动态初始预算节点（2026-10-05）
+
+CompositePoisson提供ideal native B sensitivity上界；GravityBoundary用当前
+source/G/原rtol-atol生成向下舍入的初始half份额，状态仅Proposed，
+不是最终RHS或发布证书。四例实际uniform/mixed共88cells，以动态target
+约8.54e-19–8.84e-19完成原请求；独立Fraction完整residual及budget上界PASS，
+原CPU/CUDA-enabled Host lifecycle和actualCartesianRuntime回归PASS。
+见RZDynamicInitialBudgetNode-20261005.zh-CN.md。
+生产SelfGravity尚未消费该接口，完整RZ Runtime、continuous势力/axis/viscosity/
+angular A→D及Device/long-run门槛保留，原科学阈值未改。
