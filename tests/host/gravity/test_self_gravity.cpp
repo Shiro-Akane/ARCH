@@ -147,6 +147,50 @@ void lifecycle() {
     require(maximum>0.02*arch::constants::gravity::cgs::gravitational_constant,"tiny physical gravity was clamped away");
 
 }
+/** Existing bounded native source, now consumed through the actual executor.
+ * This abstract numerical-domain dependency is not full Runtime all-block proof.
+ */
+void ring_execution_identity() {
+    elliptic::CartesianMesh base;base.dimension=2;
+    base.cells={4,4,1};base.spacing={.25,.25,1.};base.origin={0.,-.5,0.};
+    base.geometry=elliptic::Geometry::Cylindrical;
+    base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    std::vector<elliptic::CompositeCell> cells;
+    for(int j=0;j<4;++j)for(int i=0;i<4;++i)cells.push_back({0,{i,j,0}});
+    elliptic::CompositePoisson op(base,cells,elliptic::BoundaryKind::CurvilinearIsolated);
+    GravityBoundary tree(op,{9});GravitySolveIdentity identity;
+    identity.topology={9};identity.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+    identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
+    identity.inputs.push_back({{{1},{9}},state::StateSlot::Current,{1},1});
+    std::vector<double> density(op.size(),1.);tree.update(density,identity);
+    RingBoundaryControl control;control.face_absolute_target=1.e-18;
+    control.maximum_boxes_per_leaf=65536;
+    RingBoundaryEvaluation result;auto execution=make_host_gravity_execution();
+    execution->run(EvaluateRingBoundary{&tree,&op,&identity,&control,&result});
+    require(result.status==RingBoundaryStatus::Bounded && result.source==identity
+        && result.source_generation>0 && result.values.size()==op.faces().size(),
+        "typed ring executor lost bounded source identity");
+    tree.require_current_ring(op,result);
+    const auto generation=result.source_generation;
+    auto stale=identity;stale.inputs.front().version={2};
+    rejects([&]{execution->run(EvaluateRingBoundary{&tree,&op,&stale,&control,&result});},
+        "typed ring executor accepted stale source");
+    require(result.source_generation==0 && result.values.empty()
+        && result.status!=RingBoundaryStatus::Bounded,
+        "failed typed ring request retained a bounded result");
+    auto limited=control;limited.maximum_leaf_evaluations=1;
+    execution->run(EvaluateRingBoundary{&tree,&op,&identity,&limited,&result});
+    require(result.status==RingBoundaryStatus::WorkLimit && result.source==identity
+        && result.source_generation==generation,"typed ring executor hid WorkLimit provenance");
+    rejects([&]{execution->run(EvaluateRingBoundary{nullptr,&op,&identity,&control,&result});},
+        "typed ring executor accepted missing owner");
+    require(result.values.empty() && result.source_generation==0,
+        "incomplete descriptor retained partial output");
+    EvaluateBoundary legacy{};legacy.semantics=base.semantics;
+    rejects([&]{execution->run(legacy);},"RZ chart reached legacy log work");
+    std::cout<<"TYPED_RING_HOST_EXECUTION_PASS cells="<<op.size()
+        <<" source_identity=1 stale_result_retired=1 work_limit=1 missing_owner=1 legacy_log_rejected=1\n";
+}
 void rz_binding_identity() {
     constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
     std::size_t checked=0;
@@ -364,4 +408,4 @@ void native_components() {
 }
 
 }
-int main() { try {lifecycle();native_components();rz_binding_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+int main() { try {lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }

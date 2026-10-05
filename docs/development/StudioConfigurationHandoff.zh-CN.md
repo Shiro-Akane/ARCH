@@ -604,3 +604,15 @@ face/work/actual Host cell force/dz timestep、CPU4CTest、actualCartesian Runti
 CUDA-enabled Host1CTest通过。见RZNativeFaceWorkNode-20261005.zh-CN.md和summary。
 只关闭该affine scope，RZ typed ring boundary/publication/连续科学/axis/viscosity gate保持。
 生产ELF未变receipt复用，raw/ELF本机，无Windows或新长跑。
+
+
+## 2026-10-05：typed CPU ring执行与实机Device预先拒绝
+
+原GravityWork/Host executor接实际ring_boundary，旧result先失效，
+source/generation、stale/missing/WorkLimit诊断通过16-cell原预算源验证。
+legacy工作项携带真实chart，Host/CUDA拒绝RZ log；实机Device拒绝typed ring，
+零kernel/transfer/fence增量、无Host fallback且旧证书退役，原36 reduction边界case通过。
+CPU1CTest、CUDA-enabled2CTest与actualCartesian Runtime7gather通过；
+见RZTypedRingExecutionNode-20261005.zh-CN.md及processed summary。
+SelfGravity RZ完整source/RHS/solve/publication和科学gate仍未签收；公开JENS CUDA门槛不变。
+生产ELF未变，raw/ELF本机，不开展Windows或新长跑。

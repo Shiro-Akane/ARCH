@@ -626,6 +626,38 @@ void verify_composite_reductions()
     }
 }
 
+// The production provider must decline unqualified ring work before touching
+// borrowed owners, launching a kernel, or retaining an old Host certificate.
+void verify_typed_ring_device_gates()
+{
+    using namespace Physical::Gravity;
+    auto owner=arch::cuda::make_cuda_gravity_execution(nullptr,0,{});
+    const auto before=owner->numeric()->counters();
+    RingBoundaryEvaluation result;result.status=RingBoundaryStatus::Bounded;
+    result.source_generation=99;result.values={1.};
+    bool rejected=false;
+    try {owner->run(EvaluateRingBoundary{nullptr,nullptr,nullptr,nullptr,&result});}
+    catch(const std::logic_error& e) {
+        rejected=std::string_view(e.what())=="CUDA finite-ring boundary execution is not qualified";
+    }
+    if(!rejected || result.status==RingBoundaryStatus::Bounded
+        || result.source_generation!=0 || !result.values.empty())
+        fail("CUDA typed ring decline retained a certificate or touched missing owner");
+    EvaluateBoundary legacy{};
+    legacy.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    rejected=false;
+    try {owner->run(legacy);}
+    catch(const std::logic_error& e) {
+        rejected=std::string_view(e.what())=="RZ boundary requires the typed finite-ring consumer";
+    }
+    if(!rejected)fail("CUDA RZ chart reached legacy logarithmic work");
+    const auto after=owner->numeric()->counters();
+    if(before.kernels!=after.kernels || before.bytes_h2d!=after.bytes_h2d
+        || before.bytes_d2h!=after.bytes_d2h || before.synchronizations!=after.synchronizations)
+        fail("CUDA typed ring decline launched or transferred work");
+    std::cout<<"TYPED_RING_DEVICE_GATES_PASS legacy_log_rejected=1 result_retired=1 kernels=0 transfers=0\n";
+}
+
 int main()
 {
     int device_count = 0;
@@ -640,6 +672,7 @@ int main()
     verify_real_hydro_owner();
     verify_real_diffusion_owner();
     verify_composite_reductions();
+    verify_typed_ring_device_gates();
     if (edge_cases != 36) fail("device edge case count");
     if (failures == 0)
         std::cout << "D2_CUDA_REDUCTION_CONTRACT_PASS edge_cases="

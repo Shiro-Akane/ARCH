@@ -124,7 +124,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
             op.base().geometry==arch::elliptic::Geometry::Cartesian ? GridMetrics::Geometry::Cartesian
                 : (op.base().geometry==arch::elliptic::Geometry::Cylindrical
                     ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical),
-            arch::constants::gravity::cgs::gravitational_constant,op.base().origin[0]+op.base().cells[0]*op.base().spacing[0],w.boundary_values.data});
+            arch::constants::gravity::cgs::gravitational_constant,op.base().origin[0]+op.base().cells[0]*op.base().spacing[0],w.boundary_values.data,op.base().semantics});
         w.solver.boundary_rhs(w.rhs,w.boundary_values);
     } else if(op.boundary_kind()==arch::elliptic::BoundaryKind::RadialIsolated) {
         // Spherical free-space outer value: Phi(R)=-G*M/R,
