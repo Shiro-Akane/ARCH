@@ -700,3 +700,14 @@ GRAVITY-IDENTITY-PREFLIGHT-01 已复现并修复：原非法 time 请求在最�
 零工作、旧场退役和合法恢复通过，CPU/CUDA-enabled Host 生命周期及实际
 Cartesian Runtime 4→8→4/7 gather 回归通过。见 GravityRequestPreflightNode-20261005.zh-CN.md。
 这不是完整 RZ Runtime、Device JENS/RZ 或演化科学签收，原能力门槛保持。
+
+### RZ Runtime 预算接线审计（2026-10-05）
+
+原生产 SelfGravity 仍在 bind gate 前停止。独立 Fraction 对四份已有 native
+solved record 重建 K=norm_native(abs(B)*1)，K约47.43–49.12 cm^-2，
+确认固定1e-18 fixture预算不能作为任意密度/mesh的生产默认值。
+缩放列只是线性数学诊断、未运行新物理样本；100位sqrt不是outward证书。
+下一步在原 Workspace/SelfGravity 贯通全块身份、动态内部份额、原请求完整
+ledger和force/work/publication资格；不能以再加抽象fixture替代真实Runtime。
+见 RZRuntimeBudgetIntegrationAudit-20261005.zh-CN.md；公开RZ/连续势力/axis/
+viscosity/angular/CUDA/long-run科学门槛保持，原阈值不变。

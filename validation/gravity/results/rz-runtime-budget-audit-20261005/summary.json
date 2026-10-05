@@ -1,0 +1,167 @@
+{
+  "status": "OFFLINE_EXACT_MAPPING_DIAGNOSTIC",
+  "records": [
+    {
+      "recordSha256": "6f71914bed06a19a5b6cec0aa6cb533db160b50556b5b9af14942ae376471724",
+      "rows": [
+        {
+          "radialOrigin": 0,
+          "mixed": false,
+          "cells": 16,
+          "boundaryRowsNormSquaredExact": {
+            "numerator": "21724414849406109634904536064",
+            "denominator": "9274230385674014259733423"
+          },
+          "boundarySensitivityCmMinus2": "48.39885680855292144911035134624913687048554140933058399905079919292751002544074188962180861101591407",
+          "recordedToleranceSafePerSecondSquared": 1.1370095481114307e-15,
+          "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic": "1.174624384837227494402371941463406410185183743331183346081916448407257693447217399370369928534113623E-17",
+          "fixedTargetScaleDiagnostics": [
+            {
+              "densityScale": "1e-6",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "5.6850477405571534906325575967995815989522770915465255114895626320503652095794677734375E-22",
+              "fixedTargetResidualContribution": "4.839885680855292144911035134624913687048554140933058399905079919292751002544074188962180861101591407E-17",
+              "fixedContributionOverHalfTolerance": "85133.59784698953702727303796630355732929096509928775101439243887801256026040922658084107283763002694"
+            },
+            {
+              "densityScale": "1",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "5.6850477405571534906325575967995815989522770915465255114895626320503652095794677734375E-16",
+              "fixedTargetResidualContribution": "4.839885680855292144911035134624913687048554140933058399905079919292751002544074188962180861101591407E-17",
+              "fixedContributionOverHalfTolerance": "0.08513359784698953702727303796630355732929096509928775101439243887801256026040922658084107283763002694"
+            },
+            {
+              "densityScale": "1e6",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "5.6850477405571534906325575967995815989522770915465255114895626320503652095794677734375E-10",
+              "fixedTargetResidualContribution": "4.839885680855292144911035134624913687048554140933058399905079919292751002544074188962180861101591407E-17",
+              "fixedContributionOverHalfTolerance": "8.513359784698953702727303796630355732929096509928775101439243887801256026040922658084107283763002694E-8"
+            }
+          ],
+          "recordedSolvePassed": true
+        },
+        {
+          "radialOrigin": 0.5,
+          "mixed": false,
+          "cells": 16,
+          "boundaryRowsNormSquaredExact": {
+            "numerator": "163895591807397123660654851072",
+            "denominator": "72868953030295826326476895"
+          },
+          "boundarySensitivityCmMinus2": "47.42554949681298662623641991508963796713659200059492769756471769485659282021185605800711605533838424",
+          "recordedToleranceSafePerSecondSquared": 1.6516908386960193e-15,
+          "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic": "1.741351292942861422469325356340070538412389400671470585727005927756170627175730868074760433640478612E-17",
+          "fixedTargetScaleDiagnostics": [
+            {
+              "densityScale": "1e-6",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "8.25845419348009652039300008722915327248823556295642678293233984732069075107574462890625E-22",
+              "fixedTargetResidualContribution": "4.742554949681298662623641991508963796713659200059492769756471769485659282021185605800711605533838424E-17",
+              "fixedContributionOverHalfTolerance": "57426.66652344529429621417408471113484549069654392743302458143822325476146742071513953442134525796907"
+            },
+            {
+              "densityScale": "1",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "8.25845419348009652039300008722915327248823556295642678293233984732069075107574462890625E-16",
+              "fixedTargetResidualContribution": "4.742554949681298662623641991508963796713659200059492769756471769485659282021185605800711605533838424E-17",
+              "fixedContributionOverHalfTolerance": "0.05742666652344529429621417408471113484549069654392743302458143822325476146742071513953442134525796907"
+            },
+            {
+              "densityScale": "1e6",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "8.25845419348009652039300008722915327248823556295642678293233984732069075107574462890625E-10",
+              "fixedTargetResidualContribution": "4.742554949681298662623641991508963796713659200059492769756471769485659282021185605800711605533838424E-17",
+              "fixedContributionOverHalfTolerance": "5.742666652344529429621417408471113484549069654392743302458143822325476146742071513953442134525796907E-8"
+            }
+          ],
+          "recordedSolvePassed": true
+        }
+      ]
+    },
+    {
+      "recordSha256": "5e0fc39ea731f0c09dcfd0813257618b1ca6be9b91f080f966f43d862d3974ef",
+      "rows": [
+        {
+          "radialOrigin": 0,
+          "mixed": true,
+          "cells": 28,
+          "boundaryRowsNormSquaredExact": {
+            "numerator": "3649320115177778877741877166714991967597795813592474837696369040477440",
+            "denominator": "1512202282382052954875347674218687711186522320492873493918905428223"
+          },
+          "boundarySensitivityCmMinus2": "49.12482721735804292935640647980915261850595678728380632744883954429218720604081414768213879013494276",
+          "recordedToleranceSafePerSecondSquared": 1.1564498921357118e-15,
+          "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic": "1.177052376203661553941795031707547020899955359671886994998768260776580920683992012981311097702904034E-17",
+          "fixedTargetScaleDiagnostics": [
+            {
+              "densityScale": "1e-6",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "5.782249460678559152091828418471404107895552791814008930515456086141057312488555908203125E-22",
+              "fixedTargetResidualContribution": "4.912482721735804292935640647980915261850595678728380632744883954429218720604081414768213879013494276E-17",
+              "fixedContributionOverHalfTolerance": "84957.98659574459278789516105757050725123768133941490086803664442175772086755135900973950501150840727"
+            },
+            {
+              "densityScale": "1",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "5.782249460678559152091828418471404107895552791814008930515456086141057312488555908203125E-16",
+              "fixedTargetResidualContribution": "4.912482721735804292935640647980915261850595678728380632744883954429218720604081414768213879013494276E-17",
+              "fixedContributionOverHalfTolerance": "0.08495798659574459278789516105757050725123768133941490086803664442175772086755135900973950501150840727"
+            },
+            {
+              "densityScale": "1e6",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "5.782249460678559152091828418471404107895552791814008930515456086141057312488555908203125E-10",
+              "fixedTargetResidualContribution": "4.912482721735804292935640647980915261850595678728380632744883954429218720604081414768213879013494276E-17",
+              "fixedContributionOverHalfTolerance": "8.495798659574459278789516105757050725123768133941490086803664442175772086755135900973950501150840727E-8"
+            }
+          ],
+          "recordedSolvePassed": true
+        },
+        {
+          "radialOrigin": 0.5,
+          "mixed": true,
+          "cells": 28,
+          "boundaryRowsNormSquaredExact": {
+            "numerator": "27510877919005731871205515819563437943637036159676037227112015228144896",
+            "denominator": "11881589361573273216877731726003974873608389661015434595077114078895"
+          },
+          "boundarySensitivityCmMinus2": "48.11881853109694720405351731467377097190197182514048487635388326992011727731649040753834117256438416",
+          "recordedToleranceSafePerSecondSquared": 1.677867015381812e-15,
+          "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic": "1.743462398497466018271297627403262705518407178322793787363160908169683013650141089163539208042545228E-17",
+          "fixedTargetScaleDiagnostics": [
+            {
+              "densityScale": "1e-6",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "8.389335076909059820144246941626714247440324274777967428207148259389214217662811279296875E-22",
+              "fixedTargetResidualContribution": "4.811881853109694720405351731467377097190197182514048487635388326992011727731649040753834117256438416E-17",
+              "fixedContributionOverHalfTolerance": "57357.13032078067034965288875653742291999141173072972067893255298101264820243706070310429767295174333"
+            },
+            {
+              "densityScale": "1",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "8.389335076909059820144246941626714247440324274777967428207148259389214217662811279296875E-16",
+              "fixedTargetResidualContribution": "4.811881853109694720405351731467377097190197182514048487635388326992011727731649040753834117256438416E-17",
+              "fixedContributionOverHalfTolerance": "0.05735713032078067034965288875653742291999141173072972067893255298101264820243706070310429767295174333"
+            },
+            {
+              "densityScale": "1e6",
+              "linearScalingDiagnosticOnly": true,
+              "scaledHalfTolerance": "8.389335076909059820144246941626714247440324274777967428207148259389214217662811279296875E-10",
+              "fixedTargetResidualContribution": "4.811881853109694720405351731467377097190197182514048487635388326992011727731649040753834117256438416E-17",
+              "fixedContributionOverHalfTolerance": "5.735713032078067034965288875653742291999141173072972067893255298101264820243706070310429767295174333E-8"
+            }
+          ],
+          "recordedSolvePassed": true
+        }
+      ]
+    }
+  ],
+  "meaning": "K=norm_native(abs(B)*1); potential target delta contributes at most K*delta in exact native arithmetic",
+  "limitations": [
+    "Decimal sqrt/result is diagnostic, not an outward runtime certificate",
+    "Scaled density rows are linear mathematical diagnostics, not new physical runs",
+    "No new thresholds or production budget selected",
+    "Runtime must use original owner interval K and final complete original-request assessment",
+    "No Runtime source/solve/publication, continuous Phi/force or long-run qualification"
+  ]
+}
