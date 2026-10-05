@@ -826,3 +826,11 @@ RZ-REFERENCE-COMPLEMENT-01：80位R=1/dr1e-60/dz2e-60时旧m舍入1，
 200个非零错误力符号反例可辨；Fraction stored-stencil算术偏差单列。
 见 RZFaceGradientMappingNode-20261005.zh-CN.md。只证明实际导出映射，
 不签收continuous/contact force；全量连续参考差分诊断仍单独运行。
+
+### 当前 CPU Release 科学复验（2026-10-05）
+
+原唯一build-cpu增量更新ARCH至32f7b139...31b8e；冻结JENS九演化+九实际续算PASS，
+质量/能量漂移0、uniform与off/output native bits一致。完整原主入口80记录PASS，
+其中比旧74子组多六个既有配置拒绝。原physics/阈值不改，粗PCM能量不扩大签收。
+见CurrentCpuReleaseScientificCheckpoint-20261005.zh-CN.md。
+这些并发环境用时不作benchmark；CUDA/new RZ/long-run gate保持。
