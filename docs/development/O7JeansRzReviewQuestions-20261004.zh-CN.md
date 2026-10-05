@@ -685,3 +685,10 @@ SelfGravity尚未接完整finite-ring/native force/work/runtime消费者，显�
 原CPU生命周期及实际Cartesian Runtime回归、CUDA-enabled Host构建兼容通过，
 均不冒称RZ科学/device签收。见RZEllipticChartBindingNode-20261005.zh-CN.md。
 原科学阈值未改；完整8.4 A→B→C→D与连续环体budget仍未完成。
+
+### 原重力workspace的RZ geometry producer证据（2026-10-05）
+
+原构造器物理距离/边界观察点接显式chart：dr/dz及(r,0,z)在3584实际tree cell通过。
+Existing旧数学保留，CPU/实际Cartesian Runtime/CUDA-enabled Host scoped回归通过。
+完整RZ Runtime仍在bind gate前停止，不冒称source/RHS/force-work或Device科学签收。
+见RZGravityWorkspaceChartNode-20261005.zh-CN.md；原8.4与连续环体科学出口不变。

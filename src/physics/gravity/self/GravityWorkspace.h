@@ -19,6 +19,12 @@
 #include "physics/gravity/self/SelfGravity.h"
 
 namespace Physical::Gravity {
+/** Original workspace geometry producers. The caller owns topology/storage
+ * validation; these functions do not publish a field or qualify RZ runtime.
+ */
+GravityCell gravity_cell_geometry(amr::EllipticCellBinding,
+    const arch::elliptic::CompositePoisson&,int cell);
+BoundaryPoint gravity_boundary_point(const arch::elliptic::CompositePoisson&,int face);
 struct SelfGravity::Workspace {
     using Vector=arch::multigrid::Vector;
     template<class T> using Array=arch::multigrid::Array<T>;

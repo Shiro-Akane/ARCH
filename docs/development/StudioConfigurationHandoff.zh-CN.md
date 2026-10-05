@@ -552,3 +552,13 @@ SelfGravity在未完成finite-ring/native force-work/runtime consumer前明确�
 见RZEllipticChartBindingNode-20261005.zh-CN.md及processed summary。
 未变CPU ELF复用receipt；JENS门槛候选未应用，完整CUDA冻结包等待明确本地验证授权。
 raw数据本机；整体目标、RZ科学、long-run/benchmark仍未完成。
+
+
+## 2026-10-05：原GravityWorkspace RZ物理几何消费
+
+原构造器现在消费同一geometry producer，RZ长度dr/dz与meridian(r,0,z)观察点，
+Existing原center/公式不变；3584真实root/mixed cell与所有边界face检查通过。
+原CPU self-gravity1/1、actualCartesian Runtime7gather/time0、CUDA-enabled Host1/1 PASS，
+不是Device RZ或完整RZ Runtime/science。原bind/regrid/JENS gate保持。
+见RZGravityWorkspaceChartNode-20261005.zh-CN.md及processed summary。
+CPU ELF未变receipt复用、raw/ELF本机；完整finite-ring runtime/force-work/科学/长跑仍未签收。

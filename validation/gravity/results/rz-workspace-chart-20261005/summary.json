@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "1.0",
+  "node": "Original gravity workspace consumes explicit native RZ lengths/observers",
+  "status": "GEOMETRY_PRODUCER_PASS_NOT_RZ_RUNTIME_QUALIFICATION",
+  "sourceHeadBeforeCommit": "5c1d3a3212b68a63e14a68d91667ad8d8146af69",
+  "repositoryDirtyAtBuild": true,
+  "inputFingerprints": {
+    "src/physics/gravity/self/GravityWorkspace.cpp": "3e7f0e2578e959af1aaa2ab59d0c276e9f68d284da08e8b123c38e815bdfead6",
+    "src/physics/gravity/self/GravityWorkspace.h": "086d6ac94b459e595d193518602dc0b4adf71b600969e43c0b2bb6ad324bdc41",
+    "tests/host/gravity/test_self_gravity.cpp": "718248ec963b6225f6b6629d6b748d860251fbc4027e04be37ed7814722c7689"
+  },
+  "geometryConsumer": {
+    "owner": "SelfGravity::Workspace",
+    "actualConstructorUsesSameProducers": true,
+    "physicalLengths": "dr,dz; inactive third width=0",
+    "observer": "r,0,z; BoundaryPoint.face retained",
+    "nativeIdentity": "original block/offset from validated binding",
+    "cases": [
+      "axis uniform",
+      "axis mixed",
+      "off-axis uniform",
+      "off-axis mixed"
+    ],
+    "cells": 3584,
+    "rawArraysUploaded": false,
+    "negativeCellAndInvalidFaceReject": true,
+    "existingArithmetic": "same old PhysicalSpacing arguments and PhysicalPosition leaf; not center round-trip",
+    "limitation": "RZ geometry descriptors tested through original functions; full RZ Workspace/solve blocked by retained SelfGravity::bind gate"
+  },
+  "checks": {
+    "cpuCtest": {
+      "name": "self_gravity_lifecycle",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "cudaEnabledHostCtest": {
+      "name": "self_gravity_lifecycle",
+      "passed": 1,
+      "failed": 0,
+      "execution": "Host; not CUDA Device RZ science"
+    },
+    "actualCartesianRuntime": {
+      "exitCode": 0,
+      "treeSequence": [
+        4,
+        8,
+        4
+      ],
+      "gathers": 7,
+      "time": 0,
+      "steps": 0
+    },
+    "architectureAudit": "PASS",
+    "diffCheck": "PASS"
+  },
+  "build": {
+    "cpuFinalSeconds": 5.019,
+    "cudaEnabledSeconds": 5.02,
+    "parallel": 28,
+    "peakSwapKiB": 0,
+    "guardStopped": false
+  },
+  "executables": {
+    "build-cpu/arch_self_gravity": {
+      "sha256": "3964df3267993ed33c510725aa0ab95aee290bb854567a2f6f6f3e8546c35cb2",
+      "size": 523224
+    },
+    "build-cuda/arch_self_gravity": {
+      "sha256": "3964df3267993ed33c510725aa0ab95aee290bb854567a2f6f6f3e8546c35cb2",
+      "size": 523224
+    },
+    "build-cpu/bin/ARCH": {
+      "sha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+      "size": 7539704
+    },
+    "studio/.local/integration/rz-workspace-runtime-20261005/gravity-runtime-contract": {
+      "sha256": "456e177124f22bc19ba415f31b503767ebad11a4427ad569542aa524cf6132a0",
+      "size": 1573456
+    }
+  },
+  "linkedGravityArchives": {
+    "build-cpu/libarch_gravity_cpu.a": {
+      "sha256": "d280d6b650171792b5fdbe525bd65c5f3b0024fbb4af6714ef70f5d1a002d687",
+      "size": 2987908
+    },
+    "build-cuda/libarch_gravity_cpu.a": {
+      "sha256": "d280d6b650171792b5fdbe525bd65c5f3b0024fbb4af6714ef70f5d1a002d687",
+      "size": 2987908
+    }
+  },
+  "logs": {
+    "studio/.local/integration/rz-workspace-chart-20261005.cpu-build.log": {
+      "sha256": "eaae868e98c963636f5c72f56fa56936e5bd55fe4d4a83d85f02a081c85d5598",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-workspace-chart-20261005.cpu-build.log"
+    },
+    "studio/.local/integration/rz-workspace-chart-20261005.cpu-build-final.log": {
+      "sha256": "497b84eb39686d9d081dc735e7467316e1c12e441269db258d9d1027ea56cb1f",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-workspace-chart-20261005.cpu-build-final.log"
+    },
+    "studio/.local/integration/rz-workspace-chart-20261005.cpu-ctest.log": {
+      "sha256": "11c8bde3095b51594066df51458d669a0e9ad7a4b499e1bfc97706c3b98c6d91",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-workspace-chart-20261005.cpu-ctest.log"
+    },
+    "studio/.local/integration/rz-workspace-chart-20261005.cuda-build.log": {
+      "sha256": "7776751451cf27d1f6a39de8fa6f290ecc88a45eab3cd846c5dbe67696076d7a",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-workspace-chart-20261005.cuda-build.log"
+    },
+    "studio/.local/integration/rz-workspace-chart-20261005.cuda-host-ctest.log": {
+      "sha256": "0fbd56fba50db653f2c2d59160d41aee045f09d98592e566aeca2945e3ce4f09",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-workspace-chart-20261005.cuda-host-ctest.log"
+    },
+    "studio/.local/integration/rz-workspace-runtime-20261005/result.json": {
+      "sha256": "0e5128f1657f37460fb5d0e4de482386b03537d3f17b22eba9cd62d4796348e0",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-workspace-runtime-20261005/result.json"
+    }
+  },
+  "failureHistory": {
+    "firstCompileFailure": "new fixture used BoundaryPoint.point; actual existing member is position",
+    "fix": "correct field reference; same assertions/math/tolerances retained",
+    "rawLog": "studio/.local/integration/rz-workspace-chart-20261005.cpu-build.log"
+  },
+  "limitations": [
+    "Public RZ runtime/self-gravity/regrid gate unchanged",
+    "No complete finite-ring RHS/solver/force/work runtime or continuous science acceptance",
+    "No CUDA Device RZ qualification or full JENS CUDA frozen package",
+    "CUDA JENS local candidate awaits explicit authorization; no gate bypass",
+    "Production CPU ELF unchanged; old receipt reused, not current-source Build Manifest",
+    "No scientific trajectory/long-run/benchmark/Windows work; raw output and ELF local"
+  ],
+  "recordedUtc": "2026-10-05T01:18:37.266408+00:00"
+}

@@ -3,6 +3,7 @@
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/self/SelfGravity.h"
+#include "physics/gravity/self/GravityWorkspace.h"
 #include "amr/AMRControl.h"
 #include "physics/constant/PhysicalConstants.h"
 #include "core/config/ControlRelations.h"
@@ -184,8 +185,28 @@ void rz_binding_identity() {
             const double native=GridMetrics::CellVolume(
                 GridMetrics::make_geometry_view(grid,rz),i,j,0);
             require(op.volumes()[cell]==native,"RZ composite/native full-ring measure differ");
+            const auto descriptor=gravity_cell_geometry(storage,op,static_cast<int>(cell));
+            require(descriptor.block==static_cast<int>(storage.block)
+                && descriptor.offset==storage.offset,"RZ workspace changed native storage identity");
+            require(descriptor.width[0]==op.width(cell,0)
+                && descriptor.width[1]==op.width(cell,1)
+                && descriptor.width[2]==0.,"RZ workspace interpreted dz as r*dphi");
             ++checked;
         }
+        int observers=0;
+        for(std::size_t face=0;face<op.faces().size();++face) {
+            const auto& native=op.faces()[face];
+            if(native.boundary_side<0)continue;
+            const auto descriptor=gravity_boundary_point(op,static_cast<int>(face));
+            require(descriptor.face==static_cast<int>(face)
+                && descriptor.position[0]==native.center[0]
+                && descriptor.position[1]==0. && descriptor.position[2]==native.center[1],
+                "RZ workspace observer treated physical z as azimuth");
+            ++observers;
+        }
+        require(observers>0,"RZ workspace observer coverage missing");
+        rejects([&]{gravity_cell_geometry(binding.storage.front(),op,-1);},"negative cell descriptor accepted");
+        rejects([&]{gravity_boundary_point(op,static_cast<int>(op.faces().size()));},"invalid face descriptor accepted");
         auto controls=config.physics.gravity;controls.boundary="isolated";
         SelfGravity gravity(controls);
         bool rejected=false;
@@ -225,7 +246,7 @@ void rz_binding_identity() {
         verify_binding(amr::bind_elliptic_mesh(control,config.grid,next));
     }
     std::cout<<"RZ_ELLIPTIC_BINDING_IDENTITY_PASS cells="<<checked
-        <<" axis=1 offaxis=1 mixed=1 axial_dirichlet=1 runtime_gate=1 old_publication_retired=1 recovery=1\n";
+        <<" axis=1 offaxis=1 mixed=1 workspace_lengths=1 meridian_observers=1 axial_dirichlet=1 runtime_gate=1 old_publication_retired=1 recovery=1\n";
 }
 void native_components() {
     for(int dimension:{2,3}) {

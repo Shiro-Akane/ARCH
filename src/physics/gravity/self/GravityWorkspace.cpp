@@ -15,6 +15,42 @@
 #include "grid/GridMetrics.h"
 
 namespace Physical::Gravity {
+namespace {
+GridMetrics::GeometryView workspace_chart(const arch::elliptic::CompositePoisson& op) {
+    GridMetrics::GeometryView view{};
+    view.geometry=op.base().geometry==arch::elliptic::Geometry::Cartesian
+        ?GridMetrics::Geometry::Cartesian
+        :(op.base().geometry==arch::elliptic::Geometry::Cylindrical
+            ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
+    view.dim=op.base().dimension;view.semantics=op.base().semantics;
+    return view;
+}
+}
+/** Describe the accepted native cell's physical lengths in the bound chart.
+ * RZ uses dr/dz; Existing retains its exact radius/theta calculation path.
+ */
+GravityCell gravity_cell_geometry(amr::EllipticCellBinding binding,
+    const arch::elliptic::CompositePoisson& op,int cell) {
+    if(cell<0 || cell>=op.size() || binding.offset<0)
+        throw std::invalid_argument("Invalid gravity cell geometry descriptor");
+    GravityCell result{static_cast<int>(binding.block),binding.offset,{}};
+    const auto chart=workspace_chart(op);const auto native=op.center(cell);
+    for(int axis=0;axis<op.base().dimension;++axis)
+        result.width[axis]=chart.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+            ?GridMetrics::Rz::PhysicalSpacing(axis,op.width(cell,0),op.width(cell,1))
+            :GridMetrics::PhysicalSpacing(chart.geometry,chart.dim,axis,
+                op.width(cell,0),op.width(cell,1),op.width(cell,2),native[0],native[1]);
+    return result;
+}
+/** Bind a boundary observer to the same chart; RZ is (r,0,z), not (r,phi).
+ * This is an observation point only, never a point-mass source approximation.
+ */
+BoundaryPoint gravity_boundary_point(const arch::elliptic::CompositePoisson& op,int face) {
+    if(face<0 || face>=static_cast<int>(op.faces().size()) || op.faces()[face].boundary_side<0)
+        throw std::invalid_argument("Invalid gravity boundary geometry descriptor");
+    const auto point=GridMetrics::PhysicalPosition(workspace_chart(op),op.faces()[face].center);
+    return {{point[0],point[1],point[2]},face};
+}
 /** Allocate resident density, face and force fields for one topology epoch. */
 SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic::BoundaryKind kind,
     std::shared_ptr<GravityExecution> runner):binding(std::move(value)),execution(std::move(runner)),
@@ -26,16 +62,8 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
     if(curved)work_sides=e.array<double>(6*n);else work_sides=sides;
     inverse_dt_squared=e.array<double>(n);density_pointers=e.array<const double*>(binding.grids.size());
     std::vector<GravityCell> locations;
-    for(int i=0;i<n;++i){const auto b=binding.storage[i];GravityCell c{static_cast<int>(b.block),b.offset,{}};
-        const auto native=op.center(i);
-        const auto geometry=op.base().geometry==arch::elliptic::Geometry::Cartesian
-            ?GridMetrics::Geometry::Cartesian
-            :(op.base().geometry==arch::elliptic::Geometry::Cylindrical
-                ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
-        for(int a=0;a<op.base().dimension;++a)
-            c.width[a]=GridMetrics::PhysicalSpacing(geometry,op.base().dimension,a,
-                op.width(i,0),op.width(i,1),op.width(i,2),native[0],native[1]);
-        locations.push_back(c);}
+    for(int i=0;i<n;++i)
+        locations.push_back(gravity_cell_geometry(binding.storage[i],op,i));
     cells=e.upload(locations);volumes=e.upload(op.volumes());
     for(std::size_t b=0;b<binding.grids.size();++b){lookup.emplace(binding.grids[b],b);patch_offsets.push_back(native_size);native_size+=binding.grids[b]->GetTotalSize();}
     patch_faces=e.array<double>(3*native_size);
@@ -71,14 +99,9 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
                     work_boundary_weights[side].push_back(factor*f.value_boundary_coefficient);
                 }
             }}
-        if(f.boundary_side>=0) {
-            const auto geometry=op.base().geometry==arch::elliptic::Geometry::Cartesian
-                ?GridMetrics::Geometry::Cartesian
-                :(op.base().geometry==arch::elliptic::Geometry::Cylindrical
-                    ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
-            const auto point=GridMetrics::PhysicalPosition(geometry,op.base().dimension,f.center);
-            boundary_points.push_back({{point[0],point[1],point[2]},i});
-        }}
+        if(f.boundary_side>=0)
+            boundary_points.push_back(gravity_boundary_point(op,i));
+    }
     // Multiple refined fragments share one coarse native face. A physical
     // acceleration is its area-weighted normal gradient, not the sum of
     // fragment gradients; the work rows above retain their own A_f/V_i.
