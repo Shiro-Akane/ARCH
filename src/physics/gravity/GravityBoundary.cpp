@@ -48,6 +48,33 @@ bool exact_root_coordinate(double origin,double root_spacing,double index,
     const double error=(origin-(sum-virtual_product))+(product-virtual_product);
     return error==0.&&sum==stored;
 }
+/** Shared exact root source/observer geometry proof, independent of whether
+ * a boundary evaluation has completed. No tolerance or coordinate replacement.
+ */
+bool exact_native_ring_geometry(const arch::elliptic::CompositePoisson& op) {
+    if(op.base().dimension!=2
+        ||op.base().semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)return false;
+    const auto& base=op.base();
+    for(int i=0;i<op.size();++i)for(int axis=0;axis<2;++axis) {
+        const auto& cell=op.cells()[i];
+        const double center=op.center(i)[axis],half=.5*op.width(i,axis);
+        if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
+                double(cell.index[axis]),cell.level,center-half)
+            ||!exact_root_coordinate(base.origin[axis],base.spacing[axis],
+                double(cell.index[axis])+1.,cell.level,center+half))return false;
+    }
+    for(const auto& face:op.faces())if(face.boundary_side>=0) {
+        const int owner=face.left>=0?face.left:face.right;
+        const auto& cell=op.cells()[owner];
+        for(int axis=0;axis<2;++axis) {
+            const double index=double(cell.index[axis])+(axis==face.axis
+                ? double(face.boundary_side%2):.5);
+            if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
+                index,cell.level,face.center[axis]))return false;
+        }
+    }
+    return true;
+}
 /** Integrate a piecewise-constant curved cell into Cartesian mass moments. */
 BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int cell,
     const std::array<double,3>& origin) {
@@ -241,7 +268,8 @@ std::vector<RingMomentEnclosure> GravityBoundary::ring_moment_enclosures(
  * and the result is not publishable. Existing production values() stays gated.
  */
 /** Derive an initial potential work target from current source and ideal B.
- * Source norm is a scale for a proposal, NOT a lower bound for final RHS.
+ * Source-only fallback is a scale, not a final RHS lower bound. The optional
+ * positive isolated branch proves a lower bound using native geometry/mass/B.
  * The actual ring/source/construction/assembly/A ledger must still accept
  * the original rtol/atol before any corresponding field qualification.
  */
@@ -271,7 +299,71 @@ RingBoundaryBudgetProposal GravityBoundary::propose_ring_budget(
     const auto down=[](double v){return v>0.?std::nextafter(v,0.):0.;};
     result.source_norm_lower=down(std::max(0.,norm.lower-error_norm.upper));
     result.boundary_sensitivity_upper=sensitivity.native_norm_upper;
-    result.initial_tolerance=std::max(atol,down(rtol*result.source_norm_lower));
+    // Positive isolated sources have negative Newtonian potential. If every
+    // ideal B coefficient is nonnegative, no source/boundary cancellation is
+    // possible. For all source/observer points, distance <= D; hence
+    // -Phi >= G*M/D and |b_i| >= 4*pi*G*rho_i + (G*M/D)*sum_f B_if.
+    // This is an independent initial RHS norm lower bound, not a solve result.
+    if(exact_native_ring_geometry(op)) {
+        using namespace finite_ring_detail;
+        const auto measure=op.native_rz_measure_enclosure();
+        if(measure.status==arch::elliptic::BoundaryErrorStatus::Bounded) {
+            double mass=0.,outer=0.,low=std::numeric_limits<double>::infinity(),
+                high=-std::numeric_limits<double>::infinity();
+            for(int i=0;i<op.size();++i) {
+                mass=down(mass+down(ring_density_[i]*measure.volume_lower[i]));
+                const auto c=op.center(i);
+                outer=std::max(outer,c[0]+.5*op.width(i,0));
+                low=std::min(low,c[1]-.5*op.width(i,1));
+                high=std::max(high,c[1]+.5*op.width(i,1));
+            }
+            const double radial_extent=positive_up(outer+outer);
+            const double axial_extent=offset_interval(high,low).upper;
+            const double distance=distance_interval(radial_extent,axial_extent).upper;
+            if(!std::isfinite(mass)||!std::isfinite(distance)) {
+                result.status=RingBudgetStatus::Overflow;return result;
+            }
+            if(distance>0.) {
+                const double magnitude=down(down(source.gravitational_constant*mass)/distance);
+                std::vector<double> maps(op.size(),0.);
+                bool positive_maps=true;
+                for(std::size_t f=0;f<op.faces().size();++f)if(op.faces()[f].boundary_side>=0) {
+                    const auto map=op.native_rz_face_enclosure(f);
+                    if(map.status!=arch::elliptic::BoundaryErrorStatus::Bounded) {
+                        positive_maps=false;break;
+                    }
+                    const auto& face=op.faces()[f];
+                    for(int side=0;side<2;++side) {
+                        const int cell=side?face.right:face.left;if(cell<0)continue;
+                        if(map.boundary_map_lower[side]<0.){positive_maps=false;break;}
+                        maps[cell]=down(maps[cell]+map.boundary_map_lower[side]);
+                    }
+                    if(!positive_maps)break;
+                }
+                if(positive_maps) {
+                    result.rhs_cell_magnitude_lower.resize(op.size());
+                    for(int i=0;i<op.size();++i)
+                        result.rhs_cell_magnitude_lower[i]=down(
+                            std::max(0.,-source_error.upper[i])+down(magnitude*maps[i]));
+                    const auto rhs_norm=op.native_rz_norm_interval(result.rhs_cell_magnitude_lower);
+                    if(rhs_norm.status==arch::elliptic::BoundaryErrorStatus::Bounded) {
+                        result.basis=RingBudgetBasis::PositiveIsolatedRhs;
+                        result.mass_lower=mass;result.maximum_distance_upper=distance;
+                        result.potential_magnitude_lower=magnitude;
+                        result.rhs_norm_lower=rhs_norm.lower;
+                    } else {
+                        result.rhs_cell_magnitude_lower.clear();
+                        if(rhs_norm.status==arch::elliptic::BoundaryErrorStatus::Overflow) {
+                            result.status=RingBudgetStatus::Overflow;return result;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    const double initial_norm=result.basis==RingBudgetBasis::PositiveIsolatedRhs
+        ?result.rhs_norm_lower:result.source_norm_lower;
+    result.initial_tolerance=std::max(atol,down(rtol*initial_norm));
     if(!std::isfinite(result.initial_tolerance)
         ||!std::isfinite(result.boundary_sensitivity_upper)){
         result.status=RingBudgetStatus::Overflow;return result;}
@@ -391,25 +483,7 @@ std::vector<arch::elliptic::NativeRzFacePotentialError> GravityBoundary::root_sc
     if(ring.errors.size()!=op.faces().size())throw std::invalid_argument("Missing ring face errors");
     std::vector<NativeRzFacePotentialError> result(ring.errors.size());
     for(std::size_t i=0;i<result.size();++i)result[i].error=ring.errors[i];
-    const auto& base=op.base();
-    for(int i=0;i<op.size();++i)for(int axis=0;axis<2;++axis) {
-        const auto& cell=op.cells()[i];
-        const double center=op.center(i)[axis],half=.5*op.width(i,axis);
-        if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
-                double(cell.index[axis]),cell.level,center-half)
-            ||!exact_root_coordinate(base.origin[axis],base.spacing[axis],
-                double(cell.index[axis])+1.,cell.level,center+half))return result;
-    }
-    for(const auto& face:op.faces())if(face.boundary_side>=0) {
-        const int owner=face.left>=0?face.left:face.right;
-        const auto& cell=op.cells()[owner];
-        for(int axis=0;axis<2;++axis) {
-            const double index=double(cell.index[axis])+(axis==face.axis
-                ? double(face.boundary_side%2):.5);
-            if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
-                index,cell.level,face.center[axis]))return result;
-        }
-    }
+    if(!exact_native_ring_geometry(op))return result;
     for(std::size_t i=0;i<result.size();++i)if(op.faces()[i].boundary_side>=0
         &&ring.errors[i].quality==BoundaryErrorQuality::CertifiedAbsolute)
         result[i].scope=NativeRzPotentialScope::RootDyadicSourceAndObserver;

@@ -733,3 +733,15 @@ leaf40960、parent13680、242.433秒；未进入Poisson，没有native成功publ
 RZ-NATIVE-SERVICE-BUDGET-01 OPEN。零源按原正密度条件拒绝，未替代非零验证。
 见RZNativeServiceCandidateNode-20261005.zh-CN.md。
 完整Runtime/连续势力/axis/viscosity/角动量/CUDA/long-run门槛保持，原阈值/cap未改。
+
+### RZ 正孤立 RHS 原预算节点（2026-10-05）
+
+严格 native geometry/measure/正 B 下，原所有者以完整环体质量下界和最大距离
+证明 isolated Phi magnitude 下界，与正 source 同号累加得到 RHS norm 下界；
+仍用原 rtol/atol/K/half 和最终完整原请求 ledger，不改 caps 或物理阈值。
+四例88cells solve/独立 reference、两例heterogeneous预算-only PASS；
+原两块512-cell service成功，residual upper4.443476783658658e-15
+<= safe1.4684682266979847e-14，113.252秒，普通physical reader仍拒绝candidate。
+RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保留。
+见 RZPositiveIsolatedRhsBudgetNode-20261005.zh-CN.md。
+完整Runtime/连续势力/axis/viscosity/angular/CUDA/long-run科学门槛保持。

@@ -8,6 +8,7 @@
 #include "physics/constant/PhysicalConstants.h"
 #include "core/config/ControlRelations.h"
 #include <iostream>
+#include <iomanip>
 #include <limits>
 using namespace Physical::Gravity;
 using namespace arch;
@@ -229,6 +230,8 @@ void ring_execution_identity() {
         const auto proposal=tree.propose_ring_budget(op,identity,source,1.e-10,0.);
         require(proposal.source==identity&&proposal.source_generation>generation,
             "budget proposal lost current source identity");
+        require(proposal.basis==RingBudgetBasis::PositiveIsolatedRhs,
+            "exact positive native boundary map lacks proved RHS basis");
         if(rho==0.)require(proposal.status==RingBudgetStatus::ZeroBudget
             &&proposal.control.face_absolute_target==0.,"zero budget acquired a floor");
         else {
@@ -470,6 +473,10 @@ void native_rz_service_candidate(bool zero_source=false) {
         "candidate lost full native source identity or original request");
     require(assessment.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
         "candidate acquired physical qualification");
+    std::cout<<std::setprecision(17)<<"RZ_NATIVE_SERVICE_RESIDUAL total="
+        <<assessment.conditional.total_residual_upper<<" safe="
+        <<assessment.conditional.tolerance_safe<<" source_generation="
+        <<assessment.source_generation<<" input_count="<<assessment.source.inputs.size()<<"\\n";
     const auto& phi=gravity.native_rz_potential();
     const auto& g=gravity.native_rz_acceleration();
     require(phi.size()==512,"candidate active native extent changed");

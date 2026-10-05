@@ -1428,7 +1428,7 @@ void ring_source_retirement_contract() {
     std::cout<<"RING_ACTUAL_SOURCE_RETIREMENT_PASS cases=2 static_mixed_mesh=1 no_simulation=1\n";
 }
 
-void native_ring_solved_probe(bool mixed=false,bool dynamic_budget=false) {
+void native_ring_solved_probe(bool mixed=false,bool dynamic_budget=false,bool budget_only=false) {
     using namespace Physical::Gravity;
     const auto dump=[](const auto& x){std::cout<<'[';bool first=true;for(auto v:x){if(!first)std::cout<<',';first=false;std::cout<<v;}std::cout<<']';};
     std::cout<<std::setprecision(17)<<"{\"cases\":[";bool first=true;
@@ -1441,6 +1441,7 @@ void native_ring_solved_probe(bool mixed=false,bool dynamic_budget=false) {
         id.operator_revision=id.boundary_revision=id.accuracy_revision=1;
         id.inputs.push_back({{{1},{9}},state::StateSlot::Current,{1},1});
         std::vector<double> density(op.size(),1.);
+        if(budget_only)for(int i=0;i<op.size();++i)density[i]=.25+.125*((3*i)%11);
         tree.update(density,id);
         auto& execution=solver.execution();auto src=execution.array<double>(op.size());
         execution.linear(src,-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant,
@@ -1453,6 +1454,44 @@ void native_ring_solved_probe(bool mixed=false,bool dynamic_budget=false) {
             control=proposal.control;
         }
         control.maximum_boxes_per_leaf=65536;
+        if(budget_only) {
+            require(proposal.basis==RingBudgetBasis::PositiveIsolatedRhs,
+                "heterogeneous source missing proved RHS basis");
+            const auto bounds=bound_isolated_gravity_source(op,density,source);
+            if(!first)std::cout<<',';first=false;
+            std::cout<<"{\"budget_only\":true,\"dynamic_budget\":true,\"mixed\":"<<mixed
+                <<",\"radial_origin\":"<<origin<<",\"origin\":";dump(base.origin);
+            std::cout<<",\"spacing\":";dump(base.spacing);
+            std::cout<<",\"source_lower\":";dump(bounds.lower);
+            std::cout<<",\"source_upper\":";dump(bounds.upper);
+            std::cout<<",\"proposal_basis\":"<<int(proposal.basis)
+                <<",\"proposal_source_norm_lower\":"<<proposal.source_norm_lower
+                <<",\"proposal_rhs_norm_lower\":"<<proposal.rhs_norm_lower
+                <<",\"proposal_mass_lower\":"<<proposal.mass_lower
+                <<",\"proposal_distance_upper\":"<<proposal.maximum_distance_upper
+                <<",\"proposal_potential_magnitude_lower\":"<<proposal.potential_magnitude_lower
+                <<",\"proposal_tolerance\":"<<proposal.initial_tolerance
+                <<",\"boundary_sensitivity_upper\":"<<proposal.boundary_sensitivity_upper
+                <<",\"face_target\":"<<control.face_absolute_target
+                <<",\"proposal_rhs_cell_lower\":";dump(proposal.rhs_cell_magnitude_lower);
+            std::cout<<",\"sensitivity_cells\":";dump(op.native_rz_boundary_sensitivity().cell_coefficients);
+            std::cout<<",\"cells\":[";
+            for(int i=0;i<op.size();++i) {
+                if(i)std::cout<<',';std::cout<<"{\"level\":"<<op.cells()[i].level
+                    <<",\"index\":";dump(op.cells()[i].index);
+                std::cout<<",\"density\":"<<density[i]<<'}';
+            }
+            std::cout<<"],\"faces\":[";
+            for(std::size_t i=0;i<op.faces().size();++i) {
+                if(i)std::cout<<',';const auto& f=op.faces()[i];
+                std::cout<<"{\"axis\":"<<f.axis<<",\"side\":"<<f.boundary_side%2
+                    <<",\"left\":"<<f.left<<",\"right\":"<<f.right
+                    <<",\"construction\":"<<int(f.construction)
+                    <<",\"boundary_side\":"<<f.boundary_side<<",\"samples\":";dump(f.samples);
+                std::cout<<'}';
+            }
+            std::cout<<"]}";continue;
+        }
         const auto ring=tree.ring_boundary(op,id,control);
         if(ring.status!=RingBoundaryStatus::Bounded) {
             std::cerr<<"RING_BUDGET_DIAGNOSTIC {\"origin\":"<<origin
@@ -1517,7 +1556,14 @@ void native_ring_solved_probe(bool mixed=false,bool dynamic_budget=false) {
         std::cout<<",\"dynamic_budget\":"<<dynamic_budget
             <<",\"face_target\":"<<control.face_absolute_target
             <<",\"proposal_source_norm_lower\":"<<proposal.source_norm_lower
-            <<",\"proposal_tolerance\":"<<proposal.initial_tolerance
+
+            <<",\"proposal_basis\":"<<int(proposal.basis)
+            <<",\"proposal_rhs_norm_lower\":"<<proposal.rhs_norm_lower
+            <<",\"proposal_mass_lower\":"<<proposal.mass_lower
+            <<",\"proposal_distance_upper\":"<<proposal.maximum_distance_upper
+            <<",\"proposal_potential_magnitude_lower\":"<<proposal.potential_magnitude_lower
+            <<",\"proposal_rhs_cell_lower\":";dump(proposal.rhs_cell_magnitude_lower);
+        std::cout            <<",\"proposal_tolerance\":"<<proposal.initial_tolerance
             <<",\"boundary_sensitivity_upper\":"<<proposal.boundary_sensitivity_upper
             <<",\"sensitivity_cells\":";dump(op.native_rz_boundary_sensitivity().cell_coefficients);
         std::cout<<",\"source\":";dump(source);std::cout<<",\"rhs\":";dump(rhs);
@@ -2541,6 +2587,7 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="ring-balanced-reduction-probe") {ring_balanced_reduction_probe();return 0;}
         if(argc>1 && std::string(argv[1])=="ring-source-retirement") {ring_source_retirement_contract();return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-mixed-probe") {native_ring_solved_probe(true);return 0;}
+        if(argc>1 && std::string(argv[1])=="native-ring-positive-budget-probe") {native_ring_solved_probe(true,true,true);return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-dynamic-solved-probe") {native_ring_solved_probe(false,true);return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-dynamic-mixed-probe") {native_ring_solved_probe(true,true);return 0;}
         if(argc>1 && std::string(argv[1])=="native-ring-solved-probe") {native_ring_solved_probe();return 0;}

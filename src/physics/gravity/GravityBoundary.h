@@ -364,6 +364,7 @@ struct RingBoundaryControl {
 /** An initial work allocation only. Final RHS/residual assessment is mandatory;
  * no Proposed result qualifies a solved field, continuous physics or publication.
  */
+enum class RingBudgetBasis { SourceScale, PositiveIsolatedRhs };
 enum class RingBudgetStatus { Proposed, ZeroBudget, InvalidInput, UncertifiedInput, Overflow };
 struct RingBoundaryBudgetProposal {
     RingBudgetStatus status=RingBudgetStatus::InvalidInput;
@@ -371,6 +372,11 @@ struct RingBoundaryBudgetProposal {
     std::uint64_t source_generation=0;
     RingBoundaryControl control;
     double source_norm_lower=0.,boundary_sensitivity_upper=0.,initial_tolerance=0.;
+    RingBudgetBasis basis=RingBudgetBasis::SourceScale;
+    double rhs_norm_lower=0.,mass_lower=0.,maximum_distance_upper=0.,
+        potential_magnitude_lower=0.;
+    std::vector<double> rhs_cell_magnitude_lower;
+
 };
 enum class RingBoundaryStatus : unsigned char { Bounded, WorkLimit, PrecisionLimit };
 struct RingBoundaryEvaluation {
