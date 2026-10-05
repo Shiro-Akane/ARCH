@@ -21,12 +21,17 @@ from pathlib import Path
 from rz_ring_axis_reference import PI, G, decimal_value
 
 
-def elliptic_ke(m):
-    """Complete K(m), E(m), with m the parameter, not modulus k."""
-    if not Decimal(0) <= m < Decimal(1):
-        raise ValueError("Elliptic parameter must satisfy 0 <= m < 1")
-    a, b = Decimal(1), (1-m).sqrt()
-    correction, weight = m/2, Decimal(1)
+def elliptic_ke_complement(complement):
+    """K/E from q=1-m computed directly from squared distances.
+
+    Positive q retains a near-contact distance even when 1-q rounds to one.
+    q=0 is the mathematical singularity, never replaced by an epsilon.
+    Arithmetic diagnostic only, not a quadrature-error certificate.
+    """
+    if not complement.is_finite() or not Decimal(0) < complement <= Decimal(1):
+        raise ValueError("Elliptic complement must satisfy 0 < q <= 1")
+    a, b = Decimal(1), complement.sqrt()
+    correction, weight = (1-complement)/2, Decimal(1)
     for _ in range(64):
         c = (a-b)/2
         correction += weight*c*c
@@ -37,6 +42,13 @@ def elliptic_ke(m):
         a, b = new_a, new_b
         weight *= 2
     raise ArithmeticError("AGM failed to converge at current precision")
+
+
+def elliptic_ke(m):
+    """Compatibility entry for an explicitly supplied nonsingular parameter."""
+    if not m.is_finite() or not Decimal(0) <= m < Decimal(1):
+        raise ValueError("Elliptic parameter must satisfy 0 <= m < 1")
+    return elliptic_ke_complement(1-m)
 
 
 @lru_cache(maxsize=16)
@@ -106,7 +118,7 @@ def finite_volume_reference(case, order=32, precision=80):
                     angular_gr = Decimal(0)
                     angular_gz = 2*PI*u/(s2*s)
                 else:
-                    k, e = elliptic_ke(4*R*radius/s2)
+                    k, e = elliptic_ke_complement(d2/s2)
                     angular_phi = 4*k/s
                     angular_gr = 2*(e*(radius*radius-R*R+u*u)/d2-k)/(R*s)
                     angular_gz = 4*u*e/(s*d2)
@@ -243,8 +255,10 @@ def contact_potential_reference(case, order=32, precision=80, t_panels=1):
                                 dz = tv*(uv*b if triangle == 0 else b)
                                 radius = R+dr
                                 s2 = (R+radius)**2+dz*dz
-                                # Decimal independent parameter m=k^2, not modulus.
-                                kv, _ = elliptic_ke(4*R*radius/s2)
+                                # Direct complementary parameter from distance;
+                                # never form 1-m by a near-contact subtraction.
+                                d2 = dr*dr+dz*dz
+                                kv, _ = elliptic_ke_complement(d2/s2)
                                 integral += wt*wu*(thi-tlo)/4 * tv*abs(a*b)*radius*kv/s2.sqrt()
                                 work += 1
         return dict(potential=+(-4*G*rho*integral), kernel_evaluations=work,

@@ -811,3 +811,11 @@ Device/long-run科学出口仍开放，生产门槛保持。
 见 RZActualRuntimeRollbackNode-20261005.zh-CN.md。
 仅t=0注入工程故障；RepairBudget元数据不在数组bits断言范围，
 continuous势力/Hydro角动量/axis/viscosity/Device/long-run科学出口仍开放。
+
+### 独立参考 direct complement 修正（2026-10-05）
+
+RZ-REFERENCE-COMPLEMENT-01：80位R=1/dr1e-60/dz2e-60时旧m舍入1，
+真实正距离误拒绝；exterior Phi/force和contact Phi改按§7.2直接q=d²/s²。
+六q/三精度K高精度对照、五非法反例、五实际积分精度检查PASS。
+见 RZReferenceComplementNode-20261005.zh-CN.md；只关闭参考算术finding，
+没有认证quadrature/contact force/空间误差，Core与科学门槛不变。
