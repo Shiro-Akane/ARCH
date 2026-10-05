@@ -421,6 +421,90 @@ void rz_binding_identity() {
     std::cout<<"RZ_ELLIPTIC_BINDING_IDENTITY_PASS cells="<<checked
         <<" axis=1 offaxis=1 mixed=1 workspace_lengths=1 face_acceleration=1 potential_work=1 actual_cell_force=1 physical_timestep=1 meridian_observers=1 axial_dirichlet=1 runtime_gate=1 old_publication_retired=1 recovery=1\n";
 }
+/** Real native two-block gather and original SelfGravity pipeline.
+ * Opt-in expensive verification; no Hydro/time/output and no physical publish.
+ */
+void native_rz_service_candidate(bool zero_source=false) {
+    SimConfig config;config.grid.geometry="cylindrical";config.grid.dim=2;
+    config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=1.;
+    config.grid.x2_min=-.5;config.grid.x2_max=.5;
+    config.physics.gravity.boundary="isolated";
+    config.physics.gravity.relative_tolerance=1.e-10;
+    config.physics.gravity.absolute_tolerance=0.;config.physics.gravity.max_cycles=200;
+    amr::AMRControl control(8,2);
+    control.tree->InitRootGrid(config,0,GridMetrics::GeometrySemantics::AxisymmetricRz);
+    GravitySolveIdentity identity;identity.topology={7};
+    identity.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+    identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
+    std::vector<amr::BlockHandle> handles;std::vector<GravityDensityView> views;
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& b=control.pool->GetBlock(id);
+        for(int c=0;c<b.grid.GetTotalSize();++c)b.fluid_state.set(c,{zero_source?0.:1.,0.,0.,0.,10.});
+        handles.push_back({{static_cast<std::uint64_t>(id+1)},{7}});
+        const GravityInputIdentity input{handles.back(),state::StateSlot::Current,{1},1};
+        identity.inputs.push_back(input);
+        views.push_back({input,{b.fluid_state.rho.data(),b.fluid_state.rho.size(),
+            amr::native_scalar_layout(b.grid),grid::FieldMemory::Host,1}});
+    }
+    SelfGravity gravity(config.physics.gravity);
+    auto binding=amr::bind_elliptic_mesh(control,config.grid,handles);
+    rejects([&]{gravity.bind(binding);},"public bind enabled RZ");
+    gravity.bind_native_rz_candidate(binding,65536,100000);
+    if(zero_source) {
+        bool rejected=false;
+        try{gravity.prepare({identity,views});}
+        catch(const std::invalid_argument& error) {
+            rejected=std::string_view(error.what())=="Self gravity requires finite positive active density";
+        }
+        require(rejected,"native candidate relaxed the positive-density service contract");
+        rejects([&]{gravity.native_rz_potential();},"zero-density rejection published candidate");
+        rejects([&]{gravity.potential();},"zero-density rejection published physical field");
+        std::cout<<"RZ_NATIVE_SERVICE_ZERO_REJECT_PASS positive_density_contract=1 candidate_unpublished=1\\n";
+        return;
+    }
+    gravity.prepare({identity,views});
+    const auto& assessment=gravity.native_rz_assessment();
+    require(assessment.source==identity&&assessment.source.inputs.size()==2
+        &&assessment.conditional.status==elliptic::BoundaryResidualStatus::Accepted,
+        "candidate lost full native source identity or original request");
+    require(assessment.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
+        "candidate acquired physical qualification");
+    const auto& phi=gravity.native_rz_potential();
+    const auto& g=gravity.native_rz_acceleration();
+    require(phi.size()==512,"candidate active native extent changed");
+    double maximum=0.;
+    for(int a=0;a<3;++a)for(double value:g[a]) {
+        require(std::isfinite(value),"candidate force nonfinite");
+        if(a==2)require(value==0.,"axisymmetric candidate has azimuth force");
+        maximum=std::max(maximum,std::abs(value));
+    }
+    if(zero_source) {
+        require(maximum==0.,"zero numerical source generated force");
+        for(double value:phi)require(value==0.,"zero numerical source generated potential");
+    } else require(maximum>0.,"nonzero source candidate skipped force work");
+    rejects([&]{gravity.potential();},"candidate passed physical output reader");
+    rejects([&]{gravity.report();},"candidate passed physical report reader");
+    rejects([&]{gravity.patch_view(0);},"candidate passed physical Hydro patch reader");
+    auto stale=identity;stale.inputs.back().version={2};
+    rejects([&]{gravity.prepare({stale,views});},"candidate accepted nonfirst stale dependency");
+    rejects([&]{gravity.native_rz_potential();},"candidate failure retained old field");
+    std::cout<<"RZ_NATIVE_SERVICE_CANDIDATE_PASS zero_numerical_source="<<zero_source<<" blocks=2 cells=512 source_identity=1"
+        <<" original_request=1 finite_force=1 physical_readers_rejected=1 nonfirst_stale=1 time=0 steps=0\\n";
+}
+void qualification_scope() {
+    Fixture f;GravityFieldValidity validity;
+    validity.publish({f.identity,1,{1,state::CompletionState::Complete},
+        GravityFieldScope::NativeRzCandidate});
+    require(!validity.matches(f.identity,1),"native candidate matched physical scope");
+    require(validity.matches(f.identity,1,GravityFieldScope::NativeRzCandidate),
+        "native candidate not identified explicitly");
+    rejects([&]{validity.publish({f.identity,1,{1,state::CompletionState::Complete},
+        static_cast<GravityFieldScope>(255)});},"unknown field qualification accepted");
+    validity.invalidate();
+    require(!validity.matches(f.identity,1,GravityFieldScope::NativeRzCandidate),
+        "candidate scope retained retired publication");
+}
 void native_components() {
     for(int dimension:{2,3}) {
         SimConfig config; config.grid.dim=dimension;
@@ -465,4 +549,7 @@ void native_components() {
 }
 
 }
-int main() { try {request_identity_preflight();lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+int main(int argc,char** argv) { try {
+    if(argc>1&&std::string_view(argv[1])=="native-rz-zero-scope"){native_rz_service_candidate(true);return 0;}
+    if(argc>1&&std::string_view(argv[1])=="native-rz-service-candidate"){native_rz_service_candidate();return 0;}
+    qualification_scope();request_identity_preflight();lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }

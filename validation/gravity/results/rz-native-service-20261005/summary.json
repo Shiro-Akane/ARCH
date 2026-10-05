@@ -1,0 +1,84 @@
+{
+  "status": "CANDIDATE_IMPLEMENTATION_REGRESSION_PASS_NONZERO_SERVICE_WORK_LIMIT",
+  "baseline": "11c3a3baa2d85b6dec8c789d9c964c944e6f3ab6",
+  "nonzero": {
+    "exitCode": 1,
+    "status": "WorkLimit",
+    "enteredPoisson": false,
+    "seconds": 242.433,
+    "faceAbsoluteTarget": 6.185029400051462e-20,
+    "leafEvaluations": 40960,
+    "parentEvaluations": 13680,
+    "peakOwnedRssKiB": 21920,
+    "swapKiB": 0,
+    "guardStopped": false,
+    "originalRtol": 1e-10,
+    "originalAtol": 0,
+    "maximumBoxesPerLeaf": 65536,
+    "maximumWork": 100000
+  },
+  "failedProducer": {
+    "baseline": "11c3a3baa2d85b6dec8c789d9c964c944e6f3ab6",
+    "sourceSha256": {
+      "src/physics/gravity/GravitySolveTypes.h": "7def3ec7eb9210dd09a6108b2f4b90e2040a2fbbe90359cbb0eaaa8e569debb7",
+      "src/physics/gravity/self/GravityWorkspace.h": "ff49288e9b94fc3e9fa10e36525c18edbdeb352da4281f7ab58668fc99f542d7",
+      "src/physics/gravity/self/SelfGravity.cpp": "2b42be22462e032713dfcd8a7ef732a28c4506fe98ba2c30863e287ca175a92a",
+      "src/physics/gravity/self/SelfGravity.h": "a2da730429b3c4fb0c1b2ae8579351cd60ceaa8481c6b1805f38ba96a21bb053",
+      "tests/host/gravity/test_self_gravity.cpp": "1f5c0746bbbf00fed1b66db546a9bbd50ea3f5f253429baaa2f9da885ea5c4fb"
+    },
+    "testElfSha256": "c2f8ad49ffcac08ef5361e714ad2f6a9b5779b40741b2a62b06c1ec7ab4f9280",
+    "command": [
+      "build-cpu/arch_self_gravity",
+      "native-rz-service-candidate"
+    ],
+    "scope": "Internal native two-block source/solve/force candidate; no timestep/scientific output",
+    "processId": 2162298,
+    "toolSession": 75268,
+    "notes": [
+      "Metadata is provenance, not proof of live process or completed test",
+      "Normal physical readers reject candidate scope",
+      "No publication or PASS claim until terminal outcome"
+    ]
+  },
+  "qualification": {
+    "normalBindRzRejected": true,
+    "scopeUnitRegression": "PASS",
+    "unknownScopeRejected": true,
+    "candidateDoesNotMatchPhysicalConsumers": true,
+    "nativeSuccessfulPublicationNotYetVerified": true
+  },
+  "regressions": {
+    "cpuSelfGravityLifecycle": "PASS 11.89s",
+    "gravityStageContract": "PASS",
+    "actualCartesianRuntime": "PASS",
+    "zeroDensityServiceRejection": "PASS",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "actualCartesianRuntime": {
+    "exitCode": 0,
+    "stdout": "ACTUAL_JEANS_RUNTIME_LEASE_PASS initial_blocks=4 coarse_blocks=4 nonfirst_version_reject=1 device_only_reject=1 time=0 steps=0\nACTUAL_GRAVITY_RUNTIME_CONTRACT_PASS initial_blocks=4 refined_blocks=8 coarsened_blocks=4 gathers=7 cells=64 time=0 steps=0\n",
+    "elfSha256": "668a22ecb4a88ca25be87ace205db4bea7a5bc4354ebc6c8d7084a7cfca5dd74"
+  },
+  "currentSourceSha256": {
+    "src/physics/gravity/GravitySolveTypes.h": "7def3ec7eb9210dd09a6108b2f4b90e2040a2fbbe90359cbb0eaaa8e569debb7",
+    "src/physics/gravity/self/GravityWorkspace.h": "ff49288e9b94fc3e9fa10e36525c18edbdeb352da4281f7ab58668fc99f542d7",
+    "src/physics/gravity/self/SelfGravity.cpp": "2b42be22462e032713dfcd8a7ef732a28c4506fe98ba2c30863e287ca175a92a",
+    "src/physics/gravity/self/SelfGravity.h": "a2da730429b3c4fb0c1b2ae8579351cd60ceaa8481c6b1805f38ba96a21bb053",
+    "tests/host/gravity/test_self_gravity.cpp": "d7771cf3a2d29d7f62b8405b6ce1d275b6ae45641f1687d91a733dcb09837b37"
+  },
+  "currentTestElfSha256": "005f0e86e9ce5a15c504111e7b2bc578aa0c5b590d116c9a8650ac891b6f1b1a",
+  "productionElfSha256": {
+    "build-cpu/bin/ARCH": "5d454c03404b8b6a9fae082d82270886904637e04df7d9b59a29682bc56c2be0",
+    "build-cuda/bin/ARCH": "0203e0b5f097b465898fe68ad62dc734e2cecd680b3e50782682e70fffebe3fc"
+  },
+  "newFinding": "RZ-NATIVE-SERVICE-BUDGET-01",
+  "limitations": [
+    "Nonzero source->ring attempted; Poisson/force/work/publication not reached",
+    "Scope unit regression does not prove native successful publication",
+    "Zero density rejected under unchanged positive-density contract, not a science fixture",
+    "Service fixture uses native AMRControl blocks, not DriverRuntime RZ regrid/evolution",
+    "No continuous Phi/force qualification or public RZ grant",
+    "No CUDA numerical, simulation, H5/checkpoint, benchmark or long run"
+  ]
+}

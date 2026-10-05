@@ -56,6 +56,11 @@ struct SelfGravity::Workspace {
     int native_size=0;
     GravityFieldValidity validity;
     GravitySolveIdentity source;
+    GravityFieldScope scope=GravityFieldScope::ExistingPhysics;
+    std::unique_ptr<GravityBoundary> ring_source;
+    RingBoundaryControl ring_limits;
+    RingBoundaryEvaluation ring;
+    RingRhsAssessment ring_assessment;
     std::uint64_t generation=0;
     bool ready=false;
     mutable bool downloaded=false;
@@ -66,8 +71,8 @@ struct SelfGravity::Workspace {
     double mean=0.,max_density=0.,max_acceleration_ratio=0.;
     Workspace(amr::EllipticMeshBinding,arch::elliptic::BoundaryKind,std::shared_ptr<GravityExecution>);
     /** Reject access unless the workspace holds a matching completed gravity field. */
-    void require() const {
-        if(!ready||!validity.matches(source,generation))throw std::logic_error("Self-gravity field is not published for this input");
+    void require(GravityFieldScope requested=GravityFieldScope::ExistingPhysics) const {
+        if(!ready||!validity.matches(source,generation,requested))throw std::logic_error("Self-gravity field is not published for this input");
     }
     /** Return a patch view only for the bound native density allocation. */
     const GravityPatchView& patch(const Grid& grid,const FluidState& state) const {
@@ -77,8 +82,8 @@ struct SelfGravity::Workspace {
         return patches[it->second];
     }
     /** Materialize potential and acceleration lazily for host output. */
-    void download() const {
-        require();if(downloaded)return;
+    void download(GravityFieldScope requested=GravityFieldScope::ExistingPhysics) const {
+        require(requested);if(downloaded)return;
         auto& e=solver.execution();host_phi=e.download(solver.resident_potential());
         const auto acceleration=e.download(g);const int n=solver.op().size();
         for(int a=0;a<3;++a)host_g[a].assign(acceleration.begin()+a*n,acceleration.begin()+(a+1)*n);

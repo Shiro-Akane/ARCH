@@ -47,10 +47,13 @@ struct GravitySolveRequest {
     // Geometry, physical BC and elliptic operator bindings are added with their
     // verified P2/P3 implementations; the request never owns fluid storage.
 };
+// Numerical candidate publications must not satisfy physical consumers.
+enum class GravityFieldScope { ExistingPhysics, NativeRzCandidate };
 struct GravityFieldStamp {
     GravitySolveIdentity source;
     std::uint64_t storage_generation = 0;
     arch::state::CompletionToken completion{};
+    GravityFieldScope scope=GravityFieldScope::ExistingPhysics;
 };
 
 /** Validate density/domain dependencies before either source-cache or field use.
@@ -77,14 +80,18 @@ class GravityFieldValidity {
 public:
     /** Publish a completed gravity stamp only after validating every density dependency. */
     void publish(GravityFieldStamp stamp) {
+        if(stamp.scope!=GravityFieldScope::ExistingPhysics
+            &&stamp.scope!=GravityFieldScope::NativeRzCandidate)
+            throw std::invalid_argument("Unknown gravity field qualification scope");
         if (!arch::state::is_complete(stamp.completion) || !stamp.storage_generation)
             throw std::invalid_argument("Incomplete gravity field publication");
         validate_gravity_solve_identity(stamp.source);
         published_ = std::move(stamp);
     }
     /** Require exact topology, time, operator settings and storage generation. */
-    bool matches(const GravitySolveIdentity& source, std::uint64_t storage_generation) const {
-        return published_ && published_->source == source
+    bool matches(const GravitySolveIdentity& source, std::uint64_t storage_generation,
+        GravityFieldScope scope=GravityFieldScope::ExistingPhysics) const {
+        return published_ && published_->scope==scope && published_->source == source
             && published_->storage_generation == storage_generation;
     }
     /** Retire the publication before any state or topology mutation. */

@@ -19,6 +19,8 @@ namespace arch::state { struct CompletionToken; }
 namespace arch::multigrid { struct SolveReport; }
 namespace Physical::Gravity {
 struct GravitySolveRequest;
+struct RingRhsAssessment;
+struct RingBoundaryBudgetProposal;
 class GravityExecution;
 struct GravityPatchView;
 class SelfGravity final : public IGravityPolicy {
@@ -26,6 +28,13 @@ public:
     explicit SelfGravity(GravityConfig config);
     ~SelfGravity();
     void bind(amr::EllipticMeshBinding binding) const;
+    // Internal CPU numerical verification only. Native candidates cannot be
+    // read by normal physical patch/output consumers; public bind stays gated.
+    void bind_native_rz_candidate(amr::EllipticMeshBinding,
+        std::uint64_t maximum_boxes_per_leaf,std::uint64_t maximum_work) const;
+    const RingRhsAssessment& native_rz_assessment() const;
+    const std::vector<double>& native_rz_potential() const;
+    const std::array<std::vector<double>,3>& native_rz_acceleration() const;
     arch::state::CompletionToken prepare(const GravitySolveRequest&) const;
     void invalidate() const noexcept;
     void clear_solver_initial_guess() const noexcept;
@@ -47,6 +56,8 @@ public:
 private:
     struct Workspace;
     Workspace& workspace() const;
+    void bind_impl(amr::EllipticMeshBinding,bool native_candidate,
+        std::uint64_t maximum_boxes,std::uint64_t maximum_work) const;
     GravityConfig config_;
     mutable std::unique_ptr<Workspace> work_;
     mutable std::shared_ptr<GravityExecution> execution_;

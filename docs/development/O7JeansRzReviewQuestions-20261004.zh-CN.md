@@ -722,3 +722,14 @@ source/G/原rtol-atol生成向下舍入的初始half份额，状态仅Proposed�
 见RZDynamicInitialBudgetNode-20261005.zh-CN.md。
 生产SelfGravity尚未消费该接口，完整RZ Runtime、continuous势力/axis/viscosity/
 angular A→D及Device/long-run门槛保留，原科学阈值未改。
+
+### 原 SelfGravity RZ 候选接线 / WorkLimit（2026-10-05）
+
+原服务新增显式CPU numerical candidate入口及独立field scope；
+默认RZ bind/config/API门槛保持，candidate不能匹配ordinary physical consumer。
+原CPU/stage/actualCartesianRuntime回归通过。
+真实2-block/512-cell非零源在target6.185029400051462e-20下WorkLimit：
+leaf40960、parent13680、242.433秒；未进入Poisson，没有native成功publication。
+RZ-NATIVE-SERVICE-BUDGET-01 OPEN。零源按原正密度条件拒绝，未替代非零验证。
+见RZNativeServiceCandidateNode-20261005.zh-CN.md。
+完整Runtime/连续势力/axis/viscosity/角动量/CUDA/long-run门槛保持，原阈值/cap未改。
