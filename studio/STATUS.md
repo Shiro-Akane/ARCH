@@ -10,6 +10,9 @@
 - 真实 Sod / Cartesian CellularDet 细化块点击→生产隔离读取→实际 Inspector：
   PlotfileRealRendererReadbackNode-20261005.zh-CN.md。两个既有 t=0 DENS 样本通过；
   保留真实 producer 身份，原文件未变；不是正式 HTTP/Host 全应用人工 UAT。
+- 正式 ProjectPlotfileAudit + LocalHostProvider + HTTP Host + 实际 LOD 坐标查询：
+  PlotfileProjectHttpRendererNode-20261005.zh-CN.md。独立 h5py FP64/grid identity 与错误保留通过；
+  不是完整 App/launcher 人工 UAT 或全字段科学验收。
 - 正式冻结输入/长包、完整 RZ 连续力参考、axis/viscosity finding 和完整科学签收仍开放；
   JENS 公共 CUDA 接口候选仍需明确授权。未满足门槛不发布生产支持声明。
 - 原始 HDF5/checkpoint/日志/数组留本机，仅处理摘要与复现脚本提交 review。

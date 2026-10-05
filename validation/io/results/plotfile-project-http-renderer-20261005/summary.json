@@ -1,0 +1,97 @@
+{
+  "status": "PASS",
+  "scope": "Real ProjectPlotfileAudit + LocalHostProvider + production HTTP Host and isolated reader + native Electron wheel/pan/selection + actual Inspector; independent stored HDF5 point oracle, not human/scientific UAT",
+  "records": [
+    {
+      "caseId": "Sod",
+      "dimension": 1,
+      "shape": [
+        12,
+        16
+      ],
+      "fileSha256": "fe089e72113896ef7261064596ffdbf25cced4366ceaa84812dc2a5b102a8e9f",
+      "producer": {
+        "case_id": "Sod",
+        "raw_config_sha256": "f5537c04af9e6cecac3ad8b8ef3967f635377f8170a295e31eb1970351cf9f5d",
+        "binary_sha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+        "run_id": "unknown"
+      },
+      "queriedPoint": [
+        0.5153916069963865
+      ],
+      "index": 99,
+      "block": 6,
+      "localIndices": [
+        3
+      ],
+      "logicalKey": "2/8/0/0",
+      "level": 2,
+      "valueBits": "000000000000c03f",
+      "cellMeasureBits": "000000000000703f",
+      "rawValueCoordinatesBoundsMeasure": "FP64 bit-identical",
+      "independentMatchCount": 1,
+      "inspectorRawValueText": "renderer-asserted",
+      "missingFileRetention": "PASS",
+      "fileUnchanged": true
+    },
+    {
+      "caseId": "CellularDet",
+      "dimension": 2,
+      "shape": [
+        20,
+        16,
+        16
+      ],
+      "fileSha256": "81431b1d80407949d852381ab67b6d11dd4598090c6abe1963b882ce9fa2b3ed",
+      "producer": {
+        "case_id": "CellularDet",
+        "raw_config_sha256": "477f2d048efa08ee00d06ff755b464c14498a0755eb263cb7f9fabf9a1e154c8",
+        "binary_sha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+        "run_id": "unknown"
+      },
+      "queriedPoint": [
+        13.194025139107497,
+        6.649655172413793
+      ],
+      "index": 512,
+      "block": 2,
+      "localIndices": [
+        0,
+        0
+      ],
+      "logicalKey": "1/2/1/0",
+      "level": 1,
+      "valueBits": "ffffffffcf126341",
+      "cellMeasureBits": "7d14ae47e17ac43f",
+      "rawValueCoordinatesBoundsMeasure": "FP64 bit-identical",
+      "independentMatchCount": 1,
+      "inspectorRawValueText": "renderer-asserted",
+      "missingFileRetention": "PASS",
+      "fileUnchanged": true
+    }
+  ],
+  "httpResponseStatusCounts": {
+    "200": 9,
+    "400": 2
+  },
+  "limits": [
+    "Two existing t=0 files; DENS only",
+    "No desktop launcher or full App shell tested",
+    "No cancellation/race or all pixels/fields tested in this node",
+    "Original unknown run_id remains unknown",
+    "No new simulation, independent physics oracle, benchmark or Windows work"
+  ],
+  "ownedServersClosed": true,
+  "loopbackOnly": true,
+  "sourceHead": "e8197850421c45d5e72a465ddc063a4e514966eb",
+  "inputSha256": {
+    "studio/src/components/ProjectPlotfileAudit.tsx": "b452aa7551f7656ae23389465cf0a9c2f3e5751019b5dfc4d7a80ef72bdeee42",
+    "studio/src/host/LocalHostProvider.tsx": "677460d43852c63d1fac0c2c7af80bdc5921c7c50f8c1a155ed34016fa9c5e09",
+    "studio/src/styles.css": "1b9c3fca721ba05ad1195ad91e0bde7b5dd252d516f2ed276353c7865819a50a",
+    "studio/host/server.ts": "8be9c65596c0240456ba3d4b6fc7f0a4294b6b52f612ee22c9739396966ce69e",
+    "studio/host/projectPlotfileMetadata.ts": "46c38a606c53bb1556f999b9d84eb77edc4346d4acd5ec64e5e4518a7e78e716",
+    "validation/io/verify_project_plotfile_http_renderer.mjs": "2913299a4012a8f2d3217e82e03207187713cf0435700c7e0437558a69a1bf2e",
+    "validation/io/verify_http_renderer_point_oracle.py": "4f7b0e975cf16f02eaddd4ecb2b2c00932e44130b1cd75df89a70dff08004738"
+  },
+  "navigationRequests": 0
+}
