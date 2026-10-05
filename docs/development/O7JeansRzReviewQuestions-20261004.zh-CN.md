@@ -819,3 +819,10 @@ RZ-REFERENCE-COMPLEMENT-01：80位R=1/dr1e-60/dz2e-60时旧m舍入1，
 六q/三精度K高精度对照、五非法反例、五实际积分精度检查PASS。
 见 RZReferenceComplementNode-20261005.zh-CN.md；只关闭参考算术finding，
 没有认证quadrature/contact force/空间误差，Core与科学门槛不变。
+
+### 全部实际面梯度映射检查（2026-10-05）
+
+四组88 cells/208 faces，独立重建 anchored/Neumaier gradient逐bit一致，
+200个非零错误力符号反例可辨；Fraction stored-stencil算术偏差单列。
+见 RZFaceGradientMappingNode-20261005.zh-CN.md。只证明实际导出映射，
+不签收continuous/contact force；全量连续参考差分诊断仍单独运行。
