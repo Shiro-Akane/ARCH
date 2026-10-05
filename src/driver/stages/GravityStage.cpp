@@ -24,13 +24,25 @@
 
 namespace arch::driver {
 /** Open diagnostics for a configured self-gravity stage. */
-GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGravityPolicy* policy)
-    :runtime_(runtime),gravity_(dynamic_cast<const Physical::Gravity::SelfGravity*>(policy)) {
+GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGravityPolicy* policy,
+    Qualification qualification)
+    :qualification_(qualification),runtime_(runtime),gravity_(dynamic_cast<const Physical::Gravity::SelfGravity*>(policy)) {
+    if(qualification_!=Qualification::Production&&qualification_!=Qualification::NativeRzCandidate)
+        throw std::invalid_argument("Unknown gravity stage qualification");
+    if(qualification_==Qualification::NativeRzCandidate
+        &&(!gravity_||runtime_.backend()
+            ||runtime_.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz))
+        throw std::invalid_argument("Native RZ stage verification requires a CPU RZ Runtime");
     if (!gravity_) return;
     const auto& config=runtime.configuration();
     std::filesystem::create_directories(config.io.out_dir);
-    diagnostics_.open(config.io.out_dir+"/gravity_solves.tsv");
+    diagnostics_.open(config.io.out_dir+(qualification_==Qualification::NativeRzCandidate
+        ?"/native_rz_candidates.tsv":"/gravity_solves.tsv"));
     if (!diagnostics_) throw std::runtime_error("Cannot open gravity solve diagnostics");
+    if(qualification_==Qualification::NativeRzCandidate) {
+        diagnostics_<<"time\tstage\tepoch\tlease\tcells\tsource_generation\tresidual_upper\ttolerance_safe\tphysical_qualified\n"
+            <<std::setprecision(17);return;
+    }
     diagnostics_<<"time\tstage\tepoch\tgeneration\tcells\titerations\trhs_rms\tresidual\ttarget\trho_mean\tdevice\tsetup_seconds\tsolve_seconds\tkernels\tbytes_h2d\tbytes_d2h\tsynchronizations\tsource_boundary_seconds\tpoisson_seconds\tforce_seconds\n"<<std::setprecision(17);
 }
 /** Lease the exact RK input density generation and publish its solved field. */
@@ -38,11 +50,16 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     const auto start=std::chrono::steady_clock::now();
     invalidate();
     auto* backend=runtime_.backend();
+    if(qualification_==Qualification::NativeRzCandidate&&backend)
+        throw std::logic_error("Native RZ stage verification cannot execute on Device");
     if(backend)gravity_->set_execution(backend->gravity_execution());
     const auto& handles=runtime_.handles(); const auto& config=runtime_.configuration();
     if (handles.empty()) throw std::logic_error("Gravity requires active topology");
     if (epoch_!=handles.front().epoch) {
-        gravity_->bind(amr::bind_elliptic_mesh(runtime_.control(),config.grid,handles));
+        auto binding=amr::bind_elliptic_mesh(runtime_.control(),config.grid,handles);
+        if(qualification_==Qualification::NativeRzCandidate)
+            gravity_->bind_native_rz_candidate(std::move(binding),65536,100000);
+        else gravity_->bind(std::move(binding));
         epoch_=handles.front().epoch;
     }
     // A new borrowed storage lease is issued for every solve, even if slots or
@@ -68,7 +85,24 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     const auto prepared=std::chrono::steady_clock::now();
     auto execution=backend?backend->gravity_execution():nullptr;
     const auto before=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
-    const auto token=gravity_->prepare({identity,views}); const auto& report=gravity_->report();
+    const auto token=gravity_->prepare({identity,views});
+    if(qualification_==Qualification::NativeRzCandidate) {
+        // Use the same Runtime lease and full original request. No physical
+        // report/patch/CFL/output consumer is promoted by this diagnostic path.
+        const auto& candidate=gravity_->native_rz_assessment();
+        if(candidate.source!=identity
+            ||candidate.conditional.status!=arch::elliptic::BoundaryResidualStatus::Accepted
+            ||candidate.physical_status!=arch::elliptic::BoundaryResidualStatus::UncertifiedInput)
+            throw std::logic_error("Native RZ stage candidate identity/qualification mismatch");
+        diagnostics_<<time<<'\t'<<stage<<'\t'<<epoch_.value<<'\t'<<generation_<<'\t'
+            <<gravity_->cell_count()<<'\t'<<candidate.source_generation<<'\t'
+            <<candidate.conditional.total_residual_upper<<'\t'
+            <<candidate.conditional.tolerance_safe<<"\t0\n";
+        diagnostics_.flush();
+        if(!diagnostics_)throw std::runtime_error("Cannot write native RZ candidate diagnostics");
+        return token;
+    }
+    const auto& report=gravity_->report();
     const auto finished=std::chrono::steady_clock::now();
     const auto after=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
     diagnostics_<<time<<'\t'<<stage<<'\t'<<epoch_.value<<'\t'<<generation_<<'\t'<<gravity_->cell_count()<<'\t'

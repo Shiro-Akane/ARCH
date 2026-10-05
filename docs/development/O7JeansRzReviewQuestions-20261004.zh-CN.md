@@ -755,3 +755,13 @@ RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保�
 见 RZNativeSlotLifecycleNode-20261005.zh-CN.md。
 版本/storage身份由fixture给定，不代表DriverRuntime真实租约/regrid事务；
 连续势力/Hydro守恒/axis/viscosity/Device/long-run科学门槛保持。
+
+### RZ 实际Runtime租约→Stage→原服务节点（2026-10-05）
+
+显式CPU NativeRzCandidate stage资格复用原Runtime ledger/handles/slot/version，
+原两块512cells三次实际gather，lease1/4/5、source generation1/2/3；
+未发布/非首未发布Scratch在gather前拒绝、旧场退役、合法发布恢复。
+原完整conditional residual PASS，普通plot/CFL/Hydro消费者拒绝candidate，
+默认生产RZ bind/Device/regrid门槛保持。实际Cartesian4→8→4/7gather回归PASS。
+见 RZActualRuntimeCandidateNode-20261005.zh-CN.md。
+只覆盖真实root Runtime三槽，不代表混合拓扑迁移或连续势力/守恒/Device/长跑签收。

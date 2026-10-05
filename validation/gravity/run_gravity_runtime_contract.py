@@ -7,6 +7,7 @@ import argparse,json,pathlib,shlex,subprocess,os,hashlib
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument("--build",type=pathlib.Path,required=True)
 p.add_argument("--output-root",type=pathlib.Path,required=True)
+p.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
 a=p.parse_args();build=a.build.resolve();out=a.output_root.resolve()
 if out.exists():p.error("output-root must be new")
 entries=json.loads((build/"compile_commands.json").read_text())
@@ -14,7 +15,7 @@ main=next(e for e in entries if pathlib.Path(e["file"]).name=="main.cpp")
 root=pathlib.Path(main["file"]).parent.parent
 if "-DARCH_CUDA_BUILD_ENABLED=0" not in shlex.split(main["command"]):p.error("CPU build required")
 out.mkdir(parents=True)
-sources=["tests/host/gravity/test_gravity_runtime_contract.cpp",
+sources=["tests/host/gravity/test_gravity_runtime_rz_contract.cpp" if a.native_rz else "tests/host/gravity/test_gravity_runtime_contract.cpp",
  "src/driver/stages/GravityStage.cpp",
  "src/driver/runtime/DriverRuntime.cpp","src/driver/runtime/DriverBoundary.cpp",
  "src/driver/runtime/DriverRegrid.cpp","src/amr/elliptic/EllipticMeshAdapter.cpp"]
@@ -40,7 +41,7 @@ idx=tokens.index(main["output"]);tokens[idx:idx+1]=objects
 exe=out/"gravity-runtime-contract";tokens[tokens.index("-o")+1]=str(exe)
 execute("link",tokens)
 result=subprocess.run([str(exe),str(out/"runtime-output")],env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
-    text=True,capture_output=True,timeout=30)
+    text=True,capture_output=True,timeout=1200 if a.native_rz else 30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
 summary={"scope":"Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity all-block/slot/regrid publication; no simulation time advancement",
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
@@ -51,5 +52,9 @@ summary={"scope":"Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity al
     for h in [root/"src/numerics/diffusion"/name for name in
       ["DiffDispatch.h","DiffusionAMRStages.h","RKL1TimeIntegrator.h","RKL2TimeIntegrator.h"]]},
  "limitations":["Supported Cartesian identity path only; RZ production gravity/regrid remains gated","No actual Hydro integration or scientific evolution acceptance","No CUDA qualification; only local gravity diagnostic output"]}
+if a.native_rz:
+    summary["scope"]="Actual CPU RZ DriverRuntime lease -> GravityStage -> SelfGravity candidate; no timestep"
+    summary["limitations"]=["Native candidate only; ordinary physical readers and RZ regrid/Device gates held",
+        "No continuous Phi/force or evolution/conservation acceptance"]
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)

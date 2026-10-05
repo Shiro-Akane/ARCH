@@ -19,7 +19,11 @@ namespace arch::driver {
 class DriverRuntime;
 class GravityStage final : public scheduler::HydroStagePreparation {
 public:
-    GravityStage(DriverRuntime&, const Physical::Gravity::IGravityPolicy*);
+    // Explicit internal CPU verification only; never selected from SimConfig.
+    // Candidate fields remain unreadable by normal Hydro/plot/CFL consumers.
+    enum class Qualification { Production, NativeRzCandidate };
+    GravityStage(DriverRuntime&, const Physical::Gravity::IGravityPolicy*,
+        Qualification = Qualification::Production);
     state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest&) override;
     void prepare_current(double time, bool reset_solver_history);
     void invalidate() const override;
@@ -28,6 +32,7 @@ public:
     bool active() const { return gravity_!=nullptr; }
 private:
     state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int);
+    Qualification qualification_;
     DriverRuntime& runtime_;
     const Physical::Gravity::SelfGravity* gravity_;
     amr::TopologyEpoch epoch_{};
