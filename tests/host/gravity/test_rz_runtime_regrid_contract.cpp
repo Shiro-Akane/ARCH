@@ -3,6 +3,9 @@
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
+#include "driver/stages/GravityStage.h"
+#include "physics/gravity/self/SelfGravity.h"
+#include "physics/gravity/GravityExecution.h"
 #include <array>
 #include <filesystem>
 #include <iomanip>
@@ -51,15 +54,23 @@ static void conservation(const Totals& before,const Totals& after,const char* la
 }
 int main(int argc,char** argv){
  try{
-    require(argc==2,"new persistent directory required");
+    require(argc==2||(argc==3&&std::string_view(argv[2])=="--field-after-regrid"),
+        "new persistent directory and optional field-after-regrid required");
+    const bool field_after_regrid=argc==3;
     require(!std::filesystem::exists(argv[1]),"new directory required");
     for(double omega:{0.,1.}){
+        if(field_after_regrid&&omega==0.)continue;
         SimConfig config;config.grid.geometry="cylindrical";config.grid.dim=2;
         config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
         config.grid.x1_min=0.;config.grid.x1_max=1.;config.grid.x2_min=-.5;config.grid.x2_max=.5;
         config.grid.amr_max_blocks=16;config.amr.lrefinemax=1;config.amr.lrefinemin=0;
         config.amr.refine_on_rho=true;config.amr.refine_threshold=.001;config.amr.derefine_threshold=.0005;
         config.amr.regrid_interval=1;config.io.out_dir=argv[1];
+        if(field_after_regrid){
+            config.physics.gravity.boundary="isolated";
+            config.physics.gravity.relative_tolerance=1.e-10;
+            config.physics.gravity.absolute_tolerance=0.;config.physics.gravity.max_cycles=200;
+        }
         SpeciesManager species;species.add_species("a",1.,1.,1.4,1.);species.add_species("b",2.,1.,1.4,1.);
         amr::AMRControl control(16,2);
         control.tree->InitRootGrid(config,2,GridMetrics::GeometrySemantics::AxisymmetricRz);
@@ -78,6 +89,35 @@ int main(int argc,char** argv){
         BCHandler boundary(config,GridMetrics::GeometrySemantics::AxisymmetricRz);
         arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
         runtime.initialize_topology();
+        Physical::Gravity::SelfGravity gravity(config.physics.gravity);
+        using Stage=arch::driver::GravityStage;
+        std::unique_ptr<Stage> stage;
+        if(field_after_regrid)stage=std::make_unique<Stage>(runtime,&gravity,Stage::Qualification::NativeRzCandidate);
+        const auto verify_field=[&](const char* phase){
+            stage->prepare_current(0.,true);
+            const auto& assessment=gravity.native_rz_assessment();
+            auto live=runtime.stage_context();
+            require(assessment.source.topology==runtime.handles().front().epoch
+                &&assessment.source.inputs.size()==runtime.handles().size(),
+                "rebound native field retained old topology/dependencies");
+            for(std::size_t n=0;n<runtime.handles().size();++n){
+                const auto& input=assessment.source.inputs[n];
+                require(input.block==runtime.handles()[n]&&input.slot==arch::state::StateSlot::Current
+                    &&input.version==live.ledger.inspect({runtime.handles()[n],input.slot}).interior.version,
+                    "rebound field did not consume actual current lease");
+            }
+            require(gravity.native_rz_potential().size()==256*runtime.handles().size(),
+                "rebound native field extent mismatch");
+            for(const auto& component:gravity.native_rz_acceleration())
+                for(double value:component)require(std::isfinite(value),"rebound native force nonfinite");
+            rejects([&]{stage->plot_fields();},"rebound candidate acquired physical output grant");
+            rejects([&]{gravity.patch_view(runtime.handles().size()-1);},"rebound candidate acquired Hydro grant");
+            std::cout<<std::setprecision(17)<<"ACTUAL_RZ_REGRID_FIELD_PASS phase="<<phase
+                <<" blocks="<<runtime.handles().size()<<" cells="<<gravity.native_rz_potential().size()
+                <<" epoch="<<assessment.source.topology.value
+                <<" total="<<assessment.conditional.total_residual_upper
+                <<" safe="<<assessment.conditional.tolerance_safe<<" time=0 steps=0"<<std::endl;
+        };
         rejects([&]{runtime.perform_regrid(0,0.);},"production RZ regrid gate lifted");
         const auto root_handles=runtime.handles();const auto root=totals(control);
         require(runtime.regrid_native_rz_candidate(0,0.),"Runtime RZ refinement missing");
@@ -142,6 +182,12 @@ int main(int argc,char** argv){
                 }
             }
             conservation(veto_input,totals(control),"frozen-parent-veto");
+            if(field_after_regrid){
+                require(runtime.handles().size()==5,"actual mixed field witness missing");
+                verify_field("mixed");
+                stage->invalidate();
+                rejects([&]{gravity.native_rz_potential();},"old mixed field survived topology invalidation");
+            }
             std::cout<<"ACTUAL_RZ_RUNTIME_PARENT_VETO_PASS transaction_rejected="<<refused
                 <<" active_blocks="<<runtime.handles().size()<<" children=4 parent_m=-111/8 parent_eint=-9/128 time=0 steps=0"<<std::endl;
         }
@@ -162,6 +208,7 @@ int main(int argc,char** argv){
         require(runtime.regrid_native_rz_candidate(0,0.),"Runtime RZ coarsening missing");
         require(runtime.handles().size()==root_handles.size(),"Runtime RZ coarsening root count");
         conservation(coarsen_input,totals(control),"coarsen");
+        if(field_after_regrid)verify_field("coarse");
         auto coarse=runtime.stage_context();
         rejects([&]{coarse.ledger.inspect({refined_handles.back(),arch::state::StateSlot::Current});},
             "coarsened ledger retained refined handle");

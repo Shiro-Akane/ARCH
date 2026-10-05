@@ -776,3 +776,14 @@ RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保�
 见 RZActualRuntimeRegridNode-20261005.zh-CN.md。
 混合mesh field solve/fatal rollback/Hydro力矩/连续势力/axis/viscosity/Device/
 完整科学出口及长跑仍待验证，不以AMR transfer代替演化签收。
+
+### RZ 实际mixed Runtime field finding（2026-10-05）
+
+真实2→8→5拓扑接原candidate Stage，1280cells的ring boundary
+在leaf74984+parent25016=100000原global cap时WorkLimit，
+target4.7082587313629388e-18；没有Poisson或field成功publication，粗化后段未执行。
+RZ-MIXED-RUNTIME-WORK-01 OPEN；rtol/atol/caps/域不变，
+range/kernel/box计数与source-tree visits区分。
+见 RZMixedRuntimeFieldFinding-20261005.zh-CN.md。
+下一步审计原所有者严格等密度完整相邻分区的等价积分复用；
+方案尚未实施，不以架构PASS或之前root/transfer成功替代mixed科学证据。
