@@ -1,0 +1,203 @@
+{
+  "sourceBaseline": "66cc5592638bd3e8cabf42e034342ddca764ae19",
+  "sourceInputs": {
+    "src/grid/GridMetrics.h": "950085f6e37f7c938fe0365bf9d913630a01026bfa417c7435648f1584ed8656",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "21c52cb31bccb15bbbb3ca3809f86ab5e8608280a1d3817e46555e0400b3bf77",
+    "tests/math/geometry/RzMetricCases.h": "6c22bcf09cade87d85fcf473cce3e1392842f44ab70fc05a7cc00d94d86ce540",
+    "validation/amr/rz_metric_reference.py": "e212b8df68c6c276b51698d4321a651cc613fe512ac5d325325e6a381102247d"
+  },
+  "sourceState": "baseline + explicit modified/new metric and test inputs",
+  "compiledArtifact": {
+    "relativePath": "build-cpu/arch_curvilinear_metrics",
+    "sha256": "56f1c4ad710b1860bf0a1738abf7e18de9a5023e9b699aef9a67e680ccc3de89",
+    "size": 114432
+  },
+  "buildDirectory": "build-cpu",
+  "buildType": "Release",
+  "compiler": "/usr/bin/c++",
+  "buildTarget": "arch_curvilinear_metrics",
+  "productionARCHBuilt": false,
+  "simulationExecuted": false,
+  "productionGeometryDispatchChanged": false,
+  "runtimeRzEnabled": false,
+  "checks": {
+    "independentOracle": {
+      "status": "pass",
+      "cases": 10,
+      "precision_digits": [
+        70,
+        100
+      ],
+      "scope": "Full-rotation metric fixture verification only",
+      "production_rz_enabled": false,
+      "scientific_acceptance": false,
+      "rows": [
+        {
+          "inputs": [
+            0.0,
+            0.25,
+            0.125
+          ],
+          "reference": [
+            0.02454369260617026,
+            0.0,
+            0.19634954084936207,
+            0.19634954084936207
+          ]
+        },
+        {
+          "inputs": [
+            0.0,
+            1.0,
+            1.0
+          ],
+          "reference": [
+            3.141592653589793,
+            0.0,
+            6.283185307179586,
+            3.141592653589793
+          ]
+        },
+        {
+          "inputs": [
+            1.0,
+            2.0,
+            0.5
+          ],
+          "reference": [
+            4.71238898038469,
+            3.141592653589793,
+            6.283185307179586,
+            9.42477796076938
+          ]
+        },
+        {
+          "inputs": [
+            1000000.0,
+            1000001.0,
+            0.001
+          ],
+          "reference": [
+            6283.18844877224,
+            6283.185307179587,
+            6283.191590364894,
+            6283188.44877224
+          ]
+        },
+        {
+          "inputs": [
+            10000000000.0,
+            10000000001.0,
+            1.0
+          ],
+          "reference": [
+            62831853074.937454,
+            62831853071.79587,
+            62831853078.07905,
+            62831853074.937454
+          ]
+        },
+        {
+          "inputs": [
+            1e-10,
+            1.00001e-10,
+            1e-08
+          ],
+          "reference": [
+            6.283216723078815e-33,
+            6.283185307179587e-18,
+            6.283248139032658e-18,
+            6.283216723078815e-25
+          ]
+        },
+        {
+          "inputs": [
+            1.0,
+            1.0000000001,
+            1.0
+          ],
+          "reference": [
+            6.283185827366829e-10,
+            6.283185307179586,
+            6.283185307807905,
+            6.283185827366829e-10
+          ]
+        },
+        {
+          "inputs": [
+            1e+150,
+            1.0000000000999999e+150,
+            1e-100
+          ],
+          "reference": [
+            6.283180618103622e+190,
+            6.2831853071795865e+50,
+            6.283185307807904e+50,
+            6.283180618103622e+290
+          ]
+        },
+        {
+          "inputs": [
+            1e-100,
+            2e-100,
+            1e-100
+          ],
+          "reference": [
+            9.424777960769381e-300,
+            6.283185307179586e-200,
+            1.2566370614359172e-199,
+            9.42477796076938e-200
+          ]
+        },
+        {
+          "inputs": [
+            1e-150,
+            2e-150,
+            1e+100
+          ],
+          "reference": [
+            9.42477796076938e-200,
+            6.283185307179587e-50,
+            1.2566370614359173e-49,
+            9.42477796076938e-300
+          ]
+        }
+      ]
+    },
+    "cpuCtest": {
+      "name": "curvilinear_metrics",
+      "passCount": 1,
+      "failCount": 0,
+      "existingMetricMaxRelativeError": 3.03178e-16,
+      "rzMetricMaxRelativeError": 1.64562e-16,
+      "arithmeticGate": 2e-12,
+      "gateSource": "existing curvilinear metric arithmetic gate; not full RZ scientific budget"
+    },
+    "buildWarnings": [],
+    "diffCheck": "PASS"
+  },
+  "covered": [
+    "full rotating volume",
+    "radial/axial face area",
+    "axis zero radial area",
+    "thin/large/small finite reference cases",
+    "r/z physical spacing",
+    "div(r e_r + z e_z)=3",
+    "inverse-radius measure ratio",
+    "2x2 finite source volume partition",
+    "coarse/fine axial face-area sum",
+    "existing metric/source/CFL/diffusion regression"
+  ],
+  "notCovered": [
+    "production geometry/view dispatch",
+    "RZ geometric source implementation",
+    "AMR tree/transfer/reflux integration",
+    "Poisson/isolated finite-ring kernel integration",
+    "checkpoint geometry identity",
+    "actual CUDA execution",
+    "evolution/scientific acceptance"
+  ],
+  "localLogs": "studio/.local/integration/rz-metric-primitives-20261004",
+  "rawDataUploaded": false,
+  "pushed": false
+}

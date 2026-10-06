@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "numerics/integrator/IHydroSolver.h"
+#include "numerics/integrator/HydroGeometryBinding.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 
 #include "amr/AMRControl.h"
@@ -33,6 +34,8 @@ struct SolverEuler
                       const Numerics::IHydroSolver* hydro,
                       const NumericsConfig &num_cfg)
     {
+        const auto geometry=TimeIntegration::bind_hydro_geometry(
+            amr_ctrl,boundary_condition,hydro,gravity);
         amr_ctrl.flux_register.Clear();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
         if (!active_blocks.empty()) {
@@ -92,7 +95,8 @@ struct SolverEuler
                 TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition, &amr::Block::state_next);
                 amr_ctrl.ghost_exchange.ExecuteExchange(
                     amr_ctrl.pool, amr_ctrl.tree, dim,
-                    &amr::Block::state_next, binding.handles);
+                    &amr::Block::state_next, binding.handles,geometry.exchange_chart,
+                    {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint});
                 return token;
             },
             [&](arch::state::SlotRotation rotation) {
@@ -113,8 +117,11 @@ struct SolverEuler
             },
             [&](const HydroPlan&, arch::state::StateSlot,
                 arch::state::CompletionToken token) {
-                amr_ctrl.ApplyReflux(dt);
-                TimeIntegration::accept_reflux_state(amr_ctrl,num_cfg);
+                amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics,
+                    geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
+                if (geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+                    TimeIntegration::validate_reflux_state(amr_ctrl,num_cfg);
+                else TimeIntegration::accept_reflux_state(amr_ctrl,num_cfg);
                 return token;
             });
     }

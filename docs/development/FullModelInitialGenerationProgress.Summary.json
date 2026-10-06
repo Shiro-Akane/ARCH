@@ -1,0 +1,205 @@
+{
+  "date": "2026-10-03",
+  "baseCommit": "8522e85b86c9b175edb2f469538f433e38990aa5",
+  "scope": "CPU Core init-only generation and root mesh; Host/UI generalization incomplete",
+  "binary": {
+    "path": "build-cpu/bin/ARCH",
+    "sha256": "7ca561d57b876cbdc7fa4672199278682ee8a174a89cf13c6df3ab2a5421e9b7",
+    "size": 7199784
+  },
+  "productionUiBinary": {
+    "path": "build-studio-cpu/bin/ARCH",
+    "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+    "unchanged": true
+  },
+  "compiledApiInputs": {
+    "src/api/Preview.h": "ee4175257eeaefe25f55c9305fcbf5e7962a56ae562be608276bbb3aa17dfa6e",
+    "src/api/inspection/Discovery.cpp": "818deb895886a87f428bbb46ec818d255e2f75a010776f3aca078edb848f37c1",
+    "src/api/preview/Preview.cpp": "7d6b21de99d931dcb67d02f99944b426bbf8c313f4ea9cd5473fe4c67d5d9357",
+    "src/api/preview/PreviewCommand.cpp": "96cd74e5417e19661a2fbd925e66299a2faf6459b8d4a904f7f50ac1b7dd9cf3",
+    "src/api/preview/Sampling.h": "cf11e451cd29a2ea6ab39203e20e21e77ce07d153182f6922481cdf0077b6a1e",
+    "src/api/session/InitialSampleCache.h": "4b762d3aa666ccffb64b0bcb2976a9b47b71bb9f640d74d1419ebb18060803eb",
+    "src/api/session/PreviewSession.cpp": "640e167a7de6ff5280e137ce57fdd42ed455bed15f6b972760bda60f66165320"
+  },
+  "modelDomains": [
+    {
+      "caseId": "Sod",
+      "dimensions": [
+        1
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "CellularDet",
+      "dimensions": [
+        2
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "BurnGradient",
+      "dimensions": [
+        1
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "BurnOneZone",
+      "dimensions": [
+        1
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "CooperativeHotspots",
+      "dimensions": [
+        2
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "DiffusionMode",
+      "dimensions": [
+        1
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "ExternalGravity",
+      "dimensions": [
+        1
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "Gaussian",
+      "dimensions": [
+        1,
+        2,
+        3
+      ],
+      "geometries": [
+        "cartesian",
+        "cylindrical",
+        "spherical"
+      ]
+    },
+    {
+      "caseId": "GravityBox",
+      "dimensions": [
+        1,
+        2,
+        3
+      ],
+      "geometries": [
+        "cartesian",
+        "cylindrical",
+        "spherical"
+      ]
+    },
+    {
+      "caseId": "JeansWave",
+      "dimensions": [
+        1
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "RT",
+      "dimensions": [
+        2,
+        3
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "SNIaCoupled",
+      "dimensions": [
+        2,
+        3
+      ],
+      "geometries": [
+        "cartesian",
+        "cylindrical",
+        "spherical"
+      ]
+    },
+    {
+      "caseId": "Sedov",
+      "dimensions": [
+        1,
+        2,
+        3
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    },
+    {
+      "caseId": "SmoothAdvection",
+      "dimensions": [
+        1
+      ],
+      "geometries": [
+        "cartesian"
+      ]
+    }
+  ],
+  "coverage": {
+    "maintainedInputs": "tests/api/inspection/test_case_inspection.py",
+    "baseModelFieldAndRootMeshCount": 14,
+    "nonCubicOrientation": "Gaussian Cartesian/spherical/cylindrical shape=[2,3,5], native velocity units and labels",
+    "additional3d": "Sedov/RT/GravityBox; SNIaCoupled Cartesian/cylindrical/spherical references",
+    "session": "three-axis single-shot equivalence, warm shape changes, error recovery to Sod",
+    "meshLimit": "root geometry/lref=0; not mixed-level scientific certification",
+    "noScientificOutput": true,
+    "noTimeStepping": true
+  },
+  "latestResults": {
+    "generationCliSessionCellular": {
+      "status": "PASS",
+      "groups": 4,
+      "log": "final-generation-regression.log"
+    },
+    "cacheVelz": {
+      "status": "PASS",
+      "rebuiltTarget": "arch_initial_sample_cache",
+      "log": "final-full-model-cache-regression.log"
+    },
+    "otherScopedResults": "parameter metadata, sampling budgets, mesh geometry, case inspection, verified resources passed before final display-name-only patch"
+  },
+  "knownFailuresResolved": [
+    "Three legitimate zero-species fluids hit legacy Preview guard; now shared IdealGas accepts original empty species.",
+    "New test referenced nonexistent leaf.bounds.lower; corrected to established leaf.lower.",
+    "Cellular capability test assumed exactly two models; now checks runtime discovery equality and retains all Cellular checks.",
+    "3D GravityBox test omitted inactive-axis bounds and centres; made input explicit, Core missing-input rejection retained."
+  ],
+  "pending": [
+    "Host/runtime validators and generic model/provider UI",
+    "3D slices/state view and production desktop UAT",
+    "mixed-level full-model AMR verification",
+    "independent plt read-only provider",
+    "JENS/RZ/CPU-CUDA scientific gates"
+  ],
+  "rawEvidenceLocal": "studio/.local/integration/full-model-generation-20261003",
+  "push": false,
+  "tag": false
+}

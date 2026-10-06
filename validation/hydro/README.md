@@ -18,7 +18,7 @@ Overall acceptance is tracked in the [validation index](../README.md).
 ## Smooth-wave spatial accuracy
 
 The `SmoothAdvection` implementation remains in `simulation/SmoothAdvection/`;
-the immutable parameter files owned by this record are in [`inputs/`](inputs/).
+the immutable parameter files owned by this record are in [`inputs/`](inputs).
 They advect a periodic entropy wave with
 $\rho=1+0.2\sin(2\pi x)$, $u=1$, and $p=1$ to $t=0.1$. The initial and
 translated references are exact finite-volume cell averages. HLLC and SSPRK3

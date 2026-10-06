@@ -8,6 +8,8 @@
  */
 
 #pragma once
+#include "io/chk/CheckpointGeometryIdentity.h"
+#include "grid/GridGeometryView.h"
 
 #include <cmath>
 #include <initializer_list>
@@ -29,6 +31,7 @@ namespace amr {
 
 namespace io {
     struct CheckpointProvenance;
+    struct PlotSourceIdentity;
     struct PlotScalarField { std::string_view name; std::span<const double> values; };
 }
 
@@ -56,7 +59,10 @@ void write_plt(amr::AMRControl &amr_ctrl,
                PressureFunc p_func, TemperatureFunc t_func, Gamma1Func gamma1_func, const void* p_context,
                int file_index, double current_time,
                const SimConfig &config, const SpeciesManager &specs,
-               std::span<const io::PlotScalarField> extra_fields = {});
+               std::span<const io::PlotScalarField> extra_fields = {},
+               const io::CheckpointProvenance* runtime_provenance = nullptr,
+               std::string_view run_id = {},
+               GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
 
 // Checkpoint output for restart.
 void write_chk(amr::AMRControl &amr_ctrl,
@@ -66,10 +72,12 @@ void write_chk(amr::AMRControl &amr_ctrl,
                bool resume_after_regrid,
                const SimConfig &config, const SpeciesManager &specs,
                const io::CheckpointProvenance &provenance,
-               const arch::state::RepairBudget &repairs = arch::state::RepairBudget{});
+               const arch::state::RepairBudget &repairs = arch::state::RepairBudget{},
+               const io::CheckpointGeometryIdentity &geometry_identity = {1, "existing"});
 
 // Checkpoint input for restart.
 void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
               RunState &run_state, const SimConfig &config,
               const SpeciesManager &specs,
-              const io::CheckpointProvenance &expected_provenance);
+              const io::CheckpointProvenance &expected_provenance,
+              const io::CheckpointGeometryIdentity &expected_geometry = {1, "existing"});

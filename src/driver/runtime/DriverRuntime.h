@@ -12,12 +12,15 @@
 
 #include <array>
 #include <memory>
+#include <functional>
 #include <span>
 #include <vector>
 
 #include "driver/runtime/ComputeBackend.h"
 #include "driver/runtime/TopologyIdentityRegistry.h"
 #include "driver/schedule/StageScheduler.h"
+#include "grid/GridMetrics.h"
+#include "amr/exchange/CoordinateSeamPlan.h"
 
 class BCHandler;
 struct SimulationController;
@@ -43,7 +46,14 @@ public:
     DriverRuntime& operator=(const DriverRuntime&) = delete;
 
     void initialize_topology();
-    bool perform_regrid(int step, double time);
+    bool perform_regrid(int step, double time, bool jeans_repair_only = false);
+    // Explicit internal CPU transaction verification; not reachable from
+    // SimConfig/API/Driver evolution and never enables Device or production RZ.
+    bool regrid_native_rz_candidate(int step,double time,
+        const std::function<void()>& after_host_finalization = {});
+    void ensure_jeans_resolution(int step, double time);
+    // Explicit diagnostic/enforcement request; never invoked for disabled JENS.
+    std::vector<double> evaluate_current_jeans_resolution();
     // Backend-local ghosts never request Host materialization.
     void ensure_fluid_ghosts(state::StateSlot slot = state::StateSlot::Current);
     void materialize_current_for_host();
@@ -66,6 +76,7 @@ public:
     BCHandler& boundaries() const { return bc_handler; }
     const SimConfig& configuration() const { return config; }
     const SpeciesManager& species() const { return specs; }
+    GridMetrics::GeometrySemantics geometry_semantics() const noexcept { return geometry_semantics_; }
     state::RepairBudget& repair_budget();
     const std::vector<RegridMeasurement>& regrid_records() const { return regrid_measurements; }
     /** Observe actual surface fluxes only for selected case boundary callbacks. */
@@ -79,9 +90,14 @@ private:
     state::StateVersion current_interior_version() const;
     void publish_current_ghost();
     void complete_device_boundary(state::StateSlot);
-    bool execute_regrid();
+    bool execute_regrid(bool jeans_repair_only,bool native_rz_candidate=false,
+        const std::function<void()>& after_host_finalization = {});
+    bool perform_regrid_impl(int step,double time,bool jeans_repair_only,
+        bool native_rz_candidate,const std::function<void()>& after_host_finalization = {});
+    bool device_jeans_parent_resolved(const amr::Block&,std::span<const int>);
     static backend::HostStateTransferView host_transfer_view(FluidState&);
 
+    const GridMetrics::GeometrySemantics geometry_semantics_;
     amr::AMRControl& amr_ctrl;
     BCHandler& bc_handler;
     const SimConfig& config;

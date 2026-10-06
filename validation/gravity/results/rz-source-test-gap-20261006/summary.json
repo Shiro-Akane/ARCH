@@ -1,0 +1,138 @@
+{
+  "status": "PASS_TEST_SENSITIVITY_ONLY",
+  "base_fixture": "3eb727df077b0839c2048e919a28958fba5b124d",
+  "candidate_header_sha256": "9fa69541dbbf834c716a61d0102be5f56f6b3bf5e50084d4c360c82691447517",
+  "positive": {
+    "name": "correct_candidate",
+    "exit_code": 0,
+    "compiled": true,
+    "header_sha256": "9fa69541dbbf834c716a61d0102be5f56f6b3bf5e50084d4c360c82691447517",
+    "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+    "elf_sha256": "085604e82dc8e28fe788fae06f0e931ac24ac4f0899f525b931c3e87b76750eb"
+  },
+  "rejected_mutations": [
+    {
+      "name": "mom_u_nan",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "84a343bab32f0f177b906656764ddbc775b10c4d5ed7d47c3ce1b5f937821366",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "6e61f4992a1317be2ba4467d2d9c54edd483f059887ced7c501629c9a6f0e296"
+    },
+    {
+      "name": "mom_u_inf",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "5edca4d5922c32e362ed7195e23575987193a21392c09865f696c2c0e1644ea4",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "d056460fb3d106bb65ffb814f55847345a280d3cb14d2fe64a140d32bd175b8e"
+    },
+    {
+      "name": "mom_v_nan",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "a9084aa8c21ca5ef790f6a6bf9f41d692b5da6cc5aee4a8f360ac25dc6d22ad0",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "988a3573ecc3b994967132143eb32bdab5d196e861b8db070aa4ba55a74ef275"
+    },
+    {
+      "name": "mom_v_inf",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "93c17a447513965e93194405666822e3ff01ea7675a438bfd0972b0233cbacc1",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "1df7859ca14bd7f4f33940d88087deadb19ac21f50f244873f945a6192e5c444"
+    },
+    {
+      "name": "mom_w_nan",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "7e3445e33167a30536d585f4cc320cb2bbb127501c2197d3c824cd004968d231",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "a0829a2e584027b8fa028253934e00f44c00d78ce686f77941246574185ee038"
+    },
+    {
+      "name": "mom_w_inf",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "dfdc50ac0fbdf5cbe1c4c75c6131b6487ecaa8b055c81977597975ae065783de",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "6d6cf33d55b6bac3fbc187535953d58b267a81a2366015f1c9cfeec897088b5b"
+    },
+    {
+      "name": "eng_nan",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "9b48fe2eb2f600b0ed2977abd1ef301c5e1a5a30d5e1a6083e2b809e5300aa72",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "71c3181293fc7c0e81862a185dd0689b401df070ecdbeb6365fc851835214156"
+    },
+    {
+      "name": "eng_inf",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "7b751bf5cabd8bde5ce50dfa0f0a2a46b2cb04ec9edf1fd898daa95eaa0c9326",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "e646d99bacdc7a6f3c50fa977508b9b01412608e766ca21f074bc303b41fb895"
+    },
+    {
+      "name": "radial_wrong_W_denominator",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "1fb490b751260de1ff962d58cfd25369fe9f4feee83ff363dddd540b92b2d403",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "c5952e2c4c040d63f67a0393a9f55b57c9278fde5f5c499f762859f9d23697b2"
+    },
+    {
+      "name": "axial_wrong_W_denominator",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "3b1b9bb3ee3dac5aeb3c66c96da79efbfcc1d57dab8d4d8ec7073a3e2e22527e",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "0b31fafcfae0898ccba3abb0540dc440a5b864ae4ecc40226603a6a2038f6293"
+    },
+    {
+      "name": "energy_wrong_W_denominator",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "059393498ea23253b5ffaa4622e463a981b40b3e38886e1eab3f2f725b4b0341",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "2d1fa1bf69078434a6a159b619187851ae227d6371faae0decd6eb4491a2978b"
+    },
+    {
+      "name": "angular_wrong_V_denominator",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "9ee89da7537533f203062ec891d46db871ae29acbd6f5caa2632e07f82e2d109",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "1c21a96ed2e93f9da78ae030e60b87ca57d5fb9354a0d6d88b423f522bb925f7"
+    },
+    {
+      "name": "radial_axial_swapped",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "3746afe168ba508669821c62ef65d3c0fc5d58b408ab7af399c72e4cf6446a7e",
+      "test_sha256": "13d3128add2999c0953abb2bd9e6b5e9183a2cd27124648451e92a7653056d46",
+      "elf_sha256": "a2731c3a0ba0609cabbe8664863c430ca60944b9d49d521da3a681ed9af91413"
+    }
+  ],
+  "historical_false_pass_reproduced": [
+    {
+      "name": "old_eng_nan",
+      "exit_code": 0,
+      "compiled": true,
+      "header_sha256": "9b48fe2eb2f600b0ed2977abd1ef301c5e1a5a30d5e1a6083e2b809e5300aa72",
+      "test_sha256": "555bc1e1e79304e4fc4455f69434008d22a736533dd3ed0910eb973d6c1751ed",
+      "elf_sha256": "f5dee83fa857cc6d66e52d053802b5c4236a1ac27a89e36488616624173b3288"
+    },
+    {
+      "name": "old_radial_wrong_W_denominator",
+      "exit_code": 0,
+      "compiled": true,
+      "header_sha256": "1fb490b751260de1ff962d58cfd25369fe9f4feee83ff363dddd540b92b2d403",
+      "test_sha256": "555bc1e1e79304e4fc4455f69434008d22a736533dd3ed0910eb973d6c1751ed",
+      "elf_sha256": "50e6f7fb9e8c6f3d610cd34aebaf7e1a290d6a72bd780e65e472b175f4cc4122"
+    }
+  ],
+  "scope": "Actual scalar-owner compilation, not stage producer/evolution/RZ science acceptance"
+}

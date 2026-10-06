@@ -1,0 +1,26 @@
+{
+  "baseline": "7473158e6e8be1faff92adbd9016616b1fbf6e3a",
+  "status": "isolated-manufactured-native-tabular-engineering-pass",
+  "cases": 240,
+  "maxRelativeError": 1.0004323370200706e-14,
+  "arithmeticBudget": 2e-12,
+  "ctest": {
+    "name": "native_tabular_eos",
+    "passed": 1,
+    "failed": 0
+  },
+  "productionBinarySha256": "ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a",
+  "testSourceSha256": "3bb7a69ac13a5e8cb122f8d5a2d5f580d151fb6c5305f72f5597c3f4760f38b2",
+  "localLog": "studio/.local/integration/jeans-native-tabular-20261003/LastTest.log",
+  "logSha256": "04cc120a226cfa9700512994a4f3a7e8eba1b0661a8dad070e2e4b239c51b434",
+  "notCovered": [
+    "real EOSDriver table",
+    "Helmholtz",
+    "free-energy tabular",
+    "production JENS",
+    "AMR parent eligibility",
+    "trajectory",
+    "CUDA"
+  ],
+  "simulationRun": false
+}

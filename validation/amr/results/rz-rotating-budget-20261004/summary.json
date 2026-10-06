@@ -1,0 +1,154 @@
+{
+  "baseCommit": "00db019149962011f29f12917740ed2b3584eeaa",
+  "authority": "86bec324018349c6d81df84a3cced3ed9f9a2792 \u00a78",
+  "sourceSha256": {
+    "tests/host/grid/test_curvilinear_metrics.cpp": "aa0c45a288937d2e35890f7f0839334bf97bb35224469760be7b1a6646ff64f3"
+  },
+  "testExecutableSha256": "70c668a5344abe57c34d2e9ac99b3bf8ddd08ac07af6506650dd4b4da4c673bb",
+  "unchangedProductionArchSha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "productionRebuilt": false,
+  "boundary": "all four reflecting; external advective torque/mass/energy zero",
+  "dt": 0.0001,
+  "endpoint": 0.001,
+  "threshold": 1e-12,
+  "repairEvents": 0,
+  "cases": [
+    {
+      "method": "Euler (1st Order)",
+      "direction": 0,
+      "inner": 0.0,
+      "steps": 10,
+      "angularRelativeDrift": 1.18471e-17,
+      "massRelativeDrift": 7.04029e-18,
+      "energyRelativeDrift": 6.7776e-18,
+      "speciesRelativeDrift": 9.08796e-18,
+      "maxTorqueRegister": 0.000168525
+    },
+    {
+      "method": "SSPRK2",
+      "direction": 0,
+      "inner": 0.0,
+      "steps": 10,
+      "angularRelativeDrift": 9.66168e-18,
+      "massRelativeDrift": 8.76585e-18,
+      "energyRelativeDrift": 5.10521e-18,
+      "speciesRelativeDrift": 5.60807e-18,
+      "maxTorqueRegister": 0.000168561
+    },
+    {
+      "method": "SSPRK3",
+      "direction": 0,
+      "inner": 0.0,
+      "steps": 10,
+      "angularRelativeDrift": 5.69464e-16,
+      "massRelativeDrift": 6.21547e-16,
+      "energyRelativeDrift": 7.31629e-16,
+      "speciesRelativeDrift": 6.67965e-16,
+      "maxTorqueRegister": 0.000168561
+    },
+    {
+      "method": "Euler (1st Order)",
+      "direction": 0,
+      "inner": 1.0,
+      "steps": 10,
+      "angularRelativeDrift": 1.72086e-17,
+      "massRelativeDrift": 6.69518e-18,
+      "energyRelativeDrift": 5.16489e-18,
+      "speciesRelativeDrift": 2.87594e-18,
+      "maxTorqueRegister": 0.00035643
+    },
+    {
+      "method": "SSPRK2",
+      "direction": 0,
+      "inner": 1.0,
+      "steps": 10,
+      "angularRelativeDrift": 7.26992e-18,
+      "massRelativeDrift": 1.00083e-17,
+      "energyRelativeDrift": 7.70356e-18,
+      "speciesRelativeDrift": 8.45525e-18,
+      "maxTorqueRegister": 0.000356563
+    },
+    {
+      "method": "SSPRK3",
+      "direction": 0,
+      "inner": 1.0,
+      "steps": 10,
+      "angularRelativeDrift": 5.66594e-16,
+      "massRelativeDrift": 6.18993e-16,
+      "energyRelativeDrift": 7.32013e-16,
+      "speciesRelativeDrift": 6.66843e-16,
+      "maxTorqueRegister": 0.000356563
+    },
+    {
+      "method": "Euler (1st Order)",
+      "direction": 1,
+      "inner": 0.0,
+      "steps": 10,
+      "angularRelativeDrift": 1.32273e-17,
+      "massRelativeDrift": 4.48646e-18,
+      "energyRelativeDrift": 3.87291e-18,
+      "speciesRelativeDrift": 5.63683e-18,
+      "maxTorqueRegister": 4.21575e-05
+    },
+    {
+      "method": "SSPRK2",
+      "direction": 1,
+      "inner": 0.0,
+      "steps": 10,
+      "angularRelativeDrift": 1.05818e-17,
+      "massRelativeDrift": 1.67725e-17,
+      "energyRelativeDrift": 1.19708e-17,
+      "speciesRelativeDrift": 1.50124e-17,
+      "maxTorqueRegister": 4.22116e-05
+    },
+    {
+      "method": "SSPRK3",
+      "direction": 1,
+      "inner": 0.0,
+      "steps": 10,
+      "angularRelativeDrift": 5.71304e-16,
+      "massRelativeDrift": 6.02842e-16,
+      "energyRelativeDrift": 7.40694e-16,
+      "speciesRelativeDrift": 6.44066e-16,
+      "maxTorqueRegister": 4.22116e-05
+    },
+    {
+      "method": "Euler (1st Order)",
+      "direction": 1,
+      "inner": 1.0,
+      "steps": 10,
+      "angularRelativeDrift": 5.79754e-18,
+      "massRelativeDrift": 5.79789e-18,
+      "energyRelativeDrift": 7.70355e-18,
+      "speciesRelativeDrift": 1.28267e-17,
+      "maxTorqueRegister": 9.68353e-05
+    },
+    {
+      "method": "SSPRK2",
+      "direction": 1,
+      "inner": 1.0,
+      "steps": 10,
+      "angularRelativeDrift": 6.07361e-18,
+      "massRelativeDrift": 1.06985e-17,
+      "energyRelativeDrift": 8.75403e-18,
+      "speciesRelativeDrift": 1.06985e-17,
+      "maxTorqueRegister": 9.69575e-05
+    },
+    {
+      "method": "SSPRK3",
+      "direction": 1,
+      "inner": 1.0,
+      "steps": 10,
+      "angularRelativeDrift": 6.11502e-16,
+      "massRelativeDrift": 6.12712e-16,
+      "energyRelativeDrift": 7.24922e-16,
+      "speciesRelativeDrift": 6.49588e-16,
+      "maxTorqueRegister": 9.69575e-05
+    }
+  ],
+  "initialFailure": "second step requires ghost synchronization/publication; test now uses actual scheduler complete_boundary and real boundary/AMR exchange; no ledger bypass",
+  "scope": "bounded internal mixed-AMR hydro closed-budget verification; not full RZ qualification",
+  "cudaQualified": false,
+  "fullRzQualified": false,
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-rotating-budget-20261004"
+}

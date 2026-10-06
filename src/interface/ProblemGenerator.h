@@ -21,6 +21,8 @@
 
 #include "amr/AMRControl.h"
 #include "data/GlobalDefs.h"
+#include "core/config/ConfigValidation.h"
+#include "core/config/PreparedConfiguration.h"
 #include "data/UserTypes.h"
 #include "grid/Grid.h"
 #include "physics/eos/IdealGas.h"
@@ -30,10 +32,16 @@
 struct ProblemInitializationContext
 {
     arch::dispatch::EosId eos = arch::dispatch::EosId::Ideal;
+    GridMetrics::GeometrySemantics geometry_semantics = GridMetrics::GeometrySemantics::Existing;
 };
+
+class ProblemRegistry;
 
 class ProblemGenerator
 {
+    friend class ProblemRegistry;
+    // Assigned only by the registry factory, never by config input or a caller.
+    std::string registered_case_id_;
 public:
     virtual ~ProblemGenerator() = default;
 
@@ -58,13 +66,30 @@ public:
     /** @brief Compiled case source digest recorded at registration. */
     const std::string &SourceSha256() const { return source_sha256_; }
 
+    // Input completeness and provenance precede model code. A successful
+    // preparation owns an immutable copy; no stale mutable storage is certified.
+    arch::config::PreparedConfiguration SetupChecked(SimConfig& config, SpeciesManager& species) {
+        arch::config::ValidateControls(config, species.count());
+        config.RequireLoadedValues();
+        if (!registered_case_id_.empty()
+            && config.LoadedCaseId() != registered_case_id_)
+            throw ConfigValueError("case", "CASE_IDENTITY_MISMATCH",
+                "Loaded configuration belongs to another registered model.");
+        const auto before = config;
+        Setup(config, species);
+        arch::config::ValidateControls(config, species.count());
+        config.RequireSamePreparation(before);
+        species.ValidateRegistrationSources();
+        return arch::config::PreparedConfiguration(config, species, *this);
+    }
+
     // Explicit inspection boundary. Production InitializeData has no observer
     // or extra per-cell branch. Restore the caller's observer even on failure.
     void InspectSetup(SimConfig& config, SpeciesManager& species,
                       const std::shared_ptr<arch::preview::ParameterReadTrace>& reads) {
         const auto previous = config.parameter_reads;
         config.parameter_reads = reads;
-        try { Setup(config, species); }
+        try { SetupChecked(config, species); }
         catch (...) { config.parameter_reads = previous; throw; }
         config.parameter_reads = previous;
     }
@@ -80,8 +105,8 @@ public:
      * 1. Read problem-specific parameters from 'config' (e.g., shock_position).
      * 2. Register necessary species into 'specs'.
      *
-     * @param config Input/Output: The simulation configuration.
-     * (Can be read for params, or modified if enforcing BCs).
+     * @param config Loaded preparation configuration. Application checks reject
+     * undeclared changes; record model state in members and register species.
      * @param specs  Output: The species manager to populate.
      */
     virtual void Setup(SimConfig &config, SpeciesManager &specs) = 0;

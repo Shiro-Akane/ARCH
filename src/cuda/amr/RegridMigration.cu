@@ -213,10 +213,10 @@ cudaError_t launch_cuda_regrid_prolongation(
     return cudaGetLastError();
 }
 
-cudaError_t launch_cuda_regrid_restriction(
+cudaError_t validate_cuda_regrid_restriction(
     const DeviceRegridChildren& children, DeviceRegridBlock destination,
     double density_floor, double min_eint, double* workspace,
-    std::size_t workspace_scalars, int* status, cudaStream_t stream)
+    std::size_t workspace_scalars, int* status)
 {
     if (!valid_block(destination) || !valid_floors(density_floor, min_eint) || !status)
         return cudaErrorInvalidValue;
@@ -226,6 +226,18 @@ cudaError_t launch_cuda_regrid_restriction(
     if (!valid_workspace(cells, destination.state.n_species,
             amr::regrid_math::restriction_workspace_per_species, workspace, workspace_scalars))
         return cudaErrorInvalidValue;
+    return cudaSuccess;
+}
+
+cudaError_t launch_cuda_regrid_restriction(
+    const DeviceRegridChildren& children, DeviceRegridBlock destination,
+    double density_floor, double min_eint, double* workspace,
+    std::size_t workspace_scalars, int* status, cudaStream_t stream)
+{
+    const auto preflight=validate_cuda_regrid_restriction(children,destination,
+        density_floor,min_eint,workspace,workspace_scalars,status);
+    if(preflight!=cudaSuccess) return preflight;
+    const int cells=destination.grid.active_cell_count();
     constexpr int threads = 128;
     restrict_regrid_families<<<(static_cast<unsigned>(cells) + threads - 1) / threads, threads, 0, stream>>>(
         children, destination, density_floor, min_eint, workspace, status, cells);

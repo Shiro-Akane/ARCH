@@ -15,6 +15,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 #include "numerics/multigrid/CompositeMultigrid.h"
 
@@ -128,7 +129,19 @@ void CompositeMultigrid::build_levels(elliptic::CartesianMesh base,std::vector<C
             parents.push_back(entry->second);
         }
         levels_.back().parent=std::move(parents);
-        levels_.emplace_back(make_level(coarse_base,std::move(coarse)));
+        try {
+            levels_.emplace_back(boundary
+                ? CompositePoisson(coarse_base,std::move(coarse),*boundary,&fine)
+                : CompositePoisson(coarse_base,std::move(coarse),kind,&fine));
+        } catch (const std::invalid_argument& error) {
+            throw std::invalid_argument("Composite coarse mesh cells=(" +
+                std::to_string(coarse_base.cells[0]) + "," +
+                std::to_string(coarse_base.cells[1]) + "," +
+                std::to_string(coarse_base.cells[2]) + "), spacing=(" +
+                std::to_string(coarse_base.spacing[0]) + "," +
+                std::to_string(coarse_base.spacing[1]) + "," +
+                std::to_string(coarse_base.spacing[2]) + "): " + error.what());
+        }
         const auto& child=levels_[levels_.size()-2]; const auto& parent=levels_.back();
         std::vector<double> volume(parent.op.size());
         for(int cell=0;cell<child.op.size();++cell) volume[child.parent[cell]]+=child.op.volumes()[cell];

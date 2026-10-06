@@ -61,6 +61,7 @@ PreviewRequest request_from(const detail::SessionObject& input, Command command)
         if (command == Command::Fields && key=="samples") { request.sample_count=int(n); request.sample_count_provided=true; }
         else if (command == Command::Fields && key=="samplesX1") request.samples_x1=int(n);
         else if (command == Command::Fields && key=="samplesX2") request.samples_x2=int(n);
+        else if (command == Command::Fields && key=="samplesX3") request.samples_x3=int(n);
         else if (command == Command::Mesh && key=="meshMaxBlocks") {
             if (n<1 || n>contract::mesh_max_blocks) throw std::invalid_argument("meshMaxBlocks must be 1..1024");
             request.mesh_max_blocks=int(n);

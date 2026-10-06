@@ -30,14 +30,33 @@ add_test(NAME preview_api_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_preview.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(preview_api_contract PROPERTIES TIMEOUT 180)
+add_test(NAME preview_full_model_contract
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_full_model_preview.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(preview_full_model_contract PROPERTIES TIMEOUT 180)
+
 add_test(NAME configuration_api_contract
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_configuration.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(configuration_api_contract PROPERTIES TIMEOUT 180)
-add_executable(arch_preview_parameter_reads tests/api/configuration/test_parameter_reads.cpp src/api/configuration/ParameterMetadata.cpp)
+add_test(NAME configuration_entry_contract
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_configuration_entry.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(configuration_entry_contract PROPERTIES TIMEOUT 180)
+add_test(NAME configuration_v3_contract
+    COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_configuration_v3.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(configuration_v3_contract PROPERTIES TIMEOUT 180)
+
+add_executable(arch_preview_parameter_reads tests/api/configuration/test_parameter_reads.cpp
+    src/api/configuration/ParameterMetadata.cpp src/core/config/CompositionInput.cpp)
 arch_configure_host_test(arch_preview_parameter_reads)
-add_test(NAME preview_parameter_reads COMMAND arch_preview_parameter_reads)
+add_test(NAME preview_parameter_reads COMMAND arch_preview_parameter_reads
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3/sod-valid.par)
 add_test(NAME preview_parameter_metadata
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/configuration/test_parameter_metadata.py
@@ -46,6 +65,14 @@ set_tests_properties(preview_parameter_metadata PROPERTIES TIMEOUT 180)
 add_executable(arch_preview_sampling_limits tests/api/preview/test_sampling_limits.cpp)
 arch_configure_host_test(arch_preview_sampling_limits)
 add_test(NAME preview_sampling_limits COMMAND arch_preview_sampling_limits)
+add_executable(arch_preview_mesh_geometry
+    tests/api/preview/test_initial_mesh_geometry.cpp
+    src/api/preview/ResourceEstimates.cpp src/core/files/FileFingerprint.cpp
+    src/physics/boundary/PhysicalBoundaryHandler.cpp)
+arch_configure_host_test(arch_preview_mesh_geometry)
+target_link_libraries(arch_preview_mesh_geometry PRIVATE arch_build_contract)
+add_test(NAME preview_mesh_geometry COMMAND arch_preview_mesh_geometry)
+
 add_test(NAME portable_network_generator
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/network/test_portable_network_generator.py)
@@ -80,9 +107,41 @@ add_test(NAME runtime_validation_inputs_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/validation/test_runtime_validation_inputs.py)
 set_tests_properties(runtime_validation_inputs_contract PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME rz_qualification_runner_contract
+    COMMAND ${Python3_EXECUTABLE} -B -m unittest discover
+        -s tests/tooling -p test_rz_qualification_runners.py)
+set_tests_properties(rz_qualification_runner_contract PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+
+# Syntax is checked before any model, EOS or device resource is constructed.
+add_executable(arch_config_input_records tests/host/io/test_config_input_records.cpp)
+target_link_libraries(arch_config_input_records PRIVATE arch_build_contract)
+add_test(NAME config_input_records COMMAND arch_config_input_records
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
+
+add_executable(arch_input_resolution tests/host/core/test_input_resolution.cpp)
+target_link_libraries(arch_input_resolution PRIVATE arch_build_contract)
+add_test(NAME input_resolution COMMAND arch_input_resolution
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
+
+add_executable(arch_case_configuration tests/host/core/test_case_configuration.cpp
+    src/core/config/CompositionInput.cpp)
+target_link_libraries(arch_case_configuration PRIVATE arch_build_contract)
+add_test(NAME case_configuration COMMAND arch_case_configuration)
+
+add_executable(arch_configuration_input tests/host/core/test_configuration_input.cpp
+    src/core/config/CompositionInput.cpp src/core/files/FileFingerprint.cpp)
+target_include_directories(arch_configuration_input PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/simulation" "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_compile_definitions(arch_configuration_input PRIVATE
+    ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(arch_configuration_input PRIVATE arch_build_contract)
+add_test(NAME configuration_input COMMAND arch_configuration_input
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3-candidate")
 
 # Numerical leaves and independent reference authorities.
-foreach(contract IN ITEMS core/physical_constants amr/refinement_indicator_math grid/curvilinear_metrics)
+foreach(contract IN ITEMS core/physical_constants core/jeans_diagnostics amr/refinement_indicator_math grid/curvilinear_metrics)
     get_filename_component(contract_directory "${contract}" DIRECTORY)
     get_filename_component(contract "${contract}" NAME)
     add_executable(arch_${contract} tests/host/${contract_directory}/test_${contract}.cpp)
@@ -91,6 +150,7 @@ foreach(contract IN ITEMS core/physical_constants amr/refinement_indicator_math 
     add_test(NAME ${contract} COMMAND arch_${contract})
 endforeach()
 add_executable(arch_compensated_sum tests/host/numerics/test_compensated_sum.cpp)
+target_sources(arch_curvilinear_metrics PRIVATE src/physics/boundary/PhysicalBoundaryHandler.cpp)
 target_include_directories(arch_compensated_sum PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_compile_features(arch_compensated_sum PRIVATE cxx_std_20)
 add_test(NAME compensated_sum COMMAND arch_compensated_sum)
@@ -250,7 +310,7 @@ function(arch_register_io_regression_tests)
         set_tests_properties(ui_expansion_contract PROPERTIES TIMEOUT 300)
     endif()
     add_executable(arch_preview_cellular_reference
-        tests/api/preview/cellular_reference.cpp
+        tests/api/preview/cellular_reference.cpp src/core/config/CompositionInput.cpp
         src/core/problem/ProblemHelper.cpp src/core/files/FileFingerprint.cpp
         src/physics/eos/eosdispatch.cpp src/physics/eos/sources/Tabular3DEOS.cpp
         src/physics/eos/sources/Tabular4DEOS.cpp src/physics/eos/sources/TabularBaryonSource.cpp
@@ -264,6 +324,21 @@ function(arch_register_io_regression_tests)
         COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_cellular_preview.py
             $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_FILE:arch_preview_cellular_reference>)
     set_tests_properties(preview_cellular_2d PROPERTIES TIMEOUT 600)
+
+    add_executable(arch_plotfile_publication
+        tests/host/io/test_plotfile_publication.cpp src/io/hdf5/HDF5Writer.cpp
+        src/core/files/FileFingerprint.cpp)
+    arch_configure_host_test(arch_plotfile_publication
+        "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_plotfile_publication PRIVATE
+        ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        target_compile_definitions(arch_plotfile_publication PRIVATE ARCH_PLOT_FAILURE_TEST=1)
+        target_link_options(arch_plotfile_publication PRIVATE
+            "-Wl,--wrap=H5Dwrite" "-Wl,--wrap=H5Fflush" "-Wl,--wrap=H5Fclose")
+    endif()
+    add_test(NAME plotfile_publication COMMAND arch_plotfile_publication
+        "${CMAKE_CURRENT_BINARY_DIR}/plotfile-publication-data")
 
     add_executable(arch_checkpoint_compatibility
         tests/host/io/test_checkpoint_compatibility.cpp
@@ -351,9 +426,11 @@ endfunction()
 
 # Observed inputs and real Init sinks, separate from reviewed dimensional evidence.
 add_executable(arch_initialization_probe tests/api/inspection/test_initialization_probe.cpp
-    src/api/configuration/ParameterMetadata.cpp src/api/inspection/CaseUnitEvidence.cpp)
+    src/api/configuration/ParameterMetadata.cpp src/api/inspection/CaseUnitEvidence.cpp
+    src/core/config/CompositionInput.cpp)
 arch_configure_host_test(arch_initialization_probe)
-add_test(NAME initialization_probe COMMAND arch_initialization_probe)
+add_test(NAME initialization_probe COMMAND arch_initialization_probe
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/api/examples/configuration-v3/sod-valid.par)
 add_test(NAME case_inspection_contract
     COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/inspection/test_case_inspection.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})

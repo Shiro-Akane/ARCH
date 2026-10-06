@@ -9,6 +9,7 @@
 #include "numerics/linalg/DenseWrap.h"
 #include "core/config/ConfigValidation.h"
 #include "driver/DriverUtils.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "fixtures/hydro/MeanThermoCases.h"
@@ -63,6 +64,16 @@ void timestep_controls() {
     }
 }
 void leaves() {
+    // A truthful RZ ledger does not authorize heating an unresolved candidate.
+    arch::state::RepairBudget rz_ledger(0,arch::state::RepairSemantics::RzVolumeAngular);
+    const FluidVector rz_unresolved{1.,0.,0.,3.,5.},rz_zero_delta{};
+    FluidVector proposed;
+    const auto rejected=TimeIntegration::update_stage_cell(rz_unresolved,rz_unresolved,rz_zero_delta,
+        nullptr,nullptr,nullptr,0,1,0.,1.,1e-14,100.,1e10,proposed,nullptr,
+        rz_ledger.view(),2.,0,true,5.);
+    require(!arch::state::accepted(rejected)
+        &&std::all_of(rz_ledger.values.begin(),rz_ledger.values.end(),[](double x){return x==0.;}),
+        "RZ unresolved candidate was repaired or changed conservation ledger");
     timestep_controls();
     require(MeanThermoCases::evaluate(),"shared mean thermodynamic view contract");
     IdealGasView eos;

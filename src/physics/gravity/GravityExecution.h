@@ -37,6 +37,7 @@ struct EvaluateBoundary {
     int size;const BoundaryPoint* points;const BoundaryTreeNode* nodes;const BoundaryMoments* moments;
     int node_count,dimension;GridMetrics::Geometry geometry;
     double G,reference_radius;double* values;
+    GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing;
     /** Evaluate one isolated face value from the current multipole tree. */
     ARCH_INLINE void operator()(int i) const {
         values[points[i].face]=dimension==2
@@ -44,6 +45,22 @@ struct EvaluateBoundary {
             :isolated_potential(nodes,moments,node_count,points[i].position,G,.25,2,geometry,dimension);
     }
 };
+/** Checked CPU ring work. All inputs are borrowed for this synchronous call;
+ * the output owns its arrays and retains source/generation/work diagnostics.
+ * This descriptor does not enable RZ runtime or claim a solved field.
+ */
+struct EvaluateRingBoundary {
+    const GravityBoundary* source;
+    const arch::elliptic::CompositePoisson* op;
+    const GravitySolveIdentity* identity;
+    const RingBoundaryControl* control;
+    RingBoundaryEvaluation* result;
+};
+/** Reject an RZ chart before launching the legacy 2D logarithmic kernel. */
+inline void validate_legacy_boundary_work(const EvaluateBoundary& work) {
+    if(work.semantics!=GridMetrics::GeometrySemantics::Existing)
+        throw std::logic_error("RZ boundary requires the typed finite-ring consumer");
+}
 struct CellAcceleration {
     int size,dimension;const GravityCell* cells;const double* sides;double* g;double* inverse_dt_squared;
     /** Average adjacent face accelerations and estimate the gravity timestep. */
@@ -87,7 +104,7 @@ struct GravityBoundarySample {
         out[2*i]=sum.value(); out[2*i+1]=signs[i]*gradient[faces[i]];
     }
 };
-using GravityWork=std::variant<GatherDensity,UpdateMoments,EvaluateBoundary,CellAcceleration,ScatterBoundary,GravityBoundarySample>;
+using GravityWork=std::variant<GatherDensity,UpdateMoments,EvaluateBoundary,CellAcceleration,ScatterBoundary,GravityBoundarySample,EvaluateRingBoundary>;
 class GravityExecution {
 public:
     virtual ~GravityExecution()=default;

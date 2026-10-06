@@ -1,0 +1,1725 @@
+{
+  "measurementSourceHead": "5e20f91d0d23c905089fd597856aa3545aeb91fc",
+  "scientificBinarySourceCommit": "b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1",
+  "scientificBinarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+  "buildRepeated": false,
+  "runs": [
+    {
+      "case": "Sod",
+      "scope": "t=0 only; no evolution acceptance",
+      "referenceInputSha256": "2f6a0861b84ccbc700ae467b6058691785b95c31ca56a719fe543165d1cec48e",
+      "inputSha256": "f5537c04af9e6cecac3ad8b8ef3967f635377f8170a295e31eb1970351cf9f5d",
+      "binarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "changedKeys": [
+        "out_dir",
+        "plt_variables"
+      ],
+      "exitCode": 0,
+      "error": null,
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-shared-face-fields-20261004/raw/Sod-7f5rr08g"
+    },
+    {
+      "case": "CellularDet",
+      "scope": "t=0 only; no evolution acceptance",
+      "referenceInputSha256": "654c62def79c7a4c332c750a2b784d7e9693316694f74f832797cc9863f13a0d",
+      "inputSha256": "477f2d048efa08ee00d06ff755b464c14498a0755eb263cb7f9fabf9a1e154c8",
+      "binarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "changedKeys": [
+        "out_dir",
+        "plt_variables"
+      ],
+      "exitCode": 0,
+      "error": null,
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-shared-face-fields-20261004/raw/CellularDet-_tu_jo3s"
+    }
+  ],
+  "fieldCheckpointAndHostReadback": [
+    {
+      "case": "Sod",
+      "time": 0,
+      "step": 0,
+      "plotfileSha256": "fe089e72113896ef7261064596ffdbf25cced4366ceaa84812dc2a5b102a8e9f",
+      "plotfileBytes": 56792,
+      "checkpointSha256": "cbd3ff549a596092a55eec0243db7eb1edc568ac36e56f1ac406269d3776e39e",
+      "inputSha256": "f5537c04af9e6cecac3ad8b8ef3967f635377f8170a295e31eb1970351cf9f5d",
+      "binarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "changedInputKeys": [
+        "out_dir",
+        "plt_variables"
+      ],
+      "fields": {
+        "DENS": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "mass_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "g/cm^3"
+          },
+          "samples": 192,
+          "min": 0.125,
+          "max": 1.0
+        },
+        "DIVV": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "velocity_divergence",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "samples": 192,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "ENER": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "total_energy_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "samples": 192,
+          "min": 0.25000000000000006,
+          "max": 2.5000000000000004
+        },
+        "ENTR": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure_density_proxy",
+            "metadata_version": "candidate-field-1",
+            "unit": "unknown",
+            "unit_reason": "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy"
+          },
+          "samples": 192,
+          "min": 1.0,
+          "max": 1.837917367995254
+        },
+        "PRES": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "samples": 192,
+          "min": 0.1,
+          "max": 1.0
+        },
+        "SodGas": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 192,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "TEMP": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "temperature",
+            "metadata_version": "candidate-field-1",
+            "unit": "K"
+          },
+          "samples": 192,
+          "min": 2.0000000000000004,
+          "max": 2.5000000000000004
+        },
+        "VELX": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "samples": 192,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "VORT": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "vorticity_magnitude",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "samples": 192,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "checkpointUnchangedBitMismatches": {
+        "rho": 0,
+        "mom_u": 0,
+        "mom_v": 0,
+        "mom_w": 0,
+        "eng": 0,
+        "enuc_rate": 0,
+        "X": 0,
+        "rhoX": 0
+      },
+      "fieldCheckpointBitMismatches": {
+        "DENS": 0,
+        "ENER": 0,
+        "VELX": 0,
+        "SodGas": 0
+      },
+      "hostReaderRawPointBitMismatches": {
+        "DENS": 0,
+        "DIVV": 0,
+        "ENER": 0,
+        "ENTR": 0,
+        "PRES": 0,
+        "SodGas": 0,
+        "TEMP": 0,
+        "VELX": 0,
+        "VORT": 0
+      },
+      "logicalKeysMatch": true,
+      "unverifiedScientificFields": [
+        "PRES",
+        "TEMP",
+        "ENTR",
+        "VORT",
+        "DIVV"
+      ],
+      "scope": "t=0 stored fields and metadata; not EOS/diagnostic independent science acceptance"
+    },
+    {
+      "case": "CellularDet",
+      "time": 0,
+      "step": 0,
+      "plotfileSha256": "81431b1d80407949d852381ab67b6d11dd4598090c6abe1963b882ce9fa2b3ed",
+      "plotfileBytes": 1601016,
+      "checkpointSha256": "b9414a0798bdd9c497b01e7a48be8056c6f5ecfab005d64eb78a764c8f03a425",
+      "inputSha256": "477f2d048efa08ee00d06ff755b464c14498a0755eb263cb7f9fabf9a1e154c8",
+      "binarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "changedInputKeys": [
+        "out_dir",
+        "plt_variables"
+      ],
+      "fields": {
+        "DENS": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "mass_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "g/cm^3"
+          },
+          "samples": 5120,
+          "min": 9999999.999999994,
+          "max": 44018601.46790276
+        },
+        "DIVV": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "velocity_divergence",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "samples": 5120,
+          "min": -2527500000.0,
+          "max": 0.0
+        },
+        "ENER": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "total_energy_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "samples": 5120,
+          "min": 1.6286614998780037e+24,
+          "max": 5.556266755531392e+25
+        },
+        "ENTR": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure_density_proxy",
+            "metadata_version": "candidate-field-1",
+            "unit": "unknown",
+            "unit_reason": "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy"
+          },
+          "samples": 5120,
+          "min": 56551319426707.36,
+          "max": 350266338307725.94
+        },
+        "PRES": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "samples": 5120,
+          "min": 8.673469414740809e+23,
+          "max": 1.4631603001410902e+25
+        },
+        "TEMP": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "temperature",
+            "metadata_version": "candidate-field-1",
+            "unit": "K"
+          },
+          "samples": 5120,
+          "min": 199999999.99999663,
+          "max": 4710871133.116774
+        },
+        "VELX": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "samples": 5120,
+          "min": 0.0,
+          "max": 1011000000.0000001
+        },
+        "VELY": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "samples": 5120,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "VORT": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "vorticity_magnitude",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "samples": 5120,
+          "min": 0.0,
+          "max": 8.940696716308594e-07
+        },
+        "ar36": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "c12": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 0.5999999999999998,
+          "max": 0.6000000000000002
+        },
+        "ca40": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "cr48": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "fe52": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "fe54": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "h1": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "he3": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "he4": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 0.39999999999999986,
+          "max": 0.4000000000000002
+        },
+        "mg24": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "n14": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "ne20": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "neut": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "ni56": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "o16": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "prot": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "s32": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "si28": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "ti44": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        }
+      },
+      "checkpointUnchangedBitMismatches": {
+        "rho": 0,
+        "mom_u": 0,
+        "mom_v": 0,
+        "mom_w": 0,
+        "eng": 0,
+        "enuc_rate": 0,
+        "X": 0,
+        "rhoX": 0
+      },
+      "fieldCheckpointBitMismatches": {
+        "DENS": 0,
+        "ENER": 0,
+        "VELX": 0,
+        "VELY": 0,
+        "h1": 0,
+        "he3": 0,
+        "he4": 0,
+        "c12": 0,
+        "n14": 0,
+        "o16": 0,
+        "ne20": 0,
+        "mg24": 0,
+        "si28": 0,
+        "s32": 0,
+        "ar36": 0,
+        "ca40": 0,
+        "ti44": 0,
+        "cr48": 0,
+        "fe52": 0,
+        "fe54": 0,
+        "ni56": 0,
+        "neut": 0,
+        "prot": 0
+      },
+      "hostReaderRawPointBitMismatches": {
+        "DENS": 0,
+        "DIVV": 0,
+        "ENER": 0,
+        "ENTR": 0,
+        "PRES": 0,
+        "TEMP": 0,
+        "VELX": 0,
+        "VELY": 0,
+        "VORT": 0,
+        "ar36": 0,
+        "c12": 0,
+        "ca40": 0,
+        "cr48": 0,
+        "fe52": 0,
+        "fe54": 0,
+        "h1": 0,
+        "he3": 0,
+        "he4": 0,
+        "mg24": 0,
+        "n14": 0,
+        "ne20": 0,
+        "neut": 0,
+        "ni56": 0,
+        "o16": 0,
+        "prot": 0,
+        "s32": 0,
+        "si28": 0,
+        "ti44": 0
+      },
+      "logicalKeysMatch": true,
+      "unverifiedScientificFields": [
+        "PRES",
+        "TEMP",
+        "ENTR",
+        "VORT",
+        "DIVV"
+      ],
+      "scope": "t=0 stored fields and metadata; not EOS/diagnostic independent science acceptance"
+    }
+  ],
+  "crossBuild": [
+    {
+      "case": "Sod",
+      "currentPlotfileSha256": "fe089e72113896ef7261064596ffdbf25cced4366ceaa84812dc2a5b102a8e9f",
+      "priorPlotfileSha256": "7cbbf3d54bb96b3d1c04449cd18116062e6d8f645096ddc3c7dda481d91b9d38",
+      "currentBinarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "priorBinarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+      "currentInputSha256": "f5537c04af9e6cecac3ad8b8ef3967f635377f8170a295e31eb1970351cf9f5d",
+      "priorInputSha256": "69ff073e097cdc4e3e8e4e38ee31e09c1189223608ce3896e5095bd11c0e47a1",
+      "changedInputKeys": [
+        "out_dir"
+      ],
+      "sameBlockOrder": true,
+      "fields": {
+        "DENS": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "09afc69714200d8689ad586babdbc8cc940e8f4cf2c16a7d00831ecc426cb22a",
+          "priorRawArraySha256": "09afc69714200d8689ad586babdbc8cc940e8f4cf2c16a7d00831ecc426cb22a"
+        },
+        "DIVV": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca",
+          "priorRawArraySha256": "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+        },
+        "ENER": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "955e6b3e9f048262b254a42e427886956ee4a6185c76a45f8c772cd611b85212",
+          "priorRawArraySha256": "955e6b3e9f048262b254a42e427886956ee4a6185c76a45f8c772cd611b85212"
+        },
+        "ENTR": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "4f546e92d53fa64726a55f379c9571a9def281a4518df26dd87420fe79173cd8",
+          "priorRawArraySha256": "4f546e92d53fa64726a55f379c9571a9def281a4518df26dd87420fe79173cd8"
+        },
+        "PRES": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "3f1ca40b950c79cdd9f058569fa9b491fb7ad4e204f2c87e6e0df2df9f6fe17f",
+          "priorRawArraySha256": "3f1ca40b950c79cdd9f058569fa9b491fb7ad4e204f2c87e6e0df2df9f6fe17f"
+        },
+        "SodGas": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "9ea77139a1584321c11c9b7ed81b372a4da7d0cdd71d467ff0c43730d9fd1c18",
+          "priorRawArraySha256": "9ea77139a1584321c11c9b7ed81b372a4da7d0cdd71d467ff0c43730d9fd1c18"
+        },
+        "TEMP": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "236c5e556d9432ac412cf56055b4f041fb76658b6330e413064f8a0a195592d6",
+          "priorRawArraySha256": "236c5e556d9432ac412cf56055b4f041fb76658b6330e413064f8a0a195592d6"
+        },
+        "VELX": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca",
+          "priorRawArraySha256": "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+        },
+        "VORT": {
+          "shape": [
+            12,
+            16
+          ],
+          "samples": 192,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca",
+          "priorRawArraySha256": "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+        }
+      },
+      "allFieldBitsMatch": true,
+      "sourcesUnchanged": true,
+      "scope": "Exact stored t=0 numeric identity, not independent scientific correctness"
+    },
+    {
+      "case": "CellularDet",
+      "currentPlotfileSha256": "81431b1d80407949d852381ab67b6d11dd4598090c6abe1963b882ce9fa2b3ed",
+      "priorPlotfileSha256": "986e316496087f786ca49e14779a7d46894e0cad59a3a8ffa80f2dbee619c937",
+      "currentBinarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "priorBinarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+      "currentInputSha256": "477f2d048efa08ee00d06ff755b464c14498a0755eb263cb7f9fabf9a1e154c8",
+      "priorInputSha256": "9f40e8723b368d2bf22c1311d3565c5e266d3734a12f7073148b5a15059daa9d",
+      "changedInputKeys": [
+        "out_dir"
+      ],
+      "sameBlockOrder": true,
+      "fields": {
+        "DENS": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "60078841d4069cbd812501707221b6fd1ac4ce7f8c83a482ab0f2ca79a225d24",
+          "priorRawArraySha256": "60078841d4069cbd812501707221b6fd1ac4ce7f8c83a482ab0f2ca79a225d24"
+        },
+        "DIVV": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "58e55245fc4ff8007ccc8094d23c8f1c6b8417c543d9e155616347618fb42aac",
+          "priorRawArraySha256": "58e55245fc4ff8007ccc8094d23c8f1c6b8417c543d9e155616347618fb42aac"
+        },
+        "ENER": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "9ea09ccbb9649c5f3000de3a1a939b702d995dfff1c6bc43cdd7a9cd4a59d4a5",
+          "priorRawArraySha256": "9ea09ccbb9649c5f3000de3a1a939b702d995dfff1c6bc43cdd7a9cd4a59d4a5"
+        },
+        "ENTR": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "f8b996999797a55fbdb67c62c1fc407aaa48f5d1bfab226a049fcf16b763148e",
+          "priorRawArraySha256": "f8b996999797a55fbdb67c62c1fc407aaa48f5d1bfab226a049fcf16b763148e"
+        },
+        "PRES": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "04b20c43fb43c979708bbf4e15ec55d28381712894ecf764128e796490f1ccaa",
+          "priorRawArraySha256": "04b20c43fb43c979708bbf4e15ec55d28381712894ecf764128e796490f1ccaa"
+        },
+        "TEMP": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "6b3ff62afd8c17f6f893545a1c5d0edba8e5ad5cb8e6543c0442188e2a327d35",
+          "priorRawArraySha256": "6b3ff62afd8c17f6f893545a1c5d0edba8e5ad5cb8e6543c0442188e2a327d35"
+        },
+        "VELX": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "74018f39f979bcce04d269180793227529fee5b48c7bc660e5fcf608945669a5",
+          "priorRawArraySha256": "74018f39f979bcce04d269180793227529fee5b48c7bc660e5fcf608945669a5"
+        },
+        "VELY": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "02b1c2234680617802901a77eae606ad02e4ddb4282ccbc60061eac5b2d90bba",
+          "priorRawArraySha256": "02b1c2234680617802901a77eae606ad02e4ddb4282ccbc60061eac5b2d90bba"
+        },
+        "VORT": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "3bdb4baa32800dfab719505d3e2da4f22202755ece9926cfc2f1fad25e269b21",
+          "priorRawArraySha256": "3bdb4baa32800dfab719505d3e2da4f22202755ece9926cfc2f1fad25e269b21"
+        },
+        "ar36": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "c12": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "40fbd8a9ad0c2983a5ba902ff7e4f73076ad66cc542566c3af187c1a2ff0de18",
+          "priorRawArraySha256": "40fbd8a9ad0c2983a5ba902ff7e4f73076ad66cc542566c3af187c1a2ff0de18"
+        },
+        "ca40": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "cr48": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "fe52": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "fe54": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "h1": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "he3": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "he4": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "f96c05bbc209459329ea1075adf2f055f4b3b8d9d3917098f387f17999e2e765",
+          "priorRawArraySha256": "f96c05bbc209459329ea1075adf2f055f4b3b8d9d3917098f387f17999e2e765"
+        },
+        "mg24": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "n14": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "ne20": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "neut": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "ni56": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "o16": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "prot": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "s32": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "si28": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        },
+        "ti44": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "samples": 5120,
+          "bitMismatchCount": 0,
+          "currentRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d",
+          "priorRawArraySha256": "350564f70da3b63748b41c5614ca8a3c26f0f14de42dea5acd9794510747837d"
+        }
+      },
+      "allFieldBitsMatch": true,
+      "sourcesUnchanged": true,
+      "scope": "Exact stored t=0 numeric identity, not independent scientific correctness"
+    }
+  ],
+  "isolatedPointReadback": {
+    "rows": [
+      {
+        "case": "Sod",
+        "fileSha256": "fe089e72113896ef7261064596ffdbf25cced4366ceaa84812dc2a5b102a8e9f",
+        "fieldCount": 9,
+        "fields": [
+          {
+            "field": "DENS",
+            "index": 186,
+            "rawValue": 0.125,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "DIVV",
+            "index": 186,
+            "rawValue": 0,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ENER",
+            "index": 186,
+            "rawValue": 0.25000000000000006,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ENTR",
+            "index": 186,
+            "rawValue": 1.837917367995254,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "PRES",
+            "index": 186,
+            "rawValue": 0.1,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "SodGas",
+            "index": 186,
+            "rawValue": 1,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "TEMP",
+            "index": 186,
+            "rawValue": 2.0000000000000004,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "VELX",
+            "index": 186,
+            "rawValue": 0,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "VORT",
+            "index": 186,
+            "rawValue": 0,
+            "bitExactNumericPoint": true
+          }
+        ],
+        "sourceUnchanged": true
+      },
+      {
+        "case": "CellularDet",
+        "fileSha256": "81431b1d80407949d852381ab67b6d11dd4598090c6abe1963b882ce9fa2b3ed",
+        "fieldCount": 28,
+        "fields": [
+          {
+            "field": "DENS",
+            "index": 3074,
+            "rawValue": 43375362.843074,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "DIVV",
+            "index": 3074,
+            "rawValue": 0,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ENER",
+            "index": 3074,
+            "rawValue": 5.448150357506065e+25,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ENTR",
+            "index": 3074,
+            "rawValue": 348033079629151.5,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "PRES",
+            "index": 3074,
+            "rawValue": 1.431377054391908e+25,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "TEMP",
+            "index": 3074,
+            "rawValue": 4678074541.662061,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "VELX",
+            "index": 3074,
+            "rawValue": 1010999999.9999999,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "VELY",
+            "index": 3074,
+            "rawValue": 0,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "VORT",
+            "index": 3074,
+            "rawValue": 5.96046447753906e-07,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ar36",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "c12",
+            "index": 3074,
+            "rawValue": 0.6000000000000001,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ca40",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "cr48",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "fe52",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "fe54",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "h1",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "he3",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "he4",
+            "index": 3074,
+            "rawValue": 0.39999999999999997,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "mg24",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "n14",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ne20",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "neut",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ni56",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "o16",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "prot",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "s32",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "si28",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          },
+          {
+            "field": "ti44",
+            "index": 3074,
+            "rawValue": 1e-20,
+            "bitExactNumericPoint": true
+          }
+        ],
+        "sourceUnchanged": true
+      }
+    ],
+    "scope": "Production isolated reader/client raw points; not full-array query or independent science acceptance"
+  },
+  "coverage": [
+    {
+      "scope": "all stored Cartesian leaf cells; exact endpoint diagnostics, not scientific tolerance acceptance",
+      "plotfileSha256": "fe089e72113896ef7261064596ffdbf25cced4366ceaa84812dc2a5b102a8e9f",
+      "plotfileBytes": 56792,
+      "dimension": 1,
+      "shape": [
+        12,
+        16
+      ],
+      "leafBlocks": 12,
+      "cells": 192,
+      "activeRootBlocks": [
+        4
+      ],
+      "externalDomain": [
+        [
+          0,
+          1
+        ]
+      ],
+      "nativeStoredCoverage": {
+        "exactlyOnceWithinDomain": true,
+        "measures": {
+          "gap": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "overlap_excess": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "outside": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "covered": {
+            "exact": "1",
+            "float": 1.0
+          }
+        },
+        "compressedBins": {
+          "gap": 0,
+          "overlap": 0,
+          "outside": 0
+        },
+        "maxMultiplicity": 1,
+        "compressedGridShape": [
+          193
+        ],
+        "examples": []
+      },
+      "logicalDyadicCoverage": {
+        "exactlyOnceWithinDomain": true,
+        "measures": {
+          "gap": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "overlap_excess": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "outside": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "covered": {
+            "exact": "1",
+            "float": 1.0
+          }
+        },
+        "compressedBins": {
+          "gap": 0,
+          "overlap": 0,
+          "outside": 0
+        },
+        "maxMultiplicity": 1,
+        "compressedGridShape": [
+          193
+        ],
+        "examples": []
+      },
+      "maxStoredEndpointDifferenceFromLogicalDomain": {
+        "exact": "0",
+        "float": 0.0
+      },
+      "sourceUnchanged": true
+    },
+    {
+      "scope": "all stored Cartesian leaf cells; exact endpoint diagnostics, not scientific tolerance acceptance",
+      "plotfileSha256": "81431b1d80407949d852381ab67b6d11dd4598090c6abe1963b882ce9fa2b3ed",
+      "plotfileBytes": 1601016,
+      "dimension": 2,
+      "shape": [
+        20,
+        16,
+        16
+      ],
+      "leafBlocks": 20,
+      "cells": 5120,
+      "activeRootBlocks": [
+        2,
+        1
+      ],
+      "externalDomain": [
+        [
+          0,
+          25.6
+        ],
+        [
+          0,
+          12.8
+        ]
+      ],
+      "nativeStoredCoverage": {
+        "exactlyOnceWithinDomain": true,
+        "measures": {
+          "gap": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "overlap_excess": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "outside": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "covered": {
+            "exact": "12980742146337070512478121581609/39614081257132168796771975168",
+            "float": 327.68000000000006
+          }
+        },
+        "compressedBins": {
+          "gap": 0,
+          "overlap": 0,
+          "outside": 0
+        },
+        "maxMultiplicity": 1,
+        "compressedGridShape": [
+          97,
+          69
+        ],
+        "examples": []
+      },
+      "logicalDyadicCoverage": {
+        "exactlyOnceWithinDomain": true,
+        "measures": {
+          "gap": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "overlap_excess": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "outside": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "covered": {
+            "exact": "12980742146337070512478121581609/39614081257132168796771975168",
+            "float": 327.68000000000006
+          }
+        },
+        "compressedBins": {
+          "gap": 0,
+          "overlap": 0,
+          "outside": 0
+        },
+        "maxMultiplicity": 1,
+        "compressedGridShape": [
+          97,
+          65
+        ],
+        "examples": []
+      },
+      "maxStoredEndpointDifferenceFromLogicalDomain": {
+        "exact": "15/4503599627370496",
+        "float": 3.3306690738754696e-15
+      },
+      "sourceUnchanged": true
+    }
+  ],
+  "checks": {
+    "t0RunExitCodes": [
+      0,
+      0
+    ],
+    "hostClientReaderExitCode": 0,
+    "crossBuildExitCode": 0,
+    "isolatedWorkerExitCode": 0,
+    "coverageExitCodes": [
+      0,
+      0
+    ],
+    "newCheckerCounterexampleTests": 3
+  },
+  "limitations": [
+    "t=0 only; no trajectory, CUDA or scientific oracle acceptance",
+    "PRES/TEMP/ENTR/VORT/DIVV lack independent physical correctness review",
+    "query remains leaf scan; no spatial index or cache",
+    "no new native desktop UAT",
+    "raw scientific arrays, H5, checkpoint and binary remain local"
+  ]
+}

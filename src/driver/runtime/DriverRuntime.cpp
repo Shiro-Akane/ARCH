@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <utility>
 
@@ -30,13 +31,16 @@ using topology::TopologyObservation;
 /** Borrow core run owners and initialize state/version bookkeeping. */
 DriverRuntime::DriverRuntime(amr::AMRControl& control, BCHandler& boundaries,
     const SimConfig& settings, const SpeciesManager& species, SimulationController& controller)
-    : amr_ctrl(control), bc_handler(boundaries), config(settings), specs(species), ctrl(controller),
+    : geometry_semantics_(boundaries.geometry_semantics()), amr_ctrl(control), bc_handler(boundaries), config(settings), specs(species), ctrl(controller),
       topology_registry(topology::TopologyDomainBounds{
           config.grid.dim,
           {static_cast<std::uint32_t>(std::max(1, config.grid.nblockx1)),
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx2)),
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx3))},
-          config.amr.lrefinemax}) {}
+          config.amr.lrefinemax}) {
+    ctrl.repairs.bind_semantics(geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
+        ? state::RepairSemantics::RzVolumeAngular : state::RepairSemantics::ExistingVolume);
+}
 DriverRuntime::~DriverRuntime() = default;
 /** Snapshot logical identities for the requested active block order. */
 std::vector<TopologyObservation> DriverRuntime::observe_blocks(std::span<const int> active) const
@@ -76,6 +80,47 @@ state::StateVersion DriverRuntime::current_interior_version() const
         }
     }
     return version;
+}
+
+/** Consume accepted interiors only after whole-domain publication preflight.
+ * Current slot/storage identity alone is not a publication lease. Keep the
+ * physical EOS/Jeans computation in the existing tree/backend owners.
+ */
+std::vector<double> DriverRuntime::evaluate_current_jeans_resolution()
+{
+    topology_registry.validate_committed_snapshot(observe_topology());
+    const auto version = current_interior_version();
+    const auto& active = amr_ctrl.tree->GetActiveBlocks();
+    if (active.size() != stage_handles.size()
+        || (compute_backend && backend_storage.size() != active.size()))
+        throw std::logic_error("JENS Current topology/storage extent mismatch");
+    const auto side = compute_backend ? ExecutionSide::Device : ExecutionSide::Host;
+    std::vector<backend::BackendStateAccess> accesses;
+    if (compute_backend) accesses.reserve(active.size());
+    // Do not evaluate earlier blocks before a later publication fails.
+    for (std::size_t index = 0; index < active.size(); ++index) {
+        residency_ledger->require_readable(
+            {stage_handles[index], StateSlot::Current}, {side, version, true, false});
+        if (compute_backend) {
+            const auto access = backend_access(index, StateSlot::Current);
+            if (!compute_backend->contains(access))
+                throw std::logic_error("JENS Current backend storage is unavailable");
+            accesses.push_back(access);
+        }
+    }
+    std::vector<double> result;
+    if (compute_backend) result = compute_backend->evaluate_jeans_resolution(accesses);
+    else {
+        result.reserve(active.size());
+        for (int id : active)
+            result.push_back(amr_ctrl.tree->MinimumJeansCells(amr_ctrl.pool->GetBlock(id)));
+    }
+    if (result.size() != active.size())
+        throw std::logic_error("JENS Current summary extent mismatch");
+    for (double value : result)
+        if (!std::isfinite(value) || value <= 0.)
+            throw std::runtime_error("JENS Current summary is invalid");
+    return result;
 }
 
 /** Lower one host fluid state to the backend transfer view. */
@@ -123,6 +168,8 @@ void DriverRuntime::trace_backend_operation(backend::BackendOperation operation,
 /** Register initial block identities and their state residency. */
 void DriverRuntime::initialize_topology()
 {
+    for (int id:amr_ctrl.tree->GetActiveBlocks())
+        (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
     auto initial_candidate =
         topology_registry.stage_adoption(observe_topology());
     std::unique_ptr<StateResidencyLedger> staged_initial_ledger;
@@ -151,7 +198,11 @@ void DriverRuntime::initialize_topology()
             amr_ctrl.ghost_exchange.ExecuteExchange(
                 amr_ctrl.pool, amr_ctrl.tree, config.grid.dim,
                 &amr::Block::fluid_state,
-                proposed.handles_in_observation_order);
+                proposed.handles_in_observation_order,
+                geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
+                    ? amr::CoordinateSeamGeometry::RzAxisymmetric
+                    : amr::CoordinateSeamGeometry::ExistingChart,
+                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
             StageExecutionContext staged_context{
                 ExecutionSide::Host, *replacement, scheduler_clock};
             (void)arch::scheduler::complete_boundary(
@@ -173,6 +224,8 @@ void DriverRuntime::initialize_topology()
 /** Build topology bindings for backend storage allocation. */
 std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bindings()
 {
+    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("RZ device runtime is not yet migrated");
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     if (active.empty() || stage_handles.size() != active.size()) {
         throw std::logic_error(
@@ -208,6 +261,8 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
 /** Install a validated compute backend and its resident block views. */
 void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> backend)
 {
+    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("RZ device runtime is not yet migrated");
     if (compute_backend || !backend) throw std::logic_error("invalid backend installation");
     compute_backend = std::move(backend);
 }

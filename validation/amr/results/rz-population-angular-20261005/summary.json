@@ -1,0 +1,300 @@
+{
+  "status": "PASS",
+  "scope": "Actual internal RZ fresh-start V/W cell initialization and Driver root/topology ghost handoff; not complete C/D science",
+  "baselineCommit": "c3364e001d47c0cb50e4d8b2fa07d3713ec70e36",
+  "sourceInputs": {
+    "src/core/problem/ProblemHelper.cpp": "017b0cecddcd463595bbb171cdc179b997b55a40ae23e44d536c48630e20a482",
+    "src/core/problem/ProblemHelper.h": "495e8cd3e3114f81cdf5756cf2edfeb95d4348f758b0d1a531b6c8d2acd208d2",
+    "src/core/problem/InitialStateConversion.h": "96a624c1add4b953911bcf3b89a4e5649ca0f61b37d365225b5ca8eca9adc7b2",
+    "src/driver/initialization/InitialMesh.h": "e4a336980e23b4bbe17d670c29052d34ab9dc47c5da204f94b343c4e8c110feb",
+    "tests/host/grid/test_rz_initial_population.cpp": "66dea08c5c34b5b2df8fc77f2cbc96573089afed53bffbf5647eecf71ea15a80",
+    "tests/host/grid/test_registered_rz_initialization.cpp": "662a7db719f8609dd7ca2f9f30a93d9e67ace46c9cf564789b8a8d11db1fddfa"
+  },
+  "additionalInputs": {
+    "src/grid/GridMetrics.h": "49eae7319dc001d843a530910fbd9b39ff7fdcf3290525a133a6b6c433aa718c",
+    "src/driver/DriverUtils.h": "57f8fc674c66f2d7db7b8ac7c52d99cae7ecc042b82aeb331f3079dc98f38007",
+    "src/driver/runtime/DriverRuntime.cpp": "f0b3bbe379af900fb8f4c8e72f9dd1ba77e671ce3f95f9e175a5688a42d3d3bd",
+    "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+    "simulation/GaussianPulse/Gaussian.cpp": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9",
+    "validation/amr/inputs/gaussian_rz_init_probe.par": "58a152b658b8918f28484b608670b840fa85e5722fb83d966e91fef4faf2d28b",
+    "validation/gravity/results/o7-resume-20261004/jens-short-contract.json": "815c6369f5a33c3bd549dc86c43b876f542f6af00c78a2978155962d8a9eb1fe"
+  },
+  "productionBinarySha256": "7c4d8d3c450b07daccd3e0cb21242bc3c5e499371e9a247e49fcefbea73fec16",
+  "build": {
+    "tree": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "backend": "CPU",
+    "type": "Release",
+    "parallel": 28,
+    "configurePerformed": false,
+    "finalPeakOwnedRssKiB": 6154088,
+    "finalElapsedSeconds": 16.16,
+    "swapGrowthKiB": 0
+  },
+  "population": {
+    "status": "PASS",
+    "scopedExecutableSha256": "58acc4687a991657695b36fd9dcfe3fa454c58924bb9b731245778f56a7bc084",
+    "cells": 512,
+    "checkedGhostDonors": 256,
+    "maxStateAbsoluteError": 3.552713678800501e-15,
+    "relativeAngularIntegralError": 3.5132429098631294e-17,
+    "ownerAngularBudget": 1e-12,
+    "arithmeticGate": 2e-12,
+    "noTimestep": true,
+    "atomicFailureAllBlocks": true,
+    "initialRepairRequiredRejected": true,
+    "invalidProfileBeforeCallback": true,
+    "invalidSpeciesBeforeCallback": true,
+    "truncatedStateBeforeCallback": true,
+    "nanGhostSnapshotsComparedByBits": true
+  },
+  "registeredGaussian": {
+    "status": "PASS",
+    "scope": "Same actual registered Gaussian Setup/Init; V-average species compared to independent erf cell integral; initialization consistency only",
+    "scopedExecutableSha256": "fdee9742543ddb52ff84e53ad68a9a721975745be8f772a9acbf7d29e90be4e7",
+    "minimumOrder": 1.8,
+    "rows": [
+      {
+        "rootsPerAxis": 1,
+        "cells": 256,
+        "rmsFractionError": 4.474305491559505e-06,
+        "maxFractionError": 2.5248438952130137e-05,
+        "order": 0.0,
+        "caseSourceSha256": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9"
+      },
+      {
+        "rootsPerAxis": 2,
+        "cells": 1024,
+        "rmsFractionError": 2.824653094038462e-07,
+        "maxFractionError": 1.6868116438639724e-06,
+        "order": 3.985518161583475,
+        "caseSourceSha256": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9"
+      },
+      {
+        "rootsPerAxis": 4,
+        "cells": 4096,
+        "rmsFractionError": 1.7701627525356574e-08,
+        "maxFractionError": 1.0773578329459355e-07,
+        "order": 3.9961197797852464,
+        "caseSourceSha256": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9"
+      }
+    ],
+    "caseSourceUnmodified": true,
+    "inputVariants": "original engineering probe; nblockx1/nblockx2=1,2,4 and max_blocks=32, loaded/prepared separately; domain/EOS/model physics fixed"
+  },
+  "apiRegression": {
+    "pass": 7,
+    "fail": 0,
+    "tests": [
+      "preview_initial_conversion",
+      "preview_api_contract",
+      "preview_full_model_contract",
+      "preview_mesh_geometry",
+      "initialization_probe",
+      "preview_session_contract",
+      "preview_cellular_2d"
+    ],
+    "cppTargetsRebuilt": true
+  },
+  "frozenJens": {
+    "contract": "uniform-lifecycle-1",
+    "status": "PASS",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "7c4d8d3c450b07daccd3e0cb21242bc3c5e499371e9a247e49fcefbea73fec16",
+    "cases": [
+      {
+        "name": "jeans-uniform-1d-active",
+        "dimension": 1,
+        "lane": "active",
+        "cells": 128,
+        "elapsed_seconds": 0.06389295298140496,
+        "restart_elapsed_seconds": 0.06407688197214156,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 29,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-1d-active"
+      },
+      {
+        "name": "jeans-uniform-1d-disabled",
+        "dimension": 1,
+        "lane": "disabled",
+        "cells": 64,
+        "elapsed_seconds": 0.06395165901631117,
+        "restart_elapsed_seconds": 0.031751544011058286,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-1d-disabled"
+      },
+      {
+        "name": "jeans-uniform-1d-output_only",
+        "dimension": 1,
+        "lane": "output_only",
+        "cells": 64,
+        "elapsed_seconds": 0.0640351619804278,
+        "restart_elapsed_seconds": 0.06390300998464227,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-1d-output_only"
+      },
+      {
+        "name": "jeans-uniform-2d-active",
+        "dimension": 2,
+        "lane": "active",
+        "cells": 4096,
+        "elapsed_seconds": 0.364772410976002,
+        "restart_elapsed_seconds": 0.21431922298506834,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 218,
+        "stage_solves": 162,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 55,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-2d-active"
+      },
+      {
+        "name": "jeans-uniform-2d-disabled",
+        "dimension": 2,
+        "lane": "disabled",
+        "cells": 1024,
+        "elapsed_seconds": 0.11447386399959214,
+        "restart_elapsed_seconds": 0.06395132999750786,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-2d-disabled"
+      },
+      {
+        "name": "jeans-uniform-2d-output_only",
+        "dimension": 2,
+        "lane": "output_only",
+        "cells": 1024,
+        "elapsed_seconds": 0.11430757399648428,
+        "restart_elapsed_seconds": 0.06383016298059374,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-2d-output_only"
+      },
+      {
+        "name": "jeans-uniform-3d-active",
+        "dimension": 3,
+        "lane": "active",
+        "cells": 131072,
+        "elapsed_seconds": 21.472686969995266,
+        "restart_elapsed_seconds": 10.793587000021944,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 330,
+        "stage_solves": 246,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 83,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-3d-active"
+      },
+      {
+        "name": "jeans-uniform-3d-disabled",
+        "dimension": 3,
+        "lane": "disabled",
+        "cells": 16384,
+        "elapsed_seconds": 1.4177410940174013,
+        "restart_elapsed_seconds": 0.765661117999116,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-3d-disabled"
+      },
+      {
+        "name": "jeans-uniform-3d-output_only",
+        "dimension": 3,
+        "lane": "output_only",
+        "cells": 16384,
+        "elapsed_seconds": 1.3669443179969676,
+        "restart_elapsed_seconds": 0.7658646840136498,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005/final-binary/frozen-jeans-campaign/jeans-uniform-3d-output_only"
+      }
+    ],
+    "comparisons": [
+      {
+        "dimension": 1,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 2,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 3,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      }
+    ]
+  },
+  "frozenGuard": {
+    "elapsedSeconds": 45.103,
+    "peakOwnedRssKiB": 819132,
+    "swapGrowthKiB": 0
+  },
+  "architectureAudit": "PASS",
+  "diffCheck": "PASS",
+  "findingClosures": {
+    "RZ-INIT-W-01": "Actual RZ PopulateState now uses shared V/W averages",
+    "RZ-INIT-REPAIR-01": "Initialization no longer publishes a V-only angular repair: repaired/unresolved candidates reject atomically; does not close runtime repair ledger migration"
+  },
+  "preservedFirstAttemptEvidence": {
+    "populationSnapshot": "NaN sentinel == comparison false; corrected to strict bit snapshot without changing source state behavior",
+    "registeredReference": "old midpoint Gaussian fails under cell-average semantics; replaced by independent erf integral/convergence, not production-generated reference"
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-population-angular-20261005",
+  "limitations": [
+    "Public RZ capability remains gated",
+    "No evolved RZ force/hydro acceptance",
+    "Runtime repair report/checkpoint ledger semantics still require explicit review/migration",
+    "RZ-VISC-01 and RZ-AXIS-01 remain open",
+    "No CUDA or RZ long run",
+    "No Windows adaptation"
+  ]
+}

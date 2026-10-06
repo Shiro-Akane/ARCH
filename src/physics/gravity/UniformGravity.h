@@ -30,9 +30,9 @@ struct UniformGravityResult {
 // Density is a borrowed, padded x-fast Host cell view. The call is synchronous;
 // only the active box is sampled. No density floor, hydro state repair or EOS call.
 // No fields are returned on numerical failure; malformed inputs throw.
+// Physical G comes only from shared CGS constants; manufactured RHS belongs to multigrid.
 UniformGravityResult solve_uniform_gravity(multigrid::HostMultigrid& solver,
     grid::ConstScalarFieldView density, const elliptic::BoundaryData& boundary,
     multigrid::SolveControl control,
-    double gravitational_constant = arch::constants::gravity::cgs::gravitational_constant,
     std::span<const double> initial = {});
 } // namespace arch::gravity

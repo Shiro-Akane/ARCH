@@ -1,0 +1,632 @@
+{
+  "status": "PASS",
+  "samples": 85,
+  "precision": [
+    160,
+    240
+  ],
+  "pi_reference": "independent Machin atan series",
+  "max_relative_width": 1.321422608996641e-14,
+  "max_iterations": 13,
+  "scope": "K of exact stored complementary root, not source quadrature",
+  "results": [
+    {
+      "root_hex": "0x0.0000000000001p-1022",
+      "lower": 745.8263662824963,
+      "upper": 745.826366282505,
+      "iterations": 13,
+      "relative_interval_width": 1.1584733468071197e-14
+    },
+    {
+      "root_hex": "0x0.0000000000002p-1022",
+      "lower": 745.1332191019366,
+      "upper": 745.1332191019451,
+      "iterations": 13,
+      "relative_interval_width": 1.1442937464790032e-14
+    },
+    {
+      "root_hex": "0x0.000000134d761p-1022",
+      "lower": 729.0031837635739,
+      "upper": 729.0031837635823,
+      "iterations": 13,
+      "relative_interval_width": 1.154017729794707e-14
+    },
+    {
+      "root_hex": "0x0.078ba34e0549dp-1022",
+      "lower": 713.3069442027031,
+      "upper": 713.3069442027113,
+      "iterations": 13,
+      "relative_interval_width": 1.1475357673835027e-14
+    },
+    {
+      "root_hex": "0x0.0b8157268fdafp-1022",
+      "lower": 712.8850880962755,
+      "upper": 712.8850880962837,
+      "iterations": 13,
+      "relative_interval_width": 1.1482148319044167e-14
+    },
+    {
+      "root_hex": "0x1.0000000000000p-1022",
+      "lower": 709.7827128933795,
+      "upper": 709.7827128933876,
+      "iterations": 13,
+      "relative_interval_width": 1.1372164088542958e-14
+    },
+    {
+      "root_hex": "0x1.b6e3d22865634p-1004",
+      "lower": 696.7669924453173,
+      "upper": 696.7669924453253,
+      "iterations": 13,
+      "relative_interval_width": 1.1421434606975339e-14
+    },
+    {
+      "root_hex": "0x1.f466631bb0bd2p-982",
+      "lower": 681.3865954372473,
+      "upper": 681.3865954372551,
+      "iterations": 13,
+      "relative_interval_width": 1.15123952471617e-14
+    },
+    {
+      "root_hex": "0x1.059949b708f29p-980",
+      "lower": 680.6488967943591,
+      "upper": 680.6488967943668,
+      "iterations": 13,
+      "relative_interval_width": 1.135784543467126e-14
+    },
+    {
+      "root_hex": "0x1.37d99cc506d59p-957",
+      "lower": 664.530801143401,
+      "upper": 664.5308011434084,
+      "iterations": 13,
+      "relative_interval_width": 1.112009321342257e-14
+    },
+    {
+      "root_hex": "0x1.73c115074bc6ap-934",
+      "lower": 648.4127054924427,
+      "upper": 648.4127054924501,
+      "iterations": 13,
+      "relative_interval_width": 1.1396513962959541e-14
+    },
+    {
+      "root_hex": "0x1.453f50c042108p-931",
+      "lower": 646.4669110111827,
+      "upper": 646.4669110111897,
+      "iterations": 13,
+      "relative_interval_width": 1.090324008651113e-14
+    },
+    {
+      "root_hex": "0x1.862ed0f79c166p-916",
+      "lower": 635.887673656244,
+      "upper": 635.8876736562513,
+      "iterations": 13,
+      "relative_interval_width": 1.1442205778809778e-14
+    },
+    {
+      "root_hex": "0x1.bb2a62fe638ffp-911",
+      "lower": 632.2946098414847,
+      "upper": 632.2946098414915,
+      "iterations": 13,
+      "relative_interval_width": 1.0788025324155443e-14
+    },
+    {
+      "root_hex": "0x1.fdbaac0f9ab98p-897",
+      "lower": 622.4506131872165,
+      "upper": 622.4506131872234,
+      "iterations": 13,
+      "relative_interval_width": 1.1141280856819887e-14
+    },
+    {
+      "root_hex": "0x1.d89e81913e1c0p-889",
+      "lower": 616.9810254081639,
+      "upper": 616.9810254081706,
+      "iterations": 13,
+      "relative_interval_width": 1.0871523028018477e-14
+    },
+    {
+      "root_hex": "0x1.0825b3323dab0p-887",
+      "lower": 616.1765141905263,
+      "upper": 616.1765141905331,
+      "iterations": 13,
+      "relative_interval_width": 1.1070221123662872e-14
+    },
+    {
+      "root_hex": "0x1.6b74db111876cp-876",
+      "lower": 608.2327424450576,
+      "upper": 608.2327424450643,
+      "iterations": 13,
+      "relative_interval_width": 1.1027889420440406e-14
+    },
+    {
+      "root_hex": "0x1.3ae3591f5b4d9p-864",
+      "lower": 600.058418539568,
+      "upper": 600.0584185395747,
+      "iterations": 13,
+      "relative_interval_width": 1.1178117360473308e-14
+    },
+    {
+      "root_hex": "0x1.77603725064a8p-841",
+      "lower": 583.9403228886098,
+      "upper": 583.9403228886164,
+      "iterations": 13,
+      "relative_interval_width": 1.1291969965758819e-14
+    },
+    {
+      "root_hex": "0x1.5185bdd899864p-834",
+      "lower": 579.1945884309406,
+      "upper": 579.194588430947,
+      "iterations": 13,
+      "relative_interval_width": 1.0991924026185122e-14
+    },
+    {
+      "root_hex": "0x1.24d6de5f25ca6p-832",
+      "lower": 577.950301932508,
+      "upper": 577.9503019325144,
+      "iterations": 13,
+      "relative_interval_width": 1.1212295812398096e-14
+    },
+    {
+      "root_hex": "0x1.bf7b9d9cce00dp-818",
+      "lower": 567.8222272376512,
+      "upper": 567.8222272376587,
+      "iterations": 12,
+      "relative_interval_width": 1.321422608996641e-14
+    },
+    {
+      "root_hex": "0x1.0ab877c142ffap-794",
+      "lower": 551.7041315866935,
+      "upper": 551.7041315866995,
+      "iterations": 12,
+      "relative_interval_width": 1.0921437876342595e-14
+    },
+    {
+      "root_hex": "0x1.3df4a91a4dcb5p-771",
+      "lower": 535.5860359357356,
+      "upper": 535.586035935741,
+      "iterations": 12,
+      "relative_interval_width": 1.0188779849540953e-14
+    },
+    {
+      "root_hex": "0x1.95f831e415172p-751",
+      "lower": 521.4787263447142,
+      "upper": 521.4787263447197,
+      "iterations": 12,
+      "relative_interval_width": 1.0464411940421722e-14
+    },
+    {
+      "root_hex": "0x1.7b08617a104eep-748",
+      "lower": 519.4679402847772,
+      "upper": 519.4679402847827,
+      "iterations": 12,
+      "relative_interval_width": 1.0504918181564731e-14
+    },
+    {
+      "root_hex": "0x1.c3d79c9b8fe2ep-725",
+      "lower": 503.349844633819,
+      "upper": 503.3498446338241,
+      "iterations": 12,
+      "relative_interval_width": 1.01637216183e-14
+    },
+    {
+      "root_hex": "0x1.0d51a73deee2dp-701",
+      "lower": 487.2317489828609,
+      "upper": 487.2317489828657,
+      "iterations": 12,
+      "relative_interval_width": 9.916616914343604e-15
+    },
+    {
+      "root_hex": "0x1.40534ff0a9ad2p-695",
+      "lower": 482.89942482032046,
+      "upper": 482.8994248203251,
+      "iterations": 12,
+      "relative_interval_width": 9.652445430682756e-15
+    },
+    {
+      "root_hex": "0x1.410d9f9b2f7f3p-678",
+      "lower": 471.11365333190264,
+      "upper": 471.11365333190724,
+      "iterations": 12,
+      "relative_interval_width": 9.773261494677278e-15
+    },
+    {
+      "root_hex": "0x1.529dc77a61da6p-672",
+      "lower": 466.9015094599838,
+      "upper": 466.9015094599884,
+      "iterations": 12,
+      "relative_interval_width": 9.861430803791483e-15
+    },
+    {
+      "root_hex": "0x1.7eb9aa8cf1ddep-655",
+      "lower": 454.99555768094456,
+      "upper": 454.9955576809489,
+      "iterations": 12,
+      "relative_interval_width": 9.494817609737544e-15
+    },
+    {
+      "root_hex": "0x1.8037cafb13452p-646",
+      "lower": 448.7533405010691,
+      "upper": 448.7533405010734,
+      "iterations": 12,
+      "relative_interval_width": 9.626891754382593e-15
+    },
+    {
+      "root_hex": "0x1.c83e7ad4e6efep-632",
+      "lower": 438.8774620299862,
+      "upper": 438.8774620299905,
+      "iterations": 12,
+      "relative_interval_width": 9.843521727999366e-15
+    },
+    {
+      "root_hex": "0x1.14345afbc2142p-631",
+      "lower": 438.6862011573966,
+      "upper": 438.68620115740094,
+      "iterations": 12,
+      "relative_interval_width": 9.847813361859933e-15
+    },
+    {
+      "root_hex": "0x1.0ff151a99f483p-608",
+      "lower": 422.75936637902805,
+      "upper": 422.7593663790321,
+      "iterations": 12,
+      "relative_interval_width": 9.54652471377523e-15
+    },
+    {
+      "root_hex": "0x1.8a665c4cf65a0p-595",
+      "lower": 413.3766790067668,
+      "upper": 413.37667900677076,
+      "iterations": 12,
+      "relative_interval_width": 9.62569859968178e-15
+    },
+    {
+      "root_hex": "0x1.442e4fb671960p-585",
+      "lower": 406.6412707280698,
+      "upper": 406.64127072807366,
+      "iterations": 12,
+      "relative_interval_width": 9.505558733903754e-15
+    },
+    {
+      "root_hex": "0x1.704c301187911p-571",
+      "lower": 396.809620575334,
+      "upper": 396.8096205753388,
+      "iterations": 12,
+      "relative_interval_width": 1.2033093293919628e-14
+    },
+    {
+      "root_hex": "0x1.8274291c6065bp-562",
+      "lower": 390.5231750771111,
+      "upper": 390.5231750771157,
+      "iterations": 12,
+      "relative_interval_width": 1.179012468803233e-14
+    },
+    {
+      "root_hex": "0x1.bd11c63366d26p-561",
+      "lower": 389.68880980601375,
+      "upper": 389.6888098060182,
+      "iterations": 12,
+      "relative_interval_width": 1.1377762356969214e-14
+    },
+    {
+      "root_hex": "0x1.ccb0536608d61p-539",
+      "lower": 374.40507942615295,
+      "upper": 374.4050794261573,
+      "iterations": 12,
+      "relative_interval_width": 1.1538571645563029e-14
+    },
+    {
+      "root_hex": "0x1.1e683351afd86p-526",
+      "lower": 365.86947478854466,
+      "upper": 365.86947478854887,
+      "iterations": 12,
+      "relative_interval_width": 1.149703182571018e-14
+    },
+    {
+      "root_hex": "0x1.1297872d9cbb5p-515",
+      "lower": 358.2869837751948,
+      "upper": 358.28698377519873,
+      "iterations": 12,
+      "relative_interval_width": 1.0947078959074577e-14
+    },
+    {
+      "root_hex": "0x1.4756ccb01abfbp-492",
+      "lower": 342.1688881242366,
+      "upper": 342.1688881242404,
+      "iterations": 12,
+      "relative_interval_width": 1.1130494898447048e-14
+    },
+    {
+      "root_hex": "0x1.a7f1556d705cdp-471",
+      "lower": 327.3541955216958,
+      "upper": 327.3541955216994,
+      "iterations": 12,
+      "relative_interval_width": 1.1113279917778174e-14
+    },
+    {
+      "root_hex": "0x1.8637f41fcad32p-469",
+      "lower": 326.0507924732784,
+      "upper": 326.05079247328194,
+      "iterations": 12,
+      "relative_interval_width": 1.0809027460526446e-14
+    },
+    {
+      "root_hex": "0x1.d12d41afca3c3p-446",
+      "lower": 309.9326968223202,
+      "upper": 309.9326968223235,
+      "iterations": 12,
+      "relative_interval_width": 1.063752978543248e-14
+    },
+    {
+      "root_hex": "0x1.1544581b7dec2p-422",
+      "lower": 293.814601171362,
+      "upper": 293.8146011713652,
+      "iterations": 12,
+      "relative_interval_width": 1.0834149982725565e-14
+    },
+    {
+      "root_hex": "0x1.6090d3b77464cp-417",
+      "lower": 290.1086090246111,
+      "upper": 290.10860902461417,
+      "iterations": 12,
+      "relative_interval_width": 1.0580674006207148e-14
+    },
+    {
+      "root_hex": "0x1.4a8729fc3ddb7p-399",
+      "lower": 277.6965055204037,
+      "upper": 277.69650552040684,
+      "iterations": 11,
+      "relative_interval_width": 1.1258290886612223e-14
+    },
+    {
+      "root_hex": "0x1.b5abbf78edbd6p-396",
+      "lower": 275.33628807120743,
+      "upper": 275.3362880712104,
+      "iterations": 11,
+      "relative_interval_width": 1.0735445739711419e-14
+    },
+    {
+      "root_hex": "0x1.8a0522c7e7095p-376",
+      "lower": 261.57840986944564,
+      "upper": 261.5784098694482,
+      "iterations": 11,
+      "relative_interval_width": 9.778918107243742e-15
+    },
+    {
+      "root_hex": "0x1.ff65f89a41d1dp-358",
+      "lower": 248.84101365926452,
+      "upper": 248.8410136592669,
+      "iterations": 11,
+      "relative_interval_width": 9.594172427793592e-15
+    },
+    {
+      "root_hex": "0x1.d5b561574765bp-353",
+      "lower": 245.4603142184875,
+      "upper": 245.46031421848988,
+      "iterations": 11,
+      "relative_interval_width": 9.72631196922875e-15
+    },
+    {
+      "root_hex": "0x1.397c68f6e5696p-347",
+      "lower": 241.70578883246884,
+      "upper": 241.70578883247114,
+      "iterations": 11,
+      "relative_interval_width": 9.524631060691665e-15
+    },
+    {
+      "root_hex": "0x1.3ecafef841aa8p-333",
+      "lower": 231.98494109006316,
+      "upper": 231.98494109006538,
+      "iterations": 11,
+      "relative_interval_width": 9.556195006256204e-15
+    },
+    {
+      "root_hex": "0x1.17f7d4ed8c33ep-329",
+      "lower": 229.3422185675293,
+      "upper": 229.34221856753143,
+      "iterations": 11,
+      "relative_interval_width": 9.294530333727618e-15
+    },
+    {
+      "root_hex": "0x1.4dbf7b3f71cb7p-306",
+      "lower": 213.2241229165711,
+      "upper": 213.224122916573,
+      "iterations": 11,
+      "relative_interval_width": 8.930764989391672e-15
+    },
+    {
+      "root_hex": "0x1.dfecbfedcf976p-302",
+      "lower": 210.088290902232,
+      "upper": 210.08829090223395,
+      "iterations": 11,
+      "relative_interval_width": 9.334637081751955e-15
+    },
+    {
+      "root_hex": "0x1.576896bde0754p-297",
+      "lower": 206.95726358527506,
+      "upper": 206.9572635852769,
+      "iterations": 11,
+      "relative_interval_width": 8.926534304581397e-15
+    },
+    {
+      "root_hex": "0x1.d963e3b393ecdp-292",
+      "lower": 203.17052854791362,
+      "upper": 203.17052854791544,
+      "iterations": 11,
+      "relative_interval_width": 8.953018021592027e-15
+    },
+    {
+      "root_hex": "0x1.8ddbcc7f40ba6p-283",
+      "lower": 197.10602726561268,
+      "upper": 197.10602726561478,
+      "iterations": 11,
+      "relative_interval_width": 1.067043218833528e-14
+    },
+    {
+      "root_hex": "0x1.e2c2810a375c6p-273",
+      "lower": 189.98113291533483,
+      "upper": 189.98113291533681,
+      "iterations": 11,
+      "relative_interval_width": 1.0472195999667504e-14
+    },
+    {
+      "root_hex": "0x1.da48ce468e7c7p-260",
+      "lower": 180.98793161465449,
+      "upper": 180.9879316146563,
+      "iterations": 11,
+      "relative_interval_width": 1.0050335330748452e-14
+    },
+    {
+      "root_hex": "0x1.1ab20e472914ap-236",
+      "lower": 164.86983596369626,
+      "upper": 164.8698359636979,
+      "iterations": 11,
+      "relative_interval_width": 9.998549081630726e-15
+    },
+    {
+      "root_hex": "0x1.46b7f453c49a2p-215",
+      "lower": 150.1690164620795,
+      "upper": 150.16901646208098,
+      "iterations": 11,
+      "relative_interval_width": 9.841769795130845e-15
+    },
+    {
+      "root_hex": "0x1.50ffd44f4a73dp-213",
+      "lower": 148.75174031273806,
+      "upper": 148.75174031273946,
+      "iterations": 11,
+      "relative_interval_width": 9.362335924015616e-15
+    },
+    {
+      "root_hex": "0x1.91bc08eac9a41p-190",
+      "lower": 132.63364466177987,
+      "upper": 132.6336446617811,
+      "iterations": 10,
+      "relative_interval_width": 9.214355140611924e-15
+    },
+    {
+      "root_hex": "0x1.ea87f289a255ep-168",
+      "lower": 117.1847095709636,
+      "upper": 117.18470957096456,
+      "iterations": 10,
+      "relative_interval_width": 8.125012805889575e-15
+    },
+    {
+      "root_hex": "0x1.dee7a4ad4b81fp-167",
+      "lower": 116.51554901082166,
+      "upper": 116.51554901082264,
+      "iterations": 10,
+      "relative_interval_width": 8.415606188817453e-15
+    },
+    {
+      "root_hex": "0x1.1d7314f534b61p-143",
+      "lower": 100.39745335986336,
+      "upper": 100.39745335986434,
+      "iterations": 10,
+      "relative_interval_width": 9.76667178831983e-15
+    },
+    {
+      "root_hex": "0x1.54484932d2e72p-120",
+      "lower": 84.27935770890511,
+      "upper": 84.2793577089059,
+      "iterations": 10,
+      "relative_interval_width": 9.442500342728902e-15
+    },
+    {
+      "root_hex": "0x1.ff2c13ec42b32p-117",
+      "lower": 81.79298545245827,
+      "upper": 81.79298545245905,
+      "iterations": 10,
+      "relative_interval_width": 9.555795096761753e-15
+    },
+    {
+      "root_hex": "0x1.95a5efea6b347p-97",
+      "lower": 68.16126205794691,
+      "upper": 68.16126205794751,
+      "iterations": 9,
+      "relative_interval_width": 8.756526508136951e-15
+    },
+    {
+      "root_hex": "0x1.e392010175ee6p-74",
+      "lower": 52.04316640698869,
+      "upper": 52.0431664069891,
+      "iterations": 9,
+      "relative_interval_width": 7.918710854716847e-15
+    },
+    {
+      "root_hex": "0x1.203af9ee75616p-50",
+      "lower": 35.92507075603036,
+      "upper": 35.92507075603079,
+      "iterations": 8,
+      "relative_interval_width": 1.2064863330600484e-14
+    },
+    {
+      "root_hex": "0x1.5798ee2308c3ap-27",
+      "lower": 19.806975105072176,
+      "upper": 19.806975105072343,
+      "iterations": 8,
+      "relative_interval_width": 8.43023944937777e-15
+    },
+    {
+      "root_hex": "0x1.00a043ecba616p-25",
+      "lower": 18.712531405498606,
+      "upper": 18.71253140549876,
+      "iterations": 8,
+      "relative_interval_width": 8.163870770767606e-15
+    },
+    {
+      "root_hex": "0x1.47ae147ae147bp-7",
+      "lower": 5.991589340506976,
+      "upper": 5.991589340507019,
+      "iterations": 6,
+      "relative_interval_width": 7.263639093400132e-15
+    },
+    {
+      "root_hex": "0x1.999999999999ap-4",
+      "lower": 3.695637362989866,
+      "upper": 3.6956373629898827,
+      "iterations": 5,
+      "relative_interval_width": 4.566300293232698e-15
+    },
+    {
+      "root_hex": "0x1.0000000000000p-1",
+      "lower": 2.156515647499639,
+      "upper": 2.1565156474996474,
+      "iterations": 4,
+      "relative_interval_width": 3.912651872910923e-15
+    },
+    {
+      "root_hex": "0x1.fffffffffffffp-1",
+      "lower": 1.5707963267948957,
+      "upper": 1.5707963267948974,
+      "iterations": 0,
+      "relative_interval_width": 1.1308638867425836e-15
+    },
+    {
+      "root_hex": "0x1.0000000000000p+0",
+      "lower": 1.5707963267948957,
+      "upper": 1.5707963267948972,
+      "iterations": 0,
+      "relative_interval_width": 9.895059008997607e-16
+    }
+  ],
+  "base_commit": "6c10ff3fb07e55611c3060d031d0427bfba54dfc",
+  "authority_commit": "86bec324018349c6d81df84a3cced3ed9f9a2792",
+  "source_sha256": {
+    "src/physics/gravity/FiniteRingBoundaryMath.h": "a7b6b081fa60d610e80b7cf7200d018289830e85d99d7baf78d5fc0e8b9650a0",
+    "tests/host/gravity/test_composite_poisson.cpp": "51ced8dd0a6eb06363ad1aced77be9406f3517d3d436aa0cc3122487f4c98df5",
+    "validation/gravity/rz_ring_k_interval_reference.py": "c743b2079dbd5557fb306b28b800827adbf1bffee09a38b899b5d4181b4af4ea"
+  },
+  "arch_sha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "production_binary_changed": false,
+  "build": "existing CPU Release, parallel 28, memory guard PASS, no swap growth",
+  "checks": {
+    "unit": "PASS",
+    "independent_decimal": "85 PASS",
+    "ring_contact_dual_gate": "PASS",
+    "boundary_acceptance": "PASS",
+    "core_regression": "3/3 PASS",
+    "architecture": "PASS",
+    "diff_check": "PASS"
+  },
+  "arithmetic_preconditions": "IEEE binary64, gradual underflow, bounded sqrt rounding, no fast-math/implicit contraction as current project build contract; CUDA not yet qualified",
+  "source_quadrature_certified": false,
+  "production_rz_gate": "RETAINED",
+  "raw_local_only": "studio/.local/integration/rz-ring-k-interval-20261004"
+}

@@ -1,0 +1,35 @@
+{
+  "baseHead": "352b65eb75d813708cd6ea45494a20dc8a2fbe6e",
+  "dirtyInputs": {
+    "src/grid/GridGeometryView.h": "66ff9d949584dbe1a79c99fa890108a126c2721dee8c5fa95b7e4323ea0515bd",
+    "src/grid/GridMetrics.h": "63c0c2fa77aa972e86fad4677cfffbe0237541449acd7c58b757a702f87dd120",
+    "src/numerics/integrator/GeometricSources.h": "fc6f69ffd7df380ec22b40f317e81569b5061986e4d8c5c77d36e40c2b40e602",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "9a131e15e7038e751da99504c857be63f2cecb3f79f58029bc5a02aba72873eb"
+  },
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "amr_operation_plans": "PASS",
+    "diffCheck": "PASS"
+  },
+  "binaries": {
+    "arch_curvilinear_metrics": "16fec3c700557289a849c6fc1323d4b61326e24bd0d52bde57c6c74ceecd493d",
+    "arch_amr_operation_plans": "8579c5d16bccd531b5e5120657c9283ce6a239df86d6e5cd9d813f58877b2590"
+  },
+  "afterBuildChange": "GridMetrics documentation only",
+  "coverage": [
+    "full-ring cell and radial/axial face dispatch",
+    "dr/dz physical spacing",
+    "r/z representative Cartesian meridian position",
+    "shared source r/z/phi dispatch matches explicit adapter",
+    "factory rejects noncylindrical or non2D views",
+    "legacy metrics/source and AMR regression"
+  ],
+  "notCovered": [
+    "all downstream geometry consumers",
+    "RZ transport/AMR/elliptic/gravity production",
+    "IO/checkpoint revision",
+    "runtime capability",
+    "CUDA execution",
+    "science acceptance"
+  ]
+}

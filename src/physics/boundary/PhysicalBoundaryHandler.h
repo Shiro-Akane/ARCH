@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -24,7 +25,9 @@ namespace arch::backend { class ComputeBackend; struct BackendStateAccess; }
 
 /** Boundary adapter used by all Host integrators and the shared CUDA driver. */
 struct BCHandler {
-    explicit BCHandler(const SimConfig& config);
+    explicit BCHandler(const SimConfig& config,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
+    GridMetrics::GeometrySemantics geometry_semantics() const noexcept { return semantics_; }
     /** Bind shared EOS conversion without multiplying the integrator matrix. */
     template<class Eos> void bind(const Eos& eos, const SpeciesManager& species) {
         if (!callback_) return;
@@ -45,6 +48,7 @@ struct BCHandler {
                       const Grid&) const;
     bool has_user() const noexcept { return bool(callback_); }
     const arch::boundary::BoundaryPlan& logical_plan() const noexcept { return logical_plan_; }
+    const arch::boundary::BoundaryPlan& logical_plan(const Grid&) const;
 private:
     struct Ghost {
         int source, destination;
@@ -58,8 +62,11 @@ private:
     void store_conditions(arch::boundary::DiffusionBoundaryStorage&, const Ghost&,
                           const arch::boundary::PhysicalBoundaryData&, int) const;
     const SimConfig* config_;
+    GridMetrics::GeometrySemantics semantics_;
     arch::boundary::BoundaryPlan logical_plan_;
     arch::boundary::host::HostCompiledBoundaryPlan compiled_;
+    std::optional<arch::boundary::BoundaryPlan> axis_plan_;
+    std::optional<arch::boundary::host::HostCompiledBoundaryPlan> axis_compiled_;
     arch::boundary::PhysicalBoundaryFunction callback_;
     std::function<arch::boundary::PhysicalBoundaryEvaluation(
         const arch::boundary::BoundaryCoordinates&, const FluidVector&, std::span<const double>,

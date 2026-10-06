@@ -26,6 +26,7 @@
 #include <array>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <type_traits>
@@ -447,6 +448,22 @@ public:
         std::span<const int>)
     {
         throw std::logic_error("backend AMR indicators are unavailable");
+    }
+    // Accepted Current cells only; callers still own publication/version leases.
+    // A backend without this consumer must reject, never materialize Host state
+    // as an implicit fallback. Result order follows the supplied access order.
+    virtual std::vector<double> evaluate_jeans_resolution(
+        std::span<const BackendStateAccess>)
+    {
+        throw std::logic_error("backend JENS accepted-state consumer is unavailable");
+    }
+    // Geometric child order, accepted Current only. Restrict into unpublished
+    // scratch and evaluate that same parent through authoritative EOS/JENS.
+    // nullopt means the shared restriction CoarseFluid veto; other errors fail.
+    virtual std::optional<double> evaluate_jeans_parent(
+        std::span<const BackendStateAccess>, const amr::Block&)
+    {
+        throw std::logic_error("backend JENS candidate-parent consumer is unavailable");
     }
     virtual std::unique_ptr<BackendTopologyStoreTransaction>
     begin_topology_store_transaction(

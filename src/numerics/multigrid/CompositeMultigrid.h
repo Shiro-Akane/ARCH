@@ -27,6 +27,10 @@ public:
     void clear_initial_guess() noexcept { has_accepted_potential_ = false; }
     CompositeExecution& execution() const { return *execution_; }
     std::size_t level_count() const { return levels_.size(); }
+    // Read-only construction evidence; only this owner can derive coarse operators.
+    const elliptic::CompositePoisson& level_operator(std::size_t level) const {
+        return levels_.at(level).op;
+    }
     double mean(const Vector& x,int level=0);
     double norm(const Vector& x,int level=0);
     void project(Vector& x,int level=0);

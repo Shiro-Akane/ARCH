@@ -1,0 +1,30 @@
+{
+  "baseline": "508595c255eaba75caa36212092465cd33520db0",
+  "upstream": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+  "routes": [
+    "POST /api/plotfile/audit-metadata",
+    "POST /api/plotfile/audit-slice"
+  ],
+  "scope": "read-only file audit; not formal scientific Viewer",
+  "httpTests": 5,
+  "fullStudioHostTests": 272,
+  "typecheck": "PASS",
+  "lint": "PASS",
+  "build": "PASS",
+  "diffCheck": "PASS",
+  "realFixtureSample": {
+    "field": "PRES",
+    "globalIndex": 32,
+    "blocks": 4,
+    "cellsPerBlock": 16,
+    "block": 2,
+    "localIndex": 0,
+    "value": 0.3054751636143017
+  },
+  "renderEligible": false,
+  "completion": "unknown",
+  "nativeCellGeometry": "unavailable",
+  "clientDisconnectLifecycle": "signal wiring implemented; exact live HTTP cancellation timing not verified",
+  "firstFailure": "test incorrectly used global32 as local32; worker rejected; fixture request corrected without loosening bounds",
+  "simulationExecuted": false
+}

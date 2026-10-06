@@ -1,0 +1,105 @@
+{
+  "electronPid": 276655,
+  "hostPid": 276701,
+  "requestId": "50c6ea93-a004-4c60-aff8-b67e10fe7ae9",
+  "identity": {
+    "requestId": "50c6ea93-a004-4c60-aff8-b67e10fe7ae9",
+    "projectId": "ca80c88a-fe0a-4b7e-9426-356eef679f19",
+    "profileId": "initial-cpu-RT-2d",
+    "caseId": "RT",
+    "configRevision": "aa72d96c240e3cd349fdae1f75bbd79a23a7b144fc926713fb00a0586f890602",
+    "buildId": "b122233f-61aa-4fd5-932a-a27ded45e302",
+    "binarySha256": "ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a"
+  },
+  "shape": [
+    128,
+    128
+  ],
+  "count": 16384,
+  "dataSha256": "db48f94a1e57fb8142f2d4d8731870b7fa6394decba65a4491311761864f6f5d",
+  "diskConfigSha256": "aa72d96c240e3cd349fdae1f75bbd79a23a7b144fc926713fb00a0586f890602",
+  "selectedSample": {
+    "index": 13491,
+    "indices": [
+      51,
+      105
+    ],
+    "coordinates": [
+      0.1005859375,
+      0.82421875
+    ],
+    "fields": {
+      "DENS": 2,
+      "PRES": 2.43515625,
+      "TEMP": 0.004242432491289199,
+      "VELX": 0,
+      "ENER": 6.0878906499317775,
+      "EINT": 3.0439453125000004,
+      "VELY": -0.00015789799436237168
+    }
+  },
+  "amr": {
+    "complete": false,
+    "leafCount": 64,
+    "completedPasses": 0,
+    "configuredMaxBlocks": 768,
+    "configuredMaxLevel": 2
+  },
+  "amrRequestId": "84817f24-b4ed-46c3-91b5-142cb4e2ff4c",
+  "leafAtSample": {
+    "cellShape": [
+      16,
+      16
+    ],
+    "cellSpacing": [
+      0.00390625,
+      0.00390625
+    ],
+    "level": 0,
+    "logicalIndex": [
+      1,
+      13,
+      0
+    ],
+    "logicalKey": "0:1:13:0",
+    "lower": [
+      0.0625,
+      0.8125
+    ],
+    "upper": [
+      0.125,
+      0.875
+    ]
+  },
+  "meshSha256": "dd33e49d82efa3fe3f92ff70a5900dbe262d04a30bd34b8bb01049c683d6145b",
+  "baselineCommit": "f6a67758549ab4045ebcfa918648fcac9423acdf",
+  "scope": "Linux/WSL native production RT Cartesian 2D Initial Condition; no timestep or scientific output",
+  "beforeAfterUnchanged": [
+    "requestId",
+    "identity",
+    "dataSha256",
+    "diskConfigSha256",
+    "amrRequestId",
+    "meshSha256"
+  ],
+  "cleanup": {
+    "normalExitCode": 0,
+    "absentPids": [
+      276655,
+      276701,
+      277126
+    ],
+    "selectedBinaryPreviewWorkers": []
+  },
+  "acceptance": {
+    "fieldAndInspector": "PASS",
+    "limitedAmrTruthfulness": "PASS",
+    "amrBlockInspector": "PASS",
+    "displayOnlyIdentityRetention": "PASS",
+    "normalCloseCleanup": "PASS",
+    "nativeZoomPan": "UNVERIFIED",
+    "rtEvolution": "NOT RUN",
+    "cuda": "NOT RUN",
+    "fullDependencyFreshness": "UNKNOWN"
+  }
+}

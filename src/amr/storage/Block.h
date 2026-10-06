@@ -15,6 +15,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -106,7 +107,8 @@ struct Block {
      */
     void InterpolateFromCoarse(const Block& coarse, int child_idx, int dim,
                                double density_floor,
-                               double min_specific_internal_energy);
+                               double min_specific_internal_energy,
+                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
 
     /**
      * @brief Volume average data from child blocks to this coarse block.
@@ -115,7 +117,14 @@ struct Block {
      */
     void AverageToCoarse(const Block* children[], int dim,
                          double density_floor,
-                         double min_specific_internal_energy);
+                         double min_specific_internal_energy,
+                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
+    // Candidate-parent preflight returns the shared mathematical status.
+    // It never mutates source children or allocates/publishes a pool block.
+    regrid_math::Status TryAverageToCoarse(const Block* children[], int dim,
+                         double density_floor, double min_specific_internal_energy,
+                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
+
 
 
     /**
@@ -124,7 +133,8 @@ struct Block {
      * @param root_dx1/2/3  Root-level cell spacing (computed by AmrTree)
      */
     void InitGeometry(const Grid& root_grid,
-                      double root_dx1, double root_dx2, double root_dx3)
+                      double root_dx1, double root_dx2, double root_dx3,
+                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
         // Calculate cell sizes at this level
         double factor = 1.0 / (1 << level);
@@ -150,7 +160,7 @@ struct Block {
                     root_grid.nblockx1, root_grid.nblockx2, root_grid.nblockx3);
         grid.geometry = root_grid.geometry;
         grid.dim = root_grid.dim;
-        grid.InitializeTopology();
+        grid.InitializeTopology(semantics);
     }
 };
 
@@ -171,8 +181,10 @@ inline regrid_math::ConstStateView regrid_state_view(const FluidState& state)
 
 inline void Block::InterpolateFromCoarse(
     const Block& coarse, int child_idx, int dim, double density_floor,
-    double min_specific_internal_energy)
+    double min_specific_internal_energy, GridMetrics::GeometrySemantics semantics)
 {
+    const auto fine_view=GridMetrics::make_geometry_view(grid,semantics);
+    const auto coarse_view=GridMetrics::make_geometry_view(coarse.grid,semantics);
     const int nx = BLOCK_NX / 2;
     const int ny = dim >= 2 ? BLOCK_NY / 2 : 1;
     const int nz = dim == 3 ? BLOCK_NZ / 2 : 1;
@@ -203,14 +215,34 @@ inline void Block::InterpolateFromCoarse(
                 geometry.neighbours[3] = dim >= 2 ? coarse.grid.GetIndex(ci, cj + 1, ck) : geometry.center;
                 geometry.neighbours[4] = dim == 3 ? coarse.grid.GetIndex(ci, cj, ck - 1) : geometry.center;
                 geometry.neighbours[5] = dim == 3 ? coarse.grid.GetIndex(ci, cj, ck + 1) : geometry.center;
-                geometry.coarse_volume = GridMetrics::CellVolume(coarse.grid, ci, cj, ck);
+                geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
+                geometry.angular_momentum=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+                double angular_center=0.0;
+                if(geometry.angular_momentum) {
+                    geometry.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(
+                        coarse_view.GetFacePosL(ci),coarse_view.GetFacePosR(ci),coarse_view.dx2);
+                    angular_center=GridMetrics::Rz::AngularReconstructionCoordinate(
+                        coarse_view.GetFacePosL(ci),coarse_view.GetFacePosR(ci));
+                    const double lower=GridMetrics::Rz::AngularReconstructionCoordinate(
+                        coarse_view.GetFacePosL(ci-1),coarse_view.GetFacePosR(ci-1));
+                    const double upper=GridMetrics::Rz::AngularReconstructionCoordinate(
+                        coarse_view.GetFacePosL(ci+1),coarse_view.GetFacePosR(ci+1));
+                    geometry.angular_neighbour_distances[0]=angular_center-lower;
+                    geometry.angular_neighbour_distances[1]=upper-angular_center;
+                }
                 int destination[8]{};
                 for (int child = 0; child < (1 << dim); ++child) {
                     const int fi = grid.Is() + 2 * i + (child & 1);
                     const int fj = grid.Js() + 2 * j + (dim >= 2 ? (child >> 1) & 1 : 0);
                     const int fk = grid.Ks() + 2 * k + (dim == 3 ? (child >> 2) & 1 : 0);
                     destination[child] = grid.GetIndex(fi, fj, fk);
-                    geometry.fine_volumes[child] = GridMetrics::CellVolume(grid, fi, fj, fk);
+                    geometry.fine_volumes[child] = GridMetrics::CellVolume(fine_view, fi, fj, fk);
+                    if(geometry.angular_momentum) {
+                        geometry.fine_angular_measures[child]=GridMetrics::Rz::AngularMomentumMeasure(
+                            fine_view.GetFacePosL(fi),fine_view.GetFacePosR(fi),fine_view.dx2);
+                        geometry.angular_radial_offsets[child]=GridMetrics::Rz::AngularReconstructionCoordinate(
+                            fine_view.GetFacePosL(fi),fine_view.GetFacePosR(fi))-angular_center;
+                    }
                 }
                 regrid_math::ProlongationResult result{};
                 const auto status = regrid_math::prolong_family(
@@ -232,8 +264,20 @@ inline void Block::InterpolateFromCoarse(
 
 inline void Block::AverageToCoarse(
     const Block* children[], int dim, double density_floor,
-    double min_specific_internal_energy)
+    double min_specific_internal_energy, GridMetrics::GeometrySemantics semantics)
 {
+    const auto status=TryAverageToCoarse(children,dim,density_floor,
+                                       min_specific_internal_energy,semantics);
+    if(status!=regrid_math::Status::Ok)
+        throw std::runtime_error(regrid_math::status_message(status));
+}
+
+inline regrid_math::Status Block::TryAverageToCoarse(
+    const Block* children[], int dim, double density_floor,
+    double min_specific_internal_energy, GridMetrics::GeometrySemantics semantics)
+{
+    const auto coarse_view=GridMetrics::make_geometry_view(grid,semantics);
+    std::array<GridMetrics::GeometryView,8> fine_views{};
     const int nx = BLOCK_NX;
     const int ny = dim >= 2 ? BLOCK_NY : 1;
     const int nz = dim == 3 ? BLOCK_NZ : 1;
@@ -244,6 +288,8 @@ inline void Block::AverageToCoarse(
         if (children[child] == nullptr
             || children[child]->fluid_state.GetNumSpecies() != species)
             throw std::invalid_argument("invalid Host AMR restriction binding");
+    for (int child=0;child<(1<<dim);++child)
+        fine_views[child]=GridMetrics::make_geometry_view(children[child]->grid,semantics);
     std::vector<double> workspace(static_cast<std::size_t>(species));
     for (int k = 0; k < nz; ++k) {
         for (int j = 0; j < ny; ++j) {
@@ -260,20 +306,27 @@ inline void Block::AverageToCoarse(
                 const int ck = grid.Ks() + k;
                 regrid_math::RestrictionGeometry geometry{};
                 geometry.count = 1 << dim;
-                geometry.coarse_volume = GridMetrics::CellVolume(grid, ci, cj, ck);
+                geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
+                geometry.angular_momentum=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+                if(geometry.angular_momentum)
+                    geometry.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(
+                        coarse_view.GetFacePosL(ci),coarse_view.GetFacePosR(ci),coarse_view.dx2);
                 for (int cell = 0; cell < geometry.count; ++cell) {
                     const int fi = child.grid.Is() + ibase + (cell & 1);
                     const int fj = child.grid.Js() + jbase + (dim >= 2 ? (cell >> 1) & 1 : 0);
                     const int fk = child.grid.Ks() + kbase + (dim == 3 ? (cell >> 2) & 1 : 0);
                     geometry.source_cells[cell] = child.grid.GetIndex(fi, fj, fk);
-                    geometry.volumes[cell] = GridMetrics::CellVolume(child.grid, fi, fj, fk);
+                    geometry.volumes[cell] = GridMetrics::CellVolume(fine_views[child_index], fi, fj, fk);
+                    if(geometry.angular_momentum)
+                        geometry.angular_measures[cell]=GridMetrics::Rz::AngularMomentumMeasure(
+                            fine_views[child_index].GetFacePosL(fi),
+                            fine_views[child_index].GetFacePosR(fi),fine_views[child_index].dx2);
                 }
                 regrid_math::RestrictionResult result{};
                 const auto status = regrid_math::restrict_family(
                     regrid_state_view(child.fluid_state), geometry, species,
                     density_floor, min_specific_internal_energy, workspace.data(), result);
-                if (status != regrid_math::Status::Ok)
-                    throw std::runtime_error(regrid_math::status_message(status));
+                if (status != regrid_math::Status::Ok) return status;
                 const int destination = grid.GetIndex(ci, cj, ck);
                 fluid_state.set(destination, result.fluid);
                 fluid_state.enuc_rate[destination] = result.enuc;
@@ -282,6 +335,7 @@ inline void Block::AverageToCoarse(
             }
         }
     }
+    return regrid_math::Status::Ok;
 }
 
 } // namespace amr

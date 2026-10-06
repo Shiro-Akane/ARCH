@@ -86,10 +86,49 @@ class RuntimeInputTests(unittest.TestCase):
             parameter_file=self.parameter, working_directory=self.cwd,
             parameter_reader=read_parameter_map, **kwargs)
 
-    def test_default_and_explicit_ideal_do_not_consume_unused_tables(self):
-        for text in ("", "eos_type = IDEAL\neos_table_path = absent.tbl\n"):
+    def test_explicit_ideal_does_not_consume_unused_tables(self):
+        for text in ("eos_type=ideal\n", "eos_type = IDEAL\neos_table_path = absent.tbl\n"):
             self.parameter.write_text(text)
             self.assertEqual(self.capture()["dependencies"], [])
+
+    def test_missing_empty_or_unknown_eos_cannot_create_validation_identity(self):
+        for text in ("", "eos_type=\n", "eos_type=typo\n"):
+            self.parameter.write_text(text)
+            with self.subTest(text=text), self.assertRaisesRegex(
+                    RuntimeError, "explicit valid eos_type"):
+                self.capture()
+
+    def test_explicit_override_can_supply_required_eos(self):
+        self.parameter.write_text("")
+        identity = self.capture(scientific_overrides={"eos_type": "ideal"})
+        self.assertEqual(identity["eos_type"], "ideal")
+        self.assertEqual(identity["scientific_overrides"], {"eos_type": "ideal"})
+        self.assertEqual(identity["dependencies"], [])
+
+    def test_ambiguous_or_malformed_input_cannot_create_identity(self):
+        for text, code in (
+                ("eos_type=ideal\neos_type=ideal\n", "DUPLICATE_PARAMETER"),
+                ("eos_type=ideal\ngamma=1.4\ngamma=1.6\n", "DUPLICATE_PARAMETER"),
+                ("eos_type=ideal\nbroken line\n", "MALFORMED_LINE"),
+                ("eos_type=ideal\n=unused\n", "EMPTY_KEY")):
+            self.parameter.write_text(text)
+            with self.subTest(text=text), self.assertRaisesRegex(RuntimeError, code):
+                self.capture(scientific_overrides={"eos_type": "ideal"})
+
+    def test_raw_parser_retains_empty_and_expression_values(self):
+        self.parameter.write_text(
+            "# comment\neos_type = ideal # chosen\noptional =\n"
+            "x1_max=2*pi\npath=file=name\n")
+        self.assertEqual(read_parameter_map(self.parameter), {
+            "eos_type": "ideal", "optional": "", "x1_max": "2*pi", "path": "file=name"})
+
+    def test_renderer_rejects_duplicate_source_before_writing(self):
+        self.parameter.write_text("eos_type=ideal\ncompute_backend=cpu\ncompute_backend=cuda\n")
+        output = self.root / "not-created" / "rendered.par"
+        with self.assertRaisesRegex(RuntimeError, "DUPLICATE_PARAMETER"):
+            restart_validation.backend_validation._render_parameter_overrides(
+                self.parameter, output, {"compute_backend": "cpu"})
+        self.assertFalse(output.parent.exists())
 
     def test_relative_path_is_resolved_from_arch_cwd_not_parameter_directory(self):
         self.parameter.write_text("eos_type = tabular\neos_table_path = table.h5\n")

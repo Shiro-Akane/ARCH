@@ -3,7 +3,7 @@
  * @brief One Host/device authority for conservative regrid cell-family math.
  *
  * These are full-cell migration operations, not coarse/fine ghost filling.
- * Backends supply samples, physical volumes, and scratch storage; the limited
+ * Backends supply samples, physical V/W measures, and scratch storage; the limited
  * reconstruction, conservation correction, fluid admissibility, and simplex
  * projection are identical on both backends. Morton/topology is not included.
  * Workflow:
@@ -136,6 +136,13 @@ struct ProlongationGeometry {
     int neighbours[6]{};
     double coarse_volume = 0.0;
     double fine_volumes[maximum_children]{};
+    // Explicit internal RZ only. mom_w=m_phi is W-averaged; all other
+    // conserved fields retain their ordinary V measure.
+    bool angular_momentum = false;
+    double coarse_angular_measure = 0.0;
+    double fine_angular_measures[maximum_children]{};
+    double angular_neighbour_distances[2]{};
+    double angular_radial_offsets[maximum_children]{};
 };
 
 struct ProlongationResult {
@@ -160,8 +167,13 @@ ARCH_HOST_DEVICE inline double reconstruct(
     int field, int child)
 {
     const double center = source.conserved_sample(field, geometry.center);
-    const double sx = minmod(center - source.conserved_sample(field, geometry.neighbours[0]),
-                            source.conserved_sample(field, geometry.neighbours[1]) - center);
+    const double lower_difference=center-source.conserved_sample(field,geometry.neighbours[0]);
+    const double upper_difference=source.conserved_sample(field,geometry.neighbours[1])-center;
+    const bool angular=geometry.angular_momentum && field==3;
+    const double sx = angular
+        ? minmod(lower_difference/geometry.angular_neighbour_distances[0],
+                 upper_difference/geometry.angular_neighbour_distances[1])
+        : minmod(lower_difference,upper_difference);
     const double sy = geometry.dimension >= 2
         ? minmod(center - source.conserved_sample(field, geometry.neighbours[2]),
                  source.conserved_sample(field, geometry.neighbours[3]) - center) : 0.0;
@@ -170,7 +182,8 @@ ARCH_HOST_DEVICE inline double reconstruct(
                  source.conserved_sample(field, geometry.neighbours[5]) - center) : 0.0;
     // Accumulate limited slopes in x, y, z order on both backends. Inactive
     // axes contribute zero; each child lies at +/-1/4 of the parent width.
-    return center + ((child & 1) ? 0.25 : -0.25) * sx
+    return center + (angular ? geometry.angular_radial_offsets[child]
+                            : ((child & 1) ? 0.25 : -0.25)) * sx
         + ((child & 2) ? 0.25 : -0.25) * sy
         + ((child & 4) ? 0.25 : -0.25) * sz;
 }
@@ -185,6 +198,14 @@ ARCH_HOST_DEVICE inline Status prolong_family(
         || !std::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
         return Status::InvalidGeometry;
     const int cells = 1 << geometry.dimension;
+    if (geometry.angular_momentum &&
+        (geometry.dimension!=2 || !std::isfinite(geometry.coarse_angular_measure)
+         || geometry.coarse_angular_measure<=0.0
+         || !std::isfinite(geometry.angular_neighbour_distances[0])
+         || !std::isfinite(geometry.angular_neighbour_distances[1])
+         || geometry.angular_neighbour_distances[0]<=0.0
+         || geometry.angular_neighbour_distances[1]<=0.0))
+        return Status::InvalidGeometry;
     result.rhoX = workspace;
     double* deviation = species > 0 ? workspace
         + static_cast<std::size_t>(species) * maximum_children : nullptr;
@@ -192,6 +213,11 @@ ARCH_HOST_DEVICE inline Status prolong_family(
         + static_cast<std::size_t>(species) * (2 * maximum_children) : nullptr;
     for (int cell = 0; cell < cells; ++cell) {
         if (!std::isfinite(geometry.fine_volumes[cell]) || geometry.fine_volumes[cell] <= 0.0)
+            return Status::InvalidGeometry;
+        if(geometry.angular_momentum &&
+           (!std::isfinite(geometry.fine_angular_measures[cell])
+            || geometry.fine_angular_measures[cell]<=0.0
+            || !std::isfinite(geometry.angular_radial_offsets[cell])))
             return Status::InvalidGeometry;
         for (int field = 0; field < 5; ++field)
             component(result.fluid[cell], field) = reconstruct(source, geometry, field, cell);
@@ -201,9 +227,12 @@ ARCH_HOST_DEVICE inline Status prolong_family(
     }
     for (int field = 0; field < 5; ++field) {
         double integral = 0.0;
+        const bool angular=geometry.angular_momentum && field==3;
         for (int cell = 0; cell < cells; ++cell)
-            integral += component(result.fluid[cell], field) * geometry.fine_volumes[cell];
-        const double shift = source.fields[field][geometry.center] - integral / geometry.coarse_volume;
+            integral += component(result.fluid[cell], field)
+                * (angular ? geometry.fine_angular_measures[cell] : geometry.fine_volumes[cell]);
+        const double shift = source.fields[field][geometry.center] - integral
+            / (angular ? geometry.coarse_angular_measure : geometry.coarse_volume);
         for (int cell = 0; cell < cells; ++cell)
             component(result.fluid[cell], field) += shift;
     }
@@ -238,11 +267,12 @@ ARCH_HOST_DEVICE inline Status prolong_family(
         fluid_theta = lower;
     }
     if (fluid_theta < 1.0) fluid_theta *= 1.0 - 64.0 * std::numeric_limits<double>::epsilon();
-    for (int cell = 0; cell < cells; ++cell) {
-        result.fluid[cell] = blend_conserved_state(parent, result.fluid[cell], fluid_theta);
-        if (!is_admissible_conserved_state(result.fluid[cell], density_floor, min_eint))
-            return Status::FineFluid;
-    }
+    if(!geometry.angular_momentum || species==0)
+        for (int cell = 0; cell < cells; ++cell) {
+            result.fluid[cell] = blend_conserved_state(parent, result.fluid[cell], fluid_theta);
+            if (!is_admissible_conserved_state(result.fluid[cell], density_floor, min_eint))
+                return Status::FineFluid;
+        }
     int closure_species = -1;
     double parent_sum = 0.0;
     const double tolerance = composition_simplex_tolerance(species);
@@ -267,7 +297,48 @@ ARCH_HOST_DEVICE inline Status prolong_family(
         const double shift = target - integral / geometry.coarse_volume;
         for (int cell = 0; cell < cells; ++cell) result.rhoX[static_cast<std::size_t>(sp) * maximum_children + cell] += shift;
     }
-    if (species > 0) {
+    if(geometry.angular_momentum && species>0) {
+        // One family-wide theta for rho/E/m_phi and rhoX deviations.
+        // Each component's deviations have zero integral under its own V/W
+        // measure. Independent clipping would destroy those conserved sums.
+        for(int cell=0;cell<cells;++cell) {
+            double sum=0.0;
+            for(int sp=0;sp<species;++sp)
+                sum+=result.rhoX[static_cast<std::size_t>(sp)*maximum_children+cell];
+            result.rhoX[static_cast<std::size_t>(closure_species)*maximum_children+cell]
+                +=result.fluid[cell].rho-sum;
+        }
+        double theta=fluid_theta;
+        for(int sp=0;sp<species;++sp)
+            for(int cell=0;cell<cells;++cell) {
+                const double baseline=parent.rho*parent_X[sp];
+                const double candidate=result.rhoX[static_cast<std::size_t>(sp)*maximum_children+cell];
+                if(!std::isfinite(candidate)) return Status::CompositionProjection;
+                if(candidate<0.0) theta=minimum(theta,baseline/(baseline-candidate));
+            }
+        theta=unit_clamp(theta);
+        if(theta<fluid_theta) theta*=1.0-32.0*std::numeric_limits<double>::epsilon();
+        for(int cell=0;cell<cells;++cell) {
+            result.fluid[cell]=blend_conserved_state(parent,result.fluid[cell],theta);
+            if(!is_admissible_conserved_state(result.fluid[cell],density_floor,min_eint))
+                return Status::FineFluid;
+            double sum=0.0;
+            for(int sp=0;sp<species;++sp) {
+                const std::size_t index=static_cast<std::size_t>(sp)*maximum_children+cell;
+                const double baseline=parent.rho*parent_X[sp];
+                result.rhoX[index]=theta<=0.0 ? baseline
+                    : baseline+theta*(result.rhoX[index]-baseline);
+                if(!std::isfinite(result.rhoX[index]) || result.rhoX[index]<0.0)
+                    return Status::CompositionProjection;
+                sum+=result.rhoX[index];
+            }
+            const auto closure=static_cast<std::size_t>(closure_species)*maximum_children+cell;
+            result.rhoX[closure]+=result.fluid[cell].rho-sum;
+            if(!std::isfinite(result.rhoX[closure]) || result.rhoX[closure]<0.0)
+                return Status::CompositionClosure;
+        }
+    }
+    if (species > 0 && !geometry.angular_momentum) {
         double excess[maximum_children]{};
         for (int cell = 0; cell < cells; ++cell) {
             double sum = 0.0;
@@ -309,6 +380,9 @@ struct RestrictionGeometry {
     int source_cells[maximum_children]{};
     double volumes[maximum_children]{};
     double coarse_volume = 0.0;
+    bool angular_momentum = false;
+    double angular_measures[maximum_children]{};
+    double coarse_angular_measure = 0.0;
 };
 
 struct RestrictionResult {
@@ -326,20 +400,34 @@ ARCH_HOST_DEVICE inline Status restrict_family(
         || species < 0 || (species > 0 && workspace == nullptr)
         || !std::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
         return Status::InvalidGeometry;
+    if(geometry.angular_momentum &&
+       (geometry.count!=4 || !std::isfinite(geometry.coarse_angular_measure)
+        || geometry.coarse_angular_measure<=0.0))
+        return Status::InvalidGeometry;
     FluidVector integral{};
+    double angular_integral = 0.0;
     double enuc_integral = 0.0;
     for (int sp = 0; sp < species; ++sp) workspace[sp] = 0.0;
     for (int cell = 0; cell < geometry.count; ++cell) {
         const int index = geometry.source_cells[cell];
         const double volume = geometry.volumes[cell];
         if (!std::isfinite(volume) || volume <= 0.0) return Status::InvalidGeometry;
-        integral = integral + source.fluid(index) * volume;
+        FluidVector sample=source.fluid(index);
+        if(geometry.angular_momentum) sample.mom_w=0.0;
+        integral = integral + sample * volume;
+        if(geometry.angular_momentum) {
+            const double measure=geometry.angular_measures[cell];
+            if(!std::isfinite(measure) || measure<=0.0) return Status::InvalidGeometry;
+            angular_integral+=source.fields[3][index]*measure;
+        }
         enuc_integral += source.fields[5][index] * volume;
         for (int sp = 0; sp < species; ++sp)
             workspace[sp] += restriction_math::weighted_species_density(
                 source.fields[0][index], source.fraction(sp, index), volume);
     }
     result.fluid = integral * (1.0 / geometry.coarse_volume);
+    if(geometry.angular_momentum)
+        result.fluid.mom_w=angular_integral/geometry.coarse_angular_measure;
     if (!is_admissible_conserved_state(result.fluid, density_floor, min_eint)) return Status::CoarseFluid;
     result.enuc = enuc_integral / geometry.coarse_volume;
     if (!std::isfinite(result.enuc)) return Status::RestrictionEnuc;

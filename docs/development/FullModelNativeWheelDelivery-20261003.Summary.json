@@ -1,0 +1,28 @@
+{
+  "baseline": "a2e4b9c5683bec06e440c441f0f0450f1a50f42c",
+  "pid": 355883,
+  "startIdentity": "2636259",
+  "liveAtAudit": true,
+  "passiveObserverSha256": "1133616616894bc0be49736f3da2a378e7d5489a7b591bf32e8e7935fbfa895a",
+  "trustedPointerEvents": 2,
+  "wheelEvents": 0,
+  "axes": [
+    "0",
+    "0",
+    "0.05",
+    "0.2",
+    "0.1",
+    "0.4",
+    "0.15",
+    "0.6",
+    "0.2",
+    "0.8",
+    "0.25",
+    "1"
+  ],
+  "current": true,
+  "nativeZoom": "NOT VERIFIED",
+  "realMouseResult": "pending user",
+  "binaryUnchanged": true,
+  "configUnchanged": true
+}

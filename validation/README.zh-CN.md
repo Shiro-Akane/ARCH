@@ -164,6 +164,6 @@ ARCH 的[表数据契约](../src/physics/eos/TabularEOS.zh-CN.md)包含规范化
 - [构建测量](backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)
 - [容量测量](backend/results/device-memory-first-law-20260907/README.zh-CN.md)
 - [设备检查记录](backend/results/final-first-law-20260907/README.zh-CN.md)
-- [交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50/)
+- [交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50)
 
 </details>

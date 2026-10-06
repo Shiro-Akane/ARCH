@@ -1,0 +1,34 @@
+{
+  "scope": "Actual Driver CFL/diffusion candidate aggregation, no timestep advancement",
+  "exitCode": 0,
+  "stdout": "RZ_RUNTIME_DT direction=0 inner=0 rkl=1 hydro=0.00063382882430512981 independent_hydro=0.00063382882430512981 diffusion_fe=0.01502403846153846 diffusion_sts=395.38461538461536\nRZ_RUNTIME_DT direction=0 inner=0 rkl=2 hydro=0.00063382882430512981 independent_hydro=0.00063382882430512981 diffusion_fe=0.01502403846153846 diffusion_sts=196.14783653846152\nRZ_RUNTIME_HALO direction=0 inner=0 leaves=5 version=1 PASS\nRZ_RUNTIME_DT direction=0 inner=1 rkl=1 hydro=0.00063382882430512981 independent_hydro=0.00063382882430512981 diffusion_fe=0.039047712700515783 diffusion_sts=1027.6108455969338\nRZ_RUNTIME_DT direction=0 inner=1 rkl=2 hydro=0.00063382882430512981 independent_hydro=0.00063382882430512981 diffusion_fe=0.039047712700515783 diffusion_sts=509.79131793285387\nRZ_RUNTIME_HALO direction=0 inner=1 leaves=5 version=1 PASS\nRZ_RUNTIME_DT direction=1 inner=0 rkl=1 hydro=0.00057546900903755955 independent_hydro=0.00057546900903755944 diffusion_fe=0.027901785714285712 diffusion_sts=734.28571428571433\nRZ_RUNTIME_DT direction=1 inner=0 rkl=2 hydro=0.00057546900903755955 independent_hydro=0.00057546900903755944 diffusion_fe=0.027901785714285712 diffusion_sts=364.27455357142856\nRZ_RUNTIME_HALO direction=1 inner=0 leaves=5 version=1 PASS\nRZ_RUNTIME_DT direction=1 inner=1 rkl=1 hydro=0.00057546900903755955 independent_hydro=0.00057546900903755944 diffusion_fe=0.039048157242518818 diffusion_sts=1027.6225445199193\nRZ_RUNTIME_DT direction=1 inner=1 rkl=2 hydro=0.00057546900903755955 independent_hydro=0.00057546900903755944 diffusion_fe=0.039048157242518818 diffusion_sts=509.7971216954287\nRZ_RUNTIME_HALO direction=1 inner=1 leaves=5 version=1 PASS\n",
+  "stderr": "",
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "executableSha256": "f9cf3e1c7e51c21047723c9cac05312688cc837bc03dd3f262e543852b0f7be1",
+  "recompiledSources": {
+    "tests/host/driver/test_rz_runtime_boundary.cpp": "3c93493a803756ce2b02c7cbf21aa2d87bfe33be2f529e820a8fcba1b38062db",
+    "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+    "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+    "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69"
+  },
+  "limitations": [
+    "RZ production regrid remains gated",
+    "CUDA not qualified",
+    "No scientific evolution acceptance",
+    "Actual RKL stage evolution still needs RZ propagation",
+    "Public chart/config/checkpoint migration incomplete"
+  ],
+  "baseline": "25210f04e5faed1460e69f79c193dceefb700e64",
+  "timestepHeaderSha256": "aa787a3812fa110806608671b3892c88dddc5c30ed3ef82d4cf17a8bb7dc2d99",
+  "checks": {
+    "runtime_four_cases": "PASS",
+    "rkl_candidate_routes": "PASS 8 cases",
+    "active_nan_density": "Rejected by actual Driver candidate aggregation",
+    "curvilinear_metrics": "PASS",
+    "shared_stage_scheduler": "PASS",
+    "reduction_contract": "PASS"
+  },
+  "hydroMaxAbsoluteError": 1.0842021724855044e-19,
+  "diffusionReferenceScope": "Binding/aggregation equality to explicit RZ shared leaf; not independent science oracle",
+  "rawLogs": "studio/.local/integration/rz-runtime-timestep-20261004"
+}

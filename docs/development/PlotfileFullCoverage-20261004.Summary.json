@@ -1,0 +1,314 @@
+{
+  "sourceCommit": "17d5536fc29a643236b39af4fec7d60cacb999c4",
+  "ownerContractCommit": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+  "sourceAtMeasurement": "clean baseline plus new read-only diagnostics; no production changes",
+  "rows": [
+    {
+      "scope": "all stored Cartesian leaf cells; exact endpoint diagnostics, not scientific tolerance acceptance",
+      "plotfileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+      "plotfileBytes": 38360,
+      "dimension": 1,
+      "shape": [
+        12,
+        16
+      ],
+      "leafBlocks": 12,
+      "cells": 192,
+      "activeRootBlocks": [
+        4
+      ],
+      "externalDomain": [
+        [
+          0,
+          1
+        ]
+      ],
+      "nativeStoredCoverage": {
+        "exactlyOnceWithinDomain": true,
+        "measures": {
+          "gap": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "overlap_excess": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "outside": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "covered": {
+            "exact": "1",
+            "float": 1.0
+          }
+        },
+        "compressedBins": {
+          "gap": 0,
+          "overlap": 0,
+          "outside": 0
+        },
+        "maxMultiplicity": 1,
+        "compressedGridShape": [
+          193
+        ],
+        "examples": []
+      },
+      "logicalDyadicCoverage": {
+        "exactlyOnceWithinDomain": true,
+        "measures": {
+          "gap": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "overlap_excess": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "outside": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "covered": {
+            "exact": "1",
+            "float": 1.0
+          }
+        },
+        "compressedBins": {
+          "gap": 0,
+          "overlap": 0,
+          "outside": 0
+        },
+        "maxMultiplicity": 1,
+        "compressedGridShape": [
+          193
+        ],
+        "examples": []
+      },
+      "maxStoredEndpointDifferenceFromLogicalDomain": {
+        "exact": "0",
+        "float": 0.0
+      },
+      "sourceUnchanged": true
+    },
+    {
+      "scope": "all stored Cartesian leaf cells; exact endpoint diagnostics, not scientific tolerance acceptance",
+      "plotfileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+      "plotfileBytes": 474616,
+      "dimension": 2,
+      "shape": [
+        20,
+        16,
+        16
+      ],
+      "leafBlocks": 20,
+      "cells": 5120,
+      "activeRootBlocks": [
+        2,
+        1
+      ],
+      "externalDomain": [
+        [
+          0,
+          25.6
+        ],
+        [
+          0,
+          12.8
+        ]
+      ],
+      "nativeStoredCoverage": {
+        "exactlyOnceWithinDomain": false,
+        "measures": {
+          "gap": {
+            "exact": "299039015257400951/1267650600228229401496703205376",
+            "float": 2.359001882723533e-13
+          },
+          "overlap_excess": {
+            "exact": "82866233143617131/633825300114114700748351602688",
+            "float": 1.3073986337985845e-13
+          },
+          "outside": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "covered": {
+            "exact": "415383748682785957360284633210537/1267650600228229401496703205376",
+            "float": 327.6799999999998
+          }
+        },
+        "compressedBins": {
+          "gap": 736,
+          "overlap": 544,
+          "outside": 0
+        },
+        "maxMultiplicity": 2,
+        "compressedGridShape": [
+          97,
+          86
+        ],
+        "examples": [
+          {
+            "kind": "gap",
+            "multiplicity": 0,
+            "bounds": [
+              [
+                "0",
+                "3602879701896397/18014398509481984"
+              ],
+              [
+                "5404319552844595/4503599627370496",
+                "1351079888211149/1125899906842624"
+              ]
+            ]
+          },
+          {
+            "kind": "overlap",
+            "multiplicity": 2,
+            "bounds": [
+              [
+                "0",
+                "3602879701896397/18014398509481984"
+              ],
+              [
+                "5854679515581645/2251799813685248",
+                "2927339757790823/1125899906842624"
+              ]
+            ]
+          },
+          {
+            "kind": "overlap",
+            "multiplicity": 2,
+            "bounds": [
+              [
+                "0",
+                "3602879701896397/18014398509481984"
+              ],
+              [
+                "3",
+                "6755399441055745/2251799813685248"
+              ]
+            ]
+          },
+          {
+            "kind": "overlap",
+            "multiplicity": 2,
+            "bounds": [
+              [
+                "0",
+                "3602879701896397/18014398509481984"
+              ],
+              [
+                "8106479329266893/2251799813685248",
+                "4053239664633447/1125899906842624"
+              ]
+            ]
+          },
+          {
+            "kind": "overlap",
+            "multiplicity": 2,
+            "bounds": [
+              [
+                "0",
+                "3602879701896397/18014398509481984"
+              ],
+              [
+                "5",
+                "5629499534213121/1125899906842624"
+              ]
+            ]
+          },
+          {
+            "kind": "overlap",
+            "multiplicity": 2,
+            "bounds": [
+              [
+                "0",
+                "3602879701896397/18014398509481984"
+              ],
+              [
+                "6",
+                "6755399441055745/1125899906842624"
+              ]
+            ]
+          }
+        ]
+      },
+      "logicalDyadicCoverage": {
+        "exactlyOnceWithinDomain": true,
+        "measures": {
+          "gap": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "overlap_excess": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "outside": {
+            "exact": "0",
+            "float": 0.0
+          },
+          "covered": {
+            "exact": "12980742146337070512478121581609/39614081257132168796771975168",
+            "float": 327.68000000000006
+          }
+        },
+        "compressedBins": {
+          "gap": 0,
+          "overlap": 0,
+          "outside": 0
+        },
+        "maxMultiplicity": 1,
+        "compressedGridShape": [
+          97,
+          65
+        ],
+        "examples": []
+      },
+      "maxStoredEndpointDifferenceFromLogicalDomain": {
+        "exact": "15/4503599627370496",
+        "float": 3.3306690738754696e-15
+      },
+      "sourceUnchanged": true
+    }
+  ],
+  "pointReproduction": {
+    "plotfileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+    "sourceUnchanged": true,
+    "results": [
+      {
+        "kind": "gap",
+        "point": [
+          0.1,
+          1.2
+        ],
+        "matchCount": 0,
+        "indices": [],
+        "error": "NO_NATIVE_CELL: point outside stored cells or in a gap."
+      },
+      {
+        "kind": "overlap",
+        "point": [
+          0.1,
+          2.6
+        ],
+        "matchCount": 2,
+        "indices": [
+          1216,
+          1232
+        ],
+        "error": "AMBIGUOUS_NATIVE_CELL: overlapping stored bounds."
+      }
+    ],
+    "scope": "Real stored-boundary Inspector failure reproduction; no tolerance acceptance or geometry repair"
+  },
+  "checks": {
+    "scopedUnittestPass": 5,
+    "sodDiagnosticExit": 0,
+    "cellularDiagnosticExit": 1,
+    "pointReproductionExit": 0
+  },
+  "scope": "t=0 Cartesian full stored leaf-cell coverage diagnostics only; not evolution, EOS accuracy or scientific tolerance acceptance",
+  "finding": "Cellular stored FP64 y-face rounding creates exact gaps/overlaps despite complete logical leaf tiling. No tolerance or repair applied."
+}

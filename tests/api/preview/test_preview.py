@@ -18,7 +18,11 @@ ENV = dict(os.environ, OMP_NUM_THREADS='1', CUDA_VISIBLE_DEVICES='')
 
 
 def config(**overrides):
-    return BASE + ('\n' + '\n'.join(f'{k} = {v}' for k, v in overrides.items()) + '\n').encode()
+    # Replace existing assignments: duplicate keys are configuration errors.
+    lines = [line for line in BASE.splitlines()
+             if line.split(b'#', 1)[0].split(b'=', 1)[0].strip().decode() not in overrides]
+    return b'\n'.join(lines) + ('\n' + '\n'.join(
+        f'{k} = {v}' for k, v in overrides.items()) + '\n').encode()
 
 
 class PreviewContract(unittest.TestCase):
@@ -80,13 +84,16 @@ class PreviewContract(unittest.TestCase):
         self.assertEqual(state['amr']['initialRefinement'], 'not_executed')
         self.assertIsNone(state['amr']['actualHierarchy'])
 
-    def test_unsaved_values_defaults_and_resolution_independence(self):
+    def test_unsaved_values_and_resolution_independence(self):
         original = self.cwd / 'original.par'
         original.write_bytes(BASE)
         self.invoke(config(x_pos=.2), '--samples', '17')
         self.assertEqual(original.read_bytes(), BASE)
         payload = b'\n'.join(line for line in BASE.splitlines() if not line.startswith(b'x_pos')) + b'\n'
-        result = self.invoke(payload, '--samples', '2')
+        missing = self.invoke(payload, expected=3)
+        self.assertEqual(missing['stage'], 'configuration')
+        self.assertIsNone(missing['data'])
+        result = self.invoke(BASE, '--samples', '2')
         fields = {f['key']: f['values'] for f in result['data']['fields']}
         self.assertEqual(fields['DENS'], [1, .125])
         self.assertEqual(result['state']['grid']['axes'][0]['rootCells'], 128)
@@ -111,16 +118,16 @@ class PreviewContract(unittest.TestCase):
 
     def test_errors_preserve_confirmed_state_and_never_fallback(self):
         for payload, case, status, stage in [
-            (BASE, 'NoSuchCase', 4, 'support'),
+            (BASE, 'NoSuchCase', 3, 'configuration'),
             (config(nblockx2=1), 'Sod', 4, 'support'),
             (config(geometry='spherical'), 'Sod', 4, 'support'),
             (config(restart='true', restart_file='missing.h5'), 'Sod', 4, 'support'),
             (config(x_pos=2), 'Sod', 5, 'setup'),
-            (config(x_pos='nan'), 'Sod', 5, 'setup'),
+            (config(x_pos='nan'), 'Sod', 3, 'configuration'),
             (config(nblockx1=0), 'Sod', 3, 'configuration'),
             (config(lrefinemax=16), 'Sod', 3, 'configuration'),
-            (config(eos_type='unknown'), 'Sod', 5, 'eos'),
-            (config(eos_type='helmholtz', eos_table_path='absent.dat'), 'Sod', 5, 'eos'),
+            (config(eos_type='unknown'), 'Sod', 3, 'configuration'),
+            (config(eos_type='helmholtz', eos_coulomb_mult=1, eos_table_path='absent.dat'), 'Sod', 5, 'eos'),
             (config(eos_type='tabular', eos_table_path='absent.h5'), 'Sod', 5, 'eos'),
         ]:
             with self.subTest(case=case, payload=payload[-150:]):
@@ -128,7 +135,7 @@ class PreviewContract(unittest.TestCase):
                 self.assertEqual(result['stage'], stage)
                 self.assertIsNone(result['data'])
                 self.assertEqual(result['state']['configuration'],
-                                 'not_loaded' if payload in (config(nblockx1=0), config(lrefinemax=16)) else 'parsed')
+                                 'not_loaded' if stage == 'configuration' else 'parsed')
                 self.assertEqual(result['identity']['configRevision'], hashlib.sha256(payload).hexdigest())
         result = self.invoke(config(restart='maybe'), expected=3)
         self.assertEqual(result['state']['configuration'], 'not_loaded')
@@ -169,7 +176,7 @@ class PreviewContract(unittest.TestCase):
 
     def test_real_helmholtz_loader_reports_its_source(self):
         table = ROOT / 'EOS_toolkit/tables/helmholtz/helm_table.dat'
-        payload = config(eos_type='helmholtz', eos_table_path=str(table),
+        payload = config(eos_type='helmholtz', eos_coulomb_mult=1, eos_table_path=str(table),
                          rho_left=1e7, rho_right=1e6, p_left=3e24, p_right=1e23)
         result = self.invoke(payload, '--samples', '2')
         eos = result['state']['eos']
@@ -178,7 +185,7 @@ class PreviewContract(unittest.TestCase):
 
     def test_helmholtz_pressure_below_source_range_is_rejected(self):
         table = ROOT / 'EOS_toolkit/tables/helmholtz/helm_table.dat'
-        payload = config(eos_type='helmholtz', eos_table_path=str(table),
+        payload = config(eos_type='helmholtz', eos_coulomb_mult=1, eos_table_path=str(table),
                          rho_left=1e7, rho_right=1e6, p_left=1e24, p_right=1e23)
         result = self.invoke(payload, '--samples', '2', expected=6)
         self.assertTrue(any(d['code']=='INITIALIZATION_FAILED' for d in result['diagnostics']))

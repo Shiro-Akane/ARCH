@@ -1,0 +1,369 @@
+{
+  "scope": "Historical hosted job timestamps; not current CI qualification/cold-cache comparison",
+  "sourceHead": "edda3b7cc283977960e3311aaf88fb6758f3ec53",
+  "currentWorkflowSha256": "35cec3d3a10f05c25c081dbb1000ee98a498a2cf56b3c57f12242fcacd4cd492",
+  "currentBranchActionsRunCount": 0,
+  "historicalRuns": [
+    {
+      "runId": 36329736632,
+      "headSha": "131118ccc3a0167656dd1b6834997341c65b16b0",
+      "branch": "compute/optim",
+      "workflowSha256": "8fbd89eb7a9dd9fd880ad50b1bfa109fe9ca692f2db8fbdbab52e342fe331e44",
+      "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/36329736632",
+      "jobs": [
+        {
+          "name": "Tooling",
+          "conclusion": "success",
+          "labels": [
+            "ubuntu-24.04"
+          ],
+          "wallSeconds": 43.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Check out the tested revision",
+              "conclusion": "success",
+              "wallSeconds": 4.0
+            },
+            {
+              "name": "Prepare host tools",
+              "conclusion": "success",
+              "wallSeconds": 20.0
+            },
+            {
+              "name": "Validate workflow syntax",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Audit shared implementation and header boundaries",
+              "conclusion": "success",
+              "wallSeconds": 2.0
+            },
+            {
+              "name": "Run the existing Python suite without skips",
+              "conclusion": "success",
+              "wallSeconds": 12.0
+            },
+            {
+              "name": "Retain tooling diagnostics",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Post Check out the tested revision",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            }
+          ]
+        },
+        {
+          "name": "CPU Release",
+          "conclusion": "success",
+          "labels": [
+            "ubuntu-24.04"
+          ],
+          "wallSeconds": 527.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Check out source and the required EOS table",
+              "conclusion": "success",
+              "wallSeconds": 8.0
+            },
+            {
+              "name": "Prepare the CPU toolchain",
+              "conclusion": "success",
+              "wallSeconds": 15.0
+            },
+            {
+              "name": "Identify native compiler targets for the cache",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Restore compiler cache",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Configure the existing CPU Release preset with tests and KLU",
+              "conclusion": "success",
+              "wallSeconds": 27.0
+            },
+            {
+              "name": "Build the application and existing CPU validation suite",
+              "conclusion": "success",
+              "wallSeconds": 333.0
+            },
+            {
+              "name": "Run every configured CPU test",
+              "conclusion": "success",
+              "wallSeconds": 134.0
+            },
+            {
+              "name": "Validate low-density physical trajectories and repair accounting",
+              "conclusion": "success",
+              "wallSeconds": 5.0
+            },
+            {
+              "name": "Report cache use",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Save cache after a successful main or V1 push",
+              "conclusion": "skipped",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Retain CPU diagnostics, not build products or checkpoints",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Post Check out source and the required EOS table",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            }
+          ]
+        },
+        {
+          "name": "CI required",
+          "conclusion": "success",
+          "labels": [
+            "ubuntu-24.04"
+          ],
+          "wallSeconds": 3.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Require both jobs to succeed",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            }
+          ]
+        }
+      ],
+      "cacheClassification": "UNKNOWN: step success does not prove cache hit",
+      "currentRevisionAcceptance": false,
+      "criticalPathJobSeconds": 527.0,
+      "hasStudioHostJob": false
+    },
+    {
+      "runId": 36330347084,
+      "headSha": "25adec4224497981a0c124a3485f786194975be4",
+      "branch": "main",
+      "workflowSha256": "8fbd89eb7a9dd9fd880ad50b1bfa109fe9ca692f2db8fbdbab52e342fe331e44",
+      "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/36330347084",
+      "jobs": [
+        {
+          "name": "CPU Release",
+          "conclusion": "success",
+          "labels": [
+            "ubuntu-24.04"
+          ],
+          "wallSeconds": 497.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Check out source and the required EOS table",
+              "conclusion": "success",
+              "wallSeconds": 12.0
+            },
+            {
+              "name": "Prepare the CPU toolchain",
+              "conclusion": "success",
+              "wallSeconds": 26.0
+            },
+            {
+              "name": "Identify native compiler targets for the cache",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Restore compiler cache",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Configure the existing CPU Release preset with tests and KLU",
+              "conclusion": "success",
+              "wallSeconds": 30.0
+            },
+            {
+              "name": "Build the application and existing CPU validation suite",
+              "conclusion": "success",
+              "wallSeconds": 289.0
+            },
+            {
+              "name": "Run every configured CPU test",
+              "conclusion": "success",
+              "wallSeconds": 126.0
+            },
+            {
+              "name": "Validate low-density physical trajectories and repair accounting",
+              "conclusion": "success",
+              "wallSeconds": 3.0
+            },
+            {
+              "name": "Report cache use",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Save cache after a successful main or V1 push",
+              "conclusion": "success",
+              "wallSeconds": 3.0
+            },
+            {
+              "name": "Retain CPU diagnostics, not build products or checkpoints",
+              "conclusion": "success",
+              "wallSeconds": 2.0
+            },
+            {
+              "name": "Post Check out source and the required EOS table",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            }
+          ]
+        },
+        {
+          "name": "Tooling",
+          "conclusion": "success",
+          "labels": [
+            "ubuntu-24.04"
+          ],
+          "wallSeconds": 37.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Check out the tested revision",
+              "conclusion": "success",
+              "wallSeconds": 3.0
+            },
+            {
+              "name": "Prepare host tools",
+              "conclusion": "success",
+              "wallSeconds": 13.0
+            },
+            {
+              "name": "Validate workflow syntax",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Audit shared implementation and header boundaries",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Run the existing Python suite without skips",
+              "conclusion": "success",
+              "wallSeconds": 16.0
+            },
+            {
+              "name": "Retain tooling diagnostics",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Post Check out the tested revision",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            }
+          ]
+        },
+        {
+          "name": "CI required",
+          "conclusion": "success",
+          "labels": [
+            "ubuntu-24.04"
+          ],
+          "wallSeconds": 4.0,
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            },
+            {
+              "name": "Require both jobs to succeed",
+              "conclusion": "success",
+              "wallSeconds": 1.0
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success",
+              "wallSeconds": 0.0
+            }
+          ]
+        }
+      ],
+      "cacheClassification": "UNKNOWN: step success does not prove cache hit",
+      "currentRevisionAcceptance": false,
+      "criticalPathJobSeconds": 497.0,
+      "hasStudioHostJob": false
+    }
+  ],
+  "finding": "CI-HOSTED-CURRENT-01",
+  "state": "OPEN",
+  "unchanged": [
+    "workflow triggers",
+    "timeout",
+    "required checks",
+    "Core source",
+    "scientific budgets"
+  ],
+  "limits": [
+    "No logs/cache-hit evidence",
+    "Runner image label not identical hardware",
+    "Historical source lacks current Studio/Host job",
+    "Lower second-run time does not prove cached"
+  ]
+}

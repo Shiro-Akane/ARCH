@@ -1,0 +1,299 @@
+{
+  "status": "SCOPED_CPU_PASS",
+  "scope": "Nonnegative exact stored full-ring leaf sources, general translated moment interval and budget-checked parent traversal; not complete geometry/source/RHS/physical acceptance",
+  "baseCommit": "d02f337da429333bbd23aab00dd2fd64597fdd15",
+  "binarySha256": "b3f2c618d1912f1e2f0ae709dfab1e0af33b3f4302a9063d53dcbd680359cd06",
+  "productionBinaryUnchanged": true,
+  "reusedFrozenJensReceipt": "validation/io/results/rz-repair-ledger-20261005/summary.json",
+  "finalProbeSha256": "d78854ace1aa130c041dfdd255f72e2cdef116ad82fec364e76d6e2df39fb292",
+  "referenceProbeSha256": "0f7b73f57da4560ba12060f73fe13f8fc5fb0d57f22e7b47ccf127cc1bd64524",
+  "referenceProbeDataSha256": "1169f9af2967505db6b6ca5ce450a01fd9be1dfb4ae039feb1f994079b597c59",
+  "finalProbeDataBitIdentical": true,
+  "intervalReference": {
+    "status": "PASS",
+    "scope": "Exact stored full-ring source geometry/moment companion and far diagnostic containment; not full physical geometry/RHS/RZ acceptance",
+    "cases": 4,
+    "nodes": 116,
+    "momentComparisons": 2320,
+    "decimalNewtonComparisons": 16,
+    "decimalPrecisions": [
+      80,
+      120
+    ],
+    "probeSha256": "0f7b73f57da4560ba12060f73fe13f8fc5fb0d57f22e7b47ccf127cc1bd64524",
+    "rows": [
+      {
+        "mixed": false,
+        "radialOrigin": 0,
+        "leafCount": 16,
+        "nodeCount": 21,
+        "independentMass": "4.83923078377337794890286072943117652064840673951105953391341173733228866797144805836630279236181701945021326058719082277",
+        "independentAxialDipole": "0.073631077818510702876489262616525597869598455653246166091687686608888540545725878346556178685261861767416350572762491961",
+        "supportUpper": 1.38278221853732,
+        "independentSupportSquared": "1.25000000000000002775557561562891428096276945716484903489117703397092741524065928615527809597551822662353515625",
+        "farChecks": [
+          {
+            "observer": [
+              60,
+              80
+            ],
+            "lower": -3.2372113381764493e-09,
+            "upper": -3.2371938683772083e-09,
+            "generalTailUpper": 8.734899608322206e-15,
+            "evaluationWidth": 2.3988237764037803e-23,
+            "newton12Precision80": "-3.2372026008516417816530836657463712723181565716445440997436195482448711597214737E-9",
+            "newton16Precision100": "-3.237202600851653710666306063839103018691125114159108985682226291599233314783577884875783936479431580E-9",
+            "referenceDifferenceDiagnostic": "1.192901322239809273174637297E-23"
+          },
+          {
+            "observer": [
+              600,
+              -800
+            ],
+            "lower": -3.2291107007185086e-10,
+            "upper": -3.2291106836301756e-10,
+            "generalTailUpper": 8.544153149009155e-19,
+            "evaluationWidth": 2.5332406259436473e-24,
+            "newton12Precision80": "-3.2291106921767220081383403476738742268528988183613975125006833493806434340403643E-10",
+            "newton16Precision100": "-3.229110692176722012231909185549242815635616563927304310205216896861239257906934253900519583183041682E-10",
+            "referenceDifferenceDiagnostic": "4.093568837875368588782717746E-28"
+          }
+        ]
+      },
+      {
+        "mixed": false,
+        "radialOrigin": 0.5,
+        "leafCount": 16,
+        "nodeCount": 21,
+        "independentMass": "11.5339647285732274957564838590601144513928873495490584110086098533285561154460538037392990363950849719253138985265531060",
+        "independentAxialDipole": "0.147262155637021288718641033459033097331573582910410082305417743211385922482380244771125000366493965421744373786729233499",
+        "supportUpper": 1.8801993223490385,
+        "independentSupportSquared": "2.50000000000000002775557561562891428096276945716484903489117703397092741524065928615527809597551822662353515625",
+        "farChecks": [
+          {
+            "observer": [
+              60,
+              80
+            ],
+            "lower": -7.715407095633744e-09,
+            "upper": -7.715301889409622e-09,
+            "generalTailUpper": 5.2603112031011844e-14,
+            "evaluationWidth": 5.790264287871194e-23,
+            "newton12Precision80": "-7.7153544711116970704837666796198390773239556375532706547372711072889591523673846E-9",
+            "newton16Precision100": "-7.715354471111866553202088283469772217802432736689320290277642936090580891766504564424780268284055884E-9",
+            "referenceDifferenceDiagnostic": "1.694827183216038499331404785E-22"
+          },
+          {
+            "observer": [
+              600,
+              -800
+            ],
+            "lower": -7.696370972456069e-10,
+            "upper": -7.696370870016389e-10,
+            "generalTailUpper": 5.121980934031224e-18,
+            "evaluationWidth": 5.893661864440322e-24,
+            "newton12Precision80": "-7.6963709212490831656777902444656052714919400483709644117430721064281264638453028E-10",
+            "newton16Precision100": "-7.696370921249083203310809515269649544016931848971744348177345936559615518367316612283132739830900714E-10",
+            "referenceDifferenceDiagnostic": "3.763301927080404427252499180E-27"
+          }
+        ]
+      },
+      {
+        "mixed": true,
+        "radialOrigin": 0,
+        "leafCount": 28,
+        "nodeCount": 37,
+        "independentMass": "4.84352592997945769744377721688988928420892214711053733993745461180775561910801135069558336286227718436396489505897674243",
+        "independentAxialDipole": "0.074551466291242092459528062843345924008342166866568605758129835030437145330980863084305039984176346026663307530683400123",
+        "supportUpper": 1.38278221853732,
+        "independentSupportSquared": "1.25000000000000002775557561562891428096276945716484903489117703397092741524065928615527809597551822662353515625",
+        "farChecks": [
+          {
+            "observer": [
+              60,
+              80
+            ],
+            "lower": -3.2400891363214075e-09,
+            "upper": -3.240071651016531e-09,
+            "generalTailUpper": 8.742652425368872e-15,
+            "evaluationWidth": 2.481541837659083e-23,
+            "newton12Precision80": "-3.2400803912232585747629470790911521671572337806718017491443524811016564365464725E-9",
+            "newton16Precision100": "-3.240080391223270517064864388121107824012490914349521605986142949476073638070687345390658035340795624E-9",
+            "referenceDifferenceDiagnostic": "1.194230191730902995565685526E-23"
+          },
+          {
+            "observer": [
+              600,
+              -800
+            ],
+            "lower": -3.231976299258962e-10,
+            "upper": -3.231976282155462e-10,
+            "generalTailUpper": 8.551736665609601e-19,
+            "evaluationWidth": 2.6366382025127757e-24,
+            "newton12Precision80": "-3.2319762907096122939877575594480568275433355771251050545393227294103723883715795E-10",
+            "newton16Precision100": "-3.231976290709612298086463520748515396040242051018557919769717601680076892966912389611066259512765461E-10",
+            "referenceDifferenceDiagnostic": "4.098705961300458568496906474E-28"
+          }
+        ]
+      },
+      {
+        "mixed": true,
+        "radialOrigin": 0.5,
+        "leafCount": 28,
+        "nodeCount": 37,
+        "independentMass": "11.5382598747793072042414105647009393148938781702351996943021722577729707130148476102117042343399822772740980906647778636",
+        "independentAxialDipole": "0.149102932582484066752183208533894064565818728489088730601956379155232786930333661306489774100345820970705924205534439078",
+        "supportUpper": 1.8801993223490385,
+        "independentSupportSquared": "2.50000000000000002775557561562891428096276945716484903489117703397092741524065928615527809597551822662353515625",
+        "farChecks": [
+          {
+            "observer": [
+              60,
+              80
+            ],
+            "lower": -7.718289686685677e-09,
+            "upper": -7.71818444128369e-09,
+            "generalTailUpper": 5.26227009635589e-14,
+            "evaluationWidth": 5.790264287871194e-23,
+            "newton12Precision80": "-7.7182370424152217879477057287849780638243190356610950652067528376507541642138012E-9",
+            "newton16Precision100": "-7.718237042415391441784708507956123569720387052238375377984302389750588617205059473723977592519129748E-9",
+            "referenceDifferenceDiagnostic": "1.696538370027791711455058961E-22"
+          },
+          {
+            "observer": [
+              600,
+              -800
+            ],
+            "lower": -7.699236078241376e-10,
+            "upper": -7.699235975763549e-10,
+            "generalTailUpper": 5.1238883143201484e-18,
+            "evaluationWidth": 5.893661864440322e-24,
+            "newton12Precision80": "-7.6992360270154681634963999270952924749946965330648519182513177012332436653489121E-10",
+            "newton16Precision100": "-7.699236027015468201166156893479382200267208846716232409728653725199682761277020931847710967875249966E-10",
+            "referenceDifferenceDiagnostic": "3.766975696638408972527251231E-27"
+          }
+        ]
+      }
+    ],
+    "limitations": [
+      "Newton quadrature convergence is diagnostic, not a certified reference error",
+      "Production RZ values remain gated",
+      "No CUDA or long trajectory certification"
+    ]
+  },
+  "generalTailChecks": {
+    "status": "PASS",
+    "checks": 24,
+    "precision": 120,
+    "scope": "nonnegative source general q^3 tail, exact stored support/observer, direct full-ring mass integral"
+  },
+  "nativeFaceRows": [
+    {
+      "mixed": 0,
+      "radial_origin": 0,
+      "leaves": 16,
+      "exterior_faces": 12,
+      "source_evaluations": 96,
+      "parent_evaluations": 60,
+      "parent_acceptances": 24,
+      "represented_leaves": 192,
+      "far_tail_max": 4.123727101180995e-06,
+      "far_evaluation_width_max": 1.2043749718772087e-21,
+      "newton_references": 1,
+      "newton8": -2.648686491151159e-07,
+      "newton12": -2.648870780292588e-07,
+      "quadrature_difference": 1.8428914142913818e-11,
+      "rhs_error": 6.086820043304833e-05
+    },
+    {
+      "mixed": 0,
+      "radial_origin": 0.5,
+      "leaves": 16,
+      "exterior_faces": 16,
+      "source_evaluations": 184,
+      "parent_evaluations": 80,
+      "parent_acceptances": 18,
+      "represented_leaves": 256,
+      "far_tail_max": 4.277989621308056e-06,
+      "far_evaluation_width_max": 1.4558378780933293e-21,
+      "newton_references": 1,
+      "newton8": -3.8885752508890826e-07,
+      "newton12": -3.888760207508854e-07,
+      "quadrature_difference": 1.8495661977128693e-11,
+      "rhs_error": 5.3179694313840376e-05
+    },
+    {
+      "mixed": 1,
+      "radial_origin": 0,
+      "leaves": 28,
+      "exterior_faces": 12,
+      "source_evaluations": 134,
+      "parent_evaluations": 86,
+      "parent_acceptances": 34,
+      "represented_leaves": 336,
+      "far_tail_max": 4.21708940820625e-06,
+      "far_evaluation_width_max": 1.4426029882924808e-21,
+      "newton_references": 1,
+      "newton8": -2.6478532124942166e-07,
+      "newton12": -2.6480375016356454e-07,
+      "quadrature_difference": 1.8428914142917153e-11,
+      "rhs_error": 6.203484418314581e-05
+    },
+    {
+      "mixed": 1,
+      "radial_origin": 0.5,
+      "leaves": 28,
+      "exterior_faces": 16,
+      "source_evaluations": 286,
+      "parent_evaluations": 130,
+      "parent_acceptances": 30,
+      "represented_leaves": 448,
+      "far_tail_max": 2.1293875815203654e-06,
+      "far_evaluation_width_max": 1.6775222822575409e-21,
+      "newton_references": 1,
+      "newton8": -3.888026349463855e-07,
+      "newton12": -3.888211306083626e-07,
+      "quadrature_difference": 1.849566197708679e-11,
+      "rhs_error": 2.7492379568991605e-05
+    }
+  ],
+  "internalFaceAbsoluteBudget": 1e-05,
+  "potentialUnit": "cm^2/s^2",
+  "rhsErrorUnit": "s^-2",
+  "scopedTestsPassed": [
+    "physical_constants",
+    "gravity_stage_contract",
+    "self_gravity_lifecycle",
+    "self_gravity_physics",
+    "composite_poisson_analytic",
+    "composite_poisson_contract",
+    "poisson_multigrid_analytic",
+    "poisson_multigrid_contract"
+  ],
+  "cliChecksPassed": [
+    "ring-parent-probe",
+    "ring-native-face",
+    "ring-far-leaf",
+    "ring-enclosure",
+    "ring-axis-enclosure",
+    "boundary-ledger"
+  ],
+  "sourceFingerprints": {
+    "src/physics/gravity/GravityBoundary.h": "2a3fca81d1e186e8dc3d17fd8e15e83658df4097f70c81bb5fb803de4e923770",
+    "src/physics/gravity/GravityBoundary.cpp": "47189be29cb5d1c78c2fe0a7659806d3e36fb11bbd7130fd1365627c5e3f6375",
+    "src/physics/gravity/FiniteRingBoundaryMath.h": "dbbc9298eaa3e34c48a53deb3b812b2dc57fe56092a4a48d7f97b82ab8f3b2a6",
+    "src/grid/GridMetrics.h": "49eae7319dc001d843a530910fbd9b39ff7fdcf3290525a133a6b6c433aa718c",
+    "src/physics/constant/PhysicalConstants.h": "fbac1db45fb0301fefc4a547ea2c5957182c680ea7ea6ed7a57742714f81734e",
+    "tests/host/gravity/test_composite_poisson.cpp": "8333f2d29476e129bb114571d42c2b1e3dbb7620001d6c6d5f0d2c8c4c99476a",
+    "validation/gravity/rz_ring_parent_reference.py": "2ed7114b0ea6d92f9364228d48f8d8a79f0f05d344b976faa57af3899f23b53a"
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-ring-parent-enclosure-20261005",
+  "workScope": "O(tree nodes) scratch moment prepass; existing 100000 global query cap now includes parent attempts and leaf evaluations; leaf source quadrature retains original box cap",
+  "limitations": [
+    "Intervals treat the stored leaf edges and density as exact source inputs; canonical physical geometry/volume/coefficient construction is not certified by this node",
+    "Signed manufactured source parent acceptance is unsupported; leaf/update reject negative density",
+    "Far evaluation width is a separate interval-width diagnostic, not a quadrature estimate or RHS residual",
+    "Newton quadrature references diagnose containment, not certified reference error",
+    "No direct acceleration path, production RZ activation, CUDA run, new long campaign or timing claim"
+  ]
+}

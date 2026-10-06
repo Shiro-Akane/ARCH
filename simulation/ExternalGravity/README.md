@@ -4,7 +4,7 @@
 initializes a uniform one-dimensional Cartesian state for a configured constant
 external acceleration. Setup requires `gravity_type=external`.
 
-The [gravity inputs](../../validation/gravity/inputs/) select the time integrators.
+The [gravity inputs](../../validation/gravity/inputs) select the time integrators.
 The [gravity summary](../../validation/gravity/README.md) describes the analytic
 momentum/energy comparison and coupled application results.
 

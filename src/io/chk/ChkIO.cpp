@@ -29,6 +29,11 @@ namespace fs = std::filesystem;
 // Checkpoint output for restart.
 namespace {
 
+/** Copy identity values only; metric formulas remain in GridMetrics. */
+io::CheckpointNativeDomainIdentity rz_config_domain(const SimConfig& config) {
+    return {{config.grid.x1_min,config.grid.x1_max,config.grid.x2_min,config.grid.x2_max},
+        {config.grid.nblockx1,config.grid.nblockx2},{amr::BLOCK_NX,amr::BLOCK_NY}};
+}
 size_t checkpoint_cells_per_block(int dim)
 {
     return static_cast<size_t>(amr::BLOCK_NX)
@@ -46,8 +51,24 @@ void write_chk(amr::AMRControl &amr_ctrl,
                bool resume_after_regrid,
                const SimConfig &config, const SpeciesManager &specs,
                const io::CheckpointProvenance &provenance,
-               const arch::state::RepairBudget &repairs)
+               const arch::state::RepairBudget &repairs,
+               const io::CheckpointGeometryIdentity &geometry_identity)
 {
+    io::require_checkpoint_geometry_compatible(config.grid.dim, config.grid.geometry,
+                                               geometry_identity, geometry_identity);
+    const auto expected_repairs=geometry_identity.chart=="axisymmetric-rz"
+        ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
+    if(repairs.semantics!=expected_repairs)
+        throw std::runtime_error("Checkpoint repair measure identity differs from source chart");
+    io::CheckpointNativeDomainIdentity native_domain;
+    if(geometry_identity.chart=="axisymmetric-rz") {
+        if(amr_ctrl.tree->GetGeometrySemantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::runtime_error("RZ checkpoint source tree has no authoritative RZ geometry");
+        const auto& root=amr_ctrl.tree->GetRootGrid();
+        native_domain={{root.x1_min,root.x1_max,root.x2_min,root.x2_max},
+            {root.nblockx1,root.nblockx2},{amr::BLOCK_NX,amr::BLOCK_NY}};
+        io::require_rz_checkpoint_domain_compatible(native_domain,rz_config_domain(config));
+    }
     if (!fs::exists(config.io.out_dir)) fs::create_directories(config.io.out_dir);
 
     std::ostringstream filename;
@@ -71,6 +92,8 @@ void write_chk(amr::AMRControl &amr_ctrl,
     checkpoint.plt_file_index = plt_file_index;
     checkpoint.dim = dim;
     checkpoint.geometry = config.grid.geometry;
+    checkpoint.geometry_identity = geometry_identity;
+    checkpoint.native_domain = native_domain;
     checkpoint.cells_per_block = cells_per_block;
     checkpoint.has_timestep_state = true;
     checkpoint.resume_after_regrid = resume_after_regrid;
@@ -133,9 +156,15 @@ void write_chk(amr::AMRControl &amr_ctrl,
 void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
               RunState &run_state, const SimConfig &config,
               const SpeciesManager &specs,
-              const io::CheckpointProvenance &expected_provenance)
+              const io::CheckpointProvenance &expected_provenance,
+              const io::CheckpointGeometryIdentity &expected_geometry)
 {
     io::CheckpointData checkpoint = io::read_hdf5_chk_impl(filepath);
+    io::require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                                               checkpoint.geometry_identity, expected_geometry);
+    // Bind W/native indexing before any live tree reconstruction or mutation.
+    if(expected_geometry.chart=="axisymmetric-rz")
+        io::require_rz_checkpoint_domain_compatible(checkpoint.native_domain,rz_config_domain(config));
     if (checkpoint.state_controls != arch::config::StateControlIdentity(config))
         throw std::runtime_error("Checkpoint state controls differ from the active configuration");
     const int expected_species = specs.count();
@@ -163,7 +192,10 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     }
 
     amr_ctrl.tree->LoadLeafGrid(config, expected_species, checkpoint.levels,
-                                checkpoint.logical_x1, checkpoint.logical_x2, checkpoint.logical_x3);
+                                checkpoint.logical_x1, checkpoint.logical_x2, checkpoint.logical_x3,
+                                expected_geometry.chart == "axisymmetric-rz"
+                                    ? GridMetrics::GeometrySemantics::AxisymmetricRz
+                                    : GridMetrics::GeometrySemantics::Existing);
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (active_blocks.size() != checkpoint.levels.size())
         throw std::runtime_error("Checkpoint AMR leaf reconstruction changed the block count.");

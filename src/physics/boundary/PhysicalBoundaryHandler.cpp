@@ -46,10 +46,24 @@ arch::boundary::BoundaryType logical_type(std::string_view token) {
 }
 }
 
-BCHandler::BCHandler(const SimConfig& config)
-    : config_(&config), logical_plan_(make_logical_plan(config)),
+BCHandler::BCHandler(const SimConfig& config, GridMetrics::GeometrySemantics semantics)
+    : config_(&config), semantics_(semantics), logical_plan_(make_logical_plan(config)),
       compiled_(arch::boundary::host::compile(logical_plan_,
           arch::boundary::host::make_canonical_layout(config.grid.dim))) {
+    if (semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        if (config.grid.dim != 2 || config.grid.geometry != "cylindrical"
+            || !std::isfinite(config.grid.x1_min) || config.grid.x1_min < 0.)
+            throw std::invalid_argument("RZ boundary requires cylindrical 2D nonnegative radius");
+        if (config.grid.x1_min == 0.) {
+            auto input = logical_plan_.input();
+            if (input.faces[0] == arch::boundary::BoundaryType::Periodic)
+                throw std::invalid_argument("RZ axis cannot be radial periodic");
+            input.faces[0] = arch::boundary::BoundaryType::RzAxis;
+            axis_plan_ = arch::boundary::make_boundary_plan(input);
+            axis_compiled_ = arch::boundary::host::compile(*axis_plan_, compiled_.layout);
+        }
+    } else if (semantics_ != GridMetrics::GeometrySemantics::Existing)
+        throw std::invalid_argument("Unknown boundary chart");
     if (const auto* selection = arch::boundary::CurrentUserBoundaries())
         callback_ = selection->callbacks.physical;
     const auto names = face_names(config);
@@ -154,10 +168,24 @@ void BCHandler::store_conditions(arch::boundary::DiffusionBoundaryStorage& stora
         destination[4 + s] = data.species.empty() ? arch::boundary::ScalarBoundaryCondition{} : data.species[s];
 }
 
-void BCHandler::apply(FluidState& state, const Grid& grid) const {
+const arch::boundary::BoundaryPlan& BCHandler::logical_plan(const Grid& grid) const {
     if (!(arch::boundary::host::make_layout(grid) == compiled_.layout))
         throw std::invalid_argument("Grid does not match prepared boundary layout");
-    arch::boundary::host::execute(compiled_, state);
+    if (semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        (void)GridMetrics::make_geometry_view(grid, semantics_);
+        if (!std::isfinite(grid.x1_min) || grid.x1_min < 0.)
+            throw std::invalid_argument("Invalid RZ physical boundary radius");
+        if (grid.x1_min == 0.) {
+            if (!axis_plan_) throw std::invalid_argument("RZ axis patch disagrees with prepared source domain");
+            return *axis_plan_;
+        }
+    }
+    return logical_plan_;
+}
+
+void BCHandler::apply(FluidState& state, const Grid& grid) const {
+    const auto& selected = logical_plan(grid);
+    arch::boundary::host::execute(&selected == &logical_plan_ ? compiled_ : *axis_compiled_, state);
     if (!callback_) return;
     if (!evaluate_) throw std::logic_error("User boundary EOS has not been bound");
     auto storage = make_diffusion_storage(grid, state.GetNumSpecies());

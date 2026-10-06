@@ -1,0 +1,189 @@
+--- a/src/physics/gravity/IGravityPolicy.h
++++ b/src/physics/gravity/IGravityPolicy.h
+@@ -26,9 +26,17 @@
+  * Acts as a compilation firewall (type erasure boundary) between the generic
+  * Host hydrodynamics loops and specific gravity implementations.
+  */
++enum class GravitySourceOrigin { Unknown, ExternalNativeOrthonormal, FiniteRingCurrentState };
++struct GravitySourceContract {
++    GravitySourceOrigin origin=GravitySourceOrigin::Unknown;
++    GridMetrics::GeometrySemantics chart=GridMetrics::GeometrySemantics::Existing;
++    // Identity of a future stage-owned integral producer is required separately.
++    // A declared origin/chart alone must never release the RZ stage gate.
++};
+ class IGravityPolicy {
+ public:
+     virtual ~IGravityPolicy() = default;
++    virtual GravitySourceContract source_contract() const noexcept { return {}; }
+     // Optional work from the actual Riemann mass flux. Existing external gravity
+     // retains its cell source; self gravity supplies this compatible face work.
+     virtual void add_flux_work_on_patch(std::vector<FluidVector>&,
+--- a/src/physics/gravity/ExternalGravity.h
++++ b/src/physics/gravity/ExternalGravity.h
+@@ -12,6 +12,10 @@
+
+ #include "data/FluidState.h"
+ #include "grid/Grid.h"
++#include "grid/GridMetrics.h"
++#include "driver/runtime/StateResidency.h"
++#include "numerics/reconstruction/Reconstruction.h"
++#include <array>
+
+ namespace Physical {
+ namespace Gravity {
+@@ -20,11 +24,116 @@
+ {
+     double g_x, g_y, g_z;
+
+-    ExternalGravity(double gx, double gy, double gz) : g_x(gx), g_y(gy), g_z(gz) {}
++    ExternalGravity(double gx, double gy, double gz,
++        GridMetrics::GeometrySemantics chart=GridMetrics::GeometrySemantics::Existing)
++        :g_x(gx),g_y(gy),g_z(gz),chart_(chart) {
++        if(chart!=GridMetrics::GeometrySemantics::Existing
++           &&chart!=GridMetrics::GeometrySemantics::AxisymmetricRz)
++            throw std::invalid_argument("unknown external gravity chart");
++    }
++
++    GravitySourceContract source_contract() const noexcept override {
++        return {GravitySourceOrigin::ExternalNativeOrthonormal,
++                chart_};
++    }
++
++    struct RzStageIdentity {
++        GravitySourceOrigin origin=GravitySourceOrigin::Unknown;
++        GridMetrics::GeometrySemantics chart=GridMetrics::GeometrySemantics::Existing;
++        amr::BlockHandle block{};
++        arch::state::StateSlot slot=arch::state::StateSlot::Current;
++        arch::state::StateVersion version{};
++        std::uint64_t storage_generation=0,config_revision=0,macro_step=0;
++        int stage=0;
++        std::array<double,3> acceleration{};
++        const FluidState* state=nullptr;
++        friend bool operator==(const RzStageIdentity&,const RzStageIdentity&)=default;
++    };
++
++    // Own a patch candidate only. Caller must bind expected identity to the
++    // actual scheduler frame; this method neither publishes nor rotates slots.
++    template<typename Limiter>
++    std::vector<FluidVector> produce_rz_stage_patch(const FluidState& state,
++        const Grid& grid,double dt,const RzStageIdentity& identity,
++        const RzStageIdentity& expected,
++        const arch::state::StateResidencyLedger& ledger) const
++    {
++        const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
++        if(chart_!=rz || identity!=expected
++           ||identity.origin!=GravitySourceOrigin::ExternalNativeOrthonormal
++           ||identity.chart!=rz ||identity.state!=&state
++           ||!identity.storage_generation ||!identity.config_revision ||identity.stage<=0
++           ||identity.acceleration!=std::array<double,3>{g_x,g_y,g_z}
++           ||!std::isfinite(dt) ||dt<0
++           ||!std::isfinite(g_x)||!std::isfinite(g_y)||!std::isfinite(g_z))
++            throw std::invalid_argument("RZ external source/chart/stage identity mismatch");
++        ledger.require_readable({identity.block,identity.slot},
++            {arch::state::ExecutionSide::Host,identity.version,true,true});
++        const auto geometry=GridMetrics::make_geometry_view(grid,rz);
++        if(grid.ng<1 ||state.rho.size()!=std::size_t(grid.GetTotalSize())
++           ||state.mom_u.size()!=state.rho.size()||state.mom_v.size()!=state.rho.size()
++           ||state.mom_w.size()!=state.rho.size()||state.eng.size()!=state.rho.size())
++            throw std::invalid_argument("RZ external patch layout mismatch");
++        if(grid.GetFacePosL(grid.Is())==0 && (g_x!=0||g_z!=0))
++            throw std::invalid_argument("constant radial/phi source is nonregular at axis");
++        const auto centroid=[&](int i,bool angular) {
++            double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
++            const bool mirrored=right<=0;
++            if(mirrored) {const double swap=left;left=-right;right=-swap;}
++            if(left<0||!(right>left))throw std::invalid_argument("invalid source stencil radius");
++            const double result=angular?GridMetrics::Rz::AngularReconstructionRadius(left,right)
++                :GridMetrics::Rz::VolumeCentroidRadius(left,right);
++            return mirrored?-result:result;
++        };
++        const auto gradient=[&](const std::vector<double>& q,int cell,int i,bool angular) {
++            const double xm=centroid(i-1,angular),x=centroid(i,angular),xp=centroid(i+1,angular);
++            if(!std::isfinite(q[cell-1])||!std::isfinite(q[cell])||!std::isfinite(q[cell+1])
++               ||!(xm<x&&x<xp))throw std::invalid_argument("invalid RZ source reconstruction");
++            const double back=(q[cell]-q[cell-1])/(x-xm);
++            const double forward=(q[cell+1]-q[cell])/(xp-x);
++            if(!std::isfinite(back)||!std::isfinite(forward)||!std::isfinite(back+forward))
++                throw std::invalid_argument("nonfinite RZ source gradient");
++            const double result=2*compute_limited_slope<Limiter>(0.,back,back+forward);
++            if(!std::isfinite(result))throw std::invalid_argument("nonfinite limited RZ source gradient");
++            return result;
++        };
++        std::vector<FluidVector> candidate(grid.GetTotalSize());
++        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
++            const int cell=grid.GetIndex(i,j,0);
++            const auto mean=state.get(cell);
++            if(!(mean.rho>0)||!std::isfinite(mean.rho)||!std::isfinite(mean.mom_u)
++               ||!std::isfinite(mean.mom_v)||!std::isfinite(mean.mom_w)||!std::isfinite(mean.eng))
++                throw std::invalid_argument("invalid RZ source stage state");
++            const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
++            const double rv=centroid(i,false),rw=centroid(i,true);
++            const double drho=gradient(state.rho,cell,i,false);
++            const double dmphi=gradient(state.mom_w,cell,i,true);
++            if(!(mean.rho+drho*(left-rv)>0)||!(mean.rho+drho*(right-rv)>0))
++                throw std::invalid_argument("nonpositive reconstructed RZ density");
++            const double rho_w=mean.rho+drho*(rw-rv);
++            const double mphi_v=mean.mom_w+dmphi*(rv-rw);
++            const double V=GridMetrics::CellVolume(geometry,i,j,0);
++            const double W=GridMetrics::Rz::AngularMomentumMeasure(left,right,grid.dx2);
++            const ExternalRzStageIntegrals rates{V,W,V*mean.rho*g_x,V*mean.rho*g_y,
++                W*rho_w*g_z,V*(mean.mom_u*g_x+mean.mom_v*g_y+mphi_v*g_z)};
++            if(!(V>0)||!(W>0)||!std::isfinite(V)||!std::isfinite(W)
++               ||!std::isfinite(rates.radial_momentum_rate)
++               ||!std::isfinite(rates.axial_momentum_rate)
++               ||!std::isfinite(rates.angular_momentum_rate)||!std::isfinite(rates.energy_rate))
++                throw std::invalid_argument("nonfinite RZ source integral");
++            add_external_rz_stage_integrals(rates,dt,candidate[cell]);
++            if(!std::isfinite(candidate[cell].mom_u)||!std::isfinite(candidate[cell].mom_v)
++               ||!std::isfinite(candidate[cell].mom_w)||!std::isfinite(candidate[cell].eng))
++                throw std::invalid_argument("nonfinite RZ source increment");
++        }
++        return candidate;
++    }
+
+     virtual void add_sources_on_patch(std::vector<FluidVector>& dU, const FluidState& state,
+                                       const Grid& grid, double dt, void* execution_stream = nullptr) const override
+     {
++        if(chart_==GridMetrics::GeometrySemantics::AxisymmetricRz)
++            throw std::invalid_argument("RZ external source requires a framed integral producer");
+         const int ks = grid.Ks(), ke = grid.Ke();
+         const int js = grid.Js(), je = grid.Je();
+         const int nk = ke - ks, nj = je - js;
+@@ -42,6 +151,8 @@
+             }
+         }
+     }
++private:
++    GridMetrics::GeometrySemantics chart_;
+ };
+
+ }
+--- a/src/physics/gravity/GravitySource.h
++++ b/src/physics/gravity/GravitySource.h
+@@ -51,4 +51,26 @@
+     delta.mom_w += dt * rho * gravity.g_z;
+     delta.eng += dt * (state.mom_u * gravity.g_x + state.mom_v * gravity.g_y + state.mom_w * gravity.g_z);
+ }
++/** Stage integrals supplied by an authoritative physical-field producer.
++ * Momentum r/z and energy use V; angular impulse uses W. These are source
++ * rates, not stored representative cell values. Integrals include full 2*pi.
++ * The stage owner validates source/chart/epoch and positive native measures
++ * before this arithmetic leaf. No callback/source traversal is introduced here.
++ */
++struct ExternalRzStageIntegrals {
++    double volume=0.0;
++    double angular_measure=0.0;
++    double radial_momentum_rate=0.0;
++    double axial_momentum_rate=0.0;
++    double angular_momentum_rate=0.0;
++    double energy_rate=0.0;
++};
++ARCH_INLINE void add_external_rz_stage_integrals(
++    const ExternalRzStageIntegrals& source, double dt, FluidVector& delta)
++{
++    delta.mom_u += dt * source.radial_momentum_rate / source.volume;
++    delta.mom_v += dt * source.axial_momentum_rate / source.volume;
++    delta.mom_w += dt * source.angular_momentum_rate / source.angular_measure;
++    delta.eng += dt * source.energy_rate / source.volume;
++}
+ } // namespace Physical::Gravity

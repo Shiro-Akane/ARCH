@@ -1,0 +1,783 @@
+{
+  "status": "candidate-classification-expectations-not-runtime-schema",
+  "sourceCatalogue": "src/core/config/StandardParameters.h",
+  "policyOwner": "docs/development/ConfigurationContractPlan.zh-CN.md",
+  "notes": [
+    "Test expectations only; production must extend the existing Core catalogue, not load this as a second registry.",
+    "Condition families are audit groupings, not executable predicates or frontend applicability rules.",
+    "Required tmax applies to formal evolution; an explicit initial-state request may omit it.",
+    "Allowed defaults require an explicit owner/value/evidence in the complete schema; this file does not publish values.",
+    "gravity_G retires during O7.0; jeans_cells is added in the subsequent JENS implementation, not advertised here.",
+    "Case declarations, log_dir and species membership are additional to this standard-key coverage."
+  ],
+  "expectedCounts": {
+    "legacyStandard": 95,
+    "required": 19,
+    "conditional": 50,
+    "documentedDefaultAllowed": 25,
+    "retired": 1,
+    "afterGravityRetirement": 94
+  },
+  "parameters": [
+    {
+      "key": "geometry",
+      "type": "string",
+      "group": "Grid",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "nblockx1",
+      "type": "int",
+      "group": "Grid",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "nblockx2",
+      "type": "int",
+      "group": "Grid",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "nblockx3",
+      "type": "int",
+      "group": "Grid",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "max_blocks",
+      "type": "int",
+      "group": "Grid",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x1_min",
+      "type": "expression",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x1_max",
+      "type": "expression",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x2_min",
+      "type": "expression",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x2_max",
+      "type": "expression",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x3_min",
+      "type": "expression",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x3_max",
+      "type": "expression",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x1l_boundary_type",
+      "type": "string",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x1r_boundary_type",
+      "type": "string",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x2l_boundary_type",
+      "type": "string",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x2r_boundary_type",
+      "type": "string",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x3l_boundary_type",
+      "type": "string",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "x3r_boundary_type",
+      "type": "string",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "active-axis",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "solver",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "dt_init",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "conditional",
+      "conditionFamily": "burn-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "dt_max",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "hll_wave_speed",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "conditional",
+      "conditionFamily": "selected-method-consumer",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "dt_min",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "tstep_change_factor",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "cfl",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "limiter",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "conditional",
+      "conditionFamily": "selected-method-consumer",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "reconstruct",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "EntropyFix",
+      "type": "bool",
+      "group": "Runtime",
+      "classification": "conditional",
+      "conditionFamily": "selected-method-consumer",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "EntropyFixCoefficient",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "sml_rho",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "min_eint",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "max_eint",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "compute_backend",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "cuda_device",
+      "type": "int",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "eos_type",
+      "type": "string",
+      "group": "EOS",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "eos_table_path",
+      "type": "string",
+      "group": "EOS",
+      "classification": "conditional",
+      "conditionFamily": "selected-eos",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "eos_helm_table_path",
+      "type": "string",
+      "group": "EOS",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "eos_coulomb_mult",
+      "type": "float",
+      "group": "EOS",
+      "classification": "conditional",
+      "conditionFamily": "selected-eos",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gamma",
+      "type": "float",
+      "group": "EOS",
+      "classification": "conditional",
+      "conditionFamily": "selected-eos",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "use_burn",
+      "type": "bool",
+      "group": "Network",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "network_name",
+      "type": "string",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "network-or-composition-consumer",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "nuclearTempMin",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "burn-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "nuclearDensMin",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "burn-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "smallt",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "temperature-or-composition-floor-consumer",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "smallx",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "temperature-or-composition-floor-consumer",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "enucDtFactor",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "burn-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "use_nse",
+      "type": "string",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "burn-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "nseTempThreshold",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "resolved-nse-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "nseDensThreshold",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "resolved-nse-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_solver",
+      "type": "string",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "burn-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "linear_solver",
+      "type": "string",
+      "group": "Network",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_rtol",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "burn-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_atol",
+      "type": "float",
+      "group": "Network",
+      "classification": "conditional",
+      "conditionFamily": "burn-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_max_newton_iter",
+      "type": "int",
+      "group": "Network",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_max_substeps",
+      "type": "int",
+      "group": "Network",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_dt_safe_fac",
+      "type": "float",
+      "group": "Network",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_dt_fac_max",
+      "type": "float",
+      "group": "Network",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_dt_fac_min",
+      "type": "float",
+      "group": "Network",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "ode_initial_dt_frac",
+      "type": "float",
+      "group": "Network",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "use_diffusion",
+      "type": "bool",
+      "group": "Diffusion",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "diff_integrator",
+      "type": "string",
+      "group": "Diffusion",
+      "classification": "conditional",
+      "conditionFamily": "diffusion-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "diff_cfl",
+      "type": "float",
+      "group": "Diffusion",
+      "classification": "conditional",
+      "conditionFamily": "diffusion-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "diff_max_stages",
+      "type": "int",
+      "group": "Diffusion",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "use_thermal_diff",
+      "type": "bool",
+      "group": "Diffusion",
+      "classification": "conditional",
+      "conditionFamily": "diffusion-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "use_viscous_diff",
+      "type": "bool",
+      "group": "Diffusion",
+      "classification": "conditional",
+      "conditionFamily": "diffusion-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "use_species_diff",
+      "type": "bool",
+      "group": "Diffusion",
+      "classification": "conditional",
+      "conditionFamily": "diffusion-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "nu_visc",
+      "type": "float",
+      "group": "Diffusion",
+      "classification": "conditional",
+      "conditionFamily": "constant-transport-channel",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "alpha_therm",
+      "type": "float",
+      "group": "Diffusion",
+      "classification": "conditional",
+      "conditionFamily": "constant-transport-channel",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "D_spec",
+      "type": "float",
+      "group": "Diffusion",
+      "classification": "conditional",
+      "conditionFamily": "constant-transport-channel",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_boundary",
+      "type": "string",
+      "group": "Gravity",
+      "classification": "conditional",
+      "conditionFamily": "self-gravity",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_rtol",
+      "type": "float",
+      "group": "Gravity",
+      "classification": "conditional",
+      "conditionFamily": "self-gravity",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_atol",
+      "type": "float",
+      "group": "Gravity",
+      "classification": "conditional",
+      "conditionFamily": "self-gravity",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_max_cycles",
+      "type": "int",
+      "group": "Gravity",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_type",
+      "type": "string",
+      "group": "Gravity",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_g_x",
+      "type": "expression",
+      "group": "Gravity",
+      "classification": "conditional",
+      "conditionFamily": "external-gravity",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_g_y",
+      "type": "expression",
+      "group": "Gravity",
+      "classification": "conditional",
+      "conditionFamily": "external-gravity",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_g_z",
+      "type": "expression",
+      "group": "Gravity",
+      "classification": "conditional",
+      "conditionFamily": "external-gravity",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "gravity_G",
+      "type": "expression",
+      "group": "Gravity",
+      "classification": "retired",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "lrefinemin",
+      "type": "int",
+      "group": "Grid",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "lrefinemax",
+      "type": "int",
+      "group": "Grid",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "regrid_interval",
+      "type": "int",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "dynamic-amr",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "refine_var",
+      "type": "string",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "dynamic-amr",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "refine_threshold",
+      "type": "float",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "dynamic-amr",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "derefine_threshold",
+      "type": "float",
+      "group": "Grid",
+      "classification": "conditional",
+      "conditionFamily": "dynamic-amr",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "tmax",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "max_steps",
+      "type": "int",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "out_dir",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "base_name",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "plt_dt",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "plt_dstep",
+      "type": "int",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "chk_dt",
+      "type": "float",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "chk_dstep",
+      "type": "int",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "restart",
+      "type": "bool",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "restart_file",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "conditional",
+      "conditionFamily": "restart-enabled",
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "plt_variables",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "documented-default-allowed",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    },
+    {
+      "key": "time_integrator",
+      "type": "string",
+      "group": "Runtime",
+      "classification": "required",
+      "conditionFamily": null,
+      "evidence": "docs/development/ConfigurationContractPlan.zh-CN.md#3"
+    }
+  ]
+}

@@ -56,13 +56,8 @@ public:
             ctx.config.grid.x3l_boundary_type, ctx.config.grid.x3r_boundary_type};
         if (faces[2 * static_cast<int>(ctx.axis) + static_cast<int>(ctx.side)] == "periodic")
             return arch::boundary::GravityBoundaryData::Periodic();
-        // G comes from the CGS constants header, not from an editable input; a
-        // gravity_G override would make these values inconsistent with the
-        // solver, so the example rejects it explicitly.
-        if (ctx.config.physics.gravity.G_const != kGravity)
-            throw std::invalid_argument(
-                "UserBoundary example requires the arch CGS gravitational constant; "
-                "remove gravity_G from the input.");
+        // Both this callback and the solver use the immutable CGS constant.
+        // The common input validator rejects the retired gravity_G key.
 
         const int dimension = ctx.config.grid.geometry == "spherical" && ctx.dimension == 2
             ? 2 : GeometryDimension(ctx.config.grid.geometry);

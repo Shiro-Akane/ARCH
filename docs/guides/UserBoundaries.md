@@ -178,3 +178,9 @@ Checkpoint format 7 requires physical face types, case/callback source digests
 and scientific custom inputs. Changing or omitting this identity rejects
 restart. Source/output absolute paths and backend choice are excluded, allowing
 compatible restarts across machines and CPU/CUDA.
+
+## 配置 v3 与函数式注册
+
+每个算例必须声明它读取的参数。函数式算例使用 `REGISTER_PROBLEM_WITH_CONFIGURATION(NAME, SETUP_FUNC, INIT_FUNC, DESCRIBE_FUNC)`，由最后一个回调返回完整 `CaseConfiguration`；原三参数宏不补造声明或默认值。示例见 [UserGravity/case.cpp](../../simulation/UserGravity/case.cpp)。`user_boundary_heat_flux` 显式声明为浮点输入，单位 `erg/(cm^2*s)`；完整输入保留现有物理值。自引力使用内部固定 CGS 常数，不能再通过 `gravity_G` / `G_const` 改写。
+
+完整的参数声明用于配置/初始化边界校验，与完整场及 AMR 的能力登记分别维护。新任意算例不会仅因注册便自动获得 Preview。

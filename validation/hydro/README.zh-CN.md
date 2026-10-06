@@ -13,7 +13,7 @@ CPU 和 CUDA 已通过光滑波空间与时间精度、Sod、持续周期平流�
 
 ## 光滑波空间精度
 
-`SmoothAdvection` 实现仍位于 `simulation/SmoothAdvection/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们对周期 entropy wave $\rho=1+0.2\sin(2\pi x)$、$u=1$、$p=1$ 平流至 $t=0.1$。初始和位移后的参考均为精确有限体积单元平均值。固定 HLLC 和 SSPRK3，分别在 64、128 和 256 单元上运行 PCM、MUSCL-MC 与 PPM。
+`SmoothAdvection` 实现仍位于 `simulation/SmoothAdvection/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs)，它们对周期 entropy wave $\rho=1+0.2\sin(2\pi x)$、$u=1$、$p=1$ 平流至 $t=0.1$。初始和位移后的参考均为精确有限体积单元平均值。固定 HLLC 和 SSPRK3，分别在 64、128 和 256 单元上运行 PCM、MUSCL-MC 与 PPM。
 
 ### 复现
 

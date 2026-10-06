@@ -1,0 +1,326 @@
+{
+  "sourceCommit": "b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1",
+  "sourceCleanAtBuild": true,
+  "build": "existing build-cpu CPU Release incremental ARCH; PlotIO.cpp object and relink only",
+  "binarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+  "headerSha256": "2b5960d59bb4b9acfd13a15af776c16a30859c78cd27f785052777d662b826fa",
+  "beforeRegression": {
+    "ctestExitCode": 8,
+    "message": "adjacent native y faces disagree"
+  },
+  "afterRegression": {
+    "plotfilePublication": "PASS",
+    "checkpointCompatibility": "PASS",
+    "count": 2
+  },
+  "t0": [
+    {
+      "case": "Sod",
+      "referenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/Sod-ps9xam5i",
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-shared-face-20261004/Sod-1t2i7etp",
+      "sourceCommit": "b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1",
+      "referenceInputSha256": "8a2d92fed96382017dbca79dedbcebbf870d8e9c3e15c6efe4c3f829f0353e69",
+      "inputSha256": "2f6a0861b84ccbc700ae467b6058691785b95c31ca56a719fe543165d1cec48e",
+      "binarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "exitCode": 0,
+      "changedKeys": [
+        "out_dir"
+      ],
+      "scope": "existing approved CPU t=0 inputs; no evolution",
+      "plotfileSha256": "83a5d8871144640798fe4a719ba2b060a0047b27569de809c1df069b00b7d82f",
+      "plotfileBytes": 38360,
+      "coverageExitCode": 0,
+      "geometry": {
+        "scope": "all stored Cartesian leaf cells; exact endpoint diagnostics, not scientific tolerance acceptance",
+        "plotfileSha256": "83a5d8871144640798fe4a719ba2b060a0047b27569de809c1df069b00b7d82f",
+        "plotfileBytes": 38360,
+        "dimension": 1,
+        "shape": [
+          12,
+          16
+        ],
+        "leafBlocks": 12,
+        "cells": 192,
+        "activeRootBlocks": [
+          4
+        ],
+        "externalDomain": [
+          [
+            0,
+            1
+          ]
+        ],
+        "nativeStoredCoverage": {
+          "exactlyOnceWithinDomain": true,
+          "measures": {
+            "gap": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "overlap_excess": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "outside": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "covered": {
+              "exact": "1",
+              "float": 1.0
+            }
+          },
+          "compressedBins": {
+            "gap": 0,
+            "overlap": 0,
+            "outside": 0
+          },
+          "maxMultiplicity": 1,
+          "compressedGridShape": [
+            193
+          ],
+          "examples": []
+        },
+        "logicalDyadicCoverage": {
+          "exactlyOnceWithinDomain": true,
+          "measures": {
+            "gap": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "overlap_excess": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "outside": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "covered": {
+              "exact": "1",
+              "float": 1.0
+            }
+          },
+          "compressedBins": {
+            "gap": 0,
+            "overlap": 0,
+            "outside": 0
+          },
+          "maxMultiplicity": 1,
+          "compressedGridShape": [
+            193
+          ],
+          "examples": []
+        },
+        "maxStoredEndpointDifferenceFromLogicalDomain": {
+          "exact": "0",
+          "float": 0.0
+        },
+        "sourceUnchanged": true
+      },
+      "changedYUpperCells": 0,
+      "unchangedPlotDatasetCount": 15,
+      "unchangedCheckpointNumericDatasets": [
+        "Blocks/level",
+        "Blocks/logical_x1",
+        "Blocks/logical_x2",
+        "Blocks/logical_x3",
+        "Data/X",
+        "Data/eng",
+        "Data/enuc_rate",
+        "Data/mom_u",
+        "Data/mom_v",
+        "Data/mom_w",
+        "Data/rho",
+        "Data/rhoX",
+        "Species/A",
+        "Species/Cv",
+        "Species/Z",
+        "Species/gamma",
+        "gravity_controls",
+        "repair_position",
+        "state_controls",
+        "state_repairs"
+      ],
+      "unchangedSpeciesProperties": [
+        "species_A",
+        "species_Z",
+        "species_gamma",
+        "species_Cv"
+      ]
+    },
+    {
+      "case": "CellularDet",
+      "referenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/CellularDet-961ptsw8",
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-shared-face-20261004/CellularDet-8kig9gci",
+      "sourceCommit": "b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1",
+      "referenceInputSha256": "e280f011586d02906d2bed1f65faeb980748be54deb29733eb55faf971f8a0c0",
+      "inputSha256": "654c62def79c7a4c332c750a2b784d7e9693316694f74f832797cc9863f13a0d",
+      "binarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "exitCode": 0,
+      "changedKeys": [
+        "out_dir"
+      ],
+      "scope": "existing approved CPU t=0 inputs; no evolution",
+      "plotfileSha256": "385080a9d75fb854f218186bf6513aea586e260fe6b60f395d2a197970b8ab68",
+      "plotfileBytes": 474616,
+      "coverageExitCode": 0,
+      "geometry": {
+        "scope": "all stored Cartesian leaf cells; exact endpoint diagnostics, not scientific tolerance acceptance",
+        "plotfileSha256": "385080a9d75fb854f218186bf6513aea586e260fe6b60f395d2a197970b8ab68",
+        "plotfileBytes": 474616,
+        "dimension": 2,
+        "shape": [
+          20,
+          16,
+          16
+        ],
+        "leafBlocks": 20,
+        "cells": 5120,
+        "activeRootBlocks": [
+          2,
+          1
+        ],
+        "externalDomain": [
+          [
+            0,
+            25.6
+          ],
+          [
+            0,
+            12.8
+          ]
+        ],
+        "nativeStoredCoverage": {
+          "exactlyOnceWithinDomain": true,
+          "measures": {
+            "gap": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "overlap_excess": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "outside": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "covered": {
+              "exact": "12980742146337070512478121581609/39614081257132168796771975168",
+              "float": 327.68000000000006
+            }
+          },
+          "compressedBins": {
+            "gap": 0,
+            "overlap": 0,
+            "outside": 0
+          },
+          "maxMultiplicity": 1,
+          "compressedGridShape": [
+            97,
+            69
+          ],
+          "examples": []
+        },
+        "logicalDyadicCoverage": {
+          "exactlyOnceWithinDomain": true,
+          "measures": {
+            "gap": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "overlap_excess": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "outside": {
+              "exact": "0",
+              "float": 0.0
+            },
+            "covered": {
+              "exact": "12980742146337070512478121581609/39614081257132168796771975168",
+              "float": 327.68000000000006
+            }
+          },
+          "compressedBins": {
+            "gap": 0,
+            "overlap": 0,
+            "outside": 0
+          },
+          "maxMultiplicity": 1,
+          "compressedGridShape": [
+            97,
+            65
+          ],
+          "examples": []
+        },
+        "maxStoredEndpointDifferenceFromLogicalDomain": {
+          "exact": "15/4503599627370496",
+          "float": 3.3306690738754696e-15
+        },
+        "sourceUnchanged": true
+      },
+      "changedYUpperCells": 1280,
+      "unchangedPlotDatasetCount": 15,
+      "unchangedCheckpointNumericDatasets": [
+        "Blocks/level",
+        "Blocks/logical_x1",
+        "Blocks/logical_x2",
+        "Blocks/logical_x3",
+        "Data/X",
+        "Data/eng",
+        "Data/enuc_rate",
+        "Data/mom_u",
+        "Data/mom_v",
+        "Data/mom_w",
+        "Data/rho",
+        "Data/rhoX",
+        "Species/A",
+        "Species/Cv",
+        "Species/Z",
+        "Species/gamma",
+        "gravity_controls",
+        "repair_position",
+        "state_controls",
+        "state_repairs"
+      ],
+      "unchangedSpeciesProperties": [
+        "species_A",
+        "species_Z",
+        "species_gamma",
+        "species_Cv"
+      ]
+    }
+  ],
+  "pointRepair": {
+    "plotfileSha256": "385080a9d75fb854f218186bf6513aea586e260fe6b60f395d2a197970b8ab68",
+    "sourceUnchanged": true,
+    "results": [
+      {
+        "point": [
+          0.1,
+          1.2
+        ],
+        "index": 1104,
+        "value": 44018601.46790276,
+        "matchCount": 1,
+        "scannedCells": 5120,
+        "clientValidation": "PASS"
+      },
+      {
+        "point": [
+          0.1,
+          2.6
+        ],
+        "index": 1232,
+        "value": 43609267.79755719,
+        "matchCount": 1,
+        "scannedCells": 5120,
+        "clientValidation": "PASS"
+      }
+    ],
+    "scope": "Real Cartesian t=0 native point repair only; no independent EOS or evolution acceptance"
+  },
+  "scope": "writer metadata arithmetic repair for existing Cartesian Sod/Cellular CPU t=0 slice; not general floating-point mesh or evolution certification"
+}

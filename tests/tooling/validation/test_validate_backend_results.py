@@ -122,11 +122,11 @@ class BackendValidationTests(unittest.TestCase):
             parameter.write_text('lrefinemin = 0\nlrefinemax = 1\nlrefinemax = 0\n')
             with self.assertRaises(RuntimeError) as caught:
                 module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
-            self.assertIn('duplicate', str(caught.exception))
-            with self.assertRaisesRegex(RuntimeError, 'duplicate'):
+            self.assertIn('DUPLICATE_PARAMETER', str(caught.exception))
+            with self.assertRaisesRegex(RuntimeError, 'DUPLICATE_PARAMETER'):
                 module.read_parameter_map(parameter)
             parameter.write_text('lrefinemin = 0\nlrefinemin = 1\nlrefinemax = 0\n')
-            with self.assertRaisesRegex(RuntimeError, 'duplicate'):
+            with self.assertRaisesRegex(RuntimeError, 'DUPLICATE_PARAMETER'):
                 module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
             # Float text underflowing to zero is not an integer level bound.
             for text in ('lrefinemin = 0\nlrefinemax = 1e-10000\n',

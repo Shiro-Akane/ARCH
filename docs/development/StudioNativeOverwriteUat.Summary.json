@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-03",
+  "sourceBase": "a946d9826628a5b1decab76a28a0db79a9d7ce7e",
+  "implementationChange": "studio/src/styles.css: config-conflict bounded grid and auto-height wrapping buttons",
+  "platform": "Linux/WSL independent production Electron window",
+  "windowId": 724458,
+  "hostPid": 87403,
+  "case": "Sod",
+  "testRelativePath": "studio/.local/integration/native-overwrite-uat-9bc3a517-d692-43c9-91c0-7d1b362c157f/CellularDet.par",
+  "deliberatelyMismatchedFilename": true,
+  "cancelOverwrite": {
+    "passed": true,
+    "diskUnchanged": true,
+    "unsavedCfl": "0.41",
+    "savedCfl": "0.4"
+  },
+  "explicitOverwrite": {
+    "passed": true,
+    "cflBefore": "0.4",
+    "cflAfter": "0.41",
+    "at": "2026-10-03T06:55:43.259870+00:00",
+    "exactExpectedBytes": true,
+    "afterSha256": "c0a61d4f5435881012486c339071464822ce640ace41ead24f731626707bdeec",
+    "originalSourceUnchanged": true,
+    "backupUnchanged": true,
+    "diffCflNotInserted": true,
+    "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+  },
+  "productionRecheck": {
+    "longPathContained": true,
+    "buttonsNoOverlap": true,
+    "overwriteButtonUsable": true,
+    "nativeReloadDiskVersion": true,
+    "workingCfl": "0.41",
+    "savedCfl": "0.41",
+    "diskState": "in-sync"
+  },
+  "checks": [
+    {
+      "command": "npm test",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "tests": {
+    "pass": 234,
+    "fail": 0,
+    "skip": 0
+  },
+  "localEvidence": "studio/.local/integration/native-overwrite-uat-9bc3a517-d692-43c9-91c0-7d1b362c157f",
+  "limits": [
+    "Earlier external-conflict refusal evidence remains separate.",
+    "No scientific Run, real Preview, AMR, ARCH Build or CUDA started here.",
+    "Refresh/edit showed pairing confirmation; Continue Preview never clicked.",
+    "Second same-content overwrite rechecks repaired button usability, not another dirty-save case.",
+    "Confirmation above Save in scroll pane needs manual scroll; no automatic focus.",
+    "No claim of clean ARCH compile or complete dependency freshness."
+  ]
+}

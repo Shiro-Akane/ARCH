@@ -38,6 +38,23 @@ class RTInstability
     int g_sp_heavy, g_sp_light;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho_heavy", "float", "g/cm^3"},
+            {"rho_light", "float", "g/cm^3"},
+            {"y_int", "float", "cm"},
+            {"p_int", "float", "erg/cm^3"},
+            {"amplitude", "float", "cm/s"}};
+        return result;
+    }
+
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         // 1. Grid bounds for wave number calculation
@@ -58,8 +75,8 @@ public:
 
         // 4. Setup pseudo-species to track the mixing interfaces
         // Using the global gamma (e.g., 1.4). CV is arbitrary for ideal gas tracking.
-        g_sp_light = specs.add_species("LightFluid", 1.0, 1.0, config.physics.gamma, 717.5);
-        g_sp_heavy = specs.add_species("HeavyFluid", 4.0, 2.0, config.physics.gamma, 717.5);
+        g_sp_light = specs.add_species("LightFluid", config.MaterialConstant(1.0, "LightFluid.A"), config.MaterialConstant(1.0, "LightFluid.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "LightFluid.Cv"));
+        g_sp_heavy = specs.add_species("HeavyFluid", config.MaterialConstant(4.0, "HeavyFluid.A"), config.MaterialConstant(2.0, "HeavyFluid.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "HeavyFluid.Cv"));
 
         std::cout << "[Problem] Rayleigh-Taylor Instability Setup Complete.\n"
                   << "          Interface at y=" << g_y_int << "\n"

@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "scope": "CI report completeness and registration coverage only; no Core test/scientific rerun or hosted workflow claim",
+  "sourceHead": "4263b0583cd8c505966e5b31118cc978466abb44",
+  "actualInventoryTests": 71,
+  "cpuAnchors": 39,
+  "newConfigurationAnchors": [
+    "case_configuration",
+    "config_input_records",
+    "configuration_api_contract",
+    "configuration_entry_contract",
+    "configuration_input",
+    "configuration_v3_contract",
+    "input_resolution"
+  ],
+  "newPreviewAnchors": [
+    "case_inspection_contract",
+    "preview_api_contract",
+    "preview_cellular_2d",
+    "preview_exact_sample_cache",
+    "preview_full_model_contract",
+    "preview_initial_conversion",
+    "preview_mesh_geometry",
+    "preview_parameter_metadata",
+    "preview_parameter_reads",
+    "preview_sampling_limits",
+    "preview_session_contract",
+    "preview_verified_resources"
+  ],
+  "newJensAnchors": [
+    "jeans_diagnostics",
+    "refinement_indicator_math"
+  ],
+  "beforeMissingV3Accepted": true,
+  "afterMissingV3Rejection": "cpu coverage is missing: configuration_v3_contract",
+  "removalNegativeControls": 21,
+  "unittestExit": 0,
+  "localUnittestAndInventorySeconds": 0.06816057200194336,
+  "addedWorkflowJobs": 0,
+  "addedCoreTestExecutions": 0,
+  "timeoutChanged": false,
+  "limitations": [
+    "No new GitHub hosted job result",
+    "No new cold/cache build time on same hosted runner",
+    "Local check timing is not formal platform benchmark"
+  ],
+  "inputSha256": {
+    "tools/check_ci_results.py": "79e00e85554559644a7c9604bd2e4e4ff63c22b4cb70884654ba5bd3e8622167",
+    "tests/tooling/build_tools/test_ci_results.py": "c59eff26099f14704cb164a83f461d8c121fcf565be5733407451012ab1925d3",
+    ".github/workflows/ci.yml": "35cec3d3a10f05c25c081dbb1000ee98a498a2cf56b3c57f12242fcacd4cd492",
+    "cmake/tests/HostTests.cmake": "ef87e32ba04ef141a9865c3303a33558025d863672b217f769a9daf2670f9f47"
+  }
+}

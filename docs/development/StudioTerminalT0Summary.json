@@ -1,0 +1,66 @@
+{
+  "scope": "Real Linux xterm -> Run worker -> ARCH, previously authorized Sod t=0 only",
+  "sourceCommit": "301517c2b43d8f56f5c1a5c3972901397e29ca2b",
+  "repositoryDirty": false,
+  "runId": "926efbfc-5fd5-4dfd-b9cd-51453c1da819",
+  "binary": {
+    "relativePath": "build-studio-cpu/bin/ARCH",
+    "fingerprint": {
+      "sha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+      "size": 7174432,
+      "modifiedTime": "2026-10-02T04:02:04.184Z"
+    },
+    "sourceClaim": "compiled-version-only"
+  },
+  "config": {
+    "relativePath": "studio/.local/integration/terminal-t0-4e3ddd62-3462-4e24-a90d-44d1d8bdf7c6/Sod.par",
+    "fingerprint": {
+      "sha256": "60bddc22c7c1130c43a2f341d74efdbe07823b9a8a0d770018b708f17ef5654d",
+      "size": 1209,
+      "modifiedTime": "2026-10-02T04:47:11.888Z"
+    }
+  },
+  "outcome": {
+    "exitCode": 0,
+    "totalSteps": 0,
+    "finalTime": 0,
+    "initialAmrLeavesFromLog": 12,
+    "terminalLogEmpty": true,
+    "ownedTerminalExited": true,
+    "ownedCoreExited": true,
+    "ownedWorkerExited": true
+  },
+  "checkpointTimeMetadata": {
+    "reference_HLLC_plt_0000.h5": {
+      "@time": 0
+    },
+    "reference_chk_0000.h5": {
+      "@step": 0,
+      "@time": 0
+    }
+  },
+  "metadataReader": "existing h5wasm/node 0.10.3, read-only scalar attributes",
+  "inputChanges": [
+    "out_dir only, unique persistent local destination"
+  ],
+  "localEvidence": {
+    "relativePath": "studio/.local/integration/terminal-t0-4e3ddd62-3462-4e24-a90d-44d1d8bdf7c6",
+    "recordSha256": "477f74dc3f6d67bd75fdeccdbd09e4cad5819c54f128e8a3f714d73d287a4b50",
+    "rawFiles": [
+      {
+        "name": "reference_HLLC_plt_0000.h5",
+        "size": 16480
+      },
+      {
+        "name": "reference_chk_0000.h5",
+        "size": 29592
+      }
+    ]
+  },
+  "limits": [
+    "No time evolution or restart continuation acceptance.",
+    "No visual/manual UI UAT claim.",
+    "Guard sampled only twice over 1.008 s; peak RSS is not a representative run-memory measurement.",
+    "Compiled binary selected explicitly; no current-source freshness claim."
+  ]
+}

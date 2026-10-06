@@ -1,12 +1,16 @@
+> 当前合并与 release 收束以 [2026-10-06 计划](ComputeStudioReleasePlan-20261006.zh-CN.md)为入口；下文保留各阶段的证据日期和覆盖边界。
+
 # Core、Studio、Jeans 与 RZ 联合交付计划
 
 2026-10-06 更新：当前汇总线及分支处理见[归并说明](ComputeOptimConsolidation-20261006.zh-CN.md)，本轮有限收尾见[收尾清单](StudioRoundClosure-20261006.zh-CN.md)。Studio 继续使用现有集成分支，不先 merge O8；最终由维护者统一归入 `compute/optim`，审计后再合入 `main`。
 
 2026-10-01。本文是合作者的统一入口，覆盖 O7.0 配置整改、Studio／Host、
 O7.1–O7.5 Jeans／RZ 实现，以及部分 O9 的第二平台验证。
-发布基线是 `v1.2.1`，工作计划位于 `compute/optim`。本轮只交付 Linux／WSL，原生 Windows 适配明确排除。
-本文为实施与验收约定，
-尚未改变运行行为；14700K／RTX 4070 Ti 为拟使用平台，尚无该机验收结果。
+发布基线是 `v1.2.1`，初始规划保存在 `compute/optim`；该线收尾 checkpoint 已交给 `compute/optim` 统一集成，原执行分支为 `studio/compute-optim-integration`。本轮只交付 Linux／WSL，原生 Windows 适配明确排除。
+本文为实施与验收约定。14700K／RTX 4070 Ti 已完成合作者报告的平台预检，
+完整科学与正式 CUDA／性能验收仍未完成。2026-10-04 可取得源码与 Core 决定
+见[恢复短 gate 评审](O7ResumeShortGates-20261004.zh-CN.md#core-review2026-10-04)；
+后文 2026-10-01 的历史审计记录保留其时间与覆盖边界。
 
 **交付目标：由一位负责人贯通配置/API、Studio、O7 实现及冻结方案下的验证；
 ARCH 维护者负责科学规则、参考输入、误差预算及最终合并判定。**
@@ -14,6 +18,9 @@ ARCH 维护者负责科学规则、参考输入、误差预算及最终合并判
 不能把目标明确理解为每个实现细节都有唯一答案。
 
 ## 1. 基线、证据与文档权威
+
+下表保留 2026-10-01 的入口审计；当前集成分支的进度及批准范围沿上述 Core 评审记录，
+旧的“源码未取得”或“模型初态仅两项”不能替代新提交的逐项核对。
 
 | 对象 | 本次核对结果 | 使用边界 |
 | --- | --- | --- |
@@ -85,20 +92,26 @@ H5／plt／checkpoint 原始数据继续留在本机。
 
 ### 1.2 从当前分支建立自己的工作区
 
-交接文档和主计划一起位于 `compute/optim`，合作者拉取该分支的完整仓库。
-新目录示例（目录已存在时自行选择新位置，不覆盖现有工作）：
+当前执行分支是 `studio/compute-optim-integration`；复用本机已有的一份 ARCH checkout，
+在 clean 工作树上接收增量并记录 SHA，不创建第二份源码、worktree 或交叉引用的构建缓存。
+有未提交工作时先保留，再按实际差异合入；不 reset／覆盖用户改动。
 
 ```bash
-git clone --branch compute/optim git@github.com:Shiro-Akane/ARCH.git ARCH-compute-optim
-cd ARCH-compute-optim
+git fetch origin
+git switch studio/compute-optim-integration
+git merge --ff-only origin/studio/compute-optim-integration
 git rev-parse HEAD
 git status --short
 ```
 
 已有仓库可先 fetch，再建立独立 worktree 或本地分支；不要在未保存的 Studio 工作区上
 直接重置或覆盖。记录取得的精确 SHA，并确认本文及执行细则均存在。
-`compute/optim` 现已包含 O8 实现、Core RZ 契约和 RT 审计记录；完整 Studio/O7 工作台仍在
-`studio/compute-optim-integration`。先冻结该线本轮交付，再由维护者按模块整合，不能直接用整侧源码覆盖另一侧。
+`compute/optim` 现已包含 O8 实现、Core RZ 契约和 RT 审计记录；本轮将 Studio/O7 的 b7cb8b69 按模块合入 compute/optim；
+后续以集成分支精确 SHA 为基线，不使用整侧源码覆盖另一侧。
+本地历史有独立提交而不能 fast-forward 时，先审阅差异再做有界集成。
+Core 科学决定追加于现有 [逐项 review 清单](O7JeansRzReviewQuestions-20261004.zh-CN.md)：
+第6节是 JENS 短包，第7节是环体数学／误差接口，第8节是 RZ 单一角动量表示。
+每个获准节点可以独立推进并提交 review；未获准或未验收子集不阻塞无依赖工程工作。
 
 本地开发可以分阶段提交，统一回到约定的交付分支 review；多人写入时先登记责任。
 远端前进时先 fetch 并检查差异，不能 force-push 覆盖他人的工作。
@@ -416,11 +429,15 @@ O8／O10 不在本次委托范围；所有阶段均不以原生 Windows 可运�
 
 ### 7.1 平台与构建准备
 
-RTX 4070 Ti 属于 compute capability **8.9**，RTX 3060 Ti 为 **8.6**。
-新机记录 `CMAKE_CUDA_ARCHITECTURES=89`，使用满足 ARCH 构建要求、
-能够原生编译 SM_89 且已验证的 CUDA 工具链；显卡型号和 capability 以实际查询为准。
-不复制旧机 SM_86 缓存，也不沿用此前误记的 SM_120／CUDA 12.8 必需条件。
-依据：[NVIDIA GPU 表](https://developer.nvidia.com/cuda/gpus)。
+用户于 2026-10-04 确认原平台描述有误，实际为 RTX 4070 Ti。
+本机只读 nvidia-smi 查询 compute capability **8.9**，与
+[NVIDIA GPU 表](https://developer.nvidia.com/cuda/gpus) 一致；RTX 3060 Ti 为 **8.6**。
+后续 CUDA lane 核对并记录 CMAKE_CUDA_ARCHITECTURES=89（或经验证的等效目标），
+冻结能原生编译该目标的实际 Toolkit／驱动／编译器身份。
+原先针对误报 5070 Ti 的 SM_120、architecture=120 和 CUDA 12.8 最低版本假设撤销，
+不因此主动升级工具链、重建 CUDA tree 或修改现有缓存。
+架构可编译与设备执行／数值验收分别验证；仍须先通过 CPU gate。
+更正证据见 [平台确认](PlatformIdentityCorrection-20261004.zh-CN.md)。
 
 记录 GPU 型号／显存、CPU／物理核／SMT、RAM、OS／WSL 内核、驱动、Toolkit、
 Host 编译器、CMake、构建选项、cuDSS／KLU 与 EOS／网络数据身份。
@@ -583,3 +600,91 @@ Nsight 原始 trace 或其他大型二进制 raw data。**
 受影响 CPU／CUDA 以及必需科学 review 均需完成。
 后续全模型预览与 plt 使用各自出口；暂未实现的能力在界面和文档中保持准确。
 最终摘要给维护者足够信息决定合并，无需由合作者自行宣布科学模型或新 GPU 已全面认证。
+
+
+## 2026-10-05：JENS actual Runtime device transaction 节点
+
+真实Runtime repair/ordinary regrid接通accepted device minima与same-tree candidate parent hook。
+1D/2D/3D目标160细化8/16/32、parent veto、exact equality和target64粗化、nextafter refine、
+finest拒绝、容量8/峰值12 rollback与stale Host/retired identity均原CUDA CTest实机PASS。
+CPU相关3项+实际Runtime gravity fixture PASS；没有推进time/step。
+见JeansRuntimeDeviceTransactionsNode-20261005.zh-CN.md及processed summary。
+公开CUDA JENS/RZ gate仍保持，完整冻结9+9 CUDA、科学RZ、long-run/benchmark未签收。
+未变CPU ARCH复用匹配receipt，旧Manifest不当作当前source fresh；raw数据/ELF/log本机。
+
+
+## 2026-10-05：RZ权威tree→elliptic chart桥接
+
+原adapter现在传递tree semantics并使用同一显式GridMetrics full-ring measure；
+axis/offaxis、2roots→5mixed真实tree事务，共3584cells逐cellvolume与z Dirichlet验证PASS。
+SelfGravity在未完成finite-ring/native force-work/runtime consumer前明确拒绝RZ，
+旧publication失效及Cartesian恢复通过，不宣布RZ科学完成。
+原CPU生命周期1/1、实际Cartesian Runtime7gather与CUDA-enabled Host1/1通过；
+旧工程非法AMR阈值对修正并以Core关系检查，原科学门槛不变。
+见RZEllipticChartBindingNode-20261005.zh-CN.md及processed summary。
+未变CPU ELF复用receipt；JENS门槛候选未应用，完整CUDA冻结包等待明确本地验证授权。
+raw数据本机；整体目标、RZ科学、long-run/benchmark仍未完成。
+
+
+## 2026-10-05：原GravityWorkspace RZ物理几何消费
+
+原构造器现在消费同一geometry producer，RZ长度dr/dz与meridian(r,0,z)观察点，
+Existing原center/公式不变；3584真实root/mixed cell与所有边界face检查通过。
+原CPU self-gravity1/1、actualCartesian Runtime7gather/time0、CUDA-enabled Host1/1 PASS，
+不是Device RZ或完整RZ Runtime/science。原bind/regrid/JENS gate保持。
+见RZGravityWorkspaceChartNode-20261005.zh-CN.md及processed summary。
+CPU ELF未变receipt复用、raw/ELF本机；完整finite-ring runtime/force-work/科学/长跑仍未签收。
+
+
+## 2026-10-05：完整 CUDA ARCH 与原 CPU-qualified 短子组
+
+源2a984091的完整ARCH Release/sm89构建通过；19真实Device进程、
+27记录（8预期拒绝）原Wave/Box/Radial quick子组PASS。
+原参考/科学阈值/低G迁移未改，repair/residual/restart通过；
+真实端点与输入分别记录，不以quick/步骤截断冒充完整campaign/长跑。
+见CurrentCudaOriginalShortNode-20261005.zh-CN.md及processed summary。
+公开CUDA JENS gate未改，冻结9+9待明确本地验证授权；RZ科学/生产gate保持。
+raw/ELF本机；完整CUDA/long-run/benchmark未完成，不开展Windows适配。
+
+
+## 2026-10-05：原完整 gravity CUDA 子组
+
+同源/ELF/590-input聚合身份的原Wave32+Box14+Radial28，共74记录PASS；
+58真实Device进程、12预期拒绝及4汇总，repair/residual/空间与时间阶/restart原gate通过。
+见CurrentCudaOriginalFullNode-20261005.zh-CN.md及processed summary。
+明确保留PCM时间探针无energy-budget及两步/12步/40步短范围，不冒称统一终点benchmark。
+公开CUDA JENS gate未动，冻结9+9待明确本地验证授权；RZ全消费者/科学gate保持。
+raw/ELF本机，无Windows适配；整体O7、批准长跑及冻结benchmark未完成。
+
+
+## 2026-10-05：当前CPU binary身份与冻结短包
+
+标准增量ARCH构建实际产生新5d454c03 ELF，590-input聚合与当前CUDA receipt相同。
+因此复验原CPU冻结JENS9演化+9真实restart，以及Wave32/Box14/Radial28原完整子组，全PASS。
+原16epsilon、质量/能量/残差/收敛阈值未变；真实端点/短步数限制分别记录。
+见CurrentCpuSourceIdentityNode-20261005.zh-CN.md与processed summary，raw/ELF本机。
+这是current源码匹配CPU receipt，不冒称公开CUDA JENS/RZ全科学/long-run/benchmark签收。
+CUDA9+9候选仍待明确本地验证授权；原科学gate保持，不开展Windows适配。
+
+
+## 2026-10-05：原生RZ face/work消费者与切向插值finding
+
+原Workspace face-row producer接回构造器；真实3584cells的Phi=z揭露coarse/fine
+normal-only Phi_face切向偏置（work=-.6772486772486772，native reference0）。
+原CompositePoisson用同一neighborhood/LU修正affine再现，原断言不变；
+face/work/actual Host cell force/dz timestep、CPU4CTest、actualCartesian Runtime7gather、
+CUDA-enabled Host1CTest通过。见RZNativeFaceWorkNode-20261005.zh-CN.md和summary。
+只关闭该affine scope，RZ typed ring boundary/publication/连续科学/axis/viscosity gate保持。
+生产ELF未变receipt复用，raw/ELF本机，无Windows或新长跑。
+
+
+## 2026-10-05：typed CPU ring执行与实机Device预先拒绝
+
+原GravityWork/Host executor接实际ring_boundary，旧result先失效，
+source/generation、stale/missing/WorkLimit诊断通过16-cell原预算源验证。
+legacy工作项携带真实chart，Host/CUDA拒绝RZ log；实机Device拒绝typed ring，
+零kernel/transfer/fence增量、无Host fallback且旧证书退役，原36 reduction边界case通过。
+CPU1CTest、CUDA-enabled2CTest与actualCartesian Runtime7gather通过；
+见RZTypedRingExecutionNode-20261005.zh-CN.md及processed summary。
+SelfGravity RZ完整source/RHS/solve/publication和科学gate仍未签收；公开JENS CUDA门槛不变。
+生产ELF未变，raw/ELF本机，不开展Windows或新长跑。

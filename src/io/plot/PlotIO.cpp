@@ -22,9 +22,13 @@
 #include "data/GlobalDefs.h"
 #include "grid/Grid.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
+#include "physics/diagnostics/JeansDiagnostics.h"
 #include "physics/species/Species.h"
 
 #include "io/IO.h"
+#include "core/files/FileFingerprint.h"
+#include "io/plot/PlotGridMetadata.h"
+#include "io/plot/PlotFieldMetadata.h"
 #include "io/hdf5/HDF5Writer.h"
 
 namespace fs = std::filesystem;
@@ -46,8 +50,22 @@ void write_plt(amr::AMRControl &amr_ctrl,
                PressureFunc p_func, TemperatureFunc t_func, Gamma1Func gamma1_func, const void* p_context,
                int file_index, double current_time,
                const SimConfig &config, const SpeciesManager &specs,
-               std::span<const io::PlotScalarField> extra_fields)
+               std::span<const io::PlotScalarField> extra_fields,
+               const io::CheckpointProvenance* runtime_provenance, std::string_view run_id,
+               GridMetrics::GeometrySemantics semantics)
 {
+    // A profile mismatch must fail before creating any output directory/file.
+    if (semantics != GridMetrics::GeometrySemantics::Existing
+        && semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::invalid_argument("Unknown Plotfile geometry profile.");
+    if (config.io.vars.jens && config.physics.gravity.type != "self")
+        throw std::invalid_argument("JENS output requires self gravity.");
+    const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+    if (active_blocks.empty())
+        throw std::invalid_argument("Cannot publish Plotfile without active leaf blocks.");
+    for (int id : active_blocks)
+        (void)GridMetrics::make_geometry_view(amr_ctrl.pool->GetBlock(id).grid,semantics);
+    const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
     if (!fs::exists(config.io.out_dir))
         fs::create_directories(config.io.out_dir);
 
@@ -57,7 +75,6 @@ void write_plt(amr::AMRControl &amr_ctrl,
         << config.numerics.solver_name << "_plt_"
         << std::setw(4) << std::setfill('0') << file_index << ".h5";
 
-    const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     int dim = 3;
     std::string geom = "cartesian";
     if (!active_blocks.empty()) {
@@ -67,7 +84,6 @@ void write_plt(amr::AMRControl &amr_ctrl,
     }
 
     size_t num_blocks = active_blocks.size();
-    if (num_blocks == 0) return;
 
     const amr::Block& first_b = amr_ctrl.pool->GetBlock(active_blocks[0]);
     std::vector<size_t> block_dims = get_hdf5_dims(first_b.grid);
@@ -82,19 +98,51 @@ void write_plt(amr::AMRControl &amr_ctrl,
     std::vector<int> block_levels(num_blocks);
     std::vector<int> block_mortons(num_blocks);
 
+    io::PlotNativeGrid native_grid;
+    io::PlotRzAngularState angular_state;
+    const bool has_native_grid = io::supports_plot_native_grid(first_b.grid,semantics);
+    if (has_native_grid) {
+        for (size_t axis=0;axis<3;++axis) {
+            native_grid.lower[axis].reserve(total_cells);
+            native_grid.upper[axis].reserve(total_cells);
+            native_grid.logical[axis].reserve(num_blocks);
+        }
+        native_grid.cell_measure.reserve(total_cells);
+        if (rz) {
+            native_grid.angular_measure.reserve(total_cells);
+            angular_state.m_phi.reserve(total_cells);
+            angular_state.angular_momentum_density.reserve(total_cells);
+        }
+    }
     size_t cell_idx = 0;
     for (size_t b_idx = 0; b_idx < num_blocks; ++b_idx) {
         const amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[b_idx]);
         block_levels[b_idx] = b.level;
         block_mortons[b_idx] = b.morton_code;
+        if (b.grid.dim != dim || b.grid.geometry != geom)
+            throw std::invalid_argument("Mixed plotfile block geometry.");
+        if (has_native_grid) {
+            native_grid.logical[0].push_back(b.logical_x1);
+            native_grid.logical[1].push_back(b.logical_x2);
+            native_grid.logical[2].push_back(b.logical_x3);
+        }
 
         for (int k = b.grid.Ks(); k < b.grid.Ke(); ++k) {
             for (int j = b.grid.Js(); j < b.grid.Je(); ++j) {
                 for (int i = b.grid.Is(); i < b.grid.Ie(); ++i) {
-                    PointCoords p = b.grid.GetPhysicalCoords(i, j, k);
+                    PointCoords p = b.grid.GetPhysicalCoords(i, j, k,semantics);
                     coord_x[cell_idx] = p.x;
                     coord_y[cell_idx] = p.y;
                     coord_z[cell_idx] = p.z;
+                    if (has_native_grid)
+                        io::append_plot_native_cell(native_grid,b.grid,i,j,k,semantics);
+                    if (rz) {
+                        const double m_phi = b.fluid_state.mom_w[b.grid.GetIndex(i,j,k)];
+                        angular_state.m_phi.push_back(m_phi);
+                        angular_state.angular_momentum_density.push_back(
+                            arch::state::rz_angular_density(m_phi,
+                                native_grid.angular_measure.back(), native_grid.cell_measure.back()));
+                    }
                     cell_idx++;
                 }
             }
@@ -144,7 +192,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
                 for (int j = grid.Js(); j < grid.Je(); ++j) {
                     for (int i = grid.Is(); i < grid.Ie(); ++i) {
                         const VelocityDiagnostics::Values diagnostic =
-                            VelocityDiagnostics::evaluate(grid, vel_x, vel_y, vel_z, i, j, k);
+                            VelocityDiagnostics::evaluate(GridMetrics::make_geometry_view(grid,semantics), vel_x, vel_y, vel_z, i, j, k);
                         if (include_vorticity) vorticity[buffer_index] = diagnostic.vorticity;
                         if (include_divergence) divergence[buffer_index] = diagnostic.divergence;
                         ++buffer_index;
@@ -183,7 +231,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
     if (vars.v && dim >= 2)
         extract_and_store("VELY", [](const FluidState &s, int idx) { auto U = s.get(idx); return arch::state::recover(U).v; });
 
-    if (vars.w && dim == 3)
+    if (vars.w && (dim == 3 || rz))
         extract_and_store("VELZ", [](const FluidState &s, int idx) { auto U = s.get(idx); return arch::state::recover(U).w; });
 
     if (vars.entr) {
@@ -197,11 +245,64 @@ void write_plt(amr::AMRControl &amr_ctrl,
         });
     }
 
+    if (vars.jens) {
+        if (!p_func || !gamma1_func)
+            throw std::invalid_argument("JENS output requires authoritative EOS callbacks.");
+        std::vector<double> buffer(total_cells);
+        std::vector<double> fractions(specs.count());
+        std::size_t index=0;
+        for (int id:active_blocks) {
+            const auto& block=amr_ctrl.pool->GetBlock(id);
+            const auto& grid=block.grid;
+            const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
+            const auto& state=block.fluid_state;
+            for (int k=grid.Ks();k<grid.Ke();++k)
+                for (int j=grid.Js();j<grid.Je();++j)
+                    for (int i=grid.Is();i<grid.Ie();++i) {
+                        const int cell=grid.GetIndex(i,j,k);
+                        for (int species=0;species<state.GetNumSpecies();++species)
+                            fractions[species]=state.X(species,cell);
+                        const auto fluid=state.get(cell);
+                        const double pressure=p_func(fluid,fractions.data(),p_context);
+                        // Gamma1 callback is rho*adiabatic_cs^2/P from the
+                        // current EOS, not the configurable fallback gamma.
+                        const double gamma1=gamma1_func(fluid,fractions.data(),p_context);
+                        if (!std::isfinite(pressure) || pressure<=0.
+                            || !std::isfinite(gamma1) || gamma1<=0.)
+                            throw std::runtime_error("JENS output requires finite positive EOS pressure and Gamma1.");
+                        const auto diagnostic=JeansDiagnostics::evaluate_cell(
+                            fluid.rho,gamma1*pressure/fluid.rho,geometry,i,j);
+                        if (diagnostic.status!=JeansDiagnostics::Status::valid)
+                            throw std::runtime_error("JENS output rejected invalid or unrepresentable state.");
+                        buffer[index++]=diagnostic.cells;
+                    }
+        }
+        data_map.emplace("JENS",std::move(buffer));
+    }
+
     if (vars.enuc)
         extract_and_store("ENUC", [](const FluidState& state, int index) { return state.enuc_rate[index]; });
 
     if (vars.vort || vars.divv) {
         extract_velocity_diagnostics(vars.vort, vars.divv);
+    }
+    std::map<std::string, io::PlotFieldMetadata> field_metadata;
+    for (const auto& [name, values] : data_map) {
+        auto declaration = io::plot_field_metadata(name, geom == "cartesian");
+        if (rz && (name == "VELX" || name == "VELY" || name == "VELZ")) {
+            declaration.basis = "local-orthonormal-r-z-phi";
+            declaration.meaning = name == "VELX" ? "radial_velocity"
+                : name == "VELY" ? "axial_velocity" : "representative_azimuthal_velocity";
+        }
+        if (rz) {
+            if (name == "DENS" || name == "ENER") declaration.averaging = "native-volume-average";
+            else if (name == "VELZ") declaration.averaging = "representative-m_phi-over-rho";
+            else if (name == "VELX" || name == "VELY")
+                declaration.averaging = "recovered-from-native-volume-averaged-conserved-state";
+            else if (name == "PRES" || name == "TEMP" || name == "JENS")
+                declaration.averaging = "evaluated-from-representative-conserved-state";
+        }
+        field_metadata.emplace(name,std::move(declaration));
     }
     std::vector<int> selected_species;
     if (vars.species) {
@@ -220,6 +321,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
     }
     for (const int species : selected_species) {
         const std::string& var_name = specs.get_name(species);
+        field_metadata[var_name] = io::plot_species_metadata();
         extract_and_store(var_name, [species](const FluidState &s, int idx) {
             return s.X(species, idx);
         });
@@ -232,5 +334,24 @@ void write_plt(amr::AMRControl &amr_ctrl,
             throw std::invalid_argument("Nonfinite additional plot field");
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
     }
-    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map);
+    io::PlotSourceIdentity source_identity;
+    source_identity.run_id = run_id;
+    source_identity.unit_system = "cgs";
+    source_identity.binary_sha256 = arch::core::running_executable_sha256();
+    if (const auto input = config.LoadedInput()) {
+        source_identity.case_id = input->case_id;
+        if (input->raw_text_available)
+            source_identity.raw_config_sha256 = arch::core::string_sha256(input->raw_text);
+    }
+    if (runtime_provenance && runtime_provenance->available) {
+        source_identity.eos_type = runtime_provenance->eos_type;
+        source_identity.eos_table_sha256 = runtime_provenance->eos_table_sha256;
+        source_identity.ideal_gamma = runtime_provenance->ideal_gamma;
+        source_identity.species_names = runtime_provenance->species_names;
+        source_identity.species_A = runtime_provenance->species_A;
+        source_identity.species_Z = runtime_provenance->species_Z;
+        source_identity.species_gamma = runtime_provenance->species_gamma;
+        source_identity.species_Cv = runtime_provenance->species_Cv;
+    }
+    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity, &field_metadata,semantics,rz ? &angular_state : nullptr);
 }

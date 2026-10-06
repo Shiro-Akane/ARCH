@@ -46,6 +46,10 @@ struct IsentropicState {
  * With network_name=none and burning disabled, leaves gas definitions to the
  * problem. Unknown networks and burning without a network are rejected.
  */
+// Register network material without reading fractions. Use only when Init
+// constructs the composition and the case declares consumes_input=false.
+void SetupNetworkSpecies(SimConfig& config, SpeciesManager& specs);
+
 void SetupNetworkAndFractions(SimConfig& config, SpeciesManager& specs,
                               std::vector<double>& default_X);
 
@@ -88,7 +92,11 @@ IsentropicState GetIsentropicStateAtPressureFactor(
 
 namespace detail {
 
-/** @brief Internal bridge from a case Init callback to AMR state initialization. */
+/** Internal bridge from a physical Init callback to AMR state initialization.
+ * Existing charts retain point conversion and their original repair accounting.
+ * Explicit RZ publishes V/W-averaged interiors transactionally, with no repair;
+ * ghosts remain unavailable until Driver's physical BC/committed exchange.
+ */
 void PopulateState(amr::AMRControl& amr_ctrl, const SimConfig& config,
                    const SpeciesManager& specs,
                    ProblemInitializationContext context,

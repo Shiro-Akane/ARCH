@@ -1,0 +1,4002 @@
+{
+  "amrIndicators": {
+    "alternativeSeparator": "+",
+    "choices": [
+      {
+        "available": true,
+        "reason": null,
+        "selected": true,
+        "value": "DENS"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "PRES"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "TEMP"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "VELX"
+      },
+      {
+        "available": false,
+        "reason": "requires at least 2D",
+        "selected": false,
+        "value": "VELY"
+      },
+      {
+        "available": false,
+        "reason": "requires 3D",
+        "selected": false,
+        "value": "VELZ"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "ENER"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "VORT"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "DIVV"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "ENTR"
+      },
+      {
+        "available": false,
+        "reason": "requires reactions",
+        "selected": false,
+        "value": "ENUC"
+      },
+      {
+        "available": false,
+        "reason": "Jeans diagnostic is not implemented",
+        "selected": false,
+        "value": "JENS"
+      },
+      {
+        "available": true,
+        "reason": null,
+        "selected": false,
+        "value": "SPECIES"
+      }
+    ],
+    "namedSpecies": [],
+    "separator": ",",
+    "speciesResolution": "requires case Setup"
+  },
+  "completeness": {
+    "scope": "declared-configuration-before-setup",
+    "state": "invalid"
+  },
+  "coordinates": {
+    "activation": "positive-block-count",
+    "axes": [
+      {
+        "active": true,
+        "blocks": 8,
+        "blocksKey": "nblockx1",
+        "displayName": "x",
+        "key": "x1",
+        "kind": "length",
+        "lowerBoundaryKey": "x1l_boundary_type",
+        "maxKey": "x1_max",
+        "minKey": "x1_min",
+        "nativeName": "x",
+        "unit": "cm",
+        "upperBoundaryKey": "x1r_boundary_type"
+      },
+      {
+        "active": false,
+        "blocks": 0,
+        "blocksKey": "nblockx2",
+        "displayName": "x2",
+        "key": "x2",
+        "kind": "inactive",
+        "lowerBoundaryKey": "x2l_boundary_type",
+        "maxKey": "x2_max",
+        "minKey": "x2_min",
+        "nativeName": "x2",
+        "unit": null,
+        "upperBoundaryKey": "x2r_boundary_type"
+      },
+      {
+        "active": false,
+        "blocks": 0,
+        "blocksKey": "nblockx3",
+        "displayName": "x3",
+        "key": "x3",
+        "kind": "inactive",
+        "lowerBoundaryKey": "x3l_boundary_type",
+        "maxKey": "x3_max",
+        "minKey": "x3_min",
+        "nativeName": "x3",
+        "unit": null,
+        "upperBoundaryKey": "x3r_boundary_type"
+      }
+    ],
+    "dimension": 1,
+    "disabledBlockCount": 0,
+    "geometry": "cartesian",
+    "thirdAxisRequiresSecond": true,
+    "unitSystem": "cgs"
+  },
+  "coverage": {
+    "auxiliaryParametersComplete": true,
+    "caseParametersComplete": true,
+    "conditionsComplete": true,
+    "diagnosticsComplete": true,
+    "standardParametersComplete": true
+  },
+  "diagnostics": [
+    {
+      "code": "MALFORMED_LINE",
+      "conditionId": null,
+      "expected": {
+        "type": null,
+        "units": null
+      },
+      "locations": [
+        {
+          "column": 1,
+          "endColumn": 9,
+          "line": 71,
+          "rawValue": null,
+          "source": "stdin"
+        }
+      ],
+      "message": "Non-comment line requires an equals sign.",
+      "module": null,
+      "parameterKey": null,
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "DUPLICATE_PARAMETER",
+      "conditionId": "case:Sod:x_pos",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "cm"
+        }
+      },
+      "locations": [
+        {
+          "column": 8,
+          "endColumn": 12,
+          "line": 54,
+          "rawValue": " 0.5",
+          "source": "stdin"
+        },
+        {
+          "column": 7,
+          "endColumn": 11,
+          "line": 70,
+          "rawValue": "0.25",
+          "source": "stdin"
+        }
+      ],
+      "message": "Duplicate parameter; no occurrence is selected.",
+      "module": "Case",
+      "parameterKey": "x_pos",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "INVALID_NUMBER",
+      "conditionId": "requires:ode_rtol",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [
+        {
+          "column": 10,
+          "endColumn": 13,
+          "line": 72,
+          "rawValue": "bad",
+          "source": "stdin"
+        }
+      ],
+      "message": "Config parameter 'ode_rtol': Expected a complete finite decimal or scientific-notation number.",
+      "module": "Network",
+      "parameterKey": "ode_rtol",
+      "relatedKeys": [],
+      "severity": "error"
+    }
+  ],
+  "diffusion": {
+    "channels": [
+      {
+        "coefficientKey": "alpha_therm",
+        "constantInputAllowed": true,
+        "stellarModelSuppliesCoefficient": true,
+        "toggleKey": "use_thermal_diff",
+        "unit": "cm^2/s"
+      },
+      {
+        "coefficientKey": "nu_visc",
+        "constantInputAllowed": true,
+        "stellarModelSuppliesCoefficient": false,
+        "toggleKey": "use_viscous_diff",
+        "unit": "cm^2/s"
+      },
+      {
+        "coefficientKey": "D_spec",
+        "constantInputAllowed": true,
+        "stellarModelSuppliesCoefficient": false,
+        "toggleKey": "use_species_diff",
+        "unit": "cm^2/s"
+      }
+    ],
+    "conflictResolution": "explicit reversible removal from working text; hiding fields is insufficient",
+    "enabled": false,
+    "forbiddenExplicitKeys": [],
+    "modeEditable": false,
+    "possibleSources": [
+      "constant"
+    ],
+    "selectionRule": "species_count > 0 and EOS electron density > 0 selects stellar transport; positive viscosity/thermal overrides then fail",
+    "source": "constant",
+    "sourceScope": "configuration; EOS state not evaluated",
+    "version": "1"
+  },
+  "execution": {
+    "caseDeclarations": "checked",
+    "caseRegistration": "checked",
+    "cuda": "not_initialized",
+    "eos": "not_loaded",
+    "filesystem": "not_accessed",
+    "setup": "not_executed",
+    "simulationReadiness": "not_checked",
+    "validationStage": "conditional-resolution"
+  },
+  "identity": {
+    "caseId": "Sod",
+    "configRevision": "1f1027703bb042194574265b1b6a84fbc708d065006d04cb13cb5184b11c7f58",
+    "requestId": "v3-invalid"
+  },
+  "kind": "configuration-inspection",
+  "parameters": [
+    {
+      "applicability": {
+        "conditionId": "requires:D_spec",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "D_spec",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:D_spec",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:EntropyFix",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "EntropyFix",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:EntropyFix",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:EntropyFixCoefficient",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "EntropyFixCoefficient",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:EntropyFixCoefficient"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:alpha_therm",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "alpha_therm",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:alpha_therm",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:base_name",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "base_name",
+      "locations": [
+        {
+          "column": 12,
+          "endColumn": 16,
+          "line": 40,
+          "rawValue": " Sod",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "Sod",
+      "path": null,
+      "rawValue": " Sod",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "Sod",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "cfl",
+      "locations": [
+        {
+          "column": 6,
+          "endColumn": 10,
+          "line": 28,
+          "rawValue": " 0.4",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0.4,
+      "path": null,
+      "rawValue": " 0.4",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0.4,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:chk_dstep",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "chk_dstep",
+      "locations": [
+        {
+          "column": 12,
+          "endColumn": 15,
+          "line": 44,
+          "rawValue": " -1",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": -1,
+      "path": null,
+      "rawValue": " -1",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:chk_dt",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "chk_dt",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 14,
+          "line": 43,
+          "rawValue": " -1.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": -1,
+      "path": null,
+      "rawValue": " -1.0",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "compute_backend",
+      "locations": [
+        {
+          "column": 18,
+          "endColumn": 22,
+          "line": 63,
+          "rawValue": " cpu",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "cpu",
+      "path": null,
+      "rawValue": " cpu",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "cpu",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:cuda_device",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "cuda_device",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:cuda_device"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:derefine_threshold",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "derefine_threshold",
+      "locations": [
+        {
+          "column": 21,
+          "endColumn": 25,
+          "line": 35,
+          "rawValue": " 0.2",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0.2,
+      "path": null,
+      "rawValue": " 0.2",
+      "requirement": {
+        "conditionId": "requires:derefine_threshold",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.2,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:diff_cfl",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "diff_cfl",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:diff_cfl",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:diff_integrator",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "diff_integrator",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:diff_integrator",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:diff_max_stages",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "diff_max_stages",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 256,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:diff_max_stages"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:dt_init",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "dt_init",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:dt_init",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:dt_max",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "dt_max",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:dt_max"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:dt_min",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "dt_min",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 1e-20,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:dt_min"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:enucDtFactor",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "enucDtFactor",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:enucDtFactor",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:eos_coulomb_mult",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "missing",
+      "key": "eos_coulomb_mult",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:eos_coulomb_mult",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:eos_helm_table_path",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "missing",
+      "key": "eos_helm_table_path",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "",
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:eos_helm_table_path"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:eos_table_path",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "missing",
+      "key": "eos_table_path",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:eos_table_path",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "present",
+      "key": "eos_type",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 17,
+          "line": 48,
+          "rawValue": " ideal",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "ideal",
+      "path": null,
+      "rawValue": " ideal",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "ideal",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gamma",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "present",
+      "key": "gamma",
+      "locations": [
+        {
+          "column": 8,
+          "endColumn": 12,
+          "line": 49,
+          "rawValue": " 1.4",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1.4,
+      "path": null,
+      "rawValue": " 1.4",
+      "requirement": {
+        "conditionId": "requires:gamma",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 1.4,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "geometry",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 21,
+          "line": 3,
+          "rawValue": " cartesian",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "cartesian",
+      "path": null,
+      "rawValue": " cartesian",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "cartesian",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_atol",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_atol",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_atol",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "1/s^2"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_boundary",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_boundary",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_boundary",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_g_x",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_g_x",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_g_x",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_g_y",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_g_y",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_g_y",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_g_z",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_g_z",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_g_z",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:gravity_max_cycles",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_max_cycles",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 200,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:gravity_max_cycles"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_rtol",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_rtol",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_rtol",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "present",
+      "key": "gravity_type",
+      "locations": [
+        {
+          "column": 15,
+          "endColumn": 20,
+          "line": 50,
+          "rawValue": " none",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "none",
+      "path": null,
+      "rawValue": " none",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "none",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:hll_wave_speed",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "hll_wave_speed",
+      "locations": [
+        {
+          "column": 17,
+          "endColumn": 21,
+          "line": 67,
+          "rawValue": " roe",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "roe",
+      "path": null,
+      "rawValue": " roe",
+      "requirement": {
+        "conditionId": "requires:hll_wave_speed",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "roe",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:limiter",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "limiter",
+      "locations": [
+        {
+          "column": 10,
+          "endColumn": 13,
+          "line": 26,
+          "rawValue": " mc",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "mc",
+      "path": null,
+      "rawValue": " mc",
+      "requirement": {
+        "conditionId": "requires:limiter",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "mc",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:linear_solver",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "linear_solver",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "Auto",
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:linear_solver"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "lrefinemax",
+      "locations": [
+        {
+          "column": 13,
+          "endColumn": 15,
+          "line": 31,
+          "rawValue": " 0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "lrefinemin",
+      "locations": [
+        {
+          "column": 13,
+          "endColumn": 15,
+          "line": 30,
+          "rawValue": " 0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:max_blocks",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "max_blocks",
+      "locations": [
+        {
+          "column": 13,
+          "endColumn": 16,
+          "line": 8,
+          "rawValue": " 32",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 32,
+      "path": null,
+      "rawValue": " 32",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 32,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "max_eint",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 16,
+          "line": 66,
+          "rawValue": " 1e21",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1e+21,
+      "path": null,
+      "rawValue": " 1e21",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 1e+21,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/g"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:max_steps",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "max_steps",
+      "locations": [
+        {
+          "column": 12,
+          "endColumn": 15,
+          "line": 38,
+          "rawValue": " -1",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": -1,
+      "path": null,
+      "rawValue": " -1",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "min_eint",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 17,
+          "line": 65,
+          "rawValue": " 1e-10",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1e-10,
+      "path": null,
+      "rawValue": " 1e-10",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 1e-10,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/g"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "nblockx1",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 13,
+          "line": 5,
+          "rawValue": " 8",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 8,
+      "path": null,
+      "rawValue": " 8",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 8,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "nblockx2",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 13,
+          "line": 6,
+          "rawValue": " 0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "nblockx3",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 13,
+          "line": 7,
+          "rawValue": " 0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:network_name",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "present",
+      "key": "network_name",
+      "locations": [
+        {
+          "column": 15,
+          "endColumn": 20,
+          "line": 68,
+          "rawValue": " none",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "none",
+      "path": null,
+      "rawValue": " none",
+      "requirement": {
+        "conditionId": "requires:network_name",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "none",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nseDensThreshold",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "nseDensThreshold",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nseDensThreshold",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nseTempThreshold",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "nseTempThreshold",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nseTempThreshold",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nu_visc",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "nu_visc",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nu_visc",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nuclearDensMin",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "nuclearDensMin",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nuclearDensMin",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nuclearTempMin",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "nuclearTempMin",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nuclearTempMin",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:ode_atol",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_atol",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:ode_atol",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "reason": "Absolute tolerance for temperature and abundance components; no single scalar unit.",
+        "status": "mixed-state",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_dt_fac_max",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_dt_fac_max",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 2,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_dt_fac_max"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_dt_fac_min",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_dt_fac_min",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_dt_fac_min"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_dt_safe_fac",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_dt_safe_fac",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.9,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_dt_safe_fac"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_initial_dt_frac",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_initial_dt_frac",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_initial_dt_frac"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_max_newton_iter",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_max_newton_iter",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 50,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_max_newton_iter"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_max_substeps",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_max_substeps",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 10000,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_max_substeps"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:ode_rtol",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "invalid",
+      "key": "ode_rtol",
+      "locations": [
+        {
+          "column": 10,
+          "endColumn": 13,
+          "line": 72,
+          "rawValue": "bad",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": "bad",
+      "requirement": {
+        "conditionId": "requires:ode_rtol",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:ode_solver",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_solver",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:ode_solver",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:out_dir",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "out_dir",
+      "locations": [
+        {
+          "column": 10,
+          "endColumn": 30,
+          "line": 39,
+          "rawValue": " output/sod_standard",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "output/sod_standard",
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "output-directory",
+        "targetMayBeNew": true
+      },
+      "rawValue": " output/sod_standard",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "output/sod_standard",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:plt_dstep",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "plt_dstep",
+      "locations": [
+        {
+          "column": 12,
+          "endColumn": 15,
+          "line": 42,
+          "rawValue": " -1",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": -1,
+      "path": null,
+      "rawValue": " -1",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:plt_dt",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "plt_dt",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 14,
+          "line": 41,
+          "rawValue": " 0.05",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0.05,
+      "path": null,
+      "rawValue": " 0.05",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.05,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:plt_variables",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "plt_variables",
+      "locations": [
+        {
+          "column": 16,
+          "endColumn": 39,
+          "line": 45,
+          "rawValue": " DENS, PRES, VELX, ENER",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "DENS, PRES, VELX, ENER",
+      "path": null,
+      "rawValue": " DENS, PRES, VELX, ENER",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "DENS, PRES, VELX, ENER",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "reconstruct",
+      "locations": [
+        {
+          "column": 14,
+          "endColumn": 20,
+          "line": 25,
+          "rawValue": " muscl",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "muscl",
+      "path": null,
+      "rawValue": " muscl",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "muscl",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:refine_threshold",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "refine_threshold",
+      "locations": [
+        {
+          "column": 19,
+          "endColumn": 23,
+          "line": 34,
+          "rawValue": " 0.8",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0.8,
+      "path": null,
+      "rawValue": " 0.8",
+      "requirement": {
+        "conditionId": "requires:refine_threshold",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.8,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:refine_var",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "refine_var",
+      "locations": [
+        {
+          "column": 13,
+          "endColumn": 18,
+          "line": 33,
+          "rawValue": " DENS",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "DENS",
+      "path": null,
+      "rawValue": " DENS",
+      "requirement": {
+        "conditionId": "requires:refine_var",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "DENS",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:regrid_interval",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "regrid_interval",
+      "locations": [
+        {
+          "column": 18,
+          "endColumn": 20,
+          "line": 32,
+          "rawValue": " 2",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 2,
+      "path": null,
+      "rawValue": " 2",
+      "requirement": {
+        "conditionId": "requires:regrid_interval",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 2,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:restart",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "restart",
+      "locations": [
+        {
+          "column": 10,
+          "endColumn": 16,
+          "line": 46,
+          "rawValue": " false",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": false,
+      "path": null,
+      "rawValue": " false",
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": false,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:restart_file",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "restart_file",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:restart_file",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:smallt",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "smallt",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:smallt",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:smallx",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "smallx",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:smallx",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "sml_rho",
+      "locations": [
+        {
+          "column": 10,
+          "endColumn": 16,
+          "line": 64,
+          "rawValue": " 1e-12",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1e-12,
+      "path": null,
+      "rawValue": " 1e-12",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 1e-12,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "solver",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 14,
+          "line": 24,
+          "rawValue": " HLLC",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "HLLC",
+      "path": null,
+      "rawValue": " HLLC",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "HLLC",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "time_integrator",
+      "locations": [
+        {
+          "column": 18,
+          "endColumn": 22,
+          "line": 27,
+          "rawValue": " RK2",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "RK2",
+      "path": null,
+      "rawValue": " RK2",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "RK2",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "formal-evolution",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "present",
+      "key": "tmax",
+      "locations": [
+        {
+          "column": 7,
+          "endColumn": 11,
+          "line": 37,
+          "rawValue": " 0.2",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0.2,
+      "path": null,
+      "rawValue": " 0.2",
+      "requirement": {
+        "conditionId": "formal-evolution",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0.2,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:tstep_change_factor",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "tstep_change_factor",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 1.2,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:tstep_change_factor"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "present",
+      "key": "use_burn",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 17,
+          "line": 51,
+          "rawValue": " false",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": false,
+      "path": null,
+      "rawValue": " false",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": false,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "present",
+      "key": "use_diffusion",
+      "locations": [
+        {
+          "column": 16,
+          "endColumn": 22,
+          "line": 52,
+          "rawValue": " false",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": false,
+      "path": null,
+      "rawValue": " false",
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": false,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:use_nse",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "use_nse",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:use_nse",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:use_species_diff",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "use_species_diff",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:use_species_diff",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:use_thermal_diff",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "use_thermal_diff",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:use_thermal_diff",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:use_viscous_diff",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "use_viscous_diff",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:use_viscous_diff",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x1_max",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x1_max",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 13,
+          "line": 11,
+          "rawValue": " 1.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1,
+      "path": null,
+      "rawValue": " 1.0",
+      "requirement": {
+        "conditionId": "requires:x1_max",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 1,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x1",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x1_min",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x1_min",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 13,
+          "line": 10,
+          "rawValue": " 0.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0.0",
+      "requirement": {
+        "conditionId": "requires:x1_min",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x1",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x1l_boundary_type",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x1l_boundary_type",
+      "locations": [
+        {
+          "column": 20,
+          "endColumn": 28,
+          "line": 17,
+          "rawValue": " outflow",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "outflow",
+      "path": null,
+      "rawValue": " outflow",
+      "requirement": {
+        "conditionId": "requires:x1l_boundary_type",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "outflow",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x1r_boundary_type",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x1r_boundary_type",
+      "locations": [
+        {
+          "column": 20,
+          "endColumn": 28,
+          "line": 18,
+          "rawValue": " outflow",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "outflow",
+      "path": null,
+      "rawValue": " outflow",
+      "requirement": {
+        "conditionId": "requires:x1r_boundary_type",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": "outflow",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x2_max",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x2_max",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 13,
+          "line": 13,
+          "rawValue": " 1.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1,
+      "path": null,
+      "rawValue": " 1.0",
+      "requirement": {
+        "conditionId": "requires:x2_max",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 1,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x2",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x2_min",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x2_min",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 13,
+          "line": 12,
+          "rawValue": " 0.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0.0",
+      "requirement": {
+        "conditionId": "requires:x2_min",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x2",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x2l_boundary_type",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x2l_boundary_type",
+      "locations": [
+        {
+          "column": 20,
+          "endColumn": 28,
+          "line": 19,
+          "rawValue": " outflow",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "outflow",
+      "path": null,
+      "rawValue": " outflow",
+      "requirement": {
+        "conditionId": "requires:x2l_boundary_type",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "outflow",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x2r_boundary_type",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x2r_boundary_type",
+      "locations": [
+        {
+          "column": 20,
+          "endColumn": 28,
+          "line": 20,
+          "rawValue": " outflow",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "outflow",
+      "path": null,
+      "rawValue": " outflow",
+      "requirement": {
+        "conditionId": "requires:x2r_boundary_type",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "outflow",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x3_max",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x3_max",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 13,
+          "line": 15,
+          "rawValue": " 1.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1,
+      "path": null,
+      "rawValue": " 1.0",
+      "requirement": {
+        "conditionId": "requires:x3_max",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 1,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x3",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x3_min",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x3_min",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 13,
+          "line": 14,
+          "rawValue": " 0.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0.0",
+      "requirement": {
+        "conditionId": "requires:x3_min",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x3",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x3l_boundary_type",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x3l_boundary_type",
+      "locations": [
+        {
+          "column": 20,
+          "endColumn": 28,
+          "line": 21,
+          "rawValue": " outflow",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "outflow",
+      "path": null,
+      "rawValue": " outflow",
+      "requirement": {
+        "conditionId": "requires:x3l_boundary_type",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "outflow",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x3r_boundary_type",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "present",
+      "key": "x3r_boundary_type",
+      "locations": [
+        {
+          "column": 20,
+          "endColumn": 28,
+          "line": 22,
+          "rawValue": " outflow",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": "outflow",
+      "path": null,
+      "rawValue": " outflow",
+      "requirement": {
+        "conditionId": "requires:x3r_boundary_type",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "outflow",
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:x_pos",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "duplicate",
+      "key": "x_pos",
+      "locations": [
+        {
+          "column": 8,
+          "endColumn": 12,
+          "line": 54,
+          "rawValue": " 0.5",
+          "source": "stdin"
+        },
+        {
+          "column": 7,
+          "endColumn": 11,
+          "line": 70,
+          "rawValue": "0.25",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "case:Sod:x_pos",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:rho_left",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "present",
+      "key": "rho_left",
+      "locations": [
+        {
+          "column": 11,
+          "endColumn": 15,
+          "line": 55,
+          "rawValue": " 1.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1,
+      "path": null,
+      "rawValue": " 1.0",
+      "requirement": {
+        "conditionId": "case:Sod:rho_left",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 1,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:p_left",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "present",
+      "key": "p_left",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 13,
+          "line": 56,
+          "rawValue": " 1.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 1,
+      "path": null,
+      "rawValue": " 1.0",
+      "requirement": {
+        "conditionId": "case:Sod:p_left",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 1,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:u_left",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "present",
+      "key": "u_left",
+      "locations": [
+        {
+          "column": 9,
+          "endColumn": 13,
+          "line": 57,
+          "rawValue": " 0.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0.0",
+      "requirement": {
+        "conditionId": "case:Sod:u_left",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm/s"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:rho_right",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "present",
+      "key": "rho_right",
+      "locations": [
+        {
+          "column": 12,
+          "endColumn": 18,
+          "line": 58,
+          "rawValue": " 0.125",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0.125,
+      "path": null,
+      "rawValue": " 0.125",
+      "requirement": {
+        "conditionId": "case:Sod:rho_right",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0.125,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:p_right",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "present",
+      "key": "p_right",
+      "locations": [
+        {
+          "column": 10,
+          "endColumn": 14,
+          "line": 59,
+          "rawValue": " 0.1",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0.1,
+      "path": null,
+      "rawValue": " 0.1",
+      "requirement": {
+        "conditionId": "case:Sod:p_right",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0.1,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:u_right",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "present",
+      "key": "u_right",
+      "locations": [
+        {
+          "column": 10,
+          "endColumn": 14,
+          "line": 60,
+          "rawValue": " 0.0",
+          "source": "stdin"
+        }
+      ],
+      "parsedValue": 0,
+      "path": null,
+      "rawValue": " 0.0",
+      "requirement": {
+        "conditionId": "case:Sod:u_right",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm/s"
+      },
+      "usage": "simulation",
+      "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "log_dir",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "output-directory",
+        "targetMayBeNew": true
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "output/sod_standard",
+      "sourceEvidence": {
+        "dependencies": [
+          "out_dir"
+        ],
+        "owner": "main:log-output-directory"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "derived",
+      "valueStage": "configuration-resolution-before-setup"
+    }
+  ],
+  "schemaVersion": "1.0",
+  "status": "error",
+  "unitSystem": "cgs",
+  "version": "3"
+}

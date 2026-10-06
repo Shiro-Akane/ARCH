@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "node": "JENS actual Runtime accepted-interior lease",
+  "status": "SCOPED_PASS_NOT_ENFORCEMENT_LIFECYCLE",
+  "sourceHeadBeforeCommit": "3beaed0e5b5ccc6263a874e4be5a1fcc33173c3f",
+  "inputFingerprints": {
+    "src/driver/runtime/DriverRuntime.h": "82d25c78778426b2e0a125eafe1c8c76aa7cf62b1710762648ec752ec1358cca",
+    "src/driver/runtime/DriverRuntime.cpp": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+    "tests/host/gravity/test_gravity_runtime_contract.cpp": "17de355d821cac5bb1b75b69375fc539238b61f5aba568d68af211c438025e49",
+    "tests/cuda/amr/test_cuda_regrid_transaction.cpp": "59622dda3b057feee271c8fae23f9a1c272b0fc9b278a27d3bea3feff3c17806",
+    "cmake/tests/CudaTests.cmake": "8f62d5b8692c334ae70ef34392e383a83b4db69fcefd0e5df62fa448da6b30c4"
+  },
+  "cpu": {
+    "fixtureExitCode": 0,
+    "fixtureSha256": "22888e04b2c5b2d58c0352c88bfeb039958ea191d025ebd537252556248f59d9",
+    "initialBlocks": 4,
+    "initialActiveCells": 64,
+    "refinedBlocks": 8,
+    "coarsenedBlocks": 4,
+    "nonfirstVersionRejectedBeforeEos": true,
+    "deviceOnlyRejectedBeforeHostEos": true,
+    "actualGravityGathers": 7,
+    "controllerTime": 0,
+    "controllerSteps": 0,
+    "productionArchSha256Unchanged": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+    "logSha256": "876e233e57582c1c98cd7167b9b4c5dd46ef2b3153aa653c0f299ce3cd6bddcb",
+    "recompiledSources": {
+      "tests/host/gravity/test_gravity_runtime_contract.cpp": "17de355d821cac5bb1b75b69375fc539238b61f5aba568d68af211c438025e49",
+      "src/driver/stages/GravityStage.cpp": "8820d7ba03478f00671b91ad8d43a2fe46b2450676a3ef4862f6950e2f029ea6",
+      "src/driver/runtime/DriverRuntime.cpp": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+      "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+      "src/driver/runtime/DriverRegrid.cpp": "1af39912876480e6b264552ab495b544bc908310bd4d355f8d1b4ba667adcda8"
+    }
+  },
+  "cuda": {
+    "ctest": "cuda_regrid_transaction",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "blocks": 2,
+    "staleHostPoisonIgnored": true,
+    "nonfirstVersionRejectedBeforeKernel": true,
+    "pendingInteriorRejectedBeforeKernel": true,
+    "recoveryExplicitRealD2HThenLedgerCompletion": true,
+    "validEvaluationDelta": {
+      "kernels": 4,
+      "bytesH2D": 0,
+      "bytesD2H": 16,
+      "streamSyncs": 1
+    },
+    "originalRegridSpeciesCounts": [
+      4,
+      41
+    ],
+    "originalRegridRefineRestrictRollbackPassed": true,
+    "controllerTime": 0,
+    "controllerSteps": 0,
+    "executableSha256": "812971782665f5f6d11abc41dc7cbd438507ad771a246bdf3323ebf35cad38b3",
+    "logSha256": "c3178386db489c45f9d14992f1d5a1c154e99b35069556345a916888645f158a"
+  },
+  "limitations": [
+    "Explicit Runtime request entry, not yet ordinary Driver JENS enforcement integration",
+    "Public CUDA JENS startup/regrid gates retained",
+    "Device candidate parent EOS/veto not yet connected",
+    "No production CUDA ARCH receipt",
+    "No full frozen CUDA short package/restart/output receipt",
+    "No new RZ scientific acceptance or long run/benchmark",
+    "Raw diagnostics and binaries local"
+  ],
+  "recordedUtc": "2026-10-05T00:06:02.452470+00:00"
+}

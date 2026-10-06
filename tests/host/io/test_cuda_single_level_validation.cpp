@@ -7,7 +7,8 @@
  */
 #include "cuda/runtime/CudaBackend.h"
 #include "io/hdf5/HDF5Writer.h"
-#include "core/config/RuntimeParams.h"
+#include "fixtures/io/checkpoint_analysis_inputs.h"
+#include <optional>
 #include "fixtures/io/checkpoint_conservation_metrics.h"
 
 #include <algorithm>
@@ -728,10 +729,9 @@ void print_conservation_metrics(const std::filesystem::path& checkpoint_path,
     const io::CheckpointData checkpoint =
         io::read_hdf5_chk_impl(checkpoint_path.string());
     const std::size_t blocks = checkpoint.levels.size();
-    const SimConfig config = parameter_path == nullptr
-        ? SimConfig{} : RuntimeParams::Load(parameter_path);
-    const auto totals = checkpoint_metrics::compute(
-        checkpoint, parameter_path == nullptr ? nullptr : &config.grid);
+    const std::optional<GridConfig> grid = parameter_path == nullptr
+        ? std::nullopt : std::optional(checkpoint_analysis::Inputs::File(parameter_path).grid());
+    const auto totals = checkpoint_metrics::compute(checkpoint, grid ? &*grid : nullptr);
     std::cout << std::setprecision(17)
               << "{\"step\":" << checkpoint.step_count
               << ",\"time\":" << checkpoint.time
@@ -1076,17 +1076,18 @@ void qualify_sod_checkpoint(const io::CheckpointData& checkpoint)
 void qualify_gravity_checkpoint(const io::CheckpointData& checkpoint, const char* parameter_path)
 {
     require(parameter_path != nullptr, "gravity reference requires actual run parameters");
-    const auto config = RuntimeParams::Load(parameter_path);
-    require(config.physics.gravity.type == "external" && config.physics.eos_type == "ideal"
-                && config.grid.geometry == "cartesian",
+    const auto inputs = checkpoint_analysis::Inputs::File(parameter_path);
+    require(inputs.standard_token("gravity_type") == "external"
+                && inputs.standard_token("eos_type") == "ideal"
+                && inputs.standard_token("geometry") == "cartesian",
             "gravity reference requires Cartesian constant external acceleration and ideal gas");
-    const double rho0 = config.Get<double>("rho0", 1.0);
-    const double pressure0 = config.Get<double>("pressure0", 1.0);
-    const double gamma = config.physics.gamma;
+    const double rho0 = inputs.case_number("rho0");
+    const double pressure0 = inputs.case_number("pressure0");
+    const double gamma = inputs.standard<double>("gamma");
     const std::array velocity{
-        config.Get<double>("velocity_x0", 0.0) + config.physics.gravity.g_x * checkpoint.time,
-        config.physics.gravity.g_y * checkpoint.time,
-        config.physics.gravity.g_z * checkpoint.time};
+        inputs.case_number("velocity_x0") + inputs.standard<double>("gravity_g_x") * checkpoint.time,
+        inputs.standard<double>("gravity_g_y") * checkpoint.time,
+        inputs.standard<double>("gravity_g_z") * checkpoint.time};
     const double energy = pressure0 / (gamma - 1.0)
         + 0.5 * rho0 * (velocity[0]*velocity[0] + velocity[1]*velocity[1] + velocity[2]*velocity[2]);
     require(rho0 > 0.0 && pressure0 > 0.0 && gamma > 1.0 && std::isfinite(energy),

@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-03",
+  "localHead": "2ee7a6c9cd13ed70ffb892c85b6a643a59afc068",
+  "originComputeOptim": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+  "upstreamO8": "ee091b35c45e959910a6a4520aa240856c0d560d",
+  "upstreamRtNotes": "2ee826655b20f5f40697c681a63b2e2c40f631a4",
+  "mergeBase": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+  "overlappingChangedFiles": [
+    "README.md",
+    "README.zh-CN.md",
+    "cmake/project/Application.cmake",
+    "cmake/tests/CudaTests.cmake",
+    "cmake/tests/HostTests.cmake",
+    "docs/Reference.md",
+    "docs/Reference.zh-CN.md",
+    "docs/guides/SimulationCase.md",
+    "docs/guides/SimulationCase.zh-CN.md",
+    "src/amr/exchange/CoordinateSeamPlan.h",
+    "src/api/CONFIGURATION_API.md",
+    "src/api/configuration/Configuration.cpp",
+    "src/api/inspection/CaseUnitEvidence.cpp",
+    "src/core/config/ConfigValidation.h",
+    "src/core/config/UserInterface.h",
+    "src/core/problem/ProblemRegistry.h",
+    "src/driver/Driver.h",
+    "src/driver/SolverDispatch.cpp",
+    "src/driver/dispatch/PolicyDescriptor.h",
+    "src/driver/stages/GravityStage.cpp",
+    "src/interface/ProblemGenerator.h",
+    "src/io/chk/CheckpointCompatibility.cpp",
+    "src/main.cpp",
+    "src/numerics/elliptic/CartesianPoisson.cpp",
+    "src/numerics/elliptic/CompositePoisson.cpp",
+    "src/physics/gravity/self/SelfGravity.cpp",
+    "tests/api/inspection/test_case_inspection.py",
+    "tests/api/preview/test_ui_expansion.py",
+    "tests/host/gravity/test_self_gravity.cpp",
+    "tools/validate_backend_results.py",
+    "validation/gravity/run_self_gravity.py"
+  ],
+  "scope": "Read-only upstream integration impact audit. No patches integrated, no build or scientific run.",
+  "scientificGate": "JENS/RZ approvals not newly found in compute/optim; remain pending.",
+  "evidence": [
+    {
+      "path": "simulation/UserBoundary/gravity_boundary.cpp",
+      "relevantLines": [
+        {
+          "line": 3,
+          "text": " * @brief Class-form user potential boundary for the UserBoundary example."
+        },
+        {
+          "line": 62,
+          "text": "        if (ctx.config.physics.gravity.G_const != kGravity)"
+        }
+      ]
+    },
+    {
+      "path": "simulation/UserGravity/gravity_boundary.cpp",
+      "relevantLines": [
+        {
+          "line": 3,
+          "text": " * @brief Free-function user potential boundary for the UserGravity example."
+        },
+        {
+          "line": 59,
+          "text": "    if (ctx.config.physics.gravity.G_const != kGravity)"
+        }
+      ]
+    },
+    {
+      "path": "src/io/chk/CheckpointCompatibility.cpp",
+      "relevantLines": [
+        {
+          "line": 103,
+          "text": "        result.gravity_controls={gravity.G_const,gravity.relative_tolerance,gravity.absolute_tolerance,"
+        }
+      ]
+    },
+    {
+      "path": "src/core/config/ConfigValidation.h",
+      "relevantLines": [
+        {
+          "line": 91,
+          "text": "    positive(g.G_const, \"gravity_G\");"
+        },
+        {
+          "line": 96,
+          "text": "    require(g.boundary == \"periodic\" || g.boundary == \"isolated\" || g.boundary == \"user\""
+        },
+        {
+          "line": 98,
+          "text": "            \"Expected periodic, isolated, dirichlet, neumann or user gravity boundary.\");"
+        },
+        {
+          "line": 109,
+          "text": "                \"Curvilinear self-gravity requires isolated or explicit Dirichlet/Neumann/user boundaries.\");"
+        },
+        {
+          "line": 140,
+          "text": "            if(g.boundary==\"user\") continue; // Callback topology is checked when the mesh is bound."
+        }
+      ]
+    },
+    {
+      "path": "src/api/configuration/Configuration.cpp",
+      "relevantLines": [
+        {
+          "line": 87,
+          "text": "    if (key == \"gravity_boundary\") return simple_options({\"periodic\", \"isolated\", \"dirichlet\", \"neumann\", \"user\"});"
+        },
+        {
+          "line": 91,
+          "text": "            Json::object({{\"value\", \"user\"}, {\"displayName\", \"User primitive\"}, {\"acceptedNames\", Json::array({\"user\", \"inflow\", \"dirichlet\"})}}),"
+        },
+        {
+          "line": 178,
+          "text": "        return \"active grid axis; user/inflow/dirichlet requires compiled sibling physical_boundary.cpp; neumann means zero normal gradient; callbacks run on Host with boundary-slice CUDA transfers; dispatch checks registration\";"
+        },
+        {
+          "line": 180,
+          "text": "        return \"gravity_type=self; user requires compiled sibling gravity_boundary.cpp and may return Dirichlet/Neumann/Robin/Periodic per face; callbacks run on Host with boundary-only CUDA transfers; inspection is not runtime readiness\";"
+        },
+        {
+          "line": 236,
+          "text": "    return Json::object({{\"version\", contract::configuration_version}, {\"schemaCommand\", \"--config-schema\"},"
+        },
+        {
+          "line": 240,
+          "text": "/** Build the versioned standard parameter schema from Core definitions. */"
+        },
+        {
+          "line": 263,
+          "text": "    return Json::object({{\"schemaVersion\", contract::schema_version}, {\"version\", contract::configuration_version}, {\"kind\", \"configuration-schema\"}, {\"status\", \"ok\"},"
+        },
+        {
+          "line": 274,
+          "text": "    auto result = Json::object({{\"schemaVersion\", contract::schema_version}, {\"version\", contract::configuration_version}, {\"kind\", \"configuration-inspection\"},"
+        }
+      ]
+    }
+  ],
+  "upstreamResults": "Reported by upstream only; not second-platform validation."
+}

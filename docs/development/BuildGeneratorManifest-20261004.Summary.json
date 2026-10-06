@@ -1,0 +1,55 @@
+{
+  "sourceHeadBeforeCommit": "52e2d22184ceb74fb2c703033861cbc75c428fb1",
+  "sourceFingerprints": {
+    "studio/host/cmakeEvidence.ts": "a89e9f1aa0d4371fd81a339d784229ce0047cf5be86e17f4ff1b341db0c380f8",
+    "studio/host/buildManifest.ts": "0bfbce589cae9dd5a85a38ae9d09b77c2d5ee09c9611408b06eaa25fe018f59d",
+    "studio/host/buildRunner.ts": "6472cf763db4d0a88ae99155d4c8b41bfc4c03adbbd4dd0e7f3f63aaa7a01f7f",
+    "studio/tests/host-cmake-evidence.test.ts": "d35fe5c24445bdcaae64ba11b2abadf36ca3053269f38af6b964a0ebe6e2b248",
+    "studio/tests/host-build.test.ts": "0fc843d3c83bbdd28fd99f454526bcd82c986428c3a15dfcc3823fb58f943646"
+  },
+  "initialScopedResult": {
+    "pass": 21,
+    "fail": 1,
+    "reason": "Old CMake-only fixture omitted newly required Host generator cache evidence; original log retained"
+  },
+  "scopedRecheck": {
+    "pass": 22,
+    "fail": 0
+  },
+  "fullStudioHost": {
+    "pass": 322,
+    "fail": 0,
+    "skip": 0
+  },
+  "typecheck": "PASS",
+  "lint": "PASS",
+  "productionBuild": "PASS_WITH_EXISTING_LARGE_CHUNK_WARNING",
+  "actualRead": {
+    "kind": "cmake-configuration-inputs",
+    "inputCount": 82,
+    "tools": [
+      {
+        "role": "cmake",
+        "path": "/usr/bin/cmake",
+        "resolvedPath": "/usr/bin/cmake",
+        "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+        "size": 11796472
+      },
+      {
+        "role": "ninja",
+        "path": "/usr/bin/ninja",
+        "resolvedPath": "/usr/bin/ninja",
+        "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+        "size": 248040
+      }
+    ],
+    "legacyComparesStable": false,
+    "unchangedSnapshotComparesStable": true,
+    "dependenciesComplete": false,
+    "actualBuildExecuted": false
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/build-generator-manifest-20261004",
+  "dependenciesComplete": false,
+  "actualArchBuildExecuted": false,
+  "nextRequiredEvidence": "Real BuildRunner Build on clean committed source, persisted generator identities and across-Build stability; full generator runtime closure remains unproven"
+}

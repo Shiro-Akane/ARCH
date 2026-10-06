@@ -1,0 +1,99 @@
+{
+  "status": "PASS",
+  "scope": "Candidate shared RZ cell V/W conversion; production PopulateState migration NOT complete",
+  "baselineCommit": "ceffbaafe6f849a15dc7036a1f8a013ee668eb5a",
+  "productionBinarySha256": "b0f38076e245eb78c335b2324930f16d46cd952304aec5909ac100fe922812ad",
+  "productionBinaryUnchanged": true,
+  "sourceInputs": {
+    "src/core/problem/InitialStateConversion.h": "de6ccc32a81841c522bdeebbf1f3375ad27a38fb3811de9dc479112f14a63fa9",
+    "src/grid/GridMetrics.h": "49eae7319dc001d843a530910fbd9b39ff7fdcf3290525a133a6b6c433aa718c",
+    "tests/api/preview/test_initial_conversion.cpp": "f6dc93eeeb7c4a6add8139031c0924a430e8967cd57875f2ab8628284835d19e"
+  },
+  "algorithm": "Tensor Gauss-2: separate normalized r and r^2 weights; physical primitive -> existing point EOS -> V/W cell averages -> strict representative EOS validation",
+  "analyticIntegralCases": 6,
+  "maxAbsoluteError": 1.42109e-14,
+  "arithmeticGate": 2e-12,
+  "rigidAngularReference": "m_phi/Omega=45/56 on r=[1/2,1]; volume rotational E=5*Omega^2/16",
+  "closureConsistency": {
+    "scope": "Initialization representative internal-energy closure RMS over native V, including axis; not evolved force/hydro convergence",
+    "rows": [
+      {
+        "cells": 16,
+        "error": 0.000162608,
+        "order": 0.0
+      },
+      {
+        "cells": 32,
+        "error": 4.06805e-05,
+        "order": 1.99898
+      },
+      {
+        "cells": 64,
+        "error": 1.01719e-05,
+        "order": 1.99975
+      }
+    ],
+    "minimumRequiredOrder": 1.8,
+    "printedMetricsPrecision": "existing test stdout default approximately 6 significant digits"
+  },
+  "negativeChecks": {
+    "unresolvedAverageRejected": true,
+    "sampleRepairRejected": true,
+    "invalidNativeCellBeforeCallback": true,
+    "collapsedMeasureBeforeCallback": true,
+    "overflowExtentBeforeCallback": true
+  },
+  "ctest": [
+    "preview_initial_conversion PASS",
+    "curvilinear_metrics PASS"
+  ],
+  "existingPopulateCompatibility": {
+    "cases": 4,
+    "status": "PASS",
+    "scope": "Original polar/RZ midpoint and explicit repair diagnostic fixtures unchanged",
+    "sourceInputs": {
+      "tests/host/grid/test_rz_initial_population.cpp": "efad9ff76602fb12b866c5c47e2dc4e77866a7f029bc3238f50473dd36370358",
+      "src/core/problem/ProblemHelper.cpp": "da6ae9cae1f4d8cc73c7f67dab335e15c92d356792a5651519c7d9b6062755e3",
+      "src/physics/eos/eosdispatch.cpp": "7758ee7e4680999816ae86c79ffa9e3792856231960508a93e408221b6ea03c6"
+    },
+    "executableSha256": "13072f0c4c1744af62cb56722a9af9547c8d8e3923656879e434538994ea5f62"
+  },
+  "architectureAudit": "PASS",
+  "diffCheck": "PASS",
+  "build": {
+    "existingTree": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "parallel": 28,
+    "peakOwnedRssKiB": 9259648,
+    "elapsedSeconds": 25.525,
+    "swapGrowthKiB": 0
+  },
+  "jensFrozenReceipt": {
+    "path": "validation/io/results/rz-angular-plot-20261005/summary.json",
+    "sha256": "7339bac1b9732b91b060274729594d3f6d8be6ea1f3f5bd5255779181cf9637a",
+    "status": "PASS",
+    "evolutions": 9,
+    "actualRestarts": 9,
+    "rerunThisNode": false,
+    "reason": "actual production ELF unchanged"
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-cell-initial-conversion-20261005",
+  "openFindings": [
+    "RZ-INIT-W-01 actual PopulateState still uses midpoint rho*u_phi; new converter not yet installed",
+    "RZ-INIT-REPAIR-01 original V-only mom_phi repair ledger must be migrated with native W/J semantics",
+    "RZ-VISC-01 and RZ-AXIS-01 remain open"
+  ],
+  "limitations": [
+    "No full initial population/BC migration claim",
+    "No new model initialization",
+    "No evolved spatial convergence acceptance",
+    "No public RZ capability",
+    "No CUDA or long run"
+  ],
+  "finalPreflightBuild": {
+    "peakOwnedRssKiB": 1925724,
+    "elapsedSeconds": 14.147,
+    "swapGrowthKiB": 0,
+    "parallel": 28
+  },
+  "finalPreflightCtest": "preview_initial_conversion PASS"
+}

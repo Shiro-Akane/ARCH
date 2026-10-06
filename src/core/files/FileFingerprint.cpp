@@ -236,4 +236,16 @@ std::string file_sha256(const std::string& path)
     return digest;
 }
 
+const std::string& running_executable_sha256()
+{
+#if defined(__linux__)
+    // The kernel holds the running executable inode even if its path is replaced.
+    // Hash only the main executable; shared libraries/toolchain are separate IDs.
+    static const std::string digest = file_sha256("/proc/self/exe");
+#else
+    static const std::string digest;
+#endif
+    return digest;
+}
+
 } // namespace arch::core

@@ -4,7 +4,8 @@
  *
  * Workflow:
  * 1. Inspect committed leaf geometry for an origin, cylindrical axis, or
- *    spherical pole on a full-azimuth domain.
+ *    spherical pole. Existing angular charts require a full turn; explicit
+ *    RZ mode mirrors the axis locally at unchanged z.
  * 2. Map each singular-face ghost center through the regular coordinate chart
  *    and locate its active AMR donor. Record native-vector basis signs.
  * 3. On every Host or CUDA stage, apply shared reconstruction after ordinary
@@ -32,8 +33,12 @@
 #include "amr/storage/Block.h"
 #include "amr/storage/MemoryPool.h"
 #include "grid/CoordinateBoundary.h"
+#include "physics/constant/PhysicalConstants.h"
 
 namespace amr {
+
+/** Explicit chart identity; RZ is opt-in until the whole geometry path migrates. */
+enum class CoordinateSeamGeometry { ExistingChart, RzAxisymmetric };
 
 struct CoordinateSeamPlan {
     std::vector<CoordinateSeamTransfer> transfers;
@@ -46,7 +51,7 @@ inline std::array<double, 3> regular_position(
     std::array<double, 3> point, int dimension, bool spherical,
     double phi_lower, double phi_width, std::array<std::int8_t, 3>& signs)
 {
-    const double pi = std::acos(-1.);
+    const double pi = arch::constants::math::pi;
     const int azimuth = dimension - 1;
     // Across r=0: (r,phi) -> (-r,phi+pi); for a sphere also
     // (theta,phi) -> (pi-theta,phi+pi). Basis signs follow those maps.
@@ -141,15 +146,23 @@ inline void donor_stencil(const Grid& grid,
 /** Build immutable singular-face operations from the current active hierarchy. */
 inline CoordinateSeamPlan make_coordinate_seam_plan(
     const std::shared_ptr<MemoryPool>& pool,
-    std::span<const int> active_blocks, int dimension)
+    std::span<const int> active_blocks, int dimension,
+    CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart)
 {
+    const bool rz = chart == CoordinateSeamGeometry::RzAxisymmetric;
+    if (rz && dimension != 2)
+        throw std::invalid_argument("RZ coordinate seam requires dimension 2");
     CoordinateSeamPlan plan;
     if (active_blocks.empty() || dimension < 2 || dimension > 3) return plan;
     const Grid& first = pool->GetBlock(active_blocks.front()).grid;
-    if (first.geometry != "cylindrical" && first.geometry != "spherical")
+    if (first.geometry != "cylindrical" && first.geometry != "spherical") {
+        if (rz) throw std::invalid_argument("RZ coordinate seam requires cylindrical geometry");
         return plan;
+    }
+    if (rz && first.geometry != "cylindrical")
+        throw std::invalid_argument("RZ coordinate seam requires cylindrical geometry");
     const bool spherical = first.geometry == "spherical";
-    const double pi = std::acos(-1.);
+    const double pi = arch::constants::math::pi;
     std::array<double, 3> lower{
         std::numeric_limits<double>::infinity(),
         std::numeric_limits<double>::infinity(),
@@ -184,10 +197,10 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
     // A partial wedge is still a valid pre-existing Hydro boundary problem.
     // Only full turns have a physical phi+pi donor. Explicit potential
     // boundaries may use sectors, whose regularity does not imply this join.
-    if (std::abs(phi_width - 2. * pi) > 64.*std::numeric_limits<double>::epsilon()*2.*pi) return plan;
+    if (!rz && std::abs(phi_width - 2. * pi) > 64.*std::numeric_limits<double>::epsilon()*2.*pi) return plan;
 
-    // Leaf lookup is needed only for a full-turn singular domain. Ordinary
-    // curved domains retain their previous exchange-plan construction cost.
+    // Leaf lookup is needed for a singular full-turn chart or explicit RZ
+    // axis. Ordinary curved domains retain their previous construction cost.
     std::map<std::tuple<int, int, int, int>, int> leaves;
     for (int id : active_blocks) {
         const Block& block = pool->GetBlock(id);
@@ -206,8 +219,16 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
         const std::array<double, 3> ghost{
             grid.GetCellCenterX(i), grid.GetCellCenterY(j),
             grid.GetCellCenterZ(k)};
-        const auto mapped = seam_detail::regular_position(ghost, dimension,
-            spherical, lower[azimuth], phi_width, transfer.momentum_sign);
+        auto mapped = ghost;
+        if (rz) {
+            // Axisymmetric mirror: r -> -r, z unchanged. Scalars and z
+            // momentum are even, r/phi momentum odd. No azimuth donor.
+            mapped[0] = -mapped[0];
+            transfer.momentum_sign = {-1, 1, -1};
+        } else {
+            mapped = seam_detail::regular_position(ghost, dimension,
+                spherical, lower[azimuth], phi_width, transfer.momentum_sign);
+        }
         transfer.source_id = seam_detail::locate_donor(leaves, mapped,
             lower, upper, root_blocks, dimension, max_level);
         seam_detail::donor_stencil(

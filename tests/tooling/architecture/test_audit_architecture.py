@@ -208,7 +208,7 @@ target_link_options(arch_build_contract INTERFACE
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
         "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
-        "src/core/config/RuntimeParams.h": "parser.GetBool",
+        "src/core/config/RuntimeParams.h": "arch::config::AnalyzeConfigurationInput; input.RequireDeclaredInputs();",
         "src/driver/schedule/DriverControl.h": "1.0e-12",
         "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
         "src/physics/eos/eos_Utils.h": "get_isentropic_state_at_pressure_factor",
@@ -526,7 +526,7 @@ arch_configure_cuda_backend_object(arch_cuda_backend_grid_metrics
 
     def test_accepts_exact_burn_resource_object_links(self):
         for name, extra in (("policy", " src/core/files/FileFingerprint.cpp"),
-                            ("controller", "")):
+                            ("controller", " src/core/config/CompositionInput.cpp")):
             target = f"arch_cuda_burn_{name}_parity"
             source = f"tests/cuda/microphysics/burn/test_burn_{name}_parity.cu"
             definition = f"add_executable({target} {source}{extra})"
@@ -544,6 +544,40 @@ arch_configure_cuda_backend_object(arch_cuda_backend_grid_metrics
                 with self.subTest(linkage=invalid_linkage, definition=invalid_definition):
                     self.assert_rejected_with({"CMakeLists.txt": invalid_definition,
                                                "cmake/Tests.cmake": invalid_linkage}, "canonical owner")
+
+    def test_runtime_params_requires_both_migrated_configuration_gates(self):
+        valid = self.protected["src/core/config/RuntimeParams.h"]
+        for mutation in (
+                valid.replace("arch::config::AnalyzeConfigurationInput", ""),
+                valid.replace("input.RequireDeclaredInputs();", ""),
+                "parser.GetBool"):
+            with self.subTest(mutation=mutation):
+                self.assert_rejected_with(
+                    {"src/core/config/RuntimeParams.h": mutation},
+                    "protected mainline authority changed: src/core/config/RuntimeParams.h")
+
+    def test_burn_controller_keeps_exact_helper_and_object_ownership(self):
+        definition = """add_executable(arch_cuda_burn_controller_parity
+            tests/cuda/microphysics/burn/test_burn_controller_parity.cu
+            src/core/config/CompositionInput.cpp)"""
+        linkage = """target_link_libraries(arch_cuda_burn_controller_parity PRIVATE
+            arch_cuda_backend_eos_helm arch_cuda_backend_eos_species
+            arch_cuda_backend_eos_utils arch_build_contract CUDA::cudart)"""
+        mutations = (
+            ("missing-helper", definition.replace("src/core/config/CompositionInput.cpp", ""), linkage),
+            ("replaced-helper", definition.replace("CompositionInput.cpp", "OtherInput.cpp"), linkage),
+            ("extra-backend", definition, linkage.replace("PRIVATE", "PRIVATE arch_cuda_backend_core")),
+            ("missing-object", definition, linkage.replace("arch_cuda_backend_eos_helm", "")),
+            ("replaced-object", definition, linkage.replace("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_tabular3")),
+            ("reordered-objects", definition, linkage.replace(
+                "arch_cuda_backend_eos_helm arch_cuda_backend_eos_species",
+                "arch_cuda_backend_eos_species arch_cuda_backend_eos_helm")),
+        )
+        for name, bad_definition, bad_linkage in mutations:
+            with self.subTest(mutation=name):
+                self.assert_rejected_with(
+                    {"CMakeLists.txt": bad_definition, "cmake/Tests.cmake": bad_linkage},
+                    "canonical owner")
 
     def test_accepts_module_host_helper_with_root_definition(self):
         self.assert_accepted({

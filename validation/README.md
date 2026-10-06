@@ -191,6 +191,6 @@ These data files support reproduction and independent review; they are not setup
 - [build measurements](backend/results/cold-core-first-law-20260907/release-909/README.md)
 - [capacity measurements](backend/results/device-memory-first-law-20260907/README.md)
 - [instrumentation records](backend/results/final-first-law-20260907/README.md)
-- [delivery audit](backend/results/final-acceptance-20260907/release-73a9cf50/)
+- [delivery audit](backend/results/final-acceptance-20260907/release-73a9cf50)
 
 </details>

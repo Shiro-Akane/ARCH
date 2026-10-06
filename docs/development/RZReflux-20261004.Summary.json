@@ -1,0 +1,93 @@
+{
+  "baseHead": "d0e18cdc7a4b6069ea6aa443c58e2e06133aa26b",
+  "dirtyInputs": {
+    "src/amr/AMRControl.h": "5ec8058b5f23b35b6cb0ed76b8f83d39bfe42473c4d7ed902b77c518bc1b8c04",
+    "src/amr/flux/AMRFluxRegistering.h": "9de7245d415d39eb01bfb6afb3832f6e2830cbb7d46a2ddc6de95c66f46edfa2",
+    "src/amr/flux/AmrFluxPlan.h": "3b7c71b8d31f18e6ee1652a4034a5b4d02e803ca31eebc53386e703263ed66cb",
+    "src/amr/flux/FluxRegister.h": "2f9ec45191bce49b1c2459297edc8c48749b7396a780d52ffffe905e14d15d6c",
+    "tests/host/amr/test_amr_flux_surface_plan.cpp": "7a2008e1ca9b6bf29491a215dc54ab2efb4ba5f977ca82d6c58feb4f5a8c0d20"
+  },
+  "testBinarySha256": {
+    "arch_amr_flux_surface_plan": "e697c50605c378a341991009e3a78fe9e877b24167daa1ed4d4c5f479f33d032",
+    "arch_amr_operation_plans": "79defe8e77cb643b4dddb4ae4f176ad91e708a9a5d6157279a914068b6c86b24",
+    "arch_curvilinear_metrics": "d798e064561e1c0b9b274a2f676dda7f2e9adc04ba1111d05790f86d1c2e9f99"
+  },
+  "checks": {
+    "amr_flux_surface_plan": "PASS",
+    "amr_operation_plans": "PASS",
+    "curvilinear_metrics": "PASS",
+    "diffCheck": "PASS"
+  },
+  "fixture": {
+    "mixedLeafCount": 5,
+    "levels": "four L1 plus one L0",
+    "directions": [
+      0,
+      1
+    ],
+    "innerRadius": [
+      0,
+      1
+    ],
+    "species": 2,
+    "stageWeight": 1,
+    "dt": 0.001,
+    "faceFlux": "1+0.3*r_face_or_center^2+0.2*z_face_or_center",
+    "state": "rho10,mom_r20,mom_z30,mom_phi40,eng1000; X0=.6,X1=.4",
+    "faceComponents": "[F,2F,3F,4F,5F], species .6F/.4F"
+  },
+  "independentOracle": {
+    "radialArea": "2*pi*r_face*dz",
+    "axialArea": "pi*(r_hi^2-r_lo^2)",
+    "cellVolume": "pi*(r_hi^2-r_lo^2)*dz",
+    "register": "sum(F_fine*A_fine/A_coarse)-F_coarse",
+    "integratedCorrection": "sum(delta_rho*V)=dt*sum(oriented coarse area*register)",
+    "arithmetic": "long double geometry/accumulation, same pi constant; no production metric helper in oracle"
+  },
+  "resultsRoundedByExistingStreamPrecision": [
+    {
+      "direction": 0.0,
+      "inner": 0.0,
+      "register_error": 0.0,
+      "conservation_error": 0.0
+    },
+    {
+      "direction": 0.0,
+      "inner": 1.0,
+      "register_error": 0.0,
+      "conservation_error": 0.0
+    },
+    {
+      "direction": 1.0,
+      "inner": 0.0,
+      "register_error": 3.13985e-16,
+      "conservation_error": 1.73142e-17
+    },
+    {
+      "direction": 1.0,
+      "inner": 1.0,
+      "register_error": 3.13985e-16,
+      "conservation_error": 3.53183e-17
+    }
+  ],
+  "engineeringGate": "existing absolute close 1e-13; integral arithmetic witness 1e-13, not owner science budget",
+  "identityChecks": [
+    "same-chart/native geometry cache hit",
+    "polar/RZ fingerprint distinction",
+    "native radial-bound shift invalidates topology/reflux identity",
+    "wrong chart rejects old accumulated flux",
+    "new geometry rejects old accumulated flux",
+    "explicit Clear/new registration recovers",
+    "uniform empty RZ reflux no-op"
+  ],
+  "planIdentityVersion": 2,
+  "limits": [
+    "explicit internal RZ only; runtime Grid/scheduler/Hydro AMR guard still unchanged",
+    "not an angular momentum conservation fix; RZBlockTransfer finding remains open",
+    "finite-volume synthetic face flux only, no full evolving Hydro/AMR trajectory",
+    "native Grid bindings fixed within each registration interval; concurrent chart/geometry mutation unsupported",
+    "low-level manually assembled legacy register operations without producer identity remain existing compatibility API",
+    "no CUDA; no ARCH full build/simulation; no push/tag/main merge"
+  ],
+  "localEvidence": "studio/.local/integration/rz-reflux-20261004"
+}

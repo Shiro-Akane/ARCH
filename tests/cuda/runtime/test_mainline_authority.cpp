@@ -124,13 +124,21 @@ SimConfig load_fixture_config(
     const std::string& contents)
 {
     const auto path = fixture.path() / name;
+    ConfigParser values;
+    require(values.Load(std::string(ARCH_SOURCE_DIR) + "/tests/fixtures/config/runtime-authority.par"),
+            "complete authority input is missing");
+    ConfigParser changes;
+    std::istringstream changes_stream(contents);
+    changes.Load(changes_stream);
+    auto merged = values.GetAllParams();
+    for (const auto& [key, value] : changes.GetAllParams()) merged[key] = value;
     {
         std::ofstream output(path);
         require(output.good(), "could not create runtime-parameter fixture");
-        output << contents;
+        for (const auto& [key, value] : merged) output << key << "=" << value << "\n";
         require(output.good(), "could not write runtime-parameter fixture");
     }
-    return RuntimeParams::Load(path.string());
+    return RuntimeParams::Load(path.string(), "authority-input");
 }
 
 bool same_requirements(
@@ -207,14 +215,12 @@ void test_case_api_and_log_directory_fallback()
     using RootWidth = double (*)(const SimConfig&, int);
     static_assert(std::is_same_v<decltype(&ProblemHelper::GetRootCellWidth), RootWidth>);
     TempFixture fixture;
-    const auto fallback_path = fixture.path() / "fallback.par";
-    std::ofstream(fallback_path) << "out_dir = authority-output\n";
-    const SimConfig fallback = RuntimeParams::Load(fallback_path.string());
+    const SimConfig fallback = load_fixture_config(
+        fixture, "fallback.par", "out_dir=authority-output\n");
     require(fallback.Get<std::string>("log_dir", fallback.io.out_dir) == "authority-output",
-            "log_dir did not default to out_dir");
-    const auto override_path = fixture.path() / "override.par";
-    std::ofstream(override_path) << "out_dir = authority-output\nlog_dir = authority-log\n";
-    const SimConfig override = RuntimeParams::Load(override_path.string());
+            "log_dir did not derive from out_dir");
+    const SimConfig override = load_fixture_config(
+        fixture, "override.par", "out_dir=authority-output\nlog_dir=authority-log\n");
     require(override.Get<std::string>("log_dir", override.io.out_dir) == "authority-log",
             "explicit log_dir did not override out_dir");
 }
@@ -287,18 +293,24 @@ void test_runtime_enum_token_canonicalization()
                     & boundary_bit(BoundaryFeature::Periodic)) != 0,
             "mixed-case enum tokens selected the wrong resolved requirements");
 
-    const SimConfig unknown = load_fixture_config(
-        fixture, "unknown-enums.par",
-        "geometry = NoSuchGeometry\n"
-        "nblockx1 = 1\n"
-        "nblockx2 = 1\n"
-        "nblockx3 = 1\n"
-        "x1l_boundary_type = NoSuchBoundary\n"
-        "gravity_type = NoSuchGravity\n");
-    require(unknown.grid.geometry == "nosuchgeometry"
-                && unknown.grid.x1l_boundary_type == "nosuchboundary"
-                && unknown.physics.gravity.type == "nosuchgravity",
-            "unknown enum tokens were not preserved modulo ASCII case");
+    for (const auto& [key, token] : {
+            std::pair{"geometry", "NoSuchGeometry"}, {"gravity_type", "NoSuchGravity"},
+            {"x1l_boundary_type", "NoSuchBoundary"}, {"x2l_boundary_type", "IgnoredInactiveLower"}}) {
+        bool rejected = false;
+        try {
+            (void)load_fixture_config(fixture, "unknown-enums.par",
+                std::string("nblockx2=0\nnblockx3=0\n") + key + "=" + token + "\n");
+        } catch (const ConfigInputError& error) {
+            rejected = std::any_of(error.diagnostics.begin(), error.diagnostics.end(),
+                [&](const auto& item) { return item.key == key && item.code == "INVALID_OPTION"; });
+        }
+        require(rejected, "unknown explicit enum was not rejected at the input boundary");
+    }
+    // Direct dispatch must also reject malformed programmatic controls.
+    SimConfig unknown = lowercase;
+    unknown.grid.geometry = "nosuchgeometry";
+    unknown.grid.x1l_boundary_type = "nosuchboundary";
+    unknown.physics.gravity.type = "nosuchgravity";
     require(!resolve_execution_requirements(unknown, 0).ok,
             "unknown geometry was silently mapped to a valid mode");
     SimConfig invalid = unknown;
@@ -317,11 +329,12 @@ void test_runtime_enum_token_canonicalization()
         "nblockx3 = 0\n"
         "x1l_boundary_type = Periodic\n"
         "x1r_boundary_type = Outflow\n"
-        "x2l_boundary_type = IgnoredInactiveLower\n"
-        "x2r_boundary_type = IgnoredInactiveUpper\n"
-        "x3l_boundary_type = AlsoIgnoredInactiveLower\n"
-        "x3r_boundary_type = AlsoIgnoredInactiveUpper\n"
-        "gravity_type = External\n");
+        "x2l_boundary_type = reflecting\n"
+        "x2r_boundary_type = periodic\n"
+        "x3l_boundary_type = reflecting\n"
+        "x3r_boundary_type = periodic\n"
+        "gravity_type = External\n"
+        "gravity_g_x=0\ngravity_g_y=0\ngravity_g_z=0\n");
     const auto inactive_requirements =
         resolve_execution_requirements(inactive_faces, 0);
     require(inactive_requirements.ok,
@@ -470,6 +483,17 @@ void test_resolved_dispatch_source_boundary()
 int main()
 {
     try {
+        ProblemRegistry::Get().Register("authority-input",
+            []() -> std::unique_ptr<ProblemGenerator> {
+                throw std::runtime_error("authority input must not construct a model");
+            }, {"authority", "authority", true, [](const arch::config::StandardInputResolution&) {
+                arch::config::CaseConfiguration declaration;
+                declaration.complete = true;
+                declaration.consumers.needs_network = false;
+                declaration.consumers.needs_temperature_floor = false;
+                declaration.consumers.needs_composition_floor = false;
+                return declaration;
+            }});
         test_strict_bool_parsing();
         test_portability_and_fixture_concurrency();
         test_case_api_and_log_directory_fallback();

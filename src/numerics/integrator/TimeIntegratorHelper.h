@@ -121,10 +121,20 @@ namespace TimeIntegration
         const double* lower_species_flux, const double* upper_species_flux,
         int n_spec, int species_stride,
         double area_l, double area_r, double volume, double dt,
-        FluidVector& dU, double* d_spec)
+        FluidVector& dU, double* d_spec,
+        double torque_l = 0.0, double torque_r = 0.0,
+        double angular_measure = 0.0)
     {
         double dt_over_vol = dt / volume;
-        dU = dU + (lower_flux * area_l - upper_flux * area_r) * dt_over_vol;
+        auto lower=lower_flux,upper=upper_flux;
+        // The unique RZ m_phi slot is J/W. All other fields remain V averages.
+        // Do not form an unused m_phi V-divergence before replacing it.
+        if(angular_measure>0.0) {
+            lower.mom_w=upper.mom_w=0.0;
+            dU.mom_w += dt/angular_measure
+                *(lower_flux.mom_w*torque_l-upper_flux.mom_w*torque_r);
+        }
+        dU = dU + (lower * area_l - upper * area_r) * dt_over_vol;
         for (int s = 0; s < n_spec; ++s)
         {
             int off = s * species_stride;
@@ -136,20 +146,21 @@ namespace TimeIntegration
     inline void accumulate_divergence(
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         const std::vector<FluidVector> &fluxes, const std::vector<double> &spec_fluxes,
-        const Grid &grid, double dt, int dir, int n_spec)
+        const Grid &grid, double dt, int dir, int n_spec,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+        bool angular_transport = false)
     {
+        const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
+        // Hydro opts in only after its curvature source migration. The existing
+        // viscous stress/source consumer must migrate together in its own node.
+        const bool torque=angular_transport
+            && semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
         int total_size = grid.GetTotalSize();
 
         const int ks = grid.Ks(), ke = grid.Ke();
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
-
-        // Immutable geometry descriptor hoisted per patch invocation: the Grid
-        // is const and its topology is fixed until this call returns, so every
-        // row/cell reuses the same shared leaf descriptor instead of rebuilding
-        // it inside the traversal.
-        const GridMetrics::GeometryView geometry = GridMetrics::make_geometry_view(grid);
 
         const auto accumulate_row = [&](int kj) {
             int k = ks + kj / nj;
@@ -172,7 +183,14 @@ namespace TimeIntegration
                     fluxes[idx], fluxes[idx + stride],
                     lower_species_flux, upper_species_flux,
                     n_spec, total_size, area_l, area_r, volume, dt,
-                    dU[idx], species_delta);
+                    dU[idx], species_delta,
+                    torque
+                        ? GridMetrics::Rz::FaceTorqueMeasure(geometry,dir,i,false) : 0.0,
+                    torque
+                        ? GridMetrics::Rz::FaceTorqueMeasure(geometry,dir,i,true) : 0.0,
+                    torque
+                        ? GridMetrics::Rz::AngularMomentumMeasure(
+                            geometry.GetFacePosL(i),geometry.GetFacePosR(i),geometry.dx2) : 0.0);
             }
         };
         bool parallel_rows = nk * nj > 1;
@@ -198,14 +216,15 @@ namespace TimeIntegration
         const FluidState &state,
         const EosType &eos,
         const Grid &grid,
-        double dt)
+        double dt,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        const auto geometry = GridMetrics::make_geometry_view(grid, semantics);
         arch::state::HostFailure failure;
         if (grid.geometry == "cartesian")
             return;
 
         int n_spec = state.GetNumSpecies();
-        const auto geometry = GridMetrics::make_geometry_view(grid);
         const int ks = grid.Ks(), ke = grid.Ke();
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
@@ -256,12 +275,17 @@ namespace TimeIntegration
         double weight_n, double weight_flux,
         double sml_rho, double min_eint, double max_eint,
         FluidVector& U_new, double* Xi_new, arch::state::RepairView repairs = {},
-        double cell_volume = 1.0, int cell = 0)
+        double cell_volume = 1.0, int cell = 0, bool strict_conservative = false,
+        double angular_measure = 0.0)
     {
         U_new = weight_n * U_old + weight_flux * (U_curr + delta);
 
         const double raw_density = U_new.rho;
-        const auto repair = arch::state::apply_bounds(U_new, sml_rho, min_eint, max_eint);
+        arch::state::Repair repair{};
+        if(strict_conservative)
+            repair.status=arch::state::validate(U_new,nullptr,0,1,sml_rho,min_eint,max_eint);
+        else
+            repair=arch::state::apply_bounds(U_new,sml_rho,min_eint,max_eint);
         if (!arch::state::accepted(repair.status)) {
             U_new.eng = arch::state::invalid();
             return repair.status;
@@ -273,7 +297,8 @@ namespace TimeIntegration
             const double density = weight_n * U_old.rho * Xi_old[off]
                 + weight_flux * (U_curr.rho * Xi_curr[off] + d_spec[off]);
             double fraction = density / raw_density;
-            if (!std::isfinite(fraction) || fraction < -arch::state::composition_roundoff_limit) {
+            if (!std::isfinite(fraction) || fraction <
+                (strict_conservative ? 0.0 : -arch::state::composition_roundoff_limit)) {
                 U_new.eng = arch::state::invalid();
                 return arch::state::Status::invalid_composition;
             }
@@ -292,9 +317,12 @@ namespace TimeIntegration
             return arch::state::Status::invalid_composition;
         }
         if (repair.status == arch::state::Status::repaired || composition_repaired) {
+            if(!repairs.conserved_density(repair.delta.rho,repair.delta.mom_u,
+                repair.delta.mom_v,repair.delta.mom_w,repair.delta.eng,cell_volume,angular_measure)) {
+                U_new.eng=arch::state::invalid();
+                return arch::state::Status::nonfinite;
+            }
             repairs.event(cell_volume, cell);
-            const auto delta = cell_volume * repair.delta;
-            repairs.conserved(delta.rho,delta.mom_u,delta.mom_v,delta.mom_w,delta.eng);
             for (int s = 0; s < n_spec; ++s) {
                 const int off = s * species_stride;
                 const double before = weight_n * U_old.rho * Xi_old[off]
@@ -311,8 +339,10 @@ namespace TimeIntegration
         const FluidState &u_n, const FluidState &u_current, FluidState &u_dest,
         const std::vector<FluidVector> &dU, const std::vector<double> &d_spec,
         const Grid &grid, double weight_n, double weight_flux,
-        double sml_rho, double min_eint, double max_eint)
+        double sml_rho, double min_eint, double max_eint,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        const auto geometry = GridMetrics::make_geometry_view(grid, semantics);
         int n_spec = u_n.GetNumSpecies();
         int total_size = grid.GetTotalSize();
 
@@ -323,11 +353,9 @@ namespace TimeIntegration
         const int nk = ke - ks;
         const int nj = je - js;
 
-        // Immutable geometry descriptor hoisted per patch invocation; shared
-        // leaf math is unchanged and no per-cell value is cached.
-        const GridMetrics::GeometryView geometry = GridMetrics::make_geometry_view(grid);
-
-        u_dest.stage_repairs.reset(n_spec);
+        const auto repair_profile=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+            ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
+        u_dest.stage_repairs.reset(n_spec,repair_profile);
         int invalid_count = 0;
         const auto update_row = [&](int kj, arch::state::RepairBudget& local,
                                     int& local_invalid) {
@@ -352,7 +380,10 @@ namespace TimeIntegration
                     U_old, U_curr, dU[idx], Xi_old, Xi_curr, species_delta,
                     n_spec, total_size, weight_n, weight_flux,
                     sml_rho, min_eint, max_eint, U_new, Xi_new, local.view(),
-                    GridMetrics::CellVolume(geometry, i, j, k), idx);
+                    GridMetrics::CellVolume(geometry, i, j, k), idx,
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz,
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                        ? GridMetrics::Rz::AngularMomentumMeasure(grid.GetFacePosL(i),grid.GetFacePosR(i),grid.dx2) : 0.0);
                 if (!arch::state::accepted(status)) ++local_invalid;
                 u_dest.set(idx, U_new);
             }
@@ -364,7 +395,7 @@ namespace TimeIntegration
         if (parallel_rows) {
 #pragma omp parallel reduction(+:invalid_count)
             {
-                arch::state::RepairBudget local(n_spec);
+                arch::state::RepairBudget local(n_spec,repair_profile);
 #pragma omp for schedule(static)
                 for (int kj = 0; kj < nk * nj; ++kj)
                     update_row(kj, local, invalid_count);
@@ -372,7 +403,7 @@ namespace TimeIntegration
                 u_dest.stage_repairs.combine(local);
             }
         } else {
-            arch::state::RepairBudget local(n_spec);
+            arch::state::RepairBudget local(n_spec,repair_profile);
             for (int kj = 0; kj < nk * nj; ++kj)
                 update_row(kj, local, invalid_count);
             u_dest.stage_repairs.combine(local);
@@ -431,8 +462,15 @@ namespace TimeIntegration
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         std::vector<FluidVector> &flux_buffer, std::vector<double> &spec_flux_buffer,
         const Physical::Gravity::IGravityPolicy* gravity,
-        double entropy_fix_coeff, double flux_weight = 1.0, bool roe_wave_speed = true)
+        double entropy_fix_coeff, double flux_weight = 1.0, bool roe_wave_speed = true,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        // Validate the chart and reject consumers not yet migrated before any
+        // output/cache mutation. Runtime Grid still uses its existing chart.
+        (void)GridMetrics::make_geometry_view(grid, semantics);
+        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
+            && gravity != nullptr)
+            throw std::invalid_argument("RZ Hydro gravity consumer not migrated");
         int n_spec = state.GetNumSpecies();
         std::fill(dU.begin(), dU.end(), FluidVector());
         std::fill(d_spec.begin(), d_spec.end(), 0.0);
@@ -454,18 +492,19 @@ namespace TimeIntegration
 
             capture_hydro_surface_flux(state, grid, dir, flux_buffer, spec_flux_buffer);
 
-            accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
+            accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec, semantics,true);
 
             if (gravity) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
 
             // Flux registration has one shared face-index convention for all AMR operators.
             if (amr_ctrl && block_id >= 0) {
                 amr::RegisterCoarseFineFluxes(*amr_ctrl, block_id, grid, dir,
-                                               flux_buffer, spec_flux_buffer, n_spec, flux_weight);
+                                               flux_buffer, spec_flux_buffer, n_spec, flux_weight, semantics,
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
             }
         }
 
-        add_geometric_sources(dU, state, eos, grid, dt);
+        add_geometric_sources(dU, state, eos, grid, dt, semantics);
         add_gravity_sources(dU, state, grid, dt, gravity);
     }
 } // namespace TimeIntegration

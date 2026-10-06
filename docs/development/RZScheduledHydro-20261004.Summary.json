@@ -1,0 +1,37 @@
+{
+  "baseline": "9bc86efe66bd95bbc7745208e07a541979ae020b",
+  "scope": "Actual Host Euler/RK2/RK3 scheduler, fixed internal RZ profile",
+  "fixtures": [
+    "RZ_SCHEDULED_HYDRO method=Euler (1st Order) direction=0 inner=0 max_state_error=2.77556e-17 version=3",
+    "RZ_SCHEDULED_HYDRO method=SSPRK2 direction=0 inner=0 max_state_error=2.77556e-17 version=4",
+    "RZ_SCHEDULED_HYDRO method=SSPRK3 direction=0 inner=0 max_state_error=2.77556e-17 version=5",
+    "RZ_SCHEDULED_HYDRO method=Euler (1st Order) direction=0 inner=1 max_state_error=3.55618e-17 version=3",
+    "RZ_SCHEDULED_HYDRO method=SSPRK2 direction=0 inner=1 max_state_error=3.55618e-17 version=4",
+    "RZ_SCHEDULED_HYDRO method=SSPRK3 direction=0 inner=1 max_state_error=3.55618e-17 version=5",
+    "RZ_SCHEDULED_HYDRO method=Euler (1st Order) direction=1 inner=0 max_state_error=1.38778e-17 version=3",
+    "RZ_SCHEDULED_HYDRO method=SSPRK2 direction=1 inner=0 max_state_error=1.38778e-17 version=4",
+    "RZ_SCHEDULED_HYDRO method=SSPRK3 direction=1 inner=0 max_state_error=1.38778e-17 version=5",
+    "RZ_SCHEDULED_HYDRO method=Euler (1st Order) direction=1 inner=1 max_state_error=1.38778e-17 version=3",
+    "RZ_SCHEDULED_HYDRO method=SSPRK2 direction=1 inner=1 max_state_error=1.38778e-17 version=4",
+    "RZ_SCHEDULED_HYDRO method=SSPRK3 direction=1 inner=1 max_state_error=1.38778e-17 version=5"
+  ],
+  "checks": {
+    "curvilinear_metrics": "PASS (final flux guard)",
+    "shared_stage_scheduler": "PASS",
+    "boundary_plan": "PASS",
+    "amr_operation_plans": "PASS"
+  },
+  "negative_checks": [
+    "Hydro/BC mismatch rejected before Clear and scheduler publication",
+    "Existing accumulated flux sentinel retained",
+    "Clock tokens/versions and Current interior version unchanged on rejection"
+  ],
+  "initial_failure": "Old source-wiring assertion matched only ApplyReflux(dt); updated to require the profile argument, one callback, and exchange chart binding. Numerical scheduler tests had passed.",
+  "limitations": [
+    "Public runtime/chart migration incomplete",
+    "Initial DriverRuntime ghost/CFL/regrid/diffusion wiring still needs migration",
+    "AMR angular-momentum transfer finding open",
+    "No gravity/CUDA/scientific trajectory qualification"
+  ],
+  "raw_logs": "studio/.local/integration/rz-scheduled-hydro-20261004"
+}

@@ -72,7 +72,7 @@ class Campaign:
         for line in (ROOT / 'simulation/JeansWave/JeansWave.par').read_text().splitlines():
             if '=' in line and not line.startswith('#'):
                 key, value = line.split('=', 1)
-                self.base[key] = value
+                self.base[key.strip()] = value.strip()
         self.results = []
 
     def run(self, name, *, energy_budget=.01, **changes):
@@ -114,7 +114,11 @@ class Campaign:
                                 env=os.environ | {'OMP_NUM_THREADS': '1'}, capture_output=True, text=True, timeout=60)
         (folder / 'run.log').write_text(result.stdout + result.stderr)
         require(result.returncode != 0 and expected.lower() in (result.stdout + result.stderr).lower(), name + ': expected rejection missing')
-        require(not list(folder.glob('*plt*.h5')), name + ': published output on rejected run')
+        require('DUPLICATE_PARAMETER' not in result.stdout + result.stderr and
+                'MISSING_PARAMETER' not in result.stdout + result.stderr,
+                name + ': unrelated input construction error masked the target rejection')
+        require(not list(folder.glob('*.h5')) and not list(folder.glob('*.partial')),
+                name + ': published or temporary scientific output on rejected run')
         self.results.append(dict(name=name, rejected=True, reason=expected))
 
     def restart(self):
@@ -132,7 +136,12 @@ class Campaign:
                 require(np.array_equal(left[name][:], right[name][:]), 'restart differs in ' + name)
             require(left.attrs['time'] == right.attrs['time'], 'restart time mismatch')
         self.results.append(dict(name='restart-identity', datasets=len(names), bitwise_equal=True))
-        for key, value in [('gravity_G', G*1.01), ('gravity_rtol', 2e-10), ('gravity_atol', 1e-14), ('gravity_max_cycles', 201)]:
+        # A retired input must fail during configuration, before restart IO.
+        # Saved-G identity rejection is covered by checkpoint_compatibility;
+        # changing the input key no longer tests that later boundary.
+        self.reject('retired-gravity-G', 'RETIRED_PARAMETER',
+                    **(common | {'gravity_G': G*1.01}))
+        for key, value in [('gravity_rtol', 2e-10), ('gravity_atol', 1e-14), ('gravity_max_cycles', 201)]:
             self.reject('restart-reject-' + key, 'gravity policy/boundary/controls', restart='true', restart_file=checkpoint,
                         **(common | {key: value}))
 
@@ -177,9 +186,9 @@ class Campaign:
         require(force_errors[1] < force_errors[0] or max(force_errors) < 1e-11, 'AMR force does not improve')
         for dimension in [2, 3]:
             self.run(f'native-{dimension}d', nblockx1=2, nblockx2=1, nblockx3=int(dimension==3),
-                     x2_max=.5, x3_max=.5, max_blocks=16, max_steps=2, tmax=.02)
+                     x2_min=0, x3_min=0, x2_max=.5, x3_max=.5, max_blocks=16, max_steps=2, tmax=.02)
             self.run(f'native-mixed-{dimension}d', nblockx1=4, nblockx2=1, nblockx3=int(dimension==3),
-                     x2_max=.25, x3_max=.25, max_blocks=32, max_steps=2, tmax=.02,
+                     x2_min=0, x3_min=0, x2_max=.25, x3_max=.25, max_blocks=32, max_steps=2, tmax=.02,
                      phase=math.pi/4, lrefinemax=1, refine_threshold=2e-5, derefine_threshold=5e-6)
         self.restart()
 
@@ -214,7 +223,8 @@ def main():
                 ('reject-periodic-fluid-face', {'x1l_boundary_type':'outflow'},
                  'Fluid faces must match the gravity topology'),
                 ('reject-3d-isolated-fluid-faces',
-                 {'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1},
+                 {'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1,
+                  'x2_min':0, 'x2_max':1, 'x3_min':0, 'x3_max':1},
                  'Fluid faces must match the gravity topology')]:
             campaign.reject(name, message, **changes)
         status = 'passed'

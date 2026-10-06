@@ -1,0 +1,67 @@
+{
+  "baseline": "1abf61913a9f72aad7176ef947122f2779728ae7",
+  "finding": "GRAVITY-IDENTITY-PREFLIGHT-01",
+  "initialFailure": "malformed identity executed gravity work before rejection",
+  "fix": "Shared validate_gravity_solve_identity before gather, after invalidation",
+  "identityNegativeCases": [
+    "NaN time",
+    "infinite time",
+    "nonfirst zero version",
+    "nonfirst zero storage generation",
+    "nonfirst invalid slot"
+  ],
+  "coverage": {
+    "nativeBlocks": 4,
+    "rejectedWorkCount": 0,
+    "oldPublicationRetired": true,
+    "validRecovery": true
+  },
+  "tests": {
+    "cpuSelfGravity": {
+      "status": "PASS",
+      "seconds": 12.14
+    },
+    "cudaEnabledHostSelfGravity": {
+      "status": "PASS",
+      "seconds": 12.13
+    },
+    "actualCartesianRuntime": "PASS",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "builds": {
+    "cpu": {
+      "seconds": 4.031,
+      "peakOwnedRssKiB": 396296,
+      "swapKiB": 0
+    },
+    "cudaEnabledHost": {
+      "seconds": 6.025,
+      "peakOwnedRssKiB": 504992,
+      "swapKiB": 0
+    }
+  },
+  "sourceSha256": {
+    "src/physics/gravity/self/SelfGravity.cpp": "8380736d83818fa7d4b8ae6c6fda0d2f4a655f0d8ffdaa8b4c2ec5f5a1381e52",
+    "tests/host/gravity/test_self_gravity.cpp": "d5e89c9afa35dc26ce1df931ef6957a77f1f327d24d187e3fdefc880c53dd837"
+  },
+  "testBinarySha256": {
+    "build-cpu/arch_self_gravity": "d98f2e3377447de1be050a2c0ae2c8da61c4c6b9a8c7e6c54b44683942d00638",
+    "build-cuda/arch_self_gravity": "d98f2e3377447de1be050a2c0ae2c8da61c4c6b9a8c7e6c54b44683942d00638"
+  },
+  "productionBinarySha256": {
+    "build-cpu/bin/ARCH": "5d454c03404b8b6a9fae082d82270886904637e04df7d9b59a29682bc56c2be0",
+    "build-cuda/bin/ARCH": "0203e0b5f097b465898fe68ad62dc734e2cecd680b3e50782682e70fffebe3fc"
+  },
+  "actualRuntime": {
+    "executableSha256": "5710e124baf0df1e9d0b18cffdae466db39e54129da6a67045c0c1a685b71627",
+    "stdout": "ACTUAL_JEANS_RUNTIME_LEASE_PASS initial_blocks=4 coarse_blocks=4 nonfirst_version_reject=1 device_only_reject=1 time=0 steps=0\nACTUAL_GRAVITY_RUNTIME_CONTRACT_PASS initial_blocks=4 refined_blocks=8 coarsened_blocks=4 gathers=7 cells=64 time=0 steps=0\n",
+    "exitCode": 0
+  },
+  "limitations": [
+    "Not complete RZ Runtime source/RHS/solve/publication",
+    "CUDA-enabled lifecycle uses Host, not device RZ/JENS science",
+    "Production binaries unchanged and not current-source identity",
+    "No simulation, new output/checkpoint, long run or benchmark"
+  ]
+}

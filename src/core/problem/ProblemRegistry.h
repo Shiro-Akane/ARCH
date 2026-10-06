@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "interface/ProblemGenerator.h"
+#include "core/config/CaseConfiguration.h"
 
 /**
  * @brief Callback signature to instantiate a specific problem generator.
@@ -28,6 +29,8 @@ using ProblemCreator = std::function<std::unique_ptr<ProblemGenerator>()>;
 struct ProblemRegistration {
     std::string source_file, source_sha256;
     bool point_initialization = false;
+    std::function<arch::config::CaseConfiguration(
+        const arch::config::StandardInputResolution&)> configuration_declaration;
 };
 
 class ProblemRegistry
@@ -81,6 +84,7 @@ public:
             {
                 generator->BindRegistration(name, {}, {});
             }
+            generator->registered_case_id_ = name;
         }
         return generator;
     }
@@ -90,6 +94,14 @@ public:
         std::vector<std::string> result;
         for (const auto& [name, creator] : creators_) result.push_back(name);
         return result;
+    }
+
+    arch::config::CaseConfiguration DescribeConfiguration(
+        const std::string& name, const arch::config::StandardInputResolution& inputs) const {
+        const auto* info = Registration(name);
+        if (!info) throw std::invalid_argument("Unknown registered case: " + name);
+        if (!info->configuration_declaration) return {};
+        return info->configuration_declaration(inputs);
     }
 
     const ProblemRegistration* Registration(const std::string& name) const {

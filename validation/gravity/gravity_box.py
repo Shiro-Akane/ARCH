@@ -125,10 +125,95 @@ class BoxCampaign:
         self.results.append(record)
         return plots, folder, record
 
+    def jeans_uniform_lifecycle(self, dimensions=(1,2,3)):
+        """Core-frozen bounded subgroup; reuse real GravityBox and native readers."""
+        import json
+        from check_jeans_plot import qualify
+        contract=json.loads((ROOT/'validation/gravity/results/o7-resume-20261004/jens-short-contract.json').read_text())
+        require(contract['contract_version']=='uniform-lifecycle-1','unknown Jeans contract')
+        require(self.backend=='cpu','Jeans CUDA qualification is separate')
+        common={k:('true' if v else 'false') if isinstance(v,bool) else v
+                for k,v in contract['common'].items()}
+        records=[]
+        for domain in contract['dimensions']:
+            dim=domain['dim']
+            if dim not in dimensions:continue
+            changes=dict(common)
+            for axis in range(1,4):
+                changes[f'nblockx{axis}']=domain['root_blocks'][axis-1]
+                changes[f'x{axis}l_boundary_type']='periodic'
+                changes[f'x{axis}r_boundary_type']='periodic'
+                if axis<=dim:
+                    changes[f'x{axis}_min']=domain['lower_cm'][axis-1]
+                    changes[f'x{axis}_max']=domain['upper_cm'][axis-1]
+                    changes[f'center_{("x","y","z")[axis-1]}']=domain['center_cm'][axis-1]
+            for lane,settings in contract['lanes'].items():
+                options=changes|dict(refine_var=settings['refine_var'],
+                    plt_variables='DENS,PRES,TEMP,VELX,VELY,VELZ,ENER,SPECIES')
+                if settings['jens_plot']:options['plt_variables']+=',JENS'
+                if 'jeans_cells' in settings:options['jeans_cells']=settings['jeans_cells']
+                name=f'jeans-uniform-{dim}d-{lane}'
+                plots,folder,record=self.run(name,energy_budget=1e-12,**options)
+                require(plots[-1]['time']==.02,name+': physical endpoint not reached')
+                require(all(np.all(p['level']==settings['expected_level']) for p in plots),
+                        name+': wrong AMR level or parent coarsen')
+                require(len(plots[0]['level'])==(domain['expected_initial_active_leaf_blocks']
+                        if lane=='active' else 4),name+': wrong initial leaf count')
+                for plot in plots:
+                    for key in ['GPOT',*['GACX','GACY','GACZ'][:dim]]:
+                        require(key in plot and np.all(plot[key]==0),name+': missing/nonzero uniform-source '+key)
+                    for key in ['VELX','VELY','VELZ']:
+                        if key in plot:require(np.all(plot[key]==0),name+': uniform state moved')
+                    require(np.all(plot['DENS']==1e7),name+': uniform density changed')
+                    require(np.all(plot['TEMP']==1),name+': uniform temperature changed')
+                    require(np.all(plot['ENER']==1e7),name+': uniform energy density changed')
+                    require(np.all(plot['PRES']==(1.6666666666666667-1)*1e7),
+                            name+': uniform EOS pressure changed')
+                    require(np.all(plot['gas']==1),name+': uniform composition changed')
+                checks=[]
+                if settings['jens_plot']:
+                    for path in sorted(folder.glob('*plt*.h5')):
+                        checks.append(qualify(path))
+                        with h5py.File(path) as h:
+                            if lane=='active':
+                                require(np.all(h['Data/JENS'][:]>=settings['jeans_cells']),
+                                        name+': unresolved accepted output')
+                checkpoints=[]
+                for path in folder.glob('*chk*.h5'):
+                    with h5py.File(path) as h:
+                        if float(h.attrs['time'])==.01:checkpoints.append(path)
+                require(len(checkpoints)==1,name+': no unique actual checkpoint at .01 s')
+                _,resumed,restart_record=self.run(name+'-restart',energy_budget=1e-12,
+                    **(options|dict(restart='true',restart_file=str(checkpoints[0]))))
+                direct=max(folder.glob('*chk*.h5'))
+                recovered=max(resumed.glob('*chk*.h5'))
+                with h5py.File(direct) as h, h5py.File(recovered) as g:
+                    require(float(h.attrs['time'])==.02 and float(g.attrs['time'])==.02,
+                            name+': restart endpoint not reached')
+                    for key in h.attrs:
+                        require(key in g.attrs and np.array_equal(h.attrs[key],g.attrs[key]),
+                                name+': strict restart attribute mismatch '+key)
+                    # Compare the actual native state/controller payload, not
+                    # file hashes or requested output names.
+                    for key in h:
+                        if isinstance(h[key],h5py.Dataset):
+                            require(key in g and np.array_equal(h[key][:],g[key][:]),
+                                    name+': strict restart mismatch '+key)
+                record.update(contract='uniform-lifecycle-1',dimension=dim,lane=lane,
+                    jens_checks=checks,restart_pass=True,
+                    restart_elapsed_seconds=restart_record['elapsed_seconds'])
+                records.append(record)
+        return records
+
     @staticmethod
     def cloud_config(roots=1, extent=1., **changes):
         return dict(gravity_boundary='isolated', nblockx1=roots, nblockx2=roots, nblockx3=roots,
+                    # Preserve the pre-v3 cloud's actual Setup defaults and
+                    # the independent oracle's center, rather than inheriting
+                    # explicit values from the periodic 1D base configuration.
+                    x1_min=0., x2_min=0., x3_min=0.,
                     x1_max=extent, x2_max=extent, x3_max=extent,
+                    center_x=extent/2, center_y=extent/2, center_z=extent/2,
                     x1l_boundary_type='reflecting', x1r_boundary_type='reflecting',
                     x2l_boundary_type='reflecting', x2r_boundary_type='reflecting',
                     x3l_boundary_type='reflecting', x3r_boundary_type='reflecting',
@@ -157,7 +242,8 @@ class BoxCampaign:
         amplitude,thermal=1e-5,2e-5
         data,folder,record=self.run(f'thermal-linear-{roots}', nblockx1=roots, rho0=1e7, temperature0=3e7,
             amplitude=amplitude, temperature_amplitude=thermal, use_diffusion='true',use_thermal_diff='true',
-            alpha_therm=1e15,tmax=.05,cfl=.2,diff_integrator='RKL2')
+            alpha_therm=1e15,tmax=.05,cfl=.2,diff_integrator='RKL2',diff_cfl=.8,
+            use_viscous_diff='false',use_species_diff='false')
         d=data[-1];k=2*math.pi/1e8;speed=math.sqrt((2/3)*CV*3e7);omega_g=4*math.pi*G*1e7
         matrix=np.array([[0,-k*speed,0],[k*speed-omega_g/(k*speed),0,k*speed],
                          [0,-(2/3)*k*speed,-1e15*k*k]])
@@ -178,13 +264,17 @@ class BoxCampaign:
         return dict(nblockx1=2, rho0=1e7, temperature0=1e9, amplitude=.01,temperature_amplitude=.01,
                     eos_type='helmholtz',eos_table_path=str(ROOT/'EOS_toolkit/tables/helmholtz/helm_table.dat'),
                     use_burn='true',network_name='aprox13',xhe4=1.,xc12=0.,xo16=0.,
+                    # Preserve the original pre-v3 RuntimeParams effective defaults.
+                    nuclearTempMin=1e9,nuclearDensMin=1e-10,smallt=1e5,smallx=1e-20,
+                    enucDtFactor=1e30,eos_coulomb_mult=1.,
                     ode_solver='bd',linear_solver='DenseLU',ode_rtol=1e-9,ode_atol=1e-12,
                     tmax=1e-4,dt_init=2.5e-5,tstep_change_factor=1.,use_nse='false') | changes
 
     def coupled(self, name, diffusion=False, **changes):
         config=self.burning_config()
         if diffusion:
-            config.update(use_diffusion='true',use_thermal_diff='true',use_species_diff='true',diff_integrator='RKL2')
+            config.update(use_diffusion='true',use_thermal_diff='true',use_species_diff='true',
+                          use_viscous_diff='false',diff_integrator='RKL2',diff_cfl=.8)
         data,folder,record=self.run(name, **(config|changes))
         require(abs(record['nuclear_heat_over_initial_gas'])>1e-8,name+': no nuclear heat')
         def mean_fraction(d,key):

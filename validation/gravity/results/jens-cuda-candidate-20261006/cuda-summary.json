@@ -1,0 +1,504 @@
+{
+  "contract": "uniform-lifecycle-1",
+  "status": "PASS",
+  "scope": "Private CUDA Cartesian uniform-lifecycle-1 candidate only; not full JENS/RZ or public capability release.",
+  "binarySha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf",
+  "cases": [
+    {
+      "name": "jeans-uniform-1d-active",
+      "dimension": 1,
+      "lane": "active",
+      "cells": 128,
+      "elapsed_seconds": 0.8150208179999936,
+      "restart_elapsed_seconds": 0.7651928850000331,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 114,
+      "stage_solves": 84,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": 29,
+      "maxJensRelativeError": 4.50750606346323e-17,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-1d-active"
+    },
+    {
+      "name": "jeans-uniform-1d-disabled",
+      "dimension": 1,
+      "lane": "disabled",
+      "cells": 64,
+      "elapsed_seconds": 0.76554890899979,
+      "restart_elapsed_seconds": 0.7149076430000605,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 58,
+      "stage_solves": 42,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": null,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-1d-disabled"
+    },
+    {
+      "name": "jeans-uniform-1d-output_only",
+      "dimension": 1,
+      "lane": "output_only",
+      "cells": 64,
+      "elapsed_seconds": 0.7649729899999329,
+      "restart_elapsed_seconds": 0.7651051089997054,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 58,
+      "stage_solves": 42,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": 4.50750606346323e-17,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-1d-output_only"
+    },
+    {
+      "name": "jeans-uniform-2d-active",
+      "dimension": 2,
+      "lane": "active",
+      "cells": 4096,
+      "elapsed_seconds": 1.1160397740000008,
+      "restart_elapsed_seconds": 0.9154542369997216,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 218,
+      "stage_solves": 162,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": 55,
+      "maxJensRelativeError": 4.50750606346323e-17,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-2d-active"
+    },
+    {
+      "name": "jeans-uniform-2d-disabled",
+      "dimension": 2,
+      "lane": "disabled",
+      "cells": 1024,
+      "elapsed_seconds": 0.8151077120000991,
+      "restart_elapsed_seconds": 0.765111928999886,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 114,
+      "stage_solves": 84,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": null,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-2d-disabled"
+    },
+    {
+      "name": "jeans-uniform-2d-output_only",
+      "dimension": 2,
+      "lane": "output_only",
+      "cells": 1024,
+      "elapsed_seconds": 0.8152183939996576,
+      "restart_elapsed_seconds": 0.7650644410000496,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 114,
+      "stage_solves": 84,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": 4.50750606346323e-17,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-2d-output_only"
+    },
+    {
+      "name": "jeans-uniform-3d-active",
+      "dimension": 3,
+      "lane": "active",
+      "cells": 131072,
+      "elapsed_seconds": 6.480460432999735,
+      "restart_elapsed_seconds": 3.6726721710001584,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 330,
+      "stage_solves": 246,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": 83,
+      "maxJensRelativeError": 4.50750606346323e-17,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-3d-active"
+    },
+    {
+      "name": "jeans-uniform-3d-disabled",
+      "dimension": 3,
+      "lane": "disabled",
+      "cells": 16384,
+      "elapsed_seconds": 1.2153866040002868,
+      "restart_elapsed_seconds": 1.0152594200003477,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 170,
+      "stage_solves": 126,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": null,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-3d-disabled"
+    },
+    {
+      "name": "jeans-uniform-3d-output_only",
+      "dimension": 3,
+      "lane": "output_only",
+      "cells": 16384,
+      "elapsed_seconds": 1.2173865469999328,
+      "restart_elapsed_seconds": 1.0153089229997931,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 170,
+      "stage_solves": 126,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": 4.50750606346323e-17,
+      "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/cuda-campaign/jeans-uniform-3d-output_only"
+    }
+  ],
+  "comparisons": [
+    {
+      "dimension": 1,
+      "offVsOutputNativeStateExact": true,
+      "offVsOutputSolveCountsExact": true
+    },
+    {
+      "dimension": 2,
+      "offVsOutputNativeStateExact": true,
+      "offVsOutputSolveCountsExact": true
+    },
+    {
+      "dimension": 3,
+      "offVsOutputNativeStateExact": true,
+      "offVsOutputSolveCountsExact": true
+    }
+  ],
+  "backend": "cuda",
+  "candidate_base": "ccfcef5bc60f4361a808dc1e83c020094ab50930",
+  "candidate_patch_sha256": "c026244a12f55900062aa32f213466d6d07dddf388eb18695424b0f2726bb123",
+  "candidate_delivery_ref": "11c665b37deb0f73106e2d2ed90d22c27082b836",
+  "public_identity_unchanged": true,
+  "build_identity": {
+    "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf",
+    "cache_sha256": "5d4f506889fea4e4e24a1e26cc86e3361806a9c3353707745c0eec7afa530712"
+  },
+  "scoped_tests": "Internal ctest changing into directory: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/build-cuda\nTest project /home/arch/projects/ARCH-compute-optim/studio/.local/integration/jens-cuda-candidate-20261006/build-cuda\n    Start   5: configuration_api_contract\n1/3 Test   #5: configuration_api_contract .......   Passed   10.34 sec\n    Start  23: configuration_input\n2/3 Test  #23: configuration_input ..............   Passed    0.02 sec\n    Start 138: checkpoint_compatibility\n3/3 Test #138: checkpoint_compatibility .........   Passed    0.15 sec\n\n100% tests passed, 0 tests failed out of 3\n\nTotal Test time (real) =  10.51 sec\n",
+  "resource_limits": {
+    "build": {
+      "wallclock_limit_s": 3600,
+      "vram_system_limit_mib": 10240,
+      "raw_output_limit_bytes": 10737418240,
+      "samples": 1747,
+      "peak_vram_mib": 2430,
+      "peak_output_bytes": 0,
+      "stop_reason": null,
+      "exit_code": 0,
+      "elapsed_seconds": 1825.9280737649997
+    },
+    "campaign": {
+      "wallclock_limit_s": 14400,
+      "vram_system_limit_mib": 10240,
+      "raw_output_limit_bytes": 10737418240,
+      "samples": 34,
+      "peak_vram_mib": 3131,
+      "peak_output_bytes": 134126630,
+      "stop_reason": null,
+      "exit_code": 0,
+      "elapsed_seconds": 35.27852907500028
+    }
+  },
+  "input_identities": [
+    {
+      "name": "jeans-uniform-1d-disabled",
+      "sha256": "07eb68671d3fa93a272b8eb12b939acefff7bef86dc641300f4e2bd0ef40612a",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-1d-disabled-restart",
+      "sha256": "91796a9f78172a157783b5a19260a5858a84e12561cd1c7f3825ca3b624951f5",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-1d-output_only",
+      "sha256": "e2e3fe9b9dc0aa5d7675499c5724fad7206ad9e3771e3bcb072b60a6a3dee7ee",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-1d-output_only-restart",
+      "sha256": "55f66207dd907c06a0206ffc0b53e83809e934851fcd279e6e921cfe8fb43404",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-1d-active",
+      "sha256": "d1a7088ecc7281bd48c1844ac547d1be4eccbcae2a26863c27bd35a0240c4f57",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-1d-active-restart",
+      "sha256": "85210e59bd0fb1621cd3f9213abdb82da2191612831e1c60d9554ac55a304da5",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-2d-disabled",
+      "sha256": "687eb24fff705fe85905c1fd1e465a3bd2a7c977fd7a4edd2ebaa332e254718b",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-2d-disabled-restart",
+      "sha256": "0bd56ba1eed8828550587a365180f64688179d6094fbad3d60219ed63b869ce6",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-2d-output_only",
+      "sha256": "16ab9d43143247d3e0f45cfbdb45f67c890c2729e7ccf472edb7fe1ceb94e9c0",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-2d-output_only-restart",
+      "sha256": "a06bc73fc21bb12e7fdb6d06f8997cbf1cd2f82fecb928a6643dcc78760accf6",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-2d-active",
+      "sha256": "861f3ac3146caded8d77afca5bc605178bbc24b3bb891850bab7c496417aa6f4",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-2d-active-restart",
+      "sha256": "55bddc6c4da9bbbd6f6c28cc44594fc85f2f94f35b01454b50d061adee39d50c",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-3d-disabled",
+      "sha256": "c75b97b239a449dbea1cd66b9ed4b2ea3a5b14e0fe74b9c950db2354b0070c7c",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-3d-disabled-restart",
+      "sha256": "0c124c532e0264943647b1adb32dd52c53dccc3330386c5a483050a5dfd03cb1",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-3d-output_only",
+      "sha256": "95e80562140afdcf0f184787c393d05cebcf8e582be9d7b5f20e8ed85e5346ad",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-3d-output_only-restart",
+      "sha256": "8a6ab58c7030c6cb79460a054557a38d18713e3e91f039840487d6332f200c92",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-3d-active",
+      "sha256": "c1fab82be6238f8e513b559edfa7027499d0cb47851bb74ae84fafd77b0692e3",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    },
+    {
+      "name": "jeans-uniform-3d-active-restart",
+      "sha256": "1738b1585cb6faa06df9b65d697db18a7ade05a56620ec0905473ce306b37d62",
+      "binary_sha256": "4d6c96ed709b2b405dfd20e916f93b672264caee1008f6647d60547890bf08cf"
+    }
+  ],
+  "gravity_device_evidence": [
+    {
+      "name": "jeans-uniform-1d-disabled",
+      "backend": "cuda",
+      "solves": 58,
+      "stage_solves": 42,
+      "kernels": 986.0,
+      "bytes_h2d": 1856.0,
+      "bytes_d2h": 3248.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-1d-disabled-restart",
+      "backend": "cuda",
+      "solves": 30,
+      "stage_solves": 21,
+      "kernels": 510.0,
+      "bytes_h2d": 960.0,
+      "bytes_d2h": 1680.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    },
+    {
+      "name": "jeans-uniform-1d-output_only",
+      "backend": "cuda",
+      "solves": 58,
+      "stage_solves": 42,
+      "kernels": 986.0,
+      "bytes_h2d": 1856.0,
+      "bytes_d2h": 3248.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-1d-output_only-restart",
+      "backend": "cuda",
+      "solves": 30,
+      "stage_solves": 21,
+      "kernels": 510.0,
+      "bytes_h2d": 960.0,
+      "bytes_d2h": 1680.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    },
+    {
+      "name": "jeans-uniform-1d-active",
+      "backend": "cuda",
+      "solves": 114,
+      "stage_solves": 84,
+      "kernels": 1938.0,
+      "bytes_h2d": 7296.0,
+      "bytes_d2h": 6384.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-1d-active-restart",
+      "backend": "cuda",
+      "solves": 58,
+      "stage_solves": 42,
+      "kernels": 986.0,
+      "bytes_h2d": 3712.0,
+      "bytes_d2h": 3248.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    },
+    {
+      "name": "jeans-uniform-2d-disabled",
+      "backend": "cuda",
+      "solves": 114,
+      "stage_solves": 84,
+      "kernels": 1938.0,
+      "bytes_h2d": 3648.0,
+      "bytes_d2h": 6384.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-2d-disabled-restart",
+      "backend": "cuda",
+      "solves": 58,
+      "stage_solves": 42,
+      "kernels": 986.0,
+      "bytes_h2d": 1856.0,
+      "bytes_d2h": 3248.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    },
+    {
+      "name": "jeans-uniform-2d-output_only",
+      "backend": "cuda",
+      "solves": 114,
+      "stage_solves": 84,
+      "kernels": 1938.0,
+      "bytes_h2d": 3648.0,
+      "bytes_d2h": 6384.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-2d-output_only-restart",
+      "backend": "cuda",
+      "solves": 58,
+      "stage_solves": 42,
+      "kernels": 986.0,
+      "bytes_h2d": 1856.0,
+      "bytes_d2h": 3248.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    },
+    {
+      "name": "jeans-uniform-2d-active",
+      "backend": "cuda",
+      "solves": 218,
+      "stage_solves": 162,
+      "kernels": 3706.0,
+      "bytes_h2d": 27904.0,
+      "bytes_d2h": 12208.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-2d-active-restart",
+      "backend": "cuda",
+      "solves": 110,
+      "stage_solves": 81,
+      "kernels": 1870.0,
+      "bytes_h2d": 14080.0,
+      "bytes_d2h": 6160.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    },
+    {
+      "name": "jeans-uniform-3d-disabled",
+      "backend": "cuda",
+      "solves": 170,
+      "stage_solves": 126,
+      "kernels": 5440.0,
+      "bytes_h2d": 5440.0,
+      "bytes_d2h": 9520.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-3d-disabled-restart",
+      "backend": "cuda",
+      "solves": 86,
+      "stage_solves": 63,
+      "kernels": 2752.0,
+      "bytes_h2d": 2752.0,
+      "bytes_d2h": 4816.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    },
+    {
+      "name": "jeans-uniform-3d-output_only",
+      "backend": "cuda",
+      "solves": 170,
+      "stage_solves": 126,
+      "kernels": 5440.0,
+      "bytes_h2d": 5440.0,
+      "bytes_d2h": 9520.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-3d-output_only-restart",
+      "backend": "cuda",
+      "solves": 86,
+      "stage_solves": 63,
+      "kernels": 2752.0,
+      "bytes_h2d": 2752.0,
+      "bytes_d2h": 4816.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    },
+    {
+      "name": "jeans-uniform-3d-active",
+      "backend": "cuda",
+      "solves": 330,
+      "stage_solves": 246,
+      "kernels": 10560.0,
+      "bytes_h2d": 84480.0,
+      "bytes_d2h": 18480.0,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0
+    },
+    {
+      "name": "jeans-uniform-3d-active-restart",
+      "backend": "cuda",
+      "solves": 166,
+      "stage_solves": 123,
+      "kernels": 5312.0,
+      "bytes_h2d": 42496.0,
+      "bytes_d2h": 9296.0,
+      "mass_relative_drift": null,
+      "energy_minus_nuclear_over_initial_gas": null
+    }
+  ]
+}

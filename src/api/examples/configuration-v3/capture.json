@@ -1,0 +1,58 @@
+{
+  "baseCommit": "e4c87d98b648ea33028f6f53bae438ed388ff3d5",
+  "sourceWasDirty": false,
+  "executableSha256": "12322fbd2506555ee409c8bd862f73d2f44977a05673296c91d7e851397fe04e",
+  "configurationVersion": "3",
+  "fixtures": [
+    {
+      "name": "schema",
+      "args": [
+        "--config-schema"
+      ],
+      "exitCode": 0,
+      "configSha256": null
+    },
+    {
+      "name": "sod-valid",
+      "args": [
+        "--inspect-config",
+        "Sod",
+        "--config-stdin",
+        "--request-id",
+        "v3-valid"
+      ],
+      "exitCode": 0,
+      "configSha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843"
+    },
+    {
+      "name": "empty",
+      "args": [
+        "--inspect-config",
+        "Sod",
+        "--config-stdin",
+        "--request-id",
+        "v3-empty"
+      ],
+      "exitCode": 3,
+      "configSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "invalid",
+      "args": [
+        "--inspect-config",
+        "Sod",
+        "--config-stdin",
+        "--request-id",
+        "v3-invalid"
+      ],
+      "exitCode": 3,
+      "configSha256": "1f1027703bb042194574265b1b6a84fbc708d065006d04cb13cb5184b11c7f58"
+    }
+  ],
+  "implementationSha256": {
+    "src/api/ApplicationContract.h": "ae4118e039d55af07ccca7ed2dda9d6804900d6f16ad5f4c52d6fbcf4a742c79",
+    "src/api/configuration/Configuration.cpp": "03df1f382c16ddda0d38293a68c2ffd75122df2d88d552bae91f4709dcff47dc",
+    "src/api/protocol/Response.h": "7ce4193b34e2c9be538f2a7ea16e4bb4eb9101ba4e6ed7d7f49efa0d041ebcd9",
+    "src/core/config/InputResolution.h": "14bcec2628176dc4680b9c9823bfc0b54040ff016696b77a6b7704d6cc893bee"
+  }
+}

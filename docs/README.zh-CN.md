@@ -4,6 +4,8 @@
 
 从[构建与首次运行](../README.zh-CN.md#构建)开始，再用[算例指南](guides/SimulationCase.zh-CN.md)查看输出或编写自己的问题。输入、输出和物理常数使用 CGS。
 
+[ARCH Studio 本地桌面指南](guides/Studio.zh-CN.md)介绍 CLI 呼出、配置编辑、初始场/AMR 和只读 Plotfile 工作流。
+
 ## 选择功能和配置
 
 - [功能清单](Features.zh-CN.md)：各模块、坐标、边界及自引力的可用范围。

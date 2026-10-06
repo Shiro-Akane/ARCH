@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {retiredParameters} from '../src/data/retiredParameters.ts';
+import {loadPar,editPar,removeRetiredParameter,exportPar,parErrors,revertPar,parStatus} from '../src/state/parState.ts';
+import {serializePar} from '../src/data/ParDocument.ts';
+import {EditHistory} from '../src/state/editHistory.ts';
+for(const key of retiredParameters)test('explicit migration preserves raw / comments / duplicates / Undo / reopen: '+key,()=>{
+ const raw='# before\r\n'+key+' = false # retained note\r\nunknown = keep\r\n'+key+' = true\r\nnblockx2=0\r\nnblockx3=0';
+ const original=loadPar('legacy.par',raw);
+ assert.equal(serializePar(original.document,original.changes),raw);
+ assert.ok(parErrors(original)[key]);assert.throws(()=>exportPar(original));
+ assert.throws(()=>editPar(original,key,'false'),/Retired/);
+ const edited=editPar(original,'unknown','changed');
+ const next=removeRetiredParameter(edited,key);
+ const history=new EditHistory<typeof original>();history.record(edited,next);
+ assert.equal(next.document.raw,raw);
+ const text=exportPar(next).text;
+ assert.ok(text.includes('# retained note\r\n'));assert.ok(text.includes('unknown = changed\r\n'));
+ assert.ok(!text.includes(key+' ='));assert.equal(parStatus(next),'dirty');
+ const undone=history.undo(next);assert.deepEqual(undone,edited);
+ assert.equal(serializePar(undone.document,undone.changes,undone.removedKeys),serializePar(edited.document,edited.changes));
+ assert.equal(exportPar(history.redo(undone)).text,text);
+ assert.equal(serializePar(revertPar(next).document),raw);
+ assert.equal(exportPar(loadPar('saved.par',text)).text,text);
+});
+test('normal key cannot use retired removal; retired names cannot be inserted as Custom',()=>{
+ const state=loadPar('a.par','nblockx2=0\nnblockx3=0\n');
+ assert.throws(()=>removeRetiredParameter(state,'x_pos'));
+ for(const key of retiredParameters)assert.throws(()=>editPar(state,key,'1'));
+});

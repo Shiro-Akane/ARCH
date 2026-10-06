@@ -33,6 +33,7 @@
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/transfer/RegridExecutionPlan.h"
 #include "amr/refinement/RefinementIndicatorMath.h"
+#include "physics/diagnostics/JeansDiagnostics.h"
 #include "amr/storage/MemoryPool.h"
 #include "amr/topology/Morton.h"
 
@@ -95,16 +96,23 @@ private:
 
     // Global Domain (root-level grid topology)
     Grid root_grid;
+    GridMetrics::GeometrySemantics root_semantics=GridMetrics::GeometrySemantics::Existing;
     double root_dx1, root_dx2, root_dx3;
     std::vector<int> refinement_species_indices;
     using ThermodynamicEvaluator = std::function<void(const FluidState&, std::vector<double>*, std::vector<double>*, std::vector<double>*)>;
     ThermodynamicEvaluator thermodynamic_evaluator;
+    using JeansEvaluator = std::function<JeansDiagnostics::Resolution(
+        const FluidVector&, const double*, const GridMetrics::GeometryView&, int, int)>;
+    JeansEvaluator jeans_evaluator;
     int deferred_initial_refinement_passes = 0;
 
 public:
     AmrTree(std::shared_ptr<MemoryPool> memory_pool) : pool(memory_pool) {}
 
     int GetRootGridDim() const { return root_grid.dim; }
+    /** Immutable native domain identity for IO; no geometry reconstruction. */
+    const Grid& GetRootGrid() const { return root_grid; }
+    GridMetrics::GeometrySemantics GetGeometrySemantics() const { return root_semantics; }
     /**
      * @brief Installs the EOS-backed pressure/temperature batch evaluator.
      *
@@ -114,6 +122,87 @@ public:
     void SetThermodynamicEvaluator(ThermodynamicEvaluator evaluator)
     {
         thermodynamic_evaluator = std::move(evaluator);
+    }
+
+    /** Bind the current immutable EOS; no result or stage state is cached. */
+    void SetJeansEvaluator(JeansEvaluator evaluator)
+    {
+        jeans_evaluator = std::move(evaluator);
+    }
+
+    /** Inspect active accepted cells only, through authoritative EOS and metrics. */
+    double MinimumJeansCells(const Block& block) const
+    {
+        if (!jeans_evaluator)
+            throw std::runtime_error("JENS requires the current EOS evaluator before regridding.");
+        const auto& state = block.fluid_state;
+        const auto& grid = block.grid;
+        const auto geometry = GridMetrics::make_geometry_view(grid,root_semantics);
+        std::vector<double> fractions(state.GetNumSpecies());
+        double minimum = std::numeric_limits<double>::infinity();
+        for (int k=grid.Ks();k<grid.Ke();++k)
+            for (int j=grid.Js();j<grid.Je();++j)
+                for (int i=grid.Is();i<grid.Ie();++i) {
+                    const int cell=grid.GetIndex(i,j,k);
+                    for (int species=0;species<state.GetNumSpecies();++species)
+                        fractions[species]=state.X(species,cell);
+                    const auto value=jeans_evaluator(state.get(cell),fractions.data(),geometry,i,j);
+                    if (value.status!=JeansDiagnostics::Status::valid)
+                        throw std::runtime_error("JENS rejected nonfinite, nonpositive or unrepresentable accepted state.");
+                    minimum=std::min(minimum,value.cells);
+                }
+        return minimum;
+    }
+
+    /** Construct authoritative geometry for one complete logical child family.
+     * No pool destination or accepted field is allocated/published by this hook.
+     */
+    Block CandidateParentGeometry(std::span<const int> siblings) const
+    {
+        if(siblings.size()!=static_cast<std::size_t>(1<<root_grid.dim))
+            throw std::logic_error("candidate parent requires a complete child family");
+        const auto& first=pool->GetBlock(siblings.front());
+        if(first.level<=0 || (first.logical_x1&1)
+            || (root_grid.dim>=2 && (first.logical_x2&1))
+            || (root_grid.dim==3 && (first.logical_x3&1)))
+            throw std::logic_error("candidate parent requires the lower logical child");
+        for(std::size_t child=0;child<siblings.size();++child) {
+            const auto& block=pool->GetBlock(siblings[child]);
+            if(block.level!=first.level
+                || block.logical_x1!=first.logical_x1+int(child&1)
+                || block.logical_x2!=first.logical_x2+(root_grid.dim>=2?int((child>>1)&1):0)
+                || block.logical_x3!=first.logical_x3+(root_grid.dim==3?int((child>>2)&1):0))
+                throw std::logic_error("candidate parent child order/identity mismatch");
+        }
+        Block candidate{};
+        candidate.level=first.level-1;
+        candidate.logical_x1=first.logical_x1>>1;
+        candidate.logical_x2=first.logical_x2>>1;
+        candidate.logical_x3=first.logical_x3>>1;
+        candidate.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3,root_semantics);
+        return candidate;
+    }
+
+    /** Preflight the real restricted parent without allocating or publishing a pool block. */
+    bool CandidateParentResolved(const SimConfig& config, std::span<const int> siblings) const
+    {
+        auto candidate=CandidateParentGeometry(siblings);
+        const auto& first=pool->GetBlock(siblings.front());
+        candidate.fluid_state.Preallocate(candidate.grid.GetTotalSize());
+        candidate.fluid_state.InitSpecies(first.fluid_state.GetNumSpecies());
+        const Block* children[8]{};
+        for (std::size_t child=0;child<siblings.size();++child)
+            children[child]=&pool->GetBlock(siblings[child]);
+        const auto status=candidate.TryAverageToCoarse(children,root_grid.dim,
+            config.numerics.sml_rho,config.numerics.min_eint,root_semantics);
+        // Inadmissible restricted parent vetoes this group without repairing
+        // E/J or allocating a destination. Other contract failures remain fatal.
+        if(status==regrid_math::Status::CoarseFluid) return false;
+        if(status!=regrid_math::Status::Ok)
+            throw std::runtime_error(regrid_math::status_message(status));
+        // The same W/V-restricted candidate feeds authoritative EOS/JENS.
+        return !config.amr.refine_on_jeans
+            || MinimumJeansCells(candidate)>=config.amr.jeans_cells;
     }
 
     /** @brief Defers initial thermodynamic regridding until the EOS is live. */
@@ -148,7 +237,19 @@ public:
     /**
      * @brief Initialize the Level 0 root blocks.
      */
-    void InitRootGrid(const SimConfig& config, int n_species) {
+    void InitRootGrid(const SimConfig& config, int n_species,
+                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) {
+        // Preflight explicit RZ domain before changing root/active storage.
+        // Default polar creation retains its historical per-block validation.
+        if (semantics != GridMetrics::GeometrySemantics::Existing) {
+            Grid candidate(MAX_NG, config.grid.x1_min, config.grid.x1_max,
+                config.grid.x2_min, config.grid.x2_max,
+                config.grid.x3_min, config.grid.x3_max,
+                config.grid.nblockx1, config.grid.nblockx2, config.grid.nblockx3);
+            candidate.dim=config.grid.dim;
+            candidate.geometry=config.grid.geometry;
+            candidate.InitializeTopology(semantics);
+        }
         if (config.amr.lrefinemin < 0 ||
             config.amr.lrefinemax < config.amr.lrefinemin ||
             config.amr.lrefinemax > kMaxRefinementLevel) {
@@ -166,6 +267,7 @@ public:
             throw std::invalid_argument("AMR root-block extent exceeds the 20-bit Morton coordinate range at lrefinemax.");
         }
 
+        root_semantics=semantics;
         // Populate root grid from user config
         root_grid = Grid(amr::MAX_NG,
                          config.grid.x1_min, config.grid.x1_max,
@@ -203,7 +305,7 @@ public:
                     b.logical_x2 = j;
                     b.logical_x3 = k;
                     b.morton_code = encodeMorton(0, i, j, k);
-                    b.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3);
+                    b.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3, semantics);
                     b.fluid_state.InitSpecies(n_species);
                     b.state_next.InitSpecies(n_species);
                     b.state_scratch.InitSpecies(n_species);
@@ -232,7 +334,8 @@ public:
                       const std::vector<int>& levels,
                       const std::vector<uint32_t>& logical_x1,
                       const std::vector<uint32_t>& logical_x2,
-                      const std::vector<uint32_t>& logical_x3)
+                      const std::vector<uint32_t>& logical_x3,
+                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
         const size_t count = levels.size();
         if (count == 0 || logical_x1.size() != count || logical_x2.size() != count ||
@@ -240,7 +343,7 @@ public:
             throw std::invalid_argument("Checkpoint AMR leaf metadata is inconsistent.");
         }
 
-        InitRootGrid(config, n_species);
+        InitRootGrid(config, n_species, semantics);
         for (const int root_id : active_blocks) pool->FreeBlock(root_id);
         active_blocks.clear();
 
@@ -257,7 +360,7 @@ public:
             block.logical_x3 = logical_x3[index];
             block.morton_code = encodeMorton(block.level, block.logical_x1,
                                              block.logical_x2, block.logical_x3);
-            block.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3);
+            block.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3, semantics);
             block.fluid_state.InitSpecies(n_species);
             block.state_next.InitSpecies(n_species);
             block.state_scratch.InitSpecies(n_species);
@@ -319,6 +422,22 @@ public:
         return refinement_species_indices;
     }
 
+    /** Repair accepted-state JENS deficits without changing ordinary cadence. */
+    void EvaluateJeansRepair(const SimConfig& config)
+    {
+        (void)indicator::make_selection(config.amr,root_grid.dim,refinement_species_indices);
+        for (int id:active_blocks) {
+            auto& block=pool->GetBlock(id);
+            block.refine_flag=0;
+            if (!config.amr.refine_on_jeans) continue;
+            if (MinimumJeansCells(block)<config.amr.jeans_cells) {
+                if (block.level>=config.amr.lrefinemax)
+                    throw std::runtime_error("JENS remains underresolved at lrefinemax; increase allowed resolution.");
+                block.refine_flag=1;
+            }
+        }
+    }
+
     void EvaluateRefinement(const SimConfig& config) {
         const auto selection = indicator::make_selection(
             config.amr, root_grid.dim, refinement_species_indices);
@@ -371,6 +490,14 @@ public:
                 block.refine_flag = indicator::refinement_flag(maximum, block.level,
                     config.amr.lrefinemin, config.amr.lrefinemax,
                     config.amr.refine_threshold, config.amr.derefine_threshold);
+                if (config.amr.refine_on_jeans) {
+                    const double minimum=MinimumJeansCells(block);
+                    if (minimum<config.amr.jeans_cells) {
+                        if (block.level>=config.amr.lrefinemax)
+                            throw std::runtime_error("JENS remains underresolved at lrefinemax; increase allowed resolution.");
+                        block.refine_flag=1;
+                    }
+                }
             } catch (...) { failure.capture_current(); }
         }
         failure.rethrow();
@@ -513,7 +640,7 @@ public:
                     proposed_lowering.at(group.destination.handle))
                     .InterpolateFromCoarse(
                         parent, group.child_index, owner_->root_grid.dim,
-                        config_.numerics.sml_rho, config_.numerics.min_eint);
+                        config_.numerics.sml_rho, config_.numerics.min_eint,owner_->root_semantics);
             }
             for (const auto& group : groups.restrictions) {
                 const Block* children[8]{};
@@ -523,7 +650,7 @@ public:
                 owner_->pool->GetBlock(proposed_lowering.at(group.destination.handle))
                     .AverageToCoarse(
                         children, owner_->root_grid.dim,
-                        config_.numerics.sml_rho, config_.numerics.min_eint);
+                        config_.numerics.sml_rho, config_.numerics.min_eint,owner_->root_semantics);
             }
             migration_complete_ = true;
         }
@@ -785,10 +912,13 @@ public:
         const SimConfig& config,
         const PreApplyRegridObserver& observer = {},
         const StagedAllocationObserver& allocation_observer = {},
-        const std::function<void()>& evaluate_indicators = {})
+        const std::function<void()>& evaluate_indicators = {},
+        bool jeans_repair_only = false,
+        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {})
     {
         PreparedRegrid prepared(*this, config);
         if (evaluate_indicators) evaluate_indicators();
+        else if (jeans_repair_only) EvaluateJeansRepair(config);
         else EvaluateRefinement(config);
         RippleCheck();
         if (observer) observer(*this);
@@ -821,7 +951,7 @@ public:
                         child.level, child.logical_x1,
                         child.logical_x2, child.logical_x3);
                     child.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
+                        root_grid, root_dx1, root_dx2, root_dx3,root_semantics);
                     const int species = block.fluid_state.GetNumSpecies();
                     child.fluid_state.InitSpecies(species);
                     child.state_next.InitSpecies(species);
@@ -856,6 +986,14 @@ public:
                         siblings.push_back(sibling);
                     }
                 }
+                if (can_merge && (config.amr.refine_on_jeans
+                    || root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)) {
+                    if(candidate_parent) {
+                        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+                            throw std::logic_error("device RZ candidate parent is not qualified");
+                        can_merge=candidate_parent(CandidateParentGeometry(siblings),siblings);
+                    } else can_merge=CandidateParentResolved(config,siblings);
+                }
                 if (can_merge) {
                     prepared.changed_ = true;
                     PoolBlockAllocationGuard allocation(
@@ -873,7 +1011,7 @@ public:
                         parent.level, parent.logical_x1,
                         parent.logical_x2, parent.logical_x3);
                     parent.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
+                        root_grid, root_dx1, root_dx2, root_dx3,root_semantics);
                     const int species = block.fluid_state.GetNumSpecies();
                     parent.fluid_state.InitSpecies(species);
                     parent.state_next.InitSpecies(species);

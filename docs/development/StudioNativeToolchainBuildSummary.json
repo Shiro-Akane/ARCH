@@ -1,0 +1,656 @@
+{
+  "observedAt": "2026-10-03T06:08:29.027285+00:00",
+  "sourceHead": "f1875686ebb49cdcb317fc87f7dcdb3792015b08",
+  "buildId": "f6449e3d-ccc0-4d51-ac96-eaf767de62a8",
+  "profileId": "studio-cpu-release",
+  "managedSourceRoot": "/home/arch/projects/ARCH-compute-optim",
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+  "target": "ARCH",
+  "startedAt": "2026-10-03T06:07:32.777Z",
+  "finishedAt": "2026-10-03T06:07:33.689Z",
+  "result": {
+    "projectId": "72ce7ca5-216a-4495-95e0-37485790d210",
+    "buildId": "f6449e3d-ccc0-4d51-ac96-eaf767de62a8",
+    "startedAt": "2026-10-03T06:07:32.777Z",
+    "finishedAt": "2026-10-03T06:07:33.726Z",
+    "state": "succeeded",
+    "exitCode": 0,
+    "signal": null
+  },
+  "trackedInputsUnchanged": true,
+  "binaryUnchanged": true,
+  "binary": {
+    "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+    "size": 7177152,
+    "mtimeNs": 1791000710885251414
+  },
+  "compilerInputCount": 735,
+  "compilerObjectCount": 66,
+  "inputsStableDuringBuild": true,
+  "compilerInputsStableDuringBuild": true,
+  "compilerDriversStableDuringBuild": true,
+  "preBuildCompilerDrivers": [
+    {
+      "language": "C",
+      "path": "/usr/bin/cc",
+      "resolvedPath": "/usr/bin/x86_64-linux-gnu-gcc-13",
+      "id": "GNU",
+      "version": "13.3.0",
+      "sha256": "1b99826121ae6682a634e5efe09bd3e3df58ce58e0b28f849114ab5b89139c26",
+      "size": 1023032,
+      "components": [
+        {
+          "role": "cc1",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+          "sha256": "5d1679131184e2de4435b426eb264bf13472fe026db8e5c6bc97445814e8e2f4",
+          "size": 30487984
+        },
+        {
+          "role": "collect2",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+          "sha256": "4d1f341ae5b763b513258ee2812422a45e063c30a2f1924a0cf63d3699f3a158",
+          "size": 336056
+        },
+        {
+          "role": "as",
+          "path": "/usr/bin/as",
+          "resolvedPath": "/usr/bin/x86_64-linux-gnu-as",
+          "sha256": "7a2ef948033b05ad0c5dcb0d5be059bc68562b5d45713d91aee21df2b4bf4e92",
+          "size": 745768
+        },
+        {
+          "role": "ld",
+          "path": "/usr/bin/ld",
+          "resolvedPath": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+          "sha256": "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8",
+          "size": 1359128
+        },
+        {
+          "role": "lto1",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+          "sha256": "7c9bdc474948b9127b5942f0f260ecc7067fb3afbb54fcbe2ddf598b9889edc8",
+          "size": 29352624
+        },
+        {
+          "role": "liblto_plugin.so",
+          "path": "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+          "sha256": "14469ff8498fca3871c29dbf678c2330123207fffb8308151314a08395309ddf",
+          "size": 68296
+        }
+      ],
+      "specsSha256": "3a269a0e5ee21101352e1f276f347d289e4152854796704a46416964b170e0dc"
+    },
+    {
+      "language": "CXX",
+      "path": "/usr/bin/c++",
+      "resolvedPath": "/usr/bin/x86_64-linux-gnu-g++-13",
+      "id": "GNU",
+      "version": "13.3.0",
+      "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+      "size": 1027128,
+      "components": [
+        {
+          "role": "cc1plus",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+          "sha256": "840b332fb62ec6f694ac77d91fe69ef7f80b0d69512ed89374af0ee7a506255d",
+          "size": 32675168
+        },
+        {
+          "role": "collect2",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+          "sha256": "4d1f341ae5b763b513258ee2812422a45e063c30a2f1924a0cf63d3699f3a158",
+          "size": 336056
+        },
+        {
+          "role": "as",
+          "path": "/usr/bin/as",
+          "resolvedPath": "/usr/bin/x86_64-linux-gnu-as",
+          "sha256": "7a2ef948033b05ad0c5dcb0d5be059bc68562b5d45713d91aee21df2b4bf4e92",
+          "size": 745768
+        },
+        {
+          "role": "ld",
+          "path": "/usr/bin/ld",
+          "resolvedPath": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+          "sha256": "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8",
+          "size": 1359128
+        },
+        {
+          "role": "lto1",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+          "sha256": "7c9bdc474948b9127b5942f0f260ecc7067fb3afbb54fcbe2ddf598b9889edc8",
+          "size": 29352624
+        },
+        {
+          "role": "liblto_plugin.so",
+          "path": "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+          "sha256": "14469ff8498fca3871c29dbf678c2330123207fffb8308151314a08395309ddf",
+          "size": 68296
+        }
+      ],
+      "specsSha256": "3a269a0e5ee21101352e1f276f347d289e4152854796704a46416964b170e0dc"
+    }
+  ],
+  "compilerDrivers": [
+    {
+      "language": "C",
+      "path": "/usr/bin/cc",
+      "resolvedPath": "/usr/bin/x86_64-linux-gnu-gcc-13",
+      "id": "GNU",
+      "version": "13.3.0",
+      "sha256": "1b99826121ae6682a634e5efe09bd3e3df58ce58e0b28f849114ab5b89139c26",
+      "size": 1023032,
+      "components": [
+        {
+          "role": "cc1",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+          "sha256": "5d1679131184e2de4435b426eb264bf13472fe026db8e5c6bc97445814e8e2f4",
+          "size": 30487984
+        },
+        {
+          "role": "collect2",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+          "sha256": "4d1f341ae5b763b513258ee2812422a45e063c30a2f1924a0cf63d3699f3a158",
+          "size": 336056
+        },
+        {
+          "role": "as",
+          "path": "/usr/bin/as",
+          "resolvedPath": "/usr/bin/x86_64-linux-gnu-as",
+          "sha256": "7a2ef948033b05ad0c5dcb0d5be059bc68562b5d45713d91aee21df2b4bf4e92",
+          "size": 745768
+        },
+        {
+          "role": "ld",
+          "path": "/usr/bin/ld",
+          "resolvedPath": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+          "sha256": "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8",
+          "size": 1359128
+        },
+        {
+          "role": "lto1",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+          "sha256": "7c9bdc474948b9127b5942f0f260ecc7067fb3afbb54fcbe2ddf598b9889edc8",
+          "size": 29352624
+        },
+        {
+          "role": "liblto_plugin.so",
+          "path": "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+          "sha256": "14469ff8498fca3871c29dbf678c2330123207fffb8308151314a08395309ddf",
+          "size": 68296
+        }
+      ],
+      "specsSha256": "3a269a0e5ee21101352e1f276f347d289e4152854796704a46416964b170e0dc"
+    },
+    {
+      "language": "CXX",
+      "path": "/usr/bin/c++",
+      "resolvedPath": "/usr/bin/x86_64-linux-gnu-g++-13",
+      "id": "GNU",
+      "version": "13.3.0",
+      "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+      "size": 1027128,
+      "components": [
+        {
+          "role": "cc1plus",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+          "sha256": "840b332fb62ec6f694ac77d91fe69ef7f80b0d69512ed89374af0ee7a506255d",
+          "size": 32675168
+        },
+        {
+          "role": "collect2",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+          "sha256": "4d1f341ae5b763b513258ee2812422a45e063c30a2f1924a0cf63d3699f3a158",
+          "size": 336056
+        },
+        {
+          "role": "as",
+          "path": "/usr/bin/as",
+          "resolvedPath": "/usr/bin/x86_64-linux-gnu-as",
+          "sha256": "7a2ef948033b05ad0c5dcb0d5be059bc68562b5d45713d91aee21df2b4bf4e92",
+          "size": 745768
+        },
+        {
+          "role": "ld",
+          "path": "/usr/bin/ld",
+          "resolvedPath": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+          "sha256": "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8",
+          "size": 1359128
+        },
+        {
+          "role": "lto1",
+          "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+          "sha256": "7c9bdc474948b9127b5942f0f260ecc7067fb3afbb54fcbe2ddf598b9889edc8",
+          "size": 29352624
+        },
+        {
+          "role": "liblto_plugin.so",
+          "path": "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+          "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+          "sha256": "14469ff8498fca3871c29dbf678c2330123207fffb8308151314a08395309ddf",
+          "size": 68296
+        }
+      ],
+      "specsSha256": "3a269a0e5ee21101352e1f276f347d289e4152854796704a46416964b170e0dc"
+    }
+  ],
+  "linkUnavailable": [
+    {
+      "path": "/tmp/ccBQoX6r.ltrans0.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans1.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans10.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans11.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans12.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans13.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans14.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans15.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans16.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans17.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans18.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans19.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans2.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans20.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans21.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans22.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans23.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans24.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans25.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans26.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans27.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans28.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans29.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans3.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans30.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans31.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans32.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans33.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans34.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans35.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans36.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans37.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans38.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans39.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans4.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans40.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans41.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans42.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans43.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans44.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans45.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans46.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans47.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans48.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans49.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans5.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans50.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans51.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans52.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans53.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans54.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans55.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans56.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans57.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans58.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans59.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans6.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans60.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans61.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans62.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans63.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans64.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans65.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans66.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans67.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans68.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans69.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans7.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans70.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans71.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans72.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans73.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans74.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans75.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans76.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans77.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans78.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans79.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans8.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans80.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans81.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans82.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans83.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans84.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans85.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans86.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans87.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans88.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans89.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans9.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans90.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans91.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans92.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans93.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans94.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans95.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans96.ltrans.o",
+      "reason": "missing"
+    },
+    {
+      "path": "/tmp/ccBQoX6r.ltrans97.ltrans.o",
+      "reason": "missing"
+    }
+  ],
+  "binaryState": "freshness-unknown",
+  "freshnessReason": "Linker input evidence is incomplete or unavailable.",
+  "nativeOutput": [
+    "Re-checking globbed directories",
+    "ninja: no work to do.",
+    "succeeded"
+  ],
+  "previewUi": "Previous preview: build changed or unverified / retained, previous-stale",
+  "scope": "successful no-work incremental Build and new Manifest capture; not clean build/full dependency proof",
+  "rawUploaded": false
+}

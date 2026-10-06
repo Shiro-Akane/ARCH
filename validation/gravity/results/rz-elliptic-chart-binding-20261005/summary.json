@@ -1,0 +1,167 @@
+{
+  "schemaVersion": "1.0",
+  "node": "Authoritative tree RZ chart -> native elliptic binding",
+  "status": "INTERFACE_PASS_RZ_RUNTIME_INCOMPLETE",
+  "sourceHeadBeforeCommit": "897aabad73699c77cf998b2e77244bcca2ac60fd",
+  "repositoryDirtyAtBuild": true,
+  "inputFingerprints": {
+    "src/amr/elliptic/EllipticMeshAdapter.cpp": "9e3be652d00e571861a1a893b98b2bc75fa7983e696c82d20a7079b24753b340",
+    "src/physics/gravity/self/SelfGravity.cpp": "bb51fb65210419993a61a38d1abae7ae75fa3c3b90ab7f35dd9ab5913a233ba2",
+    "tests/host/gravity/test_self_gravity.cpp": "cf839d7eaf3e1977fbbf6e33ec72565abc1ca5d906436dcd2d783c9ae0f978bb",
+    "validation/gravity/run_gravity_runtime_contract.py": "6ff16e2c0b4505bb2bf02ff72949d2f2c4368f6e7701ad3c2d62e893bbe5a202"
+  },
+  "finding": {
+    "id": "RZ-ELLIPTIC-SEMANTICS-01",
+    "before": "adapter defaulted elliptic semantics and native metric view to Existing; tree opt-in RZ tag lost",
+    "after": "tree semantics copied to existing EllipticMesh; native and fragment GridMetrics consume same full-ring view",
+    "closureScope": "adapter chart/measure/axial boundary identity only",
+    "remaining": "RZ SelfGravity finite-ring boundary, physical width/position, force/work and publication consumer not qualified"
+  },
+  "bindingContract": {
+    "radialLower": [
+      0,
+      1
+    ],
+    "uniformRoots": 2,
+    "mixedLeaves": 5,
+    "treeEpochBefore": 17,
+    "treeEpochAfter": 18,
+    "checkedNativeCells": 3584,
+    "uniformAndMixed": true,
+    "nativeAndCompositeVolumeExact": true,
+    "axialLowAndHighDirichlet": true,
+    "RzRuntimeExplicitlyRejected": true,
+    "oldCartesianPublicationRetiredAfterRzBindFailure": true,
+    "supportedCartesianRebindRecovery": true,
+    "noSimulationIntegratorCalled": true,
+    "noScientificOutputCreated": true
+  },
+  "cpuTests": {
+    "ctest": "self_gravity_lifecycle",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "existing2d3dVectorFieldsPassed": true,
+    "actualRuntimeFixtureExit": 0,
+    "actualRuntimeFixtureScope": "Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity all-block/slot/regrid publication; no simulation time advancement",
+    "actualRuntimeTreeSequence": [
+      4,
+      8,
+      4
+    ],
+    "actualRuntimeGathers": 7,
+    "actualRuntimeTime": 0,
+    "actualRuntimeSteps": 0
+  },
+  "cudaBuildCompatibility": {
+    "ctest": "self_gravity_lifecycle",
+    "passed": 1,
+    "failed": 0,
+    "execution": "Host CTest built with ARCH_CUDA_BUILD_ENABLED=1",
+    "actualDeviceRzScienceQualified": false,
+    "cudaJensGatesUnchanged": true
+  },
+  "fixtureCorrection": {
+    "oldRefinePair": [
+      0.01,
+      0.2
+    ],
+    "newRefinePair": [
+      0.01,
+      0.005
+    ],
+    "oldCoarsenPair": [
+      1,
+      1
+    ],
+    "newCoarsenPair": [
+      1,
+      0.5
+    ],
+    "ordinaryDensIndicatorRetained": true,
+    "validatedWith": "arch::config::relations::CurvatureThresholds",
+    "scientificToleranceChanged": false,
+    "olderEngineeringReceiptsNotRewritten": true
+  },
+  "build": {
+    "cpuFinalSeconds": 5.019,
+    "cudaEnabledHostSeconds": 5.03,
+    "topParallel": 28,
+    "peakSwapKiB": 0,
+    "guardStopped": false
+  },
+  "executables": {
+    "build-cpu/arch_self_gravity": {
+      "sha256": "01465e28b675eca28b305deb7bc49ffd2f3907e48ba7970f06238fb5725152d3",
+      "size": 522568
+    },
+    "build-cuda/arch_self_gravity": {
+      "sha256": "01465e28b675eca28b305deb7bc49ffd2f3907e48ba7970f06238fb5725152d3",
+      "size": 522568
+    },
+    "build-cpu/bin/ARCH": {
+      "sha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+      "size": 7539704
+    },
+    "studio/.local/integration/rz-elliptic-runtime-20261005/gravity-runtime-contract": {
+      "sha256": "dcb1859d461dbd833a7e679db169d1fe9223c208ddcbb2eba16058584aeddf10",
+      "size": 1573296
+    }
+  },
+  "logs": {
+    "studio/.local/integration/rz-elliptic-binding-20261005.build.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.build.log",
+      "sha256": "f2342f64300cc1142ff59b01090fea9a0bb270a41febce040b1dfbcd8c456909"
+    },
+    "studio/.local/integration/rz-elliptic-binding-20261005.build-final.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.build-final.log",
+      "sha256": "d9d08c08283098143fb40a46b25599e96ca0c37e35383d552cc5fc4d90de0a84"
+    },
+    "studio/.local/integration/rz-elliptic-binding-20261005.build-mixed.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.build-mixed.log",
+      "sha256": "e8dc2eaa9a27bed435264ca0ace015bbd19e985fb1939d5e73dde34079f9c794"
+    },
+    "studio/.local/integration/rz-elliptic-binding-20261005.build-valid-fixture.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.build-valid-fixture.log",
+      "sha256": "f19cc7e382f0dcc585268aad0efd029960ee007b02fa7d89e551bdde74b4a000"
+    },
+    "studio/.local/integration/rz-elliptic-binding-20261005.ctest.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.ctest.log",
+      "sha256": "e6925999b5ff554493e39ea4b22ca85ee3a9cd7e09fb02fa522747f0ba470ac8"
+    },
+    "studio/.local/integration/rz-elliptic-binding-20261005.ctest-mixed.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.ctest-mixed.log",
+      "sha256": "c3cf9ddb9a9a1adfae8d131ff1ef36af2dc9eb1eaafa93ac64f63a8e9437227e"
+    },
+    "studio/.local/integration/rz-elliptic-binding-20261005.ctest-final.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.ctest-final.log",
+      "sha256": "ca5abd77deeb98ee9aa50fb90f42ae7c0ba8e02444c0b4a74e4f6eb89cf19534"
+    },
+    "studio/.local/integration/rz-elliptic-binding-20261005.cuda-build.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.cuda-build.log",
+      "sha256": "a3135cc614713fff95b79c90253defa0c1d70013c8b181aa9180f0832449890c"
+    },
+    "studio/.local/integration/rz-elliptic-binding-20261005.cuda-host-ctest.log": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-binding-20261005.cuda-host-ctest.log",
+      "sha256": "fd4dcc45fc1b6c2bf29c93be38baebc3652ac8ed2797d7d2c6669b50090fdecb"
+    },
+    "studio/.local/integration/rz-elliptic-runtime-20261005/result.json": {
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-elliptic-runtime-20261005/result.json",
+      "sha256": "e131fe8a148ee3466271b7ba3022b07400dc3d3bd4eaa524711804f33a65c686"
+    }
+  },
+  "firstBuildFailure": {
+    "cause": "called private Grid validator and unqualified amr::BLOCK_NX/NY in new fixture",
+    "fix": "reuse public GridMetrics view validation; correct namespaces",
+    "rawLog": "studio/.local/integration/rz-elliptic-binding-20261005.build.log",
+    "scientificThresholdChanged": false
+  },
+  "limitations": [
+    "Interface/routing equality, not independent continuous geometry/Phi/force acceptance",
+    "RZ production self-gravity/regrid and complete A-B-C-D remain gated",
+    "No full CUDA JENS evolution/output/checkpoint/restart receipt; local gate candidate still awaits explicit authorization",
+    "CPU production ARCH ELF unchanged; old matched receipt reused, not current-source Build Manifest",
+    "No simulation/benchmark/long run/Windows work; raw fields/logs/ELF remain local"
+  ],
+  "recordedUtc": "2026-10-05T01:10:31.685012+00:00"
+}

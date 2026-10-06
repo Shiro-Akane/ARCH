@@ -60,3 +60,22 @@ refine_var=DENS
 refine_threshold=0.005
 derefine_threshold=0.001
 gravity_rtol=1e-08
+
+# Explicit migration of previous controls; geometry and AMR settings unchanged.
+compute_backend=cpu
+diff_cfl=0.8
+enucDtFactor=1e30
+eos_coulomb_mult=1.0
+gravity_atol=0.0
+hll_wave_speed=roe
+max_eint=1e21
+min_eint=1e-10
+nuclearDensMin=1e-10
+ode_atol=1e-8
+ode_rtol=1e-4
+smallt=1e5
+smallx=1e-20
+sml_rho=1e-12
+use_species_diff=false
+use_viscous_diff=false
+center_z=0.5

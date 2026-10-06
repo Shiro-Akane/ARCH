@@ -11,6 +11,7 @@ Begin with [build and first run](../README.md#build), then use the [case guide](
 - [CUDA guide](CudaBackendStatus.md): backend choice and AMR execution.
 - [Build guide](guides/Build.md): dependencies, presets, EOS tables and compile resources.
 - [Simulation catalogue](../simulation/README.md): runnable problems and example inputs.
+- [ARCH Studio](guides/Studio.md): Linux CLI desktop, parameter workspace, initial Preview/AMR and read-only Plotfile workflow.
 
 ## Interpret results
 

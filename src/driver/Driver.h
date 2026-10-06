@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "core/config/RuntimeConfiguration.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/stages/DriverStages.h"
@@ -40,8 +41,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const Numerics::IHydroSolver* hydro,
                     void (*integrator_solve)(amr::AMRControl&, double, BCHandler&, const Physical::Gravity::IGravityPolicy*, const Numerics::IHydroSolver*, const NumericsConfig&),
                     const std::string& integrator_name,
-                    const SimConfig &config,
-                    const SpeciesManager &specs,
+                    const arch::config::RuntimeConfiguration &runtime_config,
                     const RunState &start_state,
                     const io::CheckpointProvenance &checkpoint_provenance,
                     const arch::dispatch::ResolvedExecutionPlan* resolved_plan = nullptr,
@@ -49,6 +49,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const arch::dispatch::BackendResolution* backend_resolution = nullptr,
                     arch::dispatch::StartupOrder* startup_order = nullptr)
 {
+    const auto& config = runtime_config.config();
+    const auto& specs = runtime_config.species();
     if (resolved_plan == nullptr || execution_requirements == nullptr
         || backend_resolution == nullptr || startup_order == nullptr) {
         throw std::invalid_argument(
@@ -122,6 +124,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     bool has_burn = config.physics.burn.use_burn;
     bool has_diff = config.physics.diffusion.use_diffusion;
 
+    if (config.amr.refine_on_jeans
+        && backend_resolution->resolved_backend != arch::dispatch::ComputeBackend::Cpu)
+        throw std::logic_error("device JENS lifecycle is not qualified");
+    runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
     start_compute_backend(runtime, eos, *resolved_plan, *backend_resolution, *startup_order);
     GravityStage gravity_stage(runtime, gravity);
     {
@@ -227,6 +233,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         gravity_stage.invalidate();
         ctrl.advance(dt);
         bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
+        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
         advanced_any_step = true;
         ctrl.print_step(dt, candidates.hydro, has_burn ? dt / 2.0 : 0.0,
                         candidates.diffusion_forward_euler, has_burn, has_diff);

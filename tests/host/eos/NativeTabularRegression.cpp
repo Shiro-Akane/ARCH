@@ -4,6 +4,7 @@
  */
 #include "fixtures/eos/NativeTabularFixture.h"
 #include "physics/eos/tabular/Tabular3DEOS.h"
+#include "physics/diagnostics/JeansDiagnostics.h"
 #include "physics/eos/sources/TabularSource.h"
 #include "core/files/FileFingerprint.h"
 #include <algorithm>
@@ -62,6 +63,8 @@ void manufactured(const std::filesystem::path& directory)
     close(eos.source_energy_shift, energy_shift, 0.0, "energy reference");
     if (!eos.native_direct || !eos.axis_nodes[0] || !eos.axis_nodes[1] || !eos.axis_nodes[2])
         throw std::runtime_error("native table axes were not retained");
+    double worst_jeans_relative = 0.0;
+    int jeans_cases = 0;
     for (int i = 0; i < 40; ++i) {
         const double rho = std::pow(10.0, 3.1 + 1.7 * (i + 0.3) / 40.0);
         const double T = std::pow(10.0, 7.02 + 1.9 * ((i * 17) % 40 + 0.2) / 40.0);
@@ -80,6 +83,37 @@ void manufactured(const std::filesystem::path& directory)
         close(eos.get_sound_speed_from_rho_T(rho, T, X), std::sqrt((5.0/3.0)*p/rho), 2e-12, "sound speed");
         close(eos.get_total_energy_primitive(rho,2.0,-3.0,4.0,p,X),
             rho*(energy+14.5),2e-12,"primitive pressure inverse");
+        // Isolated accepted-state acoustic -> Jeans leaf qualification.
+        // Reference uses only the manufactured caloric law, literal CGS G
+        // and pi, not production EOS derivatives or production constants.
+        // The existing fixture's 2e-12 arithmetic budget is retained; this
+        // does not approve a general-EOS/AMR/trajectory scientific budget.
+        for (bool moving : {false, true}) {
+            const double u = moving ? 2.0e7 : 0.0;
+            const double v = moving ? -3.0e7 : 0.0;
+            const double w = moving ? 4.0e7 : 0.0;
+            const FluidVector state{rho, rho*u, rho*v, rho*w,
+                rho*(energy + .5*(u*u+v*v+w*w))};
+            const double state_pressure = eos.get_pressure(state, X);
+            const double speed = eos.get_sound_speed(state, state_pressure, X);
+            for (double spacing : {0.25, 1.0, 4.0}) {
+                const auto actual = JeansDiagnostics::evaluate(
+                    state.rho, speed*speed, spacing);
+                const long double reference_cs2 =
+                    (1.0L + 1.0e8L/1.5e8L) * 1.0e8L * T *
+                    std::exp(0.7L * static_cast<long double>(ye));
+                const long double expected = std::sqrt(
+                    3.141592653589793238462643383279502884L * reference_cs2 /
+                    (6.67430e-8L * static_cast<long double>(rho))) / spacing;
+                const double relative = static_cast<double>(
+                    std::abs(static_cast<long double>(actual.cells)-expected)/expected);
+                if (actual.status != JeansDiagnostics::Status::valid ||
+                    !std::isfinite(relative) || relative > 2e-12)
+                    throw std::runtime_error("Native tabular Jeans caloric reference mismatch");
+                worst_jeans_relative = std::max(worst_jeans_relative, relative);
+                ++jeans_cases;
+            }
+        }
         double gradient[3]{}, capacity_gradient[3]{}, action[3]{};
         const double flow[]{0.0, 1.0, 0.0};
         eos.get_energy_composition_gradient<3>(rho, T, X, gradient);
@@ -90,6 +124,9 @@ void manufactured(const std::filesystem::path& directory)
         close(capacity_gradient[1], composition_coefficient*cv, 2e-11, "cv derivative");
         close(action[1], composition_coefficient*composition_coefficient*energy, 3e-11, "energy Hessian");
     }
+    if (jeans_cases != 240) throw std::runtime_error("Native tabular Jeans coverage mismatch");
+    std::cout << std::setprecision(17) << "JEANS_NATIVE_TABULAR_CASES=" << jeans_cases
+              << " MAX_RELATIVE_ERROR=" << worst_jeans_relative << '\n';
     // Every source vertex, including all finite domain faces, has an
     // independent analytic value. This also catches source-layout mistakes.
     for (double lr : log_density) for (double lt : log_kelvin) for (double ye : electron_fraction) {

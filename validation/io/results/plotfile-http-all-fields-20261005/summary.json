@@ -1,0 +1,164 @@
+{
+  "status": "PASS",
+  "scope": "Full native values and declarations via production HTTP + client validation, independent h5py. Storage/readback consistency only.",
+  "rows": [
+    {
+      "caseId": "Sod",
+      "fileSha256": "fe089e72113896ef7261064596ffdbf25cced4366ceaa84812dc2a5b102a8e9f",
+      "shape": [
+        12,
+        16
+      ],
+      "fields": [
+        "DENS",
+        "DIVV",
+        "ENER",
+        "ENTR",
+        "PRES",
+        "SodGas",
+        "TEMP",
+        "VELX",
+        "VORT"
+      ],
+      "fieldCount": 9,
+      "blocks": 12,
+      "cells": 192,
+      "verifiedFieldValues": 1728,
+      "levels": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "producerBinarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "runId": "unknown",
+      "rawFieldsCoordinatesBoundsMeasure": "FP64 bit-identical for every active leaf cell",
+      "fieldUnitBasisCenteringMeaning": "exact stored declaration match",
+      "fileUnchanged": true
+    },
+    {
+      "caseId": "CellularDet",
+      "fileSha256": "81431b1d80407949d852381ab67b6d11dd4598090c6abe1963b882ce9fa2b3ed",
+      "shape": [
+        20,
+        16,
+        16
+      ],
+      "fields": [
+        "DENS",
+        "DIVV",
+        "ENER",
+        "ENTR",
+        "PRES",
+        "TEMP",
+        "VELX",
+        "VELY",
+        "VORT",
+        "ar36",
+        "c12",
+        "ca40",
+        "cr48",
+        "fe52",
+        "fe54",
+        "h1",
+        "he3",
+        "he4",
+        "mg24",
+        "n14",
+        "ne20",
+        "neut",
+        "ni56",
+        "o16",
+        "prot",
+        "s32",
+        "si28",
+        "ti44"
+      ],
+      "fieldCount": 28,
+      "blocks": 20,
+      "cells": 5120,
+      "verifiedFieldValues": 143360,
+      "levels": [
+        1,
+        2
+      ],
+      "producerBinarySha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+      "runId": "unknown",
+      "rawFieldsCoordinatesBoundsMeasure": "FP64 bit-identical for every active leaf cell",
+      "fieldUnitBasisCenteringMeaning": "exact stored declaration match",
+      "fileUnchanged": true
+    }
+  ],
+  "limits": [
+    "Existing t=0 files from older recorded producer; no new binary freshness claim",
+    "No physics/EOS oracle or unit declaration scientific signoff",
+    "No renderer all-field UAT",
+    "NaN/Infinity encoded as named JSON tokens; no nonfinite payload-bit certification",
+    "First read scans/hash cost not bounded by returned pixel count",
+    "No simulation or Windows work"
+  ],
+  "negativeControls": [
+    {
+      "name": "raw-value",
+      "rejected": true,
+      "exitCode": 1
+    },
+    {
+      "name": "array-order",
+      "rejected": true,
+      "exitCode": 1
+    },
+    {
+      "name": "cell-measure",
+      "rejected": true,
+      "exitCode": 1
+    },
+    {
+      "name": "field-unit",
+      "rejected": true,
+      "exitCode": 1
+    },
+    {
+      "name": "binary-identity",
+      "rejected": true,
+      "exitCode": 1
+    },
+    {
+      "name": "missing-block",
+      "rejected": true,
+      "exitCode": 1
+    }
+  ],
+  "transport": {
+    "requests": 670,
+    "maxResponseBytes": 42737,
+    "rows": [
+      {
+        "caseId": "Sod",
+        "fileSha256": "fe089e72113896ef7261064596ffdbf25cced4366ceaa84812dc2a5b102a8e9f",
+        "fieldCount": 9,
+        "blocks": 12,
+        "cells": 192,
+        "fieldValues": 1728,
+        "wallSeconds": 18.673513871000004,
+        "fileUnchanged": true
+      },
+      {
+        "caseId": "CellularDet",
+        "fileSha256": "81431b1d80407949d852381ab67b6d11dd4598090c6abe1963b882ce9fa2b3ed",
+        "fieldCount": 28,
+        "blocks": 20,
+        "cells": 5120,
+        "fieldValues": 143360,
+        "wallSeconds": 107.42234621,
+        "fileUnchanged": true
+      }
+    ]
+  },
+  "hostPortClosed": true,
+  "sourceHead": "f342a5593d29c5975d7957dafc064434e017d80a",
+  "scriptSha256": {
+    "verify_plotfile_http_all_fields.mjs": "da6bb7b7a3cb105cec2a55d2a8b98ab51ee6d0589d7df50b0d31420add63f75b",
+    "verify_plotfile_http_all_fields.py": "28bcd05ec4088b3be994e7a3577a04f14a9a5314545b1ae0f06edc447f6c1e0e"
+  }
+}

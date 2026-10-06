@@ -40,8 +40,10 @@
 
 namespace ProblemHelper
 {
-    void SetupNetworkAndFractions(SimConfig &config, SpeciesManager &specs, std::vector<double> &default_X)
+    static void SetupNetwork(SimConfig &config, SpeciesManager &specs,
+                             std::vector<double>* fractions)
     {
+        config.RequireLoadedValues();
         using namespace arch::dispatch;
         const std::string &net_type = config.physics.burn.network_name;
         const auto selected = parse_registered_policy<NetworkPolicies>(
@@ -66,13 +68,24 @@ namespace ProblemHelper
                                                  CpuNoNetworkBinding>) {
                     using Network = typename CpuNetworkType<Binding>::type;
                     if (specs.count() == 0) Network::RegisterSpecies(specs);
-                    Network::SetupInitialFractions(
-                        config, specs, default_X);
+                    if (fractions) Network::SetupInitialFractions(
+                        config, specs, *fractions);
                     setup = true;
                 }
             });
         if (!registered || !setup)
             throw std::logic_error("registered network has no CPU setup binding");
+    }
+
+    void SetupNetworkSpecies(SimConfig& config, SpeciesManager& specs)
+    {
+        SetupNetwork(config, specs, nullptr);
+    }
+
+    void SetupNetworkAndFractions(SimConfig& config, SpeciesManager& specs,
+                                  std::vector<double>& fractions)
+    {
+        SetupNetwork(config, specs, &fractions);
     }
 
     double GetPressureFromRhoT(const SimConfig &config, const SpeciesManager &specs, double rho, double T, const double *X)
@@ -166,6 +179,53 @@ namespace ProblemHelper
         arch::config::ValidateControls(config, specs.count());
         int n_species = specs.count();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+        // Validate the whole chart before invoking model callbacks or mutating
+        // any block. Public callers retain Existing until full RZ migration.
+        const auto semantics = context.geometry_semantics;
+        if (semantics != GridMetrics::GeometrySemantics::Existing &&
+            semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::invalid_argument("Unknown initialization geometry profile");
+        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz &&
+            (config.grid.dim != 2 || config.grid.geometry != "cylindrical"))
+            throw std::invalid_argument("RZ initialization requires cylindrical dimension 2");
+        for (int id : active_blocks) {
+            const auto& block = amr_ctrl.pool->GetBlock(id);
+            const auto& grid = block.grid;
+            if (semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+                const auto& state=block.fluid_state;
+                const size_t size=grid.GetTotalSize();
+                if(state.GetNumSpecies()!=n_species || state.rho.size()!=size
+                    || state.mom_u.size()!=size || state.mom_v.size()!=size
+                    || state.mom_w.size()!=size || state.eng.size()!=size
+                    || state.enuc_rate.size()!=size
+                    || state.mass_fractions.size()!=size*static_cast<size_t>(n_species))
+                    throw std::invalid_argument("RZ initialization state/species layout mismatch");
+            }
+            if (grid.dim != config.grid.dim || grid.geometry != config.grid.geometry)
+                throw std::invalid_argument("Initialization native grid/config geometry mismatch");
+            (void)GridMetrics::make_geometry_view(grid, semantics);
+        }
+
+        // RZ cell averages are transactional: an unresolved rotating candidate
+        // must not leave earlier blocks/cells or repair evidence partially live.
+        // Physical ghost fill belongs to Driver boundary/exchange ownership.
+        const bool rz=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+        std::vector<FluidState> proposed;
+        if (rz) {
+            proposed.reserve(active_blocks.size());
+            for (int id:active_blocks) {
+                proposed.push_back(amr_ctrl.pool->GetBlock(id).fluid_state);
+                auto& state=proposed.back();
+                state.stage_repairs.reset(n_species,arch::state::RepairSemantics::RzVolumeAngular);
+                std::fill(state.rho.begin(),state.rho.end(),arch::state::invalid());
+                std::fill(state.mom_u.begin(),state.mom_u.end(),arch::state::invalid());
+                std::fill(state.mom_v.begin(),state.mom_v.end(),arch::state::invalid());
+                std::fill(state.mom_w.begin(),state.mom_w.end(),arch::state::invalid());
+                std::fill(state.eng.begin(),state.eng.end(),arch::state::invalid());
+                std::fill(state.mass_fractions.begin(),state.mass_fractions.end(),arch::state::invalid());
+                std::fill(state.enuc_rate.begin(),state.enuc_rate.end(),0.);
+            }
+        }
 
         EOSDispatcher::dispatch_eos(context.eos, config, specs, [&](auto &&eos) {
             std::exception_ptr initialization_failure;
@@ -179,6 +239,21 @@ namespace ProblemHelper
                 {
                     try {
                     amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[b_idx]);
+                    if (rz) {
+                        auto& output=proposed[b_idx];
+                        for(int k=b.grid.Ks();k<b.grid.Ke();++k)
+                        for(int j=b.grid.Js();j<b.grid.Je();++j)
+                        for(int i=b.grid.Is();i<b.grid.Ie();++i) {
+                            const double zlo=b.grid.x2_min+(j-b.grid.ng)*b.grid.dx2;
+                            const double zhi=b.grid.x2_min+(j-b.grid.ng+1)*b.grid.dx2;
+                            const auto cell=InitialRzCellState(b.grid.GetFacePosL(i),
+                                b.grid.GetFacePosR(i),zlo,zhi,n_species,eos,config.numerics,init_callback);
+                            const int index=b.grid.GetIndex(i,j,k);
+                            output.set(index,cell.conserved);
+                            for(int sp=0;sp<n_species;++sp)output.X(sp,index)=cell.mass_fractions[sp];
+                        }
+                        continue;
+                    }
                     b.fluid_state.stage_repairs.reset(n_species);
 
                     for (int k = 0; k < b.grid.GetTotalZ(); ++k) {
@@ -190,7 +265,7 @@ namespace ProblemHelper
                                 int idx = b.grid.GetIndex(i, j, k);
 
                                 // Compute logical physical coordinate (assuming center of cell)
-                                PointCoords p = b.grid.GetPhysicalCoords(i, j, k);
+                                PointCoords p = b.grid.GetPhysicalCoords(i, j, k, semantics);
 
                                 data.rho = 0.0;
                                 data.u = 0.0;
@@ -209,7 +284,7 @@ namespace ProblemHelper
                                     && i >= b.grid.Is() && i < b.grid.Ie()
                                     && j >= b.grid.Js() && j < b.grid.Je()
                                     && k >= b.grid.Ks() && k < b.grid.Ke()) {
-                                    const double volume=GridMetrics::CellVolume(b.grid,i,j,k);
+                                    const double volume=GridMetrics::CellVolume(GridMetrics::make_geometry_view(b.grid,semantics),i,j,k);
                                     if (b.fluid_state.stage_repairs.values[0] == 0.0) {
                                         b.fluid_state.stage_repairs.position[0]=p.x;
                                         b.fluid_state.stage_repairs.position[1]=p.y;
@@ -240,6 +315,11 @@ namespace ProblemHelper
             }
             if (initialization_failure) std::rethrow_exception(initialization_failure);
         });
+        if (rz) {
+            static_assert(std::is_nothrow_swappable_v<FluidState>);
+            for(size_t index=0;index<active_blocks.size();++index)
+                std::swap(amr_ctrl.pool->GetBlock(active_blocks[index]).fluid_state,proposed[index]);
+        }
     }
     } // namespace detail
 } // namespace ProblemHelper

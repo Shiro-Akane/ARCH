@@ -1,0 +1,37 @@
+{
+  "baseHead": "bdd7bbfc9da8cab297a72ce429a9abe98eeb8b69",
+  "dirtyInputs": {
+    "src/numerics/diffusion/DiffFlux.h": "cc0799109b6e01d25aa3562738e857126e639e03f87db48c566cc4123132e79c",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "ca455f93eed4221d18fef3eab424c34210c42da3087c79388fa3f9405a55a13f"
+  },
+  "checks": "curvilinear_metrics + amr_operation_plans 2/2 PASS; diff check PASS",
+  "binarySha256": "864190cbebf78e9ff18419ff86b5296d3a20b6e0047bb129cd1f44aab93f0e2d",
+  "witness": {
+    "CartesianVelocity": [
+      "x-2*y",
+      "2*x+y",
+      "3*z"
+    ],
+    "RzVelocity": [
+      "r",
+      "3*z",
+      "2*r"
+    ],
+    "momentumLaplacian": 0,
+    "workDivergence": "19*mu",
+    "radialLower": [
+      0,
+      1,
+      4
+    ],
+    "phiNeighbourReads": 0
+  },
+  "initialFailure": "New test missing DiffFlux namespace on make_diffusion_config_view; corrected; initial build.log retained.",
+  "limits": [
+    "local shared face/source operator only",
+    "native Grid transport dispatch not migrated",
+    "no variable coefficient convergence or evolved stability acceptance",
+    "no CUDA",
+    "no new science tolerance"
+  ]
+}

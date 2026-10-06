@@ -212,8 +212,13 @@ class UserBoundaryCampaign:
                                  target_backend=self.backend, bitwise_equal=source.backend==self.backend))
         self.reject('restart-reject-callback-input', p, 'physical/gravity boundary identity',
                     restart='true', restart_file=checkpoint_path, user_boundary_heat_flux='.02')
-        self.reject('missing-physical-callback', p, 'physical_boundary.cpp', case='Sod')
-        self.reject('missing-gravity-callback', p, 'gravity_boundary.cpp', case='Sod',
+        # Strict case input validation must pass before these checks can reach
+        # the independently missing boundary callback on the Sod registration.
+        sod = p | dict(x_pos='.5', rho_left=1, p_left=1, u_left=0,
+                       rho_right='.125', p_right='.1', u_right=0)
+        sod.pop('user_boundary_heat_flux')
+        self.reject('missing-physical-callback', sod, 'physical_boundary.cpp', case='Sod')
+        self.reject('missing-gravity-callback', sod, 'gravity_boundary.cpp', case='Sod',
                     use_diffusion='false', x1l_boundary_type='outflow', x1r_boundary_type='outflow')
 
     def run_checks(self, quick=False):

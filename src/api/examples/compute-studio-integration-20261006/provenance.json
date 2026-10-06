@@ -1,0 +1,9 @@
+{
+  "binarySha256": "8f585ea9fa8ec3d9e3fceb4b9603a52052ee7a84f488503f925fca3fb6df1f3c",
+  "sourceScope": "working merge of a566310e and b7cb8b69 with reviewed compatibility fixes; not a release binary",
+  "configurationVersion": "3",
+  "standardParameters": 95,
+  "registeredModels": 16,
+  "inputSha256": "846b49441cc59d4087aa87313edbb8ab432e64eb3c493b57a843c0c9dff98ffa",
+  "rawFieldDataIncluded": false
+}

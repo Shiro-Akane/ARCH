@@ -1,0 +1,48 @@
+{
+  "scope": "actual production t=0 Gaussian cloud engineering observation, not a timing/science gate",
+  "sourceHead": "79df8f11ae03d42f276bc50c07dca3efcd34478b",
+  "productionBinarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "librarySha256": "e86d0ec2ac05df235076652450baf6ddc55407a412bb6e92a3e065a5e779480f",
+  "sourceSha256": "8e5dd42620665b2d0a0d13335a2f62048c9b6cd1014eea828f36a40703c66adb",
+  "requestedThreads": 8,
+  "environment": {
+    "OMP_NUM_THREADS": "8",
+    "OMP_DYNAMIC": "FALSE",
+    "OMP_PLACES": "threads",
+    "OMP_PROC_BIND": "spread"
+  },
+  "traceSummary": {
+    "summary": true,
+    "interceptedRegions": 1058,
+    "recordLimit": 128,
+    "oversizedTeams": 0,
+    "teamSizeCounts": {
+      "1": 1053,
+      "8": 5
+    }
+  },
+  "memberRecordCount": 128,
+  "memberRecordsValid": true,
+  "memberCoverage": "first 128 only; whole-call team histogram covers all intercepted GOMP_parallel regions",
+  "datasetsCompared": 22,
+  "t0ArraysBitwiseEqual": true,
+  "firstComparatorIssue": "HDF5 object dtype tobytes compared pointer addresses; correcting string value comparison without rerunning first pair showed 22 equal datasets",
+  "testsPassed": 3,
+  "architectureAuditExit": 0,
+  "diffCheckExit": 0,
+  "initialCompileWarning": "missing initializer for Context.members; explicit initialization in final build removed warning",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/gomp-production-team-20261005",
+  "rawFingerprints": {
+    "teams.jsonl": "efcca87aaea92f1a96b11a9029df45e6e326d2fdb2b4a058bf4ce2cc6a7fa653",
+    "input.par": "ec0a1cdc99d721e88472f3146140f77fca2cac183a53d4c271e2e9b418036644",
+    "run.log": "ec6e0ff04234a85cccca26461f9f8333492b8ab44b97ef5789c9fcf80d367d02",
+    "tests.log": "a3b17138cee0d42edcbb5e11193c3a5aadb6f4afe196f481c0d78ae6d8a8df58",
+    "compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "limitations": [
+    "GNU GOMP_parallel ABI diagnostic only; no other OpenMP runtime portability claim",
+    "LD_PRELOAD measurement overhead; instrumented timings cannot enter benchmark",
+    "This case only; does not fill runner actual_openmp_team_size for future runs",
+    "No best thread screening, CUDA, long-run or science acceptance"
+  ]
+}

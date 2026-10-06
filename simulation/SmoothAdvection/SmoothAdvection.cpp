@@ -27,6 +27,23 @@ class SmoothAdvectionProblem
     int mode_ = 1;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho_mean", "float", "g/cm^3", "verification"},
+            {"rho_amplitude", "float", "g/cm^3", "verification"},
+            {"pressure0", "float", "erg/cm^3", "verification"},
+            {"velocity0", "float", "cm/s", "verification"},
+            {"mode", "int", "1", "verification"}};
+        return result;
+    }
+
     void Setup(SimConfig& config, SpeciesManager&)
     {
         if (config.grid.dim != 1 || config.grid.geometry != "cartesian") {

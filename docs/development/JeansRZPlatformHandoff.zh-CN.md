@@ -1,10 +1,13 @@
+> 当前合并与 release 收束以 [2026-10-06 计划](ComputeStudioReleasePlan-20261006.zh-CN.md)为入口；下文保留各阶段的证据日期和覆盖边界。
+
 # Jeans、RZ 与第二平台验证执行细则
 
 2026-10-01。本文配合[联合交付入口](StudioConfigurationHandoff.zh-CN.md)，
 将 **O7.1–O7.5 的实现与受影响验证、部分 O9 的数据生产**交给同一位合作者。
 [主计划第 2、3、5 节](ComputeOptimizationPlan.zh-CN.md)继续定义数学和科学验收，
 本文细化工作顺序、复用位置、评审材料与第二台机器的执行方式。
-具体进度随阶段提交和签收证据记录；本文件不是新机实测结果或已冻结的科学输入包。
+实现与局部证据按逐项记录更新；完整科学验收尚未通过。
+已冻结的有界输入包见 [JENS 短验收包](O7JeansRzReviewQuestions-20261004.zh-CN.md#6-已冻结的-jens-短验收包uniform-lifecycle-1)，其余模型不得据此自动补齐预算。
 
 ## 1. 可以承担到哪一步
 
@@ -54,6 +57,13 @@ JENS 新增细化工作量、旧二维极平面与新 RZ 不属于同工作量�
 另列结果，不能拿它们的步数减少宣称底层优化。
 
 ### 2.1 恢复实施与科学签收边界（2026-10-04）
+
+最新可取得的协作者源码为 `4b5e496a9943099c203c6b001b1d95a56d9edf72`；
+[恢复短 gate 的 Core review](O7ResumeShortGates-20261004.zh-CN.md#core-review2026-10-04)、
+[架构迁移决定](O7ArchitectureRulesReview-20261004.zh-CN.md#2-core-决定与集成出口2026-10-04)
+及[科学子 gate 决定](O7JeansRzReviewQuestions-20261004.zh-CN.md#4-core-决定已批准子-gate-与剩余材料2026-10-04)
+补充本节授权；既有审批记录保留，完整科学验收仍未通过。
+
 
 合作者最新报告的 checkpoint 为 `4a7b43075a8b41726c20af6c3ffd6fadc41dcd96`，
 本轮增量尚未推送；维护者当前无法取得该对象，以下是基于现有共享源码及报告的
@@ -135,7 +145,8 @@ RZ 制造解和球对称映射可按第 4 节继续；环体源近远场方法�
 达到层级／容量限制仍欠分辨必须失败并报告单元／层级／最小 N_J 和原因。
 仅输出、触发 AMR、未启用三种路径分别检查；未启用时不增加遍历、EOS 或同步成本。
 
-维护者先确认：一般 EOS 声速含义、诊断/AMR 的条件需求、父态规则与参考预算。
+上述声速、参数条件和父态定义已在 [Core 科学决定](O7JeansRzReviewQuestions-20261004.zh-CN.md#4-core-决定已批准子-gate-与剩余材料2026-10-04) 定案；
+初始／接受宏步／regrid／restart 先执行 [uniform-lifecycle-1](O7JeansRzReviewQuestions-20261004.zh-CN.md#6-已冻结的-jens-短验收包uniform-lifecycle-1)，再逐项补其余待确认参考。
 尤其“约四格”不是所有闭合、非线性碎裂或降维模型的充分收敛保证。
 用 [JeansWave](../../simulation/JeansWave/README.md) 和
 [GravityBox](../../simulation/GravityBox/README.md) 做集成，不另外复制初始化公式。
@@ -311,7 +322,7 @@ i7-14700K 为 **8 个 P 核、12 个 E 核、28 个硬件线程**；
   无法读取的指标记 unavailable；OS／驱动错误保存为平台证据，不直接归为 ARCH 数学故障。
   测量包含正常热稳态，不以反复冷却后挑最好成绩替代持续运行成本。
 
-GPU 工具链、SM_89、CPU-only 与 CUDA-binary 两种 CPU 基线、至少三次成对交替测量、
+GPU 工具链、已确认的 SM_89 目标、CPU-only 与 CUDA-binary 两种 CPU 基线、至少三次成对交替测量、
 绝对墙钟口径及负收益处理沿[联合计划第 7 节](StudioConfigurationHandoff.zh-CN.md#7-rtx-4070-ti新平台的执行协议)。
 跨 3060 Ti／4070 Ti 主机是平台结果，不能声称单凭比值隔离了 GPU 硬件贡献。
 H100 后续补测独立登记，不阻塞本阶段的已定义出口。
@@ -385,3 +396,7 @@ H100 后续补测独立登记，不阻塞本阶段的已定义出口。
 - [ ] 测试按独有覆盖收束；长轨迹／正式性能手动运行，不扩张日常 CI，不依赖 FLASH。
 - [ ] 本地后处理完成，上传清单无 raw data；成功、失败、未完成均有精简且可复核的证据。
 - [ ] 最新 Reference／算例／API／功能说明和注释同步，用户不会看到未实现能力已开放。
+
+2026-10-04 环体节点：按 [有限环体数学与误差接口](O7JeansRzReviewQuestions-20261004.zh-CN.md#7-rz-有限环体边界已定数学部件与误差接口) 先实现共享矩／kernel／支持球／余项界和有界接触积分；独立提交。近场可靠误差界和完整势／力科学出口仍逐项验收，未取得前不发布完整 RZ 能力。
+
+2026-10-04 角动量节点：按 [单一状态与贯通实施](O7JeansRzReviewQuestions-20261004.zh-CN.md#8-rz-角动量单一表示与贯通实施节点) 依次提交内部转换／传递、通量／source／reflux、全部消费者和科学子组；无第二权威数组。近场与 JENS 工作可并行，完整 RZ gate 在短科学签收前保留。

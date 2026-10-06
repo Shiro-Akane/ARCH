@@ -2,9 +2,11 @@
 
 本目录集中管理 GUI 等本地工具调用 ARCH 的接口。当前提供 **1.0 版初始状态预览**，由现有 `ARCH` 可执行程序提供，不需要单独的服务进程。
 
-标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。v1.2.1 的目录含 95 个标准参数；客户端从当前程序查询实际键、默认、约束和坐标信息。配置扩展现为版本 2。
+标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。当前集成 Core 的配置扩展为版本 3，活动目录 95 项；客户端须查询当前程序的实际键、必填条件、允许默认及约束。Host/Studio 已迁移 nullable 传输与表单。标准目录及 case 声明以当前响应为准，不能沿用 v2 的缺项回填；本轮检查范围见[集成报告](../../docs/development/ComputeStudioIntegrationReport-20261006.zh-CN.md)。
 
-后续完整性整改与客户端迁移见 [联合交付入口](../../docs/development/StudioConfigurationHandoff.zh-CN.md)，包括缺项诊断、版本 3、Linux／WSL 工作流、Jeans／RZ 接入和平台验证；入口附阅读顺序与分支使用方法。这些计划项尚未实现。[Core UI 交接](CORE_UI_HANDOFF.md) 和 [本地工作流交接](LOCAL_WORKFLOW_HANDOFF.md) 保留各历史提交的实现与测试记录。
+本次 CPU 构建的真实 schema、注册模型及 O8 检查响应见[集成示例](examples/compute-studio-integration-20261006/README.md)，附 binary 与输入身份；示例不是客户端固定基线。
+
+后续完整性整改与客户端迁移见 [联合交付入口](../../docs/development/StudioConfigurationHandoff.zh-CN.md)，包括缺项诊断、版本 3、Linux／WSL 工作流、Jeans／RZ 接入和平台验证；入口附阅读顺序与分支使用方法。已实现功能与待闭环科学项分别以[当前集成计划](../../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md)为准。[Core UI 交接](CORE_UI_HANDOFF.md) 和 [本地工作流交接](LOCAL_WORKFLOW_HANDOFF.md) 保留各历史提交的实现与测试记录。
 
 现有本地接口提供统一 CGS、模型查询、逐级资源估算及有界 CPU 初始 AMR 网格。`--preview` 点采样独立于网格接口，命令见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。全部注册模型的参数与初始化检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，该入口与完整场／网格渲染能力分别查询。
 
@@ -12,7 +14,7 @@
 
 ## 当前提供什么
 
-- 支持已注册的 **一维 Cartesian Sod** 与 **二维 Cartesian CellularDet**；直接调用各模型的 `Setup/Init`。
+- runtime modelCapabilities 发布内置模型的已审阅初始化域，直接复用各模型 Setup/Init。旧 Sod 1D / CellularDet 2D Cartesian 字段、采样及顶层能力视图保持兼容。新模型和三维路径需要重新编译当前 Core；Studio 从当前 binary 的能力响应协商模型、维数和采样。
 - 使用 CPU 生成显示采样。配置中的 `compute_backend=cuda` 不会触发设备检测或 CUDA 初始化。
 - 接收尚未保存的 `.par` 文本，返回坐标、密度、压力、温度、速度和能量。
 - 同时返回 EOS、基础网格、AMR 配置、已注册组分及各阶段状态。
@@ -21,7 +23,7 @@
 - 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制模型公式。
 - 旧 `--preview` 不建立 AMR 层级；`--preview-amr` 建立真实初始层级。两者均不进入时间推进，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
 
-新 `--preview-amr` 提供 Linux/WSL 上的真实初始 AMR 布局。旧场采样入口的参数 metadata 仍只覆盖 Sod `x_pos`；`--inspect-case` 独立提供注册模型的 Setup/Get 与少量 Init 检查。v1.2.1 注册 14 个模型；具体检查能力、单位证据及覆盖范围以当前程序响应为准。未观察到的参数不表示未使用。完整场图和 AMR 网格仍以各自能力列表为准；CellularDet 尚无可编辑分界线。任意 C++ 表达式的自动单位反推未提供。
+新 `--preview-amr` 提供 Linux/WSL 上的真实初始 AMR 布局。旧场采样入口的参数 metadata 仍只覆盖 Sod `x_pos`；`--inspect-case` 独立提供注册模型的 Setup/Get 与少量 Init 检查。本轮集成 CPU binary 注册 16 个模型（包括 O8 的 UserBoundary / UserGravity），并已验收全部维护输入的初态和根网格；v1.2.1 的 14 个模型属于历史基线。具体检查能力、单位证据及覆盖范围以当前程序响应为准。未观察到的参数不表示未使用。完整场图和 AMR 网格仍以各自能力列表为准；CellularDet 尚无可编辑分界线。任意 C++ 表达式的自动单位反推未提供。
 
 旧 `--preview` 中的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
 
@@ -73,6 +75,44 @@ Host 应直接启动进程，以 stdin 写入编辑器当前的 `.par` 文本，
 - 上述单次命令每个进程处理一次请求。会话模式另见 PREVIEW_SESSION_API.md。Host 负责超时、取消和终止进程；未正常退出或未收到完整响应时，不接纳结果。
 
 接口不需要 WebSocket、HTTP 或 SSH。本地 Host 可以使用已有的进程管理方式调用。
+
+### 按配置维度生成通用初态
+
+新增可选 extensions.initialSampling.version="1"；外层 schema 保持1.0。
+采样维度来自解析后的配置，不能从模型文件名或默认维度猜测。
+已注册不等于自动支持；未知自定义模型仍可检查，不会自动获得完整场能力。
+每个模型的维度/几何域见 modelCapabilities，具体组合仍由真实 SetupChecked 检查。
+
+除旧 Sod/Cellular 行保留 sampling 外，新模型提供 samplingByDimension：
+1D 使用 --samples，默认512、2–4096；
+2D 使用全部两轴计数，默认128×128、每轴2–256、总点数≤65536；
+3D 使用全部三轴计数，默认32³、每轴2–64、总点数≤32768。
+计数全部给出或全部省略，不能混用一维参数；响应仍受8 MiB限制，超限返回结构化错误。
+
+三维调用示例（配置须实际启用三轴；不能只给采样参数改变维度）：
+
+~~~sh
+build-cpu/bin/ARCH --preview SNIaCoupled --config-stdin \
+  --samples-x1 5 --samples-x2 3 --samples-x3 2 \
+  < simulation/SNIaCoupled/SNIaCoupled_3d_cartesian_amr.par
+~~~
+
+data.kind 为 line/grid/volume；shape分别为[Nx]/[Ny,Nx]/[Nz,Ny,Nx]，
+order为x1-fastest，三维索引 (k*Ny+j)*Nx+i。
+按维度提供6/7/8个字段，三维新增VELZ，前六字段及VELY顺序不变。
+会话等价成员为samples/samplesX1/samplesX2/samplesX3，使用相同生成边界。
+
+data.coordinates.version="1"明确native-grid轴、native-orthonormal速度和原生轴单位；
+角坐标为rad、长度为cm。初始化点通过共享Grid展开为真实Cartesian PointCoords。
+二维cylindrical当前是(r,phi)、z=0，不是未来RZ；二维spherical是赤道(r,phi)，theta=pi/2。
+非活动坐标由Grid的规则记录，不将所有x3一概解释为物理z。
+BurnOneZone标为uniform-state，不能把重复采样解释为反应轨迹。
+纯流体零物种继续使用共享IdealGas原有闭合，不注入虚构species或客户端物理默认。
+
+真实AMR使用相同模型域并复用已有初始化/细化路径。
+新曲线几何AMR的data.unit=null，通过版本化coordinates.metadata逐轴给单位；
+不能将angular bounds/cellSpacing称为cm。AMR层级没有cell field arrays，
+完整场Init样本也不是细化单元平均值。成功初态不认证引力场、演化、GPU或科学收敛。
 
 ### CellularDet 二维调用
 

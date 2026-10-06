@@ -80,7 +80,7 @@ python3 validation/gravity/results/coupled-final-20260907/check_terminal.py \
 
 ## 均匀源项测试
 
-`simulation/ExternalGravity/` 中的 `ExternalGravity` 算例和 [`inputs/`](inputs/)
+`simulation/ExternalGravity/` 中的 `ExternalGravity` 算例和 [`inputs/`](inputs)
 中的不可变参数，在均匀网格上单独验证重力源项。
 应用记录
 复现了下表及 metrics.csv 中的数值，两个后端均到达指定物理终点。

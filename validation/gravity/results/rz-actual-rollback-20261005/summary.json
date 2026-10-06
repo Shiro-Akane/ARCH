@@ -1,0 +1,63 @@
+{
+  "scope": "Actual CPU RZ fatal finalizer rollback and fresh native field recovery; t=0 only",
+  "baseCommit": "65f03e6adc15d61bfd31b5de13ac61d995230eb1",
+  "status": "PASS",
+  "executableSha256": "c118c304a7fafe777691518ed7cc1724eb8e754ee7936c60c875bcce9cd1ecda",
+  "sourceFingerprints": {
+    "tests/host/gravity/test_rz_runtime_rollback_contract.cpp": "4f11cf97ab7a14cec7425ebd812cbd0e2d1a84548a50628603b8697cd0479102",
+    "src/driver/stages/GravityStage.cpp": "fc2336d88b6041fae7e9c4106f6796e268ec54d189a622bc42f517103f60d038",
+    "src/driver/runtime/DriverRuntime.cpp": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+    "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+    "src/driver/runtime/DriverRegrid.cpp": "c61ca4a9235d71d475cf1eacd9663a28d915a66f51ce06ea880fc7051b3facb5",
+    "src/amr/elliptic/EllipticMeshAdapter.cpp": "9e3be652d00e571861a1a893b98b2bc75fa7983e696c82d20a7079b24753b340"
+  },
+  "faultAttempts": 3,
+  "sourceBlocks": 2,
+  "stagedBlocks": 8,
+  "poolBefore": 2,
+  "peakPool": 10,
+  "poolAfterEachFailure": 2,
+  "poolAfterSuccessfulRetry": 8,
+  "sourceArrayAddressChanges": 6,
+  "checks": [
+    "conserved/species/enuc SoA bits restored",
+    "active topology and handles preserved",
+    "original Current versions and ghost readability preserved",
+    "no staged leak or successful failure record",
+    "fresh source pointers in GatherDensity",
+    "matching actual Current ledger",
+    "valid 2-to-8 retry",
+    "old handles and invalidated field rejected",
+    "production RZ gate held"
+  ],
+  "field": {
+    "cells": 512,
+    "totalResidualUpper": 4.467410153427834e-15,
+    "toleranceSafe": 1.458600232933514e-14
+  },
+  "cartesianRegression": {
+    "exitCode": 0,
+    "executableSha256": "21ab04053fd8aeaf5301a6b45b95520c59bd2e4ae77d18a20778baf7c85eaf7e",
+    "topology": "4 -> 8 -> 4",
+    "gathers": 7
+  },
+  "architectureAudit": "PASS",
+  "resourceObservation": {
+    "elapsedSeconds": 121.227,
+    "peakOwnedRssKiB": 1350784,
+    "baselineSwapKiB": 0,
+    "peakSwapKiB": 0,
+    "guardStopped": false
+  },
+  "time": 0,
+  "steps": 0,
+  "limitations": [
+    "Injected engineering failure only, not a physical stability/evolution gate",
+    "CPU source allocation addresses can change during deep-copy restore; no pointer-identity grant",
+    "Production RZ/Device gates held",
+    "RepairBudget metadata is not covered by the SoA bitwise assertion",
+    "No continuous force, Hydro angular momentum, axis/viscosity, Device rollback or long evolution signoff",
+    "Separate local test ELF; no production ARCH freshness claim"
+  ],
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-actual-rollback-field-20261005"
+}

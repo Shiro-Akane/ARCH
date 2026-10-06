@@ -17,6 +17,12 @@ namespace amr {
 /** Bind the shared EOS evaluator for density, pressure, temperature and gamma1 refinement fields. */
 template<class EosPolicy>
 void BindRefinementThermodynamics(AmrTree& tree, const EosPolicy& eos) {
+    tree.SetJeansEvaluator([&eos](const FluidVector& state, const double* fractions,
+        const GridMetrics::GeometryView& geometry, int i, int j) {
+        const double pressure=eos.get_pressure(state,fractions);
+        const double sound=eos.get_sound_speed(state,pressure,fractions);
+        return JeansDiagnostics::evaluate_cell(state.rho,sound*sound,geometry,i,j);
+    });
     tree.SetThermodynamicEvaluator([&eos](const FluidState& state,
                                                      std::vector<double>* pressure,
                                                      std::vector<double>* temperature,

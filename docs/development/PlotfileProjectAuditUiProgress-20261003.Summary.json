@@ -1,0 +1,36 @@
+{
+  "baseline": "5cd700445116868a73180109f4f7d170f2ae7e25",
+  "stage": "Project-scoped raw plotfile audit UI",
+  "checks": {
+    "fullStudioHost": 275,
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "diffCheck": "PASS"
+  },
+  "renderer": {
+    "scope": "production renderer/Host integration; not native manual UAT",
+    "passed": true,
+    "fixtureSha256": "dadaba822af2ff977cf81a04927901485cd90b0d2502a97ef99f8e0cac50b5ed",
+    "storedShape": [
+      4,
+      16
+    ],
+    "field": "PRES",
+    "globalIndex": 32,
+    "value": 0.3054751636143017,
+    "warningsRetained": true,
+    "launcherExitCode": 0,
+    "electronPid": 350218,
+    "hostPid": 350262,
+    "pidsGone": true
+  },
+  "configAndBinaryUnchanged": true,
+  "nativeManualUat": "pending",
+  "formalPlotfileScienceStage": "incomplete; completion/provenance/native geometry contract pending",
+  "simulationExecuted": false,
+  "firstFailures": [
+    "response validator type narrowing corrected",
+    "legacy mode-description local H5 requirement restored without removing regression"
+  ]
+}

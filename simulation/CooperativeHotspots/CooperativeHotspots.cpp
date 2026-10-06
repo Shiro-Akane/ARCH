@@ -102,6 +102,29 @@ class CooperativeHotspots
     }
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"ambient_density", "float", "g/cm^3"},
+            {"ambient_temperature", "float", "K"},
+            {"hotspot_temperature", "float", "K"},
+            {"hotspot_center_x", "float", "cm"},
+            {"hotspot_center_y", "float", "cm"},
+            {"hotspot_radius", "float", "cm"},
+            {"hotspot_separation", "float", "cm"},
+            {"hotspot_mode", "string", "1", "simulation", {true, {}},
+             {"single", "double", "equal_energy", "elongated"}, true}};
+        return result;
+    }
+
     void Setup(SimConfig &config, SpeciesManager &species)
     {
         if (config.grid.dim != 2 || config.grid.geometry != "cartesian")

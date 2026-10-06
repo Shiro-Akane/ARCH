@@ -30,6 +30,23 @@ class DiffusionModeProblem
     int tracer_id_ = -1;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho0", "float", "g/cm^3", "verification"},
+            {"pressure0", "float", "erg/cm^3", "verification"},
+            {"tracer_mean", "float", "1", "verification"},
+            {"tracer_amplitude", "float", "1", "verification"},
+            {"mode", "int", "1", "verification"}};
+        return result;
+    }
+
     void Setup(SimConfig& config, SpeciesManager& species)
     {
         if (config.grid.dim != 1 || config.grid.geometry != "cartesian") {
@@ -53,10 +70,8 @@ public:
         const double half_cell_phase = arch::constants::math::pi * mode_ * cell_width / length_;
         cell_average_factor_ = std::sin(half_cell_phase) / half_cell_phase;
 
-        background_id_ = species.add_species("background", 1.0, 1.0,
-                                             config.physics.gamma, 717.5);
-        tracer_id_ = species.add_species("tracer", 1.0, 1.0,
-                                         config.physics.gamma, 717.5);
+        background_id_ = species.add_species("background", config.MaterialConstant(1.0, "background.A"), config.MaterialConstant(1.0, "background.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "background.Cv"));
+        tracer_id_ = species.add_species("tracer", config.MaterialConstant(1.0, "tracer.A"), config.MaterialConstant(1.0, "tracer.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "tracer.Cv"));
 
         std::cout << "[Problem] Diffusion cosine mode: X=" << mean_ << "+"
                   << amplitude_ << " cos(2*pi*" << mode_ << "*x/L)" << std::endl;

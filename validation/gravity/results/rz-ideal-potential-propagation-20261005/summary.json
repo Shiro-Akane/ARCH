@@ -1,0 +1,675 @@
+{
+  "status": "PASS",
+  "cases": 38,
+  "cells": 3288,
+  "faces": 7464,
+  "boundaryFaces": 1632,
+  "rows": [
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "maximumInverseResidualUpper": 5.467848396278901e-13,
+      "maximumCoefficientWidth": 4.9253046086050745e-11,
+      "potentialPropagationNativeNormUpper": 9.410976221299548e-05,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 9.410980785155037e-05
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "maximumInverseResidualUpper": 1.0432765762402606e-12,
+      "maximumCoefficientWidth": 1.7537260532662913e-10,
+      "potentialPropagationNativeNormUpper": 0.0004305502801966364,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.00043055050761636304
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "maximumInverseResidualUpper": 8.181233468462785e-13,
+      "maximumCoefficientWidth": 1.7612222791285603e-10,
+      "potentialPropagationNativeNormUpper": 0.0002456936340633559,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.00024569375935203753
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "maximumInverseResidualUpper": 8.163469900068782e-13,
+      "maximumCoefficientWidth": 1.765343426995969e-10,
+      "potentialPropagationNativeNormUpper": 0.0002555152213764855,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.000255515366280657
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 5.467848396278901e-13,
+      "maximumCoefficientWidth": 4.9253046086050745e-11,
+      "potentialPropagationNativeNormUpper": 0.00010839775099262166,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.00010839777817849277
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 1.0432765762402606e-12,
+      "maximumCoefficientWidth": 1.7537260532662913e-10,
+      "potentialPropagationNativeNormUpper": 0.0004952953983766073,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0004952955298561986
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 8.181233468462785e-13,
+      "maximumCoefficientWidth": 1.7612222791285603e-10,
+      "potentialPropagationNativeNormUpper": 0.00029092293782988037,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0002909230117184654
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 8.163469900068782e-13,
+      "maximumCoefficientWidth": 1.765343426995969e-10,
+      "potentialPropagationNativeNormUpper": 0.00028919534065437945,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.000289195423346281
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 5.467848396278901e-13,
+      "maximumCoefficientWidth": 4.9253046086050745e-11,
+      "potentialPropagationNativeNormUpper": 0.0001099877931120038,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.00010998782048797523
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 1.0432765762402606e-12,
+      "maximumCoefficientWidth": 1.7537260532662913e-10,
+      "potentialPropagationNativeNormUpper": 0.0005057243877765558,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0005057245204169202
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 8.181233468462785e-13,
+      "maximumCoefficientWidth": 1.7612222791285603e-10,
+      "potentialPropagationNativeNormUpper": 0.00029830366086764667,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.00029830373582936384
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 8.163469900068782e-13,
+      "maximumCoefficientWidth": 1.765343426995969e-10,
+      "potentialPropagationNativeNormUpper": 0.00028989175450017113,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.000289891837227984
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 64,
+      "boundaryFaces": 12,
+      "maximumInverseResidualUpper": 7.578382366091324e-13,
+      "maximumCoefficientWidth": 1.0507683612104302e-10,
+      "potentialPropagationNativeNormUpper": 9.341207532416388e-05,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 9.341213863076254e-05
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 64,
+      "boundaryFaces": 12,
+      "maximumInverseResidualUpper": 1.3435919044013655e-12,
+      "maximumCoefficientWidth": 3.254285729781259e-10,
+      "potentialPropagationNativeNormUpper": 0.0004560273103482257,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.00045602764541262706
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 88,
+      "boundaryFaces": 18,
+      "maximumInverseResidualUpper": 8.921752225887764e-13,
+      "maximumCoefficientWidth": 3.190372410699638e-10,
+      "potentialPropagationNativeNormUpper": 0.0004802515877384139,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0004802516987690443
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 88,
+      "boundaryFaces": 18,
+      "maximumInverseResidualUpper": 9.87876447311465e-13,
+      "maximumCoefficientWidth": 3.530686853991938e-10,
+      "potentialPropagationNativeNormUpper": 0.0004686416687633375,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0004686417870294263
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 7.596145934485326e-13,
+      "maximumCoefficientWidth": 1.0507683612104302e-10,
+      "potentialPropagationNativeNormUpper": 8.7155852774132e-05,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 8.715588736302671e-05
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 1.3435919044013655e-12,
+      "maximumCoefficientWidth": 3.254285729781259e-10,
+      "potentialPropagationNativeNormUpper": 0.0003915744548829837,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.00039157464714271133
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 94,
+      "boundaryFaces": 24,
+      "maximumInverseResidualUpper": 8.921752225887764e-13,
+      "maximumCoefficientWidth": 3.190372410699638e-10,
+      "potentialPropagationNativeNormUpper": 0.0005655876246526512,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0005655877999724408
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 94,
+      "boundaryFaces": 24,
+      "maximumInverseResidualUpper": 1.0074163725448679e-12,
+      "maximumCoefficientWidth": 3.530686853991938e-10,
+      "potentialPropagationNativeNormUpper": 0.0005305579078238917,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0005305580528403849
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 7.596145934485326e-13,
+      "maximumCoefficientWidth": 1.0507683612104302e-10,
+      "potentialPropagationNativeNormUpper": 8.635289100534923e-05,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 8.635292378801797e-05
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "maximumInverseResidualUpper": 1.3435919044013655e-12,
+      "maximumCoefficientWidth": 3.254285729781259e-10,
+      "potentialPropagationNativeNormUpper": 0.00038841532290537147,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0003884155085088183
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 94,
+      "boundaryFaces": 24,
+      "maximumInverseResidualUpper": 8.921752225887764e-13,
+      "maximumCoefficientWidth": 3.190372410699638e-10,
+      "potentialPropagationNativeNormUpper": 0.0005746875085568966,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.000574687688177982
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 94,
+      "boundaryFaces": 24,
+      "maximumInverseResidualUpper": 1.0074163725448679e-12,
+      "maximumCoefficientWidth": 3.530686853991938e-10,
+      "potentialPropagationNativeNormUpper": 0.0005250526792719749,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.0005250528244486325
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 576,
+      "boundaryFaces": 132,
+      "maximumInverseResidualUpper": 5.467848396278901e-13,
+      "maximumCoefficientWidth": 7.880487373768119e-10,
+      "potentialPropagationNativeNormUpper": 0.014762248980356338,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.014762251375143651
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 288,
+      "boundaryFaces": 68,
+      "maximumInverseResidualUpper": 8.163469900068782e-13,
+      "maximumCoefficientWidth": 1.4122747415967751e-09,
+      "potentialPropagationNativeNormUpper": 0.014193358128467596,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.014193360089648518
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 144,
+      "boundaryFaces": 36,
+      "maximumInverseResidualUpper": 1.88660198574553e-12,
+      "maximumCoefficientWidth": 4.51258586053882e-09,
+      "potentialPropagationNativeNormUpper": 0.01409758674047639,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.014097592630772178
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 580,
+      "boundaryFaces": 136,
+      "maximumInverseResidualUpper": 5.467848396278901e-13,
+      "maximumCoefficientWidth": 7.880487373768119e-10,
+      "potentialPropagationNativeNormUpper": 0.018327448973053027,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.018327451029170213
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 292,
+      "boundaryFaces": 72,
+      "maximumInverseResidualUpper": 8.163469900068782e-13,
+      "maximumCoefficientWidth": 1.4122747415967751e-09,
+      "potentialPropagationNativeNormUpper": 0.017537488431618866,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.01753748998224329
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 148,
+      "boundaryFaces": 40,
+      "maximumInverseResidualUpper": 1.9185764088547346e-12,
+      "maximumCoefficientWidth": 4.727411351268529e-09,
+      "potentialPropagationNativeNormUpper": 0.01727284889928564,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.017272852543900236
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 448,
+      "faces": 994,
+      "boundaryFaces": 132,
+      "maximumInverseResidualUpper": 6.286089168412318e-13,
+      "maximumCoefficientWidth": 1.7523120732221287e-09,
+      "potentialPropagationNativeNormUpper": 0.014363780433232902,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.014363784215078106
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 576,
+      "boundaryFaces": 132,
+      "maximumInverseResidualUpper": 5.467848396278901e-13,
+      "maximumCoefficientWidth": 7.880487373768119e-10,
+      "potentialPropagationNativeNormUpper": 0.014762248980356338,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.014762251375143651
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 288,
+      "boundaryFaces": 68,
+      "maximumInverseResidualUpper": 8.163469900068782e-13,
+      "maximumCoefficientWidth": 1.4122747415967751e-09,
+      "potentialPropagationNativeNormUpper": 0.014193358128467596,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.014193360089648518
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 3,
+      "radialOrigin": 0,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 144,
+      "boundaryFaces": 36,
+      "maximumInverseResidualUpper": 1.88660198574553e-12,
+      "maximumCoefficientWidth": 4.51258586053882e-09,
+      "potentialPropagationNativeNormUpper": 0.01409758674047639,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.014097592630772178
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 448,
+      "faces": 998,
+      "boundaryFaces": 136,
+      "maximumInverseResidualUpper": 6.286089168412318e-13,
+      "maximumCoefficientWidth": 1.7523120732221287e-09,
+      "potentialPropagationNativeNormUpper": 0.01573471902186526,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.015734722708677647
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 580,
+      "boundaryFaces": 136,
+      "maximumInverseResidualUpper": 5.467848396278901e-13,
+      "maximumCoefficientWidth": 7.880487373768119e-10,
+      "potentialPropagationNativeNormUpper": 0.018327448973053027,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.018327451029170213
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 292,
+      "boundaryFaces": 72,
+      "maximumInverseResidualUpper": 8.163469900068782e-13,
+      "maximumCoefficientWidth": 1.4122747415967751e-09,
+      "potentialPropagationNativeNormUpper": 0.017537488431618866,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.01753748998224329
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 3,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 148,
+      "boundaryFaces": 40,
+      "maximumInverseResidualUpper": 1.9185764088547346e-12,
+      "maximumCoefficientWidth": 4.727411351268529e-09,
+      "potentialPropagationNativeNormUpper": 0.01727284889928564,
+      "fullManufacturedBoundaryBoxNativeNormUpper": 0.017272852543900236
+    }
+  ],
+  "probeSha256": "65361de8a9562926e9d3412b073b1d498524b41462f3391230519a21e62a6d22",
+  "scope": "Ideal B error propagation and complete construction+potential+assembly box for explicitly root-scoped manufactured inputs",
+  "limitations": [
+    "No existing stored-coordinate ring error automatically promoted",
+    "Actual ideal source/observer potential producer and interior A/residual/Phi/force remain pending",
+    "Actual recovery fixture remains pending; no threshold change, simulation, CUDA or long-run claim",
+    "Raw vectors retained locally"
+  ],
+  "baselineCommit": "621939e9a863533df6cf4daed6e8cc22f82b5e0c",
+  "sourceSha256": {
+    "src/numerics/elliptic/CompositePoisson.h": "5a9d01a841898144b71cb8d1d245d6f03a5de0bb7ef3c6f1b154b920a0910352",
+    "src/numerics/elliptic/CompositePoisson.cpp": "4d03e34b98f4b2e29b1c137f8e4653efddeefe44e0d870448fff76685d74ad3d",
+    "tests/host/gravity/test_composite_poisson.cpp": "be17283ac2dd08566ae8612a1c5e942c5d44e7088f20ee2dcea4f8bf5186bdd1",
+    "validation/gravity/rz_ideal_potential_propagation_reference.py": "90ce6a931574a48125a7786798c2dcd96156e53df84ee179add9782516ca020b",
+    "validation/gravity/rz_stencil_construction_reference.py": "289e2bdbdcbd4198bf8448da5daace23ad71e6bbbed549995e38abd5206a2241",
+    "src/numerics/linalg/DenseWrap.h": "b26f83191a53d5affeea6b9421f52a932911157a235ad3adf0d9bf2124312634"
+  },
+  "cpuArchSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "checks": {
+    "affectedCoreCtest": "6/6 PASS; 11.49 seconds",
+    "architectureAudit": "PASS",
+    "diffCheck": "PASS",
+    "stencilRegression": "38 operator / 7464 face / 38752 coefficient terms PASS",
+    "mapRegression": "38 operator / 3288 cell / 7464 face / 1632 boundary PASS",
+    "build": "Existing CPU Release tree incremental; parallel28; guard not stopped; swap growth0; 11.144 seconds; peak RSS2635632 KiB",
+    "frozenJeans": "Same 7d3bd3... binary matches frozen 9 short + 9 actual restart receipt; reused without rerun"
+  },
+  "frozenJeansReceipt": {
+    "path": "validation/gravity/results/rz-stencil-construction-20261005/summary.json",
+    "sha256": "fe1473f61205f1aae7831be7e6d95f3637c51654432567d7d16a826c792bf2a0",
+    "binarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+    "status": "PASS",
+    "shortEvolutions": 9,
+    "actualRestarts": 9
+  },
+  "dyadicProofComparison": {
+    "referencePath": "validation/gravity/results/rz-stencil-enclosure-20261005/summary.json",
+    "referenceSha256": "2a3b5f6b7412662eefaf6e54d96749bc0ea757faa6402a2175198dedcc86237c",
+    "oldMaximumCoefficientWidth": 4.283883470179717e-08,
+    "newMaximumCoefficientWidth": 4.727411351268529e-09,
+    "oldMaximumInverseResidualUpper": 1.540823024726025e-11,
+    "newMaximumInverseResidualUpper": 1.9185764088547346e-12,
+    "meaning": "Sharper proof from exact integer dyadic normalization; no production coefficient or threshold change"
+  },
+  "scopeContract": "Distinct NativeRzFacePotentialError; explicit RootDyadicSourceAndObserver and CertifiedAbsolute required; default Unknown rejected.",
+  "negativeChecks": [
+    "Missing array InvalidInput",
+    "Unknown scope UncertifiedInput",
+    "Estimate UncertifiedInput",
+    "negative/NaN InvalidInput",
+    "finite input product overflow Overflow",
+    "explicit root-scoped zero errors give exact zero native RMS"
+  ],
+  "remainingDependencies": [
+    "Real producer of ideal-root source/observer potential errors, bound to current source/generation identity",
+    "Interior A construction and actual physical residual; full Phi/force and all RZ consumers",
+    "Natural recovery fixture plus existing axis/viscosity findings; CPU science before unified CUDA/long runs"
+  ]
+}

@@ -445,6 +445,79 @@ void verify_indicator_batch(arch::cuda::CudaBackend& scalar, arch::cuda::CudaBac
     }
 }
 
+// Routing/storage witness; the separate accepted-cell test owns independent
+// Decimal/caloric science references. Do not treat scalar-vs-batch as a new oracle.
+void verify_jeans_consumer(arch::cuda::CudaBackend& scalar, arch::cuda::CudaBackend& batch,
+    const std::array<arch::backend::BackendStateAccess,2>& accesses)
+{
+    std::vector<double> expected;
+    for (const auto& access : accesses) {
+        const auto one=scalar.evaluate_jeans_resolution({&access,1});
+        require(one.size()==1 && std::isfinite(one.front()),"invalid scalar JENS control");
+        expected.push_back(one.front());
+    }
+    require(batch.evaluate_jeans_resolution(std::span(accesses).first(1))
+        ==std::vector<double>{expected.front()},"JENS scratch shrink result drifted");
+    const std::array reversed{accesses[1],accesses[0]};
+    const auto before=batch.counters();
+    const auto result=batch.evaluate_jeans_resolution(reversed);
+    const auto after=batch.counters();
+    require(result==std::vector<double>({expected[1],expected[0]}),"JENS block order/value drifted");
+    require(after.kernel_count-before.kernel_count==4
+        && after.bytes_d2h-before.bytes_d2h==2*sizeof(double)
+        && after.bytes_h2d==before.bytes_h2d
+        && after.stream_sync_count-before.stream_sync_count==1,
+        "JENS consumer materialized fields or used extra completion boundaries");
+    for(int fault=0;fault<4;++fault) {
+        auto invalid=accesses;
+        if(fault==0)invalid[1]=invalid[0];
+        if(fault==1)++invalid[1].storage.value;
+        if(fault==2)invalid[1].slot=arch::state::StateSlot::Next;
+        if(fault==3)++invalid[1].block.epoch.value;
+        bool rejected=false;
+        try {(void)batch.evaluate_jeans_resolution(invalid);}
+        catch(const std::invalid_argument&){rejected=true;}
+        const auto done=batch.counters();
+        require(rejected && done.kernel_count==after.kernel_count
+            && done.bytes_h2d==after.bytes_h2d && done.bytes_d2h==after.bytes_d2h
+            && done.stream_sync_count==after.stream_sync_count,
+            "late invalid JENS access partially submitted work");
+    }
+    require(batch.evaluate_jeans_resolution({}).empty(),"empty JENS batch was not a no-op");
+    const auto empty=batch.counters();
+    require(empty.kernel_count==after.kernel_count && empty.bytes_d2h==after.bytes_d2h
+        && empty.stream_sync_count==after.stream_sync_count,"empty JENS batch submitted work");
+    std::cout<<"CUDA_JEANS_BACKEND_CURRENT_PASS blocks=2\n";
+}
+
+void verify_jeans_failure_recovery(arch::cuda::CudaBackend& backend,
+    const std::array<arch::backend::BackendStateAccess,2>& accesses,
+    std::array<amr::Block,2>& blocks)
+{
+    const auto original=backend.evaluate_jeans_resolution(accesses);
+    for(int fault=0;fault<3;++fault) {
+        FluidState damaged=blocks[1].fluid_state;
+        const auto& grid=blocks[1].grid;
+        const int cell=grid.GetIndex(grid.Is(),grid.Js(),grid.Ks());
+        if(fault==0)damaged.rho[cell]=0.;
+        if(fault==1)damaged.rho[cell]=std::numeric_limits<double>::quiet_NaN();
+        if(fault==2)damaged.eng[cell]=-1.;
+        backend.enqueue_upload_slot(accesses[1],arch::state::StateRegion::Interior,
+            transfer_view(damaged));
+        backend.quiesce();
+        bool rejected=false;
+        try {(void)backend.evaluate_jeans_resolution(accesses);}
+        catch(const std::runtime_error&){rejected=true;}
+        require(rejected,"invalid second-block accepted cell did not reject JENS batch");
+        backend.enqueue_upload_slot(accesses[1],arch::state::StateRegion::Interior,
+            transfer_view(blocks[1].fluid_state));
+        backend.quiesce();
+        require(backend.evaluate_jeans_resolution(accesses)==original,
+            "JENS recovery reused an invalid latch/value or changed valid source");
+    }
+    std::cout<<"CUDA_JEANS_BACKEND_FAILURE_RECOVERY_PASS cases=3\n";
+}
+
 void run_hydro_batch_contract()
 {
     using namespace arch;
@@ -486,6 +559,8 @@ void run_hydro_batch_contract()
         upload(*scalar);
         upload(*batch);
         verify_indicator_batch(*scalar,*batch,accesses);
+        verify_jeans_consumer(*scalar,*batch,accesses);
+        verify_jeans_failure_recovery(*batch,accesses,blocks);
         const std::array<double, 2> reference_dt{
             scalar->compute_hydro_dt(accesses[0], 0.8),
             scalar->compute_hydro_dt(accesses[1], 0.8)};
@@ -569,6 +644,7 @@ void run_hydro_batch_contract()
             batch->rotate_slots(access, plan.final_rotation);
         }
         verify_indicator_batch(*scalar,*batch,accesses);
+        verify_jeans_consumer(*scalar,*batch,accesses);
         for (std::size_t i = 0; i < blocks.size(); ++i) {
             FluidState a, b;
             a.Preallocate(blocks[i].grid.GetTotalSize()); a.InitSpecies(0);

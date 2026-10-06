@@ -11,6 +11,7 @@
 #include "api/Configuration.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "grid/Grid.h"
+#include "data/FieldUnits.h"
 
 namespace arch::api {
 using detail::Json;
@@ -22,15 +23,7 @@ std::string UnitSystem(const SimConfig& config) {
 std::string FieldUnit(const std::string& key, const std::string& system) {
     if (system == "unknown") return {};
     if (system != "cgs") return {};
-    if (key == "DENS") return "g/cm^3";
-    if (key == "TEMP") return "K";
-    if (key == "PRES") return "erg/cm^3";
-    if (key == "ENER") return "erg/cm^3";
-    if (key == "GPOT") return "cm^2/s^2";
-    if (key == "GACX" || key == "GACY" || key == "GACZ") return "cm/s^2";
-    if (key == "EINT") return "erg/g";
-    if (key == "VELX" || key == "VELY" || key == "VELZ") return "cm/s";
-    return {};
+    return std::string(arch::fields::cgs_unit(key));
 }
 std::string AxisUnit(const std::string& label, const std::string& system) {
     if (label == "phi" || label == "phi_cy" || label == "theta") return "rad";
@@ -66,17 +59,16 @@ Json CoordinateMetadata(const GridConfig& g, const std::string& system) {
         {"thirdAxisRequiresSecond", true}, {"unitSystem", system}});
 }
 /** Summarize AMR controls for the resolved configuration. */
-Json RefinementMetadata(const SimConfig& c) {
-    const auto& a = c.amr;
+Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled, bool self_gravity, bool cpu_backend) {
     struct Item { const char* name; bool selected; const char* unavailable; };
     const Item items[] = {{"DENS", a.refine_on_rho, ""}, {"PRES", a.refine_on_p, ""},
         {"TEMP", a.refine_on_temp, ""}, {"VELX", a.refine_on_velx, ""},
-        {"VELY", a.refine_on_vely, c.grid.dim < 2 ? "requires at least 2D" : ""},
-        {"VELZ", a.refine_on_velz, c.grid.dim < 3 ? "requires 3D" : ""},
+        {"VELY", a.refine_on_vely, dimension < 2 ? "requires at least 2D" : ""},
+        {"VELZ", a.refine_on_velz, dimension < 3 ? "requires 3D" : ""},
         {"ENER", a.refine_on_eng, ""}, {"VORT", a.refine_on_vorticity, ""},
         {"DIVV", a.refine_on_div_v, ""}, {"ENTR", a.refine_on_entropy, ""},
-        {"ENUC", a.refine_on_enuc, !c.physics.burn.use_burn ? "requires reactions" : ""},
-        {"JENS", a.refine_on_jeans, "Jeans diagnostic is not implemented"},
+        {"ENUC", a.refine_on_enuc, !burn_enabled ? "requires reactions" : ""},
+        {"JENS", a.refine_on_jeans, self_gravity && cpu_backend ? "" : "requires self gravity and explicit CPU backend; CUDA not qualified"},
         {"SPECIES", a.refine_all_species, ""}};
     auto choices = Json::array();
     for (const auto& item : items)
@@ -87,10 +79,14 @@ Json RefinementMetadata(const SimConfig& c) {
     return Json::object({{"choices", choices}, {"namedSpecies", names},
         {"speciesResolution", "requires case Setup"}, {"separator", ","}, {"alternativeSeparator", "+"}});
 }
+Json RefinementMetadata(const SimConfig& c) {
+    return RefinementMetadata(c.amr, c.grid.dim, c.physics.burn.use_burn,
+        c.physics.gravity.type=="self",c.execution.compute_backend=="cpu");
+}
 /** Expose the applicable diffusion controls and their state. */
-Json DiffusionMetadata(const SimConfig& c) {
-    const bool helm = dispatch::ascii_iequals(c.physics.eos_type, "helmholtz");
-    const bool ideal = dispatch::ascii_iequals(c.physics.eos_type, "ideal");
+Json DiffusionMetadata(const std::string& eos_type, bool enabled) {
+    const bool helm = dispatch::ascii_iequals(eos_type, "helmholtz");
+    const bool ideal = dispatch::ascii_iequals(eos_type, "ideal");
     auto channels = Json::array();
     const char* toggles[] = {"use_thermal_diff", "use_viscous_diff", "use_species_diff"};
     const char* coefficients[] = {"alpha_therm", "nu_visc", "D_spec"};
@@ -98,12 +94,15 @@ Json DiffusionMetadata(const SimConfig& c) {
         channels.push(Json::object({{"toggleKey", toggles[i]}, {"coefficientKey", coefficients[i]},
             {"unit", "cm^2/s"}, {"constantInputAllowed", !helm},
             {"stellarModelSuppliesCoefficient", i == 0}}));
-    return Json::object({{"version", "1"}, {"enabled", c.physics.diffusion.use_diffusion},
+    return Json::object({{"version", "1"}, {"enabled", enabled},
         {"modeEditable", false}, {"source", ideal ? "constant" : "state-dependent"},
         {"sourceScope", "configuration; EOS state not evaluated"},
         {"possibleSources", ideal ? Json::array({"constant"}) : Json::array({"constant", "stellar-conductivity"})},
         {"selectionRule", "species_count > 0 and EOS electron density > 0 selects stellar transport; positive viscosity/thermal overrides then fail"},
-        {"forbiddenExplicitKeys", helm && c.physics.diffusion.use_diffusion ? Json::array({"alpha_therm", "nu_visc", "D_spec"}) : Json::array()},
+        {"forbiddenExplicitKeys", helm && enabled ? Json::array({"alpha_therm", "nu_visc", "D_spec"}) : Json::array()},
         {"channels", channels}, {"conflictResolution", "explicit reversible removal from working text; hiding fields is insufficient"}});
+}
+Json DiffusionMetadata(const SimConfig& c) {
+    return DiffusionMetadata(c.physics.eos_type, c.physics.diffusion.use_diffusion);
 }
 } // namespace arch::api

@@ -1,17 +1,33 @@
 #!/usr/bin/env python3
-"""Check declared CTest coverage and completion, without redefining test physics.
+"""Check CTest coverage and Node completion, without redefining test physics.
 
 CTest owns test discovery, execution and numerical pass/fail decisions. This
 reader rejects incomplete or skipped runs that would otherwise look successful.
+Node reports use a separate completion mode; no CTest scientific coverage is implied.
 It does not create or replace scientific Validation evidence.
 """
 
 import argparse
 import json
+import re
 from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
 
+
+# Existing parser / entry / API tests; removing their CMake registration must
+# not silently shrink a "complete" CPU report after the v3 contract migration.
+CONFIGURATION_COVERAGE_ANCHORS = frozenset({
+    "config_input_records", "input_resolution", "case_configuration", "configuration_input",
+    "configuration_api_contract", "configuration_entry_contract", "configuration_v3_contract",
+})
+PREVIEW_COVERAGE_ANCHORS = frozenset({
+    "preview_initial_conversion", "preview_api_contract", "preview_full_model_contract",
+    "preview_parameter_reads", "preview_parameter_metadata", "preview_sampling_limits",
+    "preview_mesh_geometry", "case_inspection_contract", "preview_session_contract",
+    "preview_verified_resources", "preview_exact_sample_cache", "preview_cellular_2d",
+})
+JENS_COVERAGE_ANCHORS = frozenset({"jeans_diagnostics", "refinement_indicator_math"})
 
 # Coverage anchors for the CPU+KLU profile, not a frozen total test count.
 # All other tests discovered by CTest must also appear in the completed report.
@@ -23,7 +39,7 @@ CPU_COVERAGE_ANCHORS = frozenset({
     "shared_stage_scheduler", "gravity_stage_contract", "checkpoint_temporal_comparison",
     "poisson_multigrid_contract", "poisson_multigrid_analytic",
     "composite_poisson_contract", "composite_poisson_analytic", "self_gravity_lifecycle", "self_gravity_physics",
-})
+}) | CONFIGURATION_COVERAGE_ANCHORS | PREVIEW_COVERAGE_ANCHORS | JENS_COVERAGE_ANCHORS
 
 DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
     "cuda_compile_probe", "shared_stage_scheduler", "gravity_stage_contract",
@@ -79,16 +95,53 @@ def check_junit(root, expected):
     return len(cases)
 
 
+def check_node_tap(text):
+    """Require Node's complete TAP summary, without rerunning its Host subset."""
+    if not text.startswith("TAP version 13\n"):
+        raise ValueError("expected a Node TAP report")
+    counters = {}
+    for key in ("tests", "suites", "pass", "fail", "cancelled", "skipped", "todo"):
+        matches = re.findall(r"^# " + key + r" ([0-9]+)$", text, re.MULTILINE)
+        if len(matches) != 1:
+            raise ValueError("missing or repeated Node TAP counter: " + key)
+        counters[key] = int(matches[0])
+    if counters["tests"] == 0 or counters["pass"] != counters["tests"]:
+        raise ValueError("Node suite is empty or incomplete")
+    if any(counters[key] for key in ("fail", "cancelled", "skipped", "todo")):
+        raise ValueError("Node suite contains failed, cancelled, skipped or TODO tests")
+    if re.search(r"^\s*(?:not ok\b|Bail out!)", text, re.MULTILINE):
+        raise ValueError("Node TAP contains an unsuccessful test or bailout")
+    plans = re.findall(r"^1\.\.([0-9]+)$", text, re.MULTILINE)
+    if len(plans) != 1 or int(plans[0]) == 0:
+        raise ValueError("Node TAP has no completed nonempty plan")
+    records = re.findall(r"^\s*ok [0-9]+ - ", text, re.MULTILINE)
+    top_records = re.findall(r"^ok ([0-9]+) - ", text, re.MULTILINE)
+    if len(records) != counters["tests"] + counters["suites"] or len(top_records) != int(plans[0]):
+        raise ValueError("Node TAP summary or plan does not match completed entries")
+    if [int(i) for i in top_records] != list(range(1, int(plans[0]) + 1)):
+        raise ValueError("Node TAP top-level entries are missing or repeated")
+    return counters["tests"]
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", choices=PROFILES, default="cpu",
                         help="cpu uses the complete inventory; driver-cuda is a scoped GPU gate")
-    parser.add_argument("--inventory", type=Path, required=True,
+    reports = parser.add_mutually_exclusive_group(required=True)
+    reports.add_argument("--inventory", type=Path,
                         help="ctest --show-only=json-v1 output from the CI build")
+    reports.add_argument("--node-tap", type=Path,
+                         help="complete Node --test --test-reporter=tap output")
     parser.add_argument("--junit", type=Path,
                         help="ctest --output-junit report; omit to check discovery only")
     args = parser.parse_args(argv)
     try:
+        if args.node_tap is not None:
+            if args.junit is not None:
+                raise ValueError("--junit requires --inventory")
+            count = check_node_tap(args.node_tap.read_text(encoding="utf-8"))
+            print(f"studio: all {count} Node tests passed without skips or TODO")
+            return 0
         inventory = json.loads(args.inventory.read_text(encoding="utf-8"))
         if not isinstance(inventory, dict):
             raise ValueError("CTest inventory must be a JSON object")
@@ -99,7 +152,8 @@ def main(argv=None):
         else:
             print(f"{args.profile}: {len(expected)} inventory tests; coverage anchors present")
     except (OSError, ValueError, ET.ParseError) as error:
-        print(f"{args.profile} result check failed: {error}", file=sys.stderr)
+        profile = "studio" if args.node_tap is not None else args.profile
+        print(f"{profile} result check failed: {error}", file=sys.stderr)
         return 1
     return 0
 

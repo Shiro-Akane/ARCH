@@ -29,6 +29,18 @@ constexpr double kDensity = 1.0;        // g/cm^3
 constexpr double kPressure = 1.0;       // erg/cm^3
 constexpr double kSpecificHeatCv = 1.0; // erg/(g K); finite positive by construction
 
+arch::config::CaseConfiguration UserGravityConfiguration(
+    const arch::config::StandardInputResolution&)
+{
+    arch::config::CaseConfiguration result;
+    result.complete = true;
+    result.consumers.needs_network = false;
+    result.consumers.needs_temperature_floor = false;
+    result.consumers.needs_composition_floor = false;
+    result.parameters = {{"user_boundary_heat_flux", "float", "erg/(cm^2*s)"}};
+    return result;
+}
+
 /** Registers the case species and validates the configured geometry. */
 void UserGravitySetup(SimConfig &config, SpeciesManager &specs)
 {
@@ -37,8 +49,7 @@ void UserGravitySetup(SimConfig &config, SpeciesManager &specs)
         throw std::invalid_argument(
             "UserGravity supports cartesian, cylindrical and spherical geometry.");
 
-    // Setup validates the same optional CGS heat control the boundary reads.
-    // Inspection records this access; missing input intentionally means zero flux.
+    // The declared CGS heat control is explicit; zero selects a Value face.
     const double heat_flux = config.Get<double>("user_boundary_heat_flux", 0.0);
     if (!std::isfinite(heat_flux))
         throw std::invalid_argument("user_boundary_heat_flux must be finite in erg/(cm^2 s).");
@@ -50,7 +61,11 @@ void UserGravitySetup(SimConfig &config, SpeciesManager &specs)
 
     // One explicit neutral species: A=1, Z=0, gamma from the active EOS
     // configuration and a finite positive Cv.
-    specs.add_species("UserGravityGas", 1.0, 0.0, gamma, kSpecificHeatCv);
+    specs.add_species("UserGravityGas",
+        config.MaterialConstant(1.0, "UserGravityGas.A"),
+        config.MaterialConstant(0.0, "UserGravityGas.Z"),
+        config.MaterialInput("gamma"),
+        config.MaterialConstant(kSpecificHeatCv, "UserGravityGas.Cv"));
 
     // Explicit consistency of the manufactured state with the ideal-gas
     // relation p = (gamma - 1) * rho * Cv * T.
@@ -83,4 +98,5 @@ void UserGravityInit(const PointCoords &point, PrimitiveData &out)
 }
 } // namespace
 
-REGISTER_PROBLEM("UserGravity", UserGravitySetup, UserGravityInit)
+REGISTER_PROBLEM_WITH_CONFIGURATION("UserGravity", UserGravitySetup, UserGravityInit,
+                                    UserGravityConfiguration)

@@ -23,6 +23,7 @@
 #include <bit>
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <string_view>
@@ -182,8 +183,10 @@ ARCH_INLINE double finalize_cfl_dt(double cfl_number, double minimum)
  */
 template <typename EosType>
 inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number,
-                          bool parallel_rows = true)
+                          bool parallel_rows = true,
+                          GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
+    const auto geometry = GridMetrics::make_geometry_view(grid, semantics);
     arch::state::HostFailure failure;
     int n_species = state.GetNumSpecies();
     const auto reduction_spec = arch::reduction::minimum_spec(
@@ -205,14 +208,22 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
             for (int i = grid.Is(); i < grid.Ie(); ++i) {
                 const int idx = grid.GetIndex(i, j, k);
                 const FluidVector U = state.get(idx);
+                // Every visited cell is active. A reduction's Ignore-NaN
+                // policy cannot turn a bad physical candidate into readiness.
+                if (!is_cfl_cell_active(U))
+                    throw std::runtime_error("Invalid active hydro CFL density: cell="
+                        + std::to_string(idx));
                 double cell_dt = std::numeric_limits<double>::quiet_NaN();
                 if (is_cfl_cell_active(U)) {
                     for (int s = 0; s < n_species; ++s)
                         Xi_cache[s] = state.X(s, idx);
                     cell_dt = evaluate_cfl_cell_dt(
                         U, Xi_cache.data(), eos,
-                        GridMetrics::make_geometry_view(grid), i, j);
+                        geometry, i, j);
                 }
+                if (!(cell_dt > 0.0) || !std::isfinite(cell_dt))
+                    throw std::runtime_error("Invalid active hydro CFL candidate: cell="
+                        + std::to_string(idx));
                 amr::CellLogicalKey cell_key{};
                 cell_key.logical_i = i;
                 cell_key.logical_j = j;

@@ -426,6 +426,27 @@ void characterize_hydro()
     expect_bits("production.hydro.active",
                 adaptive_dt(state, HydroEos{}, grid, 0.8),
                 std::bit_cast<std::uint64_t>(.8*serial_hydro));
+    // The generic minimum may ignore NaN sentinels, but this traversal only
+    // visits active cells. One invalid physical cell must reject the patch.
+    const int broken=grid.GetIndex(grid.Is()+3);
+    const auto saved=state.get(broken);
+    for(bool parallel : {false,true}) {
+        for(double bad : {0.,-1.,std::numeric_limits<double>::quiet_NaN(),
+                          std::numeric_limits<double>::infinity()}) {
+            state.set(broken,saved);
+            state.rho[broken]=bad;
+            bool rejected=false;
+            try { (void)adaptive_dt(state,HydroEos{},grid,.8,parallel); }
+            catch(const std::runtime_error&) { rejected=true; }
+            expect(rejected,"production.hydro.single-invalid-active-density");
+        }
+        state.set(broken,saved);state.mom_u[broken]=std::numeric_limits<double>::infinity();
+        bool rejected=false;
+        try { (void)adaptive_dt(state,HydroEos{},grid,.8,parallel); }
+        catch(const std::runtime_error&) { rejected=true; }
+        expect(rejected,"production.hydro.single-invalid-active-candidate");
+    }
+    state.set(broken,saved);
     std::fill(state.rho.begin(), state.rho.end(), 0.0);
     bool rejected = false;
     try { adaptive_dt(state, HydroEos{}, grid, 0.8); }

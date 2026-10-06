@@ -1,0 +1,283 @@
+{
+  "node": "RZ finite ring native exterior face consumer",
+  "date": "2026-10-05",
+  "status": "SCOPED_CPU_PASS_PRODUCTION_RZ_GATED",
+  "sourceBaseline": "5711afe4c66299b9c4cae0469d3250cca816ff05",
+  "dirtyAtBuild": true,
+  "sourceFingerprints": {
+    "src/physics/gravity/GravityBoundary.cpp": "1c34067e5c861322f65030f805a3ce783c9d38ac2a96becccf61bc1cf0ebf0c6",
+    "src/physics/gravity/GravityBoundary.h": "d6e229c8fca5bbae7a8d9670a19bdaeee995df75e5a9cddd463475fba3c8d46c",
+    "src/physics/gravity/GravitySolveTypes.h": "6fa79e3732ae743d67b08a9243f89a1f7961d1d88b771962dfc2a36c9b6222f1",
+    "tests/host/gravity/test_composite_poisson.cpp": "ea29e5f45e20f70f2e7aa64e57822b3d8024bc9b5aad90728689bbfe906a43f8"
+  },
+  "previousBinarySha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "binarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "platform": "Linux/WSL CPU Release; CUDA OFF",
+  "worktree": "/home/arch/projects/ARCH-compute-optim",
+  "contractSha256": "815c6369f5a33c3bd549dc86c43b876f542f6af00c78a2978155962d8a9eb1fe",
+  "internalEngineeringBudget": {
+    "faceAbsoluteTarget": 1e-05,
+    "unit": "cm^2/s^2",
+    "maximumBoxesPerLeaf": 8,
+    "productionScientificAcceptance": false
+  },
+  "nativeFaces": [
+    {
+      "mixed": 0,
+      "radial_origin": 0,
+      "leaves": 16,
+      "exterior_faces": 12,
+      "source_evaluations": 192,
+      "newton_references": 1,
+      "newton8": -2.648686491151159e-07,
+      "newton12": -2.648870780292588e-07,
+      "quadrature_difference": 1.8428914142913818e-11,
+      "rhs_error": 7.5337543697233786e-06
+    },
+    {
+      "mixed": 0,
+      "radial_origin": 0.5,
+      "leaves": 16,
+      "exterior_faces": 16,
+      "source_evaluations": 256,
+      "newton_references": 1,
+      "newton8": -3.8885752508890826e-07,
+      "newton12": -3.888760207508854e-07,
+      "quadrature_difference": 1.8495661977128693e-11,
+      "rhs_error": 7.283554756486083e-06
+    },
+    {
+      "mixed": 1,
+      "radial_origin": 0,
+      "leaves": 28,
+      "exterior_faces": 12,
+      "source_evaluations": 336,
+      "newton_references": 1,
+      "newton8": -2.6478532124942166e-07,
+      "newton12": -2.6480375016356454e-07,
+      "quadrature_difference": 1.8428914142917153e-11,
+      "rhs_error": 6.9103955150596064e-06
+    },
+    {
+      "mixed": 1,
+      "radial_origin": 0.5,
+      "leaves": 28,
+      "exterior_faces": 16,
+      "source_evaluations": 448,
+      "newton_references": 1,
+      "newton8": -3.888026349463855e-07,
+      "newton12": -3.888211306083626e-07,
+      "quadrature_difference": 1.849566197708679e-11,
+      "rhs_error": 6.727377012061151e-06
+    }
+  ],
+  "checks": [
+    {
+      "name": "native-with-reference",
+      "exitCode": 0
+    },
+    {
+      "name": "moments-corrected",
+      "exitCode": 0
+    },
+    {
+      "name": "axis",
+      "exitCode": 0
+    },
+    {
+      "name": "ring",
+      "exitCode": 0
+    },
+    {
+      "name": "ledger",
+      "exitCode": 0
+    },
+    {
+      "name": "ctest",
+      "exitCode": 0
+    },
+    {
+      "name": "architecture",
+      "exitCode": 0
+    }
+  ],
+  "ctestPassed": 4,
+  "frozenJens": {
+    "contract": "uniform-lifecycle-1",
+    "status": "PASS",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+    "cases": [
+      {
+        "name": "jeans-uniform-1d-active",
+        "dimension": 1,
+        "lane": "active",
+        "cells": 128,
+        "elapsed_seconds": 0.06439744199451525,
+        "restart_elapsed_seconds": 0.064538452992565,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 29,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-1d-disabled",
+        "dimension": 1,
+        "lane": "disabled",
+        "cells": 64,
+        "elapsed_seconds": 0.0641755560063757,
+        "restart_elapsed_seconds": 0.06451158500567544,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null
+      },
+      {
+        "name": "jeans-uniform-1d-output_only",
+        "dimension": 1,
+        "lane": "output_only",
+        "cells": 64,
+        "elapsed_seconds": 0.11469638900598511,
+        "restart_elapsed_seconds": 0.06402787000115495,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-2d-active",
+        "dimension": 2,
+        "lane": "active",
+        "cells": 4096,
+        "elapsed_seconds": 0.365509426992503,
+        "restart_elapsed_seconds": 0.21446035099506844,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 218,
+        "stage_solves": 162,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 55,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-2d-disabled",
+        "dimension": 2,
+        "lane": "disabled",
+        "cells": 1024,
+        "elapsed_seconds": 0.16467716700572055,
+        "restart_elapsed_seconds": 0.11480986399692483,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null
+      },
+      {
+        "name": "jeans-uniform-2d-output_only",
+        "dimension": 2,
+        "lane": "output_only",
+        "cells": 1024,
+        "elapsed_seconds": 0.11461420099658426,
+        "restart_elapsed_seconds": 0.1143197869969299,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-3d-active",
+        "dimension": 3,
+        "lane": "active",
+        "cells": 131072,
+        "elapsed_seconds": 23.429009995001252,
+        "restart_elapsed_seconds": 12.296540686002118,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 330,
+        "stage_solves": 246,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 83,
+        "maxJensRelativeError": 4.50750606346323e-17
+      },
+      {
+        "name": "jeans-uniform-3d-disabled",
+        "dimension": 3,
+        "lane": "disabled",
+        "cells": 16384,
+        "elapsed_seconds": 1.7190452850045403,
+        "restart_elapsed_seconds": 0.8669518230017275,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null
+      },
+      {
+        "name": "jeans-uniform-3d-output_only",
+        "dimension": 3,
+        "lane": "output_only",
+        "cells": 16384,
+        "elapsed_seconds": 1.569035705004353,
+        "restart_elapsed_seconds": 0.7660713819932425,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17
+      }
+    ],
+    "comparisons": [
+      {
+        "dimension": 1,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 2,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 3,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      }
+    ]
+  },
+  "limitations": [
+    "Not production RZ values() path; capability gate retained",
+    "All source leaves visited; no certified far-parent acceptance",
+    "Standalone native CompositePoisson fixtures, not real AMR topology source-publication integration",
+    "Independent 8/12-order Newton integration is diagnostic, not a certified reference or a convergence proof",
+    "RHS errors describe boundary-only stored-operator propagation; full coefficient/assembly/residual evaluation certificates remain pending",
+    "No CUDA/scientific long-run/performance acceptance"
+  ],
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-ring-native-face-20261005"
+}

@@ -1,0 +1,42 @@
+{
+  "baseSourceHead": "94a094f4f4c226de68cf64f52161877e890214be",
+  "before": {
+    "scope": "real CPU DriverIO IO-only fixture; no timestep or EOS science acceptance",
+    "exitCode": 1,
+    "stdout": "[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-plot-publication-20261003-before-v2/evidence/fixture_HLLC_plt_0017.h5 at t=0\n",
+    "stderr": "failed publication advanced Driver plot index\n",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "fixtureSource": "/home/arch/projects/ARCH-compute-optim/tests/host/io/test_driver_plot_publication.cpp"
+  },
+  "after": {
+    "scope": "real CPU DriverIO IO-only fixture; no timestep or EOS science acceptance",
+    "exitCode": 0,
+    "stdout": "[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-plot-publication-20261003-final/evidence/fixture_HLLC_plt_0017.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-plot-publication-20261003-final/evidence/fixture_HLLC_plt_0018.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-plot-publication-20261003-final/evidence/fixture_HLLC_plt_0019.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-plot-publication-20261003-final/evidence/fixture_HLLC_plt_0020.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-plot-publication-20261003-final/evidence/fixture_HLLC_plt_0021.h5 at t=0\n[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-plot-publication-20261003-final/evidence/fixture_HLLC_plt_0022.h5 at t=0\nPASS real Driver write/flush/close/rename/create propagation; unchanged failure index; same-index retries; time=0 step=0\n",
+    "stderr": "",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "driverSourceSha256": "a536f14b1db2a4b32f10ebfc924294a9e582bd7924bd7fa045721ee031b7538f",
+    "dispatchLibrarySha256": "91b4d10327a034b726938e16320d0f1f7c5bd1edf8f2ec03679de85c7f0abec7",
+    "testExecutableSha256": "df9c3a6a8c0bb98aa3dd1e4bcb21ee71ba76f38a9d177819967f3aa489b3959d",
+    "fixtureSource": "/home/arch/projects/ARCH-compute-optim/tests/host/io/test_driver_plot_publication.cpp"
+  },
+  "failureStages": [
+    "write",
+    "flush",
+    "close",
+    "rename",
+    "create"
+  ],
+  "counterSemantics": "failure keeps index; success advances once; retry uses same index",
+  "regression": {
+    "plotfile_publication": "PASS",
+    "checkpoint_compatibility": "PASS",
+    "ctestSeconds": 0.15
+  },
+  "coverageLimits": [
+    "fixed valid closure witnesses; not EOS/science acceptance",
+    "no timestep",
+    "not actual ENOSPC/crash durability",
+    "checkpoint unchanged; atomic publication is separate finding",
+    "manual Linux scoped runner; not automatically included in CTest"
+  ]
+}

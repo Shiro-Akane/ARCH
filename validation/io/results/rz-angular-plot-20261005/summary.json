@@ -1,0 +1,286 @@
+{
+  "status": "PASS",
+  "scope": "Internal RZ Plotfile angular representation consumer; not complete RZ science or public capability",
+  "baselineCommit": "d80ceafea671229b7ed25c7d39062f667d18efc2",
+  "sourceInputs": {
+    "src/io/hdf5/HDF5Writer.h": "4ddf013fab0d3761e743812f192ecff78bcbaa28e035735bb8b41703b67588f1",
+    "src/io/hdf5/HDF5Writer.cpp": "adf557dd818e8a3849ac3831e85b9d5205b5be765be350d2efada26921caee34",
+    "src/io/plot/PlotGridMetadata.h": "5372baa7b92e5967fd8bbfcf79a61ebcf400c862853b21416703da716c135a51",
+    "src/io/plot/PlotIO.cpp": "8f9863bea8ccd8c90bf65232866dd66bcc1f3eeacb56e046e7717e4146d6e32e",
+    "tests/host/io/test_plotfile_publication.cpp": "668affa9cb68364da3a278f66ada00e4c80b78403d25f46d96b39b808d8c86e7",
+    "validation/io/verify_rz_driver_plot.py": "356ae7c6eef4d7cbb34c328eee5057ad01e83d2ce433665bdba1803040224aa7"
+  },
+  "productionBinarySha256": "b0f38076e245eb78c335b2324930f16d46cd952304aec5909ac100fe922812ad",
+  "build": {
+    "directory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "type": "Release",
+    "backend": "CPU",
+    "configurePerformed": false,
+    "parallel": 28,
+    "peakOwnedRssKiB": 3328544,
+    "swapGrowthKiB": 0
+  },
+  "plotReadback": {
+    "status": "PASS",
+    "scope": "Actual Driver IO-only fixture; analytical velocity and independent Decimal ring measure, no timestep advancement",
+    "arithmeticGate": 2e-12,
+    "gateOrigin": "Existing internal CPU geometry engineering gate; not owner scientific acceptance",
+    "rows": [
+      {
+        "mode": "cartesian",
+        "shape": [
+          1,
+          16
+        ],
+        "fileSha256": "37efc457b93f26e5a1285aa5d3b5b7c0e80d03988525be6e9ec19f0e9cb1c97d",
+        "legacyMetadataPreserved": true
+      },
+      {
+        "mode": "rz",
+        "shape": [
+          1,
+          16,
+          16
+        ],
+        "cells": 256,
+        "fileSha256": "7e71a46713141331b29d0c3961124b6655adcf4bd0f92b26ee5ed5ae9a842cdb",
+        "chart": "axisymmetric-rz",
+        "coordinateMapping": "(r,z) -> Cartesian (r,0,z)",
+        "measureUnit": "cm^3",
+        "normalization": "full_rotation",
+        "fullDomainVolume": 25.132741228718345,
+        "metricMaxRelativeError": 2.0561161577137884e-16,
+        "angularMeasureMaxRelativeError": 2.1370656127418904e-16,
+        "angularDensityMaxAbsoluteError": 1.1102230246251565e-16,
+        "rawMPhiPreserved": true,
+        "representativeVelocityDistinguished": true,
+        "fieldMaxAbsoluteErrors": {
+          "VELX": 0.0,
+          "VELY": 0.0,
+          "VELZ": 0.0,
+          "DIVV": {
+            "allCellsBoundaryDiscreteMaxError": 7.216449660063518e-16,
+            "interiorAnalyticMaxError": 7.216449660063518e-16
+          },
+          "VORT": {
+            "allCellsBoundaryDiscreteMaxError": 1.1102230246251565e-16,
+            "interiorAnalyticMaxError": 1.1102230246251565e-16
+          }
+        },
+        "publication": "checked-close-atomic-replace"
+      }
+    ],
+    "limitations": [
+      "No public RZ capability",
+      "No RZ Viewer support",
+      "No gravity or angular-momentum transfer acceptance",
+      "No CUDA"
+    ]
+  },
+  "readerGate": {
+    "status": "PASS",
+    "cartesianMetadata": "accepted",
+    "internalRzMetadata": "explicitly rejected",
+    "errorCode": "WORKER_FAILED",
+    "diagnostic": "Unsupported candidate native geometry.",
+    "fileHashesUnchanged": true,
+    "scope": "Current production isolated reader capability gate; not RZ Viewer or science acceptance"
+  },
+  "publicationNegativeCases": 10,
+  "publicationTest": "PASS",
+  "actualDriverIo": "PASS",
+  "hostPlotRegression": {
+    "pass": 86,
+    "fail": 0,
+    "skipped": 0
+  },
+  "architectureAudit": "PASS",
+  "diffCheck": "PASS",
+  "frozenJens": {
+    "contract": "uniform-lifecycle-1",
+    "status": "PASS",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "b0f38076e245eb78c335b2324930f16d46cd952304aec5909ac100fe922812ad",
+    "cases": [
+      {
+        "name": "jeans-uniform-1d-active",
+        "dimension": 1,
+        "lane": "active",
+        "cells": 128,
+        "elapsed_seconds": 0.11485542700393125,
+        "restart_elapsed_seconds": 0.06388141599018127,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 29,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-1d-active"
+      },
+      {
+        "name": "jeans-uniform-1d-disabled",
+        "dimension": 1,
+        "lane": "disabled",
+        "cells": 64,
+        "elapsed_seconds": 0.06432793999556452,
+        "restart_elapsed_seconds": 0.11510420800186694,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-1d-disabled"
+      },
+      {
+        "name": "jeans-uniform-1d-output_only",
+        "dimension": 1,
+        "lane": "output_only",
+        "cells": 64,
+        "elapsed_seconds": 0.11479639000026509,
+        "restart_elapsed_seconds": 0.06404263997683302,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-1d-output_only"
+      },
+      {
+        "name": "jeans-uniform-2d-active",
+        "dimension": 2,
+        "lane": "active",
+        "cells": 4096,
+        "elapsed_seconds": 0.41485942600411363,
+        "restart_elapsed_seconds": 0.2646733160072472,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 218,
+        "stage_solves": 162,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 55,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-2d-active"
+      },
+      {
+        "name": "jeans-uniform-2d-disabled",
+        "dimension": 2,
+        "lane": "disabled",
+        "cells": 1024,
+        "elapsed_seconds": 0.11435785700450651,
+        "restart_elapsed_seconds": 0.11487633900833316,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-2d-disabled"
+      },
+      {
+        "name": "jeans-uniform-2d-output_only",
+        "dimension": 2,
+        "lane": "output_only",
+        "cells": 1024,
+        "elapsed_seconds": 0.21527686199988239,
+        "restart_elapsed_seconds": 0.06421497600967996,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-2d-output_only"
+      },
+      {
+        "name": "jeans-uniform-3d-active",
+        "dimension": 3,
+        "lane": "active",
+        "cells": 131072,
+        "elapsed_seconds": 24.386974975001067,
+        "restart_elapsed_seconds": 12.500921820988879,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 330,
+        "stage_solves": 246,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 83,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-3d-active"
+      },
+      {
+        "name": "jeans-uniform-3d-disabled",
+        "dimension": 3,
+        "lane": "disabled",
+        "cells": 16384,
+        "elapsed_seconds": 1.719747210998321,
+        "restart_elapsed_seconds": 1.0172371189983096,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-3d-disabled"
+      },
+      {
+        "name": "jeans-uniform-3d-output_only",
+        "dimension": 3,
+        "lane": "output_only",
+        "cells": 16384,
+        "elapsed_seconds": 1.770017758011818,
+        "restart_elapsed_seconds": 1.0670748509874102,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005/frozen-jeans-campaign/jeans-uniform-3d-output_only"
+      }
+    ],
+    "comparisons": [
+      {
+        "dimension": 1,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 2,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 3,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      }
+    ]
+  },
+  "frozenContractSha256": "815c6369f5a33c3bd549dc86c43b876f542f6af00c78a2978155962d8a9eb1fe",
+  "rawEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-plot-20261005",
+  "limitations": [
+    "No new rotating initialization or subcell kinetic reference",
+    "No public RZ Viewer or Preview capability",
+    "No complete C/D signoff",
+    "RZ-VISC-01 and RZ-AXIS-01 remain open",
+    "No CUDA qualification or RZ long run"
+  ]
+}

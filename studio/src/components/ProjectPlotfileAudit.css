@@ -1,0 +1,32 @@
+
+.project-plotfile-audit button {
+ color: #d5e2eb;
+ background: #20323e;
+ border: 1px solid #526572;
+ border-radius: 4px;
+ margin: 3px;
+ padding: 6px 10px;
+}
+.project-plotfile-audit button:disabled { opacity: .45; }
+.project-plotfile-audit button:focus-visible,
+.project-plotfile-audit input:focus-visible,
+.project-plotfile-audit select:focus-visible { outline: 2px solid #ffde59; outline-offset: 2px; }
+.project-plotfile-audit input:not([type="checkbox"]), .project-plotfile-audit select {
+ color: #d5e2eb;
+ background: #14232c;
+ border: 1px solid #526572;
+ padding: 5px;
+}
+.project-plotfile-audit label { margin: 4px 8px 4px 0; }
+.project-plotfile-audit fieldset { border: 1px solid #526572; }
+
+/* Keep cancellation and the request outcome reachable while inspecting long files. */
+.project-plotfile-audit .plotfile-read-controls {
+ position: sticky;
+ top: 0;
+ z-index: 2;
+ padding: 8px 0;
+ background: #0f1921;
+ border-bottom: 1px solid #526572;
+}
+.project-plotfile-audit .plotfile-read-controls p { margin: 6px 0; }

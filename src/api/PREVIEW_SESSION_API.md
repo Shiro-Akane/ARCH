@@ -47,12 +47,12 @@ Host 设置项目的运行工作目录，使用参数数组直接启动 binary�
 | `--inspect-config` | 无 |
 | `--amr-resources` | 无 |
 | `--inspect-case` | 无 |
-| `--preview` | Sod：`samples`；CellularDet：`samplesX1` 与 `samplesX2` 同时提供 |
+| `--preview` | 1D：samples；2D：samplesX1/samplesX2；3D：samplesX1/samplesX2/samplesX3（各活动轴同时提供或省略） |
 | `--preview-amr` | `meshMaxBlocks`、`meshMemoryMiB` |
 
 范围、默认值、维数、采样排列和模型支持范围与相应旧命令相同。整数字段不接受 JSON 小数或指数形式。未知字段、重复字段、错误类型、未知命令被拒绝。传输对象只接受字符串和整数成员；不接受嵌套对象、数组、布尔值或 null。
 
-发现/schema 查询仍使用原有便宜的单次命令。新增会话不扩展场图或网格支持列表：模型检查覆盖 11 个现有模型，完整场图和 AMR 当前仍为 Sod 1D / CellularDet 2D。
+发现/schema 查询仍使用原有便宜的单次命令。当前 Core 通用初态扩展由 extensions.initialSampling.version="1" 协商；会话按实际配置维度接受 samples（1D）或全部 samplesX1/samplesX2[/samplesX3]（2D/3D），不能混用。模型域由当前 modelCapabilities 查询，不固定11或14个模型；SetupChecked仍检查具体配置。详见 README 的通用初态说明。旧会话传输版本和 Sod/Cellular 数据含义保持兼容。
 
 需要主动释放资源时发送：
 

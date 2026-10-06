@@ -94,7 +94,11 @@ def runtime_inputs(*, parameter_file: Path, working_directory: Path,
             raise RuntimeError("scientific overrides must be single parameter values")
         overrides[key] = text.strip()
     effective.update(overrides)
-    eos_type = effective.get("eos_type", "ideal").lower()
+    eos_type = effective.get("eos_type", "").lower()
+    # Configuration v3 requires an explicit EOS. Identity collection must not
+    # invent a model choice or treat an unknown spelling as a table EOS.
+    if eos_type not in {"ideal", "helmholtz", "tabular"}:
+        raise RuntimeError("runtime validation identity requires explicit valid eos_type")
     dependencies = []
     if eos_type != "ideal":
         # EOSFactory::table_path and checkpoint provenance remove quote marks;

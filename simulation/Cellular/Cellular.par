@@ -20,8 +20,8 @@ x2_max    = 12.8
 x3_min    = 0.0
 x3_max    = 1.0
 
-# A reflecting left face can act as a rigid wall for ignition; the present
-# file leaves x1l unspecified and therefore uses the parser's default.
+# Preserve the previous effective left boundary explicitly.
+x1l_boundary_type = outflow
 x1r_boundary_type = outflow
 x2l_boundary_type = outflow
 x2r_boundary_type = outflow
@@ -119,3 +119,17 @@ noiseAmplitude = 0.0     # Sinusoidal density/pressure amplitude; 0 keeps planar
 xhe4 = 0.4               # Mass fractions must sum to one.
 xc12 = 0.6
 xo16 = 0.0
+
+# Explicit migration of previous registered controls.
+compute_backend = cpu
+eos_coulomb_mult = 1.0
+hll_wave_speed = roe
+min_eint = 1e-10
+ode_atol = 1e-8
+ode_rtol = 1e-4
+smallt = 1e5
+smallx = 1e-20
+use_diffusion = false
+use_nse = true
+nseTempThreshold = 4.5e9
+nseDensThreshold = 1e6

@@ -25,3 +25,19 @@ JSON 的 Fraction 以有理数字符串输出。所有带 `per_2pi` 的积分量
 完整连续 Newton 面力、源内/接触误差界及真实演化预算不在这个工具里。它的测试通过只记 `ANALYTIC_FIXTURE_REFERENCES_ONLY`；四项 RZ finding 和 CUDA JENS public gate 仍各自保留。
 
 输入单位：rho 为 g/cm³，r/z 为 cm，dt 为 s，Ω 为 s⁻¹，a 为 cm⁻² s⁻¹，μ 为 g/(cm*s)，P0 为 dyn/cm²。V 总量为 cm³，W 为 cm⁴，J 为 g cm²/s，能量总量为 erg。μ 多项式是参考工具的输入，不新增生产配置参数。
+
+## 私有候选复验工具
+
+`run_frozen_rz_closure.py` 与 `run_production_binding_mutations.py` 仅供隔离候选树使用，不会解除公开门槛或应用候选 patch。`--identity` 接收已冻结的 JSON 文件或 JSON 对象文本，必须包含三个 64 位十六进制 SHA-256：
+
+```json
+{
+  "elf_sha256": "<independently frozen candidate ELF SHA-256>",
+  "fixture_sha256": "<frozen production fixture SHA-256>",
+  "patch_sha256": "<frozen inert patch SHA-256>"
+}
+```
+
+占位符必须换成独立核对的实际摘要。不能在同一次待验运行中自动生成并接受这些值作为来源证明。runner 在执行前及每组执行后核对文件身份；closure 检查 24 个完整且唯一的参数组合、精确终点、有限误差、错误拒绝原因和生产所有者计数。mutation 必须以预期诊断和精确拒绝退出码结束，崩溃/信号不算通过；默认 `--jobs 2`。修改后的源码在失败时也须恢复并重建、核对原 binary 身份。
+
+这些约束有标准库离线测试：`python3 -m unittest discover -s tests/tooling -p test_rz_qualification_runners.py -v`。通过只证明 runner 的检查边界，不证明候选科学通过，也不证明公开门槛未变化；runner 明确报告 `NOT_CHECKED_BY_RUNNER`，公共入口另验。

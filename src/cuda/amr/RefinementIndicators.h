@@ -59,6 +59,25 @@ inline std::size_t indicator_wave_capacity(std::size_t cells, int species,
     return std::min({blocks, std::size_t{1024}, capacity});
 }
 
+// Accepted-state JENS reduction is separate from curvature indicators.
+// Borrowed storage has active_cell_count doubles and total_size*n_species
+// composition entries. The caller owns Current/version validation and fencing.
+struct DeviceJeansWorkspace {
+    double* cell_resolution = nullptr;
+    double* block_minimum = nullptr;
+    double* composition = nullptr;
+    int* eos_status = nullptr;
+};
+#define ARCH_DECLARE_JEANS_RESOLUTION(EOS) \
+cudaError_t launch_cuda_jeans_resolution( \
+    DeviceStateView state, DeviceGridView grid, EOS eos, \
+    DeviceJeansWorkspace workspace, cudaStream_t stream)
+ARCH_DECLARE_JEANS_RESOLUTION(IdealGasView);
+ARCH_DECLARE_JEANS_RESOLUTION(HelmEosView);
+ARCH_DECLARE_JEANS_RESOLUTION(Tabular3DEOSView);
+ARCH_DECLARE_JEANS_RESOLUTION(Tabular4DEOSView);
+#undef ARCH_DECLARE_JEANS_RESOLUTION
+
 #define ARCH_DECLARE_REFINEMENT_INDICATORS(EOS) \
 cudaError_t launch_cuda_refinement_indicators( \
     DeviceStateView state, DeviceGridView grid, EOS eos, \

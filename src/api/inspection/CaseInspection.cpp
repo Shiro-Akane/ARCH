@@ -76,8 +76,7 @@ void validate_probe_domain(const SimConfig& c) {
     for (int i = 0; i < c.grid.dim; ++i)
         if (!std::isfinite(lo[i]) || !std::isfinite(hi[i]) || !(hi[i] > lo[i]) || !std::isfinite(hi[i]-lo[i]))
             throw std::invalid_argument("Probe requires finite ordered active-axis bounds");
-    for (const auto& [key, value] : c.custom_params)
-        if (!std::isfinite(value)) throw std::invalid_argument("Non-finite parameter: " + key);
+    c.RequireLoadedValues();
 }
 } // namespace
 /** Run setup and bounded CPU initial-state inspection without time integration. */
@@ -99,7 +98,8 @@ PreviewResponse InspectCase(const PreviewRequest& request) {
     int code = 3;
     const char* error = "INVALID_CONFIGURATION";
     try {
-        config = RuntimeParams::LoadText(request.config_text, reads);
+        config = RuntimeParams::LoadText(request.config_text, request.case_id,
+            arch::config::ConfigurationPurpose::InitialState, reads);
         PublishStateSnapshot(out["state"], config);
         validate_probe_domain(config);
         code = 4; error = "UNSUPPORTED_CASE_INSPECTION"; ReportStage(request, out, "support");

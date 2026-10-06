@@ -1,0 +1,264 @@
+{
+  "date": "2026-10-05",
+  "status": "SCOPED_CPU_PASS_PRODUCTION_RZ_GATED",
+  "sourceBaseline": "88746c86704e0bcb37feed0685323cf0f0375654",
+  "dirtyAtBuild": true,
+  "sourceFingerprints": {
+    "src/physics/gravity/FiniteRingBoundaryMath.h": "41a6a0b082c7b21dc079e2fe4696b5ea3df213117a2266b7fea2b96ce100ca86",
+    "src/physics/gravity/GravityBoundary.cpp": "f60f7e845645b1b81ca74aa716a5272e2439b1855289bea7020037bd4c31c70c",
+    "src/physics/gravity/GravityBoundary.h": "cf6b7c6b39a879a7a674a0cffc1414b60b78dc04eceff476747cb2fbb9c94de1",
+    "tests/host/gravity/test_composite_poisson.cpp": "28c35cd8687674e2ff5f1bd720108bcac456a893e4324b2ab5c05a5fa9f828b8",
+    "validation/gravity/rz_ring_far_leaf_reference.py": "1718abc120966e7c7feef8ec46162f30c44deb0ca22dc8ecf89426b72fe737b8"
+  },
+  "cpuArchBinarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "cpuArchBinaryUnchanged": true,
+  "scopedTestBinarySha256": "b6e0457a7f023f8d6d88ff8c261879299d44441d64562b545d546f5fea8d3a2b",
+  "internalControl": {
+    "relativeTarget": 1e-10,
+    "absoluteTarget": 0,
+    "maximumBoxes": 8192,
+    "productionScienceThreshold": false
+  },
+  "samples": [
+    {
+      "r": 2.0,
+      "z": 0.0,
+      "lower": -1.1311305668751044,
+      "upper": -1.1311305666489453,
+      "error": 1.1307954572714608e-10,
+      "boxes": 5761.0,
+      "range_evaluations": 11521.0,
+      "kernel_enclosures": 115210.0,
+      "agm_iterations": 485941.0
+    },
+    {
+      "r": 0.75,
+      "z": 2.0,
+      "lower": -1.1005902388232087,
+      "upper": -1.1005902386031456,
+      "error": 1.1003153943534018e-10,
+      "boxes": 2985.0,
+      "range_evaluations": 5969.0,
+      "kernel_enclosures": 59690.0,
+      "agm_iterations": 238727.0
+    },
+    {
+      "r": 0.01,
+      "z": 2.0,
+      "lower": -1.1669888613941326,
+      "upper": -1.166988861160915,
+      "error": 1.1660894472242947e-10,
+      "boxes": 2377.0,
+      "range_evaluations": 4753.0,
+      "kernel_enclosures": 47530.0,
+      "agm_iterations": 128364.0
+    },
+    {
+      "r": 2.0,
+      "z": -0.7,
+      "lower": -1.01330737088948,
+      "upper": -1.0133073706869038,
+      "error": 1.0128808902720722e-10,
+      "boxes": 4007.0,
+      "range_evaluations": 8013.0,
+      "kernel_enclosures": 80130.0,
+      "agm_iterations": 321977.0
+    }
+  ],
+  "independentNewtonDiagnostic": {
+    "status": "PASS",
+    "cases": 4,
+    "reference": "independent full-azimuth 3D Newton product quadrature",
+    "orders": [
+      12,
+      16
+    ],
+    "decimalPrecisions": [
+      80,
+      100
+    ],
+    "sampleDomain": "separated",
+    "angularSamples": [
+      128,
+      256
+    ],
+    "scope": "diagnostic containment, not certified quadrature error or full RZ scientific acceptance",
+    "rows": [
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.0000000000000p+1",
+          "0x0.0p+0"
+        ],
+        "newtonOrder12Precision80": "-7.5495047417708233465779181324587139714691551732550635358426811064024650696945558E-8",
+        "newtonOrder16Precision100": "-7.549504741770823347628317740066271080772128762415162300637097240442054714148856585430077445672609274E-8",
+        "enclosure": {
+          "status": 0,
+          "lower": -7.54950474249451e-08,
+          "upper": -7.549504740985055e-08,
+          "value": -7.549504741739783e-08,
+          "absolute_error": 7.547275318272631e-18,
+          "boxes": 5761,
+          "range_evaluations": 11521,
+          "kernel_enclosures": 115210,
+          "agm_iterations": 485941
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.8000000000000p-1",
+          "0x1.0000000000000p+1"
+        ],
+        "newtonOrder12Precision80": "-7.3456694303420069637328190225381889667863387259626292293342695396500020026144939E-8",
+        "newtonOrder16Precision100": "-7.345669430342006963732789380969450745641013506079066044394876302521350645539401354581172034160193121E-8",
+        "enclosure": {
+          "status": 0,
+          "lower": -7.345669430977743e-08,
+          "upper": -7.345669429508974e-08,
+          "value": -7.345669430243359e-08,
+          "absolute_error": 7.34384182714379e-18,
+          "boxes": 2985,
+          "range_evaluations": 5969,
+          "kernel_enclosures": 59690,
+          "agm_iterations": 238727
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.47ae147ae147bp-7",
+          "0x1.0000000000000p+1"
+        ],
+        "newtonOrder12Precision80": "-7.7888337570144939805284053417549883437851060119245051898764619600929776135424872E-8",
+        "newtonOrder16Precision100": "-7.788833757014493980528454829474269559321731728537762473872335111334705201247562575517181499174742825E-8",
+        "enclosure": {
+          "status": 0,
+          "lower": -7.78883375760286e-08,
+          "upper": -7.788833756046294e-08,
+          "value": -7.788833756824577e-08,
+          "absolute_error": 7.782829886948132e-18,
+          "boxes": 2377,
+          "range_evaluations": 4753,
+          "kernel_enclosures": 47530,
+          "agm_iterations": 128364
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.0000000000000p+1",
+          "-0x1.6666666666666p-1"
+        ],
+        "newtonOrder12Precision80": "-6.7631173848142899394621962220907694131681820736511029332379335945015513486756448E-8",
+        "newtonOrder16Precision100": "-6.763117384814289939455888084575313387997458248709982737372276659604799985177746078076464100799578673E-8",
+        "enclosure": {
+          "status": 0,
+          "lower": -6.763117385527656e-08,
+          "upper": -6.763117384175601e-08,
+          "value": -6.763117384851628e-08,
+          "absolute_error": 6.7602758311549786e-18,
+          "boxes": 4007,
+          "range_evaluations": 8013,
+          "kernel_enclosures": 80130,
+          "agm_iterations": 321977
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "mode": "ring-separated-gauss",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-enclosure",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-native-face",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-far-leaf",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-axis-enclosure",
+      "exitCode": 0
+    },
+    {
+      "mode": "boundary-ledger",
+      "exitCode": 0
+    },
+    {
+      "mode": "ctest",
+      "exitCode": 0
+    },
+    {
+      "mode": "architecture",
+      "exitCode": 0
+    },
+    {
+      "mode": "diff",
+      "exitCode": 0
+    },
+    {
+      "mode": "decimal",
+      "exitCode": 0
+    }
+  ],
+  "ctestPassed": 4,
+  "knownCappedFailure": {
+    "sample": [
+      0.5,
+      1.0,
+      -0.23,
+      0.71,
+      1.0,
+      2.0,
+      0.0
+    ],
+    "maximumBoxes": 4096,
+    "relativeTarget": 1e-10,
+    "status": "WorkLimit",
+    "preservedAsNegativeTest": true
+  },
+  "proof": "Positive tensor Gauss weights, enclosed exact +/-1/sqrt(3) nodes, analytical fourth derivative remainder area*pi/360*((dr/d)^4*(1+rh/d)+(dz/d)^4*(rh/d))",
+  "actualWorkSemantics": {
+    "rangeEvaluations": "rectangle evaluations including replaced ancestors",
+    "kernelEnclosures": "actual K interval calls",
+    "agmIterations": "sum of K interval iterations; not scalar FLOP/runtime estimates"
+  },
+  "matchingJensReceipt": {
+    "binarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+    "evolutions": 9,
+    "restarts": 9,
+    "status": "PASS",
+    "rerunThisNode": false,
+    "reason": "No production ARCH ELF change or new JENS evidence after affected-target rebuild"
+  },
+  "limitations": [
+    "Contact/inside strict target remains WorkLimit",
+    "General parent far certificate incomplete",
+    "Full native RHS coefficient/assembly/residual and real AMR source publication pending",
+    "No production RZ or CUDA/full scientific acceptance"
+  ],
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-separated-gauss-20261005"
+}

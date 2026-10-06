@@ -20,13 +20,24 @@ build also passes native burn restart.
 Whole-project acceptance is tracked in the [validation index](../README.md).
 
 The `BurnOneZone` implementation remains in `simulation/BurnOneZone/`; the
-immutable parameter files owned by this record are in [`inputs/`](inputs/).
+immutable parameter files owned by this record are in [`inputs/`](inputs).
 They run the production burn driver at
 $\rho=10^7\,\mathrm{g\,cm^{-3}}$, $T=3\times10^9\,\mathrm{K}$, initial
 `C12=0.5`, `O16=0.5`, and $t=10^{-10}\,\mathrm{s}$. The strict BE_NR input
 (`rtol=1e-10`, `atol=1e-14`) supplies an internal converged reference; BD and
 ROS4 use `rtol=1e-6`, `atol=1e-10`. This is solver cross-verification, not an
 independent physical validation of aprox13 rates.
+
+## Configuration v3 migration in progress
+
+The frozen historical inputs and results above are unchanged.
+[bd-config-v3.par](inputs/bd-config-v3.par) is the explicit-input migration of
+bd.par: it records the previously effective min_eint=1e-10,
+hll_wave_speed=roe and eos_coulomb_mult=1.0. The focused controller witness
+uses this file and the production BurnOneZone declaration. Its configuration
+loading is checked on CPU; this is not a new burn trajectory or CUDA result.
+The other archived inputs/runners still need configuration migration before
+the historical replay recipe can be used with the new loader.
 
 ## Helmholtz table identity
 

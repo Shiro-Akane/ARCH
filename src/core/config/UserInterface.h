@@ -33,7 +33,7 @@
  * @param INIT_FUNC Callback for initial data generation (InitFunc).
  */
 
-#define REGISTER_PROBLEM(NAME, SETUP_FUNC, INIT_FUNC)                                                                                     \
+#define REGISTER_PROBLEM_WITH_CONFIGURATION(NAME, SETUP_FUNC, INIT_FUNC, DESCRIBE_FUNC)                                                   \
     namespace                                                                                                                             \
     {                                                                                                                                     \
         /* Helper struct to trigger registration during static initialization */                                                          \
@@ -42,13 +42,18 @@
             ProxyRegisterer()                                                                                                             \
             {                                                                                                                             \
                 /* The constructor runs before main(), registering the callback */                                                        \
-                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<GenericProblemGenerator>(SETUP_FUNC, INIT_FUNC); }, {__FILE__, ARCH_CASE_SOURCE_SHA256, true}); \
+                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<GenericProblemGenerator>(SETUP_FUNC, INIT_FUNC); }, {__FILE__, ARCH_CASE_SOURCE_SHA256, true, DESCRIBE_FUNC}); \
             }                                                                                                                             \
         };                                                                                                                                \
                                                                                                                                           \
         /* Static instance forces the constructor to run at program startup */                                                            \
         static ProxyRegisterer global_proxy_instance;                                                                                     \
     }
+
+// The three-argument form retains explicit "incomplete" declaration status.
+// Function cases use the four-argument form to declare inputs before Setup.
+#define REGISTER_PROBLEM(NAME, SETUP_FUNC, INIT_FUNC) \
+    REGISTER_PROBLEM_WITH_CONFIGURATION(NAME, SETUP_FUNC, INIT_FUNC, {})
 
 /**
  * @brief Macro to register a class-based problem automatically.
@@ -62,7 +67,7 @@
         {                                                                                                                                 \
             ProxyRegistererClass()                                                                                                        \
             {                                                                                                                             \
-                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<TypedProblemGenerator<CLASS_TYPE>>(); }, {__FILE__, ARCH_CASE_SOURCE_SHA256, true});            \
+                ProblemRegistry::Get().Register(NAME, []() { return std::make_unique<TypedProblemGenerator<CLASS_TYPE>>(); }, {__FILE__, ARCH_CASE_SOURCE_SHA256, true, &arch::config::DescribeRegisteredCase<CLASS_TYPE>});            \
             }                                                                                                                             \
         };                                                                                                                                \
         static ProxyRegistererClass global_proxy_class_instance;                                                                          \

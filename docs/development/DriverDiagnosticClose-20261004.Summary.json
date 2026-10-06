@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "scope": "Actual CPU DriverIO time=0 diagnostics failure/recovery; no timestep evolution",
+  "before": {
+    "exitCode": 1,
+    "executableSha256": "24a1ba341c714f9a98f064fdfbefe3f7a9c7bf2c5b12b07a8f7c0d4fc5fca3bc",
+    "sourceSha256": "f4124a59694eb4bd9fd98dbfc6b8b3d872d0e1f88b22fe21e3400800f0906f59",
+    "finding": "run_timings.tsv and cpu_stage_timings.tsv buffered failures swallowed"
+  },
+  "after": {
+    "exitCode": 0,
+    "executableSha256": "4ff5396358835adb543d269307981fca4f8fbaea4717631caae751f47e09a225",
+    "sourceSha256": "8e65440816daf2f1b52f6c314aca6ff8305bad87a19c6bdd0e85fd7aefb7c23a",
+    "scenarios": [
+      "Cartesian run_timings.tsv /dev/full",
+      "Cartesian cpu_stage_timings.tsv /dev/full",
+      "RZ run_timings.tsv /dev/full",
+      "RZ cpu_stage_timings.tsv /dev/full"
+    ],
+    "recovery": true,
+    "repairSerializationAndPreviousCheckpointUnchanged": true
+  },
+  "helperConsumers": [
+    "run timings",
+    "CPU stage timings",
+    "state repair diagnostics",
+    "regrid measurements",
+    "CUDA backend trace",
+    "CUDA diffusion schedule"
+  ],
+  "limitations": [
+    "Regrid and CUDA streams use same helper but not fault-injected in this CPU fixture",
+    "No real ENOSPC, power-loss or fsync durability claim",
+    "Main ARCH not rebuilt yet; fixture separately recompiled from actual source",
+    "Science, public RZ and CUDA qualification remain incomplete"
+  ]
+}

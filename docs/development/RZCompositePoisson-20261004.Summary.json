@@ -1,0 +1,92 @@
+{
+  "baseHead": "6f34b4c9723941b245d4fad2a20165b89c9cfe77",
+  "dirtyInputs": {
+    "src/numerics/elliptic/EllipticMesh.h": "07a46768ab54520575a0799e3c16ffea2141f3dd9ea95365f5de55bfe124036b",
+    "src/numerics/elliptic/CartesianPoisson.cpp": "ea85c31f87b7b594db16bb7730f9accc1b2b0843f32d3e40b3cd36e2158e7eee",
+    "src/numerics/elliptic/CompositePoisson.cpp": "003352631633b94d8ff0d9583a360e06dea65ce66eb19470afed2ffc37e4e819",
+    "tests/host/gravity/test_composite_poisson.cpp": "1d60efa90cee1fe75e2be4231e4f2ccc90a6550e76ec62cd429ce1df39cd9c1e"
+  },
+  "binarySha256": "61405e020544d36a3b998653f3c4cd1e878811e91d88c56c4476feca102e0520",
+  "checks": {
+    "rz": "4/4 PASS",
+    "contract": "PASS",
+    "curved": "PASS",
+    "singular": "PASS",
+    "diffCheck": "PASS"
+  },
+  "results": [
+    {
+      "inner": 0.0,
+      "mixed": 0.0,
+      "cells": 64.0,
+      "coarse_fine": 0.0,
+      "volume": 3.1415926535897936,
+      "operator_error": 5.684341886080802e-14,
+      "face_error": 1.3322676295501878e-15,
+      "phi_error": 4.440892098500626e-16,
+      "solved_face_error": 9.992007221626409e-15,
+      "cycles": 1.0,
+      "residual": 4.446910979619515e-14,
+      "target": 1.0003365866503567e-09
+    },
+    {
+      "inner": 0.0,
+      "mixed": 1.0,
+      "cells": 112.0,
+      "coarse_fine": 32.0,
+      "volume": 3.1415926535897944,
+      "operator_error": 5.684341886080802e-14,
+      "face_error": 1.5543122344752192e-15,
+      "phi_error": 1.3510026430907374e-12,
+      "solved_face_error": 4.9320547645947954e-12,
+      "cycles": 9.0,
+      "residual": 1.9570830900747585e-11,
+      "target": 1.0008167567512743e-09
+    },
+    {
+      "inner": 0.5,
+      "mixed": 0.0,
+      "cells": 64.0,
+      "coarse_fine": 0.0,
+      "volume": 6.283185307179587,
+      "operator_error": 2.2737367544323206e-13,
+      "face_error": 2.220446049250313e-15,
+      "phi_error": 6.661338147750939e-16,
+      "solved_face_error": 1.4432899320127035e-14,
+      "cycles": 1.0,
+      "residual": 6.47742649993781e-14,
+      "target": 1.8083765512267432e-09
+    },
+    {
+      "inner": 0.5,
+      "mixed": 1.0,
+      "cells": 112.0,
+      "coarse_fine": 32.0,
+      "volume": 6.283185307179586,
+      "operator_error": 2.2737367544323206e-13,
+      "face_error": 2.220446049250313e-15,
+      "phi_error": 1.0710876630071198e-11,
+      "solved_face_error": 1.3740331095135616e-10,
+      "cycles": 8.0,
+      "residual": 7.098957692904127e-10,
+      "target": 1.8094049419931432e-09
+    }
+  ],
+  "reference": {
+    "potential": "0.75*r^2+1.25*z^2; point values",
+    "A": "-L",
+    "rhs": -5.5,
+    "gradient": [
+      "1.5*r",
+      "2.5*z"
+    ],
+    "boundary": "analytic test values only; no production free-space ring kernel"
+  },
+  "limits": [
+    "not self-gravity ring source/boundary acceptance",
+    "not RZ hydro evolution",
+    "not scientific thresholds frozen for this experiment",
+    "no CUDA",
+    "runtime native mesh loader unchanged"
+  ]
+}

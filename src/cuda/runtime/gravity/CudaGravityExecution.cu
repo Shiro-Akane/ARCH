@@ -98,9 +98,21 @@ public:
     }
     /** Visit a shared work descriptor and launch its scalar kernel. */
     template<class Variant> void launch(const Variant& work) {
-        std::visit([&](auto task){if(!task.size)return;
-            execute_work<<<(task.size+127)/128,128,0,lease_->stream>>>(task);
-            check_cuda(cudaGetLastError(),"launch shared gravity arithmetic");++counters_.kernels;
+        std::visit([&](auto task){
+            using Task=std::decay_t<decltype(task)>;
+            if constexpr(std::is_same_v<Task,Physical::Gravity::EvaluateRingBoundary>) {
+                // The result is a Host-owned control object, never device storage.
+                // Retire any old certificate even when this provider declines.
+                if(task.result)*task.result=Physical::Gravity::RingBoundaryEvaluation{};
+                // No Host fallback or device launch before CPU qualification.
+                throw std::logic_error("CUDA finite-ring boundary execution is not qualified");
+            } else {
+                if constexpr(std::is_same_v<Task,Physical::Gravity::EvaluateBoundary>)
+                    Physical::Gravity::validate_legacy_boundary_work(task);
+                if(!task.size)return;
+                execute_work<<<(task.size+127)/128,128,0,lease_->stream>>>(task);
+                check_cuda(cudaGetLastError(),"launch shared gravity arithmetic");++counters_.kernels;
+            }
         },work);
     }
     /** Launch a composite numerical work descriptor. */

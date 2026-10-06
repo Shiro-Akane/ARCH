@@ -41,3 +41,16 @@ use_diffusion=false
 rho0=1e7
 pressure0=6e6
 amplitude=1e-4
+
+# Explicit migration of previous effective controls and case inputs.
+compute_backend = cpu
+hll_wave_speed = roe
+sml_rho = 1e-12
+min_eint = 1e-10
+max_eint = 1e21
+gravity_boundary = periodic
+gravity_rtol = 1e-10
+gravity_atol = 0.0
+phase = 0.0
+mode = 1
+standing_wave = false

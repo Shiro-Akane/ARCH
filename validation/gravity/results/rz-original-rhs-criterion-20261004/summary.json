@@ -1,0 +1,54 @@
+{
+  "node": "conditional original-RHS residual criterion",
+  "authority_commit": "86bec324018349c6d81df84a3cced3ed9f9a2792",
+  "authority_sections": [
+    6,
+    7,
+    8
+  ],
+  "base_commit": "dd8c94893f13193f9661d13aa9ac3c1e73bd113c",
+  "build_source_dirty": true,
+  "architecture": "CPU Release, existing build-cpu; CUDA OFF",
+  "arch_sha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "production_binary_changed": false,
+  "source_sha256": {
+    "src/numerics/elliptic/CompositePoisson.h": "d1e15d0531d39292ba2a3b52f9eecb7059eea104229d5f1935894d150f419542",
+    "src/numerics/elliptic/CompositePoisson.cpp": "c210aa5f47ca700eeb89b1f053ae96d179d4de009f90e648bce83f9a45880ab5",
+    "tests/host/gravity/test_composite_poisson.cpp": "fef638c13afa7224a899d24364a46eb93a7fd6ec5a7923204fd77dfc4b1aa3f6"
+  },
+  "checks": {
+    "boundary_acceptance": "PASS",
+    "boundary_ledger": "PASS",
+    "core_ctest": "3/3 PASS",
+    "architecture": "PASS",
+    "diff_check": "PASS",
+    "memory_guard": "PASS"
+  },
+  "acceptance_evidence": {
+    "cells": 28,
+    "signed_patterns": 16,
+    "requested_rtol": 0.001,
+    "requested_atol": 0,
+    "safe_target_printed": 0.001,
+    "total_residual_upper_printed": 1.00491e-05,
+    "cancelled_rhs_safe_target": 0,
+    "cancelled_rhs_status": "ResidualTooLarge",
+    "exact_zero_status": "Accepted",
+    "estimated_arithmetic_status": "UncertifiedInput",
+    "subnormal_positive_upper": "PASS"
+  },
+  "proof_scope": "Conditional on certified caller-supplied face, assembly and residual-evaluation bounds; exact mathematical norm of stored vectors/weights. Tests against current discrete operator are regression evidence, not an independent physical geometry or near-quadrature proof.",
+  "production_wired": false,
+  "rz_production_gate": "RETAINED",
+  "remaining": [
+    "certified near/contact quadrature",
+    "geometry/moments/reduction rounding ledger",
+    "tree budget descent and source/AMR epochs",
+    "authoritative assembly and residual-evaluation bounds",
+    "independent Phi/face-force scientific verification",
+    "RZ-AXIS-01",
+    "RZ-VISC-01"
+  ],
+  "raw_local_only": "studio/.local/integration/rz-original-rhs-criterion-20261004",
+  "jens_repeat": "Not repeated: production ELF unchanged; prior matching frozen 9+9 evidence retained"
+}

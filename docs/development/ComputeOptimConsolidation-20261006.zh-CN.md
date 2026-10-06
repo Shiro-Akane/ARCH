@@ -1,3 +1,5 @@
+> 后续整合已在 `compute/optim` 完成，当前入口见[本轮集成报告](ComputeStudioIntegrationReport-20261006.zh-CN.md)及[release 收束计划](ComputeStudioReleasePlan-20261006.zh-CN.md)。下文保留早前分支整理节点的原始范围。
+
 # compute/optim：分支归并与交付入口
 
 日期：2026-10-06。此轮调整集成路线与分支管理，不发布新的科学能力。

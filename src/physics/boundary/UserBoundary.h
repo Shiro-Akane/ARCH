@@ -356,9 +356,17 @@ inline std::string BoundaryRestartIdentity(const SimConfig& config, const Resolv
                 arch::config::standard_parameters.end(), [&](const auto& field){ return field.key == key; });
         };
         text << std::hexfloat;
-        for (const auto& [key, value] : config.custom_params) if (scientific_custom(key))
+        std::map<std::string, double> numeric;
+        std::map<std::string, std::string> strings;
+        for (const auto& [key, token] : config.DeclaredInputTokens()) {
+            if (!scientific_custom(key)) continue;
+            try { numeric.emplace(key, ConfigParser::ParseNumber(key, token)); }
+            catch (const ConfigValueError&) { strings.emplace(key, token); }
+        }
+        // Retain boundary-v1 ordering/encoding from the former custom maps.
+        for (const auto& [key, value] : numeric)
             text << key.size() << ':' << key << '=' << value << ';';
-        for (const auto& [key, value] : config.custom_string_params) if (scientific_custom(key))
+        for (const auto& [key, value] : strings)
             text << key.size() << ':' << key << '=' << value.size() << ':' << value << ';';
     }
     return text.str();

@@ -1,0 +1,26 @@
+{
+  "baseline": "5a44cbec69d92e87e60427ea692f8c08b6448caa",
+  "status": "synthetic-runner-checks-pass-not-scientific-or-performance-acceptance",
+  "tests": {
+    "passed": 8,
+    "failed": 0,
+    "runtime": "Python3.12 isolated venv",
+    "numpy": "2.5.3",
+    "h5py": "3.16.0"
+  },
+  "realArchRuns": 0,
+  "budgetChanged": false,
+  "limitations": [
+    "four-module two-plot topology contract retained",
+    "warmup/alternating order/thread screening pending",
+    "frozen scientific endpoints pending owner",
+    "real CPU/CUDA/restart qualification pending"
+  ],
+  "sourceSha256": {
+    "validation/gravity/curved/run_cuda_matrix.py": "18cc41bf2061d7f6348661cac34f5627e0de06eee50e5e8135329a6e2be15232",
+    "validation/gravity/curved/verify_coupled.py": "a6bdda865f569937afa5799a2c822b24ebcf0e9246c609b46e341791f324d2be",
+    "validation/gravity/curved/compare_backends.py": "fab5e1613b649bd5ecb396065fe8fae47a500b213d44610c41b5c825cf7f6e9c",
+    "validation/gravity/curved/test_physical_endpoint.py": "234c5cc82dbd750ae347738c54df7bfb6a842f73f72486e739a811d926a58a4e"
+  },
+  "localEvidence": "studio/.local/integration/physical-endpoint-runner-20261003"
+}

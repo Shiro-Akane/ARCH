@@ -25,6 +25,7 @@ if(ARCH_ENABLE_CUDA)
 endif()
 
 include(cmake/dependencies/Dependencies.cmake)
+include(cmake/studio/Studio.cmake)
 if(BUILD_TESTING)
     arch_register_io_regression_tests()
 endif()

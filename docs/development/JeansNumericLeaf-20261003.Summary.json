@@ -1,0 +1,17 @@
+{
+  "baseCommit": "a06b8d512eeaf0fc76495b1f74f671bbb012d93e",
+  "scope": "isolated numerical leaf only",
+  "referencePrecisions": [
+    80,
+    120
+  ],
+  "referenceCases": 8,
+  "invalidInputCases": 12,
+  "unrepresentableCases": 2,
+  "cpuCTest": "1/1 PASS",
+  "cudaValidated": false,
+  "productionConsumers": false,
+  "jensSupported": false,
+  "scientificAcceptance": "pending Core confirmation",
+  "simulationRun": false
+}

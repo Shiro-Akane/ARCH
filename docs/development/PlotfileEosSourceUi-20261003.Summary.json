@@ -1,0 +1,424 @@
+{
+  "sourceBase": "568026113e09ebeb03eb0b92a55fa35096660d4e",
+  "checks": [
+    {
+      "check": "test",
+      "exitCode": 0,
+      "seconds": 6.285298402995977
+    },
+    {
+      "check": "lint",
+      "exitCode": 0,
+      "seconds": 5.778291561997321
+    },
+    {
+      "check": "typecheck",
+      "exitCode": 0,
+      "seconds": 2.9279477919990313
+    },
+    {
+      "check": "build",
+      "exitCode": 0,
+      "seconds": 3.731576578000386
+    }
+  ],
+  "testCount": 315,
+  "reader": [
+    {
+      "case": "CellularDet",
+      "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+      "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+      "speciesProperties": {
+        "version": "checkpoint-species-1",
+        "state": "recorded",
+        "source": "resolved-runtime-checkpoint-provenance",
+        "values": {
+          "A": [
+            1,
+            3,
+            4,
+            12,
+            14,
+            16,
+            20,
+            24,
+            28,
+            32,
+            36,
+            40,
+            44,
+            48,
+            52,
+            54,
+            56,
+            1,
+            1
+          ],
+          "Z": [
+            1,
+            2,
+            2,
+            6,
+            7,
+            8,
+            10,
+            12,
+            14,
+            16,
+            18,
+            20,
+            22,
+            24,
+            26,
+            26,
+            28,
+            0,
+            1
+          ],
+          "gamma": [
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667,
+            1.6667
+          ],
+          "Cv": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "dimension": 2,
+      "fieldDeclaration": {
+        "version": "candidate-field-1",
+        "unit": "g/cm^3",
+        "centering": "cell",
+        "basis": "scalar",
+        "meaning": "mass_density",
+        "unitReason": null
+      },
+      "coordinateUnit": "cm",
+      "timeUnit": "s",
+      "measureUnit": "cm^2",
+      "measureNormalization": "per_unit_transverse_length",
+      "rawPointValue": 43375362.843074,
+      "pointIndex": 3074,
+      "overviewScannedCells": 5120,
+      "readerClientValidation": "PASS",
+      "completion": "unknown",
+      "renderEligible": false,
+      "scope": "real t=0 DENS metadata/slice/overview/point; not native UI or science acceptance",
+      "hostPropertyFp64BitMismatchCount": 0
+    },
+    {
+      "case": "Sod",
+      "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+      "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+      "speciesProperties": {
+        "version": "checkpoint-species-1",
+        "state": "recorded",
+        "source": "resolved-runtime-checkpoint-provenance",
+        "values": {
+          "A": [
+            1
+          ],
+          "Z": [
+            1
+          ],
+          "gamma": [
+            1.4
+          ],
+          "Cv": [
+            1
+          ]
+        }
+      },
+      "dimension": 1,
+      "fieldDeclaration": {
+        "version": "candidate-field-1",
+        "unit": "g/cm^3",
+        "centering": "cell",
+        "basis": "scalar",
+        "meaning": "mass_density",
+        "unitReason": null
+      },
+      "coordinateUnit": "cm",
+      "timeUnit": "s",
+      "measureUnit": "cm",
+      "measureNormalization": "per_unit_transverse_area",
+      "rawPointValue": 0.125,
+      "pointIndex": 186,
+      "overviewScannedCells": 192,
+      "readerClientValidation": "PASS",
+      "completion": "unknown",
+      "renderEligible": false,
+      "scope": "real t=0 DENS metadata/slice/overview/point; not native UI or science acceptance",
+      "hostPropertyFp64BitMismatchCount": 0
+    }
+  ],
+  "isolated": {
+    "version": "isolated-plotfile-cost-1",
+    "node": "v24.21.0",
+    "rows": [
+      {
+        "case": "CellularDet",
+        "bytes": 474616,
+        "fields": 1,
+        "cells": 5120,
+        "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+        "rawPoint": {
+          "value": 43375362.843074,
+          "index": 3074
+        },
+        "queries": [
+          {
+            "label": "metadata",
+            "elapsedMs": 168.731825,
+            "responseBytes": 2721,
+            "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+            "scannedCells": null,
+            "observedWorkers": [
+              {
+                "pid": 911811,
+                "rssKiB": 113988,
+                "rchar": 4832750,
+                "readBytes": 0
+              }
+            ]
+          },
+          {
+            "label": "overview-0",
+            "elapsedMs": 182.98418,
+            "responseBytes": 23713,
+            "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+            "scannedCells": 5120,
+            "observedWorkers": [
+              {
+                "pid": 911830,
+                "rssKiB": 123528,
+                "rchar": 7884639,
+                "readBytes": 0
+              }
+            ]
+          },
+          {
+            "label": "overview-1",
+            "elapsedMs": 177.78679100000005,
+            "responseBytes": 23713,
+            "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+            "scannedCells": 5120,
+            "observedWorkers": [
+              {
+                "pid": 911841,
+                "rssKiB": 124648,
+                "rchar": 7884598,
+                "readBytes": 0
+              }
+            ]
+          },
+          {
+            "label": "point",
+            "elapsedMs": 182.65380200000004,
+            "responseBytes": 3688,
+            "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+            "scannedCells": null,
+            "observedWorkers": [
+              {
+                "pid": 911852,
+                "rssKiB": 120996,
+                "rchar": 6815166,
+                "readBytes": 0
+              }
+            ]
+          },
+          {
+            "label": "cancel-after-worker-observed",
+            "elapsedMs": 2.2266499999999496,
+            "error": {
+              "code": "CANCELLED",
+              "message": "Metadata read cancelled."
+            },
+            "responseBytes": 0,
+            "fileSha256": null,
+            "scannedCells": null,
+            "observedWorkers": []
+          },
+          {
+            "label": "metadata-after-cancel",
+            "elapsedMs": 164.86522100000002,
+            "responseBytes": 2721,
+            "fileSha256": "e233a0f5918889d31ba790555a4b1ef4ff92d8eedec4516c1b80730ef6be2e9c",
+            "scannedCells": null,
+            "observedWorkers": [
+              {
+                "pid": 911864,
+                "rssKiB": 117136,
+                "rchar": 4832750,
+                "readBytes": 0
+              }
+            ]
+          }
+        ],
+        "cancelBusyRecovery": "PASS",
+        "rawFileUnchanged": true
+      },
+      {
+        "case": "Sod",
+        "bytes": 38360,
+        "fields": 1,
+        "cells": 192,
+        "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+        "rawPoint": {
+          "value": 0.125,
+          "index": 186
+        },
+        "queries": [
+          {
+            "label": "metadata",
+            "elapsedMs": 162.92546000000004,
+            "responseBytes": 2262,
+            "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+            "scannedCells": null,
+            "observedWorkers": [
+              {
+                "pid": 911875,
+                "rssKiB": 113604,
+                "rchar": 4395926,
+                "readBytes": 0
+              }
+            ]
+          },
+          {
+            "label": "overview-0",
+            "elapsedMs": 177.07716600000003,
+            "responseBytes": 4928,
+            "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+            "scannedCells": 192,
+            "observedWorkers": [
+              {
+                "pid": 911887,
+                "rssKiB": 118520,
+                "rchar": 4429142,
+                "readBytes": 0
+              }
+            ]
+          },
+          {
+            "label": "overview-1",
+            "elapsedMs": 177.5212100000001,
+            "responseBytes": 4928,
+            "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+            "scannedCells": 192,
+            "observedWorkers": [
+              {
+                "pid": 911903,
+                "rssKiB": 118152,
+                "rchar": 4429150,
+                "readBytes": 0
+              }
+            ]
+          },
+          {
+            "label": "point",
+            "elapsedMs": 168.48043699999994,
+            "responseBytes": 3182,
+            "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+            "scannedCells": null,
+            "observedWorkers": [
+              {
+                "pid": 911930,
+                "rssKiB": 119724,
+                "rchar": 4402614,
+                "readBytes": 0
+              }
+            ]
+          },
+          {
+            "label": "cancel-after-worker-observed",
+            "elapsedMs": 2.6127140000000963,
+            "error": {
+              "code": "CANCELLED",
+              "message": "Metadata read cancelled."
+            },
+            "responseBytes": 0,
+            "fileSha256": null,
+            "scannedCells": null,
+            "observedWorkers": []
+          },
+          {
+            "label": "metadata-after-cancel",
+            "elapsedMs": 162.093437,
+            "responseBytes": 2262,
+            "fileSha256": "913d30637d4c416e84984dd1c1bfb4ac627cf9896db394f040c614446e93874c",
+            "scannedCells": null,
+            "observedWorkers": [
+              {
+                "pid": 911954,
+                "rssKiB": 115804,
+                "rchar": 4395926,
+                "readBytes": 0
+              }
+            ]
+          }
+        ],
+        "cancelBusyRecovery": "PASS",
+        "rawFileUnchanged": true
+      }
+    ],
+    "limitations": [
+      "5ms observed worker HWM/counters may miss final peak and exit counters.",
+      "Worker counters include Node/import/WASM; rchar is not dataset-only reads.",
+      "Hash checks warm OS cache; not a cold-cache benchmark.",
+      "Each query starts a fresh worker; no cross-query cache; full digest and leaf scan remain.",
+      "No HTTP/native UAT, large-file scalability or simultaneous simulation claim."
+    ]
+  },
+  "productionAsset": "index-DvnQdgEl.js",
+  "productionAssetSha256": "51510e3d2afe4389d8a2e0219df2faba6ce9f21b27f01e3abaf48242048181d0",
+  "nativeUat": {
+    "window": "ARCH Studio — ARCH-compute-optim (ARCH-Ubuntu-24.04)",
+    "capturedFrame": [
+      1516,
+      1037
+    ],
+    "CellularDet": "19 species expanded; h1 through neut/prot reachable; raw Cv=0 shown without fallback",
+    "Sod": "SodGas A=1 Z=1 gamma=1.4 Cv=1 visible",
+    "sourceStatus": "partial; run/effective config/build/source Git unknown retained",
+    "actions": "reload production assets; Real Plotfile; project-relative read; accordion; scrollbar; no Save/Preview/Run",
+    "scrollFinding": "wheel injection did not move viewport; scrollbar drag worked; not classified as application failure",
+    "legacyUat": "automated real HDF tests; no new native legacy pass claimed",
+    "selectedCoreBinary": "existing older selection remains needs-build; not elevated by file inspection"
+  },
+  "scope": "read-only recorded EOS properties; not complete scientific provenance/physics or full goal completion"
+}

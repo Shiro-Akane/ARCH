@@ -1,0 +1,155 @@
+{
+  "build": {
+    "sourceHead": "ab23bad7e8bea93c3569618d1a6335312372cc30",
+    "sourceStatus": "",
+    "beforeBinarySha256": "a5d3467297188775069d9c466cdfacb0dfa3143ec7a834de714446c12a248308",
+    "command": [
+      "cmake",
+      "--build",
+      "build-cpu",
+      "--target",
+      "ARCH",
+      "--parallel",
+      "8"
+    ],
+    "startedUnix": 1791034639.3712778,
+    "pid": 758250,
+    "exitCode": 0,
+    "finishedUnix": 1791034659.6933875,
+    "afterBinarySha256": "c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec"
+  },
+  "t0Test": {
+    "command": [
+      "python3",
+      "-B",
+      "/home/arch/projects/ARCH-compute-optim/tests/api/preview/test_ui_expansion.py",
+      "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-field-t0-20261003/ARCH-field-t0",
+      "/home/arch/projects/ARCH-compute-optim",
+      "/home/arch/projects/ARCH-compute-optim/build-cpu/arch_preview_mesh_checkpoint",
+      "Expansion.test_mesh_matches_production_initial_topology"
+    ],
+    "startedUnix": 1791034721.7748985,
+    "finishedUnix": 1791034725.3978643,
+    "exitCode": 0,
+    "evidenceDirectories": [
+      "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/CellularDet-g7bb373i",
+      "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/Sod-fbrry7vz"
+    ]
+  },
+  "cases": [
+    {
+      "case": "CellularDet",
+      "dimension": 2,
+      "time": 0,
+      "step": 0,
+      "leafBlocks": 20,
+      "storedShape": [
+        20,
+        16,
+        16
+      ],
+      "densitySamplesCompared": 5120,
+      "densityBitExactMismatchCount": 0,
+      "logicalKeysMatchPreviewAndCheckpoint": true,
+      "maxNativeBoundsAbsDifference": 1.7763568394002505e-15,
+      "maxCartesianCenterAbsDifference": 0.0,
+      "maxCellMeasureAbsDifference": 0.0,
+      "numericalMetadataReview": "reported without adding scientific tolerance",
+      "caseRawConfigBinaryEosSpeciesMatch": true,
+      "rawConfigSha256": "a9bede7dc324042290dcf818dfbfd7e4ddde82c05bcea161eda05f21836300fe",
+      "binarySha256": "c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec",
+      "plotfileSha256": "abd3382e89a55ce9f44bc04979795043aa004e62034178bb199d5189a2e3b7bb",
+      "plotfileBytes": 473216,
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/CellularDet-g7bb373i",
+      "scope": "t=0 DENS/native metadata only; no evolution or all-field acceptance"
+    },
+    {
+      "case": "Sod",
+      "dimension": 1,
+      "time": 0,
+      "step": 0,
+      "leafBlocks": 12,
+      "storedShape": [
+        12,
+        16
+      ],
+      "densitySamplesCompared": 192,
+      "densityBitExactMismatchCount": 0,
+      "logicalKeysMatchPreviewAndCheckpoint": true,
+      "maxNativeBoundsAbsDifference": 0.0,
+      "maxCartesianCenterAbsDifference": 0.0,
+      "maxCellMeasureAbsDifference": 0.0,
+      "numericalMetadataReview": "reported without adding scientific tolerance",
+      "caseRawConfigBinaryEosSpeciesMatch": true,
+      "rawConfigSha256": "7bc7d49cab1f9953f54eb5e195354080ee859c07842c9237498593c25b156def",
+      "binarySha256": "c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec",
+      "plotfileSha256": "b78b025ab3854aa505054b4f3eb69d6e408a8a9367cf5925bd0d72737e7c12b4",
+      "plotfileBytes": 36944,
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/Sod-fbrry7vz",
+      "scope": "t=0 DENS/native metadata only; no evolution or all-field acceptance"
+    }
+  ],
+  "reader": [
+    {
+      "case": "CellularDet",
+      "fileSha256": "abd3382e89a55ce9f44bc04979795043aa004e62034178bb199d5189a2e3b7bb",
+      "binarySha256": "c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec",
+      "dimension": 2,
+      "fieldDeclaration": {
+        "version": "candidate-field-1",
+        "unit": "g/cm^3",
+        "centering": "cell",
+        "basis": "scalar",
+        "meaning": "mass_density",
+        "unitReason": null
+      },
+      "coordinateUnit": "cm",
+      "timeUnit": "s",
+      "measureUnit": "cm^2",
+      "measureNormalization": "per_unit_transverse_length",
+      "rawPointValue": 43375362.843074,
+      "pointIndex": 3074,
+      "overviewScannedCells": 5120,
+      "readerClientValidation": "PASS",
+      "completion": "unknown",
+      "renderEligible": false,
+      "scope": "real t=0 DENS metadata/slice/overview/point; not native UI or science acceptance"
+    },
+    {
+      "case": "Sod",
+      "fileSha256": "b78b025ab3854aa505054b4f3eb69d6e408a8a9367cf5925bd0d72737e7c12b4",
+      "binarySha256": "c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec",
+      "dimension": 1,
+      "fieldDeclaration": {
+        "version": "candidate-field-1",
+        "unit": "g/cm^3",
+        "centering": "cell",
+        "basis": "scalar",
+        "meaning": "mass_density",
+        "unitReason": null
+      },
+      "coordinateUnit": "cm",
+      "timeUnit": "s",
+      "measureUnit": "cm",
+      "measureNormalization": "per_unit_transverse_area",
+      "rawPointValue": 0.125,
+      "pointIndex": 186,
+      "overviewScannedCells": 192,
+      "readerClientValidation": "PASS",
+      "completion": "unknown",
+      "renderEligible": false,
+      "scope": "real t=0 DENS metadata/slice/overview/point; not native UI or science acceptance"
+    }
+  ],
+  "studioChecks": {
+    "tests": 309,
+    "pass": 309,
+    "fail": 0,
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "productionAsset": "index-BJQ3bLmF.js"
+  },
+  "scientificReview": "pending; no new tolerance introduced",
+  "nativeDesktopUnitsUat": "pending; prior navigation UAT is a separate unchanged result"
+}

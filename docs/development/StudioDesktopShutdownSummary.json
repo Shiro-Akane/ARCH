@@ -1,0 +1,8 @@
+{
+  "scope": "real Linux Wayland launcher TERM shutdown with active renderer, not user window-close UAT",
+  "launcherPid": 372,
+  "hostPid": 422,
+  "exitCode": 0,
+  "cleanShutdownLogged": true,
+  "hostGone": true
+}

@@ -11,6 +11,11 @@
  */
 
 #pragma once
+#include <array>
+#include <cmath>
+#include <stdexcept>
+#include "data/MaterialValue.h"
+
 #include <limits>
 
 #include <algorithm>
@@ -35,6 +40,7 @@ struct GasProperty
     double Z;         ///< Atomic number
     double gamma_ref; ///< Specific Heat Ratio (Cp/Cv), also known as Adiabatic Index.
     double Cv_ref;    ///< Specific heat capacity (erg/(g K))
+    std::array<arch::config::MaterialValue, 4> provenance{};
 };
 
 struct SpeciesHostView;
@@ -90,6 +96,32 @@ struct SpeciesManager
         species_list.push_back({name, A, Z, gamma, Cv});
         // The index of the newly added element is size - 1
         return species_list.size() - 1;
+    }
+
+    int add_species(std::string name, arch::config::MaterialValue A,
+                    arch::config::MaterialValue Z, arch::config::MaterialValue gamma,
+                    arch::config::MaterialValue Cv) {
+        species_list.push_back({std::move(name), A.value, Z.value, gamma.value, Cv.value,
+                                {std::move(A), std::move(Z), std::move(gamma), std::move(Cv)}});
+        return species_list.size() - 1;
+    }
+
+    // Applies to application preparation, not standalone numeric species views.
+    void ValidateRegistrationSources() const {
+        for (const auto& species : species_list) {
+            const double values[] = {species.A, species.Z, species.gamma_ref, species.Cv_ref};
+            for (std::size_t i = 0; i < species.provenance.size(); ++i) {
+                const auto& source = species.provenance[i];
+                if (!std::isfinite(values[i]) || source.value != values[i]
+                    || source.origin == arch::config::MaterialOrigin::Unknown
+                    || source.owner.empty()
+                    || (source.origin == arch::config::MaterialOrigin::ModelDefinition
+                        && source.source_identity.empty())
+                    || (source.origin == arch::config::MaterialOrigin::ResolvedInput
+                        && source.parameter_key.empty()))
+                    throw std::invalid_argument("Missing or changed material registration source: " + species.name);
+            }
+        }
     }
 
     EOS_INLINE double get_A(int id) const { return species_list[id].A; }

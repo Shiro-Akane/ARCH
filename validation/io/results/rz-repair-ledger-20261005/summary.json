@@ -1,0 +1,231 @@
+{
+  "scope": "RZ repair integral measure identity through CPU stages, runtime, checkpoint and diagnostics; not full RZ scientific/CUDA qualification",
+  "baseCommit": "47cb34d373afd8184e15514559693cfd2bf4d4eb",
+  "binarySha256": "b3f2c618d1912f1e2f0ae709dfab1e0af33b3f4302a9063d53dcbd680359cd06",
+  "repairSemantics": {
+    "existing": "existing-volume-v1",
+    "rz": "rz-native-V-angular-J-v1",
+    "rzAngularSlot": 6,
+    "rzAngularMeasure": "W=integral r dV",
+    "rzAngularUnit": "g*cm^2/s",
+    "otherConservedMeasure": "V",
+    "strictRzRepairPolicy": "reject unresolved candidate; no repair or extra heat"
+  },
+  "independentChecks": {
+    "V": 2,
+    "W": 5,
+    "densityDeltaPhi": 3,
+    "expectedExistingSlot6": 6,
+    "expectedRzSlot6": 15,
+    "weightedMergeExpectedJ": 22.5,
+    "mixedMergeRejectedBeforeMutation": true,
+    "nonzeroHistoricalReinterpretationRejected": true,
+    "invalidOrOverflowWProductRejectedBeforeMutation": true,
+    "nonzeroNativeRzLedgerRoundTripExact": true,
+    "mandatoryRzRepairTagEvenZero": true,
+    "missingWrongFutureRzTagRejected": true,
+    "wrongWriterFrameDoesNotTruncate": true,
+    "strictUnresolvedRzCandidateLeavesZeroLedger": true
+  },
+  "regression": {
+    "initialCtest": {
+      "passed": 67,
+      "total": 71,
+      "failed": [
+        "input_resolution",
+        "shared_stage_scheduler",
+        "ui_expansion_contract",
+        "checkpoint_compatibility"
+      ]
+    },
+    "finalChangedRetest": {
+      "passed": [
+        "input_resolution",
+        "shared_stage_scheduler",
+        "ui_expansion_contract",
+        "checkpoint_compatibility",
+        "low_density_math"
+      ]
+    },
+    "reconciledCtestPassed": 71,
+    "total": 71,
+    "scope": "Initial full suite plus targeted reruns after fixture migrations; not a second full-suite invocation",
+    "consumers": {
+      "continuation": {
+        "exitCode": 0,
+        "executableSha256": "1f67eee2787f01f2c9775ef49068f9860df2242dd489e341b793627d75847e3c"
+      },
+      "population": {
+        "exitCode": 0,
+        "executableSha256": "34408b3e85f0a1f546c65b114a7b923046a8d954c782882225da8f204df8d338"
+      },
+      "registered": {
+        "exitCode": 0,
+        "executableSha256": "653e692835bdf0bb22c1a879944aa8bb869dfb35d7663c97f74d800850a23b34"
+      },
+      "driver-io-final": {
+        "exitCode": 0,
+        "executableSha256": "f8985ed1e833362d91e2260d92f9588930922240470a915c491acc14bfa51c40"
+      }
+    }
+  },
+  "jens": {
+    "contract": "uniform-lifecycle-1",
+    "status": "PASS",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "b3f2c618d1912f1e2f0ae709dfab1e0af33b3f4302a9063d53dcbd680359cd06"
+  },
+  "jensCases": [
+    {
+      "name": "jeans-uniform-1d-active",
+      "dimension": 1,
+      "lane": "active",
+      "cells": 128,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 114,
+      "stage_solves": 84,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": 29,
+      "maxJensRelativeError": 4.50750606346323e-17
+    },
+    {
+      "name": "jeans-uniform-1d-disabled",
+      "dimension": 1,
+      "lane": "disabled",
+      "cells": 64,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 58,
+      "stage_solves": 42,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": null
+    },
+    {
+      "name": "jeans-uniform-1d-output_only",
+      "dimension": 1,
+      "lane": "output_only",
+      "cells": 64,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 58,
+      "stage_solves": 42,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": 4.50750606346323e-17
+    },
+    {
+      "name": "jeans-uniform-2d-active",
+      "dimension": 2,
+      "lane": "active",
+      "cells": 4096,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 218,
+      "stage_solves": 162,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": 55,
+      "maxJensRelativeError": 4.50750606346323e-17
+    },
+    {
+      "name": "jeans-uniform-2d-disabled",
+      "dimension": 2,
+      "lane": "disabled",
+      "cells": 1024,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 114,
+      "stage_solves": 84,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": null
+    },
+    {
+      "name": "jeans-uniform-2d-output_only",
+      "dimension": 2,
+      "lane": "output_only",
+      "cells": 1024,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 114,
+      "stage_solves": 84,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": 4.50750606346323e-17
+    },
+    {
+      "name": "jeans-uniform-3d-active",
+      "dimension": 3,
+      "lane": "active",
+      "cells": 131072,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 330,
+      "stage_solves": 246,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": 83,
+      "maxJensRelativeError": 4.50750606346323e-17
+    },
+    {
+      "name": "jeans-uniform-3d-disabled",
+      "dimension": 3,
+      "lane": "disabled",
+      "cells": 16384,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 170,
+      "stage_solves": 126,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": null
+    },
+    {
+      "name": "jeans-uniform-3d-output_only",
+      "dimension": 3,
+      "lane": "output_only",
+      "cells": 16384,
+      "mass_relative_drift": 0.0,
+      "energy_minus_nuclear_over_initial_gas": 0.0,
+      "solves": 170,
+      "stage_solves": 126,
+      "restartExact": true,
+      "uniformFieldsExact": true,
+      "acceptedStateTransactionSteps": null,
+      "maxJensRelativeError": 4.50750606346323e-17
+    }
+  ],
+  "inputFingerprints": {
+    "src/core/problem/ProblemHelper.cpp": "e660c9a26df881ff8dae984219182a6b093bd676d1d0af0d3a5363775e443cba",
+    "src/data/StateDiagnostics.h": "bc030af4b17e7c0977d0c8c5c7ffa9e583939afa46815244169890a73a9a2fc2",
+    "src/driver/io/DriverIO.cpp": "a646820934dce38b61605e256aed61312965c49a112718b755e5102cc516b346",
+    "src/driver/runtime/DriverRuntime.cpp": "37e23c731840d694552526846f1e13e402b8cda7ec316035e482aa6e0c23a327",
+    "src/driver/stages/DriverStages.h": "00f9e70c9ee177a76f01054e53b11f89ec02cd8f84dfaef974360b6aa38481ea",
+    "src/io/chk/ChkIO.cpp": "ccbfb4598d52ad8b3121ec14b255c15a1a72d9c785355b5d94732702a1937846",
+    "src/io/hdf5/HDF5Writer.cpp": "7cd483ebff8cd3776bbed9fd70fb0d53c53163788f88ecfc5d50c6f8a57da06e",
+    "src/numerics/integrator/TimeIntegratorHelper.h": "3cfbba65128a757c23fb78d068bdecb89715e44368bb5693bd294fd5af365199",
+    "tests/api/preview/test_ui_expansion.py": "92a6978890c7f43cb8526c826e3d69f0ef4796e99b17bade7e9316b7190d915b",
+    "tests/host/core/test_input_resolution.cpp": "824eb661c637f49dae77f104d36bfcff27522fd698ad402a9937cbe397dc254a",
+    "tests/host/driver/test_shared_stage_scheduler.cpp": "44d8b2a757e6ef2de9aef7fb7827035dc5179ca17eec1d52df533e520635bec3",
+    "tests/host/io/test_checkpoint_compatibility.cpp": "d18f1ba68736a24dd66ea49e06d10df23ae29e0019620a7f1e58be2356318d58",
+    "tests/host/io/test_driver_checkpoint_geometry.cpp": "7da452993343225aa27097e747d4acdbe0a816294db3c63ee8bedf5708394a75",
+    "tests/host/numerics/test_low_density.cpp": "3420c024d321a0a482122f5cf9bc1637c168a812e284f525d6100b961f55014e"
+  },
+  "rawEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-repair-ledger-20261005",
+  "limitations": [
+    "Runtime RZ repairs remain forbidden for unresolved candidates",
+    "Internal constant axial continuation has zero angular momentum; not rotating evolution validation",
+    "No new CUDA build or CUDA qualification",
+    "No new RZ long run or timing claim",
+    "RZ viscosity/axis-force and complete ring RHS/reference gates remain open",
+    "No Windows work"
+  ]
+}

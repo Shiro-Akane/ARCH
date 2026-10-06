@@ -1,0 +1,79 @@
+{
+  "sourceCommit": "a68aee854307102a39de636923f2f3968a787244",
+  "scope": "Native Run start verified; native Stop NOT EXERCISED",
+  "runId": "8befed9e-b6cd-44e8-97e8-6ec44491e81b",
+  "state": {
+    "runId": "8befed9e-b6cd-44e8-97e8-6ec44491e81b",
+    "state": "succeeded",
+    "workerPid": 26373,
+    "workerStartTicks": "749053",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T05:45:14.747Z",
+    "processId": 26385,
+    "processStartTicks": "749060",
+    "processIdentity": "captured",
+    "exitCode": 0,
+    "signal": null,
+    "finishedAt": "2026-10-03T05:45:30.313Z"
+  },
+  "terminal": {
+    "pid": 26372,
+    "runId": "8befed9e-b6cd-44e8-97e8-6ec44491e81b"
+  },
+  "window": 13437218,
+  "openDialog": 527536,
+  "inputSha256": "27a1e7792bca0e20c9c4303900ac3a8e61d6a5980d942baaf08e1605d415fa59",
+  "frozenInputMatches": true,
+  "workerAbsent": true,
+  "coreAbsent": true,
+  "ownedProcessesBefore": [
+    {
+      "pid": 14246,
+      "state": "S",
+      "ppid": 14241,
+      "pgrp": 14246,
+      "startTicks": "279169"
+    },
+    {
+      "pid": 14292,
+      "state": "S",
+      "ppid": 14246,
+      "pgrp": 14246,
+      "startTicks": "279179"
+    },
+    {
+      "pid": 14445,
+      "state": "S",
+      "ppid": 14292,
+      "pgrp": 14445,
+      "startTicks": "279622"
+    }
+  ],
+  "ownedProcessesAfter": [
+    {
+      "pid": 14246,
+      "state": "S",
+      "ppid": 14241,
+      "pgrp": 14246,
+      "startTicks": "279169"
+    },
+    {
+      "pid": 14292,
+      "state": "S",
+      "ppid": 14246,
+      "pgrp": 14246,
+      "startTicks": "279179"
+    },
+    {
+      "pid": 14445,
+      "state": "S",
+      "ppid": 14292,
+      "pgrp": 14445,
+      "startTicks": "279622"
+    }
+  ],
+  "ownedIdentitiesUnchanged": true,
+  "stopAttempt": "Rejected by Computer Use: point (2498,1315) over explorer.exe FolderView, not selected msrdc Studio; reactivated once; run already naturally succeeded; no Stop retry or replay",
+  "rawEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-stop-20bbee1d-5e30-4988-9617-ee4cfd0e6812",
+  "scientificAcceptance": false
+}

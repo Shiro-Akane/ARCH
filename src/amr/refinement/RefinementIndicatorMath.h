@@ -43,8 +43,9 @@ struct Selection { Field field; int species = -1; };
 inline std::vector<Selection> make_selection(
     const AmrConfig& config, int dimension, std::span<const int> species)
 {
-    if (config.refine_on_jeans)
-        throw std::runtime_error("AMR JENS refinement criterion is not implemented in this build.");
+    if (config.refine_on_jeans &&
+        (!std::isfinite(config.jeans_cells) || config.jeans_cells < 4.0))
+        throw std::invalid_argument("JENS requires explicit finite jeans_cells >= 4.");
     if (config.refine_on_vely && dimension < 2)
         throw std::invalid_argument("VELY AMR indicator requires at least two spatial dimensions.");
     if (config.refine_on_velz && dimension < 3)

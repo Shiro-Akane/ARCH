@@ -11,13 +11,28 @@
 #pragma once
 
 #include "interface/ProblemGenerator.h"
+#include "driver/DriverUtils.h"
 
 namespace arch::driver {
 // Shared fresh-start boundary. Does not allocate a pool, evolve time or write output.
 inline void InitializeRootState(amr::AMRControl& control, ProblemGenerator& problem,
                                 const SimConfig& config, const SpeciesManager& species,
                                 ProblemInitializationContext context) {
-    control.tree->InitRootGrid(config, species.count());
-    problem.InitializeData(control, config, species, context);
+    control.tree->InitRootGrid(config, species.count(), context.geometry_semantics);
+    if(context.geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        // The initializer publishes physical interiors only. Reuse actual
+        // physical BC plans; interpatch placeholders are replaced by Driver's
+        // committed-handle exchange before any stage or topology publication.
+        BCHandler boundaries(config,context.geometry_semantics);
+        for(int id:control.tree->GetActiveBlocks())
+            (void)boundaries.logical_plan(control.pool->GetBlock(id).grid);
+        problem.InitializeData(control, config, species, context);
+        for(int id:control.tree->GetActiveBlocks()) {
+            auto& block=control.pool->GetBlock(id);
+            boundaries.apply(block.fluid_state,block.grid);
+        }
+    } else {
+        problem.InitializeData(control, config, species, context);
+    }
 }
 } // namespace arch::driver

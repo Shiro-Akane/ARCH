@@ -1,0 +1,83 @@
+{
+  "status": "INCOMPLETE_CPU_GATE",
+  "baselineHead": "799ecb806e4c97ba37276fbc90f6d9f09d6bde92",
+  "initialBuild": {
+    "exitCode": 1,
+    "finding": "Old raw SimConfig/species signature asserted callable after RuntimeConfiguration migration",
+    "memoryGuardStopped": false,
+    "swapGrowthKiB": 0
+  },
+  "buildResume": {
+    "baselineHead": "799ecb806e4c97ba37276fbc90f6d9f09d6bde92",
+    "testSourceSha256": "cf36c715f2cf972a2f9f4596cf58be2dadf1356ad735e2b569ad4f23d32204ff",
+    "buildResumeExitCode": 0,
+    "buildSeconds": 8.131860330999189,
+    "python": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/physical-endpoint-runner-20261003/venv/bin/python",
+    "pythonDependencies": null,
+    "ctestExitCode": 8,
+    "ctestSeconds": 118.34456367599341
+  },
+  "pythonAssociation": {
+    "from": "/usr/bin/python3",
+    "to": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/physical-endpoint-runner-20261003/venv/bin/python",
+    "numpyVersion": "2.5.3",
+    "h5pyVersion": "3.16.0",
+    "changedCacheKeys": [
+      "FIND_PACKAGE_MESSAGE_DETAILS_Python3:INTERNAL",
+      "Python3_EXECUTABLE:UNINITIALIZED",
+      "_Python3_EXECUTABLE:INTERNAL",
+      "_Python3_INTERPRETER_PROPERTIES:INTERNAL",
+      "_Python3_INTERPRETER_SIGNATURE:INTERNAL"
+    ],
+    "scientificCompilerOptionsChanged": false
+  },
+  "initialFullCtest": {
+    "tests": 71,
+    "pass": 69,
+    "fail": 2,
+    "skip": 0,
+    "failed": [
+      "self_gravity_physics",
+      "ui_expansion_contract"
+    ],
+    "seconds": 118.34456367599341,
+    "strictInventoryExitCode": 1,
+    "strictInventoryError": "cpu result check failed: JUnit reports nonzero failures"
+  },
+  "targetedRecheck": {
+    "uiExpansion": "PASS",
+    "cases": 9,
+    "seconds": 4.75,
+    "unknownCaseCode": 3,
+    "setupNotExecutedForUnknownCase": true
+  },
+  "gravityCloudMigration": {
+    "scope": "Only original quick Cartesian 3D cloud-1 t=0",
+    "effectiveValuesOrigin": "origin/compute/optim original GravityBox Setup and independent cloud oracle",
+    "domainLower": [
+      0,
+      0,
+      0
+    ],
+    "center": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "potentialRelativeRms": 0.006732694362631971,
+    "potentialBudget": 0.08,
+    "forceRelativeRms": 0.037610239604195655,
+    "forceBudget": 0.12,
+    "status": "PASS",
+    "fullCampaignPassed": false
+  },
+  "mainBinarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-full-cpu-regression-20261004",
+  "remaining": [
+    "Complete remaining gravity campaign input migration",
+    "Core approval of historical radial gravity_G=1e-20 equivalent input and budget",
+    "No full passing JUnit/inventory claim",
+    "O7.1 production lifecycle and RZ science/AMR/gravity gates",
+    "CUDA and approved O9 campaign"
+  ]
+}

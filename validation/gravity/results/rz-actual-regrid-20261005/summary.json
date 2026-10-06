@@ -1,0 +1,132 @@
+{
+  "status": "ACTUAL_CPU_RZ_RUNTIME_AMR_TRANSFER_PASS_GATES_HELD",
+  "baseline": "e2204588897dd97eb95a92ff534dce9f8bbccd3b",
+  "actualRuntime": {
+    "scope": "Actual CPU RZ Runtime ordinary AMR transaction; no timestep or gravity field grant",
+    "exitCode": 0,
+    "stdout": "ACTUAL_RZ_REGRID_CONSERVATION phase=refine mass=4.9443359450135940218e-18 energy=5.8830633892218087959e-18 angular=0 x0=1.3347385767055477273e-17 x1=1.3927706887362235913e-18 zero_rotation=1\nACTUAL_RZ_REGRID_CONSERVATION phase=coarsen mass=2.2087185287941087911e-17 energy=3.7106471283741027706e-18 angular=0 x0=7.1323202492309765397e-18 x1=1.6220276695831735588e-17 zero_rotation=1\nACTUAL_RZ_REGRID_CONSERVATION phase=no-change mass=0 energy=0 angular=0 x0=0 x1=0 zero_rotation=1\nACTUAL_RZ_RUNTIME_REGRID_PASS omega=0 root_blocks=2 refined_blocks=8 coarse_blocks=2 actual_ledger=1 old_handle_rejected=1 no_change_identity=1 production_gate_held=1 time=0 steps=0\nACTUAL_RZ_REGRID_CONSERVATION phase=refine mass=4.9443359450135940218e-18 energy=5.8830633892218087959e-18 angular=1.0178367504159992958e-17 x0=1.3347385767055477273e-17 x1=1.3927706887362235913e-18 zero_rotation=0\nACTUAL_RZ_REGRID_CONSERVATION phase=frozen-parent-veto mass=1.3252311172764652747e-17 energy=1.2545550436611475183e-17 angular=0 x0=1.9958992955509264994e-17 x1=2.5020639583995762343e-17 zero_rotation=0\nACTUAL_RZ_RUNTIME_PARENT_VETO_PASS transaction_rejected=0 active_blocks=5 children=4 parent_m=-111/8 parent_eint=-9/128 time=0 steps=0\nACTUAL_RZ_REGRID_CONSERVATION phase=coarsen mass=8.6968292071268033686e-18 energy=8.7465253740246708054e-18 angular=4.1413472414889539839e-19 x0=1.2481560436154209007e-17 x1=9.3180312933501458466e-18 zero_rotation=0\nACTUAL_RZ_REGRID_CONSERVATION phase=no-change mass=0 energy=0 angular=0 x0=0 x1=0 zero_rotation=0\nACTUAL_RZ_RUNTIME_REGRID_PASS omega=1 root_blocks=2 refined_blocks=8 coarse_blocks=2 actual_ledger=1 old_handle_rejected=1 no_change_identity=1 production_gate_held=1 time=0 steps=0\n",
+    "stderr": "",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "executableSha256": "fa67eee692ba42a91fdf1996773b5658409726f3ba9f14300d31f2ab698c5ba0",
+    "recompiledSources": {
+      "tests/host/gravity/test_rz_runtime_regrid_contract.cpp": "8321c7bf19ac84f6db0249683c8e0fee8e3fa9861972a7d8c381069264e95692",
+      "src/driver/stages/GravityStage.cpp": "fc2336d88b6041fae7e9c4106f6796e268ec54d189a622bc42f517103f60d038",
+      "src/driver/runtime/DriverRuntime.cpp": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+      "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+      "src/driver/runtime/DriverRegrid.cpp": "08f5d73713eadf576d9972f79ee2d5b71c28dc764ee42c153054c373339a62b8",
+      "src/amr/elliptic/EllipticMeshAdapter.cpp": "9e3be652d00e571861a1a893b98b2bc75fa7983e696c82d20a7079b24753b340"
+    },
+    "timestepHeaderSha256": "00f9e70c9ee177a76f01054e53b11f89ec02cd8f84dfaef974360b6aa38481ea",
+    "rklHeaderSha256": {
+      "src/numerics/diffusion/DiffDispatch.h": "349df128938e5237c861bee9de58f1e70f20841bdf22eb33bc164964d1088f09",
+      "src/numerics/diffusion/DiffusionAMRStages.h": "3f051214b754f42f4892081db0d07b19792a3cce1e757391fb6c4371403caf16",
+      "src/numerics/diffusion/RKL1TimeIntegrator.h": "b7673e0c3bc44e7df9d709a3e464e2e93032592d1c331018f66e8c6904653ccd",
+      "src/numerics/diffusion/RKL2TimeIntegrator.h": "28d4e56da8fc316e3a1ac01352c895381537acbbfeab42a8f316564cb1274e76"
+    },
+    "limitations": [
+      "Internal migration only; production RZ/Device gates held",
+      "No continuous Phi/force, Hydro evolution or full angular science acceptance"
+    ]
+  },
+  "conservationRows": [
+    {
+      "phase": "refine",
+      "mass": 4.944335945013594e-18,
+      "energy": 5.8830633892218085e-18,
+      "angular": 0.0,
+      "x0": 1.3347385767055477e-17,
+      "x1": 1.3927706887362236e-18,
+      "zero_rotation": "1"
+    },
+    {
+      "phase": "coarsen",
+      "mass": 2.2087185287941087e-17,
+      "energy": 3.7106471283741026e-18,
+      "angular": 0.0,
+      "x0": 7.132320249230976e-18,
+      "x1": 1.6220276695831737e-17,
+      "zero_rotation": "1"
+    },
+    {
+      "phase": "no-change",
+      "mass": 0.0,
+      "energy": 0.0,
+      "angular": 0.0,
+      "x0": 0.0,
+      "x1": 0.0,
+      "zero_rotation": "1"
+    },
+    {
+      "phase": "refine",
+      "mass": 4.944335945013594e-18,
+      "energy": 5.8830633892218085e-18,
+      "angular": 1.0178367504159993e-17,
+      "x0": 1.3347385767055477e-17,
+      "x1": 1.3927706887362236e-18,
+      "zero_rotation": "0"
+    },
+    {
+      "phase": "frozen-parent-veto",
+      "mass": 1.3252311172764653e-17,
+      "energy": 1.2545550436611476e-17,
+      "angular": 0.0,
+      "x0": 1.9958992955509264e-17,
+      "x1": 2.5020639583995764e-17,
+      "zero_rotation": "0"
+    },
+    {
+      "phase": "coarsen",
+      "mass": 8.696829207126804e-18,
+      "energy": 8.74652537402467e-18,
+      "angular": 4.141347241488954e-19,
+      "x0": 1.248156043615421e-17,
+      "x1": 9.318031293350145e-18,
+      "zero_rotation": "0"
+    },
+    {
+      "phase": "no-change",
+      "mass": 0.0,
+      "energy": 0.0,
+      "angular": 0.0,
+      "x0": 0.0,
+      "x1": 0.0,
+      "zero_rotation": "0"
+    }
+  ],
+  "maximumRelativeTransferError": 2.5020639583995764e-17,
+  "angularBudget": 1e-12,
+  "otherTransferBudget": 1e-12,
+  "zeroAngularReference": "exact zero, no substitute denominator",
+  "veto": {
+    "frozenParentMomentum": "-111/8",
+    "frozenParentInternalEnergy": "-9/128",
+    "actualMixedLeaves": 5,
+    "childrenPreservedBitwise": true,
+    "groupVeto": true,
+    "wholeTransactionRejected": false,
+    "validRecovery": "coarsened to two roots"
+  },
+  "runtimeHeaderSha256": "0f03a78d461067cb2c4de0920a7a5027b0aa743b8824348ac217f6cb4738905d",
+  "runnerSha256": "495075cc94118c1845ee1054acdab69713d82b76399ead03ea88f8785de5933f",
+  "cartesianRegression": {
+    "exitCode": 0,
+    "stdout": "ACTUAL_JEANS_RUNTIME_LEASE_PASS initial_blocks=4 coarse_blocks=4 nonfirst_version_reject=1 device_only_reject=1 time=0 steps=0\nACTUAL_GRAVITY_RUNTIME_CONTRACT_PASS initial_blocks=4 refined_blocks=8 coarsened_blocks=4 gathers=7 cells=64 time=0 steps=0\n",
+    "executableSha256": "b783b81169cbf103ae87727fed52a0ab525bb5aca5ee4db2bee59d1a53550040"
+  },
+  "checks": {
+    "retiredRootAndFineHandles": "rejected by actual new ledger",
+    "newInteriorGhostReadable": "PASS",
+    "noChangeIdentity": "stable",
+    "productionRzRegrid": "still rejected before and after candidate",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limitations": [
+    "Explicit internal CPU entry only; no public config/API/Driver production RZ capability",
+    "t=0 AMR transfers only; no Hydro torque impulse, evolution or spatial convergence qualification",
+    "Conservation uses each explicitly prepared engineering input, not continuous trajectory across input replacements",
+    "No gravity field solve on new mixed topology yet",
+    "No injected fatal finalizer/capacity rollback test in this node",
+    "No Device, long run, benchmark or current production ELF rebuild"
+  ]
+}

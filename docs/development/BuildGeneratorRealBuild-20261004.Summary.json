@@ -1,0 +1,198 @@
+{
+  "sourceGitHead": "8e5204628925cd2b531507dbc4174e2752826310",
+  "repositoryDirty": false,
+  "profile": "studio-cpu-release",
+  "parallelism": 4,
+  "buildType": "GNU Release",
+  "cuda": false,
+  "independentConfigure": false,
+  "simulationRun": false,
+  "firstBuild": {
+    "state": "succeeded",
+    "binaryState": "freshness-unknown",
+    "freshnessReason": "Compiler input stability was not established across Build.",
+    "changedInputs": [],
+    "result": {
+      "projectId": "generator-real-build-audit",
+      "buildId": "d827915d-c3e7-439e-92f1-55744b86b03d",
+      "startedAt": "2026-10-03T20:51:05.745Z",
+      "finishedAt": "2026-10-03T20:51:49.668Z",
+      "state": "succeeded",
+      "exitCode": 0,
+      "signal": null
+    },
+    "buildId": "d827915d-c3e7-439e-92f1-55744b86b03d",
+    "sourceGitHead": "8e5204628925cd2b531507dbc4174e2752826310",
+    "repositoryDirty": false,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+    "outputBinary": {
+      "relativePath": "build-studio-cpu/bin/ARCH",
+      "absolutePath": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu/bin/ARCH",
+      "fingerprint": {
+        "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+        "size": 7412240,
+        "modifiedTime": "2026-10-03T20:51:48.812Z"
+      }
+    },
+    "preBuildBinaryFingerprint": {
+      "sha256": "2c53420cde6f1e01c7997b39999d6073f5496e0fe3278e84b36e976de6eea117",
+      "size": 7254680,
+      "modifiedTime": "2026-10-03T16:21:13.805Z"
+    },
+    "configurationInputsStableDuringBuild": true,
+    "configurationInputCount": 82,
+    "generatorTools": [
+      {
+        "role": "cmake",
+        "path": "/usr/bin/cmake",
+        "resolvedPath": "/usr/bin/cmake",
+        "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+        "size": 11796472
+      },
+      {
+        "role": "ninja",
+        "path": "/usr/bin/ninja",
+        "resolvedPath": "/usr/bin/ninja",
+        "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+        "size": 248040
+      }
+    ],
+    "compilerInputCount": 742,
+    "compilerInputsStableDuringBuild": false,
+    "compilerDriversStableDuringBuild": true,
+    "linkInputCount": 175,
+    "missingLinkInputCount": 0,
+    "inputsStableDuringBuild": true,
+    "dependenciesComplete": false
+  },
+  "stableNoOpBuild": {
+    "state": "succeeded",
+    "binaryState": "freshness-unknown",
+    "freshnessReason": "Tracked inputs match; full dependency coverage is unknown.",
+    "changedInputs": [],
+    "result": {
+      "projectId": "generator-real-build-audit",
+      "buildId": "e62f1ecc-7269-4b35-bad9-7172c6b68cfc",
+      "startedAt": "2026-10-03T20:52:49.308Z",
+      "finishedAt": "2026-10-03T20:52:50.776Z",
+      "state": "succeeded",
+      "exitCode": 0,
+      "signal": null
+    },
+    "buildId": "e62f1ecc-7269-4b35-bad9-7172c6b68cfc",
+    "sourceGitHead": "8e5204628925cd2b531507dbc4174e2752826310",
+    "repositoryDirty": false,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+    "outputBinary": {
+      "relativePath": "build-studio-cpu/bin/ARCH",
+      "absolutePath": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu/bin/ARCH",
+      "fingerprint": {
+        "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+        "size": 7412240,
+        "modifiedTime": "2026-10-03T20:51:48.812Z"
+      }
+    },
+    "preBuildBinaryFingerprint": {
+      "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+      "size": 7412240,
+      "modifiedTime": "2026-10-03T20:51:48.812Z"
+    },
+    "configurationInputsStableDuringBuild": true,
+    "configurationInputCount": 82,
+    "generatorTools": [
+      {
+        "role": "cmake",
+        "path": "/usr/bin/cmake",
+        "resolvedPath": "/usr/bin/cmake",
+        "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+        "size": 11796472
+      },
+      {
+        "role": "ninja",
+        "path": "/usr/bin/ninja",
+        "resolvedPath": "/usr/bin/ninja",
+        "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+        "size": 248040
+      }
+    ],
+    "compilerInputCount": 742,
+    "compilerInputsStableDuringBuild": true,
+    "compilerDriversStableDuringBuild": true,
+    "linkInputCount": 175,
+    "missingLinkInputCount": 0,
+    "inputsStableDuringBuild": true,
+    "dependenciesComplete": false
+  },
+  "freshProcessDiskReload": {
+    "state": "ready",
+    "binaryState": "freshness-unknown",
+    "freshnessReason": "Tracked inputs match; full dependency coverage is unknown.",
+    "changedInputs": [],
+    "buildId": "e62f1ecc-7269-4b35-bad9-7172c6b68cfc",
+    "sourceGitHead": "8e5204628925cd2b531507dbc4174e2752826310",
+    "repositoryDirty": false,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+    "outputBinary": {
+      "relativePath": "build-studio-cpu/bin/ARCH",
+      "absolutePath": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu/bin/ARCH",
+      "fingerprint": {
+        "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+        "size": 7412240,
+        "modifiedTime": "2026-10-03T20:51:48.812Z"
+      }
+    },
+    "preBuildBinaryFingerprint": {
+      "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+      "size": 7412240,
+      "modifiedTime": "2026-10-03T20:51:48.812Z"
+    },
+    "configurationInputsStableDuringBuild": true,
+    "configurationInputCount": 82,
+    "generatorTools": [
+      {
+        "role": "cmake",
+        "path": "/usr/bin/cmake",
+        "resolvedPath": "/usr/bin/cmake",
+        "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+        "size": 11796472
+      },
+      {
+        "role": "ninja",
+        "path": "/usr/bin/ninja",
+        "resolvedPath": "/usr/bin/ninja",
+        "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+        "size": 248040
+      }
+    ],
+    "compilerInputCount": 742,
+    "compilerInputsStableDuringBuild": true,
+    "compilerDriversStableDuringBuild": true,
+    "linkInputCount": 175,
+    "missingLinkInputCount": 0,
+    "inputsStableDuringBuild": true,
+    "dependenciesComplete": false
+  },
+  "memoryGuardFirst": {
+    "min_available_kib": "18568344",
+    "baseline_swap_kib": "0",
+    "peak_swap_kib": "0",
+    "guard_stopped": "False",
+    "peak_owned_rss_kib": "4092172",
+    "elapsed_seconds": "47.282",
+    "stop_reason": "none"
+  },
+  "memoryGuardRecheck": {
+    "min_available_kib": "22086012",
+    "baseline_swap_kib": "0",
+    "peak_swap_kib": "0",
+    "guard_stopped": "False",
+    "peak_owned_rss_kib": "440536",
+    "elapsed_seconds": "5.015",
+    "stop_reason": "none"
+  },
+  "scope": "Real Host BuildRunner generator evidence persistence and disk reload; not full source/runtime dependency closure or scientific acceptance",
+  "rawDirectories": [
+    "studio/.local/integration/build-generator-real-build-20261004",
+    "studio/.local/integration/build-generator-stable-recheck-20261004"
+  ]
+}

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <array>
+#include <bit>
 #include <cmath>
 #include <memory>
 #include <map>
@@ -47,11 +48,14 @@ public:
     // One entry per exchange owner, not one entry per historical topology.
     // Logical plans contain no storage/view pointers. Slots, generations,
     // layouts and physical measures are deliberately rebound by each executor.
+    // Native geometry/chart also keys this cache because seam stencils store
+    // physical donor weights; field/slot contents remain outside the key.
     // The returned reference is valid until the next cache miss on this owner.
     const CachedPlans& GetPlans(
         const std::shared_ptr<MemoryPool>& pool,
         const std::shared_ptr<AmrTree>& tree, int dim,
-        std::span<const BlockHandle> handles) const
+        std::span<const BlockHandle> handles,
+        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart) const
     {
         if (!pool || !tree || dim < 1 || dim > 3)
             throw std::invalid_argument("invalid exchange plan cache context");
@@ -60,9 +64,10 @@ public:
             throw std::invalid_argument("exchange cache requires committed handles");
         auto& key = cache_probe_;
         key.clear();
-        key.reserve(2 + active.size() * 44);
+        key.reserve(3 + active.size() * 72);
         key.push_back(static_cast<std::uint64_t>(dim));
         key.push_back(active.size());
+        key.push_back(static_cast<std::uint64_t>(chart));
         for (std::size_t i = 0; i < active.size(); ++i) {
             if (!is_valid(handles[i]))
                 throw std::invalid_argument("exchange cache has invalid handle");
@@ -73,6 +78,20 @@ public:
                 static_cast<std::uint64_t>(block.level),
                 block.logical_x1, block.logical_x2, block.logical_x3,
                 static_cast<std::uint64_t>(block.fluid_state.GetNumSpecies())});
+            // Seam donor positions/weights depend on chart and native
+            // geometry, even if logical topology and handles are unchanged.
+            // Preserve binary64 identity instead of a lossy numeric hash.
+            const auto& grid = block.grid;
+            key.push_back(grid.geometry.size());
+            for (unsigned char byte : grid.geometry) key.push_back(byte);
+            for (double value : {grid.x1_min,grid.x1_max,grid.x2_min,grid.x2_max,
+                    grid.x3_min,grid.x3_max,grid.dx1,grid.dx2,grid.dx3})
+                key.push_back(std::bit_cast<std::uint64_t>(value));
+            key.insert(key.end(), {static_cast<std::uint64_t>(grid.dim),
+                static_cast<std::uint64_t>(grid.nblockx1),
+                static_cast<std::uint64_t>(grid.nblockx2),
+                static_cast<std::uint64_t>(grid.nblockx3),
+                static_cast<std::uint64_t>(grid.ng)});
             for (int face = 0; face < 2 * dim; ++face) {
                 const auto& neighbor = block.face_neighbors[face];
                 if (neighbor.count < 0 || neighbor.count > 4)
@@ -92,7 +111,7 @@ public:
         candidate->same_level = BuildSameLevelPlans(pool, tree, dim, handles);
         candidate->coarse_fine = BuildCoarseFinePlan(pool, tree, dim, handles);
         candidate->coordinate_seam = make_coordinate_seam_plan(
-            pool, active, dim);
+            pool, active, dim, chart);
         std::map<BlockHandle, std::size_t> indices;
         for (std::size_t i = 0; i < handles.size(); ++i)
             if (!indices.emplace(handles[i], i).second)
@@ -317,7 +336,9 @@ public:
         const std::shared_ptr<MemoryPool>& pool,
         const std::shared_ptr<AmrTree>& tree, int dim,
         FluidState Block::* state_ptr,
-        std::span<const BlockHandle> handles)
+        std::span<const BlockHandle> handles,
+        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart,
+        arch::state::Bounds bounds = {})
     {
         const auto& active_blocks = tree->GetActiveBlocks();
         if (state_ptr == nullptr || plan.dimension != dim
@@ -336,7 +357,20 @@ public:
             std::uint8_t source_count = 0;
             double source_measure_sum = 0.0;
             RefinementRule rule = RefinementRule::CoarseGhostInjection;
+            std::size_t rz_geometry = std::numeric_limits<std::size_t>::max();
         };
+        struct RzTransferGeometry {
+            regrid_math::ProlongationGeometry prolongation{};
+            regrid_math::RestrictionGeometry restriction{};
+            int fine_child = 0;
+        };
+        const bool rz=chart==CoordinateSeamGeometry::RzAxisymmetric;
+        if(rz && (dim!=2 || !std::isfinite(bounds.density) || bounds.density<0.0
+            || !std::isfinite(bounds.internal_min) || bounds.internal_min<0.0
+            || !std::isfinite(bounds.internal_max)
+            || bounds.internal_max<bounds.internal_min))
+            throw std::invalid_argument("RZ ghost exchange requires valid borrowed state bounds");
+        std::vector<RzTransferGeometry> rz_geometries;
         std::map<LogicalBlockKey, std::size_t> active_index;
         int species_count = -1;
         for (std::size_t index = 0; index < active_blocks.size(); ++index) {
@@ -422,7 +456,10 @@ public:
                     const LogicalAmrCell& logical =
                         transfer.source_cells[cell];
                     measure = GridMetrics::CellVolume(
-                        source_block.grid,
+                        GridMetrics::make_geometry_view(source_block.grid,
+                            chart==CoordinateSeamGeometry::RzAxisymmetric
+                                ? GridMetrics::GeometrySemantics::AxisymmetricRz
+                                : GridMetrics::GeometrySemantics::Existing),
                         source_block.grid.Is() + logical[0],
                         source_block.grid.Js() + logical[1],
                         source_block.grid.Ks() + logical[2]);
@@ -443,6 +480,59 @@ public:
                 || lowered.source_measure_sum <= 0.0)
                 throw std::invalid_argument(
                     "coarse-fine Host source measure sum is invalid");
+            if(rz) {
+                RzTransferGeometry geometry{};
+                const auto source_view=GridMetrics::make_geometry_view(source_block.grid,
+                    GridMetrics::GeometrySemantics::AxisymmetricRz);
+                const auto destination_view=GridMetrics::make_geometry_view(destination_block.grid,
+                    GridMetrics::GeometrySemantics::AxisymmetricRz);
+                if(lowered.rule==RefinementRule::CoarseGhostInjection) {
+                    auto& pg=geometry.prolongation;
+                    pg.dimension=2;pg.center=lowered.source_cells[0];pg.angular_momentum=true;
+                    for(int n=0;n<6;++n)pg.neighbours[n]=lowered.slope_cells[n];
+                    const int i=source_block.grid.Is()+transfer.source_cells[0][0];
+                    const int j=source_block.grid.Js()+transfer.source_cells[0][1];
+                    const double lo=source_view.GetFacePosL(i),hi=source_view.GetFacePosR(i);
+                    pg.coarse_volume=GridMetrics::CellVolume(source_view,i,j,0);
+                    pg.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(lo,hi,source_view.dx2);
+                    const double center=GridMetrics::Rz::AngularReconstructionCoordinate(lo,hi);
+                    pg.angular_neighbour_distances[0]=center-GridMetrics::Rz::AngularReconstructionCoordinate(
+                        source_view.GetFacePosL(i-1),source_view.GetFacePosR(i-1));
+                    pg.angular_neighbour_distances[1]=GridMetrics::Rz::AngularReconstructionCoordinate(
+                        source_view.GetFacePosL(i+1),source_view.GetFacePosR(i+1))-center;
+                    auto fine=GridMetrics::make_geometry_view(GridMetrics::Geometry::Cylindrical,2,
+                        {lo,source_view.x2_min+(j-source_view.ng)*source_view.dx2,0.},
+                        {source_view.dx1*.5,source_view.dx2*.5,1.});
+                    fine=GridMetrics::make_rz_geometry_view(fine);
+                    for(int c=0;c<4;++c) {
+                        const int fi=c&1,fj=(c>>1)&1;
+                        pg.fine_volumes[c]=GridMetrics::CellVolume(fine,fi,fj,0);
+                        pg.fine_angular_measures[c]=GridMetrics::Rz::AngularMomentumMeasure(
+                            fine.GetFacePosL(fi),fine.GetFacePosR(fi),fine.dx2);
+                        pg.angular_radial_offsets[c]=GridMetrics::Rz::AngularReconstructionCoordinate(
+                            fine.GetFacePosL(fi),fine.GetFacePosR(fi))-center;
+                    }
+                    geometry.fine_child=(transfer.fine_position[0]>0.0?1:0)
+                        |(transfer.fine_position[1]>0.0?2:0);
+                } else {
+                    auto& rg=geometry.restriction;
+                    rg.count=lowered.source_count;rg.angular_momentum=true;
+                    const int i=destination_block.grid.Is()+transfer.destination_cell[0];
+                    const int j=destination_block.grid.Js()+transfer.destination_cell[1];
+                    rg.coarse_volume=GridMetrics::CellVolume(destination_view,i,j,0);
+                    rg.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(
+                        destination_view.GetFacePosL(i),destination_view.GetFacePosR(i),destination_view.dx2);
+                    for(int c=0;c<rg.count;++c) {
+                        const int fi=source_block.grid.Is()+transfer.source_cells[c][0];
+                        rg.source_cells[c]=lowered.source_cells[c];
+                        rg.volumes[c]=lowered.source_measures[c];
+                        rg.angular_measures[c]=GridMetrics::Rz::AngularMomentumMeasure(
+                            source_view.GetFacePosL(fi),source_view.GetFacePosR(fi),source_view.dx2);
+                    }
+                }
+                lowered.rz_geometry=rz_geometries.size();
+                rz_geometries.push_back(geometry);
+            }
             compiled.push_back(lowered);
         }
 
@@ -452,6 +542,8 @@ public:
         };
         std::vector<GatheredTransfer> gathered;
         gathered.reserve(compiled.size());
+        std::vector<double> rz_workspace(rz
+            ? static_cast<std::size_t>(species_count)*regrid_math::prolongation_workspace_per_species : 0);
 
         // Gather the complete plan before scattering.  Besides matching the
         // CUDA two-kernel execution, this prevents the fine-to-coarse route
@@ -460,6 +552,41 @@ public:
         for (const CompiledTransfer& transfer : compiled) {
             const FluidState& source =
                 pool->GetBlock(transfer.source_id).*state_ptr;
+            if(rz) {
+                const auto& geometry=rz_geometries.at(transfer.rz_geometry);
+                const auto samples=regrid_state_view(source);
+                FluidVector fluid{};
+                GatheredTransfer values{};
+                values.mass_fractions.resize(static_cast<std::size_t>(species_count));
+                double enuc=0.0;
+                regrid_math::Status status;
+                if(transfer.rule==RefinementRule::CoarseGhostInjection) {
+                    regrid_math::ProlongationResult result{};
+                    status=regrid_math::prolong_family(samples,geometry.prolongation,species_count,
+                        bounds.density,bounds.internal_min,rz_workspace.data(),result);
+                    if(status!=regrid_math::Status::Ok)
+                        throw std::runtime_error(regrid_math::status_message(status));
+                    const int child=geometry.fine_child;
+                    fluid=result.fluid[child];enuc=result.enuc[child];
+                    for(int sp=0;sp<species_count;++sp)
+                        values.mass_fractions[sp]=result.rhoX[
+                            static_cast<std::size_t>(sp)*regrid_math::maximum_children+child]/fluid.rho;
+                } else {
+                    regrid_math::RestrictionResult result{};
+                    status=regrid_math::restrict_family(samples,geometry.restriction,species_count,
+                        bounds.density,bounds.internal_min,rz_workspace.data(),result);
+                    if(status!=regrid_math::Status::Ok)
+                        throw std::runtime_error(regrid_math::status_message(status));
+                    fluid=result.fluid;enuc=result.enuc;
+                    for(int sp=0;sp<species_count;++sp)values.mass_fractions[sp]=result.fractions[sp];
+                }
+                const auto recovered=arch::state::recover(fluid);
+                if(recovered.status!=arch::state::Status::valid || recovered.internal>bounds.internal_max)
+                    throw std::runtime_error("RZ ghost transfer violates borrowed state bounds");
+                values.fields={fluid.rho,fluid.mom_u,fluid.mom_v,fluid.mom_w,fluid.eng,enuc};
+                gathered.push_back(std::move(values));
+                continue;
+            }
             const prolongation_math::CompositionStencilView stencil{
                 source.rho.data(), source.mass_fractions.data(),
                 source.rho.size(), transfer.source_cells[0],
@@ -549,7 +676,9 @@ public:
     void ExecuteExchange(
         std::shared_ptr<MemoryPool> pool, std::shared_ptr<AmrTree> tree,
         int dim, FluidState Block::* state_ptr,
-        std::span<const BlockHandle> handles = {})
+        std::span<const BlockHandle> handles = {},
+        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart,
+        arch::state::Bounds bounds = {})
     {
         const auto& active_blocks = tree->GetActiveBlocks();
         if (handles.empty() || handles.size() != active_blocks.size())
@@ -587,7 +716,7 @@ public:
             view.species_stride = block.grid.GetTotalSize();
             views.push_back(view);
         }
-        const auto& plans = GetPlans(pool, tree, dim, handles);
+        const auto& plans = GetPlans(pool, tree, dim, handles, chart);
         host_compiled_.resize(plans.same_level.size());
         std::vector<HostExchangeBlockView> level_views;
         for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
@@ -623,7 +752,7 @@ public:
                 *compiled, level_views, host_workspace_);
         }
         ExecuteCoarseFinePlan(
-            plans.coarse_fine, pool, tree, dim, state_ptr, handles);
+            plans.coarse_fine, pool, tree, dim, state_ptr, handles, chart,bounds);
         execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 

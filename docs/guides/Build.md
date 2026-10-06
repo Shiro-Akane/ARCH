@@ -17,6 +17,7 @@ The presets in [CMakePresets.json](../../CMakePresets.json) keep output separate
 | Configure command | Build directory | Executable |
 | --- | --- | --- |
 | `cmake --preset cpu-release` | `build-cpu` | `build-cpu/bin/ARCH` |
+| `cmake --preset studio-cpu-release` | `build-studio-cpu` | `build-studio-cpu/bin/ARCH` + `arch-studio` |
 | `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
 | `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
@@ -249,3 +250,7 @@ module recipes in [Validation](../../validation/README.md) for scientific runs.
 Case boundary callbacks compile with the application. Keep `physical_boundary.cpp`
 and `gravity_boundary.cpp` beside the registered case source, then reconfigure
 and rebuild; no boundary path setting is needed. See [user boundaries](UserBoundaries.md).
+
+## Linux Studio desktop
+
+`studio-cpu-release` builds Core and the optional Electron desktop together; normal Core presets keep Studio disabled. The GUI preset uses the Host-owned local CPU build directory and GNU provenance settings. See the [Studio workflow](Studio.md) and [environment setup](StudioEnvironment.zh-CN.md) for Node 24+, WSLg, graphical libraries and independent terminal requirements.

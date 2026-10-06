@@ -24,7 +24,7 @@ namespace arch::api {
 // conversion; no quantization, interpolation or reuse across configurations.
 class InitialSampleCache {
 public:
-    using Row = std::array<double,7>;
+    using Row = std::array<double,8>;
     static constexpr std::size_t max_entries=1024, max_payload_bytes=1024*1024;
     std::size_t conversions=0, hits=0;
 private:

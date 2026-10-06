@@ -14,6 +14,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "api/ApplicationContract.h"
 
@@ -38,6 +39,7 @@ struct PreviewRequest {
     int sample_count = default_sample_count;
     bool sample_count_provided = false;
     std::optional<int> samples_x1, samples_x2;
+    std::optional<int> samples_x3;
     // Optional session progress; single-shot callers retain one JSON response.
     std::function<void(std::string_view)> progress;
     std::function<void(std::size_t, std::size_t, std::size_t)> sample_evaluation;
@@ -51,6 +53,19 @@ struct PreviewResponse {
 // and JSON in README.md. Single-shot and serial session transports share this
 // boundary. Optional bounded CPU initial hierarchy; no time stepping,
 // device probe or scientific output writer.
+// Explicit audited initialization domains, independent of registry membership.
+// SetupChecked remains authoritative for configuration-dependent restrictions.
+struct InitialPreviewDomain {
+    unsigned dimensions = 0;
+    bool curved = false;
+    bool uniform_state = false;
+    bool accepts(int dimension, std::string_view geometry) const {
+        return dimension >= 1 && dimension <= 3 && (dimensions & (1u << dimension))
+            && (geometry == "cartesian" || (curved
+                && (geometry == "spherical" || geometry == "cylindrical")));
+    }
+};
+InitialPreviewDomain PreviewDomain(std::string_view case_id);
 PreviewResponse GeneratePreview(const PreviewRequest &request);
 std::string PreviewCapabilities();
 PreviewResponse PreviewInputError(const std::string &message);

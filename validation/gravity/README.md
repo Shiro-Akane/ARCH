@@ -97,7 +97,7 @@ report and input identities. Keep the same build and data for both commands.
 ## Uniform source test
 
 The `ExternalGravity` problem in `simulation/ExternalGravity/` and the
-immutable parameters in [`inputs/`](inputs/) isolate the gravity source on a
+immutable parameters in [`inputs/`](inputs) isolate the gravity source on a
 uniform mesh. The application record
 reproduces the values below and in metrics.csv, with both backends
 reaching the prescribed physical endpoint.

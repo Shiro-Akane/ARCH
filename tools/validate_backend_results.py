@@ -67,15 +67,24 @@ def select_cases(manifest: dict[str, Any], requested: list[str]) -> list[dict[st
 
 
 def read_parameter_map(path: Path) -> dict[str, str]:
+    """Read unambiguous raw assignments; Core still owns semantic validation."""
     result: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.split("#", 1)[0]
-        match = PARAMETER_RE.match(stripped)
-        if match:
-            key = match.group(1)
-            if key in result:
-                raise RuntimeError(f"duplicate parameter in actual run inputs: {key}")
-            result[key] = match.group(2)
+    locations: dict[str, int] = {}
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        stripped = line.split("#", 1)[0].strip()
+        if not stripped:
+            continue
+        if "=" not in stripped:
+            raise RuntimeError(f"{path}:{number}: MALFORMED_LINE: expected equals sign")
+        key, value = (part.strip() for part in stripped.split("=", 1))
+        if not key:
+            raise RuntimeError(f"{path}:{number}: EMPTY_KEY")
+        if key in locations:
+            raise RuntimeError(
+                f"{path}:{number}: DUPLICATE_PARAMETER [{key}]; "
+                f"first assignment at line {locations[key]}; no occurrence selected")
+        locations[key] = number
+        result[key] = value
     return result
 
 
@@ -155,6 +164,8 @@ def render_terminal_parameter_file(
 def _render_parameter_overrides(
     source: Path, destination: Path, overrides: dict[str, str]
 ) -> None:
+    # Never repair ambiguous canonical input by applying execution overrides.
+    read_parameter_map(source)
     seen: set[str] = set()
     output: list[str] = []
     for line in source.read_text(encoding="utf-8").splitlines():

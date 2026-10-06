@@ -1,0 +1,32 @@
+{
+  "baseline": "ffcd32fd60ec574d0e2fc5cf7e75c54befe6cb27",
+  "scope": "Studio-only automatic project identity reconciliation after successful managed Build",
+  "checks": {
+    "npmTest": {
+      "pass": 320,
+      "fail": 0
+    },
+    "lint": 0,
+    "typecheck": 0,
+    "build": 0,
+    "diffCheck": 0
+  },
+  "productionAsset": "index-CRygbPVh.js",
+  "nativeUat": {
+    "platform": "Linux/WSLg existing Electron",
+    "electronPid": 839715,
+    "hostPid": 839760,
+    "manualProjectRefreshClicked": false,
+    "configureOrBuildRepeated": false,
+    "savedConfigEdited": false,
+    "sodPreview": "Current",
+    "binarySha256": "1bf5a00d0b8b332d0379ff75785f888a5a892f5b8fffc3a03fae015654b2086e",
+    "configSha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843"
+  },
+  "limits": [
+    "No native dirty-config or project-switch UAT; late refresh protection has scoped automated evidence.",
+    "No new Core Build, simulation, Plotfile or AMR request in this turn.",
+    "Build freshness remains unknown for complete dependency coverage.",
+    "No overall scientific or platform acceptance claim."
+  ]
+}

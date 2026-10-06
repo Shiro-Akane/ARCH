@@ -12,18 +12,22 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 #include "numerics/elliptic/CartesianPoisson.h"
 
 #include "core/CompensatedSum.h"
+#include "physics/constant/PhysicalConstants.h"
 
 namespace arch::elliptic {
-/** Validate geometric extents; complete angular coverage is a model requirement. */
-void validate_mesh(const CartesianMesh& m, bool full_angular_domain)
+/** Reject non-Cartesian mesh extents and spacing before building an operator. */
+void detail::validate_mesh_geometry(const CartesianMesh& m, bool full_angular_domain)
 {
+    const bool rz=m.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (rz && (m.dimension!=2 || m.geometry!=Geometry::Cylindrical))
+        throw std::invalid_argument("RZ elliptic mesh requires cylindrical dimension 2");
     if (m.dimension < 1 || m.dimension > 3) throw std::invalid_argument("Poisson dimension must be 1..3");
     std::size_t count = 1;
-    double smallest = std::numeric_limits<double>::max(), largest = 0.;
     double diagonal_bound = 0.;
     for (int a = 0; a < 3; ++a) {
         const int n = m.cells[a];
@@ -40,17 +44,14 @@ void validate_mesh(const CartesianMesh& m, bool full_angular_domain)
                 !std::isfinite(m.origin[a] + n * m.spacing[a]))
                 throw std::invalid_argument("Poisson geometry exceeds arithmetic range");
             diagonal_bound += coefficient;
-            smallest = std::min(smallest, m.spacing[a]);
-            largest = std::max(largest, m.spacing[a]);
         }
     }
-    if (!std::isfinite(diagonal_bound) ||
-        (m.geometry == Geometry::Cartesian && largest / smallest > 2.))
-        throw std::invalid_argument("Poisson prototype requires valid spacing and finite diagonal");
+    if (!std::isfinite(diagonal_bound))
+        throw std::invalid_argument("Poisson prototype requires a finite diagonal bound");
     if (m.geometry != Geometry::Cartesian) {
         if (m.origin[0] < 0.)
             throw std::invalid_argument("Curvilinear gravity requires nonnegative radius");
-        if (m.dimension >= 2) {
+        if (m.dimension >= 2 && !rz) {
             const int azimuth=m.dimension-1;
             const double turn=2.*std::acos(-1.), span=m.cells[azimuth]*m.spacing[azimuth];
             const double roundoff=64.*std::numeric_limits<double>::epsilon()*turn;
@@ -62,6 +63,22 @@ void validate_mesh(const CartesianMesh& m, bool full_angular_domain)
         if(m.dimension==3 && m.geometry==Geometry::Spherical &&
             (m.origin[1]<0. || m.origin[1]+m.cells[1]*m.spacing[1]>std::acos(-1.)))
             throw std::invalid_argument("Spherical polar angle must stay in [0, pi]");
+    }
+}
+
+/** Physical input support remains distinct from internal hierarchy geometry. */
+void validate_mesh(const CartesianMesh& m, bool full_angular_domain)
+{
+    detail::validate_mesh_geometry(m, full_angular_domain);
+    if (m.geometry == Geometry::Cartesian) {
+        double smallest = std::numeric_limits<double>::max(), largest = 0.;
+        for (int a=0;a<m.dimension;++a) {
+            smallest=std::min(smallest,m.spacing[a]);
+            largest=std::max(largest,m.spacing[a]);
+        }
+        if (largest / smallest > 2.)
+            throw std::invalid_argument("Poisson prototype spacing ratio=" +
+                std::to_string(largest / smallest) + " exceeds limit=2");
     }
 }
 

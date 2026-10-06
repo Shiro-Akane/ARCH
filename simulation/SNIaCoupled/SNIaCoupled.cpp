@@ -37,6 +37,28 @@ class SNIaCoupledProblem
     std::vector<double> fractions_;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"},
+            {"temperature0", "float", "K"},
+            {"temperature_peak", "float", "K"},
+            {"density_amplitude", "float", "1"},
+            {"hotspot_width", "float", "cm"},
+            {"center_x", "float", "cm"},
+            {"center_y", "float", "cm"},
+            {"center_z", "float", "cm"}};
+        return result;
+    }
+
     /** Validate the four-module contract and load the network composition. */
     void Setup(SimConfig& config, SpeciesManager& species)
     {

@@ -1,0 +1,4958 @@
+{
+  "amrIndicators": null,
+  "completeness": {
+    "scope": "declared-configuration-before-setup",
+    "state": "incomplete"
+  },
+  "coordinates": null,
+  "coverage": {
+    "auxiliaryParametersComplete": true,
+    "caseParametersComplete": true,
+    "conditionsComplete": false,
+    "diagnosticsComplete": true,
+    "standardParametersComplete": true
+  },
+  "diagnostics": [
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "cfl",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "compute_backend",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "EOS",
+      "parameterKey": "eos_type",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Grid",
+      "parameterKey": "geometry",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Gravity",
+      "parameterKey": "gravity_type",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "int",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Grid",
+      "parameterKey": "lrefinemax",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "int",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Grid",
+      "parameterKey": "lrefinemin",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "erg/g"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "max_eint",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "erg/g"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "min_eint",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "int",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Grid",
+      "parameterKey": "nblockx1",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "int",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Grid",
+      "parameterKey": "nblockx2",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "int",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Grid",
+      "parameterKey": "nblockx3",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "reconstruct",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "g/cm^3"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "sml_rho",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "solver",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "time_integrator",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "formal-evolution",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "s"
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Runtime",
+      "parameterKey": "tmax",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "bool",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Network",
+      "parameterKey": "use_burn",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "always",
+      "expected": {
+        "type": "bool",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Required input has no declared value.",
+      "module": "Diffusion",
+      "parameterKey": "use_diffusion",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "case:Sod:x_pos",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "cm"
+        }
+      },
+      "locations": [],
+      "message": "Required case input has no declared value.",
+      "module": "Case",
+      "parameterKey": "x_pos",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "case:Sod:rho_left",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "g/cm^3"
+        }
+      },
+      "locations": [],
+      "message": "Required case input has no declared value.",
+      "module": "Case",
+      "parameterKey": "rho_left",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "case:Sod:p_left",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "erg/cm^3"
+        }
+      },
+      "locations": [],
+      "message": "Required case input has no declared value.",
+      "module": "Case",
+      "parameterKey": "p_left",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "case:Sod:u_left",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "cm/s"
+        }
+      },
+      "locations": [],
+      "message": "Required case input has no declared value.",
+      "module": "Case",
+      "parameterKey": "u_left",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "case:Sod:rho_right",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "g/cm^3"
+        }
+      },
+      "locations": [],
+      "message": "Required case input has no declared value.",
+      "module": "Case",
+      "parameterKey": "rho_right",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "case:Sod:p_right",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "erg/cm^3"
+        }
+      },
+      "locations": [],
+      "message": "Required case input has no declared value.",
+      "module": "Case",
+      "parameterKey": "p_right",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "MISSING_PARAMETER",
+      "conditionId": "case:Sod:u_right",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "cm/s"
+        }
+      },
+      "locations": [],
+      "message": "Required case input has no declared value.",
+      "module": "Case",
+      "parameterKey": "u_right",
+      "relatedKeys": [],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:D_spec",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "cm^2/s"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Diffusion",
+      "parameterKey": "D_spec",
+      "relatedKeys": [
+        "use_diffusion",
+        "use_species_diff",
+        "eos_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:EntropyFix",
+      "expected": {
+        "type": "bool",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Runtime",
+      "parameterKey": "EntropyFix",
+      "relatedKeys": [
+        "solver"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:alpha_therm",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "cm^2/s"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Diffusion",
+      "parameterKey": "alpha_therm",
+      "relatedKeys": [
+        "use_diffusion",
+        "use_thermal_diff",
+        "eos_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:derefine_threshold",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "derefine_threshold",
+      "relatedKeys": [
+        "lrefinemin",
+        "lrefinemax"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:diff_cfl",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Diffusion",
+      "parameterKey": "diff_cfl",
+      "relatedKeys": [
+        "use_diffusion"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:diff_integrator",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Diffusion",
+      "parameterKey": "diff_integrator",
+      "relatedKeys": [
+        "use_diffusion"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:dt_init",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "s"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Runtime",
+      "parameterKey": "dt_init",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:enucDtFactor",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "enucDtFactor",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:eos_coulomb_mult",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "EOS",
+      "parameterKey": "eos_coulomb_mult",
+      "relatedKeys": [
+        "eos_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:eos_table_path",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "EOS",
+      "parameterKey": "eos_table_path",
+      "relatedKeys": [
+        "eos_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:gamma",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "EOS",
+      "parameterKey": "gamma",
+      "relatedKeys": [
+        "eos_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:gravity_atol",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "1/s^2"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Gravity",
+      "parameterKey": "gravity_atol",
+      "relatedKeys": [
+        "gravity_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:gravity_boundary",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Gravity",
+      "parameterKey": "gravity_boundary",
+      "relatedKeys": [
+        "gravity_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:gravity_g_x",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "status": "known",
+          "unit": "cm/s^2"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Gravity",
+      "parameterKey": "gravity_g_x",
+      "relatedKeys": [
+        "gravity_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:gravity_g_y",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "status": "known",
+          "unit": "cm/s^2"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Gravity",
+      "parameterKey": "gravity_g_y",
+      "relatedKeys": [
+        "gravity_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:gravity_g_z",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "status": "known",
+          "unit": "cm/s^2"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Gravity",
+      "parameterKey": "gravity_g_z",
+      "relatedKeys": [
+        "gravity_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:gravity_rtol",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Gravity",
+      "parameterKey": "gravity_rtol",
+      "relatedKeys": [
+        "gravity_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:hll_wave_speed",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Runtime",
+      "parameterKey": "hll_wave_speed",
+      "relatedKeys": [
+        "solver"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:limiter",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Runtime",
+      "parameterKey": "limiter",
+      "relatedKeys": [
+        "reconstruct"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:network_name",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "network_name",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:nseDensThreshold",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "g/cm^3"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "nseDensThreshold",
+      "relatedKeys": [
+        "use_burn",
+        "use_nse"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:nseTempThreshold",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "K"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "nseTempThreshold",
+      "relatedKeys": [
+        "use_burn",
+        "use_nse"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:nu_visc",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "cm^2/s"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Diffusion",
+      "parameterKey": "nu_visc",
+      "relatedKeys": [
+        "use_diffusion",
+        "use_viscous_diff",
+        "eos_type"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:nuclearDensMin",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "g/cm^3"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "nuclearDensMin",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:nuclearTempMin",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "K"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "nuclearTempMin",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:ode_atol",
+      "expected": {
+        "type": "float",
+        "units": {
+          "reason": "Absolute tolerance for temperature and abundance components; no single scalar unit.",
+          "status": "mixed-state",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "ode_atol",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:ode_rtol",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "ode_rtol",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:ode_solver",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "ode_solver",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:refine_threshold",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "refine_threshold",
+      "relatedKeys": [
+        "lrefinemin",
+        "lrefinemax"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:refine_var",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "refine_var",
+      "relatedKeys": [
+        "lrefinemin",
+        "lrefinemax"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:regrid_interval",
+      "expected": {
+        "type": "int",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "regrid_interval",
+      "relatedKeys": [
+        "lrefinemin",
+        "lrefinemax"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:smallt",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "known",
+          "unit": "K"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "smallt",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:smallx",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "smallx",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:use_nse",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Network",
+      "parameterKey": "use_nse",
+      "relatedKeys": [
+        "use_burn"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:use_species_diff",
+      "expected": {
+        "type": "bool",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Diffusion",
+      "parameterKey": "use_species_diff",
+      "relatedKeys": [
+        "use_diffusion"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:use_thermal_diff",
+      "expected": {
+        "type": "bool",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Diffusion",
+      "parameterKey": "use_thermal_diff",
+      "relatedKeys": [
+        "use_diffusion"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:use_viscous_diff",
+      "expected": {
+        "type": "bool",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Diffusion",
+      "parameterKey": "use_viscous_diff",
+      "relatedKeys": [
+        "use_diffusion"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x1_max",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "axis": "x1",
+          "status": "coordinate-dependent",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x1_max",
+      "relatedKeys": [
+        "nblockx1"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x1_min",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "axis": "x1",
+          "status": "coordinate-dependent",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x1_min",
+      "relatedKeys": [
+        "nblockx1"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x1l_boundary_type",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x1l_boundary_type",
+      "relatedKeys": [
+        "nblockx1"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x1r_boundary_type",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x1r_boundary_type",
+      "relatedKeys": [
+        "nblockx1"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x2_max",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "axis": "x2",
+          "status": "coordinate-dependent",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x2_max",
+      "relatedKeys": [
+        "nblockx2"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x2_min",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "axis": "x2",
+          "status": "coordinate-dependent",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x2_min",
+      "relatedKeys": [
+        "nblockx2"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x2l_boundary_type",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x2l_boundary_type",
+      "relatedKeys": [
+        "nblockx2"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x2r_boundary_type",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x2r_boundary_type",
+      "relatedKeys": [
+        "nblockx2"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x3_max",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "axis": "x3",
+          "status": "coordinate-dependent",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x3_max",
+      "relatedKeys": [
+        "nblockx3"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x3_min",
+      "expected": {
+        "type": "expression",
+        "units": {
+          "axis": "x3",
+          "status": "coordinate-dependent",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x3_min",
+      "relatedKeys": [
+        "nblockx3"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x3l_boundary_type",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x3l_boundary_type",
+      "relatedKeys": [
+        "nblockx3"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:x3r_boundary_type",
+      "expected": {
+        "type": "string",
+        "units": {
+          "status": "not-applicable",
+          "unit": null
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "x3r_boundary_type",
+      "relatedKeys": [
+        "nblockx3"
+      ],
+      "severity": "error"
+    }
+  ],
+  "diffusion": null,
+  "execution": {
+    "caseDeclarations": "checked",
+    "caseRegistration": "checked",
+    "cuda": "not_initialized",
+    "eos": "not_loaded",
+    "filesystem": "not_accessed",
+    "setup": "not_executed",
+    "simulationReadiness": "not_checked",
+    "validationStage": "conditional-resolution"
+  },
+  "identity": {
+    "caseId": "Sod",
+    "configRevision": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "requestId": "v3-empty"
+  },
+  "kind": "configuration-inspection",
+  "parameters": [
+    {
+      "applicability": {
+        "conditionId": "requires:D_spec",
+        "missingDependencies": [
+          "use_diffusion",
+          "use_species_diff",
+          "eos_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "D_spec",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:D_spec",
+        "missingDependencies": [
+          "use_diffusion",
+          "use_species_diff",
+          "eos_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:EntropyFix",
+        "missingDependencies": [
+          "solver"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "EntropyFix",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:EntropyFix",
+        "missingDependencies": [
+          "solver"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:EntropyFixCoefficient",
+        "missingDependencies": [
+          "solver",
+          "EntropyFix"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "EntropyFixCoefficient",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:EntropyFixCoefficient"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:alpha_therm",
+        "missingDependencies": [
+          "use_diffusion",
+          "use_thermal_diff",
+          "eos_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "alpha_therm",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:alpha_therm",
+        "missingDependencies": [
+          "use_diffusion",
+          "use_thermal_diff",
+          "eos_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:base_name",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "base_name",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "arch",
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:base_name"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "cfl",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:chk_dstep",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "chk_dstep",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:chk_dstep"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:chk_dt",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "chk_dt",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:chk_dt"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "compute_backend",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:cuda_device",
+        "missingDependencies": [
+          "compute_backend"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "cuda_device",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:cuda_device"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:derefine_threshold",
+        "missingDependencies": [
+          "lrefinemin",
+          "lrefinemax"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "derefine_threshold",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:derefine_threshold",
+        "missingDependencies": [
+          "lrefinemin",
+          "lrefinemax"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:diff_cfl",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "diff_cfl",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:diff_cfl",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:diff_integrator",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "diff_integrator",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:diff_integrator",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:diff_max_stages",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "diff_max_stages",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 256,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:diff_max_stages"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:dt_init",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "dt_init",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:dt_init",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:dt_max",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "dt_max",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:dt_max"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:dt_min",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "dt_min",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 1e-20,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:dt_min"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:enucDtFactor",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "enucDtFactor",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:enucDtFactor",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:eos_coulomb_mult",
+        "missingDependencies": [
+          "eos_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "missing",
+      "key": "eos_coulomb_mult",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:eos_coulomb_mult",
+        "missingDependencies": [
+          "eos_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:eos_helm_table_path",
+        "missingDependencies": [
+          "eos_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "missing",
+      "key": "eos_helm_table_path",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "",
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:eos_helm_table_path"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:eos_table_path",
+        "missingDependencies": [
+          "eos_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "missing",
+      "key": "eos_table_path",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:eos_table_path",
+        "missingDependencies": [
+          "eos_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "missing",
+      "key": "eos_type",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gamma",
+        "missingDependencies": [
+          "eos_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "EOS",
+      "inputState": "missing",
+      "key": "gamma",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gamma",
+        "missingDependencies": [
+          "eos_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "geometry",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_atol",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_atol",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_atol",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "1/s^2"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_boundary",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_boundary",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_boundary",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_g_x",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_g_x",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_g_x",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_g_y",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_g_y",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_g_y",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_g_z",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_g_z",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_g_z",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "status": "known",
+        "unit": "cm/s^2"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:gravity_max_cycles",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_max_cycles",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 200,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:gravity_max_cycles"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:gravity_rtol",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_rtol",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:gravity_rtol",
+        "missingDependencies": [
+          "gravity_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Gravity",
+      "inputState": "missing",
+      "key": "gravity_type",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:hll_wave_speed",
+        "missingDependencies": [
+          "solver"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "hll_wave_speed",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:hll_wave_speed",
+        "missingDependencies": [
+          "solver"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:limiter",
+        "missingDependencies": [
+          "reconstruct"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "limiter",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:limiter",
+        "missingDependencies": [
+          "reconstruct"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:linear_solver",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "linear_solver",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "Auto",
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:linear_solver"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "lrefinemax",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "lrefinemin",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:max_blocks",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "max_blocks",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 2000,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:max_blocks"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "max_eint",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/g"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:max_steps",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "max_steps",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:max_steps"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "min_eint",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/g"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "nblockx1",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "nblockx2",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "nblockx3",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:network_name",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "network_name",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:network_name",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nseDensThreshold",
+        "missingDependencies": [
+          "use_burn",
+          "use_nse"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "nseDensThreshold",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nseDensThreshold",
+        "missingDependencies": [
+          "use_burn",
+          "use_nse"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nseTempThreshold",
+        "missingDependencies": [
+          "use_burn",
+          "use_nse"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "nseTempThreshold",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nseTempThreshold",
+        "missingDependencies": [
+          "use_burn",
+          "use_nse"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nu_visc",
+        "missingDependencies": [
+          "use_diffusion",
+          "use_viscous_diff",
+          "eos_type"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "nu_visc",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nu_visc",
+        "missingDependencies": [
+          "use_diffusion",
+          "use_viscous_diff",
+          "eos_type"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm^2/s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nuclearDensMin",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "nuclearDensMin",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nuclearDensMin",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:nuclearTempMin",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "nuclearTempMin",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:nuclearTempMin",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:ode_atol",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_atol",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:ode_atol",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "reason": "Absolute tolerance for temperature and abundance components; no single scalar unit.",
+        "status": "mixed-state",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_dt_fac_max",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_dt_fac_max",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 2,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_dt_fac_max"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_dt_fac_min",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_dt_fac_min",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_dt_fac_min"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_dt_safe_fac",
+        "missingDependencies": [
+          "use_burn",
+          "ode_solver"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_dt_safe_fac",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 0.9,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_dt_safe_fac"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_initial_dt_frac",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_initial_dt_frac",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_initial_dt_frac"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_max_newton_iter",
+        "missingDependencies": [
+          "use_burn",
+          "ode_solver"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_max_newton_iter",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 50,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_max_newton_iter"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:ode_max_substeps",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_max_substeps",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 10000,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:ode_max_substeps"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:ode_rtol",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_rtol",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:ode_rtol",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:ode_solver",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "ode_solver",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:ode_solver",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:out_dir",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "out_dir",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "output-directory",
+        "targetMayBeNew": true
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "data",
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:out_dir"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:plt_dstep",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "plt_dstep",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:plt_dstep"
+      },
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:plt_dt",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "plt_dt",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": -1,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:plt_dt"
+      },
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:plt_variables",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "plt_variables",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "ALL",
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:plt_variables"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "reconstruct",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:refine_threshold",
+        "missingDependencies": [
+          "lrefinemin",
+          "lrefinemax"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "refine_threshold",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:refine_threshold",
+        "missingDependencies": [
+          "lrefinemin",
+          "lrefinemax"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:refine_var",
+        "missingDependencies": [
+          "lrefinemin",
+          "lrefinemax"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "refine_var",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:refine_var",
+        "missingDependencies": [
+          "lrefinemin",
+          "lrefinemax"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:regrid_interval",
+        "missingDependencies": [
+          "lrefinemin",
+          "lrefinemax"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "regrid_interval",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:regrid_interval",
+        "missingDependencies": [
+          "lrefinemin",
+          "lrefinemax"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "int",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:restart",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "restart",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": false,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:restart"
+      },
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:restart_file",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "restart_file",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "input-file",
+        "targetMayBeNew": false
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:restart_file",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:smallt",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "smallt",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:smallt",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "K"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:smallx",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "smallx",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:smallx",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "sml_rho",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "solver",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "time_integrator",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "formal-evolution",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "tmax",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "formal-evolution",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "consumes:tstep_change_factor",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "tstep_change_factor",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": 1.2,
+      "sourceEvidence": {
+        "dependencies": [],
+        "owner": "ConfigurationContractPlan:allowed-default:tstep_change_factor"
+      },
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": "documented-default",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "use_burn",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "use_diffusion",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:use_nse",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Network",
+      "inputState": "missing",
+      "key": "use_nse",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:use_nse",
+        "missingDependencies": [
+          "use_burn"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:use_species_diff",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "use_species_diff",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:use_species_diff",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:use_thermal_diff",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "use_thermal_diff",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:use_thermal_diff",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:use_viscous_diff",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Diffusion",
+      "inputState": "missing",
+      "key": "use_viscous_diff",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:use_viscous_diff",
+        "missingDependencies": [
+          "use_diffusion"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "bool",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x1_max",
+        "missingDependencies": [
+          "nblockx1"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x1_max",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x1_max",
+        "missingDependencies": [
+          "nblockx1"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x1",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x1_min",
+        "missingDependencies": [
+          "nblockx1"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x1_min",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x1_min",
+        "missingDependencies": [
+          "nblockx1"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x1",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x1l_boundary_type",
+        "missingDependencies": [
+          "nblockx1"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x1l_boundary_type",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x1l_boundary_type",
+        "missingDependencies": [
+          "nblockx1"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x1r_boundary_type",
+        "missingDependencies": [
+          "nblockx1"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x1r_boundary_type",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x1r_boundary_type",
+        "missingDependencies": [
+          "nblockx1"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x2_max",
+        "missingDependencies": [
+          "nblockx2"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x2_max",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x2_max",
+        "missingDependencies": [
+          "nblockx2"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x2",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x2_min",
+        "missingDependencies": [
+          "nblockx2"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x2_min",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x2_min",
+        "missingDependencies": [
+          "nblockx2"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x2",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x2l_boundary_type",
+        "missingDependencies": [
+          "nblockx2"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x2l_boundary_type",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x2l_boundary_type",
+        "missingDependencies": [
+          "nblockx2"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x2r_boundary_type",
+        "missingDependencies": [
+          "nblockx2"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x2r_boundary_type",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x2r_boundary_type",
+        "missingDependencies": [
+          "nblockx2"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x3_max",
+        "missingDependencies": [
+          "nblockx3"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x3_max",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x3_max",
+        "missingDependencies": [
+          "nblockx3"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x3",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x3_min",
+        "missingDependencies": [
+          "nblockx3"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x3_min",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x3_min",
+        "missingDependencies": [
+          "nblockx3"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "expression",
+      "units": {
+        "axis": "x3",
+        "status": "coordinate-dependent",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x3l_boundary_type",
+        "missingDependencies": [
+          "nblockx3"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x3l_boundary_type",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x3l_boundary_type",
+        "missingDependencies": [
+          "nblockx3"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:x3r_boundary_type",
+        "missingDependencies": [
+          "nblockx3"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "x3r_boundary_type",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:x3r_boundary_type",
+        "missingDependencies": [
+          "nblockx3"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:x_pos",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "missing",
+      "key": "x_pos",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "case:Sod:x_pos",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:rho_left",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "missing",
+      "key": "rho_left",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "case:Sod:rho_left",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:p_left",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "missing",
+      "key": "p_left",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "case:Sod:p_left",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:u_left",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "missing",
+      "key": "u_left",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "case:Sod:u_left",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm/s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:rho_right",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "missing",
+      "key": "rho_right",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "case:Sod:rho_right",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "g/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:p_right",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "missing",
+      "key": "p_right",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "case:Sod:p_right",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "erg/cm^3"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "case:Sod:u_right",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": "Sod",
+      "group": "Case",
+      "inputState": "missing",
+      "key": "u_right",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "case:Sod:u_right",
+        "missingDependencies": [],
+        "required": true,
+        "state": "satisfied"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "known",
+        "unit": "cm/s"
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "always",
+        "missingDependencies": [],
+        "state": "satisfied"
+      },
+      "caseId": null,
+      "group": "Runtime",
+      "inputState": "missing",
+      "key": "log_dir",
+      "locations": [],
+      "parsedValue": null,
+      "path": {
+        "checkOwner": "local-host",
+        "existenceChecked": false,
+        "relativeTo": "process-working-directory",
+        "role": "output-directory",
+        "targetMayBeNew": true
+      },
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "optional",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": "data",
+      "sourceEvidence": {
+        "dependencies": [
+          "out_dir"
+        ],
+        "owner": "main:log-output-directory"
+      },
+      "type": "string",
+      "units": {
+        "status": "not-applicable",
+        "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": "derived",
+      "valueStage": "configuration-resolution-before-setup"
+    }
+  ],
+  "schemaVersion": "1.0",
+  "status": "error",
+  "unitSystem": "cgs",
+  "version": "3"
+}

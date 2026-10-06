@@ -33,11 +33,11 @@
 #include "physics/boundary/UserBoundary.h"
 
 namespace Physical::Gravity {
-/** Validate gravity boundary kind, G and convergence controls once. */
+/** Validate gravity boundary kind and convergence controls once. */
 SelfGravity::SelfGravity(GravityConfig config):config_(std::move(config)) {
     const bool known=config_.boundary=="periodic" || config_.boundary=="isolated"
         || config_.boundary=="dirichlet" || config_.boundary=="neumann" || config_.boundary=="user";
-    if (!known || !std::isfinite(config_.G_const) || config_.G_const<=0.
+    if (!known
         || !std::isfinite(config_.relative_tolerance) || config_.relative_tolerance<=0. || config_.relative_tolerance>=1.
         || !std::isfinite(config_.absolute_tolerance) || config_.absolute_tolerance<0. || config_.max_cycles<1)
         throw std::invalid_argument("Invalid self-gravity physical or convergence controls");
@@ -59,13 +59,30 @@ SelfGravity::Workspace& SelfGravity::workspace() const {
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
     return *work_;
 }
-/** Bind one AMR topology epoch and establish native active-cell order. The
- *  supplied stage/restart @p time samples the initial side structure, so a
- *  restart never evaluates a user callback at an artificial t=0. */
-void SelfGravity::bind(amr::EllipticMeshBinding binding, double time) const {
+/** Bind one AMR topology epoch and establish native active-cell order. */
+void SelfGravity::bind(amr::EllipticMeshBinding binding,double time) const {
+    bind_impl(std::move(binding),false,0,0,time);
+}
+/** Explicit numerical candidate, never a production RZ capability grant. */
+void SelfGravity::bind_native_rz_candidate(amr::EllipticMeshBinding binding,
+    std::uint64_t maximum_boxes,std::uint64_t maximum_work) const {
+    bind_impl(std::move(binding),true,maximum_boxes,maximum_work,0.);
+}
+void SelfGravity::bind_impl(amr::EllipticMeshBinding binding,bool native_candidate,
+    std::uint64_t maximum_boxes,std::uint64_t maximum_work,double time) const {
     invalidate();
     if (binding.grids.empty() || binding.grids.size()!=binding.handles.size()
         || binding.cells.size()!=binding.storage.size()) throw std::invalid_argument("Invalid gravity mesh binding");
+    // Source/measure binding is distinct from the full-ring boundary,
+    // native force/work and runtime publication consumer. Do not enter the
+    // legacy EvaluateBoundary workspace before that full RZ path is accepted.
+    if(binding.base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz&&!native_candidate)
+        throw std::logic_error("RZ self-gravity finite-ring runtime consumer is not qualified");
+    if(native_candidate && (binding.base.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||binding.base.geometry!=arch::elliptic::Geometry::Cylindrical||binding.base.dimension!=2
+        ||config_.boundary!="isolated"||!maximum_boxes||maximum_boxes>65536||!maximum_work
+        ||(execution_&&execution_->numeric()->device())))
+        throw std::invalid_argument("Invalid or unsupported internal native RZ verification binding");
     std::size_t cell=0;
     for (std::size_t b=0;b<binding.grids.size();++b) {
         if (!binding.grids[b] || !amr::is_valid(binding.handles[b])
@@ -106,6 +123,13 @@ void SelfGravity::bind(amr::EllipticMeshBinding binding, double time) const {
     work_=std::make_unique<Workspace>(std::move(binding),kind,std::move(boundary),
         execution_?execution_:(execution_=make_host_gravity_execution()));
     work_->boundary_time=time;
+    if(native_candidate) {
+        work_->scope=GravityFieldScope::NativeRzCandidate;
+        work_->ring_limits.maximum_boxes_per_leaf=maximum_boxes;
+        work_->ring_limits.maximum_leaf_evaluations=maximum_work;
+        work_->ring_source=std::make_unique<GravityBoundary>(
+            work_->solver.op(),work_->binding.handles.front().epoch);
+    }
 }
 /** Retire a prior gravity publication whenever its density lease changes. */
 void SelfGravity::invalidate() const noexcept { if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate(); } }
@@ -140,12 +164,15 @@ void SelfGravity::clear_solver_initial_guess() const noexcept {
 /** Gather current density, solve A phi = -4 pi G rho_source, and publish force. */
 arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& request) const {
     invalidate();
+    // Validate the same domain dependency contract used by source caches and
+    // publication before gather, moments, solve or device work can begin.
+    validate_gravity_solve_identity(request.identity);
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
     const auto& identity=request.identity;
     {
         auto& bound=*work_; const auto& op=bound.solver.op();
         if (request.blocks.size()!=bound.patches.size() || identity.inputs.size()!=bound.patches.size()
-            || identity.topology!=bound.binding.handles.front().epoch || identity.gravitational_constant!=config_.G_const
+            || identity.topology!=bound.binding.handles.front().epoch || identity.gravitational_constant!=arch::constants::gravity::cgs::gravitational_constant
             || identity.operator_revision!=1 || identity.boundary_revision!=1 || identity.accuracy_revision!=1)
             throw std::logic_error("Self-gravity solve identity differs from bound mesh/configuration");
         for (std::size_t b=0;b<bound.patches.size();++b) {
@@ -178,9 +205,10 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     // A=-Laplacian: A*Phi=-4*pi*G*(rho-<rho>) only for a wholly periodic
     // gravity; every flux boundary keeps rho and relies on the shared
     // compatibility check instead of manufacturing a zero-mean source.
-    const double factor=-4.*arch::constants::math::pi*config_.G_const;
-    e.linear(w.rhs,factor,w.density,0.,{},
-        op.periodic_boundary()?-factor*w.mean:0.);
+    const double factor=-4.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant;
+    if(op.periodic_boundary())e.difference_scale(w.rhs,w.density,w.mean,factor);
+    else e.linear(w.rhs,factor,w.density);
+    std::vector<double> native_source;
     if(w.explicit_boundary){
         // Evaluate the position/time datum c at the actual physical face
         // centers and scatter only O(surface) values onto the shared plan.
@@ -212,6 +240,28 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
                 w.boundary_face_index.data,w.boundary_face_values.data,w.boundary_values.data});
         }
         w.solver.boundary_rhs(w.rhs,w.boundary_values);
+    } else if(w.ring_source) {
+        e.fence();
+        native_source=e.download(w.rhs);
+        const auto density=e.download(w.density);
+        w.ring_source->update(density,identity);
+        const auto proposal=w.ring_source->propose_ring_budget(op,identity,native_source,
+            config_.relative_tolerance,config_.absolute_tolerance);
+        if(proposal.status!=RingBudgetStatus::Proposed&&proposal.status!=RingBudgetStatus::ZeroBudget)
+            throw std::runtime_error("Native RZ initial budget unavailable");
+        auto control=proposal.control;
+        control.maximum_boxes_per_leaf=w.ring_limits.maximum_boxes_per_leaf;
+        control.maximum_leaf_evaluations=w.ring_limits.maximum_leaf_evaluations;
+        w.execution->run(EvaluateRingBoundary{w.ring_source.get(),&op,&identity,&control,&w.ring});
+        if(w.ring.status!=RingBoundaryStatus::Bounded) {
+            std::ostringstream message;message<<"Native RZ ring boundary failed: status="
+                <<int(w.ring.status)<<" target="<<std::setprecision(17)<<control.face_absolute_target
+                <<" leaf="<<w.ring.leaf_evaluations<<" parent="<<w.ring.parent_evaluations;
+            throw std::runtime_error(message.str());
+        }
+        e.copy(w.boundary_values.data,w.ring.values.data(),sizeof(double)*w.ring.values.size(),
+            arch::multigrid::Transfer::Upload);
+        w.solver.boundary_rhs(w.rhs,w.boundary_values);
     } else if(w.nodes.size){
         for(auto it=w.layers.rbegin();it!=w.layers.rend();++it)
             w.execution->run(UpdateMoments{it->size,it->data,w.nodes.data,w.moments.data,w.density.data,w.volumes.data});
@@ -219,7 +269,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
             op.base().geometry==arch::elliptic::Geometry::Cartesian ? GridMetrics::Geometry::Cartesian
                 : (op.base().geometry==arch::elliptic::Geometry::Cylindrical
                     ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical),
-            config_.G_const,op.base().origin[0]+op.base().cells[0]*op.base().spacing[0],w.boundary_values.data});
+            arch::constants::gravity::cgs::gravitational_constant,op.base().origin[0]+op.base().cells[0]*op.base().spacing[0],w.boundary_values.data,op.base().semantics});
         w.solver.boundary_rhs(w.rhs,w.boundary_values);
     } else if(op.boundary_kind()==arch::elliptic::BoundaryKind::RadialIsolated) {
         // Spherical free-space outer value: Phi(R)=-G*M/R,
@@ -230,7 +280,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
             const double unit_mass=e.reduce({w.density.data,nullptr,w.volumes.data,
                 op.size(),arch::multigrid::ReductionKind::Product});
             const double outer=op.base().origin[0]+op.base().cells[0]*op.base().spacing[0];
-            const double value=-4.*arch::constants::math::pi*config_.G_const*unit_mass/outer;
+            const double value=-4.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant*unit_mass/outer;
             for(std::size_t f=0;f<op.faces().size();++f)
                 if(op.faces()[f].boundary_side==1)
                     e.copy(w.boundary_values.data+f,&value,sizeof(value),arch::multigrid::Transfer::Upload);
@@ -243,11 +293,28 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     if(op.periodic_boundary()) w.solver.project(w.rhs);
     e.fence();
     const auto source_ready=Clock::now();
-    w.report=w.solver.solve(w.rhs,{config_.relative_tolerance,config_.absolute_tolerance,config_.max_cycles});
+    const double algebra_fraction=w.ring_source?.5:1.;
+    const double algebra_rtol=config_.relative_tolerance*algebra_fraction;
+    if(!(algebra_rtol>0.))throw std::runtime_error("Native algebra tolerance is not representable");
+    w.report=w.solver.solve(w.rhs,{algebra_rtol,config_.absolute_tolerance*algebra_fraction,config_.max_cycles});
     if(w.report.status!=arch::multigrid::SolveStatus::Converged){
         std::ostringstream message;message<<std::setprecision(17)<<"Self-gravity Poisson solve failed: iterations="<<w.report.cycles
             <<" residual="<<w.report.residual<<" target="<<w.report.target<<" rhs="<<w.report.rhs_rms;throw std::runtime_error(message.str());}
     e.fence();
+    if(w.ring_source) {
+        const auto phi=e.download(w.solver.resident_potential()),rhs=e.download(w.rhs);
+        std::vector<double> residual(op.size());op.apply(phi,residual);
+        for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
+        w.ring_assessment=w.ring_source->assess_native_ring_rhs(op,w.ring,native_source,
+            rhs,phi,residual,config_.relative_tolerance,config_.absolute_tolerance);
+        if(w.ring_assessment.conditional.status!=arch::elliptic::BoundaryResidualStatus::Accepted) {
+            std::ostringstream message;message<<std::setprecision(17)
+                <<"Native RZ original request rejected: status="<<int(w.ring_assessment.conditional.status)
+                <<" total="<<w.ring_assessment.conditional.total_residual_upper
+                <<" safe="<<w.ring_assessment.conditional.tolerance_safe;
+            throw std::runtime_error(message.str());
+        }
+    }
     const auto poisson_ready=Clock::now();
     w.solver.gradient(w.solver.resident_potential(),w.face_gradient,w.boundary_values);
     e.run(arch::multigrid::RowsWork{w.sides.size,w.side_gather.view(),w.face_gradient.data,w.sides.data});
@@ -270,7 +337,19 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     if (++w.generation==0) throw std::overflow_error("Self-gravity publication counter exhausted");
     w.source=identity;
     arch::state::CompletionToken token{w.generation,arch::state::CompletionState::Complete};
-    w.validity.publish({identity,w.generation,token}); w.ready=true; return token;
+    w.validity.publish({identity,w.generation,token,w.scope}); w.ready=true; return token;
+}
+/** Internal snapshots explicitly require candidate scope. They cannot satisfy
+ * ordinary physical patch/output readers or claim continuous Phi/force quality.
+ */
+const RingRhsAssessment& SelfGravity::native_rz_assessment() const {
+    workspace().require(GravityFieldScope::NativeRzCandidate);return work_->ring_assessment;
+}
+const std::vector<double>& SelfGravity::native_rz_potential() const {
+    workspace().download(GravityFieldScope::NativeRzCandidate);return work_->host_phi;
+}
+const std::array<std::vector<double>,3>& SelfGravity::native_rz_acceleration() const {
+    workspace().download(GravityFieldScope::NativeRzCandidate);return work_->host_g;
 }
 /** Switch host/device execution and rebuild resident arrays on the same topology. */
 void SelfGravity::set_execution(std::shared_ptr<GravityExecution> execution) const {
@@ -293,7 +372,7 @@ double SelfGravity::timestep(double cfl) const {
     workspace().require();const auto& w=*work_;
     if(!std::isfinite(cfl)||cfl<=0.||cfl>1.)throw std::invalid_argument("Invalid gravity CFL");
     // dt_g = CFL / sqrt(max(4*pi*G*rho_max, max_a |g_a|/dx_a)).
-    return cfl/std::sqrt(std::max(4.*arch::constants::math::pi*config_.G_const*w.max_density,w.max_acceleration_ratio));
+    return cfl/std::sqrt(std::max(4.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant*w.max_density,w.max_acceleration_ratio));
 }
 /** Download the accepted potential only when requested by output. */
 const std::vector<double>& SelfGravity::potential() const {workspace().download();return work_->host_phi;}
@@ -348,7 +427,7 @@ GravityBoundarySnapshot SelfGravity::boundary_snapshot() const {
         w.boundary_samples_bound=true;
     }
     GravityBoundarySnapshot result;
-    result.mesh=op.base(); result.G=config_.G_const; result.time=w.source.input_time;
+    result.mesh=op.base(); result.G=arch::constants::gravity::cgs::gravitational_constant; result.time=w.source.input_time;
     result.potential_energy=.5*execution.reduce({w.density.data,w.solver.resident_potential().data,
         w.volumes.data,op.size(),arch::multigrid::ReductionKind::Product});
     if(!std::isfinite(result.potential_energy)) throw std::runtime_error("Nonfinite gravity field energy");

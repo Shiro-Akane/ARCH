@@ -1,0 +1,119 @@
+{
+  "baseline": "4b5e496a9943099c203c6b001b1d95a56d9edf72",
+  "scope": "tracked source in the sole working checkout; in-memory candidate only, production auditor unchanged",
+  "before": [
+    "protected mainline authority changed: src/core/config/RuntimeParams.h",
+    "OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+  ],
+  "after": [],
+  "mutations": [
+    {
+      "name": "missing_analysis",
+      "rejected": true,
+      "expected": "protected mainline authority changed: src/core/config/RuntimeParams.h"
+    },
+    {
+      "name": "missing_required_gate",
+      "rejected": true,
+      "expected": "protected mainline authority changed: src/core/config/RuntimeParams.h"
+    },
+    {
+      "name": "old_boolean_only",
+      "rejected": true,
+      "expected": "protected mainline authority changed: src/core/config/RuntimeParams.h"
+    },
+    {
+      "name": "missing_composition",
+      "rejected": true,
+      "expected": "OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+    },
+    {
+      "name": "wrong_helper",
+      "rejected": true,
+      "expected": "OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+    },
+    {
+      "name": "extra_backend_core",
+      "rejected": true,
+      "expected": "OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+    },
+    {
+      "name": "missing_eos_object",
+      "rejected": true,
+      "expected": "OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+    },
+    {
+      "name": "wrong_eos_object",
+      "rejected": true,
+      "expected": "OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+    },
+    {
+      "name": "reordered_eos_objects",
+      "rejected": true,
+      "expected": "OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+    }
+  ],
+  "date": "2026-10-04",
+  "soleCheckout": "/home/shiroakane/ARCH",
+  "configuration": "work Python 3.12; no compilation, no ARCH simulation, no CUDA execution",
+  "productionAuditUnchanged": true,
+  "producerRuntimeReportsIndependentlyReplayed": false,
+  "matchedInputFingerprints": 10,
+  "localChecks": {
+    "radial_similarity_contract": {
+      "passed": 3,
+      "failed": 0
+    },
+    "exact_rational_references": {
+      "mixture_gamma": "27/14",
+      "incompatible_parent_m_phi": [
+        "1/4",
+        "1/8"
+      ]
+    }
+  },
+  "scientificAcceptance": "Incomplete; RZ angular and ring-source budgets remain gated",
+  "workerScope": "Two tool-free DeepSeek independent reasoning reviews; leader accepted bounded math only, no scientific runtime signoff",
+  "workers": [
+    {
+      "task": "jens-static",
+      "durationSeconds": 14.86,
+      "usage": {
+        "input_tokens": 1757,
+        "cached_input_tokens": 384,
+        "output_tokens": 3089,
+        "noncached_input_tokens": 1373,
+        "reasoning_tokens": 2593,
+        "visible_output_tokens": 496
+      },
+      "estimatedCostUsd": {
+        "currency": "USD",
+        "off_peak": 0.0020605,
+        "peak": 0.004121,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "acceptance": "Bounded reasoning accepted; no tool execution or algorithm approval"
+    },
+    {
+      "task": "rz-angular",
+      "durationSeconds": 23.16,
+      "usage": {
+        "input_tokens": 1648,
+        "cached_input_tokens": 384,
+        "output_tokens": 4738,
+        "noncached_input_tokens": 1264,
+        "reasoning_tokens": 4168,
+        "visible_output_tokens": 570
+      },
+      "estimatedCostUsd": {
+        "currency": "USD",
+        "off_peak": 0.00303355,
+        "peak": 0.0060671,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "acceptance": "Bounded reasoning accepted; no tool execution or algorithm approval"
+    }
+  ]
+}

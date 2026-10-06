@@ -9,6 +9,9 @@
 
 #pragma once
 #include <cstdint>
+#include "grid/GridGeometryView.h"
+#include "io/chk/CheckpointGeometryIdentity.h"
+#include <array>
 #include "data/StateDiagnostics.h"
 #include <map>
 #include <string>
@@ -52,6 +55,8 @@ struct CheckpointData {
     int dim = 1;
     int num_species = 0;
     std::string geometry;
+    CheckpointGeometryIdentity geometry_identity;
+    CheckpointNativeDomainIdentity native_domain; // mandatory for current RZ, empty for existing
     std::size_t cells_per_block = 0;
     bool has_timestep_state = false;
     bool resume_after_regrid = false;
@@ -66,11 +71,56 @@ struct CheckpointData {
     std::vector<double> mass_fractions;
 };
 
+// Partial evidence supplied from the immutable load boundary and resolved EOS.
+// Missing run/config/build/binary identities remain explicitly unknown.
+struct PlotSourceIdentity {
+    std::string run_id;
+    std::string case_id;
+    std::string raw_config_sha256;
+    std::string binary_sha256;
+    std::string eos_type, eos_table_sha256;
+    double ideal_gamma = 0.;
+    std::string unit_system;
+    std::vector<std::string> species_names;
+    // Exact resolved constituents; absent vectors remain unknown for legacy callers.
+    std::vector<double> species_A, species_Z, species_gamma, species_Cv;
+};
+
+// Candidate native metadata for Cartesian 1D/2D or explicit RZ leaf interiors.
+// Cell arrays use exactly the Data field flattening; inactive bounds are zero.
+struct PlotNativeGrid {
+    std::array<std::vector<double>,3> lower, upper;
+    std::vector<double> cell_measure;
+    std::vector<double> angular_measure; // RZ only: W=int r*dV; same cell order
+    std::array<std::vector<uint32_t>,3> logical;
+    std::string measure_unit = "unknown", normalization = "unknown";
+};
+
+// RZ output view, not a second evolved state. The producer copies m_phi from
+// mom_w and derives J/V using the shared conversion and native W/V.
+struct PlotRzAngularState {
+    std::vector<double> m_phi, angular_momentum_density;
+};
+
+// Declarations come from the actual producer, not inferred by the HDF serializer.
+struct PlotFieldMetadata {
+    std::string unit = "unknown", basis = "unknown", meaning = "unknown";
+    std::string unit_reason = "producer declaration unavailable";
+    std::string averaging = "unknown";
+};
+
+// Linux/WSL candidate: checked close, then atomic replacement. Throws on failure.
+// Publication alone supplies no scientific provenance, units or native bounds.
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,
                          const std::vector<size_t>& dims,
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
-                         const std::map<std::string, std::vector<double>>& data_map);
+                         const std::map<std::string, std::vector<double>>& data_map,
+                         const PlotNativeGrid* native_grid = nullptr,
+                         const PlotSourceIdentity* source_identity = nullptr,
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata = nullptr,
+                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+                         const PlotRzAngularState* rz_angular_state = nullptr);
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint);
 CheckpointData read_hdf5_chk_impl(const std::string& filepath);

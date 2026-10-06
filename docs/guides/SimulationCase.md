@@ -220,6 +220,8 @@ Create `simulation/MyCase/MyCase.cpp`. `REGISTER_PROBLEM_CLASS` wraps a plain,
 default-constructible case class with these methods:
 
 ```cpp
+static arch::config::CaseConfiguration DescribeConfiguration(
+    const arch::config::StandardInputResolution&);
 void Setup(SimConfig &config, SpeciesManager &specs);
 void Init(const PointCoords &point, PrimitiveData &out) const;
 ```
@@ -245,7 +247,7 @@ to an EOS policy.
 
 `Setup` runs before grid allocation. Read case parameters, validate them, and register species there. The `Init` function is called under OpenMP to populate the allocated root-grid cells exactly once. Both the initial and any subsequent fine AMR blocks are constructed via conservative transfers rather than by calling `Init` again. Because of this, `Init` must be strictly deterministic, thread-safe, and free of any order-dependent side effects.
 
-Minimal complete example:
+This example registers an IdealGas material. A complete declaration lists all case inputs; it does not certify files, EOS or device readiness:
 
 ```cpp
 #include <UserInterface.h>
@@ -263,6 +265,20 @@ class GaussianDensity
     int gas_id_ = -1;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"}, {"pressure0", "float", "erg/cm^3"},
+            {"amplitude", "float", "g/cm^3"}, {"width", "float", "cm"}};
+        return result;
+    }
+
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         rho0_ = config.Get<double>("rho0", 1.0);
@@ -273,7 +289,9 @@ public:
             throw std::invalid_argument("GaussianDensity parameters must be positive.");
         }
         gas_id_ = specs.add_species(
-            "Gas", 1.0, 1.0, config.physics.gamma, 1.0);
+            "Gas", config.MaterialConstant(1.0, "Gas.A"),
+            config.MaterialConstant(1.0, "Gas.Z"), config.MaterialInput("gamma"),
+            config.MaterialConstant(1.0, "Gas.Cv"));
     }
 
     void Init(const PointCoords &point, PrimitiveData &out) const
@@ -291,6 +309,8 @@ public:
 REGISTER_PROBLEM_CLASS("GaussianDensity", GaussianDensity);
 ```
 
+For this example, copy the migrated Sod_beginner.par, remove its seven Sod-only keys (x_pos, rho_left/right, p_left/right, u_left/right), and explicitly add rho0=1, pressure0=1, amplitude=0.1 and width=0.1. Keep the standard configuration. These are teaching inputs, not runtime fallback defaults. Setup reads controls and registers materials; it must not rewrite standard controls.
+
 After adding a new `.cpp`, rerun CMake configuration to refresh the source glob:
 
 ```bash
@@ -306,10 +326,9 @@ cmake --build build-cpu --target ARCH --parallel 1
 
 ### `SimConfig`
 
-Use `config.Get<double/int/string>(key, default)` for case-specific parameters.
+Use `config.Get<double/int/string>(key, default)` for case-specific parameters. First declare their types, units and requirements in static `DescribeConfiguration`. Declarations resolve before Setup; incomplete Setup is not used to discover missing inputs. The second Get argument is read-observation metadata, not a missing-input fallback or an approved physical default.
 Custom numeric values in `.par` must be complete decimal or scientific-notation
-numbers, such as `1e8`; an incomplete value fails when the case reads it as a
-number. Standard grid-bound and gravity expression fields accept lowercase
+numbers, such as `1e8`; an incomplete value fails during declared-input resolution before Setup. Standard grid-bound and gravity expression fields accept lowercase
 `pi`, `2*pi`, and forms such as `exp(1)` or `exp(-2)`. `exp(number)` denotes the
 natural exponential function. The `e/E` in `1e8` or `1E8` is a base-10
 scientific-notation exponent marker, not a standalone constant.
@@ -318,8 +337,8 @@ For mathematics in a case `.cpp`, include `<cmath>` as needed and use
 `std::exp`, `std::sin`, `std::cos`, and `std::log`. The natural constant is
 `std::numbers::e` from `<numbers>`; the public ARCH headers also provide
 `arch::constants::math::pi`. These calculations belong in `Setup` or `Init`;
-`config.Get` does not evaluate C++ expressions. Unknown keys are retained as
-custom parameters without spelling validation.
+`config.Get` does not evaluate C++ expressions. Unknown keys are rejected. Only keys owned by case or composition declarations
+may be read; retired keys cannot bypass rejection as custom parameters.
 
 When you need access to core settings, you should read them directly from their strictly-typed members. For example:
 

@@ -24,6 +24,9 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
     EllipticMeshBinding result;
     auto& base=result.base;
     base.dimension=config.dim;
+    // Tree owns the explicit chart identity; do not reinterpret internal RZ
+    // leaves as legacy cylindrical/azimuthal geometry during scalar binding.
+    base.semantics=control.tree->GetGeometrySemantics();
     if(config.geometry=="cartesian")base.geometry=arch::elliptic::Geometry::Cartesian;
     else if(config.geometry=="cylindrical")base.geometry=arch::elliptic::Geometry::Cylindrical;
     else if(config.geometry=="spherical")base.geometry=arch::elliptic::Geometry::Spherical;
@@ -73,9 +76,12 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
                     ?GridMetrics::Geometry::Cartesian
                     :(base.geometry==arch::elliptic::Geometry::Cylindrical
                         ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
-                const double composite=GridMetrics::CellVolume(
-                    GridMetrics::make_geometry_view(geometry,base.dimension,lower,widths),0,0,0);
-                const double native=GridMetrics::CellVolume(grid,i,j,k);
+                auto fragment=GridMetrics::make_geometry_view(geometry,base.dimension,lower,widths);
+                if(base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+                    fragment=GridMetrics::make_rz_geometry_view(fragment);
+                const double composite=GridMetrics::CellVolume(fragment,0,0,0);
+                const double native=GridMetrics::CellVolume(
+                    GridMetrics::make_geometry_view(grid,base.semantics),i,j,k);
                 if(std::abs(native-composite)>64*std::numeric_limits<double>::epsilon()*composite)
                     throw std::logic_error("Elliptic cell volume differs from native metrics");
                 result.cells.push_back(cell);

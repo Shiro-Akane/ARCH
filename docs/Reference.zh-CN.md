@@ -143,7 +143,7 @@ Tabular3D/4D 的未提交 ODE/NSE 查询使用局部试探失败状态；CPU/CUD
 
 ```text
 main(argc, argv)
-  -> RuntimeParams::Load(.par)
+  -> RuntimeParams::Load(.par, case_id)
   -> ProblemRegistry::Create(problem name)
   -> case.Setup(config, species)
   -> DispatchSolver
@@ -248,16 +248,16 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 ## 参数解析
 
-`ConfigParser` 对每个非空行读取第一个 `=`，删除 `#` 后文本，去除空白，并在键重复时保留最后一个值。键区分大小写。
+`ConfigParser` 对每个非空行读取第一个 `=`，删除 `#` 后文本，去除空白，并保存原 token 和位置。重复键携带位置报错，不选择任何一次赋值。键区分大小写；无等号的非注释行和空键均报错。
 
 重要行为：
 
 - 标准整数和浮点数值要求完整的数值记号；浮点数可用十进制或科学记数法；
 - Boolean 只接受不区分大小写的 `true` 或 `false`；数字 `0`/`1` 与 `on`/`off` 会被拒绝；
 - geometry、boundary、gravity 与 compute-backend token 在参数加载时统一规范为 ASCII 小写；
-- 未知键保留在 `SimConfig::custom_params` 或 `custom_string_params`，不提供拼写验证；
-- 自定义键缺失时，`SimConfig::Get<T>` 返回调用者提供的默认值；自定义数值须是完整数值记号，存在但不可作为数值解析的键在数值读取时会报错；
-- 网格边界 `x1/x2/x3_min/max` 及引力参数 `gravity_g_x/y/z`、`gravity_G` 使用轻量表达式解析器，支持小写 `pi`、`-pi`、`2*pi`、`pi*2`、`pi/2` 和 `exp(number)`，例如 `exp(1)`；结果必须有限。独立的 `e/E` 常数及 `sin`、`cos`、`log` 不属于 `.par` 表达式语法；`1e8`/`1E8` 中的 `e/E` 仅是科学记数法的指数标记；
+- 标准、算例和组分声明完成所有权判断后，未知键明确报错；
+- 算例参数必须在 Setup 前声明；`SimConfig::Get<T>` 读取已解析的声明值，第二个实参不补齐缺项。非法值保留原 token，但没有有效 resolved 值或来源；
+- 网格边界 `x1/x2/x3_min/max` 及引力参数 `gravity_g_x/y/z` 使用轻量表达式解析器，支持小写 `pi`、`-pi`、`2*pi`、`pi*2`、`pi/2` 和 `exp(number)`，例如 `exp(1)`；结果必须有限。独立的 `e/E` 常数及 `sin`、`cos`、`log` 不属于 `.par` 表达式语法；`1e8`/`1E8` 中的 `e/E` 仅是科学记数法的指数标记；
 - 路径相对于进程工作目录解释；
 - EOS dispatch 会移除 `eos_table_path` 的引号，普通字符串则保留解析器文本。
 
@@ -265,15 +265,15 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 | 无效选择 | 当前行为 |
 | --- | --- |
-| flux | 警告，选择 HLLC |
-| reconstruction | 警告，选择 PCM |
-| MUSCL limiter | 警告，选择 MinMod |
-| hydro integrator | 警告，选择 SSPRK2 |
+| flux | 配置解析报错；不自动回退 |
+| reconstruction | 配置解析报错；不自动回退 |
+| MUSCL limiter | 配置解析报错；不自动回退 |
+| hydro integrator | 配置解析报错；不自动回退 |
 | gravity | 在统一解析配置时抛出异常 |
 | EOS、network、ODE、linear solver | 抛出异常 |
 | diffusion integrator | 在统一解析配置时抛出异常 |
 
-科研工作流应检查启动时的 Strategy 行，并核对 fallback 警告。
+运行前应检查配置诊断。合法别名和显式 auto 策略保持各自语义；未知方法不静默替换。`gravity_G` 已退役，正式引力直接使用共享 CGS 常数，checkpoint 仅记录只读身份。
 
 ### 输入迁移
 
@@ -283,26 +283,26 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 ## 参数参考
 
-下列默认值来自 `RuntimeParams::Load`，其优先级高于 `GlobalDefs.h` 中的默认成员初始化值。
+配置扩展 3 将缺失与零/false 分开记录。下表只有标记“默认”的项目允许缺项时应用登记值；必填和条件必填项没有运行默认值。条件必填依据 Core 实际消费者判断，上游未知时保持未解析。存储初始化和模板推荐均不能补齐缺项。完整条件见当前 binary schema 与[配置契约](development/ConfigurationContractPlan.zh-CN.md)。
 
 ### 网格与几何
 
-| 键 | 类型 | 加载默认值 | 契约 |
+| 键 | 类型 | 缺项策略 | 契约 |
 | --- | --- | --- | --- |
-| `geometry` | string | `cartesian` | `cartesian`、`cylindrical`、`spherical` |
-| `nblockx1` | int | `1` | 正的 root block 数 |
-| `nblockx2` | int | `1` | `<=0` 移除轴 2 |
-| `nblockx3` | int | `1` | `<=0` 移除轴 3；轴 3 要求轴 2 活动 |
-| `max_blocks` | int | `2000` | 严格的 AMR 内存池容量 |
-| `x1_min/max` | expression | `0/1` | 活动轴必须 max > min |
-| `x2_min/max` | expression | `0/1` | 角度限制取决于几何/维度 |
-| `x3_min/max` | expression | `0/1` | 角度限制取决于几何/维度 |
-| `x1l_boundary_type` | string | `outflow` | `outflow`、`reflect`、`periodic`、`neumann`、`user`；流体 `inflow/dirichlet` 同属指定状态接口，见[用户边界](guides/UserBoundaries.zh-CN.md) |
-| `x1r_boundary_type` | string | `outflow` | 同上 |
-| `x2l_boundary_type` | string | `outflow` | 同上 |
-| `x2r_boundary_type` | string | `outflow` | 同上 |
-| `x3l_boundary_type` | string | `outflow` | 同上 |
-| `x3r_boundary_type` | string | `outflow` | 同上 |
+| `geometry` | string | 必填 | `cartesian`、`cylindrical`、`spherical` |
+| `nblockx1` | int | 必填 | 正的 root block 数 |
+| `nblockx2` | int | 必填 | `0` 移除轴 2 |
+| `nblockx3` | int | 必填 | `0` 移除轴 3；轴 3 要求轴 2 活动 |
+| `max_blocks` | int | 默认：`2000` | 严格的 AMR 内存池容量 |
+| `x1_min/max` | expression | 条件必填：x1 活动 | 活动轴必须 max > min |
+| `x2_min/max` | expression | 条件必填：x2 活动 | 角度限制取决于几何/维度 |
+| `x3_min/max` | expression | 条件必填：x3 活动 | 角度限制取决于几何/维度 |
+| `x1l_boundary_type` | string | 条件必填：x1 活动 | `outflow`、`reflect`、`periodic`、`neumann`、`user`；流体 `inflow/dirichlet` 同属指定状态接口，见[用户边界](guides/UserBoundaries.zh-CN.md) |
+| `x1r_boundary_type` | string | 条件必填：x1 活动 | 同上 |
+| `x2l_boundary_type` | string | 条件必填：x2 活动 | 同上 |
+| `x2r_boundary_type` | string | 条件必填：x2 活动 | 同上 |
+| `x3l_boundary_type` | string | 条件必填：x3 活动 | 同上 |
+| `x3r_boundary_type` | string | 条件必填：x3 活动 | 同上 |
 
 逻辑坐标含义：
 
@@ -318,21 +318,21 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 ### 流体数值方法与执行
 
-| 键 | 类型 | 加载默认值 | 契约 |
+| 键 | 类型 | 缺项策略 | 契约 |
 | --- | --- | --- | --- |
-| `solver` | string | `SW` | `SW`、`VL`、`Roe`、`HLL`、`HLLC` |
-| `hll_wave_speed` | string | `roe` | HLL/HLLC 的 Roe–Glaister 或 `davis` 端点波速；其他通量拒绝非默认选择 |
-| `reconstruct` | string | `pcm` | `pcm`、`donor_cell`、`muscl`、`plm`、`ppm` |
-| `limiter` | string | `minmod` | 仅 MUSCL：`minmod`、`superbee`、`vanleer`、`mc` |
-| `time_integrator` | string | `RK2` | `Euler/RK1`、`RK2/SSPRK2`、`RK3/SSPRK3` |
-| `cfl` | double | `0.8` | 显式流体 CFL；有限且 `0 < cfl <= 1`，加载时校验 |
-| `EntropyFix` | bool | `true` | 启用 entropy-fix 平滑 |
-| `EntropyFixCoefficient` | double | `0.1` | 启用 entropy fix 时使用 |
-| `sml_rho` | double | `1e-12` | 正且可解析密度的修复下限；低密度研究按目标解设置 |
-| `min_eint` | double | `1e-10` | 正且可解析比内能的修复下限 |
-| `max_eint` | double | `1e21` | 比内能拒绝上界，不静默裁剪 |
-| `compute_backend` | string | `cpu` | `cpu`、`cuda` 或 `auto`；显式 CUDA fail-closed，`auto` 只能在构造前回退 |
-| `cuda_device` | int | `0` | CUDA probe、构造与生命周期操作使用的 runtime device ordinal |
+| `solver` | string | 必填 | `SW`、`VL`、`Roe`、`HLL`、`HLLC` |
+| `hll_wave_speed` | string | 条件必填：HLL/HLLC | HLL/HLLC 的 Roe–Glaister 或 `davis` 端点波速；其他通量拒绝非默认选择 |
+| `reconstruct` | string | 必填 | `pcm`、`donor_cell`、`muscl`、`plm`、`ppm` |
+| `limiter` | string | 条件必填：所选重构消费 limiter | 仅 MUSCL：`minmod`、`superbee`、`vanleer`、`mc` |
+| `time_integrator` | string | 必填 | `Euler/RK1`、`RK2/SSPRK2`、`RK3/SSPRK3` |
+| `cfl` | double | 必填 | 显式流体 CFL；有限且 `0 < cfl <= 1`，加载时校验 |
+| `EntropyFix` | bool | 条件必填：所选通量消费 entropy fix | 启用 entropy-fix 平滑 |
+| `EntropyFixCoefficient` | double | 默认：`0.1` | 启用 entropy fix 时使用 |
+| `sml_rho` | double | 必填 | 正且可解析密度的修复下限；低密度研究按目标解设置 |
+| `min_eint` | double | 必填 | 正且可解析比内能的修复下限 |
+| `max_eint` | double | 必填 | 比内能拒绝上界，不静默裁剪 |
+| `compute_backend` | string | 必填 | `cpu`、`cuda` 或 `auto`；显式 CUDA fail-closed，`auto` 只能在构造前回退 |
+| `cuda_device` | int | 默认：`0` | CUDA probe、构造与生命周期操作使用的 runtime device ordinal |
 
 所有通量使用完整物理面 EOS，目前不提供面热力学近似开关。`hll_wave_speed=davis` 同时适用于 HLL 与 HLLC，改变波速
 估计而不近似热力学；它与 PCM/MUSCL/PPM 的重构选择独立。
@@ -341,33 +341,33 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 ### AMR
 
-| 键 | 类型 | 加载默认值 | 契约 |
+| 键 | 类型 | 缺项策略 | 契约 |
 | --- | --- | --- | --- |
-| `lrefinemin` | int | `0` | 已存储；依赖非零最小层级前应验证当前层次行为 |
-| `lrefinemax` | int | `0` | 最大细化层级；零关闭细化 |
-| `regrid_interval` | int | `2` | 必须为正 |
-| `refine_var` | string list | `DENS` | 逗号或 `+`；规范场名或已注册核素 |
-| `refine_threshold` | double | `0.8` | Lohner 指标，范围 `[0,1]` |
-| `derefine_threshold` | double | `0.2` | 必须 `>=0` 且小于 refine threshold |
+| `lrefinemin` | int | 必填 | 已存储；依赖非零最小层级前应验证当前层次行为 |
+| `lrefinemax` | int | 必填 | 最大细化层级；零关闭细化 |
+| `regrid_interval` | int | 条件必填：动态 AMR | 必须为正 |
+| `refine_var` | string list | 条件必填：动态 AMR | 逗号或 `+`；规范场名或已注册核素 |
+| `refine_threshold` | double | 条件必填：活动曲率 AMR 指标 | Lohner 指标，范围 `[0,1]` |
+| `derefine_threshold` | double | 条件必填：活动曲率 AMR 指标 | 必须 `>=0` 且小于 refine threshold |
 
 即使 `lrefinemax = 0`，`refine_var` 仍会验证。
 
 ### EOS 与重力
 
-| 键 | 类型 | 加载默认值 | 契约 |
+| 键 | 类型 | 缺项策略 | 契约 |
 | --- | --- | --- | --- |
-| `eos_type` | string | `ideal` | `ideal`、`tabular`、`helmholtz` |
-| `eos_table_path` | string | 空 | tabular/Helmholtz 必需 |
-| `eos_helm_table_path` | string | 空 | 缺项补齐使用的辅助电子表；空值使用已有 Timmes 表 |
-| `eos_coulomb_mult` | double | `1` | Helmholtz 离子 Coulomb 修正比例，有限 `[0,1]`；非默认值仅限 Helmholtz；不是电子补齐开关 |
-| `gamma` | double | `1.4` | 理想气体模型 gamma |
-| `gravity_type` | string | `none` | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU/CUDA 一维球/柱及受测完整方位角二维极坐标、三维柱/球坐标 isolated 已验收，包含原点、轴线和极点 |
-| `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
-| `gravity_G` | expression | `6.6743e-8` | CGS 引力常数 |
-| `gravity_boundary` | string | `periodic` | `periodic` 去除体积平均密度；`isolated` 为现有有限质量／径向／二维对数核；`dirichlet` 零势；`neumann` 零外法向梯度且检查 Gauss 相容性；`user` 从 `gravity_boundary.cpp` 返回逐面条件 |
-| `gravity_rtol` | float | `1e-10` | 大于零且小于一的体积 RMS 相对残差 |
-| `gravity_atol` | float | `0` | 非负绝对残差，单位 `s^-2`；零代表相对精度主导 |
-| `gravity_max_cycles` | int | `200` | 正整数，MG/FGMRES 外迭代上限；不收敛停止推进 |
+| `eos_type` | string | 必填 | `ideal`、`tabular`、`helmholtz` |
+| `eos_table_path` | string | 条件必填：所选 EOS 需要表文件 | tabular/Helmholtz 必需 |
+| `eos_helm_table_path` | string | 默认：空 | 缺项补齐使用的辅助电子表；空值使用已有 Timmes 表 |
+| `eos_coulomb_mult` | double | 条件必填：Helmholtz | Helmholtz 离子 Coulomb 修正比例，有限 `[0,1]`；非默认值仅限 Helmholtz；不是电子补齐开关 |
+| `gamma` | double | 条件必填：IdealGas | 理想气体模型 gamma |
+| `gravity_type` | string | 必填 | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU/CUDA 一维球/柱及受测完整方位角二维极坐标、三维柱/球坐标 isolated 已验收，包含原点、轴线和极点 |
+| `gravity_g_x/y/z` | expression | 条件必填：外部引力；全部分量 | 外部重力分量 |
+| `gravity_G` | expression | 已退役；拒绝 | 报 RETIRED_PARAMETER；不可由输入覆盖 |
+| `gravity_boundary` | string | 条件必填：自引力 | `periodic` 去除体积平均密度；`isolated` 为现有有限质量／径向／二维对数核；`dirichlet` 零势；`neumann` 零外法向梯度且检查 Gauss 相容性；`user` 从 `gravity_boundary.cpp` 返回逐面条件 |
+| `gravity_rtol` | float | 条件必填：自引力 | 大于零且小于一的体积 RMS 相对残差 |
+| `gravity_atol` | float | 条件必填：自引力 | 非负绝对残差，单位 `s^-2`；零代表相对精度主导 |
+| `gravity_max_cycles` | int | 默认：`200` | 正整数，MG/FGMRES 外迭代上限；不收敛停止推进 |
 
 对 `eos_type=tabular`，EOSDispatcher 可识别 3D/4D 规范化 HDF5、EOSDriver 总
 EOS HDF5，以及原始 Shen EOS2/EOS4 使用的正温度 16 列重子 ASCII 主表。
@@ -414,32 +414,32 @@ Helmholtz 保留来源的 Coulomb 非正状态保护。在低温、强耦合状�
 
 ### 燃烧、网络与 ODE
 
-| 键 | 类型 | 加载默认值 | 契约 |
+| 键 | 类型 | 缺项策略 | 契约 |
 | --- | --- | --- | --- |
-| `use_burn` | bool | `false` | 启用燃烧模块 |
-| `network_name` | string | `aprox19` | 上述内置网络或任意已编译的 `custom:<id>`；NSE 能力由生成包元数据确定 |
-| `nuclearTempMin` | double | `1e9` | K；燃烧激活阈值 |
-| `nuclearDensMin` | double | `1e-10` | g/cm3；燃烧激活阈值 |
-| `smallt` | double | `1e5` | K；燃烧状态 floor |
-| `smallx` | double | `1e-20` | 组分 floor |
-| `enucDtFactor` | double | `1e30` | 能量释放时间步 limiter；巨大默认值实际关闭限制 |
-| `use_nse` | bool 或 `auto` | `true` | `true` 要求网络支持 NSE；`false` 禁用；`auto` 按网络能力决定是否启用 |
-| `nseTempThreshold` | double | `4.5e9` | 有限正数，K；true 与 auto 均用严格的 `T > threshold` |
-| `nseDensThreshold` | double | `1e6` | 有限非负数，g/cm3；true 与 auto 均用严格的 `rho > threshold` |
-| `ode_solver` | string | `BE_NR` | `BE_NR`、`ROS4` 或 `BD` |
-| `linear_solver` | string | `Auto` | 不区分大小写的 `Auto`、`DenseLU`、`SparseKLU` 或 `cuDSS`（接受 `dense_lu`、`sparse_klu`、`cu_dss` alias）；具体化规则见下文 |
-| `ode_rtol` | double | `1e-4` | ODE 相对容差 |
-| `ode_atol` | double | `1e-8` | ODE 绝对容差 |
-| `ode_max_newton_iter` | int | `50` | 使用 Newton 时的迭代上限 |
-| `ode_max_substeps` | int | `10000` | 自适应子步上限 |
-| `ode_dt_safe_fac` | double | `0.9` | 自适应 controller 安全系数 |
-| `ode_dt_fac_max` | double | `2.0` | 增长系数 |
-| `ode_dt_fac_min` | double | `0.1` | 缩小系数 |
-| `ode_initial_dt_frac` | double | `1` | 首个内部试步比例；误差不合格仍会拒绝并缩步 |
-| `dt_init` | double | `1e-16` | 启用燃烧时的首个宏时间步 |
-| `dt_min` | double | `1e-20` | 宏时间步终止阈值 |
-| `dt_max` | double | `-1` | 最大宏步，单位 s；`-1` 不另设上限，否则必须有限且不小于 `dt_min`；不能放宽 CFL/燃烧限制 |
-| `tstep_change_factor` | double | `1.2` | 第一步后的最大宏步增长 |
+| `use_burn` | bool | 必填 | 启用燃烧模块 |
+| `network_name` | string | 条件必填：case/EOS/burn 消费网络 | 上述内置网络或任意已编译的 `custom:<id>`；NSE 能力由生成包元数据确定 |
+| `nuclearTempMin` | double | 条件必填：燃烧启用 | K；燃烧激活阈值 |
+| `nuclearDensMin` | double | 条件必填：燃烧启用 | g/cm3；燃烧激活阈值 |
+| `smallt` | double | 条件必填：消费温度下限 | K；燃烧状态 floor |
+| `smallx` | double | 条件必填：消费组分下限 | 组分 floor |
+| `enucDtFactor` | double | 条件必填：燃烧启用 | 能量释放时间步 limiter；显式巨大值实际关闭限制 |
+| `use_nse` | bool 或 `auto` | 条件必填：燃烧启用 | `true` 要求网络支持 NSE；`false` 禁用；`auto` 按网络能力决定是否启用 |
+| `nseTempThreshold` | double | 条件必填：NSE true/auto 启用 | 有限正数，K；true 与 auto 均用严格的 `T > threshold` |
+| `nseDensThreshold` | double | 条件必填：NSE true/auto 启用 | 有限非负数，g/cm3；true 与 auto 均用严格的 `rho > threshold` |
+| `ode_solver` | string | 条件必填：燃烧启用 | `BE_NR`、`ROS4` 或 `BD` |
+| `linear_solver` | string | 默认：`Auto` | 不区分大小写的 `Auto`、`DenseLU`、`SparseKLU` 或 `cuDSS`（接受 `dense_lu`、`sparse_klu`、`cu_dss` alias）；具体化规则见下文 |
+| `ode_rtol` | double | 条件必填：燃烧启用 | ODE 相对容差 |
+| `ode_atol` | double | 条件必填：燃烧启用 | ODE 绝对容差 |
+| `ode_max_newton_iter` | int | 默认：`50` | 使用 Newton 时的迭代上限 |
+| `ode_max_substeps` | int | 默认：`10000` | 自适应子步上限 |
+| `ode_dt_safe_fac` | double | 默认：`0.9` | 自适应 controller 安全系数 |
+| `ode_dt_fac_max` | double | 默认：`2.0` | 增长系数 |
+| `ode_dt_fac_min` | double | 默认：`0.1` | 缩小系数 |
+| `ode_initial_dt_frac` | double | 默认：`1` | 首个内部试步比例；误差不合格仍会拒绝并缩步 |
+| `dt_init` | double | 条件必填：燃烧启用 | 启用燃烧时的首个宏时间步 |
+| `dt_min` | double | 默认：`1e-20` | 宏时间步终止阈值 |
+| `dt_max` | double | 默认：`-1` | 最大宏步，单位 s；`-1` 不另设上限，否则必须有限且不小于 `dt_min`；不能放宽 CFL/燃烧限制 |
+| `tstep_change_factor` | double | 默认：`1.2` | 第一步后的最大宏步增长 |
 
 `ROS4` 使用匹配的四 stage、四阶、L-stable tableau。每个内部步计算一次 Jacobian，分解一次 `I - gamma*dt*J` 并由全部 stage 复用。在 aprox13/Helmholtz 单区测试中，它通过当前 BE_NR 跨求解器容差。生产研究仍需给出子步/容差收敛序列，并比较核素和能量历史，尤其是在扩展网络或 EOS 耦合时。
 
@@ -449,36 +449,36 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 
 ### 扩散
 
-| 键 | 类型 | 加载默认值 | 契约 |
+| 键 | 类型 | 缺项策略 | 契约 |
 | --- | --- | --- | --- |
-| `use_diffusion` | bool | `false` | 启用扩散模块 |
-| `diff_integrator` | string | `RKL2` | `RKL1` 或 `RKL2` |
-| `diff_cfl` | double | `0.8` | RKL stage/step 选择所用比例 |
-| `diff_max_stages` | int | `256` | 限制 STS 多项式和宏步 |
-| `use_thermal_diff` | bool | `false` | 热传导 |
-| `use_viscous_diff` | bool | `false` | 动量扩散 |
-| `use_species_diff` | bool | `false` | 组分扩散 |
-| `nu_visc` | double | `0` | 非 Helm 下的常运动黏度 |
-| `alpha_therm` | double | `0` | 非 Helm 下的常热扩散率 |
-| `D_spec` | double | `0` | 非 Helm 下的常组分扩散率 |
+| `use_diffusion` | bool | 必填 | 启用扩散模块 |
+| `diff_integrator` | string | 条件必填：扩散启用 | `RKL1` 或 `RKL2` |
+| `diff_cfl` | double | 条件必填：扩散启用 | RKL stage/step 选择所用比例 |
+| `diff_max_stages` | int | 默认：`256` | 限制 STS 多项式和宏步 |
+| `use_thermal_diff` | bool | 条件必填：扩散启用 | 热传导 |
+| `use_viscous_diff` | bool | 条件必填：扩散启用 | 动量扩散 |
+| `use_species_diff` | bool | 条件必填：扩散启用 | 组分扩散 |
+| `nu_visc` | double | 条件必填：需要常黏性系数 | 非 Helm 下的常运动黏度 |
+| `alpha_therm` | double | 条件必填：需要常热输运系数 | 非 Helm 下的常热扩散率 |
+| `D_spec` | double | 条件必填：需要常组分输运系数 | 非 Helm 下的常组分扩散率 |
 
 使用 Helmholtz 扩散时，省略三个常数 override 键以选择 `diffusionCoe` 输运。只要 override 键存在就会拒绝，包括零值。该材料模型目前仅提供热传导；开启黏性／组分通道不会产生非零系数。
 
 ### 时间、输出与重启
 
-| 键 | 类型 | 加载默认值 | 契约 |
+| 键 | 类型 | 缺项策略 | 契约 |
 | --- | --- | --- | --- |
-| `tmax` | double | `0.1` | 目标物理时间 |
-| `max_steps` | int | `-1` | 正值启用步数停止 |
-| `out_dir` | string | `data` | 在日志建立前创建 |
-| `base_name` | string | `arch` | 输出文件名前缀 |
-| `plt_dt` | double | `-1` | 正的物理时间间隔 |
-| `plt_dstep` | int | `-1` | 正的步数间隔 |
-| `chk_dt` | double | `-1` | 正的物理时间间隔 |
-| `chk_dstep` | int | `-1` | 正的步数间隔 |
-| `plt_variables` | string list | `ALL` | 逗号或 `+`，规范场/核素 |
-| `restart` | bool | `false` | 启用 checkpoint 重启 |
-| `restart_file` | string | 空 | `restart = true` 时必须为非空路径 |
+| `tmax` | double | 条件必填：正式演化；纯初态请求可缺省 | 目标物理时间 |
+| `max_steps` | int | 默认：`-1` | 正值启用步数停止 |
+| `out_dir` | string | 默认：`data` | 在日志建立前创建 |
+| `base_name` | string | 默认：`arch` | 输出文件名前缀 |
+| `plt_dt` | double | 默认：`-1` | 正的物理时间间隔 |
+| `plt_dstep` | int | 默认：`-1` | 正的步数间隔 |
+| `chk_dt` | double | 默认：`-1` | 正的物理时间间隔 |
+| `chk_dstep` | int | 默认：`-1` | 正的步数间隔 |
+| `plt_variables` | string list | 默认：`ALL` | 逗号或 `+`，规范场/核素 |
+| `restart` | bool | 默认：`false` | 启用 checkpoint 重启 |
+| `restart_file` | string | 条件必填：restart=true | `restart = true` 时必须为非空路径 |
 
 在第零步，ARCH 写入初始 PLT 和 CHK。至少推进一步后，无论到达目标时间还是 `max_steps`，都会强制最终输出；已完成的 restart 不重复写出这些文件。
 
@@ -546,6 +546,9 @@ double SimConfig::GetCustomParam(
 维护中的算例侧操作为：
 
 ```cpp
+int add_species(std::string name, arch::config::MaterialValue A,
+                arch::config::MaterialValue Z, arch::config::MaterialValue gamma,
+                arch::config::MaterialValue Cv);
 int add_species(std::string name, double A, double Z, double gamma, double Cv);
 int GetSpeciesID(const std::string &name) const;
 int count() const;
@@ -555,6 +558,12 @@ double get_Z(int id) const;
 double get_gamma_ref(int id) const;
 double get_Cv_ref(int id) const;
 ```
+
+应用 Setup 使用带来源的值登记材料：模型定义使用
+config.MaterialConstant(value, fieldOwner)，已解析数值输入使用
+config.MaterialInput(key)。原 double 重载保留给独立数学组分视图，
+其记录不能通过应用准备的来源检查。合法的不登记 species 的模型不会被补造组分。
+
 
 ID 是注册顺序索引。`GetSpeciesID` 不区分大小写，缺失时返回 `-1`；属性 getter 不检查 ID。
 

@@ -90,7 +90,8 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
         const auto candidate_for = [&](std::size_t index, bool parallel_rows) {
             const amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[index]);
             const auto scan = [&] {
-                return adaptive_dt(b.fluid_state, eos, b.grid, cfl, parallel_rows);
+                return adaptive_dt(b.fluid_state, eos, b.grid, cfl, parallel_rows,
+                    runtime.geometry_semantics());
             };
             const double dt_b = [&] {
                 if constexpr (requires { typename EosPolicy::HostHydroScope; }) {
@@ -160,7 +161,8 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
             const double block_dt = compute_backend
                 ? device_diffusion_dt[index]
                 : DiffFlux::adaptive_dt_diff(
-                    block.fluid_state, eos, block.grid, config, 1.0);
+                    block.fluid_state, eos, block.grid, config, 1.0,
+                    runtime.geometry_semantics());
             workspace.diffusion_dt_candidates.push_back({
                 block_dt,
                 DriverReduction::make_block_reduction_key(
@@ -196,7 +198,7 @@ inline state::RepairBudget collect_stage_repairs(
     auto& control = runtime.control();
     const auto& active = control.tree->GetActiveBlocks();
     const auto& handles = runtime.handles();
-    state::RepairBudget report(runtime.species().count());
+    state::RepairBudget report(runtime.species().count(),runtime.repair_budget().semantics);
     if (device_report) report = *device_report;
     else for (std::size_t index = 0; index < active.size(); ++index) {
         const auto& block = control.pool->GetBlock(active[index]);
@@ -214,7 +216,7 @@ inline state::RepairBudget collect_stage_repairs(
             const int k = cell / grid.stride_z;
             const int j = (cell - k * grid.stride_z) / grid.stride_y;
             const auto point = grid.GetPhysicalCoords(
-                cell - k * grid.stride_z - j * grid.stride_y, j, k);
+                cell - k * grid.stride_z - j * grid.stride_y, j, k, runtime.geometry_semantics());
             report.position[0] = point.x;
             report.position[1] = point.y;
             report.position[2] = point.z;
@@ -354,16 +356,18 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
         }
         if (rkl1) {
             Numerics::Diffusion::advance_amr_rkl1(
-                amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config);
+                amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config,
+                runtime.geometry_semantics());
         } else {
             Numerics::Diffusion::advance_amr_rkl2(
-                amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config);
+                amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config,
+                runtime.geometry_semantics());
         }
     } else {
         const auto execute_single = [&](auto& integrator) {
             amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks.front());
             integrator.integrate(block, eos, block.grid, config,
-                                 diffusion_dt, dt_diff_fe, bc_handler);
+                                 diffusion_dt, dt_diff_fe, bc_handler, runtime.geometry_semantics());
         };
         Numerics::Diffusion::dispatch_diffusion(
             config, resolved_plan->diffusion_integrator,
@@ -480,7 +484,7 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     const auto& stage_handles = runtime.handles();
     auto* compute_backend = runtime.backend();
     const auto& num_cfg = config.numerics;
-    state::RepairBudget pending(runtime.species().count());
+    state::RepairBudget pending(runtime.species().count(),runtime.repair_budget().semantics);
     stage_context.hydro_acceptance = [&](const scheduler::StageDescriptor& descriptor) {
         if (stage_context.hydro_preparation) stage_context.hydro_preparation->invalidate();
         auto stage = collect_stage_repairs(runtime, descriptor.output_slot,

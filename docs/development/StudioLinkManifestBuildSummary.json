@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "scope": "Actual Host Build linker-input provenance; no simulation or scientific validation",
+  "sourceCommit": "bb036640d10e5294a0e92b0cd7ca046e7161c940",
+  "repositoryDirty": false,
+  "buildId": "a48d762c-e99c-4368-87e2-eb49ca76e313",
+  "result": "succeeded",
+  "binary": {
+    "sha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+    "size": 7174432,
+    "modifiedTime": "2026-10-02T04:02:04.184Z"
+  },
+  "compilerInputCount": 735,
+  "linkerPersistentFileCount": 75,
+  "linkerPersistentBytes": 119779535,
+  "linkerUnavailableCount": 98,
+  "depfileSha256": "d78e3f1da2e506862ba7dc2aa8518c59eb154b033f5b94df6910f83d3cfc1cce",
+  "freshness": "freshness-unknown",
+  "freshnessReason": "Linker input evidence is incomplete or unavailable.",
+  "fullDependencyCoverage": false,
+  "localEvidence": {
+    "relativePath": "studio/.local/integration/host-build-a48d762c-e99c-4368-87e2-eb49ca76e313.json",
+    "sha256": "317367ae52cf1a683a001eedc0774f8bfc2905d1c82272812d89e66d2cee3ec5"
+  },
+  "limitations": [
+    "Unavailable linker inputs remain unverified; filenames do not prove harmless generated intermediates.",
+    "Compiler subprogram and complete toolchain provenance not yet covered.",
+    "Not Linux UI UAT or Run/Restart acceptance."
+  ]
+}

@@ -1,0 +1,738 @@
+{
+  "status": "PASS",
+  "cases": 38,
+  "cells": 3288,
+  "faces": 7464,
+  "boundaryFaces": 1632,
+  "rows": [
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 6.123233995736766e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 0.0,
+      "maximumExactBoundaryMapDiscrepancy": 3.792834166706277e-14,
+      "constructionNativeNormUpper": 1.8478300194294573e-10,
+      "constructionPlusAssemblyNativeNormUpper": 1.8483906949178646e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 5.519206757259503e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 3.4568074389739076e-15,
+      "maximumExactBoundaryMapDiscrepancy": 1.841685255631902e-13,
+      "constructionNativeNormUpper": 9.151856160591764e-10,
+      "constructionPlusAssemblyNativeNormUpper": 9.154492848707013e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 3.061616997868383e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 0.0,
+      "maximumExactBoundaryMapDiscrepancy": 1.1782980558511345e-13,
+      "constructionNativeNormUpper": 5.922215608829173e-10,
+      "constructionPlusAssemblyNativeNormUpper": 5.923399896007567e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 5.35782974626967e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 0.0,
+      "maximumExactBoundaryMapDiscrepancy": 1.259739811788575e-13,
+      "constructionNativeNormUpper": 5.744966066631033e-10,
+      "constructionPlusAssemblyNativeNormUpper": 5.746214407688852e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 3.062390723664118e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 4.486071616830084e-16,
+      "maximumExactBoundaryMapDiscrepancy": 3.184128447246173e-14,
+      "constructionNativeNormUpper": 9.901811072245204e-11,
+      "constructionPlusAssemblyNativeNormUpper": 9.904924672594088e-11
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 1.1102230246251565e-16,
+      "maximumAreaDiscrepancy": 1.88152349574255e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 4.169821201357718e-15,
+      "maximumExactBoundaryMapDiscrepancy": 2.366238714842937e-13,
+      "constructionNativeNormUpper": 4.786190996646279e-10,
+      "constructionPlusAssemblyNativeNormUpper": 4.787538552623461e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 8.421381058627391e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 8.972143233660169e-16,
+      "maximumExactBoundaryMapDiscrepancy": 9.760444121667664e-14,
+      "constructionNativeNormUpper": 3.1786309348472554e-10,
+      "constructionPlusAssemblyNativeNormUpper": 3.179396720232518e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 3.062390723664118e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 4.486071616830084e-16,
+      "maximumExactBoundaryMapDiscrepancy": 1.259739811788575e-13,
+      "constructionNativeNormUpper": 2.9824005939227056e-10,
+      "constructionPlusAssemblyNativeNormUpper": 2.9831021483842914e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 2.1346020293319321e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.087249251271622e-15,
+      "maximumExactBoundaryMapDiscrepancy": 3.675696726065434e-14,
+      "constructionNativeNormUpper": 1.010502727405881e-10,
+      "constructionPlusAssemblyNativeNormUpper": 1.0108147398833489e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 8.326672684688674e-17,
+      "maximumAreaDiscrepancy": 1.88152349574255e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 3.382964768228293e-15,
+      "maximumExactBoundaryMapDiscrepancy": 1.8006107238065568e-13,
+      "constructionNativeNormUpper": 4.882049709392398e-10,
+      "constructionPlusAssemblyNativeNormUpper": 4.88338563573563e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 2.158388933054445e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 4.0977391427596054e-15,
+      "maximumExactBoundaryMapDiscrepancy": 1.2802585187868935e-13,
+      "constructionNativeNormUpper": 3.2516298165913533e-10,
+      "constructionPlusAssemblyNativeNormUpper": 3.252560248273195e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 2.1346020293319321e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.087249251271622e-15,
+      "maximumExactBoundaryMapDiscrepancy": 1.259739811788575e-13,
+      "constructionNativeNormUpper": 3.0341119787186664e-10,
+      "constructionPlusAssemblyNativeNormUpper": 3.034840317509943e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 64,
+      "boundaryFaces": 12,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 7.655976809160296e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 8.972143233660169e-16,
+      "maximumExactBoundaryMapDiscrepancy": 1.4553923768591017e-13,
+      "constructionNativeNormUpper": 2.363884274046804e-10,
+      "constructionPlusAssemblyNativeNormUpper": 2.3642244700031636e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 64,
+      "boundaryFaces": 12,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 5.519206757259503e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 6.913614877947815e-15,
+      "maximumExactBoundaryMapDiscrepancy": 4.694471783819944e-13,
+      "constructionNativeNormUpper": 1.152647427276619e-09,
+      "constructionPlusAssemblyNativeNormUpper": 1.1528730126513386e-09
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 88,
+      "boundaryFaces": 18,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 3.061616997868383e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.7944286467320338e-15,
+      "maximumExactBoundaryMapDiscrepancy": 5.042346995497015e-13,
+      "constructionNativeNormUpper": 6.96615787426734e-10,
+      "constructionPlusAssemblyNativeNormUpper": 6.967204338358303e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 88,
+      "boundaryFaces": 18,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 8.421381058627391e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 8.972143233660169e-16,
+      "maximumExactBoundaryMapDiscrepancy": 2.7652224927219794e-13,
+      "constructionNativeNormUpper": 6.740237574293827e-10,
+      "constructionPlusAssemblyNativeNormUpper": 6.741875835317433e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 3.062390723664118e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 7.494482563027774e-16,
+      "maximumExactBoundaryMapDiscrepancy": 1.43513807582435e-13,
+      "constructionNativeNormUpper": 1.0763134687066522e-10,
+      "constructionPlusAssemblyNativeNormUpper": 1.0765766471442561e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 1.1102230246251565e-16,
+      "maximumAreaDiscrepancy": 1.88152349574255e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.951986608033865e-14,
+      "maximumExactBoundaryMapDiscrepancy": 5.784657107014132e-13,
+      "constructionNativeNormUpper": 5.221644323370774e-10,
+      "constructionPlusAssemblyNativeNormUpper": 5.223084253971881e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 94,
+      "boundaryFaces": 24,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 8.421381058627391e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 2.6258608163818724e-15,
+      "maximumExactBoundaryMapDiscrepancy": 5.127781993384726e-13,
+      "constructionNativeNormUpper": 9.781916058647653e-10,
+      "constructionPlusAssemblyNativeNormUpper": 9.783295478389984e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 94,
+      "boundaryFaces": 24,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 3.062390723664118e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.3129304081909362e-15,
+      "maximumExactBoundaryMapDiscrepancy": 2.7652224927219794e-13,
+      "constructionNativeNormUpper": 9.196470919843259e-10,
+      "constructionPlusAssemblyNativeNormUpper": 9.198300613486929e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 2.1346020293319321e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.087249251271622e-15,
+      "maximumExactBoundaryMapDiscrepancy": 1.4085322974974753e-13,
+      "constructionNativeNormUpper": 1.0526165810098076e-10,
+      "constructionPlusAssemblyNativeNormUpper": 1.0528736744204117e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "maximumExactCenterDiscrepancy": 8.326672684688674e-17,
+      "maximumAreaDiscrepancy": 1.88152349574255e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.7410551422813738e-14,
+      "maximumExactBoundaryMapDiscrepancy": 4.0342958496509324e-13,
+      "constructionNativeNormUpper": 5.119549329785528e-10,
+      "constructionPlusAssemblyNativeNormUpper": 5.12095147310629e-10
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 94,
+      "boundaryFaces": 24,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 2.158388933054445e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.3295626352940382e-14,
+      "maximumExactBoundaryMapDiscrepancy": 6.294009792779333e-13,
+      "constructionNativeNormUpper": 1.0149929417953261e-09,
+      "constructionPlusAssemblyNativeNormUpper": 1.0151682762664437e-09
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 94,
+      "boundaryFaces": 24,
+      "maximumExactCenterDiscrepancy": 5.551115123125783e-17,
+      "maximumAreaDiscrepancy": 2.158388933054445e-16,
+      "maximumExactAreaOverVolumeDiscrepancy": 4.0977391427596054e-15,
+      "maximumExactBoundaryMapDiscrepancy": 2.0717860839487078e-13,
+      "constructionNativeNormUpper": 9.499062171664134e-10,
+      "constructionPlusAssemblyNativeNormUpper": 9.500885194327321e-10
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 576,
+      "boundaryFaces": 132,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 1.052672632328424e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.126234715367037e-14,
+      "maximumExactBoundaryMapDiscrepancy": 1.066429522092616e-11,
+      "constructionNativeNormUpper": 6.813046843638609e-08,
+      "constructionPlusAssemblyNativeNormUpper": 6.8133937988187e-08
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 288,
+      "boundaryFaces": 68,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 1.7225222452677164e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 5.251721632763745e-15,
+      "maximumExactBoundaryMapDiscrepancy": 8.06233479544688e-12,
+      "constructionNativeNormUpper": 3.031238985658121e-08,
+      "constructionPlusAssemblyNativeNormUpper": 3.031529873043639e-08
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 144,
+      "boundaryFaces": 36,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 2.8707495141239435e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 2.6258608163818724e-15,
+      "maximumExactBoundaryMapDiscrepancy": 5.306285733317484e-12,
+      "constructionNativeNormUpper": 7.162158124921344e-08,
+      "constructionPlusAssemblyNativeNormUpper": 7.16242959669818e-08
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 580,
+      "boundaryFaces": 136,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 1.913994202290074e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.2760381487872242e-14,
+      "maximumExactBoundaryMapDiscrepancy": 1.054676636596965e-11,
+      "constructionNativeNormUpper": 4.148694245459619e-08,
+      "constructionPlusAssemblyNativeNormUpper": 4.14901584705274e-08
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 292,
+      "boundaryFaces": 72,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 3.540840916374403e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 5.631173576835185e-15,
+      "maximumExactBoundaryMapDiscrepancy": 8.06233479544688e-12,
+      "constructionNativeNormUpper": 1.610462277730162e-08,
+      "constructionPlusAssemblyNativeNormUpper": 1.6107645738608975e-08
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 148,
+      "boundaryFaces": 40,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 6.12468473160377e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 2.6258608163818724e-15,
+      "maximumExactBoundaryMapDiscrepancy": 5.306285733317484e-12,
+      "constructionNativeNormUpper": 3.9423148575374594e-08,
+      "constructionPlusAssemblyNativeNormUpper": 3.9426078812098506e-08
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 448,
+      "faces": 994,
+      "boundaryFaces": 132,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 1.052672632328424e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 2.5520762975744483e-14,
+      "maximumExactBoundaryMapDiscrepancy": 4.3912931376825235e-11,
+      "constructionNativeNormUpper": 4.0334625020792654e-08,
+      "constructionPlusAssemblyNativeNormUpper": 4.03384063304563e-08
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 576,
+      "boundaryFaces": 132,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 1.052672632328424e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.126234715367037e-14,
+      "maximumExactBoundaryMapDiscrepancy": 1.066429522092616e-11,
+      "constructionNativeNormUpper": 6.813046843638609e-08,
+      "constructionPlusAssemblyNativeNormUpper": 6.8133937988187e-08
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 288,
+      "boundaryFaces": 68,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 1.7225222452677164e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 5.251721632763745e-15,
+      "maximumExactBoundaryMapDiscrepancy": 8.06233479544688e-12,
+      "constructionNativeNormUpper": 3.031238985658121e-08,
+      "constructionPlusAssemblyNativeNormUpper": 3.031529873043639e-08
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 3,
+      "radialOrigin": 0,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 144,
+      "boundaryFaces": 36,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 2.8707495141239435e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 2.6258608163818724e-15,
+      "maximumExactBoundaryMapDiscrepancy": 5.306285733317484e-12,
+      "constructionNativeNormUpper": 7.162158124921344e-08,
+      "constructionPlusAssemblyNativeNormUpper": 7.16242959669818e-08
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 448,
+      "faces": 998,
+      "boundaryFaces": 136,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 1.913994202290074e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 2.1364407944999215e-14,
+      "maximumExactBoundaryMapDiscrepancy": 4.3912931376825235e-11,
+      "constructionNativeNormUpper": 4.4567232189229046e-08,
+      "constructionPlusAssemblyNativeNormUpper": 4.457143906818464e-08
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 580,
+      "boundaryFaces": 136,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 1.913994202290074e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 1.2760381487872242e-14,
+      "maximumExactBoundaryMapDiscrepancy": 1.054676636596965e-11,
+      "constructionNativeNormUpper": 4.148694245459619e-08,
+      "constructionPlusAssemblyNativeNormUpper": 4.14901584705274e-08
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 292,
+      "boundaryFaces": 72,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 3.540840916374403e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 5.631173576835185e-15,
+      "maximumExactBoundaryMapDiscrepancy": 8.06233479544688e-12,
+      "constructionNativeNormUpper": 1.610462277730162e-08,
+      "constructionPlusAssemblyNativeNormUpper": 1.6107645738608975e-08
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 3,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 148,
+      "boundaryFaces": 40,
+      "maximumExactCenterDiscrepancy": 0.0,
+      "maximumAreaDiscrepancy": 6.12468473160377e-17,
+      "maximumExactAreaOverVolumeDiscrepancy": 2.6258608163818724e-15,
+      "maximumExactBoundaryMapDiscrepancy": 5.306285733317484e-12,
+      "constructionNativeNormUpper": 3.9423148575374594e-08,
+      "constructionPlusAssemblyNativeNormUpper": 3.9426078812098506e-08
+    }
+  ],
+  "probeSha256": "b600d4dc00b9f74a2a861f6cb5be32cbcd3678833790ff07a7b1c17ce5765ddb",
+  "scope": "Ideal native face geometry and selected-stencil B construction, plus actual canonical RHS assembly for supplied manufactured face values",
+  "limitations": [
+    "Face values do not certify potential at ideal source/observer coordinates",
+    "Interior A construction, full physical residual, Phi/force and recovery coverage remain separate",
+    "No tolerance change, simulation, CUDA or long-run claim; raw arrays retained locally"
+  ],
+  "baselineCommit": "e02d8342e91b5ea6ba868b506c194731eb35d4af",
+  "sourceSha256": {
+    "src/numerics/elliptic/CompositePoisson.h": "da8fed3443ef66af1b47a7db2f5923358d9991dcda558e148222dc6153e2a7df",
+    "src/numerics/elliptic/CompositePoisson.cpp": "8b62e98dc8f14ad80d9598c425ec7b0bb6481e1cef6f4114af821335649040cb",
+    "tests/host/gravity/test_composite_poisson.cpp": "123035ff2b532d58867dbd493662184e297812f7d346986c0d5e46cce65c0f43",
+    "validation/gravity/rz_face_map_enclosure_reference.py": "567178ba83dda59588b41ee9be6073f3b2e52cb3a1c34528ff7cf26d16069af1",
+    "validation/gravity/rz_stencil_construction_reference.py": "289e2bdbdcbd4198bf8448da5daace23ad71e6bbbed549995e38abd5206a2241",
+    "validation/gravity/rz_ring_axis_reference.py": "e5709e62c09919b31194bec698eef8a4e02f0404f689297b50e1c6e33e9db9a9",
+    "src/grid/GridMetrics.h": "49eae7319dc001d843a530910fbd9b39ff7fdcf3290525a133a6b6c433aa718c",
+    "src/numerics/linalg/DenseWrap.h": "b26f83191a53d5affeea6b9421f52a932911157a235ad3adf0d9bf2124312634"
+  },
+  "cpuArchSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "checks": {
+    "affectedCoreCtest": "6/6 PASS; 10.19 seconds",
+    "architectureAudit": "PASS",
+    "diffCheck": "PASS",
+    "stencilEnclosureRegression": "38 operators / 7464 faces / 38752 coefficient terms PASS",
+    "build": "Existing CPU Release tree incremental; parallel28; guards not stopped; swap growth0",
+    "faceBuildGuard": "10.152 seconds; peak RSS2582156 KiB",
+    "ledgerBuildGuard": "11.157 seconds; peak RSS2572856 KiB",
+    "frozenJeans": "Identical binary reused matching frozen 9 short + 9 actual restart receipt"
+  },
+  "frozenJeansReceipt": {
+    "path": "validation/gravity/results/rz-stencil-construction-20261005/summary.json",
+    "sha256": "fe1473f61205f1aae7831be7e6d95f3637c51654432567d7d16a826c792bf2a0",
+    "binarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+    "status": "PASS",
+    "shortEvolutions": 9,
+    "actualRestarts": 9
+  },
+  "identityScope": "Actual selected face/leaf topology including 10 derived coarse operators; ideal root-dyadic geometry, mathematical pi, exact supplied face values",
+  "importantCompositionGap": "When adding real potential errors use ideal B*e_f, or include (Bideal-Bstored)*e_f cross term; old stored-B propagation plus construction alone is insufficient.",
+  "remainingDependencies": [
+    "Ideal-source/observer potential error, with correct ideal-B propagation/cross term",
+    "Interior A construction plus actual residual composition using ideal native weights",
+    "Natural recovery trigger coverage; independent Phi/force and axis/viscosity/full RZ consumer science",
+    "Unified CUDA and approved timing/long runs only after corresponding CPU science gate"
+  ]
+}

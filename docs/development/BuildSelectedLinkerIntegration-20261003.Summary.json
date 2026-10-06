@@ -1,0 +1,33 @@
+{
+  "sourceCommit": "164de218ae7c9797f4ad5d4e0f6c17f9d501ef3a",
+  "buildId": "39eb4f9e-3618-4011-8810-4880e473f6ff",
+  "startedAt": "2026-10-03T10:13:03.771Z",
+  "finishedAt": "2026-10-03T10:13:05.195Z",
+  "buildState": "succeeded",
+  "repositoryDirtyAtBuild": false,
+  "binarySha256": "ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a",
+  "configurationInputCount": 82,
+  "compilerInputCount": 735,
+  "linkInputCount": 172,
+  "missingLinkInputCount": 0,
+  "configurationStable": true,
+  "compilerInputsStable": true,
+  "toolchainStable": true,
+  "reload": {
+    "pid": 308659,
+    "buildId": "39eb4f9e-3618-4011-8810-4880e473f6ff",
+    "binaryState": "freshness-unknown",
+    "reason": "Tracked inputs match; full dependency coverage is unknown.",
+    "changedInputs": [],
+    "selected": {
+      "role": "selected-ld.mold",
+      "path": "/usr/bin/ld.mold",
+      "resolvedPath": "/usr/bin/mold",
+      "sha256": "9e23dde239d96e75691c107d0f387039aae7698ca73defec6080ada0eb920723",
+      "size": 19054816
+    }
+  },
+  "cleanBuild": false,
+  "simulationRun": false,
+  "fullDependencyCoverage": false
+}

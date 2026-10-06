@@ -77,6 +77,7 @@ public:
 private:
     using Clock = std::chrono::steady_clock;
     Clock::time_point started_ = Clock::now();
+    std::string plot_run_id_; // One output session; new on restart invocation.
     double output_seconds_ = 0.;
     std::size_t output_calls_ = 0;
     DriverRuntime& runtime;

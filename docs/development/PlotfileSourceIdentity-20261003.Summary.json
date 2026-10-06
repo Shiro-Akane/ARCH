@@ -1,0 +1,38 @@
+{
+  "baseline": "ae3af9b741e3e2eb6106945a8b87d4c7221b92e9",
+  "kind": "manufactured IO provenance validation",
+  "cases": [
+    {
+      "dimension": 1,
+      "version": "candidate-identity-1",
+      "scope": "partial",
+      "case": "Sod",
+      "eos": "ideal",
+      "gamma": 1.4,
+      "speciesCount": 1,
+      "missingIdentitiesRemainUnknown": true,
+      "fieldShape": [
+        2,
+        16
+      ]
+    },
+    {
+      "dimension": 2,
+      "version": "candidate-identity-1",
+      "scope": "partial",
+      "case": "Sod",
+      "eos": "ideal",
+      "gamma": 1.4,
+      "speciesCount": 1,
+      "missingIdentitiesRemainUnknown": true,
+      "fieldShape": [
+        2,
+        16,
+        16
+      ]
+    }
+  ],
+  "scopedTests": "2/2 PASS",
+  "scientificReview": "pending",
+  "productionBinaryReplaced": false
+}

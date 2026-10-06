@@ -1,0 +1,82 @@
+{
+  "status": "DEVICE_JEANS_ACCEPTED_CELL_SUBGROUP_PASS",
+  "sourceHeadBefore": "a10e1cc1811cf886a9c34a234258f78575149a5d",
+  "changedInputFingerprints": {
+    "src/cuda/amr/RefinementIndicators.h": "5619a773726c3aaf0e3fc3a2fd72b3db0a07d2945f9f84a429f200eb154e45c5",
+    "src/cuda/amr/RefinementIndicators.cu": "907bc6468782ed7b2f9ffc130e9aa909c5bb62a10a2a4a37bc6e015bfc8bfdaf",
+    "tests/cuda/amr/test_jeans_resolution.cu": "27c7e0f802475b97a8258d50f1b23552f457c0804b36eee851d4f8255d3e9d88",
+    "tests/cuda/amr/test_refinement_indicators.cpp": "b69b91544333f4be19766d28f882d447ac04b22ec96e6a0bfa924d5a6e79deda",
+    "cmake/tests/CudaTests.cmake": "b999b50ead54a0da8e50f125a1c898506919c614ea272d721122a95f9f61f762"
+  },
+  "referenceSha256": "9cb4711a659a42217e8ced7d93aba768dc166af27d6d970ef46cc1234f151b7a",
+  "reference": "existing independent Decimal 80/120-digit cases, approved static 16 double epsilon budget",
+  "cpuBinarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "cpuBinaryUnchanged": true,
+  "cudaTestBinarySha256": "546fe941d0e6ff2fb25a09a549414a8cc171c4cc944b807cff3e0583bdcfb174",
+  "gpu": "RTX 4070 Ti",
+  "cudaArchitecture": "89",
+  "cudaToolkit": "12.8.93",
+  "numeric": {
+    "valid": 197,
+    "unrepresentable": 104,
+    "invalid": 12,
+    "maxRelativeError": 1.5432483614913696e-16
+  },
+  "caloric": {
+    "cases": 24,
+    "maxRelativeError": 1.9657272738823614e-16,
+    "referenceGammaMixture": "27/14",
+    "speciesExtentPreflightChecks": 12
+  },
+  "acceptedBlocks": {
+    "dimensions": [
+      1,
+      2,
+      3
+    ],
+    "levels": [
+      0,
+      1
+    ],
+    "combinations": 6,
+    "checks": [
+      "frozen uniform independent caloric reference",
+      "changed active-cell minimum",
+      "invalid ghost ignored",
+      "zero/negative/NaN active density invalidates whole summary",
+      "negative internal energy failure",
+      "valid recovery",
+      "missing workspace preflight leaves EOS latch untouched"
+    ]
+  },
+  "ctest": {
+    "name": "cuda_refinement_indicators",
+    "exitCode": 0,
+    "includesExistingTests": true
+  },
+  "architectureAuditExitCode": 0,
+  "diffCheckExitCode": 0,
+  "buildMemoryGuard": "MEMORY_GUARD_RESULT min_available_kib=22491580 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=556616 elapsed_seconds=25.085 stop_reason=none",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/cuda-jeans-resolution-20261005",
+  "logs": {
+    "build.log": "eca4466bc2d6072496397163f1d846dd2400653688b30d7977641b0e8ad4bcfc",
+    "build-final.log": "fa470931605f4489dbbd46c7b824556a775ccbff3dc909a25790386242da16c2",
+    "architecture-final.log": "6c6d45955d255c6686e952acf0322fd17e34a224fdecb79959195bebd2e9de69",
+    "build-canonical.log": "0b63fe409d2ad076810e2af065fb031381dc7dd0d05ce4dc1d7d54977946046f",
+    "architecture-canonical.log": "7ae45a45d96d9bd72156c3a8971574329fc11f3e8a339dd9b51dbc9b39a954d0",
+    "build-witness.log": "4edfbe4599bfa0726263b4f4acedad014579b841757bc620879104a99cfb4af4",
+    "architecture-witness.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-caloric.log": "71b71dd8f8eb484d08a20e86f04cba18f6c7bd65f31ff4d489b689086dafb349",
+    "ctest-caloric.log": "3df3e73082db52ea21a51902e7e96686cb92e7ec48d8c2e74f3183c2bfe47476",
+    "architecture-caloric.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "limits": [
+    "Only new Cartesian accepted-state device leaf is qualified",
+    "Helm/Tabular3D/Tabular4D overloads compiled, not independently science qualified by these IdealGas tests",
+    "No CudaBackend minimum consumer or Current/version validation yet",
+    "No candidate-parent device EOS, AMR lifecycle, output or checkpoint qualification",
+    "Public JENS CUDA/auto gates unchanged",
+    "RZ science findings unchanged",
+    "No full production CUDA ARCH binary, long run or formal timing"
+  ]
+}

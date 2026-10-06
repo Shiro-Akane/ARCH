@@ -1,0 +1,34 @@
+{
+  "sourceCommit": "64148c7a1c6e7c718f14309c6115d51d8b74bad4",
+  "kind": "local-cpu-initial-amr-integration",
+  "identity": {
+    "caseId": "CellularDet",
+    "configRevision": "c3e8b28d04de5f9be5667799c6a4501d7dc6b0c61c32d7065552768817ee1ab6",
+    "requestId": "926ca6e5-d3e7-4b18-9ab9-b314d81b731c"
+  },
+  "execution": {
+    "previewBackend": "cpu",
+    "scientificOutput": "not_created",
+    "simulationReadiness": "not_checked",
+    "timeStepping": "not_executed"
+  },
+  "status": "ok",
+  "mesh": {
+    "dimension": 2,
+    "geometry": "cartesian",
+    "complete": true,
+    "completedPasses": 2,
+    "leafCount": 20,
+    "fieldOverlay": "separate uniform Init samples; not AMR cell averages"
+  },
+  "levelCounts": {
+    "1": 4,
+    "2": 16
+  },
+  "limitations": [
+    "No simulation or evolution acceptance",
+    "No renderer/manual UAT acceptance",
+    "No field-to-AMR EOS identity assertion"
+  ],
+  "localRaw": "studio/.local/integration/local-cellular-amr-response.json"
+}

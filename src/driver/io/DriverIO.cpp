@@ -11,9 +11,11 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <string>
 #include <vector>
 
 #include "driver/io/DriverIO.h"
+#include "core/files/RunIdentity.h"
 
 #include "amr/AMRControl.h"
 #include "driver/runtime/DriverRuntime.h"
@@ -23,6 +25,16 @@
 
 namespace arch::driver {
 namespace {
+/** Finish diagnostic streams explicitly; destructors cannot propagate buffered failures. */
+void close_diagnostic(std::ofstream& output, const char* description)
+{
+    output.flush();
+    if (!output)
+        throw std::runtime_error(std::string("cannot flush ") + description);
+    output.close();
+    if (!output)
+        throw std::runtime_error(std::string("cannot close ") + description);
+}
 /** Reject invalid conserved, composition or EOS state before serializing any plot. */
 void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
                           TemperatureFunc temperature, Gamma1Func gamma1, const void* eos)
@@ -61,10 +73,15 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
     const auto& specs = runtime.species();
+    if (amr_ctrl.tree->GetActiveBlocks().empty())
+        throw std::invalid_argument("Cannot publish Plotfile without active leaf blocks.");
     runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
-    write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index++,
-              ctrl.t_current, config, specs, extra_fields);
+    if (plot_run_id_.empty()) plot_run_id_ = arch::core::new_run_identity();
+    write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index,
+              ctrl.t_current, config, specs, extra_fields, &checkpoint_provenance, plot_run_id_, runtime.geometry_semantics());
+    // A failed write/close/publication must not consume the next output identity.
+    ++ctrl.plt_file_index;
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
@@ -78,10 +95,18 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
     if (runtime.backend())
         runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
-    write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index,
+    const auto semantics = runtime.geometry_semantics();
+    io::CheckpointGeometryIdentity geometry_identity{1, "existing"};
+    if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
+        geometry_identity = io::current_rz_checkpoint_geometry();
+    else if (semantics != GridMetrics::GeometrySemantics::Existing)
+        throw std::runtime_error("Unsupported runtime checkpoint geometry profile");
+    write_chk(amr_ctrl, ctrl.chk_file_index, ctrl.plt_file_index,
               ctrl.step_count, ctrl.t_current, ctrl.dt_old,
               dt_burn_global, resume_after_regrid, config, specs,
-              checkpoint_provenance, ctrl.repairs);
+              checkpoint_provenance, ctrl.repairs, geometry_identity);
+    // Reserve the identity until the serializer reports success.
+    ++ctrl.chk_file_index;
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
@@ -121,6 +146,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                << std::chrono::duration<double>(Clock::now()-started_).count() << '\t'
                << output_seconds_ << '\t' << output_calls_ << '\n';
         if (!timing) throw std::runtime_error("cannot write run timings");
+        close_diagnostic(timing, "run timings");
     }
     // Stage clocks are wall intervals around synchronous CPU calls. They do
     // not include setup, output or miscellaneous Driver work; the existing
@@ -135,13 +161,31 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
             timing << names[i] << '\t' << cpu_stages.seconds[i]
                    << '\t' << cpu_stages.calls[i] << '\n';
         if (!timing) throw std::runtime_error("cannot write CPU stage timings");
+        close_diagnostic(timing, "CPU stage timings");
     }
     {
+        const bool rz = runtime.geometry_semantics()
+            == GridMetrics::GeometrySemantics::AxisymmetricRz;
+        const auto expected_repairs=rz ? state::RepairSemantics::RzVolumeAngular
+            : state::RepairSemantics::ExistingVolume;
+        if(ctrl.repairs.semantics!=expected_repairs)
+            throw std::runtime_error("Repair report measure identity differs from runtime chart");
         std::ofstream report(config.io.out_dir + "/state_repairs.txt");
         if (!report) throw std::runtime_error("cannot write state repair diagnostics");
         report << std::setprecision(17) << "revision=P1.5-v1 units=CGS\n";
+        // RZ slot 6 is J=W*m_phi; other conserved deltas use V.
+        if(rz) report << "repair_semantics=" << state::repair_semantics_name(ctrl.repairs.semantics) << "\n";
+        if (rz)
+            report << "geometry_semantics_revision=2\ngeometry_chart=axisymmetric-rz\n"
+                   << "momentum_basis=local-orthonormal-r-z-phi\n"
+                   << "measure_unit=cm^3\nmeasure_normalization=full_rotation\n"
+                   << "mass_unit=g\nmomentum_unit=g*cm/s\nenergy_unit=erg\n"
+                   << "angular_momentum_unit=g*cm^2/s\nstate_semantics=rz-m-phi-j-over-w-v1\n";
         const char* names[]{"events","affected_volume","mass_signed","mass_absolute",
-            "momentum_x","momentum_y","momentum_z","energy_signed","energy_absolute","local_cell"};
+            rz ? "momentum_r" : "momentum_x",
+            rz ? "momentum_z" : "momentum_y",
+            rz ? "angular_momentum_signed" : "momentum_z",
+            "energy_signed","energy_absolute","local_cell"};
         for (int i=0;i<state::RepairView::fixed_size;++i) report << names[i] << "=" << ctrl.repairs.values[i] << "\n";
         for (int i=0;i<ctrl.repairs.species();++i) {
             report << "species_" << i << "_signed=" << ctrl.repairs.values[10+2*i] << "\n";
@@ -150,6 +194,8 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         report << "block_uid=" << ctrl.repairs.block_uid << "\nstage=" << ctrl.repairs.stage
                << "\ntime=" << ctrl.repairs.time << "\nposition=" << ctrl.repairs.position[0] << ","
                << ctrl.repairs.position[1] << "," << ctrl.repairs.position[2] << "\n";
+        // Buffered text failures must propagate before announcing diagnostics.
+        close_diagnostic(report, "state repair diagnostics");
         std::cout << "[State] floor repairs=" << ctrl.repairs.values[0]
                   << " delta_mass=" << ctrl.repairs.values[2]
                   << " delta_energy=" << ctrl.repairs.values[7] << std::endl;
@@ -170,6 +216,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                    << record.operations.kernel_count << '\t' << record.operations.stream_sync_count << '\n';
         }
         if (!output) throw std::runtime_error("failed writing regrid measurements");
+        close_diagnostic(output, "regrid measurements");
     }
 
     if (compute_backend) {
@@ -215,6 +262,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         }
         if (!trace_output)
             throw std::runtime_error("failed writing CUDA backend trace");
+        close_diagnostic(trace_output, "CUDA backend trace");
 
         if (has_diff) {
             const std::filesystem::path schedule_path = directory
@@ -242,6 +290,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
             if (!schedule_output || cuda_diffusion_schedule.empty())
                 throw std::runtime_error(
                     "failed writing CUDA diffusion schedule");
+            close_diagnostic(schedule_output, "CUDA diffusion schedule");
         }
     }
 

@@ -21,6 +21,7 @@
 
 #include "amr/topology/AmrDefines.h"
 #include "data/GlobalDefs.h"
+#include "grid/GridGeometryView.h"
 
 // One physical point expressed in each supported coordinate system.
 struct PointCoords
@@ -90,8 +91,16 @@ private:
     /**
      * @brief Validate physical-domain bounds and reject invalid geometry.
      */
-    void ValidateDomain() const
+    void RequireGeometrySemantics(GridMetrics::GeometrySemantics semantics) const
     {
+        if (semantics == GridMetrics::GeometrySemantics::Existing) return;
+        if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz ||
+            dim != 2 || geometry != "cylindrical")
+            throw std::invalid_argument("RZ coordinates require cylindrical dimension 2");
+    }
+    void ValidateDomain(GridMetrics::GeometrySemantics semantics) const
+    {
+        RequireGeometrySemantics(semantics);
         // 0. Dimensionality and topology checks
         if (amr::BLOCK_NX < 1 || amr::BLOCK_NY < 1 || amr::BLOCK_NZ < 1)
             throw std::invalid_argument("Grid Error: BLOCK dimensions must be >= 1.");
@@ -135,8 +144,8 @@ private:
             if (x1_min < 0.0)
                 throw std::invalid_argument("Domain Error: R_min cannot be negative.");
 
-            // In 2D cylindrical coordinates, x2 represents phi and may span 2pi.
-            if (dim == 2)
+            // Legacy 2D is polar; explicit RZ x2 is an unrestricted length.
+            if (dim == 2 && semantics == GridMetrics::GeometrySemantics::Existing)
             {
                 if ((x2_max - x2_min) > 2.0 * arch::constants::math::pi + eps)
                     throw std::invalid_argument("Domain Error (2D Polar): Azimuthal angle phi (y bounds) cannot exceed 2*pi.");
@@ -153,8 +162,9 @@ public:
      * @brief Computes dimensions, steps, and memory strides.
      * Centralized to avoid duplicated code in constructors.
      */
-    void InitializeTopology()
+    void InitializeTopology(GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        RequireGeometrySemantics(semantics);
         // Step Length
         dx1 = (amr::BLOCK_NX > 0) ? (x1_max - x1_min) / amr::BLOCK_NX : 0.0;
         dx2 = (amr::BLOCK_NY > 1 && dim >= 2) ? (x2_max - x2_min) / amr::BLOCK_NY : 0.0;
@@ -171,7 +181,7 @@ public:
         total_size = amr::PAD_NX * total_y_ * total_z_;
 
         // Check Domain
-        ValidateDomain();
+        ValidateDomain(semantics);
     }
 
     int GetTotalX() const { return total_x_; }
@@ -184,8 +194,11 @@ public:
     /**
      * @brief Return physical axis names for HDF5/XDMF post-processing.
      */
-    std::vector<std::string> GetAxisNames() const
+    std::vector<std::string> GetAxisNames(GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) const
     {
+        RequireGeometrySemantics(semantics);
+        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
+            return {"r_cy", "z_cy"};
         if (geometry == "spherical")
         {
             if (dim == 1)
@@ -216,17 +229,30 @@ public:
      * The result exposes a common physical-coordinate view independent of the
      * grid's native Cartesian, cylindrical, or spherical coordinates.
      */
-    PointCoords GetPhysicalCoords(int i, int j = 0, int k = 0) const
+    PointCoords GetPhysicalCoords(int i, int j = 0, int k = 0,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) const
     {
         return PhysicalCoordsFromNative(dim, geometry, GetCellCenterX(i),
-                                        GetCellCenterY(j), GetCellCenterZ(k));
+                                        GetCellCenterY(j), GetCellCenterZ(k), semantics);
     }
 
     // Shared coordinate expansion for grid cells and initial-preview samples.
     // This does not allocate a grid or change sampling resolution.
     static PointCoords PhysicalCoordsFromNative(int dim, const std::string &geometry,
-                                                double cx, double cy = 0.0, double cz = 0.0)
+                                                double cx, double cy = 0.0, double cz = 0.0,
+                                                GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        if (semantics != GridMetrics::GeometrySemantics::Existing) {
+            if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz ||
+                dim != 2 || geometry != "cylindrical")
+                throw std::invalid_argument("RZ coordinates require cylindrical dimension 2");
+            PointCoords rz{};
+            rz.x=cx; rz.y=0.; rz.z=cy;
+            rz.r_cy=cx; rz.z_cy=cy; rz.phi_cy=0.;
+            rz.r=std::hypot(cx,cy); // Spherical radius, never the native r axis.
+            rz.theta=std::atan2(cx,cy); rz.phi=0.;
+            return rz;
+        }
         PointCoords coords{};
 
         // Supply deterministic inactive-coordinate values for 1D and 2D grids.

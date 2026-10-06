@@ -1,0 +1,655 @@
+{
+  "sourceHead": "dfe6f4bb16740fcb0c12f6ef44b8d35f77fa00ee",
+  "binarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "scope": "Original Campaign.full, existing frozen inputs and budgets, excludes Box/Radial campaigns; not full CPU gate",
+  "status": "FAIL",
+  "error": "Command '['/home/arch/projects/ARCH-compute-optim/build-cpu/bin/ARCH', 'JeansWave', '/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-full-cpu-20261004/runs/native-mixed-3d/input.par']' returned non-zero exit status 1.",
+  "elapsedSeconds": 5.319949137003277,
+  "results": [
+    {
+      "name": "spatial-32",
+      "solves": 134,
+      "last_time": 0.1,
+      "density_relative_rms": 0.0065685073095967965,
+      "mass_relative_drift": 1.7229467630386353e-15,
+      "energy_over_initial_potential": 3.0180987082766693e-06,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 6.1458337667298394e-18,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "spatial-64",
+      "solves": 262,
+      "last_time": 0.1,
+      "density_relative_rms": 0.0015957884745969439,
+      "mass_relative_drift": 3.597233444452286e-15,
+      "energy_over_initial_potential": 6.6417007942831364e-06,
+      "initial_net_force": 1.5194639815274328e-20,
+      "final_net_force": 1.879759495150746e-18,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "spatial-128",
+      "solves": 518,
+      "last_time": 0.1,
+      "density_relative_rms": 0.00046516043758345563,
+      "mass_relative_drift": 7.127528078854084e-15,
+      "energy_over_initial_potential": 1.3434092474429676e-05,
+      "initial_net_force": 4.944852656205035e-21,
+      "final_net_force": 1.642833513218615e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-reference",
+      "solves": 12294,
+      "last_time": 0.3,
+      "density_relative_rms": 0.16814571316730928,
+      "mass_relative_drift": 1.7006532289087773e-13,
+      "energy_over_initial_potential": 0.0003222170128056219,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 7.23212775976655e-18,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-reference-finer",
+      "solves": 24582,
+      "last_time": 0.3,
+      "density_relative_rms": 0.1681457134175606,
+      "mass_relative_drift": 3.497989382594824e-13,
+      "energy_over_initial_potential": 0.0006217461428278683,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 1.8653260821210307e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-Euler-0.8",
+      "solves": 52,
+      "last_time": 0.3,
+      "density_relative_rms": 0.11864519027638784,
+      "mass_relative_drift": 1.746229827404022e-17,
+      "energy_over_initial_potential": 0.10338022791390558,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 5.156042625059108e-18,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-Euler-0.4",
+      "solves": 100,
+      "last_time": 0.3,
+      "density_relative_rms": 0.14382684481834734,
+      "mass_relative_drift": 2.3283064365386962e-17,
+      "energy_over_initial_potential": 0.050182209425447884,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 1.5695824152847988e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-Euler-0.2",
+      "solves": 196,
+      "last_time": 0.3,
+      "density_relative_rms": 0.15609447370442792,
+      "mass_relative_drift": 1.9208528101444245e-16,
+      "energy_over_initial_potential": 0.02471633040058266,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 2.5311488852598225e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-order-Euler",
+      "errors": [
+        199.76518006011165,
+        98.28425754847866,
+        48.73934211746555
+      ],
+      "orders": [
+        1.0232728771497395,
+        1.0118735770321212
+      ],
+      "reference_change": 1.0327279772470468e-05
+    },
+    {
+      "name": "temporal-RK2-0.8",
+      "solves": 77,
+      "last_time": 0.3,
+      "density_relative_rms": 0.16838701303380138,
+      "mass_relative_drift": 1.746229827404022e-17,
+      "energy_over_initial_potential": 0.00011919631947566047,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 1.6945016791749478e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-RK2-0.4",
+      "solves": 149,
+      "last_time": 0.3,
+      "density_relative_rms": 0.168212191527468,
+      "mass_relative_drift": 8.149072527885437e-17,
+      "energy_over_initial_potential": 1.5067033710289224e-05,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 1.3282189975811494e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-RK2-0.2",
+      "solves": 293,
+      "last_time": 0.3,
+      "density_relative_rms": 0.1681631445883989,
+      "mass_relative_drift": 4.94765117764473e-16,
+      "energy_over_initial_potential": 1.6954437055686413e-06,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 2.184933178475745e-18,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-order-RK2",
+      "errors": [
+        4.511265082606809,
+        1.124800914508002,
+        0.2808115502017408
+      ],
+      "orders": [
+        2.0038623890308775,
+        2.0019954902980523
+      ],
+      "reference_change": 1.0327279772470468e-05
+    },
+    {
+      "name": "temporal-RK3-0.8",
+      "solves": 102,
+      "last_time": 0.3,
+      "density_relative_rms": 0.16816437705325601,
+      "mass_relative_drift": 1.4668330550193786e-15,
+      "energy_over_initial_potential": 3.531560777880504e-05,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 2.6679252123514375e-18,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-RK3-0.4",
+      "solves": 198,
+      "last_time": 0.3,
+      "density_relative_rms": 0.16814801695850062,
+      "mass_relative_drift": 2.62516550719738e-15,
+      "energy_over_initial_potential": 2.6576392597136967e-07,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 4.753249719703192e-18,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-RK3-0.2",
+      "solves": 390,
+      "last_time": 0.3,
+      "density_relative_rms": 0.1681459992380687,
+      "mass_relative_drift": 5.3492840379476546e-15,
+      "energy_over_initial_potential": 9.105668017736845e-06,
+      "initial_net_force": 5.02764194875756e-18,
+      "final_net_force": 1.4290846309045942e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "temporal-order-RK3",
+      "errors": [
+        0.07860912007662621,
+        0.009796439167417103,
+        0.001222720139314344
+      ],
+      "orders": [
+        3.0043673453965725,
+        3.0021632180481
+      ],
+      "reference_change": 1.0327279772470468e-05
+    },
+    {
+      "name": "energy-64-Euler",
+      "solves": 132,
+      "last_time": 0.1,
+      "density_relative_rms": 0.003036857240307293,
+      "mass_relative_drift": 6.111804395914078e-17,
+      "energy_over_initial_potential": 0.004874673780741356,
+      "initial_net_force": 1.5194639815274328e-20,
+      "final_net_force": 2.3110415784950383e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "energy-64-RK2",
+      "solves": 197,
+      "last_time": 0.1,
+      "density_relative_rms": 0.0016009912501098941,
+      "mass_relative_drift": 5.8207660913467405e-18,
+      "energy_over_initial_potential": 8.87021350858213e-08,
+      "initial_net_force": 1.5194639815274328e-20,
+      "final_net_force": 4.585426674022715e-18,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "dynamic-amr-64",
+      "solves": 2054,
+      "last_time": 0.4,
+      "density_relative_rms": 0.0012648161305907919,
+      "mass_relative_drift": 2.8253998607397078e-14,
+      "energy_over_initial_potential": 8.538446121084695e-05,
+      "initial_net_force": 1.0213296905715608e-21,
+      "final_net_force": 2.361257096920845e-18,
+      "maximum_net_force": 8.956081576299133e-08,
+      "refined": true,
+      "coarsened": true,
+      "unchanged": true,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "dynamic-amr-128",
+      "solves": 4102,
+      "last_time": 0.4,
+      "density_relative_rms": 0.0004284016834885026,
+      "mass_relative_drift": 5.660403985530138e-14,
+      "energy_over_initial_potential": 4.2562329182605995e-05,
+      "initial_net_force": 0.0,
+      "final_net_force": 7.19048237664706e-18,
+      "maximum_net_force": 6.789718528054283e-09,
+      "refined": true,
+      "coarsened": true,
+      "unchanged": true,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "native-2d",
+      "solves": 10,
+      "last_time": 0.0031247587731731774,
+      "density_relative_rms": 0.0006814759742401387,
+      "mass_relative_drift": 1.3969838619232177e-16,
+      "energy_over_initial_potential": 1.9572691197498642e-07,
+      "initial_net_force": 1.3434350787718771e-17,
+      "final_net_force": 1.7631790843390478e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "native-mixed-2d",
+      "solves": 10,
+      "last_time": 0.000781189397635466,
+      "density_relative_rms": 0.0011135515577511575,
+      "mass_relative_drift": 9.458744898438454e-17,
+      "energy_over_initial_potential": 7.068354102930263e-06,
+      "initial_net_force": 5.31091439097198e-19,
+      "final_net_force": 3.9015437188834903e-10,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    },
+    {
+      "name": "native-3d",
+      "solves": 10,
+      "last_time": 0.0020832031223764606,
+      "density_relative_rms": 0.0004694103396457028,
+      "mass_relative_drift": 1.280568540096283e-16,
+      "energy_over_initial_potential": 2.633665709688814e-07,
+      "initial_net_force": 4.587339293367386e-18,
+      "final_net_force": 1.369773666645584e-17,
+      "configIdentityState": "Exact input retained locally with separately recorded SHA"
+    }
+  ],
+  "inputFingerprints": [
+    {
+      "name": "dynamic-amr-128",
+      "sha256": "cc9dc4ce5742b8202f8231d2d6c4cbfa30e0ba86bc8252ef0f850d6e3f493d1a"
+    },
+    {
+      "name": "dynamic-amr-64",
+      "sha256": "f23bd8422640309c1272814f444e115f34fd7d1c3b9335ea5fca9c08a33fce20"
+    },
+    {
+      "name": "energy-64-Euler",
+      "sha256": "63cdd7971b823b4c0b9302767a908981eb8877bc3313040a97223e6e5a07c4ad"
+    },
+    {
+      "name": "energy-64-RK2",
+      "sha256": "a2dfbea1e593341793d5e242ce2a69c306a2e440b2904ef19f7b4d569a6812f5"
+    },
+    {
+      "name": "native-2d",
+      "sha256": "d328a86d51324c04ef6a0944da11084a98592bd319a0bc3a7e0ae59532cced1f"
+    },
+    {
+      "name": "native-3d",
+      "sha256": "cfac87792b89a4aa7fadab5891344de4bde1c6eac7605982dd1e2715c881a3e6"
+    },
+    {
+      "name": "native-mixed-2d",
+      "sha256": "c6c0c5d46810963d7c7f21570853656292846380259b21b955fde075911dc20a"
+    },
+    {
+      "name": "native-mixed-3d",
+      "sha256": "b8e025842e6d6f0ecbc8f8daf3202420a9066cd411551e093c95d48ea35d9af7"
+    },
+    {
+      "name": "spatial-128",
+      "sha256": "6d9dc3b63b52d1fc826688dc00ba195f647e78929293028ec68450a8e2a6eb51"
+    },
+    {
+      "name": "spatial-32",
+      "sha256": "c2b84604879ec249fc7104712bb653d461939ad7c6c702b71a5f3f9141e2780e"
+    },
+    {
+      "name": "spatial-64",
+      "sha256": "bd1ffa22952b6a6ed6dd104bfa60c9b1d3f83fa5fce073041cbdb2a13533be66"
+    },
+    {
+      "name": "temporal-Euler-0.2",
+      "sha256": "530537e04591324bdae05b9b1bc74aad908efe1cc88df3bb24f8bcd7df9e1302"
+    },
+    {
+      "name": "temporal-Euler-0.4",
+      "sha256": "20888fbe9c0f1c82db9ea999169d5c566451e81cf54a39de241718c71ce766dc"
+    },
+    {
+      "name": "temporal-Euler-0.8",
+      "sha256": "2aa242e75690e33274008e7f2b08b1a42cb43bfe7e7279be98d41c32c2d5aa76"
+    },
+    {
+      "name": "temporal-RK2-0.2",
+      "sha256": "f8b64371b7b1fe42531a802bfd1e4709ed824c4f93c3bf29927c0f4b031a51b3"
+    },
+    {
+      "name": "temporal-RK2-0.4",
+      "sha256": "388a2b8f1921c32119c93e380f77ea2532f690c07d64408adb2c194cd80a1ed4"
+    },
+    {
+      "name": "temporal-RK2-0.8",
+      "sha256": "ca46b87d7d5adcab5267b399a3a1ce71489f1c7eebe5d3e0ba9ecdeee0caa705"
+    },
+    {
+      "name": "temporal-RK3-0.2",
+      "sha256": "781a7d6a1d702a269f5412b1d7ea13b7f3b2a4e3564c98e13e6611e7764d3e82"
+    },
+    {
+      "name": "temporal-RK3-0.4",
+      "sha256": "2a8e039d20fbddb242e28580c9865879844be2fce43d35d5502f054d66ed4cb8"
+    },
+    {
+      "name": "temporal-RK3-0.8",
+      "sha256": "80608647f5ce6e9b228db180786e32fe1f4d90db3901f69d57830f13c0f7ca57"
+    },
+    {
+      "name": "temporal-reference",
+      "sha256": "7af2630971cdcacab5c13da4a60961520fbefd12bc52e6b70456ed0171b0d6a9"
+    },
+    {
+      "name": "temporal-reference-finer",
+      "sha256": "ca630fe32f8e71e8db80aa014360e84ecf663e6fb5bf552dccda57867f26d8ba"
+    }
+  ],
+  "independentRestart": {
+    "scope": "Original Campaign.restart independently after full campaign failure; does not change full FAIL",
+    "binarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+    "status": "PASS",
+    "results": [
+      {
+        "name": "restart-continuous",
+        "solves": 518,
+        "last_time": 0.1,
+        "density_relative_rms": 0.0007811355263350581,
+        "mass_relative_drift": 7.006019586697221e-15,
+        "energy_over_initial_potential": 3.69220811995436e-05,
+        "initial_net_force": 0.0,
+        "final_net_force": 3.2011183081118636e-18,
+        "configIdentityState": "Exact input retained locally with separately recorded SHA"
+      },
+      {
+        "name": "restart-resumed",
+        "solves": 486,
+        "last_time": 0.1,
+        "configIdentityState": "Exact input retained locally with separately recorded SHA"
+      },
+      {
+        "name": "restart-identity",
+        "datasets": 14,
+        "bitwise_equal": true
+      },
+      {
+        "name": "retired-gravity-G",
+        "rejected": true,
+        "reason": "RETIRED_PARAMETER"
+      },
+      {
+        "name": "restart-reject-gravity_rtol",
+        "rejected": true,
+        "reason": "gravity policy/boundary/controls"
+      },
+      {
+        "name": "restart-reject-gravity_atol",
+        "rejected": true,
+        "reason": "gravity policy/boundary/controls"
+      },
+      {
+        "name": "restart-reject-gravity_max_cycles",
+        "rejected": true,
+        "reason": "gravity policy/boundary/controls"
+      }
+    ],
+    "rawByteAudit": {
+      "datasets": 14,
+      "numericDatasets": 14,
+      "numericRawBytesEqual": true
+    }
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-full-cpu-20261004",
+  "fullSelfGravityGate": "FAIL_AND_PENDING",
+  "generatorSha256": "f7da0393898855039814544997108ae287841b22b492162c9d12f7d65767401b",
+  "inputAuditBefore": [
+    {
+      "name": "native-2d",
+      "exitCode": 3,
+      "errors": [
+        {
+          "code": "MISSING_PARAMETER",
+          "conditionId": "requires:x2_min",
+          "expected": {
+            "type": "expression",
+            "units": {
+              "axis": "x2",
+              "status": "coordinate-dependent",
+              "unit": null
+            }
+          },
+          "locations": [],
+          "message": "Required input has no declared value.",
+          "module": "Grid",
+          "parameterKey": "x2_min",
+          "relatedKeys": [],
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "name": "native-mixed-2d",
+      "exitCode": 3,
+      "errors": [
+        {
+          "code": "MISSING_PARAMETER",
+          "conditionId": "requires:x2_min",
+          "expected": {
+            "type": "expression",
+            "units": {
+              "axis": "x2",
+              "status": "coordinate-dependent",
+              "unit": null
+            }
+          },
+          "locations": [],
+          "message": "Required input has no declared value.",
+          "module": "Grid",
+          "parameterKey": "x2_min",
+          "relatedKeys": [],
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "name": "native-3d",
+      "exitCode": 3,
+      "errors": [
+        {
+          "code": "MISSING_PARAMETER",
+          "conditionId": "requires:x2_min",
+          "expected": {
+            "type": "expression",
+            "units": {
+              "axis": "x2",
+              "status": "coordinate-dependent",
+              "unit": null
+            }
+          },
+          "locations": [],
+          "message": "Required input has no declared value.",
+          "module": "Grid",
+          "parameterKey": "x2_min",
+          "relatedKeys": [],
+          "severity": "error"
+        },
+        {
+          "code": "MISSING_PARAMETER",
+          "conditionId": "requires:x3_min",
+          "expected": {
+            "type": "expression",
+            "units": {
+              "axis": "x3",
+              "status": "coordinate-dependent",
+              "unit": null
+            }
+          },
+          "locations": [],
+          "message": "Required input has no declared value.",
+          "module": "Grid",
+          "parameterKey": "x3_min",
+          "relatedKeys": [],
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "name": "native-mixed-3d",
+      "exitCode": 3,
+      "errors": [
+        {
+          "code": "MISSING_PARAMETER",
+          "conditionId": "requires:x2_min",
+          "expected": {
+            "type": "expression",
+            "units": {
+              "axis": "x2",
+              "status": "coordinate-dependent",
+              "unit": null
+            }
+          },
+          "locations": [],
+          "message": "Required input has no declared value.",
+          "module": "Grid",
+          "parameterKey": "x2_min",
+          "relatedKeys": [],
+          "severity": "error"
+        },
+        {
+          "code": "MISSING_PARAMETER",
+          "conditionId": "requires:x3_min",
+          "expected": {
+            "type": "expression",
+            "units": {
+              "axis": "x3",
+              "status": "coordinate-dependent",
+              "unit": null
+            }
+          },
+          "locations": [],
+          "message": "Required input has no declared value.",
+          "module": "Grid",
+          "parameterKey": "x3_min",
+          "relatedKeys": [],
+          "severity": "error"
+        }
+      ]
+    }
+  ],
+  "inputAuditAfter": [
+    {
+      "name": "native-2d",
+      "exitCode": 0,
+      "errors": []
+    },
+    {
+      "name": "native-mixed-2d",
+      "exitCode": 0,
+      "errors": []
+    },
+    {
+      "name": "native-3d",
+      "exitCode": 0,
+      "errors": []
+    },
+    {
+      "name": "native-mixed-3d",
+      "exitCode": 0,
+      "errors": []
+    }
+  ],
+  "failureDiagnostic": "[Fatal Error] Poisson prototype requires valid spacing and finite diagonal",
+  "coarseningEvidence": {
+    "qualification": "Source-derived sequence, not runtime mesh trace",
+    "rootCells": [
+      64,
+      16,
+      16
+    ],
+    "rootSpacing": [
+      0.015625,
+      0.015625,
+      0.015625
+    ],
+    "sequences": [
+      {
+        "cells": [
+          64,
+          16,
+          16
+        ],
+        "spacingRatio": 1
+      },
+      {
+        "cells": [
+          32,
+          8,
+          8
+        ],
+        "spacingRatio": 1
+      },
+      {
+        "cells": [
+          16,
+          4,
+          4
+        ],
+        "spacingRatio": 1
+      },
+      {
+        "cells": [
+          8,
+          4,
+          4
+        ],
+        "spacingRatio": 2
+      },
+      {
+        "cells": [
+          4,
+          4,
+          4
+        ],
+        "spacingRatio": 4
+      }
+    ],
+    "guardMaxRatio": 2,
+    "coarseDenseLuCapacity": 64
+  },
+  "unmodifiedScienceConstraints": [
+    "No max_blocks/domain/budget or spacing guard change",
+    "No replacement multigrid method or larger bottom solve",
+    "Historical radial G migration remains owner decision",
+    "Independent Restart PASS does not replace full FAIL"
+  ]
+}

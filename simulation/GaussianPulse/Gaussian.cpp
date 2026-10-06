@@ -34,6 +34,39 @@ class GaussianPulse
     std::vector<double> default_X;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        result.composition->consumes_input = false; // Init owns the spatial fractions.
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"},
+            {"p0", "float", "erg/cm^3"},
+            {"amp", "float", "1"},
+            {"width", "float", "cm"},
+            {"xc", "float", "cm"},
+            {"yc", "float", "cm"},
+            {"zc", "float", "cm"},
+            {"pressure_amplitude", "float", "1"},
+            {"u_amplitude", "float", "cm/s"},
+            {"v_amplitude", "float", "cm/s"},
+            {"w_amplitude", "float", "cm/s"},
+            {"gas_cv", "float", "erg/(g*K)"}};
+        for (auto& parameter : result.parameters) {
+            if (parameter.key == "gas_cv")
+                parameter.requirement = result.composition->complete
+                    ? arch::config::ConditionResult{result.composition->keys.size() < 2, {}}
+                    : arch::config::ConditionResult{std::nullopt, {"network_name"}};
+        }
+        return result;
+    }
+
     // 1. Setup Phase (Parameter Extraction)
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
@@ -58,8 +91,8 @@ public:
                 "Gaussian requires positive rho0, p0, width and pressure_amplitude > -1");
         // A passive pulse has no reaction network by default. Explicit nuclear
         // network selections (e.g. with Helmholtz) use the common factory.
-        config.physics.burn.network_name = config.Get<std::string>("network_name", "none");
-        ProblemHelper::SetupNetworkAndFractions(config, specs, default_X);
+        // network_name is the already resolved standard input; Setup does not override it.
+        ProblemHelper::SetupNetworkSpecies(config, specs);
 
         if (specs.count() >= 2) {
             m_bg_id = 0;
@@ -68,8 +101,8 @@ public:
             const double cv = config.Get<double>("gas_cv", 717.5);
             if (!std::isfinite(cv) || cv <= 0.0)
                 throw std::invalid_argument("Gaussian gas_cv must be finite and positive");
-            m_bg_id = specs.add_species("BgGas", 1.0, 1.0, config.physics.gamma, cv);
-            m_ps_id = specs.add_species("PassiveGas", 1.0, 1.0, config.physics.gamma, cv);
+            m_bg_id = specs.add_species("BgGas", config.MaterialConstant(1.0, "BgGas.A"), config.MaterialConstant(1.0, "BgGas.Z"), config.MaterialInput("gamma"), config.MaterialInput("gas_cv"));
+            m_ps_id = specs.add_species("PassiveGas", config.MaterialConstant(1.0, "PassiveGas.A"), config.MaterialConstant(1.0, "PassiveGas.Z"), config.MaterialInput("gamma"), config.MaterialInput("gas_cv"));
         }
 
         default_X.assign(specs.count(), 0.0);

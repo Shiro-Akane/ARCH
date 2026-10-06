@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+void verify_cuda_jeans_resolution();
+
 namespace {
 void check(cudaError_t status) {
     if (status != cudaSuccess) throw std::runtime_error(cudaGetErrorString(status));
@@ -393,6 +395,7 @@ int main() {
         return 1;
     }
     try {
+        verify_cuda_jeans_resolution();
         require(std::abs(amr::indicator::loehner_error(1.0, 2.0, 4.0) - 1.0 / 3.09) < 1.e-15,
             "frozen Lohner stencil changed");
         require(amr::indicator::refinement_flag(0.8, 1, 0, 2, 0.8, 0.2) == 0,

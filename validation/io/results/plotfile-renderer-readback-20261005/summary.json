@@ -1,0 +1,84 @@
+{
+  "status": "PASS",
+  "scope": "Actual Linux renderer click -> stored-row center -> production isolated point reader/client validator -> actual Inspector; existing H5; not HTTP/Host or human/scientific UAT",
+  "electron": "44.4.3",
+  "chromium": "152.0.7977.130",
+  "records": [
+    {
+      "caseId": "Sod",
+      "fileSha256": "fe089e72113896ef7261064596ffdbf25cced4366ceaa84812dc2a5b102a8e9f",
+      "producer": {
+        "case_id": "Sod",
+        "raw_config_sha256": "f5537c04af9e6cecac3ad8b8ef3967f635377f8170a295e31eb1970351cf9f5d",
+        "binary_sha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+        "run_id": "unknown"
+      },
+      "dimension": 1,
+      "shape": [
+        3
+      ],
+      "block": 8,
+      "index": 129,
+      "level": 3,
+      "logicalKey": "3/12/0/0",
+      "status": "PASS",
+      "rawValueBits": "000000000000f03f",
+      "cellMeasureBits": "000000000000603f",
+      "rawValueBoundsMeasure": "h5py bit/number exact",
+      "inspectorText": "PASS",
+      "rawResponseUnchanged": true,
+      "wheelGeometryChanged": true,
+      "panGeometryChanged": true,
+      "fitRestored": true,
+      "dragSelectionCalls": 0
+    },
+    {
+      "caseId": "CellularDet",
+      "fileSha256": "81431b1d80407949d852381ab67b6d11dd4598090c6abe1963b882ce9fa2b3ed",
+      "producer": {
+        "case_id": "CellularDet",
+        "raw_config_sha256": "477f2d048efa08ee00d06ff755b464c14498a0755eb263cb7f9fabf9a1e154c8",
+        "binary_sha256": "1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8",
+        "run_id": "unknown"
+      },
+      "dimension": 2,
+      "shape": [
+        2,
+        3
+      ],
+      "block": 4,
+      "index": 1041,
+      "level": 2,
+      "logicalKey": "2/0/0/0",
+      "status": "PASS",
+      "rawValueBits": "a4b3783c42c48441",
+      "cellMeasureBits": "7c14ae47e17aa43f",
+      "rawValueBoundsMeasure": "h5py bit/number exact",
+      "inspectorText": "PASS",
+      "rawResponseUnchanged": true,
+      "wheelGeometryChanged": true,
+      "panGeometryChanged": true,
+      "fitRestored": true,
+      "dragSelectionCalls": 0
+    }
+  ],
+  "sourceHead": "ebacc4f698316c103daefb34340f3f933d6746aa",
+  "sourceFilesSha256": {
+    "studio/src/components/PlotfileNativeView.tsx": "ee95ec6b4d0953e2fcdf2379a1b74747013ba82aa61d1e296640da8c4f97c0b3",
+    "studio/src/components/PlotfileNativeInspector.tsx": "445213763f98250dd4969d9ed0acefc7dda4535503b7b80d2146bf9529d5c048",
+    "studio/host/plotfileMetadata.ts": "e3e84e63a6ab58a675a23bfb1ce562d8d60f778528a1672564b9d2ae0d8c1627",
+    "studio/host/isolatedPlotfileMetadata.ts": "f1fcad21de8ed9cba756e1b00d55dff05a7d2c01f2114919f72c343d35e3d63f",
+    "validation/io/export_renderer_point_oracle.py": "58b009f93c51880b97e4c578440220e2235fe6e5c391910e023b06166583bc9a",
+    "validation/io/verify_plotfile_renderer_readback.mjs": "bf8e620e7304d24a5dd26032f0f2f37cf5015ab6f1e1456555b8a867cdf99de9"
+  },
+  "rawFilesUnchanged": true,
+  "oracleExporterReproduction": "identical",
+  "limits": [
+    "Only DENS and one native fine-block cell per existing t=0 file",
+    "Native selection row -> stored center query, not the raw mouse coordinates",
+    "Custom bounded IPC adapter; no production HTTP/Host endpoint or ProjectPlotfileAudit mounted",
+    "No human UAT, independent physics oracle or complete identity certification",
+    "Producer run_id unknown remains unknown; original ELF identity retained",
+    "No new simulation, current binary output, RZ/3D or Windows work"
+  ]
+}

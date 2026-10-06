@@ -1,0 +1,244 @@
+{
+  "kind": "actual H5, HTTP, client, SSR; no native desktop UAT",
+  "cases": [
+    {
+      "caseId": "Sod",
+      "dimension": 1,
+      "viewport": {
+        "x": [
+          0.35,
+          0.55
+        ],
+        "y": [
+          0,
+          1
+        ]
+      },
+      "viewportHttpBytes": 4775,
+      "viewportIdentity": "PASS",
+      "viewportSSR": "PASS",
+      "point": [
+        0.501953125
+      ],
+      "pointHttpBytes": 2898,
+      "pointRule": "half-open; global-maximum-inclusive",
+      "exactPointIndex": 96,
+      "leafBlocks": 12,
+      "levels": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "scannedCells": 192,
+      "displayShape": [
+        1,
+        32
+      ],
+      "fileSha256": "3817608ba60fd43a905d39b9261a51c37b41a190e31891b98d6911855854ca8d",
+      "httpBytes": 4706,
+      "httpWallMs": 171.5215740000001,
+      "rawRepresentativeIndex": 96,
+      "rawRepresentativeValue": 0.125,
+      "domain": {
+        "x": [
+          0,
+          1
+        ],
+        "y": [
+          0,
+          1
+        ]
+      },
+      "HTTP": "PASS",
+      "SVG_SSR": "PASS",
+      "rawInspector": "PASS",
+      "sourceUnchanged": true
+    },
+    {
+      "caseId": "CellularDet",
+      "dimension": 2,
+      "viewport": {
+        "x": [
+          0,
+          3.2
+        ],
+        "y": [
+          5,
+          8
+        ]
+      },
+      "viewportHttpBytes": 24089,
+      "viewportIdentity": "PASS",
+      "viewportSSR": "PASS",
+      "point": [
+        0.5,
+        6.5
+      ],
+      "pointHttpBytes": 3150,
+      "pointRule": "half-open; global-maximum-inclusive",
+      "exactPointIndex": 3074,
+      "leafBlocks": 20,
+      "levels": [
+        1,
+        2
+      ],
+      "scannedCells": 5120,
+      "displayShape": [
+        24,
+        32
+      ],
+      "fileSha256": "78104fab2ea63a58fd15cb82a4c227e0fee3c5c8c1726091e65855ddcd4dd187",
+      "httpBytes": 23233,
+      "httpWallMs": 182.14402100000007,
+      "rawRepresentativeIndex": 3074,
+      "rawRepresentativeValue": 43375362.843074,
+      "domain": {
+        "x": [
+          0,
+          25.6
+        ],
+        "y": [
+          0,
+          12.8
+        ]
+      },
+      "HTTP": "PASS",
+      "SVG_SSR": "PASS",
+      "rawInspector": "PASS",
+      "sourceUnchanged": true
+    }
+  ],
+  "sourceBaseline": "fcf2e25f981ffc7b906412c9f303feeff62bc6fa",
+  "checks": {
+    "npmTest": {
+      "pass": 302,
+      "fail": 0
+    },
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "nativeViewerUat": "NOT_RUN"
+  },
+  "costs": [
+    {
+      "measurementVersion": "plotfile-query-cost-1",
+      "mode": "overview",
+      "request": {
+        "field": "DENS",
+        "width": 32,
+        "height": 1,
+        "viewport": {
+          "x": [
+            0.35,
+            0.55
+          ],
+          "y": [
+            0,
+            1
+          ]
+        }
+      },
+      "runtime": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "file": {
+        "sha256": "3817608ba60fd43a905d39b9261a51c37b41a190e31891b98d6911855854ca8d",
+        "bytes": 38272
+      },
+      "structure": {
+        "blocks": 12,
+        "cells": 192,
+        "cellShape": [
+          16
+        ]
+      },
+      "responseBytes": 4600,
+      "elapsedMs": 83.50949499999999,
+      "cpuMicroseconds": {
+        "user": 108871,
+        "system": 21142
+      },
+      "processPeakRssKiB": 116064,
+      "io": {
+        "processLogicalReadBytes": "97978",
+        "processStorageReadBytes": "0",
+        "processReadSyscalls": "105",
+        "readerDigestBytes": 38272,
+        "hdf5DatasetReadBytes": null
+      },
+      "limitations": [
+        "Peak RSS includes Node, imports and HDF5 WASM; it is not incremental payload memory.",
+        "Linux rchar covers process read calls during the query, including non-HDF5 reads.",
+        "Linux read_bytes is storage I/O charged to this process; cached reads may report zero.",
+        "The current reader streams a whole-file digest on every query.",
+        "No per-dataset HDF5 byte counter is instrumented; do not infer it from response size.",
+        "This tool neither drops caches nor establishes a cold-cache benchmark.",
+        "Audit budgets remain unchanged; small local files do not establish large-file LOD scalability."
+      ],
+      "case": "Sod"
+    },
+    {
+      "measurementVersion": "plotfile-query-cost-1",
+      "mode": "overview",
+      "request": {
+        "field": "DENS",
+        "width": 32,
+        "height": 24,
+        "viewport": {
+          "x": [
+            0,
+            3.2
+          ],
+          "y": [
+            5,
+            8
+          ]
+        }
+      },
+      "runtime": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "file": {
+        "sha256": "78104fab2ea63a58fd15cb82a4c227e0fee3c5c8c1726091e65855ddcd4dd187",
+        "bytes": 472888
+      },
+      "structure": {
+        "blocks": 20,
+        "cells": 5120,
+        "cellShape": [
+          16,
+          16
+        ]
+      },
+      "responseBytes": 23906,
+      "elapsedMs": 96.57391799999999,
+      "cpuMicroseconds": {
+        "user": 141888,
+        "system": 29763
+      },
+      "processPeakRssKiB": 125412,
+      "io": {
+        "processLogicalReadBytes": "3551490",
+        "processStorageReadBytes": "0",
+        "processReadSyscalls": "221",
+        "readerDigestBytes": 472888,
+        "hdf5DatasetReadBytes": null
+      },
+      "limitations": [
+        "Peak RSS includes Node, imports and HDF5 WASM; it is not incremental payload memory.",
+        "Linux rchar covers process read calls during the query, including non-HDF5 reads.",
+        "Linux read_bytes is storage I/O charged to this process; cached reads may report zero.",
+        "The current reader streams a whole-file digest on every query.",
+        "No per-dataset HDF5 byte counter is instrumented; do not infer it from response size.",
+        "This tool neither drops caches nor establishes a cold-cache benchmark.",
+        "Audit budgets remain unchanged; small local files do not establish large-file LOD scalability."
+      ],
+      "case": "CellularDet"
+    }
+  ]
+}

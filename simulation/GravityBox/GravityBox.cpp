@@ -13,6 +13,43 @@ class GravityBoxProblem {
     int dimension_=1;double hydrostatic_drop_=0.;
     std::vector<double> fractions_;
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"},
+            {"temperature0", "float", "K"},
+            {"amplitude", "float", "1"},
+            {"temperature_amplitude", "float", "1"},
+            {"velocity0", "float", "cm/s"},
+            {"width", "float", "cm"},
+            {"center_x", "float", "cm"},
+            {"center_y", "float", "cm"},
+            {"center_z", "float", "cm"},
+            {"gas_cv", "float", "erg/(g*K)"},
+            {"hydrostatic_radial", "string", "1", "verification", {true, {}}, {"true", "false"}}};
+        for (auto& parameter : result.parameters) {
+            if (parameter.key == "gas_cv")
+                parameter.requirement = result.composition->complete
+                    ? arch::config::ConditionResult{result.composition->keys.size() < 1, {}}
+                    : arch::config::ConditionResult{std::nullopt, {"network_name"}};
+            if (parameter.key == "center_y")
+                parameter.requirement = arch::config::input_detail::condition(
+                    arch::config::InputCondition::Axis2, inputs, result.consumers);
+            if (parameter.key == "center_z")
+                parameter.requirement = arch::config::input_detail::condition(
+                    arch::config::InputCondition::Axis3, inputs, result.consumers);
+        }
+        return result;
+    }
+
     void Setup(SimConfig& config,SpeciesManager& species) {
         const bool radial=config.grid.dim==1 &&
             (config.grid.geometry=="spherical" || config.grid.geometry=="cylindrical");
@@ -46,16 +83,16 @@ public:
         if(hydrostatic_radial_ && (!radial_ || !isolated_ || lower_[0]!=0. ||
             amplitude_!=0. || velocity_!=0. || temperature_amplitude_!=0.))
             throw std::invalid_argument("Radial hydrostatic reference requires an origin-centered uniform resting gas");
-        config.physics.burn.network_name=config.Get<std::string>("network_name",config.physics.burn.use_burn?"aprox13":"none");
+        // network_name is the already resolved standard input; Setup does not override it.
         ProblemHelper::SetupNetworkAndFractions(config,species,fractions_);
         if(species.count()==0){const double cv=config.Get<double>("gas_cv",1.2471693927e8);
             if(!std::isfinite(cv)||cv<=0.)throw std::invalid_argument("GravityBox gas_cv must be finite and positive");
-            species.add_species("gas",1.,0.,config.physics.gamma,cv);fractions_={1.};
+            species.add_species("gas",config.MaterialConstant(1., "gas.A"),config.MaterialConstant(0., "gas.Z"),config.MaterialInput("gamma"),config.MaterialInput("gas_cv"));fractions_={1.};
             if(hydrostatic_radial_) {
                 const double dimension=config.grid.geometry=="spherical"?3.:2.;
                 // dP/dr=-rho*4*pi*G*rho*r/d and
                 // P=(gamma-1)*rho*cv*T for the single ideal-gas species.
-                hydrostatic_drop_=2.*arch::constants::math::pi*config.physics.gravity.G_const*rho_/
+                hydrostatic_drop_=2.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant*rho_/
                     (dimension*(config.physics.gamma-1.)*cv);
                 const double outer_ghost=length_[0]*
                     (1.+4./(config.grid.nblockx1*amr::BLOCK_NX));

@@ -101,6 +101,15 @@ DeepSeek 使用仅含指定源码的隔离暂存目录；每个文件只有一�
 
 ## 1. O7.0：配置完整性、常数与参数用途
 
+2026-10-04 的可取得实施 checkpoint 为
+`studio/compute-optim-integration` / `4b5e496a9943099c203c6b001b1d95a56d9edf72`。
+[Core 恢复评审](O7ResumeShortGates-20261004.zh-CN.md#core-review2026-10-04)
+记录限定 coarse-mesh／low-G 修复、源码身份核对及批准的架构候选；
+[科学子 gate 决定](O7JeansRzReviewQuestions-20261004.zh-CN.md#4-core-决定已批准子-gate-与剩余材料2026-10-04)
+区分已认可静态参考与未完成的 JENS 生命周期、RZ 角动量及环体预算。
+下列清单仍是完整验收标准，局部交付不将全部 checkbox 自动勾选。
+
+
 先按[配置完整性重构清单](ConfigurationContractPlan.zh-CN.md)实施第一种方案：
 调整 GlobalDefs／加载／Setup 的构造边界，以独立存在性和条件需求检测缺项，
 不用全部置零／false 的方式判断缺失。该清单逐项覆盖当前 95 个标准键：
@@ -248,7 +257,7 @@ ARCH 首版使用当前流体闭合提供的声速，明确记录这种差别；
 | --- | --- |
 | `refine_var=JENS` | 复用已有字段选择；与其他指标共同使用时，任一要求细化即细化，全部允许才粗化 |
 | `plt_variables=...,JENS` | 只输出诊断时不改变 AMR 或推进；无 self gravity 时显式请求报适用性错误，ALL 过滤不可用派生场 |
-| `jeans_cells` | 归 AmrConfig，启用 JENS 时必填，有限实数且 ≥4；模板拟推荐 8，待检查后冻结，无隐式回填，也不宣称文献保证 |
+| `jeans_cells` | 归 AmrConfig，refine_var 请求 JENS 时必填；仅输出不要求目标；有限实数且 ≥4；模板拟推荐 8，待检查后冻结，无隐式回填，也不宣称文献保证 |
 | 粗化和上限处理 | 不额外暴露第二套阈值、G 或压力 floor；按父网格是否仍解析及现有层级／容量规则决定 |
 
 只新增一个有物理意义的分辨率控制。普通 `refine_threshold/derefine_threshold`
@@ -652,12 +661,93 @@ O8 已将 CUDA 燃烧策略的 15 个路线／状态入口归并为五个矩阵�
 | --- | --- | --- |
 | O6／O6+ | 已发布，工程收尾完成 | 保留原始成功／失败记录及成本—精度限制；不重开统一 FLASH 倍数线 |
 | 本轮计划 | 源码与入口核对完成；文档更新 | 完整性／默认分类、常数与用途清单、JENS、后续边界及 CI 收束 |
-| O7.0 | 交付计划已补齐，尚未实施 | 关键缺项／未知选项拒绝、统一配置构造、G 退役、参数用途及 Core／Studio 版本同步；按联合交付计划验收 |
-| O7.1 | 联合负责人实施，待 O7.0 | JENS 解析／AMR／输出／低密度／重启／两后端及关闭路径开销检查 |
-| O7.2–O7.5 | 联合负责人实施，科学方案分层 review | RZ 定义、度量、旋流、AMR／引力、公共坐标与几何身份迁移 |
-| O8 | 科学、CPU／CUDA、设备安全与成本验收完成 | 见用户边界验收记录；内置防退化通过，保留短回调负收益及长期验证边界 |
-| O9 | 第二平台批准子集委托执行，待冻结输入／预算 | ARCH 独立长时科学验证、整程成本、处理后证据与 CI 收束；外部对照仍可选 |
+| O7.0 | 配置/Core/API/Studio 已推进；两条获准架构迁移已集成，真实源树审计独立通过；完整阶段仍待验 | 关键缺项／未知选项拒绝、统一配置构造、G 退役、参数用途及 Core／Studio 版本同步；按联合交付计划验收 |
+| O7.1 | 静态父态、内部 CPU 事务／接受状态／plot 已提交局部证据；短包已定，公开接线和完整科学验收未完成 | JENS 解析／AMR／输出／低密度／重启／两后端及关闭路径开销检查 |
+| O7.2–O7.5 | 环体数学／误差接口和单一角动量实施节点已定；局部 CPU 证据已推进，完整消费者与科学验收未通过 | RZ 定义、度量、旋流、AMR／引力、公共坐标与几何身份迁移 |
+| O8 | 已合入 compute/optim，集成后兼容回归在本轮重新检查 | 用户 BC 数学、时序、设备执行、收支及内置路径性能 |
+| O9 | 4070 Ti 平台及计时工程入口已推进；正式 CUDA／性能验收未启动，新 RZ 等待科学前置 | ARCH 独立长时科学验证、整程成本、处理后证据与 CI 收束；外部对照仍可选 |
 | O10 | 待讨论 | 映射／拓扑／时间推进方案比较；不随此计划自动开始实现 |
 
 每个实施提交更新状态和证据入口。修复只重跑受影响的科学路径；
 无法通过的必需物理检查保持开放，外部对照未运行与 ARCH 验收失败分别记录。
+
+## 2026-10-04 获准实施增量
+
+08ae94684批准的两条架构迁移已集成：architecture 108/108、现有tooling discovery 409/409、
+配置执行7/7及真实源树audit通过，两个本地finding关闭。
+JENS新增6个独立父态静态样本通过；生命周期/后端与完整科学验收未完成。
+RZ角动量finding、离散设计与环体预算仍待审；不改变前述物理定义或阶段出口。
+证据见O7ApprovedArchitectureAndJeansParent-20261004.zh-CN.md。
+
+### JENS CPU accepted-state 生命周期接线增量
+
+内部 Tree 事务 checkpoint 523bec6a 已推送。现在 Driver 在初始化/恢复进入计算 backend 前、
+以及每个完成的宏步后执行只细化 JENS repair，复用既有拓扑/状态发布事务；
+普通指标的 regrid cadence 不变。最后一层必须再次检查，不以用完 pass 数隐藏分辨率不足。
+
+真实 CPU Runtime 多级 repair、身份稳定、容量/层级失败回滚、关闭路径无事务，以及原
+DriverIO checkpoint native/失败传播回归通过；CPU ARCH 与 shared scheduler 已重建。
+公开 JENS schema/能力仍关闭，演化、重启参数身份、输出和 CUDA 完整链未验收。
+详见 O7JeansAcceptedStateLifecycle-20261004.zh-CN.md；RZ finding 与待审预算不变。
+
+2026-10-04 增量节点：已冻结 [JENS 短验收包](O7JeansRzReviewQuestions-20261004.zh-CN.md#6-已冻结的-jens-短验收包uniform-lifecycle-1)，合作者可先实施／提交 CPU 子组。环体及角动量设计独立推进，不挂起本节点；关闭、仅输出、AMR 约束的参数条件同步注册表与 API。
+
+### JENS 原生 Plotfile 消费者增量
+
+原生叶单元 writer 已接入共享 JeansDiagnostics 与当前 EOS pressure/Gamma1 回调；
+输出 FP64 无量纲 N_J，不替换 conserved fields。Cartesian/内部 RZ 静态输出、
+独立高精度参考、失败拒绝与最后成功文件保留检查通过。
+配置/API 的公开 JENS gate 暂未解除，uniform-lifecycle-1 的实际三通道演化/
+0.01→0.02 s 重启验收仍待完整配置与 checkpoint 身份接线。见
+O7JeansNativePlotConsumer-20261004.zh-CN.md；不据此关闭 RZ finding。
+
+### JENS 条件输入与 checkpoint identity 增量
+
+jeans_cells 已加入唯一注册表与 API schema，只有 refine_var 请求 JENS 时必填；
+仅输出/关闭不要求目标，无隐式默认。显式未完成 qualification 的 JENS 请求明确拒绝，
+替代旧 warning-and-disable。公开能力仍未解除。
+restart state_controls revision3/20值记录 active JENS 与已消费目标，
+旧 revision 明确拒绝，不迁移原始 checkpoint。CPU 构建、6个 scoped 回归与实际
+architecture audit 通过，详见 O7JeansConditionalInputIdentity-20261004.zh-CN.md。
+冻结三通道演化/真实续算及 CUDA 科学验收仍未完成。
+
+2026-10-04 环体节点：数学路线和误差接口见 [Core 决定第7节](O7JeansRzReviewQuestions-20261004.zh-CN.md#7-rz-有限环体边界已定数学部件与误差接口)。共享 finite-ring 部件可以并行实施，完整生产边界及 RZ 科学状态维持待验；不将泊松 residual 误写为边界势／面力的总误差。
+
+2026-10-04 角动量节点：采用 [RZ 单一代表量 m_phi=J/W 的贯通方案](O7JeansRzReviewQuestions-20261004.zh-CN.md#8-rz-角动量单一表示与贯通实施节点)。按 A→B→C→D 小提交验收，父态不可解析 veto 与所有几何消费者同批迁移。该决定解锁实现，不关闭既有 Lz finding 或新 RZ 长跑出口。
+
+2026-10-04 实施节点：CPU self gravity 的公开 JENS 接线及 uniform-lifecycle-1
+九通道短演化/真实checkpoint续算 PASS，见 O7JeansUniformLifecycle-20261004.zh-CN.md。
+关闭的只是均匀态CPU短包；其他EOS/非均匀/CUDA/开销验收仍待完成。
+RZ-A前置W/centroid/torque测度及单一状态无存储转换已经通过现有CPU数学测试，
+见 RZAngularMeasureNode-20261004.zh-CN.md；真实transfer和其余消费者仍未迁移，
+完整RZ门槛继续保留。
+
+2026-10-04 RZ-A CPU全单元传递节点：真实W restriction/prolongation、
+同一candidate parent positivity→EOS/JENS→migration、非法父态veto及joint theta
+通过CPU fixtures。最终ELF的冻结JENS九组演化/续算回归PASS。
+详见 RZAngularTransferNode-20261004.zh-CN.md。AMR ghost和B/C/D消费者
+仍待贯通，完整RZ能力门槛保留，尚未开展CUDA/RZ新长跑。
+
+2026-10-04 RZ-A CPU coarse/fine ghost节点：复用同一W/V family数学，
+径向/轴向1536 injection及768 average、三状态槽、非法父态/borrowed bounds失败
+无部分coarse/fine scatter通过；新ELF的JENS冻结九组演化与续算回归PASS。
+见 RZAngularGhostNode-20261004.zh-CN.md。B/C/D与CUDA仍待贯通，
+不把本节点作为完整RZ科学签收或长跑许可。
+
+2026-10-04 RZ-B CPU hydro torque增量：共享J/W divergence、去除重复phi curvature、
+严格无floor候选验证及独立closed/open/HLLC六组收支通过，最大相对误差8.6803e-18。
+新ELF冻结JENS九组演化/续算回归PASS。见 RZHydroTorqueNode-20261004.zh-CN.md。
+AMR signed torque/W reflux与C/D仍待贯通；变量mu应力finding RZ-VISC-01交Core确认，
+其余批准节点继续，完整RZ能力gate保留，不启动新RZ长跑。
+
+2026-10-04 finite-ring前置节点：同一GravityBoundary tree缓存axis-centered full-ring
+analytic十个矩和真实support；uniform/mixed parent翻译、signed absolute-mass与
+远场q=.01/.2/.7/.95余项包络验证PASS。见 RZFiniteRingMomentNode-20261004.zh-CN.md。
+constructor可建立内部缓存，production values双向chart gate继续拒绝RZ；
+near/contact kernel、rounding/global error ledger与完整科学签收尚未完成。
+
+2026-10-04 finite-ring kernel/contact数学节点：唯一shared complementary-root AGM、
+精确axis limit、split+Duffy及显式工作/精度上限通过独立Decimal参考。
+8个axis样本、3个contact样本分别核对精度/分区；default contact仍明确WorkLimit，
+所有near结果estimate-only，不填certified residual。见 RZFiniteRingKernelNode-20261004.zh-CN.md。
+production values gate保留，可靠near bound/global ledger及RZ B/C/D仍待贯通。

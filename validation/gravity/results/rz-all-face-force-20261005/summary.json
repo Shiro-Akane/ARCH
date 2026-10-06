@@ -1,0 +1,187 @@
+{
+  "status": "DIAGNOSTIC_COMPLETE_REFERENCE_UNRESOLVED",
+  "finding": "RZ-CONTINUOUS-FORCE-REFERENCE-01 OPEN",
+  "faces": 208,
+  "cells": 88,
+  "rows": [
+    {
+      "radialOrigin": 0,
+      "mixedAmr": false,
+      "sourceId": "97f4113f62a09e4244caa17023e74618931caf92a25d61df4bf17de42a481e48",
+      "sourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      },
+      "nativeLeaves": 16,
+      "referenceExactUniformUnion": true,
+      "faces": 36,
+      "coarseFineFaces": 0,
+      "faceAreaRmsNormalAccelerationDelta": "8.813045204455722036297171238630873867381032989675061982124359227555580132414517501643867388417952337E-10",
+      "maximumNormalAccelerationDelta": "2.2534870021215173049251243263315407185509897887730023239371389780242615309746660438513472975168508E-9",
+      "analyticAxisFaces": 0,
+      "maximumOrder16To32ForceDelta": "2.53608545412249179716276703435938241854598697383843236390212833552445568527072E-9",
+      "maximumStep16To32ForceDelta": "4.0730877114757463541140432254797767617437851188451804079113543968767396238013E-10",
+      "maximumPrecision80To100ForceDelta": "4.368947378940610933466246E-83",
+      "boundaryFaceAreaRmsDelta": "1.225084347716365098589313837283794175129123475554432349643495764276643637299990790778358194515509960E-9",
+      "coarseFineFaceAreaRmsDelta": null,
+      "certified": false
+    },
+    {
+      "radialOrigin": 0.5,
+      "mixedAmr": false,
+      "sourceId": "7ffd24f2f132829d0209f64336c6919a4c7321700fbbd6c905e652645e34c1ce",
+      "sourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      },
+      "nativeLeaves": 16,
+      "referenceExactUniformUnion": true,
+      "faces": 40,
+      "coarseFineFaces": 0,
+      "faceAreaRmsNormalAccelerationDelta": "1.171891469885753239254106677053298008073161509820535495888767895641193284371059127971928400566498125E-9",
+      "maximumNormalAccelerationDelta": "4.28287758597153340965365472035798560126151431708931416227570433230374924168184241006290601510458795E-9",
+      "analyticAxisFaces": 0,
+      "maximumOrder16To32ForceDelta": "2.552986275967237843579782576144355622825876572122932164127870137474836335275663E-9",
+      "maximumStep16To32ForceDelta": "4.07870672979050565070006670235129185877781772249770467360870623276942890435831E-10",
+      "maximumPrecision80To100ForceDelta": "1.1804507752577210579960397E-82",
+      "boundaryFaceAreaRmsDelta": "1.749353378924204123790013886933163725589840095568517981855568570801518205181642202397339090566220595E-9",
+      "coarseFineFaceAreaRmsDelta": null,
+      "certified": false
+    },
+    {
+      "radialOrigin": 0,
+      "mixedAmr": true,
+      "sourceId": "20c402eebc310f8e65cdeb56600ed69129d30141a6b4e1bf159947e9a2921484",
+      "sourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      },
+      "nativeLeaves": 28,
+      "referenceExactUniformUnion": true,
+      "faces": 64,
+      "coarseFineFaces": 16,
+      "faceAreaRmsNormalAccelerationDelta": "9.028419080911503059922821575120143062518649884431669873272554088405694106459210488472408441282853057E-10",
+      "maximumNormalAccelerationDelta": "2.4272104142232556354824996268428653857918320342921635483023733530242615309746660438513472975168572E-9",
+      "analyticAxisFaces": 0,
+      "maximumOrder16To32ForceDelta": "2.53608545412249179716276703435938241854598697383843236390212833552445568527072E-9",
+      "maximumStep16To32ForceDelta": "4.0730877114757463541140432254797767617437851188451804079113543968767396238013E-10",
+      "maximumPrecision80To100ForceDelta": "1.1350704686162314110938890E-82",
+      "boundaryFaceAreaRmsDelta": "1.431078301061119034691493345232874295325904312868378682666068161039249802153468286081264182504926256E-9",
+      "coarseFineFaceAreaRmsDelta": "6.517983703822159056181303420962957869097494918247047499708074683090273488783423730675874255699843525E-10",
+      "certified": false
+    },
+    {
+      "radialOrigin": 0.5,
+      "mixedAmr": true,
+      "sourceId": "92a2b0a04b8f8f0640aba0e99e6f31708e0966bd79666ba902a05d68e1d69ea6",
+      "sourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      },
+      "nativeLeaves": 28,
+      "referenceExactUniformUnion": true,
+      "faces": 68,
+      "coarseFineFaces": 16,
+      "faceAreaRmsNormalAccelerationDelta": "1.124783581713535483759048574278773397695302261157892527191420876197416374621589379078248319237032885E-9",
+      "maximumNormalAccelerationDelta": "4.59072208919844793636193804305035775383513981600626796438446898074124924168184241006290601510468395E-9",
+      "analyticAxisFaces": 0,
+      "maximumOrder16To32ForceDelta": "2.552986275967237843579782576144355622825876572122932164127870137474836335275663E-9",
+      "maximumStep16To32ForceDelta": "4.07870672979050565070006670235129185877781772249770467360870623276942890435831E-10",
+      "maximumPrecision80To100ForceDelta": "1.989582866334415732360740E-82",
+      "boundaryFaceAreaRmsDelta": "1.850124804661478335472948586468382989284815487841582732623828775198106257197633657064396930714302070E-9",
+      "coarseFineFaceAreaRmsDelta": "6.017663138015297209311994093911615678894023947344209648085158292538925607268132088922033255581953763E-10",
+      "certified": false
+    }
+  ],
+  "identity": {
+    "baseCommit": "4ab4af8396999d99b6c64f168646bfeb14d3ebb9",
+    "scriptFingerprints": {
+      "validation/gravity/rz_matched_face_force_reference.py": "b491a49e84d02eeafb30b3f1a6b04606bb777777a9566f2ee85a51fa0133efcb",
+      "validation/gravity/rz_matched_native_reference.py": "60388b0835407b62c94be6e7186ebbcde993f1d40024d672bc8f598113400fa7",
+      "validation/gravity/rz_matched_source_reference.py": "53cc68bfab5fef8382eb9c0aab84917726a09a561151257559c71378d65f9d10",
+      "validation/gravity/rz_ring_offaxis_reference.py": "84b413c7fc188f57a8f9141ea529f3dd3a22d6e14bfc718c568ff99ec6988021",
+      "validation/gravity/rz_ring_axis_reference.py": "6f77570a8c76d4424751f65fb4d4a0ec779764b9bb836a1703f4eefd51f6f35c"
+    },
+    "inputSha256": "36a077b40be63748110cf5406960a626211d2293dbdbaf2335a53c58ce8c7175",
+    "originalProducers": {
+      "uniform.json": "d0920305673b978f3e6155804391ef9631b102ee0974fbc81bf8d06a5fec92b0",
+      "mixed.json": "ef024cf06c28f6e6f2410b5ca3ceaf6b934bf2c450affec330bd3e667f50cf07"
+    },
+    "scope": "4 cases, 88 native cells, all 208 native faces; fixed reference sequence; no scientific acceptance"
+  },
+  "inputMatchesPublishedQuartetReceipt": true,
+  "resourceObservation": {
+    "elapsedSeconds": 1309.406,
+    "peakOwnedRssKiB": 19832,
+    "peakSwapKiB": 0,
+    "guardStopped": false
+  },
+  "method": "negative centered derivative of independent matched Decimal Phi; axis analytic; frozen step/order/precision sequence",
+  "units": {
+    "potential": "cm^2/s^2",
+    "acceleration": "cm/s^2"
+  },
+  "limitations": [
+    "Difference, quadrature and precision variation are estimates, not certified bounds",
+    "Exact uniform union changes only equivalent reference integration domain; all native cells/faces/source identity retained",
+    "No approved continuous force threshold is inferred from observed errors",
+    "Static native numerical probe, not Runtime evolution or CUDA release"
+  ],
+  "interpretation": "Quadrature-order drift comparable with measured field delta; not an independent reliable contact-force oracle or a Core failure verdict"
+}

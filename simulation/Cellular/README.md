@@ -4,6 +4,13 @@
 perturbed thermodynamic states, a directed shock and transverse perturbations
 for cellular-detonation calculations.
 
+[CellularPreview2D.par](CellularPreview2D.par) is the CPU init-only reference for
+the x1–x2 Preview contract. It explicitly records the controls formerly supplied
+by the loader, preserving their previous values. It has no evolution endpoint;
+it is not an evolution-ready input. Run from the repository root to resolve its
+Helmholtz table path, or replace that assignment with the intended table path.
+Do not append a second assignment: duplicate parameters are rejected.
+
 [Cellular.par](Cellular.par) is the reusable Helmholtz-EOS burning example.
 [CellularFlash2D.par](CellularFlash2D.par) preserves the 2D helium-rich
 Cellular initial state used in the user-provided FLASH 4.8 archive comparison. It runs the normal

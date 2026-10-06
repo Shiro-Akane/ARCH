@@ -1,0 +1,239 @@
+{
+  "status": "SCOPED PASS; FULL PHYSICAL CHAIN PENDING",
+  "baseline": "282da3bd5078a3662fbf185494847cc2048eabbe",
+  "sourceFingerprints": {
+    "src/numerics/elliptic/CompositePoisson.h": "c5bf1ff4c0b681082d923c02bb4e1c3e7294513daa17ab47b15e8937a4d17a19",
+    "src/numerics/elliptic/CompositePoisson.cpp": "2cfececd5bd88e0037fbc0d544001269a637758341e2fb74112a79cecbcf3b31",
+    "tests/host/gravity/test_composite_poisson.cpp": "381b83ca01a176910183db232d20e98c2c52cca9f14481d882b4115f0112ab51",
+    "validation/gravity/constant_mode_projection_reference.py": "0e526a075c667a4c2b1621a04939680069edf6b03b1b5519ef57ebe3a626c6d4"
+  },
+  "binaryBefore": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "binaryAfter": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "checks": [
+    {
+      "check": "reference",
+      "exitCode": 0
+    },
+    {
+      "check": "ctest",
+      "exitCode": 0
+    },
+    {
+      "check": "architecture",
+      "exitCode": 2
+    },
+    {
+      "check": "architecture-corrected",
+      "exitCode": 0
+    },
+    {
+      "check": "boundary-acceptance",
+      "exitCode": 0
+    },
+    {
+      "check": "arithmetic-reference",
+      "exitCode": 0
+    },
+    {
+      "check": "diff",
+      "exitCode": 0
+    }
+  ],
+  "reference": {
+    "status": "PASS",
+    "cases": [
+      {
+        "mixed": false,
+        "periodic": false,
+        "lane": 0,
+        "cells": 16,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": false,
+        "lane": 1,
+        "cells": 16,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": false,
+        "lane": 2,
+        "cells": 16,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": false,
+        "lane": 3,
+        "cells": 16,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": false,
+        "lane": 4,
+        "cells": 16,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": true,
+        "lane": 0,
+        "cells": 16,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": true,
+        "lane": 1,
+        "cells": 16,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 1.490116119384769e-08,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": true,
+        "lane": 2,
+        "cells": 16,
+        "maxObservedAbsoluteError": 1.52587890625e-05,
+        "normUpper": 0.0013427734375000028,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": true,
+        "lane": 3,
+        "cells": 16,
+        "maxObservedAbsoluteError": 8.499176403487565e+83,
+        "normUpper": 5.828006676677198e+84,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": false,
+        "periodic": true,
+        "lane": 4,
+        "cells": 16,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 1.2e-322,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": false,
+        "lane": 0,
+        "cells": 28,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": false,
+        "lane": 1,
+        "cells": 28,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": false,
+        "lane": 2,
+        "cells": 28,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": false,
+        "lane": 3,
+        "cells": 28,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": false,
+        "lane": 4,
+        "cells": 28,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": true,
+        "lane": 0,
+        "cells": 28,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 0,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": true,
+        "lane": 1,
+        "cells": 28,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 2.4214386940002494e-08,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": true,
+        "lane": 2,
+        "cells": 28,
+        "maxObservedAbsoluteError": 3.814697265625e-06,
+        "normUpper": 0.0024414062500000056,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": true,
+        "lane": 3,
+        "cells": 28,
+        "maxObservedAbsoluteError": 7.285008345846484e+83,
+        "normUpper": 7.770675568902934e+84,
+        "exactStoredWeightSum": "1"
+      },
+      {
+        "mixed": true,
+        "periodic": true,
+        "lane": 4,
+        "cells": 28,
+        "maxObservedAbsoluteError": 0.0,
+        "normUpper": 2e-322,
+        "exactStoredWeightSum": "1"
+      }
+    ],
+    "negativePass": true,
+    "scope": "canonical P_w=x-sum(stored weight*x), or identity for nonperiodic; physical density mean/source preprocessing and ideal geometry uncertified"
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/constant-mode-projection-20261005",
+  "productionRzGate": "retained",
+  "JensFrozenReceipt": "unchanged binary; matching 9 continuous + 9 checkpoint restart receipt at rz-ring-native-face-20261005, not rerun",
+  "limitations": [
+    "stored weights only, not ideal geometric weights",
+    "does not certify density preprocessing or 4*pi*G multiplication",
+    "conservative bounds may exceed tiny contrasts; does not grant tolerance acceptance",
+    "no automatic physical quality, build freshness or state publication token",
+    "no CUDA, long run or full RZ science approval"
+  ]
+}

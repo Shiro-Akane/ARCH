@@ -3,7 +3,8 @@
  * @brief A lightweight, text-based configuration file parser.
  * Supports simple "key = value" syntax.
  * Handles inline comments (starting with '#') and whitespace trimming.
- * Provides type-safe accessors (Bool, Int, Double, String) with default fallbacks.
+ * Preserves raw source records and rejects malformed lines and duplicate keys.
+ * Typed accessors preserve strict conversion; requirement resolution is a caller responsibility.
  */
 
 #pragma once
@@ -15,6 +16,11 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <optional>
+#include <vector>
+#include <iterator>
+#include <limits>
+#include <type_traits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -29,11 +35,57 @@ public:
           key(std::move(parameter)), code(std::move(error_code)) {}
 };
 
+// Byte positions refer to the original UTF-8 line, one-based and end-exclusive.
+struct ConfigSourceLocation {
+    std::string source;
+    std::size_t line, column, end_column;
+    std::optional<std::string> raw_value;
+};
+struct ConfigInputDiagnostic {
+    std::string key, code, message;
+    std::vector<ConfigSourceLocation> locations;
+    std::vector<std::string> related_keys;
+};
+class ConfigInputError : public ConfigValueError {
+    static std::string describe(const std::vector<ConfigInputDiagnostic>& errors) {
+        std::string text;
+        for (const auto& error : errors) {
+            if (!text.empty()) text += "; ";
+            text += error.code;
+            if (!error.key.empty()) text += " [" + error.key + "]";
+            text += ": " + error.message;
+        }
+        return text;
+    }
+public:
+    std::vector<ConfigInputDiagnostic> diagnostics;
+    explicit ConfigInputError(const std::vector<ConfigInputDiagnostic>& errors)
+        : ConfigValueError(errors.empty() ? "" : errors.front().key,
+                           errors.empty() ? "INVALID_INPUT" : errors.front().code, describe(errors)),
+          diagnostics(errors) {}
+};
+
 class ConfigParser
 {
 private:
     /// Storage for parsed key-value pairs
     std::map<std::string, std::string> parameters;
+    std::map<std::string, std::vector<ConfigSourceLocation>> occurrences;
+    std::vector<ConfigInputDiagnostic> diagnostics;
+    std::string input_text;
+
+    void reset() {
+        parameters.clear();
+        occurrences.clear();
+        diagnostics.clear();
+        input_text.clear();
+    }
+    void reject_duplicate(const std::string& key) const {
+        const auto it = occurrences.find(key);
+        if (it != occurrences.end() && it->second.size() > 1)
+            throw ConfigInputError({{key, "DUPLICATE_PARAMETER",
+                "Duplicate parameter; no occurrence is selected.", it->second}});
+    }
 
     /**
      * @brief Internal helper: Removes leading and trailing whitespace from a string.
@@ -50,6 +102,44 @@ private:
     }
 
 public:
+    static bool ParseBoolean(const std::string& key, std::string text) {
+        std::transform(text.begin(), text.end(), text.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (text == "true") return true;
+        if (text == "false") return false;
+        throw ConfigValueError(key, "INVALID_BOOLEAN", "Expected true or false (case-insensitive).");
+    }
+
+    // Common production/inspection conversion check for typed programmatic values.
+    // Raw tokens, when present, also enforce lexical integer/boolean semantics.
+    template<class T>
+    static void ValidateNumeric(const std::string& key, double number,
+                                const std::string* raw = nullptr) {
+        if constexpr (std::is_same_v<T, bool>) {
+            if (raw) (void)ParseBoolean(key, *raw);
+            if (!std::isfinite(number) || (number != 0.0 && number != 1.0))
+                throw ConfigValueError(key, "INVALID_BOOLEAN", "Requires an exact boolean value.");
+        } else if constexpr (std::is_integral_v<T>) {
+            if (raw) {
+                const auto first = !raw->empty() && (raw->front() == '+' || raw->front() == '-') ? 1u : 0u;
+                bool whole = first < raw->size();
+                for (std::size_t i = first; i < raw->size(); ++i)
+                    whole &= (*raw)[i] >= '0' && (*raw)[i] <= '9';
+                if (!whole) throw ConfigValueError(key, "INVALID_INTEGER", "Requires an integer token.");
+            }
+            if (!std::isfinite(number) || std::trunc(number) != number
+                || static_cast<long double>(number) < std::numeric_limits<T>::lowest()
+                || static_cast<long double>(number) > std::numeric_limits<T>::max())
+                throw ConfigValueError(key, "INVALID_INTEGER", "Not representable as the requested integer.");
+        } else {
+            static_assert(std::is_floating_point_v<T>);
+            if (!std::isfinite(number)
+                || static_cast<long double>(number) < std::numeric_limits<T>::lowest()
+                || static_cast<long double>(number) > std::numeric_limits<T>::max())
+                throw ConfigValueError(key, "INVALID_NUMBER", "Requires a finite representable number.");
+        }
+    }
+
     static int ParseInteger(const std::string& key, const std::string& text) {
         const char* begin = text.data();
         const char* end = begin + text.size();
@@ -99,50 +189,81 @@ public:
      * 3. Splits lines by the first '=' character into Key and Value.
      * 4. Trims whitespace around Keys and Values.
      * @param filename Path to the configuration file.
-     * @return true if file opened and parsed successfully, false otherwise.
+     * @return false when the file cannot be opened; syntax errors throw ConfigInputError.
      */
     bool Load(const std::string &filename)
     {
-        std::ifstream file(filename);
+        reset();
+        std::ifstream file(filename, std::ios::binary);
         if (!file.is_open())
         {
-            std::cerr << "[Warning] Config file " << filename << " not found! Using defaults." << std::endl;
+            std::cerr << "[Error] Cannot open config file " << filename << std::endl;
             return false;
         }
-
         return Load(file, filename);
     }
 
-    // The application API uses the same parser for an unsaved working copy.
+    // Inspection may retain partial records after syntax errors. Runtime Load
+    // uses this same reader, then refuses any diagnosed input before resolution.
+    void Read(std::istream &input, const std::string &source = "<memory>")
+    {
+        reset();
+        input_text.assign(std::istreambuf_iterator<char>(input), {});
+        if (input.bad()) throw std::runtime_error("Cannot read config input: " + source);
+        std::istringstream lines(input_text);
+        std::string line;
+        std::size_t line_number = 0;
+        while (std::getline(lines, line))
+        {
+            ++line_number;
+            const auto physical_size = line.size();
+            const auto comment = line.find('#');
+            if (comment != std::string::npos) line.resize(comment);
+            if (trim(line).empty()) continue;
+            const auto delimiter = line.find('=');
+            if (delimiter == std::string::npos) {
+                diagnostics.push_back({"", "MALFORMED_LINE",
+                    "Non-comment line requires an equals sign.",
+                    {{source, line_number, 1, physical_size + 1, std::nullopt}}});
+                continue;
+            }
+            const auto key = trim(line.substr(0, delimiter));
+            if (key.empty()) {
+                diagnostics.push_back({"", "EMPTY_KEY", "Parameter key is empty.",
+                    {{source, line_number, 1, physical_size + 1, std::nullopt}}});
+                continue;
+            }
+            const auto raw = line.substr(delimiter + 1);
+            auto& locations = occurrences[key];
+            locations.push_back({source, line_number, delimiter + 2, line.size() + 1, raw});
+            if (locations.size() == 1) parameters.emplace(key, trim(raw));
+            else parameters.erase(key);
+        }
+        for (const auto& [key, locations] : occurrences) {
+            if (locations.size() > 1)
+                diagnostics.push_back({key, "DUPLICATE_PARAMETER",
+                    "Duplicate parameter; no occurrence is selected.", locations});
+        }
+    }
+
+    void ThrowIfInvalid() const {
+        if (!diagnostics.empty()) throw ConfigInputError(diagnostics);
+    }
+    const std::vector<ConfigInputDiagnostic>& Diagnostics() const { return diagnostics; }
+    const std::string& InputText() const { return input_text; }
+    const auto& Occurrences() const { return occurrences; }
+    const std::vector<ConfigSourceLocation>& Locations(const std::string& key) const {
+        static const std::vector<ConfigSourceLocation> empty;
+        const auto it = occurrences.find(key);
+        return it == occurrences.end() ? empty : it->second;
+    }
+
     bool Load(std::istream &input, const std::string &source = "<memory>")
     {
-        parameters.clear();
-
-        std::string line;
-        while (std::getline(input, line))
-        {
-            // 1. Strip comments (content after '#')
-            size_t commentPos = line.find('#');
-            if (commentPos != std::string::npos)
-            {
-                line = line.substr(0, commentPos);
-            }
-
-            // 2. Trim whitespace
-            line = trim(line);
-            if (line.empty())
-                continue;
-
-            // 3. Parse "Key = Value"
-            size_t delimPos = line.find('=');
-            if (delimPos != std::string::npos)
-            {
-                std::string key = trim(line.substr(0, delimPos));
-                std::string value = trim(line.substr(delimPos + 1));
-                parameters[key] = value;
-            }
-        }
-        std::cout << "[Info] Loaded " << parameters.size() << " parameters from " << source << std::endl;
+        Read(input, source);
+        ThrowIfInvalid();
+        std::cout << "[Info] Loaded " << parameters.size()
+                  << " parameters from " << source << std::endl;
         return true;
     }
 
@@ -154,20 +275,12 @@ public:
      */
     bool GetBool(const std::string &key, bool defaultVal) const
     {
+        reject_duplicate(key);
         const auto it = parameters.find(key);
         if (it == parameters.end())
             return defaultVal;
 
-        std::string value = it->second;
-        std::transform(value.begin(), value.end(), value.begin(),
-                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-        if (value == "true")
-            return true;
-        if (value == "false")
-            return false;
-
-        throw ConfigValueError(key, "INVALID_BOOLEAN",
-            "Expected true or false (case-insensitive).");
+        return ParseBoolean(key, it->second);
     }
 
     /**
@@ -177,6 +290,7 @@ public:
      */
     int GetInt(const std::string &key, int defaultVal) const
     {
+        reject_duplicate(key);
         if (parameters.find(key) != parameters.end())
         {
             return ParseInteger(key, parameters.at(key));
@@ -191,6 +305,7 @@ public:
      */
     double GetDouble(const std::string &key, double defaultVal) const
     {
+        reject_duplicate(key);
         if (parameters.find(key) != parameters.end())
         {
             return ParseNumber(key, parameters.at(key));
@@ -205,6 +320,7 @@ public:
      */
     std::string GetString(const std::string &key, const std::string &defaultVal) const
     {
+        reject_duplicate(key);
         if (parameters.find(key) != parameters.end())
         {
             return parameters.at(key);
@@ -213,11 +329,12 @@ public:
     }
 
     /**
-     * @brief Returns the raw map of all parsed key-value pairs.
+     * @brief Returns unambiguous, trimmed key-value pairs after syntax validation.
      * Useful for iterating over custom parameters that are not hard-coded.
      */
     const std::map<std::string, std::string> &GetAllParams() const
     {
+        ThrowIfInvalid();
         return parameters;
     }
 
@@ -228,6 +345,6 @@ public:
      */
     bool HasKey(const std::string &key) const
     {
-        return parameters.find(key) != parameters.end();
+        return occurrences.find(key) != occurrences.end();
     }
 };

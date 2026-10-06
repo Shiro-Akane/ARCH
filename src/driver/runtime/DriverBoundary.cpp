@@ -131,6 +131,8 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
     arch::state::HostFailure failure;
     const auto member = slot == StateSlot::Current ? &amr::Block::fluid_state
         : slot == StateSlot::Next ? &amr::Block::state_next : &amr::Block::state_scratch;
+    for (int id:amr_ctrl.tree->GetActiveBlocks())
+        (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
 #pragma omp parallel for schedule(dynamic, 1)
     for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
         try {
@@ -140,7 +142,11 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
     }
     failure.rethrow();
     amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                            config.grid.dim, member, stage_handles);
+                                            config.grid.dim, member, stage_handles,
+                                            geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
+                                                ? amr::CoordinateSeamGeometry::RzAxisymmetric
+                                                : amr::CoordinateSeamGeometry::ExistingChart,
+                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
     if (residency_ledger && !stage_handles.empty()) {
         StageExecutionContext context{ExecutionSide::Host, *residency_ledger, scheduler_clock};
         const auto version = residency_ledger->inspect({stage_handles.front(), slot}).interior.version;

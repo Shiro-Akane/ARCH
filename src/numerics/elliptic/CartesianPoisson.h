@@ -25,6 +25,8 @@ struct BoundaryData {
     std::array<std::vector<double>, 6> values; // 2*axis + side; empty for periodic.
 };
 
+// Geometry checks used for controlled internal coarse derivation.
+namespace detail { void validate_mesh_geometry(const CartesianMesh& mesh, bool full_angular_domain = false); }
 void validate_mesh(const CartesianMesh& mesh, bool full_angular_domain = false);
 void validate_boundary(const CartesianMesh& mesh, const BoundaryData& boundary);
 void validate_values(std::span<const double> values, std::size_t size);

@@ -32,6 +32,11 @@ struct LinearWork {
     // y_i = a*x_i + b*z_i + c; absent inputs contribute zero.
     ARCH_INLINE void operator()(int i) const { out[i]=(x?a*x[i]:0.)+(y?b*y[i]:0.)+c; }
 };
+/** Scale a difference before multiplication; retain small x-offset contrasts. */
+struct DifferenceScaleWork {
+    int size;double* out;const double* x;double offset,scale;
+    ARCH_INLINE void operator()(int i) const {out[i]=(x[i]-offset)*scale;}
+};
 struct SparseView { const int* offsets; const int* columns; const double* values; };
 struct RowsWork {
     int size; SparseView rows; const double* x; double* out; double alpha=1.,beta=0.;
@@ -91,9 +96,7 @@ struct ProjectWork {
     // Periodic gauge: x_i <- x_i - <x>_volume.
     ARCH_INLINE void operator()(int i) const {x[i]-=(*scale)*(*sum);}
 };
-// Legacy face work is appended last so every existing alternative keeps its
-// index for the current Host/CUDA visitors.
-using CompositeWork=std::variant<LinearWork,RowsWork,GradientWork,JacobiWork,ProjectWork,LegacyGradientWork>;
+using CompositeWork=std::variant<LinearWork,DifferenceScaleWork,RowsWork,GradientWork,JacobiWork,ProjectWork,LegacyGradientWork>;
 enum class ReductionKind { Maximum, Product };
 struct Reduction {
     const double* x; const double* y; const double* weights; int size;
@@ -152,6 +155,9 @@ public:
     }
     void linear(Vector& out,double a,const Vector& x,double b=0.,const Vector& y={},double c=0.) {
         run(LinearWork{out.size,out.data,x.data,y.data,a,b,c});
+    }
+    void difference_scale(Vector& out,const Vector& x,double offset,double scale) {
+        run(DifferenceScaleWork{out.size,out.data,x.data,offset,scale});
     }
     void fill(Vector& out,double value=0.) { linear(out,0.,{},0.,{},value); }
     double maximum(const Vector& x) { return reduce({x.data,nullptr,nullptr,x.size,ReductionKind::Maximum}); }

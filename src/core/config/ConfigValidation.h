@@ -16,6 +16,8 @@
 #include "data/GlobalDefs.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "io/ConfigParser.h"
+#include "core/config/ScalarControlValidation.h"
+#include "core/config/ControlRelations.h"
 
 namespace arch::config {
 // Shared by text parsing, direct C++ setup and runtime dispatch. Presentation
@@ -25,166 +27,108 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     const auto require = [](bool valid, const char* key, const char* message) {
         if (!valid) throw ConfigValueError(key, "INVALID_RANGE", message);
     };
-    const auto positive = [&](double value, const char* key) {
-        require(std::isfinite(value) && value > 0.0, key, "Requires a finite positive value.");
-    };
-    const auto nonnegative = [&](double value, const char* key) {
-        require(std::isfinite(value) && value >= 0.0, key, "Requires a finite nonnegative value.");
+    const auto scalar = [&](double value, const char* key) {
+        if (const auto* error = ScalarControlError(key, value))
+            throw ConfigValueError(key, "INVALID_RANGE", error);
     };
     const auto& n = c.numerics;
-    positive(n.sml_rho, "sml_rho");
-    positive(n.min_eint, "min_eint");
-    positive(n.max_eint, "max_eint");
-    require(n.max_eint >= n.min_eint, "max_eint", "Must be at least min_eint.");
-    positive(n.cfl, "cfl");
-    require(n.cfl <= 1.0, "cfl", "Must not exceed one.");
-    nonnegative(n.entropy_fix_coeff, "EntropyFixCoefficient");
-    positive(n.dt_init, "dt_init");
-    positive(n.dt_min, "dt_min");
-    require(n.dt_max == -1.0 || (std::isfinite(n.dt_max) && n.dt_max >= n.dt_min),
+    scalar(n.sml_rho, "sml_rho");
+    scalar(n.min_eint, "min_eint");
+    scalar(n.max_eint, "max_eint");
+    require(relations::AtLeast(n.max_eint, n.min_eint), "max_eint", "Must be at least min_eint.");
+    scalar(n.cfl, "cfl");
+    scalar(n.entropy_fix_coeff, "EntropyFixCoefficient");
+    scalar(n.dt_init, "dt_init");
+    scalar(n.dt_min, "dt_min");
+    require(relations::TimeCap(n.dt_max, n.dt_min),
             "dt_max", "Use -1 for no cap, or a finite cap at least dt_min.");
-    const bool hll_family = arch::dispatch::ascii_iequals(n.solver_name,"HLL")
-                         || arch::dispatch::ascii_iequals(n.solver_name,"HLLC");
-    require(hll_family || n.hll_roe_wave_speed, "hll_wave_speed",
+    require(relations::HllSpeed(n.solver_name, n.hll_roe_wave_speed), "hll_wave_speed",
             "A nondefault signal-speed estimator requires HLL or HLLC; other solvers have their own spectra.");
-    require(std::isfinite(c.physics.eos_coulomb_mult) && c.physics.eos_coulomb_mult >= 0.0
-            && c.physics.eos_coulomb_mult <= 1.0, "eos_coulomb_mult", "Requires a finite value in [0,1].");
-    require(c.physics.eos_coulomb_mult == 1.0 || arch::dispatch::ascii_iequals(c.physics.eos_type, "helmholtz"), "eos_coulomb_mult",
+    scalar(c.physics.eos_coulomb_mult, "eos_coulomb_mult");
+    require(relations::Coulomb(c.physics.eos_coulomb_mult, c.physics.eos_type), "eos_coulomb_mult",
             "A nondefault Coulomb factor requires eos_type=helmholtz.");
-    require(n.dt_init >= n.dt_min, "dt_init", "Must be at least dt_min.");
-    require(std::isfinite(n.tstep_change_factor) && n.tstep_change_factor >= 1.0,
-            "tstep_change_factor", "Requires a finite growth factor of at least one.");
-    require(std::isfinite(c.physics.gamma) && c.physics.gamma > 1.0,
-            "gamma", "Ideal-gas gamma must exceed one.");
+    require(relations::AtLeast(n.dt_init, n.dt_min), "dt_init", "Must be at least dt_min.");
+    scalar(n.tstep_change_factor, "tstep_change_factor");
+    scalar(c.physics.gamma, "gamma");
     const auto& b = c.physics.burn;
-    nonnegative(b.nuclearTempMin, "nuclearTempMin");
-    nonnegative(b.nuclearDensMin, "nuclearDensMin");
-    positive(b.smallt, "smallt");
-    positive(b.smallx, "smallx");
+    scalar(b.nuclearTempMin, "nuclearTempMin");
+    scalar(b.nuclearDensMin, "nuclearDensMin");
+    scalar(b.smallt, "smallt");
+    scalar(b.smallx, "smallx");
     require(b.smallx < 1.0 && species_count * b.smallx < 1.0,
             "smallx", "Require 0 < smallx and species_count * smallx < 1.");
-    positive(b.enucDtFactor, "enucDtFactor");
-    positive(b.nseTempThreshold, "nseTempThreshold");
-    nonnegative(b.nseDensThreshold, "nseDensThreshold");
+    scalar(b.enucDtFactor, "enucDtFactor");
+    scalar(b.nseTempThreshold, "nseTempThreshold");
+    scalar(b.nseDensThreshold, "nseDensThreshold");
     const auto& o = b.odeconfig;
-    positive(o.rtol, "ode_rtol");
-    positive(o.atol, "ode_atol");
-    require(o.rtol < 1.0, "ode_rtol", "Relative tolerance must be smaller than one.");
-    require(o.max_newton_iter > 0, "ode_max_newton_iter", "Iteration count must be positive.");
-    require(o.max_substeps > 0, "ode_max_substeps", "Substep count must be positive.");
-    positive(o.dt_safe_factor, "ode_dt_safe_fac");
-    require(o.dt_safe_factor <= 1.0, "ode_dt_safe_fac", "Safety factor must not exceed one.");
-    positive(o.dt_fac_min, "ode_dt_fac_min");
-    require(o.dt_fac_min <= 1.0, "ode_dt_fac_min", "Reduction factor must not exceed one.");
-    require(std::isfinite(o.dt_fac_max) && o.dt_fac_max >= 1.0,
-            "ode_dt_fac_max", "Growth factor must be finite and at least one.");
-    positive(o.initial_dt_frac, "ode_initial_dt_frac");
-    require(o.initial_dt_frac <= 1.0, "ode_initial_dt_frac", "Initial substep fraction must not exceed one.");
+    scalar(o.rtol, "ode_rtol");
+    scalar(o.atol, "ode_atol");
+    scalar(o.max_newton_iter, "ode_max_newton_iter");
+    scalar(o.max_substeps, "ode_max_substeps");
+    scalar(o.dt_safe_factor, "ode_dt_safe_fac");
+    scalar(o.dt_fac_min, "ode_dt_fac_min");
+    scalar(o.dt_fac_max, "ode_dt_fac_max");
+    scalar(o.initial_dt_frac, "ode_initial_dt_frac");
     const auto& d = c.physics.diffusion;
-    positive(d.diff_cfl, "diff_cfl");
-    require(d.diff_cfl <= 1.0, "diff_cfl", "Must not exceed one.");
-    require(d.max_stages >= 2, "diff_max_stages", "RKL requires at least two stages.");
-    nonnegative(d.nu_visc, "nu_visc");
-    nonnegative(d.alpha_therm, "alpha_therm");
-    nonnegative(d.D_spec, "D_spec");
+    scalar(d.diff_cfl, "diff_cfl");
+    scalar(d.max_stages, "diff_max_stages");
+    scalar(d.nu_visc, "nu_visc");
+    scalar(d.alpha_therm, "alpha_therm");
+    scalar(d.D_spec, "D_spec");
     const auto& g = c.physics.gravity;
-    positive(g.G_const, "gravity_G");
-    positive(g.relative_tolerance, "gravity_rtol");
-    require(g.relative_tolerance < 1.0, "gravity_rtol", "Relative tolerance must be smaller than one.");
-    nonnegative(g.absolute_tolerance, "gravity_atol");
-    require(g.max_cycles > 0, "gravity_max_cycles", "Iteration count must be positive.");
-    require(g.boundary == "periodic" || g.boundary == "isolated" || g.boundary == "user"
-            || g.boundary == "dirichlet" || g.boundary == "neumann", "gravity_boundary",
-            "Expected periodic, isolated, dirichlet, neumann or user gravity boundary.");
+    scalar(g.relative_tolerance, "gravity_rtol");
+    scalar(g.absolute_tolerance, "gravity_atol");
+    scalar(g.max_cycles, "gravity_max_cycles");
+    require(g.boundary == "periodic" || g.boundary == "isolated" || g.boundary == "dirichlet" || g.boundary == "neumann" || g.boundary == "user", "gravity_boundary", "Expected periodic, isolated, dirichlet, neumann or user gravity boundary.");
     if (g.type == "self") {
-        const auto reflecting = [](const std::string& name) {
-            const auto parsed = arch::dispatch::parse_boundary(name);
-            return parsed.ok && parsed.value == arch::dispatch::BoundaryFeature::Reflecting;
-        };
-        const bool curved=c.grid.geometry=="spherical" || c.grid.geometry=="cylindrical";
-        require(c.grid.geometry=="cartesian" || curved, "geometry",
-            "Self-gravity supports Cartesian, cylindrical and spherical geometry.");
-        if(curved) {
-            require(g.boundary!="periodic","gravity_boundary",
-                "Curvilinear self-gravity requires isolated or explicit Dirichlet/Neumann/user boundaries.");
-            require(c.grid.x1_min>=0.,"x1_min","Curvilinear self-gravity requires nonnegative radius.");
-            require(c.grid.x1_min > 0. || reflecting(c.grid.x1l_boundary_type),"x1l_boundary_type",
-                "The radial inner boundary requires reflecting fluid flow.");
-            if(c.grid.dim>1 && g.boundary=="isolated") {
-                // Full-azimuth singular faces use the shared AMR chart mapping;
-                // the radial inner face remains reflecting at the zero-area join.
-                const int azimuth=c.grid.dim-1;
-                const double phi_min=azimuth==1?c.grid.x2_min:c.grid.x3_min;
-                const double phi_max=azimuth==1?c.grid.x2_max:c.grid.x3_max;
-                const double turn=2.*std::acos(-1.);
-                require(std::abs((phi_max-phi_min)-turn)<=64.*std::numeric_limits<double>::epsilon()*turn,
-                    azimuth==1?"x2_max":"x3_max","Curvilinear gravity requires a full azimuthal turn.");
-                if(c.grid.geometry=="spherical" && c.grid.dim==3) {
-                    const double pi=std::acos(-1.);
-                    require(c.grid.x2_min>=0. && c.grid.x2_max<=pi,"x2_min",
-                        "Spherical polar bounds must remain within [0,pi].");
-                    if(c.grid.x2_min==0.)
-                        require(reflecting(c.grid.x2l_boundary_type),"x2l_boundary_type",
-                            "The north pole requires reflecting fluid flow with coordinate-seam mapping.");
-                    if(std::abs(c.grid.x2_max-pi)<=1e-12)
-                        require(reflecting(c.grid.x2r_boundary_type),"x2r_boundary_type",
-                            "The south pole requires reflecting fluid flow with coordinate-seam mapping.");
-                }
-            }
-        } else if(g.boundary=="isolated")
-            require(c.grid.dim==3,"gravity_boundary","Cartesian isolated gravity requires a 3D Newtonian domain.");
-        const std::string faces[]{c.grid.x1l_boundary_type,c.grid.x1r_boundary_type,
-            c.grid.x2l_boundary_type,c.grid.x2r_boundary_type,c.grid.x3l_boundary_type,c.grid.x3r_boundary_type};
-        const int azimuth=curved && c.grid.dim>1 && g.boundary=="isolated"?c.grid.dim-1:-1;
-        for (int a=0; a<2*c.grid.dim; ++a) {
-            if(g.boundary=="user") continue; // Callback topology is checked when the mesh is bound.
-            const bool periodic=g.boundary=="periodic" || a/2==azimuth;
-            require(periodic ? faces[a]=="periodic" : arch::dispatch::parse_boundary(faces[a]).ok && faces[a]!="periodic",
-                "gravity_boundary", "Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).");
-        }
+        relations::GravityTopology topology;
+        topology.geometry = c.grid.geometry;
+        topology.boundary = g.boundary;
+        topology.dimension = c.grid.dim;
+        topology.lower = {c.grid.x1_min, c.grid.x2_min, c.grid.x3_min};
+        topology.upper = {c.grid.x1_max, c.grid.x2_max, c.grid.x3_max};
+        topology.faces = {c.grid.x1l_boundary_type, c.grid.x1r_boundary_type,
+                          c.grid.x2l_boundary_type, c.grid.x2r_boundary_type,
+                          c.grid.x3l_boundary_type, c.grid.x3r_boundary_type};
+        relations::CheckGravityTopology(topology,
+            [&](const char* key, const char* message, const auto&) { require(false, key, message); });
     }
     require(std::isfinite(g.g_x), "gravity_g_x", "Acceleration must be finite.");
     require(std::isfinite(g.g_y), "gravity_g_y", "Acceleration must be finite.");
     require(std::isfinite(g.g_z), "gravity_g_z", "Acceleration must be finite.");
     require(c.grid.nblockx1 > 0, "nblockx1", "First axis requires positive blocks.");
     require(c.grid.nblockx2 >= 0, "nblockx2", "Block count cannot be negative.");
-    require(c.grid.nblockx3 >= 0 && (c.grid.nblockx3 == 0 || c.grid.nblockx2 > 0),
+    require(relations::AxisTopology(c.grid.nblockx2, c.grid.nblockx3),
             "nblockx3", "Third axis requires an active second axis.");
-    require(c.grid.amr_max_blocks > 0, "max_blocks", "Block capacity must be positive.");
+    scalar(c.grid.amr_max_blocks, "max_blocks");
     const double lower[]{c.grid.x1_min, c.grid.x2_min, c.grid.x3_min};
     const double upper[]{c.grid.x1_max, c.grid.x2_max, c.grid.x3_max};
     const char* keys[]{"x1_max", "x2_max", "x3_max"};
     for (int axis = 0; axis < c.grid.dim; ++axis)
-        require(std::isfinite(lower[axis]) && std::isfinite(upper[axis] - lower[axis])
-                && upper[axis] > lower[axis], keys[axis], "Active axis must have finite positive extent.");
-    require(c.amr.lrefinemin >= 0 && c.amr.lrefinemax >= c.amr.lrefinemin
-            && c.amr.lrefinemax <= amr::kMaxRefinementLevel,
+        require(relations::ActiveExtent(lower[axis], upper[axis]), keys[axis], "Active axis must have finite positive extent.");
+    require(relations::RefinementLevels(c.amr.lrefinemin, c.amr.lrefinemax),
             "lrefinemax", "Require ordered refinement levels within the Morton range.");
-    require(c.amr.regrid_interval > 0, "regrid_interval", "Regrid interval must be positive.");
-    require(std::isfinite(c.amr.refine_threshold) && std::isfinite(c.amr.derefine_threshold)
-            && c.amr.refine_threshold <= 1.0 && c.amr.derefine_threshold >= 0.0
-            && c.amr.derefine_threshold < c.amr.refine_threshold,
+    scalar(c.amr.regrid_interval, "regrid_interval");
+    if (c.amr.refine_on_jeans) scalar(c.amr.jeans_cells,"jeans_cells");
+    require(relations::CurvatureThresholds(c.amr.refine_threshold, c.amr.derefine_threshold),
             "refine_threshold", "Require 0 <= derefine_threshold < refine_threshold <= 1.");
-    nonnegative(c.io.tmax, "tmax");
-    require(c.io.max_steps == -1 || c.io.max_steps >= 0, "max_steps", "Use -1 or a nonnegative step limit.");
-    const auto cadence = [&](double value, const char* key) {
-        require(std::isfinite(value) && (value == -1.0 || value > 0.0), key,
-                "Use -1 to disable output, or a positive cadence.");
-    };
-    cadence(c.io.plt_dt, "plt_dt"); cadence(c.io.chk_dt, "chk_dt");
-    cadence(c.io.plt_dstep, "plt_dstep"); cadence(c.io.chk_dstep, "chk_dstep");
-    require(c.execution.cuda_device >= 0, "cuda_device", "Device index cannot be negative.");
+    scalar(c.io.tmax, "tmax");
+    scalar(c.io.max_steps, "max_steps");
+    scalar(c.io.plt_dt, "plt_dt"); scalar(c.io.chk_dt, "chk_dt");
+    scalar(c.io.plt_dstep, "plt_dstep"); scalar(c.io.chk_dstep, "chk_dstep");
+    scalar(c.execution.cuda_device, "cuda_device");
 }
 // Restart identity for state recovery and the physical/temporal limits that
 // determine accepted trajectories. The format revision fixes algorithm policy.
-inline constexpr std::size_t StateControlCount = 18;
-inline constexpr double StateControlRevision = 2.0;
+inline constexpr std::size_t StateControlCount = 20;
+inline constexpr double StateControlRevision = 3.0;
 inline std::vector<double> StateControlIdentity(const SimConfig& c)
 {
     const auto& n=c.numerics; const auto& b=c.physics.burn;
     return {StateControlRevision,n.sml_rho,n.min_eint,n.max_eint,n.cfl,n.dt_init,n.dt_min,n.tstep_change_factor,
         b.smallt,b.smallx,b.nuclearTempMin,b.nuclearDensMin,b.enucDtFactor,
         b.odeconfig.rtol,b.odeconfig.atol,n.dt_max,c.physics.eos_coulomb_mult,
-        double(n.hll_roe_wave_speed)};
+        double(n.hll_roe_wave_speed),double(c.amr.refine_on_jeans),
+        c.amr.refine_on_jeans ? c.amr.jeans_cells : 0.0};
 }
 } // namespace arch::config

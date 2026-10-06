@@ -3,6 +3,7 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -12,7 +13,16 @@ import unittest
 ARCH, ROOT, READER = map(lambda s: Path(s).resolve(), sys.argv[1:4])
 del sys.argv[1:4]
 ENV = dict(os.environ, OMP_NUM_THREADS='1', CUDA_VISIBLE_DEVICES='')
-SOD = 'nblockx1=4\nnblockx2=0\nnblockx3=0\nx_pos=.43\nlrefinemax=3\nrefine_threshold=.1\nderefine_threshold=.01\nmax_blocks=128\nnetwork_name=none\n'
+def edit(text, **values):
+    for key, value in values.items():
+        text = re.sub(rf"^{re.escape(key)}\s*=.*\n?", "", text, flags=re.MULTILINE)
+        text += f"\n{key}={value}\n"
+    return text
+
+SOD = edit((ROOT/'simulation/Sod/Sod.par').read_text(), nblockx1=4,
+    nblockx2=0, nblockx3=0, x_pos='.43', lrefinemax=3,
+    refine_threshold='.1', derefine_threshold='.01', max_blocks=128, network_name='none')
+
 
 class Expansion(unittest.TestCase):
     def setUp(self):
@@ -37,7 +47,7 @@ class Expansion(unittest.TestCase):
         return obj
 
     def cell_text(self):
-        return (ROOT/'simulation/Cellular/CellularPreview2D.par').read_text()+f'\neos_table_path={ROOT}/EOS_toolkit/tables/helmholtz/helm_table.dat\nuse_burn=false\nmax_blocks=128\nrefine_threshold=.1\nderefine_threshold=.01\n'
+        return edit((ROOT/'simulation/Cellular/CellularPreview2D.par').read_text(), eos_table_path=f'{ROOT}/EOS_toolkit/tables/helmholtz/helm_table.dat', use_burn='false', max_blocks=128, refine_threshold='.1', derefine_threshold='.01')
 
     def test_registry_is_compiled_and_does_not_setup(self):
         out=self.api('--list-cases')
@@ -45,7 +55,8 @@ class Expansion(unittest.TestCase):
         self.assertIn('Sedov', cases)
         self.assertIn('CellularDet', cases)
         self.assertNotIn('Cellular', cases)
-        self.assertFalse(cases['Sedov']['initialFieldPreview'])
+        self.assertTrue(cases['Sedov']['initialFieldPreview'])
+        self.assertTrue(cases['Sedov']['initialAmrPreview'])
         self.assertTrue(cases['CellularDet']['initialAmrPreview'])
         self.assertEqual(out['setup'], 'not_executed')
         self.assertTrue(all(not c['automaticCustomUnitInference'] for c in cases.values()))
@@ -53,7 +64,13 @@ class Expansion(unittest.TestCase):
     def test_all_standard_parameters_have_presentation(self):
         out=self.api('--config-schema')
         params={p['key']:p for p in out['parameters']}
-        self.assertEqual(len(params), 95)
+        entries=(ROOT/'src/core/config/StandardParameterEntries.inc').read_text().splitlines()
+        expected={re.match(r'ARCH_STANDARD_PARAMETER\("([^"]+)"',line).group(1)
+            for line in entries if line.startswith('ARCH_STANDARD_PARAMETER(')
+            and 'RequirementKind::Retired' not in line}
+        self.assertEqual(set(params),expected)
+        self.assertEqual(len(out['parameters']),len(params))
+        self.assertNotIn('gravity_G',params)
         for p in params.values():
             self.assertTrue(p['presentation']['description'])
             self.assertTrue(p['presentation']['displayName'])
@@ -69,25 +86,26 @@ class Expansion(unittest.TestCase):
         self.assertIn('Deuflhard', bd['displayName'])
 
     def test_diffusion_channels_and_cgs(self):
-        text=SOD+'use_diffusion=true\nuse_thermal_diff=true\nalpha_therm=2\n'
+        text=edit(SOD,use_diffusion='true',use_thermal_diff='true',use_viscous_diff='false',use_species_diff='false',diff_integrator='RKL2',diff_cfl='.8',alpha_therm=2)
         out=self.api('--inspect-config', text)
         params={p['key']:p for p in out['parameters']}
         self.assertEqual(out['unitSystem'],'cgs')
-        self.assertTrue(params['alpha_therm']['applicable'])
-        self.assertFalse(params['nu_visc']['applicable'])
+        self.assertEqual(params['alpha_therm']['applicability']['state'],'satisfied')
+        self.assertEqual(params['nu_visc']['applicability']['state'],'not-applicable')
         self.assertEqual(params['alpha_therm']['units']['unit'],'cm^2/s')
         self.assertEqual(out['diffusion']['source'],'constant')
-        disabled=self.api('--inspect-config',text+'use_diffusion=false\n')
-        self.assertFalse(next(p for p in disabled['parameters'] if p['key']=='alpha_therm')['applicable'])
-        out=self.api('--inspect-config',SOD+'eos_type=helmholtz\nuse_diffusion=true\n')
+        disabled=self.api('--inspect-config',edit(text,use_diffusion='false'))
+        self.assertEqual(next(p for p in disabled['parameters'] if p['key']=='alpha_therm')['applicability']['state'],'not-applicable')
+        helm=re.sub(r'^alpha_therm=.*\n?', '', edit(text,eos_type='helmholtz',eos_table_path='/absent',eos_coulomb_mult=1), flags=re.MULTILINE)
+        out=self.api('--inspect-config',helm)
         self.assertEqual(set(out['diffusion']['forbiddenExplicitKeys']),{'alpha_therm','nu_visc','D_spec'})
         self.assertFalse(out['diffusion']['modeEditable'])
         self.assertEqual([c['stellarModelSuppliesCoefficient'] for c in out['diffusion']['channels']],[True,False,False])
-        self.api('--inspect-config',SOD+'eos_type=helmholtz\nuse_diffusion=true\nalpha_therm=0\n',code=3)
+        self.api('--inspect-config',edit(helm,alpha_therm=0),code=3)
 
     def test_resource_estimate_scales_and_does_not_load_eos(self):
         for dim in [1,2,3]:
-            text=f'nblockx1=2\nnblockx2={int(dim>=2)}\nnblockx3={int(dim==3)}\nlrefinemax=3\neos_type=helmholtz\neos_table_path=/absent\n'
+            text=f'nblockx1=2\nnblockx2={int(dim>=2)}\nnblockx3={int(dim==3)}\nlrefinemax=3\nlrefinemin=0\nmax_blocks=2000\neos_type=helmholtz\neos_table_path=/absent\n'
             out=self.api('--amr-resources',text,case='not-registered')
             data=out['data']
             self.assertEqual(out['execution']['setup'],'not_executed')
@@ -95,7 +113,7 @@ class Expansion(unittest.TestCase):
             self.assertEqual([l['fullDomainLeafBlocks'] for l in data['levels']],[2*2**(dim*i) for i in range(4)])
             self.assertTrue(all(l['stateBytesIncludingSpecies'] is None for l in data['levels']))
             self.assertEqual(data['oomPrediction'],'not-provided')
-        huge=self.api('--amr-resources','nblockx1=1000\nnblockx2=1000\nnblockx3=1000\nlrefinemax=15\n')
+        huge=self.api('--amr-resources','nblockx1=1000\nnblockx2=1000\nnblockx3=1000\nlrefinemax=15\nlrefinemin=0\nmax_blocks=2000\n')
         self.assertTrue(huge['data']['levels'][-1]['overflow'])
         self.assertIsNone(huge['data']['levels'][-1]['fullDomainLeafBlocks'])
 
@@ -122,7 +140,7 @@ class Expansion(unittest.TestCase):
         self.assertTrue(out['data']['complete'])
         self.verify_mesh(out,[1])
         self.assertGreater(max(b['level'] for b in out['data']['leaves']),0)
-        zero=self.api('--preview-amr',SOD+'lrefinemax=0\n')
+        zero=self.api('--preview-amr',edit(SOD,lrefinemax=0))
         self.assertEqual(zero['data']['leafCount'],4)
         limited=self.api('--preview-amr',SOD,'--mesh-max-blocks','6')
         self.assertEqual(limited['status'],'limited')
@@ -135,7 +153,7 @@ class Expansion(unittest.TestCase):
         self.assertEqual(root['status'],'limited')
 
     def test_cpu_preview_ignores_requested_cuda(self):
-        out=self.api('--preview-amr',SOD+'compute_backend=cuda\ncuda_device=999\n')
+        out=self.api('--preview-amr',edit(SOD,compute_backend='cuda',cuda_device=999))
         self.assertEqual(out['execution']['previewBackend'],'cpu')
         self.assertEqual(out['state']['computeBackendRequested'],'cuda')
         self.assertEqual(out['execution']['timeStepping'],'not_executed')
@@ -144,8 +162,15 @@ class Expansion(unittest.TestCase):
         for args in [('--mesh-max-blocks','2.5'),('--mesh-memory-mib','999'),('--samples','32')]:
             out=self.api('--preview-amr',SOD,*args,code=2)
             self.assertEqual(out['kind'],'initial-amr-preview')
-        self.api('--preview-amr',SOD,case='Sedov',code=4)
-        self.api('--preview-amr',SOD+'restart=true\nrestart_file=/absent\n',code=4)
+        unknown=self.api('--preview-amr',SOD,case='not-registered',code=3)
+        self.assertTrue(any(d.get('detailCode')=='UNKNOWN_CASE' for d in unknown['diagnostics']))
+        self.assertEqual(unknown['state']['setup'],'not_executed')
+        sedov=edit((ROOT/'simulation/Sedov/Sedov.par').read_text(),lrefinemax=0)
+        mesh=self.api('--preview-amr',sedov,case='Sedov')
+        self.assertEqual(mesh['execution']['timeStepping'],'not_executed')
+        self.assertTrue(mesh['data']['complete'])
+        self.verify_mesh(mesh,[1,1])
+        self.api('--preview-amr',edit(SOD,restart='true',restart_file='/absent'),code=4)
 
     def test_cellular_mesh_and_resource_species(self):
         out=self.api('--preview-amr',self.cell_text(),case='CellularDet')
@@ -155,19 +180,26 @@ class Expansion(unittest.TestCase):
 
     def test_mesh_matches_production_initial_topology(self):
         # tmax=0 calls production initialization/output only, no time evolution.
-        for case,text,domain in [('Sod',SOD+'refine_var=DENS,PRES\n',[1]),('CellularDet',self.cell_text(),[25.6,12.8])]:
+        for case,text,domain in [('Sod',edit(SOD,refine_var='DENS,PRES'),[1]),('CellularDet',self.cell_text(),[25.6,12.8])]:
             with self.subTest(case=case):
                 preview=self.api('--preview-amr',text,case=case)
                 self.assertTrue(preview['data']['complete'])
                 self.verify_mesh(preview,domain)
-                outdir=self.cwd/case
-                par=self.cwd/(case+'.par')
-                par.write_text(text+f'\nsolver=HLLC\ntmax=0\ncompute_backend=cpu\nout_dir={outdir}\nbase_name=reference\nplt_variables=DENS\n')
+                root=ROOT/'studio/.local/integration/amr-production-oracle'
+                root.mkdir(parents=True,exist_ok=True)
+                evidence=Path(tempfile.mkdtemp(prefix=case+'-',dir=root))
+                outdir=evidence/'output'
+                par=evidence/(case+'.par')
+                par.write_text(edit(text,solver='HLLC',hll_wave_speed='roe',tmax=0,max_steps=-1,compute_backend='cpu',out_dir=outdir,base_name='reference',plt_variables='DENS',plt_dt=-1,plt_dstep=-1,chk_dt=-1,chk_dstep=-1))
                 run=subprocess.run([str(ARCH),case,str(par)],cwd=self.cwd,env=ENV,capture_output=True,text=True,timeout=90)
+                (evidence/'stdout.log').write_text(run.stdout)
+                (evidence/'stderr.log').write_text(run.stderr)
+                (evidence/'preview.json').write_text(json.dumps(preview))
                 self.assertEqual(run.returncode,0,(run.stdout[-3000:],run.stderr[-2000:]))
                 checkpoints=sorted(outdir.rglob('*chk*.h5'))
                 self.assertTrue(checkpoints,list(outdir.rglob('*')))
                 ref=json.loads(subprocess.check_output([str(READER),str(checkpoints[0])],text=True))
+                (evidence/'summary.json').write_text(json.dumps({'scope':'t=0 initial topology only; no evolution acceptance','case':case,'time':ref['time'],'productionKeys':sorted(ref['keys']),'previewKeys':sorted(b['logicalKey'] for b in preview['data']['leaves']),'inputSha256':hashlib.sha256(par.read_bytes()).hexdigest(),'binarySha256':hashlib.sha256(ARCH.read_bytes()).hexdigest()},indent=2))
                 self.assertEqual(ref['time'],0)
                 self.assertEqual(sorted(ref['keys']),sorted(b['logicalKey'] for b in preview['data']['leaves']))
 

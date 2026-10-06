@@ -17,10 +17,11 @@
 | 配置命令 | 构建目录 | 可执行文件 |
 | --- | --- | --- |
 | `cmake --preset cpu-release` | `build-cpu` | `build-cpu/bin/ARCH` |
+| `cmake --preset studio-cpu-release` | `build-studio-cpu` | `build-studio-cpu/bin/ARCH` + `arch-studio` |
 | `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
 | `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
-三个预设都使用 Ninja 与 OpenMP。Release 预设设置 `BUILD_TESTING=OFF`；
+上述预设都使用 Ninja 与 OpenMP。Release 预设设置 `BUILD_TESTING=OFF`；
 `cuda-debug` 则启用测试，供开发使用。两个 CUDA 预设均通过
 `CMAKE_CUDA_ARCHITECTURES=native` 面向配置时可见的显卡，并设置
 `ARCH_CUDA_HEAVY_COMPILE_JOBS=1`。预设只负责配置，实际编译仍使用下方明确的
@@ -216,3 +217,7 @@ CTest 负责运行测试，不会自动编译缺失的测试程序。不指定 `
 
 算例边界随应用编译：把 `physical_boundary.cpp`、`gravity_boundary.cpp` 放在注册算例源码
 同目录，新增文件后重新配置并构建，无需边界路径参数。见[用户边界](UserBoundaries.zh-CN.md)。
+
+## Linux Studio desktop
+
+`studio-cpu-release` builds Core and the optional Electron desktop together; normal Core presets keep Studio disabled. The GUI preset uses the Host-owned local CPU build directory and GNU provenance settings. See the [Studio workflow](Studio.md) and [environment setup](StudioEnvironment.zh-CN.md) for Node 24+, WSLg, graphical libraries and independent terminal requirements.

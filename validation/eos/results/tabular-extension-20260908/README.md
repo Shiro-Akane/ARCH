@@ -87,7 +87,7 @@ performance measurements. No full new CUDA application campaign was run.
 
 ## Retained diagnostic attempts
 
-[diagnostics](diagnostics/) retains the first static replay and its failures.
+[diagnostics](diagnostics) retains the first static replay and its failures.
 The first environment had an older Python incompatible with the shared tooling.
 The first application replay passed both raw tables and their six guards, but
 the manufactured guard input used the raw source's state, outside its smaller

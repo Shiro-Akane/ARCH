@@ -9,7 +9,7 @@ released at the end of its selected process trace. The executable, profiler and
 launcher identities were verified before and after collection.
 
 The [complete evidence](release-926/evidence.json) is a focused capacity result;
-the [final acceptance index](../final-acceptance-20260907/) combines it with the
+the [final acceptance index](../final-acceptance-20260907) combines it with the
 other release gates. This result alone does not mark the release as qualified.
 
 ## Workloads and measured allocation peaks

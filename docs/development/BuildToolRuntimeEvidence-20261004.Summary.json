@@ -1,0 +1,2383 @@
+{
+  "baseSourceCommit": "e83b617d2a978b319201d1d1947282bf42da51bb",
+  "auditSourceDirty": true,
+  "auditScriptSha256": "d9f782c22accc6aded73cef07ec09e528154b19309f41779e5b9af8d6acb5fc2",
+  "recordedRootManifest": {
+    "buildId": "e62f1ecc-7269-4b35-bad9-7172c6b68cfc",
+    "roots": [
+      "/usr/bin/cmake",
+      "/usr/bin/ninja",
+      "/usr/bin/cc",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+      "/usr/bin/as",
+      "/usr/bin/ld",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+      "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+      "/usr/bin/c++",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+      "/usr/bin/ld.mold"
+    ]
+  },
+  "tests": {
+    "initial": "5/6; nonregular directory exception mismatch, retained raw failure",
+    "final": "8/8 PASS; FIFO, no execution, RPATH/missing/ambiguity, graph cycle/budget"
+  },
+  "actual": {
+    "kind": "static-build-tool-elf-dependencies",
+    "version": 1,
+    "status": "partial",
+    "roots": [
+      "/usr/bin/cmake",
+      "/usr/bin/ninja",
+      "/usr/bin/cc",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+      "/usr/bin/as",
+      "/usr/bin/ld",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+      "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+      "/usr/bin/c++",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+      "/usr/bin/ld.mold"
+    ],
+    "inspectors": [
+      {
+        "path": "/usr/bin/readelf",
+        "resolvedPath": "/usr/bin/x86_64-linux-gnu-readelf",
+        "sha256": "871be389739ecf9924b052c2fde4d2a2068a54e882201b9c34897337a5a0a130",
+        "size": 789280
+      },
+      {
+        "path": "/usr/sbin/ldconfig",
+        "resolvedPath": "/usr/sbin/ldconfig",
+        "sha256": "bfd5df90c7f070feab584435f106f254ffffaa268a04de5b5c3bd61d59c092f3",
+        "size": 387
+      }
+    ],
+    "loaderCache": {
+      "path": "/etc/ld.so.cache",
+      "resolvedPath": "/etc/ld.so.cache",
+      "sha256": "885522b84c91a098355c182a91b8e65c3031219381f94a0c5be3f6e5e42e711f",
+      "size": 31747
+    },
+    "nodes": [
+      {
+        "path": "/usr/bin/cmake",
+        "resolvedPath": "/usr/bin/cmake",
+        "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+        "size": 11796472,
+        "needed": [
+          "libcurl.so.4",
+          "libarchive.so.13",
+          "librhash.so.0",
+          "libuv.so.1",
+          "libz.so.1",
+          "libjsoncpp.so.25",
+          "libstdc++.so.6",
+          "libm.so.6",
+          "libgcc_s.so.1",
+          "libc.so.6"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/bin/ninja",
+        "resolvedPath": "/usr/bin/ninja",
+        "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+        "size": 248040,
+        "needed": [
+          "libstdc++.so.6",
+          "libc.so.6"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/bin/cc",
+        "resolvedPath": "/usr/bin/x86_64-linux-gnu-gcc-13",
+        "sha256": "1b99826121ae6682a634e5efe09bd3e3df58ce58e0b28f849114ab5b89139c26",
+        "size": 1023032,
+        "needed": [
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "sha256": "5d1679131184e2de4435b426eb264bf13472fe026db8e5c6bc97445814e8e2f4",
+        "size": 30487984,
+        "needed": [
+          "libisl.so.23",
+          "libmpc.so.3",
+          "libmpfr.so.6",
+          "libgmp.so.10",
+          "libz.so.1",
+          "libzstd.so.1",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+        "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+        "sha256": "4d1f341ae5b763b513258ee2812422a45e063c30a2f1924a0cf63d3699f3a158",
+        "size": 336056,
+        "needed": [
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/bin/as",
+        "resolvedPath": "/usr/bin/x86_64-linux-gnu-as",
+        "sha256": "7a2ef948033b05ad0c5dcb0d5be059bc68562b5d45713d91aee21df2b4bf4e92",
+        "size": 745768,
+        "needed": [
+          "libbfd-2.42-system.so",
+          "libz.so.1",
+          "libzstd.so.1",
+          "libc.so.6"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/bin/ld",
+        "resolvedPath": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+        "sha256": "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8",
+        "size": 1359128,
+        "needed": [
+          "libbfd-2.42-system.so",
+          "libctf.so.0",
+          "libjansson.so.4",
+          "libc.so.6"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "sha256": "7c9bdc474948b9127b5942f0f260ecc7067fb3afbb54fcbe2ddf598b9889edc8",
+        "size": 29352624,
+        "needed": [
+          "libisl.so.23",
+          "libmpc.so.3",
+          "libmpfr.so.6",
+          "libgmp.so.10",
+          "libz.so.1",
+          "libzstd.so.1",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+        "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+        "sha256": "14469ff8498fca3871c29dbf678c2330123207fffb8308151314a08395309ddf",
+        "size": 68296,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/bin/c++",
+        "resolvedPath": "/usr/bin/x86_64-linux-gnu-g++-13",
+        "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+        "size": 1027128,
+        "needed": [
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "sha256": "840b332fb62ec6f694ac77d91fe69ef7f80b0d69512ed89374af0ee7a506255d",
+        "size": 32675168,
+        "needed": [
+          "libisl.so.23",
+          "libmpc.so.3",
+          "libmpfr.so.6",
+          "libgmp.so.10",
+          "libz.so.1",
+          "libzstd.so.1",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/usr/bin/ld.mold",
+        "resolvedPath": "/usr/bin/mold",
+        "sha256": "9e23dde239d96e75691c107d0f387039aae7698ca73defec6080ada0eb920723",
+        "size": 19054816,
+        "needed": [
+          "libz.so.1",
+          "libstdc++.so.6",
+          "libgcc_s.so.1",
+          "libc.so.6"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/lib64/ld-linux-x86-64.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da",
+        "size": 236616,
+        "needed": [],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libcurl.so.4",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "sha256": "cf6398ebba028cc7dcc5425208bb2da2d0706b885a7c9c4cbac3d453e512c1f6",
+        "size": 786336,
+        "needed": [
+          "libnghttp2.so.14",
+          "libidn2.so.0",
+          "librtmp.so.1",
+          "libssh.so.4",
+          "libpsl.so.5",
+          "libssl.so.3",
+          "libcrypto.so.3",
+          "libgssapi_krb5.so.2",
+          "libldap.so.2",
+          "liblber.so.2",
+          "libzstd.so.1",
+          "libbrotlidec.so.1",
+          "libz.so.1",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libarchive.so.13",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "sha256": "6de6959b1a1d0c4bbe0c8fadc3d410060f579e0cc671c9d3dc9ad20f5de91e47",
+        "size": 854168,
+        "needed": [
+          "libnettle.so.8",
+          "libacl.so.1",
+          "liblzma.so.5",
+          "libzstd.so.1",
+          "liblz4.so.1",
+          "libbz2.so.1.0",
+          "libz.so.1",
+          "libxml2.so.2",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/librhash.so.0",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/librhash.so.0",
+        "sha256": "a02aee7fd2f933294f8b7af54c7cc1f35952a966f449cf1a39c670c7beb294c4",
+        "size": 218496,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libuv.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libuv.so.1.0.0",
+        "sha256": "11933a4a53d7cc817afb01610242b59a0e2e1b2bd64589a2203c1f84bbf7083f",
+        "size": 211032,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libz.so.1.3",
+        "sha256": "86200da370f20476a2507e9097a789b5ef97269b4ca8d5e164ad82dab9d99892",
+        "size": 113000,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libjsoncpp.so.25",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libjsoncpp.so.1.9.5",
+        "sha256": "72527df2ef55a4af661f691e8be0eeece16a8e9bfc9a2a21971d41738e84b67b",
+        "size": 219304,
+        "needed": [
+          "libstdc++.so.6",
+          "libm.so.6",
+          "libgcc_s.so.1",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
+        "size": 2592224,
+        "needed": [
+          "libm.so.6",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2",
+          "libgcc_s.so.1"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libm.so.6",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0",
+        "size": 952616,
+        "needed": [
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb",
+        "size": 183024,
+        "needed": [
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+        "size": 2129424,
+        "needed": [
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libisl.so.23",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libisl.so.23.3.0",
+        "sha256": "db4f717fd1678b48e5dddea1cbdd2d239594a70b57e96d0923bfd9533351efa8",
+        "size": 1863352,
+        "needed": [
+          "libgmp.so.10",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libmpc.so.3",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libmpc.so.3.3.1",
+        "sha256": "91d2b2b0b794028c733431e01acc227ff39ee289384fdf22869c8b42ad3aaa3b",
+        "size": 134440,
+        "needed": [
+          "libmpfr.so.6",
+          "libgmp.so.10",
+          "libm.so.6",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libmpfr.so.6",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libmpfr.so.6.2.1",
+        "sha256": "2156351fa3dedd04a7381c6ac7a8a26efa2d6fb08b80f8a2d644ccdd653710ae",
+        "size": 760464,
+        "needed": [
+          "libgmp.so.10",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libgmp.so.10.5.0",
+        "sha256": "0ccdfb6d6f5c039465f6d002cf7e4c072d48ac6a2cffc8dd6c748dec31592804",
+        "size": 534896,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libzstd.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5",
+        "sha256": "0a2128bc10841fb29e76d08d945864dfb0b6a66da5df6df5d8299197439e54bb",
+        "size": 755864,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "sha256": "edbfd18bfc133c0d77bab7470601e83bd88ed3e578bedce368042f888034e68e",
+        "size": 1479888,
+        "needed": [
+          "libz.so.1",
+          "libzstd.so.1",
+          "libsframe.so.1",
+          "ld-linux-x86-64.so.2",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libctf.so.0",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libctf.so.0.0.0",
+        "sha256": "5708839db0b080ef4dafc44c4adaa6976b55de5078aeed35c81d55ab4d0c7841",
+        "size": 220384,
+        "needed": [
+          "libbfd-2.42-system.so",
+          "libz.so.1",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libjansson.so.4",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libjansson.so.4.14.0",
+        "sha256": "c49935a4b3ac599064281b1f257576087806d0dad7ec46f353bd983b052c5e26",
+        "size": 64008,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libnghttp2.so.14",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libnghttp2.so.14.26.0",
+        "sha256": "46764ab5b6ca7e353a322054f0bee45d9158a27f3e6a82a2fa4447f2ba9ba268",
+        "size": 170352,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libidn2.so.0",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libidn2.so.0.4.0",
+        "sha256": "6e632fd9a3125db60bbc623719bbc17b0470330321c5b1c57f1ff7190e5551ad",
+        "size": 133192,
+        "needed": [
+          "libunistring.so.5",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/librtmp.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/librtmp.so.1",
+        "sha256": "15a2a75e8c437b9c99971b5ee10278ab110beef1a56d1d9e5d6759ea140e98ac",
+        "size": 121848,
+        "needed": [
+          "libgnutls.so.30",
+          "libhogweed.so.6",
+          "libnettle.so.8",
+          "libgmp.so.10",
+          "libz.so.1",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libssh.so.4",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libssh.so.4.9.6",
+        "sha256": "b82bd54edb908605b8142be1a6d242df65501af0e9bb7581cc36ebf4d8a5ecfd",
+        "size": 462360,
+        "needed": [
+          "libcrypto.so.3",
+          "libz.so.1",
+          "libgssapi_krb5.so.2",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libpsl.so.5",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libpsl.so.5.3.4",
+        "sha256": "ae6c5a9aecc249fc66e03c16ec6c4385d09d7e12e0ea7694bb831ab4fee8133c",
+        "size": 75768,
+        "needed": [
+          "libunistring.so.5",
+          "libidn2.so.0",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libssl.so.3",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libssl.so.3",
+        "sha256": "a40e7b67489bbd257e432c700ff8f6a1ad796425b5eccecdc2930127fdd86624",
+        "size": 696512,
+        "needed": [
+          "libcrypto.so.3",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libcrypto.so.3",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libcrypto.so.3",
+        "sha256": "6866ed711dab8927e1bf82bf1cd30e828bdfc34f3cc1e83b1c9eb01ce6c37d9a",
+        "size": 5309400,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libgssapi_krb5.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2",
+        "sha256": "8d0b00978cde2a5a9ec76bee1e16a80efd502bc4db8647174a00a61c9d90f989",
+        "size": 338696,
+        "needed": [
+          "libkrb5.so.3",
+          "libk5crypto.so.3",
+          "libcom_err.so.2",
+          "libkrb5support.so.0",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libldap.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libldap.so.2.0.200",
+        "sha256": "a9829b999c95452eb0a34cc7b5349427b76dbf3e5d5c8672a5ca69e454c1b151",
+        "size": 372400,
+        "needed": [
+          "liblber.so.2",
+          "libsasl2.so.2",
+          "libgnutls.so.30",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/liblber.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/liblber.so.2.0.200",
+        "sha256": "ddf14275b1fb70ba06510094071adcc1462e675f15ae6cdcadbf40c1dabe5a03",
+        "size": 59888,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libbrotlidec.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libbrotlidec.so.1.1.0",
+        "sha256": "64d8a5019d4c294b89fde1193343ea324bbd8603652554e5545f0a01595fa2c5",
+        "size": 51512,
+        "needed": [
+          "libbrotlicommon.so.1",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libnettle.so.8",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libnettle.so.8.8",
+        "sha256": "a245ed916229583d6fe0b07657b3ed945bc148c28cc08b5266295f620d2b91cc",
+        "size": 342280,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libacl.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libacl.so.1.1.2302",
+        "sha256": "1f5247285409ec89990e9fe384d78dfb2ae6ec8e210a2657073babc8d6b7e54f",
+        "size": 38984,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/liblzma.so.5",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5",
+        "sha256": "696e868dd0700a19a6d65fc01608ec2d70d3cb91f65710e89180cd2e688f30cb",
+        "size": 202904,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/liblz4.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4",
+        "sha256": "40bffd0a098387368b16b992abd5f7cf43c0fa2f05cabe5a6d483719554adfda",
+        "size": 137440,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libbz2.so.1.0",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4",
+        "sha256": "cc08c9f50a8009ffd6391e0116a100369b11ca9238fa52392c019e6645b122a1",
+        "size": 78944,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libxml2.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libxml2.so.2.9.14",
+        "sha256": "ddd3af3f491a9686c82fe1232f1250cec368eb2fbcb1d2725c6ce9401a6dbd3b",
+        "size": 1967424,
+        "needed": [
+          "libicuuc.so.74",
+          "libz.so.1",
+          "liblzma.so.5",
+          "libm.so.6",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libsframe.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libsframe.so.1.0.0",
+        "sha256": "d2e00d05f3713bb0d5eb9f1a212cca2b34cd789a0c4cc0c529ee77827237383f",
+        "size": 35168,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libunistring.so.5",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libunistring.so.5.0.0",
+        "sha256": "7bcf825cd449892db5105ad2aed91dcf94a27b796426600c765720c584c54dd1",
+        "size": 1755312,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libgnutls.so.30",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "sha256": "ddbae2995750875c07bc218d12a062d73f8250678f54dedda7e9be5068781c98",
+        "size": 2065824,
+        "needed": [
+          "libp11-kit.so.0",
+          "libidn2.so.0",
+          "libunistring.so.5",
+          "libtasn1.so.6",
+          "libnettle.so.8",
+          "libhogweed.so.6",
+          "libgmp.so.10",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libhogweed.so.6",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libhogweed.so.6.8",
+        "sha256": "c3c606139d4f7776efa4dbd4a6b62e30c916b07a0cafd8c3ef173d6f093607e3",
+        "size": 288920,
+        "needed": [
+          "libnettle.so.8",
+          "libgmp.so.10",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libkrb5.so.3",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libkrb5.so.3.3",
+        "sha256": "8cd11f2aa69efdac7c040a2794f8bf1a737405abff53908b737c721d1c4ba65d",
+        "size": 823488,
+        "needed": [
+          "libk5crypto.so.3",
+          "libcom_err.so.2",
+          "libkrb5support.so.0",
+          "libkeyutils.so.1",
+          "libresolv.so.2",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libk5crypto.so.3",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libk5crypto.so.3.1",
+        "sha256": "dd8b93b95adf53a638772061dbe81dc0252d2d8857ae1df774aed78c6a79e0c0",
+        "size": 178648,
+        "needed": [
+          "libkrb5support.so.0",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libcom_err.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libcom_err.so.2.1",
+        "sha256": "022943b3b11c860b049bce41342f1c2594941b7b401d95dfdf235521099fee08",
+        "size": 18504,
+        "needed": [
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libkrb5support.so.0",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libkrb5support.so.0.1",
+        "sha256": "8253bcdf7f39fcf8f25e797757808e671d777efc00b0cd1fbbcd9da61b0e98f7",
+        "size": 47904,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libsasl2.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libsasl2.so.2.0.25",
+        "sha256": "a0f410ad093236856eee59c4ff2838dc04d932ea0993400f23ed77d67d85af34",
+        "size": 101200,
+        "needed": [
+          "libcrypto.so.3",
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libbrotlicommon.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libbrotlicommon.so.1.1.0",
+        "sha256": "a91ead095d2c80520c55a89057bbe10b031a075340442e63f44b310f93883a1b",
+        "size": 141640,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libicuuc.so.74",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+        "sha256": "7560aadde38e5f4237a47a1ddd5891f9b36768a77a60faae30beee003ac01901",
+        "size": 2140336,
+        "needed": [
+          "libicudata.so.74",
+          "libstdc++.so.6",
+          "libm.so.6",
+          "libgcc_s.so.1",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libp11-kit.so.0",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libp11-kit.so.0.3.1",
+        "sha256": "a59efd4792d3343dedea1d26a28f5597abfe3369082deb504c4802a31b014897",
+        "size": 1714008,
+        "needed": [
+          "libffi.so.8",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libtasn1.so.6",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.3",
+        "sha256": "59994414d0cdec4f678ef91eaaafc44b26b00bca507e4cc7978caaf79f584173",
+        "size": 88216,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libkeyutils.so.1",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libkeyutils.so.1.10",
+        "sha256": "f48214417757f18793ed6e180cc14ee1d6f04252a518fc7270e8ca1d0b4260fe",
+        "size": 22600,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libresolv.so.2",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libresolv.so.2",
+        "sha256": "1d730ea434da5a5595bc6a961d7a9ace83e03703205df9644044b3dca79c362f",
+        "size": 64008,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libicudata.so.74",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libicudata.so.74.2",
+        "sha256": "ddbb3718b8bd9cbd780e5ab08b4503c30a6c4fa0706ebe5d074ed6b596c1714e",
+        "size": 30795392,
+        "needed": [],
+        "interpreter": null,
+        "searchPaths": []
+      },
+      {
+        "path": "/lib/x86_64-linux-gnu/libffi.so.8",
+        "resolvedPath": "/usr/lib/x86_64-linux-gnu/libffi.so.8.1.4",
+        "sha256": "00f593fe192f2851b8ce23b25cec2488d769beb5a8f63e8c9e563071e1075153",
+        "size": 47672,
+        "needed": [
+          "libc.so.6"
+        ],
+        "interpreter": null,
+        "searchPaths": []
+      }
+    ],
+    "edges": [
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libcurl.so.4",
+        "candidate": "/lib/x86_64-linux-gnu/libcurl.so.4",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libarchive.so.13",
+        "candidate": "/lib/x86_64-linux-gnu/libarchive.so.13",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "librhash.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/librhash.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libuv.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libuv.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libjsoncpp.so.25",
+        "candidate": "/lib/x86_64-linux-gnu/libjsoncpp.so.25",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libstdc++.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libm.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libm.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libgcc_s.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/cmake",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/ninja",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/bin/ninja",
+        "kind": "DT_NEEDED",
+        "requested": "libstdc++.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/ninja",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-gcc-13",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-gcc-13",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-gcc-13",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "DT_NEEDED",
+        "requested": "libisl.so.23",
+        "candidate": "/lib/x86_64-linux-gnu/libisl.so.23",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "DT_NEEDED",
+        "requested": "libmpc.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libmpc.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "DT_NEEDED",
+        "requested": "libmpfr.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libmpfr.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "DT_NEEDED",
+        "requested": "libzstd.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libzstd.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-as",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-as",
+        "kind": "DT_NEEDED",
+        "requested": "libbfd-2.42-system.so",
+        "candidate": "/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-as",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-as",
+        "kind": "DT_NEEDED",
+        "requested": "libzstd.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libzstd.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-as",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+        "kind": "DT_NEEDED",
+        "requested": "libbfd-2.42-system.so",
+        "candidate": "/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+        "kind": "DT_NEEDED",
+        "requested": "libctf.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/libctf.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+        "kind": "DT_NEEDED",
+        "requested": "libjansson.so.4",
+        "candidate": "/lib/x86_64-linux-gnu/libjansson.so.4",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "DT_NEEDED",
+        "requested": "libisl.so.23",
+        "candidate": "/lib/x86_64-linux-gnu/libisl.so.23",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "DT_NEEDED",
+        "requested": "libmpc.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libmpc.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "DT_NEEDED",
+        "requested": "libmpfr.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libmpfr.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "DT_NEEDED",
+        "requested": "libzstd.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libzstd.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-g++-13",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-g++-13",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/x86_64-linux-gnu-g++-13",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "DT_NEEDED",
+        "requested": "libisl.so.23",
+        "candidate": "/lib/x86_64-linux-gnu/libisl.so.23",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "DT_NEEDED",
+        "requested": "libmpc.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libmpc.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "DT_NEEDED",
+        "requested": "libmpfr.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libmpfr.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "DT_NEEDED",
+        "requested": "libzstd.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libzstd.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/mold",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/bin/mold",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/mold",
+        "kind": "DT_NEEDED",
+        "requested": "libstdc++.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/mold",
+        "kind": "DT_NEEDED",
+        "requested": "libgcc_s.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/bin/mold",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libnghttp2.so.14",
+        "candidate": "/lib/x86_64-linux-gnu/libnghttp2.so.14",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libidn2.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/libidn2.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "librtmp.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/librtmp.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libssh.so.4",
+        "candidate": "/lib/x86_64-linux-gnu/libssh.so.4",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libpsl.so.5",
+        "candidate": "/lib/x86_64-linux-gnu/libpsl.so.5",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libssl.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libssl.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libcrypto.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libcrypto.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libgssapi_krb5.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/libgssapi_krb5.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libldap.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/libldap.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "liblber.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/liblber.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libzstd.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libzstd.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libbrotlidec.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libbrotlidec.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcurl.so.4.8.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "libnettle.so.8",
+        "candidate": "/lib/x86_64-linux-gnu/libnettle.so.8",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "libacl.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libacl.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "liblzma.so.5",
+        "candidate": "/lib/x86_64-linux-gnu/liblzma.so.5",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "libzstd.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libzstd.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "liblz4.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/liblz4.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "libbz2.so.1.0",
+        "candidate": "/lib/x86_64-linux-gnu/libbz2.so.1.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "libxml2.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/libxml2.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/librhash.so.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libuv.so.1.0.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libz.so.1.3",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libjsoncpp.so.1.9.5",
+        "kind": "DT_NEEDED",
+        "requested": "libstdc++.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libjsoncpp.so.1.9.5",
+        "kind": "DT_NEEDED",
+        "requested": "libm.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libm.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libjsoncpp.so.1.9.5",
+        "kind": "DT_NEEDED",
+        "requested": "libgcc_s.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libjsoncpp.so.1.9.5",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "kind": "DT_NEEDED",
+        "requested": "libm.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libm.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "kind": "DT_NEEDED",
+        "requested": "libgcc_s.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "kind": "interpreter",
+        "requested": "/lib64/ld-linux-x86-64.so.2",
+        "candidate": "/lib64/ld-linux-x86-64.so.2"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libisl.so.23.3.0",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libisl.so.23.3.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libmpc.so.3.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "libmpfr.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libmpfr.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libmpc.so.3.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libmpc.so.3.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "libm.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libm.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libmpc.so.3.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libmpfr.so.6.2.1",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libmpfr.so.6.2.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libmpfr.so.6.2.1",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgmp.so.10.5.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "kind": "DT_NEEDED",
+        "requested": "libzstd.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libzstd.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "kind": "DT_NEEDED",
+        "requested": "libsframe.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libsframe.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libctf.so.0.0.0",
+        "kind": "DT_NEEDED",
+        "requested": "libbfd-2.42-system.so",
+        "candidate": "/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libctf.so.0.0.0",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libctf.so.0.0.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libjansson.so.4.14.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libnghttp2.so.14.26.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libidn2.so.0.4.0",
+        "kind": "DT_NEEDED",
+        "requested": "libunistring.so.5",
+        "candidate": "/lib/x86_64-linux-gnu/libunistring.so.5",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libidn2.so.0.4.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/librtmp.so.1",
+        "kind": "DT_NEEDED",
+        "requested": "libgnutls.so.30",
+        "candidate": "/lib/x86_64-linux-gnu/libgnutls.so.30",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/librtmp.so.1",
+        "kind": "DT_NEEDED",
+        "requested": "libhogweed.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libhogweed.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/librtmp.so.1",
+        "kind": "DT_NEEDED",
+        "requested": "libnettle.so.8",
+        "candidate": "/lib/x86_64-linux-gnu/libnettle.so.8",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/librtmp.so.1",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/librtmp.so.1",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/librtmp.so.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libssh.so.4.9.6",
+        "kind": "DT_NEEDED",
+        "requested": "libcrypto.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libcrypto.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libssh.so.4.9.6",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libssh.so.4.9.6",
+        "kind": "DT_NEEDED",
+        "requested": "libgssapi_krb5.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/libgssapi_krb5.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libssh.so.4.9.6",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libssh.so.4.9.6",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libpsl.so.5.3.4",
+        "kind": "DT_NEEDED",
+        "requested": "libunistring.so.5",
+        "candidate": "/lib/x86_64-linux-gnu/libunistring.so.5",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libpsl.so.5.3.4",
+        "kind": "DT_NEEDED",
+        "requested": "libidn2.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/libidn2.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libpsl.so.5.3.4",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libssl.so.3",
+        "kind": "DT_NEEDED",
+        "requested": "libcrypto.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libcrypto.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libssl.so.3",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcrypto.so.3",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2",
+        "kind": "DT_NEEDED",
+        "requested": "libkrb5.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libkrb5.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2",
+        "kind": "DT_NEEDED",
+        "requested": "libk5crypto.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libk5crypto.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2",
+        "kind": "DT_NEEDED",
+        "requested": "libcom_err.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/libcom_err.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2",
+        "kind": "DT_NEEDED",
+        "requested": "libkrb5support.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/libkrb5support.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libldap.so.2.0.200",
+        "kind": "DT_NEEDED",
+        "requested": "liblber.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/liblber.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libldap.so.2.0.200",
+        "kind": "DT_NEEDED",
+        "requested": "libsasl2.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/libsasl2.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libldap.so.2.0.200",
+        "kind": "DT_NEEDED",
+        "requested": "libgnutls.so.30",
+        "candidate": "/lib/x86_64-linux-gnu/libgnutls.so.30",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libldap.so.2.0.200",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/liblber.so.2.0.200",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbrotlidec.so.1.1.0",
+        "kind": "DT_NEEDED",
+        "requested": "libbrotlicommon.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libbrotlicommon.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbrotlidec.so.1.1.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libnettle.so.8.8",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libacl.so.1.1.2302",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libxml2.so.2.9.14",
+        "kind": "DT_NEEDED",
+        "requested": "libicuuc.so.74",
+        "candidate": "/lib/x86_64-linux-gnu/libicuuc.so.74",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libxml2.so.2.9.14",
+        "kind": "DT_NEEDED",
+        "requested": "libz.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libxml2.so.2.9.14",
+        "kind": "DT_NEEDED",
+        "requested": "liblzma.so.5",
+        "candidate": "/lib/x86_64-linux-gnu/liblzma.so.5",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libxml2.so.2.9.14",
+        "kind": "DT_NEEDED",
+        "requested": "libm.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libm.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libxml2.so.2.9.14",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libsframe.so.1.0.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libunistring.so.5.0.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "libp11-kit.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/libp11-kit.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "libidn2.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/libidn2.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "libunistring.so.5",
+        "candidate": "/lib/x86_64-linux-gnu/libunistring.so.5",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "libtasn1.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libtasn1.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "libnettle.so.8",
+        "candidate": "/lib/x86_64-linux-gnu/libnettle.so.8",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "libhogweed.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libhogweed.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libgnutls.so.30.37.1",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libhogweed.so.6.8",
+        "kind": "DT_NEEDED",
+        "requested": "libnettle.so.8",
+        "candidate": "/lib/x86_64-linux-gnu/libnettle.so.8",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libhogweed.so.6.8",
+        "kind": "DT_NEEDED",
+        "requested": "libgmp.so.10",
+        "candidate": "/lib/x86_64-linux-gnu/libgmp.so.10",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libhogweed.so.6.8",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libkrb5.so.3.3",
+        "kind": "DT_NEEDED",
+        "requested": "libk5crypto.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libk5crypto.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libkrb5.so.3.3",
+        "kind": "DT_NEEDED",
+        "requested": "libcom_err.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/libcom_err.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libkrb5.so.3.3",
+        "kind": "DT_NEEDED",
+        "requested": "libkrb5support.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/libkrb5support.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libkrb5.so.3.3",
+        "kind": "DT_NEEDED",
+        "requested": "libkeyutils.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libkeyutils.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libkrb5.so.3.3",
+        "kind": "DT_NEEDED",
+        "requested": "libresolv.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/libresolv.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libkrb5.so.3.3",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libk5crypto.so.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "libkrb5support.so.0",
+        "candidate": "/lib/x86_64-linux-gnu/libkrb5support.so.0",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libk5crypto.so.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcom_err.so.2.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libcom_err.so.2.1",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libkrb5support.so.0.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libsasl2.so.2.0.25",
+        "kind": "DT_NEEDED",
+        "requested": "libcrypto.so.3",
+        "candidate": "/lib/x86_64-linux-gnu/libcrypto.so.3",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libsasl2.so.2.0.25",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libbrotlicommon.so.1.1.0",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+        "kind": "DT_NEEDED",
+        "requested": "libicudata.so.74",
+        "candidate": "/lib/x86_64-linux-gnu/libicudata.so.74",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+        "kind": "DT_NEEDED",
+        "requested": "libstdc++.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+        "kind": "DT_NEEDED",
+        "requested": "libm.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libm.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+        "kind": "DT_NEEDED",
+        "requested": "libgcc_s.so.1",
+        "candidate": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libp11-kit.so.0.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "libffi.so.8",
+        "candidate": "/lib/x86_64-linux-gnu/libffi.so.8",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libp11-kit.so.0.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libp11-kit.so.0.3.1",
+        "kind": "DT_NEEDED",
+        "requested": "ld-linux-x86-64.so.2",
+        "candidate": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.3",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libkeyutils.so.1.10",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libresolv.so.2",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      },
+      {
+        "parent": "/usr/lib/x86_64-linux-gnu/libffi.so.8.1.4",
+        "kind": "DT_NEEDED",
+        "requested": "libc.so.6",
+        "candidate": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolution": "ldconfig-default-candidate-not-loaded-proof"
+      }
+    ],
+    "unresolved": [],
+    "inspectedProgramExecuted": false,
+    "dependenciesComplete": false,
+    "missingCoverage": [
+      "actual-loader-selection",
+      "dlopen-and-plugins",
+      "loader-environment-preload-hwcaps",
+      "non-ELF-tool-data",
+      "across-build-stability",
+      "build-manifest-integration",
+      "complete-dependency-closure"
+    ]
+  },
+  "buildRun": false,
+  "simulationRun": false,
+  "manifestModified": false,
+  "dependenciesComplete": false,
+  "status": "PARTIAL STATIC EVIDENCE; NOT ACTUAL LOADED DEPENDENCY CLOSURE",
+  "rawDirectory": "studio/.local/integration/build-tool-runtime-20261004"
+}

@@ -185,11 +185,20 @@ if(ARCH_CUDA_HEAVY_JOB_POOL)
     set_property(TARGET arch_cuda_hydro_dispatch PROPERTY JOB_POOL_LINK ${ARCH_CUDA_HEAVY_JOB_POOL})
 endif()
 add_test(NAME cuda_hydro_dispatch COMMAND arch_cuda_hydro_dispatch)
+# A test-only kernel archive extends the existing AMR witness. Production
+# indicator OBJECT ownership and the CTest entrypoint remain unchanged.
+add_library(arch_cuda_jeans_witness STATIC tests/cuda/amr/test_jeans_resolution.cu)
+target_link_libraries(arch_cuda_jeans_witness PRIVATE arch_build_contract CUDA::cudart)
+arch_configure_cuda_leaf_test(arch_cuda_jeans_witness)
+if(ARCH_CUDA_HEAVY_JOB_POOL)
+    set_property(TARGET arch_cuda_jeans_witness PROPERTY
+        JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+endif()
 add_executable(arch_cuda_refinement_indicators
     tests/cuda/amr/test_refinement_indicators.cpp
     $<TARGET_OBJECTS:arch_cuda_backend_amr_indicators>)
 target_link_libraries(arch_cuda_refinement_indicators PRIVATE
-    arch_build_contract CUDA::cudart)
+    arch_cuda_jeans_witness arch_build_contract CUDA::cudart)
 add_test(NAME cuda_refinement_indicators COMMAND arch_cuda_refinement_indicators)
 set_tests_properties(cuda_refinement_indicators PROPERTIES SKIP_RETURN_CODE 77)
 
@@ -293,8 +302,11 @@ target_link_libraries(arch_cuda_burn_policy_parity PRIVATE
     arch_cuda_backend_eos_utils
     arch_build_contract CUDA::cudart)
 add_executable(arch_cuda_burn_controller_parity
-    tests/cuda/microphysics/burn/test_burn_controller_parity.cu)
+    tests/cuda/microphysics/burn/test_burn_controller_parity.cu
+    src/core/config/CompositionInput.cpp)
 arch_configure_cuda_math_test(arch_cuda_burn_controller_parity)
+target_include_directories(arch_cuda_burn_controller_parity PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/simulation")
 target_compile_definitions(arch_cuda_burn_controller_parity PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(arch_cuda_burn_controller_parity PRIVATE

@@ -1,0 +1,115 @@
+{
+  "baseline": "3565424972716a59b5c2feb9803c569032ddaea6",
+  "scope": "Linux native production RT 3D Initial Preview and limited mixed AMR; no simulation",
+  "configuration": {
+    "path": "src/api/examples/local-workflow/rt-3d-limited-amr.par",
+    "sha256": "339289de3d8d979c985d5a25c0a2c1fb5c3c3b1e7bde82ad3e52a296e35966b1",
+    "diskUnchanged": true
+  },
+  "build": {
+    "buildId": "851a260f-4bb3-4287-8307-5e92a789e117",
+    "sourceGitHead": "3565424972716a59b5c2feb9803c569032ddaea6",
+    "repositoryDirty": false,
+    "startedAt": "2026-10-03T16:20:51.014Z",
+    "finishedAt": "2026-10-03T16:21:14.586Z",
+    "buildProfileFingerprint": "4820ff080e42372783cb0f1dd02e4384074a64244ae216b7d720eb800f80f846",
+    "inputsStableDuringBuild": true,
+    "configurationInputsStableDuringBuild": true,
+    "compilerInputsStableDuringBuild": false
+  },
+  "binary": {
+    "sha256": "2c53420cde6f1e01c7997b39999d6073f5496e0fe3278e84b36e976de6eea117",
+    "size": 7254680,
+    "modifiedTime": "2026-10-03T16:21:13.805Z"
+  },
+  "productionAsset": "index-JbL_fzAw.js",
+  "initialField": {
+    "case": "RT",
+    "shape": [
+      32,
+      32,
+      32
+    ],
+    "densityRange": [
+      1,
+      2
+    ],
+    "densityUnit": "g/cm^3",
+    "status": "Current"
+  },
+  "amr": {
+    "complete": false,
+    "reason": "regrid-exceeds-working-capacity",
+    "completedPasses": 1,
+    "workingCapacity": 18,
+    "leafCount": 10,
+    "levelCounts": {
+      "0": 2,
+      "1": 8,
+      "2": 0
+    },
+    "budget": {
+      "blocks": 512,
+      "memoryMiB": 256
+    }
+  },
+  "nativeEvidence": [
+    "z fixed sample 0: x/y plane, z=0.00390625 cm",
+    "x fixed sample 0: y/z plane, x=0.00390625 cm",
+    "y fixed sample 0: x/z plane, y=0.015625 cm",
+    "canvas AMR hit selected logicalKey 1:1:2:0 with authoritative geometry",
+    "level 1 hidden: outlines absent, click in former L1 area did not select hidden block",
+    "production fix: hidden L1 clears visible dropdown value and hides old geometry Inspector",
+    "production fix: show L1 restores same logicalKey 1:1:2:0 and native bounds",
+    "Working Copy remained Saved and disk in-sync; no Save or Run"
+  ],
+  "selectedLeaf": {
+    "logicalKey": "1:1:2:0",
+    "level": 1,
+    "logicalIndex": [
+      1,
+      2,
+      0
+    ],
+    "lower": [
+      0.125,
+      0.3333333333333333,
+      0
+    ],
+    "upper": [
+      0.25,
+      0.5,
+      0.125
+    ],
+    "cellShape": [
+      16,
+      16,
+      16
+    ],
+    "cellSpacing": [
+      0.0078125,
+      0.010416666666666666,
+      0.0078125
+    ],
+    "cellFieldArrays": "not provided"
+  },
+  "checks": {
+    "npmTest": {
+      "pass": 321,
+      "fail": 0
+    },
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limits": [
+    "Native wheel zoom/pan not qualified by this round",
+    "Full dependency freshness remains unknown; compilerInputsStableDuringBuild=false",
+    "Field Preview state snapshot says hierarchy not constructed, separately returned AMR is limited; wording distinction still merits UI review",
+    "Slice display-only observation is UI/code evidence, not authenticated response-array capture",
+    "No full scientific acceptance, CUDA or evolution benchmark; original raw outputs remain local"
+  ],
+  "push": false,
+  "rawUploaded": false
+}

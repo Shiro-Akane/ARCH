@@ -1,3 +1,4 @@
+#include "core/files/RunIdentity.h"
 /**
  * @file HDF5Writer.cpp
  * @brief Read and write the common HDF5 datasets and attributes.
@@ -14,12 +15,17 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <system_error>
+#include <unistd.h>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <string>
 
 #include "io/hdf5/HDF5Writer.h"
+#include "io/chk/CheckpointCompatibility.h"
+#include "data/FluidState.h"
 #include "core/config/ConfigValidation.h"
 
 #include <highfive/H5DataSet.hpp>
@@ -47,6 +53,9 @@ std::string state_control_error(const std::vector<double>& controls)
         return "Invalid checkpoint state-control length: expected "
             + std::to_string(arch::config::StateControlCount) + ", got "
             + std::to_string(controls.size()) + ".";
+    if ((controls[18] != 0.0 && controls[18] != 1.0)
+        || (controls[18] == 0.0 ? controls[19] != 0.0 : controls[19] < 4.0))
+        return "Invalid checkpoint Jeans resolution controls.";
     return {};
 }
 
@@ -185,22 +194,178 @@ bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
 
 } // namespace
 
+// Explicit close is required: HighFive destructor errors are only logged.
+class CheckedPlotFile final : public File {
+public:
+    using File::File;
+    void close_checked() {
+        if (H5Fget_obj_count(getId(), H5F_OBJ_ALL | H5F_OBJ_LOCAL) != 1)
+            throw std::runtime_error("Plotfile still has open child handles.");
+        if (H5Fclose(getId()) < 0) throw std::runtime_error("Plotfile close failed.");
+        _hid = H5I_INVALID_HID;
+    }
+};
+
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,
                          const std::vector<size_t>& dims,
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
-                         const std::map<std::string, std::vector<double>>& data_map)
+                         const std::map<std::string, std::vector<double>>& data_map,
+                         const PlotNativeGrid* native_grid,
+                         const PlotSourceIdentity* source_identity,
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata,
+                         GridMetrics::GeometrySemantics semantics,
+                         const PlotRzAngularState* rz_angular_state)
 {
-    try
-    {
-        File file(filepath, File::ReadWrite | File::Create | File::Truncate);
-
+    const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if ((semantics != GridMetrics::GeometrySemantics::Existing && !rz)
+        || (rz && (dim != 2 || geom != "cylindrical")))
+        throw std::invalid_argument("Unsupported Plotfile geometry profile.");
+    if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
+        || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
+        throw std::invalid_argument("Invalid plotfile dimensions/time/fields.");
+    size_t cells = 1;
+    for (size_t extent : dims) {
+        if (extent == 0 || cells > std::numeric_limits<size_t>::max() / extent)
+            throw std::invalid_argument("Invalid plotfile shape.");
+        cells *= extent;
+    }
+    if (coord_x.size() != cells || coord_y.size() != cells || coord_z.size() != cells
+        || block_levels.size() != dims.front() || block_mortons.size() != dims.front())
+        throw std::invalid_argument("Inconsistent plotfile coordinate/block payload.");
+    for (const auto& [name, buffer] : data_map)
+        if (name.empty() || name.find('/') != std::string::npos || buffer.size() != cells)
+            throw std::invalid_argument("Invalid plotfile field name/length.");
+    if (rz && (!native_grid || !rz_angular_state))
+        throw std::invalid_argument("RZ Plotfile requires native W and m_phi state payload.");
+    if (!rz && (rz_angular_state || (native_grid && !native_grid->angular_measure.empty())))
+        throw std::invalid_argument("RZ angular payload on existing Plotfile geometry.");
+    if (rz) {
+        if (native_grid->angular_measure.size()!=cells
+            || rz_angular_state->m_phi.size()!=cells
+            || rz_angular_state->angular_momentum_density.size()!=cells)
+            throw std::invalid_argument("Invalid RZ angular payload length.");
+        for (size_t i=0;i<cells;++i)
+            if (!std::isfinite(native_grid->angular_measure[i]) || native_grid->angular_measure[i]<=0.
+                || !std::isfinite(rz_angular_state->m_phi[i])
+                || !std::isfinite(rz_angular_state->angular_momentum_density[i]))
+                throw std::invalid_argument("Invalid RZ angular measure/state.");
+    }
+    if (native_grid) {
+        if ((!rz && (geom != "cartesian" || dim > 2)) || native_grid->cell_measure.size() != cells)
+            throw std::invalid_argument("Invalid candidate native grid geometry/length.");
+        for (size_t axis = 0; axis < 3; ++axis) {
+            if (native_grid->lower[axis].size() != cells
+                || native_grid->upper[axis].size() != cells
+                || native_grid->logical[axis].size() != dims.front())
+                throw std::invalid_argument("Invalid native grid bounds/logical shape.");
+            for (size_t cell = 0; cell < cells; ++cell) {
+                double lo = native_grid->lower[axis][cell], hi = native_grid->upper[axis][cell];
+                if (!std::isfinite(lo) || !std::isfinite(hi)
+                    || (rz && axis == 0 && lo < 0.)
+                    || (axis < static_cast<size_t>(dim) ? hi <= lo : lo != 0. || hi != 0.))
+                    throw std::invalid_argument("Invalid native cell bounds.");
+            }
+        }
+        if ((rz || native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
+            && (native_grid->measure_unit!=(rz ? "cm^3" : dim==1 ? "cm" : "cm^2")
+                || native_grid->normalization!=(rz ? "full_rotation" : dim==1 ? "per_unit_transverse_area" : "per_unit_transverse_length")))
+            throw std::invalid_argument("Invalid native measure declaration.");
+        for (double measure : native_grid->cell_measure)
+            if (!std::isfinite(measure) || measure <= 0.)
+                throw std::invalid_argument("Invalid native cell measure.");
+        if (rz)
+            for (size_t i=0;i<cells;++i)
+                if (rz_angular_state->angular_momentum_density[i]
+                    != arch::state::rz_angular_density(rz_angular_state->m_phi[i],
+                        native_grid->angular_measure[i],native_grid->cell_measure[i]))
+                    throw std::invalid_argument("RZ J/V differs from supplied m_phi, W and V.");
+    }
+    if (field_metadata) {
+        const auto text_ok=[](const std::string& v) {
+            return !v.empty() && v.size()<=256 && v.find(char(0))==std::string::npos;
+        };
+        for (const auto& [name,m] : *field_metadata) {
+            if (!data_map.contains(name) || !text_ok(m.unit) || !text_ok(m.basis)
+                || !text_ok(m.meaning) || !text_ok(m.averaging) || m.unit_reason.size()>256
+                || m.unit_reason.find(char(0))!=std::string::npos
+                || (m.unit=="unknown" && m.unit_reason.empty()))
+                throw std::invalid_argument("Invalid plot field metadata.");
+        }
+    }
+    if (source_identity) {
+        const auto& id=*source_identity;
+        if (!id.run_id.empty() && !arch::core::valid_run_identity(id.run_id))
+            throw std::invalid_argument("Invalid plot run identity.");
+        if (!id.unit_system.empty() && id.unit_system!="cgs")
+            throw std::invalid_argument("Unsupported plot unit system.");
+        const auto text_ok=[](const std::string& text) {
+            return text.size()<=128 && text.find(char(0))==std::string::npos;
+        };
+        if (!text_ok(id.case_id) || !text_ok(id.eos_type) || id.species_names.size()>128
+            || !std::all_of(id.species_names.begin(),id.species_names.end(),[&](const auto& n){return !n.empty()&&text_ok(n);}))
+            throw std::invalid_argument("Invalid plot source identity text.");
+        if (!id.eos_table_sha256.empty() &&
+            (id.eos_table_sha256.size()!=64 || !std::all_of(id.eos_table_sha256.begin(),id.eos_table_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid plot EOS table digest.");
+        if (!id.raw_config_sha256.empty() &&
+            (id.raw_config_sha256.size()!=64 || !std::all_of(id.raw_config_sha256.begin(),id.raw_config_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid raw config digest.");
+        if (!id.binary_sha256.empty() &&
+            (id.binary_sha256.size()!=64 || !std::all_of(id.binary_sha256.begin(),id.binary_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid plot binary digest.");
+        if (id.eos_type=="ideal" && (!std::isfinite(id.ideal_gamma) || id.ideal_gamma<=1. || !id.eos_table_sha256.empty()))
+            throw std::invalid_argument("Invalid plot ideal EOS identity.");
+        if (id.eos_type.empty() && (!id.eos_table_sha256.empty() || !id.species_names.empty()))
+            throw std::invalid_argument("Plot EOS evidence requires its resolved policy.");
+        const bool has_properties=!id.species_A.empty() || !id.species_Z.empty()
+            || !id.species_gamma.empty() || !id.species_Cv.empty();
+        if (has_properties) {
+            for(const auto* values:{&id.species_A,&id.species_Z,&id.species_gamma,&id.species_Cv})
+                if (id.eos_type.empty() || id.species_names.empty()
+                    || values->size()!=id.species_names.size()
+                    || !std::all_of(values->begin(),values->end(),[](double v){return std::isfinite(v);}))
+                    throw std::invalid_argument("Invalid plot resolved species properties.");
+        }
+    }
+    // Same-directory atomic replacement retains legacy overwrite semantics.
+    // Atomic visibility does not promise power-loss durability (no fsync).
+    std::string pattern = filepath + ".partial-XXXXXX";
+    std::vector<char> temporary(pattern.begin(), pattern.end());
+    temporary.push_back(0);
+    int fd = ::mkstemp(temporary.data());
+    if (fd < 0) throw std::system_error(errno, std::generic_category(), "Create plot temporary");
+    const std::filesystem::path temporary_path(temporary.data());
+    if (::close(fd) != 0) {
+        int error = errno;
+        std::error_code ignored; std::filesystem::remove(temporary_path, ignored);
+        throw std::system_error(error, std::generic_category(), "Close temporary descriptor");
+    }
+    try {
+        CheckedPlotFile file(temporary_path.string(), File::ReadWrite | File::Truncate);
         file.createAttribute("time", current_time);
         file.createAttribute("dim", dim);
         file.createAttribute("geometry", geom);
+        if (rz) {
+            file.createAttribute("geometry_semantics_revision",2);
+            file.createAttribute("geometry_chart",std::string("axisymmetric-rz"));
+            file.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
+        }
+        file.createAttribute("time_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "s" : "unknown"));
 
+        {
+        file.createAttribute("plot_publication_version", std::string("candidate-1"));
+        file.createAttribute("plot_publication_state", std::string("complete"));
+        file.createAttribute("plot_publication_method", std::string("checked-close-atomic-replace"));
+        file.createAttribute("plot_storage_order", std::string("x1-fastest"));
+        file.createAttribute("plot_identity_state", std::string("unknown"));
         Group grid_group = file.createGroup("Grid");
         Group data_group = file.createGroup("Data");
+        grid_group.createAttribute("coordinate_basis",std::string("cartesian"));
+        grid_group.createAttribute("coordinate_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "cm" : "unknown"));
 
         grid_group.createDataSet("x", coord_x);
         grid_group.createDataSet("y", coord_y);
@@ -208,21 +373,158 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         grid_group.createDataSet("level", block_levels);
         grid_group.createDataSet("morton", block_mortons);
 
+        if (source_identity) {
+            const auto& id=*source_identity;
+            Group identity=file.createGroup("SourceIdentity");
+            identity.createAttribute("version",std::string("candidate-identity-1"));
+            identity.createAttribute("scope",std::string("partial"));
+            identity.createAttribute("case_id",id.case_id.empty()?std::string("unknown"):id.case_id);
+            identity.createAttribute("case_source",id.case_id.empty()?std::string("unknown"):std::string("ConfigurationInput.case_id"));
+            identity.createAttribute("binary_sha256",id.binary_sha256.empty()?std::string("unknown"):id.binary_sha256);
+            identity.createAttribute("binary_source",id.binary_sha256.empty()?std::string("unknown"):std::string("Linux /proc/self/exe"));
+            identity.createAttribute("binary_scope",std::string("main-executable-only"));
+            identity.createAttribute("raw_config_sha256",id.raw_config_sha256.empty()?std::string("unknown"):id.raw_config_sha256);
+            identity.createAttribute("raw_config_source",id.raw_config_sha256.empty()?std::string("unknown"):
+                std::string("ConfigurationInput.raw_text; exact parser bytes"));
+            identity.createAttribute("eos_type",id.eos_type.empty()?std::string("unknown"):id.eos_type);
+            identity.createAttribute("eos_source",id.eos_type.empty()?std::string("unknown"):std::string("resolved-runtime-checkpoint-provenance"));
+            identity.createAttribute("eos_table_sha256",id.eos_table_sha256.empty()?std::string("unknown"):id.eos_table_sha256);
+            identity.createAttribute("eos_table_state",id.eos_type=="ideal"?std::string("not-applicable"):
+                id.eos_table_sha256.empty()?std::string("unknown"):std::string("recorded"));
+            identity.createAttribute("species_identity_state",id.eos_type.empty()?std::string("unknown"):std::string("recorded"));
+            identity.createAttribute("ideal_gamma_available",id.eos_type=="ideal"?1:0);
+            if(id.eos_type=="ideal")identity.createAttribute("ideal_gamma",id.ideal_gamma);
+            identity.createAttribute("species_count",static_cast<int>(id.species_names.size()));
+            if(!id.species_names.empty())identity.createDataSet("species_names",id.species_names);
+            const bool has_properties=!id.species_A.empty();
+            identity.createAttribute("species_properties_version",std::string("checkpoint-species-1"));
+            identity.createAttribute("species_properties_state",std::string(has_properties?"recorded":"unknown"));
+            identity.createAttribute("species_properties_source",std::string(has_properties?
+                "resolved-runtime-checkpoint-provenance":"unknown"));
+            if(has_properties) {
+                identity.createDataSet("species_A",id.species_A);
+                identity.createDataSet("species_Z",id.species_Z);
+                identity.createDataSet("species_gamma",id.species_gamma);
+                identity.createDataSet("species_Cv",id.species_Cv);
+            } else {
+                identity.createAttribute("species_properties_reason",
+                    std::string("resolved species properties not supplied by caller"));
+            }
+            identity.createAttribute("run_id",id.run_id.empty()?std::string("unknown"):id.run_id);
+            identity.createAttribute("run_id_source",id.run_id.empty()?std::string("unknown"):
+                std::string("DriverIO output session; OS-generated UUIDv4"));
+            for(const auto& [name,reason]:std::map<std::string,std::string>{
+                {"effective_config_sha256","authoritative effective-config identity not supplied to writer"},
+                {"build_id","authoritative Build Manifest identity not supplied to writer"},
+                {"source_git_head","authoritative source Git identity not supplied to writer"}}) {
+                identity.createAttribute(name,std::string("unknown"));
+                identity.createAttribute(name+"_reason",reason);
+            }
+            identity.createAttribute("eos_unit_system",id.unit_system.empty()?std::string("unknown"):id.unit_system);
+        }
+
+        if (native_grid) {
+            Group native = file.createGroup("NativeGrid");
+            native.createAttribute("version", std::string(rz ? "candidate-axisymmetric-rz-2" : "candidate-cartesian-1"));
+            if (rz) {
+                native.createAttribute("x1_axis",std::string("r_cy"));
+                native.createAttribute("x2_axis",std::string("z_cy"));
+                native.createAttribute("x3_axis",std::string("inactive"));
+                native.createAttribute("native_coordinate_unit",std::string("cm"));
+            }
+            native.createAttribute("centering", std::string("cell"));
+            native.createAttribute("ghost_cells", 0);
+            native.createAttribute("block_kind", std::string("active-leaf"));
+            native.createAttribute("center_basis", std::string("cartesian"));
+            native.createAttribute("measure_source", std::string("GridMetrics::CellVolume"));
+            native.createAttribute("measure_convention",
+                std::string(rz ? "full-rotation-axisymmetric-ring" : "active-coordinate-product; inactive-measures-omitted"));
+            native.createAttribute("measure_unit", native_grid->measure_unit);
+            native.createAttribute("measure_normalization", native_grid->normalization);
+            native.createAttribute("logical_identity",
+                std::string("file-local level/logical_x1/logical_x2/logical_x3"));
+            for (size_t axis = 0; axis < 3; ++axis) {
+                const std::string name = "x" + std::to_string(axis+1);
+                native.createDataSet(name + "_lower", native_grid->lower[axis]);
+                native.createDataSet(name + "_upper", native_grid->upper[axis]);
+                native.createDataSet("logical_" + name, native_grid->logical[axis]);
+            }
+            native.createDataSet("cell_measure", native_grid->cell_measure);
+            if (rz) {
+                auto w = native.createDataSet("angular_measure",native_grid->angular_measure);
+                w.createAttribute("unit",std::string("cm^4"));
+                w.createAttribute("meaning",std::string("integral-r-dV"));
+                w.createAttribute("source",std::string("GridMetrics::Rz::AngularMomentumMeasure"));
+                w.createAttribute("normalization",std::string("full_rotation"));
+            }
+        }
+
+        if (rz) {
+            auto state = file.createGroup("NativeState");
+            state.createAttribute("version",std::string("candidate-rz-angular-1"));
+            state.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
+            state.createAttribute("storage_order",std::string("same-as-Data; x1-fastest"));
+            state.createAttribute("evolved_state",std::string("m_phi only; J/V is derived output"));
+            for (const auto& [name, values] : std::map<std::string,const std::vector<double>*>{
+                {"m_phi",&rz_angular_state->m_phi},
+                {"angular_momentum_density",&rz_angular_state->angular_momentum_density}}) {
+                auto ds = state.createDataSet<double>(name,DataSpace(dims));
+                ds.write_raw(values->data());
+                const bool m = name=="m_phi";
+                ds.createAttribute("unit",std::string(m ? "g/(cm^2*s)" : "g/(cm*s)"));
+                ds.createAttribute("basis",std::string("local-orthonormal-r-z-phi"));
+                ds.createAttribute("centering",std::string("cell"));
+                ds.createAttribute("meaning",std::string(m ? "J-cell-over-W" : "J-cell-over-V"));
+                ds.createAttribute("averaging",std::string(m ? "r-dV-weighted-angular-momentum-component" : "native-volume-angular-momentum-density"));
+                ds.createAttribute("source",std::string(m ? "FluidState::mom_w" : "arch::state::rz_angular_density"));
+            }
+        }
+
         for (const auto& [name, buffer] : data_map) {
             DataSet ds = data_group.createDataSet<double>(name, DataSpace(dims));
             ds.write_raw(buffer.data());
+            PlotFieldMetadata metadata;
+            if (field_metadata) {
+                if (const auto it=field_metadata->find(name);it!=field_metadata->end()) metadata=it->second;
+            }
+            ds.createAttribute("metadata_version",std::string("candidate-field-1"));
+            ds.createAttribute("unit",metadata.unit);
+            ds.createAttribute("centering",std::string("cell"));
+            ds.createAttribute("basis",metadata.basis);
+            ds.createAttribute("meaning",metadata.meaning);
+            ds.createAttribute("averaging",metadata.averaging);
+            if (!metadata.unit_reason.empty()) ds.createAttribute("unit_reason",metadata.unit_reason);
         }
 
-        std::cout << "[IO] Saved PLT: " << filepath << " at t=" << current_time << std::endl;
+        }
+        file.flush();
+        file.close_checked();
+        std::filesystem::rename(temporary_path, filepath);
+    } catch (...) {
+        std::error_code ignored;
+        std::filesystem::remove(temporary_path, ignored);
+        throw;
     }
-    catch (Exception &err)
-    {
-        std::cerr << "[IO Error] PLT write failed: " << err.what() << std::endl;
-    }
+    std::cout << "[IO] Saved PLT: " << filepath << " at t=" << current_time << std::endl;
 }
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint)
 {
+    const auto geometry_identity = (checkpoint.geometry_identity.revision == 0 && checkpoint.geometry_identity.chart.empty())
+        ? CheckpointGeometryIdentity{1, "existing"} : checkpoint.geometry_identity;
+    require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                                          geometry_identity, geometry_identity);
+    if(geometry_identity.chart=="axisymmetric-rz") {
+        require_valid_rz_checkpoint_domain(checkpoint.native_domain);
+        const auto& shape=checkpoint.native_domain.cell_shape;
+        if(checkpoint.cells_per_block/static_cast<std::size_t>(shape[0])!=static_cast<std::size_t>(shape[1])
+            ||checkpoint.cells_per_block%static_cast<std::size_t>(shape[0])!=0)
+            throw std::runtime_error("RZ checkpoint native cell shape differs from payload");
+    }
+    const auto expected_repairs=geometry_identity.chart=="axisymmetric-rz"
+        ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
+    if(checkpoint.repairs.semantics!=expected_repairs)
+        throw std::invalid_argument("Checkpoint repair measure identity differs from source chart");
     const size_t blocks = checkpoint.levels.size();
     if (!has_consistent_checkpoint_payload(checkpoint)) {
         throw std::invalid_argument("Checkpoint payload dimensions are inconsistent.");
@@ -251,6 +553,7 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
         file.createAttribute("checkpoint_version", checkpoint_format_version);
         file.createDataSet("state_repairs", checkpoint.repairs.values);
+        file.createAttribute("repair_semantics",std::string(arch::state::repair_semantics_name(checkpoint.repairs.semantics)));
         file.createDataSet("state_controls", checkpoint.state_controls);
         file.createAttribute("repair_block_uid", checkpoint.repairs.block_uid);
         file.createAttribute("repair_stage", checkpoint.repairs.stage);
@@ -265,6 +568,19 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("plt_index", checkpoint.plt_file_index);
         file.createAttribute("dim", checkpoint.dim);
         file.createAttribute("geometry", checkpoint.geometry);
+        file.createAttribute("geometry_semantics_revision", geometry_identity.revision);
+        file.createAttribute("geometry_chart", geometry_identity.chart);
+        if(geometry_identity.chart=="axisymmetric-rz") {
+            file.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
+            auto domain=file.createGroup("NativeDomain");
+            domain.createAttribute("version",1);
+            domain.createAttribute("bounds_order",std::string("r_min,r_max,z_min,z_max"));
+            domain.createAttribute("coordinate_unit",std::string("cm"));
+            domain.createAttribute("measure_normalization",std::string("full_rotation"));
+            domain.createDataSet("bounds",checkpoint.native_domain.bounds);
+            domain.createDataSet("root_blocks",checkpoint.native_domain.root_blocks);
+            domain.createDataSet("cell_shape",checkpoint.native_domain.cell_shape);
+        }
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
         file.createAttribute("eos_type", checkpoint.provenance.eos_type);
@@ -361,8 +677,59 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         file.getAttribute("plt_index").read(checkpoint.plt_file_index);
         file.getAttribute("dim").read(checkpoint.dim);
         file.getAttribute("geometry").read(checkpoint.geometry);
+        const bool has_revision = file.hasAttribute("geometry_semantics_revision");
+        const bool has_chart = file.hasAttribute("geometry_chart");
+        if (has_revision != has_chart)
+            throw std::runtime_error("Incomplete checkpoint geometry identity");
+        if (has_revision) {
+            file.getAttribute("geometry_semantics_revision").read(checkpoint.geometry_identity.revision);
+            file.getAttribute("geometry_chart").read(checkpoint.geometry_identity.chart);
+            require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                checkpoint.geometry_identity, checkpoint.geometry_identity);
+            if(checkpoint.geometry_identity.chart=="axisymmetric-rz") {
+                if(!file.hasAttribute("state_semantics"))
+                    throw std::runtime_error("RZ checkpoint missing mandatory m_phi=J/W state semantics");
+                std::string state_semantics;
+                file.getAttribute("state_semantics").read(state_semantics);
+                if(state_semantics!=rz_checkpoint_state_semantics)
+                    throw std::runtime_error("RZ checkpoint state semantics mismatch: expected m_phi=J/W");
+                if(!file.exist("NativeDomain"))
+                    throw std::runtime_error("RZ checkpoint native domain identity missing");
+                auto domain=file.getGroup("NativeDomain");
+                int version=0;std::string order,unit,normalization;
+                domain.getAttribute("version").read(version);
+                domain.getAttribute("bounds_order").read(order);
+                domain.getAttribute("coordinate_unit").read(unit);
+                domain.getAttribute("measure_normalization").read(normalization);
+                if(version!=1||order!="r_min,r_max,z_min,z_max"||unit!="cm"||normalization!="full_rotation")
+                    throw std::runtime_error("RZ checkpoint native domain contract mismatch");
+                domain.getDataSet("bounds").read(checkpoint.native_domain.bounds);
+                domain.getDataSet("root_blocks").read(checkpoint.native_domain.root_blocks);
+                domain.getDataSet("cell_shape").read(checkpoint.native_domain.cell_shape);
+                require_valid_rz_checkpoint_domain(checkpoint.native_domain);
+            }
+        }
+        const bool rz_repairs=checkpoint.geometry_identity.chart=="axisymmetric-rz";
+        const auto repair_profile=rz_repairs ? arch::state::RepairSemantics::RzVolumeAngular
+            : arch::state::RepairSemantics::ExistingVolume;
+        if(!file.hasAttribute("repair_semantics")) {
+            if(rz_repairs) throw std::runtime_error("RZ checkpoint missing mandatory repair measure identity");
+        } else {
+            std::string saved_repairs;
+            file.getAttribute("repair_semantics").read(saved_repairs);
+            if(saved_repairs!=arch::state::repair_semantics_name(repair_profile))
+                throw std::runtime_error("Checkpoint repair measure identity mismatch");
+        }
+        // Identity has been validated; never infer a historical nonzero ledger from its values.
+        checkpoint.repairs.semantics=repair_profile;
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);
+        if(checkpoint.geometry_identity.chart=="axisymmetric-rz") {
+            const auto& shape=checkpoint.native_domain.cell_shape;
+            if(checkpoint.cells_per_block/static_cast<std::size_t>(shape[0])!=static_cast<std::size_t>(shape[1])
+                ||checkpoint.cells_per_block%static_cast<std::size_t>(shape[0])!=0)
+                throw std::runtime_error("RZ checkpoint native cell shape differs from payload");
+        }
         int burn_enabled = 0;
         int nse_enabled = 0;
         checkpoint.provenance.available = true;

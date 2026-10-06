@@ -26,6 +26,8 @@ ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应�
 
 ## 构建
 
+本地桌面 [ARCH Studio](docs/guides/Studio.zh-CN.md) 提供分组参数编辑、真实初始场与 AMR 预览、受控编译、独立终端运行/续算以及只读 Plotfile 查看。可用 `ARCH_BUILD_STUDIO=ON` 与 Core 一起构建，随后通过 `arch-studio` 呼出；每个模型的能力以选中二进制返回的接口为准。[Studio 状态](studio/STATUS.md)与[本轮发布收束计划](docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md)列出验收范围及待完成内容。
+
 在 Linux 或 WSL2 终端中构建。按所选后端准备依赖：
 
 - **基础工具：** 支持 C++20 的编译器、CMake 3.22+、Ninja 和 Git。
@@ -81,7 +83,13 @@ export OMP_NUM_THREADS=4
 其中，`Sod` 选择算例定义，`.par` 文件提供参数，`OMP_NUM_THREADS` 控制 CPU
 工作线程数，不影响数值精度设置。如果使用方案 B，可执行文件
 路径应换成 `./build-cuda/bin/ARCH`。需要 GPU 执行时，先复制示例参数文件，
-在副本中加入 `compute_backend = cuda`，再运行该副本。
+将副本中已有的 `compute_backend = cpu` 替换为 `compute_backend = cuda`，再运行该副本。不要追加第二次赋值：重复键会明确报错。
+
+示例已显式提供必需配置。修改后可先进行只读检查：
+
+    ./build-cpu/bin/ARCH --inspect-config Sod --config-stdin < simulation/Sod/Sod_beginner.par
+
+该检查仅覆盖已声明配置，不执行 Setup、不加载 EOS、不检查路径存在性，也不代表已经具备模拟运行条件。缺失或非法值需要补齐或修正，不会从运行默认值静默回填。
 
 成功运行后，程序会打印所选方法和时间步表，并在 `output/first_sod/` 下写入：
 
@@ -172,4 +180,4 @@ MPI 用于将计算分配到多个进程和机器。后续探索还可能包括�
 
 ## 许可证
 
-ARCH 自有代码采用 [MIT License](LICENSE)。第三方科学代码和数据保留其来源与条款，见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)及[许可证目录](LICENSES/)。
+ARCH 自有代码采用 [MIT License](LICENSE)。第三方科学代码和数据保留其来源与条款，见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)及[许可证目录](LICENSES)。

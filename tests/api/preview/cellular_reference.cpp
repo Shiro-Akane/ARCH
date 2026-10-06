@@ -16,7 +16,8 @@ int main(int argc, char **argv) {
     const std::string text{std::istreambuf_iterator<char>(std::cin), {}};
     auto *old = std::cout.rdbuf(std::cerr.rdbuf());
     try {
-        auto config = RuntimeParams::LoadText(text);
+        auto config = RuntimeParams::LoadText(text, "CellularDet",
+            arch::config::ConfigurationPurpose::InitialState);
         SpeciesManager species;
         CellularDetonation problem;
         problem.Setup(config, species);

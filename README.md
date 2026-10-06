@@ -27,6 +27,8 @@ Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automati
 
 ## Build
 
+[ARCH Studio](docs/guides/Studio.md) provides grouped parameter editing, real initial fields/AMR, controlled builds, independent Run/Restart terminals and read-only Plotfile views. Opt in with `ARCH_BUILD_STUDIO=ON` to build it alongside Core, then launch `arch-studio`. Capabilities come from the selected binary. See [current status](studio/STATUS.md) and the [integration/release closure plan](docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md).
+
 Build in a Linux or WSL2 terminal. Prepare the dependencies for your backend:
 
 - **Core tools:** a C++20 compiler, CMake 3.22+, Ninja and Git.
@@ -83,9 +85,13 @@ export OMP_NUM_THREADS=4
 Here `Sod` selects the problem definition, and the `.par` file supplies its
 parameters. `OMP_NUM_THREADS` controls the number of CPU worker threads; it is
 not a numerical accuracy setting. For Option B, the
-executable is `./build-cuda/bin/ARCH`. To request GPU execution, add
-`compute_backend = cuda` to a copy of the example parameter file and run that
-copy.
+executable is `./build-cuda/bin/ARCH`. To request GPU execution, copy the example and replace its existing `compute_backend = cpu` assignment with `compute_backend = cuda`, then run that copy. Do not append a duplicate assignment.
+
+The example explicitly supplies required configuration controls. Inspect an edited input before running it:
+
+    ./build-cpu/bin/ARCH --inspect-config Sod --config-stdin < simulation/Sod/Sod_beginner.par
+
+This checks declared configuration only; it does not execute Setup, load EOS tables, check paths or establish simulation readiness. Missing or invalid values must be corrected, not silently filled from runtime defaults.
 
 A successful run prints the selected methods and a table of time steps, then
 writes files under `output/first_sod/`:
@@ -178,4 +184,4 @@ MPI would distribute calculations across processes and machines. Later explorati
 
 ## License
 
-ARCH-owned code uses the [MIT License](LICENSE). Third-party scientific code and data retain their original provenance and terms; see the [third-party notices](THIRD_PARTY_NOTICES.md) and [license directory](LICENSES/).
+ARCH-owned code uses the [MIT License](LICENSE). Third-party scientific code and data retain their original provenance and terms; see the [third-party notices](THIRD_PARTY_NOTICES.md) and [license directory](LICENSES).
