@@ -2,6 +2,8 @@
 
 The [integration/release closure plan](ComputeStudioReleasePlan-20261006.zh-CN.md) governs the `compute/optim` merge of checkpoint `b7cb8b69`, compatibility repairs and completion criteria. Its [integration report](ComputeStudioIntegrationReport-20261006.zh-CN.md) separates current tests from historical/private evidence. The [earlier consolidation route](ComputeOptimConsolidation-20261006.zh-CN.md) preserves branch cleanup provenance; dedicated GNN work remains separate.
 
+The [GUI branch retirement record](GuiBranchRetirement-20261006.zh-CN.md) makes `origin/compute/optim` the shared baseline for new short-lived Studio/Host tasks, preserves old contract documents and records the recovery bundle. Completed GUI branches are not parallel development baselines.
+
 Start with [implementation ownership](ImplementationOwnership.md) before changing shared mathematics, backend storage or execution. The map identifies the maintained owner and its CPU/CUDA consumers. The [acceptance checklist](CudaReleaseStandard.md) describes validation and publication requirements; [comment and documentation style](CommentAndDocumentationStyle.md) covers source comments and reader-facing documentation.
 
 The [self-gravity implementation plan](SelfGravityImplementationPlan.zh-CN.md) and [curvilinear gravity plan](CurvilinearGravityPlan.zh-CN.md) remain active references for field ownership, AMR coupling and geometry. GUI and Core contracts remain with the [API module](../../src/api/README.md).

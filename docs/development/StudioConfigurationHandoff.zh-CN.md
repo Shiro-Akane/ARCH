@@ -2,7 +2,7 @@
 
 # Core、Studio、Jeans 与 RZ 联合交付计划
 
-2026-10-06 更新：当前汇总线及分支处理见[归并说明](ComputeOptimConsolidation-20261006.zh-CN.md)，本轮有限收尾见[收尾清单](StudioRoundClosure-20261006.zh-CN.md)。Studio 继续使用现有集成分支，不先 merge O8；最终由维护者统一归入 `compute/optim`，审计后再合入 `main`。
+2026-10-06 更新：Studio checkpoint 已在 `compute/optim` 的 `9e4a5cfd7b317869241328fd1e0985a9e2d52f84` 完成集成与 CPU 工程验收；见[集成报告](ComputeStudioIntegrationReport-20261006.zh-CN.md)。旧 GUI 执行与接口分支按[退役记录](GuiBranchRetirement-20261006.zh-CN.md)整理，之后统一从 `origin/compute/optim` 建立短期任务分支。科学 finding 与 release 待闭环内容仍按收束计划执行；审计后再合入 `main`。
 
 2026-10-01。本文是合作者的统一入口，覆盖 O7.0 配置整改、Studio／Host、
 O7.1–O7.5 Jeans／RZ 实现，以及部分 O9 的第二平台验证。
@@ -92,22 +92,24 @@ H5／plt／checkpoint 原始数据继续留在本机。
 
 ### 1.2 从当前分支建立自己的工作区
 
-当前执行分支是 `studio/compute-optim-integration`；复用本机已有的一份 ARCH checkout，
-在 clean 工作树上接收增量并记录 SHA，不创建第二份源码、worktree 或交叉引用的构建缓存。
+当前共同开发基线是 `origin/compute/optim`；旧 `studio/compute-optim-integration` 已完成交付并退役。
+复用本机已有的一份 ARCH checkout，在 clean 工作树上更新共同基线、记录 SHA，再为本轮任务建立短期分支。不要交叉引用不同工作区的构建缓存。
 有未提交工作时先保留，再按实际差异合入；不 reset／覆盖用户改动。
 
 ```bash
-git fetch origin
-git switch studio/compute-optim-integration
-git merge --ff-only origin/studio/compute-optim-integration
+git fetch origin --prune
+git switch compute/optim
+git merge --ff-only origin/compute/optim
 git rev-parse HEAD
 git status --short
+git switch -c studio/next-task origin/compute/optim
 ```
 
-已有仓库可先 fetch，再建立独立 worktree 或本地分支；不要在未保存的 Studio 工作区上
-直接重置或覆盖。记录取得的精确 SHA，并确认本文及执行细则均存在。
-`compute/optim` 现已包含 O8 实现、Core RZ 契约和 RT 审计记录；本轮将 Studio/O7 的 b7cb8b69 按模块合入 compute/optim；
-后续以集成分支精确 SHA 为基线，不使用整侧源码覆盖另一侧。
+`studio/next-task` 是命名示例，创建前替换为本轮约定的任务名；不要重新推送退役分支。
+若本地没有 `compute/optim`，先用 `git switch --track origin/compute/optim` 建立它。
+已有仓库可先 fetch，再按任务需要建立独立 worktree 或本地分支；不要在未保存的 Studio 工作区上直接重置或覆盖。记录取得的精确 SHA，并确认本文及执行细则均存在。
+`compute/optim` 现已包含 O8 实现、Core RZ 契约、RT 审计记录及 Studio/O7 的 b7cb8b69 收尾节点；
+后续以最新集成提交为基线，不使用整侧源码覆盖另一侧。任务分支合并并验收后退役，避免长期并行维护重复基线。
 本地历史有独立提交而不能 fast-forward 时，先审阅差异再做有界集成。
 Core 科学决定追加于现有 [逐项 review 清单](O7JeansRzReviewQuestions-20261004.zh-CN.md)：
 第6节是 JENS 短包，第7节是环体数学／误差接口，第8节是 RZ 单一角动量表示。

@@ -2,6 +2,8 @@
 
 Working integration: `compute/optim`, combining base `a566310e` and collaborator closure `b7cb8b69`. Current acceptance is recorded in the [integration report](../docs/development/ComputeStudioIntegrationReport-20261006.zh-CN.md), with the [release closure plan](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md) as the next-step authority.
 
+The shared development baseline is `origin/compute/optim`; old GUI delivery and contract branches are retired. New task branches start from its current reviewed commit. [Retirement/provenance](../docs/development/GuiBranchRetirement-20261006.zh-CN.md) preserves historical sources and the recovery route.
+
 | Area | Current boundary |
 | --- | --- |
 | Linux CLI / desktop | Production `arch-studio` entry; opt-in CMake build, bundled Host Node in the Linux package; graphical and terminal prerequisites |

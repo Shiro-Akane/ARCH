@@ -1,4 +1,4 @@
-> 后续整合已在 `compute/optim` 完成，当前入口见[本轮集成报告](ComputeStudioIntegrationReport-20261006.zh-CN.md)及[release 收束计划](ComputeStudioReleasePlan-20261006.zh-CN.md)。下文保留早前分支整理节点的原始范围。
+> 后续整合已在 `compute/optim` 完成，当前入口见[本轮集成报告](ComputeStudioIntegrationReport-20261006.zh-CN.md)、[GUI 分支退役记录](GuiBranchRetirement-20261006.zh-CN.md)及[release 收束计划](ComputeStudioReleasePlan-20261006.zh-CN.md)。下文保留早前分支整理节点的原始范围，“GUI 分支本轮不动”等描述属于当时状态。
 
 # compute/optim：分支归并与交付入口
 
