@@ -780,3 +780,11 @@ Main alignment, CPU build, dynamic 95-key/14-model compatibility, expression sup
 - Private RZ typed declaration/shared stage-integral arithmetic fixture PASS; actual producer/binding/RK24/restart NOT qualified.
 - Symmetric swirl viscosity, axis-neighbor and certified continuous force continue underCore v1; findings remain open pending actual evidence.
 - Conditional2D performance diagnostic NOT started: exact physical-core/type association and required owned-resource/write-headroom guards pending. No3D/repeated timing/long execution.
+
+## RZ source test gaps / private producer node — 2026-10-06
+- Scalar gap fixes published as a6df1f54: nonfinite checks and 13 compiled mutation rejects.
+- Private real patch producer: 256 cells, three input slots, variable density, 13 identity/nonfinite/ghost rejects; state and ledger unchanged.
+- Actual scheduler preparation rejection: Euler/RK2/RK3, two blocks, late failure before any writer/publication; arrays/ledger/clock unchanged.
+- Inert cumulative patch + fixtures + processed summaries delivered. Public Core/gates untouched.
+- Production owner identity, numerical RK/restart, viscosity/axis/continuous-force signoff remain pending; not full RZ acceptance.
+- No O8 merge, long runs, 3D, repeat timing or Windows work. 2D resource prerequisites still pending.

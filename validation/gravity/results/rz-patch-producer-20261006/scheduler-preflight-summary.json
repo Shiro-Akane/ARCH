@@ -1,0 +1,14 @@
+{
+  "status": "PASS_REAL_SCHEDULER_PREPARATION_REJECTION_ONLY",
+  "candidate_base": "326626cb",
+  "fixture_sha256": "417fd0d4a35fd2229c2a208a5f770e45bba61cbd5db6ec522880d44596d85938",
+  "elf_sha256": "d806a18da7c5e91b7ffdbc64f9b468bcb6b5ef6665dd2c8cee6d634d1060dcaa",
+  "stdout": "RZ_SCHEDULER_PREFLIGHT_PASS plans=3 blocks=2 late_failure=PASS arrays=unchanged ledger=unchanged clock=unchanged callbacks=0 numerical_RK=NOT_RUN\n",
+  "not_covered": [
+    "actual RK numerical executor",
+    "configuration/storage owner frame construction",
+    "successful stage publication",
+    "boundary/reflux budgets",
+    "frozen evolution/restart"
+  ]
+}
