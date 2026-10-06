@@ -766,3 +766,10 @@ Main alignment, CPU build, dynamic 95-key/14-model compatibility, expression sup
 - Controlled CPU Build no-op; binary SHA unchanged. No Core reconstruction, simulation, full-model Preview expansion or Plotfile work.
 - Report: PHASE3B_PARAMETER_WORKSPACE_REPORT.md. Local checkpoint: studio-phase3b-v0.21.0.
 - STOP before Phase 3C. No automatic push.
+
+## Joint delivery limited resumption — 2026-10-06
+- Human authorized isolated JENS CUDA candidate verification; public gates stay unchanged.
+- Pinned base ccfcef5bc60f4361a808dc1e83c020094ab50930; inert ten-file candidate patch and preparation tool delivered. Status: pending validation.
+- Separate external/variable-mu/axis-neighbor decision packages; continuous-force reference remains OPEN. Physics/budgets require Core confirmation.
+- Four complete SNIaCoupled benchmark/long input proposals with source/EOS/network hashes; NOT frozen and NOT executed.
+- No new long-run/Windows work; prior passing evidence retained without blanket rerun.
