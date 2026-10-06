@@ -773,3 +773,10 @@ Main alignment, CPU build, dynamic 95-key/14-model compatibility, expression sup
 - Separate external/variable-mu/axis-neighbor decision packages; continuous-force reference remains OPEN. Physics/budgets require Core confirmation.
 - Four complete SNIaCoupled benchmark/long input proposals with source/EOS/network hashes; NOT frozen and NOT executed.
 - No new long-run/Windows work; prior passing evidence retained without blanket rerun.
+
+## Joint delivery Core RZ v1 — 2026-10-06
+- Core4639774f cherry-picked as6af9849d; definitions confirmed, no main merge.
+- Private CUDA JENS frozen9+9/scoped3 PASS; public gate/source/cache/ELFs unchanged. Evidence326626cb.
+- Private RZ typed declaration/shared stage-integral arithmetic fixture PASS; actual producer/binding/RK24/restart NOT qualified.
+- Symmetric swirl viscosity, axis-neighbor and certified continuous force continue underCore v1; findings remain open pending actual evidence.
+- Conditional2D performance diagnostic NOT started: exact physical-core/type association and required owned-resource/write-headroom guards pending. No3D/repeated timing/long execution.

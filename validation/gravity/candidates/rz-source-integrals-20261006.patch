@@ -1,0 +1,63 @@
+--- a/src/physics/gravity/IGravityPolicy.h
++++ b/src/physics/gravity/IGravityPolicy.h
+@@ -26,9 +26,17 @@
+  * Acts as a compilation firewall (type erasure boundary) between the generic
+  * Host hydrodynamics loops and specific gravity implementations.
+  */
++enum class GravitySourceOrigin { Unknown, ExternalNativeOrthonormal, FiniteRingCurrentState };
++struct GravitySourceContract {
++    GravitySourceOrigin origin=GravitySourceOrigin::Unknown;
++    GridMetrics::GeometrySemantics chart=GridMetrics::GeometrySemantics::Existing;
++    // Identity of a future stage-owned integral producer is required separately.
++    // A declared origin/chart alone must never release the RZ stage gate.
++};
+ class IGravityPolicy {
+ public:
+     virtual ~IGravityPolicy() = default;
++    virtual GravitySourceContract source_contract() const noexcept { return {}; }
+     // Optional work from the actual Riemann mass flux. Existing external gravity
+     // retains its cell source; self gravity supplies this compatible face work.
+     virtual void add_flux_work_on_patch(std::vector<FluidVector>&,
+--- a/src/physics/gravity/ExternalGravity.h
++++ b/src/physics/gravity/ExternalGravity.h
+@@ -22,6 +22,11 @@
+ 
+     ExternalGravity(double gx, double gy, double gz) : g_x(gx), g_y(gy), g_z(gz) {}
+ 
++    GravitySourceContract source_contract() const noexcept override {
++        return {GravitySourceOrigin::ExternalNativeOrthonormal,
++                GridMetrics::GeometrySemantics::Existing};
++    }
++
+     virtual void add_sources_on_patch(std::vector<FluidVector>& dU, const FluidState& state,
+                                       const Grid& grid, double dt, void* execution_stream = nullptr) const override
+     {
+--- a/src/physics/gravity/GravitySource.h
++++ b/src/physics/gravity/GravitySource.h
+@@ -51,4 +51,26 @@
+     delta.mom_w += dt * rho * gravity.g_z;
+     delta.eng += dt * (state.mom_u * gravity.g_x + state.mom_v * gravity.g_y + state.mom_w * gravity.g_z);
+ }
++/** Stage integrals supplied by an authoritative physical-field producer.
++ * Momentum r/z and energy use V; angular impulse uses W. These are source
++ * rates, not stored representative cell values. Integrals include full 2*pi.
++ * The stage owner validates source/chart/epoch and positive native measures
++ * before this arithmetic leaf. No callback/source traversal is introduced here.
++ */
++struct ExternalRzStageIntegrals {
++    double volume=0.0;
++    double angular_measure=0.0;
++    double radial_momentum_rate=0.0;
++    double axial_momentum_rate=0.0;
++    double angular_momentum_rate=0.0;
++    double energy_rate=0.0;
++};
++ARCH_INLINE void add_external_rz_stage_integrals(
++    const ExternalRzStageIntegrals& source, double dt, FluidVector& delta)
++{
++    delta.mom_u += dt * source.radial_momentum_rate / source.volume;
++    delta.mom_v += dt * source.axial_momentum_rate / source.volume;
++    delta.mom_w += dt * source.angular_momentum_rate / source.angular_measure;
++    delta.eng += dt * source.energy_rate / source.volume;
++}
+ } // namespace Physical::Gravity
