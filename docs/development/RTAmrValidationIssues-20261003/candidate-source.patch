@@ -1,0 +1,668 @@
+diff --git a/src/amr/flux/FluxRegister.h b/src/amr/flux/FluxRegister.h
+index a942c0e2..41941568 100644
+--- a/src/amr/flux/FluxRegister.h
++++ b/src/amr/flux/FluxRegister.h
+@@ -19,6 +19,7 @@
+ #include <bit>
+ #include <map>
+ #include <memory>
++#include <set>
+ #include <span>
+ #include <stdexcept>
+ #include <tuple>
+@@ -29,6 +30,7 @@
+ #include "amr/storage/Block.h"
+ #include "amr/storage/MemoryPool.h"
+ #include "grid/GridMetrics.h"
++#include "numerics/state/StateAdmissibility.h"
+ 
+ namespace amr {
+ 
+@@ -94,6 +96,10 @@ private:
+     }
+ 
+ public:
++    // Candidate audit rows: last reflux call and final weighted RKL half-step.
++    arch::state::RepairBudget reflux_repairs;
++    arch::state::RepairBudget diffusion_reflux_repairs;
++
+     FluxRegister() = default;
+ 
+     void Resize(int max_blocks, int dim) {
+@@ -400,6 +406,7 @@ public:
+         FluidState Block::* state_ptr,
+         double timestep_scale = 1.0)
+     {
++        reflux_repairs.reset(num_species_);
+         validate_amr_plan(plan);
+         if (handles.size() != active_blocks.size())
+             throw std::invalid_argument("reflux Host view count mismatch");
+@@ -504,6 +511,7 @@ public:
+             groups.push_back(std::move(group));
+         }
+ 
++        std::set<std::pair<int, int>> touched_cells;
+         for (const auto& group : groups) {
+             Block& block = pool->GetBlock(group.block_id);
+             FluidState& state = block.*state_ptr;
+@@ -515,6 +523,7 @@ public:
+                 block.grid.Is() + logical[0],
+                 block.grid.Js() + logical[1],
+                 block.grid.Ks() + logical[2]);
++            touched_cells.emplace(group.block_id, index);
+             const FluidVector delta = GetSummedFlux(
+                 group.block_id, group.face, group.cell);
+             const double correction =
+@@ -538,6 +547,33 @@ public:
+                     state.rho[index]);
+             }
+         }
++        // A corner can receive several face contributions: repair only once,
++        // after every contribution. The subsequent strict check is unchanged.
++        for (const auto& [id, cell] : touched_cells) {
++            Block& block = pool->GetBlock(id);
++            FluidState& state = block.*state_ptr;
++            bool negative = false;
++            for (int s = 0; s < state.GetNumSpecies(); ++s)
++                negative = negative || state.X(s, cell) < 0.0;
++            if (!negative) continue;
++            const int k = cell / block.grid.stride_z;
++            const int j = (cell - k * block.grid.stride_z) / block.grid.stride_y;
++            const int i = cell - k * block.grid.stride_z - j * block.grid.stride_y;
++            arch::state::RepairBudget report(state.GetNumSpecies());
++            const auto outcome = arch::state::repair_reflux_composition_roundoff(
++                state.rho[cell], state.mass_fractions.data() + cell,
++                state.GetNumSpecies(), block.grid.GetTotalSize(), report.view(),
++                GridMetrics::CellVolume(block.grid, i, j, k), cell);
++            if (!arch::state::accepted(outcome))
++                throw std::runtime_error("Rejected reflux composition repair: block="
++                    + std::to_string(id) + " cell=" + std::to_string(cell));
++            report.block_uid = handles[active_index.at(logical_key(block, plan.dimension))].uid.value;
++            const auto point = block.grid.GetPhysicalCoords(i, j, k);
++            report.position[0] = point.x;
++            report.position[1] = point.y;
++            report.position[2] = point.z;
++            reflux_repairs.combine(report);
++        }
+     }
+ 
+ private:
+diff --git a/src/cuda/amr/AmrFluxSurfaceKernels.cuh b/src/cuda/amr/AmrFluxSurfaceKernels.cuh
+index 605a8bf7..2afd4d8d 100644
+--- a/src/cuda/amr/AmrFluxSurfaceKernels.cuh
++++ b/src/cuda/amr/AmrFluxSurfaceKernels.cuh
+@@ -187,6 +187,26 @@ __global__ void reflux_kernel(
+                     correction, flux.species_flux(species, flux_cell),
+                     rho_after));
+     }
++    bool negative = false;
++    for (int s = 0; s < state.n_species; ++s)
++        negative = negative || state.species(s, state_cell) < 0.0;
++    if (negative) {
++        const auto& block = blocks[target.block];
++        // Borrowed per-block audit storage belongs to this reflux completion.
++        // Missing storage retains rejection rather than silently projecting.
++        if (!block.reflux_repairs.values || !block.grid.cell_volume) {
++            if (status) atomicExch(status, 106);
++            return;
++        }
++        const auto repaired = arch::state::repair_reflux_composition_roundoff(
++            state.rho[state_cell], state.mass_fractions + state_cell,
++            state.n_species, state.total_size, block.reflux_repairs,
++            block.grid.cell_volume[state_cell], state_cell);
++        if (!arch::state::accepted(repaired)) {
++            if (status) atomicExch(status, 100 + static_cast<int>(repaired));
++            return;
++        }
++    }
+     if (status) {
+         const auto outcome=arch::state::validate(state.load(state_cell),
+             state.n_species?state.mass_fractions+state_cell:nullptr,
+diff --git a/src/cuda/amr/AmrFluxSurfaceTypes.cuh b/src/cuda/amr/AmrFluxSurfaceTypes.cuh
+index 9adb269f..8f517e45 100644
+--- a/src/cuda/amr/AmrFluxSurfaceTypes.cuh
++++ b/src/cuda/amr/AmrFluxSurfaceTypes.cuh
+@@ -10,6 +10,7 @@
+ #pragma once
+ 
+ #include "cuda/common/CudaCommon.cuh"
++#include "data/StateDiagnostics.h"
+ 
+ #include <array>
+ #include <cstddef>
+@@ -56,6 +57,7 @@ struct DeviceAmrFluxBlockView {
+     DeviceGridView grid{};
+     DeviceAmrFluxSurfaceView registers[6]{};
+     DeviceAmrFluxSurfaceView initial_flux[6]{};
++    state::RepairView reflux_repairs{};
+ };
+ 
+ inline constexpr std::size_t amr_flux_surface_scalar_count(
+diff --git a/src/cuda/runtime/control/CudaBackendInternal.h b/src/cuda/runtime/control/CudaBackendInternal.h
+index 75b8dcdf..eac5adcc 100644
+--- a/src/cuda/runtime/control/CudaBackendInternal.h
++++ b/src/cuda/runtime/control/CudaBackendInternal.h
+@@ -212,6 +212,7 @@ struct CudaAmrFluxPlanRuntime {
+     std::map<std::pair<amr::BlockHandle, int>, std::size_t> route_index;
+     amr::AmrCompiledRefluxPlan compiled_reflux{};
+     DeviceAllocation<int> reflux_status;
++    DeviceAllocation<double> reflux_repairs;
+     DeviceAllocation<amr::AmrRefluxTarget> reflux_targets;
+     DeviceAllocation<amr::AmrRefluxContribution> reflux_contributions;
+     std::vector<amr::AmrFluxSurfaceRequirement> surface_requirements;
+diff --git a/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp b/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp
+index a944d988..76f804a5 100644
+--- a/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp
++++ b/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp
+@@ -257,6 +257,13 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
+         || plan->device_blocks.size() != plan->host_blocks.size())
+         throw std::logic_error("CUDA AMR flux block bindings drifted");
+ 
++    reflux_repairs.reset(plan->species_count);
++    const int repair_stride = state::RepairView::fixed_size + 2 * plan->species_count;
++    const std::size_t repair_count = plan->host_blocks.size() * repair_stride;
++    if (repair_count && !plan->reflux_repairs.get())
++        plan->reflux_repairs.allocate(repair_count);
++    std::vector<double> host_repairs(repair_count, 0.0);
++
+     // Slot rotation changes the DeviceStateView pointers.  Rebind immediately
+     // before reflux so Hydro targets the rotated Current buffer and RKL targets
+     // the descriptor's not-yet-published output slot.
+@@ -265,6 +272,8 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
+         if (block == nullptr)
+             throw std::logic_error("CUDA AMR flux block was retired early");
+         plan->host_blocks[index].state = block->slots[slot_index(slot)];
++        plan->host_blocks[index].reflux_repairs = {
++            plan->reflux_repairs.get() + index * repair_stride, plan->species_count};
+     }
+ 
+     const auto& reflux = plan->compiled_reflux;
+@@ -279,6 +288,8 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
+                "rebind CUDA AMR reflux state slots");
+     if (!plan->reflux_status.get()) plan->reflux_status.allocate(1);
+     check_cuda(cudaMemsetAsync(plan->reflux_status.get(),0,sizeof(int),impl_->stream.get()),"reset reflux status");
++    check_cuda(cudaMemsetAsync(plan->reflux_repairs.get(), 0,
++        repair_count * sizeof(double), impl_->stream.get()), "reset reflux repair summaries");
+     int reflux_status=0;
+     CudaQuiescenceGuard reflux_guard{*impl_};
+     check_cuda(launch_cuda_amr_reflux(
+@@ -293,10 +304,34 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
+                "launch CUDA AMR reflux");
+     check_cuda(cudaMemcpyAsync(&reflux_status,plan->reflux_status.get(),sizeof(int),
+         cudaMemcpyDeviceToHost,impl_->stream.get()),"download reflux status");
++    check_cuda(cudaMemcpyAsync(host_repairs.data(), plan->reflux_repairs.get(),
++        repair_count * sizeof(double), cudaMemcpyDeviceToHost, impl_->stream.get()),
++        "download reflux repair summaries");
+     quiesce();
+     reflux_guard.completed=true;
+     impl_->runtime_counters.bytes_d2h+=sizeof(int);
++    impl_->runtime_counters.bytes_d2h += repair_count * sizeof(double);
+     if (reflux_status) throw std::runtime_error("Invalid state after CUDA AMR reflux: status="+std::to_string(reflux_status));
++    for (std::size_t index = 0; index < plan->host_blocks.size(); ++index) {
++        state::RepairBudget report(plan->species_count);
++        std::copy_n(host_repairs.data() + index * repair_stride, repair_stride, report.values.data());
++        if (report.values[0] == 0.0) continue;
++        report.block_uid = plan->runtime_blocks[index]->handle.uid.value;
++        const auto& grid = plan->host_blocks[index].grid;
++        const int cell = static_cast<int>(report.values[9]);
++        const int k = cell / grid.stride_z;
++        const int j = (cell - k * grid.stride_z) / grid.stride_y;
++        const int i = cell - k * grid.stride_z - j * grid.stride_y;
++        const auto geometry = make_grid_geometry_view(grid);
++        const auto point = Grid::PhysicalCoordsFromNative(grid.dim,
++            geometry.geometry == GridMetrics::Geometry::Cartesian ? "cartesian" :
++            geometry.geometry == GridMetrics::Geometry::Cylindrical ? "cylindrical" : "spherical",
++            geometry.GetCellCenterX(i), geometry.GetCellCenterY(j), geometry.GetCellCenterZ(k));
++        report.position[0] = point.x;
++        report.position[1] = point.y;
++        report.position[2] = point.z;
++        reflux_repairs.combine(report);
++    }
+     if (dt > 0.0) ++impl_->runtime_counters.kernel_count;
+     return expected;
+ }
+diff --git a/src/data/StateDiagnostics.h b/src/data/StateDiagnostics.h
+index 0d6756bb..df462b40 100644
+--- a/src/data/StateDiagnostics.h
++++ b/src/data/StateDiagnostics.h
+@@ -80,7 +80,7 @@ struct RepairView {
+ struct RepairBudget {
+     std::vector<double> values;
+     std::uint64_t block_uid = 0; // 0 identifies initialization before topology publication.
+-    int stage = 0; // 0 initial state, 1..3 Hydro Runge-Kutta stage.
++    int stage = 0; // 0 no Hydro stage (initial/reflux/RKL); 1..3 Hydro RK. Checkpoint-compatible.
+     double time = 0.0;
+     double position[3]{}; // Physical coordinates of one triggering cell.
+ 
+diff --git a/src/driver/runtime/ComputeBackend.h b/src/driver/runtime/ComputeBackend.h
+index cdca2559..4711510e 100644
+--- a/src/driver/runtime/ComputeBackend.h
++++ b/src/driver/runtime/ComputeBackend.h
+@@ -269,6 +269,7 @@ public:
+     virtual double compute_hydro_dt(BackendStateAccess current,
+                                     double cfl) = 0;
+     state::RepairBudget stage_repairs; // Compact completed-stage diagnostics.
++    state::RepairBudget reflux_repairs; // Last reflux, before time weighting.
+     virtual state::CompletionToken execute_hydro_stage(
+         BackendStateAccess current,
+         const scheduler::StageDescriptor& descriptor,
+diff --git a/src/driver/stages/DriverStages.h b/src/driver/stages/DriverStages.h
+index 0843ba46..06c2af6b 100644
+--- a/src/driver/stages/DriverStages.h
++++ b/src/driver/stages/DriverStages.h
+@@ -205,6 +205,7 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
+     const bool has_diff = config.physics.diffusion.use_diffusion;
+     if (!has_diff || diffusion_dt <= 0.0) return;
+ 
++    state::RepairBudget pending_reflux(runtime.species().count());
+     if (compute_backend) {
+         runtime.ensure_fluid_ghosts(StateSlot::Current);
+         const auto copy_one = [&](StateSlot destination) {
+@@ -236,6 +237,7 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
+             order, diffusion_dt, dt_diff_fe,
+             config.physics.diffusion.diff_cfl,
+             config.physics.diffusion.max_stages);
++        const auto repair_weights = DiffFunction::reflux_repair_weights(order, stages);
+         int negative_gamma_stages = 0;
+         for (int stage = 1; stage <= stages; ++stage) {
+             const auto coefficients = DiffFunction::get_rkl_coeffs(
+@@ -265,8 +267,13 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
+             const arch::scheduler::RklPlan&,
+             const arch::scheduler::RklStageDescriptor& descriptor,
+             arch::state::CompletionToken token) {
+-            return compute_backend->execute_amr_reflux(
++            const auto completed = compute_backend->execute_amr_reflux(
+                 descriptor.output_slot, diffusion_dt, token);
++            auto report = compute_backend->reflux_repairs;
++            report.stage = 0; // Not a Hydro RK stage; old checkpoint field stays 0..3.
++            report.time = stage_context.step_start_time;
++            pending_reflux.combine(report, repair_weights.at(descriptor.stage));
++            return completed;
+         };
+         const auto boundary = [&] (
+             StateSlot slot, arch::state::StateVersion version,
+@@ -289,6 +296,7 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
+                 stage_context, stage_handles, stages, executor,
+                 reflux, boundary, rotation);
+         }
++        runtime.repair_budget().combine(pending_reflux);
+         runtime.trace_backend_operation(
+             arch::backend::BackendOperation::DiffusionStage,
+             StateSlot::Current, before);
+@@ -318,6 +326,9 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
+             Numerics::Diffusion::advance_amr_rkl2(
+                 amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config);
+         }
++        auto report = amr_ctrl.flux_register.diffusion_reflux_repairs;
++        report.time = stage_context.step_start_time;
++        runtime.repair_budget().combine(report);
+     } else {
+         const auto execute_single = [&](auto& integrator) {
+             amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks.front());
+@@ -534,6 +545,11 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
+             amr_ctrl, dt, bc_handler, gravity, hydro, num_cfg);
+     }
+ 
++    auto reflux_report = compute_backend ? compute_backend->reflux_repairs
++        : amr_ctrl.flux_register.reflux_repairs;
++    reflux_report.stage = 0; // Post-RK reflux is not a Hydro stage; source weight is 1.
++    reflux_report.time = stage_context.step_start_time;
++    pending.combine(reflux_report);
+     runtime.repair_budget().combine(pending);
+ 
+ }
+diff --git a/src/numerics/diffusion/DiffFunction.cpp b/src/numerics/diffusion/DiffFunction.cpp
+index cd15be94..b48786c8 100644
+--- a/src/numerics/diffusion/DiffFunction.cpp
++++ b/src/numerics/diffusion/DiffFunction.cpp
+@@ -9,6 +9,7 @@
+ 
+ #include <algorithm>
+ #include <cmath>
++#include <stdexcept>
+ 
+ #include "numerics/diffusion/DiffFunction.h"
+ 
+@@ -159,4 +160,27 @@ namespace DiffFunction
+             ? get_rkl1_coeffs(stage, stages)
+             : get_rkl2_coeffs(stage, stages);
+     }
++
++    std::vector<double> reflux_repair_weights(RKLOrder order, int stages)
++    {
++        if ((order != RKLOrder::First && order != RKLOrder::Second)
++            || stages < (order == RKLOrder::First ? 1 : 2))
++            throw std::invalid_argument("invalid RKL repair accounting schedule");
++        std::vector<double> weights(static_cast<std::size_t>(stages) + 1, 0.0);
++        weights[stages] = 1.0;
++        // Reverse the existing recurrence for GLOBAL conserved mass.
++        // Boundary fluxes remain separate; this is not a cellwise error estimate.
++        for (int j = stages; j >= 2; --j) {
++            const auto c = get_rkl_coeffs(order, j, stages);
++            weights[j - 1] += weights[j] * c.mu;
++            weights[j - 2] += weights[j] * c.nu;
++        }
++        weights[0] = 0.0;
++        // RKL1/2 final source weights are nonnegative despite nu < 0.
++        // Require this before using RepairBudget::combine for absolute budgets.
++        for (int j = 1; j <= stages; ++j)
++            if (!std::isfinite(weights[j]) || weights[j] < 0.0)
++                throw std::runtime_error("invalid final RKL repair source weight");
++        return weights;
++    }
+ }
+diff --git a/src/numerics/diffusion/DiffFunction.h b/src/numerics/diffusion/DiffFunction.h
+index 8fc03c15..08b05f3e 100644
+--- a/src/numerics/diffusion/DiffFunction.h
++++ b/src/numerics/diffusion/DiffFunction.h
+@@ -8,6 +8,7 @@
+  */
+ 
+ #pragma once
++#include <vector>
+ 
+ // RKL stage-count and recurrence-coefficient utilities.
+ 
+@@ -56,4 +57,8 @@ namespace DiffFunction
+      */
+     RKLCoeffs get_rkl2_coeffs(int j, int s);
+     RKLCoeffs get_rkl_coeffs(RKLOrder order, int j, int s);
++
++    // Final conserved-mass contribution of an additive post-reflux repair at
++    // each stage (index 0 unused). Does not change integration coefficients.
++    std::vector<double> reflux_repair_weights(RKLOrder order, int stages);
+ }
+diff --git a/src/numerics/diffusion/DiffusionAMRStages.h b/src/numerics/diffusion/DiffusionAMRStages.h
+index e98aefed..8565a951 100644
+--- a/src/numerics/diffusion/DiffusionAMRStages.h
++++ b/src/numerics/diffusion/DiffusionAMRStages.h
+@@ -689,6 +689,10 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
+     const int stages = DiffFunction::compute_stages(order, dt, dt_diff_fe, diff_cfl, max_stages);
+     if (stages <= 0) return;
+ 
++    amr_ctrl.flux_register.diffusion_reflux_repairs.reset(
++        amr_ctrl.pool->GetBlock(active_blocks.front()).fluid_state.GetNumSpecies());
++    const auto repair_weights = DiffFunction::reflux_repair_weights(order, stages);
++
+     const StageBinding& binding = current_stage_binding();
+     if (binding.handles.size() != active_blocks.size())
+         throw std::logic_error("AMR RKL scheduler handle count mismatch");
+@@ -788,6 +792,10 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
+                     dt, detail::member_for(descriptor.output_slot));
+                 TimeIntegration::validate_reflux_state(amr_ctrl,config.numerics,
+                     detail::member_for(descriptor.output_slot));
++                auto report = amr_ctrl.flux_register.reflux_repairs;
++                report.stage = 0; // RKL is not a Hydro RK stage; no checkpoint schema change.
++                amr_ctrl.flux_register.diffusion_reflux_repairs.combine(
++                    report, repair_weights.at(descriptor.stage));
+                 return token;
+             };
+     const auto boundary =
+diff --git a/src/numerics/state/StateAdmissibility.h b/src/numerics/state/StateAdmissibility.h
+index 2a4b6329..bc7f5766 100644
+--- a/src/numerics/state/StateAdmissibility.h
++++ b/src/numerics/state/StateAdmissibility.h
+@@ -126,6 +126,61 @@ ARCH_INLINE Status validate(const FluidVector& fluid, const double* fractions,
+     return Status::valid;
+ }
+ 
++// Experimental candidate on an unmerged branch, with explicit repair accounting.
++// Invoke only after ALL reflux contributions to a cell. This is an explicitly
++// accounted roundoff repair, NOT an exactly species-conservative correction.
++// Preserve all nonnegative fractions bit-for-bit. Keep the existing strict
++// validator unchanged and require an audit row before changing any state.
++ARCH_INLINE Status repair_reflux_composition_roundoff(
++    double rho, double* fractions, int species, int stride,
++    RepairView repairs, double cell_volume, int cell)
++{
++    if (!std::isfinite(rho) || !std::isfinite(cell_volume)) return Status::nonfinite;
++    if (!(rho > 0.0) || !(cell_volume > 0.0)) return Status::nonpositive_density;
++    if (species < 0 || stride <= 0 || (species && !fractions))
++        return Status::invalid_composition;
++    if (!species) return Status::valid;
++    // Same small-negative and composition-sum bounds as the existing stage
++    // update/normalization contract. No new user tolerance or validator change.
++    const double negative_bound = 64.0 * std::numeric_limits<double>::epsilon();
++    const double sum_bound = 512.0 * species * std::numeric_limits<double>::epsilon();
++    double before_sum = 0.0, after_sum = 0.0;
++    bool needed = false;
++    for (int s = 0; s < species; ++s) {
++        const double x = fractions[s * stride];
++        if (!std::isfinite(x) || x < -negative_bound) return Status::invalid_composition;
++        before_sum += x;
++        after_sum += std::max(0.0, x);
++        needed = needed || x < 0.0;
++    }
++    if (!std::isfinite(before_sum) || !std::isfinite(after_sum)
++        || std::abs(before_sum - 1.0) > sum_bound
++        || std::abs(after_sum - 1.0) > sum_bound)
++        return Status::invalid_composition;
++    if (!needed) return Status::valid;
++    if (!repairs.values || repairs.species != species)
++        return Status::invalid_composition;
++    // Validate every prospective mass entry before mutating any fraction.
++    // Refuse an unrepresentable audit delta instead of silently dropping it.
++    for (int s = 0; s < species; ++s) {
++        const double x = fractions[s * stride];
++        if (x < 0.0) {
++            const double delta = (rho * -x) * cell_volume;
++            if (!std::isfinite(delta) || !(delta > 0.0))
++                return Status::invalid_composition;
++        }
++    }
++    repairs.event(cell_volume, cell);
++    for (int s = 0; s < species; ++s) {
++        const double x = fractions[s * stride];
++        if (x < 0.0) {
++            repairs.species_mass(s, (rho * -x) * cell_volume);
++            fractions[s * stride] = 0.0;
++        }
++    }
++    return Status::repaired;
++}
++
+ ARCH_INLINE bool accepted(Status status)
+ { return status == Status::valid || status == Status::repaired; }
+ 
+diff --git a/validation/rt-reflux-candidate-v1/test_rkl_accounting.cpp b/validation/rt-reflux-candidate-v1/test_rkl_accounting.cpp
+new file mode 100644
+index 00000000..5d8070fa
+--- /dev/null
++++ b/validation/rt-reflux-candidate-v1/test_rkl_accounting.cpp
+@@ -0,0 +1,53 @@
++#include "numerics/diffusion/DiffFunction.h"
++#include "data/StateDiagnostics.h"
++#include <algorithm>
++#include <cmath>
++#include <iostream>
++#include <stdexcept>
++
++int main() {
++    int impulses = 0;
++    for (auto order : {DiffFunction::RKLOrder::First, DiffFunction::RKLOrder::Second})
++        for (int stages : {1, 2, 3, 5, 16, 32, 64, 128, 256}) {
++            if (order == DiffFunction::RKLOrder::Second && stages == 1) continue;
++            const auto weights = DiffFunction::reflux_repair_weights(order, stages);
++            if (weights[0] != 0 || weights.back() != 1) return 1;
++            arch::state::RepairBudget combined(2);
++            long double previous = 0, older = 0;
++            for (int j = 1; j <= stages; ++j) {
++                const auto c = DiffFunction::get_rkl_coeffs(order, j, stages);
++                const long double impulse = (j % 3 == 0 ? -1.0L : 1.0L) * 1e-120L * j;
++                const long double next = c.mu * previous + c.nu * older + impulse;
++                older = previous; previous = next;
++                arch::state::RepairBudget one(2);
++                one.view().event(1, j);
++                one.view().species_mass(0, static_cast<double>(impulse));
++                combined.combine(one, weights[j]);
++            }
++            if (combined.values[0] != stages
++                || combined.values[11] < std::abs(combined.values[10])
++                || std::abs(combined.values[10] - previous) > 2e-10L * combined.values[11])
++                return 2;
++            for (int injected = 1; injected <= stages; ++injected) {
++                long double a = 0, b = 0;
++                for (int j = 1; j <= stages; ++j) {
++                    const auto c = DiffFunction::get_rkl_coeffs(order, j, stages);
++                    const long double next = c.mu * a + c.nu * b + (j == injected ? 1 : 0);
++                    b = a; a = next;
++                }
++                if (std::abs(weights[injected] - a) > 2e-10L * std::max(1.0L, std::abs(a)))
++                    return 3;
++                ++impulses;
++            }
++        }
++    int rejected = 0;
++    try { (void)DiffFunction::reflux_repair_weights(DiffFunction::RKLOrder::First, 0); }
++    catch (const std::invalid_argument&) { ++rejected; }
++    try { (void)DiffFunction::reflux_repair_weights(DiffFunction::RKLOrder::Second, 1); }
++    catch (const std::invalid_argument&) { ++rejected; }
++    if (rejected != 2) return 4;
++    const auto rkl2 = DiffFunction::reflux_repair_weights(DiffFunction::RKLOrder::Second, 2);
++    if (rkl2[1] != 1.5 || rkl2[2] != 1) return 5;
++    std::cout << "PASS RKL accounting: " << impulses
++              << " stage impulses; signed/absolute budgets; 2 invalid schedules\n";
++}
+diff --git a/validation/rt-reflux-candidate-v1/test_roundoff.cpp b/validation/rt-reflux-candidate-v1/test_roundoff.cpp
+new file mode 100644
+index 00000000..d1ea9c3c
+--- /dev/null
++++ b/validation/rt-reflux-candidate-v1/test_roundoff.cpp
+@@ -0,0 +1,137 @@
++// Candidate leaf tests only. No production execution path is changed by this test.
++#include <cmath>
++#include <cstdio>
++#include <cstring>
++#include <limits>
++#include <stdexcept>
++#include <vector>
++#include "numerics/state/StateAdmissibility.h"
++#ifdef __CUDACC__
++#include <cuda_runtime.h>
++#endif
++
++struct Case {
++    double rho = 1.0, volume = 0.25;
++    double fractions[6] = {0.25, 91.0, 92.0, 0.75, 93.0, 94.0};
++    double accounting[14]{};
++    int species = 2, stride = 3, ledger_species = 2, ledger = 1;
++    int status = -1;
++};
++
++ARCH_INLINE void evaluate(Case& value)
++{
++    value.status = static_cast<int>(arch::state::repair_reflux_composition_roundoff(
++        value.rho, value.fractions, value.species, value.stride,
++        {value.ledger ? value.accounting : nullptr, value.ledger_species}, value.volume, 17));
++}
++
++#ifdef __CUDACC__
++__global__ void evaluate_device(Case* cases, int count)
++{
++    const int i = blockIdx.x * blockDim.x + threadIdx.x;
++    if (i < count) evaluate(cases[i]);
++}
++void checked(cudaError_t code)
++{
++    if (code != cudaSuccess) throw std::runtime_error(cudaGetErrorString(code));
++}
++#endif
++
++int main()
++{
++    try {
++        using arch::state::Status;
++        std::vector<Case> input;
++        std::vector<const char*> names;
++        std::vector<Status> expected;
++        const auto add = [&](const char* name, Case value, Status status) {
++            names.push_back(name); input.push_back(value); expected.push_back(status);
++        };
++        add("valid_mixture", Case{}, Status::valid);
++        Case pure; pure.fractions[0] = 0.0; pure.fractions[3] = 1.0;
++        add("valid_pure",pure,Status::valid);
++        const double real_witnesses[] = {-2.0499299336421651e-143, -1.7291201970583932e-223,
++            -4.6467854312720427e-143, -1.3967681576435428e-250};
++        const char* witness_names[] = {"native_rt", "rt_species", "rt_thermal", "rt_both"};
++        for (int i=0; i<4; ++i) {
++            Case value=pure; value.fractions[0]=real_witnesses[i];
++            add(witness_names[i],value,Status::repaired);
++        }
++        Case near=pure; near.fractions[0]=-1e-15;
++        add("bounded_small_negative",near,Status::repaired);
++        Case large=pure; large.fractions[0]=-1e-6;
++        add("reject_large_negative",large,Status::invalid_composition);
++        Case nan=pure; nan.fractions[0]=std::numeric_limits<double>::quiet_NaN();
++        add("reject_nan",nan,Status::invalid_composition);
++        Case sum=pure; sum.fractions[3]=1.01;
++        add("reject_bad_sum",sum,Status::invalid_composition);
++        Case absent=near; absent.ledger=0;
++        add("reject_unaccounted_repair",absent,Status::invalid_composition);
++        Case mismatch=near; mismatch.ledger_species=1;
++        add("reject_wrong_ledger_shape",mismatch,Status::invalid_composition);
++        Case underflow=pure; underflow.fractions[0]=-1e-310; underflow.volume=1e-20;
++        add("reject_unrepresentable_mass_delta",underflow,Status::invalid_composition);
++        Case bad_rho=near; bad_rho.rho=0;
++        add("reject_zero_density",bad_rho,Status::nonpositive_density);
++        Case empty=pure; empty.species=0; empty.ledger=0;
++        add("zero_species",empty,Status::valid);
++        Case stride=near; stride.stride=0;
++        add("reject_bad_stride",stride,Status::invalid_composition);
++        auto cpu=input;
++        for (std::size_t i=0; i<cpu.size(); ++i) {
++            evaluate(cpu[i]);
++            if (cpu[i].status != static_cast<int>(expected[i])) throw std::runtime_error(names[i]);
++            if (expected[i] != Status::repaired) {
++                if (std::memcmp(cpu[i].fractions,input[i].fractions,sizeof(cpu[i].fractions))
++                    || std::memcmp(cpu[i].accounting,input[i].accounting,sizeof(cpu[i].accounting)))
++                    throw std::runtime_error("non-repair path changed state or accounting");
++            } else {
++                if (cpu[i].fractions[0] != 0.0 || cpu[i].fractions[3] != input[i].fractions[3])
++                    throw std::runtime_error("repair changed nonnegative species");
++                const double delta=(input[i].rho * -input[i].fractions[0])*input[i].volume;
++                const double expected_row[14] = {1,input[i].volume,0,0,0,0,0,0,0,17,delta,delta,0,0};
++                if (std::memcmp(cpu[i].accounting,expected_row,sizeof(expected_row)))
++                    throw std::runtime_error("repair mass was not explicitly and exactly recorded");
++                for (int gap : {1,2,4,5})
++                    if (cpu[i].fractions[gap] != input[i].fractions[gap]) throw std::runtime_error("stride gap changed");
++                const FluidVector fluid{input[i].rho,0,0,0,10*input[i].rho};
++                if (arch::state::validate(fluid,cpu[i].fractions,2,3,1e-30,1e-30,1e30)!=Status::valid)
++                    throw std::runtime_error("existing strict validator still rejects repaired composition");
++            }
++            std::printf("CPU case=%s status=%d passed=1\n",names[i],cpu[i].status);
++        }
++#ifdef __CUDACC__
++        Case* device=nullptr;
++        checked(cudaMalloc(&device,input.size()*sizeof(Case)));
++        checked(cudaMemcpy(device,input.data(),input.size()*sizeof(Case),cudaMemcpyHostToDevice));
++        evaluate_device<<<1,32>>>(device,static_cast<int>(input.size()));
++        checked(cudaGetLastError()); checked(cudaDeviceSynchronize());
++        auto gpu=input;
++        checked(cudaMemcpy(gpu.data(),device,input.size()*sizeof(Case),cudaMemcpyDeviceToHost));
++        checked(cudaFree(device));
++        bool parity_failed=false;
++        for (std::size_t i=0; i<cpu.size(); ++i) {
++            if (gpu[i].status != cpu[i].status
++                || std::memcmp(gpu[i].fractions,cpu[i].fractions,sizeof(cpu[i].fractions))
++                || std::memcmp(gpu[i].accounting,cpu[i].accounting,sizeof(cpu[i].accounting))) {
++                parity_failed=true;
++                std::printf("MISMATCH case=%s cpu_status=%d gpu_status=%d\n",names[i],cpu[i].status,gpu[i].status);
++                for (int k=0;k<6;++k)
++                    if (std::memcmp(&cpu[i].fractions[k],&gpu[i].fractions[k],sizeof(double)))
++                        std::printf("MISMATCH fraction=%d cpu=%.17g gpu=%.17g\n",k,cpu[i].fractions[k],gpu[i].fractions[k]);
++                for (int k=0;k<14;++k)
++                    if (std::memcmp(&cpu[i].accounting[k],&gpu[i].accounting[k],sizeof(double)))
++                        std::printf("MISMATCH accounting=%d cpu=%.17g gpu=%.17g\n",k,cpu[i].accounting[k],gpu[i].accounting[k]);
++            }
++        }
++        if (parity_failed) throw std::runtime_error("CPU/GPU candidate leaf mismatch");
++        std::printf("CUDA_PARITY cases=%zu exact_fields=fractions,status,repair_accounting passed=1\n",cpu.size());
++#else
++        std::printf("CPU_ONLY cases=%zu passed=1\n",cpu.size());
++#endif
++        return 0;
++    } catch (const std::exception& error) {
++        std::fprintf(stderr,"TEST_FAILED %s\n",error.what());
++        return 1;
++    }
++}
