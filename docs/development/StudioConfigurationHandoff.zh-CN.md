@@ -1,5 +1,7 @@
 # Core、Studio、Jeans 与 RZ 联合交付计划
 
+2026-10-06 更新：当前汇总线及分支处理见[归并说明](ComputeOptimConsolidation-20261006.zh-CN.md)，本轮有限收尾见[收尾清单](StudioRoundClosure-20261006.zh-CN.md)。Studio 继续使用现有集成分支，不先 merge O8；最终由维护者统一归入 `compute/optim`，审计后再合入 `main`。
+
 2026-10-01。本文是合作者的统一入口，覆盖 O7.0 配置整改、Studio／Host、
 O7.1–O7.5 Jeans／RZ 实现，以及部分 O9 的第二平台验证。
 发布基线是 `v1.2.1`，工作计划位于 `compute/optim`。本轮只交付 Linux／WSL，原生 Windows 适配明确排除。
@@ -95,8 +97,8 @@ git status --short
 
 已有仓库可先 fetch，再建立独立 worktree 或本地分支；不要在未保存的 Studio 工作区上
 直接重置或覆盖。记录取得的精确 SHA，并确认本文及执行细则均存在。
-`compute/optim` 当前主要增量为计划，不等于包含尚未推送的 Studio checkpoint；
-先取得对方工作台源码，再按文件和提交核对引入，不能直接用旧 Core 覆盖此基线。
+`compute/optim` 现已包含 O8 实现、Core RZ 契约和 RT 审计记录；完整 Studio/O7 工作台仍在
+`studio/compute-optim-integration`。先冻结该线本轮交付，再由维护者按模块整合，不能直接用整侧源码覆盖另一侧。
 
 本地开发可以分阶段提交，统一回到约定的交付分支 review；多人写入时先登记责任。
 远端前进时先 fetch 并检查差异，不能 force-push 覆盖他人的工作。
@@ -125,7 +127,7 @@ git status --short
 在同一集成分支串接 Core、Studio 和证据提交，保留可审阅的小提交。
 先核对 Studio checkpoint 与当前 main 的差异，再移植需要的 Studio／Host 内容；
 不以旧分支整体覆盖已发布的 EOS、CUDA、引力或配置改进。每次同步记录 base/head SHA。
-工作可依次推送供 review；合并 main 和发布由 ARCH 维护者控制。
+工作可依次推送供 review；最终改动统一归入 `compute/optim`，合并 main 和发布由 ARCH 维护者控制。
 
 | 主要改动区域 | 所有权与边界 |
 | --- | --- |

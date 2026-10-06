@@ -1,5 +1,7 @@
 # Contributor guide and working records
 
+The [current integration route](ComputeOptimConsolidation-20261006.zh-CN.md) consolidates maintained work into `compute/optim` before the final `main` audit. The [bounded Studio/Compute closure checklist](StudioRoundClosure-20261006.zh-CN.md) records the reviewed RZ node and remaining frozen tasks; active GUI and dedicated GNN work remain separate.
+
 Start with [implementation ownership](ImplementationOwnership.md) before changing shared mathematics, backend storage or execution. The map identifies the maintained owner and its CPU/CUDA consumers. The [acceptance checklist](CudaReleaseStandard.md) describes validation and publication requirements; [comment and documentation style](CommentAndDocumentationStyle.md) covers source comments and reader-facing documentation.
 
 The [self-gravity implementation plan](SelfGravityImplementationPlan.zh-CN.md) and [curvilinear gravity plan](CurvilinearGravityPlan.zh-CN.md) remain active references for field ownership, AMR coupling and geometry. GUI and Core contracts remain with the [API module](../../src/api/README.md).
