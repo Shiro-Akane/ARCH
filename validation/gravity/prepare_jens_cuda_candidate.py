@@ -13,7 +13,7 @@ import tarfile
 BASE = "ccfcef5bc60f4361a808dc1e83c020094ab50930"
 PATCH = "validation/gravity/candidates/jens-cuda-20261006.patch"
 PATHS = ["CMakeLists.txt", "CMakePresets.json", "cmake", "src", "simulation",
-         "include", "tests", "tools", "validation/gravity", "LICENSE"]
+         "include", "tests", "tools", "validation", "LICENSE"]
 
 def digest(path):
     h = hashlib.sha256()
