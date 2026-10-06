@@ -1,0 +1,50 @@
+{
+  "core_contract": "CORE-RZ-20261006-v1",
+  "definition_ref": "4639774fe3c94ae27b3e831d0f0b9d6340de34fd",
+  "closure_ref": "b466ce0216928fee56878afe43aae9e8a1614f25",
+  "full_rz_science": "NOT_SIGNED",
+  "items": [
+    {
+      "finding": "finite-ring",
+      "status": "BLOCKED",
+      "actual_result": "Actual Runtime root/three-slot and regrid/rollback conditional candidate gates previously passed; physical acceleration/public Hydro consumer remains unqualified.",
+      "unfinished_reason": "Continuous matched-source contact/internal force reference lacks certified uncertainty. Density/topology leases alone do not qualify physical finite-ring source.",
+      "evidence": [
+        "docs/development/RZActualRuntimeCandidateNode-20261005.zh-CN.md",
+        "validation/gravity/results/rz-actual-runtime-20261005/summary.json",
+        "docs/development/RZActualRuntimeRegridNode-20261005.zh-CN.md",
+        "docs/development/RZActualRuntimeRollbackNode-20261005.zh-CN.md"
+      ]
+    },
+    {
+      "finding": "RZ-VISC-01",
+      "status": "NOT_RUN",
+      "actual_result": "Existing legacy curvilinear regression passes; explicit RZ diffusion still uses historical vector-Laplacian connection. This is not the approved symmetric swirl stress qualification.",
+      "unfinished_reason": "Core v1 definitions are approved. Shared DiffFlux symmetric tau_rphi/tau_zphi and paired energy/torque migration has not been implemented/validated in this external-source node; no new physical claim.",
+      "evidence": [
+        "docs/development/RZViscousStressReview-20261004.zh-CN.md",
+        "docs/development/CoreRZDecisions-20261006.zh-CN.md"
+      ]
+    },
+    {
+      "finding": "RZ-AXIS-01",
+      "status": "FAILED",
+      "actual_result": "Actual current private ELF rerun original Omega=1, N=16/32/64/128 axis/off-axis RHS; axis Linf order 0.999997 at finest pair, threshold >=1.8 retained.",
+      "unfinished_reason": "General V/W reconstruction, kinetic/EOS/source quadrature remains unresolved. Omega=4/cubic, local bands, mixed-AMR evolved/restart qualification not complete; no calibrated equilibrium patch or changed norm.",
+      "evidence": [
+        "docs/development/RZAxisEquilibriumFinding-20261004.zh-CN.md",
+        "validation/gravity/results/rz-frozen-closure-20261006/summary.json"
+      ]
+    },
+    {
+      "finding": "RZ-CONTINUOUS-FORCE-REFERENCE-01",
+      "status": "BLOCKED",
+      "actual_result": "Previous matched-source 88 cells/208 faces diagnostic complete; order16->32 maximum force drift about 2.55e-9 cm/s^2; estimate is not certified bound.",
+      "unfinished_reason": "Certified contact/internal force uncertainty <= original tolerance/10 is not established. Core v1 reference objects are confirmed; the outstanding issue is implementation/certification, not a request to reapprove definitions.",
+      "evidence": [
+        "docs/development/RZAllFaceForceReferenceFinding-20261005.zh-CN.md",
+        "validation/gravity/results/rz-all-face-force-20261005/summary.json"
+      ]
+    }
+  ]
+}

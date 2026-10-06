@@ -788,3 +788,13 @@ Main alignment, CPU build, dynamic 95-key/14-model compatibility, expression sup
 - Inert cumulative patch + fixtures + processed summaries delivered. Public Core/gates untouched.
 - Production owner identity, numerical RK/restart, viscosity/axis/continuous-force signoff remain pending; not full RZ acceptance.
 - No O8 merge, long runs, 3D, repeat timing or Windows work. 2D resource prerequisites still pending.
+
+## Compute round closure / private RZ owner + RK + checkpoint — 2026-10-06
+- Fetched compute/optim b466ce021; retained Studio parent1f743efd and Core contract4639774f. No branch merge.
+- Inert23-file cumulative candidate patch; actual Runtime/config/storage/scheduler identity, Hydro limiter/cache and numerical macro-step rollback qualified in private CPU fixture.
+- Owner11 rejects; Euler/RK2/RK3 last-stage numerical rejection/retry; three compiled mutations reject and exact ELF restored.
+- Original24 evolutions +24 real checkpoint restarts PASS: split step5/t=.0005, final step10/t=.001,10240 native words bitwise equal, original1e-12 budgets/repair0 retained.
+- finite-ring BLOCKED; symmetric viscosity NOT_RUN; axis RHS FAILED; continuous-force BLOCKED. Full RZ NOT_SIGNED.
+- 2D NOT_RUN: physical-core mapping and complete owned-resource/write-headroom guards absent. Prior JENS evidence/public gates/CPU-CUDA ELF unchanged.
+- Report: docs/development/StudioComputeRoundClosure-20261006.zh-CN.md. Raw artifacts local, processed identities/results only.
+- Freeze partial review checkpoint; Core owns O8/compute consolidation. No Windows/3D/repeated timings/long runs/new tag.
