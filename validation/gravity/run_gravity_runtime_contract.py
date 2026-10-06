@@ -10,7 +10,7 @@ p.add_argument("--output-root",type=pathlib.Path,required=True)
 modes=p.add_mutually_exclusive_group()
 modes.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
 modes.add_argument("--native-rz-regrid",action="store_true",help="Explicit internal CPU RZ Runtime AMR transaction, no physical grant")
-p.add_argument("--field-after-regrid",action="store_true",help="Native RZ regrid plus original candidate fields on mixed/coarse topology")
+p.add_argument("--field-after-regrid",action="store_true",help="Native RZ regrid plus original candidate fields on refined/coarse topology")
 p.add_argument("--regrid-rollback",action="store_true",help="Actual CPU RZ finalizer fault/rollback verification")
 a=p.parse_args()
 if a.regrid_rollback and not a.native_rz_regrid:p.error("--regrid-rollback requires --native-rz-regrid")
@@ -69,17 +69,17 @@ if a.native_rz or a.native_rz_regrid:
     summary["limitations"]=["Native candidate only; ordinary physical readers and RZ regrid/Device gates held",
         "No continuous Phi/force or evolution/conservation acceptance"]
 if a.native_rz_regrid:
-    summary["scope"]="Actual CPU RZ Runtime ordinary AMR transaction; no timestep or gravity field grant"
+    summary["scope"]="Actual CPU RZ Runtime conservative AMR transactions and authentic cold parent veto; no timestep or gravity field grant"
     summary["limitations"]=["Internal migration only; production RZ/Device gates held",
         "No continuous Phi/force, Hydro evolution or full angular science acceptance"]
 if a.field_after_regrid:
-    summary["scope"]="Actual CPU RZ Runtime mixed/coarse AMR -> native field rebind; no timestep"
+    summary["scope"]="Actual CPU RZ Runtime refined/coarse AMR -> native field rebind; no timestep"
     summary["limitations"]=["Explicit candidate only; production physical readers/Device gates held",
         "No continuous Phi/force or Hydro conservation/evolution science acceptance"]
 if a.regrid_rollback:
     summary["scope"]="Actual CPU RZ Runtime finalizer fault, source/ledger/pool rollback and retry; no timestep"
     summary["limitations"]=["Injected engineering failure only, not a physical stability/evolution gate",
-        "CPU source allocation addresses can change during deep-copy restore; no pointer-identity grant",
+        "Seven actual source Host vector addresses, values and BC frame are checked through in-place rollback; no unrelated pointer or Device ownership grant",
         "Production RZ/Device gates held"]
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)

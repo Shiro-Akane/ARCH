@@ -22,6 +22,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <span>
 #include <stdexcept>
@@ -40,6 +41,7 @@
 #include "data/GlobalDefs.h"
 #include "data/StateDiagnostics.h"
 #include "grid/Grid.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
 #include "physics/species/Species.h"
 
@@ -130,7 +132,12 @@ public:
         jeans_evaluator = std::move(evaluator);
     }
 
-    /** Inspect active accepted cells only, through authoritative EOS and metrics. */
+    /** Inspect active accepted cells only, through authoritative EOS and metrics.
+     * Native RZ Workflow: borrow the actual completed density support, derive
+     * its shared effective mean, and pass only that temporary EOS input to the
+     * same Jeans evaluator. Runtime owns the ghost/version/bounds qualification;
+     * this reader neither publishes a witness nor changes evolved native U.
+     */
     double MinimumJeansCells(const Block& block) const
     {
         if (!jeans_evaluator)
@@ -146,7 +153,24 @@ public:
                     const int cell=grid.GetIndex(i,j,k);
                     for (int species=0;species<state.GetNumSpecies();++species)
                         fractions[species]=state.X(species,cell);
-                    const auto value=jeans_evaluator(state.get(cell),fractions.data(),geometry,i,j);
+                    const auto value=[&] {
+                        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+                            const int nx=grid.GetTotalX();
+                            if(nx<3||nx>grid.stride_y||i<0||i>=nx)
+                                throw std::logic_error("Native RZ JENS requires the actual logical density support");
+                            const auto read=[&state](int index) {return state.get(index);};
+                            // Default leaf bounds derive only the numerical mean.
+                            // Genuine Runtime EOS/configured bounds already own
+                            // source acceptance; this is not a new source gate.
+                            const auto closure=RzThermodynamics::make_cell_supported(
+                                read,cell,geometry,i,std::clamp(i-1,0,nx-3));
+                            if(!closure.valid())
+                                throw std::runtime_error("Native RZ JENS rejected the actual density/inertia closure");
+                            return jeans_evaluator(closure.effective_mean,
+                                fractions.data(),geometry,i,j);
+                        }
+                        return jeans_evaluator(state.get(cell),fractions.data(),geometry,i,j);
+                    }();
                     if (value.status!=JeansDiagnostics::Status::valid)
                         throw std::runtime_error("JENS rejected nonfinite, nonpositive or unrepresentable accepted state.");
                     minimum=std::min(minimum,value.cells);
@@ -183,7 +207,13 @@ public:
         return candidate;
     }
 
-    /** Preflight the real restricted parent without allocating or publishing a pool block. */
+    /** Preflight the real restricted parent without publishing a pool block.
+     * Native RZ only checks conservative finite/rho/simplex provisional state.
+     * It has no completed parent ghosts, hence no authority to certify thermal
+     * closure or JENS. Runtime must complete and validate the whole candidate
+     * before publication, and attribute any qualified local coarsening veto.
+     * Existing geometry retains its original temporary-parent EOS/JENS path.
+     */
     bool CandidateParentResolved(const SimConfig& config, std::span<const int> siblings) const
     {
         auto candidate=CandidateParentGeometry(siblings);
@@ -195,8 +225,13 @@ public:
             children[child]=&pool->GetBlock(siblings[child]);
         const auto status=candidate.TryAverageToCoarse(children,root_grid.dim,
             config.numerics.sml_rho,config.numerics.min_eint,root_semantics);
-        // Inadmissible restricted parent vetoes this group without repairing
-        // E/J or allocating a destination. Other contract failures remain fatal.
+        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            if(status!=regrid_math::Status::Ok)
+                throw std::runtime_error(regrid_math::status_message(status));
+            return true; // provisional only; genuine final EOS/JENS is still pending
+        }
+        // Existing-geometry inadmissible parents retain their original local
+        // preflight veto; other contract failures remain fatal.
         if(status==regrid_math::Status::CoarseFluid) return false;
         if(status!=regrid_math::Status::Ok)
             throw std::runtime_error(regrid_math::status_message(status));
@@ -600,6 +635,23 @@ public:
             return restriction_;
         }
 
+        /** Exact proposed restricted-parent identity for a genuine final gate.
+         * Workflow: require this live unpublished owner and built plans; look up
+         * only actual restriction relations. Unchanged/prolonged cells return
+         * nullopt, never a nearest geometry or guessed parent identity.
+         */
+        std::optional<LogicalBlockKey> restricted_parent_key(int proposed_pool_index) const
+        {
+            require_owner();
+            if(!plans_built_)
+                throw std::logic_error("restricted parent identities require built migration plans");
+            for(const auto& relation:restrictions_)
+                if(relation.parent==proposed_pool_index)
+                    return logical_key(owner_->pool->GetBlock(relation.parent),
+                        owner_->root_grid.dim);
+            return std::nullopt;
+        }
+
         void BuildMigrationPlans(std::span<const BlockHandle> old_handles,
                                  std::span<const BlockHandle> proposed_handles,
                                  const AmrPlanScope& scope)
@@ -640,7 +692,8 @@ public:
                     proposed_lowering.at(group.destination.handle))
                     .InterpolateFromCoarse(
                         parent, group.child_index, owner_->root_grid.dim,
-                        config_.numerics.sml_rho, config_.numerics.min_eint,owner_->root_semantics);
+                        config_.numerics.sml_rho, config_.numerics.min_eint,owner_->root_semantics,
+                        config_.numerics.max_eint);
             }
             for (const auto& group : groups.restrictions) {
                 const Block* children[8]{};
@@ -908,18 +961,72 @@ public:
         bool retired_released_ = false;
     };
 
+private:
+    /** Apply exact caller-vetoed native parent families before balance ripple.
+     * Workflow: validate every key and complete active sibling family first;
+     * then clear only coarsen (-1) flags. Refine decisions remain authoritative.
+     * The borrowed span is not stored, and no live prepared relation is edited.
+     */
+    void ApplyCoarseningVetoes(std::span<const LogicalBlockKey> vetoed)
+    {
+        if(vetoed.empty())return;
+        if(root_semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::invalid_argument("coarsening vetoes require explicit Native RZ geometry");
+        const int dimension=root_grid.dim;
+        if(dimension!=2)
+            throw std::logic_error("Native RZ coarsening requires the actual two-dimensional tree");
+        std::set<LogicalBlockKey> seen;
+        std::vector<int> children_to_keep;
+        for(const auto& key:vetoed) {
+            amr_plan_detail::validate_logical_key(key,dimension);
+            if(!seen.insert(key).second)
+                throw std::invalid_argument("duplicate native coarsening veto key");
+            if(key.level==std::numeric_limits<int>::max()
+                ||key.logical_x1>std::numeric_limits<std::uint32_t>::max()/2
+                ||key.logical_x2>std::numeric_limits<std::uint32_t>::max()/2)
+                throw std::invalid_argument("native coarsening veto key exceeds exact child coordinates");
+            bool has_coarsen=false;
+            for(int ordinal=0;ordinal<(1<<dimension);++ordinal) {
+                const LogicalBlockKey child_key{dimension,key.level+1,
+                    key.logical_x1*2+std::uint32_t(ordinal&1),
+                    key.logical_x2*2+std::uint32_t((ordinal>>1)&1),0};
+                const int id=FindBlock(child_key.level,child_key.logical_x1,
+                    child_key.logical_x2,child_key.logical_x3);
+                if(id<0||PreparedRegrid::logical_key(pool->GetBlock(id),dimension)!=child_key)
+                    throw std::invalid_argument("native coarsening veto has no exact complete active child family");
+                const int flag=pool->GetBlock(id).refine_flag;
+                has_coarsen=has_coarsen||flag==-1;
+                children_to_keep.push_back(id);
+            }
+            if(!has_coarsen)
+                throw std::invalid_argument("native coarsening veto family has no coarsening candidate");
+        }
+        for(const int id:children_to_keep) {
+            auto& block=pool->GetBlock(id);
+            if(block.refine_flag==-1)block.refine_flag=0;
+        }
+    }
+
+public:
+    /** Prepare conservative topology/transfer relations without publication.
+     * A Runtime retry may supply exact native parent vetoes after restoring its
+     * frozen indicator flags. Apply those vetoes before the unchanged 2:1 ripple;
+     * final completed-state EOS/JENS acceptance remains Runtime-owned.
+     */
     PreparedRegrid PrepareRegrid(
         const SimConfig& config,
         const PreApplyRegridObserver& observer = {},
         const StagedAllocationObserver& allocation_observer = {},
         const std::function<void()>& evaluate_indicators = {},
         bool jeans_repair_only = false,
-        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {})
+        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {},
+        std::span<const LogicalBlockKey> vetoed_coarsenings = {})
     {
         PreparedRegrid prepared(*this, config);
         if (evaluate_indicators) evaluate_indicators();
         else if (jeans_repair_only) EvaluateJeansRepair(config);
         else EvaluateRefinement(config);
+        ApplyCoarseningVetoes(vetoed_coarsenings);
         RippleCheck();
         if (observer) observer(*this);
 
@@ -1041,6 +1148,9 @@ public:
     bool Regrid(const SimConfig& config,
                 const PreApplyRegridObserver& observer = {})
     {
+        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+            &&config.amr.refine_on_jeans)
+            throw std::logic_error("Native RZ JENS regrid requires the actual completed Runtime candidate finalizer");
         auto prepared = PrepareRegrid(config, observer);
         if (!prepared.topology_changed()) {
             prepared.PublishNoChangeNoexcept();

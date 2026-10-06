@@ -12,6 +12,7 @@
 #include "amr/flux/FluxRegister.h"
 #include "amr/exchange/GhostExchange.h"
 #include "amr/transfer/LimitedLinearProlongation.h"
+#include "amr/transfer/NativeRzRegridTransfer.h"
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
 #include "numerics/reconstruction/Reconstruction.h"
 #include "fixtures/amr/amr_composition_test_cases.h"
@@ -1382,7 +1383,14 @@ void test_rz_coarse_fine_ghost_angular() {
                     const double radius=hi<=0.
                         ? -.75*(std::pow(-lo,4)-std::pow(-hi,4))/(std::pow(-lo,3)-std::pow(-hi,3))
                         : .75*(std::pow(hi,4)-std::pow(lo,4))/(std::pow(hi,3)-std::pow(lo,3));
-                    state.set(cell,{1.,0.,0.,omega*radius,100.});
+                    // e0 is constant physical specific internal energy.  The native
+                    // total energy is its V average plus the independently integrated
+                    // rotational kinetic energy: <E>_V=e0+Omega^2 int(r^3)dr/(2 int(r)dr).
+                    // The same signed antiderivatives make E even across the axis.
+                    const long double l=lo,h=hi;
+                    const long double energy=100.L+static_cast<long double>(omega)*omega
+                        *(h*h*h*h-l*l*l*l)/(4.L*(h*h-l*l));
+                    state.set(cell,{1.,0.,0.,omega*radius,static_cast<double>(energy)});
                     state.enuc_rate[cell]=.25*omega;
                     state.X(0,cell)=.6;state.X(1,cell)=.4;
                 }
@@ -1401,8 +1409,10 @@ void test_rz_coarse_fine_ghost_angular() {
                     /(hi*hi*hi-lo*lo*lo);
                 expect(std::abs(state.mom_w[destination]-expected)<1.e-12*std::max(1.L,std::abs(expected)),
                     "RZ ghost did not preserve analytic rigid rotation W average");
+                const long double expected_energy=100.L+static_cast<long double>(omega)*omega
+                    *(hi*hi*hi*hi-lo*lo*lo*lo)/(4.L*(hi*hi-lo*lo));
                 expect(std::abs(state.rho[destination]-1.)<1.e-12
-                    && std::abs(state.eng[destination]-100.)<1.e-12
+                    && std::abs(state.eng[destination]-expected_energy)<1.e-12
                     && std::abs(state.X(0,destination)-.6)<1.e-12
                     && std::abs(state.X(1,destination)-.4)<1.e-12,
                     "RZ ghost changed independent V fields or composition");
@@ -1442,30 +1452,9 @@ void test_rz_coarse_fine_ghost_angular() {
             }
         };
         unchanged();
-        if(direction==1 && inner==0.) {
-            const auto selected=std::find_if(cells.transfers.begin(),cells.transfers.end(),
-                [](const auto& t) {return t.rule==amr::RefinementRule::FineGhostAverage
-                    && t.destination_cell[0]==0;});
-            expect(selected!=cells.transfers.end(),"RZ axis W counterexample route missing");
-            auto& block=block_for(selected->source.handle);
-            for(int c=0;c<selected->source_count;++c) {
-                const int cell=cell_index(block.grid,selected->source_cells[c]);
-                const bool high=c&1;
-                block.fluid_state.set(cell,{1.,0.,0.,high?-16.:1.,
-                    high?2049./16.:9./16.});
-            }
-            snapshot.clear();
-            for(int id:active)snapshot.push_back(control.pool->GetBlock(id).fluid_state);
-            rejected=false;
-            try {
-                control.ghost_exchange.ExecuteCoarseFinePlan(plans.coarse_fine,
-                    control.pool,control.tree,2,&amr::Block::fluid_state,handles,chart,bounds);
-            } catch(const std::runtime_error& e) {
-                rejected=std::string(e.what()).find("inadmissible coarse-cell")!=std::string::npos;
-            }
-            expect(rejected,"RZ ghost did not reject frozen W parent counterexample");
-            unchanged();
-        }
+        // The former raw -9/128 parent veto is not a native thermal oracle:
+        // its independent kappa=8/9 closure has e=85/8>0.  Actual thermal
+        // rejection is owned by the post-ghost Runtime quartic-density test.
     }
     expect(injections>0 && averages>0,"RZ ghost did not cover both directions");
     std::cout<<"RZ_GHOST_W_PASS injections="<<injections<<" averages="<<averages<<'\n';
@@ -1516,47 +1505,6 @@ void test_rz_rigid_rotation_transfer() {
     std::cout<<"RZ_RIGID_ROTATION_TRANSFER_PASS\n";
 }
 
-void test_rz_joint_prolongation_theta() {
-    const auto close=[](double a,double b) { return std::abs(a-b)<=1.e-12*std::max(1.,std::abs(b)); };
-    using namespace amr::regrid_math;
-    const double rho[]{1.,1.,1.,1.,1.},zero[]{0.,0.,0.,0.,0.};
-    const double angular[]{0.,-1000.,1000.,0.,0.};
-    const double energy[]{1.,1000001.,1000001.,1.,1.};
-    const double fractions[]{.5,0.,1.,.5,.5,.5,1.,0.,.5,.5};
-    ConstStateView source{{rho,zero,zero,angular,energy,zero},fractions,5};
-    ProlongationGeometry geometry{};
-    geometry.dimension=2;geometry.center=0;
-    geometry.neighbours[0]=1;geometry.neighbours[1]=2;
-    geometry.neighbours[2]=3;geometry.neighbours[3]=4;
-    geometry.coarse_volume=4.;geometry.angular_momentum=true;
-    geometry.coarse_angular_measure=8.;
-    geometry.angular_neighbour_distances[0]=geometry.angular_neighbour_distances[1]=1.;
-    for(int c=0;c<4;++c) {
-        geometry.fine_volumes[c]=(c&1)?1.5:.5;
-        geometry.fine_angular_measures[c]=(c&1)?3.5:.5;
-        geometry.angular_radial_offsets[c]=(c&1)?.25:-.25;
-    }
-    double workspace[34]{};ProlongationResult result{};
-    expect(prolong_family(source,geometry,2,1.e-14,1.e-10,workspace,result)==Status::Ok,
-           "RZ joint prolongation rejected admissible parent");
-    const double theta=result.fluid[0].mom_w/-437.5;
-    expect(theta>0. && theta<1.,"RZ joint theta fixture did not limit kinetic state");
-    double j=0.,mass=0.,energy_sum=0.,species[2]{};
-    for(int c=0;c<4;++c) {
-        expect(is_admissible_conserved_state(result.fluid[c],1.e-14,1.e-10),
-               "RZ joint theta published inadmissible child");
-        expect(close(result.rhoX[c],.5+theta*((c&1)?.0625:-.1875)),
-               "RZ rhoX did not share angular/E family theta");
-        j+=result.fluid[c].mom_w*geometry.fine_angular_measures[c];
-        mass+=result.fluid[c].rho*geometry.fine_volumes[c];
-        energy_sum+=result.fluid[c].eng*geometry.fine_volumes[c];
-        for(int sp=0;sp<2;++sp)species[sp]+=result.rhoX[sp*8+c]*geometry.fine_volumes[c];
-    }
-    expect(std::abs(j)<1.e-12 && close(mass,4.) && close(energy_sum,4.)
-        && close(species[0],2.) && close(species[1],2.),
-        "RZ common theta lost J/E/mass/rhoX integral");
-    std::cout<<"RZ_JOINT_PROLONGATION_THETA_PASS\n";
-}
 
 void test_rz_candidate_parent_veto() {
     SimConfig config{};
@@ -1566,6 +1514,7 @@ void test_rz_candidate_parent_veto() {
     config.grid.x2_min=0.;config.grid.x2_max=1.;
     config.amr.lrefinemin=0;config.amr.lrefinemax=1;
     config.amr.refine_on_rho=false;
+    config.numerics.sml_rho=1.e-14;config.numerics.min_eint=1.e-14;
     auto pool=std::make_shared<amr::MemoryPool>(8,2);
     amr::AmrTree tree(pool);
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
@@ -1575,10 +1524,8 @@ void test_rz_candidate_parent_veto() {
     for(int id:ids) {
         auto& block=pool->GetBlock(id);const auto& g=block.grid;
         for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
-            const bool high=(i-g.Is())&1;
-            const int cell=g.GetIndex(i,j,0);
-            block.fluid_state.set(cell,{1.,0.,0.,high?-16.:1.,
-                                       high?2049./16.:9./16.});
+            const bool high=(i-g.Is())&1;const int cell=g.GetIndex(i,j,0);
+            block.fluid_state.set(cell,{1.,0.,0.,high?-16.:1.,high?2049./16.:9./16.});
             block.fluid_state.X(0,cell)=1.;
         }
         states.push_back(block.fluid_state);
@@ -1586,62 +1533,42 @@ void test_rz_candidate_parent_veto() {
     int eos_calls=0;
     tree.SetJeansEvaluator([&](const FluidVector&,const double*,
         const GridMetrics::GeometryView&,int,int) {
-        ++eos_calls;
-        return JeansDiagnostics::Resolution{800.,JeansDiagnostics::Status::valid};
+        ++eos_calls;return JeansDiagnostics::Resolution{800.,JeansDiagnostics::Status::valid};
     });
-    // Explicit ordinary coarsen proposal: candidate negativity must veto even
-    // with JENS disabled; then repeat with JENS to prove positivity precedes EOS.
     for(bool jeans:{false,true}) {
         config.amr.refine_on_jeans=jeans;config.amr.jeans_cells=160.;
         auto prepared=tree.PrepareRegrid(config,{}, {},[&] {
             for(int id:tree.GetActiveBlocks())pool->GetBlock(id).refine_flag=-1;
         });
-        expect(!prepared.topology_changed(),"RZ inadmissible W parent published coarsen");
-        prepared.PublishNoChangeNoexcept();
-        expect(tree.GetActiveBlocks()==ids && pool->GetNumActiveBlocks()==4,
-               "RZ parent veto changed tree or allocated pool");
-        expect(eos_calls==0,"RZ inadmissible parent reached Jeans EOS");
-        for(std::size_t b=0;b<ids.size();++b) {
-            const auto& actual=pool->GetBlock(ids[b]).fluid_state;
-            expect(actual.rho==states[b].rho && actual.mom_w==states[b].mom_w
-                && actual.eng==states[b].eng
-                && actual.mass_fractions==states[b].mass_fractions,
-                "RZ parent veto changed fine E/J/rhoX");
+        expect(prepared.topology_changed()&&prepared.proposed_active_blocks().size()==1,
+            "native finite/simplex parent was rejected by a false raw thermal oracle");
+        expect(tree.GetActiveBlocks()==ids,"provisional prepare published accepted topology");
+        std::vector<amr::BlockHandle> old_handles;
+        for(std::size_t n=0;n<ids.size();++n)old_handles.push_back({{81000+n},{1}});
+        const std::vector<amr::BlockHandle> proposed_handles{{{82000},{2}}};
+        prepared.BuildMigrationPlans(old_handles,proposed_handles,{91001,{1},{2}});
+        const auto& plan=prepared.restriction_plan();
+        expect(!plan.operations.empty(),"native prepared parent has no real restriction plan");
+        for(const auto& op:plan.operations) {
+            expect(op.destination.handle==proposed_handles.front()
+                &&op.destination.logical.level==0&&op.destination.logical.logical_x1==0
+                &&op.destination.logical.logical_x2==0&&op.destination.logical.logical_x3==0,
+                "native parent endpoint differs from staged logical/handle identity");
+            bool source_found=false;for(const auto& handle:old_handles)source_found|=op.source.handle==handle;
+            expect(source_found,"native restriction plan refers to an unrelated source frame");
+        }
+        expect(eos_calls==0,"ghostless native preparation called EOS/JENS");
+        prepared.AbortNoexcept();
+        expect(tree.GetActiveBlocks()==ids&&pool->GetNumActiveBlocks()==4,
+            "native provisional abort changed source tree/pool ownership");
+        for(std::size_t n=0;n<ids.size();++n) {
+            const auto& u=pool->GetBlock(ids[n]).fluid_state;
+            expect(u.rho==states[n].rho&&u.mom_w==states[n].mom_w&&u.eng==states[n].eng
+                &&u.mass_fractions==states[n].mass_fractions,
+                "native provisional abort changed source E/J/rhoX");
         }
     }
-    // Now make the candidate resolvable and use authoritative IdealGas.
-    // The first axis cell has W weights 1:7, hence m_phi=15/8 (not V's 7/4).
-    SpeciesManager species;
-    species.add_species("gas",1.,1.,1.5,1.);
-    IdealGas eos(1.5,species);
-    bool saw_w_parent=false;
-    tree.SetJeansEvaluator([&](const FluidVector& u,const double* fractions,
-        const GridMetrics::GeometryView& geometry,int i,int j) {
-        ++eos_calls;
-        expect(geometry.semantics==rz,"RZ Jeans candidate lost physical chart");
-        if(geometry.dx1==1./16. && i==geometry.ng && j==geometry.ng) {
-            expect(std::abs(u.mom_w-15./8.)<1.e-12,"RZ Jeans saw V-averaged parent");
-            saw_w_parent=true;
-        }
-        const double pressure=eos.get_pressure(u,fractions);
-        const double sound=eos.get_sound_speed(u,pressure,fractions);
-        return JeansDiagnostics::evaluate_cell(u.rho,sound*sound,geometry,i,j);
-    });
-    for(int id:ids) {
-        auto& block=pool->GetBlock(id);const auto& g=block.grid;
-        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
-            const int cell=g.GetIndex(i,j,0);
-            block.fluid_state.set(cell,{1.,0.,0.,((i-g.Is())&1)?2.:1.,100.});
-        }
-    }
-    expect(tree.Regrid(config) && tree.GetActiveBlocks().size()==1,
-           "RZ resolved actual EOS candidate failed coarsen");
-    const auto& parent=pool->GetBlock(tree.GetActiveBlocks().front());
-    expect(saw_w_parent && eos_calls>0,"RZ accepted parent bypassed real EOS/JENS");
-    expect(std::abs(parent.fluid_state.mom_w[parent.grid.GetIndex(
-        parent.grid.Is(),parent.grid.Js(),0)]-15./8.)<1.e-12,
-        "RZ published parent differs from EOS/JENS candidate");
-    std::cout<<"RZ_CANDIDATE_PARENT_VETO_PASS\n";
+    std::cout<<"RZ_CANDIDATE_PARENT_PROVISIONAL_ABORT_PASS runtime_thermal_gate=false\n";
 }
 
 void test_rz_angular_restriction_counterexample() {
@@ -1663,12 +1590,27 @@ void test_rz_angular_restriction_counterexample() {
                "RZ veto reference child not admissible");
     }
     RestrictionResult result{};double workspace[1]{};
-    expect(restrict_family(source,geometry,1,1.e-14,1.e-14,workspace,result)==Status::CoarseFluid,
-           "RZ W parent failed to reject positive-child negative-internal counterexample");
+    expect(restrict_family(source,geometry,1,1.e-14,1.e-14,workspace,result)==Status::Ok,
+           "RZ provisional restriction applied an invalid Cartesian thermal veto");
     expect(result.fluid.mom_w==-111./8. && result.fluid.eng==1539./16.,
            "RZ W parent differs from independent frozen rational reference");
     expect(result.fluid.eng-.5*result.fluid.mom_w*result.fluid.mom_w==-9./128.,
            "RZ parent counterexample internal energy changed");
+    // Constant rho on [0,1]: V=1/2, W=1/3, I=1/4, hence kappa=8/9.
+    // True numerical native e=1539/16-(8/9)*(111/8)^2/2=85/8 > 0.
+    // These exact rational values are independent of the closure implementation.
+    const long double independent_e=1539.L/16.L-(8.L/9.L)*(111.L/8.L)*(111.L/8.L)/2.L;
+    expect(std::abs(independent_e-85.L/8.L)<2.e-12L,"independent native thermal rational changed");
+    Grid native_grid(amr::MAX_NG,0.,16.,-.5,.5,0.,1.);
+    native_grid.geometry="cylindrical";native_grid.dim=2;native_grid.InitializeTopology();
+    const auto native_geometry=GridMetrics::make_geometry_view(native_grid,
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
+    const auto read=[&](int){return result.fluid;};
+    const auto closure=RzThermodynamics::make_cell(read,
+        native_grid.GetIndex(native_grid.Is(),native_grid.Js(),0),native_geometry,
+        native_grid.Is(),arch::state::Bounds{1.e-14,1.e-14,100.});
+    expect(closure.valid()&&std::abs(closure.internal-static_cast<double>(independent_e))<2.e-12,
+        "actual density stencil native closure disagrees with independent kappa/e");
     geometry.angular_momentum=false;
     expect(restrict_family(source,geometry,1,1.e-14,1.e-14,workspace,result)==Status::Ok,
            "legacy V parent reference should resolve; test does not distinguish W");
@@ -1676,6 +1618,243 @@ void test_rz_angular_restriction_counterexample() {
     expect(restrict_family(source,geometry,1,1.e-14,1.e-14,workspace,result)==Status::InvalidGeometry,
            "RZ accepted zero angular measure");
     std::cout<<"RZ_ANGULAR_RESTRICTION_COUNTEREXAMPLE_PASS\n";
+}
+
+/** Independent antiderivatives for rho=Omega=1, e=1/64 on an actual cell.
+ * V~int r dr, W~int r^2 dr, I~int r^3 dr. Signed axis ghosts inherit even
+ * rho/E and odd m_phi. These expectations never call the production quadrature.
+ */
+FluidVector rz_cold_cell_reference(const Grid& grid,int i)
+{
+    long double low=grid.GetFacePosL(i),high=grid.GetFacePosR(i),sign=1.;
+    if(high<=0.) {const long double saved=low;low=-high;high=-saved;sign=-1.;}
+    const long double v=(high*high-low*low)/2.L;
+    const long double w=(high*high*high-low*low*low)/3.L;
+    const long double inertia=(high*high*high*high-low*low*low*low)/4.L;
+    return {1.,0.,0.,static_cast<double>(sign*inertia/w),
+        static_cast<double>(1.L/64.L+inertia/(2.L*v))};
+}
+
+/** Build one actual Block geometry/layout, without any scheduler/EOS witness. */
+void rz_test_block_geometry(amr::Block& block,double low,double high,
+    double axial_low,double axial_high,int species)
+{
+    block.grid=Grid(amr::MAX_NG,low,high,axial_low,axial_high,0.,1.);
+    block.grid.geometry="cylindrical";block.grid.dim=2;block.grid.InitializeTopology();
+    block.fluid_state.Preallocate(block.grid.GetTotalSize());block.fluid_state.InitSpecies(species);
+}
+
+/** Populate real logical cold-spin cells; optional ghosts-only mode preserves
+ * actual transferred interiors. Analytic fixture ghosts are explicitly not a
+ * Runtime BC/exchange publication or topology/clock qualification.
+ */
+void rz_test_fill_cold(amr::Block& block,bool ghosts_only=false)
+{
+    const auto& grid=block.grid;
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        if(ghosts_only&&i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je())continue;
+        const int index=grid.GetIndex(i,j,0);
+        block.fluid_state.set(index,rz_cold_cell_reference(grid,i));
+        block.fluid_state.enuc_rate[index]=.125;
+        for(int s=0;s<block.fluid_state.GetNumSpecies();++s)block.fluid_state.X(s,index)=s==0?1.:0.;
+    }
+}
+
+/** Actual Block prolongation/restriction with independent cold V/W/E references.
+ * No copied-parent baseline is accepted as an outer fine-cell thermal oracle.
+ * Source/fine ghosts are real analytic fixture cells; final Runtime science is
+ * separately owned. Original 2e-12 numeric budget remains unchanged.
+ */
+void test_rz_cold_block_family_roundtrip()
+{
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr long double pi=3.141592653589793238462643383279502884L;
+    const arch::state::Bounds bounds{1.e-14,1./128.,1./32.};
+    amr::Block parent{},restored{};std::array<amr::Block,4> fine;
+    rz_test_block_geometry(parent,0.,1.,-.5,.5,1);
+    rz_test_block_geometry(restored,0.,1.,-.5,.5,1);
+    rz_test_fill_cold(parent);rz_test_fill_cold(restored);
+    const FluidState original=parent.fluid_state;
+    const amr::Block* children[4]{};
+    SpeciesManager species;species.add_species("gas",1.,1.,1.4,1.);
+    IdealGas eos(1.4,species);
+    std::array<long double,4> before{},after{},refined{};
+    const auto accumulate=[&](const amr::Block& block,std::array<long double,4>& totals) {
+        const auto& g=block.grid;const auto& u=block.fluid_state;
+        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+            const int index=g.GetIndex(i,j,0);const long double l=g.GetFacePosL(i),h=g.GetFacePosR(i);
+            const long double v=pi*(h*h-l*l)*g.dx2;
+            const long double w=(2.L*pi/3.L)*(h*h*h-l*l*l)*g.dx2;
+            totals[0]+=u.rho[index]*v;totals[1]+=u.mom_w[index]*w;
+            totals[2]+=u.eng[index]*v;totals[3]+=u.rho[index]*u.X(0,index)*v;
+        }
+    };
+    accumulate(parent,before);
+    for(int c=0;c<4;++c) {
+        const double r=.5*(c&1),z=-.5+.5*((c>>1)&1);
+        rz_test_block_geometry(fine[c],r,r+.5,z,z+.5,1);
+        fine[c].InterpolateFromCoarse(parent,c,2,bounds.density,bounds.internal_min,rz);
+        children[c]=&fine[c];rz_test_fill_cold(fine[c],true);
+        const auto& g=fine[c].grid;const auto& u=fine[c].fluid_state;
+        const auto geometry=GridMetrics::make_geometry_view(g,rz);
+        const auto read=[&](int index){return u.get(index);};
+        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+            const int index=g.GetIndex(i,j,0);const auto expected=rz_cold_cell_reference(g,i),actual=u.get(index);
+            expect(std::abs(actual.rho-expected.rho)<2.e-12&&std::abs(actual.mom_u)<2.e-12
+                &&std::abs(actual.mom_v)<2.e-12&&std::abs(actual.mom_w-expected.mom_w)<2.e-12
+                &&std::abs(actual.eng-expected.eng)<2.e-12,
+                "actual cold Block prolongation differs from independent V/W antiderivatives");
+            const auto closure=RzThermodynamics::make_cell(read,index,geometry,i,bounds);
+            expect(closure.valid()&&std::abs(closure.internal-1./64.)<2.e-12,
+                "actual fine density/rotation closure lost independent cold thermal energy");
+            const double x=u.X(0,index);
+            expect(std::abs(x-1.)<2.e-12,"cold Block species mass did not follow real rho_V");
+            for(int node=0;node<RzThermodynamics::physical_node_count;++node) {
+                const auto point=RzThermodynamics::base_point(closure,
+                    RzThermodynamics::physical_node_radius(closure,node));
+                expect(arch::state::validate_eos(point,&x,1,bounds,eos)==arch::state::Status::valid,
+                    "cold transferred numerical baseline failed actual point IdealGas");
+                const double pressure=eos.get_pressure(point,&x);
+                expect(std::abs(pressure-(1.4-1.)/64.)<2.e-12,
+                    "cold baseline pressure differs from independent IdealGas reference");
+            }
+        }
+        accumulate(fine[c],refined);
+    }
+    expect(restored.TryAverageToCoarse(children,2,bounds.density,bounds.internal_min,rz)
+        ==amr::regrid_math::Status::Ok,"cold actual Block restriction used a raw kinetic veto");
+    accumulate(restored,after);
+    for(int n=0;n<4;++n)
+        expect(std::abs(refined[n]-before[n])<2.e-12L*std::max(1.L,std::abs(before[n]))
+            &&std::abs(after[n]-before[n])<2.e-12L*std::max(1.L,std::abs(before[n])),
+            "cold actual Block roundtrip lost independent mass/J/E/species integral");
+    for(int j=parent.grid.Js();j<parent.grid.Je();++j)for(int i=parent.grid.Is();i<parent.grid.Ie();++i) {
+        const int index=parent.grid.GetIndex(i,j,0);
+        expect(std::abs(restored.fluid_state.rho[index]-original.rho[index])<2.e-12
+            &&std::abs(restored.fluid_state.mom_w[index]-original.mom_w[index])<2.e-12
+            &&std::abs(restored.fluid_state.eng[index]-original.eng[index])<2.e-12,
+            "cold actual restricted cell differs from original native moments");
+    }
+    expect(parent.fluid_state.rho==original.rho&&parent.fluid_state.mom_w==original.mom_w
+        &&parent.fluid_state.eng==original.eng&&parent.fluid_state.mass_fractions==original.mass_fractions,
+        "actual Block transfer mutated immutable source native fields");
+    // Whole native [0,1] means: mphi=3/4 and E=17/64. Copied into [.5,1],
+    // kappa=392/405 gives e=17/64-(392/405)*(3/4)^2/2=-19/2880.
+    Grid outer(amr::MAX_NG,.5,8.5,-.5,.5,0.,1.);
+    outer.geometry="cylindrical";outer.dim=2;outer.InitializeTopology();
+    const FluidVector copied{1.,0.,0.,3./4.,17./64.};
+    const long double bad_e=17.L/64.L-(392.L/405.L)*(3.L/4.L)*(3.L/4.L)/2.L;
+    expect(std::abs(bad_e+19.L/2880.L)<2.e-12L,"independent copied cold reference changed");
+    const auto copy_closure=RzThermodynamics::make_cell([&](int){return copied;},
+        outer.GetIndex(outer.Is(),outer.Js(),0),GridMetrics::make_geometry_view(outer,rz),outer.Is(),bounds);
+    expect(!copy_closure.valid(),"copied parent moments were mistaken for an admissible outer fine baseline");
+    std::cout<<"RZ_COLD_BLOCK_FAMILY_PASS exact_native_integrals=true runtime_bc_qualification=false\n";
+}
+
+/** Thirteen-species public family math: independent minmod gradients need not
+ * sum to zero. Test actual family row/column conservation and a constant trace;
+ * do not call the limited profile an exact analytic physical solution.
+ */
+void test_rz_thirteen_species_family_simplex()
+{
+    using namespace amr::regrid_math;
+    constexpr int count=13;constexpr double trace=1.e-20;
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    amr::Block source{};rz_test_block_geometry(source,0.,1.,-.5,.5,count);rz_test_fill_cold(source);
+    const auto& g=source.grid;const int i=g.Is()+2,j=g.Js()+2,index=g.GetIndex(i,j,0);
+    for(int y=0;y<g.GetTotalY();++y)for(int x=0;x<g.GetTotalX();++x) {
+        const int cell=g.GetIndex(x,y,0);
+        const std::array<double,3> values=x<i?std::array<double,3>{.1,.2,.7}
+            :x==i?std::array<double,3>{.2,.3,.5}:std::array<double,3>{.25,.45,.3};
+        for(int s=0;s<count;++s)source.fluid_state.X(s,cell)=s<3?values[s]:s==12?trace:0.;
+    }
+    // Independent raw minmod increments: .05 + .10 - .20 = -.05.
+    // Finite row correction of that defect is forbidden; dependent largest
+    // Xi must make the physical profile simplex-preserving before integration.
+    expect(std::abs((.05L+.10L-.20L)+.05L)<2.e-12L,
+        "three-species nonclosure witness changed");
+    NativeRzProlongationContext context{};
+    context.source_geometry=GridMetrics::make_geometry_view(g,rz);
+    context.logical_nx=g.GetTotalX();context.logical_ny=g.GetTotalY();context.radial_i=i;context.axial_j=j;
+    const double rl=g.GetFacePosL(i),rr=g.GetFacePosR(i),rm=rl+.5*(rr-rl);
+    const double zl=g.x2_min+(j-g.ng)*g.dx2,zr=g.x2_min+(j-g.ng+1)*g.dx2,zm=zl+.5*(zr-zl);
+    for(int c=0;c<4;++c)context.children[c]={c&1?rm:rl,c&1?rr:rm,c&2?zm:zl,c&2?zr:zm};
+    std::array<double,count*prolongation_workspace_per_species> workspace{};
+    ProlongationResult result{};
+    const auto state=[&](int k){return source.fluid_state.get(k);};
+    const auto enuc=[&](int k){return source.fluid_state.enuc_rate[k];};
+    const auto fraction=[&](int s,int k){return source.fluid_state.X(s,k);};
+    expect(prolong_native_family(context,state,enuc,fraction,count,{1.e-14,1./128.,1./32.},
+        workspace.data(),result)==Status::Ok,"dependent thirteen-species native family failed finite/simplex transfer");
+    std::array<long double,count> columns{};long double volume=0.;
+    for(int c=0;c<4;++c) {
+        const auto& b=context.children[c];const long double lo=b.radial_lower,hi=b.radial_upper;
+        const long double v=(hi*hi-lo*lo)/2.L*(b.axial_upper-b.axial_lower);volume+=v;
+        double row=0.;
+        for(int s=0;s<count;++s) {
+            const double mass=result.rhoX[s*maximum_children+c];
+            expect(std::isfinite(mass)&&mass>=0.,"thirteen-species child contains a nonfinite/negative mass");
+            row+=mass;columns[s]+=mass*v;
+        }
+        expect(std::abs(row-result.fluid[c].rho)<2.e-12,
+            "thirteen-species rhoX row fails to close to actual native density");
+        expect(std::abs(result.rhoX[12*maximum_children+c]/result.fluid[c].rho-trace)
+            <=16.*std::numeric_limits<double>::epsilon()*trace,
+            "thirteen-species closure invented or erased the constant positive trace");
+    }
+    for(int s=0;s<count;++s) {
+        const long double reference=source.fluid_state.rho[index]*source.fluid_state.X(s,index)*volume;
+        expect(std::abs(columns[s]-reference)<2.e-12L*volume,
+            "thirteen-species own-V column mass differs from immutable parent target");
+    }
+    std::cout<<"RZ_THIRTEEN_SPECIES_FAMILY_PASS independent_limited_plus_dependent_simplex=true\n";
+}
+
+/** Strict FP64 counterexamples use actual logical cells and a valid source
+ * closure. Neither unrepresentable positive rhoX nor loss of a represented
+ * constant momentum may publish a pending result or introduce a physical floor.
+ */
+void test_rz_native_family_representability()
+{
+    using namespace amr::regrid_math;
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const arch::state::Bounds bounds{0.,0.,2.};
+    for(const int count:{0,2,13}) {
+        amr::Block source{};rz_test_block_geometry(source,1.,2.,0.,1.,count);
+        const auto& grid=source.grid;
+        const double mr=count==0?std::numeric_limits<double>::denorm_min():0.;
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            source.fluid_state.set(cell,{1.e-300,mr,0.,0.,1.e-300});
+            for(int sp=0;sp<count;++sp)source.fluid_state.X(sp,cell)=sp==0?1.:1.e-30;
+        }
+        NativeRzProlongationContext context{};
+        context.source_geometry=GridMetrics::make_geometry_view(grid,rz);
+        context.logical_nx=grid.GetTotalX();context.logical_ny=grid.GetTotalY();
+        context.radial_i=grid.Is()+5;context.axial_j=grid.Js()+5;
+        const int i=context.radial_i,j=context.axial_j,index=grid.GetIndex(i,j,0);
+        const double rl=grid.GetFacePosL(i),rr=grid.GetFacePosR(i),rm=rl+.5*(rr-rl);
+        const double zl=grid.x2_min+(j-grid.ng)*grid.dx2;
+        const double zr=grid.x2_min+(j-grid.ng+1)*grid.dx2,zm=zl+.5*(zr-zl);
+        for(int child=0;child<4;++child)context.children[child]={
+            (child&1)?rm:rl,(child&1)?rr:rm,(child&2)?zm:zl,(child&2)?zr:zm};
+        const auto read=[&](int cell){return source.fluid_state.get(cell);};
+        const auto enuc=[&](int cell){return source.fluid_state.enuc_rate[cell];};
+        const auto fraction=[&](int sp,int cell){return source.fluid_state.X(sp,cell);};
+        expect(RzThermodynamics::make_cell(read,index,context.source_geometry,i,bounds).valid(),
+            "subnormal counterexample source closure is not admissible");
+        ProlongationResult sentinel{};sentinel.fluid[0]={123.,124.,125.,126.,127.};
+        std::vector<double> workspace(static_cast<std::size_t>(count)*prolongation_workspace_per_species);
+        const auto status=prolong_native_family(context,read,enuc,fraction,count,bounds,
+            workspace.data(),sentinel);
+        expect(status==(count==0?Status::ParentFluid:Status::SpeciesIntegral),
+            "native family silently erased represented momentum or an unrepresentable positive trace");
+        expect(sentinel.fluid[0].rho==123.&&sentinel.fluid[0].mom_u==124.
+            &&sentinel.fluid[0].mom_v==125.&&sentinel.fluid[0].mom_w==126.
+            &&sentinel.fluid[0].eng==127.&&sentinel.rhoX==nullptr,
+            "failed native arithmetic published its pending result");
+    }
+    std::cout<<"RZ_NATIVE_REPRESENTABILITY_PASS cases=3 explicit_failure=1 no_result_publication=1\n";
 }
 
 void test_rz_regrid_roundtrip() {
@@ -1752,6 +1931,10 @@ void test_rz_regrid_roundtrip() {
     }
 }
 
+/** Axis donor/parity and topology-cache ownership only. The fixture initializes
+ * active cells; it does not provide the completed physical halo needed by the
+ * separate native coarse/fine thermodynamic transfer owner.
+ */
 void test_rz_axis_seam(bool mixed, double inner_radius)
 {
     SimConfig config{};
@@ -1813,8 +1996,9 @@ void test_rz_axis_seam(bool mixed, double inner_radius)
         auto& grid=control.pool->GetBlock(id).grid;
         grid.x1_min-=.25;grid.x1_max-=.25;
     }
-    exchange.ExecuteExchange(control.pool,control.tree,2,
-        &amr::Block::fluid_state,handles,rz);
+    const auto& restored=exchange.GetPlans(control.pool,control.tree,2,handles,rz);
+    amr::execute_coordinate_seam_plan(restored.coordinate_seam,control.pool,
+        &amr::Block::fluid_state);
     expect(exchange.PlanCacheBuilds()==builds+2,"Restored axis retained shifted plan");
     expect(exchange.GetPlans(control.pool,control.tree,2,handles)
         .coordinate_seam.transfers.empty(),"Returning to polar retained RZ plan");
@@ -2045,9 +2229,11 @@ int main()
         test_coordinate_seam_mapping();
         test_rz_coarse_fine_ghost_angular();
     test_rz_rigid_rotation_transfer();
-    test_rz_joint_prolongation_theta();
     test_rz_candidate_parent_veto();
     test_rz_angular_restriction_counterexample();
+    test_rz_cold_block_family_roundtrip();
+    test_rz_thirteen_species_family_simplex();
+    test_rz_native_family_representability();
     test_rz_regrid_roundtrip();
         test_rz_axis_seam(false,0.);
         test_rz_axis_seam(true,0.);

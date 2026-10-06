@@ -11,10 +11,14 @@
  */
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
+#include <exception>
 #include <functional>
 #include <limits>
+#include <map>
+#include <set>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -33,9 +37,206 @@ using state::StateResidencyLedger;
 using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
-/** Stage a topology transaction, migrate state, validate and publish only on success. */
+namespace {
+using RegridField=std::vector<double> FluidState::*;
+constexpr std::array<RegridField,7> regrid_fields{
+    &FluidState::rho,&FluidState::mom_u,&FluidState::mom_v,&FluidState::mom_w,
+    &FluidState::eng,&FluidState::enuc_rate,&FluidState::mass_fractions};
+
+/** Retry evidence is created only by this attempt's authentic restriction owner. */
+class NativeCoarseningVeto final : public std::runtime_error {
+public:
+    const NativeCoarseningVetoRecord record;
+    NativeCoarseningVeto(const std::string& message,NativeCoarseningVetoRecord value)
+        :std::runtime_error(message),record(std::move(value)) {}
+};
+
+/** Exact thermal phase/status filter; never classify EOS exceptions by strings. */
+bool native_thermal_veto(const RzThermodynamics::AcceptanceDiagnostic& d) noexcept
+{
+    return d.phase==RzThermodynamics::AcceptancePhase::effective_thermal
+        &&d.inertia_mapping_valid&&d.node==-1
+        &&(d.status==state::Status::unresolved_energy
+            ||d.status==state::Status::energy_ceiling
+            ||d.status==state::Status::invalid_thermodynamics);
+}
+
+/** One original Current copy and seven actual leases, preserving borrowed spans.
+ * BC/exchange changes Current arrays and replaces diffusion controls, but does
+ * not write capture pointees. Restore these values/pointers in place; allocation
+ * drift is a fatal ownership violation rather than a successful parent veto.
+ */
+struct RegridSourceBackup {
+    int pool_index;
+    amr::Block* block;
+    FluidState values;
+    std::array<const double*,7> pointers{};
+    std::array<std::size_t,7> sizes{};
+    RegridSourceBackup(int id,amr::Block& live)
+        :pool_index(id),block(&live),values(live.fluid_state) {
+        for(std::size_t f=0;f<regrid_fields.size();++f) {
+            const auto& field=live.fluid_state.*regrid_fields[f];
+            pointers[f]=field.data();sizes[f]=field.size();
+        }
+    }
+    /** Allocation-free rejection, with original array addresses intact. */
+    void restore(amr::Block& live) noexcept {
+        if(&live!=block)std::terminate();
+        for(std::size_t f=0;f<regrid_fields.size();++f) {
+            const auto& field=live.fluid_state.*regrid_fields[f];
+            if(field.data()!=pointers[f]||field.size()!=sizes[f])std::terminate();
+        }
+        for(const auto field:regrid_fields)
+            std::copy((values.*field).begin(),(values.*field).end(),
+                (live.fluid_state.*field).begin());
+        live.fluid_state.n_species_=values.n_species_;
+        live.fluid_state.block_total_size_=values.block_total_size_;
+        std::swap(live.fluid_state.stage_repairs,values.stage_repairs);
+        live.fluid_state.diffusion_boundary=values.diffusion_boundary;
+        live.fluid_state.boundary_flux_capture=values.boundary_flux_capture;
+    }
+};
+
+/** Metadata-only identity of an accepted source, not another hierarchy copy. */
+struct NativeRegridSource {
+    int id;
+    const amr::Block* block;
+    LogicalBlockIdentity logical;
+    std::array<const double*,7> pointers{};
+    std::array<std::size_t,7> sizes{};
+    int species,extent;
+    std::array<int,8> layout;
+    std::array<double,9> coordinates;
+    NativeRegridSource(int pool_id,const amr::Block& b,int dimension)
+        :id(pool_id),block(&b),logical{dimension,b.level,b.logical_x1,b.logical_x2,b.logical_x3},
+          species(b.fluid_state.GetNumSpecies()),extent(b.fluid_state.block_total_size_),
+          layout{b.grid.dim,b.grid.ng,b.grid.stride_y,b.grid.stride_z,b.grid.total_size,
+              b.grid.nblockx1,b.grid.nblockx2,b.grid.nblockx3},
+          coordinates{b.grid.x1_min,b.grid.x1_max,b.grid.x2_min,b.grid.x2_max,
+              b.grid.x3_min,b.grid.x3_max,b.grid.dx1,b.grid.dx2,b.grid.dx3} {
+        for(std::size_t f=0;f<regrid_fields.size();++f) {
+            const auto& field=b.fluid_state.*regrid_fields[f];
+            pointers[f]=field.data();sizes[f]=field.size();
+        }
+    }
+    /** Reject pool, key, grid or field-allocation drift before the next attempt. */
+    bool matches(const amr::Block& b,int dimension) const noexcept {
+        const LogicalBlockIdentity key{dimension,b.level,b.logical_x1,b.logical_x2,b.logical_x3};
+        const std::array<double,9> geometry{b.grid.x1_min,b.grid.x1_max,b.grid.x2_min,b.grid.x2_max,
+            b.grid.x3_min,b.grid.x3_max,b.grid.dx1,b.grid.dx2,b.grid.dx3};
+        const std::array<int,8> actual_layout{b.grid.dim,b.grid.ng,b.grid.stride_y,b.grid.stride_z,
+            b.grid.total_size,b.grid.nblockx1,b.grid.nblockx2,b.grid.nblockx3};
+        if(&b!=block||b.id!=id||!b.active||key!=logical||geometry!=coordinates
+            ||actual_layout!=layout||b.grid.geometry!="cylindrical"
+            ||b.fluid_state.GetNumSpecies()!=species||b.fluid_state.block_total_size_!=extent)return false;
+        for(std::size_t f=0;f<regrid_fields.size();++f) {
+            const auto& field=b.fluid_state.*regrid_fields[f];
+            if(field.data()!=pointers[f]||field.size()!=sizes[f])return false;
+        }
+        return true;
+    }
+};
+} // namespace
+
+/** One ordinary/device attempt, or bounded exact native-parent veto retries.
+ * Workflow: accept source ghosts/EOS once, freeze exact source identities and
+ * evaluated flags, then retry fresh transactions only for authentic restricted
+ * interior thermal/JENS failures. Every failure has already restored Current
+ * values/leases and aborted its unpublished namespace before reaching this loop.
+ */
 bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candidate,
     const std::function<void()>& after_host_finalization)
+{
+    if(!native_rz_candidate)
+        return execute_regrid_attempt(jeans_repair_only,false,after_host_finalization);
+    if(host_hydro_transaction_||compute_backend||jeans_repair_only
+        ||geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("Native coarsening retry requires its actual CPU RZ owner");
+    ensure_fluid_ghosts(); // actual selected EOS and completed source qualification
+    topology_registry.validate_committed_snapshot(observe_topology());
+    const auto source_active=amr_ctrl.tree->GetActiveBlocks();
+    const auto source_handles=stage_handles;
+    const auto* const handle_address=stage_handles.data();
+    const auto* const source_pool=amr_ctrl.pool.get();
+    const auto* const source_tree=amr_ctrl.tree.get();
+    auto* const source_ledger=residency_ledger.get();
+    const auto source_epoch=source_ledger->active_epoch();
+    const auto source_version=current_interior_version();
+    const auto boundary_context=bc_handler.snapshot_stage_context();
+    std::vector<NativeRegridSource> sources;
+    sources.reserve(source_active.size());
+    for(const int id:source_active)sources.emplace_back(id,amr_ctrl.pool->GetBlock(id),config.grid.dim);
+    const auto require_sources=[&] {
+        if(compute_backend||amr_ctrl.pool.get()!=source_pool||amr_ctrl.tree.get()!=source_tree
+            ||residency_ledger.get()!=source_ledger
+            ||source_ledger->active_epoch()!=source_epoch
+            ||stage_handles.data()!=handle_address||stage_handles!=source_handles
+            ||amr_ctrl.tree->GetActiveBlocks()!=source_active
+            ||!bc_handler.stage_context_matches(boundary_context))
+            throw std::logic_error("Native coarsening retry source owner/epoch changed");
+        topology_registry.validate_committed_snapshot(observe_topology());
+        for(std::size_t index=0;index<sources.size();++index) {
+            if(!sources[index].matches(amr_ctrl.pool->GetBlock(sources[index].id),config.grid.dim))
+                throw std::logic_error("Native coarsening retry source allocation/layout changed");
+            source_ledger->require_readable({source_handles[index],StateSlot::Current},
+                {ExecutionSide::Host,source_version,true,true});
+        }
+    };
+    std::vector<std::pair<int,int>> frozen_flags;
+    std::set<amr::LogicalBlockKey> potential_parents;
+    bool evaluated=false;
+    const auto evaluate_native=[&] {
+        require_sources();
+        if(evaluated) {
+            for(const auto& [id,flag]:frozen_flags)amr_ctrl.pool->GetBlock(id).refine_flag=flag;
+            return;
+        }
+        amr_ctrl.tree->EvaluateRefinement(config);
+        frozen_flags.reserve(source_active.size());
+        std::map<amr::LogicalBlockKey,std::set<amr::LogicalBlockKey>> groups;
+        for(const int id:source_active) {
+            const auto& b=amr_ctrl.pool->GetBlock(id);
+            frozen_flags.emplace_back(id,b.refine_flag);
+            if(b.refine_flag==-1&&b.level>0) {
+                const amr::LogicalBlockKey parent{config.grid.dim,b.level-1,
+                    b.logical_x1>>1,b.logical_x2>>1,b.logical_x3>>1};
+                groups[parent].insert({config.grid.dim,b.level,b.logical_x1,b.logical_x2,b.logical_x3});
+            }
+        }
+        for(const auto& [parent,children]:groups)
+            if(children.size()==static_cast<std::size_t>(1<<config.grid.dim))potential_parents.insert(parent);
+        evaluated=true;
+    };
+    std::vector<amr::LogicalBlockKey> vetoed;
+    native_coarsening_veto_records_.clear();
+    for(;;) {
+        require_sources();
+        try {
+            return execute_regrid_attempt(false,true,after_host_finalization,vetoed,evaluate_native);
+        } catch(const NativeCoarseningVeto& failure) {
+            require_sources(); // attempt restored arrays/BC and aborted before retry
+            if(failure.record.scope.from_epoch!=source_epoch
+                ||!potential_parents.contains(failure.record.parent)
+                ||std::find(vetoed.begin(),vetoed.end(),failure.record.parent)!=vetoed.end()
+                ||vetoed.size()>=potential_parents.size())
+                throw std::logic_error("Native coarsening veto is duplicate, foreign or outside finite source families");
+            vetoed.push_back(failure.record.parent);
+            native_coarsening_veto_records_.push_back(failure.record);
+        } catch(...) {
+            // No physics/output rollback is invented. The attempt owns source
+            // restoration; preserve the accepted BC frame before propagating.
+            if(residency_ledger.get()==source_ledger&&stage_handles==source_handles)
+                bc_handler.restore_stage_context_noexcept(boundary_context);
+            throw;
+        }
+    }
+}
+
+/** Stage one fresh topology transaction; ordinary/device arithmetic is shared. */
+bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz_candidate,
+    const std::function<void()>& after_host_finalization,
+    std::span<const amr::LogicalBlockKey> vetoed_coarsenings,
+    const std::function<void()>& evaluate_native_indicators)
 {
     if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes regrid");
     if(after_host_finalization&&!native_rz_candidate)
@@ -63,7 +264,7 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
 
     // Topology decisions consume compact device-computed indicators, not
     // a Host copy of every conserved/species field.
-    if (!compute_backend) ensure_fluid_ghosts();
+    if (!compute_backend&&!native_rz_candidate) ensure_fluid_ghosts();
     const std::vector<int> old_active(
         amr_ctrl.tree->GetActiveBlocks().begin(),
         amr_ctrl.tree->GetActiveBlocks().end());
@@ -122,7 +323,9 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
             config.amr.refine_on_jeans
                 ? std::function<bool(const amr::Block&,std::span<const int>)>(evaluate_device_parent)
                 : std::function<bool(const amr::Block&,std::span<const int>)>{})
-        : amr_ctrl.tree->PrepareRegrid(config, {}, {}, {}, jeans_repair_only);
+        : amr_ctrl.tree->PrepareRegrid(config, {}, {},
+            native_rz_candidate?evaluate_native_indicators:std::function<void()>{},
+            jeans_repair_only,{},vetoed_coarsenings);
     auto topology_candidate = topology_registry.stage_reconciliation(
         observe_blocks(prepared.proposed_active_blocks()));
     const auto& proposed = topology_candidate.reconciliation();
@@ -273,18 +476,57 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
     }
 #endif
 
-    prepared.ExecuteMigration();
-    transaction.mark_ready();
+    try {
+        prepared.ExecuteMigration();
+        if(native_rz_candidate) {
+            const auto bounds=native_rz_eos_bounds();
+            std::vector<double> fractions(static_cast<std::size_t>(specs.count()));
+            const auto proposed_ids=prepared.proposed_active_blocks();
+            for(std::size_t patch=0;patch<proposed_ids.size();++patch) {
+                const int id=proposed_ids[patch];
+                const auto key=prepared.restricted_parent_key(id);
+                if(!key)continue;
+                const auto& block=amr_ctrl.pool->GetBlock(id);
+                const auto& fluid=block.fluid_state;const auto& grid=block.grid;
+                const auto geometry=GridMetrics::make_geometry_view(grid,geometry_semantics_);
+                const auto read=[&fluid](int cell) {return fluid.get(cell);};
+                // Failure-only: these three migrated active rho observations
+                // are final and independent of unknown candidate BC/ghosts.
+                for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is()+1;i<grid.Ie()-1;++i) {
+                    const int cell=grid.GetIndex(i,j,0);
+                    for(int sp=0;sp<specs.count();++sp)fractions[sp]=fluid.X(sp,cell);
+                    if(RzThermodynamics::provisional_native_state(read(cell),fractions.data(),
+                        specs.count(),1,bounds)!=state::Status::valid)
+                        throw std::runtime_error("Restricted native parent provisional state is invalid");
+                    const auto closure=RzThermodynamics::make_cell(read,cell,geometry,i,bounds);
+                    if(!closure.valid()) {
+                        const RzThermodynamics::AcceptanceDiagnostic diagnostic{
+                            closure.inertia_mapping_valid?RzThermodynamics::AcceptancePhase::effective_thermal
+                                :RzThermodynamics::AcceptancePhase::density_or_inertia,
+                            closure.status,cell,i,j,-1,closure.inertia_mapping_valid};
+                        if(!native_thermal_veto(diagnostic))
+                            throw RzThermodynamics::AcceptanceError("Restricted native parent early closure is invalid",diagnostic);
+                        throw NativeCoarseningVeto("Restricted native parent interior cannot represent its conservative thermal state",
+                            {*key,NativeCoarseningVetoKind::EffectiveThermal,diagnostic,scope,
+                                proposed.handles_in_observation_order[patch],{},0.});
+                    }
+                }
+            }
+        }
+        transaction.mark_ready();
+    } catch(...) {
+        transaction.abort([&]() noexcept {prepared.AbortNoexcept();});
+        throw;
+    }
 
-    struct HostStateBackup {
-        int pool_index = -1;
-        FluidState state;
-    };
     struct RegridPublication {
         std::unique_ptr<StateResidencyLedger> ledger;
         std::vector<amr::BlockHandle> handles;
         arch::scheduler::PublicationWitness topology_witness{};
-        std::vector<HostStateBackup> source_backups;
+        std::vector<RegridSourceBackup> source_backups;
+        BCHandler::StageContextSnapshot boundary_context;
+        explicit RegridPublication(const BCHandler& boundary)
+            :boundary_context(boundary.snapshot_stage_context()) {}
     };
     static_assert(std::is_nothrow_swappable_v<FluidState>);
 
@@ -301,7 +543,7 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                                     != transaction_scope.to_epoch)
                                 throw std::logic_error(
                                     "AMR publication scope drifted");
-                            RegridPublication payload;
+                            RegridPublication payload(bc_handler);
                             payload.handles = committed_topology
                                 .handles_in_observation_order;
                             payload.topology_witness =
@@ -312,10 +554,8 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                             payload.source_backups.reserve(
                                 old_active.size());
                             for (const int pool_index : old_active) {
-                                payload.source_backups.push_back({
-                                    pool_index,
-                                    amr_ctrl.pool->GetBlock(pool_index)
-                                        .fluid_state});
+                                payload.source_backups.emplace_back(pool_index,
+                                    amr_ctrl.pool->GetBlock(pool_index));
                             }
                             return payload;
                         },
@@ -324,12 +564,9 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                             const auto restore_source_states = [&]() noexcept {
                                 for (auto& backup
                                      : payload.source_backups) {
-                                    using std::swap;
-                                    swap(amr_ctrl.pool
-                                             ->GetBlock(backup.pool_index)
-                                             .fluid_state,
-                                         backup.state);
+                                    backup.restore(amr_ctrl.pool->GetBlock(backup.pool_index));
                                 }
+                                bc_handler.restore_stage_context_noexcept(payload.boundary_context);
                             };
                             try {
                                 if (transaction_scope != scope)
@@ -348,7 +585,8 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                                 // It runs inside the same fallible finalizer,
                                 // after real BC/ghost work and before publication.
                                 if(after_host_finalization)after_host_finalization();
-                                (void)arch::scheduler::complete_boundary(
+                                try {
+                                    (void)arch::scheduler::complete_boundary(
                                     staged_context, payload.handles,
                                     StateSlot::Current,
                                     payload.topology_witness.version,
@@ -357,6 +595,30 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                                        arch::state::CompletionToken token) {
                                         return token;
                                     });
+                                } catch(const NativeBoundaryAcceptanceError& error) {
+                                if(native_rz_candidate&&!after_host_finalization&&error.slot==StateSlot::Current
+                                    &&error.version==payload.topology_witness.version
+                                    &&native_thermal_veto(error.diagnostic)) {
+                                    const auto& active=amr_ctrl.tree->GetActiveBlocks();
+                                    const auto found=std::find(active.begin(),active.end(),error.pool_index);
+                                    if(found!=active.end()) {
+                                        const auto patch=static_cast<std::size_t>(found-active.begin());
+                                        const auto& grid=amr_ctrl.pool->GetBlock(error.pool_index).grid;
+                                        const auto& d=error.diagnostic;
+                                        if(patch<payload.handles.size()&&payload.handles[patch]==error.handle
+                                            &&d.i>=grid.Is()&&d.i<grid.Ie()&&d.j>=grid.Js()&&d.j<grid.Je()
+                                            &&d.index==grid.GetIndex(d.i,d.j,0)) {
+                                            const auto key=prepared.restricted_parent_key(error.pool_index);
+                                            if(key)
+                                                throw NativeCoarseningVeto(error.what(),
+                                                    {*key,NativeCoarseningVetoKind::EffectiveThermal,d,scope,
+                                                        error.handle,error.version,0.});
+                                        }
+                                    }
+                                }
+                                throw; // ghost/EOS/survivor/prolongation failures stay fatal
+                                }
+
                                 for (const amr::BlockHandle handle
                                      : payload.handles) {
                                     payload.ledger->require_readable(
@@ -364,6 +626,20 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                                         {ExecutionSide::Host,
                                          payload.topology_witness.version,
                                          true, true});
+                                }
+                                if(native_rz_candidate&&config.amr.refine_on_jeans) {
+                                    const auto& actual_ids=amr_ctrl.tree->GetActiveBlocks();
+                                    for(std::size_t patch=0;patch<actual_ids.size();++patch) {
+                                        const int id=actual_ids[patch];
+                                        const auto key=prepared.restricted_parent_key(id);
+                                        const double minimum=amr_ctrl.tree->MinimumJeansCells(amr_ctrl.pool->GetBlock(id));
+                                        if(!std::isfinite(minimum)||minimum<=0.)
+                                            throw std::runtime_error("Completed candidate JENS result is invalid");
+                                        if(key&&minimum<config.amr.jeans_cells)
+                                            throw NativeCoarseningVeto("Completed restricted parent remains JENS underresolved",
+                                                {*key,NativeCoarseningVetoKind::JeansResolution,std::nullopt,
+                                                    scope,payload.handles[patch],payload.topology_witness.version,minimum});
+                                    }
                                 }
                             } catch (...) {
                                 restore_source_states();

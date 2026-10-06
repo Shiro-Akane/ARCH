@@ -189,9 +189,19 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
             }
         };
         require_frame();
-        for (const auto& patch : patches) {
+        for (std::size_t index=0;index<patches.size();++index) {
+            const auto& patch=patches[index];
             const auto& block = amr_ctrl.pool->GetBlock(patch.pool_index);
-            eos_acceptance(block.*member, block.grid);
+            try {
+                eos_acceptance(block.*member, block.grid);
+            } catch(const RzThermodynamics::AcceptanceError& error) {
+                // Frame/owner drift is fatal before attaching provenance. The
+                // original phase/status survives; mean/physical EOS faults are
+                // not converted into an effective-thermal failure.
+                require_frame();
+                throw NativeBoundaryAcceptanceError(error.what(),patch.pool_index,
+                    frozen_handles[index],slot,version,error.diagnostic());
+            }
         }
         // EOS and callbacks must not change the BC time/purpose/revision or
         // any publication/layout owner during the real whole-domain gate.

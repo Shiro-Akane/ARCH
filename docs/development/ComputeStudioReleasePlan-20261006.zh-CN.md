@@ -215,3 +215,37 @@
 - 本轮 175 个已通过且所有消费者结束的 H5，共 13,863,080 字节，已处理为 4,385 个 dataset 摘要并由主智能体逐文件身份复核后清理；累计清理 1,382 文件、260,124,536 字节。raw 输入、日志、科学判断与清理回执保留本机，失败和历史中断证据保持。Host 余量约 23.9 GB，始终维持 8 GiB 与下一写入 64 MiB 预留。
 - 独立 DPS 短数学参考经精确有理数复核：对于二次径向密度及仿射物理速度/温度，4×2 Gauss 积分的 V/W/J/E 次数满足既有求积精确性。改变密度闭合时，细粗化的有效热能差不服从固定密度的正方差结论。唯一返修更正了“仅能量次数提高”的措辞；只采用参考，不签收运行算法。两次共 41.75 秒，费用估计 0.00609095–0.0121819 美元，实际账单未知，无阻塞等待或新增源码返工。
 - 下一出口为真实 Native AMR 传递与完成目标 ghost 后的 EOS/JENS。旧 raw 点热能粗化 veto 不能当作 native 科学反例，需用独立的目标密度/惯量闭合判断。选定 MUSCL/PPM/PCM、完整耦合、CUDA、GUI 原生人工验收和两平台配对长时/计时仍未完成；本节点完整 CPU 回归不能拼成整个 release 验收。本条 UTC 写入时间：2026-10-06T22:49:54.281251+00:00。
+
+
+### 执行回查：2026-10-07 08:08 JST
+
+- 完整域边界节点已推送 `c26ba5af0`；新原生传递节点仍在候选/复核中，不能复用上个执行物的 CPU 通过记录。下一阶段已经冻结真实 source closure、物理 primitive minmod、V/W 独立守恒残差、同 family theta 与 N−1 独立组分及一个 closure 组分；后者防止多组分独立限幅破坏 simplex。ENUC 保持原独立 signed minmod，原两次燃烧、普通方法及阈值保持。
+- 精确有理数参考按真实 16-cell patch、NG4 和单边 clamp 确认：rho=32−r^4、Omega1、e0=2^-25 时，fine 全 48 个 unique 径向逻辑状态合法，coarse 有 9 个 active 和 3 个 ghost 内能非法，真实 M/J/E 积分守恒。这是数学参考，实际用户边界、转移、EOS 与 rollback 尚需同一 owner 验收。
+- 原生 restriction 保留原 V/W 守恒积分，源码候选已去掉 raw 点热能判定；最终真实目标 EOS 权威保持。实际新 restricted parent 的三密度支撑若全部位于已迁移 active interiors，可提前做同一 closure 的 fail-only 检查并精确归属 veto；这是不依赖 ghost 的必要失败判定，不能产生 EOS/GhostValid PASS。其余新目标、ghost、selected EOS、身份和非法 source 必须继续完成真实域检查，无法归属时明确失败。
+- Runtime 候选负责一次冻结 indicator 后有限 fresh-plan veto，source 数组原地址 rollback、完整候选 EOS/JENS 和精确 parent/epoch 诊断；共享 math、真实 Block/ghost overlay、测试各自独占文件，主智能体统一编译。Native Device、公有 RZ、全耦合、计时/长跑与 GUI 原生验收仍未完成。唯一工作区和 Host 磁盘预留约束保持。
+- DPS 公共残差恒等式核对实际 63.71 秒，经主智能体独立 antiderivative/Fraction 复核采用；费用估计 0.0091627–0.0183254 美元、账单未知，没有模型/编译资源竞争或阻塞等待。它确认 own-measure conservation/simplex 数学恒等式，没有认证目标热闭合或算法。一次本地只读源码检查的自动审批超时，按工具允许的单次重试成功，未因此改变授权或科学标准。本条 UTC 实际写入时间：2026-10-06T23:08:23.119130+00:00。
+
+
+### 执行回查：2026-10-07 08:23 JST
+
+- 原生 AMR 数学、实际 Block/ghost 同帧 overlay、Tree 和 Runtime 候选已由主智能体复核并集成，尚未编译或运行。旧 raw native 点热能 prolongation 分支及其错误 oracle 退役；普通 prolongation 的操作次序保持，真实 Native 分支使用既有 minmod、V/W 和 Gauss authority，ENUC 独立，原 max_eint 传给真实消费者。
+- 独立交叉检查发现两项极小量可表示性缺口：正 rho*Xi 下溢，以及直接求积丢失可表示的常量 denorm 动量。唯一正式返修在原候选范围内增加 fail-closed 产品检查及按 component 自身尺度的 B/final 家族守恒核对，采用既有 64eps，无物理 floor 或密度绝对容差。N−1 梯度只计算一次并使用现有临时工作区，没有持久第二套状态。真实编译/反例尚待执行。
+- 有限粗化重试只接受 authentic 新 restricted parent 的 effective thermal/JENS 失败：source/ghost/EOS/身份/几何/回调失败继续致命；存在验证回调时 late thermal 也致命。一次冻结 source/indicator，每次真实 fresh plan，原位恢复七组源数组及 BC context。完整候选 JENS 无效量在任何块致命，只有 restricted parent 分辨率不足可 veto。公共 RZ/Device、完整选定重构/耦合、GUI UAT、冻结计时与长跑仍未完成。
+- 四份已授权边界源码的外部审查逻辑任务已耗尽两次交付尝试，不继续重试；新可用边界已由本地真实 owner 核对。DPS 已接受内容仅为短公共数学参考，不作为算法通过。当前数学与 Runtime 复核、实际测试候选是不同责任文件；重负载由主智能体独占。UTC 实际写入时间：2026-10-06T23:23:04.257833+00:00。
+
+
+### 执行回查：2026-10-07 08:43 JST
+
+- 新 Native AMR 节点真实完整 CPU 编译通过（251.440秒）。原生 ghost、冷旋转真实 Block、13组分、极小量可表示性与独立M/J/E roundtrip 已在 AMR owner 实际通过；同 owner 后续轴/cache 夹具此前调用了需要完整物理halo的整个域交换，而它只初始化 active cells，正在收束为其原有坐标seam职责。数值预算与轴反射断言保持。最新窄目标重编通过（8.217秒），尚待实际重跑，不将部分通过称为整个 owner 通过。
+- 实际 Runtime 冷四次密度 fine→coarse 的真实目标内能 veto 通过（含编译35.264秒）；普通细化/粗化 M/J/E/组分相对守恒误差为0至8.75×10^-17。晚期故障、七组源数组原地址及逐位回滚、BC context恢复与真实场绑定检查也实际通过，场积分与安全误差保持原预算。所有结果仍仅覆盖内部 CPU AMR/回滚，不签收公开 RZ 演化或 Device。
+- 只读真实坐标公式探针发现非二进制计算域跨层面坐标可差1–2 ULP，当前 exact midpoint/outer identity 会误拒绝 genuine dyadic family。没有据样本选择经验坐标epsilon，亦未用状态守恒容差替代拓扑/几何身份；正在冻结共享坐标或有证据的几何owner方案，公开科学 gate 保持关闭。
+- 新 DPS 公共组分均值/行和参考49.12秒，主智能体用精确有理数独立复核后仅采用该恒等式；返回的严格正密度 theta 描述存在边界问题，未采用。不签收实现；估计费用0.0082111–0.0164222美元，账单未知，无阻塞等待、源码返工或模型资源竞争。
+- 私有CPU单进程夹具编译与窄CPU2目标重编发生短暂重叠，两者现均已结束；后续继续由主智能体顺序管理重负载。E盘保留阈值未触发，无新增模拟raw。CUDA、完整耦合、GUI人工出口、匹配平台计时及长时验收仍未完成。UTC实际写入时间：2026-10-06T23:43:16.291351+00:00。
+
+
+### 执行回查：2026-10-07 08:52 JST
+
+- 本节点真实完整 CTest 回归76/76通过，CTest owner无skip，78.47秒；逐项inventory/JUnit核对通过，执行物SHA256为ff86a4f9a7eee984b253cf4623f64cf72dad420efbc51d62062eae4d4741456c。保留嵌套Python子测试自己的跳过记录：Preview一个可选simulation oracle、当前Python环境的memory guard十八项平台依赖测试；不能将CTest无skip描述为所有内部case均运行。此前具备pidfd的系统Python guard独立50项证据保持原身份。
+- Native Runtime细化/粗化与七数组原地址回滚实际通过；新增field-after-regrid真实失败为RingBoundary WorkLimit：74989leaf加25011parent恰好100000总visits。没有改变relative tolerance=1e-10/absolute=0/maxcycles=200，也不通过更换宽松输入绕开。实际2048source/160physicalfaces的树规模归因正在核对，下一节点用真实规模导出的有限工作预算与原积分/error authority处理；不将去除错误资源截断称为性能优化。失败输入/ELF/日志和输出保留。
+- 几何修复选择真实root域、level、logical cell生成身份认证，保持actual坐标公式与普通路径不变；跨层浮点端点不能直接作为逻辑2:1的identity oracle。共享V/W child-sum权重只负责zero-mean residual，actualchild/parent测度比负责真实积分gate，保留原64epsilon及共同theta，没有独立修正E/J。真正的z周期像需由原config授权并携带source chart平移；不使用未经授权的modulo。该方案仍在候选阶段，未编译，公开RZ/Device门槛保持。
+- 唯一工作区、共享数学库、Host磁盘预留和通过raw处理要求保持。源码审查原额度耗尽不重开；本轮三个内部worker分别做新identity候选、ring归因、只读raw处理，文件和计算职责分离。CUDA/GUI人工/连续力与全耦合/配对性能及长时出口仍未完成。本条UTC实际写入时间：2026-10-06T23:52:12.422610+00:00。

@@ -8,6 +8,7 @@
 #include "physics/eos/IdealGas.h"
 #include "physics/gravity/self/SelfGravity.h"
 #include "physics/gravity/GravityExecution.h"
+#include <array>
 #include <cstring>
 #include <filesystem>
 #include <iostream>
@@ -22,7 +23,15 @@ static bool same_state(const FluidState& a,const FluidState& b){
         &&bits(a.mom_w,b.mom_w)&&bits(a.eng,b.eng)&&bits(a.enuc_rate,b.enuc_rate)
         &&bits(a.mass_fractions,b.mass_fractions);
 }
-/** Check the real Stage copies fresh restored allocation pointers into gather. */
+
+/** Borrowed addresses of the seven actual source-owned Host arrays. */
+using SourceAddresses=std::array<const double*,7>;
+static SourceAddresses source_addresses(const FluidState& s){
+    return {s.rho.data(),s.mom_u.data(),s.mom_v.data(),s.mom_w.data(),
+        s.eng.data(),s.enuc_rate.data(),s.mass_fractions.data()};
+}
+
+/** Check the real Stage gathers the original in-place-restored source pointers. */
 class FreshPointers final:public Physical::Gravity::GravityExecution {
     amr::AMRControl& control_;
     std::shared_ptr<Physical::Gravity::GravityExecution> host_=
@@ -83,10 +92,11 @@ int main(int argc,char** argv){
         versions.push_back(runtime.stage_context().ledger.inspect(
             {handles[i],arch::state::StateSlot::Current}).interior.version);
     }
-    int callbacks=0,peak_pool=pool_before,address_changes=0;
+    std::vector<SourceAddresses> original_addresses;
+    for(int id:roots)original_addresses.push_back(source_addresses(control.pool->GetBlock(id).fluid_state));
+    const auto original_boundary=boundary.snapshot_stage_context();
+    int callbacks=0,peak_pool=pool_before;
     for(int attempt=0;attempt<3;++attempt){
-        std::vector<const double*> addresses;
-        for(int id:roots)addresses.push_back(control.pool->GetBlock(id).fluid_state.rho.data());
         bool exact_failure=false;
         try {
             runtime.regrid_native_rz_candidate(0,0.,[&]{
@@ -101,6 +111,7 @@ int main(int argc,char** argv){
                     s.set(0,{-777.,-778.,-779.,-780.,-781.});
                     s.enuc_rate[0]=-782.;s.mass_fractions[0]=-783.;
                 }
+                boundary.configure_stage(3.+attempt,arch::boundary::BoundaryPurpose::Hydro);
                 throw std::runtime_error("INTERNAL_RZ_FINALIZER_FAULT");
             });
         }catch(const std::runtime_error& error){
@@ -111,11 +122,13 @@ int main(int argc,char** argv){
         require(control.tree->GetActiveBlocks()==roots&&runtime.handles()==handles,"failed finalizer published topology");
         require(control.pool->GetNumActiveBlocks()==pool_before,"failed finalizer leaked staged blocks");
         require(runtime.regrid_records().empty(),"failed finalizer recorded a successful transaction");
+        require(boundary.stage_context_matches(original_boundary),"failed finalizer did not restore exact BC snapshot");
         auto context=runtime.stage_context();
         for(std::size_t i=0;i<roots.size();++i){
             const auto& source=control.pool->GetBlock(roots[i]).fluid_state;
             require(same_state(source,expected[i]),"failed finalizer did not restore original source bits");
-            address_changes+=source.rho.data()!=addresses[i];
+            require(source_addresses(source)==original_addresses[i],
+                "failed finalizer changed one of seven borrowed source array addresses");
             const auto version=context.ledger.inspect({handles[i],arch::state::StateSlot::Current}).interior.version;
             require(version==versions[i],"failed finalizer published new interior version");
             context.ledger.require_readable({handles[i],arch::state::StateSlot::Current},
@@ -125,7 +138,7 @@ int main(int argc,char** argv){
     require(callbacks==3,"finalizer callback count");
     // Reject a real staged native thermodynamic closure after completed BC and
     // exchange. Unlike the callback throws above, this hook returns normally:
-    // the mandatory shared post-ghost gate must veto the unpublished candidate.
+    // the mandatory shared post-ghost gate must fatally reject the unpublished candidate.
     // The deliberately negative energy is an engineering counterexample, not
     // a physical floor repair or an evolved solution.
     int gate_fault_callbacks=0;bool closure_rejected=false;
@@ -150,12 +163,16 @@ int main(int argc,char** argv){
         "rejected native closure published staged topology");
     require(control.pool->GetNumActiveBlocks()==pool_before&&runtime.regrid_records().empty(),
         "rejected native closure leaked staged storage or successful record");
+    require(boundary.stage_context_matches(original_boundary),"fatal late closure rejection did not restore BC snapshot");
+    require(runtime.native_coarsening_veto_records().empty(),"late injected closure failure became a parent veto");
     auto restored=runtime.stage_context();
     for(std::size_t i=0;i<roots.size();++i){
+        require(source_addresses(control.pool->GetBlock(roots[i]).fluid_state)==original_addresses[i],
+            "late native rejection changed one of seven borrowed source array addresses");
         require(same_state(control.pool->GetBlock(roots[i]).fluid_state,expected[i]),
-            "native closure veto did not restore original source bits");
+            "fatal native closure rejection did not restore original source bits");
         require(restored.ledger.inspect({handles[i],arch::state::StateSlot::Current})
-            .interior.version==versions[i],"native closure veto published new interior version");
+            .interior.version==versions[i],"fatal native closure rejection published new interior version");
         restored.ledger.require_readable({handles[i],arch::state::StateSlot::Current},
             {arch::state::ExecutionSide::Host,versions[i],true,true});
     }
@@ -204,7 +221,7 @@ int main(int argc,char** argv){
     require(gated,"fault verification lifted production RZ gate");
     std::cout<<"ACTUAL_RZ_RUNTIME_ROLLBACK_PASS attempts=3 source_blocks=2"
         <<" staged_blocks=8 pool_before="<<pool_before<<" peak_pool="<<peak_pool
-        <<" source_address_changes="<<address_changes<<" final_pool=8"
+        <<" source_all_seven_addresses_preserved=1 final_pool=8"
         <<" all_source_arrays_bitwise=1 topology_preserved=1 original_versions=1"
         <<" old_ghost_readable=1 no_staged_leak=1 retry=1 retired_handle=1"
         <<" production_gate_held=1 time=0 steps=0"<<std::endl;

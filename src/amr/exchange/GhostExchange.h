@@ -20,6 +20,7 @@
 #include <memory>
 #include <map>
 #include <span>
+#include <utility>
 #include <vector>
 
 #include "amr/exchange/CoarseFineCellPlan.h"
@@ -30,7 +31,9 @@
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/transfer/ConservativeRestriction.h"
 #include "amr/transfer/LimitedLinearProlongation.h"
+#include "amr/transfer/NativeRzRegridTransfer.h"
 #include "data/GlobalDefs.h"
+#include "numerics/state/RzNativeClosure.h"
 
 namespace amr {
 
@@ -360,7 +363,7 @@ public:
             std::size_t rz_geometry = std::numeric_limits<std::size_t>::max();
         };
         struct RzTransferGeometry {
-            regrid_math::ProlongationGeometry prolongation{};
+            regrid_math::NativeRzProlongationContext prolongation{};
             regrid_math::RestrictionGeometry restriction{};
             int fine_child = 0;
         };
@@ -448,6 +451,13 @@ public:
             for (std::size_t cell = 0; cell < lowered.source_count; ++cell) {
                 lowered.source_cells[cell] = cell_index(
                     source_block.grid, transfer.source_cells[cell]);
+                if(rz&&lowered.rule==RefinementRule::FineGhostAverage) {
+                    const auto& logical=transfer.source_cells[cell];
+                    if(logical[0]<0||logical[0]>=source_block.grid.Ie()-source_block.grid.Is()
+                        ||logical[1]<0||logical[1]>=source_block.grid.Je()-source_block.grid.Js()
+                        ||logical[2]!=0)
+                        throw std::invalid_argument("Native restriction overlay requires actual fine interior donors");
+                }
                 // Cartesian fine cells have one common measure, so unit
                 // weights preserve the existing arithmetic.  Curvilinear
                 // restriction must use physical cell volumes.
@@ -487,33 +497,27 @@ public:
                 const auto destination_view=GridMetrics::make_geometry_view(destination_block.grid,
                     GridMetrics::GeometrySemantics::AxisymmetricRz);
                 if(lowered.rule==RefinementRule::CoarseGhostInjection) {
-                    auto& pg=geometry.prolongation;
-                    pg.dimension=2;pg.center=lowered.source_cells[0];pg.angular_momentum=true;
-                    for(int n=0;n<6;++n)pg.neighbours[n]=lowered.slope_cells[n];
-                    const int i=source_block.grid.Is()+transfer.source_cells[0][0];
-                    const int j=source_block.grid.Js()+transfer.source_cells[0][1];
-                    const double lo=source_view.GetFacePosL(i),hi=source_view.GetFacePosR(i);
-                    pg.coarse_volume=GridMetrics::CellVolume(source_view,i,j,0);
-                    pg.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(lo,hi,source_view.dx2);
-                    const double center=GridMetrics::Rz::AngularReconstructionCoordinate(lo,hi);
-                    pg.angular_neighbour_distances[0]=center-GridMetrics::Rz::AngularReconstructionCoordinate(
-                        source_view.GetFacePosL(i-1),source_view.GetFacePosR(i-1));
-                    pg.angular_neighbour_distances[1]=GridMetrics::Rz::AngularReconstructionCoordinate(
-                        source_view.GetFacePosL(i+1),source_view.GetFacePosR(i+1))-center;
-                    auto fine=GridMetrics::make_geometry_view(GridMetrics::Geometry::Cylindrical,2,
-                        {lo,source_view.x2_min+(j-source_view.ng)*source_view.dx2,0.},
-                        {source_view.dx1*.5,source_view.dx2*.5,1.});
-                    fine=GridMetrics::make_rz_geometry_view(fine);
-                    for(int c=0;c<4;++c) {
-                        const int fi=c&1,fj=(c>>1)&1;
-                        pg.fine_volumes[c]=GridMetrics::CellVolume(fine,fi,fj,0);
-                        pg.fine_angular_measures[c]=GridMetrics::Rz::AngularMomentumMeasure(
-                            fine.GetFacePosL(fi),fine.GetFacePosR(fi),fine.dx2);
-                        pg.angular_radial_offsets[c]=GridMetrics::Rz::AngularReconstructionCoordinate(
-                            fine.GetFacePosL(fi),fine.GetFacePosR(fi))-center;
-                    }
+                    auto& context=geometry.prolongation;
+                    context.source_geometry=source_view;
+                    context.logical_nx=source_block.grid.GetTotalX();
+                    context.logical_ny=source_block.grid.GetTotalY();
+                    context.radial_i=source_block.grid.Is()+transfer.source_cells[0][0];
+                    context.axial_j=source_block.grid.Js()+transfer.source_cells[0][1];
                     geometry.fine_child=(transfer.fine_position[0]>0.0?1:0)
                         |(transfer.fine_position[1]>0.0?2:0);
+                    // The selected member is the actual destination ghost.
+                    // The other intervals are its real 2:1 spatial siblings;
+                    // no sibling array/virtual halo is read or written here.
+                    const int fi=destination_block.grid.Is()+transfer.destination_cell[0]
+                        -(geometry.fine_child&1);
+                    const int fj=destination_block.grid.Js()+transfer.destination_cell[1]
+                        -((geometry.fine_child>>1)&1);
+                    for(int child=0;child<4;++child) {
+                        const int ci=fi+(child&1),cj=fj+((child>>1)&1);
+                        context.children[child]={destination_view.GetFacePosL(ci),destination_view.GetFacePosR(ci),
+                            destination_view.x2_min+(cj-destination_view.ng)*destination_view.dx2,
+                            destination_view.x2_min+(cj-destination_view.ng+1)*destination_view.dx2};
+                    }
                 } else {
                     auto& rg=geometry.restriction;
                     rg.count=lowered.source_count;rg.angular_momentum=true;
@@ -549,44 +553,87 @@ public:
         // CUDA two-kernel execution, this prevents the fine-to-coarse route
         // from overwriting a coarse stencil needed by its reciprocal
         // coarse-to-fine route.
+        if(rz) {
+            // Workflow: first gather every fine->coarse result from immutable
+            // fine interiors, then lend that sparse same-frame density/U/X
+            // overlay to all coarse->fine readers. All candidates remain local
+            // until both passes succeed; final scatter and seam order stay as
+            // before. No full-state copy or previous-stage field cache is used.
+            gathered.resize(compiled.size());
+            using OverlayKey=std::pair<int,int>; // actual pool id + flat cell, one frozen slot
+            std::map<OverlayKey,std::size_t> restriction_overlay;
+            /** Validate only native finite/rho/simplex and ENUC; actual thermal
+             * closure/EOS follows genuine final hierarchy ghost completion. */
+            const auto validate_provisional=[&](const GatheredTransfer& values) {
+                const auto& u=values.fields;
+                const FluidVector native{u[0],u[1],u[2],u[3],u[4]};
+                if(!std::isfinite(u[5])||RzThermodynamics::provisional_native_state(native,
+                    values.mass_fractions.data(),species_count,1,bounds)!=arch::state::Status::valid)
+                    throw std::runtime_error("RZ ghost transfer violates borrowed provisional state bounds");
+            };
+            for(std::size_t n=0;n<compiled.size();++n) {
+                const auto& transfer=compiled[n];
+                if(transfer.rule!=RefinementRule::FineGhostAverage)continue;
+                const auto& source=pool->GetBlock(transfer.source_id).*state_ptr;
+                const auto& geometry=rz_geometries.at(transfer.rz_geometry);
+                regrid_math::RestrictionResult result{};
+                const auto status=regrid_math::restrict_family(regrid_state_view(source),
+                    geometry.restriction,species_count,bounds.density,bounds.internal_min,
+                    rz_workspace.data(),result);
+                if(status!=regrid_math::Status::Ok)
+                    throw std::runtime_error(regrid_math::status_message(status));
+                auto& values=gathered[n];const auto& fluid=result.fluid;
+                values.fields={fluid.rho,fluid.mom_u,fluid.mom_v,fluid.mom_w,fluid.eng,result.enuc};
+                values.mass_fractions.resize(static_cast<std::size_t>(species_count));
+                for(int sp=0;sp<species_count;++sp)values.mass_fractions[sp]=result.fractions[sp];
+                validate_provisional(values);
+                if(!restriction_overlay.emplace(OverlayKey{transfer.destination_id,
+                    transfer.destination_cell},n).second)
+                    throw std::logic_error("Native restriction overlay has duplicate actual destination");
+            }
+            for(std::size_t n=0;n<compiled.size();++n) {
+                const auto& transfer=compiled[n];
+                if(transfer.rule==RefinementRule::FineGhostAverage)continue;
+                if(transfer.rule!=RefinementRule::CoarseGhostInjection)
+                    throw std::logic_error("Native transfer has an unknown real refinement rule");
+                const auto& source=pool->GetBlock(transfer.source_id).*state_ptr;
+                const auto& geometry=rz_geometries.at(transfer.rz_geometry);
+                /** Read the same immutable candidate overlay before actual live seed data. */
+                const auto overlay=[&](int index)->const GatheredTransfer* {
+                    const auto entry=restriction_overlay.find(OverlayKey{transfer.source_id,index});
+                    return entry==restriction_overlay.end()?nullptr:&gathered[entry->second];
+                };
+                const auto read=[&](int index) {
+                    if(const auto* value=overlay(index)) {
+                        const auto& u=value->fields;return FluidVector{u[0],u[1],u[2],u[3],u[4]};
+                    }
+                    return source.get(index);
+                };
+                const auto enuc=[&](int index) {
+                    if(const auto* value=overlay(index))return value->fields[5];
+                    return source.enuc_rate[index];
+                };
+                const auto fraction=[&](int sp,int index) {
+                    if(const auto* value=overlay(index))return value->mass_fractions[sp];
+                    return source.X(sp,index);
+                };
+                regrid_math::ProlongationResult result{};
+                const auto status=regrid_math::prolong_native_family(geometry.prolongation,
+                    read,enuc,fraction,species_count,bounds,rz_workspace.data(),result);
+                if(status!=regrid_math::Status::Ok)
+                    throw std::runtime_error(regrid_math::status_message(status));
+                const int child=geometry.fine_child;const auto& fluid=result.fluid[child];
+                auto& values=gathered[n];
+                values.fields={fluid.rho,fluid.mom_u,fluid.mom_v,fluid.mom_w,fluid.eng,result.enuc[child]};
+                values.mass_fractions.resize(static_cast<std::size_t>(species_count));
+                for(int sp=0;sp<species_count;++sp)values.mass_fractions[sp]=result.rhoX[
+                    static_cast<std::size_t>(sp)*regrid_math::maximum_children+child]/fluid.rho;
+                validate_provisional(values);
+            }
+        } else {
         for (const CompiledTransfer& transfer : compiled) {
             const FluidState& source =
                 pool->GetBlock(transfer.source_id).*state_ptr;
-            if(rz) {
-                const auto& geometry=rz_geometries.at(transfer.rz_geometry);
-                const auto samples=regrid_state_view(source);
-                FluidVector fluid{};
-                GatheredTransfer values{};
-                values.mass_fractions.resize(static_cast<std::size_t>(species_count));
-                double enuc=0.0;
-                regrid_math::Status status;
-                if(transfer.rule==RefinementRule::CoarseGhostInjection) {
-                    regrid_math::ProlongationResult result{};
-                    status=regrid_math::prolong_family(samples,geometry.prolongation,species_count,
-                        bounds.density,bounds.internal_min,rz_workspace.data(),result);
-                    if(status!=regrid_math::Status::Ok)
-                        throw std::runtime_error(regrid_math::status_message(status));
-                    const int child=geometry.fine_child;
-                    fluid=result.fluid[child];enuc=result.enuc[child];
-                    for(int sp=0;sp<species_count;++sp)
-                        values.mass_fractions[sp]=result.rhoX[
-                            static_cast<std::size_t>(sp)*regrid_math::maximum_children+child]/fluid.rho;
-                } else {
-                    regrid_math::RestrictionResult result{};
-                    status=regrid_math::restrict_family(samples,geometry.restriction,species_count,
-                        bounds.density,bounds.internal_min,rz_workspace.data(),result);
-                    if(status!=regrid_math::Status::Ok)
-                        throw std::runtime_error(regrid_math::status_message(status));
-                    fluid=result.fluid;enuc=result.enuc;
-                    for(int sp=0;sp<species_count;++sp)values.mass_fractions[sp]=result.fractions[sp];
-                }
-                const auto recovered=arch::state::recover(fluid);
-                if(recovered.status!=arch::state::Status::valid || recovered.internal>bounds.internal_max)
-                    throw std::runtime_error("RZ ghost transfer violates borrowed state bounds");
-                values.fields={fluid.rho,fluid.mom_u,fluid.mom_v,fluid.mom_w,fluid.eng,enuc};
-                gathered.push_back(std::move(values));
-                continue;
-            }
             const prolongation_math::CompositionStencilView stencil{
                 source.rho.data(), source.mass_fractions.data(),
                 source.rho.size(), transfer.source_cells[0],
@@ -654,6 +701,8 @@ public:
                 }
             }
             gathered.push_back(std::move(values));
+        }
+
         }
 
         for (std::size_t index = 0; index < compiled.size(); ++index) {

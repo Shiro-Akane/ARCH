@@ -13,8 +13,10 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <span>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "driver/runtime/ComputeBackend.h"
@@ -22,6 +24,7 @@
 #include "driver/schedule/StageScheduler.h"
 #include "grid/GridMetrics.h"
 #include "amr/exchange/CoordinateSeamPlan.h"
+#include "amr/transfer/AmrTransferPlans.h"
 #include "numerics/state/RzNativeClosure.h"
 
 class BCHandler;
@@ -39,6 +42,34 @@ struct RegridMeasurement {
     bool changed;
     double elapsed_seconds;
     backend::BackendCounters operations;
+};
+/** Authentic failed whole-patch gate with its frozen Runtime publication owner.
+ * This envelope alone is never permission to retry; the live prepared
+ * restriction relation and active-interior thermal phase must also match.
+ */
+class NativeBoundaryAcceptanceError final : public std::runtime_error {
+public:
+    const int pool_index;
+    const amr::BlockHandle handle;
+    const state::StateSlot slot;
+    const state::StateVersion version;
+    const RzThermodynamics::AcceptanceDiagnostic diagnostic;
+    NativeBoundaryAcceptanceError(const std::string& message,int pool_id,
+        amr::BlockHandle identity,state::StateSlot selected,state::StateVersion value,
+        RzThermodynamics::AcceptanceDiagnostic evidence)
+        :std::runtime_error(message),pool_index(pool_id),handle(identity),
+          slot(selected),version(value),diagnostic(evidence) {}
+};
+enum class NativeCoarseningVetoKind { EffectiveThermal, JeansResolution };
+/** Compact per-call evidence; no fluid arrays/raw output or scientific receipt. */
+struct NativeCoarseningVetoRecord {
+    amr::LogicalBlockKey parent;
+    NativeCoarseningVetoKind kind;
+    std::optional<RzThermodynamics::AcceptanceDiagnostic> diagnostic;
+    amr::AmrPlanScope scope;
+    amr::BlockHandle target;
+    state::StateVersion version{}; // zero for fail-only prepublication checks
+    double jeans_minimum=0.; // meaningful only for JeansResolution
 };
 class HostHydroTransaction;
 class DriverRuntime {
@@ -106,6 +137,10 @@ public:
         return host_hydro_transaction_;
     }
     const std::vector<RegridMeasurement>& regrid_records() const { return regrid_measurements; }
+    /** Exact parent vetoes from the latest internal native call, not EOS PASS. */
+    const std::vector<NativeCoarseningVetoRecord>& native_coarsening_veto_records() const noexcept {
+        return native_coarsening_veto_records_;
+    }
     /** Observe actual surface fluxes only for selected case boundary callbacks. */
     void bind_boundary_accounting(scheduler::StageExecutionContext&);
     const std::vector<double>& hydro_boundary_budget() const { return hydro_boundary_budget_; }
@@ -125,6 +160,10 @@ private:
     void complete_device_boundary(state::StateSlot);
     bool execute_regrid(bool jeans_repair_only,bool native_rz_candidate=false,
         const std::function<void()>& after_host_finalization = {});
+    bool execute_regrid_attempt(bool jeans_repair_only,bool native_rz_candidate,
+        const std::function<void()>& after_host_finalization,
+        std::span<const amr::LogicalBlockKey> vetoed_coarsenings = {},
+        const std::function<void()>& evaluate_native_indicators = {});
     bool perform_regrid_impl(int step,double time,bool jeans_repair_only,
         bool native_rz_candidate,const std::function<void()>& after_host_finalization = {});
     bool device_jeans_parent_resolved(const amr::Block&,std::span<const int>);
@@ -155,6 +194,7 @@ private:
     };
     std::array<UserBoundaryStamp, 3> user_boundary_stamps_{};
     std::vector<RegridMeasurement> regrid_measurements;
+    std::vector<NativeCoarseningVetoRecord> native_coarsening_veto_records_;
     // Surface records are rebuilt after a topology epoch changes. Integrated
     // budgets retain their since-process-start scope across AMR regrids.
     amr::TopologyEpoch boundary_budget_epoch_{};

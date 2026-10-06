@@ -186,6 +186,112 @@
       6.148
     ]
   },
+  "nativeTransferCpu": {
+    "ctest": {
+      "failures": 0,
+      "inventorySha256": "6173ce42e13bfa25c71ee03f0391e82d5a2789128e38d2b45349a78c5783911a",
+      "junitSha256": "fede9f718c3ac82a303f892238cfc9f9cf7fff9de65f98c5f2a8bf32c509b067",
+      "nestedPythonSkips": {
+        "memory_guard_contract": 18,
+        "preview_api_contract": 1,
+        "scope": "CTest owner completion is not nested-case execution; earlier System Python guard result retained under its own identity"
+      },
+      "newCiOwners": 0,
+      "parallel": 2,
+      "seconds": 78.47,
+      "skips": 0,
+      "stdoutSha256": "b98b3ba9e7b127a5fc1e43d8cef32dc7e7390242359f724ecde1d75d7fc0eac1",
+      "tests": 76
+    },
+    "knownOpen": [
+      "Nonbinary genuine dyadic grids need authentic source/destination geometry generator binding; no empirical epsilon chosen",
+      "Native isolated field-after-regrid hits total tree visitation WorkLimit: 74989 leaf +25011 parent ==100000; fixed precision unchanged",
+      "Selected native PCM/MUSCL/PPM, complete force/viscosity/evolution/Device/public production gates still open"
+    ],
+    "productionExecutableSha256": "ff86a4f9a7eee984b253cf4623f64cf72dad420efbc51d62062eae4d4741456c",
+    "recordedAtUtc": "2026-10-06T23:50:47.375321+00:00",
+    "releaseAccepted": false,
+    "runtime": {
+      "field-after-regrid": {
+        "executableSha256": "346fdd5a969f206337a75283e4840e10e990edca21dfcb651c99b39d47b512a0",
+        "exitCode": 1,
+        "limitations": [
+          "Explicit candidate only; production physical readers/Device gates held",
+          "No continuous Phi/force or Hydro conservation/evolution science acceptance"
+        ],
+        "recompiledSources": {
+          "src/amr/elliptic/EllipticMeshAdapter.cpp": "b7b2885c90c3fc9678e3ba637dc88bc311875c966da510d29766c9062f13944c",
+          "src/driver/runtime/DriverBoundary.cpp": "68299ec6a43481412df19f35705feb7a4c26e345c2b3d99fc02ffbed199fef7b",
+          "src/driver/runtime/DriverRegrid.cpp": "831d3f3558e475b926f97d432ea12d14ae2d27be9811ab31f6e3e6390c7c015e",
+          "src/driver/runtime/DriverRuntime.cpp": "2c9e067826f6169ef2822a5f24869abfb2b340d3b5ab22a97d7f439e1d5d134c",
+          "src/driver/stages/GravityStage.cpp": "d218b77bac02875d2e62eeb702c85f7a56bfff490c9b9542e1758533f2844b71",
+          "tests/host/gravity/test_rz_runtime_regrid_contract.cpp": "bda5ca5955ce7deb553d18de42da941d578b6ac31392455f6176385a0488289f"
+        },
+        "resultSha256": "c55e990a19c74725d80d4bb343482638d10836e956e5ee375a1eeacff2070fbe",
+        "scope": "Actual CPU RZ Runtime refined/coarse AMR -> native field rebind; no timestep",
+        "stderr": "Native RZ ring boundary failed: status=1 target=4.6529152159148903e-18 leaf=74989 parent=25011\n",
+        "stdoutSha256": "9285acc8e4b44084df9e0d8b0a17063e17752c08329ac0f5cc567093e333f815"
+      },
+      "regrid": {
+        "executableSha256": "346fdd5a969f206337a75283e4840e10e990edca21dfcb651c99b39d47b512a0",
+        "exitCode": 0,
+        "limitations": [
+          "Internal migration only; production RZ/Device gates held",
+          "No continuous Phi/force, Hydro evolution or full angular science acceptance"
+        ],
+        "recompiledSources": {
+          "src/amr/elliptic/EllipticMeshAdapter.cpp": "b7b2885c90c3fc9678e3ba637dc88bc311875c966da510d29766c9062f13944c",
+          "src/driver/runtime/DriverBoundary.cpp": "68299ec6a43481412df19f35705feb7a4c26e345c2b3d99fc02ffbed199fef7b",
+          "src/driver/runtime/DriverRegrid.cpp": "831d3f3558e475b926f97d432ea12d14ae2d27be9811ab31f6e3e6390c7c015e",
+          "src/driver/runtime/DriverRuntime.cpp": "2c9e067826f6169ef2822a5f24869abfb2b340d3b5ab22a97d7f439e1d5d134c",
+          "src/driver/stages/GravityStage.cpp": "d218b77bac02875d2e62eeb702c85f7a56bfff490c9b9542e1758533f2844b71",
+          "tests/host/gravity/test_rz_runtime_regrid_contract.cpp": "bda5ca5955ce7deb553d18de42da941d578b6ac31392455f6176385a0488289f"
+        },
+        "resultSha256": "d6c3aedbfc4e1323c05e8eb7a3b75de0834f78342465e2f1d3ed3eff4f9d9101",
+        "scope": "Actual CPU RZ Runtime conservative AMR transactions and authentic cold parent veto; no timestep or gravity field grant",
+        "stderr": "",
+        "stdoutSha256": "1d562b2b5bfd6bb48550904adff7fca2e40347c2e7a8f8882c9424dfd19585ba"
+      },
+      "rollback": {
+        "executableSha256": "f3712a955ca93783317ee628b709615a6e3bb89b87e4f0d825324978fbad69a7",
+        "exitCode": 0,
+        "limitations": [
+          "Injected engineering failure only, not a physical stability/evolution gate",
+          "Seven actual source Host vector addresses, values and BC frame are checked through in-place rollback; no unrelated pointer or Device ownership grant",
+          "Production RZ/Device gates held"
+        ],
+        "recompiledSources": {
+          "src/amr/elliptic/EllipticMeshAdapter.cpp": "b7b2885c90c3fc9678e3ba637dc88bc311875c966da510d29766c9062f13944c",
+          "src/driver/runtime/DriverBoundary.cpp": "68299ec6a43481412df19f35705feb7a4c26e345c2b3d99fc02ffbed199fef7b",
+          "src/driver/runtime/DriverRegrid.cpp": "831d3f3558e475b926f97d432ea12d14ae2d27be9811ab31f6e3e6390c7c015e",
+          "src/driver/runtime/DriverRuntime.cpp": "2c9e067826f6169ef2822a5f24869abfb2b340d3b5ab22a97d7f439e1d5d134c",
+          "src/driver/stages/GravityStage.cpp": "d218b77bac02875d2e62eeb702c85f7a56bfff490c9b9542e1758533f2844b71",
+          "tests/host/gravity/test_rz_runtime_rollback_contract.cpp": "cad5bbae4afb36a6f7538ee20e882b3c15b2edb841aab6df04e08096ee7f978f"
+        },
+        "resultSha256": "57ffad3eb06d9bcdce52e0ef0c204b85bb83df6c6ca915ea836e726740810d59",
+        "scope": "Actual CPU RZ Runtime finalizer fault, source/ledger/pool rollback and retry; no timestep",
+        "stderr": "",
+        "stdoutSha256": "5fae41529638d48ee2979e136a3d0616cec0cfac256557b1054f825e59d71f96"
+      }
+    },
+    "scope": "Internal CPU Native RZ migration, source closure, completed-domain finalizer and rollback; public physics/Device remain gated",
+    "sourceBaseCommit": "c26ba5af0b2ac996d95ed979a98beac28bafcf6c",
+    "sourceSha256": {
+      "src/amr/exchange/GhostExchange.h": "52c857327b98ad7e966097a99e281c064f5f87634f638b5616ab76541d97fb40",
+      "src/amr/storage/Block.h": "7b891cb4d47868181fe9f92e3223b02d5d40a4216bee8832e94d66cfd4c22c40",
+      "src/amr/topology/AmrTree.h": "f6fd928e57c7497c4c4d772323802e834449911472acf8e1664d96f7df5c7690",
+      "src/amr/transfer/NativeRzRegridTransfer.h": "d720f7f08ef188617661ccd0124274aeb861040568750ee9d067e36c30edacf5",
+      "src/amr/transfer/RegridTransferMath.h": "634b1889abe109db051d8e4281f84d0dbe4a16143c7a9ed4f5633fe5c1b8a485",
+      "src/driver/runtime/DriverRegrid.cpp": "831d3f3558e475b926f97d432ea12d14ae2d27be9811ab31f6e3e6390c7c015e",
+      "src/driver/runtime/DriverRuntime.cpp": "2c9e067826f6169ef2822a5f24869abfb2b340d3b5ab22a97d7f439e1d5d134c",
+      "src/driver/runtime/DriverRuntime.h": "5ace2fdcd10de923a30a3df668c74012a12bac5e84afa1c174adaf1a3f6369ae",
+      "src/numerics/state/RzNativeClosure.h": "956e6a214ef38fe6054a7139e807ba35a9a1ae688831286c6bfe752e8082eebe",
+      "tests/host/amr/test_amr_operation_plans.cpp": "8cbca9a8ac4a3b0c97445a3b042adb5c3ee12c90f1e784220c4d96d3b7baad38",
+      "tests/host/gravity/test_rz_runtime_regrid_contract.cpp": "bda5ca5955ce7deb553d18de42da941d578b6ac31392455f6176385a0488289f",
+      "tests/host/gravity/test_rz_runtime_rollback_contract.cpp": "cad5bbae4afb36a6f7538ee20e882b3c15b2edb841aab6df04e08096ee7f978f",
+      "validation/gravity/run_gravity_runtime_contract.py": "9d827877791d288b7db54b7c2ff016da3999b2f56b961b7356258d024611bc19"
+    }
+  },
   "newIndependentCoarseningReference": "Actual existing low_density_math passed; true quartic M/J/E fine-positive/coarse-negative; not transfer qualification",
   "priorNarrowOwners": {
     "passed": 8,

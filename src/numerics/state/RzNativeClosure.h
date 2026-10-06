@@ -41,6 +41,8 @@ struct Cell {
     FluidVector effective_mean{};
     double radial_velocity=0.,axial_velocity=0.,omega=0.,internal=0.;
     arch::state::Status status=arch::state::Status::invalid_thermodynamics;
+    // Transient construction witness, not an EOS/state publication receipt.
+    bool inertia_mapping_valid=false;
     ARCH_INLINE bool valid() const {return status==arch::state::Status::valid;}
 };
 
@@ -79,6 +81,9 @@ ARCH_INLINE Cell from_density(const FluidVector& native,const RzDensity::Cell& d
     if(!std::isfinite(result.omega)) {
         result.status=arch::state::Status::nonfinite;return result;
     }
+    // A policy owner may distinguish a constructed finite inertia mapping from
+    // missing support. Thermal validity and selected EOS remain separate gates.
+    result.inertia_mapping_valid=std::isfinite(result.effective_mean.mom_w);
     result.status=arch::state::validate(result.effective_mean,nullptr,0,1,
         bounds.density,bounds.internal_min,bounds.internal_max);
     if(!result.valid())return result;
@@ -207,6 +212,38 @@ ARCH_INLINE double physical_node_radius(const Cell& cell,int node)
  * and rollback before publication. Device traversal reuses the scalar leaves
  * rather than materializing an entire device patch on the Host.
  */
+/** Exact phase of an actual completed-cell failure; no string classification. */
+enum class AcceptancePhase : unsigned char {
+    provisional, density_or_inertia, effective_thermal, mean_eos, physical_eos
+};
+
+/** Diagnostic from the real selected-EOS traversal, before publication.
+ * i/j/index are actual logical patch coordinates. A mapping witness means only
+ * that rho_* and I_* produced the finite effective momentum; it never certifies
+ * the returned thermal state. Missing support/nonfinite arithmetic stay fatal.
+ */
+struct AcceptanceDiagnostic {
+    AcceptancePhase phase=AcceptancePhase::provisional;
+    arch::state::Status status=arch::state::Status::invalid_thermodynamics;
+    int index=-1,i=-1,j=-1,node=-1;
+    bool inertia_mapping_valid=false;
+};
+
+/** Preserve the existing runtime-error text while carrying exact gate evidence.
+ * The authentic restriction transaction may consider only a newly restricted
+ * interior's effective_thermal result under its own proven source/migration
+ * provenance. This type alone grants no veto, retry or successful EOS receipt.
+ */
+class AcceptanceError : public std::runtime_error {
+public:
+    AcceptanceError(const std::string& message,AcceptanceDiagnostic diagnostic)
+        :std::runtime_error(message),diagnostic_(diagnostic) {}
+    /** Borrow immutable actual failed-cell diagnostics; no state is changed. */
+    const AcceptanceDiagnostic& diagnostic() const noexcept {return diagnostic_;}
+private:
+    AcceptanceDiagnostic diagnostic_;
+};
+
 namespace detail {
 /** Shared read-only Host region gate: preserve native precheck, actual mean EOS,
  * both true faces and four radial Gauss-node EOS checks with the original
@@ -235,16 +272,24 @@ inline void validate_patch_eos_region(const FluidState& state,const Grid& grid,i
         const auto native=read(index);
         const auto preliminary=provisional_native_state(native,fractions.data(),species,1,bounds);
         if(preliminary!=arch::state::Status::valid)
-            throw std::runtime_error("RZ native provisional state rejected at cell "+std::to_string(index));
+            throw AcceptanceError("RZ native provisional state rejected at cell "+std::to_string(index),
+                {AcceptancePhase::provisional,preliminary,index,i,j,-1,false});
         const auto cell=closure(read,index,view,i,bounds);
-        if(validate_mean_eos(cell,fractions.data(),species,eos)!=arch::state::Status::valid)
-            throw std::runtime_error("RZ native closure/EOS rejected at cell "+std::to_string(index));
+        const auto mean_status=validate_mean_eos(cell,fractions.data(),species,eos);
+        if(mean_status!=arch::state::Status::valid) {
+            const auto phase=cell.valid() ? AcceptancePhase::mean_eos
+                : (cell.inertia_mapping_valid ? AcceptancePhase::effective_thermal
+                                             : AcceptancePhase::density_or_inertia);
+            throw AcceptanceError("RZ native closure/EOS rejected at cell "+std::to_string(index),
+                {phase,mean_status,index,i,j,-1,cell.inertia_mapping_valid});
+        }
         for(int node=0;node<physical_node_count;++node) {
             const auto point=base_point(cell,physical_node_radius(cell,node));
-            if(arch::state::validate_eos(point,fractions.data(),species,bounds,eos)
-                !=arch::state::Status::valid)
-                throw std::runtime_error("RZ physical baseline/EOS rejected at cell "+std::to_string(index)
-                    +", node "+std::to_string(node));
+            const auto point_status=arch::state::validate_eos(point,fractions.data(),species,bounds,eos);
+            if(point_status!=arch::state::Status::valid)
+                throw AcceptanceError("RZ physical baseline/EOS rejected at cell "+std::to_string(index)
+                    +", node "+std::to_string(node),
+                    {AcceptancePhase::physical_eos,point_status,index,i,j,node,cell.inertia_mapping_valid});
         }
     }
 }
