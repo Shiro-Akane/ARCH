@@ -1,0 +1,21 @@
+{
+  "title": "TODO_CONFIRMED_ARCH_TITLE",
+  "upload_type": "software",
+  "version": "TODO_RELEASE_VERSION",
+  "description": "TODO_FINAL_RELEASE_DESCRIPTION_FROM_METADATA_MD",
+  "license": "TODO_CONFIRMED_ZENODO_LICENSE_IDENTIFIER",
+  "creators": [
+    {
+      "name": "Ye, Haonan",
+      "orcid": "0009-0002-0706-1183"
+    },
+    {
+      "name": "Jiang, Enjie",
+      "orcid": "0009-0000-8768-9557"
+    },
+    {
+      "name": "Ding, Yu",
+      "orcid": "0009-0003-3677-6441"
+    }
+  ]
+}

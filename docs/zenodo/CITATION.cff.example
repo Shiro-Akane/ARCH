@@ -1,0 +1,25 @@
+# 发布前候选：必须替换所有 TODO_ 并确认许可证；作者顺序已确定。
+# 版本基线为 GUI 收尾完成后的版本；GNN 不在本次发布范围内。
+# 许可标识依据根目录 LICENSE 与 docs/legal/README.md，发布前核对最终归档范围。
+# 确认后才生成/更新仓库根目录 CITATION.cff；本文件不是生效文件。
+cff-version: 1.2.0
+message: "If you use this software, please cite the archived version you used."
+type: software
+title: "TODO_CONFIRMED_ARCH_TITLE"
+version: "TODO_RELEASE_VERSION"
+repository-code: "TODO_REPOSITORY_URL"
+license: "TODO_CONFIRMED_SPDX_LICENSE"
+authors:
+  - family-names: "Ye"
+    given-names: "Haonan"
+    orcid: "https://orcid.org/0009-0002-0706-1183"
+  - family-names: "Jiang"
+    given-names: "Enjie"
+    orcid: "https://orcid.org/0009-0000-8768-9557"
+  - family-names: "Ding"
+    given-names: "Yu"
+    orcid: "https://orcid.org/0009-0003-3677-6441"
+# 获得真实值后添加 date-released: "YYYY-MM-DD" 和 doi: "10.xxxx/..."。
+# 个人项目，按维护者要求暂不填写 affiliation。
+# 最终作者顺序：Haonan Ye、Enjie Jiang、Yu Ding。
+# 根目录采用后用 CFF 验证器做 schema 校验；语法通过不代表事实已确认。
