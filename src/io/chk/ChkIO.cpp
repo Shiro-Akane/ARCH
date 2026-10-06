@@ -2,10 +2,15 @@
  * @file ChkIO.cpp
  * @brief Pack and restore checkpoint metadata, controller state and AMR leaves.
  *
- * Writing gathers synchronized host interiors, native composition and identity
- * metadata into the shared HDF5 payload. Reading checks compatibility and layout
- * before restoring the leaf grid, fields and timestep/output controller state;
- * backend transfers and evolution are outside this serialization layer.
+ * Workflow:
+ * 1. Write synchronized Host interiors with native composition and identities.
+ * 2. Read and check the exact geometry/schema, provenance and incoming layout.
+ * 3. Check native RZ finite/rho/simplex bounds provisionally: serialized cells
+ *    lack the real density ghosts needed for I_* and J^2/(2*I_*V).
+ * 4. Restore original native V/W means and timestep/output controller state.
+ * 5. The Runtime binds the same actual EOS and completes real BC/exchange before
+ *    its post-ghost thermal acceptance. This reader does not certify that EOS
+ *    gate, perform backend transfers, repair energy or advance a trajectory.
  */
 
 #include <filesystem>
@@ -19,6 +24,7 @@
 #include "data/GlobalDefs.h"
 
 #include "io/IO.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "io/hdf5/HDF5Writer.h"
@@ -175,18 +181,26 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     }
     const bool verified_identity = io::require_checkpoint_provenance_compatible(
         checkpoint.provenance, expected_provenance);
-    // Validate the complete incoming state before replacing the live hierarchy.
+    // Native RZ stores m_phi=J/W alongside E/V. Before the actual leaf/ghost
+    // stencil exists it is impossible to recover J^2/(2*I_*V); check only the
+    // shared finite/rho/composition contract here. Runtime initialization owns
+    // actual post-ghost mean/point EOS acceptance before any evolution starts.
+    // Existing charts retain their original strict raw-state validation.
     const auto& limits = config.numerics;
+    const bool native_rz=expected_geometry.chart=="axisymmetric-rz";
+    const arch::state::Bounds bounds{limits.sml_rho,limits.min_eint,limits.max_eint};
     const size_t incoming_cells = checkpoint.rho.size();
     if (checkpoint.repairs.species() != expected_species)
         throw std::runtime_error("Checkpoint repair ledger and species count disagree");
     for (size_t cell = 0; cell < incoming_cells; ++cell) {
         const FluidVector fluid{checkpoint.rho[cell], checkpoint.mom_u[cell],
             checkpoint.mom_v[cell], checkpoint.mom_w[cell], checkpoint.eng[cell]};
-        const auto status = arch::state::validate(fluid,
-            expected_species ? checkpoint.mass_fractions.data() + cell : nullptr,
-            expected_species, static_cast<int>(incoming_cells),
-            limits.sml_rho, limits.min_eint, limits.max_eint);
+        const double* fractions=expected_species ? checkpoint.mass_fractions.data()+cell : nullptr;
+        const auto status = native_rz
+            ? RzThermodynamics::provisional_native_state(fluid,fractions,expected_species,
+                static_cast<int>(incoming_cells),bounds)
+            : arch::state::validate(fluid,fractions,expected_species,
+                static_cast<int>(incoming_cells),limits.sml_rho,limits.min_eint,limits.max_eint);
         if (status != arch::state::Status::valid || !std::isfinite(checkpoint.enuc_rate[cell]))
             throw std::runtime_error("Invalid checkpoint state at cell " + std::to_string(cell));
     }

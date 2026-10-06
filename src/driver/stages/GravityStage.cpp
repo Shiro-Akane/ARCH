@@ -11,6 +11,8 @@
 #include <chrono>
 #include <filesystem>
 #include <iomanip>
+#include <sstream>
+#include <type_traits>
 
 #include "driver/stages/GravityStage.h"
 
@@ -53,6 +55,11 @@ GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGrav
             <<std::setprecision(17);
     }
     diagnostics_<<"time\tstage\tepoch\tgeneration\tcells\titerations\trhs_rms\tresidual\ttarget\trho_mean\tdevice\tsetup_seconds\tsolve_seconds\tkernels\tbytes_h2d\tbytes_d2h\tsynchronizations\tsource_boundary_seconds\tpoisson_seconds\tforce_seconds\n"<<std::setprecision(17);
+    // Publish the schema once, including runs rejected before their first step.
+    diagnostics_.flush();
+    if(boundary_diagnostics_.is_open())boundary_diagnostics_.flush();
+    if(!diagnostics_||(boundary_diagnostics_.is_open()&&!boundary_diagnostics_))
+        throw std::runtime_error("Cannot publish gravity diagnostic schema");
 }
 /** Lease the exact RK input density generation and publish its solved field. */
 state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::StateResidencyLedger& ledger,double time,int stage) {
@@ -112,33 +119,46 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
         return token;
     }
     const auto& report=gravity_->report();
+    // Transaction rows stay private until the complete split macro-step accepts.
+    std::ostringstream solve_row,boundary_row;
+    solve_row<<std::setprecision(17);boundary_row<<std::setprecision(17);
+    std::ostream& solve_output=journal_active_?static_cast<std::ostream&>(solve_row):diagnostics_;
     const auto finished=std::chrono::steady_clock::now();
     const auto after=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
-    diagnostics_<<time<<'\t'<<stage<<'\t'<<epoch_.value<<'\t'<<generation_<<'\t'<<gravity_->cell_count()<<'\t'
+    solve_output<<time<<'\t'<<stage<<'\t'<<epoch_.value<<'\t'<<generation_<<'\t'<<gravity_->cell_count()<<'\t'
         <<report.cycles<<'\t'<<report.rhs_rms<<'\t'<<report.residual<<'\t'<<report.target<<'\t'<<gravity_->density_mean()<<'\t'
         <<(backend?1:0)<<'\t'<<std::chrono::duration<double>(prepared-start).count()<<'\t'
         <<std::chrono::duration<double>(finished-prepared).count()<<'\t'<<after.kernels-before.kernels<<'\t'
         <<after.bytes_h2d-before.bytes_h2d<<'\t'<<after.bytes_d2h-before.bytes_d2h<<'\t'
         <<after.synchronizations-before.synchronizations<<'\t'<<gravity_->timings().source_boundary<<'\t'
         <<gravity_->timings().poisson<<'\t'<<gravity_->timings().force<<'\n';
-    if (!diagnostics_) throw std::runtime_error("Cannot write gravity diagnostics");
+    if (!solve_output) throw std::runtime_error("Cannot write gravity diagnostics");
     if(boundary_diagnostics_.is_open()) {
         auto next=gravity_->boundary_snapshot();
         const auto observed=std::chrono::steady_clock::now();
         const auto observer_counters=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
-        const double exchange=boundary_snapshot_ ? Physical::Gravity::gravity_boundary_exchange(*boundary_snapshot_,next) : 0.;
-        const double change=boundary_snapshot_ ? next.potential_energy-boundary_snapshot_->potential_energy : 0.;
-        boundary_exchange_+=exchange;
-        boundary_diagnostics_ << time << '\t' << (boundary_snapshot_?boundary_snapshot_->time:time)
+        auto& previous=journal_active_?pending_boundary_snapshot_:boundary_snapshot_;
+        auto& cumulative=journal_active_?pending_boundary_exchange_:boundary_exchange_;
+        std::ostream& boundary_output=journal_active_?static_cast<std::ostream&>(boundary_row):boundary_diagnostics_;
+        const double exchange=previous ? Physical::Gravity::gravity_boundary_exchange(*previous,next) : 0.;
+        const double change=previous ? next.potential_energy-previous->potential_energy : 0.;
+        cumulative+=exchange;
+        boundary_output << time << '\t' << (previous?previous->time:time)
             << '\t' << stage << '\t' << next.potential_energy << '\t' << change << '\t' << exchange
-            << '\t' << boundary_exchange_ << '\t' << next.faces.size()
+            << '\t' << cumulative << '\t' << next.faces.size()
             << '\t' << std::chrono::duration<double>(observed-finished).count()
             << '\t' << observer_counters.kernels-after.kernels
             << '\t' << observer_counters.bytes_h2d-after.bytes_h2d
             << '\t' << observer_counters.bytes_d2h-after.bytes_d2h
             << '\t' << observer_counters.synchronizations-after.synchronizations << '\n';
-        if(!boundary_diagnostics_) throw std::runtime_error("Cannot write gravity boundary diagnostics");
-        boundary_snapshot_=std::move(next);
+        if(!boundary_output) throw std::runtime_error("Cannot write gravity boundary diagnostics");
+        previous=std::move(next);
+    }
+    if(journal_active_) {
+        if(!prepared_||pending_count_>=pending_rows_.size())
+            throw std::logic_error("Gravity journal has no bounded prepared row");
+        prepared_->source=identity;
+        pending_rows_[pending_count_]={solve_row.str(),boundary_row.str()};
     }
     if(backend)for(std::size_t b=0;b<handles.size();++b)backend->publish_gravity(runtime_.backend_access(b,slot),gravity_->patch_view(b));
     return token;
@@ -146,10 +166,32 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
 /** Prepare gravity for the requested hydro stage input. */
 state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparationRequest& request) {
     if (!gravity_) throw std::logic_error("No self-gravity stage service");
+    if(journal_active_) {
+        if(prepared_||request.side!=state::ExecutionSide::Host||runtime_.backend()
+            ||&request.ledger!=&runtime_.stage_context().ledger
+            ||request.handles.size()!=runtime_.handles().size()
+            ||!std::equal(request.handles.begin(),request.handles.end(),runtime_.handles().begin()))
+            throw std::logic_error("Gravity journal request is outside its actual Runtime frame");
+        (void)scheduler::hydro_output_time_fraction(request.method,request.descriptor);
+        scheduler::detail::require_boundary_interval(request.input_time,request.step_dt);
+        if(request.descriptor.stage!=static_cast<int>(pending_count_+1)
+            ||(journal_method_&&(*journal_method_!=request.method
+                ||journal_dt_!=request.step_dt||request.input_time!=journal_start_
+                    +request.descriptor.input_time_fraction*journal_dt_)))
+            throw std::logic_error("Gravity journal stage sequence/time changed inside a macro-step");
+        if(!journal_method_) {
+            journal_method_=request.method;journal_start_=request.input_time;journal_dt_=request.step_dt;
+            expected_count_=scheduler::supported_hydro_time_plan(request.method).stages.size();
+        }
+        prepared_.emplace(PreparedFrame{request.method,request.descriptor,{},request.input_time,request.step_dt});
+        gravity_->begin_host_stage_consumption(request.step_dt);
+    }
     return solve(request.descriptor.input_slot,request.ledger,request.input_time,request.descriptor.stage);
 }
 /** Prepare gravity on the accepted current state for output and timestep use. */
 void GravityStage::prepare_current(double time, bool reset_solver_history) {
+    if(journal_active_||committed_count_)
+        throw std::logic_error("Current gravity/output preparation requires a closed, flushed macro-step");
     if (gravity_) {
         // A checkpoint stores accepted fluid fields but no iterative Poisson
         // history. The Driver resets only at durable restart boundaries so
@@ -158,6 +200,76 @@ void GravityStage::prepare_current(double time, bool reset_solver_history) {
         auto context=runtime_.stage_context();
         solve(state::StateSlot::Current,context.ledger,time,0);
     }
+}
+/** A real Host production service can journal without granting any new physical scope. */
+bool GravityStage::supports_host_macro_step_journal() const noexcept {
+    return gravity_&&!runtime_.backend()&&qualification_==Qualification::Production;
+}
+/** Copy accepted observer state before acquiring a fluid transaction. */
+void GravityStage::begin_macro_step() {
+    if(!supports_host_macro_step_journal()||journal_active_||committed_count_)
+        throw std::logic_error("Gravity macro-step journal is unavailable or already live/unflushed");
+    auto next=boundary_snapshot_; // All fallible allocation precedes owner mutation.
+    pending_boundary_snapshot_=std::move(next);
+    pending_boundary_exchange_=boundary_exchange_;pending_count_=0;expected_count_=0;
+    journal_method_.reset();prepared_.reset();journal_active_=true;
+}
+/** Validate the exact source lease, all Runtime inputs and actual force/work consumption. */
+void GravityStage::accept(const scheduler::StageDescriptor& descriptor) {
+    if(!journal_active_||!prepared_
+        ||!scheduler::same_stage_descriptor(descriptor,prepared_->descriptor)
+        ||descriptor.stage!=static_cast<int>(pending_count_+1))
+        throw std::logic_error("Gravity journal acceptance does not match its prepared descriptor");
+    const auto& source=prepared_->source;
+    if(source.topology!=epoch_||source.input_time!=prepared_->input_time
+        ||source.inputs.size()!=runtime_.handles().size())
+        throw std::logic_error("Gravity prepared field identity/time changed before acceptance");
+    const auto context=runtime_.stage_context();
+    for(std::size_t b=0;b<source.inputs.size();++b) {
+        const auto& input=source.inputs[b];
+        if(input.block!=runtime_.handles()[b]||input.slot!=descriptor.input_slot
+            ||input.storage_generation!=generation_)
+            throw std::logic_error("Gravity source patch/slot/storage frame changed before acceptance");
+        context.ledger.require_readable({input.block,input.slot},
+            {state::ExecutionSide::Host,input.version,true,false});
+    }
+    gravity_->require_host_stage_consumption(source);
+    gravity_->end_host_stage_consumption();
+    ++pending_count_;prepared_.reset();invalidate();
+}
+/** Move only bounded accepted observer records; physical publication was checked before this tail. */
+void GravityStage::commit_macro_step() noexcept {
+    // The transaction calls this only after all fallible endpoint checks. A
+    // programmer contract error cannot silently publish an incomplete prefix.
+    if(!journal_active_||prepared_||!journal_method_
+        ||!expected_count_||pending_count_!=expected_count_
+        ||committed_count_)std::terminate();
+    static_assert(std::is_nothrow_swappable_v<decltype(boundary_snapshot_)>);
+    committed_rows_.swap(pending_rows_);committed_count_=pending_count_;
+    boundary_snapshot_.swap(pending_boundary_snapshot_);
+    boundary_exchange_=pending_boundary_exchange_;
+    pending_count_=0;journal_method_.reset();journal_active_=false;
+}
+/** A failed attempt keeps accepted boundary history and emits no diagnostic prefix. */
+void GravityStage::discard_macro_step() noexcept {
+    if(!journal_active_)return;
+    if(gravity_)gravity_->end_host_stage_consumption();
+    prepared_.reset();journal_method_.reset();pending_boundary_snapshot_.reset();
+    pending_count_=0;journal_active_=false;invalidate();
+}
+/** Report already accepted records; durable I/O is outside numerical commit/rollback. */
+void GravityStage::flush_committed_diagnostics() {
+    if(journal_active_)throw std::logic_error("Cannot flush a tentative gravity macro-step");
+    if(!committed_count_)return; // Ordinary runs retain their existing buffered reporting.
+    for(std::size_t i=0;i<committed_count_;++i) {
+        diagnostics_<<committed_rows_[i].solve;
+        if(boundary_diagnostics_.is_open())boundary_diagnostics_<<committed_rows_[i].boundary;
+    }
+    diagnostics_.flush();
+    if(boundary_diagnostics_.is_open())boundary_diagnostics_.flush();
+    if(committed_count_&&(!diagnostics_||(boundary_diagnostics_.is_open()&&!boundary_diagnostics_)))
+        throw std::runtime_error("Cannot publish accepted gravity macro-step diagnostics");
+    committed_count_=0;
 }
 /** Retire both host and device gravity views before changing state. */
 void GravityStage::invalidate() const { if(gravity_)gravity_->invalidate();if(runtime_.backend())runtime_.backend()->invalidate_gravity(); }

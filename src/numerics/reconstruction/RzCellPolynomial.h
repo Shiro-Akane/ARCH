@@ -122,7 +122,7 @@ ARCH_INLINE FluidVector point_state(const StateReader& read,int index,
 }
 
 /** Number of certified nodes of one cell: both true faces plus four Gauss. */
-inline constexpr int certified_node_count=6;
+inline constexpr int certified_node_count=RzThermodynamics::physical_node_count;
 
 /** Maximum number of halvings of the single trial factor before theta=0. */
 inline constexpr int high_profile_halving_limit=54;
@@ -139,11 +139,7 @@ inline constexpr int high_profile_halving_limit=54;
  */
 ARCH_INLINE double certified_node_radius(int n,const RzThermodynamics::Cell& baseline)
 {
-    const double lower=baseline.density.lower,upper=baseline.density.upper;
-    if(n==0)return lower;
-    if(n==1)return upper;
-    const double half=.5*(upper-lower),midpoint=lower+half;
-    return midpoint+half*quadrature_node(n-2);
+    return RzThermodynamics::physical_node_radius(baseline,n);
 }
 
 /** One admissible conservative profile anchored at the native baseline.

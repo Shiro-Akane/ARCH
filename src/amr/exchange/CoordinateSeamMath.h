@@ -6,7 +6,9 @@
  * 1. Receive a topology-owned donor stencil and borrowed structure-of-arrays views.
  * 2. Interpolate conserved fields and mass fractions at the mapped physical point.
  * 3. Rotate native momentum components and use the active donor center if the
- *    ghost-only interpolation leaves the admissible state domain.
+ *    ghost-only interpolation leaves its chart's provisional state domain.
+ * 4. Leave complete native RZ thermal/EOS acceptance to the Runtime owner
+ *    after the actual whole-domain density boundary/exchange has completed.
  *
  * Host and CUDA call this same arithmetic. The topology lookup and device
  * memory ownership remain with their respective AMR executors.
@@ -18,6 +20,8 @@
 #include <cstdint>
 
 #include "amr/transfer/RegridTransferMath.h"
+#include "grid/GridGeometryView.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
 
 namespace amr {
@@ -31,6 +35,7 @@ struct CoordinateSeamTransfer {
     std::array<int, 3> source_neighbor{};
     std::array<double, 3> neighbor_weight{};
     std::array<std::int8_t, 3> momentum_sign{1, 1, 1};
+    GridMetrics::GeometrySemantics geometry_semantics = GridMetrics::GeometrySemantics::Existing;
 };
 
 /** Borrowed SoA fields; Scalar is const double for a donor and double for a ghost. */
@@ -49,12 +54,25 @@ template<class Scalar> struct CoordinateSeamFields {
     }
 };
 
-/** Return false only when the already published active donor itself is invalid. */
+/** Reconstruct a provisional ghost using this immutable stencil's actual chart.
+ * Existing charts retain their point-state recovery and composition fallback.
+ * Native RZ has m_phi=J/W and E=E_V: a single pre-ghost operation cannot recover
+ * its thermal state without the complete density stencil. It checks finite
+ * native fields, positive rho and the shared simplex, without inventing I_*.
+ * Candidate fractions use the existing destination ghost scratch; failure may
+ * leave that scratch changed. No accepted-ghost token or EOS certificate is
+ * published here. Runtime must reject failure and apply its full post-ghost
+ * native EOS gate before publication. Unknown chart semantics fail before any
+ * field access. Host and CUDA execute exactly this same scalar arithmetic.
+ */
 ARCH_INLINE bool apply_coordinate_seam_transfer(
     const CoordinateSeamTransfer& transfer,
     CoordinateSeamFields<const double> source,
     CoordinateSeamFields<double> destination)
 {
+    const bool rz = transfer.geometry_semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (!rz && transfer.geometry_semantics != GridMetrics::GeometrySemantics::Existing)
+        return false;
     const auto sample = [&](const double* field) {
         double value = field[transfer.source_center];
         for (int axis = 0; axis < 3; ++axis)
@@ -73,8 +91,10 @@ ARCH_INLINE bool apply_coordinate_seam_transfer(
         transfer.momentum_sign[2] * sample(source.mom_w),
         sample(source.eng)};
     const double enuc = sample(source.enuc_rate);
-    bool admissible = arch::state::recover(candidate).status
-        == arch::state::Status::valid && std::isfinite(enuc);
+    bool admissible = std::isfinite(enuc) && (rz
+        ? RzThermodynamics::provisional_native_state(candidate, nullptr, 0, 1)
+            == arch::state::Status::valid
+        : arch::state::recover(candidate).status == arch::state::Status::valid);
     double species_sum = 0.;
     const double species_tolerance = regrid_math::composition_simplex_tolerance(
         source.species_count);
@@ -86,9 +106,14 @@ ARCH_INLINE bool apply_coordinate_seam_transfer(
                    - source.species(species, transfer.source_center));
         destination.fractions[species * destination.total_size + cell] = value;
         species_sum += value;
-        admissible &= std::isfinite(value) && value >= 0. && value <= 1.;
+        if (!rz) admissible &= std::isfinite(value) && value >= 0. && value <= 1.;
     }
-    if (source.species_count > 0)
+    if (rz) {
+        const double* fractions = source.species_count > 0
+            ? destination.fractions + cell : nullptr;
+        admissible &= RzThermodynamics::provisional_native_state(candidate, fractions,
+            source.species_count, destination.total_size) == arch::state::Status::valid;
+    } else if (source.species_count > 0)
         admissible &= std::abs(species_sum - 1.) <= species_tolerance;
     if (admissible) {
         destination.rho[cell] = candidate.rho;
@@ -105,7 +130,14 @@ ARCH_INLINE bool apply_coordinate_seam_transfer(
     center.mom_u *= transfer.momentum_sign[0];
     center.mom_v *= transfer.momentum_sign[1];
     center.mom_w *= transfer.momentum_sign[2];
-    if (arch::state::recover(center).status != arch::state::Status::valid)
+    if (rz) {
+        const double* fractions = source.species_count > 0
+            ? source.fractions + transfer.source_center : nullptr;
+        if (RzThermodynamics::provisional_native_state(center, fractions,
+                source.species_count, source.total_size) != arch::state::Status::valid
+            || !std::isfinite(source.enuc_rate[transfer.source_center]))
+            return false;
+    } else if (arch::state::recover(center).status != arch::state::Status::valid)
         return false;
     destination.rho[cell] = center.rho;
     destination.mom_u[cell] = center.mom_u;

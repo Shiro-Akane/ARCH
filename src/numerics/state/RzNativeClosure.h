@@ -7,6 +7,9 @@
  * 2. Map m_phi=J/W to an effective ordinary momentum with the same rotational
  *    kinetic mean, then use the existing strict energy/bounds validation.
  * 3. Expose the mean EOS input and a conservative physical baseline at radius r.
+ * 4. Precheck raw native means without treating J/W as a point momentum.
+ * 5. After actual whole-domain BC/exchange, validate the mean and the same
+ *    physical baseline at both faces and the four shared radial Gauss nodes.
  *
  * I_* is the inertia of the explicit numerical density reconstruction, not a
  * certificate of an unknown subcell physical field. No new evolved field, EOS,
@@ -17,9 +20,13 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "core/ArchPortability.h"
 #include "data/FluidState.h"
+#include "grid/GridMetrics.h"
 #include "numerics/reconstruction/RzDensityMoments.h"
 #include "numerics/state/StateAdmissibility.h"
 
@@ -54,10 +61,7 @@ ARCH_INLINE Cell from_density(const FluidVector& native,const RzDensity::Cell& d
     if(!(native.rho>0.)) {
         result.status=arch::state::Status::nonpositive_density;return result;
     }
-    if(!std::isfinite(bounds.density)||bounds.density<0.
-       ||!std::isfinite(bounds.internal_min)||bounds.internal_min<0.
-       ||!std::isfinite(bounds.internal_max)||bounds.internal_max<bounds.internal_min)
-        return result;
+    if(!arch::state::valid_bounds(bounds))return result;
     const double volume_weight=std::abs(density.lower/density.radius_scale)
         +std::abs(density.upper/density.radius_scale);
     const double numerator[]{native.rho,density.weighted_two,density.weighted_two};
@@ -124,5 +128,101 @@ ARCH_INLINE FluidVector base_derivative(const Cell& cell,double radius)
         +(.5*mz)*cell.axial_velocity+(.5*angular)*velocity
         +(.5*rho*velocity)*cell.omega;
     return {gradient,mr,mz,angular,energy};
+}
+
+/** Finite/rho/simplex precheck of native U, without energy recovery.
+ * This is provisional only: J/W and E/V use different measures. Bounds are
+ * checked as configuration, but raw E is never compared with a Cartesian
+ * kinetic energy. No repair, floor, normalization or publication occurs.
+ */
+ARCH_INLINE arch::state::Status provisional_native_state(const FluidVector& native,
+    const double* fractions,int species,int stride,const arch::state::Bounds& bounds={})
+{
+    if(!arch::state::valid_bounds(bounds))
+        return arch::state::Status::invalid_thermodynamics;
+    if(!std::isfinite(native.rho)||!std::isfinite(native.mom_u)
+        ||!std::isfinite(native.mom_v)||!std::isfinite(native.mom_w)
+        ||!std::isfinite(native.eng))return arch::state::Status::nonfinite;
+    if(!(native.rho>0.))return arch::state::Status::nonpositive_density;
+    if(native.rho<bounds.density)return arch::state::Status::invalid_thermodynamics;
+    return arch::state::validate_composition(fractions,species,stride);
+}
+
+/** Apply the actual EOS to an already-constructed numerical mean closure.
+ * effective_mean has the same rotational kinetic mean J^2/(2 I_* V), so
+ * ordinary strict recovery is now appropriate. Cell construction has checked
+ * the caller's bounds; composition and EOS use contiguous Xi. A mean PASS alone
+ * does not establish physical-point acceptance or any ghost/topology epoch.
+ * EOS exceptions propagate to the caller's transaction owner.
+ */
+template<class Eos>
+ARCH_INLINE arch::state::Status validate_mean_eos(const Cell& cell,
+    const double* contiguous_fractions,int species,const Eos& eos)
+{
+    if(!cell.valid())return cell.status;
+    return arch::state::validate_eos(cell.effective_mean,contiguous_fractions,
+        species,{},eos);
+}
+
+inline constexpr int physical_node_count=6;
+
+/** Radius on this real accepted cell: both faces, then four Gauss nodes.
+ * Use actual lower/upper bounds, rather than recomputing origin +/- h/2,
+ * because those can have different FP64 endpoints on a generated grid.
+ */
+ARCH_INLINE double physical_node_radius(const Cell& cell,int node)
+{
+    if(node<0||node>=physical_node_count)return arch::state::invalid();
+    const double lower=cell.density.lower,upper=cell.density.upper;
+    if(node==0)return lower;
+    if(node==1)return upper;
+    const double half=.5*(upper-lower),midpoint=lower+half;
+    return midpoint+half*RzReconstruction::quadrature_node(node-2);
+}
+
+/** Validate one read-only Host patch after its real density ghosts exist.
+ * Workflow: check actual chart/layout; precheck each native mean; construct
+ * rho_* and I_* from its real radial neighbors; evaluate the actual EOS for
+ * the effective mean and its six baseline physical points with the same Xi.
+ * No arrays or means are changed. This certifies the numerical baseline at
+ * these points, not an unknown subcell field or an already-evaluated high ray.
+ * The Runtime caller owns exact slot/version/topology, completed BC/exchange,
+ * and rollback before publication. Device traversal reuses the scalar leaves
+ * rather than materializing an entire device patch on the Host.
+ */
+template<class Eos>
+inline void validate_patch_eos(const FluidState& state,const Grid& grid,int species,
+    const arch::state::Bounds& bounds,const Eos& eos)
+{
+    const auto view=GridMetrics::make_geometry_view(grid,
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
+    const int extent=grid.GetTotalSize();
+    if(!arch::state::valid_bounds(bounds)||grid.ng<1||extent<=0
+        ||species<0||state.GetNumSpecies()!=species||state.block_total_size_!=extent
+        ||state.rho.size()!=static_cast<std::size_t>(extent)
+        ||state.mom_u.size()!=state.rho.size()||state.mom_v.size()!=state.rho.size()
+        ||state.mom_w.size()!=state.rho.size()||state.eng.size()!=state.rho.size()
+        ||state.mass_fractions.size()!=static_cast<std::size_t>(species)*extent)
+        throw std::invalid_argument("RZ EOS acceptance requires the actual complete patch layout and density ghosts");
+    std::vector<double> fractions(static_cast<std::size_t>(species));
+    const auto read=[&](int index){return state.get(index);};
+    for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+        const int index=grid.GetIndex(i,j,0);
+        for(int s=0;s<species;++s)fractions[s]=state.X(s,index);
+        const auto native=read(index);
+        const auto preliminary=provisional_native_state(native,fractions.data(),species,1,bounds);
+        if(preliminary!=arch::state::Status::valid)
+            throw std::runtime_error("RZ native provisional state rejected at cell "+std::to_string(index));
+        const auto cell=make_cell(read,index,view,i,bounds);
+        if(validate_mean_eos(cell,fractions.data(),species,eos)!=arch::state::Status::valid)
+            throw std::runtime_error("RZ native closure/EOS rejected at cell "+std::to_string(index));
+        for(int node=0;node<physical_node_count;++node) {
+            const auto point=base_point(cell,physical_node_radius(cell,node));
+            if(arch::state::validate_eos(point,fractions.data(),species,bounds,eos)
+                !=arch::state::Status::valid)
+                throw std::runtime_error("RZ physical baseline/EOS rejected at cell "+std::to_string(index)
+                    +", node "+std::to_string(node));
+        }
+    }
 }
 } // namespace RzThermodynamics

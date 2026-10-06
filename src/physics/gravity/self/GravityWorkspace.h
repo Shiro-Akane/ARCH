@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <unordered_map>
 
 #include "amr/elliptic/EllipticMeshAdapter.h"
@@ -56,6 +57,12 @@ struct SelfGravity::Workspace {
     std::vector<Array<int>> layers;
     std::vector<int> patch_offsets;
     std::vector<GravityPatchView> patches;
+    // Allocated only by an explicit Host transaction. Each patch records one
+    // momentum consumer and one conservative work consumer per active axis.
+    // Atomics make duplicate consumption detectable across patch executors.
+    std::unique_ptr<std::atomic<unsigned>[]> host_consumption;
+    bool observe_host_consumption = false;
+    double host_consumption_dt = 0.;
     // O(surface) physical-face scatter plan for the position/time datum c.
     std::vector<int> boundary_faces;
     std::vector<std::array<double,3>> boundary_native;
@@ -101,6 +108,48 @@ struct SelfGravity::Workspace {
         if(it==lookup.end()||patches[it->second].density!=state.rho.data())
             throw std::logic_error("Self-gravity patch uses a different density allocation/slot");
         return patches[it->second];
+    }
+    /** Allocate/reset the bounded per-patch receipt before any fluid producer runs. */
+    void begin_host_consumption(double step_dt) {
+        if(solver.execution().device())
+            throw std::logic_error("Host gravity receipt cannot observe Device consumers");
+        if(!host_consumption)
+            host_consumption=std::make_unique<std::atomic<unsigned>[]>(patches.size());
+        for(std::size_t b=0;b<patches.size();++b)
+            host_consumption[b].store(0,std::memory_order_relaxed);
+        host_consumption_dt=step_dt;
+        observe_host_consumption=true;
+    }
+    /** A receipt certifies the prepared interval, never merely a callback visit. */
+    void require_host_consumer(const Grid& grid,unsigned bit,double dt) const {
+        if(!observe_host_consumption)return;
+        const auto found=lookup.find(&grid);
+        if(found==lookup.end()||!host_consumption||!bit
+            ||!std::isfinite(dt)||!(dt>0.)||dt!=host_consumption_dt)
+            throw std::logic_error("Gravity Host consumer interval/frame differs from preparation");
+        if(host_consumption[found->second].load(std::memory_order_relaxed)&bit)
+            throw std::logic_error("Gravity patch source/work consumed twice");
+    }
+    /** Record completed source algebra, rejecting duplicate patch/axis use. */
+    void consume_host_patch(const Grid& grid,unsigned bit) {
+        if(!observe_host_consumption)return;
+        const auto found=lookup.find(&grid);
+        if(found==lookup.end()||!host_consumption||!bit)
+            throw std::logic_error("Gravity consumer is outside the prepared Host patch frame");
+        const auto previous=host_consumption[found->second].fetch_or(bit,std::memory_order_relaxed);
+        if(previous&bit)
+            throw std::logic_error("Gravity patch source/work consumed twice");
+    }
+    /** Match the actual field publication and all completed physical source/work calls. */
+    void require_host_consumption(const GravitySolveIdentity& expected) const {
+        require();
+        if(!observe_host_consumption||!host_consumption||source!=expected
+            ||solver.execution().device())
+            throw std::logic_error("Gravity Host receipt does not match the prepared publication");
+        const unsigned complete=(1u<<(solver.op().base().dimension+1))-1u;
+        for(std::size_t b=0;b<patches.size();++b)
+            if(host_consumption[b].load(std::memory_order_relaxed)!=complete)
+                throw std::logic_error("Gravity Host receipt has an unconsumed patch force/work");
     }
     /** Materialize potential and acceleration lazily for host output. */
     void download(GravityFieldScope requested=GravityFieldScope::ExistingPhysics) const {

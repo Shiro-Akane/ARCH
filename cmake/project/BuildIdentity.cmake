@@ -2,11 +2,13 @@
 # This owner runs after backend/providers so configured feature definitions exist.
 # Runtime Git queries and a self-embedded executable digest are deliberately absent.
 
-set(arch_identity_inputs ${ARCH_APPLICATION_SOURCES} ${ARCH_DISPATCH_SOURCES}
+set(arch_identity_inputs ${ARCH_APPLICATION_SOURCES} ${ARCH_DRIVER_RUNTIME_SOURCES}
+    ${ARCH_DISPATCH_SOURCES}
     ${ARCH_GRAVITY_CPU_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
 # Bind extracted mathematical leaves and actual CUDA object owners as well as
 # APP collection variables; extraction must not silently drop a source identity.
-set(arch_identity_targets ARCH arch_build_contract arch_solver_dispatch arch_gravity_cpu arch_diffusion_math)
+set(arch_identity_targets ARCH arch_build_contract arch_driver_runtime
+    arch_solver_dispatch arch_gravity_cpu arch_diffusion_math)
 get_property(arch_identity_directory_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN LISTS arch_identity_directory_targets)
     if(target MATCHES "^arch_cuda_")

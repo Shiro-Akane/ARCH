@@ -9,6 +9,9 @@
  * no-diagnostic run. These impulses are not physical RZ floor corrections.
  * Post-boundary rejection tests use real BC/exchange and Runtime rollback;
  * their injected ghost poison is an engineering ordering witness, not an EOS reference.
+ * Native preflight negatives call each actual selected integrator without a
+ * transaction, so unchanged populated registers/fields prove rejection before
+ * Clear or patch execution rather than successful restoration afterward.
  * No scientific tolerance, floor, public RZ gate or production method is changed.
  */
 #include <algorithm>
@@ -22,16 +25,19 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "amr/AMRControl.h"
 #include "driver/runtime/HostHydroTransaction.h"
 #include "driver/schedule/DriverControl.h"
+#include "driver/stages/DriverMacroStep.h"
 #include "driver/stages/DriverStages.h"
 #include "numerics/integrator/TimeIntegratorEuler.h"
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
 #include "physics/boundary/UserBoundary.h"
+#include "physics/eos/IdealGas.h"
 
 namespace {
 using namespace arch;
@@ -237,7 +243,7 @@ public:
 /** Actual type-erased Hydro producer with bounded faults and explicit diagnostic-only impulses. */
 class HydroProbe:public Numerics::IHydroSolver {
 public:
-    enum class Fault {None,LastBlock,FinalReflux,RepairSemantics};
+    enum class Fault {None,LastBlock,Stage3NativeRejection,RepairSemantics};
     enum class DiagnosticReceipt {EventOnly,StageImpulses,None};
     DiagnosticReceipt diagnostic_receipt=DiagnosticReceipt::EventOnly;
     bool poison_output_ghosts=false;
@@ -302,8 +308,11 @@ public:
                 output.rho[cell]=std::numeric_limits<double>::quiet_NaN();
                 output.eng[cell]=std::numeric_limits<double>::quiet_NaN();
             }
-        // The actual final reflux validator rejects this injected inadmissible density AFTER rotation.
-        if(fault==Fault::FinalReflux&&old_weight==1./3.)output.rho[g.GetIndex(g.Is(),g.Js(),0)]=0.;
+        // This invalid third-stage output must be rejected by the mandatory
+        // native post-ghost gate before final slot rotation or reflux. It is
+        // an explicit engineering counterexample, not a reflux-generated state.
+        if(fault==Fault::Stage3NativeRejection&&old_weight==1./3.)
+            output.rho[g.GetIndex(g.Is(),g.Js(),0)]=0.;
     }
 };
 
@@ -337,7 +346,7 @@ void selected_rk3_ghost_fault(amr::AMRControl& c,double dt,BCHandler& bc,
     GhostFaultBoundary selected{bc,probe};SolverRK3::solve(c,dt,selected,gravity,hydro,n);
 }
 /** Freeze a method-specific configuration before the Runtime borrows it. */
-SimConfig settings(dispatch::TimeIntegratorId method){
+SimConfig settings(dispatch::TimeIntegratorId method,bool split_profile=false){
     SimConfig c;c.grid.dim=2;c.grid.geometry="cylindrical";c.grid.nblockx1=2;c.grid.nblockx2=1;c.grid.nblockx3=0;
     c.grid.amr_max_blocks=8;c.grid.x1_min=1.;c.grid.x1_max=3.;c.grid.x2_min=-1.;c.grid.x2_max=1.;
     c.amr.lrefinemin=0;c.amr.lrefinemax=0;
@@ -347,11 +356,20 @@ SimConfig settings(dispatch::TimeIntegratorId method){
         case dispatch::TimeIntegratorId::Rk3:c.numerics.time_integrator="RK3";break;
         default:throw std::invalid_argument("unsupported fixture Hydro method");
     }
-    c.numerics.sml_rho=1.e-20;c.numerics.min_eint=1.e-20;c.numerics.max_eint=1.e99;return c;
+    c.numerics.sml_rho=1.e-20;c.numerics.min_eint=1.e-20;c.numerics.max_eint=1.e99;
+    if(split_profile) {
+        c.physics.burn.use_burn=true;c.physics.burn.nuclearTempMin=0.;
+        c.physics.burn.nuclearDensMin=0.;c.physics.burn.smallt=1.e-20;
+        c.physics.burn.use_nse=false;
+        c.physics.diffusion.use_diffusion=true;
+        c.physics.diffusion.use_viscous_diffusion=true;c.physics.diffusion.nu_visc=1.e-4;
+    }
+    return c;
 }
 /** Real Runtime fixture; no replacement ledger, scheduler or accepted-owner service. */
 struct Fixture {
     SimConfig config;SpeciesManager species;
+    std::unique_ptr<IdealGas> eos;
     amr::AMRControl control{8,2};RunState start;
     std::unique_ptr<SimulationController> controller;
     std::unique_ptr<boundary::ScopedUserBoundarySelection> selection;
@@ -361,18 +379,36 @@ struct Fixture {
     std::unique_ptr<JournalProbe> journal;
     HydroProbe hydro;driver::DriverStageWorkspace workspace;
     dispatch::ResolvedExecutionPlan plan{};
+    std::function<void(const scheduler::StageExecutionContext&, StateSlot,
+        state::StateVersion)> boundary_witness;
+    /** Keep the actual mandatory EOS gate while adding explicit test-only faults. */
+    void refresh_boundary_gate() {
+        runtime->bind_native_boundary_acceptance(*context, runtime->handles());
+        if (boundary_witness) {
+            const auto science = context->post_boundary_acceptance;
+            const auto witness = boundary_witness;
+            context->post_boundary_acceptance = [science, witness](
+                const scheduler::StageExecutionContext& actual, StateSlot slot,
+                state::StateVersion version) {
+                science(actual, slot, version);
+                witness(actual, slot, version);
+            };
+        }
+    }
     explicit Fixture(dispatch::TimeIntegratorId method=dispatch::TimeIntegratorId::Rk3,
-        bool bind_source_journal=true):config(settings(method)) {
+        bool bind_source_journal=true,bool split_profile=false):config(settings(method,split_profile)) {
         if(bind_source_journal&&method!=dispatch::TimeIntegratorId::Rk3)
             throw std::invalid_argument("fixture source journal is explicitly RK3-only");
         species.add_species("X",1.,1.,1.4,1.);
+        eos=std::make_unique<IdealGas>(1.4,species);
         control.tree->InitRootGrid(config,1,rz);control.flux_register.EnsureSpecies(1);
         for(int id:control.tree->GetActiveBlocks()) {
             auto& block=control.pool->GetBlock(id);
             for(auto* state:slots(block)) {
                 state->stage_repairs.reset(1,state::RepairSemantics::RzVolumeAngular);
                 for(int cell=0;cell<block.grid.GetTotalSize();++cell) {
-                    state->set(cell,{2.,.2,.3,.4,20.});state->enuc_rate[cell]=.75;state->X(0,cell)=1.;
+                    state->set(cell,split_profile?FluidVector{2.,0.,.3,0.,20.}:FluidVector{2.,.2,.3,.4,20.});
+                    state->enuc_rate[cell]=.75;state->X(0,cell)=1.;
                 }
             }
         }
@@ -385,6 +421,7 @@ struct Fixture {
         selection=std::make_unique<boundary::ScopedUserBoundarySelection>(std::move(selected),config,species);
         bc=std::make_unique<BCHandler>(config,rz);
         runtime=std::make_unique<driver::DriverRuntime>(control,*bc,config,species,*controller);
+        runtime->bind_native_rz_eos(*eos);
         runtime->initialize_topology();context.emplace(runtime->stage_context());
         context->step_start_time=2.;context->step_dt=.125;context->boundary_start_time=2.;context->boundary_step_dt=.125;
         if(bind_source_journal) {
@@ -393,8 +430,12 @@ struct Fixture {
         }
         hydro.last_id=control.tree->GetActiveBlocks().back();
         // Use the existing Driver rule even with pure builtin ghosts, so stage time/revision is exercised.
+        context->configure_boundary_context=[this](double time,boundary::BoundaryPurpose purpose){
+            bc->configure_stage(time,purpose);refresh_boundary_gate();
+        };
         context->physical_boundary_preparation=[this](StateSlot slot,double time,boundary::BoundaryPurpose purpose){
             bc->configure_stage(time,purpose);runtime->ensure_fluid_ghosts(slot);
+            refresh_boundary_gate();
         };
         runtime->bind_boundary_accounting(*context);plan.time_integrator=method;
     }
@@ -404,6 +445,65 @@ struct Fixture {
         driver::advance_hydro(*runtime,workspace,*context,&plan,context->step_dt,integrator,nullptr,&hydro,qualification);
     }
 };
+/** Require the actual native scheduler/gate frame before any selected solve writes. */
+void native_gate_preflight_preserves_evidence(){
+    struct Method {dispatch::TimeIntegratorId id;driver::IntegratorSolve solve;};
+    const std::array<Method,3> methods{{
+        {dispatch::TimeIntegratorId::Euler,selected_euler},
+        {dispatch::TimeIntegratorId::Rk2,selected_rk2},
+        {dispatch::TimeIntegratorId::Rk3,selected_rk3}}};
+    const std::array<const char*,4> expected{{
+        "production stage scheduler is not bound",
+        "Native RZ Hydro requires post-boundary acceptance",
+        "Native RZ Hydro requires a Host stage binding",
+        "Native RZ Hydro stage domain extent mismatch"}};
+    for(const auto& method:methods)for(int fault=0;fault<4;++fault) {
+        Fixture f(method.id,false);
+        const int id=f.control.tree->GetActiveBlocks().front();
+        // Nonzero original fluid/species registers and receipts make Clear()
+        // or reset observably destructive; there is no rollback guard here.
+        f.control.flux_register.AddCoarseFlux(id,0,0,{1.,2.,3.,4.,5.},.75);
+        f.control.flux_register.AddCoarseSpeciesFlux(id,0,0,0,.25,.75);
+        for(int active:f.control.tree->GetActiveBlocks()) {
+            auto& block=f.control.pool->GetBlock(active);
+            for(auto* slot:slots(block))
+                slot->stage_repairs.view().event(1.,block.grid.GetIndex(block.grid.Is(),block.grid.Js(),0));
+        }
+        // The real Runtime installs the gate for all cases initially. Only the
+        // explicit absent-gate negative removes it; this does not substitute a
+        // no-op callback or assert authentication from std::function presence.
+        require(bool(f.context->post_boundary_acceptance),"real Runtime native gate is missing from fixture");
+        if(fault==1)f.context->post_boundary_acceptance={};
+        if(fault==2)f.context->side=state::ExecutionSide::Device;
+        const auto fields_before=capture_fields(f.control);
+        const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+        bool caught=false;
+        try {
+            const auto invoke=[&]{method.solve(f.control,f.context->step_dt,*f.bc,nullptr,&f.hydro,f.config.numerics);};
+            if(fault==0)invoke();
+            else {
+                std::span<const amr::BlockHandle> handles=f.runtime->handles();
+                if(fault==3) {
+                    require(handles.size()==2,"extent negative needs two actual Runtime patches");
+                    handles=handles.first(1);
+                }
+                scheduler::ScopedStageBinding binding(*f.context,handles);
+                invoke();
+            }
+        }catch(const std::logic_error& error) {
+            caught=std::string(error.what()).find(expected[fault])!=std::string::npos;
+            if(!caught)throw;
+        }
+        require(caught,"actual native selected solve did not reject its incomplete execution frame");
+        for(const auto& field:fields_before)field.matches(f.control);
+        require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before),
+            "native gate preflight changed populated registers, Runtime owners or publication evidence");
+        require(f.hydro.patch_visits==0&&f.hydro.final_block_visits==0,
+            "native gate preflight reached an actual numerical patch producer");
+        require(!f.journal&&!f.context->hydro_preparation,
+            "native gate preflight negative acquired a source journal or transaction");
+    }
+}
 /** Independent receipt algebra through real Runtime and all three selected Hydro lanes. */
 void independent_rz_hydro_receipt_counts(){
     struct Case {
@@ -522,7 +622,9 @@ void post_boundary_rejection_rolls_back_complete_runtime(){
         }
         int gate_calls=0,checked_ghosts=0;
         bool gate_rejected=false,source_invalidated_before_restore=false;
-        f.context->post_boundary_acceptance=[&](StateSlot slot,state::StateVersion version) {
+        f.boundary_witness=[&](const scheduler::StageExecutionContext& actual_context,
+            StateSlot slot,state::StateVersion version) {
+            require(&actual_context==&*f.context,"post-boundary witness lost actual calling context");
             ++gate_calls;
             require(gate_calls==f.journal->pending_count
                 &&f.journal->invalidations>=invalidations_before+gate_calls,
@@ -565,7 +667,8 @@ void post_boundary_rejection_rolls_back_complete_runtime(){
             &&f.journal->discard_calls==1&&bool(f.context->post_boundary_acceptance),
             "post-boundary rejection erased earlier history or dropped the original callback");
         // The new hook deliberately rejects before final rotation/Current mapping.
-        // This validates atomic ownership, not the still-unbound RZ scientific closure.
+        // The mandatory real-EOS closure runs before this injected witness;
+        // an ordering/rollback pass alone does not qualify RZ source dynamics.
     }
 }
 
@@ -573,18 +676,29 @@ void post_boundary_rejection_rolls_back_complete_runtime(){
 void post_boundary_callback_presence_is_frozen(){
     for(bool present:{false,true}) {
         Fixture f;int original_calls=0;
-        if(present)f.context->post_boundary_acceptance=[&](StateSlot,state::StateVersion){++original_calls;};
+        const auto science=f.context->post_boundary_acceptance;
+        if(present)f.context->post_boundary_acceptance=[&,science](
+            const scheduler::StageExecutionContext& actual,StateSlot slot,state::StateVersion version){
+            science(actual,slot,version);++original_calls;
+        };
+        else {
+            // Explicit malformed-context negative only; this absent mandatory
+            // gate never reaches a scientific producer or successful advance.
+            f.context->post_boundary_acceptance={};
+        }
         rejected_exact(f,[&] {
             scheduler::ScopedStageBinding binding(*f.context,f.runtime->handles());
             driver::HostHydroTransaction transaction(*f.runtime,*f.context,f.hydro);
             if(present)f.context->post_boundary_acceptance={};
-            else f.context->post_boundary_acceptance=[](StateSlot,state::StateVersion){};
+            else f.context->post_boundary_acceptance=science;
             transaction.validate_storage();
         },"Host Hydro transaction owner/frame changed");
         require(bool(f.context->post_boundary_acceptance)==present,
             "rollback failed to restore the new hook's original presence");
         if(present) {
-            f.context->post_boundary_acceptance(StateSlot::Current,{1});
+            const auto version=f.context->ledger.inspect(
+                {f.runtime->handles().front(),StateSlot::Current}).interior.version;
+            f.context->post_boundary_acceptance(*f.context,StateSlot::Current,version);
             require(original_calls==1,"rollback restored presence but lost the original gate callable");
         }
         require(f.hydro.patch_visits==0,"callback-presence rejection reached a numerical producer");
@@ -626,7 +740,7 @@ void first_use_and_retry(){
     require(std::any_of(failed.runtime->hydro_boundary_budget().begin(),failed.runtime->hydro_boundary_budget().end(),
         [](double value){return value!=0.;}),"fixture failed to exercise actual nonzero boundary accounting");
 }
-void existing_alias_late_ghost_reflux(){
+void existing_alias_late_ghost_native_rejection(){
     for(int failure:{0,1,2}){
         Fixture f;f.advance();
         for(int id:f.control.tree->GetActiveBlocks()){
@@ -637,8 +751,8 @@ void existing_alias_late_ghost_reflux(){
         if(failure==0){f.hydro.fault=HydroProbe::Fault::LastBlock;
             rejected_exact(f,[&]{f.advance();},"HYDRO_LAST_STAGE_LAST_BLOCK_FAULT");}
         if(failure==1)rejected_exact(f,[&]{f.advance(selected_rk3_ghost_fault);},"HYDRO_GHOST_AFTER_RECEIPT_FAULT");
-        if(failure==2){f.hydro.fault=HydroProbe::Fault::FinalReflux;
-            rejected_exact(f,[&]{f.advance();},"AMR block=");}
+        if(failure==2){f.hydro.fault=HydroProbe::Fault::Stage3NativeRejection;
+            rejected_exact(f,[&]{f.advance();},"RZ native provisional state rejected at cell ");}
         require(f.journal->committed_count==3&&f.journal->commit_calls==1,"failure erased previously accepted source history");
         f.hydro.fault=HydroProbe::Fault::None;f.advance();
         require(f.journal->commit_calls==2&&f.journal->discard_calls==1,"warm retry lifecycle failed");
@@ -902,15 +1016,218 @@ void production_invalidation_before_repair_failure(){
     }
 }
 
+/** Stateless injected heat-release policy through the ACTUAL Host Burn batch.
+ * This prescribed de/dt=1/4 is an engineering input, not a reaction network.
+ * The existing packed-temperature/first-law handoff, native closure, workers
+ * and two Burn half calls remain real; no alternate state update is used.
+ */
+struct MacroHeatProbe {
+    static constexpr int NEQ=3; // One species, temperature, passive energy.
+    bool integrate(double* packed,double rho,double interval,const IdealGas& eos,
+        const BurnConfig&,double& recommended,double* energy) const {
+        const double old_energy=eos.get_eint_from_T(rho,packed[1],packed);
+        const double release=.25*interval;
+        packed[1]=eos.get_temperature(rho,old_energy+release,packed);
+        packed[2]=release;recommended=.5;
+        if(energy)*energy=release;
+        return true;
+    }
+};
+
+/** Same five-segment production helper, actual Burn/RKL/Runtime EOS and BC.
+ * Hydro/source and additional surface impulses are explicitly diagnostic
+ * injections. Nonzero old history, tentative RKL budgets and late failures
+ * exercise transaction ownership without claiming source/tensor accuracy.
+ */
+void whole_macro_endpoint_and_rollback(){
+    enum class Fault {None,BurnFirst,DiffusionFirst,HydroLast,DiffusionSecond,BurnSecond,EndpointEos};
+    const std::array<Fault,7> faults{{Fault::None,Fault::BurnFirst,Fault::DiffusionFirst,
+        Fault::HydroLast,Fault::DiffusionSecond,Fault::BurnSecond,Fault::EndpointEos}};
+    for(const auto order:{dispatch::DiffusionIntegratorId::Rkl1,dispatch::DiffusionIntegratorId::Rkl2})
+        for(const auto fault:faults) {
+            Fixture f(dispatch::TimeIntegratorId::Rk3,true,true);
+            f.plan.diffusion_integrator=order;
+            f.advance(); // Genuine accepted Hydro history and aliased captures before this attempt.
+            f.controller->dt_old=.375;f.controller->step_count=1;f.controller->t_current=2.;
+            double burn_advice=.75;
+            const auto fields_before=capture_fields(f.control);
+            const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+            const auto repairs_before=f.runtime->repair_budget();
+            const auto hydro_before=f.runtime->hydro_boundary_budget();
+            const auto diffusion_before=f.runtime->diffusion_boundary_budget();
+            const auto source_before=f.journal->committed;
+            const int source_count=f.journal->committed_count;
+            const auto old_dt=f.controller->dt_old,old_burn=burn_advice;
+            const int first_id=f.control.tree->GetActiveBlocks().front();
+            auto& first=f.control.pool->GetBlock(first_id);
+            const int first_cell=first.grid.GetIndex(first.grid.Is(),first.grid.Js(),0);
+            const double old_energy=first.fluid_state.eng[first_cell];
+            std::optional<std::pair<double,boundary::BoundaryPurpose>> configured;
+            const auto actual_configure=f.context->configure_boundary_context;
+            f.context->configure_boundary_context=[&](double time,boundary::BoundaryPurpose purpose) {
+                actual_configure(time,purpose);configured=std::pair{time,purpose};
+            };
+            auto actual_rkl_accept=f.context->rkl_flux_capture_accept;
+            f.context->rkl_flux_capture_accept=[&](const scheduler::RklStageDescriptor& d,
+                const scheduler::RklPlan& plan) {
+                // Diagnostic-only nonzero surface impulses make publication
+                // of BOTH diffusion budgets observable even for this actual
+                // constant axial-translation zero-viscous-operator profile.
+                if(d.stage==static_cast<int>(plan.stages.size()))
+                    for(int id:f.control.tree->GetActiveBlocks()) {
+                        auto capture=f.control.pool->GetBlock(id).fluid_state.boundary_flux_capture;
+                        require(bool(capture),"actual RKL did not install the Runtime capture owner");
+                        for(int face=0;face<6;++face)
+                            for(double& value:capture->stage[face])value+=.001*(1.+face);
+                    }
+                actual_rkl_accept(d,plan);
+                require(bits(f.runtime->diffusion_boundary_budget(),diffusion_before),
+                    "RKL half published accepted diffusion budget before the macro endpoint");
+            };
+            const auto burn=BurnerHandle<IdealGas>::bind<MacroHeatProbe>();
+            int burn_calls=0,diffusion_calls=0;
+            double completed_burn_advice=0.;
+            std::vector<driver::CpuStage> measured;
+            bool injected=false;
+            auto reject=[&](const char* message){injected=true;throw std::logic_error(message);};
+            auto attempt=[&] {
+                driver::NativeMacroStepAdvice advice(*f.runtime,*f.controller,burn_advice);
+                (void)f.controller->calculate_next_dt(f.context->step_dt,burn_advice);
+                burn_advice=1.e99;
+                scheduler::ScopedStageBinding binding(*f.context,f.runtime->handles());
+                driver::execute_driver_macro_step(*f.runtime,*f.context,&f.hydro,true,
+                    [&](driver::BurnHalf half,double interval,state::CompletionToken token) {
+                        ++burn_calls;
+                        require(f.runtime->active_host_hydro_transaction()!=nullptr,
+                            "burn did not borrow the complete macro owner");
+                        require(f.journal->committed_count==source_count,
+                            "Hydro committed its borrowed macro owner before Burn2");
+                        auto result=driver::execute_burn_half(*f.runtime,f.workspace,*f.eos,burn,
+                            half,interval,burn_advice,token);
+                        if((fault==Fault::BurnFirst&&half==driver::BurnHalf::First)
+                            ||(fault==Fault::BurnSecond&&half==driver::BurnHalf::Second))
+                            reject("MACRO_ACTUAL_BURN_POST_WRITE_REJECTED");
+                        if(fault==Fault::EndpointEos&&half==driver::BurnHalf::Second) {
+                            // The lane publishes this finite, positive-rho
+                            // candidate. Only the final ACTUAL Runtime EOS
+                            // rejects its unresolved negative thermal energy.
+                            first.fluid_state.eng[first_cell]=-1.;injected=true;
+                        }
+                        require(repairs_equal(f.runtime->repair_budget(),repairs_before),
+                            "burn observed prematurely accepted macro repair receipts");
+                        return result;
+                    },
+                    [&](double interval) {
+                        ++diffusion_calls;
+                        require(configured&&bits(configured->first,f.context->boundary_start_time)
+                            &&configured->second==boundary::BoundaryPurpose::Diffusion,
+                            "macro diffusion input did not refresh its actual Runtime EOS/BC snapshot");
+                        const auto rkl_order=order==dispatch::DiffusionIntegratorId::Rkl1
+                            ?DiffFunction::RKLOrder::First:DiffFunction::RKLOrder::Second;
+                        require(DiffFunction::compute_stages(rkl_order,interval,.01,
+                            f.config.physics.diffusion.diff_cfl,f.config.physics.diffusion.max_stages)>=2,
+                            "macro RKL profile omitted real recurrence stages");
+                        driver::advance_diffusion(*f.runtime,f.workspace,*f.context,*f.eos,&f.plan,
+                            1,interval,.01);
+                        require(repairs_equal(f.runtime->repair_budget(),repairs_before),
+                            "diffusion half exposed accepted macro repair history");
+                        if((fault==Fault::DiffusionFirst&&diffusion_calls==1)
+                            ||(fault==Fault::DiffusionSecond&&diffusion_calls==2))
+                            reject("MACRO_ACTUAL_RKL_POST_WRITE_REJECTED");
+                    },
+                    [&](double interval) {
+                        if(fault==Fault::HydroLast)f.hydro.fault=HydroProbe::Fault::LastBlock;
+                        driver::advance_hydro(*f.runtime,f.workspace,*f.context,&f.plan,interval,
+                            selected_rk3,nullptr,&f.hydro);
+                        require(f.journal->committed_count==source_count
+                            &&repairs_equal(f.runtime->repair_budget(),repairs_before)
+                            &&bits(f.runtime->hydro_boundary_budget(),hydro_before),
+                            "borrowed Hydro published source/repair/surface prefix before final EOS");
+                    },
+                    [&](driver::CpuStage stage,auto&& execute) {measured.push_back(stage);execute();});
+                completed_burn_advice=burn_advice;advice.commit();
+            };
+            bool rejected=false;
+            try{attempt();}
+            catch(const std::exception& error) {
+                const std::string message=error.what();
+                if(fault==Fault::HydroLast)
+                    rejected=message.find("HYDRO_LAST_STAGE_LAST_BLOCK_FAULT")!=std::string::npos;
+                else if(fault==Fault::EndpointEos)
+                    rejected=message.find("RZ native provisional state rejected")!=std::string::npos
+                        ||message.find("RZ native closure/EOS rejected")!=std::string::npos;
+                else rejected=injected&&message.find("MACRO_ACTUAL_")!=std::string::npos;
+                if(!rejected)throw; // No earlier unrelated failure can satisfy this matrix.
+            }
+            require(bits(f.controller->t_current,2.)&&f.controller->step_count==1,
+                "macro helper advanced accepted physical time/count before the caller's commit");
+            if(fault!=Fault::None) {
+                require(rejected,"macro failure injection did not reach its actual late owner");
+                for(const auto& before:fields_before)before.matches(f.control);
+                require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before),
+                    "full macro rejection lost fields/addresses/BC/ledger/register/receipts");
+                require(bits(f.controller->dt_old,old_dt)&&bits(burn_advice,old_burn),
+                    "failed macro did not restore exact accepted timestep advice");
+                require(f.journal->committed==source_before&&f.journal->committed_count==source_count
+                    &&f.journal->pending_count==0,"late macro failure published source history");
+                if(fault==Fault::BurnSecond||fault==Fault::EndpointEos)
+                    require(burn_calls==2&&diffusion_calls==2,
+                        "late failure did not execute both actual Burn and diffusion halves");
+            } else {
+                const std::vector<driver::CpuStage> sequence{driver::CpuStage::BurnFirst,
+                    driver::CpuStage::Diffusion,driver::CpuStage::Hydro,
+                    driver::CpuStage::Diffusion,driver::CpuStage::BurnSecond};
+                require(!rejected&&measured==sequence&&burn_calls==2&&diffusion_calls==2,
+                    "accepted macro changed the original split or timing intervals");
+                require(f.journal->committed_count==source_count+3&&f.journal->pending_count==0
+                    &&!f.runtime->active_host_hydro_transaction(),"macro endpoint did not commit/release its one owner");
+                require(!bits(f.runtime->diffusion_boundary_budget(),diffusion_before)
+                    &&!bits(f.runtime->hydro_boundary_budget(),hydro_before),
+                    "macro commit omitted a tentative boundary receipt owner");
+                // E gain = injected Hydro .125 + rho * (dt/4). This is an
+                // independent engineering first-law count; original rounding
+                // budget is unchanged, and no nuclear/tensor claim is made.
+                require(std::abs(first.fluid_state.eng[first_cell]-old_energy-.1875)<=2.e-12,
+                    "macro endpoint omitted or doubled a real Burn half");
+                require(bits(f.controller->dt_old,.125)&&bits(burn_advice,completed_burn_advice)
+                    &&std::isfinite(burn_advice)&&burn_advice>0.&&burn_advice<1.e99,
+                    "successful macro did not retain actual accepted timestep advice");
+                for(const auto handle:f.runtime->handles()) {
+                    const auto coherence=f.context->ledger.inspect({handle,StateSlot::Current});
+                    f.context->ledger.require_readable({handle,StateSlot::Current},
+                        {state::ExecutionSide::Host,coherence.interior.version,true,true});
+                    scheduler::detail::require_settled_destination(coherence);
+                }
+            }
+        }
+}
+
+/** The original timestep function writes dt_old before it rejects a bad proposal. */
+void rejected_timestep_advice_is_not_accepted(){
+    Fixture f;double burn_advice=.75;f.controller->dt_old=.375;
+    bool rejected=false;
+    try {
+        driver::NativeMacroStepAdvice guard(*f.runtime,*f.controller,burn_advice);
+        (void)f.controller->calculate_next_dt(-1.,burn_advice);
+    }catch(const std::runtime_error& error) {
+        rejected=std::string(error.what()).find("dt too small")!=std::string::npos;
+        if(!rejected)throw;
+    }
+    require(rejected&&bits(f.controller->dt_old,.375)&&bits(burn_advice,.75),
+        "rejected timestep proposal changed accepted scalar advice");
+}
+
 } // namespace
 
 /** Added to the existing gravity_stage_contract executable; no new broad CI campaign. */
 void test_host_hydro_transaction(){
-    first_use_and_retry();existing_alias_late_ghost_reflux();descriptor_and_frame_negatives();
+    first_use_and_retry();existing_alias_late_ghost_native_rejection();descriptor_and_frame_negatives();
     exclusive_owner_and_partial_permutation();retired_uid_and_replay_history();
     fail_closed_profiles();forbidden_residency();actual_foreign_binding_before_write();
     changed_borrowed_binding_after_begin();mismatched_step_size_before_write();
     production_invalidation_before_repair_failure();
     independent_rz_hydro_receipt_counts();reflux_receipt_preflight_preserves_evidence();
     post_boundary_rejection_rolls_back_complete_runtime();post_boundary_callback_presence_is_frozen();
+    native_gate_preflight_preserves_evidence();
+    whole_macro_endpoint_and_rollback();rejected_timestep_advice_is_not_accepted();
 }

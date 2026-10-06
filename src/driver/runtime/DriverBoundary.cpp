@@ -3,12 +3,14 @@
  * @brief Apply boundary and ghost operations at the required stage state generation.
  *
  * Workflow:
- * 1. Receive a resolved configuration, stage request and current state identity.
- * 2. Apply boundary and ghost operations at the required stage state generation.
- * 3. Hand completed state and diagnostics to the next scheduled stage.
+ * 1. Select the actual Current/Next/Scratch slot and freeze its domain context.
+ * 2. Apply physical boundaries and whole-domain halo exchange to that slot.
+ * 3. Validate native-RZ closure with the real EOS before publishing ghosts.
+ * 4. Record only successfully completed Device boundary context/cache stamps.
  */
 
 #include <algorithm>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 
@@ -16,6 +18,7 @@
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 
 namespace arch::driver {
 using scheduler::StageExecutionContext;
@@ -24,18 +27,6 @@ using state::StateResidencyLedger;
 using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
-/** Publish the completed host ghost generation for current state. */
-void DriverRuntime::publish_current_ghost()
-{
-    StageExecutionContext context{
-        ExecutionSide::Host, *residency_ledger, scheduler_clock};
-    (void)arch::scheduler::complete_boundary(
-        context, stage_handles, StateSlot::Current,
-        current_interior_version(),
-        [](StateSlot, arch::state::StateVersion,
-           arch::state::CompletionToken token) { return token; });
-}
-
 /** Launch the device boundary plan for the requested state version. */
 state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requested, state::StateVersion version, state::CompletionToken token)
 {
@@ -79,6 +70,8 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
 /** Wait for and validate a device boundary publication. */
 void DriverRuntime::complete_device_boundary(StateSlot slot)
 {
+    if (geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("Native RZ EOS boundary acceptance is unavailable on Device");
     if (stage_handles.empty())
         throw std::logic_error("CUDA boundary requires active blocks");
     const auto version = residency_ledger->inspect(
@@ -127,30 +120,30 @@ void DriverRuntime::complete_device_boundary(StateSlot slot)
 /** Fill missing host or device ghosts before a stage reads the state. */
 void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
 {
+    const auto member = TimeIntegration::hydro_boundary_state_member(slot);
     if (compute_backend) { complete_device_boundary(slot); return; }
-    arch::state::HostFailure failure;
-    const auto member = slot == StateSlot::Current ? &amr::Block::fluid_state
-        : slot == StateSlot::Next ? &amr::Block::state_next : &amr::Block::state_scratch;
+    // Freeze the actual domain/ledger/BC time before any fallible ghost writes.
+    // Existing pre-initialization callers retain their interior-only behavior;
+    // native candidates must have their real EOS and staged ledger available.
+    std::optional<StageExecutionContext> context;
+    state::StateVersion version{};
+    if (residency_ledger && !stage_handles.empty()) {
+        context.emplace(stage_context());
+        version = residency_ledger->inspect({stage_handles.front(), slot}).interior.version;
+    } else if (geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        throw std::logic_error("Native RZ boundary acceptance requires initialized residency");
+    }
     for (int id:amr_ctrl.tree->GetActiveBlocks())
         (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
-#pragma omp parallel for schedule(dynamic, 1)
-    for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
-        try {
-            amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
-            bc_handler.apply(block.*member, block.grid);
-        } catch (...) { failure.capture_current(); }
-    }
-    failure.rethrow();
+    TimeIntegration::apply_domain_boundary(amr_ctrl, bc_handler, member);
     amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
                                             config.grid.dim, member, stage_handles,
                                             geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
                                                 ? amr::CoordinateSeamGeometry::RzAxisymmetric
                                                 : amr::CoordinateSeamGeometry::ExistingChart,
                 {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
-    if (residency_ledger && !stage_handles.empty()) {
-        StageExecutionContext context{ExecutionSide::Host, *residency_ledger, scheduler_clock};
-        const auto version = residency_ledger->inspect({stage_handles.front(), slot}).interior.version;
-        (void)arch::scheduler::complete_boundary(context, stage_handles, slot, version,
+    if (context) {
+        (void)arch::scheduler::complete_boundary(*context, stage_handles, slot, version,
             [](StateSlot, arch::state::StateVersion, arch::state::CompletionToken token) { return token; });
     }
 }

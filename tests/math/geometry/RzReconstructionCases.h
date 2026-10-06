@@ -266,6 +266,100 @@ inline void native_mean_cache_traversal()
         <<" hot_flux_finite=1 cold_axial_generic_limiter_rejected=1 PASS\n";
 }
 
+/** Real-EOS acceptance from independent density and inertia antiderivatives.
+ * A cold native mean is provisional until its real density ghosts provide I_*.
+ * Mean acceptance does not imply that cancellation at every point is resolved.
+ */
+inline void native_acceptance_leaves()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    SpeciesManager species;species.add_species("gas0",1.,1.,1.4,3.);
+    species.add_species("gas1",2.,1.,1.4,3.);IdealGas eos(1.4,species);
+    const double fractions[]{.5,.5};
+    for(bool variable:{false,true}) {
+        Reference reference;
+        if(variable) {reference.constant=7.L/8.L;reference.quadratic=1.L/4.L;}
+        Grid grid(amr::MAX_NG,0.,amr::BLOCK_NX,-.5,.5,0.,1.);
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+        FluidState state;populate(state,grid,reference,.5L,0.L);
+        const auto before=state;
+        const auto view=GridMetrics::make_geometry_view(grid,rz);
+        const int i=grid.Is(),index=grid.GetIndex(i,grid.Js()+1,0);
+        const auto read=[&](int n){return state.get(n);};
+        const auto raw=read(index);
+        if(arch::state::recover(raw).status!=arch::state::Status::unresolved_energy
+            ||RzThermodynamics::provisional_native_state(raw,fractions,2,1)
+                !=arch::state::Status::valid)
+            throw std::runtime_error("Cold native mean was confused with a point momentum");
+        const auto cell=RzThermodynamics::make_cell(read,index,view,i);
+        if(RzThermodynamics::validate_mean_eos(cell,fractions,2,eos)
+            !=arch::state::Status::valid)
+            throw std::runtime_error("Real EOS rejected independent cold native means");
+        const long double mass=reference.density_moment(0.L,1.L,1);
+        const long double rho=2.L*mass;
+        RzViscousCases::closure_check(cell.internal,reference.internal,
+            "Native EOS closure disagrees with independent thermal energy");
+        RzViscousCases::closure_check(eos.get_temperature(raw.rho,cell.internal,fractions),
+            reference.internal/3.L,"Native mean temperature differs from caloric reference");
+        const double pressure=eos.get_pressure(cell.effective_mean,fractions);
+        RzViscousCases::closure_check(pressure,.4L*rho*reference.internal,
+            "Native mean pressure differs from independent density integral");
+        const double sound=eos.get_sound_speed(cell.effective_mean,pressure,fractions);
+        RzViscousCases::closure_check(sound*sound,1.4L*.4L*reference.internal,
+            "Native sound speed differs from independent caloric reference");
+        RzThermodynamics::validate_patch_eos(state,grid,2,{},eos);
+        if(state.rho!=before.rho||state.mom_u!=before.mom_u||state.mom_v!=before.mom_v
+            ||state.mom_w!=before.mom_w||state.eng!=before.eng
+            ||state.mass_fractions!=before.mass_fractions)
+            throw std::runtime_error("Read-only native acceptance altered conserved means");
+        const double strided[]{.5,77.,.5};
+        if(RzThermodynamics::provisional_native_state(raw,strided,2,2)
+            !=arch::state::Status::valid)
+            throw std::runtime_error("Native acceptance rejected actual species-major stride");
+        const double invalid[][2]{{-.1,1.1},{.25,.25},
+            {std::numeric_limits<double>::quiet_NaN(),1.}};
+        for(const auto& composition:invalid)
+            if(RzThermodynamics::provisional_native_state(raw,composition,2,1)
+                !=arch::state::Status::invalid_composition)
+                throw std::runtime_error("Native provisional state accepted invalid composition");
+        if(RzThermodynamics::provisional_native_state(raw,nullptr,2,1)
+                !=arch::state::Status::invalid_composition
+            ||RzThermodynamics::provisional_native_state(raw,fractions,2,0)
+                !=arch::state::Status::invalid_composition
+            ||RzThermodynamics::provisional_native_state(raw,nullptr,0,1)
+                !=arch::state::Status::valid)
+            throw std::runtime_error("Native composition layout validation changed");
+        auto invalid_rho=raw;invalid_rho.rho=0.;
+        if(RzThermodynamics::provisional_native_state(invalid_rho,fractions,2,1)
+            !=arch::state::Status::nonpositive_density)
+            throw std::runtime_error("Native provisional state accepted exact vacuum");
+        arch::state::Bounds malformed;malformed.internal_min=-1.;
+        if(RzThermodynamics::provisional_native_state(raw,fractions,2,1,malformed)
+            !=arch::state::Status::invalid_thermodynamics)
+            throw std::runtime_error("Native provisional state accepted invalid configured bounds");
+    }
+    {
+        Reference reference;reference.internal=std::ldexp(11.L,-54);
+        Grid grid(amr::MAX_NG,0.,amr::BLOCK_NX,-.5,.5,0.,1.);
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+        FluidState state;populate(state,grid,reference,.5L,0.L);
+        const auto view=GridMetrics::make_geometry_view(grid,rz);
+        const int i=grid.Is(),index=grid.GetIndex(i,grid.Js()+1,0);
+        const auto cell=RzThermodynamics::make_cell([&](int n){return state.get(n);},index,view,i);
+        if(RzThermodynamics::validate_mean_eos(cell,fractions,2,eos)
+                !=arch::state::Status::valid
+            ||arch::state::validate_eos(RzThermodynamics::base_point(cell,
+                static_cast<double>(.5L+.5L*nodes.back())),fractions,2,{},eos)
+                !=arch::state::Status::unresolved_energy)
+            throw std::runtime_error("Mean acceptance concealed the independent unresolved point");
+        bool rejected=false;
+        try {RzThermodynamics::validate_patch_eos(state,grid,2,{},eos);}
+        catch(const std::runtime_error&) {rejected=true;}
+        if(!rejected)throw std::runtime_error("Post-ghost gate accepted an unresolved physical point");
+    }
+    std::cout<<"RZ_NATIVE_ACCEPTANCE real_eos=1 independent_integrals=1 point_veto=1 PASS\n";
+}
+
 /** Shared pure-profile verification with real stencil ownership and two species.
  * These local mathematical cases do not qualify hierarchy stages or the full
  * scientific admissibility of every neighboring cell.
@@ -486,5 +580,6 @@ inline void native_profile()
     }
     std::cout<<"RZ_NATIVE_LIMITED_PROFILE cases="<<cases<<" PASS\n";
     native_mean_cache_traversal();
+    native_acceptance_leaves();
 }
 } // namespace RzReconstructionCases

@@ -73,21 +73,23 @@ include("${CMAKE_CURRENT_LIST_DIR}/../CustomNetworks.cmake")
 list(FILTER ARCH_APPLICATION_SOURCES EXCLUDE REGEX
     "/src/physics/boundary/PhysicalBoundaryHandler\\.cpp$")
 
-# Dispatch sources (isolated in its own object target to manage template instantiation)
-set(DISPATCH_SRC_DIRS
-    "src/driver/dispatch/bindings"
-    "src/driver/dispatch/capability"
-)
-# Dispatch consumers need the extracted driver owners as well as policy binding.
-# Keep those non-template implementations in the same library, rather than
-# making its references resolve only when linked into the ARCH executable.
-set(ARCH_DISPATCH_SOURCES
-    src/driver/SolverDispatch.cpp
+# Runtime owns the concrete topology, boundary, and accounting implementations.
+# Keep lifecycle consumers independent of the policy-template dispatch archive.
+set(ARCH_DRIVER_RUNTIME_SOURCES
     src/driver/runtime/DriverRuntime.cpp
     src/driver/runtime/DriverBoundary.cpp
     src/driver/runtime/DriverBoundaryDiagnostics.cpp
     src/physics/boundary/PhysicalBoundaryHandler.cpp
-    src/driver/runtime/DriverRegrid.cpp
+    src/driver/runtime/DriverRegrid.cpp)
+
+# Dispatch sources stay in their own static target for template instantiation.
+set(DISPATCH_SRC_DIRS
+    "src/driver/dispatch/bindings"
+    "src/driver/dispatch/capability"
+)
+# Policy binding and its I/O/gravity adapters consume the shared Runtime owner.
+set(ARCH_DISPATCH_SOURCES
+    src/driver/SolverDispatch.cpp
     src/driver/io/DriverIO.cpp
     src/driver/stages/GravityStage.cpp
     src/amr/elliptic/EllipticMeshAdapter.cpp)
@@ -152,10 +154,14 @@ foreach(source IN LISTS ARCH_GRAVITY_CPU_SOURCES)
 endforeach()
 add_library(arch_gravity_cpu STATIC ${ARCH_GRAVITY_CPU_SOURCES})
 target_link_libraries(arch_gravity_cpu PUBLIC arch_build_contract)
+add_library(arch_driver_runtime STATIC ${ARCH_DRIVER_RUNTIME_SOURCES})
+target_link_libraries(arch_driver_runtime
+    PUBLIC arch_build_contract
+    PRIVATE arch_diffusion_math)
 add_library(arch_solver_dispatch STATIC ${ARCH_DISPATCH_SOURCES})
 target_link_libraries(arch_solver_dispatch
     PUBLIC arch_build_contract
-    PRIVATE arch_diffusion_math arch_gravity_cpu)
+    PRIVATE arch_driver_runtime arch_diffusion_math arch_gravity_cpu)
 
 add_executable(ARCH ${ARCH_APPLICATION_SOURCES})
 
@@ -177,10 +183,11 @@ endif()
 
 target_link_libraries(ARCH PRIVATE arch_solver_dispatch)
 if(CMAKE_DL_LIBS)
+    target_link_libraries(arch_driver_runtime PRIVATE ${CMAKE_DL_LIBS})
     target_link_libraries(arch_solver_dispatch PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
-foreach(target ARCH arch_solver_dispatch)
+foreach(target ARCH arch_driver_runtime arch_solver_dispatch)
     target_compile_features(${target} PRIVATE cxx_std_20)
     target_include_directories(${target} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -189,13 +196,17 @@ foreach(target ARCH arch_solver_dispatch)
     )
 endforeach()
 
-# PCH covers heavy STL/OpenMP headers shared by every dispatch TU
-target_precompile_headers(arch_solver_dispatch PRIVATE
+# Each owner gets a private PCH with the existing STL/OpenMP header contract.
+# Separate PCH ownership avoids reversing Runtime's dependency on dispatch.
+set(ARCH_DRIVER_COMMON_PCH_HEADERS
     <vector> <string> <memory> <map> <iostream> <cmath> <omp.h>
     <sstream> <stdexcept> <algorithm> <iomanip> <array>
 )
+foreach(target arch_driver_runtime arch_solver_dispatch)
+    target_precompile_headers(${target} PRIVATE ${ARCH_DRIVER_COMMON_PCH_HEADERS})
+endforeach()
 
-# Dispatch uses the same Release optimization and configuration-specific IPO
+# Runtime and dispatch use the same Release optimization and configuration-specific IPO
 # as the application. There is no lower-optimization policy matrix override;
 # build concurrency, rather than runtime optimization, bounds build memory.
 

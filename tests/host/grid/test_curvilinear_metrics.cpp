@@ -11,6 +11,7 @@
 #include "numerics/integrator/TimeIntegratorEuler.h"
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "math/geometry/CurvilinearMetricCases.h"
 #include "math/geometry/RzMetricCases.h"
@@ -20,10 +21,13 @@
 #include "physics/gravity/ExternalGravity.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
 #include <iostream>
+#include <algorithm>
 #include <bit>
 #include <cstdint>
 #include <mutex>
+#include <span>
 #include <stdexcept>
+#include <vector>
 
 #include "math/geometry/RzEquilibriumCases.h"
 #include "math/geometry/RzReconstructionCases.h"
@@ -39,6 +43,70 @@ struct ConstantEos {
     double get_pressure(const FluidVector&, const double*) const { return 5.0; }
     double get_sound_speed(const FluidVector&, double, const double*) const { return 2.0; }
 };
+
+/** Attach actual EOS acceptance to the original manual geometry-unit scheduler.
+ * This adapter preserves the fixture's independent handles/ledger/clock and
+ * spatial samples. It is not the authenticated production Runtime service.
+ * The gate sees actual post-BC/exchange slot buffers, preflights exact Host
+ * interiors for the entire domain, then validates their density closure and
+ * physical baseline using the original IdealGas and configured bounds.
+ */
+void bind_rz_geometry_fixture_acceptance(
+    arch::scheduler::StageExecutionContext& context,amr::AMRControl& control,
+    const std::vector<amr::BlockHandle>& handles,const IdealGas& eos,
+    const NumericsConfig& numerics,int& completed_gates)
+{
+    const auto active=control.tree->GetActiveBlocks();
+    const arch::state::Bounds bounds{
+        numerics.sml_rho,numerics.min_eint,numerics.max_eint};
+    if(active.empty()||handles.size()!=active.size()||!arch::state::valid_bounds(bounds))
+        throw std::logic_error("RZ geometry fixture acceptance has an invalid domain or bounds");
+    auto* const expected_context=&context;
+    auto* const expected_ledger=&context.ledger;
+    auto* const expected_clock=&context.clock;
+    const auto epoch=context.ledger.active_epoch();
+    const int species=control.pool->GetBlock(active.front()).fluid_state.GetNumSpecies();
+    const std::span<const amr::BlockHandle> borrowed_handles=handles;
+    context.post_boundary_acceptance=[&control,&eos,&completed_gates,
+        expected_context,expected_ledger,expected_clock,epoch,species,bounds,
+        active,borrowed_handles,frozen_handles=handles](
+            const arch::scheduler::StageExecutionContext& actual,
+            arch::state::StateSlot slot,arch::state::StateVersion version) {
+        const auto member=TimeIntegration::hydro_boundary_state_member(slot);
+        const auto require_frame=[&] {
+            const auto& binding=arch::scheduler::current_stage_binding();
+            const auto live_handles=control.ActiveHandles();
+            if(&actual!=expected_context||actual.side!=arch::state::ExecutionSide::Host
+                ||&actual.ledger!=expected_ledger||&actual.clock!=expected_clock
+                ||actual.ledger.active_epoch()!=epoch
+                ||control.tree->GetActiveBlocks()!=active
+                ||&binding.context!=&actual
+                ||binding.handles.data()!=borrowed_handles.data()
+                ||binding.handles.size()!=frozen_handles.size()
+                ||live_handles.data()!=borrowed_handles.data()
+                ||live_handles.size()!=frozen_handles.size()
+                ||!std::equal(binding.handles.begin(),binding.handles.end(),frozen_handles.begin()))
+                throw std::logic_error("RZ geometry fixture acceptance owner/handle frame changed");
+            // Ghost readiness has not been published yet. Require exactly the
+            // candidate Host interior version, not the preceding ghost version.
+            for(const auto handle:frozen_handles) {
+                actual.ledger.require_readable({handle,slot},
+                    {arch::state::ExecutionSide::Host,version,true,false});
+                const auto state=actual.ledger.inspect({handle,slot});
+                if(state.interior.pending_transfer!=arch::state::PendingTransferPhase::None
+                    ||state.ghost.pending_transfer!=arch::state::PendingTransferPhase::None)
+                    throw std::logic_error("RZ geometry fixture acceptance has a pending transfer");
+            }
+        };
+        require_frame();
+        for(int id:active) {
+            const auto& block=control.pool->GetBlock(id);
+            RzThermodynamics::validate_patch_eos(block.*member,block.grid,species,bounds,eos);
+        }
+        require_frame();
+        ++completed_gates;
+    };
+}
 }
 
 
@@ -651,6 +719,8 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
     }
     MonotonicSchedulerClock clock(2,1);
     StageExecutionContext context{ExecutionSide::Host,ledger,clock};
+    int completed_gates=0;
+    bind_rz_geometry_fixture_acceptance(context,control,handles,eos,numerics,completed_gates);
     ScopedStageBinding scope(context,handles);
     // Independent full-ring integral budget, not production metric helpers.
     const auto totals=[&]() {
@@ -748,6 +818,8 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
     const auto final_applied=observer.applied();
     if(open && final_out[2]==0.)throw std::runtime_error("open fixture has zero external torque");
     const int stages=std::is_same_v<Solver,SolverEuler>?1:(std::is_same_v<Solver,SolverRK2>?2:3);
+    if(completed_gates!=steps*(stages+2))
+        throw std::runtime_error("rotating geometry fixture missed actual initial/stage/Current EOS acceptance");
     if(observer.stage_calls()!=steps*stages*static_cast<int>(active.size()))
         throw std::runtime_error("boundary budget missed a real RK patch-stage");
     const auto final_state=totals();
@@ -842,6 +914,8 @@ void test_rz_scheduled_hydro(int direction,double inner) {
     }
     MonotonicSchedulerClock clock(2,1);
     StageExecutionContext context{ExecutionSide::Host,ledger,clock};
+    int completed_gates=0;
+    bind_rz_geometry_fixture_acceptance(context,control,handles,eos,numerics,completed_gates);
     ScopedStageBinding scope(context,handles);
     // Mismatch must fail before advancing the clock/ledger. Use the actual
     // scheduled entry, not only its helper.
@@ -863,15 +937,26 @@ void test_rz_scheduled_hydro(int direction,double inner) {
         (std::is_same_v<Solver,SolverRK2>?2:3);
     if(clock.last_version()!=1+stages+1)
         throw std::runtime_error("RZ scheduler publication count");
+    if(completed_gates!=static_cast<int>(stages+1))
+        throw std::runtime_error("scheduled geometry fixture missed actual stage/Current EOS acceptance");
     double error=0.;
     for(std::size_t n=0;n<active.size();++n) {
         const auto& block=control.pool->GetBlock(active[n]);
         const auto& g=block.grid;
         const auto state=ledger.inspect({handles[n],StateSlot::Current});
+        // Final reflux now completes real Current BC/exchange and the actual
+        // EOS gate before readiness. Require matching Host ghosts, replacing
+        // the former expected invalid ghosts from the path without a gate.
         if(state.interior.version.value!=clock.last_version()
             ||state.interior.residency!=StateResidency::HostValid
-            ||state.ghost.residency!=StateResidency::Invalid)
+            ||state.ghost.residency!=StateResidency::HostValid
+            ||state.ghost.version!=state.interior.version
+            ||state.ghost_source_version!=state.interior.version
+            ||!is_complete(state.ghost.completion)
+            ||state.ghost.pending_transfer!=PendingTransferPhase::None)
             throw std::runtime_error("RZ final reflux ledger identity");
+        ledger.require_readable({handles[n],StateSlot::Current},
+            {ExecutionSide::Host,StateVersion{clock.last_version()},true,true});
         for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
             const int cell=g.GetIndex(i,j,0);
             const auto u=block.fluid_state.get(cell);
@@ -1214,12 +1299,25 @@ int main(int argc,char** argv)
         const double composition[]{1.};
         const int cell=grid.GetIndex(1,1);
         FluidVector delta{};
-        int neighbour_reads=0;
+        // The actual native thermal closure needs rho at this signed annulus
+        // and its two radial neighbors. These are real positive-density cells
+        // in the same 3x3 layout, including the reflected annulus when left=0.
+        // Axisymmetry still forbids any inactive phi-neighbor access; retain a
+        // strict reader whitelist rather than forbidding legitimate radial rho.
+        std::array<int,3> radial_reads{};
+        const auto read=[&](int index) {
+            if(index<cell-1 || index>cell+1)
+                throw std::runtime_error("RZ viscous source accessed inactive phi neighbour");
+            ++radial_reads[static_cast<std::size_t>(index-(cell-1))];
+            return states.at(static_cast<std::size_t>(index));
+        };
         const auto status=DiffFlux::evaluate_geometric_diffusion_cell(
             states[cell],composition,eos,species.get_host_view(),cfg,grid,1,1,0,1.,
-            nullptr,nullptr,delta,[&](int index) {++neighbour_reads;return states.at(index);});
-        if (!status.valid || !status.active || neighbour_reads!=0)
-            throw std::runtime_error("RZ viscous source accessed inactive phi neighbour");
+            nullptr,nullptr,delta,read);
+        if (!status.valid || !status.active)
+            throw std::runtime_error("RZ viscous source rejected the actual thermal density stencil");
+        if(radial_reads[0]==0 || radial_reads[1]==0 || radial_reads[2]==0)
+            throw std::runtime_error("RZ viscous source omitted its actual radial density stencil");
         const double r=grid.GetCellCenterX(1),inv=2./(left+left+.25);
         close(delta.mom_u,-2.*coefficients.nu_visc*inv,"RZ radial viscous connection");
         close(delta.mom_w,0.,"RZ duplicated azimuthal viscous connection");

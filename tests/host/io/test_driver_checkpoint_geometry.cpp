@@ -9,12 +9,224 @@
 #include "core/files/FileFingerprint.h"
 #include "core/files/RunIdentity.h"
 #include "amr/refinement/RefinementThermodynamics.h"
+#include "physics/constant/PhysicalConstants.h"
 #include "physics/eos/IdealGas.h"
+#include <highfive/H5File.hpp>
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
+#include <vector>
 static void require(bool b,const char* m){if(!b)throw std::runtime_error(m);}
+
+/** Observe actual IdealGas evaluations without replacing any EOS mathematics. */
+struct ColdIoIdealGas : IdealGas {
+    mutable std::size_t pressure_calls=0,temperature_calls=0;
+    explicit ColdIoIdealGas(const SpeciesManager& species):IdealGas(1.4,species){}
+    double get_pressure(const FluidVector& state,const double* fractions) const {
+        ++pressure_calls;return IdealGas::get_pressure(state,fractions);
+    }
+    double get_temperature(double rho,double internal,const double* fractions) const {
+        ++temperature_calls;return IdealGas::get_temperature(rho,internal,fractions);
+    }
+};
+
+/** Existing closure-local FP64 rounding window, not a relative thermal bound.
+ * Omega=32 makes E/e ill-conditioned near r=2. Keep the existing
+ * 2e-12*max(1,|reference|) scalar budget. For lambda(P), propagate this
+ * pressure budget rather than imposing the same relative budget on a square
+ * root after E-K cancellation. The independently evaluated lambda formula and
+ * its pressure back-conversion retain the original scalar window.
+ */
+static void cold_io_check(double actual,long double expected,const char* message) {
+    require(std::isfinite(actual)
+        &&std::abs(static_cast<long double>(actual)-expected)
+            <=2e-12L*std::max(1.L,std::abs(expected)),message);
+}
+
+/** Independent polynomial antiderivative; no production quadrature or closure. */
+static long double cold_io_moment(long double lower,long double upper,int power) {
+    return (std::pow(upper,power+1)-std::pow(lower,power+1))/(power+1);
+}
+
+/** Snapshot only original native active means in the writer's leaf/cell order. */
+static std::vector<std::array<double,5>> cold_io_native_state(const amr::AMRControl& control) {
+    std::vector<std::array<double,5>> result;
+    for(int id:control.tree->GetActiveBlocks()) {
+        const auto& block=control.pool->GetBlock(id);
+        const auto& grid=block.grid;
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const auto u=block.fluid_state.get(grid.GetIndex(i,j,0));
+            result.push_back({u.rho,u.mom_u,u.mom_v,u.mom_w,u.eng});
+        }
+    }
+    return result;
+}
+
+/** Actual cold native Runtime->EOS->DriverIO->HDF->read_chk->Runtime path.
+ * Rho=1, Omega=32, e=.0025, Gamma1=1.4, Cv=2 imply P=.001 and T=.00125.
+ * Independent V/W antiderivatives construct every input. Real axis/outflow
+ * BC/exchange fills initially invalid ghosts. This is a local mean/I/O witness,
+ * with no timestep, AMR transfer or whole-model restart qualification.
+ */
+static void cold_native_io_gate(const std::filesystem::path& root) {
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr long double rho=1.L,omega=32.L,internal=.0025L,gamma=1.4L,cv=2.L;
+    constexpr long double pressure_reference=.001L;
+    SimConfig config;
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=1;config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=2.;
+    config.grid.x2_min=0.;config.grid.x2_max=2.;
+    config.grid.x1l_boundary_type="outflow";config.grid.x1r_boundary_type="outflow";
+    config.grid.x2l_boundary_type="outflow";config.grid.x2r_boundary_type="outflow";
+    config.amr.lrefinemin=0;config.amr.lrefinemax=0;
+    config.physics.gravity.type="self"; // JENS diagnostic only; no gravity stage.
+    config.io.out_dir=(root/"cold-native-rz").string();config.io.base_name="cold-native-rz";
+    config.io.vars.rho=true;config.io.vars.eng=true;
+    config.io.vars.p=true;config.io.vars.temp=true;config.io.vars.entr=true;config.io.vars.jens=true;
+    config.io.vars.u=true;config.io.vars.v=true;config.io.vars.w=true;
+    SpeciesManager species;species.add_species("cold-ideal",1.,1.,1.4,2.);
+    ColdIoIdealGas eos(species);
+    amr::AMRControl control(4,2);control.tree->InitRootGrid(config,1,rz);
+    bool raw_negative=false;
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+        require(grid.ng>=1,"cold native IO requires actual density ghosts");
+        for(int cell=0;cell<grid.GetTotalSize();++cell) {
+            block.fluid_state.set(cell,{-77.,0.,0.,0.,-77.});
+            block.fluid_state.X(0,cell)=1.;
+        }
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const long double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+            // V=2*pi*dz*integral(r dr), W=2*pi*dz*integral(r^2 dr),
+            // I=2*pi*dz*rho*integral(r^3 dr). The common prefactor cancels
+            // only in native means: m_phi=Omega*I/W, E=rho*e+Omega^2*I/(2V).
+            const long double v=cold_io_moment(lo,hi,1),w=cold_io_moment(lo,hi,2);
+            const long double inertia=rho*cold_io_moment(lo,hi,3);
+            const FluidVector u{static_cast<double>(rho),0.,0.,
+                static_cast<double>(omega*inertia/w),
+                static_cast<double>(rho*internal+omega*omega*inertia/(2*v))};
+            const int cell=grid.GetIndex(i,j,0);block.fluid_state.set(cell,u);
+            if(i==grid.Is()) {
+                const long double raw_thermal=static_cast<long double>(u.eng)
+                    -static_cast<long double>(u.mom_w)*u.mom_w/(2*u.rho);
+                require(raw_thermal<0.,"cold fixture no longer distinguishes raw J/W thermal recovery");
+                require(arch::state::recover(u).status==arch::state::Status::unresolved_energy,
+                    "raw point interpretation unexpectedly accepts cold native mean");
+                raw_negative=true;
+            }
+        }
+    }
+    require(raw_negative,"cold fixture did not visit an actual first radial cell");
+    const auto native=cold_io_native_state(control);
+    RunState start;SimulationController counters(config,start);
+    counters.repairs.reset(species.count());
+    BCHandler boundary(config,rz);boundary.bind(eos,species);
+    boundary.configure_stage(0.,arch::boundary::BoundaryPurpose::Hydro);
+    arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
+    runtime.bind_native_rz_eos(eos);runtime.initialize_topology();
+    require(eos.pressure_calls>0&&eos.temperature_calls>0,
+        "actual native Current postghost gate did not evaluate the same IdealGas");
+    require(cold_io_native_state(control)==native,"postghost EOS gate changed native U");
+    for(int id:control.tree->GetActiveBlocks()) {
+        const auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+        require(block.fluid_state.rho[grid.GetIndex(grid.Is()-1,grid.Js(),0)]==1.,
+            "real axis BC/exchange did not replace invalid density ghost");
+    }
+    auto pressure=+[](const FluidVector& u,const double* x,const void* context) {
+        return static_cast<const ColdIoIdealGas*>(context)->get_pressure(u,x);
+    };
+    auto temperature=+[](const FluidVector& u,const double* x,const void* context) {
+        return static_cast<const ColdIoIdealGas*>(context)->get_temperature(
+            u.rho,arch::state::recover(u).internal,x);
+    };
+    auto gamma1=+[](const FluidVector& u,const double* x,const void* context) {
+        const auto& gas=*static_cast<const ColdIoIdealGas*>(context);
+        const double p=gas.get_pressure(u,x),sound=gas.get_sound_speed(u,p,x);
+        return u.rho*sound*sound/p;
+    };
+    const auto provenance=io::inspect_checkpoint_provenance(config,species,
+        arch::dispatch::EosId::Ideal,false,"none",false);
+    const auto identity=fixture_plot_identity(config,species,rz);
+    arch::driver::DriverIO output(runtime,counters,provenance,identity,pressure,temperature,gamma1,&eos);
+    output.write_plot();output.write_checkpoint(1e99,false);
+    require(cold_io_native_state(control)==native,"native IO altered active V/W means");
+    const auto plot_path=std::filesystem::path(config.io.out_dir)/"cold-native-rz_SW_plt_0000.h5";
+    const auto checkpoint_path=std::filesystem::path(config.io.out_dir)/"cold-native-rz_chk_0000.h5";
+    HighFive::File plot(plot_path.string(),HighFive::File::ReadOnly);
+    std::array<std::vector<double>,4> fields;
+    const std::array<const char*,4> names{"PRES","TEMP","ENTR","JENS"};
+    for(std::size_t field=0;field<names.size();++field) {
+        const auto dataset=plot.getDataSet(std::string("Data/")+names[field]);
+        fields[field].resize(native.size());dataset.read(fields[field].data());
+        std::string averaging;dataset.getAttribute("averaging").read(averaging);
+        require(averaging=="evaluated-from-native-mean-thermodynamic-closure",
+            "native thermal metadata misstates the published EOS input");
+    }
+    std::vector<double> azimuthal(native.size()),energy(native.size()),mphi(native.size());
+    plot.getDataSet("Data/VELZ").read(azimuthal.data());
+    plot.getDataSet("Data/ENER").read(energy.data());
+    plot.getDataSet("NativeState/m_phi").read(mphi.data());
+    std::string velocity_averaging;
+    plot.getDataSet("Data/VELZ").getAttribute("averaging").read(velocity_averaging);
+    require(velocity_averaging=="representative-m_phi-over-rho","native velocity convention changed");
+    const long double pi=std::acos(-1.L);
+    const long double G=arch::constants::gravity::cgs::gravitational_constant;
+    std::size_t cell=0;
+    for(int id:control.tree->GetActiveBlocks()) {
+        const auto& grid=control.pool->GetBlock(id).grid;
+        const long double h=std::max(grid.dx1,grid.dx2);
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i,++cell) {
+            cold_io_check(fields[0][cell],pressure_reference,"native Plot pressure differs from independent caloric state");
+            cold_io_check(fields[1][cell],internal/cv,"native Plot temperature differs from independent caloric state");
+            cold_io_check(fields[2][cell],pressure_reference/std::pow(rho,gamma),
+                "native entropy proxy differs from independent pressure/gamma state");
+            // P has independently passed its original caloric-state budget.
+            // lambda/h=sqrt(pi*gamma*P/(G*rho))/h is checked independently
+            // against that same published P; d(lambda)/lambda=dP/(2P).
+            // A thermal subtraction error allowed by the absolute P window
+            // cannot consistently be assigned a tighter relative lambda window.
+            const long double jeans_reference=std::sqrt(
+                pi*gamma*static_cast<long double>(fields[0][cell])/(G*rho))/h;
+            cold_io_check(fields[3][cell],jeans_reference,
+                "native JENS formula differs from independently checked pressure");
+            const long double wavelength=static_cast<long double>(fields[3][cell])*h;
+            cold_io_check(static_cast<double>(G*rho*wavelength*wavelength/(pi*gamma)),pressure_reference,
+                "native JENS fails independent pressure back-conversion");
+            require(energy[cell]==native[cell][4]&&mphi[cell]==native[cell][3]
+                &&azimuthal[cell]==native[cell][3]/native[cell][0],
+                "Plot replaced original native energy/angular/representative velocity");
+        }
+    }
+    const auto checkpoint=io::read_hdf5_chk_impl(checkpoint_path.string());
+    require(checkpoint.geometry_identity.revision==io::rz_checkpoint_revision
+        &&checkpoint.geometry_identity.chart=="axisymmetric-rz",
+        "cold checkpoint geometry/schema identity changed");
+    require(checkpoint.rho.size()==native.size(),"cold checkpoint shape changed");
+    for(std::size_t index=0;index<native.size();++index)
+        require(checkpoint.rho[index]==native[index][0]&&checkpoint.mom_u[index]==native[index][1]
+            &&checkpoint.mom_v[index]==native[index][2]&&checkpoint.mom_w[index]==native[index][3]
+            &&checkpoint.eng[index]==native[index][4],"checkpoint replaced cold native U");
+    amr::AMRControl restored(4,2);RunState restart;
+    read_chk(checkpoint_path.string(),restored,restart,config,species,provenance,
+        io::current_rz_checkpoint_geometry());
+    require(cold_io_native_state(restored)==native,"provisional native load did not preserve original U");
+    SimulationController resumed_counters(config,restart);BCHandler resumed_boundary(config,rz);
+    resumed_counters.repairs=restart.repairs;
+    resumed_boundary.bind(eos,species);resumed_boundary.configure_stage(0.,arch::boundary::BoundaryPurpose::Hydro);
+    arch::driver::DriverRuntime resumed(restored,resumed_boundary,config,species,resumed_counters);
+    eos.pressure_calls=0;eos.temperature_calls=0;resumed.bind_native_rz_eos(eos);resumed.initialize_topology();
+    require(eos.pressure_calls>0&&eos.temperature_calls>0,
+        "loaded native state skipped actual same-EOS postghost initialization");
+    require(cold_io_native_state(restored)==native,"loaded Current EOS gate changed original native U");
+    std::cout<<"RZ_COLD_IDEALGAS_NATIVE_IO_PASS rho=1 Omega=32 e=.0025 P=.001 Cv=2"
+        <<" cells="<<native.size()<<" raw-first-cell-thermal-negative=1 actual-postghost-eos=1 t=0\n";
+}
 // Real Runtime transaction gate, not an evolved trajectory acceptance.
 static void jeans_runtime_gate() {
     SimConfig config;
@@ -81,6 +293,7 @@ int main(int argc,char** argv) {
         config.amr.lrefinemin=0;config.amr.lrefinemax=0;
         config.io.out_dir=(root/(rz?"rz":"cartesian")).string();config.io.base_name="fixture";
         SpeciesManager species;species.add_species("fixture-gas",1.,1.,1.4,1.);
+        IdealGas runtime_eos(1.4,species);
         const auto semantics=rz?GridMetrics::GeometrySemantics::AxisymmetricRz:
                                  GridMetrics::GeometrySemantics::Existing;
         amr::AMRControl control(4,config.grid.dim);control.tree->InitRootGrid(config,1,semantics);
@@ -97,6 +310,7 @@ int main(int argc,char** argv) {
         counters.repairs.reset(species.count());
         BCHandler boundaries(config,semantics);
         arch::driver::DriverRuntime runtime(control,boundaries,config,species,counters);
+        runtime.bind_native_rz_eos(runtime_eos);
         runtime.initialize_topology();
         const auto provenance=io::inspect_checkpoint_provenance(config,species,
             arch::dispatch::EosId::Ideal,false,"none",false);
@@ -315,6 +529,7 @@ int main(int argc,char** argv) {
         std::cout<<"JEANS_NATIVE_PLOT_PASS chart="<<(rz?"RZ":"Cartesian")<<"\n";
         std::cout<<"PASS actual DriverIO "<<(rz?"RZ":"Cartesian")<<" profile/native/controller/rejection/create/retry time=0 step=0\n";
     }
+    cold_native_io_gate(root);
     return 0;
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

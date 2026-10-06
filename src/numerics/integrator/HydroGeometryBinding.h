@@ -1,8 +1,18 @@
 /**
  * @file HydroGeometryBinding.h
  * @brief Preflight and shared chart selection for Host Hydro scheduler lanes.
+ *
+ * Workflow:
+ * 1. Match the explicit Hydro chart to the physical boundary owner.
+ * 2. For native RZ, require a Host stage binding, the actual domain extent and
+ *    a configured post-boundary gate before Clear() or any patch output.
+ * 3. Preflight each real grid and boundary plan, then select its seam chart.
+ * A nonempty callable establishes presence, not authenticated Runtime identity;
+ * production binds the actual Runtime EOS gate and retains its owner checks.
  */
 #pragma once
+
+#include "driver/schedule/StageScheduler.h"
 #include "numerics/integrator/IHydroSolver.h"
 
 namespace TimeIntegration {
@@ -11,6 +21,7 @@ struct HydroGeometryBinding {
     amr::CoordinateSeamGeometry exchange_chart;
 };
 
+/** Resolve a shared chart and reject incomplete native Host execution before mutation. */
 template<typename BCPolicy>
 HydroGeometryBinding bind_hydro_geometry(
     const amr::AMRControl& control, const BCPolicy& boundary,
@@ -30,6 +41,19 @@ HydroGeometryBinding bind_hydro_geometry(
     }
     if (rz && gravity)
         throw std::invalid_argument("RZ gravity requires authoritative finite-ring contract");
+    if(rz) {
+        const auto& binding=arch::scheduler::current_stage_binding();
+        if(binding.context.side!=arch::state::ExecutionSide::Host)
+            throw std::logic_error("Native RZ Hydro requires a Host stage binding");
+        if(!binding.context.post_boundary_acceptance)
+            throw std::logic_error("Native RZ Hydro requires post-boundary acceptance");
+        const auto& active=control.tree->GetActiveBlocks();
+        if(active.empty()||binding.handles.size()!=active.size())
+            throw std::logic_error("Native RZ Hydro stage domain extent mismatch");
+        // Presence cannot identify a std::function's owner. The actual Runtime
+        // callback checks its ledger/clock/handles/grid/BC frame after real
+        // exchange and applies the bound EOS before any ghost readiness.
+    }
     // Validate all patches before Clear(), any stage output, or publication.
     for (int id:control.tree->GetActiveBlocks()) {
         const auto& grid=control.pool->GetBlock(id).grid;

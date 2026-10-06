@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <stdexcept>
 
@@ -17,7 +19,9 @@
 #include "data/GlobalDefs.h"
 #include "data/UserTypes.h"
 #include "grid/GridMetrics.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
+#include "physics/eos/eos_Utils.h"
 
 namespace ProblemHelper::detail {
 
@@ -47,8 +51,8 @@ FluidVector InitialConservedState(const PrimitiveData &data, const Eos &eos,
         if (!std::isfinite(specific_internal_energy)) {
             throw std::runtime_error("EOS returned non-finite internal energy for temperature-based initialization.");
         }
-        const double kinetic_energy = 0.5 * data.rho *
-            (data.u * data.u + data.v * data.v + data.w * data.w);
+        const double kinetic_energy = eos_utils::calc_kinetic_energy(
+            data.rho,data.u,data.v,data.w);
         state.eng = data.rho * specific_internal_energy + kinetic_energy;
     } else {
         state.eng = eos.get_total_energy_primitive(
@@ -82,14 +86,63 @@ FluidVector InitialConservedState(const PrimitiveData &data, const Eos &eos,
  * rho/mom_r/mom_z/E/rhoX are V averages; m_phi is the r*dV average of rho*u_phi.
  * The returned view owns no second evolved J/ell state. No live state is changed.
  *
- * The RZ PopulateState interior transaction uses this strict conversion:
- * repaired samples/unresolved closures fail without adding heat or changing J.
- * Ghost publication remains the Driver boundary/exchange owner's responsibility.
+ * Each real sample uses the actual EOS and strict point bounds before V/W
+ * integration. The resulting mixed-measure mean is provisional: its thermal
+ * closure requires the full same-stage density stencil, available only after
+ * the Driver has completed the actual whole-domain boundary/exchange.
+ * No raw Cartesian kinetic-energy veto, heating or change of J is performed.
  */
 struct InitialCellState {
     FluidVector conserved{};
     std::vector<double> mass_fractions;
 };
+
+/** Density-weighted quadrature fraction without premature rho*X underflow.
+ * Xbar=sum(w*rho*X)/sum(w*rho). Each positive product is represented as a
+ * mantissa and binary exponent; numerator and denominator have independent
+ * shared exponents before summation. Only the final ratio is rescaled.
+ * Identical sample fractions reproduce their constant exactly, including
+ * positive subnormals. No floor, normalization or residual-species correction
+ * is applied. Terms below the scaled sum's representability are rounding loss;
+ * this does not certify later evolved trace-mass conservation.
+ */
+template<std::size_t Samples>
+double InitialMassFraction(const std::array<double,Samples>& weights,
+    const std::array<double,Samples>& densities,const double* fractions)
+{
+    static_assert(Samples>0);
+    std::array<double,Samples> denominator{},numerator{};
+    std::array<int,Samples> denominator_power{},numerator_power{};
+    int dmax=std::numeric_limits<int>::lowest(),nmax=dmax;
+    bool constant=true;
+    for(std::size_t k=0;k<Samples;++k) {
+        if(!std::isfinite(weights[k])||!(weights[k]>0.)
+            ||!std::isfinite(densities[k])||!(densities[k]>0.)
+            ||!std::isfinite(fractions[k])||fractions[k]<0.)
+            throw std::runtime_error("Invalid physical mass-fraction quadrature sample");
+        int ew=0,er=0,ex=0;
+        denominator[k]=std::frexp(weights[k],&ew)*std::frexp(densities[k],&er);
+        denominator_power[k]=ew+er;dmax=std::max(dmax,denominator_power[k]);
+        constant=constant&&fractions[k]==fractions[0];
+        if(fractions[k]>0.) {
+            numerator[k]=denominator[k]*std::frexp(fractions[k],&ex);
+            numerator_power[k]=denominator_power[k]+ex;
+            nmax=std::max(nmax,numerator_power[k]);
+        }
+    }
+    if(constant)return fractions[0];
+    if(nmax==std::numeric_limits<int>::lowest())return 0.;
+    double mass=0.,species_mass=0.;
+    for(std::size_t k=0;k<Samples;++k) {
+        mass+=std::scalbn(denominator[k],denominator_power[k]-dmax);
+        if(numerator[k]>0.)
+            species_mass+=std::scalbn(numerator[k],numerator_power[k]-nmax);
+    }
+    const double result=std::scalbn(species_mass/mass,nmax-dmax);
+    if(!std::isfinite(result)||result<0.)
+        throw std::runtime_error("Initial mass-fraction ratio is not representable");
+    return result;
+}
 
 template <class Eos,class Callback>
 InitialCellState InitialRzCellState(double r_lower,double r_upper,
@@ -108,6 +161,10 @@ InitialCellState InitialRzCellState(double r_lower,double r_upper,
         throw std::invalid_argument("RZ initialization native V/W is not representable");
     InitialCellState output;
     output.mass_fractions.assign(species,0.);
+    constexpr std::size_t sample_count=8;
+    std::array<double,sample_count> density_samples{},volume_weights{};
+    std::vector<double> fraction_samples(static_cast<std::size_t>(species)*sample_count);
+    std::size_t sample_index=0;
     PrimitiveData data;
     for (const auto& q:GridMetrics::Rz::CellAverageSamples(r_lower,r_upper,z_lower,z_upper)) {
         data=PrimitiveData{};
@@ -121,26 +178,32 @@ InitialCellState InitialRzCellState(double r_lower,double r_upper,
         const auto sample=InitialConservedState(data,eos,limits,&repair);
         if (repair.status!=arch::state::Status::valid)
             throw std::runtime_error("RZ cell sample requires repair; candidate not published");
+        const arch::state::Bounds bounds{limits.sml_rho,limits.min_eint,limits.max_eint};
+        if(arch::state::validate_eos(sample,data.mass_fractions.data(),species,bounds,eos)
+            !=arch::state::Status::valid)
+            throw std::runtime_error("RZ Init sample lies outside the selected EOS domain");
         output.conserved.rho+=q.volume_weight*sample.rho;
         output.conserved.mom_u+=q.volume_weight*sample.mom_u;
         output.conserved.mom_v+=q.volume_weight*sample.mom_v;
         output.conserved.mom_w+=q.angular_weight*sample.mom_w;
         output.conserved.eng+=q.volume_weight*sample.eng;
+        density_samples[sample_index]=sample.rho;
+        volume_weights[sample_index]=q.volume_weight;
         for(int sp=0;sp<species;++sp)
-            output.mass_fractions[sp]+=q.volume_weight*sample.rho*data.mass_fractions[sp];
+            fraction_samples[static_cast<std::size_t>(sp)*sample_count+sample_index]
+                =data.mass_fractions[sp];
+        ++sample_index;
     }
-    for (double& x:output.mass_fractions) x/=output.conserved.rho;
-    if (arch::state::validate(output.conserved,output.mass_fractions.data(),species,1,
-        limits.sml_rho,limits.min_eint,limits.max_eint)!=arch::state::Status::valid)
-        throw std::runtime_error("RZ cell average has unresolved representative state");
-    const auto recovered=arch::state::recover(output.conserved);
-    const double temperature=eos.get_temperature(output.conserved.rho,recovered.internal,
-        output.mass_fractions.data());
-    const double pressure=eos.get_pressure(output.conserved,output.mass_fractions.data());
-    const double sound=eos.get_sound_speed(output.conserved,pressure,output.mass_fractions.data());
-    if (!(temperature>0.) || !std::isfinite(temperature) || !(pressure>0.)
-        || !std::isfinite(pressure) || !(sound>0.) || !std::isfinite(sound))
-        throw std::runtime_error("RZ cell representative state outside EOS domain");
+    const arch::state::Bounds bounds{limits.sml_rho,limits.min_eint,limits.max_eint};
+    if(RzThermodynamics::provisional_native_state(output.conserved,nullptr,0,1,bounds)
+        !=arch::state::Status::valid)
+        throw std::runtime_error("RZ Init integral has invalid finite fields or density");
+    for(int sp=0;sp<species;++sp)
+        output.mass_fractions[sp]=InitialMassFraction(volume_weights,density_samples,
+            fraction_samples.data()+static_cast<std::size_t>(sp)*sample_count);
+    if(RzThermodynamics::provisional_native_state(output.conserved,
+        output.mass_fractions.data(),species,1,bounds)!=arch::state::Status::valid)
+        throw std::runtime_error("RZ Init integral has invalid composition");
     return output;
 }
 

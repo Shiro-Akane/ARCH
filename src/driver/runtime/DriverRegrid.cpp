@@ -3,9 +3,11 @@
  * @brief Rebuild AMR topology and transfer state while invalidating stale stage views.
  *
  * Workflow:
- * 1. Receive a resolved configuration, stage request and current state identity.
- * 2. Rebuild AMR topology and transfer state while invalidating stale stage views.
- * 3. Hand completed state and diagnostics to the next scheduled stage.
+ * 1. Prepare candidate topology, migration plans and replacement state ledger.
+ * 2. Finalize real candidate BC/halo exchange with its own handles and ledger.
+ * 3. Gate native-RZ thermodynamics before ghost/topology publication; on any
+ *    failure restore retained source arrays and abort staged mesh resources.
+ * 4. Publish the successful topology and its completed state identities.
  */
 
 #include <algorithm>
@@ -22,6 +24,7 @@
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 
 namespace arch::driver {
 using scheduler::StageExecutionContext;
@@ -333,19 +336,13 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                                     throw std::logic_error(
                                         "AMR finalizer scope drifted");
                                 prepared.ActivateForFinalization();
-#pragma omp parallel for schedule(dynamic, 1)
-                                for (std::size_t index = 0;
-                                     index < amr_ctrl.tree
-                                                 ->GetActiveBlocks()
-                                                 .size();
-                                     ++index) {
-                                    amr::Block& block =
-                                        amr_ctrl.pool->GetBlock(
-                                            amr_ctrl.tree
-                                                ->GetActiveBlocks()[index]);
-                                    bc_handler.apply(
-                                        block.fluid_state, block.grid);
-                                }
+                                StageExecutionContext staged_context{
+                                    ExecutionSide::Host, *payload.ledger,
+                                    scheduler_clock};
+                                bind_native_boundary_acceptance(
+                                    staged_context, payload.handles);
+                                TimeIntegration::apply_domain_boundary(
+                                    amr_ctrl, bc_handler, &amr::Block::fluid_state);
                                 amr_ctrl.ghost_exchange.ExecuteExchange(
                                     amr_ctrl.pool, amr_ctrl.tree,
                                     config.grid.dim,
@@ -359,9 +356,6 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                                 // It runs inside the same fallible finalizer,
                                 // after real BC/ghost work and before publication.
                                 if(after_host_finalization)after_host_finalization();
-                                StageExecutionContext staged_context{
-                                    ExecutionSide::Host, *payload.ledger,
-                                    scheduler_clock};
                                 (void)arch::scheduler::complete_boundary(
                                     staged_context, payload.handles,
                                     StateSlot::Current,

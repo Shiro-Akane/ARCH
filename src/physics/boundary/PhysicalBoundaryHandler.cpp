@@ -6,6 +6,8 @@
  * 1. Apply the unchanged logical built-in boundary plan.
  * 2. Identify only the physical faces owned by the current AMR leaf.
  * 3. Evaluate immutable snapshots in x1, x2, x3 order; later axes own corners.
+ *    The handler passes its immutable chart to the shared face/ghost mapping;
+ *    native RZ coordinates are lengths (r,z), never legacy 2D polar angles.
  * 4. Store EOS-converted ghosts and face-only diffusion transport controls.
  *
  * Interior donors are clamped to active cells. Coordinate singularities remain
@@ -99,6 +101,10 @@ void BCHandler::configure_stage(double time, arch::boundary::BoundaryPurpose pur
     time_ = time; purpose_ = purpose;
 }
 
+/** Build ordered ghost requests in this handler's explicitly bound chart.
+ * Coordinate mapping and metric distance use shared Grid/GridMetrics leaves;
+ * native moment/thermodynamic conversion remains a separate physical contract.
+ */
 std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
     using namespace arch::boundary;
     std::vector<Ghost> result;
@@ -141,7 +147,7 @@ std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
                 result.push_back({grid.GetIndex(donor[0], donor[1], donor[2]),
                     grid.GetIndex(ghost[0], ghost[1], ghost[2]), face, plane, depth == 1 && active_tangent,
                     MakeBoundaryCoordinates(grid, native, static_cast<BoundaryAxis>(axis),
-                        static_cast<BoundarySide>(side), time_, depth, purpose_, ghost_native)});
+                        static_cast<BoundarySide>(side), time_, depth, purpose_, ghost_native, semantics_)});
             }
     }
     return result;

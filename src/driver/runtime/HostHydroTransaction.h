@@ -5,8 +5,9 @@
  * Workflow:
  * 1. Validate Runtime/context/topology and fixed-allocation Hydro ownership.
  * 2. Allocate all backups before ghost, observer, register or stage mutations.
- * 3. Compose tentative source, repair and boundary receipts through advance_hydro.
- * 4. Commit after final rotation/reflux, or invalidate the source and restore
+ * 3. Compose tentative source, repair and both boundary budgets through the
+ *    selected Hydro or full B/2-D/2-H-D/2-B/2 owner.
+ * 4. Commit only at that owner's accepted endpoint, or invalidate the source and restore
  *    the original allocations, slot mapping and complete owner metadata.
  *
  * No physical formula, time tableau, floor or acceptance tolerance is changed.
@@ -126,7 +127,8 @@ class HostHydroTransaction final {
     state::RepairBudget accepted_repairs_,tentative_repairs_;
     amr::TopologyEpoch boundary_epoch_;
     std::vector<backend::BoundaryFluxPlanes> surface_layout_;
-    std::vector<double> hydro_before_,diffusion_before_,rkl_previous_,rkl_older_,hydro_tentative_;
+    std::vector<double> hydro_before_,diffusion_before_,rkl_previous_,rkl_older_;
+    std::vector<double> hydro_tentative_,diffusion_tentative_;
     backend::BackendCounters observer_before_;
     std::array<DriverRuntime::UserBoundaryStamp,3> stamps_;
     bool committed_=false,leased_=false;
@@ -178,7 +180,9 @@ class HostHydroTransaction final {
             || runtime_.amr_ctrl.tree->GetActiveBlocks()!=active_
             || context_.hydro_preparation!=preparation_
             || bool(context_.post_boundary_acceptance)
-                !=bool(context_before_.post_boundary_acceptance))
+                !=bool(context_before_.post_boundary_acceptance)
+            || bool(context_.configure_boundary_context)
+                !=bool(context_before_.configure_boundary_context))
             throw std::logic_error("Host Hydro transaction owner/frame changed");
         for(const auto& b:blocks_) {
             auto& live=pool_->GetBlock(b.id);
@@ -211,6 +215,7 @@ class HostHydroTransaction final {
         context_.rkl_flux_capture_accept.swap(context_before_.rkl_flux_capture_accept);
         context_.rkl_acceptance.swap(context_before_.rkl_acceptance);
         context_.post_boundary_acceptance.swap(context_before_.post_boundary_acceptance);
+        context_.configure_boundary_context.swap(context_before_.configure_boundary_context);
     }
     /** End only this exact owner lease, without unbinding another transaction. */
     void release() noexcept {
@@ -219,6 +224,7 @@ class HostHydroTransaction final {
         runtime_.amr_ctrl.flux_register.release_host_snapshot(flux_);
         runtime_.residency_ledger->release_host_snapshot(ledger_);
         runtime_.tentative_hydro_boundary_budget_=nullptr;
+        runtime_.tentative_diffusion_boundary_budget_=nullptr;
         runtime_.host_hydro_transaction_=nullptr;leased_=false;
     }
 public:
@@ -245,7 +251,7 @@ public:
         state::ExecutionSide side;
         scheduler::HydroStagePreparation* preparation;
         double start,dt,boundary_start,boundary_dt;
-        std::array<bool,8> callbacks;
+        std::array<bool,9> callbacks;
     };
     /** Allocate a diagnostic witness only when explicitly requested by owner verification. */
     static OwnerWitness snapshot_owner(DriverRuntime& r,const scheduler::StageExecutionContext& c) {
@@ -258,7 +264,7 @@ public:
             c.step_dt,c.boundary_start_time,c.boundary_step_dt,{bool(c.hydro_acceptance),
             bool(c.physical_boundary_preparation),bool(c.hydro_flux_capture_begin),bool(c.hydro_flux_capture_accept),
             bool(c.rkl_flux_capture_begin),bool(c.rkl_flux_capture_accept),bool(c.rkl_acceptance),
-            bool(c.post_boundary_acceptance)}};
+            bool(c.post_boundary_acceptance),bool(c.configure_boundary_context)}};
     }
     /** Compare every actual mutable owner; field/capture values are checked separately by the fixture. */
     static bool owner_matches(DriverRuntime& r,const scheduler::StageExecutionContext& c,const OwnerWitness& s) {
@@ -281,10 +287,10 @@ public:
             ||r.boundary_observer_operations_!=s.counters||c.side!=s.side||c.hydro_preparation!=s.preparation
             ||!bits(c.step_start_time,s.start)||!bits(c.step_dt,s.dt)||!bits(c.boundary_start_time,s.boundary_start)
             ||!bits(c.boundary_step_dt,s.boundary_dt)
-            ||std::array<bool,8>{bool(c.hydro_acceptance),bool(c.physical_boundary_preparation),
+            ||std::array<bool,9>{bool(c.hydro_acceptance),bool(c.physical_boundary_preparation),
                 bool(c.hydro_flux_capture_begin),bool(c.hydro_flux_capture_accept),bool(c.rkl_flux_capture_begin),
                 bool(c.rkl_flux_capture_accept),bool(c.rkl_acceptance),
-                bool(c.post_boundary_acceptance)}!=s.callbacks)return false;
+                bool(c.post_boundary_acceptance),bool(c.configure_boundary_context)}!=s.callbacks)return false;
         for(std::size_t i=0;i<3;++i)
             if(r.user_boundary_stamps_[i].epoch!=s.stamps[i].epoch
                 ||r.user_boundary_stamps_[i].revision!=s.stamps[i].revision)return false;
@@ -294,7 +300,8 @@ public:
             for(std::size_t f=0;f<6;++f)
                 if(!array_bits(a.stage[f],b.stage[f])||!array_bits(a.initial[f],b.initial[f]))return false;
         }
-        return !r.host_hydro_transaction_&&!r.tentative_hydro_boundary_budget_;
+        return !r.host_hydro_transaction_&&!r.tentative_hydro_boundary_budget_
+            &&!r.tentative_diffusion_boundary_budget_;
     }
     HostHydroTransaction(DriverRuntime& runtime,scheduler::StageExecutionContext& context,
         const Numerics::IHydroSolver& hydro)
@@ -310,7 +317,8 @@ public:
           boundary_epoch_(runtime.boundary_budget_epoch_),surface_layout_(runtime.boundary_surface_layout_),
           hydro_before_(runtime.hydro_boundary_budget_),diffusion_before_(runtime.diffusion_boundary_budget_),
           rkl_previous_(runtime.boundary_rkl_previous_),rkl_older_(runtime.boundary_rkl_older_),
-          hydro_tentative_(hydro_before_),observer_before_(runtime.boundary_observer_operations_),
+          hydro_tentative_(hydro_before_),diffusion_tentative_(diffusion_before_),
+          observer_before_(runtime.boundary_observer_operations_),
           stamps_(runtime.user_boundary_stamps_) {
         static_assert(std::is_nothrow_swappable_v<FluidState>);
         static_assert(std::is_nothrow_swappable_v<state::RepairBudget>);
@@ -325,7 +333,9 @@ public:
         if(accepted_repairs_.values.size()!=field_extent
             ||accepted_repairs_.semantics!=state::RepairSemantics::RzVolumeAngular)
             throw std::logic_error("Host/RZ accepted repair owner layout mismatch");
-        if(!hydro_before_.empty()&&hydro_before_.size()!=static_cast<std::size_t>(6+runtime.specs.count()))
+        const auto boundary_fields=static_cast<std::size_t>(6+runtime.specs.count());
+        if((!hydro_before_.empty()&&hydro_before_.size()!=boundary_fields)
+            ||(!diffusion_before_.empty()&&diffusion_before_.size()!=boundary_fields))
             throw std::logic_error("Host/RZ boundary receipt layout mismatch");
         blocks_.reserve(active_.size());captures_.reserve(3*active_.size());
         std::map<boundary::BoundaryFluxCaptureStorage*,bool> unique;
@@ -352,6 +362,7 @@ public:
         catch(...) {runtime.residency_ledger->release_host_snapshot(ledger_);throw;}
         runtime.host_hydro_transaction_=this;leased_=true;
         runtime.tentative_hydro_boundary_budget_=&hydro_tentative_;
+        runtime.tentative_diffusion_boundary_budget_=&diffusion_tentative_;
         try {if(preparation_)preparation_->begin_macro_step();}
         catch(...) {discard_source_noexcept();release();throw;}
     }
@@ -370,6 +381,7 @@ public:
         if(preparation_)preparation_->commit_macro_step();
         std::swap(runtime_.repair_budget(),tentative_repairs_);
         runtime_.hydro_boundary_budget_.swap(hydro_tentative_);
+        runtime_.diffusion_boundary_budget_.swap(diffusion_tentative_);
         committed_=true;release();
     }
     /** Reject after all selected Host workers have joined; invalidate source first. */

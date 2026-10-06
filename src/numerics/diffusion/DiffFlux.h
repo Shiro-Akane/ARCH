@@ -3,10 +3,14 @@
  * @brief Computes diffusion fluxes and operators for explicit time integration.
  *
  * Workflow:
- * 1. Calculate diffusion coefficients (viscosity, thermal conductivity, species diffusivity).
- * 2. Compute face-centered gradients for the requested diffusion dimension.
- * 3. Generate diffusion fluxes and geometric source terms (for momentum).
- * 4. Combine multi-dimensional fluxes into a generic L(U) operator.
+ * 1. Bind EOS-only thermal inputs to the actual native density stencil when RZ is explicit.
+ * 2. Calculate diffusion coefficients (viscosity, thermal conductivity, species diffusivity).
+ * 3. Compute face-centered gradients for the requested diffusion dimension.
+ * 4. Generate diffusion fluxes and geometric source terms (for momentum).
+ * 5. Combine multi-dimensional fluxes into a generic L(U) operator.
+ * Native m_phi=J/W and E=E/V require E_int/V=E/V-J^2/(2*I_*V).
+ * The resulting effective_mean is passed only to EOS thermal recovery; evolved
+ * native momenta, physical velocities, traction and paired work retain their owners.
  */
 
 #pragma once
@@ -22,6 +26,7 @@
 #include "numerics/integrator/TimeIntegratorHelper.h"
 #include "numerics/diffusion/DiffusionTypes.h"
 #include "numerics/diffusion/RzViscousStress.h"
+#include "numerics/state/RzNativeClosure.h"
 
 #include "data/FluidState.h"
 #include "data/GlobalDefs.h"
@@ -59,6 +64,30 @@ namespace DiffFlux
     {
         return std::isfinite(rho_left) && rho_left > 0.0
             && std::isfinite(rho_right) && rho_right > 0.0;
+    }
+
+    /** EOS-only view; invalid native closure never supplies a guessed thermal state. */
+    struct DiffusionThermalInput {
+        FluidVector state{};
+        bool valid = false;
+    };
+
+    /** Select the legacy raw input or the actual native V/W/I_* density closure.
+     * Native effective m_phi=sqrt(kappa)*J/W, kappa=rho*W^2/(V*I_*),
+     * recovers the correct mean internal energy. The same immutable StateReader
+     * and actual radial index supply all three density means, including ghosts.
+     * No conserved state, velocity, repair receipt or floor is changed here.
+     */
+    template<class StateReader>
+    ARCH_INLINE DiffusionThermalInput diffusion_thermal_input(
+        const FluidVector& raw, const StateReader& read,
+        const GridMetrics::GeometryView& grid, int cell, int radial_index)
+    {
+        if (grid.semantics == GridMetrics::GeometrySemantics::Existing)
+            return {raw, true};
+        if (!GridMetrics::is_axisymmetric_rz(grid)) return {};
+        const auto closure = RzThermodynamics::make_cell(read, cell, grid, radial_index);
+        return {closure.effective_mean, closure.valid()};
     }
 
     ARCH_INLINE double diffusion_face_spacing(
@@ -251,16 +280,26 @@ namespace DiffFlux
         const double* species_left, const double* species_right, int species_count,
         const EosType& eos, const SpeciesAccessor& species,
         const DiffusionConfigView& config, double* species_face,
-        double* charge, double* inverse_mass)
+        double* charge, double* inverse_mass,
+        const DiffusionThermalInput* thermal_left = nullptr,
+        const DiffusionThermalInput* thermal_right = nullptr)
     {
         DiffusionFaceProperties face{};
-        const double internal_left = arch::state::recover(left).internal;
-        const double internal_right = arch::state::recover(right).internal;
+        if ((thermal_left && !thermal_left->valid) || (thermal_right && !thermal_right->valid)) {
+            face.coefficients.valid = false;
+            return face;
+        }
+        // Optional inputs affect only EOS recovery. Ordinary Host/CUDA callers
+        // retain their original raw-state convention when both are absent.
+        const auto& eos_left = thermal_left ? thermal_left->state : left;
+        const auto& eos_right = thermal_right ? thermal_right->state : right;
+        const double internal_left = arch::state::recover(eos_left).internal;
+        const double internal_right = arch::state::recover(eos_right).internal;
 
         face.temperature_left =
-            eos.get_temperature(left.rho, internal_left, species_left);
+            eos.get_temperature(eos_left.rho, internal_left, species_left);
         face.temperature_right =
-            eos.get_temperature(right.rho, internal_right, species_right);
+            eos.get_temperature(eos_right.rho, internal_right, species_right);
         face.density = 0.5 * (left.rho + right.rho);
         const double face_temperature =
             0.5 * (face.temperature_left + face.temperature_right);
@@ -292,7 +331,9 @@ namespace DiffFlux
         double* charge, double* inverse_mass,
         FluidVector& flux, double* species_flux, int species_flux_stride,
         ViscousBasisRotation rotation = {},
-        DiffusionFaceProperties* properties = nullptr)
+        DiffusionFaceProperties* properties = nullptr,
+        const DiffusionThermalInput* thermal_left = nullptr,
+        const DiffusionThermalInput* thermal_right = nullptr)
     {
         if (!diffusion_face_is_active(left.rho, right.rho)
             || !(spacing > 0.0) || !std::isfinite(spacing)) return {false, false};
@@ -302,7 +343,7 @@ namespace DiffFlux
         }
         const auto face = evaluate_diffusion_face_properties(left, right,
             species_left, species_right, species_count, eos, species, config,
-            species_face, charge, inverse_mass);
+            species_face, charge, inverse_mass, thermal_left, thermal_right);
         if (!face.coefficients.valid) return {true, false};
         if(properties) *properties=face;
         assemble_diffusion_face_flux(
@@ -414,9 +455,12 @@ namespace DiffFlux
         if (grid.geometry == DiffusionGeometry::Unsupported)
             return {diffusion_dt_sentinel(), false};
         if (!(value.rho > 0.0) || !std::isfinite(value.rho)) return {diffusion_dt_sentinel(), false};
+        const int cell = grid.GetIndex(i, j, k);
+        const auto thermal = diffusion_thermal_input(value, read_state, grid, cell, i);
+        if (!thermal.valid) return {diffusion_dt_sentinel(), false};
         for (int index = 0; index < species_count; ++index)
             composition[index] = species_source[index * species_source_stride];
-        const double internal = arch::state::recover(value).internal;
+        const double internal = arch::state::recover(thermal.state).internal;
         const double temperature =
             eos.get_temperature(value.rho, internal, composition);
         const DiffusionCoefficients coefficients =
@@ -429,7 +473,6 @@ namespace DiffFlux
             ? eos.get_cv(value.rho, temperature, composition) : 1.;
         if (!(cell_cv > 0.0) || !std::isfinite(cell_cv)) return {diffusion_dt_sentinel(), false};
         const double volume = GridMetrics::CellVolume(grid, i, j, k);
-        const int cell = grid.GetIndex(i, j, k);
         double maximum = 0., inverse_dt = 0., angular_row = 0.;
         const bool rz_viscous = GridMetrics::is_axisymmetric_rz(grid)
             && config.use_viscous_diffusion;
@@ -450,15 +493,19 @@ namespace DiffFlux
                 const int neighbour = cell + (side ? stride : -stride);
                 const auto adjacent = read_state(neighbour);
                 if (!diffusion_face_is_active(value.rho, adjacent.rho)) return {diffusion_dt_sentinel(), false};
+                const int radial_index = i + (direction == 0 ? (side ? 1 : -1) : 0);
+                const auto adjacent_thermal = diffusion_thermal_input(
+                    adjacent, read_state, grid, neighbour, radial_index);
+                if (!adjacent_thermal.valid) return {diffusion_dt_sentinel(), false};
                 for (int sp = 0; sp < species_count; ++sp)
                     neighbour_composition[sp] = read_state.fraction(sp, neighbour);
                 const auto face = side
                     ? evaluate_diffusion_face_properties(value, adjacent, composition,
                         neighbour_composition, species_count, eos, species, config,
-                        face_composition, charge, inverse_mass)
+                        face_composition, charge, inverse_mass, &thermal, &adjacent_thermal)
                     : evaluate_diffusion_face_properties(adjacent, value, neighbour_composition,
                         composition, species_count, eos, species, config,
-                        face_composition, charge, inverse_mass);
+                        face_composition, charge, inverse_mass, &adjacent_thermal, &thermal);
                 if (!face.coefficients.valid) return {diffusion_dt_sentinel(), false};
                 // The unknowns are velocity, temperature and mass fraction;
                 // their cell capacities are rho, rho*cv and rho respectively.
@@ -475,7 +522,6 @@ namespace DiffFlux
                 const double area_per_volume = GridMetrics::FaceArea(grid, direction, i, j, k, side != 0) / volume;
                 inverse_dt += area_per_volume * (transport / spacing + viscosity * connection);
                 if(rz_viscous) {
-                    const int radial_index=i+(direction==0?(side?1:-1):0);
                     const auto adjacent_angular=RzViscousStress::angular_cell(
                         read_state,neighbour,grid,radial_index);
                     const double radial_face=side?grid.GetFacePosR(i):grid.GetFacePosL(i);
@@ -637,6 +683,11 @@ inline void capture_diffusion_surface_flux(
 
                             FluidVector U_L = state.get(idx_L);
                             FluidVector U_R = state.get(idx_R);
+                            const auto read = [&state](int cell) { return state.get(cell); };
+                            const auto thermal_left = diffusion_thermal_input(
+                                U_L, read, geometry_view, idx_L, i - (dir == 0 ? 1 : 0));
+                            const auto thermal_right = diffusion_thermal_input(
+                                U_R, read, geometry_view, idx_R, i);
                             FluidVector F_diff;
                             DiffusionFaceProperties properties{};
                             const double spacing = GridMetrics::PhysicalSpacing(geometry_view,dir,i,j);
@@ -651,7 +702,7 @@ inline void capture_diffusion_surface_flux(
                                 n_species > 0 ? spec_flux_out.data() + idx_R : nullptr,
                                 grid.GetTotalSize(), do_viscous ? viscous_basis_rotation(
                                     geometry_view, dir, i, j)
-                                    : ViscousBasisRotation{}, &properties);
+                                    : ViscousBasisRotation{}, &properties, &thermal_left, &thermal_right);
                             if (!status.valid) {
                                 throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
                             }
@@ -699,9 +750,12 @@ inline void capture_diffusion_surface_flux(
         const double rho = U.rho;
         if (!(rho > 0.0) || !std::isfinite(rho)) { status.valid = false; return status; }
         const double r = grid.GetCellCenterX(i);
-        if (r == 0.0) return status;
+        if (r == 0.0 && !GridMetrics::is_axisymmetric_rz(grid)) return status;
         status.active = true;
-        const double e_int = arch::state::recover(U).internal;
+        const auto thermal = diffusion_thermal_input(
+            U, read_state, grid, grid.GetIndex(i, j, k), i);
+        if (!thermal.valid) { status.valid = false; return status; }
+        const double e_int = arch::state::recover(thermal.state).internal;
         const double temperature = eos.get_temperature(rho, e_int, composition);
         const auto coefficients = evaluate_diffusion_coefficients_from_eos(
             eos, species, config, rho, temperature, composition, charge, inverse_mass);

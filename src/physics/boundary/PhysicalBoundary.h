@@ -8,6 +8,9 @@
  *    native positions are mapped through Grid::PhysicalCoordsFromNative, the
  *    outward Cartesian normal and the face-to-ghost normal distance come from
  *    the GridMetrics authority, and the boundary time is staged verbatim.
+ *    An explicit native RZ chart uses the same Grid coordinate expansion and
+ *    shared r/z length metrics. This coordinate extension does not convert
+ *    mixed native V/W moments into callback thermodynamic point states.
  * 2. BoundaryInteriorPrimitive copies the conserved interior cell into a
  *    PrimitiveData snapshot (rho, native velocity, pressure, temperature and
  *    the complete mass-fraction vector) supplied by the selected EOS.
@@ -254,25 +257,31 @@ inline GridMetrics::Geometry PhysicalBoundaryGeometry(const Grid& grid)
 // coordinate mapping, never injected arbitrarily at an axis or pole; spacing
 // degeneracies are reported through the metric distance instead.
 inline std::array<double, 3> PhysicalBoundaryNormal(const Grid& grid, const PointCoords& face,
-    BoundaryAxis axis, BoundarySide side)
+    BoundaryAxis axis, BoundarySide side,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
-    return BoundaryCartesianNormal(grid, face, axis, side);
+    return BoundaryCartesianNormal(grid, face, axis, side, semantics);
 }
 
 // Per-native-unit metric factor of the boundary axis. The physical normal step
 // is dx_axis * factor, and it comes from the shared GridMetrics::PhysicalSpacing
 // authority evaluated at the face, so angular directions use r (and r*sin
 // theta) while length directions use unity. A zero-extent axis carries no
-// physical distance and returns 0.
-inline double PhysicalBoundaryMetric(const Grid& grid, const PointCoords& face, BoundaryAxis axis)
+// physical distance and returns 0. Explicit native RZ uses shared (dr,dz)
+// physical spacing, so both active coordinates have metric factor one.
+inline double PhysicalBoundaryMetric(const Grid& grid, const PointCoords& face, BoundaryAxis axis,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
+    const auto view = GridMetrics::make_geometry_view(grid, semantics);
     const GridMetrics::Geometry geometry = PhysicalBoundaryGeometry(grid);
     const int direction = static_cast<int>(axis);
     if (direction < 0 || direction >= grid.dim)
         throw std::invalid_argument("physical boundary axis must be an active grid direction");
     const double radius = (geometry == GridMetrics::Geometry::Cylindrical) ? face.r_cy : face.r;
-    const double spacing = GridMetrics::PhysicalSpacing(geometry, grid.dim, direction,
-        grid.dx1, grid.dx2, grid.dx3, radius, face.theta);
+    const double spacing = view.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
+        ? GridMetrics::Rz::PhysicalSpacing(direction, view.dx1, view.dx2)
+        : GridMetrics::PhysicalSpacing(geometry, grid.dim, direction,
+            grid.dx1, grid.dx2, grid.dx3, radius, face.theta);
     const double native_step = direction == 0 ? grid.dx1 : (direction == 1 ? grid.dx2 : grid.dx3);
     if (!(native_step > 0.0)) return 0.0;
     const double metric = spacing / native_step;
@@ -364,14 +373,19 @@ inline void ValidatePhysicalBoundaryData(const PhysicalBoundaryData& data,
  * layer (for ghost_depth == 0 the ghost is the face itself, so the default
  * `ghost_native` resolves to `face_native`). The outward Cartesian normal and
  * the face-to-ghost normal distance use the Grid/GridMetrics geometry authority.
+ * `semantics` is explicit: native RZ maps (r,z) to (x=r,y=0,z), with distances
+ * |delta r| or |delta z|. Existing callers retain their current coordinate
+ * conventions; this request builder does not certify native callback states.
  */
 inline BoundaryCoordinates MakeBoundaryCoordinates(const Grid& grid,
     std::array<double, 3> face_native, BoundaryAxis axis, BoundarySide side, double time,
     int ghost_depth = 0, BoundaryPurpose purpose = BoundaryPurpose::Hydro,
-    std::array<double, 3> ghost_native = {})
+    std::array<double, 3> ghost_native = {},
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
     if (grid.dim < 1 || grid.dim > 3)
         throw std::invalid_argument("physical boundary requires an active grid dimension in [1,3]");
+    (void)GridMetrics::make_geometry_view(grid, semantics);
     if (!std::isfinite(time))
         throw std::invalid_argument("physical boundary time must be finite");
     if (ghost_depth < 0)
@@ -394,11 +408,11 @@ inline BoundaryCoordinates MakeBoundaryCoordinates(const Grid& grid,
     coordinates.time = time;
     coordinates.native_position = face_native;
     coordinates.point = Grid::PhysicalCoordsFromNative(grid.dim, grid.geometry,
-        face_native[0], face_native[1], face_native[2]);
+        face_native[0], face_native[1], face_native[2], semantics);
     coordinates.ghost_point = Grid::PhysicalCoordsFromNative(grid.dim, grid.geometry,
-        ghost_native[0], ghost_native[1], ghost_native[2]);
-    coordinates.cartesian_normal = detail::PhysicalBoundaryNormal(grid, coordinates.point, axis, side);
-    const double metric = detail::PhysicalBoundaryMetric(grid, coordinates.point, axis);
+        ghost_native[0], ghost_native[1], ghost_native[2], semantics);
+    coordinates.cartesian_normal = detail::PhysicalBoundaryNormal(grid, coordinates.point, axis, side, semantics);
+    const double metric = detail::PhysicalBoundaryMetric(grid, coordinates.point, axis, semantics);
     const int direction = static_cast<int>(axis);
     const double distance = std::abs(ghost_native[direction] - face_native[direction]) * metric;
     if (!std::isfinite(distance) || distance < 0.0)

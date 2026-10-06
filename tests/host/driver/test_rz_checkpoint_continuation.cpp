@@ -79,9 +79,9 @@ static std::vector<std::uint64_t> snapshot(const amr::AMRControl& control) {
 }
 int main(int argc,char** argv) {
  try {
-    require(argc==2 || (argc==3 && std::string(argv[2])=="--repair-position"),
-            "new local output root and optional --repair-position required");
-    const bool repair_probe=argc==3;
+    require(argc==2 || (argc==3 && std::string(argv[2])=="--initial-thermal-rejection"),
+            "new local output root and optional --initial-thermal-rejection required");
+    const bool initial_rejection_probe=argc==3;
     const std::filesystem::path root(argv[1]);require(!std::filesystem::exists(root),"output root exists");
     SpeciesManager species;species.add_species("gas0",1.,1.,1.4,3.);
     species.add_species("gas1",2.,1.,1.4,3.);IdealGas eos(1.4,species);
@@ -99,9 +99,9 @@ int main(int argc,char** argv) {
         config.physics.gravity.type="none";
         config.numerics.entropy_fix_coeff=0.;config.numerics.hll_roe_wave_speed=true;
         config.numerics.sml_rho=1e-14;config.numerics.min_eint=1e-14;config.numerics.max_eint=1e10;
-        // Deliberately trigger the existing floor machinery only in the
-        // diagnostic fixture. This is not tuning a scientific run to pass.
-        if (repair_probe) config.numerics.min_eint=100.;
+        // The unchanged configured lower bound must reject this initial thermal
+        // state. Native RZ does not heat conserved means to satisfy a floor.
+        if (initial_rejection_probe) config.numerics.min_eint=100.;
         config.io.tmax=2*dt;
         config.io.out_dir=(root/(std::to_string(direction)+"-"+std::to_string(inner))).string();
         config.io.base_name="internal-rz";
@@ -110,31 +110,33 @@ int main(int argc,char** argv) {
         counters.repairs.reset(species.count());
         BCHandler boundary(config,rz);
         arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
+        runtime.bind_native_rz_eos(eos);
+        if(initial_rejection_probe) {
+            const auto before=snapshot(control);
+            const auto repairs=counters.repairs.values;
+            bool rejected=false;
+            try{runtime.initialize_topology();}
+            catch(const std::exception& error){
+                // This warm nonrotating fixture has specific e=25/4, below
+                // the unchanged configured 100 bound. Real AMR restriction
+                // may reject during halo construction before the final EOS
+                // owner. Both are legitimate initial rejection; neither is
+                // evidence that native cold transfer has been qualified.
+                const std::string message=error.what();
+                rejected=message.find("RZ native closure/EOS rejected")!=std::string::npos
+                    ||message=="AMR restriction produced an inadmissible coarse-cell fluid state.";
+                if(!rejected)throw;
+            }
+            require(rejected&&snapshot(control)==before&&counters.repairs.values==repairs
+                &&counters.step_count==0&&counters.t_current==0.,
+                "invalid initial RZ thermal state was heated, advanced or accepted");
+            std::cout<<"PASS RZ_INITIAL_THERMAL_REJECTION direction="<<direction
+                <<" inner="<<inner<<" min_eint="<<config.numerics.min_eint
+                <<" repairs=0 raw_output=0\n";
+            continue;
+        }
         runtime.initialize_topology();
         advance(runtime,counters,hydro);
-        if (repair_probe) {
-            const auto& repairs=counters.repairs;
-            require(repairs.values[0]>0.,"repair-position fixture did not generate real repairs");
-            bool found=false;
-            for(std::size_t n=0;n<runtime.handles().size();++n) {
-                if(runtime.handles()[n].uid.value!=repairs.block_uid) continue;
-                const auto& g=control.pool->GetBlock(control.tree->GetActiveBlocks()[n]).grid;
-                const int cell=static_cast<int>(repairs.values[9]);
-                const int k=cell/g.stride_z,j=(cell-k*g.stride_z)/g.stride_y;
-                const int i=cell-k*g.stride_z-j*g.stride_y;
-                const double expected_r=g.x1_min+(i-g.ng+.5)*g.dx1;
-                const double expected_z=g.x2_min+(j-g.ng+.5)*g.dx2;
-                std::cout<<std::setprecision(17)<<"RZ_REPAIR_POSITION direction="<<direction
-                    <<" inner="<<inner<<" events="<<repairs.values[0]
-                    <<" actual="<<repairs.position[0]<<","<<repairs.position[1]<<","<<repairs.position[2]
-                    <<" expected="<<expected_r<<",0,"<<expected_z<<"\n";
-                require(repairs.position[0]==expected_r && repairs.position[1]==0.
-                    &&repairs.position[2]==expected_z,"Hydro repair position used old polar chart");
-                require(repairs.stage==1 && repairs.time==0.,"repair representative stage/time changed");
-                found=true;
-            }
-            require(found,"repair representative block identity missing");
-        }
         const auto split=snapshot(control);
         const auto provenance=io::inspect_checkpoint_provenance(config,species,
             arch::dispatch::EosId::Ideal,false,"none",false);
@@ -155,13 +157,14 @@ int main(int argc,char** argv) {
         SimulationController resumed_counters(resumed_config,restart);
         BCHandler resumed_boundary(resumed_config,rz);
         arch::driver::DriverRuntime resumed(restored,resumed_boundary,resumed_config,species,resumed_counters);
+        resumed.bind_native_rz_eos(eos);
         resumed.initialize_topology();
         advance(runtime,counters,hydro);advance(resumed,resumed_counters,hydro);
         require(snapshot(control)==snapshot(restored),"continued and restarted scheduler states differ");
         require(counters.t_current==2*dt&&resumed_counters.t_current==counters.t_current
             &&counters.step_count==2&&resumed_counters.step_count==2,"continued controller differs");
         require(counters.repairs.values==resumed_counters.repairs.values
-            &&(repair_probe ? counters.repairs.values[0]>0. : counters.repairs.values[0]==0.),
+            &&counters.repairs.values[0]==0.,
             "continuation repair ledger differs");
         for(int axis=0;axis<3;++axis)
             require(counters.repairs.position[axis]==resumed_counters.repairs.position[axis],

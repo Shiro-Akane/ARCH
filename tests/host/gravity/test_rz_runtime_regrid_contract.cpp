@@ -4,6 +4,7 @@
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/GravityStage.h"
+#include "physics/eos/IdealGas.h"
 #include "physics/gravity/self/SelfGravity.h"
 #include "physics/gravity/GravityExecution.h"
 #include <array>
@@ -72,6 +73,7 @@ int main(int argc,char** argv){
             config.physics.gravity.absolute_tolerance=0.;config.physics.gravity.max_cycles=200;
         }
         SpeciesManager species;species.add_species("a",1.,1.,1.4,1.);species.add_species("b",2.,1.,1.4,1.);
+        IdealGas eos(1.4,species);
         amr::AMRControl control(16,2);
         control.tree->InitRootGrid(config,2,GridMetrics::GeometrySemantics::AxisymmetricRz);
         for(int id:control.tree->GetActiveBlocks()){
@@ -88,6 +90,7 @@ int main(int argc,char** argv){
         RunState start{};SimulationController counters(config,start);
         BCHandler boundary(config,GridMetrics::GeometrySemantics::AxisymmetricRz);
         arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
+        runtime.bind_native_rz_eos(eos);
         runtime.initialize_topology();
         Physical::Gravity::SelfGravity gravity(config.physics.gravity);
         using Stage=arch::driver::GravityStage;

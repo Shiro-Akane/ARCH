@@ -18,6 +18,7 @@
 #include "core/config/RuntimeConfiguration.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "driver/stages/DriverMacroStep.h"
 #include "driver/stages/DriverStages.h"
 #include "driver/stages/GravityStage.h"
 #include "driver/io/DriverIO.h"
@@ -100,6 +101,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     const bool time_cpu_stages = backend_resolution->resolved_backend
         == arch::dispatch::ComputeBackend::Cpu;
     const int deferred_initial_passes = amr_ctrl.tree->ConsumeDeferredInitialRefinement();
+    runtime.bind_native_rz_eos(eos);
     runtime.initialize_topology();
     // Complete deferred thermodynamic regrids through the same transaction
     // coordinator used by production regrids before the first output/step.
@@ -181,6 +183,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         if (do_plt) output.write_plot(gravity_stage.plot_fields());
         if (do_chk) output.write_checkpoint(dt_burn_global, true);
 
+        NativeMacroStepAdvice timestep_advice(runtime,ctrl,dt_burn_global);
         const auto candidates = [&] {
             CpuStageTimer timed(cpu_stages, CpuStage::Timestep, time_cpu_stages);
             return calculate_timestep_candidates(runtime, workspace, eos, resolved_plan);
@@ -194,55 +197,45 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
         stage_context.step_start_time = ctrl.t_current;
         stage_context.step_dt = dt;
-        if (bc_handler.has_user())
+        // Plan owners set input/output physical clocks through this one hook.
+        // Configuration changes the callback snapshot only: actual BC, exchange
+        // and scientific acceptance retain their existing scheduler owners.
+        stage_context.configure_boundary_context = [&](double time,
+            arch::boundary::BoundaryPurpose purpose) {
+            bc_handler.configure_stage(time, purpose);
+            runtime.bind_native_boundary_acceptance(stage_context, runtime.handles());
+        };
+        if (bc_handler.has_user()
+            ||runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz)
             stage_context.physical_boundary_preparation = [&](arch::state::StateSlot slot, double time,
                 arch::boundary::BoundaryPurpose purpose) {
-                bc_handler.configure_stage(time, purpose);
+                stage_context.configure_boundary_context(time, purpose);
                 runtime.ensure_fluid_ghosts(slot);
             };
         runtime.bind_boundary_accounting(stage_context);
         ScopedStageBinding stage_binding(stage_context, runtime.handles());
 
-        // Symmetric split: Burn(dt/2), Diffusion(dt/2), Hydro(dt), Diffusion(dt/2), Burn(dt/2).
-        if (has_burn) {
-            CpuStageTimer timed(cpu_stages, CpuStage::BurnFirst, time_cpu_stages);
-            (void)arch::scheduler::execute_burn_first_lane(stage_context, runtime.handles(),
-                [&](arch::state::CompletionToken token) {
-                    return execute_burn_half(runtime, workspace, eos, burn, BurnHalf::First,
-                                             0.5 * dt, dt_burn_global, token);
-                });
-        }
-        {
-            CpuStageTimer timed(cpu_stages, CpuStage::Diffusion, time_cpu_stages);
-            stage_context.boundary_start_time = ctrl.t_current;
-            stage_context.boundary_step_dt = 0.5 * dt;
-            bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Diffusion);
-            advance_diffusion(runtime, workspace, stage_context, eos, resolved_plan,
-                              ctrl.step_count, 0.5 * dt, candidates.diffusion_forward_euler);
-        }
-        {
-            CpuStageTimer timed(cpu_stages, CpuStage::Hydro, time_cpu_stages);
-            advance_hydro(runtime, workspace, stage_context, resolved_plan, dt,
-                          integrator_solve, gravity, hydro);
-        }
-        {
-            CpuStageTimer timed(cpu_stages, CpuStage::Diffusion, time_cpu_stages);
-            stage_context.boundary_start_time = ctrl.t_current + 0.5 * dt;
-            stage_context.boundary_step_dt = 0.5 * dt;
-            bc_handler.configure_stage(ctrl.t_current + 0.5 * dt, arch::boundary::BoundaryPurpose::Diffusion);
-            advance_diffusion(runtime, workspace, stage_context, eos, resolved_plan,
-                              ctrl.step_count, 0.5 * dt, candidates.diffusion_forward_euler);
-        }
-        if (has_burn) {
-            CpuStageTimer timed(cpu_stages, CpuStage::BurnSecond, time_cpu_stages);
-            (void)arch::scheduler::execute_burn_second_lane(stage_context, runtime.handles(),
-                [&](arch::state::CompletionToken token) {
-                    return execute_burn_half(runtime, workspace, eos, burn, BurnHalf::Second,
-                                             0.5 * dt, dt_burn_global, token);
-                });
-        }
+        execute_driver_macro_step(runtime,stage_context,hydro,has_burn,
+            [&](BurnHalf half,double half_dt,arch::state::CompletionToken token) {
+                return execute_burn_half(runtime,workspace,eos,burn,half,half_dt,dt_burn_global,token);
+            },
+            [&](double half_dt) {
+                advance_diffusion(runtime,workspace,stage_context,eos,resolved_plan,
+                    ctrl.step_count,half_dt,candidates.diffusion_forward_euler);
+            },
+            [&](double hydro_dt) {
+                advance_hydro(runtime,workspace,stage_context,resolved_plan,hydro_dt,
+                    integrator_solve,gravity,hydro);
+            },
+            [&](CpuStage stage,auto&& execute) {
+                CpuStageTimer timed(cpu_stages,stage,time_cpu_stages);execute();
+            });
+        timestep_advice.commit();
         gravity_stage.invalidate();
         ctrl.advance(dt);
+        // Numerical state/time are already accepted. Durable diagnostics are
+        // reported afterwards; an I/O error stops the run without fake rollback.
+        gravity_stage.flush_committed_diagnostics();
         bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
         runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
         advanced_any_step = true;

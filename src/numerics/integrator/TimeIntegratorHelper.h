@@ -8,8 +8,12 @@
  * carry rho*X, then recover mass fractions after the density update and state
  * admissibility repairs. Host traversal calls these leaves and registers
  * coarse-fine fluxes; the integrator supplies weights and the driver schedules exchange.
- * Completed native RZ RK receipts are collected before slot rotation; the Hydro
- * final reflux callback starts a separate row before strict state validation.
+ * Workflow for native RZ candidates:
+ * 1. Combine conserved V/W means and species densities without floor repairs.
+ * 2. Precheck finite fields, positive density and the shared mass-fraction simplex.
+ * 3. Collect completed RK receipts before slot rotation; start a separate reflux row.
+ * 4. After actual whole-domain BC/exchange, the Runtime-owned EOS gate validates
+ *    thermal bounds with the same-stage density closure before ghost publication.
  */
 
 #pragma once
@@ -21,6 +25,7 @@
 #include <omp.h>
 #endif
 #include "numerics/state/StateAdmissibility.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "numerics/flux/InvariantDomainFlux.h"
 
 #include "amr/AMRControl.h"
@@ -68,10 +73,57 @@ namespace TimeIntegration
         failure.rethrow();
     }
 
-    /** Repair trace-only composition errors, then validate the complete cell. */
-    inline void accept_stage_state(FluidState& state, const Grid& grid,
-                                   const NumericsConfig& config)
+    /**
+     * Check one native RZ patch before its genuine post-boundary EOS gate.
+     * rho and E are V means, while m_phi=J/W; their thermal state cannot be
+     * recovered by subtracting point kinetic energy from this raw vector.
+     * Validate the actual complete layout and interior finite/rho/simplex
+     * values through the common scalar leaf. No floor, repair, normalization,
+     * thermal acceptance or publication occurs here.
+     */
+    inline void validate_provisional_rz_stage_state(
+        const FluidState& state, const Grid& grid, const NumericsConfig& config)
     {
+        (void)GridMetrics::make_geometry_view(grid,
+            GridMetrics::GeometrySemantics::AxisymmetricRz);
+        const int extent=grid.GetTotalSize();
+        const int species=state.GetNumSpecies();
+        const arch::state::Bounds bounds{
+            config.sml_rho,config.min_eint,config.max_eint};
+        if(!arch::state::valid_bounds(bounds)||extent<=0||species<0
+            ||state.block_total_size_!=extent
+            ||state.rho.size()!=static_cast<std::size_t>(extent)
+            ||state.mom_u.size()!=state.rho.size()||state.mom_v.size()!=state.rho.size()
+            ||state.mom_w.size()!=state.rho.size()||state.eng.size()!=state.rho.size()
+            ||state.enuc_rate.size()!=state.rho.size()
+            ||state.mass_fractions.size()!=static_cast<std::size_t>(species)*extent)
+            throw std::invalid_argument("RZ stage precheck requires the actual complete patch layout/bounds");
+        for(int k=grid.Ks();k<grid.Ke();++k)
+            for(int j=grid.Js();j<grid.Je();++j)
+                for(int i=grid.Is();i<grid.Ie();++i) {
+                    const int cell=grid.GetIndex(i,j,k);
+                    const auto status=RzThermodynamics::provisional_native_state(
+                        state.get(cell),species ? state.mass_fractions.data()+cell : nullptr,
+                        species,extent,bounds);
+                    if(status!=arch::state::Status::valid)
+                        throw std::runtime_error("Invalid provisional RZ stage state: cell="
+                            +std::to_string(cell)+" status="
+                            +std::to_string(static_cast<int>(status)));
+                }
+    }
+
+    /** Repair Existing trace errors; native RZ only prechecks before Runtime EOS. */
+    inline void accept_stage_state(FluidState& state, const Grid& grid,
+                                   const NumericsConfig& config,
+                                   GridMetrics::GeometrySemantics semantics =
+                                       GridMetrics::GeometrySemantics::Existing)
+    {
+        if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            validate_provisional_rz_stage_state(state,grid,config);
+            return;
+        }
+        if(semantics!=GridMetrics::GeometrySemantics::Existing)
+            throw std::invalid_argument("Unknown stage acceptance chart");
         const auto geometry = GridMetrics::make_geometry_view(grid);
         for (int k = grid.Ks(); k < grid.Ke(); ++k)
             for (int j = grid.Js(); j < grid.Je(); ++j)
@@ -94,13 +146,21 @@ namespace TimeIntegration
     inline void accept_reflux_state(amr::AMRControl& control,
                                     const NumericsConfig& config,
                                     FluidState amr::Block::* slot = &amr::Block::fluid_state,
-                                    bool reset_receipt = true)
+                                    bool reset_receipt = true,
+                                    GridMetrics::GeometrySemantics semantics =
+                                        GridMetrics::GeometrySemantics::Existing)
     {
+        if(semantics!=GridMetrics::GeometrySemantics::Existing
+            &&semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::invalid_argument("Unknown reflux acceptance chart");
+        const auto repair_semantics=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+            ? arch::state::RepairSemantics::RzVolumeAngular
+            : arch::state::RepairSemantics::ExistingVolume;
         for (int id : control.tree->GetActiveBlocks()) {
             auto& block = control.pool->GetBlock(id);
             auto& state = block.*slot;
-            if (reset_receipt) state.stage_repairs.reset(state.GetNumSpecies());
-            try { accept_stage_state(state, block.grid, config); }
+            if (reset_receipt) state.stage_repairs.reset(state.GetNumSpecies(),repair_semantics);
+            try { accept_stage_state(state, block.grid, config,semantics); }
             catch (const std::exception& error) {
                 throw std::runtime_error("AMR block=" + std::to_string(id) + ": " + error.what());
             }
@@ -154,13 +214,22 @@ namespace TimeIntegration
                 }
     }
 
+    /**
+     * Precheck the native RZ reflux candidate without point-state energy recovery.
+     * The three Host Hydro callers select this owner only for explicit native RZ.
+     * m_phi=J/W and E=E_V have different measures; only the subsequent actual
+     * Current BC/exchange and Runtime EOS gate can accept their thermal closure.
+     * This function performs no repair, heating, normalization or publication.
+     */
     inline void validate_reflux_state(const amr::AMRControl& control,
                                       const NumericsConfig& config,
                                       FluidState amr::Block::* slot = &amr::Block::fluid_state)
     {
         for (int id : control.tree->GetActiveBlocks()) {
             const auto& block = control.pool->GetBlock(id);
-            try { validate_stage_state(block.*slot, block.grid, config); }
+            try {
+                validate_provisional_rz_stage_state(block.*slot,block.grid,config);
+            }
             catch (const std::exception& error) {
                 throw std::runtime_error("AMR block=" + std::to_string(id) + ": " + error.what());
             }
@@ -324,6 +393,13 @@ namespace TimeIntegration
             gravity->add_sources_on_patch(dU, state, grid, dt, nullptr);
         }
     }    // ---------------------------------------------------------
+    /**
+     * Combine U_new=w_n*U_old+w_flux*(U_current+delta U) and conserved rho*X.
+     * The default path retains its original ordinary-state bounds and repair
+     * accounting. strict_conservative selects native RZ provisional checks:
+     * J/W is not an ordinary point momentum, so its raw thermal energy is not
+     * recovered here. The actual post-ghost Runtime EOS gate owns acceptance.
+     */
     ARCH_INLINE arch::state::Status update_stage_cell(
         const FluidVector& U_old, const FluidVector& U_curr,
         const FluidVector& delta,
@@ -340,12 +416,20 @@ namespace TimeIntegration
         const double raw_density = U_new.rho;
         arch::state::Repair repair{};
         if(strict_conservative)
-            repair.status=arch::state::validate(U_new,nullptr,0,1,sml_rho,min_eint,max_eint);
+            repair.status=RzThermodynamics::provisional_native_state(U_new,nullptr,0,1,
+                {sml_rho,min_eint,max_eint});
         else
             repair=arch::state::apply_bounds(U_new,sml_rho,min_eint,max_eint);
         if (!arch::state::accepted(repair.status)) {
             U_new.eng = arch::state::invalid();
             return repair.status;
+        }
+        // Native candidates must expose the real species-major layout before
+        // any indexed access. Existing callers retain their original contract.
+        if(strict_conservative&&(n_spec<0||species_stride<=0
+            ||(n_spec>0&&(!Xi_old||!Xi_curr||!d_spec||!Xi_new)))) {
+            U_new.eng=arch::state::invalid();
+            return arch::state::Status::invalid_composition;
         }
         double sum = 0.0;
         bool composition_repaired = false;
@@ -372,6 +456,14 @@ namespace TimeIntegration
         if (composition_repaired && !arch::state::normalize_composition(Xi_new,n_spec,species_stride)) {
             U_new.eng = arch::state::invalid();
             return arch::state::Status::invalid_composition;
+        }
+        if(strict_conservative) {
+            const auto status=RzThermodynamics::provisional_native_state(
+                U_new,Xi_new,n_spec,species_stride,{sml_rho,min_eint,max_eint});
+            if(status!=arch::state::Status::valid) {
+                U_new.eng=arch::state::invalid();
+                return status;
+            }
         }
         if (repair.status == arch::state::Status::repaired || composition_repaired) {
             if(!repairs.conserved_density(repair.delta.rho,repair.delta.mom_u,

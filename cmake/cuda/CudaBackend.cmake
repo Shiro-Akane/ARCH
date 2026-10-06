@@ -368,22 +368,26 @@ include(cmake/cuda/CudaBurnDenseRoutes.cmake)
 arch_register_cuda_dense_burn_routes()
 include(cmake/cuda/CudaBurnSparseRoutes.cmake)
 arch_register_cuda_sparse_burn_routes()
-# A full CUDA build has three explicit phases: backend archive, dispatch
-# archive, and then the application.  The file-backed barriers are stronger
+# A full CUDA build has three explicit phases: backend archive, driver
+# archives, and then the application.  The file-backed barriers are stronger
 # than target-level object ordering under Ninja and prevent unplanned
 # overlap between these phases. They do not replace memory measurements.
 arch_add_completion_barrier(
     arch_cuda_backend_complete arch_cuda_backend)
-add_dependencies(arch_solver_dispatch arch_cuda_backend_complete)
-if(ARCH_CUDA_HEAVY_JOB_POOL)
-    set_property(TARGET arch_solver_dispatch PROPERTY JOB_POOL_COMPILE
-        ${ARCH_CUDA_HEAVY_JOB_POOL})
-    set_property(TARGET arch_solver_dispatch PROPERTY JOB_POOL_LINK
-        ${ARCH_CUDA_HEAVY_JOB_POOL})
-endif()
+foreach(target arch_driver_runtime arch_solver_dispatch)
+    add_dependencies(${target} arch_cuda_backend_complete)
+    if(ARCH_CUDA_HEAVY_JOB_POOL)
+        set_property(TARGET ${target} PROPERTY JOB_POOL_COMPILE
+            ${ARCH_CUDA_HEAVY_JOB_POOL})
+        set_property(TARGET ${target} PROPERTY JOB_POOL_LINK
+            ${ARCH_CUDA_HEAVY_JOB_POOL})
+    endif()
+endforeach()
+arch_add_completion_barrier(
+    arch_driver_runtime_complete arch_driver_runtime)
 arch_add_completion_barrier(
     arch_solver_dispatch_complete arch_solver_dispatch)
-add_dependencies(ARCH arch_solver_dispatch_complete)
+add_dependencies(ARCH arch_driver_runtime_complete arch_solver_dispatch_complete)
 if(BUILD_TESTING)
     set_property(TARGET arch_runtime_probe_capabilities APPEND PROPERTY
         BUILD_RPATH "${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}")

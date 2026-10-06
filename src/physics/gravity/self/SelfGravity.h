@@ -23,6 +23,7 @@ namespace arch::state { struct CompletionToken; }
 namespace arch::multigrid { struct SolveReport; }
 namespace Physical::Gravity {
 struct GravitySolveRequest;
+struct GravitySolveIdentity;
 struct RingRhsAssessment;
 struct RingBoundaryBudgetProposal;
 class GravityExecution;
@@ -54,6 +55,12 @@ public:
     // Wall time bounded by completion fences; no asynchronous launch timing.
     struct Timings { double source_boundary=0., poisson=0., force=0.; };
     const Timings& timings() const;
+    /** Enable an internal Host receipt before preparation; ordinary runs do not track consumers. */
+    void begin_host_stage_consumption(double step_dt) const;
+    /** Require the exact published input and every real patch force/work consumer. */
+    void require_host_stage_consumption(const GravitySolveIdentity&) const;
+    /** Retire a Host receipt without publishing diagnostics or retaining borrowed state. */
+    void end_host_stage_consumption() const noexcept;
     /** Sample field energy and physical-face pairs for independent accounting. */
     GravityBoundarySnapshot boundary_snapshot() const;
     void add_sources_on_patch(std::vector<FluidVector>&, const FluidState&,
@@ -72,6 +79,10 @@ private:
     GravityConfig config_;
     mutable std::unique_ptr<Workspace> work_;
     mutable std::shared_ptr<GravityExecution> execution_;
+    // Internal transaction observer only. It never changes force/work kernels,
+    // field scope, the Poisson tolerance or the public RZ capability gate.
+    mutable bool host_consumption_requested_ = false;
+    mutable double host_consumption_dt_ = 0.;
     // Immutable callback selection captured at construction and kept live for
     // every run; the referenced config/species outlive the simulation scope.
     arch::boundary::GravityBoundaryFunction user_callback_;

@@ -10,7 +10,9 @@
  *    and locate its active AMR donor. Record native-vector basis signs.
  * 3. On every Host or CUDA stage, apply shared reconstruction after ordinary
  *    exchange. No source cell, active cell, or zero-area face flux changes
- *    ownership.
+ *    ownership. Carry the explicit chart into every shared stencil, so a
+ *    provisional native RZ ghost never uses Cartesian point-energy recovery.
+ *    Runtime owns full native EOS acceptance after whole-domain exchange.
  *
  * This plan is independent of self-gravity: Hydro, diffusion, and regridding
  * consume the same ghost state.
@@ -149,6 +151,9 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
     std::span<const int> active_blocks, int dimension,
     CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart)
 {
+    if (chart != CoordinateSeamGeometry::ExistingChart
+        && chart != CoordinateSeamGeometry::RzAxisymmetric)
+        throw std::invalid_argument("Unknown coordinate seam chart cannot select a stencil");
     const bool rz = chart == CoordinateSeamGeometry::RzAxisymmetric;
     if (rz && dimension != 2)
         throw std::invalid_argument("RZ coordinate seam requires dimension 2");
@@ -214,6 +219,8 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
     const auto append = [&](int destination_id, int i, int j, int k) {
         const Grid& grid = pool->GetBlock(destination_id).grid;
         CoordinateSeamTransfer transfer;
+        transfer.geometry_semantics = rz ? GridMetrics::GeometrySemantics::AxisymmetricRz
+                                         : GridMetrics::GeometrySemantics::Existing;
         transfer.destination_id = destination_id;
         transfer.destination_cell = grid.GetIndex(i, j, k);
         const std::array<double, 3> ghost{

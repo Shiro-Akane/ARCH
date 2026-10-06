@@ -337,6 +337,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     if (++w.generation==0) throw std::overflow_error("Self-gravity publication counter exhausted");
     w.source=identity;
     arch::state::CompletionToken token{w.generation,arch::state::CompletionState::Complete};
+    if(host_consumption_requested_)w.begin_host_consumption(host_consumption_dt_);
     w.validity.publish({identity,w.generation,token,w.scope}); w.ready=true; return token;
 }
 /** Internal snapshots explicitly require candidate scope. They cannot satisfy
@@ -384,23 +385,52 @@ const arch::multigrid::SolveReport& SelfGravity::report() const {workspace().req
 double SelfGravity::density_mean() const {workspace().require();return work_->mean;}
 /** Expose physical source, Poisson and force timings. */
 const SelfGravity::Timings& SelfGravity::timings() const {workspace().require();return work_->timings;}
+/** Open only the receipt observer; preparation still validates and solves the original request. */
+void SelfGravity::begin_host_stage_consumption(double step_dt) const {
+    if(host_consumption_requested_)
+        throw std::logic_error("Gravity Host stage receipt is already active");
+    if((execution_&&execution_->numeric()->device())
+        ||(work_&&work_->solver.execution().device()))
+        throw std::logic_error("Host gravity receipt cannot observe Device consumers");
+    if(!std::isfinite(step_dt)||!(step_dt>0.))
+        throw std::invalid_argument("Gravity Host receipt requires a finite positive interval");
+    host_consumption_dt_=step_dt;
+    host_consumption_requested_=true;
+}
+/** A published field alone is insufficient: require the real force and flux-work calls. */
+void SelfGravity::require_host_stage_consumption(const GravitySolveIdentity& expected) const {
+    if(!host_consumption_requested_)
+        throw std::logic_error("Gravity Host stage receipt is not active");
+    workspace().require_host_consumption(expected);
+}
+/** Close the optional observer; next-stage publication remains explicitly invalidated by its owner. */
+void SelfGravity::end_host_stage_consumption() const noexcept {
+    host_consumption_requested_=false;
+    if(work_)work_->observe_host_consumption=false;
+}
 /** Add the midpoint face-acceleration momentum source to one native patch. */
 void SelfGravity::add_sources_on_patch(std::vector<FluidVector>& delta,const FluidState& state,
     const Grid& grid,double dt,void*) const {
     const auto& patch=workspace().patch(grid,state); const int stride[]{1,grid.stride_y,grid.stride_z};
+    workspace().require_host_consumer(grid,1u,dt);
     for (int k=grid.Ks();k<grid.Ke();++k) for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
         const int c=grid.GetIndex(i,j,k); double* momentum[]{&delta[c].mom_u,&delta[c].mom_v,&delta[c].mom_w};
         for(int a=0;a<grid.dim;++a) *momentum[a]+=gravity_momentum(patch.faces[a][c],patch.faces[a][c+stride[a]],state.rho[c],dt);
     }
+    workspace().consume_host_patch(grid,1u);
 }
 /** Add conservative gravity work using the hydro face mass flux. */
 void SelfGravity::add_flux_work_on_patch(std::vector<FluidVector>& delta,const std::vector<FluidVector>& flux,
     const FluidState& state,const Grid& grid,double dt,int axis) const {
+    if(axis<0||axis>=grid.dim)
+        throw std::invalid_argument("Gravity flux work axis is outside the active patch");
     const auto& patch=workspace().patch(grid,state); const int stride=axis==0?1:axis==1?grid.stride_y:grid.stride_z;
+    workspace().require_host_consumer(grid,1u<<(axis+1),dt);
     for (int k=grid.Ks();k<grid.Ke();++k) for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
         const int c=grid.GetIndex(i,j,k);
         delta[c].eng+=gravity_flux_work(patch.work_faces[axis][c],patch.work_faces[axis][c+stride],flux[c].rho,flux[c+stride].rho,dt);
     }
+    workspace().consume_host_patch(grid,1u<<(axis+1));
 }
 /** Reduce resident field energy and download only actual boundary face pairs. */
 GravityBoundarySnapshot SelfGravity::boundary_snapshot() const {

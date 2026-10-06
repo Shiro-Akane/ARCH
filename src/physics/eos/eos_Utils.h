@@ -1,6 +1,12 @@
 /**
  * @file eos_Utils.h
  * @brief Common thermodynamic and kinematic utilities for EOS solvers.
+ *
+ * Workflow:
+ * 1. Apply the selected EOS's composition derivatives and thermodynamic queries.
+ * 2. Build kinetic energy from the representable conserved momenta and share
+ *    the strict conservative thermal recovery used by Host and Device callers.
+ * 3. Construct checked thermodynamic paths without an extra EOS or energy floor.
  */
 #pragma once
 
@@ -90,10 +96,22 @@ namespace eos_utils
         double sound_speed = 0.0;
     };
 
-    // Shared kinetic/internal-energy conversions.
+    /** Kinetic energy density K = (rho*u^2 + rho*v^2 + rho*w^2)/2.
+     * Construct the same m_i=rho*u_i stored in a conservative state before
+     * halving each m_i*u_i product. Halving rho first can erase a positive
+     * subnormal density; squaring velocity first can overflow although K is
+     * representable. This order matches strict conservative state recovery.
+     * An unrepresentable momentum or total propagates a nonfinite result for
+     * the caller's existing state rejection; it is never floored or repaired.
+     */
     ARCH_INLINE double calc_kinetic_energy(double rho, double u, double v, double w)
     {
-        return (0.5 * rho * u) * u + (0.5 * rho * v) * v + (0.5 * rho * w) * w;
+        const double momentum_u = rho * u;
+        const double momentum_v = rho * v;
+        const double momentum_w = rho * w;
+        return (0.5 * momentum_u) * u
+             + (0.5 * momentum_v) * v
+             + (0.5 * momentum_w) * w;
     }
 
     // Extract specific internal energy from a conservative state.

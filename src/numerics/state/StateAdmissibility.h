@@ -35,6 +35,36 @@ struct Bounds {
     double internal_max = std::numeric_limits<double>::max();
 };
 
+/** Validate configured physical limits without interpreting any state. */
+ARCH_INLINE bool valid_bounds(const Bounds& bounds)
+{
+    return std::isfinite(bounds.density) && bounds.density >= 0.0
+        && std::isfinite(bounds.internal_min) && bounds.internal_min >= 0.0
+        && std::isfinite(bounds.internal_max)
+        && bounds.internal_max >= bounds.internal_min;
+}
+
+/** Check the shared mass-fraction simplex without energy recovery or repair.
+ * X_s >= 0 and |sum X_s - 1| <= 512*N*epsilon. The caller supplies a valid
+ * extent; species-major views use their real cell stride. No normalization
+ * or abundance floor is applied, including for representable trace species.
+ */
+ARCH_INLINE Status validate_composition(const double* fractions,int species,int stride)
+{
+    if (species < 0 || stride <= 0 || (species > 0 && !fractions))
+        return Status::invalid_composition;
+    double sum = 0.0;
+    for (int s = 0; s < species; ++s) {
+        const double x = fractions[static_cast<std::size_t>(s) * stride];
+        if (!std::isfinite(x) || x < 0.0) return Status::invalid_composition;
+        sum += x;
+    }
+    if (species && std::abs(sum - 1.0)
+        > 512.0 * species * std::numeric_limits<double>::epsilon())
+        return Status::invalid_composition;
+    return Status::valid;
+}
+
 struct Kinematics {
     double u{}, v{}, w{}, kinetic{}, internal{};
     Status status = Status::valid;
@@ -119,14 +149,36 @@ ARCH_INLINE Status validate(const FluidVector& fluid, const double* fractions,
     if (k.status!=Status::valid) return k.status;
     if (k.internal>energy_ceiling) return Status::energy_ceiling;
     if (fluid.rho<density_floor || k.internal<energy_floor) return Status::invalid_thermodynamics;
-    double sum=0.0;
-    for (int i=0;i<species;++i) {
-        const double x=fractions[i*stride];
-        if (!std::isfinite(x) || x<0.0) return Status::invalid_composition;
-        sum+=x;
-    }
-    if (species && std::abs(sum-1.0)>512.0*species*std::numeric_limits<double>::epsilon())
+    return validate_composition(fractions,species,stride);
+}
+
+/** Check an actual physical/EOS-input state with contiguous mass fractions.
+ * Workflow: validate limits, conservative thermal recovery and composition;
+ * then require finite positive T(rho,e,X), P(U,X), and c(U,P,X) from the
+ * selected EOS. The original 8*epsilon thermal-resolution rule is retained.
+ * EOS exceptions propagate to the transaction owner; no fallback, repair or
+ * publication occurs here. A native mixed-measure mean must first be mapped
+ * to its effective EOS state by its geometry-specific closure.
+ */
+template<class Eos>
+ARCH_INLINE Status validate_eos(const FluidVector& fluid,
+    const double* contiguous_fractions,int species,const Bounds& bounds,const Eos& eos)
+{
+    if (!valid_bounds(bounds)) return Status::invalid_thermodynamics;
+    if (species < 0 || (species > 0 && !contiguous_fractions))
         return Status::invalid_composition;
+    const auto status = validate(fluid,contiguous_fractions,species,1,
+        bounds.density,bounds.internal_min,bounds.internal_max);
+    if (status != Status::valid) return status;
+    const auto thermal = recover(fluid);
+    const double temperature = eos.get_temperature(fluid.rho,thermal.internal,
+        contiguous_fractions);
+    const double pressure = eos.get_pressure(fluid,contiguous_fractions);
+    const double sound = eos.get_sound_speed(fluid,pressure,contiguous_fractions);
+    if (!std::isfinite(temperature) || !(temperature > 0.0)
+        || !std::isfinite(pressure) || !(pressure > 0.0)
+        || !std::isfinite(sound) || !(sound > 0.0))
+        return Status::invalid_thermodynamics;
     return Status::valid;
 }
 

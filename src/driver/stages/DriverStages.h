@@ -232,7 +232,12 @@ inline state::RepairBudget collect_stage_repairs(
     return report;
 }
 
-/** Advance one diffusion half-step through the selected CPU/CUDA route. */
+/** Advance one diffusion half-step through the selected CPU/CUDA route.
+ * Keep every stage/reflux receipt in the actual Runtime measure: native RZ
+ * records angular momentum with W, while ordinary conserved fields use V.
+ * RKL's native precheck never repairs raw mixed-measure thermal energy; the
+ * genuine post-boundary Runtime EOS gate owns that acceptance.
+ */
 template<class EosPolicy>
 void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     StageExecutionContext& stage_context, const EosPolicy& eos,
@@ -258,9 +263,9 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     const int stages = DiffFunction::compute_stages(order, diffusion_dt, dt_diff_fe,
         config.physics.diffusion.diff_cfl, config.physics.diffusion.max_stages);
     const auto repair_weights = DiffFunction::repair_weights(order, stages);
-    state::RepairBudget pending(runtime.species().count());
+    state::RepairBudget pending(runtime.species().count(),runtime.repair_budget().semantics);
     stage_context.rkl_acceptance = [&](const scheduler::RklStageDescriptor& descriptor) {
-        state::RepairBudget device_report(runtime.species().count());
+        state::RepairBudget device_report(runtime.species().count(),runtime.repair_budget().semantics);
         if (compute_backend) {
             device_report = compute_backend->stage_repairs;
             device_report.combine(compute_backend->reflux_repairs);
@@ -380,7 +385,13 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
             config, resolved_plan->diffusion_integrator,
             execute_single);
     }
-    runtime.repair_budget().combine(pending);
+    // An outer native macro owner publishes both diffusion halves only after
+    // final Current BC/EOS acceptance. Standalone/Existing stages keep their
+    // original accepted receipt owner and coefficient weights.
+    auto* transaction=runtime.active_host_hydro_transaction();
+    auto& accepted=transaction?transaction->repair_receipts():runtime.repair_budget();
+    if(transaction)transaction->validate_storage();
+    accepted.combine(pending);
 }
 enum class BurnHalf { First, Second };
 /** Advance one burn half-step and reduce accepted burn timestep advice. */
@@ -485,7 +496,10 @@ state::CompletionToken execute_burn_half(DriverRuntime& runtime,
 }
 using IntegratorSolve = void (*)(amr::AMRControl&, double, BCHandler&,
     const Physical::Gravity::IGravityPolicy*, const Numerics::IHydroSolver*, const NumericsConfig&);
-/** Advance Hydro with per-stage gravity preparation and state repair accounting. */
+/** Advance Hydro with per-stage gravity preparation and state repair accounting.
+ * Borrow an active full-macro owner without committing it. Only the explicit
+ * standalone NativeRzRollback profile begins and commits its own local owner.
+ */
 inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     StageExecutionContext& stage_context, const dispatch::ResolvedExecutionPlan* resolved_plan,
     double dt, IntegratorSolve integrator_solve,
@@ -498,9 +512,13 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
         throw std::logic_error("Hydro step size must be finite, positive and equal frozen context.step_dt");
     if(stage_context.hydro_acceptance)
         throw std::logic_error("Hydro acceptance already has another owner");
-    std::optional<HostHydroTransaction> transaction;
-    if(qualification==HostHydroQualification::NativeRzRollback)
-        transaction.emplace(runtime,stage_context,*hydro);
+    auto* transaction=runtime.active_host_hydro_transaction();
+    std::optional<HostHydroTransaction> local_transaction;
+    if(transaction)transaction->validate_storage();
+    else if(qualification==HostHydroQualification::NativeRzRollback) {
+        local_transaction.emplace(runtime,stage_context,*hydro);
+        transaction=&*local_transaction;
+    }
     auto& amr_ctrl = runtime.control();
     auto& bc_handler = runtime.boundaries();
     const auto& config = runtime.configuration();
@@ -606,7 +624,7 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     reflux.stage = 0;
     reflux.time = stage_context.step_start_time;
     accepted.combine(reflux);
-    if(transaction)transaction->commit();
+    if(local_transaction)local_transaction->commit();
 }
 /** Instantiate and bind the selected backend after configuration validation. */
 template<class EosPolicy>

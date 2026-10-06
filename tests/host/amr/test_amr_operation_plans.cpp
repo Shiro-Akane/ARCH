@@ -1250,6 +1250,8 @@ void test_coordinate_seam_case(int dimension, bool spherical, bool mixed)
     bool crossed_level = false;
     bool saw_origin = false, saw_north = false, saw_south = false;
     for (const auto& transfer : plan.transfers) {
+        expect(transfer.geometry_semantics==GridMetrics::GeometrySemantics::Existing,
+            "existing coordinate seam lost its original chart semantics");
         const auto& destination = pool->GetBlock(transfer.destination_id);
         const auto& source = pool->GetBlock(transfer.source_id);
         const Grid& grid = destination.grid;
@@ -1818,6 +1820,8 @@ void test_rz_axis_seam(bool mixed, double inner_radius)
         .coordinate_seam.transfers.empty(),"Returning to polar retained RZ plan");
     std::set<int> levels;
     for (const auto& transfer:plan.transfers) {
+        expect(transfer.geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz,
+            "native RZ seam stencil lost its actual chart semantics");
         const auto& donor=control.pool->GetBlock(transfer.source_id);
         const auto& destination=control.pool->GetBlock(transfer.destination_id);
         // Mirrored active cell is in the same physical boundary block, even
@@ -1840,6 +1844,151 @@ void test_rz_axis_seam(bool mixed, double inner_radius)
     if (mixed) expect(levels==std::set<int>{0,1},"RZ mixed axis did not cover both levels");
     expect_rejected([&] {amr::make_coordinate_seam_plan(control.pool,active,3,
         amr::CoordinateSeamGeometry::RzAxisymmetric);},"RZ seam accepted 3D chart");
+}
+
+/** Real native axis plan using independent cold-spin V/W antiderivatives.
+ * This verifies a pre-ghost transfer only: no density stencil inertia, EOS
+ * acceptance token, or whole Runtime scientific qualification is fabricated.
+ */
+void test_rz_cold_coordinate_seam()
+{
+    static_assert(std::is_standard_layout_v<amr::CoordinateSeamTransfer>);
+    static_assert(std::is_trivially_copyable_v<amr::CoordinateSeamTransfer>);
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr auto chart=amr::CoordinateSeamGeometry::RzAxisymmetric;
+    constexpr long double internal=1.L/64.L;
+    SimConfig config{};
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=1;config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=amr::BLOCK_NX;
+    config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    config.grid.x1l_boundary_type="reflecting";
+    config.grid.amr_max_blocks=4;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=0;
+    amr::AMRControl control(4,2);
+    control.tree->InitRootGrid(config,2,rz);
+    const auto& active=control.tree->GetActiveBlocks();
+    for(int id:active) {
+        auto& block=control.pool->GetBlock(id);
+        const auto& grid=block.grid;
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const long double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+            const long double volume=(hi*hi-lo*lo)/2.L;
+            const long double angular=(hi*hi*hi-lo*lo*lo)/3.L;
+            const long double inertia=(hi*hi*hi*hi-lo*lo*lo*lo)/4.L;
+            const int cell=grid.GetIndex(i,j,0);
+            block.fluid_state.set(cell,{1.,0.,0.,static_cast<double>(inertia/angular),
+                static_cast<double>(internal+.5L*inertia/volume)});
+            block.fluid_state.enuc_rate[cell]=.125;
+            block.fluid_state.X(0,cell)=.25;block.fluid_state.X(1,cell)=.75;
+        }
+    }
+    const auto plan=amr::make_coordinate_seam_plan(control.pool,active,2,chart);
+    expect(!plan.transfers.empty(),"cold native RZ axis produced no actual seam operations");
+    const auto first=plan.transfers.front();
+    auto& state=control.pool->GetBlock(first.source_id).fluid_state;
+    const auto native=state.get(first.source_center);
+    expect(native.rho==1.&&native.mom_w==.75&&native.eng==17./64.
+        &&arch::state::recover(native).status==arch::state::Status::unresolved_energy,
+        "independent first-cell cold spin no longer witnesses raw point recovery failure");
+    const auto before=state;
+    amr::execute_coordinate_seam_plan(plan,control.pool,&amr::Block::fluid_state);
+    for(const auto& transfer:plan.transfers) {
+        expect(transfer.geometry_semantics==rz
+            &&transfer.source_id==transfer.destination_id
+            &&transfer.momentum_sign==std::array<std::int8_t,3>{-1,1,-1},
+            "cold native axis changed its chart, actual donor, or basis parity");
+        const auto& donor=control.pool->GetBlock(transfer.source_id).fluid_state;
+        const auto& destination=control.pool->GetBlock(transfer.destination_id).fluid_state;
+        const int source=transfer.source_center,cell=transfer.destination_cell;
+        expect(destination.rho[cell]==donor.rho[source]
+            &&destination.mom_u[cell]==-donor.mom_u[source]
+            &&destination.mom_v[cell]==donor.mom_v[source]
+            &&destination.mom_w[cell]==-donor.mom_w[source]
+            &&destination.eng[cell]==donor.eng[source]
+            &&destination.enuc_rate[cell]==donor.enuc_rate[source]
+            &&destination.X(0,cell)==.25&&destination.X(1,cell)==.75,
+            "cold native seam changed independent V/W means or strided species");
+        expect(RzThermodynamics::provisional_native_state(destination.get(cell),
+            destination.mass_fractions.data()+cell,2,destination.block_total_size_)
+                ==arch::state::Status::valid,
+            "cold native seam failed the shared provisional ghost check");
+    }
+    const auto& grid=control.pool->GetBlock(first.source_id).grid;
+    for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+        const int cell=grid.GetIndex(i,j,0);
+        expect(state.rho[cell]==before.rho[cell]&&state.mom_u[cell]==before.mom_u[cell]
+            &&state.mom_v[cell]==before.mom_v[cell]&&state.mom_w[cell]==before.mom_w[cell]
+            &&state.eng[cell]==before.eng[cell]&&state.enuc_rate[cell]==before.enuc_rate[cell]
+            &&state.X(0,cell)==before.X(0,cell)&&state.X(1,cell)==before.X(1,cell),
+            "native seam changed an active conservative donor");
+    }
+
+    // A deliberately negative interpolated rho must use the legal cold native
+    // center, although generic point recovery of that center is unresolved.
+    auto abrupt=first;abrupt.neighbor_weight={-.5,0.,0.};
+    expect(abrupt.source_neighbor[0]!=abrupt.source_center,
+        "native cold fallback lacks an actual radial donor neighbor");
+    const double neighbor_rho=state.rho[abrupt.source_neighbor[0]];
+    state.rho[abrupt.source_neighbor[0]]=100.;
+    amr::CoordinateSeamPlan fallback;fallback.transfers.push_back(abrupt);
+    amr::execute_coordinate_seam_plan(fallback,control.pool,&amr::Block::fluid_state);
+    expect(state.rho[first.destination_cell]==1.&&state.mom_w[first.destination_cell]==-.75
+        &&state.eng[first.destination_cell]==17./64.
+        &&state.X(0,first.destination_cell)==.25&&state.X(1,first.destination_cell)==.75,
+        "native cold seam fallback used a raw Cartesian energy veto");
+    state.rho[abrupt.source_neighbor[0]]=neighbor_rho;
+
+    expect_rejected([&] {amr::make_coordinate_seam_plan(control.pool,active,2,
+        static_cast<amr::CoordinateSeamGeometry>(255));},
+        "unknown coordinate seam chart selected a valid plan");
+    auto unknown=first;
+    unknown.geometry_semantics=static_cast<GridMetrics::GeometrySemantics>(255);
+    amr::CoordinateSeamPlan unsupported;unsupported.transfers.push_back(unknown);
+    const auto untouched=state;
+    expect_rejected([&] {amr::execute_coordinate_seam_plan(unsupported,control.pool,
+        &amr::Block::fluid_state);},"unknown seam semantics reached shared transfer execution");
+    expect(state.rho==untouched.rho&&state.mom_u==untouched.mom_u
+        &&state.mom_v==untouched.mom_v&&state.mom_w==untouched.mom_w
+        &&state.eng==untouched.eng&&state.enuc_rate==untouched.enuc_rate
+        &&state.mass_fractions==untouched.mass_fractions,
+        "unknown seam semantics changed ghost scratch before rejection");
+
+    const amr::CoordinateSeamFields<const double> donor{
+        state.rho.data(),state.mom_u.data(),state.mom_v.data(),state.mom_w.data(),
+        state.eng.data(),state.enuc_rate.data(),state.mass_fractions.data(),
+        state.block_total_size_,state.GetNumSpecies()};
+    const amr::CoordinateSeamFields<double> destination{
+        state.rho.data(),state.mom_u.data(),state.mom_v.data(),state.mom_w.data(),
+        state.eng.data(),state.enuc_rate.data(),state.mass_fractions.data(),
+        state.block_total_size_,state.GetNumSpecies()};
+    for(int bad=0;bad<4;++bad) {
+        state.set(first.source_center,native);
+        state.X(0,first.source_center)=.25;state.X(1,first.source_center)=.75;
+        state.enuc_rate[first.source_center]=.125;
+        if(bad==0)state.rho[first.source_center]=0.;
+        if(bad==1)state.eng[first.source_center]=std::numeric_limits<double>::quiet_NaN();
+        if(bad==2)state.X(1,first.source_center)=.25;
+        if(bad==3)state.enuc_rate[first.source_center]=std::numeric_limits<double>::infinity();
+        const auto retained=state.get(first.destination_cell);
+        const double retained_enuc=state.enuc_rate[first.destination_cell];
+        expect(!amr::apply_coordinate_seam_transfer(first,donor,destination),
+            "native seam accepted an invalid donor before full Runtime acceptance");
+        expect(state.rho[first.destination_cell]==retained.rho
+            &&state.mom_u[first.destination_cell]==retained.mom_u
+            &&state.mom_v[first.destination_cell]==retained.mom_v
+            &&state.mom_w[first.destination_cell]==retained.mom_w
+            &&state.eng[first.destination_cell]==retained.eng
+            &&state.enuc_rate[first.destination_cell]==retained_enuc,
+            "failed native seam wrote conservative fields from an invalid donor");
+        // Candidate Xi may have been written to ghost scratch. No byte-atomic
+        // whole-state or accepted-ghost publication guarantee is inferred.
+    }
+    state.set(first.source_center,native);
+    state.X(0,first.source_center)=.25;state.X(1,first.source_center)=.75;
+    state.enuc_rate[first.source_center]=.125;
+    std::cout<<"RZ_COLD_SEAM_PROVISIONAL transfers="<<plan.transfers.size()
+        <<" raw_point_unresolved=true shared_host_device_math=true runtime_eos_qualification=false\n";
 }
 
 void test_coordinate_seam_mapping()
@@ -1874,6 +2023,7 @@ void test_coordinate_seam_mapping()
     test_coordinate_seam_case(3, false, true);
     test_coordinate_seam_case(3, true, false);
     test_coordinate_seam_case(3, true, true);
+    test_rz_cold_coordinate_seam();
 }
 
 } // namespace

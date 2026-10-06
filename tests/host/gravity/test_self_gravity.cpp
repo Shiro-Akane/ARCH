@@ -8,9 +8,16 @@
 #include "amr/AMRControl.h"
 #include "physics/boundary/UserBoundary.h"
 #include "physics/constant/PhysicalConstants.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/schedule/DriverControl.h"
+#include "driver/stages/GravityStage.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <functional>
+#include <filesystem>
+#include <fstream>
 #include "core/config/ControlRelations.h"
 #include <iostream>
 #include <iomanip>
@@ -83,6 +90,121 @@ void request_identity_preflight() {
     gravity.prepare({f.identity,f.views});
     require(gravity.potential().size()==64,"valid request did not recover after identity rejection");
     std::cout<<"GRAVITY_REQUEST_PREFLIGHT_PASS lanes=5 native_blocks=4 work_before_rejection=0 recovery=1\n";
+}
+/** The real field owner requires all actual patch momentum/work consumers.
+ * This checks a four-patch source receipt, not a substitute force model.
+ */
+void host_consumption_receipt() {
+    Fixture f;SelfGravity gravity(f.config.physics.gravity);
+    gravity.bind(amr::bind_elliptic_mesh(f.control,f.config.grid,f.handles));
+    rejects([&]{gravity.begin_host_stage_consumption(0.);},"zero Host source interval accepted");
+    gravity.begin_host_stage_consumption(.125);
+    rejects([&]{gravity.begin_host_stage_consumption(.125);},"duplicate Host source receipt accepted");
+    gravity.prepare({f.identity,f.views});
+    rejects([&]{gravity.require_host_stage_consumption(f.identity);},
+        "publication without real source/work consumption accepted");
+    const auto& first=f.control.pool->GetBlock(f.control.tree->GetActiveBlocks().front());
+    std::vector<FluidVector> rejected_delta(first.grid.GetTotalSize()),rejected_flux(first.grid.GetTotalSize());
+    for(auto& face:rejected_flux)face.rho=.37;
+    for(double wrong_dt:{0.,.25,std::numeric_limits<double>::quiet_NaN()}) {
+        rejects([&]{gravity.add_sources_on_patch(rejected_delta,first.fluid_state,first.grid,wrong_dt);},
+            "wrong actual source interval accepted");
+        rejects([&]{gravity.add_flux_work_on_patch(rejected_delta,rejected_flux,
+            first.fluid_state,first.grid,wrong_dt,0);},"wrong actual work interval accepted");
+        for(const auto& value:rejected_delta)
+            require(value.rho==0.&&value.mom_u==0.&&value.mom_v==0.
+                &&value.mom_w==0.&&value.eng==0.,"wrong interval mutated the source increment");
+    }
+    auto consume=[&](bool omit_last_work) {
+        const auto& active=f.control.tree->GetActiveBlocks();
+        for(std::size_t b=0;b<active.size();++b) {
+            const auto& block=f.control.pool->GetBlock(active[b]);
+            std::vector<FluidVector> delta(block.grid.GetTotalSize()),flux(block.grid.GetTotalSize());
+            for(auto& face:flux)face.rho=.37;
+            gravity.add_sources_on_patch(delta,block.fluid_state,block.grid,.125);
+            if(!omit_last_work||b+1!=active.size())
+                gravity.add_flux_work_on_patch(delta,flux,block.fluid_state,block.grid,.125,0);
+        }
+    };
+    consume(true);
+    rejects([&]{gravity.require_host_stage_consumption(f.identity);},
+        "nonfirst patch missing flux work accepted");
+    auto& last=f.control.pool->GetBlock(f.control.tree->GetActiveBlocks().back());
+    std::vector<FluidVector> delta(last.grid.GetTotalSize()),flux(last.grid.GetTotalSize());
+    gravity.add_flux_work_on_patch(delta,flux,last.fluid_state,last.grid,.125,0);
+    gravity.require_host_stage_consumption(f.identity);
+    auto wrong=f.identity;wrong.inputs.back().version.value++;
+    rejects([&]{gravity.require_host_stage_consumption(wrong);},"wrong source version accepted");
+    rejects([&]{gravity.add_flux_work_on_patch(delta,flux,last.fluid_state,last.grid,.125,0);},
+        "duplicate real patch work accepted");
+    gravity.end_host_stage_consumption();
+    rejects([&]{gravity.require_host_stage_consumption(f.identity);},"closed source receipt accepted");
+    gravity.invalidate();
+    std::cout<<"GRAVITY_HOST_CONSUMPTION_PASS patches=4 missing_nonfirst=1 duplicate=1 exact_identity=1\n";
+}
+/** The actual GravityStage holds rows privately, discards a failed prefix and
+ * publishes a complete Euler source receipt only after explicit commit/flush.
+ * This lifecycle test does not qualify new geometry or continuum accuracy.
+ */
+void host_stage_diagnostic_journal() {
+    Fixture f;SpeciesManager species;species.add_species("X",1.,1.,1.4,1.);
+    const auto directory=std::filesystem::path("self-gravity-host-journal-fixture-"
+        +std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    require(std::filesystem::create_directory(directory),"Host journal output directory already exists");
+    f.config.io.out_dir=directory.string();
+    RunState start;start.repairs.reset(1);
+    SimulationController controller(f.config,start);BCHandler boundary(f.config);
+    driver::DriverRuntime runtime(f.control,boundary,f.config,species,controller);
+    runtime.initialize_topology();auto context=runtime.stage_context();
+    SelfGravity gravity(f.config.physics.gravity);
+    driver::GravityStage stage(runtime,&gravity);
+    require(stage.supports_host_macro_step_journal(),"real Host journal capability absent");
+    stage.flush_committed_diagnostics();
+    const auto read_rows=[&] {
+        std::ifstream input(directory/"gravity_solves.tsv");
+        return std::string(std::istreambuf_iterator<char>(input),{});
+    };
+    const auto original=read_rows();
+    const auto& descriptor=scheduler::supported_hydro_time_plan(scheduler::HydroMethod::Euler).stages.front();
+    const auto prepare=[&] {
+        stage.prepare({scheduler::HydroMethod::Euler,descriptor,runtime.handles(),
+            state::ExecutionSide::Host,context.ledger,2.,.125});
+    };
+    const auto consume=[&] {
+        for(int id:f.control.tree->GetActiveBlocks()) {
+            auto& block=f.control.pool->GetBlock(id);
+            std::vector<FluidVector> delta(block.grid.GetTotalSize()),flux(block.grid.GetTotalSize());
+            for(auto& face:flux)face.rho=.37;
+            gravity.add_sources_on_patch(delta,block.fluid_state,block.grid,.125);
+            gravity.add_flux_work_on_patch(delta,flux,block.fluid_state,block.grid,.125,0);
+        }
+    };
+    stage.begin_macro_step();prepare();
+    rejects([&]{stage.accept(descriptor);},"unconsumed real GravityStage was accepted");
+    rejects([&]{stage.flush_committed_diagnostics();},"tentative source diagnostics flushed");
+    stage.discard_macro_step();
+    require(read_rows()==original,"discarded source prefix changed accepted diagnostics");
+    rejects([&]{gravity.potential();},"discard retained readable candidate gravity");
+    stage.begin_macro_step();prepare();consume();
+    auto wrong=descriptor;wrong.flux_register_weight=.5;
+    rejects([&]{stage.accept(wrong);},"different source descriptor accepted");
+    stage.accept(descriptor);
+    require(read_rows()==original,"accepted stage row leaked before macro-step commit");
+    stage.commit_macro_step();
+    require(read_rows()==original,"numerical commit performed fallible file publication");
+    stage.flush_committed_diagnostics();
+    const auto accepted=read_rows();
+    require(accepted.size()>original.size()
+        &&std::count(accepted.begin(),accepted.end(),'\n')
+            ==std::count(original.begin(),original.end(),'\n')+1,
+        "committed actual source receipt was not published exactly once");
+    stage.flush_committed_diagnostics();
+    require(read_rows()==accepted,"source diagnostics flush repeated a committed row");
+    stage.begin_macro_step();prepare();consume();stage.accept(descriptor);
+    stage.discard_macro_step();stage.flush_committed_diagnostics();
+    require(read_rows()==accepted,"late failed source attempt erased accepted history or leaked a prefix");
+    std::filesystem::remove_all(directory);
+    std::cout<<"GRAVITY_HOST_DIAGNOSTIC_JOURNAL_PASS actual_runtime=1 actual_source=1 no_prefix=1 flush_once=1\n";
 }
 void lifecycle() {
     // Nonfinite face forces must fail before publishing a seemingly finite CFL.
@@ -1022,4 +1144,4 @@ int main(int argc,char** argv) { try {
     dirichlet_quadratic();neumann_compatibility();mixed_periodic();
     user_robin_time();user_rejections();user_periodic_mismatch();boundary_normals();user_nonfinite();
     user_structure_rebuild();user_restart_time();user_periodic_payload();user_green_accounting();
-    qualification_scope();request_identity_preflight();lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+    qualification_scope();request_identity_preflight();host_consumption_receipt();host_stage_diagnostic_journal();lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }

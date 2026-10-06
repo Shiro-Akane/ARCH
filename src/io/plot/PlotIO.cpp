@@ -2,9 +2,15 @@
  * @file PlotIO.cpp
  * @brief Export synchronized leaf fields and derived plot diagnostics.
  *
- * The writer gathers host block interiors and geometry, obtains thermodynamic
- * fields through the supplied EOS callbacks, and uses the shared velocity
- * diagnostics before HDF5 emission. Device visibility is the caller's responsibility.
+ * Workflow:
+ * 1. Gather materialized Host leaf interiors and their actual native geometry.
+ * 2. Keep evolved density/energy/angular state in its original V/W measures.
+ * 3. Construct the shared native RZ thermodynamic mean from real density ghosts
+ *    before requesting pressure, temperature, Gamma1 or Jeans diagnostics.
+ * 4. Read representative velocities directly as m_i/rho and retain their
+ *    declared basis/averaging; these are distinct from ephemeral EOS momenta.
+ * 5. Publish native bounds, measures, units and frozen provenance through HDF5.
+ * Device visibility and completed ghost/stage identity belong to the caller.
  */
 
 #include <algorithm>
@@ -21,6 +27,7 @@
 #include "data/FluidState.h"
 #include "data/GlobalDefs.h"
 #include "grid/Grid.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
 #include "physics/diagnostics/JeansDiagnostics.h"
 #include "physics/species/Species.h"
@@ -153,16 +160,35 @@ void write_plt(amr::AMRControl &amr_ctrl,
     }
 
     std::map<std::string, std::vector<double>> data_map;
+    /** Borrow one real cell's EOS mean without changing its native conserved U.
+     * The shared closure makes ordinary kinetic recovery subtract
+     * J^2/(2*I_*V), using the actual density reconstruction and signed stencil.
+     * The original path passes U unchanged to the same EOS callbacks.
+     */
+    const auto mean_for_eos=[&](const FluidState& state,int index,
+        const GridMetrics::GeometryView& geometry,int i) {
+        const auto read=[&state](int cell) { return state.get(cell); };
+        if (!rz) return read(index);
+        const auto& limits=config.numerics;
+        const auto closure=RzThermodynamics::make_cell(read,index,geometry,i,
+            {limits.sml_rho,limits.min_eint,limits.max_eint});
+        if (!closure.valid())
+            throw std::runtime_error("Invalid native RZ Plotfile thermodynamic closure at cell "
+                +std::to_string(index));
+        return closure.effective_mean;
+    };
+    /** Traverse original leaf order, supplying actual chart/i to each extractor. */
     auto extract_and_store = [&](const std::string &name, auto extract_func)
     {
         std::vector<double> buffer(total_cells);
         size_t buf_idx = 0;
         for (size_t b_idx = 0; b_idx < num_blocks; ++b_idx) {
             const amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[b_idx]);
+            const auto geometry=GridMetrics::make_geometry_view(b.grid,semantics);
             for (int k = b.grid.Ks(); k < b.grid.Ke(); ++k) {
                 for (int j = b.grid.Js(); j < b.grid.Je(); ++j) {
                     for (int i = b.grid.Is(); i < b.grid.Ie(); ++i) {
-                        buffer[buf_idx++] = extract_func(b.fluid_state, b.grid.GetIndex(i, j, k));
+                        buffer[buf_idx++] = extract_func(b.fluid_state, b.grid.GetIndex(i, j, k),geometry,i);
                     }
                 }
             }
@@ -208,41 +234,52 @@ void write_plt(amr::AMRControl &amr_ctrl,
     };
 
     if (vars.rho)
-        extract_and_store("DENS", [](const FluidState &s, int idx) { return s.get(idx).rho; });
+        extract_and_store("DENS", [](const FluidState &s,int idx,
+            const GridMetrics::GeometryView&,int) { return s.get(idx).rho; });
 
     if (vars.p) {
         std::vector<double> Xi_temp(specs.count());
-        extract_and_store("PRES", [&](const FluidState &s, int idx) {
+        extract_and_store("PRES", [&](const FluidState &s,int idx,
+            const GridMetrics::GeometryView& geometry,int i) {
             for(int k=0; k<s.GetNumSpecies(); ++k) Xi_temp[k] = s.X(k, idx);
-            return p_func(s.get(idx), Xi_temp.data(), p_context);
+            return p_func(mean_for_eos(s,idx,geometry,i), Xi_temp.data(), p_context);
         });
     }
 
     if (vars.temp) {
         std::vector<double> Xi_temp(specs.count());
-        extract_and_store("TEMP", [&](const FluidState &s, int idx) {
+        extract_and_store("TEMP", [&](const FluidState &s,int idx,
+            const GridMetrics::GeometryView& geometry,int i) {
             for (int k = 0; k < s.GetNumSpecies(); ++k) Xi_temp[k] = s.X(k, idx);
-            return t_func(s.get(idx), Xi_temp.data(), p_context);
+            return t_func(mean_for_eos(s,idx,geometry,i), Xi_temp.data(), p_context);
         });
     }
     if (vars.eng)
-        extract_and_store("ENER", [](const FluidState &s, int idx) { return s.get(idx).eng; });
+        extract_and_store("ENER", [](const FluidState &s,int idx,
+            const GridMetrics::GeometryView&,int) { return s.get(idx).eng; });
 
+    // These are native representative m_i/rho values. Thermal recovery is
+    // unrelated to reading velocity and would misinterpret RZ J/W as a point
+    // momentum; effective_mean.w must never replace the VELZ convention.
     if (vars.u)
-        extract_and_store("VELX", [](const FluidState &s, int idx) { auto U = s.get(idx); return arch::state::recover(U).u; });
+        extract_and_store("VELX", [](const FluidState &s,int idx,
+            const GridMetrics::GeometryView&,int) { return s.mom_u[idx]/s.rho[idx]; });
 
     if (vars.v && dim >= 2)
-        extract_and_store("VELY", [](const FluidState &s, int idx) { auto U = s.get(idx); return arch::state::recover(U).v; });
+        extract_and_store("VELY", [](const FluidState &s,int idx,
+            const GridMetrics::GeometryView&,int) { return s.mom_v[idx]/s.rho[idx]; });
 
     if (vars.w && (dim == 3 || rz))
-        extract_and_store("VELZ", [](const FluidState &s, int idx) { auto U = s.get(idx); return arch::state::recover(U).w; });
+        extract_and_store("VELZ", [](const FluidState &s,int idx,
+            const GridMetrics::GeometryView&,int) { return s.mom_w[idx]/s.rho[idx]; });
 
     if (vars.entr) {
         std::vector<double> Xi_temp(specs.count());
-        extract_and_store("ENTR", [&](const FluidState& state, int index) {
+        extract_and_store("ENTR", [&](const FluidState& state,int index,
+            const GridMetrics::GeometryView& geometry,int i) {
             for (int species = 0; species < state.GetNumSpecies(); ++species) Xi_temp[species] = state.X(species, index);
             const double rho = state.rho[index];
-            const FluidVector U = state.get(index);
+            const FluidVector U = mean_for_eos(state,index,geometry,i);
             const double gamma1 = gamma1_func(U, Xi_temp.data(), p_context);
             return p_func(U, Xi_temp.data(), p_context) / std::pow(rho, gamma1);
         });
@@ -265,7 +302,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
                         const int cell=grid.GetIndex(i,j,k);
                         for (int species=0;species<state.GetNumSpecies();++species)
                             fractions[species]=state.X(species,cell);
-                        const auto fluid=state.get(cell);
+                        const auto fluid=mean_for_eos(state,cell,geometry,i);
                         const double pressure=p_func(fluid,fractions.data(),p_context);
                         // Gamma1 callback is rho*adiabatic_cs^2/P from the
                         // current EOS, not the configurable fallback gamma.
@@ -284,7 +321,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
     }
 
     if (vars.enuc)
-        extract_and_store("ENUC", [](const FluidState& state, int index) { return state.enuc_rate[index]; });
+        extract_and_store("ENUC", [](const FluidState& state,int index,
+            const GridMetrics::GeometryView&,int) { return state.enuc_rate[index]; });
 
     if (vars.vort || vars.divv) {
         extract_velocity_diagnostics(vars.vort, vars.divv);
@@ -305,8 +343,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
             else if (name == "VELZ") declaration.averaging = "representative-m_phi-over-rho";
             else if (name == "VELX" || name == "VELY")
                 declaration.averaging = "recovered-from-native-volume-averaged-conserved-state";
-            else if (name == "PRES" || name == "TEMP" || name == "JENS")
-                declaration.averaging = "evaluated-from-representative-conserved-state";
+            else if (name == "PRES" || name == "TEMP" || name == "ENTR" || name == "JENS")
+                declaration.averaging = "evaluated-from-native-mean-thermodynamic-closure";
         }
         field_metadata.emplace(name,std::move(declaration));
     }
@@ -328,7 +366,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
     for (const int species : selected_species) {
         const std::string& var_name = specs.get_name(species);
         field_metadata[var_name] = io::plot_species_metadata();
-        extract_and_store(var_name, [species](const FluidState &s, int idx) {
+        extract_and_store(var_name, [species](const FluidState &s,int idx,
+            const GridMetrics::GeometryView&,int) {
             return s.X(species, idx);
         });
     }

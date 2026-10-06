@@ -8,13 +8,16 @@
 
 #pragma once
 
+#include <array>
 #include <fstream>
 #include <limits>
 #include <optional>
+#include <string>
 
 #include "driver/schedule/StageScheduler.h"
 #include "io/IO.h"
 #include "physics/gravity/self/GravityBoundaryDiagnostics.h"
+#include "physics/gravity/GravitySolveTypes.h"
 
 namespace Physical::Gravity { class IGravityPolicy; class SelfGravity; }
 namespace arch::driver {
@@ -32,6 +35,17 @@ public:
     double timestep() const;
     std::vector<io::PlotScalarField> plot_fields() const;
     bool active() const { return gravity_!=nullptr; }
+    /** Journal capability is independent of the physical field/RZ qualification gate. */
+    bool supports_host_macro_step_journal() const noexcept override;
+    /** Freeze accepted observer state before any macro-step fluid producer runs. */
+    void begin_macro_step() override;
+    /** Accept only the exact prepared descriptor and genuinely consumed field. */
+    void accept(const scheduler::StageDescriptor&) override;
+    /** Publish/discard preallocated records; neither operation performs file I/O. */
+    void commit_macro_step() noexcept override;
+    void discard_macro_step() noexcept override;
+    /** Flush an already accepted macro-step; an I/O failure remains an explicit run failure. */
+    void flush_committed_diagnostics();
 private:
     state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int);
     Qualification qualification_;
@@ -42,5 +56,23 @@ private:
     std::ofstream diagnostics_,boundary_diagnostics_;
     std::optional<Physical::Gravity::GravityBoundarySnapshot> boundary_snapshot_;
     double boundary_exchange_=0.;
+    struct DiagnosticRow { std::string solve,boundary; };
+    struct PreparedFrame {
+        scheduler::HydroMethod method;
+        scheduler::StageDescriptor descriptor;
+        Physical::Gravity::GravitySolveIdentity source;
+        double input_time=0.,step_dt=0.;
+    };
+    // At most three supported RK stages; rows are formatted before patch work.
+    // Storage/publication leases remain monotonic even after a failed attempt.
+    bool journal_active_=false;
+    std::optional<PreparedFrame> prepared_;
+    std::optional<scheduler::HydroMethod> journal_method_;
+    double journal_start_=0.,journal_dt_=0.;
+    std::array<DiagnosticRow,3> pending_rows_,committed_rows_;
+    std::size_t pending_count_=0,committed_count_=0;
+    std::size_t expected_count_=0;
+    std::optional<Physical::Gravity::GravityBoundarySnapshot> pending_boundary_snapshot_;
+    double pending_boundary_exchange_=0.;
 };
 }

@@ -5,6 +5,7 @@
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/GravityStage.h"
+#include "physics/eos/IdealGas.h"
 #include "physics/gravity/self/SelfGravity.h"
 #include "physics/gravity/GravityExecution.h"
 #include <cstring>
@@ -54,6 +55,7 @@ int main(int argc,char** argv){
     config.physics.gravity.relative_tolerance=1.e-10;
     config.physics.gravity.absolute_tolerance=0.;config.physics.gravity.max_cycles=200;
     SpeciesManager species;species.add_species("a",1.,1.,1.4,1.);species.add_species("b",2.,1.,1.4,1.);
+    IdealGas eos(1.4,species);
     amr::AMRControl control(16,2);
     control.tree->InitRootGrid(config,2,GridMetrics::GeometrySemantics::AxisymmetricRz);
     for(int id:control.tree->GetActiveBlocks()){
@@ -70,6 +72,7 @@ int main(int argc,char** argv){
     RunState start{};SimulationController counters(config,start);
     BCHandler boundary(config,GridMetrics::GeometrySemantics::AxisymmetricRz);
     arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
+    runtime.bind_native_rz_eos(eos);
     runtime.initialize_topology();
     const auto roots=control.tree->GetActiveBlocks();const auto handles=runtime.handles();
     const int pool_before=control.pool->GetNumActiveBlocks();
@@ -120,6 +123,44 @@ int main(int argc,char** argv){
         }
     }
     require(callbacks==3,"finalizer callback count");
+    // Reject a real staged native thermodynamic closure after completed BC and
+    // exchange. Unlike the callback throws above, this hook returns normally:
+    // the mandatory shared post-ghost gate must veto the unpublished candidate.
+    // The deliberately negative energy is an engineering counterexample, not
+    // a physical floor repair or an evolved solution.
+    int gate_fault_callbacks=0;bool closure_rejected=false;
+    try {
+        runtime.regrid_native_rz_candidate(0,0.,[&]{
+            ++gate_fault_callbacks;
+            require(control.tree->GetActiveBlocks().size()==8,
+                "closure counterexample did not run in staged topology");
+            require(runtime.handles()==handles,
+                "closure counterexample already published Runtime handles");
+            auto& late=control.pool->GetBlock(control.tree->GetActiveBlocks().back());
+            late.fluid_state.eng[late.grid.GetIndex(late.grid.Is(),late.grid.Js(),0)]=-1.;
+        });
+    }catch(const std::runtime_error& error){
+        closure_rejected=std::string_view(error.what()).find("RZ native closure/EOS rejected")
+            !=std::string_view::npos;
+        if(!closure_rejected)throw;
+    }
+    require(gate_fault_callbacks==1&&closure_rejected,
+        "actual post-ghost native closure failure was not propagated");
+    require(control.tree->GetActiveBlocks()==roots&&runtime.handles()==handles,
+        "rejected native closure published staged topology");
+    require(control.pool->GetNumActiveBlocks()==pool_before&&runtime.regrid_records().empty(),
+        "rejected native closure leaked staged storage or successful record");
+    auto restored=runtime.stage_context();
+    for(std::size_t i=0;i<roots.size();++i){
+        require(same_state(control.pool->GetBlock(roots[i]).fluid_state,expected[i]),
+            "native closure veto did not restore original source bits");
+        require(restored.ledger.inspect({handles[i],arch::state::StateSlot::Current})
+            .interior.version==versions[i],"native closure veto published new interior version");
+        restored.ledger.require_readable({handles[i],arch::state::StateSlot::Current},
+            {arch::state::ExecutionSide::Host,versions[i],true,true});
+    }
+    std::cout<<"ACTUAL_RZ_POSTGHOST_GATE_ROLLBACK actual_closure_rejection=1"
+        <<" returned_hook=1 unpublished_candidate=1 source_bits_versions_preserved=1\n";
     // Real native field recovery checks fresh restored pointers, all Current
     // versions and the same original complete residual budget before retry.
     Physical::Gravity::SelfGravity gravity(config.physics.gravity);

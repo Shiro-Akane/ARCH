@@ -13,6 +13,10 @@
  * 1. Evaluate the shared physical diffusion operator on synchronized AMR leaves.
  * 2. Register coarse-fine fluxes, reflux, and refresh halos at every RKL stage.
  * 3. Return a conservative composite hierarchy state to the driver.
+ * Native RZ requires a Host scheduler binding and Runtime post-boundary EOS
+ * owner before any stage copy or flux mutation. Its provisional stage/reflux
+ * checks preserve V/W means and RzVolumeAngular receipts without point-energy
+ * repair; actual completed boundary/exchange supplies thermal acceptance.
  */
 
 #pragma once
@@ -30,6 +34,23 @@
 namespace Numerics::Diffusion {
 
 namespace detail {
+
+/** Require native execution ownership before any RKL output or flux mutation.
+ * Callback presence is a preflight only; the actual Runtime callback checks
+ * its ledger, slot/version, domain and bound EOS after real boundary exchange.
+ */
+inline void require_native_stage_binding(GridMetrics::GeometrySemantics semantics,
+                                         std::size_t expected_handles)
+{
+    if(semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz) return;
+    const auto& binding=arch::scheduler::current_stage_binding();
+    if(binding.context.side!=arch::state::ExecutionSide::Host)
+        throw std::logic_error("Native RZ RKL requires a Host stage binding");
+    if(!binding.context.post_boundary_acceptance)
+        throw std::logic_error("Native RZ RKL requires post-boundary acceptance");
+    if(expected_handles==0||binding.handles.size()!=expected_handles)
+        throw std::logic_error("Native RZ RKL stage domain extent mismatch");
+}
 
 template<typename BCPolicy>
 inline void validate_geometry(const Grid& grid,const BCPolicy& boundary,
@@ -482,6 +503,7 @@ inline void advance_single_rkl(
     GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
     validate_geometry(grid,boundary_condition,semantics);
+    require_native_stage_binding(semantics,1);
     using namespace arch::scheduler;
     using arch::state::StateSlot;
     const DiffFunction::RKLOrder order = order_for(method);
@@ -531,7 +553,10 @@ inline void advance_single_rkl(
                 FluidState& previous = state_for(block, descriptor.previous_slot);
                 FluidState& older = state_for(block, descriptor.older_slot);
                 FluidState& output = state_for(block, descriptor.output_slot);
-                output.stage_repairs.reset(output.GetNumSpecies());
+                output.stage_repairs.reset(output.GetNumSpecies(),
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                        ? arch::state::RepairSemantics::RzVolumeAngular
+                        : arch::state::RepairSemantics::ExistingVolume);
                 const DiffFunction::RKLCoeffs coefficients =
                     DiffFunction::get_rkl_coeffs(
                         order, descriptor.stage, stages);
@@ -666,7 +691,7 @@ inline void advance_single_rkl(
             [&](const RklPlan&, const RklStageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
                 TimeIntegration::accept_stage_state(state_for(block, descriptor.output_slot),
-                    grid, config.numerics);
+                    grid, config.numerics,semantics);
                 return token;
             };
     const auto boundary =
@@ -703,6 +728,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                             arch::scheduler::RklMethod method,
                             GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
+    detail::require_native_stage_binding(semantics,amr_ctrl.tree->GetActiveBlocks().size());
     for(int id:amr_ctrl.tree->GetActiveBlocks())
         detail::validate_geometry(amr_ctrl.pool->GetBlock(id).grid,
             boundary_condition,semantics);
@@ -772,7 +798,10 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         detail::state_for(block, descriptor.older_slot);
                     FluidState& output =
                         detail::state_for(block, descriptor.output_slot);
-                    output.stage_repairs.reset(output.GetNumSpecies());
+                    output.stage_repairs.reset(output.GetNumSpecies(),
+                        semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                            ? arch::state::RepairSemantics::RzVolumeAngular
+                            : arch::state::RepairSemantics::ExistingVolume);
                     std::vector<FluidVector> d_previous;
                     std::vector<double> d_species_previous;
                     detail::evaluate_diffusion_increment(
@@ -785,7 +814,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                             state_n, output, d_previous,
                             d_species_previous, block.grid,
                             coefficients.tilde_mu);
-                        TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
+                        TimeIntegration::accept_stage_state(output, block.grid, config.numerics,semantics);
                         continue;
                     }
 
@@ -809,7 +838,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         d_species_previous, d_initial, d_species_initial,
                         block.grid, coefficients,
                         selected_plan.second_order);
-                    TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
+                    TimeIntegration::accept_stage_state(output, block.grid, config.numerics,semantics);
                 }
                 return token;
             };
@@ -817,9 +846,10 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
             [&](const RklPlan&, const RklStageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
                 amr_ctrl.ApplyReflux(
-                    dt, detail::member_for(descriptor.output_slot), semantics);
+                    dt, detail::member_for(descriptor.output_slot), semantics,
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
                 TimeIntegration::accept_reflux_state(amr_ctrl,config.numerics,
-                    detail::member_for(descriptor.output_slot), false);
+                    detail::member_for(descriptor.output_slot), false,semantics);
                 return token;
             };
     const auto boundary =

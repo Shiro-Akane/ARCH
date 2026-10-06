@@ -178,8 +178,15 @@ void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& c
         for (std::size_t k=0;k<budget.size();++k) budget[k]=context.boundary_step_dt*budget[k]
             +(stage.stage>1 ? coefficients.mu*boundary_rkl_previous_[k]+coefficients.nu*boundary_rkl_older_[k] : 0.);
         boundary_rkl_older_=boundary_rkl_previous_; boundary_rkl_previous_=budget;
-        if (stage.stage==static_cast<int>(plan.stages.size()))
-            for (std::size_t k=0;k<budget.size();++k) diffusion_boundary_budget_[k]+=budget[k];
+        if (stage.stage==static_cast<int>(plan.stages.size())) {
+            // Both RKL halves remain tentative inside the native macro owner;
+            // the unchanged recurrence above still integrates each dt/2.
+            auto& accepted=tentative_diffusion_boundary_budget_
+                ?*tentative_diffusion_boundary_budget_:diffusion_boundary_budget_;
+            if(accepted.size()!=budget.size())
+                throw std::logic_error("RKL boundary receipt owner layout mismatch");
+            for (std::size_t k=0;k<budget.size();++k) accepted[k]+=budget[k];
+        }
     };
 }
 } // namespace arch::driver

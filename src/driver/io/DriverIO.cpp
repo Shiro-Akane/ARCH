@@ -4,8 +4,11 @@
  *
  * Workflow:
  * 1. Receive a resolved configuration, stage request and current state identity.
- * 2. Schedule plots, checkpoints and diagnostics from the current published state.
- * 3. Hand completed state and diagnostics to the next scheduled stage.
+ * 2. Complete actual native RZ ghosts through the Runtime materialization owner.
+ * 3. Validate an ephemeral shared thermodynamic mean with the bound EOS, while
+ *    retaining the original V/W-averaged conserved state for persistence.
+ * 4. Publish plots/checkpoints only after serialization and close succeed.
+ * 5. Hand completed state and diagnostics to the next scheduled stage.
  */
 
 #include <filesystem>
@@ -20,6 +23,7 @@
 #include "amr/AMRControl.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
 #include "physics/species/Species.h"
 
@@ -35,29 +39,44 @@ void close_diagnostic(std::ofstream& output, const char* description)
     if (!output)
         throw std::runtime_error(std::string("cannot close ") + description);
 }
-/** Reject invalid conserved, composition or EOS state before serializing any plot. */
+/** Reject invalid native closure, composition or EOS state before persistence.
+ * RZ uses the actual density stencil to recover J^2/(2*I_*V), rather than
+ * treating m_phi=J/W as an ordinary point momentum. The transient effective
+ * mean is only an EOS input; this traversal never changes stored native U.
+ * Runtime materialization must have completed the actual Current ghosts.
+ */
 void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
                           TemperatureFunc temperature, Gamma1Func gamma1, const void* eos)
 {
     const auto& limits=runtime.configuration().numerics;
     const int species=runtime.species().count();
+    const auto semantics=runtime.geometry_semantics();
+    const arch::state::Bounds bounds{limits.sml_rho,limits.min_eint,limits.max_eint};
     std::vector<double> fractions(species);
     auto& control=runtime.control();
     for (int id : control.tree->GetActiveBlocks()) {
         const auto& block=control.pool->GetBlock(id);
         const auto& grid=block.grid;
         const auto& state=block.fluid_state;
+        const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
+        const auto read=[&state](int index) { return state.get(index); };
         for (int k=grid.Ks(); k<grid.Ke(); ++k)
             for (int j=grid.Js(); j<grid.Je(); ++j)
                 for (int i=grid.Is(); i<grid.Ie(); ++i) {
                     const int cell=grid.GetIndex(i,j,k);
                     try {
                         state.get_species_to_buffer(cell,fractions.data());
-                        const auto fluid=state.get(cell);
-                        if (arch::state::validate(fluid,fractions.data(),species,1,
+                        FluidVector eos_mean=read(cell);
+                        if (semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+                            const auto closure=RzThermodynamics::make_cell(read,cell,geometry,i,bounds);
+                            if (!closure.valid())
+                                throw std::runtime_error("Invalid native RZ output closure");
+                            eos_mean=closure.effective_mean;
+                        }
+                        if (arch::state::validate(eos_mean,fractions.data(),species,1,
                             limits.sml_rho,limits.min_eint,limits.max_eint)!=arch::state::Status::valid)
                             throw std::runtime_error("Invalid conserved output state");
-                        io::require_output_thermodynamics(fluid,fractions.data(),pressure,temperature,gamma1,eos);
+                        io::require_output_thermodynamics(eos_mean,fractions.data(),pressure,temperature,gamma1,eos);
                     } catch (const std::exception& error) {
                         throw std::runtime_error("Output block="+std::to_string(id)+" cell="+
                             std::to_string(cell)+": "+error.what());
@@ -66,7 +85,7 @@ void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
     }
 }
 }
-/** Materialize the accepted state and write a validated plot with gravity fields. */
+/** Complete actual ghosts/materialization and publish a validated native plot. */
 void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
 {
     const auto start = Clock::now();
@@ -86,14 +105,18 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
-/** Write restart state and provenance at a completed step boundary. */
+/** Persist original native restart means after closure/EOS validation.
+ * Materialization already performs ensure_fluid_ghosts first, so native RZ
+ * takes that single owned path; an extra call would resample user BC twice.
+ */
 void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
 {
     const auto start = Clock::now();
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
     const auto& specs = runtime.species();
-    if (runtime.backend())
+    if (runtime.backend()
+        || runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz)
         runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
     const auto semantics = runtime.geometry_semantics();

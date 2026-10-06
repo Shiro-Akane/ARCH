@@ -11,9 +11,10 @@
 #pragma once
 
 #include <array>
-#include <memory>
 #include <functional>
+#include <memory>
 #include <span>
+#include <stdexcept>
 #include <vector>
 
 #include "driver/runtime/ComputeBackend.h"
@@ -21,11 +22,13 @@
 #include "driver/schedule/StageScheduler.h"
 #include "grid/GridMetrics.h"
 #include "amr/exchange/CoordinateSeamPlan.h"
+#include "numerics/state/RzNativeClosure.h"
 
 class BCHandler;
 struct SimulationController;
 struct SimConfig;
 struct FluidState;
+struct Grid;
 struct SpeciesManager;
 namespace amr { class AMRControl; }
 namespace arch::driver {
@@ -47,6 +50,28 @@ public:
     DriverRuntime& operator=(const DriverRuntime&) = delete;
 
     void initialize_topology();
+    /** Borrow the actual run EOS for strict native-RZ post-ghost acceptance.
+     * The EOS must outlive this Runtime. Species count and physical bounds are
+     * frozen at binding; no constant-pressure substitute or repair is used.
+     */
+    template<class Eos> void bind_native_rz_eos(const Eos& eos) {
+        if (geometry_semantics_ != GridMetrics::GeometrySemantics::AxisymmetricRz)
+            return;
+        if (host_hydro_transaction_)
+            throw std::logic_error("Active Host Hydro owner excludes EOS rebinding");
+        const int species = native_rz_species_count();
+        const auto bounds = native_rz_eos_bounds();
+        native_rz_eos_acceptance_ = [&eos, species, bounds](
+            const FluidState& state, const Grid& grid) {
+            RzThermodynamics::validate_patch_eos(state, grid, species, bounds, eos);
+        };
+    }
+    /** Attach the exact borrowed Host candidate domain and its real BC context.
+     * Bind before actual BC/exchange starts; refresh after a BC time/purpose
+     * change. This internal gate does not open the public RZ science capability.
+     */
+    void bind_native_boundary_acceptance(scheduler::StageExecutionContext&,
+        std::span<const amr::BlockHandle>);
     bool perform_regrid(int step, double time, bool jeans_repair_only = false);
     // Explicit internal CPU transaction verification; not reachable from
     // SimConfig/API/Driver evolution and never enables Device or production RZ.
@@ -67,10 +92,7 @@ public:
     void install_backend(std::unique_ptr<backend::ComputeBackend>);
     void upload_initial_state();
 
-    scheduler::StageExecutionContext stage_context() {
-        return {compute_backend ? state::ExecutionSide::Device : state::ExecutionSide::Host,
-                *residency_ledger, scheduler_clock};
-    }
+    scheduler::StageExecutionContext stage_context();
     const std::vector<amr::BlockHandle>& handles() const { return stage_handles; }
     backend::ComputeBackend* backend() const { return compute_backend.get(); }
     amr::AMRControl& control() const { return amr_ctrl; }
@@ -79,6 +101,10 @@ public:
     const SpeciesManager& species() const { return specs; }
     GridMetrics::GeometrySemantics geometry_semantics() const noexcept { return geometry_semantics_; }
     state::RepairBudget& repair_budget();
+    /** Borrow the one internal Host/native-RZ macro owner; never begin a nested scope. */
+    HostHydroTransaction* active_host_hydro_transaction() const noexcept {
+        return host_hydro_transaction_;
+    }
     const std::vector<RegridMeasurement>& regrid_records() const { return regrid_measurements; }
     /** Observe actual surface fluxes only for selected case boundary callbacks. */
     void bind_boundary_accounting(scheduler::StageExecutionContext&);
@@ -90,10 +116,12 @@ private:
     // Non-owning exact token for one explicit internal Host/RZ transaction.
     HostHydroTransaction* host_hydro_transaction_=nullptr;
     std::vector<double>* tentative_hydro_boundary_budget_=nullptr;
+    std::vector<double>* tentative_diffusion_boundary_budget_=nullptr;
     std::vector<topology::TopologyObservation> observe_blocks(std::span<const int>) const;
     std::vector<topology::TopologyObservation> observe_topology() const;
     state::StateVersion current_interior_version() const;
-    void publish_current_ghost();
+    int native_rz_species_count() const;
+    state::Bounds native_rz_eos_bounds() const;
     void complete_device_boundary(state::StateSlot);
     bool execute_regrid(bool jeans_repair_only,bool native_rz_candidate=false,
         const std::function<void()>& after_host_finalization = {});
@@ -108,6 +136,8 @@ private:
     const SimConfig& config;
     const SpeciesManager& specs;
     SimulationController& ctrl;
+    // A borrowed real EOS, bound explicitly before any native candidate BC work.
+    std::function<void(const FluidState&, const Grid&)> native_rz_eos_acceptance_;
     topology::TopologyIdentityRegistry topology_registry;
     scheduler::MonotonicSchedulerClock scheduler_clock;
     std::uint64_t next_amr_transaction_id = 1;

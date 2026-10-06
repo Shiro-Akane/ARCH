@@ -1,0 +1,192 @@
+{
+  "status": "passed_scoped_cpu_checkpoint",
+  "recordedAtUtc": "2026-10-06T21:37:21.216038+00:00",
+  "sourceBaseCommit": "baa55eec90613daf24b22c16ef6693ba1246c3ff",
+  "workingTreeChangesIncluded": true,
+  "productionExecutableSha256": "8755b39d9d1de8eb4d42a1209480ffe4a5e5a53e5eb031debed2abfa65b2fba6",
+  "fullCpuCtest": {
+    "tests": 68,
+    "skipped": 0,
+    "failed": 0,
+    "seconds": 146.01,
+    "inventorySha256": "66a5eb48b86e23e50b54b85d14fbd5b5326be04b92df30b2f2ce0a217675fe6c",
+    "junitSha256": "7fd126e49e13bdb7fd3684a864300023d742a25c7b5109250d42ce467a0b39c9"
+  },
+  "priorNarrowOwners": {
+    "tests": 8,
+    "passed": 8,
+    "seconds": 14.21,
+    "productionExecutableSha256": "1cfe8934c89e3558d819541f0180d21bb14947aec3dd438190acb9e2e3da6633"
+  },
+  "privateCpuOwners": {
+    "native-rkl-angular-reflux-density-20261007": {
+      "scope": "Actual CPU Runtime halo, timestep candidates and RKL stage kernels; no simulation driver time advancement or scientific output",
+      "executableSha256": "5e8220e3ac155b6fa13977b644e3748ad357b5ff861edfbe6a5e9a140eaf0a93",
+      "sourceSha256": {
+        "tests/host/driver/test_rz_runtime_boundary.cpp": "cd1548a39ef699b9f92a3aead23f82f7d31fbe5c3ae69b79409e719bfc3b36bc"
+      },
+      "fixtureInputManifestSha256": "fe889bca1142a9c4b6804e4eadb975e92ee4251680d4e3c9a47eb07544a301c5",
+      "stdoutSha256": "4aa160098df8a4d86ca4b7abd1534e338dfdbb86cabbb2fde69e5b7f491172e3",
+      "limitations": [
+        "RZ production regrid remains gated",
+        "CUDA not qualified",
+        "No scientific evolution acceptance"
+      ],
+      "acceptanceLines": [
+        "RZ_RUNTIME_DT direction=0 inner=0 rkl=1 hydro=0.0018064102608053936 independent_hydro=0.0018064102608053938 diffusion_fe=0.1953125 diffusion_sts=5140",
+        "RZ_RUNTIME_DT direction=0 inner=0 rkl=2 hydro=0.0018064102608053936 independent_hydro=0.0018064102608053938 diffusion_fe=0.1953125 diffusion_sts=2549.921875",
+        "RZ_RUNTIME_RKL mixed=0 direction=0 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+        "RZ_RUNTIME_RKL mixed=0 direction=0 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+        "RZ_RUNTIME_THERMAL_RKL direction=0 inner=0 rkl=1 stages=2 checked=168 dt=0.93749999999999989 expected_increment=0.078749999999999987 max_error=2.1316282072803006e-14 activity=0.078750000000013642",
+        "RZ_RUNTIME_THERMAL_RKL direction=0 inner=0 rkl=2 stages=5 checked=66 dt=0.93749999999999989 expected_increment=0.078749999999999987 max_error=4.2632564145606011e-14 activity=0.078750000000006537",
+        "RZ_RUNTIME_HALO direction=0 inner=0 leaves=1 version=1 PASS",
+        "RZ_RUNTIME_DT direction=0 inner=1 rkl=1 hydro=0.0018096878207488499 independent_hydro=0.0018096878207488501 diffusion_fe=0.38927801724137934 diffusion_sts=10244.551724137933",
+        "RZ_RUNTIME_DT direction=0 inner=1 rkl=2 hydro=0.0018096878207488499 independent_hydro=0.0018096878207488501 diffusion_fe=0.38927801724137934 diffusion_sts=5082.2580818965525",
+        "RZ_RUNTIME_RKL mixed=0 direction=0 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+        "RZ_RUNTIME_RKL mixed=0 direction=0 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+        "RZ_RUNTIME_THERMAL_RKL direction=0 inner=1 rkl=1 stages=2 checked=144 dt=0.93749999999999989 expected_increment=0.078749999999999987 max_error=4.2632564145606011e-14 activity=0.078750000000042064",
+        "RZ_RUNTIME_THERMAL_RKL direction=0 inner=1 rkl=2 stages=5 checked=36 dt=0.93749999999999989 expected_increment=0.078749999999999987 max_error=5.6843418860808015e-14 activity=0.078749999999999432",
+        "RZ_RUNTIME_HALO direction=0 inner=1 leaves=1 version=1 PASS",
+        "RZ_RUNTIME_DT direction=1 inner=0 rkl=1 hydro=0.0018064102608053936 independent_hydro=0.0018064102608053938 diffusion_fe=0.1953125 diffusion_sts=5140",
+        "RZ_RUNTIME_DT direction=1 inner=0 rkl=2 hydro=0.0018064102608053936 independent_hydro=0.0018064102608053938 diffusion_fe=0.1953125 diffusion_sts=2549.921875",
+        "RZ_RUNTIME_RKL mixed=0 direction=1 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+        "RZ_RUNTIME_RKL mixed=0 direction=1 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+        "RZ_RUNTIME_THERMAL_RKL direction=1 inner=0 rkl=1 stages=2 checked=168 dt=0.93749999999999989 expected_increment=0.078749999999999987 max_error=2.1316282072803006e-14 activity=0.078750000000013642",
+        "RZ_RUNTIME_THERMAL_RKL direction=1 inner=0 rkl=2 stages=5 checked=66 dt=0.93749999999999989 expected_increment=0.078749999999999987 max_error=4.2632564145606011e-14 activity=0.078750000000006537",
+        "RZ_RUNTIME_HALO direction=1 inner=0 leaves=1 version=1 PASS",
+        "RZ_RUNTIME_DT direction=1 inner=1 rkl=1 hydro=0.0018096878207488499 independent_hydro=0.0018096878207488501 diffusion_fe=0.38927801724137934 diffusion_sts=10244.551724137933",
+        "RZ_RUNTIME_DT direction=1 inner=1 rkl=2 hydro=0.0018096878207488499 independent_hydro=0.0018096878207488501 diffusion_fe=0.38927801724137934 diffusion_sts=5082.2580818965525",
+        "RZ_RUNTIME_RKL mixed=0 direction=1 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+        "RZ_RUNTIME_RKL mixed=0 direction=1 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+        "RZ_RUNTIME_THERMAL_RKL direction=1 inner=1 rkl=1 stages=2 checked=144 dt=0.93749999999999989 expected_increment=0.078749999999999987 max_error=4.2632564145606011e-14 activity=0.078750000000042064",
+        "RZ_RUNTIME_THERMAL_RKL direction=1 inner=1 rkl=2 stages=5 checked=36 dt=0.93749999999999989 expected_increment=0.078749999999999987 max_error=5.6843418860808015e-14 activity=0.078749999999999432",
+        "RZ_RUNTIME_HALO direction=1 inner=1 leaves=1 version=1 PASS",
+        "RZ_RUNTIME_DT direction=0 inner=0 rkl=1 hydro=0.00063261018084915448 independent_hydro=0.00063261018084915448 diffusion_fe=0.01502403846153846 diffusion_sts=395.38461538461536",
+        "RZ_RUNTIME_DT direction=0 inner=0 rkl=2 hydro=0.00063261018084915448 independent_hydro=0.00063261018084915448 diffusion_fe=0.01502403846153846 diffusion_sts=196.14783653846152",
+        "RZ_RUNTIME_RKL mixed=1 direction=0 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+        "RZ_RUNTIME_RKL mixed=1 direction=0 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+        "RZ_MIXED_THERMAL_RKL direction=0 inner=0 rkl=1 energy_before=1495.7415517533784 energy_after=1495.7415517533784 relative_error=1.1876094752585577e-18 activity=0.029661043480075477",
+        "RZ_MIXED_THERMAL_RKL direction=0 inner=0 rkl=2 energy_before=1495.7415517533784 energy_after=1495.7415517533784 relative_error=3.8597307945903122e-18 activity=0.017943016503735976",
+        "RZ_RUNTIME_HALO direction=0 inner=0 leaves=5 version=1 PASS",
+        "RZ_RUNTIME_DT direction=0 inner=1 rkl=1 hydro=0.00063382795648645254 independent_hydro=0.00063382795648645243 diffusion_fe=0.039047712700515783 diffusion_sts=1027.6108455969338",
+        "RZ_RUNTIME_DT direction=0 inner=1 rkl=2 hydro=0.00063382795648645254 independent_hydro=0.00063382795648645243 diffusion_fe=0.039047712700515783 diffusion_sts=509.79131793285387",
+        "RZ_RUNTIME_RKL mixed=1 direction=0 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+        "RZ_RUNTIME_RKL mixed=1 direction=0 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+        "RZ_MIXED_THERMAL_RKL direction=0 inner=1 rkl=1 energy_before=3003.7031329744877 energy_after=3003.7031329744877 relative_error=4.731111593284976e-18 activity=0.028554576368769347",
+        "RZ_MIXED_THERMAL_RKL direction=0 inner=1 rkl=2 energy_before=3003.7031329744877 energy_after=3003.7031329744877 relative_error=9.9057648984404187e-18 activity=0.016916224823361858",
+        "RZ_RUNTIME_HALO direction=0 inner=1 leaves=5 version=1 PASS",
+        "RZ_RUNTIME_DT direction=1 inner=0 rkl=1 hydro=0.00057446426957445478 independent_hydro=0.00057446426957445478 diffusion_fe=0.027901785714285712 diffusion_sts=734.28571428571433",
+        "RZ_RUNTIME_DT direction=1 inner=0 rkl=2 hydro=0.00057446426957445478 independent_hydro=0.00057446426957445478 diffusion_fe=0.027901785714285712 diffusion_sts=364.27455357142856",
+        "RZ_RUNTIME_RKL mixed=1 direction=1 inner=0 rkl=1 stages=2 max_error=3.5527136788005009e-15",
+        "RZ_RUNTIME_RKL mixed=1 direction=1 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+        "RZ_MIXED_THERMAL_RKL direction=1 inner=0 rkl=1 energy_before=1495.7536811851653 energy_after=1495.7536811851653 relative_error=7.1255990678602176e-18 activity=0.014580964214715664",
+        "RZ_MIXED_THERMAL_RKL direction=1 inner=0 rkl=2 energy_before=1495.7536811851653 energy_after=1495.7536811851653 relative_error=2.2638622038514233e-17 activity=0.012742426652934569",
+        "RZ_RUNTIME_HALO direction=1 inner=0 leaves=5 version=1 PASS",
+        "RZ_RUNTIME_DT direction=1 inner=1 rkl=1 hydro=0.00057546623616081818 independent_hydro=0.00057546623616081818 diffusion_fe=0.039048157242518818 diffusion_sts=1027.6225445199193",
+        "RZ_RUNTIME_DT direction=1 inner=1 rkl=2 hydro=0.00057546623616081818 independent_hydro=0.00057546623616081818 diffusion_fe=0.039048157242518818 diffusion_sts=509.7971216954287",
+        "RZ_RUNTIME_RKL mixed=1 direction=1 inner=1 rkl=1 stages=2 max_error=1.7763568394002505e-15",
+        "RZ_RUNTIME_RKL mixed=1 direction=1 inner=1 rkl=2 stages=5 max_error=1.7763568394002505e-14",
+        "RZ_MIXED_THERMAL_RKL direction=1 inner=1 rkl=1 energy_before=3003.7181549082661 energy_after=3003.7181549082661 relative_error=2.3655439662307474e-18 activity=0.012139071705369986",
+        "RZ_MIXED_THERMAL_RKL direction=1 inner=1 rkl=2 energy_before=3003.7181549082661 energy_after=3003.7181549082661 relative_error=7.3923248944710848e-19 activity=0.010254678049719246",
+        "RZ_RUNTIME_HALO direction=1 inner=1 leaves=5 version=1 PASS"
+      ]
+    },
+    "native-current-io-20261007": {
+      "scope": "Actual CPU JENS Runtime transactions and DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
+      "executableSha256": "a8e6d2dbf45b039bed49adc7e2207fe4f8366657cf0ecedc54b9bfd0efb4527b",
+      "sourceSha256": {
+        "tests/host/io/test_driver_checkpoint_geometry.cpp": "37aeb97d23c6a1728f48336a9612ba228a830273dca232ba80e19e1fc1e02743"
+      },
+      "fixtureInputManifestSha256": "0cfaae8c8afeb1b4a5098146e2c1f91cc8dc4c567d69a564209d297b76486862",
+      "stdoutSha256": "18c2691f85f12136e82a96d7416c0facd5d10e5ab2efa1e05f03bc9d2b752c54",
+      "limitations": [
+        "Public RZ dispatch still gated",
+        "No evolved restart acceptance",
+        "CUDA not qualified"
+      ],
+      "acceptanceLines": [
+        "JEANS_NATIVE_PLOT_PASS chart=Cartesian",
+        "PASS actual DriverIO Cartesian profile/native/controller/rejection/create/retry time=0 step=0",
+        "JEANS_NATIVE_PLOT_PASS chart=RZ",
+        "PASS actual DriverIO RZ profile/native/controller/rejection/create/retry time=0 step=0",
+        "RZ_COLD_IDEALGAS_NATIVE_IO_PASS rho=1 Omega=32 e=.0025 P=.001 Cv=2 cells=256 raw-first-cell-thermal-negative=1 actual-postghost-eos=1 t=0"
+      ]
+    },
+    "native-current-continuation-20261007": {
+      "scope": "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
+      "executableSha256": "4cd8dd2979d65a117edef41337fdf260cb00a344c97343db8cc2b7438d59d25c",
+      "sourceSha256": {
+        "tests/host/driver/test_rz_checkpoint_continuation.cpp": "79c0ca350e71a3f263c0bc2e9cf7df9ae7997e1606e8386a750555a347bc7602"
+      },
+      "fixtureInputManifestSha256": "2924a5f1cc18aaf6e3d00f20bf2b45334e01fa7b9a9d28154f50288d11a082d6",
+      "stdoutSha256": "c34e35d54116853bca149cde593ab6e058882070a3f1cdf9fc2af68cb41fa3b6",
+      "limitations": [
+        "Public RZ dispatch still gated",
+        "No scientific evolution acceptance",
+        "CUDA not qualified"
+      ],
+      "acceptanceLines": [
+        "PASS RZ_CHECKPOINT_CONTINUATION direction=0 inner=0 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=cc0c8b461c97903467c94d5172bd38040e744f2d323c998220c3cdb232a3d66b",
+        "PASS RZ_CHECKPOINT_CONTINUATION direction=0 inner=1 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=56a7ffe33b259f51e291fa2868d228793f5681e9f2b77db2289479c10cf241e1",
+        "PASS RZ_CHECKPOINT_CONTINUATION direction=1 inner=0 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=2c316ab26e374ac3ff1f6a9152093e2841e5051f3922b45a5b9d71a1a4ca9ed3",
+        "PASS RZ_CHECKPOINT_CONTINUATION direction=1 inner=1 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=1660f95fdb4c75eeba14586b4db053e2b87b072d78028c0c60c4f406aa0d2e08"
+      ]
+    },
+    "native-current-initial-bound-rejection-20261007": {
+      "scope": "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
+      "executableSha256": "cf4834732c91f6517412b25f23987b5744542aa0cee59b7d6bea62bf79313bf3",
+      "sourceSha256": {
+        "tests/host/driver/test_rz_checkpoint_continuation.cpp": "55c5756733d712850966d1fceeb05d750ade0e5c744c4991551745f05b807114"
+      },
+      "fixtureInputManifestSha256": "8e193c9a125baeca9a5072fe1ad3b67161213a2df72b84c13484898cd8789d22",
+      "stdoutSha256": "e1b1f64657e625aa83c00dd7c7faf288c97056e9a6f183bf404d3f5d0e8cac93",
+      "limitations": [
+        "Public RZ dispatch still gated",
+        "No scientific evolution acceptance",
+        "CUDA not qualified"
+      ],
+      "acceptanceLines": [
+        "PASS RZ_INITIAL_THERMAL_REJECTION direction=0 inner=0 min_eint=100 repairs=0 raw_output=0",
+        "PASS RZ_INITIAL_THERMAL_REJECTION direction=0 inner=1 min_eint=100 repairs=0 raw_output=0",
+        "PASS RZ_INITIAL_THERMAL_REJECTION direction=1 inner=0 min_eint=100 repairs=0 raw_output=0",
+        "PASS RZ_INITIAL_THERMAL_REJECTION direction=1 inner=1 min_eint=100 repairs=0 raw_output=0"
+      ]
+    }
+  },
+  "newIndependentCoarseningReference": "Actual existing low_density_math passed; true quartic M/J/E fine-positive/coarse-negative; not transfer qualification",
+  "actualRepair": "Native RKL angular flux registration and reflux now share angular_transport=true. Original diffusion formula and numeric budgets unchanged.",
+  "storage": {
+    "hostMount": "/mnt/e",
+    "observedFreeBytes": 23919804416,
+    "minHostFreeBytes": 8589934592,
+    "nextWriteReserveBytes": 67108864,
+    "buildPeakObservedBytes": 622948435,
+    "rawCommitted": false,
+    "failedEvidencePreserved": true,
+    "passedRawProcessing": "Root accepted finite numeric/UTF8/metadata summaries; exact regular-file stat/SHA recheck before each deletion",
+    "currentPassedRawDeletedFiles": 189,
+    "currentPassedRawDeletedBytes": 15126952,
+    "cumulativePassedRawDeletedFiles": 1207,
+    "cumulativePassedRawDeletedBytes": 246261456,
+    "cleanupReceiptSha256": "fb6b54970cbcb91ab90d4f7131671bbfafce55909f7fca061f286812f53f994d",
+    "preservedInterruptedFiles": 398
+  },
+  "unqualified": [
+    "Full native RZ user-boundary moment/point physics",
+    "Selected PCM/MUSCL/PPM native face adapters",
+    "Cold native AMR transfer and actual destination inertia/EOS acceptance",
+    "Continuous finite-ring force certificate and full native gravity consumers",
+    "Full viscous tensor/work RKL AMR science",
+    "Final CUDA scientific qualification and formal timings",
+    "Current matched 14700K/4070 Ti benchmark",
+    "Native desktop interaction UAT"
+  ],
+  "releaseAccepted": false,
+  "continuationSourceLineage": {
+    "originalSourceSha256": "79c0ca350e71a3f263c0bc2e9cf7df9ae7997e1606e8386a750555a347bc7602",
+    "originalExecutableSha256": "4cd8dd2979d65a117edef41337fdf260cb00a344c97343db8cc2b7438d59d25c",
+    "inverseNegativeOnlyMigrationExactMatch": true,
+    "normalBodyUnchanged": true,
+    "currentSourceReexecutionClaimed": false
+  }
+}

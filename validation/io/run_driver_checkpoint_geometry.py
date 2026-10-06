@@ -1,55 +1,44 @@
 #!/usr/bin/env python3
-"""Compile actual CPU Driver/Runtime/IO checkpoint fixture from trusted build commands.
-No configure or timestep evolution. Raw checkpoint evidence stays in output-root.
+"""Build the actual CPU checkpoint fixture from frozen Runtime/IO leaf owners.
+No configure, production rebuild or timestep evolution. Raw evidence stays local.
 """
-import argparse,json,pathlib,shlex,subprocess,os,hashlib
+import argparse,json,pathlib,subprocess,os,sys
+root=pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(root/"tools"))
+from validation_fixture_build import build_cpu_fixture,verify_fixture_inputs,RUNTIME_SOURCES
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument("--build",type=pathlib.Path,required=True)
 p.add_argument("--output-root",type=pathlib.Path,required=True)
 a=p.parse_args();build=a.build.resolve();out=a.output_root.resolve()
 if out.exists():p.error("output-root must be new")
-entries=json.loads((build/"compile_commands.json").read_text())
-main=next(e for e in entries if pathlib.Path(e["file"]).name=="main.cpp")
-root=pathlib.Path(main["file"]).parent.parent
-if "-DARCH_CUDA_BUILD_ENABLED=0" not in shlex.split(main["command"]):p.error("CPU build required")
-out.mkdir(parents=True)
-sources=["tests/host/io/test_driver_checkpoint_geometry.cpp",
- "src/driver/runtime/DriverRuntime.cpp","src/driver/runtime/DriverBoundary.cpp",
- "src/driver/runtime/DriverRegrid.cpp","src/driver/io/DriverIO.cpp",
- "src/io/chk/ChkIO.cpp","src/io/chk/CheckpointCompatibility.cpp",
- "src/io/hdf5/HDF5Writer.cpp","src/io/plot/PlotIO.cpp"]
-objects=[]
-def execute(label,args):
-    with (out/(label+".log")).open("w") as log:
-        result=subprocess.run(args,cwd=build,stdout=log,stderr=subprocess.STDOUT,timeout=180)
-    if result.returncode:
-        print((out/(label+".log")).read_text());raise SystemExit(result.returncode)
-for i,source in enumerate(sources):
-    args=shlex.split(main["command"])
-    if i==0:
-        args += ["-I"+str(root/"tests"),
-            '-DARCH_IO_FIXTURE_SOURCE_FILE="'+str(root/"tests/host/io/test_driver_checkpoint_geometry.cpp")+'"',
-            '-DARCH_IO_FIXTURE_SOURCE_SHA256="'+hashlib.sha256((root/"tests/host/io/test_driver_checkpoint_geometry.cpp").read_bytes()).hexdigest()+'"']
-    obj=out/(str(i)+".o");objects.append(str(obj))
-    args[args.index("-o")+1]=str(obj)
-    args[args.index("-c")+1]=str(root/source)
-    execute("compile-"+str(i),args)
-commands=subprocess.check_output(["ninja","-t","commands","ARCH"],cwd=build,text=True)
-line=next(x for x in reversed(commands.splitlines()) if " -o bin/ARCH " in x)
-tokens=shlex.split(line)
-if tokens[:2]==[":","&&"]:tokens=tokens[2:]
-if tokens[-2:]==["&&",":"]:tokens=tokens[:-2]
-if any(t in {"&&",";","|",">","<"} for t in tokens):p.error("unsupported link scaffolding")
-idx=tokens.index(main["output"]);tokens[idx:idx+1]=objects
-exe=out/"driver-checkpoint-geometry";tokens[tokens.index("-o")+1]=str(exe)
-execute("link",tokens)
-result=subprocess.run([str(exe),str(out/"evidence")],env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
+source="tests/host/io/test_driver_checkpoint_geometry.cpp"
+providers={name:"ARCH" for name in ["src/io/chk/ChkIO.cpp",
+    "src/io/chk/CheckpointCompatibility.cpp","src/io/hdf5/HDF5Writer.cpp","src/io/plot/PlotIO.cpp",
+    "src/core/files/FileFingerprint.cpp","src/core/files/BuildIdentity.cpp",
+    "src/core/config/ConfigurationIdentity.cpp","src/physics/eos/eosdispatch.cpp",
+    "src/physics/eos/sources/TabularBaryonSource.cpp","src/physics/eos/sources/TabularCompletion.cpp",
+    "src/physics/eos/sources/Tabular3DEOS.cpp","src/physics/eos/sources/Tabular4DEOS.cpp"]}
+providers["src/driver/io/DriverIO.cpp"]="arch_solver_dispatch"
+headers=["tests/math/io/PlotIdentityFixture.h","src/driver/io/DriverIO.h",
+         "src/driver/runtime/DriverRuntime.h","src/numerics/state/RzNativeClosure.h"]
+exe,build_record,frozen=build_cpu_fixture(build=build,output=out,source=root/source,
+    executable_name="driver-checkpoint-geometry",owner_sources=list(RUNTIME_SOURCES),
+    observed_headers=headers,reuse_compiled_sources=providers,
+    compile_recipe="production",io_fixture_identity=True)
+result=subprocess.run([str(exe),str(out/"evidence")],
+    env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
     text=True,capture_output=True,timeout=30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
+verify_fixture_inputs(frozen,exe,build_record["executableIdentity"])
+identities=build_record["inputs"]["files"]
+def source_sha(name):return identities[str((root/name).resolve())]["sha256"]
 summary={"scope":"Actual CPU JENS Runtime transactions and DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
- "buildDirectory":str(build),"executableSha256":hashlib.sha256(exe.read_bytes()).hexdigest(),
- "recompiledSources":{s:hashlib.sha256((root/s).read_bytes()).hexdigest() for s in sources},
+ "buildDirectory":str(build),"executableSha256":build_record["executableIdentity"]["sha256"],
+ "recompiledSources":{source:source_sha(source)},
+ "reusedCompiledOwner":build_record["reusedCompiledOwner"],
+ "reusedCompiledSources":build_record["reusedCompiledSources"],
+ "fixtureBuildInputs":"fixture-build-inputs.json",
  "limitations":["Public RZ dispatch still gated","No evolved restart acceptance","CUDA not qualified"]}
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)

@@ -8,9 +8,12 @@
  * rejected requests and channel misuse. The manager links this file into the
  * existing boundary_plan target; it defines test_user_physical_boundary() and
  * deliberately has no main.
+ * Explicit native RZ cases below qualify coordinate mapping and warm no-swirl
+ * callback routing only; they do not qualify mixed V/W callback state recovery.
  */
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
+#include "physics/boundary/UserBoundary.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 #include "physics/eos/IdealGas.h"
 
@@ -317,6 +320,108 @@ void test_coordinate_dimensions()
     for (int component = 0; component < 3; ++component)
         close(z_face.cartesian_normal[component], component == 2 ? 1.0 : 0.0, 1.0e-15,
               "cylindrical z normal is e_z");
+}
+
+// Independent meridional chart expectations: x=r, y=0, z=z_native,
+// n_r=+/-e_x, n_z=+/-e_z, d=|ghost_axis-face_axis|. These checks never use
+// Grid::PhysicalCoordsFromNative or the metric helper to construct the oracle.
+void test_native_rz_coordinates()
+{
+    constexpr auto rz = GridMetrics::GeometrySemantics::AxisymmetricRz;
+    Grid grid(4, 0.0, 16.0, -2.0, 6.0, 0.0, 2.0);
+    grid.dim = 2;
+    grid.geometry = "cylindrical";
+    grid.InitializeTopology(rz);
+    struct CoordinateCase {
+        std::array<double, 3> face;
+        std::array<double, 3> ghost;
+        BoundaryAxis axis;
+        BoundarySide side;
+        int depth;
+    };
+    const std::array<CoordinateCase, 8> cases{{
+        {{2.0, -1.5, 0.0}, {1.75, -1.5, 0.0}, BoundaryAxis::X1, BoundarySide::Lower, 1},
+        {{2.0, 3.0, 0.0}, {2.75, 3.0, 0.0}, BoundaryAxis::X1, BoundarySide::Upper, 2},
+        {{3.0, -2.0, 0.0}, {3.0, -2.5, 0.0}, BoundaryAxis::X2, BoundarySide::Lower, 1},
+        {{3.0, 6.0, 0.0}, {3.0, 7.5, 0.0}, BoundaryAxis::X2, BoundarySide::Upper, 2},
+        {{0.0, 1.0, 0.0}, {-0.25, 1.0, 0.0}, BoundaryAxis::X1, BoundarySide::Lower, 1},
+        {{0.0, -2.0, 0.0}, {-0.25, -2.5, 0.0}, BoundaryAxis::X2, BoundarySide::Lower, 1},
+        {{0.0, 6.0, 0.0}, {-0.75, 7.5, 0.0}, BoundaryAxis::X2, BoundarySide::Upper, 2},
+        {{2.0, 1.0, 0.0}, {2.0, 1.0, 0.0}, BoundaryAxis::X1, BoundarySide::Upper, 0},
+    }};
+    for (const auto& item : cases) {
+        const auto coordinates = MakeBoundaryCoordinates(grid, item.face,
+            item.axis, item.side, .375, item.depth, BoundaryPurpose::Diffusion,
+            item.ghost, rz);
+        const auto expected_ghost = item.depth == 0 ? item.face : item.ghost;
+        const auto check_point = [&](const PointCoords& point, const std::array<double, 3>& native) {
+            close(point.x, native[0], 1.e-15, "RZ x is the signed native radial coordinate");
+            close(point.y, 0.0, 1.e-15, "RZ meridional y is zero");
+            close(point.z, native[1], 1.e-15, "RZ z is an axial length");
+            close(point.r_cy, native[0], 1.e-15, "RZ cylindrical radius preserves signed ghost coordinates");
+            close(point.z_cy, native[1], 1.e-15, "RZ cylindrical z is an axial length");
+            close(point.phi_cy, 0.0, 1.e-15, "RZ cylindrical azimuth is zero");
+            close(point.r, std::hypot(native[0], native[1]), 1.e-15, "RZ spherical radius is distinct from native radius");
+        };
+        check_point(coordinates.point, item.face);
+        check_point(coordinates.ghost_point, expected_ghost);
+        const int axis = static_cast<int>(item.axis);
+        const int cartesian_axis = axis == 0 ? 0 : 2;
+        const double sign = item.side == BoundarySide::Lower ? -1.0 : 1.0;
+        const auto direct_normal = BoundaryCartesianNormal(grid, coordinates.point, item.axis, item.side, rz);
+        const auto wrapped_normal = detail::PhysicalBoundaryNormal(grid, coordinates.point, item.axis, item.side, rz);
+        for (int component = 0; component < 3; ++component) {
+            const double expected = component == cartesian_axis ? sign : 0.0;
+            close(coordinates.cartesian_normal[component], expected, 1.e-15, "RZ face outward Cartesian normal");
+            close(direct_normal[component], expected, 1.e-15, "RZ direct outward normal");
+            close(wrapped_normal[component], expected, 1.e-15, "RZ wrapped outward normal");
+        }
+        close(detail::PhysicalBoundaryMetric(grid, coordinates.point, item.axis, rz),
+            1.0, 1.e-15, "RZ radial and axial coordinates have unit length metric");
+        close(coordinates.physical_distance, std::abs(expected_ghost[axis] - item.face[axis]),
+            1.e-15, "RZ face-to-ghost distance does not include a radius factor");
+        require(coordinates.native_position == item.face && coordinates.dimension == 2 &&
+            coordinates.ghost_depth == item.depth && coordinates.time == .375 &&
+            coordinates.purpose == BoundaryPurpose::Diffusion,
+            "RZ coordinates lost the actual native request identity");
+    }
+
+    // The same native numbers intentionally retain the legacy polar meaning
+    // when no explicit chart is supplied. Existing dimensional tests remain.
+    const auto legacy = MakeBoundaryCoordinates(grid, {2.0, .4, 0.0},
+        BoundaryAxis::X2, BoundarySide::Upper, 0.0, 1,
+        BoundaryPurpose::Diffusion, {2.0, .6, 0.0});
+    close(legacy.point.x, 2.0 * std::cos(.4), 1.e-15, "default cylindrical coordinates retain polar x");
+    close(legacy.point.y, 2.0 * std::sin(.4), 1.e-15, "default cylindrical coordinates retain polar y");
+    close(legacy.point.z, 0.0, 1.e-15, "default cylindrical 2D has no axial coordinate");
+    close(legacy.physical_distance, .4, 1.e-15, "default cylindrical azimuth retains r*dphi distance");
+
+    const auto reject_chart = [&](const Grid& candidate, GridMetrics::GeometrySemantics semantics) {
+        const PointCoords point{};
+        require_rejected([&] { (void)BoundaryCartesianNormal(candidate, point,
+            BoundaryAxis::X1, BoundarySide::Upper, semantics); }, "invalid native RZ normal chart accepted");
+        require_rejected([&] { (void)detail::PhysicalBoundaryNormal(candidate, point,
+            BoundaryAxis::X1, BoundarySide::Upper, semantics); }, "invalid native RZ wrapped normal chart accepted");
+        require_rejected([&] { (void)detail::PhysicalBoundaryMetric(candidate, point,
+            BoundaryAxis::X1, semantics); }, "invalid native RZ metric chart accepted");
+        require_rejected([&] { (void)MakeBoundaryCoordinates(candidate, {1.0, 0.0, 0.0},
+            BoundaryAxis::X1, BoundarySide::Upper, 0.0, 0, BoundaryPurpose::Hydro,
+            {}, semantics); }, "invalid native RZ coordinate chart accepted");
+    };
+    reject_chart(grid, static_cast<GridMetrics::GeometrySemantics>(255));
+    for (const int dimension : {0, 1, 3}) {
+        auto invalid = grid;
+        invalid.dim = dimension;
+        reject_chart(invalid, rz);
+    }
+    for (const auto* geometry : {"cartesian", "spherical", "unsupported"}) {
+        auto invalid = grid;
+        invalid.geometry = geometry;
+        reject_chart(invalid, rz);
+    }
+    require_rejected([&] { (void)MakeBoundaryCoordinates(grid, {1.0, 0.0, 0.0},
+        BoundaryAxis::X3, BoundarySide::Upper, 0.0, 0, BoundaryPurpose::Hydro, {}, rz); },
+        "inactive native RZ third direction was accepted");
 }
 
 void test_interior_snapshot(const Fixture& fixture)
@@ -1030,6 +1135,121 @@ void test_handler_domain_and_stage_time()
         "heat-only callback erased tangential wall state");
 }
 
+// Real BCHandler routing for a uniform warm state with zero velocity. For this
+// restricted witness there is no mixed angular kinetic energy, so the current
+// callback state conversion is sufficient to inspect coordinates honestly.
+// It is not a qualification of arbitrary rotating native ghost moments.
+void test_handler_native_rz_coordinates()
+{
+    constexpr auto rz = GridMetrics::GeometrySemantics::AxisymmetricRz;
+    for (const double radial_lower : {0.0, 16.0}) {
+        Fixture fixture;
+        auto& config = fixture.config;
+        config.grid.dim = 2;
+        config.grid.geometry = "cylindrical";
+        config.grid.x1_min = radial_lower;
+        config.grid.x1_max = radial_lower + 16.0;
+        config.grid.x2_min = -2.0;
+        config.grid.x2_max = 6.0;
+        config.grid.x3_min = 0.0;
+        config.grid.x3_max = 2.0;
+        config.grid.x1l_boundary_type = config.grid.x1r_boundary_type = "user";
+        config.grid.x2l_boundary_type = config.grid.x2r_boundary_type = "user";
+        Grid grid(4, config.grid.x1_min, config.grid.x1_max,
+            config.grid.x2_min, config.grid.x2_max, config.grid.x3_min, config.grid.x3_max);
+        grid.dim = 2;
+        grid.geometry = "cylindrical";
+        grid.InitializeTopology(rz);
+        std::array<int, 4> calls{};
+        bool negative_tangent_ghost = false;
+        ResolvedUserBoundaries callbacks;
+        callbacks.physical = [&](const PhysicalBoundaryContext& context) {
+            const int axis = static_cast<int>(context.axis);
+            const int side = static_cast<int>(context.side);
+            require(axis >= 0 && axis < 2 && side >= 0 && side < 2,
+                "native RZ callback received an unknown face");
+            ++calls[2 * axis + side];
+            require(context.purpose == BoundaryPurpose::Hydro && context.time == .375 &&
+                context.dimension == 2 && context.ghost_depth >= 1 && context.ghost_depth <= grid.ng,
+                "native RZ handler lost stage identity");
+            close(context.point.x, context.native_position[0], 1.e-15,
+                "native RZ handler face x must be radius");
+            close(context.point.y, 0.0, 1.e-15, "native RZ handler face y must be zero");
+            close(context.point.z, context.native_position[1], 1.e-15,
+                "native RZ handler face z must be axial length");
+            close(context.point.r_cy, context.point.x, 1.e-15,
+                "native RZ handler face cylindrical radius");
+            close(context.point.z_cy, context.point.z, 1.e-15,
+                "native RZ handler face cylindrical axial coordinate");
+            close(context.point.phi_cy, 0.0, 1.e-15,
+                "native RZ handler face azimuth must be zero");
+            close(context.ghost_point.y, 0.0, 1.e-15,
+                "native RZ handler ghost y must be zero");
+            close(context.ghost_point.r_cy, context.ghost_point.x, 1.e-15,
+                "native RZ handler preserves signed radial ghost coordinate");
+            close(context.ghost_point.z_cy, context.ghost_point.z, 1.e-15,
+                "native RZ handler preserves axial ghost coordinate");
+            close(context.ghost_point.phi_cy, 0.0, 1.e-15,
+                "native RZ handler ghost azimuth must be zero");
+            const double sign = side == 0 ? -1.0 : 1.0;
+            for (int component = 0; component < 3; ++component)
+                close(context.cartesian_normal[component], component == (axis == 0 ? 0 : 2) ? sign : 0.0,
+                    1.e-15, "native RZ handler outward normal");
+            const double face_coordinate = axis == 0 ? context.point.x : context.point.z;
+            const double ghost_coordinate = axis == 0 ? context.ghost_point.x : context.ghost_point.z;
+            const double domain_face = axis == 0
+                ? (side == 0 ? config.grid.x1_min : config.grid.x1_max)
+                : (side == 0 ? config.grid.x2_min : config.grid.x2_max);
+            close(face_coordinate, domain_face, 1.e-15, "native RZ handler owns the actual domain face");
+            const double spacing = axis == 0 ? grid.dx1 : grid.dx2;
+            const double distance = (context.ghost_depth - .5) * spacing;
+            close(ghost_coordinate - face_coordinate, sign * distance, 1.e-14,
+                "native RZ handler ghost layer uses physical r/z spacing");
+            close(context.physical_distance, distance, 1.e-14,
+                "native RZ handler physical distance must be an axial/radial length");
+            if (axis == 1 && context.ghost_point.x < 0.0) negative_tangent_ghost = true;
+            close(context.interior.temperature, 1000.0, 1.e-14,
+                "native RZ warm callback actual EOS temperature");
+            close(context.interior.u, 0.0, 1.e-15, "native RZ warm callback radial velocity");
+            close(context.interior.v, 0.0, 1.e-15, "native RZ warm callback axial velocity");
+            close(context.interior.w, 0.0, 1.e-15, "native RZ warm callback swirl velocity");
+            PhysicalBoundaryData data;
+            data.hydro = context.interior;
+            return data;
+        };
+        ScopedUserBoundarySelection selected(callbacks, config, fixture.species);
+        BCHandler handler(config, rz);
+        handler.bind(fixture.eos, fixture.species);
+        handler.configure_stage(.375, BoundaryPurpose::Hydro);
+        FluidState state;
+        state.Preallocate(grid.GetTotalSize());
+        state.InitSpecies(fixture.species.count());
+        auto primitive = interior_primitive(kComposition);
+        primitive.u = primitive.v = primitive.w = 0.0;
+        const auto warm = ProblemHelper::detail::InitialConservedState(
+            primitive, fixture.eos, config.numerics);
+        for (int cell = 0; cell < grid.GetTotalSize(); ++cell) {
+            state.set(cell, warm);
+            for (int species = 0; species < fixture.species.count(); ++species)
+                state.X(species, cell) = kComposition[species];
+        }
+        handler.apply(state, grid);
+        require(calls[1] > 0 && calls[2] > 0 && calls[3] > 0,
+            "native RZ handler did not route radial and axial user faces");
+        if (radial_lower == 0.0)
+            require(calls[0] == 0 && negative_tangent_ghost,
+                "native RZ axis regularity owner or axial negative tangent ghosts lost");
+        else require(calls[0] > 0, "native RZ off-axis lower radial user face was skipped");
+        const int total_calls = calls[0] + calls[1] + calls[2] + calls[3];
+        auto wrong_chart = grid;
+        wrong_chart.geometry = "cartesian";
+        require_rejected([&] { handler.apply(state, wrong_chart); },
+            "native RZ handler accepted a mismatched actual grid chart");
+        require(calls[0] + calls[1] + calls[2] + calls[3] == total_calls,
+            "mismatched native RZ chart invoked the user callback");
+    }
+}
+
 } // namespace
 
 void test_user_physical_boundary()
@@ -1038,6 +1258,8 @@ void test_user_physical_boundary()
     const Fixture fixture;
     test_geometry_normals();
     test_coordinate_dimensions();
+    test_native_rz_coordinates();
+    test_handler_native_rz_coordinates();
     test_interior_snapshot(fixture);
     test_hydro_temperature_state(fixture);
     test_invalid_hydro_requests(fixture);

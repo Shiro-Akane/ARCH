@@ -246,6 +246,7 @@ endforeach()
 add_executable(arch_shared_stage_scheduler
     tests/host/driver/test_shared_stage_scheduler.cpp)
 arch_configure_host_test(arch_shared_stage_scheduler)
+target_link_libraries(arch_shared_stage_scheduler PRIVATE arch_diffusion_math)
 target_compile_definitions(arch_shared_stage_scheduler PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
@@ -253,7 +254,7 @@ add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
 add_executable(arch_gravity_stage_contract
     tests/host/gravity/test_gravity_stage_contract.cpp
     tests/host/driver/test_host_hydro_transaction.cpp)
-target_link_libraries(arch_gravity_stage_contract PRIVATE arch_solver_dispatch)
+target_link_libraries(arch_gravity_stage_contract PRIVATE arch_driver_runtime)
 arch_configure_host_test(arch_gravity_stage_contract)
 add_test(NAME gravity_stage_contract COMMAND arch_gravity_stage_contract)
 
@@ -513,9 +514,10 @@ set_tests_properties(composite_poisson_analytic PROPERTIES TIMEOUT 600)
 
 target_link_libraries(arch_resolved_execution_plan PRIVATE arch_gravity_cpu)
 add_executable(arch_self_gravity tests/host/gravity/test_self_gravity.cpp
-    src/amr/elliptic/EllipticMeshAdapter.cpp)
+    src/amr/elliptic/EllipticMeshAdapter.cpp
+    src/driver/stages/GravityStage.cpp)
 arch_configure_host_test(arch_self_gravity)
-target_link_libraries(arch_self_gravity PRIVATE arch_gravity_cpu)
+target_link_libraries(arch_self_gravity PRIVATE arch_gravity_cpu arch_driver_runtime)
 add_test(NAME self_gravity_lifecycle COMMAND arch_self_gravity)
 
 add_test(NAME composite_poisson_contract COMMAND arch_composite_poisson contract)

@@ -4,6 +4,8 @@
  *
  * Workflow:
  * 1. Core constructs face coordinates, stage time and a copied interior state.
+ *    The explicit native RZ chart maps (r,z) onto the meridional phi=0 plane;
+ *    coordinate selection alone does not change callback state conversion.
  * 2. A case callback returns primitive or scalar boundary data in CGS units.
  * 3. Core validates the result and applies it through the selected EOS/operator.
  *
@@ -47,11 +49,15 @@ struct BoundaryCoordinates {
 /** Outward Cartesian unit normal from the existing native orthonormal basis.
  * Cartesian e_i; cylindrical e_R/e_z/e_phi; spherical e_r/e_theta/e_phi.
  * Grid remains the coordinate authority, including the current 2D conventions.
+ * An explicitly selected native RZ chart instead uses e_r=e_x and e_z at
+ * phi=0. This is a coordinate helper, not an EOS or native-moment conversion.
  */
 inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const PointCoords& face,
-                                                    BoundaryAxis axis, BoundarySide side)
+    BoundaryAxis axis, BoundarySide side,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
-    const GridMetrics::Geometry geometry = GridMetrics::geometry_kind(grid);
+    const auto view = GridMetrics::make_geometry_view(grid, semantics);
+    const GridMetrics::Geometry geometry = view.geometry;
     if (geometry == GridMetrics::Geometry::Unsupported)
         throw std::invalid_argument("Unsupported boundary coordinate geometry");
     const int direction = static_cast<int>(axis);
@@ -61,7 +67,11 @@ inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const Poi
         throw std::invalid_argument("physical boundary side must be Lower or Upper");
     const double sign = (side == BoundarySide::Lower) ? -1.0 : 1.0;
     std::array<double, 3> normal{0.0, 0.0, 0.0};
-    switch (geometry) {
+    if (view.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        // Native (r,z) is a meridional length chart: n_r=(1,0,0),
+        // n_z=(0,0,1). Its second coordinate is never an azimuthal angle.
+        normal[direction == 0 ? 0 : 2] = 1.0;
+    } else switch (geometry) {
     case GridMetrics::Geometry::Cartesian:
         normal[direction] = 1.0;
         break;

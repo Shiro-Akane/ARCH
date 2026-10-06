@@ -1,10 +1,12 @@
 // Actual authoritative PopulateState/EOS path; no timestep advancement.
 #include "interface/ProblemGenerator.h"
 #include "core/problem/ProblemHelper.h"
+#include "core/problem/InitialStateConversion.h"
 #include "interface/GenericProblem.h"
 #include "driver/initialization/InitialMesh.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
+#include "physics/eos/IdealGas.h"
 #include <cstring>
 #include <iomanip>
 #include "physics/constant/PhysicalConstants.h"
@@ -147,8 +149,10 @@ int main() {
         const double jerror=double(std::abs(total_j-reference_j)/reference_j);
         require(jerror<=1.e-12,"actual Init violated owner angular integral budget");
         BCHandler boundaries(config,rz);
+        IdealGas eos(1.4,species);
         SimulationController ctrl(config,RunState{});
         arch::driver::DriverRuntime runtime(control,boundaries,config,species,ctrl);
+        runtime.bind_native_rz_eos(eos);
         runtime.initialize_topology(); // real committed identities and ghost exchange, no timestep
         const auto& ids=control.tree->GetActiveBlocks();
         require(ids.size()==2,"RZ root block topology changed");
@@ -187,14 +191,26 @@ int main() {
         }
         std::vector<FluidState> before;
         for(int id:ids)before.push_back(control.pool->GetBlock(id).fluid_state);
+        // A positive cold rigid rotation is a legal provisional cell. J/W
+        // cannot be interpreted as a point momentum when testing its energy.
+        const auto cold=ProblemHelper::detail::InitialRzCellState(0.,1.,-1.,1.,1,
+            eos,config.numerics,[](const PointCoords& p,PrimitiveData& d) {
+                d.rho=1.;d.w=32.*p.r_cy;d.p=.001;d.mass_fractions={1.};
+            });
+        require(arch::state::recover(cold.conserved).status==arch::state::Status::unresolved_energy
+            &&RzThermodynamics::provisional_native_state(cold.conserved,
+                cold.mass_fractions.data(),1,1)==arch::state::Status::valid,
+            "cold native Init incorrectly used point kinetic energy");
         bool rejected=false;
         try {ProblemHelper::detail::PopulateState(control,config,species,
             {arch::dispatch::EosId::Ideal,rz},[](const PointCoords& p,PrimitiveData& d) {
                 d.rho=1.;d.w=(p.r_cy<.5 ? 1. : 32.)*p.r_cy;
-                d.p=p.r_cy<.5 ? 4. : .001;d.mass_fractions={1.};
+                // A real late-block negative pressure must still veto the
+                // entire candidate, after earlier blocks have been sampled.
+                d.p=p.r_cy<.5 ? 4. : -.001;d.mass_fractions={1.};
             });}
         catch(const std::runtime_error&){rejected=true;}
-        require(rejected,"unresolved average reached actual publication");
+        require(rejected,"invalid physical sample reached actual publication");
         const auto bits=[](const auto& a,const auto& b) {
             return a.size()==b.size()&&std::memcmp(a.data(),b.data(),a.size()*sizeof(double))==0;
         };
@@ -226,6 +242,74 @@ int main() {
         std::cout<<std::setprecision(17)<<"PASS RZ REAL POPULATE/ROOT/TOPOLOGY cells=512 ghosts="
             <<ghosts<<" max_error="<<maximum_error<<" angular_relative_error="<<jerror
             <<" failure_atomic=true layout_preflight=true no_timestep=true\n";
+    }
+    {
+        // Representable Xi must survive an unrepresentable intermediate rho*Xi.
+        // Independent V integrals: rho/scale=7/8+r^2/4 has M=1/2 and
+        // I=25/96 on [0,1], so <rho*(1+r^2)>/<rho>=73/48.
+        SpeciesManager species;species.add_species("trace",1.,1.,1.4,2.);
+        species.add_species("bulk",2.,1.,1.4,2.);IdealGas eos(1.4,species);
+        NumericsConfig limits;limits.sml_rho=std::ldexp(1.,-350);
+        const double scale=std::ldexp(1.,-300);
+        for(bool constant:{true,false}) {
+            const auto output=ProblemHelper::detail::InitialRzCellState(0.,1.,-.5,.5,
+                2,eos,limits,[&](const PointCoords& p,PrimitiveData& d) {
+                    const double r=p.r_cy;
+                    d.rho=scale*(7./8.+r*r/4.);d.SetTemperature(3.);
+                    const double trace=constant?std::numeric_limits<double>::denorm_min()
+                        :std::ldexp(1.+r*r,-800);
+                    d.mass_fractions={trace,1.-trace};
+                });
+            if(constant)
+                require(output.mass_fractions[0]==std::numeric_limits<double>::denorm_min(),
+                    "constant subnormal fraction was silently discarded during Init");
+            else {
+                const long double expected=std::ldexp(73.L/48.L,-800);
+                require(std::abs(static_cast<long double>(output.mass_fractions[0])/expected-1.L)<2.e-12L,
+                    "scaled Init fraction differs from independent nonconstant polynomial integral");
+            }
+            require(output.mass_fractions[1]==1.,"trace quadrature normalized the bulk fraction");
+        }
+        std::cout<<"PASS RZ trace Init constant reproduction and independent density-weighted ratio\n";
+    }
+    {
+        // Exact independent counterexample: all sampled rho/e are positive,
+        // but the same-stage quadratic numerical density closure is too small
+        // in inertia. On [0,1], M=95/192, I_true=63/256, I_*=35/144, giving
+        // e0=-5573/1945600. No heating or angular-momentum alteration is legal.
+        constexpr auto rz=GeometrySemantics::AxisymmetricRz;
+        SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
+        config.grid.nblockx1=1;config.grid.nblockx2=1;config.grid.nblockx3=0;
+        config.grid.x1_min=0.;config.grid.x1_max=amr::BLOCK_NX;
+        config.grid.x2_min=-.5;config.grid.x2_max=.5;
+        config.physics.eos_type="ideal";config.physics.gamma=1.4;
+        SpeciesManager species;species.add_species("gas",1.,1.,1.4,2.);
+        IdealGas eos(1.4,species);
+        amr::AMRControl control(4,2);control.tree->InitRootGrid(config,1,rz);
+        ProblemHelper::detail::PopulateState(control,config,species,
+            {arch::dispatch::EosId::Ideal,rz},[](const PointCoords& p,PrimitiveData& d) {
+                const double r=p.r_cy;
+                d.rho=r<=2. ? 1.-r*r*r*r/32. : .5;
+                d.w=r;d.p=(1.4-1.)*d.rho/4096.;d.mass_fractions={1.};
+            });
+        const auto& block=control.pool->GetBlock(control.tree->GetActiveBlocks().front());
+        const int c=block.grid.GetIndex(block.grid.Is(),block.grid.Js(),0);
+        const auto native=block.fluid_state.get(c);
+        require(std::abs(native.rho-95./96.)<2.e-12
+            &&std::abs(native.mom_w-189./256.)<2.e-12,
+            "physical Gauss Init differs from independent quartic integrals");
+        BCHandler boundaries(config,rz);SimulationController ctrl(config,RunState{});
+        arch::driver::DriverRuntime runtime(control,boundaries,config,species,ctrl);
+        runtime.bind_native_rz_eos(eos);
+        bool rejected=false;
+        try {runtime.initialize_topology();}
+        catch(const std::runtime_error&) {rejected=true;}
+        require(rejected,"positive point samples falsely qualified the native numerical closure");
+        const auto after=block.fluid_state.get(c);
+        require(after.rho==native.rho&&after.mom_u==native.mom_u
+            &&after.mom_v==native.mom_v&&after.mom_w==native.mom_w&&after.eng==native.eng,
+            "native closure rejection changed physical interior means");
+        std::cout<<"PASS RZ positive point Init remains provisional; actual post-ghost closure veto\n";
     }
     return 0;
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
