@@ -434,13 +434,8 @@ inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (binding.handles.size() != active_blocks.size())
         throw std::logic_error("RKL exchange handle count mismatch");
-    TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition, state_ptr);
-    amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                            amr_ctrl.tree->GetRootGridDim(),
-                                            state_ptr, binding.handles,
-        semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-            ? amr::CoordinateSeamGeometry::RzAxisymmetric
-            : amr::CoordinateSeamGeometry::ExistingChart,bounds);
+    TimeIntegration::synchronize_domain_boundary(amr_ctrl, boundary_condition,
+        state_ptr, binding.handles, semantics, bounds);
 }
 
 inline FluidState& state_for(amr::Block& block,
@@ -500,7 +495,8 @@ inline void advance_single_rkl(
     amr::Block& block, const EosType& eos, const Grid& grid,
     const SimConfig& config, double dt, double dt_diff_fe,
     BCPolicy& boundary_condition, arch::scheduler::RklMethod method,
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+    amr::AMRControl* native_owner = nullptr)
 {
     validate_geometry(grid,boundary_condition,semantics);
     require_native_stage_binding(semantics,1);
@@ -515,13 +511,45 @@ inline void advance_single_rkl(
     const StageBinding& binding = current_stage_binding();
     if (binding.handles.size() != 1)
         throw std::logic_error("single RKL requires one scheduler handle");
+    // Native single-patch synchronization borrows the actual domain owner.
+    // Validate it after the original native scheduler preflight and before
+    // any slot, ghost, or copy writes. Existing never requires this owner.
+    if (semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        if (!native_owner || !native_owner->pool || !native_owner->tree
+            || native_owner->tree->GetRootGridDim()!=2
+            || native_owner->tree->GetActiveBlocks().size()!=1
+            || &native_owner->pool->GetBlock(native_owner->tree->GetActiveBlocks().front())!=&block
+            || &grid!=&block.grid)
+            throw std::logic_error("Native single RKL requires its actual one-patch AMR owner");
+        const auto actual_handles=native_owner->ActiveHandles();
+        if (actual_handles.size()!=1 || actual_handles.front()!=binding.handles.front())
+            throw std::logic_error("Native single RKL owner/scheduler handle mismatch");
+        const int extent=grid.GetTotalSize();
+        const int species=block.fluid_state.GetNumSpecies();
+        const auto& state=block.fluid_state;
+        if (extent<=0 || species<0 || state.block_total_size_!=extent
+            || state.rho.size()!=static_cast<std::size_t>(extent)
+            || state.mom_u.size()!=state.rho.size() || state.mom_v.size()!=state.rho.size()
+            || state.mom_w.size()!=state.rho.size() || state.eng.size()!=state.rho.size()
+            || state.enuc_rate.size()!=state.rho.size()
+            || state.mass_fractions.size()!=static_cast<std::size_t>(species)*extent)
+            throw std::logic_error("Native single RKL actual state/grid layout mismatch");
+    }
+    /** Synchronize the selected actual slot; only Existing uses the old local fill. */
+    const auto synchronize_single=[&](StateSlot slot) {
+        if (semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+            TimeIntegration::synchronize_domain_boundary(*native_owner, boundary_condition,
+                TimeIntegration::hydro_boundary_state_member(slot), binding.handles, semantics,
+                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
+        else boundary_condition.apply(state_for(block,slot),grid);
+    };
     const auto current = binding.context.ledger.inspect(
         {binding.handles.front(), StateSlot::Current});
     if (!arch::state::side_can_read(current.ghost.residency,
                                     binding.context.side)
         || current.ghost.version != current.interior.version
         || current.ghost_source_version != current.interior.version) {
-        boundary_condition.apply(block.fluid_state, grid);
+        synchronize_single(StateSlot::Current);
         (void)complete_boundary(
             binding.context, binding.handles, StateSlot::Current,
             current.interior.version,
@@ -697,7 +725,7 @@ inline void advance_single_rkl(
     const auto boundary =
             [&](StateSlot output, arch::state::StateVersion,
                 arch::state::CompletionToken token) {
-                boundary_condition.apply(state_for(block, output), grid);
+                synchronize_single(output);
                 return token;
             };
     const auto rotate = [&](arch::state::SlotRotation rotation) {

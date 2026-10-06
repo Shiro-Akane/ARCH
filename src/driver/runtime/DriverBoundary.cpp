@@ -135,13 +135,9 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
     }
     for (int id:amr_ctrl.tree->GetActiveBlocks())
         (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
-    TimeIntegration::apply_domain_boundary(amr_ctrl, bc_handler, member);
-    amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                            config.grid.dim, member, stage_handles,
-                                            geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
-                                                ? amr::CoordinateSeamGeometry::RzAxisymmetric
-                                                : amr::CoordinateSeamGeometry::ExistingChart,
-                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
+    TimeIntegration::synchronize_domain_boundary(amr_ctrl, bc_handler,
+        member, stage_handles, geometry_semantics_,
+        {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
     if (context) {
         (void)arch::scheduler::complete_boundary(*context, stage_handles, slot, version,
             [](StateSlot, arch::state::StateVersion, arch::state::CompletionToken token) { return token; });

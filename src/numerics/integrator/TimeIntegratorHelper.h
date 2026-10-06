@@ -19,7 +19,15 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
+#include <bit>
+#include <concepts>
+#include <cstdint>
+#include <iterator>
+#include <span>
 #include <stdexcept>
+#include <type_traits>
+#include <utility>
 #include <vector>
 #ifdef _OPENMP
 #include <omp.h>
@@ -71,6 +79,173 @@ namespace TimeIntegration
             } catch (...) { failure.capture_current(); }
         }
         failure.rethrow();
+    }
+
+    /** Synchronize one actual Host domain without owning GhostValid publication.
+     * Workflow: Existing apply->exchange is unchanged. Native preflights the
+     * actual domain/layout/chart and BC frame; applies builtin seeds; performs
+     * actual exchange; prepares all immutable per-patch candidates; validates
+     * all frames/candidates; publishes every surface noexcept; exchanges again
+     * and completes axis corners. The existing caller owns final EOS/rollback.
+     * Only small metadata/surface candidates are retained, never a U/X clone.
+     * prepare_native borrows const state and its callback must remain pure.
+     */
+    template<class BCPolicy>
+    inline void synchronize_domain_boundary(amr::AMRControl& control,BCPolicy& boundary,
+        FluidState amr::Block::* member,std::span<const amr::BlockHandle> handles,
+        GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing,
+        arch::state::Bounds bounds={})
+    {
+        if(semantics==GridMetrics::GeometrySemantics::Existing) {
+            apply_domain_boundary(control,boundary,member);
+            control.ghost_exchange.ExecuteExchange(control.pool,control.tree,
+                control.tree->GetRootGridDim(),member,handles,
+                amr::CoordinateSeamGeometry::ExistingChart,bounds);
+            return;
+        }
+        if(semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::invalid_argument("Unknown Host domain boundary chart");
+        using Service=std::remove_cvref_t<BCPolicy>;
+        if constexpr(requires(BCPolicy& service,FluidState& state,const FluidState& input,
+            const Grid& grid,typename Service::NativeCandidate& candidate) {
+            {service.geometry_semantics()} -> std::same_as<GridMetrics::GeometrySemantics>;
+            service.logical_plan(grid);service.snapshot_stage_context();
+            {service.stage_context_matches(service.snapshot_stage_context())} -> std::convertible_to<bool>;
+            service.apply_builtin(state,grid);
+            {service.prepare_native(input,grid)} -> std::same_as<typename Service::NativeCandidate>;
+            service.validate_native_candidate(candidate,input,grid);
+            {service.publish_native_noexcept(std::move(candidate),state)} noexcept -> std::same_as<void>;
+            service.complete_axis(state,grid);
+        }) {
+            if(member!=&amr::Block::fluid_state&&member!=&amr::Block::state_next
+                &&member!=&amr::Block::state_scratch)
+                throw std::invalid_argument("Native boundary selected unknown actual state member");
+            const auto pool=control.pool;const auto tree=control.tree;
+            if(!pool||!tree||tree->GetRootGridDim()!=2||!arch::state::valid_bounds(bounds))
+                throw std::invalid_argument("Native boundary requires actual RZ domain and bounds");
+            const auto& active=tree->GetActiveBlocks();
+            if(active.empty()||handles.size()!=active.size()||boundary.geometry_semantics()!=semantics)
+                throw std::invalid_argument("Native boundary domain/handles/chart mismatch");
+            const std::vector<int> ids(active.begin(),active.end());
+            const std::vector<amr::BlockHandle> saved_handles(handles.begin(),handles.end());
+            const auto bc_frame=boundary.snapshot_stage_context();
+            using Field=std::vector<double> FluidState::*;
+            constexpr std::array<Field,7> fields{&FluidState::rho,&FluidState::mom_u,
+                &FluidState::mom_v,&FluidState::mom_w,&FluidState::eng,
+                &FluidState::enuc_rate,&FluidState::mass_fractions};
+            struct PatchFrame {
+                amr::Block* block;Grid grid;int species,id,level,parent,active_index;
+                bool active;std::uint64_t morton;std::array<std::uint32_t,3> logical;
+                std::array<int,8> children;std::array<amr::Block::FaceNeighbors,6> neighbours;
+                std::array<const double*,7> addresses;std::array<std::size_t,7> sizes;
+            };
+            std::vector<PatchFrame> frames;frames.reserve(ids.size());
+            for(std::size_t n=0;n<ids.size();++n) {
+                auto& block=pool->GetBlock(ids[n]);const auto& state=block.*member;
+                (void)GridMetrics::make_geometry_view(block.grid,semantics);
+                (void)boundary.logical_plan(block.grid);
+                const int extent=block.grid.GetTotalSize(),species=state.GetNumSpecies();
+                if(!amr::is_valid(handles[n])||handles[n].epoch!=handles.front().epoch
+                    ||extent<=0||species<0||state.block_total_size_!=extent
+                    ||state.rho.size()!=static_cast<std::size_t>(extent)
+                    ||state.mom_u.size()!=state.rho.size()||state.mom_v.size()!=state.rho.size()
+                    ||state.mom_w.size()!=state.rho.size()||state.eng.size()!=state.rho.size()
+                    ||state.enuc_rate.size()!=state.rho.size()
+                    ||state.mass_fractions.size()!=static_cast<std::size_t>(species)*extent
+                    ||(n&&species!=frames.front().species))
+                    throw std::invalid_argument("Native boundary actual patch layout/handle mismatch");
+                PatchFrame f{&block,block.grid,species,block.id,block.level,block.parent_id,
+                    block.active_index,block.active,block.morton_code,
+                    {block.logical_x1,block.logical_x2,block.logical_x3},{},{},{},{}};
+                std::copy(std::begin(block.children_id),std::end(block.children_id),f.children.begin());
+                std::copy(std::begin(block.face_neighbors),std::end(block.face_neighbors),f.neighbours.begin());
+                for(std::size_t k=0;k<fields.size();++k) {
+                    const auto& values=state.*fields[k];f.addresses[k]=values.data();f.sizes[k]=values.size();
+                }
+                frames.push_back(std::move(f));
+            }
+            // Metadata preflight never reads unfinished rho or changes U/X.
+            (void)control.ghost_exchange.GetPlans(pool,tree,2,handles,
+                amr::CoordinateSeamGeometry::RzAxisymmetric);
+            std::vector<typename Service::NativeCandidate> candidates(ids.size());
+            /** Compare complete geometry by exact FP64 bits, including signed zero. */
+            const auto same_grid=[](const Grid& a,const Grid& b) {
+                if(a.geometry!=b.geometry||a.dim!=b.dim||a.ng!=b.ng
+                    ||a.nblockx1!=b.nblockx1||a.nblockx2!=b.nblockx2||a.nblockx3!=b.nblockx3
+                    ||a.stride_y!=b.stride_y||a.stride_z!=b.stride_z||a.total_size!=b.total_size
+                    ||a.GetTotalX()!=b.GetTotalX()||a.GetTotalY()!=b.GetTotalY()
+                    ||a.GetTotalZ()!=b.GetTotalZ())return false;
+                for(double Grid::* f:std::array<double Grid::*,9>{&Grid::x1_min,&Grid::x1_max,
+                    &Grid::x2_min,&Grid::x2_max,&Grid::x3_min,&Grid::x3_max,&Grid::dx1,&Grid::dx2,&Grid::dx3})
+                    if(std::bit_cast<std::uint64_t>(a.*f)!=std::bit_cast<std::uint64_t>(b.*f))return false;
+                return std::equal(std::begin(a.amr_coarse_fine_face),std::end(a.amr_coarse_fine_face),
+                    std::begin(b.amr_coarse_fine_face));
+            };
+            /** Recheck borrowed domain/BC/array ownership before candidate scatter. */
+            const auto require_frame=[&] {
+                if(control.pool!=pool||control.tree!=tree||tree->GetActiveBlocks()!=ids
+                    ||handles.size()!=saved_handles.size()
+                    ||!std::equal(handles.begin(),handles.end(),saved_handles.begin())
+                    ||boundary.geometry_semantics()!=semantics||!boundary.stage_context_matches(bc_frame))
+                    throw std::logic_error("Native boundary domain or BC frame changed during preparation");
+                for(std::size_t n=0;n<frames.size();++n) {
+                    const auto& f=frames[n];const auto& block=pool->GetBlock(ids[n]);const auto& state=block.*member;
+                    if(&block!=f.block||!same_grid(block.grid,f.grid)||block.id!=f.id
+                        ||block.level!=f.level||block.parent_id!=f.parent||block.active_index!=f.active_index
+                        ||block.active!=f.active||block.morton_code!=f.morton
+                        ||block.logical_x1!=f.logical[0]||block.logical_x2!=f.logical[1]||block.logical_x3!=f.logical[2]
+                        ||state.GetNumSpecies()!=f.species||state.block_total_size_!=f.grid.GetTotalSize()
+                        ||!std::equal(std::begin(block.children_id),std::end(block.children_id),f.children.begin()))
+                        throw std::logic_error("Native boundary actual patch topology/layout changed");
+                    for(std::size_t face=0;face<f.neighbours.size();++face) {
+                        const auto& a=block.face_neighbors[face];const auto& b=f.neighbours[face];
+                        if(a.count!=b.count||a.level_diff!=b.level_diff
+                            ||!std::equal(std::begin(a.ids),std::end(a.ids),std::begin(b.ids)))
+                            throw std::logic_error("Native boundary actual neighbour topology changed");
+                    }
+                    for(std::size_t k=0;k<fields.size();++k) {
+                        const auto& values=state.*fields[k];
+                        if(values.data()!=f.addresses[k]||values.size()!=f.sizes[k])
+                            throw std::logic_error("Native boundary actual field allocation changed");
+                    }
+                }
+            };
+            /** Join all patch failures before advancing the synchronization phase. */
+            const auto joined=[&](const auto& operation) {
+                arch::state::HostFailure failure;
+#pragma omp parallel for schedule(dynamic,1)
+                for(std::size_t n=0;n<frames.size();++n) {
+                    try {operation(n);}catch(...) {failure.capture_current();}
+                }
+                failure.rethrow();
+            };
+            require_frame();
+            joined([&](std::size_t n) {auto& b=*frames[n].block;boundary.apply_builtin(b.*member,b.grid);});
+            require_frame();
+            control.ghost_exchange.ExecuteExchange(pool,tree,2,member,handles,
+                amr::CoordinateSeamGeometry::RzAxisymmetric,bounds);
+            require_frame();
+            joined([&](std::size_t n) {
+                const auto& b=*frames[n].block;
+                candidates[n]=boundary.prepare_native(static_cast<const FluidState&>(b.*member),b.grid);
+            });
+            require_frame();
+            joined([&](std::size_t n) {
+                const auto& b=*frames[n].block;
+                // Config and overlay-frame authenticity remain the service's
+                // existing frozen candidate contract, not a new config owner.
+                boundary.validate_native_candidate(candidates[n],b.*member,b.grid);
+            });
+            require_frame();
+            // Every candidate's fallible work is finished before first scatter.
+            for(std::size_t n=0;n<frames.size();++n)
+                boundary.publish_native_noexcept(std::move(candidates[n]),(*frames[n].block).*member);
+            control.ghost_exchange.ExecuteExchange(pool,tree,2,member,handles,
+                amr::CoordinateSeamGeometry::RzAxisymmetric,bounds);
+            require_frame();
+            joined([&](std::size_t n) {auto& b=*frames[n].block;boundary.complete_axis(b.*member,b.grid);});
+            require_frame();
+        } else throw std::logic_error("Native RZ boundary requires the phased candidate service");
     }
 
     /**

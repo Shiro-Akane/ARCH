@@ -5,13 +5,16 @@
  * Workflow:
  * 1. Apply the unchanged logical built-in boundary plan.
  * 2. Identify only the physical faces owned by the current AMR leaf.
- * 3. Evaluate immutable snapshots in x1, x2, x3 order; later axes own corners.
- *    The handler passes its immutable chart to the shared face/ghost mapping;
- *    native RZ coordinates are lengths (r,z), never legacy 2D polar angles.
- * 4. Store EOS-converted ghosts and face-only diffusion transport controls.
+ * 3. Existing callbacks retain their x1/x2/x3 ordering. Native RZ prepares
+ *    true point-EOS/V/W surface candidates over immutable seeds and completed
+ *    x1 prefixes, then authenticates all frames before any callback scatter.
+ * 4. Scatter provisional native ghosts and separate face-center transport
+ *    controls; complete only shared axis parity after final domain exchange.
+ *    Runtime actual completed-ghost EOS precedes scheduler GhostValid.
  *
- * Interior donors are clamped to active cells. Coordinate singularities remain
- * owned by the existing seam plan and never receive arbitrary user writes.
+ * Native source points remain inside their actual support. Negative axis
+ * corners are signed copies, and padding is never a physical halo. The domain
+ * and outer macro/regrid owners handle genuine exchange and rollback.
  */
 #include <algorithm>
 #include <bit>
@@ -34,6 +37,24 @@ std::array<std::string_view, 6> face_names(const SimConfig& c) {
     return {c.grid.x1l_boundary_type, c.grid.x1r_boundary_type,
         c.grid.x2l_boundary_type, c.grid.x2r_boundary_type,
         c.grid.x3l_boundary_type, c.grid.x3r_boundary_type};
+}
+/** Freeze storage addresses/extents without copying the complete mesh. */
+std::array<const double*,7> native_storage_pointers(const FluidState& state) {
+    return {state.rho.data(),state.mom_u.data(),state.mom_v.data(),state.mom_w.data(),
+        state.eng.data(),state.enuc_rate.data(),state.mass_fractions.data()};
+}
+/** Track all borrowed conserved/diagnostic/composition buffer extents. */
+std::array<std::size_t,7> native_storage_sizes(const FluidState& state) {
+    return {state.rho.size(),state.mom_u.size(),state.mom_v.size(),state.mom_w.size(),
+        state.eng.size(),state.enuc_rate.size(),state.mass_fractions.size()};
+}
+/** Bit-exact geometry frame, avoiding struct-padding comparisons. */
+std::array<std::uint64_t,9> native_grid_identity(const Grid& grid) {
+    return {std::bit_cast<std::uint64_t>(grid.x1_min),std::bit_cast<std::uint64_t>(grid.x1_max),
+        std::bit_cast<std::uint64_t>(grid.x2_min),std::bit_cast<std::uint64_t>(grid.x2_max),
+        std::bit_cast<std::uint64_t>(grid.x3_min),std::bit_cast<std::uint64_t>(grid.x3_max),
+        std::bit_cast<std::uint64_t>(grid.dx1),std::bit_cast<std::uint64_t>(grid.dx2),
+        std::bit_cast<std::uint64_t>(grid.dx3)};
 }
 /** Physical Neumann denotes the existing zero-normal-gradient hydro boundary. */
 arch::boundary::BoundaryType logical_type(std::string_view token) {
@@ -109,8 +130,11 @@ std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
     using namespace arch::boundary;
     std::vector<Ghost> result;
     const int lower[3]{grid.Is(), grid.Js(), grid.Ks()}, upper[3]{grid.Ie(), grid.Je(), grid.Ke()};
-    const int total[3]{grid.stride_y, grid.dim >= 2 ? grid.stride_z / grid.stride_y : 1,
-        grid.dim == 3 ? grid.total_size / grid.stride_z : 1};
+    const bool native_rz=semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    // Native state callbacks own real logical cells; PAD_NX is storage only.
+    const int total[3]{native_rz?grid.GetTotalX():grid.stride_y,
+        native_rz?grid.GetTotalY():(grid.dim >= 2 ? grid.stride_z / grid.stride_y : 1),
+        native_rz?grid.GetTotalZ():(grid.dim == 3 ? grid.total_size / grid.stride_z : 1)};
     const double block_lower[3]{grid.x1_min, grid.x2_min, grid.x3_min};
     const double block_upper[3]{grid.x1_max, grid.x2_max, grid.x3_max};
     const double domain_lower[3]{config_->grid.x1_min, config_->grid.x2_min, config_->grid.x3_min};
@@ -137,8 +161,23 @@ std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
                 donor[b] = std::clamp(cb, lower[b], upper[b] - 1);
                 donor[axis] = side ? upper[axis] - depth : lower[axis] + depth - 1;
                 ghost[axis] = side ? upper[axis] + depth - 1 : lower[axis] - depth;
+                if(native_rz) {
+                    const double radial_lower=grid.GetFacePosL(ghost[0]);
+                    if(radial_lower<0.) {
+                        // Physical EOS is never evaluated at a negative radius.
+                        // The final axis owner mirrors completed positive axial ghosts.
+                        if(axis==1&&grid.x1_min==0.)continue;
+                        throw std::invalid_argument("RZ user physical halo must remain at nonnegative radius");
+                    }
+                    // Axial corners borrow the real positive radial halo, including
+                    // preceding x1 candidates, rather than extrapolating first/last
+                    // active-cell closure outside its own physical support.
+                    if(axis==1)donor[0]=ghost[0];
+                }
                 std::array<double, 3> native{grid.GetCellCenterX(donor[0]),
                     grid.GetCellCenterY(donor[1]), grid.GetCellCenterZ(donor[2])};
+                if(native_rz)native={grid.GetCellCenterX(ghost[0]),
+                    grid.GetCellCenterY(ghost[1]),grid.GetCellCenterZ(ghost[2])};
                 native[axis] = edge;
                 const std::array<double, 3> ghost_native{grid.GetCellCenterX(ghost[0]),
                     grid.GetCellCenterY(ghost[1]), grid.GetCellCenterZ(ghost[2])};
@@ -147,7 +186,8 @@ std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
                 result.push_back({grid.GetIndex(donor[0], donor[1], donor[2]),
                     grid.GetIndex(ghost[0], ghost[1], ghost[2]), face, plane, depth == 1 && active_tangent,
                     MakeBoundaryCoordinates(grid, native, static_cast<BoundaryAxis>(axis),
-                        static_cast<BoundarySide>(side), time_, depth, purpose_, ghost_native, semantics_)});
+                        static_cast<BoundarySide>(side), time_, depth, purpose_, ghost_native, semantics_),
+                    {donor[0],donor[1]},{ghost[0],ghost[1]}});
             }
     }
     return result;
@@ -181,6 +221,12 @@ const arch::boundary::BoundaryPlan& BCHandler::logical_plan(const Grid& grid) co
         (void)GridMetrics::make_geometry_view(grid, semantics_);
         if (!std::isfinite(grid.x1_min) || grid.x1_min < 0.)
             throw std::invalid_argument("Invalid RZ physical boundary radius");
+        const double scale=std::max({std::abs(grid.x1_min),std::abs(config_->grid.x1_min),std::abs(grid.dx1)});
+        if(config_->grid.x1_min>0.
+            &&std::abs(grid.x1_min-config_->grid.x1_min)
+                <=32.*std::numeric_limits<double>::epsilon()*scale
+            &&grid.GetFacePosL(0)<0.)
+            throw std::invalid_argument("RZ off-axis physical halo must remain at nonnegative radius");
         if (grid.x1_min == 0.) {
             if (!axis_plan_) throw std::invalid_argument("RZ axis patch disagrees with prepared source domain");
             return *axis_plan_;
@@ -189,9 +235,139 @@ const arch::boundary::BoundaryPlan& BCHandler::logical_plan(const Grid& grid) co
     return logical_plan_;
 }
 
+/** Apply only the selected original logical seed, never a callback/EOS gate. */
+void BCHandler::apply_builtin(FluidState& state,const Grid& grid) const {
+    const auto& selected=logical_plan(grid);
+    arch::boundary::host::execute(&selected==&logical_plan_?compiled_:*axis_compiled_,state);
+}
+
+/** Capture one actual immutable storage/geometry/BC frame for surface work. */
+void BCHandler::capture_native_frame(NativeCandidate& candidate,
+    const FluidState& state,const Grid& grid) const {
+    if(semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("Native boundary candidate requires the explicit RZ chart");
+    (void)logical_plan(grid);
+    (void)GridMetrics::make_geometry_view(grid,semantics_);
+    arch::boundary::host::validate_state(compiled_,state);
+    candidate.owner_=this;candidate.binding_revision_=binding_revision_;
+    candidate.state_=&state;candidate.grid_=&grid;
+    candidate.layout_=arch::boundary::host::make_layout(grid);
+    candidate.pointers_=native_storage_pointers(state);candidate.sizes_=native_storage_sizes(state);
+    candidate.geometry_=native_grid_identity(grid);candidate.species_=state.GetNumSpecies();
+    candidate.revision_=stage_revision_;candidate.time_bits_=std::bit_cast<std::uint64_t>(time_);
+    candidate.purpose_=purpose_;
+}
+
+/** Prepare native surface-only candidates without changing any solver array.
+ * Completed x1 entries form an immutable prefix for x2 corner point readers.
+ * lookup stores offsets only; it never clones the complete native state.
+ */
+BCHandler::NativeCandidate BCHandler::prepare_native(const FluidState& state,
+    const Grid& grid) const {
+    NativeCandidate candidate;capture_native_frame(candidate,state,grid);
+    if(!callback_)return candidate;
+    if(!native_evaluate_)throw std::logic_error("User native RZ boundary EOS has not been bound");
+    const auto requests=ghosts(grid);
+    candidate.entries_.reserve(requests.size());
+    candidate.storage_=make_diffusion_storage(grid,state.GetNumSpecies());
+    candidate.publish_controls_=true;
+    std::vector<int> lookup(static_cast<std::size_t>(grid.GetTotalSize()),-1);
+    const auto checked_offset=[&](int index) {
+        if(index<0||index>=grid.GetTotalSize()
+            ||index%grid.stride_y>=grid.GetTotalX())
+            throw std::out_of_range("Native boundary reader requires a real logical cell");
+        return lookup[static_cast<std::size_t>(index)];
+    };
+    const NativeConservedReader read=[&](int index) {
+        const int offset=checked_offset(index);
+        return offset<0?state.get(index):candidate.entries_[static_cast<std::size_t>(offset)].conserved;
+    };
+    const NativeFractionReader fraction=[&](int species,int index) {
+        if(species<0||species>=candidate.species_)
+            throw std::out_of_range("Native boundary reader requires a registered species");
+        const int offset=checked_offset(index);
+        return offset<0?state.X(species,index)
+            :candidate.entries_[static_cast<std::size_t>(offset)].fractions[static_cast<std::size_t>(species)];
+    };
+    int readable_axis=-1;
+    std::size_t readable_prefix=0;
+    for(const auto& ghost:requests) {
+        const int axis=ghost.face/2;
+        if(axis!=readable_axis) {
+            if(axis<readable_axis)throw std::logic_error("Native boundary request axes are not ordered");
+            // Finish one complete axis before exposing its immutable overlay.
+            // Newly prepared values in this axis must never alter its siblings.
+            readable_axis=axis;readable_prefix=candidate.entries_.size();
+            for(std::size_t n=0;n<readable_prefix;++n)
+                lookup[static_cast<std::size_t>(candidate.entries_[n].destination)]=static_cast<int>(n);
+        }
+        const arch::boundary::NativeRzBoundaryRequest request{
+            ghost.source_logical,ghost.destination_logical,ghost.coordinates};
+        const auto value=native_evaluate_(grid,request,read,fraction);
+        if(value.mass_fractions.size()!=static_cast<std::size_t>(candidate.species_))
+            throw std::logic_error("Native boundary candidate has an incomplete composition");
+        const int source_offset=checked_offset(ghost.source);
+        const double enuc=source_offset<0?state.enuc_rate[ghost.source]
+            :candidate.entries_[static_cast<std::size_t>(source_offset)].enuc;
+        candidate.entries_.push_back({ghost.destination,value.conserved,value.mass_fractions,enuc});
+        store_conditions(*candidate.storage_,ghost,value.conditions,candidate.species_);
+    }
+    validate_native_candidate(candidate,state,grid);
+    return candidate;
+}
+
+/** Authenticate the borrowed frame before the domain's first callback scatter. */
+void BCHandler::validate_native_candidate(const NativeCandidate& candidate,
+    const FluidState& state,const Grid& grid) const {
+    if(semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||candidate.owner_!=this||candidate.binding_revision_!=binding_revision_
+        ||candidate.state_!=&state||candidate.grid_!=&grid
+        ||candidate.revision_!=stage_revision_
+        ||candidate.time_bits_!=std::bit_cast<std::uint64_t>(time_)
+        ||candidate.purpose_!=purpose_||candidate.species_!=state.GetNumSpecies()
+        ||candidate.layout_!=arch::boundary::host::make_layout(grid)
+        ||candidate.pointers_!=native_storage_pointers(state)
+        ||candidate.sizes_!=native_storage_sizes(state)
+        ||candidate.geometry_!=native_grid_identity(grid))
+        throw std::logic_error("Native boundary candidate storage/geometry/stage frame drifted");
+    (void)logical_plan(grid);
+    arch::boundary::host::validate_state(compiled_,state);
+    if(candidate.publish_controls_&&!candidate.storage_)
+        throw std::logic_error("Native boundary candidate lost its face conditions");
+    for(const auto& entry:candidate.entries_)
+        if(entry.destination<0||entry.destination>=grid.GetTotalSize()
+            ||entry.destination%grid.stride_y>=grid.GetTotalX()
+            ||entry.fractions.size()!=static_cast<std::size_t>(candidate.species_))
+            throw std::logic_error("Native boundary candidate lost its logical surface extent");
+}
+
+/** Allocation-free numerical scatter; actual EOS/GhostValid remain external. */
+void BCHandler::publish_native_noexcept(NativeCandidate&& candidate,FluidState& state) const noexcept {
+    for(const auto& entry:candidate.entries_) {
+        state.set(entry.destination,entry.conserved);
+        for(int species=0;species<candidate.species_;++species)
+            state.X(species,entry.destination)=entry.fractions[static_cast<std::size_t>(species)];
+        state.enuc_rate[entry.destination]=entry.enuc;
+    }
+    if(candidate.publish_controls_)state.diffusion_boundary=std::move(candidate.storage_);
+}
+
+/** Reuse sole logical RzAxis parity, including completed axial ghost rows. */
+void BCHandler::complete_axis(FluidState& state,const Grid& grid) const {
+    const auto& selected=logical_plan(grid);
+    if(semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz&&grid.x1_min==0.)
+        arch::boundary::host::execute_rz_axis(selected,*axis_compiled_,state);
+}
+
 void BCHandler::apply(FluidState& state, const Grid& grid) const {
-    const auto& selected = logical_plan(grid);
-    arch::boundary::host::execute(&selected == &logical_plan_ ? compiled_ : *axis_compiled_, state);
+    apply_builtin(state,grid);
+    if(semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        auto candidate=prepare_native(state,grid);
+        validate_native_candidate(candidate,state,grid);
+        publish_native_noexcept(std::move(candidate),state);
+        complete_axis(state,grid);
+        return;
+    }
     if (!callback_) return;
     if (!evaluate_) throw std::logic_error("User boundary EOS has not been bound");
     auto storage = make_diffusion_storage(grid, state.GetNumSpecies());
@@ -224,6 +400,8 @@ void BCHandler::apply(FluidState& state, const Grid& grid) const {
 
 void BCHandler::apply_device(arch::backend::ComputeBackend& backend, arch::backend::BackendStateAccess access,
     const Grid& grid) const {
+    if(semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("Native RZ device boundary remains unqualified");
     if (!callback_) return;
     if (!evaluate_) throw std::logic_error("User boundary EOS has not been bound");
     const auto list = ghosts(grid);

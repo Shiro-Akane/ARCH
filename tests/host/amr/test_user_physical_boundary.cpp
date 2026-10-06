@@ -8,10 +8,12 @@
  * rejected requests and channel misuse. The manager links this file into the
  * existing boundary_plan target; it defines test_user_physical_boundary() and
  * deliberately has no main.
- * Explicit native RZ cases below qualify coordinate mapping and warm no-swirl
- * callback routing only; they do not qualify mixed V/W callback state recovery.
+ * Explicit native RZ cases qualify coordinates, actual EOS point-law V/W
+ * boundary construction and candidate publication identity. They do not
+ * substitute for final whole-domain Runtime ghost/EOS or evolution gates.
  */
 #include "amr/exchange/HostBoundaryPlan.h"
+#include "physics/boundary/NativeRzBoundary.h"
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "physics/boundary/UserBoundary.h"
@@ -1139,9 +1141,10 @@ void test_handler_domain_and_stage_time()
 }
 
 // Real BCHandler routing for a uniform warm state with zero velocity. For this
-// restricted witness there is no mixed angular kinetic energy, so the current
-// callback state conversion is sufficient to inspect coordinates honestly.
-// It is not a qualification of arbitrary rotating native ghost moments.
+// restricted witness has no mixed angular kinetic energy. The actual handler
+// now observes center plus eight positive-r points for every full-state ghost;
+// axis-negative corners are signed copies after positive axial construction.
+// This remains a coordinate/temperature witness, not rotating evolution.
 void test_handler_native_rz_coordinates()
 {
     constexpr auto rz = GridMetrics::GeometrySemantics::AxisymmetricRz;
@@ -1205,12 +1208,25 @@ void test_handler_native_rz_coordinates()
                 : (side == 0 ? config.grid.x2_min : config.grid.x2_max);
             close(face_coordinate, domain_face, 1.e-15, "native RZ handler owns the actual domain face");
             const double spacing = axis == 0 ? grid.dx1 : grid.dx2;
-            const double distance = (context.ghost_depth - .5) * spacing;
-            close(ghost_coordinate - face_coordinate, sign * distance, 1.e-14,
-                "native RZ handler ghost layer uses physical r/z spacing");
+            const double distance = std::abs(ghost_coordinate - face_coordinate);
             close(context.physical_distance, distance, 1.e-14,
-                "native RZ handler physical distance must be an axial/radial length");
+                "native RZ sample distance follows its actual ghost/face coordinates");
+            const double outward = sign * (ghost_coordinate - face_coordinate);
+            require(outward > (context.ghost_depth - 1) * spacing &&
+                outward < context.ghost_depth * spacing,
+                "native RZ center/Gauss sample left its requested actual ghost layer");
+            const int target = side == 0
+                ? (axis == 0 ? grid.Is() : grid.Js()) - context.ghost_depth
+                : (axis == 0 ? grid.Ie() : grid.Je()) + context.ghost_depth - 1;
+            const double cell_lower = axis == 0 ? grid.GetFacePosL(target)
+                : grid.x2_min + (target - grid.ng) * grid.dx2;
+            const double cell_upper = axis == 0 ? grid.GetFacePosR(target)
+                : grid.x2_min + (target - grid.ng + 1) * grid.dx2;
+            require(ghost_coordinate > cell_lower && ghost_coordinate < cell_upper,
+                "native RZ callback did not sample its actual target cell");
             if (axis == 1 && context.ghost_point.x < 0.0) negative_tangent_ghost = true;
+            require(context.ghost_point.x >= 0.0,
+                "physical callback must not evaluate negative-r axis corners");
             close(context.interior.temperature, 1000.0, 1.e-14,
                 "native RZ warm callback actual EOS temperature");
             close(context.interior.u, 0.0, 1.e-15, "native RZ warm callback radial velocity");
@@ -1240,9 +1256,29 @@ void test_handler_native_rz_coordinates()
         require(calls[1] > 0 && calls[2] > 0 && calls[3] > 0,
             "native RZ handler did not route radial and axial user faces");
         if (radial_lower == 0.0)
-            require(calls[0] == 0 && negative_tangent_ghost,
-                "native RZ axis regularity owner or axial negative tangent ghosts lost");
+            require(calls[0] == 0 && !negative_tangent_ghost,
+                "native RZ axis must use signed copies rather than negative-r callbacks");
         else require(calls[0] > 0, "native RZ off-axis lower radial user face was skipped");
+        for (const int count : calls)
+            require(count % 9 == 0, "full native ghost must visit center and all eight actual samples");
+        if (radial_lower == 0.0) {
+            for (int j = 0; j < grid.GetTotalY(); ++j)
+            for (int i = 0; i < grid.Is(); ++i) {
+                const int target = grid.GetIndex(i,j,0);
+                const int donor = grid.GetIndex(2*grid.Is()-1-i,j,0);
+                const auto actual = state.get(target), positive = state.get(donor);
+                const std::array<double,5> fields{actual.rho,actual.mom_u,actual.mom_v,actual.mom_w,actual.eng};
+                const std::array<double,5> expected{positive.rho,-positive.mom_u,positive.mom_v,-positive.mom_w,positive.eng};
+                for (std::size_t field = 0; field < fields.size(); ++field)
+                    require(std::bit_cast<std::uint64_t>(fields[field]) ==
+                        std::bit_cast<std::uint64_t>(expected[field]),
+                        "warm native axis/corner must copy completed positive-r fields with original parity");
+                for (int s = 0; s < fixture.species.count(); ++s)
+                    require(std::bit_cast<std::uint64_t>(state.X(s,target)) ==
+                        std::bit_cast<std::uint64_t>(state.X(s,donor)),
+                        "warm native axis/corner changed copied composition");
+            }
+        }
         const int total_calls = calls[0] + calls[1] + calls[2] + calls[3];
         auto wrong_chart = grid;
         wrong_chart.geometry = "cartesian";
@@ -1250,6 +1286,309 @@ void test_handler_native_rz_coordinates()
             "native RZ handler accepted a mismatched actual grid chart");
         require(calls[0] + calls[1] + calls[2] + calls[3] == total_calls,
             "mismatched native RZ chart invoked the user callback");
+    }
+}
+
+// Exact physical fixture: one material, Cv=2, rho=Omega=1, e0=1/64.
+// Native U is generated from independent radial antiderivatives, never from
+// the production closure/builder; the actual IdealGas performs every callback
+// conversion. These boundary fixtures do not certify a complete Runtime step.
+SpeciesManager native_boundary_material()
+{
+    SpeciesManager material;
+    material.add_species("native",1.,1.,1.4,2.);
+    return material;
+}
+
+FluidVector native_rotating_reference(double lower,double upper)
+{
+    const long double a=lower,b=upper;
+    const long double v=(b*b-a*a)/2.;
+    const long double w=(b*b*b-a*a*a)/3.;
+    const long double r2=(std::pow(b,4)-std::pow(a,4))/(4.*v);
+    const long double rw=(std::pow(b,4)-std::pow(a,4))/(4.*w);
+    constexpr long double radial=1.L/16.L,axial=-1.L/32.L,internal=1.L/64.L;
+    return {1.,double(a<0.?-radial:radial),double(axial),double(rw),
+        double(internal+.5L*(radial*radial+axial*axial+r2))};
+}
+
+struct NativeBoundaryFixture {
+    SpeciesManager species=native_boundary_material();
+    IdealGas eos{1.4,species};
+    SimConfig config{};
+    Grid grid;
+    explicit NativeBoundaryFixture(double radial_lower=0.)
+        :grid(4,radial_lower,radial_lower+16.,-2.,6.,0.,2.)
+    {
+        config.grid.dim=2;config.grid.geometry="cylindrical";
+        config.grid.x1_min=radial_lower;config.grid.x1_max=radial_lower+16.;
+        config.grid.x2_min=-2.;config.grid.x2_max=6.;
+        config.grid.x3_min=0.;config.grid.x3_max=2.;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="user";
+        config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="user";
+        config.physics.diffusion.use_diffusion=true;
+        config.physics.diffusion.use_thermal_diffusion=true;
+        config.physics.diffusion.use_viscous_diffusion=true;
+        config.physics.diffusion.use_species_diffusion=true;
+        grid.dim=2;grid.geometry="cylindrical";
+        grid.InitializeTopology(GridMetrics::GeometrySemantics::AxisymmetricRz);
+    }
+    FluidState cold_state() const
+    {
+        FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
+        for(int index=0;index<grid.GetTotalSize();++index) {
+            // Deliberately nonphysical padding is a storage sentinel, not a
+            // valid cell or an available density/composition donor.
+            state.set(index,{987.25,123.5,-456.75,321.125,654.625});
+            state.X(0,index)=.125;state.enuc_rate[index]=42.+index/8.;
+        }
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const int index=grid.GetIndex(i,j,0);
+            state.set(index,native_rotating_reference(grid.GetFacePosL(i),grid.GetFacePosR(i)));
+            state.X(0,index)=1.;
+        }
+        return state;
+    }
+};
+
+// Fields and composition are compared by bits when the contract is storage
+// identity. Scientific state expectations below use independent integrals.
+using NativeBoundaryBits=std::array<std::uint64_t,7>;
+NativeBoundaryBits native_boundary_bits(const FluidState& state,int index)
+{
+    const auto u=state.get(index);
+    return {std::bit_cast<std::uint64_t>(u.rho),std::bit_cast<std::uint64_t>(u.mom_u),
+        std::bit_cast<std::uint64_t>(u.mom_v),std::bit_cast<std::uint64_t>(u.mom_w),
+        std::bit_cast<std::uint64_t>(u.eng),std::bit_cast<std::uint64_t>(state.enuc_rate[index]),
+        std::bit_cast<std::uint64_t>(state.X(0,index))};
+}
+std::vector<NativeBoundaryBits> native_boundary_snapshot(const FluidState& state,const Grid& grid)
+{
+    std::vector<NativeBoundaryBits> bits(static_cast<std::size_t>(grid.GetTotalSize()));
+    for(int index=0;index<grid.GetTotalSize();++index)bits[index]=native_boundary_bits(state,index);
+    return bits;
+}
+void require_native_boundary_unchanged(const FluidState& state,const Grid& grid,
+    const std::vector<NativeBoundaryBits>& before,std::string_view message)
+{
+    require(before.size()==static_cast<std::size_t>(grid.GetTotalSize()),"native snapshot layout mismatch");
+    for(int index=0;index<grid.GetTotalSize();++index)
+        require(native_boundary_bits(state,index)==before[index],message);
+}
+
+PhysicalBoundaryData native_rotating_data(const PhysicalBoundaryContext& context)
+{
+    require(context.ghost_point.r_cy>=0.,"cold physical callback entered negative radius");
+    PrimitiveData point;
+    point.rho=1.;point.u=1./16.;point.v=-1./32.;point.w=context.ghost_point.r_cy;
+    point.SetTemperature(1./128.);point.mass_fractions={1.};
+    PhysicalBoundaryData data;data.hydro=point;return data;
+}
+
+void test_handler_native_rz_cold_rotation_and_candidate_identity()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    NativeBoundaryFixture fixture;
+    auto& grid=fixture.grid;
+    std::array<int,4> calls{};
+    ResolvedUserBoundaries callbacks;
+    callbacks.physical=[&](const PhysicalBoundaryContext& context) {
+        ++calls[2*static_cast<int>(context.axis)+static_cast<int>(context.side)];
+        require(context.time==.375&&context.purpose==BoundaryPurpose::Hydro,
+            "cold native callback lost real stage metadata");
+        return native_rotating_data(context);
+    };
+    ScopedUserBoundarySelection selected(callbacks,fixture.config,fixture.species);
+    BCHandler handler(fixture.config,rz);handler.bind(fixture.eos,fixture.species);
+    handler.configure_stage(.375,BoundaryPurpose::Hydro);
+    auto state=fixture.cold_state();
+    const auto original=native_boundary_snapshot(state,grid);
+    require(arch::state::recover(state.get(grid.GetIndex(grid.Is(),grid.Js(),0))).status
+        ==arch::state::Status::unresolved_energy,
+        "cold native witness must distinguish mixed means from a raw point state");
+    handler.apply(state,grid);
+    require(calls[0]==0&&calls[1]>0&&calls[2]>0&&calls[3]>0,
+        "cold native handler lost a real face or invoked axis callback");
+    for(const int count:calls)require(count%9==0,"cold full ghost omitted center/eight samples");
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const int index=grid.GetIndex(i,j,0);
+        const auto expected=native_rotating_reference(grid.GetFacePosL(i),grid.GetFacePosR(i));
+        const auto actual=state.get(index);
+        const std::array<double,5> got{actual.rho,actual.mom_u,actual.mom_v,actual.mom_w,actual.eng};
+        const std::array<double,5> reference{expected.rho,expected.mom_u,expected.mom_v,expected.mom_w,expected.eng};
+        for(std::size_t field=0;field<got.size();++field)
+            require(std::isfinite(got[field])&&std::abs(got[field]-reference[field])<2.e-12,
+                "actual cold BCHandler differs from independent native V/W polynomial integrals");
+        require(state.X(0,index)==1.,"cold native density-weighted composition changed");
+        if(i<grid.Is()) {
+            const auto positive=state.get(grid.GetIndex(2*grid.Is()-1-i,j,0));
+            require(std::bit_cast<std::uint64_t>(actual.mom_u)==std::bit_cast<std::uint64_t>(-positive.mom_u)
+                    &&std::bit_cast<std::uint64_t>(actual.mom_w)==std::bit_cast<std::uint64_t>(-positive.mom_w)
+                    &&std::bit_cast<std::uint64_t>(actual.eng)==std::bit_cast<std::uint64_t>(positive.eng),
+                "cold native axis/axial corners lost original radial/swirl parity");
+        }
+    }
+    for(int index=0;index<grid.GetTotalSize();++index)
+        if(index%grid.stride_y>=grid.GetTotalX())
+            require(native_boundary_bits(state,index)==original[index],"native handler wrote or read padded storage");
+
+    // These identity tests prepare from the actual builtin seed. They assert
+    // no callback scatter, not rollback of that earlier builtin fill.
+    auto seed=fixture.cold_state();handler.apply_builtin(seed,grid);
+    const auto seeded=native_boundary_snapshot(seed,grid);
+    const auto storage=seed.diffusion_boundary;
+    auto candidate=handler.prepare_native(seed,grid);
+    require_native_boundary_unchanged(seed,grid,seeded,"native candidate preparation wrote solver fields");
+    require(seed.diffusion_boundary==storage,"native candidate preparation published controls");
+    BCHandler other(fixture.config,rz);other.bind(fixture.eos,fixture.species);
+    other.configure_stage(.375,BoundaryPurpose::Hydro);
+    require_rejected([&] {other.validate_native_candidate(candidate,seed,grid);},
+        "a different boundary owner accepted another handler's candidate");
+    handler.bind(fixture.eos,fixture.species);
+    require_rejected([&] {handler.validate_native_candidate(candidate,seed,grid);},
+        "EOS rebinding accepted a candidate from an obsolete binding lifetime");
+    require_native_boundary_unchanged(seed,grid,seeded,"candidate identity failure scattered fields");
+    require(seed.diffusion_boundary==storage,"candidate identity failure published controls");
+
+    int late_calls=0;
+    ResolvedUserBoundaries late_callbacks;
+    late_callbacks.physical=[&](const PhysicalBoundaryContext& context) {
+        auto data=native_rotating_data(context);
+        if(++late_calls==38)data.hydro->SetTemperature(std::numeric_limits<double>::quiet_NaN());
+        return data;
+    };
+    ScopedUserBoundarySelection late_selected(late_callbacks,fixture.config,fixture.species);
+    BCHandler late(fixture.config,rz);late.bind(fixture.eos,fixture.species);
+    late.configure_stage(.375,BoundaryPurpose::Hydro);
+    auto failed_seed=fixture.cold_state();late.apply_builtin(failed_seed,grid);
+    const auto failed_before=native_boundary_snapshot(failed_seed,grid);
+    const auto failed_storage=failed_seed.diffusion_boundary;
+    require_rejected([&] {(void)late.prepare_native(failed_seed,grid);},
+        "late invalid actual Gauss callback should reject the candidate");
+    require(late_calls==38,"late failure did not occur after four completed ghost candidates and the next center");
+    require_native_boundary_unchanged(failed_seed,grid,failed_before,
+        "late callback failure scattered a partial candidate surface");
+    require(failed_seed.diffusion_boundary==failed_storage,"late callback failure published partial face controls");
+}
+
+void test_native_rz_builder_inheritance_and_cold_target_rejection()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    NativeBoundaryFixture fixture;
+    const auto& grid=fixture.grid;
+    auto state=fixture.cold_state();
+    const int i=grid.Is()+1,j=grid.Js()-1;
+    const int target=grid.GetIndex(i,j,0);
+    // Deliberately copy the independent [0,1] native means into [1,2].
+    // Target rotation K=49/180; E_rot+thermal=17/64 gives e=-19/2880.
+    const auto copied=native_rotating_reference(0.,1.);
+    state.set(target,copied);
+    const NativeRzBoundaryRequest request{{i,grid.Js()},{i,j},MakeBoundaryCoordinates(grid,
+        {grid.GetCellCenterX(i),grid.x2_min,0.},BoundaryAxis::X2,BoundarySide::Lower,.375,1,
+        BoundaryPurpose::Diffusion,{grid.GetCellCenterX(i),grid.GetCellCenterY(j),0.},rz)};
+    const auto read=[&](int index) {return state.get(index);};
+    const auto fraction=[&](int s,int index) {return state.X(s,index);};
+    const auto frozen=native_boundary_snapshot(state,grid);
+    for(bool flux:{false,true}) {
+        int calls=0;
+        const auto callback=[&](const PhysicalBoundaryContext& context) {
+            ++calls;
+            close(context.interior.temperature,1./128.,1.e-14,"cold inherited request must use true source point EOS");
+            PhysicalBoundaryData data;
+            if(flux)data.temperature={ScalarBoundaryKind::OutwardFlux,17.};
+            return data;
+        };
+        const auto result=EvaluateNativeRzBoundaryCell(grid,request,fixture.config,fixture.species,
+            fixture.eos,callback,read,fraction);
+        const std::array<double,5> got{result.conserved.rho,result.conserved.mom_u,result.conserved.mom_v,
+            result.conserved.mom_w,result.conserved.eng};
+        const std::array<double,5> expected{copied.rho,copied.mom_u,copied.mom_v,copied.mom_w,copied.eng};
+        for(std::size_t field=0;field<got.size();++field)
+            require(std::bit_cast<std::uint64_t>(got[field])==std::bit_cast<std::uint64_t>(expected[field]),
+                "None/direct-flux native inheritance changed original U bits");
+        require(result.mass_fractions.size()==1&&result.mass_fractions[0]==1.&&calls==1,
+            "None/direct-flux native inheritance changed Xi or performed cell quadrature");
+        require(result.conditions.temperature.kind==(flux?ScalarBoundaryKind::OutwardFlux:ScalarBoundaryKind::None)
+                &&(!flux||result.conditions.temperature.value==17.),
+            "face-center direct flux conditions were lost during native inheritance");
+    }
+    int changing_calls=0;
+    const auto changing=[&](const PhysicalBoundaryContext& context) {
+        ++changing_calls;
+        close(context.interior.temperature,1./128.,1.e-14,
+            "invalid copied target must still receive a valid actual source point");
+        PhysicalBoundaryData data;data.temperature={ScalarBoundaryKind::Value,1./128.};return data;
+    };
+    require_rejected([&] {(void)EvaluateNativeRzBoundaryCell(grid,request,fixture.config,fixture.species,
+        fixture.eos,changing,read,fraction);},"changing Diffusion silently heated or replaced an invalid inherited cold target");
+    require(changing_calls==1,"copied cold target failure must follow the valid center request before any Gauss callback");
+    int mixed_calls=0;
+    const auto mixed=[&](const PhysicalBoundaryContext& context) {
+        ++mixed_calls;
+        if(mixed_calls==1)return native_rotating_data(context);
+        PhysicalBoundaryData data;data.temperature={ScalarBoundaryKind::OutwardFlux,17.};return data;
+    };
+    require_rejected([&] {(void)EvaluateNativeRzBoundaryCell(grid,request,fixture.config,fixture.species,
+        fixture.eos,mixed,read,fraction);},"native sample hydro/kind presence differed from face-center authority");
+    require(mixed_calls==2,"mixed channel schema did not reject the first inconsistent actual Gauss sample");
+    int negative_calls=0;
+    const int negative_i=grid.Is()-1;
+    const NativeRzBoundaryRequest negative{{negative_i,grid.Js()},{negative_i,j},MakeBoundaryCoordinates(grid,
+        {grid.GetCellCenterX(negative_i),grid.x2_min,0.},BoundaryAxis::X2,BoundarySide::Lower,.375,1,
+        BoundaryPurpose::Diffusion,{grid.GetCellCenterX(negative_i),grid.GetCellCenterY(j),0.},rz)};
+    const auto negative_callback=[&](const PhysicalBoundaryContext& context) {
+        ++negative_calls;return native_rotating_data(context);
+    };
+    require_rejected([&] {(void)EvaluateNativeRzBoundaryCell(grid,negative,fixture.config,fixture.species,
+        fixture.eos,negative_callback,read,fraction);},"negative-r physical callback request was folded or silently accepted");
+    require(negative_calls==0,"negative-r physical request reached the user callback");
+    require_native_boundary_unchanged(state,grid,frozen,"pure native builder wrote a field before return/failure");
+}
+
+// A separate warm, nonrotating linear density profile makes the x1->x2
+// dependency observable: correct completed radial ghosts restore exactly the
+// analytic rho(r), including positive outermost tangent corners. This does not
+// infer source/stage identities from mock callbacks or qualify evolution.
+void test_native_rz_completed_radial_prefix()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    NativeBoundaryFixture fixture(16.);
+    const auto& grid=fixture.grid;
+    auto state=fixture.cold_state();
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
+        const long double volume=(b*b-a*a)/2.;
+        const long double mean_r=(b*b*b-a*a*a)/(3.*volume);
+        const double mean_rho=double(1.L+mean_r/64.L);
+        state.set(grid.GetIndex(i,j,0),{mean_rho,0.,0.,0.,20.*mean_rho});
+    }
+    int axial_corner_calls=0;
+    ResolvedUserBoundaries callbacks;
+    callbacks.physical=[&](const PhysicalBoundaryContext& context) {
+        if(context.axis==BoundaryAxis::X2) {
+            require(std::abs(context.interior.rho-(1.+context.ghost_point.r_cy/64.))<2.e-12,
+                "axial native source did not read the complete analytic radial candidate prefix");
+            close(context.interior.temperature,10.,1.e-14,
+                "warm radial prefix changed actual source EOS temperature");
+            if(context.ghost_point.r_cy<grid.x1_min||context.ghost_point.r_cy>grid.x1_max)
+                ++axial_corner_calls;
+        }
+        PrimitiveData point;point.rho=1.+context.ghost_point.r_cy/64.;
+        point.SetTemperature(10.);point.mass_fractions={1.};
+        PhysicalBoundaryData data;data.hydro=point;return data;
+    };
+    ScopedUserBoundarySelection selected(callbacks,fixture.config,fixture.species);
+    BCHandler handler(fixture.config,rz);handler.bind(fixture.eos,fixture.species);
+    handler.configure_stage(.375,BoundaryPurpose::Hydro);handler.apply(state,grid);
+    require(axial_corner_calls>0,"linear-density prefix fixture did not exercise real positive radial/axial corners");
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
+        const long double volume=(b*b-a*a)/2.;
+        const double rho=double(1.L+(b*b*b-a*a*a)/(192.L*volume));
+        const auto actual=state.get(grid.GetIndex(i,j,0));
+        require(std::abs(actual.rho-rho)<2.e-12&&std::abs(actual.eng-20.*rho)<2.e-12
+                &&actual.mom_u==0.&&actual.mom_v==0.&&actual.mom_w==0.,
+            "linear-density native boundary differs from independent V integrals");
     }
 }
 
@@ -1345,6 +1684,9 @@ void test_user_physical_boundary()
     test_coordinate_dimensions();
     test_native_rz_coordinates();
     test_handler_native_rz_coordinates();
+    test_handler_native_rz_cold_rotation_and_candidate_identity();
+    test_native_rz_builder_inheritance_and_cold_target_rejection();
+    test_native_rz_completed_radial_prefix();
     test_interior_snapshot(fixture);
     test_hydro_temperature_state(fixture);
     test_invalid_hydro_requests(fixture);

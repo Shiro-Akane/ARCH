@@ -1,37 +1,261 @@
 {
-  "status": "passed_scoped_cpu_checkpoint",
-  "recordedAtUtc": "2026-10-06T21:37:21.216038+00:00",
-  "sourceBaseCommit": "baa55eec90613daf24b22c16ef6693ba1246c3ff",
-  "workingTreeChangesIncluded": true,
-  "productionExecutableSha256": "8755b39d9d1de8eb4d42a1209480ffe4a5e5a53e5eb031debed2abfa65b2fba6",
-  "fullCpuCtest": {
-    "tests": 68,
-    "skipped": 0,
-    "failed": 0,
-    "seconds": 146.01,
-    "inventorySha256": "66a5eb48b86e23e50b54b85d14fbd5b5326be04b92df30b2f2ce0a217675fe6c",
-    "junitSha256": "7fd126e49e13bdb7fd3684a864300023d742a25c7b5109250d42ce467a0b39c9"
+  "actualRepair": "Native RKL angular flux registration and reflux now share angular_transport=true. Original diffusion formula and numeric budgets unchanged.",
+  "continuationSourceLineage": {
+    "currentSourceReexecutionClaimed": false,
+    "inverseNegativeOnlyMigrationExactMatch": true,
+    "normalBodyUnchanged": true,
+    "originalExecutableSha256": "4cd8dd2979d65a117edef41337fdf260cb00a344c97343db8cc2b7438d59d25c",
+    "originalSourceSha256": "79c0ca350e71a3f263c0bc2e9cf7df9ae7997e1606e8386a750555a347bc7602"
   },
+  "fullCpuCtest": {
+    "failed": 0,
+    "inventorySha256": "66a5eb48b86e23e50b54b85d14fbd5b5326be04b92df30b2f2ce0a217675fe6c",
+    "junitSha256": "7fd126e49e13bdb7fd3684a864300023d742a25c7b5109250d42ce467a0b39c9",
+    "seconds": 146.01,
+    "skipped": 0,
+    "tests": 68
+  },
+  "independentTransferQuadratureReference": {
+    "GaussRule": "tensor Legendre4x2 degree<=7 in r and<=3 in z",
+    "OmegaAffineR2Degrees": {
+      "E": [
+        9,
+        3
+      ],
+      "J": [
+        7,
+        2
+      ],
+      "mphi_V": [
+        6,
+        2
+      ]
+    },
+    "affineOmegaConservedDegrees": {
+      "E": [
+        7,
+        3
+      ],
+      "J": [
+        6,
+        2
+      ],
+      "M": [
+        3,
+        1
+      ],
+      "mphi_V": [
+        5,
+        2
+      ],
+      "mr_mz": [
+        4,
+        2
+      ],
+      "rhoX": [
+        4,
+        2
+      ]
+    },
+    "constantMassMomentCounterexample": {
+      "E": "17/128",
+      "J": "1/4",
+      "M": "1/2",
+      "minusDeltaK": "1/52",
+      "minusI": "13/60",
+      "minusThermal": "-19/832",
+      "originalI": "1/4",
+      "plusDeltaK": "-1/68",
+      "plusI": "17/60",
+      "plusThermal": "49/1088"
+    },
+    "dps": {
+      "attempts": 2,
+      "billingFinal": null,
+      "blockingWaitSeconds": 0,
+      "cachedInputTokens": 768,
+      "durationSeconds": 41.75,
+      "estimatedCostUsdOffPeak": 0.00609095,
+      "estimatedCostUsdPeak": 0.0121819,
+      "inputTokens": 2855,
+      "noncachedInputTokens": 2087,
+      "outputTokens": 9626,
+      "reasoningTokens": 9054,
+      "visibleOutputTokens": 572
+    },
+    "reviewLimits": "One source degree sentence corrected by worker; exact fractions/degree sums checked by Root. No source implementation, EOS, new-density closure, or evolution certificate.",
+    "status": "MATHEMATICAL_ONLY_ACCEPTED_AFTER_ONE_NARROW_CORRECTION"
+  },
+  "independentVariableBoundaryReference": {
+    "blockedWaitSeconds": 0,
+    "estimatedCostUsd": {
+      "finalBill": "unknown",
+      "offPeak": 0.0254531,
+      "peak": 0.0509062
+    },
+    "extraWork": "One permitted delivery repair after automatic output cap truncated all reasoning; no model/test/threshold changes",
+    "fractions": {
+      "EBar": "114959/184320",
+      "IStar": "51/8",
+      "M": "39/16",
+      "V": "3/2",
+      "W": "7/3",
+      "XBar": "44911/149760",
+      "eClosure": "668715191/19063848960",
+      "ePhysical": "4399/149760",
+      "kappa": "1274/1377",
+      "mphiBar": "1401/1024",
+      "mrBar": "1879/5760",
+      "mzBar": "-679/11520",
+      "positiveResidual": "108740087/19063848960",
+      "rhoBar": "13/8"
+    },
+    "pointInternalEqualsClosureInternal": false,
+    "providerCalls": 2,
+    "providerSeconds": 149.82,
+    "qualification": "Independent exact polynomial reference and positive variance/Cauchy gap; scientific stage acceptance remains Root-owned.",
+    "status": "accepted_mathematical_reference_only",
+    "tokens": {
+      "cachedInput": 768,
+      "input": 3200,
+      "output": 41810,
+      "reasoning": 41399,
+      "visible": 411
+    }
+  },
+  "nativeDomainBoundary": {
+    "actualBoundaryWitnesses": [
+      "cold mixed V/W rho=omega=1,e=1/64 actual IdealGas and production BCHandler",
+      "logical positive-r callback sampling, signed final axis corners and padding untouched",
+      "NativeCandidate actual handler owner and borrowed EOS binding lifetime rejection",
+      "late Gauss callback failure no partial callback field/control publication",
+      "bit-preserving None/direct flux inheritance; invalid copied cold target changing-BC rejects",
+      "warm actual radial candidate prefix to axial corner true EOS",
+      "actual Runtime whole-domain sync and mandatory full logical ghost EOS; all existing source/work/macro rollback assertions preserved"
+    ],
+    "actualBuildSeconds": 127.245,
+    "fullCtest": {
+      "cpuOwners": 68,
+      "existingToolingOwners": 8,
+      "failed": 0,
+      "guardSeconds": 141.531,
+      "inventoryExact": true,
+      "newOwners": 0,
+      "passed": 76,
+      "peakOwnedRssKiB": 757956,
+      "seconds": 140.77,
+      "skipped": 0,
+      "totalCount": 76
+    },
+    "narrowCtest": {
+      "allPassed": true,
+      "count": 8,
+      "seconds": 15.33
+    },
+    "productionExecutableSha256": "c9d1c4e02c13a3f1fb2c9bcdcfc83f2b17a5ff17e2a61a0dc60684a3d6157d7d",
+    "rawCleanup": {
+      "cumulativeDeletedBytes": 260124536,
+      "cumulativeDeletedFiles": 1382,
+      "datasetRecords": 4385,
+      "deletedBytes": 13863080,
+      "processedFiles": 175,
+      "rawDataUploaded": false,
+      "receiptSha256": "cb8da6d97189abef1b2249f29d297df59e670888a4dbcee73a281036338d6bb3"
+    },
+    "rawProcessingStatus": "ROOT_RECHECKED_PROCESSED_AND_DELETED",
+    "scopeLimits": [
+      "native AMR conservative thermodynamic transfer not yet qualified",
+      "selected RZ reconstructions/face-source balance not yet qualified",
+      "full cold rotating Runtime/AMR/coupled evolution and device not yet qualified",
+      "existing ordinary public capabilities remain separately accepted"
+    ],
+    "sourceBaseCommit": "2c4c9fe7b",
+    "sourceSha256": {
+      "src/driver/runtime/DriverRuntime.h": "2e45ade20fd7340420abee21b0f49165ade526710356e26e45d7e2918cdcb28c",
+      "src/numerics/integrator/TimeIntegratorHelper.h": "215ffee98d017840fb93e2a8b9a617eba2f9a470e4fbd04757a918d6c769d431",
+      "src/physics/boundary/NativeRzBoundary.h": "e0fb6b4a7c5e84a7b0009815e01115241f75db6fd093e9b1d79d8285f20fd298",
+      "src/physics/boundary/PhysicalBoundaryHandler.cpp": "1b07a892c5ee89d23007e3f48e89c4be440658099c08bdb39c89e4c5a981fc5c",
+      "src/physics/boundary/PhysicalBoundaryHandler.h": "a89335701ae077033f16e03166117e6dbd31fad84154162f6c68b602b6c6c222",
+      "tests/host/amr/test_user_physical_boundary.cpp": "2b9b2e8c0a87b20d1ef272a1f16187ae18865a606913c1531f10a5305e175000",
+      "tests/host/driver/test_host_hydro_transaction.cpp": "6eea561b2aab7aabfdcbb3291f77164cf7b6e1f2b2c5723bea91bcc903860e95",
+      "tests/host/driver/test_shared_stage_scheduler.cpp": "ac25bc0a58310949246f542369cd72be31f7a304b3b48ab9c44492efb61b80fb"
+    },
+    "status": "SCOPED_FULL_CPU_PASS_NOT_NATIVE_RELEASE",
+    "testOwnerBuildSeconds": [
+      12.34,
+      6.148
+    ]
+  },
+  "newIndependentCoarseningReference": "Actual existing low_density_math passed; true quartic M/J/E fine-positive/coarse-negative; not transfer qualification",
   "priorNarrowOwners": {
-    "tests": 8,
     "passed": 8,
+    "productionExecutableSha256": "1cfe8934c89e3558d819541f0180d21bb14947aec3dd438190acb9e2e3da6633",
     "seconds": 14.21,
-    "productionExecutableSha256": "1cfe8934c89e3558d819541f0180d21bb14947aec3dd438190acb9e2e3da6633"
+    "tests": 8
   },
   "privateCpuOwners": {
-    "native-rkl-angular-reflux-density-20261007": {
-      "scope": "Actual CPU Runtime halo, timestep candidates and RKL stage kernels; no simulation driver time advancement or scientific output",
-      "executableSha256": "5e8220e3ac155b6fa13977b644e3748ad357b5ff861edfbe6a5e9a140eaf0a93",
-      "sourceSha256": {
-        "tests/host/driver/test_rz_runtime_boundary.cpp": "cd1548a39ef699b9f92a3aead23f82f7d31fbe5c3ae69b79409e719bfc3b36bc"
-      },
-      "fixtureInputManifestSha256": "fe889bca1142a9c4b6804e4eadb975e92ee4251680d4e3c9a47eb07544a301c5",
-      "stdoutSha256": "4aa160098df8a4d86ca4b7abd1534e338dfdbb86cabbb2fde69e5b7f491172e3",
-      "limitations": [
-        "RZ production regrid remains gated",
-        "CUDA not qualified",
-        "No scientific evolution acceptance"
+    "native-current-continuation-20261007": {
+      "acceptanceLines": [
+        "PASS RZ_CHECKPOINT_CONTINUATION direction=0 inner=0 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=cc0c8b461c97903467c94d5172bd38040e744f2d323c998220c3cdb232a3d66b",
+        "PASS RZ_CHECKPOINT_CONTINUATION direction=0 inner=1 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=56a7ffe33b259f51e291fa2868d228793f5681e9f2b77db2289479c10cf241e1",
+        "PASS RZ_CHECKPOINT_CONTINUATION direction=1 inner=0 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=2c316ab26e374ac3ff1f6a9152093e2841e5051f3922b45a5b9d71a1a4ca9ed3",
+        "PASS RZ_CHECKPOINT_CONTINUATION direction=1 inner=1 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=1660f95fdb4c75eeba14586b4db053e2b87b072d78028c0c60c4f406aa0d2e08"
       ],
+      "executableSha256": "4cd8dd2979d65a117edef41337fdf260cb00a344c97343db8cc2b7438d59d25c",
+      "fixtureInputManifestSha256": "2924a5f1cc18aaf6e3d00f20bf2b45334e01fa7b9a9d28154f50288d11a082d6",
+      "limitations": [
+        "Public RZ dispatch still gated",
+        "No scientific evolution acceptance",
+        "CUDA not qualified"
+      ],
+      "scope": "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
+      "sourceSha256": {
+        "tests/host/driver/test_rz_checkpoint_continuation.cpp": "79c0ca350e71a3f263c0bc2e9cf7df9ae7997e1606e8386a750555a347bc7602"
+      },
+      "stdoutSha256": "c34e35d54116853bca149cde593ab6e058882070a3f1cdf9fc2af68cb41fa3b6"
+    },
+    "native-current-initial-bound-rejection-20261007": {
+      "acceptanceLines": [
+        "PASS RZ_INITIAL_THERMAL_REJECTION direction=0 inner=0 min_eint=100 repairs=0 raw_output=0",
+        "PASS RZ_INITIAL_THERMAL_REJECTION direction=0 inner=1 min_eint=100 repairs=0 raw_output=0",
+        "PASS RZ_INITIAL_THERMAL_REJECTION direction=1 inner=0 min_eint=100 repairs=0 raw_output=0",
+        "PASS RZ_INITIAL_THERMAL_REJECTION direction=1 inner=1 min_eint=100 repairs=0 raw_output=0"
+      ],
+      "executableSha256": "cf4834732c91f6517412b25f23987b5744542aa0cee59b7d6bea62bf79313bf3",
+      "fixtureInputManifestSha256": "8e193c9a125baeca9a5072fe1ad3b67161213a2df72b84c13484898cd8789d22",
+      "limitations": [
+        "Public RZ dispatch still gated",
+        "No scientific evolution acceptance",
+        "CUDA not qualified"
+      ],
+      "scope": "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
+      "sourceSha256": {
+        "tests/host/driver/test_rz_checkpoint_continuation.cpp": "55c5756733d712850966d1fceeb05d750ade0e5c744c4991551745f05b807114"
+      },
+      "stdoutSha256": "e1b1f64657e625aa83c00dd7c7faf288c97056e9a6f183bf404d3f5d0e8cac93"
+    },
+    "native-current-io-20261007": {
+      "acceptanceLines": [
+        "JEANS_NATIVE_PLOT_PASS chart=Cartesian",
+        "PASS actual DriverIO Cartesian profile/native/controller/rejection/create/retry time=0 step=0",
+        "JEANS_NATIVE_PLOT_PASS chart=RZ",
+        "PASS actual DriverIO RZ profile/native/controller/rejection/create/retry time=0 step=0",
+        "RZ_COLD_IDEALGAS_NATIVE_IO_PASS rho=1 Omega=32 e=.0025 P=.001 Cv=2 cells=256 raw-first-cell-thermal-negative=1 actual-postghost-eos=1 t=0"
+      ],
+      "executableSha256": "a8e6d2dbf45b039bed49adc7e2207fe4f8366657cf0ecedc54b9bfd0efb4527b",
+      "fixtureInputManifestSha256": "0cfaae8c8afeb1b4a5098146e2c1f91cc8dc4c567d69a564209d297b76486862",
+      "limitations": [
+        "Public RZ dispatch still gated",
+        "No evolved restart acceptance",
+        "CUDA not qualified"
+      ],
+      "scope": "Actual CPU JENS Runtime transactions and DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
+      "sourceSha256": {
+        "tests/host/io/test_driver_checkpoint_geometry.cpp": "37aeb97d23c6a1728f48336a9612ba228a830273dca232ba80e19e1fc1e02743"
+      },
+      "stdoutSha256": "18c2691f85f12136e82a96d7416c0facd5d10e5ab2efa1e05f03bc9d2b752c54"
+    },
+    "native-rkl-angular-reflux-density-20261007": {
       "acceptanceLines": [
         "RZ_RUNTIME_DT direction=0 inner=0 rkl=1 hydro=0.0018064102608053936 independent_hydro=0.0018064102608053938 diffusion_fe=0.1953125 diffusion_sts=5140",
         "RZ_RUNTIME_DT direction=0 inner=0 rkl=2 hydro=0.0018064102608053936 independent_hydro=0.0018064102608053938 diffusion_fe=0.1953125 diffusion_sts=2549.921875",
@@ -89,87 +313,99 @@
         "RZ_MIXED_THERMAL_RKL direction=1 inner=1 rkl=1 energy_before=3003.7181549082661 energy_after=3003.7181549082661 relative_error=2.3655439662307474e-18 activity=0.012139071705369986",
         "RZ_MIXED_THERMAL_RKL direction=1 inner=1 rkl=2 energy_before=3003.7181549082661 energy_after=3003.7181549082661 relative_error=7.3923248944710848e-19 activity=0.010254678049719246",
         "RZ_RUNTIME_HALO direction=1 inner=1 leaves=5 version=1 PASS"
-      ]
-    },
-    "native-current-io-20261007": {
-      "scope": "Actual CPU JENS Runtime transactions and DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
-      "executableSha256": "a8e6d2dbf45b039bed49adc7e2207fe4f8366657cf0ecedc54b9bfd0efb4527b",
-      "sourceSha256": {
-        "tests/host/io/test_driver_checkpoint_geometry.cpp": "37aeb97d23c6a1728f48336a9612ba228a830273dca232ba80e19e1fc1e02743"
-      },
-      "fixtureInputManifestSha256": "0cfaae8c8afeb1b4a5098146e2c1f91cc8dc4c567d69a564209d297b76486862",
-      "stdoutSha256": "18c2691f85f12136e82a96d7416c0facd5d10e5ab2efa1e05f03bc9d2b752c54",
-      "limitations": [
-        "Public RZ dispatch still gated",
-        "No evolved restart acceptance",
-        "CUDA not qualified"
       ],
-      "acceptanceLines": [
-        "JEANS_NATIVE_PLOT_PASS chart=Cartesian",
-        "PASS actual DriverIO Cartesian profile/native/controller/rejection/create/retry time=0 step=0",
-        "JEANS_NATIVE_PLOT_PASS chart=RZ",
-        "PASS actual DriverIO RZ profile/native/controller/rejection/create/retry time=0 step=0",
-        "RZ_COLD_IDEALGAS_NATIVE_IO_PASS rho=1 Omega=32 e=.0025 P=.001 Cv=2 cells=256 raw-first-cell-thermal-negative=1 actual-postghost-eos=1 t=0"
-      ]
-    },
-    "native-current-continuation-20261007": {
-      "scope": "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
-      "executableSha256": "4cd8dd2979d65a117edef41337fdf260cb00a344c97343db8cc2b7438d59d25c",
-      "sourceSha256": {
-        "tests/host/driver/test_rz_checkpoint_continuation.cpp": "79c0ca350e71a3f263c0bc2e9cf7df9ae7997e1606e8386a750555a347bc7602"
-      },
-      "fixtureInputManifestSha256": "2924a5f1cc18aaf6e3d00f20bf2b45334e01fa7b9a9d28154f50288d11a082d6",
-      "stdoutSha256": "c34e35d54116853bca149cde593ab6e058882070a3f1cdf9fc2af68cb41fa3b6",
+      "executableSha256": "5e8220e3ac155b6fa13977b644e3748ad357b5ff861edfbe6a5e9a140eaf0a93",
+      "fixtureInputManifestSha256": "fe889bca1142a9c4b6804e4eadb975e92ee4251680d4e3c9a47eb07544a301c5",
       "limitations": [
-        "Public RZ dispatch still gated",
-        "No scientific evolution acceptance",
-        "CUDA not qualified"
+        "RZ production regrid remains gated",
+        "CUDA not qualified",
+        "No scientific evolution acceptance"
       ],
-      "acceptanceLines": [
-        "PASS RZ_CHECKPOINT_CONTINUATION direction=0 inner=0 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=cc0c8b461c97903467c94d5172bd38040e744f2d323c998220c3cdb232a3d66b",
-        "PASS RZ_CHECKPOINT_CONTINUATION direction=0 inner=1 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=56a7ffe33b259f51e291fa2868d228793f5681e9f2b77db2289479c10cf241e1",
-        "PASS RZ_CHECKPOINT_CONTINUATION direction=1 inner=0 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=2c316ab26e374ac3ff1f6a9152093e2841e5051f3922b45a5b9d71a1a4ca9ed3",
-        "PASS RZ_CHECKPOINT_CONTINUATION direction=1 inner=1 leaves=5 split_time=0.001 final_time=0.002 final_step=2 bit_words=10260 checkpoint_sha=1660f95fdb4c75eeba14586b4db053e2b87b072d78028c0c60c4f406aa0d2e08"
-      ]
-    },
-    "native-current-initial-bound-rejection-20261007": {
-      "scope": "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
-      "executableSha256": "cf4834732c91f6517412b25f23987b5744542aa0cee59b7d6bea62bf79313bf3",
+      "scope": "Actual CPU Runtime halo, timestep candidates and RKL stage kernels; no simulation driver time advancement or scientific output",
       "sourceSha256": {
-        "tests/host/driver/test_rz_checkpoint_continuation.cpp": "55c5756733d712850966d1fceeb05d750ade0e5c744c4991551745f05b807114"
+        "tests/host/driver/test_rz_runtime_boundary.cpp": "cd1548a39ef699b9f92a3aead23f82f7d31fbe5c3ae69b79409e719bfc3b36bc"
       },
-      "fixtureInputManifestSha256": "8e193c9a125baeca9a5072fe1ad3b67161213a2df72b84c13484898cd8789d22",
-      "stdoutSha256": "e1b1f64657e625aa83c00dd7c7faf288c97056e9a6f183bf404d3f5d0e8cac93",
-      "limitations": [
-        "Public RZ dispatch still gated",
-        "No scientific evolution acceptance",
-        "CUDA not qualified"
-      ],
-      "acceptanceLines": [
-        "PASS RZ_INITIAL_THERMAL_REJECTION direction=0 inner=0 min_eint=100 repairs=0 raw_output=0",
-        "PASS RZ_INITIAL_THERMAL_REJECTION direction=0 inner=1 min_eint=100 repairs=0 raw_output=0",
-        "PASS RZ_INITIAL_THERMAL_REJECTION direction=1 inner=0 min_eint=100 repairs=0 raw_output=0",
-        "PASS RZ_INITIAL_THERMAL_REJECTION direction=1 inner=1 min_eint=100 repairs=0 raw_output=0"
-      ]
+      "stdoutSha256": "4aa160098df8a4d86ca4b7abd1534e338dfdbb86cabbb2fde69e5b7f491172e3"
     }
   },
-  "newIndependentCoarseningReference": "Actual existing low_density_math passed; true quartic M/J/E fine-positive/coarse-negative; not transfer qualification",
-  "actualRepair": "Native RKL angular flux registration and reflux now share angular_transport=true. Original diffusion formula and numeric budgets unchanged.",
+  "productionExecutableSha256": "8755b39d9d1de8eb4d42a1209480ffe4a5e5a53e5eb031debed2abfa65b2fba6",
+  "recordedAtUtc": "2026-10-06T21:37:21.216038+00:00",
+  "releaseAccepted": false,
+  "sharedBoundaryLeaves": {
+    "buildGuardSeconds": 246.744,
+    "buildPeakOwnedRssKiB": 2669600,
+    "ctestCount": 6,
+    "ctestOwners": [
+      "preview_initial_conversion",
+      "curvilinear_metrics",
+      "shared_stage_scheduler",
+      "boundary_plan",
+      "amr_operation_plans",
+      "low_density_math"
+    ],
+    "ctestSeconds": 3.29,
+    "hostFreeBytes": 23919280128,
+    "newCiOwners": 0,
+    "productionExecutableSha256": "6e36e66757e7597b62a31f4b43715c01d23c0107641186fac6a60257772a5a8d",
+    "rawOutputFiles": 0,
+    "sourceBaseCommit": "cf3719b1c",
+    "sourceSha256": {
+      "src/amr/exchange/BoundaryPlan.h": "00a8337b678f0d9b260b9a0de24873e013d346aa33afe6f89bb1da65685119a7",
+      "src/amr/exchange/HostBoundaryPlan.h": "6f6be8e12c0adc3e76ab84c8011a4343023b98b721734176b77ce2ffd09931ba",
+      "src/numerics/state/RzNativeClosure.h": "3e3c3bb303f431dddb4374cb2be07789215d48f1250e848c22e3ab1f3bec7d6b",
+      "src/physics/boundary/PhysicalBoundary.h": "ca700a63b9c8e92e2a2cdcc98e27fb503fe1ba14482cd7719c8192500a22de12",
+      "tests/host/amr/test_user_physical_boundary.cpp": "5b72b2d6fa3b9dd5a206ee8ec4eccaf476e6648b6e59a4ba89dfdcc83f7bb9bd",
+      "tests/host/numerics/test_low_density.cpp": "5370ff83a6489896aa3d07ebff6c16477b7a37806aea8ddafacec02c6aedcec6"
+    },
+    "status": "SCOPED_CPU_PASS_NOT_RELEASE"
+  },
+  "sharedNumericalLeaves": {
+    "cpuBuildSeconds": 236.013,
+    "ctest": {
+      "failures": 0,
+      "names": [
+        "preview_initial_conversion",
+        "curvilinear_metrics",
+        "shared_stage_scheduler",
+        "boundary_plan",
+        "amr_operation_plans",
+        "low_density_math"
+      ],
+      "seconds": 3.06,
+      "tests": 6
+    },
+    "newCiTestsAdded": false,
+    "newRawFilesProduced": 0,
+    "originalAcceptanceBudgetsUnchanged": true,
+    "productionExecutableSha256": "1d5f90f1e793b59a239888f3c16a306d5497f34ae08384764ee265bfeebbe971",
+    "recordedAtUtc": "2026-10-06T21:59:00.889754+00:00",
+    "scopedQualification": "Shared native quadrature, density-weighted species and explicit three-real-cell supported density math. Actual independent antiderivative/EOS input witnesses; no public native RZ/BC/AMR/evolution/CUDA qualification.",
+    "sourceBaseCommit": "18d0aa750",
+    "sourceSha256": {
+      "src/core/problem/InitialStateConversion.h": "0e4ac9613e0846d1e164773fbeda29afca60074fc006ea53934389efa983ad26",
+      "src/numerics/reconstruction/RzDensityMoments.h": "f022fc16da120bd45c527489768e5a95f7c4d8c7903dc83c03a7d745113f49c9",
+      "src/numerics/state/RzCellAverage.h": "6d562ea63a509b0bc0f4859690b8f148d66c2fae716029b739cf26f3ff1bc778",
+      "tests/api/preview/test_initial_conversion.cpp": "ced0c033f77ba5d71ac1b8c4a87c7a63a84806a21e2b7628d256c8a15c081649",
+      "tests/host/grid/test_curvilinear_metrics.cpp": "2162e42048af5a7de0aeda9ecded5303897cb8d454a9867c7b5799486d7a3fbf"
+    }
+  },
+  "sourceBaseCommit": "baa55eec90613daf24b22c16ef6693ba1246c3ff",
+  "status": "passed_scoped_cpu_checkpoint",
   "storage": {
+    "buildPeakObservedBytes": 622948435,
+    "cleanupReceiptSha256": "fb6b54970cbcb91ab90d4f7131671bbfafce55909f7fca061f286812f53f994d",
+    "cumulativePassedRawDeletedBytes": 246261456,
+    "cumulativePassedRawDeletedFiles": 1207,
+    "currentPassedRawDeletedBytes": 15126952,
+    "currentPassedRawDeletedFiles": 189,
+    "failedEvidencePreserved": true,
     "hostMount": "/mnt/e",
-    "observedFreeBytes": 23919804416,
     "minHostFreeBytes": 8589934592,
     "nextWriteReserveBytes": 67108864,
-    "buildPeakObservedBytes": 622948435,
-    "rawCommitted": false,
-    "failedEvidencePreserved": true,
+    "observedFreeBytes": 23919804416,
     "passedRawProcessing": "Root accepted finite numeric/UTF8/metadata summaries; exact regular-file stat/SHA recheck before each deletion",
-    "currentPassedRawDeletedFiles": 189,
-    "currentPassedRawDeletedBytes": 15126952,
-    "cumulativePassedRawDeletedFiles": 1207,
-    "cumulativePassedRawDeletedBytes": 246261456,
-    "cleanupReceiptSha256": "fb6b54970cbcb91ab90d4f7131671bbfafce55909f7fca061f286812f53f994d",
-    "preservedInterruptedFiles": 398
+    "preservedInterruptedFiles": 398,
+    "rawCommitted": false
   },
   "unqualified": [
     "Full native RZ user-boundary moment/point physics",
@@ -181,107 +417,5 @@
     "Current matched 14700K/4070 Ti benchmark",
     "Native desktop interaction UAT"
   ],
-  "releaseAccepted": false,
-  "continuationSourceLineage": {
-    "originalSourceSha256": "79c0ca350e71a3f263c0bc2e9cf7df9ae7997e1606e8386a750555a347bc7602",
-    "originalExecutableSha256": "4cd8dd2979d65a117edef41337fdf260cb00a344c97343db8cc2b7438d59d25c",
-    "inverseNegativeOnlyMigrationExactMatch": true,
-    "normalBodyUnchanged": true,
-    "currentSourceReexecutionClaimed": false
-  },
-  "sharedNumericalLeaves": {
-    "recordedAtUtc": "2026-10-06T21:59:00.889754+00:00",
-    "sourceBaseCommit": "18d0aa750",
-    "productionExecutableSha256": "1d5f90f1e793b59a239888f3c16a306d5497f34ae08384764ee265bfeebbe971",
-    "sourceSha256": {
-      "src/numerics/state/RzCellAverage.h": "6d562ea63a509b0bc0f4859690b8f148d66c2fae716029b739cf26f3ff1bc778",
-      "src/core/problem/InitialStateConversion.h": "0e4ac9613e0846d1e164773fbeda29afca60074fc006ea53934389efa983ad26",
-      "tests/api/preview/test_initial_conversion.cpp": "ced0c033f77ba5d71ac1b8c4a87c7a63a84806a21e2b7628d256c8a15c081649",
-      "src/numerics/reconstruction/RzDensityMoments.h": "f022fc16da120bd45c527489768e5a95f7c4d8c7903dc83c03a7d745113f49c9",
-      "tests/host/grid/test_curvilinear_metrics.cpp": "2162e42048af5a7de0aeda9ecded5303897cb8d454a9867c7b5799486d7a3fbf"
-    },
-    "cpuBuildSeconds": 236.013,
-    "ctest": {
-      "tests": 6,
-      "failures": 0,
-      "seconds": 3.06,
-      "names": [
-        "preview_initial_conversion",
-        "curvilinear_metrics",
-        "shared_stage_scheduler",
-        "boundary_plan",
-        "amr_operation_plans",
-        "low_density_math"
-      ]
-    },
-    "scopedQualification": "Shared native quadrature, density-weighted species and explicit three-real-cell supported density math. Actual independent antiderivative/EOS input witnesses; no public native RZ/BC/AMR/evolution/CUDA qualification.",
-    "originalAcceptanceBudgetsUnchanged": true,
-    "newCiTestsAdded": false,
-    "newRawFilesProduced": 0
-  },
-  "independentVariableBoundaryReference": {
-    "status": "accepted_mathematical_reference_only",
-    "fractions": {
-      "V": "3/2",
-      "W": "7/3",
-      "M": "39/16",
-      "rhoBar": "13/8",
-      "mrBar": "1879/5760",
-      "mzBar": "-679/11520",
-      "mphiBar": "1401/1024",
-      "EBar": "114959/184320",
-      "XBar": "44911/149760",
-      "IStar": "51/8",
-      "kappa": "1274/1377",
-      "eClosure": "668715191/19063848960",
-      "ePhysical": "4399/149760",
-      "positiveResidual": "108740087/19063848960"
-    },
-    "pointInternalEqualsClosureInternal": false,
-    "providerCalls": 2,
-    "providerSeconds": 149.82,
-    "tokens": {
-      "input": 3200,
-      "cachedInput": 768,
-      "output": 41810,
-      "reasoning": 41399,
-      "visible": 411
-    },
-    "estimatedCostUsd": {
-      "offPeak": 0.0254531,
-      "peak": 0.0509062,
-      "finalBill": "unknown"
-    },
-    "extraWork": "One permitted delivery repair after automatic output cap truncated all reasoning; no model/test/threshold changes",
-    "blockedWaitSeconds": 0,
-    "qualification": "Independent exact polynomial reference and positive variance/Cauchy gap; scientific stage acceptance remains Root-owned."
-  },
-  "sharedBoundaryLeaves": {
-    "status": "SCOPED_CPU_PASS_NOT_RELEASE",
-    "sourceBaseCommit": "cf3719b1c",
-    "productionExecutableSha256": "6e36e66757e7597b62a31f4b43715c01d23c0107641186fac6a60257772a5a8d",
-    "buildGuardSeconds": 246.744,
-    "buildPeakOwnedRssKiB": 2669600,
-    "ctestCount": 6,
-    "ctestSeconds": 3.29,
-    "ctestOwners": [
-      "preview_initial_conversion",
-      "curvilinear_metrics",
-      "shared_stage_scheduler",
-      "boundary_plan",
-      "amr_operation_plans",
-      "low_density_math"
-    ],
-    "newCiOwners": 0,
-    "rawOutputFiles": 0,
-    "hostFreeBytes": 23919280128,
-    "sourceSha256": {
-      "src/amr/exchange/BoundaryPlan.h": "00a8337b678f0d9b260b9a0de24873e013d346aa33afe6f89bb1da65685119a7",
-      "src/amr/exchange/HostBoundaryPlan.h": "6f6be8e12c0adc3e76ab84c8011a4343023b98b721734176b77ce2ffd09931ba",
-      "src/numerics/state/RzNativeClosure.h": "3e3c3bb303f431dddb4374cb2be07789215d48f1250e848c22e3ab1f3bec7d6b",
-      "src/physics/boundary/PhysicalBoundary.h": "ca700a63b9c8e92e2a2cdcc98e27fb503fe1ba14482cd7719c8192500a22de12",
-      "tests/host/amr/test_user_physical_boundary.cpp": "5b72b2d6fa3b9dd5a206ee8ec4eccaf476e6648b6e59a4ba89dfdcc83f7bb9bd",
-      "tests/host/numerics/test_low_density.cpp": "5370ff83a6489896aa3d07ebff6c16477b7a37806aea8ddafacec02c6aedcec6"
-    }
-  }
+  "workingTreeChangesIncluded": true
 }

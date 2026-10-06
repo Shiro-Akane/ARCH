@@ -63,7 +63,7 @@ public:
         const auto bounds = native_rz_eos_bounds();
         native_rz_eos_acceptance_ = [&eos, species, bounds](
             const FluidState& state, const Grid& grid) {
-            RzThermodynamics::validate_patch_eos(state, grid, species, bounds, eos);
+            RzThermodynamics::validate_completed_patch_eos(state, grid, species, bounds, eos);
         };
     }
     /** Attach the exact borrowed Host candidate domain and its real BC context.

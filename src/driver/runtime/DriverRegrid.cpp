@@ -341,16 +341,8 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
                                     scheduler_clock};
                                 bind_native_boundary_acceptance(
                                     staged_context, payload.handles);
-                                TimeIntegration::apply_domain_boundary(
-                                    amr_ctrl, bc_handler, &amr::Block::fluid_state);
-                                amr_ctrl.ghost_exchange.ExecuteExchange(
-                                    amr_ctrl.pool, amr_ctrl.tree,
-                                    config.grid.dim,
-                                    &amr::Block::fluid_state,
-                                    payload.handles,
-                                    geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
-                                        ? amr::CoordinateSeamGeometry::RzAxisymmetric
-                                        : amr::CoordinateSeamGeometry::ExistingChart,
+                                TimeIntegration::synchronize_domain_boundary(amr_ctrl, bc_handler,
+                                    &amr::Block::fluid_state, payload.handles, geometry_semantics_,
                                     {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
                                 // Borrowed internal verification callback only.
                                 // It runs inside the same fallible finalizer,

@@ -2358,8 +2358,13 @@ void test_production_lane_fingerprints_and_authority_absence()
         expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics,") == 1,
                "each Hydro physical adapter supplies one reflux callback");
         expect(source_occurrences(*lane, "bind_hydro_geometry(") == 1
-                   && lane->find("geometry.exchange_chart") != std::string::npos,
-               "each Host Hydro lane binds exchange and reflux to one chart");
+                   && source_occurrences(*lane, "TimeIntegration::synchronize_domain_boundary(") == 1
+                   && lane->find("output_member, binding.handles, geometry.semantics,") != std::string::npos
+                   && source_occurrences(*lane, "ghost_exchange.ExecuteExchange(") == 0,
+               "each Host Hydro lane passes its actual slot/handles/chart to the shared boundary owner");
+        expect(lane->find("hydro_boundary_state_member(output)") != std::string::npos
+                   && source_occurrences(*lane, "begin_rz_hydro_reflux_receipts(amr_ctrl)") == 1,
+               "Current post-reflux boundary and the independent native reflux receipt keep actual owners");
         expect(source_occurrences(*lane, "publish_completed_interior(") == 0,
                "Hydro adapters cannot publish around the scheduler seam");
         expect(lane->find("descriptor.old_slot") != std::string::npos
@@ -2369,6 +2374,23 @@ void test_production_lane_fingerprints_and_authority_absence()
                           != std::string::npos,
                "each Hydro physical route consumes descriptor slots");
     }
+
+
+    const std::string boundary_helper=read_source(
+        "src/numerics/integrator/TimeIntegratorHelper.h");
+    const auto sync_begin=boundary_helper.find("inline void synchronize_domain_boundary(");
+    const auto sync_end=boundary_helper.find("inline void validate_provisional_rz_stage_state(",sync_begin);
+    expect(sync_begin!=std::string::npos&&sync_end!=std::string::npos,
+           "one actual-domain boundary helper remains discoverable");
+    const auto sync=boundary_helper.substr(sync_begin,sync_end-sync_begin);
+    expect(source_occurrences(boundary_helper,"inline void synchronize_domain_boundary(")==1
+               && sync.find("CoordinateSeamGeometry::ExistingChart")!=std::string::npos
+               && sync.find("CoordinateSeamGeometry::RzAxisymmetric")!=std::string::npos
+               && sync.find("apply_domain_boundary(control,boundary,member)")!=std::string::npos
+               && sync.find("publish_native_noexcept")!=std::string::npos
+               && sync.find("complete_axis")!=std::string::npos
+               && sync.find("publish_ghost(")==std::string::npos,
+           "shared real boundary owner selects the native chart while scheduler owns GhostValid");
 
     const std::string rkl1 = read_source(
         "src/numerics/diffusion/RKL1TimeIntegrator.h");

@@ -1,5 +1,7 @@
 /**
  * @file RKL1TimeIntegrator.h
+ * Native single-patch integration requires a borrowed actual AMR owner;
+ * the default absent owner remains valid only for the Existing chart.
  * @brief First-order RKL production adapters for the shared stage scheduler.
  */
 
@@ -13,11 +15,12 @@ struct RKL1TimeIntegrator
                           const Grid& grid, const SimConfig& config,
                           double dt_hydro, double dt_diff,
                           const auto& bc_handler,
-                          GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                          GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+                          amr::AMRControl* native_owner = nullptr)
     {
         Numerics::Diffusion::detail::advance_single_rkl(
             block, eos, grid, config, dt_hydro, dt_diff, bc_handler,
-            arch::scheduler::RklMethod::RKL1, semantics);
+            arch::scheduler::RklMethod::RKL1, semantics, native_owner);
     }
 };
 

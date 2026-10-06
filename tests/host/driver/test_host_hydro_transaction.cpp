@@ -316,16 +316,6 @@ public:
     }
 };
 
-/** Delegates actual BC work, then rejects one real stage ghost refresh after its pending receipt. */
-struct GhostFaultBoundary {
-    BCHandler& owner;JournalProbe* journal;
-    GridMetrics::GeometrySemantics geometry_semantics() const noexcept{return owner.geometry_semantics();}
-    const boundary::BoundaryPlan& logical_plan(const Grid& grid) const{return owner.logical_plan(grid);}
-    void apply(FluidState& state,const Grid& grid) const {
-        owner.apply(state,grid);
-        if(journal&&journal->pending_count==1)throw std::logic_error("HYDRO_GHOST_AFTER_RECEIPT_FAULT");
-    }
-};
 /** Execute production Euler with the actual Runtime-bound scheduler. */
 void selected_euler(amr::AMRControl& c,double dt,BCHandler& bc,
     const Physical::Gravity::IGravityPolicy* gravity,const Numerics::IHydroSolver* hydro,const NumericsConfig& n){
@@ -339,11 +329,6 @@ void selected_rk2(amr::AMRControl& c,double dt,BCHandler& bc,
 void selected_rk3(amr::AMRControl& c,double dt,BCHandler& bc,
     const Physical::Gravity::IGravityPolicy* gravity,const Numerics::IHydroSolver* hydro,const NumericsConfig& n){
     SolverRK3::solve(c,dt,bc,gravity,hydro,n);
-}
-void selected_rk3_ghost_fault(amr::AMRControl& c,double dt,BCHandler& bc,
-    const Physical::Gravity::IGravityPolicy* gravity,const Numerics::IHydroSolver* hydro,const NumericsConfig& n){
-    auto* probe=static_cast<JournalProbe*>(scheduler::current_stage_binding().context.hydro_preparation);
-    GhostFaultBoundary selected{bc,probe};SolverRK3::solve(c,dt,selected,gravity,hydro,n);
 }
 /** Freeze a method-specific configuration before the Runtime borrows it. */
 SimConfig settings(dispatch::TimeIntegratorId method,bool split_profile=false){
@@ -420,6 +405,7 @@ struct Fixture {
         selected.identity="owner-negative-fixture";
         selection=std::make_unique<boundary::ScopedUserBoundarySelection>(std::move(selected),config,species);
         bc=std::make_unique<BCHandler>(config,rz);
+        bc->bind(*eos,species);
         runtime=std::make_unique<driver::DriverRuntime>(control,*bc,config,species,*controller);
         runtime->bind_native_rz_eos(*eos);
         runtime->initialize_topology();context.emplace(runtime->stage_context());
@@ -750,7 +736,32 @@ void existing_alias_late_ghost_native_rejection(){
         }
         if(failure==0){f.hydro.fault=HydroProbe::Fault::LastBlock;
             rejected_exact(f,[&]{f.advance();},"HYDRO_LAST_STAGE_LAST_BLOCK_FAULT");}
-        if(failure==1)rejected_exact(f,[&]{f.advance(selected_rk3_ghost_fault);},"HYDRO_GHOST_AFTER_RECEIPT_FAULT");
+        if(failure==1) {
+            // Engineering-only rejection after the real phased BC, AMR
+            // exchange and mandatory actual-EOS gate. The original pending
+            // source receipt and full Runtime rollback assertions still own it.
+            // This witness does not replace or certify physical boundary data.
+            int completed_boundary_calls=0;
+            f.boundary_witness=[&](const scheduler::StageExecutionContext& actual,
+                StateSlot slot,state::StateVersion version) {
+                require(&actual==&*f.context&&slot==StateSlot::Scratch
+                    &&f.journal->pending_count==1,
+                    "late ghost fault did not reach its real first-stage pending receipt");
+                for(const auto handle:f.runtime->handles()) {
+                    const auto publication=actual.ledger.inspect({handle,slot});
+                    require(publication.interior.version==version
+                        &&publication.ghost.residency==state::StateResidency::Invalid,
+                        "late ghost fault ran before interior acceptance or after ghost publication");
+                }
+                ++completed_boundary_calls;
+                throw std::logic_error("HYDRO_GHOST_AFTER_RECEIPT_FAULT");
+            };
+            f.refresh_boundary_gate();
+            rejected_exact(f,[&]{f.advance();},"HYDRO_GHOST_AFTER_RECEIPT_FAULT");
+            require(completed_boundary_calls==1,
+                "actual completed first-stage boundary fault was not observed exactly once");
+            f.boundary_witness={};f.refresh_boundary_gate();
+        }
         if(failure==2){f.hydro.fault=HydroProbe::Fault::Stage3NativeRejection;
             rejected_exact(f,[&]{f.advance();},"RZ native provisional state rejected at cell ");}
         require(f.journal->committed_count==3&&f.journal->commit_calls==1,"failure erased previously accepted source history");

@@ -378,15 +378,9 @@ void DriverRuntime::initialize_topology()
                 ExecutionSide::Host, *replacement, scheduler_clock};
             bind_native_boundary_acceptance(
                 staged_context, proposed.handles_in_observation_order);
-            TimeIntegration::apply_domain_boundary(
-                amr_ctrl, bc_handler, &amr::Block::fluid_state);
-            amr_ctrl.ghost_exchange.ExecuteExchange(
-                amr_ctrl.pool, amr_ctrl.tree, config.grid.dim,
-                &amr::Block::fluid_state,
-                proposed.handles_in_observation_order,
-                geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
-                    ? amr::CoordinateSeamGeometry::RzAxisymmetric
-                    : amr::CoordinateSeamGeometry::ExistingChart,
+            TimeIntegration::synchronize_domain_boundary(amr_ctrl, bc_handler,
+                &amr::Block::fluid_state, proposed.handles_in_observation_order,
+                geometry_semantics_,
                 {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
             (void)arch::scheduler::complete_boundary(
                 staged_context, proposed.handles_in_observation_order,

@@ -96,11 +96,9 @@ struct SolverRK2
                     // post-reflux slot. Both BC and exchange use one mapping.
                     const auto output_member =
                         TimeIntegration::hydro_boundary_state_member(output);
-                    TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition, output_member);
-                    amr_ctrl.ghost_exchange.ExecuteExchange(
-                        amr_ctrl.pool, amr_ctrl.tree, dim,
-                        output_member, binding.handles,geometry.exchange_chart,
-                    {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint});
+                    TimeIntegration::synchronize_domain_boundary(amr_ctrl, boundary_condition,
+                        output_member, binding.handles, geometry.semantics,
+                        {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint});
                     return token;
                 },
             [&](arch::state::SlotRotation rotation) {
