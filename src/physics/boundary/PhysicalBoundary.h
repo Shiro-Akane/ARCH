@@ -15,9 +15,11 @@
  *    PrimitiveData snapshot (rho, native velocity, pressure, temperature and
  *    the complete mass-fraction vector) supplied by the selected EOS.
  * 3. EvaluatePhysicalBoundary calls the read-only user callback with that
- *    snapshot, validates the returned PhysicalBoundaryData, resolves the
- *    purpose-specific ghost primitive and converts it back to conserved
- *    variables through the shared InitialStateConversion authority.
+ *    snapshot, then ResolvePhysicalBoundaryData validates the returned data,
+ *    resolves the purpose-specific point ghost primitive and converts it back
+ *    through the shared InitialStateConversion authority. Native adapters may
+ *    supply actual EOS-validated point snapshots to the same resolver; native
+ *    V/W sampling and final axis parity remain outside this point-law owner.
  * 4. The manager publishes the returned conserved state and conditions. CUDA
  *    kernels, direct-flux overrides and any block/state mutation stay outside
  *    this shared Host leaf; nothing here writes grid or solver storage.
@@ -457,39 +459,30 @@ PrimitiveData BoundaryInteriorPrimitive(const FluidVector& interior,
 }
 
 /**
- * Resolve one physical boundary request into a conserved ghost state.
+ * Resolve already returned callback data using one shared point-law owner.
  *
- * The read-only callback is invoked as `PhysicalBoundaryData callback(const
- * PhysicalBoundaryContext&)` with an EOS-backed interior snapshot; it must not
- * retain the context or write solver state. Hydro requests build the ghost
- * directly from the returned primitive. Diffusion requests inherit the builtin
- * ghost (or the interior when no inherited snapshot is supplied). Value and
- * NormalGradient reference the interior; None and OutwardFlux retain the base.
- * State-changing channels rebuild conserved variables. Repairs, out-of-EOS
- * states, non-finite results and channel misuse are rejected.
+ * Workflow: validate the returned configuration/channels, resolve Hydro or
+ * Diffusion inheritance, apply Value (2*face-interior) or NormalGradient
+ * (interior+2*distance*gradient), and call the sole BuildBoundaryConserved
+ * authority. None/OutwardFlux preserve inherited conserved/composition bytes.
+ * The caller owns actual point-EOS validation of interior_primitive and any
+ * supplied inherited_primitive; this function does not reinterpret native
+ * V/W cell means, sample a cell, invoke a callback, or publish solver storage.
+ * A supplied inherited point is used only when no hydro replacement exists
+ * and a channel changes state. Request time comes from MakeBoundaryCoordinates;
+ * no new time policy is introduced here or in the existing wrapper.
  */
-template <class Eos, class Callback>
-PhysicalBoundaryEvaluation EvaluatePhysicalBoundary(const BoundaryCoordinates& coordinates,
-    const SimConfig& config, const SpeciesManager& species, const Eos& eos,
-    const Callback& callback, const FluidVector& interior, std::span<const double> composition,
-    const FluidVector* inherited_ghost = nullptr, std::span<const double> inherited_composition = {})
+template <class Eos>
+PhysicalBoundaryEvaluation ResolvePhysicalBoundaryData(const BoundaryCoordinates& coordinates,
+    const SimConfig& config, const Eos& eos, const PhysicalBoundaryData& data,
+    const FluidVector& interior, std::span<const double> composition,
+    const PrimitiveData& interior_primitive, const FluidVector* inherited_ghost = nullptr,
+    std::span<const double> inherited_composition = {},
+    const PrimitiveData* inherited_primitive = nullptr)
 {
-    const int species_count = species.count();
-    if (species_count < 0)
+    if (composition.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         throw std::invalid_argument("physical boundary requires a non-negative species count");
-    if (composition.size() != static_cast<std::size_t>(species_count))
-        throw std::invalid_argument(
-            "interior boundary composition must supply one mass fraction per registered species");
-    if (coordinates.dimension < 1 || coordinates.dimension > 3)
-        throw std::invalid_argument("physical boundary requires an active dimension in [1,3]");
-    if (coordinates.ghost_depth < 0)
-        throw std::invalid_argument("physical boundary ghost depth must be non-negative");
-    if (!std::isfinite(coordinates.physical_distance) || coordinates.physical_distance < 0.0)
-        throw std::invalid_argument("physical boundary distance must be finite and non-negative");
-
-    const PrimitiveData interior_primitive = BoundaryInteriorPrimitive(interior, composition, eos);
-    const PhysicalBoundaryContext context(coordinates, config, species, interior_primitive);
-    PhysicalBoundaryData data = callback(context);
+    const int species_count = static_cast<int>(composition.size());
     ValidatePhysicalBoundaryData(data, config, species_count);
 
     PhysicalBoundaryEvaluation evaluation{};
@@ -560,7 +553,19 @@ PhysicalBoundaryEvaluation EvaluatePhysicalBoundary(const BoundaryCoordinates& c
         return evaluation;
     }
 
+    // A native caller supplies its actual already-EOS-validated point base.
+    // Inheritance-only/direct-flux requests returned above without conversion.
+    // These new supplied-view guards protect species indexing; the Existing
+    // wrapper supplies nullptr and retains its original primitive owner.
+    if (!data.hydro && inherited_primitive
+        && inherited_primitive->mass_fractions.size() != composition.size())
+        throw std::invalid_argument("inherited boundary composition must match the registered species");
+    if (!data.hydro && species_prescribed
+        && interior_primitive.mass_fractions.size() != composition.size())
+        throw std::invalid_argument(
+            "interior boundary composition must supply one mass fraction per registered species");
     PrimitiveData ghost = data.hydro ? *data.hydro
+        : inherited_primitive ? *inherited_primitive
         : BoundaryInteriorPrimitive(inherited, inherited_x, eos);
     if (!ghost.has_temperature)
         ghost.temperature = detail::BoundaryBaseTemperature(ghost, eos, config, "diffusion ghost base");
@@ -596,6 +601,44 @@ PhysicalBoundaryEvaluation EvaluatePhysicalBoundary(const BoundaryCoordinates& c
     evaluation.conserved = detail::BuildBoundaryConserved(ghost, eos, config, "diffusion ghost");
     evaluation.mass_fractions = ghost.mass_fractions;
     return evaluation;
+}
+
+/**
+ * Resolve one physical boundary request into a conserved ghost state.
+ *
+ * The read-only callback is invoked as `PhysicalBoundaryData callback(const
+ * PhysicalBoundaryContext&)` with an EOS-backed interior snapshot; it must not
+ * retain the context or write solver state. Hydro requests build the ghost
+ * directly from the returned primitive. Diffusion requests inherit the builtin
+ * ghost (or the interior when no inherited snapshot is supplied). Value and
+ * NormalGradient reference the interior; None and OutwardFlux retain the base.
+ * State-changing channels rebuild conserved variables. Repairs, out-of-EOS
+ * states, non-finite results and channel misuse are rejected.
+ */
+template <class Eos, class Callback>
+PhysicalBoundaryEvaluation EvaluatePhysicalBoundary(const BoundaryCoordinates& coordinates,
+    const SimConfig& config, const SpeciesManager& species, const Eos& eos,
+    const Callback& callback, const FluidVector& interior, std::span<const double> composition,
+    const FluidVector* inherited_ghost = nullptr, std::span<const double> inherited_composition = {})
+{
+    const int species_count = species.count();
+    if (species_count < 0)
+        throw std::invalid_argument("physical boundary requires a non-negative species count");
+    if (composition.size() != static_cast<std::size_t>(species_count))
+        throw std::invalid_argument(
+            "interior boundary composition must supply one mass fraction per registered species");
+    if (coordinates.dimension < 1 || coordinates.dimension > 3)
+        throw std::invalid_argument("physical boundary requires an active dimension in [1,3]");
+    if (coordinates.ghost_depth < 0)
+        throw std::invalid_argument("physical boundary ghost depth must be non-negative");
+    if (!std::isfinite(coordinates.physical_distance) || coordinates.physical_distance < 0.0)
+        throw std::invalid_argument("physical boundary distance must be finite and non-negative");
+
+    const PrimitiveData interior_primitive = BoundaryInteriorPrimitive(interior, composition, eos);
+    const PhysicalBoundaryContext context(coordinates, config, species, interior_primitive);
+    PhysicalBoundaryData data = callback(context);
+    return ResolvePhysicalBoundaryData(coordinates, config, eos, data, interior,
+        composition, interior_primitive, inherited_ghost, inherited_composition);
 }
 
 } // namespace arch::boundary

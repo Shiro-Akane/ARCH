@@ -255,5 +255,33 @@
     "extraWork": "One permitted delivery repair after automatic output cap truncated all reasoning; no model/test/threshold changes",
     "blockedWaitSeconds": 0,
     "qualification": "Independent exact polynomial reference and positive variance/Cauchy gap; scientific stage acceptance remains Root-owned."
+  },
+  "sharedBoundaryLeaves": {
+    "status": "SCOPED_CPU_PASS_NOT_RELEASE",
+    "sourceBaseCommit": "cf3719b1c",
+    "productionExecutableSha256": "6e36e66757e7597b62a31f4b43715c01d23c0107641186fac6a60257772a5a8d",
+    "buildGuardSeconds": 246.744,
+    "buildPeakOwnedRssKiB": 2669600,
+    "ctestCount": 6,
+    "ctestSeconds": 3.29,
+    "ctestOwners": [
+      "preview_initial_conversion",
+      "curvilinear_metrics",
+      "shared_stage_scheduler",
+      "boundary_plan",
+      "amr_operation_plans",
+      "low_density_math"
+    ],
+    "newCiOwners": 0,
+    "rawOutputFiles": 0,
+    "hostFreeBytes": 23919280128,
+    "sourceSha256": {
+      "src/amr/exchange/BoundaryPlan.h": "00a8337b678f0d9b260b9a0de24873e013d346aa33afe6f89bb1da65685119a7",
+      "src/amr/exchange/HostBoundaryPlan.h": "6f6be8e12c0adc3e76ab84c8011a4343023b98b721734176b77ce2ffd09931ba",
+      "src/numerics/state/RzNativeClosure.h": "3e3c3bb303f431dddb4374cb2be07789215d48f1250e848c22e3ab1f3bec7d6b",
+      "src/physics/boundary/PhysicalBoundary.h": "ca700a63b9c8e92e2a2cdcc98e27fb503fe1ba14482cd7719c8192500a22de12",
+      "tests/host/amr/test_user_physical_boundary.cpp": "5b72b2d6fa3b9dd5a206ee8ec4eccaf476e6648b6e59a4ba89dfdcc83f7bb9bd",
+      "tests/host/numerics/test_low_density.cpp": "5370ff83a6489896aa3d07ebff6c16477b7a37806aea8ddafacec02c6aedcec6"
+    }
   }
 }

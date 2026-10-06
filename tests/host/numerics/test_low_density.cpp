@@ -1,4 +1,5 @@
 // Scale invariance and independent analytic references; no tolerance has units.
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstdint>
@@ -15,6 +16,7 @@
 #include "core/config/ConfigValidation.h"
 #include "driver/DriverUtils.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "fixtures/hydro/MeanThermoCases.h"
@@ -449,10 +451,147 @@ void native_rz_coarsening_thermal_reference() {
         close(static_cast<double>(actual_integrals[1][component]+actual_integrals[2][component]),
             static_cast<double>(actual_integrals[0][component]),"true M/J/E conserved across native coarsening reference");
 }
+/** Independently constructed full logical ghost EOS witness, not BC/AMR acceptance.
+ * Constant rho=Omega=1, e=1/64 supplies native V/W means by antiderivatives on
+ * each real signed interval. All storage padding remains NaN. The completed
+ * gate must accept every logical cell using real one-sided edge support, then
+ * reject malformed last-row/last-column ghosts without altering any array.
+ */
+void native_rz_completed_ghost_eos_reference() {
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr double internal=1./64.,cv=3.;
+    Grid grid(amr::MAX_NG,0.,static_cast<double>(amr::BLOCK_NX),-1.,1.,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+    const int nx=grid.GetTotalX(),ny=grid.GetTotalY();
+    require(nx>=3&&nx<grid.stride_y,"completed ghost witness requires real x padding");
+    FluidState field;field.Preallocate(grid.GetTotalSize());field.InitSpecies(1);
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    for(int index=0;index<grid.GetTotalSize();++index) {
+        field.set(index,{nan,nan,nan,nan,nan});field.enuc_rate[index]=nan;field.X(0,index)=nan;
+    }
+    // Signed V=integral r dr and I=integral r^3 dr are both negative on an
+    // axis-reflected annulus; W=integral r^2 dr is positive. Hence E remains
+    // even, m_phi=I/W is odd and physical omega stays +1 on either side.
+    for(int j=0;j<ny;++j)for(int i=0;i<nx;++i) {
+        const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
+        require(!(a<0.&&b>0.),"positive completed fixture straddles the axis");
+        const long double volume=(b*b-a*a)/2.L;
+        const long double angular=(b*b*b-a*a*a)/3.L;
+        const long double inertia=(b*b*b*b-a*a*a*a)/4.L;
+        const int index=grid.GetIndex(i,j,0);
+        field.set(index,{1.,0.,0.,static_cast<double>(inertia/angular),
+            static_cast<double>(internal+inertia/(2.L*volume))});
+        field.enuc_rate[index]=0.;field.X(0,index)=1.;
+    }
+    SpeciesManager species;species.add_species("ghost-reference",1.,1.,1.4,cv);
+    IdealGas eos(1.4,species);const double fractions[]{1.};
+    const arch::state::Bounds bounds{1e-14,1e-12,1e10};
+    const auto view=GridMetrics::make_geometry_view(grid,rz);
+    const auto read=[&](int index) {
+        require(index>=0&&index<grid.GetTotalSize()&&index%grid.stride_y<nx,
+            "completed closure read storage padding instead of logical support");
+        return field.get(index);
+    };
+    using Snapshot=std::array<std::vector<double>,7>;
+    const auto snapshot=[&]() -> Snapshot {
+        return {field.rho,field.mom_u,field.mom_v,field.mom_w,field.eng,
+            field.enuc_rate,field.mass_fractions};
+    };
+    const auto unchanged=[&](const Snapshot& before) {
+        const auto after=snapshot();
+        for(std::size_t component=0;component<before.size();++component) {
+            require(before[component].size()==after[component].size(),"completed EOS changed array extent");
+            for(std::size_t index=0;index<before[component].size();++index)
+                require(std::bit_cast<std::uint64_t>(before[component][index])
+                    ==std::bit_cast<std::uint64_t>(after[component][index]),
+                    "completed EOS validation altered native values, Xi or NaN padding");
+        }
+    };
+    const auto valid_before=snapshot();
+    RzThermodynamics::validate_patch_eos(field,grid,1,bounds,eos);
+    RzThermodynamics::validate_completed_patch_eos(field,grid,1,bounds,eos);
+    unchanged(valid_before);
+    for(int j=0;j<ny;++j)for(int i=0;i<nx;++i) {
+        const int index=grid.GetIndex(i,j,0),support=std::clamp(i-1,0,nx-3);
+        const auto cell=RzThermodynamics::make_cell_supported(read,index,view,i,support,bounds);
+        const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
+        const long double inertia=(b*b*b*b-a*a*a*a)/4.L;
+        require(cell.valid()&&RzThermodynamics::validate_mean_eos(cell,fractions,1,eos)
+            ==arch::state::Status::valid,"actual completed logical closure/IdealGas rejected");
+        close(cell.density.capacity,static_cast<double>(inertia),"signed constant-density ghost inertia");
+        close(cell.omega,1.,"signed native ghost parity changed physical omega");
+        close(cell.internal,internal,"independent native ghost specific thermal reference");
+        close(eos.get_temperature(1.,cell.internal,fractions),internal/cv,"actual ghost IdealGas temperature");
+        for(int node=0;node<RzThermodynamics::physical_node_count;++node) {
+            const double radius=RzThermodynamics::physical_node_radius(cell,node);
+            const auto point=RzThermodynamics::base_point(cell,radius);
+            compare(point,{1.,0.,0.,radius,internal+.5*radius*radius},1.,
+                "independent physical constant-density rotating ghost baseline");
+            require(arch::state::validate_eos(point,fractions,1,bounds,eos)
+                ==arch::state::Status::valid,"actual ghost physical baseline EOS rejected");
+        }
+    }
+    // Place each bad value in the very last logical ghost, outside the old
+    // active domain/density support. The active-only gate must still accept;
+    // the completed gate must discover this new region and leave all bytes.
+    const int late=grid.GetIndex(nx-1,ny-1,0);
+    const auto rejects=[&](const Grid& candidate,const char* expected) {
+        const auto before=snapshot();bool rejected=false;
+        try {RzThermodynamics::validate_completed_patch_eos(field,candidate,1,bounds,eos);}
+        catch(const std::runtime_error& error) {
+            rejected=std::string(error.what()).find(expected)!=std::string::npos;
+            if(!rejected)throw;
+        }
+        require(rejected,"invalid completed logical ghost escaped actual native/EOS gate");
+        unchanged(before);
+    };
+    const double saved_rho=field.rho[late],saved_energy=field.eng[late],saved_x=field.X(0,late);
+    for(double bad:{0.,-1.,nan}) {
+        field.rho[late]=bad;
+        RzThermodynamics::validate_patch_eos(field,grid,1,bounds,eos);
+        // An earlier same-row closure may encounter the bad required density
+        // support before reaching this target's provisional check.
+        const auto before=snapshot();bool rejected=false;
+        try {RzThermodynamics::validate_completed_patch_eos(field,grid,1,bounds,eos);}
+        catch(const std::runtime_error& error) {
+            const std::string message=error.what();
+            rejected=message.find("RZ native provisional state rejected")!=std::string::npos
+                ||message.find("RZ native closure/EOS rejected")!=std::string::npos;
+            if(!rejected)throw;
+        }
+        require(rejected,"invalid completed ghost density was repaired or skipped");unchanged(before);
+    }
+    field.rho[late]=saved_rho;field.eng[late]=-1.;
+    RzThermodynamics::validate_patch_eos(field,grid,1,bounds,eos);
+    rejects(grid,"RZ native closure/EOS rejected");field.eng[late]=saved_energy;
+    field.X(0,late)=0.;RzThermodynamics::validate_patch_eos(field,grid,1,bounds,eos);
+    rejects(grid,"RZ native provisional state rejected");field.X(0,late)=saved_x;
+    Grid straddling=grid;straddling.x1_min=.5;straddling.x1_max+=.5;
+    straddling.InitializeTopology(rz);
+    const auto straddle_view=GridMetrics::make_geometry_view(straddling,rz);
+    const int crossing=straddling.ng-1;
+    require(straddling.GetFacePosL(crossing)<0.&&straddling.GetFacePosR(crossing)>0.,
+        "straddling ghost negative lost its actual geometric counterexample");
+    require(!RzThermodynamics::make_cell_supported(read,
+        straddling.GetIndex(crossing,ny-1,0),straddle_view,crossing,crossing-1,bounds).valid(),
+        "straddling ghost support was silently folded or repaired");
+    rejects(straddling,"RZ native closure/EOS rejected");
+    // NaN padding survived both successful and rejecting traversals. These
+    // arrays were independently furnished, not produced by a real BC/exchange.
+    for(int j=0;j<ny;++j)for(int i=nx;i<grid.stride_y;++i) {
+        const int index=grid.GetIndex(i,j,0);
+        require(std::isnan(field.rho[index])&&std::isnan(field.mom_u[index])
+            &&std::isnan(field.mom_v[index])&&std::isnan(field.mom_w[index])
+            &&std::isnan(field.eng[index])&&std::isnan(field.enuc_rate[index])
+            &&std::isnan(field.X(0,index)),"completed gate consumed or filled storage padding");
+    }
+}
+
 void leaves() {
     native_rz_stage_prechecks();
     native_rz_diffusion_thermodynamics();
     native_rz_coarsening_thermal_reference();
+    native_rz_completed_ghost_eos_reference();
     timestep_controls();
     require(MeanThermoCases::evaluate(),"shared mean thermodynamic view contract");
     IdealGasView eos;

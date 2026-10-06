@@ -11,6 +11,7 @@
  * Explicit native RZ cases below qualify coordinate mapping and warm no-swirl
  * callback routing only; they do not qualify mixed V/W callback state recovery.
  */
+#include "amr/exchange/HostBoundaryPlan.h"
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "physics/boundary/UserBoundary.h"
@@ -18,6 +19,8 @@
 #include "physics/eos/IdealGas.h"
 
 #include <array>
+#include <bit>
+#include <cstdint>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -1250,10 +1253,92 @@ void test_handler_native_rz_coordinates()
     }
 }
 
+/** Independent axis-only executor witness, with already completed axial ghosts.
+ * Every real row has a distinct positive-r sentinel; parity is checked with
+ * the analytic mirror source i_s=2*Is-1-i_g, never the implementation plan.
+ * This qualifies transfer identity and untouched storage, not EOS/handler or
+ * whole native RZ stage acceptance. Original scientific tolerances are intact.
+ */
+void test_native_rz_axis_completion()
+{
+    BoundaryPlanInput input{};
+    input.dimension=2;input.active_extent={4,3,1};input.ghost_depth=2;
+    input.faces={BoundaryType::RzAxis,BoundaryType::Outflow,
+        BoundaryType::Reflecting,BoundaryType::Outflow,
+        BoundaryType::Inactive,BoundaryType::Inactive};
+    const auto logical=make_boundary_plan(input);
+    // Logical width 8, stride 11, trailing allocation padding: no padding
+    // element is a cell or available boundary source/destination.
+    const host::HostBoundaryLayout layout{2,4,3,1,2,2,2,0,8,7,1,11,77,81};
+    const auto compiled=host::compile(logical,layout);
+    FluidState state;state.Preallocate(layout.total_size);state.InitSpecies(2);
+    for(int index=0;index<layout.total_size;++index) {
+        state.set(index,{1.+index/1024.,.125+index/4096.,
+            -.25-index/8192.,.375+index/16384.,10.+index/32.});
+        state.enuc_rate[index]=.5+index;
+        state.X(0,index)=.25+(index%5)/32.;
+        state.X(1,index)=1.-state.X(0,index);
+    }
+    const auto values=[](const FluidState& actual,int index) {
+        const auto u=actual.get(index);
+        return std::array<double,8>{u.rho,u.mom_u,u.mom_v,u.mom_w,u.eng,
+            actual.enuc_rate[index],actual.X(0,index),actual.X(1,index)};
+    };
+    const auto snapshot=[&] {
+        std::vector<std::array<double,8>> result;
+        result.reserve(layout.total_size);
+        for(int index=0;index<layout.total_size;++index)result.push_back(values(state,index));
+        return result;
+    };
+    const auto require_bits=[](const std::array<double,8>& actual,
+        const std::array<double,8>& expected,std::string_view message) {
+        for(std::size_t field=0;field<actual.size();++field)
+            require(std::bit_cast<std::uint64_t>(actual[field])==
+                std::bit_cast<std::uint64_t>(expected[field]),message);
+    };
+    const auto original=snapshot();
+    host::execute_rz_axis(logical,compiled,state);
+    for(int index=0;index<layout.total_size;++index) {
+        const int j=index/layout.stride_y,i=index%layout.stride_y;
+        if(j<layout.total_y&&i<layout.active_origin_i) {
+            const int source=j*layout.stride_y+2*layout.active_origin_i-1-i;
+            auto expected=original[source];expected[1]=-expected[1];expected[3]=-expected[3];
+            require_bits(values(state,index),expected,"axis-only real-row parity/corner sentinel changed");
+        } else require_bits(values(state,index),original[index],
+            "axis-only touched positive axial user state, right ghost or padding");
+    }
+    const auto accepted=snapshot();
+    // Every binding failure must reject before the first field write, including
+    // metadata-valid source/sign corruption that cannot be caught by range checks.
+    const auto reject_unchanged=[&](const BoundaryPlan& owner,const host::HostCompiledBoundaryPlan& plan) {
+        require_rejected([&] {host::execute_rz_axis(owner,plan,state);},
+            "axis-only accepted a mismatched logical/compiled binding");
+        for(int index=0;index<layout.total_size;++index)
+            require_bits(values(state,index),accepted[index],"axis-only invalid binding partially wrote state");
+    };
+    auto corrupt=compiled;corrupt.logical_fingerprint^=1;
+    reject_unchanged(logical,corrupt);
+    corrupt=compiled;corrupt.transfers.pop_back();reject_unchanged(logical,corrupt);
+    corrupt=compiled;corrupt.transfers[0].source_index+=1;reject_unchanged(logical,corrupt);
+    corrupt=compiled;corrupt.transfers[0].destination_index+=1;reject_unchanged(logical,corrupt);
+    corrupt=compiled;corrupt.transfers[0].conserved_signs[0]=-1;reject_unchanged(logical,corrupt);
+    corrupt=compiled;corrupt.transfers[0].species_sign=-1;reject_unchanged(logical,corrupt);
+    auto different=input;different.faces[1]=BoundaryType::Reflecting;
+    reject_unchanged(make_boundary_plan(different),compiled);
+    // No-axis plans are an explicit no-op, with no ordinary physical BC applied.
+    auto no_axis=input;no_axis.faces[0]=BoundaryType::Outflow;
+    const auto no_axis_logical=make_boundary_plan(no_axis);
+    host::execute_rz_axis(no_axis_logical,host::compile(no_axis_logical,layout),state);
+    require(rz_axis_corner_operations(no_axis_logical).empty(),"no-axis plan invented RZ corners");
+    for(int index=0;index<layout.total_size;++index)
+        require_bits(values(state,index),accepted[index],"axis-only no-axis call executed an ordinary BC");
+}
+
 } // namespace
 
 void test_user_physical_boundary()
 {
+    test_native_rz_axis_completion();
     test_handler_domain_and_stage_time();
     const Fixture fixture;
     test_geometry_normals();

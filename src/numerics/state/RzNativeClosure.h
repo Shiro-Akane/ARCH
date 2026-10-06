@@ -10,6 +10,8 @@
  * 4. Precheck raw native means without treating J/W as a point momentum.
  * 5. After actual whole-domain BC/exchange, validate the mean and the same
  *    physical baseline at both faces and the four shared radial Gauss nodes.
+ * 6. Completed-patch callers traverse logical ghosts with an explicit real
+ *    three-column support; storage padding is never a logical boundary.
  *
  * I_* is the inertia of the explicit numerical density reconstruction, not a
  * certificate of an unknown subcell physical field. No new evolved field, EOS,
@@ -18,6 +20,7 @@
  */
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -91,6 +94,20 @@ ARCH_INLINE Cell make_cell(const StateReader& read,int index,
     const GridMetrics::GeometryView& grid,int i,const arch::state::Bounds& bounds={})
 {
     return from_density(read(index),RzDensity::density_cell(read,index,grid,i),bounds);
+}
+
+/** Bind an explicit real three-cell radial support containing this target.
+ * The caller supplies its logical support begin; no halo is guessed or read
+ * beyond that support. Signed reflected ghosts reuse the same density moments,
+ * capacity and angular parity as the centered leaf. No floor or EOS is added.
+ */
+template<class StateReader>
+ARCH_INLINE Cell make_cell_supported(const StateReader& read,int index,
+    const GridMetrics::GeometryView& grid,int i,int support_begin,
+    const arch::state::Bounds& bounds={})
+{
+    return from_density(read(index),
+        RzDensity::density_cell_supported(read,index,grid,i,support_begin),bounds);
 }
 
 /** Physical conservative baseline whose mathematical V/W means are native U.
@@ -190,9 +207,15 @@ ARCH_INLINE double physical_node_radius(const Cell& cell,int node)
  * and rollback before publication. Device traversal reuses the scalar leaves
  * rather than materializing an entire device patch on the Host.
  */
-template<class Eos>
-inline void validate_patch_eos(const FluidState& state,const Grid& grid,int species,
-    const arch::state::Bounds& bounds,const Eos& eos)
+namespace detail {
+/** Shared read-only Host region gate: preserve native precheck, actual mean EOS,
+ * both true faces and four radial Gauss-node EOS checks with the original
+ * diagnostics/bounds. Region and closure selection remain explicit callers.
+ */
+template<class Eos,class CellClosure>
+inline void validate_patch_eos_region(const FluidState& state,const Grid& grid,int species,
+    const arch::state::Bounds& bounds,const Eos& eos,int i_begin,int i_end,
+    int j_begin,int j_end,const CellClosure& closure)
 {
     const auto view=GridMetrics::make_geometry_view(grid,
         GridMetrics::GeometrySemantics::AxisymmetricRz);
@@ -206,14 +229,14 @@ inline void validate_patch_eos(const FluidState& state,const Grid& grid,int spec
         throw std::invalid_argument("RZ EOS acceptance requires the actual complete patch layout and density ghosts");
     std::vector<double> fractions(static_cast<std::size_t>(species));
     const auto read=[&](int index){return state.get(index);};
-    for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+    for(int j=j_begin;j<j_end;++j)for(int i=i_begin;i<i_end;++i) {
         const int index=grid.GetIndex(i,j,0);
         for(int s=0;s<species;++s)fractions[s]=state.X(s,index);
         const auto native=read(index);
         const auto preliminary=provisional_native_state(native,fractions.data(),species,1,bounds);
         if(preliminary!=arch::state::Status::valid)
             throw std::runtime_error("RZ native provisional state rejected at cell "+std::to_string(index));
-        const auto cell=make_cell(read,index,view,i,bounds);
+        const auto cell=closure(read,index,view,i,bounds);
         if(validate_mean_eos(cell,fractions.data(),species,eos)!=arch::state::Status::valid)
             throw std::runtime_error("RZ native closure/EOS rejected at cell "+std::to_string(index));
         for(int node=0;node<physical_node_count;++node) {
@@ -225,4 +248,45 @@ inline void validate_patch_eos(const FluidState& state,const Grid& grid,int spec
         }
     }
 }
+} // namespace detail
+
+/** Preserve the original active-interior centered-neighbour EOS acceptance.
+ * Existing callers keep their active extent, arithmetic path and diagnostics.
+ */
+template<class Eos>
+inline void validate_patch_eos(const FluidState& state,const Grid& grid,int species,
+    const arch::state::Bounds& bounds,const Eos& eos)
+{
+    detail::validate_patch_eos_region(state,grid,species,bounds,eos,
+        grid.Is(),grid.Ie(),grid.Js(),grid.Je(),
+        [](const auto& read,int index,const auto& view,int i,const auto& limits) {
+            return make_cell(read,index,view,i,limits);
+        });
+}
+
+/** Validate all completed logical Host cells, including signed axis ghosts.
+ * Workflow: require the actual logical layout; select three existing same-row
+ * columns with begin=clamp(i-1,0,nx-3); evaluate the same native/mean/physical
+ * EOS body before the caller publishes any ghost witness. The x padding in
+ * stride_y is storage only, never a logical cell or available density support.
+ * A cell straddling the axis is rejected by the shared density support leaf;
+ * a reflected negative annulus keeps its signed capacity/omega mathematics.
+ * Call only after genuine whole-domain BC/exchange has completed. Constructed
+ * test ghosts do not establish BC, AMR transfer or Runtime qualification.
+ */
+template<class Eos>
+inline void validate_completed_patch_eos(const FluidState& state,const Grid& grid,
+    int species,const arch::state::Bounds& bounds,const Eos& eos)
+{
+    const int nx=grid.GetTotalX(),ny=grid.GetTotalY();
+    if(nx<3||ny<1||grid.stride_y<nx||grid.stride_z<=0
+        ||ny>grid.stride_z/grid.stride_y||grid.GetTotalZ()!=1
+        ||grid.GetIndex(nx-1,ny-1,0)>=grid.GetTotalSize())
+        throw std::invalid_argument("RZ EOS acceptance requires the actual complete patch layout and density ghosts");
+    detail::validate_patch_eos_region(state,grid,species,bounds,eos,0,nx,0,ny,
+        [nx](const auto& read,int index,const auto& view,int i,const auto& limits) {
+            return make_cell_supported(read,index,view,i,std::clamp(i-1,0,nx-3),limits);
+        });
+}
+
 } // namespace RzThermodynamics

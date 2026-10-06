@@ -489,4 +489,49 @@ static_assert(static_cast<std::uint8_t>(BoundaryType::Reflecting) == 2);
 static_assert(static_cast<std::uint8_t>(BoundaryType::Inactive) == 3);
 static_assert(face_index(BoundaryAxis::X1, BoundarySide::Lower) == 0);
 static_assert(face_index(BoundaryAxis::X3, BoundarySide::Upper) == 5);
+/** Describe only the missing axial corners of an existing 2D RZ axis plan.
+ * Workflow: select each original j=k=0 axis depth template, project it onto
+ * the real lower/upper axial ghost rows, and renumber the independent list.
+ * source/destination share the same axial row. Radial mirror, depth, type,
+ * weight and component_mapping signs remain the original logical authority.
+ * Ordinary plan construction, phases and existing Host/Device calls do not
+ * change. Positive-r axial ghosts must be completed before these operations.
+ */
+inline std::vector<BoundaryOperation> rz_axis_corner_operations(const BoundaryPlan& plan)
+{
+    const auto& input = plan.input();
+    if (input.faces[0] != BoundaryType::RzAxis) return {};
+    if (input.dimension != 2 || input.ghost_depth == 0
+        || input.ghost_depth > static_cast<std::uint32_t>(input.active_extent[1]))
+        throw std::invalid_argument("Invalid logical RZ axis corner domain");
+    const auto count = detail::checked_multiply(2,
+        detail::checked_multiply(input.ghost_depth,input.ghost_depth));
+    std::vector<BoundaryOperation> result;
+    if (count > result.max_size())
+        throw std::overflow_error("RZ axis corner operation storage overflow");
+    result.reserve(static_cast<std::size_t>(count));
+    std::uint32_t templates = 0;
+    for (const auto& operation : plan.operations()) {
+        if (operation.type != BoundaryType::RzAxis
+            || operation.source.j != 0 || operation.destination.j != 0
+            || operation.source.k != 0 || operation.destination.k != 0) continue;
+        if (operation.axis != BoundaryAxis::X1 || operation.side != BoundarySide::Lower
+            || operation.phase != BoundaryPhaseId::X || operation.depth != templates + 1)
+            throw std::invalid_argument("RZ axis corner depth template is not canonical");
+        ++templates;
+        for (BoundarySide side : {BoundarySide::Lower,BoundarySide::Upper})
+            for (std::uint32_t depth = 1;depth <= input.ghost_depth;++depth) {
+                auto corner = operation;
+                const auto row = detail::checked_destination_coordinate(
+                    input.active_extent[1],depth,side);
+                corner.source.j = corner.destination.j = row;
+                corner.ordinal = result.size();
+                result.push_back(corner);
+            }
+    }
+    if (templates != input.ghost_depth || result.size() != count)
+        throw std::invalid_argument("RZ axis corner plan lacks its actual depth templates");
+    return result;
+}
+
 } // namespace arch::boundary
