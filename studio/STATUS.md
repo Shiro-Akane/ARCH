@@ -16,6 +16,9 @@
 - Plotfile 全字段/全叶单元正式 HTTP 读回：PlotfileHttpAllFieldsNode-20261005.zh-CN.md；
   145,088 原始场值及网格 FP64 位一致，6项反例拒绝。仅既有 t=0 数据存储一致性，
   不是物理/全字段 renderer 签收；670次请求，Host端口已关闭。
+- Plotfile真实ENOSPC发布：PlotfileActualEnospcPublicationNode-20261006.zh-CN.md；
+  私有4MiB tmpfs内核/HDF errno28、序号保留和重试PASS，原文件/binary不变。
+  仅create/header路径，无fsync/断电/checkpoint保证；已卸载，raw可由项目用户回查。
 - RZ-B外力矩消费者：RZAppliedTorqueGateFinding-20261005.zh-CN.md；
   NOT_CLEARED（ExternalGravity被finite-ring preflight统一拒绝）。stage 0、Current bits不变；
   不绕过gate，24组预算尚未取得结果。typed source/chart contract待Core review。

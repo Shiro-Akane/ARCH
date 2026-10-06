@@ -7,6 +7,7 @@ import argparse,json,pathlib,shlex,subprocess,os,hashlib
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument("--build",type=pathlib.Path,required=True)
 p.add_argument("--output-root",type=pathlib.Path,required=True)
+p.add_argument("--compile-only",action="store_true",help="Build IO-only fixture without running existing fault cases")
 a=p.parse_args();build=a.build.resolve();out=a.output_root.resolve()
 if out.exists():p.error("output-root must be new")
 entries=json.loads((build/"compile_commands.json").read_text())
@@ -38,13 +39,22 @@ if any(t in {"&&",";","|",">","<"} for t in tokens):p.error("unsupported link sc
 main_object=main["output"]
 tokens[tokens.index(main_object)]=str(obj)
 tokens[tokens.index("-o")+1]=str(exe)
-tokens[1:1]=[str(driver_obj),str(plot_obj)]
+# Some build layouts link these sources directly, others through an archive.
+# Replace an existing direct object; prepend only when archive selection owns it.
+for entry,fresh in ((driver,driver_obj),(plot,plot_obj)):
+    original=entry["output"]
+    if original in tokens:tokens[tokens.index(original)]=str(fresh)
+    else:tokens[1:1]=[str(fresh)]
 tokens+=["-Wl,--wrap=H5Dwrite","-Wl,--wrap=H5Fflush","-Wl,--wrap=H5Fclose"]
 for name,args in [("compile",compile_args),("compile-plot",plot_args),("compile-driver",driver_args),("link",tokens)]:
     with (out/(name+".log")).open("w") as log:
         process=subprocess.run(args,cwd=build,stdout=log,stderr=subprocess.STDOUT,timeout=180)
     if process.returncode:
         print((out/(name+".log")).read_text());raise SystemExit(process.returncode)
+if a.compile_only:
+    print(json.dumps({"status":"BUILT_NOT_RUN","testExecutable":str(exe),"testExecutableSha256":hashlib.sha256(exe.read_bytes()).hexdigest(),
+        "fixtureSourceSha256":hashlib.sha256((root/"tests/host/io/test_driver_plot_publication.cpp").read_bytes()).hexdigest()}))
+    raise SystemExit(0)
 env={**os.environ,"OMP_NUM_THREADS":"1","CUDA_VISIBLE_DEVICES":""}
 process=subprocess.run([str(exe),str(out/"evidence")],env=env,text=True,capture_output=True,timeout=30)
 (out/"stdout.log").write_text(process.stdout);(out/"stderr.log").write_text(process.stderr)

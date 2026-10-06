@@ -12,6 +12,13 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
+#include <array>
+#include <cerrno>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/vfs.h>
+#include <sys/statvfs.h>
+#include <linux/magic.h>
 
 enum class Fault { None, Write, Flush, Close };
 static Fault fault=Fault::None;
@@ -34,7 +41,9 @@ extern "C" herr_t __wrap_H5Fclose(hid_t a) {
 static void require(bool b,const char* message){if(!b)throw std::runtime_error(message);}
 int main(int argc,char** argv) {
  try {
-    require(argc==2,"unique persistent fixture directory required");
+    require(argc==2 || argc==3,"unique fixture directory [--enospc] required");
+    const bool enospc = argc==3;
+    require(!enospc || std::string(argv[2])=="--enospc","unknown fixture mode");
     const std::filesystem::path root(argv[1]);
     require(!std::filesystem::exists(root),"fixture directory must be new");
     std::filesystem::create_directories(root);
@@ -98,6 +107,68 @@ int main(int argc,char** argv) {
     require(counters.plt_file_index==18,"successful publication did not advance exactly once");
     const auto first=root/"fixture_HLLC_plt_0017.h5";
     const auto first_digest=arch::core::file_sha256(first.string());
+    if (enospc) {
+        // Only a caller-owned tiny tmpfs in a private mount namespace is eligible.
+        // Never fill the project filesystem or substitute a fake HDF return code.
+        struct statfs fs_info{};
+        struct statvfs capacity{};
+        require(::statfs(root.c_str(), &fs_info)==0 && fs_info.f_type==TMPFS_MAGIC,
+                "ENOSPC fixture requires real tmpfs");
+        require(::statvfs(root.c_str(), &capacity)==0, "tmpfs capacity unavailable");
+        const auto total_bytes=static_cast<unsigned long long>(capacity.f_blocks)*capacity.f_frsize;
+        require(total_bytes>0 && total_bytes<=8ULL*1024*1024,
+                "ENOSPC fixture refuses filesystem larger than 8 MiB");
+        const auto reservation=root/"space-reservation";
+        const int fd=::open(reservation.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
+        require(fd>=0,"cannot create controlled space reservation");
+        std::array<char,65536> zero{};
+        unsigned long long reserved=0;
+        int space_errno=0;
+        for (;;) {
+            const auto written=::write(fd,zero.data(),zero.size());
+            if(written<0){space_errno=errno;break;}
+            if(written==0){space_errno=EIO;break;}
+            reserved+=static_cast<unsigned long long>(written);
+            require(reserved<=total_bytes,"reservation exceeded bounded filesystem");
+        }
+        require(::close(fd)==0,"reservation close failed");
+        require(space_errno==ENOSPC,"kernel did not report actual ENOSPC");
+        require(::statvfs(root.c_str(),&capacity)==0 && capacity.f_bavail==0,
+                "controlled filesystem not actually full");
+        const int before=counters.plt_file_index;
+        const auto failed_path=target();
+        bool propagated=false;
+        std::ostringstream logs;
+        auto* old=std::cout.rdbuf(logs.rdbuf());
+        try { output.write_plot(); }
+        catch(const std::exception& error) {
+            propagated=true;
+            std::cerr<<"actual ENOSPC Driver error: "<<error.what()<<'\n';
+        }
+        std::cout.rdbuf(old);
+        require(propagated,"full filesystem write was accepted");
+        require(counters.plt_file_index==before,"ENOSPC advanced publication index");
+        require(!std::filesystem::exists(failed_path),"ENOSPC exposed final file");
+        require(logs.str().find("Saved PLT")==std::string::npos,"ENOSPC logged success");
+        require(arch::core::file_sha256(first.string())==first_digest,
+                "ENOSPC changed previous successful publication");
+        for(const auto& item:std::filesystem::directory_iterator(root))
+            require(item.path().filename().string().find(".partial-")==std::string::npos,
+                    "ENOSPC leaked partial file");
+        require(std::filesystem::remove(reservation),"cannot release owned space reservation");
+        output.write_plot();
+        require(counters.plt_file_index==before+1 && std::filesystem::is_regular_file(failed_path),
+                "ENOSPC retry did not publish same index exactly once");
+        require(arch::core::file_sha256(first.string())==first_digest,
+                "retry changed previous successful file");
+        require(counters.step_count==0 && counters.t_current==0.,
+                "ENOSPC IO-only fixture advanced simulation");
+        std::cout<<"PASS actual_kernel_errno="<<space_errno
+                 <<" tmpfs_bytes="<<total_bytes<<" reserved_bytes="<<reserved
+                 <<" failed_index="<<before<<" retry_index="<<counters.plt_file_index
+                 <<" original_sha256="<<first_digest<<" time=0 step=0\n";
+        return 0;
+    }
     for(Fault stage:{Fault::Write,Fault::Flush,Fault::Close}){
         const int before=counters.plt_file_index;const auto failed_path=target();
         fault=stage;injected=0;bool propagated=false;
