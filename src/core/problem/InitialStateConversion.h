@@ -5,7 +5,9 @@
  * Workflow:
  * 1. Read validated configuration or a registered problem request.
  * 2. Convert case primitive fields to solver conserved state using the shared EOS.
- * 3. Return a single resolved value or state with explicit failure on invalid input.
+ * 3. For native RZ cells, validate all eight physical EOS samples and reuse
+ *    the shared V/W integration and density-weighted composition leaves.
+ * 4. Return a single resolved value or state with explicit failure on invalid input.
  */
 
 #pragma once
@@ -19,6 +21,7 @@
 #include "data/GlobalDefs.h"
 #include "data/UserTypes.h"
 #include "grid/GridMetrics.h"
+#include "numerics/state/RzCellAverage.h"
 #include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
 #include "physics/eos/eos_Utils.h"
@@ -111,39 +114,21 @@ double InitialMassFraction(const std::array<double,Samples>& weights,
     const std::array<double,Samples>& densities,const double* fractions)
 {
     static_assert(Samples>0);
-    std::array<double,Samples> denominator{},numerator{};
-    std::array<int,Samples> denominator_power{},numerator_power{};
-    int dmax=std::numeric_limits<int>::lowest(),nmax=dmax;
-    bool constant=true;
-    for(std::size_t k=0;k<Samples;++k) {
-        if(!std::isfinite(weights[k])||!(weights[k]>0.)
-            ||!std::isfinite(densities[k])||!(densities[k]>0.)
-            ||!std::isfinite(fractions[k])||fractions[k]<0.)
-            throw std::runtime_error("Invalid physical mass-fraction quadrature sample");
-        int ew=0,er=0,ex=0;
-        denominator[k]=std::frexp(weights[k],&ew)*std::frexp(densities[k],&er);
-        denominator_power[k]=ew+er;dmax=std::max(dmax,denominator_power[k]);
-        constant=constant&&fractions[k]==fractions[0];
-        if(fractions[k]>0.) {
-            numerator[k]=denominator[k]*std::frexp(fractions[k],&ex);
-            numerator_power[k]=denominator_power[k]+ex;
-            nmax=std::max(nmax,numerator_power[k]);
-        }
-    }
-    if(constant)return fractions[0];
-    if(nmax==std::numeric_limits<int>::lowest())return 0.;
-    double mass=0.,species_mass=0.;
-    for(std::size_t k=0;k<Samples;++k) {
-        mass+=std::scalbn(denominator[k],denominator_power[k]-dmax);
-        if(numerator[k]>0.)
-            species_mass+=std::scalbn(numerator[k],numerator_power[k]-nmax);
-    }
-    const double result=std::scalbn(species_mass/mass,nmax-dmax);
-    if(!std::isfinite(result)||result<0.)
+    if(!fractions)
+        throw std::runtime_error("Invalid physical mass-fraction quadrature sample");
+    const auto result=RzCellAverage::fraction_mean(weights,densities,
+        [fractions](std::size_t k) {return fractions[k];});
+    if(result.status==RzCellAverage::Status::unrepresentable)
         throw std::runtime_error("Initial mass-fraction ratio is not representable");
-    return result;
+    if(!result.valid())
+        throw std::runtime_error("Invalid physical mass-fraction quadrature sample");
+    return result.value;
 }
 
+/** Sample the actual positive physical cell, then borrow the shared math.
+ * Point EOS/bounds/repair rejection precedes integration; the returned native
+ * mixed-measure candidate still requires the same-stage post-ghost closure.
+ */
 template <class Eos,class Callback>
 InitialCellState InitialRzCellState(double r_lower,double r_upper,
     double z_lower,double z_upper,int species,const Eos& eos,
@@ -162,11 +147,13 @@ InitialCellState InitialRzCellState(double r_lower,double r_upper,
     InitialCellState output;
     output.mass_fractions.assign(species,0.);
     constexpr std::size_t sample_count=8;
+    const auto samples=GridMetrics::Rz::CellAverageSamples(r_lower,r_upper,z_lower,z_upper);
+    std::array<FluidVector,sample_count> point_samples{};
     std::array<double,sample_count> density_samples{},volume_weights{};
     std::vector<double> fraction_samples(static_cast<std::size_t>(species)*sample_count);
     std::size_t sample_index=0;
     PrimitiveData data;
-    for (const auto& q:GridMetrics::Rz::CellAverageSamples(r_lower,r_upper,z_lower,z_upper)) {
+    for (const auto& q:samples) {
         data=PrimitiveData{};
         data.mass_fractions.assign(species,0.);
         const auto p=Grid::PhysicalCoordsFromNative(2,"cylindrical",q.radius,q.axial,0.,
@@ -182,11 +169,7 @@ InitialCellState InitialRzCellState(double r_lower,double r_upper,
         if(arch::state::validate_eos(sample,data.mass_fractions.data(),species,bounds,eos)
             !=arch::state::Status::valid)
             throw std::runtime_error("RZ Init sample lies outside the selected EOS domain");
-        output.conserved.rho+=q.volume_weight*sample.rho;
-        output.conserved.mom_u+=q.volume_weight*sample.mom_u;
-        output.conserved.mom_v+=q.volume_weight*sample.mom_v;
-        output.conserved.mom_w+=q.angular_weight*sample.mom_w;
-        output.conserved.eng+=q.volume_weight*sample.eng;
+        point_samples[sample_index]=sample;
         density_samples[sample_index]=sample.rho;
         volume_weights[sample_index]=q.volume_weight;
         for(int sp=0;sp<species;++sp)
@@ -194,6 +177,11 @@ InitialCellState InitialRzCellState(double r_lower,double r_upper,
                 =data.mass_fractions[sp];
         ++sample_index;
     }
+    const auto integrated=RzCellAverage::conserved_mean(samples,
+        [&point_samples](std::size_t k) {return point_samples[k];});
+    if(!integrated.valid())
+        throw std::runtime_error("RZ Init integral has invalid finite fields or density");
+    output.conserved=integrated.value;
     const arch::state::Bounds bounds{limits.sml_rho,limits.min_eint,limits.max_eint};
     if(RzThermodynamics::provisional_native_state(output.conserved,nullptr,0,1,bounds)
         !=arch::state::Status::valid)

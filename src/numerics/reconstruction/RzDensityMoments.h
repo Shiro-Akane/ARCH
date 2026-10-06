@@ -3,8 +3,10 @@
  * @brief Shared density-only radial cell moments for the RZ reconstruction leaves.
  *
  * Workflow:
- * 1. Fit a density-only quadratic to three native V means and enforce its
- *    positivity over the whole cell while preserving the current V mean.
+ * 1. Fit a density-only quadratic to three real same-row native V means and
+ *    enforce positivity over the target cell while preserving its own V mean.
+ *    Central support retains the original path; explicit one-sided support
+ *    never fabricates a halo or infers an unavailable density.
  * 2. Integrate C=int rho*r^3 dr and s=int rho*r^5 dr/C with four Gauss points,
  *    and cache the normalized quadrature factors an angular caller needs.
  * 3. Expose angular_velocity, which forms temporary omega=J/(2*pi*dz*C) from
@@ -156,43 +158,74 @@ ARCH_INLINE double angular_velocity(double m_phi,const Cell& cell)
     return detail::scaled_value(numerator,2,denominator,3);
 }
 
-/** Fit density alone and integrate C and its r^2 graph abscissa.
+/** Fit density on exactly three real same-row cells containing the target.
  * Four Gauss nodes exactly integrate quadratic*r^5 (degree seven). Radius and
  * density scaling preserve signed ghost capacity without forming r^5.
  * Only rho of the three native cells and the actual grid are read; E, momenta,
  * m_phi and composition do not enter these fixed graph moments and no EOS is
- * used. Invalid geometry, nonpositive rho or a nonpositive ray returns an
- * invalid cell through the existing guards.
+ * used. The explicit support consists of columns [support_begin,support_begin+2].
+ * Invalid/missing support or density returns invalid, without extrapolation.
+ * Target-anchor fit and p_theta=rho_target+theta*(p-rho_target) preserve the
+ * target's actual V mean even when it is the first or last support cell.
  */
 template<class StateReader>
-ARCH_INLINE Cell density_cell(const StateReader& read,int index,
-    const GridMetrics::GeometryView& grid,int i)
+ARCH_INLINE Cell density_cell_supported(const StateReader& read,int index,
+    const GridMetrics::GeometryView& grid,int i,int support_begin)
 {
     Cell result{};
     if(grid.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz||
        grid.geometry!=GridMetrics::Geometry::Cylindrical||grid.dim!=2||
-       !std::isfinite(grid.dx1)||!(grid.dx1>0.)||grid.ng<1||grid.stride_y<=0||
-       i<1||i+1>=grid.stride_y||index<1||index+1>=grid.total_size||
+       !std::isfinite(grid.dx1)||!(grid.dx1>0.)||grid.ng<1||grid.stride_y<3||
+       i<0||i>=grid.stride_y||index<0||index>=grid.total_size||
+       support_begin<0||support_begin>grid.stride_y-3||
        index%grid.stride_y!=i)return result;
-    for(int offset=-1;offset<=1;++offset) {
-        const double low=grid.GetFacePosL(i+offset),high=grid.GetFacePosR(i+offset);
+    const int row_begin=index-i;
+    const int support_end=support_begin+2;
+    if(i<support_begin||i>support_end||support_end>=grid.total_size-row_begin)
+        return result;
+    for(int offset=0;offset<3;++offset) {
+        const double low=grid.GetFacePosL(support_begin+offset),
+            high=grid.GetFacePosR(support_begin+offset);
         if(!std::isfinite(low)||!std::isfinite(high)||!(high>low)||
            (low<0.&&high>0.))return result;
     }
-    const auto low=read(index-1),middle=read(index),high=read(index+1);
+    const int source=row_begin+support_begin;
+    const auto low=read(source),middle=read(source+1),high=read(source+2);
     if(!std::isfinite(low.rho)||!(low.rho>0.)||
        !std::isfinite(middle.rho)||!(middle.rho>0.)||
        !std::isfinite(high.rho)||!(high.rho>0.))return result;
-    const auto geometry=RzReconstruction::radial_cell(grid,i);
+    const int target=i-support_begin;
+    const bool central=target==1;
+    RzReconstruction::RadialCell geometry{};
+    if(central)geometry=RzReconstruction::radial_cell(grid,i);
+    else {
+        geometry.origin=grid.GetCellCenterX(i);geometry.spacing=grid.dx1;
+        if(!std::isfinite(geometry.origin))return result;
+        for(int n=0;n<3;++n)
+            geometry.volume[n]=RzReconstruction::cell_moments(
+                grid.GetFacePosL(support_begin+n),grid.GetFacePosR(support_begin+n),
+                geometry.origin,geometry.spacing,false);
+    }
     result.origin=geometry.origin;result.spacing=geometry.spacing;
     result.lower=grid.GetFacePosL(i);result.upper=grid.GetFacePosR(i);
     if(!std::isfinite(result.origin))return result;
-    result.density=RzReconstruction::field(low.rho,middle.rho,high.rho,geometry);
+    const double rho[]{low.rho,middle.rho,high.rho};
+    const double target_mean=rho[target];
+    if(central)
+        result.density=RzReconstruction::field(low.rho,middle.rho,high.rho,geometry);
+    else {
+        // fit's middle observation is its authoritative anchor, not a
+        // physical ordering requirement. Permute the same three real V
+        // observations so c0=rho_target-c1*<t>_target-c2*<t^2>_target.
+        const int left=target==0?1:0,right=target==2?1:2;
+        result.density=RzReconstruction::fit(rho[left],target_mean,rho[right],
+            geometry.volume[left],geometry.volume[target],geometry.volume[right]);
+    }
     double density_scale=0.;
-    if(!detail::positive_density(result.density,middle.rho,geometry.volume[1],
+    if(!detail::positive_density(result.density,target_mean,geometry.volume[target],
         (result.lower-result.origin)/result.spacing,
         (result.upper-result.origin)/result.spacing,density_scale))return result;
-    density_scale=std::fmax(density_scale,middle.rho);
+    density_scale=std::fmax(density_scale,target_mean);
     const double radius_scale=std::fmax(std::abs(result.lower),std::abs(result.upper));
     const double half=.5*(result.upper-result.lower),midpoint=result.lower+half;
     if(!(density_scale>0.)||!(radius_scale>0.)||!std::isfinite(half))return result;
@@ -214,5 +247,17 @@ ARCH_INLINE Cell density_cell(const StateReader& read,int index,
     result.density_scale=density_scale;result.radius_scale=radius_scale;
     result.weighted_two=weighted_two;result.weighted_three=weighted_three;
     result.valid=true;result.valid=detail::cell_valid(result);return result;
+}
+
+/** Original centered density closure; preserve its three-cell arithmetic path.
+ * A caller needing actual one-sided ghost support must select that explicit
+ * support through density_cell_supported, never invent a missing halo.
+ */
+template<class StateReader>
+ARCH_INLINE Cell density_cell(const StateReader& read,int index,
+    const GridMetrics::GeometryView& grid,int i)
+{
+    if(i<1||index<1)return {};
+    return density_cell_supported(read,index,grid,i,i-1);
 }
 } // namespace RzDensity

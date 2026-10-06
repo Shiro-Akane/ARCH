@@ -188,5 +188,72 @@
     "inverseNegativeOnlyMigrationExactMatch": true,
     "normalBodyUnchanged": true,
     "currentSourceReexecutionClaimed": false
+  },
+  "sharedNumericalLeaves": {
+    "recordedAtUtc": "2026-10-06T21:59:00.889754+00:00",
+    "sourceBaseCommit": "18d0aa750",
+    "productionExecutableSha256": "1d5f90f1e793b59a239888f3c16a306d5497f34ae08384764ee265bfeebbe971",
+    "sourceSha256": {
+      "src/numerics/state/RzCellAverage.h": "6d562ea63a509b0bc0f4859690b8f148d66c2fae716029b739cf26f3ff1bc778",
+      "src/core/problem/InitialStateConversion.h": "0e4ac9613e0846d1e164773fbeda29afca60074fc006ea53934389efa983ad26",
+      "tests/api/preview/test_initial_conversion.cpp": "ced0c033f77ba5d71ac1b8c4a87c7a63a84806a21e2b7628d256c8a15c081649",
+      "src/numerics/reconstruction/RzDensityMoments.h": "f022fc16da120bd45c527489768e5a95f7c4d8c7903dc83c03a7d745113f49c9",
+      "tests/host/grid/test_curvilinear_metrics.cpp": "2162e42048af5a7de0aeda9ecded5303897cb8d454a9867c7b5799486d7a3fbf"
+    },
+    "cpuBuildSeconds": 236.013,
+    "ctest": {
+      "tests": 6,
+      "failures": 0,
+      "seconds": 3.06,
+      "names": [
+        "preview_initial_conversion",
+        "curvilinear_metrics",
+        "shared_stage_scheduler",
+        "boundary_plan",
+        "amr_operation_plans",
+        "low_density_math"
+      ]
+    },
+    "scopedQualification": "Shared native quadrature, density-weighted species and explicit three-real-cell supported density math. Actual independent antiderivative/EOS input witnesses; no public native RZ/BC/AMR/evolution/CUDA qualification.",
+    "originalAcceptanceBudgetsUnchanged": true,
+    "newCiTestsAdded": false,
+    "newRawFilesProduced": 0
+  },
+  "independentVariableBoundaryReference": {
+    "status": "accepted_mathematical_reference_only",
+    "fractions": {
+      "V": "3/2",
+      "W": "7/3",
+      "M": "39/16",
+      "rhoBar": "13/8",
+      "mrBar": "1879/5760",
+      "mzBar": "-679/11520",
+      "mphiBar": "1401/1024",
+      "EBar": "114959/184320",
+      "XBar": "44911/149760",
+      "IStar": "51/8",
+      "kappa": "1274/1377",
+      "eClosure": "668715191/19063848960",
+      "ePhysical": "4399/149760",
+      "positiveResidual": "108740087/19063848960"
+    },
+    "pointInternalEqualsClosureInternal": false,
+    "providerCalls": 2,
+    "providerSeconds": 149.82,
+    "tokens": {
+      "input": 3200,
+      "cachedInput": 768,
+      "output": 41810,
+      "reasoning": 41399,
+      "visible": 411
+    },
+    "estimatedCostUsd": {
+      "offPeak": 0.0254531,
+      "peak": 0.0509062,
+      "finalBill": "unknown"
+    },
+    "extraWork": "One permitted delivery repair after automatic output cap truncated all reasoning; no model/test/threshold changes",
+    "blockedWaitSeconds": 0,
+    "qualification": "Independent exact polynomial reference and positive variance/Cauchy gap; scientific stage acceptance remains Root-owned."
   }
 }

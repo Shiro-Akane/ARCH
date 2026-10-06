@@ -100,7 +100,177 @@ static void test_extreme_ideal_initialization() {
     std::cout << "INITIAL_RANGE_PASS states=4 actual_ideal_eos=true no_repair=true\n";
 }
 
+// Independent antiderivatives for native radial/axial monomials. This
+// fixture supplies actual point-EOS-valid samples but qualifies only the
+// shared numerical integration, not a completed Runtime/AMR ghost state.
+static long double native_monomial_mean(long double lower,long double upper,
+    int power,int measure_power) {
+    const int numerator_power=power+measure_power+1;
+    const int denominator_power=measure_power+1;
+    return ((std::pow(upper,numerator_power)-std::pow(lower,numerator_power))
+            /numerator_power)
+         / ((std::pow(upper,denominator_power)-std::pow(lower,denominator_power))
+            /denominator_power);
+}
+
+static void test_shared_rz_cell_average() {
+    SpeciesManager empty;
+    IdealGas eos(1.4,empty);
+    const arch::state::Bounds bounds{1.e-30,0.,1.e6};
+    for(const auto radial:std::array<std::array<double,2>,2>{{{0.,1.},{.5,1.25}}}) {
+        const auto samples=GridMetrics::Rz::CellAverageSamples(radial[0],radial[1],-.25,.75);
+        for(int power=0;power<=6;++power) {
+            std::array<FluidVector,8> points{};
+            const int angular_power=power<=5?power:0;
+            for(std::size_t k=0;k<points.size();++k) {
+                const double r=samples[k].radius,z=samples[k].axial;
+                points[k]={1.,std::pow(r,power),z*z*z,std::pow(r,angular_power),
+                    1000.+std::pow(r,power)*z*z};
+                require(arch::state::validate_eos(points[k],nullptr,0,bounds,eos)
+                            ==arch::state::Status::valid,
+                        "shared integral fixture must supply actual point-EOS-valid data");
+            }
+            const auto result=RzCellAverage::conserved_mean(samples,
+                [&points](std::size_t k) {return points[k];});
+            require(result.valid(),"valid native monomial integration failed");
+            const long double radial_v=native_monomial_mean(radial[0],radial[1],power,1);
+            const long double radial_w=native_monomial_mean(radial[0],radial[1],angular_power,2);
+            const long double axial_three=native_monomial_mean(-.25L,.75L,3,0);
+            const long double axial_two=native_monomial_mean(-.25L,.75L,2,0);
+            const std::array<double,5> expected{1.,double(radial_v),double(axial_three),
+                double(radial_w),double(1000.L+radial_v*axial_two)};
+            const auto& s=result.value;
+            const std::array<double,5> actual{s.rho,s.mom_u,s.mom_v,s.mom_w,s.eng};
+            for(std::size_t c=0;c<actual.size();++c)
+                require(std::abs(actual[c]-expected[c])<2.e-12,
+                        "shared RZ average differs from an independent antiderivative");
+        }
+    }
+    const auto samples=GridMetrics::Rz::CellAverageSamples(0.,1.,0.,1.);
+    std::array<FluidVector,8> cold{};
+    std::array<double,8> weights{},densities{},fractions{};
+    for(std::size_t k=0;k<cold.size();++k) {
+        const double r=samples[k].radius;
+        cold[k]={1.,0.,0.,r,1./64.+.5*r*r};
+        require(arch::state::validate_eos(cold[k],nullptr,0,bounds,eos)
+                    ==arch::state::Status::valid,
+                "cold rotating integration samples must pass actual point EOS");
+        weights[k]=samples[k].volume_weight;
+        densities[k]=7./8.+r*r/4.;
+        fractions[k]=1./4.+r*r/8.;
+    }
+    const auto rotation=RzCellAverage::conserved_mean(samples,
+        [&cold](std::size_t k) {return cold[k];});
+    require(rotation.valid()&&std::abs(rotation.value.rho-1.)<2.e-12
+            &&rotation.value.mom_u==0.&&rotation.value.mom_v==0.
+            &&std::abs(rotation.value.mom_w-3./4.)<2.e-12
+            &&std::abs(rotation.value.eng-17./64.)<2.e-12,
+            "cold native V/W integral changed rho=Omega=1 independent means");
+    require(arch::state::recover(rotation.value).status==arch::state::Status::unresolved_energy,
+            "mixed-measure cold mean was accidentally treated as point momentum");
+    const auto weighted=RzCellAverage::fraction_mean(weights,densities,
+        [&fractions](std::size_t k) {return fractions[k];});
+    // integral rho*X*r dr = (7/32)/2 + (11/64)/4 + (1/32)/6;
+    // integral rho*r dr = (7/8)/2 + (1/4)/4 = 1/2.
+    constexpr long double independent_fraction=121.L/384.L;
+    require(weighted.valid()&&std::abs(weighted.value-double(independent_fraction))<2.e-12,
+            "density-weighted Xi differs from the independent rational integral");
+    require(std::abs(ProblemHelper::detail::InitialMassFraction(weights,densities,
+                fractions.data())-weighted.value)<2.e-12,
+            "InitialMassFraction host entry did not delegate the shared ratio");
+
+    const std::array<double,2> unequal_weights{std::ldexp(1.,-1000),std::ldexp(1.,1000)};
+    const std::array<double,2> reciprocal_density{std::ldexp(1.,1000),std::ldexp(1.,-1000)};
+    const std::array<double,2> tiny_fraction{std::ldexp(1.,-1000),std::ldexp(1.,-999)};
+    const auto tiny=RzCellAverage::fraction_mean(unequal_weights,reciprocal_density,
+        [&tiny_fraction](std::size_t k) {return tiny_fraction[k];});
+    require(reciprocal_density[1]*tiny_fraction[1]==0.
+            &&tiny.valid()&&tiny.value==std::ldexp(3.,-1001),
+            "scaled Xi ratio lost a representable contribution to premature rho*Xi underflow");
+    const std::array<double,2> huge{std::ldexp(1.,1000),std::ldexp(1.,1000)};
+    const auto balanced=RzCellAverage::fraction_mean(huge,huge,
+        [](std::size_t k) {return k?.75:.25;});
+    require(!std::isfinite(huge[0]*huge[0])&&balanced.valid()&&balanced.value==.5,
+            "scaled Xi ratio rejected a finite ratio because w*rho overflowed");
+    for(double constant:std::array<double,3>{0.,std::numeric_limits<double>::denorm_min(),.5}) {
+        const auto exact=RzCellAverage::fraction_mean(unequal_weights,reciprocal_density,
+            [constant](std::size_t) {return constant;});
+        require(exact.valid()&&exact.value==constant,
+                "constant Xi must be reproduced exactly, including positive subnormals");
+    }
+
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    const double inf=std::numeric_limits<double>::infinity();
+    const std::array<double,2> good{1.,1.};
+    // A varying exact ratio of denorm_min/2 rounds to zero under the existing
+    // IEEE contract. This is rounding loss, not a species floor or default.
+    const auto rounded_zero=RzCellAverage::fraction_mean(good,good,
+        [](std::size_t k) {return k?0.:std::numeric_limits<double>::denorm_min();});
+    require(rounded_zero.valid()&&rounded_zero.value==0.,
+            "varying Xi final rounding behavior changed during math extraction");
+    for(double bad:std::array<double,4>{0.,-1.,nan,inf}) {
+        const std::array<double,2> invalid{1.,bad};
+        const auto bad_weight=RzCellAverage::fraction_mean(invalid,good,
+            [](std::size_t) {return std::numeric_limits<double>::denorm_min();});
+        const auto bad_density=RzCellAverage::fraction_mean(good,invalid,
+            [](std::size_t) {return .5;});
+        require(!bad_weight.valid()&&bad_weight.status==RzCellAverage::Status::invalid_weight
+                &&std::isnan(bad_weight.value),
+                "constant Xi bypassed invalid weight validation or returned a usable default");
+        require(!bad_density.valid()&&bad_density.status==RzCellAverage::Status::invalid_density
+                &&std::isnan(bad_density.value),
+                "constant Xi bypassed invalid density validation or returned a usable default");
+    }
+    for(double bad:std::array<double,3>{-1.,nan,inf}) {
+        const auto invalid=RzCellAverage::fraction_mean(good,good,
+            [bad](std::size_t k) {return k?bad:.5;});
+        require(!invalid.valid()&&invalid.status==RzCellAverage::Status::invalid_fraction
+                &&std::isnan(invalid.value),
+                "invalid Xi must return a category and an unusable NaN");
+    }
+    for(int invalid_kind=0;invalid_kind<6;++invalid_kind) {
+        auto invalid_samples=samples;
+        auto invalid_points=cold;
+        RzCellAverage::Status expected=RzCellAverage::Status::invalid_coordinate;
+        if(invalid_kind==0)invalid_samples[0].radius=-1.;
+        if(invalid_kind==1)invalid_samples[0].axial=nan;
+        if(invalid_kind==2) {
+            invalid_samples[0].angular_weight=0.;
+            expected=RzCellAverage::Status::invalid_weight;
+        }
+        if(invalid_kind==3) {
+            invalid_points[0].eng=inf;
+            expected=RzCellAverage::Status::nonfinite_state;
+        }
+        if(invalid_kind==4) {
+            invalid_points[0].rho=0.;
+            expected=RzCellAverage::Status::invalid_density;
+        }
+        if(invalid_kind==5) {
+            // Deliberately corrupted finite weight, not a claimed GridMetrics
+            // rule: its product cannot be represented and must not publish U.
+            invalid_samples[0].volume_weight=std::numeric_limits<double>::max();
+            invalid_points[0].rho=2.;
+            expected=RzCellAverage::Status::unrepresentable;
+        }
+        const auto invalid=RzCellAverage::conserved_mean(invalid_samples,
+            [&invalid_points](std::size_t k) {return invalid_points[k];});
+        require(!invalid.valid()&&invalid.status==expected
+                &&std::isnan(invalid.value.rho)&&std::isnan(invalid.value.mom_u)
+                &&std::isnan(invalid.value.mom_v)&&std::isnan(invalid.value.mom_w)
+                &&std::isnan(invalid.value.eng),
+                "invalid integral must return a category and five unusable NaNs");
+    }
+    bool null_rejected=false;
+    try { (void)ProblemHelper::detail::InitialMassFraction(good,good,nullptr); }
+    catch(const std::runtime_error&) {null_rejected=true;}
+    require(null_rejected,"host fraction wrapper must reject a null reader source");
+    std::cout<<"RZ_SHARED_AVERAGE_PASS monomials=14 cold_native=true scaled_xi=true "
+                "exact_subnormal=true invalid_inputs=true\n";
+}
+
 int main() {
+    test_shared_rz_cell_average();
     test_extreme_ideal_initialization();
     SpeciesManager empty;
     IdealGas air(1.4, empty);

@@ -11,6 +11,7 @@
 #include "numerics/integrator/TimeIntegratorEuler.h"
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
+#include "numerics/reconstruction/RzDensityMoments.h"
 #include "numerics/state/RzNativeClosure.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "math/geometry/CurvilinearMetricCases.h"
@@ -22,8 +23,11 @@
 #include "physics/diagnostics/VelocityDiagnostics.h"
 #include <iostream>
 #include <algorithm>
+#include <array>
 #include <bit>
+#include <cmath>
 #include <cstdint>
+#include <limits>
 #include <mutex>
 #include <span>
 #include <stdexcept>
@@ -39,6 +43,202 @@ void close(double actual, double expected, const char* name) {
         2.e-12 * std::max(1.0, std::abs(expected)))
         throw std::runtime_error(name);
 }
+
+/** Independent physical polynomial integral: int r^power dr on [left,right]. */
+long double supported_density_power_integral(long double left,long double right,int power)
+{
+    long double low=1.,high=1.;
+    for(int n=0;n<=power;++n) {low*=left;high*=right;}
+    return (high-low)/static_cast<long double>(power+1);
+}
+
+/** Independent antiderivatives for rho=a+b*r+c*r^2; no production moments/Gauss.
+ * V mass is int rho*|r| dr; signed capacity is int rho*r^3 dr and physical
+ * rotational inertia is 2*pi*dz*abs(capacity), including reflected ghosts.
+ */
+struct SupportedDensityReference {
+    long double a,b,c;
+    long double integral(long double left,long double right,int power) const {
+        return a*supported_density_power_integral(left,right,power)
+            +b*supported_density_power_integral(left,right,power+1)
+            +c*supported_density_power_integral(left,right,power+2);
+    }
+    long double mass(long double left,long double right) const {
+        return (right<=0.?-1.L:1.L)*integral(left,right,1);
+    }
+    double mean(double left,double right) const {
+        const long double area=(right<=0.?-1.L:1.L)*
+            supported_density_power_integral(left,right,1);
+        return static_cast<double>(mass(left,right)/area);
+    }
+    double point(double r) const {return static_cast<double>(a+r*(b+r*c));}
+};
+
+/** A real finite row range: count only the three advertised reads in order.
+ * Everything outside the support, and each non-density field, is poisoned.
+ */
+struct SupportedDensityReader {
+    const std::vector<FluidVector>& cells;
+    int first;
+    mutable std::array<int,3> observed{};
+    mutable int count=0;
+    FluidVector operator()(int index) const {
+        if(index<first||index>first+2||index<0||index>=static_cast<int>(cells.size())||count>=3)
+            throw std::runtime_error("RZ supported density accessed unavailable real support");
+        observed[count++]=index;
+        return cells[index];
+    }
+    void require_three() const {
+        if(count!=3||observed!=std::array<int,3>{first,first+1,first+2})
+            throw std::runtime_error("RZ supported density changed its real three-cell read order");
+    }
+};
+
+/** Check actual supported closure against independent physical antiderivatives.
+ * Targets include the outermost real column and signed reflected axis ghosts.
+ * The original 2e-12*max(1,abs(reference)) owner budget remains unchanged.
+ */
+void test_rz_supported_density()
+{
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    auto grid_for=[](int ng,int columns) {
+        GridMetrics::GeometryView grid;
+        grid.geometry=GridMetrics::Geometry::Cylindrical;
+        grid.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        grid.dim=2;grid.ng=ng;grid.stride_y=columns;
+        grid.total_size=3*columns;grid.dx1=1.;grid.x1_min=0.;
+        return grid;
+    };
+    const auto check=[&](const GridMetrics::GeometryView& grid,int support_begin,
+        const SupportedDensityReference& reference) {
+        const int row_begin=grid.stride_y; // A real nonfirst row, not a flattened halo.
+        std::vector<FluidVector> cells(grid.total_size,FluidVector{nan,nan,nan,nan,nan});
+        for(int offset=0;offset<3;++offset) {
+            const int column=support_begin+offset;
+            cells[row_begin+column].rho=reference.mean(grid.GetFacePosL(column),grid.GetFacePosR(column));
+        }
+        for(int offset=0;offset<3;++offset) {
+            const int i=support_begin+offset,index=row_begin+i;
+            const SupportedDensityReader read{cells,row_begin+support_begin};
+            const auto cell=RzDensity::density_cell_supported(read,index,grid,i,support_begin);
+            read.require_three();
+            if(!cell.valid)throw std::runtime_error("RZ real supported polynomial was rejected");
+            const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+            close(cell.lower,left,"RZ supported lower bound");
+            close(cell.upper,right,"RZ supported upper bound");
+            close(cell.origin,grid.GetCellCenterX(i),"RZ supported target origin");
+            close(cell.spacing,grid.dx1,"RZ supported spacing");
+            const long double capacity=reference.integral(left,right,3);
+            close(cell.capacity,static_cast<double>(capacity),"RZ supported signed C antiderivative");
+            close(cell.mean_s,static_cast<double>(reference.integral(left,right,5)/capacity),
+                "RZ supported r-square abscissa antiderivative");
+            for(double radius:{left,.5*(left+right),right})
+                close(cell.density.at((radius-cell.origin)/cell.spacing),reference.point(radius),
+                    "RZ supported physical density polynomial");
+            // Translate the RESULT polynomial for an independent physical integral.
+            const long double h=cell.spacing,o=cell.origin,
+                c=static_cast<long double>(cell.density.quadratic)/(h*h),
+                b=static_cast<long double>(cell.density.linear)/h-2.L*c*o,
+                a=cell.density.constant-static_cast<long double>(cell.density.linear)*o/h+c*o*o;
+            const SupportedDensityReference reconstructed{a,b,c};
+            close(reconstructed.mean(left,right),cells[index].rho,"RZ supported target V mean");
+            constexpr long double pi=3.141592653589793238462643383279502884L,dz=.75L;
+            const long double ring=2.L*pi*dz;
+            close(static_cast<double>(ring*reconstructed.mass(left,right)),
+                static_cast<double>(ring*reference.mass(left,right)),"RZ supported physical M");
+            close(static_cast<double>(ring*std::abs(static_cast<long double>(cell.capacity))),
+                static_cast<double>(ring*std::abs(capacity)),"RZ supported physical I");
+            if(offset==1) {
+                // API compatibility only; independent physical integrals above are the oracle.
+                const SupportedDensityReader centered_read{cells,row_begin+support_begin};
+                const auto centered=RzDensity::density_cell(centered_read,index,grid,i);
+                centered_read.require_three();
+                const auto fields=[](const RzDensity::Cell& value) {
+                    return std::array<double,13>{value.density.constant,value.density.linear,
+                        value.density.quadratic,value.origin,value.spacing,value.lower,value.upper,
+                        value.capacity,value.mean_s,value.density_scale,value.radius_scale,
+                        value.weighted_two,value.weighted_three};
+                };
+                const auto original=fields(centered),supported=fields(cell);
+                if(centered.valid!=cell.valid)throw std::runtime_error("RZ central validity changed");
+                for(std::size_t n=0;n<original.size();++n)
+                    if(std::bit_cast<std::uint64_t>(original[n])!=std::bit_cast<std::uint64_t>(supported[n]))
+                        throw std::runtime_error("RZ centered density arithmetic path changed");
+            }
+        }
+    };
+    // Positive outer ghost [3,4] sees only [1,2],[2,3],[3,4]; no fourth cell exists.
+    check(grid_for(1,5),2,{1.25L,0.L,0.L});
+    check(grid_for(1,5),2,{2.L,.125L,.25L});
+    // Even density across distinct cells touching the axis remains valid; a cell
+    // that itself straddles the axis is rejected by the separate negative below.
+    check(grid_for(3,9),0,{1.25L,0.L,0.L});
+    check(grid_for(3,9),0,{2.L,0.L,.25L});
+    check(grid_for(1,5),0,{1.25L,0.L,0.L});
+    check(grid_for(1,5),0,{2.L,0.L,.25L});
+
+    {
+        auto geometry=grid_for(1,3);geometry.x1_min=1.;
+        std::vector<FluidVector> cells(geometry.total_size,FluidVector{nan,nan,nan,nan,nan});
+        cells[3].rho=1.;cells[4].rho=1.;cells[5].rho=100.;
+        const SupportedDensityReader read{cells,3};
+        const auto cell=RzDensity::density_cell_supported(read,3,geometry,0,0);
+        read.require_three();
+        // These positive means on [0,1],[1,2],[2,3] fit the physical
+        // polynomial 56-123.75*r+55*r^2, whose rho(1)=-12.75 requires the
+        // existing positivity contraction. Its authoritative target mean is 1.
+        if(!cell.valid)throw std::runtime_error("RZ one-sided positive mean contraction failed");
+        const long double h=cell.spacing,o=cell.origin,
+            c=static_cast<long double>(cell.density.quadratic)/(h*h),
+            b=static_cast<long double>(cell.density.linear)/h-2.L*c*o,
+            a=cell.density.constant-static_cast<long double>(cell.density.linear)*o/h+c*o*o;
+        const SupportedDensityReference contracted{a,b,c};
+        close(contracted.mean(0.,1.),1.,"RZ one-sided contraction preserved actual target V mean");
+        close(cell.capacity,static_cast<double>(contracted.integral(0.,1.,3)),
+            "RZ one-sided contracted signed C");
+        close(cell.mean_s,static_cast<double>(contracted.integral(0.,1.,5)/contracted.integral(0.,1.,3)),
+            "RZ one-sided contracted graph abscissa");
+    }
+
+    const auto grid=grid_for(1,5);
+    std::vector<FluidVector> cells(grid.total_size,FluidVector{1.,nan,nan,nan,nan});
+    auto reject_without_read=[&](const GridMetrics::GeometryView& geometry,int index,int i,int begin) {
+        const SupportedDensityReader read{cells,7};
+        if(RzDensity::density_cell_supported(read,index,geometry,i,begin).valid||read.count!=0)
+            throw std::runtime_error("RZ invalid real geometry/support was read or accepted");
+    };
+    reject_without_read(grid,6,1,2); // Target not in advertised support.
+    reject_without_read(grid,8,3,-1);
+    reject_without_read(grid,8,3,3); // Would borrow the following row.
+    reject_without_read(grid,8,2,2); // Flat index does not name target column.
+    reject_without_read(grid,-1,3,2);
+    reject_without_read(grid,grid.total_size,3,2);
+    auto invalid=grid;invalid.total_size=9;
+    reject_without_read(invalid,8,3,2); // Third real support index 9 is missing.
+    invalid=grid;invalid.x1_min=.25;
+    reject_without_read(invalid,7,2,0); // Actual [-.75,.25] support cell straddles axis.
+    for(double spacing:{0.,-1.,nan,std::numeric_limits<double>::infinity()}) {
+        invalid=grid;invalid.dx1=spacing;reject_without_read(invalid,8,3,2);
+    }
+    invalid=grid;invalid.x1_min=nan;reject_without_read(invalid,8,3,2);
+    invalid=grid;invalid.semantics=GridMetrics::GeometrySemantics::Existing;
+    reject_without_read(invalid,8,3,2);
+    invalid=grid;invalid.geometry=GridMetrics::Geometry::Cartesian;
+    reject_without_read(invalid,8,3,2);
+    invalid=grid;invalid.dim=1;reject_without_read(invalid,8,3,2);
+    invalid=grid;invalid.ng=0;reject_without_read(invalid,8,3,2);
+    invalid=grid;invalid.stride_y=2;reject_without_read(invalid,1,1,0);
+    invalid=grid;invalid.total_size=0;reject_without_read(invalid,0,0,0);
+    for(int offset=0;offset<3;++offset)
+        for(double rho:{0.,-1.,nan,std::numeric_limits<double>::infinity()}) {
+            cells[7+offset].rho=rho;
+            const SupportedDensityReader read{cells,7};
+            if(RzDensity::density_cell_supported(read,8,grid,3,2).valid)
+                throw std::runtime_error("RZ nonpositive/nonfinite real support density accepted");
+            read.require_three();cells[7+offset].rho=1.;
+        }
+}
+
 struct ConstantEos {
     double get_pressure(const FluidVector&, const double*) const { return 5.0; }
     double get_sound_speed(const FluidVector&, double, const double*) const { return 2.0; }
@@ -1330,6 +1530,7 @@ int main(int argc,char** argv)
     // Complete Host operator with native padded storage and explicit RZ chart.
     RzViscousCases::native_thermodynamic_closure();
     RzReconstructionCases::native_profile();
+    test_rz_supported_density();
     RzViscousCases::azimuthal_operator();
     ViscousGeometryCases::convergence("cpu", evaluate);
     ViscousGeometryCases::radial_origin("cpu", evaluate);
