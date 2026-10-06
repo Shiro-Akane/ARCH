@@ -1,0 +1,134 @@
+{
+  "audited_ref": "d430de65bf1312e135ceb7b12e18736877e0f8e0",
+  "input_checks": [
+    {
+      "id": "snia-2d-benchmark",
+      "path_hash_matches": true,
+      "original_path_hash_matches": true,
+      "actual_changes": {
+        "max_steps": "-1",
+        "out_dir": "studio/.local/integration/proposed-snia-2d-benchmark",
+        "base_name": "SNIaCoupled2Dbenchmark",
+        "chk_dt": "5e-8"
+      },
+      "removed_keys": [],
+      "endpoint_matches": true,
+      "restart_split_matches": true,
+      "declared_overrides_match_after": true,
+      "no_undeclared_changes": true,
+      "path": "validation/gravity/candidates/benchmark-20261006/snia-2d-benchmark.par",
+      "sha256": "8195994965f596d3f1936ac39c0ad681a8bbaf2e1b8bf3cce0f269292ef455f9",
+      "original_path": "simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "original_sha256": "fffe60075b5610759d6388af904e69fe2f180a34886a4b6ad5d487ca70284d8a"
+    },
+    {
+      "id": "snia-2d-long",
+      "path_hash_matches": true,
+      "original_path_hash_matches": true,
+      "actual_changes": {
+        "tmax": "1e-6",
+        "max_steps": "-1",
+        "out_dir": "studio/.local/integration/proposed-snia-2d-long",
+        "base_name": "SNIaCoupled2Dlong",
+        "chk_dt": "5e-7"
+      },
+      "removed_keys": [],
+      "endpoint_matches": true,
+      "restart_split_matches": true,
+      "declared_overrides_match_after": true,
+      "no_undeclared_changes": true,
+      "path": "validation/gravity/candidates/benchmark-20261006/snia-2d-long.par",
+      "sha256": "cc89cd79f9a285c89c0849f9bb46512c77094c0b91ba446c64b98c4ea23ae8cf",
+      "original_path": "simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "original_sha256": "fffe60075b5610759d6388af904e69fe2f180a34886a4b6ad5d487ca70284d8a"
+    },
+    {
+      "id": "snia-3d-benchmark",
+      "path_hash_matches": true,
+      "original_path_hash_matches": true,
+      "actual_changes": {
+        "max_steps": "-1",
+        "out_dir": "studio/.local/integration/proposed-snia-3d-benchmark",
+        "base_name": "SNIaCoupled3Dbenchmark",
+        "chk_dt": "5e-8"
+      },
+      "removed_keys": [],
+      "endpoint_matches": true,
+      "restart_split_matches": true,
+      "declared_overrides_match_after": true,
+      "no_undeclared_changes": true,
+      "path": "validation/gravity/candidates/benchmark-20261006/snia-3d-benchmark.par",
+      "sha256": "c388d7337b3554ea963113ca6ed20da9af02696a2f71d30af1ce398ef1d33f8b",
+      "original_path": "simulation/SNIaCoupled/SNIaCoupled_3d_cartesian_amr.par",
+      "original_sha256": "662d72fc12fdb604d71fac82d9cd63d21e437f688e27ff54ea4d14061c9d029a"
+    },
+    {
+      "id": "snia-3d-long",
+      "path_hash_matches": true,
+      "original_path_hash_matches": true,
+      "actual_changes": {
+        "tmax": "1e-6",
+        "max_steps": "-1",
+        "out_dir": "studio/.local/integration/proposed-snia-3d-long",
+        "base_name": "SNIaCoupled3Dlong",
+        "chk_dt": "5e-7"
+      },
+      "removed_keys": [],
+      "endpoint_matches": true,
+      "restart_split_matches": true,
+      "declared_overrides_match_after": true,
+      "no_undeclared_changes": true,
+      "path": "validation/gravity/candidates/benchmark-20261006/snia-3d-long.par",
+      "sha256": "1d776c3664fe46b07e3fe7f049e5d3f967addfdd13a2730797e0f5383da32a49",
+      "original_path": "simulation/SNIaCoupled/SNIaCoupled_3d_cartesian_amr.par",
+      "original_sha256": "662d72fc12fdb604d71fac82d9cd63d21e437f688e27ff54ea4d14061c9d029a"
+    }
+  ],
+  "network_checks": [
+    {
+      "path": "src/physics/network/aprox13/NetAprox13.cpp",
+      "hash_matches": true,
+      "expected_sha256": "8f87ee39e2c80c9c22fb9241e2c5a61476a7f4a8a662ad39e43028daa9cc96d4"
+    },
+    {
+      "path": "src/physics/network/aprox13/NetAprox13.h",
+      "hash_matches": true,
+      "expected_sha256": "2dfbc8aececc68c71668248c463bf1f64bfd1e4570f872e37b0cfbdd0223d907"
+    },
+    {
+      "path": "src/physics/network/aprox13/README.md",
+      "hash_matches": true,
+      "expected_sha256": "94487b7286781f729b2986fbed2d87ff3d6ffa70206e1cab287bcea691e716a2"
+    },
+    {
+      "path": "src/physics/network/aprox13/TimmesJacobian.inc",
+      "hash_matches": true,
+      "expected_sha256": "6c57b312d361f46496c959d8148bfa8ac43179140627d436cc6fcec020bce3c9"
+    },
+    {
+      "path": "src/physics/network/aprox13/TimmesRateLibrary.h",
+      "hash_matches": true,
+      "expected_sha256": "ac4542e555d980731dd64bb4ed3b4c2682df24e215e1b4fdcc30e96314009708"
+    },
+    {
+      "path": "src/physics/network/aprox13/TimmesRhs.inc",
+      "hash_matches": true,
+      "expected_sha256": "cf0cd8e1387b3cbab4ff4f3c90d103b8cb2a1d7f8e0223000aa3c53717595bde"
+    }
+  ],
+  "table_is_git_lfs_pointer": true,
+  "table_lfs_identity_matches": true,
+  "table_payload_hash_checked": true,
+  "no_simulation_or_eos_load": true,
+  "table_local_payload_hash_matches": true,
+  "declaration_semantics": "changes lists intended overrides including already-equal explicit values; actual differences are a subset, not required to equal all overrides.",
+  "scope": "Static input/hash audit only; no simulation/EOS/production readiness claim",
+  "manifest_path": "validation/gravity/candidates/benchmark-20261006/input-proposals.json",
+  "eos_identity": {
+    "type": "helmholtz",
+    "path": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+    "size": 60242514
+  },
+  "network_identity": "aprox13"
+}
