@@ -29,6 +29,9 @@ driver_obj=out/"DriverIO.o"
 driver_args[driver_args.index("-o")+1]=str(driver_obj)
 compile_args[compile_args.index("-o")+1]=str(obj)
 compile_args[compile_args.index("-c")+1]=str(root/"tests/host/io/test_driver_plot_publication.cpp")
+compile_args += ["-I"+str(root/"tests"),
+    '-DARCH_IO_FIXTURE_SOURCE_FILE="'+str(root/"tests/host/io/test_driver_plot_publication.cpp")+'"',
+    '-DARCH_IO_FIXTURE_SOURCE_SHA256="'+hashlib.sha256((root/"tests/host/io/test_driver_plot_publication.cpp").read_bytes()).hexdigest()+'"']
 commands=subprocess.check_output(["ninja","-t","commands","ARCH"],cwd=build,text=True)
 link_line=next(line for line in reversed(commands.splitlines()) if " -o bin/ARCH " in line)
 # Strip known Ninja no-op scaffolding, reject any remaining shell syntax.

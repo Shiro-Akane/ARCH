@@ -33,6 +33,7 @@ export interface ConfigWriteResponse extends ConfigReadResponse { project:Projec
 export type BuildState = 'not-configured'|'ready'|'queued'|'building'|'succeeded'|'failed'|'cancelled'|'unknown';
 export type BinaryBuildState = 'missing'|'available'|'built-from-current-tracked-inputs'|'needs-build'|'freshness-unknown';
 export interface BuildProfile {
+ buildBackend?:'cpu'|'cuda';
  id:string; displayName:string; managedSourceRoot:string; buildDirRelative:string; target:string; outputBinaryRelative:string;
  compilerDependencyMode?:'ninja'; retainGnuLtoInputs?:boolean; linkDependencyFile?:string; registeredCases?:string[]; caseId?:string; sourceRelativePath?:string; parallelism:number; trackedInputs:string[]; dependenciesComplete:boolean;
 }

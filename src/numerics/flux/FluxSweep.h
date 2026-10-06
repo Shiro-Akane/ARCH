@@ -3,14 +3,16 @@
  * @brief Host face traversal shared by every numerical flux policy.
  *
  * Workflow:
- * 1. Prepare required physical mean thermodynamics for one immutable RK stage.
+ * 1. Prepare required physical mean thermodynamics for one immutable RK stage;
+ *    native RZ uses the accepted shared density/inertia closure's EOS input.
  * 2. Reconstruct conservative/species states using the configured shared
  *    PCM/MUSCL/PPM and coarse-fine policy; call the selected shared face flux.
  * 3. Apply the unchanged conservative limiter using physical mean P/c, then
  *    publish one fluid/species flux for both neighbours and AMR registration.
  *
- * This host adapter owns scratch and OpenMP traversal only. CUDA gathers its
- * resident views and invokes the same reconstruction, closure and flux leaves.
+ * This host adapter owns scratch and OpenMP traversal only. Existing CUDA
+ * callers retain their original representation; native RZ device migration
+ * and the full native-measure flux limiter require separate qualification.
  */
 #pragma once
 
@@ -20,8 +22,10 @@
 #include <omp.h>
 #endif
 
+#include "grid/GridMetrics.h"
 #include "numerics/flux/InvariantDomainFlux.h"
 #include "numerics/reconstruction/AMRInterfaceReconstruction.h"
+#include "numerics/state/RzNativeClosure.h"
 
 namespace FluxTraversal {
 /** Execute one directional sweep without duplicating a solver's mathematics. */
@@ -61,13 +65,31 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
     {
         if (mean_cache->ready.size() != static_cast<std::size_t>(total_size))
             throw std::logic_error("Face mean EOS cache has wrong patch size");
+        const auto geometry = GridMetrics::make_geometry_view(grid,mean_cache->geometry_semantics);
+        const bool native_rz = geometry.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+        if (native_rz && grid.stride_y <= 0)
+            throw std::logic_error("RZ mean EOS requires a positive native row stride");
+        const auto read = [&state](int index) { return state.get(index); };
         std::vector<double> mean_species(n_spec);
         const auto ensure_mean = [&](int cell) {
             if (mean_cache->ready[cell]) return;
             state.get_species_to_buffer(cell, mean_species.data());
-            FluxAdmissibility::required_mean_thermo(
-                state.get(cell), mean_species.data(), eos,
-                mean_cache->pressure[cell], mean_cache->sound_speed[cell]);
+            if (native_rz) {
+                // m_phi=J/W has a different kinetic mean from an ordinary
+                // point momentum. Reuse the accepted shared closure (kappa
+                // and effective_mean); do not implement another EOS or floor.
+                const auto closure = RzThermodynamics::make_cell(
+                    read,cell,geometry,cell % grid.stride_y);
+                if (!closure.valid())
+                    throw std::runtime_error("RZ face mean EOS requires an admissible native closure");
+                FluxAdmissibility::required_mean_thermo(
+                    closure.effective_mean, mean_species.data(), eos,
+                    mean_cache->pressure[cell], mean_cache->sound_speed[cell]);
+            } else {
+                FluxAdmissibility::required_mean_thermo(
+                    state.get(cell), mean_species.data(), eos,
+                    mean_cache->pressure[cell], mean_cache->sound_speed[cell]);
+            }
             mean_cache->ready[cell] = 1;
         };
         for (int kj = 0; kj < nk * nj; ++kj) {
@@ -87,7 +109,7 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
         mean_cache->pressure.data(),
         mean_cache->sound_speed.data(),
         mean_cache->ready.data(), total_size, n_spec,
-        mean_cache->roe_wave_speed};
+        mean_cache->roe_wave_speed,mean_cache->geometry_semantics};
 
     const auto process_row = [&](int kj, std::vector<double>& Xi_L,
                                  std::vector<double>& Xi_R,
@@ -103,7 +125,7 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
                     FluidVector U_L, U_R;
                     AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(
                         state,eos,grid,dir,i,j,k,idx,stride,n_spec,
-                        Xi_L.data(),Xi_R.data(),Xi_cell.data(),U_L,U_R);
+                        Xi_L.data(),Xi_R.data(),Xi_cell.data(),U_L,U_R,mean_cache->geometry_semantics);
 
                     FluxAdmissibility::compute_candidate([&] {
                         FluxPolicy::compute_face_flux(

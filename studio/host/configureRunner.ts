@@ -26,6 +26,7 @@ async function directory(root:string,relative:string){
 }
 /** Serial fixed-argv operation. Configure success never creates a Build Manifest. */
 export class ConfigureRunner {
+ beforeStart?:()=>Promise<void>;
  readonly profile:ConfigureProfile;private active=false;private log?:BuildLog;private child?:ChildProcess;private cancelled=false;private killTimer?:ReturnType<typeof setTimeout>;private latest?:ConfigureResult;private completed:Promise<void>=Promise.resolve();private resolveCompleted?:()=>void;private closing=false;
  constructor(profile:ConfigureProfile){this.profile=structuredClone(profile);}
  snapshot(){return {operationId:this.log?.buildId,profileId:this.profile.id,active:this.active,processId:this.processId,latest:this.latest?structuredClone(this.latest):undefined};}
@@ -53,6 +54,7 @@ export class ConfigureRunner {
   const id=randomUUID(),result:ConfigureResult={id,profileId,state:'failed',exitCode:null};
   this.log=new BuildLog(projectId,id);
   try{
+   await this.beforeStart?.();
    const p=this.profile;
    if(process.platform!=='linux'||!['Ninja','Unix Makefiles'].includes(p.generator))throw new Error('Unsupported Configure platform or generator.');
    await checkedPath(p.sourceRoot,'CMakeLists.txt');

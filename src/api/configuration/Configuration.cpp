@@ -478,10 +478,12 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
         const int x2 = *config::input_detail::get<int>(analysis.standard, "nblockx2");
         const int x3 = *config::input_detail::get<int>(analysis.standard, "nblockx3");
         const bool burn = *config::input_detail::get<bool>(analysis.standard, "use_burn");
+        const auto* backend = config::input_detail::get<std::string>(analysis.standard,"compute_backend");
+        const auto* geometry = config::input_detail::get<std::string>(analysis.standard,"geometry");
         result["amrIndicators"] = RefinementMetadata(
             *analysis.refinement_selection, x3 > 0 ? 3 : x2 > 0 ? 2 : 1, burn,
             config::input_detail::choice(analysis.standard,"gravity_type",{"self"}).value.value_or(false),
-            config::input_detail::choice(analysis.standard,"compute_backend",{"cpu"}).value.value_or(false));
+            backend && geometry && config::SupportsJeansBackend(*backend,*geometry));
     }
     return SerializePreviewResponse(result, complete ? 0 : 3);
 }

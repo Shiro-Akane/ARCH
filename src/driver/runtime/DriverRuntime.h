@@ -37,6 +37,7 @@ struct RegridMeasurement {
     double elapsed_seconds;
     backend::BackendCounters operations;
 };
+class HostHydroTransaction;
 class DriverRuntime {
 public:
     DriverRuntime(amr::AMRControl&, BCHandler&, const SimConfig&,
@@ -85,6 +86,10 @@ public:
     const std::vector<double>& diffusion_boundary_budget() const { return diffusion_boundary_budget_; }
     const backend::BackendCounters& boundary_observer_operations() const { return boundary_observer_operations_; }
 private:
+    friend class HostHydroTransaction;
+    // Non-owning exact token for one explicit internal Host/RZ transaction.
+    HostHydroTransaction* host_hydro_transaction_=nullptr;
+    std::vector<double>* tentative_hydro_boundary_budget_=nullptr;
     std::vector<topology::TopologyObservation> observe_blocks(std::span<const int>) const;
     std::vector<topology::TopologyObservation> observe_topology() const;
     state::StateVersion current_interior_version() const;

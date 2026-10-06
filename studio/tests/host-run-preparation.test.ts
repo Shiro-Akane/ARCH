@@ -254,3 +254,16 @@ test('Restart handoff persists confirmed checkpoint identity and worker refuses 
   assert.equal(state.state,'failed');assert.match(state.error!,/checkpoint changed/);assert.equal(state.processId,undefined);
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
+
+test('selected source is rechecked before preparation and before confirmed terminal handoff',async()=>{
+ const f=await fixture();
+ try{
+  const request={projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'run' as const};
+  f.runner.assertCase=async()=>{throw new Error('selected source remains pending');};
+  await assert.rejects(f.runner.prepare(request),/source remains pending/);
+  const seen:string[]=[];f.runner.assertCase=async caseId=>{seen.push(caseId);};
+  const plan=await f.runner.prepare(request);assert.equal(plan.canConfirm,true);assert.deepEqual(seen,['Sod']);
+  f.runner.assertCase=async()=>{throw new Error('source changed after compilation');};
+  await assert.rejects(f.runner.consume({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'}),/source changed after compilation/);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});

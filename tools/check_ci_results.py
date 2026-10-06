@@ -28,6 +28,11 @@ PREVIEW_COVERAGE_ANCHORS = frozenset({
     "preview_verified_resources", "preview_exact_sample_cache", "preview_cellular_2d",
 })
 JENS_COVERAGE_ANCHORS = frozenset({"jeans_diagnostics", "refinement_indicator_math"})
+RELEASE_CONTRACT_COVERAGE_ANCHORS = frozenset({
+    "plotfile_publication", "checkpoint_conservation_metrics",
+    "conservative_acceptance", "rkl_repair_weights",
+    "boundary_plan", "amr_flux_surface_plan",
+})
 
 # Coverage anchors for the CPU+KLU profile, not a frozen total test count.
 # All other tests discovered by CTest must also appear in the completed report.
@@ -39,7 +44,7 @@ CPU_COVERAGE_ANCHORS = frozenset({
     "shared_stage_scheduler", "gravity_stage_contract", "checkpoint_temporal_comparison",
     "poisson_multigrid_contract", "poisson_multigrid_analytic",
     "composite_poisson_contract", "composite_poisson_analytic", "self_gravity_lifecycle", "self_gravity_physics",
-}) | CONFIGURATION_COVERAGE_ANCHORS | PREVIEW_COVERAGE_ANCHORS | JENS_COVERAGE_ANCHORS
+}) | CONFIGURATION_COVERAGE_ANCHORS | PREVIEW_COVERAGE_ANCHORS | JENS_COVERAGE_ANCHORS | RELEASE_CONTRACT_COVERAGE_ANCHORS
 
 DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
     "cuda_compile_probe", "shared_stage_scheduler", "gravity_stage_contract",
@@ -54,7 +59,9 @@ PROFILES = {"cpu": CPU_COVERAGE_ANCHORS, "driver-cuda": DRIVER_CUDA_COVERAGE_ANC
 def check_inventory(inventory, profile="cpu"):
     """Require profile anchors and later account for every supplied inventory entry.
 
-    CPU CI supplies the entire configured inventory. Driver-CUDA is explicitly
+    CPU CI supplies its complete numerical/API inventory; the separate Tooling
+    job owns tests labeled tooling. Local unfiltered inventories are accepted.
+    Driver-CUDA is explicitly
     scoped to orchestration contracts, not the complete GPU scientific campaign.
     Neither profile permits missing, skipped or unexpected result entries.
     """

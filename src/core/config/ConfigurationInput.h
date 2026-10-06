@@ -101,7 +101,7 @@ inline ConfigurationInput AnalyzeConfigurationInput(
         const auto* backend=input_detail::get<std::string>(result.standard,"compute_backend");
         try {
             ResolveRefinementSelection(selection, *x3 > 0 ? 3 : *x2 > 0 ? 2 : 1, *burn, false,
-                gravity && *gravity=="self",backend && *backend=="cpu");
+                gravity && *gravity=="self",backend && SupportsJeansBackend(*backend,*geometry));
             result.refinement_selection = std::move(selection);
         } catch (const std::invalid_argument& error) {
             auto& record = result.standard.parameters.at("refine_var");

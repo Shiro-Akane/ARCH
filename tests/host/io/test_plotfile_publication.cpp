@@ -164,8 +164,21 @@ int main(int argc, char** argv) {
                 require(pos.x==(native.lower[0].back()+native.upper[0].back())*.5,
                         "Cartesian center/bounds mismatch");
             }
-            grid.geometry="cylindrical";
-            require(!io::supports_plot_native_grid(grid),"curved support falsely claimed");
+            // Native capability records indexed faces and the shared measure;
+            // it does not upgrade the partial source/publication identity below.
+            for(const auto* geometry:{"cylindrical","spherical"}) {
+                grid.geometry=geometry;
+                require(io::supports_plot_native_grid(grid),"known curved native chart unsupported");
+            }
+            grid.geometry="unknown-chart";
+            require(!io::supports_plot_native_grid(grid),"unknown native chart accepted");
+            grid.geometry="cartesian";
+            bool unknown_semantics_rejected=false;
+            try {
+                (void)io::supports_plot_native_grid(grid,
+                    static_cast<GridMetrics::GeometrySemantics>(99));
+            } catch(const std::invalid_argument&) {unknown_semantics_rejected=true;}
+            require(unknown_semantics_rejected,"unknown native semantics accepted");
         }
         std::vector<size_t> native_dims{2};
         if(dimension==2) native_dims.push_back(ny);

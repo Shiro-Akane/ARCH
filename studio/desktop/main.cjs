@@ -25,7 +25,7 @@ async function stopHost(){
 }
 async function launch(options){
  if(owned)throw new Error('An owned project is already open. Close this window before changing project.');
- const allowed=['project','binary','case','config','source','distro','cwd'];
+ const allowed=['project','binary','case','config','source','distro','cwd','build-dir'];
  if(!options||Object.keys(options).some(k=>!allowed.includes(k))||Object.values(options).some(v=>typeof v!=='string'||v.includes('\0')))throw new Error('Invalid desktop launch options.');
  distro=options.distro||undefined;linuxUser=undefined;
  if(linux&&distro)throw new Error('Linux launcher does not select another WSL distribution.');
@@ -43,7 +43,7 @@ async function launch(options){
  if(!runtime)throw new Error('Linux Node 24+ missing in the selected environment. Install a supported Node runtime, then reopen ARCH Studio.');
  const entry=await mapPath(path.join(contentRoot,'host','desktop.ts'));
  const token=randomBytes(32).toString('hex');
- const payload=Buffer.from(JSON.stringify({...values,caseId:options.case,origin,token})).toString('base64url');
+ const payload=Buffer.from(JSON.stringify({...values,caseId:options.case,buildDir:options['build-dir']?(/^(?:[A-Za-z]:|\\\\|\/)/.test(options['build-dir'])?await mapPath(options['build-dir']):path.posix.resolve(project??cwd,options['build-dir'])):undefined,origin,token})).toString('base64url');
  const child=spawn(linux?runtime:'wsl.exe',linux?[entry,payload]:[...(distro?['-d',distro]:[]),...(linuxUser?['-u',linuxUser]:[]),'--exec',runtime,entry,payload],{windowsHide:true,stdio:['pipe','pipe','pipe']});owned=child;
  let errors='';child.stderr.on('data',b=>{errors=(errors+b.toString()).slice(-16000);});child.stdin.on('error',()=>{});
  try{
@@ -62,7 +62,7 @@ async function launch(options){
   }
   if(!connected)throw new Error('Owned Local Host connection unavailable: '+lastError+'. No unrelated service was adopted.');
   await log('ready '+JSON.stringify({bridgePid:child.pid,hostPid:ready.pid,port:ready.port,project:ready.project,caseId:ready.caseId,distro:distro??'default',linuxUser}));
-  await createWindow({endpoint:origin,caseId:ready.caseId,project:ready.project},'/index.html');
+  await createWindow({endpoint:origin,caseId:ready.caseId,project:ready.project,selectedSource:ready.selectedSource},'/index.html');
  }catch(e){await stopHost();throw e;}
 }
 async function createWindow(bootstrap,page){

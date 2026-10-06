@@ -35,6 +35,11 @@ public:
         return semantics_;
     }
 
+    /** Shared Host stage updates write fixed extents; accepted integrators rotate live slots. */
+    HostHydroStorageContract host_storage_contract() const noexcept override {
+        return HostHydroStorageContract::FixedExtentSlotPermutation;
+    }
+
     virtual void evaluate_patch(amr::AMRControl* amr_ctrl, int block_id,
                                 const FluidState& state, const Grid& grid, double dt,
                                 std::vector<FluidVector>& dU, std::vector<double>& d_spec,

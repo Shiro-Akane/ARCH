@@ -5,6 +5,7 @@
  * Synthetic edge cases and production hydro, diffusion and burn consumers
  * exercise tie-breaking, invalid candidates and block-level reductions.
  */
+#include "amr/storage/Block.h"
 #include "driver/stages/DriverBurn.h"
 #include "driver/schedule/ReductionSpec.h"
 #include "driver/DriverUtils.h"
@@ -13,6 +14,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <bit>
 #include <cmath>
 #include <cstdint>
@@ -567,6 +569,303 @@ void characterize_burn()
     }
 }
 
+/** Independent physical antiderivative for the frozen native RZ burn source.
+ * rho(r)=7/8+r^2/4, Omega=1, u_r=u_z=0; even density and odd m_phi
+ * supply the reflected negative-radius ghosts as well as physical cells.
+ */
+long double rz_burn_density_moment(long double lower,long double upper,int power)
+{
+    const auto integral=[&](int exponent) {
+        return (std::pow(upper,exponent+1)-std::pow(lower,exponent+1))/(exponent+1);
+    };
+    return 7.L/8.L*integral(power)+integral(power+2)/4.L;
+}
+
+/** Compare new independent physical references with the unchanged 2e-12 gate. */
+void expect_rz_burn_close(double actual,long double reference,std::string_view name)
+{
+    expect(std::isfinite(actual)&&std::abs(static_cast<long double>(actual)-reference)
+        <=2.e-12L*std::max(1.L,std::abs(reference)),name);
+}
+
+/** Thread-safe observer for a one-zone constant integral(delta e) operation.
+ * It reads the actual packed X/T and interval, transfers a known fraction,
+ * and returns a fixed heat release; no production EOS/closure serves as oracle.
+ */
+struct NativeRzBurner {
+    static constexpr int NEQ=4;
+    static constexpr bool exact_input_reusable=false;
+    static constexpr double delta_energy=1./32.;
+    static constexpr double half_interval=1./8.;
+    double expected_temperature=1./64.,expected_x0=.25;
+    int failure_mode=0;
+    std::atomic<int> calls{0},input_failures{0};
+
+    template<class Eos>
+    bool integrate(double* packed,double rho,double interval,const Eos&,
+        const BurnConfig&,double& recommended,double* energy)
+    {
+        calls.fetch_add(1,std::memory_order_relaxed);
+        bool known_density=false;
+        for(int n=0;n<amr::BLOCK_NX;++n)
+            known_density=known_density||rho==1.+n*(n+1)/4.;
+        if(!known_density||interval!=half_interval||packed[0]!=expected_x0
+           ||packed[1]!=1.-expected_x0||packed[3]!=0.
+           ||!std::isfinite(packed[2])||std::abs(packed[2]-expected_temperature)>2.e-12)
+            input_failures.fetch_add(1,std::memory_order_relaxed);
+        packed[0]+=1./16.;packed[1]-=1./16.;packed[2]+=delta_energy;
+        packed[3]=1.;recommended=interval;*energy=delta_energy;
+        if(failure_mode==1)return false; // Mutated packed workspace must not publish.
+        if(failure_mode==2)*energy=-expected_temperature-1.;
+        return true;
+    }
+};
+
+/** Verify real native RZ preparation, ODE input and checked energy publication.
+ * The two actual wrapper calls preserve the split half-step interface, but
+ * this local source test does not qualify the complete production Strang cycle
+ * or scheduler/ghost-version identity. Physical ghosts are supplied explicitly.
+ */
+void characterize_native_rz_burn()
+{
+    const int failures_before=failures;
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr long double initial_internal=1.L/64.L;
+    Grid grid(amr::MAX_NG,0.,amr::BLOCK_NX,-.5,.5,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+    FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(2);
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const long double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+        const long double volume=(hi*hi-lo*lo)/2.L;
+        const long double angular_measure=(hi*hi*hi-lo*lo*lo)/3.L;
+        const long double rho=rz_burn_density_moment(lo,hi,1)/volume;
+        const long double inertia=rz_burn_density_moment(lo,hi,3);
+        const int cell=grid.GetIndex(i,j,0);
+        state.set(cell,{static_cast<double>(rho),0.,0.,
+            static_cast<double>(inertia/angular_measure),
+            static_cast<double>(rho*initial_internal+inertia/(2.L*volume))});
+        state.X(0,cell)=.25;state.X(1,cell)=.75;
+    }
+    const int first=grid.GetIndex(grid.Is(),grid.Js(),0);
+    const auto first_native=state.get(first);
+    expect_rz_burn_close(first_native.rho,1.L,"production.burn.rz.source-rho-V");
+    expect_rz_burn_close(first_native.mom_w,25.L/32.L,"production.burn.rz.source-J-over-W");
+    expect_rz_burn_close(first_native.eng,53.L/192.L,"production.burn.rz.source-E-V");
+    expect_rz_burn_close(first_native.eng-.5*first_native.mom_w*first_native.mom_w/first_native.rho,
+        -179.L/6144.L,"production.burn.rz.raw-negative-energy-reference");
+    expect(arch::state::recover(first_native).status==arch::state::Status::unresolved_energy,
+        "production.burn.rz.raw-mixed-energy-invalid");
+    // The physical inertia 25/96 differs from the constant-rho guess 1/4.
+    expect_rz_burn_close(static_cast<double>(rz_burn_density_moment(0.L,1.L,3)),25.L/96.L,
+        "production.burn.rz.variable-density-inertia-reference");
+
+    SpeciesManager species;
+    species.add_species("a",1.,1.,1.4,1.);
+    species.add_species("b",4.,2.,1.4,1.);
+    IdealGas eos(1.4,species); // Both Cv=1, so the real EOS requires T=e.
+    SimConfig config{};
+    config.physics.burn.use_burn=true;
+    config.physics.burn.nuclearDensMin=0.;config.physics.burn.nuclearTempMin=0.;
+    config.physics.burn.smallt=1.e-12;config.physics.burn.smallx=1.e-20;
+    config.physics.burn.enucDtFactor=.5;
+    config.numerics.sml_rho=1.e-12;config.numerics.min_eint=1.e-10;
+    config.numerics.max_eint=1.e21;
+    const auto original_rho=state.rho,original_mr=state.mom_u;
+    const auto original_mz=state.mom_v,original_mphi=state.mom_w;
+    NativeRzBurner burner;
+    for(int half=0;half<2;++half) {
+        const auto previous_energy=state.eng;
+        burner.expected_temperature=1./64.+half*NativeRzBurner::delta_energy;
+        burner.expected_x0=.25+half/16.;
+        double limit=99.;
+        execute_burn_step(state,NativeRzBurner::half_interval,eos,burner,grid,config,limit,rz);
+        expect(burner.calls.load(std::memory_order_relaxed)
+                ==(half+1)*amr::BLOCK_NX*amr::BLOCK_NY,
+            "production.burn.rz.exact-two-half-call-count");
+        expect(burner.input_failures.load(std::memory_order_relaxed)==0,
+            "production.burn.rz.actual-rho-X-T-half-dt-inputs");
+        expect_rz_burn_close(limit,(3.L+2.L*half)/32.L,
+            "production.burn.rz.physical-thermal-energy-limiter");
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            const bool active=i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je();
+            if(active) {
+                const long double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+                const long double rho=rz_burn_density_moment(lo,hi,1)/((hi*hi-lo*lo)/2.L);
+                expect_rz_burn_close(state.eng[cell]-previous_energy[cell],
+                    rho*NativeRzBurner::delta_energy,"production.burn.rz.delta-E-rho-V-delta-e");
+                expect(state.X(0,cell)==.25+(half+1)/16.
+                    &&state.X(1,cell)==.75-(half+1)/16.,
+                    "production.burn.rz.accepted-X-publication");
+                expect_bits("production.burn.rz.enuc-rate",state.enuc_rate[cell],
+                    0x3fd0000000000000ULL); // (1/32)/(1/8)=1/4.
+            } else {
+                expect_bits("production.burn.rz.ghost-energy-unchanged",state.eng[cell],
+                    std::bit_cast<std::uint64_t>(previous_energy[cell]));
+                expect(state.X(0,cell)==.25&&state.X(1,cell)==.75,
+                    "production.burn.rz.ghost-X-unchanged");
+                expect_bits("production.burn.rz.ghost-enuc-zero",state.enuc_rate[cell],0);
+            }
+        }
+        for(int cell=0;cell<grid.GetTotalSize();++cell) {
+            expect_bits("production.burn.rz.rho-bits-unchanged",state.rho[cell],
+                std::bit_cast<std::uint64_t>(original_rho[cell]));
+            expect_bits("production.burn.rz.mr-bits-unchanged",state.mom_u[cell],
+                std::bit_cast<std::uint64_t>(original_mr[cell]));
+            expect_bits("production.burn.rz.mz-bits-unchanged",state.mom_v[cell],
+                std::bit_cast<std::uint64_t>(original_mz[cell]));
+            expect_bits("production.burn.rz.mphi-bits-unchanged",state.mom_w[cell],
+                std::bit_cast<std::uint64_t>(original_mphi[cell]));
+        }
+    }
+
+    // Publication is a cell-level contract. The batch intentionally clears
+    // enuc before traversal, so use the actual cell owner to test rollback of
+    // a nonzero diagnostic and changes to its temporary packed ODE workspace.
+    const auto geometry=GridMetrics::make_geometry_view(grid,rz);
+    burner.expected_temperature=5./64.;burner.expected_x0=.375;
+    for(int failure_case=0;failure_case<4;++failure_case) {
+        FluidState trial=state;
+        SimConfig trial_config=config;
+        if(failure_case==0)trial.eng[first]=0.;
+        if(failure_case==3)trial_config.numerics.max_eint=6./64.;
+        const auto before_energy=trial.eng,before_x=trial.mass_fractions;
+        const auto before_enuc=trial.enuc_rate;
+        burner.failure_mode=failure_case==1?1:failure_case==2?2:0;
+        std::vector<double> packed(NativeRzBurner::NEQ,0.);
+        DriverBurn::HostBurnMemo memo(NativeRzBurner::NEQ);
+        const auto controls=make_burn_config_view(trial_config.physics.burn);
+        bool rejected=false;
+        try {
+            (void)DriverBurn::advance_host_burn_cell(trial,first,
+                NativeRzBurner::half_interval,eos,burner,trial_config,controls,packed,memo,
+                &geometry,grid.Is());
+        } catch(const std::runtime_error&) {rejected=true;}
+        expect(rejected,"production.burn.rz.invalid-closure-ODE-heat-bounds-rejected");
+        expect(trial.eng==before_energy&&trial.mass_fractions==before_x
+            &&trial.enuc_rate==before_enuc,
+            "production.burn.rz.failed-cell-does-not-publish-E-X-enuc");
+        expect(trial.rho==original_rho&&trial.mom_u==original_mr
+            &&trial.mom_v==original_mz&&trial.mom_w==original_mphi,
+            "production.burn.rz.failed-cell-keeps-native-moments");
+    }
+    std::cout<<"RZ_NATIVE_BURN half_steps=2 active_cells="
+        <<amr::BLOCK_NX*amr::BLOCK_NY<<" failure_cases=4 "
+        <<(failures==failures_before?"PASS":"FAIL")<<'\n';
+}
+
+/** Check actual DriverUtils native CFL traversal against physical acoustics.
+ * Native rho_V/J/W/E_V are independent antiderivatives of the same quadratic
+ * density/rigid-rotation source as the burn case. Kappa=rho_V*W^2/(V*I)
+ * gives the known e0, while only u_r/u_z and the actual length spacings enter
+ * the two-face CFL rate. No closure/CFL leaf is called to form the reference.
+ * This is a fluid CFL adapter test, not a source/RKL stability certificate.
+ */
+void characterize_native_rz_cfl()
+{
+    const int failures_before=failures;
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr long double internal=1.L/64.L,radial=1.L/8.L,axial=-1.L/4.L;
+    constexpr double cfl=.4;
+    SpeciesManager species;
+    species.add_species("a",1.,1.,1.5,2.);
+    species.add_species("b",4.,2.,1.75,4.);
+    IdealGas eos(1.4,species);
+    amr::Block block{};
+    block.active=true;
+    block.grid=Grid(amr::MAX_NG,0.,amr::BLOCK_NX,-.5,-.5+amr::BLOCK_NY/2.,0.,1.);
+    auto& grid=block.grid;grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+    auto& state=block.fluid_state;
+    state.Preallocate(grid.GetTotalSize());state.InitSpecies(2);
+    double zero_rotation_dt=0.;
+    for(int omega=0;omega<=1;++omega) {
+        long double reference=std::numeric_limits<long double>::max();
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const long double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+            const long double volume=(hi*hi-lo*lo)/2.L;
+            const long double angular_measure=(hi*hi*hi-lo*lo*lo)/3.L;
+            const long double rho=rz_burn_density_moment(lo,hi,1)/volume;
+            const long double inertia=rz_burn_density_moment(lo,hi,3);
+            const long double ur=hi<=0.L?-radial:radial;
+            const long double phi=omega*inertia/angular_measure;
+            const long double energy=rho*(internal+(ur*ur+axial*axial)/2.L)
+                +omega*omega*inertia/(2.L*volume);
+            const int cell=grid.GetIndex(i,j,0);
+            state.set(cell,{static_cast<double>(rho),static_cast<double>(rho*ur),
+                static_cast<double>(rho*axial),static_cast<double>(phi),static_cast<double>(energy)});
+            state.X(0,cell)=.25+(i-grid.Is())/128.+(j-grid.Js())/256.;
+            state.X(1,cell)=1.-state.X(0,cell);
+            if(i<grid.Is()||i>=grid.Ie()||j<grid.Js()||j>=grid.Je())continue;
+            const long double kappa=rho*angular_measure*angular_measure/(volume*inertia);
+            const long double decoded=(energy-rho*(ur*ur+axial*axial)/2.L
+                -kappa*phi*phi/(2.L*rho))/rho;
+            expect_rz_burn_close(static_cast<double>(decoded),internal,
+                "production.cfl.rz.independent-native-kappa-e0-reference");
+            if(i==grid.Is())expect_rz_burn_close(static_cast<double>(kappa),64.L/75.L,
+                "production.cfl.rz.variable-density-first-cell-kappa");
+            const long double x0=state.X(0,cell),x1=state.X(1,cell);
+            const long double gamma_minus_one=(x0+3.L*x1)/(2.L*x0+4.L*x1);
+            const long double sound=std::sqrt((1.L+gamma_minus_one)*gamma_minus_one*internal);
+            // Independent r/z length transport: dr=1, dz=1/2. Phi is inactive.
+            const long double rate=(std::abs(radial)+sound)+(std::abs(axial)+sound)/.5L;
+            reference=std::min(reference,static_cast<long double>(cfl)/(2.L*rate));
+        }
+        const FluidState original=state;
+        if(omega)expect(arch::state::recover(state.get(grid.GetIndex(grid.Is(),grid.Js(),0))).status
+                ==arch::state::Status::unresolved_energy,
+            "production.cfl.rz.cold-raw-mean-is-not-a-point");
+        const double serial=adaptive_dt(block.fluid_state,eos,block.grid,cfl,false,rz);
+        const double parallel=adaptive_dt(block.fluid_state,eos,block.grid,cfl,true,rz);
+        expect_rz_burn_close(serial,reference,"production.cfl.rz.actual-serial-physical-acoustic-dt");
+        expect_rz_burn_close(parallel,reference,"production.cfl.rz.actual-parallel-physical-acoustic-dt");
+        expect_bits("production.cfl.rz.adapter-reduction-schedule-stable",parallel,
+            std::bit_cast<std::uint64_t>(serial));
+        if(!omega)zero_rotation_dt=serial;
+        else expect_rz_burn_close(serial,zero_rotation_dt,
+            "production.cfl.rz.inactive-phi-does-not-change-fluid-transport-bound");
+        expect(state.rho==original.rho&&state.mom_u==original.mom_u
+            &&state.mom_v==original.mom_v&&state.mom_w==original.mom_w
+            &&state.eng==original.eng&&state.mass_fractions==original.mass_fractions
+            &&state.enuc_rate==original.enuc_rate,"production.cfl.rz.immutable-block-stage");
+    }
+
+    const int first=grid.GetIndex(grid.Is(),grid.Js(),0);
+    for(bool parallel:{false,true}) {
+        for(double bad:{0.,-1.,std::numeric_limits<double>::quiet_NaN(),
+                std::numeric_limits<double>::infinity()}) {
+            FluidState trial=state;trial.rho[first]=bad;
+            bool rejected=false;
+            try {(void)adaptive_dt(trial,eos,grid,cfl,parallel,rz);}
+            catch(const std::runtime_error&) {rejected=true;}
+            expect(rejected,"production.cfl.rz.invalid-active-density-rejected");
+        }
+        FluidState missing_ghost=state;
+        missing_ghost.rho[grid.GetIndex(grid.Is()-1,grid.Js(),0)]=0.;
+        bool rejected=false;
+        try {(void)adaptive_dt(missing_ghost,eos,grid,cfl,parallel,rz);}
+        catch(const std::runtime_error&) {rejected=true;}
+        expect(rejected,"production.cfl.rz.missing-required-density-ghost-rejected");
+
+        // Actual zero-halo Grid/state storage, not a forged closure context.
+        amr::Block no_halo{};
+        no_halo.grid=Grid(0,0.,amr::BLOCK_NX,-.5,-.5+amr::BLOCK_NY/2.,0.,1.);
+        no_halo.grid.dim=2;no_halo.grid.geometry="cylindrical";no_halo.grid.InitializeTopology(rz);
+        no_halo.fluid_state.Preallocate(no_halo.grid.GetTotalSize());no_halo.fluid_state.InitSpecies(2);
+        for(int j=0;j<amr::BLOCK_NY;++j)for(int i=0;i<amr::BLOCK_NX;++i) {
+            const int cell=no_halo.grid.GetIndex(i,j,0),source=grid.GetIndex(grid.Is()+i,grid.Js()+j,0);
+            no_halo.fluid_state.set(cell,state.get(source));
+            no_halo.fluid_state.X(0,cell)=state.X(0,source);
+            no_halo.fluid_state.X(1,cell)=state.X(1,source);
+        }
+        rejected=false;
+        try {(void)adaptive_dt(no_halo.fluid_state,eos,no_halo.grid,cfl,parallel,rz);}
+        catch(const std::runtime_error&) {rejected=true;}
+        expect(rejected,"production.cfl.rz.actual-grid-without-halo-rejected");
+    }
+    std::cout<<"RZ_NATIVE_CFL serial_parallel=1 rotation_cases=2 invalid_inputs=12 "
+        <<(failures==failures_before?"PASS":"FAIL")<<'\n';
+}
+
 // The counter is observational only; accepted outputs depend on the full key.
 struct CountingBurner {
     static constexpr bool exact_input_reusable = true;
@@ -675,6 +974,8 @@ int main()
     characterize_hydro();
     characterize_diffusion();
     characterize_burn();
+    characterize_native_rz_burn();
+    characterize_native_rz_cfl();
     verify_burn_memo();
     verify_block_minimum_helper();
     expect(edge_cases == 36, "edge.case.count");

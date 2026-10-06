@@ -9,6 +9,8 @@
  * 1. Receive a stage descriptor and current state ledger.
  * 2. Order hydro, gravity, burn, diffusion and output transitions.
  * 3. Require completed publications before consuming a state.
+ * 4. When explicitly bound, validate completed boundary candidates before
+ *    publishing ghost readiness; owner receipts retain their original order.
  */
 
 #pragma once
@@ -44,6 +46,15 @@ struct StageDescriptor {
     // Time of the input state relative to the beginning of the Hydro step.
     double input_time_fraction = 0.0;
 };
+
+/** Compare the complete prepared stage, keeping source quadrature separate from repair weights. */
+inline bool same_stage_descriptor(const StageDescriptor& a,const StageDescriptor& b) noexcept {
+    return a.stage==b.stage&&a.old_slot==b.old_slot&&a.input_slot==b.input_slot
+        &&a.output_slot==b.output_slot&&a.old_weight==b.old_weight
+        &&a.update_weight==b.update_weight&&a.flux_register_weight==b.flux_register_weight
+        &&a.input_requires_ghost==b.input_requires_ghost
+        &&a.refresh_ghost_after==b.refresh_ghost_after&&a.input_time_fraction==b.input_time_fraction;
+}
 
 struct HydroPlan {
     HydroMethod method = HydroMethod::Euler;
@@ -198,6 +209,15 @@ public:
     virtual ~HydroStagePreparation() = default;
     virtual state::CompletionToken prepare(const HydroStagePreparationRequest&) = 0;
     virtual void invalidate() const {}
+    /** Existing services are not implicitly accepted as atomic source journals. */
+    virtual bool supports_host_macro_step_journal() const noexcept { return false; }
+    /** Candidate hook: fallible private journal allocation; never writes accepted fluid/owners. */
+    virtual void begin_macro_step() {}
+    /** Candidate hook: validate complete prepared frame/consumption, then append a tentative receipt. */
+    virtual void accept(const StageDescriptor&) {}
+    /** Candidate hooks: preallocated, noexcept publication or discard of only this owner's journal. */
+    virtual void commit_macro_step() noexcept {}
+    virtual void discard_macro_step() noexcept {}
 };
 
 struct StageExecutionContext {
@@ -218,6 +238,9 @@ struct StageExecutionContext {
     std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_begin;
     std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_accept;
     std::function<void(const RklStageDescriptor&)> rkl_acceptance;
+    // Optional candidate-state gate after real whole-domain boundary work and
+    // before ghost readiness. Empty preserves the existing execution sequence.
+    std::function<void(state::StateSlot, state::StateVersion)> post_boundary_acceptance;
 };
 
 static_assert(std::is_same_v<decltype(StageExecutionContext::side),
@@ -372,6 +395,24 @@ void publish_ghost_batch(StageExecutionContext& context,
     }
 }
 
+/** Execute actual boundary work, check its token, gate the candidate, then publish ghosts. */
+template <typename HandleRange, typename Boundary>
+state::CompletionToken execute_completed_boundary(
+    StageExecutionContext& context, const HandleRange& handles,
+    state::StateSlot slot, state::StateVersion version, Boundary&& boundary)
+{
+    const state::CompletionToken token = context.clock.next_completion();
+    const state::CompletionToken completed =
+        std::forward<Boundary>(boundary)(slot, version, token);
+    if (!state::is_complete(completed) || completed.value != token.value)
+        throw std::logic_error(
+            "boundary completion does not match scheduler token");
+    if (context.post_boundary_acceptance)
+        context.post_boundary_acceptance(slot, version);
+    publish_ghost_batch(context, handles, slot, version, completed);
+    return completed;
+}
+
 } // namespace detail
 
 struct NoStagePreparation {
@@ -408,20 +449,10 @@ StageExecutionResult execute_stage(StageExecutionContext& context,
     detail::publish_interior_batch(context, handles, descriptor.output_slot,
                                    witness);
     StageExecutionResult result{witness.version, witness.completion, {}};
-    if (descriptor.refresh_ghost_after) {
-        const state::CompletionToken ghost_token =
-            context.clock.next_completion();
-        const state::CompletionToken boundary_completion =
-            std::forward<Boundary>(boundary)(descriptor.output_slot,
-                                             witness.version, ghost_token);
-        if (!state::is_complete(boundary_completion)
-            || boundary_completion.value != ghost_token.value) {
-            throw std::logic_error(
-                "boundary completion does not match scheduler token");
-        }
-        detail::publish_ghost_batch(context, handles, descriptor.output_slot,
-                                    witness.version, boundary_completion);
-        result.ghost_completion = boundary_completion;
+    if (descriptor.refresh_ghost_after || context.post_boundary_acceptance) {
+        result.ghost_completion = detail::execute_completed_boundary(
+            context, handles, descriptor.output_slot, witness.version,
+            std::forward<Boundary>(boundary));
     }
     return result;
 }
@@ -557,6 +588,10 @@ HydroExecutionResult execute_hydro_plan(
         detail::publish_interior_batch(
             context, handles, state::StateSlot::Current, witness);
         result.final_reflux = witness;
+        if (context.post_boundary_acceptance)
+            (void)detail::execute_completed_boundary(
+                context, handles, state::StateSlot::Current, witness.version,
+                std::forward<Boundary>(boundary));
     }
     return result;
 }
@@ -846,14 +881,8 @@ state::CompletionToken complete_boundary(
     state::StateSlot slot, state::StateVersion version,
     Boundary&& boundary)
 {
-    const state::CompletionToken token = context.clock.next_completion();
-    const state::CompletionToken completed =
-        std::forward<Boundary>(boundary)(slot, version, token);
-    if (!state::is_complete(completed) || completed.value != token.value)
-        throw std::logic_error(
-            "boundary completion does not match scheduler token");
-    detail::publish_ghost_batch(context, handles, slot, version, completed);
-    return completed;
+    return detail::execute_completed_boundary(
+        context, handles, slot, version, std::forward<Boundary>(boundary));
 }
 
 } // namespace arch::scheduler

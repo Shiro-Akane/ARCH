@@ -20,6 +20,8 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <utility>
 #include <map>
 #include <unordered_map>
 #include <stdexcept>
@@ -157,6 +159,7 @@ public:
                         CompletionToken completed_initialization,
                         ExecutionSide initial_side = ExecutionSide::Host)
     {
+        if(host_snapshot_owner_)throw std::logic_error("Host transaction excludes topology registration");
         validate_side(initial_side);
         validate_handle_epoch(block);
         if (!is_valid(current_version))
@@ -180,6 +183,7 @@ public:
 
     void retire_block(amr::BlockHandle block)
     {
+        if(host_snapshot_owner_)throw std::logic_error("Host transaction excludes topology retirement");
         BlockRecord& record = require_record(block);
         quiesce(block);
         record.active = false; // Keep the UID as a same-epoch tombstone.
@@ -219,6 +223,8 @@ public:
                           StateVersion new_version,
                           CompletionToken completed_operation)
     {
+        if(host_snapshot_owner_&&side!=ExecutionSide::Host)
+            throw std::logic_error("Host transaction excludes Device publication");
         validate_side(side);
         if (!is_valid(new_version))
             throw std::logic_error("published version must be nonzero");
@@ -246,6 +252,8 @@ public:
                        StateVersion source_version,
                        CompletionToken completed_operation)
     {
+        if(host_snapshot_owner_&&side!=ExecutionSide::Host)
+            throw std::logic_error("Host transaction excludes Device publication");
         validate_side(side);
         if (!is_valid(source_version))
             throw std::logic_error("ghost source version must be nonzero");
@@ -271,6 +279,7 @@ public:
                         PendingTransferPhase direction,
                         CompletionToken pending_operation)
     {
+        if(host_snapshot_owner_)throw std::logic_error("Host transaction excludes asynchronous transfer");
         validate_region(region);
         if (direction != PendingTransferPhase::PendingH2D
             && direction != PendingTransferPhase::PendingD2H) {
@@ -406,6 +415,73 @@ private:
         std::array<Entry, 3> slots{};
         bool active = false;
     };
+public:
+    /** Prepared Host metadata backup. Freeze it only after all owner allocation succeeds. */
+    class HostSnapshot {
+        friend class StateResidencyLedger;
+        amr::TopologyEpoch epoch_{};
+        std::unordered_map<std::uint64_t, BlockRecord> records_;
+        explicit HostSnapshot(const StateResidencyLedger& owner)
+            : epoch_(owner.active_epoch_),records_(owner.blocks_) {}
+    public:
+        HostSnapshot(const HostSnapshot&)=delete;
+        HostSnapshot& operator=(const HostSnapshot&)=delete;
+        HostSnapshot(HostSnapshot&&)=delete;
+        HostSnapshot& operator=(HostSnapshot&&)=delete;
+    };
+    /** Exclude asynchronous/Device/Synchronized ownership before numerical mutation. */
+    HostSnapshot snapshot_host() const {
+        if(host_snapshot_owner_)throw std::logic_error("Host residency backup already leased");
+        for(const auto& [uid,record]:blocks_) {
+            if(!record.active)continue;
+            for(const auto& slot:record.slots) {
+                validate_quiescent(slot.coherence);
+                for(const auto& region:{slot.coherence.interior,slot.coherence.ghost})
+                    if(region.residency!=StateResidency::HostValid
+                        &&region.residency!=StateResidency::Invalid)
+                        throw std::logic_error("Host backup excludes Device/Synchronized residency");
+            }
+        }
+        return HostSnapshot(*this);
+    }
+    /** A metadata lease forbids topology/transfer mutation, but permits Host stage publications. */
+    void freeze_host_snapshot(const HostSnapshot& snapshot) {
+        if(host_snapshot_owner_||!host_snapshot_matches(snapshot))
+            throw std::logic_error("Host residency backup is stale or overlapping");
+        host_snapshot_owner_=&snapshot;
+    }
+    /** Restore complete prepared records by noexcept ownership swap; no node allocation. */
+    void restore_host_snapshot_noexcept(HostSnapshot& snapshot) noexcept {
+        if(host_snapshot_owner_!=&snapshot)std::terminate();
+        blocks_.swap(snapshot.records_);active_epoch_=snapshot.epoch_;
+    }
+    /** Release only the exact backup whose lifetime still covers this ledger. */
+    void release_host_snapshot(const HostSnapshot& snapshot) noexcept {
+        if(host_snapshot_owner_!=&snapshot)std::terminate();
+        host_snapshot_owner_=nullptr;
+    }
+    /** Exact read-only owner check includes retired UIDs and invisible token high-watermarks. */
+    bool host_snapshot_matches(const HostSnapshot& snapshot) const noexcept {
+        const auto same_region=[](const RegionCoherence& a,const RegionCoherence& b) {
+            return a.residency==b.residency&&a.version==b.version
+                &&a.completion==b.completion&&a.pending_transfer==b.pending_transfer;
+        };
+        if(active_epoch_!=snapshot.epoch_||blocks_.size()!=snapshot.records_.size())return false;
+        for(const auto& [uid,record]:blocks_) {
+            const auto found=snapshot.records_.find(uid);
+            if(found==snapshot.records_.end()||record.active!=found->second.active)return false;
+            for(std::size_t s=0;s<3;++s) {
+                const auto& a=record.slots[s];const auto& b=found->second.slots[s];
+                if(a.interior_last_token_id!=b.interior_last_token_id
+                    ||a.ghost_last_token_id!=b.ghost_last_token_id
+                    ||a.coherence.ghost_source_version!=b.coherence.ghost_source_version
+                    ||!same_region(a.coherence.interior,b.coherence.interior)
+                    ||!same_region(a.coherence.ghost,b.coherence.ghost))return false;
+            }
+        }
+        return true;
+    }
+private:
 
     static constexpr std::array<StateSlot, 3> all_slots() noexcept
     {
@@ -594,6 +670,7 @@ private:
 
     amr::TopologyEpoch active_epoch_{};
     std::unordered_map<std::uint64_t, BlockRecord> blocks_;
+    const HostSnapshot* host_snapshot_owner_=nullptr;
 };
 
 } // namespace arch::state

@@ -52,7 +52,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
                const SimConfig &config, const SpeciesManager &specs,
                std::span<const io::PlotScalarField> extra_fields,
                const io::CheckpointProvenance* runtime_provenance, std::string_view run_id,
-               GridMetrics::GeometrySemantics semantics)
+               GridMetrics::GeometrySemantics semantics,
+               const io::PlotSourceIdentity* frozen_source_identity)
 {
     // A profile mismatch must fail before creating any output directory/file.
     if (semantics != GridMetrics::GeometrySemantics::Existing
@@ -66,6 +67,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
     for (int id : active_blocks)
         (void)GridMetrics::make_geometry_view(amr_ctrl.pool->GetBlock(id).grid,semantics);
     const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (!frozen_source_identity || !frozen_source_identity->formal)
+        throw std::invalid_argument("Production Plotfile requires frozen complete runtime provenance");
     if (!fs::exists(config.io.out_dir))
         fs::create_directories(config.io.out_dir);
 
@@ -289,6 +292,9 @@ void write_plt(amr::AMRControl &amr_ctrl,
     std::map<std::string, io::PlotFieldMetadata> field_metadata;
     for (const auto& [name, values] : data_map) {
         auto declaration = io::plot_field_metadata(name, geom == "cartesian");
+        if (!rz && geom!="cartesian" && (name=="VELX" || name=="VELY" || name=="VELZ"))
+            declaration.basis=dim==3?(geom=="cylindrical"?"local-orthonormal-r-z-phi":"local-orthonormal-r-theta-phi"):
+                dim==2?"local-orthonormal-r-phi-inactive":"local-orthonormal-r-inactive-inactive";
         if (rz && (name == "VELX" || name == "VELY" || name == "VELZ")) {
             declaration.basis = "local-orthonormal-r-z-phi";
             declaration.meaning = name == "VELX" ? "radial_velocity"
@@ -334,24 +340,10 @@ void write_plt(amr::AMRControl &amr_ctrl,
             throw std::invalid_argument("Nonfinite additional plot field");
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
     }
-    io::PlotSourceIdentity source_identity;
-    source_identity.run_id = run_id;
-    source_identity.unit_system = "cgs";
-    source_identity.binary_sha256 = arch::core::running_executable_sha256();
-    if (const auto input = config.LoadedInput()) {
-        source_identity.case_id = input->case_id;
-        if (input->raw_text_available)
-            source_identity.raw_config_sha256 = arch::core::string_sha256(input->raw_text);
-    }
-    if (runtime_provenance && runtime_provenance->available) {
-        source_identity.eos_type = runtime_provenance->eos_type;
-        source_identity.eos_table_sha256 = runtime_provenance->eos_table_sha256;
-        source_identity.ideal_gamma = runtime_provenance->ideal_gamma;
-        source_identity.species_names = runtime_provenance->species_names;
-        source_identity.species_A = runtime_provenance->species_A;
-        source_identity.species_Z = runtime_provenance->species_Z;
-        source_identity.species_gamma = runtime_provenance->species_gamma;
-        source_identity.species_Cv = runtime_provenance->species_Cv;
-    }
+    // Encoding/EOS/build identities were frozen once by the production startup
+    // owner. The output-session UUID remains independent of this scientific ID.
+    io::PlotSourceIdentity source_identity=*frozen_source_identity;
+    source_identity.run_id=run_id;
+    (void)runtime_provenance; // Already incorporated at the immutable freeze boundary.
     io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity, &field_metadata,semantics,rz ? &angular_state : nullptr);
 }

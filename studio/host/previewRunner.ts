@@ -16,6 +16,7 @@ import {validateCorePreview,validateModelCapabilities} from '../src/host/preview
 export interface PreviewHooks {spawn?:typeof spawn;timeoutMs?:number;graceMs?:number}
 interface PendingPreview {text:string;count:number|number[];identity:PreviewIdentity;profile:PreviewProfile;queuedAt:number}
 export class PreviewRunner {
+ assertCase?:(caseId:string)=>Promise<void>;
  externalBusy?:()=>boolean;
  readonly build:BuildRunner; profile:PreviewProfile; private profiles:PreviewProfile[];
  private capabilityKey?:string; private capabilityPromise?:Promise<unknown>;
@@ -91,7 +92,7 @@ export class PreviewRunner {
   let profile=this.profiles.find(p=>p.id===r.profileId);
   if(!profile&&!this.isActive()){await this.readiness();profile=this.profiles.find(p=>p.id===r.profileId);}
   if(!profile)throw new BuildError('Unknown Host-owned Preview profile.');
-  const chosen=profile;let count:number|number[];
+  const chosen=profile;await this.assertCase?.(chosen.caseId);let count:number|number[];
   if(chosen.dimension>1){
    count=r.requestedShape??chosen.defaultShape!;
    if(r.requestedSampleCount!==undefined||!Array.isArray(count)||count.length!==chosen.dimension||count.some(n=>!Number.isInteger(n)||n<2||n>(chosen.maxPerAxis??256))||count.reduce((a,b)=>a*b,1)>chosen.maxSampleCount)throw new BuildError('Invalid bounded multidimensional Preview sampling shape.');

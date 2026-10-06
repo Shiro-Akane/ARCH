@@ -81,7 +81,7 @@ external provenance claim unless their file header or that notice says so.
 | Geometry | `cartesian`, `cylindrical`, `spherical` | supported on CPU and CUDA | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
 | AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
 | Self gravity | `gravity_type = self` | CPU, CUDA | Periodic Cartesian, isolated 3D Cartesian, and tested radial/full-azimuth curvilinear domains; see [self-gravity domains](#self-gravity-domains). |
-| Jeans field | `JENS` | reserved | Parser warns and disables it. |
+| Jeans field and refinement | `JENS` | CPU wired; CUDA engineering candidate | Requires self gravity and an explicit backend; see [AMR and plot variable vocabulary](#amr-and-plot-variable-vocabulary) for conditions and validation scope. |
 
 CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, registered
 flux, reconstruction and time-integrator routes, Ideal/Helmholtz/Tabular3D/Tabular4D
@@ -463,6 +463,7 @@ tabular component discovery or electron completion.
 | `lrefinemax` | int | Required | maximum refinement level; zero disables refinement |
 | `regrid_interval` | int | Required: dynamic AMR | must be positive |
 | `refine_var` | string list | Required: dynamic AMR | comma or `+`; canonical fields or registered species |
+| `jeans_cells` | double | Required: `refine_var` contains `JENS` | finite and `>=4`; minimum number of physical grid spacings required to resolve each cell's Jeans length |
 | `refine_threshold` | double | Required: active curvature AMR indicator | Lohner indicator, `[0,1]` |
 | `derefine_threshold` | double | Required: active curvature AMR indicator | must be `>=0` and less than refine threshold |
 
@@ -667,12 +668,31 @@ include `rho`, `p`, `u`, `v`, `w`, and `eng`.
 | `DIVV` | metric-aware velocity divergence | yes | yes | implemented geometries |
 | `ENTR` | local `p/rho^Gamma1` proxy | yes | yes | finite positive EOS state |
 | `ENUC` | signed nuclear specific-energy source rate | yes | yes | burning enabled |
-| `JENS` | Jeans criterion | reserved | reserved | disabled |
+| `JENS` | Jeans length divided by the largest active physical grid spacing | yes | yes | self gravity; explicit CPU, or explicit Cartesian CUDA engineering candidate |
 | `SPECIES` | every registered species | yes | yes | registered composition |
 | registered name | one species/tracer | yes | yes | case-insensitive lookup |
 
 `CONSERVED` selects `DENS`, active velocities, and `ENER`. `ALL` selects every
 available PLT field and registered species.
+
+Selecting `JENS` for refinement or explicit output requires `gravity_type=self`
+and an explicit `compute_backend=cpu`, or `compute_backend=cuda` with
+`geometry=cartesian`. `auto` and curved-coordinate CUDA combinations are
+rejected. Refinement also requires a finite `jeans_cells >= 4`; selecting only
+the output field does not require that refinement parameter.
+`plt_variables=ALL` includes `JENS` for the self-gravity/backend combinations
+above. The canonical name is `JENS`; aliases such as `JEANS` and inputs that
+fail these conditions produce errors rather than disabling the indicator.
+Meeting the configuration conditions does not establish backend readiness:
+explicit CUDA still requires an available CUDA build and device.
+
+The public CPU entry passed nine evolutions and nine checkpoint continuations
+for a uniform periodic background with a single constant-specific-heat IdealGas.
+Full qualification for nonzero gravity fields and general EOS remains pending.
+Explicit Cartesian CUDA wiring is an engineering candidate whose final GPU
+scientific validation has not passed; it does not qualify the full RZ feature.
+See the [integration and release plan](development/ComputeStudioReleasePlan-20261006.zh-CN.md)
+for current evidence and remaining gates.
 
 `ENTR` is the local proxy `p/rho^Gamma1`, with
 `Gamma1 = rho*c_s^2/p` from the active EOS. It is the usual constant-gamma
@@ -1317,18 +1337,25 @@ State-control identity includes state bounds, timestep controls, Coulomb fractio
   CPU execution only.
   Generated NSE requires the documented equilibrium-model eligibility; it is not
   a promise that every correct kinetic network admits an NSE bypass.
-- See [self-gravity domains](#self-gravity-domains) for geometry, boundary and root-grid constraints. External mass sources and the Jeans-specific refinement indicator remain outside this capability. [Gravity validation](../validation/gravity/README.md) records coupled and performance scope.
+- See [self-gravity domains](#self-gravity-domains) for geometry, boundary and root-grid constraints. External mass sources remain outside this capability. [AMR and plot variable vocabulary](#amr-and-plot-variable-vocabulary) gives Jeans field/refinement conditions and tested scope; [gravity validation](../validation/gravity/README.md) records coupled and performance scope.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict
   conservation or hide malformed numerical selections; production runs must
   inspect their resolved configuration and diagnostics.
-- Unit metadata and complete build/run provenance (parameter file, compiler,
-  solver settings, boundaries, and commit) remain external to HDF5. Checkpoints
-  embed the restart-critical EOS/table/network/species identity, but Release
-  flags still prevent a cross-machine bitwise-reproducibility guarantee.
-- Case builds assume the `simulation/<Case>/` layout, and plot-write failures are
-  reported without aborting the simulation.
+- Formal Plotfiles embed completed-publication markers, typed configuration/case/
+  build/binary/EOS identities, field units and native cell bounds/measures.
+  Interpret provenance within its declared executable and build scope; record
+  runtime environments and external dependencies separately. `unknown` fields
+  in an older candidate indicate incomplete provenance and do not establish
+  formal-publication eligibility. Checkpoints embed the restart-critical
+  EOS/table/network/species identity; Release flags do not guarantee bitwise
+  reproducibility across machines.
+- Case builds assume the `simulation/<Case>/` layout. Plot write, close or
+  publication failures propagate through Core with a nonzero exit status and
+  no successful publication result. Only a successfully closed and atomically
+  published final file qualifies as complete; leftover temporary or partial
+  files are not authoritative complete Plotfiles.
 - Sedov deposits a normalized continuous finite-radius profile at cell centres,
   so its discrete injected energy remains resolution dependent.
 

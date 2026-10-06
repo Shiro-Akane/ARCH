@@ -1,8 +1,13 @@
 """Independent finite-cloud and coupled-physics checks for the standard GravityBox.
 
 This module extends the existing gravity campaign; it is not another CI job.
+The explicit CLI runs only the frozen JENS subgroup against an existing binary;
+it never copies a source tree, configures a build or changes scientific budgets.
 """
+import argparse
 import csv
+import hashlib
+import json
 import math
 import os
 from pathlib import Path
@@ -127,11 +132,10 @@ class BoxCampaign:
 
     def jeans_uniform_lifecycle(self, dimensions=(1,2,3)):
         """Core-frozen bounded subgroup; reuse real GravityBox and native readers."""
-        import json
         from check_jeans_plot import qualify
         contract=json.loads((ROOT/'validation/gravity/results/o7-resume-20261004/jens-short-contract.json').read_text())
         require(contract['contract_version']=='uniform-lifecycle-1','unknown Jeans contract')
-        require(self.backend=='cpu','Jeans CUDA qualification is separate')
+        require(self.backend in ('cpu','cuda'),'unknown explicit Jeans backend')
         common={k:('true' if v else 'false') if isinstance(v,bool) else v
                 for k,v in contract['common'].items()}
         records=[]
@@ -340,3 +344,72 @@ class BoxCampaign:
         record['transport_relative_effect']=difference
         require(difference>1e-8,'combined case has no resolved transport effect')
         if not quick:self.temporal_coupling()
+
+
+def file_sha256(path):
+    """Hash an actual input or executable without requiring a Git checkout."""
+    digest=hashlib.sha256()
+    with Path(path).open('rb') as stream:
+        for block in iter(lambda:stream.read(1024*1024),b''):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def compact_jeans_record(record, output):
+    """Keep verified scalars and exact input identities; raw arrays stay local."""
+    compact={key:value for key,value in record.items() if key not in ('config','jens_checks')}
+    folder=output/record['name']
+    compact['input_sha256']=file_sha256(folder/'input.par')
+    compact['restart_input_sha256']=file_sha256(output/(record['name']+'-restart')/'input.par')
+    compact['raw_directory']=record['name']
+    compact['jens_checks']=[{key:check[key] for key in
+        ('cells','dtype','gridEvidence','maxRelativeError','bound','publication','sourceIdentityScope')}
+        for check in record['jens_checks']]
+    return compact
+
+
+def main():
+    """Run the frozen 1D/2D/3D subgroup on one existing ELF, preserving failures."""
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--jeans-uniform-lifecycle',action='store_true',required=True,
+                        help='Run the existing frozen 9 evolutions and 9 same-lane checkpoint restarts.')
+    parser.add_argument('--arch',type=Path,required=True,help='Existing built ARCH executable; no build or source snapshot.')
+    parser.add_argument('--output',type=Path,required=True,help='New local directory for raw evidence and compact summary.')
+    parser.add_argument('--backend',choices=('cpu','cuda'),required=True,help='Explicit requested backend; no auto qualification.')
+    args=parser.parse_args()
+    executable=args.arch.resolve()
+    require(executable.is_file() and os.access(executable,os.X_OK),'ARCH executable is missing or not executable')
+    output=args.output.resolve()
+    # Do not overwrite a previous run, including its failure evidence.
+    output.mkdir(parents=True,exist_ok=False)
+    contract=ROOT/'validation/gravity/results/o7-resume-20261004/jens-short-contract.json'
+    summary=dict(contract='uniform-lifecycle-1',backend=args.backend,threads=1,
+        executable=str(executable),binary_sha256=file_sha256(executable),
+        runner_sha256=file_sha256(Path(__file__)),contract_sha256=file_sha256(contract),
+        base_input_sha256=file_sha256(ROOT/'simulation/GravityBox/GravityBox.par'),
+        scope='frozen Cartesian single-caloric-IdealGas JENS lifecycle; no arbitrary-EOS, nonzero-gravity or performance acceptance',
+        raw_evidence='local only; publish compact processed records, not HDF5 or full logs')
+    campaign=BoxCampaign(executable,output,backend=args.backend,threads=1)
+    try:
+        records=campaign.jeans_uniform_lifecycle()
+        require(len(records)==9 and all(record['restart_pass'] for record in records),
+                'frozen 9 evolution and 9 actual checkpoint restart coverage incomplete')
+        require(file_sha256(executable)==summary['binary_sha256'],'ARCH executable changed during qualification')
+        require(file_sha256(Path(__file__))==summary['runner_sha256'],'runner changed during qualification')
+        require(file_sha256(contract)==summary['contract_sha256'],'frozen contract changed during qualification')
+        require(file_sha256(ROOT/'simulation/GravityBox/GravityBox.par')==summary['base_input_sha256'],
+                'base input changed during qualification')
+        summary.update(status='PASS',evolution_cases=9,restart_cases=9,
+            records=[compact_jeans_record(record,output) for record in records])
+    except Exception as error:
+        # A successful subprocess or partially collected run is not qualification.
+        summary.update(status='FAIL',error=str(error),completed_run_records=len(campaign.results))
+        (output/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+        raise
+    (output/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+    print(json.dumps({key:summary[key] for key in
+        ('status','contract','backend','binary_sha256','evolution_cases','restart_cases','scope')},indent=2))
+
+
+if __name__=='__main__':
+    main()

@@ -141,7 +141,7 @@ jobs:
             -DBUILD_TESTING=ON -DARCH_ENABLE_KLU=ON -DARCH_FETCH_SUITESPARSE=ON \
             -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-ci/cpu/bin" \
             2>&1 | tee build-ci/reports/configure.log
-          ctest --test-dir build-ci/cpu --show-only=json-v1 > build-ci/reports/inventory.json
+          ctest --test-dir build-ci/cpu -LE '^tooling$' --show-only=json-v1 > build-ci/reports/inventory.json
           python3 tools/check_ci_results.py --inventory build-ci/reports/inventory.json
 
       - name: Build the application and existing CPU validation suite
@@ -151,9 +151,9 @@ jobs:
             --log build-ci/reports/build.log -- \
             cmake --build build-ci/cpu --parallel 2
 
-      - name: Run every configured CPU test
+      - name: Run every configured CPU numerical and API test
         run: |
-          ctest --test-dir build-ci/cpu --parallel 1 --timeout 600 \
+          ctest --test-dir build-ci/cpu -LE '^tooling$' --parallel 1 --timeout 600 \
             --no-tests=error --output-on-failure \
             --output-junit "$PWD/build-ci/reports/ctest.xml" \
             2>&1 | tee build-ci/reports/ctest.log

@@ -11,6 +11,7 @@ import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 export interface SelectedConfigurationBinary {root:string;projectId:string;binaryRelativePath:string}
 /** Only the Host chooses executable, arguments, cwd and environment. */
 export class ConfigurationAdapter {
+ assertCase?:(caseId:string)=>Promise<void>;
  private active=false;
  private registryQuery:Promise<Record<string,unknown>>|null=null;
  private schemaCache?:{buildId:string;sha:string;core:ConfigurationSchema};
@@ -75,6 +76,7 @@ export class ConfigurationAdapter {
  async inspect(r:ConfigurationRequest){
   const keys=['projectId','caseId','configText','configRevision'];
   if(Object.keys(r).length!==keys.length||Object.keys(r).some(k=>!keys.includes(k))||r.projectId!==this.target.projectId||typeof r.caseId!=='string'||typeof r.configText!=='string'||r.configText.includes('\0')||Buffer.byteLength(r.configText)>1024*1024||Buffer.from(r.configText).toString('utf8')!==r.configText||r.configRevision!==createHash('sha256').update(r.configText).digest('hex'))throw new BuildError('Invalid configuration inspection request.');
+  await this.assertCase?.(r.caseId);
   if(this.discover ? !(await this.discover()).cases.some(c=>c.caseId===r.caseId) : this.selected ? !validateRegistry(await this.run(['--list-cases'])).some(c=>c.caseId===r.caseId) : r.caseId!==this.preview!.profile.caseId)throw new BuildError('Invalid configuration inspection request: case is not registered in selected binary.');
   const schema=await this.schema();
   const before=await this.ready();const requestId=randomUUID();

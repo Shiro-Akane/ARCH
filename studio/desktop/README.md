@@ -9,7 +9,9 @@ studio/desktop/arch-studio --project "$PWD" --binary build-studio-cpu/bin/ARCH -
 studio/desktop/arch-studio --source "$PWD/simulation/Sod/Sod.cpp" --config simulation/Sod/Sod.par
 ```
 
-With CMake `ARCH_BUILD_STUDIO=ON`, the equivalent launcher is `build-studio-cpu/bin/arch-studio`. Relative binary/config paths resolve against the selected project. `--source` identifies registered source; it does not compile new C++ automatically. Missing builds, stale identities and unsupported cases remain visible errors. Configure/Build are explicit actions with a small output panel.
+With CMake `ARCH_BUILD_STUDIO=ON`, the equivalent launcher is `build-studio-cpu/bin/arch-studio`. Relative binary/config paths resolve against the selected project. `--source` selects a regular `.cpp` under `simulation/`; an uncompiled or edited source remains pending until explicit Configure/Build produces its exact registered source and digest. The source view is read-only; edit C++ with your editor. Missing executables open the workbench with Core actions disabled. Stale identities and unsupported cases remain visible errors. Configure/Build are explicit actions with a small output panel.
+
+Use `--build-dir build-release-cpu` (or select Existing build directory in the launcher) to adopt an existing in-project Ninja ARCH tree explicitly. Its canonical source/build/output identities and CPU/CUDA setting are checked; Configure preserves the cache mode and adds no new definitions. Selecting this tree does not assert build freshness or enable Preview before a matching successful Studio Build.
 
 Node is selected from `ARCH_STUDIO_NODE`, otherwise the packaged Host runtime, PATH and the existing user/system candidates. `ARCH_STUDIO_NODE` must be an absolute supported Linux executable. An invalid explicit runtime is never replaced silently.
 

@@ -20,6 +20,9 @@
 
 namespace Numerics {
 
+/** Internal Host storage promise; unavailable bindings fail before a guarded step. */
+enum class HostHydroStorageContract { Unavailable, FixedExtentSlotPermutation };
+
 /**
  * @brief Pure virtual interface for hydrodynamics solvers.
  * Acts as a compilation firewall for the heavy templates of Flux and Reconstruction schemes.
@@ -28,6 +31,11 @@ namespace Numerics {
 class IHydroSolver {
 public:
     virtual ~IHydroSolver() = default;
+
+    /** Qualified updates keep all conserved/species allocations and only rotate whole slots. */
+    virtual HostHydroStorageContract host_storage_contract() const noexcept {
+        return HostHydroStorageContract::Unavailable;
+    }
 
     // Internal chart identity. Existing bindings retain their historical chart;
     // Host RZ bindings must report the same profile used by patch mathematics.

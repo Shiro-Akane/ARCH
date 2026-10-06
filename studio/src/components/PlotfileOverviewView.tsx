@@ -68,11 +68,11 @@ function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFit
   if(i>=0&&i<o.width&&j>=0&&j<o.height)setChosen(j*o.width+i);
   onPoint(o.dimension===1?[x]:[x,y]);
  }
- return <section aria-label="Candidate global Plotfile display LOD">
-  <h3>Plotfile display LOD · candidate</h3>
+ return <section aria-label={samples.audit.completion.state==='complete'?'Global Plotfile display LOD':'Candidate global Plotfile display LOD'}>
+  <h3>Plotfile display LOD{samples.audit.completion.state==='complete'?'':' · candidate'}</h3>
   <p>{samples.relativePath} · {o.field} · time {samples.audit.time} · file {samples.audit.file.sha256}</p>
   <p>{o.globalDomain&&JSON.stringify(o.domain)!==JSON.stringify(o.globalDomain)?'Viewport LOD':'Full-domain LOD'} · displayed x1 [{o.domain.x.join(', ')}]{o.dimension===2?' · x2 ['+o.domain.y.join(', ')+']':''}</p>
-  <p>{o.scannedCells} stored leaf cells scanned → {o.width}×{o.height} display pixels. Coordinate-overlap-weighted display means; not native values or scientific integrals. Recorded field unit: {unit}; review pending.</p>
+  <p>{o.scannedCells} stored leaf cells scanned → {o.width}×{o.height} display pixels. Coordinate-overlap-weighted display means; not native values or scientific integrals. Recorded field unit: {unit}.</p>
   <p>Click to locate the exact native cell at stored x1[/x2] coordinates. Keyboard pixel selection reads its largest-overlap representative. Inspector shows the raw stored cell, not the LOD mean. Zoom/pan redraw this existing LOD; zoom does not fetch finer data.</p>
   {leaves&&<fieldset><legend>Native leaf block outlines · same file digest</legend>
    <label><input type="checkbox" checked={showBlocks} onChange={e=>setShowBlocks(e.target.checked)}/>Show native leaf outlines</label>

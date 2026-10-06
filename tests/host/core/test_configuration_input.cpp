@@ -104,6 +104,65 @@ int main(int argc, char** argv) {
         const auto& definition=Definition("jeans_cells");
         require(!definition.declared_default&&definition.condition==InputCondition::JeansAmr,
                 "Jeans target acquired implicit default or wrong condition");
+        auto jeans_input=without(without(without(fixture,"refine_var"),"gravity_type"),"compute_backend")
+            +"refine_var=JENS\njeans_cells=160\ngravity_type=self\ncompute_backend=cuda\n";
+        const auto device_jeans=inspect(jeans_input);
+        require(device_jeans.refinement_selection && device_jeans.refinement_selection->refine_on_jeans,
+                "explicit Cartesian CUDA JENS rejected before setup");
+        require(has(inspect(without(jeans_input,"compute_backend")+"compute_backend=auto\n"),
+                "refine_var","INVALID_REFINEMENT_SELECTION"),"auto silently acquired JENS capability");
+        for(const std::string geometry:{"cylindrical","spherical"})
+            require(has(inspect(without(jeans_input,"geometry")+"geometry="+geometry+"\n"),
+                    "refine_var","INVALID_REFINEMENT_SELECTION"),"native-coordinate CUDA JENS acquired capability");
+        require(has(inspect(without(jeans_input,"gravity_type")+"gravity_type=none\n"),
+                "refine_var","INVALID_REFINEMENT_SELECTION"),"JENS acquired capability without self gravity");
+
+        // Exercise the actual production PLT resolver, not just its API catalog.
+        // InitialState loading performs no Setup, EOS, mesh or CUDA construction.
+        std::string self_input=fixture;
+        for(const std::string key:{"gravity_type","gravity_boundary","gravity_rtol",
+                "gravity_atol","gravity_max_cycles","compute_backend","plt_variables",
+                "x1l_boundary_type","x1r_boundary_type"})
+            self_input=without(self_input,key);
+        self_input+="gravity_type=self\ngravity_boundary=periodic\ngravity_rtol=1e-10\n"
+            "gravity_atol=0\ngravity_max_cycles=100\nx1l_boundary_type=periodic\n"
+            "x1r_boundary_type=periodic\n";
+        for(const std::string backend:{"cpu","cuda"}) {
+            const auto all=RuntimeParams::LoadText(self_input+"compute_backend="+backend+"\nplt_variables=ALL\n",
+                "declared-test",ConfigurationPurpose::InitialState);
+            const auto explicit_output=RuntimeParams::LoadText(self_input+"compute_backend="+backend+"\nplt_variables=DENS,JENS\n",
+                "declared-test",ConfigurationPurpose::InitialState);
+            require(all.io.vars.jens && explicit_output.io.vars.jens,
+                    "ALL and explicit JENS disagreed on a supported requested route");
+            require(!all.amr.refine_on_jeans && !explicit_output.amr.refine_on_jeans,
+                    "output-only JENS changed the AMR selection");
+            require(!has(*explicit_output.LoadedInput(),"jeans_cells","MISSING_PARAMETER"),
+                    "production output-only JENS required an AMR target");
+        }
+        const auto auto_all=RuntimeParams::LoadText(self_input+"compute_backend=auto\nplt_variables=ALL\n",
+            "declared-test",ConfigurationPurpose::InitialState);
+        require(!auto_all.io.vars.jens,"ALL silently enabled JENS for automatic backend selection");
+        struct RequestedRoute { const char* backend; const char* geometry; };
+        const RequestedRoute unsupported_routes[]={{"auto","cartesian"},
+            {"cuda","cylindrical"},{"cuda","spherical"}};
+        for(const auto& route:unsupported_routes) {
+            auto request=without(self_input,"geometry")+"geometry="+route.geometry+"\n";
+            if(std::string(route.geometry)!="cartesian") {
+                // Valid radial topology isolates the JENS-route rejection
+                // from the independent prohibition on radial periodic gravity.
+                request=without(without(without(request,"gravity_boundary"),
+                    "x1l_boundary_type"),"x1r_boundary_type")
+                    +"gravity_boundary=isolated\nx1l_boundary_type=reflecting\nx1r_boundary_type=reflecting\n";
+            }
+            bool rejected=false;
+            try {
+                RuntimeParams::LoadText(request+"compute_backend="+route.backend+"\nplt_variables=DENS,JENS\n",
+                    "declared-test",ConfigurationPurpose::InitialState);
+            } catch(const std::invalid_argument& error) {
+                rejected=std::string(error.what()).find("JENS output ")!=std::string::npos;
+            }
+            require(rejected,"unsupported explicit JENS output reached production loading");
+        }
         const auto unknown_amr = inspect(without(fixture, "nblockx2"));
         require(!unknown_amr.refinement_selection
                 && !has(unknown_amr, "refine_var", "INVALID_REFINEMENT_SELECTION"),

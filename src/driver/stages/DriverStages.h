@@ -7,6 +7,8 @@
  * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
 #pragma once
+#include <cmath>
+#include <optional>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -15,6 +17,7 @@
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "driver/io/DriverIO.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "driver/runtime/HostHydroTransaction.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/DriverBurn.h"
 
@@ -64,6 +67,10 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
     if (stage_handles.size() != active_blocks.size())
         throw std::logic_error(
             "active topology and scheduler handles disagree");
+    // Native mean sound speeds use the same density/inertia stencil as Hydro.
+    // Complete its actual halo even when diffusion is disabled.
+    if (runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        runtime.ensure_fluid_ghosts(StateSlot::Current);
     workspace.hydro_dt_candidates.clear();
     workspace.hydro_dt_candidates.reserve(active_blocks.size());
     if (compute_backend) {
@@ -433,6 +440,12 @@ state::CompletionToken execute_burn_half(DriverRuntime& runtime,
             StateSlot::Current, before);
         return token;
     }
+    // The native inertia reads neighbouring density means. Bind actual
+    // same-level/coarse-fine ghosts before the burn's immutable density scan;
+    // neither burn half changes rho, Pr, Pz or J.
+    const auto burn_geometry=runtime.geometry_semantics();
+    if (burn_geometry==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        runtime.ensure_fluid_ghosts(StateSlot::Current);
     std::vector<double> dt_burn_by_block(active_blocks.size(), 1e99);
     std::vector<DriverBurn::HostBurnPatch> patches(active_blocks.size());
     state::HostFailure failure;
@@ -440,8 +453,9 @@ state::CompletionToken execute_burn_half(DriverRuntime& runtime,
     for (size_t i = 0; i < active_blocks.size(); ++i) {
         amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[i]);
         try {
-            bc_handler.apply(b.fluid_state, b.grid);
-            patches[i] = {&b.fluid_state, &b.grid};
+            if (burn_geometry!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+                bc_handler.apply(b.fluid_state, b.grid);
+            patches[i] = {&b.fluid_state, &b.grid, burn_geometry};
         } catch (...) { failure.capture_current(); }
     }
     failure.rethrow();
@@ -475,8 +489,18 @@ using IntegratorSolve = void (*)(amr::AMRControl&, double, BCHandler&,
 inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     StageExecutionContext& stage_context, const dispatch::ResolvedExecutionPlan* resolved_plan,
     double dt, IntegratorSolve integrator_solve,
-    const Physical::Gravity::IGravityPolicy* gravity, const Numerics::IHydroSolver* hydro)
+    const Physical::Gravity::IGravityPolicy* gravity, const Numerics::IHydroSolver* hydro,
+    HostHydroQualification qualification = HostHydroQualification::Production)
 {
+    if(!resolved_plan||!hydro||(!runtime.backend()&&!integrator_solve))
+        throw std::logic_error("Hydro requires its selected plan and executable solver");
+    if(!std::isfinite(dt)||dt<=0.||dt!=stage_context.step_dt)
+        throw std::logic_error("Hydro step size must be finite, positive and equal frozen context.step_dt");
+    if(stage_context.hydro_acceptance)
+        throw std::logic_error("Hydro acceptance already has another owner");
+    std::optional<HostHydroTransaction> transaction;
+    if(qualification==HostHydroQualification::NativeRzRollback)
+        transaction.emplace(runtime,stage_context,*hydro);
     auto& amr_ctrl = runtime.control();
     auto& bc_handler = runtime.boundaries();
     const auto& config = runtime.configuration();
@@ -486,7 +510,12 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     const auto& num_cfg = config.numerics;
     state::RepairBudget pending(runtime.species().count(),runtime.repair_budget().semantics);
     stage_context.hydro_acceptance = [&](const scheduler::StageDescriptor& descriptor) {
-        if (stage_context.hydro_preparation) stage_context.hydro_preparation->invalidate();
+        // Only the explicitly begun transaction composes atomic source receipts.
+        // Production retains invalidate-before-collection, including collection failures.
+        if(stage_context.hydro_preparation) {
+            if(transaction)stage_context.hydro_preparation->accept(descriptor);
+            else stage_context.hydro_preparation->invalidate();
+        }
         auto stage = collect_stage_repairs(runtime, descriptor.output_slot,
             compute_backend ? &compute_backend->stage_repairs : nullptr);
         if (stage.values[0] > 0.0) {
@@ -497,9 +526,16 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
         if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk3)
             weight = descriptor.stage == 1 ? 1.0/6.0 : descriptor.stage == 2 ? 2.0/3.0 : 1.0;
         pending.combine(stage, weight);
+        if(transaction) {
+            transaction->validate_storage();
+            if(stage_context.hydro_preparation)stage_context.hydro_preparation->invalidate();
+        }
     };
-    struct ClearAcceptance { scheduler::StageExecutionContext& context;
-        ~ClearAcceptance() { context.hydro_acceptance = {}; } } clear{stage_context};
+    struct RestoreAcceptance {
+        scheduler::StageExecutionContext& context;
+        std::function<void(const scheduler::StageDescriptor&)> previous;
+        ~RestoreAcceptance() noexcept { context.hydro_acceptance.swap(previous); }
+    } restore{stage_context,{}};
     if (compute_backend) {
         runtime.ensure_fluid_ghosts(StateSlot::Current);
         auto& currents = workspace.hydro_currents;
@@ -563,12 +599,14 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
             amr_ctrl, dt, bc_handler, gravity, hydro, num_cfg);
     }
 
-    runtime.repair_budget().combine(pending);
+    auto& accepted=transaction ? transaction->repair_receipts() : runtime.repair_budget();
+    accepted.combine(pending);
     auto reflux = collect_stage_repairs(runtime, StateSlot::Current,
         compute_backend ? &compute_backend->reflux_repairs : nullptr);
     reflux.stage = 0;
     reflux.time = stage_context.step_start_time;
-    runtime.repair_budget().combine(reflux);
+    accepted.combine(reflux);
+    if(transaction)transaction->commit();
 }
 /** Instantiate and bind the selected backend after configuration validation. */
 template<class EosPolicy>

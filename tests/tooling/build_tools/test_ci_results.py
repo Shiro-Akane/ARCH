@@ -91,6 +91,17 @@ class CiResultTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "low_density_math"):
             check_inventory(self.inventory(CPU_COVERAGE_ANCHORS - {"low_density_math"}))
 
+    def test_release_publication_conservation_and_boundary_contracts_are_required(self):
+        required = {
+            "plotfile_publication", "checkpoint_conservation_metrics",
+            "conservative_acceptance", "rkl_repair_weights",
+            "boundary_plan", "amr_flux_surface_plan",
+        }
+        self.assertTrue(required <= CPU_COVERAGE_ANCHORS)
+        for name in sorted(required):
+            with self.subTest(missing=name), self.assertRaisesRegex(ValueError, name):
+                check_inventory(self.inventory(CPU_COVERAGE_ANCHORS - {name}))
+
     def test_complete_report_accepts_new_tests_without_a_fixed_total(self):
         names = check_inventory(self.inventory(CPU_COVERAGE_ANCHORS | {"new_regression"}))
         self.assertEqual(check_junit(self.report(names), names), len(names))

@@ -62,8 +62,12 @@ including KLU, on GitHub-hosted Linux machines. The jobs reuse the commands and
 test owners described here; no separate CI mathematical implementation exists.
 The CPU job fetches the required Helmholtz LFS table and rejects incomplete or
 skipped CTest reports. The tooling job also rejects skipped controls.
+Runner contracts labeled `tooling` execute in the Tooling job; the CPU job uses
+the same label exclusion for inventory and execution. An unfiltered local
+CTest run below includes those contracts.
 
-The `CI required` result combines those two jobs. It does not represent CUDA
+Studio and Host run their full Node suite once, followed by lint and the typed
+production build. The `CI required` result combines all three jobs. It does not represent CUDA
 execution or a rerun of the full scientific Validation campaign. Diagnostic
 artifacts are kept for 14 days, separately from reviewed Validation records.
 See the [workflow guide](../.github/workflows/README.md) for manual runs,
@@ -124,7 +128,8 @@ requires scheduler, gravity preparation, checkpoint and CUDA AMR/batch/reduction
 coverage anchors. Supply inventory and JUnit files from the same CTest selection;
 every selected test must pass without skips. This does not certify the full CUDA
 inventory, application-level numerics, restart or sanitizer checks. Hosted CPU CI
-continues to check its complete configured inventory.
+continues to check its complete numerical/API inventory, with runner contracts
+covered by the separate Tooling job.
 Build this target to compare CPU artifacts without a CUDA build.
 
 ## Add CUDA and its sparse provider
@@ -151,6 +156,30 @@ ctest --test-dir build-test-cuda --parallel 1 --output-on-failure
 building for another device. Build parallelism is configurable and does not
 change numerical methods. Begin with serial device tests and inspect their
 memory requirements before increasing concurrency.
+
+The same resource guard can observe logical output size and actual free space
+on the Host storage mount. Create an output parent before launching a simulation
+that creates its own run directory below it:
+
+```bash
+mkdir -p validation-local
+/usr/bin/python3 tools/run_memory_guarded.py --min-available-mib 1536 \
+  --max-swap-growth-mib 256 --pressure-guard \
+  --output-root validation-local --max-output-mib 512 \
+  --host-storage-root /mnt/e --min-host-free-mib 8192 \
+  --next-write-reserve-mib 64 -- ./build-test-cpu/bin/ARCH Sod input.par
+```
+
+The mount and capacities are local examples; set `out_dir` in `input.par` below
+the observed output directory. The guard requires Python with Linux pidfd
+support. It refuses or stops a run when output plus the next-write reservation
+exceeds the budget, or Host free space falls below the retained margin plus that
+reservation; normal completion also checks the final sample. WSL filesystem
+free space and the free space of its Host disk are recorded separately. The
+observation is sampled, and the caller sets the reservation from expected output.
+After a batch passes, save processed metrics and input/binary identities before
+removing raw output. Retain failed and unresolved evidence in a bounded local
+directory.
 
 Check CMake's provider messages and the CTest inventory. cuDSS-specific and
 generated-network tests appear when their providers/packages are enabled.

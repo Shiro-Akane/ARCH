@@ -8,10 +8,15 @@ bin/
 # 本地模拟输出
 output/
 
-# Validation summaries, inputs and logs belong in Git. Generated checkpoints
-# and plots stay beside them locally, or in a separately published data archive.
-# This does not exclude EOS inputs or remove already tracked reference data.
+# Validation summaries, inputs and compact references belong in Git. Generated
+# state and per-step raw transcripts remain local; curated EOS/test inputs and
+# processed reference TSV are unaffected.
 /validation/**/results/**/*.h5
+/validation/**/results/**/*_backend_trace.tsv
+/validation/**/results/**/gravity_solves.tsv
+/validation/**/results/**/*_log.dat
+/validation/**/results/**/*.stdout
+/validation/**/results/**/*.stderr
 __pycache__/
 
 # 系统与编辑器文件

@@ -115,17 +115,36 @@ try{
  const inactiveBad=await inspectText(configure(selfText,{jeans_cells:'3'}));
  assert.equal(inactiveBad.core.status,'error');
  assert.ok(inactiveBad.core.diagnostics.some(d=>d.parameterKey==='jeans_cells'&&d.code==='INVALID_RANGE'));
- for(const backend of ['auto','cuda']){
-  const rejected=await inspectText(configure(editedText,{compute_backend:backend}));
+ const cudaText=configure(editedText,{compute_backend:'cuda',geometry:'cartesian'});
+ const cudaActive=await inspectText(cudaText);
+ assert.equal(cudaActive.core.status,'ok');
+ assert.equal(cudaActive.core.amrIndicators?.choices.find(c=>c.value==='JENS')?.available,true);
+ assert.equal(cudaActive.core.amrIndicators?.choices.find(c=>c.value==='JENS')?.selected,true);
+ assert.equal(cudaActive.core.parameters.find(p=>p.key==='jeans_cells')?.parsedValue,160);
+ assert.equal(cudaActive.core.parameters.find(p=>p.key==='jeans_cells')?.valueSource,'input');
+ assert.equal(cudaActive.identity.configRevision,createHash('sha256').update(cudaText).digest('hex'));
+ for(const changes of [{compute_backend:'auto'},
+  {compute_backend:'cuda',geometry:'cylindrical'},
+  {compute_backend:'cuda',geometry:'spherical'},
+  {compute_backend:'cuda',gravity_type:'none'}]){
+  const rejected=await inspectText(configure(editedText,changes));
   assert.equal(rejected.core.status,'error');
   assert.ok(rejected.core.diagnostics.some(d=>d.parameterKey==='refine_var'&&d.code==='INVALID_REFINEMENT_SELECTION'));
+  assert.equal(rejected.core.parameters.find(p=>p.key==='refine_var')?.parsedValue,'JENS');
+  assert.equal(rejected.core.parameters.find(p=>p.key==='jeans_cells')?.parsedValue,160);
+  assert.equal(rejected.core.parameters.find(p=>p.key==='compute_backend')?.parsedValue,changes.compute_backend);
+  assert.equal(rejected.core.execution.simulationReadiness,'not_checked');
+  assert.equal(rejected.core.execution.cuda,'not_initialized');
  }
  const outputOnly=await inspectText(configure(selfText,{plt_variables:'DENS,JENS'}));
  assert.equal(outputOnly.core.status,'ok');
  const outputTarget=outputOnly.core.parameters.find(p=>p.key==='jeans_cells')!;
  assert.equal(outputTarget.parsedValue,null);assert.equal(outputTarget.requirement.required,false);
- for(const result of [unselected,missing,active,bad,inactiveBad,outputOnly]){
+ for(const result of [unselected,missing,active,cudaActive,bad,inactiveBad,outputOnly]){
   assert.equal(result.core.execution.setup,'not_executed');
+  assert.equal(result.core.execution.eos,'not_loaded');
+  assert.equal(result.core.execution.cuda,'not_initialized');
+  assert.equal(result.core.execution.simulationReadiness,'not_checked');
   assert.equal(result.identity.binarySha256,schema.binarySha256);
  }
  assert.equal(await readFile(f.root+'/untouched.par','utf8'),'disk original');
@@ -134,6 +153,7 @@ try{
   parameterCount:currentSchema.parameters.length,
   cases:['valid','empty','duplicate-and-syntax','bounded-overflow','JENS-unselected-available',
    'JENS-missing-null','JENS-first-edit-insertion','JENS-one-Undo-Redo','JENS-active-input',
-   'JENS-invalid-retained','JENS-inactive-invalid','JENS-auto-CUDA-rejected','JENS-output-only-no-target'],scientificResources:'not-created',
+   'JENS-invalid-retained','JENS-inactive-invalid','JENS-Cartesian-CUDA-static-route',
+   'JENS-auto-native-CUDA-nonself-rejected','JENS-output-only-no-target'],scientificResources:'not-created',
   scope:'real binary through ConfigurationAdapter; static selected-binary identity, no successful Build claim'},null,2));
 }finally{await f.cleanup();}

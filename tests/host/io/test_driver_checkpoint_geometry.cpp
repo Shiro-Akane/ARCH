@@ -2,10 +2,12 @@
 #include "amr/AMRControl.h"
 #include "driver/DriverUtils.h"
 #include "driver/io/DriverIO.h"
+#include "math/io/PlotIdentityFixture.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "core/files/FileFingerprint.h"
+#include "core/files/RunIdentity.h"
 #include "amr/refinement/RefinementThermodynamics.h"
 #include "physics/eos/IdealGas.h"
 #include <fstream>
@@ -101,7 +103,8 @@ int main(int argc,char** argv) {
         auto pressure=+[](const FluidVector&,const double*,const void*){return 2.;};
         auto temperature=+[](const FluidVector&,const double*,const void*){return 2.5;};
         auto gamma=+[](const FluidVector&,const double*,const void*){return 1.4;};
-        arch::driver::DriverIO output(runtime,counters,provenance,pressure,temperature,gamma,nullptr);
+        const auto plot_identity=fixture_plot_identity(config,species,semantics);
+        arch::driver::DriverIO output(runtime,counters,provenance,plot_identity,pressure,temperature,gamma,nullptr);
         // A real serializer rejection must propagate without consuming an index.
         // Keep the scientific state valid; corrupt only the repair-ledger shape.
         const auto ledger=counters.repairs.values;
@@ -283,8 +286,10 @@ int main(int argc,char** argv) {
             return u.rho*cs*cs/p;
         };
         const auto leaves=control.tree->GetActiveBlocks();
+        auto diagnostic_identity=fixture_plot_identity(config,species,semantics);
+        diagnostic_identity.run_id=arch::core::new_run_identity();
         write_plt(control,actual_pressure,actual_temperature,actual_gamma,&plot_eos,
-                  12,0.,config,species,{},&provenance,{},semantics);
+                  12,0.,config,species,{},&provenance,diagnostic_identity.run_id,semantics,&diagnostic_identity);
         require(control.tree->GetActiveBlocks()==leaves,"JENS output changed AMR topology");
         const auto good_plot=std::filesystem::path(config.io.out_dir)/"fixture_SW_plt_0012.h5";
         const auto plot_digest=arch::core::file_sha256(good_plot.string());
@@ -294,7 +299,7 @@ int main(int argc,char** argv) {
         bool diagnostic_rejected=false;
         try {
             write_plt(control,actual_pressure,actual_temperature,bad_gamma,&plot_eos,
-                      13,0.,config,species,{},&provenance,{},semantics);
+                      13,0.,config,species,{},&provenance,diagnostic_identity.run_id,semantics,&diagnostic_identity);
         } catch(const std::runtime_error&) {diagnostic_rejected=true;}
         require(diagnostic_rejected&&!std::filesystem::exists(
             std::filesystem::path(config.io.out_dir)/"fixture_SW_plt_0013.h5"),
@@ -302,7 +307,7 @@ int main(int argc,char** argv) {
         config.physics.gravity.type="none";diagnostic_rejected=false;
         try {
             write_plt(control,actual_pressure,actual_temperature,actual_gamma,&plot_eos,
-                      13,0.,config,species,{},&provenance,{},semantics);
+                      13,0.,config,species,{},&provenance,diagnostic_identity.run_id,semantics,&diagnostic_identity);
         } catch(const std::invalid_argument&) {diagnostic_rejected=true;}
         require(diagnostic_rejected&&arch::core::file_sha256(good_plot.string())==plot_digest,
             "inapplicable JENS request damaged last successful output");

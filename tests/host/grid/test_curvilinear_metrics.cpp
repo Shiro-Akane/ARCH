@@ -25,6 +25,10 @@
 #include <mutex>
 #include <stdexcept>
 
+#include "math/geometry/RzEquilibriumCases.h"
+#include "math/geometry/RzReconstructionCases.h"
+#include "math/geometry/RzViscousCases.h"
+
 namespace {
 void close(double actual, double expected, const char* name) {
     if (!std::isfinite(actual) || std::abs(actual - expected) >
@@ -288,8 +292,17 @@ void test_rz_host_cfl() {
                 const int cell=grid.GetIndex(i,j,0);
                 const double radius=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
                 const double radial=.1+.2*radius,axial=-.5+.3*z;
-                state.set(cell,{rho,rho*radial,rho*axial,rho*swirl,
-                    pressure/.4+.5*rho*(radial*radial+axial*axial+swirl*swirl)});
+                // Native m_phi is the W mean of rho*Omega*r and E is a V
+                // mean. Integrate those two polynomials independently; a
+                // point-state swirl momentum is not a native annular mean.
+                const double left=grid.x1_min+(i-grid.Is())*grid.dx1;
+                const double right=left+grid.dx1;
+                const double angular_radius=.75*(std::pow(right,4)-std::pow(left,4))
+                    /(std::pow(right,3)-std::pow(left,3));
+                const double radial_square_mean=.5*(right*right+left*left);
+                state.set(cell,{rho,rho*radial,rho*axial,rho*swirl*angular_radius,
+                    pressure/.4+.5*rho*(radial*radial+axial*axial
+                        +swirl*swirl*radial_square_mean)});
                 state.X(0,cell)=1.;
                 if(i>=grid.Is() && i<grid.Ie() && j>=grid.Js() && j<grid.Je()) {
                     // Independent two-face acoustic transport bound, dr != dz.
@@ -878,93 +891,6 @@ void test_rz_scheduled_hydro(int direction,double inner) {
 }
 
 
-// Isolated scientific diagnostic: the default compatibility suite cannot
-// silently turn a failed RZ spatial gate into a production capability.
-int audit_rz_rotating_equilibrium()
-{
-    SpeciesManager species;species.add_species("gas",1.,1.,1.4,3.);
-    IdealGas eos(1.4,species);
-    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
-    bool passed=true;
-    for(double inner:{0.,1.}) {
-        long double previous_l1=0.,previous_rms=0.,previous_max=0.,previous_closure=0.;
-        for(int roots:{1,2,4,8}) {
-            long double weighted_abs=0.,weighted_square=0.,volume_sum=0.,max_error=0.;
-            long double closure_max=0.,J=0.,analytic_J=0.,source_max=0.;
-            double peak_radius=0.;
-            for(int block=0;block<roots;++block) {
-                const double lower=inner+static_cast<double>(block)/roots;
-                const double upper=inner+static_cast<double>(block+1)/roots;
-                Grid g(amr::MAX_NG,lower,upper,-.125,.125,0.,1.);
-                g.dim=2;g.geometry="cylindrical";g.InitializeTopology(rz);
-                FluidState state;state.Preallocate(g.GetTotalSize());state.InitSpecies(1);
-                for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
-                    double l=g.GetFacePosL(i),h=g.GetFacePosR(i),sign=1.;
-                    if(h<=0.) {const double t=l;l=-h;h=-t;sign=-1.;}
-                    const double r2mean=.5*(h*h+l*l);
-                    const double Pmean=5.+.5*r2mean; // rho=Omega=1.
-                    const double m=sign*GridMetrics::Rz::AngularReconstructionRadius(l,h);
-                    // E is the native volume average, not representative KE.
-                    const double E=Pmean/.4+.5*r2mean;
-                    const int c=g.GetIndex(i,j,0);
-                    state.set(c,{1.,0.,0.,m,E});state.X(0,c)=1.;
-                }
-                const int size=g.GetTotalSize();
-                std::vector<FluidVector> delta(size),flux(size);
-                std::vector<double> ds(size),sf(size);
-                TimeIntegration::evaluate_all_dimensions<
-                    FluxHLLC<MusclReconstruction<McLimiter>>>(
-                    nullptr,-1,state,eos,g,1.,delta,ds,flux,sf,nullptr,0.,1.,true,rz);
-                const long double pi=std::acos(-1.L);
-                for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
-                    const int c=g.GetIndex(i,j,0);
-                    const long double l=g.GetFacePosL(i),h=g.GetFacePosR(i);
-                    const long double V=pi*(h*h-l*l)*g.dx2;
-                    const long double W=2.L*pi*(h*h*h-l*l*l)*g.dx2/3.L;
-                    const long double Pmean=5.L+(h*h+l*l)/4.L;
-                    const long double err=std::abs(delta[c].mom_u); // exact equilibrium rhs=0.
-                    weighted_abs+=V*err;weighted_square+=V*err*err;volume_sum+=V;
-                    if(err>max_error) {max_error=err;peak_radius=g.GetCellCenterX(i);}
-                    const double X=1.;
-                    const double P=eos.get_pressure(state.get(c),&X);
-                    if(!std::isfinite(P))throw std::runtime_error("equilibrium diagnostic EOS input invalid");
-                    FluidVector source{};
-                    TimeIntegration::add_rz_geometric_source_cell(
-                        state.get(c),&X,eos,static_cast<double>(l),
-                        static_cast<double>(h),1.,source);
-                    const long double exact_pressure_div=2.L*
-                        (h*(5.L+h*h/2.L)-l*(5.L+l*l/2.L))/(h*h-l*l);
-                    source_max=std::max(source_max,
-                        std::abs(static_cast<long double>(source.mom_u)-exact_pressure_div));
-
-                    closure_max=std::max(closure_max,
-                        std::abs(static_cast<long double>(P)-Pmean));
-                    J+=state.mom_w[c]*W;
-                    analytic_J+=pi*g.dx2*(h*h*h*h-l*l*l*l)/2.L;
-                }
-            }
-            const long double L1=weighted_abs/volume_sum,rms=std::sqrt(weighted_square/volume_sum);
-            const double p1=roots==1?0.:static_cast<double>(std::log2(previous_l1/L1));
-            const double p2=roots==1?0.:static_cast<double>(std::log2(previous_rms/rms));
-            const double pinf=roots==1?0.:static_cast<double>(std::log2(previous_max/max_error));
-            const double pc=roots==1?0.:static_cast<double>(std::log2(previous_closure/closure_max));
-            const long double jerr=std::abs(J-analytic_J)/std::abs(analytic_J);
-            if(!std::isfinite(static_cast<double>(L1))||jerr>1.e-12L)
-                throw std::runtime_error("RZ equilibrium input or analytic J is invalid");
-            // Do not choose a favorable norm to close an ambiguous full gate.
-            if(roots==8 && (p1<1.8||p2<1.8||pinf<1.8||pc<1.8))passed=false;
-            std::cout<<"RZ_EQUILIBRIUM inner="<<inner<<" cells="<<roots*amr::BLOCK_NX
-                <<" L1="<<static_cast<double>(L1)<<" rms="<<static_cast<double>(rms)
-                <<" Linf="<<static_cast<double>(max_error)<<" closure="<<static_cast<double>(closure_max)
-                <<" source_exact_face_residual="<<static_cast<double>(source_max)
-                <<" peak_radius="<<peak_radius<<" p_L1="<<p1<<" p_rms="<<p2<<" p_Linf="<<pinf<<" p_closure="<<pc
-                <<" J_input_error="<<static_cast<double>(jerr)<<'\n';
-            previous_l1=L1;previous_rms=rms;previous_max=max_error;previous_closure=closure_max;
-        }
-    }
-    std::cout<<"RZ_EQUILIBRIUM_SPATIAL_GATE="<<(passed?"PASS":"NOT_CLEARED")<<'\n';
-    return passed?0:2;
-}
 
 void test_rz_native_coordinates()
 {
@@ -1057,6 +983,7 @@ int main(int argc,char** argv)
     std::cout << "INDEPENDENT_METRIC_MAX_RELATIVE_ERROR=" << conditioning << '\n';
     // Same existing arithmetic metric gate; no new production science budget.
     const double rz_conditioning = RzMetricCases::conditioning_error();
+    RzMetricCases::cell_average_samples();
     if (!std::isfinite(rz_conditioning) || rz_conditioning > 2.e-12)
         throw std::runtime_error("independent full-rotation RZ measures");
     std::cout << "RZ_METRIC_MAX_RELATIVE_ERROR=" << rz_conditioning << '\n';
@@ -1269,9 +1196,9 @@ int main(int argc,char** argv)
         result.raw_dt = DiffFlux::adaptive_dt_diff(state, eos, grid, config, 1.);
         return result;
     };
-    // Independent Cartesian vector-Laplacian witness for axisymmetric flow:
-    // vr=r, vz=3z, vphi=2r => Cartesian v=(x-2y,2x+y,3z).
-    // Momentum Laplacian is zero and work divergence is mu*(1+4+4+1+9)=19mu.
+    // The original radial/axial connection remains unchanged. The phi
+    // connection now belongs to the symmetric torque divergence below and
+    // must not also be applied as the former vector-Laplacian cell source.
     for (double left : {0.,1.,4.}) {
         auto grid=make_rz_geometry_view(make_geometry_view(
             Geometry::Cylindrical,2,{left,-1.,0.},{.25,.5,0.}));
@@ -1295,104 +1222,17 @@ int main(int argc,char** argv)
             throw std::runtime_error("RZ viscous source accessed inactive phi neighbour");
         const double r=grid.GetCellCenterX(1),inv=2./(left+left+.25);
         close(delta.mom_u,-2.*coefficients.nu_visc*inv,"RZ radial viscous connection");
-        close(delta.mom_w,-4.*coefficients.nu_visc*inv,"RZ swirl viscous connection");
+        close(delta.mom_w,0.,"RZ duplicated azimuthal viscous connection");
         if (delta.mom_v!=0. || delta.rho!=0. || delta.eng!=0.)
             throw std::runtime_error("RZ viscous source changed z/mass/energy");
         close(DiffFlux::viscous_source_stability_rate(coefficients.nu_visc,grid,1,1),
             coefficients.nu_visc*inv/r,"RZ unresolved phi row bound");
-        for (int direction=0;direction<2;++direction) {
-            const int stride=direction==0?1:grid.stride_y;
-            FluidVector flux[2];
-            for (int side=0;side<2;++side) {
-                const auto& a=states[cell+(side?0:-stride)];
-                const auto& b=states[cell+(side?stride:0)];
-                DiffFlux::assemble_diffusion_face_flux(a,b,1.,1.,2.,
-                    composition,composition,1,PhysicalSpacing(grid,direction,1,1),
-                    1.,coefficients,cfg,flux[side],nullptr,0,
-                    DiffFlux::viscous_basis_rotation(grid,direction,1,1));
-            }
-            delta=delta-(flux[1]*FaceArea(grid,direction,1,1,0,true)
-                -flux[0]*FaceArea(grid,direction,1,1,0,false))/CellVolume(grid,1,1,0);
-        }
-        close(delta.mom_u,0.,"RZ radial linear-vector Laplacian");
-        close(delta.mom_v,0.,"RZ axial linear-vector Laplacian");
-        close(delta.mom_w,0.,"RZ swirl linear-vector Laplacian");
-        close(delta.eng,19.*2.*coefficients.nu_visc,"RZ conservative viscous work flux");
         if (delta.rho!=0.) throw std::runtime_error("RZ viscosity changed mass");
     }
     // Complete Host operator with native padded storage and explicit RZ chart.
-    for (double left : {0.,1.}) {
-        Grid grid(amr::MAX_NG,left,left+1.,-.5,.5,0.,1.);
-        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
-        FluidState state,delta;
-        state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
-        delta.Preallocate(grid.GetTotalSize());delta.InitSpecies(1);
-        for(int j=0;j<grid.GetTotalY();++j) for(int i=0;i<grid.GetTotalX();++i) {
-            const int cell=grid.GetIndex(i,j,0);
-            const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
-            state.set(cell,{2.,2.*r,6.*z,4.*r,1000.});state.X(0,cell)=1.;
-        }
-        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config,
-            GeometrySemantics::AxisymmetricRz);
-        for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
-            const int cell=grid.GetIndex(i,j,0);
-            close(delta.mom_u[cell],0.,"RZ Host radial linear operator");
-            close(delta.mom_v[cell],0.,"RZ Host axial linear operator");
-            close(delta.mom_w[cell],0.,"RZ Host swirl linear operator");
-            close(delta.eng[cell],19.*2.*ViscousGeometryCases::viscosity,
-                "RZ Host conservative work divergence");
-            if(delta.rho[cell]!=0. || delta.X(0,cell)!=0.)
-                throw std::runtime_error("RZ Host viscosity changed mass/species");
-        }
-        const double dt=DiffFlux::adaptive_dt_diff(state,eos,grid,config,1.,
-            GeometrySemantics::AxisymmetricRz);
-        // Constant nu: radial/axial face sum is 2nu/dr²+2nu/dz²,
-        // and the strongest unresolved phi source is at the first radial cell.
-        const double center=grid.GetCellCenterX(grid.Is());
-        const double inv=2./(2.*left+grid.dx1);
-        const double rate=2.*ViscousGeometryCases::viscosity
-            *(1./(grid.dx1*grid.dx1)+1./(grid.dx2*grid.dx2))
-            +ViscousGeometryCases::viscosity*inv/center;
-        close(dt,1./rate,"RZ Host explicit diffusion limit");
-    }
-    // Variable mu=nu*rho, rho=2+alpha*r. Independent cell-volume
-    // average of Cartesian div(mu*v.grad(v)) is nu*(38+24alpha*<r>).
-    double previous_rz_work_error=0.;
-    for(double h : {.05,.025,.0125}) {
-        const double lower=.5-(amr::BLOCK_NX/2+.5)*h;
-        Grid grid(amr::MAX_NG,lower,lower+amr::BLOCK_NX*h,
-            -.5,-.5+amr::BLOCK_NY*h,0.,1.);
-        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
-        FluidState state,delta;
-        state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
-        delta.Preallocate(grid.GetTotalSize());delta.InitSpecies(1);
-        constexpr double alpha=.1;
-        for(int j=0;j<grid.GetTotalY();++j) for(int i=0;i<grid.GetTotalX();++i) {
-            const int cell=grid.GetIndex(i,j,0);
-            const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j),rho=2.+alpha*r;
-            state.set(cell,{rho,rho*r,rho*3.*z,rho*2.*r,rho*1000.});
-            state.X(0,cell)=1.;
-        }
-        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config,
-            GeometrySemantics::AxisymmetricRz);
-        const int i=grid.Is()+amr::BLOCK_NX/2,j=grid.Js()+amr::BLOCK_NY/2;
-        const int cell=grid.GetIndex(i,j,0);
-        const double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
-        const double average_r=(2./3.)*(hi*hi+hi*lo+lo*lo)/(hi+lo);
-        const double nu=ViscousGeometryCases::viscosity;
-        close(delta.mom_u[cell],nu*alpha,"RZ variable-mu radial derivative");
-        close(delta.mom_v[cell],0.,"RZ variable-mu axial derivative");
-        close(delta.mom_w[cell],2.*nu*alpha,"RZ variable-mu swirl derivative");
-        const double reference=nu*(38.+24.*alpha*average_r);
-        const double error=std::abs(delta.eng[cell]-reference);
-        std::cout<<"RZ_HOST_VARIABLE_MU h="<<h<<" work_error="<<error<<'\n';
-        if(!std::isfinite(error) || (previous_rz_work_error>1.e-10
-            && previous_rz_work_error<3.5*error))
-            throw std::runtime_error("RZ variable-mu work lost second-order consistency");
-        previous_rz_work_error=error;
-    }
-    if(previous_rz_work_error>1.e-4)
-        throw std::runtime_error("RZ variable-mu existing analytic engineering budget exceeded");
+    RzViscousCases::native_thermodynamic_closure();
+    RzReconstructionCases::native_profile();
+    RzViscousCases::azimuthal_operator();
     ViscousGeometryCases::convergence("cpu", evaluate);
     ViscousGeometryCases::radial_origin("cpu", evaluate);
     ViscousGeometryCases::density_stability("cpu", evaluate);

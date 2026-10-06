@@ -1,4 +1,3 @@
-#include "core/files/RunIdentity.h"
 /**
  * @file HDF5Writer.cpp
  * @brief Read and write the common HDF5 datasets and attributes.
@@ -14,6 +13,9 @@
  */
 
 #include <algorithm>
+#include <bit>
+#include <charconv>
+#include <cstdint>
 #include <cmath>
 #include <filesystem>
 #include <system_error>
@@ -27,6 +29,9 @@
 #include "io/chk/CheckpointCompatibility.h"
 #include "data/FluidState.h"
 #include "core/config/ConfigValidation.h"
+#include "core/config/ConfigurationRecord.h"
+#include "core/files/FileFingerprint.h"
+#include "core/files/RunIdentity.h"
 
 #include <highfive/H5DataSet.hpp>
 #include <highfive/H5DataSpace.hpp>
@@ -252,7 +257,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                 throw std::invalid_argument("Invalid RZ angular measure/state.");
     }
     if (native_grid) {
-        if ((!rz && (geom != "cartesian" || dim > 2)) || native_grid->cell_measure.size() != cells)
+        if ((geom!="cartesian" && geom!="cylindrical" && geom!="spherical") || native_grid->cell_measure.size() != cells)
             throw std::invalid_argument("Invalid candidate native grid geometry/length.");
         for (size_t axis = 0; axis < 3; ++axis) {
             if (native_grid->lower[axis].size() != cells
@@ -267,9 +272,14 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                     throw std::invalid_argument("Invalid native cell bounds.");
             }
         }
+        const auto expected_unit=rz?"cm^3":geom=="cartesian"?(dim==1?"cm":dim==2?"cm^2":"cm^3"):
+            dim==3 || (geom=="spherical" && dim==1)?"cm^3":"cm^2";
+        const auto expected_normalization=rz?"full_rotation":geom=="cartesian"?
+            (dim==1?"per_unit_transverse_area":dim==2?"per_unit_transverse_length":"full_volume"):
+            dim==3?"full_volume":geom=="spherical" && dim==1?"per_unit_solid_angle":
+            dim==1?"per_unit_azimuth_and_axial_length":"per_unit_transverse_length";
         if ((rz || native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
-            && (native_grid->measure_unit!=(rz ? "cm^3" : dim==1 ? "cm" : "cm^2")
-                || native_grid->normalization!=(rz ? "full_rotation" : dim==1 ? "per_unit_transverse_area" : "per_unit_transverse_length")))
+            && (native_grid->measure_unit!=expected_unit || native_grid->normalization!=expected_normalization))
             throw std::invalid_argument("Invalid native measure declaration.");
         for (double measure : native_grid->cell_measure)
             if (!std::isfinite(measure) || measure <= 0.)
@@ -331,6 +341,116 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                     throw std::invalid_argument("Invalid plot resolved species properties.");
         }
     }
+    if (source_identity && source_identity->formal) {
+        const auto& id=*source_identity;
+        const auto config_fields=arch::config::decode_identity_record(id.effective_config_record);
+        arch::config::require_configuration_identity_coverage(config_fields);
+        const auto eos_fields=arch::config::decode_identity_record(id.eos_identity_record);
+        if(arch::config::identity_value(config_fields,"version",'s')!="arch-effective-configuration-1"
+            || arch::config::identity_value(config_fields,"case.id",'s')!=id.case_id
+            || arch::config::identity_value(config_fields,"case.compiled-source",'s')!=id.case_source_sha256
+            || arch::config::identity_value(config_fields,"backend",'s')!=id.resolved_backend
+            || arch::config::identity_value(config_fields,"grid.dim",'i')!=std::to_string(dim)
+            || arch::config::identity_value(config_fields,"grid.geometry",'s')!=geom
+            || arch::config::identity_value(config_fields,"geometry-semantics",'s')!=(rz?"axisymmetric-rz-2":"existing-1")
+            || arch::config::identity_value(eos_fields,"version",'s')!="arch-eos-identity-1"
+            || arch::config::identity_value(eos_fields,"type",'s')!=id.eos_type
+            || arch::config::identity_value(eos_fields,"accepted-table-fingerprint",'s')!=id.eos_table_sha256
+            || arch::config::identity_value(config_fields,"physics.eos_coulomb_mult",'d')
+                !=arch::config::identity_value(eos_fields,"coulomb-multiplier",'d'))
+            throw std::invalid_argument("Contradictory formal configuration/EOS record");
+        // IEEE-754 binary64 bits, in fixed big-endian hexadecimal order, are
+        // identity evidence; decimal formatting must not round these fields.
+        const auto bits=[](double value) {
+            const auto number=std::bit_cast<std::uint64_t>(value);
+            const char* digits="0123456789abcdef";std::string encoded(16,'0');
+            for(int i=0;i<16;++i)encoded[15-i]=digits[(number>>(4*i))&15];
+            return encoded;
+        };
+        if(id.species_names.empty() && id.eos_type!="ideal")
+            throw std::invalid_argument("Formal table EOS provenance requires resolved constituents");
+        // A gamma-only IdealGas has a known, empty composition. Every ordered
+        // vector must explicitly record count zero; absent counts or extra
+        // indexed entries cannot certify that state.
+        for(const auto* name:{"names","A","Z","gamma","Cv"}) {
+            const std::string prefix="species."+std::string(name)+".";
+            if(arch::config::identity_value(eos_fields,prefix+"count",'i')!=std::to_string(id.species_names.size()))
+                throw std::invalid_argument("Contradictory formal EOS constituent count: "+std::string(name));
+            for(const auto& [key,value]:eos_fields) {
+                (void)value;
+                if(!key.starts_with(prefix) || key==prefix+"count")continue;
+                const auto index_text=std::string_view(key).substr(prefix.size());
+                std::size_t index=0;
+                const auto parsed=std::from_chars(index_text.data(),index_text.data()+index_text.size(),index);
+                if(parsed.ec!=std::errc{} || parsed.ptr!=index_text.data()+index_text.size()
+                    || index>=id.species_names.size() || index_text!=std::to_string(index))
+                    throw std::invalid_argument("Unexpected formal EOS constituent entry: "+key);
+            }
+        }
+        if(id.eos_type=="ideal" && (arch::config::identity_value(eos_fields,"ideal-gamma",'d')!=bits(id.ideal_gamma)
+            || arch::config::identity_value(config_fields,"physics.gamma",'d')!=bits(id.ideal_gamma)))
+            throw std::invalid_argument("Contradictory formal IdealGas gamma");
+        for(const auto* values:{&id.species_A,&id.species_Z,&id.species_gamma,&id.species_Cv})
+            if(values->size()!=id.species_names.size())
+                throw std::invalid_argument("Incomplete formal EOS constituent properties");
+        for(std::size_t i=0;i<id.species_names.size();++i) {
+            if(arch::config::identity_value(eos_fields,"species.names."+std::to_string(i),'s')!=id.species_names[i])
+                throw std::invalid_argument("Contradictory formal species name");
+            for(const auto& [name,values]:std::initializer_list<std::pair<const char*,const std::vector<double>*>>{
+                {"A",&id.species_A},{"Z",&id.species_Z},{"gamma",&id.species_gamma},{"Cv",&id.species_Cv}})
+                if(values->size()!=id.species_names.size() || arch::config::identity_value(eos_fields,
+                    "species."+std::string(name)+"."+std::to_string(i),'d')!=bits((*values)[i]))
+                    throw std::invalid_argument("Contradictory formal EOS constituent property");
+        }
+        if(native_grid) {
+            const std::array<std::string,3> axes=geom=="cartesian"?std::array<std::string,3>{"x","y","z"}:
+                rz?std::array<std::string,3>{"r","z","inactive"}:dim==3?
+                (geom=="cylindrical"?std::array<std::string,3>{"r","z","phi"}:std::array<std::string,3>{"r","theta","phi"}):
+                std::array<std::string,3>{"r","phi","inactive"};
+            for(int i=0;i<3;++i) {
+                const std::string axis=i<dim?axes[i]:"inactive";
+                const std::string unit=i>=dim?"inactive":axis=="theta"||axis=="phi"?"rad":"cm";
+                if(native_grid->axes[i]!=axis||native_grid->axis_units[i]!=unit)
+                    throw std::invalid_argument("Contradictory formal native coordinate declaration");
+            }
+            const std::string convention=rz?"full-rotation-axisymmetric-ring":geom=="cartesian"?
+                "active-coordinate-product; inactive-measures-omitted":"GridMetrics-native-coordinate-integral";
+            if(native_grid->measure_convention!=convention)
+                throw std::invalid_argument("Contradictory formal native measure convention");
+        }
+        const auto digest=[](const std::string& value) {
+            return value.size()==64 && std::all_of(value.begin(),value.end(),[](char c) {
+                return (c>='0'&&c<='9') || (c>='a'&&c<='f');
+            });
+        };
+        const auto record_ok=[&](const std::string& record,const std::string& hash) {
+            return !record.empty() && record.size()<=1024*1024 && record.find(char(0))==std::string::npos
+                && digest(hash) && arch::core::string_sha256(record)==hash;
+        };
+        if (!native_grid || !arch::core::valid_run_identity(id.run_id)
+            || id.case_id.empty() || !digest(id.case_source_sha256)
+            || !digest(id.raw_config_sha256) || !digest(id.binary_sha256)
+            || id.effective_config_version!="arch-effective-configuration-1"
+            || !record_ok(id.effective_config_record,id.effective_config_sha256)
+            || id.build_identity_version!="arch-build-identity-1"
+            || id.build_identity_scope!="project-source-and-configured-compiler-profile"
+            || !record_ok(id.source_manifest_record,id.source_manifest_sha256)
+            || !record_ok(id.build_profile_record,id.build_profile_sha256)
+            || !digest(id.build_id)
+            || arch::core::string_sha256(id.build_identity_version+"\n"+id.source_manifest_sha256
+                    +"\n"+id.build_profile_sha256+"\n")!=id.build_id
+            || id.eos_identity_version!="arch-eos-identity-1"
+            || !record_ok(id.eos_identity_record,id.eos_identity_sha256)
+            || id.eos_type.empty() || id.unit_system!="cgs"
+            || (id.eos_type!="ideal" && !digest(id.eos_table_sha256))
+            || (id.resolved_backend!="cpu" && id.resolved_backend!="cuda")
+            || (!id.source_git_head.empty() && (id.source_git_head.size()!=40
+                || !std::all_of(id.source_git_head.begin(),id.source_git_head.end(),[](char c) {
+                    return (c>='0'&&c<='9') || (c>='a'&&c<='f');
+                })))
+            || (id.source_git_dirty!="true" && id.source_git_dirty!="false" && id.source_git_dirty!="unknown"))
+            throw std::invalid_argument("Incomplete or inconsistent formal Plotfile provenance");
+    }
     // Same-directory atomic replacement retains legacy overwrite semantics.
     // Atomic visibility does not promise power-loss durability (no fsync).
     std::string pattern = filepath + ".partial-XXXXXX";
@@ -354,14 +474,19 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             file.createAttribute("geometry_chart",std::string("axisymmetric-rz"));
             file.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
         }
+        if (!rz && source_identity && source_identity->formal) {
+            file.createAttribute("geometry_semantics_revision",1);
+            file.createAttribute("geometry_chart",std::string("existing"));
+        }
         file.createAttribute("time_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "s" : "unknown"));
 
         {
-        file.createAttribute("plot_publication_version", std::string("candidate-1"));
+        const bool formal=source_identity && source_identity->formal;
+        file.createAttribute("plot_publication_version", std::string(formal?"arch-plot-publication-1":"candidate-1"));
         file.createAttribute("plot_publication_state", std::string("complete"));
         file.createAttribute("plot_publication_method", std::string("checked-close-atomic-replace"));
         file.createAttribute("plot_storage_order", std::string("x1-fastest"));
-        file.createAttribute("plot_identity_state", std::string("unknown"));
+        file.createAttribute("plot_identity_state", std::string(formal?"recorded":"unknown"));
         Group grid_group = file.createGroup("Grid");
         Group data_group = file.createGroup("Data");
         grid_group.createAttribute("coordinate_basis",std::string("cartesian"));
@@ -376,8 +501,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         if (source_identity) {
             const auto& id=*source_identity;
             Group identity=file.createGroup("SourceIdentity");
-            identity.createAttribute("version",std::string("candidate-identity-1"));
-            identity.createAttribute("scope",std::string("partial"));
+            identity.createAttribute("version",std::string(formal?"arch-plot-identity-1":"candidate-identity-1"));
+            identity.createAttribute("scope",std::string(formal?"resolved-runtime":"partial"));
             identity.createAttribute("case_id",id.case_id.empty()?std::string("unknown"):id.case_id);
             identity.createAttribute("case_source",id.case_id.empty()?std::string("unknown"):std::string("ConfigurationInput.case_id"));
             identity.createAttribute("binary_sha256",id.binary_sha256.empty()?std::string("unknown"):id.binary_sha256);
@@ -397,40 +522,78 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             identity.createAttribute("species_count",static_cast<int>(id.species_names.size()));
             if(!id.species_names.empty())identity.createDataSet("species_names",id.species_names);
             const bool has_properties=!id.species_A.empty();
+            // Formal gamma-only IdealGas records an exact empty composition;
+            // omitting its zero-length datasets does not mean evidence is unknown.
+            const bool recorded_properties=has_properties || (formal && id.eos_type=="ideal" && id.species_names.empty());
             identity.createAttribute("species_properties_version",std::string("checkpoint-species-1"));
-            identity.createAttribute("species_properties_state",std::string(has_properties?"recorded":"unknown"));
-            identity.createAttribute("species_properties_source",std::string(has_properties?
+            identity.createAttribute("species_properties_state",std::string(recorded_properties?"recorded":"unknown"));
+            identity.createAttribute("species_properties_source",std::string(recorded_properties?
                 "resolved-runtime-checkpoint-provenance":"unknown"));
             if(has_properties) {
                 identity.createDataSet("species_A",id.species_A);
                 identity.createDataSet("species_Z",id.species_Z);
                 identity.createDataSet("species_gamma",id.species_gamma);
                 identity.createDataSet("species_Cv",id.species_Cv);
-            } else {
+            } else if(!recorded_properties) {
                 identity.createAttribute("species_properties_reason",
                     std::string("resolved species properties not supplied by caller"));
             }
             identity.createAttribute("run_id",id.run_id.empty()?std::string("unknown"):id.run_id);
             identity.createAttribute("run_id_source",id.run_id.empty()?std::string("unknown"):
                 std::string("DriverIO output session; OS-generated UUIDv4"));
-            for(const auto& [name,reason]:std::map<std::string,std::string>{
-                {"effective_config_sha256","authoritative effective-config identity not supplied to writer"},
-                {"build_id","authoritative Build Manifest identity not supplied to writer"},
-                {"source_git_head","authoritative source Git identity not supplied to writer"}}) {
-                identity.createAttribute(name,std::string("unknown"));
-                identity.createAttribute(name+"_reason",reason);
+            if(formal) {
+                identity.createAttribute("case_source_sha256",id.case_source_sha256);
+                identity.createAttribute("case_source_identity_source",std::string("compiled-case-registration"));
+                identity.createAttribute("effective_config_version",id.effective_config_version);
+                identity.createAttribute("effective_config_sha256",id.effective_config_sha256);
+                identity.createAttribute("effective_config_source",std::string("immutable-runtime-config-and-resolved-plan"));
+                identity.createAttribute("build_identity_version",id.build_identity_version);
+                identity.createAttribute("build_identity_scope",id.build_identity_scope);
+                identity.createAttribute("build_id",id.build_id);
+                identity.createAttribute("build_source",std::string("CMake-embedded-project-source-and-compiler-profile"));
+                identity.createAttribute("source_manifest_sha256",id.source_manifest_sha256);
+                identity.createAttribute("build_profile_sha256",id.build_profile_sha256);
+                identity.createAttribute("source_git_head",id.source_git_head.empty()?std::string("not-applicable"):id.source_git_head);
+                identity.createAttribute("source_git_dirty",id.source_git_dirty);
+                identity.createAttribute("source_git_source",std::string("optional-build-time-annotation"));
+                identity.createAttribute("eos_identity_version",id.eos_identity_version);
+                identity.createAttribute("eos_identity_sha256",id.eos_identity_sha256);
+                identity.createAttribute("eos_table_identity_kind",std::string(id.eos_type=="ideal"?"not-applicable":
+                    id.eos_type=="helmholtz"?"accepted-table-content":"accepted-table-content-and-component-interpretation"));
+                identity.createAttribute("resolved_backend",id.resolved_backend);
+                identity.createDataSet("effective_config_record",id.effective_config_record);
+                identity.createDataSet("source_manifest_record",id.source_manifest_record);
+                identity.createDataSet("build_profile_record",id.build_profile_record);
+                identity.createDataSet("eos_identity_record",id.eos_identity_record);
+            } else {
+                for(const auto& [name,reason]:std::map<std::string,std::string>{
+                    {"effective_config_sha256","authoritative effective-config identity not supplied to writer"},
+                    {"build_id","authoritative Build Manifest identity not supplied to writer"},
+                    {"source_git_head","authoritative source Git identity not supplied to writer"}}) {
+                    identity.createAttribute(name,std::string("unknown"));
+                    identity.createAttribute(name+"_reason",reason);
+                }
             }
             identity.createAttribute("eos_unit_system",id.unit_system.empty()?std::string("unknown"):id.unit_system);
         }
 
         if (native_grid) {
             Group native = file.createGroup("NativeGrid");
-            native.createAttribute("version", std::string(rz ? "candidate-axisymmetric-rz-2" : "candidate-cartesian-1"));
+            native.createAttribute("version", std::string(rz ? (formal?"arch-native-axisymmetric-rz-2":"candidate-axisymmetric-rz-2") :
+                (formal?(geom=="cartesian"?"arch-native-cartesian-1":"arch-native-curvilinear-1"):"candidate-cartesian-1")));
             if (rz) {
-                native.createAttribute("x1_axis",std::string("r_cy"));
-                native.createAttribute("x2_axis",std::string("z_cy"));
+                native.createAttribute("x1_axis",std::string(formal?"r":"r_cy"));
+                native.createAttribute("x2_axis",std::string(formal?"z":"z_cy"));
                 native.createAttribute("x3_axis",std::string("inactive"));
                 native.createAttribute("native_coordinate_unit",std::string("cm"));
+            }
+            if(formal) {
+                native.createAttribute("native_geometry",geom);
+                for(std::size_t axis=0;axis<3;++axis) {
+                    const std::string key="x"+std::to_string(axis+1);
+                    if(!rz)native.createAttribute(key+"_axis",native_grid->axes[axis]);
+                    native.createAttribute(key+"_unit",native_grid->axis_units[axis]);
+                }
             }
             native.createAttribute("centering", std::string("cell"));
             native.createAttribute("ghost_cells", 0);
@@ -438,7 +601,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             native.createAttribute("center_basis", std::string("cartesian"));
             native.createAttribute("measure_source", std::string("GridMetrics::CellVolume"));
             native.createAttribute("measure_convention",
-                std::string(rz ? "full-rotation-axisymmetric-ring" : "active-coordinate-product; inactive-measures-omitted"));
+                std::string(rz ? "full-rotation-axisymmetric-ring" : formal?native_grid->measure_convention:
+                    "active-coordinate-product; inactive-measures-omitted"));
             native.createAttribute("measure_unit", native_grid->measure_unit);
             native.createAttribute("measure_normalization", native_grid->normalization);
             native.createAttribute("logical_identity",
@@ -461,7 +625,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
 
         if (rz) {
             auto state = file.createGroup("NativeState");
-            state.createAttribute("version",std::string("candidate-rz-angular-1"));
+            state.createAttribute("version",std::string(source_identity && source_identity->formal ? "arch-rz-angular-1" : "candidate-rz-angular-1"));
             state.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
             state.createAttribute("storage_order",std::string("same-as-Data; x1-fastest"));
             state.createAttribute("evolved_state",std::string("m_phi only; J/V is derived output"));
@@ -487,7 +651,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             if (field_metadata) {
                 if (const auto it=field_metadata->find(name);it!=field_metadata->end()) metadata=it->second;
             }
-            ds.createAttribute("metadata_version",std::string("candidate-field-1"));
+            ds.createAttribute("metadata_version",std::string(formal?"arch-field-1":"candidate-field-1"));
             ds.createAttribute("unit",metadata.unit);
             ds.createAttribute("centering",std::string("cell"));
             ds.createAttribute("basis",metadata.basis);

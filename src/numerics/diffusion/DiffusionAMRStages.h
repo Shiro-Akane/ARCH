@@ -315,9 +315,11 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
         std::fill(species_flux_buffer.begin(), species_flux_buffer.end(), 0.0);
         DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir, capture_budget, semantics);
         TimeIntegration::accumulate_divergence(dU, d_species, flux_buffer, species_flux_buffer,
-                                               grid, dt, dir, n_species, semantics);
+                                               grid, dt, dir, n_species, semantics,
+            semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
         amr::RegisterCoarseFineFluxes(amr_ctrl, block_id, grid, dir, flux_buffer,
-                                      species_flux_buffer, n_species, flux_weight, semantics);
+                                      species_flux_buffer, n_species, flux_weight, semantics,
+            semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
     }
 
     DiffFlux::add_geometric_sources(dU, state, eos, grid, config, dt, semantics);

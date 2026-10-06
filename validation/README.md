@@ -86,12 +86,18 @@ immutable baseline parameter files under `inputs/`, and optional `figures/`. Eac
 validation `.par` file names its owning record and must change together with the
 relevant metrics and acceptance decision. Reusable teaching and example inputs
 remain under `simulation/`; runtime data remain under `EOS_toolkit/`. Do not create
-a parallel validation tree. Raw logs, hardware metadata and historical records
-belong under each module's `results/`, separate from the user-facing summary.
-Generated HDF5 checkpoints and plot outputs remain in the local result directory
-and are excluded from new Git additions. Keep the JSON/CSV results, parameters,
-logs and artifact hashes in Git; distribute a full binary-data archive separately
-when needed. Existing tracked reference data and EOS inputs are unaffected.
+a parallel validation tree. Reviewed measurements, sanitized hardware metadata
+and historical decisions belong under each module's `results/`, separate from
+the user-facing summary. Keep JSON/CSV metrics, immutable parameters, reference
+samples, reproduction scripts and compact failure explanations in Git.
+
+Generated checkpoints, plots, complete application transcripts and per-step
+backend/solver traces remain in local result directories or an identified local
+archive. Their retained identities and archive scope are described in the
+[raw-record archive index](archive/README.md). Raw files are not required by CI;
+regression fixtures and runtime EOS inputs retain their existing owners. A
+separately published data archive can accompany a study when its raw outputs
+are needed for independent analysis.
 
 ### Result identity and evidence
 

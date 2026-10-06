@@ -62,7 +62,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
                std::span<const io::PlotScalarField> extra_fields = {},
                const io::CheckpointProvenance* runtime_provenance = nullptr,
                std::string_view run_id = {},
-               GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
+               GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
+               const io::PlotSourceIdentity* source_identity = nullptr);
 
 // Checkpoint output for restart.
 void write_chk(amr::AMRControl &amr_ctrl,

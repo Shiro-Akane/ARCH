@@ -5,6 +5,7 @@
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/DriverStages.h"
 #include "driver/io/DriverIO.h"
+#include "math/io/PlotIdentityFixture.h"
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/HydroSolverImpl.h"
 #include "numerics/flux/FluxHLLC.h"
@@ -44,6 +45,7 @@ static void advance(arch::driver::DriverRuntime& runtime,SimulationController& c
     plan.time_integrator=arch::dispatch::TimeIntegratorId::Rk2;
     auto context=runtime.stage_context();
     context.step_start_time=counters.t_current;
+    context.step_dt=dt; // Freeze the same step used by integrator, source and boundary receipts.
     {
         arch::scheduler::ScopedStageBinding scope(context,runtime.handles());
         arch::driver::advance_hydro(runtime,workspace,context,&plan,dt,
@@ -139,7 +141,8 @@ int main(int argc,char** argv) {
         auto pressure=+[](const FluidVector&,const double*,const void*){return 5.;};
         auto temperature=+[](const FluidVector&,const double*,const void*){return 25./12.;};
         auto gamma=+[](const FluidVector&,const double*,const void*){return 1.4;};
-        arch::driver::DriverIO output(runtime,counters,provenance,pressure,temperature,gamma,nullptr);
+        const auto plot_identity=fixture_plot_identity(config,species,GridMetrics::GeometrySemantics::AxisymmetricRz);
+        arch::driver::DriverIO output(runtime,counters,provenance,plot_identity,pressure,temperature,gamma,nullptr);
         output.write_checkpoint(1e99,false);
         const auto checkpoint=std::filesystem::path(config.io.out_dir)/"internal-rz_chk_0000.h5";
         const auto checkpoint_sha=arch::core::file_sha256(checkpoint.string());

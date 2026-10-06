@@ -8,11 +8,14 @@
  * carry rho*X, then recover mass fractions after the density update and state
  * admissibility repairs. Host traversal calls these leaves and registers
  * coarse-fine fluxes; the integrator supplies weights and the driver schedules exchange.
+ * Completed native RZ RK receipts are collected before slot rotation; the Hydro
+ * final reflux callback starts a separate row before strict state validation.
  */
 
 #pragma once
 
 #include <algorithm>
+#include <stdexcept>
 #include <vector>
 #ifdef _OPENMP
 #include <omp.h>
@@ -23,6 +26,7 @@
 #include "amr/AMRControl.h"
 #include "amr/flux/AMRFluxRegistering.h"
 #include "data/FluidState.h"
+#include "driver/runtime/StateResidency.h"
 #include "grid/Grid.h"
 #include "grid/GridMetrics.h"
 #include "physics/gravity/IGravityPolicy.h"
@@ -30,6 +34,23 @@
 
 namespace TimeIntegration
 {
+    /**
+     * Resolve a Host Hydro output slot before physical boundary or ghost writes.
+     * Current is the actual final storage after rotation and reflux; it is not
+     * an alias for Next. Integrators reject any narrower storage-profile slot
+     * before using this shared mapping. Unknown enum values always fail closed.
+     */
+    inline FluidState amr::Block::* hydro_boundary_state_member(
+        arch::state::StateSlot slot)
+    {
+        switch (slot) {
+        case arch::state::StateSlot::Current: return &amr::Block::fluid_state;
+        case arch::state::StateSlot::Next: return &amr::Block::state_next;
+        case arch::state::StateSlot::Scratch: return &amr::Block::state_scratch;
+        }
+        throw std::logic_error("Host Hydro boundary selected unknown state slot");
+    }
+
     /** Fill block ghosts and propagate callback failures after workers join. */
     template<class BCPolicy>
     inline void apply_domain_boundary(amr::AMRControl& control, BCPolicy& boundary,
@@ -83,6 +104,36 @@ namespace TimeIntegration
             catch (const std::exception& error) {
                 throw std::runtime_error("AMR block=" + std::to_string(id) + ": " + error.what());
             }
+        }
+    }
+
+    /**
+     * Begin the native RZ Hydro reflux receipt after all RK stages are accepted.
+     * The scheduler has rotated the final output to Current; its completed RK
+     * receipt already belongs to the driver's pending stage budget. Start an
+     * independent reflux row so the later Current collection cannot count that
+     * final-stage correction again. This clears no accepted history and performs
+     * no state repair; RKL deliberately retains its stage row through reflux.
+     */
+    inline void begin_rz_hydro_reflux_receipts(amr::AMRControl& control)
+    {
+        // Validate every row before clearing any block: an invalid measure or
+        // species layout is an owner error, never a reason to erase evidence.
+        for (int id : control.tree->GetActiveBlocks()) {
+            const auto& state = control.pool->GetBlock(id).fluid_state;
+            const int species = state.GetNumSpecies();
+            if (species < 0
+                || state.stage_repairs.semantics
+                    != arch::state::RepairSemantics::RzVolumeAngular
+                || state.stage_repairs.values.size()
+                    != static_cast<std::size_t>(arch::state::RepairView::fixed_size)
+                        + 2 * static_cast<std::size_t>(species))
+                throw std::invalid_argument("RZ Hydro reflux receipt measure/layout mismatch");
+        }
+        for (int id : control.tree->GetActiveBlocks()) {
+            auto& state = control.pool->GetBlock(id).fluid_state;
+            state.stage_repairs.reset(state.GetNumSpecies(),
+                arch::state::RepairSemantics::RzVolumeAngular);
         }
     }
 
@@ -242,7 +293,13 @@ namespace TimeIntegration
                     {
                         int idx = grid.GetIndex(i, j, k);
                         state.get_species_to_buffer(idx, Xi.data());
-                        add_geometric_source_cell(
+                        if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+                            if(!add_rz_integrated_geometric_source(
+                                [&state](int c){return state.get(c);},
+                                [&state](int k,int c){return state.X(k,c);},
+                                idx,n_spec,eos,geometry,i,dt,Xi.data(),dU[idx]))
+                                throw std::runtime_error("RZ geometric source has an inadmissible point/stencil");
+                        } else add_geometric_source_cell(
                             state.get(idx), Xi.data(), eos, geometry, i, j, dt, dU[idx]);
                     }
 
@@ -481,6 +538,7 @@ namespace TimeIntegration
         static thread_local FluxAdmissibility::MeanThermoCache mean_cache;
         mean_cache.reset(grid.GetTotalSize());
         mean_cache.roe_wave_speed = roe_wave_speed;
+        mean_cache.geometry_semantics = semantics;
 
         for (int dir = 0; dir < grid.dim; ++dir)
         {

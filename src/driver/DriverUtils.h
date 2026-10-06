@@ -19,6 +19,7 @@
 
 #include "grid/Grid.h"
 #include "grid/GridMetrics.h"
+#include "numerics/state/RzNativeClosure.h"
 
 #include <bit>
 #include <cstdint>
@@ -217,8 +218,20 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
                 if (is_cfl_cell_active(U)) {
                     for (int s = 0; s < n_species; ++s)
                         Xi_cache[s] = state.X(s, idx);
+                    FluidVector eos_mean=U;
+                    if (geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+                        // Only the EOS kinetic interpretation changes. The
+                        // active r/z velocities and physical spacing retain
+                        // the original two-face CFL formula; phi is inactive.
+                        const auto read=[&state](int cell) {return state.get(cell);};
+                        const auto closure=RzThermodynamics::make_cell(read,idx,geometry,i);
+                        if (!closure.valid())
+                            throw std::runtime_error("Invalid native RZ hydro CFL closure: cell="
+                                +std::to_string(idx));
+                        eos_mean=closure.effective_mean;
+                    }
                     cell_dt = evaluate_cfl_cell_dt(
-                        U, Xi_cache.data(), eos,
+                        eos_mean, Xi_cache.data(), eos,
                         geometry, i, j);
                 }
                 if (!(cell_dt > 0.0) || !std::isfinite(cell_dt))

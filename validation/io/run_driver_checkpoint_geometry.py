@@ -26,6 +26,10 @@ def execute(label,args):
         print((out/(label+".log")).read_text());raise SystemExit(result.returncode)
 for i,source in enumerate(sources):
     args=shlex.split(main["command"])
+    if i==0:
+        args += ["-I"+str(root/"tests"),
+            '-DARCH_IO_FIXTURE_SOURCE_FILE="'+str(root/"tests/host/io/test_driver_checkpoint_geometry.cpp")+'"',
+            '-DARCH_IO_FIXTURE_SOURCE_SHA256="'+hashlib.sha256((root/"tests/host/io/test_driver_checkpoint_geometry.cpp").read_bytes()).hexdigest()+'"']
     obj=out/(str(i)+".o");objects.append(str(obj))
     args[args.index("-o")+1]=str(obj)
     args[args.index("-c")+1]=str(root/source)

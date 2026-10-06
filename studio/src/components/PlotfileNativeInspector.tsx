@@ -8,7 +8,7 @@ export function PlotfileNativeInspector({samples,row}:{samples:AuditResponse;row
  if(!p||row<0||row>=p.values.length)return null;
  const n=p.nativeCells,d=a.fields.find(f=>f.name===p.field)?.declaration;
  return <section aria-label="Plotfile sample Inspector">
-  <h3>{n?'Native stored cell Inspector · candidate':'Stored sample Inspector'}</h3>
+  <h3>{n?'Native stored cell Inspector':'Stored sample Inspector'}</h3>
   <dl>
    <dt>Observed file</dt><dd>{samples.relativePath}</dd>
    <dt>File SHA-256</dt><dd className="audit-digest">{a.file.sha256}</dd>
@@ -24,15 +24,18 @@ export function PlotfileNativeInspector({samples,row}:{samples:AuditResponse;row
    {n&&<>
     <dt>File-local logical key / level</dt><dd>{n.logicalKey} / {n.level}</dd>
     {(['x1','x2','x3'] as const).map((axis,i)=><div key={axis}>
-     <dt>{axis} bounds · {i<a.dimension?'active':'inactive'}</dt>
+     <dt>{n.axes?.[i]??axis} bounds · {n.axisUnits?.[i]??(i<a.dimension?'active':'inactive')}</dt>
      <dd>[{formatPlotfileRawValue(n.lower[axis][row])}, {formatPlotfileRawValue(n.upper[axis][row])}]</dd>
     </div>)}
     <dt>Stored cell measure · {n.measureUnit??'unit unknown'}</dt><dd>{formatPlotfileRawValue(n.cellMeasure[row])}</dd>
+    {n.angularMeasure&&<><dt>Angular measure W · cm^4 · integral r dV</dt><dd>{formatPlotfileRawValue(n.angularMeasure[row])}</dd></>}
+    {n.mPhi&&<><dt>Stored m_phi · J/W · g/(cm^2 s)</dt><dd>{formatPlotfileRawValue(n.mPhi[row])}</dd></>}
+    {n.angularMomentumDensity&&<><dt>Derived J/V · g/(cm s)</dt><dd>{formatPlotfileRawValue(n.angularMomentumDensity[row])}</dd></>}
     <dt>Measure normalization</dt><dd>{n.measureNormalization??'unknown'}</dd>
     <dt>Measure source / convention</dt><dd>{n.measureSource} · {n.measureConvention}</dd>
    </>}
   </dl>
   <PlotfileSourceEvidence evidence={a.candidateSourceIdentity}/>
-  <p>{n?'Candidate native metadata; scientific review remains pending; recorded units do not certify provenance. Logical identity is scoped to this file digest.':'Native bounds and cell measure were not recorded in this file.'} Values are read from storage, without interpolation or LOD aggregation.</p>
+  <p>{n?'Native metrics and logical identity belong to this file digest; numerical qualification is separate from format validation.':'Native bounds and cell measure were not recorded in this file.'} Values are read from storage, without interpolation or LOD aggregation.</p>
  </section>;
 }

@@ -16,6 +16,73 @@ struct CountingIdealGas : IdealGasView {
     }
 };
 
+/** Native mean EOS and point EOS are distinct interpretations of RZ data.
+ * Independently integrate rho=Omega=1, r=[0,1], e0=1/64: V=1/2, W=1/3,
+ * I=1/4, J=1/4, mphi=3/4, EV=17/64. Ordinary recovery of raw native U
+ * gives -1/64; the explicit kappa=8/9 image recovers the positive e0.
+ * This scalar Host/device fixture checks the cache contract, not FluxSweep's
+ * stage/geometry wiring, a RZ limiter proof or whole-model qualification.
+ */
+ARCH_INLINE bool rz_native_mean_miss()
+{
+    const double composition[]{1.};
+    const FluidVector native{1.,0.,0.,3./4.,17./64.};
+    if(native.eng-.5*native.mom_w*native.mom_w/native.rho!=-1./64.
+       ||arch::state::recover(native).status!=arch::state::Status::unresolved_energy)
+        return false;
+    const FluidVector effective{1.,0.,0.,(3./4.)*std::sqrt(8./9.),17./64.};
+    if(arch::state::recover(effective).status!=arch::state::Status::valid)
+        return false;
+    int mean_calls=0;CountingIdealGas mean_eos(&mean_calls);
+    double mean_pressure=0.,mean_speed=0.;
+    FluxAdmissibility::required_mean_thermo(effective,composition,mean_eos,mean_pressure,mean_speed);
+    if(mean_calls!=1||!std::isfinite(mean_pressure)||!std::isfinite(mean_speed)
+       ||std::abs(mean_pressure-1./160.)>1e-13
+       ||std::abs(mean_speed-std::sqrt(7./800.))>1e-13)return false;
+
+    // The actual native SoA matches byte-for-byte, yet its cached closure EOS
+    // cannot be reused as a physical point interpretation of those bytes.
+    double rho[]{1.},mx[]{0.},my[]{0.},mz[]{3./4.},eng[]{17./64.},xs[]{1.};
+    double cached_pressure[]{mean_pressure},cached_speed[]{mean_speed};
+    unsigned char ready[]{1};
+    FluxAdmissibility::MeanThermoView view{
+        rho,mx,my,mz,eng,xs,cached_pressure,cached_speed,ready,1,1};
+    if(view.geometry_semantics!=GridMetrics::GeometrySemantics::Existing)return false;
+    view.geometry_semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if(!view.matches(0,native,composition,1))return false;
+    for(int side=0;side<2;++side) {
+        double pressure=123.,speed=456.;
+        if(view.query(native,composition,1,side?-1:0,side?0:-1,pressure,speed)
+           ||pressure!=123.||speed!=456.)return false;
+    }
+
+    // Independently valid cold physical point at r=1/2: mphi=1/2 and E=9/64.
+    // Deliberately different cached p/c make an accidental exact-state hit
+    // observable without ever calling a negative-energy native point EOS.
+    const FluidVector point{1.,0.,0.,.5,9./64.};
+    if(arch::state::recover(point).status!=arch::state::Status::valid)return false;
+    mz[0]=point.mom_w;eng[0]=point.eng;
+    cached_pressure[0]=2./160.;cached_speed[0]=std::sqrt(14./800.);
+    if(!view.matches(0,point,composition,1))return false;
+    double pressure=321.,speed=654.;
+    if(view.query(point,composition,1,0,0,pressure,speed)
+       ||pressure!=321.||speed!=654.)return false;
+    int face_calls=0;CountingIdealGas point_eos(&face_calls);
+    FluxAdmissibility::face_thermo(point,1./64.,composition,1,point_eos,&view,0,pressure,speed);
+    if(face_calls!=1||!std::isfinite(pressure)||!std::isfinite(speed)
+       ||std::abs(pressure-1./160.)>1e-13
+       ||std::abs(speed-std::sqrt(7./800.))>1e-13)return false;
+
+    // HLLC's equal-state optimization queries MeanThermoView directly.
+    // F(U,U) is the physical Euler flux: u_r=0 gives only radial pressure.
+    int flux_calls=0;CountingIdealGas flux_eos(&flux_calls);
+    FluidVector flux;double species_flux[1];
+    FluxHLLC<PCMReconstruction>::compute_face_flux(point,point,composition,composition,
+        1,flux_eos,0,0.,flux,species_flux,&view,0,0);
+    return flux_calls==1&&flux.rho==0.&&std::abs(flux.mom_u-1./160.)<=1e-13
+        &&flux.mom_v==0.&&flux.mom_w==0.&&flux.eng==0.&&species_flux[0]==0.;
+}
+
 // Independent uniform Euler flux with rho=2, u=1.5, e=3.875 and gamma=1.4.
 // Readiness, every conserved component, composition, extent and both endpoint
 // indices are perturbed separately. Misses must query the original EOS, while
@@ -71,6 +138,7 @@ ARCH_INLINE bool evaluate() {
             if(changed && pressure!=eos.get_pressure_from_rho_e(2.,e,x)) return false;
         }
     }
+    if(!rz_native_mean_miss())return false;
     // Independent Davis HLL formula and stationary-contact HLLC invariant.
     // Both schemes share this method choice, including near-vacuum scales.
     for (double scale : {1.,1e-30,1e-100}) {

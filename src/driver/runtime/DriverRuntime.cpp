@@ -168,6 +168,7 @@ void DriverRuntime::trace_backend_operation(backend::BackendOperation operation,
 /** Register initial block identities and their state residency. */
 void DriverRuntime::initialize_topology()
 {
+    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
     for (int id:amr_ctrl.tree->GetActiveBlocks())
         (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
     auto initial_candidate =
@@ -224,6 +225,7 @@ void DriverRuntime::initialize_topology()
 /** Build topology bindings for backend storage allocation. */
 std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bindings()
 {
+    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
     if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("RZ device runtime is not yet migrated");
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
@@ -261,6 +263,7 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
 /** Install a validated compute backend and its resident block views. */
 void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> backend)
 {
+    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
     if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("RZ device runtime is not yet migrated");
     if (compute_backend || !backend) throw std::logic_error("invalid backend installation");
@@ -270,6 +273,7 @@ void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> bac
 /** Upload accepted case initial state before device stepping. */
 void DriverRuntime::upload_initial_state()
 {
+    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     for (std::size_t index = 0; index < active.size(); ++index) {
         amr::Block& block = amr_ctrl.pool->GetBlock(active[index]);

@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <exception>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -101,6 +102,80 @@ private:
 
 public:
     FluxRegister() = default;
+    /** Complete Host flux owner backup; values live outside the original arena. */
+    class HostSnapshot {
+        friend class FluxRegister;
+        int dimension_,capacity_,stride_,species_;
+        std::array<int,6> cells_,offsets_;
+        std::vector<FluidVector> fluid_;
+        std::vector<double> composition_;
+        std::vector<int> active_;
+        std::optional<std::uint64_t> identity_;
+        const FluidVector* fluid_address_;
+        const double* composition_address_;
+        const int* active_address_;
+        explicit HostSnapshot(const FluxRegister& owner)
+            : dimension_(owner.dim_),capacity_(owner.capacity_),stride_(owner.block_stride_),
+              species_(owner.num_species_),cells_(owner.face_cells_),offsets_(owner.face_offsets_),
+              fluid_(owner.fluxes_),composition_(owner.species_fluxes_),active_(owner.active_),
+              identity_(owner.topology_identity_),fluid_address_(owner.fluxes_.data()),
+              composition_address_(owner.species_fluxes_.data()),active_address_(owner.active_.data()) {}
+    public:
+        HostSnapshot(const HostSnapshot&)=delete;
+        HostSnapshot& operator=(const HostSnapshot&)=delete;
+        HostSnapshot(HostSnapshot&&)=delete;
+        HostSnapshot& operator=(HostSnapshot&&)=delete;
+    };
+    /** Scheduler-barrier allocation before stages; no parallel registration may overlap it. */
+    HostSnapshot snapshot_host() const {
+        std::lock_guard lock(identity_mutex_);
+        if(host_snapshot_owner_)throw std::logic_error("Host flux backup already leased");
+        return HostSnapshot(*this);
+    }
+    /** Freeze arena extents; clearing and adding fixed-size stage fluxes remain legal. */
+    void freeze_host_snapshot(const HostSnapshot& snapshot) {
+        std::lock_guard lock(identity_mutex_);
+        if(host_snapshot_owner_||!host_snapshot_matches(snapshot))
+            throw std::logic_error("Host flux backup is stale or overlapping");
+        host_snapshot_owner_=&snapshot;
+    }
+    /** Restore into the original fluid/species/face arrays after all Host workers joined. */
+    void restore_host_snapshot_noexcept(const HostSnapshot& snapshot) noexcept {
+        if(host_snapshot_owner_!=&snapshot||!snapshot_layout_matches(snapshot))std::terminate();
+        std::copy(snapshot.fluid_.begin(),snapshot.fluid_.end(),fluxes_.begin());
+        std::copy(snapshot.composition_.begin(),snapshot.composition_.end(),species_fluxes_.begin());
+        std::copy(snapshot.active_.begin(),snapshot.active_.end(),active_.begin());
+        topology_identity_=snapshot.identity_;
+    }
+    /** Release the exact owner; called only outside registration worker regions. */
+    void release_host_snapshot(const HostSnapshot& snapshot) noexcept {
+        if(host_snapshot_owner_!=&snapshot)std::terminate();
+        host_snapshot_owner_=nullptr;
+    }
+    /** Compare metadata, original arena addresses and every FP64 payload bit. */
+    bool host_snapshot_matches(const HostSnapshot& snapshot,bool require_original_arena=true) const noexcept {
+        const auto bits=[](double a,double b){return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);};
+        if(!snapshot_layout_matches(snapshot,require_original_arena)||topology_identity_!=snapshot.identity_||active_!=snapshot.active_)return false;
+        for(std::size_t i=0;i<fluxes_.size();++i) {
+            const auto& a=fluxes_[i];const auto& b=snapshot.fluid_[i];
+            if(!bits(a.rho,b.rho)||!bits(a.mom_u,b.mom_u)||!bits(a.mom_v,b.mom_v)
+                ||!bits(a.mom_w,b.mom_w)||!bits(a.eng,b.eng))return false;
+        }
+        for(std::size_t i=0;i<species_fluxes_.size();++i)
+            if(!bits(species_fluxes_[i],snapshot.composition_[i]))return false;
+        return true;
+    }
+private:
+    const HostSnapshot* host_snapshot_owner_=nullptr;
+    /** Layout checks never allocate, resize or change the arena owner. */
+    bool snapshot_layout_matches(const HostSnapshot& s,bool require_original_arena=true) const noexcept {
+        return dim_==s.dimension_&&capacity_==s.capacity_&&block_stride_==s.stride_
+            &&num_species_==s.species_&&face_cells_==s.cells_&&face_offsets_==s.offsets_
+            &&fluxes_.size()==s.fluid_.size()&&species_fluxes_.size()==s.composition_.size()
+            &&active_.size()==s.active_.size()&&(!require_original_arena||(fluxes_.data()==s.fluid_address_
+            &&species_fluxes_.data()==s.composition_address_&&active_.data()==s.active_address_));
+    }
+public:
 
     void Resize(int max_blocks, int dim) {
         if (max_blocks < 0) {
@@ -108,6 +183,7 @@ public:
         }
         if (dim_ == dim && capacity_ >= max_blocks) return;
 
+        if(host_snapshot_owner_)throw std::logic_error("Host transaction excludes flux arena resize");
         ConfigureLayout(dim);
         dim_ = dim;
         capacity_ = max_blocks;
@@ -123,6 +199,7 @@ public:
             throw std::invalid_argument("FluxRegister species count cannot be negative.");
         }
         if (num_species_ == num_species) return;
+        if(host_snapshot_owner_)throw std::logic_error("Host transaction excludes flux species resize");
         num_species_ = num_species;
         species_fluxes_.assign(static_cast<size_t>(capacity_) * block_stride_ * num_species_, 0.0);
     }

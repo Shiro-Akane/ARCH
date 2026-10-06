@@ -15,7 +15,7 @@ separately when useful.
 | Check | Coverage |
 | --- | --- |
 | `Tooling` | Workflow syntax, shared-authority/header audit and every Python test under `tests/tooling`; empty or skipped suites fail |
-| `CPU Release` | The `cpu-release` preset with tests and KLU enabled; builds ARCH and all configured CPU tests, then runs the complete CTest inventory |
+| `CPU Release` | The `cpu-release` preset with tests and KLU enabled; builds ARCH and all configured CPU tests, then runs every numerical/API CTest; Tooling owns the runner contracts |
 | `Studio and Host` | Clean locked install with Node 24.21.0; full Node suite once (including Host), lint and production build with type checking; empty/skipped/TODO reports fail |
 | `CI required` | Succeeds only when Tooling, CPU Release and Studio/Host all succeed; failed, cancelled or skipped dependencies do not count as passing |
 
@@ -38,13 +38,23 @@ Shared-stage and gravity preparation contracts are now explicit anchors too.
 Configuration v3 parser/resolution/direct-entry/API contracts and the existing
 Preview initialization/model/metadata/sampling/session/resource contracts are
 also required anchors, together with JENS diagnostics and indicator mathematics.
+Publication completion, checkpoint conservation, conservative stage acceptance,
+RKL repair weights, physical boundaries and AMR flux surfaces are required
+anchors as well.
 Removing their CMake registrations therefore fails coverage even when every
 remaining JUnit entry passes. This does not run another suite or authorize a
-scientific gate: all configured tests still run once, and missing/skipped entries
+scientific gate: every selected test runs once, and missing/skipped entries
 remain failures.
 After execution, [check_ci_results.py](../../tools/check_ci_results.py) requires
-one passing JUnit entry per configured test, without omissions or skips.
+one passing JUnit entry per selected test, without omissions or skips.
 The inventory, rather than a hard-coded total, determines how many tests run.
+
+Eight runner contracts are also registered with CTest for standalone local use.
+They carry the `tooling` label; hosted CPU inventory and execution both use
+`-LE '^tooling$'`, while the Tooling job discovers their complete Python suite.
+An unfiltered local CTest run includes them. The two hosted jobs cover the
+existing contracts once, and CTest failures cannot disappear by applying
+different discovery and execution selections.
 
 The CPU job also runs the 72-case positive-density physical matrix in
 `validation/low_density`, using its unchanged scientific budgets and a fresh
@@ -121,8 +131,9 @@ short-lived CI artifacts do not overwrite the reviewed records in
 
 Future physics work follows the [compute plan](../../docs/development/ComputeOptimizationPlan.zh-CN.md):
 record actual build/test duration, map each scientific requirement to its test,
-and consolidate repeated coverage before delivery. This is a planned review of
-coverage and cost; the current complete-inventory checks remain in force.
+and consolidate repeated coverage before delivery. Completion checks account
+for every test in each selected inventory; long-run and performance campaigns
+retain their separate scientific records and resource limits.
 
 ## Maintainer setup
 

@@ -60,3 +60,11 @@ test('static registry survives overlapping schema requests without enabling Prev
   assert.equal((await f.preview.readiness()).ready,false);
  }finally{await f.cleanup();}
 });
+
+test('configuration rejects pending selected source before inspecting or mutating input',async()=>{
+ const f=await previewFixture();try{
+  const adapter=new ConfigurationAdapter(f.preview);adapter.assertCase=async()=>{throw new Error('pending source binding');};
+  await assert.rejects(adapter.inspect({projectId:'p',caseId:'Sod',configText:f.request.configText,configRevision:f.request.configRevision}),/pending source binding/);
+  assert.equal((await f.preview.readiness()).ready,true);
+ }finally{await f.cleanup();}
+});

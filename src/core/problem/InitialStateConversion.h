@@ -77,7 +77,8 @@ FluidVector InitialConservedState(const PrimitiveData &data, const Eos &eos,
 
 /**
  * Candidate native RZ cell conversion for the initialization/BC migration.
- * Callback supplies physical primitive components at four real cell samples.
+ * Callback supplies physical primitive components at eight real cell samples
+ * (four radial Gauss nodes crossed with two axial Gauss nodes).
  * rho/mom_r/mom_z/E/rhoX are V averages; m_phi is the r*dV average of rho*u_phi.
  * The returned view owns no second evolved J/ell state. No live state is changed.
  *

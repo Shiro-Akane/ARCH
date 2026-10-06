@@ -63,7 +63,7 @@ ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩
 | 几何 | `cartesian`、`cylindrical`、`spherical` | CPU 与 CUDA 均支持 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项。 |
 | AMR | `lrefinemax >= 0` | CPU 与 CUDA 均支持 | 每个活动维固定 16 个单元的 block 尺寸。topology/Morton 决策留在 Host；指标、守恒 migration、ghost 与 reflux 在 device 调用共用数值叶子。 |
 | 自重力 | `gravity_type = self` | CPU、CUDA | 周期笛卡尔、孤立三维笛卡尔，以及受测径向和完整方位角曲线坐标域；具体条件见[自引力计算域](#自引力计算域)。 |
-| Jeans 场 | `JENS` | 预留 | 解析器警告并关闭。 |
+| Jeans 场与细化 | `JENS` | CPU 已接线；CUDA 工程候选 | 要求自引力和显式后端；适用条件与验收范围见 [AMR 与 plot 变量词汇](#amr-与-plot-变量词汇)。 |
 
 CUDA 已实现笛卡尔、柱坐标和球坐标下的一维、二维与三维流体计算，提供已注册的通量、重构和时间推进路径，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
 
@@ -347,6 +347,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `lrefinemax` | int | 必填 | 最大细化层级；零关闭细化 |
 | `regrid_interval` | int | 条件必填：动态 AMR | 必须为正 |
 | `refine_var` | string list | 条件必填：动态 AMR | 逗号或 `+`；规范场名或已注册核素 |
+| `jeans_cells` | double | 条件必填：`refine_var` 包含 `JENS` | 有限且 `>=4`；要求每个单元的 Jeans 长度达到的最少物理网格间距数 |
 | `refine_threshold` | double | 条件必填：活动曲率 AMR 指标 | Lohner 指标，范围 `[0,1]` |
 | `derefine_threshold` | double | 条件必填：活动曲率 AMR 指标 | 必须 `>=0` 且小于 refine threshold |
 
@@ -499,11 +500,15 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 | `DIVV` | 考虑度量的速度散度 | 是 | 是 | 已实现几何 |
 | `ENTR` | 局部 `p/rho^Gamma1` 代理量 | 是 | 是 | 有限正 EOS 状态 |
 | `ENUC` | 有符号核比能源率 | 是 | 是 | 启用燃烧 |
-| `JENS` | Jeans 判据 | 预留 | 预留 | 已关闭 |
+| `JENS` | Jeans 长度与最大活动物理网格间距之比 | 是 | 是 | 自引力；显式 CPU，或笛卡尔显式 CUDA 工程候选 |
 | `SPECIES` | 所有已注册核素 | 是 | 是 | 已注册组分 |
 | 注册名称 | 单一核素/tracer | 是 | 是 | 不区分大小写查找 |
 
 `CONSERVED` 选择 `DENS`、活动速度和 `ENER`。`ALL` 选择所有可用 PLT 场和已注册核素。
+
+`JENS` 用于细化或显式输出时要求 `gravity_type=self`，并显式选择 `compute_backend=cpu`，或在 `geometry=cartesian` 下选择 `compute_backend=cuda`；`auto` 和曲线坐标 CUDA 组合会被拒绝。细化还必须提供有限的 `jeans_cells >= 4`，输出单独选择 `JENS` 不要求该细化参数。`plt_variables=ALL` 在上述自引力/后端组合中包含 `JENS`。规范名称是 `JENS`；`JEANS` 等别名以及不满足条件的输入会报错，不会自动关闭指标。声明符合配置条件不表示运行后端已就绪；显式 CUDA 仍需可用的 CUDA 构建与设备。
+
+CPU 公共入口已完成均匀周期背景、单一恒比热 IdealGas 的九组演化与九组 checkpoint 续算检查。非零引力场和一般 EOS 的完整验收仍待补齐；笛卡尔显式 CUDA 接线属于工程候选，最终 GPU 科学验收尚未通过，也不代表完整 RZ 通过。当前证据与后续门槛见[集成与发布计划](development/ComputeStudioReleasePlan-20261006.zh-CN.md)。
 
 `ENTR` 是局部代理量 `p/rho^Gamma1`，其中活动 EOS 给出 `Gamma1 = rho*c_s^2/p`。对于常 gamma 理想气体，它是通常的不变量；对于一般 EOS 策略，它是细化代理量。它不是 EOS 返回的绝对熵，不能用来把一般状态沿等熵线移动。固定组分等熵状态必须使用 EOS 策略接口一节记录的微分热力学恒等式构造。
 
@@ -975,11 +980,11 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 
 - 验证结果对应[验证索引](../validation/README.zh-CN.md)注明的受测工作负载与配置；整体验收状态也由该索引统一记录。
 - CUDA 生成网络必须满足[设备数学包契约](../src/physics/network/custom/README.md)，包括声明 `device_callable_math=true`；通过检查的仅主机网络包在 CPU 上执行。生成网络 NSE 受平衡模型资格限制；正确的动力学网络不一定适合 NSE 旁路。
-- 自引力的几何、边界与根网格限制见[自引力计算域](#自引力计算域)；域外质量源及 Jeans 专用细化指标尚未进入该能力范围。具体耦合与性能见[引力验证](../validation/gravity/README.zh-CN.md)。
+- 自引力的几何、边界与根网格限制见[自引力计算域](#自引力计算域)；域外质量源尚未进入该能力范围。Jeans 场与细化的配置条件及受测范围见 [AMR 与 plot 变量词汇](#amr-与-plot-变量词汇)；具体耦合与性能见[引力验证](../validation/gravity/README.zh-CN.md)。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
-- 单位元数据以及完整的构建/运行来源（参数文件、编译器、求解器设置、边界与 commit）位于 HDF5 外部。检查点内嵌重启关键的 EOS/表/网络/核素身份，但 Release flags 无法保证跨机器逐位复现。
-- 算例构建假设 `simulation/<Case>/` 布局；plot 写入失败会报告但不会终止模拟。
+- 正式 Plotfile 内嵌发布完成标记、类型化配置／算例／构建／执行物／EOS 身份、字段单位及原生单元边界与测度。来源记录按已声明的执行物和构建范围解释，运行环境及外部依赖仍需另行记录；旧 candidate 的 `unknown` 字段表示来源证明不完整，其资格不能等同于正式发布。检查点内嵌重启关键的 EOS/表/网络/核素身份，但 Release flags 无法保证跨机器逐位复现。
+- 算例构建假设 `simulation/<Case>/` 布局；plot 写入、关闭或发布失败会由 Core 传播并以非零状态退出，不会返回成功发布结果。完成发布资格仅属于成功关闭并原子发布的最终文件，残留临时或部分文件不能作为完整 Plotfile 的科学权威。
 - Sedov 在单元中心沉积归一化的连续有限半径 profile，因此离散注入能量随分辨率变化。
 
 ## 源码索引

@@ -440,5 +440,21 @@ class MutationCleanupTests(unittest.TestCase):
             self.assertIn("restored ELF check failed", str(caught.exception))
 
 
+def load_tests(loader, existing, pattern):
+    """Run the independent exact RZ references in the existing runner owner.
+
+    This extends discovery instead of scheduling a duplicate CI campaign.
+    These reference identities certify their mathematics, not production gates.
+    """
+    original = list(sys.path)
+    try:
+        sys.path.insert(0, str(RUNNER_DIR))
+        reference = load_module("rz_analytic_reference_tests", "test_analytic_reference.py")
+        existing.addTests(loader.loadTestsFromModule(reference))
+    finally:
+        sys.path[:] = original
+    return existing
+
+
 if __name__ == "__main__":
     unittest.main()

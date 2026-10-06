@@ -17,7 +17,8 @@
 namespace arch::api {
 detail::Json ConfigurationSchema();
 detail::Json RefinementMetadata(const SimConfig& config);
-detail::Json RefinementMetadata(const AmrConfig& amr, int dimension, bool burn_enabled, bool self_gravity = false, bool cpu_backend = false);
+/** Describe requested indicator routes; build/device and simulation readiness are separate. */
+detail::Json RefinementMetadata(const AmrConfig& amr, int dimension, bool burn_enabled, bool self_gravity = false, bool jeans_backend = false);
 detail::Json DiffusionMetadata(const SimConfig& config);
 detail::Json DiffusionMetadata(const std::string& eos_type, bool enabled);
 PreviewResponse InspectConfiguration(const PreviewRequest& request);

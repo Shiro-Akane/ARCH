@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "core/config/ConfigurationIdentity.h"
 #include "core/config/RuntimeConfiguration.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/runtime/DriverRuntime.h"
@@ -88,7 +89,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         return U.rho * sound_speed * sound_speed / pressure;
     };
-    DriverIO output(runtime, ctrl, checkpoint_provenance, p_func, t_func, gamma1_func, &eos);
+    // Freeze final typed controls, accepted EOS and actual executable/backend
+    // provenance once. Each published output reuses this immutable run record.
+    const auto plot_source_identity = arch::config::make_plot_source_identity(
+        config, checkpoint_provenance, *resolved_plan,
+        backend_resolution->resolved_backend, runtime.geometry_semantics());
+    DriverIO output(runtime, ctrl, checkpoint_provenance, plot_source_identity,
+                    p_func, t_func, gamma1_func, &eos);
     CpuStageTimings cpu_stages;
     const bool time_cpu_stages = backend_resolution->resolved_backend
         == arch::dispatch::ComputeBackend::Cpu;
@@ -124,11 +131,15 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     bool has_burn = config.physics.burn.use_burn;
     bool has_diff = config.physics.diffusion.use_diffusion;
 
-    if (config.amr.refine_on_jeans
-        && backend_resolution->resolved_backend != arch::dispatch::ComputeBackend::Cpu)
-        throw std::logic_error("device JENS lifecycle is not qualified");
-    runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
+    // JENS startup workflow: the CPU consumes accepted Host Current before
+    // backend construction; CUDA first uploads and publishes resident Current,
+    // then the same Runtime owner acquires its accepted Device lease. Neither
+    // route borrows stale Host storage after a device publication.
+    if (backend_resolution->resolved_backend == arch::dispatch::ComputeBackend::Cpu)
+        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
     start_compute_backend(runtime, eos, *resolved_plan, *backend_resolution, *startup_order);
+    if (backend_resolution->resolved_backend == arch::dispatch::ComputeBackend::Cuda)
+        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
     GravityStage gravity_stage(runtime, gravity);
     {
         CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);

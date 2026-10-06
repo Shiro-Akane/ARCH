@@ -26,6 +26,7 @@ endif()
 
 include(cmake/dependencies/Dependencies.cmake)
 include(cmake/studio/Studio.cmake)
+include(cmake/project/BuildIdentity.cmake)
 if(BUILD_TESTING)
     arch_register_io_regression_tests()
 endif()

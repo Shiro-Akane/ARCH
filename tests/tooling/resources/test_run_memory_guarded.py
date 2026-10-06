@@ -11,6 +11,7 @@ import sys
 import tempfile
 import time
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 
@@ -114,6 +115,204 @@ class GpuMemoryObservationTests(unittest.TestCase):
             with self.assertRaises(subprocess.TimeoutExpired):
                 guard.GpuMemoryObservation('smi', '0')
 
+
+class OutputStorageObservationTests(unittest.TestCase):
+    """Logical output tallies stay inside one pinned, non-followed directory."""
+
+    def observation(self, root, budget_mib=1, reserve_mib=0):
+        return guard.OutputStorageObservation(root, budget_mib, reserve_mib)
+
+    def test_regular_file_st_size_is_tallied_and_peaked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            (root / 'nested').mkdir(parents=True)
+            (root / 'a.bin').write_bytes(b'a' * 1024)
+            (root / 'nested' / 'b.bin').write_bytes(b'b' * 512)
+            observer = self.observation(root, budget_mib=1.)
+            self.assertEqual(observer.current_bytes, 1536)
+            self.assertEqual(observer.peak_bytes, 1536)
+            (root / 'nested' / 'b.bin').unlink()
+            observer.sample()
+            self.assertEqual(observer.current_bytes, 1024)
+            self.assertEqual(observer.peak_bytes, 1536)
+            self.assertIn('scope=directory', observer.summary())
+
+    def test_next_write_reservation_shifts_the_effective_budget(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            (root / 'a.bin').write_bytes(b'a' * 1024)
+            self.assertFalse(self.observation(root, budget_mib=.001).over_budget())
+            self.assertTrue(self.observation(root, budget_mib=.001,
+                                              reserve_mib=.001).over_budget())
+
+    def test_requested_root_must_be_a_preexisting_real_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(RuntimeError, 'inaccessible'):
+                self.observation(Path(directory) / 'missing')
+            real = Path(directory) / 'real'
+            real.mkdir()
+            link = Path(directory) / 'link'
+            link.symlink_to(real)
+            with self.assertRaisesRegex(RuntimeError, 'preexisting real directory'):
+                self.observation(link)
+
+    def test_symlink_entry_inside_the_tree_fails_closed_without_following(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            (root / 'link').symlink_to(Path(directory) / 'outside.bin')
+            with self.assertRaisesRegex(RuntimeError, 'symlink'):
+                self.observation(root)
+
+    def test_unsupported_entry_type_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            os.mkfifo(root / 'pipe')
+            with self.assertRaisesRegex(RuntimeError, 'unsupported entry type'):
+                self.observation(root)
+
+    def test_changed_pinned_root_identity_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            observer = self.observation(root)
+            pinned = os.stat(root, follow_symlinks=False)
+            with patch.object(guard.os, 'stat', return_value=SimpleNamespace(
+                    st_dev=pinned.st_dev, st_ino=pinned.st_ino + 1, st_mode=pinned.st_mode)):
+                with self.assertRaisesRegex(RuntimeError, 'identity changed'):
+                    observer.sample()
+
+    def test_nonfinite_or_nonpositive_budget_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            for budget in (float('nan'), float('inf'), 0, -1):
+                with self.subTest(budget=budget), self.assertRaises(RuntimeError):
+                    self.observation(root, budget_mib=budget)
+
+    def test_root_substituted_by_a_symlink_fails_closed(self):
+        # Deterministic substitution, not a raced thread: the pinned path is
+        # renamed away and a symlink is put in its place between samples.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            outside = Path(directory) / 'outside'
+            outside.mkdir()
+            (outside / 'hidden.bin').write_bytes(b'h' * 4096)
+            observer = self.observation(root)
+            os.rename(root, Path(directory) / 'moved')
+            root.symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(RuntimeError, 'identity changed|symlink|inaccessible'):
+                observer.sample()
+            self.assertEqual(observer.current_bytes, 0)
+
+    def test_root_substituted_by_another_directory_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            observer = self.observation(root)
+            os.rename(root, Path(directory) / 'moved')
+            root.mkdir()
+            with self.assertRaisesRegex(RuntimeError, 'identity changed'):
+                observer.sample()
+
+    def test_child_directory_substituted_by_a_symlink_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            child = root / 'child'
+            child.mkdir(parents=True)
+            outside = Path(directory) / 'outside'
+            outside.mkdir()
+            (outside / 'hidden.bin').write_bytes(b'h' * 4096)
+            observer = self.observation(root)
+            os.rename(child, root / 'moved')
+            child.symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(RuntimeError, 'symlink'):
+                observer.sample()
+
+    def test_mocked_directory_identity_mismatch_fails_closed(self):
+        # A mocked fd stat stands in for a directory swapped under the walk, so
+        # the identity check is exercised without any probabilistic race.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            observer = self.observation(root)
+            pinned = os.stat(root, follow_symlinks=False)
+            with patch.object(guard.os, 'fstat', return_value=SimpleNamespace(
+                    st_dev=pinned.st_dev, st_ino=pinned.st_ino + 1, st_mode=pinned.st_mode)):
+                with self.assertRaisesRegex(RuntimeError, 'identity changed'):
+                    observer.sample()
+
+
+class HostStorageObservationTests(unittest.TestCase):
+    """Actual free space comes from the Linux mount, not a Windows drive letter."""
+
+    def test_minimum_free_space_is_tracked_from_disk_usage(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(guard.shutil, 'disk_usage',
+                              return_value=SimpleNamespace(free=9 * 1024 * 1024)):
+                observer = guard.HostStorageObservation(root, 1)
+            self.assertEqual(observer.initial_free, 9 * 1024 * 1024)
+            with patch.object(guard.shutil, 'disk_usage',
+                              return_value=SimpleNamespace(free=4 * 1024 * 1024)):
+                observer.sample()
+            self.assertEqual(observer.minimum_free, 4 * 1024 * 1024)
+            self.assertIn('scope=linux_mount', observer.summary())
+
+    def test_minimum_threshold_and_reservation_bound_the_stop(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            free = 3 * 1024 * 1024
+            with patch.object(guard.shutil, 'disk_usage',
+                              return_value=SimpleNamespace(free=free)):
+                self.assertFalse(guard.HostStorageObservation(root, 2).under_minimum())
+                self.assertTrue(guard.HostStorageObservation(root, 4).under_minimum())
+                self.assertTrue(guard.HostStorageObservation(
+                    root, 2, reserve_mib=2).under_minimum())
+
+    def test_requested_root_and_free_space_reading_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(RuntimeError, 'inaccessible'):
+                guard.HostStorageObservation(Path(directory) / 'missing', 1)
+            real = Path(directory) / 'real'
+            real.mkdir()
+            link = Path(directory) / 'link'
+            link.symlink_to(real)
+            with self.assertRaisesRegex(RuntimeError, 'preexisting real directory'):
+                guard.HostStorageObservation(link, 1)
+            with patch.object(guard.shutil, 'disk_usage',
+                              side_effect=OSError(5, 'FREE_SPACE_CONTROL')):
+                with self.assertRaisesRegex(RuntimeError, 'FREE_SPACE_CONTROL'):
+                    guard.HostStorageObservation(real, 1)
+            with patch.object(guard.shutil, 'disk_usage',
+                              return_value=SimpleNamespace(free=float('nan'))):
+                with self.assertRaisesRegex(RuntimeError, 'finite'):
+                    guard.HostStorageObservation(real, 1)
+
+    def test_changed_pinned_root_identity_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            real = Path(directory) / 'real'
+            real.mkdir()
+            observer = guard.HostStorageObservation(real, 1)
+            pinned = os.stat(real, follow_symlinks=False)
+            with patch.object(guard.os, 'stat', return_value=SimpleNamespace(
+                    st_dev=pinned.st_dev, st_ino=pinned.st_ino + 1, st_mode=pinned.st_mode)):
+                with self.assertRaisesRegex(RuntimeError, 'identity changed'):
+                    observer.sample()
+
+    def test_host_root_substituted_by_another_directory_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'host'
+            root.mkdir()
+            observer = guard.HostStorageObservation(root, 1)
+            os.rename(root, Path(directory) / 'moved')
+            root.mkdir()
+            with self.assertRaisesRegex(RuntimeError, 'identity changed'):
+                observer.sample()
+
 # This child escapes the command's session and ignores TERM to exercise KILL.
 LEAF = r'''
 import json, os, pathlib, signal, sys, time
@@ -133,15 +332,35 @@ subprocess.Popen([sys.executable, '-c', sys.argv[1], sys.argv[2]], start_new_ses
 '''
 
 COMMAND = r'''
-import pathlib, subprocess, sys, time
+import os, pathlib, subprocess, sys, time
 subprocess.run([sys.executable, '-c', sys.argv[1], sys.argv[2], sys.argv[3]], check=True)
 while not pathlib.Path(sys.argv[3]).exists():
     time.sleep(.005)
 print('COMMAND_LOG_MARKER', flush=True)
+if sys.argv[4] == 'grow':
+    root = pathlib.Path(os.environ['OUTPUT_GROWTH_ROOT'])
+    chunk = b'x' * 65536
+    for index in range(4096):
+        (root / f'part-{index:04d}.bin').write_bytes(chunk)
+    while True:
+        time.sleep(1)
+if sys.argv[4] == 'fastgrow':
+    root = pathlib.Path(os.environ['OUTPUT_GROWTH_ROOT'])
+    chunk = b'x' * 65536
+    for index in range(64):
+        (root / f'fast-{index:04d}.bin').write_bytes(chunk)
+    raise SystemExit(0)
 if sys.argv[4] == 'wait':
     while True:
         time.sleep(1)
 raise SystemExit(int(sys.argv[4]))
+'''
+
+# Reused by the storage preflight tests: the marker exists only if the guard
+# launched the child, which a refused preflight must never do.
+MARKER_CHILD = r'''
+import pathlib, sys
+pathlib.Path(sys.argv[1]).write_text('ran')
 '''
 
 RUNNER = r'''
@@ -193,6 +412,20 @@ if mode == 'launch_interrupt':
         # Simulate interruption after fork but before main's Popen assignment.
         raise guard.GuardInterrupted(signal.SIGTERM)
     guard.subprocess.Popen = interrupted_launch
+if mode in ('host_low', 'host_error'):
+    # Real free space is read at preflight; the live mount is then simulated so
+    # no test depends on the actual host filling up.
+    real_disk_usage = guard.shutil.disk_usage
+    class _Usage:
+        def __init__(self, free):
+            self.free = free
+    def fake_disk_usage(path):
+        if ready.exists():
+            if mode == 'host_error':
+                raise OSError(5, 'HOST_FREE_FAILURE_CONTROL')
+            return _Usage(1)
+        return real_disk_usage(path)
+    guard.shutil.disk_usage = fake_disk_usage
 sys.argv = ([sys.argv[1]] + (['--gpu-memory-device', '0'] if mode == 'gpu_error' else [])
             + (['--pressure-guard'] if mode.startswith('pressure_') else []) + sys.argv[4:])
 raise SystemExit(guard.main())
@@ -251,7 +484,8 @@ class MemoryGuardTests(unittest.TestCase):
         open_pid.assert_not_called()
         self.assertEqual(set(tracker.owned), {42})
 
-    def run_tree(self, mode, exit_code='wait', interrupt=False):
+    def run_tree(self, mode, exit_code='wait', interrupt=False, extra_args=(), env=None,
+                 poll_seconds='.01'):
         with tempfile.TemporaryDirectory(prefix='arch-memory-guard-test-') as directory:
             ready = Path(directory) / 'leaf.json'
             log = Path(directory) / 'command.log'
@@ -262,10 +496,11 @@ class MemoryGuardTests(unittest.TestCase):
                 command = [sys.executable, '-c', RUNNER, str(TOOL), str(ready), mode,
                            '--min-available-mib', '1', '--max-swap-growth-mib',
                            '256' if mode.startswith('swap_') else '0',
-                           '--poll-seconds', '.01', '--log', str(log), '--',
+                           '--poll-seconds', poll_seconds, '--log', str(log), *extra_args, '--',
                            sys.executable, '-c', COMMAND, MIDDLE, LEAF, str(ready), exit_code]
                 process = subprocess.Popen(command, stdout=subprocess.PIPE,
-                                           stderr=subprocess.STDOUT, text=True)
+                                           stderr=subprocess.STDOUT, text=True,
+                                           env={**os.environ, **env} if env else None)
                 if interrupt:
                     deadline = time.monotonic() + 5
                     while not ready.exists() and process.poll() is None and time.monotonic() < deadline:
@@ -341,6 +576,144 @@ class MemoryGuardTests(unittest.TestCase):
         code, output = self.run_tree('swap_above')
         self.assertEqual(code, 125, output)
         self.assertIn('stop_reason=swap_growth', output)
+
+    def test_output_budget_stop_reaps_owned_tree_and_leaves_sibling(self):
+        with tempfile.TemporaryDirectory(prefix='arch-output-guard-test-') as workspace:
+            growth = Path(workspace) / 'out'
+            growth.mkdir()
+            code, output = self.run_tree(
+                'grow', exit_code='grow',
+                extra_args=('--output-root', str(growth), '--max-output-mib', '1',
+                            '--next-write-reserve-mib', '0'),
+                env={'OUTPUT_GROWTH_ROOT': str(growth)})
+            self.assertEqual(code, 125, output)
+            self.assertIn('stop_reason=output_bytes', output)
+            self.assertIn('OUTPUT_STORAGE_OBSERVATION', output)
+            self.assertIn('complete=False', output)
+            written = sum(item.stat().st_size for item in growth.iterdir())
+            self.assertGreater(written, 1024 * 1024)
+            self.assertFalse(growth.is_symlink())
+
+    def test_fast_child_output_breach_is_caught_on_the_final_sample(self):
+        # A child that finishes inside one poll interval is never seen by the
+        # monitor loop; the end-of-run sample must still stop the run (125)
+        # rather than report the child's exit code as success. A deliberately
+        # long poll interval makes the final sample the only observation.
+        with tempfile.TemporaryDirectory(prefix='arch-output-final-test-') as workspace:
+            growth = Path(workspace) / 'out'
+            growth.mkdir()
+            code, output = self.run_tree(
+                'normal', exit_code='fastgrow', poll_seconds='2',
+                extra_args=('--output-root', str(growth), '--max-output-mib', '1'),
+                env={'OUTPUT_GROWTH_ROOT': str(growth)})
+            self.assertEqual(code, 125, output)
+            self.assertIn('stop_reason=output_bytes', output)
+            self.assertIn('MEMORY_GUARD_STOP', output)
+            self.assertIn('OUTPUT_STORAGE_OBSERVATION', output)
+            self.assertIn('complete=False', output)
+            written = sum(item.stat().st_size for item in growth.iterdir())
+            self.assertGreater(written, 1024 * 1024)
+
+    def test_low_host_free_space_stop_reaps_owned_tree(self):
+        code, output = self.run_tree(
+            'host_low', extra_args=('--host-storage-root', tempfile.gettempdir(),
+                                    '--min-host-free-mib', '2'))
+        self.assertEqual(code, 125, output)
+        self.assertIn('stop_reason=host_free', output)
+        self.assertIn('HOST_STORAGE_OBSERVATION', output)
+
+    def test_host_free_monitor_error_keeps_fail_closed_semantics(self):
+        code, output = self.run_tree(
+            'host_error', extra_args=('--host-storage-root', tempfile.gettempdir(),
+                                      '--min-host-free-mib', '2'))
+        self.assertNotEqual(code, 0, output)
+        self.assertIn('stop_reason=monitor_error', output)
+        self.assertIn('HOST_FREE_FAILURE_CONTROL', output)
+
+    def test_run_without_disk_arguments_keeps_legacy_output(self):
+        code, output = self.run_tree('normal', '0')
+        self.assertEqual(code, 0, output)
+        self.assertIn('MEMORY_GUARD_RESULT', output)
+        self.assertNotIn('OUTPUT_STORAGE_OBSERVATION', output)
+        self.assertNotIn('HOST_STORAGE_OBSERVATION', output)
+
+
+@unittest.skipUnless(sys.platform == 'linux', 'Linux guard required')
+class StoragePreflightTests(unittest.TestCase):
+    """A refused storage preflight must never launch the child process."""
+
+    def run_preflight(self, extra_args, command):
+        with tempfile.TemporaryDirectory(prefix='arch-storage-preflight-') as directory:
+            return subprocess.run(
+                [sys.executable, '-c', RUNNER, str(TOOL),
+                 str(Path(directory) / 'ready.json'), 'preflight',
+                 '--min-available-mib', '1', '--max-swap-growth-mib', '0',
+                 '--poll-seconds', '.01', *extra_args, '--', *command],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+
+    def assert_refused_without_child(self, extra_args, expected_message):
+        with tempfile.TemporaryDirectory(prefix='arch-storage-marker-') as directory:
+            marker = Path(directory) / 'child-marker'
+            result = self.run_preflight(extra_args, [sys.executable, '-c', MARKER_CHILD, str(marker)])
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn(expected_message, result.stderr)
+            self.assertFalse(marker.exists(), 'child ran despite refused preflight')
+
+    def test_missing_output_root_refuses_before_launching_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.assert_refused_without_child(
+                ('--output-root', str(Path(directory) / 'absent'), '--max-output-mib', '1'),
+                'cannot establish requested output/host storage observation')
+
+    def test_symlinked_output_root_refuses_before_launching_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            real = Path(directory) / 'real'
+            real.mkdir()
+            link = Path(directory) / 'link'
+            link.symlink_to(real)
+            self.assert_refused_without_child(
+                ('--output-root', str(link), '--max-output-mib', '1'),
+                'cannot establish requested output/host storage observation')
+
+    def test_missing_host_root_refuses_before_launching_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.assert_refused_without_child(
+                ('--host-storage-root', str(Path(directory) / 'absent'), '--min-host-free-mib', '1'),
+                'cannot establish requested output/host storage observation')
+
+    def test_storage_arguments_are_validated_as_pairs(self):
+        for extra in (('--output-root', tempfile.gettempdir()), ('--max-output-mib', '1'),
+                      ('--host-storage-root', tempfile.gettempdir()), ('--min-host-free-mib', '1')):
+            with self.subTest(extra=extra):
+                result = self.run_preflight(extra, [sys.executable, '-c', 'pass'])
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+
+    def test_nonpositive_budget_and_orphaned_reservation_are_refused(self):
+        for extra in (('--output-root', tempfile.gettempdir(), '--max-output-mib', '0'),
+                      ('--host-storage-root', tempfile.gettempdir(), '--min-host-free-mib', '0'),
+                      ('--next-write-reserve-mib', '5'),
+                      ('--next-write-reserve-mib=-1',)):
+            with self.subTest(extra=extra):
+                result = self.run_preflight(extra, [sys.executable, '-c', 'pass'])
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+
+    def test_output_already_over_budget_refuses_before_launching_child(self):
+        # A tree that already exceeds its budget must be refused up front, not
+        # launch the child and only then notice at the first poll.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'out'
+            root.mkdir()
+            (root / 'existing.bin').write_bytes(b'z' * (2 * 1024 * 1024))
+            self.assert_refused_without_child(
+                ('--output-root', str(root), '--max-output-mib', '1'),
+                'already exceeds the configured budget before launch')
+
+    def test_host_already_below_minimum_refuses_before_launching_child(self):
+        # An impossible minimum is guaranteed to be under any real free space,
+        # so this refusal does not depend on the live host's occupancy.
+        self.assert_refused_without_child(
+            ('--host-storage-root', tempfile.gettempdir(), '--min-host-free-mib', '1000000000'),
+            'already below the configured minimum before launch')
 
 
 if __name__ == '__main__':

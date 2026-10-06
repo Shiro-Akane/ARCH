@@ -1,7 +1,7 @@
 import {checkpointFilesystemIdentity} from '../host/runCheckpoint.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import fs,{mkdtemp,mkdir,writeFile,readFile,rm,rename,stat} from 'node:fs/promises';
 import {spawn,execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {randomUUID} from 'node:crypto';
@@ -133,18 +133,82 @@ test('a Stop request recorded before terminal handoff prevents any Core start',a
 });
 
 test('Restart worker rejects missing or changed checkpoint handoff before Core starts',async()=>{
- for(const mutation of ['missing-identity','changed','unchanged']){
+ for(const mutation of ['missing-identity','missing-file','changed','in-place','old-metadata','unchanged']){
   const {root,directory,job}=await setup('#!/bin/sh\nexit 0\n');
   try{
-   job.mode='restart';await writeFile(root+'/checkpoint.h5','checkpoint-one');
-   if(mutation!=='missing-identity')job.checkpoint={path:root+'/checkpoint.h5',filesystemIdentity:await checkpointFilesystemIdentity(root+'/checkpoint.h5')};
+   job.mode='restart';await writeFile(root+'/checkpoint.txt','checkpoint-one');
+   if(mutation!=='missing-identity')job.checkpoint={path:root+'/checkpoint.txt',filesystemIdentity:await checkpointFilesystemIdentity(root+'/checkpoint.txt')};
    if(mutation==='missing-identity'){await assert.rejects(executeRun(job,directory),/handoff identity/);continue;}
-   if(mutation==='changed'){await rm(root+'/checkpoint.h5');await writeFile(root+'/checkpoint.h5','checkpoint-two');}
+   if(mutation==='missing-file')await rm(root+'/checkpoint.txt');
+   if(mutation==='changed'){await rm(root+'/checkpoint.txt');await writeFile(root+'/checkpoint.txt','checkpoint-two');}
+   if(mutation==='in-place')await writeFile(root+'/checkpoint.txt','checkpoint-two');
+   if(mutation==='old-metadata')job.checkpoint!.filesystemIdentity=JSON.parse(job.checkpoint!.filesystemIdentity)[1];
    const state=await executeRun(job,directory);
-   if(mutation==='changed'){assert.equal(state.state,'failed');assert.match(state.error!,/checkpoint changed/);assert.equal(state.processId,undefined);}
+   if(mutation!=='unchanged'){assert.equal(state.state,'failed');assert.match(state.error!,/checkpoint changed/);assert.equal(state.processId,undefined);}
    else{assert.equal(state.state,'succeeded');assert.ok(state.processId);}
   }finally{await rm(root,{recursive:true,force:true});}
  }
+});
+
+test('checkpoint content identity rejects same-size changes even when every metadata field aliases',async t=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'ARCH checkpoint identity ')),filename=root+'/checkpoint.txt';
+ try{
+  await writeFile(filename,'checkpoint-one');
+  const before=await checkpointFilesystemIdentity(filename),metadata=await stat(filename,{bigint:true});
+  await writeFile(filename,'checkpoint-two');
+  const originalOpen=fs.open.bind(fs),originalStat=fs.stat.bind(fs);
+  // Deterministic version of the observed real inode/timestamp collision:
+  // metadata alone is identical while the actual opened bytes have changed.
+  t.mock.method(fs,'open',async(...args:Parameters<typeof fs.open>)=>{
+   const handle=await originalOpen(...args);
+   if(args[0]===filename)t.mock.method(handle,'stat',async()=>metadata);
+   return handle;
+  });
+  t.mock.method(fs,'stat',async(...args:Parameters<typeof fs.stat>)=>
+   args[0]===filename?metadata:originalStat(...args));
+  const after=await checkpointFilesystemIdentity(filename);
+  assert.notEqual(after,before);
+  assert.deepEqual(JSON.parse(after).slice(0,2),JSON.parse(before).slice(0,2));
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('checkpoint inspection closes its owned descriptor on a read error',async t=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'ARCH checkpoint read failure ')),filename=root+'/checkpoint.txt';
+ try{
+  await writeFile(filename,'checkpoint-one');
+  const originalOpen=fs.open.bind(fs);let closes=0;
+  let opened:Awaited<ReturnType<typeof fs.open>>|undefined;
+  t.mock.method(fs,'open',async(...args:Parameters<typeof fs.open>)=>{
+   const handle=await originalOpen(...args);opened=handle;
+   const originalClose=handle.close.bind(handle);
+   t.mock.method(handle,'read',async()=>{throw Object.assign(new Error('injected checkpoint read failure'),{code:'EIO'});});
+   t.mock.method(handle,'close',async()=>{closes++;await originalClose();});
+   return handle;
+  });
+  await assert.rejects(checkpointFilesystemIdentity(filename),/injected checkpoint read failure/);
+  assert.equal(closes,1);assert.ok(opened);
+  await assert.rejects(opened.stat(),{code:'EBADF'});
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('checkpoint inspection rejects a path replacement during the descriptor read',async t=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'ARCH checkpoint path swap ')),filename=root+'/checkpoint.txt';
+ try{
+  await writeFile(filename,'checkpoint-one');
+  const originalOpen=fs.open.bind(fs);let closes=0,replaced=false;
+  t.mock.method(fs,'open',async(...args:Parameters<typeof fs.open>)=>{
+   const handle=await originalOpen(...args),originalRead=handle.read.bind(handle),originalClose=handle.close.bind(handle);
+   t.mock.method(handle,'read',async(...readArgs:Parameters<typeof handle.read>)=>{
+    if(!replaced){replaced=true;await rename(filename,filename+'.old');await writeFile(filename,'checkpoint-two');}
+    return originalRead(...readArgs);
+   });
+   t.mock.method(handle,'close',async()=>{closes++;await originalClose();});
+   return handle;
+  });
+  await assert.rejects(checkpointFilesystemIdentity(filename),/checkpoint changed/);
+  assert.equal(replaced,true);assert.equal(closes,1);
+  assert.equal(await readFile(filename,'utf8'),'checkpoint-two');
+ }finally{await rm(root,{recursive:true,force:true});}
 });
 
 

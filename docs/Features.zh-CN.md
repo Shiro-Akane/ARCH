@@ -32,4 +32,6 @@
 | 三维柱／球坐标 | 完整方位角的孤立域 | 柱坐标 `(r,z,phi)`；球坐标 `(r,theta,phi)`；轴线／极点使用相应反射接合 |
 | 三类几何一至三维 | 指定势／外法向梯度／线性 Robin 及用户边界 | 有效的非周期域、环域或扇区域；周期方向与 AMR 拓扑匹配，纯 Neumann 检查 Gauss 相容性 |
 
-这些范围已有椭圆场、AMR、重启和选定耦合算例检查。逐面 Dirichlet、Neumann、良定线性 Robin 和用户回调支持三类几何及有效扇区域；孤立质量模型仍要求完整方位角。域外质量源及 Jeans 专用细化指标尚未纳入自引力能力。边界热／黏性／组分通道与后端成本见[用户边界](guides/UserBoundaries.zh-CN.md)。流体、热扩散、燃烧、自引力与 AMR 的四模块组合有代表性 CPU/CUDA 运行；每种模型替换仍应按[组合条件](Reference.zh-CN.md#方法与物理模块的组合)核对。详细的边界、残差控制和输出字段见[引力参数与接口](Reference.zh-CN.md#eos-与重力)，实测范围见[引力验证](../validation/gravity/README.zh-CN.md)。
+这些范围已有椭圆场、AMR、重启和选定耦合算例检查。逐面 Dirichlet、Neumann、良定线性 Robin 和用户回调支持三类几何及有效扇区域；孤立质量模型仍要求完整方位角。域外质量源尚未纳入自引力能力。边界热／黏性／组分通道与后端成本见[用户边界](guides/UserBoundaries.zh-CN.md)。流体、热扩散、燃烧、自引力与 AMR 的四模块组合有代表性 CPU/CUDA 运行；每种模型替换仍应按[组合条件](Reference.zh-CN.md#方法与物理模块的组合)核对。详细的边界、残差控制和输出字段见[引力参数与接口](Reference.zh-CN.md#eos-与重力)，实测范围见[引力验证](../validation/gravity/README.zh-CN.md)。
+
+Jeans 场与细化指标 `JENS` 已接入 CPU，当前验收限于均匀周期背景、单一恒比热 IdealGas 的演化与续算。显式笛卡尔 CUDA 接线属于工程候选，最终 GPU 验收尚未通过；一般 EOS、非零引力场和完整 RZ 验收仍待补齐。选择该指标须启用自引力和显式后端；`auto`、曲线坐标 CUDA 及非法组合会报错。配置条件与 `jeans_cells` 参数见[AMR 与 plot 变量词汇](Reference.zh-CN.md#amr-与-plot-变量词汇)。

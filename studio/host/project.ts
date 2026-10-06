@@ -9,6 +9,9 @@ import {PreviewRunner} from './previewRunner.ts';
 import {SOD_PREVIEW_PROFILE,PREVIEW_PROFILES} from './previewProfile.ts';
 import {readSource} from './source.ts';
 import {BuildRunner} from './buildRunner.ts';
+import {requireCompiledSourceCase} from './desktopSource.ts';
+import {validateExistingBuildProfile} from './existingBuildProfile.ts';
+import type {BuildProfile} from '../src/host/contracts.ts';
 import {BUILD_PROFILES} from './buildProfile.ts';
 import {atomicSave,publishConfig} from './atomicConfig.ts';
 import {ConfigError} from './config.ts';
@@ -18,12 +21,13 @@ import path from 'node:path';import {randomUUID} from 'node:crypto';
 import {fingerprint,projectRoot,selectedPath} from './files.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 import type {ProjectSnapshot,ProjectFileRef} from '../src/host/contracts.ts';
-export interface ProjectOptions { project:string; case?:string; config?:string; binary?:string; buildProfile?:string; configureProfile?:ConfigureProfile }
+export interface ProjectOptions { project:string; case?:string; config?:string; binary?:string; buildProfile?:string; configureProfile?:ConfigureProfile; trustedBuildProfile?:BuildProfile; selectedSource?:string; requestedCaseId?:string }
 export async function openProject(options:ProjectOptions) {
  const root=await projectRoot(options.project);
- const local=options.buildProfile===LOCAL_CPU_PROFILE_ID?localCpuProfile(root):undefined;
+ const local=options.buildProfile===LOCAL_CPU_PROFILE_ID&&!options.trustedBuildProfile?localCpuProfile(root):undefined;
  if(local){if(options.configureProfile)throw new Error('Local CPU profile owns its Configure settings.');options.configureProfile=local.configure;}
- const selectedProfile=local?.build??BUILD_PROFILES.find(p=>p.id===options.buildProfile);
+ const selectedProfile=options.trustedBuildProfile??local?.build??BUILD_PROFILES.find(p=>p.id===options.buildProfile);
+ if(options.trustedBuildProfile&&(selectedProfile?.id!==options.buildProfile||selectedProfile?.managedSourceRoot!==root))throw new Error('Trusted Host profile identity differs from the managed project.');
  if(options.configureProfile){
   if(options.configureProfile.sourceRoot!==root)throw new Error('Configure source root differs from managed project.');
   if(selectedProfile&&(selectedProfile.managedSourceRoot!==root||selectedProfile.buildDirRelative!==options.configureProfile.buildDirRelative))
@@ -40,12 +44,13 @@ export async function openProject(options:ProjectOptions) {
  let build:BuildRunner|undefined;
  if(options.buildProfile){if(!selectedProfile)throw new Error('Unknown Host build profile');build=new BuildRunner(root,result.session.projectId,selectedProfile!);result.host.capabilities.build=(await build.initialize()).configured;}
  const configure=options.configureProfile?new ConfigureRunner(options.configureProfile):undefined;
- const previewProfiles=local?PREVIEW_PROFILES.map(profile=>({...profile,buildProfileId:LOCAL_CPU_PROFILE_ID})):PREVIEW_PROFILES;
- const preview=build&&(local||build.profile.id===SOD_PREVIEW_PROFILE.buildProfileId)?new PreviewRunner(build,previewProfiles[0],{},previewProfiles):undefined;
+ const previewProfiles=local||options.trustedBuildProfile?PREVIEW_PROFILES.map(profile=>({...profile,buildProfileId:selectedProfile!.id})):PREVIEW_PROFILES;
+ const preview=build&&(local||options.trustedBuildProfile||build.profile.id===SOD_PREVIEW_PROFILE.buildProfileId)?new PreviewRunner(build,previewProfiles[0],{},previewProfiles):undefined;
  const workflow=preview?new WorkflowRunner(preview):undefined;
  if(preview)preview.externalBusy=()=>(workflow?.isActive()??false)||(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);
  if(preview&&build){build.executionBlocked=()=>preview.isActive()||(workflow?.isActive()??false)||(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);result.host.capabilities.preview=(await preview.readiness()).ready;}
  if(build&&!preview)build.executionBlocked=()=>(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);
+ if(options.trustedBuildProfile&&build){if(configure&&build.profile.id.startsWith('studio-existing-'))configure.beforeStart=()=>validateExistingBuildProfile(root,build!.profile);const retire=build.beforeStart;build.beforeStart=async()=>{if(build!.profile.id.startsWith('studio-existing-'))await validateExistingBuildProfile(root,build!.profile);await retire?.();};}
  const baseline=structuredClone(result.session);
  const changed=(a:ProjectFileRef|undefined,b:ProjectFileRef|undefined)=>Boolean(a&&b&&(a.exists!==b.exists||a.sha256!==b.sha256||a.size!==b.size||a.modifiedTime!==b.modifiedTime));
  async function refresh(){
@@ -67,7 +72,18 @@ export async function openProject(options:ProjectOptions) {
  function serial<T>(operation:()=>Promise<T>):Promise<T>{const next=queue.then(operation);queue=next.catch(()=>undefined);return next;}
  async function saved(read:ConfigReadResponse):Promise<ConfigWriteResponse>{options.config=read.relativePath;const current=await fingerprint(root,read.relativePath,'parameter');result.session.parameterFile=current;baseline.parameterFile=structuredClone(current);result.session.configFileState=current.error?'unknown':current.exists?'available':'missing';result.session.refreshedAt=new Date().toISOString();return {...read,project:structuredClone(result)};}
  function projectId(id:string){if(id!==result.session.projectId)throw new ConfigError('protocol-error','Project session changed. Reconnect before saving.');}
- return {runs,runPreparation,configure,build,preview,workflow,configuration:options.binary?new ConfigurationAdapter({root,projectId:result.session.projectId,binaryRelativePath:options.binary}):undefined,readSource:()=>readSource(root,options.case,result.session.projectId),snapshot:()=>{result.host.capabilities.preview=preview?.snapshot().ready??false;return structuredClone(result);},refresh:()=>serial(refresh),readConfig:()=>serial(()=>readConfig(root,options.config,result.session.projectId)),
+ const configuration=options.binary?new ConfigurationAdapter({root,projectId:result.session.projectId,binaryRelativePath:options.binary}):undefined;
+ if(options.selectedSource){
+  if(!configuration)throw new Error('Selected source has no configured executable owner.');
+  const assertCase=async(caseId:string)=>{
+   const registry=await configuration.discovery();
+   const resolved=await requireCompiledSourceCase(root,options.selectedSource!,registry.cases,options.requestedCaseId);
+   if(caseId!==resolved)throw new Error('Requested case differs from the exact selected source registration.');
+  };
+  configuration.assertCase=assertCase;if(runPreparation)runPreparation.assertCase=assertCase;
+  if(workflow)workflow.assertCase=assertCase;if(preview)preview.assertCase=assertCase;
+ }
+ return {runs,runPreparation,configure,build,preview,workflow,configuration,readSource:()=>readSource(root,options.case,result.session.projectId),snapshot:()=>{result.host.capabilities.preview=preview?.snapshot().ready??false;return structuredClone(result);},refresh:()=>serial(refresh),readConfig:()=>serial(()=>readConfig(root,options.config,result.session.projectId)),
   openConfig:(request:OpenConfigRequest)=>serial(async()=>{projectId(request.projectId);return saved(await readConfig(root,request.relativePath,result.session.projectId));}),
   saveConfig:(request:SaveConfigRequest)=>serial(async()=>{projectId(request.projectId);if(request.relativePath!==options.config)throw new ConfigError('invalid-path','Save may only update the current associated configuration.');return saved(await atomicSave(root,request.relativePath,result.session.projectId,request.text,request.expectedFingerprint));}),
   saveConfigAs:(request:SaveConfigAsRequest)=>serial(async()=>{projectId(request.projectId);return saved(await publishConfig(root,request.destinationRelativePath,result.session.projectId,request.text,undefined,true));})};

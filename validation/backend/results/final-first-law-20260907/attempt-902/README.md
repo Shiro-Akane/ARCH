@@ -7,8 +7,11 @@ The copy preserves the original relative-path expressions; it is evidence,
 not an entry point to run from this deeper directory.
 
 The local execution log `build/memcheck-final-902.log` recorded 22
-completed routes followed by an audit31 timeout; it is not bundled with this repository. The [partial application
-output](../memcheck-902/audit31_sparse_cells/arch.stdout) and [incomplete sanitizer
-report](../memcheck-902/audit31_sparse_cells/sanitizer.log) remain unchanged.
+completed routes followed by an audit31 timeout; it is not bundled with this repository.
+The partial application output is preserved byte-for-byte in the
+[identified local raw archive](../../../../archive/README.md); its original path is
+`validation/backend/results/final-first-law-20260907/memcheck-902/audit31_sparse_cells/arch.stdout`.
+The [incomplete sanitizer report](../memcheck-902/audit31_sparse_cells/sanitizer.log)
+remains in this record.
 This attempt did not pass the complete focused suite. A replacement must use a
 new output directory and finish the unchanged workload.

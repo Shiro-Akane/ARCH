@@ -60,8 +60,8 @@ function NativeView({samples,domain,selectedRow,onSelect}:{samples:AuditResponse
   if(row!==null)onSelect(row);
  }
  const invalid=p.values.filter(v=>typeof v!=='number').length;
- return <section aria-label="Candidate native Plotfile slice view">
-  <h3>Native stored cells · candidate slice display</h3>
+ return <section aria-label={a.completion.state==='complete'?'Native Plotfile slice view':'Candidate native Plotfile slice view'}>
+  <h3>Native stored cells · {a.completion.state==='complete'?'':'candidate '}slice display</h3>
   <p>One requested block region, not a global overview or LOD. Units and scientific certification remain pending. Field: {p.field} · level {n.level} · key {n.logicalKey}.</p>
   <div>
    <button onClick={()=>setView(v=>zoomNativeSpatialView(v,a.dimension,.8))}>Zoom in · stored cells</button>

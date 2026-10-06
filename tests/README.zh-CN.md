@@ -45,10 +45,13 @@ ARCH 测试使用仓库内的解析／独立参考和常规依赖；配置、运
 全部 Python 工具测试，以及包含 KLU 和所有已配置 Host 测试的 CPU Release 构建。
 这些任务复用下文的测试入口，不维护另一套 CI 数学实现。CPU 任务会下载所需的
 Helmholtz LFS 表，拒绝缺项或跳过的 CTest 报告；工具任务同样不接受跳过的检查。
+标有 `tooling` 的运行器契约由工具任务执行，CPU 任务在发现清单与实际执行时使用
+相同的标签排除。下文未筛选的本地 CTest 命令仍包含这些契约。
 触发范围由工作流定义。下载限定为当前测试真正使用的
-Helmholtz 表，不下载无关历史 HDF5 与大表；测试选择、数值容差和失败判据保持不变。
+Helmholtz 表，不下载无关历史 HDF5 与大表；数值容差和失败判据由原测试负责。
 
-`CI required` 汇总这两个任务的结果，不代表实际执行了 CUDA 或重新完成了整套科学
+Studio 与 Host 的完整 Node 测试只执行一次，随后检查代码规范并构建带类型检查的生产资源。
+`CI required` 汇总这三个任务的结果，不代表实际执行了 CUDA 或重新完成了整套科学
 验证。诊断附件保留 14 天，与维护者审阅过的 Validation 记录分开存放。
 手动运行、资源限制、安全设置及分支规则的接入方法见[工作流指南](../.github/workflows/README.md)。
 
@@ -116,11 +119,30 @@ ctest --test-dir build-test-cuda --parallel 1 --output-on-failure
 `native` 面向配置时可见的 GPU；为其他设备编译时使用指南中的架构选项。编译并行度
 可以调整，不改变数值方法。设备测试先串行执行，测清显存需求后再增加并发。
 
+运行模拟时，同一个资源护栏可以限制输出目录的逻辑字节总量并检查 Host
+存储挂载的实际余量。预先建立输出父目录，让模拟在其中创建自己的运行目录：
+
+```bash
+mkdir -p validation-local
+/usr/bin/python3 tools/run_memory_guarded.py --min-available-mib 1536 \
+  --max-swap-growth-mib 256 --pressure-guard \
+  --output-root validation-local --max-output-mib 512 \
+  --host-storage-root /mnt/e --min-host-free-mib 8192 \
+  --next-write-reserve-mib 64 -- ./build-test-cpu/bin/ARCH Sod input.par
+```
+
+这里的挂载路径和容量是本机示例；`input.par` 的 `out_dir` 应位于该输出目录。
+护栏需要支持 Linux pidfd 的 Python。输出总量加写入预留超过预算，或 Host
+余量低于保留量加写入预留时，运行会被拒绝或停止；正常退出也检查最终值。
+WSL 内部文件系统余量与承载它的 Host 磁盘余量分别记录。观测按间隔采样，
+写入预留由调用方根据预计输出设置。每批验证通过并保存处理后指标、输入与执行物
+身份后清理原始输出；失败及待判定记录保留在有界的本地证据目录。
+
 只验证 Driver 改动时，可显式使用 `tools/check_ci_results.py --profile driver-cuda`
 核对所选 CTest 的 inventory 和 JUnit。发现与执行必须使用相同的选择范围；该 profile
 要求调度、引力准备、检查点比较及 CUDA AMR/批处理/归约等必要锚点，所有所选测试
 均须通过，不接受跳过。它只标识 Driver 范围，不能替代完整 CUDA 测试、实际模拟的
-数值/重启对照或 sanitizer；GitHub CPU CI 仍验证完整 inventory。
+数值/重启对照或 sanitizer；GitHub CPU CI 验证完整数值／API 清单，运行器契约由独立的工具任务覆盖。
 
 请检查配置输出和 CTest 清单。cuDSS 专项与生成网络测试仅在相应库和网络包启用时
 出现；不包含这些条目的构建没有测试对应能力。复现代表性完整配置时，先按

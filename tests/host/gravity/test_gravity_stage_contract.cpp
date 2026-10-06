@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+void test_host_hydro_transaction();
+
 namespace {
 using namespace arch::scheduler;
 using namespace arch::state;
@@ -167,7 +169,7 @@ void test_field_identity() {
 }
 } // namespace
 int main() {
-    try { test_preparation(); test_failures(); test_field_identity(); }
+    try { test_preparation(); test_failures(); test_field_identity(); test_host_hydro_transaction(); }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
     std::cout << "Gravity stage preparation and field identity contracts passed\n";
 }

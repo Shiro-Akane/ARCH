@@ -113,6 +113,19 @@ add_test(NAME rz_qualification_runner_contract
 set_tests_properties(rz_qualification_runner_contract PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Hosted CI runs these runner contracts in its complete Tooling job. Labeling
+# keeps them available to an unfiltered local CTest run while avoiding a second
+# execution in the CPU numerical/API lane.
+set(ARCH_HOST_TOOLING_TESTS
+    portable_network_generator cuda_amr_smoke_runner_contract
+    curvilinear_manifest_contract backend_validation_contract
+    validation_provenance_contract runtime_validation_inputs_contract
+    rz_qualification_runner_contract)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND ARCH_HOST_TOOLING_TESTS memory_guard_contract)
+endif()
+set_property(TEST ${ARCH_HOST_TOOLING_TESTS} APPEND PROPERTY LABELS tooling)
+
 
 # Syntax is checked before any model, EOS or device resource is constructed.
 add_executable(arch_config_input_records tests/host/io/test_config_input_records.cpp)
@@ -237,7 +250,10 @@ target_compile_definitions(arch_shared_stage_scheduler PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
 
-add_executable(arch_gravity_stage_contract tests/host/gravity/test_gravity_stage_contract.cpp)
+add_executable(arch_gravity_stage_contract
+    tests/host/gravity/test_gravity_stage_contract.cpp
+    tests/host/driver/test_host_hydro_transaction.cpp)
+target_link_libraries(arch_gravity_stage_contract PRIVATE arch_solver_dispatch)
 arch_configure_host_test(arch_gravity_stage_contract)
 add_test(NAME gravity_stage_contract COMMAND arch_gravity_stage_contract)
 

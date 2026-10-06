@@ -5,6 +5,7 @@ import {parseLaunchArgs,windowsAssociation} from '../desktop/arguments.mjs';
 test('desktop launch preserves semantic arguments and spaced paths',()=>{
  assert.deepEqual(parseLaunchArgs(['--case','Sod','--config','test inputs/Sod.par'],'/project'),{cwd:'/project',case:'Sod',config:'test inputs/Sod.par'});
  assert.deepEqual(parseLaunchArgs(['--project','/project one','--binary','build/bin/ARCH'],'/else'),{cwd:'/else',project:'/project one',binary:'build/bin/ARCH'});
+ assert.equal(parseLaunchArgs(['--build-dir','build cpu'],'/project')['build-dir'],'build cpu');
  assert.equal(parseLaunchArgs(['--source','/project/Sod.cpp','--cwd','/project/nested'],'/else').cwd,'/project/nested');
  for(const args of [['--command','id'],['--case'],['--case','Sod','--case','Other'],['--cwd','/a','--cwd','/b'],['--config','--project']])assert.throws(()=>parseLaunchArgs(args,'/project'));
 });

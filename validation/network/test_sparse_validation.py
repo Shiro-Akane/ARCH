@@ -1,8 +1,14 @@
-"""Fail-closed real sparse trajectory transcript controls; stdlib only."""
-import json
+"""Fail-closed sparse trajectory parser controls; deterministic stdlib fixtures.
+
+These tests validate the transcript contract, not a scientific trajectory or a
+timing claim. Historical raw output is not a prerequisite for the test suite.
+"""
 from pathlib import Path
+import sys
 import unittest
 
+sys.path.insert(0, str(Path(__file__).parent / "tests/fixtures"))
+from audit31_transcript_fixture import load_audit31_fixture
 from run_sparse_validation import parse_transcript, validate_storage_controls
 
 
@@ -115,15 +121,35 @@ class SparseTranscriptContract(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.parse(lines)
 
-    def test_original_archived_audit31_transcript_is_compatible(self):
-        archive = Path(__file__).parent / "results/sparse-native-20260907/release-900"
-        evidence = json.loads((archive / "evidence.json").read_text())
-        metadata = next(record["manifest"] for record in evidence["identity"]["build"]["registered_networks"]
-                        if record["manifest"]["runtime_name"] == "custom:audit31")
-        controls = dict(rho=1.e7, temperature=3.e9, interval=1.e-10, cv=1.e8, rtol=1.e-7)
-        result = parse_transcript((archive / "trajectory/arch.stdout").read_text(), metadata, controls, 4)
+    def test_representative_audit31_transcript_is_compatible(self):
+        fixture = load_audit31_fixture()
+        self.assertEqual(fixture["schema"], 1)
+        metadata = fixture["metadata"]
+        self.assertEqual(metadata["runtime_name"], "custom:audit31")
+        self.assertEqual(len(metadata["species"]), 31)
+        controls = fixture["controls"]
+        transcript = fixture["transcript"]
+        result = parse_transcript(transcript, metadata, controls, fixture["steps"],
+            tuple(fixture["storage_sizes"]), fixture["pool_cells"])
         self.assertEqual(result["steps"], 4)
         self.assertEqual(result["storage_sizes"], (2, 3))
+        self.assertEqual({method: record["attempts"] for method, record in result["methods"].items()},
+                         {1: 13194, 2: 35, 3: 397})
+        self.assertEqual({method: record["rejections"] for method, record in result["methods"].items()},
+                         {1: 98, 2: 5, 3: 45})
+        self.assertEqual(result["field_budget"], 2.e-10)
+        self.assertEqual(result["limiter_budget"], 2.e-8)
+        # The original audit31 input/network identity remains fail-closed.
+        for field in controls:
+            wrong_controls = dict(controls)
+            wrong_controls[field] *= 2
+            with self.subTest(control=field), self.assertRaises(ValueError):
+                parse_transcript(transcript, metadata, wrong_controls, 4)
+        for wrong_metadata in (dict(metadata, runtime_name="custom:other"),
+                               dict(metadata, auxiliary_equations=1),
+                               dict(metadata, species=metadata["species"][:-1])):
+            with self.subTest(metadata=wrong_metadata), self.assertRaises(ValueError):
+                parse_transcript(transcript, wrong_metadata, controls, 4)
 
 
 if __name__ == "__main__":

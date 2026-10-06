@@ -79,7 +79,8 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
     if (plot_run_id_.empty()) plot_run_id_ = arch::core::new_run_identity();
     write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index,
-              ctrl.t_current, config, specs, extra_fields, &checkpoint_provenance, plot_run_id_, runtime.geometry_semantics());
+              ctrl.t_current, config, specs, extra_fields, &checkpoint_provenance,
+              plot_run_id_, runtime.geometry_semantics(), &plot_source_identity);
     // A failed write/close/publication must not consume the next output identity.
     ++ctrl.plt_file_index;
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();

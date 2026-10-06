@@ -136,3 +136,59 @@ P(r) = P0 + rho*(Omega²*r²/2 + Omega*a*r⁴/2 + a²*r⁶/6)
 配套 unittest 验证解析恒等式、已知错误替代与非法输入。它们证明参考工具的有限 fixture 数学，不是生产运行、EOS、Poisson、AMR、CPU/CUDA 整体科学 PASS。本轮未 build/run simulation、未执行 GPU 编译。
 
 物理应力依据：[CFD Direct 的 Newtonian fluid 说明](https://doc.cfd.direct/notes/cfd-general-principles/newtonian-fluid)。本轮迁移范围和状态量映射以上述 Core 定义为准，不借一般公式扩大签收范围。
+
+## 10. 原生均值与低热能旋流的新增核对
+
+独立有理数核对确认：W 方位动量均值与 V 总能量均值不能直接合成普通 Cartesian 点态动能。取首格 r=[0,1]、rho=1、u_phi=r、点比内能 e=1/64，单位 dz 下的 per_2pi 量为 V=1/2、W=1/3、I=integral(rho*r²*dV)/(2*pi)=1/4、J=1/4。保存 m_phi=3/4、E_V=17/64，而普通恢复得到 `E_V-m_phi²/(2*rho)=-1/64`，物理点场的比内能仍为正 1/64。该反例由独立 Fraction 参考覆盖；它不属于小值或舍入误差。
+
+已知真实正密度场时，Cauchy–Schwarz 给出角动能总量下界 `K_phi >= J²/(2*I)`。与 E_V 比较必须再除以 V。本例由刚体旋转达到等号。只知道 rho_V 时 I 未唯一确定；任意密度重构给出的 I 不能自动成为权威充分条件。点 EOS、均值 veto、重构参考态、AMR 父子证明和阶段接受需采用同一有依据的原生表示；不能仅修改一个 `valid()` 判断并宣称全链路通过。
+
+目前新增矩重构仍处于内部验收范围：配置的 MUSCL/PPM 与 coarse-fine 限制器语义、轴向面求积、均值热力学缓存及 AMR 原生能量判定尚需统一。旧父格反例须带完整 rho/bounds/表示规则复核，不从本反例推断它无效。公开 RZ 门槛保持至真实演化、AMR 和续算证明齐备。
+
+## 11. 统一原生热力学数值闭合（实施接口冻结，尚未科学验收）
+
+### 11.1 表示与数值含义
+
+继续保存 `rho,m_r,m_z,E,rho*X` 的 V 均值与唯一 `m_phi=J/W`，不新增演化惯量数组。共同正密度二次重构 `rho_*(r)` 保持当前 V 密度均值，并使用真实、同阶段的径向邻居及反射 ghost。临时 `I_*=2*pi*dz*integral(rho_* r^3 dr)` 是明确的**数值重构闭合**，不是未知连续场真实 I 的证书。RZ 的空间算子、热力学、扩散与 transfer 必须消费同一个版本/几何/ghost 身份的闭合；不能在不同消费者各自选一个方便的 I。
+
+记 `M=rho_V V, P_r=m_r,V V, P_z=m_z,V V, J=m_phi,W W, H=E_V V`。共同代表热态使用
+
+```
+u_r=P_r/M; u_z=P_z/M; Omega=J/I_*
+e0=(H-(P_r^2+P_z^2)/(2*M)-J^2/(2*I_*))/M
+```
+
+代表 EOS 输入为 `(rho_V,e0,Xbar)`；实际面/源点使用 `rho_*(r)` 与物理速度。借用普通 shared state recovery 时，将方位代表动量映成 `m_eff=m_phi,W*sqrt(rho_V*W^2/(V*I_*))`，使同一个现有热能判定获得上述 e0。比例和动能必须指数缩放，热能可解析性的原8 epsilon以及 `sml_rho/min_eint/max_eint` 不变。反射负半径 ghost 使用 signed capacity 与奇偶关系，热能用正物理惯量，不能生成负动能。
+
+基线物理 profile 为
+
+```
+rho=rho_*(r); m_r=rho*u_r; m_z=rho*u_z; m_phi=rho*Omega*r
+E=rho*(e0+(u_r^2+u_z^2+Omega^2*r^2)/2); rhoX_s=rho*Xbar_s
+```
+
+它保持全部原生均值。theta=0只能返回该物理基线，不能返回 raw mixed-measure `FluidVector`。高阶与基线共用同一 rho*，并用同theta限制动量、能量和组分。若正性调整改变了密度 polynomial，组分高阶同步使用 `q_high,s=q_poly,s+Xbar_s*(rho_*-rho_unlimited)`，保留每个 V 均值及总组分和；不能用逐点normalize来代替积分守恒。实际消费者点态还须通过真实 EOS 与既定上下界。
+
+常量惯量捷径不能替代此闭合：取 `rho=7/8+r^2/4`、r=[0,1]、Omega=1、常数点比内能epsilon，则 `rho_V=1,I=J=25/96,H=25/192+epsilon/2`（per_2pi），常量rho惯量I0=1/4给出的比内能为 `epsilon-25/2304`。rho平均值相同并不使 I 相同。另有分段正密度反例，均值允许域不能从rho均值唯一推出。
+
+max_eint的上限集合也不凸：rho=1、e_max=1/2时 `(m_r,E)=(+1,1)` 与 `(-1,1)` 都符合上限，中点比内能为1。重构ray搜索必须检查实际选中的点态；不能把下限的凸性推导延伸成上下限全域或 RK/RKL 正性证明。
+
+### 11.2 阶段、AMR 与耦合所有者
+
+RZ输入先完成全层级真实物理BC与ghost，随后借用只读 closure context；身份至少含数组slot/version、ghost来源version、拓扑及几何。叶数学无全域额外状态，不开另一套后端公式。
+
+每个输出分为有限量/正密度/simplex预检与post-boundary closure/EOS科学验收。现有 source消费及repair receipt owner 保留；另外一个post-ghost gate检查整个候选层级。Euler、所有RK最后一级与final reflux同样必须完成ghost和gate。拒绝由既有Runtime事务恢复原数组、身份、时间和账本；“数据写完”不能代替科学接受。
+
+Init先检查实际采样点再做V/W积分，径向使用Gauss4；任意用户函数仅称数值求积。初始BC/AMR ghost就绪后才验收native closure。checkpoint读入先做结构/finite/rho/simplex预检，再于真实恢复的BC/ghost完成后验收；数值闭合修订须带明确身份，旧private checkpoint不能被静默重解释。
+
+AMR restriction继续真实V/W求和。先建立候选拓扑及其ghost，然后进行closure/EOS验收；不可表示的coarsening保留children，有限、单调移除候选，并重查受影响stencil。prolongation回退积分parent物理基线到各child自己的V/W，不复制不同半径的raw parent。最终候选拓扑通过后才发布。
+
+Burn继续原单zone ODE和两次半步，不把closure迁移变成多节点ODE：固定M/I*/Pr/Pz/J，核能增量 `delta E_V=rho_V*delta e_nuc`，用原kinetic保留的方式完成hand-off。EOS点函数及核网络内部算法不改变。Self-gravity保留既有flux-compatible能量耦合的唯一authority；外源方位功与力按既定V/W场积分，不能另加同一份rho*u·g。
+
+角向粘性用同I*、同rho*及对称正链接。固定rho半离散耗散/守恒不等于有限步热性；完整FE/RKL张量、非线性系数、AMR及变化BC仍要真实逐阶段post-ghost验收。不能以谱步长界单独宣称热能正性。
+
+### 11.3 实施和签收依赖
+
+先提取共同moment/density叶函数，再加入原生thermo adapter与profile，随后迁移Init/transfer/ghost预检、真实post-boundary gate及所有Hydro/CFL/Burn/Gravity/diffusion/IO消费者。配置的PCM/MUSCL/PPM和coarse-fine stencil语义必须逐项核对，不能把一个径向特例称作所有方法已支持。RZ user BC需要点primitive与native ghost的独立转换及初始EOS绑定，不能直接套普通Cartesian mean函数。
+
+以上为root冻结的实施规则，既有空间阶数、独立参考误差预算、能量/组分/角动量收支及公共门槛保持。完整实现、CPU/CUDA演化、AMR与真实续算通过前，本节不是release PASS。

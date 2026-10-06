@@ -1,3 +1,4 @@
+import {desktop} from '../host/desktop';
 import {validateDiscovery} from '../host/workflowClient';
 import {InspectionRequests} from '../data/inspectionRequests';
 import {useEffect,useRef} from 'react';
@@ -10,7 +11,7 @@ import {sameBuildScope} from '../host/configurationContracts';
 import {pairingSuspicion} from '../data/configurationIdentity';
 export function ConfigurationBridge({copy}:{copy:WorkingCopy|null}){
  const {connected,snapshot}=useHost();
- const {model,buildScope,configurationScope,setConfigurationScope,setSchema,setInspection,setInspectionMessage,setDiscovery}=useCoreParameters();
+ const {model,buildScope,configurationScope,setConfigurationScope,setSchema,setInspection,setInspectionMessage,setDiscovery,setModel}=useCoreParameters();
  const requests=useRef(new InspectionRequests());
  const projectId=connected?snapshot?.session.projectId:undefined;
  const binarySha=snapshot?.session.executable?.sha256;
@@ -18,9 +19,16 @@ export function ConfigurationBridge({copy}:{copy:WorkingCopy|null}){
  const project=configurationScope?.projectId===projectId?configurationScope:null;
  useEffect(()=>{
   if(!buildScope||buildScope.projectId!==projectId)return;let disposed=false;
-  void previewRequest('/api/cases').then(v=>{if(!disposed)setDiscovery(validateDiscovery(v,buildScope));}).catch(()=>{if(!disposed)setDiscovery(null);});
+  void previewRequest('/api/cases').then(v=>{if(!disposed){const registered=validateDiscovery(v,buildScope);setDiscovery(registered);
+   if(desktop?.selectedSource&&snapshot?.session.caseSource?.sha256){
+    const absolute=snapshot.session.projectRoot+'/'+desktop.selectedSource;
+    const matches=registered.cases.filter(c=>(c.inspection.sourceFile===absolute||c.inspection.sourceFile===desktop?.selectedSource)
+     &&c.inspection.compiledSourceSha256===snapshot.session.caseSource?.sha256);
+    if(matches.length===1)setModel(matches[0].caseId);
+   }
+  }}).catch(()=>{if(!disposed)setDiscovery(null);});
   return()=>{disposed=true;};
- },[buildScope,projectId,setDiscovery]);
+ },[buildScope,projectId,setDiscovery,setModel,snapshot?.session.projectRoot,snapshot?.session.caseSource?.sha256]);
  const text=copy?.text;
  useEffect(()=>{
   if(!project)return;let disposed=false;

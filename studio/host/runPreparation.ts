@@ -14,6 +14,7 @@ import type {PrepareRunRequest,ConfirmRunRequest,RunPreparation} from '../src/ho
 export type {PrepareRunRequest,ConfirmRunRequest,RunPreparation} from '../src/host/runContracts.ts';
 /** Static run preflight on the selected binary, independent of Preview capability/freshness. */
 export class RunPreparationRunner {
+ assertCase?:(caseId:string)=>Promise<void>;
  private active=false;
  private prepared?:{plan:RunPreparation;schema:ConfigurationSchema;checkpointIdentity?:string};
  readonly root:string;readonly projectId:string;readonly binaryRelativePath:string;
@@ -47,6 +48,7 @@ export class RunPreparationRunner {
   if(this.active)throw new BuildError('Run preparation already active.',409);
   this.active=true;this.prepared=undefined;
   try{
+   await this.assertCase?.(request.caseId);
    const saved=await this.config();
    if(saved.projectId!==this.projectId||saved.fingerprint.sha256!==request.configRevision)
     throw new BuildError('Save the exact Working Copy before preparing Run/Restart.',409);
@@ -98,7 +100,7 @@ export class RunPreparationRunner {
    Date.now()-Date.parse(prepared.plan.createdAt)>5*60*1000)throw new BuildError('Run plan unavailable, invalid or expired; prepare again.',409);
   this.prepared=undefined;this.active=true;
   try{
-   const plan=prepared.plan,saved=await this.config();
+   const plan=prepared.plan;await this.assertCase?.(plan.caseId);const saved=await this.config();
    if(saved.projectId!==this.projectId||saved.relativePath!==plan.config.relativePath||
     !sameFingerprint(saved.fingerprint,plan.config.fingerprint)||!sameFingerprint(await this.binary(),plan.binary.fingerprint))
     throw new BuildError('Saved input or binary changed after preparation; prepare again.',409);

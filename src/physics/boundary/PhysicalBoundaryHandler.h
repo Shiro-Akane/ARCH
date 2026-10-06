@@ -40,6 +40,27 @@ struct BCHandler {
     }
     /** Set the physical time and operator whose boundary data are requested. */
     void configure_stage(double time, arch::boundary::BoundaryPurpose purpose);
+    /** Opaque mutable context only; compiled logical/axis plans remain immutable. */
+    class StageContextSnapshot {
+        friend struct BCHandler;
+        double time_;
+        std::uint64_t revision_;
+        arch::boundary::BoundaryPurpose purpose_;
+        StageContextSnapshot(double t,std::uint64_t r,arch::boundary::BoundaryPurpose p)
+            : time_(t),revision_(r),purpose_(p) {}
+    };
+    /** Capture a context identity at a quiescent Host scheduler boundary. */
+    StageContextSnapshot snapshot_stage_context() const noexcept {
+        return {time_,stage_revision_,purpose_};
+    }
+    /** Restore the context paired with the restored original ghost fields. */
+    void restore_stage_context_noexcept(const StageContextSnapshot& s) noexcept {
+        time_=s.time_;stage_revision_=s.revision_;purpose_=s.purpose_;
+    }
+    /** Inspect all context fields, including time/purpose hidden behind revision. */
+    bool stage_context_matches(const StageContextSnapshot& s) const noexcept {
+        return time_==s.time_&&stage_revision_==s.revision_&&purpose_==s.purpose_;
+    }
     /** Identity of the exact time/purpose snapshot; equal requests may reuse ghosts. */
     std::uint64_t stage_revision() const noexcept { return stage_revision_; }
     void apply(FluidState& state, const Grid& grid) const;

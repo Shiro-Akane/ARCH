@@ -9,7 +9,7 @@ document.getElementById('launch').onclick=async()=>{
  status.textContent='Preparing managed Local Host…';button.disabled=true;
  try{
   const options={};
-  for(const key of ['project','config','binary','case','source','distro']){
+  for(const key of ['project','config','binary','case','source','distro','build-dir']){
    if(key==='distro'&&api.platform==='linux')continue;
    const value=document.getElementById(key).value;
    if(value)options[key]=value;

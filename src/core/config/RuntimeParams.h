@@ -311,7 +311,8 @@ private:
         assign(cfg.amr.jeans_cells, "jeans_cells");
         assign(cfg.amr.refine_var, "refine_var");
         arch::config::ResolveRefinementSelection(cfg.amr, cfg.grid.dim, cfg.physics.burn.use_burn,true,
-            cfg.physics.gravity.type=="self",cfg.execution.compute_backend=="cpu");
+            cfg.physics.gravity.type=="self",
+            arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry));
         assign(cfg.amr.refine_threshold, "refine_threshold");
         assign(cfg.amr.derefine_threshold, "derefine_threshold");
         // Time limits and output configuration.
@@ -358,7 +359,10 @@ private:
         const auto enable_all = [&] {
             cfg.io.vars.rho = cfg.io.vars.temp = cfg.io.vars.u = cfg.io.vars.v = cfg.io.vars.w = true;
             cfg.io.vars.p = cfg.io.vars.eng = cfg.io.vars.species = cfg.io.vars.vort = cfg.io.vars.divv = cfg.io.vars.entr = cfg.io.vars.enuc = true;
-            cfg.io.vars.jens=cfg.physics.gravity.type=="self" && cfg.execution.compute_backend=="cpu";
+            // ALL uses the same requested route as explicit JENS, without
+            // treating a static configuration check as device readiness.
+            cfg.io.vars.jens=cfg.physics.gravity.type=="self"
+                && arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry);
         };
         clear_plot_variables();
         std::stringstream output_stream(plt_vars);
@@ -402,8 +406,9 @@ private:
         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
         if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.io.vars.w = false; }
         if (cfg.io.vars.jens)
-            if (cfg.physics.gravity.type!="self" || cfg.execution.compute_backend!="cpu")
-                throw std::invalid_argument("JENS output requires self gravity and explicit CPU backend; CUDA is not qualified.");
+            if (cfg.physics.gravity.type!="self"
+                || !arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry))
+                throw std::invalid_argument(std::string("JENS output ") + arch::config::JeansBackendRequirement + ".");
 
         arch::config::ValidateControls(cfg);
         return cfg;

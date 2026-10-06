@@ -12,7 +12,7 @@ export function WorkflowBar({copy=null}:{copy?:WorkingCopy|null}){
  const building=pending||!!status?.activeBuildId;
  const canBuild=connected&&!!status?.configured&&!building&&!configure.status?.active&&!configure.pending;
  const canConfigure=connected&&!!configure.status?.profileId&&!building&&!configure.pending&&!configure.status.active;
- const configureReason=configure.status?.profileId?'Configure the Host-owned CPU build profile. Configuration does not build or update the executable.':'Configure unavailable: select a Host-owned Configure profile.';
+ const configureReason=configure.status?.profileId?'Configure the selected Host-owned build profile. Configuration does not build or update the executable.':'Configure unavailable: select a Host-owned Configure profile.';
  return <footer className="real-workflow" aria-label="Real Config workflow">
   <div className="workflow-actions">
    <button disabled={!canConfigure} title={configureReason} onClick={()=>{setOpen(true);void configure.start();}}>{configure.status?.active?'Configuring…':'Configure'}</button>{configure.status?.active&&<button disabled={configure.pending} onClick={()=>void configure.cancel()}>Cancel Configure</button>}

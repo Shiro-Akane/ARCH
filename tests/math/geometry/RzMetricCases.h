@@ -2,18 +2,28 @@
  * @file RzMetricCases.h
  * @brief Independent full-rotation finite-volume references for shared math.
  *
- * Expected values integrate the full source measure with 70/100-digit Decimal,
+ * Stored measure values integrate the full source measure with 70/100-digit Decimal,
  * then round once to binary64. Endpoints are the exact binary64 input values.
  * Reproduce with validation/amr/rz_metric_reference.py; no production formulas
- * are called by that oracle. This does not qualify hydro/gravity/AMR evolution.
+ * are called by that oracle. Gauss sample moments separately use long-double
+ * polynomial antiderivatives. Neither check qualifies hydro/gravity/AMR evolution.
  */
 #pragma once
 #include "grid/GridMetrics.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 namespace RzMetricCases {
+/** Independently integrate r^power under r^measure dr in long double. */
+inline long double mean_power(long double lo,long double hi,int power,int measure)
+{
+    return (measure+1.L)/(power+measure+1.L)
+        *(std::pow(hi,power+measure+1)-std::pow(lo,power+measure+1))
+        /(std::pow(hi,measure+1)-std::pow(lo,measure+1));
+}
+
 struct MeasureCase {
     double lower, upper, dz;
     double volume, lower_radial_area, upper_radial_area, axial_area;
@@ -59,5 +69,113 @@ inline double conditioning_error()
     double error=0.;
     for (const auto& c:cases) error=std::max(error,relative_error(c));
     return error;
+}
+
+/** Compare independent long-double sample moments with the original window. */
+inline void check_sample_moment(long double actual,long double expected,const char* label)
+{
+    if(!std::isfinite(actual)||std::abs(actual-expected)>2.e-12L*std::max(1.L,std::abs(expected)))
+        throw std::runtime_error(label);
+}
+
+/** Qualify the shared Gauss-4 radial times Gauss-2 axial sampling rule.
+ * Expected monomial means use source antiderivatives in mean_power(), never
+ * shared quadrature nodes/weights. V includes r dr and W includes r^2 dr;
+ * consequently radial degrees 6/5 and axial degree 3 are exact mathematically.
+ * The numerical check retains finite-precision tolerance and is not an
+ * initialization/hierarchy scientific certificate.
+ */
+inline void cell_average_samples()
+{
+    constexpr auto existing=GridMetrics::GeometrySemantics::Existing;
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    struct SampleRange {double radial_lo,radial_hi,axial_lo,axial_hi;};
+    constexpr SampleRange ranges[]{
+        {0.,1.,-.75,1.25}, {0.,.125,2.,2.5},
+        {1.,2.,-2.,-1.25}, {3.,3.25,0.,.375}};
+    for(const auto& range:ranges) {
+        const double dr=range.radial_hi-range.radial_lo,dz=range.axial_hi-range.axial_lo;
+        Grid grid(amr::MAX_NG,range.radial_lo,range.radial_lo+amr::BLOCK_NX*dr,
+            range.axial_lo,range.axial_lo+amr::BLOCK_NY*dz,0.,1.);
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+        const auto native=GridMetrics::make_geometry_view(grid,rz);
+        const auto legacy=GridMetrics::make_geometry_view(grid,existing);
+        const auto original=GridMetrics::make_geometry_view(grid);
+        if(native.semantics!=rz||native.geometry!=GridMetrics::Geometry::Cylindrical
+           ||native.dim!=2||legacy.semantics!=existing||original.semantics!=existing
+           ||native.ng!=legacy.ng||native.stride_y!=legacy.stride_y
+           ||native.stride_z!=legacy.stride_z||native.total_size!=legacy.total_size
+           ||native.dx1!=legacy.dx1||native.dx2!=legacy.dx2||native.dx3!=legacy.dx3
+           ||native.x1_min!=legacy.x1_min||native.x2_min!=legacy.x2_min
+           ||native.x3_min!=legacy.x3_min||legacy.geometry!=original.geometry
+           ||legacy.dim!=original.dim||legacy.stride_y!=original.stride_y
+           ||legacy.total_size!=original.total_size)
+            throw std::runtime_error("RZ sample factory changed a legal native/legacy layout");
+        bool rejected=false;
+        try {
+            (void)GridMetrics::make_geometry_view(grid,
+                static_cast<GridMetrics::GeometrySemantics>(255));
+        } catch(const std::invalid_argument&) {rejected=true;}
+        if(!rejected)throw std::runtime_error("RZ sample factory accepted unknown geometry semantics");
+
+        const double left=grid.GetFacePosL(grid.Is()),right=grid.GetFacePosR(grid.Is());
+        const double z_lower=grid.x2_min,z_upper=grid.x2_min+grid.dx2;
+        if(left!=range.radial_lo||right!=range.radial_hi||z_lower!=range.axial_lo
+           ||z_upper!=range.axial_hi)
+            throw std::runtime_error("RZ sample fixture did not bind its actual cell bounds");
+        const auto samples=GridMetrics::Rz::CellAverageSamples(left,right,z_lower,z_upper);
+        if(samples.size()!=8)throw std::runtime_error("RZ sample rule lost radial-four/axial-two product");
+        long double sum_v=0.,sum_w=0.;
+        for(const auto& sample:samples) {
+            if(!std::isfinite(sample.radius)||!std::isfinite(sample.axial)
+               ||!std::isfinite(sample.volume_weight)||!std::isfinite(sample.angular_weight)
+               ||!(sample.radius>left&&sample.radius<right)
+               ||!(sample.axial>z_lower&&sample.axial<z_upper)
+               ||!(sample.volume_weight>0.)||!(sample.angular_weight>0.))
+                throw std::runtime_error("RZ sample rule published invalid nodes/weights outside actual bounds");
+            sum_v+=sample.volume_weight;sum_w+=sample.angular_weight;
+        }
+        check_sample_moment(sum_v,1.L,"RZ sample V weights are not normalized");
+        check_sample_moment(sum_w,1.L,"RZ sample W weights are not normalized");
+
+        for(int measure=1;measure<=2;++measure) {
+            const int radial_degree=measure==1?6:5;
+            for(int power=0;power<=radial_degree;++power) {
+                long double actual=0.;
+                for(const auto& sample:samples)
+                    actual+=(measure==1?sample.volume_weight:sample.angular_weight)
+                        *std::pow(static_cast<long double>(sample.radius),power);
+                check_sample_moment(actual,mean_power(left,right,power,measure),
+                    "RZ sampled radial monomial differs from independent antiderivative");
+            }
+            for(int power=0;power<=3;++power) {
+                long double actual=0.;
+                for(const auto& sample:samples)
+                    actual+=(measure==1?sample.volume_weight:sample.angular_weight)
+                        *std::pow(static_cast<long double>(sample.axial),power);
+                check_sample_moment(actual,mean_power(z_lower,z_upper,power,0),
+                    "RZ sampled axial monomial differs from independent antiderivative");
+            }
+            // Separate physical measures factor exactly for these tensor-product
+            // source monomials, including the highest-degree qualified product.
+            const int cross_powers[][2]{{1,2},{radial_degree-1,1},{radial_degree,3}};
+            for(const auto& cross:cross_powers) {
+                long double actual=0.;
+                for(const auto& sample:samples)
+                    actual+=(measure==1?sample.volume_weight:sample.angular_weight)
+                        *std::pow(static_cast<long double>(sample.radius),cross[0])
+                        *std::pow(static_cast<long double>(sample.axial),cross[1]);
+                check_sample_moment(actual,mean_power(left,right,cross[0],measure)
+                    *mean_power(z_lower,z_upper,cross[1],0),
+                    "RZ sampled mixed monomial differs from independent product integral");
+            }
+        }
+    }
+    Grid cartesian(amr::MAX_NG,0.,1.,0.,1.,0.,1.);
+    cartesian.dim=2;cartesian.geometry="cartesian";cartesian.InitializeTopology();
+    const auto cartesian_view=GridMetrics::make_geometry_view(cartesian,existing);
+    if(cartesian_view.semantics!=existing||cartesian_view.geometry!=GridMetrics::Geometry::Cartesian
+       ||cartesian_view.dim!=2||cartesian_view.total_size!=cartesian.GetTotalSize())
+        throw std::runtime_error("RZ sample guard changed legal existing Cartesian factory behavior");
 }
 } // namespace RzMetricCases

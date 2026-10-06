@@ -4,6 +4,7 @@ import argparse,hashlib,json,struct
 from pathlib import Path
 import h5py
 import numpy as np
+from verify_plotfile_fields import load_plot_json, verify_plot_identity
 
 def bits(value): return struct.pack('<d',float(value))
 def check_bits(actual,expected):
@@ -21,7 +22,7 @@ def main():
     args=ap.parse_args();root=args.root.resolve();files={};handles={}
     try:
         for line in args.trace.open():
-            row=json.loads(line);req=row['request'];path=(root/req['relativePath']).resolve()
+            row=load_plot_json(line);req=row['request'];path=(root/req['relativePath']).resolve()
             assert path.is_relative_to(root)
             if row['route']=='metadata':
                 assert str(path) not in files
@@ -36,8 +37,8 @@ def main():
                     assert identity[api]==str(f['SourceIdentity'].attrs[stored])
                 run=str(f['SourceIdentity'].attrs['run_id'])
                 assert identity['runId']==(None if run=='unknown' else run)
-                assert all(v is None for v in m['scientificIdentity'].values())
-                files[str(path)]={'fileSha256':sha,'seen':set(),'values':0,'metadata':m}
+                verified_identity=verify_plot_identity(f,observed=m,expected_sha=sha)
+                files[str(path)]={'fileSha256':sha,'seen':set(),'values':0,'metadata':m,'identity':verified_identity}
                 continue
             assert row['route']=='slice'
             f=handles[str(path)];state=files[str(path)];m=state['metadata']
@@ -81,11 +82,12 @@ def main():
                 'levels':sorted(set(map(int,f['Grid/level'][:]))),
                 'producerBinarySha256':str(f['SourceIdentity'].attrs['binary_sha256']),
                 'runId':str(f['SourceIdentity'].attrs['run_id']),
+                'identity':state['identity'],
                 'rawFieldsCoordinatesBoundsMeasure':'FP64 bit-identical for every active leaf cell',
                 'fieldUnitBasisCenteringMeaning':'exact stored declaration match','fileUnchanged':True})
         assert len(rows)==2
         output={'status':'PASS','scope':'Full native values and declarations via production HTTP + client validation, independent h5py. Storage/readback consistency only.',
-            'rows':rows,'limits':['Existing t=0 files from older recorded producer; no new binary freshness claim',
+            'rows':rows,'limits':['Recorded local t=0 files; embedded producer identity, no selected-binary freshness inference',
                 'No physics/EOS oracle or unit declaration scientific signoff','No renderer all-field UAT',
                 'NaN/Infinity encoded as named JSON tokens; no nonfinite payload-bit certification',
                 'First read scans/hash cost not bounded by returned pixel count','No simulation or Windows work']}

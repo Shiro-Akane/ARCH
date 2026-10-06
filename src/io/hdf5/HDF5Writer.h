@@ -74,6 +74,17 @@ struct CheckpointData {
 // Partial evidence supplied from the immutable load boundary and resolved EOS.
 // Missing run/config/build/binary identities remain explicitly unknown.
 struct PlotSourceIdentity {
+    // Formal producer records are immutable per run. Low-level legacy callers
+    // may leave formal=false and retain explicitly partial provenance.
+    bool formal = false;
+    std::string case_source_sha256;
+    std::string effective_config_version, effective_config_sha256, effective_config_record;
+    std::string build_identity_version, build_identity_scope, build_id;
+    std::string source_manifest_sha256, build_profile_sha256;
+    std::string source_manifest_record, build_profile_record;
+    std::string source_git_head, source_git_dirty;
+    std::string eos_identity_version, eos_identity_sha256, eos_identity_record;
+    std::string resolved_backend;
     std::string run_id;
     std::string case_id;
     std::string raw_config_sha256;
@@ -89,6 +100,9 @@ struct PlotSourceIdentity {
 // Candidate native metadata for Cartesian 1D/2D or explicit RZ leaf interiors.
 // Cell arrays use exactly the Data field flattening; inactive bounds are zero.
 struct PlotNativeGrid {
+    std::array<std::string,3> axes{"x","y","z"};
+    std::array<std::string,3> axis_units{"cm","cm","cm"};
+    std::string measure_convention="active-coordinate-product; inactive-measures-omitted";
     std::array<std::vector<double>,3> lower, upper;
     std::vector<double> cell_measure;
     std::vector<double> angular_measure; // RZ only: W=int r*dV; same cell order

@@ -1,6 +1,12 @@
 /**
  * @file RefinementSelection.h
  * @brief Shared host-only AMR selection parsing and conditional filtering.
+ *
+ * Workflow:
+ * 1. Canonicalize explicitly supplied AMR indicators.
+ * 2. Check their physics, dimension and requested backend prerequisites.
+ * 3. Resolve selection flags without constructing a mesh, EOS or device.
+ *    Actual backend availability and scientific qualification remain separate.
  */
 #pragma once
 #include <algorithm>
@@ -9,12 +15,25 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+
 #include "data/GlobalDefs.h"
 
 namespace arch::config {
+/** Check the requested JENS route; this does not probe a device or certify EOS. */
+inline bool SupportsJeansBackend(std::string_view backend, std::string_view geometry) {
+    return backend == "cpu" || (backend == "cuda" && geometry == "cartesian");
+}
+
+inline constexpr const char* JeansBackendRequirement =
+    "requires self gravity and explicit CPU or Cartesian CUDA backend; "
+    "auto and native-coordinate CUDA are not qualified";
+
+/** Parse indicator names and reject unavailable selections before initialization. */
 inline void ResolveRefinementSelection(AmrConfig& a, int dimension,
                                        bool burn_enabled, bool emit_warnings = true,
-                                       bool self_gravity = false, bool cpu_backend = false) {
+                                       bool self_gravity = false, bool jeans_backend = false) {
         std::replace(a.refine_var.begin(), a.refine_var.end(), '+', ',');
         a.refine_on_rho = false;
         a.refine_on_p = false;
@@ -73,8 +92,8 @@ inline void ResolveRefinementSelection(AmrConfig& a, int dimension,
         if (a.refine_on_vely && dimension < 2) { warn_amr_disabled("VELY", "the simulation is one-dimensional"); a.refine_on_vely = false; }
         if (a.refine_on_velz && dimension < 3) { warn_amr_disabled("VELZ", "the simulation has fewer than three dimensions"); a.refine_on_velz = false; }
         if (a.refine_on_jeans) {
-            if (!self_gravity || !cpu_backend)
-                throw std::invalid_argument("JENS refinement requires self gravity and explicit CPU backend; CUDA is not qualified.");
+            if (!self_gravity || !jeans_backend)
+                throw std::invalid_argument(std::string("JENS refinement ") + JeansBackendRequirement + ".");
             if (!std::isfinite(a.jeans_cells) || a.jeans_cells<4.)
                 throw std::invalid_argument("JENS refinement requires explicit finite jeans_cells >= 4.");
         }

@@ -143,6 +143,7 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
 
 /** Attach accounting hooks to the existing scheduler; ordinary cases leave them empty. */
 void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& context) {
+    if(host_hydro_transaction_)throw std::logic_error("Boundary accounting must bind before Host Hydro transaction");
     const auto* selected=boundary::CurrentUserBoundaries();
     if (!selected || (!selected->callbacks.physical && !selected->callbacks.gravity)) return;
     const int fields=6+specs.count();
@@ -154,7 +155,9 @@ void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& c
     };
     context.hydro_flux_capture_accept=[this,&context](const scheduler::StageDescriptor&) {
         const auto rate=integrate_boundary_capture();
-        for (std::size_t k=0;k<rate.size();++k) hydro_boundary_budget_[k]+=context.step_dt*rate[k];
+        auto& budget=tentative_hydro_boundary_budget_ ? *tentative_hydro_boundary_budget_ : hydro_boundary_budget_;
+        if(budget.size()!=rate.size())throw std::logic_error("Hydro boundary receipt extent changed");
+        for (std::size_t k=0;k<rate.size();++k) budget[k]+=context.step_dt*rate[k];
     };
     context.rkl_flux_capture_begin=[this](const scheduler::RklStageDescriptor& stage,const scheduler::RklPlan& plan) {
         if (stage.stage==1) {

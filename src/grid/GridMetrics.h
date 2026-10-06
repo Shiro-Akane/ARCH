@@ -18,6 +18,7 @@
 
 #include "grid/Grid.h"
 #include "grid/GridGeometryView.h"
+#include "numerics/reconstruction/RzPolynomialMoments.h"
 
 namespace GridMetrics {
 
@@ -64,6 +65,9 @@ inline GeometryView make_rz_geometry_view(GeometryView grid)
 /** Bind one native storage layout to an explicit validated internal chart. */
 inline GeometryView make_geometry_view(const Grid& grid, GeometrySemantics semantics)
 {
+    if (semantics!=GeometrySemantics::Existing
+        && semantics!=GeometrySemantics::AxisymmetricRz)
+        throw std::invalid_argument("Unknown geometry semantics cannot select a grid chart");
     const auto view=make_geometry_view(grid);
     return semantics==GeometrySemantics::AxisymmetricRz ? make_rz_geometry_view(view) : view;
 }
@@ -154,7 +158,9 @@ ARCH_HOST_DEVICE inline double AngularReconstructionRadius(double left, double r
 }
 
 /**
- * Tensor Gauss-2 cell samples for V and W averages. This is a numerical
+ * Radial Gauss-4 times axial Gauss-2 cell samples for V and W averages.
+ * Reuse the same radial nodes/weights as native density and inertia closure.
+ * This is a numerical
  * integration rule, not an extra physical model or a user accuracy control.
  * Preconditions: finite 0<=left<right and finite z_lower<z_upper.
  * r dr and r^2 dr use separate normalized weights; do not exchange them.
@@ -162,21 +168,22 @@ ARCH_HOST_DEVICE inline double AngularReconstructionRadius(double left, double r
 struct CellAverageSample {
     double radius, axial, volume_weight, angular_weight;
 };
-ARCH_HOST_DEVICE inline std::array<CellAverageSample,4> CellAverageSamples(
+ARCH_HOST_DEVICE inline std::array<CellAverageSample,8> CellAverageSamples(
     double left,double right,double z_lower,double z_upper)
 {
     constexpr double inverse_sqrt_three=.577350269189625764509148780501957456;
     const double t=left/right;
-    std::array<CellAverageSample,4> result{};
+    std::array<CellAverageSample,8> result{};
     int index=0;
     for (int j=0;j<2;++j)
-        for (int i=0;i<2;++i) {
-            const double radial_fraction=.5+(i ? .5 : -.5)*inverse_sqrt_three;
+        for (int i=0;i<4;++i) {
+            const double radial_fraction=.5+.5*RzReconstruction::quadrature_node(i);
             const double axial_fraction=.5+(j ? .5 : -.5)*inverse_sqrt_three;
             const double radius=left+radial_fraction*(right-left);
             const double q=radius/right;
             result[index++]={radius,z_lower+axial_fraction*(z_upper-z_lower),
-                .5*q/(1.+t),.75*q*q/(1.+t+t*t)};
+                (.5*RzReconstruction::quadrature_weight(i))*q/(1.+t),
+                (.75*RzReconstruction::quadrature_weight(i))*q*q/(1.+t+t*t)};
         }
     return result;
 }

@@ -6,6 +6,8 @@
  * to concrete state slots. The scheduler owns stage order and weights; the
  * hydro interface performs patch updates, and callbacks synchronize halos,
  * rotate storage, and apply reflux at the prescribed completion boundary.
+ * An explicitly bound post-boundary gate also synchronizes the rotated,
+ * refluxed Current slot; ordinary stages retain the scheduler's refresh policy.
  */
 #pragma once
 
@@ -89,13 +91,17 @@ struct SolverEuler
             },
             [&](arch::state::StateSlot output, arch::state::StateVersion,
                 arch::state::CompletionToken token) {
-                if (output != arch::state::StateSlot::Next)
+                if (output == arch::state::StateSlot::Scratch)
                     throw std::logic_error(
-                        "Euler ghost exchange requires Next output");
-                TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition, &amr::Block::state_next);
+                        "Euler ghost exchange does not use Scratch output");
+                // Current names the actual post-reflux slot. Resolve before
+                // either write so invalid slots cannot partially apply BC.
+                const auto output_member =
+                    TimeIntegration::hydro_boundary_state_member(output);
+                TimeIntegration::apply_domain_boundary(amr_ctrl, boundary_condition, output_member);
                 amr_ctrl.ghost_exchange.ExecuteExchange(
                     amr_ctrl.pool, amr_ctrl.tree, dim,
-                    &amr::Block::state_next, binding.handles,geometry.exchange_chart,
+                    output_member, binding.handles,geometry.exchange_chart,
                     {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint});
                 return token;
             },
@@ -117,6 +123,8 @@ struct SolverEuler
             },
             [&](const HydroPlan&, arch::state::StateSlot,
                 arch::state::CompletionToken token) {
+                if (geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+                    TimeIntegration::begin_rz_hydro_reflux_receipts(amr_ctrl);
                 amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics,
                     geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
                 if (geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)

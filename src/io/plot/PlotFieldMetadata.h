@@ -1,12 +1,19 @@
 /**
- * Plot producer declarations for the existing Cartesian 1D/2D fields.
- * No field calculation, EOS fallback or geometry conversion belongs here.
+ * @file PlotFieldMetadata.h
+ * @brief Units and physical meaning for stored cell-centered Plotfile fields.
+ * Workflow:
+ * 1. Identify the existing stored field without changing its calculation.
+ * 2. Attach CGS units and known basis/meaning from the shared field-unit owner.
+ * 3. Preserve explicit reasons where a physical unit cannot be declared.
  */
 #pragma once
+
+#include <string_view>
+
 #include "data/FieldUnits.h"
 #include "io/hdf5/HDF5Writer.h"
-#include <string_view>
 namespace io {
+/** Describe one existing output field; values and scientific kernels stay unchanged. */
 inline PlotFieldMetadata plot_field_metadata(std::string_view name, bool cartesian) {
     PlotFieldMetadata m;
     if (name == "JENS") m.meaning = "jeans_length_over_max_active_physical_spacing";

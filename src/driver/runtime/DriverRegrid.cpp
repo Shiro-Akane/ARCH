@@ -34,6 +34,7 @@ using topology::TopologyObservation;
 bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candidate,
     const std::function<void()>& after_host_finalization)
 {
+    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes regrid");
     if(after_host_finalization&&!native_rz_candidate)
         throw std::logic_error("Native finalization verification cannot affect production regrid");
     if(native_rz_candidate&&(geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
@@ -454,6 +455,7 @@ bool DriverRuntime::regrid_native_rz_candidate(int step,double time,
 bool DriverRuntime::perform_regrid_impl(int step,double time,bool jeans_repair_only,
     bool native_rz_candidate,const std::function<void()>& after_host_finalization)
 {
+    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes regrid");
     const auto started = std::chrono::steady_clock::now();
     const auto before = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};

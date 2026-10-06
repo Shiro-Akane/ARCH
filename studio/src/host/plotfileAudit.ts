@@ -12,12 +12,14 @@ import {record} from './previewValidation.ts';
 export interface SliceSelection {field:string;block:number;start:number[];count:number[]}
 export type RawPlotNumber=number|'NaN'|'Infinity'|'-Infinity';
 export interface CandidateNativeGrid {
- version:'candidate-cartesian-1';measureSource:'GridMetrics::CellVolume';
- measureConvention:'active-coordinate-product; inactive-measures-omitted';measureUnit:'cm'|'cm^2'|null;measureNormalization?:string|null;
+ version:'candidate-cartesian-1'|'arch-native-cartesian-1'|'arch-native-curvilinear-1'|'arch-native-axisymmetric-rz-2';measureSource:'GridMetrics::CellVolume';
+ measureConvention:'active-coordinate-product; inactive-measures-omitted'|'GridMetrics-native-coordinate-integral'|'full-rotation-axisymmetric-ring';
+ measureUnit:'cm'|'cm^2'|'cm^3'|null;measureNormalization?:string|null;
+ geometry?:'cartesian'|'cylindrical'|'spherical';axes?:string[];axisUnits?:string[];chart?:'existing'|'axisymmetric-rz';
 }
 export interface NativePlotCells extends CandidateNativeGrid {
  identityScope:'file-local';logicalKey:string;level:number;logicalCoordinates:number[];
- lower:Record<'x1'|'x2'|'x3',number[]>;upper:Record<'x1'|'x2'|'x3',number[]>;cellMeasure:number[];
+ lower:Record<'x1'|'x2'|'x3',number[]>;upper:Record<'x1'|'x2'|'x3',number[]>;cellMeasure:number[];angularMeasure?:number[];mPhi?:number[];angularMomentumDensity?:number[];
 }
 export interface PlotfileAudit {
  pointEvidence?:PlotfilePointEvidence;
@@ -25,8 +27,8 @@ export interface PlotfileAudit {
  candidateSourceIdentity?:PlotfileSourceEvidence|null;
  schemaVersion:string;file:{bytes:number;sha256:string};time:number;dimension:number;geometry:string;
  blocks:number;cellShape:number[];cells:number;fields:{name:string;shape:number[];unit:string|null;declaration?:PlotfileFieldDeclaration|null}[];timeUnit?:'s'|null;
- completion:{state:'unknown';reason:string};renderEligible:false;candidateNativeGrid?:CandidateNativeGrid|null;
- scientificIdentity:Record<string,null>;coordinates:{storedBasis:'cartesian';centering:'cell-center';units:'cm'|null};
+ completion:{state:'unknown'|'complete';reason:string};renderEligible:boolean;candidateNativeGrid?:CandidateNativeGrid|null;
+ scientificIdentity:Record<string,string|null>;coordinates:{storedBasis:'cartesian';centering:'cell-center';units:'cm'|null};
  payload?:{nativeCells?:NativePlotCells|null;field:string;block:number;start:number[];shape:number[];linearIndices:number[];values:RawPlotNumber[];coordinates:Record<'x'|'y'|'z',RawPlotNumber[]>;unit:string|null;diagnostics:string[]};
 }
 export interface AuditResponse {projectId:string;relativePath:string;audit:PlotfileAudit}
@@ -34,16 +36,37 @@ const raw=(v:unknown):v is RawPlotNumber=>typeof v==='number'&&Number.isFinite(v
 function unknownScience(v:unknown){return record(v)&&['case','config','build','binary','eos'].every(k=>v[k]===null);}
 function rawCoordinates(v:unknown,n:number){if(!record(v))return false;return ['x','y','z'].every(k=>{const a=v[k];return Array.isArray(a)&&a.length===n&&a.every(raw);});}
 function nativeHeaderValid(v:unknown):v is CandidateNativeGrid {
- return record(v)&&v.version==='candidate-cartesian-1'&&v.measureSource==='GridMetrics::CellVolume'&&
-  v.measureConvention==='active-coordinate-product; inactive-measures-omitted'&&validMeasureLabels(v.measureUnit,v.measureNormalization);
+ if(!record(v)||v.measureSource!=='GridMetrics::CellVolume'||!validMeasureLabels(v.measureUnit,v.measureNormalization))return false;
+ if(v.version==='candidate-cartesian-1')return v.measureConvention==='active-coordinate-product; inactive-measures-omitted';
+ if(!['arch-native-cartesian-1','arch-native-curvilinear-1','arch-native-axisymmetric-rz-2'].includes(String(v.version))||
+  !['cartesian','cylindrical','spherical'].includes(String(v.geometry))||!Array.isArray(v.axes)||!Array.isArray(v.axisUnits)||
+  v.axes.length!==3||v.axisUnits.length!==3||!v.axes.every(x=>typeof x==='string')||
+  !v.axisUnits.every(x=>['cm','rad','inactive'].includes(String(x))))return false;
+ const dimension=v.axes.filter(x=>x!=='inactive').length,rz=v.version==='arch-native-axisymmetric-rz-2';
+ if(dimension<1||dimension>3||v.chart!==(rz?'axisymmetric-rz':'existing')||
+  v.version==='arch-native-cartesian-1'&&v.geometry!=='cartesian'||
+  v.version==='arch-native-curvilinear-1'&&!['cylindrical','spherical'].includes(String(v.geometry))||
+  rz&&(v.geometry!=='cylindrical'||dimension!==2))return false;
+ const axes=v.geometry==='cartesian'?['x','y','z']:rz?['r','z','inactive']:
+  dimension===3?(v.geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r','phi','inactive'];
+ const units:string[]=axes.map(x=>['theta','phi'].includes(x)?'rad':'cm');
+ for(let i=0;i<3;i++){if(i>=dimension){axes[i]='inactive';units[i]='inactive';}
+  if(v.axes[i]!==axes[i]||v.axisUnits[i]!==units[i])return false;}
+ const convention=rz?'full-rotation-axisymmetric-ring':v.geometry==='cartesian'?
+  'active-coordinate-product; inactive-measures-omitted':'GridMetrics-native-coordinate-integral';
+ return v.measureConvention===convention&&validMeasureLabels(v.measureUnit,v.measureNormalization,dimension);
 }
 function nativeCellsValid(v:unknown,header:unknown,n:number,dimension:number):v is NativePlotCells {
- if(!nativeHeaderValid(v)||!nativeHeaderValid(header)||v.measureUnit!==header.measureUnit||v.measureNormalization!==header.measureNormalization||!record(v)||v.identityScope!=='file-local'||
+ if(!nativeHeaderValid(v)||!nativeHeaderValid(header)||v.version!==header.version||v.geometry!==header.geometry||v.chart!==header.chart||v.measureUnit!==header.measureUnit||v.measureNormalization!==header.measureNormalization||!record(v)||v.identityScope!=='file-local'||
     !Number.isSafeInteger(v.level)||Number(v.level)<0||!Array.isArray(v.logicalCoordinates)||
     v.logicalCoordinates.length!==3||v.logicalCoordinates.some(x=>!Number.isSafeInteger(x)||x<0||x>0xffffffff)||
     v.logicalKey!==[v.level,...v.logicalCoordinates].join('/')||
     !record(v.lower)||!record(v.upper)||!Array.isArray(v.cellMeasure)||v.cellMeasure.length!==n||
     v.cellMeasure.some(x=>typeof x!=='number'||!Number.isFinite(x)||x<=0))return false;
+ if(v.chart==='axisymmetric-rz'&&(!Array.isArray(v.angularMeasure)||v.angularMeasure.length!==n||
+   !v.angularMeasure.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>0)||
+   ['mPhi','angularMomentumDensity'].some(key=>!Array.isArray(v[key])||v[key].length!==n||
+    !v[key].every((x:unknown)=>typeof x==='number'&&Number.isFinite(x)))))return false;
  const lower=v.lower,upper=v.upper;
  return ['x1','x2','x3'].every((key,axis)=>{
   const lo=lower[key],hi=upper[key];
@@ -75,8 +98,8 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
     a.cells!==Number(a.blocks)*a.cellShape.reduce((x:number,y:number)=>x*y,1)||
     !Array.isArray(a.fields)||a.fields.length<1||a.fields.length>128||
     a.fields.some(f=>!record(f)||typeof f.name!=='string'||!f.name.length||(f.unit!==null&&!declaredText(f.unit))||(f.declaration!==undefined&&f.declaration!==null? !validFieldDeclaration(f.declaration)||f.unit!==f.declaration.unit:f.unit!==null)||JSON.stringify(f.shape)!==JSON.stringify([a.blocks,...a.cellShape as number[]]))||
-    !record(a.completion)||a.completion.state!=='unknown'||typeof a.completion.reason!=='string'||a.renderEligible!==false||
-    !unknownScience(a.scientificIdentity)||
+    !record(a.completion)||!['unknown','complete'].includes(String(a.completion.state))||typeof a.completion.reason!=='string'||typeof a.renderEligible!=='boolean'||
+    !record(a.scientificIdentity)||
     !record(a.coordinates)||a.coordinates.storedBasis!=='cartesian'||a.coordinates.centering!=='cell-center'||![null,'cm'].includes(a.coordinates.units as null|'cm'))
   throw Error('Unsupported or malformed Plotfile audit response.');
  if(a.coordinates.units==='cm'&&(!record(a.candidateSourceIdentity)||a.candidateSourceIdentity.eosUnitSystem!=='cgs'))throw Error('Coordinate units lack matching recorded unit system.');
@@ -85,8 +108,19 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
  if(a.candidateSourceIdentity!==undefined&&a.candidateSourceIdentity!==null&&!sourceEvidenceValid(a.candidateSourceIdentity))
   throw Error('Invalid candidate source evidence.');
  const hasNative=a.candidateNativeGrid!==undefined&&a.candidateNativeGrid!==null;
- if(hasNative&&(!nativeHeaderValid(a.candidateNativeGrid)||!validMeasureLabels(a.candidateNativeGrid.measureUnit,a.candidateNativeGrid.measureNormalization,Number(a.dimension))||a.geometry!=='cartesian'||![1,2].includes(Number(a.dimension))))
-  throw Error('Invalid candidate native header.');
+ const formal=record(a.candidateSourceIdentity)&&a.candidateSourceIdentity.version==='arch-plot-identity-1';
+ if(hasNative&&(!nativeHeaderValid(a.candidateNativeGrid)||!validMeasureLabels(a.candidateNativeGrid.measureUnit,a.candidateNativeGrid.measureNormalization,Number(a.dimension))||
+   a.candidateNativeGrid.version==='candidate-cartesian-1'&&(a.geometry!=='cartesian'||![1,2].includes(Number(a.dimension)))||
+   a.candidateNativeGrid.version!=='candidate-cartesian-1'&&a.candidateNativeGrid.geometry!==a.geometry))
+  throw Error('Invalid native header.');
+ if(formal){
+  const source=a.candidateSourceIdentity as unknown as PlotfileSourceEvidence;
+  if(!hasNative||a.completion.state!=='complete'||a.renderEligible!==(a.geometry==='cartesian'&&[1,2].includes(Number(a.dimension)))||
+   Object.entries({case:source.caseId,config:source.effectiveConfigSha256,build:source.buildId,
+    binary:source.binarySha256,eos:source.eosIdentitySha256}).some(([key,value])=>!record(a.scientificIdentity)||a.scientificIdentity[key]!==value)||
+   !record(a.nativeCellGeometry)||a.nativeCellGeometry.bounds!=='recorded'||a.nativeCellGeometry.volume!=='recorded')throw Error('Formal publication/provenance mismatch');
+ }else if(a.completion.state!=='unknown'||a.renderEligible!==false||!unknownScience(a.scientificIdentity))
+  throw Error('Partial evidence cannot certify formal publication');
  if(selection){
   const cellShape=a.cellShape as number[];
   if(selection.start.length!==cellShape.length||selection.count.length!==cellShape.length||

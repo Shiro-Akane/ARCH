@@ -1,3 +1,4 @@
+import {effectiveConfigurationFields} from './configurationIdentityFields.ts';
 import {validFieldDeclaration,validMeasureLabels} from '../src/host/plotfileDeclarations.ts';
 import type {PlotfileFieldDeclaration} from '../src/host/plotfileDeclarations.ts';
 import {copyPointRequest,nativeAxisContains,POINT_BOUNDARY_RULE} from '../src/host/plotfilePoint.ts';
@@ -62,15 +63,51 @@ function fieldDeclaration(d:InstanceType<typeof h5.Dataset>):PlotfileFieldDeclar
  if(!validFieldDeclaration(value))throw Error('Invalid recorded field declaration.');
  return value;
 }
+/** Read and verify a bounded scalar provenance record before returning its digest. */
+function identityRecord(e:InstanceType<typeof h5.Group>,name:string,expected:unknown):string {
+ const d=dataset(e,name),shape=d.shape;
+ if(d.metadata.type!==3||shape&&shape.reduce((a,b)=>a*b,1)!==1)
+  throw Error('Invalid formal identity record: '+name);
+ const raw=d.value,value=Array.isArray(raw)&&raw.length===1?raw[0]:raw;
+ if(typeof value!=='string'||!value.length||Buffer.byteLength(value)>1024*1024||value.includes('\0')||
+  typeof expected!=='string'||createHash('sha256').update(value).digest('hex')!==expected)
+  throw Error('Formal identity record digest mismatch: '+name);
+ return value;
+}
+/** Decode the producer's typed length-prefix record without reinterpreting floats. */
+function typedRecord(record:string):Map<string,{type:string;value:string}> {
+ const bytes=Buffer.from(record),values=new Map<string,{type:string;value:string}>();let offset=0;
+ const size=()=>{const colon=bytes.indexOf(58,offset);if(colon<offset||colon-offset>8)throw Error('Invalid typed identity length');
+  const n=bytes.subarray(offset,colon).toString('ascii');if(!/^(0|[1-9][0-9]*)$/.test(n))throw Error('Invalid typed identity length');
+  offset=colon+1;return Number(n);};
+ while(offset<bytes.length){const keySize=size();if(keySize===0||keySize>bytes.length-offset)throw Error('Invalid typed identity key');
+  const key=bytes.subarray(offset,offset+keySize).toString('utf8');offset+=keySize;
+  const type=String.fromCharCode(bytes[offset++]),valueSize=size();
+  if(valueSize>bytes.length-offset||!['s','d','i','b','n'].includes(type)||values.has(key))throw Error('Invalid typed identity field');
+  const value=bytes.subarray(offset,offset+valueSize).toString('utf8');offset+=valueSize;
+  if(bytes[offset++]!==10||type==='d'&&!/^[a-f0-9]{16}$/.test(value)||type==='b'&&!['0','1'].includes(value)||
+    type==='n'&&value!==''||type==='i'&&(!/^-?(0|[1-9][0-9]*)$/.test(value)||value==='-0'||
+     BigInt(value)<-(1n<<63n)||BigInt(value)>=(1n<<63n))||
+    type==='d'&&!Number.isFinite(Buffer.from(value,'hex').readDoubleBE()))throw Error('Invalid typed identity value');
+  values.set(key,{type,value});
+ }
+ return values;
+}
+/** Preserve exact binary64 field identities for cross-checks against HDF scalar attributes. */
+function floatBits(value:number):string {const bytes=Buffer.alloc(8);bytes.writeDoubleBE(value);return bytes.toString('hex');}
+
 function sourceEvidence(file:InstanceType<typeof h5.File>){
  const e=file.get('SourceIdentity');
  if(e===null)return null;
  if(!(e instanceof h5.Group))throw Error('Invalid local SourceIdentity group.');
  const read=(key:string)=>scalar(e,key);
  const known=(key:string)=>{const value=read(key);return value==='unknown'?null:value;};
- for(const key of ['effective_config_sha256','build_id','source_git_head'])
-  if(read(key)!=='unknown')throw Error('Unsupported candidate source identity claim: '+key);
- if(scalar(file,'plot_identity_state')!=='unknown')throw Error('Candidate source identity cannot certify full provenance.');
+ const formal=read('version')==='arch-plot-identity-1';
+ if(!formal){
+  for(const key of ['effective_config_sha256','build_id','source_git_head'])
+   if(read(key)!=='unknown')throw Error('Unsupported candidate source identity claim: '+key);
+  if(scalar(file,'plot_identity_state')!=='unknown')throw Error('Candidate source identity cannot certify full provenance.');
+ }else if(scalar(file,'plot_identity_state')!=='recorded')throw Error('Invalid formal identity state');
  const count=read('species_count');
  if(typeof count!=='number'||!Number.isSafeInteger(count)||count<0||count>128)
   throw Error('Candidate species count exceeds budget.');
@@ -82,16 +119,22 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
   const values=d.slice([[0,count]]);
   if(!Array.isArray(values))throw Error('Invalid candidate species representation.');
   speciesNames=values;
- }
+ }else if(e.get('species_names')!==null)throw Error('Contradictory zero-count species dataset.');
  let speciesProperties:unknown;
  const propertyNames=['A','Z','gamma','Cv'];
  if(e.attrs.species_properties_version){
   const version=read('species_properties_version'),state=read('species_properties_state');
   if(version!=='checkpoint-species-1')throw Error('Unsupported candidate species properties version.');
   if(state==='recorded'){
-   if(count===0)throw Error('Empty recorded candidate species properties.');
+   if(count===0&&(!formal||read('eos_type')!=='ideal'))throw Error('Invalid empty recorded species properties.');
    const values:Record<string,number[]>={};
    for(const key of propertyNames){
+    // Exact formal gamma-only IdealGas has explicit zero record counts and no
+    // constituent datasets. Do not infer known-empty evidence for legacy files.
+    if(count===0){
+     if(e.get('species_'+key)!==null)throw Error('Contradictory zero-count species properties dataset.');
+     values[key]=[];continue;
+    }
     const d=dataset(e,'species_'+key),shape=d.shape;
     if(d.metadata.type!==1||d.metadata.size!==8||!shape||shape.length!==1||shape[0]!==count)
      throw Error('Invalid candidate species properties shape/type.');
@@ -129,48 +172,140 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
   speciesState:read('species_identity_state'),speciesNames,
   ...(speciesProperties===undefined?{}:{speciesProperties}),
   ...(unknownIdentityReasons===undefined?{}:{unknownIdentityReasons}),
-  runId:known('run_id'),...(e.attrs.run_id_source?{runIdSource:known('run_id_source')}:{}),effectiveConfigSha256:null,buildId:null,sourceGitHead:null,eosUnitSystem:known('eos_unit_system'),
+  runId:known('run_id'),...(e.attrs.run_id_source?{runIdSource:known('run_id_source')}:{}),
+  effectiveConfigSha256:formal?read('effective_config_sha256'):null,buildId:formal?read('build_id'):null,
+  sourceGitHead:formal&&read('source_git_head')!=='not-applicable'?read('source_git_head'):null,eosUnitSystem:known('eos_unit_system'),
+  ...(formal?{caseSourceSha256:read('case_source_sha256'),effectiveConfigVersion:read('effective_config_version'),
+   effectiveConfigSource:read('effective_config_source'),buildIdentityVersion:read('build_identity_version'),
+   buildIdentityScope:read('build_identity_scope'),buildSource:read('build_source'),
+   sourceManifestSha256:read('source_manifest_sha256'),buildProfileSha256:read('build_profile_sha256'),
+   sourceGitDirty:read('source_git_dirty'),sourceGitSource:read('source_git_source'),
+   eosIdentityVersion:read('eos_identity_version'),eosIdentitySha256:read('eos_identity_sha256'),
+   eosTableIdentityKind:read('eos_table_identity_kind'),resolvedBackend:read('resolved_backend'),recordsVerified:true as const}:{}),
  };
- if(!sourceEvidenceValid(evidence))throw Error('Invalid candidate source evidence.');
+ if(!sourceEvidenceValid(evidence))throw Error(formal?'Invalid formal source evidence.':'Invalid candidate source evidence.');
+ if(formal){
+  const cfg=typedRecord(identityRecord(e,'effective_config_record',evidence.effectiveConfigSha256));
+  const eos=typedRecord(identityRecord(e,'eos_identity_record',evidence.eosIdentitySha256));
+  for(const [key,type] of effectiveConfigurationFields)if(cfg.get(key)?.type!==type)throw Error('Incomplete formal effective configuration: '+key);
+  for(const name of ['version','case.id','case.compiled-source','resolved-execution.version','backend','geometry-semantics',
+   'flux','reconstruction','limiter','time','eos','network','ode','linear','diffusion','boundary-identity'])
+   if(cfg.get(name)?.type!=='s')throw Error('Incomplete resolved execution identity: '+name);
+  for(const name of ['amr.refine_species_names','io.plot_species_names']){
+   const count=Number(cfg.get(name+'.count')?.value);
+   if(!Number.isSafeInteger(count)||count<0||count>128)throw Error('Invalid effective configuration selection length');
+   for(let i=0;i<count;i++)if(cfg.get(name+'.'+i)?.type!=='s')throw Error('Incomplete effective configuration selection');
+  }
+  for(const [name,type] of [['version','s'],['type','s'],['accepted-table-fingerprint','s'],['ideal-gamma','d'],['coulomb-multiplier','d']])
+   if(eos.get(name)?.type!==type)throw Error('Missing/mistyped formal EOS identity: '+name);
+  if(cfg.get('physics.eos_coulomb_mult')?.value!==eos.get('coulomb-multiplier')?.value)throw Error('Contradictory EOS model control');
+  const source=identityRecord(e,'source_manifest_record',evidence.sourceManifestSha256);
+  const profile=identityRecord(e,'build_profile_record',evidence.buildProfileSha256);
+  const expectedBuild=createHash('sha256').update('arch-build-identity-1\n'+evidence.sourceManifestSha256+'\n'+evidence.buildProfileSha256+'\n').digest('hex');
+  if(cfg.get('resolved-execution.version')?.value!=='arch-resolved-execution-1'||evidence.buildId!==expectedBuild||!source.startsWith('arch-project-source-manifest-1\n')||
+    !profile.startsWith('arch-configured-compiler-profile-1\n')||
+    cfg.get('version')?.value!=='arch-effective-configuration-1'||cfg.get('case.id')?.value!==evidence.caseId||
+    cfg.get('case.compiled-source')?.value!==evidence.caseSourceSha256||cfg.get('backend')?.value!==evidence.resolvedBackend||
+    eos.get('version')?.value!=='arch-eos-identity-1'||eos.get('type')?.value!==evidence.eosType||
+    cfg.get('grid.dim')?.value!==String(scalar(file,'dim'))||cfg.get('grid.geometry')?.value!==scalar(file,'geometry')||
+    cfg.get('geometry-semantics')?.value!==(scalar(file,'geometry_semantics_revision')===2?'axisymmetric-rz-2':'existing-1')||
+    eos.get('accepted-table-fingerprint')?.value!==(evidence.eosTableSha256??'')||
+    evidence.eosType==='ideal'&&(eos.get('ideal-gamma')?.value!==floatBits(evidence.idealGamma as number)||
+     cfg.get('physics.gamma')?.value!==floatBits(evidence.idealGamma as number)))throw Error('Contradictory formal runtime identity');
+  for(const name of ['names','A','Z','gamma','Cv']){
+   const prefix='species.'+name+'.',length=eos.get(prefix+'count');
+   if(length?.type!=='i'||length.value!==String(count))throw Error('Contradictory formal EOS constituent count: '+name);
+   for(const key of eos.keys())if(key.startsWith(prefix)&&key!==prefix+'count'){
+    const index=key.slice(prefix.length);
+    if(!/^(0|[1-9][0-9]*)$/.test(index)||Number(index)>=count)throw Error('Unexpected formal EOS constituent entry: '+key);
+   }
+  }
+  for(let i=0;i<count;i++){
+   if(eos.get('species.names.'+i)?.type!=='s'||eos.get('species.names.'+i)?.value!==evidence.speciesNames[i])throw Error('Contradictory formal species identity');
+   for(const key of ['A','Z','gamma','Cv'] as const){
+    const p=evidence.speciesProperties;if(p?.state!=='recorded'||eos.get('species.'+key+'.'+i)?.type!=='d'||eos.get('species.'+key+'.'+i)?.value!==floatBits(p.values[key][i]))
+     throw Error('Contradictory formal EOS constituent identity');
+   }
+  }
+ }
  return evidence;
 }
-type NativeHeader={version:string;measureSource:string;measureConvention:string;measureUnit:'cm'|'cm^2'|null;measureNormalization?:string|null};
+type NativeHeader={version:string;measureSource:string;measureConvention:string;measureUnit:'cm'|'cm^2'|'cm^3'|null;
+ measureNormalization?:string|null;geometry?:string;axes?:string[];axisUnits?:string[];chart?:string};
+/** Recognize an explicit native chart; never map legacy cylindrical directly to RZ. */
 function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:string):NativeHeader|null {
  const entity=file.get('NativeGrid');
  if(entity===null)return null;
  if(!(entity instanceof h5.Group))throw Error('Invalid local NativeGrid group.');
- const expected:Record<string,string|number>={
-  version:'candidate-cartesian-1',centering:'cell',ghost_cells:0,block_kind:'active-leaf',
-  center_basis:'cartesian',measure_source:'GridMetrics::CellVolume',
-  measure_convention:'active-coordinate-product; inactive-measures-omitted',
-  logical_identity:'file-local level/logical_x1/logical_x2/logical_x3',
- };
- if(geometry!=='cartesian'||![2,3].includes(shape.length))throw Error('Unsupported candidate native geometry.');
+ const version=scalar(entity,'version'),formal=typeof version==='string'&&version.startsWith('arch-native-');
+ const rz=version==='arch-native-axisymmetric-rz-2';
+ const partialRz=rz&&scalar(file,'plot_publication_version')==='candidate-1'&&
+  scalar(group(file,'SourceIdentity'),'version')==='candidate-identity-1';
+ const dimension=shape.length-1;
+ if(!formal&&(version!=='candidate-cartesian-1'||geometry!=='cartesian'||![1,2].includes(dimension)))
+  throw Error('Unsupported candidate native geometry.');
+ if(formal&&(!['arch-native-cartesian-1','arch-native-curvilinear-1','arch-native-axisymmetric-rz-2'].includes(String(version))||
+   scalar(entity,'native_geometry')!==geometry||version==='arch-native-cartesian-1'&&geometry!=='cartesian'||
+   version==='arch-native-curvilinear-1'&&!['cylindrical','spherical'].includes(geometry)||
+   rz&&(geometry!=='cylindrical'||dimension!==2||scalar(file,'geometry_semantics_revision')!==2||
+     scalar(file,'geometry_chart')!=='axisymmetric-rz')))throw Error('Invalid formal native geometry profile');
+ const convention=rz?'full-rotation-axisymmetric-ring':geometry==='cartesian'?
+  'active-coordinate-product; inactive-measures-omitted':'GridMetrics-native-coordinate-integral';
+ const expected:Record<string,string|number>={centering:'cell',ghost_cells:0,block_kind:'active-leaf',
+  center_basis:'cartesian',measure_source:'GridMetrics::CellVolume',measure_convention:convention,
+  logical_identity:'file-local level/logical_x1/logical_x2/logical_x3'};
  for(const [name,value] of Object.entries(expected))
-  if(scalar(entity,name)!==value)throw Error('Unsupported candidate native metadata: '+name);
+  if(scalar(entity,name)!==value)throw Error('Unsupported native metadata: '+name);
  const rawUnit=scalar(entity,'measure_unit'),measureUnit=rawUnit==='unknown'?null:rawUnit;
  const rawNormalization=entity.attrs.measure_normalization?scalar(entity,'measure_normalization'):null;
  const measureNormalization=rawNormalization==='unknown'?null:rawNormalization;
- if(!validMeasureLabels(measureUnit,measureNormalization,shape.length-1))throw Error('Invalid native measure labels.');
- const publication:Record<string,string>={
-  plot_publication_version:'candidate-1',plot_publication_state:'complete',
-  plot_publication_method:'checked-close-atomic-replace',plot_storage_order:'x1-fastest',
- };
+ if(!validMeasureLabels(measureUnit,measureNormalization,dimension))throw Error('Invalid native measure labels.');
+ let axes:string[]|undefined,axisUnits:string[]|undefined;
+ if(formal){
+  axes=[1,2,3].map(axis=>scalar(entity,'x'+axis+'_axis') as string);
+  axisUnits=[1,2,3].map(axis=>scalar(entity,'x'+axis+'_unit') as string);
+  const expectedAxes=geometry==='cartesian'?['x','y','z']:rz?['r','z','inactive']:
+   dimension===3?(geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r','phi','inactive'];
+  const expectedUnits:string[]=expectedAxes.map(axis=>['phi','theta'].includes(axis)?'rad':'cm');
+  for(let axis=0;axis<3;axis++){
+   if(axis>=dimension){expectedAxes[axis]='inactive';expectedUnits[axis]='inactive';}
+   if(axes[axis]!==expectedAxes[axis]||axisUnits[axis]!==expectedUnits[axis])throw Error('Invalid native coordinate axes/units');
+  }
+ }
+ const publication:Record<string,string>={plot_publication_version:formal&&!partialRz?'arch-plot-publication-1':'candidate-1',
+  plot_publication_state:'complete',plot_publication_method:'checked-close-atomic-replace',plot_storage_order:'x1-fastest'};
  for(const [name,value] of Object.entries(publication))
-  if(scalar(file,name)!==value)throw Error('Invalid candidate native publication: '+name);
+  if(scalar(file,name)!==value)throw Error('Invalid native publication: '+name);
+ if(rz){
+  const state=group(file,'NativeState'),w=dataset(entity,'angular_measure');
+  for(const [key,value] of Object.entries({unit:'cm^4',meaning:'integral-r-dV',source:'GridMetrics::Rz::AngularMomentumMeasure',normalization:'full_rotation'}))
+   if(scalar(w,key)!==value)throw Error('Invalid RZ angular measure semantics');
+  const expected={version:partialRz?'candidate-rz-angular-1':'arch-rz-angular-1',state_semantics:'rz-m-phi-j-over-w-v1',
+   storage_order:'same-as-Data; x1-fastest',evolved_state:'m_phi only; J/V is derived output'};
+  for(const [name,value] of Object.entries(expected))if(scalar(state,name)!==value)throw Error('Invalid RZ recorded state semantics');
+  if(scalar(file,'state_semantics')!=='rz-m-phi-j-over-w-v1')throw Error('Invalid RZ root state semantics');
+  for(const name of ['m_phi','angular_momentum_density']){
+   const d=dataset(state,name),ds=shapeOf(d,'NativeState/'+name),m=name==='m_phi';
+   if(d.metadata.type!==1||d.metadata.size!==8||JSON.stringify(ds)!==JSON.stringify(shape))throw Error('Invalid RZ native state shape/type');
+   for(const [key,value] of Object.entries({unit:m?'g/(cm^2*s)':'g/(cm*s)',basis:'local-orthonormal-r-z-phi',centering:'cell',
+    meaning:m?'J-cell-over-W':'J-cell-over-V',averaging:m?'r-dV-weighted-angular-momentum-component':'native-volume-angular-momentum-density',
+    source:m?'FluidState::mom_w':'arch::state::rz_angular_density'}))if(scalar(d,key)!==value)throw Error('Invalid RZ native field semantics');
+  }
+ }
  const cells=shape.reduce((a,b)=>a*b,1);
- for(const name of ['x1_lower','x1_upper','x2_lower','x2_upper','x3_lower','x3_upper','cell_measure']){
+ for(const name of ['x1_lower','x1_upper','x2_lower','x2_upper','x3_lower','x3_upper','cell_measure',...(rz?['angular_measure']:[])]){
   const d=dataset(entity,name),ds=shapeOf(d,'NativeGrid/'+name);
   if(d.metadata.type!==1||d.metadata.size!==8||ds.length!==1||ds[0]!==cells)
-   throw Error('Candidate native dataset shape/type mismatch: '+name);
+   throw Error('Native dataset shape/type mismatch: '+name);
  }
  for(const name of ['logical_x1','logical_x2','logical_x3']){
   const d=dataset(entity,name),ds=shapeOf(d,'NativeGrid/'+name);
   if(d.metadata.type!==0||d.metadata.size!==4||ds.length!==1||ds[0]!==shape[0])
-   throw Error('Candidate logical dataset shape/type mismatch: '+name);
+   throw Error('Native logical dataset shape/type mismatch: '+name);
  }
- return {version:'candidate-cartesian-1',measureSource:'GridMetrics::CellVolume',
-  measureConvention:'active-coordinate-product; inactive-measures-omitted',measureUnit:measureUnit as 'cm'|'cm^2'|null,measureNormalization:measureNormalization as string|null};
+ return {version:String(version),measureSource:'GridMetrics::CellVolume',measureConvention:convention,
+  measureUnit:measureUnit as 'cm'|'cm^2'|'cm^3'|null,measureNormalization:measureNormalization as string|null,
+  ...(formal?{geometry,axes,axisUnits,chart:rz?'axisymmetric-rz':'existing'}:{})};
 }
 type RawNumber=number|'NaN'|'Infinity'|'-Infinity';
 function rawNumbers(value:unknown,expected:number):RawNumber[] {
@@ -214,7 +349,8 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
  let nativeCells:null|{
   version:string;identityScope:string;logicalKey:string;level:number;logicalCoordinates:number[];
   lower:Record<string,number[]>;upper:Record<string,number[]>;cellMeasure:number[];
-  measureSource:string;measureConvention:string;measureUnit:'cm'|'cm^2'|null;measureNormalization?:string|null;
+  measureSource:string;measureConvention:string;measureUnit:'cm'|'cm^2'|'cm^3'|null;measureNormalization?:string|null;
+  angularMeasure?:number[];mPhi?:number[];angularMomentumDensity?:number[];
  }=null;
  if(native){
   const ng=group(file,'NativeGrid');
@@ -237,6 +373,17 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
      throw Error('Invalid candidate native bounds: '+name);
   }
   const cellMeasure=readRows('cell_measure');
+  let angular:Record<string,number[]>={};
+  if(native.chart==='axisymmetric-rz'){
+   const angularMeasure=readRows('angular_measure');
+   if(angularMeasure.some(value=>value<=0))throw Error('Invalid native angular measure');
+   const state=group(file,'NativeState'),readState=(name:string)=>{
+    const raw=rawNumbers(dataset(state,name).slice([[block,block+1],...start.map((n,i)=>[n,n+count[i]] as [number,number])]),cells);
+    if(raw.some(value=>typeof value!=='number'))throw Error('Nonfinite RZ angular state');
+    return raw as number[];
+   };
+   angular={angularMeasure,mPhi:readState('m_phi'),angularMomentumDensity:readState('angular_momentum_density')};
+  }
   if(cellMeasure.some(v=>v<=0))throw Error('Invalid native cell measure.');
   const readBlock=(g:InstanceType<typeof h5.Group>,name:string)=>{
    const d=dataset(g,name);
@@ -248,7 +395,8 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
   const level=readBlock(grid,'level');
   const logicalCoordinates=['logical_x1','logical_x2','logical_x3'].map(name=>readBlock(ng,name));
   nativeCells={...native,identityScope:'file-local',logicalKey:[level,...logicalCoordinates].join('/'),
-   level,logicalCoordinates,lower,upper,cellMeasure};
+   level,logicalCoordinates,lower,upper,cellMeasure,
+   ...angular};
  }
  const nonFinite=values.some(v=>typeof v!=='number')||Object.values(coordinates).some(a=>a.some(v=>typeof v!=='number'));
  return {field,block,start:[...start],shape:[...count],order:'x1-fastest',linearIndices:indices,values,coordinates,
@@ -410,6 +558,10 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    }
    const candidateSourceIdentity=sourceEvidence(file);
    const candidateNativeGrid=nativeHeader(file,shape,geometry);
+   const formal=candidateSourceIdentity?.version==='arch-plot-identity-1';
+   if(formal&&(!candidateNativeGrid||!candidateNativeGrid.version.startsWith('arch-native-'))||
+     candidateNativeGrid?.version.startsWith('arch-native-')&&!formal&&
+      !(candidateNativeGrid.version==='arch-native-axisymmetric-rz-2'&&scalar(file,'plot_publication_version')==='candidate-1'&&candidateSourceIdentity?.version==='candidate-identity-1'))throw Error('Formal publication lacks matching runtime/native identities');
    if(candidateNativeGrid){
     // Candidate writer contract preserves raw binary64 fields and centers.
     // Legacy structure inspection has no such precision claim.
@@ -423,11 +575,11 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    }
    if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request,candidateNativeGrid);}
    if(pointRequest){
-    if(!candidateNativeGrid||!names.includes(pointRequest.field))throw Error('Point read requires candidate native Cartesian 1D/2D bounds and a stored field.');
+    if(!candidateNativeGrid||geometry!=='cartesian'||![1,2].includes(dimension)||!names.includes(pointRequest.field))throw Error('Point read requires candidate native Cartesian 1D/2D bounds and a stored field.');
     ({payload,pointEvidence}=readPoint(file,shape,pointRequest,candidateNativeGrid));
    }
    if(overviewRequest){
-    if(!candidateNativeGrid||!names.includes(overviewRequest.field))throw Error('Overview requires candidate native Cartesian 1D/2D metadata and a stored field.');
+    if(!candidateNativeGrid||geometry!=='cartesian'||![1,2].includes(dimension)||!names.includes(overviewRequest.field))throw Error('Overview requires candidate native Cartesian 1D/2D metadata and a stored field.');
     overview=readOverview(file,shape,overviewRequest);
    }
    const coordinateUnit=grid.attrs.coordinate_unit?scalar(grid,'coordinate_unit'):null;
@@ -436,11 +588,17 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    if(timeUnit!==null&&!['unknown','s'].includes(String(timeUnit)))throw Error('Unsupported recorded time unit.');
    structure={timeUnit:timeUnit==='s'?'s':null,candidateSourceIdentity,candidateNativeGrid,time,dimension,geometry,blocks,cellShape:shape.slice(1),cells,order:'x1-fastest',fields,
     coordinates:{storedBasis:'cartesian',centering:'cell-center',units:coordinateUnit==='cm'?'cm':null},
-    completion:{state:'unknown',reason:candidateNativeGrid?'Candidate writer publication recognized; scientific contract review remains pending.':'Legacy writer has no recognized completion/publish contract.'},
-    scientificIdentity:{case:null,config:null,build:null,binary:null,eos:null},
-    nativeCellGeometry:{bounds:'unavailable',volume:'unavailable'},
-    renderEligible:false,
-    diagnostics:[request?'FIELD_SLICE_AUDIT':'METADATA_ONLY','OUTPUT_COMPLETION_UNVERIFIED',fields.every(f=>f.unit===null)?'UNITS_UNAVAILABLE':'RECORDED_UNITS_REVIEW_PENDING','SCIENTIFIC_IDENTITY_UNAVAILABLE',...(candidateNativeGrid?['CANDIDATE_NATIVE_GRID_REVIEW_PENDING']:['NATIVE_CELL_GEOMETRY_UNAVAILABLE'])]};
+    completion:candidateSourceIdentity?.version==='arch-plot-identity-1'&&candidateNativeGrid?
+     {state:'complete',reason:'Recognized checked-close atomic publication with validated scoped runtime provenance.'}:
+     {state:'unknown',reason:candidateNativeGrid?'Candidate writer publication recognized; scientific contract review remains pending.':'Legacy writer has no recognized completion/publish contract.'},
+    scientificIdentity:candidateSourceIdentity?.version==='arch-plot-identity-1'?{
+     case:candidateSourceIdentity.caseId,config:candidateSourceIdentity.effectiveConfigSha256,
+     build:candidateSourceIdentity.buildId,binary:candidateSourceIdentity.binarySha256,eos:candidateSourceIdentity.eosIdentitySha256}:
+     {case:null,config:null,build:null,binary:null,eos:null},
+    nativeCellGeometry:candidateSourceIdentity?.version==='arch-plot-identity-1'&&candidateNativeGrid?
+     {bounds:'recorded',volume:'recorded'}:{bounds:'unavailable',volume:'unavailable'},
+    renderEligible:candidateSourceIdentity?.version==='arch-plot-identity-1'&&!!candidateNativeGrid&&geometry==='cartesian'&&[1,2].includes(dimension),
+    diagnostics:[request?'FIELD_SLICE_AUDIT':'METADATA_ONLY',...(formal?['SCOPED_RUNTIME_IDENTITY_RECORDED','NATIVE_CELL_GEOMETRY_RECORDED','NUMERICAL_QUALIFICATION_SEPARATE']:['OUTPUT_COMPLETION_UNVERIFIED',fields.every(f=>f.unit===null)?'UNITS_UNAVAILABLE':'RECORDED_UNITS_REVIEW_PENDING','SCIENTIFIC_IDENTITY_UNAVAILABLE',...(candidateNativeGrid?['CANDIDATE_NATIVE_GRID_REVIEW_PENDING']:['NATIVE_CELL_GEOMETRY_UNAVAILABLE'])])]};
   } finally {if(file.file_id>=0n)file.close();}
   const hash=createHash('sha256'),buffer=Buffer.alloc(64*1024);
   let position=0;

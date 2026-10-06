@@ -1,8 +1,11 @@
-import {copyPointRequest,validPointEvidence,pointMatchesNativeCell} from '../src/host/plotfilePoint.ts';
+import {copyPointRequest} from '../src/host/plotfilePoint.ts';
 import type {PlotfilePointRequest} from '../src/host/plotfilePoint.ts';
-import {copyOverviewRequest,validOverview} from '../src/host/plotfileOverview.ts';
+import {copyOverviewRequest} from '../src/host/plotfileOverview.ts';
 import type {PlotfileOverviewRequest} from '../src/host/plotfileOverview.ts';
-/** Linux reader isolation only; no endpoint, renderer or completion claim. */
+import {validatePlotfileAudit,validatePlotfileOverview,validatePlotfilePoint} from '../src/host/plotfileAudit.ts';
+import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
+import {record} from '../src/host/previewValidation.ts';
+/** Linux reader isolation; publication/provenance use the shared client contract. */
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {copyPlotfileSliceRequest} from './plotfileSliceRequest.ts';
@@ -17,6 +20,34 @@ export class PlotfileReadError extends Error {
 }
 let active=false;
 const OUTPUT_LIMIT=64*1024;
+
+/**
+ * Check the fixed worker's response with the same metadata, source/native
+ * identities and raw-selection rules as the client. The local envelope only
+ * adapts transport shape; it does not assert an external project association.
+ * Formal publication completion is distinct from numerical qualification.
+ */
+export function validateIsolatedPlotfileResult(result:unknown,slice?:PlotfileSliceRequest,overview?:PlotfileOverviewRequest,point?:PlotfilePointRequest):Metadata{
+ if(!record(result)||result.schemaVersion!==(point?'audit-point-1':overview?'audit-overview-1':slice?'audit-slice-1':'audit-1'))
+  throw Error('Invalid metadata worker response.');
+ // The producer never combines formal source evidence with a partial native
+ // header. Keep that fail-closed distinction before the shared typed checks.
+ if(record(result.candidateSourceIdentity)&&result.candidateSourceIdentity.version==='arch-plot-identity-1'&&
+  (!record(result.candidateNativeGrid)||typeof result.candidateNativeGrid.version!=='string'||
+   !result.candidateNativeGrid.version.startsWith('arch-native-')))
+  throw Error('Formal publication lacks a formal native identity.');
+ const projectId='isolated-reader',relativePath='selected-plotfile';
+ const envelope={protocolVersion:PROTOCOL_VERSION,projectId,relativePath,metadata:result,result};
+ const sha=record(result.file)&&typeof result.file.sha256==='string'?result.file.sha256:undefined;
+ if(point){
+  if(sha===undefined)throw Error('Missing native point file identity.');
+  validatePlotfilePoint(envelope,projectId,relativePath,point,sha);
+ }else if(overview){
+  if(sha===undefined)throw Error('Missing overview file identity.');
+  validatePlotfileOverview(envelope,projectId,relativePath,overview,sha);
+ }else validatePlotfileAudit(envelope,projectId,relativePath,slice,sha);
+ return result as unknown as Metadata;
+}
 
 /** Options are Host-owned. The browser must not supply execution settings. */
 function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={},slice?:PlotfileSliceRequest,overview?:PlotfileOverviewRequest,point?:PlotfilePointRequest):Promise<Metadata>{
@@ -53,30 +84,7 @@ function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number
     if(code!==0||signal||response.ok!==true){
      reject(new PlotfileReadError('WORKER_FAILED',typeof response.message==='string'?response.message:'Metadata worker failed.'));return;
     }
-    if(response.result?.schemaVersion!==(point?'audit-point-1':overview?'audit-overview-1':slice?'audit-slice-1':'audit-1')||response.result?.renderEligible!==false||
-       response.result?.completion?.state!=='unknown')throw Error('Invalid metadata worker response.');
-    if(overview&&!validOverview(response.result.overview,overview,response.result.cells,response.result.dimension,response.result.cellShape,response.result.blocks))throw Error('Invalid overview worker response.');
-    let selection=slice;
-    if(point){
-     const p=response.result.payload;
-     if(!validPointEvidence(response.result.pointEvidence,point,response.result.cells,response.result.dimension)||
-      !pointMatchesNativeCell(p?.nativeCells,point,response.result.pointEvidence)||p.field!==point.field)
-      throw Error('Invalid native point worker response.');
-     selection=copyPlotfileSliceRequest({field:p.field,block:p.block,start:p.start,count:p.shape});
-     if(selection.count.some(n=>n!==1))throw Error('Point response is not a single native cell.');
-    }
-    if(selection){
-     const slice=selection;
-     const p=response.result.payload,n=slice.count.reduce((a,b)=>a*b,1);
-     const raw=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)||v==='NaN'||v==='Infinity'||v==='-Infinity';
-     if(!p||p.field!==slice.field||p.block!==slice.block||p.order!=='x1-fastest'||
-        JSON.stringify(p.start)!==JSON.stringify(slice.start)||JSON.stringify(p.shape)!==JSON.stringify(slice.count)||
-        !Array.isArray(p.values)||p.values.length!==n||!p.values.every(raw)||
-        !Array.isArray(p.linearIndices)||p.linearIndices.length!==n||!p.linearIndices.every((i:unknown)=>typeof i==='number'&&Number.isSafeInteger(i)&&i>=0)||
-        ['x','y','z'].some(axis=>!Array.isArray(p.coordinates?.[axis])||p.coordinates[axis].length!==n||!p.coordinates[axis].every(raw)))
-      throw Error('Invalid slice worker response.');
-    }else if(response.result.payload!==undefined)throw Error('Metadata worker returned an unexpected payload.');
-    resolve(response.result as Metadata);
+    resolve(validateIsolatedPlotfileResult(response.result,slice,overview,point));
    }catch{reject(new PlotfileReadError('INVALID_RESPONSE','Metadata worker returned an invalid response.'));}
   });
  });

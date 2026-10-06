@@ -10,11 +10,13 @@
  */
 #pragma once
 
-#include "data/FluidState.h"
-#include "grid/GridMetrics.h"
-
 #include <algorithm>
 #include <cmath>
+#include <limits>
+
+#include "data/FluidState.h"
+#include "grid/GridMetrics.h"
+#include "numerics/reconstruction/RzCellPolynomial.h"
 
 namespace TimeIntegration {
 
@@ -52,6 +54,43 @@ ARCH_HOST_DEVICE inline void add_rz_geometric_source_cell(
     const double inverse_radius=GridMetrics::Rz::InverseRadiusVolumeAverage(r_left,r_right);
     add_cylindrical_momentum_sources(U.rho,U.mom_u/U.rho,U.mom_w/U.rho,
         pressure,inverse_radius,dt,delta.mom_u,nullptr);
+}
+
+/** Integrate the RZ radial source using the same conservative point profile.
+ * S_r V = 2*pi*dz*integral(P+rho*u_phi^2) dr: the radial Jacobian cancels
+ * the curvature 1/r before quadrature, including the native axis cell.
+ * A bad required stencil or thermodynamic state rejects the stage. The caller
+ * owns composition scratch and commits the result only after this leaf passes.
+ */
+template<class StateReader,class FractionReader,class EosType>
+ARCH_INLINE bool add_rz_integrated_geometric_source(
+    const StateReader& read,const FractionReader& fraction,int index,int species,
+    const EosType& eos,const GridMetrics::GeometryView& grid,int i,double dt,
+    double* composition,FluidVector& delta)
+{
+    const auto cell=RzReconstruction::radial_cell(grid,i);
+    const auto closure=RzThermodynamics::make_cell(read,index,grid,i);
+    const auto profile=RzReconstruction::limited_profile(read,fraction,index,species,cell,closure);
+    if(!profile.valid)return false;
+    const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+    FluidVector integral{};
+    for(int n=0;n<4;++n) {
+        const double radius=RzReconstruction::certified_node_radius(n+2,closure);
+        const auto point=profile.at(radius);
+        for(int k=0;k<species;++k)
+            composition[k]=RzReconstruction::limited_fraction(read,fraction,index,k,
+                cell,radius,profile,point.rho);
+        if(arch::state::validate(point,composition,species,1,0.,0.,
+            std::numeric_limits<double>::max())!=arch::state::Status::valid)return false;
+        const double pressure=eos.get_pressure(point,composition);
+        if(!std::isfinite(pressure)||!(pressure>0.))return false;
+        add_cylindrical_momentum_sources(point.rho,point.mom_u/point.rho,
+            point.mom_w/point.rho,pressure,2./(left+right),
+            .5*dt*RzReconstruction::quadrature_weight(n),integral.mom_u,nullptr);
+    }
+    if(!std::isfinite(integral.mom_u))return false;
+    delta.mom_u+=integral.mom_u;
+    return true;
 }
 
 template <typename EosType>

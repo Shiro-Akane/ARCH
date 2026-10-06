@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "grid/GridGeometryView.h"
 #include "numerics/flux/FluxFunctions.h"
 
 // Conservative convex limiting against a local Lax-Friedrichs bar state.
@@ -79,7 +80,10 @@ ARCH_INLINE void limit_reconstruction(const FluidVector& mean, FluidVector& face
     }
 }
 
-/** Recover both required mean-state thermodynamic values from one EOS state. */
+/** Recover required mean thermodynamics from the caller's ordinary EOS input.
+ * Legacy callers supply the original mean; native RZ callers supply the shared
+ * closure's effective_mean, without replacing their evolved conserved state.
+ */
 template<class Eos>
 ARCH_INLINE void required_mean_thermo(const FluidVector& mean,
     const double* composition, const Eos& eos, double& pressure, double& speed)
@@ -88,7 +92,7 @@ ARCH_INLINE void required_mean_thermo(const FluidVector& mean,
         eos.get_pressure_and_sound_speed(
             mean.rho, 0.0, composition, pressure, speed);
     }) {
-        // The limiter queries the unchanged cell means for every face. Helm's
+        // The caller fixes the mean's geometry/energy interpretation. Helm's
         // grouped path preserves the strict inversion and acoustic derivatives,
         // while avoiding a second inverse for the same (rho, e, X) state.
         calc_endpoint_thermo(mean, arch::state::recover(mean).internal,
@@ -111,6 +115,9 @@ struct MeanThermoView {
     const unsigned char* ready = nullptr;
     int cells = 0, species = 0;
     bool roe_wave_speed = true;
+    // Appended default preserves Existing semantics for older Host/device
+    // aggregate initializers. Native RZ mean EOS inputs are not point states.
+    GridMetrics::GeometrySemantics geometry_semantics = GridMetrics::GeometrySemantics::Existing;
 
     /** Apply the original complete conserved-state/composition equality test. */
     ARCH_INLINE bool matches(int cell, const FluidVector& state,
@@ -125,9 +132,14 @@ struct MeanThermoView {
         return true;
     }
 
-    /** Reuse a face endpoint only when it is the unchanged owning mean. */
+    /** Reuse an identical ordinary mean; native RZ always requires point EOS. */
     ARCH_INLINE bool query(const FluidVector& state, const double* composition,
                            int count, int left, int right, double& p, double& c) const {
+        // Native U stores m_phi=J/W. Its cached EOS uses effective_mean and
+        // the density-inertia closure, so equal U bytes do not prove equal
+        // point (rho,e,X). This also protects HLLC's direct equal-state query.
+        if (geometry_semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
+            return false;
         const int cell = matches(left,state,composition,count) ? left
             : matches(right,state,composition,count) ? right : -1;
         if (cell < 0) return false;
@@ -136,7 +148,7 @@ struct MeanThermoView {
     }
 };
 
-/** Recover required endpoint thermodynamics, reusing only an identical mean. */
+/** Recover physical point EOS; only identical ordinary means permit cache reuse. */
 template<class Eos>
 ARCH_INLINE void face_thermo(const FluidVector& state, double energy,
     const double* composition, int count, const Eos& eos,
@@ -145,7 +157,8 @@ ARCH_INLINE void face_thermo(const FluidVector& state, double energy,
     if constexpr (requires {
         eos.get_pressure_and_sound_speed(state.rho,energy,composition,pressure,sound);
     }) {
-        // Required means use recover(state).internal. Directional primitive
+        // Ordinary means use recover(state).internal; native RZ query rejects
+        // reuse and reaches the original point EOS below. Directional primitive
         // arithmetic can round an equal conserved state to a different e;
         // reuse only the same (rho,e,X) query, not merely the same U and X.
         if (means && means->query(state,composition,count,cell,cell,pressure,sound)
@@ -157,6 +170,7 @@ ARCH_INLINE void face_thermo(const FluidVector& state, double energy,
 // One host patch-stage owns this cache. A value is published only after the
 // complete EOS query succeeds; the caller resets validity on every RK stage.
 struct MeanThermoCache {
+    GridMetrics::GeometrySemantics geometry_semantics=GridMetrics::GeometrySemantics::Existing;
     bool roe_wave_speed = true;
     std::vector<double> pressure;
     std::vector<double> sound_speed;

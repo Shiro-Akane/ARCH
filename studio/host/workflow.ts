@@ -11,6 +11,7 @@ import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 import type {DiscoveryResponse,WorkflowRequest,WorkflowStatus} from '../src/host/workflowContracts.ts';
 /** Fixed semantic operations only; browser never supplies argv, cwd, env or executable. */
 export class WorkflowRunner {
+ assertCase?:(caseId:string)=>Promise<void>;
  private preview:PreviewRunner;
  private cached?:{discovery:DiscoveryResponse;session:SessionCapability};
  private current:WorkflowStatus;
@@ -63,6 +64,7 @@ export class WorkflowRunner {
   const token=++this.epoch,requestId=randomUUID();
   this.current={...this.current,state:'running',requestId,operation:r.operation,stage:'preparing',error:undefined,failure:undefined};
   try{
+   await this.assertCase?.(r.caseId);
    const d=await this.discovery(),model=d.cases.find(c=>c.caseId===r.caseId);
    if(!model)throw new BuildError('Case is not registered in the selected binary.');
    if(r.operation==='inspect-case'&&!model.inspection.setupReads)throw new BuildError('Case initialization inspection unavailable.');
