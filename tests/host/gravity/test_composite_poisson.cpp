@@ -3335,6 +3335,247 @@ void rz_smooth_convergence() {
         "native RZ smooth potential/face/coarse-fine order below original 1.8");
 }
 
+
+/** Closed polynomial reference for TWO prescribed smooth fields, not A*Phi.
+ * Phi0=r^4+z^4/2+r^2*z^2/4+r^2+z^2/2.
+ * Phi1=2*r^4+z^4/4+r^2*z^2/2+r^2/2+2*z^2+r^2*z.
+ * Cylindrical Laplacians are L0=5+33*r^2/2+7*z^2 and
+ * L1=6+33*r^2+5*z^2+4*z, positive on both frozen reference domains.
+ * Raw term products keep exact binary coefficients; all integrals below are
+ * independent polynomial antiderivatives under dV/(2*pi)=r*dr*dz.
+ */
+struct RzGreenPolynomial {
+    struct Term {long double coefficient;int radial,axial;};
+    using Terms=std::vector<Term>;
+    static Terms potential(int field) {
+        return field==0?Terms{{1.,4,0},{.5,0,4},{.25,2,2},{1.,2,0},{.5,0,2}}
+            :Terms{{2.,4,0},{.25,0,4},{.5,2,2},{.5,2,0},{2.,0,2},{1.,2,1}};
+    }
+    /** Independent continuum Laplacian coefficients, never operator rows. */
+    static Terms laplacian(int field) {
+        return field==0?Terms{{5.,0,0},{16.5,2,0},{7.,0,2}}
+            :Terms{{6.,0,0},{33.,2,0},{5.,0,2},{4.,0,1}};
+    }
+    /** Differentiate an explicit physical polynomial in the selected chart axis. */
+    static Terms derivative(const Terms& terms,int axis) {
+        Terms result;
+        for(auto term:terms) {
+            const int power=axis==0?term.radial:term.axial;if(!power)continue;
+            term.coefficient*=power;if(axis==0)--term.radial;else --term.axial;
+            result.push_back(term);
+        }
+        return result;
+    }
+    /** Product subtraction for the independent Green cross polynomials. */
+    static Terms cross(const Terms& a,const Terms& b,const Terms& c,const Terms& d) {
+        Terms result;
+        for(const auto& x:a)for(const auto& y:b)
+            result.push_back({x.coefficient*y.coefficient,x.radial+y.radial,x.axial+y.axial});
+        for(const auto& x:c)for(const auto& y:d)
+            result.push_back({-x.coefficient*y.coefficient,x.radial+y.radial,x.axial+y.axial});
+        return result;
+    }
+    /** Integer powers use only multiplication, with degree at most eight here. */
+    static long double power(long double x,int degree) {
+        long double result=1.;for(int i=0;i<degree;++i)result*=x;return result;
+    }
+    /** Independent physical point evaluation; no cell-average interpretation. */
+    static long double point(const Terms& terms,long double r,long double z) {
+        long double result=0.;for(const auto& term:terms)
+            result+=term.coefficient*power(r,term.radial)*power(z,term.axial);
+        return result;
+    }
+    struct Integral {long double value=0.,scale=0.;};
+    /** Exact formula integral r*P dr dz. Scale retains BOTH endpoint powers
+     * before subtraction, bounding antiderivative cancellation prospectively.
+     */
+    static Integral volume(const Terms& terms,long double a,long double b,long double c,long double d) {
+        Integral result;
+        for(const auto& term:terms) {
+            const int rp=term.radial+2,zp=term.axial+1;
+            const long double bl=power(b,rp),al=power(a,rp),du=power(d,zp),cl=power(c,zp);
+            result.value+=term.coefficient*((bl-al)/rp)*((du-cl)/zp);
+            result.scale+=std::abs(term.coefficient)*(std::abs(bl)+std::abs(al))/rp
+                *(std::abs(du)+std::abs(cl))/zp;
+        }
+        return result;
+    }
+    /** Exact face integral of r*P, per full-circle factor 2*pi. The normal
+     * coordinate is fixed; tangential integration uses actual fragment bounds.
+     */
+    static Integral face(const Terms& terms,int axis,long double normal,long double lo,long double hi) {
+        Integral result;
+        for(const auto& term:terms) {
+            const int degree=axis==0?term.axial+1:term.radial+2;
+            const long double h=power(hi,degree),l=power(lo,degree);
+            const long double fixed=power(normal,axis==0?term.radial+1:term.axial);
+            result.value+=term.coefficient*fixed*(h-l)/degree;
+            result.scale+=std::abs(term.coefficient*fixed)*(std::abs(h)+std::abs(l))/degree;
+        }
+        return result;
+    }
+    /** Each expression above uses <4096 long-double operations per integral
+     * (<=48 raw cross terms, <=8 multiplications/power). gamma_m bounds forward
+     * roundoff against the absolute raw-endpoint scale, not physical error.
+     * epsilon is conservative (2u); factor four encloses evaluation of the
+     * budget/scale itself. This is fixed BEFORE results, not an observed fit.
+     */
+    static long double allowance(std::size_t operations,long double scale) {
+        const long double eps=std::numeric_limits<long double>::epsilon();
+        const long double meps=operations*eps;
+        require(std::isfinite(scale)&&scale>=0.&&meps<.5L,
+            "two-field Green roundoff count/scale is invalid");
+        return 4.L*(meps/(1.L-meps))*scale;
+    }
+};
+
+/** Genuine native two-field Green consistency with no additional MG solve.
+ * Workflow: use the ORIGINAL axis/annulus, uniform/mixed N16/32/64/128 meshes;
+ * integrate independent continuum sources/boundary polynomials; sample the
+ * actual stored point fields and original face gradients; verify continuous
+ * and face-incidence identities with prospective arithmetic bounds ONLY.
+ *
+ * C=integral(Phi1*LapPhi0-Phi0*LapPhi1)dV equals boundary Green exactly.
+ * For stored fields, C_h-B_h=T_internal+T_boundary-T_residual, with
+ * R_k=sum sigma*A*g_k/V-LapPhi_k(Vmean). Every physical/CF/axis cell remains.
+ * Point-vs-integrated and original operator/fit errors are DIAGNOSTICS, without
+ * a new empirical physical allowance or isolated/coupled qualification.
+ * Original true MG, 1e-11/300, >=1.8 order tests remain separate and unchanged.
+ */
+void rz_two_field_green_consistency() {
+    using Reference=RzGreenPolynomial;
+    const auto phi0=Reference::potential(0),phi1=Reference::potential(1);
+    const auto lap0=Reference::laplacian(0),lap1=Reference::laplacian(1);
+    const auto cross=Reference::cross(phi1,lap0,phi0,lap1);
+    const std::array<Reference::Terms,2> boundary_cross{
+        Reference::cross(phi1,Reference::derivative(phi0,0),phi0,Reference::derivative(phi1,0)),
+        Reference::cross(phi1,Reference::derivative(phi0,1),phi0,Reference::derivative(phi1,1))};
+    for(double inner:{0.,1.})for(bool mixed:{false,true})for(int n:{16,32,64,128}) {
+        auto base=base_mesh(2,n);base.geometry=elliptic::Geometry::Cylindrical;
+        base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        base.origin={inner,-.5,0.};base.root_upper={inner+1.,.5,0.};base.native_canonical_domain=true;
+        elliptic::CompositePoisson op(base,make_cells(base,mixed),elliptic::BoundaryKind::CurvilinearIsolated);
+        const auto exact_cross=Reference::volume(cross,inner,inner+1.,-.5,.5);
+        Reference::Integral exact_boundary;
+        for(int axis=0;axis<2;++axis)for(int side=0;side<2;++side) {
+            const long double coordinate=axis==0?inner+side:(side?.5L:-.5L);
+            const auto value=Reference::face(boundary_cross[axis],axis,coordinate,
+                axis==0?-.5L:inner,axis==0?.5L:inner+1.);
+            exact_boundary.value+=(side?1.L:-1.L)*value.value;exact_boundary.scale+=value.scale;
+        }
+        const auto analytic_allowance=Reference::allowance(4096*5,exact_cross.scale+exact_boundary.scale);
+        require(std::abs(exact_cross.value-exact_boundary.value)<=analytic_allowance,
+            "two-field continuum volume/face-integrated Green identity failed");
+        require(std::abs(exact_cross.value)>analytic_allowance,
+            "two-field reference cross integral vanished; Green witness is degenerate");
+        std::array<std::vector<double>,2> phi,lap,bc,rhs,applied;
+        std::array<std::vector<long double>,2> divergence;
+        for(int k=0;k<2;++k) {
+            phi[k].resize(op.size());lap[k].resize(op.size());rhs[k].resize(op.size());
+            applied[k].resize(op.size());bc[k].resize(op.faces().size());divergence[k].resize(op.size());
+        }
+        long double leaf_integral=0.,leaf_scale=0.,face_integral=0.,face_scale=0.;
+        long double stored_cross=0.,stored_scale=0.,boundary=0.,analytic_point_boundary=0.;
+        long double internal=0.,physical=0.,residual_cross=0.,identity_scale=0.;
+        int axis_cells=0,physical_faces=0,cf_faces=0;
+        for(int cell=0;cell<op.size();++cell) {
+            const double a=op.lower(cell,0),b=op.upper(cell,0),c=op.lower(cell,1),d=op.upper(cell,1);
+            require(a>=0.&&b>a&&d>c,"two-field Green has invalid actual cell endpoints");
+            if(a==0.)++axis_cells;
+            const auto integral=Reference::volume(cross,a,b,c,d);
+            leaf_integral+=integral.value;leaf_scale+=integral.scale;
+            const long double measure=(static_cast<long double>(b)*b-static_cast<long double>(a)*a)*(d-c)/2.L;
+            for(int k=0;k<2;++k) {
+                const auto& p=k?phi1:phi0;const auto& l=k?lap1:lap0;
+                phi[k][cell]=static_cast<double>(Reference::point(p,op.center(cell)[0],op.center(cell)[1]));
+                lap[k][cell]=static_cast<double>(Reference::volume(l,a,b,c,d).value/measure);
+                require(std::isfinite(phi[k][cell])&&std::isfinite(lap[k][cell])&&lap[k][cell]>0.,
+                    "two-field independent V-mean physical source is nonpositive/nonfinite");
+                rhs[k][cell]=-lap[k][cell]; // NEVER A*analyticPhi.
+            }
+            const long double v=op.volumes()[cell];
+            stored_cross+=v*(static_cast<long double>(phi[1][cell])*lap[0][cell]
+                -static_cast<long double>(phi[0][cell])*lap[1][cell]);
+            stored_scale+=v*(std::abs(static_cast<long double>(phi[1][cell])*lap[0][cell])
+                +std::abs(static_cast<long double>(phi[0][cell])*lap[1][cell]));
+        }
+        for(std::size_t f=0;f<op.faces().size();++f) {
+            const auto& face=op.faces()[f];const long double area=face.area;
+            require(face.native_bounds&&face.area>0.&&face.axis<2,
+                "two-field Green lacks genuine positive native face fragments");
+            std::array<double,2> gradient{};
+            for(int k=0;k<2;++k) {
+                bc[k][f]=face.boundary_side>=0?static_cast<double>(Reference::point(k?phi1:phi0,face.center[0],face.center[1])):0.;
+                gradient[k]=op.face_gradient(phi[k],face,bc[k][f]);
+                require(std::isfinite(gradient[k]),"two-field actual face gradient is nonfinite");
+                if(face.left>=0)divergence[k][face.left]+=area*gradient[k];
+                if(face.right>=0)divergence[k][face.right]-=area*gradient[k];
+            }
+            for(int cell:{face.left,face.right})if(cell>=0)
+                identity_scale+=area*(std::abs(static_cast<long double>(phi[1][cell])*gradient[0])
+                    +std::abs(static_cast<long double>(phi[0][cell])*gradient[1]));
+            if(face.boundary_side>=0) {
+                ++physical_faces;
+                const long double sign=(face.boundary_side&1)?1.L:-1.L;
+                const int cell=face.left>=0?face.left:face.right;
+                const auto integrated=Reference::face(boundary_cross[face.axis],face.axis,face.center[face.axis],
+                    face.fragment_lower[1-face.axis],face.fragment_upper[1-face.axis]);
+                face_integral+=sign*integrated.value;face_scale+=integrated.scale;
+                boundary+=sign*area*(static_cast<long double>(bc[1][f])*gradient[0]
+                    -static_cast<long double>(bc[0][f])*gradient[1]);
+                analytic_point_boundary+=sign*area*Reference::point(boundary_cross[face.axis],face.center[0],face.center[1]);
+                physical+=sign*area*((static_cast<long double>(phi[1][cell])-bc[1][f])*gradient[0]
+                    -(static_cast<long double>(phi[0][cell])-bc[0][f])*gradient[1]);
+                identity_scale+=2.L*area*(std::abs(static_cast<long double>(bc[1][f])*gradient[0])
+                    +std::abs(static_cast<long double>(bc[0][f])*gradient[1]));
+            } else {
+                require(face.left>=0&&face.right>=0,"two-field internal face has missing actual incidence");
+                if(op.cells()[face.left].level!=op.cells()[face.right].level)++cf_faces;
+                internal+=area*((static_cast<long double>(phi[1][face.left])-phi[1][face.right])*gradient[0]
+                    -(static_cast<long double>(phi[0][face.left])-phi[0][face.right])*gradient[1]);
+            }
+        }
+        long double max_face_residual=0.;
+        for(int cell=0;cell<op.size();++cell) {
+            const long double v=op.volumes()[cell];
+            const long double r0=divergence[0][cell]/v-lap[0][cell],r1=divergence[1][cell]/v-lap[1][cell];
+            residual_cross+=v*(phi[1][cell]*r0-phi[0][cell]*r1);
+            max_face_residual=std::max(max_face_residual,std::max(std::abs(r0),std::abs(r1)));
+        }
+        identity_scale=4.L*(identity_scale+stored_scale);
+        const std::size_t samples=static_cast<std::size_t>(op.size())+op.faces().size()+4;
+        // <=256 primitive long-double operations per cell/face for this identity;
+        // gamma includes all incidence and final signed reductions/divisions.
+        const auto discrete_allowance=Reference::allowance(256*samples,identity_scale);
+        const long double incidence_defect=stored_cross-boundary-internal-physical+residual_cross;
+        require(std::abs(incidence_defect)<=discrete_allowance,
+            "two-field original-face discrete Green incidence identity failed");
+        require(std::abs(leaf_integral-exact_cross.value)<=Reference::allowance(4096*samples,leaf_scale+exact_cross.scale)
+            &&std::abs(face_integral-exact_boundary.value)<=Reference::allowance(4096*samples,face_scale+exact_boundary.scale),
+            "two-field actual cells/physical fragments lost the continuum integration domain");
+        require(physical_faces>0&&(!mixed||cf_faces>0)&&(inner!=0.||axis_cells>0),
+            "two-field Green omitted physical/coarse-fine/axis cell coverage");
+        double operator_residual=0.;
+        for(int k=0;k<2;++k) {
+            const auto lifted=op.effective_rhs(rhs[k],bc[k]);op.apply(phi[k],applied[k]);
+            for(int cell=0;cell<op.size();++cell)applied[k][cell]-=lifted[cell];
+            operator_residual=std::max(operator_residual,op.norm(applied[k]));
+        }
+        std::cout<<std::setprecision(17)<<"RZ_TWO_FIELD_GREEN_DIAGNOSTIC inner="<<inner<<" mixed="<<mixed<<" n="<<n
+            <<" cells="<<op.size()<<" physical_faces="<<physical_faces<<" cf_faces="<<cf_faces<<" axis_cells="<<axis_cells
+            <<" continuous_cross_per_2pi="<<exact_cross.value<<" continuous_boundary_per_2pi="<<exact_boundary.value
+            <<" continuum_identity_allowance="<<analytic_allowance
+            <<" point_volume_defect="<<stored_cross-2.L*pi*exact_cross.value
+            <<" analytic_face_center_quadrature_defect="<<analytic_point_boundary-2.L*pi*exact_boundary.value
+            <<" actual_stencil_vs_analytic_face_sample_defect="<<boundary-analytic_point_boundary
+            <<" internal="<<internal<<" boundary_anchor="<<physical<<" residual_cross="<<residual_cross
+            <<" stored_cross_minus_boundary="<<stored_cross-boundary<<" incidence_defect="<<incidence_defect
+            <<" incidence_roundoff_allowance="<<discrete_allowance
+            <<" analytic_point_operator_rms="<<operator_residual<<" analytic_point_face_residual_max="<<max_face_residual
+            <<" physical_qualified=0 no_extra_mg=1"<<std::endl;
+    }
+}
+
 void curved_manufactured(bool singular=false, bool seam_refined=false) {
     for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
         for(int dim:{2,3}) for(bool refined:{false,true}) {
@@ -3670,7 +3911,7 @@ int main(int argc,char** argv) {
 
         if(argc>1 && std::string(argv[1])=="rz-order-diagnostic") {rz_order_diagnostic();return 0;}
         if(argc>1 && std::string(argv[1])=="coarse-diagnostic") {coarse_mesh_diagnostic();return 0;}
-        if (argc>1 && std::string(argv[1])=="rz") { finite_ring_moment_contract(); native_rz_canonical_boundary_stencil_contract(); rz_manufactured(); rz_smooth_convergence(); rz_boundary_guard(); return 0; }
+        if (argc>1 && std::string(argv[1])=="rz") { finite_ring_moment_contract(); native_rz_canonical_boundary_stencil_contract(); rz_manufactured(); rz_smooth_convergence(); rz_two_field_green_consistency(); rz_boundary_guard(); return 0; }
         if (argc>1 && std::string(argv[1])=="ring") { finite_ring_moment_contract(); finite_ring_kernel_contract(); rz_boundary_guard(); return 0; }
         if (argc>1 && std::string(argv[1])=="contract") { contract(); coarse_mesh_diagnostic(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
@@ -3689,7 +3930,7 @@ int main(int argc,char** argv) {
             // Reuse the existing analytic owner for native point-stencil,
             // certificate and physical-volume-source convergence checks.
             native_rz_canonical_boundary_stencil_contract();
-            rz_manufactured();rz_smooth_convergence();
+            rz_manufactured();rz_smooth_convergence();rz_two_field_green_consistency();
             boundary_convergence(16);isolated_boundary();averaged_source_exactness();
             convergence(2);radial_convergence();curved_manufactured();
             curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);curved_manufactured(true,true);

@@ -645,6 +645,7 @@ class CompleteReferenceReuseEngineeringTests(unittest.TestCase):
         reference_input=dict(source=combined["source"],root_bounds=record["root_bounds"],
                              source_identity=record["source_identity"],observers=schedule["sites"])
         return dict(profile="actual-materialized-full-domain-diagnostic-1",
+            resource_limits=dict(max_calls=1800000,wall_seconds=240.),
             status="FULL_DOMAIN_MATHEMATICAL_REFERENCE_DIAGNOSTIC_ONLY",science_accepted=False,
             physical_qualified=False,core_binding_qualified=False,reference_complete=True,coverage_complete=True,
             reference_status="MathematicalIntervalsCertified",failure=None,
@@ -1192,5 +1193,120 @@ class ExactDenseSweepTests(unittest.TestCase):
         self.assertGreater(clock.call_count, len(rectangles))
         self.assertEqual((source, root, identity), before)
         reset.assert_not_called(); backend.assert_not_called()
+
+
+
+class KnownFullReferenceProfileReuseTests(unittest.TestCase):
+    """SYNTHETIC known-profile/import checks; no Runtime or integral evidence.
+
+    A fixed-layout source retains the existing one-face transport fixture.
+    These tests validate the reuse-import schema/schedule only, never claim
+    physical all-side coverage or fabricate a successful numerical integral.
+    """
+
+    def prepared(self, level=0):
+        fixture=CompleteReferenceReuseEngineeringTests()
+        old=(fixture.wire() if level==0 else
+             FixedMatchedReferenceProfileEngineeringTests().profile_wire(level))
+        reference=fixture.reference(old)
+        if level:
+            policy=surface.Budget.matched_resolution(level)
+            resources=rz.full_materialized_resource_profile(policy)
+            reference.update(profile=resources["profile"],resource_limits=resources["resource_limits"],
+                matched_resolution=rz.validate_matched_materialized_profile(old,policy))
+            reference["budget"].update(max_calls=policy.max_calls,timeout_seconds=policy.timeout_seconds,
+                resource_profile=policy.resource_profile)
+        return old,reference
+
+    def validate(self, old, reference, budget=None):
+        fixture=CompleteReferenceReuseEngineeringTests()
+        budget=surface.Budget.full_domain_diagnostic() if budget is None else budget
+        values=rz.validate_materialized_record(old,budget)
+        union=rz.coalesce_exact_dense_source(old["source"],old["root_bounds"],old["source_identity"],budget)
+        return rz._reuse_validate_reference(old,reference,values,union,fixture.raw_sha(old),budget)
+
+    def test_only_three_known_profiles_validate_exact_schedule_without_new_budget_or_backend(self):
+        for level,count in ((0,1),(1,2048),(2,8192)):
+            old,reference=self.prepared(level);before=copy.deepcopy((old,reference))
+            budget=surface.Budget.full_domain_diagnostic();started=budget.started
+            with self.subTest(level=level), \
+                 patch.object(surface.Budget,"start",side_effect=AssertionError("request reset")) as subset, \
+                 patch.object(surface.Budget,"full_domain_diagnostic",side_effect=AssertionError("mapping reset")) as full, \
+                 patch.object(surface.Budget,"matched_resolution",side_effect=AssertionError("old reference restart")) as matched, \
+                 patch.object(surface,"load_optional_flint",side_effect=AssertionError("backend reached")) as backend, \
+                 patch.object(surface,"evaluate_reference",side_effect=AssertionError("integral reached")) as integral:
+                schedule,verified=self.validate(old,reference,budget)
+            self.assertEqual(len(verified),count+len(old["candidate_field"]["face_values"]))
+            self.assertEqual(len(schedule["targets"]),len(verified))
+            self.assertEqual((old,reference),before)
+            self.assertEqual((budget.started,budget.calls,budget.max_calls,budget.timeout_seconds),
+                             (started,0,1800000,240.))
+            self.assertFalse(reference["science_accepted"]);self.assertFalse(reference["core_binding_qualified"])
+            for spy in (subset,full,matched,backend,integral):spy.assert_not_called()
+
+    def test_unknown_profile_wrong_layout_count_and_matched_metadata_reject(self):
+        old,reference=self.prepared(1)
+        faults={
+            "unknown":lambda o,r:r.update(profile="actual-materialized-matched-resolution-3"),
+            "known_wrong_level":lambda o,r:r.update(profile="actual-materialized-matched-resolution-2",
+                resource_limits=dict(max_calls=22000000,wall_seconds=1800.)),
+            "missing_matched":lambda o,r:r.pop("matched_resolution"),
+            "forged_count":lambda o,r:r["matched_resolution"].update(expected_cells=2047),
+            "wrong_root_blocks":lambda o,r:r["matched_resolution"].update(root_blocks=[8,1]),
+            "incomplete_source":lambda o,r:o["source"]["leaves"].pop()}
+        for name,mutate in faults.items():
+            changed_old,changed_reference=copy.deepcopy((old,reference));mutate(changed_old,changed_reference)
+            with self.subTest(fault=name),self.assertRaises((ValueError,KeyError)):
+                self.validate(changed_old,changed_reference)
+
+    def test_fixed_resource_limits_and_original_history_forgeries_reject(self):
+        old,reference=self.prepared(1)
+        faults={
+            "missing_limits":lambda r:r.pop("resource_limits"),
+            "raised_limit":lambda r:r["resource_limits"].update(max_calls=6000001),
+            "lowered_limit":lambda r:r["resource_limits"].update(wall_seconds=240.),
+            "calls_over":lambda r:r["budget"].update(calls=6000001),
+            "calls_zero":lambda r:r["budget"].update(calls=0),
+            "calls_bool":lambda r:r["budget"].update(calls=True),
+            "history_max":lambda r:r["budget"].update(max_calls=1800000),
+            "history_float_max":lambda r:r["budget"].update(max_calls=6000000.),
+            "history_timeout":lambda r:r["budget"].update(timeout_seconds=1800.),
+            "history_wall":lambda r:r["budget"].update(wall_seconds=600.),
+            "history_negative_wall":lambda r:r["budget"].update(wall_seconds=-1.),
+            "history_profile":lambda r:r["budget"].update(resource_profile="full-domain-diagnostic-1")}
+        for name,mutate in faults.items():
+            changed=copy.deepcopy(reference);mutate(changed)
+            with self.subTest(fault=name),self.assertRaises(ValueError):self.validate(old,changed)
+        for name in ("raised_limit","history_max","history_timeout"):
+            default,default_reference=self.prepared()
+            if name=="raised_limit":default_reference["resource_limits"]["max_calls"]=6000000
+            if name=="history_max":default_reference["budget"]["max_calls"]=6000000
+            if name=="history_timeout":default_reference["budget"]["timeout_seconds"]=600.
+            with self.subTest(default_fault=name),self.assertRaises(ValueError):self.validate(default,default_reference)
+
+    def test_matched_schema_checks_borrow_original_mapping_deadline_without_reset(self):
+        old,reference=self.prepared(1)
+        # Once inside strict matched validation, the original mapping deadline
+        # expires. A fresh 600-second reference budget must not hide that expiry.
+        budget=surface.Budget(started=1.,_full_domain_diagnostic=True)
+        values=(None,old["candidate_field"]["cell_values"],[],{}, {})
+        with patch.object(surface.time,"monotonic",return_value=242.), \
+             patch.object(surface.Budget,"matched_resolution",side_effect=AssertionError("old request reset")) as factory, \
+             patch.object(rz,"materialized_full_schedule",side_effect=AssertionError("schedule reached")) as schedule:
+            with self.assertRaises(surface.WorkLimit):
+                rz._reuse_validate_reference(old,reference,values,{},"0"*64,budget)
+        self.assertEqual((budget.started,budget.calls,budget.timeout_seconds),(1.,0,240.))
+        factory.assert_not_called();schedule.assert_not_called()
+
+    def test_matched_reuse_rejects_new_source_change_after_import_without_integrating(self):
+        import math
+        fixture=CompleteReferenceReuseEngineeringTests()
+        old,reference=self.prepared(1);new=copy.deepcopy(old)
+        new["source"]["leaves"][0]["density"]=math.nextafter(1.,2.)
+        result=fixture.reuse(old,new,reference)
+        self.assertEqual(result["reference_status"],"UNVERIFIED")
+        self.assertFalse(result["coverage_complete"])
+        self.assertIn("Actual source bounds/density/storage changed",result["failure"])
+        self.assertEqual((result["mapping_budget"]["calls"],result["budget"]["kernel_evaluations"]),(0,0))
 
 if __name__=="__main__":unittest.main()

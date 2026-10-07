@@ -835,11 +835,33 @@ def _reuse_validate_reference(old, reference, validated, combined, raw_sha, budg
     producer receipt: structural checks cannot independently prove an arbitrary
     caller's interval mathematics or authenticate JSON as a live Runtime.
     """
-    from rz_ring_surface_reference import CGS_G, rational
+    from rz_ring_surface_reference import Budget, CGS_G, rational
+    # This descriptor selects only existing immutable resource policies. Its
+    # preflight checks borrow the SAME mapping deadline: no old request restart,
+    # new integration budget, allowance transfer or callback charge is made.
+    policies = {"actual-materialized-full-domain-diagnostic-1": dict(_full_domain_diagnostic=True),
+                "actual-materialized-matched-resolution-1": dict(_matched_resolution=1),
+                "actual-materialized-matched-resolution-2": dict(_matched_resolution=2)}
+    _reuse_require(reference.get("profile") in policies, "Unknown original full reference resource profile")
+    class ImportedProfileBudget(Budget):
+        def check_time(self):
+            """Keep fixed-layout validation under the actual mapping deadline."""
+            budget.check_time()
+    original_policy = ImportedProfileBudget(started=budget.started, **policies[reference["profile"]])
+    resources = full_materialized_resource_profile(original_policy)
+    _reuse_require(reference.get("resource_limits") == resources["resource_limits"],
+                   "Original full reference resource limits mismatch")
+    if original_policy.matched_resolution_level:
+        expected_matched = validate_matched_materialized_profile(old, original_policy)
+        _reuse_require(reference.get("matched_resolution") == expected_matched,
+                       "Original matched reference layout metadata mismatch")
+    else:
+        _reuse_require(reference.get("matched_resolution") is None,
+                       "Default reference carries conflicting matched layout metadata")
     _, cells, faces, by_cell, by_face = validated
     schedule = materialized_full_schedule(old, cells, faces, by_cell, by_face, budget)
     widths = {key: str(CGS_G/Fraction(10**12)) for key in ("Phi", "g_r", "g_z")}
-    _reuse_require(reference.get("profile") == "actual-materialized-full-domain-diagnostic-1"
+    _reuse_require(reference.get("profile") == resources["profile"]
         and reference.get("reference_complete") is True and reference.get("coverage_complete") is True
         and reference.get("status") == "FULL_DOMAIN_MATHEMATICAL_REFERENCE_DIAGNOSTIC_ONLY"
         and reference.get("reference_status") == "MathematicalIntervalsCertified"
@@ -875,11 +897,15 @@ def _reuse_validate_reference(old, reference, validated, combined, raw_sha, budg
         and identity.get("core_binding_qualified") is False,
         "Original reference input digest/observer identity mismatch")
     history = reference["budget"]
-    _reuse_require(type(history.get("calls")) is int and 0 < history["calls"] <= 1800000
-        and history.get("max_calls") == 1800000 and history.get("timeout_seconds") == 240.
+    _reuse_require(type(history.get("calls")) is int and 0 < history["calls"] <= original_policy.max_calls
+        and type(history.get("max_calls")) is int and history["max_calls"] == original_policy.max_calls
+        and type(history.get("timeout_seconds")) in (int, float)
+        and history["timeout_seconds"] == original_policy.timeout_seconds
         and type(history.get("wall_seconds")) in (int, float)
-        and math.isfinite(history["wall_seconds"]) and 0 <= history["wall_seconds"] < 240.
-        and history.get("resource_profile") == "full-domain-diagnostic-1", "Invalid original reference work history")
+        and math.isfinite(history["wall_seconds"])
+        and 0 <= history["wall_seconds"] < original_policy.timeout_seconds
+        and history.get("resource_profile") == original_policy.resource_profile,
+        "Invalid original reference work history")
     site_rows = reference["sites"]
     _reuse_require(isinstance(site_rows, list) and len(site_rows) == len(schedule["sites"]),
                    "Incomplete original reference sites")

@@ -1,0 +1,62 @@
+{
+  "schema": "arch-native-complete-resolution-diagnostics-1",
+  "source": "same finite-cylinder uniform-density physical source, actual finer uniform native topologies",
+  "referenceWidths": "exact CGS_G/10**12; allPhi/gr/ gz point intervals",
+  "referenceBudgetSeconds": 2400,
+  "actualReferenceCampaignSeconds": 970.335,
+  "newKernelCalls": 21994902,
+  "sourceSnapshot2HistoricalOnly": true,
+  "original8192SourceWholeFenceFailed": true,
+  "sourceProducerExit2": "UNKNOWN",
+  "referenceCampaignFullSourceFence": true,
+  "scienceAccepted": false,
+  "physicalQualified": false,
+  "scope": "complete continuous point field/gradient diagnosis; point-vs-volume energy and public coupled qualification not granted",
+  "rows": [
+    {
+      "cells": 512,
+      "allOriginalTargets": 1568,
+      "fullReferenceAndCoverage": true,
+      "maxAbsoluteErrorUpper": {
+        "point_cell_potential": 3.507268845166642e-11,
+        "force_minus_original_gradient": 1.0171340040611433e-09,
+        "derived_original_value_row_vs_point_potential": 2.6294566292043437e-10,
+        "actual_boundary_datum_potential": 2.5365876458466445e-20
+      }
+    },
+    {
+      "cells": 2048,
+      "allOriginalTargets": 6208,
+      "fullReferenceAndCoverage": true,
+      "maxAbsoluteErrorUpper": {
+        "point_cell_potential": 9.071757576328917e-12,
+        "force_minus_original_gradient": 4.973579390379037e-10,
+        "derived_original_value_row_vs_point_potential": 6.599309278882092e-11,
+        "actual_boundary_datum_potential": 1.8289576740651392e-20
+      },
+      "observedDiagnosticOrders": {
+        "point_cell_potential": 1.950894029843264,
+        "force_minus_original_gradient": 1.0321533512022465,
+        "derived_original_value_row_vs_point_potential": 1.9943777640632165,
+        "actual_boundary_datum_potential": 0.47186732180991126
+      }
+    },
+    {
+      "cells": 8192,
+      "allOriginalTargets": 24704,
+      "fullReferenceAndCoverage": true,
+      "maxAbsoluteErrorUpper": {
+        "point_cell_potential": 2.2973250513759033e-12,
+        "force_minus_original_gradient": 2.4625988846970135e-10,
+        "derived_original_value_row_vs_point_potential": 1.6523808907662274e-11,
+        "actual_boundary_datum_potential": 8.743121622792288e-21
+      },
+      "observedDiagnosticOrders": {
+        "point_cell_potential": 1.9814270879275921,
+        "force_minus_original_gradient": 1.0141028491424913,
+        "derived_original_value_row_vs_point_potential": 1.99776875061553,
+        "actual_boundary_datum_potential": 1.0648013153405063
+      }
+    }
+  ]
+}
