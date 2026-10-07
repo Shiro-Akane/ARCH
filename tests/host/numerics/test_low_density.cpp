@@ -587,9 +587,121 @@ void native_rz_completed_ghost_eos_reference() {
     }
 }
 
+
+/** Genuine bound Native face/row spacing, with independently integrated
+ * constant-density annular capacities. Actual Host flux traversal and raw
+ * thermal FE traversal share the face distance; axial torque rows additionally
+ * use the CURRENT cell height. This grants no full tensor/RKL qualification.
+ */
+void native_rz_actual_diffusion_distances()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr long double rho=1.25L,alpha=.2L,nu=.03L;
+    const auto relative=[](double actual,long double expected,const char* why) {
+        const long double band=64.L*std::numeric_limits<double>::epsilon()*std::abs(expected);
+        require(std::isfinite(actual)&&std::isfinite(expected)
+            &&std::abs(static_cast<long double>(actual)-expected)<=band,why);
+    };
+    Grid root(amr::MAX_NG,.1,1.3,-.3,.8,0.,1.,1,1,1);
+    root.dim=2;root.geometry="cylindrical";root.InitializeTopology(rz);
+    amr::Block block{};block.Reset();block.id=0;block.level=14;
+    block.logical_x1=0;block.logical_x2=(std::uint32_t{1}<<14)-1;
+    block.InitGeometry(root,(root.x1_max-root.x1_min)/amr::BLOCK_NX,
+        (root.x2_max-root.x2_min)/amr::BLOCK_NY,1.,rz);
+    const auto& g=block.grid;const auto geometry=GridMetrics::make_geometry_view(g,rz);
+    const int i=g.Is()+5;
+    const auto height=[&](int row) {
+        return static_cast<long double>(g.GetAxialFacePosR(row))-g.GetAxialFacePosL(row);
+    };
+    int j=-1;
+    for(int row=g.Js()+1;row<g.Je()-1;++row)
+        if((height(row-1)+height(row))!=(height(row)+height(row+1))) {j=row;break;}
+    require(j>=0,"real nonbinary canonical grid lacks distinct lower/upper face distances");
+    const long double dz=height(j),d_lower=(height(j-1)+dz)/2.L,d_upper=(dz+height(j+1))/2.L;
+    require(dz>0.&&d_lower>0.&&d_upper>0.&&d_lower!=d_upper,
+        "actual positive unequal Native face distances missing");
+    relative(DiffFlux::diffusion_face_spacing(geometry,1,i,j),d_lower,"Native lower actual face distance");
+    relative(DiffFlux::diffusion_face_spacing(geometry,1,i,j+1),d_upper,"Native upper actual face distance");
+    require(DiffFlux::diffusion_face_spacing(geometry,1,i,j)
+        !=DiffFlux::diffusion_face_spacing(geometry,1,i,j+1),"both Native rows reused current height");
+    SpeciesManager species;species.add_species("spacing-gas",1.,1.,1.4,3.);
+    IdealGas eos(1.4,species);const auto species_view=species.get_host_view();
+    FluidState field;field.Preallocate(g.GetTotalSize());field.InitSpecies(1);
+    // Thermal mode uses exact e=100,102,105 steps; torque mode uses actual
+    // physical Omega=0,1,3 and e=100. Both fill every legitimate radial halo.
+    const auto fill=[&](bool rotating) {
+        for(int index=0;index<g.GetTotalSize();++index) {
+            field.set(index,{double(rho),0.,0.,0.,double(100.L*rho)});field.X(0,index)=1.;
+        }
+        for(int row=0;row<g.GetTotalY();++row)for(int column=0;column<g.GetTotalX();++column) {
+            const long double l=g.GetFacePosL(column),h=g.GetFacePosR(column);
+            const long double omega=rotating?(row<j?0.L:row==j?1.L:3.L):0.L;
+            const long double e=rotating?100.L:row<j?100.L:row==j?102.L:105.L;
+            const long double mphi=rho*omega*.75L*(h+l)*(h*h+l*l)/(h*h+h*l+l*l);
+            const long double energy=rho*(e+omega*omega*(h*h+l*l)/4.L);
+            field.set(g.GetIndex(column,row,0),{double(rho),0.,0.,double(mphi),double(energy)});
+        }
+    };
+    fill(false);const FluidState before=field;
+    SimConfig config{};config.physics.diffusion.use_diffusion=true;
+    config.physics.diffusion.use_thermal_diffusion=true;
+    config.physics.diffusion.use_viscous_diffusion=false;config.physics.diffusion.use_species_diffusion=false;
+    config.physics.diffusion.alpha_therm=double(alpha);
+    std::vector<FluidVector> flux(g.GetTotalSize());std::vector<double> species_flux(g.GetTotalSize());
+    DiffFlux::compute_fluxes(field,eos,g,config,flux,species_flux,1,false,rz);
+    relative(flux[g.GetIndex(i,j,0)].eng,-rho*alpha*2.L/d_lower,"actual Host lower Fourier spacing");
+    relative(flux[g.GetIndex(i,j+1,0)].eng,-rho*alpha*3.L/d_upper,"actual Host upper Fourier spacing");
+    const int index=g.GetIndex(i,j,0);const DiffFlux::HostDiffusionStateReader read{field};
+    const DiffFlux::DiffusionConfigView thermal{true,true,false,false,0.,double(alpha),0.};
+    double x[1],nx[1],fx[1],charge[1],inverse_mass[1];
+    const auto dt=DiffFlux::evaluate_diffusion_dt_candidate(field.get(index),field.mass_fractions.data()+index,
+        1,g.GetTotalSize(),eos,species_view,thermal,geometry,i,j,0,x,nx,fx,charge,inverse_mass,read);
+    require(dt.valid,"actual Native thermal FE row rejected");
+    const long double rl=g.GetFacePosL(i),rh=g.GetFacePosR(i);
+    const long double dr=rh-rl,dr_high=static_cast<long double>(g.GetFacePosR(i+1))-g.GetFacePosL(i+1);
+    // Actual annular A_r/V=2*r_face/((rh-rl)*(rh+rl)); axial A/V=1/dz.
+    const long double inverse=alpha*(2.L*rl/(dr*(rh+rl)*dr)
+        +2.L*rh/(dr*(rh+rl)*dr_high)+(1.L/d_lower+1.L/d_upper)/dz);
+    relative(dt.value,1.L/inverse,"actual thermal dt row did not use both producer face distances");
+    require(field.rho==before.rho&&field.mom_w==before.mom_w&&field.eng==before.eng
+        &&field.mass_fractions==before.mass_fractions,"flux/dt qualification mutated inputs");
+
+    fill(true);config.physics.diffusion.use_thermal_diffusion=false;
+    config.physics.diffusion.use_viscous_diffusion=true;config.physics.diffusion.nu_visc=double(nu);
+    DiffFlux::compute_fluxes(field,eos,g,config,flux,species_flux,1,false,rz);
+    const long double C=rho*dr*(rh+rl)*(rh*rh+rl*rl)/4.L;
+    const long double W=dr*(rh*rh+rh*rl+rl*rl)/3.L;
+    require(C>0.&&W>0.,"independent annular angular capacity invalid");
+    relative(flux[g.GetIndex(i,j,0)].mom_w,-nu*C/(d_lower*W),"actual lower torque producer spacing");
+    relative(flux[g.GetIndex(i,j+1,0)].mom_w,-2.L*nu*C/(d_upper*W),"actual upper torque producer spacing");
+    const auto center=RzViscousStress::angular_cell(read,index,geometry,i);
+    const auto low=RzViscousStress::angular_cell(read,index-g.stride_y,geometry,i);
+    const auto high=RzViscousStress::angular_cell(read,index+g.stride_y,geometry,i);
+    require(center.valid&&low.valid&&high.valid,"actual annular row capacities rejected");
+    relative(center.capacity,C,"actual angular capacity versus independent rho*r^3 integral");
+    relative(RzViscousStress::face_row_rate(center,low,1,double(d_lower),double(nu),double(rl),double(dz)),
+        nu*C/(d_lower*dz*C),"lower angular row nu*Cface/(d_face*dz_center*Ccenter)");
+    relative(RzViscousStress::face_row_rate(center,high,1,double(d_upper),double(nu),double(rl),double(dz)),
+        nu*C/(d_upper*dz*C),"upper angular row nu*Cface/(d_face*dz_center*Ccenter)");
+    require(std::isnan(RzViscousStress::face_row_rate(center,low,1,double(d_lower),double(nu),double(rl),-1.)),
+        "invalid actual angular-row height accepted");
+    auto ordinary=geometry;ordinary.semantics=GridMetrics::GeometrySemantics::Existing;
+    require(DiffFlux::diffusion_face_spacing(ordinary,1,i,j)==DiffFlux::diffusion_face_spacing(
+        ordinary.geometry,ordinary.dim,1,ordinary.dx1,ordinary.dx2,ordinary.dx3,
+        ordinary.GetCellCenterX(i),ordinary.SourceTheta(j)),"ordinary producer literal spacing changed");
+    auto unbound=geometry;unbound.dyadic_identity={};
+    require(DiffFlux::diffusion_face_spacing(unbound,1,i,j)==unbound.dx2,
+        "unbound Native uniform axial distance changed");
+    require(RzViscousStress::face_row_rate(center,low,1,double(d_lower),double(nu),double(rl))
+        ==RzViscousStress::face_row_rate(center,low,1,double(d_lower),double(nu),double(rl),double(d_lower)),
+        "omitted old row height marker changed uniform-spacing formula");
+    std::cout<<"RZ_ACTUAL_DIFFUSION_DISTANCE_PASS actual_flux_and_thermal_dt=true axial_angular_rows=true whole_tensor_qualified=false\n";
+}
+
 void leaves() {
     native_rz_stage_prechecks();
     native_rz_diffusion_thermodynamics();
+    native_rz_actual_diffusion_distances();
     native_rz_coarsening_thermal_reference();
     native_rz_completed_ghost_eos_reference();
     timestep_controls();

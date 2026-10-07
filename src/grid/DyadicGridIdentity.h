@@ -7,8 +7,10 @@
  * 2. Native Block initialization binds its real level and logical position.
  * 3. Generate every bound native face from one checked global integer index.
  * 4. Authenticate block endpoints/representative spacing against that owner.
- * 5. Lend the same face/cell leaves to Host/device consumers. Periodic images,
- *    fluid/EOS acceptance and topology publication remain separate owners.
+ * 5. Resolve paired-periodic axial ghost cells as physical-domain aliases.
+ *    Their bounds, midpoint and width all borrow the represented source cell.
+ * 6. Lend the same leaves to Host/device consumers; fluid/EOS acceptance and
+ *    topology publication remain separate owners.
  *
  * Formula: p(G)=root_lower+(root_upper-root_lower)*(double(G)/double(N)),
  * N=root_cells*2^level; p(0)/p(N) retain the original user endpoint bits.
@@ -148,16 +150,45 @@ ARCH_INLINE bool canonical_axis_face(const DyadicGridIdentity& identity,int axis
 }
 
 /** Resolve one ordered represented cell from its two actual canonical faces.
- * Center=left+(right-left)/2; width=right-left. No nominal spacing or floor
- * substitutes for a collapsed/nonfinite cell. All output references are atomic.
+ * Workflow: authenticate the actual root context and signed global cell; for
+ * axis 1 with the root's genuine paired-periodic rule, map the CELL into the
+ * physical extent; resolve both source-domain endpoints together; validate and
+ * publish the represented bounds, midpoint and width atomically. Radial and
+ * nonperiodic axial cells retain their original unwrapped face operation order.
+ * Formula: alias G=((G mod N)+N) mod N, then [p(G),p(G+1)]; importantly p(N)
+ * remains the upper endpoint of the last represented cell, never p(0).
+ * Center=left+(right-left)/2; width=right-left. Periodic callbacks and primitive
+ * reconstruction see this same physical-domain alias chart. No translated
+ * endpoints, nominal spacing, geometry epsilon, clamp or floor replace it.
+ * canonical_axis_face remains UNWRAPPED for real block/root descriptors.
  */
 ARCH_INLINE bool canonical_axis_cell(const DyadicGridIdentity& identity,int axis,
     std::int64_t local_cell,double& lower,double& upper,double& center,double& width)
 {
     double left=0.,right=0.;
-    if(local_cell==std::numeric_limits<std::int64_t>::max()
-       ||!canonical_axis_face(identity,axis,local_cell,left)
-       ||!canonical_axis_face(identity,axis,local_cell+1,right))return false;
+    if(axis==1&&identity.periodic_axial) {
+        std::int64_t global=0;
+        // global_cell validates bound/root/level/logical identity before modulo.
+        // Preserve canonical_dyadic_face's original exact signed-index domain.
+        constexpr std::int64_t signed_limit=std::int64_t{1}<<53;
+        constexpr std::uint64_t exact_limit=std::uint64_t{1}<<53;
+        if(!global_cell(identity,axis,local_cell,global)
+           ||global < -signed_limit||global>signed_limit)return false;
+        const auto roots=static_cast<std::uint64_t>(identity.root_blocks[axis])
+            *static_cast<std::uint64_t>(dyadic_identity_detail::axis_cells(axis));
+        if(roots==0||roots>(exact_limit>>identity.level))return false;
+        const auto total=static_cast<std::int64_t>(roots<<identity.level);
+        const auto remainder=global%total;
+        const auto represented=remainder<0?remainder+total:remainder;
+        if(!canonical_dyadic_face(identity.root_lower[axis],identity.root_upper[axis],
+                roots,identity.level,represented,left)
+           ||!canonical_dyadic_face(identity.root_lower[axis],identity.root_upper[axis],
+                roots,identity.level,represented+1,right))return false;
+    } else {
+        if(local_cell==std::numeric_limits<std::int64_t>::max()
+           ||!canonical_axis_face(identity,axis,local_cell,left)
+           ||!canonical_axis_face(identity,axis,local_cell+1,right))return false;
+    }
     const double length=right-left,middle=left+.5*length;
     if(!std::isfinite(length)||!(length>0.)||!std::isfinite(middle)
        ||!(middle>left)||!(middle<right))return false;

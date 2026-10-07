@@ -12,6 +12,7 @@
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
 #include "numerics/reconstruction/RzDensityMoments.h"
+#include "numerics/reconstruction/RzSelectedReconstruction.h"
 #include "numerics/state/RzNativeClosure.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "math/geometry/CurvilinearMetricCases.h"
@@ -383,7 +384,14 @@ void test_rz_torque_divergence_budget() {
             std::fill(flux.begin(),flux.end(),FluidVector{});
             std::fill(sf.begin(),sf.end(),0.);
             if(lane==2) {
-                FluxHLLC<PCMReconstruction>::compute_fluxes(state,eos,grid,flux,sf,dir);
+                // Independent boundary integration must borrow the SAME native
+                // face semantics as the actual stage delta above. An ordinary
+                // point-mean sweep is a different flux, even with policy PCM.
+                FluxAdmissibility::MeanThermoCache native_means;
+                native_means.reset(size);
+                native_means.geometry_semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+                native_means.physical_bounds={};
+                FluxHLLC<PCMReconstruction>::compute_fluxes(state,eos,grid,flux,sf,dir,0.,&native_means);
             } else {
                 for(int j=grid.Js();j<=grid.Je();++j)for(int i=grid.Is();i<=grid.Ie();++i) {
                     const int cell=grid.GetIndex(i,j,0);
@@ -462,10 +470,11 @@ void test_rz_host_hydro() {
     species.add_species("gas", 1., 1., 1.4, 3.);
     IdealGas eos(1.4, species);
     const auto rz = GeometrySemantics::AxisymmetricRz;
-    for (double inner : {0., 1.}) for (double swirl : {0., 2.}) {
-        // Nonzero constant swirl has no regular axis extension; its source
-        // witness is restricted to the non-axis domain.
-        if (inner == 0. && swirl != 0.) continue;
+    for (double inner : {0., 1.}) for (double omega : {0., 2.}) {
+        // Physical solid-body rotation u_phi=Omega*r is regular at the axis.
+        // Native m_phi is its W mean and E its V mean, rather than a point
+        // state with constant u_phi. True negative-radius ghosts use the same
+        // odd velocity/even energy field and independent signed integrals.
         Grid grid(amr::MAX_NG, inner, inner+1., -.5, .5, 0., 1.);
         grid.dim=2; grid.geometry="cylindrical"; grid.InitializeTopology();
         FluidState state, updated;
@@ -473,11 +482,37 @@ void test_rz_host_hydro() {
         state.Preallocate(size); state.InitSpecies(1);
         updated.Preallocate(size); updated.InitSpecies(1);
         constexpr double rho=2., axial=3., pressure=5., dt=.001;
-        const double energy=pressure/.4+.5*rho*(axial*axial+swirl*swirl);
         for (int cell=0;cell<size;++cell) {
-            state.set(cell,{rho,0.,rho*axial,rho*swirl,energy});
+            // Padding is storage, not another physical radial cell.
+            state.set(cell,{rho,0.,rho*axial,0.,pressure/.4+.5*rho*axial*axial});
             state.X(0,cell)=1.;
         }
+        for (int j=0;j<grid.GetTotalY();++j) for(int i=0;i<grid.GetTotalX();++i) {
+            const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+            const long double l2=l*l,h2=h*h,l3=l2*l,h3=h2*h,l4=l2*l2,h4=h2*h2;
+            if (!(h>l) || (l<0.L && h>0.L))
+                throw std::runtime_error("Solid-body oracle requires a one-sided physical radial cell");
+            const long double sign=h<=0.L?-1.L:1.L;
+            // Independent antiderivatives: V/(2*pi*dz)=int |r|dr,
+            // W/(2*pi*dz)=int r^2dr, J/(2*pi*dz)=rho*Omega*int r^3dr.
+            const long double v=sign*(h2-l2)/2.L,w=(h3-l3)/3.L;
+            const long double angular_mean=static_cast<long double>(rho)*omega*(h4-l4)/(4.L*w);
+            const long double radius_square_v=sign*(h4-l4)/(4.L*v);
+            const long double energy=static_cast<long double>(pressure)/.4L
+                +.5L*rho*(static_cast<long double>(axial)*axial
+                    +static_cast<long double>(omega)*omega*radius_square_v);
+            state.set(grid.GetIndex(i,j,0),{rho,0.,rho*axial,
+                static_cast<double>(angular_mean),static_cast<double>(energy)});
+        }
+        const auto source_bits=[&]() {
+            std::vector<std::uint64_t> words;
+            for(const auto* values:std::array<const std::vector<double>*,7>{
+                &state.rho,&state.mom_u,&state.mom_v,&state.mom_w,&state.eng,
+                &state.enuc_rate,&state.mass_fractions})
+                for(double value:*values) words.push_back(std::bit_cast<std::uint64_t>(value));
+            return words;
+        };
+        const auto original_source=source_bits();
         std::vector<FluidVector> delta(size),flux(size);
         std::vector<double> species_delta(size),species_flux(size);
         TimeIntegration::evaluate_all_dimensions<FluxHLLC<PCMReconstruction>>(
@@ -488,21 +523,28 @@ void test_rz_host_hydro() {
         double max_error=0.;
         for (int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
             const int cell=grid.GetIndex(i,j,0);
-            const double inverse_radius=2./(grid.GetFacePosL(i)+grid.GetFacePosR(i));
-            const double expected=dt*rho*swirl*swirl*inverse_radius;
+            const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+            // Pressure flux and curvature cancel. The centrifugal V mean is
+            // dt*rho*Omega^2*int r^2dr/int r dr, equivalently
+            // dt*rho*Omega^2*2*(l*l+l*h+h*h)/(3*(l+h)).
+            const long double radial_mean=((h*h*h-l*l*l)/3.L)/((h*h-l*l)/2.L);
+            const double expected=static_cast<double>(static_cast<long double>(dt)*rho*omega*omega*radial_mean);
             close(delta[cell].mom_u,expected,"RZ Host Hydro centrifugal source");
             close(delta[cell].mom_v,0.,"RZ Host Hydro axial momentum");
-            close(delta[cell].mom_w,0.,"RZ Host Hydro swirl momentum");
+            close(delta[cell].mom_w,0.,"RZ Host Hydro omega momentum");
             close(delta[cell].rho,0.,"RZ Host Hydro density");
             close(delta[cell].eng,0.,"RZ Host Hydro energy");
             close(species_delta[cell],0.,"RZ Host Hydro species");
             close(updated.mom_u[cell],expected,"RZ Host Hydro RK update");
             close(updated.mom_v[cell],rho*axial,"RZ Host Hydro updated axial momentum");
+            close(updated.rho[cell],state.rho[cell],"RZ Host Hydro updated V density mean");
+            close(updated.mom_w[cell],state.mom_w[cell],"RZ Host Hydro updated W angular mean");
+            close(updated.eng[cell],state.eng[cell],"RZ Host Hydro updated V energy mean");
             close(updated.X(0,cell),1.,"RZ Host Hydro updated composition");
             max_error=std::max(max_error,std::abs(delta[cell].mom_u-expected));
         }
         if (updated.stage_repairs.values[0]!=0.)
-            throw std::runtime_error("RZ constant-state Hydro unexpectedly repaired");
+            throw std::runtime_error("RZ solid-body Hydro unexpectedly repaired");
         // Reject legacy gravity before resetting output or calling its owner.
         struct UnmigratedGravity : Physical::Gravity::IGravityPolicy {
             mutable int calls=0;
@@ -520,6 +562,8 @@ void test_rz_host_hydro() {
         }
         if (!rejected || delta[0].rho!=123. || unmigrated.calls!=0)
             throw std::runtime_error("RZ unmigrated gravity changed Hydro output");
+        if(source_bits()!=original_source)
+            throw std::runtime_error("RZ solid-body Hydro changed immutable source arrays");
         // Core's new single-J contract rejects a conservative RZ candidate
         // below configured bounds; the former repair fixture is not acceptance.
         FluidState low, repaired;
@@ -535,7 +579,7 @@ void test_rz_host_hydro() {
         } catch(const std::runtime_error&) {low_rejected=true;}
         if(!low_rejected || repaired.stage_repairs.values[0]!=0.)
             throw std::runtime_error("RZ Hydro repaired a forbidden conservative candidate");
-        std::cout<<"RZ_HOST_HYDRO inner="<<inner<<" swirl="<<swirl
+        std::cout<<"RZ_HOST_HYDRO inner="<<inner<<" omega="<<omega
             <<" max_radial_error="<<max_error<<" repair_volume="
             <<repaired.stage_repairs.values[1]<<'\n';
     }
@@ -735,9 +779,11 @@ public:
         void* stream=nullptr) const override
     {
         std::array<long double,5> local{};
-        long double unweighted_torque=0.;
+        long double unweighted_torque=0.,patch_torque=0.,same_torque=0.,mixed_torque=0.;
         FluxAdmissibility::MeanThermoCache means;
         means.reset(grid.GetTotalSize());means.roe_wave_speed=cfg.hll_roe_wave_speed;
+        means.geometry_semantics=owner_.geometry_semantics();
+        means.physical_bounds={cfg.sml_rho,cfg.min_eint,cfg.max_eint};
         std::vector<FluidVector> flux(grid.GetTotalSize());
         std::vector<double> species_flux(state.GetNumSpecies()*grid.GetTotalSize());
         const auto& block=control->pool->GetBlock(block_id);
@@ -748,7 +794,7 @@ public:
             FluxHLLC<PCMReconstruction>::compute_fluxes(state,eos_,grid,flux,
                 species_flux,dir,cfg.entropy_fix_coeff,&means);
             for(int side=0;side<2;++side) {
-                if(block.face_neighbors[2*dir+side].count!=0)continue;
+                const bool external_face=block.face_neighbors[2*dir+side].count==0;
                 const int count=dir==0?grid.Je()-grid.Js():grid.Ie()-grid.Is();
                 for(int n=0;n<count;++n) {
                     const int i=dir==0?(side?grid.Ie():grid.Is()):grid.Is()+n;
@@ -759,6 +805,12 @@ public:
                     const long double T=dir==0?2.L*pi*l*l*grid.dx2
                         :2.L*pi*(h*h*h-l*l*l)/3.L;
                     const long double factor=(side?1.L:-1.L)*dt*stage_weight;
+                    patch_torque+=factor*T*flux[c].mom_w;
+                    if(!external_face) {
+                        if(block.face_neighbors[2*dir+side].level_diff==0)same_torque+=factor*T*flux[c].mom_w;
+                        else mixed_torque+=factor*T*flux[c].mom_w;
+                        continue;
+                    }
                     local[0]+=factor*A*flux[c].rho;
                     local[1]+=factor*A*flux[c].eng;
                     local[2]+=factor*T*flux[c].mom_w;
@@ -791,7 +843,15 @@ public:
         }
         owner_.evaluate_patch(control,block_id,state,grid,dt,dU,ds,
             gravity,cfg,stage_weight,stream);
+        long double patch_delta=0.;
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+            const long double W=2.L*pi*(h*h*h-l*l*l)*grid.dx2/3.L;
+            patch_delta+=stage_weight*W*dU[grid.GetIndex(i,j,0)].mom_w;
+        }
         std::lock_guard lock(mutex_);
+        patch_torque_+=patch_torque;patch_delta_+=patch_delta;
+        same_torque_+=same_torque;mixed_torque_+=mixed_torque;
         for(int k=0;k<5;++k) {outward_[k]+=local[k];applied_[k]+=applied[k];}
         unweighted_applied_+=unweighted_applied;
         unweighted_torque_+=unweighted_torque;
@@ -815,6 +875,9 @@ public:
     long double unweighted_applied() const {
         std::lock_guard lock(mutex_);return unweighted_applied_;
     }
+    std::array<long double,4> patch_budget() const {
+        std::lock_guard lock(mutex_);return {patch_torque_,patch_delta_,same_torque_,mixed_torque_};
+    }
     int stage_calls() const {std::lock_guard lock(mutex_);return stage_calls_;}
 private:
     const Physical::Gravity::ExternalGravity* external_=nullptr;
@@ -825,7 +888,7 @@ private:
     mutable std::mutex mutex_;
     mutable std::array<long double,5> outward_{};
     mutable int stage_calls_=0;
-    mutable long double unweighted_torque_=0.;
+    mutable long double unweighted_torque_=0.,patch_torque_=0.,patch_delta_=0.,same_torque_=0.,mixed_torque_=0.;
 };
 
 template<typename Solver>
@@ -945,6 +1008,7 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
     long double maxJ=0.,maxM=0.,maxE=0.,maxSpecies=0.;
     double maxTorqueRegister=0.;
     constexpr int steps=10;
+    long double cumulative_reflux=0.;
     for(int step=0;step<steps;++step) {
         complete_boundary(context,handles,StateSlot::Current,
             StateVersion{clock.last_version()},
@@ -984,6 +1048,21 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
             }
             throw;
         }
+        for(int id:active) {
+            const auto& b=control.pool->GetBlock(id);const auto& g=b.grid;
+            const long double pi=std::acos(-1.L);
+            for(int face=0;face<4;++face) {
+                if(b.face_neighbors[face].level_diff!=1||!control.flux_register.HasData(id,face))continue;
+                const int dir=face/2,side=face%2,count=dir==0?g.Je()-g.Js():g.Ie()-g.Is();
+                for(int n=0;n<count;++n) {
+                    const int i=dir==0?(side?g.Ie():g.Is()):g.Is()+n;
+                    const long double l=g.GetFacePosL(i),h=g.GetFacePosR(i);
+                    const long double A=dir==0?2.L*pi*l*g.dx2:pi*(h*h-l*l);
+                    cumulative_reflux+=(side?-1.L:1.L)*1.e-4L*A*
+                        control.flux_register.GetSummedFlux(id,face,n).mom_w;
+                }
+            }
+        }
         const auto now=totals();
         const auto out=observer.outward();
         const auto applied=observer.applied();
@@ -996,8 +1075,21 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
         const long double xerror=std::max(std::abs(now[4]-before[4]+out[3])
             /(before[4]+std::abs(out[3])),std::abs(now[5]-before[5]+out[4])
             /(before[5]+std::abs(out[4])));
-        if(jerror>1.e-12L||merror>1.e-12L||eerror>1.e-12L||xerror>1.e-12L)
+        if(jerror>1.e-12L||merror>1.e-12L||eerror>1.e-12L||xerror>1.e-12L) {
+            std::cerr<<"RZ_MIXED_BUDGET_FAILURE method="<<Solver::name()<<" direction="<<direction
+                <<" inner="<<inner<<" open="<<open<<" step="<<step<<" J="<<double(jerror)
+                <<" mass="<<double(merror)<<" E="<<double(eerror)<<" species="<<double(xerror)
+                <<" dJ="<<double(now[2]-before[2])<<" out="<<double(out[2])
+                <<" all_faces="<<double(observer.patch_budget()[0])
+                <<" dU_W="<<double(observer.patch_budget()[1])
+                <<" reflux="<<double(cumulative_reflux)
+                <<" patch_telescope="<<double(observer.patch_budget()[0]+observer.patch_budget()[1])
+                <<" stage_update="<<double(now[2]-before[2]-observer.patch_budget()[1]-cumulative_reflux)
+                <<" same_level="<<double(observer.patch_budget()[2])
+                <<" coarse_fine_minus_reflux="<<double(observer.patch_budget()[3]-cumulative_reflux)
+                <<" join="<<double(observer.patch_budget()[0]-out[2]-cumulative_reflux)<<'\n';
             throw std::runtime_error("RZ rotating mixed-AMR closed science budget");
+        }
         maxJ=std::max(maxJ,jerror);maxM=std::max(maxM,merror);
         maxE=std::max(maxE,eerror);maxSpecies=std::max(maxSpecies,xerror);
         for(int id:active) {
@@ -1220,6 +1312,295 @@ void test_rz_native_coordinates()
     }
     std::cout<<"RZ_NATIVE_COORDINATES physical/native/axes/domain/legacy PASS\n";
 }
+
+/** Independent native solid-body means from polynomial antiderivatives.
+ * rho=Omega=1, ur=0, uz=v; V weight |r|, W weight r^2.
+ */
+FluidVector selected_rotation_mean(double lo,double hi,double internal,double axial)
+{
+    const long double left=lo,right=hi,sign=hi<=0.?-1.L:1.L;
+    const long double v=sign*(right*right-left*left)/2.L;
+    const long double w=(right*right*right-left*left*left)/3.L;
+    const long double inertia=(right*right*right*right-left*left*left*left)/4.L;
+    return {1.,0.,axial,static_cast<double>(inertia/w),
+        static_cast<double>(internal+.5L*axial*axial+sign*inertia/(2.L*v))};
+}
+
+/** Real logical Grid fixture; bound mode binds its actual level-zero root. */
+Grid selected_rotation_grid(bool bound)
+{
+    Grid grid(amr::MAX_NG,0.,16.,-8.,8.,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";
+    if(bound) {
+        grid.dyadic_identity.bound=true;
+        grid.dyadic_identity.root_lower={0.,-8.};
+        grid.dyadic_identity.root_upper={16.,8.};
+        grid.dyadic_identity.root_blocks={1,1};
+        grid.dyadic_identity.level=0;grid.dyadic_identity.logical={0,0};
+    }
+    grid.InitializeTopology(GridMetrics::GeometrySemantics::AxisymmetricRz);
+    return grid;
+}
+
+/** Populate all real ghosts by the same independent physical antiderivatives. */
+void selected_fill_rotation(FluidState& state,const Grid& grid,
+    const std::vector<double>& fractions,double axial,bool warm=false)
+{
+    state.Preallocate(grid.GetTotalSize());state.InitSpecies(static_cast<int>(fractions.size()));
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        // A non-affine monotone warm axial stencil distinguishes limiter types.
+        const double e=warm?100.+(j<6?j:j==6?6.:6.+2.*(j-6)):1./64.;
+        const int index=grid.GetIndex(i,j);
+        state.set(index,selected_rotation_mean(grid.GetFacePosL(i),grid.GetFacePosR(i),e,axial));
+        for(int s=0;s<state.GetNumSpecies();++s)state.X(s,index)=fractions[s];
+    }
+}
+
+/** Point bundle EOS gate and analytic baseline independent of reconstruction. */
+void selected_check_pcm(const RzSelectedReconstruction::FaceBundles& bundle,
+    const double* q,const std::vector<double>& fractions,const IdealGas& eos,double axial)
+{
+    if(bundle.status!=arch::state::Status::valid)
+        throw std::runtime_error("Native selected PCM rejected independent cold rotation");
+    const int count=static_cast<int>(fractions.size());
+    for(int d=0;d<2;++d) {
+        const auto& donor=bundle.donor[d];
+        if(donor.theta!=1.)throw std::runtime_error("Native PCM altered its exact baseline ray");
+        for(int n=0;n<donor.node_count;++n) {
+            const double r=donor.radius[n];const auto& point=donor.point[n];
+            close(point.rho,1.,"Selected PCM independent rho");
+            close(point.mom_u,0.,"Selected PCM independent radial momentum");
+            close(point.mom_v,axial,"Selected PCM independent axial momentum");
+            close(point.mom_w,r,"Selected PCM independent physical swirl");
+            close(point.eng,1./64.+.5*axial*axial+.5*r*r,"Selected PCM independent physical energy");
+            std::vector<double> x(count);double sum=0.;
+            for(int s=0;s<count;++s) {
+                x[s]=q[(d*8+n)*count+s]/point.rho;sum+=x[s];
+                close(x[s],fractions[s],"Selected PCM changed original species");
+                if(fractions[s]==0.&&x[s]!=0.)throw std::runtime_error("Selected PCM invented a zero species");
+                if(fractions[s]>0.&&!(x[s]>0.))throw std::runtime_error("Selected PCM lost a positive trace");
+            }
+            if(arch::state::validate_eos(point,x.data(),count,{},eos)!=arch::state::Status::valid)
+                throw std::runtime_error("Selected PCM actual IdealGas rejected physical node");
+            close(eos.get_pressure(point,x.data()),(1.4-1.)/64.,"Selected PCM analytic pressure");
+            double original=0.;for(double value:fractions)original+=value;
+            if(std::abs(sum-original)>32.*std::numeric_limits<double>::epsilon()*original)
+                throw std::runtime_error("Selected PCM changed original near-one alpha");
+            if(original>1.+8.*std::numeric_limits<double>::epsilon()
+                &&!(sum>1.+8.*std::numeric_limits<double>::epsilon()))
+                throw std::runtime_error("Selected PCM normalized original near-one alpha");
+        }
+    }
+}
+
+/** Actual IdealGas with observable required queries and a documented high probe.
+ * Required rejection acts only in pressure; probe rejection leaves required
+ * baseline EOS intact. It is an owner failure-injection fixture, not fake EOS.
+ */
+struct SelectedObservedEos {
+    const IdealGas& eos;
+    bool reject_probe=false,reject_required=false;
+    double rejected_internal=0.;
+    mutable int pressures=0,probes=0;
+    double get_temperature(double rho,double e,const double* x) const {
+        return eos.get_temperature(rho,e,x);
+    }
+    double get_pressure(const FluidVector& u,const double* x) const {
+        ++pressures;
+        const double e=arch::state::recover(u).internal;
+        if(reject_required&&std::abs(e-rejected_internal)<=2.e-12*std::max(1.,std::abs(rejected_internal)))
+            throw std::runtime_error("Selected required actual IdealGas pressure fixture rejection");
+        return eos.get_pressure(u,x);
+    }
+    double get_sound_speed(const FluidVector& u,double p,const double* x) const {
+        return eos.get_sound_speed(u,p,x);
+    }
+    // Keep the actual required IdealGas inverse interface complete. The shared
+    // probe helper's later ordinary return is compiled even when its earlier
+    // optional probe branch is selected; only the probe below injects failure.
+    double get_total_energy_primitive(double rho,double u,double v,double w,double p,const double* x) const {
+        return eos.get_total_energy_primitive(rho,u,v,w,p,x);
+    }
+    double probe_total_energy_primitive(double rho,double u,double v,double w,double p,const double* x) const {
+        ++probes;
+        return reject_probe?std::numeric_limits<double>::quiet_NaN():eos.get_total_energy_primitive(rho,u,v,w,p,x);
+    }
+};
+
+/** Direct selected owner tests; not a method-order or coupled-stage proof. */
+void test_rz_selected_face_bundles()
+{
+    const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr double axial=1./8.;
+    for(bool bound:{false,true})for(int species_count:{2,13}) {
+        SpeciesManager species;
+        for(int s=0;s<species_count;++s)species.add_species("selected"+std::to_string(s),1.,1.,1.4,3.);
+        IdealGas eos(1.4,species);
+        std::vector<double> fractions(species_count,0.);
+        fractions[0]=.2+16.*std::numeric_limits<double>::epsilon();fractions[1]=.8;
+        if(species_count==13){fractions[1]=.3;fractions[2]=.5;fractions[3]=1.e-30;}
+        const Grid grid=selected_rotation_grid(bound);FluidState state;
+        selected_fill_rotation(state,grid,fractions,axial);
+        const auto read=[&](int index){return state.get(index);};
+        const auto fraction=[&](int s,int index){return state.X(s,index);};
+        const int index=grid.GetIndex(grid.Is(),grid.Js());
+        if(arch::state::recover(state.get(index)).status!=arch::state::Status::unresolved_energy)
+            throw std::runtime_error("Selected cold fixture lost raw-mean unresolved diagnostic");
+        close(state.eng[index]-.5*(state.mom_w[index]*state.mom_w[index]+axial*axial),
+            -1./64.,"Selected raw mean negative energy antiderivative");
+        for(int direction:{0,1}) {
+            RzSelectedReconstruction::Context context{GridMetrics::make_geometry_view(grid,rz),
+                grid.GetTotalX(),grid.GetTotalY(),grid.Is(),grid.Js(),direction,species_count,{}};
+            std::vector<double> q(16*species_count,-17.),scratch(19*species_count);
+            const auto bundle=RzSelectedReconstruction::reconstruct_face<PCMReconstruction>(
+                read,fraction,context,eos,q.data(),scratch.data(),scratch.size());
+            if(bundle.donor[0].node_count!=(direction==0?6:8))
+                throw std::runtime_error("Selected PCM wrong physical node layout");
+            selected_check_pcm(bundle,q.data(),fractions,eos,axial);
+            auto bad=context;bad.bounds.internal_min=1.;
+            std::fill(q.begin(),q.end(),-17.);
+            const auto failure=RzSelectedReconstruction::reconstruct_face<PCMReconstruction>(
+                read,fraction,bad,eos,q.data(),scratch.data(),scratch.size());
+            if(failure.status==arch::state::Status::valid
+                ||std::any_of(q.begin(),q.end(),[](double v){return v!=-17.;}))
+                throw std::runtime_error("Selected required failure published rhoX output");
+        }
+    }
+    SpeciesManager species;species.add_species("selected",1.,1.,1.4,3.);
+    IdealGas eos(1.4,species);const Grid grid=selected_rotation_grid(true);FluidState state;
+    selected_fill_rotation(state,grid,{1.},0.,true);
+    const auto read=[&](int index){return state.get(index);};
+    const auto fraction=[&](int s,int index){return state.X(s,index);};
+    // Direct Native scalar entry must receive configured bounds explicitly;
+    // the real full face traversal receives them through the stage owner.
+    for(int fault=0;fault<4;++fault) {
+        arch::state::Bounds bounds{};
+        if(fault==1)bounds.density=2.;
+        if(fault==2)bounds.internal_min=200.;
+        if(fault==3)bounds.internal_max=1.;
+        FluidVector left(42.,43.,44.,45.,46.),right=left;
+        double xl=-17.,xr=-17.,work=0.;bool rejected=false;
+        try {AMRInterfaceReconstruction::reconstruct_face<PCMReconstruction>(
+            state,eos,grid,0,grid.Is(),grid.Js(),0,grid.GetIndex(grid.Is(),grid.Js()),
+            1,1,&xl,&xr,&work,left,right,rz,fault==0?nullptr:&bounds);}
+        catch(const std::invalid_argument&){rejected=true;}
+        catch(const std::runtime_error&){rejected=true;}
+        if(!rejected||left.rho!=42.||left.eng!=46.||right.rho!=42.||right.eng!=46.
+            ||xl!=-17.||xr!=-17.)
+            throw std::runtime_error("Direct Native trace omitted configured bounds or published rejected outputs");
+    }
+    RzSelectedReconstruction::Context context{GridMetrics::make_geometry_view(grid,rz),
+        grid.GetTotalX(),grid.GetTotalY(),grid.Is(),6,1,1,{}};
+    std::vector<double> qm(16),qs(16),workspace(19);
+    const auto minmod=RzSelectedReconstruction::reconstruct_face<MusclReconstruction<MinMod>>(
+        read,fraction,context,eos,qm.data(),workspace.data(),workspace.size());
+    const auto superbee=RzSelectedReconstruction::reconstruct_face<MusclReconstruction<SuperBee>>(
+        read,fraction,context,eos,qs.data(),workspace.data(),workspace.size());
+    if(minmod.status!=arch::state::Status::valid||superbee.status!=arch::state::Status::valid
+        ||minmod.donor[0].theta!=1.||superbee.donor[0].theta!=1.)
+        throw std::runtime_error("Selected warm MUSCL real policy stencil rejected");
+    close(minmod.donor[0].point[0].eng-superbee.donor[0].point[0].eng,.5,
+        "Native selected MinMod and SuperBee silently share one method");
+    SelectedObservedEos observed{eos};
+    std::vector<double> q(16,-17.);
+    const auto ppm=RzSelectedReconstruction::reconstruct_face<PPMReconstruction>(
+        read,fraction,context,observed,q.data(),workspace.data(),workspace.size());
+    if(ppm.status!=arch::state::Status::valid||observed.probes!=16||observed.pressures<60)
+        throw std::runtime_error("Native PPM skipped actual six-source pressure or both-trace probes");
+    SelectedObservedEos high_failure{eos,true};
+    const auto fallback=RzSelectedReconstruction::reconstruct_face<PPMReconstruction>(
+        read,fraction,context,high_failure,q.data(),workspace.data(),workspace.size());
+    if(fallback.status!=arch::state::Status::valid||fallback.donor[0].theta!=0.
+        ||fallback.donor[1].theta!=0.||high_failure.probes!=16)
+        throw std::runtime_error("Native PPM high inverse failure did not contract whole bundles");
+    for(int d=0;d<2;++d)for(int n=0;n<8;++n) {
+        const double r=fallback.donor[d].radius[n];const double e=d==0?106.:108.;
+        close(fallback.donor[d].point[n].eng,e+.5*r*r,"PPM baseline fallback analytic energy");
+        close(fallback.donor[d].point[n].mom_w,r,"PPM fallback changed swirl independently");
+        close(q[d*8+n],1.,"PPM fallback changed species independently");
+    }
+    // Thirteen actual materials: N-1 selected profiles plus a dependent row.
+    // Axial MUSCL endpoints independently preserve each owning q mean.
+    SpeciesManager many_species;
+    for(int k=0;k<13;++k)many_species.add_species("many"+std::to_string(k),1.,1.,1.4,3.);
+    IdealGas many_eos(1.4,many_species);FluidState many;
+    std::vector<double> initial(13,0.);initial[0]=.2;initial[1]=.3;initial[2]=.5;
+    selected_fill_rotation(many,grid,initial,0.,true);
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const int cell=grid.GetIndex(i,j);
+        many.X(0,cell)=(j<6?.1:j==6?.2:.25)+16.*std::numeric_limits<double>::epsilon();
+        many.X(1,cell)=j<6?.2:j==6?.3:.45;
+        many.X(2,cell)=j<6?.7:j==6?.5:.3;
+        many.X(3,cell)=1.e-30;
+    }
+    auto many_context=context;many_context.species=13;
+    std::vector<double> manyq(16*13,-17.),manywork(19*13);
+    const auto manyread=[&](int cell){return many.get(cell);};
+    const auto manyfraction=[&](int k,int cell){return many.X(k,cell);};
+    const auto manybundle=RzSelectedReconstruction::reconstruct_face<MusclReconstruction<MinMod>>(
+        manyread,manyfraction,many_context,many_eos,manyq.data(),manywork.data(),manywork.size());
+    if(manybundle.status!=arch::state::Status::valid)
+        throw std::runtime_error("Selected actual thirteen-species MUSCL rejected");
+    for(int d=0;d<2;++d)for(int n=0;n<4;++n) {
+        const int cell=grid.GetIndex(grid.Is(),6+d);
+        double lower_sum=0.,upper_sum=0.;
+        for(int k=0;k<13;++k) {
+            const double low=manyq[(d*8+n)*13+k],high=manyq[(d*8+4+n)*13+k];
+            close(.5*low+.5*high,many.X(k,cell),"Selected rhoX traces changed actual owning mean");
+            lower_sum+=low;upper_sum+=high;
+            if(k==3&&(!(low>0.)||!(high>0.)))
+                throw std::runtime_error("Selected thirteen-species lost positive trace");
+            if(k>=4&&(low!=0.||high!=0.))
+                throw std::runtime_error("Selected thirteen-species invented zero trace");
+        }
+        if(!(lower_sum>1.+8.*std::numeric_limits<double>::epsilon())
+            ||!(upper_sum>1.+8.*std::numeric_limits<double>::epsilon()))
+            throw std::runtime_error("Selected high rhoX profiles normalized original alpha");
+        const double r=manybundle.donor[d].radius[n],e=d==0?106.:108.;
+        close(.5*manybundle.donor[d].point[n].eng+.5*manybundle.donor[d].point[4+n].eng,
+            e+.5*r*r,"Selected fluid traces changed independent owning energy mean");
+    }
+    SelectedObservedEos required_failure{eos,false,true,112.};
+    std::fill(q.begin(),q.end(),-17.);bool threw=false;
+    try {(void)RzSelectedReconstruction::reconstruct_face<PPMReconstruction>(
+        read,fraction,context,required_failure,q.data(),workspace.data(),workspace.size());}
+    catch(const std::runtime_error& error){threw=std::string(error.what())==
+        "Selected required actual IdealGas pressure fixture rejection";}
+    if(!threw||std::any_of(q.begin(),q.end(),[](double v){return v!=-17.;}))
+        throw std::runtime_error("Native PPM required wide EOS failure became a fallback/publication");
+}
+
+/** Actual sweep witness: physical time integration is outside this test.
+ * Independent integrals on [0,1]: <r>_W=3/4, <r^2/2>_V=1/4.
+ * Native FluxSweep wiring and actual physical_bounds cache dependency must be
+ * integrated before Root compiles/runs this candidate; no current pass implied.
+ */
+void test_rz_selected_pcm_axial_flux()
+{
+    const Grid grid=selected_rotation_grid(true);FluidState state;
+    constexpr double velocity=1./8.,e0=1./64.;
+    selected_fill_rotation(state,grid,{1.},velocity);
+    SpeciesManager species;species.add_species("selected",1.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    std::vector<FluidVector> flux(grid.GetTotalSize());std::vector<double> species_flux(grid.GetTotalSize());
+    FluxAdmissibility::MeanThermoCache cache;cache.reset(grid.GetTotalSize());
+    cache.geometry_semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    cache.physical_bounds={};
+    FluxHLLC<PCMReconstruction>::compute_fluxes(state,eos,grid,flux,species_flux,1,0.,&cache);
+    const int face=grid.GetIndex(grid.Is(),grid.Js())+grid.stride_y;
+    close(flux[face].rho,velocity,"Native PCM axial independent mass flux");
+    close(flux[face].mom_w,3.*velocity/4.,"Native axial physical phi flux requires W average");
+    close(flux[face].eng,velocity*(1.4*e0+1./4.+.5*velocity*velocity),
+        "Native axial energy flux requires V antiderivative");
+    close(species_flux[face],velocity,"Native axial species flux independent mass");
+    for(int j=grid.Js()-1;j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+        const auto f=flux[grid.GetIndex(i,j)+grid.stride_y];
+        if(!std::isfinite(f.rho)||!std::isfinite(f.mom_u)||!std::isfinite(f.mom_v)
+            ||!std::isfinite(f.mom_w)||!std::isfinite(f.eng))
+            throw std::runtime_error("Actual native PCM axial sweep produced invalid physical flux");
+    }
+}
+
 int main(int argc,char** argv)
 {
     if(argc==2 && std::string(argv[1])=="rz-applied-torque-audit") {
@@ -1239,6 +1620,8 @@ int main(int argc,char** argv)
     }
     if(argc==2 && std::string(argv[1])=="rz-equilibrium-audit")
         return audit_rz_rotating_equilibrium();
+    test_rz_selected_face_bundles();
+    test_rz_selected_pcm_axial_flux();
     test_rz_angular_measures();
     test_rz_torque_divergence_budget();
     test_rz_native_coordinates();

@@ -6,6 +6,8 @@
  * 1. Bind EOS-only thermal inputs to the actual native density stencil when RZ is explicit.
  * 2. Calculate diffusion coefficients (viscosity, thermal conductivity, species diffusivity).
  * 3. Compute face-centered gradients for the requested diffusion dimension.
+ *    Native axial producer and each timestep row share the same actual face
+ *    distance, while the row's current-cell capacity uses its actual height.
  * 4. Generate diffusion fluxes and geometric source terms (for momentum).
  * 5. Combine multi-dimensional fluxes into a generic L(U) operator.
  * Native m_phi=J/W and E=E/V require E_int/V=E/V-J^2/(2*I_*V).
@@ -96,6 +98,29 @@ namespace DiffFlux
     {
         return GridMetrics::PhysicalSpacing(
             geometry, dim, direction, dx1, dx2, dx3, radius, theta);
+    }
+
+    /** Actual right-indexed face distance, shared by producer and dt rows.
+     * Workflow: preserve the original ordinary/radial PhysicalSpacing path;
+     * on a Native axial face, borrow both adjacent represented cell widths;
+     * reject invalid geometry and return their positive finite half-sum.
+     * Formula d_(j-1/2)=0.5*dz_(j-1)+0.5*dz_j. Periodic alias widths are
+     * supplied by the same GridMetrics cell owner, never reconstructed here.
+     * The i,j indices name the RIGHT cell of the face, not the current dt cell.
+     */
+    ARCH_INLINE double diffusion_face_spacing(
+        const GridMetrics::GeometryView& grid,int direction,int i,int j)
+    {
+        if(!GridMetrics::is_axisymmetric_rz(grid)||direction!=1)
+            return GridMetrics::PhysicalSpacing(grid,direction,i,j);
+        if(j==std::numeric_limits<int>::min())
+            return std::numeric_limits<double>::quiet_NaN();
+        const double left=grid.CellWidth(1,j-1),right=grid.CellWidth(1,j);
+        if(!std::isfinite(left)||!(left>0.)||!std::isfinite(right)||!(right>0.))
+            return std::numeric_limits<double>::quiet_NaN();
+        const double distance=.5*left+.5*right;
+        return std::isfinite(distance)&&distance>0.?distance:
+            std::numeric_limits<double>::quiet_NaN();
     }
 
     ARCH_INLINE DiffusionCoefficients evaluate_diffusion_coefficients(
@@ -482,14 +507,27 @@ namespace DiffFlux
             angular_center=RzViscousStress::angular_cell(read_state,cell,grid,i);
             if(!angular_center.valid)return {diffusion_dt_sentinel(),false};
         }
+        const bool native_rz=GridMetrics::is_axisymmetric_rz(grid);
         for (int direction = 0; direction < grid.dim; ++direction) {
-            const double spacing = GridMetrics::PhysicalSpacing(grid, direction, i, j);
-            if (!(spacing > 0.0) || !(volume > 0.0))
+            // Ordinary callers retain the original current-cell spacing. For
+            // Native axial rows, this is the current capacity height only;
+            // each side resolves its own shared face distance below.
+            const double cell_spacing = GridMetrics::PhysicalSpacing(grid, direction, i, j);
+            if (!(cell_spacing > 0.0) || !(volume > 0.0)
+                ||(native_rz&&!std::isfinite(cell_spacing)))
                 return {diffusion_dt_sentinel(), false};
             const int stride = direction == 0 ? 1 : direction == 1 ? grid.stride_y : grid.stride_z;
             const double connection = config.use_viscous_diffusion
                 ? viscous_basis_rotation(grid, direction, i, j).infinity_norm() : 0.;
             for (int side = 0; side < 2; ++side) {
+                // Lower face has right cell=current; upper face has right
+                // cell=current+stride. Producer uses these exact same indices.
+                const int face_i=i+(direction==0&&side?1:0);
+                const int face_j=j+(direction==1&&side?1:0);
+                const double spacing=native_rz
+                    ?diffusion_face_spacing(grid,direction,face_i,face_j):cell_spacing;
+                if(!(spacing>0.)||(native_rz&&!std::isfinite(spacing)))
+                    return {diffusion_dt_sentinel(),false};
                 const int neighbour = cell + (side ? stride : -stride);
                 const auto adjacent = read_state(neighbour);
                 if (!diffusion_face_is_active(value.rho, adjacent.rho)) return {diffusion_dt_sentinel(), false};
@@ -527,7 +565,8 @@ namespace DiffFlux
                     const double radial_face=side?grid.GetFacePosR(i):grid.GetFacePosL(i);
                     const double rate=RzViscousStress::face_row_rate(
                         angular_center,adjacent_angular,direction,spacing,
-                        face.coefficients.nu_visc,radial_face);
+                        face.coefficients.nu_visc,radial_face,
+                        direction==1?cell_spacing:0.);
                     if(!std::isfinite(rate)||rate<0.)return {diffusion_dt_sentinel(),false};
                     angular_row+=rate;
                 }
@@ -690,7 +729,7 @@ inline void capture_diffusion_surface_flux(
                                 U_R, read, geometry_view, idx_R, i);
                             FluidVector F_diff;
                             DiffusionFaceProperties properties{};
-                            const double spacing = GridMetrics::PhysicalSpacing(geometry_view,dir,i,j);
+                            const double spacing = diffusion_face_spacing(geometry_view,dir,i,j);
                             const DiffusionFaceStatus status = evaluate_diffusion_face(
                                 U_L, U_R,
                                 n_species > 0 ? state.mass_fractions.data() + idx_L : nullptr,

@@ -191,6 +191,8 @@ struct FamilyGeometry {
  * counts and periodic authorization must match bitwise; fine global index is
  * twice the real coarse index. Only a paired periodic z rule admits +/- one
  * genuine root-domain image. Radial images and blind modulo are forbidden.
+ * Both actual cell views already expose the same physical-domain alias chart;
+ * the authorized logical image therefore publishes zero coordinate shift.
  */
 ARCH_INLINE bool dyadic_mapping(const NativeRzProlongationContext& context,double& z_shift)
 {
@@ -221,9 +223,11 @@ ARCH_INLINE bool dyadic_mapping(const NativeRzProlongationContext& context,doubl
         const auto extent=std::int64_t(b.root_blocks[1])*amr::BLOCK_NY
             *(std::int64_t{1}<<b.level);
         if(difference!=extent&&difference!=-extent)return false;
-        z_shift=(difference>0?1.:-1.)*(a.root_upper[1]-a.root_lower[1]);
-        if(!std::isfinite(z_shift))return false;
+        // Exact image authorization remains mandatory, but actual source and
+        // child points are already expressed in the same represented alias
+        // chart. Adding a domain span here would apply periodicity twice.
     }
+    z_shift=0.;
     return true;
 }
 

@@ -172,6 +172,7 @@ ARCH_INLINE void face_thermo(const FluidVector& state, double energy,
 struct MeanThermoCache {
     GridMetrics::GeometrySemantics geometry_semantics=GridMetrics::GeometrySemantics::Existing;
     bool roe_wave_speed = true;
+    arch::state::Bounds physical_bounds{}; // Actual numerics bounds, not a GUI policy.
     std::vector<double> pressure;
     std::vector<double> sound_speed;
     std::vector<unsigned char> ready;
@@ -183,28 +184,49 @@ struct MeanThermoCache {
     }
 };
 
-/** Blend a face flux using already validated thermodynamics of both cell means. */
-ARCH_INLINE void limit_face_with_thermo(const FluidVector& left, const FluidVector& right,
-    const double* x_left, const double* x_right, int species,
-    double p_left, double c_left, double p_right, double c_right,
-    int direction, FluidVector& high, double* species_flux)
+/** Physical point LLF baseline and the unchanged joint face factor.
+ * valid certifies only the original wave/bar prerequisite, not an EOS table,
+ * native mixed-measure whole-stage domain or scheduler publication.
+ */
+struct PointFaceBlend {
+    FluidVector low{};
+    double wave_speed=0.;
+    double theta=0.;
+    bool valid=false;
+};
+
+namespace point_face_detail {
+/** Stack-only original arithmetic retained for the ordinary final species loop.
+ * It avoids recomputing a/F_L/F_R or adding hidden fields to the public result.
+ */
+struct Arithmetic { double a=0.;FluidVector fl{},fr{}; };
+
+/** Sole factor owner for public point inspection and the ordinary limiter.
+ * Workflow: original a and physical fluxes -> LLF low/bar -> segment factors
+ * -> original shifted species cone. No caller output is mutated here.
+ * low=(F_L+F_R)/2-a*(U_R-U_L)/2;
+ * bar=(U_L+U_R)/2-(F_R-F_L)/(2a).
+ */
+ARCH_INLINE PointFaceBlend evaluate(const FluidVector& left,const FluidVector& right,
+    const double* x_left,const double* x_right,int species,
+    double p_left,double c_left,double p_right,double c_right,
+    int direction,const FluidVector& high,const double* species_high,
+    Arithmetic& arithmetic)
 {
+    PointFaceBlend result;
     const double a = std::max(std::abs(get_un(left, direction)) + c_left,
                               std::abs(get_un(right, direction)) + c_right);
     const auto fl = get_flux(left, p_left, direction);
     const auto fr = get_flux(right, p_right, direction);
-    if (!(a > 0.0) || !std::isfinite(a)) {
-        high = FluidVector(arch::state::invalid(), 0.0, 0.0, 0.0, arch::state::invalid());
-        return;
-    }
+    arithmetic.a=a;arithmetic.fl=fl;arithmetic.fr=fr;
+    result.wave_speed=a;
+    if (!(a > 0.0) || !std::isfinite(a)) return result;
     // Local Lax-Friedrichs: F_low=(F_L+F_R)/2-a*(U_R-U_L)/2.
     const auto low = 0.5 * fl + 0.5 * fr - (0.5 * a) * (right - left);
     // Invariant-domain bar state: U_bar=(U_L+U_R)/2-(F_R-F_L)/(2a).
     const auto bar = 0.5 * left + 0.5 * right - (0.5 / a) * (fr - fl);
-    if (!valid(bar)) {
-        high = FluidVector(arch::state::invalid(), 0.0, 0.0, 0.0, arch::state::invalid());
-        return;
-    }
+    result.low=low;
+    if (!valid(bar)) return result;
     const auto correction = (low - high) / a;
     double theta = std::min(segment_fraction(bar, correction), segment_fraction(bar, -1.0 * correction));
     for (int s = 0; s < species; ++s) {
@@ -222,12 +244,53 @@ ARCH_INLINE void limit_face_with_thermo(const FluidVector& left, const FluidVect
         const double tau = arch::state::composition_roundoff_limit;
         const double shifted_bar = bar_species + tau * bar.rho;
         const double shifted_deviation = std::abs(
-            (low_species - species_flux[s]) / a + tau * correction.rho);
+            (low_species - species_high[s]) / a + tau * correction.rho);
         if (!std::isfinite(shifted_deviation) || !std::isfinite(shifted_bar))
             theta = 0.0;
         else if (shifted_deviation > shifted_bar)
             theta = std::min(theta, std::max(0.0, shifted_bar) / shifted_deviation);
     }
+    result.theta=theta;result.valid=true;return result;
+}
+} // namespace point_face_detail
+
+/** Return the original physical point limiter factor without blending a flux.
+ * Native radial integration can take a minimum of these four node factors and
+ * blend all low/high components once. Caller supplies actual point EOS inputs;
+ * this entry never upgrades that point lemma to a native stage guarantee.
+ * Existing species/pointer/direction preconditions remain caller-owned.
+ */
+ARCH_INLINE PointFaceBlend point_face_blend_with_thermo(
+    const FluidVector& left,const FluidVector& right,
+    const double* x_left,const double* x_right,int species,
+    double p_left,double c_left,double p_right,double c_right,
+    int direction,const FluidVector& high,const double* species_high)
+{
+    point_face_detail::Arithmetic arithmetic;
+    return point_face_detail::evaluate(left,right,x_left,x_right,species,
+        p_left,c_left,p_right,c_right,direction,high,species_high,arithmetic);
+}
+
+/** Blend a face flux using the sole original shared factor owner.
+ * Keep original final fluid/species expression order and rejection bytes.
+ * No required mean EOS query, trace window or segment iteration is changed.
+ */
+ARCH_INLINE void limit_face_with_thermo(const FluidVector& left, const FluidVector& right,
+    const double* x_left, const double* x_right, int species,
+    double p_left, double c_left, double p_right, double c_right,
+    int direction, FluidVector& high, double* species_flux)
+{
+    point_face_detail::Arithmetic arithmetic;
+    const auto factor=point_face_detail::evaluate(left,right,x_left,x_right,species,
+        p_left,c_left,p_right,c_right,direction,high,species_flux,arithmetic);
+    if (!factor.valid) {
+        high = FluidVector(arch::state::invalid(), 0.0, 0.0, 0.0, arch::state::invalid());
+        return;
+    }
+    const double a=arithmetic.a;
+    const auto fl=arithmetic.fl,fr=arithmetic.fr;
+    const auto low=factor.low;
+    const double theta=factor.theta;
     if (theta >= 1.0) return;
     high = theta == 0.0 ? low : low + theta * (high - low);
     for (int s = 0; s < species; ++s) {

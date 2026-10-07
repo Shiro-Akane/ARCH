@@ -809,6 +809,28 @@ public:
         }
         ExecuteCoarseFinePlan(
             plans.coarse_fine, pool, tree, dim, state_ptr, handles, chart,bounds);
+        if (chart == CoordinateSeamGeometry::RzAxisymmetric) {
+            // Workflow: coarse-fine radial publication follows the original
+            // X/Y sweep and refreshes only active axial tangent rows. Native
+            // axial donor closures also read radial rho in axial ghosts. At
+            // a T junction those corners must therefore borrow the newly
+            // published radial halo, rather than the earlier Y copy. Replay
+            // exactly the already-validated Y phase; do not iterate exchange.
+            // Y gathers every source before scatter, reads active axial rows,
+            // and writes axial ghosts only: active U/X and refreshed radial
+            // coarse-fine rows remain immutable. No new math/cache is added.
+            // The first complete sweep already reserved level_views and both
+            // shared workspace vectors for every level/phase. The same views,
+            // sizes and immutable plans cannot grow during this replay.
+            for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
+                level_views.clear();
+                for (const auto index : plans.level_indices[group])
+                    level_views.push_back(views[index]);
+                exchange_detail::execute_prevalidated_host_exchange_plan(
+                    *host_compiled_[group], level_views, host_workspace_,
+                    ExchangePhaseId::Y);
+            }
+        }
         execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 

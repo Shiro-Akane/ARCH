@@ -66,6 +66,19 @@ struct GeometryView {
         return result;
     }
 
+    /** Resolve one axial/radial cell endpoint with its represented cell owner.
+     * Periodic axial ghosts select both source-domain endpoints together; the
+     * upper face of the last alias cell stays root_upper. Descriptor faces use
+     * CanonicalFace separately and never wrap their root/block identities.
+     */
+    ARCH_HOST_DEVICE double CanonicalCellFace(int axis,std::int64_t local_cell,bool upper) const
+    {
+        double left=0.,right=0.,middle=0.,width=0.;
+        if(geometry!=Geometry::Cylindrical||dim!=2||!GridMetrics::canonical_axis_cell(dyadic_identity,axis,
+            local_cell,left,right,middle,width))return std::numeric_limits<double>::quiet_NaN();
+        return upper?right:left;
+    }
+
     /** Bound cell width/center wrapper with actual face representability. */
     ARCH_HOST_DEVICE double CanonicalCellValue(int axis,std::int64_t local_cell,bool center) const
     {
@@ -106,15 +119,18 @@ struct GeometryView {
         return x1_min + (i - ng + 1) * dx1;
     }
 
-    /** Lower/upper actual axial faces; unbound grids retain their local formula. */
+    /** Axial CELL bounds in the same represented chart as center and width.
+     * Paired-periodic ghosts are source-domain aliases; real descriptor faces
+     * remain unwrapped. Unbound grids retain their original local formula.
+     */
     ARCH_HOST_DEVICE double GetAxialFacePosL(int j) const
     {
-        if(dyadic_identity.bound)return CanonicalFace(1,std::int64_t(j)-ng);
+        if(dyadic_identity.bound)return CanonicalCellFace(1,std::int64_t(j)-ng,false);
         return x2_min + (j - ng) * dx2;
     }
     ARCH_HOST_DEVICE double GetAxialFacePosR(int j) const
     {
-        if(dyadic_identity.bound)return CanonicalFace(1,std::int64_t(j)-ng+1);
+        if(dyadic_identity.bound)return CanonicalCellFace(1,std::int64_t(j)-ng,true);
         return x2_min + (j - ng + 1) * dx2;
     }
 

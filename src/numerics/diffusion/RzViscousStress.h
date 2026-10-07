@@ -12,6 +12,8 @@
  *    corresponding axial omega difference, and pair the same traction/work.
  * 4. Return face fluxes in their distinct torque/area normalizations and the
  *    matching nonnegative row rate to the existing divergence/timestep owner.
+ *    An axial row divides by the shared face distance and separately by the
+ *    actual current-cell height; only uniform cells make those lengths equal.
  *
  * Density is invariant in pure diffusion. Frozen nu gives fixed positive
  * capacities and symmetric positive links, with eigenvalues in [-2*q_max,0].
@@ -152,11 +154,17 @@ ARCH_INLINE FaceFlux azimuthal_face(const AngularCell& left,const AngularCell& r
 
 /** Nonnegative row contribution from the same actual frozen face connection.
  * Radial K=2*nu*rho_face*r_face^4/|s_adj-s_center|, q=K/C_center.
- * Axial q=nu*C_face/(dz^2*C_center). Summing all faces supplies the dtFE bound.
+ * Axial K=nu*C_face/d_face, q=K/(dz_center*C_center). Summing all faces
+ * supplies the original dtFE graph bound, with actual capacity height rather
+ * than a second copy of the gradient distance. Existing callers that omit
+ * current_height retain their original uniform-spacing denominator; zero is
+ * solely that optional-argument marker, never a Native physical cell height.
+ * Native callers must explicitly supply their validated positive actual dz.
  * Invalid geometry/density/coefficient yields NaN, never a fabricated bound.
  */
 ARCH_INLINE double face_row_rate(const AngularCell& center,const AngularCell& adjacent,
-    int direction,double normal_spacing,double nu,double radial_face)
+    int direction,double normal_spacing,double nu,double radial_face,
+    double current_height=0.)
 {
     const double invalid=std::numeric_limits<double>::quiet_NaN();
     if((direction!=0&&direction!=1)||!std::isfinite(normal_spacing)||
@@ -176,9 +184,11 @@ ARCH_INLINE double face_row_rate(const AngularCell& center,const AngularCell& ad
         rate=detail::scaled_value(numerator,7,denominator,2);
     } else {
         if(!detail::axial_pair(center,adjacent))return invalid;
+        const double height=current_height==0.?normal_spacing:current_height;
+        if(!std::isfinite(height)||!(height>0.))return invalid;
         const double capacity=.5*center.capacity+.5*adjacent.capacity;
         const double numerator[]{nu,capacity};
-        const double denominator[]{normal_spacing,normal_spacing,center.capacity};
+        const double denominator[]{normal_spacing,height,center.capacity};
         rate=detail::scaled_value(numerator,2,denominator,3);
     }
     return std::isfinite(rate)&&rate>=0.?rate:invalid;

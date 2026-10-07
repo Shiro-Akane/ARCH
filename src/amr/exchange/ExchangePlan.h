@@ -630,11 +630,24 @@ inline void validate_compiled_host_exchange_plan(
 // Execute a plan already validated at construction and kept private by the
 // topology owner. Current pointers, layout, species and handles are checked by
 // that owner before reaching this function.
+/** Execute all previously validated phases, or replay one actual phase.
+ * A selector never rebuilds a plan or changes its ordinals. Native RZ uses
+ * the existing Y gather/scatter after coarse-fine radial halo publication:
+ * Y's source rows are active while its radial tangent includes those halos.
+ * Default std::nullopt retains the original X/Y/Z execution and arithmetic.
+ * The caller owns immutable lowering and stable live views, just as for the
+ * original all-phase executor; this helper is not a domain transaction.
+ */
 inline void execute_prevalidated_host_exchange_plan(
     const HostCompiledSameLevelExchangePlan& compiled,
     std::span<const HostExchangeBlockView> views,
-    HostExchangeWorkspace& workspace)
+    HostExchangeWorkspace& workspace,
+    std::optional<ExchangePhaseId> phase_selector = std::nullopt)
 {
+    if (phase_selector && *phase_selector != ExchangePhaseId::X
+        && *phase_selector != ExchangePhaseId::Y
+        && *phase_selector != ExchangePhaseId::Z)
+        throw std::invalid_argument("unknown prevalidated Host exchange phase");
     std::size_t expected_first = 0;
     for (std::size_t phase_index = 0;
          phase_index < compiled.phases.size(); ++phase_index) {
@@ -645,6 +658,10 @@ inline void execute_prevalidated_host_exchange_plan(
             || phase.count > compiled.operations.size() - phase.first)
             throw std::invalid_argument("invalid Host exchange phase metadata");
         expected_first += phase.count;
+        // Still check the complete phase partition. Only its execution is
+        // selected; immutable endpoint validation belongs to the caller's
+        // original compile/check, with no dummy operations or renumbering.
+        if (phase_selector && phase.id != *phase_selector) continue;
 
         auto& operation_offsets = workspace.operation_offsets;
         operation_offsets.assign(phase.count + 1, 0);

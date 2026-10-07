@@ -24,6 +24,7 @@
 
 #include "grid/GridMetrics.h"
 #include "numerics/flux/InvariantDomainFlux.h"
+#include "numerics/flux/RzNativeFaceFlux.h"
 #include "numerics/reconstruction/AMRInterfaceReconstruction.h"
 #include "numerics/state/RzNativeClosure.h"
 
@@ -58,6 +59,13 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
 
     const int nk = k_end - k_start;
     const int nj = j_end - j_start;
+    const auto geometry=GridMetrics::make_geometry_view(grid,mean_cache->geometry_semantics);
+    const bool native_rz=GridMetrics::is_axisymmetric_rz(geometry);
+    const int logical_nx=grid.Ie()+grid.ng,logical_ny=grid.Je()+grid.ng;
+    if(native_rz&&!arch::state::valid_bounds(mean_cache->physical_bounds))
+        throw std::invalid_argument("Native face requires actual physical bounds");
+    if(static_cast<std::size_t>(n_spec)>std::numeric_limits<std::size_t>::max()/35)
+        throw std::length_error("Native face species workspace is not representable");
 
     // Exact cell-mean EOS results are reused by all faces and dimensions
     // of this patch-stage. Only the host execution schedule owns the
@@ -78,8 +86,10 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
                 // m_phi=J/W has a different kinetic mean from an ordinary
                 // point momentum. Reuse the accepted shared closure (kappa
                 // and effective_mean); do not implement another EOS or floor.
-                const auto closure = RzThermodynamics::make_cell(
-                    read,cell,geometry,cell % grid.stride_y);
+                const int radial=cell % grid.stride_y;
+                const int begin=std::clamp(radial-1,0,logical_nx-3);
+                const auto closure = RzThermodynamics::make_cell_supported(
+                    read,cell,geometry,radial,begin,mean_cache->physical_bounds);
                 if (!closure.valid())
                     throw std::runtime_error("RZ face mean EOS requires an admissible native closure");
                 FluxAdmissibility::required_mean_thermo(
@@ -114,13 +124,44 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
     const auto process_row = [&](int kj, std::vector<double>& Xi_L,
                                  std::vector<double>& Xi_R,
                                  std::vector<double>& Xi_cell,
-                                 std::vector<double>& face_species_flux) {
+                                 std::vector<double>& face_species_flux,
+                                 std::vector<double>& native_workspace,
+                                 std::vector<double>& native_high_sum,
+                                 std::vector<double>& native_low_sum) {
             try {
                 int k = k_start + kj / nj;
                 int j = j_start + kj % nj;
                 for (int i = i_start; i < i_end; ++i)
                 {
                     int idx = grid.GetIndex(i, j, k);
+                    if(native_rz) {
+                        // Actual interface policy precedes the selected bundle:
+                        // all configured limiters/PPM remain selected elsewhere.
+                        const RzSelectedReconstruction::Context context{
+                            geometry,logical_nx,logical_ny,i,j,dir,n_spec,mean_cache->physical_bounds};
+                        const auto count=static_cast<std::size_t>(n_spec);
+                        RzNativeFaceFlux::Scratch scratch{
+                            count?native_workspace.data():nullptr,
+                            count?native_workspace.data()+16*count:nullptr,19*count,
+                            Xi_L.data(),Xi_R.data(),Xi_cell.data(),
+                            native_high_sum.data(),native_low_sum.data()};
+                        const auto read=[&state](int cell){return state.get(cell);};
+                        const auto fraction=[&state](int species,int cell){return state.X(species,cell);};
+                        FluidVector native_flux;
+                        const auto status=AMRInterfaceReconstruction::needs_tvd_interface_reconstruction<ReconstructPolicy>(grid,dir,i,j,k)
+                            ?RzNativeFaceFlux::compute<FluxPolicy,MusclReconstruction<MinMod>>(
+                                read,fraction,context,eos,coefficient,&mean_view,idx,idx+stride,
+                                scratch,native_flux,face_species_flux.data())
+                            :RzNativeFaceFlux::compute<FluxPolicy,ReconstructPolicy>(
+                                read,fraction,context,eos,coefficient,&mean_view,idx,idx+stride,
+                                scratch,native_flux,face_species_flux.data());
+                        if(status!=arch::state::Status::valid)
+                            throw std::runtime_error("Native selected physical face failed required geometry/state/EOS acceptance");
+                        flux_out[idx+stride]=native_flux;
+                        for(int species=0;species<n_spec;++species)
+                            spec_flux_out[species*total_size+idx+stride]=face_species_flux[species];
+                        continue;
+                    }
                     // 1. Reconstruction
                     FluidVector U_L, U_R;
                     AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(
@@ -163,15 +204,21 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
         {
             std::vector<double> Xi_L(n_spec), Xi_R(n_spec);
             std::vector<double> Xi_cell(n_spec), face_species_flux(n_spec);
+            std::vector<double> native_workspace(native_rz?35*static_cast<std::size_t>(n_spec):0);
+            std::vector<double> native_high_sum(native_rz?n_spec:0),native_low_sum(native_rz?n_spec:0);
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
-                process_row(kj, Xi_L, Xi_R, Xi_cell, face_species_flux);
+                process_row(kj, Xi_L, Xi_R, Xi_cell, face_species_flux,
+                    native_workspace,native_high_sum,native_low_sum);
         }
     } else {
         std::vector<double> Xi_L(n_spec), Xi_R(n_spec);
         std::vector<double> Xi_cell(n_spec), face_species_flux(n_spec);
+        std::vector<double> native_workspace(native_rz?35*static_cast<std::size_t>(n_spec):0);
+        std::vector<double> native_high_sum(native_rz?n_spec:0),native_low_sum(native_rz?n_spec:0);
         for (int kj = 0; kj < nk * nj; ++kj)
-            process_row(kj, Xi_L, Xi_R, Xi_cell, face_species_flux);
+            process_row(kj, Xi_L, Xi_R, Xi_cell, face_species_flux,
+                    native_workspace,native_high_sum,native_low_sum);
     }
 
     failure.rethrow();

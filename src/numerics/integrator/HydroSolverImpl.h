@@ -56,7 +56,8 @@ public:
         const auto evaluate = [&] {
             TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy, EosType>(
                 amr_ctrl, block_id, state, eos_, grid, dt, dU, d_spec,
-                flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed, semantics_);
+                flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed, semantics_,
+                {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint});
         };
         if constexpr (requires { typename EosType::HostHydroScope; }) {
             // The EOS owns the complete key. Storage is local to this worker

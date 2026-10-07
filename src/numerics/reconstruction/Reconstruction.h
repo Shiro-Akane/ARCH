@@ -1,6 +1,14 @@
 /**
  * @file Reconstruction.h
  * @brief Spatial reconstruction from cell averages to interface states.
+ *
+ * Workflow:
+ * 1. Select the existing PCM, MUSCL limiter or PPM reconstruction policy.
+ * 2. Gather required conservative/primitive cell means and actual EOS pressure.
+ * 3. Build the selected scalar/primitive endpoints with shared Host/device math.
+ * 4. Probe reconstructed EOS energy; the calling owner handles trial fallback.
+ * PPM exposes both endpoints of one owning cell from its existing five-value
+ * stencil, so geometry adapters need no extra seventh axial stencil value.
  */
 
 #pragma once
@@ -358,7 +366,79 @@ private:
         fR = cw_right + theta * (fR - cw_right);
     }
 
+    /** Apply the existing CW/curvature rule to already projected own-cell faces.
+     * The five means are ordered [i-2,i-1,i,i+1,i+2]. Keeping projection outside
+     * lets the ordinary six-point pair preserve its original three-face order.
+     */
+    static ARCH_INLINE void limit_own_scalar_cell(
+        const double (&v)[5], double& lower, double& upper)
+    {
+        apply_cell_limiter(lower, upper, v[0], v[1], v[2], v[3], v[4]);
+    }
+
+    /** Original primitive pressure/density ray for one owning-cell face.
+     * theta=min(1,rho_mean/[2*(rho_mean-rho_face)],
+     * p_mean/[2*(p_mean-p_face)]) only for a nonpositive trial rho/p.
+     * All primitive components follow that same original per-face ray.
+     */
+    static ARCH_INLINE void limit_own_primitive_face(
+        double mean_rho, double mean_velocity_x, double mean_velocity_y,
+        double mean_velocity_z, double mean_pressure,
+        double& rho, double& velocity_x, double& velocity_y,
+        double& velocity_z, double& pressure)
+    {
+        double theta=1.0;
+        if (!(rho > 0.0)) theta=std::min(theta,0.5*mean_rho/(mean_rho-rho));
+        if (!(pressure > 0.0)) theta=std::min(theta,0.5*mean_pressure/(mean_pressure-pressure));
+        if (theta < 1.0) {
+            rho=mean_rho+theta*(rho-mean_rho);
+            pressure=mean_pressure+theta*(pressure-mean_pressure);
+            velocity_x=mean_velocity_x+theta*(velocity_x-mean_velocity_x);
+            velocity_y=mean_velocity_y+theta*(velocity_y-mean_velocity_y);
+            velocity_z=mean_velocity_z+theta*(velocity_z-mean_velocity_z);
+        }
+    }
+
+    /** Assemble the same physical conserved trial and original EOS probe.
+     * m=rho*u and E=EOS(rho,u,p,X); unresolved energy remains nonfinite for the
+     * caller to reject or restore with the matching owning composition.
+     */
+    template <typename EosType>
+    static ARCH_INLINE void assemble_own_eos_point(
+        double rho, double velocity_x, double velocity_y, double velocity_z,
+        double pressure, const double* composition, const EosType& eos,
+        FluidVector& point)
+    {
+        point.rho = rho;
+        point.mom_u = rho * velocity_x;
+        point.mom_v = rho * velocity_y;
+        point.mom_w = rho * velocity_z;
+        point.eng = ReconstructionMath::probe_face_energy(
+            eos, rho, velocity_x, velocity_y, velocity_z, pressure, composition);
+    }
+
 public:
+    /** Reconstruct both endpoints of one owning scalar cell from five means.
+     * Workflow: original fourth-order left/right face interpolation and
+     * projection, then the unchanged owning CW/curvature limiter.
+     * f_- = project((7*(v1+v2)-(v0+v3))/12),
+     * f_+ = project((7*(v2+v3)-(v1+v4))/12).
+     * Interpolation itself retains the original evaluated coefficient formula.
+     */
+    static ARCH_INLINE void reconstruct_scalar_cell_ppm(
+        const double (&v)[5], double& lower, double& upper)
+    {
+        lower = project_face(
+            interpolate_face_4th(v[0], v[1], v[2], v[3]), v[0], v[1], v[2], v[3]);
+        upper = project_face(
+            interpolate_face_4th(v[1], v[2], v[3], v[4]), v[1], v[2], v[3], v[4]);
+        limit_own_scalar_cell(v, lower, upper);
+    }
+
+    /** Return the original left/right states at one face from six means.
+     * All three projected faces retain their original evaluation order; the
+     * two exact five-value windows delegate only their owning-cell limiting.
+     */
     static ARCH_INLINE void reconstruct_scalar_ppm(
         const double (&v)[6], double& left, double& right)
     {
@@ -371,11 +451,13 @@ public:
 
         double u_L_cell_i = u_face_imhalf;
         double u_R_cell_i = u_face_iphalf;
-        apply_cell_limiter(u_L_cell_i, u_R_cell_i, v[0], v[1], v[2], v[3], v[4]);
+        const double own_i[5]{v[0], v[1], v[2], v[3], v[4]};
+        limit_own_scalar_cell(own_i, u_L_cell_i, u_R_cell_i);
 
         double u_L_cell_ip1 = u_face_iphalf;
         double u_R_cell_ip1 = u_face_ip3half;
-        apply_cell_limiter(u_L_cell_ip1, u_R_cell_ip1, v[1], v[2], v[3], v[4], v[5]);
+        const double own_ip1[5]{v[1], v[2], v[3], v[4], v[5]};
+        limit_own_scalar_cell(own_ip1, u_L_cell_ip1, u_R_cell_ip1);
 
         left = u_R_cell_i;
         right = u_L_cell_ip1;
@@ -428,37 +510,75 @@ public:
         // asking an EOS to invert the face. No dimensional pressure floor.
         for (int side=0; side<2; ++side) {
             const int center=side+2;
-            double theta=1.0;
-            if (!(face_rho[side] > 0.0)) theta=std::min(theta,0.5*rho[center]/(rho[center]-face_rho[side]));
-            if (!(face_pressure[side] > 0.0)) theta=std::min(theta,0.5*pressure[center]/(pressure[center]-face_pressure[side]));
-            if (theta < 1.0) {
-                face_rho[side]=rho[center]+theta*(face_rho[side]-rho[center]);
-                face_pressure[side]=pressure[center]+theta*(face_pressure[side]-pressure[center]);
-                face_velocity_x[side]=velocity_x[center]+theta*(face_velocity_x[side]-velocity_x[center]);
-                face_velocity_y[side]=velocity_y[center]+theta*(face_velocity_y[side]-velocity_y[center]);
-                face_velocity_z[side]=velocity_z[center]+theta*(face_velocity_z[side]-velocity_z[center]);
-            }
+            limit_own_primitive_face(
+                rho[center], velocity_x[center], velocity_y[center],
+                velocity_z[center], pressure[center],
+                face_rho[side], face_velocity_x[side], face_velocity_y[side],
+                face_velocity_z[side], face_pressure[side]);
         }
         const double rho_left = face_rho[0];
         const double rho_right = face_rho[1];
         const double pressure_left = face_pressure[0];
         const double pressure_right = face_pressure[1];
 
-        left.rho = rho_left;
-        left.mom_u = rho_left * face_velocity_x[0];
-        left.mom_v = rho_left * face_velocity_y[0];
-        left.mom_w = rho_left * face_velocity_z[0];
-        left.eng = ReconstructionMath::probe_face_energy(
-            eos, rho_left, face_velocity_x[0], face_velocity_y[0],
-            face_velocity_z[0], pressure_left, X_left);
+        assemble_own_eos_point(
+            rho_left, face_velocity_x[0], face_velocity_y[0],
+            face_velocity_z[0], pressure_left, X_left, eos, left);
+        assemble_own_eos_point(
+            rho_right, face_velocity_x[1], face_velocity_y[1],
+            face_velocity_z[1], pressure_right, X_right, eos, right);
+    }
 
-        right.rho = rho_right;
-        right.mom_u = rho_right * face_velocity_x[1];
-        right.mom_v = rho_right * face_velocity_y[1];
-        right.mom_w = rho_right * face_velocity_z[1];
-        right.eng = ReconstructionMath::probe_face_energy(
-            eos, rho_right, face_velocity_x[1], face_velocity_y[1],
-            face_velocity_z[1], pressure_right, X_right);
+    /** Expose original own-cell primitive endpoints AFTER its rho/p ray.
+     * The caller can derive matching rhoX/rho before any actual EOS inverse;
+     * no trial material is substituted and no new limiting formula is added.
+     */
+    static ARCH_INLINE void reconstruct_cell_primitives(
+        const double (&rho)[5], const double (&velocity_x)[5],
+        const double (&velocity_y)[5], const double (&velocity_z)[5],
+        const double (&pressure)[5], double (&face_rho)[2],
+        double (&face_velocity_x)[2], double (&face_velocity_y)[2],
+        double (&face_velocity_z)[2], double (&face_pressure)[2])
+    {
+        reconstruct_scalar_cell_ppm(rho, face_rho[0], face_rho[1]);
+        reconstruct_scalar_cell_ppm(velocity_x, face_velocity_x[0], face_velocity_x[1]);
+        reconstruct_scalar_cell_ppm(velocity_y, face_velocity_y[0], face_velocity_y[1]);
+        reconstruct_scalar_cell_ppm(velocity_z, face_velocity_z[0], face_velocity_z[1]);
+        reconstruct_scalar_cell_ppm(pressure, face_pressure[0], face_pressure[1]);
+        for (int side=0; side<2; ++side) {
+            limit_own_primitive_face(
+                rho[2], velocity_x[2], velocity_y[2], velocity_z[2], pressure[2],
+                face_rho[side], face_velocity_x[side], face_velocity_y[side],
+                face_velocity_z[side], face_pressure[side]);
+        }
+    }
+
+    /** Reconstruct physical primitive/EOS trials at both faces of one cell.
+     * Workflow: reuse the original scalar owning-cell PPM for rho/u/p, apply
+     * the original per-face rho/p ray against index two, then probe the actual
+     * EOS with each supplied matching face composition. Required stencil EOS
+     * gathering remains the caller's strict responsibility. This entry performs
+     * no species normalization, baseline restore or native common-theta rule.
+     */
+    template <typename EosType>
+    static ARCH_INLINE void reconstruct_cell_eos(
+        const double (&rho)[5], const double (&velocity_x)[5],
+        const double (&velocity_y)[5], const double (&velocity_z)[5],
+        const double (&pressure)[5], const double* X_lower,
+        const double* X_upper, const EosType& eos,
+        FluidVector& lower, FluidVector& upper)
+    {
+        double face_rho[2], face_velocity_x[2], face_velocity_y[2];
+        double face_velocity_z[2], face_pressure[2];
+        reconstruct_cell_primitives(rho, velocity_x, velocity_y, velocity_z,
+            pressure, face_rho, face_velocity_x, face_velocity_y,
+            face_velocity_z, face_pressure);
+        assemble_own_eos_point(
+            face_rho[0], face_velocity_x[0], face_velocity_y[0],
+            face_velocity_z[0], face_pressure[0], X_lower, eos, lower);
+        assemble_own_eos_point(
+            face_rho[1], face_velocity_x[1], face_velocity_y[1],
+            face_velocity_z[1], face_pressure[1], X_upper, eos, upper);
     }
 
 private:

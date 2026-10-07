@@ -149,9 +149,10 @@ inline void check_physical_points(const StateReader& read,const FractionReader& 
  * to the actual composition of every required stage cell. No expected cache
  * is constructed by calling the closure or its thermodynamic leaves.
  *
- * The cold axial face deliberately retains the existing generic limiter's
- * mixed-measure failure. Its cache result is a local wiring check, not full
- * native-RZ hydro qualification; only the hot case requires finite fluxes.
+ * Both cold/hot production faces use genuine physical B point fluxes. The
+ * separate direct raw-native bar test preserves the mixed-measure misuse
+ * counterexample; neither mean-cache readiness nor finite faces prove a whole
+ * native-RZ update, source coupling or long-time scientific qualification.
  */
 inline void native_mean_cache_traversal()
 {
@@ -218,25 +219,38 @@ inline void native_mean_cache_traversal()
                     "RZ actual traversal mean sound speed differs from independent physical rho/e/X");
                 ++required_checks;
             }
-            if(hot) {
-                for(int j=grid.Js();j<(dir==1?grid.Je()+1:grid.Je());++j)
-                    for(int i=grid.Is();i<(dir==0?grid.Ie()+1:grid.Ie());++i) {
-                        const int face=grid.GetIndex(i,j,0);
-                        const auto value=flux[face];
-                        if(!std::isfinite(value.rho)||!std::isfinite(value.mom_u)
-                           ||!std::isfinite(value.mom_v)||!std::isfinite(value.mom_w)
-                           ||!std::isfinite(value.eng)||!std::isfinite(species_flux[face])
-                           ||!std::isfinite(species_flux[grid.GetTotalSize()+face]))
-                            throw std::runtime_error("RZ hot traversal returned a nonfinite actual fluid/species flux");
-                    }
-            } else if(dir==1) {
-                // Adjacent axial cells have the same native U at the same r.
-                // The LLF bar retains rho/m_phi/E and may add normal momentum
-                // from the composition pressure jump. Its raw e is therefore
-                // at most -1/64: physical mean EOS cannot qualify this limiter.
-                const auto value=flux[grid.GetIndex(grid.Is(),grid.Js()+1,0)];
-                if(std::isfinite(value.rho)||std::isfinite(value.eng))
-                    throw std::runtime_error("RZ cold traversal falsely promoted the generic mixed-measure limiter");
+            // Actual selected Native faces must be finite in both directions,
+            // including the cold first cell whose raw point recovery is invalid.
+            // All existing fluid/species finite checks also remain on hot faces.
+            for(int j=grid.Js();j<(dir==1?grid.Je()+1:grid.Je());++j)
+                for(int i=grid.Is();i<(dir==0?grid.Ie()+1:grid.Ie());++i) {
+                    const int face=grid.GetIndex(i,j,0);
+                    const auto value=flux[face];
+                    if(!std::isfinite(value.rho)||!std::isfinite(value.mom_u)
+                       ||!std::isfinite(value.mom_v)||!std::isfinite(value.mom_w)
+                       ||!std::isfinite(value.eng)||!std::isfinite(species_flux[face])
+                       ||!std::isfinite(species_flux[grid.GetTotalSize()+face]))
+                        throw std::runtime_error("RZ cold/hot traversal returned a nonfinite actual fluid/species flux");
+                }
+            if(!hot&&dir==1) {
+                // Preserve the independent negative example at the exact
+                // owning raw Native states, not at the new physical B path.
+                // Here U_L=U_R=(1,0,0,3/4,17/64). The axial pressure jump
+                // adds only normal bar momentum; its generic point e is
+                // -1/64-delta_mz^2/2, so physical cached P/c cannot qualify it.
+                const int left=grid.GetIndex(grid.Is(),grid.Js(),0);
+                const int right=left+grid.stride_y;
+                const double x_left[]{state.X(0,left),state.X(1,left)};
+                const double x_right[]{state.X(0,right),state.X(1,right)};
+                const double high_species[]{species_flux[right],
+                    species_flux[grid.GetTotalSize()+right]};
+                const auto raw_factor=FluxAdmissibility::point_face_blend_with_thermo(
+                    state.get(left),state.get(right),x_left,x_right,2,
+                    cache.pressure[left],cache.sound_speed[left],
+                    cache.pressure[right],cache.sound_speed[right],1,
+                    flux[right],high_species);
+                if(raw_factor.valid)
+                    throw std::runtime_error("Physical cache P/c falsely qualified a raw-native point bar");
             }
             if(state.rho!=original_rho||state.mom_u!=original_mr||state.mom_v!=original_mz
                ||state.mom_w!=original_mphi||state.eng!=original_energy
@@ -263,7 +277,8 @@ inline void native_mean_cache_traversal()
         }
     }
     std::cout<<"RZ_NATIVE_MEAN_CACHE required_cells="<<required_checks
-        <<" hot_flux_finite=1 cold_axial_generic_limiter_rejected=1 PASS\n";
+        <<" hot_flux_finite=1 cold_native_flux_finite_both_dirs=1"
+        <<" cold_raw_native_point_bar_rejected=1 PASS\n";
 }
 
 /** Real-EOS acceptance from independent density and inertia antiderivatives.

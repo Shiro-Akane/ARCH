@@ -95,6 +95,59 @@ int main(int argc,char** argv){
     std::vector<SourceAddresses> original_addresses;
     for(int id:roots)original_addresses.push_back(source_addresses(control.pool->GetBlock(id).fluid_state));
     const auto original_boundary=boundary.snapshot_stage_context();
+    // Distinct metadata-only failed-finalizer witness. No field value, layout,
+    // Block logical key or EOS is mutated: only the retained source Grid's
+    // root provenance changes after real staged BC/exchange has completed.
+    // These old parents are inactive in the refined candidate, so the unique
+    // injected exception (not a claimed candidate EOS check) triggers rollback.
+    std::vector<GridMetrics::DyadicGridIdentity> original_identity;
+    for(int id:roots)original_identity.push_back(control.pool->GetBlock(id).grid.dyadic_identity);
+    int metadata_callbacks=0;bool metadata_failed=false;
+    try {
+        runtime.regrid_native_rz_candidate(0,0.,[&]{
+            ++metadata_callbacks;
+            require(control.tree->GetActiveBlocks().size()==8,
+                "metadata fault did not run after actual staged topology activation");
+            require(runtime.handles()==handles,
+                "metadata fault already published accepted Runtime handles");
+            auto& source_grid=control.pool->GetBlock(roots.front()).grid;
+            require(GridMetrics::equal_identity(source_grid.dyadic_identity,original_identity.front()),
+                "metadata source identity changed before the injection");
+            source_grid.dyadic_identity.periodic_axial=!source_grid.dyadic_identity.periodic_axial;
+            require(!GridMetrics::equal_identity(source_grid.dyadic_identity,original_identity.front()),
+                "metadata fault did not change actual source provenance");
+            throw std::runtime_error("INTERNAL_RZ_SOURCE_PROVENANCE_FAULT");
+        });
+    }catch(const std::runtime_error& error){
+        metadata_failed=std::string_view(error.what())=="INTERNAL_RZ_SOURCE_PROVENANCE_FAULT";
+        if(!metadata_failed)throw;
+    }
+    require(metadata_callbacks==1&&metadata_failed,"metadata-only finalizer fault was swallowed");
+    require(control.tree->GetActiveBlocks()==roots&&runtime.handles()==handles,
+        "metadata-only failure published candidate topology");
+    require(control.pool->GetNumActiveBlocks()==pool_before&&runtime.regrid_records().empty(),
+        "metadata-only failure leaked staged pool or successful records");
+    require(runtime.native_coarsening_veto_records().empty(),
+        "metadata-only failure became a scientific parent veto");
+    require(boundary.stage_context_matches(original_boundary),
+        "metadata-only failure did not restore the actual BC stage frame");
+    auto metadata_restored=runtime.stage_context();
+    for(std::size_t i=0;i<roots.size();++i){
+        const auto& block=control.pool->GetBlock(roots[i]);
+        require(GridMetrics::equal_identity(block.grid.dyadic_identity,original_identity[i]),
+            "metadata-only failure did not restore complete source root provenance");
+        require(source_addresses(block.fluid_state)==original_addresses[i]
+            &&same_state(block.fluid_state,expected[i]),
+            "metadata-only failure changed source array addresses or exact bits");
+        const auto version=metadata_restored.ledger.inspect(
+            {handles[i],arch::state::StateSlot::Current}).interior.version;
+        require(version==versions[i],"metadata-only failure published a new accepted source version");
+        metadata_restored.ledger.require_readable({handles[i],arch::state::StateSlot::Current},
+            {arch::state::ExecutionSide::Host,version,true,true});
+    }
+    std::cout<<"ACTUAL_RZ_SOURCE_PROVENANCE_ROLLBACK metadata_only=1"
+        <<" original_source_identity=1 all_seven_leases_bits=1 bc_frame=1"
+        <<" actual_callback=1 topology_versions=1 time=0 steps=0\n";
     int callbacks=0,peak_pool=pool_before;
     for(int attempt=0;attempt<3;++attempt){
         bool exact_failure=false;

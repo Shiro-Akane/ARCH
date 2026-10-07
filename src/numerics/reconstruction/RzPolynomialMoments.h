@@ -28,6 +28,7 @@
 #pragma once
 
 #include <cmath>
+#include <limits>
 
 #include "core/ArchPortability.h"
 #include "grid/GridGeometryView.h"
@@ -151,6 +152,36 @@ struct Cubic {
     }
 };
 
+/** Shared pivoted moment-difference solve for a cubic's c1,c2,c3.
+ * Valid-input pivot order, elimination and back-substitution match the original
+ * angular_field arithmetic. Zero pivots/nonfinite arithmetic reject explicitly;
+ * there is no dimensional epsilon or alternate solver.
+ */
+ARCH_INLINE bool solve_cubic_differences(double (&a)[3][4],double& c1,double& c2,double& c3)
+{
+    for(int row=0;row<3;++row)for(int col=0;col<4;++col)
+        if(!std::isfinite(a[row][col]))return false;
+    for(int col=0;col<3;++col) {
+        int pivot=col;
+        for(int row=col+1;row<3;++row)
+            if(std::abs(a[row][col])>std::abs(a[pivot][col]))pivot=row;
+        if(pivot!=col)for(int n=col;n<4;++n) {
+            const double tmp=a[col][n];a[col][n]=a[pivot][n];a[pivot][n]=tmp;
+        }
+        if(a[col][col]==0.||!std::isfinite(a[col][col]))return false;
+        for(int row=col+1;row<3;++row) {
+            const double factor=a[row][col]/a[col][col];
+            if(!std::isfinite(factor))return false;
+            for(int n=col;n<4;++n)a[row][n]-=factor*a[col][n];
+            for(int n=col;n<4;++n)if(!std::isfinite(a[row][n]))return false;
+        }
+    }
+    c3=a[2][3]/a[2][2];
+    c2=(a[1][3]-a[1][2]*c3)/a[1][1];
+    c1=(a[0][3]-a[0][1]*c2-a[0][2]*c3)/a[0][0];
+    return std::isfinite(c1)&&std::isfinite(c2)&&std::isfinite(c3);
+}
+
 /** Solve the moment differences for one W-averaged cubic field. */
 ARCH_INLINE Cubic angular_field(double low,double middle,double high,double extra,
     const RadialCell& cell)
@@ -164,21 +195,11 @@ ARCH_INLINE Cubic angular_field(double low,double middle,double high,double extr
         a[row][0]=n.first-m.first;a[row][1]=n.second-m.second;
         a[row][2]=n.third-m.third;a[row][3]=values[row];
     }
-    for(int col=0;col<3;++col) {
-        int pivot=col;
-        for(int row=col+1;row<3;++row)
-            if(std::abs(a[row][col])>std::abs(a[pivot][col]))pivot=row;
-        if(pivot!=col)for(int n=col;n<4;++n) {
-            const double tmp=a[col][n];a[col][n]=a[pivot][n];a[pivot][n]=tmp;
-        }
-        for(int row=col+1;row<3;++row) {
-            const double factor=a[row][col]/a[col][col];
-            for(int n=col;n<4;++n)a[row][n]-=factor*a[col][n];
-        }
+    double c1=0.,c2=0.,c3=0.;
+    if(!solve_cubic_differences(a,c1,c2,c3)) {
+        const double invalid=std::numeric_limits<double>::quiet_NaN();
+        return {invalid,invalid,invalid,invalid};
     }
-    const double c3=a[2][3]/a[2][2];
-    const double c2=(a[1][3]-a[1][2]*c3)/a[1][1];
-    const double c1=(a[0][3]-a[0][1]*c2-a[0][2]*c3)/a[0][0];
     return {middle-c1*m.first-c2*m.second-c3*m.third,c1,c2,c3};
 }
 

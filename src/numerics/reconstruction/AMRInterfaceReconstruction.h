@@ -17,7 +17,7 @@
 
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
 #include "numerics/reconstruction/Reconstruction.h"
-#include "numerics/reconstruction/RzCellPolynomial.h"
+#include "numerics/reconstruction/RzSelectedReconstruction.h"
 #include "grid/GridMetrics.h"
 #include "grid/Grid.h"
 
@@ -45,38 +45,39 @@ inline void reconstruct_face(const FluidState& state, const EosType& eos, const 
                              int dir, int i, int j, int k, int idx, int stride,
                              int n_spec, double* Xi_L, double* Xi_R, double* Xi_cell,
                              FluidVector& U_L, FluidVector& U_R,
-                             GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing)
+                             GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing,
+                             const arch::state::Bounds* physical_bounds=nullptr)
 {
-    // RZ fields have different conservative measures. Physical radial traces
-    // must come from those moments before any solver sees a point-state EOS.
-    if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz && dir==0
-       && ReconstructPolicy::NG>1) {
-        if(grid.ng<3)
-            throw std::invalid_argument("RZ moment face reconstruction requires three halo cells");
+    // Native full faces use the selected bundle owner in RzNativeFaceFlux.
+    // This scalar interface can expose a genuine radial trace only; an axial
+    // face needs four V/W Gauss points and must never pretend to be one mean.
+    if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        if(dir!=0)throw std::invalid_argument("Native axial reconstruction requires complete V/W face integration");
+        if(!physical_bounds||!arch::state::valid_bounds(*physical_bounds))
+            throw std::invalid_argument("Native radial trace requires explicit physical bounds");
         const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
-        const auto read=[&state](int c){return state.get(c);};
-        const auto fraction=[&state](int k,int c){return state.X(k,c);};
-        const double radius=grid.GetFacePosR(i);
-        const auto left_cell=RzReconstruction::radial_cell(geometry,i);
-        const auto right_cell=RzReconstruction::radial_cell(geometry,i+1);
-        const auto left_closure=RzThermodynamics::make_cell(read,idx,geometry,i);
-        const auto right_closure=RzThermodynamics::make_cell(read,idx+1,geometry,i+1);
-        const auto low=RzReconstruction::limited_profile(read,fraction,idx,n_spec,left_cell,left_closure);
-        const auto high=RzReconstruction::limited_profile(read,fraction,idx+1,n_spec,right_cell,right_closure);
-        if(!low.valid||!high.valid)
-            throw std::runtime_error("RZ face reconstruction requires admissible stage stencils");
-        U_L=low.at(radius);U_R=high.at(radius);
-        for(int k=0;k<n_spec;++k) {
-            Xi_L[k]=RzReconstruction::limited_fraction(read,fraction,idx,k,left_cell,radius,low,U_L.rho);
-            Xi_R[k]=RzReconstruction::limited_fraction(read,fraction,idx+1,k,right_cell,radius,high,U_R.rho);
+        const RzSelectedReconstruction::Context context{
+            geometry,grid.Ie()+grid.ng,grid.Je()+grid.ng,i,j,dir,n_spec,*physical_bounds};
+        const auto count=static_cast<std::size_t>(n_spec);
+        if(count>std::numeric_limits<std::size_t>::max()/35)
+            throw std::length_error("Native reconstruction species workspace overflow");
+        std::vector<double> scratch(35*count);
+        const auto read=[&state](int cell){return state.get(cell);};
+        const auto fraction=[&state](int species,int cell){return state.X(species,cell);};
+        const auto selected=needs_tvd_interface_reconstruction<ReconstructPolicy>(grid,dir,i,j,k)
+            ?RzSelectedReconstruction::reconstruct_face<MusclReconstruction<MinMod>>(
+                read,fraction,context,eos,count?scratch.data():nullptr,
+                count?scratch.data()+16*count:nullptr,19*count)
+            :RzSelectedReconstruction::reconstruct_face<ReconstructPolicy>(
+                read,fraction,context,eos,count?scratch.data():nullptr,
+                count?scratch.data()+16*count:nullptr,19*count);
+        if(selected.status!=arch::state::Status::valid)
+            throw std::runtime_error("Native selected radial donor failed required acceptance");
+        U_L=selected.donor[0].point[1];U_R=selected.donor[1].point[0];
+        for(int species=0;species<n_spec;++species) {
+            Xi_L[species]=scratch[count+species]/U_L.rho;
+            Xi_R[species]=scratch[8*count+species]/U_R.rho;
         }
-        // The native profile uses one conservative ray for fluid and rho*X.
-        // Validate the actual query points; normalization would change that ray.
-        if(arch::state::validate(U_L,Xi_L,n_spec,1,0.,0.,
-               std::numeric_limits<double>::max())!=arch::state::Status::valid
-           ||arch::state::validate(U_R,Xi_R,n_spec,1,0.,0.,
-               std::numeric_limits<double>::max())!=arch::state::Status::valid)
-            throw std::runtime_error("RZ face has an inadmissible point composition/state");
         return;
     }
     if (needs_tvd_interface_reconstruction<ReconstructPolicy>(grid, dir, i, j, k))

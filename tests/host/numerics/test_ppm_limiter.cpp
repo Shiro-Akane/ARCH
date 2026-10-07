@@ -9,8 +9,12 @@
 // reconstruction input; every tolerance is a floating-point rounding allowance
 // and carries no physical units.
 #include "numerics/reconstruction/Reconstruction.h"
+#include "numerics/reconstruction/RzWeightedReconstruction.h"
 
 #include <algorithm>
+#include <array>
+#include <bit>
+#include <cstdint>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -418,6 +422,229 @@ void perturbation_sweep()
     }
 }
 
+// Native conservative scalar references below integrate actual polynomial
+// fields analytically. Production moments are inputs to the implementation,
+// never the oracle for means/centroids/profile integrals in these tests.
+namespace native_scalar_checks {
+namespace w = RzReconstruction::weighted;
+
+long double power(long double x, int n)
+{
+    long double value=1.;for(int k=0;k<n;++k)value*=x;return value;
+}
+long double integral_power(long double a,long double b,int n)
+{
+    return (power(b,n+1)-power(a,n+1))/(n+1);
+}
+// Whole-negative V has |r|=-r; that common minus cancels in this ratio.
+long double analytic_mean(const std::array<long double,4>& q,double a,double b,bool angular)
+{
+    const int p=angular?2:1;long double value=0.;
+    for(int n=0;n<4;++n)value+=q[n]*integral_power(a,b,n+p);
+    return value/integral_power(a,b,p);
+}
+long double analytic_value(const std::array<long double,4>& q,long double r)
+{
+    return q[0]+r*(q[1]+r*(q[2]+r*q[3]));
+}
+void close(double value,long double reference,double scale,const char* message)
+{
+    const long double tolerance=64.L*kEps*std::max(static_cast<long double>(scale),std::abs(reference));
+    require(std::isfinite(value)&&std::isfinite(reference)
+        &&std::abs(static_cast<long double>(value)-reference)<=tolerance,message);
+}
+template<std::size_t N>
+std::array<w::Cell,N> cells(double lower,bool angular)
+{
+    std::array<w::Cell,N> result;
+    for(std::size_t n=0;n<N;++n)
+        require(w::bind_cell(lower+double(n),lower+double(n)+1.,angular,result[n]),
+            "actual one-sided scalar cell rejected");
+    return result;
+}
+template<std::size_t N>
+std::array<double,N> means(const std::array<long double,4>& q,const std::array<w::Cell,N>& c)
+{
+    std::array<double,N> result;
+    for(std::size_t n=0;n<N;++n)result[n]=double(analytic_mean(q,c[n].lower,c[n].upper,c[n].angular));
+    return result;
+}
+template<std::size_t N> double scale_of(const std::array<double,N>& q)
+{
+    double scale=0.;for(double v:q)scale=std::max(scale,std::abs(v));return scale;
+}
+// Expand the ACTUAL returned own-xi coefficients into a physical polynomial,
+// then integrate with independent long-double antiderivatives under V/W.
+void conserved(const w::Profile& p,double mean,bool angular,double scale)
+{
+    require(p.valid,"selected scalar profile invalid");
+    const long double a=p.lower,h=static_cast<long double>(p.upper)-a;
+    const long double c0=p.polynomial.constant,c1=p.polynomial.linear,c2=p.polynomial.quadratic;
+    const std::array<long double,4> physical{c0-c1*a/h+c2*a*a/(h*h),c1/h-2*c2*a/(h*h),c2/(h*h),0.};
+    close(double(analytic_mean(physical,p.lower,p.upper,angular)),mean,scale,
+        "full selected donor lost its own V/W mean");
+}
+bool same(const w::Profile& a,const w::Profile& b)
+{
+    const double x[]{a.polynomial.constant,a.polynomial.linear,a.polynomial.quadratic,a.lower,a.upper,a.mean};
+    const double y[]{b.polynomial.constant,b.polynomial.linear,b.polynomial.quadratic,b.lower,b.upper,b.mean};
+    for(int n=0;n<6;++n)if(std::bit_cast<std::uint64_t>(x[n])!=std::bit_cast<std::uint64_t>(y[n]))return false;
+    return a.valid==b.valid;
+}
+
+void muscl_identity()
+{
+    for(bool angular:{false,true})for(double origin:{0.,2.,-4.}) {
+        const auto c=cells<4>(origin,angular);
+        const std::array<long double,4> q{2.L,.5L,0.,0.};const auto v=means(q,c);
+        w::Profile a,b,sa,sb;
+        require(w::muscl<MinMod>(v,c,a,b)&&w::muscl<SuperBee>(v,c,sa,sb),"affine selected MUSCL rejected");
+        const double scale=scale_of(v);
+        for(int donor=0;donor<2;++donor) {
+            const auto& m=donor?b:a;const auto& s=donor?sb:sa;const auto& cell=c[donor+1];
+            conserved(m,v[donor+1],angular,scale);conserved(s,v[donor+1],angular,scale);
+            for(double r:{cell.lower,cell.upper}) {
+                const auto exact=analytic_value(q,r);
+                close(m.at(r),exact,scale,"MinMod affine weighted endpoint");
+                close(s.at(r),exact,scale,"SuperBee affine weighted endpoint");
+            }
+        }
+        // Nonlinear means give unequal one-sided gradients. Actual MinMod and
+        // SuperBee must differ; affine data instead MUST agree (ratio=1).
+        const std::array<double,4> shaped{0.,1.,3.,6.};
+        require(w::muscl<MinMod>(shaped,c,a,b)&&w::muscl<SuperBee>(shaped,c,sa,sb),"nonlinear limiter stencil rejected");
+        require(a.at(c[1].upper)!=sa.at(c[1].upper),"selected MUSCL limiter was bypassed");
+        const double centroid_low=double(analytic_mean({0.,1.,0.,0.},c[0].lower,c[0].upper,angular));
+        const double centroid=double(analytic_mean({0.,1.,0.,0.},c[1].lower,c[1].upper,angular));
+        const double centroid_high=double(analytic_mean({0.,1.,0.,0.},c[2].lower,c[2].upper,angular));
+        const double backward=1./(centroid-centroid_low),forward=2./(centroid_high-centroid);
+        const double ratio=backward/forward;
+        const double minmod=std::min(1.,ratio),superbee=std::max(std::min(2.*ratio,1.),std::min(ratio,2.));
+        close(a.at(c[1].upper),1.+minmod*forward*(c[1].upper-centroid),6.,"actual MinMod analytic gradient");
+        close(sa.at(c[1].upper),1.+superbee*forward*(c[1].upper-centroid),6.,"actual SuperBee analytic gradient");
+        conserved(a,1.,angular,6.);conserved(b,3.,angular,6.);
+        conserved(sa,1.,angular,6.);conserved(sb,3.,angular,6.);
+    }
+}
+
+void ppm_polynomials()
+{
+    for(bool angular:{false,true})for(double origin:{0.,2.,-6.}) {
+        const auto c=cells<6>(origin,angular);
+        const long double center=origin+2.5L;
+        // A true smooth minimum inside the left donor: supported curvature
+        // may keep it, so this test never requires every final curve monotone.
+        const std::array<long double,4> quadratic{1.L+center*center,-2.L*center,1.L,0.};
+        const auto v=means(quadratic,c);w::Profile left,right;
+        require(w::ppm(v,c,left,right),"weighted smooth quadratic PPM rejected");
+        for(int n=0;n<2;++n) {
+            const auto& p=n?right:left;const auto& cell=c[n+2];
+            conserved(p,v[n+2],angular,scale_of(v));
+            for(double r:{cell.lower,cell.upper})close(p.at(r),analytic_value(quadratic,r),scale_of(v),
+                "weighted quadratic full donor endpoint");
+        }
+        // Cubic exactness belongs to the four-mean FACE interpolation, not
+        // the full cell parabola (which cannot be an arbitrary cubic).
+        const std::array<long double,4> cubic{2.L,3.L,.5L,1.L/64.L};const auto cv=means(cubic,c);
+        for(int n=0;n<3;++n) {
+            double face=0.;const double r=c[n+1].upper;
+            require(w::cubic_face(cv.data()+n,c.data()+n,r,c[n+1].upper-c[n+1].lower,face),"true cubic face solve rejected");
+            close(face,analytic_value(cubic,r),scale_of(cv),"four weighted cubic means lost exact face");
+        }
+        // Arbitrary finite six-point means exercise conservation independently
+        // of polynomial interpolation or a supported-extremum assertion.
+        const std::array<double,6> isolated{.7,.5,1.,1.2,.5,.9};
+        require(w::ppm(isolated,c,left,right),"finite isolated weighted PPM rejected");
+        conserved(left,isolated[2],angular,scale_of(isolated));conserved(right,isolated[3],angular,scale_of(isolated));
+        const std::array<double,6> zero{};
+        require(w::ppm(zero,c,left,right),"weighted exact-zero PPM rejected");
+        conserved(left,0.,angular,0.);conserved(right,0.,angular,0.);
+        require(left.at(c[2].lower)==0.&&left.at(c[2].upper)==0.
+            &&right.at(c[3].lower)==0.&&right.at(c[3].upper)==0.,
+            "weighted exact-zero endpoints drifted");
+    }
+}
+
+void cw_geometry()
+{
+    for(bool angular:{false,true})for(bool reflected:{false,true}) {
+        w::Cell cell;require(w::bind_cell(reflected?-1.:0.,reflected?0.:1.,angular,cell),"axis CW cell rejected");
+        const double factor_left=reflected?(angular?2./3.:1.):(angular?9.:5.);
+        const double factor_right=reflected?(angular?9.:5.):(angular?2./3.:1.);
+        for(double sign:{1.,-1.})for(int side:{0,1}) {
+            double l=sign*(side==0?-2.*factor_left:-1.),r=sign*(side==1?2.*factor_right:1.);
+            require(w::cw_bound(l,r,0.,cell.xi),"weighted CW rejected valid geometry");
+            close(l,sign*(side==0?-factor_left:-1.),2.*std::max(factor_left,factor_right),"weighted CW left analytic factor");
+            close(r,sign*(side==1?factor_right:1.),2.*std::max(factor_left,factor_right),"weighted CW right analytic factor");
+            // Use independent p-weighted xi moments from antiderivatives.
+            const long double mu1=analytic_mean({-cell.lower,1.,0.,0.},cell.lower,cell.upper,angular);
+            const std::array<long double,4> xi2{cell.lower*cell.lower,-2.L*cell.lower,1.,0.};
+            const long double mu2=analytic_mean(xi2,cell.lower,cell.upper,angular),delta=r-l;
+            const long double a=(-l-delta*mu1)/(mu1-mu2);
+            const long double band=64.L*kEps*std::max(std::abs(delta),std::abs(a));
+            require(sign*(delta+a)>=-band&&sign*(delta-a)>=-band,"weighted CW derivative sign");
+        }
+    }
+}
+
+void own_cell_ordinary_bits()
+{
+    const double controls[][6]={{1,1,1,1,1,1},{1,1.5,2,2.5,3,3.5},{.7,.5,1,1.2,.5,.9},
+        {1,1,1,2,2,2},{.25,.25,.25,4,4,.25},{0,0,0,0,0,0}};
+    for(const auto& v:controls) {
+        double six[6],low[5],high[5];for(int n=0;n<6;++n)six[n]=v[n];
+        for(int n=0;n<5;++n){low[n]=v[n];high[n]=v[n+1];}
+        double a=0.,b=0.,ll=0.,lr=0.,rl=0.,rr=0.;
+        PPMReconstruction::reconstruct_scalar_ppm(six,a,b);
+        PPMReconstruction::reconstruct_scalar_cell_ppm(low,ll,lr);
+        PPMReconstruction::reconstruct_scalar_cell_ppm(high,rl,rr);
+        require(std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(lr)
+            &&std::bit_cast<std::uint64_t>(b)==std::bit_cast<std::uint64_t>(rl),"ordinary owning-cell extraction changed interface bits");
+        double expected_ll=reference_face(reference_interpolate_face(v[0],v[1],v[2],v[3]),v[0],v[1],v[2],v[3]);
+        double expected_lr=reference_face(reference_interpolate_face(v[1],v[2],v[3],v[4]),v[1],v[2],v[3],v[4]);
+        double expected_rl=expected_lr;
+        double expected_rr=reference_face(reference_interpolate_face(v[2],v[3],v[4],v[5]),v[2],v[3],v[4],v[5]);
+        reference_cell(expected_ll,expected_lr,v[0],v[1],v[2],v[3],v[4]);
+        reference_cell(expected_rl,expected_rr,v[1],v[2],v[3],v[4],v[5]);
+        const double scale=stencil_scale(v);
+        close_relative(ll,expected_ll,scale,"ordinary lower endpoint old oracle");
+        close_relative(lr,expected_lr,scale,"ordinary upper endpoint old oracle");
+        close_relative(rl,expected_rl,scale,"ordinary next lower old oracle");
+        close_relative(rr,expected_rr,scale,"ordinary next upper old oracle");
+    }
+}
+
+void rejection_atomicity()
+{
+    auto c=cells<6>(0.,false);const std::array<double,6> original{1,2,3,4,5,6};
+    const w::Profile sentinel{{42.,3.,4.},17.,18.,23.,true};
+    for(int fault=0;fault<4;++fault) {
+        auto geometry=c;auto v=original;w::Profile left=sentinel,right=sentinel;
+        if(fault==0)v[5]=std::numeric_limits<double>::quiet_NaN();
+        if(fault==1)geometry[2].xi.first=0.;
+        if(fault==2)geometry[2].lower=-.25; // Actual support crosses the axis.
+        if(fault==3)geometry[3].lower=geometry[3].upper; // Zero physical spacing.
+        require(!w::ppm(v,geometry,left,right),"illegal weighted PPM input accepted");
+        require(same(left,sentinel)&&same(right,sentinel),"rejected weighted PPM published partial donor");
+    }
+    w::Cell cell;
+    require(!w::bind_cell(-.25,.25,false,cell),"cross-axis selected cell accepted");
+    require(!w::bind_cell(0.,std::numeric_limits<double>::infinity(),false,cell),"nonfinite selected support accepted");
+    double singular[3][4]={{1,0,0,1},{2,0,0,2},{3,0,0,3}};
+    double a=17.,b=18.,d=19.;
+    require(!RzReconstruction::solve_cubic_differences(singular,a,b,d),"singular actual difference matrix accepted");
+    require(a==17.&&b==18.&&d==19.,"singular difference solve published coefficients");
+    auto m=cells<4>(0.,true);const std::array<double,4> bad{1.,2.,3.,std::numeric_limits<double>::infinity()};
+    w::Profile left=sentinel,right=sentinel;
+    require(!w::muscl<MinMod>(bad,m,left,right)&&same(left,sentinel)&&same(right,sentinel),"nonfinite MUSCL published partial profiles");
+}
+void run()
+{
+    muscl_identity();ppm_polynomials();cw_geometry();own_cell_ordinary_bits();rejection_atomicity();
+    std::cout<<"Native selected scalar mathematics checks passed (independent V/W integrals, 64 eps; no full method grant)\n";
+}
+} // namespace native_scalar_checks
+
 } // namespace
 
 int main()
@@ -431,6 +658,7 @@ int main()
         reference_sweep();
         perturbation_witnesses();
         perturbation_sweep();
+        native_scalar_checks::run();
         std::cout << "PPM curvature limiter checks passed (C=1.25, 64 eps witness band)\n";
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

@@ -70,10 +70,11 @@ struct RegridSourceBackup {
     int pool_index;
     amr::Block* block;
     FluidState values;
+    Grid original_grid; // Small value metadata; source array leases stay fixed.
     std::array<const double*,7> pointers{};
     std::array<std::size_t,7> sizes{};
     RegridSourceBackup(int id,amr::Block& live)
-        :pool_index(id),block(&live),values(live.fluid_state) {
+        :pool_index(id),block(&live),values(live.fluid_state),original_grid(live.grid) {
         for(std::size_t f=0;f<regrid_fields.size();++f) {
             const auto& field=live.fluid_state.*regrid_fields[f];
             pointers[f]=field.data();sizes[f]=field.size();
@@ -94,6 +95,11 @@ struct RegridSourceBackup {
         std::swap(live.fluid_state.stage_repairs,values.stage_repairs);
         live.fluid_state.diffusion_boundary=values.diffusion_boundary;
         live.fluid_state.boundary_flux_capture=values.boundary_flux_capture;
+        // Swap the actual source descriptors/provenance without allocation.
+        // A failed callback cannot leave a different root or periodic alias
+        // associated with the restored physical arrays and boundary frame.
+        static_assert(std::is_nothrow_swappable_v<Grid>);
+        std::swap(live.grid,original_grid);
     }
 };
 
@@ -107,13 +113,15 @@ struct NativeRegridSource {
     int species,extent;
     std::array<int,8> layout;
     std::array<double,9> coordinates;
+    GridMetrics::DyadicGridIdentity dyadic_identity;
     NativeRegridSource(int pool_id,const amr::Block& b,int dimension)
         :id(pool_id),block(&b),logical{dimension,b.level,b.logical_x1,b.logical_x2,b.logical_x3},
           species(b.fluid_state.GetNumSpecies()),extent(b.fluid_state.block_total_size_),
           layout{b.grid.dim,b.grid.ng,b.grid.stride_y,b.grid.stride_z,b.grid.total_size,
               b.grid.nblockx1,b.grid.nblockx2,b.grid.nblockx3},
           coordinates{b.grid.x1_min,b.grid.x1_max,b.grid.x2_min,b.grid.x2_max,
-              b.grid.x3_min,b.grid.x3_max,b.grid.dx1,b.grid.dx2,b.grid.dx3} {
+              b.grid.x3_min,b.grid.x3_max,b.grid.dx1,b.grid.dx2,b.grid.dx3},
+          dyadic_identity(b.grid.dyadic_identity) {
         for(std::size_t f=0;f<regrid_fields.size();++f) {
             const auto& field=b.fluid_state.*regrid_fields[f];
             pointers[f]=field.data();sizes[f]=field.size();
@@ -128,6 +136,7 @@ struct NativeRegridSource {
             b.grid.total_size,b.grid.nblockx1,b.grid.nblockx2,b.grid.nblockx3};
         if(&b!=block||b.id!=id||!b.active||key!=logical||geometry!=coordinates
             ||actual_layout!=layout||b.grid.geometry!="cylindrical"
+            ||!GridMetrics::equal_identity(b.grid.dyadic_identity,dyadic_identity)
             ||b.fluid_state.GetNumSpecies()!=species||b.fluid_state.block_total_size_!=extent)return false;
         for(std::size_t f=0;f<regrid_fields.size();++f) {
             const auto& field=b.fluid_state.*regrid_fields[f];
