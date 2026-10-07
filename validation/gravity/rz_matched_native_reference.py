@@ -1191,8 +1191,248 @@ def reuse_materialized_full_reference(record, old_record, reference, *, new_raw_
     return result
 
 
+def _energy_interval(lower, upper):
+    """Serialize exact outward endpoints; never certify a decimal midpoint."""
+    lower, upper = Fraction(lower), Fraction(upper)
+    _reuse_require(lower <= upper, "Reversed energy interval")
+    return dict(lower_rational=str(lower), upper_rational=str(upper),
+                width_rational=str(upper-lower))
+
+
+def _energy_ball_bounds(ball):
+    """Reuse the existing finite arb/endpoints owner without a second convention."""
+    from rz_ring_surface_reference import _finite, _ball_record
+    _finite(ball)
+    value = _ball_record(ball)
+    return _energy_interval(value["lower_rational"], value["upper_rational"])
+
+
+def _energy_cell_geometry(leaf, diameter_squared):
+    """Read REAL rounded edges: positive physical V and the proven delta condition.
+
+    V/pi=(b^2-a^2) dz; delta^2=(dr^2+dz^2)/4. Comparing squares
+    exactly proves delta<=D/4 before any sqrt/log/backend operation. Axis
+    contact a=0 is valid; negative/straddling physical target cells are not.
+    """
+    from rz_ring_surface_reference import rational
+    a,b,c,d = (rational(leaf[key]) for key in
+               ("r_lower","r_upper","z_lower","z_upper"))
+    rho = rational(leaf["density"])
+    _reuse_require(0 <= a < b and c < d and rho >= 0 and diameter_squared > 0,
+                   "Invalid physical PWC energy cell")
+    dr, dz, mid = b-a, d-c, (a+b)/2
+    delta_squared = (dr*dr+dz*dz)/4
+    _reuse_require(16*delta_squared <= diameter_squared,
+                   "Energy remainder requires delta<=D/4; no clamp or new bound")
+    center=leaf["center"]
+    _reuse_require(isinstance(center,list) and len(center)==3
+        and rational(center[0])==mid and rational(center[1])==(c+d)/2,
+        "Energy observer is not the exact actual-edge midpoint; center roundoff bridge not supplied")
+    # Native V linear offset is dr^2/(12*r_mid); W does not weight scalar Phi.
+    return dict(volume_over_pi=(b*b-a*a)*dz, density=rho,
+                radial_offset=dr*dr/(12*mid), delta_squared=delta_squared)
+
+
+def _energy_complete_cell_intervals(record, mapped, budget):
+    """Require the complete pinned mapping, exact current source and all cell sites.
+
+    This INTERNAL consumer is called only after complete old/new reuse closure;
+    it is not an alternate artifact importer. The accepted external reference
+    pin remains the outer owner's provenance, not a mathematical authorization
+    manufactured from a hash or supplied status string.
+    """
+    from rz_ring_surface_reference import CGS_G, rational
+    _reuse_require(mapped.get("status")=="COMPLETE_REFERENCE_REUSE_DIAGNOSTIC_ONLY"
+        and mapped.get("reference_status")=="MathematicalIntervalsCertified"
+        and mapped.get("coverage_complete") is True and mapped.get("reference_complete") is True
+        and mapped.get("actual_record_canonical_sha256")==_reuse_canonical_sha(record)
+        and mapped.get("source_identity")==record["source_identity"],
+        "Energy requires the exact complete current pinned mapping")
+    _reuse_require(all(mapped.get(key) is False for key in
+        ("science_accepted","physical_qualified","core_binding_qualified")),
+        "Energy mapping cannot import a scientific grant")
+    pin=mapped.get("externally_accepted_reference_sha256")
+    _reuse_require(isinstance(pin,str) and len(pin)==64
+        and all(ch in "0123456789abcdef" for ch in pin)
+        and mapped.get("reused_reference_raw_sha256")==pin, "Missing accepted energy reference pin")
+    leaves=record["source"]["leaves"]; cells=record["candidate_field"]["cell_values"]
+    _reuse_require(len(cells)==len(leaves), "Missing energy cell values")
+    observers={value["source_index"]:value for value in record["observers"] if value.get("kind")=="cell-center"}
+    intervals={}; widths={key:str(CGS_G/Fraction(10**12)) for key in ("Phi","g_r","g_z")}
+    _reuse_require(mapped.get("target_widths_exact")==widths, "Energy cannot change reference widths")
+    _reuse_require(len(mapped.get("targets",[]))==len(record["observers"]), "Partial energy point mapping")
+    for row in mapped["targets"]:
+        budget.check_time()
+        _reuse_require(row.get("math_interval_meets_original_width") is True
+            and row.get("reference_status")=="MathematicalIntervalsCertified"
+            and row.get("science_accepted") is False, "Unverified energy point row")
+        if row.get("kind")!="cell":continue
+        index=row["actual_index"]
+        _reuse_require(type(index) is int and 0<=index<len(leaves) and index not in intervals,
+                       "Duplicate/foreign energy cell index")
+        observer=observers.get(index)
+        _reuse_require(observer is not None and row.get("observer_id")==observer["id"]
+            and Fraction(row["r_exact"])==rational(observer["r_observer"])
+            and Fraction(row["z_exact"])==rational(observer["z_observer"]),
+                       "Energy cell observer identity changed")
+        interval=_reuse_interval(row["intervals"]["Phi"],CGS_G/Fraction(10**12))
+        intervals[index]=(Fraction(interval["lower_rational"]),Fraction(interval["upper_rational"]))
+        _reuse_require(rational(cells[index]["potential"])==Fraction(
+            row["comparisons"]["point_cell_potential"]["actual_exact"]), "Energy actual potential changed")
+    _reuse_require(set(intervals)==set(range(len(leaves))), "Missing complete energy cell point intervals")
+    return intervals
+
+
+def _energy_reference_snapshot(record, mapped, dependency_directory, budget):
+    """Bound continuum W using ALL supplied PWC cells and old certified POINT Phi.
+
+    Workflow: exact complete pinned reuse -> actual edge/mass/site checks ->
+    optional existing arb70 -> true-pi V and global GR/D Taylor bound -> exact
+    stored-input and declared FP64 reduction diagnostics. No integral/kernel,
+    new callback allowance, numerical floor, fitted rate or scientific PASS.
+    """
+    from rz_ring_surface_reference import CGS_G, rational, load_optional_flint, _exact, WorkLimit
+    result=dict(profile="pwc-native-volume-energy-bridge-1",status="ENERGY_REFERENCE_UNVERIFIED",
+        interval_complete=False,science_accepted=False,physical_qualified=False,core_binding_qualified=False,
+        source_identity=copy.deepcopy(record.get("source_identity")),kernel_evaluations=0,failure=None)
+    try:
+        budget.check_time()
+        intervals=_energy_complete_cell_intervals(record,mapped,budget)
+        leaves=record["source"]["leaves"]; cells=record["candidate_field"]["cell_values"]
+        root=list(map(rational,record["root_bounds"]))
+        _reuse_require(len(root)==4 and 0<=root[0]<root[1] and root[2]<root[3], "Invalid full-ring energy root")
+        # Full 3D ring-space diameter, not the meridional rectangle diagonal.
+        diameter_squared=4*root[1]**2+(root[3]-root[2])**2
+        geometry=[_energy_cell_geometry(leaf,diameter_squared) for leaf in leaves]
+        _reuse_require(rational(record["source_identity"]["G"])==CGS_G, "Energy G source mismatch")
+        maximum_density=max(item["density"] for item in geometry)
+        # Loading/transcendentals remain optional and charge the SAME mapping
+        # deadline; there is no integral dispatch or precision escalation.
+        budget.check_time(); backend=load_optional_flint(dependency_directory)
+        _reuse_require(backend.ctx.dps==70, "Energy interval backend must already be exactly 70 dps")
+        arb=backend.arb; pi=arb.pi(); diameter=_exact(arb,diameter_squared).sqrt()
+        gr=_exact(arb,CGS_G*maximum_density)
+        point_lo=point_hi=stored_exact=Fraction(0); fp64=0.
+        bridge=arb(0); point_error=arb(0); volumes=arb(0)
+        for index,(leaf,cell,item) in enumerate(zip(leaves,cells,geometry)):
+            budget.check_time()
+            volume=pi*_exact(arb,item["volume_over_pi"]); mass=volume*_exact(arb,item["density"])
+            volumes+=volume
+            lower,upper=intervals[index]; actual=rational(cell["potential"])
+            factor=item["density"]*item["volume_over_pi"]/2
+            point_lo+=factor*lower;point_hi+=factor*upper
+            point_error+=mass*_exact(arb,max(abs(actual-lower),abs(actual-upper)))/2
+            delta=_exact(arb,item["delta_squared"]).sqrt()
+            remainder=gr*_exact(arb,item["delta_squared"])*(26*pi+32*pi*(diameter/(2*delta)).log())
+            cell_bridge=4*pi*gr*diameter*_exact(arb,item["radial_offset"])+remainder
+            bridge+=mass*cell_bridge/2
+            # Exact computation on stored FP64 rho/V/Phi data is separate
+            # from true-pi volume and from the following explicit reduction.
+            stored_exact+=rational(leaf["density"])*rational(leaf["stored_operator_volume"])*actual/2
+            fp64+=((float(leaf["density"])*float(leaf["stored_operator_volume"]))*float(cell["potential"]))*.5
+            _reuse_require(math.isfinite(fp64), "Diagnostic FP64 energy reduction overflow; no substitute")
+        point=_energy_interval(_energy_ball_bounds(pi*_exact(arb,point_lo))["lower_rational"],
+                               _energy_ball_bounds(pi*_exact(arb,point_hi))["upper_rational"])
+        bridge_upper=Fraction(_energy_ball_bounds(bridge)["upper_rational"])
+        point_upper=Fraction(_energy_ball_bounds(point_error)["upper_rational"])
+        _reuse_require(bridge_upper>=0 and point_upper>=0, "Unresolved nonnegative energy bound")
+        actual_over_pi=sum((item["density"]*item["volume_over_pi"]*rational(cell["potential"])/2
+            for item,cell in zip(geometry,cells)),Fraction(0))
+        true_point_actual=_energy_ball_bounds(pi*_exact(arb,actual_over_pi))
+        geometry_delta=_energy_interval(stored_exact-Fraction(true_point_actual["upper_rational"]),
+                                       stored_exact-Fraction(true_point_actual["lower_rational"]))
+        geometry_upper=max(abs(Fraction(geometry_delta[key])) for key in ("lower_rational","upper_rational"))
+        reduction=Fraction.from_float(fp64)-stored_exact
+        continuum=_energy_interval(Fraction(point["lower_rational"])-bridge_upper,
+                                   Fraction(point["upper_rational"])+bridge_upper)
+        error_upper=bridge_upper+point_upper+geometry_upper+abs(reduction)
+        budget.check_time()
+        result.update(status="COMPLETE_ENERGY_BRIDGE_DIAGNOSTIC_ONLY",interval_complete=True,
+            actual_record_canonical_sha256=mapped["actual_record_canonical_sha256"],
+            materializedRecordSha256=mapped["materializedRecordSha256"],
+            field_identity=copy.deepcopy(mapped["field_identity"]),
+            original_source_input_sha256=mapped["original_source_input_sha256"],
+            externally_accepted_reference_sha256=mapped["externally_accepted_reference_sha256"],
+            cell_count=len(leaves),density_maximum_exact=str(maximum_density),G_exact=str(CGS_G),
+            maximum_cell_delta_squared_exact=str(max(item["delta_squared"] for item in geometry)),
+            full_ring_diameter_squared_exact=str(diameter_squared),full_ring_diameter_interval=_energy_ball_bounds(diameter),
+            true_full_ring_volume_interval=_energy_ball_bounds(volumes),point_midpoint_wh_interval=point,
+            continuum_wh_interval=continuum,volume_remainder_energy_upper_exact=str(bridge_upper),
+            actual_true_volume_point_wh_interval=true_point_actual,
+            true_volume_point_field_error_upper_exact=str(point_upper),
+            stored_measure_point_wh_exact=str(stored_exact),stored_minus_true_volume_point_wh_interval=geometry_delta,
+            stored_measure_mapping_error_upper_exact=str(geometry_upper),diagnostic_fp64_sequential_wh=fp64,
+            diagnostic_fp64_sequential_wh_exact=str(Fraction.from_float(fp64)),
+            diagnostic_fp64_reduction_error_exact=str(reduction),numeric_to_continuum_energy_error_upper_exact=str(error_upper),
+            numeric_minus_continuum_interval=_energy_interval(Fraction.from_float(fp64)-Fraction(continuum["upper_rational"]),
+                                                            Fraction.from_float(fp64)-Fraction(continuum["lower_rational"])),
+            backend=dict(ctx_dps=70,python_flint_version=str(backend.__version__)),
+            reduction_semantics="test-only sequential FP64 sum (((rho*storedV)*Phi_h)*0.5); not a captured production reduction")
+    except (OSError,ValueError,TypeError,KeyError,AttributeError,ArithmeticError,ImportError,WorkLimit) as exc:
+        result.update(failure=str(exc),failure_type=type(exc).__name__)
+    result["limitations"]=["Exact supplied full-ring PWC source and complete already certified point intervals only",
+        "True-pi volume bridge, field point error, stored-volume mapping and declared FP64 reduction are separate",
+        "Axis cell bound is coarse; no space/time rate, scientific tolerance or public/native/Device grant",
+        "A complete energy interval can be too wide to settle a frozen scientific budget"]
+    return result
+
+
+def _energy_reference_delta(before, after):
+    """Subtract two independently closed snapshots; add BOTH endpoint bridges.
+
+    A reused identical source can have different numerical fields/generations.
+    This operation does not assert that arbitrary snapshots are a physical
+    trajectory, and cannot reuse one source's reference for a changed density.
+    """
+    for item in (before,after):
+        _reuse_require(item.get("status")=="COMPLETE_ENERGY_BRIDGE_DIAGNOSTIC_ONLY"
+            and item.get("interval_complete") is True and all(item.get(key) is False for key in
+            ("science_accepted","physical_qualified","core_binding_qualified")), "Incomplete endpoint energy bridge")
+    _reuse_require(all(Fraction(item["numeric_to_continuum_energy_error_upper_exact"])>=0
+        for item in (before,after)), "Negative endpoint energy error bound")
+    _reuse_require(before["G_exact"]==after["G_exact"], "Endpoint energy G mismatch")
+    result=dict(profile="pwc-native-volume-energy-delta-1",science_accepted=False,
+        physical_qualified=False,core_binding_qualified=False,
+        before_source_identity=copy.deepcopy(before["source_identity"]),after_source_identity=copy.deepcopy(after["source_identity"]),
+        endpoint_error_sum_upper_exact=str(Fraction(before["numeric_to_continuum_energy_error_upper_exact"])
+            +Fraction(after["numeric_to_continuum_energy_error_upper_exact"])),
+        diagnostic_fp64_endpoint_difference_exact=str(Fraction(after["diagnostic_fp64_sequential_wh_exact"])
+            -Fraction(before["diagnostic_fp64_sequential_wh_exact"])),
+        scope="Two independent endpoint bridges; no physical-trajectory/time-energy acceptance")
+    for key in ("point_midpoint_wh_interval","continuum_wh_interval"):
+        left,right=before[key],after[key]
+        for interval in (left,right):
+            _reuse_require(Fraction(interval["lower_rational"])<=Fraction(interval["upper_rational"])
+                and Fraction(interval["width_rational"])==Fraction(interval["upper_rational"])-Fraction(interval["lower_rational"]),
+                "Malformed endpoint energy interval")
+        result[key.replace("wh_interval","delta_wh_interval")]=_energy_interval(
+            Fraction(right["lower_rational"])-Fraction(left["upper_rational"]),
+            Fraction(right["upper_rational"])-Fraction(left["lower_rational"]))
+    return result
+
+
+def _energy_cli_snapshot(record, mapped, directory, budget):
+    """Freeze optional arb precision locally; restore it on EVERY exit.
+
+    The default pure mapping path never calls this helper or loads flint.
+    Elementary interval arithmetic uses the same remaining mapping deadline.
+    """
+    from rz_ring_surface_reference import load_optional_flint, WorkLimit
+    backend=None; original=None
+    try:
+        budget.check_time();backend=load_optional_flint(directory)
+        original=backend.ctx.dps;backend.ctx.dps=70
+        return _energy_reference_snapshot(record,mapped,directory,budget)
+    except (OSError,ValueError,TypeError,AttributeError,ArithmeticError,ImportError,WorkLimit) as exc:
+        return dict(profile="pwc-native-volume-energy-bridge-1",status="ENERGY_REFERENCE_UNVERIFIED",
+            interval_complete=False,science_accepted=False,physical_qualified=False,core_binding_qualified=False,
+            kernel_evaluations=0,failure=str(exc),failure_type=type(exc).__name__)
+    finally:
+        if backend is not None and original is not None:backend.ctx.dps=original
+
+
 def _reuse_full_reference_cli(arguments, summary_output):
-    """Read three immutable local artifacts once and run no optional backend."""
+    """Read three immutable artifacts; optional energy uses no integral kernel."""
     from rz_ring_surface_reference import Budget, WorkLimit
     budget = Budget.full_domain_diagnostic()
     snapshots = []
@@ -1212,6 +1452,12 @@ def _reuse_full_reference_cli(arguments, summary_output):
         result = reuse_materialized_full_reference(new, old, reference, new_raw_sha256=new_sha,
             old_raw_sha256=old_sha, reference_raw_sha256=reference_sha,
             expected_reference_sha256=arguments.reuse_full_reference_sha256, _shared_budget=budget)
+        if getattr(arguments,"energy_reference",False):
+            result["energy_reference"]=_energy_cli_snapshot(new,result,arguments.dependency_directory,budget)
+            result["energy_reference_requested"]=True
+            result["energy_reference_complete"]=result["energy_reference"]["interval_complete"]
+            result["mapping_budget"]=budget.record()
+            result["budget"]=dict(result["mapping_budget"],resource_profile="pure-exact-reference-mapping-1",kernel_evaluations=0)
         for path, identity, sha in snapshots:
             budget.check_time(); stat = path.stat()
             _reuse_require((stat.st_dev,stat.st_ino,stat.st_size,stat.st_mtime_ns,stat.st_ctime_ns) == identity
@@ -1236,6 +1482,10 @@ def _reuse_full_reference_cli(arguments, summary_output):
     summary["weighted_acceleration_maximum_absolute_error_upper_exact"] = {
         name:str(max((Fraction(row["error"]["absolute_error_upper_exact"]) for row in result.get(name,[])),default=Fraction(0)))
         for name in ("side_acceleration_rows","cell_acceleration_rows")}
+    if "energy_reference" in result:
+        summary["energy_reference"]=copy.deepcopy(result["energy_reference"])
+        summary["energy_reference_requested"]=True
+        summary["energy_reference_complete"]=result["energy_reference_complete"]
     summary_output.parent.mkdir(parents=True, exist_ok=True)
     summary_output.write_text(json.dumps(summary, indent=2, allow_nan=False)+"\n")
     print("ACTUAL_MATERIALIZED_REFERENCE_REUSE_DIAGNOSTIC", result["reference_status"], len(result["targets"]))
@@ -1287,6 +1537,8 @@ def main():
     p.add_argument("--reuse-full-reference",type=Path, help="Pure exact reuse of a complete accepted local reference; no integral backend")
     p.add_argument("--reference-materialized-record",type=Path, help="Original actual record bound to the imported reference")
     p.add_argument("--reuse-full-reference-sha256", help="Externally accepted reference full-file SHA; required provenance pin, not a physical parameter")
+    p.add_argument("--energy-reference",action="store_true",
+                   help="Optional true-volume PWC energy bridge from complete pinned reuse; no new integral or science grant")
     p.add_argument("--dependency-directory",type=Path)
     p.add_argument("--output",required=True,type=Path)
     p.add_argument("--full-domain", action="store_true",
@@ -1301,6 +1553,8 @@ def main():
     p.add_argument("--observer-set", choices=("boundary", "cells"), default="boundary")
     a=p.parse_args()
     if a.output.exists():p.error("output must be new")
+    if a.energy_reference and a.reuse_full_reference is None:
+        p.error("--energy-reference requires complete pinned --reuse-full-reference")
     if a.reference_profile is not None and (not a.full_domain or a.materialized_record is None):
         p.error("--reference-profile requires --materialized-record and --full-domain")
     if a.reference_profile is not None and any(item is not None for item in

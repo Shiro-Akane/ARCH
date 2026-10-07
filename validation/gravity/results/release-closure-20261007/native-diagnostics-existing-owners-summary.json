@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "status": "PASS_EXISTING_CPU_AND_TOOLING_OWNERS_ONLY",
+  "cpuBuildGuardSeconds": 70.953,
+  "cpuBuildCumulativeSeconds": 913.175,
+  "buildLogicalCapSeconds": 1200,
+  "existingStage": {
+    "passed": 1,
+    "seconds": 26.68,
+    "guardSeconds": 27.133
+  },
+  "existingPoissonSelf": {
+    "passed": 5,
+    "seconds": 48.54,
+    "guardSeconds": 49.231
+  },
+  "existingReferenceToolOwner": {
+    "passed": 71,
+    "seconds": 10.045,
+    "guardSeconds": 11.058,
+    "optionalActualArbAndMachinPiCheck": true
+  },
+  "homologyActuallyRun": false,
+  "sourceOwningApi": "PENDING",
+  "completeDynamicFourModule": "PENDING",
+  "CUDACompiled": false,
+  "continuousEnergyQualified": false,
+  "unchangedScientificThresholds": true,
+  "guardsStopped": false,
+  "swapKiB": 0,
+  "EFreeMinimumBytes": 23846371328
+}

@@ -1,0 +1,46 @@
+{
+  "acceptance_status": "ACCEPTED_PUBLIC_PAIRED_IDENTITY_WITH_SCOPE",
+  "accepted": true,
+  "independentChecks": {
+    "exactRationalCases": 12,
+    "physicalSymmetricKernelProof": "Compact bounded sources: integrable Newton kernel gives Fubini symmetry; exact cross terms cancel",
+    "arbitraryNumericFieldsAllowed": true,
+    "zeroDensityChangeAllowed": true
+  },
+  "qualifications": [
+    "Same true full-ring partition and G; signed delta density only error weights",
+    "Point/volume reference must be separately certified and complete before/after",
+    "Actual stored volume, reduction, boundary flux, force/work and timestep still separate",
+    "Not current implementation/science/restart/GPU acceptance"
+  ],
+  "observedSeconds": 33.3,
+  "reportedTokens": {
+    "input": 1590,
+    "cached": 384,
+    "new": 1206,
+    "output": 8034,
+    "reasoning": 7628,
+    "visible": 406
+  },
+  "estimatedUSD": [
+    0.00500245,
+    0.0100049
+  ],
+  "actualBillAndManagerActiveCost": "UNKNOWN",
+  "newRetries": 0,
+  "schema": 1,
+  "scope": "PUBLIC_MATH_ONLY_NO_SOURCE_OR_RAW_EXPORT",
+  "workerSeconds": 33.3,
+  "inputTokens": 1590,
+  "cachedInputTokens": 384,
+  "outputTokens": 8034,
+  "reasoningTokens": 7628,
+  "visibleOutputTokens": 406,
+  "estimatedUsdRange": [
+    0.00500245,
+    0.0100049
+  ],
+  "actualInvoice": "UNKNOWN",
+  "rootActiveCost": "UNKNOWN",
+  "implementationOrPhysicalQualified": false
+}

@@ -26,7 +26,16 @@ import {pairingSuspicion,previewMetadataMatches} from '../src/data/configuration
 import {loadPar,editPar,parErrors,exportPar} from '../src/state/parState.ts';
 test('actual Core schema and successful/failed inspection fixtures are accepted, malformed identity rejected',async()=>{
  const fixture=async(name:string)=>JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/'+name,import.meta.url),'utf8'));
- const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8')));assert.equal(schema.parameters.length,94);
+ const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8')));
+ // The real selected Core owns catalog growth; scientific presence rules stay
+ // explicit so refreshing response metadata cannot grant an implicit target.
+ assert.equal(new Set(schema.parameters.map(p=>p.key)).size,schema.parameters.length);
+ const jeans=schema.parameters.find(p=>p.key==='jeans_cells')!;
+ assert.ok(jeans);assert.equal(jeans.allowedDefault,null);
+ assert.equal(jeans.requirement.kind,'conditional');
+ assert.deepEqual(jeans.requirement.condition.dependencies,['refine_var']);
+ assert.equal(jeans.constraints.min,4);assert.equal(jeans.constraints.minInclusive,true);
+ assert.equal(jeans.units.unit,'1');
  for(const name of ['sod-valid.json','empty.json','invalid.json']){const v=await fixture(name);validateConfigurationInspection(v,v.identity);assert.throws(()=>validateConfigurationInspection(v,{...v.identity,requestId:'late'}));}
  const broken=await fixture('schema.json');broken.parameters[1].key=broken.parameters[0].key;assert.throws(()=>validateConfigurationSchema(broken));
 });

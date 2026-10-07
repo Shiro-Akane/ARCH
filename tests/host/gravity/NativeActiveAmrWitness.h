@@ -91,18 +91,22 @@ inline void Owner::observe_dynamic_source(const Physical::Gravity::NativeSelfSta
         &&topology->angular_transport&&topology->species_count==species_count,
         "Dynamic source lost the actual native flux topology lease");
     const auto times=solve_times(*gravity);
+    const auto ring=gravity->ring_memo_observations(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
+    require(ring.epoch==event.source->topology.value&&ring.source_generation==event.source_generation
+        &&ring.field_generation==event.field_generation,"Dynamic ring observations changed actual field identity");
     std::lock_guard<std::mutex> lock(source_mutex);
     auto [it,inserted]=sources.try_emplace(stage);auto& visit=it->second;
     if(inserted) {
         visit.descriptor=*event.descriptor;visit.field_generation=event.field_generation;
         visit.source_generation=event.source_generation;visit.input_time=event.source->input_time;
         visit.source=*event.source;visit.lease=event.generation;
-        visit.topology_fingerprint=topology->fingerprint;visit.solver_seconds=times;
+        visit.topology_fingerprint=topology->fingerprint;visit.solver_seconds=times;visit.ring_memo=ring;
     }
     require(visit.source==*event.source&&visit.lease==event.generation
         &&visit.field_generation==event.field_generation&&visit.source_generation==event.source_generation
         &&visit.topology_fingerprint==topology->fingerprint,
         "Dynamic operation crossed field/source/topology generations");
+    require(visit.ring_memo==ring,"Repeated same-field observer changed actual ring observations");
     for(int k=0;k<3;++k)require(bits(visit.solver_seconds[k],times[k]),
         "Repeated same-field observer changed its actual solve timing");
     if(event.kind==Kind::AxisBefore||event.kind==Kind::AxisAfter) {
@@ -253,6 +257,25 @@ inline void require_active_unchanged(Owner& owner,const std::vector<CellBefore>&
     }
 }
 
+/** Print only copied scalar observations associated with a genuinely accepted field.
+ * Workflow: authentic preparation/consumers capture -> original macro/Current
+ * checks accept -> publish one compact line and flush it before later work.
+ * The ring counter counts certified kernel enclosures, not CUDA/backend launches.
+ * This function performs no scientific work, interval lookup or field transfer.
+ */
+inline void print_ring_observations(const Physical::Gravity::SelfGravity::RingMemoObservations& ring,
+    int stage,double time,const char* purpose) {
+    std::cout<<"NATIVE_ACTIVE_RING_MEMO purpose="<<purpose<<" stage="<<stage<<" epoch="<<ring.epoch
+        <<" source_generation="<<ring.source_generation<<" field_generation="<<ring.field_generation
+        <<" time="<<time<<" cells="<<ring.cells<<" boundary_faces="<<ring.boundary_faces
+        <<" memo_hits="<<ring.memo_hits<<" memo_misses="<<ring.memo_misses
+        <<" memo_admissions="<<ring.memo_admissions<<" entries="<<ring.entries<<" capacity="<<ring.capacity
+        <<" current_call_kernel_enclosures="<<ring.current_call_kernel_enclosures
+        <<" current_call_range_evaluations="<<ring.current_call_range_evaluations
+        <<" current_call_agm_iterations="<<ring.current_call_agm_iterations
+        <<" accepted_field_observation=1 physical_qualified=0"<<std::endl;
+}
+
 /** Publish compact actual half/stage evidence only after that macro's checks.
  * Actual RKL work remains distinct from the immutable thermal input flux probe.
  */
@@ -266,16 +289,18 @@ inline void report_macro(const Owner& owner,int macro,double seconds) {
             <<" thermal_probe_max="<<d.maximum_flux_probe<<" diffusion_changed_E_cells="<<d.changed_energy
             <<" rkl2_begin="<<d.rkl_begin<<" rkl2_accept="<<d.rkl_accept<<'\n';
     }
-    for(const auto& [stage,visit]:owner.sources)
+    for(const auto& [stage,visit]:owner.sources) {
+        print_ring_observations(visit.ring_memo,stage,visit.input_time,"HydroStage");
         std::cout<<"NATIVE_ACTIVE_AMR_SOURCE macro="<<macro<<" stage="<<stage<<" epoch="<<visit.source.topology.value
             <<" lease="<<visit.lease<<" field_generation="<<visit.field_generation
             <<" source_generation="<<visit.source_generation<<" time="<<visit.input_time
             <<" patches="<<visit.patch_axes.size()<<" radial_axes="<<visit.axes[0]<<" axial_axes="<<visit.axes[1]
             <<" energy_operations="<<visit.registration.size()<<" topology_fingerprint="<<visit.topology_fingerprint
             <<" source_boundary_seconds="<<visit.solver_seconds[0]<<" poisson_seconds="<<visit.solver_seconds[1]
-            <<" force_seconds="<<visit.solver_seconds[2]<<'\n';
+            <<" force_seconds="<<visit.solver_seconds[2]<<std::endl;
+    }
     std::cout<<"NATIVE_ACTIVE_AMR_MACRO macro="<<macro<<" wall_seconds="<<seconds
-        <<" accepted_time="<<owner.controller->t_current<<" accepted_steps="<<owner.controller->step_count<<'\n';
+        <<" accepted_time="<<owner.controller->t_current<<" accepted_steps="<<owner.controller->step_count<<std::endl;
 }
 
 /** Genuine five-field dynamic activity entry; no checkpoint or public science grant. */
@@ -405,7 +430,9 @@ inline void advance_dynamic_to_m1(Owner& owner) {
         <<" tolerance_safe="<<current.conditional_residual.tolerance_safe<<" wall_seconds="<<std::chrono::duration<double>(Clock::now()-current_start).count()
         <<" source_boundary_seconds="<<current_times[0]<<" poisson_seconds="<<current_times[1]
         <<" force_seconds="<<current_times[2]<<" private_gravity_dt="<<gravity_dt
-        <<" discrete_proof=accepted physical_qualified=0\n";
+        <<" discrete_proof=accepted physical_qualified=0"<<std::endl;
+    print_ring_observations(owner.gravity->ring_memo_observations(
+        Physical::Gravity::GravityFieldScope::NativeRzCandidate),0,accepted_time,"AcceptedCurrent");
     const auto m1_before=owner.totals();const auto b1=boundary_before(owner);const auto m1_start=Clock::now();
     owner.advance();const auto m1_after=owner.totals();check_macro_balance(owner,m1_before,b1,m1_after);
     report_macro(owner,1,std::chrono::duration<double>(Clock::now()-m1_start).count());
@@ -460,5 +487,7 @@ inline void prepare_continuation_current(Owner& owner) {
         "Actual restart Current gravity timestep rejects frozen M2");
     owner.accepted_journal.push_back({0,time,view.source.topology.value,view.runtime_lease_generation,
         view.source_generation,view.potential.size()});owner.check_dynamic_journal();
+    print_ring_observations(owner.gravity->ring_memo_observations(
+        Physical::Gravity::GravityFieldScope::NativeRzCandidate),0,time,"AcceptedCurrent");
 }
 } // namespace native_active_four_module

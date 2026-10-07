@@ -369,6 +369,17 @@ public:
         const int physical_status=int(*receipt.physical_status);
         field_.emplace(Field{std::move(receipt),conditional_status,physical_status});
     }
+    /** Borrow the SAME already-authenticated owning Current field receipt.
+     * Workflow: require completed source/solve capture -> require retained field
+     * -> lend a const reference for immediate tests-only reducers/serialization.
+     * Its lifetime ends with this record; no new solve, download, reduction,
+     * Runtime lease, physical qualification or pre-Hydro source View is issued.
+     */
+    const Physical::Gravity::NativeRzFieldInspection& native_field_receipt() const {
+        if(capturing_||!checked_||!captured_||invoke_failed_||!field_)
+            throw std::logic_error("Field receipt requires one completed authenticated source/field capture");
+        return field_->receipt;
+    }
     /** Serialize the original owning field's discrete proof scalars only.
      * Workflow: require the actual known proof scope/status -> copy its RMS,
      * total-volume enclosure and conditional/error scalars -> restore precision.

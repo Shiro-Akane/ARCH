@@ -112,6 +112,8 @@ struct SourceVisit {
     double input_time=0.;
     std::array<int,2> axes{};
     std::array<double,3> solver_seconds{};
+    // Scalar copy captured while this exact prepared field is still ready.
+    Physical::Gravity::SelfGravity::RingMemoObservations ring_memo{};
     Physical::Gravity::GravitySolveIdentity source{};
     std::uint64_t lease=0,topology_fingerprint=0;
     std::map<int,std::array<int,2>> patch_axes,patch_before;
@@ -501,9 +503,13 @@ public:
         const auto& timing=o.gravity->timings(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
         const std::array<double,3> times{timing.source_boundary,timing.poisson,timing.force};
         for(double value:times)require(std::isfinite(value)&&value>=0.,"Actual solve phase timing is invalid");
+        const auto ring=o.gravity->ring_memo_observations(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
+        require(ring.epoch==event.source->topology.value&&ring.source_generation==event.source_generation
+            &&ring.field_generation==event.field_generation,"Actual source ring observations changed field identity");
         if(inserted) {visit.descriptor=*event.descriptor;visit.field_generation=event.field_generation;
             visit.source_generation=event.source_generation;visit.input_time=event.source->input_time;
-            visit.solver_seconds=times;}
+            visit.solver_seconds=times;visit.ring_memo=ring;}
+        require(visit.ring_memo==ring,"Same-field ring observations changed between actual consumers");
         for(int k=0;k<3;++k)require(bits(visit.solver_seconds[k],times[k]),
             "Same-field actual solve phase timing changed between observers");
         require(visit.field_generation==event.field_generation&&visit.source_generation==event.source_generation

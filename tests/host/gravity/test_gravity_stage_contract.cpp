@@ -634,6 +634,11 @@ using namespace arch;
 using rz_runtime_witness::bits;
 constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
 constexpr double interval=1.e-3;
+/** Prospective physical inputs, separate from legacy scientific fixtures.
+ * The first authorized batch is 512 cells and one Euler step of duration T.
+ * The 2048 / T/2 campaign remains a later, separately budgeted request.
+ */
+struct HomologyInput {bool enabled=false;int cells=512;int steps=1;};
 using ActualHydro=Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>>;
 using Stage=driver::GravityStage;
 /** Delegate every actual gravity operation; count only genuine density gathers. */
@@ -694,16 +699,30 @@ struct Owner {
     std::optional<scheduler::StageExecutionContext> context;
     driver::DriverStageWorkspace workspace;dispatch::ResolvedExecutionPlan resolved{};
     scheduler::HydroMethod method;bool mixed,wrong_dt=false,drop_cache=false;
-    Owner(scheduler::HydroMethod selected,bool refined,const std::string& label)
-        :method(selected),mixed(refined) {
+    HomologyInput homology{};double step_interval=interval,dynamical_time=0.,endpoint_interval=0.,specific_energy=0.;
+    Owner(scheduler::HydroMethod selected,bool refined,const std::string& label,HomologyInput input={})
+        :method(selected),mixed(refined),homology(input) {
+        if(homology.enabled) {
+            require(method==scheduler::HydroMethod::Euler&&!mixed
+                &&(homology.cells==512||homology.cells==2048)
+                &&(homology.steps==1||homology.steps==2),"Invalid prospective homology input");
+            const double G=arch::constants::gravity::cgs::gravitational_constant;
+            dynamical_time=1./std::sqrt(G);endpoint_interval=dynamical_time/4096.;
+            step_interval=endpoint_interval/homology.steps;specific_energy=G*10000.*10000.;
+            require(std::isfinite(dynamical_time)&&dynamical_time>0.
+                &&std::isfinite(step_interval)&&step_interval>0.
+                &&std::isfinite(specific_energy)&&specific_energy>0.,"Unrepresentable homology scales");
+        }
         config.grid.dim=2;config.grid.geometry="cylindrical";
         config.grid.nblockx1=mixed?2:1;config.grid.nblockx2=1;config.grid.nblockx3=0;
+        if(homology.enabled) {config.grid.nblockx1=homology.cells==512?2:4;config.grid.nblockx2=homology.cells==512?1:2;}
         config.grid.x1_min=10000.;config.grid.x1_max=30000.;
         config.grid.x2_min=-10000.;config.grid.x2_max=10000.;config.grid.amr_max_blocks=16;
         config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="outflow";
         config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="outflow";
         config.amr.lrefinemin=0;config.amr.lrefinemax=mixed?1:0;
         config.numerics.solver_name="HLLC";config.numerics.reconstruction="pcm";
+        if(homology.enabled)config.numerics.cfl=.8;
         config.numerics.time_integrator=method==scheduler::HydroMethod::Euler?"euler":
             method==scheduler::HydroMethod::RK2?"rk2":"rk3";
         config.physics.gravity.type="self";config.physics.gravity.boundary="isolated";
@@ -712,6 +731,7 @@ struct Owner {
         config.physics.gravity.max_cycles=200;
         config.physics.burn.use_burn=false;config.physics.diffusion.use_diffusion=false;
         config.io.tmax=1.;config.io.plt_dt=config.io.chk_dt=0.;
+        if(homology.enabled)config.io.tmax=endpoint_interval;
         config.io.out_dir="native-self-hydro-owner/"+label;
         species.add_species("self-hydro-gas",1.,1.,1.4,2.);eos=std::make_unique<IdealGas>(1.4,species);
         if(mixed)control.tree->LoadLeafGrid(config,1,{1,1,1,1,0},
@@ -733,11 +753,22 @@ struct Owner {
                         r2mean=(h*h*h*h-l*l*l*l)/(4.*V),a=.02L,b=.002L/10000.L;
                     const double uz=double(a+b*rmean);
                     const double energy=double(100.L+.5L*.01L*.01L+.5L*(a*a+2.*a*b*rmean+b*b*r2mean));
-                    fluid->set(grid.GetIndex(i,j,0),{1.,.01,uz,0.,energy});
+                    if(homology.enabled) {
+                        // Exact native V means of rho=1, u_r=-H*r, u_z=-H*z:
+                        // <r>=integral(r^2 dr)/integral(r dr),
+                        // E_V=e*+.5 H^2(<r^2>_V+<z^2>), J/W=0.
+                        const long double zl=grid.GetAxialFacePosL(j),zh=grid.GetAxialFacePosR(j),
+                            zmean=(zl+zh)/2.L,z2mean=(zl*zl+zl*zh+zh*zh)/3.L,H=1.L/dynamical_time;
+                        fluid->set(grid.GetIndex(i,j,0),{1.,double(-H*rmean),double(-H*zmean),0.,
+                            double(specific_energy+.5L*H*H*(r2mean+z2mean))});
+                    } else {
+                        fluid->set(grid.GetIndex(i,j,0),{1.,.01,uz,0.,energy});
+                    }
                 }
             }
         }
-        start.time=.375;start.step=1;start.repairs.reset(1,state::RepairSemantics::RzVolumeAngular);
+        start.time=.375;if(homology.enabled)start.time=0.;
+        start.step=1;start.repairs.reset(1,state::RepairSemantics::RzVolumeAngular);
         counters=std::make_unique<SimulationController>(config,start);
         bc=std::make_unique<BCHandler>(config,rz);bc->bind(*eos,species);
         bc->configure_stage(start.time,boundary::BoundaryPurpose::Hydro);
@@ -756,7 +787,7 @@ struct Owner {
         hydro=std::make_unique<ActualHydro>(*eos,rz);observer=std::make_unique<ObservedHydro>(*this,*hydro);
         resolved.time_integrator=method==scheduler::HydroMethod::Euler?dispatch::TimeIntegratorId::Euler:
             method==scheduler::HydroMethod::RK2?dispatch::TimeIntegratorId::Rk2:dispatch::TimeIntegratorId::Rk3;
-        context.emplace(runtime->stage_context());context->step_start_time=start.time;context->step_dt=interval;
+        context.emplace(runtime->stage_context());context->step_start_time=start.time;context->step_dt=step_interval;
         context->configure_boundary_context=[this](double time,boundary::BoundaryPurpose purpose) {
             bc->configure_stage(time,purpose);runtime->bind_native_boundary_acceptance(*context,runtime->handles());
         };
@@ -788,7 +819,7 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
     const Physical::Gravity::IGravityPolicy* policy,const NumericsConfig& config,double weight,void* stream,
     const boundary::HostHydroBoundaryAuthority* walls) const {
     require(control==&owner_.control&&policy==owner_.gravity.get()&&walls
-        &&owner_.runtime->active_host_hydro_transaction()&&bits(dt,interval),
+        &&owner_.runtime->active_host_hydro_transaction()&&bits(dt,owner_.step_interval),
         "PrivateSelf consumer lost actual Runtime/policy/transaction/wall identity");
     const auto* frame=policy->prepared_native_self();
     require(frame&&!policy->prepared_native_external(),"PrivateSelf consumer has no uniquely prepared real field frame");
@@ -986,7 +1017,20 @@ int main(int argc,char** argv) {
             std::cout<<"PRIVATE_NATIVE_SELF_GREEN_PAIR algebra_checked=1 two_actual_fields=1 continuous_green_science=UNVERIFIED physical_grant=0\n";
             return 0;
         }
-        if(argc!=1)throw std::invalid_argument("expected no arguments, private-native-active-four-module-amr <actual-helm-table-path>, private-native-active-four-module <actual-helm-table-path>, private-native-self, private-native-self-cache-refusal, private-native-self-energy or private-native-self-green-pair");
+        if((argc==2||argc==4)&&std::string(argv[1])=="private-native-self-homology") {
+            native_self_hydro_owner_checks::HomologyInput input{true,512,1};
+            if(argc==4) {
+                const std::string cells=argv[2],steps=argv[3];
+                if((cells!="512"&&cells!="2048")||(steps!="1"&&steps!="2"))
+                    throw std::invalid_argument("homology requires 512|2048 cells and 1|2 endpoint steps");
+                input.cells=cells=="512"?512:2048;input.steps=steps=="1"?1:2;
+            }
+            arch::test::run_native_self_homology_pair<native_self_hydro_owner_checks::Owner>(input);
+            std::cout<<"PRIVATE_NATIVE_SELF_HOMOLOGY actual_fields="<<2*input.steps<<" cells="<<input.cells
+                <<" endpoint_steps="<<input.steps<<" total_energy_science=UNVERIFIED before_materialized_source=UNKNOWN physical_grant=0\n";
+            return 0;
+        }
+        if(argc!=1)throw std::invalid_argument("expected no arguments, private-native-active-four-module-amr <actual-helm-table-path>, private-native-active-four-module <actual-helm-table-path>, private-native-self, private-native-self-cache-refusal, private-native-self-energy, private-native-self-green-pair or private-native-self-homology");
         reflux_row_checks::run(); test_native_external_source_mean(); test_preparation(); test_failures(); test_field_identity(); test_host_hydro_transaction(); run_native_rz_runtime_boundary_contract();
     }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

@@ -152,6 +152,21 @@ public:
     double density_mean() const;
     // Wall time bounded by completion fences; no asynchronous launch timing.
     struct Timings { double source_boundary=0., poisson=0., force=0.; };
+    /** Scalar observations of the SAME completed ring integration call.
+     * Workflow: require the existing ready/scope contract -> authenticate current
+     * ring/source generations -> copy counters and actual instance occupancy.
+     * Counts are not execution-backend kernels or a scientific/cache grant.
+     * No interval, source/field array, borrowed view or new cache is returned.
+     */
+    struct RingMemoObservations {
+        std::uint64_t epoch=0,source_generation=0,field_generation=0,cells=0,boundary_faces=0;
+        std::uint64_t memo_hits=0,memo_misses=0,memo_admissions=0;
+        std::uint64_t current_call_kernel_enclosures=0,current_call_range_evaluations=0,
+            current_call_agm_iterations=0,entries=0,capacity=0;
+        bool operator==(const RingMemoObservations&) const = default;
+    };
+    /** Copy completed Host Native diagnostics; explicit scope does not grant physics. */
+    RingMemoObservations ring_memo_observations(GravityFieldScope scope) const;
     /** Read completed measurements at their exact numerical field scope.
      * Explicit Native scope permits diagnostics only; it grants no physical
      * consumer, purpose lease or source/frame authority. Default remains the

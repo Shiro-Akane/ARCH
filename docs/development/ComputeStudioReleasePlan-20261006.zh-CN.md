@@ -641,3 +641,17 @@ DPS公共角动量限制与热能正值核对一次33.14s/7889输出(7371思考/
 ### 目标回查 2026-10-07 17:26:56 UTC
 
 1ac24f7c2 已推送 Native RZ 公共输入/观察、共享 AMR/EOS/组分修正和有界原积分缓存；全部 Core/数学/物理仍由本工作区负责，无外部审批依赖。缓存原四组、公共 API 六组、共享 Native/低密度五组已实际通过，其范围分别保留，整套 release 未完成。下一步实际 ELF 再生配置样例和 Studio 原 oracle 同步，之后源码/HEAD 冻结重跑动态五场（累计已用 542.417/1200 s）。APP 构建累计 842.222/1200 s，暖态 fresh checkpoint 的独立 2400 s 编译/运行尚未启动。最终 CUDA、连续能量/场、GUI、正式同终点计时/长跑和 CI 收束仍待验；4070 当前可比组缺失不阻塞本机工作。唯一 checkout、单重负载、E 盘 guard 和失败证据保持。下一回查≤15分钟。
+
+### 目标回查 2026-10-07 17:41:55 UTC
+
+796b57111 已推送真实 Core 配置四响应和八字段 Native RZ Host parser 的局部契约。真实静态 source/ELF 前后相同；新维护的 jeans_cells 使 catalog 为95项，Studio 原固定94项数字迁移为动态catalog与明确JENS条件检查，未改物理阈值。当前五场动态运行仍在原余657.583s内执行，真实regrid和第三场已记录，原M1扩散组分检查已越过；完整结果未签收。source/HEAD冻结，所有新候选仅/tmp，唯一重负载。
+
+新 DeepSeek 公共点势→体积能量界任务因Root遗漏API transport误入CLI150.1s且0工具命令/无交付；唯一正确API返修65.06s仍超时，总215.16/220s、token/费用未知、数学结果UNKNOWN，无重复派发或模型绕行。独立本地复核候选常数与轴/接触条件，真实冻结物理尺度两field fixture候选并行；都不能替代连续能量或完整release gate。缓存实际生命周期和容量在只读归因，暖态fresh checkpoint/CUDA/GUI/计时长跑/CI等原目标仍开放；失败证据/磁盘guard/不依赖FLASH和外部4070保持。下一回查≤15分钟。
+
+### 目标回查 2026-10-07 18:01:37 UTC
+
+全部 Core、字段/接口、数学物理与验收由当前维护方负责，UI 展示另行协调。当前整套 release 未完成。Studio 当前真实 Node 24 全部 362 项通过（23.381s，guard24.161s），仅单元/Host契约，不等同真实桌面或科学运行。第二次动态耦合655.931s外层超时，只有3份求场记录，M1扩散验收receipt未持久化，因此纠正上次“已越过”的推断，不按PASS计；失败数据保留。动态累计1198.348s，Root于下一尝试前将自定累计上界调整为2400s，剩余1201.652s，原门槛不改且已用时间不清零。
+
+有界缓存实际诊断与物理尺度homology候选已合入但尚未编译；下一步读取真实live frame的共享引力步长与真实Hydro CFL，按冻结dt预检，再编译和实算。连续能量仍需要真正Hydro前/Current后source的同身份owning导出；Current-only观察接口不能伪造before授权。DPS公共配对能量恒等式33.3s已独立代数/Fubini复核，仅数学；无仓库/raw外发，费用估算USD0.00500245–0.0100049，实际账单与Root active成本未知。待验独立候选/设计继续/tmp，单重负载、唯一工作区、E盘预留与失败保留不变。CUDA/完整续算/连续能量/GUI/同终点计时长跑及CI收束仍开放。上一回查超出15分钟约4分钟如实记录，下一回查≤15分钟。
+
+新增诊断与prospective物理尺度fixture已实际CPU编译70.953s通过，累计原构建任务913.175/1200s。原Stage26.68s/1组、原Poisson/Self五组48.54s、原reference工具owner71项10.045s（含可选既有arb与独立Machin π检验）均通过。此处是工程/代数/旧owner，不是新homology连续能量或CUDA通过。真实Hydro/私有live gravity CFL原公式预检已静态review接入，实际homology尚未运行。新v2 sealed owning源/场接口、tests-only序列化与严格目的消费者分别有唯一/tmp责任；旧Current准备hook不放开、旧科学门槛保持。接下来source/HEAD冻结，完成真实动态五场并读取实际缓存观察；checkpoint/连续能量等完整O仍未验收。

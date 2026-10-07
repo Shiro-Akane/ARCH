@@ -717,6 +717,33 @@ double SelfGravity::density_mean() const {workspace().require();return work_->me
 const SelfGravity::Timings& SelfGravity::timings(GravityFieldScope scope) const {
     workspace().require(scope);return work_->timings;
 }
+/** Observe the SAME completed Host ring call without a solve or array transfer.
+ * Workflow: use the original ready/scope guard -> require current ring identity
+ * -> copy original per-call counters/occupancy plus actual operator identity.
+ * A hit saved certified interval work, not tree/source validation. Numerical
+ * scope is retained and no Runtime purpose/source lease is manufactured here.
+ */
+SelfGravity::RingMemoObservations SelfGravity::ring_memo_observations(
+    GravityFieldScope scope) const {
+    auto& w=workspace();w.require(scope);
+    if(scope!=GravityFieldScope::NativeRzCandidate||!w.ring_source
+        ||w.solver.execution().device()||w.ring.source!=w.source
+        ||w.ring.source_generation!=w.ring_assessment.source_generation)
+        throw std::logic_error("Ring memo diagnostics have no matching completed Host Native scope");
+    w.ring_source->require_current_ring(w.solver.op(),w.ring);
+    RingMemoObservations result{};
+    result.epoch=w.source.topology.value;result.source_generation=w.ring.source_generation;
+    result.field_generation=w.generation;result.cells=static_cast<std::uint64_t>(w.solver.op().size());
+    for(const auto& face:w.solver.op().faces())if(face.boundary_side>=0)++result.boundary_faces;
+    result.memo_hits=w.ring.memo_hits;result.memo_misses=w.ring.memo_misses;
+    result.memo_admissions=w.ring.memo_admissions;
+    result.current_call_kernel_enclosures=w.ring.kernel_enclosures;
+    result.current_call_range_evaluations=w.ring.range_evaluations;
+    result.current_call_agm_iterations=w.ring.agm_iterations;
+    result.entries=static_cast<std::uint64_t>(w.ring_source->ring_memo_size());
+    result.capacity=GravityBoundary::maximum_ring_memo_entries;
+    return result;
+}
 /** Open only the receipt observer; preparation still validates and solves the original request. */
 void SelfGravity::begin_host_stage_consumption(double step_dt) const {
     if(prepared_native_self()) {

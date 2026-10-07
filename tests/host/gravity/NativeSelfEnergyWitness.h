@@ -38,6 +38,7 @@
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "driver/runtime/HostHydroTransaction.h"
 #include "driver/schedule/StageScheduler.h"
+#include "driver/stages/DriverStages.h"
 #include "physics/gravity/NativeSelfStage.h"
 #include "physics/gravity/self/SelfGravity.h"
 
@@ -85,8 +86,10 @@ template<class Owner> class NativeSelfEnergyWitness final {
     };
     Owner& owner_;double dt_;amr::EllipticMeshBinding binding_;
     std::vector<Cell> cells_;std::optional<Field> field_;
-    std::array<const double*,7> input_leases_{};
+    std::vector<std::array<const double*,7>> input_leases_;
     scheduler::StageDescriptor descriptor_{};std::mutex mutex_;
+    double entry_time_;int entry_gathers_;long double boundary_energy_entry_=0.;
+    double gravity_timestep_=0.;
     long double boundary_phi_=0.,boundary_energy_=0.,boundary_phi_scale_=0.,boundary_energy_scale_=0.;
     long double work_error_=0.,work_state_scale_=0.,work_operation_scale_=0.;
     std::size_t before_events_=0,after_events_=0;long double entry_resolution_=0.,max_local_work_ratio_=0.,max_local_mass_ratio_=0.;
@@ -196,7 +199,7 @@ template<class Owner> class NativeSelfEnergyWitness final {
             const auto& block=owner_.control.pool->GetBlock(event.block_id);
             energy_require(event.grid==binding_.grids[b]&&event.input==&fluid(block,descriptor_.input_slot),
                 "Private energy event changed real input owner");
-            for(std::size_t f=0;f<7;++f)energy_require((event.input->*rz_runtime_witness::fields[f]).data()==input_leases_[f],
+            for(std::size_t f=0;f<7;++f)energy_require((event.input->*rz_runtime_witness::fields[f]).data()==input_leases_.at(b)[f],
                 "Private energy event changed an actual seven-array input lease");found=true;
         }
         energy_require(found,"Private energy event is outside actual domain");
@@ -205,12 +208,26 @@ template<class Owner> class NativeSelfEnergyWitness final {
 public:
     /** Bind actual uniform cells and independent full-ring V from canonical faces. */
     NativeSelfEnergyWitness(Owner& owner,double dt):owner_(owner),dt_(dt),
-        binding_(amr::bind_elliptic_mesh(owner.control,owner.config.grid,owner.runtime->handles())) {
-        energy_require(owner.method==scheduler::HydroMethod::Euler&&!owner.mixed&&binding_.handles.size()==1,
+        binding_(amr::bind_elliptic_mesh(owner.control,owner.config.grid,owner.runtime->handles())),
+        entry_time_(owner.context->step_start_time),entry_gathers_(owner.execution->gathers) {
+        energy_require(owner.method==scheduler::HydroMethod::Euler&&!owner.mixed
+            &&(binding_.handles.size()==1||owner.homology.enabled),
             "Private energy witness is only the frozen uniform Euler lane");
         const auto active=owner.control.tree->GetActiveBlocks();
-        const auto& source=owner.control.pool->GetBlock(active.front()).fluid_state;
-        for(std::size_t f=0;f<7;++f)input_leases_[f]=(source.*rz_runtime_witness::fields[f]).data();
+        if(owner.homology.enabled) {
+            energy_require(entry_gathers_>=0&&entry_gathers_<=std::numeric_limits<int>::max()-2,
+                "Homology real field counter cannot represent this two-field step");
+            energy_require(binding_.storage.size()==std::size_t(owner.homology.cells),
+                "Homology actual cell count differs from frozen layout");
+            const auto& boundary=owner.runtime->hydro_boundary_budget();
+            energy_require(boundary.size()>4,"Homology entry boundary budget missing");
+            boundary_energy_entry_=energy_finite(boundary[4]);
+        }
+        input_leases_.resize(binding_.handles.size());
+        for(std::size_t b=0;b<binding_.handles.size();++b) {
+            const auto& source=owner.control.pool->GetBlock(active.at(b)).fluid_state;
+            for(std::size_t f=0;f<7;++f)input_leases_[b][f]=(source.*rz_runtime_witness::fields[f]).data();
+        }
         for(const auto& where:binding_.storage) {
             const auto& block=owner.control.pool->GetBlock(active.at(where.block));const auto& grid=block.grid;
             const int i=where.offset%grid.stride_y,j=where.offset/grid.stride_y;
@@ -235,6 +252,15 @@ public:
         energy_require(scheduler::same_stage_descriptor(descriptor,scheduler::make_hydro_plan(scheduler::HydroMethod::Euler).stages.front()),
             "Private energy capture is not actual Euler descriptor");
         self.source_matches(field,descriptor.input_slot,owner.context->step_start_time);
+        if(owner.homology.enabled)energy_require(owner.execution->gathers==self.entry_gathers_+1,
+            "Homology Hydro capture did not consume exactly one new authentic field");
+        if(owner.homology.enabled) {
+            const auto* frame=owner.gravity->prepared_native_self();
+            energy_require(frame!=nullptr,"Homology has no actual live Hydro gravity frame");
+            self.gravity_timestep_=frame->timestep();
+            energy_require(std::isfinite(self.gravity_timestep_)&&self.gravity_timestep_>0.
+                &&self.dt_<=self.gravity_timestep_,"Frozen homology dt exceeds actual source gravity cap");
+        }
         const auto active=owner.control.tree->GetActiveBlocks();
         for(const auto& cell:self.cells_) {
             const auto& state=fluid(owner.control.pool->GetBlock(active.at(cell.block)),descriptor.input_slot);
@@ -243,6 +269,11 @@ public:
                 "First real Hydro source differs from macro-entry mass/energy");
         }
         self.field_.emplace(std::move(field));self.bind_faces();
+    }
+    /** Return only the cap measured on the actual prepared pre-Hydro field. */
+    double gravity_timestep() const {
+        energy_require(owner_.homology.enabled&&field_&&gravity_timestep_>0.,
+            "Homology actual gravity timestep has not been measured");return gravity_timestep_;
     }
     /** Observe original physical mass/energy flux and independently pair same Phi.
      * q=-dt sum A F_out (Phi_face-Phi_cell); A and dt appear exactly once.
@@ -302,9 +333,12 @@ public:
     /** Close algebra with a genuine postCurrent field; green/skew/time are reports.
      * DeltaW=L+S, Dtotal=epsilon+(L-Q)+S; neither S==BG nor Dtotal==0 is asserted.
      */
-    void publish(const Field& post,bool fault_rollback) {
+    void publish(const Field& post,bool fault_rollback,bool prospective=false,const std::string& directory={}) {
         source_matches(post,state::StateSlot::Current,owner_.counters->t_current);
-        energy_require(field_&&post.faces.size()==field_->faces.size()&&before_events_==2&&after_events_==2&&fault_rollback,
+        energy_require(field_&&post.faces.size()==field_->faces.size()
+            &&before_events_==2*binding_.handles.size()&&after_events_==2*binding_.handles.size()
+            &&(fault_rollback||(prospective&&owner_.homology.enabled))
+            &&(!owner_.homology.enabled||owner_.execution->gathers==entry_gathers_+2),
             "Private energy incomplete actual macro/post/rollback evidence");
         const auto active=owner_.control.tree->GetActiveBlocks();
         long double deltaE=0.,stateE=0.,Q=0.,Qscale=0.,W0=0.,W1=0.,L=0.,S=0.,pairscale=0.,masserror=0.,massstate=0.,massops=0.,resolution=entry_resolution_;
@@ -324,7 +358,8 @@ public:
             resolution+=c.volume*(std::nextafter(state.eng[c.offset],std::numeric_limits<double>::infinity())-state.eng[c.offset]);
         }
         const auto& boundary=owner_.runtime->hydro_boundary_budget();energy_require(boundary.size()>4,"Private energy Runtime boundary budget missing");
-        const long double BE=boundary[4],BP=boundary_phi_,epsilon=deltaE+BE+BP+Q;
+        const long double BE=owner_.homology.enabled?boundary[4]-boundary_energy_entry_:boundary[4],
+            BP=boundary_phi_,epsilon=deltaE+BE+BP+Q;
         const NativeEnergyBudget account(epsilon,stateE,std::abs(deltaE)+boundary_energy_scale_+boundary_phi_scale_+Qscale),
             boundary_check(BE-boundary_energy_,0.,boundary_energy_scale_),
             work(work_error_,work_state_scale_,work_operation_scale_),mass(masserror,massstate,massops),
@@ -355,12 +390,15 @@ public:
         NativeEnergyBudget(D-(epsilon+finite_step+S),stateE+std::abs(W0)+std::abs(W1),std::abs(BE)+std::abs(BP)+Qscale+std::abs(L)+pairscale).check(
             "Whole diagnostic algebra decomposition failed");
         energy_finite(resolution);energy_finite(stateE);energy_finite(Qscale);
-        // Publish no pending event prefix: both accepted fields and fault rollback
-        // have already passed. These are compact local diagnostics, not raw arrays.
-        std::ofstream json(owner_.config.io.out_dir+"/energy-diagnostic.json"),tsv(owner_.config.io.out_dir+"/energy-accounting.tsv");
+        // Publish only after both accepted fields and original algebra gates.
+        // Legacy four-field callers additionally require their real fault rollback;
+        // prospective callers retain that separate owner rather than pretending
+        // this two-field batch reran it. No total-energy science gate is defined.
+        const auto& destination=directory.empty()?owner_.config.io.out_dir:directory;
+        std::ofstream json(destination+"/energy-diagnostic.json"),tsv(destination+"/energy-accounting.tsv");
         energy_require(bool(json)&&bool(tsv),"Cannot open accepted energy diagnostic output");
         json<<std::setprecision(std::numeric_limits<long double>::max_digits10)
-            <<"{\"schema\":\"arch-private-native-self-energy-1\",\"physical_qualified\":false,\"total_energy_science\":\"UNVERIFIED\",\"accounting_checked\":true,\"actual_fields_batch\":4,\"method\":\"Euler\",\"dt\":"<<dt_
+            <<"{\"schema\":\"arch-private-native-self-energy-1\",\"physical_qualified\":false,\"total_energy_science\":\"UNVERIFIED\",\"accounting_checked\":true,\"actual_fields_batch\":"<<(prospective?2:4)<<",\"method\":\"Euler\",\"dt\":"<<dt_
             <<",\"G\":"<<field_->source.gravitational_constant<<",\"cells\":"<<cells_.size()
             <<",\"source_generation0\":"<<field_->source_generation<<",\"source_generation1\":"<<post.source_generation
             <<",\"field_generation0\":"<<field_->field_generation<<",\"field_generation1\":"<<post.field_generation
@@ -384,7 +422,9 @@ public:
         for(std::size_t b=0;b<field_->source.inputs.size();++b) {if(b)json<<',';const auto& a=field_->source.inputs[b];const auto& z=post.source.inputs[b];
             json<<"{\"uid\":"<<a.block.uid.value<<",\"epoch\":"<<a.block.epoch.value<<",\"slot0\":"<<int(a.slot)<<",\"slot1\":"<<int(z.slot)
                 <<",\"version0\":"<<a.version.value<<",\"version1\":"<<z.version.value<<",\"density_lease0\":"<<a.storage_generation<<",\"density_lease1\":"<<z.storage_generation<<'}';}
-        json<<"]}\n";tsv<<std::setprecision(std::numeric_limits<long double>::max_digits10)<<"scope\tDeltaE\tB_E\tB_Phi\tQ\tepsilon_account\tDeltaW\tL\tS\tB_G\tfinite_step\tD_total\n"
+        json<<"]";
+        if(prospective)json<<",\"resource_scope\":\"prospective-homology-step;whole-request-guard-external\",\"before_materialized_source_export\":\"UNKNOWN\",\"rollback_campaign\":\"retained-separate-original-four-field-owner\"";
+        json<<"}\n";tsv<<std::setprecision(std::numeric_limits<long double>::max_digits10)<<"scope\tDeltaE\tB_E\tB_Phi\tQ\tepsilon_account\tDeltaW\tL\tS\tB_G\tfinite_step\tD_total\n"
             <<"stored-point-rows-diagnostic\t"<<deltaE<<'\t'<<BE<<'\t'<<BP<<'\t'<<Q<<'\t'<<epsilon<<'\t'<<W1-W0<<'\t'<<L<<'\t'<<S<<'\t'<<BG<<'\t'<<finite_step<<'\t'<<D<<'\n';
         json.flush();tsv.flush();energy_require(bool(json)&&bool(tsv),"Accepted energy diagnostic output failed");
     }
@@ -396,18 +436,20 @@ public:
      * S-BG=(T_internal+T_boundary-T_residual)/(8*pi*G). This finite-dimensional
      * identity neither imposes S==BG nor certifies a continuous isolated field.
      */
-    void publish_green_pair(const Field& post) {
+    void publish_green_pair(const Field& post,bool prospective=false,const std::string& directory={}) {
+        energy_require(!prospective||owner_.homology.enabled,"Prospective Green label has no homology input");
         source_matches(post,state::StateSlot::Current,owner_.counters->t_current);
         energy_require(field_&&post.faces.size()==field_->faces.size()
-            &&before_events_==2&&after_events_==2&&owner_.execution->gathers==2,
+            &&before_events_==2*binding_.handles.size()&&after_events_==2*binding_.handles.size()
+            &&(owner_.homology.enabled?owner_.execution->gathers==entry_gathers_+2:owner_.execution->gathers==2),
             "Private Green pair lacks two genuine fields or completed actual work");
         energy_require(field_->source.topology==post.source.topology
             &&field_->source.operator_revision==post.source.operator_revision
             &&field_->source.boundary_revision==post.source.boundary_revision
             &&field_->source.accuracy_revision==post.source.accuracy_revision
             &&rz_runtime_witness::bits(field_->source.gravitational_constant,post.source.gravitational_constant)
-            &&rz_runtime_witness::bits(field_->source.input_time,owner_.start.time)
-            &&rz_runtime_witness::bits(post.source.input_time,owner_.start.time+dt_),
+            &&rz_runtime_witness::bits(field_->source.input_time,entry_time_)
+            &&rz_runtime_witness::bits(post.source.input_time,entry_time_+dt_),
             "Private Green pair changed topology/operator/G or genuine endpoint time");
         for(std::size_t b=0;b<field_->source.inputs.size();++b) {
             const auto& a=field_->source.inputs[b];const auto& z=post.source.inputs[b];
@@ -533,10 +575,11 @@ public:
             rms1=energy_finite(std::sqrt(residual_square1/volume_sum));
         // Publish only after the genuine macro/post source, all row fences and
         // fixed algebra checks pass. No flux/Phi/rho arrays or raw data are emitted.
-        std::ofstream json(owner_.config.io.out_dir+"/green-pair-diagnostic.json");
+        const auto& destination=directory.empty()?owner_.config.io.out_dir:directory;
+        std::ofstream json(destination+"/green-pair-diagnostic.json");
         energy_require(bool(json),"Cannot open accepted Green pair diagnostic output");
         json<<std::setprecision(std::numeric_limits<long double>::max_digits10)
-            <<"{\"schema\":\"arch-private-native-self-green-pair-1\",\"physical_qualified\":false,\"continuous_green_science\":\"UNVERIFIED\",\"algebra_checked\":true,\"actual_fields_batch\":2,\"resource_scope\":\"distinct-two-field-diagnostic-240s\",\"method\":\"Euler\",\"dt\":"<<dt_
+            <<"{\"schema\":\"arch-private-native-self-green-pair-1\",\"physical_qualified\":false,\"continuous_green_science\":\"UNVERIFIED\",\"algebra_checked\":true,\"actual_fields_batch\":2,\"resource_scope\":\""<<(prospective?"prospective-homology-step;whole-request-guard-external":"distinct-two-field-diagnostic-240s")<<"\",\"method\":\"Euler\",\"dt\":"<<dt_
             <<",\"G\":"<<field_->source.gravitational_constant<<",\"cells\":"<<cells_.size()<<",\"faces\":"<<post.faces.size()
             <<",\"time0\":"<<field_->source.input_time<<",\"time1\":"<<post.source.input_time
             <<",\"source_generation0\":"<<field_->source_generation<<",\"source_generation1\":"<<post.source_generation
@@ -699,6 +742,101 @@ template<class Owner> void run_native_self_green_pair(double dt) {
     bool refused=false;try{observed.gravity->potential();}catch(const std::logic_error&){refused=true;}
     energy_require(refused,"Green pair diagnostic acquired public potential capability");
     witness.publish_green_pair(post);
+}
+
+
+/** Prospective homology endpoint: one or two REAL Euler macro steps.
+ * Workflow per step: new authentic Hydro frame -> close its journal -> advance
+ * real accepted clock -> true Current ghosts/EOS -> one postCurrent solve/export
+ * -> original owner/ledger and algebra gates -> compact step evidence. A later
+ * step receives a NEW Hydro stage, never relabels the Current field as Hydro.
+ * Each step consumes two genuine fields. The first 512/1 request has a shared
+ * 420s external guard; other campaign resources must be frozen by Root before
+ * execution. Complete before-source export remains UNKNOWN: no fake source View
+ * or additional solve fills the missing immutable Hydro-source observer API.
+ */
+template<class Owner,class Input> void run_native_self_homology_pair(Input input) {
+    using Stage=driver::GravityStage;using Witness=NativeSelfEnergyWitness<Owner>;
+    energy_require(input.enabled&&(input.cells==512||input.cells==2048)&&(input.steps==1||input.steps==2),
+        "Invalid frozen homology endpoint request");
+    Owner observed(scheduler::HydroMethod::Euler,false,
+        "homology-"+std::to_string(input.cells)+"-steps-"+std::to_string(input.steps),input);
+    const double dt=observed.step_interval;
+    double minimum_hydro_cap=std::numeric_limits<double>::infinity(),
+        minimum_gravity_cap=std::numeric_limits<double>::infinity();
+    for(int step=0;step<input.steps;++step) {
+        const auto destination=observed.config.io.out_dir+"/step-"+std::to_string(step);
+        energy_require(!std::filesystem::exists(destination),"Homology step evidence exists; preserve it");
+        std::filesystem::create_directories(destination);
+        if(step) {
+            observed.stage=std::make_unique<Stage>(*observed.runtime,observed.gravity.get(),Stage::Qualification::NativeRzSelfHydroCandidate);
+            observed.context->hydro_preparation=observed.stage.get();
+            observed.observer->visits.clear(); // A new genuine one-stage macro, not a generation alias.
+        }
+        // Use the real Native mean-EOS/halo reduction before any Hydro mutation.
+        const auto caps=driver::calculate_timestep_candidates(*observed.runtime,observed.workspace,
+            *observed.eos,&observed.resolved);
+        energy_require(std::isfinite(caps.hydro)&&caps.hydro>0.&&dt<=caps.hydro,
+            "Frozen homology dt exceeds actual Hydro CFL cap");
+        minimum_hydro_cap=std::min(minimum_hydro_cap,caps.hydro);
+        Witness witness(observed,dt);
+        observed.stage->set_native_self_flux_observation(&Witness::sink,&witness);
+        observed.observer->energy_payload=&witness;observed.observer->energy_field_capture=&Witness::capture;
+        observed.observer->energy_delta_capture=&Witness::delta;observed.advance();
+        minimum_gravity_cap=std::min(minimum_gravity_cap,witness.gravity_timestep());
+        observed.stage->flush_committed_diagnostics();journal_rows(observed,1);
+        energy_require(observed.execution->gathers==2*step+1&&!observed.gravity->prepared_native_self(),
+            "Homology macro did not use exactly one new authentic field");
+        observed.context->hydro_preparation=nullptr;observed.stage.reset();
+        std::filesystem::rename(observed.config.io.out_dir+"/native_rz_candidates.tsv",destination+"/hydro-stages.tsv");
+        observed.counters->advance(dt);const double tnew=observed.counters->t_current;
+        energy_require(rz_runtime_witness::bits(tnew,(step+1)*dt)
+            &&observed.counters->step_count==observed.start.step+step+1,"Homology accepted clock missed fixed endpoint fraction");
+        observed.context->step_start_time=tnew;observed.context->step_dt=dt;
+        observed.context->configure_boundary_context(tnew,boundary::BoundaryPurpose::Hydro);
+        observed.runtime->ensure_fluid_ghosts(state::StateSlot::Current);
+        observed.stage=std::make_unique<Stage>(*observed.runtime,observed.gravity.get(),Stage::Qualification::NativeRzCandidate);
+        const auto active=observed.control.tree->GetActiveBlocks();
+        std::vector<rz_runtime_witness::FieldsWitness> accepted;accepted.reserve(active.size());
+        for(int id:active)accepted.emplace_back(observed.control.pool->GetBlock(id));
+        const auto saved=driver::HostHydroTransaction::snapshot_owner(*observed.runtime,*observed.context);
+        RzMaterializedSourceRecord record;record.capture_call(*observed.stage,[&]{observed.stage->prepare_current(tnew,false);});
+        energy_require(record.source_only_checked()&&!record.cleanup_failed()&&record.callback_count()==1,
+            "Homology postCurrent materialized source not authentic");
+        record.capture_native_field(*observed.stage);const auto& post=record.native_field_receipt();
+        for(std::size_t b=0;b<active.size();++b)accepted[b].matches(observed.control.pool->GetBlock(active[b]));
+        energy_require(driver::HostHydroTransaction::owner_matches(*observed.runtime,*observed.context,saved)
+            &&observed.execution->gathers==2*(step+1)&&observed.counters->step_count==observed.start.step+step+1
+            &&rz_runtime_witness::bits(observed.counters->t_current,tnew),"Homology postCurrent changed accepted owners");
+        bool refused=false;try{observed.gravity->potential();}catch(const std::logic_error&){refused=true;}
+        energy_require(refused,"Homology field diagnostic acquired public capability");
+        // Both reducers consume the SAME authenticated owning receipt, not a
+        // second inspection/download/reduction or a duplicate solution.
+        witness.publish(post,false,true,destination);witness.publish_green_pair(post,true,destination);
+        std::ofstream source(destination+"/post-materialized-native-source.json");
+        energy_require(bool(source),"Cannot open authentic homology source output");source<<record.json()<<'\n';
+        source.flush();energy_require(bool(source),"Homology source output failed");
+        observed.observer->energy_payload=nullptr;observed.observer->energy_field_capture=nullptr;
+        observed.observer->energy_delta_capture=nullptr;
+        observed.stage->flush_committed_diagnostics();observed.stage.reset();
+        std::filesystem::rename(observed.config.io.out_dir+"/native_rz_candidates.tsv",destination+"/current-stages.tsv");
+    }
+    energy_require(observed.execution->gathers==2*input.steps
+        &&rz_runtime_witness::bits(observed.counters->t_current,observed.endpoint_interval),
+        "Homology campaign did not end at the same physical T with real fields");
+    std::ofstream inputs(observed.config.io.out_dir+"/homology-inputs.json");
+    energy_require(bool(inputs),"Cannot open accepted homology input evidence");
+    inputs<<std::setprecision(std::numeric_limits<double>::max_digits10)
+        <<"{\"schema\":\"arch-native-homology-inputs-1\",\"physical_qualified\":false,\"total_energy_science\":\"UNVERIFIED\",\"before_source_export\":\"UNKNOWN\",\"post_source_export\":\"actual-accepted-Current\",\"cells\":"<<input.cells
+        <<",\"endpoint_steps\":"<<input.steps<<",\"actual_fields\":"<<observed.execution->gathers
+        <<",\"resource_seconds\":"<<(input.cells==512&&input.steps==1?"420":"null")
+        <<",\"resource_scope\":\"whole-request external guard; additional campaign budget must be frozen before execution\",\"rho\":1,\"G\":"<<arch::constants::gravity::cgs::gravitational_constant
+        <<",\"L\":10000,\"t_start\":0,\"t_dyn\":"<<observed.dynamical_time<<",\"T\":"<<observed.endpoint_interval
+        <<",\"dt\":"<<dt<<",\"t_end_actual\":"<<observed.counters->t_current<<",\"e_star\":"<<observed.specific_energy
+        <<",\"velocity\":\"u_r=-r/t_dyn,u_z=-z/t_dyn,u_phi=0\",\"mean_definition\":\"independent-full-ring-V-antiderivatives\",\"physical_energy_budget\":null,\"rollback_campaign\":\"original separate four-field owner unchanged\",\"timestep_preflight\":{\"status\":\"ACTUAL_HYDRO_AND_PREPARED_GRAVITY_CAPS_CHECKED\",\"CFL\":"<<observed.config.numerics.cfl
+        <<",\"minimum_hydro_cap\":"<<minimum_hydro_cap<<",\"minimum_actual_pre_hydro_gravity_cap\":"<<minimum_gravity_cap
+        <<",\"extra_preflight_solves\":0,\"public_native_timestep_authority\":false}}\n";
+    inputs.flush();energy_require(bool(inputs),"Homology input evidence output failed");
 }
 
 } // namespace arch::test

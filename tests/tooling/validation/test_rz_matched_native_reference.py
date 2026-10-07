@@ -1387,4 +1387,117 @@ class KnownFullReferenceProfileReuseTests(unittest.TestCase):
         self.assertIn("Actual source bounds/density/storage changed",result["failure"])
         self.assertEqual((result["mapping_budget"]["calls"],result["budget"]["kernel_evaluations"]),(0,0))
 
+class VolumeEnergyBridgeEngineeringTests(unittest.TestCase):
+    """Exact algebra/negative-shape witnesses only; no actual Newton qualification."""
+
+    def test_axis_geometry_uses_true_volume_offset_and_rejects_coarse_delta(self):
+        from fractions import Fraction as F
+        leaf=dict(r_lower=0.,r_upper=.25,z_lower=-.125,z_upper=.125,density=3.,center=[.125,0.,0.])
+        actual=rz._energy_cell_geometry(leaf,F(5))
+        self.assertEqual(actual["volume_over_pi"],F(1,64))
+        self.assertEqual(actual["radial_offset"],F(1,24))
+        self.assertEqual(actual["delta_squared"],F(1,32))
+        for change in (dict(r_lower=-.25),dict(r_upper=0.),dict(z_upper=-.125),dict(density=-1.)):
+            changed={**leaf,**change}
+            with self.subTest(change=change),self.assertRaises(ValueError):rz._energy_cell_geometry(changed,F(5))
+        changed={**leaf,"center":[.125,.001,0.]}
+        with self.assertRaisesRegex(ValueError,"exact actual-edge midpoint"):
+            rz._energy_cell_geometry(changed,F(5))
+        leaf.update(r_upper=1.,z_lower=-.5,z_upper=.5)
+        with self.assertRaisesRegex(ValueError,"delta<=D/4"):rz._energy_cell_geometry(leaf,F(5))
+
+    def packet(self):
+        """Reuse EXISTING synthetic all-target transport fixture, not raw field PASS."""
+        fixture=CompleteReferenceReuseEngineeringTests();record=fixture.wire()
+        mapped=fixture.reuse(record)
+        self.assertTrue(mapped["coverage_complete"],mapped.get("failure"))
+        return record,mapped
+
+    def test_missing_cells_changed_pin_or_field_reject_before_backend(self):
+        mutations=(lambda r,m:m["targets"].pop(0),
+            lambda r,m:m["targets"].append(copy.deepcopy(m["targets"][0])),
+            lambda r,m:m.update(externally_accepted_reference_sha256="1"*64),
+            lambda r,m:r["candidate_field"]["cell_values"][0].update(potential=-3.),
+            lambda r,m:m["targets"][0]["intervals"]["Phi"].pop("upper_rational"),
+            lambda r,m:m.update(coverage_complete=False))
+        for mutate in mutations:
+            record,mapped=self.packet();mutate(record,mapped)
+            with self.subTest(mutate=mutate),patch.object(surface,"load_optional_flint",side_effect=AssertionError("backend reached")) as load:
+                result=rz._energy_reference_snapshot(record,mapped,None,surface.Budget.full_domain_diagnostic())
+            self.assertFalse(result["interval_complete"]);self.assertEqual(result["status"],"ENERGY_REFERENCE_UNVERIFIED")
+            self.assertFalse(result["science_accepted"]);load.assert_not_called()
+
+    def test_same_expired_budget_has_no_reset_or_integral_dispatch(self):
+        record,mapped=self.packet();budget=surface.Budget(started=1.,_full_domain_diagnostic=True)
+        with patch.object(surface.time,"monotonic",return_value=242.), \
+             patch.object(surface.Budget,"full_domain_diagnostic",side_effect=AssertionError("reset")) as reset, \
+             patch.object(surface,"load_optional_flint",side_effect=AssertionError("backend")) as load, \
+             patch.object(surface,"evaluate_reference",side_effect=AssertionError("integral")) as evaluate:
+            result=rz._energy_reference_snapshot(record,mapped,None,budget)
+        self.assertFalse(result["interval_complete"]);self.assertEqual(result["failure_type"],"WorkLimit")
+        self.assertEqual((budget.started,budget.calls),(1.,0))
+        for spy in (reset,load,evaluate):spy.assert_not_called()
+
+    def test_delta_adds_both_bridges_and_rejects_partial_or_malformed_endpoint(self):
+        base=dict(status="COMPLETE_ENERGY_BRIDGE_DIAGNOSTIC_ONLY",interval_complete=True,
+            science_accepted=False,physical_qualified=False,core_binding_qualified=False,G_exact="1",
+            source_identity=dict(time=0),numeric_to_continuum_energy_error_upper_exact="5",
+            diagnostic_fp64_sequential_wh_exact="-2",
+            point_midpoint_wh_interval=rz._energy_interval(-3,-2),continuum_wh_interval=rz._energy_interval(-8,3))
+        after=copy.deepcopy(base);after.update(source_identity=dict(time=1),
+            numeric_to_continuum_energy_error_upper_exact="7",diagnostic_fp64_sequential_wh_exact="-1")
+        after["point_midpoint_wh_interval"]=rz._energy_interval(-2,-1)
+        after["continuum_wh_interval"]=rz._energy_interval(-9,6)
+        result=rz._energy_reference_delta(base,after)
+        self.assertEqual(result["endpoint_error_sum_upper_exact"],"12")
+        self.assertEqual(result["diagnostic_fp64_endpoint_difference_exact"],"1")
+        self.assertEqual(result["point_midpoint_delta_wh_interval"],rz._energy_interval(0,2))
+        self.assertEqual(result["continuum_delta_wh_interval"],rz._energy_interval(-12,14))
+        self.assertFalse(result["science_accepted"])
+        for change in ("partial","width","G"):
+            bad=copy.deepcopy(after)
+            if change=="partial":bad["interval_complete"]=False
+            if change=="width":bad["continuum_wh_interval"]["width_rational"]="0"
+            if change=="G":bad["G_exact"]="2"
+            with self.subTest(change=change),self.assertRaises(ValueError):rz._energy_reference_delta(base,bad)
+
+    def test_optional_existing_arb_true_pi_and_reduction_separation(self):
+        """Synthetic constant point interval tests transformation, not Newton Phi.
+
+        The independent true-pi oracle is Machin's rational alternating series;
+        no production moment/arb-pi value is reused as the expected result.
+        Optional flint absence skips this local elementary-arithmetic witness.
+        """
+        try:backend=surface.load_optional_flint()
+        except surface.ReferenceFailure:self.skipTest("optional preexisting python-flint unavailable")
+        from fractions import Fraction as F
+        def atan_bounds(inverse):
+            value=sum((F((-1)**k,(2*k+1)*inverse**(2*k+1)) for k in range(75)),F(0))
+            following=F((-1)**75,151*inverse**151)
+            return min(value,value+following),max(value,value+following)
+        lo5,hi5=atan_bounds(5);lo239,hi239=atan_bounds(239)
+        pi_lo,pi_hi=16*lo5-4*hi239,16*hi5-4*lo239
+        fixture=CompleteReferenceReuseEngineeringTests();record=fixture.wire();reference=fixture.reference(record)
+        for site in reference["sites"]:site["intervals"]["Phi"]=rz._energy_interval(-2,-2)
+        sites={site["observer_id"]:site for site in reference["sites"]}
+        for row in reference["targets"]:
+            row["intervals"]=rz.reflected_reference_intervals(sites[row["site_id"]]["intervals"],row["g_z_sign"])
+        mapped=fixture.reuse(record,reference=reference)
+        previous=backend.ctx.dps
+        try:
+            backend.ctx.dps=70
+            with patch.object(surface,"evaluate_reference",side_effect=AssertionError("integral reached")) as evaluate:
+                result=rz._energy_reference_snapshot(record,mapped,None,surface.Budget.full_domain_diagnostic())
+            self.assertTrue(result["interval_complete"],result.get("failure"))
+            # rho=3, exact V=3*pi, Phi=-2: Wh_point=-9*pi.
+            interval=result["point_midpoint_wh_interval"]
+            self.assertLessEqual(F(interval["lower_rational"]),-9*pi_hi)
+            self.assertGreaterEqual(F(interval["upper_rational"]),-9*pi_lo)
+            self.assertEqual(result["true_volume_point_field_error_upper_exact"],"0")
+            self.assertGreater(F(result["volume_remainder_energy_upper_exact"]),0)
+            self.assertNotEqual(F(result["stored_measure_mapping_error_upper_exact"]),0)
+            self.assertFalse(result["physical_qualified"]);evaluate.assert_not_called()
+        finally:backend.ctx.dps=previous
+
+
 if __name__=="__main__":unittest.main()

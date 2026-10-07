@@ -286,6 +286,16 @@ public:
     const arch::boundary::HostHydroBoundaryDomainAuthority& boundary_domain() const {
         checked([&]{require_live();});return domain_;
     }
+    /** Read the original gravity stability cap from this actual live Hydro field.
+     * dt_g = CFL / sqrt(max(4*pi*G*rho_max, max_a |g_a|/dx_a)).
+     * The prepared source, configuration and topology lease are rechecked;
+     * this private frame does not issue public native-field authority.
+     */
+    double timestep() const {
+        double result=0.;checked([&]{require_live();
+            result=policy_->field_timestep(cfl_,GravityFieldScope::NativeRzCandidate);});
+        return result;
+    }
     /** Claim a real pool input once, before flux/cache/dU/register mutation. */
     PatchReceipt claim_patch(const amr::AMRControl* control,int id,const FluidState& input,
         const Grid& grid,double dt,const IGravityPolicy& policy) const {
@@ -335,7 +345,7 @@ private:
         ObservationSink sink=nullptr,void* payload=nullptr)
         :policy_(&policy),control_(&control),configuration_(&config),gravity_(config.physics.gravity),grid_configuration_(config.grid),
           bounds_{config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint},
-          dt_(dt),stage_weight_(descriptor.flux_register_weight),generation_(generation),source_(source),
+          dt_(dt),stage_weight_(descriptor.flux_register_weight),cfl_(config.numerics.cfl),generation_(generation),source_(source),
           field_generation_(policy.workspace().generation),
           source_generation_(policy.workspace().ring_assessment.source_generation),
           domain_(boundary,control,binding,descriptor),patch_count_(control.tree->GetActiveBlocks().size()),
@@ -409,6 +419,7 @@ private:
             &&same_double(a.relative_tolerance,b.relative_tolerance)
             &&same_double(a.absolute_tolerance,b.absolute_tolerance);};
         if(gravity_.type!="self"||!same(current,gravity_)||!same(service,gravity_)
+            ||!same_double(configuration_->numerics.cfl,cfl_)
             ||configuration_->grid!=grid_configuration_
             ||!same_double(configuration_->grid.x1_min,grid_configuration_.x1_min)
             ||!same_double(configuration_->grid.x1_max,grid_configuration_.x1_max)
@@ -474,7 +485,7 @@ private:
     }
     const SelfGravity* policy_;const amr::AMRControl* control_;const SimConfig* configuration_;
     const GravityConfig gravity_;const GridConfig grid_configuration_;const arch::state::Bounds bounds_;
-    const double dt_,stage_weight_;const std::uint64_t generation_;
+    const double dt_,stage_weight_,cfl_;const std::uint64_t generation_;
     const GravitySolveIdentity source_;const std::uint64_t field_generation_,source_generation_;
     const arch::boundary::HostHydroBoundaryDomainAuthority domain_;
     const std::size_t patch_count_;std::unique_ptr<PatchRecord[]> patches_;

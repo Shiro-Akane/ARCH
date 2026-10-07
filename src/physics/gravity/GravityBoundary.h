@@ -442,6 +442,11 @@ public:
         const GravitySolveIdentity&,const RingBoundaryControl&) const;
     /** Discard only instance-owned numeric history; source/field authority is unchanged. */
     void clear_ring_memo() noexcept;
+    /** Read instance-owned interval occupancy without lookup/admission or source work.
+     * Workflow: the serialized Host caller owns preparation -> copy size only.
+     * This numerical-history observation grants no source/field qualification.
+     */
+    std::size_t ring_memo_size() const noexcept { return ring_memo_.size(); }
     void require_current_ring(const arch::elliptic::CompositePoisson&,
         const RingBoundaryEvaluation&) const;
     // Lift a current producer only after exact root source/observer equality

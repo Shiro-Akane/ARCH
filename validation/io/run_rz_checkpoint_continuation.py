@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build the internal two-step CPU RK2 checkpoint fixture with frozen owner objects.
+"""Build the internal CPU RK2 checkpoint fixture with frozen owner objects.
+The explicit warm mode runs four physical modules and a genuine AMR regrid.
 No configure, production rebuild or public case run. Raw checkpoints stay local.
 """
 import argparse,json,pathlib,subprocess,os,sys,time,hashlib
@@ -67,7 +68,8 @@ if table and table_identity(table)!=table_before:raise RuntimeError("actual warm
 verify_fixture_inputs(frozen,exe,build_record["executableIdentity"])
 identities=build_record["inputs"]["files"]
 def source_sha(name):return identities[str((root/name).resolve())]["sha256"]
-summary={"scope":"Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
+summary={"scope":("Internal RZ warm four-module M0 -> actual regrid/Current -> M1 -> checkpoint -> fresh empty Runtime -> uninterrupted/resumed M2; engineering and bitwise continuation fixture, no continuous-energy qualification"
+    if table else "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation"),
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
  "initialThermalRejectionProbe":a.initial_thermal_rejection,
  "warmNativeActive":bool(table),"actualHelmTableIdentity":table_before,
