@@ -5,18 +5,21 @@
  * Exercise shared prolongation cases in every dimension, including trace
  * species, closure roundoff and invalid parent-density controls.
  */
-#include "cuda/amr/CoarseFineExchangeKernels.cuh"
-#include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
-#include "fixtures/amr/amr_composition_test_cases.h"
-
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "amr/flux/AmrFluxMath.h"
+#include "cuda/amr/CoarseFineExchangeKernels.cuh"
+#include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
+#include "fixtures/amr/amr_composition_test_cases.h"
 
 namespace {
 
@@ -166,6 +169,68 @@ void run_case(const amr::test::CompositionCase& example, int dimension,
     }
 }
 
+/** Execute the one production Host/device reflux scalar; no device-only math. */
+__global__ void reflux_species_identity_leaf(const double* input,double* output,int count)
+{
+    const int cell=static_cast<int>(threadIdx.x);
+    if(cell<count) {
+        const double* c=input+5*cell;
+        output[cell]=amr::flux_math::reflux_mass_fraction(c[0],c[1],c[2],c[3],c[4]);
+        if(cell==0)output[count]=amr::flux_math::reflux_species_density(c[0],c[1],c[2],c[3])/c[4];
+    }
+}
+
+/** Genuine device zero-transport, active and invalid scalar cases in this owner.
+ * Values/oracles match the Host owner. The extra raw output independently
+ * exposes the previous one-ULP rhoX/rho loss on the actual device arithmetic.
+ */
+void test_reflux_species_identity_leaf()
+{
+    constexpr double rho=10543210.12345, x=.1;
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    const double inf=std::numeric_limits<double>::infinity();
+    struct Case { std::array<double,5> input; double expected; int kind; };
+    const std::array<Case,15> cases{{
+        {{rho, x, .125, 0., rho}, x, 0},
+        {{rho, x, 0., 3., rho}, x, 0},
+        {{rho, x, -.375, -0., rho}, x, 0},
+        {{2., .25, .5, .5, 2.}, .375, 0},
+        {{2., .25, .5, 0., 4.}, .125, 0},
+        {{rho, x, .5, std::numeric_limits<double>::denorm_min(), rho},
+            0x1.9999999999999p-4, 0},
+        {{rho, x, nan, 0., rho}, 0., 1},
+        {{rho, x, inf, 0., rho}, 0., 1},
+        {{rho, x, 0., inf, rho}, 0., 1},
+        {{rho, x, 0., nan, rho}, 0., 1},
+        {{rho, x, 1., inf, rho}, inf, 2},
+        {{rho, nan, 0., 0., rho}, 0., 1},
+        {{rho, inf, 0., 0., rho}, inf, 2},
+        {{0., x, 0., 0., 0.}, 0., 1},
+        {{inf, x, 0., 0., inf}, 0., 1}
+    }};
+    std::array<double,5*15> input{};
+    for(std::size_t n=0;n<cases.size();++n)
+        std::copy(cases[n].input.begin(),cases[n].input.end(),input.begin()+5*n);
+    DeviceBuffer<double> actual_input(input.size()),actual_output(cases.size()+1);
+    check(cudaMemcpy(actual_input.get(),input.data(),sizeof(input),cudaMemcpyHostToDevice));
+    reflux_species_identity_leaf<<<1,32>>>(actual_input.get(),actual_output.get(),static_cast<int>(cases.size()));
+    check(cudaGetLastError());check(cudaDeviceSynchronize());
+    std::array<double,16> output{};
+    check(cudaMemcpy(output.data(),actual_output.get(),sizeof(output),cudaMemcpyDeviceToHost));
+    require(std::bit_cast<std::uint64_t>(output.back())
+        ==std::bit_cast<std::uint64_t>(0x1.9999999999999p-4)
+        &&std::bit_cast<std::uint64_t>(output.back())!=std::bit_cast<std::uint64_t>(x),
+        "CUDA zero-transport regression did not expose original rhoX/rho loss");
+    for(std::size_t n=0;n<cases.size();++n) {
+        const auto& c=cases[n];const double actual=output[n];
+        const bool accepted=c.kind==1?std::isnan(actual):c.kind==2?
+            std::isinf(actual)&&actual>0.:
+            std::bit_cast<std::uint64_t>(actual)==std::bit_cast<std::uint64_t>(c.expected);
+        require(accepted,"CUDA shared reflux species identity/active/invalid contract failed");
+    }
+    std::cout<<"CUDA_AMR_ZERO_TRANSPORT_SPECIES_PASS cases="<<cases.size()<<" shared_scalar=1\n";
+}
+
 __global__ void reconstruct_muscl_composition(arch::cuda::DeviceStateView state, double* faces)
 {
     FluidVector left{}, right{};
@@ -215,6 +280,7 @@ int main()
     try {
         check(probe);
         test_muscl_face_composition_closure();
+        test_reflux_species_identity_leaf();
         const auto cases = amr::test::composition_cases();
         for (int dimension = 1; dimension <= 3; ++dimension) {
             for (const auto& example : cases) run_case(example, dimension);

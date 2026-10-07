@@ -560,10 +560,13 @@ std::vector<double> DriverRuntime::evaluate_current_jeans_resolution()
     const auto side = compute_backend ? ExecutionSide::Device : ExecutionSide::Host;
     std::vector<backend::BackendStateAccess> accesses;
     if (compute_backend) accesses.reserve(active.size());
-    // Do not evaluate earlier blocks before a later publication fails.
+    // Native density/inertia recovery reads real neighboring ghost means.
+    // Require their matching publication across the whole domain before any
+    // patch EOS; this reader never configures/fills BC or guesses a time.
     for (std::size_t index = 0; index < active.size(); ++index) {
         residency_ledger->require_readable(
-            {stage_handles[index], StateSlot::Current}, {side, version, true, false});
+            {stage_handles[index],StateSlot::Current},
+            {side,version,true,geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz});
         if (compute_backend) {
             const auto access = backend_access(index, StateSlot::Current);
             if (!compute_backend->contains(access))

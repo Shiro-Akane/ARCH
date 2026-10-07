@@ -1,0 +1,50 @@
+{
+  "status": "ACTUAL_SAME_WARM_MODEL_CPU_ACTIVITY_PASS_NO_CLEAR_SPEEDUP",
+  "scienceQualified": false,
+  "dynamicAmrQualified": false,
+  "restartQualified": false,
+  "sourceBinaryEosFenceUnchanged": true,
+  "wallSeconds": 135.86834481998812,
+  "macroWallSeconds": 135.414326151,
+  "historicalSameModelWallSeconds": 136.17566505199648,
+  "singleMeasurementRatio": 0.9977432074086732,
+  "formalPairedBenchmark": false,
+  "phaseSeconds": [
+    {
+      "stage": "1",
+      "source_boundary_seconds": "57.105554798",
+      "poisson_seconds": "0.0015718419999999999",
+      "force_seconds": "8.6026000000000006e-05"
+    },
+    {
+      "stage": "2",
+      "source_boundary_seconds": "77.133583186999999",
+      "poisson_seconds": "0.001146907",
+      "force_seconds": "6.6649000000000005e-05"
+    }
+  ],
+  "sourceBoundaryFractionOfMacro": 0.991321537392657,
+  "exactOriginalActivityValuesPreserved": true,
+  "binary": {
+    "path": "/home/shiroakane/ARCH/build-release-cpu/arch_gravity_stage_contract",
+    "sha256": "1c0a09bd1529a381e232e7d3d68683e0e07a174b6ec18002f44ad88c8e998209"
+  },
+  "eos": {
+    "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+  },
+  "executionEnvironment": {
+    "OMP_NUM_THREADS": "2",
+    "OMP_DYNAMIC": "FALSE",
+    "OMP_PROC_BIND": null,
+    "OMP_PLACES": null,
+    "OMP_SCHEDULE": null,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "currentSource": {
+    "commit": "522ed4a9e9bc7486c87e27c3e11e813fd3fbab9c",
+    "worktree_sha256": "217246cbffc2adf1ff111fd32ce143a9423e233574fbee8e8aeabc2b644acec6",
+    "dirty": true
+  },
+  "limitation": "One cold process for the same frozen warm model, original scientific gates retained. Cache does not yet show a meaningful overall speedup. Source/boundary dominates; no FLASH/CUDA/general-platform performance claim."
+}

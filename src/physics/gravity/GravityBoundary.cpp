@@ -13,9 +13,11 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <new>
 #include <optional>
 #include <stdexcept>
 #include <unordered_map>
@@ -501,6 +503,70 @@ RingBoundaryBudgetProposal GravityBoundary::propose_ring_budget(
         ?RingBudgetStatus::Proposed:RingBudgetStatus::ZeroBudget;
     return result;
 }
+/** Hash all exact input words; no rounded-coordinate or density key is used. */
+std::size_t GravityBoundary::RingMemoHash::operator()(const RingMemoKey& key) const noexcept {
+    std::size_t hash=0;
+    for(const auto word:key.words)
+        hash^=std::hash<std::uint64_t>{}(word)+std::size_t{0x9e3779b9}+(hash<<6)+(hash>>2);
+    return hash;
+}
+/** Clear mathematical history only; generations, source moments and leases survive. */
+void GravityBoundary::clear_ring_memo() noexcept {ring_memo_.clear();}
+/** Memoize only original successful leaf/quartet enclosures, never tree authority.
+ * Workflow: validate the original inputs before lookup; use exact geometry/G
+ * words and current quartet eligibility; recheck the current precision/box
+ * request; otherwise execute the original kernel and lazily admit its Bounded
+ * result. Every caller still charges the original traversal/global work budget.
+ * Allocation failure merely prevents admission; it cannot alter a valid result.
+ */
+RingPotentialEnclosure GravityBoundary::memoized_ring_potential(
+    double rl,double rh,double zl,double zh,double density,double ro,double zo,double G,
+    const RingEnclosureControl& control,bool quartet,RingBoundaryEvaluation& diagnostics) const {
+    const bool eligible=std::isfinite(rl)&&std::isfinite(rh)&&rl>=0.&&rl<rh
+        &&std::isfinite(zl)&&std::isfinite(zh)&&zl<zh
+        &&std::isfinite(ro)&&ro>=0.&&std::isfinite(zo)
+        &&density>0.&&std::isnormal(density)&&G>0.&&std::isnormal(G)
+        &&std::isfinite(control.relative_target)&&control.relative_target>=0.
+        &&std::isfinite(control.absolute_target)&&control.absolute_target>=0.
+        &&control.maximum_boxes>0&&control.maximum_boxes<=65536;
+    RingMemoKey key;
+    decltype(ring_memo_)::iterator found=ring_memo_.end();
+    if(eligible) {
+        key.words={std::bit_cast<std::uint64_t>(rl),std::bit_cast<std::uint64_t>(rh),
+            std::bit_cast<std::uint64_t>(zl),std::bit_cast<std::uint64_t>(zh),
+            std::bit_cast<std::uint64_t>(ro),std::bit_cast<std::uint64_t>(zo),
+            std::bit_cast<std::uint64_t>(G),quartet?1ULL:0ULL};
+        found=ring_memo_.find(key);
+        if(found!=ring_memo_.end()) {
+            RingPotentialEnclosure reused;
+            const auto& entry=found->second;
+            if(reuse_bounded_ring_interval(entry.interval,entry.density,density,
+                entry.leaf_boxes,control,reused)) {
+                ++diagnostics.memo_hits;return reused;
+            }
+        }
+    }
+    ++diagnostics.memo_misses;
+    const auto original=finite_ring_potential_enclosure(rl,rh,zl,zh,density,ro,zo,G,control);
+    if(eligible&&original.bound_valid&&original.status==RingIntervalStatus::Bounded
+        &&finite_ring_detail::interval_finite({original.lower,original.upper})
+        &&original.lower<0.&&original.upper<=0.
+        &&std::isnormal(original.lower)
+        &&(original.upper==0.||std::isnormal(original.upper))) {
+        const RingMemoEntry entry{{original.lower,original.upper},density,original.leaf_boxes};
+        if(found!=ring_memo_.end()) {
+            found->second=entry;++diagnostics.memo_admissions;
+        } else if(ring_memo_.size()<maximum_ring_memo_entries) {
+            try {
+                if(ring_memo_.emplace(key,entry).second)++diagnostics.memo_admissions;
+            } catch(const std::bad_alloc&) {
+                // A bounded mathematical result is independent of optional history storage.
+            }
+        }
+    }
+    return original;
+}
+
 RingBoundaryEvaluation GravityBoundary::ring_boundary(
     const arch::elliptic::CompositePoisson& op,const GravitySolveIdentity& source,
     const RingBoundaryControl& control) const {
@@ -522,7 +588,8 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
     RingEnclosureControl leaf_control{};
     leaf_control.absolute_target=positive_down(control.face_absolute_target/op.size());
     leaf_control.maximum_boxes=control.maximum_boxes_per_leaf;
-    // Recompute from this full current source; no cache survives identity changes.
+    // Current moments and quartet eligibility are always recomputed from the full source.
+    // The integral memo stores only mathematical intervals, never source authority.
     std::vector<std::optional<UniformRingQuartet>> quartets(nodes_.size());
     // Same-density coalescing integrates the exact union of stored rectangles.
     // It does not promote their potential errors to ideal-root scope.
@@ -545,9 +612,9 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
                     const auto& tile=*quartets[index];
                     auto tile_control=leaf_control;
                     tile_control.absolute_target=positive_down(4.*leaf_control.absolute_target);
-                    const auto enclosure=finite_ring_potential_enclosure(tile.rl,tile.rh,tile.zl,tile.zh,
+                    const auto enclosure=memoized_ring_potential(tile.rl,tile.rh,tile.zl,tile.zh,
                         tile.density,op.faces()[face].center[0],op.faces()[face].center[1],
-                        source.gravitational_constant,tile_control);
+                        source.gravitational_constant,tile_control,true,result);
                     result.range_evaluations+=enclosure.range_evaluations;
                     result.kernel_enclosures+=enclosure.kernel_enclosures;
                     result.agm_iterations+=enclosure.agm_iterations;
@@ -590,9 +657,9 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
             // lower+width could re-round an upper edge differently.
             const double rl=op.lower(node.cell,0),rh=op.upper(node.cell,0);
             const double zl=op.lower(node.cell,1),zh=op.upper(node.cell,1);
-            const auto leaf=finite_ring_potential_enclosure(rl,rh,zl,zh,
+            const auto leaf=memoized_ring_potential(rl,rh,zl,zh,
                 ring_density_[node.cell],op.faces()[face].center[0],
-                op.faces()[face].center[1],source.gravitational_constant,leaf_control);
+                op.faces()[face].center[1],source.gravitational_constant,leaf_control,false,result);
             result.range_evaluations+=leaf.range_evaluations;
             result.kernel_enclosures+=leaf.kernel_enclosures;
             result.agm_iterations+=leaf.agm_iterations;

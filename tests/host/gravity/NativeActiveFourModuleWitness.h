@@ -12,7 +12,8 @@
  *    genuine RKL2 callbacks and both actual private Self work-axis consumers.
  * 4. Require an accepted physical endpoint and publish compact activity
  *    diagnostics. No dynamic AMR, restart, continuous-field accuracy or
- *    macro fluid-plus-gravity energy qualification follows from this witness.
+ *    macro fluid-plus-gravity energy qualification follows from the single-root
+ *    entry. The separate dynamic entry uses the same operations and budgets.
  *
  * Q_B,h = sum_cells V*rho*ENUC_h*(dt/2). The two ENUC publications are
  * distinct; the last rate is never multiplied by the complete macro dt.
@@ -24,6 +25,7 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <fstream>
@@ -37,6 +39,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -76,7 +79,10 @@ using Hydro=Numerics::HydroSolverImpl<HelmEos,FluxHLLC<MusclReconstruction<McLim
 
 /** Real Current active-cell snapshot; no ghost or second physical state owner. */
 struct CellBefore {
-    int index=0;
+    int index=0,block_id=-1,level=0;
+    amr::BlockHandle handle{};
+    std::array<std::uint32_t,3> logical{};
+    double enuc=0.;
     FluidVector fluid{};
     std::array<double,species_count> fractions{};
 };
@@ -88,12 +94,28 @@ struct HalfRecord {
     std::array<long double,species_count> species_delta{};
     double maximum_flux_probe=0.,maximum_enuc=0.;
 };
+/** Original operation evidence, copied only from the synchronous real receipt. */
+struct RegistrationVisit {
+    Physical::Gravity::GravityRefluxRowIdentity row{};
+    int reserved=0,applied=0,flux_index=-1;
+    double FE=0.,Frho=0.,psi=0.,result=0.;
+};
+/** Accepted native journal expectation; Current stage0 remains a separate purpose. */
+struct JournalVisit {
+    int stage=0;double time=0.;std::uint64_t epoch=0,lease=0,source_generation=0;
+    std::size_t cells=0;
+};
 /** Owning scalar copies of actual synchronous source work, never borrowed Phi. */
 struct SourceVisit {
     scheduler::StageDescriptor descriptor{};
     std::uint64_t field_generation=0,source_generation=0;
     double input_time=0.;
     std::array<int,2> axes{};
+    std::array<double,3> solver_seconds{};
+    Physical::Gravity::GravitySolveIdentity source{};
+    std::uint64_t lease=0,topology_fingerprint=0;
+    std::map<int,std::array<int,2>> patch_axes,patch_before;
+    std::map<std::tuple<int,int,std::size_t>,RegistrationVisit> registration;
 };
 /** Integral diagnostics use each real native V/W measure and current rho*X. */
 struct Totals {
@@ -101,14 +123,29 @@ struct Totals {
     std::array<long double,species_count> species{};
 };
 
-/** One actual uniformly tiled annulus. Empty CF routes are asserted, not
- * mistaken for AMR coverage. BC remains the existing outflow implementation.
+/** Test-only EMPTY initialization selector. The approved IO TU owns its loader
+ * and every file/provenance operation. Shared stage owners gain no IO symbol
+ * dependency: a null callback follows the original root/model Init exactly.
+ * The loader runs after the actual independent Helm owner exists and before
+ * Controller/BC/Runtime, and receives the actual EMPTY control and RunState.
+ */
+struct EmptyInitialization {
+    using Loader=void (*)(void*,amr::AMRControl&,RunState&,const SimConfig&,
+        const SpeciesManager&,HelmEos&);
+    Loader load=nullptr;
+    void* payload=nullptr;
+};
+
+/** Shared maintained activity owner. The original entry has one real root;
+ * the separately frozen dynamic entry starts with two roots before a true regrid.
+ * Empty initial CF routes are asserted, not mistaken for AMR coverage.
  */
 class Owner {
 public:
     SimConfig config{};
     SpeciesManager species;
-    amr::AMRControl control{8,2};
+    amr::AMRControl control;
+    const bool dynamic;
     RunState start{};
     std::unique_ptr<HelmEos> eos;
     std::unique_ptr<SimulationController> controller;
@@ -123,22 +160,36 @@ public:
     std::array<HalfRecord,2> burns{},diffusions{};
     std::mutex source_mutex;
     std::map<int,SourceVisit> sources;
+    std::vector<JournalVisit> accepted_journal;
     double forward_euler=0.,burn_advice=DriverBurn::INACTIVE_LIMITER_CANDIDATE;
     int active_diffusion=-1,hydro_calls=0;
+    double macro_wall_seconds=0.;
 
     /** Freeze physical/numerical inputs before any handler, EOS or Runtime.
+     * Optional checkpoint construction creates its own species/Helm owner and
+     * EMPTY Tree, restores real IO means without calling model Init, then shares
+     * the sole Runtime/BC/source binding path. endpoint_time is frozen before
+     * controller construction; it does not mutate an in-flight run contract.
      * T=1e9+(3e9-1e9)*exp(-((r-3)^2+z^2)/(2*.5^2)); rho=1e7,
      * X_C12=X_O16=.5, u_r=u_z=u_phi=0. V/W Init remains shared.
+     * Only the dynamic variant uses rho=1e7*(1+.1*exp(-((r-1.7)/.25)^2-(z/.5)^2)).
      */
-    explicit Owner(const std::string& table) {
+    explicit Owner(const std::string& table,bool dynamic_mode=false,
+        double endpoint_time=0.,EmptyInitialization initialization={},
+        const std::string& output_directory={})
+        :control(dynamic_mode?32:8,2),dynamic(dynamic_mode) {
         require(!table.empty(),"Active four-module requires an explicit actual Helm table path");
         config.grid.dim=2;config.grid.geometry="cylindrical";
-        config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
+        config.grid.nblockx1=dynamic?2:1;config.grid.nblockx2=1;config.grid.nblockx3=0;
         config.grid.x1_min=1.;config.grid.x1_max=5.;
-        config.grid.x2_min=-2.;config.grid.x2_max=2.;config.grid.amr_max_blocks=8;
+        config.grid.x2_min=-2.;config.grid.x2_max=2.;config.grid.amr_max_blocks=dynamic?32:8;
         config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="outflow";
         config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="outflow";
-        config.amr.lrefinemin=config.amr.lrefinemax=0;
+        config.amr.lrefinemin=0;config.amr.lrefinemax=dynamic?1:0;
+        if(dynamic) {
+            config.amr.refine_var="DENS";config.amr.refine_on_rho=true;
+            config.amr.refine_threshold=.1;config.amr.derefine_threshold=.02;
+        }
         config.numerics.solver_name="HLLC";config.numerics.reconstruction="muscl";
         config.numerics.limiter="mc";config.numerics.time_integrator="RK2";
         config.numerics.cfl=.3;config.numerics.dt_init=macro_dt;
@@ -167,48 +218,72 @@ public:
         config.physics.gravity.type="self";config.physics.gravity.boundary="isolated";
         config.physics.gravity.relative_tolerance=1.e-10;
         config.physics.gravity.absolute_tolerance=0.;config.physics.gravity.max_cycles=200;
-        config.io.tmax=macro_dt;config.io.plt_dt=config.io.chk_dt=-1.;
+        config.io.tmax=endpoint_time==0.?(dynamic?2.*macro_dt:macro_dt):endpoint_time;
+        require(std::isfinite(config.io.tmax)&&config.io.tmax>0.,"Invalid frozen activity endpoint");config.io.plt_dt=config.io.chk_dt=-1.;
         config.io.plt_dstep=config.io.chk_dstep=-1;
-        config.io.out_dir="native-active-four-module";
+        config.io.out_dir=output_directory.empty()?(dynamic?"native-active-four-module-amr":"native-active-four-module"):output_directory;
+        if(!output_directory.empty())config.io.base_name="native-active";
+        config.io.restart=initialization.load!=nullptr;
         NetAprox13::RegisterSpecies(species);
         require(species.count()==species_count,"Active four-module lost real aprox13 layout");
         eos=std::make_unique<HelmEos>(table,&species,config.physics.eos_coulomb_mult);
+        if(!initialization.load) {
         control.tree->InitRootGrid(config,species_count,native);
         control.flux_register.EnsureSpecies(species_count);
-        require(control.tree->GetActiveBlocks().size()==1,"First activity witness is not a single real root");
-        auto& block=current_block();block.RequireNativeGeometryIdentity();const auto& grid=block.grid;
-        require(grid.Ie()-grid.Is()==16&&grid.Je()-grid.Js()==16,
-            "Active four-module has invalid actual N16 annular support");
-        // The actual first halo is [0,.25]: ordered nonnegative support is
-        // valid, and all its real shared Gauss points remain strictly positive.
-        for(int i=0;i<grid.GetTotalX();++i) {
-            const double lower=grid.GetFacePosL(i),upper=grid.GetFacePosR(i);
-            require(std::isfinite(lower)&&std::isfinite(upper)&&lower>=0.&&upper>lower,
-                "Active four-module has invalid actual radial cell support");
-        }
-        for(const auto& sample:GridMetrics::Rz::CellAverageSamples(grid.GetFacePosL(0),
-            grid.GetFacePosR(0),grid.GetAxialFacePosL(0),grid.GetAxialFacePosR(0)))
-            require(std::isfinite(sample.radius)&&sample.radius>0.,
-                "Active four-module first halo has a nonpositive actual Gauss radius");
-        for(auto* fluid:rz_runtime_witness::slots(block)) {
-            fluid->stage_repairs.reset(species_count,state::RepairSemantics::RzVolumeAngular);
-            for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
-                const auto value=ProblemHelper::detail::InitialRzCellState(
-                    grid.GetFacePosL(i),grid.GetFacePosR(i),grid.GetAxialFacePosL(j),
-                    grid.GetAxialFacePosR(j),species_count,*eos,config.numerics,
-                    [](const PointCoords& p,PrimitiveData& primitive) {
-                        const double dr=(p.r_cy-3.)/.5,dz=p.z_cy/.5;
-                        primitive.rho=1.e7;primitive.u=primitive.v=primitive.w=0.;
-                        primitive.SetTemperature(1.e9+2.e9*std::exp(-.5*(dr*dr+dz*dz)));
-                        primitive.mass_fractions.assign(species_count,0.);
-                        primitive.mass_fractions[timmes_aprox13_detail::ic12]=.5;
-                        primitive.mass_fractions[timmes_aprox13_detail::io16]=.5;
-                    });
-                const int c=grid.GetIndex(i,j,0);fluid->set(c,value.conserved);
-                fluid->set_species_from_buffer(c,value.mass_fractions.data());fluid->enuc_rate[c]=0.;
+        require(control.tree->GetActiveBlocks().size()==static_cast<std::size_t>(dynamic?2:1),
+            "Activity witness lost its actual configured root domain");
+        for(int block_id:control.tree->GetActiveBlocks()) {
+            auto& block=control.pool->GetBlock(block_id);block.RequireNativeGeometryIdentity();const auto& grid=block.grid;
+            require(grid.Ie()-grid.Is()==16&&grid.Je()-grid.Js()==16,
+                "Active four-module has invalid actual N16 annular support");
+            // The single-root first halo is [0,.25]; the dynamic two-root first
+            // halo begins at .5. All actual shared Gauss radii must be positive.
+            for(int i=0;i<grid.GetTotalX();++i) {
+                const double lower=grid.GetFacePosL(i),upper=grid.GetFacePosR(i);
+                require(std::isfinite(lower)&&std::isfinite(upper)&&lower>=0.&&upper>lower,
+                    "Active four-module has invalid actual radial cell support");
             }
-        }
+            for(const auto& sample:GridMetrics::Rz::CellAverageSamples(grid.GetFacePosL(0),
+                grid.GetFacePosR(0),grid.GetAxialFacePosL(0),grid.GetAxialFacePosR(0)))
+                require(std::isfinite(sample.radius)&&sample.radius>0.,
+                    "Active four-module first halo has a nonpositive actual Gauss radius");
+            for(auto* fluid:rz_runtime_witness::slots(block)) {
+                fluid->stage_repairs.reset(species_count,state::RepairSemantics::RzVolumeAngular);
+                for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+                    const auto value=ProblemHelper::detail::InitialRzCellState(
+                        grid.GetFacePosL(i),grid.GetFacePosR(i),grid.GetAxialFacePosL(j),
+                        grid.GetAxialFacePosR(j),species_count,*eos,config.numerics,
+                        [this](const PointCoords& p,PrimitiveData& primitive) {
+                            const double dr=(p.r_cy-3.)/.5,dz=p.z_cy/.5;
+                            primitive.rho=1.e7;
+                            if(dynamic) {
+                                const double rr=(p.r_cy-1.7)/.25,zz=p.z_cy/.5;
+                                primitive.rho*=1.+.1*std::exp(-rr*rr-zz*zz);
+                            }
+                            primitive.u=primitive.v=primitive.w=0.;
+                            primitive.SetTemperature(1.e9+2.e9*std::exp(-.5*(dr*dr+dz*dz)));
+                            primitive.mass_fractions.assign(species_count,0.);
+                            primitive.mass_fractions[timmes_aprox13_detail::ic12]=.5;
+                            primitive.mass_fractions[timmes_aprox13_detail::io16]=.5;
+                        });
+                    const int c=grid.GetIndex(i,j,0);fluid->set(c,value.conserved);
+                    fluid->set_species_from_buffer(c,value.mass_fractions.data());fluid->enuc_rate[c]=0.;
+                }
+            }
+        } // All real roots use the same eight-point Init/EOS owner.
         start.repairs.reset(species_count,state::RepairSemantics::RzVolumeAngular);
+        } else {
+            // Genuine fresh path never runs model Init. The selected approved
+            // fixture loader owns file/provenance checks and conserved means;
+            // actual Runtime BC/Helm below alone grants completed readiness.
+            require(dynamic&&control.tree->GetActiveBlocks().empty(),
+                "Warm restart requires EMPTY independent dynamic control");
+            initialization.load(initialization.payload,control,start,config,species,*eos);
+            require(start.checkpoint_provenance_verified&&start.has_timestep_state
+                &&!start.resume_after_regrid&&bits(start.time,2.*macro_dt)&&start.step==2,
+                "Warm checkpoint did not retain the actual M1 accepted schedule");
+            control.flux_register.EnsureSpecies(species_count);burn_advice=start.dt_burn;
+        }
         controller=std::make_unique<SimulationController>(config,start);
         bc=std::make_unique<BCHandler>(config,native);bc->bind(*eos,species);
         bc->configure_stage(start.time,boundary::BoundaryPurpose::Hydro);
@@ -225,7 +300,23 @@ public:
         plan.eos=dispatch::EosId::Helmholtz;plan.network=dispatch::NetworkId::Aprox13;
         plan.ode_solver=dispatch::OdeSolverId::Bd;plan.linear_solver=dispatch::LinearSolverId::DenseLu;
         plan.diffusion_integrator=dispatch::DiffusionIntegratorId::Rkl2;
-        context.emplace(runtime->stage_context());context->step_start_time=start.time;context->step_dt=macro_dt;
+        bind_context_at_current();
+        const auto& topology=control.RequireFluxTopologyPlan(species_count,native,-1,true);
+        if(!initialization.load)
+            require(topology.routes.empty(),"Uniform first activity witness unexpectedly has CF routes");
+        else require(control.tree->GetActiveBlocks().size()==5&&!topology.routes.empty(),
+            "Fresh warm checkpoint did not reconstruct the actual mixed CF domain");
+    }
+
+    /** Bind actual new Runtime references and controller time after topology publication.
+     * The old context must be destroyed before a regrid replaces its ledger.
+     * No counters, accumulated accounting values or gravity journal are reset.
+     */
+    void bind_context_at_current() {
+        require(!context&&!runtime->active_host_hydro_transaction()&&!gravity->prepared_native_self(),
+            "Context rebinding requires a quiescent actual Runtime");
+        context.emplace(runtime->stage_context());context->step_start_time=controller->t_current;
+        context->step_dt=macro_dt;
         context->configure_boundary_context=[this](double time,boundary::BoundaryPurpose purpose) {
             bc->configure_stage(time,purpose);
             runtime->bind_native_boundary_acceptance(*context,runtime->handles());
@@ -234,50 +325,73 @@ public:
             context->configure_boundary_context(time,purpose);runtime->ensure_fluid_ghosts(slot);
         };
         context->hydro_preparation=gravity_stage.get();
-        context->configure_boundary_context(start.time,boundary::BoundaryPurpose::Hydro);
+        context->configure_boundary_context(controller->t_current,boundary::BoundaryPurpose::Hydro);
         runtime->bind_boundary_accounting(*context);bind_rkl_observers();
         const auto candidates=driver::calculate_timestep_candidates(*runtime,workspace,*eos,&plan);
         forward_euler=candidates.diffusion_forward_euler;
         require(std::isfinite(forward_euler)&&forward_euler>0.&&std::isfinite(candidates.hydro)
             &&macro_dt<=candidates.hydro,"Frozen active macro exceeds its actual physical stability proposal");
-        const auto& topology=control.RequireFluxTopologyPlan(species_count,native,-1,true);
-        require(topology.routes.empty(),"Uniform first activity witness unexpectedly has CF routes");
     }
-
-    /** Borrow the actual sole pooled Current; no copied grid is authenticated. */
+    /** Borrow the actual first pooled Current; the single-root entry retains its scope. */
     amr::Block& current_block() {return control.pool->GetBlock(control.tree->GetActiveBlocks().front());}
-    /** Freeze active cells in the exact row order used for later diagnostic differences. */
+    /** Resolve a recorded pooled cell only under its same UID, epoch and logical key. */
+    amr::Block& recorded_block(const CellBefore& cell) {
+        const auto& active=control.tree->GetActiveBlocks();
+        const auto found=std::find(active.begin(),active.end(),cell.block_id);
+        require(found!=active.end(),"Diagnostic cell no longer belongs to the actual active domain");
+        const auto n=static_cast<std::size_t>(found-active.begin());
+        auto& b=control.pool->GetBlock(cell.block_id);
+        require(n<runtime->handles().size()&&runtime->handles()[n]==cell.handle
+            &&b.level==cell.level&&std::array<std::uint32_t,3>{b.logical_x1,b.logical_x2,b.logical_x3}==cell.logical,
+            "Diagnostic cell crossed a topology/storage owner");return b;
+    }
+    /** Freeze every actual active cell in runtime handle order; no ghost state is copied. */
     std::vector<CellBefore> freeze_active() {
-        auto& b=current_block();const auto& g=b.grid;std::vector<CellBefore> result;
-        result.reserve(256);
-        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
-            CellBefore cell;cell.index=g.GetIndex(i,j,0);cell.fluid=b.fluid_state.get(cell.index);
-            for(int s=0;s<species_count;++s)cell.fractions[s]=b.fluid_state.X(s,cell.index);
-            result.push_back(cell);
+        const auto& active=control.tree->GetActiveBlocks();std::vector<CellBefore> result;
+        require(active.size()==runtime->handles().size(),"Active snapshot has incomplete real handles");
+        result.reserve(256*active.size());
+        for(std::size_t n=0;n<active.size();++n) {
+            auto& b=control.pool->GetBlock(active[n]);const auto& g=b.grid;
+            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                CellBefore cell;cell.index=g.GetIndex(i,j,0);cell.fluid=b.fluid_state.get(cell.index);
+                cell.block_id=active[n];cell.handle=runtime->handles()[n];cell.level=b.level;
+                cell.logical={b.logical_x1,b.logical_x2,b.logical_x3};cell.enuc=b.fluid_state.enuc_rate[cell.index];
+                for(int s=0;s<species_count;++s)cell.fractions[s]=b.fluid_state.X(s,cell.index);
+                result.push_back(cell);
+            }
         }
         return result;
     }
-    /** Sum actual native M,J,E,rhoX; these are diagnostics, not a new evolution. */
+    /** Sum actual native M,J,E,rhoX across all active patches, in original cell order. */
     Totals totals() {
-        const auto& b=current_block();const auto& g=b.grid;
-        const auto view=GridMetrics::make_geometry_view(g,native);Totals result;
-        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
-            const int c=g.GetIndex(i,j,0);const long double V=GridMetrics::CellVolume(view,i,j,0);
-            const long double W=GridMetrics::Rz::AngularMomentumMeasure(view,i,j);
-            const auto value=b.fluid_state.get(c);result.mass+=V*value.rho;
-            result.angular+=W*value.mom_w;result.energy+=V*value.eng;
-            for(int s=0;s<species_count;++s)result.species[s]+=V*value.rho*b.fluid_state.X(s,c);
+        Totals result;
+        for(int id:control.tree->GetActiveBlocks()) {
+            const auto& b=control.pool->GetBlock(id);const auto& g=b.grid;
+            const auto view=GridMetrics::make_geometry_view(g,native);
+            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                const int c=g.GetIndex(i,j,0);const long double V=GridMetrics::CellVolume(view,i,j,0);
+                const long double W=GridMetrics::Rz::AngularMomentumMeasure(view,i,j);
+                const auto value=b.fluid_state.get(c);result.mass+=V*value.rho;
+                result.angular+=W*value.mom_w;result.energy+=V*value.eng;
+                for(int s=0;s<species_count;++s)result.species[s]+=V*value.rho*b.fluid_state.X(s,c);
+            }
         }
         return result;
     }
+    /** Dynamic-only observers are defined in the cohesive AMR witness owner. */
+    void observe_dynamic_source(const Physical::Gravity::NativeSelfStageObservation&);
+    void complete_dynamic_sources();
+    void check_dynamic_journal();
+
     /** Record NEW rate and rhoX changes immediately after this genuine burn half.
      * Delta E and Q use independent diagnostics. A large thermal energy may
      * mask a small source in subtraction; activity requires composition and
      * the ODE-owned rate, rather than inventing a detectable gravity signal.
      */
     void record_burn(HalfRecord& record,const std::vector<CellBefore>& before,double half) {
-        auto& b=current_block();const auto& g=b.grid;const auto view=GridMetrics::make_geometry_view(g,native);
         for(const auto& old:before) {
+            auto& b=recorded_block(old);const auto& g=b.grid;
+            const auto view=GridMetrics::make_geometry_view(g,native);
             const int i=old.index%g.stride_y,j=old.index/g.stride_y;
             const long double V=GridMetrics::CellVolume(view,i,j,0);const auto now=b.fluid_state.get(old.index);
             const double rate=b.fluid_state.enuc_rate[old.index];
@@ -310,23 +424,25 @@ public:
      * capture/accounting writes. The true RKL stages subsequently run normally.
      */
     double thermal_flux_probe() {
-        auto& b=current_block();const auto& g=b.grid;const FluidState before=b.fluid_state;
-        std::vector<FluidVector> flux(g.GetTotalSize());
-        std::vector<double> species_flux(static_cast<std::size_t>(g.GetTotalSize())*species_count);
         double maximum=0.;
-        for(int axis=0;axis<2;++axis) {
-            std::fill(flux.begin(),flux.end(),FluidVector{});
-            std::fill(species_flux.begin(),species_flux.end(),0.);
-            DiffFlux::compute_fluxes(b.fluid_state,*eos,g,config,flux,species_flux,axis,false,native);
-            for(int j=g.Js();j<g.Je()+(axis==1);++j)for(int i=g.Is();i<g.Ie()+(axis==0);++i) {
-                const auto f=flux[g.GetIndex(i,j,0)];
-                require(std::isfinite(f.eng)&&f.rho==0.&&f.mom_u==0.&&f.mom_v==0.&&f.mom_w==0.,
-                    "Actual thermal-only flux probe had nonfinite or nonthermal transport");
-                maximum=std::max(maximum,std::abs(f.eng));
+        for(int block_id:control.tree->GetActiveBlocks()) {
+            auto& b=control.pool->GetBlock(block_id);const auto& g=b.grid;const FluidState before=b.fluid_state;
+            std::vector<FluidVector> flux(g.GetTotalSize());
+            std::vector<double> species_flux(static_cast<std::size_t>(g.GetTotalSize())*species_count);
+            for(int axis=0;axis<2;++axis) {
+                std::fill(flux.begin(),flux.end(),FluidVector{});
+                std::fill(species_flux.begin(),species_flux.end(),0.);
+                DiffFlux::compute_fluxes(b.fluid_state,*eos,g,config,flux,species_flux,axis,false,native);
+                for(int j=g.Js();j<g.Je()+(axis==1);++j)for(int i=g.Is();i<g.Ie()+(axis==0);++i) {
+                    const auto f=flux[g.GetIndex(i,j,0)];
+                    require(std::isfinite(f.eng)&&f.rho==0.&&f.mom_u==0.&&f.mom_v==0.&&f.mom_w==0.,
+                        "Actual thermal-only flux probe had nonfinite or nonthermal transport");
+                    maximum=std::max(maximum,std::abs(f.eng));
+                }
             }
+            for(const auto field:rz_runtime_witness::fields)
+                require(bits(b.fluid_state.*field,before.*field),"Flux probe changed an actual state/diagnostic array");
         }
-        for(const auto field:rz_runtime_witness::fields)
-            require(bits(b.fluid_state.*field,before.*field),"Flux probe changed an actual state/diagnostic array");
         require(maximum>0.,"Actual warm half input has no nonzero stellar thermal flux");return maximum;
     }
     /** Keep the genuine Runtime capture/accounting callbacks, adding observations
@@ -345,10 +461,12 @@ public:
         context->rkl_flux_capture_accept=[this,accept](const scheduler::RklStageDescriptor& stage,const scheduler::RklPlan& p) {
             auto& r=diffusions.at(static_cast<std::size_t>(active_diffusion));
             require(stage.stage==++r.rkl_accept&&r.rkl_accept<=r.rkl_begin,"Actual RKL accepted a foreign stage");
-            const auto capture=current_block().fluid_state.boundary_flux_capture;
-            require(bool(capture),"Actual RKL physical capture owner is missing");
-            for(const auto& plane:capture->stage)for(double value:plane)
-                require(std::isfinite(value),"Actual RKL produced a nonfinite boundary flux");
+            for(int id:control.tree->GetActiveBlocks()) {
+                const auto capture=control.pool->GetBlock(id).fluid_state.boundary_flux_capture;
+                require(bool(capture),"Actual RKL physical capture owner is missing");
+                for(const auto& plane:capture->stage)for(double value:plane)
+                    require(std::isfinite(value),"Actual RKL produced a nonfinite boundary flux");
+            }
             accept(stage,p); // Original Runtime recurrence; never substitute a receipt.
         };
     }
@@ -357,6 +475,7 @@ public:
      */
     static void observe_source(void* payload,const Physical::Gravity::NativeSelfStageObservation& event) {
         auto& o=*static_cast<Owner*>(payload);
+        if(o.dynamic){o.observe_dynamic_source(event);return;}
         if(event.kind!=Physical::Gravity::NativeSelfStageObservation::Kind::AxisAfter)return;
         require(event.grid&&event.input&&event.delta&&event.flux&&event.descriptor&&event.source
             &&event.axis>=0&&event.axis<2&&event.block_id==o.control.tree->GetActiveBlocks().front()
@@ -379,8 +498,14 @@ public:
         std::lock_guard<std::mutex> lock(o.source_mutex);
         auto [it,inserted]=o.sources.try_emplace(stage);
         auto& visit=it->second;
+        const auto& timing=o.gravity->timings(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
+        const std::array<double,3> times{timing.source_boundary,timing.poisson,timing.force};
+        for(double value:times)require(std::isfinite(value)&&value>=0.,"Actual solve phase timing is invalid");
         if(inserted) {visit.descriptor=*event.descriptor;visit.field_generation=event.field_generation;
-            visit.source_generation=event.source_generation;visit.input_time=event.source->input_time;}
+            visit.source_generation=event.source_generation;visit.input_time=event.source->input_time;
+            visit.solver_seconds=times;}
+        for(int k=0;k<3;++k)require(bits(visit.solver_seconds[k],times[k]),
+            "Same-field actual solve phase timing changed between observers");
         require(visit.field_generation==event.field_generation&&visit.source_generation==event.source_generation
             &&++visit.axes[event.axis]==1,"Actual source axis was repeated or crossed field generations");
     }
@@ -389,6 +514,13 @@ public:
      * operation and records only the input/output evidence around that call.
      */
     void advance() {
+        const auto macro_started=std::chrono::steady_clock::now();
+        const double entry_time=controller->t_current;const int entry_step=controller->step_count;
+        if(dynamic) {
+            burns={};diffusions={};sources.clear();hydro_calls=0;active_diffusion=-1;
+            context->step_start_time=entry_time;context->step_dt=macro_dt;
+            context->configure_boundary_context(entry_time,boundary::BoundaryPurpose::Hydro);
+        }
         scheduler::ScopedStageBinding binding(*context,runtime->handles());
         const auto burn=BurnerHandle<HelmEos>::bind<Burn>();
         driver::execute_driver_macro_step(*runtime,*context,hydro.get(),true,
@@ -407,8 +539,8 @@ public:
                 runtime->ensure_fluid_ghosts(state::StateSlot::Current);
                 record.maximum_flux_probe=thermal_flux_probe();const auto before=freeze_active();
                 driver::advance_diffusion(*runtime,workspace,*context,*eos,&plan,controller->step_count,half,forward_euler);
-                const auto& fluid=current_block().fluid_state;
                 for(const auto& old:before) {
+                    const auto& fluid=recorded_block(old).fluid_state;
                     if(!bits(fluid.rho[old.index],old.fluid.rho))
                         std::cerr<<std::setprecision(17)<<"THERMAL_MASS_DIAGNOSTIC half="<<active_diffusion+1
                             <<" cell="<<old.index<<" before="<<old.fluid.rho<<" after="<<fluid.rho[old.index]
@@ -416,8 +548,37 @@ public:
                             <<" rkl_stages="<<record.rkl_stages<<'\n';
                     require(bits(fluid.rho[old.index],old.fluid.rho),"Thermal diffusion transported mass");
                     record.changed_energy+=!bits(fluid.eng[old.index],old.fluid.eng);
-                    for(int s=0;s<species_count;++s)require(bits(fluid.X(s,old.index),old.fractions[s]),
-                        "Thermal-only diffusion changed species");
+                    for(int s=0;s<species_count;++s) {
+                        // Failure-only evidence from this actual accepted RKL
+                        // half; no EOS/flux recomputation, tolerance or state
+                        // change is allowed before the original bit assertion.
+                        if(!bits(fluid.X(s,old.index),old.fractions[s])) {
+                            const auto& grid=control.pool->GetBlock(old.block_id).grid;
+                            const double after=fluid.X(s,old.index);
+                            std::cerr<<std::setprecision(17)<<"THERMAL_SPECIES_DIAGNOSTIC"
+                                <<" blockId="<<old.block_id<<" handleUid="<<old.handle.uid.value
+                                <<" epoch="<<old.handle.epoch.value<<" level="<<old.level
+                                <<" logical="<<old.logical[0]<<','<<old.logical[1]<<','<<old.logical[2]
+                                <<" cell="<<old.index<<" i="<<old.index%grid.stride_y
+                                <<" j="<<(old.index%grid.stride_z)/grid.stride_y<<" species="<<s
+                                <<" Xbefore="<<old.fractions[s]<<" Xafter="<<after
+                                <<" delta="<<after-old.fractions[s]
+                                <<" XbeforeBits="<<std::bit_cast<std::uint64_t>(old.fractions[s])
+                                <<" XafterBits="<<std::bit_cast<std::uint64_t>(after)
+                                <<" rhoBefore="<<old.fluid.rho<<" rhoAfter="<<fluid.rho[old.index]
+                                <<" rhoBeforeBits="<<std::bit_cast<std::uint64_t>(old.fluid.rho)
+                                <<" rhoAfterBits="<<std::bit_cast<std::uint64_t>(fluid.rho[old.index])
+                                <<" rkl_begin="<<record.rkl_begin<<" rkl_accept="<<record.rkl_accept
+                                <<" rkl_stages="<<record.rkl_stages<<" half="<<active_diffusion+1
+                                <<" half_dt="<<half<<" macro_time="<<controller->t_current
+                                <<" macro_step="<<controller->step_count
+                                <<" macro_start="<<context->step_start_time<<" macro_dt="<<context->step_dt
+                                <<" clock_token="<<context->clock.last_token()
+                                <<" clock_version="<<context->clock.last_version()<<'\n';
+                        }
+                        require(bits(fluid.X(s,old.index),old.fractions[s]),
+                            "Thermal-only diffusion changed species");
+                    }
                 }
                 require(record.rkl_stages>=2&&record.rkl_begin==record.rkl_stages
                     &&record.rkl_accept==record.rkl_stages,"Actual RKL2 half did not complete all genuine stages");
@@ -429,9 +590,10 @@ public:
                 driver::advance_hydro(*runtime,workspace,*context,&plan,full,&SolverRK2::solve<BCHandler>,gravity.get(),hydro.get());},
             [](driver::CpuStage,auto&& call) {call();});
         require(!runtime->active_host_hydro_transaction()&&!gravity->prepared_native_self()
-            &&bits(controller->t_current,start.time)&&controller->step_count==start.step,
+            &&bits(controller->t_current,dynamic?entry_time:start.time)&&controller->step_count==(dynamic?entry_step:start.step),
             "Actual macro left a tentative source/transaction or prematurely advanced time");
-        require(sources.size()==2&&sources.at(1).axes==std::array<int,2>{1,1}
+        if(dynamic)complete_dynamic_sources();
+        else require(sources.size()==2&&sources.at(1).axes==std::array<int,2>{1,1}
             &&sources.at(2).axes==std::array<int,2>{1,1}
             &&sources.at(1).field_generation!=sources.at(2).field_generation,
             "Actual RK2 omitted a solved stage or genuine work-axis consumer");
@@ -441,12 +603,17 @@ public:
                 &&stamp.ghost.pending_transfer==state::PendingTransferPhase::None,"Actual endpoint has pending residency");
             context->ledger.require_readable(key,{state::ExecutionSide::Host,stamp.interior.version,true,true});
         }
-        RzThermodynamics::validate_completed_patch_eos(current_block().fluid_state,current_block().grid,species_count,
-            {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint},*eos);
+        for(int id:control.tree->GetActiveBlocks()) {
+            const auto& b=control.pool->GetBlock(id);
+            RzThermodynamics::validate_completed_patch_eos(b.fluid_state,b.grid,species_count,
+                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint},*eos);
+        }
         require(runtime->repair_budget().semantics==state::RepairSemantics::RzVolumeAngular,
             "Accepted active macro changed native repair measure");
         for(double value:runtime->repair_budget().values)require(value==0.,"Warm activity witness required a repair");
-        controller->advance(macro_dt);gravity_stage->flush_committed_diagnostics();check_journal();
+        controller->advance(macro_dt);gravity_stage->flush_committed_diagnostics();
+        if(dynamic)check_dynamic_journal();else check_journal();
+        macro_wall_seconds=std::chrono::duration<double>(std::chrono::steady_clock::now()-macro_started).count();
     }
     /** Read the actual two committed rows; no synthesized successful receipt. */
     void check_journal() {
@@ -495,8 +662,12 @@ inline void run(const std::string& table) {
             <<" thermal_probe_max="<<d.maximum_flux_probe<<" diffusion_changed_E_cells="<<d.changed_energy
             <<" rkl2_begin="<<d.rkl_begin<<" rkl2_accept="<<d.rkl_accept<<'\n';
     }
+    for(const auto& [stage,visit]:owner.sources)
+        std::cout<<"NATIVE_ACTIVE_SOURCE_TIMING stage="<<stage<<" source_boundary_seconds="<<visit.solver_seconds[0]
+            <<" poisson_seconds="<<visit.solver_seconds[1]<<" force_seconds="<<visit.solver_seconds[2]<<'\n';
     std::cout<<"PRIVATE_NATIVE_ACTIVE_FOUR_MODULE candidate_only=1 actual_BD_DenseLU=1 actual_Helm_table=1"
         <<" actual_aprox13=1 actual_RKL2=1 actual_RK2_Self=1 macro_dt="<<macro_dt
+        <<" macro_wall_seconds="<<owner.macro_wall_seconds
         <<" accepted_time="<<owner.controller->t_current<<" accepted_steps="<<owner.controller->step_count
         <<" source_stages="<<owner.sources.size()<<" CF_routes=0 active_AMR_qualified=0 restart_qualified=0"
         <<" total_energy_qualified=0 physical_qualified=0 gravity_signal_may_be_below_thermal_ULP=1"

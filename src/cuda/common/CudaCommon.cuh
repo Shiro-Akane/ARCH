@@ -6,6 +6,10 @@
  * preserve the common field layout; geometry formulas remain in GridMetrics.
  * Species scratch uses local or caller-owned storage without changing the
  * numerical policy. Passing a view transfers neither ownership nor completion.
+ * Workflow: lower an explicitly selected chart; authenticate any bound native
+ * root and layout with the common dyadic owner; copy value-only provenance;
+ * recheck the payload before launch. Metadata does not authorize a backend or
+ * certify EOS, boundary, source, or native physics consumers.
  */
 
 #pragma once
@@ -15,9 +19,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <stdexcept>
 #include <type_traits>
 
 #include "data/FluidState.h"
+#include "grid/GridGeometryView.h"
 
 namespace arch::cuda
 {
@@ -177,6 +183,11 @@ struct DeviceGridView
     const double* face_area_lower[3];
     const double* face_area_upper[3];
 
+    // Owned chart/root metadata; actual uppers are x1_max/x2_max above. Existing
+    // aggregate initializers retain the default ordinary chart and no identity.
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing;
+    GridMetrics::DyadicGridIdentity dyadic_identity{};
+
     ARCH_INLINE int index(int i, int j = 0, int k = 0) const
     {
         return k * stride_z + j * stride_y + i;
@@ -231,6 +242,34 @@ inline bool valid_hydro_view(const DeviceStateView& view)
             <= std::numeric_limits<int>::max() / view.n_species;
 }
 
+/** Recheck a value-owned chart before any numerical launch.
+ * Workflow: preserve ordinary layouts; require a complete native block layout
+ * and shared exact generation identity for RZ. A bound native payload cannot
+ * be relabelled Existing. This checks self-consistency, not external Host
+ * freshness or scientific qualification. No coordinates are regenerated here.
+ */
+inline bool valid_device_grid_geometry(const DeviceGridView& grid)
+{
+    using GridMetrics::GeometrySemantics;
+    if (grid.semantics == GeometrySemantics::Existing)
+        return !grid.dyadic_identity.bound;
+    if (grid.semantics != GeometrySemantics::AxisymmetricRz
+        || grid.geometry != static_cast<int>(DeviceGeometry::Cylindrical)
+        || grid.dim != 2 || !grid.dyadic_identity.bound
+        || grid.ng < 0
+        || grid.ng > (std::numeric_limits<int>::max() - amr::BLOCK_NX) / 2
+        || grid.ng > (std::numeric_limits<int>::max() - amr::BLOCK_NY) / 2
+        || grid.is != grid.ng || grid.ie != grid.ng + amr::BLOCK_NX
+        || grid.js != grid.ng || grid.je != grid.ng + amr::BLOCK_NY
+        || grid.total_x != amr::BLOCK_NX + 2 * grid.ng
+        || grid.total_y != amr::BLOCK_NY + 2 * grid.ng
+        || grid.ks != 0 || grid.ke != 1 || grid.total_z != 1)
+        return false;
+    return GridMetrics::matches_identity(grid.dyadic_identity,
+        {grid.x1_min, grid.x2_min}, {grid.x1_max, grid.x2_max},
+        {grid.dx1, grid.dx2});
+}
+
 inline bool valid_hydro_grid(const DeviceGridView& grid)
 {
     if (grid.dim < 1 || grid.dim > 3 || grid.ng < 0
@@ -256,7 +295,8 @@ inline bool valid_hydro_grid(const DeviceGridView& grid)
     if (grid.total_y - 1 > remaining / grid.stride_y)
         return false;
     remaining -= (grid.total_y - 1) * grid.stride_y;
-    return grid.total_x - 1 <= remaining;
+    return grid.total_x - 1 <= remaining
+        && valid_device_grid_geometry(grid);
 }
 
 static_assert(std::is_standard_layout_v<DeviceStateView>);
@@ -268,11 +308,26 @@ static_assert(std::is_trivially_copyable_v<CudaHydroWorkspaceView>);
 static_assert(std::is_standard_layout_v<SpeciesWorkspaceView>);
 static_assert(std::is_trivially_copyable_v<SpeciesWorkspaceView>);
 
-// Host-only POD binding. The caller owns the concrete grid; raw device views
-// and launch declarations must not include the host topology implementation.
+/** Lower a Host grid without borrowing its geometry storage.
+ * Workflow: copy the unchanged ordinary layout prefix; bind the explicit
+ * internal chart; authenticate native actual root counts and canonical
+ * lower/upper/spacing with matches_identity; then copy the owned identity.
+ * Native missing-data and chart mismatches fail before this function returns.
+ * Its caller owns allocation order: this function itself allocates no GPU
+ * storage and does not promise that an earlier caller allocation did not occur.
+ */
 template <class HostGrid>
-inline DeviceGridView make_device_grid_view(const HostGrid& grid)
+inline DeviceGridView make_device_grid_view(const HostGrid& grid,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
 {
+    using GridMetrics::GeometrySemantics;
+    if (semantics != GeometrySemantics::Existing
+        && semantics != GeometrySemantics::AxisymmetricRz)
+        throw std::invalid_argument("CUDA grid lowering received unknown geometry semantics");
+    if constexpr (requires { grid.dyadic_identity.bound; }) {
+        if (grid.dyadic_identity.bound && semantics == GeometrySemantics::Existing)
+            throw std::invalid_argument("CUDA bound Native RZ grid requires explicit geometry semantics");
+    }
     int geometry = static_cast<int>(DeviceGeometry::Cartesian);
     if (grid.geometry == "cylindrical")
         geometry = static_cast<int>(DeviceGeometry::Cylindrical);
@@ -307,6 +362,18 @@ inline DeviceGridView make_device_grid_view(const HostGrid& grid)
     view.x1_max = grid.x1_max;
     view.x2_max = grid.x2_max;
     view.x3_max = grid.x3_max;
+    view.semantics = semantics;
+    if (semantics == GeometrySemantics::AxisymmetricRz) {
+        if constexpr (requires { grid.dyadic_identity; grid.nblockx1; grid.nblockx2; }) {
+            view.dyadic_identity = grid.dyadic_identity;
+            if (grid.nblockx1 != view.dyadic_identity.root_blocks[0]
+                || grid.nblockx2 != view.dyadic_identity.root_blocks[1]
+                || !valid_hydro_grid(view))
+                throw std::invalid_argument("CUDA Native RZ lowering lacks matching actual grid identity/layout");
+        } else {
+            throw std::invalid_argument("CUDA Native RZ lowering requires actual root identity/counts");
+        }
+    }
     return view;
 }
 } // namespace arch::cuda

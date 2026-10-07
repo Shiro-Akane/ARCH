@@ -11,6 +11,8 @@
 #include "amr/refinement/RefinementThermodynamics.h"
 #include "../../math/physics/JeansNumericCases.h"
 #include <array>
+#include <bit>
+#include <cstdint>
 #include <limits>
 #include <iostream>
 #include <iomanip>
@@ -150,6 +152,127 @@ void frozen_uniform_tree_gate()
     require(rejected&&short_tree.GetActiveBlocks()==before&&short_pool->GetNumActiveBlocks()==4,
             "frozen staged capacity failure published/leaked blocks");
     std::cout<<"JEANS_FROZEN_UNIFORM_TREE_PASS\n";
+}
+
+
+/** Observe the real IdealGas inputs of an actual Native refinement batch.
+ * Expected caloric e0 and gamma come from independent integrated initial
+ * data. The existing 16-epsilon arithmetic window scales with E/K operations;
+ * it is not a scientific convergence budget or a source-publication grant.
+ */
+struct NativeRefinementEosWitness {
+    const IdealGas& actual;
+    double internal;
+    double energy_scale;
+    mutable int pressures=0,temperatures=0,sounds=0;
+    void check(bool condition,const char* message) const {
+        if(!condition)throw std::runtime_error(message);
+    }
+    double get_pressure(const FluidVector& u,const double* xi) const {
+        ++pressures;
+        check(u.rho==1.&&xi&&xi[0]==.25&&xi[1]==.75,
+            "Native refinement evaluated padding or changed source fractions");
+        const double expected=.5*internal;
+        const double value=actual.get_pressure(u,xi);
+        check(std::isfinite(value)&&std::abs(value-expected)<=
+            16.*std::numeric_limits<double>::epsilon()*.5*energy_scale,
+            "Native refinement pressure used raw mixed-measure kinetic energy");
+        return value;
+    }
+    double get_temperature(double rho,double e,const double* xi) const {
+        ++temperatures;
+        check(rho==1.&&xi&&xi[0]==.25&&xi[1]==.75,
+            "Native refinement temperature read nonlogical padding");
+        const double value=actual.get_temperature(rho,e,xi);
+        check(std::isfinite(value)&&std::abs(value-internal/2.)<=
+            16.*std::numeric_limits<double>::epsilon()*energy_scale/2.,
+            "Native refinement temperature did not use the physical mean e0");
+        return value;
+    }
+    double get_sound_speed(const FluidVector& u,double pressure,const double* xi) const {
+        ++sounds;
+        return actual.get_sound_speed(u,pressure,xi);
+    }
+};
+
+/** Actual bound Native axis Tree with independently integrated cold rotation.
+ * The first positive cell has unresolved generic raw e, while the real Native
+ * mean and all physical centers have e0>0. Pitch padding stays poison. No
+ * Runtime/EOS/source authority is manufactured by this standalone reader test.
+ */
+void native_refinement_batch_contract()
+{
+    SimConfig config;
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=1.;
+    config.grid.x2_min=-.5;config.grid.x2_max=.5;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+    config.amr.refine_on_rho=false;config.amr.refine_on_jeans=false;
+    config.amr.refine_on_p=true;config.amr.refine_on_temp=true;
+    config.amr.refine_on_entropy=true;config.amr.refine_on_vorticity=true;
+    config.amr.refine_on_div_v=true;config.amr.refine_threshold=.1;
+    config.amr.derefine_threshold=.02;
+    config.numerics.sml_rho=1.e-14;config.numerics.min_eint=1.e-14;
+    config.numerics.max_eint=1.e3;
+    SpeciesManager species;
+    species.add_species("first",1.,1.,1.5,2.);
+    species.add_species("second",2.,1.,1.5,2.);
+    IdealGas actual(1.5,species);
+    auto pool=std::make_shared<amr::MemoryPool>(8,2);
+    amr::AmrTree tree(pool);
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    tree.InitRootGrid(config,2,native);
+    auto& block=pool->GetBlock(tree.GetActiveBlocks().front());
+    const auto& grid=block.grid;
+    const long double h=1.L/amr::BLOCK_NX;
+    const double e0=static_cast<double>(h*h/64.L);
+    const double bad=std::numeric_limits<double>::quiet_NaN();
+    for(auto* values:{&block.fluid_state.rho,&block.fluid_state.mom_u,
+        &block.fluid_state.mom_v,&block.fluid_state.mom_w,&block.fluid_state.eng,
+        &block.fluid_state.mass_fractions})std::fill(values->begin(),values->end(),bad);
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const int cell=grid.GetIndex(i,j,0);
+        const long double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+        const long double lo=std::min(std::abs(left),std::abs(right));
+        const long double hi=std::max(std::abs(left),std::abs(right));
+        const long double v=(hi*hi-lo*lo)/2.L;
+        const long double w=(hi*hi*hi-lo*lo*lo)/3.L;
+        const long double inertia=(std::pow(hi,4)-std::pow(lo,4))/4.L;
+        const long double sign=right<=0.?-1.L:1.L;
+        block.fluid_state.set(cell,{1.,0.,0.,static_cast<double>(sign*inertia/w),
+            static_cast<double>(e0+.5L*inertia/v)});
+        block.fluid_state.X(0,cell)=.25;block.fluid_state.X(1,cell)=.75;
+    }
+    const int first=grid.GetIndex(grid.Is(),grid.Js(),0);
+    const auto cold=block.fluid_state.get(first);
+    const long double raw=static_cast<long double>(cold.eng)-
+        .5L*cold.mom_w*cold.mom_w;
+    if(!(raw<0.)||arch::state::recover(cold).status!=arch::state::Status::unresolved_energy)
+        throw std::runtime_error("Native refinement fixture lost the independent raw negative-e witness");
+    const auto saved=block.fluid_state;
+    // Largest actual ghost |r| is 1+ng/16. The independent E operation scale
+    // is fixed before evaluation, rather than selected from an observed error.
+    const double radius=1.+static_cast<double>(grid.ng)/amr::BLOCK_NX;
+    NativeRefinementEosWitness witness{actual,e0,e0+.5*radius*radius};
+    amr::BindRefinementThermodynamics(tree,witness);
+    tree.EvaluateRefinement(config);
+    if(block.refine_flag!=0||witness.pressures<=0||witness.temperatures<=0||witness.sounds<=0)
+        throw std::runtime_error("Native constant cold thermodynamic/curl fields requested artificial refinement");
+    // Audit every source bit, including the deliberately nonlogical NaN pitch.
+    const auto same=[](const std::vector<double>& a,const std::vector<double>& b) {
+        return a.size()==b.size()&&std::equal(a.begin(),a.end(),b.begin(),
+            [](double x,double y){return std::bit_cast<std::uint64_t>(x)==std::bit_cast<std::uint64_t>(y);});
+    };
+    for(auto member:{&FluidState::rho,&FluidState::mom_u,&FluidState::mom_v,
+                    &FluidState::mom_w,&FluidState::eng,&FluidState::mass_fractions})
+        if(!same(block.fluid_state.*member,saved.*member))
+            throw std::runtime_error("Native refinement mutated physical means/composition/padding");
+    config.numerics.min_eint=2.*e0;
+    bool rejected=false;
+    try{tree.EvaluateRefinement(config);}catch(const std::runtime_error&){rejected=true;}
+    if(!rejected)throw std::runtime_error("Native refinement discarded actual configured internal-energy bound");
+    std::cout<<"NATIVE_REFINEMENT_MEAN_BATCH_PASS\n";
 }
 
 void parent_state_reference()
@@ -417,5 +540,6 @@ int main()
     parent_state_reference();
     tree_transaction_contract();
     frozen_uniform_tree_gate();
+    native_refinement_batch_contract();
     std::cout << "JEANS_DIAGNOSTICS_NUMERIC_PASS\n";
 }

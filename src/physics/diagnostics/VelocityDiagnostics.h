@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <vector>
 
 #include "grid/Grid.h"
@@ -81,7 +82,20 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
     add_face_flux(0, vel_x, x_minus, x_plus);
     if (grid.dim >= 2) add_face_flux(1, vel_y, y_minus, y_plus);
     if (grid.dim == 3) add_face_flux(2, vel_z, z_minus, z_plus);
-    result.divergence = volume > 0.0 ? face_flux / volume : 0.0;
+    const bool native=GridMetrics::is_axisymmetric_rz(grid);
+    if (native) {
+        // Negative-r axis ghosts are a signed coordinate extension: their
+        // oriented face flux and r*dr volume have the same sign. The ratio
+        // reproduces the even physical divergence; this does not authorize
+        // a negative physical integration measure or a ghost publication.
+        if (!std::isfinite(volume) || volume==0.0) {
+            const double invalid=std::numeric_limits<double>::quiet_NaN();
+            return {invalid,invalid};
+        }
+        result.divergence=face_flux/volume;
+    } else {
+        result.divergence = volume > 0.0 ? face_flux / volume : 0.0;
+    }
 
     if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cartesian) {
         const double omega_x = ddy(vel_z) - ddz(vel_y);
@@ -91,7 +105,16 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
         return result;
     }
 
-    const double radius = std::max(std::abs(grid.GetCellCenterX(i)), 0.5 * grid.dx1);
+    // Native reflected ghosts retain signed r and signed physical u_phi.
+    // The same cylindrical curl formula uses u_phi/r; taking |r| would turn
+    // a rigid-rotation ghost curl from 2*Omega into zero. Existing charts
+    // retain their original absolute-radius numerical convention exactly.
+    const double radius = native ? grid.GetCellCenterX(i)
+        : std::max(std::abs(grid.GetCellCenterX(i)), 0.5 * grid.dx1);
+    if (native && (!std::isfinite(radius) || radius==0.0)) {
+        const double invalid=std::numeric_limits<double>::quiet_NaN();
+        return {invalid,invalid};
+    }
     if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cylindrical
         && (grid.dim == 3 || GridMetrics::is_axisymmetric_rz(grid))) {
         // Logical axes are (r,z,phi), or explicit axisymmetric (r,z).

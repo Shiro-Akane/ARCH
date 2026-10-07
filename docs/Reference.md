@@ -78,12 +78,12 @@ external provenance claim unless their file header or that notice says so.
 | Host execution | `compute_backend = cpu` | supported | OpenMP is configured at build time. |
 | CUDA execution | `compute_backend = cuda/auto` | supported | Built with `ARCH_ENABLE_CUDA=ON`; explicit CUDA is fail-closed and `auto` may fall back only before construction. |
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
-| Geometry | `cartesian`, `cylindrical`, `spherical` | supported on CPU and CUDA | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
+| Geometry | `cartesian`, `cylindrical`, `spherical` | qualified scopes on CPU and CUDA; axisymmetric 2D in progress | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
 | AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
 | Self gravity | `gravity_type = self` | CPU, CUDA | Periodic Cartesian, isolated 3D Cartesian, and tested radial/full-azimuth curvilinear domains; see [self-gravity domains](#self-gravity-domains). |
 | Jeans field and refinement | `JENS` | CPU wired; CUDA engineering candidate | Requires self gravity and an explicit backend; see [AMR and plot variable vocabulary](#amr-and-plot-variable-vocabulary) for conditions and validation scope. |
 
-CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, registered
+CUDA implements the established Cartesian, radial, spherical polar and three-dimensional cylindrical/spherical hydro routes, registered
 flux, reconstruction and time-integrator routes, Ideal/Helmholtz/Tabular3D/Tabular4D
 EOS, and RKL1/RKL2 diffusion through the common geometry definitions. Two-dimensional
 spherical grids use ARCH's polar `(r,phi)` convention. Runtime
@@ -133,11 +133,12 @@ External gravity supplies an acceleration. Self gravity solves a composite AMR P
 | Cartesian 1D–3D | `periodic` | Every active fluid face is periodic; the Poisson source removes volume-mean density |
 | Cartesian 3D | `isolated` | Physical fluid faces may be outflow or reflecting; gravity uses a finite-mass boundary |
 | Cylindrical/spherical radial 1D | `isolated` | Nonnegative radius and reflecting inner radial fluid face |
-| Cylindrical/spherical polar 2D `(r,phi)` | `isolated` | Full azimuth with periodic fluid faces; reflecting inner radial face |
+| Spherical equatorial polar 2D `(r,phi)` | `isolated` | Full azimuth with periodic fluid faces; reflecting inner radial face |
+| Axisymmetric cylindrical 2D `(r,z)` | Qualification in progress | Full field/energy, dynamic reacting AMR, continuation and CUDA acceptance remain in progress; execution is capability-checked |
 | Cylindrical `(r,z,phi)` / spherical `(r,theta,phi)` 3D | `isolated` | Full azimuth; inner radial and tested axis/pole singular faces reflect |
-| All three geometries, 1D–3D | `dirichlet`, `neumann`, `user` | Per-side potential/outward gradient/linear Robin; paired periodic directions and regular coordinate joins |
+| Qualified scopes of all three geometries, 1D–3D | `dirichlet`, `neumann`, `user` | Per-side potential/outward gradient/linear Robin; paired periodic directions and regular coordinate joins |
 
-Every self-gravity root axis needs a power-of-two cell extent. Native root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. Explicit `dirichlet`, `neumann` and `user` work in 1D–3D for all three geometries. User conditions combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions, including valid annuli, sectors and wedges. Coordinate singularities retain their regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). A periodic potential responds to density relative to its volume mean, while isolated gravity uses the full density. The isolated two-dimensional polar potential uses a logarithmic kernel with mass per unit axial length. See [gravity parameters](#eos-and-gravity) for solver controls and [gravity validation](../validation/gravity/README.md) for tested trajectories.
+Every self-gravity root axis needs a power-of-two cell extent. Native root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. Explicit `dirichlet`, `neumann` and `user` operate in the qualified 1D–3D geometry scopes; axisymmetric cylindrical 2D remains subject to the capability checks above. User conditions combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions, including valid annuli, sectors and wedges. Coordinate singularities retain their regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). A periodic potential responds to density relative to its volume mean, while isolated gravity uses the full density. The isolated spherical two-dimensional polar potential uses a logarithmic kernel with mass per unit axial length. Axisymmetric cylindrical `(r,z)` uses full-ring volume semantics; its current implementation and local checks do not establish complete scientific or CUDA qualification. Historical cylindrical polar records describe their original chart. See [gravity parameters](#eos-and-gravity) for solver controls and [gravity validation](../validation/gravity/README.md) for tested trajectories.
 
 ### Combining methods and physics
 
@@ -421,9 +422,9 @@ Logical coordinate meanings are:
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi | r, theta, phi |
-| Cylindrical | r | r, phi | r, z, phi |
+| Cylindrical | r | r, z | r, z, phi |
 
-For converted `PointCoords`, the origin is fixed at `(0,0,0)`.
+For converted `PointCoords`, the origin is fixed at `(0,0,0)`. Cylindrical 2D expands `(r,z)` as `point.x=r`, `point.y=0`, `point.z=z`, with `point.phi_cy=0`; radial, axial and azimuthal velocities remain three physical components. Configuration and initial Preview chart checks do not qualify time evolution.
 
 Every `bool` parameter accepts `true` or `false` case-insensitively (for example,
 `TRUE`, `False`, and `tRuE`). Numeric `0/1`, `on/off`, `yes/no`, partial matches,
@@ -478,7 +479,7 @@ tabular component discovery or electron completion.
 | `eos_helm_table_path` | string | Default: empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
 | `eos_coulomb_mult` | double | Required: Helmholtz | Helmholtz ion Coulomb correction fraction, finite `[0,1]`; nondefault values require Helmholtz; independent of electron completion |
 | `gamma` | double | Required: IdealGas | ideal-gas model gamma |
-| `gravity_type` | string | Required | `none`, `external`, `self`; self supports validated Cartesian periodic 1D–3D and isolated 3D on CPU/CUDA; isolated spherical/cylindrical 1D and tested full-azimuth 2D/3D curvilinear gravity, including coordinate joins, on CPU/CUDA are supported |
+| `gravity_type` | string | Required | `none`, `external`, `self`; qualified CPU/CUDA self-gravity scopes include Cartesian periodic 1D–3D, isolated Cartesian 3D, spherical/cylindrical radial 1D, spherical polar 2D and full-azimuth cylindrical/spherical 3D with tested joins; axisymmetric cylindrical 2D remains subject to Runtime capability checks and ongoing scientific qualification |
 | `gravity_g_x/y/z` | expression | Required: external gravity; all components | used for external gravity |
 | `gravity_G` | expression | Retired; rejected | Reports RETIRED_PARAMETER; no input override |
 | `gravity_boundary` | string | Required: self gravity | `periodic`: remove volume-mean density; `isolated`: existing finite-mass/radial/logarithmic closure; `dirichlet`: zero potential; `neumann`: zero outward gradient with Gauss compatibility; `user`: per-side data from `gravity_boundary.cpp` |
@@ -825,8 +826,7 @@ center_y_ = config.grid.x2_min;
 measures from the global `(0,0,0)` origin. Shifting the physical profile does
 not shift the origin or axis of the curved grid metric; on a curved grid,
 `x1_min` is a native radial bound. See the [case guide](guides/SimulationCase.md#pointcoords)
-for a complete example. In 2D spherical and cylindrical geometry, the second
-logical coordinate is planar azimuth `phi`.
+for a complete example. The second logical coordinate is axial `z` in cylindrical 2D and planar azimuth `phi` in spherical 2D.
 
 ### `PrimitiveData`
 

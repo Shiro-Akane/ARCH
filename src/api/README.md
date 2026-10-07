@@ -99,12 +99,12 @@ build-cpu/bin/ARCH --preview SNIaCoupled --config-stdin \
 
 data.kind 为 line/grid/volume；shape分别为[Nx]/[Ny,Nx]/[Nz,Ny,Nx]，
 order为x1-fastest，三维索引 (k*Ny+j)*Nx+i。
-按维度提供6/7/8个字段，三维新增VELZ，前六字段及VELY顺序不变。
+普通一／二／三维采样提供6/7/8个字段；二维轴对称柱坐标同样提供8个字段，VELX／VELY／VELZ分别表示径向／轴向／方位速度。前六字段及VELY顺序不变。
 会话等价成员为samples/samplesX1/samplesX2/samplesX3，使用相同生成边界。
 
 data.coordinates.version="1"明确native-grid轴、native-orthonormal速度和原生轴单位；
 角坐标为rad、长度为cm。初始化点通过共享Grid展开为真实Cartesian PointCoords。
-二维cylindrical当前是(r,phi)、z=0，不是未来RZ；二维spherical是赤道(r,phi)，theta=pi/2。
+公开二维cylindrical采用轴对称(r,z)，物理点为x=r、y=0、z=z，phi_cy=0；二维spherical为赤道(r,phi)，theta=pi/2。三维cylindrical／spherical分别为(r,z,phi)／(r,theta,phi)。配置与初态Preview坐标检查已接线；Native RZ完整连续场、引力能量、动态反应AMR／续算及CUDA科学验收仍在进行，正式运行受能力检查约束。历史二维柱坐标极平面响应保留其原坐标身份。
 非活动坐标由Grid的规则记录，不将所有x3一概解释为物理z。
 BurnOneZone标为uniform-state，不能把重复采样解释为反应轨迹。
 纯流体零物种继续使用共享IdealGas原有闭合，不注入虚构species或客户端物理默认。

@@ -2,7 +2,9 @@
 
 [Cellular.cpp](Cellular.cpp) registers `CellularDet`. It initializes ambient and
 perturbed thermodynamic states, a directed shock and transverse perturbations
-for cellular-detonation calculations.
+for cellular-detonation calculations. Setup requires Cartesian geometry;
+shock directions and transverse perturbations retain their Cartesian meaning.
+An axisymmetric detonation is a separate physical initial-condition model.
 
 [CellularPreview2D.par](CellularPreview2D.par) is the CPU init-only reference for
 the x1–x2 Preview contract. It explicitly records the controls formerly supplied

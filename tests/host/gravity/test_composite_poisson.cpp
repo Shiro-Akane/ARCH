@@ -2556,6 +2556,71 @@ void finite_ring_enclosure_contract() {
     const auto accepted=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,1.,0.,1.,loose);
     require(accepted.bound_valid && accepted.status==RingIntervalStatus::Bounded
         && accepted.absolute_error<=loose.absolute_target,"explicit loose algorithm target failed");
+    // Reuse only an original successful signed interval; no geometry/source grant is implied.
+    RingPotentialEnclosure reused;
+    require(reuse_bounded_ring_interval({accepted.lower,accepted.upper},1.,1.,
+        accepted.leaf_boxes,loose,reused)&&reused.lower==accepted.lower
+        &&reused.upper==accepted.upper&&reused.value==accepted.value
+        &&reused.absolute_error==accepted.absolute_error&&reused.range_evaluations==0
+        &&reused.kernel_enclosures==0&&reused.agm_iterations==0,
+        "same-density interval reuse changed original endpoint or work arithmetic");
+    for(double rho:{.5,2.}) {
+        auto scaled=loose;scaled.absolute_target=rho*loose.absolute_target;
+        require(reuse_bounded_ring_interval({accepted.lower,accepted.upper},1.,rho,
+            accepted.leaf_boxes,scaled,reused)&&reused.lower<=rho*accepted.lower
+            &&reused.upper>=rho*accepted.upper&&reused.absolute_error<=scaled.absolute_target,
+            "positive density interval scaling lost original linear enclosure");
+    }
+    RingPotentialEnclosure sentinel;sentinel.value=123.;
+    auto too_few=loose;too_few.maximum_boxes=1;
+    require(!reuse_bounded_ring_interval({accepted.lower,accepted.upper},1.,1.,2,
+        too_few,sentinel)&&sentinel.value==123.,
+        "interval history bypassed current box cost or published a failed reuse");
+    require(!reuse_bounded_ring_interval({accepted.lower,accepted.upper},1.,1.,
+        accepted.leaf_boxes,tight,sentinel)&&sentinel.value==123.,
+        "interval history bypassed the original zero-target precision limit");
+    for(double bad:{0.,-1.,std::numeric_limits<double>::denorm_min(),
+                    std::numeric_limits<double>::infinity(),
+                    std::numeric_limits<double>::quiet_NaN()}) {
+        require(!reuse_bounded_ring_interval({accepted.lower,accepted.upper},1.,bad,
+            accepted.leaf_boxes,loose,sentinel)
+            &&!reuse_bounded_ring_interval({accepted.lower,accepted.upper},bad,1.,
+                accepted.leaf_boxes,loose,sentinel)&&sentinel.value==123.,
+            "invalid or subnormal density entered memo scaling instead of the original kernel");
+    }
+    // Exact binary powers: both rho inputs are normal, but 2^(-40-1000)
+    // and 2^(-44-1000) are subnormal. Original old-density integral endpoints
+    // times those ratios are normal finite outputs; only the ratio scope,
+    // rather than a final-product overflow/underflow, must force fallback.
+    const double large_density=std::scalbn(1.,1000);
+    auto large_control=loose;large_control.absolute_target=std::scalbn(loose.absolute_target,1000);
+    const auto large_original=finite_ring_potential_enclosure(.5,1.,-.375,.375,
+        large_density,1.,0.,1.,large_control);
+    require(large_original.bound_valid&&large_original.status==RingIntervalStatus::Bounded,
+        "exact-power memo refusal fixture lacks an original bounded integral");
+    for(int exponent:{-40,-44}) {
+        const double small_density=std::scalbn(1.,exponent);
+        const double exact_ratio=std::scalbn(1.,exponent-1000);
+        const auto ratio=finite_ring_detail::interval_quotient_positive(
+            {small_density,small_density},{large_density,large_density});
+        require(std::isnormal(large_density)&&std::isnormal(small_density)
+            &&exact_ratio>0.&&!std::isnormal(exact_ratio)
+            &&finite_ring_detail::interval_finite(ratio)&&ratio.lower>0.
+            &&!std::isnormal(ratio.lower)&&!std::isnormal(ratio.upper)
+            &&std::isnormal(large_original.lower*exact_ratio)
+            &&std::isnormal(large_original.upper*exact_ratio),
+            "exact-power source did not isolate a positive subnormal ratio with normal outputs");
+        auto small_control=loose;
+        small_control.absolute_target=std::scalbn(loose.absolute_target,exponent);
+        require(!reuse_bounded_ring_interval({large_original.lower,large_original.upper},
+            large_density,small_density,large_original.leaf_boxes,small_control,sentinel)
+            &&sentinel.value==123.,
+            "subnormal outward ratio was accepted or changed failed output before original fallback");
+    }
+    require(!reuse_bounded_ring_interval({accepted.lower,accepted.upper},
+        std::numeric_limits<double>::min(),std::numeric_limits<double>::max(),
+        accepted.leaf_boxes,loose,sentinel)&&sentinel.value==123.,
+        "overflowing density ratio was silently memoized");
     const auto zero=finite_ring_potential_enclosure(.5,1.,-.375,.375,0.,1.,0.,1.,tight);
     require(zero.bound_valid && zero.status==RingIntervalStatus::Bounded
         && zero.lower==0. && zero.upper==0. && zero.absolute_error==0.,
@@ -2746,6 +2811,90 @@ long double canonical_rz_point_derivative(const std::array<double,3>& point,
         radial_power-(axis==0?1:0),axial_power-(axis==1?1:0));
 }
 
+/** Compare final-owner cached proofs with the original derived-MG routines.
+ * The hierarchy's real first coarse operator is constructed with a fine owner
+ * and therefore remains uncached. A public final operator with its exact base,
+ * ordered cells and named boundary uses the eager cache. Compare every public
+ * payload field exactly; the existing monomial/measure tests remain independent
+ * scientific oracles. Returned-value mutation and copy/move checks protect owned
+ * cache lifetime without a public test-only cache switch or repeated formula.
+ */
+void native_rz_geometry_cache_contract() {
+    const auto same_measure=[](const elliptic::NativeRzMeasureEnclosure& a,
+                               const elliptic::NativeRzMeasureEnclosure& b) {
+        return a.status==b.status&&a.volume_lower==b.volume_lower
+            &&a.volume_upper==b.volume_upper&&a.volume_error_upper==b.volume_error_upper
+            &&a.weight_lower==b.weight_lower&&a.weight_upper==b.weight_upper
+            &&a.weight_error_upper==b.weight_error_upper
+            &&a.total_volume_lower==b.total_volume_lower&&a.total_volume_upper==b.total_volume_upper;
+    };
+    const auto same_stencil=[](const elliptic::NativeRzStencilEnclosure& a,
+                               const elliptic::NativeRzStencilEnclosure& b) {
+        return a.status==b.status&&a.construction==b.construction&&a.face_index==b.face_index
+            &&a.coefficient_lower==b.coefficient_lower&&a.coefficient_upper==b.coefficient_upper
+            &&a.coefficient_error_upper==b.coefficient_error_upper
+            &&a.boundary_lower==b.boundary_lower&&a.boundary_upper==b.boundary_upper
+            &&a.boundary_error_upper==b.boundary_error_upper
+            &&a.inverse_residual_upper==b.inverse_residual_upper
+            &&a.inverse_norm_upper==b.inverse_norm_upper&&a.lambda_error_upper==b.lambda_error_upper;
+    };
+    const auto same_face=[](const elliptic::NativeRzFaceEnclosure& a,
+                            const elliptic::NativeRzFaceEnclosure& b) {
+        return a.status==b.status&&a.face_index==b.face_index&&a.center_lower==b.center_lower
+            &&a.center_upper==b.center_upper&&a.center_error_upper==b.center_error_upper
+            &&a.area_lower==b.area_lower&&a.area_upper==b.area_upper
+            &&a.area_error_upper==b.area_error_upper
+            &&a.area_over_volume_lower==b.area_over_volume_lower
+            &&a.area_over_volume_upper==b.area_over_volume_upper
+            &&a.area_over_volume_error_upper==b.area_over_volume_error_upper
+            &&a.boundary_map_lower==b.boundary_map_lower&&a.boundary_map_upper==b.boundary_map_upper
+            &&a.boundary_map_error_upper==b.boundary_map_error_upper;
+    };
+    for(double inner:{0.,1.}) {
+        auto mesh=base_mesh(2,8);mesh.geometry=elliptic::Geometry::Cylindrical;
+        mesh.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        mesh.native_canonical_domain=true;mesh.origin={inner,-.5,0.};
+        mesh.root_upper={inner+1.,.5,0.};
+        const multigrid::CompositeMultigrid hierarchy(mesh,make_cells(mesh,true),
+            elliptic::BoundaryKind::CurvilinearIsolated);
+        require(hierarchy.level_count()>1,"cache witness lacks a real derived operator");
+        const auto& original=hierarchy.level_operator(1);
+        const elliptic::CompositePoisson cached(original.base(),original.cells(),original.boundary_kind());
+        require(cached.cells()==original.cells()&&cached.faces().size()==original.faces().size(),
+            "cached and uncached geometry ownership differs");
+        require(same_measure(cached.native_rz_measure_enclosure(),original.native_rz_measure_enclosure()),
+            "cached native measure changed an original payload field");
+        for(std::size_t face=0;face<original.faces().size();++face) {
+            require(same_stencil(cached.native_rz_stencil_enclosure(face),original.native_rz_stencil_enclosure(face)),
+                "cached native stencil changed an original payload field");
+            require(same_face(cached.native_rz_face_enclosure(face),original.native_rz_face_enclosure(face)),
+                "cached native map changed an original payload field");
+        }
+        const auto out_of_range=original.faces().size();
+        require(same_stencil(cached.native_rz_stencil_enclosure(out_of_range),
+                             original.native_rz_stencil_enclosure(out_of_range))
+            &&same_face(cached.native_rz_face_enclosure(out_of_range),
+                         original.native_rz_face_enclosure(out_of_range)),
+            "cache bypassed original invalid-face payload");
+        auto returned_measure=cached.native_rz_measure_enclosure();
+        auto returned_stencil=cached.native_rz_stencil_enclosure(0);
+        auto returned_face=cached.native_rz_face_enclosure(0);
+        require(!returned_measure.volume_lower.empty()&&!returned_stencil.coefficient_lower.empty(),
+            "cache isolation witness lacks actual measure/stencil entries");
+        returned_measure.volume_lower[0]=-1.;returned_stencil.coefficient_lower[0]=-1.;
+        returned_face.area_lower=-1.;
+        require(same_measure(cached.native_rz_measure_enclosure(),original.native_rz_measure_enclosure())
+            &&same_stencil(cached.native_rz_stencil_enclosure(0),original.native_rz_stencil_enclosure(0))
+            &&same_face(cached.native_rz_face_enclosure(0),original.native_rz_face_enclosure(0)),
+            "by-value certificate exposed mutable cached storage");
+        auto copied=cached;auto moved=std::move(copied);
+        require(same_measure(moved.native_rz_measure_enclosure(),original.native_rz_measure_enclosure())
+            &&same_stencil(moved.native_rz_stencil_enclosure(0),original.native_rz_stencil_enclosure(0))
+            &&same_face(moved.native_rz_face_enclosure(0),original.native_rz_face_enclosure(0)),
+            "operator copy/move detached immutable cached geometry");
+    }
+}
+
 /** Genuine canonical Native boundary-cubic and matching stencil-proof gate.
  * Workflow:
  * 1. Build actual axis/annulus and uniform/mixed dyadic leaves from configured
@@ -2757,6 +2906,7 @@ long double canonical_rz_point_derivative(const std::array<double,3>& point,
  * or a source/field acceptance. The original 1e-10 polynomial budget is reused.
  */
 void native_rz_canonical_boundary_stencil_contract() {
+    native_rz_geometry_cache_contract();
     constexpr double original_polynomial_budget=1e-10;
     constexpr std::array<std::array<int,2>,10> powers{{
         {0,0},{1,0},{0,1},{2,0},{1,1},{0,2},{3,0},{2,1},{1,2},{0,3}}};

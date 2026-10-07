@@ -5,7 +5,8 @@
  * Workflow:
  * 1. Receive the registered case, resolved configuration and empty root topology.
  * 2. Initialize root blocks and ask the case to fill primitive fields.
- * 3. Return the native mesh to Driver ownership before any time stage.
+ * 3. Return Native active interiors as provisional cell averages; the real
+ *    EOS-bound Runtime completes physical BC/exchange/EOS before publication.
  */
 
 #pragma once
@@ -20,17 +21,14 @@ inline void InitializeRootState(amr::AMRControl& control, ProblemGenerator& prob
                                 ProblemInitializationContext context) {
     control.tree->InitRootGrid(config, species.count(), context.geometry_semantics);
     if(context.geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        // The initializer publishes physical interiors only. Reuse actual
-        // physical BC plans; interpatch placeholders are replaced by Driver's
-        // committed-handle exchange before any stage or topology publication.
+        // Validate logical BC compatibility before calling the initializer.
+        // Native Init fills actual active V/W means only. A temporary unbound
+        // handler cannot certify physical ghosts: bound Runtime initialization
+        // performs the real whole-domain phases and selected-EOS acceptance.
         BCHandler boundaries(config,context.geometry_semantics);
         for(int id:control.tree->GetActiveBlocks())
             (void)boundaries.logical_plan(control.pool->GetBlock(id).grid);
         problem.InitializeData(control, config, species, context);
-        for(int id:control.tree->GetActiveBlocks()) {
-            auto& block=control.pool->GetBlock(id);
-            boundaries.apply(block.fluid_state,block.grid);
-        }
     } else {
         problem.InitializeData(control, config, species, context);
     }

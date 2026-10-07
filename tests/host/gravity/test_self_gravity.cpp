@@ -530,6 +530,59 @@ void ring_execution_identity() {
         <<" parents="<<parents<<" surface_faces="<<exterior<<" work_bound="<<traversal_bound
         <<" consumed="<<result.leaf_evaluations+result.parent_evaluations
         <<" complete_surface=1 original_target=1 physical_qualification=0\n";
+    // Mathematical memo reuse cannot retire current source checks or tree work caps.
+    const auto first=result;
+    require(first.memo_admissions>0,"bounded original ring intervals were not admitted");
+    execution->run(EvaluateRingBoundary{&tree,&op,&identity,&control,&result});
+    require(result.memo_hits>0&&result.memo_misses<=first.memo_misses
+        &&result.range_evaluations<=first.range_evaluations
+        &&result.kernel_enclosures<=first.kernel_enclosures&&result.agm_iterations<=first.agm_iterations
+        &&result.lower==first.lower&&result.upper==first.upper&&result.values==first.values
+        &&result.leaf_evaluations==first.leaf_evaluations
+        &&result.parent_evaluations==first.parent_evaluations,
+        "same-density memo changed original intervals, work charges or kernel diagnostics");
+    const auto cached_generation=result.source_generation;
+    auto scaled_identity=identity;scaled_identity.inputs.front().version={2};
+    std::fill(density.begin(),density.end(),2.);tree.update(density,scaled_identity);
+    auto scaled_control=control;scaled_control.face_absolute_target=2.*control.face_absolute_target;
+    RingBoundaryEvaluation scaled;
+    execution->run(EvaluateRingBoundary{&tree,&op,&scaled_identity,&scaled_control,&scaled});
+    require(scaled.status==RingBoundaryStatus::Bounded&&scaled.source==scaled_identity
+        &&scaled.source_generation>cached_generation&&scaled.memo_hits>0,
+        "positive-density memo scaling lost actual source generation or current error budget");
+    tree.require_current_ring(op,scaled);
+    const auto scaled_generation=scaled.source_generation;
+    rejects([&]{tree.require_current_ring(op,first);},
+        "memo entry granted authority to a stale original source generation");
+    for(std::size_t f=0;f<op.faces().size();++f)if(op.faces()[f].boundary_side>=0) {
+        // Two rigorous intervals for the same density-scaled source must overlap.
+        // Direct shared-leaf tests separately check outward interval containment.
+        require(scaled.lower[f]<=2.*first.upper[f]&&scaled.upper[f]>=2.*first.lower[f]
+            &&scaled.errors[f].absolute_error<=scaled_control.face_absolute_target,
+            "density-scaled ring intervals are disjoint or exceed the current target");
+    }
+    auto one_box=scaled_control;one_box.maximum_boxes_per_leaf=1;
+    RingBoundaryEvaluation boxed;
+    execution->run(EvaluateRingBoundary{&tree,&op,&scaled_identity,&one_box,&boxed});
+    require(boxed.memo_misses>0&&boxed.status!=RingBoundaryStatus::Bounded,
+        "memo hid the current one-box subdivision limit");
+    auto zero_target=scaled_control;zero_target.face_absolute_target=0.;
+    zero_target.maximum_boxes_per_leaf=1;
+    RingBoundaryEvaluation tighter;
+    execution->run(EvaluateRingBoundary{&tree,&op,&scaled_identity,&zero_target,&tighter});
+    require(tighter.memo_hits==0&&tighter.memo_misses>0
+        &&tighter.status!=RingBoundaryStatus::Bounded,
+        "memo converted a tighter zero target into successful convergence");
+    // Clear does not change identity/generation, but the next evaluation performs fresh work.
+    tree.clear_ring_memo();
+    execution->run(EvaluateRingBoundary{&tree,&op,&scaled_identity,&scaled_control,&scaled});
+    require(scaled.memo_hits==0&&scaled.memo_misses>0&&scaled.memo_admissions>0
+        &&scaled.kernel_enclosures>0&&scaled.source_generation==scaled_generation
+        &&scaled.status==RingBoundaryStatus::Bounded,
+        "numeric-history clear retained memo work or reset actual source authority");
+    std::fill(density.begin(),density.end(),1.);tree.update(density,identity);
+    execution->run(EvaluateRingBoundary{&tree,&op,&identity,&control,&result});
+    require(result.status==RingBoundaryStatus::Bounded,"restored source did not meet original target");
     const auto generation=result.source_generation;
     auto stale=identity;stale.inputs.front().version={2};
     rejects([&]{execution->run(EvaluateRingBoundary{&tree,&op,&stale,&control,&result});},

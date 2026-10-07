@@ -1,4 +1,5 @@
-# Near-vacuum 2D polar origin using the existing density-floor control.
+# New full-ring Native RZ representative input; historical polar acceptance does not transfer.
+# r domain/numerics retained; axial z[0,1e8] cm with outflow; execution remains qualification-gated.
 compute_backend=cpu
 geometry=cylindrical
 nblockx1=2
@@ -9,8 +10,8 @@ x1_min=0
 x1_max=1e8
 x1l_boundary_type=reflecting
 x1r_boundary_type=outflow
-x2l_boundary_type=periodic
-x2r_boundary_type=periodic
+x2l_boundary_type=outflow
+x2r_boundary_type=outflow
 x3l_boundary_type=periodic
 x3r_boundary_type=periodic
 solver=HLLC
@@ -26,8 +27,8 @@ refine_threshold=0.005
 derefine_threshold=0.001
 tmax=1e-6
 max_steps=2
-out_dir=output/gravity/p12_polar_low_density
-base_name=P12LowDensity
+out_dir=output/gravity/rz_low_density
+base_name=RzLowDensity
 plt_dt=-1
 plt_dstep=-1
 chk_dt=-1
@@ -44,7 +45,7 @@ rho0=1e-12
 temperature0=1e7
 amplitude=0.05
 x2_min=0
-x2_max=6.283185307179586
+x2_max=1e8
 center_x=2e7
 center_y=0
 width=1e7
@@ -52,3 +53,16 @@ dt_init=1e-8
 dt_min=1e-20
 tstep_change_factor=1.0
 sml_rho=1e-13
+center_z=0
+
+# Explicit shared GravityBox gas/EOS/solver controls; density and floor remain this input.
+min_eint=1e-10
+max_eint=1e21
+hll_wave_speed=roe
+gravity_rtol=1e-10
+gravity_atol=0.0
+network_name=none
+gas_cv=1.2471693927e8
+temperature_amplitude=0.0
+velocity0=0.0
+hydrostatic_radial=false

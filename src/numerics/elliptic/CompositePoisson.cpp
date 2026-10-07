@@ -260,6 +260,11 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
     for (double volume:volumes_) total_volume.add(volume);
     for (double& weight:weights_) weight/=total_volume.value();
     build_faces();
+    // Final faces include policy elimination and positive-diagonal recovery.
+    // Only the actual finest Native owner repeatedly evaluates these proofs;
+    // derived hierarchy levels retain their original on-demand construction.
+    if (!fine && base_.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        prepare_native_rz_geometry_cache();
 }
 /** Validate the per-side policy and derive its nullspace and fit-shape flags.
  *  Dirichlet keeps a=1,b=0, Neumann a=0,b=1, Robin finite a>=0,b>0 and every
@@ -1137,11 +1142,57 @@ PoissonArithmeticError finish_arithmetic_ledger(const CompositePoisson& op,
     result.status=norm.status;result.norm_upper=norm.upper;return result;
 }
 }
+/** Eagerly retain the ORIGINAL geometry proofs of this final Native operator.
+ * Workflow: final assembly/recovery -> measure -> every stencil -> every map.
+ * The face-map formula calls the existing public stencil getter; all stencil
+ * records are complete before that call can reuse them. Failed/unknown proof
+ * statuses are stored unchanged, never converted into an accepted zero bound.
+ * No source, iterate, supplied boundary value, runtime identity or borrowed
+ * object is retained. Construction is serial; later reads are immutable.
+ */
+void CompositePoisson::prepare_native_rz_geometry_cache() {
+    native_rz_measure_cache_=compute_native_rz_measure_enclosure();
+    native_rz_stencil_cache_.reserve(faces_.size());
+    for(std::size_t index=0;index<faces_.size();++index)
+        native_rz_stencil_cache_.push_back(compute_native_rz_stencil_enclosure(index));
+    native_rz_stencil_cache_ready_=true;
+    native_rz_face_cache_.reserve(faces_.size());
+    for(std::size_t index=0;index<faces_.size();++index)
+        native_rz_face_cache_.push_back(compute_native_rz_face_enclosure(index));
+    native_rz_geometry_cache_ready_=true;
+}
+/** Return the same outward volume/weight payload by value.
+ * A finest Native operator owns the completed immutable record. Ordinary and
+ * derived MG operators execute the original compute body with original status.
+ */
+NativeRzMeasureEnclosure CompositePoisson::native_rz_measure_enclosure() const {
+    if(native_rz_geometry_cache_ready_)return native_rz_measure_cache_;
+    return compute_native_rz_measure_enclosure();
+}
+/** Return the actual final-stencil proof without repeating its Gram enclosure.
+ * Out-of-range requests still run the original rejection path, preserving the
+ * requested face_index and InvalidInput status rather than indexing the cache.
+ */
+NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size_t index) const {
+    if(native_rz_stencil_cache_ready_&&index<native_rz_stencil_cache_.size())
+        return native_rz_stencil_cache_[index];
+    return compute_native_rz_stencil_enclosure(index);
+}
+/** Return the same actual face/map proof by value, with no field qualification.
+ * All range products, signed B factors and metric defects were computed by the
+ * original body after final recovery; unknown/error records retain their status.
+ */
+NativeRzFaceEnclosure CompositePoisson::native_rz_face_enclosure(std::size_t index) const {
+    if(native_rz_geometry_cache_ready_&&index<native_rz_face_cache_.size())
+        return native_rz_face_cache_[index];
+    return compute_native_rz_face_enclosure(index);
+}
+
 /** Enclose the final RZ derivative stencil relative to ideal root geometry.
  * The existing final face owns the sample set and actual recovery decision.
  * No thresholds/coefficients are altered; failure cannot become a certificate.
  */
-NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size_t index) const {
+NativeRzStencilEnclosure CompositePoisson::compute_native_rz_stencil_enclosure(std::size_t index) const {
     NativeRzStencilEnclosure result;result.face_index=index;
     if(index>=faces_.size()||base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2)return result;
@@ -1310,7 +1361,7 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
  * This includes actual stored area/coefficient/volume construction error;
  * floating RHS assembly is still handled by its separate arithmetic ledger.
  */
-NativeRzFaceEnclosure CompositePoisson::native_rz_face_enclosure(std::size_t index) const {
+NativeRzFaceEnclosure CompositePoisson::compute_native_rz_face_enclosure(std::size_t index) const {
     NativeRzFaceEnclosure result;result.face_index=index;
     if(index>=faces_.size()||base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2)return result;
@@ -1576,7 +1627,7 @@ NativeRzResidualEvaluationError CompositePoisson::native_rz_residual_evaluation_
  * nearly equal radial edges. Stored GridMetrics outputs are compared, never
  * assumed exact; fitted coefficients are deliberately outside this scope.
  */
-NativeRzMeasureEnclosure CompositePoisson::native_rz_measure_enclosure() const {
+NativeRzMeasureEnclosure CompositePoisson::compute_native_rz_measure_enclosure() const {
     NativeRzMeasureEnclosure result;
     if(base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2)return result;

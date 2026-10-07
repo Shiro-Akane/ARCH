@@ -152,7 +152,12 @@ public:
     double density_mean() const;
     // Wall time bounded by completion fences; no asynchronous launch timing.
     struct Timings { double source_boundary=0., poisson=0., force=0.; };
-    const Timings& timings() const;
+    /** Read completed measurements at their exact numerical field scope.
+     * Explicit Native scope permits diagnostics only; it grants no physical
+     * consumer, purpose lease or source/frame authority. Default remains the
+     * qualified Existing physics path, with the original completion check.
+     */
+    const Timings& timings(GravityFieldScope scope=GravityFieldScope::ExistingPhysics) const;
     /** Enable an internal Host receipt before preparation; ordinary runs do not track consumers. */
     void begin_host_stage_consumption(double step_dt) const;
     /** Require the exact published input and every real patch force/work consumer. */

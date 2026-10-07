@@ -23,6 +23,7 @@
 #include "driver/stages/GravityStage.h"
 #include "driver/io/DriverIO.h"
 #include "amr/refinement/RefinementThermodynamics.h"
+#include "grid/GridMetrics.h"
 #include "numerics/state/StateAdmissibility.h"
 #include <iostream>
 #include <limits>
@@ -66,12 +67,17 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     using namespace arch::driver;
     using arch::scheduler::ScopedStageBinding;
     SimulationController ctrl(config, start_state);
-    BCHandler bc_handler{config};
+    const auto geometry_semantics=GridMetrics::resolve_public_chart(
+        config.grid.geometry,config.grid.dim);
+    BCHandler bc_handler{config,geometry_semantics};
     bc_handler.bind(eos, specs);
     bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
+    // Runtime binds the receipt measure before initial budgets are combined.
+    // Construction publishes no topology; the real bound EOS/BC initialization
+    // below remains the sole authority for completed Native ghosts.
+    DriverRuntime runtime(amr_ctrl, bc_handler, config, specs, ctrl);
     if (!config.io.restart)
         for (int id : amr_ctrl.tree->GetActiveBlocks()) ctrl.repairs.combine(amr_ctrl.pool->GetBlock(id).fluid_state.stage_repairs);
-    DriverRuntime runtime(amr_ctrl, bc_handler, config, specs, ctrl);
     amr::BindRefinementThermodynamics(*amr_ctrl.tree, eos);
     const auto p_func = [](const FluidVector& U, const double* Xi, const void* context) -> double {
         return static_cast<const EosPolicy*>(context)->get_pressure(U, Xi);
@@ -216,12 +222,12 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             ScopedStageBinding stage_binding(stage_context, runtime.handles());
             std::optional<NativeMacroRetryAttempt> retry_attempt;
             if(!runtime.backend()&&runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                std::optional<scheduler::RklMethod> method;
+                std::optional<arch::scheduler::RklMethod> method;
                 if(config.physics.diffusion.use_diffusion) {
-                    if(resolved_plan->diffusion_integrator==dispatch::DiffusionIntegratorId::Rkl1)
-                        method=scheduler::RklMethod::RKL1;
-                    else if(resolved_plan->diffusion_integrator==dispatch::DiffusionIntegratorId::Rkl2)
-                        method=scheduler::RklMethod::RKL2;
+                    if(resolved_plan->diffusion_integrator==arch::dispatch::DiffusionIntegratorId::Rkl1)
+                        method=arch::scheduler::RklMethod::RKL1;
+                    else if(resolved_plan->diffusion_integrator==arch::dispatch::DiffusionIntegratorId::Rkl2)
+                        method=arch::scheduler::RklMethod::RKL2;
                     else throw std::logic_error("Native retry has no selected supported RKL method");
                 }
                 retry_attempt.emplace(runtime,stage_context,attempt_index,method,candidates.diffusion_forward_euler);
@@ -257,7 +263,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     if (advanced_any_step && (ctrl.reached_target_time() || ctrl.reached_step_limit())) {
         {
             CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);
-            gravity_stage.prepare_current(ctrl.t_current, false);
+            // A terminal checkpoint is also restartable with a later target
+            // time. Its boundary solve uses the same cold unsaved numerical
+            // history policy as a scheduled durable checkpoint.
+            gravity_stage.prepare_current(ctrl.t_current, true);
         }
         std::cout << ">>> Terminal time/step limit reached. Forcing final output..." << std::endl;
         output.write_plot(gravity_stage.plot_fields());

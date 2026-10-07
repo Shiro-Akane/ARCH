@@ -3,7 +3,8 @@
  * @brief Gaussian species pulse with optional pressure and velocity perturbations.
  *
  * Workflow:
- * 1. Setup(): Read pulse parameters (amplitude, width, location) from configuration.
+ * 1. Setup(): Read pulse parameters and enforce yc=0 for the public RZ chart.
+ *    A meridional pulse is an axisymmetric ring, not an off-plane 3D center.
  * 2. Setup(): Use registered network species or add passive gas species.
  * 3. Init(): Evaluate one envelope in Grid's physical Cartesian coordinates.
  * 4. Init(): Apply it to species and optional hydrodynamic perturbations.
@@ -89,6 +90,9 @@ public:
             m_pressure_amplitude <= -1.0)
             throw std::invalid_argument(
                 "Gaussian requires positive rho0, p0, width and pressure_amplitude > -1");
+        if (GridMetrics::resolve_public_chart(config.grid.geometry,config.grid.dim)
+                ==GridMetrics::GeometrySemantics::AxisymmetricRz && m_yc!=0.)
+            throw std::invalid_argument("Native RZ Gaussian requires yc=0; xc is radial and zc is axial");
         // A passive pulse has no reaction network by default. Explicit nuclear
         // network selections (e.g. with Helmholtz) use the common factory.
         // network_name is the already resolved standard input; Setup does not override it.

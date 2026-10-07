@@ -13,6 +13,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
 #include <UserInterface.h>
@@ -57,6 +58,10 @@ public:
 
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
+        // Stratification and perturbations belong to Cartesian physical axes.
+        // Retain the existing dimension handling; do not reinterpret y as RZ z.
+        if (config.grid.geometry!="cartesian")
+            throw std::invalid_argument("RT requires Cartesian geometry");
         // 1. Grid bounds for wave number calculation
         g_Lx = config.grid.x1_max - config.grid.x1_min;
         g_is_3d = config.grid.dim == 3;

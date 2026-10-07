@@ -17,12 +17,12 @@ technical results and combined acceptance status.
 | Facility | Implementation scope |
 |---|---|
 | Hydrodynamics | Van Leer, Steger-Warming, Roe, HLL, HLLC; PCM/MUSCL/PPM; MinMod/MC/SuperBee/Van Leer limiters; Euler/SSPRK2/SSPRK3 |
-| Mesh and geometry | One-, two- and three-dimensional block meshes; Cartesian, cylindrical and spherical geometry with the common CPU conventions |
+| Mesh and geometry | Established Cartesian, radial, spherical polar and three-dimensional cylindrical/spherical block meshes with common CPU conventions; axisymmetric cylindrical 2D Device qualification is in progress |
 | Boundaries | Periodic, outflow, reflecting and user physical/potential conditions; Host callbacks exchange surface slices using shared EOS/face mathematics; see [user boundaries](guides/UserBoundaries.md) |
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
 | Diffusion | Species, thermal and viscous operators with RKL1/RKL2; the material closure determines active channels. The current Helmholtz stellar closure supplies thermal conduction only. |
-| Gravity | External stage sources and composite-AMR self-gravity: Cartesian periodic 1D–3D or isolated 3D, plus tested isolated 1D radial and full-azimuth 2D/3D curved domains including coordinate joins; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
+| Gravity | External stage sources and composite-AMR self-gravity: Cartesian periodic 1D–3D or isolated 3D, plus tested isolated 1D radial, spherical polar 2D and full-azimuth cylindrical/spherical 3D domains including coordinate joins; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
 | Built-in burning | iso7, aprox13, aprox19, aprox21; BE_NR, BD, ROS4 and network-constrained NSE |
 | Generated burning | Registered networks with device-callable math, including recognized embedded weak tables stored read-only on each backend; dense or sparse solving as described below |
 | Output and restart | Shared HDF5/checkpoint facilities, with state transfers at IO boundaries and CPU/CUDA restart routes |
@@ -45,9 +45,7 @@ the isotope set of the selected supported network: a built-in network or an
 explicitly certified generated model.
 See [the API and parameter reference](Reference.md) for precise configuration.
 
-In two dimensions, both cylindrical and spherical grids use the polar
-`(r, phi)` plane; `phi` is the azimuthal angle in radians. Three-dimensional
-spherical grids use `(r, theta, phi)`.
+Public cylindrical 2D uses axisymmetric `(r,z)`, expanded as `x=r`, `y=0`, `z=z` at `phi=0`, with three physical velocity components. Spherical 2D uses the equatorial `(r,phi)` plane; 3D cylindrical/spherical grids use `(r,z,phi)` / `(r,theta,phi)`. Full Native RZ field/energy, reacting dynamic AMR/continuation and Device acceptance remain in progress; Runtime capability checks govern execution. Historical cylindrical 2D polar records retain their original chart and do not qualify Native RZ.
 
 ## GPU-AMR execution model
 
@@ -135,7 +133,7 @@ Use the same physical input, AMR criteria and output settings on both backends
 when timing them. Self-gravity uses a real device solve on CUDA, but its
 extra setup can make small grids slower than CPU. The local RTX 3060 Ti
 [curved self-gravity record](../validation/gravity/results/p13-20260924/README.md)
-shows end-to-end coupled gains while separating the Poisson cost; use the
+preserves its original chart and source identity, showing end-to-end coupled gains while separating the Poisson cost; it is not Native RZ evidence. Use the
 [gravity acceptance](../validation/gravity/README.md) for tested limits.
 
 ### What the CUDA optimization changes

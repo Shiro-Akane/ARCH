@@ -6,7 +6,7 @@ checkpoint producers, and opposite-backend continuations to step 3. Compare
 the physical final plot by AMR leaf identity and the fixed field budgets.
 
 Usage: check_cross_backend_restart.py --arch build-cuda/bin/ARCH \
-    --source validation/gravity/curved/inputs/p12_polar_origin.par \
+    --source validation/gravity/curved/inputs/rz_origin.par \
     --output /tmp/arch-curved-cross-restart
 """
 

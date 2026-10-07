@@ -1510,7 +1510,49 @@ void classification_post_fence_rejections() {
 void run(){complete_retry();minimum_and_advice();first_aligned_short();eos_binding_drift();classification_post_fence_rejections();}
 } // namespace thermal_retry_checks
 
+/** A genuine Native Runtime reader must reject newly published Current means
+ * until the same Runtime completes BC/exchange/EOS and publishes their ghosts.
+ * This uses the existing warm owner/EOS; it does not fake ghost certificates,
+ * fill boundaries inside the reader or grant a private/public gravity route.
+ */
+void native_jeans_ghost_preflight()
+{
+    Fixture f(0,false,0.,dispatch::TimeIntegratorId::Euler,true);
+    int calls=0;
+    f.control.tree->SetJeansEvaluator([&](const FluidVector& u,const double* x,
+        const GridMetrics::GeometryView& geometry,int i,int j) {
+        ++calls;
+        const double p=f.eos->get_pressure(u,x);
+        const double c=f.eos->get_sound_speed(u,p,x);
+        return JeansDiagnostics::evaluate_cell(u.rho,c*c,geometry,i,j);
+    });
+    const auto initial=f.runtime->evaluate_current_jeans_resolution();
+    require(initial.size()==f.runtime->handles().size()&&calls==amr::BLOCK_NX*amr::BLOCK_NY,
+        "Native Current Jeans reader missed actual accepted cells");
+    scheduler::publish_completed_interior(*f.context,f.runtime->handles(),StateSlot::Current);
+    const auto ready=f.context->ledger.inspect({f.runtime->handles().front(),StateSlot::Current});
+    f.context->ledger.require_readable({f.runtime->handles().front(),StateSlot::Current},
+        {state::ExecutionSide::Host,ready.interior.version,true,false});
+    require(ready.ghost.residency==state::StateResidency::Invalid,
+        "Native stale-ghost witness did not invalidate actual ghost publication");
+    auto& block=f.control.pool->GetBlock(f.control.tree->GetActiveBlocks().front());
+    const rz_runtime_witness::FieldsWitness untouched(block);
+    const auto token=f.context->clock.last_token();const int before=calls;
+    bool rejected=false;
+    try{(void)f.runtime->evaluate_current_jeans_resolution();}
+    catch(const std::logic_error&){rejected=true;}
+    require(rejected&&calls==before&&f.context->clock.last_token()==token,
+        "Native Jeans missing-ghost reader entered EOS or secretly filled/published boundaries");
+    untouched.matches(block);
+    f.runtime->ensure_fluid_ghosts();
+    const auto completed=f.runtime->evaluate_current_jeans_resolution();
+    require(completed.size()==initial.size()&&calls==before+amr::BLOCK_NX*amr::BLOCK_NY,
+        "Native Jeans failed after actual Runtime ghost/EOS completion");
+    std::cout<<"RZ_NATIVE_JEANS_GHOST_PREFLIGHT_PASS\n";
+}
+
 void run() {
+    native_jeans_ghost_preflight();
     for(int direction=0;direction<2;++direction)for(bool open:{false,true})
         for(double phi:{-.025,.025})for(auto method:{dispatch::TimeIntegratorId::Euler,
             dispatch::TimeIntegratorId::Rk2,dispatch::TimeIntegratorId::Rk3})

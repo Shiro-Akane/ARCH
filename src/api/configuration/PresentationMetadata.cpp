@@ -8,12 +8,15 @@
  * 3. Return typed evidence or an explicit error; do not start the simulation Driver.
  */
 
+#include <algorithm>
+
 #include "api/Configuration.h"
 
 #include "core/config/RefinementSelection.h"
 #include "data/FieldUnits.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "grid/Grid.h"
+#include "grid/GridMetrics.h"
 
 namespace arch::api {
 using detail::Json;
@@ -37,8 +40,16 @@ Json CoordinateMetadata(const GridConfig& g, const std::string& system) {
     Grid grid;
     grid.geometry = g.geometry;
     grid.dim = g.dim;
-    const auto names = grid.GetAxisNames();
     const bool known_geometry = dispatch::parse_geometry(g.geometry).ok;
+    // Canonicalize only the local, parser-known geometry for Grid/chart queries.
+    // Keep the original input in the response; unknown inspection stays unknown.
+    if (known_geometry)
+        std::transform(grid.geometry.begin(),grid.geometry.end(),grid.geometry.begin(),
+            dispatch::ascii_lower);
+    const auto geometry_semantics=known_geometry && g.dim>=1 && g.dim<=3
+        ? GridMetrics::resolve_public_chart(grid.geometry,g.dim)
+        : GridMetrics::GeometrySemantics::Existing;
+    const auto names = grid.GetAxisNames(geometry_semantics);
     const int blocks[] = {g.nblockx1, g.nblockx2, g.nblockx3};
     auto axes = Json::array();
     for (int i = 0; i < 3; ++i) {

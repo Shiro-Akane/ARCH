@@ -203,8 +203,10 @@ int main(int argc, char** argv) {
             "nblockx1=1\nnblockx2=1\nnblockx3=0\nx1_min=0\nx1_max=1\n"
             "x2_min=0\nx2_max=1\nx1l_boundary_type=outflow\n"
             "x1r_boundary_type=outflow\nx2l_boundary_type=outflow\nx2r_boundary_type=outflow", sod);
-        for (const auto key : {"x1l_boundary_type", "x2_max"})
-            require(error(bad_isolated_faces, key, "INVALID_RANGE"), "isolated chart error not aggregated");
+        require(error(bad_isolated_faces, "x1l_boundary_type", "INVALID_RANGE"),
+                "RZ axis requires the existing reflecting inner fluid boundary");
+        require(!error(bad_isolated_faces, "x2_max", "INVALID_RANGE"),
+                "RZ axial extent was incorrectly interpreted as an azimuth");
         const auto explicit_sector = resolve(
             "gravity_type=self\ngeometry=cylindrical\ngravity_boundary=dirichlet\n"
             "nblockx1=1\nnblockx2=1\nnblockx3=0\nx1_min=1\nx1_max=2\n"
@@ -215,10 +217,17 @@ int main(int argc, char** argv) {
         const auto valid_gravity = resolve(
             "gravity_type=self\ngeometry=cylindrical\ngravity_boundary=isolated\n"
             "nblockx1=1\nnblockx2=1\nnblockx3=0\nx1_min=0\nx1_max=1\n"
-            "x2_min=0\nx2_max=2*pi\nx1l_boundary_type=reflecting\n"
-            "x1r_boundary_type=outflow\nx2l_boundary_type=periodic\nx2r_boundary_type=periodic", sod);
+            "x2_min=-2\nx2_max=2\nx1l_boundary_type=reflecting\n"
+            "x1r_boundary_type=outflow\nx2l_boundary_type=outflow\nx2r_boundary_type=outflow", sod);
         for (const auto& diagnostic : valid_gravity.diagnostics)
-            require(diagnostic.code != "INVALID_RANGE", "existing cylindrical chart contract changed");
+            require(diagnostic.code != "INVALID_RANGE", "RZ arbitrary axial extent/physical face contract rejected");
+        const auto periodic_rz_faces = resolve(
+            "gravity_type=self\ngeometry=cylindrical\ngravity_boundary=isolated\n"
+            "nblockx1=1\nnblockx2=1\nnblockx3=0\nx1_min=1\nx1_max=2\n"
+            "x2_min=-2\nx2_max=2\nx1l_boundary_type=outflow\n"
+            "x1r_boundary_type=outflow\nx2l_boundary_type=periodic\nx2r_boundary_type=periodic", sod);
+        require(error(periodic_rz_faces,"gravity_boundary","INVALID_RANGE"),
+                "Isolated finite RZ source accepted periodic axial fluid faces");
         const auto unknown_gravity = resolve("gravity_type=self\nx1_min=-1", sod);
         require(!error(unknown_gravity, "x1_min", "INVALID_RANGE"),
                 "unknown geometry guessed a radial domain");

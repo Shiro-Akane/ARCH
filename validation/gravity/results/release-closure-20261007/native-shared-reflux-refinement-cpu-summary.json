@@ -1,0 +1,29 @@
+{
+  "status": "CPU_ORIGINAL_FIVE_OWNERS_PASS",
+  "sourceCommit": "522ed4a9e9bc7486c87e27c3e11e813fd3fbab9c",
+  "worktreeDirty": true,
+  "elapsedSeconds": 26.82,
+  "guardSeconds": 27.13,
+  "owners": [
+    "jeans_diagnostics",
+    "refinement_indicator_math",
+    "gravity_stage_contract",
+    "amr_flux_surface_plan",
+    "low_density_math"
+  ],
+  "productionChanges": [
+    "Finite exact no-transport species identity in common Host/CUDA leaf; original active formula unchanged",
+    "Actual Native V/W mean thermodynamics and physical center velocity observers; Existing EOS batch body unchanged",
+    "Actual matching-ghost preflight before Native Current Jeans EOS",
+    "Signed reflected-axis diagnostic radius/oriented ghost measure"
+  ],
+  "cpuBuildSeconds": 233.886,
+  "cpuBuildFailedTargetSeconds": 5.038,
+  "cumulativeAppBuildUsedSeconds": 673.327,
+  "originalAcceptanceThresholdsUnchanged": true,
+  "cudaCompiled": false,
+  "dynamicWarmScientificAcceptance": false,
+  "publicNativeFullScience": false,
+  "continuumEnergyAndRestart": false,
+  "scope": "Local component and actual Runtime correctness, no full release or acceleration grant"
+}

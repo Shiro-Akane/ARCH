@@ -308,6 +308,16 @@ public:
     void project(std::span<double> x) const;
 private:
     friend class arch::multigrid::CompositeMultigrid;
+    /** Build owned geometry-only proofs after all final face recovery decisions.
+     * Density, potential, boundary values and field generations are not cached.
+     */
+    void prepare_native_rz_geometry_cache();
+    /** Original outward measure construction, also used by uncached MG levels. */
+    NativeRzMeasureEnclosure compute_native_rz_measure_enclosure() const;
+    /** Original final-sample stencil proof, without changing its fit or status. */
+    NativeRzStencilEnclosure compute_native_rz_stencil_enclosure(std::size_t face_index) const;
+    /** Original face geometry proof; reuse completed stencil records if present. */
+    NativeRzFaceEnclosure compute_native_rz_face_enclosure(std::size_t face_index) const;
     NativeRzOperatorConstructionError native_rz_operator_construction_error_impl(
         std::span<const double> potential,std::span<const double> boundary_values) const;
     // Only the hierarchy owner can construct a derived operator from a real
@@ -326,6 +336,13 @@ private:
     std::vector<CompositeFace> faces_;
     std::vector<std::vector<int>> neighbors_;
     int max_level_ = 0;
+    // Owned immutable payloads move/copy with the same final operator geometry.
+    // Derived MG levels keep these vectors empty and use the original routines.
+    NativeRzMeasureEnclosure native_rz_measure_cache_;
+    std::vector<NativeRzStencilEnclosure> native_rz_stencil_cache_;
+    std::vector<NativeRzFaceEnclosure> native_rz_face_cache_;
+    bool native_rz_stencil_cache_ready_ = false;
+    bool native_rz_geometry_cache_ready_ = false;
     CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
                      BoundaryKind kind, CompositeBoundary boundary, const CompositePoisson* fine);
     void prepare_boundary();

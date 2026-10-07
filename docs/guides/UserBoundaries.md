@@ -145,8 +145,10 @@ state and random draws must not determine boundary data.
 | Geometry | 1D | 2D | 3D |
 | --- | --- | --- | --- |
 | Cartesian | x | (x,y) | (x,y,z) |
-| Cylindrical | r | (r,phi) | (r,z,phi) |
+| Cylindrical | r | (r,z) | (r,z,phi) |
 | Spherical | r | Equatorial (r,phi) | (r,theta,phi) |
+
+Cylindrical 2D points have `x=r`, `y=0`, `z=z` and `phi_cy=0`; radial, axial and azimuthal velocities are distinct physical components. Its full Native RZ scientific and Device qualification remains in progress, and execution is subject to Runtime capability checks. Historical cylindrical polar boundary checks retain their original chart.
 
 Explicit potential data permits valid annuli, azimuthal sectors and spherical
 wedges. Existing root-grid and 2:1 AMR constraints still apply. Origin, axis and

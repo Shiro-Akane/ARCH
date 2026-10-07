@@ -351,7 +351,7 @@ class ConfigurationV3(unittest.TestCase):
 
     def test_coordinates_use_only_valid_explicit_topology(self):
         labels = {"cartesian": [["x"], ["x", "y"], ["x", "y", "z"]],
-                  "cylindrical": [["r"], ["r", "phi"], ["r", "z", "phi"]],
+                  "cylindrical": [["r"], ["r", "z"], ["r", "z", "phi"]],
                   "spherical": [["r"], ["r", "phi"], ["r", "theta", "phi"]]}
         for geometry, dimensions in labels.items():
             for dim, expected in enumerate(dimensions, 1):

@@ -11,12 +11,12 @@ CUDA 后端会在 GPU 上执行流体动力学与自适应网格的数值计算�
 | 模块 | 已有实现范围 |
 |---|---|
 | 流体 | Van Leer、Steger-Warming、Roe、HLL、HLLC；PCM/MUSCL/PPM；MinMod/MC/SuperBee/Van Leer 限制器；Euler/SSPRK2/SSPRK3 |
-| 网格与几何 | 一、二、三维块网格；笛卡尔、柱坐标与球坐标，采用两端共用的坐标约定 |
+| 网格与几何 | 既有笛卡尔、径向、球坐标极平面及三维柱／球坐标块网格采用共用坐标约定；轴对称二维柱坐标 Device 验收进行中 |
 | 边界 | 周期、流出、反射及用户物理／势边界；Host 回调只交换所需边界片，共用 EOS 与面通量规则；成本见[用户边界](guides/UserBoundaries.zh-CN.md) |
 | 动态 AMR | 细化指标、守恒插值与限制、跨层交换、流体／扩散通量修正和事务式状态迁移 |
 | EOS | 理想气体、Helmholtz、规范化 Tabular3D/Tabular4D 数据布局 |
 | 扩散 | 组分、热和黏性算子采用 RKL1/RKL2；材料模型决定实际通道。目前 Helmholtz 恒星模型只提供热传导。 |
-| 重力 | 外部阶段源项，以及复合 AMR 自引力：Cartesian 一至三维全周期或三维孤立边界，并支持受测一维径向和完整方位角二维／三维曲线坐标孤立域与坐标奇点接合；已验证燃烧与热扩散组合。见[引力验证](../validation/gravity/README.zh-CN.md)。 |
+| 重力 | 外部阶段源项，以及复合 AMR 自引力：Cartesian 一至三维全周期或三维孤立边界，并支持受测一维径向、二维球坐标极平面及完整方位角三维柱／球坐标孤立域与奇点接合；已验证燃烧与热扩散组合。见[引力验证](../validation/gravity/README.zh-CN.md)。 |
 | 内置燃烧 | iso7、aprox13、aprox19、aprox21；BE_NR、BD、ROS4 和网络受限 NSE |
 | 生成网络燃烧 | 已注册且数学实现可在设备端运行的网络；支持已识别的内嵌弱反应率表，各后端分别保存只读数据；按下述规则执行稠密或稀疏求解 |
 | 输出与恢复 | 共用 HDF5/checkpoint 设施，在 IO 边界同步状态，并提供 CPU/CUDA 重启路径 |
@@ -33,8 +33,7 @@ HLLC/MUSCL/RK2、BD、RKL2 热扩散、自引力 MG 与 AMR 已有代表性 CPU/
 平衡组分；网络可以是内置网络或明确认证的生成模型。具体配置见
 [API 与参数参考](Reference.zh-CN.md)。
 
-二维柱坐标与球坐标网格都采用极坐标平面 `(r, phi)`，其中 `phi` 是以弧度表示的
-方位角；三维球坐标使用 `(r, theta, phi)`。
+公开二维柱坐标采用轴对称 `(r,z)`，在 `phi=0` 处展开为 `x=r`、`y=0`、`z=z`，并保留三个物理速度分量。二维球坐标采用赤道极平面 `(r,phi)`；三维柱／球坐标为 `(r,z,phi)`／`(r,theta,phi)`。Native RZ 完整场／能量、动态反应 AMR／续算及 Device 验收仍在进行，运行受能力检查约束。历史二维柱坐标极平面记录保持原坐标语义，不作为 Native RZ 证据。
 
 ## GPU-AMR 执行方式
 
@@ -105,7 +104,7 @@ CPU8 的 5.0–10.3 倍**，对应加速比约为 0.10–0.20。其数值对照�
 
 测速时，两端应使用相同的物理输入、AMR 判据和输出设置。CUDA 自引力在设备上实际求解，
 但小网格的额外开销可能使其慢于 CPU。本机 RTX 3060 Ti 的
-[曲线自引力记录](../validation/gravity/results/p13-20260924/README.md)分别报告了整段耦合收益与泊松阶段耗时；
+[曲线自引力记录](../validation/gravity/results/p13-20260924/README.md)保留原坐标与源码身份，分别报告整段耦合收益与泊松阶段耗时，不作为 Native RZ 证据；
 选择后端前可查阅[引力验收](../validation/gravity/README.zh-CN.md)。
 
 ### CUDA 优化具体改变了什么

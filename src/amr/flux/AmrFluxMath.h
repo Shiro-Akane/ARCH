@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <cmath>
+
 #include "amr/transfer/AmrTransferPlans.h"
 #include "core/ArchPortability.h"
 
@@ -83,10 +85,27 @@ ARCH_HOST_DEVICE inline double reflux_species_density(
         + correction * registered_species_flux;
 }
 
+/** Publish the conserved-species reflux correction without rerounding identity.
+ * Workflow: recognize only finite, positive, unchanged density and an exactly
+ * absent transport term; preserve the original fraction bits in that case;
+ * otherwise evaluate the original rhoX/rho expression at its original site.
+ * Formula: X_after=(rho_before*X_before+c*F_rhoX)/rho_after. When c=0 or
+ * F_rhoX=0 and rho_after=rho_before, the exact operation is X_after=X_before.
+ * A product that underflows to zero is NOT evidence of absent transport.
+ * Invalid controls/state follow the original arithmetic and remain visible
+ * to the existing acceptance owner; this function does not repair or validate
+ * a composition simplex, inspect a physical module, or change active reflux.
+ */
 ARCH_HOST_DEVICE inline double reflux_mass_fraction(
     double rho_before, double mass_fraction_before, double correction,
     double registered_species_flux, double rho_after) noexcept
 {
+    if (std::isfinite(rho_before) && rho_before > 0.0
+        && std::isfinite(rho_after) && rho_after > 0.0
+        && rho_after == rho_before && std::isfinite(mass_fraction_before)
+        && std::isfinite(correction) && std::isfinite(registered_species_flux)
+        && (correction == 0.0 || registered_species_flux == 0.0))
+        return mass_fraction_before;
     return reflux_species_density(
         rho_before, mass_fraction_before, correction,
         registered_species_flux) / rho_after;

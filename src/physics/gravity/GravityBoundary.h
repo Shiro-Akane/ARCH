@@ -4,16 +4,20 @@
  * Workflow:
  * 1. Receive active density with mesh and generation identity.
  * 2. Define the device-shareable multipole leaves and boundary evaluation work.
- * 3. Publish a checked potential/acceleration field for the requested stage.
+ * 3. Reuse bounded leaf/quartet intervals only after current precision/work checks.
+ * 4. Publish a checked potential/acceleration field for the requested stage.
  */
 
 #pragma once
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <span>
+#include <unordered_map>
 #include <vector>
 
 #include "core/CompensatedSum.h"
@@ -387,6 +391,8 @@ struct RingBoundaryEvaluation {
         kernel_enclosures=0,agm_iterations=0,parent_evaluations=0,parent_acceptances=0,
         represented_leaf_evaluations=0,coalesced_parent_attempts=0,
         coalesced_parent_acceptances=0,coalesced_native_leaves=0;
+    // Integral memo diagnostics; tree visits and all source coverage are still charged.
+    std::uint64_t memo_hits=0,memo_misses=0,memo_admissions=0;
     std::vector<double> values,lower,upper,far_truncation_upper,far_evaluation_width_upper;
     std::vector<arch::elliptic::BoundaryPotentialError> errors;
 };
@@ -434,6 +440,8 @@ public:
         const arch::elliptic::CompositePoisson&,const GravitySolveIdentity&) const;
     RingBoundaryEvaluation ring_boundary(const arch::elliptic::CompositePoisson&,
         const GravitySolveIdentity&,const RingBoundaryControl&) const;
+    /** Discard only instance-owned numeric history; source/field authority is unchanged. */
+    void clear_ring_memo() noexcept;
     void require_current_ring(const arch::elliptic::CompositePoisson&,
         const RingBoundaryEvaluation&) const;
     // Lift a current producer only after exact root source/observer equality
@@ -458,6 +466,28 @@ public:
     const auto& moments() const {return moments_;}
 private:
     friend class SelfGravity; // Private stage borrower reads actual generation only.
+    /** Exact stored geometry, observer, G and actual leaf/quartet eligibility key. */
+    struct RingMemoKey {
+        std::array<std::uint64_t,8> words{};
+        bool operator==(const RingMemoKey&) const = default;
+    };
+    /** Hash exact bit words; equality, rather than hash collision, authorizes reuse. */
+    struct RingMemoHash {
+        std::size_t operator()(const RingMemoKey&) const noexcept;
+    };
+    /** Original Bounded signed interval, its strictly positive density and work cost. */
+    struct RingMemoEntry {
+        finite_ring_detail::SignedInterval interval;
+        double density=0.;
+        std::uint64_t leaf_boxes=0;
+    };
+    /** Try the current request against mathematical history, then the unchanged kernel. */
+    RingPotentialEnclosure memoized_ring_potential(double rl,double rh,double zl,double zh,
+        double density,double ro,double zo,double G,const RingEnclosureControl&,
+        bool quartet,RingBoundaryEvaluation&) const;
+    static constexpr std::size_t maximum_ring_memo_entries=65536;
+    // Serialized CPU controller owns this cache. It stores no source, lease or face result.
+    mutable std::unordered_map<RingMemoKey,RingMemoEntry,RingMemoHash> ring_memo_;
     void require_ring_operator(const arch::elliptic::CompositePoisson&) const;
     arch::elliptic::CartesianMesh bound_mesh_;
     arch::elliptic::BoundaryKind bound_boundary_;

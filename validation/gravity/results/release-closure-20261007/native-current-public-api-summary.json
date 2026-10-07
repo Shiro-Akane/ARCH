@@ -1,0 +1,17 @@
+{
+  "status": "CURRENT_REBUILT_PUBLIC_API_SIX_PASS",
+  "owners": [
+    "preview_initial_conversion",
+    "preview_api_contract",
+    "preview_full_model_contract",
+    "configuration_api_contract",
+    "configuration_entry_contract",
+    "configuration_v3_contract"
+  ],
+  "testSeconds": 35.76,
+  "guardSeconds": 36.221,
+  "geometryContract": "Public cylindrical2D r,z with physical3velocity Preview; spherical2D remains r,phi",
+  "scientificEvolutionQualification": false,
+  "cudaQualification": false,
+  "usesHistoricalPassAsCurrent": false
+}

@@ -5,12 +5,15 @@
  * Exercise reconstructed faces, directional fluxes, divergence and primitive
  * recovery against host results and independent physical identities.
  */
+#include <algorithm>
+#include <array>
 #include <bit>
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 #include <string_view>
 #include <vector>
 
@@ -36,6 +39,8 @@
 #include "math/RoeThermodynamicCases.h"
 
 #if defined(__CUDACC__)
+#include "amr/storage/Block.h"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "cuda/hydro/policies/HydroFluxPolicies.cuh"
 #include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
 #include "cuda/hydro/kernels/HydroStageKernels.cuh"
@@ -1750,6 +1755,186 @@ int run_concurrent_repairs()
     cudaFree(ledger); cudaFree(failure);
     return result;
 }
+
+/** One bounded device arena for native CFL candidates and actual metric planes.
+ * Host uploads shared geometry leaves; independent integral checks below
+ * verify W/torque, rather than inventing a second device metric formula.
+ */
+struct NativeHydroLeafArena {
+    double* values=nullptr;
+    int* status=nullptr;
+    const int total,count;
+    NativeHydroLeafArena(int size,int active):total(size),count(active) {
+        if(cudaMalloc(&values,(5*total+count+1)*sizeof(double))!=cudaSuccess)
+            throw std::runtime_error("native hydro leaf arena allocation failed");
+        if(cudaMalloc(&status,sizeof(int))!=cudaSuccess) {
+            cudaFree(values);values=nullptr;
+            throw std::runtime_error("native hydro status allocation failed");
+        }
+    }
+    ~NativeHydroLeafArena(){cudaFree(status);cudaFree(values);}
+    NativeHydroLeafArena(const NativeHydroLeafArena&)=delete;
+    NativeHydroLeafArena& operator=(const NativeHydroLeafArena&)=delete;
+    arch::cuda::CudaHydroWorkspaceView workspace() const {
+        arch::cuda::CudaHydroWorkspaceView w{};
+        w.cfl_candidates=values+5*total;w.cfl_result=w.cfl_candidates+count;
+        w.cfl_status=status;return w;
+    }
+};
+
+/** Actual Block-generated Native leaf observations, without Runtime/BC grant.
+ * Two small fixtures cover cold axis rotation and a nonbinary deep annulus.
+ * Full logical rho support is physical analytic extension; pitch is poison.
+ * This qualifies only the existing resident CFL/divergence mathematical lane.
+ */
+int run_native_cfl_divergence()
+{
+    using namespace arch::cuda;
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const auto checked=[](cudaError_t error) {
+        if(error!=cudaSuccess)throw std::runtime_error(cudaGetErrorString(error));
+    };
+    const auto require=[](bool ok,const char* message) {
+        if(!ok)throw std::runtime_error(message);
+    };
+    try {
+        for(bool deep:{false,true}) {
+            Grid root(amr::MAX_NG,deep?.4:0.,deep?1.3:1.,-.3,.7,
+                0.,1.,deep?3:1,deep?5:1,1);
+            root.geometry="cylindrical";root.dim=2;
+            amr::Block block;block.Reset();block.level=deep?10:0;
+            block.logical_x1=deep?2U:0U;block.logical_x2=deep?7U:0U;
+            block.InitGeometry(root,(root.x1_max-root.x1_min)/(root.nblockx1*amr::BLOCK_NX),
+                (root.x2_max-root.x2_min)/(root.nblockx2*amr::BLOCK_NY),1.,native);
+            block.RequireNativeGeometryIdentity();const auto& host_grid=block.grid;
+            auto grid=make_device_grid_view(host_grid,native);
+            const auto geometry=GridMetrics::make_geometry_view(host_grid,native);
+            const int total=grid.total_size,count=grid.active_cell_count();
+            DeviceStateFixture state(total,0),flux(total,0),delta(total,0);
+            require(state.valid&&flux.valid&&delta.valid,"native state allocation failed");
+            FluidState host;host.Preallocate(total);host.InitSpecies(0);
+            const double poison=std::numeric_limits<double>::quiet_NaN();
+            for(int c=0;c<total;++c){state.store(c,{poison,poison,poison,poison,poison});
+                host.set(c,{poison,poison,poison,poison,poison});}
+            const double e0=deep?.001:host_grid.dx1*host_grid.dx1/64.;
+            for(int j=0;j<host_grid.GetTotalY();++j)for(int i=0;i<host_grid.GetTotalX();++i) {
+                const int c=host_grid.GetIndex(i,j,0);
+                const long double l=host_grid.GetFacePosL(i),h=host_grid.GetFacePosR(i);
+                const long double lo=std::min(std::abs(l),std::abs(h)),hi=std::max(std::abs(l),std::abs(h));
+                const long double v=(hi*hi-lo*lo)/2,w=(hi*hi*hi-lo*lo*lo)/3;
+                const long double inertia=(hi*hi*hi*hi-lo*lo*lo*lo)/4;
+                const long double sign=h<=0?-1:1;
+                const FluidVector u{1.,0.,0.,double(sign*inertia/w),double(e0+.5L*inertia/v)};
+                state.store(c,u);host.set(c,u);
+            }
+            if(!deep)require(arch::state::recover(host.get(host_grid.GetIndex(host_grid.Is(),host_grid.Js(),0))).status
+                ==arch::state::Status::unresolved_energy,"cold native raw oracle no longer rejects");
+            require(state.upload(),"native state upload failed");
+            NativeHydroLeafArena arena(total,count);
+            auto workspace=arena.workspace();
+            const double host_dt=adaptive_dt(host,IdealGasView{},host_grid,.8,false,native);
+            checked(launch_compute_hydro_dt(state.view,grid,IdealGasView{},.8,workspace,nullptr));
+            double actual_dt=0.;int status=0;
+            checked(cudaMemcpy(&actual_dt,workspace.cfl_result,sizeof(double),cudaMemcpyDeviceToHost));
+            checked(cudaMemcpy(&status,workspace.cfl_status,sizeof(int),cudaMemcpyDeviceToHost));
+            require(status==0&&std::isfinite(actual_dt)&&scalar_near(actual_dt,host_dt),
+                "native resident CFL differs from actual shared Host closure");
+            std::vector<double> metrics(5*total,0.);
+            for(int j=grid.js;j<grid.je;++j)for(int i=grid.is;i<grid.ie;++i) {
+                const int c=host_grid.GetIndex(i,j,0);metrics[c]=GridMetrics::CellVolume(geometry,i,j,0);
+                for(int axis=0;axis<2;++axis){metrics[(1+axis)*total+c]=GridMetrics::FaceArea(geometry,axis,i,j,0,false);
+                    metrics[(3+axis)*total+c]=GridMetrics::FaceArea(geometry,axis,i,j,0,true);}
+            }
+            checked(cudaMemcpy(arena.values,metrics.data(),metrics.size()*sizeof(double),cudaMemcpyHostToDevice));
+            grid.cell_volume=arena.values;
+            for(int axis=0;axis<2;++axis){grid.face_area_lower[axis]=arena.values+(1+axis)*total;
+                grid.face_area_upper[axis]=arena.values+(3+axis)*total;}
+            for(int direction=0;direction<2;++direction) {
+                for(int c=0;c<total;++c){const double q=1.+.01*(c%grid.stride_y)+.03*(c/grid.stride_y);
+                    flux.store(c,{q,2.*q,3.*q,4.*q,5.*q});delta.store(c,{0.,0.,0.,0.,0.});}
+                require(flux.upload()&&delta.upload(),"native divergence upload failed");
+                checked(launch_hydro_divergence(flux.view,delta.view,grid,.001,direction,nullptr));
+                require(delta.download(),"native divergence download failed");
+                for(int j=grid.js;j<grid.je;++j)for(int i=grid.is;i<grid.ie;++i) {
+                    const int c=host_grid.GetIndex(i,j,0),stride=grid.stride(direction);
+                    FluidVector expected{};
+                    TimeIntegration::accumulate_cell_divergence(flux.load(c),flux.load(c+stride),nullptr,nullptr,
+                        0,total,metrics[(1+direction)*total+c],metrics[(3+direction)*total+c],metrics[c],.001,
+                        expected,nullptr,GridMetrics::Rz::FaceTorqueMeasure(geometry,direction,i,j,false),
+                        GridMetrics::Rz::FaceTorqueMeasure(geometry,direction,i,j,true),
+                        GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j));
+                    require(vector_near(delta.load(c),expected),"native device divergence lost shared Host parity");
+                    const long double l=host_grid.GetFacePosL(i),h=host_grid.GetFacePosR(i);
+                    const long double dz=static_cast<long double>(host_grid.GetAxialFacePosR(j))-host_grid.GetAxialFacePosL(j);
+                    const long double radial_w=(h*h*h-l*l*l)/3;
+                    const long double wl=direction==0?l*l*dz:radial_w;
+                    const long double wh=direction==0?h*h*dz:radial_w;
+                    const double independent=double(.001L*(flux.load(c).mom_w*wl-flux.load(c+stride).mom_w*wh)/(radial_w*dz));
+                    require(scalar_near(delta.load(c).mom_w,independent),"native device angular divergence used V or one missing lever");
+                }
+            }
+            auto bad=grid;bad.dyadic_identity.level=amr::kMaxRefinementLevel+1;
+            const double sentinel=123.;checked(cudaMemcpy(workspace.cfl_result,&sentinel,sizeof(double),cudaMemcpyHostToDevice));
+            require(launch_compute_hydro_dt(state.view,bad,IdealGasView{},.8,workspace,nullptr)==cudaErrorInvalidValue
+                &&launch_hydro_divergence(flux.view,delta.view,bad,.001,0,nullptr)==cudaErrorInvalidValue,
+                "native malformed identity reached a hydro kernel");
+            checked(cudaMemcpy(&actual_dt,workspace.cfl_result,sizeof(double),cudaMemcpyDeviceToHost));
+            require(actual_dt==sentinel,"rejected native identity modified CFL output");
+            // Construct a complete authentic no-halo Grid from the actual
+            // Block bounds/root identity. All logical extents/strides are
+            // rebuilt; this is not an inconsistent mutation of a POD's ng.
+            Grid no_halo(0,host_grid.x1_min,host_grid.x1_max,
+                host_grid.x2_min,host_grid.x2_max,host_grid.x3_min,host_grid.x3_max,
+                host_grid.nblockx1,host_grid.nblockx2,host_grid.nblockx3);
+            no_halo.geometry=host_grid.geometry;no_halo.dim=host_grid.dim;
+            no_halo.dyadic_identity=host_grid.dyadic_identity;
+            no_halo.InitializeTopology(native);
+            const auto no_halo_view=make_device_grid_view(no_halo,native);
+            require(valid_hydro_grid(no_halo_view)&&no_halo_view.ng==0
+                &&no_halo_view.is==0&&no_halo_view.ie==no_halo_view.total_x,
+                "true no-halo Native mathematical Grid became malformed");
+            DeviceStateFixture no_halo_state(no_halo_view.total_size,0);
+            require(no_halo_state.valid,"no-halo state allocation failed");
+            for(int c=0;c<no_halo_view.total_size;++c)
+                no_halo_state.store(c,{1.,0.,0.,0.,1.});
+            require(no_halo_state.upload(),"no-halo state upload failed");
+            NativeHydroLeafArena no_halo_arena(no_halo_view.total_size,no_halo_view.active_cell_count());
+            const auto no_halo_workspace=no_halo_arena.workspace();
+            const int status_sentinel=7;
+            std::vector<double> candidate_sentinels(no_halo_view.active_cell_count(),sentinel);
+            checked(cudaMemcpy(no_halo_workspace.cfl_result,&sentinel,sizeof(double),cudaMemcpyHostToDevice));
+            checked(cudaMemcpy(no_halo_workspace.cfl_status,&status_sentinel,sizeof(int),cudaMemcpyHostToDevice));
+            checked(cudaMemcpy(no_halo_workspace.cfl_candidates,candidate_sentinels.data(),
+                candidate_sentinels.size()*sizeof(double),cudaMemcpyHostToDevice));
+            require(launch_compute_hydro_dt(no_halo_state.view,no_halo_view,IdealGasView{},.8,
+                no_halo_workspace,nullptr)==cudaErrorInvalidValue,
+                "Native no-halo CFL launched an out-of-domain rho stencil");
+            checked(cudaMemcpy(&actual_dt,no_halo_workspace.cfl_result,sizeof(double),cudaMemcpyDeviceToHost));
+            checked(cudaMemcpy(&status,no_halo_workspace.cfl_status,sizeof(int),cudaMemcpyDeviceToHost));
+            std::vector<double> no_halo_candidates(candidate_sentinels.size());
+            checked(cudaMemcpy(no_halo_candidates.data(),no_halo_workspace.cfl_candidates,
+                no_halo_candidates.size()*sizeof(double),cudaMemcpyDeviceToHost));
+            require(actual_dt==sentinel&&status==status_sentinel&&no_halo_candidates==candidate_sentinels,
+                "Native no-halo CFL rejection modified outputs/status before returning");
+            const int ghost=host_grid.GetIndex(grid.is-1,grid.js,0);state.rho[ghost]=poison;
+            require(state.upload(),"invalid closure upload failed");
+            checked(launch_compute_hydro_dt(state.view,grid,IdealGasView{},.8,workspace,nullptr));
+            checked(cudaMemcpy(&actual_dt,workspace.cfl_result,sizeof(double),cudaMemcpyDeviceToHost));
+            checked(cudaMemcpy(&status,workspace.cfl_status,sizeof(int),cudaMemcpyDeviceToHost));
+            require(status!=0&&std::isnan(actual_dt),"native bad actual rho support silently passed CFL reduction");
+            require(state.download(),"native source verification download failed");
+            for(int c=0;c<total;++c) {
+                const auto a=state.load(c),b=host.get(c);
+                for(auto member:{&FluidVector::rho,&FluidVector::mom_u,&FluidVector::mom_v,&FluidVector::mom_w,&FluidVector::eng})
+                    require(c==ghost&&member==&FluidVector::rho?std::isnan(a.*member):
+                        std::bit_cast<std::uint64_t>(a.*member)==std::bit_cast<std::uint64_t>(b.*member),
+                        "native CFL/divergence changed resident source or pitch bits");
+            }
+        }
+        std::cout<<"NATIVE_CUDA_CFL_DIVERGENCE_LEAF_PASS layouts=2 runtime_authority=0 physical_qualification=0\n";
+        return 0;
+    } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 198;}
+}
 #endif
 } // namespace
 
@@ -1886,6 +2071,8 @@ int main()
     const int route_result = run_route_matrix();
     if (route_result != 0)
         return route_result;
+    const int native_result=run_native_cfl_divergence();
+    if(native_result!=0)return native_result;
 #endif
     return 0;
 }

@@ -1012,6 +1012,51 @@ private:
 };
 } // namespace finite_ring_detail
 
+/** Reuse one previously Bounded interval for the same exact ring geometry/G.
+ * Workflow: validate positive normal densities and the original signed interval,
+ * retain its exact endpoints at equal density, or enclose rho_new/rho_old with
+ * the existing outward quotient/product; then recheck this request's box and
+ * error budgets before publishing. Both ratio endpoints must remain normal;
+ * otherwise fall back even when the final product would be representable.
+ * The source law is Phi(rho)=rho*Phi(1).
+ * No geometry, source identity, field qualification or fresh kernel work is
+ * inferred here. A false result leaves output untouched and requests fallback.
+ */
+ARCH_INLINE bool reuse_bounded_ring_interval(finite_ring_detail::SignedInterval interval,
+    double old_density,double density,std::uint64_t leaf_boxes,
+    const RingEnclosureControl& control,RingPotentialEnclosure& output) {
+    using namespace finite_ring_detail;
+    if(!(old_density>0.)||!std::isnormal(old_density)||!(density>0.)||!std::isnormal(density)
+        ||!interval_finite(interval)||!(interval.lower<0.)||interval.upper>0.
+        ||!std::isnormal(interval.lower)||(interval.upper!=0.&&!std::isnormal(interval.upper))
+        ||!std::isfinite(control.relative_target)||control.relative_target<0.
+        ||!std::isfinite(control.absolute_target)||control.absolute_target<0.
+        ||control.maximum_boxes==0||control.maximum_boxes>65536
+        ||leaf_boxes>control.maximum_boxes)return false;
+    if(density!=old_density) {
+        const auto ratio=interval_quotient_positive({density,density},{old_density,old_density});
+        if(!interval_finite(ratio)||!std::isnormal(ratio.lower)
+            ||!std::isnormal(ratio.upper)||!(ratio.lower>0.))return false;
+        interval=interval_product(interval,ratio);
+        if(!interval_finite(interval)||!(interval.lower<0.)||interval.upper>0.
+            ||!std::isnormal(interval.lower)
+            ||(interval.upper!=0.&&!std::isnormal(interval.upper)))return false;
+    }
+    RingPotentialEnclosure result{};
+    result.lower=interval.lower;result.upper=interval.upper;
+    // Original same-sign midpoint and outward error sequence, without regrouping.
+    result.value=result.lower+.5*(result.upper-result.lower);
+    result.absolute_error=positive_up(std::max(result.value-result.lower,result.upper-result.value));
+    const double safe_target=std::max(control.absolute_target,
+        positive_down(control.relative_target*std::abs(result.value)));
+    if(!std::isfinite(result.value)||!std::isfinite(result.absolute_error)
+        ||result.absolute_error>safe_target)return false;
+    result.leaf_boxes=leaf_boxes;
+    result.bound_valid=true;result.status=RingIntervalStatus::Bounded;
+    // range/kernel/AGM remain zero: this reuse performs only scalar interval math.
+    output=result;return true;
+}
+
 /** Encloses the exact integral for stored geometry/density/G, including contact.
  * Bounds remain diagnostic when a requested target fails; status WorkLimit is
  * not successful convergence. Resource controller is CPU only at this node.

@@ -1,5 +1,6 @@
 // Internal RZ Host scheduler -> checkpoint -> reconstructed Runtime continuation.
 // Existing constant-axial-translation fixture, not a scientific trajectory.
+#include "host/gravity/NativeActiveAmrWitness.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/DriverUtils.h"
 #include "driver/schedule/DriverControl.h"
@@ -77,8 +78,136 @@ static std::vector<std::uint64_t> snapshot(const amr::AMRControl& control) {
     }
     return values;
 }
+/** Canonical active-state words sorted by actual logical key; new runtime
+ * UIDs may differ, while original conserved/X/ENUC bits must be identical.
+ */
+static std::vector<std::uint64_t> warm_words(native_active_four_module::Owner& owner) {
+    auto cells=owner.freeze_active();
+    std::sort(cells.begin(),cells.end(),[](const auto& a,const auto& b) {
+        return std::tuple{a.level,a.logical,a.index}<std::tuple{b.level,b.logical,b.index};
+    });
+    std::vector<std::uint64_t> words;
+    for(const auto& c:cells) {
+        words.push_back(c.level);for(auto v:c.logical)words.push_back(v);words.push_back(c.index);
+        for(double v:{c.fluid.rho,c.fluid.mom_u,c.fluid.mom_v,c.fluid.mom_w,c.fluid.eng,c.enuc})
+            words.push_back(std::bit_cast<std::uint64_t>(v));
+        for(double v:c.fractions)words.push_back(std::bit_cast<std::uint64_t>(v));
+    }
+    return words;
+}
+/** Exact existing repair record equality includes the representative identity. */
+static void warm_repairs(const arch::state::RepairBudget& a,const arch::state::RepairBudget& b) {
+    ::require(a.semantics==b.semantics&&a.values.size()==b.values.size()
+        &&a.block_uid==b.block_uid&&a.stage==b.stage
+        &&native_active_four_module::bits(a.time,b.time),"Warm continuation repair identity differs");
+    for(std::size_t i=0;i<a.values.size();++i)
+        ::require(native_active_four_module::bits(a.values[i],b.values[i]),"Warm repair value bits differ");
+    for(int axis=0;axis<3;++axis)
+        ::require(native_active_four_module::bits(a.position[axis],b.position[axis]),"Warm repair position bits differ");
+}
+/** Immutable local IO input, owned for the synchronous EMPTY construction. */
+struct WarmCheckpointInput {
+    std::string checkpoint,table,table_sha;
+};
+/** Approved IO TU loader: genuine EMPTY read_chk, never Init then overwrite.
+ * Workflow: inspect the actual table/scientific identity after the fresh Helm
+ * owner loads, reconstruct native means into EMPTY storage, verify the saved
+ * table against that same file, then return for actual Runtime ghost/EOS bind.
+ * Helm table stream bytes are pinned before/after construction by this caller
+ * and the strict runner; this callback does not claim ghost or source readiness.
+ */
+static void load_warm_checkpoint(void* payload,amr::AMRControl& control,RunState& state,
+    const SimConfig& config,const SpeciesManager& species,HelmEos& eos) {
+    const auto& input=*static_cast<const WarmCheckpointInput*>(payload);
+    ::require(control.tree->GetActiveBlocks().empty(),"Warm IO loader requires EMPTY genuine storage");
+    const auto actual_table_sha=arch::core::file_sha256(input.table);
+    ::require(actual_table_sha==input.table_sha,"Actual fresh Helm table changed during construction");
+    const auto provenance=io::inspect_checkpoint_provenance(config,species,
+        arch::dispatch::EosId::Helmholtz,true,"aprox13",false);
+    io::require_loaded_eos_table_compatible(provenance.eos_table_sha256,actual_table_sha);
+    read_chk(input.checkpoint,control,state,config,species,provenance,io::current_rz_checkpoint_geometry());
+    io::require_loaded_eos_table_compatible(state.verified_eos_table_sha256,actual_table_sha);
+    ::require(arch::core::file_sha256(input.table)==actual_table_sha,"Actual table changed during read_chk");
+    static_cast<void>(eos); // Genuine owner exists; only Runtime grants its completed-patch EOS.
+}
+/** Actual active B/D/RK2Self mixed-AMR -> one checkpoint -> fresh M2.
+ * The endpoint is frozen before owners. Each M2 uses its own actual accounting
+ * differences; process-local journal prefixes/budgets are never checkpointed.
+ * No formal Plot identity is invented: DriverIO's Plot member is unused here.
+ */
+static void warm_continuation(const std::filesystem::path& root,const std::string& table) {
+    using namespace native_active_four_module;
+    const auto table_sha=arch::core::file_sha256(table);
+    Owner original(table,true,3.*macro_dt,{},(root/"uninterrupted").string());
+    ::require(arch::core::file_sha256(table)==table_sha,"Actual new Helm table changed during construction");
+    advance_dynamic_to_m1(original);
+    ::require(bits(original.controller->dt_old,macro_dt),"Warm M1 lost actual dt_old");
+    const auto split=warm_words(original);const auto repairs=original.controller->repairs;
+    const double advice=original.burn_advice;
+    const auto provenance=io::inspect_checkpoint_provenance(original.config,original.species,
+        arch::dispatch::EosId::Helmholtz,true,"aprox13",false);
+    ::require(provenance.eos_table_sha256==table_sha,"Warm checkpoint table identity changed");
+    auto pressure=+[](const FluidVector& U,const double* X,const void* context) {
+        return static_cast<const HelmEos*>(context)->get_pressure(U,X);
+    };
+    auto temperature=+[](const FluidVector& U,const double* X,const void* context) {
+        return static_cast<const HelmEos*>(context)->get_temperature(U.rho,arch::state::recover(U).internal,X);
+    };
+    auto gamma=+[](const FluidVector& U,const double* X,const void* context) {
+        const auto& eos=*static_cast<const HelmEos*>(context);const double p=eos.get_pressure(U,X);
+        const double c=eos.get_sound_speed(U,p,X);
+        return std::isfinite(p)&&p>0.&&std::isfinite(c)&&c>0.&&U.rho>0.?
+            U.rho*c*c/p:std::numeric_limits<double>::quiet_NaN();
+    };
+    const io::PlotSourceIdentity unused_checkpoint_only_plot{};
+    arch::driver::DriverIO output(*original.runtime,*original.controller,provenance,
+        unused_checkpoint_only_plot,pressure,temperature,gamma,original.eos.get());
+    original.gravity_stage->flush_committed_diagnostics();
+    output.write_checkpoint(advice,false);
+    const auto file=std::filesystem::path(original.config.io.out_dir)/"native-active_chk_0000.h5";
+    const auto checkpoint_sha=arch::core::file_sha256(file.string());
+    ::require(warm_words(original)==split,"Checkpoint writer changed native conserved means");
+    WarmCheckpointInput loader_input{file.string(),table,table_sha};
+    Owner resumed(table,true,3.*macro_dt,
+        EmptyInitialization{&load_warm_checkpoint,&loader_input},(root/"resumed").string());
+    ::require(warm_words(resumed)==split,"Fresh EMPTY checkpoint owner changed accepted native bits");
+    ::require(bits(resumed.controller->t_current,original.controller->t_current)
+        &&resumed.controller->step_count==original.controller->step_count
+        &&bits(resumed.controller->dt_old,original.controller->dt_old)&&bits(resumed.burn_advice,advice)
+        &&resumed.controller->chk_file_index==original.controller->chk_file_index
+        &&resumed.controller->plt_file_index==original.controller->plt_file_index,
+        "Fresh warm checkpoint lost actual controller/advice/IO counters");
+    warm_repairs(resumed.controller->repairs,repairs);
+    prepare_continuation_current(original);prepare_continuation_current(resumed);
+    ::require(warm_words(original)==split&&warm_words(resumed)==split,
+        "Actual restart Current changed checkpoint fluid bits");
+    const auto first=original.totals(),second=resumed.totals();
+    const auto first_boundary=boundary_before(original),second_boundary=boundary_before(resumed);
+    original.advance();check_macro_balance(original,first,first_boundary,original.totals());report_macro(original,2,original.macro_wall_seconds);
+    resumed.advance();check_macro_balance(resumed,second,second_boundary,resumed.totals());report_macro(resumed,2,resumed.macro_wall_seconds);
+    ::require(warm_words(original)==warm_words(resumed),"Warm M2 full native U/X/ENUC bitwise continuation differs");
+    ::require(bits(original.controller->t_current,3.*macro_dt)
+        &&bits(original.controller->t_current,resumed.controller->t_current)
+        &&original.controller->step_count==3&&resumed.controller->step_count==3
+        &&bits(original.controller->dt_old,resumed.controller->dt_old)
+        &&bits(original.burn_advice,resumed.burn_advice)
+        &&original.controller->plt_file_index==resumed.controller->plt_file_index
+        &&original.controller->chk_file_index==resumed.controller->chk_file_index,
+        "Warm M2 controller/counter/advice bits differ");
+    warm_repairs(original.controller->repairs,resumed.controller->repairs);
+    ::require(arch::core::file_sha256(file.string())==checkpoint_sha
+        &&arch::core::file_sha256(table)==table_sha,"Warm consumers changed checkpoint/table contents");
+    std::cout<<std::setprecision(17)<<"PASS WARM_NATIVE_ACTIVE_CHECKPOINT_CONTINUATION split_time="
+        <<2.*macro_dt<<" final_time="<<original.controller->t_current<<" final_step=3 leaves=5 cells=1280"
+        <<" bit_words="<<split.size()<<" checkpoint_sha="<<checkpoint_sha<<" table_sha="<<table_sha
+        <<" genuine_burn_thermal_hydro_self=1 mixed_CF=1 raw_checkpoints=1 physical_qualified=0 total_energy_qualified=0 CUDA_qualified=0\n";
+}
 int main(int argc,char** argv) {
  try {
+    if(argc==4&&std::string(argv[2])=="--warm-native-active") {
+        const std::filesystem::path root(argv[1]);require(!std::filesystem::exists(root),"output root exists");
+        warm_continuation(root,argv[3]);return 0;
+    }
     require(argc==2 || (argc==3 && std::string(argv[2])=="--initial-thermal-rejection"),
             "new local output root and optional --initial-thermal-rejection required");
     const bool initial_rejection_probe=argc==3;

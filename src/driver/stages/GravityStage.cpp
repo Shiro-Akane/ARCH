@@ -1022,12 +1022,17 @@ void GravityStage::commit_macro_step() noexcept {
     boundary_exchange_=pending_boundary_exchange_;
     pending_count_=0;journal_method_.reset();journal_active_=false;
 }
-/** A failed attempt keeps accepted boundary history and emits no diagnostic prefix. */
+/** A failed attempt keeps accepted physical boundary history and emits no prefix.
+ * Native RZ numerical guesses and interval memoization are unsaved precision
+ * history. Retire the failed source first, then clear that history so a retry
+ * cannot depend on work performed by the abandoned macro attempt.
+ */
 void GravityStage::discard_macro_step() noexcept {
     if(!journal_active_)return;
     if(gravity_)gravity_->end_host_stage_consumption();
     prepared_.reset();journal_method_.reset();pending_boundary_snapshot_.reset();
     pending_count_=0;journal_active_=false;invalidate();
+    if(native_self()&&gravity_)gravity_->clear_solver_initial_guess();
 }
 /** Report already accepted records; durable I/O is outside numerical commit/rollback. */
 void GravityStage::flush_committed_diagnostics() {

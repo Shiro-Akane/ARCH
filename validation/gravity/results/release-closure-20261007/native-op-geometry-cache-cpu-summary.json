@@ -1,0 +1,38 @@
+{
+  "status": "CPU_ORIGINAL_OWNERS_ACCEPTED_PUBLIC_CHART_NOT_FULLY_QUALIFIED",
+  "sourceBaseline": "522ed4a9e",
+  "cacheCandidatePatchSha256": "f75f2ecea70d4fb3ea395586d62168ab38b7b07f9ed00d712971fcfae58f4d37",
+  "cacheScope": "Owned final native geometry-only measure/stencil/face enclosures; original interval arithmetic/status unchanged; no field/source/iterate cached",
+  "comparison": "Every original public payload field exactly compared with genuine uncached derived MG operator at exact same geometry; invalid index, return-value mutation isolation and copy/move also checked",
+  "tests": [
+    {
+      "owner": "input_resolution",
+      "seconds": 0.01,
+      "passed": true
+    },
+    {
+      "owner": "composite_poisson_analytic",
+      "seconds": 7.99,
+      "passed": true
+    },
+    {
+      "owner": "composite_poisson_contract",
+      "seconds": 2.0,
+      "passed": true
+    }
+  ],
+  "buildSeconds": 16.134,
+  "testSeconds": 10.01,
+  "observedHostFreeBytes": 23846379520,
+  "swapGrowthKiB": 0,
+  "guardStopped": false,
+  "physicsThresholdChanges": false,
+  "originalComputeBodiesByteIdentical": true,
+  "scopeLimits": [
+    "No measured cache speedup yet",
+    "No public Native RZ complete evolution/AMR/restart qualification",
+    "No CUDA rebuild yet",
+    "Strict same-time comparative benchmark remains open"
+  ],
+  "rawLocalOnly": true
+}

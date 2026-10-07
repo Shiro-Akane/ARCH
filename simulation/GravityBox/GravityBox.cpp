@@ -1,15 +1,19 @@
 /** CGS gas box: periodic modes or an isolated Gaussian cloud. Physical
  * operators, composition/EOS conversion and AMR use the production interfaces.
  */
-#include <UserInterface.h>
-#include <GlobalDefs.h>
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <string>
+
+#include <GlobalDefs.h>
+#include <UserInterface.h>
 class GravityBoxProblem {
     double rho_=1e7,temperature_=1e7,amplitude_=1e-3,temperature_amplitude_=0.;
     double velocity_=0.,width_=0.;
     double lower_[3]{},length_[3]{},center_[3]{};
     bool isolated_=false,radial_=false,hydrostatic_radial_=false;
+    bool axisymmetric_rz_=false; // Derived public chart; never a new input control.
     int dimension_=1;double hydrostatic_drop_=0.;
     std::vector<double> fractions_;
 public:
@@ -35,6 +39,26 @@ public:
             {"center_z", "float", "cm"},
             {"gas_cv", "float", "erg/(g*K)"},
             {"hydrostatic_radial", "string", "1", "verification", {true, {}}, {"true", "false"}}};
+        // Resolve only known typed chart inputs. Missing dependencies stay
+        // explicit; the real Setup uses the same shared public chart resolver.
+        const auto native_chart = [&]() -> arch::config::ConditionResult {
+            using namespace arch::config::input_detail;
+            const auto* geometry=get<std::string>(inputs,"geometry");
+            const auto* blocks2=get<int>(inputs,"nblockx2");
+            const auto* blocks3=get<int>(inputs,"nblockx3");
+            if (!geometry) return unknown("geometry");
+            if (!blocks2) return unknown("nblockx2");
+            if (!blocks3) return unknown("nblockx3");
+            if (!arch::dispatch::parse_geometry(*geometry).ok) return unknown("geometry");
+            auto canonical=*geometry;
+            std::transform(canonical.begin(),canonical.end(),canonical.begin(),
+                [](char value) { return arch::dispatch::ascii_lower(value); });
+            const int dimension=*blocks3>0 ? 3 : *blocks2>0 ? 2 : 1;
+            return known(GridMetrics::resolve_public_chart(canonical,dimension)
+                ==GridMetrics::GeometrySemantics::AxisymmetricRz);
+        }();
+        const auto native_isolated=arch::config::input_detail::combine(native_chart,
+            arch::config::input_detail::choice(inputs,"gravity_boundary",{"isolated"}),true);
         for (auto& parameter : result.parameters) {
             if (parameter.key == "gas_cv")
                 parameter.requirement = result.composition->complete
@@ -44,8 +68,10 @@ public:
                 parameter.requirement = arch::config::input_detail::condition(
                     arch::config::InputCondition::Axis2, inputs, result.consumers);
             if (parameter.key == "center_z")
-                parameter.requirement = arch::config::input_detail::condition(
-                    arch::config::InputCondition::Axis3, inputs, result.consumers);
+                parameter.requirement = arch::config::input_detail::combine(
+                    arch::config::input_detail::condition(
+                        arch::config::InputCondition::Axis3, inputs, result.consumers),
+                    native_isolated,false);
         }
         return result;
     }
@@ -57,6 +83,8 @@ public:
         if(config.grid.geometry!="cartesian" && !curved)
             throw std::invalid_argument("GravityBox requires Cartesian, cylindrical or spherical geometry");
         isolated_=config.physics.gravity.boundary=="isolated";dimension_=config.grid.dim;
+        axisymmetric_rz_=GridMetrics::resolve_public_chart(config.grid.geometry,dimension_)
+            ==GridMetrics::GeometrySemantics::AxisymmetricRz;
         radial_=radial;
         const auto hydrostatic=config.Get<std::string>("hydrostatic_radial","false");
         if(hydrostatic!="true" && hydrostatic!="false")
@@ -75,6 +103,13 @@ public:
             center_[a]=config.Get<double>(keys[a],radial?0.:
                 curved?(a==0?lower_[0]+0.5*length_[0]:0.)
                       :lower_[a]+0.5*length_[a]);
+        if (isolated_ && axisymmetric_rz_) {
+            // Full-ring clouds use actual radial/axial physical centers.
+            // center_y denotes the inactive Cartesian direction and must be zero.
+            center_[2]=config.Get<double>("center_z",0.);
+            if (center_[1]!=0.)
+                throw std::invalid_argument("Native RZ GravityBox requires center_y=0; center_x is radial and center_z is axial");
+        }
         width_=config.Get<double>("width",0.08*length_[0]);
         for(double v:{rho_,temperature_,amplitude_,temperature_amplitude_,velocity_,width_,center_[0],center_[1],center_[2]})
             if(!std::isfinite(v))throw std::invalid_argument("GravityBox parameters must be finite");
@@ -105,9 +140,18 @@ public:
     }
     void Init(const PointCoords& p,PrimitiveData& state) const {
         double mode;
-        if(isolated_){const double coords[]{p.x,p.y,p.z};double r2=0.;
-            for(int a=0;a<dimension_;++a){const double q=(coords[a]-center_[a])/width_;r2+=q*q;}
-            mode=std::exp(-0.5*r2);
+        if(isolated_){
+            if (axisymmetric_rz_) {
+                // One physical meridional Gaussian becomes a full-ring source.
+                // q^2=[(r-center_x)/width]^2+[(z-center_z)/width]^2.
+                const double dr=(p.r_cy-center_[0])/width_;
+                const double dz=(p.z_cy-center_[2])/width_;
+                mode=std::exp(-0.5*(dr*dr+dz*dz));
+            } else {
+                const double coords[]{p.x,p.y,p.z};double r2=0.;
+                for(int a=0;a<dimension_;++a){const double q=(coords[a]-center_[a])/width_;r2+=q*q;}
+                mode=std::exp(-0.5*r2);
+            }
         }else mode=std::cos(2.*arch::constants::math::pi*(p.x-lower_[0])/length_[0]);
         state.rho=rho_*(1.+amplitude_*mode);state.p=0.;
         state.SetTemperature(hydrostatic_radial_ ? temperature_-hydrostatic_drop_*p.x*p.x

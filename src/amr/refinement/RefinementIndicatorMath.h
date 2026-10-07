@@ -143,8 +143,13 @@ struct VelocityView {
     const double* momentum = nullptr;
     const double* density = nullptr;
     double density_floor = 0.0;
+    const double* physical = nullptr;
 
+    /** Read a physical center view when supplied; otherwise keep the original
+     * point-momentum quotient, including its unchanged nonpositive-rho gate.
+     */
     ARCH_INLINE double operator[](int cell) const {
+        if (physical) return physical[cell];
         return density[cell] > 0.0 ? momentum[cell] / density[cell] : std::numeric_limits<double>::quiet_NaN();
     }
 };
@@ -163,6 +168,13 @@ struct StateView {
     double density_floor = 0.0;
     // Runtime metadata, not a compile-time species ceiling.
     int species_count = 0;
+    // Borrowed per-batch physical velocities, never evolved Native momenta.
+    const double* physical_velocity[3]{};
+
+    /** Select one common physical-velocity reader for VEL, curl and div(v). */
+    ARCH_INLINE VelocityView velocity(int component) const {
+        return {momentum[component],density,density_floor,physical_velocity[component]};
+    }
 
     ARCH_INLINE bool valid_entropy(int cell) const {
         return std::isfinite(pressure[cell]) && pressure[cell] > 0.0
@@ -181,9 +193,9 @@ struct StateView {
         case Field::Energy: return energy[cell];
         case Field::NuclearEnergyRate: return nuclear_energy[cell];
         case Field::Species: return species[selection.species * cells + cell];
-        case Field::VelocityX: return VelocityView{momentum[0], density, density_floor}[cell];
-        case Field::VelocityY: return VelocityView{momentum[1], density, density_floor}[cell];
-        case Field::VelocityZ: return VelocityView{momentum[2], density, density_floor}[cell];
+        case Field::VelocityX: return velocity(0)[cell];
+        case Field::VelocityY: return velocity(1)[cell];
+        case Field::VelocityZ: return velocity(2)[cell];
         case Field::Entropy: {
             // P/rho^Gamma1 is an entropy proxy for refinement, not the general
             // EOS thermodynamic entropy. Invalid ghost closure uses the nearest
@@ -202,9 +214,7 @@ struct StateView {
         case Field::Vorticity:
         case Field::Divergence: {
             const auto result = VelocityDiagnostics::evaluate(grid,
-                VelocityView{momentum[0], density, density_floor},
-                VelocityView{momentum[1], density, density_floor},
-                VelocityView{momentum[2], density, density_floor}, i, j, k);
+                velocity(0),velocity(1),velocity(2),i,j,k);
             return selection.field == Field::Vorticity ? result.vorticity : result.divergence;
         }
         }

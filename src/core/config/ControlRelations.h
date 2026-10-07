@@ -15,6 +15,7 @@
 #include <string_view>
 #include "amr/topology/Morton.h"
 #include "driver/dispatch/PolicyDescriptor.h"
+#include "grid/GridMetrics.h"
 #include "physics/constant/PhysicalConstants.h"
 
 namespace arch::config::relations {
@@ -56,6 +57,10 @@ template<class Report>
 void CheckGravityTopology(const GravityTopology& g, Report report) {
     if (!g.geometry) return;
     const bool curved = *g.geometry == "spherical" || *g.geometry == "cylindrical";
+    const bool native_rz = g.dimension && *g.dimension>=1 && *g.dimension<=3
+        && (curved || *g.geometry=="cartesian")
+        && GridMetrics::resolve_public_chart(*g.geometry,*g.dimension)
+            ==GridMetrics::GeometrySemantics::AxisymmetricRz;
     if (*g.geometry != "cartesian" && !curved)
         report("geometry", "Self-gravity supports Cartesian, cylindrical and spherical geometry.",
                std::vector<std::string>{"gravity_type"});
@@ -73,7 +78,7 @@ void CheckGravityTopology(const GravityTopology& g, Report report) {
         if (g.lower[0] && *g.lower[0] == 0.0 && g.faces[0] && !reflecting(*g.faces[0]))
             report("x1l_boundary_type", "The radial inner boundary requires reflecting fluid flow.",
                    std::vector<std::string>{"gravity_type", "geometry"});
-        if (g.boundary && *g.boundary == "isolated" && g.dimension && *g.dimension > 1) {
+        if (g.boundary && *g.boundary == "isolated" && g.dimension && *g.dimension > 1 && !native_rz) {
             const int azimuth = *g.dimension - 1;
             const double turn = arch::constants::math::two_pi;
             if (g.lower[azimuth] && g.upper[azimuth]
@@ -106,7 +111,8 @@ void CheckGravityTopology(const GravityTopology& g, Report report) {
                std::vector<std::string>{"geometry", "nblockx2", "nblockx3"});
     if (!g.dimension || !g.boundary) return;
     if (*g.boundary == "user") return; // Side topology is checked by the compiled callback owner.
-    const int azimuth = curved && *g.boundary == "isolated" && *g.dimension > 1 ? *g.dimension - 1 : -1;
+    const int azimuth = curved && !native_rz && *g.boundary == "isolated"
+        && *g.dimension > 1 ? *g.dimension - 1 : -1;
     for (int axis = 0; axis < 2 * *g.dimension; ++axis) {
         if (!g.faces[axis]) continue;
         const bool periodic = *g.boundary == "periodic" || axis / 2 == azimuth;
@@ -114,7 +120,7 @@ void CheckGravityTopology(const GravityTopology& g, Report report) {
         const auto parsed = dispatch::parse_boundary(face);
         if (!(periodic ? face == "periodic" : parsed.ok && parsed.value != dispatch::BoundaryFeature::Periodic))
             report("gravity_boundary",
-                   "Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).",
+                   "Fluid faces must match the field topology: physical r/z faces in RZ; periodic azimuth only in an active angular chart.",
                    std::vector<std::string>{"geometry", "x" + std::to_string(axis / 2 + 1)
                        + (axis % 2 == 0 ? "l_boundary_type" : "r_boundary_type")});
     }

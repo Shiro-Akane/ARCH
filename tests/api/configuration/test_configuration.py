@@ -237,7 +237,7 @@ class ConfigurationContract(unittest.TestCase):
 
     def test_geometry_and_units_in_all_dimensions(self):
         names = {'cartesian': {1:['x'],2:['x','y'],3:['x','y','z']},
-                 'cylindrical': {1:['r'],2:['r','phi'],3:['r','z','phi']},
+                 'cylindrical': {1:['r'],2:['r','z'],3:['r','z','phi']},
                  'spherical': {1:['r'],2:['r','phi'],3:['r','theta','phi']}}
         for geometry, dims in names.items():
             for dim, labels in dims.items():

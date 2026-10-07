@@ -101,7 +101,10 @@ private:
     GridMetrics::GeometrySemantics root_semantics=GridMetrics::GeometrySemantics::Existing;
     double root_dx1, root_dx2, root_dx3;
     std::vector<int> refinement_species_indices;
-    using ThermodynamicEvaluator = std::function<void(const FluidState&, std::vector<double>*, std::vector<double>*, std::vector<double>*)>;
+    using ThermodynamicEvaluator = std::function<void(const FluidState&,const Grid&,
+        GridMetrics::GeometrySemantics,const arch::state::Bounds&,
+        std::vector<double>*,std::vector<double>*,std::vector<double>*,
+        std::array<std::vector<double>,3>*)>;
     ThermodynamicEvaluator thermodynamic_evaluator;
     using JeansEvaluator = std::function<JeansDiagnostics::Resolution(
         const FluidVector&, const double*, const GridMetrics::GeometryView&, int, int)>;
@@ -486,7 +489,12 @@ public:
         const bool needs_temperature = config.amr.refine_on_temp;
         const bool needs_gamma1 = config.amr.refine_on_entropy;
         const bool needs_thermodynamics = needs_pressure || needs_temperature || needs_gamma1;
-        if (needs_thermodynamics && !thermodynamic_evaluator)
+        const bool needs_physical_velocity = root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+            && (config.amr.refine_on_velx || config.amr.refine_on_vely || config.amr.refine_on_velz
+                || config.amr.refine_on_vorticity || config.amr.refine_on_div_v);
+        const arch::state::Bounds bounds{config.numerics.sml_rho,
+            config.numerics.min_eint,config.numerics.max_eint};
+        if ((needs_thermodynamics || needs_physical_velocity) && !thermodynamic_evaluator)
             throw std::runtime_error(
                 "EOS-backed AMR indicators require the thermodynamic evaluator before regridding.");
 
@@ -503,21 +511,30 @@ public:
                 const FluidState& state = block.fluid_state;
                 const int total = grid.GetTotalSize();
                 std::vector<double> pressure, temperature, gamma1;
-                if (needs_thermodynamics) {
-                    thermodynamic_evaluator(state, needs_pressure ? &pressure : nullptr,
-                        needs_temperature ? &temperature : nullptr, needs_gamma1 ? &gamma1 : nullptr);
+                std::array<std::vector<double>,3> physical_velocity;
+                if (needs_thermodynamics || needs_physical_velocity) {
+                    thermodynamic_evaluator(state,grid,root_semantics,bounds,
+                        needs_pressure ? &pressure : nullptr,needs_temperature ? &temperature : nullptr,
+                        needs_gamma1 ? &gamma1 : nullptr,needs_physical_velocity ? &physical_velocity : nullptr);
                     if ((needs_pressure && pressure.size() != static_cast<std::size_t>(total))
                         || (needs_temperature && temperature.size() != static_cast<std::size_t>(total))
                         || (needs_gamma1 && gamma1.size() != static_cast<std::size_t>(total)))
                         throw std::runtime_error("EOS evaluator returned an invalid AMR buffer.");
+                    if (needs_physical_velocity)
+                        for (const auto& component : physical_velocity)
+                            if (component.size()!=static_cast<std::size_t>(total))
+                                throw std::runtime_error("AMR evaluator returned an invalid physical velocity buffer.");
                 }
                 const indicator::StateView view{
                     state.rho.data(), {state.mom_u.data(), state.mom_v.data(), state.mom_w.data()},
                     state.eng.data(), state.enuc_rate.data(), state.mass_fractions.data(),
                     pressure.data(), temperature.data(), gamma1.data(), total,
                     grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(),
-                    config.numerics.sml_rho, state.GetNumSpecies()};
-                const auto geometry = GridMetrics::make_geometry_view(grid);
+                    config.numerics.sml_rho,state.GetNumSpecies(),
+                    {needs_physical_velocity?physical_velocity[0].data():nullptr,
+                     needs_physical_velocity?physical_velocity[1].data():nullptr,
+                     needs_physical_velocity?physical_velocity[2].data():nullptr}};
+                const auto geometry = GridMetrics::make_geometry_view(grid,root_semantics);
                 double maximum = 0.0;
                 for (int k = grid.Ks(); k < grid.Ke(); ++k)
                     for (int j = grid.Js(); j < grid.Je(); ++j)

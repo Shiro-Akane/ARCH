@@ -60,12 +60,12 @@ ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩
 | Host 执行 | `compute_backend = cpu` | 支持 | OpenMP 在构建时配置。 |
 | CUDA 执行 | `compute_backend = cuda/auto` | 支持 | 使用 `ARCH_ENABLE_CUDA=ON` 构建；显式 CUDA fail-closed，`auto` 只能在构造前回退。 |
 | 维度 | 正的 `nblockx1`；尾部 block 数可为零 | 支持 | `nblockx2=0,nblockx3=0` 为 1D；`nblockx3=0` 为 2D。 |
-| 几何 | `cartesian`、`cylindrical`、`spherical` | CPU 与 CUDA 均支持 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项。 |
+| 几何 | `cartesian`、`cylindrical`、`spherical` | 已验收范围支持 CPU／CUDA；轴对称二维验收进行中 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项。 |
 | AMR | `lrefinemax >= 0` | CPU 与 CUDA 均支持 | 每个活动维固定 16 个单元的 block 尺寸。topology/Morton 决策留在 Host；指标、守恒 migration、ghost 与 reflux 在 device 调用共用数值叶子。 |
 | 自重力 | `gravity_type = self` | CPU、CUDA | 周期笛卡尔、孤立三维笛卡尔，以及受测径向和完整方位角曲线坐标域；具体条件见[自引力计算域](#自引力计算域)。 |
 | Jeans 场与细化 | `JENS` | CPU 已接线；CUDA 工程候选 | 要求自引力和显式后端；适用条件与验收范围见 [AMR 与 plot 变量词汇](#amr-与-plot-变量词汇)。 |
 
-CUDA 已实现笛卡尔、柱坐标和球坐标下的一维、二维与三维流体计算，提供已注册的通量、重构和时间推进路径，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
+CUDA 已实现既有笛卡尔、径向、球坐标极平面及三维柱／球坐标流体路径，提供已注册的通量、重构和时间推进路径，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
 
 四个内置燃烧网络支持 DenseLU、可选的 cuDSS 求解及 NSE。生成网络包通过 CMake 的
 [设备数学包契约检查](../src/physics/network/custom/README.md)，且清单声明
@@ -102,11 +102,12 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 笛卡尔一至三维 | `periodic` | 所有活动轴的流体面周期；泊松方程去除体积平均密度 |
 | 笛卡尔三维 | `isolated` | 物理流体面可流出或反射；引力由有限质量分布设边界 |
 | 柱／球坐标一维径向 | `isolated` | 半径非负，径向内流体面反射 |
-| 柱／球坐标二维极坐标 `(r,phi)` | `isolated` | 方位角覆盖完整一周且流体面周期，径向内面反射 |
+| 球坐标二维赤道极平面 `(r,phi)` | `isolated` | 方位角覆盖完整一周且流体面周期，径向内面反射 |
+| 轴对称柱坐标二维 `(r,z)` | 验收进行中 | 完整场／能量、动态反应 AMR、续算及 CUDA 验收仍在进行，运行须通过能力检查 |
 | 三维柱 `(r,z,phi)`／球 `(r,theta,phi)` | `isolated` | 完整方位角；径向内面及受测轴线／极点奇点面反射 |
-| 三类几何一至三维 | `dirichlet`、`neumann`、`user` | 逐面指定势／外梯度／线性 Robin；周期方向成对匹配，奇点保持正则性 |
+| 三类几何已验收的一至三维范围 | `dirichlet`、`neumann`、`user` | 逐面指定势／外梯度／线性 Robin；周期方向成对匹配，奇点保持正则性 |
 
-所有自引力域的根网格各轴单元数须为二的幂，根网格间距比不超过 2，AMR 叶子保持 2:1 平衡。`gravity_boundary` 应与流体面拓扑匹配。显式 `dirichlet`、`neumann` 和 `user` 适用于三类几何的一至三维；`user` 可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，并支持有效的环域／扇区／楔域。坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势只由密度偏离体积平均值的部分驱动；孤立势不减去密度背景。二维极坐标孤立势采用单位轴向长度质量的对数核。误差控制见[引力参数](#eos-与重力)，受测轨迹见[引力验证](../validation/gravity/README.zh-CN.md)。
+所有自引力域的根网格各轴单元数须为二的幂，根网格间距比不超过 2，AMR 叶子保持 2:1 平衡。`gravity_boundary` 应与流体面拓扑匹配。显式 `dirichlet`、`neumann` 和 `user` 适用于三类几何已验收的一至三维范围，轴对称二维柱坐标仍须通过上述能力检查；`user` 可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，并支持有效的环域／扇区／楔域。坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势只由密度偏离体积平均值的部分驱动；孤立势不减去密度背景。二维球坐标极平面孤立势采用单位轴向长度质量的对数核。轴对称柱坐标 `(r,z)` 使用完整环体积语义；当前实现及局部检查不代表完整科学或 CUDA 验收，历史柱坐标极平面记录保持原坐标语义。误差控制见[引力参数](#eos-与重力)，受测轨迹见[引力验证](../validation/gravity/README.zh-CN.md)。
 
 ### 方法与物理模块的组合
 
@@ -310,9 +311,9 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi | r, theta, phi |
-| Cylindrical | r | r, phi | r, z, phi |
+| Cylindrical | r | r, z | r, z, phi |
 
-转换后的 `PointCoords` 固定以 `(0,0,0)` 为原点。
+转换后的 `PointCoords` 固定以 `(0,0,0)` 为原点。二维柱坐标把 `(r,z)` 展开为 `point.x=r`、`point.y=0`、`point.z=z`，且 `point.phi_cy=0`；径向、轴向和方位速度仍是三个物理分量。配置及初态 Preview 的坐标检查不代表时间演化验收。
 
 所有 `bool` 参数均不区分大小写地接受 `true` 或 `false`，例如 `TRUE`、`False` 和 `tRuE`。数值 `0/1`、`on/off`、`yes/no`、部分匹配及其他拼写都会被拒绝，错误信息会指出参数名。
 
@@ -362,7 +363,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `eos_helm_table_path` | string | 默认：空 | 缺项补齐使用的辅助电子表；空值使用已有 Timmes 表 |
 | `eos_coulomb_mult` | double | 条件必填：Helmholtz | Helmholtz 离子 Coulomb 修正比例，有限 `[0,1]`；非默认值仅限 Helmholtz；不是电子补齐开关 |
 | `gamma` | double | 条件必填：IdealGas | 理想气体模型 gamma |
-| `gravity_type` | string | 必填 | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立边界；CPU/CUDA 一维球/柱及受测完整方位角二维极坐标、三维柱/球坐标 isolated 已验收，包含原点、轴线和极点 |
+| `gravity_type` | string | 必填 | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立、一维球／柱径向、二维球坐标极平面及三维完整方位角柱／球坐标孤立域和受测接合；轴对称二维柱坐标仍受运行能力检查约束，完整科学验收进行中 |
 | `gravity_g_x/y/z` | expression | 条件必填：外部引力；全部分量 | 外部重力分量 |
 | `gravity_G` | expression | 已退役；拒绝 | 报 RETIRED_PARAMETER；不可由输入覆盖 |
 | `gravity_boundary` | string | 条件必填：自引力 | `periodic` 去除体积平均密度；`isolated` 为现有有限质量／径向／二维对数核；`dirichlet` 零势；`neumann` 零外法向梯度且检查 Gauss 相容性；`user` 从 `gravity_boundary.cpp` 返回逐面条件 |
@@ -605,7 +606,7 @@ center_x_ = config.grid.x1_min;
 center_y_ = config.grid.x2_min;
 ```
 
-`Setup` 写入后，同一对象的 `Init` 读取这些成员；`Init` 没有 `config` 参数。在 `Init` 中使用 $r_{\mathrm{local}}^2=(x-x_c)^2+(y-y_c)^2$，其中 `x/y` 是 `point.x/y`，`x_c/y_c` 是上面保存的中心坐标。`point.r` 仍表示到全局 `(0,0,0)` 的距离；平移物理分布不会平移曲线网格的度量原点和轴线。在曲线网格中，`x1_min` 是原生径向轴下界。完整算例见[模拟算例指南的 `PointCoords` 小节](guides/SimulationCase.zh-CN.md#pointcoords)。二维 spherical 和 cylindrical 几何中，第二个逻辑坐标是平面方位角 `phi`。
+`Setup` 写入后，同一对象的 `Init` 读取这些成员；`Init` 没有 `config` 参数。在 `Init` 中使用 $r_{\mathrm{local}}^2=(x-x_c)^2+(y-y_c)^2$，其中 `x/y` 是 `point.x/y`，`x_c/y_c` 是上面保存的中心坐标。`point.r` 仍表示到全局 `(0,0,0)` 的距离；平移物理分布不会平移曲线网格的度量原点和轴线。在曲线网格中，`x1_min` 是原生径向轴下界。完整算例见[模拟算例指南的 `PointCoords` 小节](guides/SimulationCase.zh-CN.md#pointcoords)。二维 cylindrical 的第二个逻辑坐标为轴向 `z`，二维 spherical 的第二个逻辑坐标为平面方位角 `phi`。
 
 ### `PrimitiveData`
 

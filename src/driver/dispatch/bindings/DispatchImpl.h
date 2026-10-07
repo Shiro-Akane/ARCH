@@ -21,6 +21,7 @@
 #include "core/config/RuntimeParams.h"
 #include "data/FluidState.h"
 #include "grid/Grid.h"
+#include "grid/GridMetrics.h"
 
 // Flux and reconstruction policies.
 #include "numerics/flux/FluxHLL.h"
@@ -121,8 +122,10 @@ void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 arch::dispatch::StartupOrder& startup_order,
                 const io::CheckpointProvenance& checkpoint_provenance)
 {
-    // Bind the selected EOS and flux policy behind the hydrodynamics interface.
-    Numerics::HydroSolverImpl<EosPolicy, FluxSchemePolicy> hydro_solver(eos);
+    // Bind the selected EOS/flux policies to the same public computational chart.
+    const auto& grid=runtime.config().grid;
+    Numerics::HydroSolverImpl<EosPolicy, FluxSchemePolicy> hydro_solver(eos,
+        GridMetrics::resolve_public_chart(grid.geometry,grid.dim));
 
     std::string integrator_name = TimeIntegrator::name() + " + " + FluxSchemePolicy::name();
 

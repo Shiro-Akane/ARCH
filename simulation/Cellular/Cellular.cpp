@@ -55,6 +55,10 @@ public:
 
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
+        // This planar benchmark uses Cartesian positions and velocity directions.
+        // A curved chart is a different physical model, not a coordinate relabel.
+        if (config.grid.geometry!="cartesian")
+            throw std::invalid_argument("CellularDet requires Cartesian geometry");
         // [1. Read Thermodynamics & Kinematics (Temperature-based)]
         rho_amb = config.Get<double>("rhoAmbient", 1.0e7);
         T_amb = config.Get<double>("tempAmbient", 2.0e8);

@@ -5,17 +5,21 @@
  * Exercise shared reflux arithmetic, surface-to-cell mapping and topology
  * partitioning, including signed and zero-weight stage contributions.
  */
-#include "amr/flux/AmrFluxExecutionPlan.h"
-#include "amr/AMRControl.h"
-#include "amr/flux/FluxRegister.h"
-#include "amr/flux/AMRFluxRegistering.h"
-
+#include <array>
+#include <bit>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "amr/AMRControl.h"
+#include "amr/flux/AmrFluxExecutionPlan.h"
+#include "amr/flux/FluxRegister.h"
+#include "amr/flux/AMRFluxRegistering.h"
 
 namespace {
 
@@ -142,6 +146,52 @@ void test_shared_math()
             * initial_flux;
     expect(close(rkl_register, 0.55),
            "signed two-operator RKL registration drifted");
+}
+
+/** Exact no-transport species identity, plus unchanged active/invalid arithmetic.
+ * These finite nonbinary rho/X values exhibit the old multiplication/division
+ * one-ULP defect. Binary active cases have exact independent fractions; a
+ * nonzero underflowing product must retain the original active expression.
+ */
+void test_zero_transport_species_identity()
+{
+    constexpr double rho=10543210.12345, x=.1;
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    const double inf=std::numeric_limits<double>::infinity();
+    struct Case { std::array<double,5> input; double expected; int kind; };
+    const std::array<Case,15> cases{{
+        {{rho, x, .125, 0., rho}, x, 0},
+        {{rho, x, 0., 3., rho}, x, 0},
+        {{rho, x, -.375, -0., rho}, x, 0},
+        {{2., .25, .5, .5, 2.}, .375, 0},
+        {{2., .25, .5, 0., 4.}, .125, 0},
+        {{rho, x, .5, std::numeric_limits<double>::denorm_min(), rho},
+            0x1.9999999999999p-4, 0},
+        {{rho, x, nan, 0., rho}, 0., 1},
+        {{rho, x, inf, 0., rho}, 0., 1},
+        {{rho, x, 0., inf, rho}, 0., 1},
+        {{rho, x, 0., nan, rho}, 0., 1},
+        {{rho, x, 1., inf, rho}, inf, 2},
+        {{rho, nan, 0., 0., rho}, 0., 1},
+        {{rho, inf, 0., 0., rho}, inf, 2},
+        {{0., x, 0., 0., 0.}, 0., 1},
+        {{inf, x, 0., 0., inf}, 0., 1}
+    }};
+    const double raw=amr::flux_math::reflux_species_density(rho,x,.125,0.)/rho;
+    expect(std::bit_cast<std::uint64_t>(raw)
+        ==std::bit_cast<std::uint64_t>(0x1.9999999999999p-4)
+        &&std::bit_cast<std::uint64_t>(raw)!=std::bit_cast<std::uint64_t>(x),
+        "zero-transport regression no longer witnesses original rhoX/rho one-ULP loss");
+    for(std::size_t n=0;n<cases.size();++n) {
+        const auto& c=cases[n];
+        const double actual=amr::flux_math::reflux_mass_fraction(
+            c.input[0],c.input[1],c.input[2],c.input[3],c.input[4]);
+        const bool accepted=c.kind==1?std::isnan(actual):c.kind==2?
+            std::isinf(actual)&&actual>0.:
+            std::bit_cast<std::uint64_t>(actual)==std::bit_cast<std::uint64_t>(c.expected);
+        expect(accepted,"shared reflux species identity/active/invalid contract case="+std::to_string(n));
+    }
+    std::cout<<"AMR_ZERO_TRANSPORT_SPECIES_PASS cases="<<cases.size()<<" exact_identity=1 original_active_math=1\n";
 }
 
 void test_canonical_surface_lowering()
@@ -752,6 +802,7 @@ int main()
         test_rz_angular_normalization();
         test_rz_uniform_empty_reflux();
         test_shared_math();
+        test_zero_transport_species_identity();
         test_canonical_surface_lowering();
         test_zero_activation_and_signed_execution();
         test_corner_reflux_grouping();

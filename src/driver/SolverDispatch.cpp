@@ -26,6 +26,7 @@
 #include "core/config/RuntimeConfiguration.h"
 #include "data/FluidState.h"
 #include "grid/Grid.h"
+#include "grid/GridMetrics.h"
 #include "interface/ProblemGenerator.h"
 #include "physics/boundary/UserBoundary.h"
 #include "io/IO.h"
@@ -132,6 +133,11 @@ void write_backend_sidecar(
  */
 const char* axis_label(const SimConfig& config, int axis)
 {
+    if (GridMetrics::resolve_public_chart(config.grid.geometry,config.grid.dim)
+        == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        static constexpr const char* rz[] = {"r", "z"};
+        return rz[axis];
+    }
     if (config.grid.geometry == "cartesian") {
         static constexpr const char* cartesian[] = {"x", "y", "z"};
         return cartesian[axis];
@@ -278,7 +284,9 @@ void DispatchSolver(ProblemGenerator &problem,
         backend.resolved_backend == ComputeBackend::Cpu
             ? cpu_candidate.value : cuda_candidate.value;
     write_backend_sidecar(config, plan, backend);
-    const ProblemInitializationContext initialization{plan.eos};
+    // Carry the same derived chart into actual root geometry and cell averages.
+    const ProblemInitializationContext initialization{plan.eos,
+        GridMetrics::resolve_public_chart(config.grid.geometry,config.grid.dim)};
 
     const int required_ng = requirements.required_ghost_depth;
     if (required_ng > amr::MAX_NG) {

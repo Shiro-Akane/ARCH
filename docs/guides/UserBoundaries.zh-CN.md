@@ -135,8 +135,10 @@ $$
 | 计算几何 | 一维 | 二维 | 三维 |
 | --- | --- | --- | --- |
 | Cartesian | x | (x,y) | (x,y,z) |
-| Cylindrical | r | (r,phi) | (r,z,phi) |
+| Cylindrical | r | (r,z) | (r,z,phi) |
 | Spherical | r | 赤道极坐标 (r,phi) | (r,theta,phi) |
+
+二维柱坐标的物理点为 `x=r`、`y=0`、`z=z`、`phi_cy=0`；径向、轴向与方位速度是三个独立物理分量。Native RZ 完整科学与 Device 验收仍在进行，运行受能力检查约束；历史柱坐标极平面边界检查保留原坐标语义。
 
 显式势条件允许物理上有效的环域、方位角扇区和球坐标楔域。根网格与 2:1 AMR 的
 限制仍按[自引力计算域](../Reference.zh-CN.md#自引力计算域)执行。

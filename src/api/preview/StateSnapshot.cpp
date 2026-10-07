@@ -12,6 +12,7 @@
 
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "grid/Grid.h"
+#include "grid/GridMetrics.h"
 
 namespace arch::api {
 using detail::Json;
@@ -26,11 +27,15 @@ Json grid_snapshot(const SimConfig &config) {
     const std::string lower[] = {g.x1l_boundary_type, g.x2l_boundary_type, g.x3l_boundary_type};
     const std::string upper[] = {g.x1r_boundary_type, g.x2r_boundary_type, g.x3r_boundary_type};
     Grid native; native.geometry = g.geometry; native.dim = g.dim;
-    const auto names = native.GetAxisNames();
+    const bool known_geometry = dispatch::parse_geometry(g.geometry).ok;
+    const auto geometry_semantics=known_geometry && g.dim>=1 && g.dim<=3
+        ? GridMetrics::resolve_public_chart(g.geometry,g.dim)
+        : GridMetrics::GeometrySemantics::Existing;
+    const auto names = native.GetAxisNames(geometry_semantics);
     auto axes = Json::array();
     for (int axis = 0; axis < g.dim; ++axis) {
         const std::int64_t n = std::int64_t(blocks[axis]) * cells[axis];
-        const bool known = dispatch::parse_geometry(g.geometry).ok;
+        const bool known = known_geometry;
         const auto label = known ? names.at(axis) : "x"+std::to_string(axis+1);
         const auto unit = known ? AxisUnit(label, UnitSystem(config)) : std::string();
         axes.push(Json::object({{"name", "x" + std::to_string(axis + 1)}, {"unit", unit.empty() ? Json() : Json(unit)},

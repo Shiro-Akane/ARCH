@@ -212,7 +212,11 @@ void SelfGravity::rebuild_boundary(arch::elliptic::CompositeBoundary boundary) c
 void SelfGravity::clear_solver_initial_guess() const noexcept {
     if(prepared_native_self()){prepared_native_self()->invalidate();invalidate();return;}
     if(native_source_inspection_running_){native_source_inspection_invalidated_=true;return;}
-    if(work_) work_->solver.clear_initial_guess();
+    if(work_) {
+        // Restart/retry history reset shares the original guarded owner, not field invalidation.
+        if(work_->ring_source)work_->ring_source->clear_ring_memo();
+        work_->solver.clear_initial_guess();
+    }
 }
 /** Gather current density, solve A phi = -4 pi G rho_source, and publish force. */
 arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& request) const {
@@ -705,8 +709,14 @@ const std::array<std::vector<double>,3>& SelfGravity::acceleration() const {work
 const arch::multigrid::SolveReport& SelfGravity::report() const {workspace().require();return work_->report;}
 /** Expose the current volume-weighted density mean. */
 double SelfGravity::density_mean() const {workspace().require();return work_->mean;}
-/** Expose physical source, Poisson and force timings. */
-const SelfGravity::Timings& SelfGravity::timings() const {workspace().require();return work_->timings;}
+/** Expose already fence-completed phase measurements at the matching scope.
+ * This diagnostic returns no field data and cannot promote a candidate into
+ * physical execution; the actual Runtime/purpose owner still authenticates
+ * any association of these scalar measurements with a scientific request.
+ */
+const SelfGravity::Timings& SelfGravity::timings(GravityFieldScope scope) const {
+    workspace().require(scope);return work_->timings;
+}
 /** Open only the receipt observer; preparation still validates and solves the original request. */
 void SelfGravity::begin_host_stage_consumption(double step_dt) const {
     if(prepared_native_self()) {

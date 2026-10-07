@@ -5,8 +5,9 @@
  * These Host/device leaves are the metric authority for flux divergence,
  * transfer, sources, and stability estimates. Inactive-coordinate measures
  * are omitted consistently: spherical 1D uses volume per solid angle, while
- * default curved 2D geometries describe a polar plane, not an (r,theta) slice.
- * An explicit internal AxisymmetricRz view uses full-ring r/z measures.
+ * Existing curved 2D math views describe a polar plane, not an (r,theta) slice.
+ * Public configuration selects full-ring AxisymmetricRz for cylindrical 2D;
+ * explicit internal views retain their own semantics and qualification gates.
  * Face fluxes and vector components use the local orthonormal basis.
  */
 
@@ -16,6 +17,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 #include "grid/Grid.h"
 #include "grid/GridGeometryView.h"
@@ -30,7 +32,22 @@ inline Geometry geometry_from_name(const std::string& geometry) {
     return Geometry::Unsupported;
 }
 
-/** Native Grid retains its legacy semantics until the full production migration. */
+/** Resolve the public computational chart after typed configuration validation.
+ * Workflow: reject unknown canonical geometry/dimension; select full-ring (r,z)
+ * only for cylindrical 2D; keep all other public charts on the Existing leaves.
+ * This derived identity selects coordinates and measures. It grants no backend,
+ * AMR, source-field or scientific capability and changes no internal Grid default.
+ */
+inline GeometrySemantics resolve_public_chart(const std::string& geometry, int dimension)
+{
+    const auto kind=geometry_from_name(geometry);
+    if (kind==Geometry::Unsupported || dimension<1 || dimension>3)
+        throw std::invalid_argument("Public chart requires a known canonical geometry and dimension 1..3");
+    return kind==Geometry::Cylindrical && dimension==2
+        ? GeometrySemantics::AxisymmetricRz : GeometrySemantics::Existing;
+}
+
+/** Internal Grid defaults stay explicit; public owners use resolve_public_chart. */
 inline bool is_axisymmetric_rz(const Grid&) { return false; }
 
 inline Geometry geometry_kind(const Grid& grid) {
@@ -111,8 +128,8 @@ ARCH_HOST_DEVICE inline double cylindrical_inverse_radius_average(
  * Workflow: callers validate 0 <= r_left < r_right and dz > 0, then use
  * these same volume/face measures for divergence, transfer and diagnostics.
  * Explicit AxisymmetricRz GeometryView dispatch consumes these same leaves.
- * Default 2-D cylindrical still represents the polar plane until all consumers
- * and runtime geometry identity migrate together.
+ * Existing internal 2-D cylindrical views retain the polar-plane convention;
+ * public cylindrical 2-D entry owners select this explicit RZ chart together.
  * Units are cm^3, cm^2 and cm for CGS inputs. No unit-azimuth normalization
  * or inactive-direction measure is mixed into the full 2*pi volume.
  */

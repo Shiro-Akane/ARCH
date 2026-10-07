@@ -7,6 +7,8 @@
 三维使用同一现成算例从归档重建的程序；未编写或修改 FLASH Fortran。原始数值输出保存在 `/tmp`，
 本目录保留可复查的简表、独立比较脚本与验收记录，不提交大型 plot/checkpoint。
 
+本记录中的二维柱坐标结果对应原极坐标物理身份；受测输入保留在原始提交中。现行轴对称 `(r,z)` 输入及验证范围见[活动算例](../../curved/inputs/README.md)。
+
 ## ARCH 的受测能力
 
 P11 开放的组合是 CPU、`gravity_boundary=isolated`、完整 `2π` 方位角和正内半径：
@@ -77,7 +79,7 @@ Helmholtz EOS 和 RKL2 热扩散；这是厘米尺度 C/O 热点的**运行与�
 三维球域经历 `16→2`；这只检验真实迁移、坐标接合和重启，
 不作为相同物理输入的逐场误差对照。所有续算均无状态修复，泊松残差达标。
 
-近真空诊断使用 [现有 GravityBox 输入](../../curved/inputs/p12_polar_low_density.par)：
+近真空诊断使用 [受测版本的 GravityBox 输入](https://github.com/Shiro-Akane/ARCH/blob/0164354b5/validation/gravity/curved/inputs/p12_polar_low_density.par)：
 `ρ₀=1e-12 g/cm³`、现有 `sml_rho=1e-13 g/cm³` 与小 CFL，
 二维原点 AMR 两步无修复且泊松收敛。密度恰好贴着默认下限并取过大的首步时
 会发生下限修复；这组受控输入不意味着任意近真空流都无需选择合适的

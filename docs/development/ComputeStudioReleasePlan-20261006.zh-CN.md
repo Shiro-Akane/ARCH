@@ -615,3 +615,25 @@ DPS针对新真实Green finding独立公开求和49.68s、11791输出（11385思
 目标回查 2026-10-07T15:09:08.286258+00:00：共享RKL精确静止一header已Root核对，原8宏/active rhoX scalar字节相同，唯一返修关闭；新增回归归入low_density原owner，现单重负载实际编译/lowdensity/原Stage/同暖态四模块，原450累计89.909s、余360.091s保持，源码冻结。真实用途投影/certificate消费者增加完整性拒绝，Root关闭新Current缺proof/零generation/误用status枚举，历史math缺省记录保持原身份，不添Runtime授权。DPS新公开能量任务31.3+71.26=102.56s、23114输出tokens，估算USD.01416742–.02833484，原能量/annularcentroid恒等式限定采用；force modulus漏h首轮拒绝，唯一返修错误返回blocked而非执行自足推导，未收完整交付。Root独立near/far给安全64pi G rho h(1+log(L/h))条件界，不能据此签离散方案；无新API/源码raw外发/阻塞等待，Rootactive成本未知。下一节点真实mixed RHO indicator既有owner、实际AMR/续算，其余全O scientific/CPU-CUDA/GUI/匹配计时/长跑/CI仍未完成。唯一checkout/失败raw保留/E预留保持，下一回查≤15分钟。
 
 目标回查 2026-10-07T15:15:04.839292+00:00：共享RKL修复实际CPU编译66.305s，新stationary+原low_density0.016s及原Stage26.683s均通过；同暖态真实四模块136.176s/exit0，450s逻辑任务含先前失败/诊断89.909与本guard233.503共323.412s，原断言/物理/步长/coeff/门槛不改。两个实际Burn半步各256cell新ENUC/组分变化、各两真实RKLstage完成、两SelfRK2真实源stage及质量/J/组分收支原预算接受；CF0、仅一步1e-12s，完整连续gravity-energy/动态AMR/restart/publicDevice均不据此签收。present-proof/current-schema既有工具owner66项/10.103s通过，原63test bodies保持，新增拒绝身份/单位/非法bounds/非加性语义；只有真实数据状态copy不构造物理授权。下一正式同场export按现有runner单场闭合新purpose/certificate，随后Root冻结真实RHO mixed-AMR输入接真实Runtime。全O长期/GUI/CPU-CUDA/总计时/CI文档继续未完成，唯一checkout/单重负载/E预留/失败证据保持。薄记录[native-active-four-module-cpu-summary.json](../../validation/gravity/results/release-closure-20261007/native-active-four-module-cpu-summary.json)。下一回查≤15分钟。
+
+目标回查 2026-10-07T16:23:55.785712+00:00：全部Core/接口/科学/验收由本工作区负责，合理新方案替代后退役旧接口，不再依赖前实施方确认。最终Native operator不可变几何证书缓存与uncached真MG对照已复用原owner，CPU输入/Poisson analytic/contract三组通过10.01s；缓存数学三个原函数主体保持逐字相同，尚无正式性能收益结论。公开二维柱坐标统一(r,z)，Init/BC/Hydro/Preview及配置关系正在整体迁移；实际API中暴露VELZ缺失已修正源码，原四通过/两失败记录保持，尚待新binary复验。旧polar活动输入移为独立RZ物理身份，不继承历史PASS，历史raw不改。当前唯一重负载CPU ARCH+Stage编译，1200s逻辑预算此前272.092s，新请求上限900s；源码冻结。新的真实暖态M0→DENS重网格→AcceptedCurrent→M1五field候选已整合并独立review，未运行/签收， prospective独立1200s不重置旧single任务累计323.412s。公开Native/CUDA/完整连续energy/动态AMR续算/最终GUI/同物理终点正式计时/长跑/CI与release保持未完成。
+
+DPS公共角动量限制与热能正值核对一次33.14s/7889输出(7371思考/518正文)、384cache/1081非cache输入，估算USD.0048967–.0097934，实际账单和Root active成本未知。Root独立Fraction与Cauchy核对接受：保守M/J/E并不自动保证改变数值惯量后的热能正值；对任意角动量分配不增动能的条件是I_parent>=ΣI_child，J_total=0仅为受限子集例外。这里只是数学条件，不是实际ARCH重网格失败证据/新增state许可/放宽gate。与真实CPU编译和只读review重叠、0阻塞等待、无需返修；记录保留计时及判定，继续有界数学副手，不能声称普遍提速。唯一checkout/E盘8GiB加128MiB预留/失败raw留存/完成消费者后清理保持；下一目标回查≤15分钟。
+
+目标回查 2026-10-07T16:40:46.356719+00:00：CPU ARCH+Stage实际重建162.311s通过，累计原1200s编译任务434.403s；修正VELZ与Native配置schema后的两原API owner18.55s/2/2通过，原4通过仍是前binary记录，不虚称一次新全suite。相同原单块暖态再次实际PASS135.868s，前次136.176s，一次比.9977无明确性能收益；两个Self source_boundary合计134.239s，占实际宏135.414s约99.13%，Poisson合计.002719s、force合计.000153s。积分producer是当前主要成本，operator certificate memo不能解决这一处；薄摘要已存，后续考虑固定几何线性积分区间复用，但当前source/预算/原残差/lease与restart冷history检查不减。新的真实M0→DENS重网格→Current→M1五field以prospective完整1200s运行，未签收。独立三路径CUDA元数据候选静态review无阻塞、原27legacy与5真几何组保持，尚未NVCC/Device通过/未解除gates。AMR audit确认P/T/ENTR原生均值与padding、VORT/DIV旧geometry及JENS ghost-read前置需整改；Shared math整改候选/tmp并行，不改运行source。下一真实warm checkpoint设计从空AMR+freshEOS/BC/Runtime加载、两branch真正清除未保存数值history后M2，严格原bitwise/checkpoint身份；尚未实现运行。
+
+本次回查比上一≤15分钟目标迟约1分钟，如实记录。全O release/连续field-energy/动态AMR续算/publicDevice/GUI/同终点正式计时/长跑/CI收束继续未完成；唯一工作区、单重负载、E盘8GiB+128MiB预留和失败raw保留不变。4070匹配记录目前仍未取得，不以历史processed冒充本轮数据。下一回查≤15分钟。
+
+### 目标回查 2026-10-07 16:55:21 UTC
+
+整套 O 系列 release 尚未验收。当前实际动态耦合执行耗时 541.246 s，源码、二进制、EOS 身份前后一致；M0 两次燃烧/两次扩散/两场自引力、真实 DENS regrid（epoch 1→2，2→5 leaves）与新的 AcceptedCurrent 第三场已执行。M1 首次热扩散未通过原组分位模式检查，剩余两场 Hydro 和完整动态耦合仍未通过。共享通量修正已找到独立的零输运 1 ULP 反例，实际失败单元仍待诊断；修复沿用原物理、原位模式门槛和共享 CPU/CUDA 数学。当前动态运行逻辑预算累计使用 542.417/1200 s，余 657.583 s，不重置预算。
+
+同一原 N16 温热模型当前总耗时 135.868 s，其中两个 source_boundary 阶段合计 134.239 s；几何证书缓存没有可确认的整体提速。后续有界优化仅复用已认证几何积分区间，当前密度、资源、源身份与误差预算重新验证；缓存历史在真实重启/拒步边界的处理须闭合。两项新 DeepSeek 公共数学任务分别 33.14 s / 35.70 s，独立复核通过限定的惯量不等式与线性区间证明；均不构成实际算法、守恒、重启或性能验收。未运行额外 GPU/重型任务，原失败证据保留。
+
+### 目标回查 2026-10-07 17:09:18 UTC
+
+原有五组 CPU owner 全部通过（26.82 s）：真实 Native Runtime/Jeans ghost/EOS、Native AMR 热力学/物理速度和反射轴诊断、共享零输运组分修正、低密度及原 Stage 契约。当前重新构建的公开配置与真实全模型 Preview 六组全部通过（35.76 s）；历史四通过/两失败不再作为本次整体结果。构建累计 673.327/1200 s，含一次目标名称错误 5.038 s，未重置；CPU 构建 233.886 s，无 guard stop/swap。
+
+完整 M1/五场动态耦合和 warm fresh checkpoint 尚待执行。缓存候选严格保留原积分及当前整体预算，独立 review/唯一局部返修中；重启、拒步的未序列化历史清除已接入真实入口。CUDA metadata 与 selected CFL/角动量散度候选仍只完成静态工作，未编译/运行/开放 Native Device。实际 4070 Ti 当前可比正式数据尚未取得，不等待外部维护方；全部 Core/接口/数学物理工作由本工作区完成。release、完整能量/连续场、GPU收益、长跑、最终GUI/CI仍未通过。
+
+缓存原有四组 CPU owner 全部通过（70.57 s），包括同密度原区间、密度变化后当前目标/源代次、stale 拒绝、当前 box/work 资源限制与重启历史清除。此处只记录共享数学与实际控制者的局部验证；动态完整五场、暖态 fresh checkpoint、连续场/引力总能量、CUDA 和性能尚未通过。新的 warm IO 模式保留原门槛与旧 30 s 模式，新增 2400 s 完整编译/执行独立上界；真实 IO 依赖仅由批准的 checkpoint TU 加载，普通 Stage owner 不新增 IO 链接依赖。

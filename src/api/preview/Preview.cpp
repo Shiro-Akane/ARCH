@@ -35,6 +35,7 @@
 #include "core/problem/ProblemHelper.h"
 #include "core/problem/ProblemRegistry.h"
 #include "grid/Grid.h"
+#include "grid/GridMetrics.h"
 #include "physics/eos/eosdispatch.h"
 
 namespace arch::api {
@@ -174,6 +175,8 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             throw;
         }
         config.parameter_reads.reset();
+        const auto geometry_semantics=GridMetrics::resolve_public_chart(
+            config.grid.geometry,config.grid.dim);
         const auto callbacks = arch::boundary::ResolveCaseBoundaries(
             request.case_id, problem->SourceFile(), config);
         arch::boundary::ScopedUserBoundarySelection boundary_scope(
@@ -203,7 +206,11 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         state["eos"]["resolved"] = std::string(dispatch::canonical_policy_name<dispatch::EosPolicies>(eos_id));
         std::optional<MeshResult> mesh;
         std::vector<double> x_coordinates, y_coordinates, z_coordinates;
-        const std::size_t field_count = config.grid.dim == 3 ? 8 : config.grid.dim == 2 ? 7 : 6;
+        // Native RZ has two computational axes and three physical velocity
+        // components. Its azimuthal field is independent of an inactive phi axis.
+        const std::size_t field_count = config.grid.dim==3
+            ||geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                ? 8 : config.grid.dim==2 ? 7 : 6;
         std::vector<std::vector<double>> values(field_count);
         for (auto &field_values : values) field_values.reserve(sampling.count);
         EOSDispatcher::dispatch_eos(eos_id, config, specs, [&](auto &&eos, std::string_view fingerprint) {
@@ -233,7 +240,8 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                         data.mass_fractions.resize(specs.count(), 0.0);
                         const PointCoords point = Grid::PhysicalCoordsFromNative(config.grid.dim, config.grid.geometry,
                             x_coordinates[i], config.grid.dim >= 2 ? y_coordinates[j] : 0.0,
-                            config.grid.dim == 3 ? z_coordinates[k] : 0.0);
+                            config.grid.dim == 3 ? z_coordinates[k] : 0.0,
+                            geometry_semantics);
                         problem->SampleInitialPrimitive(point, data);
                         if (data.mass_fractions.size() != std::size_t(specs.count())
                             || !std::isfinite(data.rho) || data.rho <= 0)
@@ -278,7 +286,14 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             state["amr"]["actualHierarchy"] = mesh->constructed ? Json::object({{"location", "data.leaves"}}) : Json();
             state["amr"]["initialRefinement"] = mesh->complete ? "complete" : "limited";
             state["amr"]["indicatorEvaluation"] = "see-data-completedPasses";
-            if (!mesh->complete) result["diagnostics"].push(diagnostic("warning", "PREVIEW_BUDGET_LIMIT", "Preview stopped at its working budget; this is not an OOM prediction."));
+            if (!mesh->complete) {
+                if (mesh->constructed
+                    && geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                    && config.amr.lrefinemax>0)
+                    result["diagnostics"].push(diagnostic("warning", "NATIVE_RZ_AMR_PREVIEW_NOT_QUALIFIED",
+                        "Preview contains Native RZ root active initialization only; requested refinement needs a qualified Runtime."));
+                else result["diagnostics"].push(diagnostic("warning", "PREVIEW_BUDGET_LIMIT", "Preview stopped at its working budget; this is not an OOM prediction."));
+            }
             for (const auto& [log, severity] : {std::pair{&logs.info, "info"}, std::pair{&logs.warning, "warning"}}) {
                 if (!log->text.empty()) result["diagnostics"].push(diagnostic(severity, "CORE_LOG", log->message()));
                 if (log->truncated) result["diagnostics"].push(diagnostic("warning", "LOG_TRUNCATED", "Core log exceeded 16 KiB"));
@@ -288,7 +303,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         Grid coordinate_grid;
         coordinate_grid.dim = config.grid.dim;
         coordinate_grid.geometry = config.grid.geometry;
-        const auto axis_names = coordinate_grid.GetAxisNames();
+        const auto axis_names = coordinate_grid.GetAxisNames(geometry_semantics);
         auto axes = Json::array({axis_json("x1", axis_names[0], x_coordinates, UnitSystem(config))});
         auto shape = Json::array({sampling.nx});
         if (config.grid.dim >= 2) {
@@ -306,7 +321,9 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             std::string display_name = names[j];
             if (config.grid.geometry != "cartesian" && (j == 3 || j == 6 || j == 7)) {
                 const int axis = j == 3 ? 0 : j == 6 ? 1 : 2;
-                display_name = "Native " + axis_names[axis] + " velocity";
+                const std::string component=geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                    &&axis==2 ? "phi_cy" : axis_names.at(axis);
+                display_name = "Native " + component + " velocity";
             }
             fields.push(field(keys[j], display_name.c_str(), values[j], UnitSystem(config)));
         }
@@ -333,6 +350,9 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                     fixed.push(Json::object({{"name", "theta"}, {"value", arch::constants::math::pi / 2.0}, {"unit", "rad"}}));
                 if (config.grid.dim == 1)
                     fixed.push(Json::object({{"name", "phi"}, {"value", 0}, {"unit", "rad"}}));
+            } else if (geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+                // The actual meridional input is (r,z); only azimuth is inactive.
+                fixed.push(Json::object({{"name", "phi_cy"}, {"value", 0}, {"unit", "rad"}}));
             } else {
                 fixed.push(Json::object({{"name", "z_cy"}, {"value", 0}, {"unit", "cm"}}));
                 if (config.grid.dim == 1)
