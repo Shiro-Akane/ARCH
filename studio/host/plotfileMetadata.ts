@@ -478,32 +478,39 @@ function readOverview(file:InstanceType<typeof h5.File>,shape:number[],request:P
  return {...acc.finish(),globalDomain:domain,nativeBlocks:blockSummary};
 }
 
+/** Resolve a raw cell from intrinsic recorded x1/x2/x3 bounds only.
+ * Workflow: scan bounded FP64 chunks for actual domain edges; scan again for
+ * exactly one half-open/global-maximum-inclusive owner; translate x1-fastest
+ * storage to a one-cell existing readSlice request. No chart formula, native
+ * mean conversion or world-coordinate projection enters either pass.
+ */
 function readPoint(file:InstanceType<typeof h5.File>,shape:number[],request:PlotfilePointRequest,native:NativeHeader){
  const dimension=shape.length-1;
  if(request.point.length!==dimension)throw Error('Point coordinates must match stored dimension.');
  const ng=group(file,'NativeGrid'),total=shape.reduce((a,b)=>a*b,1);
  // Reuse dataset objects only within this open file/query; no cross-query cache.
- const boundDatasets=['x1_lower','x1_upper',...(dimension===2?['x2_lower','x2_upper']:[])].map(name=>dataset(ng,name));
+ const boundDatasets=Array.from({length:dimension},(_,axis)=>['x'+(axis+1)+'_lower','x'+(axis+1)+'_upper']).flat().map(name=>dataset(ng,name));
  const bounds=(start:number,count:number)=>boundDatasets.map(d=>{
   const values=rawNumbers(d.slice([[start,start+count]]),count);
-  if(values.some(v=>typeof v!=='number'))throw Error('Nonfinite native point geometry.');
+  if(values.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw Error('Nonfinite native point geometry.');
   return values as number[];
  });
- const domain={x:[Infinity,-Infinity] as [number,number],y:dimension===2?[Infinity,-Infinity] as [number,number]:[0,1] as [number,number]};
+ const ranges=Array.from({length:dimension},()=>[Infinity,-Infinity] as [number,number]);
  for(let start=0;start<total;start+=512){
   const b=bounds(start,Math.min(512,total-start));
-  for(let i=0;i<b[0].length;i++){
-   domain.x[0]=Math.min(domain.x[0],b[0][i]);domain.x[1]=Math.max(domain.x[1],b[1][i]);
-   if(dimension===2){domain.y[0]=Math.min(domain.y[0],b[2][i]);domain.y[1]=Math.max(domain.y[1],b[3][i]);}
+  for(let i=0;i<b[0].length;i++)for(let axis=0;axis<dimension;axis++){
+   const lo=b[2*axis][i],hi=b[2*axis+1][i];
+   if(hi<=lo||!Number.isFinite(hi-lo))throw Error('Invalid native point cell bounds.');
+   ranges[axis][0]=Math.min(ranges[axis][0],lo);ranges[axis][1]=Math.max(ranges[axis][1],hi);
   }
  }
+ if(ranges.some(([lo,hi])=>!Number.isFinite(lo)||!Number.isFinite(hi)||hi<=lo||!Number.isFinite(hi-lo)))throw Error('Invalid native point domain bounds.');
+ const domain:PlotfilePointEvidence['domain']={x:ranges[0],y:dimension>=2?ranges[1]:[0,1],...(dimension===3?{z:ranges[2]}:{})};
  let index=-1,matches=0;
  for(let start=0;start<total;start+=512){
   const b=bounds(start,Math.min(512,total-start));
   for(let i=0;i<b[0].length;i++){
-   if(b[1][i]<=b[0][i]||dimension===2&&b[3][i]<=b[2][i])throw Error('Invalid native point cell bounds.');
-   if(nativeAxisContains(request.point[0],b[0][i],b[1][i],domain.x[1])&&
-    (dimension===1||nativeAxisContains(request.point[1],b[2][i],b[3][i],domain.y[1]))){index=start+i;matches++;}
+   if(request.point.every((point,axis)=>nativeAxisContains(point,b[2*axis][i],b[2*axis+1][i],ranges[axis][1]))){index=start+i;matches++;}
   }
  }
  if(matches!==1)throw Error(matches?'AMBIGUOUS_NATIVE_CELL: overlapping stored bounds.':'NO_NATIVE_CELL: point outside stored cells or in a gap.');
@@ -575,7 +582,10 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    }
    if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request,candidateNativeGrid);}
    if(pointRequest){
-    if(!candidateNativeGrid||geometry!=='cartesian'||![1,2].includes(dimension)||!names.includes(pointRequest.field))throw Error('Point read requires candidate native Cartesian 1D/2D bounds and a stored field.');
+    // Formal native charts may be inspected by intrinsic point; partial RZ
+    // remains Inspector-slice-only and does not inherit Cartesian permission.
+    const legacyPoint=candidateNativeGrid?.version==='candidate-cartesian-1'&&geometry==='cartesian'&&[1,2].includes(dimension);
+    if(!candidateNativeGrid||!(formal&&candidateNativeGrid.version.startsWith('arch-native-')||legacyPoint)||!names.includes(pointRequest.field))throw Error('Point read requires formal native bounds or legacy candidate Cartesian 1D/2D and a stored field.');
     ({payload,pointEvidence}=readPoint(file,shape,pointRequest,candidateNativeGrid));
    }
    if(overviewRequest){

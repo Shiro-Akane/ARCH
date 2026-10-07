@@ -20,6 +20,8 @@ namespace arch::cuda
 {
 struct CudaPcmReconstruction
 {
+    // The native adapter invokes this exact shared selected mathematical policy.
+    using shared_policy = PCMReconstruction;
     static constexpr int ghost_depth = 1;
 
     template <typename EosView>
@@ -42,6 +44,8 @@ struct CudaPcmReconstruction
 template <typename Limiter>
 struct CudaMusclReconstruction
 {
+    // The native adapter invokes this exact shared selected mathematical policy.
+    using shared_policy = MusclReconstruction<Limiter>;
     static constexpr int ghost_depth = 2;
 
     template <typename EosView>
@@ -71,6 +75,8 @@ struct CudaMusclReconstruction
 
 struct CudaPpmReconstruction
 {
+    // The native adapter invokes this exact shared selected mathematical policy.
+    using shared_policy = PPMReconstruction;
     static constexpr int ghost_depth = 3;
 
     template <typename EosView>

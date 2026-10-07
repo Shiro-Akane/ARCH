@@ -17,7 +17,7 @@
 
 #include "data/FluidState.h"
 #include "grid/Grid.h"
-#include "physics/gravity/GravitySource.h"
+#include "physics/gravity/GravitySourceTypes.h"
 
 namespace arch::driver { class GravityStage; }
 

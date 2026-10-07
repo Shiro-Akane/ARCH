@@ -191,6 +191,13 @@ export function validatePlotfilePoint(value:unknown,projectId:string,relativePat
   p.start.some(n=>typeof n!=='number')||p.shape.some(n=>n!==1))throw Error('Invalid native point slice.');
  const selection={field:request.field,block:p.block,start:p.start as number[],count:p.shape as number[]};
  const response=validatePlotfileAudit({...value,result:{...result,schemaVersion:'audit-slice-1'}},projectId,relativePath,selection,sha);
+ // Point permission follows recorded publication/provenance, independently
+ // of render eligibility. A partial native RZ slice cannot become a point claim.
+ const native=response.audit.candidateNativeGrid;
+ const formal=response.audit.candidateSourceIdentity?.version==='arch-plot-identity-1';
+ const legacyPoint=native?.version==='candidate-cartesian-1'&&response.audit.geometry==='cartesian'&&[1,2].includes(response.audit.dimension);
+ if(!native||!(formal?native.version.startsWith('arch-native-'):legacyPoint))
+  throw Error('Native point lacks matching formal or legacy Cartesian identity.');
  const evidence=result.pointEvidence;
  if(!validPointEvidence(evidence,copyPointRequest(request),response.audit.cells,response.audit.dimension)||
   !pointMatchesNativeCell(response.audit.payload?.nativeCells,request,evidence))

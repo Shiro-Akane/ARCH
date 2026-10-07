@@ -430,7 +430,8 @@ ARCH_HOST_DEVICE inline GridMetrics::GeometryView make_grid_geometry_view(
                 ? GridMetrics::Geometry::Spherical : GridMetrics::Geometry::Unsupported;
     return {kind, grid.dim, grid.ng, grid.stride_y, grid.stride_z,
             grid.total_size, grid.dx1, grid.dx2, grid.dx3,
-            grid.x1_min, grid.x2_min, grid.x3_min};
+            grid.x1_min, grid.x2_min, grid.x3_min, grid.semantics,
+            {grid.x1_max, grid.x2_max}, grid.dyadic_identity};
 }
 }
 """

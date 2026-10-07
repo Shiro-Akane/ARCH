@@ -22,7 +22,7 @@ The selected binary supplies the configuration schema, registered cases and Prev
 
 Initial fields use the case's real Setup/Init and shared EOS conversion. Initial AMR is a separate bounded request, overlaid on matching fields. Native-coordinate slices support the dimensions advertised by each case. Registration alone does not enable Preview: new cases need complete input declarations and reviewed sampling/AMR capabilities. Custom units are reviewed evidence tied to source identity; automatic inference of arbitrary C++ expressions is not implemented.
 
-The Plotfile workspace reads full published files. Its supported format currently covers Sod 1D and Cartesian CellularDet 2D active leaves, bounded display queries and exact stored-cell inspection. It does not certify physical accuracy or support all 3D/curvilinear Plotfile layouts. XDMF, a reusable spatial index and bounded cross-query cache remain release-plan work.
+The Plotfile workspace reads full published files. Display overviews currently cover Cartesian 1D/2D active leaves. Formal published files support exact stored-cell queries in recorded native coordinates for Cartesian, cylindrical and spherical charts in 1D/2D/3D; native V/W, field units and typed provenance are retained. Curved/3D rendering and physical qualification remain separate requirements. XDMF, a reusable spatial index and bounded cross-query cache remain release-plan work.
 
 ## Source and evidence layout
 

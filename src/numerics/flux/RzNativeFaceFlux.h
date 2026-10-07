@@ -78,10 +78,10 @@ ARCH_INLINE bool axial_weights(const GridMetrics::GeometryView& geometry,int i,
 /** Mirror only physical normal momentum with the existing sign owner.
  * rho/E/tangential components are copied exactly; mphi is tangential to both
  * RZ wall directions. This is not the regular axis's two-odd-component parity.
- * Current face entry and BoundaryPlan::reflection_sign are both Host inline;
- * mechanical reuse grants no new device-kernel qualification.
+ * Host/device use the same existing reflection sign and point arithmetic;
+ * a flat mathematical wall view grants no Runtime boundary qualification.
  */
-inline FluidVector reflected_point(const FluidVector& interior,int direction) {
+ARCH_INLINE FluidVector reflected_point(const FluidVector& interior,int direction) {
     auto result=interior;
     const auto axis=static_cast<arch::boundary::BoundaryAxis>(direction);
     const auto field=direction==0?arch::boundary::BoundaryFieldClass::MomentumX:
@@ -99,13 +99,16 @@ inline FluidVector reflected_point(const FluidVector& interior,int direction) {
  * 2:1 TVD policy BEFORE entering; no NG-based method substitution occurs here.
  */
 template<class FluxPolicy,class ReconstructPolicy,class StateReader,class FractionReader,class Eos>
-inline arch::state::Status compute(const StateReader& read,const FractionReader& fraction,
+ARCH_INLINE arch::state::Status compute(const StateReader& read,const FractionReader& fraction,
     const RzSelectedReconstruction::Context& context,const Eos& eos,double coefficient,
     const FluxAdmissibility::MeanThermoView* means,int left_cell,int right_cell,
     Scratch scratch,FluidVector& output,double* output_species,
     const arch::boundary::HydroBoundaryView& boundary={}) {
     using Status=arch::state::Status;
     const int species=context.species;
+    // Native face inputs are physical points, never foreign raw-mean caches.
+    if(means&&means->geometry_semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+        return Status::invalid_thermodynamics;
     // Empty/default views are dormant. Nonempty Native 2D flags must name an
     // actual normal face; only the upstream frame proves boundary authority.
     int wall_side=-1;
@@ -167,9 +170,10 @@ inline arch::state::Status compute(const StateReader& read,const FractionReader&
             for(int s=0;s<species;++s)scratch.x_right[s]=scratch.x_left[s];
         }
         FluidVector high;
+        const auto& trial_eos=arch::state::candidate_eos(eos);
         FluxAdmissibility::compute_candidate([&] {
             FluxPolicy::compute_face_flux(high_left,high_right,scratch.x_left,scratch.x_right,
-                species,eos,context.direction,coefficient,high,scratch.candidate_species,
+                species,trial_eos,context.direction,coefficient,high,scratch.candidate_species,
                 means,left_cell,right_cell);
         },high,scratch.candidate_species,species);
         // B composition is the actual interior cell Xi, independent of H.

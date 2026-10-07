@@ -22,19 +22,9 @@
 #include "data/FluidState.h"
 #include "grid/GridMetrics.h"
 #include "numerics/state/RzCellAverage.h"
+#include "physics/gravity/GravitySourceTypes.h"
 
 namespace Physical::Gravity {
-struct GravityPatchView {
-    const double* density=nullptr;
-    const double* faces[3]{};      // Physical acceleration at each native face.
-    // Both are indexed by the SAME padded cell offset. Unlike acceleration,
-    // curved work depends on this cell's volume and potential; adjacent cells
-    // must retain different coefficients even at the same physical face.
-    const double* work_low[3]{};
-    const double* work_high[3]{};
-    /** Report whether a resident density and face field have been published. */
-    ARCH_INLINE bool enabled() const {return density!=nullptr;}
-};
 /** Apply the midpoint face-acceleration momentum source. */
 ARCH_INLINE double gravity_momentum(double low,double high,double rho,double dt) {
     // Delta(rho*u) = dt * rho * (g_left+g_right)/2.
@@ -56,10 +46,6 @@ ARCH_INLINE double gravity_flux_work(double low,double high,double flux_low,doub
 ARCH_INLINE double native_reflux_energy(double energy,double potential_difference,double mass_flux) {
     return energy+potential_difference*mass_flux;
 }
-struct ExternalGravityView {
-    double g_x = 0.0, g_y = 0.0, g_z = 0.0;
-    bool enabled = false;
-};
 /** Apply an external acceleration in the native orthonormal vector basis. */
 ARCH_INLINE void add_external_gravity_source_cell(
     const FluidVector& state, ExternalGravityView gravity, double dt,

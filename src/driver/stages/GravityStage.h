@@ -20,7 +20,7 @@
 #include "physics/gravity/GravitySolveTypes.h"
 #include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 
-namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; struct NativeSelfStageObservation; struct NativeRzFieldInspection; }
+namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; struct NativeSelfStageObservation; struct NativeRzFieldInspection; class NativeRzSolutionInspection; }
 namespace arch::driver {
 class DriverRuntime;
 class GravityStage final : public scheduler::HydroStagePreparation {
@@ -57,6 +57,10 @@ public:
      * and never select the ordinary Driver/public physical CFL/plot route.
      */
     Physical::Gravity::NativeRzFieldInspection native_current_field() const;
+    /** Copy one actual issued Current field with its exact source/geometry.
+     * No preparing callback is broadened and no second field is solved.
+     */
+    Physical::Gravity::NativeRzSolutionInspection native_current_source_and_field() const;
     double native_current_timestep() const;
     void invalidate() const override;
     double timestep() const;

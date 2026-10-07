@@ -1,0 +1,46 @@
+{
+  "task": "public-open-domain-self-energy-flux-20261008",
+  "kind": "public_mathematical_verification",
+  "scope": "isolated fixed-domain Newton self-energy and full-Phi mass boundary flux only",
+  "accepted": true,
+  "softwareAccepted": false,
+  "rawOrSourceExported": false,
+  "provider": {
+    "model": "deepseek-flash",
+    "effort": "high",
+    "wallSeconds": 41.82,
+    "inputTokens": 1546,
+    "cachedInputTokens": 384,
+    "uncachedInputTokens": 1162,
+    "outputTokens": 9314,
+    "reasoningTokens": 8946,
+    "visibleOutputTokens": 368,
+    "estimatedCostUsd": [
+      0.00576385,
+      0.0115277
+    ],
+    "billedCost": "UNKNOWN"
+  },
+  "independentReview": {
+    "fixedDomainSymmetricKernelFirstVariation": "deltaW=int_D Phi deltaRho; IBP and Euler gravity work cancel",
+    "uniformSphereExactFractionCases": 64,
+    "uniformSphereMassLoss": "Mdot=-3kM; W=-3GM^2/(5R); dW=18kGM^2/(5R)",
+    "halfBoundaryFluxCounterexample": true,
+    "temporalCounterexample": {
+      "potential": "1+t^2",
+      "massFlux": "1",
+      "exactTimeIntegral": "4/3",
+      "endpointMidpointApproximation": "3/2"
+    }
+  },
+  "limits": [
+    "Full Phi mass flux applies only to the stated isolated zero-exterior source and fixed physical domain",
+    "Endpoint polarization alone does not authenticate actual FV face potential or temporal work; quadrature/covariance error must be independently bounded",
+    "Common refinement preserves an identical represented density only; conservative remapping can change PWC rho and W even when total mass is unchanged, and needs separate projection accounting",
+    "No existing Q modification, new threshold, reference-field approval, production Native or trajectory qualification"
+  ],
+  "overlap": "Local real-boundary engineering and optional-reference verification; no local model/build requested by worker",
+  "blockingWaitSeconds": 0,
+  "formalRepairUsed": 0,
+  "rootActiveTokensOrCost": "UNKNOWN"
+}

@@ -77,20 +77,23 @@ struct BCHandler {
         friend struct BCHandler;
         double time_;
         std::uint64_t revision_;
+        std::uint64_t binding_revision_;
         arch::boundary::BoundaryPurpose purpose_;
-        StageContextSnapshot(double t,std::uint64_t r,arch::boundary::BoundaryPurpose p)
-            : time_(t),revision_(r),purpose_(p) {}
+        StageContextSnapshot(double t,std::uint64_t r,std::uint64_t binding,
+            arch::boundary::BoundaryPurpose p)
+            : time_(t),revision_(r),binding_revision_(binding),purpose_(p) {}
     public:
         /** Query actual immutable snapshot data, never stage authority. The
          * owner must still check stage_context_matches and its real binding. */
         double time() const noexcept {return time_;}
         arch::boundary::BoundaryPurpose purpose() const noexcept {return purpose_;}
         std::uint64_t revision() const noexcept {return revision_;}
+        std::uint64_t binding_revision() const noexcept {return binding_revision_;}
 
     };
     /** Capture a context identity at a quiescent Host scheduler boundary. */
     StageContextSnapshot snapshot_stage_context() const noexcept {
-        return {time_,stage_revision_,purpose_};
+        return {time_,stage_revision_,binding_revision_,purpose_};
     }
     /** Restore the context paired with the restored original ghost fields. */
     void restore_stage_context_noexcept(const StageContextSnapshot& s) noexcept {
@@ -98,10 +101,15 @@ struct BCHandler {
     }
     /** Inspect all context fields, including time/purpose hidden behind revision. */
     bool stage_context_matches(const StageContextSnapshot& s) const noexcept {
-        return time_==s.time_&&stage_revision_==s.revision_&&purpose_==s.purpose_;
+        return time_==s.time_&&stage_revision_==s.revision_
+            &&binding_revision_==s.binding_revision_&&purpose_==s.purpose_;
     }
     /** Identity of the exact time/purpose snapshot; equal requests may reuse ghosts. */
     std::uint64_t stage_revision() const noexcept { return stage_revision_; }
+    /** Whether empty native Hydro leases can authenticate the real point EOS.
+     * This is binding availability only, never a numerical acceptance result.
+     */
+    bool native_point_eos_bound() const noexcept { return bool(native_reflecting_evaluate_); }
     /** Opaque numerical surface candidate. No GhostValid publication is implied.
      * It borrows one exact seed layout/frame until domain-wide preparation joins.
      */

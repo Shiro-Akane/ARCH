@@ -17,6 +17,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -667,9 +668,19 @@ public:
     // Defaults are empty: ordinary CI/private matrices perform no extra copies.
     using EnergyField=Physical::Gravity::NativeRzFieldInspection;
     using EnergyFieldCapture=void(*)(void*,Owner&,EnergyField&&,const scheduler::StageDescriptor&);
+    using EnergySourceField=Physical::Gravity::NativeRzSolutionInspection;
+    static_assert(!std::is_default_constructible_v<EnergySourceField>
+        &&std::is_copy_constructible_v<EnergySourceField>
+        &&std::is_move_constructible_v<EnergySourceField>
+        &&!std::is_copy_assignable_v<EnergySourceField>
+        &&!std::is_move_assignable_v<EnergySourceField>);
+    static_assert(!std::is_copy_constructible_v<arch::test::RzMaterializedSourceRecord>
+        &&!std::is_move_constructible_v<arch::test::RzMaterializedSourceRecord>);
+    using EnergySourceFieldCapture=void(*)(void*,Owner&,EnergySourceField&&,const scheduler::StageDescriptor&);
     using EnergyDeltaCapture=void(*)(void*,Owner&,int,const FluidState&,const Grid&,const std::vector<FluidVector>&);
     void* energy_payload=nullptr;
     EnergyFieldCapture energy_field_capture=nullptr;
+    EnergySourceFieldCapture energy_source_field_capture=nullptr;
     EnergyDeltaCapture energy_delta_capture=nullptr;
     explicit ObservedHydro(Owner& owner,const ActualHydro& actual):owner_(owner),actual_(actual){}
     GridMetrics::GeometrySemantics geometry_semantics() const noexcept override{return actual_.geometry_semantics();}
@@ -832,7 +843,15 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
             const auto stage_index=visits.size();const auto plan=scheduler::make_hydro_plan(owner_.method);
             require(stage_index<plan.stages.size(),"PrivateSelf produced extra solved stages");
             const auto& descriptor=plan.stages[stage_index];
-            auto field=owner_.gravity->native_rz_field_inspection();
+            require(!(energy_field_capture&&energy_source_field_capture),
+                "PrivateSelf observer has two competing field capture owners");
+            // One issuer/copy only. The const field borrow remains valid until
+            // its owning optional is moved into the selected diagnostic owner.
+            std::optional<EnergySourceField> owned;
+            std::optional<EnergyField> legacy;
+            if(energy_source_field_capture)owned.emplace(frame->inspect_source_and_field());
+            else legacy.emplace(owner_.gravity->native_rz_field_inspection());
+            const auto& field=owned?owned->field():*legacy;
             require(field.source_generation==generation&&field.field_generation>0
                 &&field.source.topology==owner_.runtime->handles().front().epoch
                 &&field.source.inputs.size()==owner_.runtime->handles().size()
@@ -852,7 +871,10 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
             rejects([&]{owner_.gravity->patch_view(0);},"ready candidate granted public patch source");
             rejects([&]{owner_.gravity->timestep(owner_.config.numerics.cfl);},"ready candidate granted public CFL");
             rejects([&]{owner_.stage->plot_fields();},"ready candidate granted public plot fields");
-            if(energy_field_capture)energy_field_capture(energy_payload,owner_,std::move(field),descriptor);
+            if(energy_source_field_capture)
+                energy_source_field_capture(energy_payload,owner_,std::move(*owned),descriptor);
+            else if(energy_field_capture)
+                energy_field_capture(energy_payload,owner_,std::move(*legacy),descriptor);
         }
         ++visits[generation];
         const int cell=grid.GetIndex(grid.Is(),grid.Js(),0);flow|=input.mom_u[cell]!=0.||input.mom_v[cell]!=0.;
@@ -1027,7 +1049,7 @@ int main(int argc,char** argv) {
             }
             arch::test::run_native_self_homology_pair<native_self_hydro_owner_checks::Owner>(input);
             std::cout<<"PRIVATE_NATIVE_SELF_HOMOLOGY actual_fields="<<2*input.steps<<" cells="<<input.cells
-                <<" endpoint_steps="<<input.steps<<" total_energy_science=UNVERIFIED before_materialized_source=UNKNOWN physical_grant=0\n";
+                <<" endpoint_steps="<<input.steps<<" total_energy_science=UNVERIFIED before_materialized_source=EXPORTED_OWNING_SNAPSHOT physical_grant=0\n";
             return 0;
         }
         if(argc!=1)throw std::invalid_argument("expected no arguments, private-native-active-four-module-amr <actual-helm-table-path>, private-native-active-four-module <actual-helm-table-path>, private-native-self, private-native-self-cache-refusal, private-native-self-energy, private-native-self-green-pair or private-native-self-homology");

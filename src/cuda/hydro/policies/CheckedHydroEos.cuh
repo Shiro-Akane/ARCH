@@ -16,6 +16,7 @@
 #pragma once
 
 #include <cmath>
+#include <limits>
 #include <cuda_runtime.h>
 
 #include "cuda/common/CudaCommon.cuh"
@@ -46,10 +47,23 @@ public:
     /** Borrow required mean results only for the current face/stage input.
      * Their EOS owner is this launch's immutable policy. A query may reuse one
      * result only when rho, specific energy and every species input agree.
+     * Explicit Native means always decline point reuse, matching the shared
+     * MeanThermoView rule; chart identity never substitutes for point EOS.
      */
     ARCH_INLINE void bind_mean_thermodynamics(const DeviceStateView& state,
-        int left, int right, const double* pressure, const double* sound_speed)
+        int left, int right, const double* pressure, const double* sound_speed,
+        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        // Native cache entries describe closure effective means, not physical
+        // point states. Retire any earlier ordinary borrowing before returning.
+        // Unknown charts additionally poison the required-query latch; no point
+        // query can obtain an authorization from unrecognized metadata.
+        if (semantics != GridMetrics::GeometrySemantics::Existing) {
+            means_ = nullptr; mean_pressure_ = nullptr; mean_sound_speed_ = nullptr;
+            if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
+                static_cast<void>(checked(std::numeric_limits<double>::quiet_NaN()));
+            return;
+        }
         if constexpr (requires { typename Eos::HostHydroScope; }) {
             means_ = &state; mean_cells_[0] = left; mean_cells_[1] = right;
             mean_pressure_ = pressure; mean_sound_speed_ = sound_speed;

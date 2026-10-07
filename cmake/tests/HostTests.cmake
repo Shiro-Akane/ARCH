@@ -164,6 +164,9 @@ foreach(contract IN ITEMS core/physical_constants core/jeans_diagnostics amr/ref
 endforeach()
 add_executable(arch_compensated_sum tests/host/numerics/test_compensated_sum.cpp)
 target_sources(arch_curvilinear_metrics PRIVATE src/physics/boundary/PhysicalBoundaryHandler.cpp)
+# The real hydro policy instantiates SelfGravity stage/source calls. Reuse its
+# existing production owner rather than test-local definitions or stubs.
+target_link_libraries(arch_curvilinear_metrics PRIVATE arch_gravity_cpu)
 target_include_directories(arch_compensated_sum PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_compile_features(arch_compensated_sum PRIVATE cxx_std_20)
 add_test(NAME compensated_sum COMMAND arch_compensated_sum)

@@ -10,14 +10,19 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
 #include <optional>
 #include <span>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "amr/flux/AmrFluxPlan.h"
+#include "grid/GridGeometryView.h"
+#include "grid/ScalarFieldView.h"
 #include "numerics/elliptic/CompositePoisson.h"
 #include "physics/boundary/BoundaryTypes.h"
 #include "physics/boundary/UserBoundary.h"
@@ -113,6 +118,128 @@ struct NativeRzFieldInspection {
     } residual_error;
 };
 
+
+/** One actual dense source cell copied from the SAME operator and binding.
+ * Bounds/center/volume are stored producer values, not rho-from-RHS or an
+ * idealized mesh. block/offset retain the source allocation's real mapping.
+ */
+struct NativeRzOwnedSourceCell {
+    std::size_t block;
+    int offset;
+    arch::elliptic::CompositeCell key;
+    std::array<double,3> lower,upper,center;
+    double operator_volume;
+};
+/** Owning plain patch metadata; there is no borrowed Grid or fluid pointer.
+ * The actual issuer authenticates its seven allocations before/after copy.
+ */
+struct NativeRzOwnedSourcePatch {
+    amr::BlockHandle block;
+    arch::grid::ScalarFieldLayout layout;
+    arch::grid::FieldMemory memory;
+    GridMetrics::GeometryView geometry;
+};
+/** Closed owning diagnostic of one genuinely issued source and solved field.
+ * Workflow: the live Hydro/Current issuer authenticates its real Runtime;
+ * SelfGravity copies exactly that field once, its resident dense rho once and
+ * the corresponding operator/binding geometry; both owners revalidate before
+ * returning. Only SelfGravity can construct a new value. Copy preserves a valid
+ * record; move transfers it and permanently retires the source value. Neither
+ * exposes mutable components or live Runtime capability.
+ * Density is the original native V-mean, interpreted as piecewise-constant
+ * full-ring density. This historical value contains no extra solve or source
+ * approximation, and grants no continuum accuracy, public/Device consumer or
+ * Hydro schedule authority. The actual witness checks its stage descriptor.
+ */
+class NativeRzSolutionInspection final {
+public:
+    /** Copy one complete historical value after checking its lifecycle.
+     * Workflow: authenticate the source value before the first member copy ->
+     * copy every owning component -> publish only when construction completes.
+     * Allocation failure destroys the partial destination and leaves the source
+     * unchanged; there is no assignable value with mixed historical components.
+     */
+    NativeRzSolutionInspection(const NativeRzSolutionInspection& other)
+        :field_(checked_copy(other).field_),service_configuration_(other.service_configuration_),
+          mesh_(other.mesh_),periodic_(other.periodic_),cells_(other.cells_),
+          patches_(other.patches_),density_(other.density_) {}
+    /** Transfer one complete historical value and permanently retire its source.
+     * Workflow: require a valid source -> invalidate it before the first owning
+     * buffer transfer -> move all components -> publish the complete destination.
+     * If a later construction fails, neither a partial destination nor the old
+     * source is readable. This operation can reject an already moved-from value
+     * and consequently is not noexcept. It never issues a live Runtime lease.
+     */
+    NativeRzSolutionInspection(NativeRzSolutionInspection&& other)
+        :field_(std::move(take_valid(other).field_)),
+          service_configuration_(std::move(other.service_configuration_)),mesh_(other.mesh_),
+          periodic_(other.periodic_),cells_(std::move(other.cells_)),
+          patches_(std::move(other.patches_)),density_(std::move(other.density_)) {}
+    /** Whole-value replacement is forbidden: a failed member-wise assignment
+     * must never leave an authenticated mixture of two source generations.
+     */
+    NativeRzSolutionInspection& operator=(const NativeRzSolutionInspection&)=delete;
+    /** Move construction/emplace is supported; replacement cannot revive a
+     * retired value or expose an incompletely replaced historical record.
+     */
+    NativeRzSolutionInspection& operator=(NativeRzSolutionInspection&&)=delete;
+    /** Release only owned metadata/arrays, with no Runtime retirement action. */
+    ~NativeRzSolutionInspection()=default;
+    /** Return the matching field receipt, refusing a retired moved-from value. */
+    const NativeRzFieldInspection& field() const {require_valid();return field_;}
+    /** Return the actual immutable service configuration after lifecycle check. */
+    const GravityConfig& service_configuration() const {require_valid();return service_configuration_;}
+    /** Return the actual operator root mesh copied under the same publication. */
+    const arch::elliptic::CartesianMesh& mesh() const {require_valid();return mesh_;}
+    /** Return physical binding periodicity independently of Poisson gauge. */
+    const std::array<bool,3>& periodic() const {require_valid();return periodic_;}
+    /** Return all dense-order cells with original bounds and storage mappings. */
+    const std::vector<NativeRzOwnedSourceCell>& cells() const {require_valid();return cells_;}
+    /** Return the same source domain's owning patch-layout/geometry metadata. */
+    const std::vector<NativeRzOwnedSourcePatch>& patches() const {require_valid();return patches_;}
+    /** Return the same-generation resident source rho; no tiny leaf is omitted. */
+    const std::vector<double>& density() const {require_valid();return density_;}
+private:
+    friend class SelfGravity;
+    /** Reject the only incomplete public lifecycle state, without changing any
+     * source/field qualification. A complete historical record is not a lease.
+     */
+    void require_valid() const {
+        if(!valid_) throw std::logic_error("Native RZ solution inspection is moved-from");
+    }
+    /** Check before field_, the first declared member, starts copying. */
+    static const NativeRzSolutionInspection& checked_copy(const NativeRzSolutionInspection& other) {
+        other.require_valid();
+        return other;
+    }
+    /** Close the source before field_, the first member, starts moving. This
+     * private transition has no public setter and cannot be reversed by callers.
+     */
+    static NativeRzSolutionInspection& take_valid(NativeRzSolutionInspection& other) {
+        other.require_valid();
+        other.valid_=false;
+        return other;
+    }
+    /** Publish only after both issuer and producer checked the complete copy.
+     * Arguments already own storage; moving them creates no second field copy.
+     * valid_ becomes true only on a successfully constructed complete object.
+     */
+    NativeRzSolutionInspection(NativeRzFieldInspection field,GravityConfig configuration,
+        arch::elliptic::CartesianMesh mesh,std::array<bool,3> periodic,
+        std::vector<NativeRzOwnedSourceCell> cells,std::vector<NativeRzOwnedSourcePatch> patches,
+        std::vector<double> density)
+        :field_(std::move(field)),service_configuration_(std::move(configuration)),mesh_(mesh),
+          periodic_(periodic),cells_(std::move(cells)),patches_(std::move(patches)),density_(std::move(density)) {}
+    NativeRzFieldInspection field_;
+    GravityConfig service_configuration_;
+    arch::elliptic::CartesianMesh mesh_;
+    std::array<bool,3> periodic_;
+    std::vector<NativeRzOwnedSourceCell> cells_;
+    std::vector<NativeRzOwnedSourcePatch> patches_;
+    std::vector<double> density_;
+    bool valid_=true;
+};
+
 class SelfGravity final : public IGravityPolicy {
 public:
     explicit SelfGravity(GravityConfig config);
@@ -190,6 +317,13 @@ private:
     friend class NativeSelfStageFrame;
     /** Require the issued Runtime purpose without promoting numerical scope. */
     void require_runtime_purpose(GravityFieldPurpose) const;
+    /** Copy the exact solved field and dense source under an issued purpose.
+     * Only the real Hydro/Current friend issuer can request this synchronous,
+     * owning diagnostic; ordinary no-inspection paths copy no source data.
+     */
+    NativeRzSolutionInspection copy_native_rz_solution(GravityFieldPurpose,
+        const GravitySolveIdentity&,std::uint64_t expected_field_generation,
+        std::uint64_t expected_source_generation) const;
     /** Shared original timestep algebra; the public wrapper retains Existing scope. */
     double field_timestep(double,GravityFieldScope) const;
     /** Authenticate only the friend frame's actual Host candidate publication.

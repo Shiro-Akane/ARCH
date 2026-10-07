@@ -1,5 +1,7 @@
 """Actual-record adapter rejection and geometry identity, not science gates."""
 import copy
+import json
+import os
 import sys
 import unittest
 from decimal import Decimal
@@ -1466,10 +1468,14 @@ class VolumeEnergyBridgeEngineeringTests(unittest.TestCase):
 
         The independent true-pi oracle is Machin's rational alternating series;
         no production moment/arb-pi value is reused as the expected result.
-        Optional flint absence skips this local elementary-arithmetic witness.
+        Explicit maintainer selection requires a preexisting flint backend.
+        Default module discovery records this witness as NOT_REQUESTED/NOT_RUN.
         """
-        try:backend=surface.load_optional_flint()
-        except surface.ReferenceFailure:self.skipTest("optional preexisting python-flint unavailable")
+        self.assertEqual(os.environ.get("ARCH_VALIDATE_OPTIONAL_REFERENCES"), "1",
+                         "Optional arb witness requires ARCH_VALIDATE_OPTIONAL_REFERENCES=1")
+        # An explicitly requested unavailable reference is an error, not a skip
+        # or a numerical pass. The original actual numerical body follows.
+        backend=surface.load_optional_flint()
         from fractions import Fraction as F
         def atan_bounds(inverse):
             value=sum((F((-1)**k,(2*k+1)*inverse**(2*k+1)) for k in range(75)),F(0))
@@ -1499,5 +1505,393 @@ class VolumeEnergyBridgeEngineeringTests(unittest.TestCase):
             self.assertFalse(result["physical_qualified"]);evaluate.assert_not_called()
         finally:backend.ctx.dps=previous
 
+
+class OwningPublishedWireEngineeringTests(unittest.TestCase):
+    """Synthetic v2 transport checks ONLY; no issued Runtime or science grant.
+
+    The real sealed producer is tested by its owning Core fixture. These values
+    exercise version/purpose/lease/complete-field validation and exact reference
+    transport without constructing a Runtime receipt or evaluating an integral.
+    """
+
+    def wire(self, purpose="AcceptedCurrent", slot=0, complete_faces=False):
+        base = SyntheticMaterializedWireTests()
+        record = (CompleteReferenceReuseEngineeringTests().wire() if complete_faces
+                  else base.wire())
+        proof = base.wire_with_proof()["candidate_field"]
+        for key in ("native_discrete_certificate", "conditional_status", "physical_status"):
+            record["candidate_field"][key] = copy.deepcopy(proof[key])
+        record.update(schema="arch-materialized-native-source-2",
+            scope="published_native_source_and_field",
+            inspection_origin="issued-owning-solution-snapshot",
+            published_source_checked=True, source_only_checked=False)
+        # A sealed snapshot does not fabricate a prepare/callback call record.
+        del record["field_call"]
+        scope = ("accepted-current-numerical-field-only" if purpose == "AcceptedCurrent"
+                 else "hydro-stage-native-candidate-field-only")
+        for item in (record["source_identity"], record["candidate_field"]):
+            item.update(purpose=purpose, runtime_lease_generation=7,
+                        runtime_lease_authenticated=True, runtime_authority_scope=scope)
+        record["source_identity"]["inputs"][0]["slot"] = slot
+        return record
+
+    def reject_before_backend(self, record):
+        # Reuse the original owner assertion: real adapter failure must precede
+        # optional backend loading, reference evaluation and every kernel call.
+        SyntheticMaterializedWireTests().reject_before_backend(record)
+
+    def test_complete_purpose_and_slot_pairs_have_no_backend_or_science_grant(self):
+        for purpose, slot in (("AcceptedCurrent", 0), ("HydroStage", 0),
+                              ("HydroStage", 1), ("HydroStage", 2)):
+            with self.subTest(purpose=purpose, slot=slot):
+                record = self.wire(purpose, slot); before = copy.deepcopy(record)
+                with patch.object(surface, "load_optional_flint", side_effect=AssertionError("backend reached")) as backend:
+                    values = rz.validate_materialized_record(record, surface.Budget.start())
+                self.assertEqual(record, before); self.assertEqual(len(values[0]), 1)
+                self.assertFalse(record["physical_qualified"])
+                self.assertNotIn("field_call", record); self.assertNotIn("hydro_descriptor", record)
+                backend.assert_not_called()
+
+    def test_owning_version_origin_and_boolean_flags_reject_before_backend(self):
+        mutations = [lambda r: r.update(schema="arch-materialized-native-source-3"),
+            lambda r: r.update(schema="arch-materialized-native-source-1"),
+            lambda r: r.update(scope="materialized_source_only"),
+            lambda r: r.update(inspection_origin="preparing-source-callback"),
+            lambda r: r.pop("inspection_origin"), lambda r: r.pop("published_source_checked"),
+            lambda r: r.update(published_source_checked=1),
+            lambda r: r.update(published_source_checked=False),
+            lambda r: r.update(source_only_checked=True),
+            lambda r: r.update(source_only_checked=0), lambda r: r.update(physical_qualified=True)]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                record = self.wire(); mutate(record); self.reject_before_backend(record)
+
+    def test_purpose_lease_and_authority_scopes_are_one_complete_pair(self):
+        mutations = [lambda r: r["source_identity"].update(purpose="Unknown"),
+            lambda r: r["candidate_field"].update(purpose=("AcceptedCurrent"
+                if r["source_identity"]["purpose"] == "HydroStage" else "HydroStage")),
+            lambda r: r["source_identity"].pop("purpose"),
+            lambda r: r["candidate_field"].pop("runtime_lease_authenticated"),
+            lambda r: r["source_identity"].update(runtime_lease_authenticated=False),
+            lambda r: r["candidate_field"].update(runtime_lease_authenticated=1),
+            lambda r: r["source_identity"].update(runtime_lease_generation=0),
+            lambda r: r["source_identity"].update(runtime_lease_generation=True),
+            lambda r: r["candidate_field"].update(runtime_lease_generation=8),
+            lambda r: r["candidate_field"].update(runtime_lease_generation=7.),
+            lambda r: r["source_identity"].update(runtime_authority_scope="checked-source-materialization-only"),
+            lambda r: r["candidate_field"].update(runtime_authority_scope="physics-qualified"),
+            lambda r: r["source_identity"].pop("runtime_authority_scope")]
+        for purpose, slot in (("AcceptedCurrent", 0), ("HydroStage", 2)):
+            for mutate in mutations:
+                with self.subTest(purpose=purpose, mutation=mutate):
+                    record = self.wire(purpose, slot); mutate(record); self.reject_before_backend(record)
+
+    def test_same_source_and_field_generations_require_complete_original_proof(self):
+        mutations = [lambda r: r["source_identity"].update(generation=0),
+            lambda r: r["source_identity"].update(generation=True),
+            lambda r: r["source_identity"].update(generation=4),
+            lambda r: r["candidate_field"].update(source_generation=4),
+            lambda r: r["candidate_field"].update(source_generation=True),
+            lambda r: r["candidate_field"].update(field_generation=0),
+            lambda r: r["candidate_field"].update(field_generation=True),
+            lambda r: r["candidate_field"].pop("native_discrete_certificate"),
+            lambda r: r["candidate_field"]["native_discrete_certificate"].update(source_generation=4),
+            lambda r: r["candidate_field"]["native_discrete_certificate"].update(field_generation=12),
+            lambda r: r["candidate_field"]["native_discrete_certificate"].pop("conditional_residual")]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                record = self.wire(); mutate(record); self.reject_before_backend(record)
+
+    def test_published_dependency_version_storage_epoch_and_single_slot_are_strict(self):
+        mutations = [lambda r: r["source_identity"].update(topology=0),
+            lambda r: r["source_identity"].update(operator_revision=True),
+            lambda r: r["source_identity"].update(boundary_revision=0),
+            lambda r: r["source_identity"]["inputs"][0].update(version=0),
+            lambda r: r["source_identity"]["inputs"][0].update(version=True),
+            lambda r: r["source_identity"]["inputs"][0].update(storage_generation=0),
+            lambda r: r["source_identity"]["inputs"][0].update(uid=0),
+            lambda r: r["source_identity"]["inputs"][0].update(epoch=8),
+            lambda r: r["source_identity"]["inputs"][0].update(slot=3),
+            lambda r: r["source_identity"]["inputs"][0].update(slot=True),
+            lambda r: r["source_identity"].update(inputs=[]),
+            lambda r: r["source_identity"]["inputs"].append(copy.deepcopy(r["source_identity"]["inputs"][0])),
+            lambda r: r["source_identity"]["inputs"].append(dict(uid=8, epoch=9, slot=1, version=4, storage_generation=6))]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                record = self.wire(); mutate(record); self.reject_before_backend(record)
+        for slot in (1, 2):
+            self.reject_before_backend(self.wire("AcceptedCurrent", slot))
+
+    def test_partial_field_or_source_record_cannot_reach_optional_backend(self):
+        mutations = [lambda r: r.update(candidate_field={}),
+            lambda r: r["candidate_field"].pop("cell_values"),
+            lambda r: r["candidate_field"].update(cell_values=[]),
+            lambda r: r["candidate_field"].update(face_values=[]),
+            lambda r: r["candidate_field"].update(face_gradients=[]),
+            lambda r: r["candidate_field"].update(side_acceleration=[]),
+            lambda r: r["source"].update(leaves=[]),
+            lambda r: r.update(observers=[]),
+            lambda r: r["candidate_field"]["face_values"][0].pop("value_coefficients"),
+            lambda r: r["candidate_field"]["cell_values"][0].update(potential=float("inf"))]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                record = self.wire(); mutate(record); self.reject_before_backend(record)
+
+    def test_v1_current_and_preparing_rules_are_not_widened_to_hydro(self):
+        fixture = SyntheticMaterializedWireTests(); legacy = fixture.wire_with_proof()
+        for item, scope in ((legacy["source_identity"], "checked-source-materialization-only"),
+                            (legacy["candidate_field"], "accepted-current-numerical-field-only")):
+            item.update(purpose="AcceptedCurrent", runtime_lease_generation=7,
+                        runtime_lease_authenticated=True, runtime_authority_scope=scope)
+        rz.validate_materialized_record(legacy, surface.Budget.start())
+        old_producer = dict(source_only_checked=True,
+            field_call=copy.deepcopy(legacy["field_call"]),
+            service_configuration=copy.deepcopy(legacy["service_configuration"]))
+        self.assertEqual(rz._materialized_producer_identity(legacy), old_producer)
+        invalid = copy.deepcopy(legacy)
+        for item in (invalid["source_identity"], invalid["candidate_field"]):
+            item.update(purpose="HydroStage", runtime_authority_scope="hydro-stage-native-candidate-field-only")
+        fixture.reject_before_backend(invalid)
+        missing_call = copy.deepcopy(legacy); del missing_call["field_call"]
+        fixture.reject_before_backend(missing_call)
+
+    def test_exact_reference_join_keeps_old_and_owning_producer_identities_separate(self):
+        fixture = CompleteReferenceReuseEngineeringTests(); old = fixture.wire()
+        new = self.wire("HydroStage", 2, complete_faces=True)
+        # The mathematical source and observer geometry are exactly unchanged;
+        # purpose/slot publication metadata are not an old field grant.
+        before = copy.deepcopy((old, new)); result = fixture.reuse(old, new)
+        self.assertTrue(result["coverage_complete"], result.get("failure"))
+        self.assertEqual((old, new), before)
+        self.assertEqual(result["producer_identity"], rz._materialized_producer_identity(new))
+        self.assertNotIn("field_call", result["producer_identity"])
+        self.assertTrue(result["producer_identity"]["published_source_checked"])
+        self.assertFalse(result["producer_identity"]["source_only_checked"])
+        self.assertEqual(result["reference_producer_identity"]["field_call"], old["field_call"])
+        self.assertEqual(result["source_identity"]["purpose"], "HydroStage")
+        self.assertNotIn("purpose", result["reference_source_identity"])
+        self.assertEqual(result["reference_history"]["calls"], 31)
+        self.assertEqual(result["mapping_budget"]["calls"], 0)
+        self.assertFalse(result["science_accepted"]); self.assertFalse(result["physical_qualified"])
+        self.assertFalse(result["core_binding_qualified"])
+
+    def test_new_owning_purpose_does_not_loosen_exact_physical_source_join(self):
+        import math
+        fixture = CompleteReferenceReuseEngineeringTests(); old = fixture.wire()
+        mutations = [lambda r: r["source"]["leaves"][0].update(density=math.nextafter(3., 4.)),
+            lambda r: r["source_identity"].update(G=math.nextafter(6.6743e-8, 1.)),
+            lambda r: r["root_bounds"].__setitem__(1, math.nextafter(2., 3.)),
+            lambda r: r["observers"][0].update(r_observer=math.nextafter(1.5, 2.)),
+            lambda r: r["candidate_field"]["face_values"][0].update(area=math.nextafter(2.*math.pi, 7.))]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                record = self.wire("HydroStage", 1, complete_faces=True); mutate(record)
+                result = fixture.reuse(old, record)
+                self.assertFalse(result["coverage_complete"])
+                self.assertFalse(result["science_accepted"]); self.assertFalse(result["core_binding_qualified"])
+                self.assertEqual(result["mapping_budget"]["calls"], 0)
+
+    def test_owning_reference_provenance_does_not_fabricate_v1_call(self):
+        fixture = CompleteReferenceReuseEngineeringTests()
+        record = self.wire(complete_faces=True); historical_shape = copy.deepcopy(record)
+        # Build only SYNTHETIC interval mapping rows with the original owner;
+        # its legacy producer projection is then replaced by actual v2 schema.
+        historical_shape["schema"] = "arch-materialized-native-source-1"
+        historical_shape.update(source_only_checked=True, scope="materialized_source_only",
+            field_call=dict(invoke_failed=False, field_solve_failed=False, actual_candidate_observed=True))
+        historical_shape["source_identity"]["runtime_authority_scope"] = "checked-source-materialization-only"
+        reference = fixture.reference(historical_shape)
+        reference["materializedRecordSha256"] = fixture.raw_sha(record)
+        reference["actual_record_canonical_sha256"] = rz._reuse_canonical_sha(record)
+        reference["source_identity"] = copy.deepcopy(record["source_identity"])
+        reference["producer_identity"] = rz._materialized_producer_identity(record)
+        # The source input and reference identity include the actual source
+        # metadata, so recreate their original exact provenance coherently.
+        budget = surface.Budget.full_domain_diagnostic()
+        combined = rz.coalesce_exact_dense_source(record["source"], record["root_bounds"], record["source_identity"], budget)
+        reference["original_source_input_sha256"] = combined["original_dense_input_sha256"]
+        reference["exact_union"] = combined
+        reference["reference_identity"]["input"]["source"] = copy.deepcopy(combined["source"])
+        reference["reference_identity"]["input"]["source_identity"] = copy.deepcopy(record["source_identity"])
+        # Full-site IDs bind the COMPLETE source identity. The synthetic v1
+        # scaffold used a different preparing-source scope, so relabel BOTH
+        # sites and target mappings from the actual v2 schedule, retaining the
+        # exact same coordinates and fabricated intervals. The consumer's
+        # complete observer/provenance checks are not bypassed or weakened.
+        values = rz.validate_materialized_record(record, budget)
+        schedule = rz.materialized_full_schedule(record, *values[1:], budget)
+        self.assertNotEqual(reference["target_mapping"], schedule["targets"])
+        self.assertEqual(len(reference["sites"]), len(schedule["sites"]))
+        self.assertEqual(len(reference["targets"]), len(schedule["targets"]))
+        for site, actual in zip(reference["sites"], schedule["sites"]):
+            self.assertEqual(site["observer"], dict(R_exact=actual["r_observer"],
+                                                   Z_exact=actual["z_observer"]))
+            site["observer_id"] = actual["id"]
+        for target, actual in zip(reference["targets"], schedule["targets"]):
+            unchanged = {key: value for key, value in actual.items() if key != "site_id"}
+            self.assertEqual({key: target[key] for key in unchanged}, unchanged)
+            target["site_id"] = actual["site_id"]
+        reference["target_mapping"] = copy.deepcopy(schedule["targets"])
+        reference["reference_identity"]["input"]["observers"] = copy.deepcopy(schedule["sites"])
+        reference["reference_identity"]["sha256"] = rz._reuse_canonical_sha(reference["reference_identity"]["input"])
+        result = fixture.reuse(record, reference=reference)
+        self.assertTrue(result["coverage_complete"], result.get("failure"))
+        self.assertEqual(result["producer_identity"], reference["producer_identity"])
+        self.assertFalse(result["science_accepted"])
+        forged = copy.deepcopy(reference)
+        forged["producer_identity"]["field_call"] = historical_shape["field_call"]
+        rejected = fixture.reuse(record, reference=forged)
+        self.assertFalse(rejected["coverage_complete"])
+        self.assertIn("producer/configuration provenance", rejected["failure"])
+
+
+def load_tests(loader, existing, pattern):
+    """Select the ONE optional reference witness without weakening CI completion.
+
+    Workflow: read an explicit maintainer flag, flatten only this module's
+    already-discovered suite, retain every mandatory test unchanged, and emit
+    compact selection provenance. Default absence means NOT_REQUESTED/NOT_RUN;
+    it does not fabricate a skipped or passing numerical witness. Opt-in keeps
+    the actual test, whose unavailable backend is a real unittest error.
+    """
+    value = os.environ.get("ARCH_VALIDATE_OPTIONAL_REFERENCES", "0")
+    if value not in ("0", "1"):
+        raise ValueError("ARCH_VALIDATE_OPTIONAL_REFERENCES must be 0 or 1")
+    requested = value == "1"
+    method = "test_optional_existing_arb_true_pi_and_reduction_separation"
+    optional_id = (VolumeEnergyBridgeEngineeringTests.__module__ + "."
+                   + VolumeEnergyBridgeEngineeringTests.__name__ + "." + method)
+    if not callable(getattr(VolumeEnergyBridgeEngineeringTests, method, None)):
+        raise RuntimeError("The declared optional reference witness is missing")
+    selected = loader.suiteClass()
+    optional_count = 0
+
+    def append_suite(suite):
+        """Retain genuine existing test objects; only the named method is optional."""
+        nonlocal optional_count
+        for case in suite:
+            if isinstance(case, unittest.TestSuite):
+                append_suite(case)
+            elif case.id() == optional_id:
+                optional_count += 1
+                if requested:
+                    selected.addTest(case)
+            else:
+                selected.addTest(case)
+
+    append_suite(existing)
+    if optional_count > 1:
+        raise RuntimeError("Optional reference witness was discovered more than once")
+    selection = dict(owner="test_rz_matched_native_reference", selected_tests=selected.countTestCases(),
+        optional_method=method, requested=requested,
+        selection_status="REQUESTED" if requested else "NOT_REQUESTED",
+        execution_status="PENDING" if requested and optional_count else "NOT_RUN",
+        selected_optional_tests=optional_count if requested else 0,
+        science_accepted=False, physical_qualified=False)
+    print("OPTIONAL_REFERENCE_SELECTION " + json.dumps(selection, sort_keys=True), file=sys.stderr)
+    return selected
+
+
+
+class GenericExtendedReferenceResourceTests(unittest.TestCase):
+    """SYNTHETIC policy/provenance checks only; no integral or Runtime grant."""
+
+    def test_extended_request_is_one_clock_and_original_profiles_are_unchanged(self):
+        budget=surface.Budget(started=1.,calls=9999999,_full_domain_extended=True)
+        with patch.object(surface.time,"monotonic",return_value=600.):
+            budget.take()
+            self.assertEqual((budget.started,budget.calls,budget.max_calls,budget.timeout_seconds),
+                             (1.,10000000,10000000,600.))
+            with self.assertRaises(surface.WorkLimit):budget.take()
+        with patch.object(surface.time,"monotonic",return_value=601.):
+            with self.assertRaises(surface.WorkLimit):budget.check_time()
+        for policy,limits in ((surface.Budget(1.),(100000,90.)),
+                (surface.Budget(1.,_full_domain_diagnostic=True),(1800000,240.)),
+                (surface.Budget(1.,_matched_resolution=1),(6000000,600.)),
+                (surface.Budget(1.,_matched_resolution=2),(22000000,1800.))):
+            self.assertEqual((policy.max_calls,policy.timeout_seconds),limits)
+        for kwargs in (dict(_full_domain_extended=1),
+                dict(_full_domain_extended=True,_full_domain_diagnostic=True),
+                dict(_full_domain_extended=True,_matched_resolution=1)):
+            with self.assertRaises(ValueError):surface.Budget(1.,**kwargs).resource_profile
+
+    def test_generic_cli_failure_keeps_actual_shared_budget_without_matched_layout(self):
+        import tempfile
+        budget=surface.Budget(started=1.,calls=29,_full_domain_extended=True)
+        with tempfile.TemporaryDirectory() as directory:
+            output=Path(directory)/"full.json"
+            with patch.object(sys,"argv",["reference","--materialized-record","missing.json",
+                    "--full-domain","--reference-profile","full-domain-extended-1",
+                    "--output",str(output)]), \
+                 patch.object(surface.time,"monotonic",return_value=2.), \
+                 patch.object(surface.Budget,"full_domain_extended",return_value=budget) as factory, \
+                 patch.object(surface.Budget,"matched_resolution",side_effect=AssertionError("fixed layout")) as matched, \
+                 patch.object(surface,"load_optional_flint",side_effect=ImportError("synthetic missing backend")):
+                rz.main()
+            result=json.loads(output.read_text())
+            summary=json.loads(output.with_name(output.name+".summary.json").read_text())
+        factory.assert_called_once_with();matched.assert_not_called()
+        self.assertEqual(result["profile"],"actual-materialized-full-domain-extended-1")
+        self.assertEqual(result["resource_limits"],dict(max_calls=10000000,wall_seconds=600.))
+        self.assertEqual((budget.started,summary["budget"]["calls"]),(1.,29))
+        self.assertFalse(result["coverage_complete"]);self.assertFalse(summary["reference_complete"])
+
+    def test_imported_generic_profile_keeps_mapping_clock_identity_and_strict_history(self):
+        fixture=KnownFullReferenceProfileReuseTests();old,reference=fixture.prepared()
+        reference.update(profile="actual-materialized-full-domain-extended-1",
+            resource_limits=dict(max_calls=10000000,wall_seconds=600.))
+        reference["budget"].update(max_calls=10000000,timeout_seconds=600.,
+            resource_profile="full-domain-extended-1")
+        budget=surface.Budget(started=1.,calls=0,_full_domain_diagnostic=True)
+        original=copy.deepcopy((old,reference))
+        with patch.object(surface.time,"monotonic",return_value=2.), \
+             patch.object(surface.Budget,"full_domain_extended",side_effect=AssertionError("old clock reset")) as reset, \
+             patch.object(surface,"load_optional_flint",side_effect=AssertionError("integral backend")) as backend:
+            schedule,verified=fixture.validate(old,reference,budget)
+            self.assertEqual(len(schedule["targets"]),len(verified))
+            self.assertEqual((old,reference),original)
+            self.assertEqual((budget.started,budget.calls,budget.timeout_seconds),(1.,0,240.))
+            for mutation in (lambda r:r["resource_limits"].update(max_calls=10000001),
+                    lambda r:r["budget"].update(resource_profile="full-domain-diagnostic-1"),
+                    lambda r:r["budget"].update(calls=10000001),
+                    lambda r:r.update(matched_resolution={"expected_cells":2048}),
+                    lambda r:r["source_identity"].update(generation=999)):
+                changed=copy.deepcopy(reference);mutation(changed)
+                with self.assertRaises((ValueError,KeyError)):
+                    fixture.validate(old,changed,budget)
+        reset.assert_not_called();backend.assert_not_called()
+        with patch.object(surface.time,"monotonic",return_value=241.),self.assertRaises(surface.WorkLimit):
+            fixture.validate(old,reference,budget)
+
+
+class DensityContrastReuseEngineeringTests(unittest.TestCase):
+    """SYNTHETIC method-provenance checks only, never a numerical reference."""
+    def test_advertised_contrast_matches_original_exact_source_and_profile(self):
+        fixture=KnownFullReferenceProfileReuseTests();old,reference=fixture.prepared()
+        policy=surface.Budget.full_domain_extended();resources=rz.full_materialized_resource_profile(policy)
+        reference.update(profile=resources["profile"],resource_limits=resources["resource_limits"])
+        reference["budget"].update(max_calls=policy.max_calls,timeout_seconds=policy.timeout_seconds,resource_profile=policy.resource_profile)
+        source=reference["exact_union"]["source"]
+        leaves=surface.validate_dense_source(source,old["root_bounds"],old["source_identity"],policy)
+        _,metadata=surface._exact_density_contrast(leaves,old["root_bounds"],policy)
+        reference["density_decomposition"]=metadata
+        unchanged=copy.deepcopy((old,reference));mapping=surface.Budget.full_domain_diagnostic();started=mapping.started
+        with patch.object(surface,"load_optional_flint",side_effect=AssertionError("new integral")) as load, \
+             patch.object(surface.Budget,"full_domain_extended",side_effect=AssertionError("clock reset")) as reset:
+            schedule,verified=fixture.validate(old,reference,mapping)
+            self.assertEqual(len(schedule["targets"]),len(verified))
+            for key,value in (("background_density_exact","999"),("integration_term_count",0), ("integration_term_count",True),
+                    ("root_volume_over_pi_exact","0"),("exact_dense_coverage","claimed")):
+                forged=copy.deepcopy(reference);forged["density_decomposition"][key]=value
+                with self.subTest(field=key),self.assertRaisesRegex(ValueError,"decomposition provenance"):
+                    fixture.validate(old,forged,mapping)
+            original_profile=copy.deepcopy(reference)
+            original_profile.update(profile="actual-materialized-full-domain-diagnostic-1",resource_limits=dict(max_calls=1800000,wall_seconds=240.))
+            with self.assertRaisesRegex(ValueError,"only to the explicit extended"):
+                fixture.validate(old,original_profile,mapping)
+            legacy=copy.deepcopy(reference);legacy.pop("density_decomposition")
+            fixture.validate(old,legacy,mapping)  # Existing accepted generic method remains importable.
+        self.assertEqual((old,reference),unchanged)
+        self.assertEqual((mapping.started,mapping.calls),(started,0));load.assert_not_called();reset.assert_not_called()
 
 if __name__=="__main__":unittest.main()

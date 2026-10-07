@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <array>
+#include <bit>
+#include <cfenv>
 #include <cmath>
 #include <cstdlib>
 #include <functional>
@@ -1202,7 +1204,156 @@ void finite_ring_moment_contract() {
 
 
 /** Actual tree->native face->RHS error consumer, kept behind production gate. */
+/** Validate exact quotient-key arithmetic and the actual native tree memo.
+ * Metadata examples have independent exact dyadic expected values; production
+ * TwoSum is not duplicated as a test oracle. Actual cache reuse is compared
+ * with original uncached finite-leaf enclosures at EVERY exterior observer.
+ * This tests scalar-potential integral equivalence, not continuous force or
+ * physical Runtime qualification. Existing field/source/work gates remain.
+ */
+void finite_ring_axial_memo_key_contract() {
+    using namespace Physical::Gravity;
+    using ring_memo_detail::exact_axial_relative_endpoints;
+    const int original_rounding=std::fegetround();
+    require(original_rounding!=-1&&std::fesetround(FE_TONEAREST)==0,
+        "memo-key fixture cannot establish strict nearest rounding");
+    struct RoundingRestore {
+        int mode;
+        /** Restore caller arithmetic even when a test assertion throws. */
+        ~RoundingRestore(){std::fesetround(mode);}
+    } restore{original_rounding};
+    const auto original=exact_axial_relative_endpoints(1.,2.,0.);
+    const auto translated=exact_axial_relative_endpoints(3.,4.,2.);
+    const auto reflected=exact_axial_relative_endpoints(-4.,-3.,-2.);
+    require(original&&translated&&reflected&&*original==std::array<double,4>{1.,0.,2.,0.}
+        &&*translated==*original&&*reflected==*original,
+        "exact translated/reflected potential supports did not share one metadata value");
+    const double displacement=0x1p-55;
+    const auto different=exact_axial_relative_endpoints(1.,2.,displacement);
+    require(1.-displacement==1.&&2.-displacement==2.&&different
+        &&*different==std::array<double,4>{1.,-displacement,2.,-displacement}
+        &&*different!=*original,
+        "rounded endpoint collision omitted the represented exact subtraction residual");
+    const auto negative_zero=exact_axial_relative_endpoints(-1.,1.,-0.);
+    const auto positive_zero=exact_axial_relative_endpoints(-1.,1.,0.);
+    require(negative_zero&&positive_zero&&*negative_zero==*positive_zero,
+        "axial signed-zero observer changed the exact quotient key");
+    for(double value:*negative_zero)if(value==0.)
+        require(std::bit_cast<std::uint64_t>(value)==0,
+            "axial key retained a negative zero high/low word");
+    for(const auto unsupported:{std::array<double,3>{0.,0x1p401,0.},
+                               std::array<double,3>{0x1p-401,1.,0.},
+                               std::array<double,3>{0.,1.,0x1p-401}})
+        require(!exact_axial_relative_endpoints(unsupported[0],unsupported[1],unsupported[2]),
+            "unsupported axial exponents acquired an unproved normalized key");
+    require(!exact_axial_relative_endpoints(2.,1.,0.)
+        &&!exact_axial_relative_endpoints(0.,1.,std::numeric_limits<double>::quiet_NaN())
+        &&!exact_axial_relative_endpoints(0.,std::numeric_limits<double>::infinity(),0.),
+        "invalid axial support acquired an exact quotient key");
+    for(int mode:{FE_DOWNWARD,FE_UPWARD,FE_TOWARDZERO}) {
+        require(std::fesetround(mode)==0,"memo-key fixture cannot set rounding mode");
+        require(!exact_axial_relative_endpoints(1.,2.,0.),
+            "non-nearest arithmetic acquired a TwoSum quotient certificate");
+    }
+    require(std::fesetround(FE_TONEAREST)==0,"memo-key fixture lost nearest rounding");
+
+    // The unchanged active-grid validator accepts powers of two >=2, but
+    // actual Native boundary point interpolation needs transverse support.
+    // Reuse the existing canonical 4x4 owner: four distinct radial rho columns
+    // prevent uniform quartets; identical axial columns retain exact reuse.
+    auto base=base_mesh(2,4);base.spacing={.5,1.,1.};
+    base.origin={.5,-2.,0.};base.geometry=elliptic::Geometry::Cylindrical;
+    base.native_canonical_domain=true;base.root_upper={2.5,2.,0.};
+    base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const elliptic::CompositePoisson op(base,make_cells(base,false),
+        elliptic::BoundaryKind::CurvilinearIsolated);
+    GravityBoundary tree(op,{43});
+    GravitySolveIdentity source;source.topology={43};
+    source.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+    source.operator_revision=source.boundary_revision=source.accuracy_revision=1;
+    source.inputs.push_back({{{1},{43}},state::StateSlot::Current,{1},1});
+    std::vector<double> density(op.size());
+    for(int c=0;c<op.size();++c)density[c]=1.+op.cells()[c].index[0];
+    tree.update(density,source);
+    RingBoundaryControl control;control.face_absolute_target=1.e-5;
+    control.maximum_boxes_per_leaf=8;
+    const auto cold=tree.ring_boundary(op,source,control);
+    require(cold.status==RingBoundaryStatus::Bounded&&cold.memo_hits>0
+        &&cold.memo_misses>0&&cold.memo_admissions>0&&cold.kernel_enclosures>0
+        &&cold.coalesced_parent_attempts==0,
+        "actual translated/reflected native supports never reused an original bounded integral");
+    tree.require_current_ring(op,cold);
+    RingEnclosureControl leaf;
+    leaf.absolute_target=finite_ring_detail::positive_down(control.face_absolute_target/op.size());
+    leaf.maximum_boxes=control.maximum_boxes_per_leaf;
+    std::uint64_t uncached_kernels=0;std::size_t exterior=0;
+    for(std::size_t f=0;f<op.faces().size();++f) {
+        const auto& face=op.faces()[f];if(face.boundary_side<0)continue;
+        ++exterior;finite_ring_detail::SignedInterval uncached{};
+        for(int c=0;c<op.size();++c) {
+            const auto value=finite_ring_potential_enclosure(op.lower(c,0),op.upper(c,0),
+                op.lower(c,1),op.upper(c,1),density[c],face.center[0],face.center[1],
+                source.gravitational_constant,leaf);
+            require(value.bound_valid&&value.status==RingIntervalStatus::Bounded,
+                "original uncached leaf failed the same explicit precision/box request");
+            uncached=finite_ring_detail::interval_sum(uncached,{value.lower,value.upper});
+            uncached_kernels+=value.kernel_enclosures;
+        }
+        require(finite_ring_detail::interval_finite(uncached)
+            &&cold.lower[f]<=uncached.upper&&uncached.lower<=cold.upper[f]
+            &&cold.errors[f].quality==elliptic::BoundaryErrorQuality::CertifiedAbsolute
+            &&cold.errors[f].absolute_error<=control.face_absolute_target,
+            "actual quotient-cache face departed from the original uncached source enclosure/budget");
+    }
+    require(exterior>0&&cold.kernel_enclosures<uncached_kernels
+        &&cold.represented_leaf_evaluations==exterior*op.size(),
+        "normalized history omitted source coverage or saved no actual kernel work");
+    const auto warm=tree.ring_boundary(op,source,control);
+    require(warm.status==RingBoundaryStatus::Bounded&&warm.memo_hits>0
+        &&warm.kernel_enclosures==0&&warm.range_evaluations==0&&warm.agm_iterations==0,
+        "same actual source did not reuse already admitted certified intervals");
+    tree.require_current_ring(op,warm);
+    // Clearing only the memo preserves real source identity/generation. New
+    // cold traversal still benefits from WITHIN-call translation/reflection.
+    tree.clear_ring_memo();require(tree.ring_memo_size()==0,
+        "normalized integral history survived its original explicit clear");
+    const auto recold=tree.ring_boundary(op,source,control);
+    require(recold.status==RingBoundaryStatus::Bounded&&recold.memo_misses>0
+        &&recold.memo_hits>0&&recold.source_generation==cold.source_generation,
+        "memo clear altered source generation or suppressed new exact admissions");
+    const auto occupancy=tree.ring_memo_size();
+    require(std::fesetround(FE_DOWNWARD)==0,"cannot establish non-nearest cache fallback");
+    const auto directed=tree.ring_boundary(op,source,control);
+    require(directed.memo_hits==0&&directed.memo_admissions==0
+        &&tree.ring_memo_size()==occupancy,
+        "non-nearest traversal read or admitted mathematical history");
+    require(std::fesetround(FE_TONEAREST)==0,"cannot restore nearest after cache fallback");
+
+    // A real unsafe-exponent source is allowed to use the ORIGINAL raw key;
+    // normalization must decline it without altering any kernel coordinate.
+    auto raw_base=base;raw_base.origin[1]=0x1p-500;
+    raw_base.root_upper={2.5,2.,0.};raw_base.spacing={.5,.5,1.};
+    const elliptic::CompositePoisson raw_op(raw_base,make_cells(raw_base,false),
+        elliptic::BoundaryKind::CurvilinearIsolated);
+    require(!exact_axial_relative_endpoints(raw_op.lower(0,1),raw_op.upper(0,1),.5),
+        "actual unsafe-exponent source unexpectedly entered quotient mode");
+    GravityBoundary raw_tree(raw_op,{43});
+    std::vector<double> raw_density(raw_op.size());
+    for(int c=0;c<raw_op.size();++c)raw_density[c]=1.+raw_op.cells()[c].index[0];
+    raw_tree.update(raw_density,source);
+    const auto raw_cold=raw_tree.ring_boundary(raw_op,source,control);
+    const auto raw_warm=raw_tree.ring_boundary(raw_op,source,control);
+    require(raw_cold.status==RingBoundaryStatus::Bounded&&raw_cold.memo_admissions>0
+        &&raw_warm.status==RingBoundaryStatus::Bounded&&raw_warm.memo_hits>0,
+        "unsupported quotient exponent changed the exact original raw-key fallback");
+    std::cout<<"RZ_RING_AXIAL_MEMO_KEY_PASS cold_hits="<<cold.memo_hits
+        <<" cold_misses="<<cold.memo_misses<<" kernels="<<cold.kernel_enclosures
+        <<" uncached_kernels="<<uncached_kernels<<" raw_mode_hits="<<raw_warm.memo_hits
+        <<" integral_only=1 production_values=gated\n";
+}
+
 void finite_ring_tree_boundary_contract() {
+    finite_ring_axial_memo_key_contract();
     using namespace Physical::Gravity;
     auto rejects=[](auto function,const char* message) {
         bool rejected=false;try{function();}catch(const std::exception&){rejected=true;}

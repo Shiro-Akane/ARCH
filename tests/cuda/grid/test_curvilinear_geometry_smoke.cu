@@ -11,6 +11,7 @@
 #include <cmath>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -122,6 +123,33 @@ void independent_metrics()
             "independent Host thin-shell/polar measures");
     std::cout << "INDEPENDENT_METRIC_MAX_RELATIVE_ERROR host=" << host_error
               << " device=" << device_error << '\n';
+}
+
+/** Runtime-uploaded analytic covariant point gradients, not a diffusion step. */
+__global__ void independent_newtonian_kernel(
+    const ViscousGeometryCases::NewtonianPointCase* cases,int count,double* result)
+{
+    double maximum=0.;bool valid=true;
+    for(int index=0;index<count;++index) {
+        maximum=std::max(maximum,ViscousGeometryCases::newtonian_point_error(cases[index]));
+        valid=valid&&ViscousGeometryCases::newtonian_point_guards(cases[index]);
+    }
+    result[0]=maximum;result[1]=valid?1.:0.;
+}
+
+/** Execute the sole shared constitutive leaf on actual device case buffers. */
+void independent_newtonian()
+{
+    const auto inputs=ViscousGeometryCases::newtonian_point_cases();
+    DeviceBuffer<ViscousGeometryCases::NewtonianPointCase> cases(inputs.size());
+    cases.upload(inputs);DeviceBuffer<double> result(2);
+    independent_newtonian_kernel<<<1,1>>>(cases.get(),static_cast<int>(inputs.size()),result.get());
+    check(cudaGetLastError());const auto device=result.download();
+    require(std::isfinite(device[0])&&device[0]<=64.*std::numeric_limits<double>::epsilon()
+        &&device[1]==1.,"independent CUDA Newtonian constitutive point law");
+    ViscousGeometryCases::newtonian_constitutive();
+    std::cout<<"NEWTONIAN_DEVICE_CONSTITUTIVE_POINT cases="<<inputs.size()
+        <<" max_error="<<device[0]<<'\n';
 }
 
 void analytic_geometry_examples()
@@ -603,6 +631,7 @@ int main()
     try {
         check(probe);
         independent_metrics();
+        independent_newtonian();
         analytic_geometry_examples();
         viscous_diffusion_convergence();
         for (const char* geometry : {"cylindrical", "spherical"})

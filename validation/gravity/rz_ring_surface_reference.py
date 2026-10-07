@@ -26,7 +26,7 @@ corrections returned below already represent the FULL circle, with no extra
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fractions import Fraction
 import hashlib
 import importlib
@@ -42,6 +42,7 @@ MAX_CALLS = 100000
 TIMEOUT_SECONDS = 90.0
 CGS_G = Fraction(6.67430e-8)
 PROFILE = "native-ring-one-angle-kernels-1"
+MAX_GEOMETRY_MEMO_ENTRIES = 65536
 
 
 class ReferenceFailure(ValueError):
@@ -69,14 +70,25 @@ class Budget:
     calls: int = 0
     _full_domain_diagnostic: bool = False
     _matched_resolution: int = 0
+    _full_domain_extended: bool = False
+    # Exact mathematical geometry only; owned by this ONE cumulative request.
+    # Neither source/field authority nor source density is retained here.
+    _geometry_memo: _LeafGeometryMemo | None = field(default=None, init=False,
+                                                    repr=False, compare=False)
 
     @property
     def resource_profile(self) -> str:
         """Read one frozen internal policy; arbitrary/conflicting profiles fail."""
-        if type(self._full_domain_diagnostic) is not bool or type(self._matched_resolution) is not int:
+        if (type(self._full_domain_diagnostic) is not bool
+                or type(self._matched_resolution) is not int
+                or type(self._full_domain_extended) is not bool):
             raise ValueError("Invalid frozen reference resource profile")
-        if self._matched_resolution not in (0, 1, 2) or (self._matched_resolution and self._full_domain_diagnostic):
+        if (self._matched_resolution not in (0, 1, 2)
+                or sum((bool(self._matched_resolution), self._full_domain_diagnostic,
+                        self._full_domain_extended)) > 1):
             raise ValueError("Invalid/conflicting frozen reference resource profile")
+        if self._full_domain_extended:
+            return "full-domain-extended-1"
         if self._matched_resolution:
             return "matched-resolution-" + str(self._matched_resolution)
         return "full-domain-diagnostic-1" if self._full_domain_diagnostic else "bounded-request-1"
@@ -91,6 +103,7 @@ class Budget:
     def max_calls(self) -> int:
         """Read the ONE request's immutable-by-contract callback profile."""
         profile = self.resource_profile
+        if profile == "full-domain-extended-1": return 10000000
         if profile == "matched-resolution-1": return 6000000
         if profile == "matched-resolution-2": return 22000000
         return 1800000 if self._full_domain_diagnostic else MAX_CALLS
@@ -99,6 +112,7 @@ class Budget:
     def timeout_seconds(self) -> float:
         """Read the same aggregate wall profile used by every contribution."""
         profile = self.resource_profile
+        if profile == "full-domain-extended-1": return 600.0
         if profile == "matched-resolution-1": return 600.0
         if profile == "matched-resolution-2": return 1800.0
         return 240.0 if self._full_domain_diagnostic else TIMEOUT_SECONDS
@@ -112,6 +126,18 @@ class Budget:
         costs stay in their separate historical records; they are not reset.
         """
         return cls(time.monotonic(), _full_domain_diagnostic=True)
+
+    @classmethod
+    def full_domain_extended(cls) -> Budget:
+        """Start ONE explicit maintainer-only generic 600s/10000000 request.
+
+        Validation, all observers, callbacks and output share this clock. The
+        dense source needs its existing complete authentication/coverage, not
+        a fixed cell count. Precision, widths and every kernel stay unchanged.
+        The external campaign owner must include earlier costs in its own
+        frozen cap; choosing this profile does not reset a campaign budget.
+        """
+        return cls(time.monotonic(), _full_domain_extended=True)
 
     @classmethod
     def matched_resolution(cls, level: int) -> Budget:
@@ -144,10 +170,26 @@ class Budget:
 
     def record(self) -> dict[str, Any]:
         """Report measured local accounting separately from algorithm quality."""
-        return {"calls": self.calls, "max_calls": self.max_calls,
-                "wall_seconds": time.monotonic() - self.started,
-                "timeout_seconds": self.timeout_seconds,
-                "resource_profile": self.resource_profile}
+        result = {"calls": self.calls, "max_calls": self.max_calls,
+                  "wall_seconds": time.monotonic() - self.started,
+                  "timeout_seconds": self.timeout_seconds,
+                  "resource_profile": self.resource_profile}
+        if self._geometry_memo is not None:
+            result["geometry_memo"] = self._geometry_memo.record()
+        return result
+
+    def _memo_for(self, backend: Any) -> _LeafGeometryMemo:
+        """Borrow ONE run-local memo across calls sharing this actual Budget.
+
+        The original clock/calls/profile stay unchanged. Backend or precision
+        drift rejects reuse; a source/layout/density change is never inferred
+        from a previous request because every contribution is requalified.
+        """
+        self.check_time()
+        if self._geometry_memo is None:
+            self._geometry_memo = _LeafGeometryMemo(backend, self)
+        self._geometry_memo.require_context(backend)
+        return self._geometry_memo
 
 
 def rational(value: Any) -> Fraction:
@@ -169,7 +211,12 @@ def rational(value: Any) -> Fraction:
 
 @dataclass(frozen=True)
 class Leaf:
-    """One immutable full-azimuth piecewise-constant actual density rectangle."""
+    """Immutable full-ring rectangle with nonnegative integration density.
+
+    from_record preserves the actual physical source. The extended reference
+    can also construct internal positive-magnitude mathematical components;
+    their signed coefficients never become physical input records.
+    """
     identity: str
     L: Fraction
     H: Fraction
@@ -659,6 +706,175 @@ def integrate_leaf(leaf: Leaf, observer: Observer, backend: Any,
     return tuple(values)
 
 
+
+def _unit_geometry(leaf: Leaf, observer: Observer,
+                   precision: tuple[Any, ...],
+                   widths: tuple[Fraction, Fraction, Fraction]) -> tuple[Any, Leaf, Observer, int]:
+    """Map exact axial translation/reflection to a unit-density integral key.
+
+    Set Z=0 and retain EXACT a=A-Z,b=B-Z; no binary64 subtraction, mesh
+    inference or density union occurs. (a,b)->(-b,-a) preserves Phi/g_r and
+    reverses g_z, also on axis/contact by the continuous Newton force limit.
+    The key contains G,R,L,H,these relative endpoints, the actual method and
+    precision, and the actual qualifying unit-width request. IDs remain solely
+    in the caller's original record; no normalized identity is exported.
+    """
+    if len(widths) != 3 or any(width <= 0 for width in widths):
+        raise ReferenceFailure("Invalid qualified unit-density widths")
+    L,H,A,B,rho,R,Z = map(rational, (leaf.L,leaf.H,leaf.A,leaf.B,leaf.rho,observer.R,observer.Z))
+    if not (0 <= L < H and A < B and rho >= 0 and R >= 0):
+        raise ReferenceFailure("Invalid exact geometry memo contribution")
+    relative = (A-Z,B-Z)
+    reflected = (-relative[1],-relative[0])
+    sign = -1 if reflected < relative else 1
+    a,b = reflected if sign == -1 else relative
+    geometry = (CGS_G,R,L,H,a,b,precision)
+    key = geometry + (tuple(widths),)
+    return key, Leaf("unit-geometry-only",L,H,a,b,Fraction(1)), Observer("unit-origin-only",R,Fraction(0)), sign
+
+
+def _widths_meet(values: tuple[Any, Any, Any],
+                 widths: tuple[Fraction, Fraction, Fraction]) -> bool:
+    """Check actual outward rational endpoints, including scaling roundoff.
+
+    A requested tolerance or a memo admission label is never an interval proof.
+    Endpoint extraction uses the same exact fmpq serialization as the existing
+    reference, with no formatted midpoint or float certification.
+    """
+    return all(value.is_finite() and
+               Fraction(str(value.upper().fmpq()))-Fraction(str(value.lower().fmpq())) <= width
+               for value,width in zip(values,widths))
+
+
+class _LeafGeometryMemo:
+    """Bounded exact mathematical integral reuse, owned by ONE shared Budget.
+
+    Workflow: normalize exact translation/reflection, locate a qualified
+    unit-density enclosure, recheck its actual current unit/weighted widths,
+    otherwise evaluate/refine through the UNCHANGED integrate_leaf and SAME
+    cumulative budget. Multiply all three enclosing balls by actual rho;
+    reflection changes only g_z. Final all-source acceptance stays the caller's
+    ORIGINAL test. Two bounded maps hold at most65536 geometric entries;
+    saturation drops admissions, never contributions. No source/field cache,
+    backend installation, precision escalation or request-budget reset exists.
+    """
+    def __init__(self, backend: Any, budget: Budget, *, capacity: int | None = None):
+        """Capture actual backend/precision/profile; zero capacity is test-only bypass."""
+        capacity = MAX_GEOMETRY_MEMO_ENTRIES if capacity is None else capacity
+        if type(capacity) is not int or not 0 <= capacity <= 65536:
+            raise ReferenceFailure("Invalid bounded geometry memo capacity")
+        self.backend, self.budget, self.capacity = backend, budget, capacity
+        self.precision = self._precision(backend)
+        self.policy = (budget.started,budget.resource_profile,budget.max_calls,budget.timeout_seconds)
+        self.entries: dict[Any, tuple[Any, Any, Any]] = {}
+        self.latest: dict[Any, Any] = {}
+        self.hits = self.misses = self.refinements = self.admissions = 0
+        self.integration_requests = self.capacity_refusals = self.bypasses = 0
+        self.width_rejections = 0
+
+    @staticmethod
+    def _precision(backend: Any) -> tuple[Any, ...]:
+        """Read exact method/optional-backend precision metadata without changing it."""
+        try:
+            dps,bits,version = backend.ctx.dps,backend.ctx.prec,backend.__version__
+        except AttributeError as exc:
+            raise ReferenceFailure("Missing actual optional-backend precision") from exc
+        if type(dps) is not int or type(bits) is not int or dps <= 0 or bits <= 0 or not isinstance(version,str):
+            raise ReferenceFailure("Invalid actual optional-backend precision")
+        return PROFILE,version,dps,bits
+
+    def require_context(self, backend: Any) -> None:
+        """Reject backend/precision/resource drift; check wall time even on a hit."""
+        self.budget.check_time()
+        actual = (self.budget.started,self.budget.resource_profile,
+                  self.budget.max_calls,self.budget.timeout_seconds)
+        if backend is not self.backend or self._precision(backend) != self.precision or actual != self.policy:
+            raise ReferenceFailure("Geometry memo backend/precision/budget drift")
+
+    def _scaled(self, values: tuple[Any, Any, Any], rho: Fraction,
+                sign: int) -> tuple[Any, Any, Any]:
+        """Outward multiply actual rho and reflect axial force, never midpoint-rescale."""
+        factor = _exact(self.backend.arb,rho)
+        return values[0]*factor,values[1]*factor,values[2]*factor*sign
+
+    def _admit(self, key: Any, values: tuple[Any, Any, Any]) -> None:
+        """Replace a refined geometry entry or decline a saturated admission."""
+        geometry = key[:-1]
+        previous = self.latest.get(geometry)
+        if previous is None and len(self.entries) >= self.capacity:
+            self.capacity_refusals += 1
+            return
+        if previous is not None:
+            del self.entries[previous]
+        self.entries[key] = values
+        self.latest[geometry] = key
+        self.admissions += 1
+
+    def integrate(self, leaf: Leaf, observer: Observer,
+                  target_widths: tuple[Fraction, Fraction, Fraction],
+                  unit_widths: tuple[Fraction, Fraction, Fraction]) -> tuple[Any, Any, Any]:
+        """Return one actual weighted contribution or fail within the SAME budget.
+
+        unit_widths initially=min original allowance/(N*maxrho) componentwise
+        for this current source, even when another call shares the budget. The
+        extra min(target/rho) is exact and supports tighter later requests.
+        If cached or fresh actual width is insufficient, halve only the internal
+        goal and reintegrate at unchanged precision/depth/cumulative limits.
+        A finite lower precision floor therefore yields WorkLimit, never PASS.
+        """
+        self.require_context(self.backend)
+        if len(target_widths) != 3 or any(width <= 0 for width in target_widths):
+            raise ReferenceFailure("Invalid original contribution widths")
+        rho = rational(leaf.rho)
+        if rho < 0:
+            raise ReferenceFailure("Negative actual density in geometry memo")
+        if not rho:
+            return self.backend.arb(0),self.backend.arb(0),self.backend.arb(0)
+        if not self.capacity:
+            self.bypasses += 1
+            # Unmemoized diagnostic retains the original full-density kernel.
+            values = integrate_leaf(leaf,observer,self.backend,target_widths,self.budget)
+            if not _widths_meet(values,target_widths):
+                raise IntegralFailure("Unmemoized actual contribution exceeds original width")
+            return values
+        goals = tuple(min(unit,target/rho) for unit,target in zip(unit_widths,target_widths))
+        key,normalized,origin,sign = _unit_geometry(leaf,observer,self.precision,goals)
+        previous = self.latest.get(key[:-1])
+        if previous is not None:
+            values = self.entries[previous]
+            scaled = self._scaled(values,rho,sign)
+            if _widths_meet(values,goals) and _widths_meet(scaled,target_widths):
+                self.hits += 1
+                self.require_context(self.backend)
+                return scaled
+            self.width_rejections += 1
+            self.refinements += 1
+        else:
+            self.misses += 1
+        while True:
+            self.require_context(self.backend)
+            self.integration_requests += 1
+            values = integrate_leaf(normalized,origin,self.backend,goals,self.budget)
+            self.require_context(self.backend)
+            scaled = self._scaled(values,rho,sign)
+            if _widths_meet(values,goals) and _widths_meet(scaled,target_widths):
+                key = key[:-1]+(goals,)
+                self._admit(key,values)
+                return scaled
+            self.width_rejections += 1
+            self.refinements += 1
+            goals = tuple(width/2 for width in goals)
+
+    def record(self) -> dict[str, Any]:
+        """Report work/admission observations separately from any certificate."""
+        return {"profile":"run-local-exact-unit-ring-geometry-1",
+                "capacity":self.capacity,"entries":len(self.entries),
+                "hits":self.hits,"misses":self.misses,"refinements":self.refinements,
+                "integration_requests":self.integration_requests,"admissions":self.admissions,
+                "width_rejections":self.width_rejections,"capacity_refusals":self.capacity_refusals,
+                "unmemoized_bypasses":self.bypasses,"statistics_only":True}
+
+
 def _ball_record(ball: Any) -> dict[str, str]:
     """Serialize outward exact endpoint rationals, not formatted midpoints.
 
@@ -669,6 +885,104 @@ def _ball_record(ball: Any) -> dict[str, str]:
     return {"lower_rational": str(ball.lower().fmpq()),
             "upper_rational": str(ball.upper().fmpq()),
             "ball": str(ball)}
+
+
+def _exact_density_contrast(leaves: tuple[Leaf, ...], root_bounds: Any,
+                            budget: Budget) -> tuple[tuple[tuple[Leaf, int], ...], dict[str, Any]]:
+    """Decompose an ALREADY validated dense source without changing its identity.
+
+    Workflow: retain every supplied positive/zero physical leaf; aggregate its
+    EXACT full-ring volume/pi by actual Fraction density; select maximum-volume
+    density (smallest density breaks exact ties); construct a mathematical
+    background rectangle and nonzero signed contrasts. The physical identity
+        rho(x) = c*1_Omega(x) + sum_i (rho_i-c)*1_Omega_i(x)
+    follows from the caller's original disjoint full-root coverage proof. No
+    tolerance, density clipping, field/RHS inference or geometry rounding occurs.
+    Negative coefficients live OUTSIDE positive-magnitude Leaf integration.
+    This helper is not a substitute for validate_dense_source or Core authority.
+    """
+    budget.check_time()
+    if not leaves or len(root_bounds) != 4:
+        raise ReferenceFailure("Missing validated contrast source/root")
+    L,H,A,B=map(rational,root_bounds)
+    if not (0 <= L < H and A < B):
+        raise ReferenceFailure("Invalid exact contrast root")
+    volumes: dict[Fraction, Fraction]={}
+    volume_total=mass_total=Fraction(0)
+    for leaf in leaves:
+        budget.check_time()
+        if not (L <= leaf.L < leaf.H <= H and A <= leaf.A < leaf.B <= B
+                and leaf.rho >= 0):
+            raise ReferenceFailure("Invalid physical leaf in exact density contrast")
+        volume=(leaf.H**2-leaf.L**2)*(leaf.B-leaf.A)
+        volumes[leaf.rho]=volumes.get(leaf.rho,Fraction(0))+volume
+        volume_total+=volume;mass_total+=leaf.rho*volume
+    root_volume=(H**2-L**2)*(B-A)
+    if volume_total != root_volume:
+        raise ReferenceFailure("Exact contrast source volume differs from validated root")
+    background=min(volumes,key=lambda rho:(-volumes[rho],rho))
+    terms=[]
+    if background:
+        terms.append((Leaf("mathematical-background",L,H,A,B,background),1))
+    positive=negative=zeros=0;represented_mass=background*root_volume
+    for leaf in leaves:
+        budget.check_time()
+        delta=leaf.rho-background
+        if not delta:
+            zeros+=1
+            continue  # ONLY exact Fraction equality permits omission.
+        sign=1 if delta > 0 else -1
+        terms.append((Leaf("mathematical-contrast:"+leaf.identity,
+                           leaf.L,leaf.H,leaf.A,leaf.B,abs(delta)),sign))
+        positive+=sign > 0;negative+=sign < 0
+        represented_mass+=delta*(leaf.H**2-leaf.L**2)*(leaf.B-leaf.A)
+    if represented_mass != mass_total:
+        raise ReferenceFailure("Exact density contrast changed the source mass")
+    metadata=dict(profile="exact-volume-modal-density-contrast-1",
+        background_density_exact=str(background),
+        background_selected_volume_over_pi_exact=str(volumes[background]),
+        original_leaf_count=len(leaves),integration_term_count=len(terms),
+        positive_contrast_terms=positive,negative_contrast_terms=negative,
+        zero_contrast_leaves=zeros,root_bounds_exact=list(map(str,(L,H,A,B))),
+        root_volume_over_pi_exact=str(root_volume),
+        original_mass_over_pi_exact=str(mass_total),
+        represented_mass_over_pi_exact=str(represented_mass),
+        exact_dense_coverage="original-validated-disjoint-full-root",
+        science_accepted=False,core_binding_qualified=False)
+    return tuple(terms),metadata
+
+
+def _integrate_density_contrast(terms: tuple[tuple[Leaf, int], ...],
+                                observer: Observer, allowances: tuple[Fraction, Fraction, Fraction],
+                                memo: _LeafGeometryMemo) -> list[Any]:
+    """Outward sum exact signed terms under ONE unchanged shared budget.
+
+    Each nonzero term gets allowance/(4*N), reserving accumulation room.
+    Its unit-density work goal is local/abs(coefficient), never the physical
+    source's global maximum density. The original memo checks actual unit and
+    weighted widths; this owner checks the signed weighted widths again. The
+    original final all-source width gate remains mandatory after outward sum.
+    Negation is exact ball negation, outside the positive-magnitude memo.
+    """
+    if memo.budget.resource_profile != "full-domain-extended-1":
+        raise ReferenceFailure("Density contrast integration requires the explicit extended profile")
+    total=[memo.backend.arb(0),memo.backend.arb(0),memo.backend.arb(0)]
+    if not terms:
+        memo.require_context(memo.backend)
+        return total
+    local=tuple(width/(4*len(terms)) for width in allowances)
+    for leaf,sign in terms:
+        memo.require_context(memo.backend)
+        if type(sign) is not int or sign not in (-1,1) or leaf.rho <= 0:
+            raise ReferenceFailure("Invalid signed mathematical density term")
+        unit=tuple(width/leaf.rho for width in local)
+        values=memo.integrate(leaf,observer,local,unit)
+        signed=tuple(value if sign == 1 else -value for value in values)
+        if not _widths_meet(values,local) or not _widths_meet(signed,local):
+            raise IntegralFailure("Exact contrast weighted contribution exceeds original allocation")
+        for index in range(3):
+            total[index]+=signed[index]
+    return total
 
 
 def evaluate_reference(source: dict[str, Any], root_bounds: Any,
@@ -691,6 +1005,8 @@ def evaluate_reference(source: dict[str, Any], root_bounds: Any,
     if not isinstance(budget, Budget):
         raise TypeError("Invalid shared reference budget")
     stamp = None
+    decomposition = None
+    terms = None
     rows = []
     try:
         stamp = input_stamp(source, root_bounds, source_identity, observer_records)
@@ -704,16 +1020,26 @@ def evaluate_reference(source: dict[str, Any], root_bounds: Any,
         allowances = tuple(rational(target_widths[key]) for key in ("Phi", "g_r", "g_z"))
         if any(value <= 0 for value in allowances):
             raise ReferenceFailure("Original interval width allowances must be positive")
+        if budget.resource_profile == "full-domain-extended-1":
+            terms,decomposition=_exact_density_contrast(leaves,root_bounds,budget)
         backend = load_optional_flint(existing_dependency_directory)
         # Deterministic strict error allocation is an integration request only;
         # outward all-leaf accumulation is checked against the ORIGINAL widths.
         local = tuple(value / len(leaves) for value in allowances)
+        maxrho = max(leaf.rho for leaf in leaves)
+        # Allocate from THIS full source, not a cached source's count/density.
+        # All-zero sources still retain every exact leaf/identity without division.
+        unit = tuple(value/maxrho for value in local) if maxrho else local
+        memo = budget._memo_for(backend)
         for observer in observers:
             total = [backend.arb(0), backend.arb(0), backend.arb(0)]
-            for leaf in leaves:
-                values = integrate_leaf(leaf, observer, backend, local, budget)
-                for index in range(3):
-                    total[index] += values[index]
+            if terms is None:
+                for leaf in leaves:
+                    values = memo.integrate(leaf, observer, local, unit)
+                    for index in range(3):
+                        total[index] += values[index]
+            else:
+                total=_integrate_density_contrast(terms,observer,allowances,memo)
             if time.monotonic() - budget.started >= budget.timeout_seconds:
                 raise WorkLimit(f"global timeout={budget.timeout_seconds:g} seconds reached")
             finite = all(value.is_finite() for value in total)
@@ -732,6 +1058,7 @@ def evaluate_reference(source: dict[str, Any], root_bounds: Any,
                 "identity": stamp, "target_widths_exact": dict(zip(("Phi", "g_r", "g_z"),
                                                                      map(str, allowances))),
                 "rows": rows, "budget": budget.record(),
+                **({"density_decomposition": decomposition} if decomposition is not None else {}),
                 "backend": {"python_flint_version": backend.__version__, "ctx_dps": backend.ctx.dps},
                 "scope": "Exact supplied dense piecewise-constant full rings and supplied point observers only",
                 "remaining_gap": "Actual canonical Core source/observer authentication and Runtime/scientific consumer acceptance"}
@@ -741,4 +1068,5 @@ def evaluate_reference(source: dict[str, Any], root_bounds: Any,
                 "certified": False, "science_accepted": False,
                 "core_binding_qualified": False, "identity": stamp,
                 "rows": rows, "budget": budget.record(), "failure": str(exc),
+                **({"density_decomposition": decomposition} if decomposition is not None else {}),
                 "scope": "No complete all-observer mathematical certificate; earlier rows do not promote a subset"}

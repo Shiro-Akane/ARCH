@@ -138,18 +138,22 @@ These data files support reproduction and independent review; they are not setup
 ## Production self-gravity
 
 `gravity_type=self` runs composite-AMR Poisson solves on CPU and CUDA for Cartesian
-periodic 1D–3D and isolated 3D domains. Tested isolated spherical/cylindrical
-1D and full-azimuth 2D polar and 3D cylindrical/spherical domains, including
-origin, axis and pole joins, also run on both backends. Hydro, burning and
-thermal-diffusion combinations have been checked. CPU manufactured solutions,
-independent boundary and Gauss checks, AMR coupling and restart are recorded in
-the [curved-coordinate CPU record](results/p11-p12-20260923/README.md); CUDA analytic radial
-checks, same-input curved four-module parity, bidirectional restart and local
-performance are in the [curved-coordinate CUDA record](results/p13-20260924/README.md). Explicit Dirichlet/Neumann/linear Robin and user potential conditions support
-all three geometries and valid azimuth sectors. Isolated mass models still require
-full azimuth; external mass and a Jeans-specific refinement indicator are outside
-this scope. Start with [GravityBox](../../simulation/GravityBox/README.md)
-for reusable inputs. The [Cartesian gravity acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
+periodic 1D–3D and isolated 3D domains. The identified curved-coordinate records
+cover isolated spherical/cylindrical 1D, full-azimuth 2D polar and 3D
+cylindrical/spherical inputs, including origin, axis and pole joins. Their
+manufactured solutions, independent boundary/Gauss checks, AMR, coupling and
+restart evidence remain attached to those inputs and binaries: see the
+[curved-coordinate CPU record](results/p11-p12-20260923/README.md) and
+[curved-coordinate CUDA record](results/p13-20260924/README.md).
+
+Current two-dimensional cylindrical geometry resolves to axisymmetric `(r,z)`.
+The historical polar records therefore do not qualify this route; its current
+scope is described [below](#axisymmetric-rz-verification). The curved-coordinate
+records also cover Dirichlet, Neumann, linear Robin and user potential
+conditions in their stated geometries. Isolated mass sources require the full
+azimuth; external mass is outside those isolated-source records. Jeans
+refinement diagnostics have their own current checks. Start with
+[GravityBox](../../simulation/GravityBox/README.md) for reusable inputs. The [Cartesian gravity acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
 records numerical, coupling, restart and device checks. The [radial field and AMR record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The
 [earlier periodic solver record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
 periodic scope.
@@ -160,7 +164,7 @@ field/domain checks, user boundaries and selected coupling (numpy/h5py). `--quic
 `arch_composite_poisson 3` checks three-dimensional uniform and composite
 manufactured solutions; `contract` checks failure and hierarchy invariants.
 `check_cuda_compatibility.py --cpu-arch <CPU> --cuda-arch <CUDA> --output <new directory>`
-qualifies actual device gravity; `--benchmark-only --benchmark-time 0.1` measures
+checks actual device gravity in its supported routes; `--benchmark-only --benchmark-time 0.1` measures
 representative local workloads through the same physical endpoint. Runs alternate after
 warmup; `--benchmark-repeats` defaults to five. Report complete elapsed time, ranges and
 final-field parity. `--baseline-cpu-arch` adds a separate frozen/current pure-CPU regression
@@ -204,6 +208,21 @@ are optional developer work, independent of ARCH build, tests and CI.
 
 ## Axisymmetric `(r,z)` verification
 
-The native axisymmetric route is an internal verification candidate. Its CPU checks cover real reflecting/user boundaries, original Euler/RK2/RK3 external-source stages and angular diffusion refusal/rollback. Continuous self-gravity, complete coupling and Device publication have separate acceptance gates. The [current CPU record](results/release-closure-20261007/native-external-angular-cpu-summary.json) identifies the tested source and original budgets.
+Native self-gravity remains an internal verification candidate. The
+axisymmetric route uses physical `(r,z)` coordinates, volume-weighted
+mass/energy and angular-momentum measures. Its CPU records cover shared
+reconstruction and thermodynamic checks, real reflecting/user boundaries,
+Euler/RK2/RK3 external-source stages, angular diffusion rejection/rollback and
+AMR transfer/accounting. The [external-source CPU record](results/release-closure-20261007/native-external-angular-cpu-summary.json)
+identifies its tested source and original budgets.
+
+A [short dynamic four-module CPU run](results/release-closure-20261007/native-dynamic-four-module-complete-summary.json)
+completed two macros with an actual regrid, coarse-fine routes and five genuine
+self-gravity fields. This verifies the recorded activity and accounting at its
+short physical endpoint. Independent continuous self-gravity and total-energy
+acceptance, warm fresh-process restart and Native Device coupling remain
+separate exits. The complete release also requires current GUI interactions,
+sustained runs and same-endpoint performance records; historical polar results
+and lower-level Device checks do not supply these outcomes.
 
 The optional [full-ring reference](rz_ring_surface_reference.py) computes outward intervals for potential and both force components from explicit dense piecewise-constant ring sources, including contact sites. It requires an already installed `python-flint` backend; ARCH construction and CI have no such dependency. Exact supplied geometry, complete coverage and shared work limits are checked. Mathematical intervals qualify the supplied input only; actual Core source/observer identity and physical error must be checked separately. The [reference record](results/release-closure-20261007/ring-surface-reference-summary.json) preserves this scope.

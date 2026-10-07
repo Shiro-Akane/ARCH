@@ -12,6 +12,10 @@ The [gravity summary](gravity/README.md) covers external and self gravity, inclu
 
 ## Source-identified CPU/CUDA results
 
+The campaigns below retain their original source and input identities. Curved
+2D cylindrical records that used a polar chart are historical; the current
+axisymmetric `(r,z)` checks are described in the [gravity summary](gravity/README.md#axisymmetric-rz-verification).
+
 | Area | Recorded CPU/CUDA checks | Record |
 | --- | --- | --- |
 | Smooth hydro | PCM/MUSCL/PPM spatial convergence at 64/128/256 cells; independent Euler/RK2/RK3 time accuracy; 1,016-step periodic advection | [hydro](hydro/README.md) |
@@ -33,23 +37,38 @@ The [gravity summary](gravity/README.md) covers external and self gravity, inclu
 | Bounded memory capacity | Regrid migration, a 16,384-row cuDSS matrix, generated burning and AMR applications; all observed dynamic allocations released | [Detailed capacity records](#detailed-verification-records) |
 | Focused backend instrumentation | Memcheck and racecheck each pass 23 complete routes, including weak thermodynamics and real generated cuDSS burning; clean memory and race reports | [Detailed device checks](#detailed-verification-records) |
 
-The uniform application matrix
+The recorded historical uniform application matrix
 contains 22 cases, 180 CPU/CUDA executions and 90 comparisons. The
 generated-network matrix
 adds six cases, 48 executions and 24 comparisons, including actual CPU KLU and
 GPU cuDSS selection for the 32-equation audit31 network. Module summaries link
 the independent scientific checks and preserve their original budgets.
 
-The complete Release regression
-passes 98 tests, and the CPU-only regression
-passes 31. The complete Debug regression
-also passes all 98 tests without skips. Focused memcheck and racecheck each pass
-all 23 routes. Their sparse tests cover three ODEs, both storage sizes and four
+The linked historical Release and Debug regressions each passed 98 tests
+without skips; their CPU-only regression passed 31. Those totals describe the
+identified binaries in the records below. The associated focused memcheck and
+racecheck each passed all 23 routes. Their sparse tests cover three ODEs, both storage sizes and four
 subdivisions with the original numerical budgets. Ordinary scientific runs and
 memcheck retain the full `1e-10 s` interval; racecheck uses a separate `1e-12 s`
 observation interval. The shorter instrumentation run does not replace the
 full scientific trajectory. Host/device capacity and optimized core-build
 measurements are available in the detailed records below.
+
+## Current verification selection
+
+The current configured CTest list contains 76 entries: 68 numerical/API checks
+and eight tooling wrappers. Registration alone is not an execution result.
+Hosted CI selects the numerical/API entries once and runs their tooling owners
+in its separate job; [the CI guide](../.github/workflows/README.md) explains the
+matching discovery and completion checks.
+
+Current Native RZ records include shared mathematical and owner checks plus a
+short four-module AMR run. Independent continuous self-gravity/energy acceptance,
+warm fresh-process restart, Native Device coupling, real desktop interactions,
+sustained execution and formal paired timings retain separate acceptance exits.
+See the [gravity summary](gravity/README.md#axisymmetric-rz-verification) and
+[release verification plan](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md)
+for their scopes.
 
 ## Error conventions
 

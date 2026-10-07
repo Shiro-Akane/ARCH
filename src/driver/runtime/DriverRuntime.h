@@ -138,6 +138,7 @@ public:
             std::addressof(eos),species,bounds,native_rz_eos_binding_revision_};
         // Every successful rebind invalidates any previous attempt witness,
         // even if the same object address, bounds and species are reused.
+        native_host_current_boundary_stamp_.reset();
     }
     /** Attach the exact borrowed Host candidate domain and its real BC context.
      * Bind before actual BC/exchange starts; refresh after a BC time/purpose
@@ -259,6 +260,13 @@ private:
         std::uint64_t revision = 0;
     };
     std::array<UserBoundaryStamp, 3> user_boundary_stamps_{};
+    /** Completed native Host Current Hydro identity, with empty opaque BC
+     * storage leases. It owns metadata only; actual EOS validation is always
+     * repeated. Defined with the boundary implementation to avoid exposing
+     * boundary candidate types through the Runtime interface.
+     */
+    struct NativeHostCurrentBoundaryStamp;
+    std::shared_ptr<NativeHostCurrentBoundaryStamp> native_host_current_boundary_stamp_;
     std::vector<RegridMeasurement> regrid_measurements;
     std::vector<NativeCoarseningVetoRecord> native_coarsening_veto_records_;
     // Surface records are rebuilt after a topology epoch changes. Integrated

@@ -1,0 +1,53 @@
+{
+  "scope": "Public fixed-partition continuum/point skew proof only; no algorithm/trajectory qualification",
+  "provider": "Real DeepSeek Flash high API",
+  "runtimeSeconds": 22.36,
+  "tokenUsage": {
+    "input_tokens": 1681,
+    "cached_input_tokens": 384,
+    "output_tokens": 5040,
+    "noncached_input_tokens": 1297,
+    "reasoning_tokens": 4626,
+    "visible_output_tokens": 414
+  },
+  "estimatedCostUsd": {
+    "currency": "USD",
+    "off_peak": 0.0032197,
+    "peak": 0.0064394,
+    "status": "estimate from reported token usage; API billing is authoritative",
+    "pricing_snapshot": "2026-10-02.1"
+  },
+  "actualInvoiceCost": "UNKNOWN",
+  "rootActiveCost": "UNKNOWN",
+  "independentReview": {
+    "accepted": true,
+    "acceptance_status": "ACCEPTED_PUBLIC_FIXED_PARTITION_ENERGY_SKEW_PROOF_ONLY",
+    "independentChecks": {
+      "exactFractionAlgebraCases": 128,
+      "signedChangeIncluded": true,
+      "fixedWeightedSymmetricMeanMapUsed": true,
+      "independentErrorCounterexample": {
+        "deltaDensity": 0,
+        "trueNewtonSkew": 0,
+        "numericalSkew": "23/100",
+        "allowedIndependentPointErrors": "plus/minus1/100"
+      },
+      "proof": "Bounded compact source ensures absolute Fubini integrability; true-volume Newton pairing symmetric; exact density difference linear; take signed absolute source bound and triangle inequality. Numerical independent point errors separately charged without delta scaling."
+    },
+    "limits": [
+      "Geometric mean-point bound is a stated separately proven premise, not reapproved by worker",
+      "No signed production solve, positivity removal, new field tolerance or public Native qualification",
+      "Fixed source support/true volumes/midpoints/topology/G and complete rigorous point errors required",
+      "Real solver/spatial error correlations and linearity not assumed",
+      "Bound alone does not create total-energy or trajectory acceptance"
+    ],
+    "softwareAccepted": false
+  },
+  "parallelOverlap": "Actual28action CPUproductionbuild; no shared simulation resources",
+  "blockingWaitSeconds": 0,
+  "extraFormalRepairCalls": 0,
+  "repeatOfOldPairIdentity": false,
+  "sourceRawExported": false,
+  "knownTransportDeliveryFailuresThisLogicalTask": 0,
+  "recommendation": "Keep bounded public mathematical counterexample review; no single-trial general speed claim"
+}

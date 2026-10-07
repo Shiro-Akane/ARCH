@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <cfenv>
 #include <cmath>
 #include <functional>
 #include <limits>
@@ -503,7 +504,10 @@ RingBoundaryBudgetProposal GravityBoundary::propose_ring_budget(
         ?RingBudgetStatus::Proposed:RingBudgetStatus::ZeroBudget;
     return result;
 }
-/** Hash all exact input words; no rounded-coordinate or density key is used. */
+/** Hash exact tagged key words, including BOTH relative-endpoint residuals.
+ * A scalar-potential translation/reflection equivalence never changes the
+ * original signed enclosure or source/field generation checks.
+ */
 std::size_t GravityBoundary::RingMemoHash::operator()(const RingMemoKey& key) const noexcept {
     std::size_t hash=0;
     for(const auto word:key.words)
@@ -514,7 +518,8 @@ std::size_t GravityBoundary::RingMemoHash::operator()(const RingMemoKey& key) co
 void GravityBoundary::clear_ring_memo() noexcept {ring_memo_.clear();}
 /** Memoize only original successful leaf/quartet enclosures, never tree authority.
  * Workflow: validate the original inputs before lookup; use exact geometry/G
- * words and current quartet eligibility; recheck the current precision/box
+ * words or proven exact axial-relative words and current quartet eligibility;
+ * disable history outside nearest rounding; recheck the current precision/box
  * request; otherwise execute the original kernel and lazily admit its Bounded
  * result. Every caller still charges the original traversal/global work budget.
  * Allocation failure merely prevents admission; it cannot alter a valid result.
@@ -528,14 +533,24 @@ RingPotentialEnclosure GravityBoundary::memoized_ring_potential(
         &&density>0.&&std::isnormal(density)&&G>0.&&std::isnormal(G)
         &&std::isfinite(control.relative_target)&&control.relative_target>=0.
         &&std::isfinite(control.absolute_target)&&control.absolute_target>=0.
-        &&control.maximum_boxes>0&&control.maximum_boxes<=65536;
+        &&control.maximum_boxes>0&&control.maximum_boxes<=65536
+        &&std::fegetround()==FE_TONEAREST;
     RingMemoKey key;
     decltype(ring_memo_)::iterator found=ring_memo_.end();
     if(eligible) {
-        key.words={std::bit_cast<std::uint64_t>(rl),std::bit_cast<std::uint64_t>(rh),
-            std::bit_cast<std::uint64_t>(zl),std::bit_cast<std::uint64_t>(zh),
-            std::bit_cast<std::uint64_t>(ro),std::bit_cast<std::uint64_t>(zo),
-            std::bit_cast<std::uint64_t>(G),quartet?1ULL:0ULL};
+        // Mode 0 retains the exact original raw geometry. Mode 1 stores the
+        // complete exact relative endpoints, canonical under axial reflection.
+        // Distinct modes cannot collide, even when unused words are zero.
+        key.words={0ULL,std::bit_cast<std::uint64_t>(rl),std::bit_cast<std::uint64_t>(rh),
+            std::bit_cast<std::uint64_t>(ro),std::bit_cast<std::uint64_t>(G),quartet?1ULL:0ULL,
+            std::bit_cast<std::uint64_t>(zl),0ULL,std::bit_cast<std::uint64_t>(zh),0ULL,
+            std::bit_cast<std::uint64_t>(zo)};
+        if(const auto relative=ring_memo_detail::exact_axial_relative_endpoints(zl,zh,zo)) {
+            key.words[0]=1ULL;
+            for(std::size_t word=0;word<relative->size();++word)
+                key.words[6+word]=std::bit_cast<std::uint64_t>((*relative)[word]);
+            key.words[10]=0ULL;
+        }
         found=ring_memo_.find(key);
         if(found!=ring_memo_.end()) {
             RingPotentialEnclosure reused;

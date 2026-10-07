@@ -573,10 +573,13 @@ void ring_execution_identity() {
     require(tighter.memo_hits==0&&tighter.memo_misses>0
         &&tighter.status!=RingBoundaryStatus::Bounded,
         "memo converted a tighter zero target into successful convergence");
-    // Clear does not change identity/generation, but the next evaluation performs fresh work.
+    // Clear retires ALL previous-call entries without changing source authority.
+    // Exact axial quotienting can create/reuse new equivalent entries DURING
+    // the next cold traversal; those within-call hits are not retained history.
     tree.clear_ring_memo();
+    require(tree.ring_memo_size()==0,"numeric-history clear retained previous-call entries");
     execution->run(EvaluateRingBoundary{&tree,&op,&scaled_identity,&scaled_control,&scaled});
-    require(scaled.memo_hits==0&&scaled.memo_misses>0&&scaled.memo_admissions>0
+    require(scaled.memo_misses>0&&scaled.memo_admissions>0
         &&scaled.kernel_enclosures>0&&scaled.source_generation==scaled_generation
         &&scaled.status==RingBoundaryStatus::Bounded,
         "numeric-history clear retained memo work or reset actual source authority");

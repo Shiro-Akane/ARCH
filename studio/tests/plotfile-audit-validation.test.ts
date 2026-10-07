@@ -61,3 +61,20 @@ test('Inspector no-ghost indices reverse x1-fastest storage for non-square 2D/3D
  assert.throws(()=>storedCellIndices({cellShape:[3,5]},1,14));
  assert.throws(()=>storedCellIndices({cellShape:[3,5]},1,30));
 });
+
+import {POINT_BOUNDARY_RULE,validPointEvidence,pointMatchesNativeCell} from '../src/host/plotfilePoint.ts';
+test('3D point evidence requires a finite z domain and matches the returned native z bounds',()=>{
+ const request={field:'DENS',point:[3.5,2.5,2]};
+ const evidence={version:'candidate-native-point-1' as const,...request,rule:POINT_BOUNDARY_RULE,
+  domain:{x:[1,3.5] as [number,number],y:[1,2.5] as [number,number],z:[1,2] as [number,number]},scannedCells:30,matchCount:1 as const};
+ assert.ok(validPointEvidence(evidence,request,30,3));
+ for(const domain of [{x:[1,3.5],y:[1,2.5]}, {...evidence.domain,z:[1,NaN]},
+  {...evidence.domain,z:[2,1]}, {...evidence.domain,z:[1,2],world:true}])
+  assert.equal(validPointEvidence({...evidence,domain},request,30,3),false);
+ assert.equal(validPointEvidence(evidence,{field:'DENS',point:[3.5,2.5]},30,2),false);
+ assert.equal(validPointEvidence({...evidence,scannedCells:29},request,30,3),false);
+ const native={lower:{x1:[3],x2:[2],x3:[1.5]},upper:{x1:[3.5],x2:[2.5],x3:[2]}};
+ assert.ok(pointMatchesNativeCell(native,request,evidence));
+ assert.equal(pointMatchesNativeCell({...native,upper:{...native.upper,x3:[1.75]}},request,evidence),false);
+ assert.equal(pointMatchesNativeCell(native,request,{...evidence,domain:{...evidence.domain,z:[1,2.5]}}),false);
+});

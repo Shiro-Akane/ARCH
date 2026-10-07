@@ -130,12 +130,21 @@ async function buildReply(buildDirectory:string,kind:string){
 
 export async function readBuildToolchainEvidence(buildDirectory:string){
  const {build,replyFile}=await buildReply(buildDirectory,'toolchains');
- const data=await readCMakeToolchainEvidence(build,replyFile);
- if(data.compilers.some(c=>c.id==='GNU'&&c.language==='CXX')){
-  const selection=await readBuildLinkerSelection(build);
-  return readCMakeToolchainEvidence(build,replyFile,compilerProbe,selection.programName);
- }
- return data;
+ // Read only the bounded descriptor to decide whether GNU CXX needs the
+ // actual ARCH linker selection. Do not probe or hash the full toolchain yet.
+ const bytes=await boundedFile(replyFile,8*1024*1024),data:unknown=JSON.parse(bytes.toString('utf8'));
+ if(!object(data)||data.kind!=='toolchains'||!object(data.version)||data.version.major!==1||
+    !Array.isArray(data.toolchains)||!data.toolchains.length||data.toolchains.length>16)
+  throw new Error('Incompatible CMake toolchain reply.');
+ const hasGnuCxx=data.toolchains.some(entry=>object(entry)&&entry.language==='CXX'&&
+  object(entry.compiler)&&entry.compiler.id==='GNU');
+ // Non-GNU fixtures retain their old contract: a codemodel is not required.
+ const selectedProgram=hasGnuCxx?(await readBuildLinkerSelection(build)).programName:undefined;
+ const evidence=await readCMakeToolchainEvidence(build,replyFile,compilerProbe,selectedProgram);
+ // A descriptor replacement cannot change the GNU/selection decision midway.
+ if(evidence.replySha256!==createHash('sha256').update(bytes).digest('hex'))
+  throw new Error('Toolchain reply changed while selecting linker.');
+ return evidence;
 }
 /** Fingerprint fixed Host tools; cache program paths are never executed. */
 export async function readBuildGeneratorEvidence(sourceRoot:string,buildDirectory:string,hostCmake='/usr/bin/cmake'):Promise<GeneratorToolEvidence[]>{

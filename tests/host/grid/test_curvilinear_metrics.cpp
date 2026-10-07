@@ -1932,6 +1932,7 @@ int main(int argc,char** argv)
     RzReconstructionCases::native_profile();
     test_rz_supported_density();
     RzViscousCases::azimuthal_operator();
+    ViscousGeometryCases::newtonian_constitutive();
     ViscousGeometryCases::convergence("cpu", evaluate);
     ViscousGeometryCases::radial_origin("cpu", evaluate);
     ViscousGeometryCases::density_stability("cpu", evaluate);

@@ -5,6 +5,7 @@
 #include "data/FluidState.h"
 #include "grid/GridGeometryView.h"
 #include "grid/Grid.h"
+#include "numerics/diffusion/NewtonianViscousStress.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -235,6 +236,154 @@ void density_stability(const char* backend, Evaluate evaluate)
                   << " contrast=" << contrast << " minimum_entry=" << stability.minimum_entry
                   << " maximum_row_sum=" << stability.maximum_row_sum << '\n';
     }
+}
+
+/** Independent point-law inputs/closed analytical expectations, not a PDE oracle.
+ * In RZ the physical component order is (r,z,phi). Gradients below include
+ * the true connections G_rphi=-u_phi/r and G_phiphi=u_r/r through their exact
+ * regular polynomial values, including r=0; the production law divides by no
+ * radius. mu=rho*nu varies with z in the shear/swirl examples. Cartesian 1D
+ * retains the same three-dimensional Stokes trace subtraction.
+ */
+struct NewtonianPointCase {
+    NewtonianViscousStress::VelocityGradient gradient{};
+    NewtonianViscousStress::Vector velocity{};
+    NewtonianViscousStress::Tensor expected_stress{};
+    std::array<double,3> expected_power{};
+    double density=1.,nu=0.,expected_dissipation=0.;
+    bool exactly_stress_free=false;
+};
+
+/** Hand-derived closed examples; long-double expressions own expected values.
+ * No production stress, gradient, connection or flux function constructs any
+ * expected tensor, power or dissipation. These only qualify a point law.
+ */
+inline std::vector<NewtonianPointCase> newtonian_point_cases()
+{
+    std::vector<NewtonianPointCase> cases;
+    for(long double z:{-.75L,.75L})for(long double r:{0.L,.5L,1.5L,-.5L}) {
+        const long double a=.5L,b=-.25L,nu=.125L;
+        const long double rho=1.L+z/4.L,mu=rho*nu;
+        NewtonianPointCase homology{};
+        homology.density=static_cast<double>(rho);homology.nu=static_cast<double>(nu);
+        homology.gradient={static_cast<double>(a),0.,0.,0.,static_cast<double>(a),0.,0.,0.,static_cast<double>(a)};
+        homology.velocity={static_cast<double>(a*r),static_cast<double>(a*z),0.};
+        homology.exactly_stress_free=true;cases.push_back(homology);
+        auto anisotropic=homology;anisotropic.exactly_stress_free=false;
+        anisotropic.gradient[4]=static_cast<double>(b);anisotropic.velocity[1]=static_cast<double>(b*z);
+        const long double d=a-b,rr=2.L*mu*d/3.L,zz=-4.L*mu*d/3.L;
+        anisotropic.expected_stress[0]=anisotropic.expected_stress[8]=static_cast<double>(rr);
+        anisotropic.expected_stress[4]=static_cast<double>(zz);
+        anisotropic.expected_power={static_cast<double>(a*r*rr),static_cast<double>(b*z*zz),0.};
+        anisotropic.expected_dissipation=static_cast<double>(4.L*mu*d*d/3.L);cases.push_back(anisotropic);
+        NewtonianPointCase shear{};shear.density=static_cast<double>(rho);shear.nu=static_cast<double>(nu);
+        shear.gradient[3]=static_cast<double>(a*r);shear.velocity[1]=static_cast<double>(a*r*r/2.L);
+        shear.expected_stress[1]=shear.expected_stress[3]=static_cast<double>(mu*a*r);
+        shear.expected_power[0]=static_cast<double>(mu*a*a*r*r*r/2.L);
+        shear.expected_dissipation=static_cast<double>(mu*a*a*r*r);cases.push_back(shear);
+        NewtonianPointCase rotation{};rotation.density=static_cast<double>(rho);rotation.nu=static_cast<double>(nu);
+        rotation.gradient[2]=-2.;rotation.gradient[6]=2.;rotation.velocity[2]=static_cast<double>(2.L*r);
+        rotation.exactly_stress_free=true;cases.push_back(rotation);
+        NewtonianPointCase swirl{};swirl.density=static_cast<double>(rho);swirl.nu=static_cast<double>(nu);
+        const long double c=.25L,tau=2.L*mu*c*r*r;
+        swirl.gradient[2]=static_cast<double>(-c*r*r);swirl.gradient[6]=static_cast<double>(3.L*c*r*r);
+        swirl.velocity[2]=static_cast<double>(c*r*r*r);
+        swirl.expected_stress[2]=swirl.expected_stress[6]=static_cast<double>(tau);
+        swirl.expected_power[0]=static_cast<double>(2.L*mu*c*c*r*r*r*r*r);
+        swirl.expected_dissipation=static_cast<double>(4.L*mu*c*c*r*r*r*r);cases.push_back(swirl);
+        NewtonianPointCase cartesian{};cartesian.density=static_cast<double>(rho);cartesian.nu=static_cast<double>(nu);
+        cartesian.gradient[0]=static_cast<double>(a);cartesian.velocity[0]=static_cast<double>(a*r);
+        cartesian.expected_stress[0]=static_cast<double>(4.L*mu*a/3.L);
+        cartesian.expected_stress[4]=cartesian.expected_stress[8]=static_cast<double>(-2.L*mu*a/3.L);
+        cartesian.expected_power[0]=static_cast<double>(4.L*mu*a*a*r/3.L);
+        cartesian.expected_dissipation=static_cast<double>(4.L*mu*a*a/3.L);cases.push_back(cartesian);
+        homology.nu=0.;cases.push_back(homology);
+    }
+    // A finite enormous coefficient must not destroy the exact zero law.
+    auto huge=cases[0];huge.density=1.;huge.nu=std::numeric_limits<double>::max();cases.push_back(huge);
+    return cases;
+}
+
+/** Execute the same shared point law against independent expectations.
+ * The single frozen 64-epsilon rounding window compares components/power/Q;
+ * exact homology/rotation/zero-mu cases additionally require exact numerical zero.
+ * Backend executors supply runtime-uploaded identical case values.
+ */
+ARCH_INLINE double newtonian_point_error(const NewtonianPointCase& input)
+{
+    using namespace NewtonianViscousStress;
+    const double invalid=std::numeric_limits<double>::infinity();
+    Tensor tensor{};double q=0.,maximum=0.;
+    if(!stress(input.gradient,input.density*input.nu,tensor)
+        ||!dissipation(tensor,input.gradient,q))return invalid;
+    for(int field=0;field<9;++field) {
+        if(input.exactly_stress_free&&tensor[field]!=0.)return invalid;
+        maximum=std::max(maximum,std::abs(tensor[field]-input.expected_stress[field])
+            /std::max(1.,std::abs(input.expected_stress[field])));
+    }
+    maximum=std::max(maximum,std::abs(q-input.expected_dissipation)
+        /std::max(1.,std::abs(input.expected_dissipation)));
+    for(int direction=0;direction<3;++direction) {
+        Vector face{};double work=0.;
+        if(!traction(tensor,direction,face)||!power(input.velocity,face,work))return invalid;
+        for(int component=0;component<3;++component)
+            maximum=std::max(maximum,std::abs(face[component]-input.expected_stress[3*component+direction])
+                /std::max(1.,std::abs(input.expected_stress[3*component+direction])));
+        maximum=std::max(maximum,std::abs(work-input.expected_power[direction])
+            /std::max(1.,std::abs(input.expected_power[direction])));
+    }
+    return maximum;
+}
+
+/** Exact failure/no-publication witnesses, shared by host and device fixtures.
+ * Invalid coefficient/gradient, tensor/velocity/direction and unrepresentable
+ * tensor or contraction must not replace caller sentinels. No epsilon cutoff,
+ * floor, stress clipping or fabricated coefficient is used in these negatives.
+ */
+ARCH_INLINE bool newtonian_point_guards(const NewtonianPointCase& input)
+{
+    using namespace NewtonianViscousStress;
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    Tensor sentinel{};sentinel.fill(42.);Tensor output=sentinel;
+    if(stress(input.gradient,-1.,output)||output!=sentinel)return false;
+    if(stress(input.gradient,nan,output)||output!=sentinel)return false;
+    if(stress(input.gradient,std::numeric_limits<double>::infinity(),output)||output!=sentinel)return false;
+    for(int component=0;component<9;++component) {
+        auto bad=input.gradient;bad[component]=nan;
+        if(stress(bad,0.,output)||output!=sentinel)return false;
+    }
+    VelocityGradient huge{};huge[0]=std::numeric_limits<double>::max();huge[4]=-huge[0];
+    if(stress(huge,1.,output)||output!=sentinel)return false;
+    // mu==0 needs no finite differences/sums, but still requires finite inputs.
+    if(!stress(huge,0.,output))return false;
+    for(double component:output)if(component!=0.)return false;
+    const Vector vector_sentinel{41.,43.,47.};Vector face=vector_sentinel;
+    if(traction(sentinel,-1,face)||face!=vector_sentinel)return false;
+    if(traction(sentinel,3,face)||face!=vector_sentinel)return false;
+    auto invalid_tensor=sentinel;invalid_tensor[0]=nan;
+    if(traction(invalid_tensor,0,face)||face!=vector_sentinel)return false;
+    double scalar=53.;auto invalid_velocity=input.velocity;invalid_velocity[0]=nan;
+    if(power(invalid_velocity,Vector{},scalar)||scalar!=53.)return false;
+    if(power(Vector{std::numeric_limits<double>::max(),0.,0.},Vector{2.,0.,0.},scalar)||scalar!=53.)return false;
+    if(dissipation(invalid_tensor,input.gradient,scalar)||scalar!=53.)return false;
+    Tensor negative{};negative[0]=-1.;VelocityGradient positive{};positive[0]=1.;
+    if(dissipation(negative,positive,scalar)||scalar!=53.)return false;
+    Tensor enormous{};enormous[0]=std::numeric_limits<double>::max();positive[0]=2.;
+    if(dissipation(enormous,positive,scalar)||scalar!=53.)return false;
+    return true;
+}
+
+/** Qualify the analytical point law on this backend, without a PDE claim. */
+inline void newtonian_constitutive()
+{
+    double maximum=0.;const auto cases=newtonian_point_cases();
+    for(const auto& input:cases) {
+        maximum=std::max(maximum,newtonian_point_error(input));
+        if(!newtonian_point_guards(input))throw std::runtime_error("Newtonian point-law failure publication contract");
+    }
+    if(!std::isfinite(maximum)||maximum>64.*std::numeric_limits<double>::epsilon())
+        throw std::runtime_error("Newtonian analytical point-law 64-epsilon window");
+    std::cout<<"NEWTONIAN_CONSTITUTIVE_POINT cases="<<cases.size()<<" max_error="<<maximum<<'\n';
 }
 
 } // namespace ViscousGeometryCases

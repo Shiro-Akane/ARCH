@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+#include "core/ArchPortability.h"
+
 namespace arch::boundary
 {
 enum class BoundaryType : std::uint8_t {
@@ -113,7 +115,7 @@ inline BoundaryType face_type(
     return input.faces[face_index(axis, side)];
 }
 
-inline std::int8_t reflection_sign(
+ARCH_INLINE std::int8_t reflection_sign(
     BoundaryAxis axis, BoundaryType type,
     BoundaryFieldClass field) noexcept
 {

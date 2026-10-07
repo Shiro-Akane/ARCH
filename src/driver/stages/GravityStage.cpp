@@ -1079,6 +1079,29 @@ Physical::Gravity::NativeRzFieldInspection GravityStage::native_current_field() 
     gravity_->require_runtime_purpose(Physical::Gravity::GravityFieldPurpose::AcceptedCurrent);
     return gravity_->native_rz_field_inspection();
 }
+/** Copy one genuinely issued Current source and its SAME completed field.
+ * Workflow: require the actual quiescent Runtime source domain and sealed
+ * AcceptedCurrent lease -> copy exact owning producer data -> repeat domain
+ * and purpose checks. The source hook remains pre-solve/quiescent-only, and
+ * this diagnostic grants no continuous accuracy or public Native capability.
+ */
+Physical::Gravity::NativeRzSolutionInspection GravityStage::native_current_source_and_field() const {
+    if(!native_candidate()||!gravity_||!runtime_source_lease_)
+        throw std::logic_error("No issued Native Current source and field");
+    const auto* const lease=runtime_source_lease_.get();
+    lease->require_domain();
+    gravity_->require_runtime_purpose(Physical::Gravity::GravityFieldPurpose::AcceptedCurrent);
+    const auto& w=gravity_->workspace();
+    const auto field_generation=w.generation;
+    const auto source_generation=w.ring_assessment.source_generation;
+    auto result=gravity_->copy_native_rz_solution(Physical::Gravity::GravityFieldPurpose::AcceptedCurrent,
+        lease->identity,field_generation,source_generation);
+    if(runtime_source_lease_.get()!=lease)
+        throw std::logic_error("Native Current source issuer changed during inspection");
+    lease->require_domain();
+    gravity_->require_runtime_purpose(Physical::Gravity::GravityFieldPurpose::AcceptedCurrent);
+    return result;
+}
 /** Internal numerical stability cap, never ordinary public Native CFL support. */
 double GravityStage::native_current_timestep() const {
     if(!native_candidate()||!runtime_source_lease_)throw std::logic_error("No issued Native Current field");

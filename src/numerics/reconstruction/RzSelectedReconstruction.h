@@ -85,10 +85,11 @@ ARCH_INLINE bool quotient(double q,double rho,double& x) {
 template<class Eos>
 ARCH_INLINE bool trial_valid(const FluidVector& u,const double* x,int species,
     const arch::state::Bounds& bounds,const Eos& eos) {
+    const auto& trial_eos=arch::state::candidate_eos(eos);
 #if defined(__CUDA_ARCH__)
-    return arch::state::validate_eos(u,x,species,bounds,eos)==Status::valid;
+    return arch::state::validate_eos(u,x,species,bounds,trial_eos)==Status::valid;
 #else
-    try {return arch::state::validate_eos(u,x,species,bounds,eos)==Status::valid;}
+    try {return arch::state::validate_eos(u,x,species,bounds,trial_eos)==Status::valid;}
     catch(const std::runtime_error&) {return false;}
 #endif
 }

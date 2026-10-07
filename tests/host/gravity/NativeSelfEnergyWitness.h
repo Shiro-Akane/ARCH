@@ -76,6 +76,7 @@ struct NativeEnergyBudget {
  */
 template<class Owner> class NativeSelfEnergyWitness final {
     using Field=Physical::Gravity::NativeRzFieldInspection;
+    using OwnedSolution=Physical::Gravity::NativeRzSolutionInspection;
     using Observation=Physical::Gravity::NativeSelfStageObservation;
     struct Cell {
         std::size_t block;int offset,i,j;long double volume,m0,E0;double rho0,energy0;
@@ -85,7 +86,11 @@ template<class Owner> class NativeSelfEnergyWitness final {
         long double dm=0.;
     };
     Owner& owner_;double dt_;amr::EllipticMeshBinding binding_;
-    std::vector<Cell> cells_;std::optional<Field> field_;
+    std::vector<Cell> cells_;std::optional<Field> legacy_field_;
+    RzMaterializedSourceRecord before_record_;
+    // Borrow either legacy_field_ or before_record_ for this witness lifetime.
+    // The witness is never copied/moved (its mutex and observer payload forbid it).
+    const Field* field_=nullptr;
     std::vector<std::array<const double*,7>> input_leases_;
     scheduler::StageDescriptor descriptor_{};std::mutex mutex_;
     double entry_time_;int entry_gathers_;long double boundary_energy_entry_=0.;
@@ -268,7 +273,66 @@ public:
                 &&rz_runtime_witness::bits(cell.energy0,state.eng[cell.offset]),
                 "First real Hydro source differs from macro-entry mass/energy");
         }
-        self.field_.emplace(std::move(field));self.bind_faces();
+        self.legacy_field_.emplace(std::move(field));self.field_=&*self.legacy_field_;self.bind_faces();
+    }
+    /** Retain the actual Hydro issuer's one owning source/field snapshot.
+     * Workflow: preserve the original descriptor/source/entry-state checks ->
+     * read the live private gravity cap -> move the sealed value into the pending
+     * before record -> lend its SAME field to every original reducer. No legacy
+     * preparing-source View/hook or second Phi copy/download is manufactured.
+     */
+    static void capture_owned(void* payload,Owner& owner,OwnedSolution&& solution,
+        const scheduler::StageDescriptor& descriptor) {
+        energy_require(payload!=nullptr,"Private owning-source diagnostic payload is null");
+        auto& self=*static_cast<NativeSelfEnergyWitness*>(payload);
+        energy_require(&owner==&self.owner_&&owner.homology.enabled&&!self.field_,
+            "Private owning-source capture reused/foreign owner");
+        self.descriptor_=descriptor;
+        energy_require(scheduler::same_stage_descriptor(descriptor,
+                scheduler::make_hydro_plan(scheduler::HydroMethod::Euler).stages.front()),
+            "Private owning-source capture is not actual Euler descriptor");
+        self.source_matches(solution.field(),descriptor.input_slot,owner.context->step_start_time);
+        energy_require(owner.execution->gathers==self.entry_gathers_+1,
+            "Homology owning Hydro source did not consume exactly one authentic field");
+        const auto* frame=owner.gravity->prepared_native_self();
+        energy_require(frame!=nullptr,"Homology owning source has no live Hydro gravity frame");
+        self.gravity_timestep_=frame->timestep();
+        energy_require(std::isfinite(self.gravity_timestep_)&&self.gravity_timestep_>0.
+            &&self.dt_<=self.gravity_timestep_,"Frozen homology dt exceeds actual source gravity cap");
+        const auto active=owner.control.tree->GetActiveBlocks();
+        for(const auto& cell:self.cells_) {
+            const auto& state=fluid(owner.control.pool->GetBlock(active.at(cell.block)),descriptor.input_slot);
+            energy_require(rz_runtime_witness::bits(cell.rho0,state.rho[cell.offset])
+                &&rz_runtime_witness::bits(cell.energy0,state.eng[cell.offset]),
+                "First real owning Hydro source differs from macro-entry mass/energy");
+        }
+        self.before_record_.capture_owned_solution(std::move(solution));
+        // One real issuer value was moved into the record. These negative
+        // lifetime checks reuse that SAME moved-from value, with no additional
+        // solve, download, field copy or mutable authentication metadata.
+        const auto rejects_moved=[&](auto inspect) {
+            bool rejected=false;
+            try{inspect();}catch(const std::logic_error&){rejected=true;}
+            energy_require(rejected,"Moved-from native owning snapshot remained readable");
+        };
+        rejects_moved([&]{(void)solution.field();});
+        rejects_moved([&]{(void)solution.service_configuration();});
+        rejects_moved([&]{(void)solution.mesh();});
+        rejects_moved([&]{(void)solution.periodic();});
+        rejects_moved([&]{(void)solution.cells();});
+        rejects_moved([&]{(void)solution.patches();});
+        rejects_moved([&]{(void)solution.density();});
+        rejects_moved([&]{OwnedSolution invalid(solution);});
+        rejects_moved([&]{OwnedSolution invalid(std::move(solution));});
+        energy_require(self.before_record_.published_source_checked()
+            &&!self.before_record_.source_only_checked()&&self.before_record_.callback_count()==0,
+            "Homology owning Hydro record fabricated source-hook completion");
+        self.field_=&self.before_record_.native_field_receipt();self.bind_faces();
+    }
+    /** Read the pending sealed before record only after macro/post success checks. */
+    const RzMaterializedSourceRecord& before_source_record() const {
+        energy_require(owner_.homology.enabled&&field_&&before_record_.published_source_checked(),
+            "Homology owning before source has not been captured");return before_record_;
     }
     /** Return only the cap measured on the actual prepared pre-Hydro field. */
     double gravity_timestep() const {
@@ -423,7 +487,7 @@ public:
             json<<"{\"uid\":"<<a.block.uid.value<<",\"epoch\":"<<a.block.epoch.value<<",\"slot0\":"<<int(a.slot)<<",\"slot1\":"<<int(z.slot)
                 <<",\"version0\":"<<a.version.value<<",\"version1\":"<<z.version.value<<",\"density_lease0\":"<<a.storage_generation<<",\"density_lease1\":"<<z.storage_generation<<'}';}
         json<<"]";
-        if(prospective)json<<",\"resource_scope\":\"prospective-homology-step;whole-request-guard-external\",\"before_materialized_source_export\":\"UNKNOWN\",\"rollback_campaign\":\"retained-separate-original-four-field-owner\"";
+        if(prospective)json<<",\"resource_scope\":\"prospective-homology-step;whole-request-guard-external\",\"before_materialized_source_export\":\"captured-issued-owning-snapshot;publication-pending-final-source-fence\",\"rollback_campaign\":\"retained-separate-original-four-field-owner\"";
         json<<"}\n";tsv<<std::setprecision(std::numeric_limits<long double>::max_digits10)<<"scope\tDeltaE\tB_E\tB_Phi\tQ\tepsilon_account\tDeltaW\tL\tS\tB_G\tfinite_step\tD_total\n"
             <<"stored-point-rows-diagnostic\t"<<deltaE<<'\t'<<BE<<'\t'<<BP<<'\t'<<Q<<'\t'<<epsilon<<'\t'<<W1-W0<<'\t'<<L<<'\t'<<S<<'\t'<<BG<<'\t'<<finite_step<<'\t'<<D<<'\n';
         json.flush();tsv.flush();energy_require(bool(json)&&bool(tsv),"Accepted energy diagnostic output failed");
@@ -752,8 +816,8 @@ template<class Owner> void run_native_self_green_pair(double dt) {
  * step receives a NEW Hydro stage, never relabels the Current field as Hydro.
  * Each step consumes two genuine fields. The first 512/1 request has a shared
  * 420s external guard; other campaign resources must be frozen by Root before
- * execution. Complete before-source export remains UNKNOWN: no fake source View
- * or additional solve fills the missing immutable Hydro-source observer API.
+ * execution. Hydro and Current use one sealed owning snapshot each; each adds
+ * one actual dense-rho download but no additional field solve or Phi copy.
  */
 template<class Owner,class Input> void run_native_self_homology_pair(Input input) {
     using Stage=driver::GravityStage;using Witness=NativeSelfEnergyWitness<Owner>;
@@ -781,7 +845,7 @@ template<class Owner,class Input> void run_native_self_homology_pair(Input input
         minimum_hydro_cap=std::min(minimum_hydro_cap,caps.hydro);
         Witness witness(observed,dt);
         observed.stage->set_native_self_flux_observation(&Witness::sink,&witness);
-        observed.observer->energy_payload=&witness;observed.observer->energy_field_capture=&Witness::capture;
+        observed.observer->energy_payload=&witness;observed.observer->energy_source_field_capture=&Witness::capture_owned;
         observed.observer->energy_delta_capture=&Witness::delta;observed.advance();
         minimum_gravity_cap=std::min(minimum_gravity_cap,witness.gravity_timestep());
         observed.stage->flush_committed_diagnostics();journal_rows(observed,1);
@@ -800,10 +864,13 @@ template<class Owner,class Input> void run_native_self_homology_pair(Input input
         std::vector<rz_runtime_witness::FieldsWitness> accepted;accepted.reserve(active.size());
         for(int id:active)accepted.emplace_back(observed.control.pool->GetBlock(id));
         const auto saved=driver::HostHydroTransaction::snapshot_owner(*observed.runtime,*observed.context);
-        RzMaterializedSourceRecord record;record.capture_call(*observed.stage,[&]{observed.stage->prepare_current(tnew,false);});
-        energy_require(record.source_only_checked()&&!record.cleanup_failed()&&record.callback_count()==1,
-            "Homology postCurrent materialized source not authentic");
-        record.capture_native_field(*observed.stage);const auto& post=record.native_field_receipt();
+        observed.stage->prepare_current(tnew,false);
+        RzMaterializedSourceRecord record;
+        record.capture_owned_solution(observed.stage->native_current_source_and_field());
+        energy_require(record.published_source_checked()&&!record.source_only_checked()
+            &&!record.cleanup_failed()&&record.callback_count()==0,
+            "Homology postCurrent owning source/field not authentic");
+        const auto& post=record.native_field_receipt();
         for(std::size_t b=0;b<active.size();++b)accepted[b].matches(observed.control.pool->GetBlock(active[b]));
         energy_require(driver::HostHydroTransaction::owner_matches(*observed.runtime,*observed.context,saved)
             &&observed.execution->gathers==2*(step+1)&&observed.counters->step_count==observed.start.step+step+1
@@ -813,10 +880,16 @@ template<class Owner,class Input> void run_native_self_homology_pair(Input input
         // Both reducers consume the SAME authenticated owning receipt, not a
         // second inspection/download/reduction or a duplicate solution.
         witness.publish(post,false,true,destination);witness.publish_green_pair(post,true,destination);
-        std::ofstream source(destination+"/post-materialized-native-source.json");
-        energy_require(bool(source),"Cannot open authentic homology source output");source<<record.json()<<'\n';
-        source.flush();energy_require(bool(source),"Homology source output failed");
-        observed.observer->energy_payload=nullptr;observed.observer->energy_field_capture=nullptr;
+        // Both source records stay pending until the real macro, postCurrent,
+        // original accounting and Green gates succeeded. They contain one extra
+        // dense-rho download per actual owning inspection, no extra field solve.
+        std::ofstream before_source(destination+"/before-materialized-native-source.json"),
+            source(destination+"/post-materialized-native-source.json");
+        energy_require(bool(before_source)&&bool(source),"Cannot open authentic homology source outputs");
+        before_source<<witness.before_source_record().json()<<'\n';source<<record.json()<<'\n';
+        before_source.flush();source.flush();
+        energy_require(bool(before_source)&&bool(source),"Homology source output failed");
+        observed.observer->energy_payload=nullptr;observed.observer->energy_source_field_capture=nullptr;
         observed.observer->energy_delta_capture=nullptr;
         observed.stage->flush_committed_diagnostics();observed.stage.reset();
         std::filesystem::rename(observed.config.io.out_dir+"/native_rz_candidates.tsv",destination+"/current-stages.tsv");
@@ -827,8 +900,9 @@ template<class Owner,class Input> void run_native_self_homology_pair(Input input
     std::ofstream inputs(observed.config.io.out_dir+"/homology-inputs.json");
     energy_require(bool(inputs),"Cannot open accepted homology input evidence");
     inputs<<std::setprecision(std::numeric_limits<double>::max_digits10)
-        <<"{\"schema\":\"arch-native-homology-inputs-1\",\"physical_qualified\":false,\"total_energy_science\":\"UNVERIFIED\",\"before_source_export\":\"UNKNOWN\",\"post_source_export\":\"actual-accepted-Current\",\"cells\":"<<input.cells
+        <<"{\"schema\":\"arch-native-homology-inputs-1\",\"physical_qualified\":false,\"total_energy_science\":\"UNVERIFIED\",\"before_source_export\":\"actual-issued-Hydro-owning-snapshot\",\"post_source_export\":\"actual-issued-Current-owning-snapshot\",\"cells\":"<<input.cells
         <<",\"endpoint_steps\":"<<input.steps<<",\"actual_fields\":"<<observed.execution->gathers
+        <<",\"owning_source_inspections\":"<<2*input.steps<<",\"additional_dense_rho_downloads\":"<<2*input.steps
         <<",\"resource_seconds\":"<<(input.cells==512&&input.steps==1?"420":"null")
         <<",\"resource_scope\":\"whole-request external guard; additional campaign budget must be frozen before execution\",\"rho\":1,\"G\":"<<arch::constants::gravity::cgs::gravitational_constant
         <<",\"L\":10000,\"t_start\":0,\"t_dyn\":"<<observed.dynamical_time<<",\"T\":"<<observed.endpoint_interval

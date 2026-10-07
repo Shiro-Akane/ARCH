@@ -20,7 +20,7 @@ Core units are CGS, including ideal gas. Standard descriptions come from Core; c
 
 Confirmed Run/Restart use associated saved input and the selected compiled binary. Their owned independent terminal and records survive Host exit. Stop targets the recorded job. Output reservations coordinate managed runs but do not approve overwriting earlier scientific data. Cluster/background scheduling is outside this local workflow.
 
-Plotfile views read full published files. Current candidate format covers Sod 1D and Cartesian CellularDet 2D active leaves, display LOD and native stored-cell inspection. Initial samples are a separate source. XDMF, reusable spatial indexing/cache, more formats and complete native/scientific acceptance follow the [release closure plan](../development/ComputeStudioReleasePlan-20261006.zh-CN.md).
+Plotfile views read full published files. Cartesian 1D/2D active leaves support display LOD. Formal published files additionally support exact stored-cell queries in their recorded native coordinates for Cartesian, cylindrical and spherical charts in 1D/2D/3D; bounds, V/W, units and provenance come from the file. Curved/3D rendering and physical qualification are separate. Initial samples are a separate source. XDMF, reusable spatial indexing/cache, more formats and complete native/scientific acceptance follow the [release closure plan](../development/ComputeStudioReleasePlan-20261006.zh-CN.md).
 
 See [Core API](../../src/api/README.md), [configuration v3](../../src/api/CONFIGURATION_API.md), [engineering tests](../../studio/tests/README.md) and [scientific validation](../../validation/README.md). [Historical reports](../../studio/docs/archive/README.md) retain earlier scopes; they are not current launch instructions.
 

@@ -13,6 +13,7 @@
  */
 
 #include <algorithm>
+#include <bit>
 #include <chrono>
 #include <cmath>
 #include <iomanip>
@@ -667,6 +668,224 @@ NativeRzFieldInspection SelfGravity::native_rz_field_inspection() const {
     // requested purpose after the synchronous fence; this is not a science gate.
     if(runtime_lease)w.require_runtime_purpose(*purpose);
     return result;
+}
+/** Own the SAME published native source, operator geometry and solved field.
+ * Workflow: authenticate the issued purpose/publication -> freeze actual
+ * metadata owners -> copy the existing field once and resident rho once ->
+ * compare every rho bit with both the materialized ring source and its original
+ * Host allocation -> repeat publication/geometry/source checks -> return the
+ * closed value. The friend issuer separately checks the full Runtime domain
+ * before and after this call, including all seven arrays and actual ghosts.
+ * rho is the original V-mean source, not RHS/(4*pi*G). No source reconstruction,
+ * quadrature, solve, numerical tolerance, cache or live authority is created.
+ */
+NativeRzSolutionInspection SelfGravity::copy_native_rz_solution(
+    GravityFieldPurpose expected_purpose,const GravitySolveIdentity& expected_source,
+    std::uint64_t expected_field_generation,std::uint64_t expected_source_generation) const {
+    if(!valid_gravity_field_purpose(expected_purpose)||!expected_field_generation
+        ||!expected_source_generation)
+        throw std::invalid_argument("Native source/field inspection has an invalid expected publication");
+    auto& w=workspace();
+    w.require(GravityFieldScope::NativeRzCandidate);
+    w.require_runtime_purpose(expected_purpose);
+    const auto* const issuer=w.runtime_lease;
+    const auto lease_generation=issuer->generation();
+    const auto* const original_workspace=&w;
+    const auto* const original_operator=&w.solver.op();
+    const auto& op=*original_operator;
+    auto& execution=w.solver.execution();
+    const auto mesh=op.base();
+    const auto configuration=config_;
+    const auto periodic=w.binding.periodic;
+    const auto same=[](double a,double b) noexcept {
+        return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);
+    };
+    // Metadata identity is exact, including signed zero. It never supplies an
+    // approximate geometry, rho floor or acceptance error budget.
+    const auto same_mesh=[&](const arch::elliptic::CartesianMesh& a,
+        const arch::elliptic::CartesianMesh& b) {
+        if(a.dimension!=b.dimension||a.cells!=b.cells||a.geometry!=b.geometry
+            ||a.semantics!=b.semantics||a.native_canonical_domain!=b.native_canonical_domain)return false;
+        for(int axis=0;axis<3;++axis)
+            if(!same(a.origin[axis],b.origin[axis])||!same(a.spacing[axis],b.spacing[axis])
+                ||!same(a.root_upper[axis],b.root_upper[axis]))return false;
+        return true;
+    };
+    const auto same_configuration=[&](const GravityConfig& a,const GravityConfig& b) {
+        return a==b&&same(a.g_x,b.g_x)&&same(a.g_y,b.g_y)&&same(a.g_z,b.g_z)
+            &&same(a.relative_tolerance,b.relative_tolerance)
+            &&same(a.absolute_tolerance,b.absolute_tolerance);
+    };
+    if(execution.device()||!w.execution||w.execution->numeric()->device()
+        ||!mesh.native_canonical_domain||mesh.dimension!=2
+        ||mesh.geometry!=arch::elliptic::Geometry::Cylindrical
+        ||mesh.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||!same_mesh(mesh,w.binding.base)||op.size()<=0)
+        throw std::logic_error("Native source/field inspection requires the actual canonical Host RZ operator");
+    const auto count=static_cast<std::size_t>(op.size());
+    const auto patch_count=w.binding.grids.size();
+    if(!patch_count||w.binding.handles.size()!=patch_count||w.patches.size()!=patch_count
+        ||expected_source.inputs.size()!=patch_count||w.binding.cells!=op.cells()
+        ||w.binding.storage.size()!=count||op.volumes().size()!=count
+        ||w.density.size!=op.size()||!w.density.data||!w.ring_source
+        ||w.ring_source->ring_density_.size()!=count)
+        throw std::logic_error("Native source/field inspection has incomplete actual source storage");
+    const auto* const density_data=w.density.data;
+    const auto* const ring=w.ring_source.get();
+    const auto* const ring_density_address=ring->ring_density_.data();
+    const auto* const binding_cells_address=w.binding.cells.data();
+    const auto* const binding_storage_address=w.binding.storage.data();
+    const auto* const grids_address=w.binding.grids.data();
+    const auto* const handles_address=w.binding.handles.data();
+    const auto* const operator_cells_address=op.cells().data();
+    const auto* const faces_address=op.faces().data();
+    const auto* const volumes_address=op.volumes().data();
+    const auto face_count=op.faces().size();
+    // Borrowed pointer values are transient fence metadata only. No Grid
+    // pointer is retained by the returned owning diagnostic.
+    const auto original_grids=w.binding.grids;
+    std::vector<const double*> source_allocations;
+    std::vector<NativeRzOwnedSourcePatch> patches;
+    source_allocations.reserve(patch_count);patches.reserve(patch_count);
+    for(std::size_t p=0;p<patch_count;++p) {
+        if(!w.binding.grids[p]||w.binding.handles[p]!=expected_source.inputs[p].block
+            ||!amr::is_valid(w.binding.handles[p])||!w.patches[p].density)
+            throw std::logic_error("Native source/field inspection lost its original patch allocation");
+        const auto& grid=*w.binding.grids[p];
+        const auto found=w.lookup.find(&grid);
+        const auto geometry=GridMetrics::make_geometry_view(grid,mesh.semantics);
+        if(found==w.lookup.end()||found->second!=p||!geometry.dyadic_identity.bound
+            ||geometry.geometry!=GridMetrics::Geometry::Cylindrical||geometry.dim!=2
+            ||geometry.total_size!=grid.GetTotalSize()
+            ||!GridMetrics::matches_identity(geometry.dyadic_identity,{grid.x1_min,grid.x2_min},
+                {grid.x1_max,grid.x2_max},{grid.dx1,grid.dx2})
+            ||geometry.dyadic_identity.periodic_axial!=periodic[1])
+            throw std::logic_error("Native source/field inspection has incoherent actual patch geometry");
+        for(int axis=0;axis<2;++axis)
+            if(!same(geometry.dyadic_identity.root_lower[axis],mesh.origin[axis])
+                ||!same(geometry.dyadic_identity.root_upper[axis],mesh.root_upper[axis])
+                ||std::int64_t(geometry.dyadic_identity.root_blocks[axis])
+                    *(axis==0?amr::BLOCK_NX:amr::BLOCK_NY)!=mesh.cells[axis])
+                throw std::logic_error("Native source/field inspection changed its bound root geometry");
+        source_allocations.push_back(w.patches[p].density);
+        patches.push_back({w.binding.handles[p],amr::native_scalar_layout(grid),
+            arch::grid::FieldMemory::Host,geometry});
+    }
+    // This private function accepts no source buffers supplied by the caller.
+    // Every check below refers to the original resident/actual-source owners.
+    const auto require_publication=[&] {
+        if(work_.get()!=original_workspace)
+            throw std::logic_error("Native source/field workspace changed during inspection");
+        w.require(GravityFieldScope::NativeRzCandidate);
+        if(&w.solver.op()!=original_operator||w.runtime_lease!=issuer||w.purpose!=expected_purpose
+            ||w.source!=expected_source||!same(w.source.input_time,expected_source.input_time)
+            ||!same(w.source.gravitational_constant,expected_source.gravitational_constant)
+            ||w.generation!=expected_field_generation||w.ring_source.get()!=ring
+            ||w.ring_assessment.source!=expected_source
+            ||w.ring_assessment.source_generation!=expected_source_generation
+            ||!same_configuration(config_,configuration)||!same_mesh(op.base(),mesh)
+            ||!same_mesh(w.binding.base,mesh)||w.binding.periodic!=periodic
+            ||w.binding.cells.size()!=count||w.binding.cells!=op.cells()||w.binding.storage.size()!=count
+            ||w.binding.grids.size()!=patch_count||w.binding.grids!=original_grids
+            ||w.binding.handles.size()!=patch_count
+            ||w.patches.size()!=patch_count||op.size()!=static_cast<int>(count)
+            ||op.volumes().size()!=count||op.faces().size()!=face_count
+            ||w.density.size!=static_cast<int>(count)||w.density.data!=density_data
+            ||ring->ring_density_.size()!=count||ring->ring_density_.data()!=ring_density_address
+            ||w.binding.cells.data()!=binding_cells_address||w.binding.storage.data()!=binding_storage_address
+            ||w.binding.grids.data()!=grids_address||w.binding.handles.data()!=handles_address
+            ||op.cells().data()!=operator_cells_address||op.faces().data()!=faces_address
+            ||op.volumes().data()!=volumes_address||w.solver.execution().device()
+            ||!w.execution||w.execution->numeric()->device())
+            throw std::logic_error("Native source/field inspection changed its original publication owners");
+        w.require_runtime_purpose(expected_purpose);
+        if(issuer->generation()!=lease_generation
+            ||ring->materialized_ring_source_generation(op,expected_source)!=expected_source_generation)
+            throw std::logic_error("Native source/field inspection changed its actual issuer/source generation");
+    };
+    require_publication();
+    // The existing owning field copy preserves its original fences, exact
+    // point arrays, original face rows and ideal-native discrete certificates.
+    auto field=native_rz_field_inspection();
+    if(field.source!=expected_source||field.field_generation!=expected_field_generation
+        ||field.source_generation!=expected_source_generation||field.purpose!=expected_purpose
+        ||!field.runtime_lease_authenticated||field.runtime_lease_generation!=lease_generation)
+        throw std::logic_error("Native source/field inspection copied another field receipt");
+    execution.fence();
+    auto density=execution.download(w.density);
+    if(density.size()!=count)
+        throw std::runtime_error("Native source/field inspection omitted resident density entries");
+    std::vector<NativeRzOwnedSourceCell> cells;cells.reserve(count);
+    std::size_t cell=0;
+    for(std::size_t p=0;p<patch_count;++p) {
+        const auto& grid=*w.binding.grids[p];const auto& id=patches[p].geometry.dyadic_identity;
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i,++cell) {
+            if(cell>=count)throw std::logic_error("Native source/field inspection omitted an actual cell");
+            const auto storage=w.binding.storage[cell];const auto& key=op.cells()[cell];
+            const int offset=grid.GetIndex(i,j,0);
+            if(storage.block!=p||storage.offset!=offset||offset<0||offset>=grid.GetTotalSize()
+                ||key.level!=id.level||key.index!=std::array<int,3>{
+                    static_cast<int>(id.logical[0])*amr::BLOCK_NX+i-grid.Is(),
+                    static_cast<int>(id.logical[1])*amr::BLOCK_NY+j-grid.Js(),0}
+                ||!std::isfinite(density[cell])||!(density[cell]>0.)
+                ||!same(density[cell],ring->ring_density_[cell])
+                ||!same(density[cell],source_allocations[p][offset]))
+                throw std::logic_error("Native source/field inspection differs from actual dense rho/storage");
+            NativeRzOwnedSourceCell owned{p,offset,key,{},{},op.center(static_cast<int>(cell)),op.volumes()[cell]};
+            for(int axis=0;axis<3;++axis) {
+                owned.lower[axis]=op.lower(static_cast<int>(cell),axis);
+                owned.upper[axis]=op.upper(static_cast<int>(cell),axis);
+                if(!std::isfinite(owned.lower[axis])||!std::isfinite(owned.upper[axis])
+                    ||!std::isfinite(owned.center[axis]))
+                    throw std::logic_error("Native source/field inspection contains nonfinite cell geometry");
+            }
+            if(!(owned.upper[0]>owned.lower[0])||!(owned.upper[1]>owned.lower[1])
+                ||!std::isfinite(owned.operator_volume)||!(owned.operator_volume>0.)
+                ||!same(owned.lower[0],grid.GetFacePosL(i))||!same(owned.upper[0],grid.GetFacePosR(i))
+                ||!same(owned.lower[1],grid.GetAxialFacePosL(j))||!same(owned.upper[1],grid.GetAxialFacePosR(j))
+                ||!same(owned.center[0],grid.GetCellCenterX(i))||!same(owned.center[1],grid.GetCellCenterY(j)))
+                throw std::logic_error("Native source/field inspection differs from actual operator/Grid cell geometry");
+            cells.push_back(owned);
+        }
+    }
+    if(cell!=count)throw std::logic_error("Native source/field inspection has non-native extra source cells");
+    execution.fence();require_publication();
+    // A second read validates the SAME allocations/geometry, not another
+    // gathered source. Supported prepare/bind mutations are already excluded;
+    // in-place rho drift is additionally detected bit-for-bit before return.
+    for(std::size_t p=0;p<patch_count;++p) {
+        const auto& grid=*w.binding.grids[p];const auto actual=GridMetrics::make_geometry_view(grid,mesh.semantics);
+        const auto& frozen=patches[p].geometry;
+        const auto found=w.lookup.find(&grid);
+        if(found==w.lookup.end()||found->second!=p||w.patches[p].density!=source_allocations[p]
+            ||w.binding.handles[p]!=patches[p].block||amr::native_scalar_layout(grid)!=patches[p].layout
+            ||actual.geometry!=frozen.geometry||actual.dim!=frozen.dim||actual.ng!=frozen.ng
+            ||actual.stride_y!=frozen.stride_y||actual.stride_z!=frozen.stride_z
+            ||actual.total_size!=frozen.total_size||actual.semantics!=frozen.semantics
+            ||!GridMetrics::equal_identity(actual.dyadic_identity,frozen.dyadic_identity)
+            ||!same(actual.dx1,frozen.dx1)||!same(actual.dx2,frozen.dx2)||!same(actual.dx3,frozen.dx3)
+            ||!same(actual.x1_min,frozen.x1_min)||!same(actual.x2_min,frozen.x2_min)||!same(actual.x3_min,frozen.x3_min))
+            throw std::logic_error("Native source/field inspection changed original patch geometry/allocation");
+        for(int axis=0;axis<2;++axis)
+            if(!same(actual.actual_block_upper[axis],frozen.actual_block_upper[axis]))
+                throw std::logic_error("Native source/field inspection changed actual patch endpoint bits");
+    }
+    for(std::size_t c=0;c<count;++c) {
+        const auto& owned=cells[c];const auto current=w.binding.storage[c];
+        if(current.block!=owned.block||current.offset!=owned.offset||op.cells()[c]!=owned.key
+            ||!same(density[c],ring->ring_density_[c])
+            ||!same(density[c],source_allocations[owned.block][owned.offset])
+            ||!same(owned.operator_volume,op.volumes()[c]))
+            throw std::logic_error("Native source/field inspection changed actual rho/cell ownership during copy");
+        const auto center=op.center(static_cast<int>(c));
+        for(int axis=0;axis<3;++axis)
+            if(!same(owned.lower[axis],op.lower(static_cast<int>(c),axis))
+                ||!same(owned.upper[axis],op.upper(static_cast<int>(c),axis))||!same(owned.center[axis],center[axis]))
+                throw std::logic_error("Native source/field inspection changed actual cell bounds during copy");
+    }
+    require_publication();
+    return NativeRzSolutionInspection(std::move(field),configuration,mesh,periodic,
+        std::move(cells),std::move(patches),std::move(density));
 }
 /** Switch host/device execution and rebuild resident arrays on the same topology. */
 void SelfGravity::set_execution(std::shared_ptr<GravityExecution> execution) const {

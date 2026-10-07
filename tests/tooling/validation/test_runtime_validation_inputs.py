@@ -1,6 +1,7 @@
 """Runtime-table and selected-build identity; no CUDA, EOS library or large tables."""
 
 from pathlib import Path
+import ast
 import os
 import shlex
 import sys
@@ -668,12 +669,72 @@ class PrivateProviderReuseTests(unittest.TestCase):
                 self.assertIn('"recompiledSources":{source:source_sha(source)}', text)
                 self.assertIn('compile_recipe="production"', text)
                 self.assertIn('"OMP_NUM_THREADS":"2"', text)
-                self.assertIn('timeout=30', text)
+                if path != "validation/io/run_rz_checkpoint_continuation.py":
+                    self.assertIn('timeout=30', text)
                 self.assertIn('verify_fixture_inputs(frozen,exe', text)
                 self.assertNotIn('"ninja","-t","commands","ARCH"', text)
         continuation = (ROOT / "validation/io/run_rz_checkpoint_continuation.py").read_text()
         self.assertIn('"--initial-thermal-rejection"', continuation)
         self.assertNotIn('"--repair-position"', continuation)
+
+    def test_warm_checkpoint_deadline_charges_compile_and_retains_frozen_providers(self):
+        # Source-level runner contract only: no compile, process or model is run.
+        # Inspect its actual AST so ordinary30 and warm2400 remain two explicit
+        # resource modes, with compilation charged before the remaining run time.
+        text = (ROOT / "validation/io/run_rz_checkpoint_continuation.py").read_text()
+        tree = ast.parse(text)
+        body = tree.body
+        def assignment(name):
+            found = [(index, node) for index, node in enumerate(body)
+                     if isinstance(node, ast.Assign)
+                     and any(isinstance(target, ast.Name) and target.id == name
+                             for target in node.targets)]
+            self.assertEqual(len(found), 1, name)
+            return found[0]
+        def named_call(node, name):
+            return isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == name
+        started_index, started = assignment("started")
+        self.assertEqual(ast.unparse(started.value), "time.monotonic()")
+        remaining_index, remaining = assignment("remaining")
+        self.assertIsInstance(remaining.value, ast.IfExp)
+        self.assertEqual(ast.unparse(remaining.value.test), "table")
+        self.assertEqual(remaining.value.orelse.value, 30.)
+        self.assertEqual(ast.unparse(remaining.value.body), "2400.0 - (time.monotonic() - started)")
+        builds = [(index, node.value) for index, node in enumerate(body)
+                  if isinstance(node, ast.Assign) and named_call(node.value, "build_cpu_fixture")]
+        self.assertEqual(len(builds), 1)
+        build_index, build = builds[0]
+        self.assertLess(started_index, build_index)
+        self.assertLess(build_index, remaining_index)
+        keywords = {item.arg: ast.unparse(item.value) for item in build.keywords}
+        self.assertEqual(keywords["reuse_compiled_sources"], "providers")
+        self.assertEqual(keywords["owner_sources"], "list(RUNTIME_SOURCES)")
+        self.assertEqual(keywords["compile_recipe"], "'production'")
+        runs = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "subprocess" and node.func.attr == "run"]
+        self.assertEqual(len(runs), 1)
+        self.assertEqual({item.arg: ast.unparse(item.value) for item in runs[0].keywords}["timeout"], "remaining")
+        exclusive = [node for node in body if isinstance(node, ast.If)
+                     and ast.unparse(node.test) == "a.warm_native_active and a.initial_thermal_rejection"]
+        self.assertEqual(len(exclusive), 1)
+        self.assertEqual(ast.unparse(exclusive[0].body[0].value.func), "p.error")
+        exhausted = [(index, node) for index, node in enumerate(body) if isinstance(node, ast.If)
+                     and ast.unparse(node.test) == "remaining <= 0.0"]
+        self.assertEqual(len(exhausted), 1)
+        self.assertIsInstance(exhausted[0][1].body[0], ast.Raise)
+        tries = [index for index, node in enumerate(body) if isinstance(node, ast.Try)]
+        self.assertEqual(len(tries), 1)
+        self.assertLess(remaining_index, exhausted[0][0])
+        self.assertLess(exhausted[0][0], tries[0])
+        fences = [(index, node.value) for index, node in enumerate(body)
+                  if isinstance(node, ast.Expr) and named_call(node.value, "verify_fixture_inputs")]
+        self.assertEqual(len(fences), 1)
+        self.assertGreater(fences[0][0], tries[0])
+        self.assertEqual([ast.unparse(argument) for argument in fences[0][1].args],
+                         ["frozen", "exe", "build_record['executableIdentity']"])
+        self.assertIn('"prospectiveCompileAndRunCapSeconds":2400 if table else None', text)
+        self.assertIn('table_identity(table)!=table_before', text)
 
 
 class PrivateFixtureFreshnessTests(unittest.TestCase):

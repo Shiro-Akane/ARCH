@@ -262,6 +262,201 @@ static void real_native_eos_boundary_gate() {
     std::cout<<"RZ_ACTUAL_EOS_BOUNDARY_GATE unbound_before_write=1 actual_side_ledger_slot_bc=1"
         <<" late_layout_before_eos=1 late_version_before_publication=1 actual_eos_domain_rejected=1\n";
 }
+/** Prove read-only repeated Current completion with genuine BC/EOS owners.
+ * Workflow: real initialize/complete -> same-frame EOS recheck -> actual
+ * Next-to-Current physical copy/publication -> mandatory fresh completion ->
+ * time/purpose and borrower changes -> corrupt a genuine completed ghost.
+ * No Poisson, fake completion token, alternate thermodynamics or cache switch
+ * is used. The original physical EOS/thermal budgets remain with their owners.
+ */
+static void real_native_current_boundary_idempotence() {
+    using namespace arch;
+    using Slot=state::StateSlot;
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    SimConfig config;
+    config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=2.;config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="outflow";
+    config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="outflow";
+    SpeciesManager species;species.add_species("real-gas",1.,1.,1.4,3.);
+    ObservedIdealGas eos(species),rebound(species);
+    amr::AMRControl control(8,2);control.tree->InitRootGrid(config,1,rz);
+    control.flux_register.EnsureSpecies(1);
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& block=control.pool->GetBlock(id);
+        for(auto* fluid:rz_runtime_witness::slots(block))
+            for(int cell=0;cell<block.grid.GetTotalSize();++cell) {
+                fluid->set(cell,{1.,0.,0.,0.,10.});fluid->X(0,cell)=1.;
+                fluid->enuc_rate[cell]=3.+cell;
+            }
+    }
+    RunState start{};SimulationController counters(config,start);
+    BCHandler boundary(config,rz);boundary.bind(eos,species);
+    driver::DriverRuntime runtime(control,boundary,config,species,counters);
+    runtime.bind_native_rz_eos(eos);runtime.initialize_topology();
+    auto context=runtime.stage_context();
+    /** Freeze all three real allocations/values, including ghost and padding. */
+    const auto fields_snapshot=[&] {
+        std::vector<rz_runtime_witness::FieldsWitness> result;
+        for(int id:control.tree->GetActiveBlocks())result.emplace_back(control.pool->GetBlock(id));
+        return result;
+    };
+    const auto fields_match=[&](const auto& before) {
+        require(before.size()==control.tree->GetActiveBlocks().size(),"Current boundary changed active domain size");
+        for(std::size_t b=0;b<before.size();++b)
+            before[b].matches(control.pool->GetBlock(control.tree->GetActiveBlocks()[b]));
+    };
+    /** A completed same-frame observation must still call the actual IdealGas
+     * while preserving accepted publication, seven-array leases and budgets.
+     */
+    const auto repeat_without_publication=[&](ObservedIdealGas& selected) {
+        const auto before=fields_snapshot();
+        const auto owner=driver::HostHydroTransaction::snapshot_owner(runtime,context);
+        selected.pressure_calls=0;runtime.ensure_fluid_ghosts(Slot::Current);
+        require(selected.pressure_calls>0,"Current boundary reuse skipped genuine IdealGas acceptance");
+        fields_match(before);
+        require(driver::HostHydroTransaction::owner_matches(runtime,context,owner),
+            "Repeated native Current completion changed accepted owners");
+    };
+    runtime.ensure_fluid_ghosts(Slot::Current);
+    repeat_without_publication(eos);
+
+    // An actual higher-version Next state is physically copied from accepted
+    // Current, published by the existing scheduler, and genuinely completed.
+    // The subsequent real logical copy keeps Current allocations and values
+    // but changes its ghost token/version without a BC-context revision.
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& block=control.pool->GetBlock(id);
+        for(const auto field:rz_runtime_witness::fields)
+            std::copy((block.fluid_state.*field).begin(),(block.fluid_state.*field).end(),
+                (block.state_next.*field).begin());
+    }
+    (void)scheduler::publish_completed_interior(context,runtime.handles(),Slot::Next);
+    runtime.ensure_fluid_ghosts(Slot::Next);
+    const auto before_copy=fields_snapshot();
+    const auto copy_boundary=boundary.snapshot_stage_context();
+    const auto copied=scheduler::copy_slot(context,runtime.handles(),Slot::Next,Slot::Current,[&] {
+        for(int id:control.tree->GetActiveBlocks()) {
+            auto& block=control.pool->GetBlock(id);
+            for(const auto field:rz_runtime_witness::fields)
+                std::copy((block.state_next.*field).begin(),(block.state_next.*field).end(),
+                    (block.fluid_state.*field).begin());
+        }
+    });
+    fields_match(before_copy);
+    require(boundary.stage_context_matches(copy_boundary),"Logical copy changed native BC identity");
+    const auto copied_token=context.clock.last_token();
+    eos.pressure_calls=0;runtime.ensure_fluid_ghosts(Slot::Current);
+    require(eos.pressure_calls>0&&context.clock.last_token()>copied_token,
+        "New completed logical-copy ghosts falsely reused the old native boundary stamp");
+    for(const auto handle:runtime.handles()) {
+        const auto state=context.ledger.inspect({handle,Slot::Current});
+        require(state.interior.version==copied.version&&state.ghost.version==copied.version
+            &&state.ghost.completion!=copied.ghost_completion,
+            "Actual Current BC refresh lost copied version or retained copied ghost completion");
+    }
+    repeat_without_publication(eos);
+
+    /** A real BC time/purpose change must refresh; an unchanged request may
+     * only reuse after fresh EOS checking. No frozen stale callback is called.
+     */
+    const auto refresh_boundary=[&](double time,arch::boundary::BoundaryPurpose purpose) {
+        boundary.configure_stage(time,purpose);
+        const auto old_token=context.clock.last_token();
+        eos.pressure_calls=0;runtime.ensure_fluid_ghosts(Slot::Current);
+        require(eos.pressure_calls>0&&context.clock.last_token()>old_token,
+            "Changed actual BC time/purpose silently reused native Current ghosts");
+    };
+    refresh_boundary(.125,arch::boundary::BoundaryPurpose::Hydro);
+    repeat_without_publication(eos);
+    refresh_boundary(.125,arch::boundary::BoundaryPurpose::Diffusion);
+    refresh_boundary(.125,arch::boundary::BoundaryPurpose::Hydro);
+    repeat_without_publication(eos);
+    const auto before_bc_bind=boundary.snapshot_stage_context();
+    const auto bc_bind_token=context.clock.last_token();
+    boundary.bind(eos,species);eos.pressure_calls=0;
+    require(!boundary.stage_context_matches(before_bc_bind),"Same-object BC bind retained old borrowed binding identity");
+    runtime.ensure_fluid_ghosts(Slot::Current);
+    require(eos.pressure_calls>0&&context.clock.last_token()>bc_bind_token,
+        "Changed BC borrower did not refresh actual native completion");
+    repeat_without_publication(eos);
+
+    // Keep BC unchanged while Runtime alone changes its actual EOS borrower.
+    // The old callback must reject for the EOS generation, before either EOS
+    // runs. Only afterward bind the physical BC borrower to the same real EOS.
+    auto old_context=runtime.stage_context();
+    const auto rebind_boundary=boundary.snapshot_stage_context();
+    const auto old_version=old_context.ledger.inspect({runtime.handles().front(),Slot::Current}).interior.version;
+    const auto rebind_ledger=old_context.ledger.snapshot_host();
+    const auto rebind_token=old_context.clock.last_token();
+    runtime.bind_native_rz_eos(rebound);eos.pressure_calls=0;rebound.pressure_calls=0;
+    require(boundary.stage_context_matches(rebind_boundary),"Runtime-only EOS rebind changed the independent BC frame");
+    bool stale_rejected=false;
+    try {old_context.post_boundary_acceptance(old_context,Slot::Current,old_version);}
+    catch(const std::logic_error& error) {
+        stale_rejected=std::string(error.what()).find("Native RZ EOS boundary context/owner changed")!=std::string::npos;
+    }
+    require(stale_rejected&&eos.pressure_calls==0&&rebound.pressure_calls==0
+        &&old_context.ledger.host_snapshot_matches(rebind_ledger)
+        &&old_context.clock.last_token()==rebind_token,
+        "Retained native callback accepted its retired actual EOS borrower");
+    boundary.bind(rebound,species);runtime.ensure_fluid_ghosts(Slot::Current);
+    require(rebound.pressure_calls>0&&eos.pressure_calls==0&&context.clock.last_token()>rebind_token,
+        "Fresh native completion did not consume the new genuine EOS");
+    repeat_without_publication(rebound);
+
+    // Rebinding the same actual object is also a new borrower lifetime.
+    // Pointer-only matching must not rescue its previously issued callback.
+    auto same_owner_context=runtime.stage_context();
+    const auto same_owner_version=same_owner_context.ledger.inspect(
+        {runtime.handles().front(),Slot::Current}).interior.version;
+    const auto same_owner_ledger=same_owner_context.ledger.snapshot_host();
+    const auto same_owner_token=same_owner_context.clock.last_token();
+    runtime.bind_native_rz_eos(rebound);rebound.pressure_calls=0;
+    bool same_owner_stale=false;
+    try {same_owner_context.post_boundary_acceptance(same_owner_context,Slot::Current,same_owner_version);}
+    catch(const std::logic_error& error) {
+        same_owner_stale=std::string(error.what()).find("Native RZ EOS boundary context/owner changed")!=std::string::npos;
+    }
+    require(same_owner_stale&&rebound.pressure_calls==0
+        &&same_owner_context.ledger.host_snapshot_matches(same_owner_ledger)
+        &&same_owner_context.clock.last_token()==same_owner_token,
+        "Same-object EOS rebind revived a retired acceptance callback");
+    runtime.ensure_fluid_ghosts(Slot::Current);
+    require(rebound.pressure_calls>0&&context.clock.last_token()>same_owner_token,
+        "Same-object EOS rebind reused old accepted completion");
+    repeat_without_publication(rebound);
+
+    // A bad completed positive-r axial ghost is deliberately outside the
+    // accepted thermal domain. Reuse must validate it, never refill it first
+    // and erase the counterexample. The real typed diagnostic identifies the
+    // actual ghost/pool/slot; all leases and publications remain untouched.
+    const int last_id=control.tree->GetActiveBlocks().back();
+    auto& last=control.pool->GetBlock(last_id);
+    const int ghost=last.grid.GetIndex(last.grid.Is()+2,last.grid.Je(),0);
+    const double saved_energy=last.fluid_state.eng[ghost];last.fluid_state.eng[ghost]=-1.;
+    const auto fault_fields=fields_snapshot();
+    const auto fault_owner=driver::HostHydroTransaction::snapshot_owner(runtime,context);
+    rebound.pressure_calls=0;bool thermal_rejected=false;
+    try {runtime.ensure_fluid_ghosts(Slot::Current);}
+    catch(const driver::NativeBoundaryAcceptanceError& error) {
+        thermal_rejected=error.pool_index==last_id&&error.slot==Slot::Current
+            &&error.diagnostic.index==ghost
+            &&error.diagnostic.phase==RzThermodynamics::AcceptancePhase::effective_thermal;
+    }
+    require(thermal_rejected&&rebound.pressure_calls>0,
+        "Repeated Current completion concealed an invalid completed ghost or skipped real EOS");
+    fields_match(fault_fields);
+    require(driver::HostHydroTransaction::owner_matches(runtime,context,fault_owner),
+        "Rejected reused native ghost changed ledger/clock/BC/accepted owners");
+    last.fluid_state.eng[ghost]=saved_energy;
+    repeat_without_publication(rebound);
+    require(counters.step_count==0&&counters.t_current==0.,"Boundary observations advanced the physical clock");
+    std::cout<<"RZ_CURRENT_BOUNDARY_REUSE actual_eos=1 same_owners=1 logical_copy_refresh=1"
+        <<" bc_time_purpose_binding_refresh=1 stale_runtime_eos_rejected=1 ghost_failure_readonly=1 PASS\n";
+}
+
 /** Actual nonzero-angular RKL1 rejection, native macro rollback and safe half-step.
  * The antiderivatives below define physical input/reference only. The actual
  * selected diffusion producer, phased boundary service and Runtime EOS own all
@@ -558,6 +753,7 @@ void run(){rejected_macro();accepted_half();}
 void run_native_rz_runtime_external_contract();
 /** Existing gravity-stage lane: call each coherent Runtime body exactly once. */
 void run_native_rz_runtime_boundary_contract() {
+    real_native_current_boundary_idempotence();
     angular_runtime_checks::run();
     run_native_rz_runtime_external_contract();
 }
@@ -572,6 +768,7 @@ int main(int argc,char** argv) {
   }
   require(argc==1,"Unknown private RZ Runtime fixture selection");
   real_native_eos_boundary_gate();
+  real_native_current_boundary_idempotence();
   angular_runtime_checks::run();
   for(bool mixed:{false,true})for(int direction:{0,1})for(double inner:{0.,1.}) {
     SimConfig config{};

@@ -1,0 +1,214 @@
+{
+  "profile": "actual-materialized-full-domain-extended-1",
+  "status": "FULL_DOMAIN_MATHEMATICAL_REFERENCE_DIAGNOSTIC_ONLY",
+  "science_accepted": false,
+  "physical_qualified": false,
+  "core_binding_qualified": false,
+  "reference_complete": true,
+  "coverage_complete": true,
+  "target_count": 1584,
+  "verified_target_count": 1584,
+  "unique_site_count": 808,
+  "exact_z_reflection": true,
+  "source_identity": {
+    "topology": 1,
+    "operator_revision": 1,
+    "boundary_revision": 1,
+    "accuracy_revision": 1,
+    "generation": 1,
+    "time": 0.0,
+    "G": 6.6743e-08,
+    "purpose": "HydroStage",
+    "runtime_lease_generation": 1,
+    "runtime_lease_authenticated": true,
+    "runtime_authority_scope": "hydro-stage-native-candidate-field-only",
+    "inputs": [
+      {
+        "uid": 1,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 2,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      }
+    ]
+  },
+  "field_identity": {
+    "source_generation": 1,
+    "field_generation": 1
+  },
+  "actual_record_canonical_sha256": "b3c9f7f9a56226d4a477fc0192b9589b8c7f280b9c841c25bcd61495cea81859",
+  "original_source_input_sha256": "4d83d606533cc475e2d9e5d60471b7d4c97b8daa7bd9b311a7bfd7d942195df6",
+  "reference_status": "MathematicalIntervalsCertified",
+  "failure": null,
+  "target_widths_exact": {
+    "Phi": "50429584986587/755578637259143234191360000000000",
+    "g_r": "50429584986587/755578637259143234191360000000000",
+    "g_z": "50429584986587/755578637259143234191360000000000"
+  },
+  "budget": {
+    "calls": 3458373,
+    "max_calls": 10000000,
+    "wall_seconds": 188.9411157699942,
+    "timeout_seconds": 600.0,
+    "resource_profile": "full-domain-extended-1",
+    "geometry_memo": {
+      "profile": "run-local-exact-unit-ring-geometry-1",
+      "capacity": 65536,
+      "entries": 808,
+      "hits": 0,
+      "misses": 808,
+      "refinements": 0,
+      "integration_requests": 808,
+      "admissions": 808,
+      "width_rejections": 0,
+      "capacity_refusals": 0,
+      "unmemoized_bypasses": 0,
+      "statistics_only": true
+    }
+  },
+  "comparison_counts": {
+    "point_cell_potential": 512,
+    "force_minus_original_gradient": 1072,
+    "derived_original_value_row_vs_point_potential": 1072,
+    "actual_boundary_datum_potential": 96
+  },
+  "maximum_absolute_error_upper_exact": {
+    "point_cell_potential": "5442319196986688658273646257601594025113278888142954574528346633527/431359146674410236714672241392314090778194310760649159697657763987456",
+    "force_minus_original_gradient": "283937772406973369291633121340045151835547707794098934491820435314721/14134776518227074636666380005943348126619871175004951664972849610340958208",
+    "derived_original_value_row_vs_point_potential": "45755544682216567904425617344626338734666818982689311045447257869099/431359146674410236714672241392314090778194310760649159697657763987456",
+    "actual_boundary_datum_potential": "2752661885882537471781056434436865207350506338945654699033/431359146674410236714672241392314090778194310760649159697657763987456"
+  },
+  "scope": "Complete-domain mathematical interval diagnostic; no frozen production accuracy/science grant",
+  "materializedRecordSha256": "5e992332c510c2f54955497141bacff444ccf16fbc51517c5e5629644f0bfbd1",
+  "completeLocalResultSha256": "f6e31e074817e105013f449c4ba076b3b8b486e765a58a73a7cd8762b996bdaa",
+  "actualRun": {
+    "childWallSeconds": 189.38099137999234,
+    "guardSeconds": 189.952,
+    "sourceRecordElfFenceUnchanged": true,
+    "referenceConsumerSource": {
+      "commit": "9bd329f143ce02e6e23daf07eaa9caab1e61a48c",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "405374df760247e4aca754819e3ce7e82ab14c760fd0adc613d307415680d7c5",
+      "dirty": true,
+      "modified_files": [
+        "cmake/tests/HostTests.cmake",
+        "src/amr/exchange/BoundaryPlan.h",
+        "src/cuda/common/CudaLaunchConfig.h",
+        "src/cuda/hydro/kernels/HydroBatchKernels.cuh",
+        "src/cuda/hydro/kernels/HydroFaceKernel.cuh",
+        "src/cuda/hydro/policies/CheckedHydroEos.cuh",
+        "src/cuda/hydro/policies/HydroFluxPolicies.cuh",
+        "src/cuda/hydro/policies/HydroReconstructionPolicies.cuh",
+        "src/cuda/runtime/hydro/CudaBackendHydro.h",
+        "src/driver/runtime/ComputeBackend.h",
+        "src/driver/runtime/DriverBoundary.cpp",
+        "src/driver/runtime/DriverRuntime.cpp",
+        "src/driver/runtime/DriverRuntime.h",
+        "src/driver/stages/GravityStage.cpp",
+        "src/driver/stages/GravityStage.h",
+        "src/numerics/flux/InvariantDomainFlux.h",
+        "src/numerics/flux/RzNativeFaceFlux.h",
+        "src/numerics/reconstruction/RzSelectedReconstruction.h",
+        "src/numerics/state/StateAdmissibility.h",
+        "src/physics/boundary/PhysicalBoundaryHandler.h",
+        "src/physics/gravity/GravityBoundary.cpp",
+        "src/physics/gravity/GravityBoundary.h",
+        "src/physics/gravity/GravitySource.h",
+        "src/physics/gravity/IGravityPolicy.h",
+        "src/physics/gravity/NativeSelfStage.h",
+        "src/physics/gravity/self/SelfGravity.cpp",
+        "src/physics/gravity/self/SelfGravity.h",
+        "tests/cuda/grid/test_curvilinear_geometry_smoke.cu",
+        "tests/cuda/hydro/test_hydro_eos_failure.cu",
+        "tests/cuda/hydro/test_hydro_leaf_parity.cu",
+        "tests/cuda/microphysics/eos/test_eos_host_device_parity.cu",
+        "tests/host/driver/test_rz_runtime_boundary.cpp",
+        "tests/host/gravity/NativeSelfEnergyWitness.h",
+        "tests/host/gravity/RzMaterializedSourceRecord.h",
+        "tests/host/gravity/test_composite_poisson.cpp",
+        "tests/host/gravity/test_gravity_stage_contract.cpp",
+        "tests/host/gravity/test_self_gravity.cpp",
+        "tests/host/grid/test_curvilinear_metrics.cpp",
+        "tests/math/geometry/ViscousGeometryCases.h",
+        "tests/tooling/architecture/test_audit_architecture.py",
+        "tests/tooling/validation/test_runtime_validation_inputs.py",
+        "tests/tooling/validation/test_rz_matched_native_reference.py",
+        "tests/tooling/validation/test_rz_ring_offaxis_reference.py",
+        "tools/audit_architecture.py",
+        "tools/check_ci_results.py",
+        "validation/gravity/rz_matched_native_reference.py",
+        "validation/gravity/rz_ring_surface_reference.py"
+      ],
+      "untracked_source_files": [
+        "src/numerics/diffusion/NewtonianViscousStress.h",
+        "src/physics/gravity/GravitySourceTypes.h"
+      ]
+    },
+    "referenceObserverExecutableIdentity": {
+      "path": "/home/shiroakane/ARCH/build-release-cpu/arch_gravity_stage_contract",
+      "sha256": "baaa7630a178d716b822224dcd30cfdb183c27443f8f17b09c6726965be0e1f4"
+    },
+    "producerVersusCurrentConsumerAreSeparate": true,
+    "producerRecordFileIdentity": {
+      "path": "/home/shiroakane/ARCH/studio/.local/release-closure-20261006/native-owning-homology-512-step1-boundaryfix-20261008/output/native-self-hydro-owner/homology-512-steps-1/step-0/before-materialized-native-source.json",
+      "sha256": "5e992332c510c2f54955497141bacff444ccf16fbc51517c5e5629644f0bfbd1"
+    }
+  },
+  "cumulativeReferenceGuardSeconds": 394.917,
+  "cumulativeManagerCapSeconds": 1800,
+  "previousTwoWorkLimitRecordsRetained": true,
+  "continuousEnergyQualified": false,
+  "allSourceFieldPhysicsQualified": false
+}

@@ -24,6 +24,8 @@ namespace arch::cuda
 template <template <typename> class OriginalFlux>
 struct CudaOriginalFluxPolicy
 {
+    // Reuse the original point Riemann policy; PCM here only names its class.
+    using shared_policy = OriginalFlux<PCMReconstruction>;
     template <typename EosView>
     static ARCH_INLINE void compute(
         const FluidVector& left, const FluidVector& right,

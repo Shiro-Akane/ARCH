@@ -35,6 +35,18 @@ struct Bounds {
     double internal_max = std::numeric_limits<double>::max();
 };
 
+/** Borrow the optional trial EOS without its required-state failure latch.
+ * Workflow: reuse the checked view's existing candidate_view when available;
+ * otherwise borrow the unchanged ordinary EOS by const reference. Required
+ * donor/baseline validation never uses this selector; only high rays contract.
+ */
+template <class Eos>
+ARCH_INLINE decltype(auto) candidate_eos(const Eos& eos)
+{
+    if constexpr (requires { eos.candidate_view(); }) return eos.candidate_view();
+    else return (eos);
+}
+
 /** Validate configured physical limits without interpreting any state. */
 ARCH_INLINE bool valid_bounds(const Bounds& bounds)
 {

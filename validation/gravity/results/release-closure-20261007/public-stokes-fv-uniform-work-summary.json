@@ -1,0 +1,40 @@
+{
+  "status": "ACCEPTED_UNIFORM_CONSTANT_COEFFICIENT_FV_BASE_ONLY",
+  "logical_task_id": "public-stokes-fv-uniform-fourier-work-20261008",
+  "independent_checks": {
+    "wave_angles": 512,
+    "operator_max_abs_error": 8.881784197001252e-16,
+    "minimum_eigenvalue_observed": 0.0,
+    "periodic_random_cells": 60,
+    "kinetic_derivative": -696.8253661542049,
+    "face_jump_work": 696.8253661542049,
+    "total_energy_flux_sum": -2.4980018054066022e-15
+  },
+  "analytic_identity": "A=nu[(sum kappa\u00b2)I+(sigma sigmaT+diag(kappa\u00b2-sigma\u00b2))/3], kappa\u00b2-sigma\u00b2>=0; Rayleigh upper<=4nu sum kappa\u00b2/3. Velocity RHS=-A*u, momentum force=-rho*A*u; worker L notation not a density double-count license.",
+  "limits": [
+    "Uniform Cartesian and constant rho/mu only",
+    "Inactive directions retain global trace2/3",
+    "No variable mu, Native RZ, AMR, wall, nonlinear thermal or RKL capability grant"
+  ],
+  "formal_repairs_used": 1,
+  "formal_repairs_remaining": 0,
+  "initial_failure": "16384outputtokens allthinking,0visible; provider outputtruncate, notmathfailure",
+  "cumulative_worker_seconds": 163.67000000000002,
+  "cumulative_cap_seconds": 180,
+  "reported_tokens": {
+    "input": 3161,
+    "cached_input": 1024,
+    "noncached_input": 2137,
+    "output": 38141,
+    "thinking": 37843,
+    "visible": 298
+  },
+  "estimated_usd": {
+    "off_peak": 0.02320822,
+    "peak": 0.04641644
+  },
+  "actual_invoice": "UNKNOWN",
+  "root_active_token_cost": "UNKNOWN",
+  "source_raw_export": false,
+  "reviewed_at_utc": "2026-10-07T21:57:09.932786+00:00"
+}

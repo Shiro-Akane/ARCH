@@ -14,8 +14,11 @@ POST /api/plotfile/audit-metadata
 
 Response: protocolVersion, projectId, relativePath and metadata. The metadata
 includes exact file SHA/device/inode/size/mtime/ctime, blocks/cellShape and fields.
-Completion remains unknown, units/scientific identity unavailable and
-renderEligible=false. Readable HDF5 and a stable hash do not prove writer completion.
+Legacy files retain unknown completion, units and provenance unless recorded.
+Formal arch-plot-publication-1 files expose the recorded completion marker,
+arch-plot-identity-1 typed source/config/build/binary/EOS identity and field units.
+A readable file or stable hash alone does not prove publication completion or
+physical correctness; rendering eligibility is checked separately.
 
 ## Raw slice
 
@@ -103,14 +106,22 @@ POST /api/plotfile/audit-point uses the same protected origin/protocol and file 
      "expectedFileSha256":"<64 lowercase hex>",
      "pointQuery":{"field":"DENS","point":[0.5,6.5]}}
 
-Only candidate Cartesian native 1D/2D; point length equals dimension.
+Formal arch-native-* bounds with arch-plot-identity-1 source evidence support
+1D/2D/3D intrinsic point queries in Cartesian, cylindrical and spherical charts.
+Point entries are the recorded x1/x2/x3 axes in their recorded units: explicit
+axisymmetric RZ uses [r,z], independently of stored Cartesian cell centers.
+Point length equals the file dimension. Legacy candidate-cartesian-1 1D/2D
+queries retain their existing scope; partial candidate RZ identities reject.
 Cell bounds are half-open, with the full-domain maximum included.
 One exact match returns audit-point-1, a single raw slice plus pointEvidence.
 No interpolation, nearest-cell or guessed-level fallback. NO_NATIVE_CELL and
 AMBIGUOUS_NATIVE_CELL fail; current worker-error mapping is HTTP422.
 Inspector validates the echoed request/coverage/boundary rule and the returned
 cell bounds. Each point read currently scans bounds and hashes the full file;
-fixed response size does not imply indexed or cheap reads.
+fixed response size does not imply indexed or cheap reads. Formal point/slice
+queries retain the stored FP64 values, native cell bounds, V/W and angular
+momentum semantics; this query capability does not enable a curved or 3D
+overview renderer and does not certify the producing simulation.
 
 
 ### Explicit display viewport

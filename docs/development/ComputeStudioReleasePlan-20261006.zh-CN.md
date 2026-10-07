@@ -35,8 +35,8 @@
 | --- | --- | --- | --- |
 | 私有 CPU 生产身份、重构/缓存、RK source 接线 | 报告提供 24 组短演化＋24 组真实 checkpoint 续算 PASS | 核对原始身份与已提交处理后摘要；完善 runner 对输入组合、binary/source 身份、失败原因的断言；集成后重新验证 | 当前维护者 |
 | finite-ring 外源 | BLOCKED | 冻结且实现有证明的连续源/接触区误差界；生产绑定、消费者、演化/续算与预算不放宽 | 当前维护者 |
-| 对称粘性应力/能量功 | NOT_RUN | 按已确认张量与能量功契约补齐真实路径；闭合/反例、AMR、完整演化与续算 | 当前维护者 |
-| 轴邻格 | FAILED | 定位当前近轴阶数约 1 的原因，完成修正；原 1.8 阶门槛和多 Ω/网格/AMR/续算矩阵保持 | 当前维护者 |
+| 对称粘性应力/能量功 | 角向 pairedwork、RKL 与守恒已通过；完整 meridional tensor 待实现 | 按已确认张量与能量功契约补齐真实路径；闭合/反例、AMR、完整演化与续算 | 当前维护者 |
+| 轴邻格 | MC 与 PPM 各 32 行达到原 ≥1.8 门槛；16 组 smooth 制造解通过 | 保留原多 Ω/网格/AMR 与预算；完整演化、后端及长时仍独立验收 | 当前维护者 |
 | 连续面力参考 | BLOCKED | 独立连续参考及可证明误差上界，不能把 Gauss 16→32 的差作为证明 | 当前维护者 |
 | 2D 性能诊断 | NOT_RUN | 真实物理核/type 绑定；RAM、swap、GPU 所有权、磁盘及下一次写入余量 guard；冻结预算后执行 | 当前维护者 |
 | CUDA JENS | 私有 scoped 和 9＋9 的历史通过；公共 Cartesian 显式 CUDA 接线已形成工程候选 | 当前公共 CPU 演化/续算已通过；最终冻结后的 CUDA 生命周期、续算及必要科学验收仍需完成 | 当前维护者 |
@@ -667,3 +667,83 @@ bb25c50e5已推送当前验证过的诊断、旧CPU owner、71项工具与Studio
 新真实缓存观察明确：首512field约131s/42240 misses，第二约59s/39901 hits；重网格1280 Current约265s/184320 misses、仅65536 admissions，后两field约146s/223s、约65536hits，容量和相同几何的重复认证是可确认成本。DPS新公开轴向平移/反射等价45.82s经Root独立3000exact-Fraction与积分换元复核，只接受势积分/精确TwoSum高低项key的数学可行性，原kernel/G/当前密度/控制与残差不改。估算USD0.00652375–0.0130475，实账/Root active成本未知；与CPU模拟重叠、无源码/raw外发。生产sealedowning记录候选独立review发现copy assignment异常与moved-from不失效风险，列入唯一合并返修，未应用。整套O/CUDA/GUI/同终点计时长跑及CI仍开放，唯一checkout/单重负载/E护栏保持，下次≤15分钟。
 
 本次目标回查距上次约20.6分钟，超过15分钟目标约5.6分钟，如实记录。旧真实Current source的完整1568点参考加入严格V能量桥后仅1.025s/0新积分调用完成；真实Wh≈−4.1643e−7、保守总误差上界约5.5549e−8，说明单次完整区间不自动提供时间能量判定。它是历史同source数学记录，不能冒充新homology动态before/post，也没有据此放宽science gate。后续暖态checkpoint宜在新纯metadata积分key候选签收及当前生产对象重建后执行，避免已知大量重复几何积分占用完整2400s窗口；当前无重负载。
+
+
+### 目标回查 2026-10-07 18:52:38 UTC
+
+当前唯一工作区 clean、已推送9bd329f14；完整动态五场835.835s通过仅短时耦合，连续能量/暖态fresh restart/CUDA/GUI/正式同终点计时/长时与最终CI仍待完成。全部Core、字段接口、数学物理和实现由本维护方负责，无外部审批依赖。封闭源场producer独立跨接口审查确认实际rho/轴向坐标/lease fence正确，发现默认赋值异常及moved-from认证值生命周期风险；已交原owner进行唯一合并返修，未应用未编译。严格v2序列化/消费者候选Root审查；新轴向势积分key独立review中，仅保留精确TwoSum高低项和等价平移/反射，原G/密度/积分/预算/状态资格不改，未测性能。合法2×4工程fixture替代不可构造1×3，真实mesh validator不改。当前无本机重负载，候选全部/tmp不另建ARCH；后续先同ABI生产对象再真实homology与warm checkpoint。E盘guard/失败证据/FLASH及flint非强制/外部4070匹配正式数据0保持。下次回查不晚于15分钟。
+
+
+严格源场封闭值和轴向积分key均经Root及跨接口独立静态review集成，未作runtime/physics通过。producer唯一正式返修已用，删除异常可部分赋值并拒绝moved-from；Record地址固定，实际homology新增同一已移动Hydro值的9个生命周期负例，无额外求场/field复制。reference81项首次79通过/两项新增fixture失败保留，原71项保持；原consumer owner唯一合并返修中，不改旧门槛。因新增真实封闭值类型与GravityBoundary私有layout涉及生产providers，Stage-only不足以证明warm IO同ABI；Root在下一编译前将manager自定生产构建累计cap由1200s调到1800s，已用913.175s不清零，余886.825s，仅保留原strictFP/O3/LTO/并行2与资源guard。该cap不是物理/科学阈值或用户硬预算。
+
+
+当前同ABI ARCH/Stage/Self/composite生产构建28actions/165.888s通过，先前目标名称错误5.038s计入，原累计1084.101/1800s。Stage26.51s及composite1.99s通过，Self11.02s在缓存clear的工程断言失败，失败证据保持。静态归因：真实clear_ring_memo仍清空全部原map，但新严格等价轴向key允许下一次cold遍历内部新建命中；原memo_hits==0混淆“保留旧历史”与“本次新条目”。Root将该非科学计数断言替换为clear后立即要求真实mapsize==0，原新积分工作/新admissions/原sourcegeneration/Bounded与全部精度/资源/stale检查保持；不改kernel或science容差。reference81项两失败均原owner证实新增合成fixture错误，唯一返修只改非同purpose负例与完整source identity对应site IDs，原consumer/71tests不变，待实际重跑。
+
+
+### 目标回查 2026-10-07 19:10:01 UTC
+
+整套O仍未完成。新sealedowning与严格轴向势积分memo已完成同ABI生产编译；现有Stage/composite通过，Self旧clear-hit计数假设与本次内部复用发生分歧，Root按实际清空行为补强后重编/重验中，不改科学阈值。reference新增合成fixture唯一返修已采用，81项待重跑；真实512/1homology、暖态fresh续算、连续总能量/场、NativeDevice/GUI/正式同终点计时长跑与CI仍待验。DPS新公开密度差能量skew界22.36s经Root128组exact-Fraction及Fubini复核，只接受固定partition代数与有符号绝对源界；实际两求场独立误差仍必须完整另计，不能假设随密度差缩小。估算USD.0032197–.0064394，实账/Root active未知；与CPU编译重叠，无source/raw外发和阻塞/返修。唯一checkout/单重负载/E8GiB+128MiB下一写入预留/失败证据保持。距18:52:38约17.4分钟，超过15分钟目标的延迟如实记录，后续目标回查≤15分钟。
+
+
+### 目标回查 2026-10-07 19:23:03 UTC
+
+当前strict生产对象已统一，真实新quotient key owner ring-native-face按4×4合法Native支持PASS：cold110hits/66misses、812kernels对原uncached2464，raw fallback192hits；原kernel/controls/旧physics断言保持，仅工程积分复用，不作整场timing比。此前2×4constructor在积分前失败已保留、唯一fixture返修用尽。reference81项10.169s全通过，原71数值/工程门槛保持；Self lifecycle13.35s通过。当前真实512/1homology完整420s上界运行中，源码与HEAD冻结，同ABI/真实CFL/唯一owningbefore+after字段导出，结束前不声明PASS。完整release仍需continuous能量/场、warm fresh checkpoint、NativeCUDA/GUI/正式计时长跑与CI；4070当前匹配正式0条，不能比较旧JENS记录冒称当前RZ平台比。CI只读审查另发现optional flint test skip与hosted严格noskip不一致，正按显式maintaineropt-in且缺依赖失败语义/tmp候选解决，不新增mandatoryflint或testowner。唯一checkout/单重负载/E盘护栏/失败和未关闭reference依赖raw保持；下次回查≤15分钟。
+
+
+### 目标回查 2026-10-07 19:38:00 UTC
+
+完整O仍未验收。首轮512/1真实homology在93.822s完成两个实际求场且原物理残差通过，但postCurrent owner断言失败：重复Host边界发布改变completion令牌，数组未变。失败原记录保留，不改断言；Root按真实EOS、BC绑定代次、原七数组lease、accepted版本/token和quiescent Current限定实现幂等复用，活跃macro原路径不变。新原owner反例/tmp并行。optional arb默认80项11.063s guard通过，无额外依赖/skip；显式81和缺依赖失败待验。CUDA mean-EOS五文件候选仅/tmp未编译，900s原预算超28.155s如实记录、未自动重置。DPS派新公开open-domain自能边界flux数学问题，避免错误使用half-Phi而非full-Phi；不外发source/raw，无资格或阈值授权。连续场/能量、warm fresh续算、NativeCUDA、GUI、正式同终点计时长跑和CI仍开放，唯一checkout/单重负载/E盘8GiB+128MiB护栏不变。距上次14.95分钟，下一回查≤15分钟。
+
+
+### 目标回查 2026-10-07 20:00:48 UTC
+
+真实Current幂等owner26.46s及同ABI生产重建162.421s通过，保留旧边界、EOS、复制和幽灵区错误拒绝检查；build累计1265.722/1800s。新homology512/1实际91.925s、guard94.435s完成两场并导出真实Hydro前/Current后sealed源场，原记账/Green及source/ELF fence全通过；累计191.918/420s，首失败保留。仍不授予continuous总能量、public/Device或长时资格。独立before全域参考实际103.496s达到原1.8M callback限制，410/808sites已认证、全1584原targets保留，其余UNVERIFIED；70dps和G/1e12三列宽度不变。post源160个exact equal-density组，不能伪用均匀前场或旧reference；独立核对完整Newton force的精确相对几何memo、反射符号和总宽度分配，避免盲重复已知worklimit。warm fresh真实Helm/aprox13动态AMR/checkpoint双支续算在独立2400s compile+run内执行，source/生产provider冻结。optional default80/显式81及显式缺backend失败语义已验，无mandatoryflint或skip。DPS open-domain全Phi质量flux41.82s经64exactFraction球体及时间积分核对，仅数学，估算USD.00576385–.0115277，实账/Root active未知。新force-memo任务包因本地字符串引号错误首次未创建，runner未调用API；已修正，原失败保留，不消耗worker返修。完整release/CUDA/GUI/正式计时长时/CI仍开放。当前旧近轴/制造解/pairedwork顶部状态过期已独立核对，将同步成实际子集结果；完整tensor另有明确constitutive缺口不混称通过。匹配4070正式0条不形成外部等待。唯一checkout/单重负载/E护栏/失败raw保留；距上次约21分钟超过15分钟目标约6分钟，如实记录，后续回查≤15分钟。
+
+
+### 目标回查 2026-10-07 20:15:41 UTC
+
+真实 warm checkpoint 双支任务已结束，guard770.574s、E盘预留与无swap通过，正在读取完整结果与源/provider身份后再判定。完整release仍未通过；全域独立参考原worklimit保留，数学force-memo首轮仅平移/反射思路可用，接触求导与outward宽度证明需唯一正式返修，原45.61s扣入220s累计上界。共享NativeDevice单面候选与全黏性tensor冻结设计/tmp并行；源码/接口/科学验收由当前维护方负责，无外部审批等待。CPU编译、CUDA、连续场/总能量、GUI、同终点正式计时与长时及最终CI仍有开放项。唯一checkout/单重负载/失败保留不变。后续目标回查≤15分钟。
+
+
+暖态真实四模块 mixed-AMR checkpoint 双支续算已关闭工程出口：769.609s compile+run，guard770.574s，30,720状态数值逐位相同，fresh真实EOS/BC/Runtime无Init覆盖；源/provider/ELF和表身份均核对。仅续算出口，不授予连续总能量、publicRZ/CUDA或长时能力。处理后记录[native-warm-checkpoint-continuation-summary.json](../../validation/gravity/results/release-closure-20261007/native-warm-checkpoint-continuation-summary.json)。CI触发统一为仅main目标PR，现有jobs/完整性门槛保持、同PR编译缓存成功后保存；无强制FLASH/flint/Windows/异机依赖。
+
+
+### 目标回查 2026-10-07 20:28:31 UTC
+
+warm双支续算769.609s/guard770.574s、30720words逐位通过；table/ELF/reusedprovider/sourcefence均实际执行。完成checkpoint原H5已按thin记录SHA和收据清理349176B；连续homology原源场和失败原数据仍留本机。新homology512/1真实beforeHydro+afterCurrentsealedowning出口及原记账/Green接受，仅工程出口、连续总能量仍UNVERIFIED。Tooling本次652项39.824s失败3项：旧纯POD几何expected少semantics/rootupper/dyadicidentity，三个launchABI实际经GravitySource数学header导入Grid，旧fixtureliteral30assert未覆盖warm剩余预算；按真实类型隔离、exactPOD允许和ordinary30/warm2400剩余控制修复，不放宽physics断言。新NativeDevice单面共用数学候选已集成仅源码，待编译；实际CF变量fallback触发字面规则，按无语义改名保持审计禁令。DPS完整Newtonforce-memo数学返修104.98s累计经4096exactFraction与轴cap反例接受，仅数学；outward贡献/最终宽度必须实查，无source/raw外发。全张量meridional真实gradient/CFadjoint与workcarrier继续冻结，不能以PSD或phi已验收声称fulltensor。完整O科学、CUDA、GUI、同终点计时/长时/CI仍开放，唯一checkout、单重负载和E护栏保持。下一回查≤15分钟。
+
+
+### 目标回查 2026-10-07 20:42:32 UTC
+
+共享Native单面CUDA候选已集成但Device未验；严格optional独立几何memo原default11/.547s与显式arb12/1.626s通过，仅数学leaf/工程。完全场/连续能量、CPU-CUDA正式同终点计时/长时、GUI/publicRZ仍开放。工程架构审计当前PASS：将引力纯POD接线类型移出数学header以消除三个launch接口真实Grid依赖；actualPOD桥expected包含semantics/rootupper/dyadicidentity，原额外公式/错误enum/字段/hiddenfallback反例保持。唯一ordinary30s/warm2400s compile+run剩余预算改为AST验证，不改物理窗口。Root首次新文件baseline预检错误后shell仍启动构建，已按exactownedguard停进程并保留52.869s；原build累计1318.591/1800s，剩481.409s，第二次先fail-fast预检/审计后重建中，不能把首次作成功或忽略成本。全tensorconstitive/sharedleaf与meridional实际FV/CFadjoint尚在冻结；DPS broadPro公开证明180.1s无正文超时，唯一缩小矩阵返修Flash29.4s、512exactFraction核对接受必要条件，累计209.5/300s，Protoken/费用未知；不据PSD或transpose条件签物理面/体离散。已有失败raw保留、completedwarm349176B清理收据已存，仅thinrecords入仓。无外部Core/平台审批依赖；匹配4070正式当前0条不能比较旧记录。唯一checkout/单重负载/E护栏不变；下一回查≤15分钟。
+
+
+### 执行回查：2026-10-08 06:18 JST
+
+当前受影响5项CPU原owner全通过（69.06s/guard69.371s），完整默认工具658项通过（38.234s/guard39.203s），原失败记录保持。共享三维零bulk Stokes点本构已进入原curvilinear owner，57个独立解析point例及原PDE检查通过（15.575s/guard16.084s）；这只是点数学，完整meridional/CF/BC/RKL张量仍未实现，CUDA未验。生产构建累计1651.035/1800s，包含全部失败、中断与本次18.185s，不重置。
+
+新真实before参考仍在原1.8M回调停于410/808独立位置，70dps及三列G/1e12窗口不改；几何memo0命中证明消费方已先canonical合并，该输入没有进一步重复可用，不归因生产求解器。两次guard合计204.965s、原失败和全targets保留。拟采用显式通用完整参考资源档位600s/10M，仅改变维护者工作额度，旧90s/100k、240s/1.8M和两matched档位全部保留，真实测试后方可运行。外部campaign若需扩展须先冻结累计cap并保留204.965s，不能以资源变化作科学PASS。
+
+全tensor候选Q2普通边与axis三次边不具整段C0，r=5/4反例差3/64，原设计不得直接实施；DPS公开Q3正Gram5×4充分零模证明经Root60×32精确矩阵rank29核对，合法零模包括轴向平移、homology及special-conformal，非算法资格。旧axis uz bubble为四次r，超出Q3证明，须重新冻结真实axis自然边界/多项式空间。DPS72.47s、reported输出17072（思考16609），估算USD0.01041355–0.0208271，实际账单/Root成本未知；正文超runner1200字符但完整保留并独立核对，无格式API重跑。
+
+正式NativeRZ2已有metadata/slice能力，实际point Inspector仍由旧Cartesian-only guard拒绝；六文件同格式native point1/2/3维候选在/tmp，需迁移全部消费者并实际验证，未作UI/physics通过。当前全部Core接口与数学由本维护者处理，无外部审批依赖；完整连续能量/张量/NativeDevice/GUI/同终点计时长跑/最终CI仍开放。唯一checkout、单重负载、E盘8GiB+128MiB预留和失败raw保留；下一回查≤15分钟。
+
+### 2026-10-08 持续收束检查（2026-10-07T21:45:11.749282+00:00）
+
+全部 Core/API/字段与科学工作由维护者实施和签收。步前真实 owning 源的独立参考已覆盖 1,584/1,584 原目标、808 个唯一位置，原 70 dps 和区间宽度保持；实际 guard 189.952 s，前两次工作上限失败保留，参考累计 394.917/1,800 s。此结果只签收数学参考覆盖，不替代连续能量与原生全耦合。
+
+原生正式点查询 43 项局部检查通过；留存真实正式 RZ writer 的单元点查询、切片、原生 V/W、字段单位、完整身份及文件只读 SHA 通过（1.017 s）。首次误把正式 fixture 当历史候选版本的失败保留，新增明确 formal-only 调用，历史候选 RZ 拒绝断言不变。正式 Reader 能力与 Overview/render、演化科学验收分别记录。全量 Studio 尚有一项真实 GNU 构建身份异步完成等待失败；原 fixture 约 1 s 等待未改，自动审批拒绝延长后已请求用户明确工程等待授权。
+
+DPS 精确背景/密度差恒等式独立 review 通过 256 组 Fraction 检查；外向区间乘积与完整和仍须通过原宽度。惰性四路径候选待 Root 集成和真实步后参考。完整子午黏性、Native Device 生命周期、连续能量、当前 GUI 人工验收、正式配对计时及长跑仍为 OPEN，未降低原目标。
+
+### 2026-10-08 目标回查（2026-10-07T22:00:42.392151+00:00）
+
+步后独立参考在原 10,000,000 回调限制停止：36/808 唯一位置，原完整目标 1,584 个未全覆盖；实际 child 542.771 s、guard 545.410 s，源/记录/执行物前后 fence 一致。精确密度分解保留160项，原正密度、70 dps、全部宽度与最终 gate 不变；缓存1,852次命中和4,030次实际积分请求仅为工作观测。累计参考成本940.327/1,800 s，失败原数据保留。后续须先检查重复积分/精度分配，不能把前缀、步前通过或估计误差拼成全域通过。
+
+Root 集成了 GNU 工具链取证的重复工作优化：先读取有界描述并选择真实链接器，再完整获取一次身份，额外 SHA 核对防描述替换。原组件/specs/漂移断言及约1s fixture等待均未修改，实际原 owner 待结果；不把去掉重复扫描当作通过声明。DPS 的均匀常系数 Cartesian 完整 FV 应力符号经 Root 512个波数与60格周期功独立核对；该有限证明不授予变系数、RZ、AMR、壁面或 RKL 全资格。完整 meridional tensor 尚需真实共享梯度/测度/牵引/功和稳定性出口。全部 release 科学/运行/长跑目标继续保留，未移交外部或缩小范围。
+
+### 目标回查（2026-10-07T22:24:17.469222+00:00）
+
+当前 Studio 原全量367/367、原 GNU 构建身份 case、lint/typecheck/build 均通过；约1s测试等待没有改变，修复的是生产取证重复完整扫描。工具默认665/665、actionlint和架构审计通过，原失败证据保留。正式Native点查询支持原生1/2/3维字段与测度，Overview/render仍为Cartesian1/2；真实留存RZ writer只读链已验，不替代当前动态科学及桌面人工验收。完成的工程节点可以推送，整套O release仍未通过：步后独立参考36/808 WorkLimit、完整Newtonian FV/AMR稳定性、NativeDevice完整生命周期、当前GUI UAT、正式同终点计时及长时仍开放。
+
+DPS新密度加权primitive矩拟合秩证明26.86s返回，Root独立复核中；该证明不授予实际梯度或算子资格。shared covariant点梯度惰性候选251.70/360s返回，原stress/work正文未改，待Root核对。距上次实际回查23.585分钟；超过15分钟的延迟如实保留，不回填时间。唯一checkout、一个本机重负载、E盘8GiB加下一写入预留、失败/未关闭raw保留及不上传原始输出要求继续有效。

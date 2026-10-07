@@ -1,0 +1,37 @@
+{
+  "status": "ACCEPTED_PUBLIC_Q3_SUFFICIENT_CRITERION_ONLY",
+  "delivery_issue": "API completed untruncated JSON but summary exceeds runner1200char cap; raw body independently inspected, no further API for format",
+  "proof_checks": [
+    "5x4 positive samples force P1/P3 polynomial degree<=3, P2<=4 radial and<=3 axial identicallyzero",
+    "Exact Fraction60x32 evaluation matrix rank29/nullity3; independently verify axialtranslation, homology and specialconformal modes",
+    "Full C0 edge polynomial trace uniquelydetermines all3modeparameters, includingaxis vertical edge",
+    "No claim4x4minimal, exactenergyquadrature, physicalFVtraction orrealAMRalgorithm"
+  ],
+  "operator_limit": "Actual proposed axis uz bubble r^2(h^2-r^2) is degree4 and NOT Q3, so this proof cannot qualify that olddesign. Rootmustchoose regular evendegree2 free-axis bubble(h^2-r^2)(1-eta^2) orprove6x4criterion; physical axis tangentialvelocity is natural, notfixedwall.",
+  "logical_task_id": "public-q3-stokes-quadrature-nullspace-20261008",
+  "formal_repairs_used": 0,
+  "formal_repairs_remaining": 1,
+  "reviewed_at_utc": "2026-10-07T21:14:47.611933+00:00",
+  "source_raw_export": false,
+  "algorithm_capability_grant": false,
+  "worker_wall_seconds": 72.47,
+  "reported_token_usage": {
+    "input_tokens": 1512,
+    "cached_input_tokens": 384,
+    "output_tokens": 17072,
+    "noncached_input_tokens": 1128,
+    "reasoning_tokens": 16609,
+    "visible_output_tokens": 463
+  },
+  "estimated_cost_usd": {
+    "currency": "USD",
+    "off_peak": 0.01041355,
+    "peak": 0.0208271,
+    "status": "estimate from reported token usage; API billing is authoritative",
+    "pricing_snapshot": "2026-10-02.1"
+  },
+  "invoice_cost": "UNKNOWN",
+  "root_active_cost": "UNKNOWN",
+  "overlap": "serial local source reference plus subsequent compile; no local worker resources",
+  "extra_rework": "No API retry for oversize summary; independent Root degree4axisbubble exclusion"
+}

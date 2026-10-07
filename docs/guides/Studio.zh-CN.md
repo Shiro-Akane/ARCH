@@ -37,7 +37,7 @@ Studio 构建选项默认关闭，普通 Core 编译不会安装网页依赖。�
 
 ## 查看 Plotfile
 
-完整 `plt_XXXX.h5` 仍是权威数据，Studio 只读。当前候选读取范围为 Sod 一维和 Cartesian CellularDet 二维的已发布叶块。总览可用较低显示分辨率，Inspector 回查原文件中的 native cell。字段来自文件而非初始采样。
+完整 `plt_XXXX.h5` 仍是权威数据，Studio 只读。总览支持笛卡尔一维和二维的已发布叶块，可用较低显示分辨率。正式发布文件支持按所记录的原生坐标查询笛卡尔、柱和球坐标的一至三维单元；例如显式 RZ 使用 `(r,z)`，无需把它转换成单元的笛卡尔中心。查询保留文件中的 native bounds、V/W、单位和身份；曲线/三维渲染与模拟的物理验收分别处理。Inspector 回查原文件中的 native cell。字段来自文件而非初始采样。
 
 XDMF、可重建查询索引、有界跨查询缓存、更多几何/三维格式和完整全应用验收按[下一阶段计划](../development/ComputeStudioReleasePlan-20261006.zh-CN.md)闭环。交互检查图不代替科研分析或演化验证。
 

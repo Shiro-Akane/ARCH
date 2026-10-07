@@ -28,20 +28,19 @@
 namespace FluxAdmissibility {
 // A high-order face is a trial state. The final conservative limiter always
 // queries the unchanged owning cell means through the required EOS contract.
-template <class Eos>
-ARCH_INLINE auto candidate_eos(const Eos& eos)
-{
-    if constexpr (requires { eos.candidate_view(); }) return eos.candidate_view();
-    else return eos;
-}
 
 // Host tabular EOS raises on an out-of-table high-order trial. Convert only
 // that documented physics failure to a rejected candidate; leave every other
 // exception and all required mean-state queries untouched.
 template <class Compute>
-inline void compute_candidate(Compute&& compute, FluidVector& high,
+ARCH_INLINE void compute_candidate(Compute&& compute, FluidVector& high,
                               double* species_flux, int species)
 {
+#if defined(__CUDA_ARCH__)
+    // Device trial EOS returns nonfinite values without a required-state latch;
+    // the unchanged point factor rejects them. Device code has no exceptions.
+    compute();
+#else
     try {
         compute();
     } catch (const std::runtime_error&) {
@@ -50,6 +49,7 @@ inline void compute_candidate(Compute&& compute, FluidVector& high,
         for (int s = 0; s < species; ++s)
             species_flux[s] = arch::state::invalid();
     }
+#endif
 }
 
 /** Test the recovered conserved state against the shared admissible domain. */

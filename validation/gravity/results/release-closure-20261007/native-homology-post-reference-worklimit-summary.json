@@ -1,0 +1,63 @@
+{
+  "status": "WORK_LIMIT_INCOMPLETE_REFERENCE",
+  "sourceRecordElfFenceUnchanged": true,
+  "phase": "post",
+  "targetCount": 1584,
+  "uniqueSiteCount": 808,
+  "completeSites": 36,
+  "allSourceWidthMetForCompleteSitesOnly": true,
+  "wholeDomainAccepted": false,
+  "physicalQualified": false,
+  "referenceComplete": false,
+  "scienceAccepted": false,
+  "guardSeconds": 545.41,
+  "childSeconds": 542.7714507030032,
+  "budget": {
+    "calls": 10000000,
+    "max_calls": 10000000,
+    "wall_seconds": 542.3123348240042,
+    "timeout_seconds": 600.0,
+    "resource_profile": "full-domain-extended-1",
+    "geometry_memo": {
+      "profile": "run-local-exact-unit-ring-geometry-1",
+      "capacity": 65536,
+      "entries": 4029,
+      "hits": 1852,
+      "misses": 4030,
+      "refinements": 0,
+      "integration_requests": 4030,
+      "admissions": 4029,
+      "width_rejections": 0,
+      "capacity_refusals": 0,
+      "unmemoized_bypasses": 0,
+      "statistics_only": true
+    }
+  },
+  "density_decomposition": {
+    "profile": "exact-volume-modal-density-contrast-1",
+    "background_density_exact": "2252941705644107/2251799813685248",
+    "background_selected_volume_over_pi_exact": "556640625000",
+    "original_leaf_count": 160,
+    "integration_term_count": 160,
+    "positive_contrast_terms": 93,
+    "negative_contrast_terms": 66,
+    "zero_contrast_leaves": 1,
+    "root_bounds_exact": [
+      "10000",
+      "30000",
+      "-10000",
+      "10000"
+    ],
+    "root_volume_over_pi_exact": "16000000000000",
+    "original_mass_over_pi_exact": "9013590173384136091552734375/562949953421312",
+    "represented_mass_over_pi_exact": "9013590173384136091552734375/562949953421312",
+    "exact_dense_coverage": "original-validated-disjoint-full-root",
+    "science_accepted": false,
+    "core_binding_qualified": false
+  },
+  "rawReferenceSha256": "42bebe5bb26925bcf9290ff89d50932f90622bfcc643eb8cadf7d44778fefb4f",
+  "beforeReferenceComplete": true,
+  "cumulativeSeconds": 940.327,
+  "managerCumulativeCapSeconds": 1800,
+  "nextAction": "Inspect exact representation/error work before further dispatch; do not lower originalwidths or treat completed prefix aswholePASS"
+}

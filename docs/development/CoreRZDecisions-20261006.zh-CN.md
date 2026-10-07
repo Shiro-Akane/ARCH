@@ -61,7 +61,7 @@ tau_zphi = mu * d_z u_phi
 L_phi = (1/r²)*d_r(r²*tau_rphi) + d_z(tau_zphi)
 ```
 
-使用同一应力和真实力臂进入原生 torque face flux、signed AMR register、restriction/reflux。径向面力矩为 `integral(r*tau_rphi*dA)`（定半径面可写 `r_face*A_face*tau_rphi`）；轴向面为 `integral(r*tau_zphi*dA)`，使用对应面 angular measure 和重构，不能套用单个 radial r_face 或 cell r_bar。总能量粘性通量采用 `F_E,visc=-u·tau_n`，在当前通量符号下能量 RHS 为 `div(tau·u)`；方位部分与本次修改的方位应力配对。径/轴已有通量与功不在本轮静默改写。去掉重复方位连接项时须完整证明与新散度配对，不能仅把旧 source 清零。
+使用同一应力和真实力臂进入原生 torque face flux、signed AMR register、restriction/reflux。径向面力矩为 `integral(r*tau_rphi*dA)`（定半径面可写 `r_face*A_face*tau_rphi`）；轴向面为 `integral(r*tau_zphi*dA)`，使用对应面 angular measure 和重构，不能套用单个 radial r_face 或 cell r_bar。总能量粘性通量采用 `F_E,visc=-u·tau_n`，在当前通量符号下能量 RHS 为 `div(tau·u)`；方位部分与本次修改的方位应力配对。此处方位迁移保留径/轴已有通量与功；后续完整张量修正按第12节明确替换旧算子，不叠加执行。去掉重复方位连接项时须完整证明与新散度配对，不能仅把旧 source 清零。
 
 纯径向变化的旋流参考：
 
@@ -137,17 +137,17 @@ P(r) = P0 + rho*(Omega²*r²/2 + Omega*a*r⁴/2 + a²*r⁶/6)
 
 每条短包上限确认：进程树 RAM 12 GiB、owned GPU allocations 10 GiB、任务产物磁盘 10 GiB、每条完整演化/每条真实续算墙钟各 1200 s。原公共表/输入不计作新产物；磁盘 guard 要计临时、checkpoint、plotfile和日志，预估下一次写入并留系统余量。检查系统与 GPU 当前可用空间；无法落实 guard 则不启动。达到上限标资源终止/未完成，不改物理终点、网格或输入来凑通过。
 
-这些终点只用于工程性能诊断，并不承诺完整耦合科学轨迹已经合格。`1e-6`、分割 `5e-7` 的两份 long 仍未获运行授权；7200 s/30 GiB 也仍只是提议。Core 还需提供完整耦合、开放边界与核能/引力/扩散收支的独立参考和预算。新 RZ 不纳入；旧 polar 不能顶替 RZ；旧 P13 缺项不补默认值。
+这些终点只用于工程性能诊断，并不承诺完整耦合科学轨迹已经合格。原移交时 `1e-6`、分割 `5e-7` 的两份 long 未获运行授权，7200 s/30 GiB 为当时提议。当前整套 O 系列已授权维护者完成；长跑仍须先具备完整耦合、开放边界与核能/引力/扩散收支的独立参考、冻结批次预算和实际 Host 空间护栏，不沿用超过当前存储余量的提议。新 RZ 不纳入；旧 polar 不能顶替 RZ；旧 P13 缺项不补默认值。
 
-## 8. 对方同步后可以并行启动
+## 8. 维护者的实施顺序
 
 1. 继续既有私有 CUDA JENS 流程：构建 → scoped tests → 原冻结短演化/真实续算；任何失败保留并停该节点。
 2. 按第3节实现 typed RZ external binding、W/V 源项与阶段账本，保留原正负例并加 W/V 非均匀反例。
 3. 按第4节在同一 diffusion owner 内实现显式 RZ 方位应力/配对功；按第5节准备一般轴邻格重构候选。
 4. 独立推进第6节 matched-source 源内/接触参考；无可靠界继续 UNVERIFIED，不妨碍其他已批准子项。
-5. 资源空闲且 guard/输入就绪后执行第7节 2D CPU 性能诊断，再按条件推进 2D CUDA counterpart；3D/正式计时先提交批次预算，long 保持未执行。
+5. 资源空闲且 guard/输入就绪后执行第7节 2D CPU 性能诊断，再按条件推进 2D CUDA counterpart；3D/正式计时先冻结批次预算，long 在科学准备条件和资源限额具备后执行。
 
-每次提交标准确源码/ELF/input/table/请求身份、scoped tests 与未完成项。raw H5/plt/checkpoint/全日志留本机，只提交处理后摘要和必要图表。Core 再按子集决定公开范围，不以工程 PASS 覆盖四项 RZ finding。
+每个节点记录准确源码/ELF/input/table/请求身份、scoped tests 与未完成项。raw H5/plt/checkpoint/全日志留本机，只提交处理后摘要和必要图表。维护者按科学证据决定公开范围，不以工程 PASS 覆盖未关闭的 RZ finding。
 
 ## 9. 本轮工具与验证范围
 
@@ -217,3 +217,24 @@ Burn继续原单zone ODE和两次半步，不把closure迁移变成多节点ODE�
 ### 实际引力功存储节点与总能量出口
 
 [单元侧存储节点](NativeGravityWorkLayoutNode-20261007.zh-CN.md)修复真实curved左右系数别名，CPU/CUDA共用原公式，Cartesian原数据/顺序保持。原owner非线性实际行及四真实field账本/透明性/故障回滚已通过；独立端点Green分解、连续空间精度、AMR总能量及反应四模块仍验收中。本节点不开放公共Native或Device资格。accepted-Current与Hydro-stage用途应共用一个场所有者并分别验证真实源租约；用途不替代科学资格，且不把accepted Current伪装成零dt Hydro阶段。
+
+## 12. 完整黏性张量的实施边界
+
+运动粘度继续由 nu_visc 控制，动力粘度为 mu=rho*nu。完整实现采用同一三维零体粘度 Stokes 本构，计算坐标和降维不会改变迹项系数；不增加独立的用户 mu 或 bulk 参数。
+
+```text
+G_ij = physical covariant velocity gradient
+tau = mu*(G+G^T-(2/3)*tr(G)*I)
+F_E,visc = -u dot tau_n
+Q = tau:G = 2*mu*dev(sym(G)):dev(sym(G))
+```
+
+共享点本构已在原 CPU 曲线几何 owner 中通过了 57 个独立解析例的验证，原有 PDE 断言保持不变。该本构提供应力、牵引、功和收缩，非法或不可表示的结果将不予发布；目前它尚未接入完整的径向/轴向算子，CUDA 亦未进行编译。生产环境的更新需要提供真实横向梯度、同一次应力的动量与能量通量、张量几何源、边界功、AMR 以及实际时间步的证据。原向量 Laplacian 与新张量不能重叠执行，耗散也不能再次作为独立加热项叠加到总能量中。
+
+原拟议的 Q2 普通边与轴向奇三次边在粗细网格界面处存在整段不连续的问题，仅靠挂点一致性不足以解决。后续若采用连续且保均值的重构，普通边、轴边和粗细界面必须统一使用同一 Q3 边迹空间；细网格限制的是粗网格的整段多项式。在轴上，ur 为奇函数、uz 为偶函数；uz 属于自然轴边界，不能将其有限轴值当作零值壁面条件处理。原有的四次径向 uz bubble 不属于 Q3，故不能沿用 Q3 的证明逻辑。
+
+对真实Q3径/轴速度与正mu，5个径向乘4个轴向正求积点足以证明Gram零值仅来自连续零偏应变。这个充分条件不声称积分精确或点数最少。合法零模包括轴向平移、同率homology和 ur=2*b*r*z、uz=b*(z*z-r*r) 的special-conformal模式；不能误将最后一项归为数值checkerboard。真实边界会进一步约束零模。实际系数行、密度均值、轴空间、粗细限制和边迹仍须在生产实现中逐项核对。
+
+若采用弱梯度转置，必须用真实B、W和速度质量矩阵M构造K=B^T*W*B。正半定性不自动提供真实有限体积牵引或正确AMR限制；轴向净内力还需要B*e_z=0，粗细速度映射P对应的力必须采用P^T。Lambda=max_i(sum_j(abs(K_ij))/M_i) 可控制冻结线性算子的谱，但dt<=2/Lambda只给出前向Euler的加权动能条件，不能替代热能正性、非线性RKL阶段或移动边界的验收。
+
+验收继续覆盖常量和变密度/粘度、同率及异率压缩、横向剪切、轴正则、移动壁面、真实粗细界面、热能和组分拒绝、演化及fresh checkpoint续算；公共能力按整条证据开放。上述候选重构与弱梯度只是实施约束，当前不授予完整张量或Device资格。

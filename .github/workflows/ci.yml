@@ -1,11 +1,8 @@
 name: ARCH CI
 
 on:
-  push:
-    branches: [main, CUDA_complete_v1, physics/selfgravity]
   pull_request:
-    branches: [main, CUDA_complete_v1, physics/selfgravity]
-  workflow_dispatch:
+    branches: [main]
 
 # Public PRs run only on disposable GitHub-hosted machines, without secrets or
 # write permissions. Do not change this to pull_request_target to run PR code.
@@ -173,9 +170,9 @@ jobs:
         run: |
           if command -v ccache >/dev/null; then ccache --show-stats; fi
 
-      # A PR may restore trusted caches, but cannot publish a new shared cache.
-      - name: Save cache after a successful main or V1 push
-        if: success() && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CUDA_complete_v1') && steps.cache.outputs.cache-hit != 'true'
+      # Save only the current PR cache namespace after all CPU gates pass.
+      - name: Save the successful PR compiler cache
+        if: success() && steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: build-ci/ccache

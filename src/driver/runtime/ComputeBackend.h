@@ -15,9 +15,10 @@
 
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/topology/BlockHandle.h"
+#include "data/FluidState.h"
 #include "data/GlobalDefs.h"
 #include "grid/ScalarFieldView.h"
-#include "physics/gravity/GravitySource.h"
+#include "physics/gravity/GravitySourceTypes.h"
 #include "driver/schedule/StageScheduler.h"
 
 #include <cstddef>

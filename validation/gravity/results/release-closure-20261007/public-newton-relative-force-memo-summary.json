@@ -1,0 +1,35 @@
+{
+  "status": "ACCEPTED_MATHEMATICAL_DERIVATION_ONLY",
+  "scope": "Exact unit-density Newton potential/radial+axial-force axial translation/reflection geometry and rigorously budgeted weighted enclosure memo; not software/science qualification",
+  "independent_review": [
+    "Weak derivative convolution: locally integrable Newton kernel gradient convolved with bounded compact density has continuous gradient by local-L1 translation continuity, including contact and axis; no difference-quotient domination or density-boundary cancellation asserted",
+    "Reflect source about fixed observer Z0, vary observer Z0+h; potential parity and actual axial-force sign follow. No smooth convergence-order claim",
+    "4096 seeded exact-Fraction translation/reflection and positive-density aggregate-width checks",
+    "Independent analytic axis annular cap-force differences reject center-only key and missing axial reflection sign",
+    "Outward weighted and final arithmetic widths must be actually rechecked under same cumulative work budget; exact inequality alone does not authorize rounded reuse"
+  ],
+  "logical_task_id": "public-newton-reference-axial-force-cache-20261008",
+  "formal_repairs_used": 1,
+  "formal_repairs_remaining": 0,
+  "worker_seconds": 104.97999999999999,
+  "cumulative_manager_cap_seconds": 220,
+  "first_attempt_seconds": 45.61,
+  "repair_seconds": 59.37,
+  "reported_token_usage_total": {
+    "input_tokens": 3404,
+    "cached_input_tokens": 1152,
+    "output_tokens": 25007,
+    "noncached_input_tokens": 2252,
+    "reasoning_tokens": 24225,
+    "visible_output_tokens": 782
+  },
+  "estimated_cost_usd": {
+    "off_peak": 0.01534545,
+    "peak": 0.03069091
+  },
+  "invoice_cost": "UNKNOWN",
+  "root_active_cost": "UNKNOWN",
+  "source_raw_export": false,
+  "numerical_reference_software_runtime_grant": false,
+  "reviewed_at_utc": "2026-10-07T20:20:03.566783+00:00"
+}

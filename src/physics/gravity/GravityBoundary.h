@@ -11,6 +11,8 @@
 #pragma once
 
 #include <array>
+#include <bit>
+#include <cfenv>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -29,6 +31,60 @@
 #include "numerics/elliptic/CompositePoisson.h"
 
 namespace Physical::Gravity {
+namespace ring_memo_detail {
+/** Exact relative axial endpoints for optional potential-integral memo keys.
+ * Workflow: require nearest rounding and safe input exponents -> use one
+ * stored-operation TwoSum for each z_endpoint-z_observer -> keep BOTH high and
+ * low terms -> compare exact reflected pairs (-upper,-lower) by their bit words
+ * -> normalize signed zero only. Equal returned values represent the identical
+ * translated/reflected scalar-potential integral; they grant no source, cache,
+ * field, force or Runtime authority. Unsupported inputs simply decline key
+ * normalization, leaving the caller's original raw-key/kernel path available.
+ * Formula: a+b = hi+lo exactly; b_virtual=hi-a,
+ * lo=(a-(hi-b_virtual))+(b-b_virtual), with b=-z_observer.
+ * Inputs with exponent in [-400,400] keep possible nonzero subtraction
+ * residuals normal and avoid relying on subnormal/FTZ behavior. Every elementary
+ * operation is separately stored to retain the strict binary64 evaluation.
+ */
+inline std::optional<std::array<double,4>> exact_axial_relative_endpoints(
+    double lower,double upper,double observer) noexcept {
+    if(std::fegetround()!=FE_TONEAREST||!(lower<upper))return std::nullopt;
+    const auto ordinary=[](double value) noexcept {
+        if(!std::isfinite(value))return false;
+        if(value==0.)return true;
+        const int exponent=std::ilogb(std::abs(value));
+        return exponent>=-400&&exponent<=400;
+    };
+    if(!ordinary(lower)||!ordinary(upper)||!ordinary(observer))return std::nullopt;
+    const auto two_sum=[](double a,double b,std::array<double,2>& pair) noexcept {
+        volatile double high=a+b;
+        volatile double virtual_b=high-a;
+        volatile double virtual_a=high-virtual_b;
+        volatile double residual_a=a-virtual_a;
+        volatile double residual_b=b-virtual_b;
+        volatile double low=residual_a+residual_b;
+        const std::array<double,6> terms{high,virtual_b,virtual_a,residual_a,residual_b,low};
+        for(double value:terms)
+            if(!std::isfinite(value)||(value!=0.&&!std::isnormal(value)))return false;
+        pair={high==0.?0.:static_cast<double>(high),low==0.?0.:static_cast<double>(low)};
+        return true;
+    };
+    std::array<double,2> lo{},hi{};
+    if(!two_sum(lower,-observer,lo)||!two_sum(upper,-observer,hi))return std::nullopt;
+    const auto normalize_zero=[](double value) noexcept {return value==0.?0.:value;};
+    std::array<double,4> direct{lo[0],lo[1],hi[0],hi[1]};
+    const std::array<double,4> reflected{normalize_zero(-hi[0]),normalize_zero(-hi[1]),
+        normalize_zero(-lo[0]),normalize_zero(-lo[1])};
+    for(std::size_t word=0;word<direct.size();++word) {
+        const auto a=std::bit_cast<std::uint64_t>(direct[word]);
+        const auto b=std::bit_cast<std::uint64_t>(reflected[word]);
+        if(b<a)return reflected;
+        if(a<b)return direct;
+    }
+    return direct;
+}
+} // namespace ring_memo_detail
+
 struct BoundaryMoments { double value[10]{}; }; // M, dipole[3], symmetric second moment[6].
 struct BoundaryTreeNode {
     std::array<double,3> center{};
@@ -471,9 +527,11 @@ public:
     const auto& moments() const {return moments_;}
 private:
     friend class SelfGravity; // Private stage borrower reads actual generation only.
-    /** Exact stored geometry, observer, G and actual leaf/quartet eligibility key. */
+    /** Exact raw or axial-quotient geometry/G/eligibility key with a mode tag.
+     * Both TwoSum terms survive; scalar potential reflection is not force parity.
+     */
     struct RingMemoKey {
-        std::array<std::uint64_t,8> words{};
+        std::array<std::uint64_t,11> words{};
         bool operator==(const RingMemoKey&) const = default;
     };
     /** Hash exact bit words; equality, rather than hash collision, authorizes reuse. */

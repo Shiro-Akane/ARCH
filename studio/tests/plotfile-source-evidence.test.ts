@@ -7,8 +7,8 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import h5 from 'h5wasm/node';
 import {sourceEvidenceValid} from '../src/host/plotfileSourceIdentity.ts';
-import {inspectPlotfileMetadata,readPlotfileFieldSlice} from '../host/plotfileMetadata.ts';
-import {validatePlotfileAudit} from '../src/host/plotfileAudit.ts';
+import {inspectPlotfileMetadata,readPlotfileFieldSlice,readPlotfilePoint} from '../host/plotfileMetadata.ts';
+import {validatePlotfileAudit,validatePlotfilePoint} from '../src/host/plotfileAudit.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 const valid={version:'candidate-identity-1',scope:'partial',caseId:'Sod',caseSource:'ConfigurationInput.case_id',
  rawConfigSha256:'a'.repeat(64),rawConfigSource:'ConfigurationInput.raw_text; exact parser bytes',
@@ -170,6 +170,8 @@ type IdentityField={type:string;value:string};
 const encode=(fields:Map<string,IdentityField>)=>Array.from(fields,([name,{type,value}])=>`${Buffer.byteLength(name)}:${name}${type}${Buffer.byteLength(value)}:${value}\n`).join('');
 async function formalFixture(run:(path:string)=>Promise<void>,options:{dimension?:number;geometry?:string;rz?:boolean;partialRz?:boolean;partialIdentity?:boolean;candidatePublication?:boolean;gammaOnly?:boolean;
  sourceChange?:(source:InstanceType<typeof h5.Group>)=>void;
+ // Optional rectilinear stored bounds exercise format lookup, not physical chart measures.
+ pointBounds?:boolean;boundChange?:(axis:number,index:number,upper:boolean,value:number)=>number;
  recordChange?:(config:Map<string,IdentityField>,eos:Map<string,IdentityField>)=>void;attrs?:Record<string,string|number>}={}){
  const dimension=options.dimension??2,geometry=options.geometry??'cartesian',rz=options.rz??false,shape=dimension===1?[1,5]:dimension===2?[1,3,5]:[1,2,3,5];
  const speciesNames=options.gammaOnly?[]:['first','second'],idealGamma=options.gammaOnly?5/3:1.4;
@@ -226,8 +228,15 @@ async function formalFixture(run:(path:string)=>Promise<void>,options:{dimension
    for(let axis=0;axis<3;axis++){
     const label=axis<dimension?axes[axis]:'inactive',unit=axis>=dimension?'inactive':['theta','phi'].includes(label)?'rad':'cm';
     native.create_attribute('x'+(axis+1)+'_axis',label);native.create_attribute('x'+(axis+1)+'_unit',unit);
-    native.create_dataset({name:'x'+(axis+1)+'_lower',data:new Float64Array(count).fill(axis<dimension?1:0)});
-    native.create_dataset({name:'x'+(axis+1)+'_upper',data:new Float64Array(count).fill(axis<dimension?1.5:0)});
+    // x1 is fastest in actual Data storage. Defaults retain every older fixture byte.
+    const extents=shape.slice(1).reverse(),stride=extents.slice(0,axis).reduce((a,b)=>a*b,1);
+    const bound=(upper:boolean)=>Float64Array.from({length:count},(_,index)=>{
+     const ordinal=axis<dimension?Math.floor(index/stride)%extents[axis]:0;
+     const value=axis<dimension?1+(options.pointBounds?ordinal*.5:0)+(upper ? .5 : 0):0;
+     return options.boundChange?.(axis,index,upper,value)??value;
+    });
+    native.create_dataset({name:'x'+(axis+1)+'_lower',data:bound(false)});
+    native.create_dataset({name:'x'+(axis+1)+'_upper',data:bound(true)});
     native.create_dataset({name:'logical_x'+(axis+1),data:new Int32Array([0])});
    }
    native.create_dataset({name:'cell_measure',data:new Float64Array(count).fill(.5**dimension)});
@@ -342,4 +351,64 @@ test('known low-level RZ revision2 remains explicitly partial Inspector-only and
  },{geometry:'cylindrical',rz:true,partialRz:true});
  for(const options of [{partialIdentity:true},{geometry:'cylindrical',rz:true,candidatePublication:true}])
   await formalFixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/publication|identity|native|semantics/i);},options);
+});
+
+// These complete formal HDF fixtures verify stored-coordinate wire semantics only.
+// Their synthetic measures and identity records do not certify Core writer science.
+test('formal 3D point queries use x1-fastest bounds including final x3 and global maxima',async()=>{
+ await formalFixture(async path=>{
+  const metadata=await inspectPlotfileMetadata(path);assert.equal(metadata.renderEligible,false);
+  const identity={protocolVersion:PROTOCOL_VERSION,projectId:'point',relativePath:'formal-3d.h5'};
+  for(const [point,index,start] of [
+   [[1.25,1.25,1.75],15,[1,0,0]],[[1.5,1.25,1.25],1,[0,0,1]],[[3.5,2.5,2],29,[1,2,4]],
+  ] as [number[],number,number[]][]){
+   const request={field:'DENS',point},result=await readPlotfilePoint(path,request);
+   assert.deepEqual(result.payload?.linearIndices,[index]);assert.deepEqual(result.payload?.values,[index+1e-6]);
+   assert.deepEqual(result.payload?.start,start);assert.deepEqual(result.pointEvidence?.domain,{x:[1,3.5],y:[1,2.5],z:[1,2]});
+   assert.equal(result.pointEvidence?.scannedCells,30);
+   assert.equal(validatePlotfilePoint({...identity,result},'point','formal-3d.h5',request,metadata.file.sha256).audit.renderEligible,false);
+   assert.throws(()=>validatePlotfilePoint({...identity,result:{...result,pointEvidence:{...result.pointEvidence,domain:{x:[1,3.5],y:[1,2.5]}}}},
+    'point','formal-3d.h5',request,metadata.file.sha256),/point/);
+  }
+  await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[1.25,1.25]}),/dimension/);
+  await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[1.25,1.25,2.25]}),/NO_NATIVE_CELL/);
+  await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[1.25,1.25,NaN]}),/finite/);
+  await assert.rejects(readPlotfilePoint(path,{field:'missing',point:[1.25,1.25,1.25]}),/stored field/);
+ },{dimension:3,pointBounds:true});
+});
+test('formal native chart point queries retain raw RZ W and spherical bounds without renderer promotion',async()=>{
+ for(const options of [{dimension:2,geometry:'cylindrical',rz:true},{dimension:3,geometry:'spherical'},{dimension:3,geometry:'cylindrical'}])
+  await formalFixture(async path=>{
+   const point=options.dimension===2?[3.5,2.5]:[3.5,2.5,2],request={field:'DENS',point};
+   const result=await readPlotfilePoint(path,request),native=result.payload?.nativeCells;
+   assert.deepEqual(result.payload?.linearIndices,[options.dimension===2?14:29]);assert.equal(result.renderEligible,false);
+   assert.equal(result.completion.state,'complete');assert.deepEqual(native?.lower.x1,[3]);
+   if(options.rz){assert.deepEqual(native?.angularMeasure,[.5]);assert.deepEqual(native?.mPhi,[2]);assert.deepEqual(native?.angularMomentumDensity,[4]);}
+   else{assert.equal(native?.angularMeasure,undefined);assert.deepEqual(native?.lower.x3,[1.5]);}
+   const identity={protocolVersion:PROTOCOL_VERSION,projectId:'point',relativePath:'native.h5',result};
+   assert.deepEqual(validatePlotfilePoint(identity,'point','native.h5',request,result.file.sha256).audit.payload?.values,result.payload?.values);
+  },{...options,pointBounds:true});
+ await formalFixture(async path=>{await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[1.25,1.25]}),/formal native bounds/);},
+  {dimension:2,geometry:'cylindrical',rz:true,partialRz:true,pointBounds:true});
+});
+test('formal 3D point scan rejects overlapping, missing and malformed native cell bounds',async()=>{
+ await formalFixture(async path=>{await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[1.25,1.25,1.25]}),/AMBIGUOUS_NATIVE_CELL/);},
+  {dimension:3,pointBounds:true,boundChange:(axis,index,upper,value)=>index===1?(upper?1.5:1):value});
+ await formalFixture(async path=>{await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[2.25,1.25,1.25]}),/NO_NATIVE_CELL/);},
+  {dimension:3,pointBounds:true,boundChange:(axis,index,_upper,value)=>axis===0&&index%5>=2?value+.5:value});
+ for(const malformed of [NaN,Infinity])await formalFixture(async path=>{
+  await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[1.25,1.25,1.25]}),/Nonfinite native point geometry/);
+ },{dimension:3,pointBounds:true,boundChange:(axis,index,upper,value)=>axis===2&&index===29&&!upper?malformed:value});
+ await formalFixture(async path=>{await assert.rejects(readPlotfilePoint(path,{field:'DENS',point:[1.25,1.25,1.25]}),/Invalid native point cell bounds/);},
+  {dimension:3,pointBounds:true,boundChange:(axis,index,upper,value)=>axis===2&&index===29&&upper?1.5:value});
+});
+
+test('formal 1D point retains inactive y convention and the exact global endpoint owner',async()=>{
+ await formalFixture(async path=>{
+  const request={field:'DENS',point:[3.5]},result=await readPlotfilePoint(path,request);
+  assert.deepEqual(result.payload?.linearIndices,[4]);assert.deepEqual(result.payload?.values,[4+1e-6]);
+  assert.deepEqual(result.pointEvidence?.domain,{x:[1,3.5],y:[0,1]});
+  assert.equal(validatePlotfilePoint({protocolVersion:PROTOCOL_VERSION,projectId:'point',relativePath:'formal-1d.h5',result},
+   'point','formal-1d.h5',request,result.file.sha256).audit.renderEligible,true);
+ },{dimension:1,pointBounds:true});
 });

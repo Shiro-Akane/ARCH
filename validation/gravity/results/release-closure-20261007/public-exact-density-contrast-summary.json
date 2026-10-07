@@ -1,0 +1,42 @@
+{
+  "status": "ACCEPTED_EXACT_LINEAR_IDENTITY_ONLY",
+  "logical_task_id": "public-exact-density-contrast-ring-error-allocation-20261008",
+  "independent_checks": {
+    "exact_fraction_seeded_cases": 256,
+    "signed_density_identity": true,
+    "linear_functional_identity": true,
+    "planned_allocation_only": true
+  },
+  "limits": [
+    "Original dense source remains positive and immutable",
+    "Negative contrasts are algebraic coefficients, never negative physical cells",
+    "Planned epsilon/4 budget is not actual outward interval certification",
+    "Actual weighted products and final whole-source original width must pass before accepting numerical reference"
+  ],
+  "worker_blocked_scope": "Numerical interval widths not yet executed; no goal block or proof failure",
+  "formal_repairs_used": 0,
+  "formal_repairs_remaining": 1,
+  "source_raw_export": false,
+  "algorithm_capability_grant": false,
+  "reviewed_at_utc": "2026-10-07T21:43:10.637879+00:00",
+  "provider": "DeepSeek Flash high",
+  "duration_seconds": 16.83,
+  "reported_token_usage": {
+    "input_tokens": 1514,
+    "cached_input_tokens": 384,
+    "output_tokens": 3421,
+    "noncached_input_tokens": 1130,
+    "reasoning_tokens": 3140,
+    "visible_output_tokens": 281
+  },
+  "estimated_cost_usd": {
+    "currency": "USD",
+    "off_peak": 0.00222325,
+    "peak": 0.0044465,
+    "status": "estimate from reported token usage; API billing is authoritative",
+    "pricing_snapshot": "2026-10-02.1"
+  },
+  "measured_manager_active_cost": "UNKNOWN",
+  "parallel_overlap": "Root independent native-point reader integration and scoped tests; no local compute contention",
+  "extra_api_rework": 0
+}

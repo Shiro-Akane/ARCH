@@ -298,6 +298,42 @@ target_link_options(arch_build_contract INTERFACE
             with self.subTest(mutation=mutation[-100:]):
                 self.assert_rejected_with({**dependencies, relative: mutation}, "formula-copy filename")
 
+    def test_pod_geometry_bridge_rejects_semantics_root_and_identity_remapping(self):
+        relative = "src/cuda/hydro/GridGeometryAdapter.cuh"
+        source = (ROOT / relative).read_text(encoding="utf-8")
+        dependencies = {
+            "src/cuda/common/CudaCommon.cuh": "// fixture device records\n",
+            "src/grid/GridMetrics.h": "// fixture shared metric interface\n",
+        }
+        for mutation in (
+                source.replace("grid.x3_min, grid.semantics", "grid.x3_min, GridMetrics::GeometrySemantics::Existing"),
+                source.replace("{grid.x1_max, grid.x2_max}", "{grid.x2_max, grid.x1_max}"),
+                source.replace("grid.dyadic_identity", "GridMetrics::DyadicGridIdentity{}")):
+            with self.subTest(mutation=mutation[-160:]):
+                self.assert_rejected_with({**dependencies, relative: mutation}, "formula-copy filename")
+
+    def test_gravity_pod_split_does_not_authorize_grid_import_into_launch_abi(self):
+        # The real source views remain annotation-only; an accidental Grid edge
+        # must still reject every declaration ABI that borrows these PODs.
+        relative = "src/physics/gravity/GravitySourceTypes.h"
+        source = (ROOT / relative).read_text(encoding="utf-8")
+        interfaces = {
+            "src/cuda/runtime/hydro/CudaBackendHydro.h": '#include "physics/gravity/GravitySourceTypes.h"\n',
+            "src/cuda/runtime/diffusion/CudaBackendDiffusion.h": '#include "cuda/runtime/hydro/CudaBackendHydro.h"\n',
+            "src/cuda/common/CudaLaunchConfig.h": '#include "physics/gravity/GravitySourceTypes.h"\n',
+        }
+        dependencies = {
+            "src/core/ArchPortability.h": "#define ARCH_INLINE inline\n",
+            "src/grid/Grid.h": "struct Grid;\n",
+        }
+        self.assert_accepted({**dependencies, **interfaces, relative: source})
+        forbidden = {**dependencies, **interfaces,
+                     relative: source + '#include "grid/Grid.h"\n'}
+        for owner in interfaces:
+            self.assert_rejected_with(forbidden,
+                "launch/types declarations must not import grid or numerical operators: "
+                + owner.removeprefix("src/"))
+
     def test_diagnostics_and_comments_do_not_define_backend_rules(self):
         self.assert_accepted({
             "src/cuda/runtime/amr/CudaBackendMigration.cpp": """

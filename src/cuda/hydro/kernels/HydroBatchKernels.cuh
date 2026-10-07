@@ -15,10 +15,14 @@
  */
 #pragma once
 
-#include "cuda/hydro/policies/HydroIntegratorPolicies.cuh"
-#include "cuda/hydro/policies/CheckedHydroEos.cuh"
-#include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include <algorithm>
+#include <cstdint>
+#include <limits>
+
+#include "cuda/hydro/policies/CheckedHydroEos.cuh"
+#include "cuda/hydro/policies/HydroIntegratorPolicies.cuh"
+#include "cuda/runtime/hydro/CudaBackendHydro.h"
+#include "numerics/state/RzNativeClosure.h"
 
 namespace arch::cuda {
 namespace detail {
@@ -36,17 +40,88 @@ static __global__ void hydro_batch_clear(const DeviceHydroBatchBlock* blocks)
     b.output.enuc_rate[cell] = 0.0;
 }
 
-/** Evaluate only the union of means consumed by directional face limiters.
- * One normal ghost layer is required; unused corner/edge ghosts are not queried.
- * The launch follows latch clearing and precedes every face consumer.
+/** Authenticate Native metadata before any state/fraction reader is invoked.
+ * Workflow: check actual logical/padded extents and pointers -> bind the sole
+ * shared canonical identity -> validate existing physical Bounds. This is a
+ * mathematical borrowing check, not a Runtime slot/ghost/stream certificate.
+ */
+__device__ inline bool native_mean_binding_valid(const DeviceHydroBatchBlock& b,
+    const arch::state::Bounds& bounds)
+{
+    const auto& g=b.grid;
+    if (g.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
+        || g.geometry != static_cast<int>(DeviceGeometry::Cylindrical)
+        || g.dim != 2 || !g.dyadic_identity.bound || g.ng < 1
+        || g.ng > (std::numeric_limits<int>::max()-amr::BLOCK_NX)/2
+        || g.ng > (std::numeric_limits<int>::max()-amr::BLOCK_NY)/2
+        || g.total_x != amr::BLOCK_NX+2*g.ng || g.total_y != amr::BLOCK_NY+2*g.ng
+        || g.is != g.ng || g.ie != g.ng+amr::BLOCK_NX
+        || g.js != g.ng || g.je != g.ng+amr::BLOCK_NY
+        || g.total_z != 1 || g.ks != 0 || g.ke != 1
+        || g.stride_y < g.total_x || g.stride_z <= 0 || g.total_size <= 0
+        || std::int64_t(g.total_y)*g.stride_y > g.stride_z
+        || std::int64_t(g.total_y-1)*g.stride_y+g.total_x > g.total_size
+        || b.input.total_size != g.total_size || b.input.n_species < 0
+        || !b.input.rho || !b.input.mom_u || !b.input.mom_v || !b.input.mom_w
+        || !b.input.eng || !b.eos_status
+        || (b.input.n_species && (!b.input.mass_fractions
+            || g.total_size > std::numeric_limits<int>::max()/b.input.n_species))
+        || !arch::state::valid_bounds(bounds)) return false;
+    return GridMetrics::matches_identity(make_grid_geometry_view(g));
+}
+
+/** Poison a rejected required cache using only its declared allocation extent.
+ * Cache storage belongs to the caller and spans input.total_size. No geometry
+ * index or source reader is used when chart/bounds/layout preflight failed.
+ * Earlier successful cells cannot turn this sticky failure into stage readiness.
+ */
+__device__ inline void reject_mean_cache(const DeviceHydroBatchBlock& b,int lane)
+{
+    if (b.eos_status) atomicExch(b.eos_status,1);
+    const double bad=std::numeric_limits<double>::quiet_NaN();
+    for (int cell=lane;cell<b.input.total_size;cell+=blockDim.x*gridDim.x) {
+        if (b.mean_pressure)b.mean_pressure[cell]=bad;
+        if (b.mean_sound_speed)b.mean_sound_speed[cell]=bad;
+    }
+}
+
+/** Evaluate the original required strip using immutable native V/W means.
+ * Workflow: reject malformed Native metadata before reads -> gather Xi with its
+ * actual stride -> make the shared three-column density/inertia closure -> query
+ * the unchanged EOS on effective_mean -> publish complete finite positive P/c.
+ * Native Ekin=J^2/(2 I_* V); no evolved U, abundance, floor or law is changed.
+ * Existing uses the original raw mean, EOS call, traversal and write order.
  */
 template<class Eos>
-__global__ void hydro_batch_mean_thermo(const DeviceHydroBatchBlock* blocks,
-    Eos eos, SpeciesWorkspaceView workspace)
+__device__ inline void hydro_mean_thermo_work(const DeviceHydroBatchBlock& b,
+    Eos eos, SpeciesWorkspaceView workspace,const arch::state::Bounds& bounds)
 {
-    const auto& b = blocks[blockIdx.y];
-    if (!b.mean_pressure || !b.mean_sound_speed) return;
-    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
+    const int lane=blockIdx.x*blockDim.x+threadIdx.x;
+    if (!b.mean_pressure || !b.mean_sound_speed) {
+        if (b.grid.semantics!=GridMetrics::GeometrySemantics::Existing
+            && (b.mean_pressure || b.mean_sound_speed)) reject_mean_cache(b,lane);
+        return;
+    }
+    const bool native=b.grid.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (b.grid.semantics!=GridMetrics::GeometrySemantics::Existing
+        && (!native || !native_mean_binding_valid(b,bounds))) {
+        reject_mean_cache(b,lane);return;
+    }
+    // Existing launch validation owns its workspace contract. Native direct
+    // mean-only calls also authenticate the borrowed scratch before Xi reads.
+    if (native) {
+        const std::size_t n=static_cast<std::size_t>(b.input.n_species);
+        const std::size_t lanes=static_cast<std::size_t>(blockDim.x)*gridDim.x;
+        const bool local=!workspace.values && workspace.capacity==0
+            && workspace.lanes==0 && workspace.species==0 && workspace.arrays==0
+            && n<=kLocalSpeciesScratchCapacity;
+        const bool borrowed=workspace.values && n>0 && workspace.species==b.input.n_species
+            && workspace.arrays>=1 && workspace.lanes>0
+            && static_cast<std::size_t>(workspace.lanes)>=lanes
+            && n<=std::numeric_limits<std::size_t>::max()/static_cast<std::size_t>(workspace.lanes)
+            && workspace.capacity>=n*static_cast<std::size_t>(workspace.lanes);
+        if (!local && !borrowed) {reject_mean_cache(b,lane);return;}
+    }
     SpeciesLaneScratch<1> scratch(workspace, lane);
     double* composition = scratch.array(0);
     const auto checked = make_checked_hydro_eos(eos, b.eos_status);
@@ -68,10 +143,40 @@ __global__ void hydro_batch_mean_thermo(const DeviceHydroBatchBlock* blocks,
         if (!needed || outside > 1) continue;
         for (int s = 0; s < b.input.n_species; ++s)
             composition[s] = b.input.species(s, cell);
-        FluxAdmissibility::required_mean_thermo(b.input.load(cell),
-            b.input.n_species > 0 ? composition : nullptr, checked,
-            b.mean_pressure[cell], b.mean_sound_speed[cell]);
+        if (native) {
+            const auto read=[input=b.input](int index){return input.load(index);};
+            const int support=i-1<0?0:(i-1>b.grid.total_x-3?b.grid.total_x-3:i-1);
+            const auto closure=RzThermodynamics::make_cell_supported(
+                read,cell,make_grid_geometry_view(b.grid),i,support,bounds);
+            double p=std::numeric_limits<double>::quiet_NaN(),c=p;
+            if (!closure.valid() || arch::state::validate_composition(composition,
+                    b.input.n_species,1)!=arch::state::Status::valid) {
+                atomicExch(b.eos_status,1);
+            } else {
+                FluxAdmissibility::required_mean_thermo(closure.effective_mean,
+                    b.input.n_species>0?composition:nullptr,checked,p,c);
+                if (!std::isfinite(p) || !(p>0.) || !std::isfinite(c) || !(c>0.)) {
+                    atomicExch(b.eos_status,1);
+                    p=c=std::numeric_limits<double>::quiet_NaN();
+                }
+            }
+            b.mean_pressure[cell]=p;b.mean_sound_speed[cell]=c;
+        } else {
+            FluxAdmissibility::required_mean_thermo(b.input.load(cell),
+                b.input.n_species > 0 ? composition : nullptr, checked,
+                b.mean_pressure[cell], b.mean_sound_speed[cell]);
+        }
     }
+}
+
+/** One block per grid-y invokes the same required mean worker. Physical Bounds
+ * come from the existing actual launch arguments; the adapter owns no policy.
+ */
+template<class Eos>
+__global__ void hydro_batch_mean_thermo(const DeviceHydroBatchBlock* blocks,
+    Eos eos, SpeciesWorkspaceView workspace,arch::state::Bounds bounds)
+{
+    hydro_mean_thermo_work(blocks[blockIdx.y],eos,workspace,bounds);
 }
 
 /** Reset each block's required-query latch before any CFL candidate runs. */
@@ -147,6 +252,9 @@ template<class Reconstruction>
 bool valid_hydro_batch_block(const DeviceHydroBatchBlock& b, SpeciesWorkspaceView workspace)
 {
     if (!valid_hydro_grid(b.grid) || !b.eos_status
+        // Cache-only Native numerical evidence does not migrate the full raw
+        // face/source/update path. Reject before clear/flux/register writes.
+        || b.grid.semantics != GridMetrics::GeometrySemantics::Existing
         || !valid_species_workspace(workspace, b.input.n_species, 4)
         || b.grid.ng < Reconstruction::ghost_depth || !b.grid.cell_volume
         || make_grid_geometry_view(b.grid).geometry == GridMetrics::Geometry::Unsupported)
@@ -217,7 +325,8 @@ CudaBackendLaunchResult launch_hydro_batch(
         if (means) {
             const dim3 mean_grid(detail::species_launch_blocks(storage, workspace),
                                  static_cast<unsigned>(count));
-            detail::hydro_batch_mean_thermo<<<mean_grid, threads, 0, stream>>>(bindings, eos, workspace);
+            detail::hydro_batch_mean_thermo<<<mean_grid, threads, 0, stream>>>(
+                bindings,eos,workspace,{density_floor,min_e,max_e});
             if (!record()) return result;
         }
         for (int direction = 0; direction < dimension; ++direction) {

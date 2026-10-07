@@ -43,7 +43,9 @@
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "cuda/hydro/policies/HydroFluxPolicies.cuh"
 #include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
+#include "cuda/hydro/kernels/HydroFaceKernel.cuh"
 #include "cuda/hydro/kernels/HydroStageKernels.cuh"
+#include "cuda/hydro/kernels/HydroBatchKernels.cuh"
 #endif
 
 namespace
@@ -1935,6 +1937,302 @@ int run_native_cfl_divergence()
         return 0;
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 198;}
 }
+/** Invoke the actual mean worker, independently of still-held Native full-stage
+ * launch. Metadata, source and scratch are real DeviceState/Block allocations;
+ * this helper grants neither a Runtime ghost lease nor scientific capability.
+ */
+__global__ void native_required_mean_test_kernel(arch::cuda::DeviceHydroBatchBlock b,
+    arch::state::Bounds bounds)
+{
+    arch::cuda::detail::hydro_mean_thermo_work(b,IdealGasView{}, {},bounds);
+}
+
+/** Independent antiderivatives generate rho_V, J/W and E_V, including signed
+ * axis ghosts. Constant and quadratic densities both have constant e0 and
+ * Omega=1: P=(gamma-1)rho_V e0, c^2=gamma(gamma-1)e0. Check the actual required
+ * interior/one-normal-ghost strip, ignored pitch, sticky failure and source bits.
+ */
+int run_native_required_mean_cache()
+{
+    using namespace arch::cuda;
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const auto checked=[](cudaError_t e){if(e!=cudaSuccess)throw std::runtime_error(cudaGetErrorString(e));};
+    const auto require=[](bool v,const char* m){if(!v)throw std::runtime_error(m);};
+    try {
+        for(bool variable:{false,true})for(int ns:{0,2,13}) {
+            Grid root(amr::MAX_NG,variable?.4:0.,variable?1.3:1.,-.3,.7,0.,1.,1,1,1);
+            root.geometry="cylindrical";root.dim=2;
+            amr::Block block;block.Reset();block.level=0;block.logical_x1=block.logical_x2=0;
+            block.InitGeometry(root,(root.x1_max-root.x1_min)/amr::BLOCK_NX,
+                (root.x2_max-root.x2_min)/amr::BLOCK_NY,1.,native);
+            block.RequireNativeGeometryIdentity();const auto& hg=block.grid;
+            const auto g=make_device_grid_view(hg,native);const int total=g.total_size;
+            DeviceStateFixture state(total,ns);require(state.valid,"mean state allocation");
+            const double poison=std::numeric_limits<double>::quiet_NaN(),sentinel=123.;
+            const double e0=variable?1./64.:hg.dx1*hg.dx1/64.;
+            std::vector<double> rho_reference(total,poison);
+            for(int c=0;c<total;++c)state.store(c,{poison,poison,poison,poison,poison});
+            for(int j=0;j<hg.GetTotalY();++j)for(int i=0;i<hg.GetTotalX();++i) {
+                const int c=hg.GetIndex(i,j,0);const long double a=hg.GetFacePosL(i),b=hg.GetFacePosR(i);
+                const long double l=std::min(std::abs(a),std::abs(b)),u=std::max(std::abs(a),std::abs(b));
+                const long double V=(u*u-l*l)/2,W=(u*u*u-l*l*l)/3;
+                const long double c0=variable?7.L/8:1.L,c2=variable?1.L/4:0.L;
+                const long double M=c0*(u*u-l*l)/2+c2*(u*u*u*u-l*l*l*l)/4;
+                const long double I=c0*(u*u*u*u-l*l*l*l)/4
+                    +c2*(u*u*u*u*u*u-l*l*l*l*l*l)/6;
+                rho_reference[c]=double(M/V);
+                state.store(c,{double(M/V),0.,0.,double((a<0?-1:1)*I/W),double((e0*M+.5L*I)/V)});
+                for(int n=0;n<ns;++n)state.set_species(n,c,ns==2?(n==0?.25:.75):
+                    (n==0?.5:(n==1?.5:(n==12?1e-20:0.))));
+            }
+            const auto before_rho=state.rho,before_u=state.mom_u,before_v=state.mom_v,
+                before_w=state.mom_w,before_e=state.eng,before_enuc=state.enuc_rate,before_x=state.mass_fractions;
+            require(state.upload(),"mean source upload");
+            NativeHydroLeafArena arena(total,g.active_cell_count());
+            DeviceHydroBatchBlock batch{};batch.input=state.view;batch.grid=g;
+            batch.mean_pressure=arena.values;batch.mean_sound_speed=arena.values+total;batch.eos_status=arena.status;
+            const arch::state::Bounds bounds{1e-12,1e-12,1e20};
+            const auto run=[&](const DeviceHydroBatchBlock& b,const arch::state::Bounds& lim) {
+                std::vector<double> initial(2*total,sentinel);
+                checked(cudaMemcpy(arena.values,initial.data(),initial.size()*sizeof(double),cudaMemcpyHostToDevice));
+                checked(cudaMemset(arena.status,0,sizeof(int)));
+                native_required_mean_test_kernel<<<1,128>>>(b,lim);checked(cudaGetLastError());
+                checked(cudaDeviceSynchronize());
+            };
+            run(batch,bounds);int failed=-1;std::vector<double> pc(2*total);
+            checked(cudaMemcpy(pc.data(),arena.values,pc.size()*sizeof(double),cudaMemcpyDeviceToHost));
+            checked(cudaMemcpy(&failed,arena.status,sizeof(int),cudaMemcpyDeviceToHost));
+            require(failed==0,"native mean cache failed legitimate cold closure");
+            for(int c=0;c<total;++c) {
+                const int j=c/g.stride_y,i=c-j*g.stride_y;
+                const bool ai=i>=g.is&&i<g.ie,aj=j>=g.js&&j<g.je;
+                const bool needed=(ai&&aj)||(aj&&(i==g.is-1||i==g.ie))||(ai&&(j==g.js-1||j==g.je));
+                if(needed)require(scalar_near(pc[c],.4*rho_reference[c]*e0)
+                    &&scalar_near(pc[total+c],std::sqrt(1.4*.4*e0)),"native mean EOS differs independent physical P/c");
+                else require(pc[c]==sentinel&&pc[total+c]==sentinel,"mean cache queried corner/pitch outside required strip");
+            }
+            if(!variable)require(arch::state::recover(state.load(hg.GetIndex(g.is,g.js,0))).status!=arch::state::Status::valid,
+                "cold raw-mean contrast was lost");
+            require(!detail::valid_hydro_batch_block<CudaPcmReconstruction>(batch,{}),
+                "mean-only adapter accidentally promoted Native full batch");
+            auto malformed=batch;malformed.grid.semantics=static_cast<GridMetrics::GeometrySemantics>(255);
+            malformed.input.rho=nullptr;run(malformed,bounds);
+            checked(cudaMemcpy(&failed,arena.status,sizeof(int),cudaMemcpyDeviceToHost));
+            checked(cudaMemcpy(pc.data(),arena.values,pc.size()*sizeof(double),cudaMemcpyDeviceToHost));
+            require(failed!=0&&std::all_of(pc.begin(),pc.end(),[](double v){return std::isnan(v);}),
+                "unknown chart read source/published a finite required cache");
+            auto invalid=bounds;invalid.internal_min=std::numeric_limits<double>::quiet_NaN();
+            run(batch,invalid);checked(cudaMemcpy(&failed,arena.status,sizeof(int),cudaMemcpyDeviceToHost));
+            require(failed!=0,"malformed actual mean Bounds accepted");
+            require(state.download(),"mean immutable source download");
+            const auto bits=[](const std::vector<double>& a,const std::vector<double>& b) {
+                if(a.size()!=b.size())return false;
+                for(std::size_t n=0;n<a.size();++n)if(std::bit_cast<std::uint64_t>(a[n])!=std::bit_cast<std::uint64_t>(b[n]))return false;
+                return true;
+            };
+            require(bits(state.rho,before_rho)&&bits(state.mom_u,before_u)&&bits(state.mom_v,before_v)
+                &&bits(state.mom_w,before_w)&&bits(state.eng,before_e)&&bits(state.enuc_rate,before_enuc)
+                &&bits(state.mass_fractions,before_x),"mean adapter modified actual source/pitch/species bits");
+        }
+        std::cout<<"NATIVE_CUDA_REQUIRED_MEAN_CACHE_PASS layouts=2 species=0,2,13 runtime_authority=0 physical_qualification=0\n";
+        return 0;
+    }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 199;}
+}
+
+/** Two explicit lanes exercise the private 41*S resident arena, not launch ABI.
+ * Every result is published by the actual adapter/shared numerical compute.
+ */
+__global__ void native_selected_face_test_kernel(arch::cuda::DeviceStateView input,
+    arch::cuda::DeviceStateView output,arch::cuda::DeviceGridView grid,int method,
+    int direction,int i,int j,arch::state::Bounds bounds,
+    arch::cuda::detail::NativeFaceScratchView scratch,int* failure,
+    arch::boundary::HydroBoundaryView walls={},bool foreign_means=false,int lanes=1,bool null_source=false)
+{
+    const int lane=threadIdx.x;
+    if(lane>=lanes)return;
+    if(null_source)input.rho=nullptr;
+    FluxAdmissibility::MeanThermoView means{};
+    means.geometry_semantics=foreign_means?GridMetrics::GeometrySemantics::Existing:
+        GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const int tangent=lane;
+    using namespace arch::cuda;
+    if(method==0)detail::hydro_native_face_math<CudaPcmReconstruction,CudaHllcFlux>(
+        input,output,grid,IdealGasView{},direction,i+(direction==1?tangent:0),
+        j+(direction==0?tangent:0),0.,bounds,scratch,lane,failure,&means,walls);
+    else if(method==1)detail::hydro_native_face_math<CudaMusclReconstruction<McLimiter>,CudaHllcFlux>(
+        input,output,grid,IdealGasView{},direction,i+(direction==1?tangent:0),
+        j+(direction==0?tangent:0),0.,bounds,scratch,lane,failure,&means,walls);
+    else detail::hydro_native_face_math<CudaPpmReconstruction,CudaHllcFlux>(
+        input,output,grid,IdealGasView{},direction,i+(direction==1?tangent:0),
+        j+(direction==0?tangent:0),0.,bounds,scratch,lane,failure,&means,walls);
+}
+
+/** Antiderivative-built Native cold solid rotation tests the real face adapter.
+ * V=(h²-l²)/2, W=(h³-l³)/3, I=(h⁴-l⁴)/4; rho=1, J/W=sign*I/W,
+ * E_V=e0+I/(2V)+v_z²/2. Independent axial flux is v_z*(E_V+P),
+ * and phi flux uses W: v_z*J/W. Host/device parity uses the SAME compute;
+ * these independent physical identities keep that parity from being its oracle.
+ * Given analytic halos are not an authenticated Runtime BC/stage qualification.
+ */
+int run_native_selected_faces()
+{
+    using namespace arch::cuda;
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const auto checked=[](cudaError_t e){if(e!=cudaSuccess)throw std::runtime_error(cudaGetErrorString(e));};
+    const auto require=[](bool v,const char* m){if(!v)throw std::runtime_error(m);};
+    const auto bits=[](const std::vector<double>& a,const std::vector<double>& b) {
+        if(a.size()!=b.size())return false;
+        for(std::size_t n=0;n<a.size();++n)
+            if(std::bit_cast<std::uint64_t>(a[n])!=std::bit_cast<std::uint64_t>(b[n]))return false;
+        return true;
+    };
+    try {
+        for(bool annulus:{false,true})for(int ns:{0,2,13}) {
+            Grid root(amr::MAX_NG,annulus?1.:0.,annulus?3.:1.,-.5,.5,0.,1.,1,1,1);
+            root.geometry="cylindrical";root.dim=2;
+            amr::Block block;block.Reset();block.level=0;block.logical_x1=block.logical_x2=0;
+            block.InitGeometry(root,(root.x1_max-root.x1_min)/amr::BLOCK_NX,
+                (root.x2_max-root.x2_min)/amr::BLOCK_NY,1.,native);
+            block.RequireNativeGeometryIdentity();const auto& hg=block.grid;
+            auto grid=make_device_grid_view(hg,native);
+            const auto geometry=GridMetrics::make_geometry_view(hg,native);
+            const int total=grid.total_size;
+            DeviceStateFixture input(total,ns),output(total,ns);
+            require(input.valid&&output.valid,"native face state allocation");
+            const double poison=std::numeric_limits<double>::quiet_NaN(),sentinel=123.;
+            const double e0=annulus?1./64.:hg.dx1*hg.dx1/64.,vz=.125;
+            for(int c=0;c<total;++c)input.store(c,{poison,poison,poison,poison,poison});
+            for(int j=0;j<hg.GetTotalY();++j)for(int i=0;i<hg.GetTotalX();++i) {
+                const int c=hg.GetIndex(i,j,0);
+                const long double a=hg.GetFacePosL(i),b=hg.GetFacePosR(i);
+                const long double l=std::min(std::abs(a),std::abs(b)),u=std::max(std::abs(a),std::abs(b));
+                const long double V=(u*u-l*l)/2,W=(u*u*u-l*l*l)/3,I=(u*u*u*u-l*l*l*l)/4;
+                input.store(c,{1.,0.,vz,double((b<=0?-1:1)*I/W),double(e0+.5L*I/V+.5L*vz*vz)});
+                for(int s=0;s<ns;++s)input.set_species(s,c,ns==2?(s==0?.25:.75):
+                    (s==0?.5:s==1?.5:s==12?1e-20:0.));
+            }
+            const auto rho=input.rho,mr=input.mom_u,mz=input.mom_v,phi=input.mom_w,
+                energy=input.eng,enuc=input.enuc_rate,x=input.mass_fractions;
+            require(input.upload(),"native face input upload");
+            double* device_scratch=nullptr;int* failure=nullptr;
+            const std::size_t capacity=std::max<std::size_t>(1,82*std::size_t(ns));
+            checked(cudaMalloc(&device_scratch,capacity*sizeof(double)));
+            checked(cudaMalloc(&failure,sizeof(int)));
+            const detail::NativeFaceScratchView arena{device_scratch,capacity,2};
+            const arch::state::Bounds bounds{1e-12,1e-12,1e20};
+            auto reset=[&] {
+                for(int c=0;c<total;++c){output.store(c,{sentinel,sentinel,sentinel,sentinel,sentinel});
+                    for(int s=0;s<ns;++s)output.set_species(s,c,sentinel);}
+                require(output.upload(),"native face output upload");checked(cudaMemset(failure,0,sizeof(int)));
+            };
+            auto execute=[&](const DeviceGridView& g,int method,int direction,int i,int j,
+                arch::state::Bounds lim,detail::NativeFaceScratchView memory,
+                arch::boundary::HydroBoundaryView walls={},bool foreign=false,int lanes=1,bool null_source=false) {
+                reset();native_selected_face_test_kernel<<<1,2>>>(input.view,output.view,g,method,direction,
+                    i,j,lim,memory,failure,walls,foreign,lanes,null_source);checked(cudaGetLastError());
+                checked(cudaDeviceSynchronize());require(output.download(),"native face output download");
+                int failed=0;checked(cudaMemcpy(&failed,failure,sizeof(int),cudaMemcpyDeviceToHost));return failed;
+            };
+            auto host_face=[&]<class Policy>(int direction,int i,int j,arch::boundary::HydroBoundaryView walls) {
+                std::vector<double> work(std::max(1,41*ns));double* q=ns?work.data():nullptr;
+                RzNativeFaceFlux::Scratch scratch{q,ns?q+16*ns:nullptr,19*std::size_t(ns),
+                    ns?q+35*ns:nullptr,ns?q+36*ns:nullptr,ns?q+37*ns:nullptr,
+                    ns?q+38*ns:nullptr,ns?q+39*ns:nullptr};
+                RzSelectedReconstruction::Context context{geometry,hg.GetTotalX(),hg.GetTotalY(),i,j,direction,ns,bounds};
+                const auto read=[&](int c){return input.load(c);};
+                const auto fraction=[&](int s,int c){return input.species(s,c);};
+                FluidVector flux{};std::vector<double> species(ns);
+                const int left=hg.GetIndex(i,j,0),right=left+(direction==0?1:hg.stride_y);
+                FluxAdmissibility::MeanThermoView means{};means.geometry_semantics=native;
+                const auto status=RzNativeFaceFlux::compute<FluxHLLC<PCMReconstruction>,Policy>(
+                    read,fraction,context,IdealGasView{},0.,&means,left,right,scratch,flux,
+                    ns?q+40*ns:nullptr,walls);
+                require(status==arch::state::Status::valid,"native host selected face failed");
+                for(int s=0;s<ns;++s)species[s]=q[40*ns+s];
+                return std::pair{flux,species};
+            };
+            for(int method=0;method<3;++method)for(int direction=0;direction<2;++direction) {
+                const int i=grid.is,j=grid.js+4;
+                require(execute(grid,method,direction,i,j,bounds,arena,{},false,2)==0,
+                    "native configured face rejected valid cold source");
+                for(int lane=0;lane<2;++lane) {
+                    const int fi=i+(direction==1?lane:0),fj=j+(direction==0?lane:0);
+                    const auto expected=method==0?host_face.template operator()<PCMReconstruction>(direction,fi,fj,{}):
+                        method==1?host_face.template operator()<MusclReconstruction<McLimiter>>(direction,fi,fj,{}):
+                        host_face.template operator()<PPMReconstruction>(direction,fi,fj,{});
+                    const int c=grid.index(fi,fj)+grid.stride(direction);
+                    require(vector_near(output.load(c),expected.first),"native selected CPU/device face parity");
+                    for(int s=0;s<ns;++s)require(scalar_near(output.species(s,c),expected.second[s]),
+                        "native selected rhoX CPU/device parity");
+                    if(method==0&&direction==1) {
+                        const long double l=hg.GetFacePosL(fi),u=hg.GetFacePosR(fi);
+                        const long double V=(u*u-l*l)/2,W=(u*u*u-l*l*l)/3,I=(u*u*u*u-l*l*l*l)/4;
+                        const FluidVector independent{vz,0.,vz*vz+.4*e0,double(vz*I/W),
+                            double(vz*(1.4L*e0+.5L*I/V+.5L*vz*vz))};
+                        require(vector_near(output.load(c),independent),"native PCM true axial V/W antiderivative flux");
+                        for(int s=0;s<ns;++s)require(scalar_near(output.species(s,c),vz*input.species(s,c)),
+                            "native PCM species flux changed retained fractions");
+                        if(ns==13) {
+                            const double trace=vz*input.species(12,c);
+                            require(output.species(12,c)>0.&&std::abs(output.species(12,c)-trace)
+                                <=64.*std::numeric_limits<double>::epsilon()*std::abs(trace),
+                                "native face lost or changed independently known positive trace flux");
+                        }
+                    }
+                }
+            }
+            // A real 2:1 face flag selects the shared MinMod policy, not NG.
+            auto coarse=grid;coarse.amr_coarse_fine_face[0]=1;
+            require(execute(coarse,2,0,grid.is,grid.js+4,bounds,arena)==0,"native coarse-fine selected fallback");
+            const auto fallback=host_face.template operator()<MusclReconstruction<MinMod>>(0,grid.is,grid.js+4,{});
+            require(vector_near(output.load(grid.index(grid.is+1,grid.js+4)),fallback.first),"native actual MinMod fallback differs shared host");
+            if(annulus&&ns==2)for(int face=0;face<4;++face) {
+                const int dir=face/2,side=face%2;
+                const int i=dir==0?(side?grid.ie-1:grid.is-1):grid.is+4;
+                const int j=dir==1?(side?grid.je-1:grid.js-1):grid.js+4;
+                arch::boundary::HydroBoundaryView walls{};walls.reflecting[face]=true;
+                for(int method=0;method<3;++method) {
+                    require(execute(grid,method,dir,i,j,bounds,arena,walls)==0,"native physical reflecting wall face failed");
+                    const auto f=output.load(grid.index(i,j)+grid.stride(dir));
+                    require(scalar_near(f.rho,0.)&&scalar_near(f.eng,0.)&&scalar_near(f.mom_w,0.)
+                        &&scalar_near(dir==0?f.mom_v:f.mom_u,0.)
+                        &&std::isfinite(dir==0?f.mom_u:f.mom_v)&&(dir==0?f.mom_u:f.mom_v)>0.,
+                        "native mirror wall lost zero advection/positive pressure traction");
+                    for(int s=0;s<ns;++s)require(scalar_near(output.species(s,grid.index(i,j)+grid.stride(dir)),0.),
+                        "native reflecting wall transported species");
+                }
+            }
+            auto unchanged=[&] {
+                for(int c=0;c<total;++c) {
+                    const auto f=output.load(c);
+                    require(f.rho==sentinel&&f.mom_u==sentinel&&f.mom_v==sentinel
+                        &&f.mom_w==sentinel&&f.eng==sentinel,"rejected native face wrote real flux");
+                    for(int s=0;s<ns;++s)require(output.species(s,c)==sentinel,"rejected native face wrote rhoX flux");
+                }
+            };
+            auto bad=grid;bad.semantics=static_cast<GridMetrics::GeometrySemantics>(255);
+            require(execute(bad,0,0,grid.is,grid.js+4,bounds,arena,{},false,1,true)!=0,"unknown native face chart accepted");unchanged();
+            auto bad_bounds=bounds;bad_bounds.internal_max=std::numeric_limits<double>::quiet_NaN();
+            require(execute(grid,0,0,grid.is,grid.js+4,bad_bounds,arena)!=0,"native malformed physical Bounds accepted");unchanged();
+            require(execute(grid,0,0,grid.is,grid.js+4,bounds,arena,{},true)!=0,"native reused foreign ordinary mean cache");unchanged();
+            arch::boundary::HydroBoundaryView malformed_wall{};malformed_wall.reflecting[4]=true;
+            require(execute(grid,0,0,grid.is,grid.js+4,bounds,arena,malformed_wall)!=0,
+                "native RZ accepted an unsupported third-axis wall");unchanged();
+            if(ns) {
+                auto insufficient=arena;insufficient.capacity=82*std::size_t(ns)-1;
+                require(execute(grid,0,0,grid.is,grid.js+4,bounds,insufficient)!=0,"native insufficient 41*S/lane arena accepted");unchanged();
+            }
+            require(input.download(),"native face immutable input download");
+            require(bits(input.rho,rho)&&bits(input.mom_u,mr)&&bits(input.mom_v,mz)&&bits(input.mom_w,phi)
+                &&bits(input.eng,energy)&&bits(input.enuc_rate,enuc)&&bits(input.mass_fractions,x),
+                "native face changed source/halo/pitch/species bits");
+            cudaFree(failure);cudaFree(device_scratch);
+        }
+        std::cout<<"NATIVE_CUDA_SELECTED_FACE_LEAF_PASS layouts=2 policies=PCM,MC,PPM species=0,2,13 runtime_authority=0 physical_qualification=0\n";
+        return 0;
+    }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 200;}
+}
+
 #endif
 } // namespace
 
@@ -2073,6 +2371,10 @@ int main()
         return route_result;
     const int native_result=run_native_cfl_divergence();
     if(native_result!=0)return native_result;
+    const int mean_result=run_native_required_mean_cache();
+    if(mean_result!=0)return mean_result;
+    const int selected_face_result=run_native_selected_faces();
+    if(selected_face_result!=0)return selected_face_result;
 #endif
     return 0;
 }

@@ -296,6 +296,25 @@ public:
             result=policy_->field_timestep(cfl_,GravityFieldScope::NativeRzCandidate);});
         return result;
     }
+    /** Own the exact prepared Hydro source/field, without another solve.
+     * Workflow: authenticate this live frame and its complete actual input
+     * domain -> copy the producer's same-generation field/rho/geometry once ->
+     * repeat all domain, configuration and field checks before publishing.
+     * This is allowed during read-only patch consumption; completion of every
+     * work receipt is deliberately not fabricated as a precondition. Any
+     * copy/identity failure permanently poisons the frame for macro rollback.
+     */
+    NativeRzSolutionInspection inspect_source_and_field() const {
+        try {
+            require_live();domain_.require_complete_domain();
+            policy_->require_native_frame(source_,field_generation_,source_generation_);
+            auto result=policy_->copy_native_rz_solution(GravityFieldPurpose::HydroStage,
+                source_,field_generation_,source_generation_);
+            require_live();domain_.require_complete_domain();
+            policy_->require_native_frame(source_,field_generation_,source_generation_);
+            return result;
+        } catch(...) {invalidate();throw;}
+    }
     /** Claim a real pool input once, before flux/cache/dU/register mutation. */
     PatchReceipt claim_patch(const amr::AMRControl* control,int id,const FluidState& input,
         const Grid& grid,double dt,const IGravityPolicy& policy) const {

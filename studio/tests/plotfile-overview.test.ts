@@ -163,8 +163,9 @@ test('native point boundary rules are explicit and requests cannot carry arbitra
  assert.equal(nativeAxisContains(1,1,2,2),true);
  assert.equal(nativeAxisContains(2,1,2,2),true);
  for(const r of [null,{field:'DENS',point:[NaN]},{field:'DENS',point:[]},
-  {field:'DENS',point:[1,2,3]},{field:'DENS',point:[0],env:{}}])assert.throws(()=>copyPointRequest(r));
+  {field:'DENS',point:[1,2,3,4]},{field:'DENS',point:[0],env:{}}])assert.throws(()=>copyPointRequest(r));
  const r={field:'DENS',point:[1,2]},copy=copyPointRequest(r);r.point[0]=99;assert.deepEqual(copy.point,[1,2]);
+ const three={field:'DENS',point:[1,2,3]},threeCopy=copyPointRequest(three);three.point[2]=99;assert.deepEqual(threeCopy.point,[1,2,3]);
 });
 test('exact native point resolves interior, shared block edges, global maximum and raw values',async()=>{
  await withNative(async path=>{

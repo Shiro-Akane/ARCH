@@ -26,6 +26,7 @@ PREVIEW_COVERAGE_ANCHORS = frozenset({
     "preview_parameter_reads", "preview_parameter_metadata", "preview_sampling_limits",
     "preview_mesh_geometry", "case_inspection_contract", "preview_session_contract",
     "preview_verified_resources", "preview_exact_sample_cache", "preview_cellular_2d",
+    "ui_expansion_contract",
 })
 JENS_COVERAGE_ANCHORS = frozenset({"jeans_diagnostics", "refinement_indicator_math"})
 RELEASE_CONTRACT_COVERAGE_ANCHORS = frozenset({
@@ -39,6 +40,8 @@ RELEASE_CONTRACT_COVERAGE_ANCHORS = frozenset({
 CPU_COVERAGE_ANCHORS = frozenset({
     "physical_constants", "curvilinear_metrics", "amr_operation_plans", "low_density_math",
     "topology_transaction", "burn_mainline_reference",
+    "ppm_limiter_math", "conservative_flux_limiter",
+    "reduction_contract", "same_level_exchange_plan",
     "checkpoint_compatibility", "tabular_eos_ideal_gas",
     "sparse_klu_161_equations",
     "shared_stage_scheduler", "gravity_stage_contract", "checkpoint_temporal_comparison",
@@ -52,6 +55,9 @@ DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
     "cuda_store_lifecycle", "cuda_amr_exchange", "cuda_hydro_dispatch",
     "diffusion_rkl_parity", "cuda_multiblock_hydro", "cuda_multiblock_diffusion",
     "cuda_multiblock_burn", "cuda_reduction_contract", "checkpoint_temporal_comparison",
+    "hydro_leaf_parity", "cuda_curvilinear_geometry_smoke", "cuda_grid_metrics_cache",
+    "cuda_refinement_indicators", "cuda_ppm_limiter_math", "cuda_flux_limiter",
+    "cuda_conservative_acceptance", "eos_host_device_parity",
 })
 PROFILES = {"cpu": CPU_COVERAGE_ANCHORS, "driver-cuda": DRIVER_CUDA_COVERAGE_ANCHORS}
 
@@ -61,8 +67,8 @@ def check_inventory(inventory, profile="cpu"):
 
     CPU CI supplies its complete numerical/API inventory; the separate Tooling
     job owns tests labeled tooling. Local unfiltered inventories are accepted.
-    Driver-CUDA is explicitly
-    scoped to orchestration contracts, not the complete GPU scientific campaign.
+    Driver-CUDA covers selected orchestration and shared numerical-leaf contracts,
+    not the complete GPU scientific campaign.
     Neither profile permits missing, skipped or unexpected result entries.
     """
     if profile not in PROFILES:

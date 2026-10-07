@@ -235,7 +235,27 @@ def validate_native_field_proof_metadata(record):
                 "Invalid field proof bound")
         return value
     keys = ("purpose", "runtime_lease_generation", "runtime_lease_authenticated", "runtime_authority_scope")
-    if any(key in item for item in (identity, field) for key in keys):
+    owning = record.get("schema") == "arch-materialized-native-source-2"
+    if owning:
+        # Published v2 metadata belongs to one issued owning solution. This
+        # validates its transport pairing, not the live Runtime or Hydro plan.
+        require(all(key in item for item in (identity, field) for key in keys),
+                "Incomplete published field purpose metadata")
+        scopes = {"AcceptedCurrent": "accepted-current-numerical-field-only",
+                  "HydroStage": "hydro-stage-native-candidate-field-only"}
+        purpose = identity["purpose"]
+        require(type(purpose) is str and purpose in scopes
+                and field["purpose"] == purpose
+                and type(identity["runtime_lease_generation"]) is int
+                and identity["runtime_lease_generation"] > 0
+                and type(field["runtime_lease_generation"]) is int
+                and field["runtime_lease_generation"] == identity["runtime_lease_generation"]
+                and identity["runtime_lease_authenticated"] is True
+                and field["runtime_lease_authenticated"] is True
+                and identity["runtime_authority_scope"] == scopes[purpose]
+                and field["runtime_authority_scope"] == scopes[purpose],
+                "Published purpose/issuer metadata mismatch")
+    elif any(key in item for item in (identity, field) for key in keys):
         require(all(key in item for item in (identity, field) for key in keys),
                 "Incomplete actual field purpose metadata")
         require(identity["purpose"] == field["purpose"] == "AcceptedCurrent"
@@ -248,7 +268,7 @@ def validate_native_field_proof_metadata(record):
                 and identity["runtime_authority_scope"] == "checked-source-materialization-only"
                 and field["runtime_authority_scope"] == "accepted-current-numerical-field-only",
                 "Actual Current purpose/issuer metadata mismatch")
-    if any(key in item for item in (identity, field) for key in keys):
+    if owning or any(key in item for item in (identity, field) for key in keys):
         require("native_discrete_certificate" in field, "Current publication lost its same-field proof")
     if "native_discrete_certificate" not in field: return
     proof = field["native_discrete_certificate"]
@@ -321,11 +341,21 @@ def validate_materialized_record(record, budget):
         require(isinstance(value, list) and len(value) == length, "Actual array extent mismatch")
         for item in value: number(item)
         return value
-    require(isinstance(record, dict) and record.get("schema") == "arch-materialized-native-source-1",
+    require(isinstance(record, dict) and record.get("schema") in
+            ("arch-materialized-native-source-1", "arch-materialized-native-source-2"),
             "Unknown actual materialized-source schema")
-    require(record.get("source_only_checked") is True and record.get("physical_qualified") is False,
-            "Missing checked source-only record")
-    require(record.get("scope") == "materialized_source_only", "Wrong actual source export scope")
+    owning = record["schema"] == "arch-materialized-native-source-2"
+    if owning:
+        require(record.get("published_source_checked") is True
+                and record.get("source_only_checked") is False
+                and record.get("physical_qualified") is False
+                and record.get("scope") == "published_native_source_and_field"
+                and record.get("inspection_origin") == "issued-owning-solution-snapshot",
+                "Missing checked owning source/field record")
+    else:
+        require(record.get("source_only_checked") is True and record.get("physical_qualified") is False,
+                "Missing checked source-only record")
+        require(record.get("scope") == "materialized_source_only", "Wrong actual source export scope")
     service = record["service_configuration"]
     require(service.get("origin") == "actual-SelfGravity-constructor-copy", "Missing actual service configuration")
     for key in ("g_x", "g_y", "g_z", "relative_tolerance", "absolute_tolerance"): number(service[key])
@@ -339,11 +369,36 @@ def validate_materialized_record(record, budget):
     field = record["candidate_field"]
     require(isinstance(field, dict) and field.get("physical_qualified") is False,
             "Missing actual unqualified field receipt")
-    call = record["field_call"]
-    require(call.get("invoke_failed") is False and call.get("field_solve_failed") is False
-            and call.get("actual_candidate_observed") is True, "Actual field call did not succeed")
+    if not owning:
+        # Historical v1 captures a prepare invocation; v2 is a sealed owning
+        # snapshot and must not invent this pre-solve callback provenance.
+        call = record["field_call"]
+        require(call.get("invoke_failed") is False and call.get("field_solve_failed") is False
+                and call.get("actual_candidate_observed") is True, "Actual field call did not succeed")
     identity = record["source_identity"]
     validate_native_field_proof_metadata(record)
+    if owning:
+        # One published source uses one actual input slot across the domain.
+        # Slot/purpose consistency does not assert a Hydro stage descriptor.
+        require(all(type(identity.get(key)) is int and identity[key] > 0 for key in
+                    ("topology", "operator_revision", "boundary_revision", "accuracy_revision", "generation")),
+                "Invalid published source revision/generation")
+        dependencies = identity.get("inputs")
+        require(isinstance(dependencies, list) and dependencies, "Missing published source dependencies")
+        slots, keys = set(), set()
+        for dependency in dependencies:
+            budget.check_time()
+            require(isinstance(dependency, dict)
+                    and all(type(dependency.get(key)) is int and dependency[key] > 0 for key in
+                            ("uid", "epoch", "version", "storage_generation"))
+                    and dependency["epoch"] == identity["topology"]
+                    and type(dependency.get("slot")) is int and dependency["slot"] in (0, 1, 2),
+                    "Invalid published source dependency")
+            entry = (dependency["uid"], dependency["slot"])
+            require(entry not in keys, "Duplicate published source dependency")
+            keys.add(entry); slots.add(dependency["slot"])
+        require(len(slots) == 1 and (identity["purpose"] != "AcceptedCurrent" or slots == {0}),
+                "Published input slot/purpose mismatch")
     require(type(field.get("source_generation")) is int
             and field["source_generation"] == identity["generation"]
             and type(field.get("field_generation")) is int and field["field_generation"] > 0,
@@ -427,6 +482,26 @@ def validate_materialized_record(record, budget):
             array(observer[key], 3)
             require(all(same(a,b) for a,b in zip(observer[key],face[key])), "Actual face observer bounds drift")
     return leaves, cells, faces, by_cell, by_face
+
+
+def _materialized_producer_identity(record):
+    """Project version-specific producer provenance without Runtime authority.
+
+    v1 retains its original three-field invocation record, so historical pinned
+    reference provenance stays unchanged. v2 records the owning publication's
+    explicit origin and actual service configuration. Source/field generations
+    and issued lease pairing remain separate validated identities.
+    """
+    if record["schema"] == "arch-materialized-native-source-1":
+        return dict(source_only_checked=record["source_only_checked"],
+                    field_call=copy.deepcopy(record["field_call"]),
+                    service_configuration=copy.deepcopy(record["service_configuration"]))
+    if record["schema"] == "arch-materialized-native-source-2":
+        result = {key: record[key] for key in ("schema", "scope", "inspection_origin",
+                  "published_source_checked", "source_only_checked", "physical_qualified")}
+        result["service_configuration"] = copy.deepcopy(record["service_configuration"])
+        return result
+    raise ValueError("Unknown actual producer provenance schema")
 
 
 def select_materialized_observers(cells, faces, by_cell, by_face):
@@ -641,6 +716,10 @@ def full_materialized_summary(result):
         scope="Complete-domain mathematical interval diagnostic; no frozen production accuracy/science grant")
     if "matched_resolution" in result:
         summary["matched_resolution"] = copy.deepcopy(result["matched_resolution"])
+    if "density_decomposition" in result:
+        summary["density_decomposition"] = copy.deepcopy(result["density_decomposition"])
+    if "reference_density_decomposition" in result:
+        summary["reference_density_decomposition"] = copy.deepcopy(result["reference_density_decomposition"])
     return summary
 
 
@@ -649,12 +728,15 @@ def full_materialized_resource_profile(budget):
 
     Default behavior remains the original complete 240s/1800000 request. New
     matched profiles are internal fixed-layout diagnostics, not user tolerances.
+    The explicit generic extended profile changes aggregate resources only;
+    the original dense-source and whole-domain checks remain mandatory.
     """
     from rz_ring_surface_reference import Budget
     if not isinstance(budget, Budget):
         raise ValueError("Complete-domain diagnostic requires its one frozen resource profile")
     name = budget.resource_profile
     expected = {"full-domain-diagnostic-1": (1800000, 240.),
+                "full-domain-extended-1": (10000000, 600.),
                 "matched-resolution-1": (6000000, 600.),
                 "matched-resolution-2": (22000000, 1800.)}
     if name not in expected or (budget.max_calls, budget.timeout_seconds) != expected[name]:
@@ -797,9 +879,7 @@ def audit_materialized_full_record(record, dependency_directory=None, _shared_bu
             source_identity=copy.deepcopy(record["source_identity"]),
             field_identity=dict(source_generation=record["candidate_field"]["source_generation"],
                                 field_generation=record["candidate_field"]["field_generation"]),
-            producer_identity=dict(source_only_checked=record["source_only_checked"],
-                field_call=copy.deepcopy(record["field_call"]),
-                service_configuration=copy.deepcopy(record["service_configuration"])),
+            producer_identity=_materialized_producer_identity(record),
             original_source_id=record["source"]["sourceId"],
             original_source_input_sha256=combined["original_dense_input_sha256"],
             exact_union=combined, target_count=schedule["original_target_count"],
@@ -816,6 +896,8 @@ def audit_materialized_full_record(record, dependency_directory=None, _shared_bu
         result.update(reference_status=reference["status"], backend=reference.get("backend"),
             reference_identity=reference.get("identity"), sites=reference["rows"],
             failure=reference.get("failure"))
+        if "density_decomposition" in reference:
+            result["density_decomposition"] = copy.deepcopy(reference["density_decomposition"])
         resolved = {row["observer_id"]: row for row in reference["rows"]}
         for target in schedule["targets"]:
             budget.check_time()
@@ -924,6 +1006,7 @@ def _reuse_validate_reference(old, reference, validated, combined, raw_sha, budg
     # preflight checks borrow the SAME mapping deadline: no old request restart,
     # new integration budget, allowance transfer or callback charge is made.
     policies = {"actual-materialized-full-domain-diagnostic-1": dict(_full_domain_diagnostic=True),
+                "actual-materialized-full-domain-extended-1": dict(_full_domain_extended=True),
                 "actual-materialized-matched-resolution-1": dict(_matched_resolution=1),
                 "actual-materialized-matched-resolution-2": dict(_matched_resolution=2)}
     _reuse_require(reference.get("profile") in policies, "Unknown original full reference resource profile")
@@ -942,6 +1025,19 @@ def _reuse_validate_reference(old, reference, validated, combined, raw_sha, budg
     else:
         _reuse_require(reference.get("matched_resolution") is None,
                        "Default reference carries conflicting matched layout metadata")
+    # Old generic references may predate contrast processing. If the new method
+    # is advertised, recompute its exact metadata from the SAME validated source;
+    # no new clock/integral or fabricated method/source authority is imported.
+    if "density_decomposition" in reference:
+        from rz_ring_surface_reference import validate_dense_source, _exact_density_contrast
+        _reuse_require(original_policy.resource_profile == "full-domain-extended-1",
+                       "Density contrast belongs only to the explicit extended profile")
+        original_leaves=validate_dense_source(combined["source"],old["root_bounds"],
+                                              old["source_identity"],budget)
+        _,expected_decomposition=_exact_density_contrast(original_leaves,old["root_bounds"],budget)
+        _reuse_require(reference["density_decomposition"] == expected_decomposition
+            and _reuse_canonical_sha(reference["density_decomposition"]) == _reuse_canonical_sha(expected_decomposition),
+                       "Original exact density decomposition provenance mismatch")
     _, cells, faces, by_cell, by_face = validated
     schedule = materialized_full_schedule(old, cells, faces, by_cell, by_face, budget)
     widths = {key: str(CGS_G/Fraction(10**12)) for key in ("Phi", "g_r", "g_z")}
@@ -960,7 +1056,7 @@ def _reuse_validate_reference(old, reference, validated, combined, raw_sha, budg
         and reference.get("backend",{}).get("ctx_dps") == 70
         and isinstance(reference.get("backend",{}).get("python_flint_version"), str),
         "Original source label/backend provenance mismatch")
-    producer=dict(source_only_checked=old["source_only_checked"],field_call=old["field_call"],service_configuration=old["service_configuration"])
+    producer=_materialized_producer_identity(old)
     _reuse_require(reference.get("producer_identity") == producer, "Original producer/configuration provenance mismatch")
     _reuse_require(reference.get("source_identity") == old["source_identity"]
         and reference.get("field_identity") == dict(source_generation=old["candidate_field"]["source_generation"],
@@ -1175,10 +1271,12 @@ def reuse_materialized_full_reference(record, old_record, reference, *, new_raw_
             reference_field_identity=copy.deepcopy(reference["field_identity"]),
             actual_record_canonical_sha256=_reuse_canonical_sha(record), original_source_input_sha256=new_union["original_dense_input_sha256"],
             reference_original_source_input_sha256=old_union["original_dense_input_sha256"],
-            producer_identity=dict(source_only_checked=record["source_only_checked"],field_call=copy.deepcopy(record["field_call"]),service_configuration=copy.deepcopy(record["service_configuration"])),
+            producer_identity=_materialized_producer_identity(record),
             reference_producer_identity=copy.deepcopy(reference["producer_identity"]),
             reference_history=copy.deepcopy(reference["budget"]), side_acceleration_rows=sides, cell_acceleration_rows=cell_g,
             exact_join_proof="Both complete actual records/dense unions; old full site/target certificate provenance; exact source bounds/density rational+FP64 bits/G/root/native binding/face geometry/observers; new fields only")
+        if "density_decomposition" in reference:
+            result["reference_density_decomposition"] = copy.deepcopy(reference["density_decomposition"])
     except (ValueError, TypeError, KeyError, AttributeError, ArithmeticError, WorkLimit) as exc:
         result.update(failure=str(exc), failure_type=type(exc).__name__, reference_status="WorkLimit" if isinstance(exc, WorkLimit) else "UNVERIFIED")
     result["mapping_budget"] = budget.record()
@@ -1492,7 +1590,7 @@ def _reuse_full_reference_cli(arguments, summary_output):
 
 
 def write_matched_materialized_outputs(result, output, summary_output, budget):
-    """Charge full matched output/summary IO to the original request's clock.
+    """Charge explicit-profile output/summary IO to the original request's clock.
 
     Timeout never preserves a successful whole-request status. Final failure
     evidence may still be written after exhaustion; the external batch/process
@@ -1543,8 +1641,9 @@ def main():
     p.add_argument("--output",required=True,type=Path)
     p.add_argument("--full-domain", action="store_true",
                    help="Opt-in complete materialized-field diagnostic; all targets remain local")
-    p.add_argument("--reference-profile", choices=("matched-resolution-1","matched-resolution-2"),
-                   help="Maintainer-only fixed actual 2048/8192-cell full reference; unchanged math/width")
+    p.add_argument("--reference-profile", choices=("matched-resolution-1","matched-resolution-2",
+                                                     "full-domain-extended-1"),
+                   help="Maintainer-only full reference resource profile; unchanged math/width; extended profile accepts any qualified dense domain")
     p.add_argument("--summary-output", type=Path,
                    help="Separate compact full-domain aggregate (default: output name + .summary.json)")
     p.add_argument("--order",type=int,default=16)
@@ -1559,7 +1658,7 @@ def main():
         p.error("--reference-profile requires --materialized-record and --full-domain")
     if a.reference_profile is not None and any(item is not None for item in
             (a.reuse_full_reference,a.reference_materialized_record,a.reuse_full_reference_sha256)):
-        p.error("fixed matched reference profile cannot be combined with reference reuse")
+        p.error("explicit evaluation resource profile cannot be combined with reference reuse")
     reuse_inputs=(a.reuse_full_reference,a.reference_materialized_record,a.reuse_full_reference_sha256)
     if any(item is not None for item in reuse_inputs) and not all(item is not None for item in reuse_inputs):p.error("reuse requires complete reference, original materialized record and accepted full-file SHA")
     if a.reuse_full_reference is not None and (not a.full_domain or a.materialized_record is None):p.error("reuse requires --materialized-record and --full-domain")
@@ -1580,6 +1679,7 @@ def main():
             # audits/evaluators only check it; none mutate the shared context.
             # Startup, input reading and auditing all charge this SAME budget.
             full_budget = (Budget.full_domain_diagnostic() if a.reference_profile is None else
+                           Budget.full_domain_extended() if a.reference_profile == "full-domain-extended-1" else
                            Budget.matched_resolution(int(a.reference_profile.rsplit("-",1)[1])))
             resources = full_materialized_resource_profile(full_budget)
             raw = None

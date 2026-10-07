@@ -1236,6 +1236,58 @@ void test_helm_groups(View view, cudaStream_t stream)
     }
 }
 
+/** Explicit cache-origin transition: an Existing borrowed cache is deliberately
+ * tagged with distinct finite sentinel values solely to expose cache hits.
+ * Native rebind must discard it and query the actual unchanged point EOS.
+ * These local buffers carry no Runtime/native-field scientific authority.
+ */
+template<class View>
+__global__ void helm_native_mean_rebind_kernel(View plain,int* status,int* passed,bool unknown)
+{
+    const int lane=threadIdx.x;if(lane>=32)return;
+    const double x[]{.25,.75},rho=1e6;
+    const double e=plain.get_eint_from_T(rho,1e8,x);
+    double densities[]{rho,rho},zeros[2]{},energies[]{rho*e,rho*e},unused[2]{};
+    double fractions[]{x[0],x[0],x[1],x[1]},p,c;
+    arch::cuda::DeviceStateView means{densities,zeros,zeros,zeros,energies,unused,fractions,2,2};
+    const double q=arch::state::recover(means.load(0)).internal;
+    plain.get_pressure_and_sound_speed(rho,q,x,p,c);
+    double cached_p[]{2*p,2*p},cached_c[]{3*c,3*c};
+    auto checked=arch::cuda::make_checked_hydro_eos(plain,status);
+    checked.bind_mean_thermodynamics(means,0,1,cached_p,cached_c);
+    double actual_p,actual_c;checked.get_pressure_and_sound_speed(rho,q,x,actual_p,actual_c);
+    bool ok=__double_as_longlong(actual_p)==__double_as_longlong(cached_p[0])
+        &&__double_as_longlong(actual_c)==__double_as_longlong(cached_c[0]);
+    checked.bind_mean_thermodynamics(means,0,1,cached_p,cached_c,unknown?
+        static_cast<GridMetrics::GeometrySemantics>(255):GridMetrics::GeometrySemantics::AxisymmetricRz);
+    checked.get_pressure_and_sound_speed(rho,q,x,actual_p,actual_c);
+    ok=ok&&__double_as_longlong(actual_p)==__double_as_longlong(p)
+        &&__double_as_longlong(actual_c)==__double_as_longlong(c);
+    checked.candidate_view().get_pressure_and_sound_speed(rho,q,x,actual_p,actual_c);
+    passed[lane]=ok&&__double_as_longlong(actual_p)==__double_as_longlong(p)
+        &&__double_as_longlong(actual_c)==__double_as_longlong(c);
+}
+
+/** Same original EOS and exact device operands check clear-on-Native and sticky
+ * unknown-origin failure, without optional backend/new mathematical reference.
+ */
+template<class View>
+void test_helm_native_mean_rebind(View view,cudaStream_t stream)
+{
+    arch::cuda::DeviceAllocation<int> status,passed;status.allocate(1);passed.allocate(32);
+    for(bool unknown:{false,true}) {
+        cuda_check(cudaMemsetAsync(status.get(),0,sizeof(int),stream),"clear native mean rebind status");
+        helm_native_mean_rebind_kernel<<<1,32,0,stream>>>(view,status.get(),passed.get(),unknown);
+        cuda_check(cudaGetLastError(),"native mean rebind launch");
+        std::array<int,32> result{};int failed=-1;
+        cuda_check(cudaMemcpyAsync(result.data(),passed.get(),sizeof(result),cudaMemcpyDeviceToHost,stream),"copy native rebind results");
+        cuda_check(cudaMemcpyAsync(&failed,status.get(),sizeof(failed),cudaMemcpyDeviceToHost,stream),"copy native rebind status");
+        cuda_check(cudaStreamSynchronize(stream),"complete native mean rebind");
+        require(std::all_of(result.begin(),result.end(),[](int v){return v==1;})
+            &&failed==static_cast<int>(unknown),"Native/unknown mean origin retained Existing borrowed cache or lost latch");
+    }
+}
+
 void test_helm(cudaStream_t stream)
 {
     SpeciesManager species;
@@ -1372,6 +1424,7 @@ void test_helm(cudaStream_t stream)
         "Helm descriptor without species metadata owner was accepted");
     arch::cuda::HelmEosDeviceOwner owner(host, stream);
     test_helm_groups(owner.view(), stream);
+    test_helm_native_mean_rebind(owner.view(), stream);
     assert_device_pointer(owner.view().density_nodes, "Helm density node pointer");
     assert_device_pointer(owner.view().temperature_nodes, "Helm temperature node pointer");
     for (int axis = 0; axis < 2; ++axis) {

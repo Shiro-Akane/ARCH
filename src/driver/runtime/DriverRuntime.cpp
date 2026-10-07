@@ -151,9 +151,12 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
     auto* const tree = amr_ctrl.tree.get();
     const auto boundary_snapshot = bc_handler.snapshot_stage_context();
     const auto eos_acceptance = native_rz_eos_acceptance_;
+    const auto eos_binding = native_rz_eos_binding_;
+    if (!eos_binding || !native_rz_eos_binding_matches(*eos_binding))
+        throw std::logic_error("Native RZ EOS boundary binding is stale");
     context.post_boundary_acceptance = [this, ledger, committed_domain, epoch, species, pool, tree,
         handles, frozen_handles = std::move(frozen_handles), patches = std::move(patches),
-        boundary_snapshot, eos_acceptance](const StageExecutionContext& actual,
+        boundary_snapshot, eos_acceptance, eos_binding](const StageExecutionContext& actual,
             StateSlot slot, state::StateVersion version) {
         const auto member = TimeIntegration::hydro_boundary_state_member(slot);
         const auto require_frame = [&] {
@@ -164,6 +167,7 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
                     || stage_handles.size() != handles.size()))
                 || ledger->active_epoch() != epoch || specs.count() != species
                 || amr_ctrl.pool.get() != pool || amr_ctrl.tree.get() != tree
+                || !native_rz_eos_binding_matches(*eos_binding)
                 || !bc_handler.stage_context_matches(boundary_snapshot))
                 throw std::logic_error("Native RZ EOS boundary context/owner changed");
             // Gate before ghost publication: only accepted exact-version Host

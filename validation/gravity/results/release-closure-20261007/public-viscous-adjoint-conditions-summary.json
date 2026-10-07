@@ -1,0 +1,40 @@
+{
+  "status": "ACCEPTED_NECESSARY_CONDITIONS_ONLY",
+  "scope": "Public finite-dimensional strain adjoint/translation, transpose AMR elimination, positive spectrum and FE kinetic-energy condition; no FV stencil/body/traction or Runtime proof",
+  "independent_review": [
+    "Exact all-state z net-force condition is K e_z=0 iff B e_z=0 for W positive; PSD alone does not impose translation nullspace",
+    "Coarse exact condition is B_f P e_z,c=0. Translation-compatible P and fine B nullspace suffice; P translation-compatibility is not logically necessary absent that added contract",
+    "P-transpose force transfer uniquely preserves all virtual work and yields K_c=P^T K_f P positive semidefinite",
+    "512 exact-Fraction Gram quadratic forms, transpose virtual work and dt=1/Lambda weighted FE contraction checks; algebraic proof still supplies full 2/Lambda interval",
+    "Stokes homology requires actual reconstructed mode B h=0 for every positive viscosity; no claim mean-preserving fit automatically supplies compatible face divergence",
+    "M^-1K has nonnegative real spectrum by similarity to symmetric Gram; max absolute row sum bounds eigenvalues. This is not thermal positivity, stage-dependent spectrum proof or physical FV/CF closure"
+  ],
+  "logical_task_id": "public-axisymmetric-strain-adjoint-conservation-20261008",
+  "formal_repairs_used": 1,
+  "formal_repairs_remaining": 0,
+  "first_no_delivery_seconds": 180.1,
+  "repair_seconds": 29.4,
+  "cumulative_worker_seconds": 209.5,
+  "manager_cap_seconds": 300,
+  "first_attempt_tokens_and_fees": "UNKNOWN: wall timeout before response body",
+  "repair_reported_token_usage": {
+    "input_tokens": 1531,
+    "cached_input_tokens": 384,
+    "output_tokens": 6877,
+    "noncached_input_tokens": 1147,
+    "reasoning_tokens": 6489,
+    "visible_output_tokens": 388
+  },
+  "repair_only_estimated_cost_usd": {
+    "currency": "USD",
+    "off_peak": 0.0042994,
+    "peak": 0.0085988,
+    "status": "estimate from reported token usage; API billing is authoritative",
+    "pricing_snapshot": "2026-10-02.1"
+  },
+  "total_invoice_cost": "UNKNOWN",
+  "root_active_cost": "UNKNOWN",
+  "source_raw_export": false,
+  "algorithm_capability_grant": false,
+  "reviewed_at_utc": "2026-10-07T20:38:43.278718+00:00"
+}
