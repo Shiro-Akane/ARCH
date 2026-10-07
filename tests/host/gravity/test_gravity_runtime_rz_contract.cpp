@@ -8,6 +8,7 @@
 #include "physics/eos/IdealGas.h"
 #include "physics/gravity/self/SelfGravity.h"
 #include "physics/gravity/GravityExecution.h"
+#include <cstddef>
 #include <filesystem>
 #include <iostream>
 #include <limits>
@@ -448,11 +449,13 @@ void run(SimConfig& config,amr::AMRControl& control,SimulationController& counte
 /** Export one real Current materialization and its existing candidate cell
  * arrays after the independent lifecycle owner checks. No model step, ideal
  * ring geometry, face-gradient accessor or scientific qualification is added.
+ * expected_cells is the checked actual-root layout extent; its default512
+ * preserves the original lifecycle/source-only fixture without another model.
  */
 void export_json(const std::filesystem::path& out,SimConfig& config,
     amr::AMRControl& control,SimulationController& counters,
     arch::driver::DriverRuntime& runtime,Physical::Gravity::SelfGravity& gravity,
-    Stage& stage,const std::shared_ptr<Capture>& capture) {
+    Stage& stage,const std::shared_ptr<Capture>& capture,std::size_t expected_cells=512) {
     arch::test::RzMaterializedSourceRecord record;
     require(!stage.native_rz_source_inspection_attached(),"export inherited a live source inspection sink");
     // The real existing source observer owns this attachment. capture_call must
@@ -493,8 +496,8 @@ void export_json(const std::filesystem::path& out,SimConfig& config,
     // These are genuine scoped candidate getters under the captured matching
     // source stamp. They do not authorize continuous Phi/g or physical readers.
     record.capture_native_field(gravity);before.matches();
-    require(gravity.native_rz_potential().size()==512&&capture->density.size()==512,
-        "JSON export lost dense actual 512-cell field/source extent");
+    require(gravity.native_rz_potential().size()==expected_cells&&capture->density.size()==expected_cells,
+        "JSON export lost the expected dense actual field/source extent");
     for(const auto& input:gravity.native_rz_assessment().source.inputs)
         require(input.slot==Slot::Current,"JSON source export selected another Runtime slot");
     rejects([&]{gravity.potential();},"JSON capture granted physical potential");
@@ -507,7 +510,7 @@ void export_json(const std::filesystem::path& out,SimConfig& config,
     require(writer.is_open(),"cannot create actual local source JSON record");
     writer<<json<<'\n';writer.flush();require(bool(writer),"cannot write actual source JSON record");
     writer.close();require(bool(writer),"cannot close actual source JSON record");
-    std::cout<<"ACTUAL_RZ_SOURCE_JSON_EXPORT_PASS cells=512 actual_source_checked=1"
+    std::cout<<"ACTUAL_RZ_SOURCE_JSON_EXPORT_PASS cells="<<expected_cells<<" actual_source_checked=1"
         <<" actual_candidate_cell_arrays=1 physical_qualified=0 existing_sink_refused=1"
         <<" nonstd_propagated=1 time=0 steps=0"<<std::endl;
 }
@@ -515,21 +518,43 @@ void export_json(const std::filesystem::path& out,SimConfig& config,
 
 int main(int argc,char** argv){
  try {
-    require(argc==2||(argc==3&&std::string(argv[2])=="--materialized-source-only"),
-        "new persistent output directory and optional exact --materialized-source-only flag required");
-    const bool materialized_source_only=argc==3;
+    const bool default_lane=argc==2;
+    const bool source_lane=(argc==3||argc==5)&&std::string(argv[2])=="--materialized-source-only";
+    require(default_lane||source_lane,
+        "new persistent output directory and optional exact source-only/matched-resolution flags required");
+    int matched_resolution=0;
+    if(argc==5) {
+        const std::string level(argv[4]);
+        require(std::string(argv[3])=="--matched-resolution"&&(level=="0"||level=="1"||level=="2"),
+            "matched-resolution requires the source-only lane and exact level 0, 1 or 2");
+        matched_resolution=level[0]-'0';
+    }
+    const bool materialized_source_only=source_lane;
     const std::filesystem::path out(argv[1]);require(!std::filesystem::exists(out),"new directory required");
     SimConfig config;config.grid.geometry="cylindrical";config.grid.dim=2;
-    config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
+    // Workflow: a bounded maintainer ordinal changes only actual level-zero
+    // root block counts. The physical domain/source and all solver settings
+    // remain fixed. k=0 keeps the original 2x1 roots/512-cell layout.
+    const int scale=1<<matched_resolution;
+    config.grid.nblockx1=2*scale;config.grid.nblockx2=scale;config.grid.nblockx3=0;
+    const std::size_t root_count=static_cast<std::size_t>(config.grid.nblockx1)*config.grid.nblockx2;
+    require(amr::BLOCK_NX==16&&amr::BLOCK_NY==16,"matched source fixture requires the original 16x16 native blocks");
+    require(root_count<=static_cast<std::size_t>(std::numeric_limits<int>::max())/4,
+        "matched root capacity exceeds the real controller owner range");
+    const int block_capacity=static_cast<int>(4*root_count);
+    const std::size_t expected_cells=root_count*amr::BLOCK_NX*amr::BLOCK_NY;
+    require(expected_cells==static_cast<std::size_t>(512)*scale*scale,
+        "matched root count differs from its fixed source-cell extent");
     config.grid.x1_min=0.;config.grid.x1_max=1.;config.grid.x2_min=-.5;config.grid.x2_max=.5;
-    config.grid.amr_max_blocks=8;config.amr.lrefinemax=1;
+    config.grid.amr_max_blocks=block_capacity;config.amr.lrefinemax=1;
     config.physics.gravity.boundary="isolated";
     config.physics.gravity.relative_tolerance=1.e-10;config.physics.gravity.absolute_tolerance=0.;
     config.physics.gravity.max_cycles=200;config.io.out_dir=out.string();
     SpeciesManager species;species.add_species("fixture",1.,1.,1.4,1.);
     IdealGas eos(1.4,species);
-    amr::AMRControl control(8,2);
+    amr::AMRControl control(block_capacity,2);
     control.tree->InitRootGrid(config,1,GridMetrics::GeometrySemantics::AxisymmetricRz);
+    require(control.tree->GetActiveBlocks().size()==root_count,"matched initialization lost actual root owners");
     for(int id:control.tree->GetActiveBlocks()){
         auto& b=control.pool->GetBlock(id);
         for(auto* state:{&b.fluid_state,&b.state_next,&b.state_scratch}){
@@ -552,7 +577,10 @@ int main(int argc,char** argv){
     if(materialized_source_only) {
         // One fresh actual Current source/field observation. The
         // lifecycle/fault/reentry matrix uses a separate default lane.
-        source_inspection_checks::export_json(out,config,control,counters,runtime,gravity,stage,capture);
+        source_inspection_checks::export_json(out,config,control,counters,runtime,gravity,stage,capture,expected_cells);
+        std::cout<<"ACTUAL_RZ_MATCHED_RESOLUTION_SOURCE_LAYOUT level="<<matched_resolution
+            <<" root_blocks="<<config.grid.nblockx1<<','<<config.grid.nblockx2
+            <<" expected_cells="<<expected_cells<<" physical_qualified=0 time=0 steps=0"<<std::endl;
         std::cout<<"ACTUAL_RZ_MATERIALIZED_SOURCE_ONLY_PASS actual_runtime_initialized=1"
             <<" selected_current=1 source_and_candidate_cell_arrays_only=1"
             <<" physical_qualified=0 time=0 steps=0"<<std::endl;

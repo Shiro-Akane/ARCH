@@ -61,21 +61,46 @@ class Budget:
     Wall time includes its preflight/evaluation after this object is created.
     The ordinary request retains its frozen 90s/100000 profile. The separate
     full-domain diagnostic uses a manager-frozen aggregate resource profile;
-    neither profile changes reference precision or physical acceptance.
+    Fixed matched-resolution requests use the same math and their own immutable
+    resource policies; no profile changes reference precision or physical acceptance.
     No user-facing cap or per-contribution reset is exposed.
     """
     started: float
     calls: int = 0
     _full_domain_diagnostic: bool = False
+    _matched_resolution: int = 0
+
+    @property
+    def resource_profile(self) -> str:
+        """Read one frozen internal policy; arbitrary/conflicting profiles fail."""
+        if type(self._full_domain_diagnostic) is not bool or type(self._matched_resolution) is not int:
+            raise ValueError("Invalid frozen reference resource profile")
+        if self._matched_resolution not in (0, 1, 2) or (self._matched_resolution and self._full_domain_diagnostic):
+            raise ValueError("Invalid/conflicting frozen reference resource profile")
+        if self._matched_resolution:
+            return "matched-resolution-" + str(self._matched_resolution)
+        return "full-domain-diagnostic-1" if self._full_domain_diagnostic else "bounded-request-1"
+
+    @property
+    def matched_resolution_level(self) -> int:
+        """Return the internal fixed-layout selector, never a physics control."""
+        self.resource_profile  # Validate the complete profile combination.
+        return self._matched_resolution
 
     @property
     def max_calls(self) -> int:
         """Read the ONE request's immutable-by-contract callback profile."""
+        profile = self.resource_profile
+        if profile == "matched-resolution-1": return 6000000
+        if profile == "matched-resolution-2": return 22000000
         return 1800000 if self._full_domain_diagnostic else MAX_CALLS
 
     @property
     def timeout_seconds(self) -> float:
         """Read the same aggregate wall profile used by every contribution."""
+        profile = self.resource_profile
+        if profile == "matched-resolution-1": return 600.0
+        if profile == "matched-resolution-2": return 1800.0
         return 240.0 if self._full_domain_diagnostic else TIMEOUT_SECONDS
 
     @classmethod
@@ -87,6 +112,18 @@ class Budget:
         costs stay in their separate historical records; they are not reset.
         """
         return cls(time.monotonic(), _full_domain_diagnostic=True)
+
+    @classmethod
+    def matched_resolution(cls, level: int) -> Budget:
+        """Start ONE distinct fixed 2048/8192-cell complete diagnostic request.
+
+        Shared kernel formulas, 70 dps and all interval widths are unchanged.
+        The external serial owner enforces the two-request 2400s batch cap;
+        unused allowance is never transferred and old request costs persist.
+        """
+        if type(level) is not int or level not in (1, 2):
+            raise ValueError("Matched reference resource profile requires fixed level 1 or 2")
+        return cls(time.monotonic(), _matched_resolution=level)
 
     @classmethod
     def start(cls) -> Budget:
@@ -110,8 +147,7 @@ class Budget:
         return {"calls": self.calls, "max_calls": self.max_calls,
                 "wall_seconds": time.monotonic() - self.started,
                 "timeout_seconds": self.timeout_seconds,
-                "resource_profile": "full-domain-diagnostic-1" if self._full_domain_diagnostic
-                    else "bounded-request-1"}
+                "resource_profile": self.resource_profile}
 
 
 def rational(value: Any) -> Fraction:

@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <bit>
 #include <chrono>
 #include <filesystem>
@@ -315,6 +316,27 @@ void GravityStage::set_native_rz_source_inspection(NativeSourceInspectionSink si
     if(!sink&&payload)throw std::invalid_argument("Native source inspection payload requires its sink");
     source_inspection_sink_=sink;source_inspection_payload_=payload;
 }
+/** Attach or clear SAME-flux/work diagnostics only before a macro journal.
+ * Neither live-frame payload replacement, unflushed accepted rows nor concurrent
+ * source inspection is permitted. Replacing a nonempty pair requires explicit
+ * clear; the same pair is idempotent. Each later actual Frame freezes the pair; no
+ * configuration parameter, field grant or numerical producer is introduced.
+ */
+void GravityStage::set_native_self_flux_observation(NativeSelfFluxObservationSink sink,void* payload) {
+    if(!native_self()||!gravity_||runtime_.backend()||journal_active_||prepared_||committed_count_
+        ||runtime_.active_host_hydro_transaction()||source_inspection_active_
+        ||source_inspection_sink_||source_inspection_payload_
+        ||gravity_->native_source_inspection_sink_||gravity_->native_source_inspection_payload_
+        ||gravity_->native_source_inspection_running_||policy_->prepared_native_self()
+        ||policy_->prepared_native_external()
+        ||(self_frame_&&self_frame_->live_.load(std::memory_order_acquire)))
+        throw std::logic_error("Native self flux observation requires a quiescent actual private service");
+    if(!sink&&payload)throw std::invalid_argument("Native self observation payload requires its sink");
+    if(native_flux_observation_sink_&&sink
+        &&(sink!=native_flux_observation_sink_||payload!=native_flux_observation_payload_))
+        throw std::logic_error("Native self observation owner must be explicitly cleared before replacement");
+    native_flux_observation_sink_=sink;native_flux_observation_payload_=payload;
+}
 /** Runtime authentication surrounds the internal callback; publish no marker
  * on callback/lease failure. Only copied pending local records are permitted
  * inside the callback; the formatter waits for completed() after this returns.
@@ -582,7 +604,8 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
             std::unique_ptr<Physical::Gravity::NativeSelfStageFrame> next{
                 new Physical::Gravity::NativeSelfStageFrame(*gravity_,runtime_.boundaries(),
                     runtime_.control(),binding,prepared_->descriptor,config,
-                    prepared_->step_dt,generation_,identity)};
+                    prepared_->step_dt,generation_,identity,
+                    native_flux_observation_sink_,native_flux_observation_payload_)};
             self_frame_=std::move(next);policy_->native_self_frame_=self_frame_.get();
             pending_rows_[pending_count_].solve=row.str();
         } else {

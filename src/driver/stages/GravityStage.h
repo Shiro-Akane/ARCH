@@ -20,7 +20,7 @@
 #include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 #include "physics/gravity/GravitySolveTypes.h"
 
-namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; }
+namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; struct NativeSelfStageObservation; }
 namespace arch::driver {
 class DriverRuntime;
 class GravityStage final : public scheduler::HydroStagePreparation {
@@ -45,6 +45,12 @@ public:
      * this bit identifies source materialization only, never science or field.
      */
     bool native_rz_source_inspection_completed() const noexcept {return source_inspection_completed_;}
+    /** Internal SAME-operation diagnostics, attached only while this actual
+     * private Native Self service is quiescent. Payload must be thread-safe and
+     * outlive all synchronous events; this does not grant physical capability.
+     */
+    using NativeSelfFluxObservationSink=void(*)(void*,const Physical::Gravity::NativeSelfStageObservation&);
+    void set_native_self_flux_observation(NativeSelfFluxObservationSink,void*);
     state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest&) override;
     void prepare_current(double time, bool reset_solver_history);
     void invalidate() const override;
@@ -72,6 +78,8 @@ private:
     void* source_inspection_payload_=nullptr;
     bool source_inspection_active_=false;
     mutable bool source_inspection_completed_=false;
+    NativeSelfFluxObservationSink native_flux_observation_sink_=nullptr;
+    void* native_flux_observation_payload_=nullptr;
     /** Internal source-only profile; public configuration never selects it. */
     bool native_external() const noexcept { return qualification_==Qualification::NativeRzExternalCandidate; }
     /** The actual private RZ Self field/profile never opens public consumers. */

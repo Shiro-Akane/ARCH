@@ -4,6 +4,8 @@ Reuse authenticated fresh Runtime/gravity libraries and real production owner
 objects; do not configure, rebuild production, simulate or grant native physics.
 """
 import argparse,json,pathlib,subprocess,os,sys
+import hashlib
+import math
 root=pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(root/"tools"))
 from validation_fixture_build import build_cpu_fixture,verify_fixture_inputs,RUNTIME_SOURCES
@@ -14,10 +16,14 @@ modes=p.add_mutually_exclusive_group()
 modes.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
 modes.add_argument("--native-rz-regrid",action="store_true",help="Explicit internal CPU RZ Runtime AMR transaction, no physical grant")
 p.add_argument("--materialized-source-only",action="store_true",help="One actual Native source plus candidate field snapshot, separate from lifecycle matrix")
+p.add_argument("--matched-resolution",type=int,choices=(0,1,2),default=None,
+    help="Maintainer-only root-layout ordinal for native source-only export; omitted means original level 0")
 p.add_argument("--field-after-regrid",action="store_true",help="Native RZ regrid plus original candidate fields on refined/coarse topology")
 p.add_argument("--regrid-rollback",action="store_true",help="Actual CPU RZ finalizer fault/rollback verification")
 a=p.parse_args()
 if a.materialized_source_only and not a.native_rz:p.error("--materialized-source-only requires --native-rz")
+if a.matched_resolution is not None and not (a.native_rz and a.materialized_source_only):
+    p.error("--matched-resolution requires --native-rz --materialized-source-only")
 if a.regrid_rollback and not a.native_rz_regrid:p.error("--regrid-rollback requires --native-rz-regrid")
 if a.regrid_rollback and a.field_after_regrid:p.error("field-after-regrid and rollback are independent runs")
 if a.field_after_regrid and not a.native_rz_regrid:p.error("--field-after-regrid requires --native-rz-regrid")
@@ -57,6 +63,7 @@ if {pathlib.Path(name).name for name in reused_libraries}!={"libarch_driver_runt
 test_args=[str(exe),str(out/"runtime-output")]
 if a.field_after_regrid:test_args.append("--field-after-regrid")
 if a.materialized_source_only:test_args.append("--materialized-source-only")
+if a.matched_resolution is not None:test_args.extend(["--matched-resolution",str(a.matched_resolution)])
 result=subprocess.run(test_args,env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
     text=True,capture_output=True,timeout=1200 if a.native_rz or a.field_after_regrid or a.regrid_rollback else 30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
@@ -95,5 +102,58 @@ if a.materialized_source_only:
     summary["scope"]="Actual CPU Native RZ Runtime initialization -> checked Current source and same candidate field inspection; no timestep"
     summary["limitations"]=["Source and same-solve diagnostic only; lifecycle/fault matrix is a separate default lane",
         "Physical/native/Device gates held; no continuous accuracy or coupled evolution acceptance"]
+    # Read real exported binding metadata; this is source/field identity only,
+    # not a manufactured ideal observer table or a scientific accuracy gate.
+    resolution_level=0 if a.matched_resolution is None else a.matched_resolution
+    scale=1 << resolution_level
+    summary["matched_resolution"]={"level":resolution_level,"explicitlyRequested":a.matched_resolution is not None,
+        "expectedDenseCells":512*scale*scale,"expectedRootBlocks":[2*scale,scale],
+        "actualBindingObserved":False,"physicalQualified":False,"scienceAccepted":False,
+        "timeAdvanced":False,"scope":"Maintainer-only fixed physical source, changed uniform root layout"}
+    if result.returncode==0:
+        record_path=out/"runtime-output"/"materialized-native-source.json"
+        before=record_path.stat();raw=record_path.read_bytes();after=record_path.stat()
+        stat_identity=lambda value:(value.st_dev,value.st_ino,value.st_size,value.st_mtime_ns,value.st_ctime_ns)
+        if stat_identity(before)!=stat_identity(after):raise RuntimeError("Matched source record changed while reading metadata")
+        def invalid_constant(token):raise ValueError("Nonfinite matched source metadata: "+token)
+        record=json.loads(raw,parse_constant=invalid_constant,
+            parse_int=lambda token:-0.0 if token=="-0" else int(token))
+        binding=record["native_binding"];field=record["candidate_field"]
+        service=record["service_configuration"];source_identity=record["source_identity"]
+        expected_cells=512*scale*scale;expected_root_cells=[32*scale,16*scale,1]
+        spacing=binding["stored_nominal_spacing"]
+        if (record.get("schema")!="arch-materialized-native-source-1"
+            or record.get("source_only_checked") is not True or record.get("physical_qualified") is not False
+            or field.get("physical_qualified") is not False or binding.get("dimension")!=2
+            or record.get("scope")!="materialized_source_only"
+            or record.get("root_bounds")!=[0.,1.,-.5,.5]
+            or binding.get("origin",[])[:2]!=[0.,-.5] or binding.get("root_upper",[])[:2]!=[1.,.5]
+            or binding.get("periodic")!=[False,False,False]
+            or record["field_call"].get("invoke_failed") is not False
+            or record["field_call"].get("field_solve_failed") is not False
+            or record["field_call"].get("actual_candidate_observed") is not True
+            or source_identity.get("time")!=0. or field.get("source_generation")!=source_identity.get("generation")
+            or service.get("origin")!="actual-SelfGravity-constructor-copy" or service.get("boundary")!="isolated"
+            or service.get("relative_tolerance")!=1.e-10 or service.get("absolute_tolerance")!=0.
+            or service.get("max_cycles")!=200
+            or binding.get("root_cells")!=expected_root_cells
+            or len(binding["patches"])!=2*scale*scale
+            or len(record["source"]["leaves"])!=expected_cells or len(field["cell_values"])!=expected_cells
+            or any(type(leaf.get("density")) not in (int,float) or leaf["density"]!=1.
+                or leaf.get("level")!=0 for leaf in record["source"]["leaves"])
+            or len(spacing)!=3 or any(type(x) not in (int,float) or not math.isfinite(x) or x<=0 for x in spacing)
+            or spacing[0]!=1./expected_root_cells[0] or spacing[1]!=1./expected_root_cells[1]):
+            raise RuntimeError("Matched export differs from the frozen actual uniform root layout")
+        # The actual receipt supplies all observed geometry/identity. The
+        # expected dyadic layout above authenticates this maintainer scenario;
+        # it never constructs source edges or observation positions.
+        summary["matched_resolution"].update(actualBindingObserved=True,
+            actualRootCells=binding["root_cells"],actualRootOrigin=binding["origin"],actualRootUpper=binding["root_upper"],
+            actualStoredNominalSpacing=spacing,radialSpacing=spacing[0],axialSpacing=spacing[1],hMax=max(spacing[:2]),
+            hDefinition="maximum actual stored r/z spacing of this uniform canonical root layout",
+            sourceIdentity=record["source_identity"],sourceGeneration=field["source_generation"],fieldGeneration=field["field_generation"],
+            actualAmrLeafLevel=0,actualRootPatchCount=len(binding["patches"]),
+            actualServiceConfiguration=record["service_configuration"],materializedRecordSha256=hashlib.sha256(raw).hexdigest(),
+            actualRecordStat=dict(device=after.st_dev,inode=after.st_ino,size=after.st_size,mtimeNs=after.st_mtime_ns,ctimeNs=after.st_ctime_ns))
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)

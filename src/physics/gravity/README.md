@@ -24,6 +24,9 @@ caches native leaf mappings, hierarchy plans, resident fields and boundary trees
 `GravityExecution` owns shared physical work descriptors; `GravityBoundary` owns
 the finite-domain mass/dipole/quadrupole tree. `GravityPatchView` contains borrowed
 source pointers and shared momentum/face-mass-flux energy work.
+Acceleration is stored per physical face. Curvilinear energy work keeps separate
+lower and upper coefficients for each cell because its volume and potential
+enter the compatible mass-flux work. Both backends consume that same layout.
 
 The generic operator and MG/FGMRES stay in `numerics`. `CompositeMultigrid`
 uses one mathematical flow on both backends. The bounded coarse inverse factors

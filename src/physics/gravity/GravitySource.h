@@ -27,7 +27,11 @@ namespace Physical::Gravity {
 struct GravityPatchView {
     const double* density=nullptr;
     const double* faces[3]{};      // Physical acceleration at each native face.
-    const double* work_faces[3]{}; // Cell-side coefficient from Phi_face-Phi_cell.
+    // Both are indexed by the SAME padded cell offset. Unlike acceleration,
+    // curved work depends on this cell's volume and potential; adjacent cells
+    // must retain different coefficients even at the same physical face.
+    const double* work_low[3]{};
+    const double* work_high[3]{};
     /** Report whether a resident density and face field have been published. */
     ARCH_INLINE bool enabled() const {return density!=nullptr;}
 };

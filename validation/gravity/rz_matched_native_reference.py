@@ -539,7 +539,7 @@ def full_materialized_summary(result):
             error = Fraction(value["absolute_error_upper_exact"])
             maxima[key] = max(maxima.get(key, Fraction(0)), error)
             counts[key] = counts.get(key, 0) + 1
-    return dict(profile=result["profile"], status=result["status"],
+    summary = dict(profile=result["profile"], status=result["status"],
         science_accepted=False, physical_qualified=False, core_binding_qualified=False,
         reference_complete=result.get("reference_complete", False),
         coverage_complete=result.get("coverage_complete", False),
@@ -555,12 +555,132 @@ def full_materialized_summary(result):
         target_widths_exact=result["target_widths_exact"], budget=result["budget"],
         comparison_counts=counts, maximum_absolute_error_upper_exact={k: str(v) for k,v in maxima.items()},
         scope="Complete-domain mathematical interval diagnostic; no frozen production accuracy/science grant")
+    if "matched_resolution" in result:
+        summary["matched_resolution"] = copy.deepcopy(result["matched_resolution"])
+    return summary
+
+
+def full_materialized_resource_profile(budget):
+    """Validate one frozen full-request budget and describe its real resources.
+
+    Default behavior remains the original complete 240s/1800000 request. New
+    matched profiles are internal fixed-layout diagnostics, not user tolerances.
+    """
+    from rz_ring_surface_reference import Budget
+    if not isinstance(budget, Budget):
+        raise ValueError("Complete-domain diagnostic requires its one frozen resource profile")
+    name = budget.resource_profile
+    expected = {"full-domain-diagnostic-1": (1800000, 240.),
+                "matched-resolution-1": (6000000, 600.),
+                "matched-resolution-2": (22000000, 1800.)}
+    if name not in expected or (budget.max_calls, budget.timeout_seconds) != expected[name]:
+        raise ValueError("Complete-domain diagnostic requires its one frozen resource profile")
+    return dict(profile="actual-materialized-"+name,
+                resource_limits=dict(max_calls=budget.max_calls, wall_seconds=budget.timeout_seconds))
+
+
+def validate_matched_materialized_profile(record, budget):
+    """Check fixed supplied layout/source identity before exact dense coalescing.
+
+    The caller first runs the complete existing actual-record validator. This
+    additional schema check does not authenticate Runtime/ELF provenance, infer
+    ideal source faces, or replace exact all-leaf coverage/observer validation.
+    Every supplied source offset must represent one real active logical cell.
+    """
+    from rz_ring_surface_reference import CGS_G, rational
+    level = budget.matched_resolution_level
+    if not level: return None
+    budget.check_time()
+    def require(value, message):
+        if not value: raise ValueError("Fixed matched source: "+message)
+    def integers(value, expected):
+        return isinstance(value, list) and len(value) == len(expected)             and all(type(a) is int and a == b for a,b in zip(value,expected))
+    def exact(value, expected):
+        return type(value) in (int,float) and math.isfinite(value)             and rational(value) == rational(expected)             and struct.pack(">d",value) == struct.pack(">d",expected)
+    def coordinates(value, expected):
+        return isinstance(value,list) and len(value)==len(expected)             and all(exact(a,b) for a,b in zip(value,expected))
+    blocks = (2*(1<<level), 1<<level); count = 512*(4**level)
+    binding = record["native_binding"]; identity = record["source_identity"]
+    leaves = record["source"]["leaves"]; cells = record["candidate_field"]["cell_values"]
+    require(len(leaves)==count and len(cells)==count, "wrong complete cell count")
+    require(coordinates(record["root_bounds"],[0.,1.,-.5,.5])
+            and coordinates(binding["origin"],[0.,-.5,0.])
+            and coordinates(binding["root_upper"],[1.,.5,1.]), "root coordinates differ")
+    require(integers(binding["root_cells"],[16*blocks[0],16*blocks[1],1])
+            and binding["periodic"] == [False,False,False]
+            and all(type(v) is bool for v in binding["periodic"]), "root cells/periodicity differ")
+    require(exact(identity["G"],float(CGS_G)) and exact(identity["time"],0.), "CGS G/time differ")
+    service=record["service_configuration"]
+    # Actual private producer uses its real copied type='none'; it directly
+    # exercises SelfGravity without forging a public gravity-type dispatch.
+    require(service["type"]=="none" and service["boundary"]=="isolated"
+            and exact(service["relative_tolerance"],1e-10)
+            and exact(service["absolute_tolerance"],0.)
+            and type(service["max_cycles"]) is int and service["max_cycles"]==200
+            and all(exact(service[k],0.) for k in ("g_x","g_y","g_z")), "actual service configuration differs")
+    patches=binding["patches"]; inputs=identity["inputs"]
+    require(len(patches)==blocks[0]*blocks[1] and len(inputs)==len(patches), "patch/dependency count differs")
+    seen_blocks=set(); seen_uids=set(); layouts=[]
+    for patch,dependency in zip(patches,inputs):
+        budget.check_time(); root=patch["bound_root_identity"]; layout=patch["layout"]; native=patch["native_layout"]
+        logical=root["logical_block"]
+        require(isinstance(logical,list) and len(logical)==2
+                and all(type(v) is int for v in logical)
+                and 0<=logical[0]<blocks[0] and 0<=logical[1]<blocks[1]
+                and tuple(logical) not in seen_blocks, "invalid/duplicate actual root block")
+        seen_blocks.add(tuple(logical))
+        require(integers(root["root_blocks"],list(blocks)) and type(root["level"]) is int
+                and root["level"]==0 and root["periodic_axial"] is False
+                and coordinates(root["root_lower"],[0.,-.5])
+                and coordinates(root["root_upper"],[1.,.5]), "bound root/level differs")
+        require(type(dependency["uid"]) is int and dependency["uid"]>0 and dependency["uid"] not in seen_uids
+                and type(dependency["epoch"]) is int and dependency["epoch"]>0
+                and type(dependency["slot"]) is int and dependency["slot"]==0
+                and type(dependency["version"]) is int and dependency["version"]==1
+                and type(dependency["storage_generation"]) is int and dependency["storage_generation"]>0,
+                "invalid/duplicate Current input identity")
+        seen_uids.add(dependency["uid"])
+        begin=layout["active_begin"]; end=layout["active_end"]; stride=layout["stride"]; extent=layout["extent"]
+        require(all(isinstance(a,list) and len(a)==3 and all(type(v) is int for v in a)
+                    for a in (begin,end,stride,extent)), "invalid actual layout arrays")
+        require(layout["dimension"]==2 and layout["centering"]==0 and native["dimension"]==2
+                and type(native["ng"]) is int and native["ng"]==4
+                and begin==[4,4,0] and end==[20,20,1]
+                and extent[0]>=24 and extent[1:]==[24,1]
+                and stride==[1,extent[0],extent[0]*extent[1]]
+                and native["stride_y"]==stride[1] and native["stride_z"]==stride[2]
+                and native["total_size"]==stride[2], "real active/stride layout differs")
+        lower=native["origin"]; upper=native["actual_block_upper"]
+        require(isinstance(lower,list) and len(lower)==3 and all(type(v) in (int,float) and math.isfinite(v) for v in lower)
+                and isinstance(upper,list) and len(upper)==2 and all(type(v) in (int,float) and math.isfinite(v) for v in upper)
+                and 0<=lower[0]<upper[0]<=1 and -.5<=lower[1]<upper[1]<=.5 and exact(lower[2],0.),
+                "actual patch bounds differ")
+        layouts.append((logical,begin,stride,lower,upper))
+    per_patch=[set() for _ in patches]
+    for leaf in leaves:
+        budget.check_time(); block=leaf["binding_block_index"]; logical=leaf["logical_index"]
+        require(type(leaf["level"]) is int and leaf["level"]==0 and exact(leaf["density"],1.), "source level/density differs")
+        require(isinstance(logical,list) and len(logical)==3 and all(type(v) is int for v in logical)
+                and logical[2]==0, "invalid actual logical cell")
+        origin,begin,stride,lower,upper=layouts[block]
+        i=logical[0]-16*origin[0]; j=logical[1]-16*origin[1]
+        require(0<=i<16 and 0<=j<16 and (i,j) not in per_patch[block], "missing/duplicate active logical cell")
+        require(leaf["source_offset"]==(begin[0]+i)*stride[0]+(begin[1]+j)*stride[1]+begin[2]*stride[2],
+                "source offset does not match actual active logical layout")
+        require(lower[0]<=leaf["r_lower"]<leaf["r_upper"]<=upper[0]
+                and lower[1]<=leaf["z_lower"]<leaf["z_upper"]<=upper[1], "source outside actual patch bounds")
+        per_patch[block].add((i,j))
+    require(all(len(cells)==256 for cells in per_patch), "incomplete actual patch active cover")
+    return dict(level=level, expected_cells=count, root_blocks=list(blocks),
+                root_cells=binding["root_cells"], scope="Fixed supplied schema; outer Runtime authentication required",
+                batch_limits=dict(wall_seconds=2400., enforcement="External serial campaign owner; no allowance transfer"))
 
 
 def audit_materialized_full_record(record, dependency_directory=None, _shared_budget=None):
     """Opt-in complete actual-field diagnostic, distinct from the unchanged subset.
 
-    One manager-frozen 240s/1800000-callback request begins before complete schema,
+    The default manager-frozen 240s/1800000-callback request, or an explicitly
+    fixed matched-layout request, begins before complete schema,
     dense/source validation, exact source union and symmetry scheduling. It stays
     shared across every site/source/component and all final target mappings.
     Every original target and all three reference components remain in the local
@@ -569,20 +689,21 @@ def audit_materialized_full_record(record, dependency_directory=None, _shared_bu
     from rz_ring_surface_reference import (Budget, CGS_G, WorkLimit, rational,
         load_optional_flint, evaluate_reference)
     budget = Budget.full_domain_diagnostic() if _shared_budget is None else _shared_budget
-    if not isinstance(budget, Budget) or budget.max_calls != 1800000 or budget.timeout_seconds != 240.:
-        raise ValueError("Complete-domain diagnostic requires its one frozen resource profile")
+    resources = full_materialized_resource_profile(budget)
     widths = {key: str(CGS_G/Fraction(10**12)) for key in ("Phi", "g_r", "g_z")}
-    result = dict(profile="actual-materialized-full-domain-diagnostic-1",
+    result = dict(profile=resources["profile"],
         status="FULL_DOMAIN_UNVERIFIED_DIAGNOSTIC", science_accepted=False,
         physical_qualified=False, core_binding_qualified=False, reference_complete=False,
         coverage_complete=False, target_widths_exact=widths, targets=[], sites=[],
         resource_authority="Manager-frozen distinct full diagnostic request; not a user hard budget",
-        resource_limits=dict(max_calls=1800000, wall_seconds=240.))
+        resource_limits=resources["resource_limits"])
     schedule = None
     try:
         budget.check_time()
         validated = validate_materialized_record(record, budget)
         leaves, cells, faces, by_cell, by_face = validated
+        if budget.matched_resolution_level:
+            result["matched_resolution"] = validate_matched_materialized_profile(record,budget)
         # Exact dense coverage must be validated before scheduling any sites.
         combined = coalesce_exact_dense_source(record["source"], record["root_bounds"],
                                               record["source_identity"], budget)
@@ -666,15 +787,402 @@ def audit_materialized_full_record(record, dependency_directory=None, _shared_bu
     return result
 
 
+def _reuse_canonical_sha(value):
+    """Digest the complete JSON value; not a Runtime or interval authority."""
+    return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False,
+        separators=(",", ":")).encode()).hexdigest()
+
+
+def _reuse_exact_wire(value):
+    """Compare finite numeric values as both rationals and stored binary64 bits."""
+    from rz_ring_surface_reference import rational
+    if type(value) in (int, float):
+        if not math.isfinite(value): raise ValueError("Nonfinite exact reuse input")
+        return ("number", rational(value), struct.pack(">d", float(value)).hex())
+    if isinstance(value, list): return tuple(_reuse_exact_wire(item) for item in value)
+    if isinstance(value, dict): return tuple((key, _reuse_exact_wire(value[key])) for key in sorted(value))
+    return (type(value).__name__, value)
+
+
+def _reuse_require(condition, message):
+    """Reject incomplete provenance before reusing any mathematical endpoint."""
+    if not condition: raise ValueError(message)
+
+
+def _reuse_interval(interval, maximum_width, *, require_width=True):
+    """Validate rational bounds; derive the original site's exact width.
+
+    Original integral site rows contain lower/upper/ball. Their enclosing width
+    is hi-lo in exact rational arithmetic; ball text is not a scalar certificate.
+    A supplied site width must still match, while mapped target rows always
+    require their original explicit width field. Neither path widens the budget.
+    """
+    lo, hi = (Fraction(interval[key]) for key in ("lower_rational", "upper_rational"))
+    width = hi-lo
+    _reuse_require(not require_width or "width_rational" in interval,
+                   "Missing required target interval width")
+    _reuse_require(lo <= hi and width <= maximum_width
+        and ("width_rational" not in interval or Fraction(interval["width_rational"]) == width),
+        "Missing/reversed/inconsistent/too-wide certified interval")
+    return dict(lower_rational=str(lo), upper_rational=str(hi), width_rational=str(width))
+
+
+def _reuse_validate_reference(old, reference, validated, combined, raw_sha, budget):
+    """Bind EVERY imported site/target to the old actual source and exact schedule.
+
+    This checks the complete previously accepted artifact, not an aggregate or
+    a PASS string. The outer owner must retain its accepted full-file hash and
+    producer receipt: structural checks cannot independently prove an arbitrary
+    caller's interval mathematics or authenticate JSON as a live Runtime.
+    """
+    from rz_ring_surface_reference import CGS_G, rational
+    _, cells, faces, by_cell, by_face = validated
+    schedule = materialized_full_schedule(old, cells, faces, by_cell, by_face, budget)
+    widths = {key: str(CGS_G/Fraction(10**12)) for key in ("Phi", "g_r", "g_z")}
+    _reuse_require(reference.get("profile") == "actual-materialized-full-domain-diagnostic-1"
+        and reference.get("reference_complete") is True and reference.get("coverage_complete") is True
+        and reference.get("status") == "FULL_DOMAIN_MATHEMATICAL_REFERENCE_DIAGNOSTIC_ONLY"
+        and reference.get("reference_status") == "MathematicalIntervalsCertified"
+        and reference.get("failure") is None, "Original complete reference is unverified")
+    _reuse_require(all(reference.get(key) is False for key in
+        ("science_accepted", "physical_qualified", "core_binding_qualified")), "Reference imported a scientific grant")
+    _reuse_require(reference.get("materializedRecordSha256") == raw_sha
+        and reference.get("actual_record_canonical_sha256") == _reuse_canonical_sha(old)
+        and reference.get("original_source_input_sha256") == combined["original_dense_input_sha256"],
+        "Original raw/canonical/source input identity mismatch")
+    _reuse_require(reference.get("original_source_id") == old["source"]["sourceId"]
+        and reference.get("backend",{}).get("ctx_dps") == 70
+        and isinstance(reference.get("backend",{}).get("python_flint_version"), str),
+        "Original source label/backend provenance mismatch")
+    producer=dict(source_only_checked=old["source_only_checked"],field_call=old["field_call"],service_configuration=old["service_configuration"])
+    _reuse_require(reference.get("producer_identity") == producer, "Original producer/configuration provenance mismatch")
+    _reuse_require(reference.get("source_identity") == old["source_identity"]
+        and reference.get("field_identity") == dict(source_generation=old["candidate_field"]["source_generation"],
+            field_generation=old["candidate_field"]["field_generation"])
+        and reference.get("exact_union") == combined, "Original source/field/exact-union provenance mismatch")
+    _reuse_require(reference.get("target_widths_exact") == widths
+        and reference.get("target_mapping") == schedule["targets"]
+        and reference.get("target_count") == len(schedule["targets"])
+        and reference.get("unique_site_count") == len(schedule["sites"])
+        and reference.get("exact_z_reflection") is schedule["exact_z_reflection"]
+        and reference.get("symmetry_midpoint_exact") == schedule["symmetry_midpoint_exact"],
+        "Original complete observer/width/reflection identity mismatch")
+    reference_input = dict(source=combined["source"], root_bounds=old["root_bounds"],
+                           source_identity=old["source_identity"], observers=schedule["sites"])
+    identity = reference["reference_identity"]
+    _reuse_require(identity.get("input") == reference_input
+        and identity.get("sha256") == _reuse_canonical_sha(reference_input)
+        and identity.get("core_binding_qualified") is False,
+        "Original reference input digest/observer identity mismatch")
+    history = reference["budget"]
+    _reuse_require(type(history.get("calls")) is int and 0 < history["calls"] <= 1800000
+        and history.get("max_calls") == 1800000 and history.get("timeout_seconds") == 240.
+        and type(history.get("wall_seconds")) in (int, float)
+        and math.isfinite(history["wall_seconds"]) and 0 <= history["wall_seconds"] < 240.
+        and history.get("resource_profile") == "full-domain-diagnostic-1", "Invalid original reference work history")
+    site_rows = reference["sites"]
+    _reuse_require(isinstance(site_rows, list) and len(site_rows) == len(schedule["sites"]),
+                   "Incomplete original reference sites")
+    sites = {}
+    for actual, row in zip(schedule["sites"], site_rows):
+        budget.check_time()
+        _reuse_require(row.get("observer_id") == actual["id"] and actual["id"] not in sites
+            and row.get("math_certificate_meets_target") is True
+            and row.get("observer") == dict(R_exact=str(rational(actual["r_observer"])),
+                                             Z_exact=str(rational(actual["z_observer"]))),
+            "Original site certificate/coordinate identity mismatch")
+        sites[actual["id"]] = {key: _reuse_interval(row["intervals"][key], Fraction(widths[key]), require_width=False)
+                                for key in widths}
+    target_rows = reference["targets"]
+    _reuse_require(isinstance(target_rows, list) and len(target_rows) == len(schedule["targets"]),
+                   "Incomplete original target interval coverage")
+    verified = []
+    for expected, row in zip(schedule["targets"], target_rows):
+        budget.check_time()
+        _reuse_require(all(row.get(key) == value for key, value in expected.items())
+            and row.get("science_accepted") is False
+            and row.get("math_interval_meets_original_width") is True
+            and row.get("reference_status") == "MathematicalIntervalsCertified", "Original target is not certified")
+        intervals = reflected_reference_intervals(sites[expected["site_id"]], expected["g_z_sign"])
+        actual = {key: _reuse_interval(row["intervals"][key], Fraction(widths[key])) for key in widths}
+        _reuse_require(actual == intervals, "Original target interval does not match certified site reflection")
+        verified.append((expected, intervals))
+    return schedule, verified
+
+
+def _reuse_join_sources(old, new, old_values, new_values, budget):
+    """Require identical true physical input/geometry; keep execution stamps apart."""
+    _reuse_require(_reuse_exact_wire(old["root_bounds"]) == _reuse_exact_wire(new["root_bounds"])
+        and _reuse_exact_wire(old["source_identity"]["G"]) == _reuse_exact_wire(new["source_identity"]["G"])
+        and _reuse_exact_wire(old["native_binding"]) == _reuse_exact_wire(new["native_binding"]),
+        "Actual root/G/native-binding changed")
+    _reuse_require(_reuse_exact_wire(old["source"]["leaves"]) == _reuse_exact_wire(new["source"]["leaves"]),
+                   "Actual source bounds/density/storage changed")
+    _reuse_require(_reuse_exact_wire(old["observers"]) == _reuse_exact_wire(new["observers"]),
+                   "Actual observer geometry changed")
+    old_faces, new_faces = old_values[2], new_values[2]
+    geometry_keys = ("face_index", "axis", "left", "right", "boundary_side", "construction", "native_bounds",
+                     "area", "center", "fragment_lower", "fragment_upper", "fragment_width")
+    _reuse_require(len(old_faces) == len(new_faces), "Actual face count changed")
+    for before, after in zip(old_faces, new_faces):
+        budget.check_time()
+        _reuse_require(_reuse_exact_wire({key: before[key] for key in geometry_keys})
+            == _reuse_exact_wire({key: after[key] for key in geometry_keys}), "Actual face incidence/measure changed")
+
+
+def _reuse_acceleration_rows(record, face_intervals, budget):
+    """Reference the real A-weighted fragment-center gather, then the half-sum.
+
+    Exact rational A/sum(A) retains negative intervals and axis-zero rows. The
+    actual FP64 gather performs rounded accumulation/division; its difference
+    is recorded, never assumed zero. This is neither a continuous face average
+    nor a volume-mean/cell-center force identity.
+    """
+    from rz_ring_surface_reference import rational
+    field = record["candidate_field"]; cells = field["cell_values"]; faces = field["face_values"]
+    rows = [[] for _ in range(6*len(cells))]
+    for i, face in enumerate(faces):
+        budget.check_time()
+        area = rational(face["area"])
+        for cell in (face["left"], face["right"]):
+            if cell < 0: continue
+            side = 1 if cell == face["left"] else 0
+            leaf = record["source"]["leaves"][cell]
+            lower_key, upper_key = ("r_lower", "r_upper") if face["axis"] == 0 else ("z_lower", "z_upper")
+            _reuse_require(rational(face["center"][face["axis"]]) == rational(leaf[upper_key if side else lower_key]),
+                           "Face is not on its actual cell side")
+            rows[6*cell+2*face["axis"]+side].append((i, area))
+    sides, comparisons = [], []
+    for i, entries in enumerate(rows):
+        budget.check_time()
+        axis, side, cell = (i%6)//2, i%2, i//6
+        if axis == 2:
+            _reuse_require(not entries, "Inactive axis has a face")
+            lo = hi = Fraction(0)
+        elif not entries:
+            # The authentic elliptic mesh omits zero-measure r=0 faces.
+            # Its gather leaves this lower radial side at symmetry zero; no
+            # other missing active side is a complete geometric observation.
+            _reuse_require(axis == 0 and side == 0
+                and rational(record["root_bounds"][0]) == 0
+                and rational(record["source"]["leaves"][cell]["r_lower"]) == 0,
+                "Missing active cell-side face coverage")
+            lo = hi = Fraction(0)
+        else:
+            _reuse_require(bool(entries), "Missing active cell-side face coverage")
+            total = sum((area for _, area in entries), Fraction(0))
+            if total == 0:
+                _reuse_require(axis == 0 and side == 0
+                    and rational(record["source"]["leaves"][cell]["r_lower"]) == 0
+                    and all(faces[f]["boundary_side"] == 0 and rational(faces[f]["center"][0]) == 0
+                            and Fraction(face_intervals[f]["lower_rational"]) <= 0
+                            <= Fraction(face_intervals[f]["upper_rational"]) for f, _ in entries),
+                    "Zero-area side is not the actual symmetry axis")
+                lo = hi = Fraction(0)
+            else:
+                lo = sum((area*Fraction(face_intervals[f]["lower_rational"]) for f, area in entries), Fraction(0))/total
+                hi = sum((area*Fraction(face_intervals[f]["upper_rational"]) for f, area in entries), Fraction(0))/total
+        interval = dict(lower_rational=str(lo), upper_rational=str(hi), width_rational=str(hi-lo))
+        sides.append(interval)
+        error = full_interval_error(field["side_acceleration"][i], interval)
+        error["actual_binary64_hex"] = struct.pack(">d", float(field["side_acceleration"][i])).hex()
+        comparisons.append(dict(cell_index=cell, axis=axis, side=side, interval=interval, error=error))
+    cell_comparisons = []
+    for cell, value in enumerate(cells):
+        for axis in range(3):
+            budget.check_time()
+            lower, upper = sides[6*cell+2*axis:6*cell+2*axis+2]
+            lo = (Fraction(lower["lower_rational"])+Fraction(upper["lower_rational"]))/2
+            hi = (Fraction(lower["upper_rational"])+Fraction(upper["upper_rational"]))/2
+            interval = dict(lower_rational=str(lo), upper_rational=str(hi), width_rational=str(hi-lo))
+            error = full_interval_error(value["acceleration"][axis], interval)
+            error["actual_binary64_hex"] = struct.pack(">d", float(value["acceleration"][axis])).hex()
+            cell_comparisons.append(dict(cell_index=cell, axis=axis, interval=interval, error=error))
+    return comparisons, cell_comparisons
+
+
+def reuse_materialized_full_reference(record, old_record, reference, *, new_raw_sha256,
+        old_raw_sha256, reference_raw_sha256, expected_reference_sha256, _shared_budget=None):
+    """Recompare a fresh authenticated field with the complete accepted reference.
+
+    Workflow: validate BOTH actual records and complete dense source unions;
+    verify the old reference's raw/canonical/input/site/target provenance; exact
+    physical source/geometry join; re-evaluate only new stored field rows; map
+    all side/cell force enclosures. No flint, kernel, new integral budget or
+    production accuracy gate is invoked. Runtime/file authority stays outside.
+    """
+    from rz_ring_surface_reference import Budget, CGS_G, WorkLimit, rational
+    budget = Budget.full_domain_diagnostic() if _shared_budget is None else _shared_budget
+    if not isinstance(budget, Budget) or budget.timeout_seconds != 240. or budget.calls != 0:
+        raise ValueError("Pure mapping requires its one unused 240s budget")
+    result = dict(profile="actual-materialized-full-reference-reuse-1", status="REFERENCE_REUSE_UNVERIFIED",
+        science_accepted=False, physical_qualified=False, core_binding_qualified=False,
+        reference_complete=False, coverage_complete=False, reference_status="UNVERIFIED", targets=[],
+        target_widths_exact={key: str(CGS_G/Fraction(10**12)) for key in ("Phi", "g_r", "g_z")},
+        materializedRecordSha256=new_raw_sha256, reference_materialized_record_sha256=old_raw_sha256,
+        reused_reference_raw_sha256=reference_raw_sha256, failure=None)
+    try:
+        budget.check_time()
+        for digest in (new_raw_sha256, old_raw_sha256, reference_raw_sha256, expected_reference_sha256):
+            _reuse_require(isinstance(digest, str) and len(digest) == 64
+                and all(c in "0123456789abcdef" for c in digest), "Missing actual input-file SHA")
+        _reuse_require(reference_raw_sha256 == expected_reference_sha256,
+            "Imported reference differs from the externally accepted full-file SHA")
+        result["externally_accepted_reference_sha256"] = expected_reference_sha256
+        old_values = validate_materialized_record(old_record, budget)
+        new_values = validate_materialized_record(record, budget)
+        old_union = coalesce_exact_dense_source(old_record["source"], old_record["root_bounds"], old_record["source_identity"], budget)
+        new_union = coalesce_exact_dense_source(record["source"], record["root_bounds"], record["source_identity"], budget)
+        schedule, verified = _reuse_validate_reference(old_record, reference, old_values, old_union, old_raw_sha256, budget)
+        _reuse_join_sources(old_record, record, old_values, new_values, budget)
+        _, cells, faces, _, _ = new_values
+        normal_intervals = {}
+        for target, intervals in verified:
+            budget.check_time()
+            i = target["actual_index"]
+            row = dict(target, science_accepted=False, math_interval_meets_original_width=True,
+                reference_status="MathematicalIntervalsCertified", intervals=copy.deepcopy(intervals), comparisons={})
+            if target["kind"] == "cell":
+                row["comparisons"]["point_cell_potential"] = full_interval_error(cells[i]["potential"], intervals["Phi"])
+            else:
+                face = faces[i]; component = "g_r" if face["axis"] == 0 else "g_z"
+                normal_intervals[i] = intervals[component]
+                row["comparisons"]["force_minus_original_gradient"] = full_interval_error(-rational(face["gradient"]), intervals[component])
+                derived = sum((rational(cells[j]["potential"])*rational(c)
+                    for j, c in zip(face["value_samples"], face["value_coefficients"])), Fraction(0))
+                derived += rational(face["value_boundary_coefficient"])*rational(face["boundary_datum"])
+                row["comparisons"]["derived_original_value_row_vs_point_potential"] = full_interval_error(derived, intervals["Phi"])
+                if face["boundary_side"] >= 0 and not face["value_samples"] and rational(face["value_boundary_coefficient"]) == 1:
+                    row["comparisons"]["actual_boundary_datum_potential"] = full_interval_error(face["boundary_datum"], intervals["Phi"])
+            result["targets"].append(row)
+        sides, cell_g = _reuse_acceleration_rows(record, normal_intervals, budget)
+        budget.check_time()
+        result.update(status="COMPLETE_REFERENCE_REUSE_DIAGNOSTIC_ONLY", reference_status="MathematicalIntervalsCertified",
+            reference_complete=True, coverage_complete=True, target_count=len(verified), unique_site_count=len(schedule["sites"]),
+            exact_z_reflection=schedule["exact_z_reflection"], source_identity=copy.deepcopy(record["source_identity"]),
+            reference_source_identity=copy.deepcopy(old_record["source_identity"]),
+            field_identity=dict(source_generation=record["candidate_field"]["source_generation"], field_generation=record["candidate_field"]["field_generation"]),
+            reference_field_identity=copy.deepcopy(reference["field_identity"]),
+            actual_record_canonical_sha256=_reuse_canonical_sha(record), original_source_input_sha256=new_union["original_dense_input_sha256"],
+            reference_original_source_input_sha256=old_union["original_dense_input_sha256"],
+            producer_identity=dict(source_only_checked=record["source_only_checked"],field_call=copy.deepcopy(record["field_call"]),service_configuration=copy.deepcopy(record["service_configuration"])),
+            reference_producer_identity=copy.deepcopy(reference["producer_identity"]),
+            reference_history=copy.deepcopy(reference["budget"]), side_acceleration_rows=sides, cell_acceleration_rows=cell_g,
+            exact_join_proof="Both complete actual records/dense unions; old full site/target certificate provenance; exact source bounds/density rational+FP64 bits/G/root/native binding/face geometry/observers; new fields only")
+    except (ValueError, TypeError, KeyError, AttributeError, ArithmeticError, WorkLimit) as exc:
+        result.update(failure=str(exc), failure_type=type(exc).__name__, reference_status="WorkLimit" if isinstance(exc, WorkLimit) else "UNVERIFIED")
+    result["mapping_budget"] = budget.record()
+    result["budget"] = dict(result["mapping_budget"], resource_profile="pure-exact-reference-mapping-1", kernel_evaluations=0)
+    result["limitations"] = ["Only previously accepted mathematical intervals are reused; imported bytes are not self-authenticating",
+        "New/old Runtime producer, source and field stamps stay separate; old field comparisons/grants are never reused",
+        "Fragment-center area-weighted reference and cell half-sum are not continuous surface/volume averages",
+        "Rounded production gather normalization contributes to the recorded FP64 error; no zero-arithmetic-error assumption",
+        "All public/native/Device/scientific acceptance gates remain with their actual owners"]
+    return result
+
+
+def _reuse_full_reference_cli(arguments, summary_output):
+    """Read three immutable local artifacts once and run no optional backend."""
+    from rz_ring_surface_reference import Budget, WorkLimit
+    budget = Budget.full_domain_diagnostic()
+    snapshots = []
+    def read(path):
+        budget.check_time()
+        stat = path.stat(); raw = path.read_bytes(); after = path.stat()
+        identity = lambda x: (x.st_dev, x.st_ino, x.st_size, x.st_mtime_ns, x.st_ctime_ns)
+        _reuse_require(identity(stat) == identity(after), "Input changed during pure reference mapping read")
+        value = json.loads(raw, parse_constant=lambda token: (_ for _ in ()).throw(ValueError("Nonfinite JSON: "+token)),
+            parse_int=lambda token: -0.0 if token == "-0" else int(token))
+        snapshots.append((path, identity(after), hashlib.sha256(raw).hexdigest()))
+        return value, snapshots[-1][2]
+    try:
+        new, new_sha = read(arguments.materialized_record)
+        old, old_sha = read(arguments.reference_materialized_record)
+        reference, reference_sha = read(arguments.reuse_full_reference)
+        result = reuse_materialized_full_reference(new, old, reference, new_raw_sha256=new_sha,
+            old_raw_sha256=old_sha, reference_raw_sha256=reference_sha,
+            expected_reference_sha256=arguments.reuse_full_reference_sha256, _shared_budget=budget)
+        for path, identity, sha in snapshots:
+            budget.check_time(); stat = path.stat()
+            _reuse_require((stat.st_dev,stat.st_ino,stat.st_size,stat.st_mtime_ns,stat.st_ctime_ns) == identity
+                and hashlib.sha256(path.read_bytes()).hexdigest() == sha, "Input changed during exact reference mapping")
+        result["read_only_input_identities"] = [dict(path=str(path),device=identity[0],inode=identity[1],size=identity[2],mtime_ns=identity[3],ctime_ns=identity[4],sha256=sha) for path,identity,sha in snapshots]
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, ArithmeticError, WorkLimit) as exc:
+        result = dict(profile="actual-materialized-full-reference-reuse-1", status="REFERENCE_REUSE_UNVERIFIED",
+            science_accepted=False, physical_qualified=False, core_binding_qualified=False,
+            reference_complete=False, coverage_complete=False, targets=[], failure=str(exc), failure_type=type(exc).__name__,
+            reference_status="WorkLimit" if isinstance(exc, WorkLimit) else "UNVERIFIED", mapping_budget=budget.record(), budget=budget.record())
+        from rz_ring_surface_reference import CGS_G
+        result["target_widths_exact"] = {key: str(CGS_G/Fraction(10**12)) for key in ("Phi", "g_r", "g_z")}
+    arguments.output.parent.mkdir(parents=True, exist_ok=True)
+    arguments.output.write_text(json.dumps(result, indent=2, allow_nan=False)+"\n")
+    summary = full_materialized_summary(result)
+    summary.update(reference_materialized_record_sha256=result.get("reference_materialized_record_sha256"),
+        materializedRecordSha256=result.get("materializedRecordSha256"), reused_reference_raw_sha256=result.get("reused_reference_raw_sha256"),
+        reference_history=result.get("reference_history"), mapping_budget=result.get("mapping_budget"),
+        side_acceleration_count=len(result.get("side_acceleration_rows",[])), cell_acceleration_count=len(result.get("cell_acceleration_rows",[])),
+        externally_accepted_reference_sha256=result.get("externally_accepted_reference_sha256"),
+        completeLocalResultSha256=hashlib.sha256(arguments.output.read_bytes()).hexdigest())
+    summary["weighted_acceleration_maximum_absolute_error_upper_exact"] = {
+        name:str(max((Fraction(row["error"]["absolute_error_upper_exact"]) for row in result.get(name,[])),default=Fraction(0)))
+        for name in ("side_acceleration_rows","cell_acceleration_rows")}
+    summary_output.parent.mkdir(parents=True, exist_ok=True)
+    summary_output.write_text(json.dumps(summary, indent=2, allow_nan=False)+"\n")
+    print("ACTUAL_MATERIALIZED_REFERENCE_REUSE_DIAGNOSTIC", result["reference_status"], len(result["targets"]))
+
+
+def write_matched_materialized_outputs(result, output, summary_output, budget):
+    """Charge full matched output/summary IO to the original request's clock.
+
+    Timeout never preserves a successful whole-request status. Final failure
+    evidence may still be written after exhaustion; the external batch/process
+    guard is the hard bound for uninterruptible Python/backend/OS operations.
+    All original targets and interval columns remain in the complete local file.
+    """
+    from rz_ring_surface_reference import WorkLimit
+    phase="complete-output-serialization"
+    try:
+        budget.check_time()
+        result["budget"]=budget.record()
+        text=json.dumps(result,indent=2,allow_nan=False)+"\n"
+        budget.check_time(); output.parent.mkdir(parents=True,exist_ok=True)
+        phase="complete-output-write"; output.write_text(text); budget.check_time()
+        phase="summary-mapping"; summary=full_materialized_summary(result); budget.check_time()
+        if "materializedRecordSha256" in result: summary["materializedRecordSha256"]=result["materializedRecordSha256"]
+        phase="complete-output-identity"; summary["completeLocalResultSha256"]=hashlib.sha256(output.read_bytes()).hexdigest()
+        budget.check_time(); summary["budget"]=budget.record()
+        phase="summary-write"; summary_output.parent.mkdir(parents=True,exist_ok=True)
+        summary_output.write_text(json.dumps(summary,indent=2,allow_nan=False)+"\n"); budget.check_time()
+    except (OSError,ValueError,TypeError,ArithmeticError,WorkLimit) as exc:
+        result.update(status="FULL_DOMAIN_UNVERIFIED_DIAGNOSTIC", reference_complete=False,
+            coverage_complete=False, reference_status="WorkLimit" if isinstance(exc,WorkLimit) else "UNVERIFIED",
+            failure=str(exc), failure_type=type(exc).__name__, failure_phase=phase, budget=budget.record())
+        # Terminal evidence is never a second evaluation/request or a grant.
+        output.parent.mkdir(parents=True,exist_ok=True)
+        output.write_text(json.dumps(result,indent=2,allow_nan=False)+"\n")
+        summary=full_materialized_summary(result)
+        if "materializedRecordSha256" in result: summary["materializedRecordSha256"]=result["materializedRecordSha256"]
+        summary.update(failure_phase=phase, failure_type=type(exc).__name__,
+            completeLocalResultSha256=hashlib.sha256(output.read_bytes()).hexdigest())
+        summary_output.parent.mkdir(parents=True,exist_ok=True)
+        summary_output.write_text(json.dumps(summary,indent=2,allow_nan=False)+"\n")
+    return result
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     records=p.add_mutually_exclusive_group(required=True)
     records.add_argument("--probe-record",type=Path)
     records.add_argument("--materialized-record",type=Path)
+    p.add_argument("--reuse-full-reference",type=Path, help="Pure exact reuse of a complete accepted local reference; no integral backend")
+    p.add_argument("--reference-materialized-record",type=Path, help="Original actual record bound to the imported reference")
+    p.add_argument("--reuse-full-reference-sha256", help="Externally accepted reference full-file SHA; required provenance pin, not a physical parameter")
     p.add_argument("--dependency-directory",type=Path)
     p.add_argument("--output",required=True,type=Path)
     p.add_argument("--full-domain", action="store_true",
                    help="Opt-in complete materialized-field diagnostic; all targets remain local")
+    p.add_argument("--reference-profile", choices=("matched-resolution-1","matched-resolution-2"),
+                   help="Maintainer-only fixed actual 2048/8192-cell full reference; unchanged math/width")
     p.add_argument("--summary-output", type=Path,
                    help="Separate compact full-domain aggregate (default: output name + .summary.json)")
     p.add_argument("--order",type=int,default=16)
@@ -683,11 +1191,23 @@ def main():
     p.add_argument("--observer-set", choices=("boundary", "cells"), default="boundary")
     a=p.parse_args()
     if a.output.exists():p.error("output must be new")
+    if a.reference_profile is not None and (not a.full_domain or a.materialized_record is None):
+        p.error("--reference-profile requires --materialized-record and --full-domain")
+    if a.reference_profile is not None and any(item is not None for item in
+            (a.reuse_full_reference,a.reference_materialized_record,a.reuse_full_reference_sha256)):
+        p.error("fixed matched reference profile cannot be combined with reference reuse")
+    reuse_inputs=(a.reuse_full_reference,a.reference_materialized_record,a.reuse_full_reference_sha256)
+    if any(item is not None for item in reuse_inputs) and not all(item is not None for item in reuse_inputs):p.error("reuse requires complete reference, original materialized record and accepted full-file SHA")
+    if a.reuse_full_reference is not None and (not a.full_domain or a.materialized_record is None):p.error("reuse requires --materialized-record and --full-domain")
+    if a.reuse_full_reference_sha256 is not None and (len(a.reuse_full_reference_sha256)!=64 or any(c not in "0123456789abcdef" for c in a.reuse_full_reference_sha256)):p.error("accepted reference SHA must be 64 lower-case hex characters")
     if a.full_domain and a.materialized_record is None:p.error("--full-domain requires --materialized-record")
     if a.summary_output is not None and not a.full_domain:p.error("--summary-output requires --full-domain")
     if a.full_domain:
         summary_output = a.summary_output or a.output.with_name(a.output.name+".summary.json")
         if summary_output == a.output or summary_output.exists():p.error("summary output must be separate and new")
+    if a.reuse_full_reference is not None:
+        _reuse_full_reference_cli(a, summary_output)
+        return
     if a.materialized_record is not None:
         def invalid_constant(value): raise ValueError("Nonfinite JSON constant: "+value)
         if a.full_domain:
@@ -695,7 +1215,9 @@ def main():
             # The outer CLI owns the one explicit precision freeze. Library
             # audits/evaluators only check it; none mutate the shared context.
             # Startup, input reading and auditing all charge this SAME budget.
-            full_budget = Budget.full_domain_diagnostic()
+            full_budget = (Budget.full_domain_diagnostic() if a.reference_profile is None else
+                           Budget.matched_resolution(int(a.reference_profile.rsplit("-",1)[1])))
+            resources = full_materialized_resource_profile(full_budget)
             raw = None
             phase = "optional-backend-precision-freeze"
             try:
@@ -714,7 +1236,7 @@ def main():
             except (OSError, ValueError, TypeError, AttributeError, ArithmeticError, WorkLimit, ImportError) as exc:
                 # No schema/target identity is guessed after failed startup.
                 # Explicit failure evidence is still written to both outputs.
-                result = dict(profile="actual-materialized-full-domain-diagnostic-1",
+                result = dict(profile=resources["profile"],
                     status="FULL_DOMAIN_UNVERIFIED_DIAGNOSTIC", science_accepted=False,
                     physical_qualified=False, core_binding_qualified=False,
                     reference_complete=False, coverage_complete=False, targets=[], sites=[],
@@ -724,7 +1246,7 @@ def main():
                     target_widths_exact={key: str(CGS_G/Fraction(10**12))
                                         for key in ("Phi", "g_r", "g_z")},
                     resource_authority="Manager-frozen distinct full diagnostic request; not a user hard budget",
-                    resource_limits=dict(max_calls=1800000, wall_seconds=240.),
+                    resource_limits=resources["resource_limits"],
                     budget=full_budget.record())
             if raw is not None:
                 result["materializedRecordSha256"]=hashlib.sha256(raw).hexdigest()
@@ -733,6 +1255,10 @@ def main():
             data=json.loads(raw,parse_constant=invalid_constant)
             result = audit_materialized_record(data,a.dependency_directory)
             result["materializedRecordSha256"]=hashlib.sha256(raw).hexdigest()
+        if a.reference_profile is not None:
+            write_matched_materialized_outputs(result,a.output,summary_output,full_budget)
+            print("ACTUAL_MATERIALIZED_FULL_DOMAIN_DIAGNOSTIC",result["reference_status"],len(result["targets"]))
+            return
         a.output.parent.mkdir(parents=True,exist_ok=True)
         a.output.write_text(json.dumps(result,indent=2,allow_nan=False)+"\n")
         if a.full_domain:

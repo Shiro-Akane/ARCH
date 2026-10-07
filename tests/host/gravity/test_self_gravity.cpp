@@ -681,6 +681,119 @@ void rz_binding_identity() {
                 throw std::runtime_error("RZ native potential work sign/area/volume/interpolation mismatch");
             }
         }
+        // Quadratic INPUT, not a Poisson solve or an analytic face-point oracle.
+        // The unique Phi_f keeps the original actual value-stencil/Dirichlet
+        // semantics. Independently sum +/-2*A_f/V_i*(Phi_f-Phi_i) for each cell
+        // side; unlike Phi=z, same-level neighbors generally have unequal work.
+        std::vector<double> quadratic_phi(op.size()),quadratic_boundary(op.faces().size());
+        for(int cell=0;cell<op.size();++cell) {
+            const auto point=op.center(cell);
+            quadratic_phi[cell]=point[0]*point[0]+point[1]*point[1];
+        }
+        for(std::size_t f=0;f<op.faces().size();++f) {
+            const auto& point=op.faces()[f].center;
+            quadratic_boundary[f]=point[0]*point[0]+point[1]*point[1];
+        }
+        std::vector<long double> quadratic_reference(6*op.size()),quadratic_scale(6*op.size());
+        std::size_t unequal_shared_sides=0,coarse_fine_fragments=0;
+        for(std::size_t f=0;f<op.faces().size();++f) {
+            const auto& face=op.faces()[f];
+            long double face_value=static_cast<long double>(face.value_boundary_coefficient)*quadratic_boundary[f];
+            for(std::size_t k=0;k<face.value_samples.size();++k)
+                face_value+=static_cast<long double>(face.value_coefficients[k])*quadratic_phi[face.value_samples[k]];
+            for(int cell:{face.left,face.right})if(cell>=0) {
+                const int side=cell==face.left?1:0,row=6*cell+2*face.axis+side;
+                const long double factor=(side==0?2.L:-2.L)*face.area/op.volumes()[cell];
+                const long double term=factor*(face_value-quadratic_phi[cell]);
+                quadratic_reference[row]+=term;
+                quadratic_scale[row]+=std::abs(term)+std::abs(factor*quadratic_phi[cell])
+                    +std::abs(factor*face.value_boundary_coefficient*quadratic_boundary[f]);
+                for(std::size_t k=0;k<face.value_samples.size();++k)
+                    quadratic_scale[row]+=std::abs(factor*face.value_coefficients[k]
+                        *quadratic_phi[face.value_samples[k]]);
+            }
+            if(face.left<0||face.right<0)continue;
+            if(binding.cells[face.left].level!=binding.cells[face.right].level) {
+                ++coarse_fine_fragments;continue;
+            }
+            const auto left=binding.storage[face.left],right=binding.storage[face.right];
+            const auto& grid=*binding.grids[left.block];
+            const int stride=face.axis==0?1:grid.stride_y;
+            if(left.block!=right.block||right.offset!=left.offset+stride)continue;
+            // The actual same-level value row is the arithmetic average, not
+            // analytic Phi(face.center) for this quadratic input. Check that
+            // independent value before asserting the strongest alias witness.
+            require(face.value_samples.size()==2&&face.value_samples[0]==face.left
+                &&face.value_samples[1]==face.right&&face.value_coefficients[0]==.5
+                &&face.value_coefficients[1]==.5,
+                "same-level quadratic work witness lost the original unique face-value rule");
+            const long double average=.5L*(static_cast<long double>(quadratic_phi[face.left])
+                +quadratic_phi[face.right]);
+            require(face_value==average,"quadratic work face differs from independent same-level average");
+            const long double high=-2.L*face.area/op.volumes()[face.left]*(average-quadratic_phi[face.left]);
+            const long double low=2.L*face.area/op.volumes()[face.right]*(average-quadratic_phi[face.right]);
+            if(std::abs(high-low)>64.*std::numeric_limits<double>::epsilon()*(std::abs(high)+std::abs(low)))
+                ++unequal_shared_sides;
+        }
+        require(unequal_shared_sides>0,"quadratic manufactured work did not distinguish shared-face cell sides");
+        if(binding.grids.size()>2)
+            require(coarse_fine_fragments>0,"quadratic mixed topology has no genuine coarse-fine work fragments");
+        const auto view=[](const multigrid::SparseStorage& csr) {
+            return multigrid::SparseView{csr.offsets.data(),csr.columns.data(),csr.values.data()};
+        };
+        auto host=make_host_gravity_execution()->numeric();
+        const auto saved_phi=quadratic_phi,saved_boundary=quadratic_boundary;
+        std::vector<double> quadratic_work(6*op.size());
+        host->run(multigrid::RowsWork{6*op.size(),view(rows.potential_work),quadratic_phi.data(),quadratic_work.data()});
+        host->run(multigrid::RowsWork{6*op.size(),view(rows.boundary_work),quadratic_boundary.data(),quadratic_work.data(),1.,1.});
+        std::vector<int> patch_offsets;
+        int native_size=0;
+        for(const auto* grid:binding.grids) {patch_offsets.push_back(native_size);native_size+=grid->GetTotalSize();}
+        const auto patch_rows=gravity_patch_work_rows(binding,patch_offsets,native_size);
+        std::vector<double> padded_work(6*native_size,19.);
+        host->run(multigrid::RowsWork{6*native_size,view(patch_rows),quadratic_work.data(),padded_work.data()});
+        host->fence();
+        // These flat views follow the documented SAME-cell-offset contract;
+        // no field is published and no native Runtime permission is minted.
+        std::vector<GravityPatchView> patch_views(binding.grids.size());
+        for(std::size_t b=0;b<binding.grids.size();++b)for(int axis=0;axis<3;++axis) {
+            patch_views[b].work_low[axis]=padded_work.data()+2*axis*native_size+patch_offsets[b];
+            patch_views[b].work_high[axis]=padded_work.data()+(2*axis+1)*native_size+patch_offsets[b];
+        }
+        std::vector<unsigned char> occupied(6*native_size);
+        for(int cell=0;cell<op.size();++cell) {
+            const auto location=binding.storage[cell];const auto& patch=patch_views[location.block];
+            for(int axis=0;axis<2;++axis)for(int side=0;side<2;++side) {
+                const int row=6*cell+2*axis+side;
+                const int padded=(2*axis+side)*native_size+patch_offsets[location.block]+location.offset;
+                occupied[padded]=1;
+                const double actual=(side?patch.work_high[axis]:patch.work_low[axis])[location.offset];
+                require(actual==quadratic_work[row],"quadratic cell-side work selected another real cell or face alias");
+                require(std::isfinite(actual)&&std::abs(static_cast<long double>(actual)-quadratic_reference[row])
+                    <=64.*std::numeric_limits<double>::epsilon()*quadratic_scale[row],
+                    "quadratic padded work differs from independent signed area/own-volume face sum");
+            }
+        }
+        for(const auto& face:op.faces())if(face.left>=0&&face.right>=0) {
+            const auto left=binding.storage[face.left],right=binding.storage[face.right];
+            const auto& grid=*binding.grids[left.block];const int stride=face.axis==0?1:grid.stride_y;
+            if(left.block==right.block&&right.offset==left.offset+stride)
+                require(patch_views[left.block].work_high[face.axis]+left.offset
+                    !=patch_views[right.block].work_low[face.axis]+right.offset,
+                    "adjacent native quadratic work cell sides share one physical-face address");
+        }
+        for(std::size_t i=0;i<padded_work.size();++i)if(!occupied[i])
+            require(padded_work[i]==0.,"patch work invented an inactive/padded cell-side coefficient");
+        require(quadratic_phi==saved_phi&&quadratic_boundary==saved_boundary,
+            "Host work gather changed immutable actual potential/datum inputs");
+        const auto saved_work=padded_work;
+        auto wrong_offsets=patch_offsets;++wrong_offsets.back();
+        rejects([&]{gravity_patch_work_rows(binding,wrong_offsets,native_size);},
+            "patch work builder accepted invalid real padded offsets");
+        auto duplicated=binding;duplicated.storage.back()=duplicated.storage.front();
+        rejects([&]{gravity_patch_work_rows(duplicated,patch_offsets,native_size);},
+            "patch work builder accepted duplicate real cell-storage ownership");
+        require(padded_work==saved_work,"rejected patch work metadata changed the existing actual padded values");
         // Execute the original shared CellAcceleration work through its Host
         // executor; axial force must use dz and the inactive phi lane stays zero.
         make_host_gravity_execution()->run(CellAcceleration{op.size(),2,

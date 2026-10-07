@@ -45,6 +45,13 @@ struct GravityFaceRows {
     std::vector<BoundaryPoint> observers;
 };
 GravityFaceRows gravity_face_rows(const arch::elliptic::CompositePoisson&);
+/** Gather each real cell-side into its own padded patch slot.
+ * Output row (2*axis+side)*native_size+patch_offset+cell_offset selects
+ * input 6*cell+2*axis+side. A shared physical face never aliases work rows.
+ * This topology-only plan changes storage, not the compatible-work formula.
+ */
+arch::multigrid::SparseStorage gravity_patch_work_rows(
+    const amr::EllipticMeshBinding&,const std::vector<int>& patch_offsets,int native_size);
 /** One topology-only Energy registration row, indexed by the ORIGINAL route
  * operation. No stage potential, dt, RK coefficient or register metric is owned.
  */
@@ -92,10 +99,10 @@ struct SelfGravity::Workspace {
     arch::elliptic::CompositeBoundary user_boundary;
     bool explicit_boundary=false;
     arch::multigrid::CompositeMultigrid solver;
-    Vector density,rhs,boundary_values,face_gradient,sides,work_sides,g,patch_faces,patch_work_faces,inverse_dt_squared;
+    Vector density,rhs,boundary_values,face_gradient,sides,work_sides,g,patch_faces,patch_work,inverse_dt_squared;
     Array<GravityCell> cells;
     Array<const double*> density_pointers;
-    arch::multigrid::SparseArray side_gather,work_phi_gather,work_boundary_gather,patch_gather;
+    arch::multigrid::SparseArray side_gather,work_phi_gather,work_boundary_gather,patch_gather,patch_work_gather;
     Array<BoundaryTreeNode> nodes;
     Array<BoundaryMoments> moments;
     Array<BoundaryPoint> points;

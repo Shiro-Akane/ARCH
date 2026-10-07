@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "host/driver/RzRuntimeWitness.h"
+#include "host/gravity/NativeSelfEnergyWitness.h"
 
 #include "amr/AMRControl.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
@@ -655,6 +656,14 @@ public:
     mutable std::map<std::uint64_t,int> visits;
     mutable bool nonzero_field=false,flow=false,dt_fault_seen=false,cache_fault_seen=false;
     mutable std::shared_ptr<const amr::AmrFluxTopologyPlan> retained_topology;
+    // Explicit maintenance diagnostics borrow only this actual Hydro call.
+    // Defaults are empty: ordinary CI/private matrices perform no extra copies.
+    using EnergyField=Physical::Gravity::NativeRzFieldInspection;
+    using EnergyFieldCapture=void(*)(void*,Owner&,EnergyField&&,const scheduler::StageDescriptor&);
+    using EnergyDeltaCapture=void(*)(void*,Owner&,int,const FluidState&,const Grid&,const std::vector<FluidVector>&);
+    void* energy_payload=nullptr;
+    EnergyFieldCapture energy_field_capture=nullptr;
+    EnergyDeltaCapture energy_delta_capture=nullptr;
     explicit ObservedHydro(Owner& owner,const ActualHydro& actual):owner_(owner),actual_(actual){}
     GridMetrics::GeometrySemantics geometry_semantics() const noexcept override{return actual_.geometry_semantics();}
     Numerics::HostHydroStorageContract host_storage_contract() const noexcept override{return actual_.host_storage_contract();}
@@ -790,7 +799,7 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
             const auto stage_index=visits.size();const auto plan=scheduler::make_hydro_plan(owner_.method);
             require(stage_index<plan.stages.size(),"PrivateSelf produced extra solved stages");
             const auto& descriptor=plan.stages[stage_index];
-            const auto field=owner_.gravity->native_rz_field_inspection();
+            auto field=owner_.gravity->native_rz_field_inspection();
             require(field.source_generation==generation&&field.field_generation>0
                 &&field.source.topology==owner_.runtime->handles().front().epoch
                 &&field.source.inputs.size()==owner_.runtime->handles().size()
@@ -810,6 +819,7 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
             rejects([&]{owner_.gravity->patch_view(0);},"ready candidate granted public patch source");
             rejects([&]{owner_.gravity->timestep(owner_.config.numerics.cfl);},"ready candidate granted public CFL");
             rejects([&]{owner_.stage->plot_fields();},"ready candidate granted public plot fields");
+            if(energy_field_capture)energy_field_capture(energy_payload,owner_,std::move(field),descriptor);
         }
         ++visits[generation];
         const int cell=grid.GetIndex(grid.Is(),grid.Js(),0);flow|=input.mom_u[cell]!=0.||input.mom_v[cell]!=0.;
@@ -856,6 +866,7 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
         throw std::logic_error("PRIVATE_SELF_REAL_DT_CLAIM_REFUSED");
     }
     actual_.evaluate_patch(control,id,input,grid,dt,du,dx,policy,config,weight,stream,walls);
+    if(energy_delta_capture)energy_delta_capture(energy_payload,owner_,id,input,grid,du);
 }
 
 /** Count actual accepted journal rows after commit/flush, never numerical receipts guessed from dU. */
@@ -957,7 +968,12 @@ int main(int argc,char** argv) {
             std::cout<<"PRIVATE_NATIVE_SELF_CACHE_REFUSAL actual_field=1 full_rollback=1 physical_grant=0\n";
             return 0;
         }
-        if(argc!=1)throw std::invalid_argument("expected no arguments, private-native-self or private-native-self-cache-refusal");
+        if(argc==2&&std::string(argv[1])=="private-native-self-energy") {
+            arch::test::run_native_self_energy<native_self_hydro_owner_checks::Owner>(native_self_hydro_owner_checks::interval);
+            std::cout<<"PRIVATE_NATIVE_SELF_ENERGY accounting_checked=1 four_actual_fields=1 fault_rollback=1 total_energy_science=UNVERIFIED physical_grant=0\n";
+            return 0;
+        }
+        if(argc!=1)throw std::invalid_argument("expected no arguments, private-native-self, private-native-self-cache-refusal or private-native-self-energy");
         reflux_row_checks::run(); test_native_external_source_mean(); test_preparation(); test_failures(); test_field_identity(); test_host_hydro_transaction(); run_native_rz_runtime_boundary_contract();
     }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

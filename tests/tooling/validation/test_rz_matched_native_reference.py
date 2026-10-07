@@ -578,4 +578,514 @@ class FullDomainEngineeringTests(unittest.TestCase):
 
 
 
+class CompleteReferenceReuseEngineeringTests(unittest.TestCase):
+    """SYNTHETIC interval-transport defenses; NOT a mathematical/Core certificate."""
+
+    def wire(self, axis=False):
+        import math
+        record = SyntheticMaterializedWireTests().wire()
+        lower, upper = (0., 1.) if axis else (1., 2.)
+        leaf = record["source"]["leaves"][0]
+        leaf.update(r_lower=lower, r_upper=upper, center=[(lower+upper)/2, 0., 0.],
+                    stored_operator_volume=math.pi*(upper*upper-lower*lower))
+        record["root_bounds"] = [lower, upper, -.5, .5]
+        record["native_binding"].update(origin=[lower,-.5,0.], root_upper=[upper,.5,0.])
+        bound = record["native_binding"]["patches"][0]["bound_root_identity"]
+        bound.update(root_lower=[lower,-.5], root_upper=[upper,.5])
+        cell_observer = record["observers"][0]
+        cell_observer.update(r_observer=(lower+upper)/2)
+        template = record["candidate_field"]["face_values"][0]
+        faces, observers = [], [cell_observer]
+        for i, (direction, side) in enumerate(((0,0),(0,1),(1,0),(1,1))):
+            face = copy.deepcopy(template)
+            center = [lower if side==0 else upper,0.,0.] if direction==0 else [(lower+upper)/2,-.5 if side==0 else .5,0.]
+            lo = [center[0],-.5,0.] if direction==0 else [lower,center[1],0.]
+            hi = [center[0],.5,0.] if direction==0 else [upper,center[1],0.]
+            area = 2*math.pi*center[0] if direction==0 else math.pi*(upper*upper-lower*lower)
+            face.update(face_index=i, axis=direction, boundary_side=2*direction+side,
+                        left=0 if side else -1, right=-1 if side else 0, center=center,
+                        area=area, fragment_lower=lo, fragment_upper=hi,
+                        fragment_width=[hi[0]-lo[0],hi[1]-lo[1],0.],
+                        gradient=0. if axis and i==0 else .25)
+            faces.append(face)
+            observer=dict(id="synthetic-complete-face-"+str(i),kind="face-fragment-center",face_index=i,
+                          r_observer=center[0],z_observer=center[1])
+            for key in ("left","right","axis","boundary_side","native_bounds","area","center","fragment_lower","fragment_upper"):
+                observer[key]=copy.deepcopy(face[key])
+            observers.append(observer)
+        record["candidate_field"].update(face_values=faces,face_gradients=[f["gradient"] for f in faces])
+        record["observers"]=observers
+        return record
+
+    def reference(self, record):
+        # Fabricated tiny rational intervals ONLY test mapping/provenance code.
+        # This method never calls an integral or supplies scientific evidence.
+        from fractions import Fraction as F
+        budget=surface.Budget.full_domain_diagnostic()
+        values=rz.validate_materialized_record(record,budget)
+        combined=rz.coalesce_exact_dense_source(record["source"],record["root_bounds"],record["source_identity"],budget)
+        schedule=rz.materialized_full_schedule(record,*values[1:],budget)
+        width=surface.CGS_G/F(10**12)
+        def interval(lower):
+            return dict(lower_rational=str(lower),upper_rational=str(lower+width/2),width_rational=str(width/2))
+        sites=[]
+        for site in schedule["sites"]:
+            intervals=dict(Phi=interval(F(-4)),g_r=interval(F(-1)),g_z=interval(F(-2)))
+            if F(site["r_observer"])==0:
+                intervals["g_r"]=dict(lower_rational="0",upper_rational="0",width_rational="0")
+            sites.append(dict(observer_id=site["id"],observer=dict(R_exact=site["r_observer"],Z_exact=site["z_observer"]),
+                              intervals=intervals,math_certificate_meets_target=True))
+        by_id={s["observer_id"]:s for s in sites}
+        targets=[]
+        for target in schedule["targets"]:
+            targets.append(dict(target,science_accepted=False,math_interval_meets_original_width=True,
+                reference_status="MathematicalIntervalsCertified",
+                intervals=rz.reflected_reference_intervals(by_id[target["site_id"]]["intervals"],target["g_z_sign"]),
+                comparisons={"MUST_NOT_REUSE_OLD_FIELD":dict(actual_exact="123")}))
+        reference_input=dict(source=combined["source"],root_bounds=record["root_bounds"],
+                             source_identity=record["source_identity"],observers=schedule["sites"])
+        return dict(profile="actual-materialized-full-domain-diagnostic-1",
+            status="FULL_DOMAIN_MATHEMATICAL_REFERENCE_DIAGNOSTIC_ONLY",science_accepted=False,
+            physical_qualified=False,core_binding_qualified=False,reference_complete=True,coverage_complete=True,
+            reference_status="MathematicalIntervalsCertified",failure=None,
+            materializedRecordSha256=self.raw_sha(record),actual_record_canonical_sha256=rz._reuse_canonical_sha(record),
+            original_source_input_sha256=combined["original_dense_input_sha256"],source_identity=copy.deepcopy(record["source_identity"]),
+            field_identity=dict(source_generation=record["candidate_field"]["source_generation"],field_generation=record["candidate_field"]["field_generation"]),
+            producer_identity=dict(source_only_checked=record["source_only_checked"],field_call=copy.deepcopy(record["field_call"]),service_configuration=copy.deepcopy(record["service_configuration"])),
+            exact_union=combined,target_widths_exact={k:str(width) for k in ("Phi","g_r","g_z")},
+            target_mapping=schedule["targets"],target_count=len(targets),unique_site_count=len(sites),
+            exact_z_reflection=schedule["exact_z_reflection"],symmetry_midpoint_exact=schedule["symmetry_midpoint_exact"],
+            original_source_id=record["source"]["sourceId"],backend=dict(ctx_dps=70,python_flint_version="SYNTHETIC-NO-BACKEND"),
+            reference_identity=dict(input=reference_input,sha256=rz._reuse_canonical_sha(reference_input),core_binding_qualified=False),
+            budget=dict(calls=31,max_calls=1800000,wall_seconds=1.25,timeout_seconds=240.,resource_profile="full-domain-diagnostic-1"),
+            sites=sites,targets=targets)
+
+    def raw_sha(self, record):
+        import hashlib,json
+        return hashlib.sha256(json.dumps(record,allow_nan=False).encode()).hexdigest()
+
+    def reuse(self, old, new=None, reference=None, expected_pin=None, **kwargs):
+        new=copy.deepcopy(old) if new is None else new
+        reference=self.reference(old) if reference is None else reference
+        with patch.object(surface,"load_optional_flint",side_effect=AssertionError("backend reached")) as backend, \
+             patch.object(surface,"evaluate_reference",side_effect=AssertionError("integral reached")) as evaluate, \
+             patch.object(surface,"integrate_leaf",side_effect=AssertionError("kernel reached")) as integrate:
+            result=rz.reuse_materialized_full_reference(new,old,reference,new_raw_sha256=self.raw_sha(new),
+                old_raw_sha256=self.raw_sha(old),reference_raw_sha256=self.raw_sha(reference),
+                expected_reference_sha256=self.raw_sha(reference) if expected_pin is None else expected_pin,**kwargs)
+        backend.assert_not_called();evaluate.assert_not_called();integrate.assert_not_called()
+        return result
+
+    def test_new_values_stencil_and_generations_recomputed_without_old_comparisons(self):
+        old=self.wire();new=copy.deepcopy(old)
+        new["candidate_field"]["cell_values"][0]["potential"]=-3.
+        new["candidate_field"]["cell_values"][0]["acceleration"]=[-.7,-.1,0.]
+        new["candidate_field"]["side_acceleration"][0]=-.6
+        new["source_identity"]["generation"]+=1
+        new["candidate_field"].update(source_generation=4,field_generation=19)
+        new["candidate_field"]["face_values"][0].update(boundary_datum=-3.,gradient=.75,
+            value_samples=[0],value_coefficients=[.5],value_boundary_coefficient=.5)
+        new["candidate_field"]["face_gradients"][0]=.75
+        before=copy.deepcopy((old,new));result=self.reuse(old,new)
+        self.assertTrue(result["coverage_complete"],result.get("failure"))
+        self.assertEqual((old,new),before)
+        self.assertEqual(result["field_identity"],dict(source_generation=4,field_generation=19))
+        self.assertEqual(result["reference_field_identity"],dict(source_generation=3,field_generation=11))
+        self.assertEqual(result["targets"][0]["comparisons"]["point_cell_potential"]["actual_exact"],"-3")
+        self.assertEqual(result["targets"][1]["comparisons"]["force_minus_original_gradient"]["actual_exact"],"-3/4")
+        self.assertEqual(result["targets"][1]["comparisons"]["derived_original_value_row_vs_point_potential"]["actual_exact"],"-3")
+        self.assertEqual(result["reference_history"]["calls"],31)
+        self.assertEqual(result["reference_history"]["wall_seconds"],1.25)
+        self.assertEqual(result["mapping_budget"]["calls"],0)
+        self.assertFalse(result["science_accepted"]);self.assertFalse(result["core_binding_qualified"])
+        self.assertNotIn("MUST_NOT_REUSE_OLD_FIELD",repr(result["targets"]))
+        self.assertEqual((len(result["side_acceleration_rows"]),len(result["cell_acceleration_rows"])),(6,3))
+
+    def test_negative_interval_and_axis_zero_keep_real_FP64_errors(self):
+        from fractions import Fraction as F
+        old=self.wire(axis=True);old["candidate_field"]["side_acceleration"][1]=-1.
+        result=self.reuse(old);self.assertTrue(result["coverage_complete"],result.get("failure"))
+        sides=result["side_acceleration_rows"]
+        self.assertEqual(sides[0]["interval"],dict(lower_rational="0",upper_rational="0",width_rational="0"))
+        self.assertEqual(F(sides[1]["interval"]["lower_rational"]),-1)
+        self.assertGreater(F(sides[1]["error"]["absolute_error_upper_exact"]),0)
+        self.assertIn("actual_binary64_hex",sides[1]["error"])
+        self.assertEqual(result["cell_acceleration_rows"][2]["interval"]["width_rational"],"0")
+        # Both negative endpoints are retained, never abs() normalized.
+        self.assertLess(F(result["cell_acceleration_rows"][0]["interval"]["upper_rational"]),0)
+
+    def test_exact_source_G_geometry_observer_one_ulp_rejections(self):
+        import math
+        for fault in ("rho","G","root","area","fragment","observer","binding"):
+            old=self.wire();new=copy.deepcopy(old)
+            if fault=="rho":new["source"]["leaves"][0]["density"]=math.nextafter(3.,4.)
+            if fault=="G":new["source_identity"]["G"]=math.nextafter(new["source_identity"]["G"],1.)
+            if fault=="root":new["root_bounds"][1]=math.nextafter(2.,3.)
+            if fault=="area":
+                new["candidate_field"]["face_values"][0]["area"]=math.nextafter(new["candidate_field"]["face_values"][0]["area"],100.)
+                new["observers"][1]["area"]=new["candidate_field"]["face_values"][0]["area"]
+            if fault=="fragment":
+                new["candidate_field"]["face_values"][0]["fragment_lower"][1]=math.nextafter(-.5,0.)
+                new["observers"][1]["fragment_lower"][1]=new["candidate_field"]["face_values"][0]["fragment_lower"][1]
+            if fault=="observer":new["observers"][0]["r_observer"]=math.nextafter(1.5,2.)
+            if fault=="binding":new["native_binding"]["patches"][0]["native_layout"]["total_size"]=2
+            with self.subTest(fault=fault):
+                result=self.reuse(old,new);self.assertFalse(result["coverage_complete"]);self.assertEqual(result["reference_status"],"UNVERIFIED")
+
+    def test_complete_original_provenance_certificate_cannot_be_replaced_by_flags(self):
+        for fault in ("missing_target","missing_site","width","status","canonical","raw","source_sha","interval_transport","site_coordinate","ref_input"):
+            old=self.wire();ref=self.reference(old)
+            if fault=="missing_target":ref["targets"].pop()
+            if fault=="missing_site":ref["sites"].pop()
+            if fault=="width":ref["sites"][0]["intervals"]["Phi"]["width_rational"]="0"
+            if fault=="status":ref["targets"][0]["reference_status"]="UNVERIFIED"
+            if fault=="canonical":ref["actual_record_canonical_sha256"]="0"*64
+            if fault=="raw":ref["materializedRecordSha256"]="0"*64
+            if fault=="source_sha":ref["original_source_input_sha256"]="0"*64
+            if fault=="interval_transport":ref["targets"][0]["intervals"]["Phi"]["lower_rational"]="-100"
+            if fault=="site_coordinate":ref["sites"][0]["observer"]["R_exact"]="7/4"
+            if fault=="ref_input":ref["reference_identity"]["input"]["observers"][0]["r_observer"]="7/4"
+            with self.subTest(fault=fault):
+                result=self.reuse(old,reference=ref);self.assertFalse(result["coverage_complete"]);self.assertEqual(result["reference_status"],"UNVERIFIED")
+
+    def test_multifragment_negative_force_keeps_FP64_normalization_error(self):
+        from fractions import Fraction as F
+        record=self.wire();field=record["candidate_field"]
+        # SYNTHETIC stored-area row only; no authentication/geometric science
+        # grant. Exact FP64 area values are independent transport inputs.
+        second=copy.deepcopy(field["face_values"][1]);second.update(face_index=4,area=.2)
+        field["face_values"][1]["area"]=.1
+        field["face_values"].append(second)
+        field["side_acceleration"][1]=-(.1/(.1+.2)*2.+.2/(.1+.2)*4.)
+        reference={i:dict(lower_rational="-1",upper_rational="-1",width_rational="0") for i in range(5)}
+        reference[1]=dict(lower_rational="-2",upper_rational="-2",width_rational="0")
+        reference[4]=dict(lower_rational="-4",upper_rational="-4",width_rational="0")
+        before=copy.deepcopy(record)
+        sides,_=rz._reuse_acceleration_rows(record,reference,surface.Budget.full_domain_diagnostic())
+        expected=-(F(.1)*2+F(.2)*4)/(F(.1)+F(.2))
+        self.assertEqual(F(sides[1]["interval"]["lower_rational"]),expected)
+        self.assertEqual(F(sides[1]["interval"]["upper_rational"]),expected)
+        self.assertGreater(F(sides[1]["error"]["absolute_error_upper_exact"]),0)
+        self.assertEqual(record,before)
+
+    def test_reuse_CLI_requires_full_new_record_and_original_record(self):
+        import tempfile
+        for flags in (("--reuse-full-reference","ref.json"),
+                      ("--reuse-full-reference","ref.json","--reference-materialized-record","old.json"),
+                      ("--reference-materialized-record","old.json"),
+                      ("--reuse-full-reference-sha256","a"*64)):
+            with tempfile.TemporaryDirectory() as directory, self.subTest(flags=flags), \
+                 patch.object(sys,"argv",["consumer","--materialized-record","new.json","--output",directory+"/new.json",*flags]), \
+                 patch.object(surface,"load_optional_flint",side_effect=AssertionError("backend reached")) as load, \
+                 patch.object(rz,"_reuse_full_reference_cli",side_effect=AssertionError("reuse reached")) as reuse:
+                with self.assertRaises(SystemExit):rz.main()
+            load.assert_not_called();reuse.assert_not_called()
+
+    def test_coherent_forged_intervals_still_fail_external_accepted_hash_pin(self):
+        from fractions import Fraction as F
+        old=self.wire();reference=self.reference(old);accepted_pin=self.raw_sha(reference)
+        for site in reference["sites"]:
+            interval=site["intervals"]["Phi"]
+            interval["lower_rational"]=str(F(interval["lower_rational"])-1)
+            interval["upper_rational"]=str(F(interval["upper_rational"])-1)
+        sites={row["observer_id"]:row for row in reference["sites"]}
+        for target in reference["targets"]:
+            target["intervals"]=rz.reflected_reference_intervals(sites[target["site_id"]]["intervals"],target["g_z_sign"])
+        # All widths, input digests, statuses and site/target links remain
+        # structurally coherent; the caller cannot re-authorize different bytes.
+        result=self.reuse(old,reference=reference,expected_pin=accepted_pin)
+        self.assertFalse(result["coverage_complete"])
+        self.assertIn("externally accepted full-file SHA",result["failure"])
+        for pin in ("F"*64,"0"*63,"g"*64):
+            with self.subTest(pin=pin):
+                self.assertFalse(self.reuse(old,expected_pin=pin)["coverage_complete"])
+
+    def test_mapping_timeout_keeps_history_separate_and_does_not_reset(self):
+        old=self.wire();reference=self.reference(old)
+        budget=surface.Budget(started=1.,_full_domain_diagnostic=True)
+        with patch.object(surface.time,"monotonic",return_value=242.), \
+             patch.object(surface.Budget,"full_domain_diagnostic",side_effect=AssertionError("reset")) as reset:
+            result=self.reuse(old,reference=reference,_shared_budget=budget)
+        reset.assert_not_called();self.assertEqual(result["reference_status"],"WorkLimit")
+        self.assertFalse(result["coverage_complete"]);self.assertEqual(budget.calls,0)
+
+
+class OriginalFullReferenceSiteShapeTests(unittest.TestCase):
+    """Original bounds/ball schema transport only; NOT new mathematical evidence."""
+
+    def packet(self):
+        fixture=CompleteReferenceReuseEngineeringTests()
+        old=fixture.wire();reference=fixture.reference(old)
+        for site in reference["sites"]:
+            for interval in site["intervals"].values():
+                interval.pop("width_rational")
+                # Matches actual original schema, with explicit synthetic text.
+                # The ball string is descriptive; only rational endpoints bind.
+                interval["ball"]="[SYNTHETIC-TRANSPORT-NOT-A-MATH-CERTIFICATE]"
+        return fixture,old,reference
+
+    def test_original_bound_only_sites_derive_width_and_optional_width_is_checked(self):
+        from fractions import Fraction as F
+        fixture,old,reference=self.packet();before=copy.deepcopy(reference)
+        result=fixture.reuse(old,reference=reference)
+        self.assertTrue(result["coverage_complete"],result.get("failure"))
+        self.assertEqual(reference,before)
+        self.assertTrue(all("width_rational" in row["intervals"]["Phi"] for row in result["targets"]))
+        interval=reference["sites"][0]["intervals"]["Phi"]
+        interval["width_rational"]=str(F(interval["upper_rational"])-F(interval["lower_rational"]))
+        self.assertTrue(fixture.reuse(old,reference=reference)["coverage_complete"])
+        interval["width_rational"]="0"
+        rejected=fixture.reuse(old,reference=reference)
+        self.assertFalse(rejected["coverage_complete"])
+        self.assertEqual(rejected["reference_status"],"UNVERIFIED")
+
+    def test_targets_require_width_and_sites_reject_missing_reversed_or_too_wide_bounds(self):
+        from fractions import Fraction as F
+        for fault in ("target_width_missing","site_lower_missing","site_upper_missing","site_reversed","site_too_wide"):
+            fixture,old,reference=self.packet()
+            interval=reference["sites"][0]["intervals"]["Phi"]
+            if fault=="target_width_missing":reference["targets"][0]["intervals"]["Phi"].pop("width_rational")
+            if fault=="site_lower_missing":interval.pop("lower_rational")
+            if fault=="site_upper_missing":interval.pop("upper_rational")
+            if fault=="site_reversed":interval["upper_rational"]=str(F(interval["lower_rational"])-1)
+            if fault=="site_too_wide":interval["upper_rational"]=str(F(interval["lower_rational"])+2*surface.CGS_G/F(10**12))
+            with self.subTest(fault=fault):
+                result=fixture.reuse(old,reference=reference)
+                self.assertFalse(result["coverage_complete"])
+                self.assertEqual(result["reference_status"],"UNVERIFIED")
+
+
+class AuthenticAxisFaceOmissionTests(unittest.TestCase):
+    """Zero-area axis incidence transport, not continuous force certification."""
+
+    def omit_face(self, record, removed):
+        faces=record["candidate_field"]["face_values"]
+        del faces[removed]
+        record["observers"]=[row for row in record["observers"]
+            if row.get("face_index") != removed]
+        for index, face in enumerate(faces):
+            face["face_index"]=index
+        for row in record["observers"]:
+            if row.get("face_index",-1)>removed:row["face_index"]-=1
+        record["candidate_field"]["face_gradients"]=[face["gradient"] for face in faces]
+
+    def test_only_authentic_lower_symmetry_axis_may_omit_zero_measure_face(self):
+        fixture=CompleteReferenceReuseEngineeringTests()
+        record=fixture.wire(axis=True)
+        self.omit_face(record,0)
+        result=fixture.reuse(record)
+        self.assertTrue(result["coverage_complete"],result.get("failure"))
+        lower=result["side_acceleration_rows"][0]
+        self.assertEqual(lower["interval"]["lower_rational"],"0")
+        self.assertEqual(lower["interval"]["upper_rational"],"0")
+        # Preserve the real FP64 stored value difference, rather than forcing
+        # an erroneous actual gather value to equal the symmetry reference.
+        record["candidate_field"]["side_acceleration"][0]=.125
+        difference=fixture.reuse(record)["side_acceleration_rows"][0]["error"]
+        self.assertEqual(difference["absolute_error_upper_exact"],"1/8")
+        for axis, removed in ((False,0),(True,2),(True,1)):
+            record=fixture.wire(axis=axis);self.omit_face(record,removed)
+            rejected=fixture.reuse(record)
+            self.assertFalse(rejected["coverage_complete"])
+            self.assertEqual(rejected["reference_status"],"UNVERIFIED")
+
+
+class FixedMatchedReferenceProfileEngineeringTests(unittest.TestCase):
+    """Fixed policy/supplied-schema checks only; no Runtime or math certificate."""
+
+    def profile_wire(self, level):
+        """Independent binary-dyadic layout fixture; never Core provenance."""
+        blocks=(2*(1<<level),1<<level); nx,ny=16*blocks[0],16*blocks[1]
+        record=SyntheticMaterializedWireTests().wire()
+        record["root_bounds"]=[0.,1.,-.5,.5]
+        record["service_configuration"].update(type="none",boundary="isolated",
+            relative_tolerance=1e-10,absolute_tolerance=0.,max_cycles=200)
+        binding=record["native_binding"]
+        binding.update(origin=[0.,-.5,0.],root_upper=[1.,.5,1.],
+                       root_cells=[nx,ny,1],periodic=[False]*3,patches=[])
+        record["source_identity"].update(time=0.,G=6.6743e-8,inputs=[])
+        leaves=[]; cells=[]; observers=[]
+        for by in range(blocks[1]):
+            for bx in range(blocks[0]):
+                block=len(binding["patches"]); uid=block+1
+                layout=dict(dimension=2,extent=[32,24,1],stride=[1,32,768],
+                    active_begin=[4,4,0],active_end=[20,20,1],centering=0)
+                binding["patches"].append(dict(uid=uid,epoch=9,field_memory=0,layout=layout,
+                    bound_root_identity=dict(bound=True,root_lower=[0.,-.5],root_upper=[1.,.5],
+                        root_blocks=list(blocks),level=0,logical_block=[bx,by],periodic_axial=False),
+                    native_layout=dict(dimension=2,ng=4,stride_y=32,stride_z=768,total_size=768,
+                        origin=[bx/blocks[0],-.5+by/blocks[1],0.],
+                        actual_block_upper=[(bx+1)/blocks[0],-.5+(by+1)/blocks[1]])))
+                record["source_identity"]["inputs"].append(dict(uid=uid,epoch=9,slot=0,version=1,storage_generation=6))
+                for j in range(16):
+                    for i in range(16):
+                        index=len(leaves); x=16*bx+i; y=16*by+j
+                        leaf=dict(id="synthetic-fixed-cell-"+str(index),source_index=index,
+                            binding_block_index=block,source_offset=(4+j)*32+4+i,
+                            level=0,logical_index=[x,y,0],density=1.,r_lower=x/nx,r_upper=(x+1)/nx,
+                            z_lower=-.5+y/ny,z_upper=-.5+(y+1)/ny,
+                            center=[(x+.5)/nx,-.5+(y+.5)/ny,0.],stored_operator_volume=1.)
+                        leaves.append(leaf)
+                        cells.append(dict(source_index=index,leaf_id=leaf["id"],potential=-2.,acceleration=[0.]*3))
+                        observers.append(dict(id="synthetic-fixed-cell-observer-"+str(index),kind="cell-center",
+                            source_index=index,r_observer=leaf["center"][0],z_observer=leaf["center"][1]))
+        record["source"]["leaves"]=leaves
+        record["candidate_field"].update(cell_values=cells,side_acceleration=[0.]*(6*len(cells)))
+        record["observers"]=observers+[record["observers"][-1]]
+        # Retained one-face transport row is deliberately NOT a whole physical
+        # face cover. Tests below do not claim full schedule/math qualification.
+        return record
+
+    def test_new_fixed_caps_do_not_change_old_profiles_or_counter_boundaries(self):
+        for level,calls,seconds in ((1,6000000,600.),(2,22000000,1800.)):
+            budget=surface.Budget.matched_resolution(level)
+            self.assertEqual((budget.max_calls,budget.timeout_seconds),(calls,seconds))
+            self.assertEqual(budget.record()["resource_profile"],"matched-resolution-"+str(level))
+            budget.calls=calls
+            with self.assertRaises(surface.WorkLimit):budget.take()
+            self.assertEqual(budget.calls,calls)
+        self.assertEqual((surface.Budget.start().max_calls,surface.Budget.start().timeout_seconds),(100000,90.))
+        old=surface.Budget(started=1.,calls=17,_full_domain_diagnostic=True)
+        self.assertEqual((old.max_calls,old.timeout_seconds,old.calls),(1800000,240.,17))
+        for value in (0,3,-1,True,"1",600):
+            with self.subTest(value=value),self.assertRaises(ValueError):surface.Budget.matched_resolution(value)
+        for bad in (surface.Budget(1.,_matched_resolution=3),
+                    surface.Budget(1.,_matched_resolution=True),
+                    surface.Budget(1.,_matched_resolution=1,_full_domain_diagnostic=True)):
+            with self.assertRaises(ValueError):rz.full_materialized_resource_profile(bad)
+
+    def test_fixed_schema_real_offsets_complete_active_cover_and_no_input_mutation(self):
+        for level in (1,2):
+            record=self.profile_wire(level); before=copy.deepcopy(record)
+            # Existing generic shape validation is exercised, but supplies no
+            # Runtime or continuous reference authorization to this fixture.
+            budget=surface.Budget.matched_resolution(level)
+            rz.validate_materialized_record(record,budget)
+            result=rz.validate_matched_materialized_profile(record,budget)
+            self.assertEqual(result["expected_cells"],512*4**level)
+            self.assertEqual(result["level"],level);self.assertEqual(record,before)
+            self.assertEqual(budget.calls,0)
+
+    def test_fixed_source_geometry_density_G_layout_and_identity_drift_rejects(self):
+        import math
+        original=self.profile_wire(1)
+        mutations={
+            "rho_ulp":lambda r:r["source"]["leaves"][0].update(density=math.nextafter(1.,2.)),
+            "G_ulp":lambda r:r["source_identity"].update(G=math.nextafter(6.6743e-8,1.)),
+            "root_ulp":lambda r:r["root_bounds"].__setitem__(1,math.nextafter(1.,2.)),
+            "leaf_level":lambda r:r["source"]["leaves"][0].update(level=1),
+            "root_blocks":lambda r:r["native_binding"]["patches"][0]["bound_root_identity"].update(root_blocks=[8,1]),
+            "root_cells":lambda r:r["native_binding"].update(root_cells=[128,16,1]),
+            "duplicate_uid":lambda r:r["source_identity"]["inputs"][1].update(uid=1),
+            "offset":lambda r:r["source"]["leaves"][0].update(source_offset=133),
+            "logical":lambda r:r["source"]["leaves"][1].update(logical_index=[0,0,0]),
+            "count":lambda r:r["source"]["leaves"].pop(),
+            "service_tolerance":lambda r:r["service_configuration"].update(relative_tolerance=1e-9),
+            "dt_time":lambda r:r["source_identity"].update(time=.125),
+            "boolean_periodic":lambda r:r["native_binding"].update(periodic=[0,0,0])}
+        for fault,mutate in mutations.items():
+            record=copy.deepcopy(original);mutate(record)
+            with self.subTest(fault=fault),self.assertRaises((ValueError,KeyError)):
+                rz.validate_matched_materialized_profile(record,surface.Budget.matched_resolution(1))
+        with self.assertRaises(ValueError):
+            rz.validate_matched_materialized_profile(original,surface.Budget.matched_resolution(2))
+
+    def test_same_expired_matched_budget_rejects_before_schema_and_never_resets(self):
+        budget=surface.Budget(started=1.,calls=19,_matched_resolution=1)
+        with patch.object(surface.time,"monotonic",return_value=602.), \
+             patch.object(surface.Budget,"start",side_effect=AssertionError("reset")) as start, \
+             patch.object(surface.Budget,"matched_resolution",side_effect=AssertionError("reset")) as factory, \
+             patch.object(rz,"validate_materialized_record",side_effect=AssertionError("schema reached")) as schema, \
+             patch.object(surface,"load_optional_flint",side_effect=AssertionError("backend reached")) as load:
+            result=rz.audit_materialized_full_record({},_shared_budget=budget)
+        self.assertEqual(result["reference_status"],"WorkLimit")
+        self.assertEqual(result["profile"],"actual-materialized-matched-resolution-1")
+        self.assertEqual(result["budget"]["calls"],19);self.assertEqual(budget.started,1.)
+        self.assertEqual(result["resource_limits"],dict(max_calls=6000000,wall_seconds=600.))
+        self.assertFalse(result["coverage_complete"])
+        for spy in (start,factory,schema,load):spy.assert_not_called()
+
+    def test_matched_layout_rejection_precedes_coalescing_and_integral_backend(self):
+        wire=FullDomainEngineeringTests().symmetric_wire()
+        with patch.object(rz,"coalesce_exact_dense_source",side_effect=AssertionError("coalescing reached")) as coalesce, \
+             patch.object(surface,"load_optional_flint",side_effect=AssertionError("backend reached")) as load, \
+             patch.object(surface,"evaluate_reference",side_effect=AssertionError("kernel reached")) as evaluate:
+            result=rz.audit_materialized_full_record(wire,_shared_budget=surface.Budget.matched_resolution(2))
+        self.assertEqual(result["reference_status"],"UNVERIFIED")
+        self.assertIn("cell count",result["failure"]);self.assertEqual(result["budget"]["calls"],0)
+        for spy in (coalesce,load,evaluate):spy.assert_not_called()
+
+    def test_same_matched_budget_reaches_reference_and_retains_every_failure_target(self):
+        from types import SimpleNamespace
+        wire=FullDomainEngineeringTests().symmetric_wire(); budget=surface.Budget.matched_resolution(2)
+        budget.calls=23
+        # Synthetic transport fixture bypasses ONLY fixed-layout checking for
+        # this budget-identity test; it cannot prove the real layout or math.
+        with patch.object(rz,"validate_matched_materialized_profile",return_value=dict(test_scope="SYNTHETIC-BUDGET-SPY")), \
+             patch.object(surface.Budget,"start",side_effect=AssertionError("reset")) as start, \
+             patch.object(surface.Budget,"matched_resolution",side_effect=AssertionError("reset")) as factory, \
+             patch.object(surface,"load_optional_flint",return_value=SimpleNamespace(ctx=SimpleNamespace(dps=70))), \
+             patch.object(surface,"evaluate_reference",side_effect=surface.WorkLimit("synthetic integration stop")) as evaluate:
+            result=rz.audit_materialized_full_record(wire,_shared_budget=budget)
+        self.assertIs(evaluate.call_args.kwargs["_shared_budget"],budget)
+        self.assertEqual(result["budget"]["calls"],23);self.assertEqual(result["reference_status"],"WorkLimit")
+        self.assertEqual(len(result["targets"]),4)
+        self.assertTrue(all(row["reference_status"]=="UNVERIFIED_NOT_EVALUATED" for row in result["targets"]))
+        start.assert_not_called();factory.assert_not_called()
+        self.assertEqual(result["target_widths_exact"],{key:str(surface.CGS_G/10**12) for key in ("Phi","g_r","g_z")})
+        self.assertFalse(result["science_accepted"])
+
+    def test_new_CLI_profile_rejects_probe_subset_unknown_and_reference_reuse(self):
+        import tempfile
+        argv_cases=[ ["--probe-record","in.json","--full-domain","--reference-profile","matched-resolution-1"],
+                     ["--materialized-record","in.json","--reference-profile","matched-resolution-2"],
+                     ["--materialized-record","in.json","--full-domain","--reference-profile","matched-resolution-3"],
+                     ["--materialized-record","in.json","--full-domain","--reference-profile","matched-resolution-1",
+                      "--reuse-full-reference","ref.json","--reference-materialized-record","old.json",
+                      "--reuse-full-reference-sha256","a"*64] ]
+        with tempfile.TemporaryDirectory() as directory:
+            for args in argv_cases:
+                with self.subTest(args=args),patch.object(sys,"argv",["reference",*args,"--output",directory+"/new.json"]), \
+                     patch.object(surface,"load_optional_flint",side_effect=AssertionError("backend reached")) as load, \
+                     self.assertRaises(SystemExit) as stopped:
+                    rz.main()
+                self.assertEqual(stopped.exception.code,2);load.assert_not_called()
+
+    def test_matched_CLI_backend_failure_keeps_actual_profile_and_failure_files(self):
+        import tempfile,json
+        budget=surface.Budget(started=1.,calls=29,_matched_resolution=1)
+        with tempfile.TemporaryDirectory() as directory:
+            output=Path(directory)/"full.json";summary=Path(directory)/"summary.json"
+            with patch.object(sys,"argv",["reference","--materialized-record","missing.json","--full-domain",
+                    "--reference-profile","matched-resolution-1","--output",str(output),"--summary-output",str(summary)]), \
+                 patch.object(surface.time,"monotonic",return_value=2.), \
+                 patch.object(surface.Budget,"matched_resolution",return_value=budget) as factory, \
+                 patch.object(surface,"load_optional_flint",side_effect=ImportError("synthetic missing backend")), \
+                 patch.object(surface.Budget,"full_domain_diagnostic",side_effect=AssertionError("old reset")) as old:
+                rz.main()
+            result=json.loads(output.read_text());small=json.loads(summary.read_text())
+        factory.assert_called_once_with(1);old.assert_not_called()
+        self.assertEqual(result["profile"],"actual-materialized-matched-resolution-1")
+        self.assertEqual(result["resource_limits"],dict(max_calls=6000000,wall_seconds=600.))
+        self.assertEqual(result["failure_phase"],"optional-backend-precision-freeze")
+        self.assertFalse(result["coverage_complete"]);self.assertFalse(small["reference_complete"])
+        self.assertEqual(small["budget"]["calls"],29)
+
+    def test_matched_output_timeout_cannot_publish_complete_request_summary(self):
+        import tempfile,json
+        budget=surface.Budget(started=1.,calls=31,_matched_resolution=2)
+        result=dict(profile="actual-materialized-matched-resolution-2",status="SYNTHETIC-TRANSPORT-NOT-SCIENCE",
+            science_accepted=False,physical_qualified=False,core_binding_qualified=False,reference_complete=True,
+            coverage_complete=True,target_widths_exact={key:str(surface.CGS_G/10**12) for key in ("Phi","g_r","g_z")},
+            targets=[],sites=[],reference_status="SYNTHETIC",budget=budget.record())
+        with tempfile.TemporaryDirectory() as directory,patch.object(surface.time,"monotonic",return_value=1802.):
+            output=Path(directory)/"full.json";summary=Path(directory)/"small.json"
+            rz.write_matched_materialized_outputs(result,output,summary,budget)
+            actual=json.loads(output.read_text()); small=json.loads(summary.read_text())
+        self.assertEqual(actual["reference_status"],"WorkLimit")
+        self.assertEqual(actual["failure_phase"],"complete-output-serialization")
+        self.assertFalse(actual["coverage_complete"]);self.assertFalse(small["reference_complete"])
+        self.assertEqual(actual["budget"]["calls"],31)
+
+
 if __name__=="__main__":unittest.main()

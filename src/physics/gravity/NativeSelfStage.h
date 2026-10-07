@@ -13,6 +13,8 @@
  *    abandonment, duplicate, stale identity or prefix failure poisons the frame.
  * 5. Join workers; check every patch/axis/route receipt and the original domain.
  *    The existing transaction owns rollback before frame destruction.
+ * 6. An optional frozen internal sink inspects the SAME operations synchronously;
+ *    absent sinks allocate/copy no diagnostic numerical data.
  *
  * E_registered = F_E + psi_o F_rho,
  * psi_o = sum_fragment(A_fragment/A_source)*Phi_fragment - Phi_dest_coarse.
@@ -44,6 +46,26 @@
 namespace arch::driver { class GravityStage; }
 namespace Physical::Gravity {
 
+/** Synchronous internal observations of ORIGINAL work/register operations.
+ * All pointers are read-only borrows valid only during the callback. The sink
+ * must copy its own compact evidence and be thread-safe under patch parallelism.
+ * No observation grants field scope, numerical accuracy or Runtime authority.
+ */
+struct NativeSelfStageObservation {
+    enum class Kind { AxisBefore, AxisAfter, EnergyReserved, EnergyApplied };
+    Kind kind=Kind::AxisBefore;
+    const Grid* grid=nullptr;const FluidState* input=nullptr;
+    const std::vector<FluidVector>* flux=nullptr;const std::vector<FluidVector>* delta=nullptr;
+    int block_id=-1,axis=-1;double dt=0.,stage_weight=0.;
+    const arch::scheduler::StageDescriptor* descriptor=nullptr;
+    const GravitySolveIdentity* source=nullptr;
+    std::uint64_t generation=0,source_generation=0,field_generation=0;
+    const GravityRefluxRowIdentity* row=nullptr;
+    const amr::AmrFluxRegistrationRoute* route=nullptr;
+    std::size_t operation_index=0;int flux_index=-1;
+    double FE=0.,Frho=0.,psi=0.,result=0.;
+};
+
 /** One genuine private stage. Friend construction is necessary, not scientific
  * certification. Actual Runtime/transaction minting remains GravityStage's job.
  */
@@ -55,6 +77,8 @@ class NativeSelfStageFrame final {
         std::vector<std::size_t> energy_rows;
     };
 public:
+    using Observation=NativeSelfStageObservation;
+    using ObservationSink=void(*)(void*,const Observation&);
     /** One move-only patch claim; borrowing lifetime ends before owner teardown. */
     class PatchReceipt final {
     public:
@@ -90,8 +114,15 @@ public:
                 if(axis<0||axis>=2||flux.size()!=delta.size()||&flux==&delta)
                     throw std::invalid_argument("Native self work axis/extent is invalid");
                 auto& phase=frame_->patches_[index_].source[axis+1];reserve(phase);
+                if(frame_->observation_sink_) {
+                    observe_axis(Observation::Kind::AxisBefore,delta,flux,axis);require_input();
+                }
                 frame_->policy_->native_candidate_flux_work(delta,flux,*input_,*grid_,frame_->dt_,axis);
-                require_input();consume(phase);});
+                require_input();
+                if(frame_->observation_sink_) {
+                    observe_axis(Observation::Kind::AxisAfter,delta,flux,axis);require_input();
+                }
+                consume(phase);});
         }
         /** Reserve one momentum producer and execute exactly the original leaf. */
         void add_momentum(std::vector<FluidVector>& delta) {
@@ -122,7 +153,12 @@ public:
                 reserve(frame_->energy_[row]);
                 result=native_reflux_energy(FE,frame_->psi_[row],Frho);
                 if(!std::isfinite(result))throw std::runtime_error("Native self registered energy is nonfinite");
-                require_input();});return result;
+                require_input();
+                if(frame_->observation_sink_) {
+                    frame_->energy_observations_[row]={flux_index,FE,Frho,frame_->psi_[row],result};
+                    observe_energy(Observation::Kind::EnergyReserved,route,row);require_input();
+                }
+            });return result;
         }
         /** Consume this route only AFTER its original register Apply succeeds.
          * Precheck all Energy rows before any receipt transition; an empty
@@ -138,8 +174,13 @@ public:
                         throw std::logic_error("Native self Energy operation was not reserved");
                 }
                 for(std::size_t ordinal=0;ordinal<route.plan.operations.size();++ordinal)
-                    if(route.plan.operations[ordinal].field==amr::AmrField::Energy)
-                        consume(frame_->energy_[frame_->row_index_.at({route.key,ordinal})]);
+                    if(route.plan.operations[ordinal].field==amr::AmrField::Energy) {
+                        const auto row=frame_->row_index_.at({route.key,ordinal});
+                        consume(frame_->energy_[row]);
+                        if(frame_->observation_sink_) {
+                            observe_energy(Observation::Kind::EnergyApplied,route,row);require_input();
+                        }
+                    }
                 require_input();});
         }
         /** Commit only after momentum, both real axes and every original row. */
@@ -172,6 +213,37 @@ public:
                 throw std::logic_error("Native self claim is stale or already consumed");
             frame_->domain_.require_input_patch(index_,frame_->control_,id_,*input_,*grid_);
             (void)frame_->policy_->native_candidate_patch(*grid_,*input_);
+        }
+        /** Build a borrowed event from this exact already-authenticated claim.
+         * Scalars identify the original descriptor/source, not another solve.
+         */
+        Observation observation(Observation::Kind kind,int axis) const noexcept {
+            Observation event;event.kind=kind;event.grid=grid_;event.input=input_;
+            event.block_id=id_;event.axis=axis;event.dt=frame_->dt_;
+            event.stage_weight=frame_->stage_weight_;event.descriptor=&frame_->descriptor_;
+            event.source=&frame_->source_;event.generation=generation_;
+            event.source_generation=frame_->source_generation_;event.field_generation=frame_->field_generation_;
+            return event;
+        }
+        /** Inspect the SAME delta/flux before or after the one original work.
+         * No vector is copied and no flux/source kernel is invoked by this hook.
+         */
+        void observe_axis(Observation::Kind kind,const std::vector<FluidVector>& delta,
+            const std::vector<FluidVector>& flux,int axis) const {
+            auto event=observation(kind,axis);event.delta=&delta;event.flux=&flux;
+            frame_->notify(event);
+        }
+        /** Match reserve/apply observations using preallocated per-row scalars.
+         * E_registered=FE+psi*Frho; original A/sign/RK/dt remain in the register.
+         */
+        void observe_energy(Observation::Kind kind,
+            const amr::AmrFluxRegistrationRoute& route,std::size_t row) const {
+            const auto& identity=frame_->rows_->identity[row];
+            const auto& saved=frame_->energy_observations_[row];
+            auto event=observation(kind,amr::axis_value(route.key.axis));
+            event.row=&identity;event.route=&route;event.operation_index=identity.operation_index;
+            event.flux_index=saved.flux_index;event.FE=saved.FE;event.Frho=saved.Frho;
+            event.psi=saved.psi;event.result=saved.result;frame_->notify(event);
         }
         /** Exact vector extent precedes every original source write. */
         void require_arrays(const std::vector<FluidVector>& delta) const {
@@ -259,14 +331,18 @@ private:
     NativeSelfStageFrame(const SelfGravity& policy,const BCHandler& boundary,
         const amr::AMRControl& control,const arch::scheduler::StageBinding& binding,
         const arch::scheduler::StageDescriptor& descriptor,const SimConfig& config,
-        double dt,std::uint64_t generation,const GravitySolveIdentity& source)
+        double dt,std::uint64_t generation,const GravitySolveIdentity& source,
+        ObservationSink sink=nullptr,void* payload=nullptr)
         :policy_(&policy),control_(&control),configuration_(&config),gravity_(config.physics.gravity),grid_configuration_(config.grid),
           bounds_{config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint},
           dt_(dt),stage_weight_(descriptor.flux_register_weight),generation_(generation),source_(source),
           field_generation_(policy.workspace().generation),
           source_generation_(policy.workspace().ring_assessment.source_generation),
           domain_(boundary,control,binding,descriptor),patch_count_(control.tree->GetActiveBlocks().size()),
-          patches_(std::make_unique<PatchRecord[]>(patch_count_)) {
+          patches_(std::make_unique<PatchRecord[]>(patch_count_)),
+          descriptor_(descriptor),observation_sink_(sink),observation_payload_(payload) {
+        if(!observation_sink_&&observation_payload_)
+            throw std::invalid_argument("Native self observation payload requires its sink");
         if(!generation_||!patch_count_||!std::isfinite(dt_)||!(dt_>0.)
             ||!same_double(dt_,binding.context.step_dt)||!std::isfinite(stage_weight_)||!(stage_weight_>0.)
             ||source_.inputs.size()!=patch_count_||source_.topology!=binding.context.ledger.active_epoch()
@@ -290,6 +366,8 @@ private:
         rows_=&policy_->native_candidate_reflux_rows(*topology_);
         psi_=policy_->native_candidate_reflux_values();
         energy_=std::make_unique<std::atomic<Phase>[]>(rows_->identity.size());
+        if(observation_sink_&&!rows_->identity.empty())
+            energy_observations_=std::make_unique<EnergyObservation[]>(rows_->identity.size());
         for(std::size_t row=0;row<rows_->identity.size();++row) {
             energy_[row].store(Phase::Ready,std::memory_order_relaxed);
             const auto& identity=rows_->identity[row];
@@ -371,6 +449,23 @@ private:
             ||&w.reflux_rows!=rows_||w.reflux_values.data!=psi_)
             throw std::logic_error("Native self paired work or topology changed");
     }
+    /** Invoke the frozen sink synchronously, rejecting callback recursion.
+     * The thread-local marker is only a call-stack witness, not numerical cache;
+     * independent worker threads may call the thread-safe sink concurrently.
+     * Receipt guards retain poisoning/rollback on every exception.
+     */
+    void notify(const Observation& event) const {
+        static thread_local bool observing=false;
+        if(observing)throw std::logic_error("Native self observation callback is reentrant");
+        struct CallbackScope {
+            bool& active;
+            /** Mark only this thread's synchronous callback extent. */
+            explicit CallbackScope(bool& flag) noexcept:active(flag){active=true;}
+            /** Restore on throws; original receipt guard owns stage poison. */
+            ~CallbackScope(){active=false;}
+        } scope(observing);
+        observation_sink_(observation_payload_,event);
+    }
     /** Every checked failure is terminal even if caller catches its exception. */
     template<class F> void checked(F&& action) const {
         try{action();}catch(...){invalidate();throw;}
@@ -388,5 +483,12 @@ private:
     std::uint64_t topology_fingerprint_=0;const GravityRefluxRows* rows_=nullptr;const double* psi_=nullptr;
     std::map<std::pair<amr::AmrFluxRouteKey,std::size_t>,std::size_t> row_index_;
     std::unique_ptr<std::atomic<Phase>[]> energy_;mutable std::atomic<bool> live_{true};
+    // Optional diagnostics only: no allocation/copy on the absent-sink path.
+    struct EnergyObservation {int flux_index=-1;double FE=0.,Frho=0.,psi=0.,result=0.;};
+    // Own bounded diagnostic metadata across callback-driven stage retirement.
+    // The original boundary domain still authenticates its actual descriptor.
+    const arch::scheduler::StageDescriptor descriptor_;
+    const ObservationSink observation_sink_;void* const observation_payload_;
+    std::unique_ptr<EnergyObservation[]> energy_observations_;
 };
 } // namespace Physical::Gravity

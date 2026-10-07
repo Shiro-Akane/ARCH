@@ -123,8 +123,10 @@ static __device__ inline void hydro_divergence_kernel_work(
         grid.face_area_upper[direction][cell], grid.cell_volume[cell], dt,
         cell_delta,
         delta.n_species > 0 ? delta.mass_fractions + cell : nullptr);
+    // w_low/high belong to this cell, even where the physical face is shared.
+    // Host and Device apply the identical dt/2 mass-flux work leaf.
     if(gravity.enabled()) cell_delta.eng+=Physical::Gravity::gravity_flux_work(
-        gravity.work_faces[direction][cell],gravity.work_faces[direction][cell+stride],flux.rho[cell],flux.rho[cell+stride],dt);
+        gravity.work_low[direction][cell],gravity.work_high[direction][cell],flux.rho[cell],flux.rho[cell+stride],dt);
     delta.store(cell, cell_delta);
 }
 

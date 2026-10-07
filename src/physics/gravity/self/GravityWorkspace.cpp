@@ -387,6 +387,46 @@ const GravityRefluxRows& SelfGravity::Workspace::prepare_native_reflux(
     return reflux_rows;
 }
 
+/** Preserve compatible work as cell-side data, independently of face ownership.
+ * Workflow: validate padded patch offsets; assign one unique destination for
+ * each actual cell/axis/side; leave unused padded rows empty; upload through the
+ * original RowsWork backend. Formula remains w=+/-2*A/V*(Phi_f-Phi_cell).
+ */
+arch::multigrid::SparseStorage gravity_patch_work_rows(
+    const amr::EllipticMeshBinding& binding,const std::vector<int>& offsets,int native_size) {
+    if(native_size<=0||native_size>std::numeric_limits<int>::max()/6
+        ||binding.cells.size()>static_cast<std::size_t>(std::numeric_limits<int>::max()/6)
+        ||binding.cells.size()!=binding.storage.size()||offsets.size()!=binding.grids.size())
+        throw std::invalid_argument("Gravity patch work layout has invalid extents");
+    int extent=0;
+    for(std::size_t b=0;b<binding.grids.size();++b) {
+        const auto* grid=binding.grids[b];
+        if(!grid||grid->dim<1||grid->dim>3||offsets[b]!=extent
+            ||grid->GetTotalSize()<=0||grid->GetTotalSize()>native_size-extent)
+            throw std::invalid_argument("Gravity patch work layout has invalid patch offsets");
+        extent+=grid->GetTotalSize();
+    }
+    if(extent!=native_size)throw std::invalid_argument("Gravity patch work padded extent differs");
+    std::vector<int> owner(6*native_size,-1);
+    for(std::size_t c=0;c<binding.storage.size();++c) {
+        const auto location=binding.storage[c];
+        if(location.block>=binding.grids.size()||location.offset<0
+            ||location.offset>=binding.grids[location.block]->GetTotalSize())
+            throw std::invalid_argument("Gravity patch work cell storage is invalid");
+        const auto& grid=*binding.grids[location.block];
+        for(int axis=0;axis<grid.dim;++axis)for(int side=0;side<2;++side) {
+            const int row=(2*axis+side)*native_size+offsets[location.block]+location.offset;
+            if(owner[row]>=0)throw std::invalid_argument("Gravity patch work cell-side is duplicated");
+            owner[row]=6*static_cast<int>(c)+2*axis+side;
+        }
+    }
+    arch::multigrid::SparseStorage rows;const double one=1.;
+    for(int source:owner) {
+        if(source<0)rows.row({},{});else rows.row({&source,1},{&one,1});
+    }
+    return rows;
+}
+
 /** Allocate resident density, face and force fields for one topology epoch. */
 SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic::BoundaryKind kind,
     arch::elliptic::CompositeBoundary boundary,
@@ -403,13 +443,23 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
     for(int i=0;i<n;++i)
         locations.push_back(gravity_cell_geometry(binding.storage[i],op,i));
     cells=e.upload(locations);volumes=e.upload(op.volumes());
-    for(std::size_t b=0;b<binding.grids.size();++b){lookup.emplace(binding.grids[b],b);patch_offsets.push_back(native_size);native_size+=binding.grids[b]->GetTotalSize();}
+    const int layout_limit=std::numeric_limits<int>::max()/(curved?6:3);
+    for(std::size_t b=0;b<binding.grids.size();++b) {
+        const auto* grid=binding.grids[b];
+        if(!grid||grid->GetTotalSize()<=0||grid->GetTotalSize()>layout_limit-native_size)
+            throw std::overflow_error("Gravity padded patch layout exceeds its array range");
+        lookup.emplace(grid,b);patch_offsets.push_back(native_size);native_size+=grid->GetTotalSize();
+    }
     patch_faces=e.array<double>(3*native_size);
-    if(curved)patch_work_faces=e.array<double>(3*native_size);else patch_work_faces=patch_faces;
+    if(curved)patch_work=e.array<double>(6*native_size);
     patches.resize(binding.grids.size());
     for(std::size_t b=0;b<patches.size();++b)for(int a=0;a<3;++a){
         patches[b].faces[a]=patch_faces.data+a*native_size+patch_offsets[b];
-        patches[b].work_faces[a]=patch_work_faces.data+a*native_size+patch_offsets[b];
+        const int stride=a==0?1:a==1?binding.grids[b]->stride_y:binding.grids[b]->stride_z;
+        // Cartesian retains the exact original shared face arrays, including
+        // the original upper-face offset. Curved work owns both cell sides.
+        patches[b].work_low[a]=curved?patch_work.data+2*a*native_size+patch_offsets[b]:patches[b].faces[a];
+        patches[b].work_high[a]=curved?patch_work.data+(2*a+1)*native_size+patch_offsets[b]:patches[b].faces[a]+stride;
     }
     const auto face_rows=gravity_face_rows(op);
     side_gather={e,face_rows.acceleration};
@@ -424,6 +474,7 @@ SelfGravity::Workspace::Workspace(amr::EllipticMeshBinding value,arch::elliptic:
     for(int i=0;i<n;++i){const auto b=binding.storage[i];const auto& grid=*binding.grids[b.block];const int stride[]{1,grid.stride_y,grid.stride_z};
         for(int a=0;a<grid.dim;++a)for(int s=0;s<2;++s)owner[a*native_size+patch_offsets[b.block]+b.offset+s*stride[a]]=6*i+2*a+s;}
     const double one=1.;for(int i:owner){if(i<0)patch_rows.row({},{});else patch_rows.row({&i,1},{&one,1});}patch_gather={e,patch_rows};
+    if(curved)patch_work_gather={e,gravity_patch_work_rows(binding,patch_offsets,native_size)};
     if(kind==arch::elliptic::BoundaryKind::Dirichlet ||
        kind==arch::elliptic::BoundaryKind::CurvilinearIsolated){GravityBoundary tree(op);nodes=e.upload(tree.nodes());moments=e.array<BoundaryMoments>(nodes.size);
         for(const auto& layer:tree.layers())layers.push_back(e.upload(layer));points=e.upload(face_rows.observers);}

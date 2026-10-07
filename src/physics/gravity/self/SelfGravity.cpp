@@ -463,7 +463,7 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
             w.solver.resident_potential().data,w.work_sides.data});
         e.run(arch::multigrid::RowsWork{w.work_sides.size,w.work_boundary_gather.view(),
             w.boundary_values.data,w.work_sides.data,1.,1.});
-        e.run(arch::multigrid::RowsWork{w.patch_work_faces.size,w.patch_gather.view(),w.work_sides.data,w.patch_work_faces.data});
+        e.run(arch::multigrid::RowsWork{w.patch_work.size,w.patch_work_gather.view(),w.work_sides.data,w.patch_work.data});
     }
     w.execution->run(CellAcceleration{op.size(),op.base().dimension,w.cells.data,w.sides.data,w.g.data,w.inverse_dt_squared.data});
     w.max_acceleration_ratio=e.maximum(w.inverse_dt_squared);
@@ -654,7 +654,7 @@ void apply_patch_flux_work(const GravityPatchView& patch,std::vector<FluidVector
     const int stride=axis==0?1:axis==1?grid.stride_y:grid.stride_z;
     for (int k=grid.Ks();k<grid.Ke();++k) for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
         const int c=grid.GetIndex(i,j,k);
-        delta[c].eng+=gravity_flux_work(patch.work_faces[axis][c],patch.work_faces[axis][c+stride],flux[c].rho,flux[c+stride].rho,dt);
+        delta[c].eng+=gravity_flux_work(patch.work_low[axis][c],patch.work_high[axis][c],flux[c].rho,flux[c+stride].rho,dt);
     }
 }
 } // namespace
