@@ -215,6 +215,66 @@ class Observer:
         return cls(name, R, Z)
 
 
+def _validate_nonoverlapping_rectangles(leaves: tuple[Leaf, ...], budget: Budget | None) -> None:
+    """Reject positive-area overlap using exact Fraction rectangle events.
+
+    Workflow: compress strictly positive open z segments, end intervals before
+    starting intervals at the SAME exact r, then range-add each active z span.
+    The tree's minimum/maximum count certify occupancy, never physical area or
+    source density. Touching edges/corners have no positive-area intersection.
+    Containment and the original exact root-area sum remain the caller's proof.
+    This one sweep uses O(N log N) exact comparisons/integer updates and O(N)
+    memory; every event checks the SAME caller budget, without charging kernels
+    or creating a fresh deadline. No floats, epsilon, snapping or ideal mesh.
+    """
+    if budget is not None:
+        budget.check_time()
+    z_coordinates = sorted({coordinate for leaf in leaves for coordinate in (leaf.A, leaf.B)})
+    segments = len(z_coordinates) - 1
+    if segments < 1 or any(a >= b for a, b in zip(z_coordinates, z_coordinates[1:])):
+        raise ReferenceFailure("Invalid exact source overlap segment partition")
+    z_index = {coordinate: index for index, coordinate in enumerate(z_coordinates)}
+    events = []
+    for leaf in leaves:
+        if budget is not None:
+            budget.check_time()
+        lower, upper = z_index[leaf.A], z_index[leaf.B]
+        # Sorting delta -1 before +1 admits exact contact, but still checks each
+        # start separately so overlapping same-r starts cannot hide in a batch.
+        events.append((leaf.L, 1, lower, upper))
+        events.append((leaf.H, -1, lower, upper))
+    events.sort()
+    if budget is not None:
+        budget.check_time()
+    minimum, maximum, lazy = ([0] * (4 * segments) for _ in range(3))
+
+    def range_add(node, left, right, lower, upper, delta):
+        """Add one count on [lower,upper); ancestor lazy counts stay exact."""
+        if lower <= left and right <= upper:
+            minimum[node] += delta
+            maximum[node] += delta
+            lazy[node] += delta
+            return
+        midpoint = (left + right) // 2
+        if lower < midpoint:
+            range_add(2 * node, left, midpoint, lower, upper, delta)
+        if upper > midpoint:
+            range_add(2 * node + 1, midpoint, right, lower, upper, delta)
+        minimum[node] = lazy[node] + min(minimum[2 * node], minimum[2 * node + 1])
+        maximum[node] = lazy[node] + max(maximum[2 * node], maximum[2 * node + 1])
+
+    for _, delta, lower, upper in events:
+        if budget is not None:
+            budget.check_time()
+        range_add(1, 0, segments, lower, upper, delta)
+        if minimum[1] < 0:
+            raise ReferenceFailure("Exact source overlap sweep has negative occupancy")
+        if maximum[1] > 1:
+            raise ReferenceFailure("Positive-area source overlap")
+    if minimum[1] != 0 or maximum[1] != 0:
+        raise ReferenceFailure("Exact source overlap sweep has unclosed occupancy")
+
+
 def validate_dense_source(source: dict[str, Any], root_bounds: Any,
                           source_identity: dict[str, Any],
                           budget: Budget | None = None) -> tuple[Leaf, ...]:
@@ -222,7 +282,7 @@ def validate_dense_source(source: dict[str, Any], root_bounds: Any,
 
     Reuses existing source leaf field names. Bounds are the EXPLICIT actual
     canonical bounds, not the old origin+spacing ideal adapter. Containment,
-    pairwise positive-area non-overlap and exact area equality prove coverage
+    exact positive-area non-overlap and exact area equality prove coverage
     except measure-zero interfaces. Zero-density leaves remain in this proof.
     Stamp validation checks shape/consistency only; it is not Runtime authority.
     """
@@ -274,12 +334,7 @@ def validate_dense_source(source: dict[str, Any], root_bounds: Any,
         if not (L <= leaf.L < leaf.H <= H and A <= leaf.A < leaf.B <= B):
             raise ReferenceFailure("Leaf outside actual root rectangle")
         area += (leaf.H - leaf.L) * (leaf.B - leaf.A)
-        for previous in leaves[:i]:
-            if budget is not None:
-                budget.check_time()
-            if (max(previous.L, leaf.L) < min(previous.H, leaf.H) and
-                    max(previous.A, leaf.A) < min(previous.B, leaf.B)):
-                raise ReferenceFailure("Positive-area source overlap")
+    _validate_nonoverlapping_rectangles(leaves, budget)
     if area != (H - L) * (B - A):
         raise ReferenceFailure("Actual dense source leaves do not cover root")
     return leaves

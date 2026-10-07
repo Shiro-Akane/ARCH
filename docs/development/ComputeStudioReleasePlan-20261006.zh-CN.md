@@ -585,3 +585,11 @@ DPS新独立公共圆柱边缘regularity核对68.7s、14979输出（14691思考/
 目标回查 2026-10-07T09:57:26.067178+00:00：共享cell-side修复原self_gravity全owner11.071s通过，3584真实native cells含axis/offaxis/mixed，原门槛保持。新增固定参考profile综合后51工程测试0.921s通过，原42正文保持；source布局1真Runtime→Self2048cell导出251.717s通过、真实root4×2/leaf0，全部实际source logical/storage offset及fixed schema再次独立核对。布局2同一物理源8192cell正在单重负载运行，1800s累计外部sourcecampaign预冻结，另两个独立全域参考600/1800s总2400s预算未启动；不把source身份成功当精度或science通过。
 
 DPS针对新真实Green finding独立公开求和49.68s、11791输出（11385思考/406正文），384cached+1028noncached输入，估算USD.00722995–.0144599；Root用exact Fraction任意非零residual两格求和及cubic Lagrange -5/6导数独立接受，只数学并纠正leftboundary outwardsign。真实same-field residualcross/boundaryjump新两field归因候选并行，无阈值／source改动；原四field600s任务已累计403.383s关闭，不重置。时钟事件是实际较晚记录，不回填首次发现或Rootactive成本。全部公共Native/Device/总能量仍未grant，完整O其余四模块/续算/最终CPU-CUDA/GUI/计时/长时/CI出口继续；4070匹配记录保持缺失，不等待对方科学确认。下一回查≤15分钟。
+
+
+目标回查 2026-10-07T10:09:51.584050+00:00：3b40dd0cf已推送，单一checkout维持。新真实两field Green归因候选已独立审阅综合；恒等式按同stored梯度/真实Vρ分解，原四field路径/预算完整保留，尚未编译运行。8192source仍在原1200s外部限制中，源campaign前一布局251.717s已记，不重置。原dense validator的精确正面积overlap双循环已通过同一owner r-event/z-segment count扫线替换，density/G/containment/原exactarea/fullcover/sourcehash/积分完全保持；原51test正文保留、新7反例与原surfaceowner合并79项实际1.764s通过，没有新的CTest项，也未运行可选积分。actual2048完整源pureunion耗时0.09565069800009951s/0kernels，8patch/全部source记录仍逐一精确检查；不把工具加速当模拟吞吐或fieldaccuracy。
+
+旧14700K/4070Ti记录确有Device kernel执行，37项配置和终点可作历史科学对照；当前跨机正式计时组为0。旧cleanCPU/CUDA aggregate相同55546417，但不是formal benchmark，不用总campaign秒数相除。此核对不制造外部确认/数据/平台安排依赖。剩余整套O连续精度/总能量、真实反应四模块+动态AMR/续算、最终CPU-CUDA/GUI、同物理终点正式计时及长时/CI/doc收束仍继续，无release宣称。下一回查≤15分钟。
+
+
+目标回查 2026-10-07T10:26:29.711188+00:00：真实两field Green归因160.141s/exit0完整代数接受，真实preflight的全局source+ELF/依赖after fence完全不变；S−B_G=-589111.286，residual_cross=594331.921、boundary_jump=5220.632、internal_jump=.003368，重构误差-3.5304e-5在原工程budget内。主要差异为原tiny-dt端点对求解残差的放大，不把代数接受当continuous/总能量science通过；独立剩余能量预算与方法分析继续。8192source的762.204s实际生成完成，但Root在运行期间提交/更新无关test导致原全局fence拒绝；原FAILED与未持久保存的独立进程exit UNKNOWN永久保留。独立543项producer stat/SHA、原ELF以及8192/16512全部来源配对一致，仅按历史不可变生产器输入允许独立数学reference，不签当前HEAD/release。sourcecampaign累计1013.921s/1800不重置。即将启动新固定2048/8192 full-reference600/1800、总2400s维护预算，原70dps/三列宽度与所有边界目标保持；期间不改源码/HEAD，候选/tmp和文档并行。整套O连续精度/总能量、真实反应四模块+动态AMR/续算、最终CPU-CUDA/GUI、正式同物理终点计时/长时/CI/doc出口未完成；无外部Core确认依赖。下一回查≤15分钟。

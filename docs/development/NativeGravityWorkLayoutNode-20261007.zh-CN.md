@@ -15,3 +15,8 @@
 此结果签收存储修复和同次计算账本。点势端点的总能量科学状态仍为 `UNVERIFIED`：真实 `L-Q≈0.107445`，`S-B_G≈-589111.286`，后者需要分别核算离散残差交叉项、边界／内部 Green 缺陷及点势和体平均势的差异。大势能基值和小账本误差不能替代该出口。混合 AMR 总能量、实际反应四模块、CUDA 科学／加速、长时与公开 Native 能力仍按总体计划验收。
 
 处理后记录见 [CPU 能量摘要](../../validation/gravity/results/release-closure-20261007/native-self-energy-accounting-cpu-summary.json)。原场、失败日志和完整运行收据仅留本机忽略目录。
+
+
+实际端点归因采用另一组两次真实求解，耗时160.141s，运行前冻结的全局源码及生产器身份在结束后完全一致。离散恒等式 S−B_G=internal_jump+boundary_jump−residual_cross 按原工程误差预算成立；当前主要项为594331.921的残差交叉项，边界项为5220.632，内部项约.003368。这个结果定位了小时间增量的求解误差放大；连续总能量和空间收敛仍待独立验收。处理后的完整归因见 `validation/gravity/results/release-closure-20261007/native-self-green-pair-cpu-summary.json`。
+
+更细8192cell源记录的实际生产器及543项声明依赖保持不变，但运行期间提交身份/无关验证源码变化使原完整工作区检查失败。该拒绝保留，独立进程退出码未持久记录，保持未知。完整源可作为显式标注的历史不可变生产器输入用于新的独立数学对比，不作为当前提交或release通过证据；身份清单见 `native-matched-source-historical-input-summary.json`。

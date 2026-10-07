@@ -1088,4 +1088,109 @@ class FixedMatchedReferenceProfileEngineeringTests(unittest.TestCase):
         self.assertEqual(actual["budget"]["calls"],31)
 
 
+
+
+class ExactDenseSweepTests(unittest.TestCase):
+    """Finite black-box geometry/budget counterexamples; no integral/science grant."""
+
+    def source(self, rectangles, root=(0, 2, 0, 1)):
+        identity = NativeAdapterTests().case()["source_identity"]
+        keys = ("r_lower", "r_upper", "z_lower", "z_upper")
+        leaves = [dict(id="sweep-cell-"+str(index), density=3.,
+                       **dict(zip(keys, rectangle)))
+                  for index, rectangle in enumerate(rectangles)]
+        return dict(sourceId="exact-sweep-fixture", leaves=leaves), list(root), identity
+
+    def independent_cover(self, rectangles, root):
+        # Small independent exact pairwise oracle: retain explicit coordinates,
+        # strict positive intersections and containment PLUS exact area equality.
+        from fractions import Fraction as F
+        root = tuple(map(F, root)); values = [tuple(map(F, row)) for row in rectangles]
+        L, H, A, B = root
+        for index, (l, h, a, b) in enumerate(values):
+            if not (L <= l < h <= H and A <= a < b <= B):
+                return False
+            for p, q, c, d in values[:index]:
+                if max(l, p) < min(h, q) and max(a, c) < min(b, d):
+                    return False
+        return sum((h-l)*(b-a) for l, h, a, b in values) == (H-L)*(B-A)
+
+    def test_touching_edges_corners_axis_rim_and_small_exact_cover_oracle(self):
+        covers = [
+            ([(0, 1, 0, 1), (1, 2, 0, 1)], (0, 2, 0, 1)),
+            ([(0, 2, 0, ".5"), (0, 2, ".5", 1)], (0, 2, 0, 1)),
+            ([(0, 1, 0, ".5"), (0, 1, ".5", 1),
+              (1, 2, 0, ".5"), (1, 2, ".5", 1)], (0, 2, 0, 1)),
+            ([(".1", ".4", "-.3", ".7"), (".4", "1.3", "-.3", ".2"),
+              (".4", "1.3", ".2", ".7")], (".1", "1.3", "-.3", ".7")),
+        ]
+        for rectangles, root in covers:
+            with self.subTest(rectangles=rectangles):
+                self.assertTrue(self.independent_cover(rectangles, root))
+                source, root, identity = self.source(rectangles, root)
+                before = copy.deepcopy((source, root, identity))
+                result = rz.coalesce_exact_dense_source(source, root, identity)
+                self.assertEqual((source, root, identity), before)
+                ids = [leaf_id for group in result["exact_partition"]
+                       for leaf_id in group["original_leaf_ids"]]
+                self.assertEqual(sorted(ids), sorted(leaf["id"] for leaf in source["leaves"]))
+                self.assertEqual(result["original_leaf_count"], len(rectangles))
+                self.assertFalse(result["science_accepted"])
+                self.assertFalse(result["core_binding_qualified"])
+
+    def test_overlapping_same_radial_start_rejects_even_when_exact_area_matches(self):
+        rectangles = [(0, 1, 0, "3/4"), (0, 1, "1/2", "3/4")]
+        self.assertFalse(self.independent_cover(rectangles, (0, 1, 0, 1)))
+        source, root, identity = self.source(rectangles, (0, 1, 0, 1))
+        with self.assertRaisesRegex(surface.ReferenceFailure, "Positive-area source overlap"):
+            rz.coalesce_exact_dense_source(source, root, identity)
+
+    def test_nested_rectangles_rejects_positive_area_not_only_equal_boundaries(self):
+        source, root, identity = self.source([(0, 2, 0, 1), ("1/2", "3/2", "1/4", "3/4")])
+        with self.assertRaisesRegex(surface.ReferenceFailure, "Positive-area source overlap"):
+            rz.coalesce_exact_dense_source(source, root, identity)
+
+    def test_binary_rational_radial_and_axial_slivers_are_not_rounded_away(self):
+        from fractions import Fraction as F
+        epsilon = F(1, 2**80)
+        cases = [([(0, str(1+epsilon), 0, 1), (1, 2, 0, 1)], (0, 2, 0, 1)),
+                 ([(0, 1, 0, str(F(1, 2)+epsilon)), (0, 1, "1/2", 1)], (0, 1, 0, 1))]
+        for rectangles, root in cases:
+            with self.subTest(rectangles=rectangles):
+                self.assertFalse(self.independent_cover(rectangles, root))
+                source, root, identity = self.source(rectangles, root)
+                with self.assertRaisesRegex(surface.ReferenceFailure, "Positive-area source overlap"):
+                    rz.coalesce_exact_dense_source(source, root, identity)
+
+    def test_overlap_and_hole_cannot_cancel_in_original_exact_area_check(self):
+        rectangles = [(0, "3/2", 0, 1), ("1/2", 1, 0, 1)]
+        self.assertFalse(self.independent_cover(rectangles, (0, 2, 0, 1)))
+        source, root, identity = self.source(rectangles)
+        with self.assertRaisesRegex(surface.ReferenceFailure, "Positive-area source overlap"):
+            rz.coalesce_exact_dense_source(source, root, identity)
+
+    def test_disjoint_hole_still_fails_original_full_root_coverage(self):
+        source, root, identity = self.source([(0, "3/4", 0, 1), (1, 2, 0, 1)])
+        with self.assertRaisesRegex(surface.ReferenceFailure, "do not cover root"):
+            rz.coalesce_exact_dense_source(source, root, identity)
+
+    def test_dense_validation_retains_one_deadline_during_sweep_without_kernel_or_reset(self):
+        from itertools import count
+        # 32 valid rectangles; clock advances during validation only, with no
+        # integral or invented backend. The SAME original 90-second Budget must
+        # stop this request even after successful stamp/containment checks.
+        rectangles = [(i, i+1, j, j+1) for i in range(8) for j in range(4)]
+        source, root, identity = self.source(rectangles, (0, 8, 0, 4))
+        budget = surface.Budget(started=0., calls=17)
+        before = copy.deepcopy((source, root, identity))
+        with patch.object(surface.time, "monotonic", side_effect=count()) as clock, \
+             patch.object(surface.Budget, "start", side_effect=AssertionError("budget reset")) as reset, \
+             patch.object(surface, "load_optional_flint", side_effect=AssertionError("backend reached")) as backend:
+            with self.assertRaisesRegex(surface.WorkLimit, "global timeout=90"):
+                surface.validate_dense_source(source, root, identity, budget)
+        self.assertEqual((budget.started, budget.calls, budget.timeout_seconds), (0., 17, 90.))
+        self.assertGreater(clock.call_count, len(rectangles))
+        self.assertEqual((source, root, identity), before)
+        reset.assert_not_called(); backend.assert_not_called()
+
 if __name__=="__main__":unittest.main()

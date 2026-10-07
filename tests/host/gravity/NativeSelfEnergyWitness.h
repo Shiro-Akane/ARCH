@@ -388,6 +388,187 @@ public:
             <<"stored-point-rows-diagnostic\t"<<deltaE<<'\t'<<BE<<'\t'<<BP<<'\t'<<Q<<'\t'<<epsilon<<'\t'<<W1-W0<<'\t'<<L<<'\t'<<S<<'\t'<<BG<<'\t'<<finite_step<<'\t'<<D<<'\n';
         json.flush();tsv.flush();energy_require(bool(json)&&bool(tsv),"Accepted energy diagnostic output failed");
     }
+    /** Reduce the genuine two-time discrete Green identity from ORIGINAL rows.
+     * Workflow: fence both actual sources/rows; assemble original face incidence;
+     * reduce internal/boundary jumps and complete prescribed-boundary residual;
+     * check only the fixed accounting window; publish compact accepted evidence.
+     * With R_k=div(g_k)-4*pi*G*rho_k and increasing-coordinate stored gradients,
+     * S-BG=(T_internal+T_boundary-T_residual)/(8*pi*G). This finite-dimensional
+     * identity neither imposes S==BG nor certifies a continuous isolated field.
+     */
+    void publish_green_pair(const Field& post) {
+        source_matches(post,state::StateSlot::Current,owner_.counters->t_current);
+        energy_require(field_&&post.faces.size()==field_->faces.size()
+            &&before_events_==2&&after_events_==2&&owner_.execution->gathers==2,
+            "Private Green pair lacks two genuine fields or completed actual work");
+        energy_require(field_->source.topology==post.source.topology
+            &&field_->source.operator_revision==post.source.operator_revision
+            &&field_->source.boundary_revision==post.source.boundary_revision
+            &&field_->source.accuracy_revision==post.source.accuracy_revision
+            &&rz_runtime_witness::bits(field_->source.gravitational_constant,post.source.gravitational_constant)
+            &&rz_runtime_witness::bits(field_->source.input_time,owner_.start.time)
+            &&rz_runtime_witness::bits(post.source.input_time,owner_.start.time+dt_),
+            "Private Green pair changed topology/operator/G or genuine endpoint time");
+        for(std::size_t b=0;b<field_->source.inputs.size();++b) {
+            const auto& a=field_->source.inputs[b];const auto& z=post.source.inputs[b];
+            energy_require(a.block==z.block&&a.slot==descriptor_.input_slot
+                &&z.slot==state::StateSlot::Current&&a.version!=z.version,
+                "Private Green pair did not advance the actual Current publication");
+        }
+        // A term's scale is frozen as the absolute ORIGINAL primitive products,
+        // not abs(reduced result) and never a function of the observed mismatch.
+        struct Term {
+            long double value=0.,absolute=0.;
+            /** Add two signed algebra terms and retain their input operation scale. */
+            void add(long double a,long double b) {
+                value=energy_finite(value+energy_finite(energy_finite(a)+energy_finite(b)));
+                absolute=energy_finite(absolute+std::abs(a)+std::abs(b));
+            }
+            /** Divide both signed result and absolute scale by the positive constant. */
+            void divide(long double denominator) {
+                value=energy_finite(value/denominator);absolute=energy_finite(absolute/denominator);
+            }
+            /** Emit the value and its explicitly defined, untuned input scale. */
+            void json(std::ostream& stream) const {
+                stream<<"{\"value\":"<<value<<",\"absolute_operation_scale\":"<<absolute<<'}';
+            }
+        };
+        const long double four_pi_G=energy_finite(4.L*arch::constants::math::pi*field_->source.gravitational_constant),
+            denominator=energy_finite(2.L*four_pi_G);
+        energy_require(denominator>0.,"Private Green pair G denominator is not positive");
+        std::vector<long double> div0(cells_.size(),0.L),div1(cells_.size(),0.L),rho1(cells_.size(),0.L);
+        const auto active=owner_.control.tree->GetActiveBlocks();
+        Term S,BG,internal,boundary_jump,residual;
+        std::array<Term,2> internal_axis{};std::array<Term,4> boundary_sides{};
+        std::array<std::size_t,3> construction_counts{};
+        std::size_t internal_count=0,boundary_count=0;
+        long double mass_error=0.,mass_state=0.,mass_operations=0.;
+        for(std::size_t n=0;n<cells_.size();++n) {
+            const auto& c=cells_[n];const auto& state=owner_.control.pool->GetBlock(active.at(c.block)).fluid_state;
+            energy_require(c.phase[0]==2&&c.phase[1]==2&&c.delta_seen,
+                "Private Green pair cell lacks completed original work/dU evidence");
+            rho1[n]=energy_finite(state.rho[c.offset]);energy_require(rho1[n]>0.,"Private Green pair post density is invalid");
+            const long double m1=energy_finite(c.volume*rho1[n]);
+            const NativeEnergyBudget mass(m1-c.m0-c.dm,std::abs(m1)+std::abs(c.m0),std::abs(c.dm));
+            mass.check("Private Green pair actual mass change differs from original Euler dU");
+            mass_error+=mass.error;mass_state+=mass.state_scale;mass_operations+=mass.operation_scale;
+            S.add(.5L*c.m0*post.potential[n],-.5L*m1*field_->potential[n]);
+        }
+        for(std::size_t f=0;f<post.faces.size();++f) {
+            const auto& a=field_->faces[f];const auto& b=post.faces[f];
+            energy_require(a.left==b.left&&a.right==b.right&&a.axis==b.axis&&a.boundary_side==b.boundary_side
+                &&a.native_bounds==b.native_bounds&&a.construction==b.construction
+                &&rz_runtime_witness::bits(a.area,b.area)&&a.samples==b.samples&&a.value_samples==b.value_samples
+                &&rz_runtime_witness::bits(a.coefficients,b.coefficients)&&rz_runtime_witness::bits(a.value_coefficients,b.value_coefficients)
+                &&rz_runtime_witness::bits(a.boundary_coefficient,b.boundary_coefficient)
+                &&rz_runtime_witness::bits(a.anchor_coefficient,b.anchor_coefficient)
+                &&rz_runtime_witness::bits(a.value_boundary_coefficient,b.value_boundary_coefficient),
+                "Private Green pair changed ORIGINAL stored face rows");
+            for(std::size_t d=0;d<3;++d)energy_require(rz_runtime_witness::bits(a.center[d],b.center[d])
+                &&rz_runtime_witness::bits(a.fragment_lower[d],b.fragment_lower[d])
+                &&rz_runtime_witness::bits(a.fragment_upper[d],b.fragment_upper[d])
+                &&rz_runtime_witness::bits(a.fragment_width[d],b.fragment_width[d]),
+                "Private Green pair changed ORIGINAL native face geometry");
+            const int construction=static_cast<int>(a.construction);
+            energy_require(construction>=0&&construction<3&&a.axis>=0&&a.axis<2&&a.native_bounds
+                &&a.area>0.&&std::isfinite(a.area),"Private Green pair malformed original face");
+            ++construction_counts[std::size_t(construction)];
+            const long double A=a.area,g0=field_->face_gradient[f],g1=post.face_gradient[f];
+            // Original face.left receives +A*g in div; face.right receives -A*g.
+            for(int side=0;side<2;++side) {
+                const int n=side?a.right:a.left;if(n<0)continue;
+                energy_require(std::size_t(n)<cells_.size(),"Private Green pair incidence index is outside actual cells");
+                const long double sign=side?-1.L:1.L;
+                div0[std::size_t(n)]=energy_finite(div0[std::size_t(n)]+sign*A*g0);
+                div1[std::size_t(n)]=energy_finite(div1[std::size_t(n)]+sign*A*g1);
+            }
+            if(a.boundary_side<0) {
+                energy_require(a.boundary_side==-1&&a.left>=0&&a.right>=0&&a.left!=a.right,
+                    "Private Green pair malformed internal incidence");
+                ++internal_count;
+                const long double p0L=field_->potential[std::size_t(a.left)],p0R=field_->potential[std::size_t(a.right)],
+                    p1L=post.potential[std::size_t(a.left)],p1R=post.potential[std::size_t(a.right)],
+                    x=A*(p1L-p1R)*g0,y=-A*(p0L-p0R)*g1;
+                internal.add(x,y);internal_axis[std::size_t(a.axis)].add(x,y);
+            } else {
+                energy_require(a.boundary_side<4&&a.boundary_side/2==a.axis
+                    &&((a.boundary_side%2==1&&a.left>=0&&a.right<0)
+                        ||(a.boundary_side%2==0&&a.right>=0&&a.left<0)),
+                    "Private Green pair malformed physical-boundary orientation");
+                ++boundary_count;const std::size_t n=std::size_t(a.left>=0?a.left:a.right);
+                const long double sign=a.boundary_side%2?1.L:-1.L,
+                    p0=field_->potential[n],p1=post.potential[n],pf0=face_phi(*field_,f),pf1=face_phi(post,f),
+                    x=sign*A*(p1-pf1)*g0,y=-sign*A*(p0-pf0)*g1;
+                boundary_jump.add(x,y);boundary_sides[std::size_t(a.boundary_side)].add(x,y);
+                BG.add(sign*A*pf1*g0,-sign*A*pf0*g1);
+            }
+        }
+        long double volume_sum=0.,residual_square0=0.,residual_square1=0.,residual_max0=0.,residual_max1=0.;
+        for(std::size_t n=0;n<cells_.size();++n) {
+            const auto& c=cells_[n];const long double p0=field_->potential[n],p1=post.potential[n],
+                numerator0=energy_finite(div0[n]-four_pi_G*c.m0),
+                numerator1=energy_finite(div1[n]-four_pi_G*c.volume*rho1[n]),
+                R0=energy_finite(numerator0/c.volume),R1=energy_finite(numerator1/c.volume);
+            // V*R is evaluated as its ORIGINAL extensive incidence-source residual.
+            // This is complete inhomogeneous Delta residual, not homogeneous A*Phi.
+            residual.add(p1*numerator0,-p0*numerator1);
+            volume_sum=energy_finite(volume_sum+c.volume);
+            residual_square0=energy_finite(residual_square0+c.volume*R0*R0);
+            residual_square1=energy_finite(residual_square1+c.volume*R1*R1);
+            residual_max0=std::max(residual_max0,std::abs(R0));residual_max1=std::max(residual_max1,std::abs(R1));
+        }
+        energy_require(volume_sum>0.,"Private Green pair actual total volume is invalid");
+        BG.divide(denominator);internal.divide(denominator);boundary_jump.divide(denominator);residual.divide(denominator);
+        for(auto& term:internal_axis)term.divide(denominator);
+        for(auto& term:boundary_sides)term.divide(denominator);
+        const long double gap=energy_finite(S.value-BG.value),
+            reconstructed=energy_finite(internal.value+boundary_jump.value-residual.value),
+            operation_scale=energy_finite(BG.absolute+internal.absolute+boundary_jump.absolute+residual.absolute);
+        const NativeEnergyBudget algebra(gap-reconstructed,S.absolute,operation_scale),
+            mass(mass_error,mass_state,mass_operations),work(work_error_,work_state_scale_,work_operation_scale_);
+        algebra.check("Original-face discrete Green decomposition does not close");
+        mass.check("Private Green pair aggregate original Euler mass accounting failed");
+        work.check("Private Green pair aggregate original face-work accounting failed");
+        const long double rms0=energy_finite(std::sqrt(residual_square0/volume_sum)),
+            rms1=energy_finite(std::sqrt(residual_square1/volume_sum));
+        // Publish only after the genuine macro/post source, all row fences and
+        // fixed algebra checks pass. No flux/Phi/rho arrays or raw data are emitted.
+        std::ofstream json(owner_.config.io.out_dir+"/green-pair-diagnostic.json");
+        energy_require(bool(json),"Cannot open accepted Green pair diagnostic output");
+        json<<std::setprecision(std::numeric_limits<long double>::max_digits10)
+            <<"{\"schema\":\"arch-private-native-self-green-pair-1\",\"physical_qualified\":false,\"continuous_green_science\":\"UNVERIFIED\",\"algebra_checked\":true,\"actual_fields_batch\":2,\"resource_scope\":\"distinct-two-field-diagnostic-240s\",\"method\":\"Euler\",\"dt\":"<<dt_
+            <<",\"G\":"<<field_->source.gravitational_constant<<",\"cells\":"<<cells_.size()<<",\"faces\":"<<post.faces.size()
+            <<",\"time0\":"<<field_->source.input_time<<",\"time1\":"<<post.source.input_time
+            <<",\"source_generation0\":"<<field_->source_generation<<",\"source_generation1\":"<<post.source_generation
+            <<",\"field_generation0\":"<<field_->field_generation<<",\"field_generation1\":"<<post.field_generation
+            <<",\"generation_scope\":\"each-separately-created-stage;actual-handle-slot-version-time-is-authoritative\""
+            <<",\"operator_revision\":"<<post.source.operator_revision<<",\"boundary_revision\":"<<post.source.boundary_revision
+            <<",\"accuracy_revision\":"<<post.source.accuracy_revision<<",\"relative_tolerance\":"<<owner_.config.physics.gravity.relative_tolerance
+            <<",\"absolute_tolerance\":"<<owner_.config.physics.gravity.absolute_tolerance<<",\"max_cycles\":"<<owner_.config.physics.gravity.max_cycles
+            <<",\"root_bounds\":["<<owner_.config.grid.x1_min<<','<<owner_.config.grid.x1_max<<','<<owner_.config.grid.x2_min<<','<<owner_.config.grid.x2_max<<']'
+            <<",\"axis_before_events\":"<<before_events_<<",\"axis_after_events\":"<<after_events_
+            <<",\"gradient_orientation\":\"increasing-coordinate;left-outward-plus,right-outward-minus\",\"residual_definition\":\"complete-inhomogeneous-div(g)-4*pi*G*rho\""
+            <<",\"identity\":\"S-BG=internal_jump+boundary_jump-residual_cross\",\"scope\":\"original-stored-point-Phi-and-face-rows;not-continuous-Green-certificate\""
+            <<",\"S\":";S.json(json);json<<",\"B_G_stored_point_rows\":";BG.json(json);
+        json<<",\"internal_jump\":";internal.json(json);json<<",\"boundary_jump\":";boundary_jump.json(json);
+        json<<",\"residual_cross\":";residual.json(json);
+        json<<",\"S_minus_B_G\":"<<gap<<",\"reconstructed_gap\":"<<reconstructed
+            <<",\"internal_faces\":"<<internal_count<<",\"physical_boundary_faces\":"<<boundary_count
+            <<",\"construction_counts\":{\"TwoPoint\":"<<construction_counts[0]<<",\"PolynomialFit\":"<<construction_counts[1]<<",\"EllipticRecovery\":"<<construction_counts[2]<<'}'
+            <<",\"internal_by_axis\":[";for(std::size_t a=0;a<2;++a){if(a)json<<',';internal_axis[a].json(json);}
+        json<<"],\"boundary_by_side\":[";for(std::size_t a=0;a<4;++a){if(a)json<<',';boundary_sides[a].json(json);}
+        json<<"],\"native_volume_sum\":"<<volume_sum<<",\"discrete_residual_rms0\":"<<rms0<<",\"discrete_residual_rms1\":"<<rms1
+            <<",\"discrete_residual_linf0\":"<<residual_max0<<",\"discrete_residual_linf1\":"<<residual_max1
+            <<",\"residual_norm_quality\":\"long-double-stored-row-diagnostic;not-outward-physical-certificate\",\"volume_definition\":\"full-ring-long-double-antiderivative-of-actual-canonical-cell-bounds\""
+            <<",\"budget_formula\":\"64*epsilon*absolute_state_scale+1e-12*absolute_operation_scale\",\"algebra_budget\":";
+        algebra.json(json);json<<",\"mass_budget\":";mass.json(json);json<<",\"work_budget\":";work.json(json);
+        json<<",\"input_handles\":[";
+        for(std::size_t b=0;b<field_->source.inputs.size();++b){if(b)json<<',';const auto& a=field_->source.inputs[b];const auto& z=post.source.inputs[b];
+            json<<"{\"uid\":"<<a.block.uid.value<<",\"epoch\":"<<a.block.epoch.value<<",\"slot0\":"<<int(a.slot)<<",\"slot1\":"<<int(z.slot)
+                <<",\"version0\":"<<a.version.value<<",\"version1\":"<<z.version.value<<",\"density_lease0\":"<<a.storage_generation<<",\"density_lease1\":"<<z.storage_generation<<'}';}
+        json<<"]}\n";json.flush();energy_require(bool(json),"Accepted Green pair diagnostic output failed");
+    }
+
 };
 
 /** Throw at a genuinely reached original AxisBefore reservation; no prefix publish. */
@@ -470,4 +651,48 @@ template<class Owner> void run_native_self_energy(double dt) {
     energy_require(rejected,"Rejected energy prefix retained a usable candidate field");
     witness.publish(post,true); // pending numerical evidence published only after all four fields/rollback
 }
+/** Two genuine fields for a DISTINCT Green attribution request, not a re-run of
+ * the closed passive/fault matrix. Workflow: observed original macro; close its
+ * journal; advance accepted clock/Current ghosts; solve actual postCurrent once;
+ * fence unchanged accepted owners and reduce ORIGINAL face incidence in memory.
+ * Root enforces the new whole-request 240s resource cap externally. This mode
+ * does not reset/inherit the previous four-field cost or add a CI owner.
+ */
+template<class Owner> void run_native_self_green_pair(double dt) {
+    using Stage=driver::GravityStage;using Witness=NativeSelfEnergyWitness<Owner>;
+    Owner observed(scheduler::HydroMethod::Euler,false,"green-pair-observed");Witness witness(observed,dt);
+    observed.stage->set_native_self_flux_observation(&Witness::sink,&witness);
+    observed.observer->energy_payload=&witness;observed.observer->energy_field_capture=&Witness::capture;
+    observed.observer->energy_delta_capture=&Witness::delta;observed.advance();
+    observed.stage->flush_committed_diagnostics();journal_rows(observed,1);
+    energy_require(observed.execution->gathers==1&&!observed.gravity->prepared_native_self(),
+        "Green pair observed macro field count or live receipt mismatch");
+    auto& block=observed.control.pool->GetBlock(observed.control.tree->GetActiveBlocks().front());
+    observed.context->hydro_preparation=nullptr;observed.stage.reset();
+    const auto old_path=std::filesystem::path(observed.config.io.out_dir)/"native_rz_candidates.tsv";
+    const auto journal_path=std::filesystem::path(observed.config.io.out_dir)/"hydro-stages.tsv";
+    energy_require(!std::filesystem::exists(journal_path),"Green pair journal target exists; preserve prior evidence");
+    std::filesystem::rename(old_path,journal_path);
+    observed.counters->advance(dt);const double tnew=observed.counters->t_current;
+    energy_require(rz_runtime_witness::bits(tnew,observed.start.time+dt)&&observed.counters->step_count==observed.start.step+1,
+        "Green pair postCurrent skipped accepted real counter advance");
+    observed.context->step_start_time=tnew;observed.context->step_dt=dt;
+    observed.context->configure_boundary_context(tnew,boundary::BoundaryPurpose::Hydro);
+    observed.runtime->ensure_fluid_ghosts(state::StateSlot::Current);
+    observed.stage=std::make_unique<Stage>(*observed.runtime,observed.gravity.get(),Stage::Qualification::NativeRzCandidate);
+    const rz_runtime_witness::FieldsWitness accepted(block);
+    const auto saved=driver::HostHydroTransaction::snapshot_owner(*observed.runtime,*observed.context);
+    RzMaterializedSourceRecord record;record.capture_call(*observed.stage,[&]{observed.stage->prepare_current(tnew,false);});
+    energy_require(record.source_only_checked()&&!record.cleanup_failed()&&record.callback_count()==1,
+        "Green pair postCurrent materialized source is not authentic");
+    auto post=observed.gravity->native_rz_field_inspection();accepted.matches(block);
+    energy_require(driver::HostHydroTransaction::owner_matches(*observed.runtime,*observed.context,saved)
+        &&observed.execution->gathers==2&&observed.counters->step_count==observed.start.step+1
+        &&rz_runtime_witness::bits(observed.counters->t_current,tnew),
+        "Green pair actual postCurrent solve mutated accepted fields/Runtime owners");
+    bool refused=false;try{observed.gravity->potential();}catch(const std::logic_error&){refused=true;}
+    energy_require(refused,"Green pair diagnostic acquired public potential capability");
+    witness.publish_green_pair(post);
+}
+
 } // namespace arch::test
