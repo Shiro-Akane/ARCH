@@ -370,3 +370,43 @@ DPS公开应力/功恒等式首轮一个交叉导数的factor2错误由独立符
 现有科学quick输出175份H5（13,923,608 B，4385 datasets）经原判断、当前执行物/输入身份、JUnit生成时间及Root独立stat/streamSHA复核后已清理；累计2082份、315,703,528 B。输入、日志、失败和未知原始证据保留；仓库仅保存薄摘要。DPS独立有界密度误差的连续势/力包络经解析复核接受，首轮矢量sharpness表述错误已唯一返修；102.31 s/22397输出token，估计USD0.0137345–0.027469，实际账单与主智能体成本未知，阻塞等待0。包络不认证核积分或生产force。
 
 下一批复用共享V/W源分量积分，补单块Native RKL真实owner接线及真实冷旋流有限步/EOS拒绝/宏事务恢复；扩散公式、CFL、RKL系数、原阈值保持。当前remote不再列出studio集成分支，没有可新归属的4070Ti配对计时；历史异机记录继续按旧SHA保留。公开Native/Device门槛及整个O release仍未签收，连续引力、全耦合、GPU/GUI、匹配总计时和长时验证继续执行。
+
+
+### 2026-10-07T03:32:47.982703+00:00 — 真正有限步冷热能反例与既有测试入口收束
+
+新共享外力源叶复用原点法及相同V/W五分量积分；符号/零质量源不是EOS状态，严格正密度保守积分仍保持。两个现有CPU owner通过（4.82 s），真实16×16原生扩散行FE上限1/8、RKL1单阶选择/原系数/实际producer确认：默认CFL对应半步0.1使首格物理热能为e0−3/512；半步1/16为e0+75/16384。原公式、CFL和门槛未修改。下一出口为实际Runtime完成BC/EOS门、宏事务恢复与真正接受的小半步，正在并入既有gravity_stage_contract而非新增CTest；尚不据数学叶通过授予运行验收或自动重试。
+
+DPS无源码公共有限环体表面积分/一角核与contact log恒等式由Root独立微分、Gauss定理、奇点极限及Fourier项复核后限定接受：82.14 s、17248输出token（思考16919/正文329），估计USD0.01058455–0.0211691，实际费用/主智能体成本未知；阻塞等待0。该恒等式尚不是向外舍入积分证书或生产力认证。
+
+整个O release目标保持：外源真实阶段身份和V体功/W力矩、连续势/力及AMR功、非零粘性/RKL2和长期耦合、GUI原生、CUDA及两平台匹配总计时尚待闭合。仅一个ARCH工作区；Root独占编译，minAvail2GiB/无swap增长/PSI/E Host8GiB保留与64MiB写入预留保持；本批数学和Runtime夹具不生成生产raw。
+
+
+### 2026-10-07T03:47:38.560981+00:00 — 真实有限步拒绝／回滚及原测试入口收束
+
+现有gravity_stage_contract新增的实际Native Runtime出口通过（2.48907 s，guard3.036 s），保持原methods/CFL/EOS门槛：真实RKL1默认半步0.1在completed热力学门拒绝，完整宏事务/Advice恢复三slot七数组bits/地址、ledger/register/clock/BC/repair/预算；真正半步1/16在真实Runtime EOS/BC gate接受。新测试复用原CI owner，未把整套私有chart矩阵重复加入常规CI；完整正宏步、自适应缩步、RKL2与长时仍待验。薄记录见[native-external-angular-cpu-summary.json](../../validation/gravity/results/release-closure-20261007/native-external-angular-cpu-summary.json)。
+
+外源接线在下一批进行：defaultUnknown discovery、实际GravityStage私有frame、真实HostHydroTransaction/七lease/domain/RK stage借用，物理8 Gauss点实际EOS和同一V体功/W力矩源叶；Native register清理延后真实frame准备，普通路径保持。实际边界预算观测器仍有Native面积/力矩及builtin启用缺口，独立修正候选尚待验，不据此先签守恒。公开Native/Device继续关闭；整个O release、连续势/力及耦合、GUI原生、CUDA、两平台匹配总计时/长时保持原目标。
+
+第二DPS公开接触圆盘端点代数经Root精确因式/分支/axis复核后限范围接受：94.35 s、21819输出token（思考21349/正文470），估计USD0.013318–0.026636；实际费用未知。明确内部点leading log系数2、径向edge系数1，pi端点必须切换稳定直接式；未产生向外积分证书或生产力认证。无源码/raw外发；review墙钟包含Root同期实现时间，非active成本。E真实余量约22.28GiB，原8GiB/64MiB预留与单重负载owner保持；本批无raw。
+
+### 2026-10-07T04:04:21.367620+00:00 — 真实源项与边界预算下一验收出口
+
+实际GravityStage与既有边界预算owner已编译；当前三项窄CPU检查两项通过，一项因Unknown引力旧拒绝诊断文案契约失败。拒绝仍发生在输出写入前，原数学门槛保持；补齐明确的未迁移诊断后按冻结源码重验。真实Native外力24组运行、连续环带参考、完整演化/AMR/重启、CUDA、GUI人工、两平台配对总耗时与长时验收仍为整套O发布的必要出口。两名只读候选worker分别负责真实外力运行和连续参考，Root独占编译与数据写入；本节点无新增raw，DPS原源码审查修复额度已耗尽，不重复派发。
+
+### 2026-10-07T04:18:22.570546+00:00 — 真实外力矩阵与冷态边界取值支撑
+
+24组真实混合AMR外力演化、独立V/W物理功及前写身份拒绝通过原1e-12预算；整个owner在后续冷态检查失败，因此不记为owner/完整科学通过。确切原因是实际边界准备阶段的临时ghost seed进入donor密度支撑，改变数值转动惯量并把合法e0=2^-25恢复为负热能；独立有理数反例已复现。下一修正限定为物理边界donor在ghost尚未完成时使用真实active内部三列；完成的ghost/corner支撑和最终EOS继续保持。真实源项helper的参数身份防御亦纳入同一批次，数学与门槛不变。
+
+DPS第三项公开接触积分半区间代数核对经Root限定采用（62.68 s，14672输出token，估计USD0.00901675–0.0180335；账单未知）。它不认证积分器或Core绑定；与本机真实CPU检查并行，无源码/raw外发、无阻塞等待。连续参考、完整耦合/AMR/重启、Device、GUI人工、两平台配对总耗时和长时出口仍未关闭。本批无模拟raw，E余量约22.26GiB，唯一工作区与单重负载owner保持。
+
+### 2026-10-07T04:32:41.969980+00:00 — 冷态物理边界与独立连续参考出口
+
+当前五项既有CPU owner全部通过（47.91 s，guard48.310 s），编译77.291 s，无新增CI项或模拟raw。真实外力24组、冷态实际点EOS/source消费后受控discard、晚阶段真实EOS回滚及16组参数身份前写拒绝通过；完整冷态宏步和非零RKL2耦合仍待验。物理边界修正限定为ghost尚未完成时的真实active donor三列支撑；最终EOS及原阈值保持。薄记录见[native-external-angular-cpu-summary.json](../../validation/gravity/results/release-closure-20261007/native-external-angular-cpu-summary.json)。
+
+独立一角连续环源参考的唯一返修仅收紧内部积分工作请求，原70位精度、G_CGS×1e-12最终区间宽度、100000调用/90 s保持；实际九组轴/外/内/接触/corner数学区间全部完成，12596调用、0.611124 s。该结果仅认证所给数学输入，真实Core源/observer身份、完整Phi/力误差及AMR引力功继续待闭合，不据此解除公开Native/Device或release gate。下一顺序为完整CPU基线、实际RKL2/多物理与连续源绑定，之后最终CUDA/GUI原生、统一两平台总耗时和长时；独占重负载及E盘8GiB/64MiB预留保持。
+
+### 2026-10-07T04:45:29.973597+00:00 — 当前外力批次完整CPU基线
+
+同一冻结源树完整CPU构建通过（306.727 s），现有76/76回归通过（136.37 s，guard137.243 s），没有新CI owner；此后仅采用独立参考工具的已验收数学实现并更新说明。完整环源参考另有13项性质／拒绝检查，包含精确体积分轴向参考、密度线性、平移、非均匀双leaf、静态数学zero覆盖、缺块/重叠及100000共同调用上限；生产Gather的严格正密度规则保持。
+
+DPS新的公共RKL2双cell精确阶段参考经Root四组、17阶段有理数核对后限定接受，102.54 s、27762输出token（思考27215/正文547），估计USD0.0168451–0.0336902，账单及主智能体成本未知；与完整CPU构建／数学检查并行，无源码或raw外发、无阻塞等待。该公共图不证明真实RKL2阶段正性或全耦合。下一节点仍为真实非零RKL2两半步与外力/Hydro，真实源物化导出/连续势力/AMR功、CUDA/GUI原生、统一两平台总计时与长期验收。Gemini当前记录为机械事实更新，收益不足暂不派发。

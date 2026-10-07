@@ -338,6 +338,12 @@ public:
         require_domain_owner();
     }
 
+    /** Reuse one checked source-input borrow without exporting metadata or arrays. */
+    void require_input_patch(std::size_t index,const amr::AMRControl* control,
+        int id,const FluidState& state,const Grid& grid) const {
+        (void)require_patch_view(index,control,id,state,grid);
+    }
+
 private:
     friend class HostHydroBoundaryAuthority;
     using PatchAuthority=HostHydroBoundaryAuthority;

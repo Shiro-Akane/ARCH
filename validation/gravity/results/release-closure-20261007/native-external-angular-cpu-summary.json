@@ -1,0 +1,187 @@
+{
+  "recordedAtUtc": "2026-10-07T04:32:41.969980+00:00",
+  "baselineCommit": "0f20337a7",
+  "scope": "Shared external V/W mathematics and actual native Runtime angular RKL1 rejection/rollback/accepted half; not external stage grant",
+  "newCtestNames": 0,
+  "newCiJobs": 0,
+  "runtimeMathOwners": {
+    "narrowMathCtest": {
+      "passed": 2,
+      "seconds": 4.82
+    },
+    "actualRuntimeExistingOwner": {
+      "passed": 1,
+      "seconds": 2.48907,
+      "guardSeconds": 3.036,
+      "negativeHalfDt": 0.1,
+      "positiveHalfDt": 0.0625,
+      "forwardEulerBound": 0.125,
+      "independentNegativeThermal": "e0-3/512",
+      "independentPositiveThermal": "e0+75/16384",
+      "e0": "2^-25",
+      "journalProof": "Actual three-slot/seven-array bits+addresses, ledger/register/clock/BC/repair/budget rollback; accepted nonzero RKL1 half",
+      "fullPositiveMacro": false
+    }
+  },
+  "currentBatchSourceSha256": {
+    "src/physics/gravity/NativeExternalStage.h": "9ae1d62862d2703bbb8d973c75748fd5df309d3fba70b0e8c7ed96c4be09aee5",
+    "src/physics/gravity/NativeExternalSource.h": "356908f48d2466a0dbf059c57a0096a1f9748c63b010dc415148e9e42dce5a00",
+    "src/physics/boundary/NativeRzBoundary.h": "5de067a1f154633839697558e3da12cf2e21587106f1e19221e2e120923c2b5e",
+    "tests/host/driver/test_rz_runtime_boundary.cpp": "5523b70edcc7d36fad728c56e4b6af8ecb5287346cc614ea41e44d0a2e2a78b9",
+    "tests/host/amr/test_user_physical_boundary.cpp": "db01df00aa2bc4388ccdd471eed5adbab64cf99a3603dea051fc29d13bd12c94",
+    "src/driver/stages/GravityStage.cpp": "fda12b802f2eff277ee2c00bc074c9863fd89a14436ded8c296211d72a8f3cf6",
+    "src/numerics/integrator/TimeIntegratorHelper.h": "4578aaca698b8c9c2a598e4c65178f60c4b79fdad2645207990f65394dfcf897"
+  },
+  "rawGenerated": 0,
+  "limitations": [
+    "Public Native/Device capability gates remain",
+    "Nonzero warm RKL2 coupled macro and true cold positive macro pending",
+    "Independent continuous reference math passed nine contacts but actual Core binding/physical force/AMR-work remain pending",
+    "No current matched CPU/CUDA/4070Ti timing or long-time grant; whole O release not complete"
+  ],
+  "dpsPublicReferenceJobs": [
+    {
+      "taskId": "public-ring-surface-one-angle-20261007",
+      "seconds": 82.14,
+      "usage": {
+        "input_tokens": 1948,
+        "cached_input_tokens": 384,
+        "output_tokens": 17248,
+        "noncached_input_tokens": 1564,
+        "reasoning_tokens": 16919,
+        "visible_output_tokens": 329
+      },
+      "costEstimateUsd": {
+        "currency": "USD",
+        "off_peak": 0.01058455,
+        "peak": 0.0211691,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "scope": "Exact public identities only; no algorithm certificate",
+      "blockingWaitSeconds": 0,
+      "sourceExport": false
+    },
+    {
+      "taskId": "public-ring-disk-contact-kernels-20261007",
+      "seconds": 94.35,
+      "usage": {
+        "input_tokens": 1887,
+        "cached_input_tokens": 384,
+        "output_tokens": 21819,
+        "noncached_input_tokens": 1503,
+        "reasoning_tokens": 21349,
+        "visible_output_tokens": 470
+      },
+      "costEstimateUsd": {
+        "currency": "USD",
+        "off_peak": 0.013318,
+        "peak": 0.026636,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "scope": "Exact public identities only; no algorithm certificate",
+      "blockingWaitSeconds": 0,
+      "sourceExport": false
+    }
+  ],
+  "actualExternalRuntimeCurrent": {
+    "warmMatrixPassed": 24,
+    "stepsEach": 10,
+    "physicalTimeStep": 0.0001,
+    "initialTime": 0.375,
+    "selectedMethods": [
+      "Euler",
+      "RK2",
+      "RK3"
+    ],
+    "mixedAmrDirections": 2,
+    "gphiSigns": 2,
+    "physicalBoundaries": [
+      "reflecting",
+      "outflow"
+    ],
+    "unchangedNormalizedConservationBudget": 1e-12,
+    "maximumWarmConservationNormalizedError": 7.3237267868862e-16,
+    "exactPhysicalWorkPassed": true,
+    "actualSourceIdentityNegativesPassed": true,
+    "ownerStatus": "FAIL_COLD_BOUNDARY_PREPARATION",
+    "coldSourceConsumptionPassed": false,
+    "lateEosRollbackPassed": false,
+    "failedLogLocal": "native-external-runtime24-native-fixture-ctest.log",
+    "seconds": 31.29,
+    "rawProduced": false,
+    "fullNativePhysicalAcceptance": false,
+    "ownerPassed": true,
+    "coldSourceConsumptionAndDiscardPassed": true,
+    "coldCompleteStepAccepted": false,
+    "lateActualEosRollbackPassed": true,
+    "sourceApplicationIdentityNegativeCasesPassed": 16,
+    "publicCapabilityGranted": false
+  },
+  "unknownDiagnosticRepair": {
+    "scopedOwnersPassed": 3,
+    "seconds": 19.52,
+    "numericThresholdChanges": 0
+  },
+  "delegationPublicGlobalContact": {
+    "durationSeconds": 62.68,
+    "outputTokens": 14672,
+    "estimatedUsd": [
+      0.00901675,
+      0.0180335
+    ],
+    "billUsd": null,
+    "scope": "Public exact global-halfcircle contact formulas only",
+    "productionOrQuadratureAcceptance": false,
+    "sourceOrRawExport": false,
+    "blockingWaitSeconds": 0
+  },
+  "currentAffectedCtest": {
+    "passed": 5,
+    "seconds": 47.91,
+    "guardSeconds": 48.31,
+    "cases": [
+      {
+        "name": "curvilinear_metrics",
+        "seconds": 16.8701
+      },
+      {
+        "name": "gravity_stage_contract",
+        "seconds": 30.4107
+      },
+      {
+        "name": "boundary_plan",
+        "seconds": 0.604873
+      },
+      {
+        "name": "low_density_math",
+        "seconds": 0.0117619
+      },
+      {
+        "name": "conservative_flux_limiter",
+        "seconds": 0.00517648
+      }
+    ],
+    "buildSeconds": 77.291,
+    "rawGenerated": 0
+  },
+  "coldPhysicalBoundarySupport": {
+    "status": "PASS",
+    "rootCause": "Provisional logical outflow seed entered the active donor density support before immutable physical-boundary preparation",
+    "fix": "Real active three-column one-sided numerical support for physical donor; completed ghost/corner support unchanged",
+    "equationsChanged": false,
+    "eosGateOrBudgetRelaxed": false,
+    "allThreeSlotAndPaddingBitsChecked": true,
+    "sharedCoreFile": "src/physics/boundary/NativeRzBoundary.h"
+  },
+  "fullCurrentCpu": {
+    "buildSeconds": 306.727,
+    "ctestPassed": 76,
+    "ctestSeconds": 136.37,
+    "guardSeconds": 137.243,
+    "binarySha256": "c912f9fa6c93aadb8c0e09cf557fc0f74072cf771b36f7309339c24087bd24fc",
+    "newCtestOwners": 0,
+    "publicNativeOrDeviceGranted": false
+  }
+}

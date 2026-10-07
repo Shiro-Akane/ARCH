@@ -20,6 +20,8 @@
 #include "numerics/state/RzCellAverage.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/diffusion/DiffFlux.h"
+#include "numerics/diffusion/DiffFunction.h"
+#include "numerics/diffusion/DiffusionAMRStages.h"
 #include "fixtures/hydro/MeanThermoCases.h"
 #include <iostream>
 #include <stdexcept>
@@ -334,6 +336,233 @@ void native_rz_diffusion_thermodynamics() {
     require(legacy.valid&&reads==0&&legacy.state.rho==raw.rho&&legacy.state.mom_w==raw.mom_w
         &&legacy.state.eng==raw.eng,"legacy diffusion thermal convention changed");
 }
+/** Actual native angular FE counterexample, with independent physical means.
+ * Workflow: furnish analytical logical ghosts (not a BC qualification), check
+ * the real EOS and every real row dt, evaluate the genuine diffusion operator,
+ * then apply the existing one-stage RKL1 helper. Stable angular graph rows do
+ * not guarantee nonlinear kinetic/thermal admissibility after an explicit step.
+ * No Runtime/clock is owned here, so no macro rollback or BC grant is claimed.
+ */
+void native_rz_angular_fe_thermal_reference()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr long double e0=1.L/33554432.L,nu=1.L;
+    const auto relative=[](double actual,long double expected,const char* why) {
+        require(std::isfinite(actual)&&std::isfinite(expected)
+            &&std::abs(static_cast<long double>(actual)-expected)
+                <=64.L*std::numeric_limits<double>::epsilon()*std::abs(expected),why);
+    };
+    require(amr::BLOCK_NX==16&&amr::BLOCK_NY==16,
+        "angular FE independent reference requires the actual 16x16 block");
+    Grid grid(amr::MAX_NG,0.,16.,0.,16.,0.,1.,1,1,1);
+    grid.dim=2;grid.geometry="cylindrical";
+    grid.dyadic_identity={true,{0.,0.},{16.,16.},{1,1},0,{0,0},false};
+    grid.InitializeTopology(rz);
+    require(GridMetrics::matches_identity(grid.dyadic_identity,
+        {grid.x1_min,grid.x2_min},{grid.x1_max,grid.x2_max},{grid.dx1,grid.dx2})
+        &&grid.dx1==1.&&grid.dx2==1.,"angular FE real native root identity changed");
+    const auto geometry=GridMetrics::make_geometry_view(grid,rz);
+    SpeciesManager species;species.add_species("angular-fe-gas",1.,1.,1.4,2.);
+    IdealGas eos(1.4,species);const auto species_view=species.get_host_view();
+    SimConfig config{};
+    config.physics.diffusion.use_diffusion=true;
+    config.physics.diffusion.use_viscous_diffusion=true;
+    config.physics.diffusion.use_thermal_diffusion=false;
+    config.physics.diffusion.use_species_diffusion=false;
+    config.physics.diffusion.nu_visc=double(nu);
+    config.physics.diffusion.alpha_therm=0.;config.physics.diffusion.D_spec=0.;
+    require(config.physics.diffusion.diff_cfl==.8,
+        "angular FE witness must retain the actual default diffusion CFL");
+    const arch::state::Bounds bounds{config.numerics.sml_rho,
+        config.numerics.min_eint,config.numerics.max_eint};
+    require(bounds.density<1.&&bounds.internal_min<e0&&bounds.internal_max>e0,
+        "angular FE source does not satisfy the unchanged physical bounds");
+    FluidState field;field.Preallocate(grid.GetTotalSize());field.InitSpecies(1);
+    field.stage_repairs.reset(1,arch::state::RepairSemantics::RzVolumeAngular);
+    const double padding=std::bit_cast<double>(std::uint64_t{0x7ff8000000000075});
+    for(int index=0;index<grid.GetTotalSize();++index) {
+        field.set(index,{padding,padding,padding,padding,padding});
+        field.enuc_rate[index]=padding;field.X(0,index)=padding;
+    }
+    // True antiderivatives; signed negative ghosts have odd phi momentum and
+    // even density/energy. All logical ghosts are analytic fixture inputs;
+    // neither a manufactured phased handler nor actual BC completion is used.
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+        const long double V=(h*h-l*l)/2.L,W=(h*h*h-l*l*l)/3.L;
+        const long double C=(h*h*h*h-l*l*l*l)/4.L;
+        const long double omega=std::max(std::abs(l),std::abs(h))<=1.L?0.L:1.L;
+        const long double J=omega*C,Et=V*e0+omega*omega*C/2.L;
+        const int index=grid.GetIndex(i,j,0);
+        field.set(index,{1.,0.,0.,double(J/W),double(Et/V)});
+        field.enuc_rate[index]=std::ldexp(double(index),-10);field.X(0,index)=1.;
+    }
+    struct ArraySnapshot {
+        std::array<std::vector<double>,7> values;
+        std::array<const double*,7> addresses{};
+    };
+    const auto arrays=[](const FluidState& state) {
+        return std::array<const std::vector<double>*,7>{&state.rho,&state.mom_u,
+            &state.mom_v,&state.mom_w,&state.eng,&state.enuc_rate,&state.mass_fractions};
+    };
+    const auto pin=[&](const FluidState& state) {
+        ArraySnapshot snapshot;const auto current=arrays(state);
+        for(int n=0;n<7;++n) {
+            snapshot.values[n]=*current[n];snapshot.addresses[n]=current[n]->data();
+        }
+        return snapshot;
+    };
+    const auto unchanged=[&](const FluidState& state,const ArraySnapshot& snapshot) {
+        const auto current=arrays(state);
+        for(int n=0;n<7;++n) {
+            require(current[n]->data()==snapshot.addresses[n]
+                &&current[n]->size()==snapshot.values[n].size(),
+                "angular FE reference changed an original array lease");
+            for(std::size_t k=0;k<snapshot.values[n].size();++k)
+                require(std::bit_cast<std::uint64_t>((*current[n])[k])
+                    ==std::bit_cast<std::uint64_t>(snapshot.values[n][k]),
+                    "angular FE reference changed original logical/padding bits");
+        }
+    };
+    const auto before=pin(field);const auto repair_before=field.stage_repairs;
+    const auto repair_address=field.stage_repairs.values.data();
+    const auto source_diffusion_boundary=field.diffusion_boundary;
+    const auto source_flux_capture=field.boundary_flux_capture;
+    RzThermodynamics::validate_completed_patch_eos(field,grid,1,bounds,eos);
+    const DiffFlux::HostDiffusionStateReader read{field};
+    const int i=grid.Is(),j=grid.Js(),first=grid.GetIndex(i,j,0);
+    relative(RzThermodynamics::make_cell(read,first,geometry,i,bounds).internal,e0,
+        "actual first native source EOS lost independent positive e0");
+    double composition[1],neighbor_composition[1],face_composition[1],charge[1],inverse_mass[1];
+    const auto diffusion=DiffFlux::make_diffusion_config_view(config);
+    // Independent capacities and s centroids of every REAL radial row. The
+    // graph includes both axial neighbors even though this field has zero dz
+    // gradient; the retained radial-velocity source also bounds this operator.
+    const auto C=[](int n) {
+        const long double l=n,h=n+1;
+        return (h*h*h*h-l*l*l*l)/4.L;
+    };
+    const auto s=[&](int n) {
+        const long double l=n,h=n+1;
+        return (h*h*h*h*h*h-l*l*l*l*l*l)/(6.L*C(n));
+    };
+    const auto K=[&](int face) {
+        if(face==0)return 0.L;
+        const long double r=face;
+        return 2.L*nu*r*r*r*r/(s(face)-s(face-1));
+    };
+    for(int n=0;n<amr::BLOCK_NX;++n) {
+        const int radial=i+n,index=grid.GetIndex(radial,j,0);
+        const long double q_generic=4.L*nu+4.L*nu/((2.L*n+1.L)*(2.L*n+1.L));
+        const long double q_phi=(K(n)+K(n+1))/C(n)+2.L*nu;
+        require(q_generic>=q_phi,"independent actual angular row exceeds retained row");
+        const auto dt=DiffFlux::evaluate_diffusion_dt_candidate(field.get(index),
+            field.mass_fractions.data()+index,1,grid.GetTotalSize(),eos,species_view,
+            diffusion,geometry,radial,j,0,composition,neighbor_composition,
+            face_composition,charge,inverse_mass,read);
+        require(dt.valid,"actual angular FE row rejected valid analytical source");
+        relative(dt.value,1.L/q_generic,"actual angular FE row differs from integral reference");
+    }
+    const double raw_fe=DiffFlux::adaptive_dt_diff(field,eos,grid,config,1.,rz);
+    relative(raw_fe,1.L/8.L,"actual all-cell FE minimum differs from 16-row reference");
+    std::vector<FluidVector> face_flux(grid.GetTotalSize());
+    std::vector<double> face_species(grid.GetTotalSize());
+    DiffFlux::compute_fluxes(field,eos,grid,config,face_flux,face_species,0,false,rz);
+    const auto face=face_flux[grid.GetIndex(i+1,j,0)];
+    relative(face.mom_w,-15.L/16.L,"actual angular face traction differs from true capacity centroid");
+    relative(face.eng,-75.L/512.L,"actual angular face work differs from same true face velocity");
+    require(face_flux[first].mom_w==0.&&face_flux[first].eng==0.,
+        "actual regular axis contributes artificial traction/work");
+    FluidState L;L.Preallocate(grid.GetTotalSize());L.InitSpecies(1);
+    DiffFlux::compute_diffusion_operator(field,L,eos,grid,config,rz);
+    relative(L.mom_w[first],45.L/16.L,"actual first-cell native angular operator differs from J'/W");
+    relative(L.eng[first],75.L/256.L,"actual first-cell native work operator differs from E'/V");
+    for(int row=grid.Js();row<grid.Je();++row)for(int column=i;column<grid.Ie();++column) {
+        const int index=grid.GetIndex(column,row,0);
+        require(L.rho[index]==0.&&L.mom_u[index]==0.&&L.mom_v[index]==0.&&L.X(0,index)==0.,
+            "pure native angular diffusion changed unrelated conserved quantities");
+    }
+    for(bool negative:{false,true}) {
+        const double dt=negative?config.physics.diffusion.diff_cfl*raw_fe:1./16.;
+        const int stages=DiffFunction::compute_stages_rkl1(dt,raw_fe,
+            config.physics.diffusion.diff_cfl,config.physics.diffusion.max_stages);
+        require(stages==1,"actual angular FE witness did not select genuine one-stage RKL1");
+        const auto coefficient=DiffFunction::get_rkl1_coeffs(1,stages);
+        require(coefficient.tilde_mu==1.,"actual one-stage RKL1 no longer equals FE");
+        std::vector<FluidVector> increment(grid.GetTotalSize());
+        std::vector<double> species_increment(grid.GetTotalSize());
+        for(int index=0;index<grid.GetTotalSize();++index) {
+            increment[index]=dt*L.get(index);species_increment[index]=dt*L.X(0,index);
+        }
+        FluidState proposal=field;
+        Numerics::Diffusion::detail::apply_first_rkl_stage(field,proposal,increment,
+            species_increment,grid,coefficient.tilde_mu);
+        TimeIntegration::accept_stage_state(proposal,grid,config.numerics,rz);
+        // Independent finite-step physics: H_new=H_n+dt*E'-dt^2*J'^2/(2*C).
+        // Strict recovery intentionally returns no usable e for the negative
+        // candidate, so do not read its invalid internal field as an oracle.
+        const long double tau=static_cast<long double>(dt)*nu;
+        const long double J_new=15.L*tau/16.L;
+        const long double E_native=e0+75.L*tau/256.L;
+        const long double expected_e=e0+75.L*tau/256.L-225.L*tau*tau/64.L;
+        relative(proposal.mom_w[first],J_new/(1.L/3.L),"genuine first RKL1 native angular mean");
+        relative(proposal.eng[first],E_native,"genuine first RKL1 native energy mean");
+        const long double inferred_e=static_cast<long double>(proposal.eng[first])
+            -(.5L*(static_cast<long double>(proposal.mom_w[first])/3.L)
+                *(static_cast<long double>(proposal.mom_w[first])/3.L)/(1.L/4.L))/(1.L/2.L);
+        relative(double(inferred_e),expected_e,"independent finite-step true-inertia thermal value");
+        const auto candidate_before=pin(proposal);
+        const auto candidate_read=[&](int index){return proposal.get(index);};
+        const auto closure=RzThermodynamics::make_cell(candidate_read,first,geometry,i,bounds);
+        if(negative) {
+            require(expected_e<0.L&&expected_e<-1.L/1024.L,
+                "negative FE witness became a rounding-scale cancellation");
+            require(!closure.valid()&&closure.inertia_mapping_valid
+                &&closure.status==arch::state::Status::unresolved_energy,
+                "genuine negative native FE thermal state was repaired or accepted");
+            const double fraction[1]{1.};
+            require(RzThermodynamics::validate_mean_eos(closure,fraction,1,eos)
+                ==arch::state::Status::unresolved_energy,
+                "selected EOS mean path accepted negative actual native closure");
+            bool rejected=false;
+            try {RzThermodynamics::validate_completed_patch_eos(proposal,grid,1,bounds,eos);}
+            catch(const RzThermodynamics::AcceptanceError& error) {
+                const auto& diagnostic=error.diagnostic();
+                rejected=diagnostic.phase==RzThermodynamics::AcceptancePhase::effective_thermal
+                    &&diagnostic.status==arch::state::Status::unresolved_energy
+                    &&diagnostic.index==first&&diagnostic.inertia_mapping_valid;
+                if(!rejected)throw;
+            }
+            require(rejected,"actual completed-cell EOS gate did not reject the FE thermal counterexample");
+        } else {
+            require(expected_e>e0&&closure.valid(),"genuine smaller angular FE step rejected positive thermal state");
+            relative(closure.internal,e0+75.L/16384.L,"positive FE native closure differs from independent exact reference");
+            const double fraction[1]{1.};
+            require(RzThermodynamics::validate_mean_eos(closure,fraction,1,eos)==arch::state::Status::valid,
+                "selected IdealGas rejected genuinely positive smaller angular FE step");
+            RzThermodynamics::validate_completed_patch_eos(proposal,grid,1,bounds,eos);
+        }
+        unchanged(proposal,candidate_before);unchanged(field,before);
+    }
+    unchanged(field,before);
+    require(field.GetNumSpecies()==1&&field.block_total_size_==grid.GetTotalSize()
+        &&field.diffusion_boundary==source_diffusion_boundary
+        &&field.boundary_flux_capture==source_flux_capture
+        &&field.stage_repairs.values.data()==repair_address
+        &&field.stage_repairs.values==repair_before.values
+        &&field.stage_repairs.semantics==repair_before.semantics
+        &&field.stage_repairs.block_uid==repair_before.block_uid
+        &&field.stage_repairs.stage==repair_before.stage
+        &&std::bit_cast<std::uint64_t>(field.stage_repairs.time)
+            ==std::bit_cast<std::uint64_t>(repair_before.time),
+        "angular FE leaves changed source bookkeeping/observer ownership");
+    for(int axis=0;axis<3;++axis)
+        require(std::bit_cast<std::uint64_t>(field.stage_repairs.position[axis])
+            ==std::bit_cast<std::uint64_t>(repair_before.position[axis]),
+            "angular FE leaves changed source receipt position");
+    std::cout<<"RZ_ANGULAR_FE_REFERENCE_PASS actual_operator=true actual_rkl1_stage=true negative_thermal_rejected=true smaller_step_positive=true BC_or_Runtime_qualified=false\n";
+}
+
 /** Destination numerical-inertia counterexample; not an AMR transfer qualification.
  * Independent physical rho=32-r^4, Omega=1, e0=1/1024 supplies true V/W means.
  * Coarsening preserves M/J/E but refits rho_* and I_*; the fine numerical
@@ -829,6 +1058,7 @@ void leaves() {
     native_rz_angular_velocity_underflow();
     native_rz_stage_prechecks();
     native_rz_diffusion_thermodynamics();
+    native_rz_angular_fe_thermal_reference();
     native_rz_actual_diffusion_distances();
     native_rz_coarsening_thermal_reference();
     native_rz_completed_ghost_eos_reference();

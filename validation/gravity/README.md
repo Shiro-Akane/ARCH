@@ -201,3 +201,9 @@ scheduling after the user-boundary baseline. Matched-endpoint CPU/FLASH costs,
 unchanged-budget field comparisons and five-step 2D/3D coupled checks have
 separate scopes. Its unresolved cost targets remain visible; FLASH comparisons
 are optional developer work, independent of ARCH build, tests and CI.
+
+## Axisymmetric `(r,z)` verification
+
+The native axisymmetric route is an internal verification candidate. Its CPU checks cover real reflecting/user boundaries, original Euler/RK2/RK3 external-source stages and angular diffusion refusal/rollback. Continuous self-gravity, complete coupling and Device publication have separate acceptance gates. The [current CPU record](results/release-closure-20261007/native-external-angular-cpu-summary.json) identifies the tested source and original budgets.
+
+The optional [full-ring reference](rz_ring_surface_reference.py) computes outward intervals for potential and both force components from explicit dense piecewise-constant ring sources, including contact sites. It requires an already installed `python-flint` backend; ARCH construction and CI have no such dependency. Exact supplied geometry, complete coverage and shared work limits are checked. Mathematical intervals qualify the supplied input only; actual Core source/observer identity and physical error must be checked separately. The [reference record](results/release-closure-20261007/ring-surface-reference-summary.json) preserves this scope.

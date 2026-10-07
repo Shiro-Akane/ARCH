@@ -43,6 +43,7 @@
 #include "grid/Grid.h"
 #include "grid/GridMetrics.h"
 #include "physics/gravity/IGravityPolicy.h"
+#include "physics/gravity/NativeExternalSource.h"
 #include "numerics/integrator/GeometricSources.h"
 
 namespace TimeIntegration
@@ -789,14 +790,20 @@ namespace TimeIntegration
         double entropy_fix_coeff, double flux_weight = 1.0, bool roe_wave_speed = true,
         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
         arch::state::Bounds physical_bounds = {},
-        const arch::boundary::HydroBoundaryView& hydro_boundary = {})
+        const arch::boundary::HydroBoundaryView& hydro_boundary = {},
+        Physical::Gravity::NativeExternalStageFrame::PatchReceipt* native_source = nullptr)
     {
         // Validate the chart and reject consumers not yet migrated before any
         // output/cache mutation. Runtime Grid still uses its existing chart.
         (void)GridMetrics::make_geometry_view(grid, semantics);
-        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
-            && gravity != nullptr)
+        const bool rz=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+        if(rz&&gravity&&gravity->source_descriptor().origin!=
+            Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal)
             throw std::invalid_argument("RZ Hydro gravity consumer not migrated");
+        if((rz&&gravity&&!native_source)||(native_source&&(!rz||!gravity)))
+            throw std::invalid_argument("Native gravity consumer lacks its actual source receipt");
+        if(native_source)native_source->require_application(state,grid,
+            GridMetrics::make_geometry_view(grid,semantics),dt,physical_bounds);
         int n_spec = state.GetNumSpecies();
         std::fill(dU.begin(), dU.end(), FluidVector());
         std::fill(d_spec.begin(), d_spec.end(), 0.0);
@@ -823,7 +830,7 @@ namespace TimeIntegration
 
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec, semantics,true);
 
-            if (gravity) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
+            if (gravity&&!native_source) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
 
             // Flux registration has one shared face-index convention for all AMR operators.
             if (amr_ctrl && block_id >= 0) {
@@ -834,6 +841,9 @@ namespace TimeIntegration
         }
 
         add_geometric_sources(dU, state, eos, grid, dt, semantics);
-        add_gravity_sources(dU, state, grid, dt, gravity);
+        if(native_source)
+            Physical::Gravity::add_native_external_sources(dU,flux_buffer,spec_flux_buffer,
+                state,eos,grid,GridMetrics::make_geometry_view(grid,semantics),dt,physical_bounds,*native_source);
+        else add_gravity_sources(dU, state, grid, dt, gravity);
     }
 } // namespace TimeIntegration

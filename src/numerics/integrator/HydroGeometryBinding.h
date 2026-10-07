@@ -14,11 +14,13 @@
 
 #include "driver/schedule/StageScheduler.h"
 #include "numerics/integrator/IHydroSolver.h"
+#include "physics/gravity/IGravityPolicy.h"
 
 namespace TimeIntegration {
 struct HydroGeometryBinding {
     GridMetrics::GeometrySemantics semantics;
     amr::CoordinateSeamGeometry exchange_chart;
+    bool deferred_native_source=false;
 };
 
 /** Resolve a shared chart and reject incomplete native Host execution before mutation. */
@@ -39,8 +41,18 @@ HydroGeometryBinding bind_hydro_geometry(
     } else {
         if (rz) throw std::invalid_argument("RZ boundary chart identity is missing");
     }
-    if (rz && gravity)
-        throw std::invalid_argument("RZ gravity requires authoritative finite-ring contract");
+    if (rz && gravity) {
+        const auto source=gravity->source_descriptor();
+        const auto& binding=arch::scheduler::current_stage_binding();
+        if(source.origin!=Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal
+            ||!source.external.enabled||!std::isfinite(source.external.g_x)
+            ||!std::isfinite(source.external.g_y)||!std::isfinite(source.external.g_z)
+            ||!binding.context.hydro_preparation
+            ||!binding.context.hydro_preparation->supports_host_macro_step_journal())
+            throw std::invalid_argument("RZ gravity requires its actual prepared source contract");
+        // Discovery selects ordering only. The first executor must borrow the
+        // private real frame before clearing registers or evaluating patches.
+    }
     if(rz) {
         const auto& binding=arch::scheduler::current_stage_binding();
         if(binding.context.side!=arch::state::ExecutionSide::Host)
@@ -64,6 +76,6 @@ HydroGeometryBinding bind_hydro_geometry(
             throw std::invalid_argument("RZ boundary preflight is missing");
     }
     return {semantics,rz ? amr::CoordinateSeamGeometry::RzAxisymmetric
-                        : amr::CoordinateSeamGeometry::ExistingChart};
+                        : amr::CoordinateSeamGeometry::ExistingChart,rz&&gravity};
 }
 } // namespace TimeIntegration

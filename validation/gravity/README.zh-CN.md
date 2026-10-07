@@ -161,3 +161,9 @@ Helmholtz/aprox13 并关闭 NSE，不能据此宣称全部策略组合已验收�
 同状态 EOS 复用、原始表读取和多重网格 Host 调度。相同物理终点的 CPU/FLASH
 整程成本、原预算下的字段对照及 2D/3D 四模块五步检查分别说明范围，并保留未达到
 的性能目标。FLASH 对比属于可选的维护者工作，ARCH 的构建、测试和 CI 独立运行。
+
+## 轴对称 `(r,z)` 验证
+
+原生轴对称路线目前为内部验收候选。CPU 检查覆盖真实反射／用户边界、原 Euler／RK2／RK3 外力阶段以及方位扩散拒绝与回滚。连续自引力、完整耦合和设备发布分别具有验收出口；[当前 CPU 记录](results/release-closure-20261007/native-external-angular-cpu-summary.json)保存实际源码身份和原预算。
+
+可选[完整环源参考](rz_ring_surface_reference.py)从显式、完整的分片常密度环源计算势及两个力分量的向外区间，包含接触位置。它使用已安装的 `python-flint`，ARCH 构建和 CI 独立运行。工具检查实际输入几何、完整覆盖与共同工作上限；数学区间仅认证输入本身，真实 Core 源／观测点身份及物理误差另行核对。[参考记录](results/release-closure-20261007/ring-surface-reference-summary.json)保留此范围。

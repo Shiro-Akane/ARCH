@@ -36,6 +36,7 @@
 #include "numerics/integrator/TimeIntegratorEuler.h"
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
+#include "physics/boundary/BoundaryDiagnostics.h"
 #include "physics/boundary/UserBoundary.h"
 #include "physics/eos/IdealGas.h"
 
@@ -383,7 +384,8 @@ struct Fixture {
         }
     }
     explicit Fixture(dispatch::TimeIntegratorId method=dispatch::TimeIntegratorId::Rk3,
-        bool bind_source_journal=true,bool split_profile=false):config(settings(method,split_profile)) {
+        bool bind_source_journal=true,bool split_profile=false,bool select_callback_accounting=true)
+        :config(settings(method,split_profile)) {
         if(bind_source_journal&&method!=dispatch::TimeIntegratorId::Rk3)
             throw std::invalid_argument("fixture source journal is explicitly RK3-only");
         species.add_species("X",1.,1.,1.4,1.);
@@ -401,11 +403,13 @@ struct Fixture {
         }
         start.repairs.reset(1,state::RepairSemantics::RzVolumeAngular);
         controller=std::make_unique<SimulationController>(config,start);
-        boundary::ResolvedUserBoundaries selected;
-        // Nonempty registered selection exercises real Runtime accounting, with builtin physical ghosts.
-        selected.gravity=[](const boundary::GravityBoundaryContext&){return boundary::GravityBoundaryData{};};
-        selected.identity="owner-negative-fixture";
-        selection=std::make_unique<boundary::ScopedUserBoundarySelection>(std::move(selected),config,species);
+        if(select_callback_accounting) {
+            boundary::ResolvedUserBoundaries selected;
+            // Nonempty registered selection exercises real Runtime accounting, with builtin physical ghosts.
+            selected.gravity=[](const boundary::GravityBoundaryContext&){return boundary::GravityBoundaryData{};};
+            selected.identity="owner-negative-fixture";
+            selection=std::make_unique<boundary::ScopedUserBoundarySelection>(std::move(selected),config,species);
+        }
         bc=std::make_unique<BCHandler>(config,rz);
         bc->bind(*eos,species);
         runtime=std::make_unique<driver::DriverRuntime>(control,*bc,config,species,*controller);
@@ -433,6 +437,103 @@ struct Fixture {
         driver::advance_hydro(*runtime,workspace,*context,&plan,context->step_dt,integrator,nullptr,&hydro,qualification);
     }
 };
+/** Independent full-ring surface oracle for the actual Runtime plane owner.
+ * Controlled F_phi=r and constant other fluxes are captured by the real leaf;
+ * this checks geometry/accounting only, not a Riemann or diffusion solution.
+ * Native built-in faces require no fabricated user callback selection.
+ */
+void native_builtin_boundary_capture_measures(){
+    Fixture f(dispatch::TimeIntegratorId::Euler,false,false,false);
+    require(!f.selection&&!boundary::CurrentUserBoundaries(),
+        "native builtin observer unexpectedly depends on a user selection");
+    require(bool(f.context->hydro_flux_capture_begin)&&bool(f.context->hydro_flux_capture_accept)
+        &&bool(f.context->rkl_flux_capture_begin)&&bool(f.context->rkl_flux_capture_accept),
+        "native builtin Runtime did not bind its actual surface observer");
+    const auto before=capture_fields(f.control);
+    const auto fill_actual_planes=[&]{
+        for(const int id:f.control.tree->GetActiveBlocks()) {
+            auto& block=f.control.pool->GetBlock(id);const auto& g=block.grid;
+            const auto capture=block.fluid_state.boundary_flux_capture;
+            require(bool(capture),"actual Runtime observer has no allocated capture");
+            require(capture==block.state_next.boundary_flux_capture
+                &&capture==block.state_scratch.boundary_flux_capture,
+                "stage slots lost their real shared capture owner");
+            require(capture->stage[4].empty()&&capture->stage[5].empty(),
+                "inactive phi faces must have no physical-surface planes");
+            const auto view=capture->view();
+            const int lower[]{g.Is(),g.Js(),g.Ks()},upper[]{g.Ie(),g.Je(),g.Ke()};
+            for(int axis=0;axis<2;++axis)for(int side=0;side<2;++side) {
+                if(capture->stage[2*axis+side].empty())continue;
+                int face[]{lower[0],lower[1],lower[2]};face[axis]=side?upper[axis]:lower[axis];
+                const int a=(axis+1)%3,c=(axis+2)%3;
+                for(face[c]=lower[c];face[c]<upper[c];++face[c])
+                    for(face[a]=lower[a];face[a]<upper[a];++face[a]) {
+                        const long double beta=(axis+1)*(side?5.L:2.L);
+                        long double radius;
+                        if(axis==0)radius=side?g.GetFacePosR(g.Ie()-1):g.GetFacePosL(g.Is());
+                        else {
+                            const long double l=g.GetFacePosL(face[0]),h=g.GetFacePosR(face[0]);
+                            // Independent true integral: <r>_W=(integral r^3 dr)/(integral r^2 dr).
+                            radius=((h*h*h*h-l*l*l*l)/4.L)/((h*h*h-l*l*l)/3.L);
+                        }
+                        const FluidVector flux{static_cast<double>(beta),static_cast<double>(2.L*beta),
+                            static_cast<double>(-3.L*beta),static_cast<double>(beta*radius),
+                            static_cast<double>(7.L*beta)};
+                        const double species_flux=static_cast<double>(.25L*beta);
+                        boundary::CaptureBoundaryFlux(view,axis,face[0],face[1],face[2],
+                            lower[0],upper[0],lower[1],upper[1],lower[2],upper[2],
+                            flux,&species_flux,1,1,static_cast<double>(-.125L*beta));
+                    }
+            }
+        }
+    };
+    // Independent analytic surface integrals on the authentic full annulus.
+    // Radial beta is 2/5; axial beta is 4/10. All other fields use A,
+    // whereas F_phi=r requires integral r^2 dA, with no second torque lever.
+    const long double l=f.config.grid.x1_min,h=f.config.grid.x1_max;
+    const long double dz=static_cast<long double>(f.config.grid.x2_max)-f.config.grid.x2_min;
+    const long double two_pi=2.L*std::acos(-1.L);
+    const long double area_rate=two_pi*(dz*(5.L*h-2.L*l)+6.L*(h*h-l*l)/2.L);
+    const long double torque_rate=two_pi*(dz*(5.L*h*h*h-2.L*l*l*l)
+        +6.L*(h*h*h*h-l*l*l*l)/4.L);
+    const std::array<long double,7> rate{{area_rate,2.L*area_rate,-3.L*area_rate,
+        torque_rate,7.L*area_rate,.25L*area_rate,-.125L*area_rate}};
+    const auto require_rates=[&](const std::vector<double>& actual,long double dt){
+        require(actual.size()==rate.size(),"actual Runtime surface receipt extent changed");
+        for(std::size_t component=0;component<rate.size();++component) {
+            const long double expected=dt*rate[component];
+            require(std::isfinite(actual[component])
+                &&std::abs(static_cast<long double>(actual[component])-expected)
+                    <=64.L*std::numeric_limits<double>::epsilon()*std::abs(expected),
+                "native Runtime capture does not match independent full-ring V/W integral");
+        }
+    };
+    const auto hydro_plan=scheduler::make_hydro_plan(scheduler::HydroMethod::Euler);
+    f.context->hydro_flux_capture_begin(hydro_plan.stages.front());
+    fill_actual_planes();
+    f.context->hydro_flux_capture_accept(hydro_plan.stages.front());
+    require_rates(f.runtime->hydro_boundary_budget(),f.context->step_dt);
+
+    // The same actual integrator serves diffusion. A genuine RKL1 one-stage
+    // descriptor has tilde_mu=1 and no older/cache contribution; heat stays V.
+    f.context->boundary_step_dt=1./16.;
+    const auto rkl_plan=scheduler::make_rkl_plan(scheduler::RklMethod::RKL1,1);
+    f.context->rkl_flux_capture_begin(rkl_plan.stages.front(),rkl_plan);
+    fill_actual_planes();
+    f.context->rkl_flux_capture_accept(rkl_plan.stages.front(),rkl_plan);
+    require_rates(f.runtime->diffusion_boundary_budget(),f.context->boundary_step_dt);
+    // Installing/capturing/integrating an observer never evolves any real
+    // conserved/species/ENUC array, including padding, or changes its lease.
+    for(const auto& saved:before) {
+        const auto live=slots(f.control.pool->GetBlock(saved.id));
+        for(int slot=0;slot<3;++slot)for(int field=0;field<7;++field) {
+            require(bits(live[slot]->*fields[field],saved.values[slot].*fields[field]),
+                "native boundary accounting changed a source array or padding");
+            require((live[slot]->*fields[field]).data()==saved.addresses[slot][field],
+                "native boundary accounting changed a real source allocation");
+        }
+    }
+}
 /** Require the actual native scheduler/gate frame before any selected solve writes. */
 void native_gate_preflight_preserves_evidence(){
     struct Method {dispatch::TimeIntegratorId id;driver::IntegratorSolve solve;};
@@ -1243,4 +1344,5 @@ void test_host_hydro_transaction(){
     post_boundary_rejection_rolls_back_complete_runtime();post_boundary_callback_presence_is_frozen();
     native_gate_preflight_preserves_evidence();
     whole_macro_endpoint_and_rollback();rejected_timestep_advice_is_not_accepted();
+    native_builtin_boundary_capture_measures();
 }

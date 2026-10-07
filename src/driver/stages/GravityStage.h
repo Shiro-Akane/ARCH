@@ -11,6 +11,7 @@
 #include <array>
 #include <fstream>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -19,22 +20,25 @@
 #include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 #include "physics/gravity/GravitySolveTypes.h"
 
-namespace Physical::Gravity { class IGravityPolicy; class SelfGravity; }
+namespace Physical::Gravity { class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; }
 namespace arch::driver {
 class DriverRuntime;
 class GravityStage final : public scheduler::HydroStagePreparation {
 public:
     // Explicit internal CPU verification only; never selected from SimConfig.
     // Candidate fields remain unreadable by normal Hydro/plot/CFL consumers.
-    enum class Qualification { Production, NativeRzCandidate };
+    enum class Qualification { Production, NativeRzCandidate, NativeRzExternalCandidate };
     GravityStage(DriverRuntime&, const Physical::Gravity::IGravityPolicy*,
         Qualification = Qualification::Production);
+    ~GravityStage() override;
     state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest&) override;
     void prepare_current(double time, bool reset_solver_history);
     void invalidate() const override;
     double timestep() const;
     std::vector<io::PlotScalarField> plot_fields() const;
-    bool active() const { return gravity_!=nullptr; }
+    bool active() const { return gravity_!=nullptr||native_external(); }
+    /** Four accepted body-source integrals; no potential/self-gravity accounting. */
+    std::array<long double,4> external_source_budget() const noexcept { return external_accepted_; }
     /** Journal capability is independent of the physical field/RZ qualification gate. */
     bool supports_host_macro_step_journal() const noexcept override;
     /** Freeze accepted observer state before any macro-step fluid producer runs. */
@@ -47,10 +51,17 @@ public:
     /** Flush an already accepted macro-step; an I/O failure remains an explicit run failure. */
     void flush_committed_diagnostics();
 private:
+    /** Internal source-only profile; public configuration never selects it. */
+    bool native_external() const noexcept { return qualification_==Qualification::NativeRzExternalCandidate; }
+    state::CompletionToken prepare_native_external(const scheduler::HydroStagePreparationRequest&);
     state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int);
     Qualification qualification_;
     DriverRuntime& runtime_;
+    const Physical::Gravity::IGravityPolicy* policy_;
     const Physical::Gravity::SelfGravity* gravity_;
+    std::unique_ptr<Physical::Gravity::NativeExternalStageFrame> external_frame_;
+    std::array<std::array<long double,4>,3> external_pending_{};
+    std::array<long double,4> external_accepted_{};
     amr::TopologyEpoch epoch_{};
     std::uint64_t generation_=0;
     std::ofstream diagnostics_,boundary_diagnostics_;

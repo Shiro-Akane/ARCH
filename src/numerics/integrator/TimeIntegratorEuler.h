@@ -41,9 +41,9 @@ struct SolverEuler
     {
         const auto geometry=TimeIntegration::bind_hydro_geometry(
             amr_ctrl,boundary_condition,hydro,gravity);
-        amr_ctrl.flux_register.Clear();
+        if(!geometry.deferred_native_source)amr_ctrl.flux_register.Clear();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
-        if (!active_blocks.empty()) {
+        if (!geometry.deferred_native_source&&!active_blocks.empty()) {
             amr_ctrl.flux_register.EnsureSpecies(amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies());
         }
         int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
@@ -72,10 +72,25 @@ struct SolverEuler
                 // synchronous read domain before any OMP output/cache work;
                 // this nonmoving metadata owner expires before publication.
                 std::optional<arch::boundary::HostHydroBoundaryDomainAuthority> wall_domain;
+                const arch::boundary::HostHydroBoundaryDomainAuthority* wall_domain_ptr=nullptr;
                 if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                    if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>)
-                        wall_domain.emplace(boundary_condition,amr_ctrl,binding,descriptor);
-                    else throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
+                    if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>) {
+                        if(geometry.deferred_native_source) {
+                            const auto* source=gravity->prepared_native_external();
+                            if(!source)throw std::logic_error("Native source preparation supplied no actual frame");
+                            wall_domain_ptr=&source->boundary_domain();
+                            // The private actual Runtime source frame precedes
+                            // all Native register/output/cache mutation.
+                            if(descriptor.stage==1) {
+                                amr_ctrl.flux_register.Clear();
+                                if(!active_blocks.empty())amr_ctrl.flux_register.EnsureSpecies(
+                                    amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies());
+                            }
+                        } else {
+                            wall_domain.emplace(boundary_condition,amr_ctrl,binding,descriptor);
+                            wall_domain_ptr=&*wall_domain;
+                        }
+                    } else throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
                 }
 #pragma omp parallel
                 {
@@ -95,7 +110,7 @@ struct SolverEuler
                         std::optional<arch::boundary::HostHydroBoundaryAuthority> wall;
                         if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
                             if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>)
-                                wall.emplace(*wall_domain,i,active_blocks[i],input_state,b.grid);
+                                wall.emplace(*wall_domain_ptr,i,active_blocks[i],input_state,b.grid);
                             else throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
                         }
                         hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state, b.grid, dt, dU, d_spec, gravity, num_cfg, descriptor.flux_register_weight, nullptr,wall?&*wall:nullptr);
@@ -109,7 +124,7 @@ struct SolverEuler
                 // All workers have joined, including on numerical rejection.
                     // Complete-domain identity still gates publication; retain
                     // the original first numerical exception if both fail.
-                    try { if(wall_domain)wall_domain->require_complete_domain(); }
+                    try { if(wall_domain_ptr)wall_domain_ptr->require_complete_domain(); }
                     catch(...) { if(!stage_failure)stage_failure=std::current_exception(); }
                     if (stage_failure) std::rethrow_exception(stage_failure);
                 return token;

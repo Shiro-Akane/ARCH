@@ -9,6 +9,7 @@
  */
 
 #include <chrono>
+#include <bit>
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
@@ -19,22 +20,43 @@
 #include "amr/AMRControl.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "driver/runtime/HostHydroTransaction.h"
 #include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/GravityExecution.h"
 #include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/NativeExternalStage.h"
 #include "physics/gravity/self/SelfGravity.h"
 
 namespace arch::driver {
 /** Open diagnostics for a configured self-gravity stage. */
 GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGravityPolicy* policy,
     Qualification qualification)
-    :qualification_(qualification),runtime_(runtime),gravity_(dynamic_cast<const Physical::Gravity::SelfGravity*>(policy)) {
-    if(qualification_!=Qualification::Production&&qualification_!=Qualification::NativeRzCandidate)
+    :qualification_(qualification),runtime_(runtime),policy_(policy),gravity_(dynamic_cast<const Physical::Gravity::SelfGravity*>(policy)) {
+    if(qualification_!=Qualification::Production&&qualification_!=Qualification::NativeRzCandidate
+        &&qualification_!=Qualification::NativeRzExternalCandidate)
         throw std::invalid_argument("Unknown gravity stage qualification");
     if(qualification_==Qualification::NativeRzCandidate
         &&(!gravity_||runtime_.backend()
             ||runtime_.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz))
         throw std::invalid_argument("Native RZ stage verification requires a CPU RZ Runtime");
+    if(native_external()) {
+        if(!policy_||gravity_||runtime_.backend()
+            ||runtime_.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz
+            ||runtime_.configuration().physics.gravity.type!="external")
+            throw std::invalid_argument("Native external stage requires its actual CPU RZ Runtime/configuration");
+        if(policy_->prepared_native_external())
+            throw std::logic_error("Native external policy already has another actual frame owner");
+        const auto source=policy_->source_descriptor();
+        const auto& input=runtime_.configuration().physics.gravity;
+        const auto same=[](double a,double b){return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);};
+        if(source.origin!=Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal
+            ||!source.external.enabled||!std::isfinite(input.g_x)||!std::isfinite(input.g_y)
+            ||!std::isfinite(input.g_z)||!same(source.external.g_x,input.g_x)
+            ||!same(source.external.g_y,input.g_y)||!same(source.external.g_z,input.g_z)
+            ||(runtime_.configuration().grid.x1_min==0.&&(input.g_x!=0.||input.g_z!=0.)))
+            throw std::invalid_argument("Native external acceleration is mismatched or nonregular at the axis");
+        return;
+    }
     if (!gravity_) return;
     const auto& config=runtime.configuration();
     std::filesystem::create_directories(config.io.out_dir);
@@ -60,6 +82,60 @@ GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGrav
     if(boundary_diagnostics_.is_open())boundary_diagnostics_.flush();
     if(!diagnostics_||(boundary_diagnostics_.is_open()&&!boundary_diagnostics_))
         throw std::runtime_error("Cannot publish gravity diagnostic schema");
+}
+/** Retire a borrowed native source before its nonmoving metadata owner dies. */
+GravityStage::~GravityStage() { if(native_external())invalidate(); }
+
+/** Prepare a body source from the actual live Runtime transaction, not a field.
+ * All seven input leases and complete boundary frames are captured before
+ * attaching; there is no fake Poisson identity, potential or source solve.
+ */
+state::CompletionToken GravityStage::prepare_native_external(
+    const scheduler::HydroStagePreparationRequest& request) {
+    const auto& binding=scheduler::current_stage_binding();
+    auto* transaction=runtime_.active_host_hydro_transaction();
+    if(!journal_active_||!prepared_||!transaction||runtime_.backend()
+        ||request.side!=state::ExecutionSide::Host||&request.ledger!=&binding.context.ledger
+        ||&binding.context.ledger!=runtime_.residency_ledger.get()
+        ||&binding.context.clock!=&runtime_.scheduler_clock
+        ||request.input_time!=binding.context.step_start_time
+            +request.descriptor.input_time_fraction*binding.context.step_dt
+        ||request.step_dt!=binding.context.step_dt
+        ||runtime_.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||runtime_.boundaries().geometry_semantics()!=runtime_.geometry_semantics()
+        ||runtime_.configuration().physics.gravity.type!="external")
+        throw std::logic_error("Native external preparation is outside its actual Runtime stage");
+    transaction->require_source_preparation_owner(*this,binding.context,request.handles);
+    if(policy_->prepared_native_external()
+        &&policy_->prepared_native_external()!=external_frame_.get())
+        throw std::logic_error("Native external policy already has another actual frame owner");
+    runtime_.topology_registry.validate_committed_snapshot(runtime_.observe_topology());
+    const auto description=policy_->source_descriptor();
+    const auto& config=runtime_.configuration();const auto& g=config.physics.gravity;
+    const auto same=[](double a,double b){return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);};
+    if(description.origin!=Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal
+        ||!description.external.enabled||!std::isfinite(g.g_x)||!std::isfinite(g.g_y)||!std::isfinite(g.g_z)
+        ||!same(description.external.g_x,g.g_x)||!same(description.external.g_y,g.g_y)
+        ||!same(description.external.g_z,g.g_z))
+        throw std::logic_error("Native external policy disagrees with its frozen Runtime configuration");
+    for(int id:runtime_.control().tree->GetActiveBlocks()) {
+        const auto& block=runtime_.control().pool->GetBlock(id);block.RequireNativeGeometryIdentity();
+        const auto& root=block.grid.dyadic_identity;
+        if(!same(root.root_lower[0],config.grid.x1_min)||!same(root.root_upper[0],config.grid.x1_max)
+            ||!same(root.root_lower[1],config.grid.x2_min)||!same(root.root_upper[1],config.grid.x2_max)
+            ||root.root_blocks[0]!=config.grid.nblockx1||root.root_blocks[1]!=config.grid.nblockx2
+            ||(root.root_lower[0]==0.&&(g.g_x!=0.||g.g_z!=0.)))
+            throw std::logic_error("Native external actual root differs from its configured regular domain");
+    }
+    invalidate();
+    if(generation_==std::numeric_limits<std::uint64_t>::max())
+        throw std::overflow_error("Native external stage generation exhausted");
+    ++generation_; // Attempted generations are monotonic, including rollback.
+    std::unique_ptr<Physical::Gravity::NativeExternalStageFrame> next{
+        new Physical::Gravity::NativeExternalStageFrame(*policy_,runtime_.boundaries(),
+            runtime_.control(),binding,request.descriptor,description.external,config,request.step_dt,generation_)};
+    external_frame_=std::move(next);policy_->native_external_frame_=external_frame_.get();
+    return {generation_,state::CompletionState::Complete};
 }
 /** Lease the exact RK input density generation and publish its solved field. */
 state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::StateResidencyLedger& ledger,double time,int stage) {
@@ -165,7 +241,7 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
 }
 /** Prepare gravity for the requested hydro stage input. */
 state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparationRequest& request) {
-    if (!gravity_) throw std::logic_error("No self-gravity stage service");
+    if (!gravity_&&!native_external()) throw std::logic_error("No gravity stage service");
     if(journal_active_) {
         if(prepared_||request.side!=state::ExecutionSide::Host||runtime_.backend()
             ||&request.ledger!=&runtime_.stage_context().ledger
@@ -184,8 +260,9 @@ state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparat
             expected_count_=scheduler::supported_hydro_time_plan(request.method).stages.size();
         }
         prepared_.emplace(PreparedFrame{request.method,request.descriptor,{},request.input_time,request.step_dt});
-        gravity_->begin_host_stage_consumption(request.step_dt);
+        if(gravity_)gravity_->begin_host_stage_consumption(request.step_dt);
     }
+    if(native_external())return prepare_native_external(request);
     return solve(request.descriptor.input_slot,request.ledger,request.input_time,request.descriptor.stage);
 }
 /** Prepare gravity on the accepted current state for output and timestep use. */
@@ -203,7 +280,7 @@ void GravityStage::prepare_current(double time, bool reset_solver_history) {
 }
 /** A real Host production service can journal without granting any new physical scope. */
 bool GravityStage::supports_host_macro_step_journal() const noexcept {
-    return gravity_&&!runtime_.backend()&&qualification_==Qualification::Production;
+    return !runtime_.backend()&&((gravity_&&qualification_==Qualification::Production)||native_external());
 }
 /** Copy accepted observer state before acquiring a fluid transaction. */
 void GravityStage::begin_macro_step() {
@@ -220,6 +297,26 @@ void GravityStage::accept(const scheduler::StageDescriptor& descriptor) {
         ||!scheduler::same_stage_descriptor(descriptor,prepared_->descriptor)
         ||descriptor.stage!=static_cast<int>(pending_count_+1))
         throw std::logic_error("Gravity journal acceptance does not match its prepared descriptor");
+    if(native_external()) {
+        if(!external_frame_)throw std::logic_error("Native external source frame was not prepared");
+        const auto budget=external_frame_->require_complete_consumption();
+        auto* transaction=runtime_.active_host_hydro_transaction();
+        if(!transaction)throw std::logic_error("Native external acceptance lost its macro owner");
+        const auto& binding=scheduler::current_stage_binding();
+        transaction->require_source_preparation_owner(*this,binding.context,binding.handles);
+        const long double weight=descriptor.flux_register_weight;
+        // Full dt is already in the source. The actual RK weight occurs once.
+        external_pending_[pending_count_]={weight*budget.radial_momentum,weight*budget.axial_momentum,
+            weight*budget.torque,weight*budget.work};
+        for(const auto value:external_pending_[pending_count_])if(!std::isfinite(value))
+            throw std::runtime_error("Native external weighted body budget overflowed");
+        for(std::size_t field=0;field<external_accepted_.size();++field) {
+            long double total=external_accepted_[field];
+            for(std::size_t stage=0;stage<=pending_count_;++stage)total+=external_pending_[stage][field];
+            if(!std::isfinite(total))throw std::runtime_error("Native external accepted body budget overflowed");
+        }
+        ++pending_count_;prepared_.reset();invalidate();return;
+    }
     const auto& source=prepared_->source;
     if(source.topology!=epoch_||source.input_time!=prepared_->input_time
         ||source.inputs.size()!=runtime_.handles().size())
@@ -244,6 +341,13 @@ void GravityStage::commit_macro_step() noexcept {
     if(!journal_active_||prepared_||!journal_method_
         ||!expected_count_||pending_count_!=expected_count_
         ||committed_count_)std::terminate();
+    if(native_external()) {
+        for(std::size_t stage=0;stage<pending_count_;++stage)
+            for(std::size_t field=0;field<external_accepted_.size();++field)
+                external_accepted_[field]+=external_pending_[stage][field];
+        pending_count_=0;expected_count_=0;journal_method_.reset();journal_active_=false;
+        invalidate();return;
+    }
     static_assert(std::is_nothrow_swappable_v<decltype(boundary_snapshot_)>);
     committed_rows_.swap(pending_rows_);committed_count_=pending_count_;
     boundary_snapshot_.swap(pending_boundary_snapshot_);
@@ -272,7 +376,16 @@ void GravityStage::flush_committed_diagnostics() {
     committed_count_=0;
 }
 /** Retire both host and device gravity views before changing state. */
-void GravityStage::invalidate() const { if(gravity_)gravity_->invalidate();if(runtime_.backend())runtime_.backend()->invalidate_gravity(); }
+void GravityStage::invalidate() const {
+    if(native_external()) {
+        // Retiring an unused/older service must not detach another service's
+        // actual frame. Only the owner that attached this exact borrow clears it.
+        if(policy_&&external_frame_&&policy_->prepared_native_external()==external_frame_.get())
+            policy_->native_external_frame_=nullptr;
+        if(external_frame_)external_frame_->invalidate();
+    }
+    if(gravity_)gravity_->invalidate();if(runtime_.backend())runtime_.backend()->invalidate_gravity();
+}
 /** Report the gravity stability cap to the Driver scheduler. */
 double GravityStage::timestep() const { return gravity_?gravity_->timestep(runtime_.configuration().numerics.cfl):std::numeric_limits<double>::infinity(); }
 /** Materialize accepted potential and acceleration for plot output. */

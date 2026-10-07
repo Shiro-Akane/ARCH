@@ -378,8 +378,17 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     } else {
         const auto execute_single = [&](auto& integrator) {
             amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks.front());
-            integrator.integrate(block, eos, block.grid, config,
-                                 diffusion_dt, dt_diff_fe, bc_handler, runtime.geometry_semantics());
+            const auto semantics=runtime.geometry_semantics();
+            if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+                // The single-patch native adapter borrows the actual Tree,
+                // pooled block and active handles for genuine domain exchange.
+                // A Grid/chart alone cannot authorize that execution owner.
+                integrator.integrate(block,eos,block.grid,config,
+                    diffusion_dt,dt_diff_fe,bc_handler,semantics,&amr_ctrl);
+            } else {
+                integrator.integrate(block,eos,block.grid,config,
+                    diffusion_dt,dt_diff_fe,bc_handler,semantics);
+            }
         };
         Numerics::Diffusion::dispatch_diffusion(
             config, resolved_plan->diffusion_integrator,

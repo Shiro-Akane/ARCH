@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "numerics/integrator/IHydroSolver.h"
 #include "numerics/integrator/HydroBoundaryAuthority.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
@@ -57,6 +59,12 @@ public:
             : arch::boundary::HydroBoundaryView{};
         if(boundary&&semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
             throw std::invalid_argument("Native wall authority used by another Hydro chart");
+        std::optional<Physical::Gravity::NativeExternalStageFrame::PatchReceipt> source;
+        if(semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz&&gravity) {
+            const auto* frame=gravity->prepared_native_external();
+            if(!frame)throw std::logic_error("Native external source has no actual prepared stage frame");
+            source.emplace(frame->claim_patch(amr_ctrl,block_id,state,grid,dt,*gravity));
+        }
         int total_size = grid.GetTotalSize();
         int n_spec = state.GetNumSpecies();
 
@@ -67,7 +75,7 @@ public:
             TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy, EosType>(
                 amr_ctrl, block_id, state, eos_, grid, dt, dU, d_spec,
                 flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed, semantics_,
-                {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint},walls);
+                {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint},walls,source?&*source:nullptr);
         };
         if constexpr (requires { typename EosType::HostHydroScope; }) {
             // The EOS owns the complete key. Storage is local to this worker

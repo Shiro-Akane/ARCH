@@ -253,8 +253,15 @@ add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
 
 add_executable(arch_gravity_stage_contract
     tests/host/gravity/test_gravity_stage_contract.cpp
-    tests/host/driver/test_host_hydro_transaction.cpp)
-target_link_libraries(arch_gravity_stage_contract PRIVATE arch_driver_runtime)
+    tests/host/driver/test_host_hydro_transaction.cpp
+    tests/host/driver/test_rz_runtime_boundary.cpp
+    src/amr/elliptic/EllipticMeshAdapter.cpp
+    src/driver/stages/GravityStage.cpp)
+# Reuse this lane for the bounded actual angular Runtime contract; standalone
+# diagnostic EOS/geometry matrices retain their own main and assertions.
+target_compile_definitions(arch_gravity_stage_contract PRIVATE
+    ARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1)
+target_link_libraries(arch_gravity_stage_contract PRIVATE arch_driver_runtime arch_gravity_cpu)
 arch_configure_host_test(arch_gravity_stage_contract)
 add_test(NAME gravity_stage_contract COMMAND arch_gravity_stage_contract)
 
@@ -468,7 +475,7 @@ add_test(NAME preview_exact_sample_cache COMMAND arch_initial_sample_cache)
 # Physical-scale invariance uses independent analytic Euler and linear-system references.
 add_executable(arch_low_density tests/host/numerics/test_low_density.cpp)
 arch_configure_host_test(arch_low_density)
-target_link_libraries(arch_low_density PRIVATE arch_build_contract)
+target_link_libraries(arch_low_density PRIVATE arch_build_contract arch_diffusion_math)
 add_test(NAME low_density_math COMMAND arch_low_density)
 
 # Shared PPM curvature limits: analytic profiles and roundoff sensitivity.

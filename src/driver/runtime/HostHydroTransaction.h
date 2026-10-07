@@ -228,6 +228,21 @@ class HostHydroTransaction final {
         runtime_.host_hydro_transaction_=nullptr;leased_=false;
     }
 public:
+    /** Authenticate one source preparation against this live actual Runtime owner.
+     * Presence of a callback or a source descriptor never substitutes for this
+     * exact context, preparation, span and fixed-allocation transaction lease.
+     */
+    void require_source_preparation_owner(const scheduler::HydroStagePreparation& owner,
+        const scheduler::StageExecutionContext& context,
+        std::span<const amr::BlockHandle> handles) const {
+        require_owner();
+        if(preparation_!=&owner||&context!=&context_
+            ||runtime_.active_host_hydro_transaction()!=this
+            ||handles.data()!=handles_address_||handles.size()!=handles_.size()
+            ||!std::equal(handles.begin(),handles.end(),handles_.begin()))
+            throw std::logic_error("Native source preparation changed its actual Runtime transaction owner");
+    }
+
     /** Read-only exact owner witness; used at a quiescent boundary for scoped negatives.
      * It does not own a transaction or imply scientific capability acceptance. */
     struct OwnerWitness {

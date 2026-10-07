@@ -17,9 +17,20 @@
 
 #include "data/FluidState.h"
 #include "grid/Grid.h"
+#include "physics/gravity/GravitySource.h"
+
+namespace arch::driver { class GravityStage; }
 
 namespace Physical {
 namespace Gravity {
+
+class NativeExternalStageFrame;
+/** Source description is data discovery, never authority to consume a stage. */
+enum class GravitySourceOrigin : unsigned char { Unknown, NativeExternalOrthonormal };
+struct GravitySourceDescriptor {
+    GravitySourceOrigin origin=GravitySourceOrigin::Unknown;
+    ExternalGravityView external{};
+};
 
 /**
  * @brief Pure virtual interface for gravity models.
@@ -29,6 +40,12 @@ namespace Gravity {
 class IGravityPolicy {
 public:
     virtual ~IGravityPolicy() = default;
+    /** Unknown is deliberately the default for every unqualified/custom policy. */
+    virtual GravitySourceDescriptor source_descriptor() const noexcept { return {}; }
+    /** Borrow only the actual GravityStage publication; construction is private. */
+    const NativeExternalStageFrame* prepared_native_external() const noexcept {
+        return native_external_frame_;
+    }
     // Optional work from the actual Riemann mass flux. Existing external gravity
     // retains its cell source; self gravity supplies this compatible face work.
     virtual void add_flux_work_on_patch(std::vector<FluidVector>&,
@@ -42,6 +59,9 @@ public:
      */
     virtual void add_sources_on_patch(std::vector<FluidVector>& dU, const FluidState& state,
                                       const Grid& grid, double dt, void* execution_stream = nullptr) const = 0;
+private:
+    friend class arch::driver::GravityStage;
+    mutable const NativeExternalStageFrame* native_external_frame_=nullptr;
 };
 
 } // namespace Gravity

@@ -8,7 +8,8 @@
  * 2. Multiply/accumulate rho/m_r/m_z/E with V weights and m_phi with
  *    W weights, rejecting nonfinite or completely lost nonzero products.
  * 3. Form Xi means with separate exponent-scaled species and total masses.
- * 4. Return explicit mathematical status; the Host owner handles exceptions
+ * 4. Integrate signed source components through the same V/W product sequence.
+ * 5. Return explicit mathematical status; the Host owner handles exceptions
  *    and the actual stage/ghost/EOS publication contract.
  *
  * No quadrature, EOS, floor, normalization or evolved field is duplicated.
@@ -36,7 +37,7 @@ enum class Status : unsigned char {
     invalid_fraction, nonfinite_state, unrepresentable
 };
 
-/** Conserved mean or five unusable NaNs; failure never supplies default U. */
+/** State/source component mean or five NaNs; failure supplies no default U. */
 struct ConservedMean {
     FluidVector value;
     Status status;
@@ -69,19 +70,20 @@ ARCH_INLINE bool representable_contribution(double point,double weighted) {
     return std::isfinite(weighted)&&(point==0.||weighted!=0.);
 }
 
-/** Integrate validated point states in the existing sample order.
- * <U>_V=sum(w_V U) except m_phi=<rho*u_phi>_W=sum(w_W rho*u_phi).
- * Radius/weights must belong to the caller's positive native cell rule;
- * this function neither infers bounds nor invents a weight-sum tolerance.
- * Each original product is formed once and checked before its original add.
- * No floor, weight rescaling, extended precision or compensated sum is used.
- * Failed products return the existing unrepresentable status and unusable NaNs.
- * The immutable index reader must be device-callable and must not throw.
+namespace detail {
+
+/** Integrate the sole guarded V/W component sequence in its original order.
+ * State mode requires positive point and final mean rho. Source mode accepts
+ * finite signed components, including a zero mass source. Both modes retain
+ * the same positive native weights, finite checks and each original product
+ * immediately followed by its original addition. No cancellation, exponent
+ * rescaling, density surrogate or new scientific tolerance is introduced.
+ * The immutable component reader must be device-callable and must not throw.
  */
-template<std::size_t Samples,class StateReader>
-ARCH_INLINE ConservedMean conserved_mean(
+template<bool RequirePositiveDensity,std::size_t Samples,class ComponentReader>
+ARCH_INLINE ConservedMean components_mean(
     const std::array<GridMetrics::Rz::CellAverageSample,Samples>& samples,
-    const StateReader& state_reader)
+    const ComponentReader& component_reader)
 {
     static_assert(Samples>0);
     FluidVector mean{};
@@ -92,12 +94,14 @@ ARCH_INLINE ConservedMean conserved_mean(
         if(!std::isfinite(q.volume_weight)||!(q.volume_weight>0.)
            ||!std::isfinite(q.angular_weight)||!(q.angular_weight>0.))
             return ConservedMean(Status::invalid_weight);
-        const auto point=state_reader(k);
+        const auto point=component_reader(k);
         if(!std::isfinite(point.rho)||!std::isfinite(point.mom_u)
            ||!std::isfinite(point.mom_v)||!std::isfinite(point.mom_w)
            ||!std::isfinite(point.eng))
             return ConservedMean(Status::nonfinite_state);
-        if(!(point.rho>0.))return ConservedMean(Status::invalid_density);
+        if constexpr(RequirePositiveDensity) {
+            if(!(point.rho>0.))return ConservedMean(Status::invalid_density);
+        }
         const double weighted_rho=q.volume_weight*point.rho;
         if(!representable_contribution(point.rho,weighted_rho))
             return ConservedMean(Status::unrepresentable);
@@ -119,13 +123,46 @@ ARCH_INLINE ConservedMean conserved_mean(
             return ConservedMean(Status::unrepresentable);
         mean.eng+=weighted_eng;
     }
-    if(!std::isfinite(mean.rho)||!(mean.rho>0.)
+    if(!std::isfinite(mean.rho)||(RequirePositiveDensity&&!(mean.rho>0.))
        ||!std::isfinite(mean.mom_u)||!std::isfinite(mean.mom_v)
        ||!std::isfinite(mean.mom_w)||!std::isfinite(mean.eng))
         return ConservedMean(Status::unrepresentable);
     ConservedMean result;
     result.value=mean;result.status=Status::valid;
     return result;
+}
+
+} // namespace detail
+
+/** Integrate validated physical point states in the existing sample order.
+ * <U>_V=sum(w_V U), except m_phi=<rho*u_phi>_W=sum(w_W rho*u_phi).
+ * Actual radii/weights come from the caller's positive native cell rule;
+ * finite positive point/final rho and all original failure gates are retained.
+ * This is integration only: actual point EOS and stage identity belong to
+ * the caller. A failed result contains five NaNs, never a default state.
+ */
+template<std::size_t Samples,class StateReader>
+ARCH_INLINE ConservedMean conserved_mean(
+    const std::array<GridMetrics::Rz::CellAverageSample,Samples>& samples,
+    const StateReader& state_reader)
+{
+    return detail::components_mean<true>(samples,state_reader);
+}
+
+/** Integrate signed conserved source components without treating them as U.
+ * Mass, radial/axial momentum and energy use V; the azimuthal source uses W.
+ * A source integrand can have rho=0 or a finite signed mass component. It is
+ * not an EOS state, and this entry neither invents a positive rho nor applies
+ * a point thermal test. All sample/weight/finite/product guards are identical
+ * to the state entry; only its point/final positive-density gates are absent.
+ * Physical input-state/EOS checks and source origin remain the caller's duty.
+ */
+template<std::size_t Samples,class SourceReader>
+ARCH_INLINE ConservedMean source_components_mean(
+    const std::array<GridMetrics::Rz::CellAverageSample,Samples>& samples,
+    const SourceReader& source_reader)
+{
+    return detail::components_mean<false>(samples,source_reader);
 }
 
 /** Density-weighted Xi without premature w*rho*Xi overflow/underflow.

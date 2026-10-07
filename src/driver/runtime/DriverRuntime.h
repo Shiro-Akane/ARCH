@@ -148,6 +148,7 @@ public:
     const backend::BackendCounters& boundary_observer_operations() const { return boundary_observer_operations_; }
 private:
     friend class HostHydroTransaction;
+    friend class GravityStage;
     // Non-owning exact token for one explicit internal Host/RZ transaction.
     HostHydroTransaction* host_hydro_transaction_=nullptr;
     std::vector<double>* tentative_hydro_boundary_budget_=nullptr;

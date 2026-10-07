@@ -96,6 +96,34 @@ inline void validate_request(const Grid& grid,const NativeRzBoundaryRequest& req
         throw std::invalid_argument("native RZ boundary donor does not match its physical mirror and tangent cell");
 }
 
+/** Select three real density observations for this physical-law donor.
+ * Workflow: authenticate its logical radial index/layout; an active donor
+ * uses three actual active columns before physical ghosts have been built.
+ * begin=clamp(i-1,Is,Ie-3) keeps its original centered support away from a wall
+ * and uses the same existing one-sided fit at the first/last active column.
+ * A genuine axial-corner donor outside the active range already belongs to
+ * the completed preceding radial prefix and retains the original logical
+ * begin=clamp(i-1,0,totalX-3). No density, energy or EOS is changed here.
+ *
+ * Seed copies are provisional storage, not density observations certifying
+ * an active in-cell physical primitive. Reading them can change I_* while
+ * native J/E remain fixed and falsely erase a cold donor's thermal energy.
+ * The final completed-ghost EOS still uses its original full logical stencil.
+ */
+inline int source_support_begin(const Grid& grid,int source_i)
+{
+    const int nx=grid.GetTotalX(),lower=grid.Is(),upper=grid.Ie();
+    if(nx<3||grid.ng<1||grid.stride_y<nx||source_i<0||source_i>=nx
+       ||lower<0||upper<lower||upper>nx)
+        throw std::invalid_argument("native RZ boundary source requires a real radial layout/index");
+    if(source_i>=lower&&source_i<upper) {
+        if(upper-lower<3)
+            throw std::invalid_argument("native RZ boundary active source requires three real active density cells");
+        return std::clamp(source_i-1,lower,upper-3);
+    }
+    return std::clamp(source_i-1,0,nx-3);
+}
+
 /** Map a target fraction into its own true donor; reflect only the normal.
  * Normal mapping s=source_upper-f*(source_upper-source_lower) is mathematically
  * 2*face-target for mirrored cells. Tangents use source_lower+f*source_width;
@@ -254,7 +282,7 @@ PhysicalBoundaryEvaluation EvaluateNativeRzBoundaryCell(const Grid& grid,
     if(RzThermodynamics::provisional_native_state(read(source_index),source_x.data(),count,1,bounds)
         !=arch::state::Status::valid)
         throw std::runtime_error("native RZ boundary source has invalid native fields or composition");
-    const int source_begin=std::clamp(request.source[0]-1,0,grid.GetTotalX()-3);
+    const int source_begin=native_rz_detail::source_support_begin(grid,request.source[0]);
     const auto source_closure=RzThermodynamics::make_cell_supported(read,source_index,
         geometry,request.source[0],source_begin,bounds);
     const double center_r=grid.GetCellCenterX(request.destination[0]);
@@ -371,11 +399,12 @@ PhysicalBoundaryEvaluation EvaluateNativeRzReflectingCell(const Grid& grid,
         throw std::invalid_argument("native RZ reflecting boundary requires valid numerics bounds and species layout");
     const int count=species.count();
     const int source_index=grid.GetIndex(request.source[0],request.source[1],0);
-    const int source_begin=std::clamp(request.source[0]-1,0,grid.GetTotalX()-3);
+    const int source_begin=native_rz_detail::source_support_begin(grid,request.source[0]);
     std::vector<double> source_x(static_cast<std::size_t>(count)),support_x(static_cast<std::size_t>(count));
     for(int s=0;s<count;++s)source_x[s]=fraction(s,source_index);
-    // Real signed axis-reflected density cells may supply the positive donor's
-    // three-cell stencil. They are native states, never negative-r EOS points.
+    // Active donors borrow actual active density columns. A genuine completed
+    // corner prefix can include signed axis-reflected native density cells;
+    // these are density observations, never negative-r physical EOS points.
     for(int i=source_begin;i<source_begin+3;++i) {
         const int index=grid.GetIndex(i,request.source[1],0);
         for(int s=0;s<count;++s)support_x[s]=fraction(s,index);

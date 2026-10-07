@@ -2692,10 +2692,128 @@ void run() {
 }
 } // namespace hydro_wall_domain_checks
 
+/** A real cold active donor cannot borrow provisional raw-copy ghost density.
+ * Real Tree/root and registry handles execute the actual builtin -> exchange ->
+ * immutable callback -> publication -> exchange sequence. The full selected
+ * EOS subsequently checks all logical native cells; no Runtime/step grant is
+ * inferred. The independent reference uses polynomial antiderivatives.
+ */
+void test_native_rz_cold_seed_density_support()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr double e0=0x1p-25;
+    SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=1.;config.grid.x1_max=3.;config.grid.x2_min=0.;config.grid.x2_max=2.;
+    config.grid.amr_max_blocks=4;config.amr.lrefinemin=config.amr.lrefinemax=0;
+    config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="user";
+    config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="periodic";
+    config.numerics.sml_rho=config.numerics.min_eint=1.e-14;config.numerics.max_eint=1.e10;
+    SpeciesManager material;material.add_species("cold-density",1.,1.,1.4,3.);
+    IdealGas eos(1.4,material);amr::AMRControl control(4,2);
+    control.tree->InitRootGrid(config,1,rz);
+    const auto& active=control.tree->GetActiveBlocks();
+    require(active.size()==1,"cold seed fixture requires a genuine one-root domain");
+    auto& block=control.pool->GetBlock(active.front());const auto& grid=block.grid;
+    block.RequireNativeGeometryIdentity();
+    require(grid.dyadic_identity.bound&&grid.dyadic_identity.periodic_axial
+        &&grid.ng==amr::MAX_NG&&grid.Ie()-grid.Is()==16
+        &&grid.dx1==.125&&grid.dx2==.125,
+        "cold seed fixture lost authentic root/periodic/dyadic geometry");
+    const auto integral=[](long double l,long double h,int p) {
+        return (std::pow(h,p+1)-std::pow(l,p+1))/static_cast<long double>(p+1);
+    };
+    const auto independent=[&](int i) {
+        const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+        const auto v=integral(l,h,1),w=integral(l,h,2);
+        const auto m=.875L*v+.25L*integral(l,h,3);
+        const auto inertia=.875L*integral(l,h,3)+.25L*integral(l,h,5);
+        return FluidVector{double(m/v),0.,0.,double(inertia/w),double(e0*m/v+.5L*inertia/v)};
+    };
+    auto& state=block.fluid_state;
+    for(int c=0;c<grid.GetTotalSize();++c) {
+        state.set(c,{987.,123.,-456.,321.,654.});state.X(0,c)=.125;state.enuc_rate[c]=42.+c/8.;
+    }
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const int c=grid.GetIndex(i,j,0);state.set(c,independent(i));state.X(0,c)=1.;
+    }
+    const auto initialized=native_boundary_snapshot(state,grid);
+    arch::topology::TopologyIdentityRegistry registry{{2,{1,1,1},0}};
+    auto proposal=registry.stage_adoption({{block.id,{2,block.level,
+        block.logical_x1,block.logical_x2,block.logical_x3}}});
+    std::vector<amr::BlockHandle> handles;
+    (void)registry.commit_after_success(std::move(proposal),
+        [&](const auto& candidate){handles=candidate.handles_in_observation_order;});
+    require(handles.size()==1&&handles.front()==registry.handle_for_pool(block.id),
+        "cold seed fixture lacks an authentic registered handle");
+    control.BindActiveHandles(handles);
+    int lower_calls=0,upper_calls=0;
+    ResolvedUserBoundaries callbacks;callbacks.identity="native-cold-active-density-support";
+    callbacks.physical=[&](const PhysicalBoundaryContext& c) {
+        require(c.axis==BoundaryAxis::X1&&c.time==.375&&c.purpose==BoundaryPurpose::Hydro,
+            "cold seed callback lost actual face/stage purpose/time");
+        if(c.side==BoundarySide::Lower)++lower_calls;else ++upper_calls;
+        const double donor_r=2.*(c.side==BoundarySide::Lower?1.:3.)-c.ghost_point.r_cy;
+        close(c.interior.rho,.875+.25*donor_r*donor_r,2.e-12,
+            "cold seed callback did not get a genuine positive physical donor");
+        close(c.interior.w,donor_r,2.e-12,"cold seed callback source angular physical point changed");
+        close(c.interior.temperature,e0/3.,2.e-12,"cold seed source lost genuine positive EOS thermal input");
+        PrimitiveData point;const double r=c.ghost_point.r_cy;
+        point.rho=.875+.25*r*r;point.w=r;point.SetTemperature(e0/3.);point.mass_fractions={1.};
+        PhysicalBoundaryData data;data.hydro=point;return data;
+    };
+    ScopedUserBoundarySelection selected(callbacks,config,material);
+    BCHandler handler(config,rz);handler.bind(eos,material);handler.configure_stage(.375,BoundaryPurpose::Hydro);
+    handler.apply_builtin(state,grid);
+    const int first=grid.GetIndex(grid.Is(),grid.Js(),0);
+    const int seed_ghost=grid.GetIndex(grid.Is()-1,grid.Js(),0);
+    require(state.rho[seed_ghost]==state.rho[first]
+        &&state.rho[seed_ghost]!=independent(grid.Is()-1).rho,
+        "actual seed did not overwrite the analytic density halo in this counterexample");
+    const auto read=[&](int c){return state.get(c);};
+    const auto view=GridMetrics::make_geometry_view(grid,rz);
+    const arch::state::Bounds bounds{config.numerics.sml_rho,
+        config.numerics.min_eint,config.numerics.max_eint};
+    const auto stale=RzThermodynamics::make_cell_supported(read,first,view,grid.Is(),grid.Is()-1,bounds);
+    require(stale.inertia_mapping_valid&&!stale.valid()&&stale.status==arch::state::Status::unresolved_energy,
+        "raw seed-density support did not distinguish the false cold thermal rejection");
+    const auto seeded=native_boundary_snapshot(state,grid);
+    auto candidate=handler.prepare_native(state,grid);
+    require_native_boundary_unchanged(state,grid,seeded,"cold read-only boundary preparation wrote solver arrays");
+    handler.validate_native_candidate(candidate,state,grid);
+    require(lower_calls>0&&upper_calls>0&&lower_calls%9==0&&upper_calls%9==0,
+        "cold physical source did not reach center/eight-node selected EOS callbacks");
+    // Actual whole-domain re-preparation, including the two real exchanges,
+    // does not use manually copied ghost/reference data.
+    TimeIntegration::synchronize_domain_boundary(control,handler,&amr::Block::fluid_state,
+        handles,rz,bounds);
+    RzThermodynamics::validate_completed_patch_eos(state,grid,1,bounds,eos);
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const int c=grid.GetIndex(i,j,0);const auto expected=independent(i),actual=state.get(c);
+        if(i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je())
+            require(native_boundary_bits(state,c)==initialized[static_cast<std::size_t>(c)],
+                "cold boundary phasing changed active interior/ENUC/species bits");
+        close(actual.rho,expected.rho,2.e-12,"cold completed boundary density V mean reference");
+        close(actual.mom_w,expected.mom_w,2.e-12,"cold completed boundary J/W reference");
+        close(actual.eng,expected.eng,2.e-12,"cold completed boundary E/V reference");
+        require(actual.mom_u==0.&&actual.mom_v==0.&&state.X(0,c)==1.,
+            "cold completed boundary changed zero meridional motion or composition");
+    }
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=grid.GetTotalX();i<grid.stride_y;++i) {
+        const int c=grid.GetIndex(i,j,0);
+        require(native_boundary_bits(state,c)==initialized[static_cast<std::size_t>(c)],
+            "cold boundary phasing touched storage padding");
+    }
+    // Paired periodic coordinates are physical aliases, so corner validation
+    // above covers all real rows without treating alias z as an extended domain.
+    std::cout<<"Native cold seeded-density donor support checked through actual phased BC and completed EOS (local boundary; no Runtime step grant)\n";
+}
+
 } // namespace
 
 void test_user_physical_boundary()
 {
+    test_native_rz_cold_seed_density_support();
     reflecting_cell_checks::run();
     reflecting_handler_checks::run();
     hydro_wall_authority_checks::run();

@@ -22,6 +22,11 @@ struct ExternalGravity : public IGravityPolicy
 
     ExternalGravity(double gx, double gy, double gz) : g_x(gx), g_y(gy), g_z(gz) {}
 
+    /** Discover the constant local orthonormal vector; no stage is granted here. */
+    GravitySourceDescriptor source_descriptor() const noexcept override {
+        return {GravitySourceOrigin::NativeExternalOrthonormal,{g_x,g_y,g_z,true}};
+    }
+
     virtual void add_sources_on_patch(std::vector<FluidVector>& dU, const FluidState& state,
                                       const Grid& grid, double dt, void* execution_stream = nullptr) const override
     {

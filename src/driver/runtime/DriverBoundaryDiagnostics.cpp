@@ -3,12 +3,14 @@
  * @brief Integrate actual domain-face fluxes without changing evolved fields.
  *
  * Workflow:
- * 1. Allocate physical-surface observers only when a case callback is selected.
+ * 1. Allocate actual physical-surface observers for native RZ or selected callbacks.
  * 2. Set weights from the existing RK/RKL descriptors before face evaluation.
- * 3. Integrate the captured planes with outward signs and GridMetrics areas.
+ * 3. Integrate ordinary fields with actual face area, and native phi with torque measure.
  * 4. Accumulate Hydro quadrature and the unchanged RKL accounting recurrence.
  *
- * B_out = integral(dt * sum_faces A * F_out). Positive entries leave the
+ * B_out = integral(dt * sum_faces A * F_out); native phi uses integral r dA
+ * instead of A. Its captured F_W is already a normalized face average, so
+ * this owner applies the sole torque measure once. Positive entries leave the
  * domain. Momentum entries are native components; curved-basis source terms
  * must be accounted for separately. Totals start at this process, including
  * when the simulation continues a checkpoint. No field repair occurs here.
@@ -99,6 +101,7 @@ void DriverRuntime::prepare_boundary_capture(double weight, double initial_weigh
 /** Sum physical-surface rows in fixed block/axis/side/tangential-cell order. */
 std::vector<double> DriverRuntime::integrate_boundary_capture() {
     const int fields=6+specs.count();
+    const bool native_rz=geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
     std::vector<double> result(fields,0.);
     std::vector<backend::BoundaryFluxPlanes> device_planes;
     std::map<amr::BlockHandle,const backend::BoundaryFluxPlanes*> device_by_block;
@@ -115,6 +118,10 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
     const auto& active=amr_ctrl.tree->GetActiveBlocks();
     for (std::size_t b=0;b<active.size();++b) {
         const auto& block=amr_ctrl.pool->GetBlock(active[b]); const auto& grid=block.grid;
+        // Explicit Runtime semantics match the producer; a cylindrical geometry
+        // string alone must never switch the ordinary polar-plane observer.
+        GridMetrics::GeometryView native_geometry{};
+        if(native_rz)native_geometry=GridMetrics::make_geometry_view(grid,geometry_semantics());
         const auto& planes=compute_backend ? device_by_block.at(stage_handles[b])->stage
             : block.fluid_state.boundary_flux_capture->stage;
         const int lower[]{grid.Is(),grid.Js(),grid.Ks()}, upper[]{grid.Ie(),grid.Je(),grid.Ke()};
@@ -127,13 +134,25 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
             std::size_t row=0;
             for (cell[c]=lower[c];cell[c]<upper[c];++cell[c])
                 for (cell[a]=lower[a];cell[a]<upper[a];++cell[a],++row) {
-                    const double area=GridMetrics::FaceArea(grid,axis,cell[0],cell[1],cell[2],side!=0);
+                    const double area=native_rz
+                        ?GridMetrics::FaceArea(native_geometry,axis,cell[0],cell[1],cell[2],side!=0)
+                        :GridMetrics::FaceArea(grid,axis,cell[0],cell[1],cell[2],side!=0);
                     if (!std::isfinite(area) || area<0.) throw std::logic_error("Invalid boundary accounting face area");
                     const double measure=(side?1.:-1.)*area;
+                    // F_phi is physical on r faces and W-normalized on z
+                    // faces. J_out=sum integral(r dA)*F_phi, not A*F_phi;
+                    // energy/species/heat retain their actual V face measure.
+                    const double torque=native_rz
+                        ?GridMetrics::Rz::FaceTorqueMeasure(native_geometry,axis,cell[0],cell[1],side!=0)
+                        :0.;
+                    if(native_rz&&(!std::isfinite(torque)||torque<0.))
+                        throw std::logic_error("Invalid boundary accounting torque measure");
+                    const double signed_torque=(side?1.:-1.)*torque;
                     for (int field=0;field<fields;++field) {
                         const double value=planes[face][row*fields+field];
                         if (!std::isfinite(value)) throw std::runtime_error("Nonfinite actual boundary flux");
-                        result[field]+=measure*value;
+                        if(native_rz&&field==3)result[field]+=signed_torque*value;
+                        else result[field]+=measure*value;
                     }
                 }
         }
@@ -141,11 +160,13 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
     return result;
 }
 
-/** Attach accounting hooks to the existing scheduler; ordinary cases leave them empty. */
+/** Attach actual surface accounting: native RZ always observes built-in faces;
+ * ordinary cases retain the existing selected-callback activation condition. */
 void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& context) {
     if(host_hydro_transaction_)throw std::logic_error("Boundary accounting must bind before Host Hydro transaction");
     const auto* selected=boundary::CurrentUserBoundaries();
-    if (!selected || (!selected->callbacks.physical && !selected->callbacks.gravity)) return;
+    const bool native_rz=geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (!native_rz && (!selected || (!selected->callbacks.physical && !selected->callbacks.gravity))) return;
     const int fields=6+specs.count();
     if (hydro_boundary_budget_.empty()) {
         hydro_boundary_budget_.assign(fields,0.); diffusion_boundary_budget_.assign(fields,0.);
